@@ -16,7 +16,7 @@ module.exports = {
 	require: [testCJS ? "./dist/test/mochaHooks.js" : "./lib/test/mochaHooks.js"],
 	reporter: "mocha-multi-reporters",
 	"reporter-options": [
-		`configFile=test-config.json,cmrOutput=xunit+output+${outputFilePrefix}:xunit+suiteName+${suiteName}`,
+		`configFile=test-config.json,cmrOutput=mocha-junit-reporter+mochaFile+${outputFilePrefix}:mocha-junit-reporter+testsuitesTitle+${suiteName}`,
 	],
 	"unhandled-rejections": "strict",
 };

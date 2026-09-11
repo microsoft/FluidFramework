@@ -71,6 +71,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"mocha": "^11.7.5",
+		"mocha-junit-reporter": "^2.2.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"sinon": "^18.0.1",
 		"uuid": "^11.1.0"

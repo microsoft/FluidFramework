@@ -1,7 +1,7 @@
 {
-	"reporterEnabled": "spec,xunit",
-	"xunitReporterOptions": {
-		"output": "nyc/{id}junit-report.xml",
-		"suiteName": "{id}"
+	"reporterEnabled": "spec,mocha-junit-reporter",
+	"mochaJunitReporterReporterOptions": {
+		"mochaFile": "nyc/{id}junit-report.xml",
+		"testsuitesTitle": "{id}"
 	}
 }

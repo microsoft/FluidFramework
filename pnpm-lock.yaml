@@ -1332,6 +1332,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -1936,6 +1939,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -3260,6 +3266,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -3732,6 +3741,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -3928,6 +3940,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -4743,6 +4758,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -5000,6 +5018,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -5929,6 +5950,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -6032,6 +6056,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -6186,6 +6213,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -6265,6 +6295,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -6365,6 +6398,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -6459,6 +6495,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -6553,6 +6592,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -6704,6 +6746,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -6944,6 +6989,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -7071,6 +7119,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -7146,6 +7197,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -7295,6 +7349,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -7392,6 +7449,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -7492,6 +7552,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -7583,6 +7646,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -7692,6 +7758,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -7810,6 +7879,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -7943,6 +8015,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -8061,6 +8136,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -8167,6 +8245,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -8261,6 +8342,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -8361,6 +8445,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -8488,6 +8575,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -8606,6 +8696,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -8703,6 +8796,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -8812,6 +8908,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -8915,6 +9014,9 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -9084,6 +9186,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -9233,6 +9338,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -9524,6 +9632,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -9630,6 +9741,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -9767,6 +9881,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -9940,6 +10057,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -10028,6 +10148,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -10310,6 +10433,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -10425,6 +10551,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -10695,6 +10824,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -10907,6 +11039,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -11193,6 +11328,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -11302,6 +11440,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -11423,6 +11564,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -11511,6 +11655,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -11590,6 +11737,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -11699,6 +11849,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -11799,6 +11952,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -11875,6 +12031,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -11945,6 +12104,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -12036,6 +12198,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -12151,6 +12316,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -12248,6 +12416,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -12448,6 +12619,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -12624,6 +12798,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -12779,6 +12956,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -12946,6 +13126,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -13067,6 +13250,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -13269,6 +13455,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -13384,6 +13573,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -13783,6 +13975,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -13943,6 +14138,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -14072,6 +14270,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -14260,6 +14461,9 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -14339,6 +14543,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -14708,6 +14915,9 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -15050,6 +15260,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -15225,6 +15438,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -15356,6 +15572,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -15670,6 +15889,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -16002,6 +16224,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -16199,6 +16424,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -16414,6 +16642,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -16505,6 +16736,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -16602,6 +16836,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-junit-reporter:
+        specifier: ^2.2.1
+        version: 2.2.1(mocha@11.7.5)(supports-color@10.2.2)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
@@ -20715,6 +20952,9 @@ packages:
   chardet@2.1.1:
     resolution: {integrity: sha512-PsezH1rqdV9VvyNhxxOW32/d75r01NY7TQCmOqomRo15ZSOKbpTFVsfjghxo6JloQUCGnH4k1LGu0R4yCLlWQQ==}
 
+  charenc@0.0.2:
+    resolution: {integrity: sha512-yrLQ/yVUFXkzg7EDQsPieE/53+0RlaWTs+wBrvW36cyilJ2SaDWfl4Yj7MtLTXleV9uEKefbAGUPv2/iWSooRA==}
+
   charm@0.1.2:
     resolution: {integrity: sha512-syedaZ9cPe7r3hoQA9twWYKu5AIyCswN5+szkmPBe9ccdLrj4bYaCnLVPTLd2kgVRc7+zoX4tyPgRnFKCj5YjQ==}
     deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
@@ -21082,6 +21322,9 @@ packages:
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
+
+  crypt@0.0.2:
+    resolution: {integrity: sha512-mCxBlsHFYh9C+HVpiEacem8FEBnMXgU9gy4zmNC+SXAZNB/1idgp/aulFJ4FgCi7GPEVbfyng092GqL2k2rmow==}
 
   css-loader@7.1.2:
     resolution: {integrity: sha512-6WvYYn7l/XEGN8Xu2vWFt9nVzrCn39vKyTEFf/ExEyoksJjjSZV/0/35XPlMbpnr6VGhZIUg5yJrL8tGfes/FA==}
@@ -22725,6 +22968,9 @@ packages:
     resolution: {integrity: sha512-wa56o2/ElJMYqjCjGkXri7it5FbebW5usLw/nPmCMs5DeZ7eziSYZhSmPRn0txqeW4LnAmQQU7FgqLpsEFKM4A==}
     engines: {node: '>= 0.4'}
 
+  is-buffer@1.1.6:
+    resolution: {integrity: sha512-NcdALwpXkTm5Zvvbk7owOUSvVvBKDgKP5/ewfXEznmQFfs4ZRmanOeKBTjRVjka3QFoN6XJ+9F3USqfHqTaU5w==}
+
   is-buffer@2.0.5:
     resolution: {integrity: sha512-i2R6zNFDwgEHJyQUtJEk0XFi1i0dPFn/oqjK3/vPCcDeJvW5NQ83V8QbicfF1SupOaB0h8ntgBC2YiE7dfyctQ==}
     engines: {node: '>=4'}
@@ -23588,6 +23834,9 @@ packages:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
     engines: {node: '>= 0.4'}
 
+  md5@2.3.0:
+    resolution: {integrity: sha512-T1GITYmFaKuO91vxyoQMFETst+O71VUPEU3ze5GNzDm0OWdP8v1ziTaAEPUr/3kLsY3Sftgz242A1SetQiDL7g==}
+
   mdast-util-find-and-replace@3.0.1:
     resolution: {integrity: sha512-SG21kZHGC3XRTSUhtofZkBzZTJNM5ecCi0SK2IMKmSXR8vO3peL+kb1O0z7Zl83jKtutG4k5Wv/W7V3/YHvzPA==}
 
@@ -23911,6 +24160,11 @@ packages:
     resolution: {integrity: sha512-+NsyUUAZDmo6YVHzL/stxSu3t9YS1iljliy3BSDrXJ/dkn1KYdmtZODGGjLcc9XLgVVpH4KshHB8XmZgMhaBXg==}
     engines: {node: '>=10'}
     hasBin: true
+
+  mocha-junit-reporter@2.2.1:
+    resolution: {integrity: sha512-iDn2tlKHn8Vh8o4nCzcUVW4q7iXp7cC4EB78N0cDHIobLymyHNwe0XG8HEHHjc3hJlXm0Vy6zcrxaIhnI2fWmw==}
+    peerDependencies:
+      mocha: '>=2.2.5'
 
   mocha-multi-reporters@1.5.1:
     resolution: {integrity: sha512-Yb4QJOaGLIcmB0VY7Wif5AjvLMUFAdV57D2TWEva1Y0kU/3LjKpeRVmlMIfuO1SVbauve459kgtIizADqxMWPg==}
@@ -26658,6 +26912,9 @@ packages:
   xml2js@0.6.2:
     resolution: {integrity: sha512-T4rieHaC1EXcES0Kxxj4JWgaUQHDk+qwHcYOCFHfiwKz7tOVPLq7Hjq9dM1WCMhylqMEfP7hMcOIChvotiZegA==}
     engines: {node: '>=4.0.0'}
+
+  xml@1.0.1:
+    resolution: {integrity: sha512-huCv9IH9Tcf95zuYCsQraZtWnJvBtLVE0QHMOs8bWyZAFZNDcYjsPq1nEx8jKA9y+Beo9v+7OBPRisQTjinQMw==}
 
   xmlbuilder@11.0.1:
     resolution: {integrity: sha512-fDlsI/kFEx7gLvbecc0/ohLG50fugQp8ryHzMTuW9vSa1GJ0XYWKnhsUx7oie3G98+r56aTQIUB4kht42R3JvA==}
@@ -34020,6 +34277,8 @@ snapshots:
 
   chardet@2.1.1: {}
 
+  charenc@0.0.2: {}
+
   charm@0.1.2: {}
 
   chart.js@4.5.1:
@@ -34407,6 +34666,8 @@ snapshots:
       path-key: 3.1.1
       shebang-command: 2.0.0
       which: 2.0.2
+
+  crypt@0.0.2: {}
 
   css-loader@7.1.2(webpack@5.109.0):
     dependencies:
@@ -36568,6 +36829,8 @@ snapshots:
       call-bound: 1.0.4
       has-tostringtag: 1.0.2
 
+  is-buffer@1.1.6: {}
+
   is-buffer@2.0.5: {}
 
   is-builtin-module@3.2.1:
@@ -37818,6 +38081,12 @@ snapshots:
 
   math-intrinsics@1.1.0: {}
 
+  md5@2.3.0:
+    dependencies:
+      charenc: 0.0.2
+      crypt: 0.0.2
+      is-buffer: 1.1.6
+
   mdast-util-find-and-replace@3.0.1:
     dependencies:
       '@types/mdast': 4.0.4
@@ -38450,6 +38719,17 @@ snapshots:
   mkdirp@1.0.4: {}
 
   mkdirp@3.0.1: {}
+
+  mocha-junit-reporter@2.2.1(mocha@11.7.5)(supports-color@10.2.2):
+    dependencies:
+      debug: 4.4.3(supports-color@10.2.2)
+      md5: 2.3.0
+      mkdirp: 3.0.1
+      mocha: 11.7.5
+      strip-ansi: 6.0.1
+      xml: 1.0.1
+    transitivePeerDependencies:
+      - supports-color
 
   mocha-multi-reporters@1.5.1(mocha@11.7.5)(supports-color@10.2.2):
     dependencies:
@@ -41896,6 +42176,8 @@ snapshots:
     dependencies:
       sax: 1.4.1
       xmlbuilder: 11.0.1
+
+  xml@1.0.1: {}
 
   xmlbuilder@11.0.1: {}
 

@@ -133,7 +133,7 @@ export function getFluidTestMochaConfig(
 				import.meta.dirname,
 				"..",
 				"test-config.json",
-			)},cmrOutput=xunit+output+${outputFilePrefix}:xunit+suiteName+${suiteName}`,
+			)},cmrOutput=mocha-junit-reporter+mochaFile+${outputFilePrefix}:mocha-junit-reporter+testsuitesTitle+${suiteName}`,
 		];
 	}
 

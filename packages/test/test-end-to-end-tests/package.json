@@ -144,6 +144,7 @@
 		"c8": "^10.1.3",
 		"eslint": "catalog:eslint",
 		"jiti": "^2.6.1",
+		"mocha-junit-reporter": "^2.2.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"nock": "^13.3.3",
 		"rimraf": "^6.1.3",
