@@ -1,10 +1,7 @@
-#!/usr/bin/env node
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-/** Inventory Azure Fluid Relay documents by Fluid tenant. */
 
 import { execFile } from "node:child_process";
 import { writeFile, chmod, mkdir } from "node:fs/promises";

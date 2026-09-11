@@ -20,7 +20,7 @@ It does not remove the documents from Azure Fluid Relay.
 - All documents must be summarized.
 
 ## Important
-Rotate both the self-hosted fluid tenant keys and the Azure Fluid Relay tenant
+Rotate both the self-hosted Fluid tenant keys and the Azure Fluid Relay tenant
 key 2 after copying the data.
 
 ## Workflow
