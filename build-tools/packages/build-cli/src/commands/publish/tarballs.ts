@@ -9,6 +9,7 @@ import { gunzipSync } from "node:zlib";
 import { untar } from "@andrewbranch/untar.js";
 import type { Logger, PackageJson } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
+import async from "async";
 import execa from "execa";
 import globby from "globby";
 import latestVersion from "latest-version";
@@ -22,6 +23,8 @@ interface TarballMetadata {
 	filePath: string;
 	fileName: string;
 }
+
+const publishPreflightConcurrency = 10;
 
 /**
  * Publishes a tarball to the package registry unless the version is already published.
@@ -118,26 +121,50 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 		}
 		await Promise.all(mapPromises);
 
+		const tarballsToPublish: TarballMetadata[] = [];
 		for (const entry of packageOrder) {
 			const lookupEntry = orderFileIsTarballs ? entry : getTarballName(entry);
 			const toPublish = tarballMetadata.get(lookupEntry);
 			if (toPublish === undefined) {
 				this.error(`No tarball found matching '${entry}'`, { exit: 1 });
 			}
+			tarballsToPublish.push(toPublish);
+		}
 
+		// The registry check is independent for every package, unlike publishing which must remain
+		// dependency-ordered. Bound the concurrent requests to avoid overwhelming the registry.
+		// eslint-disable-next-line import-x/no-named-as-default-member -- async.mapLimit is the idiomatic usage
+		const alreadyPublished = await async.mapLimit(
+			tarballsToPublish,
+			publishPreflightConcurrency,
+			async (tarball: TarballMetadata) => isTarballPublished(tarball, this.logger),
+		);
+
+		for (const [index, toPublish] of tarballsToPublish.entries()) {
 			let tryCount = 0;
-			let status: PublishStatus;
+			let status: PublishStatus = alreadyPublished[index]
+				? "AlreadyPublished"
+				: "SuccessfullyPublished";
 
-			do {
+			while (status !== "AlreadyPublished" && tryCount <= retry) {
 				this.info(`Publishing ${toPublish.fileName}, attempt ${tryCount + 1}`);
 				// We publish one package at a time, in order, and we don't continue until the current package is successfully
 				// published. This ensures that no packages are published to npm without their dependencies first being
 				// published. Note that despite publishing in order, npm itself may still make packages available in a different
 				// order - but we have no control over that.
 				// eslint-disable-next-line no-await-in-loop
-				status = await publishTarball(toPublish, this.logger, publishArgs);
+				status = await publishTarball(
+					toPublish,
+					this.logger,
+					publishArgs,
+					// Re-check on retries so a successful upload with a lost response is not reported as a failure.
+					tryCount > 0,
+				);
 				tryCount++;
-			} while (status === "Error" && tryCount <= retry);
+				if (status === "SuccessfullyPublished") {
+					break;
+				}
+			}
 
 			switch (status) {
 				case "AlreadyPublished": {
@@ -194,17 +221,10 @@ async function publishTarball(
 	tarball: TarballMetadata,
 	log: Logger,
 	publishArgs: string[],
+	checkIfPublished: boolean,
 ): Promise<PublishStatus> {
-	try {
-		const publishedVersion = await latestVersion(tarball.name, {
-			version: tarball.version,
-		});
-		if (publishedVersion !== "" && publishedVersion !== undefined) {
-			return "AlreadyPublished";
-		}
-	} catch (error) {
-		// Assume package or version is not published, so just continue and try to publish
-		log.verbose(`Version appears unpublished; expected error: ${error}`);
+	if (checkIfPublished && (await isTarballPublished(tarball, log))) {
+		return "AlreadyPublished";
 	}
 
 	const args = ["publish", tarball.fileName, "--access", "public"];
@@ -227,6 +247,19 @@ async function publishTarball(
 	}
 
 	return "SuccessfullyPublished";
+}
+
+async function isTarballPublished(tarball: TarballMetadata, log: Logger): Promise<boolean> {
+	try {
+		const publishedVersion = await latestVersion(tarball.name, {
+			version: tarball.version,
+		});
+		return publishedVersion !== "" && publishedVersion !== undefined;
+	} catch (error) {
+		// Assume package or version is not published, so just continue and try to publish.
+		log.verbose(`Version appears unpublished; expected error: ${error}`);
+		return false;
+	}
 }
 
 function handlePublishError(
