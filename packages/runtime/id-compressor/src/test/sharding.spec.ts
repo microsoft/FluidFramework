@@ -18,6 +18,42 @@ import { isLocalId } from "./testCommon.js";
 
 describe("IdCompressor Sharding", () => {
 	describe("Basic Sharding", () => {
+		for (const newShardCount of [
+			0,
+			-1,
+			1.5,
+			Number.NaN,
+			Number.POSITIVE_INFINITY,
+			Number.MAX_SAFE_INTEGER + 1,
+		]) {
+			for (const alreadySharded of [false, true]) {
+				it(`rejects invalid shard count ${newShardCount} without changing state (alreadySharded: ${alreadySharded})`, () => {
+					const parent = createIdCompressor(SerializationVersion.V3);
+					if (alreadySharded) {
+						parent.shard(1);
+					}
+					const serialized = parent.serialize(true);
+
+					assert.throws(
+						() => parent.shard(newShardCount),
+						/Shard count must be a positive safe integer/,
+					);
+					assert.equal(parent.serialize(true), serialized);
+					assert.equal(parent.generateCompressedId(), alreadySharded ? -2 : -1);
+				});
+			}
+		}
+
+		it("rejects an excessive stride without changing state", () => {
+			const parent = createIdCompressor(SerializationVersion.V3);
+			parent.shard(1);
+			const serialized = parent.serialize(true);
+
+			assert.throws(() => parent.shard(Number.MAX_SAFE_INTEGER), /Sharding limit reached/);
+			assert.equal(parent.serialize(true), serialized);
+			assert.equal(parent.generateCompressedId(), -2);
+		});
+
 		it("can create shards", () => {
 			const sessionId = createSessionId();
 			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);

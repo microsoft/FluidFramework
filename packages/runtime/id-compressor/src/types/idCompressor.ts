@@ -172,6 +172,8 @@ export interface IIdCompressorCore {
 	 * This can allow multiple local instantiations of the same compressor to safely share an ID space in scenarios where
 	 * different threads do not have access to a central ID compressor.
 	 * @param newShardCount - The number of additional different shards to split this compressor into.
+	 * Must be a positive safe integer.
+	 * @throws If `newShardCount` is not a positive safe integer or the resulting stride exceeds the sharding limit.
 	 * @returns An array of serialized compressors of size `newShardCount`.
 	 * These can be passed across a marshalling boundary and rehydrated on the other side, and will safely share the ID space of `this`.
 	 * Note that this method should only be needed when multiple JS runtimes are in play, as sharded compressors essentially

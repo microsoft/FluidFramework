@@ -280,8 +280,8 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	 * {@inheritdoc IIdCompressorCore.shard}
 	 */
 	public shard(newShardCount: number): SerializedIdCompressorWithOngoingSession[] {
-		if (newShardCount <= 0) {
-			throw new Error("Shard count must be positive");
+		if (!Number.isSafeInteger(newShardCount) || newShardCount <= 0) {
+			throw new Error("Shard count must be a positive safe integer");
 		}
 		if (this.ongoingGhostSession) {
 			throw new Error("Cannot shard during ghost session");
@@ -299,6 +299,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		if (newStride > MAX_STRIDE_LENGTH) {
 			throw new Error("Sharding limit reached.");
 		}
+		assert(Number.isSafeInteger(newStride), "Shard stride must be a safe integer");
 
 		if (this.shardingState === undefined) {
 			// First time sharding - initialize state
