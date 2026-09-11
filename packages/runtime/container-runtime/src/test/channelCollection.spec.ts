@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import type { ConfigTypes } from "@fluidframework/core-interfaces";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	ISnapshotTree,
 	ISequencedDocumentMessage,
@@ -414,6 +415,140 @@ describe("Runtime", () => {
 						return true;
 					},
 					"Should throw DataCorruptionError for aliased context collision",
+				);
+			});
+			/* eslint-enable @typescript-eslint/consistent-type-assertions */
+		});
+
+		describe("attach capture drains all bound data stores", () => {
+			/* eslint-disable @typescript-eslint/consistent-type-assertions */
+			let channelCollection: ChannelCollection;
+			let contexts: DataStoreContexts;
+
+			/**
+			 * A minimal stand-in for a realized data store context. Its attach summary / GC data
+			 * generation can bind and create other contexts, the way realizing a data store's content
+			 * can while an attach summary is being generated.
+			 */
+			function addContext(
+				id: string,
+				bound: boolean,
+				onAttachCapture?: () => void,
+			): { readonly id: string; summarizeCount: number } {
+				const context = {
+					id,
+					isLoaded: true,
+					summarizeCount: 0,
+					getAttachSummary: () => {
+						context.summarizeCount++;
+						onAttachCapture?.();
+						return {
+							stats: {
+								treeNodeCount: 1,
+								blobNodeCount: 0,
+								handleNodeCount: 0,
+								totalBlobSize: 0,
+								unreferencedBlobSize: 0,
+							},
+							summary: { type: SummaryType.Tree, tree: {} },
+						};
+					},
+					getAttachGCData: () => ({ gcNodes: { "/": [] } }),
+				};
+				contexts.addUnbound(context as unknown as LocalFluidDataStoreContext);
+				if (bound) {
+					contexts.bind(id);
+				}
+				return context;
+			}
+
+			beforeEach(() => {
+				const mockLogger2 = new MockLogger();
+				const baseParentContext = createParentContext(mockLogger2);
+				const rootParentContext = {
+					...baseParentContext,
+					attachState: AttachState.Detached,
+					submitMessage: () => {},
+					submitSignal: () => {},
+					addedGCOutboundRoute: () => {},
+					makeLocallyVisible: () => {},
+					getExtension: () => undefined,
+				} as unknown as IFluidRootParentContextPrivate;
+
+				channelCollection = new ChannelCollection(
+					undefined /* baseSnapshot */,
+					rootParentContext,
+					mockLogger2,
+					() => {} /* gcNodeUpdated */,
+					() => false /* isDataStoreDeleted */,
+					new Map() /* aliasMap */,
+				);
+				contexts = (channelCollection as unknown as { readonly contexts: DataStoreContexts })
+					.contexts;
+			});
+
+			/**
+			 * Regression test: capturing "A" binds "B" and creates a new unbound "C". The two changes
+			 * cancel each other out in the count of unbound contexts, so a drain loop that stops as soon
+			 * as that count is unchanged would leave "B" out of the attach summary even though it is
+			 * bound (and therefore locally visible).
+			 */
+			it("visits a data store bound while another is captured, even when a new unbound one appears", () => {
+				// "unboundFirst" is iterated before "capturer" so that it is skipped before it gets bound.
+				addContext("unboundFirst", /* bound */ false);
+				let sideEffectsDone = false;
+				addContext("capturer", /* bound */ true, () => {
+					if (sideEffectsDone) {
+						return;
+					}
+					sideEffectsDone = true;
+					contexts.bind("unboundFirst");
+					addContext("newlyUnbound", /* bound */ false);
+				});
+
+				const attachSummary = channelCollection.getAttachSummary();
+				assert(
+					attachSummary.summary.type === SummaryType.Tree,
+					"Attach summary should be a tree",
+				);
+				assert.deepStrictEqual(
+					Object.keys(attachSummary.summary.tree).sort(),
+					["capturer", "unboundFirst"],
+					"A data store bound during the capture must be in the attach summary",
+				);
+			});
+
+			it("captures the same data stores in the summary and the GC data", () => {
+				addContext("unboundFirst", /* bound */ false);
+				let sideEffectsDone = false;
+				addContext("capturer", /* bound */ true, () => {
+					if (sideEffectsDone) {
+						return;
+					}
+					sideEffectsDone = true;
+					contexts.bind("unboundFirst");
+					addContext("newlyUnbound", /* bound */ false);
+				});
+
+				const { attachSummary, attachGCData } = channelCollection.getAttachData();
+				assert(
+					attachSummary.summary.type === SummaryType.Tree,
+					"Attach summary should be a tree",
+				);
+				const summarized = Object.keys(attachSummary.summary.tree).sort();
+				const gcCaptured = Object.keys(attachGCData.gcNodes)
+					.filter((nodeId) => nodeId !== "/")
+					.map((nodeId) => nodeId.replace(/^\//, ""))
+					.sort();
+				assert.deepStrictEqual(
+					summarized,
+					["capturer", "unboundFirst"],
+					"A data store bound during the capture must be in the attach summary",
+				);
+				assert.deepStrictEqual(
+					gcCaptured,
+					summarized,
+					"The GC data must cover exactly the summarized data stores",
 				);
 			});
 			/* eslint-enable @typescript-eslint/consistent-type-assertions */
