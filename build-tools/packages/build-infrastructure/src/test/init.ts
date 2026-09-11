@@ -4,7 +4,6 @@
  */
 
 import { cpSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
-import os from "node:os";
 import path from "node:path";
 
 import execa from "execa";
@@ -23,9 +22,18 @@ export const testDataPath = path.resolve(_dirname, packageRootPath, "src/test/da
 const testRepoTemplate = path.join(testDataPath, "testRepo");
 
 function createTestRepo(): string {
-	const repo = realpathSync.native(
-		mkdtempSync(path.join(os.tmpdir(), "build-infrastructure-testRepo-")),
-	);
+	const repo = realpathSync.native(mkdtempSync(path.join(testDataPath, "testRepo-")));
+	const cleanup = (): void => rmSync(repo, { recursive: true, force: true });
+	process.once("exit", cleanup);
+	process.once("SIGINT", () => {
+		cleanup();
+		process.exit(130);
+	});
+	process.once("SIGTERM", () => {
+		cleanup();
+		process.exit(143);
+	});
+
 	cpSync(testRepoTemplate, repo, {
 		recursive: true,
 		filter: (source) => path.basename(source) !== "node_modules",
@@ -46,7 +54,6 @@ function createTestRepo(): string {
 		],
 		{ cwd: repo },
 	);
-	process.once("exit", () => rmSync(repo, { recursive: true, force: true }));
 	return repo;
 }
 
