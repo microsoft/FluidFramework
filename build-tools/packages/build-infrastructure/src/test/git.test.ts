@@ -7,8 +7,10 @@ import { strict as assert } from "node:assert";
 import { unlink } from "node:fs/promises";
 import * as os from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 import { expect } from "chai";
+import execa from "execa";
 import { readJson, writeJson } from "fs-extra/esm";
 import { describe, it } from "mocha";
 import { CleanOptions, type SimpleGit, simpleGit } from "simple-git";
@@ -27,7 +29,7 @@ import {
 } from "../git.js";
 import type { PackageJson } from "../types.js";
 
-import { testRepoRoot } from "./init.js";
+import { packageRootPath, testRepoRoot } from "./init.js";
 
 describe("findGitRootSync", () => {
 	it("finds root", () => {
@@ -42,6 +44,36 @@ describe("findGitRootSync", () => {
 		assert.throws(() => {
 			findGitRootSync(os.tmpdir());
 		}, NotInGitRepository);
+	});
+});
+
+describe("isolated test repositories", () => {
+	it("supports concurrent Git mutations in separate processes", async function () {
+		this.timeout(10_000);
+
+		const initModule = pathToFileURL(path.join(packageRootPath, "lib/test/init.js")).href;
+		const mutationScript = `
+			import { writeFile } from "node:fs/promises";
+			import path from "node:path";
+			import { simpleGit } from "simple-git";
+			import { testRepoRoot } from ${JSON.stringify(initModule)};
+
+			const file = "concurrent-" + process.pid + ".json";
+			await writeFile(path.join(testRepoRoot, file), "{}");
+			await simpleGit(testRepoRoot).add(file);
+			console.log(testRepoRoot);
+		`;
+
+		const results = await Promise.all(
+			[1, 2].map(() =>
+				execa(process.execPath, ["--input-type=module", "--eval", mutationScript], {
+					cwd: packageRootPath,
+				}),
+			),
+		);
+		const roots = results.map(({ stdout }) => stdout.trim());
+
+		expect(new Set(roots).size).to.equal(2);
 	});
 });
 
