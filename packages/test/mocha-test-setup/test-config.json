@@ -1,8 +1,7 @@
 {
-	"reporterEnabled": "spec,@fluid-internal/mocha-test-setup/junit-reporter",
-	"fluidInternalMochaTestSetupJunitReporterReporterOptions": {
-		"mochaFile": "nyc/{id}junit-report.xml",
-		"testsuitesTitle": "{id}",
-		"includePending": true
+	"reporterEnabled": "spec,@fluid-internal/mocha-test-setup/xunit-reporter",
+	"fluidInternalMochaTestSetupXunitReporterReporterOptions": {
+		"output": "nyc/{id}junit-report.xml",
+		"suiteName": "{id}"
 	}
 }

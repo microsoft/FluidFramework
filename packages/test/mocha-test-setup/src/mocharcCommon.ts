@@ -121,19 +121,7 @@ export function getFluidTestMochaConfig(
 		config.reporter = `mocha-multi-reporters`;
 		// See https://www.npmjs.com/package/mocha-multi-reporters#cmroutput-option
 
-		// Sanitize the package name so it can be used in a file name, e.g. "@fluidframework/counter" becomes
-		// "fluidframework-counter". This is embedded in the JUnit report's file name itself (not just its
-		// directory) because Azure DevOps's JUnit importer determines the "Test file" grouping for a set of
-		// results from the report's physical file name when the report contains multiple `<testsuite>`
-		// elements, which is always the case for mocha-junit-reporter's output (one per describe block, unlike
-		// the single flat `<testsuite>` the previous xunit reporter produced). Without a package-specific file
-		// name, every package's report would be named identically ("junit-report.xml"), and Azure DevOps would
-		// show every package's tests grouped under the same indistinguishable "JUnit_junit-report.xml" entry.
-		const sanitizedPackageName = packageJson.name.replace("@", "").replace("/", "-");
-		const outputFilePrefix =
-			reportPrefix !== undefined
-				? `${sanitizedPackageName}-${reportPrefix}-`
-				: `${sanitizedPackageName}-`;
+		const outputFilePrefix = reportPrefix !== undefined ? `${reportPrefix}-` : "";
 		if (process.env.SILENT_TEST_OUTPUT === undefined) {
 			console.log(
 				`Writing test results relative to package to nyc/${outputFilePrefix}junit-report.xml`,
@@ -141,13 +129,13 @@ export function getFluidTestMochaConfig(
 		}
 		const suiteName =
 			reportPrefix !== undefined ? `${packageJson.name} - ${reportPrefix}` : packageJson.name;
-		const junitReporterName = "@fluid-internal/mocha-test-setup/junit-reporter";
+		const xunitReporterName = "@fluid-internal/mocha-test-setup/xunit-reporter";
 		config["reporter-options"] = [
 			`configFile=${path.join(
 				import.meta.dirname,
 				"..",
 				"test-config.json",
-			)},cmrOutput=${junitReporterName}+mochaFile+${outputFilePrefix}:${junitReporterName}+testsuitesTitle+${suiteName}`,
+			)},cmrOutput=${xunitReporterName}+output+${outputFilePrefix}:${xunitReporterName}+suiteName+${suiteName}`,
 		];
 	}
 
