@@ -243,11 +243,13 @@ describe("serializedStateManager", () => {
 			);
 			// equivalent to attach
 			serializedStateManager.setInitialSnapshot(initialSnapshot);
-			await serializedStateManager.getPendingLocalState(
+			const state = await serializedStateManager.getPendingLocalState(
 				"clientId",
 				new MockRuntime(),
 				resolvedUrl,
+				"epoch",
 			);
+			assert.strictEqual((JSON.parse(state) as IPendingContainerState).driverState, "epoch");
 		});
 
 		it("can get pending local state from previous pending state", async () => {

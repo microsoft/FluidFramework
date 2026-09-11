@@ -237,6 +237,96 @@ describe("DisableLoadConnectionRetries", () => {
 		return error;
 	}
 
+	it("delegates identity validation and restores driver state before connecting", async () => {
+		const driverState = { epoch: "epoch1" };
+		let restored = false;
+		let shouldThrowRestoreError = false;
+		let supportsDriverStatePersistence = true;
+		const restoreError = new Error("invalid driver state");
+		let connectionAttempts = 0;
+		const disposalErrors: unknown[] = [];
+		const documentServiceFactory = failSometimeProxy<
+			IDocumentServiceFactory &
+				IProvideLayerCompatDetails &
+				IProvideLayerCompatSupportRequirements
+		>({
+			createDocumentService: async () =>
+				failSometimeProxy<IDocumentService>({
+					policies: {},
+					resolvedUrl,
+					driverStatePersistence: supportsDriverStatePersistence
+						? {
+								get: () => undefined,
+								set: (state) => {
+									assert.deepStrictEqual(state, driverState);
+									if (shouldThrowRestoreError) {
+										throw restoreError;
+									}
+									restored = true;
+								},
+							}
+						: AbsentProperty,
+					connectToStorage: async () => {
+						connectionAttempts++;
+						assert(restored, "Driver state must be restored before connecting to storage");
+						throw new Error("stop after ordering check");
+					},
+					connectToDeltaStream: async () => new Promise(() => {}),
+					on: AbsentProperty,
+					off: AbsentProperty,
+					dispose: (error) => disposalErrors.push(error),
+				}),
+			ILayerCompatDetails: AbsentProperty,
+			ILayerCompatSupportRequirements: AbsentProperty,
+		});
+		const loader = new Loader({
+			codeLoader: createTestCodeLoaderProxy(),
+			documentServiceFactory,
+			urlResolver,
+		});
+		const pendingStateData = {
+			attached: true,
+			baseSnapshot: { blobs: {}, trees: {} },
+			snapshotBlobs: {},
+			pendingRuntimeState: {},
+			savedOps: [],
+			url: `https://localhost/tenant/${uuid()}`,
+			driverState,
+		};
+		const pendingState = JSON.stringify(pendingStateData);
+
+		await assert.rejects(
+			async () => loader.resolve({ url: "test" }, pendingState),
+			/stop after ordering check/,
+		);
+		assert(restored);
+		assert.strictEqual(connectionAttempts, 1);
+
+		shouldThrowRestoreError = true;
+		await assert.rejects(
+			async () => loader.resolve({ url: "test" }, pendingState),
+			restoreError,
+		);
+		assert.strictEqual(connectionAttempts, 1);
+		assert.strictEqual(disposalErrors.at(-1), restoreError);
+
+		await assert.rejects(
+			async () =>
+				loader.resolve(
+					{ url: "test" },
+					JSON.stringify({ ...pendingStateData, driverState: undefined }),
+				),
+			/does not match pending state URL/,
+		);
+
+		supportsDriverStatePersistence = false;
+		await assert.rejects(
+			async () => loader.resolve({ url: "test" }, pendingState),
+			/Document service cannot restore pending driver state/,
+		);
+		assert.strictEqual(connectionAttempts, 1);
+	});
+
 	it("load rejects when connectToStorage fails with retryable error and flag is enabled", async () => {
 		const documentServiceFactory = failSometimeProxy<
 			IDocumentServiceFactory &

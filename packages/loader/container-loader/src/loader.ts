@@ -333,7 +333,9 @@ export class Loader implements IHostLoader {
 			throw new Error(`Invalid URL ${resolvedAsFluid.url}`);
 		}
 
-		if (pendingLocalState !== undefined) {
+		// Driver state owns document identity when present. Older pending state falls back to the
+		// loader's URL-shape-dependent validation.
+		if (pendingLocalState !== undefined && pendingLocalState.driverState === undefined) {
 			const parsedPendingUrl = tryParseCompatibleResolvedUrl(pendingLocalState.url);
 			if (
 				parsedPendingUrl?.id !== parsed.id ||

@@ -112,13 +112,22 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 */
 	savedOps: ISequencedDocumentMessage[];
 	/**
-	 * The Container's URL in the service, needed to hook up the driver during rehydration
+	 * The Container's URL in the service, needed to hook up the driver during rehydration and to
+	 * validate the document identity of legacy pending state that has no {@link driverState}.
 	 */
 	url: string;
 	/**
 	 * If the Container was connected when serialized, its clientId. Used as the initial clientId upon rehydration, until reconnected.
 	 */
 	clientId?: string;
+	/**
+	 * Opaque state supplied by the document service for use when rehydrating. This value is
+	 * serialized as part of the containing pending state and persisted by the host. It must
+	 * round-trip through `JSON.stringify` and `JSON.parse` without custom serialization or
+	 * information loss, must not contain customer-identifying information, and is responsible for
+	 * validating that it belongs to the document being loaded.
+	 */
+	driverState?: unknown;
 }
 
 /**
@@ -423,6 +432,7 @@ export class SerializedStateManager implements IDisposable {
 		clientId: string | undefined,
 		runtime: Pick<IRuntime, "getPendingLocalState">,
 		resolvedUrl: IResolvedUrl,
+		driverState?: unknown,
 	): Promise<string> {
 		this.verifyNotDisposed();
 		if (!this.offlineLoadEnabled) {
@@ -476,6 +486,7 @@ export class SerializedStateManager implements IDisposable {
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
 					clientId,
+					driverState,
 				};
 
 				return JSON.stringify(pendingState);

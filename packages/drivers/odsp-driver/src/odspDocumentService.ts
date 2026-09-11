@@ -17,16 +17,19 @@ import type {
 	IResolvedUrl,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import type {
 	HostStoragePolicy,
 	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
 	TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	createChildMonitoringContext,
 	type MonitoringContext,
 	type TelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { HostStoragePolicyInternal } from "./contracts.js";
@@ -41,6 +44,7 @@ import { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
 import { hasOdcOrigin } from "./odspUrlHelper.js";
 import { getOdspResolvedUrl } from "./odspUtils.js";
 import { OpsCache } from "./opsCaching.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter.js";
 
 /**
@@ -165,6 +169,50 @@ export class OdspDocumentService
 	public get policies(): IDocumentServicePolicies {
 		return this._policies;
 	}
+
+	public readonly driverStatePersistence = {
+		get: (): Record<string, unknown> | undefined => {
+			const epoch = this.epochTracker.fluidEpoch;
+			return epoch === undefined
+				? undefined
+				: { documentId: this.odspResolvedUrl.hashedDocumentId, epoch };
+		},
+		set: (state: unknown): void => {
+			if (
+				typeof state !== "object" ||
+				state === null ||
+				Array.isArray(state) ||
+				!("epoch" in state) ||
+				typeof state.epoch !== "string" ||
+				state.epoch.length === 0 ||
+				!("documentId" in state) ||
+				typeof state.documentId !== "string"
+			) {
+				throw new UsageError(
+					"ODSP driver state must contain a non-empty epoch and document ID string",
+				);
+			}
+			if (state.documentId !== this.odspResolvedUrl.hashedDocumentId) {
+				throw new UsageError("ODSP driver state belongs to a different document");
+			}
+			const currentEpoch = this.epochTracker.fluidEpoch;
+			if (currentEpoch === state.epoch) {
+				return;
+			}
+			if (currentEpoch !== undefined) {
+				throw new NonRetryableError(
+					"ODSP driver state epoch does not match the current epoch",
+					OdspErrorTypes.fileOverwrittenInStorage,
+					{
+						driverVersion,
+						pendingStateEpoch: state.epoch,
+						currentEpoch,
+					},
+				);
+			}
+			this.epochTracker.setEpoch(state.epoch, "pendingState");
+		},
+	};
 
 	/**
 	 * Connects to a storage endpoint for snapshot service.
