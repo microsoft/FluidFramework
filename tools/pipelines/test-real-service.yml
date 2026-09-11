@@ -27,9 +27,6 @@ resources:
   - pipeline: gitrest
     source: server-gitrest
     branch: main # Default branch for manual/scheduled triggers if none is selected
-  - pipeline: gitssh
-    source: server-gitssh
-    branch: main # Default branch for manual/scheduled triggers if none is selected
   repositories:
     - repository: ff_pipeline_host
       type: git
@@ -125,7 +122,6 @@ stages:
       alfredImageTag: 0.0.$(resources.pipeline.routerlicious.runID)
       historianImageTag: 0.0.$(resources.pipeline.historian.runID)
       gitrestImageTag: 0.0.$(resources.pipeline.gitrest.runID)
-      gitsshImageTag: 0.0.$(resources.pipeline.gitssh.runID)
 
       env:
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject

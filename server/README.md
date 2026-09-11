@@ -12,8 +12,6 @@ This directory contains our reference server implementation. [Routerlicious](./r
 
 [Gitrest](./gitrest) provides a REST API to a GitHub repository. Its API is based off of GitHub's REST APIs.
 
-[Gitssh](./gitssh) is a git ssh server client container.
-
 [Historian](./historian) provides a REST API to git repositories. The API is similar to that exposed by GitHub but can be used in local development.
 
 [Lambdas](./routerlicious/packages/lambdas) reusable lambdas for serverless implementation, Routerlicious, and Tinylicious.
