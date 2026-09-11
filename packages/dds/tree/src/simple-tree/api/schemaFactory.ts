@@ -648,7 +648,16 @@ export class SchemaFactory<
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Array", types);
 			debugAssert(() => options === undefined || "No options for structural types");
-			return this.getStructuralType(fullName, types, () =>
+			const out: TreeNodeSchemaClass<
+				ScopedSchemaName<TScope, string>,
+				NodeKind.Array,
+				TreeArrayNode<T>,
+				Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+				true,
+				T,
+				undefined,
+				TCustomMetadata
+			> = this.getStructuralType(fullName, types, () =>
 				this.namedArray(fullName, nameOrAllowedTypes as T, false, true, {}),
 			) as TreeNodeSchemaClass<
 				ScopedSchemaName<TScope, string>,
@@ -660,6 +669,7 @@ export class SchemaFactory<
 				undefined,
 				TCustomMetadata
 			>;
+			return out;
 		}
 
 		const out: TreeNodeSchemaBoth<
@@ -814,7 +824,14 @@ export class SchemaFactory<
 		T
 	> {
 		type TScopedName = ScopedSchemaName<TScope, Name>;
-		return this.object(
+		const out: TreeNodeSchemaClass<
+			TScopedName,
+			NodeKind.Object,
+			System_Unsafe.TreeObjectNodeUnsafe<T, TScopedName>,
+			object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>,
+			false,
+			T
+		> = this.object(
 			name,
 			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
 		) as unknown as TreeNodeSchemaClass<
@@ -825,6 +842,7 @@ export class SchemaFactory<
 			false,
 			T
 		>;
+		return out;
 	}
 
 	/**
@@ -848,7 +866,7 @@ export class SchemaFactory<
 			{},
 		);
 
-		return RecursiveArray as TreeNodeSchemaClass<
+		const out: TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Array,
 			System_Unsafe.TreeArrayNodeUnsafe<T> &
@@ -872,7 +890,21 @@ export class SchemaFactory<
 			false,
 			T,
 			undefined
+		> = RecursiveArray as TreeNodeSchemaClass<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Array,
+			System_Unsafe.TreeArrayNodeUnsafe<T> &
+				WithType<ScopedSchemaName<TScope, Name>, NodeKind.Array>,
+			{
+				[Symbol.iterator](): Iterator<
+					System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>
+				>;
+			},
+			false,
+			T,
+			undefined
 		>;
+		return out;
 	}
 
 	/**
@@ -897,7 +929,7 @@ export class SchemaFactory<
 			{},
 		);
 
-		return MapSchema as TreeNodeSchemaClass<
+		const out: TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Map,
 			System_Unsafe.TreeMapNodeUnsafe<T> &
@@ -928,7 +960,24 @@ export class SchemaFactory<
 			false,
 			T,
 			undefined
+		> = MapSchema as TreeNodeSchemaClass<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Map,
+			System_Unsafe.TreeMapNodeUnsafe<T> &
+				WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
+			| {
+					[Symbol.iterator](): Iterator<
+						[string, System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]
+					>;
+			  }
+			| {
+					readonly [P in string]: System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
+			  },
+			false,
+			T,
+			undefined
 		>;
+		return out;
 	}
 }
 
