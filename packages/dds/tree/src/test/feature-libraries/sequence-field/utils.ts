@@ -88,7 +88,6 @@ import {
 	type IdAllocator,
 	type Mutable,
 	brand,
-	fakeIdAllocator,
 	getOrAddEmptyToMap,
 	idAllocatorFromMaxId,
 	setInNestedMap,

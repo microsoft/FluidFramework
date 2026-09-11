@@ -33,13 +33,8 @@ import {
 	applyConstraint,
 	applyFieldEdit,
 	applySynchronizationOp,
-	applyUndoRedoEdit,
 } from "./fuzzEditReducers.js";
-import {
-	createOnCreate,
-	deterministicIdCompressorFactory,
-	isRevertibleSharedTreeView,
-} from "./fuzzUtils.js";
+import { createOnCreate, deterministicIdCompressorFactory } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 
 /**

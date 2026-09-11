@@ -28,8 +28,8 @@ import {
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 
-const runsPerBatch = 200;
-const opsPerRun = 5;
+const runsPerBatch = 20;
+const opsPerRun = 50;
 
 const weights: Partial<EditGeneratorOpWeights> = {
 	fieldSelection: { optional: 0, required: 0, sequence: 1, recurse: 1 },
@@ -60,9 +60,6 @@ describe("Fuzz - revertTo", () => {
 		numberOfClients: 3,
 		defaultTestCount: runsPerBatch,
 		saveFailures: {
-			directory: failureDirectory,
-		},
-		saveSuccesses: {
 			directory: failureDirectory,
 		},
 		clientJoinOptions: {

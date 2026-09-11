@@ -386,7 +386,7 @@ export interface FieldChangeDecodingContext {
 export interface AtomIdAliasAllocator extends IdAllocator<ChangesetLocalId> {
 	/**
 	 * Reserves a contiguous block of IDs for the given original revision up to the specified maximum local ID.
-	 * Can be called multiple times for the same revision (later calls have no effect), but the maximum local ID must be consistent.
+	 * Can be called multiple times for the same revision (later calls have no effect), but the maximum local ID must be consistent across calls.
 	 */
 	reserve(
 		originalRevision: RevisionTag | undefined,

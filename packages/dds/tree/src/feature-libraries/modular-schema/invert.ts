@@ -87,8 +87,8 @@ export function invertModularChange(
 	const { revInfos: oldRevInfos } = getRevInfoFromTaggedChanges([change]);
 	const revisionMetadata = revisionMetadataSourceFromInfo(oldRevInfos);
 
-	for (const { revision } of oldRevInfos) {
-		if (change.change.maxId !== undefined) {
+	if (change.change.maxId !== undefined) {
+		for (const { revision } of oldRevInfos) {
 			genId.reserve(revision, change.change.maxId);
 		}
 	}
