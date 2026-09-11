@@ -21,6 +21,11 @@ export const testDataPath = path.resolve(_dirname, packageRootPath, "src/test/da
  */
 const testRepoTemplate = path.join(testDataPath, "testRepo");
 
+/**
+ * Creates an isolated Git repository from the test fixture.
+ *
+ * @returns The absolute path to the isolated test repository.
+ */
 function createTestRepo(): string {
 	const repo = realpathSync.native(mkdtempSync(path.join(testDataPath, "testRepo-")));
 	const cleanup = (): void => rmSync(repo, { recursive: true, force: true });
