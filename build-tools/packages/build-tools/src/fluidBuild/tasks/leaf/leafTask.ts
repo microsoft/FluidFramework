@@ -136,12 +136,14 @@ export abstract class LeafTask extends Task {
 			return this._parentLeafTasks;
 		} catch (e) {
 			if (Array.isArray(e)) {
+				// The thrown value is the dependency chain being unrolled (see `throw [this]` above).
+				const dependencyChain = e as LeafTask[];
 				// Add to the dependency chain
-				e.push(this);
-				if (e[0] === this) {
+				dependencyChain.push(this);
+				if (dependencyChain[0] === this) {
 					// detected a cycle, convert into a message
 					throw new Error(
-						`Circular dependency in parent leaf tasks: ${e
+						`Circular dependency in parent leaf tasks: ${dependencyChain
 							.map((v) => v.nameColored)
 							.join("->")}`,
 					);
@@ -718,8 +720,8 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 				return { mtimeMs: dstTime.mtimeMs, size: dstTime.size };
 			});
 			return JSON.stringify({ srcFiles: allSrcFiles, dstFiles, srcInfo, dstInfo });
-		} catch (e: any) {
-			this.traceError(`error comparing file times: ${e.message}`);
+		} catch (e) {
+			this.traceError(`error comparing file times: ${(e as Partial<Error>).message}`);
 			this.traceTrigger("failed to get file stats");
 			throw e;
 		}
@@ -749,8 +751,8 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 				srcHashes,
 				dstHashes,
 			});
-		} catch (e: any) {
-			this.traceError(`error calculating file hashes: ${e.message}`);
+		} catch (e) {
+			this.traceError(`error calculating file hashes: ${(e as Partial<Error>).message}`);
 			this.traceTrigger("failed to get file hash");
 			throw e;
 		}

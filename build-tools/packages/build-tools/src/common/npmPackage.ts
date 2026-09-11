@@ -38,7 +38,7 @@ export type FluidPackageJson = {
 	/**
 	 * nyc config
 	 */
-	nyc?: any;
+	nyc?: unknown;
 
 	/**
 	 * fluid-build config. Some properties only apply when set in the root or release group root package.json.
@@ -124,7 +124,7 @@ export class Package {
 		public readonly packageJsonFileName: string,
 		public readonly group: string,
 		public readonly monoRepo?: MonoRepo,
-		additionalProperties: any = {},
+		additionalProperties: unknown = {},
 	) {
 		[this._packageJson, this._indent] = readPackageJsonAndIndent(packageJsonFileName);
 		const pnpmWorkspacePath = path.join(this.directory, "pnpm-workspace.yaml");
@@ -264,7 +264,7 @@ export class Package {
 	}
 
 	public reload(): void {
-		this._packageJson = readJsonSync(this.packageJsonFileName);
+		this._packageJson = readJsonSync(this.packageJsonFileName) as PackageJson;
 	}
 
 	public async checkInstall(print: boolean = true): Promise<boolean> {
@@ -359,7 +359,7 @@ export class Package {
 interface TaskExec<TItem, TResult> {
 	item: TItem;
 	resolve: (result: TResult) => void;
-	reject: (reason?: any) => void;
+	reject: (reason?: unknown) => void;
 }
 
 async function queueExec<TItem, TResult>(
@@ -518,7 +518,7 @@ export function readPackageJsonAndIndent(
 ): [json: PackageJson, indent: string] {
 	const contents = readFileSync(pathToJson).toString();
 	const indentation = detectIndent(contents).indent || "\t";
-	const pkgJson: PackageJson = JSON.parse(contents);
+	const pkgJson = JSON.parse(contents) as PackageJson;
 	return [pkgJson, indentation];
 }
 

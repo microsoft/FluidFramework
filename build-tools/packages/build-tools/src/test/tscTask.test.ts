@@ -116,6 +116,23 @@ describe("normalizeTsBuildInfo", () => {
 		assert.equal(result, undefined);
 	});
 
+	it("returns undefined for non-object input", () => {
+		// The raw value comes from JSON.parse of a file on disk, so it can be any JSON value.
+		assert.equal(normalizeTsBuildInfo(undefined), undefined);
+		assert.equal(normalizeTsBuildInfo(null), undefined);
+		assert.equal(normalizeTsBuildInfo("not an object"), undefined);
+		assert.equal(normalizeTsBuildInfo(42), undefined);
+	});
+
+	it("returns undefined when the program wrapper is not an object", () => {
+		const invalid = {
+			program: "not an object",
+			version: "5.4.5",
+		};
+
+		assert.equal(normalizeTsBuildInfo(invalid), undefined);
+	});
+
 	it("handles TS6 format with semanticDiagnosticsPerFile errors", () => {
 		const ts6WithErrors = {
 			fileNames: ["./src/index.ts"],

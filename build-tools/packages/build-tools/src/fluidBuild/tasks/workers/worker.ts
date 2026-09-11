@@ -15,9 +15,23 @@ export interface WorkerMessage {
 	cwd: string;
 }
 
+/**
+ * Error information transferred from a worker back to the main thread.
+ *
+ * @remarks
+ * Process based workers communicate over IPC, which does not preserve `Error` instances, so errors
+ * are copied field by field. Values that are thrown but are not `Error`s leave every field
+ * `undefined`.
+ */
+export interface WorkerError {
+	name?: string | undefined;
+	message?: string | undefined;
+	stack?: string | undefined;
+}
+
 export interface WorkerExecResult {
 	code: number;
-	error?: Error; // unhandled exception, main thread should rerun it.
+	error?: WorkerError; // unhandled exception, main thread should rerun it.
 	memoryUsage?: NodeJS.MemoryUsage;
 }
 
@@ -40,13 +54,16 @@ async function messageHandler(msg: WorkerMessage): Promise<WorkerExecResult> {
 		} else {
 			throw new Error(`Invalid workerName ${msg.workerName}`);
 		}
-	} catch (e: any) {
+	} catch (e) {
 		// any unhandled exception thrown is going to rerun on main thread.
+		// The thrown value is not necessarily an Error, so read the fields it would have without
+		// coercing it: non-Errors leave them undefined, which is the pre-existing behavior.
+		const thrown = e as Partial<Error>;
 		res = {
 			error: {
-				name: e.name,
-				message: e.message,
-				stack: e.stack,
+				name: thrown.name,
+				message: thrown.message,
+				stack: thrown.stack,
 			},
 			code: -1,
 		};

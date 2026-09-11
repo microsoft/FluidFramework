@@ -13,6 +13,19 @@ interface Record {
 	percent: number;
 }
 
+/**
+ * The subset of an API Extractor doc model (`*.api.json`) item that this script reads.
+ *
+ * @remarks
+ * `kind` is always emitted by API Extractor. The `default` branch of the switch below still handles
+ * kinds this script does not know about.
+ */
+interface ApiItem {
+	kind: string;
+	docComment?: string;
+	members?: ApiItem[];
+}
+
 async function main(): Promise<void> {
 	const dir = process.argv[2];
 	if (!dir) {
@@ -29,7 +42,7 @@ async function main(): Promise<void> {
 			}
 			let fileTotal = 0;
 			let fileDocTotal = 0;
-			const processMembers = (member: any): void => {
+			const processMembers = (member: ApiItem): void => {
 				switch (member.kind) {
 					case "Package":
 					case "Class":
@@ -67,7 +80,9 @@ async function main(): Promise<void> {
 			};
 
 			try {
-				const content = JSON.parse(fs.readFileSync(path.join(dir, file.name), "utf-8"));
+				const content = JSON.parse(
+					fs.readFileSync(path.join(dir, file.name), "utf-8"),
+				) as ApiItem;
 				processMembers(content);
 				record.push({
 					name: file.name,
@@ -103,9 +118,10 @@ async function main(): Promise<void> {
 }
 
 // eslint-disable-next-line unicorn/prefer-top-level-await -- This is a script entry point
-main().catch((e) => {
+main().catch((e: unknown) => {
 	console.error("ERROR: unexpected error", JSON.stringify(e, undefined, 2));
-	if (e.stack) {
-		console.error(`Stack:\n${e.stack}`);
+	const { stack } = e as Partial<Error>;
+	if (stack) {
+		console.error(`Stack:\n${stack}`);
 	}
 });

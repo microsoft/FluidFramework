@@ -20,6 +20,15 @@ export interface WorkerExecResultWithOutput extends WorkerExecResult {
 	stderr: string;
 }
 
+/**
+ * The listener signature accepted by {@link EventEmitter.on} / {@link EventEmitter.off}.
+ *
+ * @remarks
+ * Derived from the Node typings rather than written out so that arbitrary handlers remain
+ * assignable without introducing an explicit `any`.
+ */
+type EventListener = Parameters<EventEmitter["on"]>[1];
+
 export class WorkerPool {
 	private readonly threadWorkerPool: Worker[] = [];
 	private readonly processWorkerPool: ChildProcess[] = [];
@@ -58,7 +67,7 @@ export class WorkerPool {
 		const installTemporaryListener = (
 			object: EventEmitter | Readable,
 			event: string,
-			handler: any,
+			handler: EventListener,
 		): void => {
 			object.on(event, handler);
 			cleanup.push(() => object.off(event, handler));
@@ -71,12 +80,12 @@ export class WorkerPool {
 			let stderr = "";
 
 			if (worker.stdout) {
-				installTemporaryListener(worker.stdout, "data", (chunk: any) => {
+				installTemporaryListener(worker.stdout, "data", (chunk: string | Buffer) => {
 					stdout += chunk;
 				});
 			}
 			if (worker.stderr) {
-				installTemporaryListener(worker.stderr, "data", (chunk: any) => {
+				installTemporaryListener(worker.stderr, "data", (chunk: string | Buffer) => {
 					stderr += chunk;
 				});
 			}
