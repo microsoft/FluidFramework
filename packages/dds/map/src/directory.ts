@@ -527,8 +527,8 @@ export class SharedDirectory
 	 * @param callback - Callback to issue
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public forEach(
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		callback: (value: any, key: string, map: FluidMap<string, any>) => void,
 	): void {
 		// eslint-disable-next-line unicorn/no-array-for-each
