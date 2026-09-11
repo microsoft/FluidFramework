@@ -123,17 +123,17 @@ describe("DeltaStorageService", () => {
 			assert(!partialResult, "partialResult === false");
 			assert.equal(messages.length, 2, "Deserialized feed response is not of expected length");
 			assert.equal(
-				messages[0].sequenceNumber,
+				messages[0]!.sequenceNumber,
 				1,
 				"First element of feed response has invalid sequence number",
 			);
 			assert.equal(
-				messages[1].sequenceNumber,
+				messages[1]!.sequenceNumber,
 				2,
 				"Second element of feed response has invalid sequence number",
 			);
 			assert.equal(
-				messages[1].type,
+				messages[1]!.type,
 				"noop",
 				"Second element of feed response has invalid op type",
 			);
@@ -193,17 +193,17 @@ describe("DeltaStorageService", () => {
 			assert(!partialResult, "partialResult === false");
 			assert.equal(messages.length, 2, "Deserialized feed response is not of expected length");
 			assert.equal(
-				messages[0].sequenceNumber,
+				messages[0]!.sequenceNumber,
 				1,
 				"First element of feed response has invalid sequence number",
 			);
 			assert.equal(
-				messages[1].sequenceNumber,
+				messages[1]!.sequenceNumber,
 				2,
 				"Second element of feed response has invalid sequence number",
 			);
 			assert.equal(
-				messages[1].type,
+				messages[1]!.type,
 				"noop",
 				"Second element of feed response has invalid op type",
 			);

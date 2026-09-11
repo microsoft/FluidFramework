@@ -720,10 +720,10 @@ describe("Tests for prefetching snapshot", () => {
 		};
 		const odspCompactSnapshotWithGroupId = convertToCompactSnapshot(snapshotWithGroupId);
 		const snapshotTreeWithGroupIdToCompare: ISnapshotTree = {
-			blobs: { ...snapshotTreeWithGroupId.trees[".app"].blobs },
+			blobs: { ...snapshotTreeWithGroupId.trees[".app"]!.blobs },
 			trees: {
-				...snapshotTreeWithGroupId.trees[".app"].trees,
-				".protocol": snapshotTreeWithGroupId.trees[".protocol"],
+				...snapshotTreeWithGroupId.trees[".app"]!.trees,
+				".protocol": snapshotTreeWithGroupId.trees[".protocol"]!,
 			},
 			id: "SnapshotId",
 		};
@@ -972,10 +972,10 @@ describe("Tests for prefetching snapshot", () => {
 		};
 		const odspCompactSnapshotWithGroupId = convertToCompactSnapshot(snapshotWithGroupId);
 		const snapshotTreeWithGroupIdToCompare: ISnapshotTree = {
-			blobs: { ...snapshotTreeWithGroupId.trees[".app"].blobs },
+			blobs: { ...snapshotTreeWithGroupId.trees[".app"]!.blobs },
 			trees: {
-				...snapshotTreeWithGroupId.trees[".app"].trees,
-				".protocol": snapshotTreeWithGroupId.trees[".protocol"],
+				...snapshotTreeWithGroupId.trees[".app"]!.trees,
+				".protocol": snapshotTreeWithGroupId.trees[".protocol"]!,
 			},
 			id: "SnapshotId",
 		};

@@ -185,7 +185,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 		const handler = (metadata: Record<string, string>): void => {
 			eventRaised = true;
 			assert.deepStrictEqual(
-				JSON.parse(metadata.sensitivityLabelsInfo),
+				JSON.parse(metadata.sensitivityLabelsInfo!),
 				parsedResponse.sensitivityLabelsInfo,
 				"sensitivity info via event should match",
 			);
@@ -217,7 +217,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 		const handler = (metadata: Record<string, string>): void => {
 			eventRaised = true;
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-			const arg1 = JSON.parse(metadata.sensitivityLabelsInfo).labels;
+			const arg1 = JSON.parse(metadata.sensitivityLabelsInfo!).labels;
 			const arg2: ISensitivityLabel[] | undefined = content.labels;
 			assert.deepStrictEqual(arg1, arg2, "label via event should match");
 		};

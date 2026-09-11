@@ -42,7 +42,7 @@ export interface ISnapshotContentsWithProps extends ISnapshot {
  * Recreates blobs section of the tree.
  * @param node - tree node to read blob section from
  */
-function readBlobSection(node: NodeTypes): {
+function readBlobSection(node: NodeTypes | undefined): {
 	blobContents: Map<string, ArrayBuffer>;
 	slowBlobStructureCount: number;
 } {
@@ -100,7 +100,7 @@ function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 	// when there are no ops. So just make the code resilient to that bug. Service has also
 	// fixed that bug.
 	assert(
-		ops.length === 0 || records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber,
+		ops.length === 0 || records.firstSequenceNumber.valueOf() === ops[0]!.sequenceNumber,
 		0x280 /* "Validate first op seq number" */,
 	);
 	return ops;
@@ -234,7 +234,7 @@ function readTreeSection(node: NodeCore): {
  * Recreates snapshot tree out of tree representation.
  * @param node - tree node to de-serialize from
  */
-function readSnapshotSection(node: NodeTypes): {
+function readSnapshotSection(node: NodeTypes | undefined): {
 	sequenceNumber: number;
 	snapshotTree: ISnapshotTree;
 	slowTreeStructureCount: number;

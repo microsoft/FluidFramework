@@ -83,7 +83,7 @@ async function validate(
 	}
 
 	if (expectedArr.length > 0) {
-		const last = expectedArr[expectedArr.length - 1].sequenceNumber + 1;
+		const last = expectedArr[expectedArr.length - 1]!.sequenceNumber + 1;
 
 		result = await cache.get(last, undefined);
 		assert(result.length === 0);
@@ -437,8 +437,8 @@ describe("OdspDeltaStorageWithCache", () => {
 			assert(ops.length === 0);
 		} else {
 			assert(ops.length === to - from);
-			assert(ops.length === 0 || ops[0].sequenceNumber === from);
-			assert(ops.length === 0 || ops[ops.length - 1].sequenceNumber === to - 1);
+			assert(ops.length === 0 || ops[0]!.sequenceNumber === from);
+			assert(ops.length === 0 || ops[ops.length - 1]!.sequenceNumber === to - 1);
 		}
 	}
 

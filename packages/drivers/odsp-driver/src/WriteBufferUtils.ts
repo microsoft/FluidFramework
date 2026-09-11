@@ -114,7 +114,7 @@ const integerBytesToCodeMap = {
 const boolToCodeMap = [
 	12, // false
 	11, // true
-];
+] as const;
 
 /**
  * Calculate how many bytes are required to encode an integer. This is always power of 2.

@@ -302,7 +302,8 @@ export class NodeCore {
 	}
 
 	public get(index: number): NodeTypes {
-		return this.children[index];
+		// Callers are expected to only ask for indices within [0, length).
+		return this.children[index]!;
 	}
 
 	public getString(index: number): string {
@@ -544,7 +545,7 @@ export class NodeCore {
 
 		for (const el of stringsToResolve) {
 			for (let it = el.startPos; it < el.endPos; it++) {
-				stringBuffer[length] = input[it];
+				stringBuffer[length] = input[it]!;
 				length++;
 			}
 			stringBuffer[length] = 0;
@@ -556,7 +557,7 @@ export class NodeCore {
 		if (result.length === stringsToResolve.length + 1) {
 			// All is good, we expect all the cases to get here
 			for (let i = 0; i < stringsToResolve.length; i++) {
-				stringsToResolve[i].content = result[i];
+				stringsToResolve[i]!.content = result[i];
 			}
 		} else {
 			// String content has \0 chars!
@@ -594,23 +595,23 @@ export class TreeBuilder extends NodeCore {
 	}
 }
 
-export function getMaybeStringInstance(node: NodeTypes): string | undefined {
-	const maybeString = node as IStringElement;
-	if (maybeString._stringElement) {
+export function getMaybeStringInstance(node: NodeTypes | undefined): string | undefined {
+	const maybeString = node as IStringElement | undefined;
+	if (maybeString?._stringElement === true) {
 		return maybeString.content;
 	}
 }
 
-export function getStringInstance(node: NodeTypes, message: string): string {
-	const maybeString = node as IStringElement;
-	if (maybeString._stringElement) {
+export function getStringInstance(node: NodeTypes | undefined, message: string): string {
+	const maybeString = node as IStringElement | undefined;
+	if (maybeString?._stringElement === true) {
 		return maybeString.content;
 	}
-	throwBufferParseException(node, "BlobCore", message);
+	throwBufferParseException(node, "String", message);
 }
 
 export function assertBlobCoreInstance(
-	node: NodeTypes,
+	node: NodeTypes | undefined,
 	message: string,
 ): asserts node is BlobCore {
 	if (node instanceof BlobCore) {
@@ -620,7 +621,7 @@ export function assertBlobCoreInstance(
 }
 
 export function assertNodeCoreInstance(
-	node: NodeTypes,
+	node: NodeTypes | undefined,
 	message: string,
 ): asserts node is NodeCore {
 	if (node instanceof NodeCore) {
@@ -630,7 +631,7 @@ export function assertNodeCoreInstance(
 }
 
 export function assertNumberInstance(
-	node: NodeTypes,
+	node: NodeTypes | undefined,
 	message: string,
 ): asserts node is number {
 	if (typeof node === "number") {
@@ -639,7 +640,10 @@ export function assertNumberInstance(
 	throwBufferParseException(node, "Number", message);
 }
 
-export function assertBoolInstance(node: NodeTypes, message: string): asserts node is boolean {
+export function assertBoolInstance(
+	node: NodeTypes | undefined,
+	message: string,
+): asserts node is boolean {
 	if (typeof node === "boolean") {
 		return;
 	}
@@ -647,7 +651,7 @@ export function assertBoolInstance(node: NodeTypes, message: string): asserts no
 }
 
 function throwBufferParseException(
-	node: NodeTypes,
+	node: NodeTypes | undefined,
 	expectedNodeType: NodeType,
 	message: string,
 ): never {
@@ -662,8 +666,10 @@ function throwBufferParseException(
 	);
 }
 
-function getNodeType(value: NodeTypes): NodeType {
-	if (typeof value === "number") {
+function getNodeType(value: NodeTypes | undefined): NodeType {
+	if (value === undefined) {
+		return "Undefined";
+	} else if (typeof value === "number") {
 		return "Number";
 	} else if (value instanceof BlobCore) {
 		return "BlobCore";
@@ -677,4 +683,11 @@ function getNodeType(value: NodeTypes): NodeType {
 	return "UnknownType";
 }
 
-type NodeType = "Number" | "BlobCore" | "NodeCore" | "Boolean" | "UnknownType" | "String";
+type NodeType =
+	| "Number"
+	| "BlobCore"
+	| "NodeCore"
+	| "Boolean"
+	| "UnknownType"
+	| "String"
+	| "Undefined";
