@@ -165,6 +165,27 @@ describe("publish tarballs", () => {
 			});
 		});
 
+		it("does not retry when publishing reports an already published tarball", async () => {
+			const tarball = createTarball("tarball");
+			let publishAttemptCount = 0;
+
+			const [result] = await publishTarballsInOrder([tarball], {
+				retry: 2,
+				isPublished: async () => false,
+				publish: async () => {
+					publishAttemptCount++;
+					return "AlreadyPublished";
+				},
+			});
+
+			expect(publishAttemptCount).to.equal(1);
+			expect(result).to.deep.equal({
+				status: "AlreadyPublished",
+				tarball,
+				tryCount: 1,
+			});
+		});
+
 		it("retries until exhaustion", async () => {
 			const tarball = createTarball("tarball");
 			let publishAttemptCount = 0;

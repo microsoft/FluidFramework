@@ -328,7 +328,7 @@ export async function publishTarballsInOrder(
 			// eslint-disable-next-line no-await-in-loop
 			status = await publish(tarball);
 			tryCount++;
-			if (status === "SuccessfullyPublished") {
+			if (status !== "Error") {
 				break;
 			}
 
