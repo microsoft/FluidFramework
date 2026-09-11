@@ -165,11 +165,6 @@ export function create(
 	): Promise<IWriteSummaryResponse> {
 		let service: RestGitService;
 		if (initial === true) {
-			await utils.validateInitialSummaryUpload({
-				tenantId,
-				authorization,
-				documentManager,
-			});
 			Lumberjack.info("HistorianInitialSummaryUploadExemption", {
 				[BaseTelemetryProperties.correlationId]:
 					getGlobalTelemetryContext().getProperties().correlationId,

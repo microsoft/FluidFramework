@@ -66,14 +66,7 @@ type SummaryOwnershipOutcome =
 	| "notFound"
 	| "identityMismatch"
 	| "scheduledDeletion"
-	| "initialReplay"
 	| "dependencyError";
-
-export interface IValidateInitialSummaryUploadArgs {
-	tenantId: string;
-	authorization: string | undefined;
-	documentManager: IDocumentManager;
-}
 
 export interface IValidateSummaryDocumentArgs {
 	tenantId: string;
@@ -351,48 +344,6 @@ function validateAlfredDocumentResponse(
 		logOwnershipOutcome(tenantId, documentId, operation, routeType, "dependencyError", error);
 		throw error;
 	}
-}
-
-export async function validateInitialSummaryUpload({
-	tenantId,
-	authorization,
-	documentManager,
-}: IValidateInitialSummaryUploadArgs): Promise<void> {
-	const documentId = getTokenDocumentId(tenantId, authorization);
-	let document: IDocument | null;
-	try {
-		document = await runWithRetry(
-			async () => documentManager.readDocument(tenantId, documentId),
-			"utils.validateInitialSummaryUpload.readDocument",
-			3,
-			1000,
-			getLumberBaseProperties(documentId, tenantId),
-			undefined,
-			shouldRetryNetworkError,
-		);
-	} catch (error) {
-		if (error instanceof NetworkError && error.code === 404) {
-			logOwnershipOutcome(tenantId, documentId, "post", "notApplicable", "allowed");
-			return;
-		}
-		logOwnershipOutcome(
-			tenantId,
-			documentId,
-			"post",
-			"notApplicable",
-			"dependencyError",
-			error,
-		);
-		throw error;
-	}
-
-	if (document === null) {
-		logOwnershipOutcome(tenantId, documentId, "post", "notApplicable", "allowed");
-		return;
-	}
-
-	validateAlfredDocumentResponse(document, tenantId, documentId, "post", "notApplicable");
-	return denyDocumentAccess(tenantId, documentId, "post", "notApplicable", "initialReplay");
 }
 
 export async function validateSummaryDocument({
