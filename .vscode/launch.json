@@ -391,16 +391,11 @@
 				// "fluid__test__r11sEndpointName": "docker", //values: frs, docker
 				// "fluid__test__backCompat": "FULL", //values: FULL This tests loader-driver compatibility for describeCompat tests
 				// "FLUID_TEST_VERBOSE": "1",
+				"MOCHA_SPEC": "{../../,../../../,../../../../}lib/test/**/${fileBasenameNoExtension}.js",
 			},
-			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
-			"windows": {
-				"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha.cmd",
-			},
-			"linux": {
-				"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
-			},
+			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+			"runtimeArgs": ["--conditions=allow-ff-test-exports", "--expose-gc"],
 			"sourceMaps": true,
-			"program": "${file}",
 			"args": [
 				// "--fgrep",               // Uncomment to filter by test case name
 				// "<test case name>",

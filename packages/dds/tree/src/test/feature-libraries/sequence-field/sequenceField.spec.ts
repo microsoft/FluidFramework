@@ -4,9 +4,11 @@
  */
 
 import { testCompose } from "./compose.test.js";
+import { testComposeMarkTrees } from "./composeMarkTrees.test.js";
 import { testFilterEdits } from "./filterEdits.test.js";
 import { testInvert } from "./invert.test.js";
 import { testMarkListFactory } from "./markListFactory.test.js";
+import { testMarkTree } from "./markTree.test.js";
 import { testRebase } from "./rebase.test.js";
 import { testRelevantRemovedRoots } from "./relevantRemovedRoots.test.js";
 import { testReplaceRevisions } from "./replaceRevisions.test.js";
@@ -29,9 +31,11 @@ describe("SequenceField", () => {
 	testEditor();
 	testUtils();
 	testMarkListFactory();
+	testMarkTree();
 	testInvert();
 	testRebase();
 	testCompose();
+	testComposeMarkTrees();
 	testToDelta();
 	testRelevantRemovedRoots();
 	testRebaserAxioms();
