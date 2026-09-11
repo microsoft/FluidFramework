@@ -75,7 +75,11 @@ describe("publish tarballs", () => {
 
 	describe("publishTarballsInOrder", () => {
 		it("bounds concurrent preflight checks and preserves publish order", async () => {
-			const tarballs = [createTarball("first"), createTarball("second"), createTarball("third")];
+			const tarballs = [
+				createTarball("first"),
+				createTarball("second"),
+				createTarball("third"),
+			];
 			const preflightChecks: string[] = [];
 			const publishOrder: string[] = [];
 			const preflightDeferreds = new Map<string, Deferred<boolean>>();
@@ -180,6 +184,24 @@ describe("publish tarballs", () => {
 				tarball,
 				tryCount: 3,
 			});
+		});
+
+		it("stops publishing after the first exhausted error", async () => {
+			const first = createTarball("first");
+			const second = createTarball("second");
+			const publishOrder: string[] = [];
+
+			const results = await publishTarballsInOrder([first, second], {
+				retry: 0,
+				isPublished: async () => false,
+				publish: async (tarball) => {
+					publishOrder.push(tarball.name);
+					return "Error";
+				},
+			});
+
+			expect(publishOrder).to.deep.equal([first.name]);
+			expect(results).to.deep.equal([{ status: "Error", tarball: first, tryCount: 1 }]);
 		});
 
 		it("rejects negative retry counts", async () => {

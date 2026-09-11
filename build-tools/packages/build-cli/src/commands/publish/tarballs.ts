@@ -342,6 +342,9 @@ export async function publishTarballsInOrder(
 		}
 
 		results.push({ status, tarball, tryCount });
+		if (status === "Error") {
+			break;
+		}
 	}
 
 	return results;
