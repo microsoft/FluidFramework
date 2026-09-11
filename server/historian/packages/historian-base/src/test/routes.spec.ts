@@ -1656,7 +1656,7 @@ describe("summary ownership routes", () => {
 		sinon.assert.notCalled(getSummary);
 	});
 
-	it("validates ownership before GET, POST, and DELETE service calls", async () => {
+	it("bypasses ownership only for initial POST while protecting existing-document routes", async () => {
 		const events: string[] = [];
 		sandbox.stub(documentManager, "readDocument").callsFake(async () => {
 			events.push("readDocument");
@@ -1676,6 +1676,12 @@ describe("summary ownership routes", () => {
 		});
 
 		await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.query({ initial: "true" })
+			.set("Authorization", authorization)
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(201);
+		await superTest
 			.get(`/repos/${tenantId}/git/summaries/${sha}`)
 			.set("Authorization", authorization)
 			.expect(200);
@@ -1691,6 +1697,7 @@ describe("summary ownership routes", () => {
 			.expect(200);
 
 		assert.deepStrictEqual(events, [
+			"createSummary",
 			"readDocument",
 			"getSummary",
 			"readDocument",
