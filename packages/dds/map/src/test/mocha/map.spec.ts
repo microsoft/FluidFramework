@@ -56,9 +56,10 @@ describe("Map", () => {
 
 			// Check that `ISharedMap` is `Map` compatible.
 			// This is not a hard requirement, but an expectation of multiple customers historically.
-			// `FluidMap` mostly replicates that with a notable exception of `clear`.
-			// If this breaks, determine at the time what elements are critical to check.
-			// This may mean checking that subset of ES target are respected.
+			// `FluidMap` mostly replicates that with a notable exception of `clear`. Since
+			// `ISharedMap` supports `clear` _and_ a version of `forEach` will callbackFn's
+			// map argument being an actual `Map`, `ISharedMap` satisfies `Map`.
+			// If this breaks, add a change set advising customers of the change and remove the check.
 			map satisfies Map<string, unknown>;
 		});
 

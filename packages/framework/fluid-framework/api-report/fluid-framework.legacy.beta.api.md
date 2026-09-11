@@ -961,7 +961,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 }
 
 // @beta @sealed @legacy
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, FluidMap<string, any> {
+export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Omit<FluidMap<string, any>, "forEach"> {
     clear(): void;
     delete(key: string): boolean;
     forEach(callbackfn: (value: any, key: string, map: Map<string, any>) => void, thisArg?: any): void;
