@@ -15,7 +15,7 @@ const execFileAsync = promisify(execFile);
 
 class ConfirmationError extends Error {
 	constructor() {
-		super("Pass --execute to create missing target tenants");
+		super("Pass --execute to create missing self-hosted tenants");
 		this.name = "ConfirmationError";
 	}
 }
@@ -36,8 +36,8 @@ function parseArgs(argv) {
 	return options;
 }
 
-function tenantAdminArguments(target, namespace, command, tenantId) {
-	const argumentsList = ["--subscription", target.subscriptionId, "--resource-group", target.resourceGroup, "--aks-name", target.aksName, "--namespace", namespace, command];
+function tenantAdminArguments(selfHost, namespace, command, tenantId) {
+	const argumentsList = ["--subscription", selfHost.subscriptionId, "--resource-group", selfHost.resourceGroup, "--aks-name", selfHost.aksName, "--namespace", namespace, command];
 	if (tenantId !== undefined) argumentsList.push(tenantId);
 	return argumentsList;
 }
@@ -58,12 +58,12 @@ export async function createMissingTenants(config, inventory, execute) {
 	const existingTenants = await runTenantAdmin(config.selfHost, config.selfHostNamespace, tenantAdminArguments(config.selfHost, config.selfHostNamespace, "list"), execute);
 	const existingIds = new Set(existingTenants.map((tenant) =>  tenant.id));
 	const created = [];
-	for (const [sourceTenantId, tenant] of Object.entries(inventory.tenants)) {
-		const targetTenantId = (tenant.selfHostTenantId || sourceTenantId).toLowerCase();
-		if (!existingIds.has(targetTenantId)) {
-			console.log(`Creating new tenant: ${targetTenantId}`);
-			await runTenantAdmin(config.selfHost, config.selfHostNamespace, [...tenantAdminArguments(config.selfHost, config.selfHostNamespace, "create", targetTenantId), "--contact", config.selfHost.contact], execute);
-			created.push(targetTenantId);
+	for (const [azureFluidRelayTenantId, tenant] of Object.entries(inventory.tenants)) {
+		const selfHostTenantId = (tenant.selfHostTenantId || azureFluidRelayTenantId).toLowerCase();
+		if (!existingIds.has(selfHostTenantId)) {
+			console.log(`Creating new tenant: ${selfHostTenantId}`);
+			await runTenantAdmin(config.selfHost, config.selfHostNamespace, [...tenantAdminArguments(config.selfHost, config.selfHostNamespace, "create", selfHostTenantId), "--contact", config.selfHost.contact], execute);
+			created.push(selfHostTenantId);
 		}
 	}
 	return created;
@@ -75,7 +75,7 @@ export async function main(argv) {
 		const { config, inventory, warnings } = await loadConfiguration(options.configPath);
 		for (const warning of warnings) console.warn(`Warning: ${warning}`);
 		const created = await createMissingTenants(config, inventory);
-		console.log(created.length === 0 ? "All target tenants already exist." : `Created ${created.length} target tenant(s).`);
+		console.log(created.length === 0 ? "All self-hosted tenants already exist." : `Created ${created.length} self-hosted tenant(s).`);
 	}
 }
 

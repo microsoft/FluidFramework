@@ -19,13 +19,13 @@ export class CredentialError extends Error {
 
 function requiredString(value, name) {
 	if (typeof value !== "string" || value.trim() === "") {
-		throw new CredentialError(`${name} is required to retrieve the source tenant key`);
+		throw new CredentialError(`${name} is required to retrieve the Azure Fluid Relay tenant key`);
 	}
 	return value;
 }
 
 /** Retrieve key2 without logging or persisting either key. */
-async function getSourceTenantKey2({ azureFluidRelayResourceGroup, azureFluidRelayServerName, azureFluidRelaySubscriptionId }) {
+async function getAzureFluidRelayTenantKey2({ azureFluidRelayResourceGroup, azureFluidRelayServerName, azureFluidRelaySubscriptionId }) {
 	const args = [
 		"fluid-relay",
 		"server",
@@ -48,7 +48,7 @@ async function getSourceTenantKey2({ azureFluidRelayResourceGroup, azureFluidRel
 		if (error?.code === "ENOENT") {
 			throw new CredentialError("Azure CLI (`az`) was not found on PATH");
 		}
-		throw new CredentialError("Unable to retrieve the source tenant secondary key from Azure Fluid Relay");
+		throw new CredentialError("Unable to retrieve the Azure Fluid Relay tenant secondary key");
 	}
 
 	const key2 = output.trim();
@@ -59,13 +59,13 @@ async function getSourceTenantKey2({ azureFluidRelayResourceGroup, azureFluidRel
 	return key2;
 }
 
-/** Run an operation with key2, then release this helper's reference. */
-export async function withSourceTenantKey2(sourceServer, operation) {
+/** Run an operation with the Azure Fluid Relay Key2. */
+export async function withAzureFluidRelayTenantKey2(azureFluidRelayServer, operation) {
 	if (typeof operation !== "function") {
 		throw new TypeError("operation must be a function");
 	}
 
-	let key2 = await getSourceTenantKey2(sourceServer);
+	let key2 = await getAzureFluidRelayTenantKey2(azureFluidRelayServer);
 	try {
 		return await operation(key2);
 	} finally {
@@ -73,7 +73,7 @@ export async function withSourceTenantKey2(sourceServer, operation) {
 	}
 }
 
-async function getTargetTenantKey2({ subscriptionId, resourceGroup, aksName, selfHostNamespace, selfHostTenantId }) {
+async function getSelfHostTenantKey2({ subscriptionId, resourceGroup, aksName, selfHostNamespace, selfHostTenantId }) {
 	const tenantId = requiredString(selfHostTenantId, "selfHostTenantId");
 	const selfhostRoot = path.resolve(import.meta.dirname, "..", "..");
 	const tenantAdmin = path.join(selfhostRoot, "tenant-admin", "tenant-admin.sh");
@@ -87,30 +87,30 @@ async function getTargetTenantKey2({ subscriptionId, resourceGroup, aksName, sel
 			"get-key", tenantId, "--key", "key2",
 		], { maxBuffer: 4096 }));
 	} catch {
-		throw new CredentialError("Unable to retrieve the target tenant secondary key");
+		throw new CredentialError("Unable to retrieve the self-hosted tenant secondary key");
 	}
 
 	let key2;
 	try {
 		key2 = JSON.parse(output).key2;
 	} catch {
-		throw new CredentialError("Target tenant key response was invalid");
+		throw new CredentialError("Self-hosted tenant key response was invalid");
 	} finally {
 		output = undefined;
 	}
 	if (typeof key2 !== "string" || key2 === "") {
-		throw new CredentialError("Target deployment returned no secondary key");
+		throw new CredentialError("Self-hosted deployment returned no secondary key");
 	}
 	return key2;
 }
 
-/** Run an operation with the target key2, then release this helper's reference. */
-export async function withTargetTenantKey2(target, operation) {
+/** Run an operation with the self-host key2. */
+export async function withSelfHostTenantKey2(selfHost, operation) {
 	if (typeof operation !== "function") {
 		throw new TypeError("operation must be a function");
 	}
 
-	let key2 = await getTargetTenantKey2(target);
+	let key2 = await getSelfHostTenantKey2(selfHost);
 	try {
 		return await operation(key2);
 	} finally {

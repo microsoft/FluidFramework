@@ -8,11 +8,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { generateToken } from "@fluidframework/server-services-client";
 import { loadConfiguration } from "../configuration/configuration.mjs";
-import { withSourceTenantKey2, withTargetTenantKey2 } from "../configuration/credentials.mjs";
+import { withAzureFluidRelayTenantKey2, withSelfHostTenantKey2 } from "../configuration/credentials.mjs";
 import { classifyError, createFailure } from "../configuration/errors.mjs";
 import { createResults, recordFailure, recordSuccess, writeStageResults } from "../configuration/results.mjs";
 
-// The source summary read and target document creation need these document-scoped permissions.
+// The Azure Fluid Relay summary read and self-hosted document creation need these document-scoped permissions.
 const scopes = ["doc:read", "doc:write", "summary:write"];
 const tokenLifetimeSeconds = 60;
 
@@ -28,30 +28,30 @@ class TransferError extends Error {
 }
 
 // Historian Git API Authorization
-function sourceAuthorization(tenantId, documentId, key) {
+function azureFluidRelayAuthorization(tenantId, documentId, key) {
 	try {
 		const token = generateToken(tenantId, documentId, key, scopes, undefined, tokenLifetimeSeconds);
 		return `Basic ${Buffer.from(`${tenantId}:${token}`).toString("base64")}`;
 	} catch {
-		throw new TransferError("Unable to generate a source Historian token", "source-historian-token-generation-failed", undefined, "source-historian");
+		throw new TransferError("Unable to generate an Azure Fluid Relay Historian token", "azure-fluid-relay-historian-token-generation-failed", undefined, "azure-fluid-relay-historian");
 	}
 }
 
-// Session discovery uses the source document token
+// Session discovery uses the Azure Fluid Relay document token.
 function discoveryAuthorization(tenantId, documentId, key) {
 	try {
 		return `Basic ${generateToken(tenantId, documentId, key, scopes, undefined, tokenLifetimeSeconds)}`;
 	} catch {
-		throw new TransferError("Unable to generate a source discovery token", "source-discovery-token-generation-failed", undefined, "source-discovery");
+		throw new TransferError("Unable to generate an Azure Fluid Relay discovery token", "azure-fluid-relay-discovery-token-generation-failed", undefined, "azure-fluid-relay-discovery");
 	}
 }
 
 // Alfred document APIs accept the short-lived JWT directly in the Basic header.
-function targetAuthorization(tenantId, documentId, key) {
+function selfHostAuthorization(tenantId, documentId, key) {
 	try {
 		return `Basic ${generateToken(tenantId, documentId, key, scopes, undefined, tokenLifetimeSeconds)}`;
 	} catch {
-		throw new TransferError("Unable to generate a target API token", "token-generation-failed", undefined, "target");
+		throw new TransferError("Unable to generate a self-hosted API token", "token-generation-failed", undefined, "self-host");
 	}
 }
 
@@ -86,12 +86,12 @@ function repositoryUrl(endpoint, tenantId) {
 }
 
 // Resolve the per-document AFR Historian host from the discovery endpoint.
-async function discoverSourceHistorian(discoveryEndpoint, tenantId, documentId, key, fetchImplementation) {
+async function discoverAzureFluidRelayHistorian(discoveryEndpoint, tenantId, documentId, key, fetchImplementation) {
 	try {
 		const endpoint = new URL(discoveryEndpoint);
 		if (endpoint.protocol !== "https:") throw new Error();
 	} catch {
-		throw new TransferError("Source discovery endpoint must be a valid HTTPS URL", "invalid-discovery-endpoint", undefined, "source-discovery");
+		throw new TransferError("Azure Fluid Relay discovery endpoint must be a valid HTTPS URL", "invalid-discovery-endpoint", undefined, "azure-fluid-relay-discovery");
 	}
 	const authorization = discoveryAuthorization(tenantId, documentId, key);
 	let response;
@@ -101,25 +101,25 @@ async function discoverSourceHistorian(discoveryEndpoint, tenantId, documentId, 
 			headers: { Authorization: authorization },
 		});
 	} catch {
-		throw new TransferError("Source session discovery request failed", "request-failed", undefined, "source-discovery");
+		throw new TransferError("Azure Fluid Relay session discovery request failed", "request-failed", undefined, "azure-fluid-relay-discovery");
 	}
 	if (response.status !== 200) {
-		throw new TransferError("Source session discovery request failed", "http-request-failed", response.status, "source-discovery");
+		throw new TransferError("Azure Fluid Relay session discovery request failed", "http-request-failed", response.status, "azure-fluid-relay-discovery");
 	}
 	let session;
 	try {
 		session = await response.json();
 	} catch {
-		throw new TransferError("Source session discovery response was invalid", "invalid-response", undefined, "source-discovery");
+		throw new TransferError("Azure Fluid Relay session discovery response was invalid", "invalid-response", undefined, "azure-fluid-relay-discovery");
 	}
 
-	if (typeof session?.historianUrl !== "string") throw new TransferError("Source session discovery did not return a Historian URL", "missing-historian-url", undefined, "source-discovery");
+	if (typeof session?.historianUrl !== "string") throw new TransferError("Azure Fluid Relay session discovery did not return a Historian URL", "missing-historian-url", undefined, "azure-fluid-relay-discovery");
 	try {
 		const historianUrl = new URL(session.historianUrl);
 		if (historianUrl.protocol !== "https:") throw new Error();
 		return historianUrl.toString().replace(/\/$/, "");
 	} catch {
-		throw new TransferError("Source session discovery returned an invalid Historian URL", "invalid-historian-url", undefined, "source-discovery");
+		throw new TransferError("Azure Fluid Relay session discovery returned an invalid Historian URL", "invalid-historian-url", undefined, "azure-fluid-relay-discovery");
 	}
 }
 
@@ -213,44 +213,44 @@ function buildCreateRequest(summary, documentId) {
 	return { id: documentId, summary: makeWholeTree(tree.entries, blobs, ".app/"), sequenceNumber, values, enableDiscovery: true, enableAnyBinaryBlobOnFirstSummary: true };
 }
 
-/** Transfer a document through the source Historian and target Alfred public APIs. */
-export async function transferDocument({ sourceEndpoint, sourceTenantId, targetEndpoint, targetTenantId, documentId, sourceKey, targetKey, fetchImplementation = fetch }) {
-	let step = "source-discovery";
+/** Transfer a document with the Azure Fluid Relay Historian and self-hosted Alfred public APIs. */
+export async function transferDocument({ azureFluidRelayEndpoint, azureFluidRelayTenantId, selfHostEndpoint, selfHostTenantId, documentId, azureFluidRelayKey, selfHostKey, fetchImplementation = fetch }) {
+	let step = "azure-fluid-relay-discovery";
 	try {
-		// Discover the source storage host, then load the most recent summary commit and payload.
-		const sourceHistorianEndpoint = await discoverSourceHistorian(sourceEndpoint, sourceTenantId, documentId, sourceKey, fetchImplementation);
-		step = "source-authorization";
-		const sourceAuth = sourceAuthorization(sourceTenantId, documentId, sourceKey);
+		// Discover the Azure Fluid Relay storage host, then load the most recent summary commit and payload.
+		const azureFluidRelayHistorianEndpoint = await discoverAzureFluidRelayHistorian(azureFluidRelayEndpoint, azureFluidRelayTenantId, documentId, azureFluidRelayKey, fetchImplementation);
+		step = "azure-fluid-relay-authorization";
+		const azureFluidRelayAuth = azureFluidRelayAuthorization(azureFluidRelayTenantId, documentId, azureFluidRelayKey);
 		// Request only this document's ref, which points to its latest summary commit.
-		step = "source-ref-read";
+		step = "azure-fluid-relay-ref-read";
 		const refName = `heads/${documentId}`;
-		const ref = await requestJson(`${repositoryUrl(sourceHistorianEndpoint, sourceTenantId)}/git/refs/${encodeURIComponent(refName)}`, sourceAuth, "source-historian", fetchImplementation, { expectedStatuses: [200] });
+		const ref = await requestJson(`${repositoryUrl(azureFluidRelayHistorianEndpoint, azureFluidRelayTenantId)}/git/refs/${encodeURIComponent(refName)}`, azureFluidRelayAuth, "azure-fluid-relay-historian", fetchImplementation, { expectedStatuses: [200] });
 		const commitSha = ref?.object?.sha;
-		if (typeof commitSha !== "string") throw new TransferError("Source document has no transferable summary", "missing-summary", undefined, "source-historian");
+		if (typeof commitSha !== "string") throw new TransferError("Azure Fluid Relay document has no transferable summary", "missing-summary", undefined, "azure-fluid-relay-historian");
 		// Download the complete flat summary, including application blobs and protocol metadata.
-		step = "source-summary-read";
-		const summary = await requestJson(`${repositoryUrl(sourceHistorianEndpoint, sourceTenantId)}/git/summaries/${encodeURIComponent(commitSha)}`, sourceAuth, "source-historian", fetchImplementation, { expectedStatuses: [200] });
+		step = "azure-fluid-relay-summary-read";
+		const summary = await requestJson(`${repositoryUrl(azureFluidRelayHistorianEndpoint, azureFluidRelayTenantId)}/git/summaries/${encodeURIComponent(commitSha)}`, azureFluidRelayAuth, "azure-fluid-relay-historian", fetchImplementation, { expectedStatuses: [200] });
 
 		// Convert the flat Historian summary into Alfred's nested initial-summary payload.
 		step = "summary-conversion";
 		const createRequest = buildCreateRequest(summary, documentId);
-		step = "target-create";
-		const created = await requestJson(`${targetEndpoint.replace(/\/$/, "")}/documents/${encodeURIComponent(targetTenantId)}`, targetAuthorization(targetTenantId, documentId, targetKey), "target", fetchImplementation, {
+		step = "self-host-create";
+		const created = await requestJson(`${selfHostEndpoint.replace(/\/$/, "")}/documents/${encodeURIComponent(selfHostTenantId)}`, selfHostAuthorization(selfHostTenantId, documentId, selfHostKey), "self-host", fetchImplementation, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(createRequest),
 			expectedStatuses: [201],
 		});
-		// Support both the legacy string response and modern response object to retain any target remapping.
-		step = "target-response-validation";
-		const targetDocumentId = typeof created === "string" ? created : created?.id;
-		if (typeof targetDocumentId !== "string" || targetDocumentId === "") {
-			throw new TransferError("Target create response omitted the document ID", "missing-target-document-id", undefined, "target");
+		// Support both the legacy string response and modern response object to retain any self-host remapping.
+		step = "self-host-response-validation";
+		const selfHostDocumentId = typeof created === "string" ? created : created?.id;
+		if (typeof selfHostDocumentId !== "string" || selfHostDocumentId === "") {
+			throw new TransferError("Self-hosted create response omitted the document ID", "missing-self-host-document-id", undefined, "self-host");
 		}
-		return targetDocumentId;
+		return selfHostDocumentId;
 	} catch (error) {
 		if (error instanceof TransferError) throw error;
-		const endpoint = step.startsWith("target") ? "target" : step === "source-discovery" ? "source-discovery" : "source-historian";
+		const endpoint = step.startsWith("self-host") ? "self-host" : step === "azure-fluid-relay-discovery" ? "azure-fluid-relay-discovery" : "azure-fluid-relay-historian";
 		throw new TransferError("Document transfer failed unexpectedly", `unexpected-${step}`, undefined, endpoint);
 	}
 }
@@ -279,25 +279,25 @@ export async function main(argv) {
 	for (const warning of warnings) console.warn(`Warning: ${warning}`);
 	const results = createResults(inventory);
 	// Process one tenant and document at a time so keys have the shortest practical lifetime.
-	for (const [sourceTenantId, tenant] of Object.entries(inventory.tenants)) {
-		const sourceTenant = config.azureFluidRelayTenants[sourceTenantId];
-		const targetTenantId = (tenant.selfHostTenantId || sourceTenantId).toLowerCase();
+	for (const [azureFluidRelayTenantId, tenant] of Object.entries(inventory.tenants)) {
+		const azureFluidRelayTenant = config.azureFluidRelayTenants[azureFluidRelayTenantId];
+		const selfHostTenantId = (tenant.selfHostTenantId || azureFluidRelayTenantId).toLowerCase();
 		for (const documentId of tenant.documents) {
-			let failureContext = { errorCode: "source-key-retrieval", endpoint: "source-credentials" };
+			let failureContext = { errorCode: "azure-fluid-relay-key-retrieval", endpoint: "azure-fluid-relay-credentials" };
 			try {
 				// Retrieve each tenant key only around the corresponding document operation.
-				const targetDocumentId = await withSourceTenantKey2(sourceTenant, (sourceKey) => {
-					failureContext = { errorCode: "target-key-retrieval", endpoint: "target-credentials" };
-					return withTargetTenantKey2({ ...config.selfHost, selfHostNamespace: config.selfHostNamespace, selfHostTenantId: targetTenantId }, (targetKey) => {
-						failureContext = { errorCode: "transfer-operation", endpoint: "target" };
-						return transferDocument({ sourceEndpoint: sourceTenant.azureFluidRelayEndpoint, sourceTenantId, targetEndpoint: config.selfHost.alfredEndpoint, targetTenantId, documentId, sourceKey, targetKey });
+				const selfHostDocumentId = await withAzureFluidRelayTenantKey2(azureFluidRelayTenant, (azureFluidRelayKey) => {
+					failureContext = { errorCode: "self-host-key-retrieval", endpoint: "self-host-credentials" };
+					return withSelfHostTenantKey2({ ...config.selfHost, selfHostNamespace: config.selfHostNamespace, selfHostTenantId }, (selfHostKey) => {
+						failureContext = { errorCode: "transfer-operation", endpoint: "self-host" };
+						return transferDocument({ azureFluidRelayEndpoint: azureFluidRelayTenant.azureFluidRelayEndpoint, azureFluidRelayTenantId, selfHostEndpoint: config.selfHost.alfredEndpoint, selfHostTenantId, documentId, azureFluidRelayKey, selfHostKey });
 					});
 				});
-				recordSuccess(results, sourceTenantId, documentId, targetDocumentId);
-				console.log(`Transferred document ${documentId} as ${targetDocumentId}.`);
+				recordSuccess(results, azureFluidRelayTenantId, documentId, selfHostDocumentId);
+				console.log(`Transferred document ${documentId} as ${selfHostDocumentId}.`);
 			} catch (error) {
 				const failure = createFailure(documentId, "document-copy", error, failureContext);
-				recordFailure(results, sourceTenantId, failure);
+				recordFailure(results, azureFluidRelayTenantId, failure);
 				console.error(`Failed to transfer document ${documentId}: ${failure.reason} (${failure.errorCode}) from ${failure.endpoint}: ${safeErrorMessage(error)}.`);
 			}
 			// Write the result to the result file

@@ -20,17 +20,17 @@ const TRANSFER_ERROR_CODES = new Set([
 	"invalid-protocol-metadata",
 	"incomplete-protocol-metadata",
 	"missing-summary",
-	"missing-target-document-id",
+	"missing-self-host-document-id",
 	"token-generation-failed",
-	"source-discovery-token-generation-failed",
-	"source-historian-token-generation-failed",
+	"azure-fluid-relay-discovery-token-generation-failed",
+	"azure-fluid-relay-historian-token-generation-failed",
 	"invalid-discovery-endpoint",
-	"unexpected-source-discovery",
-	"unexpected-source-ref-read",
-	"unexpected-source-summary-read",
+	"unexpected-azure-fluid-relay-discovery",
+	"unexpected-azure-fluid-relay-ref-read",
+	"unexpected-azure-fluid-relay-summary-read",
 	"unexpected-summary-conversion",
-	"unexpected-target-create",
-	"unexpected-target-response-validation",
+	"unexpected-self-host-create",
+	"unexpected-self-host-response-validation",
 ]);
 
 /** Classify an error without retaining its message or stack. */
@@ -52,6 +52,6 @@ export function createFailure(documentId, stage, error, fallback = {}) {
 		reason: FAILURE_REASONS.has(reason) ? reason : "internal-error",
 		...(TRANSFER_ERROR_CODES.has(error?.code) ? { errorCode: error.code } : fallback.errorCode === undefined ? {} : { errorCode: fallback.errorCode }),
 		...(typeof status === "number" ? { httpStatus: status } : {}),
-		...(new Set(["source-discovery", "source-historian", "target"]).has(error?.endpoint) ? { endpoint: error.endpoint } : fallback.endpoint === undefined ? {} : { endpoint: fallback.endpoint }),
+		...(new Set(["azure-fluid-relay-discovery", "azure-fluid-relay-historian", "self-host"]).has(error?.endpoint) ? { endpoint: error.endpoint } : fallback.endpoint === undefined ? {} : { endpoint: fallback.endpoint }),
 	};
 }

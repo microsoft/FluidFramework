@@ -8,7 +8,7 @@ export const RESULTS_FILE_NAME = "copy-data-results.json";
  * Licensed under the MIT License.
  */
 
-/** Create a result collection grouped by source tenant. */
+/** Create a result collection grouped by Azure Fluid Relay tenant. */
 export function createResults(inventory) {
 	const tenants = {};
 	for (const [tenantId, tenant] of Object.entries(inventory.tenants)) {
@@ -21,10 +21,10 @@ export function createResults(inventory) {
 	return { generatedAt: new Date().toISOString(), tenants };
 }
 
-export function recordSuccess(results, tenantId, documentId, targetDocumentId) {
+export function recordSuccess(results, tenantId, documentId, selfHostDocumentId) {
 	results.tenants[tenantId].successful.push({
 		documentId,
-		...(targetDocumentId === undefined ? {} : { targetDocumentId }),
+		...(selfHostDocumentId === undefined ? {} : { selfHostDocumentId }),
 	});
 }
 

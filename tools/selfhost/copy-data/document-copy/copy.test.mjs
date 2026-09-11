@@ -6,12 +6,12 @@ function jsonResponse(value, status = 200) {
 	return { status, json: async () => value };
 }
 
-test("transfers the latest source summary through the target document API", async () => {
+test("transfers the latest Azure Fluid Relay summary through the self-host document API", async () => {
 	const requests = [];
 	const fetchImplementation = async (url, options) => {
 		requests.push({ url, options });
-		if (url.includes("/session/")) return jsonResponse({ historianUrl: "https://source-historian.example" });
-		if (url.endsWith("/git/refs/heads%2Fsource-document")) return jsonResponse({ object: { sha: "commit" } });
+		if (url.includes("/session/")) return jsonResponse({ historianUrl: "https://azure-fluid-relay-historian.example" });
+		if (url.endsWith("/git/refs/heads%2Fazure-fluid-relay-document")) return jsonResponse({ object: { sha: "commit" } });
 		if (url.includes("/git/summaries/")) return jsonResponse({
 			trees: [{ entries: [
 				{ path: ".app", type: "tree" },
@@ -27,27 +27,27 @@ test("transfers the latest source summary through the target document API", asyn
 				{ id: "values", content: "[]", encoding: "utf-8" },
 			],
 		});
-		return jsonResponse({ id: "target-document" }, 201);
+		return jsonResponse({ id: "self-host-document" }, 201);
 	};
 
-	const targetDocumentId = await transferDocument({
-		sourceEndpoint: "https://source.example",
-		sourceTenantId: "source",
-		targetEndpoint: "https://target-alfred.example",
-		targetTenantId: "target",
-		documentId: "source-document",
-		sourceKey: "source-key",
-		targetKey: "target-key",
+	const selfHostDocumentId = await transferDocument({
+		azureFluidRelayEndpoint: "https://azure-fluid-relay.example",
+		azureFluidRelayTenantId: "azure-fluid-relay",
+		selfHostEndpoint: "https://self-host-alfred.example",
+		selfHostTenantId: "self-host",
+		documentId: "azure-fluid-relay-document",
+		azureFluidRelayKey: "azure-fluid-relay-key",
+		selfHostKey: "self-host-key",
 		fetchImplementation,
 	});
 
-	assert.equal(targetDocumentId, "target-document");
-	assert.equal(requests[1].url, "https://source-historian.example/repos/source/git/refs/heads%2Fsource-document");
+	assert.equal(selfHostDocumentId, "self-host-document");
+	assert.equal(requests[1].url, "https://azure-fluid-relay-historian.example/repos/azure-fluid-relay/git/refs/heads%2Fazure-fluid-relay-document");
 	const createRequest = requests.at(-1);
-	assert.equal(createRequest.url, "https://target-alfred.example/documents/target");
+	assert.equal(createRequest.url, "https://self-host-alfred.example/documents/self-host");
 	assert.ok(createRequest.options.headers.Authorization.startsWith("Basic "));
 	const body = JSON.parse(createRequest.options.body);
-	assert.equal(body.id, "source-document");
+	assert.equal(body.id, "azure-fluid-relay-document");
 	assert.equal(body.sequenceNumber, 5);
 	assert.deepEqual(body.summary, {
 		type: "tree",
