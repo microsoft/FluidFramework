@@ -156,7 +156,7 @@ describe("Tests1 for snapshot fetch", () => {
 				return await callback();
 			} finally {
 				assert(
-					getDownloadSnapshotStub.args[0][4]?.mds === undefined,
+					getDownloadSnapshotStub.args[0]![4]?.mds === undefined,
 					"mds should be undefined",
 				);
 				success = true;
@@ -288,7 +288,7 @@ describe("Tests1 for snapshot fetch", () => {
 			} finally {
 				getDownloadSnapshotStub.restore();
 				assert(
-					getDownloadSnapshotStub.args[0][3]?.length === 0,
+					getDownloadSnapshotStub.args[0]![3]?.length === 0,
 					"should ask for ungroupedData",
 				);
 				ungroupedData = true;
@@ -353,7 +353,7 @@ describe("Tests1 for snapshot fetch", () => {
 				return await callback();
 			} finally {
 				getDownloadSnapshotStub.restore();
-				assert(getDownloadSnapshotStub.args[0][3]?.[0] === "g1", "should ask for g1 groupId");
+				assert(getDownloadSnapshotStub.args[0]![3]?.[0] === "g1", "should ask for g1 groupId");
 				success = true;
 			}
 		}

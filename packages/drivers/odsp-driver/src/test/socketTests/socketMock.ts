@@ -143,7 +143,7 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 							initialSignals: [],
 							maxMessageSize: 1000,
 							mode: connectMessage.mode,
-							version: connectMessage.versions[0],
+							version: connectMessage.versions[0]!,
 							serviceConfiguration: { maxMessageSize: 1000, blockSize: 1000 },
 							claims: {
 								documentId: connectMessage.id,

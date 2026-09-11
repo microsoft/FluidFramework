@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	checkForKnownServerFarmType,
+	getOdspUrlParts,
 	hasOdcOrigin,
 	isOdcUrl,
 	isSpoUrl,
@@ -178,6 +179,79 @@ describe("odspUrlHelper", () => {
 					new URL("https://foo.onedrive.com/v2x1/drives('ABC123')/items('ABC123!123')"),
 				),
 				false,
+			);
+		});
+	});
+
+	describe("getOdspUrlParts", () => {
+		it("parses SPO urls", async () => {
+			assert.deepEqual(
+				await getOdspUrlParts(
+					new URL("https://foo.sharepoint.com/_api/v2.1/drives/driveId1/items/itemId1"),
+				),
+				{
+					siteUrl: "https://foo.sharepoint.com/_api/v2.1/drives/driveId1/items/itemId1",
+					driveId: "driveId1",
+					itemId: "itemId1",
+				},
+			);
+		});
+
+		it("parses ODC urls without a drive id in the path", async () => {
+			assert.deepEqual(
+				await getOdspUrlParts(new URL("https://foo.onedrive.com/v2.1/drive/items/ABC123!123")),
+				{
+					siteUrl: "https://foo.onedrive.com/v2.1/drive/items/ABC123!123",
+					// The drive id is derived from the item id for this format.
+					driveId: "ABC123",
+					itemId: "ABC123!123",
+				},
+			);
+		});
+
+		it("parses ODC urls with a drive id in the path", async () => {
+			assert.deepEqual(
+				await getOdspUrlParts(
+					new URL("https://foo.onedrive.com/v2.1/drives/DRIVE1/items/ABC123!123"),
+				),
+				{
+					siteUrl: "https://foo.onedrive.com/v2.1/drives/DRIVE1/items/ABC123!123",
+					driveId: "DRIVE1",
+					itemId: "ABC123!123",
+				},
+			);
+		});
+
+		it("parses ODC OData urls", async () => {
+			assert.deepEqual(
+				await getOdspUrlParts(
+					new URL("https://foo.onedrive.com/v2.1/drives('DRIVE1')/items('ABC123!123')"),
+				),
+				{
+					siteUrl: "https://foo.onedrive.com/v2.1/drives('DRIVE1')/items('ABC123!123')",
+					driveId: "DRIVE1",
+					itemId: "ABC123!123",
+				},
+			);
+		});
+
+		it("returns undefined for malformed urls", async () => {
+			// Not a joinsession-like SPO path.
+			assert.equal(
+				await getOdspUrlParts(new URL("https://foo.sharepoint.com/_api/v2.1/drives/driveId1")),
+				undefined,
+			);
+			// ODC path with an item id that does not match either supported format.
+			assert.equal(
+				await getOdspUrlParts(new URL("https://foo.onedrive.com/v2.1/drive/items/ABC123")),
+				undefined,
+			);
+			// ODC OData path missing the closing item quote.
+			assert.equal(
+				await getOdspUrlParts(
+					new URL("https://foo.onedrive.com/v2.1/drives('DRIVE1')/items('ABC123!123"),
+				),
+				undefined,
 			);
 		});
 	});
