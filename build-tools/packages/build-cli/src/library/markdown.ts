@@ -49,22 +49,6 @@ export function addHeadingLinks(): (tree: Node) => void {
 }
 
 /**
- * A regular expression that extracts an admonition title from a string UNLESS the admonition title is the only thing on
- * the line.
- *
- * Capture group 1 is the admonition type/title (from the leading `[!` all the way to the trailing `]`).
- *
- * @remarks
- *
- * Description of the regular expression:
- *
- * This regular expression matches patterns in the form of `[!WORD]` where WORD can be CAUTION, IMPORTANT, NOTE, TIP, or
- * WARNING. It ensures that the pattern is not followed by only whitespace characters until the end of the line.
- * Additionally, it captures any whitespace characters that follow the matched pattern.
- */
-const ADMONITION_REGEX = /(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])(?!\s*$)\s*/gm;
-
-/**
  * A regular expression to remove single line breaks from text. This is used to remove extraneous line breaks in text
  * nodes in markdown. This is useful because GitHub sometimes renders single line breaks, and sometimes it ignores them
  * like the CommonMark spec describes. Removing them ensures that markdown renders as expected across GitHub.
@@ -79,24 +63,102 @@ const ADMONITION_REGEX = /(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])(?!\s*$)\s
 const SOFT_BREAK_REGEX = /$[^$]/gms;
 
 /**
+ * A regular expression that matches a GitHub alert marker at the start of a string, together with the rest of that
+ * line and the line break that ends it.
+ *
+ * Capture group 1 is the marker itself (from the leading `[!` all the way to the trailing `]`).
+ *
+ * @remarks
+ *
+ * GitHub renders a blockquote as an alert when its first paragraph begins with one of these markers and the marker is
+ * alone on its line. The match is deliberately case-insensitive, because GitHub accepts `[!note]` and `[!Note]` just
+ * as it accepts `[!NOTE]`. The alternation is written in lower case only to satisfy the `unicorn/better-regex` lint
+ * rule; with the `i` flag the case used in the pattern makes no difference.
+ *
+ * `[^\S\n]*` allows trailing spaces or tabs after the marker, which GitHub also allows, while stopping short of the
+ * line break so that the line break itself is part of the match and can be preserved.
+ */
+const ALERT_MARKER_REGEX = /^(\[!(?:caution|important|note|tip|warning)])[^\S\n]*\n/i;
+
+/**
+ * Returns the text node holding the alert marker of a GitHub alert, or `undefined` if the given node is not an alert.
+ *
+ * @remarks
+ *
+ * The rules mirror GitHub's own renderer:
+ *
+ * - The marker must be the very first thing in the blockquote's first paragraph. A marker that appears after other
+ * text, or in a later paragraph, does not make an alert.
+ * - The marker must be alone on its line, with the body starting on a following line.
+ * - Alerts cannot be nested inside other elements, so the blockquote must be at the top level of the document.
+ */
+function findAlertMarkerNode(
+	blockquote: Parent,
+	parent: Parent | undefined,
+): { value: string } | undefined {
+	// GitHub does not render alerts nested inside other elements, including inside another blockquote.
+	if (parent?.type !== "root") {
+		return undefined;
+	}
+
+	const firstBlock = blockquote.children[0];
+	if (firstBlock?.type !== "paragraph") {
+		return undefined;
+	}
+
+	const firstInline = (firstBlock as Parent).children[0] as { type: string; value?: string };
+	if (firstInline?.type !== "text" || firstInline.value === undefined) {
+		return undefined;
+	}
+
+	// A marker with no line break after it is either the whole blockquote, which GitHub does not treat as an alert
+	// because it has no body, or a marker with the body on its own line, which GitHub does not treat as an alert
+	// either. Neither case has a line break to preserve.
+	return ALERT_MARKER_REGEX.test(firstInline.value)
+		? (firstInline as { value: string })
+		: undefined;
+}
+
+/**
  * A remarkjs/unist plugin that strips soft line breaks. This is a workaround for GitHub's inconsistent markdown
  * rendering in GitHub Releases. According to CommonMark, Markdown paragraphs are denoted by two line breaks, and single
  * line breaks should be ignored. But in GitHub releases, single line breaks are rendered. This plugin removes the soft
  * line breaks so that the markdown is correctly rendered.
+ *
+ * @remarks
+ *
+ * GitHub alerts (`> [!NOTE]`) depend on the marker being alone on its line, so collapsing that particular line break
+ * would stop the alert from rendering. Alert blockquotes are therefore identified before any line breaks are removed,
+ * and the line break that ends the marker's line is kept.
  */
 export function stripSoftBreaks(): (tree: Node) => void {
 	return (tree: Node): void => {
-		// strip soft breaks
-		visit(tree, "text", (node: { value: string }) => {
-			node.value = node.value.replace(SOFT_BREAK_REGEX, " ");
-		});
+		// Identify alert markers up front. Once soft breaks have been stripped there is no way to tell a marker that
+		// was alone on its line from one the author wrote inline with the body, and only the former is an alert.
+		const alertMarkerNodes = new Set<{ value: string }>();
+		visit(
+			tree,
+			"blockquote",
+			(node: Parent, _index: number | undefined, parent: Parent | undefined) => {
+				const markerNode = findAlertMarkerNode(node, parent);
+				if (markerNode !== undefined) {
+					alertMarkerNodes.add(markerNode);
+				}
+			},
+		);
 
-		// preserve GitHub admonitions; without this the line breaks in the alert are lost and it doesn't render correctly.
-		visit(tree, "blockquote", (node: Node) => {
-			visit(node, "text", (innerNode: { value: string }) => {
-				// If the text is an admonition title, split
-				innerNode.value = innerNode.value.replace(ADMONITION_REGEX, "$1\n");
-			});
+		visit(tree, "text", (node: { value: string }) => {
+			if (alertMarkerNodes.has(node)) {
+				// Keep the marker and the line break that follows it, and strip soft breaks from the rest of the node.
+				const marker = ALERT_MARKER_REGEX.exec(node.value);
+				if (marker !== null) {
+					const body = node.value.slice(marker[0].length).replace(SOFT_BREAK_REGEX, " ");
+					node.value = `${marker[1]}\n${body}`;
+					return;
+				}
+			}
+
+			node.value = node.value.replace(SOFT_BREAK_REGEX, " ");
 		});
 	};
 }
