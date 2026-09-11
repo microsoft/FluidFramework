@@ -142,8 +142,6 @@ stages:
             customCommand: 'run build'
           env:
             INSTRUMENTATION_KEY: $(INSTRUMENTATION_KEY)
-            # Building the website with 3x versions currently eats up a lot of memory, so we need to increase the max heap size for Node.js.
-            NODE_OPTIONS: --max-old-space-size=6144
 
         - task: Bash@3
           displayName: 'Verify Pagefind search bundle'
