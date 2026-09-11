@@ -278,7 +278,7 @@ async function main() {
 
 	const outputPath = path.resolve(options.output);
 	// Redact any unexpected credentials.
-	const serialized = scrub(`${JSON.stringify(inventory, undefined, 2)}\n`);
+	const serialized = redact(`${JSON.stringify(inventory, undefined, 2)}\n`);
 	await mkdir(path.dirname(outputPath), { recursive: true });
 	// Apply owner-only permissions to new and existing files.
 	await writeFile(outputPath, serialized, { encoding: "utf-8", mode: OUTPUT_MODE });
@@ -295,7 +295,7 @@ async function main() {
 main().then(
 	(code) => process.exit(code),
 	(err) => {
-		console.error(`\nError: ${scrub(err instanceof Error ? err.message : err)}`);
+		console.error(`\nError: ${redact(err instanceof Error ? err.message : err)}`);
 		process.exit(1);
 	},
 );
