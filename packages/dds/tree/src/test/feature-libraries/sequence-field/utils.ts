@@ -477,20 +477,20 @@ export function invertDeep(
 
 export function testInvert(
 	change: TaggedChange<Changeset>,
-	revision: RevisionTag | undefined,
+	inverseRevision: RevisionTag | undefined,
 	isRollback = true,
 ): Changeset {
 	deepFreeze(change.change);
 	const table = newCrossFieldTable();
 	const genId = new DefaultAtomIdAliasAllocator();
-	genId.reserve(revision, brand(Number.MAX_SAFE_INTEGER));
-	let inverted = invert(change.change, isRollback, genId, revision, table);
+	genId.reserve(change.revision, brand(Number.MAX_SAFE_INTEGER));
+	let inverted = invert(change.change, isRollback, genId, inverseRevision, table);
 
 	if (table.isInvalidated) {
 		table.isInvalidated = false;
 		table.srcQueries.clear();
 		table.dstQueries.clear();
-		inverted = invert(change.change, isRollback, genId, revision, table);
+		inverted = invert(change.change, isRollback, genId, inverseRevision, table);
 	}
 
 	return inverted;
