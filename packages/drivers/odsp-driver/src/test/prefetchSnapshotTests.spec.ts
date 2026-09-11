@@ -259,6 +259,51 @@ describe("Tests for prefetching snapshot", () => {
 			);
 		});
 
+		it("noCache bypasses a prefetched snapshot", async () => {
+			await mockFetchSingle(
+				async () =>
+					prefetchLatestSnapshot(
+						resolved,
+						async (_options) => "token",
+						localCache,
+						true,
+						mockLogger,
+						undefined,
+						false,
+						undefined,
+						undefined,
+						odspDocumentServiceFactory,
+					),
+				async () =>
+					createResponse(
+						{ "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+						odspSnapshot,
+						200,
+					),
+			);
+
+			const networkSnapshot: IOdspSnapshot = {
+				...odspSnapshot,
+				id: "network-id",
+				trees: [{ ...odspSnapshot.trees[0], id: "network-id" }],
+			};
+			const version = await mockFetchSingle(
+				async () => service.getVersions(null, 1, undefined, FetchSource.noCache),
+				async () =>
+					createResponse(
+						{ "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+						networkSnapshot,
+						200,
+					),
+			);
+
+			assert.deepStrictEqual(
+				version,
+				[{ id: "network-id", treeId: undefined! }],
+				"noCache should return the network snapshot rather than the prefetched snapshot",
+			);
+		});
+
 		it("prefetching snapshot should result in snapshot source as network if both cache and prefetch throws", async () => {
 			// overwriting get() to make cache fetch throw
 			localCache.get = async (): Promise<void> => {

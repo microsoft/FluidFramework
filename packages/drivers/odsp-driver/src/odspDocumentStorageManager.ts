@@ -284,6 +284,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						hostSnapshotOptions,
 						snapshotFetchOptions.loadingGroupIds,
 						snapshotFetchOptions.scenarioName,
+						true /* avoidPrefetchSnapshotCache */,
 					);
 					method = "networkOnly";
 				} else {
@@ -355,6 +356,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 							hostSnapshotOptions,
 							snapshotFetchOptions.loadingGroupIds,
 							snapshotFetchOptions.scenarioName,
+							false /* avoidPrefetchSnapshotCache */,
 						);
 
 						// Ensure that failures on both paths are ignored initially.
@@ -412,6 +414,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 								hostSnapshotOptions,
 								snapshotFetchOptions.loadingGroupIds,
 								snapshotFetchOptions.scenarioName,
+								false /* avoidPrefetchSnapshotCache */,
 							);
 						}
 					}
@@ -553,11 +556,13 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		hostSnapshotOptions: ISnapshotOptions | undefined,
 		loadingGroupIds: string[] | undefined,
 		scenarioName?: string,
+		avoidPrefetchSnapshotCache: boolean = false,
 	): Promise<ISnapshot | IPrefetchSnapshotContents> {
 		return this.fetchSnapshotFromNetworkCore(
 			hostSnapshotOptions,
 			loadingGroupIds,
 			scenarioName,
+			avoidPrefetchSnapshotCache,
 		).catch((error) => {
 			// Issue #5895:
 			// If we are offline, this error is retryable. But that means that RetriableDocumentStorageService
@@ -576,10 +581,13 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		hostSnapshotOptions: ISnapshotOptions | undefined,
 		loadingGroupIds: string[] | undefined,
 		scenarioName?: string,
+		avoidPrefetchSnapshotCache: boolean = false,
 	): Promise<ISnapshot | IPrefetchSnapshotContents> {
-		// Don't look into cache, if the host specifically tells us so. Also, if request is
-		// for initial snapshot, don't consult the prefetch cache.
-		if (!this.hostPolicy.avoidPrefetchSnapshotCache && this.firstSnapshotFetchCall) {
+		if (
+			!avoidPrefetchSnapshotCache &&
+			!this.hostPolicy.avoidPrefetchSnapshotCache &&
+			this.firstSnapshotFetchCall
+		) {
 			const prefetchCacheKey = getKeyForCacheEntry(
 				createCacheSnapshotKey(
 					this.odspResolvedUrl,
