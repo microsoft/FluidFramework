@@ -395,16 +395,14 @@ describe("listPackageJsonPaths", () => {
 
 describe("listPackageJsonPaths: staged deletion (local)", () => {
 	// Root simpleGit at testRepoRoot so git's output paths come back testRepo-relative; the
-	// underlying repo is still the main FF repo (testRepo is a directory inside it, not its
-	// own git repo), so `ls-files` / `ls-tree HEAD` work as usual.
+	// temporary fixture is its own repository, so `ls-files` / `ls-tree HEAD` work as usual.
 	const git = simpleGit(testRepoRoot);
 	const targetPkgRel = "packages/group3/pkg-g/package.json";
-	const targetPkgAbs = path.join(testRepoRoot, targetPkgRel);
 	const targetDir = path.posix.dirname(targetPkgRel);
 
 	beforeEach(async () => {
 		// Stage the deletion of an existing tracked package.json.
-		await git.rm([targetPkgAbs]);
+		await git.rm([targetPkgRel]);
 	});
 
 	afterEach(async () => {
