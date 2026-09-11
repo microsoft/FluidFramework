@@ -252,7 +252,7 @@ export async function transferDocument({ sourceEndpoint, sourceTenantId, targetE
 
 // Require an execution flag before creating the documents
 function parseArgs(argv) {
-	const options = { configPath: "configuration/parameters/copy-data.config.json", execute: false };
+	const options = { configPath: path.join(import.meta.dirname, "..", "configuration", "parameters", "copy-data.config.json"), execute: false };
 	for (let index = 0; index < argv.length; index++) {
 		switch (argv[index]) {
 			case "--config": options.configPath = argv[++index]; break;
