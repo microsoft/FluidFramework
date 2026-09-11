@@ -417,22 +417,7 @@ export class SchemaFactoryAlpha<
 		Pick<ObjectNodeSchema, "fields"> {
 		// TODO: syntax highting is vs code is broken here. Don't trust it. Use the compiler instead.
 		type TScopedName = ScopedSchemaName<TScope, Name>;
-		const out: TreeNodeSchemaClass<
-			TScopedName,
-			NodeKind.Object,
-			System_Unsafe.TreeObjectNodeUnsafe<T, TScopedName>,
-			object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>,
-			false,
-			T,
-			never,
-			TCustomMetadata
-		> &
-			ObjectNodeSchema<
-				ScopedSchemaName<TScope, Name>,
-				RestrictiveStringRecord<ImplicitFieldSchema>,
-				false,
-				TCustomMetadata
-			> = this.objectAlpha(
+		return this.objectAlpha(
 			name,
 			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
 			options,
@@ -452,7 +437,6 @@ export class SchemaFactoryAlpha<
 				false,
 				TCustomMetadata
 			>;
-		return out;
 	}
 
 	/**
@@ -483,22 +467,7 @@ export class SchemaFactoryAlpha<
 		SimpleObjectNodeSchema<SchemaType.View, TCustomMetadata> &
 		Pick<ObjectNodeSchema, "fields"> {
 		type TScopedName = ScopedSchemaName<TScope, Name>;
-		const out: TreeNodeSchemaClass<
-			TScopedName,
-			NodeKind.Object,
-			System_Unsafe.TreeObjectNodeUnsafe<T, TScopedName>,
-			object & InsertableObjectFromSchemaRecordAlphaUnsafe<T>,
-			false,
-			T,
-			never,
-			TCustomMetadata
-		> &
-			ObjectNodeSchema<
-				ScopedSchemaName<TScope, Name>,
-				RestrictiveStringRecord<ImplicitFieldSchema>,
-				false,
-				TCustomMetadata
-			> = this.objectAlpha(
+		return this.objectAlpha(
 			name,
 			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
 			options,
@@ -518,7 +487,6 @@ export class SchemaFactoryAlpha<
 				false,
 				TCustomMetadata
 			>;
-		return out;
 	}
 
 	/**

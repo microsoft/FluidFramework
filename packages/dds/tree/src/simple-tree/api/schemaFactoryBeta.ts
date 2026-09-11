@@ -257,16 +257,7 @@ export class SchemaFactoryBeta<
 		never,
 		TCustomMetadata
 	> {
-		const out: TreeNodeSchemaClass<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Object,
-			TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
-			object & InsertableObjectFromSchemaRecord<T>,
-			true,
-			T,
-			never,
-			TCustomMetadata
-		> = objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
+		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
 			...defaultSchemaFactoryObjectOptions,
 			...options,
 		}) as TreeNodeSchemaClass<
@@ -279,7 +270,6 @@ export class SchemaFactoryBeta<
 			never,
 			TCustomMetadata
 		>;
-		return out;
 	}
 
 	public override objectRecursive<
@@ -301,16 +291,7 @@ export class SchemaFactoryBeta<
 		TCustomMetadata
 	> {
 		type TScopedName = ScopedSchemaName<TScope, Name>;
-		const out: TreeNodeSchemaClass<
-			TScopedName,
-			NodeKind.Object,
-			System_Unsafe.TreeObjectNodeUnsafe<T, TScopedName>,
-			object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>,
-			false,
-			T,
-			never,
-			TCustomMetadata
-		> = this.object(
+		return this.object(
 			name,
 			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
 			options,
@@ -324,7 +305,6 @@ export class SchemaFactoryBeta<
 			never,
 			TCustomMetadata
 		>;
-		return out;
 	}
 
 	/**
@@ -446,15 +426,7 @@ export class SchemaFactoryBeta<
 		if (maybeAllowedTypes === undefined) {
 			const nodeTypes = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Record", nodeTypes);
-			const out: TreeNodeSchemaClass<
-				/* Name */ ScopedSchemaName<TScope, string>,
-				/* Kind */ NodeKind.Record,
-				/* TNode */ TreeRecordNode<T>,
-				/* TInsertable */ RecordNodeInsertableData<T>,
-				/* ImplicitlyConstructable */ true,
-				/* Info */ T,
-				/* TConstructorExtra */ undefined
-			> = this.getStructuralType(fullName, nodeTypes, () =>
+			return this.getStructuralType(fullName, nodeTypes, () =>
 				this.namedRecord(
 					fullName,
 					nameOrAllowedTypes as T,
@@ -470,7 +442,6 @@ export class SchemaFactoryBeta<
 				/* Info */ T,
 				/* TConstructorExtra */ undefined
 			>;
-			return out;
 		}
 		const out: TreeNodeSchemaBoth<
 			/* Name */ ScopedSchemaName<TScope, string>,
@@ -551,7 +522,7 @@ export class SchemaFactoryBeta<
 			options,
 		);
 
-		const out: TreeNodeSchemaClass<
+		return RecordSchema as TreeNodeSchemaClass<
 			/* Name */ ScopedSchemaName<TScope, Name>,
 			/* Kind */ NodeKind.Record,
 			/* TNode */ TreeRecordNodeUnsafe<T> &
@@ -567,19 +538,6 @@ export class SchemaFactoryBeta<
 			/* Info */ T,
 			/* TConstructorExtra */ undefined,
 			/* TCustomMetadata */ TCustomMetadata
-		> = RecordSchema as TreeNodeSchemaClass<
-			/* Name */ ScopedSchemaName<TScope, Name>,
-			/* Kind */ NodeKind.Record,
-			/* TNode */ TreeRecordNodeUnsafe<T> &
-				WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>,
-			/* TInsertable */ {
-				readonly [P in string]: System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
-			},
-			/* ImplicitlyConstructable */ false,
-			/* Info */ T,
-			/* TConstructorExtra */ undefined,
-			/* TCustomMetadata */ TCustomMetadata
 		>;
-		return out;
 	}
 }
