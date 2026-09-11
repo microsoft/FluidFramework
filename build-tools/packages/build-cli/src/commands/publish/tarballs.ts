@@ -62,6 +62,7 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 		retry: Flags.integer({
 			description: `Number of times to retry publishing a package that fails to publish.`,
 			default: 0,
+			min: 0,
 		}),
 		dryRun: Flags.boolean({
 			aliases: ["dry-run"],
@@ -122,13 +123,17 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 		await Promise.all(mapPromises);
 
 		const tarballsToPublish: TarballMetadata[] = [];
+		const seenTarballs = new Set<string>();
 		for (const entry of packageOrder) {
 			const lookupEntry = orderFileIsTarballs ? entry : getTarballName(entry);
 			const toPublish = tarballMetadata.get(lookupEntry);
 			if (toPublish === undefined) {
 				this.error(`No tarball found matching '${entry}'`, { exit: 1 });
 			}
-			tarballsToPublish.push(toPublish);
+			if (!seenTarballs.has(lookupEntry)) {
+				seenTarballs.add(lookupEntry);
+				tarballsToPublish.push(toPublish);
+			}
 		}
 
 		// The registry check is independent for every package, unlike publishing which must remain
