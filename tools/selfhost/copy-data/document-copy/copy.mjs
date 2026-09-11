@@ -201,8 +201,8 @@ function buildCreateRequest(summary, documentId) {
 	let sequenceNumber;
 	let values;
 	try {
-		sequenceNumber = JSON.parse(attributes.content).sequenceNumber;
-		values = JSON.parse(quorumValues.content);
+		sequenceNumber = JSON.parse(attributes.encoding === "base64" ? Buffer.from(attributes.content, "base64").toString("utf8") : attributes.content).sequenceNumber;
+ 		values = JSON.parse(quorumValues.encoding === "base64" ? Buffer.from(quorumValues.content, "base64").toString("utf8") : quorumValues.content);
 	} catch {
 		throw new TransferError("Source summary protocol metadata was invalid", "invalid-protocol-metadata", undefined, "source-historian");
 	}
