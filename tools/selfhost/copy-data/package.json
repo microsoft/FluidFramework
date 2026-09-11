@@ -19,6 +19,9 @@
 	"dependencies": {
 		"@fluidframework/server-services-client": "^7.0.1"
 	},
+	"devDependencies": {
+		"rimraf": "^6.1.3"
+	},
 	"engines": {
 		"node": ">=22.0.0"
 	}
