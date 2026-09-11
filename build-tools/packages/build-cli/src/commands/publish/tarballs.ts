@@ -17,14 +17,82 @@ import { BaseCommand } from "../../library/commands/base.js";
 import { getTarballName } from "../../library/package.js";
 import { readLines } from "../../library/text.js";
 
-interface TarballMetadata {
+/**
+ * Package metadata extracted from a tarball before publishing.
+ */
+export interface TarballMetadata {
+	/**
+	 * The npm package name.
+	 */
 	name: string;
+
+	/**
+	 * The package version.
+	 */
 	version: string;
+
+	/**
+	 * The absolute path to the tarball.
+	 */
 	filePath: string;
+
+	/**
+	 * The tarball file name.
+	 */
 	fileName: string;
 }
 
 const publishPreflightConcurrency = 10;
+
+/**
+ * Hooks and options used by {@link publishTarballsInOrder}.
+ */
+export interface PublishTarballsOptions {
+	/**
+	 * Number of times to retry a failed publish after the first attempt.
+	 */
+	retry: number;
+
+	/**
+	 * Checks whether a package version is already published.
+	 */
+	isPublished: (tarball: TarballMetadata) => Promise<boolean>;
+
+	/**
+	 * Publishes one tarball.
+	 */
+	publish: (tarball: TarballMetadata) => Promise<PublishStatus>;
+
+	/**
+	 * Called immediately before each publish attempt.
+	 */
+	onPublishAttempt?: (tarball: TarballMetadata, attempt: number) => void;
+
+	/**
+	 * Maximum number of initial registry preflight checks to run at the same time.
+	 */
+	preflightConcurrency?: number;
+}
+
+/**
+ * Result for one tarball processed by {@link publishTarballsInOrder}.
+ */
+export interface PublishTarballResult {
+	/**
+	 * The final publish status for the tarball.
+	 */
+	status: PublishStatus;
+
+	/**
+	 * The tarball that was processed.
+	 */
+	tarball: TarballMetadata;
+
+	/**
+	 * The number of publish attempts made.
+	 */
+	tryCount: number;
+}
 
 /**
  * Publishes a tarball to the package registry unless the version is already published.
@@ -122,55 +190,26 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 		}
 		await Promise.all(mapPromises);
 
-		const tarballsToPublish: TarballMetadata[] = [];
-		const seenTarballs = new Set<string>();
-		for (const entry of packageOrder) {
-			const lookupEntry = orderFileIsTarballs ? entry : getTarballName(entry);
-			const toPublish = tarballMetadata.get(lookupEntry);
-			if (toPublish === undefined) {
-				this.error(`No tarball found matching '${entry}'`, { exit: 1 });
-			}
-			if (!seenTarballs.has(lookupEntry)) {
-				seenTarballs.add(lookupEntry);
-				tarballsToPublish.push(toPublish);
-			}
+		let tarballsToPublish: TarballMetadata[];
+		try {
+			tarballsToPublish = getTarballsToPublish(
+				packageOrder,
+				tarballMetadata,
+				orderFileIsTarballs,
+			);
+		} catch (error) {
+			this.error((error as Error).message, { exit: 1 });
 		}
 
-		// The registry check is independent for every package, unlike publishing which must remain
-		// dependency-ordered. Bound the concurrent requests to avoid overwhelming the registry.
-		// eslint-disable-next-line import-x/no-named-as-default-member -- async.mapLimit is the idiomatic usage
-		const alreadyPublished = await async.mapLimit(
-			tarballsToPublish,
-			publishPreflightConcurrency,
-			async (tarball: TarballMetadata) => isTarballPublished(tarball, this.logger),
-		);
+		const results = await publishTarballsInOrder(tarballsToPublish, {
+			retry,
+			isPublished: async (tarball) => isTarballPublished(tarball, this.logger),
+			publish: async (tarball) => publishTarball(tarball, this.logger, publishArgs),
+			onPublishAttempt: (tarball, attempt) =>
+				this.info(`Publishing ${tarball.fileName}, attempt ${attempt}`),
+		});
 
-		for (const [index, toPublish] of tarballsToPublish.entries()) {
-			let tryCount = 0;
-			let status: PublishStatus = alreadyPublished[index]
-				? "AlreadyPublished"
-				: "SuccessfullyPublished";
-
-			while (status !== "AlreadyPublished" && tryCount <= retry) {
-				this.info(`Publishing ${toPublish.fileName}, attempt ${tryCount + 1}`);
-				// We publish one package at a time, in order, and we don't continue until the current package is successfully
-				// published. This ensures that no packages are published to npm without their dependencies first being
-				// published. Note that despite publishing in order, npm itself may still make packages available in a different
-				// order - but we have no control over that.
-				// eslint-disable-next-line no-await-in-loop
-				status = await publishTarball(
-					toPublish,
-					this.logger,
-					publishArgs,
-					// Re-check on retries so a successful upload with a lost response is not reported as a failure.
-					tryCount > 0,
-				);
-				tryCount++;
-				if (status === "SuccessfullyPublished") {
-					break;
-				}
-			}
-
+		for (const { status, tarball: toPublish, tryCount } of results) {
 			switch (status) {
 				case "AlreadyPublished": {
 					this.info(`Already published ${toPublish.fileName}, skipping`);
@@ -220,18 +259,99 @@ async function extractPackageJsonFromTarball(
 	return packageJson;
 }
 
-type PublishStatus = "SuccessfullyPublished" | "AlreadyPublished" | "Error";
+/**
+ * Final status for a tarball publish operation.
+ */
+export type PublishStatus = "SuccessfullyPublished" | "AlreadyPublished" | "Error";
+
+/**
+ * Resolves the ordered, deduplicated list of tarballs to publish.
+ */
+export function getTarballsToPublish(
+	packageOrder: readonly string[],
+	tarballMetadata: ReadonlyMap<string, TarballMetadata>,
+	orderFileIsTarballs: boolean,
+): TarballMetadata[] {
+	const tarballsToPublish: TarballMetadata[] = [];
+	const seenTarballs = new Set<string>();
+	for (const entry of packageOrder) {
+		const lookupEntry = orderFileIsTarballs ? entry : getTarballName(entry);
+		const toPublish = tarballMetadata.get(lookupEntry);
+		if (toPublish === undefined) {
+			throw new Error(`No tarball found matching '${entry}'`);
+		}
+		if (!seenTarballs.has(lookupEntry)) {
+			seenTarballs.add(lookupEntry);
+			tarballsToPublish.push(toPublish);
+		}
+	}
+	return tarballsToPublish;
+}
+
+/**
+ * Runs publish orchestration for a set of already ordered tarballs.
+ */
+export async function publishTarballsInOrder(
+	tarballs: readonly TarballMetadata[],
+	options: PublishTarballsOptions,
+): Promise<PublishTarballResult[]> {
+	const { isPublished, onPublishAttempt, preflightConcurrency, publish, retry } = options;
+	if (retry < 0) {
+		throw new RangeError(`retry must be greater than or equal to 0`);
+	}
+
+	// The registry check is independent for every package, unlike publishing which must remain
+	// dependency-ordered. Bound the concurrent requests to avoid overwhelming the registry.
+	// eslint-disable-next-line import-x/no-named-as-default-member -- async.mapLimit is the idiomatic usage
+	const alreadyPublished = await async.mapLimit(
+		[...tarballs],
+		preflightConcurrency ?? publishPreflightConcurrency,
+		async (tarball: TarballMetadata) => isPublished(tarball),
+	);
+	const results: PublishTarballResult[] = [];
+
+	for (const [index, tarball] of tarballs.entries()) {
+		if (alreadyPublished[index]) {
+			results.push({ status: "AlreadyPublished", tarball, tryCount: 0 });
+			continue;
+		}
+
+		let tryCount = 0;
+		let status: PublishStatus = "Error";
+
+		while (tryCount <= retry) {
+			onPublishAttempt?.(tarball, tryCount + 1);
+			// We publish one package at a time, in order, and we don't continue until the current package is successfully
+			// published. This ensures that no packages are published to npm without their dependencies first being
+			// published. Note that despite publishing in order, npm itself may still make packages available in a different
+			// order - but we have no control over that.
+			// eslint-disable-next-line no-await-in-loop
+			status = await publish(tarball);
+			tryCount++;
+			if (status === "SuccessfullyPublished") {
+				break;
+			}
+
+			// A package may become available after the upfront preflight has completed, either because
+			// a concurrent publisher won the race or because this publish succeeded but lost its response.
+			// eslint-disable-next-line no-await-in-loop
+			if (await isPublished(tarball)) {
+				status = "AlreadyPublished";
+				break;
+			}
+		}
+
+		results.push({ status, tarball, tryCount });
+	}
+
+	return results;
+}
 
 async function publishTarball(
 	tarball: TarballMetadata,
 	log: Logger,
 	publishArgs: string[],
-	checkIfPublished: boolean,
 ): Promise<PublishStatus> {
-	if (checkIfPublished && (await isTarballPublished(tarball, log))) {
-		return "AlreadyPublished";
-	}
-
 	const args = ["publish", tarball.fileName, "--access", "public"];
 	if (publishArgs !== undefined) {
 		args.push(...publishArgs);
