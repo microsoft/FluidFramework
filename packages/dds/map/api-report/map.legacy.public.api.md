@@ -12,7 +12,6 @@ export interface IDirectory extends FluidMap<string, any>, IEventProvider<IDirec
     createSubDirectory(subdirName: string): IDirectory;
     delete(key: string): boolean;
     deleteSubDirectory(subdirName: string): boolean;
-    forEach(callbackfn: (value: any, key: string, map: Map<string, any>) => void, thisArg?: any): void;
     get<T = any>(key: string): T | undefined;
     getSubDirectory(subdirName: string): IDirectory | undefined;
     getWorkingDirectory(relativePath: string): IDirectory | undefined;
