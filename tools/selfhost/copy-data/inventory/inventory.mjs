@@ -35,7 +35,8 @@ class AzError extends Error {
 /** Extract safe status codes and discard Azure CLI output. */
 function getAzFailureCodes(err) {
 	const exitCode = typeof err?.code === "number" ? err.code : undefined;
-	const httpStatus = Number(/\b([45]\d\d)\b/.exec(String(err?.stderr ?? ""))?.[1]) || undefined;
+	const httpStatus =
+		Number(/\b([45]\d\d)\b/.exec(String(err?.stderr ?? ""))?.[1]) || undefined;
 	return { exitCode, httpStatus };
 }
 
@@ -66,7 +67,7 @@ function resourceGroupOf(resource) {
 	if (resource?.resourceGroup) return resource.resourceGroup;
 	throw new AzError(
 		"Unable to get resource group from Azure Fluid Relay server response. " +
-		"Verify that 'az fluid-relay server list' returns the expected ARM schema.",
+			"Verify that 'az fluid-relay server list' returns the expected ARM schema.",
 	);
 }
 
@@ -249,8 +250,12 @@ async function main() {
 			const codeSummary = [
 				codes.exitCode === undefined ? undefined : `exit ${codes.exitCode}`,
 				codes.httpStatus === undefined ? undefined : `HTTP ${codes.httpStatus}`,
-			].filter(Boolean).join(", ");
-			log(`  ${server.name}: failed to list documents${codeSummary ? ` (${codeSummary})` : ""}`);
+			]
+				.filter(Boolean)
+				.join(", ");
+			log(
+				`  ${server.name}: failed to list documents${codeSummary ? ` (${codeSummary})` : ""}`,
+			);
 		}
 	}
 
@@ -282,7 +287,9 @@ async function main() {
 	await writeFile(outputPath, serialized, { encoding: "utf-8", mode: OUTPUT_MODE });
 	await chmod(outputPath, OUTPUT_MODE);
 
-	log(`\nWrote ${total} document(s) across ${Object.keys(tenants).length} tenant(s) to ${outputPath}`);
+	log(
+		`\nWrote ${total} document(s) across ${Object.keys(tenants).length} tenant(s) to ${outputPath}`,
+	);
 	if (errors.length > 0) {
 		log(`${errors.length} server(s) could not be read; see "errors" in the output.`);
 		return 1;

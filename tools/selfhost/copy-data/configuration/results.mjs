@@ -59,7 +59,10 @@ export async function writeStageResults(resultsDirectory, stage, results) {
 		},
 	};
 	const temporaryPath = `${resultsPath}.tmp`;
-	await writeFile(temporaryPath, `${JSON.stringify(updated, undefined, "\t")}\n`, { encoding: "utf8", mode: 0o600 });
+	await writeFile(temporaryPath, `${JSON.stringify(updated, undefined, "\t")}\n`, {
+		encoding: "utf8",
+		mode: 0o600,
+	});
 	await rename(temporaryPath, resultsPath);
 	return resultsPath;
 }

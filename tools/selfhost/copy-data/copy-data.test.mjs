@@ -14,7 +14,10 @@ test("uses the default configuration to run phases in order", async () => {
 		calls.push({ script: path.basename(scriptPath), args });
 	});
 
-	const configPath = path.resolve(import.meta.dirname, "configuration/parameters/copy-data.config.json");
+	const configPath = path.resolve(
+		import.meta.dirname,
+		"configuration/parameters/copy-data.config.json",
+	);
 	assert.deepEqual(calls, [
 		{ script: "validate-config.mjs", args: ["--config", configPath] },
 		{ script: "tenant-creation.mjs", args: ["--config", configPath, "--execute"] },
@@ -29,12 +32,12 @@ test("uses --config to override the default configuration", async () => {
 	});
 
 	const configPath = path.resolve("custom-config.json");
-	assert.deepEqual(calls[0], { script: "validate-config.mjs", args: ["--config", configPath] });
+	assert.deepEqual(calls[0], {
+		script: "validate-config.mjs",
+		args: ["--config", configPath],
+	});
 });
 
 test("requires execution confirmation", async () => {
-	await assert.rejects(
-		main([]),
-		/Use --execute/,
-	);
+	await assert.rejects(main([]), /Use --execute/);
 });

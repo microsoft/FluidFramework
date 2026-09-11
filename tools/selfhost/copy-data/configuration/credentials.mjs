@@ -19,13 +19,19 @@ export class CredentialError extends Error {
 
 function requiredString(value, name) {
 	if (typeof value !== "string" || value.trim() === "") {
-		throw new CredentialError(`${name} is required to retrieve the Azure Fluid Relay tenant key`);
+		throw new CredentialError(
+			`${name} is required to retrieve the Azure Fluid Relay tenant key`,
+		);
 	}
 	return value;
 }
 
 /** Retrieve key2 without logging or persisting either key. */
-async function getAzureFluidRelayTenantKey2({ azureFluidRelayResourceGroup, azureFluidRelayServerName, azureFluidRelaySubscriptionId }) {
+async function getAzureFluidRelayTenantKey2({
+	azureFluidRelayResourceGroup,
+	azureFluidRelayServerName,
+	azureFluidRelaySubscriptionId,
+}) {
 	const args = [
 		"fluid-relay",
 		"server",
@@ -39,7 +45,10 @@ async function getAzureFluidRelayTenantKey2({ azureFluidRelayResourceGroup, azur
 		"--output",
 		"tsv",
 	];
-	args.push("--subscription", requiredString(azureFluidRelaySubscriptionId, "azureFluidRelaySubscriptionId"));
+	args.push(
+		"--subscription",
+		requiredString(azureFluidRelaySubscriptionId, "azureFluidRelaySubscriptionId"),
+	);
 
 	let output;
 	try {
@@ -73,19 +82,36 @@ export async function withAzureFluidRelayTenantKey2(azureFluidRelayServer, opera
 	}
 }
 
-async function getSelfHostTenantKey2({ subscriptionId, resourceGroup, aksName, selfHostNamespace, selfHostTenantId }) {
+async function getSelfHostTenantKey2({
+	subscriptionId,
+	resourceGroup,
+	aksName,
+	selfHostNamespace,
+	selfHostTenantId,
+}) {
 	const tenantId = requiredString(selfHostTenantId, "selfHostTenantId");
 	const selfhostRoot = path.resolve(import.meta.dirname, "..", "..");
 	const tenantAdmin = path.join(selfhostRoot, "tenant-admin", "tenant-admin.sh");
 	let output;
 	try {
-		({ stdout: output } = await execFileAsync(tenantAdmin, [
-			"--subscription", requiredString(subscriptionId, "subscriptionId"),
-			"--resource-group", requiredString(resourceGroup, "resourceGroup"),
-			"--aks-name", requiredString(aksName, "aksName"),
-			"--namespace", requiredString(selfHostNamespace, "selfHostNamespace"),
-			"get-key", tenantId, "--key", "key2",
-		], { maxBuffer: 4096 }));
+		({ stdout: output } = await execFileAsync(
+			tenantAdmin,
+			[
+				"--subscription",
+				requiredString(subscriptionId, "subscriptionId"),
+				"--resource-group",
+				requiredString(resourceGroup, "resourceGroup"),
+				"--aks-name",
+				requiredString(aksName, "aksName"),
+				"--namespace",
+				requiredString(selfHostNamespace, "selfHostNamespace"),
+				"get-key",
+				tenantId,
+				"--key",
+				"key2",
+			],
+			{ maxBuffer: 4096 },
+		));
 	} catch {
 		throw new CredentialError("Unable to retrieve the self-hosted tenant secondary key");
 	}

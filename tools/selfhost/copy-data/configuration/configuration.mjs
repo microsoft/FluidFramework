@@ -40,7 +40,12 @@ async function readJson(filePath, name, errors) {
 }
 
 function validateInventory(inventory, config, errors, warnings) {
-	if (!inventory || typeof inventory !== "object" || !inventory.tenants || typeof inventory.tenants !== "object") {
+	if (
+		!inventory ||
+		typeof inventory !== "object" ||
+		!inventory.tenants ||
+		typeof inventory.tenants !== "object"
+	) {
 		errors.push("Inventory must contain tenants");
 		return;
 	}
@@ -56,7 +61,9 @@ function validateInventory(inventory, config, errors, warnings) {
 
 	for (const [tenantId, tenant] of Object.entries(inventory.tenants)) {
 		if (!isString(tenant?.selfHostTenantId)) {
-			warnings.push(`Inventory tenant ${tenantId} has no selfHostTenantId; using the Azure Fluid Relay tenant ID`);
+			warnings.push(
+				`Inventory tenant ${tenantId} has no selfHostTenantId; using the Azure Fluid Relay tenant ID`,
+			);
 		}
 		if (!Array.isArray(tenant?.documents) || tenant.documents.length === 0) {
 			errors.push(`Inventory tenant ${tenantId} must contain documents`);
@@ -66,10 +73,26 @@ function validateInventory(inventory, config, errors, warnings) {
 			errors.push(`azureFluidRelayTenants must include inventory tenant ${tenantId}`);
 			continue;
 		}
-		requireString(azureFluidRelayTenant.azureFluidRelayEndpoint, `azureFluidRelayTenants.${tenantId}.azureFluidRelayEndpoint`, errors);
-		requireString(azureFluidRelayTenant.azureFluidRelaySubscriptionId, `azureFluidRelayTenants.${tenantId}.azureFluidRelaySubscriptionId`, errors);
-		requireString(azureFluidRelayTenant.azureFluidRelayResourceGroup, `azureFluidRelayTenants.${tenantId}.azureFluidRelayResourceGroup`, errors);
-		requireString(azureFluidRelayTenant.azureFluidRelayServerName, `azureFluidRelayTenants.${tenantId}.azureFluidRelayServerName`, errors);
+		requireString(
+			azureFluidRelayTenant.azureFluidRelayEndpoint,
+			`azureFluidRelayTenants.${tenantId}.azureFluidRelayEndpoint`,
+			errors,
+		);
+		requireString(
+			azureFluidRelayTenant.azureFluidRelaySubscriptionId,
+			`azureFluidRelayTenants.${tenantId}.azureFluidRelaySubscriptionId`,
+			errors,
+		);
+		requireString(
+			azureFluidRelayTenant.azureFluidRelayResourceGroup,
+			`azureFluidRelayTenants.${tenantId}.azureFluidRelayResourceGroup`,
+			errors,
+		);
+		requireString(
+			azureFluidRelayTenant.azureFluidRelayServerName,
+			`azureFluidRelayTenants.${tenantId}.azureFluidRelayServerName`,
+			errors,
+		);
 	}
 
 	for (const tenantId of Object.keys(azureFluidRelayTenants)) {

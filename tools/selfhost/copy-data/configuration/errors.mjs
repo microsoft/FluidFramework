@@ -3,15 +3,32 @@
  * Licensed under the MIT License.
  */
 
-const FAILURE_REASONS = new Set(["network", "http-error", "internal-error", "az-cli-error", "timeout"]);
-const COPY_ENDPOINTS = new Set(["azure-fluid-relay-discovery", "azure-fluid-relay-historian", "self-host"]);
+const FAILURE_REASONS = new Set([
+	"network",
+	"http-error",
+	"internal-error",
+	"az-cli-error",
+	"timeout",
+]);
+const COPY_ENDPOINTS = new Set([
+	"azure-fluid-relay-discovery",
+	"azure-fluid-relay-historian",
+	"self-host",
+]);
 
-const SAFE_ERROR_NAMES = new Set(["AzError", "ConfigurationError", "ConfirmationError", "CopyError", "CredentialError"]);
+const SAFE_ERROR_NAMES = new Set([
+	"AzError",
+	"ConfigurationError",
+	"ConfirmationError",
+	"CopyError",
+	"CredentialError",
+]);
 
 /** Classify an error without retaining its message or stack. */
 export function classifyError(error) {
 	if (error?.name === "AbortError" || error?.code === "ETIMEDOUT") return "timeout";
-	if (typeof error?.statusCode === "number" || typeof error?.status === "number") return "http-error";
+	if (typeof error?.statusCode === "number" || typeof error?.status === "number")
+		return "http-error";
 	if (typeof error?.code === "string" && error.code.startsWith("E")) return "network";
 	if (error?.name === "CredentialError" || error?.name === "AzError") return "az-cli-error";
 	return "internal-error";
@@ -26,7 +43,11 @@ export function createFailure(documentId, stage, error, fallback = {}) {
 		stage,
 		reason: FAILURE_REASONS.has(reason) ? reason : "internal-error",
 		...(typeof status === "number" ? { httpStatus: status } : {}),
-		...(COPY_ENDPOINTS.has(error?.endpoint) ? { endpoint: error.endpoint } : fallback.endpoint === undefined ? {} : { endpoint: fallback.endpoint }),
+		...(COPY_ENDPOINTS.has(error?.endpoint)
+			? { endpoint: error.endpoint }
+			: fallback.endpoint === undefined
+				? {}
+				: { endpoint: fallback.endpoint }),
 	};
 }
 

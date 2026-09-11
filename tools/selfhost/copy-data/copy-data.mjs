@@ -10,7 +10,12 @@ import { safeErrorMessage } from "./configuration/errors.mjs";
 
 function parseArgs(argv) {
 	const options = {
-		configPath: path.join(import.meta.dirname, "configuration", "parameters", "copy-data.config.json"),
+		configPath: path.join(
+			import.meta.dirname,
+			"configuration",
+			"parameters",
+			"copy-data.config.json",
+		),
 		execute: false,
 	};
 	for (let index = 0; index < argv.length; index++) {
@@ -24,7 +29,7 @@ function parseArgs(argv) {
 				break;
 			case "--help":
 			case "-h":
-					console.log("Usage: node copy-data.mjs --execute [--config <path>]");
+				console.log("Usage: node copy-data.mjs --execute [--config <path>]");
 				return undefined;
 			default:
 				throw new Error(`Unknown argument: ${argv[index]}`);
@@ -37,10 +42,17 @@ function parseArgs(argv) {
 function runScript(scriptPath, args) {
 	return new Promise((resolve, reject) => {
 		const child = spawn(process.execPath, [scriptPath, ...args], { stdio: "inherit" });
-		child.once("error", () => reject(new Error(`Unable to start ${path.basename(scriptPath)}`)));
+		child.once("error", () =>
+			reject(new Error(`Unable to start ${path.basename(scriptPath)}`)),
+		);
 		child.once("exit", (code, signal) => {
 			if (code === 0) resolve();
-			else reject(new Error(`${path.basename(scriptPath)} failed${signal ? ` with signal ${signal}` : ` with exit code ${code}`}`));
+			else
+				reject(
+					new Error(
+						`${path.basename(scriptPath)} failed${signal ? ` with signal ${signal}` : ` with exit code ${code}`}`,
+					),
+				);
 		});
 	});
 }
@@ -52,9 +64,20 @@ export async function main(argv, run = runScript) {
 	const configPath = path.resolve(options.configPath);
 	const dataCopyDirectory = import.meta.dirname;
 
-	await run(path.join(dataCopyDirectory, "configuration", "validate-config.mjs"), ["--config", configPath]);
-	await run(path.join(dataCopyDirectory, "tenant-creation", "tenant-creation.mjs"), ["--config", configPath, "--execute"]);
-	await run(path.join(dataCopyDirectory, "document-copy", "copy.mjs"), ["--config", configPath, "--execute"]);
+	await run(path.join(dataCopyDirectory, "configuration", "validate-config.mjs"), [
+		"--config",
+		configPath,
+	]);
+	await run(path.join(dataCopyDirectory, "tenant-creation", "tenant-creation.mjs"), [
+		"--config",
+		configPath,
+		"--execute",
+	]);
+	await run(path.join(dataCopyDirectory, "document-copy", "copy.mjs"), [
+		"--config",
+		configPath,
+		"--execute",
+	]);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

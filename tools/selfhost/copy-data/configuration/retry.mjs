@@ -6,7 +6,10 @@
 const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 /** Retry a transient operation without logging its arguments or errors. */
-export async function retry(operation, { attempts = 3, delayMs = 250, shouldRetry = () => true } = {}) {
+export async function retry(
+	operation,
+	{ attempts = 3, delayMs = 250, shouldRetry = () => true } = {},
+) {
 	for (let attempt = 1; ; attempt++) {
 		try {
 			return await operation();
