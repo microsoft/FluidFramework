@@ -25,7 +25,7 @@ function requiredString(value, name) {
 }
 
 /** Retrieve key2 without logging or persisting either key. */
-async function getSourceTenantKey2({ azureFluidRelayResourceGroup, azureFluidRelayServerName, subscription }) {
+async function getSourceTenantKey2({ azureFluidRelayResourceGroup, azureFluidRelayServerName, azureFluidRelaySubscriptionId }) {
 	const args = [
 		"fluid-relay",
 		"server",
@@ -39,9 +39,7 @@ async function getSourceTenantKey2({ azureFluidRelayResourceGroup, azureFluidRel
 		"--output",
 		"tsv",
 	];
-	if (subscription !== undefined) {
-		args.push("--subscription", requiredString(subscription, "subscription"));
-	}
+	args.push("--subscription", requiredString(azureFluidRelaySubscriptionId, "azureFluidRelaySubscriptionId"));
 
 	let output;
 	try {

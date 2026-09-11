@@ -14,6 +14,7 @@
 		"<azure-fluid-relay-tenant-id>": {
 			"selfHostTenantId": "<self-host-tenant-id>",
 			"azureFluidRelayEndpoint": "https://<azure-fluid-relay-server>.fluidrelay.azure.com",
+			"azureFluidRelaySubscriptionId": "<azure-fluid-relay-subscription-id>",
 			"azureFluidRelayResourceGroup": "<azure-fluid-relay-resource-group>",
 			"azureFluidRelayServerName": "<azure-fluid-relay-server>"
 		}

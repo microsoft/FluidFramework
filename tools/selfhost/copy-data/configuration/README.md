@@ -23,9 +23,9 @@ chmod 600 parameters/copy-data.config.json
 
 Update `parameters/copy-data.config.json` with the required information. Each
 `azureFluidRelayTenants` key must match an Azure Fluid Relay tenant in the
-inventory. Set `azureFluidRelayResourceGroup` and
-`azureFluidRelayServerName` to the Azure Fluid Relay server that hosts the
-tenant. To update the self-hosted tenantId, set each self-hosted `selfHostTenantId`
+inventory. For each tenant, specify the source Azure subscription, resource group,
+and Azure Fluid Relay server using `azureFluidRelaySubscriptionId`,
+`azureFluidRelayResourceGroup`, and `azureFluidRelayServerName`. To update the self-hosted tenantId, set each self-hosted `selfHostTenantId`
 in the inventory file, not in this configuration. If the `selfHostTenantId` is not
 configured, the existing Azure Fluid Relay tenant ID will be used.
 

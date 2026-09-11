@@ -24,6 +24,7 @@ test("loads a complete configuration", async () => {
 			azureFluidRelayTenants: {
 				azureFluidRelayTenant: {
 					azureFluidRelayEndpoint: "https://azure-fluid-relay.fluidrelay.azure.com",
+					azureFluidRelaySubscriptionId: "azure-fluid-relay-subscription",
 					azureFluidRelayResourceGroup: "azure-fluid-relay-resource-group",
 					azureFluidRelayServerName: "azure-fluid-relay-server",
 				},
@@ -42,7 +43,7 @@ test("uses the Azure Fluid Relay tenant ID when selfHostTenantId is missing", as
 	const directory = await mkdtemp(path.join(os.tmpdir(), "copy-data-config-"));
 	try {
 		await writeJson(directory, "inventory.json", { tenants: { azureFluidRelayTenant: { documents: ["document"] } }, errors: [] });
-		await writeJson(directory, "config.json", { inventoryPath: "inventory.json", selfHostNamespace: "default", resultsDirectory: "results", selfHost: { alfredEndpoint: "https://self-host.example", historianEndpoint: "https://self-host.example", subscriptionId: "subscription", resourceGroup: "resource-group", aksName: "aks", contact: "owner@example.com" }, azureFluidRelayTenants: { azureFluidRelayTenant: { azureFluidRelayEndpoint: "https://azure-fluid-relay.fluidrelay.azure.com", azureFluidRelayResourceGroup: "azure-fluid-relay-resource-group", azureFluidRelayServerName: "azure-fluid-relay-server" } } });
+		await writeJson(directory, "config.json", { inventoryPath: "inventory.json", selfHostNamespace: "default", resultsDirectory: "results", selfHost: { alfredEndpoint: "https://self-host.example", historianEndpoint: "https://self-host.example", subscriptionId: "subscription", resourceGroup: "resource-group", aksName: "aks", contact: "owner@example.com" }, azureFluidRelayTenants: { azureFluidRelayTenant: { azureFluidRelayEndpoint: "https://azure-fluid-relay.fluidrelay.azure.com", azureFluidRelaySubscriptionId: "azure-fluid-relay-subscription", azureFluidRelayResourceGroup: "azure-fluid-relay-resource-group", azureFluidRelayServerName: "azure-fluid-relay-server" } } });
 
 		const result = await loadConfiguration(path.join(directory, "config.json"));
 		assert.deepEqual(result.warnings, ["Inventory tenant azureFluidRelayTenant has no selfHostTenantId; using the Azure Fluid Relay tenant ID"]);

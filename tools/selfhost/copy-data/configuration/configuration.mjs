@@ -67,6 +67,7 @@ function validateInventory(inventory, config, errors, warnings) {
 			continue;
 		}
 		requireString(azureFluidRelayTenant.azureFluidRelayEndpoint, `azureFluidRelayTenants.${tenantId}.azureFluidRelayEndpoint`, errors);
+		requireString(azureFluidRelayTenant.azureFluidRelaySubscriptionId, `azureFluidRelayTenants.${tenantId}.azureFluidRelaySubscriptionId`, errors);
 		requireString(azureFluidRelayTenant.azureFluidRelayResourceGroup, `azureFluidRelayTenants.${tenantId}.azureFluidRelayResourceGroup`, errors);
 		requireString(azureFluidRelayTenant.azureFluidRelayServerName, `azureFluidRelayTenants.${tenantId}.azureFluidRelayServerName`, errors);
 	}
