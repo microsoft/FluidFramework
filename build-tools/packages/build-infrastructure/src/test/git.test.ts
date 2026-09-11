@@ -31,8 +31,8 @@ import { testRepoRoot } from "./init.js";
 
 describe("findGitRootSync", () => {
 	it("finds root", () => {
-		// This is the path to the current repo, because when tests are executed the working directory is
-		// the root of this package: build-tools/packages/build-infrastructure
+		// testRepoRoot is the isolated per-process fixture repo created in init.ts;
+		// findGitRootSync should resolve it to its own repository root.
 		const expected = path.resolve(testRepoRoot);
 		const actual = findGitRootSync(testRepoRoot);
 		assert.strictEqual(path.resolve(actual), expected);

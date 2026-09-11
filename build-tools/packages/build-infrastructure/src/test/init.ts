@@ -47,6 +47,8 @@ function createTestRepo(): string {
 			"user.name=build-tools test",
 			"-c",
 			"user.email=build-tools-test@example.invalid",
+			"-c",
+			"commit.gpgsign=false",
 			"commit",
 			"--quiet",
 			"-m",
