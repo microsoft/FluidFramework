@@ -5,7 +5,11 @@
 
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
-import type { RevisionTag } from "../../core/index.js";
+import {
+	offsetChangesetLocalId,
+	type ChangesetLocalId,
+	type RevisionTag,
+} from "../../core/index.js";
 import { type Mutable, hasSingle } from "../../util/index.js";
 import {
 	type AtomIdAliasAllocator,
@@ -106,19 +110,23 @@ function invertMark(
 			return [mark];
 		}
 		case "Rename": {
-			const inputId = getInputCellId(mark);
-			assert(inputId !== undefined, 0x9f5 /* Rename mark must have cell ID */);
-			const inverse: Mutable<CellMark<Rename>> = {
-				type: "Rename",
-				count: mark.count,
-				cellId: mark.idOverride,
-				// Unlike a remove or move-out, which follow a node, there is no way for this mark to assign the original input cell ID to another cell.
-				// This means it should be safe to always restore the input cell ID (as opposed to only doing it on rollbacks).
-				// Despite that, we still only do it on rollback for the sake of consistency: once a cell has been assigned an ID,
-				// the only way for that cell to be assigned that ID again is if it is rolled back to that state.
-				idOverride: isRollback ? inputId : { localId: inputId.localId },
-			};
-			return [withNodeChange(inverse, mark.changes)];
+			if (isRollback) {
+				const inputId = getInputCellId(mark);
+				assert(inputId !== undefined, 0x9f5 /* Rename mark must have cell ID */);
+				const inverse: Mutable<CellMark<Rename>> = {
+					type: "Rename",
+					count: mark.count,
+					cellId: mark.idOverride,
+					// Unlike a remove or move-out, which follow a node, there is no way for this mark to assign the original input cell ID to another cell.
+					// This means it should be safe to always restore the input cell ID (as opposed to only doing it on rollbacks).
+					// Despite that, we still only do it on rollback for the sake of consistency: once a cell has been assigned an ID,
+					// the only way for that cell to be assigned that ID again is if it is rolled back to that state.
+					idOverride: inputId,
+				};
+				return [withNodeChange(inverse, mark.changes)];
+			} else {
+				return [withNodeChange({ count: mark.count, cellId: mark.idOverride }, mark.changes)];
+			}
 		}
 		case "Remove": {
 			assert(mark.revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
@@ -192,7 +200,7 @@ function invertMark(
 
 			if (mark.finalEndpoint !== undefined) {
 				moveIn.finalEndpoint = {
-					localId: genId.getAlias(mark.revision, mark.finalEndpoint.localId),
+					localId: genId.getAlias(mark.finalEndpoint.revision, mark.finalEndpoint.localId),
 					revision,
 				};
 			}
@@ -231,11 +239,11 @@ function invertMark(
 
 			if (mark.finalEndpoint) {
 				invertedMark.finalEndpoint = {
-					localId: genId.getAlias(mark.revision, mark.finalEndpoint.localId),
+					localId: genId.getAlias(mark.finalEndpoint.revision, mark.finalEndpoint.localId),
 					revision,
 				};
 			}
-			return applyMovedChanges(invertedMark, mark.revision, crossFieldManager);
+			return applyMovedChanges(invertedMark, mark.revision, mark.id, crossFieldManager);
 		}
 		case "AttachAndDetach": {
 			const attach: Mark = {
@@ -326,29 +334,44 @@ function invertMark(
 }
 
 function applyMovedChanges(
-	mark: CellMark<MoveOut>,
-	revision: RevisionTag | undefined,
+	invertedMark: CellMark<MoveOut>,
+	originalRevision: RevisionTag | undefined,
+	originalId: ChangesetLocalId,
 	manager: CrossFieldManager<NodeId>,
 ): Mark[] {
 	// Although this is a source mark, we query the destination because this was a destination mark during the original invert pass.
-	const entry = manager.get(CrossFieldTarget.Destination, revision, mark.id, mark.count, true);
+	const entry = manager.get(
+		CrossFieldTarget.Destination,
+		originalRevision,
+		originalId,
+		invertedMark.count,
+		true,
+	);
 
-	if (entry.length < mark.count) {
-		const [mark1, mark2] = splitMark(mark, entry.length);
+	if (entry.length < invertedMark.count) {
+		const [mark1, mark2] = splitMark(invertedMark, entry.length);
 		const mark1WithChanges =
 			entry.value === undefined
 				? mark1
 				: withNodeChange<CellMark<MoveOut>, MoveOut>(mark1, entry.value);
 
-		return [mark1WithChanges, ...applyMovedChanges(mark2, revision, manager)];
+		return [
+			mark1WithChanges,
+			...applyMovedChanges(
+				mark2,
+				originalRevision,
+				offsetChangesetLocalId(originalId, mark1.count),
+				manager,
+			),
+		];
 	}
 
 	if (entry.value !== undefined) {
 		manager.onMoveIn(entry.value);
-		return [withNodeChange<CellMark<MoveOut>, MoveOut>(mark, entry.value)];
+		return [withNodeChange<CellMark<MoveOut>, MoveOut>(invertedMark, entry.value)];
 	}
 
-	return [mark];
+	return [invertedMark];
 }
 
 function invertNodeChangeOrSkip(
