@@ -28,13 +28,13 @@ node ../configuration/validate-config.mjs
 Copy documents only after review. `--execute` is required:
 
 ```bash
-node transfer.mjs --execute
+node copy.mjs --execute
 ```
 
 Use a specific configuration file when needed:
 
 ```bash
-node transfer.mjs --config ../configuration/parameters/data-transfer.config.json --execute
+node copy.mjs --config ../configuration/parameters/copy-data.config.json --execute
 ```
 
 `azureFluidRelayEndpoint` is the Azure Fluid Relay discovery endpoint, not a
@@ -50,4 +50,4 @@ key or its JWT.
 
 Validate the copied documents and rotate the Azure Fluid Relay and
 self-hosted tenant keys as described in the
-[data-transfer workflow](../README.md#workflow).
+[copy-data workflow](../README.md#workflow).

@@ -252,12 +252,12 @@ export async function transferDocument({ sourceEndpoint, sourceTenantId, targetE
 
 // Require an execution flag before creating the documents
 function parseArgs(argv) {
-	const options = { configPath: "configuration/parameters/data-transfer.config.json", execute: false };
+	const options = { configPath: "configuration/parameters/copy-data.config.json", execute: false };
 	for (let index = 0; index < argv.length; index++) {
 		switch (argv[index]) {
 			case "--config": options.configPath = argv[++index]; break;
 			case "--execute": options.execute = true; break;
-			case "--help": case "-h": console.log("Usage: node transfer.mjs [--config <path>] --execute"); return undefined;
+			case "--help": case "-h": console.log("Usage: node copy.mjs [--config <path>] --execute"); return undefined;
 			default: throw new Error(`Unknown argument: ${argv[index]}`);
 		}
 	}
@@ -283,7 +283,7 @@ export async function main(argv) {
 				// Retrieve each tenant key only around the corresponding document operation.
 				const targetDocumentId = await withSourceTenantKey2(sourceTenant, (sourceKey) => {
 					failureContext = { errorCode: "target-key-retrieval", endpoint: "target-credentials" };
-					return withTargetTenantKey2({ ...config.selfHost, targetNamespace: config.selfHostNamespace, selfHostTenantId: targetTenantId }, (targetKey) => {
+					return withTargetTenantKey2({ ...config.selfHost, selfHostNamespace: config.selfHostNamespace, selfHostTenantId: targetTenantId }, (targetKey) => {
 						failureContext = { errorCode: "transfer-operation", endpoint: "target" };
 						return transferDocument({ sourceEndpoint: sourceTenant.azureFluidRelayEndpoint, sourceTenantId, targetEndpoint: config.selfHost.alfredEndpoint, targetTenantId, documentId, sourceKey, targetKey });
 					});
@@ -291,12 +291,12 @@ export async function main(argv) {
 				recordSuccess(results, sourceTenantId, documentId, targetDocumentId);
 				console.log(`Transferred document ${documentId} as ${targetDocumentId}.`);
 			} catch (error) {
-				const failure = createFailure(documentId, "document-transfer", error, failureContext);
+				const failure = createFailure(documentId, "document-copy", error, failureContext);
 				recordFailure(results, sourceTenantId, failure);
 				console.error(`Failed to transfer document ${documentId}: ${failure.reason} (${failure.errorCode}) from ${failure.endpoint}: ${safeErrorMessage(error)}.`);
 			}
 			// Write the result to the result file
-			await writeStageResults(resultsDirectory, "document-transfer", results);
+			await writeStageResults(resultsDirectory, "document-copy", results);
 		}
 	}
 	if (Object.values(results.tenants).some((tenant) => tenant.failed.length > 0)) process.exitCode = 1;

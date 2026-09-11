@@ -75,7 +75,7 @@ export async function withSourceTenantKey2(sourceServer, operation) {
 	}
 }
 
-async function getTargetTenantKey2({ subscriptionId, resourceGroup, aksName, targetNamespace, selfHostTenantId }) {
+async function getTargetTenantKey2({ subscriptionId, resourceGroup, aksName, selfHostNamespace, selfHostTenantId }) {
 	const tenantId = requiredString(selfHostTenantId, "selfHostTenantId");
 	const selfhostRoot = path.resolve(import.meta.dirname, "..", "..");
 	const tenantAdmin = path.join(selfhostRoot, "tenant-admin", "tenant-admin.sh");
@@ -85,7 +85,7 @@ async function getTargetTenantKey2({ subscriptionId, resourceGroup, aksName, tar
 			"--subscription", requiredString(subscriptionId, "subscriptionId"),
 			"--resource-group", requiredString(resourceGroup, "resourceGroup"),
 			"--aks-name", requiredString(aksName, "aksName"),
-			"--namespace", requiredString(targetNamespace, "targetNamespace"),
+			"--namespace", requiredString(selfHostNamespace, "selfHostNamespace"),
 			"get-key", tenantId, "--key", "key2",
 		], { maxBuffer: 4096 }));
 	} catch {

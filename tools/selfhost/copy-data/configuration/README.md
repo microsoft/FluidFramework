@@ -17,11 +17,11 @@ tenant's `key2`.
 Create a local configuration from the template:
 
 ```bash
-cp parameters/data-transfer.config.example.json parameters/data-transfer.config.json
-chmod 600 parameters/data-transfer.config.json
+cp parameters/copy-data.config.example.json parameters/copy-data.config.json
+chmod 600 parameters/copy-data.config.json
 ```
 
-Update `parameters/data-transfer.config.json` with the required information. Each
+Update `parameters/copy-data.config.json` with the required information. Each
 `azureFluidRelayTenants` key must match an Azure Fluid Relay tenant in the
 inventory. Set `azureFluidRelayResourceGroup` and
 `azureFluidRelayServerName` to the Azure Fluid Relay server that hosts the
@@ -39,5 +39,5 @@ Validation reads only local files. It does not call Azure CLI or retrieve keys.
 
 ## Next step
 
-Run the [data-transfer command](../README.md#command) to create the new
+Run the [copy-data command](../README.md#command) to create the new
 self-hosted tenants and copy the reviewed documents.

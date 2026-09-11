@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { transferDocument } from "./transfer.mjs";
+import { transferDocument } from "./copy.mjs";
 
 function jsonResponse(value, status = 200) {
 	return { status, json: async () => value };

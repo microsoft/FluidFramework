@@ -8,7 +8,7 @@ import path from "node:path";
 import { ConfigurationError, loadConfiguration } from "./configuration.mjs";
 
 function parseArgs(argv) {
-	let configPath = path.join(import.meta.dirname, "parameters", "data-transfer.config.json");
+	let configPath = path.join(import.meta.dirname, "parameters", "copy-data.config.json");
 	for (let index = 0; index < argv.length; index++) {
 		switch (argv[index]) {
 			case "--config":

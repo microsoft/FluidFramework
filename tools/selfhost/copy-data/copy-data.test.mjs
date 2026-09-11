@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import path from "node:path";
 import test from "node:test";
-import { main } from "./data-transfer.mjs";
+import { main } from "./copy-data.mjs";
 
 test("uses the default configuration to run phases in order", async () => {
 	const calls = [];
@@ -9,11 +9,11 @@ test("uses the default configuration to run phases in order", async () => {
 		calls.push({ script: path.basename(scriptPath), args });
 	});
 
-	const configPath = path.resolve(import.meta.dirname, "configuration/parameters/data-transfer.config.json");
+	const configPath = path.resolve(import.meta.dirname, "configuration/parameters/copy-data.config.json");
 	assert.deepEqual(calls, [
 		{ script: "validate-config.mjs", args: ["--config", configPath] },
 		{ script: "tenant-creation.mjs", args: ["--config", configPath, "--execute"] },
-		{ script: "transfer.mjs", args: ["--config", configPath, "--execute"] },
+		{ script: "copy.mjs", args: ["--config", configPath, "--execute"] },
 	]);
 });
 

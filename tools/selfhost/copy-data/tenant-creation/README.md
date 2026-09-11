@@ -38,5 +38,5 @@ the tenant keys is recommended.
 
 ## Next step
 
-Run [document copy](../document-transfer/README.md) to create the reviewed
+Run [document copy](../document-copy/README.md) to create the reviewed
 documents in the mapped self-hosted tenants.

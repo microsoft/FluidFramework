@@ -1,7 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-export const RESULTS_FILE_NAME = "data-transfer-results.json";
+export const RESULTS_FILE_NAME = "copy-data-results.json";
 
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.

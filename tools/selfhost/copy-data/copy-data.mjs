@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 
 function parseArgs(argv) {
 	const options = {
-		configPath: path.join(import.meta.dirname, "configuration", "parameters", "data-transfer.config.json"),
+		configPath: path.join(import.meta.dirname, "configuration", "parameters", "copy-data.config.json"),
 		execute: false,
 	};
 	for (let index = 0; index < argv.length; index++) {
@@ -24,7 +24,7 @@ function parseArgs(argv) {
 				break;
 			case "--help":
 			case "-h":
-					console.log("Usage: node data-transfer.mjs --execute [--config <path>]");
+					console.log("Usage: node copy-data.mjs --execute [--config <path>]");
 				return undefined;
 			default:
 				throw new Error(`Unknown argument: ${argv[index]}`);
@@ -45,16 +45,16 @@ function runScript(scriptPath, args) {
 	});
 }
 
-/** Run the available data-transfer phases in dependency order. */
+/** Run the available copy-data phases in dependency order. */
 export async function main(argv, run = runScript) {
 	const options = parseArgs(argv);
 	if (options === undefined) return;
 	const configPath = path.resolve(options.configPath);
-	const dataTransferDirectory = import.meta.dirname;
+	const dataCopyDirectory = import.meta.dirname;
 
-	await run(path.join(dataTransferDirectory, "configuration", "validate-config.mjs"), ["--config", configPath]);
-	await run(path.join(dataTransferDirectory, "tenant-creation", "tenant-creation.mjs"), ["--config", configPath, "--execute"]);
-	await run(path.join(dataTransferDirectory, "document-transfer", "transfer.mjs"), ["--config", configPath, "--execute"]);
+	await run(path.join(dataCopyDirectory, "configuration", "validate-config.mjs"), ["--config", configPath]);
+	await run(path.join(dataCopyDirectory, "tenant-creation", "tenant-creation.mjs"), ["--config", configPath, "--execute"]);
+	await run(path.join(dataCopyDirectory, "document-copy", "copy.mjs"), ["--config", configPath, "--execute"]);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
