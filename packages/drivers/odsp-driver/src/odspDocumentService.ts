@@ -17,12 +17,14 @@ import type {
 	IResolvedUrl,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import type {
 	HostStoragePolicy,
 	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
 	TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	createChildMonitoringContext,
 	type MonitoringContext,
@@ -42,6 +44,7 @@ import { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
 import { hasOdcOrigin } from "./odspUrlHelper.js";
 import { getOdspResolvedUrl } from "./odspUtils.js";
 import { OpsCache } from "./opsCaching.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter.js";
 
 /**
@@ -197,7 +200,15 @@ export class OdspDocumentService
 				return;
 			}
 			if (currentEpoch !== undefined) {
-				throw new UsageError("ODSP driver state epoch does not match the current epoch");
+				throw new NonRetryableError(
+					"ODSP driver state epoch does not match the current epoch",
+					OdspErrorTypes.fileOverwrittenInStorage,
+					{
+						driverVersion,
+						pendingStateEpoch: state.epoch,
+						currentEpoch,
+					},
+				);
 			}
 			this.epochTracker.setEpoch(state.epoch, "pendingState");
 		},

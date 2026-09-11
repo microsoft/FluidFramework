@@ -133,7 +133,9 @@ export class EpochTracker implements IPersistedFileCache {
 	/**
 	 * Sets the initial epoch.
 	 *
-	 * @deprecated Use the overload that accepts a source instead.
+	 * @deprecated 3.1.0. This overload will be removed in 3.20.0. Use the overload that accepts a
+	 * source instead. See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/83307}
+	 * for context.
 	 */
 	public setEpoch(epoch: string, fromCache: boolean, fetchType: FetchTypeInternal): void;
 	public setEpoch(
