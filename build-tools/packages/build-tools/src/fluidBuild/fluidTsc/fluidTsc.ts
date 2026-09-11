@@ -51,9 +51,10 @@ async function main(): Promise<void> {
 }
 
 // eslint-disable-next-line unicorn/prefer-top-level-await -- top-level await requires ESM; this package emits CommonJS
-main().catch((e): void => {
-	error(`Unexpected error. ${e.message}`);
-	error(e.stack);
+main().catch((e: unknown): void => {
+	const { message, stack } = e as Partial<Error>;
+	error(`Unexpected error. ${message}`);
+	error(`${stack}`);
 	// eslint-disable-next-line unicorn/no-process-exit -- CLI entrypoint: exit with error code on unhandled exception
 	process.exit(1);
 });

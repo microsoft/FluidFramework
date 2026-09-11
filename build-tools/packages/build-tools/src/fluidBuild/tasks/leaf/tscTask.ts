@@ -34,13 +34,31 @@ interface ITsBuildInfo {
 			| string
 			| { version: string; affectsGlobalScope?: true; impliedFormat?: number }
 		)[];
-		affectedFilesPendingEmit?: any[];
-		emitDiagnosticsPerFile?: any[];
-		semanticDiagnosticsPerFile?: any[];
-		changeFileSet?: number[];
-		options: any;
+		affectedFilesPendingEmit?: unknown[] | undefined;
+		emitDiagnosticsPerFile?: unknown[] | undefined;
+		semanticDiagnosticsPerFile?: unknown[] | undefined;
+		changeFileSet?: number[] | undefined;
+		/**
+		 * The compiler options that tsc serialized into the build info. Typed as the oldest
+		 * supported TypeScript version's options so that it can be passed to the version agnostic
+		 * helpers on {@link TscUtil}.
+		 */
+		options: ts54Types.CompilerOptions;
 	};
 	version: string;
+}
+
+/**
+ * A JSON object as parsed from a tsbuildinfo file.
+ *
+ * @remarks
+ * Values are left `unknown` so that the truthiness checks in {@link normalizeTsBuildInfo} remain the
+ * only validation performed, matching what tsc itself writes.
+ */
+type RawJsonObject = Record<string, unknown>;
+
+function isRawJsonObject(value: unknown): value is RawJsonObject {
+	return typeof value === "object" && value !== null;
 }
 
 /**
@@ -50,24 +68,36 @@ interface ITsBuildInfo {
  * places the same keys at the top level. This function detects which format is present
  * and returns a unified structure, or `undefined` if the input is not recognizable.
  */
-export function normalizeTsBuildInfo(raw: any): ITsBuildInfo | undefined {
+export function normalizeTsBuildInfo(raw: unknown): ITsBuildInfo | undefined {
+	if (!isRawJsonObject(raw)) {
+		return undefined;
+	}
 	// TS5 format: { program: { fileNames, fileInfos, options, ... }, version }
-	if (raw.program?.fileNames && raw.program?.fileInfos && raw.program?.options) {
-		return raw as ITsBuildInfo;
+	const program = raw["program"];
+	if (
+		isRawJsonObject(program) &&
+		program["fileNames"] &&
+		program["fileInfos"] &&
+		program["options"]
+	) {
+		// The individual field types are not validated: the file is written by tsc.
+		return raw as unknown as ITsBuildInfo;
 	}
 	// TS6 format: { fileNames, fileInfos, options, ..., version }
-	if (raw.fileNames && raw.fileInfos && raw.options) {
+	if (raw["fileNames"] && raw["fileInfos"] && raw["options"]) {
+		// The individual field types are not validated: the file is written by tsc.
+		const flat = raw as unknown as ITsBuildInfo["program"] & Pick<ITsBuildInfo, "version">;
 		return {
 			program: {
-				fileNames: raw.fileNames,
-				fileInfos: raw.fileInfos,
-				options: raw.options,
-				affectedFilesPendingEmit: raw.affectedFilesPendingEmit,
-				emitDiagnosticsPerFile: raw.emitDiagnosticsPerFile,
-				semanticDiagnosticsPerFile: raw.semanticDiagnosticsPerFile,
-				changeFileSet: raw.changeFileSet,
+				fileNames: flat.fileNames,
+				fileInfos: flat.fileInfos,
+				options: flat.options,
+				affectedFilesPendingEmit: flat.affectedFilesPendingEmit,
+				emitDiagnosticsPerFile: flat.emitDiagnosticsPerFile,
+				semanticDiagnosticsPerFile: flat.semanticDiagnosticsPerFile,
+				changeFileSet: flat.changeFileSet,
 			},
-			version: raw.version,
+			version: flat.version,
 		};
 	}
 	return undefined;
@@ -236,8 +266,10 @@ export class TscTask extends LeafTask {
 
 				// Remove files that we have built before
 				configFileNames.delete(tscUtils.getCanonicalFileName(path.normalize(fullPath)));
-			} catch (e: any) {
-				this.traceTrigger(`exception generating hash for ${fileName}\n\t${e.stack}`);
+			} catch (e) {
+				this.traceTrigger(
+					`exception generating hash for ${fileName}\n\t${(e as Partial<Error>).stack}`,
+				);
 				return false;
 			}
 		}
@@ -403,7 +435,7 @@ export class TscTask extends LeafTask {
 			const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
 			if (tsBuildInfoFileFullPath && existsSync(tsBuildInfoFileFullPath)) {
 				try {
-					const raw = JSON.parse(await readFile(tsBuildInfoFileFullPath, "utf8"));
+					const raw: unknown = JSON.parse(await readFile(tsBuildInfoFileFullPath, "utf8"));
 					const normalized = normalizeTsBuildInfo(raw);
 					if (normalized) {
 						this._tsBuildInfo = normalized;

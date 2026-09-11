@@ -21,6 +21,21 @@ const traceInit = registerDebug("fluid-build:init");
 export type PackageManager = "npm" | "pnpm" | "yarn";
 
 /**
+ * The subset of `pnpm-workspace.yaml` that is read when loading a monorepo.
+ */
+interface PnpmWorkspaceConfig {
+	packages: string[];
+}
+
+/**
+ * The subset of `lerna.json` that is read when loading a monorepo.
+ */
+interface LernaConfig {
+	packages?: string[];
+	version?: string;
+}
+
+/**
  * A monorepo is a collection of packages that are versioned and released together.
  *
  * @remarks
@@ -142,13 +157,17 @@ export class MonoRepo {
 		if (packageManager === "pnpm") {
 			const pnpmWorkspace = path.join(repoPath, "pnpm-workspace.yaml");
 			const workspaceString = readFileSync(pnpmWorkspace, "utf-8");
-			this.workspaceGlobs = YAML.parse(workspaceString).packages;
+			// The parsed YAML is untyped; its shape is defined by pnpm.
+			const workspaceConfig = YAML.parse(workspaceString) as PnpmWorkspaceConfig;
+			this.workspaceGlobs = workspaceConfig.packages;
 		}
 
 		// only needed for bump tools
 		const lernaPath = path.join(repoPath, "lerna.json");
 		if (existsSync(lernaPath)) {
-			const lerna = readJsonSync(lernaPath);
+			// The parsed JSON is untyped; only the fields read below are relied upon and each is
+			// checked before use.
+			const lerna = readJsonSync(lernaPath) as LernaConfig;
 			if (packageManager !== "pnpm" && lerna.packages !== undefined) {
 				this.workspaceGlobs = lerna.packages;
 			}
@@ -163,7 +182,10 @@ export class MonoRepo {
 			if (this.pkg.packageJson.workspaces instanceof Array) {
 				this.workspaceGlobs = this.pkg.packageJson.workspaces;
 			} else {
-				this.workspaceGlobs = (this.pkg.packageJson.workspaces as any).packages;
+				// Not an array, so it is the object form of the `workspaces` field.
+				this.workspaceGlobs = (
+					this.pkg.packageJson.workspaces as { packages: string[] }
+				).packages;
 			}
 		}
 
