@@ -22,56 +22,67 @@ import { readLines } from "../../library/text.js";
  */
 export interface TarballMetadata {
 	/**
-	 * The npm package name.
+	 * The npm package name (for example `@fluidframework/core-utils`).
 	 */
-	name: string;
+	readonly name: string;
 
 	/**
-	 * The package version.
+	 * The package version (for example `2.0.0`).
 	 */
-	version: string;
+	readonly version: string;
 
 	/**
-	 * The absolute path to the tarball.
+	 * The absolute path to the tarball on disk.
 	 */
-	filePath: string;
+	readonly filePath: string;
 
 	/**
-	 * The tarball file name.
+	 * The tarball file name (for example `fluidframework-core-utils-2.0.0.tgz`).
 	 */
-	fileName: string;
+	readonly fileName: string;
 }
 
 const publishPreflightConcurrency = 10;
 
 /**
- * Hooks and options used by {@link publishTarballsInOrder}.
+ * Hooks and options used by {@link publishTarballsInOrder} to orchestrate tarball publishing.
  */
 export interface PublishTarballsOptions {
 	/**
 	 * Number of times to retry a failed publish after the first attempt.
+	 * Must be greater than or equal to 0.
 	 */
-	retry: number;
+	readonly retry: number;
 
 	/**
-	 * Checks whether a package version is already published.
+	 * Checks whether a package version is already available in the registry.
+	 *
+	 * @param tarball - The tarball metadata to check.
+	 * @returns `true` if the version exists in the registry; otherwise `false`.
 	 */
-	isPublished: (tarball: TarballMetadata) => Promise<boolean>;
+	readonly isPublished: (tarball: TarballMetadata) => Promise<boolean>;
 
 	/**
-	 * Publishes one tarball.
+	 * Publishes one tarball to the registry.
+	 *
+	 * @param tarball - The tarball to publish.
+	 * @returns The resulting {@link PublishStatus}.
 	 */
-	publish: (tarball: TarballMetadata) => Promise<PublishStatus>;
+	readonly publish: (tarball: TarballMetadata) => Promise<PublishStatus>;
 
 	/**
-	 * Called immediately before each publish attempt.
+	 * Optional callback invoked immediately before each publish attempt.
+	 *
+	 * @param tarball - The tarball being attempted.
+	 * @param attempt - The 1-based attempt number (1 for initial attempt, 2 for first retry, etc.).
 	 */
-	onPublishAttempt?: (tarball: TarballMetadata, attempt: number) => void;
+	readonly onPublishAttempt?: (tarball: TarballMetadata, attempt: number) => void;
 
 	/**
-	 * Maximum number of initial registry preflight checks to run at the same time.
+	 * Maximum number of initial registry preflight checks to execute concurrently.
+	 * Defaults to `10` when omitted.
 	 */
-	preflightConcurrency?: number;
+	readonly preflightConcurrency?: number;
 }
 
 /**
@@ -81,17 +92,17 @@ export interface PublishTarballResult {
 	/**
 	 * The final publish status for the tarball.
 	 */
-	status: PublishStatus;
+	readonly status: PublishStatus;
 
 	/**
-	 * The tarball that was processed.
+	 * The tarball metadata that was processed.
 	 */
-	tarball: TarballMetadata;
+	readonly tarball: TarballMetadata;
 
 	/**
-	 * The number of publish attempts made.
+	 * The total number of publish attempts made (0 if skipped via preflight check).
 	 */
-	tryCount: number;
+	readonly tryCount: number;
 }
 
 /**
@@ -237,10 +248,13 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 }
 
 /**
- * Reads package.json from a gzipped tarball.
+ * Reads and parses `package.json` from a gzipped tarball archive.
  *
- * Implementation from
+ * Implementation adapted from
  * https://github.com/arethetypeswrong/arethetypeswrong.github.io/blob/3729bc2a3ca2ef7dda5c22fef81f89e1abe5dacf/packages/core/src/createPackage.ts#L296
+ *
+ * @param tarballPath - Absolute path to the `.tgz` tarball file.
+ * @returns Parsed `package.json` object.
  */
 async function extractPackageJsonFromTarball(
 	tarballPath: string,
@@ -260,12 +274,25 @@ async function extractPackageJsonFromTarball(
 }
 
 /**
- * Final status for a tarball publish operation.
+ * Final outcome of a tarball publish operation.
+ *
+ * - `"SuccessfullyPublished"`: The package was published to the registry in this run.
+ * - `"AlreadyPublished"`: The package version already existed in the registry and was skipped.
+ * - `"Error"`: An error occurred and could not be resolved within the retry budget.
  */
 export type PublishStatus = "SuccessfullyPublished" | "AlreadyPublished" | "Error";
 
 /**
- * Resolves the ordered, deduplicated list of tarballs to publish.
+ * Resolves and deduplicates the list of tarballs to publish based on an ordered list of names.
+ *
+ * Retains only the first occurrence of each lookup key so duplicate entries in the order file
+ * are published only once while preserving the original relative order.
+ *
+ * @param packageOrder - Ordered list of package names or tarball file names from the order file.
+ * @param tarballMetadata - Map of tarball lookup names to metadata.
+ * @param orderFileIsTarballs - Whether `packageOrder` contains tarball file names rather than package names.
+ * @returns Ordered, deduplicated array of tarball metadata to publish.
+ * @throws `Error` if any entry in `packageOrder` does not have matching tarball metadata.
  */
 export function getTarballsToPublish(
 	packageOrder: readonly string[],
@@ -289,7 +316,20 @@ export function getTarballsToPublish(
 }
 
 /**
- * Runs publish orchestration for a set of already ordered tarballs.
+ * Executes publish orchestration for a list of tarballs.
+ *
+ * Runs initial registry preflight checks concurrently up to `options.preflightConcurrency`
+ * (default 10) to determine which packages are already published, then publishes unpublished
+ * packages sequentially in the provided dependency order.
+ *
+ * If a publish attempt fails, the registry is checked again to recover from lost responses
+ * or concurrent publication. If a tarball exhausts retries with an unrecoverable error,
+ * publishing stops immediately to avoid publishing downstream packages with broken dependencies.
+ *
+ * @param tarballs - Ordered list of tarballs to publish.
+ * @param options - Configuration and callbacks for publishing and retries.
+ * @returns Array of publish results corresponding to each attempted tarball up to first fatal error.
+ * @throws `RangeError` if `options.retry` is negative.
  */
 export async function publishTarballsInOrder(
 	tarballs: readonly TarballMetadata[],
@@ -350,6 +390,14 @@ export async function publishTarballsInOrder(
 	return results;
 }
 
+/**
+ * Invokes `npm publish` for a single tarball archive.
+ *
+ * @param tarball - Tarball metadata including file path and name.
+ * @param log - Logger instance for recording verbose output and errors.
+ * @param publishArgs - Additional CLI arguments to pass to `npm publish`.
+ * @returns Status indicating whether publication succeeded or resulted in an error.
+ */
 async function publishTarball(
 	tarball: TarballMetadata,
 	log: Logger,
@@ -377,6 +425,13 @@ async function publishTarball(
 	return "SuccessfullyPublished";
 }
 
+/**
+ * Queries the package registry to determine if a specific version of a package is already published.
+ *
+ * @param tarball - Tarball metadata containing the package name and version.
+ * @param log - Logger instance for debug output.
+ * @returns `true` if the version is found in the registry; otherwise `false`.
+ */
 async function isTarballPublished(tarball: TarballMetadata, log: Logger): Promise<boolean> {
 	try {
 		const publishedVersion = await latestVersion(tarball.name, {
@@ -390,6 +445,15 @@ async function isTarballPublished(tarball: TarballMetadata, log: Logger): Promis
 	}
 }
 
+/**
+ * Logs details about a failed publish attempt and returns an error status.
+ *
+ * @param log - Logger instance.
+ * @param name - Package name that failed to publish.
+ * @param message - Primary error message or stderr output.
+ * @param stack - Optional stack trace.
+ * @returns Always returns `"Error"`.
+ */
 function handlePublishError(
 	log: Logger,
 	name: string,

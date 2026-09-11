@@ -14,8 +14,8 @@ import PublishTarballCommand, {
 } from "../../../commands/publish/tarballs.js";
 
 interface Deferred<T> {
-	promise: Promise<T>;
-	resolve: (value: T) => void;
+	readonly promise: Promise<T>;
+	readonly resolve: (value: T) => void;
 }
 
 function createTarball(name: string): TarballMetadata {
