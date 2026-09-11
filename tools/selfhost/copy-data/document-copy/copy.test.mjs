@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { transferDocument } from "./copy.mjs";
+import { copyDocument } from "./copy.mjs";
 
 function jsonResponse(value, status = 200) {
 	return { status, json: async () => value };
 }
 
-test("transfers the latest Azure Fluid Relay summary through the self-host document API", async () => {
+test("copies the latest Azure Fluid Relay summary through the self-host document API", async () => {
 	const requests = [];
 	const fetchImplementation = async (url, options) => {
 		requests.push({ url, options });
@@ -32,7 +32,7 @@ test("transfers the latest Azure Fluid Relay summary through the self-host docum
 		return jsonResponse({ id: "self-host-document" }, 201);
 	};
 
-	const selfHostDocumentId = await transferDocument({
+	const selfHostDocumentId = await copyDocument({
 		azureFluidRelayEndpoint: "https://azure-fluid-relay.example",
 		azureFluidRelayTenantId: "azure-fluid-relay",
 		selfHostEndpoint: "https://self-host-alfred.example",

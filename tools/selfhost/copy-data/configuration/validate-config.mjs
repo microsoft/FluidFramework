@@ -5,7 +5,8 @@
  */
 
 import path from "node:path";
-import { ConfigurationError, loadConfiguration } from "./configuration.mjs";
+import { loadConfiguration } from "./configuration.mjs";
+import { safeErrorMessage } from "./errors.mjs";
 
 function parseArgs(argv) {
 	let configPath = path.join(import.meta.dirname, "parameters", "copy-data.config.json");
@@ -34,7 +35,6 @@ try {
 		console.log("Configuration is valid.");
 	}
 } catch (error) {
-	const message = error instanceof ConfigurationError || error instanceof Error ? error.message : "Configuration validation failed";
-	console.error(`Configuration validation failed: ${message}`);
+	console.error(`Configuration validation failed: ${safeErrorMessage(error)}`);
 	process.exitCode = 1;
 }

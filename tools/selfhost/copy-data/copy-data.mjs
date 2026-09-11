@@ -7,6 +7,7 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { safeErrorMessage } from "./configuration/errors.mjs";
 
 function parseArgs(argv) {
 	const options = {
@@ -30,7 +31,7 @@ function parseArgs(argv) {
 				throw new Error(`Unknown argument: ${argv[index]}`);
 		}
 	}
-	if (!options.execute) throw new Error("Pass --execute to create tenants and transfer documents");
+	if (!options.execute) throw new Error("Use --execute to create tenants and copy documents");
 	return options;
 }
 
@@ -61,7 +62,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 	try {
 		await main(process.argv.slice(2));
 	} catch (error) {
-		console.error(error instanceof Error ? `Data transfer failed: ${error.message}.` : "Data transfer failed.");
+		console.error(`Data copy failed: ${safeErrorMessage(error)}`);
 		process.exitCode = 1;
 	}
 }

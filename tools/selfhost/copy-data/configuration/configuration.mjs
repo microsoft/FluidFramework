@@ -88,7 +88,7 @@ function validateSelfHost(selfHost, errors) {
 	requireString(selfHost?.contact, "selfHost.contact", errors);
 }
 
-/** Load and validate the non-secret inputs for transfer phases. */
+/** Load and validate the non-secret inputs for copy phases. */
 export async function loadConfiguration(configPath) {
 	const resolvedConfigPath = path.resolve(configPath);
 	const readErrors = [];

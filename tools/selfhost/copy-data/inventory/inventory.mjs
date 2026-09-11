@@ -10,6 +10,7 @@ import { execFile } from "node:child_process";
 import { writeFile, chmod, mkdir } from "node:fs/promises";
 import { promisify } from "node:util";
 import path from "node:path";
+import { safeErrorMessage } from "../configuration/errors.mjs";
 import { redact } from "../configuration/redaction.mjs";
 
 const execFileAsync = promisify(execFile);
@@ -295,7 +296,7 @@ async function main() {
 main().then(
 	(code) => process.exit(code),
 	(err) => {
-		console.error(`\nError: ${redact(err instanceof Error ? err.message : err)}`);
+		console.error(`\nError: ${redact(safeErrorMessage(err))}`);
 		process.exit(1);
 	},
 );

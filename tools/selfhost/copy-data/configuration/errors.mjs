@@ -4,34 +4,9 @@
  */
 
 const FAILURE_REASONS = new Set(["network", "http-error", "internal-error", "az-cli-error", "timeout"]);
-const TRANSFER_ERROR_CODES = new Set([
-	"request-failed",
-	"http-request-failed",
-	"invalid-response",
-	"missing-historian-url",
-	"invalid-historian-url",
-	"invalid-summary-entry",
-	"unsupported-summary-entry",
-	"missing-summary-blob-id",
-	"missing-summary-blob",
-	"invalid-summary-blob",
-	"invalid-summary",
-	"missing-protocol-metadata",
-	"invalid-protocol-metadata",
-	"incomplete-protocol-metadata",
-	"missing-summary",
-	"missing-self-host-document-id",
-	"token-generation-failed",
-	"azure-fluid-relay-discovery-token-generation-failed",
-	"azure-fluid-relay-historian-token-generation-failed",
-	"invalid-discovery-endpoint",
-	"unexpected-azure-fluid-relay-discovery",
-	"unexpected-azure-fluid-relay-ref-read",
-	"unexpected-azure-fluid-relay-summary-read",
-	"unexpected-summary-conversion",
-	"unexpected-self-host-create",
-	"unexpected-self-host-response-validation",
-]);
+const COPY_ENDPOINTS = new Set(["azure-fluid-relay-discovery", "azure-fluid-relay-historian", "self-host"]);
+
+const SAFE_ERROR_NAMES = new Set(["AzError", "ConfigurationError", "ConfirmationError", "CopyError", "CredentialError"]);
 
 /** Classify an error without retaining its message or stack. */
 export function classifyError(error) {
@@ -50,8 +25,23 @@ export function createFailure(documentId, stage, error, fallback = {}) {
 		documentId,
 		stage,
 		reason: FAILURE_REASONS.has(reason) ? reason : "internal-error",
-		...(TRANSFER_ERROR_CODES.has(error?.code) ? { errorCode: error.code } : fallback.errorCode === undefined ? {} : { errorCode: fallback.errorCode }),
 		...(typeof status === "number" ? { httpStatus: status } : {}),
-		...(new Set(["azure-fluid-relay-discovery", "azure-fluid-relay-historian", "self-host"]).has(error?.endpoint) ? { endpoint: error.endpoint } : fallback.endpoint === undefined ? {} : { endpoint: fallback.endpoint }),
+		...(COPY_ENDPOINTS.has(error?.endpoint) ? { endpoint: error.endpoint } : fallback.endpoint === undefined ? {} : { endpoint: fallback.endpoint }),
 	};
+}
+
+/** Return an error message only when it is a safe error type. */
+export function safeErrorMessage(error) {
+	return SAFE_ERROR_NAMES.has(error?.name) && typeof error.message === "string"
+		? error.message
+		: "An unexpected error occurred";
+}
+
+/** Log a safe error message and add it to a result error collection. */
+export function logAndAddError(errors, error, failure, prefix) {
+	const message = safeErrorMessage(error);
+	console.error(`${prefix}: ${message}`);
+	const result = { ...failure, message };
+	errors.push(result);
+	return result;
 }

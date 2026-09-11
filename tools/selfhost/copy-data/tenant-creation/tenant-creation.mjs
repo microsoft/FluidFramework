@@ -15,7 +15,7 @@ const execFileAsync = promisify(execFile);
 
 class ConfirmationError extends Error {
 	constructor() {
-		super("Pass --execute to create missing self-hosted tenants");
+		super("Use --execute to create missing self-hosted tenants");
 		this.name = "ConfirmationError";
 	}
 }

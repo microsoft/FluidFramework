@@ -94,7 +94,7 @@ async function getSelfHostTenantKey2({ subscriptionId, resourceGroup, aksName, s
 	try {
 		key2 = JSON.parse(output).key2;
 	} catch {
-		throw new CredentialError("Self-hosted tenant key response was invalid");
+		throw new CredentialError("Self-hosted tenant key response could not be parsed as JSON");
 	} finally {
 		output = undefined;
 	}

@@ -30,6 +30,6 @@ test("uses --config to override the default configuration", async () => {
 test("requires execution confirmation", async () => {
 	await assert.rejects(
 		main([]),
-		/Pass --execute/,
+		/Use --execute/,
 	);
 });
