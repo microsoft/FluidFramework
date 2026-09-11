@@ -145,10 +145,10 @@
 				"backCompat": false,
 				"forwardCompat": false
 			},
-			"Class_MockFluidDataStoreRuntime": {
+			"ClassStatics_MockFluidDataStoreContext": {
 				"backCompat": false
 			},
-			"ClassStatics_MockFluidDataStoreContext": {
+			"Class_MockFluidDataStoreRuntime": {
 				"backCompat": false
 			},
 			"ClassStatics_MockFluidDataStoreRuntime": {

@@ -71,7 +71,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactory;
     // (undocumented)
-    finalizeIdRange(range: IdCreationRange): void;
+    finalizeIdRange(range: unknown): void;
     flush(): void;
     flushSomeMessages(numMessages: number): void;
     // (undocumented)
