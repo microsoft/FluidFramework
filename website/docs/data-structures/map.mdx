@@ -1,7 +1,13 @@
 ---
 title: SharedMap
-sidebar_position: 2
+sidebar_position: 3
 ---
+
+:::caution[Use SharedTree for new applications]
+
+Use [SharedTree](./tree/index.mdx) instead of `SharedMap` for new applications.
+
+:::
 
 ## Introduction
 
@@ -19,12 +25,11 @@ For example, in a traditional `Map`, setting a key would only set it on the loca
     -   [Handles](../concepts/handles.mdx) to other Fluid DDSes
 -   When storing objects as values in a SharedMap, changes to the object will be synchronized whole-for-whole.
     This means that individual changes to the properties of an object are not merged during synchronization.
-    If you need this behavior you should store individual properties in the SharedMap instead of full objects.
-    See [Picking the right data structure](../build/dds.mdx#picking-the-right-data-structure) for more information.
+    If your application must edit object properties independently, use a [SharedTree object node](./tree/node-types.mdx#object-nodes).
 
 :::
 
-For additional background on DDSes and a general overview of their design, see [Introducing distributed data structures](../build/dds.mdx).
+For more information about DDSes, see [Types of distributed data structures](./overview.mdx).
 
 ## Usage
 
@@ -196,7 +201,10 @@ Because the local `set` call causes the `valueChanged` event to be sent, and you
 
 ### Storing objects
 
-Storing objects in a `SharedMap` is very similar to storing primitives. However, one thing to note is that all values in `SharedMap` are merged using a last writer wins (LWW) strategy. This means that if multiple clients are writing values to the same key, whoever made the last update will "win" and overwrite the others. While this is fine for primitives, you should be mindful when storing objects in `SharedMaps` if you are looking for individual fields within the object to be independently modified. See [Picking the right data structure](../build/dds.mdx#picking-the-right-data-structure) for more information.
+Storing objects in a `SharedMap` is very similar to storing primitives.
+However, one thing to note is that all values in `SharedMap` are merged using a last writer wins (LWW) strategy.
+This means that if multiple clients are writing values to the same key, whoever made the last update will "win" and overwrite the others.
+While this is fine for primitives, use a [SharedTree object node](./tree/node-types.mdx#object-nodes) if your application must edit object properties independently.
 
 :::warning
 
