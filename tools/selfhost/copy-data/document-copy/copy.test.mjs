@@ -15,8 +15,10 @@ test("transfers the latest Azure Fluid Relay summary through the self-host docum
 		if (url.includes("/git/summaries/")) return jsonResponse({
 			trees: [{ entries: [
 				{ path: ".app", type: "tree" },
-				{ path: ".app/state", type: "blob", id: "state" },
-				{ path: ".app/empty", type: "tree" },
+				{ path: ".app/state", type: "blob", id: "state", unreferenced: true },
+				{ path: ".app/empty", type: "tree", unreferenced: true },
+				{ path: ".app/nested", type: "tree" },
+				{ path: ".app/nested/child", type: "tree", unreferenced: true },
 				{ path: ".protocol", type: "tree" },
 				{ path: ".protocol/attributes", type: "blob", id: "attributes" },
 				{ path: ".protocol/quorumValues", type: "blob", id: "values" },
@@ -52,8 +54,9 @@ test("transfers the latest Azure Fluid Relay summary through the self-host docum
 	assert.deepEqual(body.summary, {
 		type: "tree",
 		entries: [
-			{ path: "state", type: "blob", value: { type: "blob", content: "state", encoding: "utf-8" } },
-			{ path: "empty", type: "tree", value: { type: "tree", entries: [] } },
+			{ path: "state", type: "blob", unreferenced: true, value: { type: "blob", content: "state", encoding: "utf-8" } },
+			{ path: "empty", type: "tree", unreferenced: true, value: { type: "tree", entries: [] } },
+			{ path: "nested", type: "tree", value: { type: "tree", entries: [{ path: "child", type: "tree", unreferenced: true, value: { type: "tree", entries: [] } }] } },
 		],
 	});
 });

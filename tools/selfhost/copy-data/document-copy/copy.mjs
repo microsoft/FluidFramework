@@ -149,10 +149,9 @@ function makeWholeTree(entries, blobs, pathPrefix = "") {
 		if (slash >= 0) {
 			// Recursively process nested directories
 			const name = relativePath.slice(0, slash);
-			if (!children.has(name)) children.set(name, undefined);
+			if (!children.has(name)) children.set(name, { unreferenced: false });
 			continue;
 		}
-		// Source handles cannot be reused because they reference Git objects in the source repository.
 		if (entry.type === "tree") {
 			children.set(relativePath, entry);
 			continue;
@@ -161,14 +160,19 @@ function makeWholeTree(entries, blobs, pathPrefix = "") {
 		if (typeof entry.id !== "string") throw new TransferError("Source summary blob entry lacks an ID", "missing-summary-blob-id", undefined, "source-historian");
 		const blob = blobs.get(entry.id);
 		if (!blob) throw new TransferError("Source summary omitted a blob", "missing-summary-blob", undefined, "source-historian");
-		tree.entries.push({ path: relativePath, type: "blob", value: { type: "blob", content: blob.content, encoding: blob.encoding } });
+		tree.entries.push({
+			path: relativePath,
+			type: "blob",
+			...(entry.unreferenced === true && { unreferenced: true }),
+			value: { type: "blob", content: blob.content, encoding: blob.encoding },
+		});
 	}
 	// Recursively recreate each child tree
 	for (const [name, sourceEntry] of children) {
 		tree.entries.push({
 			path: name,
 			type: "tree",
-			...(sourceEntry?.unreferenced === true && { unreferenced: true }),
+			...(sourceEntry.unreferenced === true && { unreferenced: true }),
 			value: makeWholeTree(entries, blobs, `${pathPrefix}${name}/`),
 		});
 	}
