@@ -129,6 +129,14 @@ describe("Repo Root Token", () => {
 			]);
 		});
 
+		it("normalizes backslashes anywhere in the resolved path", () => {
+			const result = replaceRepoRootToken(
+				"${repoRoot}\\common\\**\\*.ts",
+				"C:\\Users\\dev\\repo",
+			);
+			assert.strictEqual(result, "C:/Users/dev/repo/common/**/*.ts");
+		});
+
 		it("normalizes Windows repo root with trailing backslash", () => {
 			const result = replaceRepoRootToken("${repoRoot}/config.json", "C:\\Users\\dev\\repo\\");
 			assert.strictEqual(result, "C:/Users/dev/repo/config.json");
