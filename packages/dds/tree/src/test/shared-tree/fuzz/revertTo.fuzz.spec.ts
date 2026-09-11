@@ -62,9 +62,6 @@ describe.only("Fuzz - revertTo", () => {
 		saveFailures: {
 			directory: failureDirectory,
 		},
-		saveSuccesses: {
-			directory: failureDirectory,
-		},
 		clientJoinOptions: {
 			clientAddProbability: 0.1,
 			maxNumberOfClients: 3,

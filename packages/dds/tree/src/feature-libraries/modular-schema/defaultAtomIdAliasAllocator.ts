@@ -13,6 +13,9 @@ import {
 import { brand, type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
 import type { AtomIdAliasAllocator } from "./fieldChangeHandler.js";
 
+/**
+ * Default implementation of the {@link AtomIdAliasAllocator} interface.
+ */
 export class DefaultAtomIdAliasAllocator implements AtomIdAliasAllocator {
 	/**
 	 * Mapping from original revision tag to the offset that should be applied to local IDs from that revision.

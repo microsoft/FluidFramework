@@ -13,7 +13,7 @@ import { DefaultAtomIdAliasAllocator } from "../../../feature-libraries/index.js
 describe("DefaultAtomIdAliasAllocator", () => {
 	const revA: RevisionTag = "RevA" as RevisionTag;
 	const revB: RevisionTag = "RevB" as RevisionTag;
-	const revC: RevisionTag = "RevC" as RevisionTag;
+	const revC = undefined;
 	const noLocalId = brand<ChangesetLocalId>(-1);
 	const localId0 = brand<ChangesetLocalId>(0);
 	const localId1 = brand<ChangesetLocalId>(1);
@@ -41,7 +41,7 @@ describe("DefaultAtomIdAliasAllocator", () => {
 		[revC, revB, revA],
 	];
 
-	const maxIdPerRevision: Map<RevisionTag, ChangesetLocalId> = new Map([
+	const maxIdPerRevision: Map<RevisionTag | undefined, ChangesetLocalId> = new Map([
 		[revA, localId2],
 		[revB, localId0],
 		[revC, localId1],
