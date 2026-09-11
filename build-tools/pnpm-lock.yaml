@@ -666,6 +666,9 @@ importers:
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
+      '@types/picomatch':
+        specifier: ^4.0.3
+        version: 4.0.3
       '@types/semver':
         specifier: ^7.7.1
         version: 7.7.1
@@ -1871,6 +1874,9 @@ packages:
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
+
+  '@types/picomatch@4.0.3':
+    resolution: {integrity: sha512-iG0T6+nYJ9FAPmx9SsUlnwcq1ZVRuCXcVEvWnntoPlrOpwtSTKNDC9uVAxTsC3PUvJ+99n4RpAcNgBbHX3JSnQ==}
 
   '@types/prettier@2.7.3':
     resolution: {integrity: sha512-+68kP9yzs4LMp7VNh8gdzMSPZFL44MLGqiHWvttYJe+6qnuVr4Ek9wSBQoveqY/r+LwjCcU29kNVkidwim+kYA==}
@@ -6909,6 +6915,8 @@ snapshots:
       undici-types: 6.21.0
 
   '@types/normalize-package-data@2.4.4': {}
+
+  '@types/picomatch@4.0.3': {}
 
   '@types/prettier@2.7.3': {}
 

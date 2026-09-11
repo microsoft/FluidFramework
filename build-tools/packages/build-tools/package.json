@@ -87,6 +87,7 @@
 		"@types/lodash.isequal": "^4.5.8",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "~22.19.17",
+		"@types/picomatch": "^4.0.3",
 		"@types/semver": "^7.7.1",
 		"eslint": "~9.39.2",
 		"json-schema-to-typescript": "^15.0.4",
