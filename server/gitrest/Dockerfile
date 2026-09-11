@@ -105,9 +105,10 @@ COPY --from=base $GITREST_ROOT/packages ./packages
 EXPOSE 3000
 
 # GITHUB#162
-# To allow for ssh access to the repo (to clone locally) we share the volume within a k8s pod with a ssh service.
-# Mounted volumes with non-root users get tricky in this case. For now simply running as root for simplicity but
-# ideally the node user could gain write permissions to this volume.
+# Mounted volumes with non-root users are tricky: repositories under /home/node/documents may be
+# owned by root (e.g. created by another process/container writing to the shared volume). For now
+# simply running as root for simplicity but ideally the node user could gain write permissions to
+# this volume.
 # Switch to the node user for security
 # USER node
 

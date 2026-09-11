@@ -226,19 +226,14 @@ Git is used to store document snapshots and provide revision history. The git st
 stream of delta messages. And git semantics as applied to document collaboration provide interesting areas for further
 exploration (i.e. branching, forking, merging documents).
 
-Snapshots live on the `git` volume shared by GitRest's container, mounted at `/home/node/documents`. To inspect them
-with a real git client, exec into the running GitRest container (which has `git` installed) and clone from that
-mounted path:
+Snapshots live on the `git` volume shared by GitRest's container, mounted at `/home/node/documents`, as bare git
+repositories. The GitRest image does not have a `git` CLI installed (it uses `isomorphic-git` internally), so
+inspect them from the host instead: copy the bare repository out of the container, then clone it locally to get a
+working tree.
 
 ```
-docker compose exec gitrest git clone /home/node/documents/fluid/fluid /tmp/fluid
-docker compose exec gitrest sh -c "cd /tmp/fluid && git checkout <document id>"
-```
-
-Or, to browse with tools on your host machine, copy the repository out of the container instead:
-
-```
-docker compose cp gitrest:/home/node/documents/fluid/fluid ./fluid
+docker compose cp gitrest:/home/node/documents/fluid/fluid ./fluid.git
+git clone ./fluid.git fluid
 cd fluid
 git checkout <document id>
 ```
