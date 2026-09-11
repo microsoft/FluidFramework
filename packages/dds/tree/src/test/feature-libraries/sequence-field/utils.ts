@@ -482,27 +482,15 @@ export function testInvert(
 ): Changeset {
 	deepFreeze(change.change);
 	const table = newCrossFieldTable();
-	let inverted = invert(
-		change.change,
-		isRollback,
-		// Sequence fields should not generate IDs during invert
-		fakeIdAllocator,
-		revision,
-		table,
-	);
+	// Rollback inversion must not allocate IDs.
+	const genId = isRollback ? fakeIdAllocator : idAllocatorFromMaxId();
+	let inverted = invert(change.change, isRollback, genId, revision, table);
 
 	if (table.isInvalidated) {
 		table.isInvalidated = false;
 		table.srcQueries.clear();
 		table.dstQueries.clear();
-		inverted = invert(
-			change.change,
-			isRollback,
-			// Sequence fields should not generate IDs during invert
-			fakeIdAllocator,
-			revision,
-			table,
-		);
+		inverted = invert(change.change, isRollback, genId, revision, table);
 	}
 
 	return inverted;
