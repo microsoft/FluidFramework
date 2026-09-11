@@ -15,7 +15,7 @@ import {
 	type TaggedChange,
 	type TreeChunk,
 } from "../../core/index.js";
-import { brand, idAllocatorFromMaxId, type IdAllocator } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import { newChangeAtomIdBTree, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import type {
 	FieldChange,
@@ -39,7 +39,8 @@ import {
 } from "./modularChangeUtils.js";
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
 import type { FlexFieldKind } from "./fieldKind.js";
-import { NodeAttachState } from "./fieldChangeHandler.js";
+import { NodeAttachState, type AtomIdAliasAllocator } from "./fieldChangeHandler.js";
+import { DefaultAtomIdAliasAllocator } from "./defaultAtomIdAliasAllocator.js";
 
 /**
  * @param change - The change to invert.
@@ -77,7 +78,7 @@ export function invertModularChange(
 		});
 	}
 
-	const genId: IdAllocator = idAllocatorFromMaxId(change.change.maxId ?? -1);
+	const genId = new DefaultAtomIdAliasAllocator();
 
 	const crossFieldTable: InvertTable = {
 		...newCrossFieldTable<FieldChange>(),
@@ -85,6 +86,12 @@ export function invertModularChange(
 	};
 	const { revInfos: oldRevInfos } = getRevInfoFromTaggedChanges([change]);
 	const revisionMetadata = revisionMetadataSourceFromInfo(oldRevInfos);
+
+	if (change.change.maxId !== undefined) {
+		for (const { revision } of oldRevInfos) {
+			genId.reserve(revision, change.change.maxId);
+		}
+	}
 
 	const invertedFields = invertFieldMap(
 		change.change.fieldChanges,
@@ -172,7 +179,7 @@ function invertFieldMap(
 	changes: FieldChangeMap,
 	parentId: NodeId | undefined,
 	isRollback: boolean,
-	genId: IdAllocator,
+	genId: AtomIdAliasAllocator,
 	crossFieldTable: InvertTable,
 	revisionMetadata: RevisionMetadataSource,
 	revisionForInvert: RevisionTag,
@@ -211,7 +218,7 @@ function invertNodeChange(
 	change: NodeChangeset,
 	id: NodeId,
 	isRollback: boolean,
-	genId: IdAllocator,
+	genId: AtomIdAliasAllocator,
 	crossFieldTable: InvertTable,
 	revisionMetadata: RevisionMetadataSource,
 	revisionForInvert: RevisionTag,

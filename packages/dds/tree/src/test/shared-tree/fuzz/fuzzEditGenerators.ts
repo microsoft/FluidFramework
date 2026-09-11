@@ -29,7 +29,7 @@ import { type DownPath, toDownPath } from "../../../feature-libraries/index.js";
 import { Tree, type ITreePrivate } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
-import { getInnerNode } from "../../../simple-tree/index.js";
+import { getInnerNode, type CommitRevision } from "../../../simple-tree/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -67,6 +67,7 @@ import {
 	GeneratedFuzzValueType,
 	type NodeRange,
 	type ForkMergeOperation,
+	type RevertTo,
 } from "./operationTypes.js";
 
 export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
@@ -276,6 +277,7 @@ export interface EditGeneratorOpWeights {
 	nodeConstraint: number;
 	fork: number;
 	merge: number;
+	revertTo: number;
 }
 const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	set: 0,
@@ -295,6 +297,7 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	nodeConstraint: 0,
 	fork: 0,
 	merge: 0,
+	revertTo: 0,
 };
 
 export interface EditGeneratorOptions {
@@ -672,6 +675,21 @@ export const makeUndoRedoEditGenerator = (
 	]);
 };
 
+export const revertToGenerator = (state: FuzzTestState): RevertTo => {
+	const allRevisions: CommitRevision[] = [];
+	const head = viewFromState(state).branchHistory.getHead();
+	for (
+		let revisionMetadata = head;
+		revisionMetadata !== undefined;
+		revisionMetadata = revisionMetadata.getParent()
+	) {
+		allRevisions.push(revisionMetadata.revision);
+	}
+	assert(allRevisions.length > 0, "No revisions available to revert to.");
+	const revision = state.random.pick(allRevisions);
+	return { type: "revertTo", revision };
+};
+
 export const makeConstraintEditGenerator = (
 	opWeightsArg: Partial<EditGeneratorOpWeights>,
 ): Generator<Constraint, FuzzTestState> => {
@@ -723,6 +741,7 @@ export function makeOpGenerator(
 		start,
 		undo,
 		redo,
+		revertTo,
 		fieldSelection,
 		schema,
 		synchronizeTrees,
@@ -751,6 +770,17 @@ export function makeOpGenerator(
 						type: "synchronizeTrees",
 					}),
 					synchronizeTrees,
+				],
+				[
+					() => revertToGenerator,
+					revertTo,
+					(state: FuzzTestState) => {
+						const view = viewFromState(state);
+						return (
+							view.checkout.transaction.size === 0 &&
+							view.branchHistory.getHead() !== undefined
+						);
+					},
 				],
 				[() => schemaEditGenerator, schema],
 				[

@@ -22,6 +22,7 @@ import {
 } from "../../../core/index.js";
 import type { CrossFieldManager } from "../../../feature-libraries/index.js";
 import {
+	DefaultAtomIdAliasAllocator,
 	DefaultRevisionReplacer,
 	type FieldChangeDelta,
 	type NodeChangeComposer,
@@ -165,7 +166,7 @@ function invert(
 	const inverted = optionalChangeRebaser.invert(
 		change.change,
 		isRollback,
-		idAllocatorFromMaxId(),
+		new DefaultAtomIdAliasAllocator(),
 		revision,
 		failCrossFieldManager,
 		defaultRevisionMetadataFromChanges([change]),

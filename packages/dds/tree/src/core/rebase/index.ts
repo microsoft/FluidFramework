@@ -33,6 +33,7 @@ export {
 	taggedAtomId,
 	taggedOptAtomId,
 	offsetChangeAtomId,
+	offsetChangesetLocalId,
 	StableIdSchema,
 	subtractChangeAtomIds,
 	type ChangeAtomIdRangeMap,
