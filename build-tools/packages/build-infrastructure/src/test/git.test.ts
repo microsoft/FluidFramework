@@ -34,7 +34,7 @@ describe("findGitRootSync", () => {
 		// testRepoRoot is the isolated per-process fixture repo created in init.ts;
 		// findGitRootSync should resolve it to its own repository root.
 		const expected = path.resolve(testRepoRoot);
-		const actual = findGitRootSync(testRepoRoot);
+		const actual = findGitRootSync(path.join(testRepoRoot, "packages/pkg-a"));
 		assert.strictEqual(path.resolve(actual), expected);
 	});
 
