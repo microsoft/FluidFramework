@@ -161,7 +161,7 @@ function invertMark(
 			const removeMark: Mutable<CellMark<Remove>> = {
 				type: "Remove",
 				count: mark.count,
-				id: genId.getAlias(inputId.revision, inputId.localId),
+				id: genId.getAlias(mark.revision, mark.id),
 				revision,
 			};
 
