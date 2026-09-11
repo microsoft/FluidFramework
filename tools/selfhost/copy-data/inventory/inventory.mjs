@@ -216,7 +216,7 @@ async function main() {
 	}
 	if (options.tenantId) log(`Filtering to Fluid tenant: ${options.tenantId}`);
 
-	// Collect document IDs by tenant because tenants can span servers.
+	// Collect each Fluid Relay server's document IDs under its tenant.
 	const tenantDocuments = new Map();
 	const errors = [];
 	let total = 0;
