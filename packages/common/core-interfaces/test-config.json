@@ -2,6 +2,7 @@
 	"reporterEnabled": "spec,mocha-junit-reporter",
 	"mochaJunitReporterReporterOptions": {
 		"mochaFile": "nyc/{id}junit-report.xml",
-		"testsuitesTitle": "{id}"
+		"testsuitesTitle": "{id}",
+		"includePending": true
 	}
 }
