@@ -95,6 +95,7 @@ import {
 	type NodeId,
 } from "./modularChangeTypes.js";
 import {
+	addAlias,
 	CrossFieldManagerI,
 	getChangeHandler,
 	getFieldsForCrossFieldKey,
@@ -109,6 +110,7 @@ import {
 	normalizeNodeId,
 	revisionInfoFromTaggedChange,
 	updateConstraintsForFields,
+	validateChangeset,
 	type CrossFieldTable,
 } from "./modularChangeUtils.js";
 import { invertModularChange } from "./invert.js";
@@ -242,7 +244,7 @@ export class ModularChangeFamily
 		const noChangeConstraintOnRevert =
 			change1.noChangeConstraintOnRevert ?? change2.noChangeConstraintOnRevert;
 
-		return makeModularChangeset({
+		const composed = makeModularChangeset({
 			fieldChanges,
 			nodeChanges,
 			nodeToParent,
@@ -256,6 +258,8 @@ export class ModularChangeFamily
 			destroys: allDestroys,
 			refreshers: allRefreshers,
 		});
+		validateChangeset(composed, this.fieldKinds);
+		return composed;
 	}
 
 	private composeAllFields(
@@ -288,9 +292,24 @@ export class ModularChangeFamily
 		const composedNodeToParent: ChangeAtomIdBTree<FieldId> = brand(
 			mergeTupleBTrees(change1.nodeToParent, change2.nodeToParent),
 		);
-		const composedNodeAliases: ChangeAtomIdBTree<NodeId> = brand(
-			mergeTupleBTrees(change1.nodeAliases, change2.nodeAliases),
-		);
+		const composedNodeAliases: ChangeAtomIdBTree<NodeId> = brand(change1.nodeAliases.clone());
+		for (const [[aliasRevision, aliasLocalId], target] of change2.nodeAliases.entries()) {
+			addAlias(
+				composedNodeAliases,
+				{ revision: aliasRevision, localId: aliasLocalId },
+				target,
+			);
+		}
+		for (const [_, target] of composedNodeAliases.entries()) {
+			normalizeNodeId(target, composedNodeAliases);
+		}
+
+		// const composedNodeAliases: ChangeAtomIdBTree<NodeId> = brand(
+		// 	mergeTupleBTrees(change1.nodeAliases, change2.nodeAliases),
+		// );
+		// for (const [_, target] of composedNodeAliases.entries()) {
+		// 	normalizeNodeId(target, composedNodeAliases);
+		// }
 
 		const crossFieldTable = newComposeTable(change1, change2, composedNodeToParent);
 
@@ -594,6 +613,24 @@ export class ModularChangeFamily
 					setInChangeAtomIdMap(crossFieldTable.newToBaseNodeId, child2, child1);
 					crossFieldTable.pendingCompositions.nodeIdsToCompose.push([child1, child2]);
 				}
+
+				if (child1 !== undefined) {
+					const normalizedId1 = normalizeNodeId(
+						child1,
+						crossFieldTable.baseChange.nodeAliases,
+					);
+					if (!areEqualChangeAtomIds(child1, normalizedId1)) {
+						debugger;
+					}
+				}
+
+				if (child2 !== undefined) {
+					const normalizedId2 = normalizeNodeId(child2, crossFieldTable.newChange.nodeAliases);
+					if (!areEqualChangeAtomIds(child2, normalizedId2)) {
+						debugger;
+					}
+				}
+
 				return child1 ?? child2 ?? fail(0xb23 /* Should not compose two undefined nodes */);
 			},
 			idAllocator,
@@ -641,6 +678,21 @@ export class ModularChangeFamily
 		);
 
 		setInChangeAtomIdMap(composedNodes, id1, composedNodeChangeset);
+
+		const normalizedId1 = normalizeNodeId(id1, crossFieldTable.baseChange.nodeAliases);
+		const normalizedId2 = normalizeNodeId(id2, crossFieldTable.newChange.nodeAliases);
+
+		if (!areEqualChangeAtomIds(id1, normalizedId1)) {
+			debugger;
+		}
+		if (!areEqualChangeAtomIds(id2, normalizedId2)) {
+			debugger;
+		}
+
+		// if (addAlias(nodeAliases, normalizedId2, id1)) {
+		// 	composedNodes.delete([normalizedId2.revision, normalizedId2.localId]);
+		// 	composedNodeToParent.delete([normalizedId2.revision, normalizedId2.localId]);
+		// }
 
 		if (!areEqualChangeAtomIds(id1, id2)) {
 			composedNodes.delete([id2.revision, id2.localId]);
@@ -708,7 +760,14 @@ export class ModularChangeFamily
 		isRollback: boolean,
 		revisionForInvert: RevisionTag,
 	): ModularChangeset {
-		return invertModularChange(change, isRollback, revisionForInvert, this.fieldKinds);
+		const inverse = invertModularChange(
+			change,
+			isRollback,
+			revisionForInvert,
+			this.fieldKinds,
+		);
+		validateChangeset(inverse, this.fieldKinds);
+		return inverse;
 	}
 
 	public rebase(

@@ -6,6 +6,7 @@
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import {
 	areEqualChangeAtomIdOpts,
+	areEqualChangeAtomIds,
 	newChangeAtomIdRangeMap,
 	type ChangesetLocalId,
 	type FieldKey,
@@ -348,9 +349,24 @@ export function normalizeNodeId(
 		if (dealiased === undefined) {
 			return currentId;
 		}
+		assert(!areEqualChangeAtomIds(dealiased, nodeId), "Node alias loop");
 
 		currentId = dealiased;
 	}
+}
+
+export function addAlias(
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
+	alias: NodeId,
+	target: NodeId,
+): boolean {
+	const normalizedAlias = normalizeNodeId(alias, nodeAliases);
+	const normalizedTarget = normalizeNodeId(target, nodeAliases);
+	if (areEqualChangeAtomIds(normalizedAlias, normalizedTarget)) {
+		return false;
+	}
+	nodeAliases.set([normalizedAlias.revision, normalizedAlias.localId], normalizedTarget);
+	return true;
 }
 
 export function makeChangesetInversions(
@@ -435,10 +451,13 @@ function validateFieldChanges(
 ): number {
 	let numChildren = 0;
 	for (const [field, fieldChange] of fieldChanges.entries()) {
-		const fieldId = { nodeId: nodeParent, field };
+		const fieldId = normalizeFieldId({ nodeId: nodeParent, field }, change.nodeAliases);
 		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
 		for (const { nodeId } of handler.getNestedChanges(fieldChange.change)) {
-			const parentFieldId = getParentFieldId(change, nodeId);
+			const parentFieldId = normalizeFieldId(
+				getParentFieldId(change, nodeId),
+				change.nodeAliases,
+			);
 			assert(
 				areEqualFieldIds(parentFieldId, fieldId),
 				0xa4e /* Inconsistent node parentage */,

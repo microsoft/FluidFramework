@@ -29,7 +29,7 @@ import {
 import type { Operation } from "./operationTypes.js";
 
 const runsPerBatch = 200;
-const opsPerRun = 5;
+const opsPerRun = 50;
 
 const weights: Partial<EditGeneratorOpWeights> = {
 	fieldSelection: { optional: 0, required: 0, sequence: 1, recurse: 1 },
@@ -39,7 +39,7 @@ const weights: Partial<EditGeneratorOpWeights> = {
 	revertTo: 10,
 };
 
-describe("Fuzz - revertTo", () => {
+describe.only("Fuzz - revertTo", () => {
 	const generatorFactory = (): AsyncGenerator<Operation, FuzzTestState> =>
 		takeAsync(opsPerRun, makeOpGenerator(weights));
 
