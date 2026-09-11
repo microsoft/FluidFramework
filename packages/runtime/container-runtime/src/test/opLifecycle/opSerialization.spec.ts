@@ -5,9 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { encodeHandleForSerialization } from "@fluidframework/runtime-utils/internal";
+import type { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -51,6 +53,39 @@ describe("opSerialization", () => {
 			ensureContentsDeserialized(message as ISequencedDocumentMessage);
 
 			assert.strictEqual(message.contents, "");
+		});
+
+		it("should classify malformed JSON as data corruption", () => {
+			const malformedContents = '{"key":"value",}';
+			const parseError = (() => {
+				try {
+					JSON.parse(malformedContents);
+				} catch (error) {
+					assert(error instanceof Error);
+					return error;
+				}
+				assert.fail("JSON.parse should throw");
+			})();
+			const message: Partial<ISequencedDocumentMessage> = {
+				sequenceNumber: 42,
+				contents: malformedContents,
+			};
+
+			assert.throws(
+				() => ensureContentsDeserialized(message as ISequencedDocumentMessage),
+				(error: IFluidErrorBase) => {
+					assert.strictEqual(error.errorType, FluidErrorTypes.dataCorruptionError);
+					assert.strictEqual(error.message, parseError.message);
+
+					const props = error.getTelemetryProperties();
+					assert.strictEqual(
+						props.dataProcessingCodepath,
+						"ensureContentsDeserialized",
+					);
+					assert.strictEqual(props.messageSequenceNumber, message.sequenceNumber);
+					return true;
+				},
+			);
 		});
 	});
 
