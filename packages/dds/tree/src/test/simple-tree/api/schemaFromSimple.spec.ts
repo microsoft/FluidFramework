@@ -19,7 +19,7 @@ import {
 	SchemaUpgrade,
 } from "../../../simple-tree/index.js";
 import { testTreeSchema } from "../../cursorTestSuite.js";
-import { HasUnknownOptionalFields, testSimpleTrees } from "../../testTrees.js";
+import { AllowsUnknownOptionalFields, testSimpleTrees } from "../../testTrees.js";
 
 describe("schemaFromSimple", () => {
 	function roundtrip(root: ImplicitFieldSchema): void {
@@ -84,7 +84,7 @@ describe("schemaFromSimple", () => {
 
 	describe("compatibility fields", () => {
 		it("handles allowUnknownOptionalFields = true", () => {
-			const root = HasUnknownOptionalFields;
+			const root = AllowsUnknownOptionalFields;
 			const simpleSchema = getSimpleSchema(root);
 			const simpleObjectSchema = simpleSchema.definitions.get(
 				"test.hasUnknownOptionalFields",
