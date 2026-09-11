@@ -764,23 +764,14 @@ function shallowCompatibilityTest(
 
 	// TODO#7441: Consider allowing data to be inserted which has keys that are extraneous/unknown to the schema (those keys are ignored)
 
-	let compatibility = CompatibilityLevel.Normal;
+	// If the schema has a required key which is not present in the input object, reject it.
 	for (const [fieldKey, fieldSchema] of schema.fields) {
-		if (getFieldProperty(data, fieldKey) !== undefined) {
-			continue;
-		}
-
-		if (fieldSchema.requiresValue) {
+		if (fieldSchema.requiresValue && getFieldProperty(data, fieldKey) === undefined) {
 			return CompatibilityLevel.None;
-		}
-
-		// Prefer a union type that does not need to generate an identifier.
-		if (fieldSchema.kind === FieldKind.Identifier) {
-			compatibility = CompatibilityLevel.Low;
 		}
 	}
 
-	return compatibility;
+	return CompatibilityLevel.Normal;
 }
 
 /**

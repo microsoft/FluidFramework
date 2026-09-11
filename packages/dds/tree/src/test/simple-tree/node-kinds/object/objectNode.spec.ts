@@ -839,24 +839,6 @@ describeHydration(
 			assert.notEqual(first, second);
 		});
 
-		it("prefers a union type that does not need an identifier default", () => {
-			const alphaSchemaFactory = new SchemaFactoryAlpha("AlphaUnionTest");
-			class WithId extends alphaSchemaFactory.object("WithId", {
-				value: alphaSchemaFactory.string,
-				id: SchemaFactoryAlpha.identifier(),
-			}) {}
-			class WithoutId extends alphaSchemaFactory.object("WithoutId", {
-				value: alphaSchemaFactory.string,
-			}) {}
-			class Root extends alphaSchemaFactory.object("Root", {
-				child: [WithId, WithoutId],
-			}) {}
-
-			const root = new Root({ child: { value: "hello" } });
-
-			assert(Tree.is(root.child, WithoutId));
-		});
-
 		it("unhydrated default identifier access via shortId returns UUID", () => {
 			class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
 			const newNode = new HasId({});
