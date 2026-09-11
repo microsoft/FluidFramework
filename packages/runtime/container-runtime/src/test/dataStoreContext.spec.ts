@@ -23,6 +23,7 @@ import type {
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	IFluidDataStoreChannel,
+	IFluidDataStoreChannelInternal,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
@@ -30,6 +31,7 @@ import type {
 	SummarizeInternalFn,
 	IContainerRuntimeBase,
 	IRuntimeStorageService,
+	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	CreateSummarizerNodeSource,
@@ -317,6 +319,133 @@ describe("Data Store Context Tests", () => {
 
 				const isRootNode = await localDataStoreContext.isRoot();
 				assert.strictEqual(isRootNode, false, "The data store should not be root.");
+			});
+		});
+
+		describe("getAttachData", () => {
+			/**
+			 * Builds a parent context whose registry instantiates the given data store channel.
+			 */
+			function createParentContextWithChannel(
+				channel: IFluidDataStoreChannel,
+			): IFluidParentContextPrivate {
+				const factory: IFluidDataStoreFactory = {
+					type: "store-type",
+					get IFluidDataStoreFactory() {
+						return factory;
+					},
+					instantiateDataStore: async () => channel,
+				};
+				const registry: IFluidDataStoreRegistry = {
+					get IFluidDataStoreRegistry() {
+						return registry;
+					},
+					get: async () => factory,
+				};
+				return {
+					IFluidDataStoreRegistry: registry,
+					baseLogger: createChildLogger(),
+					clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
+					submitMessage: () => {},
+					deltaManager: new MockDeltaManager(),
+					isReadOnly: () => false,
+				} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
+			}
+
+			/**
+			 * Returns the names of the entries of the data store's attach summary tree.
+			 */
+			function attachSummaryEntryNames(attachSummary: ISummaryTreeWithStats): string[] {
+				assert(
+					attachSummary.summary.type === SummaryType.Tree,
+					"Attach summary should be a tree",
+				);
+				return Object.keys(attachSummary.summary.tree).sort();
+			}
+
+			it("uses the channel's combined capture and decorates its summary", async () => {
+				const channelGCData: IGarbageCollectionData = {
+					gcNodes: { "/": ["/some/route"] },
+				};
+				const channel = new MockFluidDataStoreRuntime();
+				// A data store channel that supports capturing the summary and GC data together.
+				(channel as unknown as IFluidDataStoreChannelInternal).getAttachData = () => ({
+					attachSummary: {
+						stats: {
+							treeNodeCount: 1,
+							blobNodeCount: 0,
+							handleNodeCount: 0,
+							totalBlobSize: 0,
+							unreferencedBlobSize: 0,
+						},
+						summary: { type: SummaryType.Tree, tree: {} },
+					},
+					attachGCData: channelGCData,
+				});
+				channel.getAttachSummary = () => assert.fail("Should use the combined capture");
+				channel.getAttachGCData = () => assert.fail("Should use the combined capture");
+
+				localDataStoreContext = new LocalFluidDataStoreContext({
+					id: dataStoreId,
+					pkg: ["TestDataStore1"],
+					parentContext: createParentContextWithChannel(
+						channel as unknown as IFluidDataStoreChannel,
+					),
+					storage,
+					scope,
+					createSummarizerNodeFn,
+					makeLocallyVisibleFn,
+					snapshotTree: undefined,
+				});
+				await localDataStoreContext.realize();
+
+				const { attachSummary, attachGCData } = localDataStoreContext.getAttachData();
+				assert.deepStrictEqual(
+					attachSummaryEntryNames(attachSummary),
+					[channelsTreeName, dataStoreAttributesBlobName].sort(),
+					"The channel's summary should be wrapped and given the data store's attributes",
+				);
+				assert.deepStrictEqual(
+					attachGCData,
+					channelGCData,
+					"The channel's GC data should be passed through unchanged",
+				);
+			});
+
+			it("falls back to the separate captures for channels without combined capture", async () => {
+				// MockFluidDataStoreRuntime does not implement getAttachData.
+				const channel = new MockFluidDataStoreRuntime();
+				assert.strictEqual(
+					(channel as unknown as IFluidDataStoreChannelInternal).getAttachData,
+					undefined,
+					"PRECONDITION: the channel must not support the combined capture",
+				);
+
+				localDataStoreContext = new LocalFluidDataStoreContext({
+					id: dataStoreId,
+					pkg: ["TestDataStore1"],
+					parentContext: createParentContextWithChannel(
+						channel as unknown as IFluidDataStoreChannel,
+					),
+					storage,
+					scope,
+					createSummarizerNodeFn,
+					makeLocallyVisibleFn,
+					snapshotTree: undefined,
+				});
+				await localDataStoreContext.realize();
+
+				const { attachSummary, attachGCData } = localDataStoreContext.getAttachData();
+				assert.deepStrictEqual(
+					attachSummaryEntryNames(attachSummary),
+					[channelsTreeName, dataStoreAttributesBlobName].sort(),
+					"The fallback should produce the same decorated summary",
+				);
+				assert.deepStrictEqual(
+					attachGCData,
+					channel.getAttachGCData(),
+					"The fallback should use the channel's separate GC data capture",
+				);
 			});
 		});
 

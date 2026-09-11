@@ -52,7 +52,9 @@ import type {
 	FluidDataStoreRegistryEntry,
 	IContainerRuntimeBase,
 	IDataStore,
+	IFluidDataStoreAttachData,
 	IFluidDataStoreChannel,
+	IFluidDataStoreChannelInternal,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
@@ -141,6 +143,13 @@ export interface IFluidDataStoreContextPrivate extends FluidDataStoreContextInte
 	getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
 
 	getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
+
+	/**
+	 * Captures the attach summary and the attach GC data of this data store together, so that they always
+	 * describe the same set of channels. See
+	 * {@link @fluidframework/runtime-definitions#IFluidDataStoreChannelInternal.getAttachData}.
+	 */
+	getAttachData(telemetryContext?: ITelemetryContext): IFluidDataStoreAttachData;
 
 	getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
@@ -1072,6 +1081,14 @@ export abstract class FluidDataStoreContext
 		telemetryContext?: ITelemetryContext,
 	): IGarbageCollectionData;
 
+	/**
+	 * Get the attach summary and the attach GC data for the initial state being attached, captured together so
+	 * that they always describe the same set of channels.
+	 */
+	public abstract getAttachData(
+		telemetryContext?: ITelemetryContext,
+	): IFluidDataStoreAttachData;
+
 	public abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
 	// eslint-disable-next-line jsdoc/require-description
@@ -1379,6 +1396,13 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		throw new Error("Cannot attach remote store");
 	}
+
+	/**
+	 * {@inheritDoc FluidDataStoreContext.getAttachData}
+	 */
+	public getAttachData(telemetryContext?: ITelemetryContext): IFluidDataStoreAttachData {
+		throw new Error("Cannot attach remote store");
+	}
 }
 
 /**
@@ -1457,12 +1481,55 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 			this.channel !== undefined,
 			0x14f /* "There should be a channel when generating attach message" */,
 		);
+
+		return this.decorateAttachSummary(this.channel.getAttachSummary(telemetryContext));
+	}
+
+	/**
+	 * {@inheritDoc FluidDataStoreContext.getAttachGCData}
+	 */
+	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
+		assert(
+			this.channel !== undefined,
+			0x9a6 /* There should be a channel when generating attach GC data */,
+		);
+		return this.channel.getAttachGCData(telemetryContext);
+	}
+
+	/**
+	 * {@inheritDoc FluidDataStoreContext.getAttachData}
+	 */
+	public getAttachData(telemetryContext?: ITelemetryContext): IFluidDataStoreAttachData {
+		const channel: IFluidDataStoreChannelInternal | undefined = this.channel;
+		assert(channel !== undefined, "There should be a channel when generating attach data");
+
+		const attachData = channel.getAttachData?.(telemetryContext);
+		if (attachData === undefined) {
+			// back-compat: data store channels that don't support capturing both together. Note that this leaves
+			// them exposed to the summary and the GC data disagreeing if the channel creates children while
+			// generating either one.
+			return {
+				attachSummary: this.getAttachSummary(telemetryContext),
+				attachGCData: this.getAttachGCData(telemetryContext),
+			};
+		}
+
+		return {
+			attachSummary: this.decorateAttachSummary(attachData.attachSummary),
+			attachGCData: attachData.attachGCData,
+		};
+	}
+
+	/**
+	 * Adds this data store's own state (channels subtree wrapper, attributes blob and loading group id) to the
+	 * summary produced by its channel.
+	 * @param attachSummary - The channel's attach summary. Mutated in place and returned.
+	 */
+	private decorateAttachSummary(attachSummary: ISummaryTreeWithStats): ISummaryTreeWithStats {
 		assert(
 			this.pkg !== undefined,
 			0x150 /* "pkg should be available in local data store context" */,
 		);
-
-		const attachSummary = this.channel.getAttachSummary(telemetryContext);
 
 		// Wrap dds summaries in .channels subtree.
 		wrapSummaryInChannelsTree(attachSummary);
@@ -1477,17 +1544,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		}
 
 		return attachSummary;
-	}
-
-	/**
-	 * {@inheritDoc FluidDataStoreContext.getAttachGCData}
-	 */
-	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
-		assert(
-			this.channel !== undefined,
-			0x9a6 /* There should be a channel when generating attach GC data */,
-		);
-		return this.channel.getAttachGCData(telemetryContext);
 	}
 
 	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
