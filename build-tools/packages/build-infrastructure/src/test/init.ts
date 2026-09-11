@@ -17,7 +17,7 @@ export const packageRootPath = path.resolve(_dirname, "../..");
 export const testDataPath = path.resolve(_dirname, packageRootPath, "src/test/data");
 
 /**
- * Absolute path to the test repo.
+ * Absolute path to the source fixture copied into each isolated test repository.
  */
 const testRepoTemplate = path.join(testDataPath, "testRepo");
 
