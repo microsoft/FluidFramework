@@ -236,7 +236,13 @@ export class HasDescriptions extends factory.object(
 	{ metadata: { description: "root object" } },
 ) {}
 
-/** Exercises all supported persisted metadata and unknown optional fields together. */
+/**
+ * A node schema configured with all metadata options.
+ *
+ * @remarks
+ * Used to validate metadata handling in schema-focused tests.
+ * Use {@link hasAllMetadataRootSchema} when testing a root field schema.
+ */
 export class HasAllMetadata extends factory.object(
 	"hasDescriptions",
 	{
@@ -251,7 +257,13 @@ export class HasAllMetadata extends factory.object(
 	},
 ) {}
 
-const hasAllMetadataRootSchema = SchemaFactoryAlpha.optional(HasAllMetadata, {
+/**
+ * A root field schema configured with all metadata options.
+ * @remarks
+ * Root fields receive special handling in several code paths,
+ * so this is used to validate that their metadata is preserved correctly.
+ */
+export const hasAllMetadataRootSchema = SchemaFactoryAlpha.optional(HasAllMetadata, {
 	key: "unused root key",
 	metadata: { description: "root field", custom: "root field custom" },
 });
