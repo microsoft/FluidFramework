@@ -37,7 +37,7 @@ const git = simpleGit(testRepoRoot);
 
 describe("setVersion", () => {
 	afterEach(async () => {
-		await git.checkout(["HEAD", "--", testRepoRoot]);
+		await git.checkout(["HEAD", "--", "."]);
 		repo.reload();
 	});
 

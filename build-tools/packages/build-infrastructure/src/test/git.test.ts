@@ -27,15 +27,15 @@ import {
 } from "../git.js";
 import type { PackageJson } from "../types.js";
 
-import { packageRootPath, testRepoRoot } from "./init.js";
+import { testRepoRoot } from "./init.js";
 
 describe("findGitRootSync", () => {
 	it("finds root", () => {
 		// This is the path to the current repo, because when tests are executed the working directory is
 		// the root of this package: build-tools/packages/build-infrastructure
-		const expected = path.resolve(packageRootPath, "../../..");
-		const actual = findGitRootSync(process.cwd());
-		assert.strictEqual(actual, expected);
+		const expected = path.resolve(testRepoRoot);
+		const actual = findGitRootSync(testRepoRoot);
+		assert.strictEqual(path.resolve(actual), expected);
 	});
 
 	it("throws outside git repo", () => {
@@ -60,14 +60,14 @@ describe("getRemote", () => {
 });
 
 describe("getChangedSinceRef: local", () => {
-	const git = simpleGit(process.cwd());
+	const git = simpleGit(testRepoRoot);
 	const repo = loadBuildProject(testRepoRoot);
 
 	beforeEach(async () => {
 		// create a file
 		const newFile = path.join(testRepoRoot, "second/newFile.json");
 		await writeJson(newFile, '{"foo": "bar"}');
-		await git.add(newFile);
+		await git.add("second/newFile.json");
 
 		// delete a file
 		await unlink(path.join(testRepoRoot, "packages/group3/pkg-f/src/index.mjs"));
@@ -80,9 +80,9 @@ describe("getChangedSinceRef: local", () => {
 	});
 
 	afterEach(async () => {
-		await git.reset(["HEAD", "--", testRepoRoot]);
-		await git.checkout(["HEAD", "--", testRepoRoot]);
-		await git.clean(CleanOptions.FORCE, [testRepoRoot]);
+		await git.reset(["HEAD", "--", "."]);
+		await git.checkout(["HEAD", "--", "."]);
+		await git.clean(CleanOptions.FORCE, ["."]);
 	});
 
 	it("returns correct files", async () => {
@@ -136,38 +136,35 @@ describe("getChangedSinceRef: local", () => {
 });
 
 describe("getFiles", () => {
-	const git = simpleGit(process.cwd());
-	const gitRoot = findGitRootSync();
+	const git = simpleGit(testRepoRoot);
 
 	it("correct files with clean working directory", async () => {
-		const actual = await getFiles(git, testRepoRoot);
+		const actual = await getFiles(git, ".");
 		console.debug(testRepoRoot, actual);
 
-		expect(actual).to.be.containingAllOf(
-			[
-				`${testRepoRoot}/.changeset/README.md`,
-				`${testRepoRoot}/.changeset/bump-main-group-minor.md`,
-				`${testRepoRoot}/.changeset/config.json`,
-				`${testRepoRoot}/fluidBuild.config.cjs`,
-				`${testRepoRoot}/package.json`,
-				`${testRepoRoot}/packages/group2/pkg-d/package.json`,
-				`${testRepoRoot}/packages/group2/pkg-e/package.json`,
-				`${testRepoRoot}/packages/group3/pkg-f/package.json`,
-				`${testRepoRoot}/packages/group3/pkg-f/src/index.mjs`,
-				`${testRepoRoot}/packages/group3/pkg-g/package.json`,
-				`${testRepoRoot}/packages/pkg-a/package.json`,
-				`${testRepoRoot}/packages/pkg-b/package.json`,
-				`${testRepoRoot}/packages/pkg-c/package.json`,
-				`${testRepoRoot}/packages/shared/package.json`,
-				`${testRepoRoot}/pnpm-lock.yaml`,
-				`${testRepoRoot}/pnpm-workspace.yaml`,
-				`${testRepoRoot}/second/package.json`,
-				`${testRepoRoot}/second/packages/other-pkg-a/package.json`,
-				`${testRepoRoot}/second/packages/other-pkg-b/package.json`,
-				`${testRepoRoot}/second/pnpm-lock.yaml`,
-				`${testRepoRoot}/second/pnpm-workspace.yaml`,
-			].map((p) => path.relative(gitRoot, p)),
-		);
+		expect(actual).to.be.containingAllOf([
+			".changeset/README.md",
+			".changeset/bump-main-group-minor.md",
+			".changeset/config.json",
+			"fluidBuild.config.cjs",
+			"package.json",
+			"packages/group2/pkg-d/package.json",
+			"packages/group2/pkg-e/package.json",
+			"packages/group3/pkg-f/package.json",
+			"packages/group3/pkg-f/src/index.mjs",
+			"packages/group3/pkg-g/package.json",
+			"packages/pkg-a/package.json",
+			"packages/pkg-b/package.json",
+			"packages/pkg-c/package.json",
+			"packages/shared/package.json",
+			"pnpm-lock.yaml",
+			"pnpm-workspace.yaml",
+			"second/package.json",
+			"second/packages/other-pkg-a/package.json",
+			"second/packages/other-pkg-b/package.json",
+			"second/pnpm-lock.yaml",
+			"second/pnpm-workspace.yaml",
+		]);
 	});
 });
 
@@ -412,8 +409,8 @@ describe("listPackageJsonPaths: staged deletion (local)", () => {
 
 	afterEach(async () => {
 		// Restore both the index entry and the working-tree file.
-		await git.reset(["HEAD", "--", targetPkgAbs]);
-		await git.checkout(["HEAD", "--", targetPkgAbs]);
+		await git.reset(["HEAD", "--", targetPkgRel]);
+		await git.checkout(["HEAD", "--", targetPkgRel]);
 	});
 
 	it("excludes a staged-for-deletion package.json from the no-ref listing", async () => {
