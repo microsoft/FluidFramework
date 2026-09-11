@@ -4,8 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-import path from "node:path";
-
 import { expect } from "chai";
 import { afterEach, describe, it } from "mocha";
 import * as semver from "semver";
@@ -15,9 +13,9 @@ import { loadBuildProject } from "../buildProject.js";
 import type { ReleaseGroupName, WorkspaceName } from "../types.js";
 import { setVersion } from "../versions.js";
 
-import { testDataPath, testRepoRoot } from "./init.js";
+import { testRepoRoot } from "./init.js";
 
-const repo = loadBuildProject(path.join(testDataPath, "./testRepo"));
+const repo = loadBuildProject(testRepoRoot);
 const main = repo.releaseGroups.get("main" as ReleaseGroupName);
 assert(main !== undefined);
 
@@ -37,7 +35,7 @@ const git = simpleGit(testRepoRoot);
 
 describe("setVersion", () => {
 	afterEach(async () => {
-		await git.checkout(["HEAD", "--", testRepoRoot]);
+		await git.checkout(["HEAD", "--", "."]);
 		repo.reload();
 	});
 
