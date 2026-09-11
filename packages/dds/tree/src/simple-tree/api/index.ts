@@ -172,7 +172,11 @@ export type {
 	NodeChangedDataTreeDelta,
 	TreeChangeEventsBeta,
 } from "./treeChangeEventsBeta.js";
-export { createTreeIndex, type TreeIndexKey } from "./simpleTreeIndex.js";
+export {
+	createTreeIndex,
+	type TreeIndexer,
+	type TreeIndexKey,
+} from "./simpleTreeIndex.js";
 export {
 	createIdentifierIndex,
 	type IdentifierIndex,
