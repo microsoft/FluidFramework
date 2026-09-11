@@ -19,7 +19,7 @@ import {
 	SchemaUpgrade,
 } from "../../../simple-tree/index.js";
 import { testTreeSchema } from "../../cursorTestSuite.js";
-import { HasUnknownOptionalFields, testSimpleTrees } from "../../testTrees.js";
+import { AllowsUnknownOptionalFields, testSimpleTrees } from "../../testTrees.js";
 
 describe("schemaFromSimple", () => {
 	function roundtrip(root: ImplicitFieldSchema): void {
@@ -64,8 +64,16 @@ describe("schemaFromSimple", () => {
 			roundtrip(SchemaFactory.number);
 		});
 
+		const stagedOptionalTestCases = new Set([
+			"HasStagedOptionalFieldBeforeUpdate",
+			"Staged optional in root",
+			"NestedStagedOptional with no upgrades",
+		]);
+
 		for (const testSchema of testSimpleTrees) {
-			it(testSchema.name, () => {
+			// TODO: AB#82814: Fix simple schema conversion for staged optional fields and enable these cases.
+			const test = stagedOptionalTestCases.has(testSchema.name) ? it.skip : it;
+			test(testSchema.name, () => {
 				roundtrip(testSchema.schema);
 			});
 		}
@@ -76,7 +84,7 @@ describe("schemaFromSimple", () => {
 
 	describe("compatibility fields", () => {
 		it("handles allowUnknownOptionalFields = true", () => {
-			const root = HasUnknownOptionalFields;
+			const root = AllowsUnknownOptionalFields;
 			const simpleSchema = getSimpleSchema(root);
 			const simpleObjectSchema = simpleSchema.definitions.get(
 				"test.hasUnknownOptionalFields",

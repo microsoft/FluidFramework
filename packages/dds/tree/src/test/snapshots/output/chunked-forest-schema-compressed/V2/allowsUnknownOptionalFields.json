@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "identifiers": [],
+  "shapes": [
+    {
+      "c": {
+        "type": "test.hasUnknownOptionalFields",
+        "value": false
+      }
+    }
+  ],
+  "data": [
+    [
+      0
+    ]
+  ]
+}
