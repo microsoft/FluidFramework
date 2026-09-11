@@ -479,6 +479,8 @@ export interface ISharedMap
  * @legacy @beta
  */
 export interface ISharedMapBeta
-	extends Pick<ISharedMap, "get" | "set">,
+	// Keep all from ISharedMap except for FluidMap that aren't "get" or "set" (which as not present in FluidMapLegacy).
+	// Should get same result as using `Omit<ISharedMap, keyof FluidMapLegacy<string, any>>`
+	extends Omit<ISharedMap, Exclude<keyof FluidMap<string, unknown>, "get" | "set">>,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		FluidMapLegacy<string, any> {}

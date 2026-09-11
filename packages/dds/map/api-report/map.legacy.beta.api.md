@@ -104,7 +104,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Omit<FluidM
 }
 
 // @beta @sealed @legacy
-export interface ISharedMapBeta extends Pick<ISharedMap, "get" | "set">, FluidMapLegacy<string, any> {
+export interface ISharedMapBeta extends Omit<ISharedMap, Exclude<keyof FluidMap<string, unknown>, "get" | "set">>, FluidMapLegacy<string, any> {
 }
 
 // @beta @sealed @legacy
