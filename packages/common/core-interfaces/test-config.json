@@ -1,6 +1,6 @@
 {
-	"reporterEnabled": "spec,mocha-junit-reporter",
-	"mochaJunitReporterReporterOptions": {
+	"reporterEnabled": "spec,./mocha-junit-reporter-classname.cjs",
+	"mochaJunitReporterClassnameCjsReporterOptions": {
 		"mochaFile": "nyc/{id}junit-report.xml",
 		"testsuitesTitle": "{id}",
 		"includePending": true

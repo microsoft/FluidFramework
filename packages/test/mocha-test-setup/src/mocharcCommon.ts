@@ -141,12 +141,13 @@ export function getFluidTestMochaConfig(
 		}
 		const suiteName =
 			reportPrefix !== undefined ? `${packageJson.name} - ${reportPrefix}` : packageJson.name;
+		const junitReporterName = "@fluid-internal/mocha-test-setup/junit-reporter";
 		config["reporter-options"] = [
 			`configFile=${path.join(
 				import.meta.dirname,
 				"..",
 				"test-config.json",
-			)},cmrOutput=mocha-junit-reporter+mochaFile+${outputFilePrefix}:mocha-junit-reporter+testsuitesTitle+${suiteName}`,
+			)},cmrOutput=${junitReporterName}+mochaFile+${outputFilePrefix}:${junitReporterName}+testsuitesTitle+${suiteName}`,
 		];
 	}
 

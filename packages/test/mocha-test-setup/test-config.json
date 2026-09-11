@@ -1,6 +1,6 @@
 {
-	"reporterEnabled": "spec,mocha-junit-reporter",
-	"mochaJunitReporterReporterOptions": {
+	"reporterEnabled": "spec,@fluid-internal/mocha-test-setup/junit-reporter",
+	"fluidInternalMochaTestSetupJunitReporterReporterOptions": {
 		"mochaFile": "nyc/{id}junit-report.xml",
 		"testsuitesTitle": "{id}",
 		"includePending": true

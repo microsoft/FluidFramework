@@ -22,7 +22,7 @@ module.exports = {
 	require: [testCJS ? "./dist/test/mochaHooks.js" : "./lib/test/mochaHooks.js"],
 	reporter: "mocha-multi-reporters",
 	"reporter-options": [
-		`configFile=test-config.json,cmrOutput=mocha-junit-reporter+mochaFile+${outputFilePrefix}:mocha-junit-reporter+testsuitesTitle+${suiteName}`,
+		`configFile=test-config.json,cmrOutput=./mocha-junit-reporter-classname.cjs+mochaFile+${outputFilePrefix}:./mocha-junit-reporter-classname.cjs+testsuitesTitle+${suiteName}`,
 	],
 	"unhandled-rejections": "strict",
 };
