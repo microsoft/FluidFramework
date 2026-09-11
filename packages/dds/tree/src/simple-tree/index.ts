@@ -112,7 +112,7 @@ export {
 	type IdentifierIndex,
 	createTreeIndex,
 	createIdentifierIndex,
-	type TreeIndexer,
+	type TreeIndexKeyFieldSelector,
 	type TreeIndexKey,
 	type DirtyTreeStatus,
 	trackDirtyNodes,

@@ -48,14 +48,14 @@ export type TreeIndexKey = TreeLeafValue;
  * Selects the field containing the index key for nodes of a given schema.
  *
  * @remarks
- * A `TreeIndexer` is logically a pure function. For convenience, an object with a `get` method, such as a
+ * A selector is logically a pure function. For convenience, an object with a `get` method, such as a
  * `ReadonlyMap`, is also accepted. Return `undefined` for schemas that should not be indexed.
  *
- * @typeParam TSchema - The node schema types accepted by the indexer.
+ * @typeParam TSchema - The node schema types accepted by the key field selector.
  *
  * @beta
  */
-export type TreeIndexer<TSchema extends TreeNodeSchema = TreeNodeSchema> =
+export type TreeIndexKeyFieldSelector<TSchema extends TreeNodeSchema = TreeNodeSchema> =
 	| ((schema: TSchema) => string | undefined)
 	| { get(schema: TSchema): string | undefined };
 
@@ -69,7 +69,7 @@ export type TreeIndexer<TSchema extends TreeNodeSchema = TreeNodeSchema> =
  * To index identifier fields, use {@link createIdentifierIndex}.
  *
  * @param view - The view for the tree being indexed.
- * @param indexer - Selects the field whose value is the index key for nodes of each schema.
+ * @param keyFieldSelector - Selects the field whose value is the index key for nodes of each schema.
  * @param getValue - Converts the non-empty array of nodes associated with a key into the value returned for that key.
  * @param isKeyValid - Validates and narrows values read from key fields to `TKey`. An invalid value causes an error.
  *
@@ -81,7 +81,7 @@ export function createTreeIndex<
 	TValue,
 >(
 	view: TreeView<TFieldSchema>,
-	indexer: TreeIndexer,
+	keyFieldSelector: TreeIndexKeyFieldSelector,
 	getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue,
 	isKeyValid: (key: TreeIndexKey) => key is TKey,
 ): TreeIndex<TKey, TValue>;
@@ -95,7 +95,7 @@ export function createTreeIndex<
  * When multiple nodes have the same key, they are passed together to `getValue`.
  *
  * @param view - The view for the tree being indexed.
- * @param indexer - Selects the field whose value is the index key for nodes of each supplied schema.
+ * @param keyFieldSelector - Selects the field whose value is the index key for nodes of each supplied schema.
  * @param getValue - Converts the non-empty array of nodes associated with a key into the value returned for that key.
  * @param isKeyValid - Validates and narrows values read from key fields to `TKey`. An invalid value causes an error.
  * @param indexableSchema - All schema types that the index should consider.
@@ -109,14 +109,14 @@ export function createTreeIndex<
 	TSchema extends TreeNodeSchema,
 >(
 	view: TreeView<TFieldSchema>,
-	indexer: TreeIndexer<TSchema>,
+	keyFieldSelector: TreeIndexKeyFieldSelector<TSchema>,
 	getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue,
 	isKeyValid: (key: TreeIndexKey) => key is TKey,
 	indexableSchema: readonly TSchema[],
 ): TreeIndex<TKey, TValue>;
 
 /**
- * Creates a {@link TreeIndex} with a specified indexer.
+ * Creates a {@link TreeIndex} with a specified key field selector.
  *
  * @beta
  */
@@ -126,7 +126,7 @@ export function createTreeIndex<
 	TValue,
 >(
 	view: TreeView<TFieldSchema>,
-	indexer: TreeIndexer,
+	keyFieldSelector: TreeIndexKeyFieldSelector,
 	getValue:
 		| ((nodes: TreeIndexNodes<TreeNode>) => TValue)
 		| ((nodes: TreeIndexNodes<NodeFromSchema<TreeNodeSchema>>) => TValue),
@@ -153,7 +153,9 @@ export function createTreeIndex<
 						fail(0xb32 /* node is out of schema */);
 					} else {
 						const keyLocation =
-							typeof indexer === "function" ? indexer(schemus) : indexer.get(schemus);
+							typeof keyFieldSelector === "function"
+								? keyFieldSelector(schemus)
+								: keyFieldSelector.get(schemus);
 						if (keyLocation !== undefined) {
 							return makeGenericKeyFinder<TKey>(brand(keyLocation), isKeyValid);
 						}
@@ -163,7 +165,9 @@ export function createTreeIndex<
 					const schemus = indexableSchemaMap.get(schemaIdentifier);
 					if (schemus !== undefined) {
 						const keyLocation =
-							typeof indexer === "function" ? indexer(schemus) : indexer.get(schemus);
+							typeof keyFieldSelector === "function"
+								? keyFieldSelector(schemus)
+								: keyFieldSelector.get(schemus);
 						if (keyLocation !== undefined) {
 							return makeGenericKeyFinder<TKey>(brand(keyLocation), isKeyValid);
 						}

@@ -174,7 +174,7 @@ export type {
 } from "./treeChangeEventsBeta.js";
 export {
 	createTreeIndex,
-	type TreeIndexer,
+	type TreeIndexKeyFieldSelector,
 	type TreeIndexKey,
 } from "./simpleTreeIndex.js";
 export {
