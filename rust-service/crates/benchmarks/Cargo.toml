@@ -1,0 +1,20 @@
+[package]
+name = "snapshotted-stream-benchmarks"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+bytes.workspace = true
+futures-util.workspace = true
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.143"
+snapshotted-stream-core = { path = "../core" }
+snapshotted-stream-file-simple = { path = "../file-simple" }
+snapshotted-stream-memory = { path = "../memory" }
+tokio.workspace = true
+
+[lints]
+workspace = true
