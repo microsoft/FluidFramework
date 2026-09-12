@@ -32,18 +32,22 @@ In-memory, file, browser, cloud, and replicated implementations
 
 The `fluid-sequencer` adapter will provide optional multi-writer protocol semantics such as message framing, join/leave events, local and final ordering, reference stream positions, minimum-reference tracking, and eviction of writers that fall behind. Fluid drivers and direct SharedTree integration can build on this adapter without introducing Fluid concepts into storage implementations.
 
+The native Rust client starts as an idiomatic facade over the raw append and snapshot traits. Optional typed codecs, catch-up and live-subscription helpers, and safe resubmission policies are added only when implementations demonstrate common requirements; Fluid protocol semantics remain in `fluid-sequencer`.
+
 Development begins with an interactive foundation phase that creates the Rust workspace, core traits, initial tests, stub crates, and a project coordination skill while resolving design questions as they become concrete. Parallel implementation follows. Each implementation agent works in an isolated branch and worktree, makes reviewable commits, and produces a structured report covering correctness, integration, architectural friction, complexity, and performance.
 
 A third, interactive review phase integrates and synthesizes those reports before any shared abstractions or crate boundaries change. Approved adjustments, the numbered review report, updated coordination guidance, and new scoped instructions are committed separately before another parallel implementation iteration. The Phase 2/3 loop ends only when the reports, tests, documentation, and measurements justify making no further changes.
+
+Because agentic development is itself part of the research, each iteration pre-registers hypotheses and retains structured reports, costly failures, human interventions, decisions, retrospectives, and skill changes. A validator makes those records part of the Phase 2 and Phase 3 completion gates.
 
 ## Project Status
 
 The project is currently in the design phase. No Rust crate or stable API exists yet. The immediate milestones are:
 
 1. Create the Cargo workspace, core traits, initial conformance tests, crate stubs, and coordination skill interactively.
-2. Establish a working in-memory reference path and native counter demo.
-3. Implement a maximally simple file store and a separate crash-safe file store.
-4. Develop `fluid-sequencer`, wrappers, Rust and WASM clients, Fluid/SharedTree integrations, and demos in parallel.
+2. Establish a working in-memory reference path, raw native client tier, and native counter demo.
+3. In iteration `0001`, implement a maximally simple file store and focused durable-log, transparent-wrapper, and `fluid-sequencer` feasibility spikes.
+4. During each Phase 3 review, select whether to keep, replace, narrow, or expand the active workstreams from the broader research backlog.
 5. Collect structured reports from every parallel workstream.
 6. Review findings and proposed architectural changes interactively before applying them.
 7. Repeat implementation and review until tests, documentation, and comparative evidence support convergence.
@@ -53,6 +57,10 @@ Each iteration uses a dedicated integration branch and one isolated branch/workt
 ## Documents
 
 - [PLAN.md](PLAN.md) defines the architecture, semantics, iterative work phases, reporting contract, review loop, and success criteria.
+- [LEARNINGS.md](LEARNINGS.md) indexes durable architecture and agentic-development findings with links to evidence.
+- [decisions/](decisions/) contains append-only shared decision records.
+- [iterations/](iterations/) contains iteration charters, workstream records, synthesis reports, retrospectives, and next-workstream instructions.
+- [the coordination skill](../.github/skills/rust-service-coordination/SKILL.md) provides the executable workflow, templates, initializer, and artifact validator.
 - [notes.md](notes.md) preserves the original brainstorming notes and implementation ideas.
 - [notes2.md](notes2.md) records the project goals, target integrations, and stretch goals.
 

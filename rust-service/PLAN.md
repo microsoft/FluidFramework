@@ -166,6 +166,64 @@ The `fluid-sequencer` adapter provides the generic multi-user protocol that is i
 
 This adapter captures the central Fluid design pattern without making the core storage abstraction Fluid-specific. Applications with pure CRDT events may use the append stream directly or through much thinner framing, while applications whose operations depend on creation context can use `fluid-sequencer`.
 
+## Native Rust Client API
+
+The native client begins as a thin, idiomatic facade over `AppendStream` and `SnapshotStore`. Local implementations and network transports should expose the same raw traits wherever practical so applications can change deployment topology without changing the storage contract.
+
+The raw client tier provides:
+
+- stream creation, lookup, and connection lifecycle through a separate factory or transport interface;
+- opaque position serialization when positions must cross a process boundary or be retained as resume tokens;
+- capability discovery and a stable error classification over implementation-specific errors;
+- bounded asynchronous readers with explicit cancellation and end-of-current-stream behavior; and
+- append results that distinguish a definite rejection from an ambiguous outcome.
+
+The raw client must not silently retry an append with an ambiguous outcome. Automatic retry is available only when an idempotency or deduplication capability makes it safe. Reconnect may resume reads from the last delivered position, but it must not claim gap-free catch-up unless the implementation can detect stale positions and bridge historical reads to live delivery without a race.
+
+An optional application-facing tier may add:
+
+- record framing and typed codecs over opaque bytes;
+- historical catch-up followed by live subscription;
+- snapshot loading, replay, and conditional publication helpers; and
+- explicit pending-append and resubmission policies for implementations that support idempotency.
+
+These helpers remain generic over application event and state types. Application reducers, optimistic local state, offline queues, snapshot correctness, and conflict policy do not belong in the common client contract. Fluid sequence numbers, reference sequence numbers, minimum sequence numbers, joins, leaves, and quorum behavior remain in `fluid-sequencer` rather than the general native client.
+
+Iteration `0001` implements only the raw tier and the minimum framing and snapshot-recovery workflow needed by the native counter example. Rich typed clients, automatic live catch-up, offline operation, and generic resubmission remain deferred until the example and implementation reports demonstrate a common requirement.
+
+### Relevant Fluid precedents
+
+These references are implementation evidence, not normative requirements for the generic kernel:
+
+- [`ISequencedDocumentMessage`](../common/lib/protocol-definitions/src/protocol.ts#L216) shows Fluid's distinct final, client-local, reference, and minimum sequence numbers.
+- [`IDocumentDeltaStorageService` and `IStream`](../packages/common/driver-definitions/src/storage.ts#L64) separate bounded historical reads from the live connection and expose reader-controlled pacing and cancellation.
+- [`IDocumentDeltaConnection.submit`](../packages/common/driver-definitions/src/storage.ts#L315) is fire-and-forget; [`PendingStateManager`](../packages/runtime/container-runtime/src/pendingStateManager.ts#L275) separately tracks unacknowledged operations for reconnection and resubmission. This is a warning against treating transport acceptance as a durable append receipt.
+- [Deli's ordering and minimum-sequence logic](../server/routerlicious/packages/lambdas/src/deli/lambda.ts#L900) demonstrates duplicate and gap handling, stale-reference rejection, service-side final sequence assignment, and NoOp treatment.
+- [`ClientSequenceNumberManager`](../server/routerlicious/packages/lambdas/src/deli/clientSeqManager.ts#L45) demonstrates per-client local sequence tracking and minimum-reference calculation.
+- [Scribe summary validation](../server/routerlicious/packages/lambdas/src/scribe/summaryWriter.ts#L142) checks both parent lineage and a non-regressing reference sequence before publication. Parent comparison alone is therefore not sufficient precedent for monotonic snapshot publication.
+- [The protocol NoOp documentation](../common/lib/protocol-definitions/README.md#L10) illustrates that an application-level empty message may be coalesced or dropped and should not determine whether the storage kernel permits a zero-length append.
+
+## Research and Agentic Development Record
+
+The project treats its development process as a research subject. Concise structured records are required deliverables, not optional notes reconstructed after implementation. Full chat transcripts may be linked when they materially support a finding and contain no sensitive data, but they are not the primary record.
+
+Before an iteration begins, its charter records the selected questions, falsifiable hypotheses, cheapest discriminating checks, expected evidence, dependencies, stopping conditions, and deferred scope. Each workstream records its assignment and agent or owner provenance, branch and commits, commands and results, hypothesis outcomes, and integration dependencies.
+
+A workstream updates its report while work is occurring whenever:
+
+- a hypothesis is falsified;
+- three materially similar attempts fail;
+- an issue consumes substantial effort relative to the workstream;
+- user intervention or a shared-contract decision is required;
+- an undocumented workaround or unexpected dependency appears; or
+- a reusable technique or candidate skill is discovered.
+
+Each notable event records the attempted approach, evidence, impact, resolution or current state, and reusable lesson. Unknown metadata is marked `unknown` rather than inferred. Shared semantic, API, crate-boundary, conformance, scope, and coordination decisions receive append-only records under `decisions/`. Later decisions supersede earlier records instead of rewriting them.
+
+Phase 3 produces a retrospective and skill review in addition to the architectural report. Durable findings are promoted to `LEARNINGS.md`, which acts as a concise index linking to detailed evidence. Skill changes must cite observed friction or a repeated successful procedure; speculative skill ideas remain proposed or deferred.
+
+The repository skill at `.github/skills/rust-service-coordination/` provides templates and the `iteration-records.mjs` initializer and validator. Artifact validation is required before the Phase 2 integration commit and before the final Phase 3 commit. The validator checks structure and completeness markers; reviewers remain responsible for verifying that claims agree with commits, tests, and measurements.
+
 ## Work Phases
 
 ### Phase 1: Interactive foundation
@@ -179,17 +237,17 @@ Work interactively to turn the design into a compilable skeleton. Decisions may 
 - Implement enough of an in-memory reference to validate the traits.
 - Establish a conformance-test crate that can be expanded during implementation.
 - Stub crates for storage implementations, wrappers, integrations, and demos with their dependency direction encoded in the workspace.
-- Create a project skill that implements the Phase 2 Git, worktree, commit, reporting, and integration workflow described below.
+- Validate and refine the project coordination skill, templates, and artifact tooling against the compiling workspace.
 - Record unresolved semantic questions beside the crate that owns them rather than guessing prematurely.
 
-Deliverable: a compiling workspace, an initial tested kernel, a reference path, and crate boundaries suitable for independent Phase 2 work. Phase 1 ends with a validated foundation commit from which the first integration branch and all workstream worktrees are created.
+Deliverable: a compiling workspace, an initial tested kernel, a reference path, and crate boundaries suitable for independent Phase 2 work. Phase 1 ends with a validated foundation commit that becomes the recorded source for iteration `0001`.
 
 #### Phase 1 readiness gate
 
 Before creating Phase 2 worktrees, Phase 1 must also produce:
 
 - one documented command each for formatting, linting, building, testing, and running the initial example;
-- a workstream manifest naming each crate, owner, writable paths, dependencies, and expected deliverables;
+- a workstream manifest naming each planned crate and its dependencies, identifying the active iteration `0001` workstreams, and recording their owners, writable paths, expected evidence, and deliverables;
 - an initial conformance baseline that every applicable implementation can run without copying tests;
 - a decision log distinguishing settled kernel behavior from open research questions;
 - a dependency graph identifying which workstreams can start immediately and which depend on another result;
@@ -198,9 +256,29 @@ Before creating Phase 2 worktrees, Phase 1 must also produce:
 
 The gate does not require every research question to be answered. It requires unanswered questions to have an owner, an experiment or decision point, and a clear statement of whether they block another workstream.
 
+After the foundation commit, the coordinator initializes the iteration `0001` records, sets their `sourceCommit` to that foundation commit, completes the charter and workstream instructions, and runs `iteration-records.mjs validate 0001 start`. The resulting iteration kickoff commit is the common base from which the integration branch and selected workstream worktrees are created.
+
 ### Phase 2: Parallel implementation
 
-After the foundation compiles and its ownership boundaries are stable, multiple agents can implement the remaining crates in parallel. The streams below may proceed concurrently, with conformance tests and integration builds serving as the coordination mechanism.
+After the foundation compiles and its ownership boundaries are stable, multiple agents can implement a deliberately limited set of workstreams in parallel. Conformance tests and integration builds serve as the coordination mechanism.
+
+The workstreams listed in this phase are a research backlog, not a commitment to implement all of them in every iteration. Each Phase 3 review selects the smallest next set that can answer the most important open questions. Selection considers semantic risk, dependencies, integration cost, expected evidence, and the stability of the contracts involved. Workstreams not selected remain deferred without being treated as incomplete deliverables.
+
+#### First iteration scope
+
+Iteration `0001` is a contract-validation iteration. It contains only:
+
+- the in-memory reference implementation and conformance model;
+- the minimal file implementation;
+- a focused durable-log spike sufficient to test position, receipt, recovery, and durability semantics;
+- one transparent wrapper chosen during Phase 1 to test whether the kernel composes cleanly; and
+- a thin `fluid-sequencer` feasibility spike focused on final sequence metadata, reference stream positions, and any need for conditional or service-side sequencing primitives.
+
+The durable-log and `fluid-sequencer` spikes may produce throwaway prototypes, failing tests, or precise contract requirements instead of complete implementations. Browser storage, networking, caching, full encryption and compression coverage, complete Fluid integrations, broad optimization work, and comprehensive benchmarking remain deferred until Phase 3 explicitly selects them for a later iteration.
+
+Phase 1 records the exact wrapper chosen for iteration `0001`, the question it is intended to answer, and the acceptance criteria for each spike in the workstream manifest.
+
+The native Rust client work in iteration `0001` is part of the reference path rather than a separate broad client workstream. It exposes the raw traits and supports the counter example's framed append, replay, and snapshot recovery. Additional client conveniences require evidence and explicit selection in a later Phase 3 review.
 
 #### Reference implementation and conformance
 
@@ -251,7 +329,7 @@ Develop independently against the conformance suite:
 - `fluid-sequencer` multi-writer protocol adapter;
 - Fluid driver using `fluid-sequencer` and a binary protocol;
 - direct SharedTree integration with minimal runtime dependencies and a binary protocol;
-- public native Rust client API.
+- richer public native Rust client APIs beyond the iteration `0001` raw tier.
 
 Deliverable: evidence about which behaviors compose cleanly and which require changes to the kernel.
 
@@ -286,8 +364,14 @@ Phase 3 proceeds in this order:
 6. Present findings, alternatives, and tradeoffs for interactive review with the user.
 7. Make no structural, documentation, or shared-abstraction changes until the user approves the decisions.
 8. Apply the approved changes and update tests, documentation, crate boundaries, and shared APIs together.
-9. Review Phase 2 feedback about coordination and improve the project coordination skill when needed.
-10. Prepare scoped instructions for each Phase 2 agent or workstream, then begin another Phase 2 iteration.
+9. Complete the iteration retrospective, including costly issues, failed approaches, human interventions, and durable agentic-development lessons.
+10. Review Phase 2 feedback about coordination, complete the skill review, and apply approved skill improvements.
+11. Promote reusable findings to `LEARNINGS.md` and create or update append-only decision records.
+12. Review the Phase 2 research backlog and decide interactively whether the next iteration should keep, remove, replace, or expand its active workstreams.
+13. Update the workstream manifest with the selected scope, dependencies, research questions, expected evidence, and explicit deferrals.
+14. Prepare scoped instructions for each selected Phase 2 agent or workstream, validate the complete iteration record, then begin another Phase 2 iteration.
+
+Expansion is not automatic after a successful iteration. A workstream is added only when its prerequisite contracts are sufficiently stable and it answers a prioritized question that the current implementations cannot answer more cheaply. Phase 3 may also narrow the next iteration, repeat a spike, or defer expansion when results expose unresolved kernel semantics.
 
 This loop repeats until Phase 3 finds no justified adjustments and the user agrees that the evidence is sufficient:
 
@@ -366,6 +450,8 @@ Clarifications consistent with the decision log may be integrated during Phase 2
 
 Each agent or workstream must provide:
 
+- agent or owner and instruction provenance, branch, worktree, base commit, and ordered commit list;
+- its initial hypothesis, discriminating check, and the result of that check;
 - scope completed and deliverables produced;
 - tests, conformance checks, integration checks, and fault tests run;
 - performance, source size, bundle size, persisted size, and dependency measurements that apply to its scope;
@@ -373,9 +459,11 @@ Each agent or workstream must provide:
 - implementation-specific workarounds or undocumented exceptions;
 - capabilities that could not be expressed cleanly;
 - defects that are local to the implementation;
+- notable failed approaches, substantial effort sinks, and human interventions, with evidence and resolution;
 - proposed changes to traits, crate boundaries, factoring, or scope, with alternatives and tradeoffs;
-- remaining risks, unfinished work, and confidence level; and
-- feedback on workstream ownership, dependencies, the conformance suite, and the coordination skill; and
+- remaining risks, unfinished work, and confidence level;
+- feedback on workstream ownership, dependencies, the conformance suite, and the coordination skill;
+- candidate reusable skills or process changes and the situations that should trigger them; and
 - recommended instructions for the next Phase 2 iteration.
 
 Reports should include reproducible commands and machine-readable benchmark output where practical. A report may recommend no changes; it must still provide the evidence supporting that conclusion.
@@ -414,37 +502,51 @@ After all accepted work is integrated, the coordinator runs workspace-level vali
 Persistent iteration artifacts use this layout:
 
 ```text
-iterations/
-    0001/
-        phase-2/
-            integration.md
-            file-simple.md
-            file-durable.md
-            fluid-sequencer.md
-            ...
-        phase-3-report.md
-        next-phase-2-instructions/
-            file-simple.md
-            file-durable.md
-            fluid-sequencer.md
-            ...
+rust-service/
+    LEARNINGS.md
+    decisions/
+        0001-position-semantics.md
+        ...
+    iterations/
+        0001/
+            manifest.json
+            charter.md
+            phase-2/
+                instructions/
+                    file-simple.md
+                    ...
+                integration.md
+                file-simple.md
+                file-durable.md
+                fluid-sequencer.md
+                ...
+            phase-3-report.md
+            retrospective.md
+            skill-review.md
+            next-phase-2-instructions/
+                file-simple.md
+                file-durable.md
+                fluid-sequencer.md
+                ...
 ```
 
-Each workstream report is committed on that workstream branch and enters the integration branch with its implementation commits. The coordinator writes `phase-2/integration.md` with the accepted commit ranges, rejected or deferred work, conflict resolutions, and workspace-level validation results; committing this manifest creates the explicit Phase 2 integration boundary.
+The coordinator initializes each iteration with `.github/skills/rust-service-coordination/scripts/iteration-records.mjs`. Each workstream report is committed on that workstream branch and enters the integration branch with its implementation commits. The coordinator writes `phase-2/integration.md` with the accepted commit ranges, rejected or deferred work, conflict resolutions, and workspace-level validation results; committing this manifest creates the explicit Phase 2 integration boundary.
 
-Phase 3 produces one synthesis report plus scoped instructions for every continuing or newly created workstream. User-approved architecture, implementation, documentation, test, or coordination-skill changes may use additional focused commits. Phase 3 ends with a distinct commit containing the final report and next-iteration instructions; that commit is the immutable base for the next iteration.
+Phase 3 produces one synthesis report, a retrospective, a skill review, applicable decision records and learning-index updates, plus scoped instructions for every continuing or newly created workstream. User-approved architecture, implementation, documentation, test, or coordination-skill changes may use additional focused commits. Phase 3 ends with a distinct commit containing the final records and next-iteration instructions; that commit is the immutable base for the next iteration.
 
-Iteration reports are append-only historical records. Later iterations may supersede conclusions but must not rewrite earlier reports. The next iteration branches from the approved Phase 3 commit, ensuring every agent starts from the same decisions and instructions.
+Iteration reports and accepted decision records are append-only historical records. Later iterations may supersede conclusions but must not rewrite earlier records. The next iteration branches from the approved Phase 3 commit, ensuring every agent starts from the same decisions and instructions.
 
 ### Coordination skill
 
-Phase 1 creates a repository-scoped skill at `.github/skills/rust-service-coordination/SKILL.md` for starting, executing, integrating, and reporting an iteration. Its description must include the concrete Phase 2, Phase 3, worktree, integration, and iteration trigger terms that agents will use to discover it. The skill should provide:
+The repository-scoped skill at `.github/skills/rust-service-coordination/SKILL.md` governs starting, executing, integrating, and reporting an iteration. Phase 1 validates it against the implemented workspace, and later Phase 3 reviews maintain it. Its description must include the concrete Phase 2, Phase 3, worktree, integration, and iteration trigger terms that agents will use to discover it. The skill provides:
 
 - branch, worktree, and artifact naming rules;
 - commands or scripts for creating and removing worktrees safely;
 - a Phase 2 workstream instruction template;
 - the required Phase 2 report template;
+- iteration charter, retrospective, decision-record, learning-index, and skill-review guidance;
 - commit, clean-worktree, and validation checklists;
+- commands for initializing and structurally validating iteration artifacts;
 - integration order and conflict-handling guidance;
 - a Phase 3 synthesis and next-iteration instruction template; and
 - recovery guidance for abandoned, blocked, or partially integrated workstreams.
@@ -463,7 +565,8 @@ The Phase 2/3 loop ends only when the final Phase 3 review and the user agree th
 - benchmarks are reproducible and compare equivalent workloads and durability guarantees;
 - correctness, performance, source size, dependency footprint, native and browser bundle size, bandwidth, persisted size, and recovery behavior are covered where applicable;
 - comparisons include existing Fluid TypeScript implementations, in-memory versus persisted implementations, and minimal versus crash-safe file implementations where equivalent scenarios exist; and
-- negative, neutral, and inconclusive results are retained alongside positive findings.
+- negative, neutral, and inconclusive results are retained alongside positive findings; and
+- every iteration has a complete validated record, and durable architecture and agentic-development lessons link back to supporting evidence.
 
 ## Early Research Questions
 
@@ -475,6 +578,7 @@ The Phase 2/3 loop ends only when the final Phase 3 review and the user agree th
 6. What information must a stale-reader error expose without leaking implementation details?
 7. Can all network behavior preserve the same backpressure and cancellation contract?
 8. Which guarantees belong in `fluid-sequencer`, and which require cooperation from the generic kernel?
+9. Which native client conveniences are common across implementations, and which require optional capabilities or application policy?
 
 ## Initial Non-Goals
 
