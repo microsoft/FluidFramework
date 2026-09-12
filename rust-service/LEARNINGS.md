@@ -15,6 +15,8 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 - **Confirmed:** A storage receipt and an application-protocol acceptance are different contracts; validate and acknowledge Fluid operations in an authoritative adapter while keeping the kernel payload-agnostic. [Evidence](decisions/0004-authoritative-fluid-sequencer.md)
 - **Confirmed:** Opaque positions can cross process boundaries through an implementation-owned codec without exposing ordering or arithmetic. [Evidence](decisions/0005-opaque-position-codec.md)
 - **Provisional:** Keep duplicated framing and position mechanics while comparing buffered and durable implementations; factor only after equivalent guarantees reveal a stable common mechanism. [Evidence](iterations/0001/phase-2/integration.md#cross-workstream-findings)
+- **Confirmed:** A fencing authority must hold exclusivity across replay and semantic validation through append; fencing only the write permits validation against stale state. [Evidence](iterations/0003/phase-2/deployment-fencing.md#notable-events)
+- **Confirmed:** A process transport can preserve synchronous opaque-position codec laws with a client-verifiable, generation-scoped envelope while leaving retention validation to asynchronous backend operations. [Evidence](iterations/0003/phase-2/process-isolated-transport.md#contract-and-integration-friction)
 
 ## Correctness and Testing
 
@@ -34,3 +36,4 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 - **Confirmed:** A clean agent can begin Phase 1 from the plan, development policy, active report, and coordination skill without prior conversation context when repository instructions own the read order and completion gates. [Evidence](foundation-report.md#notable-events)
 - **Confirmed:** Independent workstreams should run concurrently once dependencies are satisfied; isolated worktrees and strict writable paths yielded conflict-free integration. [Evidence](iterations/0001/retrospective.md#agentic-development-findings)
 - **Confirmed:** Multi-worktree command evidence needs checkout identity and immediate shared-lockfile verification because delegated commands can report or modify the wrong checkout. [Evidence](iterations/0001/retrospective.md#costly-issues-and-dead-ends)
+- **Confirmed:** Implementation work must use a write-capable agent; a read-only exploration agent can produce plausible code proposals while leaving every required artifact untouched. [Evidence](iterations/0003/retrospective.md#costly-issues-and-dead-ends)
