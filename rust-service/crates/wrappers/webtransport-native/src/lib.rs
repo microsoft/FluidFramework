@@ -15,6 +15,7 @@ use fluid_service_protocol::{
     ErrorCode, Frame, HEADER_BYTES, Limits, Message, ProtocolError, Request, Response, decode,
     encode,
 };
+use futures_util::{StreamExt, stream::FuturesUnordered};
 use thiserror::Error;
 use tokio::time::timeout;
 use wtransport::{
@@ -28,12 +29,16 @@ const CLOSE_CODE: VarInt = VarInt::from_u32(1);
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct TransportMeasurement {
     pub wire_bytes: u64,
+    pub active_connections: usize,
+    pub peak_active_connections: usize,
     pub peak_active_streams: usize,
 }
 
 #[derive(Debug, Default)]
 struct Metrics {
     wire_bytes: AtomicU64,
+    active_connections: AtomicUsize,
+    peak_active_connections: AtomicUsize,
     active_streams: AtomicUsize,
     peak_active_streams: AtomicUsize,
 }
@@ -49,6 +54,13 @@ impl MeasurementHandle {
 }
 
 impl Metrics {
+    fn enter_connection(&self) -> ActiveConnection<'_> {
+        let active = self.active_connections.fetch_add(1, Ordering::Relaxed) + 1;
+        self.peak_active_connections
+            .fetch_max(active, Ordering::Relaxed);
+        ActiveConnection(self)
+    }
+
     fn add_wire_bytes(&self, count: usize) {
         self.wire_bytes.fetch_add(count as u64, Ordering::Relaxed);
     }
@@ -63,8 +75,18 @@ impl Metrics {
     fn snapshot(&self) -> TransportMeasurement {
         TransportMeasurement {
             wire_bytes: self.wire_bytes.load(Ordering::Relaxed),
+            active_connections: self.active_connections.load(Ordering::Relaxed),
+            peak_active_connections: self.peak_active_connections.load(Ordering::Relaxed),
             peak_active_streams: self.peak_active_streams.load(Ordering::Relaxed),
         }
+    }
+}
+
+struct ActiveConnection<'a>(&'a Metrics);
+
+impl Drop for ActiveConnection<'_> {
+    fn drop(&mut self) {
+        self.0.active_connections.fetch_sub(1, Ordering::Relaxed);
     }
 }
 
@@ -184,25 +206,34 @@ impl WebTransportServer {
     ///
     /// Returns an error when the endpoint is closed while waiting for a session.
     pub async fn serve(self) -> Result<(), WebTransportError> {
+        let mut connections = FuturesUnordered::new();
         loop {
-            let incoming = self.endpoint.accept().await;
-            let Ok(request) = incoming.await else {
-                continue;
-            };
-            if request.path() != "/fluid" {
-                request.forbidden().await;
+            if connections.len() == self.config.max_connections {
+                connections.next().await;
                 continue;
             }
-            let Ok(connection) = request.accept().await else {
-                continue;
-            };
-            serve_connection(
-                connection,
-                Arc::clone(&self.service),
-                self.config.clone(),
-                Arc::clone(&self.metrics),
-            )
-            .await;
+
+            tokio::select! {
+                incoming = self.endpoint.accept() => {
+                    let service = Arc::clone(&self.service);
+                    let config = self.config.clone();
+                    let metrics = Arc::clone(&self.metrics);
+                    connections.push(async move {
+                        let Ok(request) = incoming.await else {
+                            return;
+                        };
+                        if request.path() != "/fluid" {
+                            request.forbidden().await;
+                            return;
+                        }
+                        let Ok(connection) = request.accept().await else {
+                            return;
+                        };
+                        serve_connection(connection, service, config, metrics).await;
+                    });
+                }
+                _ = connections.next(), if !connections.is_empty() => {}
+            }
         }
     }
 }
@@ -213,6 +244,7 @@ async fn serve_connection(
     config: TransportConfig,
     metrics: Arc<Metrics>,
 ) {
+    let _active = metrics.enter_connection();
     loop {
         let Ok((send, receive)) = connection.accept_bi().await else {
             return;
@@ -522,6 +554,13 @@ mod tests {
                 let server_task = tokio::task::spawn_local(server.serve());
                 let mut client = WebTransportClient::connect(
                     format!("https://{address}/fluid"),
+                    certificate_hash.clone(),
+                    TransportConfig::default(),
+                )
+                .await
+                .unwrap();
+                let second_client = WebTransportClient::connect(
+                    format!("https://{address}/fluid"),
                     certificate_hash,
                     TransportConfig::default(),
                 )
@@ -536,6 +575,15 @@ mod tests {
                 .await
                 .unwrap(),
             Response::Acknowledged(Acknowledgement::Created)
+        );
+        assert_eq!(
+            second_client
+                .request(Request::LatestSnapshot {
+                    document: bytes(b"document"),
+                })
+                .await
+                .unwrap(),
+            Response::Snapshot(None)
         );
         assert_eq!(
             client
@@ -636,10 +684,15 @@ mod tests {
         let client_measurement = client.measurement();
         let server_measurement = server_metrics.snapshot();
         assert!(client_measurement.wire_bytes > 0);
-        assert_eq!(server_measurement.peak_active_streams, 1);
+        assert_eq!(server_measurement.active_connections, 2);
+        assert_eq!(server_measurement.peak_active_connections, 2);
+        assert!((1..=2).contains(&server_measurement.peak_active_streams));
         println!(
-            "NATIVE_EVIDENCE wire_bytes={} peak_active_streams={} reconnect_milliseconds={reconnect_milliseconds}",
-            client_measurement.wire_bytes, server_measurement.peak_active_streams
+            "NATIVE_EVIDENCE wire_bytes={} active_connections={} peak_active_connections={} peak_active_streams={} reconnect_milliseconds={reconnect_milliseconds}",
+            client_measurement.wire_bytes,
+            server_measurement.active_connections,
+            server_measurement.peak_active_connections,
+            server_measurement.peak_active_streams
         );
 
                 server_task.abort();

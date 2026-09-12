@@ -129,7 +129,9 @@ async function run() {
 		Number.parseInt(value, 16),
 	);
 	const client = await BrowserClient.connect(transportUrl, hash, 1024 * 1024);
+	const secondClient = await BrowserClient.connect(transportUrl, hash, 1024 * 1024);
 	let requestId = 1;
+	let secondRequestId = 1;
 
 	assert(
 		parseFrame(await request(client, requestId++, 1, field("browser-document"))).kind === 64,
@@ -164,16 +166,41 @@ async function run() {
 			field("equivalent-payload"),
 		),
 	);
+	const ambiguityResolution = await client.resolveSubmission(
+		encoder.encode("browser-document"),
+		encoder.encode("browser-writer"),
+		encoder.encode("browser-session"),
+		encoder.encode("browser-submission-1"),
+	);
+	assert(ambiguityResolution.kind === "committed", "submission resolution was not committed");
+	assert(
+		equalBytes(ambiguityResolution.position, firstPosition),
+		"submission resolution position mismatch",
+	);
+	assert(
+		parseFrame(
+			await request(
+				secondClient,
+				secondRequestId++,
+				2,
+				field("browser-document"),
+				field("second-browser-writer"),
+				field("second-browser-session"),
+				reference(firstPosition),
+			),
+		).kind === 64,
+		"second client open session failed",
+	);
 	submittedPosition(
 		await request(
-			client,
-			requestId++,
+			secondClient,
+			secondRequestId++,
 			3,
 			field("browser-document"),
-			field("browser-writer"),
-			field("browser-session"),
+			field("second-browser-writer"),
+			field("second-browser-session"),
 			field("browser-submission-2"),
-			u64(2),
+			u64(1),
 			reference(firstPosition),
 			field("second-payload"),
 		),
@@ -253,10 +280,14 @@ async function run() {
 	return {
 		status: "passed",
 		browser: navigator.userAgent,
-		wireBytes: client.wireBytes.toString(),
-		peakResponseBytes: client.peakResponseBytes,
+		transportSessionCount: 2,
+		wireBytes: (client.wireBytes + secondClient.wireBytes).toString(),
+		firstSessionWireBytes: client.wireBytes.toString(),
+		secondSessionWireBytes: secondClient.wireBytes.toString(),
+		peakResponseBytes: Math.max(client.peakResponseBytes, secondClient.peakResponseBytes),
 		reconnectMilliseconds: client.lastReconnectMilliseconds,
 		resumedRecords: resumedCount,
+		ambiguityResolution: ambiguityResolution.kind,
 		blobBytes: blobPayload.length,
 		summaryEntries: summary.length,
 		contentWireBytes: contentWireBytes.toString(),

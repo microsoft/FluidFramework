@@ -9,12 +9,10 @@ rust-version.workspace = true
 bytes.workspace = true
 fluid-native-service = { path = "../../service" }
 fluid-service-protocol = { path = "../../protocol" }
+futures-util.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 wtransport = "=0.7.2"
-
-[dev-dependencies]
-futures-util.workspace = true
 
 [lints]
 workspace = true
