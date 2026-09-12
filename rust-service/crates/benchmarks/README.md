@@ -33,6 +33,8 @@ The generic runner covers memory, buffered file, bounded local transport, indepe
 
 The service runner drives the public `NativeClient` against either direct `NativeService::handle` or the native HTTP/3 WebTransport client/server. Both use identical fixtures, FSP4 requests, durable service implementation, snapshot schedule, and explicit fresh-session reconnect. Direct service additionally measures clean lazy reopen; WebTransport reports encoded FSP4 bytes and peak active streams. These are equivalent application workloads, but direct calls and HTTP/3 transport are not equivalent transport guarantees.
 
+The empty-payload case covers the generic buffered-file path and direct service dispatch. It is intentionally omitted for native WebTransport because FSP4 rejects an empty required submission payload with `ProtocolError::EmptyField`; substituting a nonempty payload would not be the same fixture.
+
 The local bounded transport reports payload/token bytes and peak queued records. Its typed-boundary byte count excludes protocol framing and cannot be compared directly with FSP4 frame bytes. Native WebTransport counters include complete encoded FSP4 request and response frames but exclude QUIC, TLS, UDP, and IP overhead.
 
 Browser-WASM behavior has separate headless Chromium evidence for the same create/open/submit/read/snapshot/reconnect protocol flow. Browser `WebTransport` exposes neither packet-byte totals nor internal queue depth, so the matrix does not fabricate browser packet or queue observations and does not treat native FSP4 frame bytes as browser packet bytes.

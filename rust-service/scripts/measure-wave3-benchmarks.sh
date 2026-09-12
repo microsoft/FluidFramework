@@ -54,7 +54,9 @@ done
 
 for backend in native-service native-webtransport; do
 	run_cell --backend "$backend" --fixture small-compressible --records 200 --writers 1 --snapshot-frequency 50
-	run_cell --backend "$backend" --fixture empty --records 32 --writers 1 --snapshot-frequency 8
 done
+
+run_cell --backend native-service --fixture empty --records 32 --writers 1 --snapshot-frequency 8
+run_cell --backend file --fixture empty --records 32 --writers 1 --snapshot-frequency 8
 
 verify_assigned_roots_unchanged "$source_root"
