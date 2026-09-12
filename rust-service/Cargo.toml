@@ -14,6 +14,8 @@ members = [
     "crates/wrappers/encryption",
     "crates/wrappers/network",
     "crates/wrappers/stateful-compression",
+    "crates/wrappers/webtransport-browser",
+    "crates/wrappers/webtransport-native",
     "examples/counter",
     "examples/native-service",
 ]
