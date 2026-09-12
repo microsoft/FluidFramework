@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "iteration": "0004",
-  "status": "phase-2-complete",
+  "status": "complete",
   "sourceCommit": "a577eda313ebe68f6e8ba3e33e99ea0822a50d9a",
   "createdAt": "2026-09-12T16:39:58.134Z",
   "activeWorkstreams": [
@@ -41,10 +41,13 @@
     "hardware-power-loss",
     "browser-storage",
     "caching-and-retention",
-    "content-addressed-blobs",
-    "full-fluid-driver",
     "shared-tree-integration",
     "broad-optimization"
   ],
-  "nextWorkstreams": []
+  "nextWorkstreams": [
+    "projected-reads-ambiguity-recovery",
+    "content-addressed-blobs-summaries",
+    "browser-wasm-client-package",
+    "minimal-typescript-fluid-driver"
+  ]
 }
