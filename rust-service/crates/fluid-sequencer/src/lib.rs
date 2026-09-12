@@ -2,8 +2,13 @@
 
 use std::{
     collections::{BTreeMap, BTreeSet},
+    error::Error,
+    fmt,
+    fs::{File, OpenOptions},
     future::Future,
-    sync::{Arc, RwLock},
+    io::{Read, Seek, SeekFrom, Write},
+    path::{Path, PathBuf},
+    sync::{Arc, RwLock, RwLockReadGuard},
 };
 
 use bytes::{Buf, BufMut, Bytes, BytesMut};
@@ -419,21 +424,91 @@ where
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FenceToken(u64);
 
-struct FencedState<S> {
-    stream: S,
-    epoch: u64,
+/// Failures while accessing a deployment fencing authority.
+#[derive(Debug)]
+pub enum FenceAuthorityError {
+    Io(std::io::Error),
+    CorruptEpoch,
+    EpochExhausted,
 }
 
-/// A shared service-level gate that keeps fence validation atomic with append.
+impl fmt::Display for FenceAuthorityError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Io(error) => write!(formatter, "fencing authority I/O failed: {error}"),
+            Self::CorruptEpoch => formatter.write_str("fencing authority epoch is corrupt"),
+            Self::EpochExhausted => formatter.write_str("fencing authority epoch is exhausted"),
+        }
+    }
+}
+
+impl Error for FenceAuthorityError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::Io(error) => Some(error),
+            Self::CorruptEpoch | Self::EpochExhausted => None,
+        }
+    }
+}
+
+impl From<std::io::Error> for FenceAuthorityError {
+    fn from(error: std::io::Error) -> Self {
+        Self::Io(error)
+    }
+}
+
+#[derive(Clone)]
+enum FenceAuthority {
+    Process,
+    Deployment(Arc<PathBuf>),
+}
+
+/// A service-level gate that keeps fence validation atomic with replay, validation, and append.
 pub struct FencedStream<S> {
-    state: Arc<RwLock<FencedState<S>>>,
+    stream: Arc<S>,
+    process_epoch: Arc<RwLock<u64>>,
+    authority: FenceAuthority,
 }
 
 impl<S> Clone for FencedStream<S> {
     fn clone(&self) -> Self {
         Self {
-            state: Arc::clone(&self.state),
+            stream: Arc::clone(&self.stream),
+            process_epoch: Arc::clone(&self.process_epoch),
+            authority: self.authority.clone(),
         }
+    }
+}
+
+#[derive(Debug)]
+enum FenceAcquireError {
+    Lost,
+    Authority(FenceAuthorityError),
+}
+
+enum FenceGuard<'a, S> {
+    Process {
+        stream: &'a S,
+        _epoch: RwLockReadGuard<'a, u64>,
+    },
+    Deployment {
+        stream: &'a S,
+        _lock: File,
+    },
+}
+
+impl<S> FenceGuard<'_, S>
+where
+    S: SequencerStorage,
+{
+    fn stream(&self) -> &S {
+        match self {
+            Self::Process { stream, .. } | Self::Deployment { stream, .. } => stream,
+        }
+    }
+
+    async fn append(&self, value: Bytes) -> Result<AppendReceipt<S::Position>, S::Error> {
+        self.stream().append(value).await
     }
 }
 
@@ -445,74 +520,134 @@ where
     #[must_use]
     pub fn new(stream: S) -> Self {
         Self {
-            state: Arc::new(RwLock::new(FencedState { stream, epoch: 0 })),
+            stream: Arc::new(stream),
+            process_epoch: Arc::new(RwLock::new(0)),
+            authority: FenceAuthority::Process,
         }
+    }
+
+    /// Wraps a stream with a same-host file-lock and persisted-epoch authority.
+    ///
+    /// Independent processes must use the same authority path and storage resource.
+    ///
+    /// # Errors
+    ///
+    /// Returns an authority error when the epoch file cannot be opened or initialized.
+    pub fn with_deployment_authority(
+        stream: S,
+        authority_path: impl AsRef<Path>,
+    ) -> Result<Self, FenceAuthorityError> {
+        let authority_path = authority_path.as_ref().to_path_buf();
+        let mut file = open_locked_authority(&authority_path)?;
+        if file.metadata()?.len() == 0 {
+            write_epoch(&mut file, 0)?;
+        } else {
+            read_epoch(&mut file)?;
+        }
+        Ok(Self {
+            stream: Arc::new(stream),
+            process_epoch: Arc::new(RwLock::new(0)),
+            authority: FenceAuthority::Deployment(Arc::new(authority_path)),
+        })
     }
 
     /// Issues a new lease and invalidates all earlier tokens.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a deployment authority is configured and its epoch cannot be advanced. Deployment
+    /// callers should use [`Self::try_issue_fence`] to handle authority failures.
     #[must_use]
     pub fn issue_fence(&self) -> FenceToken {
-        let mut state = self
-            .state
-            .write()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        state.epoch += 1;
-        FenceToken(state.epoch)
+        self.try_issue_fence()
+            .expect("in-process fencing authority cannot fail")
     }
 
-    fn ensure_current(&self, fence: FenceToken) -> Result<(), FenceLost> {
-        let state = self
-            .state
-            .read()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        if state.epoch == fence.0 {
-            Ok(())
-        } else {
-            Err(FenceLost)
+    /// Issues a new lease, reporting deployment authority failures.
+    ///
+    /// # Errors
+    ///
+    /// Returns an authority error when the epoch cannot be read or advanced.
+    pub fn try_issue_fence(&self) -> Result<FenceToken, FenceAuthorityError> {
+        match &self.authority {
+            FenceAuthority::Process => {
+                let mut epoch = self
+                    .process_epoch
+                    .write()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner);
+                *epoch = epoch
+                    .checked_add(1)
+                    .ok_or(FenceAuthorityError::EpochExhausted)?;
+                Ok(FenceToken(*epoch))
+            }
+            FenceAuthority::Deployment(path) => {
+                let mut file = open_locked_authority(path)?;
+                let epoch = read_epoch(&mut file)?
+                    .checked_add(1)
+                    .ok_or(FenceAuthorityError::EpochExhausted)?;
+                write_epoch(&mut file, epoch)?;
+                Ok(FenceToken(epoch))
+            }
         }
     }
 
-    #[allow(clippy::await_holding_lock)]
-    async fn append(
-        &self,
-        fence: FenceToken,
-        value: Bytes,
-    ) -> Result<AppendReceipt<S::Position>, FencedAppendError<S::Error>> {
-        let state = self
-            .state
-            .read()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        if state.epoch != fence.0 {
-            return Err(FencedAppendError::FenceLost);
+    fn lock_current(&self, fence: FenceToken) -> Result<FenceGuard<'_, S>, FenceAcquireError> {
+        match &self.authority {
+            FenceAuthority::Process => {
+                let epoch = self
+                    .process_epoch
+                    .read()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner);
+                if *epoch != fence.0 {
+                    return Err(FenceAcquireError::Lost);
+                }
+                Ok(FenceGuard::Process {
+                    stream: &self.stream,
+                    _epoch: epoch,
+                })
+            }
+            FenceAuthority::Deployment(path) => {
+                let mut file = open_locked_authority(path).map_err(FenceAcquireError::Authority)?;
+                let epoch = read_epoch(&mut file).map_err(FenceAcquireError::Authority)?;
+                if epoch != fence.0 {
+                    return Err(FenceAcquireError::Lost);
+                }
+                Ok(FenceGuard::Deployment {
+                    stream: &self.stream,
+                    _lock: file,
+                })
+            }
         }
-        state
-            .stream
-            .append(value)
-            .await
-            .map_err(FencedAppendError::Storage)
-    }
-
-    #[allow(clippy::await_holding_lock)]
-    async fn read_all(&self) -> Result<Vec<ReadRecord<S::Position>>, S::Error> {
-        let state = self
-            .state
-            .read()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        state.stream.read_all().await
-    }
-
-    fn encode_position(&self, position: &S::Position) -> Result<PositionToken, S::Error> {
-        let state = self
-            .state
-            .read()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        state.stream.encode_position(position).map(PositionToken)
     }
 }
 
-enum FencedAppendError<E> {
-    FenceLost,
-    Storage(E),
+fn open_locked_authority(path: &Path) -> Result<File, FenceAuthorityError> {
+    let file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .open(path)?;
+    file.lock()?;
+    Ok(file)
+}
+
+fn read_epoch(file: &mut File) -> Result<u64, FenceAuthorityError> {
+    file.seek(SeekFrom::Start(0))?;
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes)?;
+    let bytes: [u8; 8] = bytes
+        .try_into()
+        .map_err(|_| FenceAuthorityError::CorruptEpoch)?;
+    Ok(u64::from_be_bytes(bytes))
+}
+
+fn write_epoch(file: &mut File, epoch: u64) -> Result<(), FenceAuthorityError> {
+    file.seek(SeekFrom::Start(0))?;
+    file.write_all(&epoch.to_be_bytes())?;
+    file.set_len(8)?;
+    file.sync_data()?;
+    Ok(())
 }
 
 /// The current process no longer owns the authoritative sequencer lease.
@@ -524,6 +659,7 @@ pub struct FenceLost;
 pub enum ServiceError<E> {
     Rejected(Rejection),
     FenceLost,
+    Authority(FenceAuthorityError),
     Storage(E),
     StorageAmbiguous(SubmissionId),
     RecoveryRequired,
@@ -571,13 +707,11 @@ where
         storage: FencedStream<S>,
         fence: FenceToken,
     ) -> Result<Self, ServiceError<S::Error>> {
-        storage
-            .ensure_current(fence)
-            .map_err(|_| ServiceError::FenceLost)?;
-        let state = replay(&storage).await?;
-        storage
-            .ensure_current(fence)
-            .map_err(|_| ServiceError::FenceLost)?;
+        let guard = storage
+            .lock_current(fence)
+            .map_err(map_fence_acquire_error)?;
+        let state = replay(&guard).await?;
+        drop(guard);
         Ok(Self {
             storage,
             fence,
@@ -602,24 +736,32 @@ where
         if self.recovery_required {
             return Err(ServiceError::RecoveryRequired);
         }
-        let entry = self
-            .state
+        let guard = self
+            .storage
+            .lock_current(self.fence)
+            .map_err(map_fence_acquire_error)?;
+        let mut state = replay(&guard).await?;
+        let entry = state
             .validate_session_start(writer_id, session_id, reference_position)
             .map_err(ServiceError::Rejected)?;
-        let receipt = match self.append_entry(&entry).await {
+        let frame = encode_entry(&entry).map_err(ServiceError::CorruptLog)?;
+        let receipt = match guard.append(frame).await.map_err(ServiceError::Storage) {
             Err(ServiceError::Storage(error)) if error.kind() == ErrorKind::Ambiguous => {
                 self.recovery_required = true;
                 return Err(ServiceError::Storage(error));
             }
             result => result?,
         };
-        let position = self
-            .storage
+        let position = guard
+            .stream()
             .encode_position(&receipt.position)
+            .map(PositionToken)
             .map_err(ServiceError::Storage)?;
-        self.state
+        state
             .apply(position, entry)
             .map_err(ServiceError::InvalidCommittedEntry)?;
+        drop(guard);
+        self.state = state;
         Ok(())
     }
 
@@ -637,15 +779,20 @@ where
         if self.recovery_required {
             return Err(ServiceError::RecoveryRequired);
         }
-        let entry = match self
-            .state
+        let guard = self
+            .storage
+            .lock_current(self.fence)
+            .map_err(map_fence_acquire_error)?;
+        let mut state = replay(&guard).await?;
+        let entry = match state
             .validate_submission(submission.clone())
             .map_err(ServiceError::Rejected)?
         {
             Preflight::Duplicate(message) => return Ok(SubmitOutcome::Duplicate(message)),
             Preflight::Append(entry) => entry,
         };
-        let receipt = match self.append_entry(&entry).await {
+        let frame = encode_entry(&entry).map_err(ServiceError::CorruptLog)?;
+        let receipt = match guard.append(frame).await.map_err(ServiceError::Storage) {
             Err(ServiceError::Storage(error)) if error.kind() == ErrorKind::Ambiguous => {
                 self.unresolved = Some(submission.clone());
                 self.recovery_required = true;
@@ -653,17 +800,19 @@ where
             }
             result => result?,
         };
-        let position = self
-            .storage
+        let position = guard
+            .stream()
             .encode_position(&receipt.position)
+            .map(PositionToken)
             .map_err(ServiceError::Storage)?;
-        let Some(message) = self
-            .state
+        let Some(message) = state
             .apply(position, entry)
             .map_err(ServiceError::InvalidCommittedEntry)?
         else {
             return Err(ServiceError::RecoveryRequired);
         };
+        drop(guard);
+        self.state = state;
         Ok(SubmitOutcome::Accepted(message))
     }
 
@@ -677,13 +826,11 @@ where
         let Some(submission) = self.unresolved.clone() else {
             return Err(ServiceError::RecoveryRequired);
         };
-        self.storage
-            .ensure_current(self.fence)
-            .map_err(|_| ServiceError::FenceLost)?;
-        let recovered = replay(&self.storage).await?;
-        self.storage
-            .ensure_current(self.fence)
-            .map_err(|_| ServiceError::FenceLost)?;
+        let guard = self
+            .storage
+            .lock_current(self.fence)
+            .map_err(map_fence_acquire_error)?;
+        let recovered = replay(&guard).await?;
         let outcome = recovered
             .accepted
             .get(&submission.submission_id)
@@ -692,37 +839,33 @@ where
                 || RecoveryOutcome::NotCommitted(submission),
                 RecoveryOutcome::Committed,
             );
+        drop(guard);
         self.state = recovered;
         self.unresolved = None;
         self.recovery_required = false;
         Ok(outcome)
     }
+}
 
-    async fn append_entry(
-        &self,
-        entry: &LogEntry,
-    ) -> Result<AppendReceipt<S::Position>, ServiceError<S::Error>> {
-        let frame = encode_entry(entry).map_err(ServiceError::CorruptLog)?;
-        self.storage
-            .append(self.fence, frame)
-            .await
-            .map_err(|error| match error {
-                FencedAppendError::FenceLost => ServiceError::FenceLost,
-                FencedAppendError::Storage(error) => ServiceError::Storage(error),
-            })
+fn map_fence_acquire_error<E>(error: FenceAcquireError) -> ServiceError<E> {
+    match error {
+        FenceAcquireError::Lost => ServiceError::FenceLost,
+        FenceAcquireError::Authority(error) => ServiceError::Authority(error),
     }
 }
 
-async fn replay<S>(storage: &FencedStream<S>) -> Result<SequencerState, ServiceError<S::Error>>
+async fn replay<S>(guard: &FenceGuard<'_, S>) -> Result<SequencerState, ServiceError<S::Error>>
 where
     S: SequencerStorage,
 {
+    let storage = guard.stream();
     let records = storage.read_all().await.map_err(ServiceError::Storage)?;
     let mut state = SequencerState::default();
     for record in records {
         let entry = decode_entry(record.payload).map_err(ServiceError::CorruptLog)?;
         let position = storage
             .encode_position(&record.position)
+            .map(PositionToken)
             .map_err(ServiceError::Storage)?;
         state
             .apply(position, entry)
@@ -859,11 +1002,17 @@ fn take_reference(frame: &mut Bytes) -> Result<SnapshotPosition<PositionToken>, 
 #[cfg(test)]
 mod tests {
     use std::{
+        env,
         error::Error,
         fmt,
+        fs::{self, OpenOptions},
         future::Future,
+        path::{Path, PathBuf},
+        process::{Child, Command},
         sync::{Arc, Mutex},
         task::{Context, Poll, Waker},
+        thread,
+        time::{Duration, Instant, SystemTime, UNIX_EPOCH},
     };
 
     use snapshotted_stream_core::Durability;
@@ -1307,4 +1456,477 @@ mod tests {
             assert_eq!(stream.len(), stored);
         }
     );
+
+    #[derive(Clone, Debug)]
+    struct ProcessFileStream {
+        log_path: PathBuf,
+        ambiguity_path: PathBuf,
+    }
+
+    impl ProcessFileStream {
+        fn new(directory: &Path) -> Self {
+            Self {
+                log_path: directory.join("sequencer.log"),
+                ambiguity_path: directory.join("next-append"),
+            }
+        }
+
+        fn records(&self) -> Result<Vec<Bytes>, ProcessFileError> {
+            let bytes = match fs::read(&self.log_path) {
+                Ok(bytes) => bytes,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => Vec::new(),
+                Err(error) => return Err(ProcessFileError::Io(error)),
+            };
+            let mut offset = 0;
+            let mut records = Vec::new();
+            while offset < bytes.len() {
+                let length_bytes: [u8; 4] = bytes
+                    .get(offset..offset + 4)
+                    .ok_or(ProcessFileError::CorruptLog)?
+                    .try_into()
+                    .map_err(|_| ProcessFileError::CorruptLog)?;
+                offset += 4;
+                let length = usize::try_from(u32::from_be_bytes(length_bytes))
+                    .map_err(|_| ProcessFileError::CorruptLog)?;
+                let payload = bytes
+                    .get(offset..offset + length)
+                    .ok_or(ProcessFileError::CorruptLog)?;
+                records.push(Bytes::copy_from_slice(payload));
+                offset += length;
+            }
+            Ok(records)
+        }
+
+        fn pause_after_fence_validation() -> Result<(), ProcessFileError> {
+            let Ok(marker) = env::var("FLUID_FENCE_VALIDATED_MARKER") else {
+                return Ok(());
+            };
+            fs::write(marker, b"validated")?;
+            let release = PathBuf::from(
+                env::var("FLUID_FENCE_RELEASE_MARKER")
+                    .map_err(|_| ProcessFileError::MissingEnvironment)?,
+            );
+            wait_for_path(&release, Duration::from_secs(10));
+            Ok(())
+        }
+    }
+
+    #[derive(Debug)]
+    enum ProcessFileError {
+        Io(std::io::Error),
+        Ambiguous,
+        CorruptLog,
+        MissingEnvironment,
+    }
+
+    impl fmt::Display for ProcessFileError {
+        fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Self::Io(error) => write!(formatter, "process file stream I/O failed: {error}"),
+                Self::Ambiguous => formatter.write_str("append result is ambiguous"),
+                Self::CorruptLog => formatter.write_str("process file stream is corrupt"),
+                Self::MissingEnvironment => {
+                    formatter.write_str("process test environment is incomplete")
+                }
+            }
+        }
+    }
+
+    impl Error for ProcessFileError {
+        fn source(&self) -> Option<&(dyn Error + 'static)> {
+            match self {
+                Self::Io(error) => Some(error),
+                Self::Ambiguous | Self::CorruptLog | Self::MissingEnvironment => None,
+            }
+        }
+    }
+
+    impl From<std::io::Error> for ProcessFileError {
+        fn from(error: std::io::Error) -> Self {
+            Self::Io(error)
+        }
+    }
+
+    impl ClassifiedError for ProcessFileError {
+        fn kind(&self) -> ErrorKind {
+            match self {
+                Self::Ambiguous => ErrorKind::Ambiguous,
+                Self::CorruptLog => ErrorKind::Corrupt,
+                Self::Io(_) | Self::MissingEnvironment => ErrorKind::Unavailable,
+            }
+        }
+    }
+
+    impl SequencerStorage for ProcessFileStream {
+        type Position = TestPosition;
+        type Error = ProcessFileError;
+
+        fn append(
+            &self,
+            value: Bytes,
+        ) -> impl Future<Output = Result<AppendReceipt<Self::Position>, Self::Error>> + Send
+        {
+            let result = (|| {
+                Self::pause_after_fence_validation()?;
+                let ambiguity = match fs::read_to_string(&self.ambiguity_path) {
+                    Ok(value) => {
+                        fs::remove_file(&self.ambiguity_path)?;
+                        Some(value)
+                    }
+                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+                    Err(error) => return Err(ProcessFileError::Io(error)),
+                };
+                if ambiguity.as_deref() != Some("not-committed") {
+                    let ordinal = self.records()?.len() + 1;
+                    let length =
+                        u32::try_from(value.len()).map_err(|_| ProcessFileError::CorruptLog)?;
+                    let mut file = OpenOptions::new()
+                        .create(true)
+                        .append(true)
+                        .open(&self.log_path)?;
+                    file.write_all(&length.to_be_bytes())?;
+                    file.write_all(&value)?;
+                    file.sync_data()?;
+                    if ambiguity.as_deref() == Some("committed") {
+                        return Err(ProcessFileError::Ambiguous);
+                    }
+                    return Ok(AppendReceipt {
+                        position: TestPosition(
+                            u64::try_from(ordinal).map_err(|_| ProcessFileError::CorruptLog)?,
+                        ),
+                        durability: Durability::Durable,
+                    });
+                }
+                Err(ProcessFileError::Ambiguous)
+            })();
+            std::future::ready(result)
+        }
+
+        fn read_all(
+            &self,
+        ) -> impl Future<Output = Result<Vec<ReadRecord<Self::Position>>, Self::Error>> + Send
+        {
+            let result = self.records().and_then(|records| {
+                records
+                    .into_iter()
+                    .enumerate()
+                    .map(|(index, payload)| {
+                        Ok(ReadRecord {
+                            position: TestPosition(
+                                u64::try_from(index + 1)
+                                    .map_err(|_| ProcessFileError::CorruptLog)?,
+                            ),
+                            payload,
+                        })
+                    })
+                    .collect()
+            });
+            std::future::ready(result)
+        }
+
+        fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error> {
+            if position.0 == 0 {
+                return Err(ProcessFileError::CorruptLog);
+            }
+            Ok(Bytes::copy_from_slice(&position.0.to_be_bytes()))
+        }
+    }
+
+    fn deployment_storage(
+        directory: &Path,
+    ) -> Result<FencedStream<ProcessFileStream>, FenceAuthorityError> {
+        FencedStream::with_deployment_authority(
+            ProcessFileStream::new(directory),
+            directory.join("authority.epoch"),
+        )
+    }
+
+    fn wait_for_path(path: &Path, timeout: Duration) {
+        let deadline = Instant::now() + timeout;
+        while !path.exists() {
+            assert!(Instant::now() < deadline, "timed out waiting for {path:?}");
+            thread::sleep(Duration::from_millis(5));
+        }
+    }
+
+    fn wait_for_child(child: &mut Child, timeout: Duration) {
+        let deadline = Instant::now() + timeout;
+        loop {
+            match child.try_wait().unwrap() {
+                Some(status) => {
+                    assert!(status.success(), "child process failed with {status}");
+                    return;
+                }
+                None if Instant::now() < deadline => thread::sleep(Duration::from_millis(5)),
+                None => {
+                    child.kill().unwrap();
+                    child.wait().unwrap();
+                    panic!("child process exceeded {timeout:?}");
+                }
+            }
+        }
+    }
+
+    fn spawn_worker(directory: &Path, role: &str, epoch: u64) -> Child {
+        Command::new(env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "tests::deployment_fencing_process_worker",
+                "--ignored",
+                "--nocapture",
+            ])
+            .env("FLUID_FENCE_TEST_DIRECTORY", directory)
+            .env("FLUID_FENCE_TEST_ROLE", role)
+            .env("FLUID_FENCE_TEST_EPOCH", epoch.to_string())
+            .spawn()
+            .unwrap()
+    }
+
+    fn process_test_directory() -> PathBuf {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let directory = env::temp_dir().join(format!(
+            "fluid-deployment-fencing-{}-{unique}",
+            std::process::id()
+        ));
+        fs::create_dir(&directory).unwrap();
+        directory
+    }
+
+    #[test]
+    #[ignore = "launched by deployment_file_authority_fences_independent_processes"]
+    fn deployment_fencing_process_worker() {
+        let Ok(role) = env::var("FLUID_FENCE_TEST_ROLE") else {
+            return;
+        };
+        let directory = PathBuf::from(env::var("FLUID_FENCE_TEST_DIRECTORY").unwrap());
+        let epoch = env::var("FLUID_FENCE_TEST_EPOCH")
+            .unwrap()
+            .parse::<u64>()
+            .unwrap();
+        if role == "replacement" {
+            fs::write(directory.join("rotation-attempted"), b"attempted").unwrap();
+        }
+        let storage = deployment_storage(&directory).unwrap();
+        match role.as_str() {
+            "old-owner" => block_on(async {
+                let mut sequencer = AuthoritativeSequencer::recover(storage, FenceToken(epoch))
+                    .await
+                    .unwrap();
+                assert!(matches!(
+                    sequencer
+                        .submit(submission(
+                            &writer(b"alice"),
+                            &session(b"session-1"),
+                            b"old-owner-1",
+                            1,
+                            SnapshotPosition::Initial,
+                        ))
+                        .await
+                        .unwrap(),
+                    SubmitOutcome::Accepted(_)
+                ));
+            }),
+            "replacement" => block_on(async {
+                let next_fence = storage.try_issue_fence().unwrap();
+                fs::write(directory.join("rotation-complete"), b"complete").unwrap();
+                let mut sequencer = AuthoritativeSequencer::recover(storage, next_fence)
+                    .await
+                    .unwrap();
+                assert!(matches!(
+                    sequencer
+                        .submit(submission(
+                            &writer(b"alice"),
+                            &session(b"session-1"),
+                            b"replacement-2",
+                            2,
+                            SnapshotPosition::Initial,
+                        ))
+                        .await
+                        .unwrap(),
+                    SubmitOutcome::Accepted(_)
+                ));
+            }),
+            "stale-owner" => block_on(async {
+                assert!(matches!(
+                    AuthoritativeSequencer::recover(storage, FenceToken(epoch)).await,
+                    Err(ServiceError::FenceLost)
+                ));
+            }),
+            "crash-holder" => {
+                let _guard = storage.lock_current(FenceToken(epoch)).unwrap();
+                fs::write(directory.join("crash-lock-held"), b"held").unwrap();
+                loop {
+                    thread::park_timeout(Duration::from_secs(10));
+                }
+            }
+            other => panic!("unknown process test role {other}"),
+        }
+    }
+
+    async_test!(deployment_file_authority_fences_independent_processes, {
+        let directory = process_test_directory();
+        let authority_path = directory.join("authority.epoch");
+        let storage = deployment_storage(&directory).unwrap();
+        let initial_fence = storage.try_issue_fence().unwrap();
+        assert_eq!(initial_fence, FenceToken(1));
+        let mut initial = AuthoritativeSequencer::recover(storage.clone(), initial_fence)
+            .await
+            .unwrap();
+        initial
+            .connect(
+                writer(b"alice"),
+                session(b"session-1"),
+                SnapshotPosition::Initial,
+            )
+            .await
+            .unwrap();
+        drop(initial);
+
+        let validated = directory.join("old-validated");
+        let release = directory.join("release-old");
+        let mut old_owner = Command::new(env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "tests::deployment_fencing_process_worker",
+                "--ignored",
+                "--nocapture",
+            ])
+            .env("FLUID_FENCE_TEST_DIRECTORY", &directory)
+            .env("FLUID_FENCE_TEST_ROLE", "old-owner")
+            .env("FLUID_FENCE_TEST_EPOCH", "1")
+            .env("FLUID_FENCE_VALIDATED_MARKER", &validated)
+            .env("FLUID_FENCE_RELEASE_MARKER", &release)
+            .spawn()
+            .unwrap();
+        wait_for_path(&validated, Duration::from_secs(10));
+
+        let probe = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(&authority_path)
+            .unwrap();
+        assert!(matches!(
+            probe.try_lock(),
+            Err(std::fs::TryLockError::WouldBlock)
+        ));
+
+        let mut replacement = spawn_worker(&directory, "replacement", 1);
+        wait_for_path(
+            &directory.join("rotation-attempted"),
+            Duration::from_secs(10),
+        );
+        assert!(!directory.join("rotation-complete").exists());
+        let handoff_started = Instant::now();
+        fs::write(&release, b"release").unwrap();
+        wait_for_child(&mut old_owner, Duration::from_secs(10));
+        wait_for_child(&mut replacement, Duration::from_secs(10));
+        let handoff_elapsed = handoff_started.elapsed();
+        assert!(directory.join("rotation-complete").exists());
+
+        let mut stale_owner = spawn_worker(&directory, "stale-owner", 1);
+        wait_for_child(&mut stale_owner, Duration::from_secs(10));
+
+        let mut crash_holder = spawn_worker(&directory, "crash-holder", 2);
+        wait_for_path(&directory.join("crash-lock-held"), Duration::from_secs(10));
+        let crash_probe = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(&authority_path)
+            .unwrap();
+        assert!(matches!(
+            crash_probe.try_lock(),
+            Err(std::fs::TryLockError::WouldBlock)
+        ));
+        crash_holder.kill().unwrap();
+        crash_holder.wait().unwrap();
+        let process_loss_started = Instant::now();
+        let replacement_fence = storage.try_issue_fence().unwrap();
+        let process_loss_elapsed = process_loss_started.elapsed();
+        assert_eq!(replacement_fence, FenceToken(3));
+
+        let mut recovered = AuthoritativeSequencer::recover(storage, replacement_fence)
+            .await
+            .unwrap();
+        let replacement_submission = submission(
+            &writer(b"alice"),
+            &session(b"session-1"),
+            b"replacement-2",
+            2,
+            SnapshotPosition::Initial,
+        );
+        assert!(matches!(
+            recovered
+                .submit(replacement_submission.clone())
+                .await
+                .unwrap(),
+            SubmitOutcome::Duplicate(_)
+        ));
+
+        fs::write(directory.join("next-append"), b"committed").unwrap();
+        let committed = submission(
+            &writer(b"alice"),
+            &session(b"session-1"),
+            b"ambiguous-committed-3",
+            3,
+            SnapshotPosition::Initial,
+        );
+        assert!(matches!(
+            recovered.submit(committed.clone()).await,
+            Err(ServiceError::StorageAmbiguous(_))
+        ));
+        assert!(matches!(
+            recovered.resolve_ambiguous().await.unwrap(),
+            RecoveryOutcome::Committed(_)
+        ));
+        assert!(matches!(
+            recovered.submit(committed).await.unwrap(),
+            SubmitOutcome::Duplicate(_)
+        ));
+
+        fs::write(directory.join("next-append"), b"not-committed").unwrap();
+        let not_committed = submission(
+            &writer(b"alice"),
+            &session(b"session-1"),
+            b"ambiguous-not-committed-4",
+            4,
+            SnapshotPosition::Initial,
+        );
+        assert!(matches!(
+            recovered.submit(not_committed.clone()).await,
+            Err(ServiceError::StorageAmbiguous(_))
+        ));
+        assert_eq!(
+            recovered.resolve_ambiguous().await.unwrap(),
+            RecoveryOutcome::NotCommitted(not_committed.clone())
+        );
+        assert!(matches!(
+            recovered.submit(not_committed).await.unwrap(),
+            SubmitOutcome::Accepted(_)
+        ));
+
+        let workload_started = Instant::now();
+        for local_sequence_number in 5..=20 {
+            let submission_id = format!("workload-{local_sequence_number}");
+            let operation = Submission {
+                writer_id: writer(b"alice"),
+                session_id: session(b"session-1"),
+                submission_id: SubmissionId::new(Bytes::from(submission_id)).unwrap(),
+                local_sequence_number,
+                reference_position: SnapshotPosition::Initial,
+                payload: Bytes::from_static(b"payload"),
+            };
+            assert!(matches!(
+                recovered.submit(operation).await.unwrap(),
+                SubmitOutcome::Accepted(_)
+            ));
+        }
+        let workload_elapsed = workload_started.elapsed();
+        println!(
+            "deployment fencing observations: handoff={handoff_elapsed:?}, process_loss_reacquire={process_loss_elapsed:?}, 16_guarded_appends={workload_elapsed:?}"
+        );
+        fs::remove_dir_all(directory).unwrap();
+    });
 }
