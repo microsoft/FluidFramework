@@ -377,7 +377,7 @@ fn decode_message(kind: u8, mut body: Bytes, limits: Limits) -> Result<Message, 
 }
 
 fn decode_request(kind: u8, body: &mut Bytes, limits: Limits) -> Result<Request, ProtocolError> {
-    match kind {
+    Ok(match kind {
         CREATE => Request::Create {
             document: take_bytes(body, limits.max_document_bytes)?,
         },
@@ -423,7 +423,7 @@ fn decode_request(kind: u8, body: &mut Bytes, limits: Limits) -> Result<Request,
         },
         SHUTDOWN => Request::Shutdown,
         _ => return Err(ProtocolError::InvalidKind),
-    }
+    })
 }
 
 fn decode_response(kind: u8, body: &mut Bytes, limits: Limits) -> Result<Response, ProtocolError> {

@@ -190,112 +190,136 @@ impl Document {
                 session,
                 reference,
                 ..
-            } => {
-                self.sequencer
-                    .connect(
-                        WriterId::new(writer).map_err(|_| ErrorCode::InvalidRequest)?,
-                        SessionId::new(session).map_err(|_| ErrorCode::InvalidRequest)?,
-                        protocol_reference(reference)?,
-                    )
-                    .await
-                    .map_err(map_sequencer_error)?;
-                Ok(Response::Acknowledged(Acknowledgement::SessionOpened))
-            }
-            Request::Submit(submission) => {
-                let outcome = self
-                    .sequencer
-                    .submit(SequencerSubmission {
-                        writer_id: WriterId::new(submission.writer)
-                            .map_err(|_| ErrorCode::InvalidRequest)?,
-                        session_id: SessionId::new(submission.session)
-                            .map_err(|_| ErrorCode::InvalidRequest)?,
-                        submission_id: SubmissionId::new(submission.submission)
-                            .map_err(|_| ErrorCode::InvalidRequest)?,
-                        local_sequence_number: submission.local_sequence_number,
-                        reference_position: protocol_reference(submission.reference)?,
-                        payload: submission.payload,
-                    })
-                    .await
-                    .map_err(map_sequencer_error)?;
-                let (disposition, message) = match outcome {
-                    SubmitOutcome::Accepted(message) => (SubmissionDisposition::Accepted, message),
-                    SubmitOutcome::Duplicate(message) => {
-                        (SubmissionDisposition::Duplicate, message)
-                    }
-                };
-                Ok(submitted_response(disposition, message))
-            }
-            Request::Read { after, .. } => {
-                let after = match after {
-                    Some(token) => Some(self.storage.decode_position(&token).await?),
-                    None => None,
-                };
-                let mut reader = self
-                    .storage
-                    .log
-                    .read(after.as_ref())
-                    .await
-                    .map_err(|error| map_storage_error(&error))?;
-                let mut records = Vec::new();
-                let mut payload_bytes = 0_usize;
-                while let Some(record) = reader.next().await {
-                    let record = record.map_err(|error| map_storage_error(&error))?;
-                    let next_payload_bytes = payload_bytes.saturating_add(record.payload.len());
-                    if !records.is_empty()
-                        && (records.len() == MAX_READ_RECORDS
-                            || next_payload_bytes > MAX_READ_PAYLOAD_BYTES)
-                    {
-                        break;
-                    }
-                    payload_bytes = next_payload_bytes;
-                    records.push(CommittedRecord {
-                        position: self.storage.token_for(&record.position)?,
-                        payload: record.payload,
-                    });
-                }
-                Ok(Response::Read { records })
-            }
-            Request::LatestSnapshot { .. } => {
-                let latest = self
-                    .storage
-                    .log
-                    .latest()
-                    .await
-                    .map_err(|error| map_storage_error(&error))?;
-                Ok(Response::Snapshot(
-                    latest
-                        .map(|snapshot| self.protocol_snapshot(snapshot))
-                        .transpose()?,
-                ))
-            }
+            } => self.open_session(writer, session, reference).await,
+            Request::Submit(submission) => self.submit(submission).await,
+            Request::Read { after, .. } => self.read(after).await,
+            Request::LatestSnapshot { .. } => self.latest_snapshot().await,
             Request::PublishSnapshot {
                 includes_through,
                 expected_parent,
                 payload,
                 ..
             } => {
-                let includes_through = match includes_through {
-                    Reference::Initial => SnapshotPosition::Initial,
-                    Reference::At(token) => {
-                        SnapshotPosition::At(self.storage.decode_position(&token).await?)
-                    }
-                };
-                let expected_parent = expected_parent.map(SnapshotId::from_bytes);
-                self.storage
-                    .log
-                    .publish(
-                        Snapshot {
-                            includes_through,
-                            payload,
-                        },
-                        expected_parent.as_ref(),
-                    )
+                self.publish_snapshot(includes_through, expected_parent, payload)
                     .await
-                    .map_err(|error| map_storage_error(&error))?;
-                Ok(Response::Acknowledged(Acknowledgement::SnapshotPublished))
             }
             Request::Create { .. } | Request::Shutdown => Err(ErrorCode::InvalidRequest),
         }
+    }
+
+    async fn open_session(
+        &mut self,
+        writer: Bytes,
+        session: Bytes,
+        reference: Reference,
+    ) -> Result<Response, ErrorCode> {
+        self.sequencer
+            .connect(
+                WriterId::new(writer).map_err(|_| ErrorCode::InvalidRequest)?,
+                SessionId::new(session).map_err(|_| ErrorCode::InvalidRequest)?,
+                protocol_reference(reference)?,
+            )
+            .await
+            .map_err(map_sequencer_error)?;
+        Ok(Response::Acknowledged(Acknowledgement::SessionOpened))
+    }
+
+    async fn submit(
+        &mut self,
+        submission: fluid_service_protocol::Submission,
+    ) -> Result<Response, ErrorCode> {
+        let outcome = self
+            .sequencer
+            .submit(SequencerSubmission {
+                writer_id: WriterId::new(submission.writer)
+                    .map_err(|_| ErrorCode::InvalidRequest)?,
+                session_id: SessionId::new(submission.session)
+                    .map_err(|_| ErrorCode::InvalidRequest)?,
+                submission_id: SubmissionId::new(submission.submission)
+                    .map_err(|_| ErrorCode::InvalidRequest)?,
+                local_sequence_number: submission.local_sequence_number,
+                reference_position: protocol_reference(submission.reference)?,
+                payload: submission.payload,
+            })
+            .await
+            .map_err(map_sequencer_error)?;
+        let (disposition, message) = match outcome {
+            SubmitOutcome::Accepted(message) => (SubmissionDisposition::Accepted, message),
+            SubmitOutcome::Duplicate(message) => (SubmissionDisposition::Duplicate, message),
+        };
+        Ok(submitted_response(disposition, message))
+    }
+
+    async fn read(&self, after: Option<Bytes>) -> Result<Response, ErrorCode> {
+        let after = match after {
+            Some(token) => Some(self.storage.decode_position(&token).await?),
+            None => None,
+        };
+        let mut reader = self
+            .storage
+            .log
+            .read(after.as_ref())
+            .await
+            .map_err(|error| map_storage_error(&error))?;
+        let mut records = Vec::new();
+        let mut payload_bytes = 0_usize;
+        while let Some(record) = reader.next().await {
+            let record = record.map_err(|error| map_storage_error(&error))?;
+            let next_payload_bytes = payload_bytes.saturating_add(record.payload.len());
+            if !records.is_empty()
+                && (records.len() == MAX_READ_RECORDS
+                    || next_payload_bytes > MAX_READ_PAYLOAD_BYTES)
+            {
+                break;
+            }
+            payload_bytes = next_payload_bytes;
+            records.push(CommittedRecord {
+                position: self.storage.token_for(&record.position)?,
+                payload: record.payload,
+            });
+        }
+        Ok(Response::Read { records })
+    }
+
+    async fn latest_snapshot(&self) -> Result<Response, ErrorCode> {
+        let latest = self
+            .storage
+            .log
+            .latest()
+            .await
+            .map_err(|error| map_storage_error(&error))?;
+        Ok(Response::Snapshot(
+            latest
+                .map(|snapshot| self.protocol_snapshot(snapshot))
+                .transpose()?,
+        ))
+    }
+
+    async fn publish_snapshot(
+        &self,
+        includes_through: Reference,
+        expected_parent: Option<Bytes>,
+        payload: Bytes,
+    ) -> Result<Response, ErrorCode> {
+        let includes_through = match includes_through {
+            Reference::Initial => SnapshotPosition::Initial,
+            Reference::At(token) => {
+                SnapshotPosition::At(self.storage.decode_position(&token).await?)
+            }
+        };
+        let expected_parent = expected_parent.map(SnapshotId::from_bytes);
+        self.storage
+            .log
+            .publish(
+                Snapshot {
+                    includes_through,
+                    payload,
+                },
+                expected_parent.as_ref(),
+            )
+            .await
+            .map_err(|error| map_storage_error(&error))?;
+        Ok(Response::Acknowledged(Acknowledgement::SnapshotPublished))
     }
 
     fn protocol_snapshot(
