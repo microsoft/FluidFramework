@@ -42,6 +42,9 @@ export interface TarballMetadata {
 	readonly fileName: string;
 }
 
+/**
+ * Default maximum number of initial registry preflight checks to execute concurrently.
+ */
 const publishPreflightConcurrency = 10;
 
 /**
