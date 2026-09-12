@@ -26,7 +26,7 @@ use snapshotted_stream_core::{
 };
 use thiserror::Error;
 
-const MAGIC: [u8; 8] = *b"SDLOG001";
+const MAGIC: [u8; 8] = *b"SDLOG002";
 const HEADER_LEN: usize = 24;
 const FRAME_MAGIC: [u8; 4] = *b"RECD";
 const FRAME_TRAILER_MAGIC: [u8; 4] = *b"ENDR";
@@ -365,7 +365,10 @@ impl SnapshotStore for DurableLog {
                 position.ordinal
             }
         };
-        let actual_parent = state.latest_snapshot.as_ref().map(|published| &published.id);
+        let actual_parent = state
+            .latest_snapshot
+            .as_ref()
+            .map(|published| &published.id);
         if actual_parent != expected_parent {
             return Err(DurableLogError::SnapshotConflict);
         }
@@ -379,12 +382,7 @@ impl SnapshotStore for DurableLog {
         }
 
         let id = snapshot_id(self.generation, ordinal, &snapshot.payload)?;
-        let encoded = encode_snapshot(
-            self.generation,
-            ordinal,
-            actual_parent,
-            &snapshot.payload,
-        )?;
+        let encoded = encode_snapshot(self.generation, ordinal, actual_parent, &snapshot.payload)?;
         let pending_path = self.directory.join(SNAPSHOT_TEMP_FILE);
         let current_path = self.directory.join(SNAPSHOT_FILE);
         let mut pending = File::create(&pending_path)?;
@@ -460,13 +458,7 @@ fn encode_snapshot(
         Some(_) => return Err(DurableLogError::Corrupt("invalid snapshot parent id")),
         None => 0,
     };
-    let checksum = snapshot_checksum(
-        generation,
-        ordinal,
-        parent_present,
-        &parent_bytes,
-        payload,
-    );
+    let checksum = snapshot_checksum(generation, ordinal, parent_present, &parent_bytes, payload);
     let mut bytes = Vec::with_capacity(
         SNAPSHOT_HEADER_LEN
             .checked_add(payload.len())
@@ -483,11 +475,7 @@ fn encode_snapshot(
     bytes.extend_from_slice(&checksum.to_be_bytes());
     bytes.extend_from_slice(&(!checksum).to_be_bytes());
     bytes.extend_from_slice(payload);
-    bytes.extend_from_slice(&frame_fields(
-        SNAPSHOT_TRAILER_MAGIC,
-        length,
-        checksum,
-    ));
+    bytes.extend_from_slice(&frame_fields(SNAPSHOT_TRAILER_MAGIC, length, checksum));
     Ok(bytes)
 }
 
@@ -661,9 +649,9 @@ fn parse_log(bytes: &[u8]) -> Result<(u128, Vec<Bytes>, u64), DurableLogError> {
         let trailer_start = cursor
             .checked_add(length)
             .ok_or(DurableLogError::Corrupt("record length overflow"))?;
-        let Some(frame_trailer) = bytes.get(
-            trailer_start..trailer_start.saturating_add(FRAME_TRAILER_LEN),
-        ) else {
+        let Some(frame_trailer) =
+            bytes.get(trailer_start..trailer_start.saturating_add(FRAME_TRAILER_LEN))
+        else {
             return Ok((generation, records, record_start as u64));
         };
         let trailer_fields = parse_frame_fields(frame_trailer, FRAME_TRAILER_MAGIC)?;
@@ -913,7 +901,10 @@ mod tests {
             bytes.extend_from_slice(&complete_frame[..prefix_length]);
             fs::write(&path, bytes).unwrap();
             let reopened = DurableLog::open(&directory).unwrap();
-            assert_eq!(reopened.head().await.unwrap(), Some(receipt.position.clone()));
+            assert_eq!(
+                reopened.head().await.unwrap(),
+                Some(receipt.position.clone())
+            );
             assert_eq!(fs::metadata(&path).unwrap().len(), valid_bytes.len() as u64);
             drop(reopened);
         }
