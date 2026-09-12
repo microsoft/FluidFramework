@@ -8,7 +8,7 @@ Report: `rust-service/iterations/0005/phase-2/projected-reads-ambiguity-recovery
 
 ## Assignment
 
-Implement [Decision 0007](../../../decisions/0007-projected-reads-and-ambiguity-recovery.md). Hypothesis: the sequencer can project accepted operations and resolve one stable ambiguous submission through versioned FSP4 without changing kernel traits or introducing hidden retry. Disprove first with a mixed session/operation page whose opaque resume skips or duplicates an operation, or a disconnect-after-commit trace that appends twice or cannot resolve while the service remains live.
+Implement [Decision 0007](../../../../decisions/0007-projected-reads-and-ambiguity-recovery.md). Hypothesis: the sequencer can project accepted operations and resolve one stable ambiguous submission through versioned FSP4 without changing kernel traits or introducing hidden retry. Disprove first with a mixed session/operation page whose opaque resume skips or duplicates an operation, or a disconnect-after-commit trace that appends twice or cannot resolve while the service remains live.
 
 ## Ownership
 

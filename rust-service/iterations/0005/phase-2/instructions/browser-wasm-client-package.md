@@ -8,7 +8,7 @@ Report: `rust-service/iterations/0005/phase-2/browser-wasm-client-package.md`
 
 ## Assignment
 
-Implement [Decision 0008](../../../decisions/0008-portable-wasm-client-boundary.md). Hypothesis: the built WASM package can expose one lifecycle/protocol API that passes deterministic Node tests through an injected asynchronous request transport and unchanged Chromium WebTransport tests. Disprove first by running the same malformed-frame, request-id, disconnect, and reconnect cases in Node and Chromium and observing divergent public outcomes.
+Implement [Decision 0008](../../../../decisions/0008-portable-wasm-client-boundary.md). Hypothesis: the built WASM package can expose one lifecycle/protocol API that passes deterministic Node tests through an injected asynchronous request transport and unchanged Chromium WebTransport tests. Disprove first by running the same malformed-frame, request-id, disconnect, and reconnect cases in Node and Chromium and observing divergent public outcomes.
 
 ## Ownership
 
