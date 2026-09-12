@@ -15,10 +15,8 @@ struct TestDirectory(PathBuf);
 
 impl TestDirectory {
     fn new() -> Self {
-        let path = std::env::temp_dir().join(format!(
-            "content-addressed-process-{}",
-            std::process::id()
-        ));
+        let path =
+            std::env::temp_dir().join(format!("content-addressed-process-{}", std::process::id()));
         let _ = fs::remove_dir_all(&path);
         fs::create_dir_all(&path).unwrap();
         Self(path)
@@ -53,7 +51,11 @@ fn process_restart_child() {
             }],
         })
         .unwrap();
-    fs::write(PathBuf::from(root).join("pending/orphan.pending"), b"partial").unwrap();
+    fs::write(
+        PathBuf::from(root).join("pending/orphan.pending"),
+        b"partial",
+    )
+    .unwrap();
 }
 
 #[test]
@@ -78,7 +80,12 @@ fn child_process_publication_survives_restart_and_orphan_cleanup() {
         .read_to_end(&mut bytes)
         .unwrap();
     assert_eq!(bytes, b"child payload");
-    assert_eq!(fs::read_dir(directory.as_ref().join("pending")).unwrap().count(), 0);
+    assert_eq!(
+        fs::read_dir(directory.as_ref().join("pending"))
+            .unwrap()
+            .count(),
+        0
+    );
 
     let summaries = fs::read_dir(directory.as_ref().join("summaries"))
         .unwrap()

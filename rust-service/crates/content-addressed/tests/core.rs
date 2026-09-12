@@ -51,7 +51,10 @@ fn manifest(blob: ContentDigest) -> SummaryManifest {
 #[test]
 fn digest_parsing_is_canonical_and_rejects_malformed_values() {
     let digest = ContentDigest::of(b"content");
-    assert_eq!(ContentDigest::from_str(&digest.to_string()).unwrap(), digest);
+    assert_eq!(
+        ContentDigest::from_str(&digest.to_string()).unwrap(),
+        digest
+    );
     assert_eq!(
         ContentDigest::from_str(&digest.to_string().to_uppercase()).unwrap(),
         digest
@@ -79,7 +82,10 @@ fn bounded_streaming_round_trips_small_and_large_blobs_after_reopen() {
     let mut generated = BoundedGeneratedReader::new(1024 * 1024 + 17, 4096);
     let large = store.put_blob(&mut generated).unwrap();
     assert_eq!(generated.bytes_read, 1024 * 1024 + 17);
-    assert_eq!(fs::metadata(store.blob_path(small.digest)).unwrap().len(), 5);
+    assert_eq!(
+        fs::metadata(store.blob_path(small.digest)).unwrap().len(),
+        5
+    );
     assert_eq!(
         fs::metadata(store.blob_path(large.digest)).unwrap().len(),
         large.size_bytes
@@ -94,7 +100,10 @@ fn bounded_streaming_round_trips_small_and_large_blobs_after_reopen() {
         .read_to_end(&mut small_bytes)
         .unwrap();
     assert_eq!(small_bytes, b"small");
-    assert_eq!(reopened.verify_blob(large.digest).unwrap(), large.size_bytes);
+    assert_eq!(
+        reopened.verify_blob(large.digest).unwrap(),
+        large.size_bytes
+    );
 }
 
 struct BoundedGeneratedReader {
@@ -148,8 +157,18 @@ fn duplicate_and_concurrent_identical_uploads_are_idempotent() {
         .into_iter()
         .map(|handle| handle.join().unwrap().unwrap())
         .collect::<Vec<_>>();
-    assert!(receipts.iter().all(|receipt| receipt.digest == receipts[0].digest));
-    assert_eq!(receipts.iter().filter(|receipt| !receipt.deduplicated).count(), 1);
+    assert!(
+        receipts
+            .iter()
+            .all(|receipt| receipt.digest == receipts[0].digest)
+    );
+    assert_eq!(
+        receipts
+            .iter()
+            .filter(|receipt| !receipt.deduplicated)
+            .count(),
+        1
+    );
     assert_eq!(store.verify_blob(receipts[0].digest).unwrap(), 256 * 1024);
 }
 
@@ -189,7 +208,9 @@ fn summary_publication_verifies_references_and_round_trips_atomically() {
     let receipt = store.publish_summary(&summary).unwrap();
     assert_eq!(store.load_summary(receipt.digest).unwrap(), summary);
     assert_eq!(
-        fs::metadata(store.summary_path(receipt.digest)).unwrap().len(),
+        fs::metadata(store.summary_path(receipt.digest))
+            .unwrap()
+            .len(),
         receipt.persisted_bytes
     );
     let duplicate = store.publish_summary(&summary).unwrap();
@@ -201,7 +222,12 @@ fn summary_publication_verifies_references_and_round_trips_atomically() {
         store.publish_summary(&manifest(missing)),
         Err(StoreError::MissingBlob(value)) if value == missing
     ));
-    assert_eq!(fs::read_dir(directory.as_ref().join("summaries")).unwrap().count(), 1);
+    assert_eq!(
+        fs::read_dir(directory.as_ref().join("summaries"))
+            .unwrap()
+            .count(),
+        1
+    );
 }
 
 #[test]
@@ -271,9 +297,17 @@ fn blob_faults_never_expose_invalid_acknowledged_content() {
         ) {
             assert!(visible.is_ok(), "{point:?}");
         } else {
-            assert!(matches!(visible, Err(StoreError::MissingBlob(_))), "{point:?}");
+            assert!(
+                matches!(visible, Err(StoreError::MissingBlob(_))),
+                "{point:?}"
+            );
         }
-        assert_eq!(fs::read_dir(directory.as_ref().join("pending")).unwrap().count(), 0);
+        assert_eq!(
+            fs::read_dir(directory.as_ref().join("pending"))
+                .unwrap()
+                .count(),
+            0
+        );
     }
 }
 
@@ -312,7 +346,10 @@ fn summary_faults_reopen_to_absent_or_fully_valid_manifest() {
         ) {
             assert_eq!(visible.unwrap(), summary, "{point:?}");
         } else {
-            assert!(matches!(visible, Err(StoreError::MissingSummary(_))), "{point:?}");
+            assert!(
+                matches!(visible, Err(StoreError::MissingSummary(_))),
+                "{point:?}"
+            );
         }
     }
 }
@@ -322,7 +359,7 @@ fn expected_summary_digest(summary: &SummaryManifest) -> ContentDigest {
     let mut encoded = Vec::new();
     encoded.extend_from_slice(b"CSUM001\0");
     encoded.extend_from_slice(&1_u32.to_be_bytes());
-    encoded.extend_from_slice(&(entry.path.len() as u32).to_be_bytes());
+    encoded.extend_from_slice(&u32::try_from(entry.path.len()).unwrap().to_be_bytes());
     encoded.extend_from_slice(entry.path.as_bytes());
     encoded.extend_from_slice(entry.blob.as_bytes());
     ContentDigest::of(&encoded)

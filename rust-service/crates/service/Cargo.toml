@@ -10,6 +10,7 @@ bytes.workspace = true
 fluid-sequencer = { path = "../fluid-sequencer" }
 fluid-service-protocol = { path = "../protocol" }
 futures-util.workspace = true
+snapshotted-stream-content-addressed = { path = "../content-addressed" }
 snapshotted-stream-core = { path = "../core" }
 snapshotted-stream-durable-log-spike = { path = "../spikes/durable-log" }
 tokio.workspace = true

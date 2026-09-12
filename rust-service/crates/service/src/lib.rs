@@ -4,7 +4,7 @@ use std::{
     collections::BTreeMap,
     fs::{self, OpenOptions},
     future::Future,
-    io::{Read, Write},
+    io::{Cursor, Read, Write},
     path::PathBuf,
     sync::{Arc, RwLock},
     time::{SystemTime, UNIX_EPOCH},
@@ -23,6 +23,10 @@ use fluid_service_protocol::{
     SubmissionDisposition,
 };
 use futures_util::StreamExt;
+use snapshotted_stream_content_addressed::{
+    ContentDigest, ContentStore, StoreConfig, StoreError, SummaryEntry as StoreSummaryEntry,
+    SummaryManifest,
+};
 use snapshotted_stream_core::{
     AppendReceipt, AppendStream, ClassifiedError, ErrorKind, PublishedSnapshot, ReadRecord,
     Snapshot, SnapshotId, SnapshotPosition, SnapshotStore,
@@ -38,6 +42,9 @@ const MAX_READ_RECORDS: usize = 1024;
 const MAX_READ_PAYLOAD_BYTES: usize = 768 * 1024;
 const MAX_PROJECTED_CANONICAL_RECORDS: usize = 1024;
 const MAX_PROJECTED_ENCODED_BYTES: usize = 768 * 1024;
+const MAX_BLOB_BYTES: u64 = 512 * 1024;
+const MAX_MANIFEST_BYTES: u64 = 4 * 1024 * 1024;
+const CONTENT_COPY_BUFFER_BYTES: usize = 64 * 1024;
 
 #[derive(Clone, Debug)]
 pub struct ServiceConfig {
@@ -53,14 +60,25 @@ impl ServiceConfig {
 
 pub struct NativeService {
     config: ServiceConfig,
+    content: Result<ContentStore, ErrorCode>,
     documents: Mutex<BTreeMap<Bytes, Document>>,
 }
 
 impl NativeService {
     #[must_use]
     pub fn new(config: ServiceConfig) -> Self {
+        let content = ContentStore::open(
+            config.root.join("content"),
+            StoreConfig {
+                max_blob_bytes: MAX_BLOB_BYTES,
+                max_manifest_bytes: MAX_MANIFEST_BYTES,
+                copy_buffer_bytes: CONTENT_COPY_BUFFER_BYTES,
+            },
+        )
+        .map_err(|error| map_content_error(&error));
         Self {
             config,
+            content,
             documents: Mutex::new(BTreeMap::new()),
         }
     }
@@ -74,6 +92,10 @@ impl NativeService {
 
     async fn handle_result(&self, request: Request) -> Result<Response, ErrorCode> {
         match request {
+            Request::UploadBlob { payload } => self.upload_blob(payload),
+            Request::FetchBlob { digest } => self.fetch_blob(&digest),
+            Request::PublishSummary { entries } => self.publish_summary(entries),
+            Request::FetchSummary { digest } => self.fetch_summary(&digest),
             Request::Create { document } => {
                 let mut documents = self.documents.lock().await;
                 if documents.contains_key(&document) || self.document_path(&document).exists() {
@@ -108,6 +130,87 @@ impl NativeService {
         }
     }
 
+    fn upload_blob(&self, payload: Bytes) -> Result<Response, ErrorCode> {
+        let receipt = self
+            .content_store()?
+            .put_blob(Cursor::new(payload))
+            .map_err(|error| map_content_error(&error))?;
+        Ok(Response::BlobUploaded {
+            digest: Bytes::copy_from_slice(receipt.digest.as_bytes()),
+            size_bytes: receipt.size_bytes,
+            deduplicated: receipt.deduplicated,
+        })
+    }
+
+    fn fetch_blob(&self, digest: &[u8]) -> Result<Response, ErrorCode> {
+        let digest = ContentDigest::from_bytes(digest).map_err(|_| ErrorCode::InvalidDigest)?;
+        let mut reader = self
+            .content_store()?
+            .open_blob(digest)
+            .map_err(|error| map_content_error(&error))?;
+        let mut payload = Vec::with_capacity(
+            usize::try_from(reader.size_bytes()).map_err(|_| ErrorCode::ContentTooLarge)?,
+        );
+        reader
+            .read_to_end(&mut payload)
+            .map_err(|_| ErrorCode::Unavailable)?;
+        Ok(Response::Blob {
+            digest: Bytes::copy_from_slice(digest.as_bytes()),
+            payload: Bytes::from(payload),
+        })
+    }
+
+    fn publish_summary(
+        &self,
+        entries: Vec<fluid_service_protocol::SummaryEntry>,
+    ) -> Result<Response, ErrorCode> {
+        let entries = entries
+            .into_iter()
+            .map(|entry| {
+                Ok(StoreSummaryEntry {
+                    path: String::from_utf8(entry.path.to_vec())
+                        .map_err(|_| ErrorCode::InvalidManifest)?,
+                    blob: ContentDigest::from_bytes(&entry.blob)
+                        .map_err(|_| ErrorCode::InvalidDigest)?,
+                })
+            })
+            .collect::<Result<Vec<_>, ErrorCode>>()?;
+        let receipt = self
+            .content_store()?
+            .publish_summary(&SummaryManifest { entries })
+            .map_err(|error| map_content_error(&error))?;
+        Ok(Response::SummaryPublished {
+            digest: Bytes::copy_from_slice(receipt.digest.as_bytes()),
+            entry_count: u32::try_from(receipt.entry_count)
+                .map_err(|_| ErrorCode::ContentTooLarge)?,
+            persisted_bytes: receipt.persisted_bytes,
+            deduplicated: receipt.deduplicated,
+        })
+    }
+
+    fn fetch_summary(&self, digest: &[u8]) -> Result<Response, ErrorCode> {
+        let digest = ContentDigest::from_bytes(digest).map_err(|_| ErrorCode::InvalidDigest)?;
+        let manifest = self
+            .content_store()?
+            .load_summary(digest)
+            .map_err(|error| map_content_error(&error))?;
+        Ok(Response::Summary {
+            digest: Bytes::copy_from_slice(digest.as_bytes()),
+            entries: manifest
+                .entries
+                .into_iter()
+                .map(|entry| fluid_service_protocol::SummaryEntry {
+                    path: Bytes::from(entry.path),
+                    blob: Bytes::copy_from_slice(entry.blob.as_bytes()),
+                })
+                .collect(),
+        })
+    }
+
+    fn content_store(&self) -> Result<&ContentStore, ErrorCode> {
+        self.content.as_ref().map_err(|code| *code)
+    }
+
     fn document_path(&self, document: &[u8]) -> PathBuf {
         self.config.root.join("documents").join(hex(document))
     }
@@ -129,7 +232,12 @@ fn request_document(request: &Request) -> Option<&Bytes> {
         | Request::LatestSnapshot { document }
         | Request::PublishSnapshot { document, .. } => Some(document),
         Request::Submit(submission) => Some(&submission.document),
-        Request::Create { .. } | Request::Shutdown => None,
+        Request::Create { .. }
+        | Request::UploadBlob { .. }
+        | Request::FetchBlob { .. }
+        | Request::PublishSummary { .. }
+        | Request::FetchSummary { .. }
+        | Request::Shutdown => None,
     }
 }
 
@@ -216,7 +324,12 @@ impl Document {
                 self.publish_snapshot(includes_through, expected_parent, payload)
                     .await
             }
-            Request::Create { .. } | Request::Shutdown => Err(ErrorCode::InvalidRequest),
+            Request::Create { .. }
+            | Request::UploadBlob { .. }
+            | Request::FetchBlob { .. }
+            | Request::PublishSummary { .. }
+            | Request::FetchSummary { .. }
+            | Request::Shutdown => Err(ErrorCode::InvalidRequest),
         }
     }
 
@@ -586,6 +699,24 @@ fn map_storage_error(error: &DurableLogError) -> ErrorCode {
         ErrorKind::Ambiguous => ErrorCode::Ambiguous,
         ErrorKind::Unavailable => ErrorCode::Unavailable,
         ErrorKind::Corrupt => ErrorCode::Corrupt,
+    }
+}
+
+fn map_content_error(error: &StoreError) -> ErrorCode {
+    match error {
+        StoreError::InvalidDigest => ErrorCode::InvalidDigest,
+        StoreError::InvalidManifest(_) => ErrorCode::InvalidManifest,
+        StoreError::BlobTooLarge { .. } | StoreError::ManifestTooLarge { .. } => {
+            ErrorCode::ContentTooLarge
+        }
+        StoreError::MissingBlob(_) => ErrorCode::BlobNotFound,
+        StoreError::MissingSummary(_) => ErrorCode::SummaryNotFound,
+        StoreError::CorruptBlob { .. } | StoreError::CorruptSummary { .. } => ErrorCode::Corrupt,
+        StoreError::Ambiguous(_) => ErrorCode::Ambiguous,
+        StoreError::Io(_)
+        | StoreError::InvalidConfig(_)
+        | StoreError::Injected(_)
+        | StoreError::Poisoned => ErrorCode::Unavailable,
     }
 }
 
@@ -981,5 +1112,108 @@ mod tests {
                 .await,
             Response::Read { records } if records.len() == 2
         ));
+    }
+
+    #[tokio::test]
+    async fn blobs_and_summaries_round_trip_and_reopen() {
+        let directory = TempDirectory::new();
+        let service = NativeService::new(ServiceConfig::new(&directory.0));
+        let upload = Request::UploadBlob {
+            payload: bytes(b"blob payload"),
+        };
+        let Response::BlobUploaded {
+            digest,
+            size_bytes: 12,
+            deduplicated: false,
+        } = service.handle(upload.clone()).await
+        else {
+            panic!("initial upload failed");
+        };
+        assert!(matches!(
+            service.handle(upload).await,
+            Response::BlobUploaded {
+                digest: duplicate,
+                size_bytes: 12,
+                deduplicated: true,
+            } if duplicate == digest
+        ));
+        let summary_digest = match service
+            .handle(Request::PublishSummary {
+                entries: vec![fluid_service_protocol::SummaryEntry {
+                    path: bytes(b"root/data"),
+                    blob: digest.clone(),
+                }],
+            })
+            .await
+        {
+            Response::SummaryPublished {
+                digest,
+                entry_count: 1,
+                persisted_bytes: 57,
+                deduplicated: false,
+            } => digest,
+            response => panic!("unexpected summary response: {response:?}"),
+        };
+        assert!(matches!(
+            service
+                .handle(Request::PublishSummary {
+                    entries: vec![fluid_service_protocol::SummaryEntry {
+                        path: bytes(b"root/data"),
+                        blob: digest.clone(),
+                    }],
+                })
+                .await,
+            Response::SummaryPublished {
+                digest,
+                entry_count: 1,
+                persisted_bytes: 57,
+                deduplicated: true,
+            } if digest == summary_digest
+        ));
+        assert_eq!(
+            service
+                .handle(Request::PublishSummary {
+                    entries: vec![fluid_service_protocol::SummaryEntry {
+                        path: bytes(b"missing"),
+                        blob: Bytes::from_static(&[9; 32]),
+                    }],
+                })
+                .await,
+            Response::Error(ErrorCode::BlobNotFound)
+        );
+        drop(service);
+
+        let reopened = NativeService::new(ServiceConfig::new(&directory.0));
+        assert_eq!(
+            reopened
+                .handle(Request::FetchBlob {
+                    digest: digest.clone(),
+                })
+                .await,
+            Response::Blob {
+                digest: digest.clone(),
+                payload: bytes(b"blob payload"),
+            }
+        );
+        assert!(matches!(
+            reopened
+                .handle(Request::FetchSummary {
+                    digest: summary_digest,
+                })
+                .await,
+            Response::Summary { entries, .. }
+                if entries == vec![fluid_service_protocol::SummaryEntry {
+                    path: bytes(b"root/data"),
+                    blob: digest,
+                }]
+        ));
+        assert_eq!(
+            reopened
+                .handle(Request::FetchBlob {
+                    digest: bytes(b"short"),
+                })
+                .await,
+            Response::Error(ErrorCode::InvalidDigest)
+        );
     }
 }

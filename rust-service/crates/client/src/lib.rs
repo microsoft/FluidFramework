@@ -3,7 +3,7 @@
 use bytes::Bytes;
 use fluid_service_protocol::{
     Acknowledgement, ErrorCode, Reference, Request, Resolution, Response, Submission,
-    SubmissionDisposition,
+    SubmissionDisposition, SummaryEntry,
 };
 use futures_util::TryStreamExt;
 use snapshotted_stream_core::{
@@ -66,6 +66,131 @@ pub enum LifecycleError {
     SubmissionIdentityNotFresh,
     #[error("response does not match the operation in state {0:?}")]
     UnexpectedResponse(LifecycleState),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct BlobUpload {
+    pub digest: Bytes,
+    pub size_bytes: u64,
+    pub deduplicated: bool,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SummaryPublication {
+    pub digest: Bytes,
+    pub entry_count: u32,
+    pub persisted_bytes: u64,
+    pub deduplicated: bool,
+}
+
+#[derive(Clone, Debug, Error, Eq, PartialEq)]
+pub enum ContentClientError {
+    #[error("content service rejected the operation: {0:?}")]
+    Service(ErrorCode),
+    #[error("content service returned an unexpected response kind")]
+    UnexpectedResponse,
+    #[error("content response identity does not match the requested digest")]
+    DigestMismatch,
+}
+
+/// Stateless request and response helpers for durable content operations.
+pub struct ContentClient;
+
+impl ContentClient {
+    #[must_use]
+    pub fn upload_blob(payload: Bytes) -> Request {
+        Request::UploadBlob { payload }
+    }
+
+    #[must_use]
+    pub fn fetch_blob(digest: Bytes) -> Request {
+        Request::FetchBlob { digest }
+    }
+
+    #[must_use]
+    pub fn publish_summary(entries: Vec<SummaryEntry>) -> Request {
+        Request::PublishSummary { entries }
+    }
+
+    #[must_use]
+    pub fn fetch_summary(digest: Bytes) -> Request {
+        Request::FetchSummary { digest }
+    }
+
+    /// Decodes a blob-upload response.
+    ///
+    /// # Errors
+    ///
+    /// Returns the service error or rejects a response for another operation.
+    pub fn uploaded(response: Response) -> Result<BlobUpload, ContentClientError> {
+        match response {
+            Response::BlobUploaded {
+                digest,
+                size_bytes,
+                deduplicated,
+            } => Ok(BlobUpload {
+                digest,
+                size_bytes,
+                deduplicated,
+            }),
+            Response::Error(code) => Err(ContentClientError::Service(code)),
+            _ => Err(ContentClientError::UnexpectedResponse),
+        }
+    }
+
+    /// Decodes a verified blob-fetch response for `expected_digest`.
+    ///
+    /// # Errors
+    ///
+    /// Returns the service error, rejects another response kind, or rejects a mismatched digest.
+    pub fn blob(response: Response, expected_digest: &[u8]) -> Result<Bytes, ContentClientError> {
+        match response {
+            Response::Blob { digest, payload } if digest == expected_digest => Ok(payload),
+            Response::Blob { .. } => Err(ContentClientError::DigestMismatch),
+            Response::Error(code) => Err(ContentClientError::Service(code)),
+            _ => Err(ContentClientError::UnexpectedResponse),
+        }
+    }
+
+    /// Decodes a summary-publication response.
+    ///
+    /// # Errors
+    ///
+    /// Returns the service error or rejects a response for another operation.
+    pub fn published(response: Response) -> Result<SummaryPublication, ContentClientError> {
+        match response {
+            Response::SummaryPublished {
+                digest,
+                entry_count,
+                persisted_bytes,
+                deduplicated,
+            } => Ok(SummaryPublication {
+                digest,
+                entry_count,
+                persisted_bytes,
+                deduplicated,
+            }),
+            Response::Error(code) => Err(ContentClientError::Service(code)),
+            _ => Err(ContentClientError::UnexpectedResponse),
+        }
+    }
+
+    /// Decodes a verified summary-fetch response for `expected_digest`.
+    ///
+    /// # Errors
+    ///
+    /// Returns the service error, rejects another response kind, or rejects a mismatched digest.
+    pub fn summary(
+        response: Response,
+        expected_digest: &[u8],
+    ) -> Result<Vec<SummaryEntry>, ContentClientError> {
+        match response {
+            Response::Summary { digest, entries } if digest == expected_digest => Ok(entries),
+            Response::Summary { .. } => Err(ContentClientError::DigestMismatch),
+            Response::Error(code) => Err(ContentClientError::Service(code)),
+            _ => Err(ContentClientError::UnexpectedResponse),
+        }
+    }
 }
 
 /// An explicit native service-client lifecycle with caller-owned transport and retry policy.
@@ -821,5 +946,47 @@ mod tests {
             })
         ));
         assert_eq!(client.state(), LifecycleState::Connected);
+    }
+
+    #[test]
+    fn content_client_builds_requests_and_validates_response_identity() {
+        let digest = Bytes::from_static(&[7; 32]);
+        assert_eq!(
+            ContentClient::upload_blob(bytes(b"payload")),
+            Request::UploadBlob {
+                payload: bytes(b"payload")
+            }
+        );
+        assert_eq!(
+            ContentClient::fetch_blob(digest.clone()),
+            Request::FetchBlob {
+                digest: digest.clone()
+            }
+        );
+        assert_eq!(
+            ContentClient::blob(
+                Response::Blob {
+                    digest: digest.clone(),
+                    payload: bytes(b"payload"),
+                },
+                &digest,
+            )
+            .unwrap(),
+            bytes(b"payload")
+        );
+        assert_eq!(
+            ContentClient::summary(
+                Response::Summary {
+                    digest: Bytes::from_static(&[8; 32]),
+                    entries: Vec::new(),
+                },
+                &digest,
+            ),
+            Err(ContentClientError::DigestMismatch)
+        );
+        assert_eq!(
+            ContentClient::uploaded(Response::Error(ErrorCode::ContentTooLarge)),
+            Err(ContentClientError::Service(ErrorCode::ContentTooLarge))
+        );
     }
 }

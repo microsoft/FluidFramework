@@ -85,10 +85,7 @@ fn main() {
 }
 
 fn measurement_directory() -> PathBuf {
-    std::env::temp_dir().join(format!(
-        "content-addressed-measure-{}",
-        std::process::id()
-    ))
+    std::env::temp_dir().join(format!("content-addressed-measure-{}", std::process::id()))
 }
 
 fn resident_high_water_kib() -> u64 {

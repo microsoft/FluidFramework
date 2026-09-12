@@ -43,6 +43,16 @@ impl ContentDigest {
         &self.0
     }
 
+    /// Parses an exact 32-byte SHA-256 identity.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`StoreError::InvalidDigest`] when `bytes` is not exactly 32 bytes.
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, StoreError> {
+        let bytes = bytes.try_into().map_err(|_| StoreError::InvalidDigest)?;
+        Ok(Self(bytes))
+    }
+
     fn from_hash(hash: Sha256) -> Self {
         Self(hash.finalize().into())
     }
@@ -65,7 +75,7 @@ impl FromStr for ContentDigest {
             return Err(StoreError::InvalidDigest);
         }
         let mut bytes = [0_u8; DIGEST_BYTES];
-        for (index, pair) in value.as_bytes().chunks_exact(2).enumerate() {
+        for (index, pair) in value.as_bytes().as_chunks::<2>().0.iter().enumerate() {
             bytes[index] = (hex_nibble(pair[0])? << 4) | hex_nibble(pair[1])?;
         }
         Ok(Self(bytes))
@@ -137,17 +147,19 @@ impl FaultInjector {
         let mut points = self.points.lock().map_err(|_| StoreError::Poisoned)?;
         if points.front() == Some(&point) {
             points.pop_front();
-            return Err(if matches!(
-                point,
-                FaultPoint::BlobAfterPublish
-                    | FaultPoint::BlobAfterDirectorySync
-                    | FaultPoint::SummaryAfterPublish
-                    | FaultPoint::SummaryAfterDirectorySync
-            ) {
-                StoreError::Ambiguous(point)
-            } else {
-                StoreError::Injected(point)
-            });
+            return Err(
+                if matches!(
+                    point,
+                    FaultPoint::BlobAfterPublish
+                        | FaultPoint::BlobAfterDirectorySync
+                        | FaultPoint::SummaryAfterPublish
+                        | FaultPoint::SummaryAfterDirectorySync
+                ) {
+                    StoreError::Ambiguous(point)
+                } else {
+                    StoreError::Injected(point)
+                },
+            );
         }
         Ok(())
     }
@@ -190,8 +202,12 @@ pub enum StoreError {
     InvalidConfig(&'static str),
     InvalidDigest,
     InvalidManifest(&'static str),
-    BlobTooLarge { limit: u64 },
-    ManifestTooLarge { limit: u64 },
+    BlobTooLarge {
+        limit: u64,
+    },
+    ManifestTooLarge {
+        limit: u64,
+    },
     MissingBlob(ContentDigest),
     MissingSummary(ContentDigest),
     CorruptBlob {
@@ -211,17 +227,35 @@ impl fmt::Display for StoreError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Io(error) => write!(formatter, "content store I/O failed: {error}"),
-            Self::InvalidConfig(reason) => write!(formatter, "invalid store configuration: {reason}"),
+            Self::InvalidConfig(reason) => {
+                write!(formatter, "invalid store configuration: {reason}")
+            }
             Self::InvalidDigest => formatter.write_str("digest is not 64 hexadecimal characters"),
-            Self::InvalidManifest(reason) => write!(formatter, "invalid summary manifest: {reason}"),
-            Self::BlobTooLarge { limit } => write!(formatter, "blob exceeds configured limit of {limit} bytes"),
-            Self::ManifestTooLarge { limit } => write!(formatter, "summary manifest exceeds configured limit of {limit} bytes"),
+            Self::InvalidManifest(reason) => {
+                write!(formatter, "invalid summary manifest: {reason}")
+            }
+            Self::BlobTooLarge { limit } => {
+                write!(formatter, "blob exceeds configured limit of {limit} bytes")
+            }
+            Self::ManifestTooLarge { limit } => write!(
+                formatter,
+                "summary manifest exceeds configured limit of {limit} bytes"
+            ),
             Self::MissingBlob(digest) => write!(formatter, "blob {digest} is missing"),
             Self::MissingSummary(digest) => write!(formatter, "summary {digest} is missing"),
-            Self::CorruptBlob { expected, actual } => write!(formatter, "blob {expected} is corrupt; actual digest is {actual}"),
-            Self::CorruptSummary { expected, actual } => write!(formatter, "summary {expected} is corrupt; actual digest is {actual}"),
+            Self::CorruptBlob { expected, actual } => write!(
+                formatter,
+                "blob {expected} is corrupt; actual digest is {actual}"
+            ),
+            Self::CorruptSummary { expected, actual } => write!(
+                formatter,
+                "summary {expected} is corrupt; actual digest is {actual}"
+            ),
             Self::Injected(point) => write!(formatter, "injected fault at {point:?}"),
-            Self::Ambiguous(point) => write!(formatter, "operation may be durably published after fault at {point:?}"),
+            Self::Ambiguous(point) => write!(
+                formatter,
+                "operation may be durably published after fault at {point:?}"
+            ),
             Self::Poisoned => formatter.write_str("fault injector mutex was poisoned"),
         }
     }
@@ -275,10 +309,19 @@ pub struct ContentStore {
 
 impl ContentStore {
     /// Opens or creates a store and removes abandoned unpublished temporary files.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for invalid configuration or filesystem failure.
     pub fn open(root: impl AsRef<Path>, config: StoreConfig) -> Result<Self, StoreError> {
         Self::open_with_fault_injector(root, config, Arc::new(FaultInjector::default()))
     }
 
+    /// Opens a store with deterministic persistence fault injection.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for invalid configuration or filesystem failure.
     pub fn open_with_fault_injector(
         root: impl AsRef<Path>,
         config: StoreConfig,
@@ -316,6 +359,11 @@ impl ContentStore {
     }
 
     /// Streams, hashes, and durably publishes a blob.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the blob exceeds its limit, persistence fails, or an injected fault
+    /// occurs.
     pub fn put_blob(&self, mut source: impl Read) -> Result<BlobReceipt, StoreError> {
         let temporary = self.temporary_path("blob");
         let result = self.put_blob_inner(&mut source, &temporary);
@@ -382,6 +430,10 @@ impl ContentStore {
     }
 
     /// Opens an existing blob after a bounded-memory full integrity scan.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the blob is absent, oversized, corrupt, or cannot be read.
     pub fn open_blob(&self, digest: ContentDigest) -> Result<BlobReader, StoreError> {
         let mut file = File::open(self.blob_path(digest)).map_err(|error| {
             if error.kind() == std::io::ErrorKind::NotFound {
@@ -408,11 +460,20 @@ impl ContentStore {
     }
 
     /// Recomputes and validates a blob identity without retaining its bytes.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the blob is absent, oversized, corrupt, or cannot be read.
     pub fn verify_blob(&self, digest: ContentDigest) -> Result<u64, StoreError> {
         self.open_blob(digest).map(|reader| reader.size_bytes)
     }
 
     /// Verifies all references, then atomically and durably publishes a manifest.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for an invalid or oversized manifest, an invalid referenced blob, a
+    /// persistence failure, or an injected fault.
     pub fn publish_summary(
         &self,
         manifest: &SummaryManifest,
@@ -470,6 +531,11 @@ impl ContentStore {
     }
 
     /// Loads a manifest after validating its identity, framing, and every blob reference.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the summary is absent, oversized, malformed, corrupt, references an
+    /// invalid blob, or cannot be read.
     pub fn load_summary(&self, digest: ContentDigest) -> Result<SummaryManifest, StoreError> {
         let bytes = read_limited(
             &self.summary_path(digest),
@@ -502,10 +568,8 @@ impl ContentStore {
 
     fn temporary_path(&self, kind: &str) -> PathBuf {
         let sequence = NEXT_TEMP_FILE.fetch_add(1, Ordering::Relaxed);
-        self.temporary.join(format!(
-            "{kind}-{}-{sequence}.pending",
-            std::process::id()
-        ))
+        self.temporary
+            .join(format!("{kind}-{}-{sequence}.pending", std::process::id()))
     }
 }
 
@@ -559,10 +623,7 @@ fn validate_manifest(manifest: &SummaryManifest) -> Result<(), StoreError> {
     Ok(())
 }
 
-fn encode_manifest(
-    manifest: &SummaryManifest,
-    limit: u64,
-) -> Result<Vec<u8>, StoreError> {
+fn encode_manifest(manifest: &SummaryManifest, limit: u64) -> Result<Vec<u8>, StoreError> {
     let entry_count = u32::try_from(manifest.entries.len())
         .map_err(|_| StoreError::InvalidManifest("entry count exceeds format range"))?;
     let mut bytes = Vec::new();
@@ -593,11 +654,17 @@ fn decode_manifest(bytes: &[u8]) -> Result<SummaryManifest, StoreError> {
             usize::try_from(entry_count)
                 .map_err(|_| StoreError::InvalidManifest("entry count exceeds address space"))?
                 .checked_mul(MANIFEST_ENTRY_FIXED_BYTES)
-                .ok_or(StoreError::InvalidManifest("entry count overflows manifest"))?,
+                .ok_or(StoreError::InvalidManifest(
+                    "entry count overflows manifest",
+                ))?,
         )
-        .ok_or(StoreError::InvalidManifest("entry count overflows manifest"))?;
+        .ok_or(StoreError::InvalidManifest(
+            "entry count overflows manifest",
+        ))?;
     if minimum > bytes.len() {
-        return Err(StoreError::InvalidManifest("entry count exceeds manifest length"));
+        return Err(StoreError::InvalidManifest(
+            "entry count exceeds manifest length",
+        ));
     }
     let mut entries = Vec::new();
     for _ in 0..entry_count {
@@ -654,11 +721,7 @@ fn read_u32(bytes: &[u8], cursor: &mut usize, error: &'static str) -> Result<u32
     ))
 }
 
-fn read_limited(
-    path: &Path,
-    limit: u64,
-    missing: StoreError,
-) -> Result<Vec<u8>, StoreError> {
+fn read_limited(path: &Path, limit: u64, missing: StoreError) -> Result<Vec<u8>, StoreError> {
     let mut file = File::open(path).map_err(|error| {
         if error.kind() == std::io::ErrorKind::NotFound {
             missing
@@ -670,8 +733,7 @@ fn read_limited(
     if length > limit {
         return Err(StoreError::ManifestTooLarge { limit });
     }
-    let capacity = usize::try_from(length)
-        .map_err(|_| StoreError::ManifestTooLarge { limit })?;
+    let capacity = usize::try_from(length).map_err(|_| StoreError::ManifestTooLarge { limit })?;
     let mut bytes = Vec::with_capacity(capacity);
     file.read_to_end(&mut bytes)?;
     Ok(bytes)

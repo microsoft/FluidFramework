@@ -5,6 +5,7 @@ use std::{
     os::unix::net::{UnixListener, UnixStream},
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
+    sync::atomic::{AtomicU64, Ordering},
     time::{Duration, Instant},
 };
 
@@ -12,20 +13,22 @@ use bytes::Bytes;
 use fluid_native_service::{NativeService, ServiceConfig};
 use fluid_service_protocol::{
     Acknowledgement, Frame, Limits, Message, Reference, Request, Resolution, Response,
-    SubmissionDisposition, decode, encode,
+    SubmissionDisposition, SummaryEntry, decode, encode,
 };
-use snapshotted_stream_client::{LifecycleEvent, LifecycleState, NativeClient};
+use snapshotted_stream_client::{ContentClient, LifecycleEvent, LifecycleState, NativeClient};
 
 const SERVER_SOCKET: &str = "FLUID_NATIVE_CLIENT_TEST_SOCKET";
 const SERVER_ROOT: &str = "FLUID_NATIVE_CLIENT_TEST_ROOT";
+static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(1);
 
 struct TempDirectory(PathBuf);
 
 impl TempDirectory {
     fn new() -> Self {
+        let sequence = NEXT_DIRECTORY.fetch_add(1, Ordering::Relaxed);
         let path = env::temp_dir().join(format!(
-            "fluid-native-client-process-{}",
-            std::process::id()
+            "fluid-native-client-process-{}-{sequence}",
+            std::process::id(),
         ));
         if path.exists() {
             fs::remove_dir_all(&path).unwrap();
@@ -167,6 +170,58 @@ fn disconnect_boundaries_resolve_without_hidden_retry() {
             ..
         })
     ));
+
+    assert_eq!(
+        exchange(&socket, Request::Shutdown),
+        Response::Acknowledged(Acknowledgement::ShuttingDown)
+    );
+    assert!(child.wait().unwrap().success());
+}
+
+#[test]
+fn content_operations_survive_lost_acknowledgement_and_process_restart() {
+    let directory = TempDirectory::new();
+    let root = directory.0.join("data");
+    let socket = directory.0.join("service.sock");
+    let mut child = spawn_server(&root, &socket);
+
+    let upload = ContentClient::upload_blob(bytes(b"durable blob"));
+    let receipt = ContentClient::uploaded(exchange(&socket, upload.clone())).unwrap();
+    assert_eq!(receipt.size_bytes, 12);
+    assert!(!receipt.deduplicated);
+    let duplicate = ContentClient::uploaded(exchange(&socket, upload)).unwrap();
+    assert_eq!(duplicate.digest, receipt.digest);
+    assert!(duplicate.deduplicated);
+
+    let entries = vec![SummaryEntry {
+        path: bytes(b"root/data"),
+        blob: receipt.digest.clone(),
+    }];
+    let publish = ContentClient::publish_summary(entries.clone());
+    send_without_reading(&socket, publish.clone());
+    let publication = ContentClient::published(exchange(&socket, publish)).unwrap();
+    assert!(publication.deduplicated);
+    assert_eq!(publication.entry_count, 1);
+
+    child.kill().unwrap();
+    child.wait().unwrap();
+    child = spawn_server(&root, &socket);
+
+    let payload = ContentClient::blob(
+        exchange(&socket, ContentClient::fetch_blob(receipt.digest.clone())),
+        &receipt.digest,
+    )
+    .unwrap();
+    assert_eq!(payload, bytes(b"durable blob"));
+    let recovered_entries = ContentClient::summary(
+        exchange(
+            &socket,
+            ContentClient::fetch_summary(publication.digest.clone()),
+        ),
+        &publication.digest,
+    )
+    .unwrap();
+    assert_eq!(recovered_entries, entries);
 
     assert_eq!(
         exchange(&socket, Request::Shutdown),

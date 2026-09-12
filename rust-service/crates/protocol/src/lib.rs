@@ -16,13 +16,23 @@ const PUBLISH_SNAPSHOT: u8 = 6;
 const SHUTDOWN: u8 = 7;
 const READ_PROJECTED: u8 = 8;
 const RESOLVE_SUBMISSION: u8 = 9;
+const UPLOAD_BLOB: u8 = 10;
+const FETCH_BLOB: u8 = 11;
+const PUBLISH_SUMMARY: u8 = 12;
+const FETCH_SUMMARY: u8 = 13;
 const ACKNOWLEDGED: u8 = 64;
 const SUBMITTED: u8 = 65;
 const READ_RESULT: u8 = 66;
 const SNAPSHOT_RESULT: u8 = 67;
 const PROJECTED_READ_RESULT: u8 = 68;
 const RESOLUTION_RESULT: u8 = 69;
+const BLOB_UPLOADED: u8 = 70;
+const BLOB_RESULT: u8 = 71;
+const SUMMARY_PUBLISHED: u8 = 72;
+const SUMMARY_RESULT: u8 = 73;
 const ERROR: u8 = 127;
+
+const CONTENT_DIGEST_BYTES: usize = 32;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Limits {
@@ -34,6 +44,9 @@ pub struct Limits {
     pub max_record_bytes: usize,
     pub max_snapshot_bytes: usize,
     pub max_read_records: usize,
+    pub max_blob_bytes: usize,
+    pub max_summary_entries: usize,
+    pub max_summary_path_bytes: usize,
 }
 
 impl Default for Limits {
@@ -47,6 +60,9 @@ impl Default for Limits {
             max_record_bytes: 768 * 1024,
             max_snapshot_bytes: 512 * 1024,
             max_read_records: 1024,
+            max_blob_bytes: 512 * 1024,
+            max_summary_entries: 4096,
+            max_summary_path_bytes: 4096,
         }
     }
 }
@@ -102,6 +118,18 @@ pub enum Request {
         includes_through: Reference,
         expected_parent: Option<Bytes>,
         payload: Bytes,
+    },
+    UploadBlob {
+        payload: Bytes,
+    },
+    FetchBlob {
+        digest: Bytes,
+    },
+    PublishSummary {
+        entries: Vec<SummaryEntry>,
+    },
+    FetchSummary {
+        digest: Bytes,
     },
     Shutdown,
 }
@@ -159,6 +187,12 @@ pub struct PublishedSnapshot {
     pub payload: Bytes,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SummaryEntry {
+    pub path: Bytes,
+    pub blob: Bytes,
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u16)]
 pub enum ErrorCode {
@@ -184,6 +218,11 @@ pub enum ErrorCode {
     RecoveryRequired = 20,
     FrameTooLarge = 21,
     UnsupportedVersion = 22,
+    BlobNotFound = 23,
+    SummaryNotFound = 24,
+    ContentTooLarge = 25,
+    InvalidDigest = 26,
+    InvalidManifest = 27,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -205,6 +244,25 @@ pub enum Response {
     },
     Resolved(Resolution),
     Snapshot(Option<PublishedSnapshot>),
+    BlobUploaded {
+        digest: Bytes,
+        size_bytes: u64,
+        deduplicated: bool,
+    },
+    Blob {
+        digest: Bytes,
+        payload: Bytes,
+    },
+    SummaryPublished {
+        digest: Bytes,
+        entry_count: u32,
+        persisted_bytes: u64,
+        deduplicated: bool,
+    },
+    Summary {
+        digest: Bytes,
+        entries: Vec<SummaryEntry>,
+    },
     Error(ErrorCode),
 }
 
@@ -361,6 +419,38 @@ fn encode_message(message: &Message, limits: Limits) -> Result<(u8, Bytes), Prot
             }
             SNAPSHOT_RESULT
         }
+        Message::Response(Response::BlobUploaded {
+            digest,
+            size_bytes,
+            deduplicated,
+        }) => {
+            put_digest(&mut body, digest)?;
+            body.put_u64(*size_bytes);
+            body.put_u8(u8::from(*deduplicated));
+            BLOB_UPLOADED
+        }
+        Message::Response(Response::Blob { digest, payload }) => {
+            put_digest(&mut body, digest)?;
+            put_blob_bytes(&mut body, payload, limits.max_blob_bytes)?;
+            BLOB_RESULT
+        }
+        Message::Response(Response::SummaryPublished {
+            digest,
+            entry_count,
+            persisted_bytes,
+            deduplicated,
+        }) => {
+            put_digest(&mut body, digest)?;
+            body.put_u32(*entry_count);
+            body.put_u64(*persisted_bytes);
+            body.put_u8(u8::from(*deduplicated));
+            SUMMARY_PUBLISHED
+        }
+        Message::Response(Response::Summary { digest, entries }) => {
+            put_digest(&mut body, digest)?;
+            put_summary_entries(&mut body, entries, limits)?;
+            SUMMARY_RESULT
+        }
         Message::Response(Response::Error(code)) => {
             body.put_u16(*code as u16);
             ERROR
@@ -440,6 +530,22 @@ fn encode_request_message(request: &Request, limits: Limits) -> Result<(u8, Byte
             put_bytes(&mut body, payload, limits.max_snapshot_bytes)?;
             PUBLISH_SNAPSHOT
         }
+        Request::UploadBlob { payload } => {
+            put_blob_bytes(&mut body, payload, limits.max_blob_bytes)?;
+            UPLOAD_BLOB
+        }
+        Request::FetchBlob { digest } => {
+            put_digest(&mut body, digest)?;
+            FETCH_BLOB
+        }
+        Request::PublishSummary { entries } => {
+            put_summary_entries(&mut body, entries, limits)?;
+            PUBLISH_SUMMARY
+        }
+        Request::FetchSummary { digest } => {
+            put_digest(&mut body, digest)?;
+            FETCH_SUMMARY
+        }
         Request::Shutdown => SHUTDOWN,
     };
     Ok((kind, body.freeze()))
@@ -495,7 +601,7 @@ fn encode_resolution(
 }
 
 fn decode_message(kind: u8, mut body: Bytes, limits: Limits) -> Result<Message, ProtocolError> {
-    let message = if kind <= RESOLVE_SUBMISSION {
+    let message = if kind <= FETCH_SUMMARY {
         Message::Request(decode_request(kind, &mut body, limits)?)
     } else {
         Message::Response(decode_response(kind, &mut body, limits)?)
@@ -560,6 +666,18 @@ fn decode_request(kind: u8, body: &mut Bytes, limits: Limits) -> Result<Request,
             includes_through: take_reference(body, limits)?,
             expected_parent: take_optional_bytes(body, limits.max_position_bytes)?,
             payload: take_bytes(body, limits.max_snapshot_bytes)?,
+        },
+        UPLOAD_BLOB => Request::UploadBlob {
+            payload: take_blob_bytes(body, limits.max_blob_bytes)?,
+        },
+        FETCH_BLOB => Request::FetchBlob {
+            digest: take_digest(body)?,
+        },
+        PUBLISH_SUMMARY => Request::PublishSummary {
+            entries: take_summary_entries(body, limits)?,
+        },
+        FETCH_SUMMARY => Request::FetchSummary {
+            digest: take_digest(body)?,
         },
         SHUTDOWN => Request::Shutdown,
         _ => return Err(ProtocolError::InvalidKind),
@@ -626,6 +744,25 @@ fn decode_response(kind: u8, body: &mut Bytes, limits: Limits) -> Result<Respons
             };
             Response::Snapshot(snapshot)
         }
+        BLOB_UPLOADED => Response::BlobUploaded {
+            digest: take_digest(body)?,
+            size_bytes: take_u64(body)?,
+            deduplicated: take_bool(body)?,
+        },
+        BLOB_RESULT => Response::Blob {
+            digest: take_digest(body)?,
+            payload: take_blob_bytes(body, limits.max_blob_bytes)?,
+        },
+        SUMMARY_PUBLISHED => Response::SummaryPublished {
+            digest: take_digest(body)?,
+            entry_count: take_u32(body)?,
+            persisted_bytes: take_u64(body)?,
+            deduplicated: take_bool(body)?,
+        },
+        SUMMARY_RESULT => Response::Summary {
+            digest: take_digest(body)?,
+            entries: take_summary_entries(body, limits)?,
+        },
         ERROR => Response::Error(take_error_code(body)?),
         _ => return Err(ProtocolError::InvalidKind),
     })
@@ -779,6 +916,97 @@ fn take_u8(body: &mut Bytes) -> Result<u8, ProtocolError> {
     Ok(body.get_u8())
 }
 
+fn take_u32(body: &mut Bytes) -> Result<u32, ProtocolError> {
+    if body.remaining() < 4 {
+        return Err(ProtocolError::Truncated);
+    }
+    Ok(body.get_u32())
+}
+
+fn take_u64(body: &mut Bytes) -> Result<u64, ProtocolError> {
+    if body.remaining() < 8 {
+        return Err(ProtocolError::Truncated);
+    }
+    Ok(body.get_u64())
+}
+
+fn take_bool(body: &mut Bytes) -> Result<bool, ProtocolError> {
+    match take_u8(body)? {
+        0 => Ok(false),
+        1 => Ok(true),
+        _ => Err(ProtocolError::InvalidDiscriminant),
+    }
+}
+
+fn put_digest(body: &mut BytesMut, digest: &Bytes) -> Result<(), ProtocolError> {
+    if digest.len() != CONTENT_DIGEST_BYTES {
+        return Err(ProtocolError::InvalidDiscriminant);
+    }
+    body.extend_from_slice(digest);
+    Ok(())
+}
+
+fn take_digest(body: &mut Bytes) -> Result<Bytes, ProtocolError> {
+    if body.remaining() < CONTENT_DIGEST_BYTES {
+        return Err(ProtocolError::Truncated);
+    }
+    Ok(body.split_to(CONTENT_DIGEST_BYTES))
+}
+
+fn put_blob_bytes(body: &mut BytesMut, value: &Bytes, limit: usize) -> Result<(), ProtocolError> {
+    if value.len() > limit {
+        return Err(ProtocolError::FieldTooLarge);
+    }
+    body.put_u32(u32::try_from(value.len()).map_err(|_| ProtocolError::FieldTooLarge)?);
+    body.extend_from_slice(value);
+    Ok(())
+}
+
+fn take_blob_bytes(body: &mut Bytes, limit: usize) -> Result<Bytes, ProtocolError> {
+    let length = usize::try_from(take_u32(body)?).map_err(|_| ProtocolError::FieldTooLarge)?;
+    if length > limit {
+        return Err(ProtocolError::FieldTooLarge);
+    }
+    if body.remaining() < length {
+        return Err(ProtocolError::Truncated);
+    }
+    Ok(body.split_to(length))
+}
+
+fn put_summary_entries(
+    body: &mut BytesMut,
+    entries: &[SummaryEntry],
+    limits: Limits,
+) -> Result<(), ProtocolError> {
+    if entries.len() > limits.max_summary_entries {
+        return Err(ProtocolError::TooManyRecords);
+    }
+    body.put_u32(u32::try_from(entries.len()).map_err(|_| ProtocolError::TooManyRecords)?);
+    for entry in entries {
+        put_bytes(body, &entry.path, limits.max_summary_path_bytes)?;
+        put_digest(body, &entry.blob)?;
+    }
+    Ok(())
+}
+
+fn take_summary_entries(
+    body: &mut Bytes,
+    limits: Limits,
+) -> Result<Vec<SummaryEntry>, ProtocolError> {
+    let count = usize::try_from(take_u32(body)?).map_err(|_| ProtocolError::TooManyRecords)?;
+    if count > limits.max_summary_entries {
+        return Err(ProtocolError::TooManyRecords);
+    }
+    let mut entries = Vec::with_capacity(count);
+    for _ in 0..count {
+        entries.push(SummaryEntry {
+            path: take_bytes(body, limits.max_summary_path_bytes)?,
+            blob: take_digest(body)?,
+        });
+    }
+    Ok(entries)
+}
+
 fn take_error_code(body: &mut Bytes) -> Result<ErrorCode, ProtocolError> {
     if body.remaining() < 2 {
         return Err(ProtocolError::Truncated);
@@ -806,6 +1034,11 @@ fn take_error_code(body: &mut Bytes) -> Result<ErrorCode, ProtocolError> {
         20 => Ok(ErrorCode::RecoveryRequired),
         21 => Ok(ErrorCode::FrameTooLarge),
         22 => Ok(ErrorCode::UnsupportedVersion),
+        23 => Ok(ErrorCode::BlobNotFound),
+        24 => Ok(ErrorCode::SummaryNotFound),
+        25 => Ok(ErrorCode::ContentTooLarge),
+        26 => Ok(ErrorCode::InvalidDigest),
+        27 => Ok(ErrorCode::InvalidManifest),
         _ => Err(ProtocolError::InvalidDiscriminant),
     }
 }
@@ -877,6 +1110,21 @@ mod tests {
             expected_parent: None,
             payload: Bytes::from_static(b"snapshot"),
         }));
+        round_trip(Message::Request(Request::UploadBlob {
+            payload: Bytes::new(),
+        }));
+        round_trip(Message::Request(Request::FetchBlob {
+            digest: Bytes::from_static(&[1; CONTENT_DIGEST_BYTES]),
+        }));
+        round_trip(Message::Request(Request::PublishSummary {
+            entries: vec![SummaryEntry {
+                path: Bytes::from_static(b"root/data"),
+                blob: Bytes::from_static(&[2; CONTENT_DIGEST_BYTES]),
+            }],
+        }));
+        round_trip(Message::Request(Request::FetchSummary {
+            digest: Bytes::from_static(&[3; CONTENT_DIGEST_BYTES]),
+        }));
         round_trip(Message::Request(Request::Shutdown));
     }
 
@@ -933,7 +1181,116 @@ mod tests {
             },
         ))));
         round_trip(Message::Response(Response::Snapshot(None)));
+        round_trip(Message::Response(Response::BlobUploaded {
+            digest: Bytes::from_static(&[4; CONTENT_DIGEST_BYTES]),
+            size_bytes: 7,
+            deduplicated: false,
+        }));
+        round_trip(Message::Response(Response::Blob {
+            digest: Bytes::from_static(&[4; CONTENT_DIGEST_BYTES]),
+            payload: Bytes::new(),
+        }));
+        round_trip(Message::Response(Response::SummaryPublished {
+            digest: Bytes::from_static(&[5; CONTENT_DIGEST_BYTES]),
+            entry_count: 1,
+            persisted_bytes: 53,
+            deduplicated: true,
+        }));
+        round_trip(Message::Response(Response::Summary {
+            digest: Bytes::from_static(&[5; CONTENT_DIGEST_BYTES]),
+            entries: vec![SummaryEntry {
+                path: Bytes::from_static(b"root/data"),
+                blob: Bytes::from_static(&[4; CONTENT_DIGEST_BYTES]),
+            }],
+        }));
         round_trip(Message::Response(Response::Error(ErrorCode::StaleSession)));
+    }
+
+    #[test]
+    fn content_operation_kinds_are_additive_and_stable() {
+        let digest = Bytes::from_static(&[1; CONTENT_DIGEST_BYTES]);
+        let request_kinds = [
+            (
+                Request::UploadBlob {
+                    payload: Bytes::new(),
+                },
+                10,
+            ),
+            (
+                Request::FetchBlob {
+                    digest: digest.clone(),
+                },
+                11,
+            ),
+            (
+                Request::PublishSummary {
+                    entries: Vec::new(),
+                },
+                12,
+            ),
+            (
+                Request::FetchSummary {
+                    digest: digest.clone(),
+                },
+                13,
+            ),
+        ];
+        for (request, expected_kind) in request_kinds {
+            let encoded = encode(
+                &Frame {
+                    request_id: 1,
+                    message: Message::Request(request),
+                },
+                Limits::default(),
+            )
+            .unwrap();
+            assert_eq!(encoded[6], expected_kind);
+        }
+
+        let response_kinds = [
+            (
+                Response::BlobUploaded {
+                    digest: digest.clone(),
+                    size_bytes: 0,
+                    deduplicated: false,
+                },
+                70,
+            ),
+            (
+                Response::Blob {
+                    digest: digest.clone(),
+                    payload: Bytes::new(),
+                },
+                71,
+            ),
+            (
+                Response::SummaryPublished {
+                    digest: digest.clone(),
+                    entry_count: 0,
+                    persisted_bytes: 12,
+                    deduplicated: false,
+                },
+                72,
+            ),
+            (
+                Response::Summary {
+                    digest,
+                    entries: Vec::new(),
+                },
+                73,
+            ),
+        ];
+        for (response, expected_kind) in response_kinds {
+            let encoded = encode(
+                &Frame {
+                    request_id: 1,
+                    message: Message::Response(response),
+                },
+                Limits::default(),
+            )
+            .unwrap();
+            assert_eq!(encoded[6], expected_kind);
+        }
     }
 
     #[test]
