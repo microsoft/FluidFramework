@@ -6,10 +6,15 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+async-trait.workspace = true
+bytes.workspace = true
+futures-util.workspace = true
 snapshotted-stream-core = { path = "../core" }
+thiserror.workspace = true
 
 [dev-dependencies]
 snapshotted-stream-conformance = { path = "../conformance" }
+tokio.workspace = true
 
 [lints]
 workspace = true
