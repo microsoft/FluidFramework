@@ -516,8 +516,7 @@ where
                 }
             }
             KIND_READ => {
-                let after =
-                    decode_request_position(&backend, &request, server_instance, config)?;
+                let after = decode_request_position(&backend, &request, server_instance, config)?;
                 match backend.read(after.as_ref()).await {
                     Ok(mut reader) => {
                         write_frame(stream, &Frame::new(KIND_READ_START, Vec::new())?, config)
@@ -934,7 +933,8 @@ fn encode_capabilities(
 fn decode_capabilities(
     frame: &Frame,
 ) -> Result<(Capabilities, [u8; SERVER_INSTANCE_BYTES]), ProcessNetworkError> {
-    if frame.kind != KIND_CAPABILITIES_RESPONSE || frame.payload.len() != 1 + SERVER_INSTANCE_BYTES {
+    if frame.kind != KIND_CAPABILITIES_RESPONSE || frame.payload.len() != 1 + SERVER_INSTANCE_BYTES
+    {
         return Err(ProcessNetworkError::MalformedFrame);
     }
     let all = [
@@ -943,16 +943,16 @@ fn decode_capabilities(
         Capability::Retention,
         Capability::IdempotentAppend,
     ];
-    let capabilities = all
-        .iter()
-        .enumerate()
-        .fold(Capabilities::NONE, |capabilities, (index, capability)| {
-            if frame.payload[0] & (1 << index) == 0 {
-                capabilities
-            } else {
-                capabilities.with(*capability)
-            }
-        });
+    let capabilities =
+        all.iter()
+            .enumerate()
+            .fold(Capabilities::NONE, |capabilities, (index, capability)| {
+                if frame.payload[0] & (1 << index) == 0 {
+                    capabilities
+                } else {
+                    capabilities.with(*capability)
+                }
+            });
     let server_instance = frame.payload[1..]
         .try_into()
         .map_err(|_| ProcessNetworkError::MalformedFrame)?;
@@ -1090,8 +1090,7 @@ fn decode_request_position<S: PositionCodec>(
                     .map_err(|error| ProcessNetworkError::Remote(error.kind()))
             })
         })
-        .transpose()
-        ?;
+        .transpose()?;
     payload.finish()?;
     Ok(position)
 }
@@ -1183,11 +1182,7 @@ fn decode_publish_request<S: PositionCodec>(
             let token = payload.bytes()?;
             SnapshotPosition::At(
                 backend
-                    .decode_position(decode_position_envelope(
-                        token,
-                        server_instance,
-                        config,
-                    )?)
+                    .decode_position(decode_position_envelope(token, server_instance, config)?)
                     .map_err(|error| ProcessNetworkError::Remote(error.kind()))?,
             )
         }
@@ -1393,10 +1388,7 @@ mod tests {
         let mut corrupted_token = foreign_token.to_vec();
         *corrupted_token.last_mut().unwrap() ^= 1;
         assert_eq!(
-            first
-                .decode_position(&corrupted_token)
-                .unwrap_err()
-                .kind(),
+            first.decode_position(&corrupted_token).unwrap_err().kind(),
             ErrorKind::InvalidPosition
         );
         let (second, _second_server, _second_path) = spawned().await;
@@ -1405,7 +1397,10 @@ mod tests {
             ErrorKind::InvalidPosition
         );
         assert_eq!(
-            second.encode_position(&receipt.position).unwrap_err().kind(),
+            second
+                .encode_position(&receipt.position)
+                .unwrap_err()
+                .kind(),
             ErrorKind::InvalidPosition
         );
         assert_eq!(
