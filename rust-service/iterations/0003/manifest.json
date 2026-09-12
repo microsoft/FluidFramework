@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "iteration": "0003",
+  "status": "active",
+  "sourceCommit": "baa5900841161074a733f60ee424c20ed8d8c70f",
+  "createdAt": "2026-09-12T15:36:45.260Z",
+  "activeWorkstreams": [
+    {
+      "name": "deployment-fencing",
+      "instructions": "phase-2/instructions/deployment-fencing.md",
+      "report": "phase-2/deployment-fencing.md"
+    },
+    {
+      "name": "process-crash-recovery",
+      "instructions": "phase-2/instructions/process-crash-recovery.md",
+      "report": "phase-2/process-crash-recovery.md"
+    },
+    {
+      "name": "process-isolated-transport",
+      "instructions": "phase-2/instructions/process-isolated-transport.md",
+      "report": "phase-2/process-isolated-transport.md"
+    }
+  ],
+  "deferredWorkstreams": [
+    "async-position-codec-api",
+    "power-loss-testing",
+    "encryption",
+    "browser-storage",
+    "caching",
+    "retention",
+    "block-compression",
+    "full-fluid-driver",
+    "broad-optimization"
+  ],
+  "nextWorkstreams": []
+}
