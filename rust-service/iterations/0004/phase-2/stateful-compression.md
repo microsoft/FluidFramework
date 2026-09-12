@@ -1,23 +1,25 @@
 # Iteration 0004: stateful-compression Report
 
 Status: in progress
-Branch: `rust-service/iteration-0004/stateful-compression`
-Worktree: <!-- TODO(required): record the worktree path -->
-Base commit: <!-- TODO(required): record the base commit -->
+Branch: `rust-service-iteration-0004-stateful-compression`
+Worktree: `/workspaces/FluidFramework-rust-service-iteration-0004-stateful-compression`
+Base commit: `30c4a06d7b456e135e046905553dd23d14326a56`
 Final commit: <!-- TODO(required): record the final commit or explain why none exists -->
-Agent or owner: <!-- TODO(required): record the agent or owner -->
-Model and tool version: <!-- TODO(required): record known values; use unknown when unavailable -->
-Instruction source: <!-- TODO(required): link the assigned instruction file and record its commit -->
-Session or transcript reference: <!-- TODO(required): record a safe reference when useful; otherwise none -->
-Started and finished: <!-- TODO(required): record known timestamps or unknown -->
+Agent or owner: GitHub Copilot stateful-compression coding agent
+Model and tool version: GitHub Copilot; model version unknown; rustc 1.98.1; cargo 1.98.1
+Instruction source: [`instructions/stateful-compression.md`](./instructions/stateful-compression.md) at actual kickoff commit `30c4a06d7b456e135e046905553dd23d14326a56`; its generated `Iteration source commit` field is `a577eda313ebe68f6e8ba3e33e99ea0822a50d9a`
+Session or transcript reference: none
+Started and finished: 2026-09-12; in progress
 
 ## Outcome
 
-<!-- TODO(required): summarize completed scope, result, and confidence -->
+In progress. The adaptive previous-record design was rejected before implementation because the public contract provides no bounded predecessor traversal from `head`; rebuilding encoder state after reopen would require `read(None)` over all retained history and would fail when retention removes that history. The implementation experiment therefore uses a caller-supplied immutable bounded dictionary and independent frames so every stored record remains directly decodable.
 
 ## Hypothesis Results
 
-<!-- TODO(required): state which charter hypotheses were supported, falsified, or remain inconclusive and link evidence -->
+Initial hypothesis: an immutable caller-supplied dictionary, bounded by configuration and copied into each encoder/decoder operation, can improve repeated multi-record compression relative to independent zlib frames while preserving arbitrary-position reads, receipts, positions, record boundaries, snapshots, retention assumptions, and corruption classification. Each stored payload remains an independent frame; no prior record or retained prefix is required.
+
+Cheapest disproof: run the shared conformance function directly over the wrapper, append a deterministic trace and resume after every returned position, reopen the wrapper over the same store, and repeat reads around snapshot and configured dictionary boundaries. Any changed receipt/position, missing or duplicate record, unavailable-history dependency, unbounded configured dictionary, or non-`Corrupt` malformed-frame result falsifies transparency. Identical seeded workloads compare persisted bytes and decoded values against per-record zlib.
 
 ## Deliverables and Commits
 
@@ -33,7 +35,7 @@ Record an event when a hypothesis is falsified, three similar attempts fail, sub
 
 | Type | Attempt or event | Evidence | Impact | Resolution or state | Reusable lesson |
 | --- | --- | --- | --- | --- | --- |
-| <!-- TODO(required): replace with a notable event or an explicit none-reviewed row --> | | | | | |
+| Falsified design | Adaptive dictionary derived from preceding records | `AppendStream::head` returns only an opaque position and `read` supports forward reads; reopening cannot recover a bounded predecessor window without reading from the retained beginning. Retention may make earlier dictionary inputs unavailable. | A prior-record adaptive context would require unbounded replay or undocumented retention and cannot satisfy the stopping conditions. | Rejected before implementation; test the immutable bounded dictionary design instead. | For transparent random-access wrappers, derive decode state solely from immutable configuration and the selected physical record unless the storage contract explicitly exposes restart metadata and bounded predecessor access. |
 
 ## Contract and Integration Friction
 
