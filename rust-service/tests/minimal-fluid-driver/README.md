@@ -20,7 +20,7 @@ This isolated package adapts the generated `fluid-webtransport-browser` WASM pac
 
 ## Validation
 
-The package is intentionally not registered in the root pnpm workspace because registration and shared lockfiles belong to integration. Build `@fluidframework/core-interfaces` and `@fluidframework/driver-definitions` first so their generated declarations exist. The local `tsconfig.json` maps only those type-only imports.
+The package is registered in the root pnpm workspace. Build `@fluidframework/core-interfaces` and `@fluidframework/driver-definitions` first so their generated declarations exist, then validate the package through its pnpm scripts.
 
 From the repository root:
 
