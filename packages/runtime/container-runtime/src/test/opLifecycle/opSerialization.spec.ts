@@ -78,10 +78,7 @@ describe("opSerialization", () => {
 					assert.strictEqual(error.message, parseError.message);
 
 					const props = error.getTelemetryProperties();
-					assert.strictEqual(
-						props.dataProcessingCodepath,
-						"ensureContentsDeserialized",
-					);
+					assert.strictEqual(props.dataProcessingCodepath, "ensureContentsDeserialized");
 					assert.strictEqual(props.messageSequenceNumber, message.sequenceNumber);
 					return true;
 				},
