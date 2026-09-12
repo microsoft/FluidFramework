@@ -363,9 +363,15 @@ test("actual WASM package backs the minimal Fluid driver contract", async () => 
 	const secondService = (await factory.createDocumentService(
 		resolvedUrl,
 	)) as MinimalWasmDocumentService;
-	const second = (await secondService.connectToDeltaStream(
-		{} as IClient,
-	)) as MinimalWasmDeltaConnection;
+	const second = (await secondService.connectToDeltaStream({
+		mode: "read",
+	} as IClient)) as MinimalWasmDeltaConnection;
+	assert.equal(first.mode, "write");
+	assert.equal(second.mode, "read");
+	assert.equal(second.initialMessages.filter(({ type }) => type === "join").length, 1);
+	const readJoin = second.initialMessages[0];
+	assert(readJoin !== undefined);
+	assert.equal(JSON.parse(readJoin.data ?? "").detail.mode, "write");
 	const message = (clientSequenceNumber: number, delta: number): IDocumentMessage => ({
 		clientSequenceNumber,
 		referenceSequenceNumber: 0,
@@ -375,8 +381,16 @@ test("actual WASM package backs the minimal Fluid driver contract", async () => 
 	first.submit([message(1, 1)]);
 	second.submit([message(1, 2)]);
 	await Promise.all([first.waitForIdle(), second.waitForIdle()]);
-	assert.equal((await first.synchronize()).length, 2);
-	assert.equal((await second.synchronize()).length, 2);
+	const firstMessages = await first.synchronize();
+	const secondMessages = await second.synchronize();
+	assert.deepEqual(
+		firstMessages.map(({ clientSequenceNumber }) => clientSequenceNumber),
+		[1, 2],
+	);
+	assert.deepEqual(
+		secondMessages.map(({ clientSequenceNumber }) => clientSequenceNumber),
+		[1, 1],
+	);
 
 	first.disconnect();
 	first.submit([message(2, 4)]);
@@ -402,7 +416,7 @@ test("actual WASM package backs the minimal Fluid driver contract", async () => 
 	if (!page.done) {
 		assert.deepEqual(
 			page.value.map(({ sequenceNumber }) => sequenceNumber),
-			[2, 3],
+			[3],
 		);
 	}
 	assert.equal(

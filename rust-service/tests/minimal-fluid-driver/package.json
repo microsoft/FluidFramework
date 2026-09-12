@@ -5,19 +5,25 @@
 	"type": "module",
 	"scripts": {
 		"build": "tsc --project tsconfig.json",
-		"check:format": "biome format src browser package.json tsconfig.json index.html",
-		"format": "biome format src browser package.json tsconfig.json index.html --write",
+		"build:shared-tree": "esbuild browser/shared-tree-trace.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-trace.js --external:../pkg/*",
+		"check:format": "biome format src browser package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html",
+		"format": "biome format src browser package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html --write",
 		"lint": "biome lint src browser",
 		"test": "node --test lib/*.test.js",
-		"typecheck": "tsc --project tsconfig.json --noEmit"
+		"typecheck": "tsc --project tsconfig.json --noEmit",
+		"typecheck:shared-tree": "tsc --project tsconfig.shared-tree.json"
 	},
 	"dependencies": {
+		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/driver-definitions": "workspace:~"
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/fluid-static": "workspace:~",
+		"@fluidframework/tree": "workspace:~"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",
 		"@types/node": "catalog:types",
+		"esbuild": "0.28.2",
 		"typescript": "~6.0.3"
 	}
 }

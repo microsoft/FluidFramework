@@ -5,10 +5,22 @@ import { tmpdir } from "node:os";
 import { extname, join, normalize } from "node:path";
 import { createServer as createNetServer } from "node:net";
 
-const [siteRoot, transportUrl, certificateHash] = process.argv.slice(2);
-if (!siteRoot || !transportUrl || !/^[0-9a-f]{64}$/i.test(certificateHash ?? "")) {
+const [
+	siteRoot,
+	transportUrl,
+	certificateHash,
+	resultProperty = "__minimalFluidDriverResult",
+	page = "index.html",
+] = process.argv.slice(2);
+if (
+	!siteRoot ||
+	!transportUrl ||
+	!/^[0-9a-f]{64}$/i.test(certificateHash ?? "") ||
+	!/^__[A-Za-z0-9]+Result$/u.test(resultProperty) ||
+	!/^[A-Za-z0-9._-]+$/u.test(page)
+) {
 	throw new Error(
-		"usage: node run-headless.mjs <site-root> <transport-url> <certificate-sha256-hex>",
+		"usage: node run-headless.mjs <site-root> <transport-url> <certificate-sha256-hex> [result-property] [page]",
 	);
 }
 
@@ -100,7 +112,7 @@ await new Promise((resolve, reject) => {
 });
 const debugPort = await freePort();
 const profile = await mkdtemp(join(tmpdir(), "minimal-fluid-driver-"));
-const pageUrl = `http://localhost:${httpPort}/?transport=${encodeURIComponent(transportUrl)}&hash=${certificateHash}`;
+const pageUrl = `http://localhost:${httpPort}/${page}?transport=${encodeURIComponent(transportUrl)}&hash=${certificateHash}`;
 const chromium = spawn(
 	"chromium",
 	[
@@ -131,7 +143,7 @@ try {
 	await client.ready();
 	await client.send("Runtime.enable");
 	const evaluation = await client.send("Runtime.evaluate", {
-		expression: `(async () => { const deadline = Date.now() + 30000; while (!window.__minimalFluidDriverResult && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 25)); return window.__minimalFluidDriverResult; })()`,
+		expression: `(async () => { const property = ${JSON.stringify(resultProperty)}; const timeout = error => ({ status: "failed", stage: window.__sharedTreeStage, error, telemetry: window.__sharedTreeTelemetry?.slice(-20) }); const deadline = Date.now() + 30000; while (!window[property] && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 25)); if (!window[property]) return timeout("timed out waiting for " + property); return Promise.race([window[property], new Promise(resolve => setTimeout(() => resolve(timeout("timed out awaiting " + property)), 30000))]); })()`,
 		awaitPromise: true,
 		returnByValue: true,
 	});
@@ -148,7 +160,7 @@ try {
 		await new Promise((resolve) => chromium.once("exit", resolve));
 	}
 	server.close();
-	await rm(profile, { recursive: true, force: true });
+	await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 }
 
 function assertPage(page) {
