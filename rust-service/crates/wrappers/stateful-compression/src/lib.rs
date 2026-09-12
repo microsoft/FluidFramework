@@ -16,6 +16,8 @@ const COMPRESSION_LEVEL: i32 = 3;
 
 /// Maximum caller-supplied dictionary size retained by a wrapper.
 pub const MAX_DICTIONARY_BYTES: usize = 64 * 1024;
+/// Maximum decoded record or snapshot size accepted by any wrapper configuration.
+pub const MAX_DECODED_BYTES: usize = 128 * 1024 * 1024;
 
 /// Invalid bounded dictionary configuration.
 #[derive(Debug, Error, Eq, PartialEq)]
@@ -26,6 +28,9 @@ pub enum ConfigurationError {
     /// The immutable dictionary exceeds the wrapper's hard memory bound.
     #[error("dictionary has {actual} bytes; maximum is {maximum}")]
     DictionaryTooLarge { actual: usize, maximum: usize },
+    /// The decoded payload bound exceeds the wrapper's hard memory ceiling.
+    #[error("decoded payload bound is {actual} bytes; maximum is {maximum}")]
+    PayloadBoundTooLarge { actual: usize, maximum: usize },
 }
 
 /// An error produced by dictionary compression or its underlying store.
@@ -81,6 +86,12 @@ impl<S> StatefulCompressionStream<S> {
     ) -> Result<Self, ConfigurationError> {
         if max_decoded_bytes == 0 {
             return Err(ConfigurationError::ZeroPayloadBound);
+        }
+        if max_decoded_bytes > MAX_DECODED_BYTES {
+            return Err(ConfigurationError::PayloadBoundTooLarge {
+                actual: max_decoded_bytes,
+                maximum: MAX_DECODED_BYTES,
+            });
         }
         if dictionary.len() > MAX_DICTIONARY_BYTES {
             return Err(ConfigurationError::DictionaryTooLarge {
@@ -161,6 +172,11 @@ fn decompress_frame(
     }
     let mut decompressor =
         zstd::bulk::Decompressor::with_dictionary(dictionary).map_err(|error| error.to_string())?;
+    let window_bytes = max_decoded_bytes.max(dictionary.len()).max(1 << 10);
+    let window_log = usize::BITS - window_bytes.saturating_sub(1).leading_zeros();
+    decompressor
+        .set_parameter(zstd::zstd_safe::DParameter::WindowLogMax(window_log))
+        .map_err(|error| error.to_string())?;
     let decoded = decompressor
         .decompress(&framed[HEADER_LEN..], decoded_len)
         .map_err(|error| error.to_string())?;
@@ -778,6 +794,18 @@ mod tests {
         assert_eq!(
             StatefulCompressionStream::new(MemoryStream::new(), Bytes::new(), 0).unwrap_err(),
             ConfigurationError::ZeroPayloadBound
+        );
+        assert_eq!(
+            StatefulCompressionStream::new(
+                MemoryStream::new(),
+                Bytes::new(),
+                MAX_DECODED_BYTES + 1,
+            )
+            .unwrap_err(),
+            ConfigurationError::PayloadBoundTooLarge {
+                actual: MAX_DECODED_BYTES + 1,
+                maximum: MAX_DECODED_BYTES,
+            }
         );
     }
 }
