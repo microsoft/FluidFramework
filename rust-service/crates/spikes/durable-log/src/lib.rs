@@ -26,6 +26,9 @@ use snapshotted_stream_core::{
 };
 use thiserror::Error;
 
+#[cfg(test)]
+use std::time::{Duration, Instant};
+
 const MAGIC: [u8; 8] = *b"SDLOG002";
 const HEADER_LEN: usize = 24;
 const FRAME_MAGIC: [u8; 4] = *b"RECD";
@@ -82,6 +85,8 @@ pub enum CrashPoint {
 #[derive(Debug, Default)]
 pub struct CrashInjector {
     points: Mutex<VecDeque<CrashPoint>>,
+    #[cfg(test)]
+    process_boundary: Option<(CrashPoint, Arc<ProcessBoundary>)>,
 }
 
 impl CrashInjector {
@@ -89,10 +94,19 @@ impl CrashInjector {
     pub fn new(points: impl IntoIterator<Item = CrashPoint>) -> Self {
         Self {
             points: Mutex::new(points.into_iter().collect()),
+            #[cfg(test)]
+            process_boundary: None,
         }
     }
 
     fn hit(&self, point: CrashPoint) -> std::io::Result<()> {
+        #[cfg(test)]
+        if let Some((target, boundary)) = &self.process_boundary
+            && *target == point
+        {
+            return boundary.stop(&format!("{point:?}"));
+        }
+
         let mut points = self
             .points
             .lock()
@@ -105,6 +119,83 @@ impl CrashInjector {
         }
         Ok(())
     }
+
+    #[cfg(test)]
+    fn for_process(point: CrashPoint, boundary: Arc<ProcessBoundary>) -> Self {
+        Self {
+            points: Mutex::new(VecDeque::new()),
+            process_boundary: Some((point, boundary)),
+        }
+    }
+}
+
+#[cfg(test)]
+#[derive(Debug)]
+struct ProcessBoundary {
+    ready: PathBuf,
+    control: PathBuf,
+    armed: PathBuf,
+    timeout: Duration,
+}
+
+#[cfg(test)]
+impl ProcessBoundary {
+    fn from_environment() -> Self {
+        let coordination = PathBuf::from(
+            std::env::var_os("DURABLE_LOG_PROCESS_COORDINATION")
+                .expect("child coordination directory is required"),
+        );
+        Self {
+            ready: coordination.join("ready"),
+            control: coordination.join("control"),
+            armed: coordination.join("armed"),
+            timeout: Duration::from_secs(10),
+        }
+    }
+
+    fn stop(&self, label: &str) -> std::io::Result<()> {
+        write_marker(&self.ready, label)?;
+        let started = Instant::now();
+        while !self.control.exists() {
+            if started.elapsed() >= self.timeout {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::TimedOut,
+                    "parent control marker timeout",
+                ));
+            }
+            std::thread::yield_now();
+        }
+
+        let control = fs::read_to_string(&self.control)?;
+        write_marker(&self.armed, &control)?;
+        match control.as_str() {
+            "abort" => std::process::abort(),
+            "exit" => std::process::exit(86),
+            "kill" => {
+                while started.elapsed() < self.timeout {
+                    std::thread::yield_now();
+                }
+                Err(std::io::Error::new(
+                    std::io::ErrorKind::TimedOut,
+                    "parent did not kill armed child",
+                ))
+            }
+            _ => Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "unknown process control marker",
+            )),
+        }
+    }
+}
+
+#[cfg(test)]
+fn write_marker(path: &Path, value: &str) -> std::io::Result<()> {
+    let pending = path.with_extension("pending");
+    let mut file = File::create(&pending)?;
+    file.write_all(value.as_bytes())?;
+    file.sync_all()?;
+    drop(file);
+    fs::rename(pending, path)
 }
 
 /// An opaque ordinal tied to one persisted log generation.
@@ -741,8 +832,9 @@ mod tests {
         fs,
         io::{Seek, SeekFrom},
         path::PathBuf,
+        process::{Child, Command, ExitStatus, Stdio},
         sync::atomic::{AtomicU64, Ordering},
-        time::Instant,
+        time::{Duration, Instant},
     };
 
     use futures_util::TryStreamExt;
@@ -752,12 +844,318 @@ mod tests {
 
     static NEXT_TEST_DIRECTORY: AtomicU64 = AtomicU64::new(1);
 
+    const CHILD_TEST: &str = "tests::process_crash_child";
+    const PROCESS_TIMEOUT: Duration = Duration::from_secs(10);
+
+    #[derive(Clone, Copy, Debug)]
+    enum Termination {
+        Kill,
+        Abort,
+        Exit,
+    }
+
+    impl Termination {
+        fn control(self) -> &'static str {
+            match self {
+                Self::Kill => "kill",
+                Self::Abort => "abort",
+                Self::Exit => "exit",
+            }
+        }
+    }
+
     fn test_directory(label: &str) -> PathBuf {
         let id = NEXT_TEST_DIRECTORY.fetch_add(1, Ordering::Relaxed);
         std::env::temp_dir().join(format!(
             "snapshotted-stream-durable-log-{}-{label}-{id}",
             std::process::id()
         ))
+    }
+
+    fn wait_for_marker(child: &mut Child, path: &Path, label: &str) {
+        let started = Instant::now();
+        loop {
+            if path.exists() {
+                return;
+            }
+            if let Some(status) = child.try_wait().unwrap() {
+                panic!("child exited before {label}: {status}");
+            }
+            assert!(
+                started.elapsed() < PROCESS_TIMEOUT,
+                "timed out waiting for {label}"
+            );
+            std::thread::yield_now();
+        }
+    }
+
+    fn wait_for_exit(child: &mut Child) -> ExitStatus {
+        let started = Instant::now();
+        loop {
+            if let Some(status) = child.try_wait().unwrap() {
+                return status;
+            }
+            if started.elapsed() >= PROCESS_TIMEOUT {
+                child.kill().unwrap();
+                let _ = child.wait();
+                panic!("timed out waiting for child exit");
+            }
+            std::thread::yield_now();
+        }
+    }
+
+    fn terminate_child(
+        data_directory: &Path,
+        operation: &str,
+        boundary: &str,
+        termination: Termination,
+    ) {
+        let coordination = test_directory("process-coordination");
+        fs::create_dir_all(&coordination).unwrap();
+        let ready = coordination.join("ready");
+        let control = coordination.join("control");
+        let armed = coordination.join("armed");
+        let mut child = Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", CHILD_TEST, "--ignored", "--nocapture"])
+            .env("DURABLE_LOG_PROCESS_CHILD", "1")
+            .env("DURABLE_LOG_PROCESS_DIRECTORY", data_directory)
+            .env("DURABLE_LOG_PROCESS_COORDINATION", &coordination)
+            .env("DURABLE_LOG_PROCESS_OPERATION", operation)
+            .env("DURABLE_LOG_PROCESS_BOUNDARY", boundary)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .unwrap();
+
+        wait_for_marker(&mut child, &ready, "child readiness marker");
+        assert_eq!(fs::read_to_string(&ready).unwrap(), boundary);
+        write_marker(&control, termination.control()).unwrap();
+        wait_for_marker(&mut child, &armed, "child armed marker");
+        assert_eq!(fs::read_to_string(&armed).unwrap(), termination.control());
+        if matches!(termination, Termination::Kill) {
+            child.kill().unwrap();
+        }
+        let status = wait_for_exit(&mut child);
+        assert!(!status.success(), "child unexpectedly succeeded");
+        if matches!(termination, Termination::Exit) {
+            assert_eq!(status.code(), Some(86));
+        }
+        fs::remove_dir_all(coordination).unwrap();
+    }
+
+    fn process_crash_point(boundary: &str) -> Option<CrashPoint> {
+        Some(match boundary {
+            "RecordAfterHeaderWrite" => CrashPoint::RecordAfterHeaderWrite,
+            "RecordAfterPayloadWrite" => CrashPoint::RecordAfterPayloadWrite,
+            "RecordAfterTrailerWrite" => CrashPoint::RecordAfterTrailerWrite,
+            "RecordBeforeSync" => CrashPoint::RecordBeforeSync,
+            "RecordAfterSync" => CrashPoint::RecordAfterSync,
+            "SnapshotAfterCreate" => CrashPoint::SnapshotAfterCreate,
+            "SnapshotAfterWrite" => CrashPoint::SnapshotAfterWrite,
+            "SnapshotBeforeFileSync" => CrashPoint::SnapshotBeforeFileSync,
+            "SnapshotAfterFileSync" => CrashPoint::SnapshotAfterFileSync,
+            "SnapshotBeforeRename" => CrashPoint::SnapshotBeforeRename,
+            "SnapshotAfterRename" => CrashPoint::SnapshotAfterRename,
+            "SnapshotBeforeDirectorySync" => CrashPoint::SnapshotBeforeDirectorySync,
+            "SnapshotAfterDirectorySync" => CrashPoint::SnapshotAfterDirectorySync,
+            "RecordBeforeWrite"
+            | "RecordAfterAcknowledgment"
+            | "SnapshotBeforeWrite"
+            | "SnapshotAfterAcknowledgment" => return None,
+            _ => panic!("unknown child boundary: {boundary}"),
+        })
+    }
+
+    #[tokio::test]
+    #[ignore = "spawned only by process recovery tests"]
+    async fn process_crash_child() {
+        if std::env::var_os("DURABLE_LOG_PROCESS_CHILD").is_none() {
+            return;
+        }
+        let directory = PathBuf::from(
+            std::env::var_os("DURABLE_LOG_PROCESS_DIRECTORY")
+                .expect("child data directory is required"),
+        );
+        let operation = std::env::var("DURABLE_LOG_PROCESS_OPERATION").unwrap();
+        let boundary_name = std::env::var("DURABLE_LOG_PROCESS_BOUNDARY").unwrap();
+        let boundary = Arc::new(ProcessBoundary::from_environment());
+        let log = match process_crash_point(&boundary_name) {
+            Some(point) => DurableLog::open_with_crash_injector(
+                &directory,
+                Arc::new(CrashInjector::for_process(point, Arc::clone(&boundary))),
+            )
+            .unwrap(),
+            None => DurableLog::open(&directory).unwrap(),
+        };
+
+        match operation.as_str() {
+            "append" => {
+                if boundary_name == "RecordBeforeWrite" {
+                    boundary.stop(&boundary_name).unwrap();
+                }
+                log.append(Bytes::from_static(b"second")).await.unwrap();
+                if boundary_name == "RecordAfterAcknowledgment" {
+                    boundary.stop(&boundary_name).unwrap();
+                }
+            }
+            "snapshot" => {
+                if boundary_name == "SnapshotBeforeWrite" {
+                    boundary.stop(&boundary_name).unwrap();
+                }
+                let records = log
+                    .read(None)
+                    .await
+                    .unwrap()
+                    .try_collect::<Vec<_>>()
+                    .await
+                    .unwrap();
+                let position = records[1].position.clone();
+                let parent = log.latest().await.unwrap().unwrap().id;
+                log.publish(
+                    Snapshot {
+                        includes_through: SnapshotPosition::At(position),
+                        payload: Bytes::from_static(b"attempted"),
+                    },
+                    Some(&parent),
+                )
+                .await
+                .unwrap();
+                if boundary_name == "SnapshotAfterAcknowledgment" {
+                    boundary.stop(&boundary_name).unwrap();
+                }
+            }
+            _ => panic!("unknown child operation: {operation}"),
+        }
+        panic!("child operation passed its configured boundary");
+    }
+
+    #[tokio::test]
+    async fn child_process_append_termination_recovers_acknowledged_prefix() {
+        let cases = [
+            ("RecordBeforeWrite", Termination::Kill),
+            ("RecordAfterHeaderWrite", Termination::Abort),
+            ("RecordAfterPayloadWrite", Termination::Exit),
+            ("RecordAfterTrailerWrite", Termination::Kill),
+            ("RecordBeforeSync", Termination::Abort),
+            ("RecordAfterSync", Termination::Exit),
+            ("RecordAfterAcknowledgment", Termination::Kill),
+        ];
+
+        for (boundary, termination) in cases {
+            let directory = test_directory("process-append");
+            let log = DurableLog::open(&directory).unwrap();
+            let acknowledged = log.append(Bytes::from_static(b"first")).await.unwrap();
+            drop(log);
+
+            terminate_child(&directory, "append", boundary, termination);
+
+            let reopened = DurableLog::open(&directory).unwrap();
+            let records = reopened
+                .read(None)
+                .await
+                .unwrap()
+                .try_collect::<Vec<_>>()
+                .await
+                .unwrap();
+            assert_eq!(records[0].position, acknowledged.position, "{boundary}");
+            assert_eq!(records[0].payload, Bytes::from_static(b"first"));
+            assert!(records.len() == 1 || records.len() == 2, "{boundary}");
+            if records.len() == 2 {
+                assert_eq!(records[1].payload, Bytes::from_static(b"second"));
+            }
+            fs::remove_dir_all(directory).unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn child_process_snapshot_termination_recovers_valid_lineage_and_replay() {
+        let boundaries = [
+            "SnapshotBeforeWrite",
+            "SnapshotAfterCreate",
+            "SnapshotAfterWrite",
+            "SnapshotBeforeFileSync",
+            "SnapshotAfterFileSync",
+            "SnapshotBeforeRename",
+            "SnapshotAfterRename",
+            "SnapshotBeforeDirectorySync",
+            "SnapshotAfterDirectorySync",
+            "SnapshotAfterAcknowledgment",
+        ];
+
+        for (index, boundary) in boundaries.into_iter().enumerate() {
+            let termination = match index % 3 {
+                0 => Termination::Kill,
+                1 => Termination::Abort,
+                _ => Termination::Exit,
+            };
+            let directory = test_directory("process-snapshot");
+            let log = DurableLog::open(&directory).unwrap();
+            let first = log.append(Bytes::from_static(b"first")).await.unwrap();
+            log.append(Bytes::from_static(b"second")).await.unwrap();
+            let third = log.append(Bytes::from_static(b"third")).await.unwrap();
+            let baseline_id = log
+                .publish(
+                    Snapshot {
+                        includes_through: SnapshotPosition::At(first.position.clone()),
+                        payload: Bytes::from_static(b"baseline"),
+                    },
+                    None,
+                )
+                .await
+                .unwrap();
+            drop(log);
+
+            terminate_child(&directory, "snapshot", boundary, termination);
+
+            let reopened = DurableLog::open(&directory).unwrap();
+            let recovered = reopened.latest().await.unwrap().unwrap();
+            let (expected_id, replay_after, expected_replay) =
+                if recovered.snapshot.payload == Bytes::from_static(b"baseline") {
+                    (
+                        baseline_id,
+                        first.position,
+                        vec![Bytes::from_static(b"second"), Bytes::from_static(b"third")],
+                    )
+                } else {
+                    assert_eq!(
+                        recovered.snapshot.payload,
+                        Bytes::from_static(b"attempted"),
+                        "{boundary}"
+                    );
+                    let position = match &recovered.snapshot.includes_through {
+                        SnapshotPosition::At(position) => position.clone(),
+                        SnapshotPosition::Initial => panic!("attempted snapshot lost its position"),
+                    };
+                    (
+                        snapshot_id(reopened.generation, position.ordinal, b"attempted").unwrap(),
+                        position,
+                        vec![Bytes::from_static(b"third")],
+                    )
+                };
+            assert_eq!(recovered.id, expected_id, "{boundary}");
+            let replay = reopened
+                .read(Some(&replay_after))
+                .await
+                .unwrap()
+                .try_collect::<Vec<_>>()
+                .await
+                .unwrap();
+            assert_eq!(
+                replay
+                    .iter()
+                    .map(|record| record.payload.clone())
+                    .collect::<Vec<_>>(),
+                expected_replay,
+                "{boundary}"
+            );
+            assert_eq!(
+                replay.last().unwrap().position,
+                third.position,
+                "{boundary}"
+            );
+            fs::remove_dir_all(directory).unwrap();
+        }
     }
 
     #[tokio::test]
