@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "iteration": "0005",
+  "status": "active",
+  "sourceCommit": "2de3d94f89ecff3e340eb1d580d628d5d951681b",
+  "createdAt": "2026-09-12T19:40:45.132Z",
+  "activeWorkstreams": [
+    {
+      "name": "projected-reads-ambiguity-recovery",
+      "instructions": "phase-2/instructions/projected-reads-ambiguity-recovery.md",
+      "report": "phase-2/projected-reads-ambiguity-recovery.md"
+    },
+    {
+      "name": "content-addressed-blobs-summaries",
+      "instructions": "phase-2/instructions/content-addressed-blobs-summaries.md",
+      "report": "phase-2/content-addressed-blobs-summaries.md"
+    },
+    {
+      "name": "browser-wasm-client-package",
+      "instructions": "phase-2/instructions/browser-wasm-client-package.md",
+      "report": "phase-2/browser-wasm-client-package.md"
+    },
+    {
+      "name": "minimal-typescript-fluid-driver",
+      "instructions": "phase-2/instructions/minimal-typescript-fluid-driver.md",
+      "report": "phase-2/minimal-typescript-fluid-driver.md"
+    }
+  ],
+  "deferredWorkstreams": [
+    "retention-and-garbage-collection",
+    "direct-shared-tree-integration",
+    "service-concurrency",
+    "browser-storage",
+    "distributed-fencing",
+    "hardware-power-loss",
+    "cloud-blob-storage",
+    "authentication-authorization",
+    "node-webtransport-adapter",
+    "broad-optimization"
+  ],
+  "nextWorkstreams": []
+}
