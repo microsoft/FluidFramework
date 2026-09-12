@@ -1,11 +1,20 @@
-#![doc = "A deterministic Fluid sequencing feasibility model over opaque appends."]
+#![doc = "A valid-only authoritative Fluid sequencer over opaque appends."]
 
-use std::collections::BTreeMap;
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    future::Future,
+    sync::{Arc, RwLock},
+};
 
 use bytes::{Buf, BufMut, Bytes, BytesMut};
-use snapshotted_stream_core::SnapshotPosition;
+use snapshotted_stream_core::{
+    AppendReceipt, AppendStream, ClassifiedError, ErrorKind, PositionCodec, ReadRecord,
+    SnapshotPosition, StreamPosition,
+};
 
-const FRAME_MAGIC: &[u8; 4] = b"FSQ1";
+const FRAME_MAGIC: &[u8; 4] = b"FSQ2";
+const SESSION_START_TAG: u8 = 0;
+const SUBMISSION_TAG: u8 = 1;
 
 /// A stable writer identity carried in every submitted frame.
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -26,6 +35,56 @@ impl WriterId {
     }
 
     /// Returns the opaque writer identity bytes.
+    #[must_use]
+    pub fn as_bytes(&self) -> &Bytes {
+        &self.0
+    }
+}
+
+/// A connection-scoped identity. Reconnects must use a fresh value.
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub struct SessionId(Bytes);
+
+impl SessionId {
+    /// Creates a non-empty session identity.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ValueError::EmptySessionId`] when `value` is empty.
+    pub fn new(value: impl Into<Bytes>) -> Result<Self, ValueError> {
+        let value = value.into();
+        if value.is_empty() {
+            return Err(ValueError::EmptySessionId);
+        }
+        Ok(Self(value))
+    }
+
+    /// Returns the opaque session identity bytes.
+    #[must_use]
+    pub fn as_bytes(&self) -> &Bytes {
+        &self.0
+    }
+}
+
+/// A stable identity used to reconcile and deduplicate one logical submission.
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub struct SubmissionId(Bytes);
+
+impl SubmissionId {
+    /// Creates a non-empty submission identity.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ValueError::EmptySubmissionId`] when `value` is empty.
+    pub fn new(value: impl Into<Bytes>) -> Result<Self, ValueError> {
+        let value = value.into();
+        if value.is_empty() {
+            return Err(ValueError::EmptySubmissionId);
+        }
+        Ok(Self(value))
+    }
+
+    /// Returns the opaque submission identity bytes.
     #[must_use]
     pub fn as_bytes(&self) -> &Bytes {
         &self.0
@@ -61,6 +120,8 @@ impl PositionToken {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ValueError {
     EmptyWriterId,
+    EmptySessionId,
+    EmptySubmissionId,
     EmptyPosition,
 }
 
@@ -68,6 +129,8 @@ pub enum ValueError {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Submission {
     pub writer_id: WriterId,
+    pub session_id: SessionId,
+    pub submission_id: SubmissionId,
     pub local_sequence_number: u64,
     pub reference_position: SnapshotPosition<PositionToken>,
     pub payload: Bytes,
@@ -81,113 +144,13 @@ pub enum FrameError {
     Truncated,
     InvalidReferenceTag,
     InvalidValue(ValueError),
+    InvalidEntryTag,
     TrailingBytes,
-}
-
-/// Encodes one submission while preserving its append boundary.
-///
-/// # Errors
-///
-/// Returns [`FrameError::FieldTooLarge`] if an identity, position, or payload cannot be length
-/// prefixed by the frame format.
-pub fn encode_submission(submission: &Submission) -> Result<Bytes, FrameError> {
-    let writer_length =
-        u16::try_from(submission.writer_id.0.len()).map_err(|_| FrameError::FieldTooLarge)?;
-    let payload_length =
-        u32::try_from(submission.payload.len()).map_err(|_| FrameError::FieldTooLarge)?;
-    let reference_length = match &submission.reference_position {
-        SnapshotPosition::Initial => 0,
-        SnapshotPosition::At(position) => {
-            u16::try_from(position.0.len()).map_err(|_| FrameError::FieldTooLarge)?
-        }
-    };
-
-    let mut frame = BytesMut::with_capacity(
-        FRAME_MAGIC.len()
-            + 2
-            + usize::from(writer_length)
-            + 8
-            + 1
-            + 2
-            + usize::from(reference_length)
-            + 4
-            + submission.payload.len(),
-    );
-    frame.extend_from_slice(FRAME_MAGIC);
-    frame.put_u16(writer_length);
-    frame.extend_from_slice(&submission.writer_id.0);
-    frame.put_u64(submission.local_sequence_number);
-    match &submission.reference_position {
-        SnapshotPosition::Initial => frame.put_u8(0),
-        SnapshotPosition::At(position) => {
-            frame.put_u8(1);
-            frame.put_u16(reference_length);
-            frame.extend_from_slice(&position.0);
-        }
-    }
-    frame.put_u32(payload_length);
-    frame.extend_from_slice(&submission.payload);
-    Ok(frame.freeze())
-}
-
-/// Decodes one complete submission frame.
-///
-/// # Errors
-///
-/// Returns a [`FrameError`] for malformed, truncated, or non-canonical input.
-pub fn decode_submission(mut frame: Bytes) -> Result<Submission, FrameError> {
-    if frame.remaining() < FRAME_MAGIC.len() || &frame[..FRAME_MAGIC.len()] != FRAME_MAGIC {
-        return Err(FrameError::InvalidMagic);
-    }
-    frame.advance(FRAME_MAGIC.len());
-
-    let writer = take_u16_bytes(&mut frame)?;
-    let writer_id = WriterId::new(writer).map_err(FrameError::InvalidValue)?;
-    if frame.remaining() < 9 {
-        return Err(FrameError::Truncated);
-    }
-    let local_sequence_number = frame.get_u64();
-    let reference_position = match frame.get_u8() {
-        0 => SnapshotPosition::Initial,
-        1 => {
-            let position = take_u16_bytes(&mut frame)?;
-            SnapshotPosition::At(PositionToken::new(position).map_err(FrameError::InvalidValue)?)
-        }
-        _ => return Err(FrameError::InvalidReferenceTag),
-    };
-    if frame.remaining() < 4 {
-        return Err(FrameError::Truncated);
-    }
-    let payload_length = usize::try_from(frame.get_u32()).map_err(|_| FrameError::FieldTooLarge)?;
-    if frame.remaining() < payload_length {
-        return Err(FrameError::Truncated);
-    }
-    let payload = frame.split_to(payload_length);
-    if frame.has_remaining() {
-        return Err(FrameError::TrailingBytes);
-    }
-
-    Ok(Submission {
-        writer_id,
-        local_sequence_number,
-        reference_position,
-        payload,
-    })
-}
-
-fn take_u16_bytes(frame: &mut Bytes) -> Result<Bytes, FrameError> {
-    if frame.remaining() < 2 {
-        return Err(FrameError::Truncated);
-    }
-    let length = usize::from(frame.get_u16());
-    if frame.remaining() < length {
-        return Err(FrameError::Truncated);
-    }
-    Ok(frame.split_to(length))
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct WriterState {
+    session_id: SessionId,
     local_sequence_number: u64,
     reference_position: SnapshotPosition<PositionToken>,
 }
@@ -201,91 +164,74 @@ pub struct SequencedMessage {
     pub submission: Submission,
 }
 
-/// A protocol-level rejection discovered while replaying an already committed frame.
+/// A protocol-level rejection produced before an invalid operation is appended.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Rejection {
-    DuplicateStreamPosition,
-    MalformedFrame(FrameError),
-    WriterAlreadyActive,
+    SessionAlreadyUsed,
     UnknownWriter,
+    StaleSession,
     DuplicateLocalSequence { last_accepted: u64, received: u64 },
     LocalSequenceGap { expected: u64, received: u64 },
     UnknownReferencePosition,
     StaleReferencePosition,
+    SubmissionIdentityConflict,
 }
 
-/// Deterministic state derived by replaying framed opaque appends in committed order.
+#[derive(Clone, Debug, Eq, PartialEq)]
+enum LogEntry {
+    SessionStart {
+        writer_id: WriterId,
+        session_id: SessionId,
+        reference_position: SnapshotPosition<PositionToken>,
+    },
+    Submission(Submission),
+}
+
 #[derive(Debug, Default)]
-pub struct Sequencer {
+struct SequencerState {
     observed_positions: Vec<PositionToken>,
     writers: BTreeMap<WriterId, WriterState>,
+    seen_sessions: BTreeSet<SessionId>,
+    accepted: BTreeMap<SubmissionId, SequencedMessage>,
     sequence_number: u64,
 }
 
-impl Sequencer {
-    /// Creates an empty replay state.
-    #[must_use]
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Registers an active writer at a known, non-stale creation position.
-    ///
-    /// # Errors
-    ///
-    /// Returns a protocol rejection when the reference is unknown or older than the current
-    /// minimum, or when the writer is already active.
-    pub fn join(
-        &mut self,
+impl SequencerState {
+    fn validate_session_start(
+        &self,
         writer_id: WriterId,
+        session_id: SessionId,
         reference_position: SnapshotPosition<PositionToken>,
-    ) -> Result<(), Rejection> {
-        if self.writers.contains_key(&writer_id) {
-            return Err(Rejection::WriterAlreadyActive);
+    ) -> Result<LogEntry, Rejection> {
+        if self.seen_sessions.contains(&session_id) {
+            return Err(Rejection::SessionAlreadyUsed);
         }
         self.validate_reference(&reference_position)?;
         if self.is_below_minimum(&reference_position) {
             return Err(Rejection::StaleReferencePosition);
         }
-        self.writers.insert(
+        Ok(LogEntry::SessionStart {
             writer_id,
-            WriterState {
-                local_sequence_number: 0,
-                reference_position,
-            },
-        );
-        Ok(())
+            session_id,
+            reference_position,
+        })
     }
 
-    /// Removes an active writer. Returns whether the writer was present.
-    pub fn leave(&mut self, writer_id: &WriterId) -> bool {
-        self.writers.remove(writer_id).is_some()
-    }
-
-    /// Observes one committed opaque append and projects it into final sequence metadata.
-    ///
-    /// The stream position is recorded even when the protocol frame is rejected: the opaque
-    /// kernel append has already committed and cannot be removed by this adapter.
-    ///
-    /// # Errors
-    ///
-    /// Returns a protocol rejection for malformed frames, duplicate or gapped writer-local
-    /// order, unknown writers or references, and stale references.
-    pub fn observe(
-        &mut self,
-        stream_position: PositionToken,
-        frame: Bytes,
-    ) -> Result<SequencedMessage, Rejection> {
-        if self.position_index(&stream_position).is_some() {
-            return Err(Rejection::DuplicateStreamPosition);
+    fn validate_submission(&self, submission: Submission) -> Result<Preflight, Rejection> {
+        if let Some(accepted) = self.accepted.get(&submission.submission_id) {
+            return if accepted.submission == submission {
+                Ok(Preflight::Duplicate(accepted.clone()))
+            } else {
+                Err(Rejection::SubmissionIdentityConflict)
+            };
         }
-        self.observed_positions.push(stream_position.clone());
-
-        let submission = decode_submission(frame).map_err(Rejection::MalformedFrame)?;
         let writer = self
             .writers
             .get(&submission.writer_id)
             .ok_or(Rejection::UnknownWriter)?;
+        if writer.session_id != submission.session_id {
+            return Err(Rejection::StaleSession);
+        }
         let expected = writer.local_sequence_number + 1;
         if submission.local_sequence_number <= writer.local_sequence_number {
             return Err(Rejection::DuplicateLocalSequence {
@@ -299,32 +245,71 @@ impl Sequencer {
                 received: submission.local_sequence_number,
             });
         }
-        self.validate_prior_reference(&submission.reference_position)?;
+        self.validate_reference(&submission.reference_position)?;
         if self.reference_rank(&submission.reference_position)
             < self.reference_rank(&writer.reference_position)
             || self.is_below_minimum(&submission.reference_position)
         {
             return Err(Rejection::StaleReferencePosition);
         }
-
-        let Some(writer) = self.writers.get_mut(&submission.writer_id) else {
-            return Err(Rejection::UnknownWriter);
-        };
-        writer.local_sequence_number = submission.local_sequence_number;
-        writer.reference_position = submission.reference_position.clone();
-        self.sequence_number += 1;
-
-        Ok(SequencedMessage {
-            stream_position,
-            sequence_number: self.sequence_number,
-            minimum_reference_position: self.minimum_reference_position(),
-            submission,
-        })
+        Ok(Preflight::Append(LogEntry::Submission(submission)))
     }
 
-    /// Returns the minimum reference position among active writers.
-    #[must_use]
-    pub fn minimum_reference_position(&self) -> SnapshotPosition<PositionToken> {
+    fn apply(
+        &mut self,
+        stream_position: PositionToken,
+        entry: LogEntry,
+    ) -> Result<Option<SequencedMessage>, Rejection> {
+        let result = match entry {
+            LogEntry::SessionStart {
+                writer_id,
+                session_id,
+                reference_position,
+            } => {
+                let entry = self.validate_session_start(
+                    writer_id.clone(),
+                    session_id.clone(),
+                    reference_position.clone(),
+                )?;
+                debug_assert!(matches!(entry, LogEntry::SessionStart { .. }));
+                self.seen_sessions.insert(session_id.clone());
+                self.writers.insert(
+                    writer_id,
+                    WriterState {
+                        session_id,
+                        local_sequence_number: 0,
+                        reference_position,
+                    },
+                );
+                None
+            }
+            LogEntry::Submission(submission) => {
+                match self.validate_submission(submission.clone())? {
+                    Preflight::Duplicate(message) => return Ok(Some(message)),
+                    Preflight::Append(_) => {}
+                }
+                let Some(writer) = self.writers.get_mut(&submission.writer_id) else {
+                    return Err(Rejection::UnknownWriter);
+                };
+                writer.local_sequence_number = submission.local_sequence_number;
+                writer.reference_position = submission.reference_position.clone();
+                self.sequence_number += 1;
+                let message = SequencedMessage {
+                    stream_position: stream_position.clone(),
+                    sequence_number: self.sequence_number,
+                    minimum_reference_position: self.minimum_reference_position(),
+                    submission: submission.clone(),
+                };
+                self.accepted
+                    .insert(submission.submission_id.clone(), message.clone());
+                Some(message)
+            }
+        };
+        self.observed_positions.push(stream_position);
+        Ok(result)
+    }
+
+    fn minimum_reference_position(&self) -> SnapshotPosition<PositionToken> {
         self.writers
             .values()
             .min_by_key(|writer| self.reference_rank(&writer.reference_position))
@@ -350,20 +335,6 @@ impl Sequencer {
         Ok(())
     }
 
-    fn validate_prior_reference(
-        &self,
-        reference: &SnapshotPosition<PositionToken>,
-    ) -> Result<(), Rejection> {
-        if matches!(
-            reference,
-            SnapshotPosition::At(position)
-                if self.position_index(position).is_none_or(|index| index + 1 == self.observed_positions.len())
-        ) {
-            return Err(Rejection::UnknownReferencePosition);
-        }
-        Ok(())
-    }
-
     fn is_below_minimum(&self, reference: &SnapshotPosition<PositionToken>) -> bool {
         self.reference_rank(reference) < self.reference_rank(&self.minimum_reference_position())
     }
@@ -384,235 +355,956 @@ impl Sequencer {
     }
 }
 
+enum Preflight {
+    Append(LogEntry),
+    Duplicate(SequencedMessage),
+}
+
+/// The finite-read, append, and position-codec boundary consumed by the sequencer service.
+pub trait SequencerStorage: Send + Sync {
+    type Position: StreamPosition;
+    type Error: ClassifiedError;
+
+    fn append(
+        &self,
+        value: Bytes,
+    ) -> impl Future<Output = Result<AppendReceipt<Self::Position>, Self::Error>> + Send;
+
+    fn read_all(
+        &self,
+    ) -> impl Future<Output = Result<Vec<ReadRecord<Self::Position>>, Self::Error>> + Send;
+
+    /// Encodes one stream-owned position as an opaque token.
+    ///
+    /// # Errors
+    ///
+    /// Returns a storage-defined error when the position cannot be encoded.
+    fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error>;
+}
+
+/// Adapts an opaque kernel stream and its position codec to [`SequencerStorage`].
+pub struct KernelStream<S>(pub S);
+
+impl<S> SequencerStorage for KernelStream<S>
+where
+    S: AppendStream + PositionCodec,
+{
+    type Position = S::Position;
+    type Error = S::Error;
+
+    fn append(
+        &self,
+        value: Bytes,
+    ) -> impl Future<Output = Result<AppendReceipt<Self::Position>, Self::Error>> + Send {
+        self.0.append(value)
+    }
+
+    async fn read_all(&self) -> Result<Vec<ReadRecord<Self::Position>>, Self::Error> {
+        let mut reader = self.0.read(None).await?;
+        let mut records = Vec::new();
+        while let Some(record) =
+            std::future::poll_fn(|context| reader.as_mut().poll_next(context)).await
+        {
+            records.push(record?);
+        }
+        Ok(records)
+    }
+
+    fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error> {
+        self.0.encode_position(position)
+    }
+}
+
+/// A monotonically issued token for one authoritative sequencer lease.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct FenceToken(u64);
+
+struct FencedState<S> {
+    stream: S,
+    epoch: u64,
+}
+
+/// A shared service-level gate that keeps fence validation atomic with append.
+pub struct FencedStream<S> {
+    state: Arc<RwLock<FencedState<S>>>,
+}
+
+impl<S> Clone for FencedStream<S> {
+    fn clone(&self) -> Self {
+        Self {
+            state: Arc::clone(&self.state),
+        }
+    }
+}
+
+impl<S> FencedStream<S>
+where
+    S: SequencerStorage,
+{
+    /// Wraps an opaque stream in the service-owned fencing gate.
+    #[must_use]
+    pub fn new(stream: S) -> Self {
+        Self {
+            state: Arc::new(RwLock::new(FencedState { stream, epoch: 0 })),
+        }
+    }
+
+    /// Issues a new lease and invalidates all earlier tokens.
+    #[must_use]
+    pub fn issue_fence(&self) -> FenceToken {
+        let mut state = self
+            .state
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        state.epoch += 1;
+        FenceToken(state.epoch)
+    }
+
+    fn ensure_current(&self, fence: FenceToken) -> Result<(), FenceLost> {
+        let state = self
+            .state
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        if state.epoch == fence.0 {
+            Ok(())
+        } else {
+            Err(FenceLost)
+        }
+    }
+
+    #[allow(clippy::await_holding_lock)]
+    async fn append(
+        &self,
+        fence: FenceToken,
+        value: Bytes,
+    ) -> Result<AppendReceipt<S::Position>, FencedAppendError<S::Error>> {
+        let state = self
+            .state
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        if state.epoch != fence.0 {
+            return Err(FencedAppendError::FenceLost);
+        }
+        state
+            .stream
+            .append(value)
+            .await
+            .map_err(FencedAppendError::Storage)
+    }
+
+    #[allow(clippy::await_holding_lock)]
+    async fn read_all(&self) -> Result<Vec<ReadRecord<S::Position>>, S::Error> {
+        let state = self
+            .state
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        state.stream.read_all().await
+    }
+
+    fn encode_position(&self, position: &S::Position) -> Result<PositionToken, S::Error> {
+        let state = self
+            .state
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        state.stream.encode_position(position).map(PositionToken)
+    }
+}
+
+enum FencedAppendError<E> {
+    FenceLost,
+    Storage(E),
+}
+
+/// The current process no longer owns the authoritative sequencer lease.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct FenceLost;
+
+/// A service failure. Protocol rejections occur before append.
+#[derive(Debug)]
+pub enum ServiceError<E> {
+    Rejected(Rejection),
+    FenceLost,
+    Storage(E),
+    StorageAmbiguous(SubmissionId),
+    RecoveryRequired,
+    CorruptLog(FrameError),
+    InvalidCommittedEntry(Rejection),
+}
+
+/// A successful submission response.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum SubmitOutcome {
+    Accepted(SequencedMessage),
+    Duplicate(SequencedMessage),
+}
+
+/// Resolution of an append whose storage response was ambiguous.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum RecoveryOutcome {
+    Committed(SequencedMessage),
+    NotCommitted(Submission),
+}
+
+/// A single authoritative Fluid submission service recovered from canonical records.
+pub struct AuthoritativeSequencer<S>
+where
+    S: SequencerStorage,
+{
+    storage: FencedStream<S>,
+    fence: FenceToken,
+    state: SequencerState,
+    unresolved: Option<Submission>,
+    recovery_required: bool,
+}
+
+impl<S> AuthoritativeSequencer<S>
+where
+    S: SequencerStorage,
+{
+    /// Replays the canonical log under the supplied current fence.
+    ///
+    /// # Errors
+    ///
+    /// Returns a fence, storage, framing, or committed-entry validation error when the service
+    /// cannot establish authoritative state.
+    pub async fn recover(
+        storage: FencedStream<S>,
+        fence: FenceToken,
+    ) -> Result<Self, ServiceError<S::Error>> {
+        storage
+            .ensure_current(fence)
+            .map_err(|_| ServiceError::FenceLost)?;
+        let state = replay(&storage).await?;
+        storage
+            .ensure_current(fence)
+            .map_err(|_| ServiceError::FenceLost)?;
+        Ok(Self {
+            storage,
+            fence,
+            state,
+            unresolved: None,
+            recovery_required: false,
+        })
+    }
+
+    /// Starts or replaces a writer session after validating its reference.
+    ///
+    /// # Errors
+    ///
+    /// Returns a protocol rejection before append, a fence or storage error during append, or
+    /// [`ServiceError::RecoveryRequired`] after an earlier ambiguous outcome.
+    pub async fn connect(
+        &mut self,
+        writer_id: WriterId,
+        session_id: SessionId,
+        reference_position: SnapshotPosition<PositionToken>,
+    ) -> Result<(), ServiceError<S::Error>> {
+        if self.recovery_required {
+            return Err(ServiceError::RecoveryRequired);
+        }
+        let entry = self
+            .state
+            .validate_session_start(writer_id, session_id, reference_position)
+            .map_err(ServiceError::Rejected)?;
+        let receipt = match self.append_entry(&entry).await {
+            Err(ServiceError::Storage(error)) if error.kind() == ErrorKind::Ambiguous => {
+                self.recovery_required = true;
+                return Err(ServiceError::Storage(error));
+            }
+            result => result?,
+        };
+        let position = self
+            .storage
+            .encode_position(&receipt.position)
+            .map_err(ServiceError::Storage)?;
+        self.state
+            .apply(position, entry)
+            .map_err(ServiceError::InvalidCommittedEntry)?;
+        Ok(())
+    }
+
+    /// Validates and appends one operation. Acceptance is returned only after append succeeds.
+    ///
+    /// # Errors
+    ///
+    /// Returns a protocol rejection before append, a fence or storage error during append,
+    /// [`ServiceError::StorageAmbiguous`] when replay must determine the outcome, or
+    /// [`ServiceError::RecoveryRequired`] while such recovery is outstanding.
+    pub async fn submit(
+        &mut self,
+        submission: Submission,
+    ) -> Result<SubmitOutcome, ServiceError<S::Error>> {
+        if self.recovery_required {
+            return Err(ServiceError::RecoveryRequired);
+        }
+        let entry = match self
+            .state
+            .validate_submission(submission.clone())
+            .map_err(ServiceError::Rejected)?
+        {
+            Preflight::Duplicate(message) => return Ok(SubmitOutcome::Duplicate(message)),
+            Preflight::Append(entry) => entry,
+        };
+        let receipt = match self.append_entry(&entry).await {
+            Err(ServiceError::Storage(error)) if error.kind() == ErrorKind::Ambiguous => {
+                self.unresolved = Some(submission.clone());
+                self.recovery_required = true;
+                return Err(ServiceError::StorageAmbiguous(submission.submission_id));
+            }
+            result => result?,
+        };
+        let position = self
+            .storage
+            .encode_position(&receipt.position)
+            .map_err(ServiceError::Storage)?;
+        let Some(message) = self
+            .state
+            .apply(position, entry)
+            .map_err(ServiceError::InvalidCommittedEntry)?
+        else {
+            return Err(ServiceError::RecoveryRequired);
+        };
+        Ok(SubmitOutcome::Accepted(message))
+    }
+
+    /// Replays storage to resolve the sole outstanding ambiguous submission.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ServiceError::RecoveryRequired`] when no submission is pending, or a fence,
+    /// storage, framing, or committed-entry validation error when replay cannot complete.
+    pub async fn resolve_ambiguous(&mut self) -> Result<RecoveryOutcome, ServiceError<S::Error>> {
+        let Some(submission) = self.unresolved.clone() else {
+            return Err(ServiceError::RecoveryRequired);
+        };
+        self.storage
+            .ensure_current(self.fence)
+            .map_err(|_| ServiceError::FenceLost)?;
+        let recovered = replay(&self.storage).await?;
+        self.storage
+            .ensure_current(self.fence)
+            .map_err(|_| ServiceError::FenceLost)?;
+        let outcome = recovered
+            .accepted
+            .get(&submission.submission_id)
+            .cloned()
+            .map_or_else(
+                || RecoveryOutcome::NotCommitted(submission),
+                RecoveryOutcome::Committed,
+            );
+        self.state = recovered;
+        self.unresolved = None;
+        self.recovery_required = false;
+        Ok(outcome)
+    }
+
+    async fn append_entry(
+        &self,
+        entry: &LogEntry,
+    ) -> Result<AppendReceipt<S::Position>, ServiceError<S::Error>> {
+        let frame = encode_entry(entry).map_err(ServiceError::CorruptLog)?;
+        self.storage
+            .append(self.fence, frame)
+            .await
+            .map_err(|error| match error {
+                FencedAppendError::FenceLost => ServiceError::FenceLost,
+                FencedAppendError::Storage(error) => ServiceError::Storage(error),
+            })
+    }
+}
+
+async fn replay<S>(storage: &FencedStream<S>) -> Result<SequencerState, ServiceError<S::Error>>
+where
+    S: SequencerStorage,
+{
+    let records = storage.read_all().await.map_err(ServiceError::Storage)?;
+    let mut state = SequencerState::default();
+    for record in records {
+        let entry = decode_entry(record.payload).map_err(ServiceError::CorruptLog)?;
+        let position = storage
+            .encode_position(&record.position)
+            .map_err(ServiceError::Storage)?;
+        state
+            .apply(position, entry)
+            .map_err(ServiceError::InvalidCommittedEntry)?;
+    }
+    Ok(state)
+}
+
+fn encode_entry(entry: &LogEntry) -> Result<Bytes, FrameError> {
+    let mut frame = BytesMut::new();
+    frame.extend_from_slice(FRAME_MAGIC);
+    match entry {
+        LogEntry::SessionStart {
+            writer_id,
+            session_id,
+            reference_position,
+        } => {
+            frame.put_u8(SESSION_START_TAG);
+            put_u16_bytes(&mut frame, &writer_id.0)?;
+            put_u16_bytes(&mut frame, &session_id.0)?;
+            put_reference(&mut frame, reference_position)?;
+        }
+        LogEntry::Submission(submission) => {
+            frame.put_u8(SUBMISSION_TAG);
+            put_u16_bytes(&mut frame, &submission.writer_id.0)?;
+            put_u16_bytes(&mut frame, &submission.session_id.0)?;
+            put_u16_bytes(&mut frame, &submission.submission_id.0)?;
+            frame.put_u64(submission.local_sequence_number);
+            put_reference(&mut frame, &submission.reference_position)?;
+            let payload_length =
+                u32::try_from(submission.payload.len()).map_err(|_| FrameError::FieldTooLarge)?;
+            frame.put_u32(payload_length);
+            frame.extend_from_slice(&submission.payload);
+        }
+    }
+    Ok(frame.freeze())
+}
+
+fn decode_entry(mut frame: Bytes) -> Result<LogEntry, FrameError> {
+    if frame.remaining() < FRAME_MAGIC.len() + 1 || &frame[..FRAME_MAGIC.len()] != FRAME_MAGIC {
+        return Err(FrameError::InvalidMagic);
+    }
+    frame.advance(FRAME_MAGIC.len());
+    let entry = match frame.get_u8() {
+        SESSION_START_TAG => LogEntry::SessionStart {
+            writer_id: WriterId::new(take_u16_bytes(&mut frame)?)
+                .map_err(FrameError::InvalidValue)?,
+            session_id: SessionId::new(take_u16_bytes(&mut frame)?)
+                .map_err(FrameError::InvalidValue)?,
+            reference_position: take_reference(&mut frame)?,
+        },
+        SUBMISSION_TAG => {
+            let writer_id =
+                WriterId::new(take_u16_bytes(&mut frame)?).map_err(FrameError::InvalidValue)?;
+            let session_id =
+                SessionId::new(take_u16_bytes(&mut frame)?).map_err(FrameError::InvalidValue)?;
+            let submission_id =
+                SubmissionId::new(take_u16_bytes(&mut frame)?).map_err(FrameError::InvalidValue)?;
+            if frame.remaining() < 8 {
+                return Err(FrameError::Truncated);
+            }
+            let local_sequence_number = frame.get_u64();
+            let reference_position = take_reference(&mut frame)?;
+            if frame.remaining() < 4 {
+                return Err(FrameError::Truncated);
+            }
+            let payload_length =
+                usize::try_from(frame.get_u32()).map_err(|_| FrameError::FieldTooLarge)?;
+            if frame.remaining() < payload_length {
+                return Err(FrameError::Truncated);
+            }
+            LogEntry::Submission(Submission {
+                writer_id,
+                session_id,
+                submission_id,
+                local_sequence_number,
+                reference_position,
+                payload: frame.split_to(payload_length),
+            })
+        }
+        _ => return Err(FrameError::InvalidEntryTag),
+    };
+    if frame.has_remaining() {
+        return Err(FrameError::TrailingBytes);
+    }
+    Ok(entry)
+}
+
+fn put_u16_bytes(frame: &mut BytesMut, value: &[u8]) -> Result<(), FrameError> {
+    let length = u16::try_from(value.len()).map_err(|_| FrameError::FieldTooLarge)?;
+    frame.put_u16(length);
+    frame.extend_from_slice(value);
+    Ok(())
+}
+
+fn take_u16_bytes(frame: &mut Bytes) -> Result<Bytes, FrameError> {
+    if frame.remaining() < 2 {
+        return Err(FrameError::Truncated);
+    }
+    let length = usize::from(frame.get_u16());
+    if frame.remaining() < length {
+        return Err(FrameError::Truncated);
+    }
+    Ok(frame.split_to(length))
+}
+
+fn put_reference(
+    frame: &mut BytesMut,
+    reference: &SnapshotPosition<PositionToken>,
+) -> Result<(), FrameError> {
+    match reference {
+        SnapshotPosition::Initial => frame.put_u8(0),
+        SnapshotPosition::At(position) => {
+            frame.put_u8(1);
+            put_u16_bytes(frame, &position.0)?;
+        }
+    }
+    Ok(())
+}
+
+fn take_reference(frame: &mut Bytes) -> Result<SnapshotPosition<PositionToken>, FrameError> {
+    if !frame.has_remaining() {
+        return Err(FrameError::Truncated);
+    }
+    match frame.get_u8() {
+        0 => Ok(SnapshotPosition::Initial),
+        1 => Ok(SnapshotPosition::At(
+            PositionToken::new(take_u16_bytes(frame)?).map_err(FrameError::InvalidValue)?,
+        )),
+        _ => Err(FrameError::InvalidReferenceTag),
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use std::{
+        error::Error,
+        fmt,
+        future::Future,
+        sync::{Arc, Mutex},
+        task::{Context, Poll, Waker},
+    };
+
+    use snapshotted_stream_core::Durability;
+
     use super::*;
 
     fn writer(value: &'static [u8]) -> WriterId {
         WriterId::new(Bytes::from_static(value)).unwrap()
     }
 
-    fn position(value: &'static [u8]) -> PositionToken {
-        PositionToken::new(Bytes::from_static(value)).unwrap()
+    fn session(value: &'static [u8]) -> SessionId {
+        SessionId::new(Bytes::from_static(value)).unwrap()
     }
 
     fn submission(
         writer_id: &WriterId,
+        session_id: &SessionId,
+        submission_id: &'static [u8],
         local_sequence_number: u64,
         reference_position: SnapshotPosition<PositionToken>,
-    ) -> Bytes {
-        encode_submission(&Submission {
+    ) -> Submission {
+        Submission {
             writer_id: writer_id.clone(),
+            session_id: session_id.clone(),
+            submission_id: SubmissionId::new(Bytes::from_static(submission_id)).unwrap(),
             local_sequence_number,
             reference_position,
             payload: Bytes::from_static(b"payload"),
-        })
-        .unwrap()
-    }
-
-    #[test]
-    fn frame_round_trips_opaque_reference_and_payload() {
-        let submission = Submission {
-            writer_id: writer(b"writer-a"),
-            local_sequence_number: 42,
-            reference_position: SnapshotPosition::At(position(b"opaque-position")),
-            payload: Bytes::from_static(b"operation"),
-        };
-
-        assert_eq!(
-            decode_submission(encode_submission(&submission).unwrap()).unwrap(),
-            submission
-        );
-    }
-
-    #[test]
-    fn committed_order_deterministically_assigns_final_sequence_metadata() {
-        let alice = writer(b"alice");
-        let bob = writer(b"bob");
-        let mut first_replay = Sequencer::new();
-        let mut second_replay = Sequencer::new();
-        for sequencer in [&mut first_replay, &mut second_replay] {
-            sequencer
-                .join(alice.clone(), SnapshotPosition::Initial)
-                .unwrap();
-            sequencer
-                .join(bob.clone(), SnapshotPosition::Initial)
-                .unwrap();
         }
-        let committed = [
-            (
-                position(b"p1"),
-                submission(&bob, 1, SnapshotPosition::Initial),
-            ),
-            (
-                position(b"p2"),
-                submission(&alice, 1, SnapshotPosition::Initial),
-            ),
-        ];
-
-        let first = committed
-            .clone()
-            .into_iter()
-            .map(|(position, frame)| first_replay.observe(position, frame).unwrap())
-            .collect::<Vec<_>>();
-        let second = committed
-            .into_iter()
-            .map(|(position, frame)| second_replay.observe(position, frame).unwrap())
-            .collect::<Vec<_>>();
-
-        assert_eq!(first, second);
-        assert_eq!(first[0].sequence_number, 1);
-        assert_eq!(first[0].submission.writer_id, bob);
-        assert_eq!(first[1].sequence_number, 2);
-        assert_eq!(first[1].submission.writer_id, alice);
     }
 
-    #[test]
-    fn duplicate_gap_and_stale_reference_do_not_advance_final_sequence() {
-        let alice = writer(b"alice");
+    fn accepted(outcome: SubmitOutcome) -> SequencedMessage {
+        match outcome {
+            SubmitOutcome::Accepted(message) | SubmitOutcome::Duplicate(message) => message,
+        }
+    }
+
+    fn block_on<F: Future>(future: F) -> F::Output {
+        let waker = Waker::noop();
+        let mut context = Context::from_waker(waker);
+        let mut future = Box::pin(future);
+        loop {
+            match future.as_mut().poll(&mut context) {
+                Poll::Ready(output) => return output,
+                Poll::Pending => std::thread::yield_now(),
+            }
+        }
+    }
+
+    macro_rules! async_test {
+        ($name:ident, $body:block) => {
+            #[test]
+            fn $name() {
+                block_on(async $body);
+            }
+        };
+    }
+
+    #[derive(Clone, Debug, Eq, PartialEq)]
+    struct TestPosition(u64);
+
+    #[derive(Clone, Copy, Debug)]
+    enum NextAppend {
+        Success,
+        AmbiguousCommitted,
+        AmbiguousNotCommitted,
+    }
+
+    #[derive(Debug)]
+    enum TestError {
+        Ambiguous,
+        InvalidPosition,
+    }
+
+    impl fmt::Display for TestError {
+        fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Self::Ambiguous => formatter.write_str("append result is ambiguous"),
+                Self::InvalidPosition => formatter.write_str("invalid position"),
+            }
+        }
+    }
+
+    impl Error for TestError {}
+
+    impl ClassifiedError for TestError {
+        fn kind(&self) -> ErrorKind {
+            match self {
+                Self::Ambiguous => ErrorKind::Ambiguous,
+                Self::InvalidPosition => ErrorKind::InvalidPosition,
+            }
+        }
+    }
+
+    #[derive(Debug, Default)]
+    struct TestState {
+        records: Vec<Bytes>,
+        next_append: Option<NextAppend>,
+    }
+
+    #[derive(Clone, Debug, Default)]
+    struct TestStream {
+        state: Arc<Mutex<TestState>>,
+    }
+
+    impl TestStream {
+        fn len(&self) -> usize {
+            self.state
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .records
+                .len()
+        }
+
+        fn fail_next(&self, outcome: NextAppend) {
+            self.state
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .next_append = Some(outcome);
+        }
+    }
+
+    impl SequencerStorage for TestStream {
+        type Position = TestPosition;
+        type Error = TestError;
+
+        fn append(
+            &self,
+            value: Bytes,
+        ) -> impl Future<Output = Result<AppendReceipt<Self::Position>, Self::Error>> + Send
+        {
+            let mut state = self
+                .state
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            let outcome = state.next_append.take().unwrap_or(NextAppend::Success);
+            if matches!(
+                outcome,
+                NextAppend::Success | NextAppend::AmbiguousCommitted
+            ) {
+                state.records.push(value);
+            }
+            if matches!(
+                outcome,
+                NextAppend::AmbiguousCommitted | NextAppend::AmbiguousNotCommitted
+            ) {
+                return std::future::ready(Err(TestError::Ambiguous));
+            }
+            std::future::ready(Ok(AppendReceipt {
+                position: TestPosition(state.records.len() as u64),
+                durability: Durability::Memory,
+            }))
+        }
+
+        fn read_all(
+            &self,
+        ) -> impl Future<Output = Result<Vec<ReadRecord<Self::Position>>, Self::Error>> + Send
+        {
+            let state = self
+                .state
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            std::future::ready(Ok(state
+                .records
+                .iter()
+                .enumerate()
+                .map(|(index, payload)| ReadRecord {
+                    position: TestPosition((index + 1) as u64),
+                    payload: payload.clone(),
+                })
+                .collect()))
+        }
+
+        fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error> {
+            if position.0 == 0 {
+                return Err(TestError::InvalidPosition);
+            }
+            Ok(Bytes::copy_from_slice(&position.0.to_be_bytes()))
+        }
+    }
+
+    async fn setup() -> (
+        TestStream,
+        FencedStream<TestStream>,
+        AuthoritativeSequencer<TestStream>,
+        WriterId,
+        SessionId,
+    ) {
+        let stream = TestStream::default();
+        let storage = FencedStream::new(stream.clone());
+        let fence = storage.issue_fence();
+        let mut sequencer = AuthoritativeSequencer::recover(storage.clone(), fence)
+            .await
+            .unwrap();
+        let writer_id = writer(b"alice");
+        let session_id = session(b"session-1");
+        sequencer
+            .connect(
+                writer_id.clone(),
+                session_id.clone(),
+                SnapshotPosition::Initial,
+            )
+            .await
+            .unwrap();
+        (stream, storage, sequencer, writer_id, session_id)
+    }
+
+    async_test!(invalid_submissions_are_rejected_before_storage, {
+        let (stream, _, mut sequencer, writer_id, session_id) = setup().await;
+        let valid = submission(
+            &writer_id,
+            &session_id,
+            b"one",
+            1,
+            SnapshotPosition::Initial,
+        );
+        sequencer.submit(valid.clone()).await.unwrap();
+        let stored = stream.len();
+
+        let duplicate_order = Submission {
+            submission_id: SubmissionId::new(Bytes::from_static(b"duplicate-order")).unwrap(),
+            ..valid.clone()
+        };
+        assert!(matches!(
+            sequencer.submit(duplicate_order).await,
+            Err(ServiceError::Rejected(
+                Rejection::DuplicateLocalSequence { .. }
+            ))
+        ));
+        let gap = submission(
+            &writer_id,
+            &session_id,
+            b"gap",
+            3,
+            SnapshotPosition::Initial,
+        );
+        assert!(matches!(
+            sequencer.submit(gap).await,
+            Err(ServiceError::Rejected(Rejection::LocalSequenceGap { .. }))
+        ));
+        assert_eq!(stream.len(), stored);
+    });
+
+    async_test!(stale_client_reconnects_and_regenerates_submission, {
+        let (stream, _, mut sequencer, alice, alice_session) = setup().await;
         let bob = writer(b"bob");
-        let mut sequencer = Sequencer::new();
+        let bob_session = session(b"bob-session");
         sequencer
-            .join(alice.clone(), SnapshotPosition::Initial)
+            .connect(bob.clone(), bob_session.clone(), SnapshotPosition::Initial)
+            .await
             .unwrap();
-        sequencer
-            .join(bob.clone(), SnapshotPosition::Initial)
-            .unwrap();
-
-        let first = sequencer
-            .observe(
-                position(b"p1"),
-                submission(&alice, 1, SnapshotPosition::Initial),
-            )
-            .unwrap();
-        assert_eq!(first.sequence_number, 1);
-        assert_eq!(
-            sequencer.observe(
-                position(b"p2"),
-                submission(&alice, 1, SnapshotPosition::Initial)
-            ),
-            Err(Rejection::DuplicateLocalSequence {
-                last_accepted: 1,
-                received: 1
-            })
-        );
-        assert_eq!(
-            sequencer.observe(
-                position(b"p3"),
-                submission(&alice, 3, SnapshotPosition::Initial)
-            ),
-            Err(Rejection::LocalSequenceGap {
-                expected: 2,
-                received: 3
-            })
-        );
-
-        let bob_advance = sequencer
-            .observe(
-                position(b"p4"),
-                submission(&bob, 1, SnapshotPosition::At(position(b"p1"))),
-            )
-            .unwrap();
-        assert_eq!(bob_advance.sequence_number, 2);
-        let alice_advance = sequencer
-            .observe(
-                position(b"p5"),
-                submission(&alice, 2, SnapshotPosition::At(position(b"p1"))),
-            )
-            .unwrap();
-        assert_eq!(
-            alice_advance.minimum_reference_position,
-            SnapshotPosition::At(position(b"p1"))
-        );
-        assert_eq!(
-            sequencer.observe(
-                position(b"p6"),
-                submission(&alice, 3, SnapshotPosition::Initial)
-            ),
-            Err(Rejection::StaleReferencePosition)
-        );
-
-        let next = sequencer
-            .observe(
-                position(b"p7"),
-                submission(&alice, 3, SnapshotPosition::At(position(b"p5"))),
-            )
-            .unwrap();
-        assert_eq!(next.sequence_number, 4);
-        assert!(sequencer.leave(&bob));
-        assert_eq!(
-            sequencer.minimum_reference_position(),
-            SnapshotPosition::At(position(b"p5"))
-        );
-    }
-
-    #[test]
-    fn protocol_rejection_is_only_known_after_opaque_append_commits() {
-        let alice = writer(b"alice");
-        let mut sequencer = Sequencer::new();
-        sequencer
-            .join(alice.clone(), SnapshotPosition::Initial)
-            .unwrap();
-        sequencer
-            .observe(
-                position(b"p1"),
-                submission(&alice, 1, SnapshotPosition::Initial),
-            )
-            .unwrap();
-
-        assert_eq!(
-            sequencer.observe(
-                position(b"committed-p2"),
-                submission(&alice, 3, SnapshotPosition::Initial),
-            ),
-            Err(Rejection::LocalSequenceGap {
-                expected: 2,
-                received: 3
-            })
-        );
-        assert_eq!(
+        let first = accepted(
             sequencer
-                .observe(
-                    position(b"p3"),
-                    submission(&alice, 2, SnapshotPosition::At(position(b"committed-p2"))),
-                )
-                .unwrap()
-                .sequence_number,
-            2
+                .submit(submission(
+                    &alice,
+                    &alice_session,
+                    b"alice-1",
+                    1,
+                    SnapshotPosition::Initial,
+                ))
+                .await
+                .unwrap(),
         );
-    }
-
-    #[test]
-    fn unknown_reference_is_rejected_without_advancing_writer_order() {
-        let alice = writer(b"alice");
-        let mut sequencer = Sequencer::new();
+        let reference = SnapshotPosition::At(first.stream_position.clone());
         sequencer
-            .join(alice.clone(), SnapshotPosition::Initial)
+            .submit(submission(
+                &bob,
+                &bob_session,
+                b"bob-1",
+                1,
+                reference.clone(),
+            ))
+            .await
             .unwrap();
-
-        assert_eq!(
-            sequencer.observe(
-                position(b"p1"),
-                submission(&alice, 1, SnapshotPosition::At(position(b"future"))),
-            ),
-            Err(Rejection::UnknownReferencePosition)
-        );
-        assert_eq!(
-            sequencer.observe(
-                position(b"p2"),
-                submission(&alice, 1, SnapshotPosition::At(position(b"p2"))),
-            ),
-            Err(Rejection::UnknownReferencePosition)
-        );
-        assert_eq!(
+        let latest = accepted(
             sequencer
-                .observe(
-                    position(b"p3"),
-                    submission(&alice, 1, SnapshotPosition::Initial)
-                )
-                .unwrap()
-                .sequence_number,
-            1
+                .submit(submission(&alice, &alice_session, b"alice-2", 2, reference))
+                .await
+                .unwrap(),
         );
-    }
+        let stored = stream.len();
+        assert!(matches!(
+            sequencer
+                .submit(submission(
+                    &alice,
+                    &alice_session,
+                    b"stale",
+                    3,
+                    SnapshotPosition::Initial,
+                ))
+                .await,
+            Err(ServiceError::Rejected(Rejection::StaleReferencePosition))
+        ));
+        assert_eq!(stream.len(), stored);
+
+        let new_session = session(b"session-2");
+        let current = SnapshotPosition::At(latest.stream_position);
+        sequencer
+            .connect(alice.clone(), new_session.clone(), current.clone())
+            .await
+            .unwrap();
+        assert!(matches!(
+            sequencer
+                .submit(submission(
+                    &alice,
+                    &alice_session,
+                    b"old-session",
+                    3,
+                    current.clone(),
+                ))
+                .await,
+            Err(ServiceError::Rejected(Rejection::StaleSession))
+        ));
+        let regenerated = submission(&alice, &new_session, b"regenerated", 1, current);
+        assert!(matches!(
+            sequencer.submit(regenerated).await.unwrap(),
+            SubmitOutcome::Accepted(_)
+        ));
+    });
+
+    async_test!(fencing_loss_rejects_old_owner_and_failover_replays, {
+        let (stream, storage, mut old, writer_id, session_id) = setup().await;
+        old.submit(submission(
+            &writer_id,
+            &session_id,
+            b"one",
+            1,
+            SnapshotPosition::Initial,
+        ))
+        .await
+        .unwrap();
+        let new_fence = storage.issue_fence();
+        let stored = stream.len();
+        assert!(matches!(
+            old.submit(submission(
+                &writer_id,
+                &session_id,
+                b"stale-owner",
+                2,
+                SnapshotPosition::Initial,
+            ))
+            .await,
+            Err(ServiceError::FenceLost)
+        ));
+        assert_eq!(stream.len(), stored);
+
+        let mut replacement = AuthoritativeSequencer::recover(storage, new_fence)
+            .await
+            .unwrap();
+        let message = accepted(
+            replacement
+                .submit(submission(
+                    &writer_id,
+                    &session_id,
+                    b"successor",
+                    2,
+                    SnapshotPosition::Initial,
+                ))
+                .await
+                .unwrap(),
+        );
+        assert_eq!(message.sequence_number, 2);
+    });
+
+    async_test!(ambiguous_committed_append_is_recovered_and_deduplicated, {
+        let (stream, _, mut sequencer, writer_id, session_id) = setup().await;
+        let pending = submission(
+            &writer_id,
+            &session_id,
+            b"ambiguous",
+            1,
+            SnapshotPosition::Initial,
+        );
+        stream.fail_next(NextAppend::AmbiguousCommitted);
+        assert!(matches!(
+            sequencer.submit(pending.clone()).await,
+            Err(ServiceError::StorageAmbiguous(_))
+        ));
+        let stored = stream.len();
+        let RecoveryOutcome::Committed(message) = sequencer.resolve_ambiguous().await.unwrap()
+        else {
+            panic!("committed append was not discovered");
+        };
+        assert_eq!(message.sequence_number, 1);
+        assert!(matches!(
+            sequencer.submit(pending).await.unwrap(),
+            SubmitOutcome::Duplicate(_)
+        ));
+        assert_eq!(stream.len(), stored);
+    });
+
+    async_test!(ambiguous_not_committed_append_can_retry_same_identity, {
+        let (stream, _, mut sequencer, writer_id, session_id) = setup().await;
+        let pending = submission(
+            &writer_id,
+            &session_id,
+            b"ambiguous",
+            1,
+            SnapshotPosition::Initial,
+        );
+        stream.fail_next(NextAppend::AmbiguousNotCommitted);
+        assert!(matches!(
+            sequencer.submit(pending.clone()).await,
+            Err(ServiceError::StorageAmbiguous(_))
+        ));
+        let stored = stream.len();
+        assert_eq!(
+            sequencer.resolve_ambiguous().await.unwrap(),
+            RecoveryOutcome::NotCommitted(pending.clone())
+        );
+        assert!(matches!(
+            sequencer.submit(pending).await.unwrap(),
+            SubmitOutcome::Accepted(_)
+        ));
+        assert_eq!(stream.len(), stored + 1);
+    });
+
+    async_test!(
+        reused_submission_identity_with_different_content_is_rejected,
+        {
+            let (stream, _, mut sequencer, writer_id, session_id) = setup().await;
+            let original = submission(
+                &writer_id,
+                &session_id,
+                b"same-id",
+                1,
+                SnapshotPosition::Initial,
+            );
+            sequencer.submit(original.clone()).await.unwrap();
+            let stored = stream.len();
+            let conflict = Submission {
+                payload: Bytes::from_static(b"different"),
+                ..original
+            };
+            assert!(matches!(
+                sequencer.submit(conflict).await,
+                Err(ServiceError::Rejected(
+                    Rejection::SubmissionIdentityConflict
+                ))
+            ));
+            assert_eq!(stream.len(), stored);
+        }
+    );
 }
