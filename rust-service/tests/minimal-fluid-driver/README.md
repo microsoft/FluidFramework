@@ -16,7 +16,8 @@ This isolated package adapts the generated `fluid-webtransport-browser` WASM pac
 - Signals, nacks, presence, automatic live-tail polling, automatic reconnect, hidden retry, offline merge, summary handles, summary attachments, loading groups, and GC/retention guarantees.
 - Summary upload accepts full trees only. Incremental handle reuse and parent concurrency are not implemented.
 - `getSnapshot`, caching, auth, production certificates, Routerlicious, and ODSP compatibility are not implemented or claimed.
-- The native server accepts one WebTransport session at a time because `WebTransportServer::serve` awaits `serve_connection` before its next `accept`. The Chromium trace therefore uses two logical Fluid delta clients over one generated `BrowserClient` and serializes requests to its capacity-one queue. Node contracts use distinct generated `InjectedClient` instances and cover concurrent logical submission plus disconnect-after-commit ambiguity. A true two-session Chromium trace requires the native service integration owner to spawn accepted connections concurrently.
+- The native server owns a bounded set of concurrent connection futures. The SharedTree Chromium trace uses three independent Fluid containers and three generated `BrowserClient` transport sessions. Each document service serializes access to its non-reentrant generated client; serialization is not shared across containers.
+- Browser loading uses Fluid's `Fluid.Container.ForceWriteConnection` host gate. Default read-to-write reconnect cursor transfer is not implemented or claimed. Node contracts cover read-mode membership plus disconnected-before-commit and committed-after-response-loss recovery.
 
 ## Validation
 
@@ -40,8 +41,10 @@ pnpm run build
 pnpm test
 ```
 
-For Chromium, generate `--target web` bindings into this package's ignored `pkg/`, generate the existing browser harness certificate, start `fluid-webtransport-native`, and run:
+For Chromium, generate `--target web` bindings into this package's ignored `pkg/`, generate the existing browser harness certificate, start `fluid-webtransport-native`, build the SharedTree bundle, and run:
 
 ```bash
-node browser/run-headless.mjs "$PWD" <WEBTRANSPORT_URL> <CERTIFICATE_SHA256_WITHOUT_COLONS>
+pnpm run typecheck:shared-tree
+pnpm run build:shared-tree
+node browser/run-headless.mjs "$PWD" <WEBTRANSPORT_URL> <CERTIFICATE_SHA256_WITHOUT_COLONS> __sharedTreeResult shared-tree.html
 ```
