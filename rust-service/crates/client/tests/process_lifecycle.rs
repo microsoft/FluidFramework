@@ -184,7 +184,7 @@ fn exchange(socket: &Path, request: Request) -> Response {
     stream.read_exact(&mut response).unwrap();
     match decode(&response, Limits::default()).unwrap().message {
         Message::Response(response) => response,
-        message => panic!("unexpected service message: {message:?}"),
+        message @ Message::Request(_) => panic!("unexpected service message: {message:?}"),
     }
 }
 
@@ -216,7 +216,7 @@ fn read_request(stream: &mut UnixStream) -> Request {
     stream.read_exact(&mut request).unwrap();
     match decode(&request, Limits::default()).unwrap().message {
         Message::Request(request) => request,
-        message => panic!("unexpected client message: {message:?}"),
+        message @ Message::Response(_) => panic!("unexpected client message: {message:?}"),
     }
 }
 
