@@ -8,7 +8,7 @@ use std::{
         Arc,
         atomic::{AtomicU64, AtomicUsize, Ordering},
     },
-    time::Duration,
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
 use async_trait::async_trait;
@@ -31,6 +31,12 @@ use crate::TransportMeasurement;
 
 const PROTOCOL_VERSION: u8 = 1;
 const HEADER_BYTES: usize = 4;
+const SERVER_INSTANCE_BYTES: usize = 16;
+const POSITION_MAGIC: &[u8; 4] = b"SSP1";
+const POSITION_LENGTH_BYTES: usize = 4;
+const POSITION_CHECKSUM_BYTES: usize = 8;
+const POSITION_ENVELOPE_BYTES: usize =
+    POSITION_MAGIC.len() + SERVER_INSTANCE_BYTES + POSITION_LENGTH_BYTES + POSITION_CHECKSUM_BYTES;
 const KIND_CAPABILITIES: u8 = 1;
 const KIND_APPEND: u8 = 2;
 const KIND_READ: u8 = 3;
@@ -183,6 +189,7 @@ pub struct ProcessClient {
     stream: Arc<Mutex<UnixStream>>,
     config: ProcessTransportConfig,
     capabilities: Capabilities,
+    server_instance: [u8; SERVER_INSTANCE_BYTES],
     metrics: Arc<ProcessMetrics>,
 }
 
@@ -219,12 +226,13 @@ impl ProcessClient {
             stream: Arc::new(Mutex::new(stream)),
             config,
             capabilities: Capabilities::NONE,
+            server_instance: [0; SERVER_INSTANCE_BYTES],
             metrics,
         };
         let response = client
             .unary(Frame::new(KIND_CAPABILITIES, Vec::new())?)
             .await?;
-        client.capabilities = decode_capabilities(&response)?;
+        (client.capabilities, client.server_instance) = decode_capabilities(&response)?;
         Ok(client)
     }
 
@@ -244,7 +252,7 @@ impl ProcessClient {
     }
 
     fn validate_position(&self, position: &ProcessPosition) -> Result<(), ProcessNetworkError> {
-        validate_token(&position.0, &self.config)
+        decode_position_envelope(&position.0, &self.server_instance, &self.config).map(|_| ())
     }
 }
 
@@ -262,7 +270,7 @@ impl AppendStream for ProcessClient {
             return Err(ProcessNetworkError::PayloadTooLarge);
         }
         let response = self.unary(Frame::new(KIND_APPEND, value.to_vec())?).await?;
-        decode_receipt(&response, &self.config)
+        decode_receipt(&response, &self.server_instance, &self.config)
     }
 
     async fn read(
@@ -270,7 +278,11 @@ impl AppendStream for ProcessClient {
         after: Option<&Self::Position>,
     ) -> Result<StreamReader<Self::Position, Self::Error>, Self::Error> {
         let mut payload = Encoder::default();
-        payload.optional_token(after.map(|position| &position.0), &self.config)?;
+        payload.optional_token(
+            after.map(|position| &position.0),
+            &self.server_instance,
+            &self.config,
+        )?;
         let request = Frame::new(KIND_READ, payload.finish())?;
         let mut stream = Arc::clone(&self.stream).lock_owned().await;
         let written = write_frame(&mut stream, &request, &self.config).await?;
@@ -284,6 +296,7 @@ impl AppendStream for ProcessClient {
 
         let (sender, receiver) = mpsc::channel(self.config.read_capacity);
         let config = self.config.clone();
+        let server_instance = self.server_instance;
         let metrics = Arc::clone(&self.metrics);
         tokio::spawn(async move {
             loop {
@@ -298,7 +311,7 @@ impl AppendStream for ProcessClient {
                 metrics.add_wire_bytes(bytes);
                 match decode_remote_error(frame) {
                     Ok(frame) if frame.kind == KIND_RECORD => {
-                        let record = decode_record(&frame, &config);
+                        let record = decode_record(&frame, &server_instance, &config);
                         if sender.send(record).await.is_err() {
                             return;
                         }
@@ -324,7 +337,7 @@ impl AppendStream for ProcessClient {
 
     async fn head(&self) -> Result<Option<Self::Position>, Self::Error> {
         let response = self.unary(Frame::new(KIND_HEAD, Vec::new())?).await?;
-        decode_optional_position(&response, &self.config)
+        decode_optional_position(&response, &self.server_instance, &self.config)
     }
 }
 
@@ -335,7 +348,7 @@ impl PositionCodec for ProcessClient {
     }
 
     fn decode_position(&self, token: &[u8]) -> Result<Self::Position, Self::Error> {
-        validate_token(token, &self.config)?;
+        decode_position_envelope(token, &self.server_instance, &self.config)?;
         Ok(ProcessPosition(Bytes::copy_from_slice(token)))
     }
 }
@@ -347,7 +360,7 @@ impl SnapshotStore for ProcessClient {
 
     async fn latest(&self) -> Result<Option<PublishedSnapshot<Self::Position>>, Self::Error> {
         let response = self.unary(Frame::new(KIND_LATEST, Vec::new())?).await?;
-        decode_latest(&response, &self.config)
+        decode_latest(&response, &self.server_instance, &self.config)
     }
 
     async fn publish(
@@ -359,7 +372,11 @@ impl SnapshotStore for ProcessClient {
             return Err(ProcessNetworkError::PayloadTooLarge);
         }
         let mut payload = Encoder::default();
-        payload.snapshot_position(&snapshot.includes_through, &self.config)?;
+        payload.snapshot_position(
+            &snapshot.includes_through,
+            &self.server_instance,
+            &self.config,
+        )?;
         payload.bytes(&snapshot.payload)?;
         payload.optional_bytes(expected_parent.map(SnapshotId::as_bytes))?;
         let response = self
@@ -441,6 +458,7 @@ where
         Err(error) => return Err(ProcessNetworkError::Io(error)),
     }
     let listener = UnixListener::bind(socket_path.as_ref()).map_err(ProcessNetworkError::Io)?;
+    let server_instance = new_server_instance();
     let permits = Arc::new(Semaphore::new(config.max_connections));
     loop {
         let permit = Arc::clone(&permits)
@@ -452,8 +470,13 @@ where
         let connection_config = config.clone();
         tokio::spawn(async move {
             let _permit = permit;
-            let result =
-                serve_connection(&mut stream, connection_backend, &connection_config).await;
+            let result = serve_connection(
+                &mut stream,
+                connection_backend,
+                &server_instance,
+                &connection_config,
+            )
+            .await;
             if let Err(error) = result {
                 let _ = write_error(&mut stream, error.kind(), &connection_config).await;
             }
@@ -464,6 +487,7 @@ where
 async fn serve_connection<S>(
     stream: &mut UnixStream,
     backend: S,
+    server_instance: &[u8; SERVER_INSTANCE_BYTES],
     config: &ProcessTransportConfig,
 ) -> Result<(), ProcessNetworkError>
 where
@@ -475,7 +499,7 @@ where
         let (request, _) = read_frame(stream, config).await?;
         match request.kind {
             KIND_CAPABILITIES if request.payload.is_empty() => {
-                let frame = encode_capabilities(backend.capabilities())?;
+                let frame = encode_capabilities(backend.capabilities(), server_instance)?;
                 write_frame(stream, &frame, config).await?;
             }
             KIND_APPEND => {
@@ -492,7 +516,8 @@ where
                 }
             }
             KIND_READ => {
-                let after = decode_request_position(&backend, &request, config)?;
+                let after =
+                    decode_request_position(&backend, &request, server_instance, config)?;
                 match backend.read(after.as_ref()).await {
                     Ok(mut reader) => {
                         write_frame(stream, &Frame::new(KIND_READ_START, Vec::new())?, config)
@@ -531,7 +556,7 @@ where
             },
             KIND_PUBLISH => {
                 let (snapshot, expected_parent) =
-                    decode_publish_request(&backend, &request, config)?;
+                    decode_publish_request(&backend, &request, server_instance, config)?;
                 match backend.publish(snapshot, expected_parent.as_ref()).await {
                     Ok(id) => {
                         let frame = encode_snapshot_id(&id)?;
@@ -708,10 +733,11 @@ impl Encoder {
     fn optional_token(
         &mut self,
         value: Option<&Bytes>,
+        server_instance: &[u8; SERVER_INSTANCE_BYTES],
         config: &ProcessTransportConfig,
     ) -> Result<(), ProcessNetworkError> {
         if let Some(value) = value {
-            validate_token(value, config)?;
+            decode_position_envelope(value, server_instance, config)?;
         }
         self.optional_bytes(value)
     }
@@ -719,6 +745,7 @@ impl Encoder {
     fn snapshot_position(
         &mut self,
         position: &SnapshotPosition<ProcessPosition>,
+        server_instance: &[u8; SERVER_INSTANCE_BYTES],
         config: &ProcessTransportConfig,
     ) -> Result<(), ProcessNetworkError> {
         match position {
@@ -727,7 +754,7 @@ impl Encoder {
                 Ok(())
             }
             SnapshotPosition::At(position) => {
-                validate_token(&position.0, config)?;
+                decode_position_envelope(&position.0, server_instance, config)?;
                 self.byte(1);
                 self.bytes(&position.0)
             }
@@ -802,7 +829,90 @@ fn validate_token(
     }
 }
 
-fn encode_capabilities(capabilities: Capabilities) -> Result<Frame, ProcessNetworkError> {
+fn new_server_instance() -> [u8; SERVER_INSTANCE_BYTES] {
+    let mut instance = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos()
+        .to_be_bytes();
+    let process_id = std::process::id().to_be_bytes();
+    for (target, source) in instance[SERVER_INSTANCE_BYTES - process_id.len()..]
+        .iter_mut()
+        .zip(process_id)
+    {
+        *target ^= source;
+    }
+    instance
+}
+
+fn position_checksum(value: &[u8]) -> u64 {
+    value.iter().fold(0xcbf2_9ce4_8422_2325, |hash, byte| {
+        (hash ^ u64::from(*byte)).wrapping_mul(0x0000_0100_0000_01b3)
+    })
+}
+
+fn encode_position_envelope(
+    backend_token: &[u8],
+    server_instance: &[u8; SERVER_INSTANCE_BYTES],
+    config: &ProcessTransportConfig,
+) -> Result<Bytes, ProcessNetworkError> {
+    validate_token(backend_token, config)?;
+    let backend_length = u32::try_from(backend_token.len())
+        .map_err(|_| ProcessNetworkError::InvalidPositionToken)?;
+    let mut envelope = Vec::with_capacity(POSITION_ENVELOPE_BYTES + backend_token.len());
+    envelope.extend_from_slice(POSITION_MAGIC);
+    envelope.extend_from_slice(server_instance);
+    envelope.extend_from_slice(&backend_length.to_be_bytes());
+    envelope.extend_from_slice(backend_token);
+    envelope.extend_from_slice(&position_checksum(&envelope).to_be_bytes());
+    Ok(Bytes::from(envelope))
+}
+
+fn decode_position_envelope<'a>(
+    envelope: &'a [u8],
+    server_instance: &[u8; SERVER_INSTANCE_BYTES],
+    config: &ProcessTransportConfig,
+) -> Result<&'a [u8], ProcessNetworkError> {
+    if envelope.len() < POSITION_ENVELOPE_BYTES + 1
+        || &envelope[..POSITION_MAGIC.len()] != POSITION_MAGIC
+    {
+        return Err(ProcessNetworkError::InvalidPositionToken);
+    }
+    let instance_start = POSITION_MAGIC.len();
+    let length_start = instance_start + SERVER_INSTANCE_BYTES;
+    if envelope[instance_start..length_start] != server_instance[..] {
+        return Err(ProcessNetworkError::InvalidPositionToken);
+    }
+    let token_start = length_start + POSITION_LENGTH_BYTES;
+    let backend_length = u32::from_be_bytes(
+        envelope[length_start..token_start]
+            .try_into()
+            .map_err(|_| ProcessNetworkError::InvalidPositionToken)?,
+    ) as usize;
+    let expected_length = POSITION_ENVELOPE_BYTES
+        .checked_add(backend_length)
+        .ok_or(ProcessNetworkError::InvalidPositionToken)?;
+    if envelope.len() != expected_length {
+        return Err(ProcessNetworkError::InvalidPositionToken);
+    }
+    let checksum_start = token_start + backend_length;
+    let expected_checksum = u64::from_be_bytes(
+        envelope[checksum_start..]
+            .try_into()
+            .map_err(|_| ProcessNetworkError::InvalidPositionToken)?,
+    );
+    if position_checksum(&envelope[..checksum_start]) != expected_checksum {
+        return Err(ProcessNetworkError::InvalidPositionToken);
+    }
+    let backend_token = &envelope[token_start..checksum_start];
+    validate_token(backend_token, config)?;
+    Ok(backend_token)
+}
+
+fn encode_capabilities(
+    capabilities: Capabilities,
+    server_instance: &[u8; SERVER_INSTANCE_BYTES],
+) -> Result<Frame, ProcessNetworkError> {
     let all = [
         Capability::LiveTailing,
         Capability::PositionSerialization,
@@ -815,11 +925,16 @@ fn encode_capabilities(capabilities: Capabilities) -> Result<Frame, ProcessNetwo
         .fold(0_u8, |bits, (index, capability)| {
             bits | u8::from(capabilities.supports(*capability)) << index
         });
-    Frame::new(KIND_CAPABILITIES_RESPONSE, vec![bits])
+    let mut payload = Vec::with_capacity(1 + SERVER_INSTANCE_BYTES);
+    payload.push(bits);
+    payload.extend_from_slice(server_instance);
+    Frame::new(KIND_CAPABILITIES_RESPONSE, payload)
 }
 
-fn decode_capabilities(frame: &Frame) -> Result<Capabilities, ProcessNetworkError> {
-    if frame.kind != KIND_CAPABILITIES_RESPONSE || frame.payload.len() != 1 {
+fn decode_capabilities(
+    frame: &Frame,
+) -> Result<(Capabilities, [u8; SERVER_INSTANCE_BYTES]), ProcessNetworkError> {
+    if frame.kind != KIND_CAPABILITIES_RESPONSE || frame.payload.len() != 1 + SERVER_INSTANCE_BYTES {
         return Err(ProcessNetworkError::MalformedFrame);
     }
     let all = [
@@ -828,7 +943,7 @@ fn decode_capabilities(frame: &Frame) -> Result<Capabilities, ProcessNetworkErro
         Capability::Retention,
         Capability::IdempotentAppend,
     ];
-    Ok(all
+    let capabilities = all
         .iter()
         .enumerate()
         .fold(Capabilities::NONE, |capabilities, (index, capability)| {
@@ -837,7 +952,11 @@ fn decode_capabilities(frame: &Frame) -> Result<Capabilities, ProcessNetworkErro
             } else {
                 capabilities.with(*capability)
             }
-        }))
+        });
+    let server_instance = frame.payload[1..]
+        .try_into()
+        .map_err(|_| ProcessNetworkError::MalformedFrame)?;
+    Ok((capabilities, server_instance))
 }
 
 fn encode_receipt<S: PositionCodec>(
@@ -861,6 +980,7 @@ fn encode_receipt<S: PositionCodec>(
 
 fn decode_receipt(
     frame: &Frame,
+    server_instance: &[u8; SERVER_INSTANCE_BYTES],
     config: &ProcessTransportConfig,
 ) -> Result<AppendReceipt<ProcessPosition>, ProcessNetworkError> {
     if frame.kind != KIND_RECEIPT {
@@ -868,7 +988,7 @@ fn decode_receipt(
     }
     let mut payload = Decoder::new(&frame.payload);
     let token = payload.bytes()?;
-    validate_token(token, config)?;
+    let token = encode_position_envelope(token, server_instance, config)?;
     let durability = match payload.byte()? {
         0 => Durability::Memory,
         1 => Durability::Buffered,
@@ -877,7 +997,7 @@ fn decode_receipt(
     };
     payload.finish()?;
     Ok(AppendReceipt {
-        position: ProcessPosition(Bytes::copy_from_slice(token)),
+        position: ProcessPosition(token),
         durability,
     })
 }
@@ -902,18 +1022,19 @@ fn encode_record<S: PositionCodec>(
 
 fn decode_record(
     frame: &Frame,
+    server_instance: &[u8; SERVER_INSTANCE_BYTES],
     config: &ProcessTransportConfig,
 ) -> Result<ReadRecord<ProcessPosition>, ProcessNetworkError> {
     let mut payload = Decoder::new(&frame.payload);
     let token = payload.bytes()?;
-    validate_token(token, config)?;
+    let token = encode_position_envelope(token, server_instance, config)?;
     let value = payload.bytes()?;
     if value.len() > config.max_payload_bytes {
         return Err(ProcessNetworkError::PayloadTooLarge);
     }
     payload.finish()?;
     Ok(ReadRecord {
-        position: ProcessPosition(Bytes::copy_from_slice(token)),
+        position: ProcessPosition(token),
         payload: Bytes::copy_from_slice(value),
     })
 }
@@ -927,13 +1048,17 @@ fn encode_optional_position<S: PositionCodec>(
         .map(|position| backend.encode_position(position))
         .transpose()
         .map_err(|error| ProcessNetworkError::Remote(error.kind()))?;
+    if let Some(token) = &token {
+        validate_token(token, config)?;
+    }
     let mut payload = Encoder::default();
-    payload.optional_token(token.as_ref(), config)?;
+    payload.optional_bytes(token.as_ref())?;
     Frame::new(KIND_POSITION, payload.finish())
 }
 
 fn decode_optional_position(
     frame: &Frame,
+    server_instance: &[u8; SERVER_INSTANCE_BYTES],
     config: &ProcessTransportConfig,
 ) -> Result<Option<ProcessPosition>, ProcessNetworkError> {
     if frame.kind != KIND_POSITION {
@@ -941,10 +1066,10 @@ fn decode_optional_position(
     }
     let mut payload = Decoder::new(&frame.payload);
     let token = payload.optional_bytes()?;
-    if let Some(token) = token {
-        validate_token(token, config)?;
-    }
-    let position = token.map(|value| ProcessPosition(Bytes::copy_from_slice(value)));
+    let position = token
+        .map(|value| encode_position_envelope(value, server_instance, config))
+        .transpose()?
+        .map(ProcessPosition);
     payload.finish()?;
     Ok(position)
 }
@@ -952,17 +1077,21 @@ fn decode_optional_position(
 fn decode_request_position<S: PositionCodec>(
     backend: &S,
     frame: &Frame,
+    server_instance: &[u8; SERVER_INSTANCE_BYTES],
     config: &ProcessTransportConfig,
 ) -> Result<Option<S::Position>, ProcessNetworkError> {
     let mut payload = Decoder::new(&frame.payload);
     let token = payload.optional_bytes()?;
-    if let Some(token) = token {
-        validate_token(token, config)?;
-    }
     let position = token
-        .map(|token| backend.decode_position(token))
+        .map(|token| {
+            decode_position_envelope(token, server_instance, config).and_then(|backend_token| {
+                backend
+                    .decode_position(backend_token)
+                    .map_err(|error| ProcessNetworkError::Remote(error.kind()))
+            })
+        })
         .transpose()
-        .map_err(|error| ProcessNetworkError::Remote(error.kind()))?;
+        ?;
     payload.finish()?;
     Ok(position)
 }
@@ -1000,6 +1129,7 @@ fn encode_latest<S: PositionCodec>(
 
 fn decode_latest(
     frame: &Frame,
+    server_instance: &[u8; SERVER_INSTANCE_BYTES],
     config: &ProcessTransportConfig,
 ) -> Result<Option<PublishedSnapshot<ProcessPosition>>, ProcessNetworkError> {
     if frame.kind != KIND_LATEST_RESPONSE {
@@ -1014,8 +1144,11 @@ fn decode_latest(
                 0 => SnapshotPosition::Initial,
                 1 => {
                     let token = payload.bytes()?;
-                    validate_token(token, config)?;
-                    SnapshotPosition::At(ProcessPosition(Bytes::copy_from_slice(token)))
+                    SnapshotPosition::At(ProcessPosition(encode_position_envelope(
+                        token,
+                        server_instance,
+                        config,
+                    )?))
                 }
                 _ => return Err(ProcessNetworkError::MalformedFrame),
             };
@@ -1040,6 +1173,7 @@ fn decode_latest(
 fn decode_publish_request<S: PositionCodec>(
     backend: &S,
     frame: &Frame,
+    server_instance: &[u8; SERVER_INSTANCE_BYTES],
     config: &ProcessTransportConfig,
 ) -> Result<(Snapshot<S::Position>, Option<SnapshotId>), ProcessNetworkError> {
     let mut payload = Decoder::new(&frame.payload);
@@ -1047,10 +1181,13 @@ fn decode_publish_request<S: PositionCodec>(
         0 => SnapshotPosition::Initial,
         1 => {
             let token = payload.bytes()?;
-            validate_token(token, config)?;
             SnapshotPosition::At(
                 backend
-                    .decode_position(token)
+                    .decode_position(decode_position_envelope(
+                        token,
+                        server_instance,
+                        config,
+                    )?)
                     .map_err(|error| ProcessNetworkError::Remote(error.kind()))?,
             )
         }
@@ -1097,9 +1234,13 @@ fn decode_snapshot_id(
 #[cfg(test)]
 mod tests {
     use std::{
+        collections::VecDeque,
         env,
         process::Command,
-        sync::atomic::{AtomicU64, Ordering},
+        sync::{
+            Arc, Mutex as StdMutex,
+            atomic::{AtomicU64, Ordering},
+        },
     };
 
     use futures_util::{StreamExt, TryStreamExt};
@@ -1249,22 +1390,47 @@ mod tests {
         let (first, _first_server, _first_path) = spawned().await;
         let receipt = first.append(Bytes::from_static(b"value")).await.unwrap();
         let foreign_token = first.encode_position(&receipt.position).unwrap();
+        let mut corrupted_token = foreign_token.to_vec();
+        *corrupted_token.last_mut().unwrap() ^= 1;
+        assert_eq!(
+            first
+                .decode_position(&corrupted_token)
+                .unwrap_err()
+                .kind(),
+            ErrorKind::InvalidPosition
+        );
         let (second, _second_server, _second_path) = spawned().await;
-        let foreign = second.decode_position(&foreign_token).unwrap();
-        let Err(error) = second.read(Some(&foreign)).await else {
-            panic!("foreign token was accepted");
-        };
-        assert_eq!(error.kind(), ErrorKind::InvalidPosition);
-
-        let malformed = second.decode_position(b"not-a-backend-token").unwrap();
-        let Err(error) = second.read(Some(&malformed)).await else {
-            panic!("malformed backend token was accepted");
-        };
-        assert_eq!(error.kind(), ErrorKind::InvalidPosition);
+        assert_eq!(
+            second.decode_position(&foreign_token).unwrap_err().kind(),
+            ErrorKind::InvalidPosition
+        );
+        assert_eq!(
+            second.encode_position(&receipt.position).unwrap_err().kind(),
+            ErrorKind::InvalidPosition
+        );
+        assert_eq!(
+            second
+                .decode_position(b"not-a-process-position")
+                .unwrap_err()
+                .kind(),
+            ErrorKind::InvalidPosition
+        );
         assert_eq!(
             second.decode_position(&[]).unwrap_err().kind(),
             ErrorKind::InvalidPosition
         );
+    }
+
+    #[tokio::test]
+    async fn passes_position_codec_conformance() {
+        let (first, _first_server, _first_path) = spawned().await;
+        let (second, _second_server, _second_path) = spawned().await;
+        let clients = Arc::new(StdMutex::new(VecDeque::from([first, second])));
+        snapshotted_stream_conformance::run_position_codec_conformance(
+            || clients.lock().unwrap().pop_front().unwrap(),
+            b"not-a-process-position",
+        )
+        .await;
     }
 
     #[tokio::test]
