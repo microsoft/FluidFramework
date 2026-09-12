@@ -1,15 +1,21 @@
 [workspace]
 members = [
+    "crates/benchmarks",
     "crates/client",
     "crates/conformance",
     "crates/core",
     "crates/file-simple",
     "crates/fluid-sequencer",
     "crates/memory",
+    "crates/protocol",
+    "crates/service",
     "crates/spikes/durable-log",
     "crates/wrappers/compression",
+    "crates/wrappers/encryption",
     "crates/wrappers/network",
+    "crates/wrappers/stateful-compression",
     "examples/counter",
+    "examples/native-service",
 ]
 resolver = "3"
 
