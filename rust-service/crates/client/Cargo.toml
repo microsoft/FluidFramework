@@ -8,8 +8,13 @@ rust-version.workspace = true
 [dependencies]
 bytes.workspace = true
 futures-util.workspace = true
+fluid-service-protocol = { path = "../protocol" }
 snapshotted-stream-core = { path = "../core" }
 thiserror.workspace = true
+
+[dev-dependencies]
+fluid-native-service = { path = "../service" }
+tokio.workspace = true
 
 [lints]
 workspace = true
