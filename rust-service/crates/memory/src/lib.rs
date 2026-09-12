@@ -10,8 +10,8 @@ use bytes::Bytes;
 use futures_util::stream;
 use snapshotted_stream_core::{
     AppendReceipt, AppendStream, Capabilities, ClassifiedError, Durability, ErrorKind,
-    PublishedSnapshot, ReadRecord, Snapshot, SnapshotId, SnapshotPosition, SnapshotStore,
-    StreamReader,
+    PositionCodec, PublishedSnapshot, ReadRecord, Snapshot, SnapshotId, SnapshotPosition,
+    SnapshotStore, StreamReader,
 };
 use thiserror::Error;
 use tokio::sync::Mutex;
@@ -30,6 +30,8 @@ pub enum MemoryError {
     ForeignPosition,
     #[error("position is beyond the committed head")]
     InvalidPosition,
+    #[error("position token is malformed")]
+    InvalidPositionToken,
     #[error("snapshot parent does not match the latest snapshot")]
     SnapshotConflict,
     #[error("snapshot position regresses behind the latest snapshot")]
@@ -39,7 +41,9 @@ pub enum MemoryError {
 impl ClassifiedError for MemoryError {
     fn kind(&self) -> ErrorKind {
         match self {
-            Self::ForeignPosition | Self::InvalidPosition => ErrorKind::InvalidPosition,
+            Self::ForeignPosition | Self::InvalidPosition | Self::InvalidPositionToken => {
+                ErrorKind::InvalidPosition
+            }
             Self::SnapshotConflict | Self::SnapshotRegression => ErrorKind::Conflict,
         }
     }
@@ -94,7 +98,7 @@ impl AppendStream for MemoryStream {
     type Error = MemoryError;
 
     fn capabilities(&self) -> Capabilities {
-        Capabilities::NONE
+        Capabilities::NONE.with(snapshotted_stream_core::Capability::PositionSerialization)
     }
 
     async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
@@ -152,6 +156,44 @@ impl AppendStream for MemoryStream {
             generation: self.generation,
             ordinal: len as u64,
         }))
+    }
+}
+
+impl PositionCodec for MemoryStream {
+    fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error> {
+        if position.generation != self.generation {
+            return Err(MemoryError::ForeignPosition);
+        }
+        let mut token = [0_u8; 16];
+        token[..8].copy_from_slice(&position.generation.to_be_bytes());
+        token[8..].copy_from_slice(&position.ordinal.to_be_bytes());
+        Ok(Bytes::copy_from_slice(&token))
+    }
+
+    fn decode_position(&self, token: &[u8]) -> Result<Self::Position, Self::Error> {
+        let token: [u8; 16] = token
+            .try_into()
+            .map_err(|_| MemoryError::InvalidPositionToken)?;
+        let generation = u64::from_be_bytes(
+            token[..8]
+                .try_into()
+                .map_err(|_| MemoryError::InvalidPositionToken)?,
+        );
+        if generation != self.generation {
+            return Err(MemoryError::ForeignPosition);
+        }
+        let ordinal = u64::from_be_bytes(
+            token[8..]
+                .try_into()
+                .map_err(|_| MemoryError::InvalidPositionToken)?,
+        );
+        if ordinal == 0 {
+            return Err(MemoryError::InvalidPositionToken);
+        }
+        Ok(MemoryPosition {
+            generation,
+            ordinal,
+        })
     }
 }
 
@@ -215,6 +257,28 @@ mod tests {
     #[tokio::test]
     async fn passes_shared_conformance() {
         snapshotted_stream_conformance::run_conformance(MemoryStream::new).await;
+    }
+
+    #[tokio::test]
+    async fn position_codec_round_trips_and_rejects_invalid_tokens() {
+        let stream = MemoryStream::new();
+        let receipt = stream.append(Bytes::from_static(b"value")).await.unwrap();
+        let token = stream.encode_position(&receipt.position).unwrap();
+        assert_eq!(stream.decode_position(&token).unwrap(), receipt.position);
+        assert_eq!(
+            stream.decode_position(b"short").unwrap_err().kind(),
+            ErrorKind::InvalidPosition
+        );
+
+        let other = MemoryStream::new();
+        assert_eq!(
+            other.decode_position(&token).unwrap_err().kind(),
+            ErrorKind::InvalidPosition
+        );
+        assert_eq!(
+            other.encode_position(&receipt.position).unwrap_err().kind(),
+            ErrorKind::InvalidPosition
+        );
     }
 
     #[tokio::test]

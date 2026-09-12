@@ -490,14 +490,16 @@ Phase 2 and Phase 3 work is organized into sequentially numbered iterations usin
 
 ### Branch and worktree model
 
-- The coordinator creates one integration branch for the iteration, such as `rust-service/iteration-0001`.
-- Every Phase 2 workstream receives its own branch and worktree created from the same iteration base, such as `rust-service/iteration-0001/file-simple`.
+- The coordinator creates one integration branch for the iteration, such as `rust-service-iteration-0001`.
+- Every Phase 2 workstream receives its own branch and worktree created from the same iteration base, such as `rust-service-iteration-0001-file-simple`.
 - Worktrees should live outside the primary checkout so concurrent agents cannot alter one another's index, working tree, generated files, or build state.
 - Each agent owns only its assigned worktree and documented crate or file scope.
 - Agents must not merge, rebase, force-push, or modify the integration branch or another workstream branch.
 - Shared kernel, workspace, and dependency changes require explicit ownership in the workstream instructions. Otherwise, agents report the required change for Phase 3 instead of making it.
 
 Worktrees isolate filesystem state; branches preserve commit attribution and make each workstream independently inspectable. Running several agents directly in one checkout is not supported.
+
+After prerequisites are satisfied, independent workstreams should be dispatched concurrently. Every delegated command must identify its absolute worktree and branch in retained evidence. A workstream that may change a crate manifest but does not own the root lockfile validates in an exact disposable copy and verifies immediately afterward that the assigned lockfile is unchanged.
 
 ### Phase 2 commits
 

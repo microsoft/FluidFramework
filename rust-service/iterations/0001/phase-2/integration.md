@@ -3,7 +3,7 @@
 Status: complete
 Integration branch: `rust-service-iteration-0001`
 Iteration base commit: `bd21af608ff051906d9449cea33704d685b0251b`
-Integration commit: report and lockfile boundary commit containing this file; its hash is recorded in the Phase 3 report
+Integration commit: `b9cabd08453`
 
 ## Accepted Work
 

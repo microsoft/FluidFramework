@@ -65,18 +65,22 @@ Before the foundation commit:
 5. Run `node .github/skills/rust-service-coordination/scripts/iteration-records.mjs validate NNNN start`.
 6. Commit the initialized records as the iteration kickoff, then create the integration branch and isolated worktrees from that kickoff commit using the naming rules in `rust-service/PLAN.md`.
 7. Give each agent its generated instruction file and report path.
+8. Dispatch every dependency-independent workstream concurrently. Delay only workstreams whose instructions name an unmet prerequisite, and record that dependency in the charter.
 
 Use [iteration charter template](./assets/iteration-charter.template.md) and [workstream instructions template](./assets/workstream-instructions.template.md) for field guidance.
 
 ## Worktrees
 
-Create the integration branch and worktree from the kickoff commit, then create every workstream from that same commit:
+Before creating branches, verify that every proposed ref is available. Create the integration branch and worktree from the kickoff commit, then create every workstream from that same commit:
 
 ```bash
-git branch rust-service/iteration-NNNN <kickoff-commit>
-git worktree add ../FluidFramework-rust-service-iteration-NNNN rust-service/iteration-NNNN
-git worktree add -b rust-service/iteration-NNNN/<workstream> ../FluidFramework-rust-service-iteration-NNNN-<workstream> <kickoff-commit>
+git show-ref --verify --quiet refs/heads/rust-service-iteration-NNNN && exit 1
+git branch rust-service-iteration-NNNN <kickoff-commit>
+git worktree add ../FluidFramework-rust-service-iteration-NNNN rust-service-iteration-NNNN
+git worktree add -b rust-service-iteration-NNNN-<workstream> ../FluidFramework-rust-service-iteration-NNNN-<workstream> <kickoff-commit>
 ```
+
+Record the actual branch, worktree, and kickoff commit in each workstream report before implementation. Generated instructions may cite the prior approved source commit; the report is authoritative for the worktree's actual kickoff provenance.
 
 Before removing a completed worktree, verify that its report accounts for all changes and that `git -C <worktree-path> status --short` is empty. Then run:
 
@@ -101,6 +105,8 @@ Never use forced removal to bypass uncommitted or untracked files. Do not delete
 4. For each notable event, capture the attempted approach, evidence, impact, resolution or current state, and reusable lesson. Prefer commands, test names, commits, and artifact links over narrative memory.
 5. Create a decision record from [the decision template](./assets/decision-record.template.md) when the outcome changes shared semantics, APIs, crate boundaries, conformance, iteration scope, or coordination policy.
 6. Finish with the report template complete and the worktree clean, or enumerate every remaining artifact.
+
+For delegated commands in repositories with multiple worktrees, print or capture `git branch --show-current` and the absolute worktree path with the result. When the workstream may edit a crate manifest but does not own the shared lockfile, validate in an exact disposable copy and immediately verify that the assigned worktree's lockfile is unchanged. Do not accept summarized validation output that omits checkout identity, exit status, or the requested test result.
 
 Use [workstream report template](./assets/workstream-report.template.md).
 

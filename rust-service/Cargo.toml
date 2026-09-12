@@ -8,6 +8,7 @@ members = [
     "crates/memory",
     "crates/spikes/durable-log",
     "crates/wrappers/compression",
+    "crates/wrappers/network",
     "examples/counter",
 ]
 resolver = "3"
@@ -23,7 +24,7 @@ bytes = "1.10.1"
 futures-core = "0.3.31"
 futures-util = "0.3.31"
 thiserror = "2.0.16"
-tokio = { version = "1.47.1", features = ["macros", "rt-multi-thread", "sync"] }
+tokio = { version = "1.47.1", features = ["io-util", "macros", "net", "rt-multi-thread", "sync", "time"] }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

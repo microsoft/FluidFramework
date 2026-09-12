@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "iteration": "0001",
-  "status": "phase-2-complete",
+  "status": "complete",
   "sourceCommit": "59f5069b43a6f2ede193f5affa8cda3a267628ff",
   "createdAt": "2026-09-12T08:01:04.690Z",
   "activeWorkstreams": [
@@ -39,5 +39,10 @@
     "retention",
     "full-fluid-integration"
   ],
-  "nextWorkstreams": []
+  "nextWorkstreams": [
+    "reference-model-faults",
+    "durable-snapshots",
+    "network-transport",
+    "authoritative-sequencer"
+  ]
 }

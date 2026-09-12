@@ -1,8 +1,8 @@
 # Iteration {{ITERATION}}: {{WORKSTREAM}} Instructions
 
 Status: planned
-Branch: `rust-service/iteration-{{ITERATION}}/{{WORKSTREAM}}`
-Base commit: <!-- TODO(required): record the iteration base commit -->
+Branch: `rust-service-iteration-{{ITERATION}}-{{WORKSTREAM}}`
+Iteration source commit: <!-- TODO(required): record the approved prior Phase 3 or foundation commit -->
 Owner: <!-- TODO(required): record the agent or owner -->
 Report: `rust-service/iterations/{{ITERATION}}/phase-2/{{WORKSTREAM}}.md`
 
@@ -20,7 +20,7 @@ Report: `rust-service/iterations/{{ITERATION}}/phase-2/{{WORKSTREAM}}.md`
 
 ## Validation
 
-<!-- TODO(required): list the narrow and integration commands that must be reported -->
+<!-- TODO(required): list narrow and integration commands; require checkout identity, exact outcomes, and a lockfile-diff check when Cargo resolution is outside ownership -->
 
 ## Escalation and Stopping Conditions
 

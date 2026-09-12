@@ -110,6 +110,26 @@ pub trait AppendStream: Send + Sync {
     async fn head(&self) -> Result<Option<Self::Position>, Self::Error>;
 }
 
+/// Optional serialization for opaque positions that cross a process boundary.
+///
+/// Tokens are implementation-defined and remain scoped to one stream generation.
+/// Consumers must not inspect, compare, or construct them.
+pub trait PositionCodec: AppendStream {
+    /// Encodes a position as an opaque resume or reference token.
+    ///
+    /// # Errors
+    ///
+    /// Returns an invalid-position error when the position is not owned by this stream.
+    fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error>;
+
+    /// Decodes an opaque token produced by this implementation.
+    ///
+    /// # Errors
+    ///
+    /// Returns an invalid-position error for malformed or foreign-generation tokens.
+    fn decode_position(&self, token: &[u8]) -> Result<Self::Position, Self::Error>;
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum SnapshotPosition<P> {
     Initial,
