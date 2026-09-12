@@ -18,6 +18,24 @@ Use this workflow for every numbered iteration under `rust-service/iterations/`.
 - Do not use full chat transcripts as the primary project record. Link a session identifier or transcript only when it materially supports a finding and contains no sensitive data.
 - Do not silently retry ambiguous appends, rewrite another workstream's commits, or change shared semantics outside the Phase 3 decision process.
 
+## Conduct the Foundation Phase
+
+Phase 1 is interactive but still produces a research record. Start from [the foundation report template](./assets/foundation-report.template.md) and maintain `rust-service/foundation-report.md` while implementing the workspace.
+
+Use the same notable-event triggers as a Phase 2 workstream. Record API hypotheses and cheap checks before editing, then capture falsified hypotheses, repeated failures, substantial effort sinks, human interventions, decisions, and candidate skills as they occur.
+
+Before the foundation commit:
+
+1. Complete every required field in `foundation-report.md` and set its status to `complete`.
+2. Run the documented format, Clippy, build, test, and example commands from `rust-service/`.
+3. Run:
+
+   ```bash
+   node .github/skills/rust-service-coordination/scripts/iteration-records.mjs validate-foundation
+   ```
+
+4. Commit the validated foundation. Use that commit as iteration `0001`'s `sourceCommit`.
+
 ## Start an Iteration
 
 1. Confirm the foundation or previous Phase 3 commit passes its documented checks.

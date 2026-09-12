@@ -207,7 +207,7 @@ These references are implementation evidence, not normative requirements for the
 
 The project treats its development process as a research subject. Concise structured records are required deliverables, not optional notes reconstructed after implementation. Full chat transcripts may be linked when they materially support a finding and contain no sensitive data, but they are not the primary record.
 
-Before an iteration begins, its charter records the selected questions, falsifiable hypotheses, cheapest discriminating checks, expected evidence, dependencies, stopping conditions, and deferred scope. Each workstream records its assignment and agent or owner provenance, branch and commits, commands and results, hypothesis outcomes, and integration dependencies.
+During Phase 1, `foundation-report.md` records the initial hypotheses, API decisions, failed approaches, human interventions, validation evidence, and readiness assessment. Before a later iteration begins, its charter records the selected questions, falsifiable hypotheses, cheapest discriminating checks, expected evidence, dependencies, stopping conditions, and deferred scope. Each workstream records its assignment and agent or owner provenance, branch and commits, commands and results, hypothesis outcomes, and integration dependencies.
 
 A workstream updates its report while work is occurring whenever:
 
@@ -222,7 +222,7 @@ Each notable event records the attempted approach, evidence, impact, resolution 
 
 Phase 3 produces a retrospective and skill review in addition to the architectural report. Durable findings are promoted to `LEARNINGS.md`, which acts as a concise index linking to detailed evidence. Skill changes must cite observed friction or a repeated successful procedure; speculative skill ideas remain proposed or deferred.
 
-The repository skill at `.github/skills/rust-service-coordination/` provides templates and the `iteration-records.mjs` initializer and validator. Artifact validation is required before the Phase 2 integration commit and before the final Phase 3 commit. The validator checks structure and completeness markers; reviewers remain responsible for verifying that claims agree with commits, tests, and measurements.
+The repository skill at `.github/skills/rust-service-coordination/` provides templates and the `iteration-records.mjs` initializer and validator. Artifact validation is required before the foundation commit, the Phase 2 integration commit, and the final Phase 3 commit. The validator checks structure and completeness markers; reviewers remain responsible for verifying that claims agree with commits, tests, and measurements.
 
 ## Work Phases
 
@@ -231,6 +231,7 @@ The repository skill at `.github/skills/rust-service-coordination/` provides tem
 Work interactively to turn the design into a compilable skeleton. Decisions may be made with user guidance as concrete API questions arise; the project does not need a complete up-front specification.
 
 - Create the Rust workspace and establish formatting, linting, build, and test commands.
+- Use the pinned Rust toolchain and committed root `Cargo.lock` policy documented in `DEVELOPMENT.md`.
 - Define the core append stream, snapshot, position, receipt, reader, capability, and error types.
 - Specify and test contiguous append ordering and real-time precedence.
 - Decide the exact byte-oriented append and read interfaces.
@@ -238,6 +239,7 @@ Work interactively to turn the design into a compilable skeleton. Decisions may 
 - Establish a conformance-test crate that can be expanded during implementation.
 - Stub crates for storage implementations, wrappers, integrations, and demos with their dependency direction encoded in the workspace.
 - Validate and refine the project coordination skill, templates, and artifact tooling against the compiling workspace.
+- Maintain `foundation-report.md` as decisions, failures, interventions, and validation results occur.
 - Record unresolved semantic questions beside the crate that owns them rather than guessing prematurely.
 
 Deliverable: a compiling workspace, an initial tested kernel, a reference path, and crate boundaries suitable for independent Phase 2 work. Phase 1 ends with a validated foundation commit that becomes the recorded source for iteration `0001`.
@@ -252,6 +254,8 @@ Before creating Phase 2 worktrees, Phase 1 must also produce:
 - a decision log distinguishing settled kernel behavior from open research questions;
 - a dependency graph identifying which workstreams can start immediately and which depend on another result;
 - a benchmark specification with initial workloads, measurement procedure, and required environment metadata; and
+- a targeted CI check for Rust formatting, Clippy, build, tests, and foundation artifact validation;
+- a complete `foundation-report.md` that passes `iteration-records.mjs validate-foundation`; and
 - a clean foundation commit that passes all documented checks.
 
 The gate does not require every research question to be answered. It requires unanswered questions to have an owner, an experiment or decision point, and a clear statement of whether they block another workstream.

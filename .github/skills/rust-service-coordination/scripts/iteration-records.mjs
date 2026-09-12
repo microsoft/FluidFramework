@@ -8,12 +8,16 @@ const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = process.env.RUST_SERVICE_RECORDS_REPOSITORY_ROOT
 	? resolve(process.env.RUST_SERVICE_RECORDS_REPOSITORY_ROOT)
 	: resolve(scriptDirectory, "../../../..");
+if (process.env.RUST_SERVICE_RECORDS_REPOSITORY_ROOT) {
+	console.error(`info: using repository root override: ${repositoryRoot}`);
+}
 const projectRoot = resolve(repositoryRoot, "rust-service");
 const iterationsRoot = resolve(projectRoot, "iterations");
 const assetsRoot = resolve(scriptDirectory, "../assets");
 const requiredMarker = "<!-- TODO(required):";
 
 const templates = {
+	foundation: "foundation-report.template.md",
 	charter: "iteration-charter.template.md",
 	instructions: "workstream-instructions.template.md",
 	report: "workstream-report.template.md",
@@ -209,6 +213,69 @@ async function validateMarkdown(path, headings, errors) {
 	}
 }
 
+async function validateFoundation() {
+	const errors = [];
+	const reportPath = resolve(projectRoot, "foundation-report.md");
+	await validateMarkdown(
+		reportPath,
+		[
+			"Purpose and Scope",
+			"Initial Hypotheses and Checks",
+			"Settled Preparation Decisions",
+			"Open Semantic Decisions",
+			"Notable Events",
+			"Deliverables and Dependency Graph",
+			"Validation Evidence",
+			"Decisions and Human Interventions",
+			"Agentic Development Findings",
+			"Phase 1 Readiness Assessment",
+		],
+		errors,
+	);
+
+	if (await exists(reportPath)) {
+		const report = await readFile(reportPath, "utf8");
+		if (!/^Status: complete$/m.test(report)) {
+			errors.push("foundation-report.md status must be complete");
+		}
+	}
+
+	for (const requiredPath of [
+		"Cargo.toml",
+		"Cargo.lock",
+		"DEVELOPMENT.md",
+		"rust-toolchain.toml",
+	]) {
+		if (!(await exists(resolve(projectRoot, requiredPath)))) {
+			errors.push(`missing rust-service/${requiredPath}`);
+		}
+	}
+
+	if (await exists(resolve(projectRoot, "DEVELOPMENT.md"))) {
+		const development = await readFile(resolve(projectRoot, "DEVELOPMENT.md"), "utf8");
+		for (const command of [
+			"cargo fmt --all -- --check",
+			"cargo clippy --workspace --all-targets --all-features -- -D warnings",
+			"cargo build --workspace --all-targets",
+			"cargo test --workspace --all-targets --all-features",
+			"cargo run -p ",
+		]) {
+			if (!development.includes(command)) {
+				errors.push(`DEVELOPMENT.md does not document: ${command}`);
+			}
+		}
+	}
+
+	if (errors.length > 0) {
+		for (const error of errors) {
+			console.error(`error: ${error}`);
+		}
+		process.exitCode = 1;
+		return;
+	}
+	console.log("Foundation passes artifact validation.");
+}
+
 async function validate(iteration, phase) {
 	if (phase !== "start" && phase !== "phase-2" && phase !== "complete") {
 		throw new Error("validation phase must be start, phase-2, or complete");
@@ -353,6 +420,7 @@ async function validate(iteration, phase) {
 
 function usage() {
 	console.log(`Usage:
+  iteration-records.mjs validate-foundation
   iteration-records.mjs init NNNN workstream-name...
 	iteration-records.mjs next NNNN workstream-name...
 	iteration-records.mjs validate NNNN start|phase-2|complete`);
@@ -360,7 +428,9 @@ function usage() {
 
 try {
 	const [command, iterationArgument, ...rest] = process.argv.slice(2);
-	if (!command || !iterationArgument) {
+	if (command === "validate-foundation") {
+		await validateFoundation();
+	} else if (!command || !iterationArgument) {
 		usage();
 		process.exitCode = 1;
 	} else {

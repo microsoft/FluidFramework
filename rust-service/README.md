@@ -42,7 +42,7 @@ Because agentic development is itself part of the research, each iteration pre-r
 
 ## Project Status
 
-The project is currently in the design phase. No Rust crate or stable API exists yet. The immediate milestones are:
+The project is ready to begin its interactive foundation phase. The Rust toolchain, development policy, and foundation research record are prepared, but no Rust crate or stable API exists yet. The immediate milestones are:
 
 1. Create the Cargo workspace, core traits, initial conformance tests, crate stubs, and coordination skill interactively.
 2. Establish a working in-memory reference path, raw native client tier, and native counter demo.
@@ -57,6 +57,8 @@ Each iteration uses a dedicated integration branch and one isolated branch/workt
 ## Documents
 
 - [PLAN.md](PLAN.md) defines the architecture, semantics, iterative work phases, reporting contract, review loop, and success criteria.
+- [DEVELOPMENT.md](DEVELOPMENT.md) defines the pinned toolchain, lockfile policy, and required foundation commands.
+- [foundation-report.md](foundation-report.md) records Phase 1 hypotheses, decisions, costly issues, validation, and readiness.
 - [LEARNINGS.md](LEARNINGS.md) indexes durable architecture and agentic-development findings with links to evidence.
 - [decisions/](decisions/) contains append-only shared decision records.
 - [iterations/](iterations/) contains iteration charters, workstream records, synthesis reports, retrospectives, and next-workstream instructions.

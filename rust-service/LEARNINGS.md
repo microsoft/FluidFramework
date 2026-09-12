@@ -24,4 +24,4 @@ _No findings recorded yet._
 
 ## Agentic Development
 
-_No findings recorded yet._
+- **Confirmed:** Test-only environment overrides must be command-scoped or visibly reported because persistent agent terminals can leak state into later validation. [Evidence](foundation-report.md#notable-events)
