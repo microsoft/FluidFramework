@@ -1,9 +1,9 @@
 # Iteration 0004 Phase 2 Integration
 
-Status: in progress
+Status: complete
 Integration branch: `rust-service-iteration-0004`
 Iteration base commit: `30c4a06d7b456e135e046905553dd23d14326a56`
-Integration commit: pending final Phase 2 integration
+Integration commit: final Phase 2 record commit containing this file
 
 ## Accepted Work
 
@@ -16,8 +16,9 @@ Wave 1 accepted in this order:
 
 - WebTransport: original `63eeedb5e4affa6e925479d3de50aafe235c6fdf..ac6aaeb2b416e26d3871a0103e70964082039d4c` became `46d807092d0..77ac7de09a8` after consuming the shared service prerequisite.
 - Native client lifecycle: original `23e09990a626e53be25d1310e5545ba4ee4f763e..948782922e83ec103f896c2d00df50b59f5a6c02` became `6f4bb557fb7..ab900c8d10e` after consuming the same prerequisite.
+- Benchmark Wave 3: original `8cf28d43fa6..1fed5105875` became `72cd1ed9f60..abf922de9b4` after consuming all reviewed implementation prerequisites.
 
-Benchmark Wave 3 remains pending.
+All planned work is integrated.
 
 ## Rejected or Deferred Work
 
@@ -28,6 +29,8 @@ None rejected. Adaptive prior-record compression was rejected within its workstr
 All Wave 1 cherry-picks were path-disjoint. Focused integration compilation found two service-assembly defects not caught by its disposable validation: `decode_request` returned a bare `Request` match instead of `Result`, and strict workspace Clippy rejected the 114-line request handler. Commit `fcdb949094a` wraps the match in `Ok` and splits the handler into operation-specific helpers without changing behavior. Integration centrally registered six new packages and regenerated the shared lockfile.
 
 Wave 2 cherry-picks were path-disjoint. Strict integrated Clippy found two test-only wildcard matches in the lifecycle process harness; `a2c88795c78` names the sole opposite protocol variants explicitly. Integration registered native and browser WebTransport packages and regenerated the shared lockfile.
+
+Benchmark Wave 3 cherry-picked cleanly. Its exact-copy helper assumed the benchmark crate was not registered and rejected the correct integrated workspace; `5f708697f2d` makes temporary registration idempotent while retaining root-file verification.
 
 ## Validation Evidence
 
@@ -46,7 +49,15 @@ Wave 2 focused validation used the same isolated target:
 - Fresh integrated Headless Chromium 152 behavior passed without insecure flags: 1,577 FSP4 bytes, 363 peak response bytes, 5 ms reconnect, and one resumed record.
 - `cargo fmt --all -- --check` passed.
 
-Workspace and artifact completion gates remain pending until benchmark Wave 3 integrates.
+Benchmark Wave 3 exact-copy validation passed rustfmt, 3 tests, strict Clippy, and all-adapter smoke after `5f708697f2d`. Its final matrix contains 26 cells and 130 schema-valid release results, exactly five repetitions per cell.
+
+Final native workspace validation from the integration checkout passed:
+
+- `cargo fmt --all -- --check`
+- `cargo clippy --workspace --all-targets --all-features -- -D warnings`
+- `cargo build --workspace --all-targets`
+- `cargo test --workspace --all-targets --all-features`: 127 passed, 0 failed, 3 intentional child-entrypoint tests ignored
+- `cargo run -p snapshotted-stream-counter`: `recovered counter: 4`
 
 ## Cross-Workstream Findings
 
@@ -60,4 +71,4 @@ Workspace and artifact completion gates remain pending until benchmark Wave 3 in
 
 ## Artifact Check
 
-Wave 1 and Wave 2 reports and commits are accounted for. Generated certificates, private keys, browser profiles, service data, and WASM bindings are ignored and uncommitted. Intentional integration changes are root workspace membership and regenerated `Cargo.lock`. Benchmark Wave 3 and final integration evidence remain pending.
+All six workstream reports and accepted commits are accounted for. Generated certificates, private keys, browser profiles, service data, benchmark result dumps, and WASM bindings are ignored and uncommitted. Intentional integration changes are root workspace membership, regenerated `Cargo.lock`, three focused validation repairs, and this report/manifest update. No other uncommitted artifact is intended.

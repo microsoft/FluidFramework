@@ -1142,14 +1142,24 @@ checksum = "ba467056f1b547ed52077911161fc86985becbc60e8e1857c8a144dab0def891"
 name = "snapshotted-stream-benchmarks"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "bytes",
+ "fluid-native-service",
+ "fluid-service-protocol",
+ "fluid-webtransport-native",
  "futures-util",
  "serde",
  "serde_json",
+ "snapshotted-stream-client",
+ "snapshotted-stream-compression",
  "snapshotted-stream-core",
+ "snapshotted-stream-encryption",
  "snapshotted-stream-file-simple",
  "snapshotted-stream-memory",
+ "snapshotted-stream-network",
+ "snapshotted-stream-stateful-compression",
  "tokio",
+ "wtransport",
 ]
 
 [[package]]
