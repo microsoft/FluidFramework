@@ -7,14 +7,24 @@ rust-version.workspace = true
 publish = false
 
 [dependencies]
+async-trait.workspace = true
 bytes.workspace = true
+fluid-native-service = { path = "../service" }
+fluid-service-protocol = { path = "../protocol" }
+fluid-webtransport-native = { path = "../wrappers/webtransport-native" }
 futures-util.workspace = true
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.143"
+snapshotted-stream-compression = { path = "../wrappers/compression" }
 snapshotted-stream-core = { path = "../core" }
+snapshotted-stream-encryption = { path = "../wrappers/encryption" }
 snapshotted-stream-file-simple = { path = "../file-simple" }
 snapshotted-stream-memory = { path = "../memory" }
+snapshotted-stream-client = { path = "../client" }
+snapshotted-stream-network = { path = "../wrappers/network" }
+snapshotted-stream-stateful-compression = { path = "../wrappers/stateful-compression" }
 tokio.workspace = true
+wtransport = "=0.7.2"
 
 [lints]
 workspace = true

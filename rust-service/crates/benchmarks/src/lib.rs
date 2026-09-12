@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-pub const SCHEMA_VERSION: u32 = 1;
+pub const SCHEMA_VERSION: u32 = 2;
 pub const DEFAULT_SEED: u64 = 0x4d59_5df4_d0f3_3173;
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -122,10 +122,13 @@ pub struct Measurements {
     pub snapshot_publish_microseconds: Option<f64>,
     pub recovery_microseconds: Option<f64>,
     pub reconnect_microseconds: Option<f64>,
+    pub process_cpu_microseconds: Option<f64>,
     pub peak_resident_memory_bytes: Option<u64>,
     pub logical_payload_bytes: u64,
     pub persisted_bytes: Option<u64>,
     pub wire_bytes: Option<u64>,
+    pub peak_queued_records: Option<usize>,
+    pub peak_active_streams: Option<usize>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -260,10 +263,13 @@ mod tests {
                 snapshot_publish_microseconds: None,
                 recovery_microseconds: None,
                 reconnect_microseconds: None,
+                process_cpu_microseconds: None,
                 peak_resident_memory_bytes: None,
                 logical_payload_bytes: 0,
                 persisted_bytes: None,
                 wire_bytes: None,
+                peak_queued_records: None,
+                peak_active_streams: None,
             },
         };
         let encoded = serde_json::to_string(&result).expect("schema should serialize");

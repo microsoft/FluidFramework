@@ -2,7 +2,10 @@ use std::{
     env, fs,
     path::{Path, PathBuf},
     process::Command,
-    sync::atomic::{AtomicU64, Ordering},
+    sync::{
+        OnceLock,
+        atomic::{AtomicU64, Ordering},
+    },
     time::Instant,
 };
 
@@ -12,10 +15,18 @@ use snapshotted_stream_benchmarks::{
     BenchmarkResult, DEFAULT_SEED, Environment, FixtureGenerator, FixtureKind, Measurements,
     SCHEMA_VERSION, Workload, summarize,
 };
+use snapshotted_stream_compression::CompressionStream;
 use snapshotted_stream_core::{AppendStream, Snapshot, SnapshotPosition, SnapshotStore};
+use snapshotted_stream_encryption::{
+    ActiveKey, EncryptionKey, EncryptionStream, KeyId, KeyProvider,
+};
 use snapshotted_stream_file_simple::FileStream;
 use snapshotted_stream_memory::MemoryStream;
+use snapshotted_stream_network::local_transport;
+use snapshotted_stream_stateful_compression::StatefulCompressionStream;
 use tokio::task::JoinSet;
+
+mod integrated;
 
 static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(1);
 
@@ -23,6 +34,31 @@ static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(1);
 enum Backend {
     Memory,
     File,
+    NetworkMemory,
+    Compression,
+    StatefulCompression,
+    Encryption,
+    StatefulCompressionEncryption,
+    NativeService,
+    NativeWebTransport,
+}
+
+const DICTIONARY: &[u8] = b"tenant=alpha;document=shared;operation=insert;path=/items/;value=collaborative-content;sequence=00000000";
+
+#[derive(Clone, Debug)]
+struct BenchmarkKey;
+
+impl KeyProvider for BenchmarkKey {
+    fn active_key(&self) -> Option<ActiveKey> {
+        Some(ActiveKey {
+            id: KeyId::new([1; 16]),
+            key: EncryptionKey::new([0x5a; 32]),
+        })
+    }
+
+    fn key_for_id(&self, id: &KeyId) -> Option<EncryptionKey> {
+        (*id == KeyId::new([1; 16])).then(|| EncryptionKey::new([0x5a; 32]))
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -45,9 +81,14 @@ struct RunMeasurements {
     finite_read_microseconds: f64,
     snapshot_publish_microseconds: Option<f64>,
     recovery_microseconds: Option<f64>,
+    reconnect_microseconds: Option<f64>,
+    process_cpu_microseconds: Option<f64>,
     peak_resident_memory_bytes: Option<u64>,
     logical_payload_bytes: u64,
     persisted_bytes: Option<u64>,
+    wire_bytes: Option<u64>,
+    peak_queued_records: Option<usize>,
+    peak_active_streams: Option<usize>,
 }
 
 #[tokio::main]
@@ -102,8 +143,24 @@ async fn smoke() -> Result<(), String> {
     verify_reopened(&reopened, snapshot.records).await?;
     drop(reopened);
     fs::remove_dir_all(&directory).map_err(display_error)?;
+
+    let mut integrated = snapshot.clone();
+    integrated.records = 8;
+    integrated.snapshot_frequency = Some(4);
+    for backend in [
+        Backend::NetworkMemory,
+        Backend::Compression,
+        Backend::StatefulCompression,
+        Backend::Encryption,
+        Backend::StatefulCompressionEncryption,
+        Backend::NativeService,
+        Backend::NativeWebTransport,
+    ] {
+        integrated.backend = backend;
+        run_backend(&integrated).await?;
+    }
     println!(
-        "correctness smoke passed: memory writers=2; memory,file snapshot-frequency=16 records=32"
+        "correctness smoke passed: memory writers=2; memory,file snapshot-frequency=16 records=32; Wave 3 adapters snapshot-frequency=4 records=8"
     );
     Ok(())
 }
@@ -129,6 +186,15 @@ async fn measure(config: Config) -> Result<(), String> {
             implementation: match config.backend {
                 Backend::Memory => "memory".to_owned(),
                 Backend::File => "file-simple".to_owned(),
+                Backend::NetworkMemory => "network-memory".to_owned(),
+                Backend::Compression => "file-compression".to_owned(),
+                Backend::StatefulCompression => "file-stateful-compression".to_owned(),
+                Backend::Encryption => "file-encryption".to_owned(),
+                Backend::StatefulCompressionEncryption => {
+                    "file-stateful-compression-encryption".to_owned()
+                }
+                Backend::NativeService => "native-service".to_owned(),
+                Backend::NativeWebTransport => "native-webtransport".to_owned(),
             },
             active_guarantees: guarantees(config.backend),
             environment: environment.clone(),
@@ -150,11 +216,14 @@ async fn measure(config: Config) -> Result<(), String> {
                 finite_read_microseconds: measurements.finite_read_microseconds,
                 snapshot_publish_microseconds: measurements.snapshot_publish_microseconds,
                 recovery_microseconds: measurements.recovery_microseconds,
-                reconnect_microseconds: None,
+                reconnect_microseconds: measurements.reconnect_microseconds,
+                process_cpu_microseconds: measurements.process_cpu_microseconds,
                 peak_resident_memory_bytes: measurements.peak_resident_memory_bytes,
                 logical_payload_bytes: measurements.logical_payload_bytes,
                 persisted_bytes: measurements.persisted_bytes,
-                wire_bytes: None,
+                wire_bytes: measurements.wire_bytes,
+                peak_queued_records: measurements.peak_queued_records,
+                peak_active_streams: measurements.peak_active_streams,
             },
         };
         println!("{}", serde_json::to_string(&result).map_err(display_error)?);
@@ -163,11 +232,12 @@ async fn measure(config: Config) -> Result<(), String> {
 }
 
 async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
-    match config.backend {
+    let cpu_started = process_cpu_microseconds();
+    let mut measurements = match config.backend {
         Backend::Memory => {
             let startup = Instant::now();
             let stream = MemoryStream::new();
-            run_stream(&stream, config, elapsed_microseconds(startup)).await
+            run_stream(&stream, config, elapsed_microseconds(startup)).await?
         }
         Backend::File => {
             let directory = unique_directory("measure");
@@ -183,9 +253,127 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
             measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
             drop(reopened);
             fs::remove_dir_all(&directory).map_err(display_error)?;
-            Ok(measurements)
+            measurements
         }
-    }
+        Backend::NetworkMemory => {
+            let startup = Instant::now();
+            let (stream, server) = local_transport(MemoryStream::new(), config.writers.max(1))
+                .map_err(display_error)?;
+            let mut measurements =
+                run_stream(&stream, config, elapsed_microseconds(startup)).await?;
+            let transport = stream.measurement();
+            measurements.wire_bytes = Some(transport.wire_bytes);
+            measurements.peak_queued_records = Some(transport.peak_queued_records);
+            server.disconnect();
+            measurements
+        }
+        Backend::Compression => {
+            let directory = unique_directory("compression");
+            let startup = Instant::now();
+            let stream =
+                CompressionStream::new(FileStream::open(&directory).map_err(display_error)?);
+            let mut measurements =
+                run_stream(&stream, config, elapsed_microseconds(startup)).await?;
+            drop(stream);
+            measurements.persisted_bytes = Some(directory_bytes(&directory)?);
+            let recovery = Instant::now();
+            let reopened =
+                CompressionStream::new(FileStream::open(&directory).map_err(display_error)?);
+            verify_reopened_stream(&reopened, config).await?;
+            measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
+            drop(reopened);
+            fs::remove_dir_all(&directory).map_err(display_error)?;
+            measurements
+        }
+        Backend::StatefulCompression => {
+            let directory = unique_directory("stateful-compression");
+            let startup = Instant::now();
+            let stream = StatefulCompressionStream::new(
+                FileStream::open(&directory).map_err(display_error)?,
+                Bytes::from_static(DICTIONARY),
+                128 * 1024,
+            )
+            .map_err(display_error)?;
+            let mut measurements =
+                run_stream(&stream, config, elapsed_microseconds(startup)).await?;
+            drop(stream);
+            measurements.persisted_bytes = Some(directory_bytes(&directory)?);
+            let recovery = Instant::now();
+            let reopened = StatefulCompressionStream::new(
+                FileStream::open(&directory).map_err(display_error)?,
+                Bytes::from_static(DICTIONARY),
+                128 * 1024,
+            )
+            .map_err(display_error)?;
+            verify_reopened_stream(&reopened, config).await?;
+            measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
+            drop(reopened);
+            fs::remove_dir_all(&directory).map_err(display_error)?;
+            measurements
+        }
+        Backend::Encryption => {
+            let directory = unique_directory("encryption");
+            let startup = Instant::now();
+            let stream = EncryptionStream::new(
+                FileStream::open(&directory).map_err(display_error)?,
+                BenchmarkKey,
+            );
+            let mut measurements =
+                run_stream(&stream, config, elapsed_microseconds(startup)).await?;
+            drop(stream);
+            measurements.persisted_bytes = Some(directory_bytes(&directory)?);
+            let recovery = Instant::now();
+            let reopened = EncryptionStream::new(
+                FileStream::open(&directory).map_err(display_error)?,
+                BenchmarkKey,
+            );
+            verify_reopened_stream(&reopened, config).await?;
+            measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
+            drop(reopened);
+            fs::remove_dir_all(&directory).map_err(display_error)?;
+            measurements
+        }
+        Backend::StatefulCompressionEncryption => {
+            let directory = unique_directory("stateful-compression-encryption");
+            let startup = Instant::now();
+            let encrypted = EncryptionStream::new(
+                FileStream::open(&directory).map_err(display_error)?,
+                BenchmarkKey,
+            );
+            let stream = StatefulCompressionStream::new(
+                encrypted,
+                Bytes::from_static(DICTIONARY),
+                128 * 1024,
+            )
+            .map_err(display_error)?;
+            let mut measurements =
+                run_stream(&stream, config, elapsed_microseconds(startup)).await?;
+            drop(stream);
+            measurements.persisted_bytes = Some(directory_bytes(&directory)?);
+            let recovery = Instant::now();
+            let encrypted = EncryptionStream::new(
+                FileStream::open(&directory).map_err(display_error)?,
+                BenchmarkKey,
+            );
+            let reopened = StatefulCompressionStream::new(
+                encrypted,
+                Bytes::from_static(DICTIONARY),
+                128 * 1024,
+            )
+            .map_err(display_error)?;
+            verify_reopened_stream(&reopened, config).await?;
+            measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
+            drop(reopened);
+            fs::remove_dir_all(&directory).map_err(display_error)?;
+            measurements
+        }
+        Backend::NativeService => integrated::run_native_service(config).await?,
+        Backend::NativeWebTransport => integrated::run_native_webtransport(config).await?,
+    };
+    measurements.process_cpu_microseconds = cpu_started
+        .zip(process_cpu_microseconds())
+        .map(|(started, finished)| finished - started);
+    Ok(measurements)
 }
 
 async fn run_stream<S>(
@@ -286,11 +474,16 @@ where
         finite_read_microseconds,
         snapshot_publish_microseconds,
         recovery_microseconds: None,
+        reconnect_microseconds: None,
+        process_cpu_microseconds: None,
         peak_resident_memory_bytes: peak_resident_memory_bytes(),
         logical_payload_bytes: config.records
             * u64::try_from(config.fixture.payload_size())
                 .map_err(|_| "fixture size exceeds measurement range")?,
         persisted_bytes: None,
+        wire_bytes: None,
+        peak_queued_records: None,
+        peak_active_streams: None,
     })
 }
 
@@ -339,6 +532,28 @@ async fn verify_reopened(stream: &FileStream, expected_records: u64) -> Result<(
     Ok(())
 }
 
+async fn verify_reopened_stream<S>(stream: &S, config: &Config) -> Result<(), String>
+where
+    S: AppendStream
+        + SnapshotStore<Position = <S as AppendStream>::Position, Error = <S as AppendStream>::Error>,
+{
+    let generator = FixtureGenerator::new(config.seed);
+    let records = stream
+        .read(None)
+        .await
+        .map_err(display_error)?
+        .try_collect::<Vec<_>>()
+        .await
+        .map_err(display_error)?;
+    verify_payloads(&records, &generator, config)?;
+    if config.snapshot_frequency.is_some()
+        && stream.latest().await.map_err(display_error)?.is_none()
+    {
+        return Err("reopened wrapper did not preserve its snapshot".to_owned());
+    }
+    Ok(())
+}
+
 fn parse_config(arguments: &[String]) -> Result<Config, String> {
     let mut config = Config {
         backend: Backend::Memory,
@@ -381,6 +596,13 @@ fn parse_backend(value: &str) -> Result<Backend, String> {
     match value {
         "memory" => Ok(Backend::Memory),
         "file" => Ok(Backend::File),
+        "network-memory" => Ok(Backend::NetworkMemory),
+        "compression" => Ok(Backend::Compression),
+        "stateful-compression" => Ok(Backend::StatefulCompression),
+        "encryption" => Ok(Backend::Encryption),
+        "stateful-compression-encryption" => Ok(Backend::StatefulCompressionEncryption),
+        "native-service" => Ok(Backend::NativeService),
+        "native-webtransport" => Ok(Backend::NativeWebTransport),
         _ => Err(format!("unknown backend: {value}")),
     }
 }
@@ -412,7 +634,50 @@ fn guarantees(backend: Backend) -> Vec<String> {
             "finite reads".to_owned(),
             "snapshot publication".to_owned(),
         ],
+        Backend::NetworkMemory => vec![
+            "bounded in-process transport".to_owned(),
+            "memory durability".to_owned(),
+            "finite reads".to_owned(),
+            "payload-byte accounting".to_owned(),
+        ],
+        Backend::Compression => wrapper_guarantees("independent zlib compression"),
+        Backend::StatefulCompression => {
+            wrapper_guarantees("bounded immutable-dictionary zstd compression")
+        }
+        Backend::Encryption => wrapper_guarantees("AES-256-GCM-SIV authenticated encryption"),
+        Backend::StatefulCompressionEncryption => vec![
+            "single-process ownership".to_owned(),
+            "buffered file durability without sync".to_owned(),
+            "bounded immutable-dictionary zstd compression before encryption".to_owned(),
+            "AES-256-GCM-SIV authenticated encryption".to_owned(),
+            "finite reads".to_owned(),
+            "snapshot publication".to_owned(),
+        ],
+        Backend::NativeService => vec![
+            "assembled durable native service".to_owned(),
+            "sequenced submissions".to_owned(),
+            "explicit native client lifecycle".to_owned(),
+            "clean service restart".to_owned(),
+            "snapshot publication".to_owned(),
+        ],
+        Backend::NativeWebTransport => vec![
+            "assembled durable native service".to_owned(),
+            "HTTP/3 WebTransport with pinned self-signed certificate".to_owned(),
+            "sequenced submissions".to_owned(),
+            "explicit native client and transport reconnect".to_owned(),
+            "FSP4 frame-byte accounting".to_owned(),
+        ],
     }
+}
+
+fn wrapper_guarantees(wrapper: &str) -> Vec<String> {
+    vec![
+        "single-process ownership".to_owned(),
+        "buffered file durability without sync".to_owned(),
+        wrapper.to_owned(),
+        "finite reads".to_owned(),
+        "snapshot publication".to_owned(),
+    ]
 }
 
 fn environment() -> Environment {
@@ -482,8 +747,31 @@ fn directory_bytes(directory: &Path) -> Result<u64, String> {
         .try_fold(0_u64, |total, entry| {
             let entry = entry.map_err(display_error)?;
             let metadata = entry.metadata().map_err(display_error)?;
-            Ok(total + metadata.len())
+            if metadata.is_dir() {
+                Ok(total + directory_bytes(&entry.path())?)
+            } else {
+                Ok(total + metadata.len())
+            }
         })
+}
+
+fn process_cpu_microseconds() -> Option<f64> {
+    static CLOCK_TICKS: OnceLock<Option<f64>> = OnceLock::new();
+    let ticks_per_second = *CLOCK_TICKS.get_or_init(|| {
+        command_output("getconf", &["CLK_TCK"])
+            .parse::<f64>()
+            .ok()
+            .filter(|value| *value > 0.0)
+    });
+    let stat = fs::read_to_string("/proc/self/stat").ok()?;
+    let fields = stat
+        .rsplit_once(") ")?
+        .1
+        .split_whitespace()
+        .collect::<Vec<_>>();
+    let user_ticks = fields.get(11)?.parse::<u64>().ok()?;
+    let system_ticks = fields.get(12)?.parse::<u64>().ok()?;
+    Some((user_ticks + system_ticks) as f64 * 1_000_000.0 / ticks_per_second?)
 }
 
 fn unique_directory(label: &str) -> PathBuf {
@@ -509,5 +797,5 @@ fn display_error(error: impl std::fmt::Display) -> String {
 }
 
 fn usage() -> String {
-    "usage: snapshotted-stream-benchmarks smoke | measure [--backend memory|file] [--fixture empty|small-compressible|small-incompressible|large-compressible|large-incompressible|snapshot] [--seed N] [--records N] [--writers N] [--snapshot-frequency N] [--warmups N] [--repetitions N]".to_owned()
+    "usage: snapshotted-stream-benchmarks smoke | measure [--backend memory|file|network-memory|compression|stateful-compression|encryption|stateful-compression-encryption|native-service|native-webtransport] [--fixture empty|small-compressible|small-incompressible|large-compressible|large-incompressible|snapshot] [--seed N] [--records N] [--writers N] [--snapshot-frequency N] [--warmups N] [--repetitions N]".to_owned()
 }

@@ -10,9 +10,10 @@ From `rust-service/`:
 bash scripts/validate-benchmarks.sh
 bash scripts/measure-benchmarks.sh --backend memory --fixture small-compressible --records 10000 --writers 1 --warmups 1 --repetitions 5
 bash scripts/measure-benchmarks.sh --backend file --fixture small-compressible --records 10000 --writers 1 --warmups 1 --repetitions 5
+bash scripts/measure-wave3-benchmarks.sh
 ```
 
-The validation command runs formatting, unit tests, strict Clippy, and correctness smoke workloads for both existing backends. Measurements have no timing assertions and write results only to standard output.
+The validation command runs formatting, unit tests, strict Clippy, and correctness smoke workloads for every backend. Measurements have no timing assertions and write results only to standard output. The Wave 3 matrix builds once in an exact disposable copy, runs 26 bounded cells with one warmup and five measured repetitions each, and leaves no generated result file or key in the repository.
 
 ## Fixtures
 
@@ -20,14 +21,20 @@ The validation command runs formatting, unit tests, strict Clippy, and correctne
 
 ## Result Schema
 
-Each output line is one schema-version-1 `BenchmarkResult`. It includes repetition number, source/environment metadata, workload parameters, active guarantees, append latency distribution, throughput, startup/read/snapshot/recovery duration, peak resident memory where `/proc` exposes it, logical bytes, and optional persisted/wire/reconnect observations. Missing counters are `null`; they are never inferred.
+Each JSON output line is one schema-version-2 `BenchmarkResult`. It includes repetition number, source/environment metadata, workload parameters, active guarantees, append latency distribution, throughput, startup/read/snapshot/recovery/reconnect duration, process CPU time and peak resident memory where `/proc` exposes them, logical and persisted bytes, FSP4 or typed-boundary wire bytes, peak queued records, and peak active transport streams. Missing counters are `null`; they are never inferred. Lines beginning with `# cell:` identify matrix cells and are not JSON.
 
 Latency and throughput use a monotonic process clock. The distribution reports minimum, median, p95, maximum, mean, sample standard deviation, and coefficient of variation. Results are procedure observations, not capacity claims.
 
 For periodic snapshot workloads, append throughput includes snapshot publication wall time and `snapshot_publish_microseconds` is the sum across all publications in the repetition.
 
-## Wave 3 Adapters
+## Wave 3 Adapters and Matrix
 
-The workload runner is generic over the public `AppendStream` and `SnapshotStore` traits. A later adapter adds its crate dependency and backend construction without copying implementation code. Service and transport adapters must supply reconnect and wire-byte observations from their public instrumentation. Compression and encryption adapters must report their ordering and active guarantees; the harness must not compare those results as equivalent to plaintext or uncompressed baselines.
+The generic runner covers memory, buffered file, bounded local transport, independent zlib, immutable-dictionary zstd, AES-256-GCM-SIV, and dictionary-compression-before-encryption. File-backed cells report recursive persisted size; wrapper cells report process CPU used by the append/read/snapshot workload. The benchmark key is a fixed non-production key used only in memory and is never emitted; encryption nonces come from the operating system.
 
-The Wave 1 file adapter reports clean-reopen recovery and persisted bytes. The memory adapter reports neither persistence nor reconnect. Neither existing implementation exposes wire-byte counters.
+The service runner drives the public `NativeClient` against either direct `NativeService::handle` or the native HTTP/3 WebTransport client/server. Both use identical fixtures, FSP4 requests, durable service implementation, snapshot schedule, and explicit fresh-session reconnect. Direct service additionally measures clean lazy reopen; WebTransport reports encoded FSP4 bytes and peak active streams. These are equivalent application workloads, but direct calls and HTTP/3 transport are not equivalent transport guarantees.
+
+The local bounded transport reports payload/token bytes and peak queued records. Its typed-boundary byte count excludes protocol framing and cannot be compared directly with FSP4 frame bytes. Native WebTransport counters include complete encoded FSP4 request and response frames but exclude QUIC, TLS, UDP, and IP overhead.
+
+Browser-WASM behavior has separate headless Chromium evidence for the same create/open/submit/read/snapshot/reconnect protocol flow. Browser `WebTransport` exposes neither packet-byte totals nor internal queue depth, so the matrix does not fabricate browser packet or queue observations and does not treat native FSP4 frame bytes as browser packet bytes.
+
+The matrix includes empty and small/large compressible/incompressible fixtures, periodic snapshots, four-writer bounded local transport, assembled-service startup, clean warm-cache restart, native lifecycle reconnect, and native WebTransport reconnect. Dropping operating-system caches requires privileges and is intentionally omitted, so recovery is labeled warm-cache rather than cold-disk. Peak RSS is process-wide high-water memory and process CPU has the host clock-tick resolution; neither isolates allocator or per-operation cost.
