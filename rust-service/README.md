@@ -32,21 +32,23 @@ In-memory, file, browser, cloud, and replicated implementations
 
 The `fluid-sequencer` adapter will provide optional multi-writer protocol semantics such as message framing, join/leave events, local and final ordering, reference stream positions, minimum-reference tracking, and eviction of writers that fall behind. Fluid drivers and direct SharedTree integration can build on this adapter without introducing Fluid concepts into storage implementations.
 
-Development begins with an interactive foundation phase that creates the Rust workspace, core traits, initial tests, and stub crates while resolving design questions as they become concrete. Parallel implementation follows. Each implementation agent then produces a structured report covering correctness, integration, architectural friction, complexity, and performance.
+Development begins with an interactive foundation phase that creates the Rust workspace, core traits, initial tests, stub crates, and a project coordination skill while resolving design questions as they become concrete. Parallel implementation follows. Each implementation agent works in an isolated branch and worktree, makes reviewable commits, and produces a structured report covering correctness, integration, architectural friction, complexity, and performance.
 
-A third, interactive review phase synthesizes those reports before any shared abstractions or crate boundaries change. Approved adjustments produce new scoped instructions and another parallel implementation iteration. The Phase 2/3 loop ends only when the reports, tests, documentation, and measurements justify making no further changes.
+A third, interactive review phase integrates and synthesizes those reports before any shared abstractions or crate boundaries change. Approved adjustments, the numbered review report, updated coordination guidance, and new scoped instructions are committed separately before another parallel implementation iteration. The Phase 2/3 loop ends only when the reports, tests, documentation, and measurements justify making no further changes.
 
 ## Project Status
 
 The project is currently in the design phase. No Rust crate or stable API exists yet. The immediate milestones are:
 
-1. Create the Cargo workspace, core traits, initial conformance tests, and crate stubs interactively.
+1. Create the Cargo workspace, core traits, initial conformance tests, crate stubs, and coordination skill interactively.
 2. Establish a working in-memory reference path and native counter demo.
 3. Implement a maximally simple file store and a separate crash-safe file store.
 4. Develop `fluid-sequencer`, wrappers, Rust and WASM clients, Fluid/SharedTree integrations, and demos in parallel.
 5. Collect structured reports from every parallel workstream.
 6. Review findings and proposed architectural changes interactively before applying them.
 7. Repeat implementation and review until tests, documentation, and comparative evidence support convergence.
+
+Each iteration uses a dedicated integration branch and one isolated branch/worktree per Phase 2 workstream. Workstream agents commit only their assigned scope and report; a coordinator integrates accepted commits and records Phase 3 decisions under a sequentially numbered `iterations/NNNN/` directory. The next iteration always starts from the approved Phase 3 commit.
 
 ## Documents
 

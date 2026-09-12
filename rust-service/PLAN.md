@@ -179,9 +179,24 @@ Work interactively to turn the design into a compilable skeleton. Decisions may 
 - Implement enough of an in-memory reference to validate the traits.
 - Establish a conformance-test crate that can be expanded during implementation.
 - Stub crates for storage implementations, wrappers, integrations, and demos with their dependency direction encoded in the workspace.
+- Create a project skill that implements the Phase 2 Git, worktree, commit, reporting, and integration workflow described below.
 - Record unresolved semantic questions beside the crate that owns them rather than guessing prematurely.
 
-Deliverable: a compiling workspace, an initial tested kernel, a reference path, and crate boundaries suitable for independent Phase 2 work.
+Deliverable: a compiling workspace, an initial tested kernel, a reference path, and crate boundaries suitable for independent Phase 2 work. Phase 1 ends with a validated foundation commit from which the first integration branch and all workstream worktrees are created.
+
+#### Phase 1 readiness gate
+
+Before creating Phase 2 worktrees, Phase 1 must also produce:
+
+- one documented command each for formatting, linting, building, testing, and running the initial example;
+- a workstream manifest naming each crate, owner, writable paths, dependencies, and expected deliverables;
+- an initial conformance baseline that every applicable implementation can run without copying tests;
+- a decision log distinguishing settled kernel behavior from open research questions;
+- a dependency graph identifying which workstreams can start immediately and which depend on another result;
+- a benchmark specification with initial workloads, measurement procedure, and required environment metadata; and
+- a clean foundation commit that passes all documented checks.
+
+The gate does not require every research question to be answered. It requires unanswered questions to have an owner, an experiment or decision point, and a clear statement of whether they block another workstream.
 
 ### Phase 2: Parallel implementation
 
@@ -253,6 +268,10 @@ Deliverable: evidence about which behaviors compose cleanly and which require ch
 
 Deliverable: reproducible benchmark results and decisions tied to measurements.
 
+Benchmark comparisons must record the source commit, toolchain, build profile, enabled features, operating system, CPU, memory, storage device and filesystem, and relevant runtime configuration. Workloads must define payload distribution, stream size, writer and reader counts, snapshot frequency, warmup, repetitions, and reported variance. Raw machine-readable results are retained alongside summaries. Comparisons must use equivalent semantics and durability guarantees; where that is impossible, the difference is part of the result rather than normalized away.
+
+Not every wrapper permutation will be supported or benchmarked. Phase 1 defines a small composition matrix representing important paths, including the ordering of compression, encryption, framing, transport, and persistence. Each supported composition receives at least one integration test so independently correct wrappers are not assumed to compose automatically.
+
 ### Phase 3: Synthesis and architectural review
 
 At the end of each Phase 2 iteration, every implementation, wrapper, integration, and demo agent produces a structured report for Phase 3. Phase 3 synthesizes those reports to evaluate the central abstractions, crate boundaries, implementation scopes, tests, documentation, and measurement quality.
@@ -267,7 +286,8 @@ Phase 3 proceeds in this order:
 6. Present findings, alternatives, and tradeoffs for interactive review with the user.
 7. Make no structural, documentation, or shared-abstraction changes until the user approves the decisions.
 8. Apply the approved changes and update tests, documentation, crate boundaries, and shared APIs together.
-9. Prepare scoped instructions for each Phase 2 agent or workstream, then begin another Phase 2 iteration.
+9. Review Phase 2 feedback about coordination and improve the project coordination skill when needed.
+10. Prepare scoped instructions for each Phase 2 agent or workstream, then begin another Phase 2 iteration.
 
 This loop repeats until Phase 3 finds no justified adjustments and the user agrees that the evidence is sufficient:
 
@@ -320,6 +340,28 @@ Changes to the kernel require a failing test, a concrete use case that cannot be
 
 Phase 2 agents may propose changes to shared abstractions, crate ownership, or project structure, but must not make those changes independently. Shared changes are decided interactively and applied during Phase 3.
 
+### Mid-iteration escalation
+
+When a workstream encounters a missing or contradictory shared contract, the agent must:
+
+1. Minimize the problem to a test, example, or precise API requirement.
+2. Record whether work can continue without an undocumented workaround.
+3. Notify the coordinator and add the finding to its Phase 2 report.
+4. Continue only on independent work if the shared decision is blocked.
+
+The coordinator may clarify behavior already settled in the decision log, but may not invent a new shared semantic contract on behalf of the user. A blocking discovery can end the current Phase 2 iteration early and move it to Phase 3; short iterations are preferable to divergent local workarounds.
+
+### Conformance governance
+
+The conformance crate is a shared specification surface owned by an explicitly assigned workstream. Phase 2 agents may add implementation-local regression tests freely, but proposed changes to shared conformance behavior must include:
+
+- the semantic law being tested;
+- a minimal implementation-independent test;
+- expected applicability by capability; and
+- results against every implementation that currently claims that capability.
+
+Clarifications consistent with the decision log may be integrated during Phase 2 by the conformance owner. Additions or changes that alter shared semantics are deferred to Phase 3. Conformance results always identify the tested conformance commit so results remain interpretable after the suite evolves.
+
 ### Required Phase 2 report
 
 Each agent or workstream must provide:
@@ -333,9 +375,81 @@ Each agent or workstream must provide:
 - defects that are local to the implementation;
 - proposed changes to traits, crate boundaries, factoring, or scope, with alternatives and tradeoffs;
 - remaining risks, unfinished work, and confidence level; and
+- feedback on workstream ownership, dependencies, the conformance suite, and the coordination skill; and
 - recommended instructions for the next Phase 2 iteration.
 
 Reports should include reproducible commands and machine-readable benchmark output where practical. A report may recommend no changes; it must still provide the evidence supporting that conclusion.
+
+## Iteration and Git Workflow
+
+Phase 2 and Phase 3 work is organized into sequentially numbered iterations using four digits, beginning with `0001`. Each iteration starts from the approved result of the previous Phase 3 review.
+
+### Branch and worktree model
+
+- The coordinator creates one integration branch for the iteration, such as `rust-service/iteration-0001`.
+- Every Phase 2 workstream receives its own branch and worktree created from the same iteration base, such as `rust-service/iteration-0001/file-simple`.
+- Worktrees should live outside the primary checkout so concurrent agents cannot alter one another's index, working tree, generated files, or build state.
+- Each agent owns only its assigned worktree and documented crate or file scope.
+- Agents must not merge, rebase, force-push, or modify the integration branch or another workstream branch.
+- Shared kernel, workspace, and dependency changes require explicit ownership in the workstream instructions. Otherwise, agents report the required change for Phase 3 instead of making it.
+
+Worktrees isolate filesystem state; branches preserve commit attribution and make each workstream independently inspectable. Running several agents directly in one checkout is not supported.
+
+### Phase 2 commits
+
+- Agents commit their own work as coherent, reviewable checkpoints rather than leaving one large uncommitted change.
+- Every commit must build or test at the narrowest applicable scope unless the commit message and report explain why it cannot.
+- Generated files belong in the same commit as the source change that requires them.
+- Agents do not rewrite commits after reporting them unless the coordinator explicitly requests it.
+- The final worktree must be clean, or the report must enumerate every intentional uncommitted or ignored artifact.
+- The Phase 2 report records the branch name, base commit, ordered commit list, validation commands, and integration dependencies.
+- The final commit on each workstream branch adds or updates that workstream's report for the current iteration.
+
+The coordinator reviews and integrates accepted workstream commits into the iteration integration branch in dependency order. Cherry-picking is preferred because it preserves focused commits without adding a merge commit for every temporary branch. Conflict resolution and cross-workstream adaptation happen on the integration branch and are committed separately with the affected workstreams identified.
+
+After all accepted work is integrated, the coordinator runs workspace-level validation and creates an explicit Phase 2 integration commit. This commit marks the immutable input to Phase 3. Rejected or incomplete branches remain available for inspection but are not silently included.
+
+### Reports and instructions
+
+Persistent iteration artifacts use this layout:
+
+```text
+iterations/
+    0001/
+        phase-2/
+            integration.md
+            file-simple.md
+            file-durable.md
+            fluid-sequencer.md
+            ...
+        phase-3-report.md
+        next-phase-2-instructions/
+            file-simple.md
+            file-durable.md
+            fluid-sequencer.md
+            ...
+```
+
+Each workstream report is committed on that workstream branch and enters the integration branch with its implementation commits. The coordinator writes `phase-2/integration.md` with the accepted commit ranges, rejected or deferred work, conflict resolutions, and workspace-level validation results; committing this manifest creates the explicit Phase 2 integration boundary.
+
+Phase 3 produces one synthesis report plus scoped instructions for every continuing or newly created workstream. User-approved architecture, implementation, documentation, test, or coordination-skill changes may use additional focused commits. Phase 3 ends with a distinct commit containing the final report and next-iteration instructions; that commit is the immutable base for the next iteration.
+
+Iteration reports are append-only historical records. Later iterations may supersede conclusions but must not rewrite earlier reports. The next iteration branches from the approved Phase 3 commit, ensuring every agent starts from the same decisions and instructions.
+
+### Coordination skill
+
+Phase 1 creates a repository-scoped skill at `.github/skills/rust-service-coordination/SKILL.md` for starting, executing, integrating, and reporting an iteration. Its description must include the concrete Phase 2, Phase 3, worktree, integration, and iteration trigger terms that agents will use to discover it. The skill should provide:
+
+- branch, worktree, and artifact naming rules;
+- commands or scripts for creating and removing worktrees safely;
+- a Phase 2 workstream instruction template;
+- the required Phase 2 report template;
+- commit, clean-worktree, and validation checklists;
+- integration order and conflict-handling guidance;
+- a Phase 3 synthesis and next-iteration instruction template; and
+- recovery guidance for abandoned, blocked, or partially integrated workstreams.
+
+Phase 2 reports include feedback on the skill and coordination process. During Phase 3, that feedback is evaluated alongside observed integration problems. User-approved improvements to the skill are committed with the Phase 3 artifacts so the next iteration automatically receives the revised workflow.
 
 ## Convergence Criteria
 
