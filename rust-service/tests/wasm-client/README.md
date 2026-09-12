@@ -5,10 +5,16 @@ The `fluid-webtransport-browser` crate generates one TypeScript-facing WASM pack
 - `InjectedClient` is environment-neutral. Its `AsyncRequestTransport.request` method receives a validated complete FSP4 request and returns a promise for a complete FSP4 response. The WASM core validates response framing and request identity and owns bounded request/lifecycle state.
 - `BrowserClient` retains the browser WebTransport adapter, certificate pinning, stream I/O, explicit disconnect, and explicit reconnect behavior.
 
-Both clients expose the same additive projected-read and ambiguity-recovery operations:
+Both clients expose the same additive projected-read, ambiguity-recovery, and content operations:
 
 - `readProjected(document, after?)` returns a `ProjectedReadPage` containing accepted operations, an opaque resume cursor, and `hasMore`. Initial references are represented by an absent reference value; non-initial references and cursors remain opaque byte arrays.
 - `resolveSubmission(document, writer, session, submission)` returns a `SubmissionResolution` with kind `committed`, `notCommitted`, or `stillUncertain`. Resolution never retries or resubmits work; any retry after `notCommitted` remains an explicit caller action.
+- `uploadBlob(payload)` returns a `BlobUpload` receipt containing the SHA-256 digest, persisted size, and deduplication status.
+- `fetchBlob(digest)` returns the bounded blob bytes after WASM validates the response's echoed 32-byte digest.
+- `publishSummary(entries)` accepts a `ReadonlyArray<SummaryEntry>` and returns a `SummaryPublication` receipt containing the digest, entry count, persisted bytes, and deduplication status.
+- `fetchSummary(digest)` returns a `ReadonlyArray<SummaryEntry>` after WASM validates the response's echoed digest. Summary paths and blob identities remain byte arrays; UTF-8 and canonical-path validation belongs to the native service.
+
+All four content operations use the existing one-request queue and configured FSP4 frame bound. They do not retry, reconnect, or buffer additional requests.
 
 Build and test the Node distribution from `rust-service/` with an isolated target:
 

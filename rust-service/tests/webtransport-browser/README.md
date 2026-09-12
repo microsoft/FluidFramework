@@ -2,7 +2,7 @@
 
 This harness runs the `BrowserClient` adapter from the same WASM package as the environment-neutral `InjectedClient` against the native HTTP/3 server without disabling certificate validation. The generated ECDSA P-256 certificate is valid for 13 days, and both clients pin its SHA-256 digest. Generated certificates, private keys, service data, browser profiles, evidence, and WASM bindings are ignored.
 
-Run all Cargo commands from an exact disposable copy of `rust-service`, add `crates/protocol`, `crates/service`, `crates/wrappers/webtransport-native`, and `crates/wrappers/webtransport-browser` to that copy's workspace members, and use isolated `CARGO_TARGET_DIR` values. The source root manifest and lockfile must remain unchanged.
+Run all Cargo commands from `rust-service/` with isolated `CARGO_TARGET_DIR` values. The required crates are registered in the workspace; validation must leave the root manifest and lockfile unchanged.
 
 ```bash
 rustup target add wasm32-unknown-unknown
@@ -18,5 +18,7 @@ node tests/webtransport-browser/run-headless.mjs tests/webtransport-browser \
   https://127.0.0.1:<printed-port>/fluid \
   "$(cat tests/webtransport-browser/.certs/cert.sha256)"
 ```
+
+The browser flow exercises document/session operations, projected reconnect behavior, blob upload/fetch, and summary publish/fetch against the native service. Blob and summary fetches validate the echoed digest before exposing content to JavaScript.
 
 `wireBytes` counts encoded FSP4 request and response bytes. Browser APIs do not expose HTTP/3, QUIC, UDP, or TLS byte totals, so the harness does not mislabel application bytes as network overhead. The process transport uses a separate protocol with a four-byte length prefix; its byte count is therefore not directly comparable to FSP4 without packet capture.

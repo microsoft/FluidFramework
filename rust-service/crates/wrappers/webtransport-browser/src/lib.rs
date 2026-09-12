@@ -8,6 +8,7 @@ use std::{cell::RefCell, rc::Rc};
 use core::{ProtocolCore, js_error};
 use fluid_service_protocol::{
     ProjectedOperation as ProtocolProjectedOperation, Reference, Resolution,
+    SummaryEntry as ProtocolSummaryEntry,
 };
 use js_sys::{Array, Date, Function, Promise, Reflect, Uint8Array};
 use wasm_bindgen::{JsCast, prelude::*};
@@ -25,7 +26,106 @@ export interface AsyncRequestTransport {
     disconnect?(): void;
     shutdown?(): void;
 }
+
+export type SummaryEntries = ReadonlyArray<SummaryEntry>;
 "#;
+
+/// Receipt for one immutable blob upload.
+#[wasm_bindgen]
+pub struct BlobUpload {
+    digest: Vec<u8>,
+    size_bytes: u64,
+    deduplicated: bool,
+}
+
+#[wasm_bindgen]
+impl BlobUpload {
+    #[wasm_bindgen(getter)]
+    #[must_use]
+    pub fn digest(&self) -> Uint8Array {
+        Uint8Array::from(self.digest.as_slice())
+    }
+
+    #[wasm_bindgen(getter, js_name = sizeBytes)]
+    #[must_use]
+    pub fn size_bytes(&self) -> u64 {
+        self.size_bytes
+    }
+
+    #[wasm_bindgen(getter)]
+    #[must_use]
+    pub fn deduplicated(&self) -> bool {
+        self.deduplicated
+    }
+}
+
+/// One canonical summary path and immutable blob identity.
+#[wasm_bindgen]
+pub struct SummaryEntry {
+    inner: ProtocolSummaryEntry,
+}
+
+#[wasm_bindgen]
+impl SummaryEntry {
+    #[wasm_bindgen(constructor)]
+    #[must_use]
+    pub fn new(path: &Uint8Array, blob: &Uint8Array) -> Self {
+        Self {
+            inner: ProtocolSummaryEntry {
+                path: path.to_vec().into(),
+                blob: blob.to_vec().into(),
+            },
+        }
+    }
+
+    #[wasm_bindgen(getter)]
+    #[must_use]
+    pub fn path(&self) -> Uint8Array {
+        Uint8Array::from(self.inner.path.as_ref())
+    }
+
+    #[wasm_bindgen(getter)]
+    #[must_use]
+    pub fn blob(&self) -> Uint8Array {
+        Uint8Array::from(self.inner.blob.as_ref())
+    }
+}
+
+/// Receipt for one immutable summary publication.
+#[wasm_bindgen]
+pub struct SummaryPublication {
+    digest: Vec<u8>,
+    entry_count: u32,
+    persisted_bytes: u64,
+    deduplicated: bool,
+}
+
+#[wasm_bindgen]
+impl SummaryPublication {
+    #[wasm_bindgen(getter)]
+    #[must_use]
+    pub fn digest(&self) -> Uint8Array {
+        Uint8Array::from(self.digest.as_slice())
+    }
+
+    #[wasm_bindgen(getter, js_name = entryCount)]
+    #[must_use]
+    pub fn entry_count(&self) -> u32 {
+        self.entry_count
+    }
+
+    #[wasm_bindgen(getter, js_name = persistedBytes)]
+    #[must_use]
+    pub fn persisted_bytes(&self) -> u64 {
+        self.persisted_bytes
+    }
+
+    #[wasm_bindgen(getter)]
+    #[must_use]
+    pub fn deduplicated(&self) -> bool {
+        self.deduplicated
+    }
+}
 
 /// One accepted operation returned by a projected read.
 #[derive(Clone)]
@@ -103,6 +203,7 @@ impl ProjectedReadPage {
     }
 
     #[wasm_bindgen(getter, js_name = hasMore)]
+    #[must_use]
     pub fn has_more(&self) -> bool {
         self.has_more
     }
@@ -159,6 +260,9 @@ impl SubmissionResolution {
 extern "C" {
     #[wasm_bindgen(typescript_type = "AsyncRequestTransport")]
     pub type AsyncRequestTransport;
+
+    #[wasm_bindgen(typescript_type = "SummaryEntries")]
+    pub type SummaryEntries;
 }
 
 /// Environment-neutral FSP4 client using a caller-provided asynchronous request transport.
@@ -227,6 +331,10 @@ impl InjectedClient {
     }
 
     /// Reads one bounded page of projected accepted operations.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid fields, transport failures, and invalid responses.
     #[wasm_bindgen(js_name = readProjected)]
     pub async fn read_projected(
         &self,
@@ -242,6 +350,10 @@ impl InjectedClient {
     }
 
     /// Resolves one stable submission identity without retrying the submission.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid identities, transport failures, and invalid responses.
     #[wasm_bindgen(js_name = resolveSubmission)]
     pub async fn resolve_submission(
         &self,
@@ -258,6 +370,71 @@ impl InjectedClient {
         )?;
         let response = self.request(Uint8Array::from(request.as_slice())).await?;
         submission_resolution(&self.core.borrow(), &response.to_vec())
+    }
+
+    /// Uploads one bounded immutable blob.
+    ///
+    /// # Errors
+    ///
+    /// Rejects oversized content, transport failures, and invalid responses.
+    #[wasm_bindgen(js_name = uploadBlob)]
+    pub async fn upload_blob(&self, payload: Uint8Array) -> Result<BlobUpload, JsValue> {
+        let request = self
+            .core
+            .borrow_mut()
+            .upload_blob_request(payload.to_vec())?;
+        let response = self.request(Uint8Array::from(request.as_slice())).await?;
+        blob_upload(&self.core.borrow(), &response.to_vec())
+    }
+
+    /// Fetches one blob and validates its echoed digest.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid digests, transport failures, and mismatched response identities.
+    #[wasm_bindgen(js_name = fetchBlob)]
+    pub async fn fetch_blob(&self, digest: Uint8Array) -> Result<Uint8Array, JsValue> {
+        let expected_digest = digest.to_vec();
+        let request = self
+            .core
+            .borrow_mut()
+            .fetch_blob_request(expected_digest.clone())?;
+        let response = self.request(Uint8Array::from(request.as_slice())).await?;
+        blob_payload(&self.core.borrow(), &response.to_vec(), &expected_digest)
+    }
+
+    /// Publishes one bounded canonical summary manifest.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid entries, transport failures, and invalid responses.
+    #[wasm_bindgen(js_name = publishSummary)]
+    pub async fn publish_summary(
+        &self,
+        entries: SummaryEntries,
+    ) -> Result<SummaryPublication, JsValue> {
+        let request = self
+            .core
+            .borrow_mut()
+            .publish_summary_request(protocol_summary_entries(entries)?)?;
+        let response = self.request(Uint8Array::from(request.as_slice())).await?;
+        summary_publication(&self.core.borrow(), &response.to_vec())
+    }
+
+    /// Fetches one summary and validates its echoed digest.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid digests, transport failures, and mismatched response identities.
+    #[wasm_bindgen(js_name = fetchSummary)]
+    pub async fn fetch_summary(&self, digest: Uint8Array) -> Result<SummaryEntries, JsValue> {
+        let expected_digest = digest.to_vec();
+        let request = self
+            .core
+            .borrow_mut()
+            .fetch_summary_request(expected_digest.clone())?;
+        let response = self.request(Uint8Array::from(request.as_slice())).await?;
+        summary_entries(&self.core.borrow(), &response.to_vec(), &expected_digest)
     }
 
     /// Cancels the active operation and invokes the optional transport cancellation hook.
@@ -397,6 +574,10 @@ impl BrowserClient {
     }
 
     /// Reads one bounded page of projected accepted operations.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid fields, transport failures, and invalid responses.
     #[wasm_bindgen(js_name = readProjected)]
     pub async fn read_projected(
         &mut self,
@@ -411,6 +592,10 @@ impl BrowserClient {
     }
 
     /// Resolves one stable submission identity without retrying the submission.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid identities, transport failures, and invalid responses.
     #[wasm_bindgen(js_name = resolveSubmission)]
     pub async fn resolve_submission(
         &mut self,
@@ -427,6 +612,61 @@ impl BrowserClient {
         )?;
         let response = self.request(Uint8Array::from(request.as_slice())).await?;
         submission_resolution(&self.core, &response.to_vec())
+    }
+
+    /// Uploads one bounded immutable blob.
+    ///
+    /// # Errors
+    ///
+    /// Rejects oversized content, transport failures, and invalid responses.
+    #[wasm_bindgen(js_name = uploadBlob)]
+    pub async fn upload_blob(&mut self, payload: Uint8Array) -> Result<BlobUpload, JsValue> {
+        let request = self.core.upload_blob_request(payload.to_vec())?;
+        let response = self.request(Uint8Array::from(request.as_slice())).await?;
+        blob_upload(&self.core, &response.to_vec())
+    }
+
+    /// Fetches one blob and validates its echoed digest.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid digests, transport failures, and mismatched response identities.
+    #[wasm_bindgen(js_name = fetchBlob)]
+    pub async fn fetch_blob(&mut self, digest: Uint8Array) -> Result<Uint8Array, JsValue> {
+        let expected_digest = digest.to_vec();
+        let request = self.core.fetch_blob_request(expected_digest.clone())?;
+        let response = self.request(Uint8Array::from(request.as_slice())).await?;
+        blob_payload(&self.core, &response.to_vec(), &expected_digest)
+    }
+
+    /// Publishes one bounded canonical summary manifest.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid entries, transport failures, and invalid responses.
+    #[wasm_bindgen(js_name = publishSummary)]
+    pub async fn publish_summary(
+        &mut self,
+        entries: SummaryEntries,
+    ) -> Result<SummaryPublication, JsValue> {
+        let request = self
+            .core
+            .publish_summary_request(protocol_summary_entries(entries)?)?;
+        let response = self.request(Uint8Array::from(request.as_slice())).await?;
+        summary_publication(&self.core, &response.to_vec())
+    }
+
+    /// Fetches one summary and validates its echoed digest.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid digests, transport failures, and mismatched response identities.
+    #[wasm_bindgen(js_name = fetchSummary)]
+    pub async fn fetch_summary(&mut self, digest: Uint8Array) -> Result<SummaryEntries, JsValue> {
+        let expected_digest = digest.to_vec();
+        let request = self.core.fetch_summary_request(expected_digest.clone())?;
+        let response = self.request(Uint8Array::from(request.as_slice())).await?;
+        summary_entries(&self.core, &response.to_vec(), &expected_digest)
     }
 
     async fn request_transport(&self, outgoing: &[u8]) -> Result<Vec<u8>, JsValue> {
@@ -485,6 +725,74 @@ fn submission_resolution(
     Ok(SubmissionResolution {
         resolution: core.resolution_response(response)?,
     })
+}
+
+fn blob_upload(core: &ProtocolCore, response: &[u8]) -> Result<BlobUpload, JsValue> {
+    let (digest, size_bytes, deduplicated) = core.blob_upload_response(response)?;
+    Ok(BlobUpload {
+        digest,
+        size_bytes,
+        deduplicated,
+    })
+}
+
+fn blob_payload(
+    core: &ProtocolCore,
+    response: &[u8],
+    expected_digest: &[u8],
+) -> Result<Uint8Array, JsValue> {
+    core.blob_response(response, expected_digest)
+        .map(|payload| Uint8Array::from(payload.as_slice()))
+}
+
+fn summary_publication(
+    core: &ProtocolCore,
+    response: &[u8],
+) -> Result<SummaryPublication, JsValue> {
+    let (digest, entry_count, persisted_bytes, deduplicated) =
+        core.summary_publication_response(response)?;
+    Ok(SummaryPublication {
+        digest,
+        entry_count,
+        persisted_bytes,
+        deduplicated,
+    })
+}
+
+fn protocol_summary_entries(entries: SummaryEntries) -> Result<Vec<ProtocolSummaryEntry>, JsValue> {
+    Array::from(&JsValue::from(entries))
+        .iter()
+        .map(|entry| {
+            Ok(ProtocolSummaryEntry {
+                path: uint8_array_property(&entry, "path")?.to_vec().into(),
+                blob: uint8_array_property(&entry, "blob")?.to_vec().into(),
+            })
+        })
+        .collect()
+}
+
+fn summary_entries(
+    core: &ProtocolCore,
+    response: &[u8],
+    expected_digest: &[u8],
+) -> Result<SummaryEntries, JsValue> {
+    let entries: Array = core
+        .summary_response(response, expected_digest)?
+        .into_iter()
+        .map(|inner| JsValue::from(SummaryEntry { inner }))
+        .collect();
+    Ok(entries.unchecked_into())
+}
+
+fn uint8_array_property(target: &JsValue, name: &str) -> Result<Uint8Array, JsValue> {
+    let value = Reflect::get(target, &JsValue::from_str(name))?;
+    if value.is_instance_of::<Uint8Array>() {
+        Ok(Uint8Array::new(&value))
+    } else {
+        Err(js_error(&format!(
+            "summary entry {name} is not a Uint8Array"
+        )))
+    }
 }
 
 fn reference_position(reference: &Reference) -> Option<Uint8Array> {

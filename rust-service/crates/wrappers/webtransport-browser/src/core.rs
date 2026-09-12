@@ -1,5 +1,5 @@
 use fluid_service_protocol::{
-    Frame, Limits, Message, Request, Resolution, Response, decode, encode,
+    Frame, Limits, Message, Request, Resolution, Response, SummaryEntry, decode, encode,
 };
 use wasm_bindgen::prelude::*;
 
@@ -9,6 +9,12 @@ enum ClientState {
     Disconnected,
     Closed,
 }
+
+type ProjectedReadResponse = (
+    Vec<fluid_service_protocol::ProjectedOperation>,
+    Option<Vec<u8>>,
+    bool,
+);
 
 pub(crate) struct ProtocolCore {
     limits: Limits,
@@ -65,17 +71,35 @@ impl ProtocolCore {
         })
     }
 
+    pub(crate) fn upload_blob_request(&mut self, payload: Vec<u8>) -> Result<Vec<u8>, JsValue> {
+        self.encode_request(Request::UploadBlob {
+            payload: payload.into(),
+        })
+    }
+
+    pub(crate) fn fetch_blob_request(&mut self, digest: Vec<u8>) -> Result<Vec<u8>, JsValue> {
+        self.encode_request(Request::FetchBlob {
+            digest: digest.into(),
+        })
+    }
+
+    pub(crate) fn publish_summary_request(
+        &mut self,
+        entries: Vec<SummaryEntry>,
+    ) -> Result<Vec<u8>, JsValue> {
+        self.encode_request(Request::PublishSummary { entries })
+    }
+
+    pub(crate) fn fetch_summary_request(&mut self, digest: Vec<u8>) -> Result<Vec<u8>, JsValue> {
+        self.encode_request(Request::FetchSummary {
+            digest: digest.into(),
+        })
+    }
+
     pub(crate) fn projected_read_response(
         &self,
         incoming: &[u8],
-    ) -> Result<
-        (
-            Vec<fluid_service_protocol::ProjectedOperation>,
-            Option<Vec<u8>>,
-            bool,
-        ),
-        JsValue,
-    > {
+    ) -> Result<ProjectedReadResponse, JsValue> {
         match decode(incoming, self.limits)
             .map_err(protocol_error)?
             .message
@@ -104,6 +128,95 @@ impl ProtocolCore {
             _ => Err(js_error(
                 "FSP4 response is not a submission resolution result",
             )),
+        }
+    }
+
+    pub(crate) fn blob_upload_response(
+        &self,
+        incoming: &[u8],
+    ) -> Result<(Vec<u8>, u64, bool), JsValue> {
+        match decode(incoming, self.limits)
+            .map_err(protocol_error)?
+            .message
+        {
+            Message::Response(Response::BlobUploaded {
+                digest,
+                size_bytes,
+                deduplicated,
+            }) => Ok((digest.to_vec(), size_bytes, deduplicated)),
+            Message::Response(Response::Error(code)) => {
+                Err(js_error(&format!("FSP4 service error: {code:?}")))
+            }
+            _ => Err(js_error("FSP4 response is not a blob upload result")),
+        }
+    }
+
+    pub(crate) fn blob_response(
+        &self,
+        incoming: &[u8],
+        expected_digest: &[u8],
+    ) -> Result<Vec<u8>, JsValue> {
+        match decode(incoming, self.limits)
+            .map_err(protocol_error)?
+            .message
+        {
+            Message::Response(Response::Blob { digest, payload }) if digest == expected_digest => {
+                Ok(payload.to_vec())
+            }
+            Message::Response(Response::Blob { .. }) => Err(js_error(
+                "content response digest does not match the requested blob",
+            )),
+            Message::Response(Response::Error(code)) => {
+                Err(js_error(&format!("FSP4 service error: {code:?}")))
+            }
+            _ => Err(js_error("FSP4 response is not a blob result")),
+        }
+    }
+
+    pub(crate) fn summary_publication_response(
+        &self,
+        incoming: &[u8],
+    ) -> Result<(Vec<u8>, u32, u64, bool), JsValue> {
+        match decode(incoming, self.limits)
+            .map_err(protocol_error)?
+            .message
+        {
+            Message::Response(Response::SummaryPublished {
+                digest,
+                entry_count,
+                persisted_bytes,
+                deduplicated,
+            }) => Ok((digest.to_vec(), entry_count, persisted_bytes, deduplicated)),
+            Message::Response(Response::Error(code)) => {
+                Err(js_error(&format!("FSP4 service error: {code:?}")))
+            }
+            _ => Err(js_error(
+                "FSP4 response is not a summary publication result",
+            )),
+        }
+    }
+
+    pub(crate) fn summary_response(
+        &self,
+        incoming: &[u8],
+        expected_digest: &[u8],
+    ) -> Result<Vec<SummaryEntry>, JsValue> {
+        match decode(incoming, self.limits)
+            .map_err(protocol_error)?
+            .message
+        {
+            Message::Response(Response::Summary { digest, entries })
+                if digest == expected_digest =>
+            {
+                Ok(entries)
+            }
+            Message::Response(Response::Summary { .. }) => Err(js_error(
+                "content response digest does not match the requested summary",
+            )),
+            Message::Response(Response::Error(code)) => {
+                Err(js_error(&format!("FSP4 service error: {code:?}")))
+            }
+            _ => Err(js_error("FSP4 response is not a summary result")),
         }
     }
 
