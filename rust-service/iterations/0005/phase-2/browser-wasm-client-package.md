@@ -40,6 +40,7 @@ Supported for Wave 1: the existing `BrowserClient::request` FSP4 validation move
 - Fresh browser bindings were generated from the same release WASM with `wasm-bindgen ... --target web`. `node tests/webtransport-browser/run-headless.mjs ... https://127.0.0.1:57412/fluid df189fa336857a868cae9f33b89e968650c63b10211010fd1fc24e01c6dcfa85` passed without insecure flags. Evidence: `{"status":"passed","browser":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36","wireBytes":"1577","peakResponseBytes":363,"reconnectMilliseconds":5,"resumedRecords":1}`.
 - Root files remained unchanged: `Cargo.toml` SHA-256 `dd40850dc1d232e7555a64dc2bd9aaba0e7448d845f9ce0732845a5404c07a09`; `Cargo.lock` SHA-256 `fa09fb406da6522b12b07f489947b793bdd48d4128cd86c0a0a9b2df4d67a4ea` before and after validation.
 - `pnpm exec biome check --write rust-service/tests/wasm-client/node-test.mjs` could not run because the repository Biome dependency is not installed in this worktree (`Command "biome" not found`). No install or lockfile modification was attempted; Node syntax and execution checks passed instead.
+- Standalone `eslint rust-service/tests/wasm-client/node-test.mjs` could not find an applicable `eslint.config.*`, and standalone `tsc` was unavailable. The emitted declaration was inspected directly and exercised from Node, but repository-standard lint and declaration typecheck remain pending dependency installation.
 
 ## Notable Events
 
@@ -80,4 +81,4 @@ Candidate coordination hardening: require delegated command output to echo and v
 - Run same-case Node and Chromium coverage for projected resume, ambiguity resolution, content-addressed blobs, and summaries after those APIs land; the current Chromium test covers existing FSP4 behavior only.
 - Compose and validate the final TypeScript Fluid driver against the emitted declarations after its handoff is available.
 - Generated `pkg/` directories, certificates, service data, and browser profiles remain ignored and uncommitted. Release packaging automation and publication metadata remain integration concerns; source-of-truth artifacts are Rust plus the committed generation instructions and tests.
-- Biome formatting remains unverified until repository JavaScript dependencies are available. Rust format, strict Clippy, Node syntax/tests, package generation, and Chromium validation passed.
+- Biome formatting, ESLint, and declaration typechecking remain unverified until repository JavaScript dependencies are available. Rust format, strict Clippy, Node syntax/tests, package generation, and Chromium validation passed.
