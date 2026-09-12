@@ -17,6 +17,8 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 - **Provisional:** Keep duplicated framing and position mechanics while comparing buffered and durable implementations; factor only after equivalent guarantees reveal a stable common mechanism. [Evidence](iterations/0001/phase-2/integration.md#cross-workstream-findings)
 - **Confirmed:** A fencing authority must hold exclusivity across replay and semantic validation through append; fencing only the write permits validation against stale state. [Evidence](iterations/0003/phase-2/deployment-fencing.md#notable-events)
 - **Confirmed:** A process transport can preserve synchronous opaque-position codec laws with a client-verifiable, generation-scoped envelope while leaving retention validation to asynchronous backend operations. [Evidence](iterations/0003/phase-2/process-isolated-transport.md#contract-and-integration-friction)
+- **Confirmed:** Public Fluid history should be projected by the sequencer that owns canonical record decoding; copying a private decoder into each client couples product APIs to storage framing. [Evidence](iterations/0004/phase-2/integration.md#cross-workstream-findings)
+- **Confirmed:** A client must keep an unacknowledged submission ambiguous until an authoritative replay or resolution distinguishes committed from absent; transport loss is not permission for hidden retry. [Evidence](iterations/0004/phase-2/native-client-lifecycle.md#hypothesis-results)
 
 ## Correctness and Testing
 
@@ -24,6 +26,7 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 - **Confirmed:** Specialized crash or transport suites do not replace shared semantic conformance; applying a concurrently expanded model directly to durable storage exposed an error-classification defect during integration. [Evidence](iterations/0002/phase-2/integration.md#conflict-resolution-and-adaptation)
 - **Confirmed:** Durable acknowledgment must classify failures after write begins as ambiguous and return success only after the implementation's documented sync policy completes. [Evidence](iterations/0001/phase-2/durable-log.md#contract-and-integration-friction)
 - **Confirmed:** Valid-only service sequencing does not require payload-aware conditional append when one fencing authority remains exclusive through append; cross-process enforcement is still required before this becomes a deployment claim. [Evidence](iterations/0002/phase-2/authoritative-sequencer.md#hypothesis-results)
+- **Confirmed:** Portable WASM client logic can use injected transport tests in Node, but browser WebTransport, certificate pinning, streams, and reconnect still require authoritative real-browser integration evidence. [Evidence](iterations/0004/phase-2/webtransport.md#validation-evidence)
 
 ## Performance and Operations
 
@@ -37,3 +40,4 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 - **Confirmed:** Independent workstreams should run concurrently once dependencies are satisfied; isolated worktrees and strict writable paths yielded conflict-free integration. [Evidence](iterations/0001/retrospective.md#agentic-development-findings)
 - **Confirmed:** Multi-worktree command evidence needs checkout identity and immediate shared-lockfile verification because delegated commands can report or modify the wrong checkout. [Evidence](iterations/0001/retrospective.md#costly-issues-and-dead-ends)
 - **Confirmed:** Implementation work must use a write-capable agent; a read-only exploration agent can produce plausible code proposals while leaving every required artifact untouched. [Evidence](iterations/0003/retrospective.md#costly-issues-and-dead-ends)
+- **Confirmed:** A set of parallel deliverables is not necessarily dependency-independent; instructions must distinguish concurrent groundwork from later integration and consumer waves. [Evidence](iterations/0004/phase-3-report.md#next-iteration-scope)
