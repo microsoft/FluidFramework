@@ -4,7 +4,7 @@ Status: complete
 Branch: `rust-service-iteration-0006-native-connection-concurrency`
 Worktree: `/workspaces/FluidFramework-rust-service-iteration-0006-native-connection-concurrency`
 Base commit: `a85dc67452af126c5cbc16c271a03f1f9c1bd33f`
-Final commit: implementation `694a0d6f30eb95f5644414a830ba9f2d3771033f`; this report commit follows it
+Final commit: implementation `694a0d6f30ed126958db2e9f1c7c0256c8bb1382`; this report commit follows it
 Agent or owner: GitHub Copilot implementation agent
 Model and tool version: GitHub Copilot; model and tool version unknown
 Instruction source: [native connection concurrency instructions](instructions/native-connection-concurrency.md) at `a85dc67452af126c5cbc16c271a03f1f9c1bd33f`
@@ -23,7 +23,7 @@ Supported. The old implementation failed the second browser handshake because it
 
 ## Deliverables and Commits
 
-- `694a0d6f30eb95f5644414a830ba9f2d3771033f` (`feat(rust-service): serve concurrent WebTransport sessions`): bounded connection future set, active/peak connection measurements, native two-session regression coverage, and a two-session Chromium trace.
+- `694a0d6f30ed126958db2e9f1c7c0256c8bb1382` (`feat(rust-service): serve concurrent WebTransport sessions`): bounded connection future set, active/peak connection measurements, native two-session regression coverage, and a two-session Chromium trace.
 - This report commit records the accepted Wave 2 handoff.
 - Public measurement additions: `active_connections` and `peak_active_connections`. Existing `wire_bytes` and `peak_active_streams` remain.
 - No dependency version changed. `futures-util` moved from dev-only to runtime dependencies and was already present in the shared lockfile.
