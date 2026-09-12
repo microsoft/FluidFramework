@@ -16,10 +16,12 @@ const fs = require("fs");
 const path = process.argv[1];
 const manifest = fs.readFileSync(path, "utf8");
 const marker = "members = [\n";
-if (!manifest.includes(marker) || manifest.includes("\"crates/benchmarks\"")) {
+if (!manifest.includes(marker)) {
   throw new Error("unexpected workspace member list");
 }
-fs.writeFileSync(path, manifest.replace(marker, `${marker}    "crates/benchmarks",\n`));
+if (!manifest.includes("\"crates/benchmarks\"")) {
+	fs.writeFileSync(path, manifest.replace(marker, `${marker}    "crates/benchmarks",\n`));
+}
 ' "$copy_root/Cargo.toml"
 }
 
