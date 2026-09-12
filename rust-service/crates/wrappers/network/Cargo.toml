@@ -14,6 +14,7 @@ thiserror.workspace = true
 tokio.workspace = true
 
 [dev-dependencies]
+snapshotted-stream-compression = { path = "../compression" }
 snapshotted-stream-conformance = { path = "../../conformance" }
 snapshotted-stream-memory = { path = "../../memory" }
 

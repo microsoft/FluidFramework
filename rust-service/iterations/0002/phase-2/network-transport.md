@@ -1,15 +1,15 @@
 # Iteration 0002: network-transport Report
 
 Status: in progress
-Branch: `rust-service/iteration-0002/network-transport`
-Worktree: <!-- TODO(required): record the worktree path -->
-Base commit: <!-- TODO(required): record the base commit -->
+Branch: `rust-service-iteration-0002-network-transport`
+Worktree: `/workspaces/FluidFramework-rust-service-iteration-0002-network-transport`
+Base commit: `d04c7aa44eb8720fee2242d98729e6916c0dcb02` (iteration source recorded by the instructions: `57b0028ff9061087b522c8dd652ca9b8b2179e50`)
 Final commit: <!-- TODO(required): record the final commit or explain why none exists -->
-Agent or owner: <!-- TODO(required): record the agent or owner -->
-Model and tool version: <!-- TODO(required): record known values; use unknown when unavailable -->
-Instruction source: <!-- TODO(required): link the assigned instruction file and record its commit -->
-Session or transcript reference: <!-- TODO(required): record a safe reference when useful; otherwise none -->
-Started and finished: <!-- TODO(required): record known timestamps or unknown -->
+Agent or owner: GitHub Copilot network transport agent
+Model and tool version: GitHub Copilot; model and tool version unknown
+Instruction source: `rust-service/iterations/0002/phase-2/instructions/network-transport.md` at `d04c7aa44eb8720fee2242d98729e6916c0dcb02`
+Session or transcript reference: none
+Started and finished: started 2026-09-12; finished pending
 
 ## Outcome
 
@@ -17,7 +17,9 @@ Started and finished: <!-- TODO(required): record known timestamps or unknown --
 
 ## Hypothesis Results
 
-<!-- TODO(required): state which charter hypotheses were supported, falsified, or remain inconclusive and link evidence -->
+Initial hypothesis: a bounded Tokio request channel and one bounded response channel per finite read can forward the raw traits and `PositionCodec` without hidden retries, live-tail semantics, or transport-specific positions. Capturing the server-side reader when the read request is handled should preserve the finite-read boundary across slow consumption and reconnect.
+
+Cheapest disproof: with capacity one, pause a reader while more historical records exist and assert observed queued records never exceed one; then disconnect and explicitly resume from the last delivered raw position. Any loss, duplicate, live record, queue-bound violation, or implicit retry falsifies the hypothesis. Additional checks cover transport closure/error classification, foreign-generation positions, snapshot recovery, codec forwarding, deterministic wire bytes, and compression ordering when available through owned dev dependencies.
 
 ## Deliverables and Commits
 
