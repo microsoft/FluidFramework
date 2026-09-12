@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
+// This file is a deliberately duplicated, plain-CJS copy of
+// packages/test/mocha-test-setup/src/xunitReporter.ts's `FluidXunitReporter`. It must be kept in sync with
+// that file for any future changes.
+//
+// @fluid-internal/mocha-test-setup depends on this package, so this package can't reuse mocha-test-setup's
+// shared reporter without introducing a circular dependency; hence the duplication, scoped to this package
+// only.
+
 "use strict";
 
-// @fluid-internal/mocha-test-setup depends on this package, so this package can't reuse mocha-test-setup's
-// shared FluidXunitReporter (packages/test/mocha-test-setup/src/xunitReporter.ts) without introducing a
-// circular dependency. This is a small, deliberately duplicated copy of the same fix, scoped to this
-// package only.
-//
 // It's based on mocha's built-in `xunit` reporter and fixes two issues with its default output when many
 // packages' reports are viewed together in Azure DevOps's Tests tab:
 //
@@ -51,7 +54,7 @@ function findRepoRoot(startDir) {
 
 const repoRoot = findRepoRoot(process.cwd());
 
-class FluidXunitReporter extends MochaXUnitReporter {
+class FluidMochaReporter extends MochaXUnitReporter {
 	test(test, options) {
 		const classname =
 			test.file === undefined ? test.fullTitle() : path.relative(repoRoot, test.file);
@@ -72,4 +75,4 @@ class FluidXunitReporter extends MochaXUnitReporter {
 	}
 }
 
-module.exports = FluidXunitReporter;
+module.exports = FluidMochaReporter;

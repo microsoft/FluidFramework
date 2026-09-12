@@ -129,6 +129,11 @@ export function getFluidTestMochaConfig(
 		}
 		const suiteName =
 			reportPrefix !== undefined ? `${packageJson.name} - ${reportPrefix}` : packageJson.name;
+		// This must be the exact module specifier mocha-multi-reporters will `require(...)` to load the reporter
+		// (see its source: https://github.com/stevemao/mocha-multi-reporters/blob/master/lib/MultiReporters.js),
+		// i.e. it can't be shortened to some arbitrary friendly name. It also determines the reporter-specific
+		// option key mocha-multi-reporters expects below (and in test-config.json): it camelCases this exact
+		// string and appends "ReporterOptions" (e.g. "@foo/bar/baz" -> "fooBarBazReporterOptions").
 		const xunitReporterName = "@fluid-internal/mocha-test-setup/xunit-reporter";
 		config["reporter-options"] = [
 			`configFile=${path.join(

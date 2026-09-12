@@ -1,6 +1,6 @@
 {
-	"reporterEnabled": "spec,./xunit-reporter-classname.cjs",
-	"xunitReporterClassnameCjsReporterOptions": {
+	"reporterEnabled": "spec,./FluidMochaReporter.cjs",
+	"fluidMochaReporterCjsReporterOptions": {
 		"output": "nyc/{id}junit-report.xml",
 		"suiteName": "{id}"
 	}
