@@ -1,6 +1,6 @@
 # Iteration 0004: service-assembly Report
 
-Status: in progress
+Status: complete
 Branch: `rust-service-iteration-0004-service-assembly`
 Worktree: `/workspaces/FluidFramework-rust-service-iteration-0004-service-assembly`
 Base commit: `30c4a06d7b456e135e046905553dd23d14326a56`
