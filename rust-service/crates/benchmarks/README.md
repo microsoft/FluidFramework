@@ -24,6 +24,8 @@ Each output line is one schema-version-1 `BenchmarkResult`. It includes repetiti
 
 Latency and throughput use a monotonic process clock. The distribution reports minimum, median, p95, maximum, mean, sample standard deviation, and coefficient of variation. Results are procedure observations, not capacity claims.
 
+For periodic snapshot workloads, append throughput includes snapshot publication wall time and `snapshot_publish_microseconds` is the sum across all publications in the repetition.
+
 ## Wave 3 Adapters
 
 The workload runner is generic over the public `AppendStream` and `SnapshotStore` traits. A later adapter adds its crate dependency and backend construction without copying implementation code. Service and transport adapters must supply reconnect and wire-byte observations from their public instrumentation. Compression and encryption adapters must report their ordering and active guarantees; the harness must not compare those results as equivalent to plaintext or uncompressed baselines.
