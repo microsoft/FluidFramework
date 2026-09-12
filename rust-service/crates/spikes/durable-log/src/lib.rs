@@ -143,8 +143,7 @@ impl ClassifiedError for DurableLogError {
             Self::AmbiguousAppend(_) | Self::AmbiguousSnapshot(_) => ErrorKind::Ambiguous,
             Self::Corrupt(_) => ErrorKind::Corrupt,
             Self::ForeignPosition | Self::InvalidPosition => ErrorKind::InvalidPosition,
-            Self::SnapshotConflict => ErrorKind::Conflict,
-            Self::SnapshotRegression => ErrorKind::Rejected,
+            Self::SnapshotConflict | Self::SnapshotRegression => ErrorKind::Conflict,
             Self::Io(_) | Self::Poisoned => ErrorKind::Unavailable,
         }
     }
@@ -762,6 +761,21 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn passes_shared_conformance() {
+        let directories = std::sync::Mutex::new(Vec::new());
+        snapshotted_stream_conformance::run_conformance(|| {
+            let directory = test_directory("conformance");
+            directories.lock().unwrap().push(directory.clone());
+            DurableLog::open(directory).unwrap()
+        })
+        .await;
+
+        for directory in directories.into_inner().unwrap() {
+            fs::remove_dir_all(directory).unwrap();
+        }
+    }
+
+    #[tokio::test]
     async fn durable_receipt_and_reopen_preserve_records_and_positions() {
         let directory = test_directory("reopen");
         let log = DurableLog::open(&directory).unwrap();
@@ -1054,7 +1068,7 @@ mod tests {
             )
             .await
             .unwrap_err();
-        assert_eq!(regression.kind(), ErrorKind::Rejected);
+        assert_eq!(regression.kind(), ErrorKind::Conflict);
         fs::remove_dir_all(directory).unwrap();
     }
 

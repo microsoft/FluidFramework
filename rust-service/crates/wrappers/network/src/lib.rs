@@ -420,6 +420,15 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn passes_position_codec_conformance() {
+        snapshotted_stream_conformance::run_position_codec_conformance(
+            || connected_memory(2).0,
+            b"invalid-memory-position",
+        )
+        .await;
+    }
+
+    #[tokio::test]
     async fn finite_reader_excludes_later_appends() {
         let (client, _server) = connected_memory(1);
         client
