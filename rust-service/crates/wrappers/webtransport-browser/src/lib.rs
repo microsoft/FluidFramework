@@ -6,7 +6,10 @@ mod core;
 use std::{cell::RefCell, rc::Rc};
 
 use core::{ProtocolCore, js_error};
-use js_sys::{Date, Function, Promise, Reflect, Uint8Array};
+use fluid_service_protocol::{
+    ProjectedOperation as ProtocolProjectedOperation, Reference, Resolution,
+};
+use js_sys::{Array, Date, Function, Promise, Reflect, Uint8Array};
 use wasm_bindgen::{JsCast, prelude::*};
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{
@@ -23,6 +26,134 @@ export interface AsyncRequestTransport {
     shutdown?(): void;
 }
 "#;
+
+/// One accepted operation returned by a projected read.
+#[derive(Clone)]
+#[wasm_bindgen]
+pub struct ProjectedOperation {
+    inner: ProtocolProjectedOperation,
+}
+
+#[wasm_bindgen]
+impl ProjectedOperation {
+    #[wasm_bindgen(getter)]
+    pub fn position(&self) -> Uint8Array {
+        Uint8Array::from(self.inner.position.as_ref())
+    }
+
+    #[wasm_bindgen(getter, js_name = sequenceNumber)]
+    pub fn sequence_number(&self) -> u64 {
+        self.inner.sequence_number
+    }
+
+    #[wasm_bindgen(getter, js_name = minimumReference)]
+    pub fn minimum_reference(&self) -> Option<Uint8Array> {
+        reference_position(&self.inner.minimum_reference)
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn writer(&self) -> Uint8Array {
+        Uint8Array::from(self.inner.writer.as_ref())
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn session(&self) -> Uint8Array {
+        Uint8Array::from(self.inner.session.as_ref())
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn submission(&self) -> Uint8Array {
+        Uint8Array::from(self.inner.submission.as_ref())
+    }
+
+    #[wasm_bindgen(getter, js_name = localSequenceNumber)]
+    pub fn local_sequence_number(&self) -> u64 {
+        self.inner.local_sequence_number
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn reference(&self) -> Option<Uint8Array> {
+        reference_position(&self.inner.reference)
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn payload(&self) -> Uint8Array {
+        Uint8Array::from(self.inner.payload.as_ref())
+    }
+}
+
+/// One bounded page of projected accepted operations.
+#[wasm_bindgen]
+pub struct ProjectedReadPage {
+    operations: Vec<ProjectedOperation>,
+    cursor: Option<Vec<u8>>,
+    has_more: bool,
+}
+
+#[wasm_bindgen]
+impl ProjectedReadPage {
+    #[wasm_bindgen(getter)]
+    pub fn operations(&self) -> Array {
+        self.operations.iter().cloned().map(JsValue::from).collect()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn cursor(&self) -> Option<Uint8Array> {
+        self.cursor.as_deref().map(Uint8Array::from)
+    }
+
+    #[wasm_bindgen(getter, js_name = hasMore)]
+    pub fn has_more(&self) -> bool {
+        self.has_more
+    }
+}
+
+/// Authoritative result for one stable submission identity.
+#[wasm_bindgen]
+pub struct SubmissionResolution {
+    resolution: Resolution,
+}
+
+#[wasm_bindgen]
+impl SubmissionResolution {
+    #[wasm_bindgen(getter)]
+    pub fn kind(&self) -> String {
+        match self.resolution {
+            Resolution::Committed { .. } => "committed",
+            Resolution::NotCommitted => "notCommitted",
+            Resolution::StillUncertain => "stillUncertain",
+        }
+        .to_owned()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn position(&self) -> Option<Uint8Array> {
+        match &self.resolution {
+            Resolution::Committed { position, .. } => Some(Uint8Array::from(position.as_ref())),
+            Resolution::NotCommitted | Resolution::StillUncertain => None,
+        }
+    }
+
+    #[wasm_bindgen(getter, js_name = sequenceNumber)]
+    pub fn sequence_number(&self) -> Option<u64> {
+        match self.resolution {
+            Resolution::Committed {
+                sequence_number, ..
+            } => Some(sequence_number),
+            Resolution::NotCommitted | Resolution::StillUncertain => None,
+        }
+    }
+
+    #[wasm_bindgen(getter, js_name = minimumReference)]
+    pub fn minimum_reference(&self) -> Option<Uint8Array> {
+        match &self.resolution {
+            Resolution::Committed {
+                minimum_reference, ..
+            } => reference_position(minimum_reference),
+            Resolution::NotCommitted | Resolution::StillUncertain => None,
+        }
+    }
+}
 
 #[wasm_bindgen]
 extern "C" {
@@ -93,6 +224,40 @@ impl InjectedClient {
             .borrow_mut()
             .finish_response(operation, request_id, &incoming)?;
         Ok(Uint8Array::from(incoming.as_slice()))
+    }
+
+    /// Reads one bounded page of projected accepted operations.
+    #[wasm_bindgen(js_name = readProjected)]
+    pub async fn read_projected(
+        &self,
+        document: Uint8Array,
+        after: Option<Uint8Array>,
+    ) -> Result<ProjectedReadPage, JsValue> {
+        let request = self
+            .core
+            .borrow_mut()
+            .read_projected_request(document.to_vec(), after.map(|value| value.to_vec()))?;
+        let response = self.request(Uint8Array::from(request.as_slice())).await?;
+        projected_read_page(&self.core.borrow(), &response.to_vec())
+    }
+
+    /// Resolves one stable submission identity without retrying the submission.
+    #[wasm_bindgen(js_name = resolveSubmission)]
+    pub async fn resolve_submission(
+        &self,
+        document: Uint8Array,
+        writer: Uint8Array,
+        session: Uint8Array,
+        submission: Uint8Array,
+    ) -> Result<SubmissionResolution, JsValue> {
+        let request = self.core.borrow_mut().resolve_submission_request(
+            document.to_vec(),
+            writer.to_vec(),
+            session.to_vec(),
+            submission.to_vec(),
+        )?;
+        let response = self.request(Uint8Array::from(request.as_slice())).await?;
+        submission_resolution(&self.core.borrow(), &response.to_vec())
     }
 
     /// Cancels the active operation and invokes the optional transport cancellation hook.
@@ -231,6 +396,39 @@ impl BrowserClient {
         Ok(Uint8Array::from(incoming.as_slice()))
     }
 
+    /// Reads one bounded page of projected accepted operations.
+    #[wasm_bindgen(js_name = readProjected)]
+    pub async fn read_projected(
+        &mut self,
+        document: Uint8Array,
+        after: Option<Uint8Array>,
+    ) -> Result<ProjectedReadPage, JsValue> {
+        let request = self
+            .core
+            .read_projected_request(document.to_vec(), after.map(|value| value.to_vec()))?;
+        let response = self.request(Uint8Array::from(request.as_slice())).await?;
+        projected_read_page(&self.core, &response.to_vec())
+    }
+
+    /// Resolves one stable submission identity without retrying the submission.
+    #[wasm_bindgen(js_name = resolveSubmission)]
+    pub async fn resolve_submission(
+        &mut self,
+        document: Uint8Array,
+        writer: Uint8Array,
+        session: Uint8Array,
+        submission: Uint8Array,
+    ) -> Result<SubmissionResolution, JsValue> {
+        let request = self.core.resolve_submission_request(
+            document.to_vec(),
+            writer.to_vec(),
+            session.to_vec(),
+            submission.to_vec(),
+        )?;
+        let response = self.request(Uint8Array::from(request.as_slice())).await?;
+        submission_resolution(&self.core, &response.to_vec())
+    }
+
     async fn request_transport(&self, outgoing: &[u8]) -> Result<Vec<u8>, JsValue> {
         let stream = JsFuture::from(self.transport.create_bidirectional_stream())
             .await?
@@ -265,6 +463,34 @@ impl BrowserClient {
     #[must_use]
     pub fn last_reconnect_milliseconds(&self) -> f64 {
         self.last_reconnect_milliseconds
+    }
+}
+
+fn projected_read_page(core: &ProtocolCore, response: &[u8]) -> Result<ProjectedReadPage, JsValue> {
+    let (operations, cursor, has_more) = core.projected_read_response(response)?;
+    Ok(ProjectedReadPage {
+        operations: operations
+            .into_iter()
+            .map(|inner| ProjectedOperation { inner })
+            .collect(),
+        cursor,
+        has_more,
+    })
+}
+
+fn submission_resolution(
+    core: &ProtocolCore,
+    response: &[u8],
+) -> Result<SubmissionResolution, JsValue> {
+    Ok(SubmissionResolution {
+        resolution: core.resolution_response(response)?,
+    })
+}
+
+fn reference_position(reference: &Reference) -> Option<Uint8Array> {
+    match reference {
+        Reference::Initial => None,
+        Reference::At(position) => Some(Uint8Array::from(position.as_ref())),
     }
 }
 

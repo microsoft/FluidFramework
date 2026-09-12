@@ -5,6 +5,11 @@ The `fluid-webtransport-browser` crate generates one TypeScript-facing WASM pack
 - `InjectedClient` is environment-neutral. Its `AsyncRequestTransport.request` method receives a validated complete FSP4 request and returns a promise for a complete FSP4 response. The WASM core validates response framing and request identity and owns bounded request/lifecycle state.
 - `BrowserClient` retains the browser WebTransport adapter, certificate pinning, stream I/O, explicit disconnect, and explicit reconnect behavior.
 
+Both clients expose the same additive projected-read and ambiguity-recovery operations:
+
+- `readProjected(document, after?)` returns a `ProjectedReadPage` containing accepted operations, an opaque resume cursor, and `hasMore`. Initial references are represented by an absent reference value; non-initial references and cursors remain opaque byte arrays.
+- `resolveSubmission(document, writer, session, submission)` returns a `SubmissionResolution` with kind `committed`, `notCommitted`, or `stillUncertain`. Resolution never retries or resubmits work; any retry after `notCommitted` remains an explicit caller action.
+
 Build and test the Node distribution from `rust-service/` with an isolated target:
 
 ```bash

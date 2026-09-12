@@ -30,8 +30,18 @@ function u64(value) {
 }
 
 function field(value) {
-    const bytes = encoder.encode(value);
+    const bytes = typeof value === "string" ? encoder.encode(value) : value;
     return concat(u32(bytes.length), bytes);
+}
+
+function optionalField(value) {
+    return value === undefined
+        ? new Uint8Array([0])
+        : concat(new Uint8Array([1]), field(value));
+}
+
+function reference(value) {
+    return optionalField(value);
 }
 
 function frame(requestId, kind, ...body) {
@@ -51,6 +61,46 @@ function createRequest(requestId = 1) {
 
 function acknowledged(requestId = 1) {
     return frame(requestId, 64, new Uint8Array([1]));
+}
+
+function requestId(request) {
+    return new DataView(request.buffer, request.byteOffset, request.byteLength).getBigUint64(8);
+}
+
+function projectedReadResult(requestIdValue, operations, cursor, hasMore) {
+    const encodedOperations = operations.map(operation => concat(
+        field(operation.position),
+        u64(operation.sequenceNumber),
+        reference(operation.minimumReference),
+        field(operation.writer),
+        field(operation.session),
+        field(operation.submission),
+        u64(operation.localSequenceNumber),
+        reference(operation.reference),
+        field(operation.payload),
+    ));
+    return frame(
+        requestIdValue,
+        68,
+        u32(operations.length),
+        ...encodedOperations,
+        optionalField(cursor),
+        new Uint8Array([Number(hasMore)]),
+    );
+}
+
+function resolutionResult(requestIdValue, kind, committed) {
+    if (kind === "committed") {
+        return frame(
+            requestIdValue,
+            69,
+            new Uint8Array([1]),
+            field(committed.position),
+            u64(committed.sequenceNumber),
+            reference(committed.minimumReference),
+        );
+    }
+    return frame(requestIdValue, 69, new Uint8Array([kind === "notCommitted" ? 2 : 3]));
 }
 
 test("actual WASM validates requests and responses around the injected transport", async () => {
@@ -186,4 +236,110 @@ test("transport rejection disconnects and shutdown is terminal", async () => {
     assert.equal(client.state, "closed");
     assert.throws(() => client.reconnect({ request: async () => acknowledged() }), /cannot reconnect/);
     await assert.rejects(client.request(createRequest()), /client is closed/);
+});
+
+test("projected reads use the accepted request and preserve opaque page metadata", async () => {
+    const document = encoder.encode("node-document");
+    const after = encoder.encode("opaque-after");
+    const operation = {
+        position: encoder.encode("opaque-position"),
+        sequenceNumber: 9,
+        minimumReference: undefined,
+        writer: encoder.encode("writer"),
+        session: encoder.encode("session"),
+        submission: encoder.encode("submission"),
+        localSequenceNumber: 4,
+        reference: encoder.encode("opaque-reference"),
+        payload: encoder.encode("projected-payload"),
+    };
+    const cursor = encoder.encode("administrative-cursor");
+    let observedRequest;
+    const client = new InjectedClient({
+        async request(request) {
+            observedRequest = request.slice();
+            return projectedReadResult(requestId(request), [operation], cursor, true);
+        },
+    }, 4096);
+
+    const page = await client.readProjected(document, after);
+    assert.deepEqual(observedRequest, frame(1, 8, field(document), optionalField(after)));
+    assert.equal(page.hasMore, true);
+    assert.deepEqual(page.cursor, cursor);
+    assert.equal(page.operations.length, 1);
+    const [actual] = page.operations;
+    assert.deepEqual(actual.position, operation.position);
+    assert.equal(actual.sequenceNumber, 9n);
+    assert.equal(actual.minimumReference, undefined);
+    assert.deepEqual(actual.writer, operation.writer);
+    assert.deepEqual(actual.session, operation.session);
+    assert.deepEqual(actual.submission, operation.submission);
+    assert.equal(actual.localSequenceNumber, 4n);
+    assert.deepEqual(actual.reference, operation.reference);
+    assert.deepEqual(actual.payload, operation.payload);
+});
+
+test("submission resolution exposes every accepted outcome without submitting", async () => {
+    const document = encoder.encode("node-document");
+    const writer = encoder.encode("writer");
+    const session = encoder.encode("session");
+    const submission = encoder.encode("submission");
+    const expectedRequest = frame(
+        1,
+        9,
+        field(document),
+        field(writer),
+        field(session),
+        field(submission),
+    );
+    const committed = {
+        position: encoder.encode("committed-position"),
+        sequenceNumber: 12,
+        minimumReference: encoder.encode("minimum-reference"),
+    };
+
+    for (const kind of ["committed", "notCommitted", "stillUncertain"]) {
+        let observedRequest;
+        const client = new InjectedClient({
+            async request(request) {
+                observedRequest = request.slice();
+                return resolutionResult(requestId(request), kind, committed);
+            },
+        }, 4096);
+        const resolution = await client.resolveSubmission(document, writer, session, submission);
+        assert.deepEqual(observedRequest, expectedRequest);
+        assert.equal(observedRequest[6], 9);
+        assert.equal(resolution.kind, kind);
+        if (kind === "committed") {
+            assert.deepEqual(resolution.position, committed.position);
+            assert.equal(resolution.sequenceNumber, 12n);
+            assert.deepEqual(resolution.minimumReference, committed.minimumReference);
+        } else {
+            assert.equal(resolution.position, undefined);
+            assert.equal(resolution.sequenceNumber, undefined);
+            assert.equal(resolution.minimumReference, undefined);
+        }
+    }
+});
+
+test("failed ambiguity resolution disconnects after one attempt with no hidden retry", async () => {
+    let calls = 0;
+    const client = new InjectedClient({
+        async request(request) {
+            calls++;
+            assert.equal(request[6], 9);
+            throw new Error("response lost after commit");
+        },
+    }, 4096);
+
+    await assert.rejects(
+        client.resolveSubmission(
+            encoder.encode("node-document"),
+            encoder.encode("writer"),
+            encoder.encode("session"),
+            encoder.encode("submission"),
+        ),
+        /response lost after commit/,
+    );
+    assert.equal(calls, 1);
+    assert.equal(client.state, "disconnected");
 });
