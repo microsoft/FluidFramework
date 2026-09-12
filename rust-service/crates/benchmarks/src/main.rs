@@ -79,6 +79,7 @@ struct RunMeasurements {
     append_latencies: Vec<f64>,
     append_elapsed_seconds: f64,
     finite_read_microseconds: f64,
+    finite_read_records: u64,
     snapshot_publish_microseconds: Option<f64>,
     recovery_microseconds: Option<f64>,
     reconnect_microseconds: Option<f64>,
@@ -214,6 +215,7 @@ async fn measure(config: Config) -> Result<(), String> {
                 append_latency_microseconds: summarize(measurements.append_latencies),
                 append_throughput_records_per_second: throughput,
                 finite_read_microseconds: measurements.finite_read_microseconds,
+                finite_read_records: measurements.finite_read_records,
                 snapshot_publish_microseconds: measurements.snapshot_publish_microseconds,
                 recovery_microseconds: measurements.recovery_microseconds,
                 reconnect_microseconds: measurements.reconnect_microseconds,
@@ -231,6 +233,7 @@ async fn measure(config: Config) -> Result<(), String> {
     Ok(())
 }
 
+#[allow(clippy::too_many_lines)]
 async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
     let cpu_started = process_cpu_microseconds();
     let mut measurements = match config.backend {
@@ -472,6 +475,7 @@ where
         append_latencies,
         append_elapsed_seconds,
         finite_read_microseconds,
+        finite_read_records: config.records,
         snapshot_publish_microseconds,
         recovery_microseconds: None,
         reconnect_microseconds: None,
@@ -771,7 +775,8 @@ fn process_cpu_microseconds() -> Option<f64> {
         .collect::<Vec<_>>();
     let user_ticks = fields.get(11)?.parse::<u64>().ok()?;
     let system_ticks = fields.get(12)?.parse::<u64>().ok()?;
-    Some((user_ticks + system_ticks) as f64 * 1_000_000.0 / ticks_per_second?)
+    let process_ticks = u32::try_from(user_ticks + system_ticks).ok()?;
+    Some(f64::from(process_ticks) * 1_000_000.0 / ticks_per_second?)
 }
 
 fn unique_directory(label: &str) -> PathBuf {

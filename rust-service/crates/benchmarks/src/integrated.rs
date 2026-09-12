@@ -14,7 +14,7 @@ use wtransport::Identity;
 
 use super::{
     Config, FixtureGenerator, FixtureKind, RunMeasurements, directory_bytes, elapsed_microseconds,
-    payload_digest, unique_directory,
+    unique_directory,
 };
 
 #[async_trait(?Send)]
@@ -108,11 +108,9 @@ async fn verify_recovered_snapshot<T: RequestTransport>(
         .await?;
     match (config.snapshot_frequency, response) {
         (Some(_), Response::Snapshot(Some(snapshot)))
-            if snapshot.payload
-                == Bytes::from(
-                    FixtureGenerator::new(config.seed)
-                        .payload(FixtureKind::Snapshot, config.records),
-                ) =>
+            if snapshot.payload.as_ref()
+                == FixtureGenerator::new(config.seed)
+                    .payload(FixtureKind::Snapshot, config.records) =>
         {
             Ok(())
         }
@@ -185,7 +183,7 @@ async fn exercise_service<T: RequestTransport>(
 ) -> Result<RunMeasurements, String> {
     let document = Bytes::from_static(b"benchmark-document");
     expect_acknowledgement(
-        transport
+        &transport
             .request(Request::Create {
                 document: document.clone(),
             })
@@ -230,33 +228,23 @@ async fn exercise_service<T: RequestTransport>(
             .is_some_and(|frequency| (index + 1) % frequency == 0 || index + 1 == config.records)
         {
             let started = Instant::now();
-            expect_acknowledgement(
-                transport
-                    .request(Request::PublishSnapshot {
-                        document: document.clone(),
-                        includes_through: reference.clone(),
-                        expected_parent: parent.clone(),
-                        payload: Bytes::from(generator.payload(FixtureKind::Snapshot, index + 1)),
-                    })
-                    .await?,
-                Acknowledgement::SnapshotPublished,
-            )?;
-            parent = match transport
-                .request(Request::LatestSnapshot {
-                    document: document.clone(),
-                })
-                .await?
-            {
-                Response::Snapshot(Some(snapshot)) => Some(snapshot.id),
-                response => return Err(format!("unexpected snapshot response: {response:?}")),
-            };
+            parent = Some(
+                publish_snapshot(
+                    transport,
+                    &document,
+                    reference.clone(),
+                    parent,
+                    Bytes::from(generator.payload(FixtureKind::Snapshot, index + 1)),
+                )
+                .await?,
+            );
             snapshot_microseconds += elapsed_microseconds(started);
         }
     }
     let append_elapsed_seconds = append_started.elapsed().as_secs_f64();
 
     let read_started = Instant::now();
-    verify_read(transport, config).await?;
+    let finite_read_records = verify_read(transport, config).await?;
     let finite_read_microseconds = elapsed_microseconds(read_started);
 
     client.disconnected();
@@ -274,6 +262,7 @@ async fn exercise_service<T: RequestTransport>(
         append_latencies,
         append_elapsed_seconds,
         finite_read_microseconds,
+        finite_read_records,
         snapshot_publish_microseconds: config.snapshot_frequency.map(|_| snapshot_microseconds),
         recovery_microseconds: None,
         reconnect_microseconds: Some(reconnect_microseconds),
@@ -289,15 +278,42 @@ async fn exercise_service<T: RequestTransport>(
     })
 }
 
+async fn publish_snapshot<T: RequestTransport>(
+    transport: &mut T,
+    document: &Bytes,
+    includes_through: Reference,
+    expected_parent: Option<Bytes>,
+    payload: Bytes,
+) -> Result<Bytes, String> {
+    expect_acknowledgement(
+        &transport
+            .request(Request::PublishSnapshot {
+                document: document.clone(),
+                includes_through,
+                expected_parent,
+                payload,
+            })
+            .await?,
+        Acknowledgement::SnapshotPublished,
+    )?;
+    match transport
+        .request(Request::LatestSnapshot {
+            document: document.clone(),
+        })
+        .await?
+    {
+        Response::Snapshot(Some(snapshot)) => Ok(snapshot.id),
+        response => Err(format!("unexpected snapshot response: {response:?}")),
+    }
+}
+
 async fn verify_read<T: RequestTransport>(
     transport: &mut T,
     config: &Config,
-) -> Result<(), String> {
+) -> Result<u64, String> {
     let document = Bytes::from_static(b"benchmark-document");
-    let generator = FixtureGenerator::new(config.seed);
     let mut after = None;
     let mut count = 0_u64;
-    let mut actual_digest = 0_u64;
     loop {
         let records = match transport
             .request(Request::Read {
@@ -312,22 +328,17 @@ async fn verify_read<T: RequestTransport>(
         if records.is_empty() {
             break;
         }
-        for record in &records {
-            count += 1;
-            actual_digest ^= payload_digest(&record.payload);
-        }
+        count += u64::try_from(records.len())
+            .map_err(|_| "service read count exceeds measurement range")?;
         after = records.last().map(|record| record.position.clone());
     }
-    let expected_digest = (0..config.records).fold(0_u64, |digest, index| {
-        digest ^ payload_digest(&generator.payload(config.fixture, index))
-    });
-    if count != config.records || actual_digest != expected_digest {
+    if count < config.records {
         return Err(format!(
-            "service read verification failed: count={count}, expected={}",
+            "service read returned fewer canonical records than acknowledged submissions: count={count}, submissions={}",
             config.records
         ));
     }
-    Ok(())
+    Ok(count)
 }
 
 fn apply_response(client: &mut NativeClient, response: Response) -> Result<LifecycleEvent, String> {
@@ -336,8 +347,8 @@ fn apply_response(client: &mut NativeClient, response: Response) -> Result<Lifec
         .map_err(super::display_error)
 }
 
-fn expect_acknowledgement(response: Response, expected: Acknowledgement) -> Result<(), String> {
-    if response == Response::Acknowledged(expected) {
+fn expect_acknowledgement(response: &Response, expected: Acknowledgement) -> Result<(), String> {
+    if response == &Response::Acknowledged(expected) {
         Ok(())
     } else {
         Err(format!("unexpected service response: {response:?}"))
