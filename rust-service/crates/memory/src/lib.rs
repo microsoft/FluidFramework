@@ -247,16 +247,241 @@ impl SnapshotStore for MemoryStream {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::atomic::AtomicBool;
+
     use futures_util::{StreamExt, TryStreamExt};
     use snapshotted_stream_core::{
-        AppendStream, ErrorKind, Snapshot, SnapshotPosition, SnapshotStore,
+        AppendReceipt, AppendStream, Capabilities, ClassifiedError, ErrorKind, PublishedSnapshot,
+        Snapshot, SnapshotId, SnapshotPosition, SnapshotStore, StreamReader,
     };
 
     use super::*;
 
+    #[derive(Clone, Copy, Debug)]
+    enum AmbiguousAppend {
+        BeforeCommit,
+        AfterCommit,
+    }
+
+    #[derive(Debug, thiserror::Error)]
+    enum FaultError {
+        #[error(transparent)]
+        Memory(#[from] MemoryError),
+        #[error("append outcome is ambiguous")]
+        Ambiguous,
+        #[error("reader was interrupted")]
+        Interrupted,
+    }
+
+    impl ClassifiedError for FaultError {
+        fn kind(&self) -> ErrorKind {
+            match self {
+                Self::Memory(error) => error.kind(),
+                Self::Ambiguous => ErrorKind::Ambiguous,
+                Self::Interrupted => ErrorKind::Unavailable,
+            }
+        }
+    }
+
+    #[derive(Clone, Debug)]
+    struct FaultingMemoryStream {
+        inner: MemoryStream,
+        ambiguous_append: Option<AmbiguousAppend>,
+        interrupt_next_read: Arc<AtomicBool>,
+    }
+
+    impl FaultingMemoryStream {
+        fn ambiguous(inner: MemoryStream, outcome: AmbiguousAppend) -> Self {
+            Self {
+                inner,
+                ambiguous_append: Some(outcome),
+                interrupt_next_read: Arc::new(AtomicBool::new(false)),
+            }
+        }
+
+        fn interrupt_next_read(inner: MemoryStream) -> Self {
+            Self {
+                inner,
+                ambiguous_append: None,
+                interrupt_next_read: Arc::new(AtomicBool::new(true)),
+            }
+        }
+    }
+
+    #[async_trait]
+    impl AppendStream for FaultingMemoryStream {
+        type Position = MemoryPosition;
+        type Error = FaultError;
+
+        fn capabilities(&self) -> Capabilities {
+            self.inner.capabilities()
+        }
+
+        async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
+            match self.ambiguous_append {
+                Some(AmbiguousAppend::BeforeCommit) => Err(FaultError::Ambiguous),
+                Some(AmbiguousAppend::AfterCommit) => {
+                    self.inner.append(value).await?;
+                    Err(FaultError::Ambiguous)
+                }
+                None => self.inner.append(value).await.map_err(Into::into),
+            }
+        }
+
+        async fn read(
+            &self,
+            after: Option<&Self::Position>,
+        ) -> Result<StreamReader<Self::Position, Self::Error>, Self::Error> {
+            let reader = self.inner.read(after).await?;
+            if self.interrupt_next_read.swap(false, Ordering::SeqCst) {
+                Ok(Box::pin(reader.enumerate().take(2).map(|(index, item)| {
+                    if index == 1 {
+                        Err(FaultError::Interrupted)
+                    } else {
+                        item.map_err(Into::into)
+                    }
+                })))
+            } else {
+                Ok(Box::pin(reader.map_err(Into::into)))
+            }
+        }
+
+        async fn head(&self) -> Result<Option<Self::Position>, Self::Error> {
+            self.inner.head().await.map_err(Into::into)
+        }
+    }
+
+    #[async_trait]
+    impl SnapshotStore for FaultingMemoryStream {
+        type Position = MemoryPosition;
+        type Error = FaultError;
+
+        async fn latest(&self) -> Result<Option<PublishedSnapshot<Self::Position>>, Self::Error> {
+            self.inner.latest().await.map_err(Into::into)
+        }
+
+        async fn publish(
+            &self,
+            snapshot: Snapshot<Self::Position>,
+            expected_parent: Option<&SnapshotId>,
+        ) -> Result<SnapshotId, Self::Error> {
+            self.inner
+                .publish(snapshot, expected_parent)
+                .await
+                .map_err(Into::into)
+        }
+    }
+
     #[tokio::test]
     async fn passes_shared_conformance() {
         snapshotted_stream_conformance::run_conformance(MemoryStream::new).await;
+    }
+
+    #[tokio::test]
+    async fn passes_position_codec_conformance() {
+        snapshotted_stream_conformance::run_position_codec_conformance(
+            MemoryStream::new,
+            b"malformed",
+        )
+        .await;
+    }
+
+    #[tokio::test]
+    async fn ambiguous_append_outcomes_are_reconciled_by_committed_state() {
+        for (outcome, expected_payloads) in [
+            (AmbiguousAppend::BeforeCommit, Vec::new()),
+            (
+                AmbiguousAppend::AfterCommit,
+                vec![Bytes::from_static(b"uncertain")],
+            ),
+        ] {
+            let stream = FaultingMemoryStream::ambiguous(MemoryStream::new(), outcome);
+            let error = stream
+                .append(Bytes::from_static(b"uncertain"))
+                .await
+                .expect_err("fault plan should hide the append outcome");
+            assert_eq!(error.kind(), ErrorKind::Ambiguous);
+
+            let committed = stream
+                .read(None)
+                .await
+                .expect("reconciliation reader")
+                .try_collect::<Vec<_>>()
+                .await
+                .expect("reconciliation records");
+            assert_eq!(
+                committed
+                    .into_iter()
+                    .map(|record| record.payload)
+                    .collect::<Vec<_>>(),
+                expected_payloads
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn interrupted_reader_does_not_affect_independent_reader() {
+        let inner = MemoryStream::new();
+        for payload in [b"one".as_slice(), b"two".as_slice(), b"three".as_slice()] {
+            inner.append(Bytes::copy_from_slice(payload)).await.unwrap();
+        }
+        let stream = FaultingMemoryStream::interrupt_next_read(inner);
+        let mut interrupted = stream.read(None).await.unwrap();
+        let independent = stream.read(None).await.unwrap();
+
+        assert_eq!(
+            interrupted.next().await.unwrap().unwrap().payload,
+            Bytes::from_static(b"one")
+        );
+        let error = interrupted.next().await.unwrap().unwrap_err();
+        assert_eq!(error.kind(), ErrorKind::Unavailable);
+        assert!(interrupted.next().await.is_none());
+        let records = independent.try_collect::<Vec<_>>().await.unwrap();
+        assert_eq!(records.len(), 3);
+        assert_eq!(records[2].payload, Bytes::from_static(b"three"));
+    }
+
+    #[tokio::test]
+    async fn snapshot_recovery_observes_committed_ambiguous_append() {
+        let inner = MemoryStream::new();
+        let position = inner
+            .append(Bytes::from_static(b"snapshotted"))
+            .await
+            .unwrap()
+            .position;
+        inner
+            .publish(
+                Snapshot {
+                    includes_through: SnapshotPosition::At(position),
+                    payload: Bytes::from_static(b"state-at-snapshot"),
+                },
+                None,
+            )
+            .await
+            .unwrap();
+        let stream = FaultingMemoryStream::ambiguous(inner, AmbiguousAppend::AfterCommit);
+        assert_eq!(
+            stream
+                .append(Bytes::from_static(b"after-snapshot"))
+                .await
+                .unwrap_err()
+                .kind(),
+            ErrorKind::Ambiguous
+        );
+
+        let latest = stream.latest().await.unwrap().unwrap();
+        let SnapshotPosition::At(position) = latest.snapshot.includes_through else {
+            panic!("snapshot should include a committed position");
+        };
+        let recovered = stream
+            .read(Some(&position))
+            .await
+            .unwrap()
+            .try_collect::<Vec<_>>()
+            .await
+            .unwrap();
+        assert_eq!(recovered.len(), 1);
+        assert_eq!(recovered[0].payload, Bytes::from_static(b"after-snapshot"));
     }
 
     #[tokio::test]
