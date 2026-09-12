@@ -21,6 +21,8 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 - **Confirmed:** A client must keep an unacknowledged submission ambiguous until an authoritative replay or resolution distinguishes committed from absent; transport loss is not permission for hidden retry. [Evidence](iterations/0004/phase-2/native-client-lifecycle.md#hypothesis-results)
 - **Confirmed:** Projected pagination must advance its opaque cursor across bounded canonical spans even when every scanned record is filtered, or administrative-only spans can cause loops or skipped accepted operations. [Evidence](iterations/0005/phase-2/projected-reads-ambiguity-recovery.md#hypothesis-results)
 - **Confirmed:** An immutable summary can be acknowledged safely only after every content-addressed reference is present and verified and the canonical manifest is durably published; retention is a separate policy. [Evidence](iterations/0005/phase-2/content-addressed-blobs-summaries.md#hypothesis-results)
+- **Confirmed:** Opaque DDS payload transport still requires the adapter to preserve the host framework's summary, identity, membership, sequence, and batch-envelope semantics; byte delivery alone does not imply application convergence. [Evidence](iterations/0006/phase-2/direct-shared-tree-integration.md#notable-events)
+- **Confirmed:** When multiple upstream writers are collapsed to one projected identity, every author-scoped monotonic field must be translated into one shared order; preserving writer-local sequence numbers creates replay corruption. [Evidence](iterations/0006/phase-2/direct-shared-tree-integration.md#notable-events)
 
 ## Correctness and Testing
 
