@@ -3,6 +3,7 @@ members = [
     "crates/benchmarks",
     "crates/client",
     "crates/conformance",
+    "crates/content-addressed",
     "crates/core",
     "crates/file-simple",
     "crates/fluid-sequencer",
