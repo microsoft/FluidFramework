@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "iteration": "0002",
+  "status": "active",
+  "sourceCommit": "57b0028ff9061087b522c8dd652ca9b8b2179e50",
+  "createdAt": "2026-09-12T15:06:44.778Z",
+  "activeWorkstreams": [
+    {
+      "name": "reference-model-faults",
+      "instructions": "phase-2/instructions/reference-model-faults.md",
+      "report": "phase-2/reference-model-faults.md"
+    },
+    {
+      "name": "durable-snapshots",
+      "instructions": "phase-2/instructions/durable-snapshots.md",
+      "report": "phase-2/durable-snapshots.md"
+    },
+    {
+      "name": "network-transport",
+      "instructions": "phase-2/instructions/network-transport.md",
+      "report": "phase-2/network-transport.md"
+    },
+    {
+      "name": "authoritative-sequencer",
+      "instructions": "phase-2/instructions/authoritative-sequencer.md",
+      "report": "phase-2/authoritative-sequencer.md"
+    }
+  ],
+  "deferredWorkstreams": [
+    "encryption",
+    "browser-storage",
+    "caching",
+    "retention",
+    "block-compression",
+    "full-fluid-driver",
+    "broad-optimization"
+  ],
+  "nextWorkstreams": []
+}
