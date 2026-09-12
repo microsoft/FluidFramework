@@ -2,7 +2,8 @@
 
 use bytes::Bytes;
 use fluid_service_protocol::{
-    Acknowledgement, ErrorCode, Reference, Request, Response, Submission, SubmissionDisposition,
+    Acknowledgement, ErrorCode, Reference, Request, Resolution, Response, Submission,
+    SubmissionDisposition,
 };
 use futures_util::TryStreamExt;
 use snapshotted_stream_core::{
@@ -43,6 +44,7 @@ pub enum LifecycleEvent {
     Connected,
     SessionRejected(ErrorCode),
     SubmissionAcknowledged(SubmissionAcknowledgement),
+    SubmissionNotCommitted,
     SubmissionRejected(ErrorCode),
     SubmissionUncertain(ErrorCode),
 }
@@ -161,7 +163,7 @@ impl NativeClient {
         self.pending_request()
     }
 
-    /// Explicitly replays the stable pending identity to resolve an ambiguous outcome.
+    /// Explicitly requests authoritative resolution of the stable pending identity.
     ///
     /// # Errors
     ///
@@ -169,6 +171,41 @@ impl NativeClient {
     pub fn recover_ambiguous(&mut self) -> Result<Request, LifecycleError> {
         self.require_state(LifecycleState::Ambiguous, "recover an ambiguous submission")?;
         self.state = LifecycleState::Recovering;
+        let pending = self
+            .pending
+            .as_ref()
+            .ok_or(LifecycleError::NoPendingSubmission)?;
+        Ok(Request::ResolveSubmission {
+            document: self.document.clone(),
+            writer: self.writer.clone(),
+            session: pending.session.clone(),
+            submission: pending.submission.clone(),
+        })
+    }
+
+    /// Constructs a projected-operation read without changing lifecycle state.
+    #[must_use]
+    pub fn read_projected(&self, after: Option<Bytes>) -> Request {
+        Request::ReadProjected {
+            document: self.document.clone(),
+            after,
+        }
+    }
+
+    /// Explicitly retries pending work after an authoritative not-committed result.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error unless the client is connected and still retains pending work.
+    pub fn retry_not_committed(&mut self) -> Result<Request, LifecycleError> {
+        self.require_state(
+            LifecycleState::Connected,
+            "retry a not-committed submission",
+        )?;
+        if self.pending.is_none() {
+            return Err(LifecycleError::NoPendingSubmission);
+        }
+        self.state = LifecycleState::Submitting;
         self.pending_request()
     }
 
@@ -222,7 +259,7 @@ impl NativeClient {
         match self.state {
             LifecycleState::Connecting => self.handle_connect_response(&response),
             LifecycleState::Submitting => self.handle_submit_response(response, false),
-            LifecycleState::Recovering => self.handle_submit_response(response, true),
+            LifecycleState::Recovering => self.handle_resolution_response(response),
             state => Err(LifecycleError::UnexpectedResponse(state)),
         }
     }
@@ -322,6 +359,41 @@ impl NativeClient {
             Response::Error(code) => {
                 self.state = LifecycleState::Disconnected;
                 Ok(LifecycleEvent::SubmissionRejected(code))
+            }
+            _ => Err(LifecycleError::UnexpectedResponse(self.state)),
+        }
+    }
+
+    fn handle_resolution_response(
+        &mut self,
+        response: Response,
+    ) -> Result<LifecycleEvent, LifecycleError> {
+        match response {
+            Response::Resolved(Resolution::Committed {
+                position,
+                sequence_number,
+                minimum_reference,
+            }) => {
+                self.pending = None;
+                self.state = LifecycleState::Connected;
+                Ok(LifecycleEvent::SubmissionAcknowledged(
+                    SubmissionAcknowledgement {
+                        disposition: SubmissionDisposition::Duplicate,
+                        position,
+                        sequence_number,
+                        minimum_reference,
+                    },
+                ))
+            }
+            Response::Resolved(Resolution::NotCommitted) => {
+                self.state = LifecycleState::Connected;
+                Ok(LifecycleEvent::SubmissionNotCommitted)
+            }
+            Response::Resolved(Resolution::StillUncertain) | Response::Error(_) => {
+                self.state = LifecycleState::Ambiguous;
+                Ok(LifecycleEvent::SubmissionUncertain(
+                    ErrorCode::RecoveryRequired,
+                ))
             }
             _ => Err(LifecycleError::UnexpectedResponse(self.state)),
         }
@@ -549,32 +621,36 @@ mod tests {
     #[test]
     fn disconnect_before_commit_is_ambiguous_until_accepted_replay() {
         let mut client = connected_client();
-        let original = submit(&mut client);
+        submit(&mut client);
         client.disconnected();
         assert_eq!(client.state(), LifecycleState::Ambiguous);
-        assert_eq!(client.recover_ambiguous().unwrap(), original);
-        let event = client
-            .handle_response(submitted(SubmissionDisposition::Accepted))
-            .unwrap();
         assert!(matches!(
-            event,
-            LifecycleEvent::SubmissionAcknowledged(SubmissionAcknowledgement {
-                disposition: SubmissionDisposition::Accepted,
-                ..
-            })
+            client.recover_ambiguous().unwrap(),
+            Request::ResolveSubmission { .. }
         ));
+        let event = client
+            .handle_response(Response::Resolved(Resolution::NotCommitted))
+            .unwrap();
+        assert_eq!(event, LifecycleEvent::SubmissionNotCommitted);
         assert_eq!(client.state(), LifecycleState::Connected);
-        assert!(client.pending().is_none());
+        assert!(client.pending().is_some());
     }
 
     #[test]
     fn disconnect_after_commit_is_resolved_by_duplicate_acknowledgement() {
         let mut client = connected_client();
-        let committed_request = submit(&mut client);
+        submit(&mut client);
         client.disconnected();
-        assert_eq!(client.recover_ambiguous().unwrap(), committed_request);
+        assert!(matches!(
+            client.recover_ambiguous().unwrap(),
+            Request::ResolveSubmission { .. }
+        ));
         let event = client
-            .handle_response(submitted(SubmissionDisposition::Duplicate))
+            .handle_response(Response::Resolved(Resolution::Committed {
+                position: bytes(b"position"),
+                sequence_number: 1,
+                minimum_reference: Reference::Initial,
+            }))
             .unwrap();
         assert!(matches!(
             event,
@@ -643,7 +719,11 @@ mod tests {
             LifecycleEvent::SubmissionUncertain(ErrorCode::Unavailable)
         );
         assert_eq!(client.state(), LifecycleState::Ambiguous);
-        assert_eq!(client.recover_ambiguous().unwrap(), request);
+        assert!(matches!(
+            client.recover_ambiguous().unwrap(),
+            Request::ResolveSubmission { .. }
+        ));
+        assert!(matches!(request, Request::Submit(_)));
     }
 
     #[test]
@@ -654,11 +734,23 @@ mod tests {
         client.recover_ambiguous().unwrap();
         assert_eq!(
             client
-                .handle_response(Response::Error(ErrorCode::RecoveryRequired))
+                .handle_response(Response::Resolved(Resolution::StillUncertain))
                 .unwrap(),
             LifecycleEvent::SubmissionUncertain(ErrorCode::RecoveryRequired)
         );
         assert_eq!(client.state(), LifecycleState::Ambiguous);
+    }
+
+    #[test]
+    fn projected_read_preserves_opaque_cursor() {
+        let client = connected_client();
+        assert_eq!(
+            client.read_projected(Some(bytes(b"cursor"))),
+            Request::ReadProjected {
+                document: bytes(b"document"),
+                after: Some(bytes(b"cursor")),
+            }
+        );
     }
 
     #[test]

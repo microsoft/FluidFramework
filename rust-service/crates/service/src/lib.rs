@@ -12,13 +12,15 @@ use std::{
 
 use bytes::Bytes;
 use fluid_sequencer::{
-    AuthoritativeSequencer, FencedStream, PositionToken, Rejection, SequencedMessage,
-    SequencerStorage, ServiceError as SequencerError, SessionId, Submission as SequencerSubmission,
-    SubmissionId, SubmitOutcome, WriterId,
+    AuthoritativeSequencer, FencedStream, PositionToken, ProjectedOperation as SequencerOperation,
+    Rejection, ResolutionOutcome, SequencedMessage, SequencerStorage,
+    ServiceError as SequencerError, SessionId, Submission as SequencerSubmission, SubmissionId,
+    SubmitOutcome, WriterId,
 };
 use fluid_service_protocol::{
-    Acknowledgement, CommittedRecord, ErrorCode, PublishedSnapshot as ProtocolSnapshot, Reference,
-    Request, Response, SubmissionDisposition,
+    Acknowledgement, CommittedRecord, ErrorCode, ProjectedOperation,
+    PublishedSnapshot as ProtocolSnapshot, Reference, Request, Resolution, Response,
+    SubmissionDisposition,
 };
 use futures_util::StreamExt;
 use snapshotted_stream_core::{
@@ -34,6 +36,8 @@ const ORDINAL_BYTES: usize = 8;
 const TOKEN_BYTES: usize = SCOPE_BYTES + ORDINAL_BYTES;
 const MAX_READ_RECORDS: usize = 1024;
 const MAX_READ_PAYLOAD_BYTES: usize = 768 * 1024;
+const MAX_PROJECTED_CANONICAL_RECORDS: usize = 1024;
+const MAX_PROJECTED_ENCODED_BYTES: usize = 768 * 1024;
 
 #[derive(Clone, Debug)]
 pub struct ServiceConfig {
@@ -120,6 +124,8 @@ fn request_document(request: &Request) -> Option<&Bytes> {
     match request {
         Request::OpenSession { document, .. }
         | Request::Read { document, .. }
+        | Request::ReadProjected { document, .. }
+        | Request::ResolveSubmission { document, .. }
         | Request::LatestSnapshot { document }
         | Request::PublishSnapshot { document, .. } => Some(document),
         Request::Submit(submission) => Some(&submission.document),
@@ -193,6 +199,13 @@ impl Document {
             } => self.open_session(writer, session, reference).await,
             Request::Submit(submission) => self.submit(submission).await,
             Request::Read { after, .. } => self.read(after).await,
+            Request::ReadProjected { after, .. } => self.read_projected(after).await,
+            Request::ResolveSubmission {
+                writer,
+                session,
+                submission,
+                ..
+            } => self.resolve_submission(writer, session, submission).await,
             Request::LatestSnapshot { .. } => self.latest_snapshot().await,
             Request::PublishSnapshot {
                 includes_through,
@@ -279,6 +292,62 @@ impl Document {
             });
         }
         Ok(Response::Read { records })
+    }
+
+    async fn read_projected(&self, after: Option<Bytes>) -> Result<Response, ErrorCode> {
+        let after = after
+            .map(PositionToken::new)
+            .transpose()
+            .map_err(|_| ErrorCode::InvalidPosition)?;
+        let page = self
+            .sequencer
+            .read_projected(
+                after.as_ref(),
+                MAX_PROJECTED_CANONICAL_RECORDS,
+                MAX_PROJECTED_ENCODED_BYTES,
+            )
+            .await
+            .map_err(map_sequencer_error)?;
+        Ok(Response::ProjectedRead {
+            operations: page
+                .operations
+                .into_iter()
+                .map(protocol_operation)
+                .collect(),
+            cursor: page.cursor.map(|position| position.as_bytes().clone()),
+            has_more: page.has_more,
+        })
+    }
+
+    async fn resolve_submission(
+        &mut self,
+        writer: Bytes,
+        session: Bytes,
+        submission: Bytes,
+    ) -> Result<Response, ErrorCode> {
+        let writer = WriterId::new(writer).map_err(|_| ErrorCode::InvalidRequest)?;
+        let session = SessionId::new(session).map_err(|_| ErrorCode::InvalidRequest)?;
+        let submission = SubmissionId::new(submission).map_err(|_| ErrorCode::InvalidRequest)?;
+        let resolution = match self
+            .sequencer
+            .resolve_submission(&writer, &session, &submission)
+            .await
+        {
+            Ok(ResolutionOutcome::Committed(message)) => Resolution::Committed {
+                position: message.stream_position.as_bytes().clone(),
+                sequence_number: message.sequence_number,
+                minimum_reference: protocol_reference_position(message.minimum_reference_position),
+            },
+            Ok(ResolutionOutcome::NotCommitted) => Resolution::NotCommitted,
+            Err(SequencerError::Storage(error))
+                if matches!(error.kind(), ErrorKind::Ambiguous | ErrorKind::Unavailable) =>
+            {
+                Resolution::StillUncertain
+            }
+            Err(SequencerError::FenceLost) => Resolution::StillUncertain,
+            Err(error) => return Err(map_sequencer_error(error)),
+        };
+        Ok(Response::Resolved(resolution))
     }
 
     async fn latest_snapshot(&self) -> Result<Response, ErrorCode> {
@@ -454,10 +523,28 @@ fn submitted_response(disposition: SubmissionDisposition, message: SequencedMess
         disposition,
         position: message.stream_position.as_bytes().clone(),
         sequence_number: message.sequence_number,
-        minimum_reference: match message.minimum_reference_position {
-            SnapshotPosition::Initial => Reference::Initial,
-            SnapshotPosition::At(position) => Reference::At(position.as_bytes().clone()),
-        },
+        minimum_reference: protocol_reference_position(message.minimum_reference_position),
+    }
+}
+
+fn protocol_operation(operation: SequencerOperation) -> ProjectedOperation {
+    ProjectedOperation {
+        position: operation.stream_position.as_bytes().clone(),
+        sequence_number: operation.sequence_number,
+        minimum_reference: protocol_reference_position(operation.minimum_reference_position),
+        writer: operation.writer_id.as_bytes().clone(),
+        session: operation.session_id.as_bytes().clone(),
+        submission: operation.submission_id.as_bytes().clone(),
+        local_sequence_number: operation.local_sequence_number,
+        reference: protocol_reference_position(operation.reference_position),
+        payload: operation.payload,
+    }
+}
+
+fn protocol_reference_position(reference: SnapshotPosition<PositionToken>) -> Reference {
+    match reference {
+        SnapshotPosition::Initial => Reference::Initial,
+        SnapshotPosition::At(position) => Reference::At(position.as_bytes().clone()),
     }
 }
 
@@ -466,6 +553,8 @@ fn map_sequencer_error(error: SequencerError<DurableLogError>) -> ErrorCode {
         SequencerError::Rejected(rejection) | SequencerError::InvalidCommittedEntry(rejection) => {
             map_rejection(&rejection)
         }
+        SequencerError::InvalidPosition => ErrorCode::InvalidPosition,
+        SequencerError::InvalidPageLimit => ErrorCode::InvalidRequest,
         SequencerError::FenceLost => ErrorCode::FenceLost,
         SequencerError::Authority(_) => ErrorCode::Unavailable,
         SequencerError::Storage(error) => map_storage_error(&error),
@@ -736,5 +825,161 @@ mod tests {
                 .await,
             Response::Error(ErrorCode::InvalidPosition)
         );
+        assert_eq!(
+            service
+                .handle(Request::ReadProjected {
+                    document: bytes(b"doc"),
+                    after: Some(bytes(b"invalid"))
+                })
+                .await,
+            Response::Error(ErrorCode::InvalidPosition)
+        );
+    }
+
+    #[tokio::test]
+    async fn projected_reads_filter_administration_and_resume_exactly() {
+        let directory = TempDirectory::new();
+        let service = NativeService::new(ServiceConfig::new(&directory.0));
+        create_and_open(&service, b"doc", b"session-one").await;
+        let administrative_page = service
+            .handle(Request::ReadProjected {
+                document: bytes(b"doc"),
+                after: None,
+            })
+            .await;
+        let Response::ProjectedRead {
+            operations,
+            cursor: Some(cursor),
+            has_more: false,
+        } = administrative_page
+        else {
+            panic!("unexpected administrative page: {administrative_page:?}");
+        };
+        assert!(operations.is_empty());
+
+        assert!(matches!(
+            service.handle(submit(b"doc", b"session-one", 1)).await,
+            Response::Submitted {
+                disposition: SubmissionDisposition::Accepted,
+                ..
+            }
+        ));
+        let projected = service
+            .handle(Request::ReadProjected {
+                document: bytes(b"doc"),
+                after: Some(cursor),
+            })
+            .await;
+        let Response::ProjectedRead {
+            operations,
+            cursor: Some(end_cursor),
+            has_more: false,
+        } = projected
+        else {
+            panic!("unexpected projected page: {projected:?}");
+        };
+        assert_eq!(operations.len(), 1);
+        assert_eq!(operations[0].sequence_number, 1);
+        assert_eq!(operations[0].payload, Bytes::from_static(b"payload-1"));
+        assert!(matches!(
+            service
+                .handle(Request::ReadProjected {
+                    document: bytes(b"doc"),
+                    after: Some(end_cursor.clone()),
+                })
+                .await,
+            Response::ProjectedRead {
+                operations,
+                cursor: Some(cursor),
+                has_more: false,
+            } if operations.is_empty() && cursor == end_cursor
+        ));
+    }
+
+    #[tokio::test]
+    async fn explicit_resolution_is_repeatable_restart_safe_and_append_free() {
+        let directory = TempDirectory::new();
+        let service = NativeService::new(ServiceConfig::new(&directory.0));
+        create_and_open(&service, b"doc", b"session-one").await;
+        let request = submit(b"doc", b"session-one", 1);
+        assert!(matches!(
+            service.handle(request.clone()).await,
+            Response::Submitted {
+                disposition: SubmissionDisposition::Accepted,
+                ..
+            }
+        ));
+        assert!(matches!(
+            service.handle(request).await,
+            Response::Submitted {
+                disposition: SubmissionDisposition::Duplicate,
+                ..
+            }
+        ));
+        let resolve = Request::ResolveSubmission {
+            document: bytes(b"doc"),
+            writer: bytes(b"writer"),
+            session: bytes(b"session-one"),
+            submission: Bytes::from(format!("submission-{:?}-1", b"session-one")),
+        };
+        for _ in 0..2 {
+            assert!(matches!(
+                service.handle(resolve.clone()).await,
+                Response::Resolved(Resolution::Committed {
+                    sequence_number: 1,
+                    ..
+                })
+            ));
+        }
+        assert_eq!(
+            service
+                .handle(Request::ResolveSubmission {
+                    document: bytes(b"doc"),
+                    writer: bytes(b"other"),
+                    session: bytes(b"session-one"),
+                    submission: bytes(b"unknown"),
+                })
+                .await,
+            Response::Error(ErrorCode::UnknownWriter)
+        );
+        assert_eq!(
+            service
+                .handle(Request::ResolveSubmission {
+                    document: bytes(b"doc"),
+                    writer: bytes(b"writer"),
+                    session: bytes(b"session-one"),
+                    submission: bytes(b"not-committed"),
+                })
+                .await,
+            Response::Resolved(Resolution::NotCommitted)
+        );
+        assert!(matches!(
+            service
+                .handle(Request::Read {
+                    document: bytes(b"doc"),
+                    after: None,
+                })
+                .await,
+            Response::Read { records } if records.len() == 2
+        ));
+
+        drop(service);
+        let restarted = NativeService::new(ServiceConfig::new(&directory.0));
+        assert!(matches!(
+            restarted.handle(resolve).await,
+            Response::Resolved(Resolution::Committed {
+                sequence_number: 1,
+                ..
+            })
+        ));
+        assert!(matches!(
+            restarted
+                .handle(Request::Read {
+                    document: bytes(b"doc"),
+                    after: None,
+                })
+                .await,
+            Response::Read { records } if records.len() == 2
+        ));
     }
 }

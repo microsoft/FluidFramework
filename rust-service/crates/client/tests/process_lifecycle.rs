@@ -11,8 +11,8 @@ use std::{
 use bytes::Bytes;
 use fluid_native_service::{NativeService, ServiceConfig};
 use fluid_service_protocol::{
-    Acknowledgement, Frame, Limits, Message, Reference, Request, Response, SubmissionDisposition,
-    decode, encode,
+    Acknowledgement, Frame, Limits, Message, Reference, Request, Resolution, Response,
+    SubmissionDisposition, decode, encode,
 };
 use snapshotted_stream_client::{LifecycleEvent, LifecycleState, NativeClient};
 
@@ -67,7 +67,7 @@ fn lifecycle_process_server() {
 }
 
 #[test]
-fn disconnect_boundaries_resolve_only_after_explicit_replay() {
+fn disconnect_boundaries_resolve_without_hidden_retry() {
     let directory = TempDirectory::new();
     let root = directory.0.join("data");
     let socket = directory.0.join("service.sock");
@@ -101,7 +101,14 @@ fn disconnect_boundaries_resolve_only_after_explicit_replay() {
         .unwrap();
     client.disconnected();
     assert_eq!(client.state(), LifecycleState::Ambiguous);
-    assert_eq!(client.recover_ambiguous().unwrap(), before_commit);
+    let before_resolution = recovery_request(&mut client);
+    assert_eq!(
+        client
+            .handle_response(exchange(&socket, before_resolution))
+            .unwrap(),
+        LifecycleEvent::SubmissionNotCommitted
+    );
+    assert_eq!(client.retry_not_committed().unwrap(), before_commit);
     assert!(matches!(
         client
             .handle_response(exchange(&socket, before_commit))
@@ -134,10 +141,10 @@ fn disconnect_boundaries_resolve_only_after_explicit_replay() {
     child.wait().unwrap();
 
     child = spawn_server(&root, &socket);
-    assert_eq!(client.recover_ambiguous().unwrap(), after_commit);
+    let after_resolution = recovery_request(&mut client);
     assert!(matches!(
         client
-            .handle_response(exchange(&socket, after_commit))
+            .handle_response(exchange(&socket, after_resolution))
             .unwrap(),
         LifecycleEvent::SubmissionAcknowledged(acknowledgement)
             if acknowledgement.disposition == SubmissionDisposition::Duplicate
@@ -145,11 +152,33 @@ fn disconnect_boundaries_resolve_only_after_explicit_replay() {
     assert_eq!(client.state(), LifecycleState::Connected);
     assert!(client.pending().is_none());
 
+    assert!(matches!(
+        exchange(
+            &socket,
+            Request::ResolveSubmission {
+                document: bytes(b"document"),
+                writer: bytes(b"writer"),
+                session: bytes(b"session-1"),
+                submission: bytes(b"submission-2"),
+            }
+        ),
+        Response::Resolved(Resolution::Committed {
+            sequence_number: 2,
+            ..
+        })
+    ));
+
     assert_eq!(
         exchange(&socket, Request::Shutdown),
         Response::Acknowledged(Acknowledgement::ShuttingDown)
     );
     assert!(child.wait().unwrap().success());
+}
+
+fn recovery_request(client: &mut NativeClient) -> Request {
+    let request = client.recover_ambiguous().unwrap();
+    assert!(matches!(request, Request::ResolveSubmission { .. }));
+    request
 }
 
 fn spawn_server(root: &Path, socket: &Path) -> Child {

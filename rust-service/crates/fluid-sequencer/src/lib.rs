@@ -169,6 +169,67 @@ pub struct SequencedMessage {
     pub submission: Submission,
 }
 
+/// One accepted Fluid operation projected from the private canonical log.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ProjectedOperation {
+    pub stream_position: PositionToken,
+    pub sequence_number: u64,
+    pub minimum_reference_position: SnapshotPosition<PositionToken>,
+    pub writer_id: WriterId,
+    pub session_id: SessionId,
+    pub submission_id: SubmissionId,
+    pub local_sequence_number: u64,
+    pub reference_position: SnapshotPosition<PositionToken>,
+    pub payload: Bytes,
+}
+
+impl From<SequencedMessage> for ProjectedOperation {
+    fn from(message: SequencedMessage) -> Self {
+        Self {
+            stream_position: message.stream_position,
+            sequence_number: message.sequence_number,
+            minimum_reference_position: message.minimum_reference_position,
+            writer_id: message.submission.writer_id,
+            session_id: message.submission.session_id,
+            submission_id: message.submission.submission_id,
+            local_sequence_number: message.submission.local_sequence_number,
+            reference_position: message.submission.reference_position,
+            payload: message.submission.payload,
+        }
+    }
+}
+
+impl ProjectedOperation {
+    fn encoded_size(&self) -> usize {
+        self.stream_position.0.len()
+            + self.writer_id.0.len()
+            + self.session_id.0.len()
+            + self.submission_id.0.len()
+            + reference_size(&self.minimum_reference_position)
+            + reference_size(&self.reference_position)
+            + self.payload.len()
+            + 8
+            + 8
+            + 7 * 4
+            + 2
+    }
+}
+
+fn reference_size(reference: &SnapshotPosition<PositionToken>) -> usize {
+    match reference {
+        SnapshotPosition::Initial => 1,
+        SnapshotPosition::At(position) => 1 + 4 + position.0.len(),
+    }
+}
+
+/// A bounded projected read and its opaque canonical resume cursor.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ProjectedPage {
+    pub operations: Vec<ProjectedOperation>,
+    pub cursor: Option<PositionToken>,
+    pub has_more: bool,
+}
+
 /// A protocol-level rejection produced before an invalid operation is appended.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Rejection {
@@ -658,6 +719,8 @@ pub struct FenceLost;
 #[derive(Debug)]
 pub enum ServiceError<E> {
     Rejected(Rejection),
+    InvalidPosition,
+    InvalidPageLimit,
     FenceLost,
     Authority(FenceAuthorityError),
     Storage(E),
@@ -679,6 +742,13 @@ pub enum SubmitOutcome {
 pub enum RecoveryOutcome {
     Committed(SequencedMessage),
     NotCommitted(Submission),
+}
+
+/// Authoritative resolution for a stable submission identity.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ResolutionOutcome {
+    Committed(Box<SequencedMessage>),
+    NotCommitted,
 }
 
 /// A single authoritative Fluid submission service recovered from canonical records.
@@ -816,6 +886,140 @@ where
         Ok(SubmitOutcome::Accepted(message))
     }
 
+    /// Reads accepted operations while advancing through a bounded number of canonical records.
+    ///
+    /// The returned cursor remains opaque and advances across administrative-only pages.
+    ///
+    /// # Errors
+    ///
+    /// Returns an invalid-position or invalid-limit error, or a fence, storage, framing, or
+    /// committed-entry validation error when projection cannot complete authoritatively.
+    pub async fn read_projected(
+        &self,
+        after: Option<&PositionToken>,
+        max_canonical_records: usize,
+        max_encoded_bytes: usize,
+    ) -> Result<ProjectedPage, ServiceError<S::Error>> {
+        if max_canonical_records == 0 || max_encoded_bytes == 0 {
+            return Err(ServiceError::InvalidPageLimit);
+        }
+        let guard = self
+            .storage
+            .lock_current(self.fence)
+            .map_err(map_fence_acquire_error)?;
+        let records = guard
+            .stream()
+            .read_all()
+            .await
+            .map_err(ServiceError::Storage)?;
+        let record_count = records.len();
+        let mut state = SequencerState::default();
+        let mut cursor_found = after.is_none();
+        let mut cursor = after.cloned();
+        let mut scanned = 0_usize;
+        let mut encoded_bytes = 0_usize;
+        let mut operations = Vec::new();
+        let mut has_more = false;
+
+        for (index, record) in records.into_iter().enumerate() {
+            let entry = decode_entry(record.payload).map_err(ServiceError::CorruptLog)?;
+            let position = guard
+                .stream()
+                .encode_position(&record.position)
+                .map(PositionToken)
+                .map_err(ServiceError::Storage)?;
+            let message = state
+                .apply(position.clone(), entry)
+                .map_err(ServiceError::InvalidCommittedEntry)?;
+
+            if !cursor_found {
+                if after == Some(&position) {
+                    cursor_found = true;
+                }
+                continue;
+            }
+            if scanned == max_canonical_records {
+                has_more = true;
+                break;
+            }
+            let operation = message.map(ProjectedOperation::from);
+            if let Some(operation) = operation.as_ref() {
+                let next_encoded_bytes = encoded_bytes.saturating_add(operation.encoded_size());
+                if !operations.is_empty() && next_encoded_bytes > max_encoded_bytes {
+                    has_more = true;
+                    break;
+                }
+                encoded_bytes = next_encoded_bytes;
+            }
+            scanned += 1;
+            cursor = Some(position);
+            if let Some(operation) = operation {
+                operations.push(operation);
+            }
+            has_more = index + 1 < record_count;
+        }
+
+        if !cursor_found {
+            return Err(ServiceError::InvalidPosition);
+        }
+        Ok(ProjectedPage {
+            operations,
+            cursor,
+            has_more,
+        })
+    }
+
+    /// Resolves one stable identity without appending or retrying the submission.
+    ///
+    /// # Errors
+    ///
+    /// Returns a context rejection for the wrong writer or session, or a fence, storage, framing,
+    /// or committed-entry validation error when replay cannot complete authoritatively.
+    pub async fn resolve_submission(
+        &mut self,
+        writer_id: &WriterId,
+        session_id: &SessionId,
+        submission_id: &SubmissionId,
+    ) -> Result<ResolutionOutcome, ServiceError<S::Error>> {
+        let guard = self
+            .storage
+            .lock_current(self.fence)
+            .map_err(map_fence_acquire_error)?;
+        let recovered = replay(&guard).await?;
+        let writer = recovered
+            .writers
+            .get(writer_id)
+            .ok_or(ServiceError::Rejected(Rejection::UnknownWriter))?;
+        if &writer.session_id != session_id {
+            return Err(ServiceError::Rejected(Rejection::StaleSession));
+        }
+        let outcome = match recovered.accepted.get(submission_id) {
+            Some(message)
+                if &message.submission.writer_id == writer_id
+                    && &message.submission.session_id == session_id =>
+            {
+                ResolutionOutcome::Committed(Box::new(message.clone()))
+            }
+            Some(_) => {
+                return Err(ServiceError::Rejected(
+                    Rejection::SubmissionIdentityConflict,
+                ));
+            }
+            None => ResolutionOutcome::NotCommitted,
+        };
+        drop(guard);
+        self.state = recovered;
+        if self.unresolved.as_ref().is_some_and(|submission| {
+            &submission.writer_id == writer_id
+                && &submission.session_id == session_id
+                && &submission.submission_id == submission_id
+        }) {
+            self.unresolved = None;
+            self.recovery_required = false;
+        }
+        Ok(outcome)
+    }
+
     /// Replays storage to resolve the sole outstanding ambiguous submission.
     ///
     /// # Errors
@@ -826,24 +1030,17 @@ where
         let Some(submission) = self.unresolved.clone() else {
             return Err(ServiceError::RecoveryRequired);
         };
-        let guard = self
-            .storage
-            .lock_current(self.fence)
-            .map_err(map_fence_acquire_error)?;
-        let recovered = replay(&guard).await?;
-        let outcome = recovered
-            .accepted
-            .get(&submission.submission_id)
-            .cloned()
-            .map_or_else(
-                || RecoveryOutcome::NotCommitted(submission),
-                RecoveryOutcome::Committed,
-            );
-        drop(guard);
-        self.state = recovered;
-        self.unresolved = None;
-        self.recovery_required = false;
-        Ok(outcome)
+        match self
+            .resolve_submission(
+                &submission.writer_id,
+                &submission.session_id,
+                &submission.submission_id,
+            )
+            .await?
+        {
+            ResolutionOutcome::Committed(message) => Ok(RecoveryOutcome::Committed(*message)),
+            ResolutionOutcome::NotCommitted => Ok(RecoveryOutcome::NotCommitted(submission)),
+        }
     }
 }
 
@@ -1429,6 +1626,156 @@ mod tests {
         ));
         assert_eq!(stream.len(), stored + 1);
     });
+
+    async_test!(projected_pages_advance_across_administrative_records, {
+        let (stream, _, mut sequencer, writer_id, session_id) = setup().await;
+        let accepted = accepted(
+            sequencer
+                .submit(submission(
+                    &writer_id,
+                    &session_id,
+                    b"projected",
+                    1,
+                    SnapshotPosition::Initial,
+                ))
+                .await
+                .unwrap(),
+        );
+        let first_page = sequencer.read_projected(None, 1, 1024).await.unwrap();
+        assert!(first_page.operations.is_empty());
+        assert!(first_page.has_more);
+        let first_cursor = first_page.cursor.unwrap();
+
+        let second_page = sequencer
+            .read_projected(Some(&first_cursor), 1, 1024)
+            .await
+            .unwrap();
+        assert_eq!(second_page.operations.len(), 1);
+        assert_eq!(second_page.operations[0].sequence_number, 1);
+        assert_eq!(
+            second_page.operations[0].payload,
+            Bytes::from_static(b"payload")
+        );
+        assert_eq!(second_page.cursor, Some(accepted.stream_position.clone()));
+        assert!(!second_page.has_more);
+        let end_page = sequencer
+            .read_projected(second_page.cursor.as_ref(), 1, 1024)
+            .await
+            .unwrap();
+        assert!(end_page.operations.is_empty());
+        assert_eq!(end_page.cursor, second_page.cursor);
+        assert!(!end_page.has_more);
+        assert_eq!(stream.len(), 2);
+    });
+
+    async_test!(projected_read_rejects_foreign_cursor, {
+        let (_, _, sequencer, _, _) = setup().await;
+        let foreign = PositionToken::new(Bytes::from_static(b"foreign")).unwrap();
+        assert!(matches!(
+            sequencer.read_projected(Some(&foreign), 1, 1024).await,
+            Err(ServiceError::InvalidPosition)
+        ));
+    });
+
+    async_test!(projected_pages_are_byte_bounded_without_skipping, {
+        let (_, _, mut sequencer, writer_id, session_id) = setup().await;
+        for (submission_id, local_sequence_number) in [(b"one".as_slice(), 1), (b"two", 2)] {
+            sequencer
+                .submit(submission(
+                    &writer_id,
+                    &session_id,
+                    submission_id,
+                    local_sequence_number,
+                    SnapshotPosition::Initial,
+                ))
+                .await
+                .unwrap();
+        }
+        let administrative = sequencer.read_projected(None, 1, usize::MAX).await.unwrap();
+        let full = sequencer
+            .read_projected(administrative.cursor.as_ref(), 2, usize::MAX)
+            .await
+            .unwrap();
+        let first_size = full.operations[0].encoded_size();
+        let bounded = sequencer
+            .read_projected(administrative.cursor.as_ref(), 2, first_size)
+            .await
+            .unwrap();
+        assert_eq!(bounded.operations.len(), 1);
+        assert!(bounded.has_more);
+        assert_eq!(
+            bounded.cursor,
+            Some(full.operations[0].stream_position.clone())
+        );
+        let resumed = sequencer
+            .read_projected(bounded.cursor.as_ref(), 2, first_size)
+            .await
+            .unwrap();
+        assert_eq!(resumed.operations.len(), 1);
+        assert_eq!(resumed.operations[0], full.operations[1]);
+        assert!(!resumed.has_more);
+    });
+
+    async_test!(
+        explicit_resolution_is_idempotent_authorized_and_append_free,
+        {
+            let (stream, storage, mut sequencer, writer_id, session_id) = setup().await;
+            let other_writer = writer(b"bob");
+            let other_session = session(b"bob-session");
+            sequencer
+                .connect(
+                    other_writer.clone(),
+                    other_session.clone(),
+                    SnapshotPosition::Initial,
+                )
+                .await
+                .unwrap();
+            let pending = submission(
+                &writer_id,
+                &session_id,
+                b"ambiguous",
+                1,
+                SnapshotPosition::Initial,
+            );
+            stream.fail_next(NextAppend::AmbiguousCommitted);
+            assert!(matches!(
+                sequencer.submit(pending.clone()).await,
+                Err(ServiceError::StorageAmbiguous(_))
+            ));
+            let stored = stream.len();
+            for _ in 0..2 {
+                assert!(matches!(
+                    sequencer
+                        .resolve_submission(&writer_id, &session_id, &pending.submission_id)
+                        .await
+                        .unwrap(),
+                    ResolutionOutcome::Committed(_)
+                ));
+                assert_eq!(stream.len(), stored);
+            }
+            assert!(matches!(
+                sequencer
+                    .resolve_submission(&other_writer, &other_session, &pending.submission_id)
+                    .await,
+                Err(ServiceError::Rejected(
+                    Rejection::SubmissionIdentityConflict
+                ))
+            ));
+
+            let replacement_fence = storage.issue_fence();
+            let mut restarted = AuthoritativeSequencer::recover(storage, replacement_fence)
+                .await
+                .unwrap();
+            assert!(matches!(
+                restarted
+                    .resolve_submission(&writer_id, &session_id, &pending.submission_id)
+                    .await
+                    .unwrap(),
+                ResolutionOutcome::Committed(_)
+            ));
+            assert_eq!(stream.len(), stored);
+        }
+    );
 
     async_test!(
         reused_submission_identity_with_different_content_is_rejected,
