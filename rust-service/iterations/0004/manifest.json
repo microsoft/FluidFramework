@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "iteration": "0004",
+  "status": "active",
+  "sourceCommit": "a577eda313ebe68f6e8ba3e33e99ea0822a50d9a",
+  "createdAt": "2026-09-12T16:39:58.134Z",
+  "activeWorkstreams": [
+    {
+      "name": "service-assembly",
+      "instructions": "phase-2/instructions/service-assembly.md",
+      "report": "phase-2/service-assembly.md"
+    },
+    {
+      "name": "webtransport",
+      "instructions": "phase-2/instructions/webtransport.md",
+      "report": "phase-2/webtransport.md"
+    },
+    {
+      "name": "native-client-lifecycle",
+      "instructions": "phase-2/instructions/native-client-lifecycle.md",
+      "report": "phase-2/native-client-lifecycle.md"
+    },
+    {
+      "name": "benchmark-baseline",
+      "instructions": "phase-2/instructions/benchmark-baseline.md",
+      "report": "phase-2/benchmark-baseline.md"
+    },
+    {
+      "name": "encryption-wrapper",
+      "instructions": "phase-2/instructions/encryption-wrapper.md",
+      "report": "phase-2/encryption-wrapper.md"
+    },
+    {
+      "name": "stateful-compression",
+      "instructions": "phase-2/instructions/stateful-compression.md",
+      "report": "phase-2/stateful-compression.md"
+    }
+  ],
+  "deferredWorkstreams": [
+    "distributed-fencing",
+    "hardware-power-loss",
+    "browser-storage",
+    "caching-and-retention",
+    "content-addressed-blobs",
+    "full-fluid-driver",
+    "shared-tree-integration",
+    "broad-optimization"
+  ],
+  "nextWorkstreams": []
+}
