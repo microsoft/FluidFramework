@@ -26,6 +26,7 @@ where
     readers_are_independent_and_cancellable(&make_stream).await;
     positions_are_generation_scoped(&make_stream).await;
     snapshots_require_lineage_and_monotonicity(&make_stream).await;
+    snapshot_recovery_reads_only_subsequent_records(&make_stream).await;
 }
 
 async fn concurrent_appends_are_contiguous<S, F>(make_stream: &F)
@@ -232,4 +233,58 @@ where
         .await
         .expect_err("position regression should conflict");
     assert_eq!(regression.kind(), ErrorKind::Conflict);
+}
+
+async fn snapshot_recovery_reads_only_subsequent_records<S, F>(make_stream: &F)
+where
+    S: AppendStream
+        + SnapshotStore<Position = <S as AppendStream>::Position, Error = <S as AppendStream>::Error>,
+    <S as AppendStream>::Error: Debug,
+    F: Fn() -> S,
+{
+    let stream = make_stream();
+    stream
+        .append(Bytes::copy_from_slice(&2_i64.to_be_bytes()))
+        .await
+        .expect("first counter append");
+    let snapshot_position = stream
+        .append(Bytes::copy_from_slice(&3_i64.to_be_bytes()))
+        .await
+        .expect("second counter append")
+        .position;
+    stream
+        .publish(
+            Snapshot {
+                includes_through: SnapshotPosition::At(snapshot_position),
+                payload: Bytes::copy_from_slice(&5_i64.to_be_bytes()),
+            },
+            None,
+        )
+        .await
+        .expect("snapshot publication");
+    stream
+        .append(Bytes::copy_from_slice(&(-1_i64).to_be_bytes()))
+        .await
+        .expect("subsequent counter append");
+
+    let snapshot = stream
+        .latest()
+        .await
+        .expect("latest snapshot")
+        .expect("published snapshot");
+    let SnapshotPosition::At(position) = snapshot.snapshot.includes_through else {
+        panic!("counter snapshot should include a committed position");
+    };
+    let records = stream
+        .read(Some(&position))
+        .await
+        .expect("recovery reader")
+        .try_collect::<Vec<_>>()
+        .await
+        .expect("recovery records");
+    let recovered = records.iter().fold(5_i64, |value, record| {
+        let encoded: [u8; 8] = record.payload.as_ref().try_into().expect("counter record");
+        value + i64::from_be_bytes(encoded)
+    });
+    assert_eq!(recovered, 4);
 }
