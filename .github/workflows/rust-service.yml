@@ -1,0 +1,43 @@
+name: Rust Service
+
+on:
+  pull_request:
+    paths:
+      - ".github/skills/rust-service-coordination/**"
+      - ".github/workflows/rust-service.yml"
+      - "rust-service/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/skills/rust-service-coordination/**"
+      - ".github/workflows/rust-service.yml"
+      - "rust-service/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Format, lint, build, and test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust-service
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Rust toolchain
+        run: rustup show active-toolchain
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Run Clippy
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      - name: Build workspace
+        run: cargo build --workspace --all-targets
+      - name: Test workspace
+        run: cargo test --workspace --all-targets --all-features
+      - name: Run counter example
+        run: cargo run -p snapshotted-stream-counter
+      - name: Validate foundation records
+        run: node ../.github/skills/rust-service-coordination/scripts/iteration-records.mjs validate-foundation

@@ -1,0 +1,33 @@
+[workspace]
+members = [
+    "crates/client",
+    "crates/conformance",
+    "crates/core",
+    "crates/file-simple",
+    "crates/fluid-sequencer",
+    "crates/memory",
+    "crates/spikes/durable-log",
+    "crates/wrappers/compression",
+    "examples/counter",
+]
+resolver = "3"
+
+[workspace.package]
+edition = "2024"
+license = "MIT"
+rust-version = "1.98.1"
+
+[workspace.dependencies]
+async-trait = "0.1.89"
+bytes = "1.10.1"
+futures-core = "0.3.31"
+futures-util = "0.3.31"
+thiserror = "2.0.16"
+tokio = { version = "1.47.1", features = ["macros", "rt-multi-thread", "sync"] }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = "warn"
+pedantic = "warn"

@@ -25,4 +25,4 @@ _No findings recorded yet._
 ## Agentic Development
 
 - **Confirmed:** Test-only environment overrides must be command-scoped or visibly reported because persistent agent terminals can leak state into later validation. [Evidence](foundation-report.md#notable-events)
-- **Provisional:** A clean agent should need only a task and workflow name when read order, autonomy boundaries, escalation rules, and completion gates live in repository-owned instructions. Validate this during the fresh Phase 1 session. [Evidence](foundation-report.md#notable-events)
+- **Confirmed:** A clean agent can begin Phase 1 from the plan, development policy, active report, and coordination skill without prior conversation context when repository instructions own the read order and completion gates. [Evidence](foundation-report.md#notable-events)

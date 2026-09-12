@@ -42,11 +42,10 @@ Because agentic development is itself part of the research, each iteration pre-r
 
 ## Project Status
 
-The project is ready to begin its interactive foundation phase. The Rust toolchain, development policy, and foundation research record are prepared, but no Rust crate or stable API exists yet. The immediate milestones are:
+Phase 1 implementation is complete and approved. The workspace contains core traits, an in-memory reference, a reusable conformance baseline, a raw client helper, a recovering counter example, and compiling boundaries for iteration `0001`. The immediate milestones are:
 
-1. Create the Cargo workspace, core traits, initial conformance tests, crate stubs, and coordination skill interactively.
-2. Establish a working in-memory reference path, raw native client tier, and native counter demo.
-3. In iteration `0001`, implement a maximally simple file store and focused durable-log, transparent-wrapper, and `fluid-sequencer` feasibility spikes.
+1. Create the validated foundation commit and initialize iteration `0001` from it.
+2. In iteration `0001`, implement a maximally simple file store and focused durable-log, compression-wrapper, and `fluid-sequencer` feasibility spikes.
 4. During each Phase 3 review, select whether to keep, replace, narrow, or expand the active workstreams from the broader research backlog.
 5. Collect structured reports from every parallel workstream.
 6. Review findings and proposed architectural changes interactively before applying them.
@@ -58,6 +57,8 @@ Each iteration uses a dedicated integration branch and one isolated branch/workt
 
 - [PLAN.md](PLAN.md) defines the architecture, semantics, iterative work phases, reporting contract, review loop, and success criteria.
 - [DEVELOPMENT.md](DEVELOPMENT.md) defines the pinned toolchain, lockfile policy, and required foundation commands.
+- [WORKSTREAMS.md](WORKSTREAMS.md) records crate dependencies, iteration ownership, deliverables, and composition coverage.
+- [BENCHMARKS.md](BENCHMARKS.md) defines initial workloads, measurement procedure, and required environment metadata.
 - [foundation-report.md](foundation-report.md) records Phase 1 hypotheses, decisions, costly issues, validation, and readiness.
 - [LEARNINGS.md](LEARNINGS.md) indexes durable architecture and agentic-development findings with links to evidence.
 - [decisions/](decisions/) contains append-only shared decision records.
