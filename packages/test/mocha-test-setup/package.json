@@ -43,7 +43,7 @@
 		"check:types:inexactOptionalPropertyTypes": "tsc --project ./tsconfig.json --noEmit --exactOptionalPropertyTypes false --skipLibCheck --emitDeclarationOnly false --tsBuildInfoFile ./tsconfig.inexactOptionalPropertyTypes.tsbuildinfo",
 		"ci:build:api-reports": "api-extractor run --config api-extractor/api-extractor-report.json",
 		"ci:build:docs": "api-extractor run --config api-extractor/api-extractor-model.json",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
