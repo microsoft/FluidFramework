@@ -230,6 +230,18 @@ The repository skill at `.github/skills/rust-service-coordination/` provides tem
 
 Work interactively to turn the design into a compilable skeleton. Decisions may be made with user guidance as concrete API questions arise; the project does not need a complete up-front specification.
 
+#### Phase 1 operating contract
+
+A clean-context agent begins by reading this plan, `DEVELOPMENT.md`, the active `foundation-report.md`, and the `rust-service-coordination` skill. Those files are the source of truth; prior chat context is not required. The brainstorming notes are historical input and need only be consulted when a concrete question requires their context.
+
+Phase 1 uses one primary implementation agent on the current branch. Do not create Phase 2 worktrees, initialize iteration `0001`, or delegate independent implementation of shared crates while the kernel and conformance boundaries are still being established.
+
+The agent proceeds autonomously on reversible scaffolding, local implementation details, tests, documentation, and changes directly implied by settled requirements. When a cheap experiment can distinguish between plausible designs, run and record that experiment before asking the user. Ask the user before settling a shared semantic or public-contract choice when multiple viable alternatives have materially different downstream consequences, and before expanding or reducing the promised Phase 1 scope. Routine naming and implementation choices do not require approval.
+
+Keep the workspace compiling at the smallest practical checkpoints and update `foundation-report.md` when its notable-event triggers occur. Record unresolved shared decisions with an owner, experiment or decision point, and downstream blocking status rather than hiding them in implementation behavior.
+
+Before declaring Phase 1 complete, present the resulting shared decisions, open questions, validation results, and proposed iteration `0001` workstreams for user review. After approval, complete the foundation report, run every documented validation command and `validate-foundation`, then create the foundation commit. Do not initialize iteration `0001` before that commit exists.
+
 - Create the Rust workspace and establish formatting, linting, build, and test commands.
 - Use the pinned Rust toolchain and committed root `Cargo.lock` policy documented in `DEVELOPMENT.md`.
 - Define the core append stream, snapshot, position, receipt, reader, capability, and error types.

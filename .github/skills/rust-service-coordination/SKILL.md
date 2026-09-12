@@ -1,7 +1,7 @@
 ---
 name: rust-service-coordination
-description: 'Coordinate Rust service Phase 2 and Phase 3 iterations, workstreams, worktrees, integration, reports, retrospectives, decision records, learning logs, skill reviews, and next-iteration instructions. Use when starting, executing, validating, integrating, recovering, or closing a rust-service iteration or when recording costly issues and agentic-development lessons.'
-argument-hint: 'init, run, integrate, review, validate, or recover an iteration'
+description: 'Coordinate the Rust service Phase 1 foundation and Phase 2 or Phase 3 iterations, including implementation, validation, workstreams, worktrees, integration, reports, retrospectives, decision records, learning logs, skill reviews, and next-iteration instructions. Use when starting, implementing, validating, integrating, recovering, or closing the rust-service foundation or an iteration, or when recording costly issues and agentic-development lessons.'
+argument-hint: 'run or validate the foundation, iteration, integration, or review workflow'
 ---
 
 # Rust Service Coordination
@@ -22,19 +22,34 @@ Use this workflow for every numbered iteration under `rust-service/iterations/`.
 
 Phase 1 is interactive but still produces a research record. Start from [the foundation report template](./assets/foundation-report.template.md) and maintain `rust-service/foundation-report.md` while implementing the workspace.
 
+### Clean-Context Entry
+
+For a request to implement Phase 1, establish context in this order:
+
+1. Read `rust-service/PLAN.md`, especially the purpose, semantic laws, Phase 1 operating contract, early research questions, and non-goals.
+2. Read `rust-service/DEVELOPMENT.md` for toolchain, lockfile, and command policy.
+3. Read `rust-service/foundation-report.md` for current hypotheses, decisions, evidence, and open blockers.
+4. Check repository status and the current Rust toolchain before editing.
+5. Consult `rust-service/README.md`, `notes.md`, `notes2.md`, or existing Fluid code only when a concrete implementation question needs that context.
+
+Do not require prior conversation context. Use one primary agent on the current branch, do not initialize iteration `0001`, and do not create Phase 2 worktrees during the foundation.
+
+Proceed without asking on reversible scaffolding, local implementation details, tests, and settled requirements. Prefer a small experiment before escalating an uncertain design. Ask the user when evidence leaves multiple materially different shared semantic or public-contract choices, when changing Phase 1 scope, and at the final readiness review. Document the alternatives, evidence, and downstream consequences with the question.
+
 Use the same notable-event triggers as a Phase 2 workstream. Record API hypotheses and cheap checks before editing, then capture falsified hypotheses, repeated failures, substantial effort sinks, human interventions, decisions, and candidate skills as they occur.
 
 Before the foundation commit:
 
-1. Complete every required field in `foundation-report.md` and set its status to `complete`.
-2. Run the documented format, Clippy, build, test, and example commands from `rust-service/`.
-3. Run:
+1. Present shared decisions, unresolved questions, validation results, and proposed iteration `0001` workstreams for user approval.
+2. Complete every required field in `foundation-report.md` and set its status to `complete`.
+3. Run the documented format, Clippy, build, test, and example commands from `rust-service/`.
+4. Run:
 
    ```bash
    node .github/skills/rust-service-coordination/scripts/iteration-records.mjs validate-foundation
    ```
 
-4. Commit the validated foundation. Use that commit as iteration `0001`'s `sourceCommit`.
+5. Commit the validated foundation. Use that commit as iteration `0001`'s `sourceCommit`.
 
 ## Start an Iteration
 
