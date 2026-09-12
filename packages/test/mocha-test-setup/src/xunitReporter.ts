@@ -16,8 +16,11 @@ import MochaXUnitReporter from "mocha/lib/reporters/xunit.js";
  * Walks up from `startDir` looking for the repo root, identified by the presence of
  * `pnpm-workspace.yaml`. Falls back to `startDir` if no such ancestor is found (e.g. if the workspace
  * layout ever changes).
+ *
+ * @remarks Exported (in addition to being used internally) so tests can independently compute the
+ * expected `classname` for a given file without duplicating this logic.
  */
-function findRepoRoot(startDir: string): string {
+export function findRepoRoot(startDir: string): string {
 	let dir = startDir;
 	// eslint-disable-next-line no-constant-condition -- terminates via the `parent === dir` root check below
 	while (true) {

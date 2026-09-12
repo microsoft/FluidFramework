@@ -49,7 +49,9 @@
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
-		"lint:fix": "fluid-build . --task eslint:fix --task format"
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"test": "npm run test:mocha:esm",
+		"test:mocha:esm": "mocha"
 	},
 	"dependencies": {
 		"@fluid-internal/test-driver-definitions": "workspace:~",
