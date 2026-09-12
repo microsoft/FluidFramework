@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "iteration": "0006",
+  "status": "active",
+  "sourceCommit": "3a72dfe57b8f3b9ee96befd18c85616440fea8e7",
+  "createdAt": "2026-09-12T21:54:50.107Z",
+  "activeWorkstreams": [
+    {
+      "name": "native-connection-concurrency",
+      "instructions": "phase-2/instructions/native-connection-concurrency.md",
+      "report": "phase-2/native-connection-concurrency.md"
+    },
+    {
+      "name": "direct-shared-tree-integration",
+      "instructions": "phase-2/instructions/direct-shared-tree-integration.md",
+      "report": "phase-2/direct-shared-tree-integration.md"
+    }
+  ],
+  "deferredWorkstreams": [
+    "retention-and-garbage-collection",
+    "browser-storage",
+    "distributed-fencing",
+    "hardware-power-loss",
+    "cloud-blob-storage",
+    "authentication-authorization",
+    "node-webtransport-adapter",
+    "production-package-publication",
+    "broad-optimization"
+  ],
+  "nextWorkstreams": []
+}
