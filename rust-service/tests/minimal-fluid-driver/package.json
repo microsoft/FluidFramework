@@ -1,0 +1,23 @@
+{
+	"name": "@fluid-experimental/minimal-wasm-driver",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build": "tsc --project tsconfig.json",
+		"check:format": "biome format src browser package.json tsconfig.json index.html",
+		"format": "biome format src browser package.json tsconfig.json index.html --write",
+		"lint": "biome lint src browser",
+		"test": "node --test lib/*.test.js",
+		"typecheck": "tsc --project tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "~2.4.5",
+		"@types/node": "catalog:types",
+		"typescript": "~6.0.3"
+	}
+}
