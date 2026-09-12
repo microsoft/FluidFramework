@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "iteration": "0002",
-  "status": "phase-2-complete",
+  "status": "complete",
   "sourceCommit": "57b0028ff9061087b522c8dd652ca9b8b2179e50",
   "createdAt": "2026-09-12T15:06:44.778Z",
   "activeWorkstreams": [
@@ -35,5 +35,9 @@
     "full-fluid-driver",
     "broad-optimization"
   ],
-  "nextWorkstreams": []
+  "nextWorkstreams": [
+    "deployment-fencing",
+    "process-crash-recovery",
+    "process-isolated-transport"
+  ]
 }

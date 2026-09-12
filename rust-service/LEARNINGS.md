@@ -19,11 +19,14 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 ## Correctness and Testing
 
 - **Confirmed:** One implementation-independent conformance function can validate direct and transparent-wrapper implementations without copied tests. [Evidence](iterations/0001/phase-2/compression.md#hypothesis-results)
+- **Confirmed:** Specialized crash or transport suites do not replace shared semantic conformance; applying a concurrently expanded model directly to durable storage exposed an error-classification defect during integration. [Evidence](iterations/0002/phase-2/integration.md#conflict-resolution-and-adaptation)
 - **Confirmed:** Durable acknowledgment must classify failures after write begins as ambiguous and return success only after the implementation's documented sync policy completes. [Evidence](iterations/0001/phase-2/durable-log.md#contract-and-integration-friction)
+- **Confirmed:** Valid-only service sequencing does not require payload-aware conditional append when one fencing authority remains exclusive through append; cross-process enforcement is still required before this becomes a deployment claim. [Evidence](iterations/0002/phase-2/authoritative-sequencer.md#hypothesis-results)
 
 ## Performance and Operations
 
 - **Confirmed:** Compare storage results only with guarantee differences visible; the minimal and durable logs used equivalent record workloads but intentionally different acknowledgment semantics. [Evidence](iterations/0001/phase-3-report.md#comparative-results)
+- **Confirmed:** Deterministic injected failures provide reproducible recovery evidence but must not be presented as process-termination or power-loss evidence. [Evidence](iterations/0002/phase-2/durable-snapshots.md#remaining-work-and-risks)
 
 ## Agentic Development
 
