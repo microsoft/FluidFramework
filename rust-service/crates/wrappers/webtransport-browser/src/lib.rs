@@ -1,8 +1,12 @@
 #![doc = "Browser WebTransport adapter for unchanged FSP4 service frames."]
 #![cfg(target_arch = "wasm32")]
 
-use fluid_service_protocol::{Limits, Message, decode};
-use js_sys::{Date, Reflect, Uint8Array};
+mod core;
+
+use std::{cell::RefCell, rc::Rc};
+
+use core::{ProtocolCore, js_error};
+use js_sys::{Date, Function, Promise, Reflect, Uint8Array};
 use wasm_bindgen::{JsCast, prelude::*};
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{
@@ -10,14 +14,155 @@ use web_sys::{
     WebTransportHash, WebTransportOptions, WritableStream,
 };
 
+#[wasm_bindgen(typescript_custom_section)]
+const TYPESCRIPT_TRANSPORT: &str = r#"
+export interface AsyncRequestTransport {
+    request(frame: Uint8Array): Promise<Uint8Array>;
+    cancel?(): void;
+    disconnect?(): void;
+    shutdown?(): void;
+}
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "AsyncRequestTransport")]
+    pub type AsyncRequestTransport;
+}
+
+/// Environment-neutral FSP4 client using a caller-provided asynchronous request transport.
+#[wasm_bindgen]
+pub struct InjectedClient {
+    transport: Rc<RefCell<JsValue>>,
+    core: Rc<RefCell<ProtocolCore>>,
+}
+
+#[wasm_bindgen]
+impl InjectedClient {
+    /// Creates a connected client with a one-request bounded queue.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid limits or transports without a request method.
+    #[wasm_bindgen(constructor)]
+    pub fn new(
+        transport: AsyncRequestTransport,
+        max_frame_bytes: usize,
+    ) -> Result<InjectedClient, JsValue> {
+        let transport: JsValue = transport.into();
+        required_method(&transport, "request")?;
+        Ok(Self {
+            transport: Rc::new(RefCell::new(transport)),
+            core: Rc::new(RefCell::new(ProtocolCore::new(max_frame_bytes)?)),
+        })
+    }
+
+    /// Sends one validated FSP4 request through the injected transport.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid frames, concurrent requests, transport failures, and invalid responses.
+    pub async fn request(&self, frame_bytes: Uint8Array) -> Result<Uint8Array, JsValue> {
+        let outgoing = frame_bytes.to_vec();
+        let (request_id, operation) = self.core.borrow_mut().begin_request(&outgoing)?;
+        let requested = call_method(
+            &self.transport.borrow(),
+            "request",
+            &[Uint8Array::from(outgoing.as_slice()).into()],
+        );
+        let requested = match requested {
+            Ok(value) => value,
+            Err(error) => {
+                self.core.borrow_mut().transport_failed(operation);
+                return Err(error);
+            }
+        };
+        let incoming = match JsFuture::from(Promise::resolve(&requested)).await {
+            Ok(value) => value,
+            Err(error) => {
+                self.core.borrow_mut().transport_failed(operation);
+                return Err(error);
+            }
+        };
+        if !incoming.is_instance_of::<Uint8Array>() {
+            self.core.borrow_mut().transport_failed(operation);
+            return Err(js_error("transport response is not a Uint8Array"));
+        }
+        let incoming = Uint8Array::new(&incoming).to_vec();
+        self.core
+            .borrow_mut()
+            .finish_response(operation, request_id, &incoming)?;
+        Ok(Uint8Array::from(incoming.as_slice()))
+    }
+
+    /// Cancels the active operation and invokes the optional transport cancellation hook.
+    ///
+    /// # Errors
+    ///
+    /// Propagates a synchronous transport cancellation failure.
+    pub fn cancel(&self) -> Result<(), JsValue> {
+        self.core.borrow_mut().cancel();
+        call_optional_method(&self.transport.borrow(), "cancel")
+    }
+
+    /// Disconnects without retrying and invokes the optional transport disconnect hook.
+    ///
+    /// # Errors
+    ///
+    /// Propagates a synchronous transport disconnect failure.
+    pub fn disconnect(&self) -> Result<(), JsValue> {
+        self.core.borrow_mut().disconnect();
+        call_optional_method(&self.transport.borrow(), "disconnect")
+    }
+
+    /// Replaces the request transport after an explicit disconnect.
+    ///
+    /// # Errors
+    ///
+    /// Rejects a missing request method or an attempt to reopen a closed client.
+    pub fn reconnect(&self, transport: AsyncRequestTransport) -> Result<(), JsValue> {
+        let transport: JsValue = transport.into();
+        required_method(&transport, "request")?;
+        self.core.borrow_mut().reconnect()?;
+        self.transport.replace(transport);
+        Ok(())
+    }
+
+    /// Permanently closes the client and invokes the optional transport shutdown hook.
+    ///
+    /// # Errors
+    ///
+    /// Propagates a synchronous transport shutdown failure.
+    pub fn shutdown(&self) -> Result<(), JsValue> {
+        self.core.borrow_mut().shutdown();
+        call_optional_method(&self.transport.borrow(), "shutdown")
+    }
+
+    #[wasm_bindgen(getter)]
+    #[must_use]
+    pub fn state(&self) -> String {
+        self.core.borrow().state().to_owned()
+    }
+
+    #[wasm_bindgen(getter, js_name = wireBytes)]
+    #[must_use]
+    pub fn wire_bytes(&self) -> u64 {
+        self.core.borrow().wire_bytes()
+    }
+
+    #[wasm_bindgen(getter, js_name = peakResponseBytes)]
+    #[must_use]
+    pub fn peak_response_bytes(&self) -> usize {
+        self.core.borrow().peak_response_bytes()
+    }
+}
+
 #[wasm_bindgen]
 pub struct BrowserClient {
     url: String,
     certificate_hash: Vec<u8>,
     transport: WebTransport,
-    limits: Limits,
-    wire_bytes: u64,
-    peak_response_bytes: usize,
+    core: ProtocolCore,
     last_reconnect_milliseconds: f64,
 }
 
@@ -36,27 +181,20 @@ impl BrowserClient {
     ) -> Result<BrowserClient, JsValue> {
         let certificate_hash = certificate_hash.to_vec();
         validate_hash(&certificate_hash)?;
-        let limits = Limits {
-            max_frame_bytes,
-            ..Limits::default()
-        };
-        if max_frame_bytes < fluid_service_protocol::HEADER_BYTES {
-            return Err(js_error("max_frame_bytes is smaller than the FSP4 header"));
-        }
+        let core = ProtocolCore::new(max_frame_bytes)?;
         let transport = open_transport(&url, &certificate_hash).await?;
         Ok(Self {
             url,
             certificate_hash,
             transport,
-            limits,
-            wire_bytes: 0,
-            peak_response_bytes: 0,
+            core,
             last_reconnect_milliseconds: 0.0,
         })
     }
 
-    pub fn disconnect(&self) {
+    pub fn disconnect(&mut self) {
         self.transport.close();
+        self.core.disconnect();
     }
 
     /// Replaces the current browser session with an explicit new connection.
@@ -68,6 +206,7 @@ impl BrowserClient {
         let started = Date::now();
         let transport = open_transport(&self.url, &self.certificate_hash).await?;
         self.transport = transport;
+        self.core.reconnect()?;
         self.last_reconnect_milliseconds = Date::now() - started;
         Ok(())
     }
@@ -79,54 +218,47 @@ impl BrowserClient {
     /// Rejects malformed or oversized frames and propagates browser stream failures.
     pub async fn request(&mut self, frame_bytes: Uint8Array) -> Result<Uint8Array, JsValue> {
         let outgoing = frame_bytes.to_vec();
-        let request_id = match decode(&outgoing, self.limits)
-            .map_err(protocol_error)?
-            .message
-        {
-            Message::Request(_) => {
-                decode(&outgoing, self.limits)
-                    .map_err(protocol_error)?
-                    .request_id
+        let (request_id, operation) = self.core.begin_request(&outgoing)?;
+        let incoming = match self.request_transport(&outgoing).await {
+            Ok(incoming) => incoming,
+            Err(error) => {
+                self.core.transport_failed(operation);
+                return Err(error);
             }
-            Message::Response(_) => return Err(js_error("outgoing FSP4 frame is not a request")),
         };
+        self.core
+            .finish_response(operation, request_id, &incoming)?;
+        Ok(Uint8Array::from(incoming.as_slice()))
+    }
+
+    async fn request_transport(&self, outgoing: &[u8]) -> Result<Vec<u8>, JsValue> {
         let stream = JsFuture::from(self.transport.create_bidirectional_stream())
             .await?
             .dyn_into::<WebTransportBidirectionalStream>()?;
         let writable: WritableStream = stream.writable().unchecked_into();
         let writer = writable.get_writer()?;
-        let outgoing_array = Uint8Array::from(outgoing.as_slice());
+        let outgoing_array = Uint8Array::from(outgoing);
         JsFuture::from(writer.write_with_chunk(outgoing_array.as_ref())).await?;
         JsFuture::from(writer.close()).await?;
         writer.release_lock();
-        self.wire_bytes = self.wire_bytes.saturating_add(outgoing.len() as u64);
 
         let readable: ReadableStream = stream.readable().unchecked_into();
         let reader: ReadableStreamDefaultReader = readable.get_reader().unchecked_into();
-        let incoming = read_bounded(&reader, self.limits.max_frame_bytes).await?;
+        let incoming = read_bounded(&reader, self.core.max_frame_bytes()).await?;
         reader.release_lock();
-        self.wire_bytes = self.wire_bytes.saturating_add(incoming.len() as u64);
-        self.peak_response_bytes = self.peak_response_bytes.max(incoming.len());
-        let response = decode(&incoming, self.limits).map_err(protocol_error)?;
-        if response.request_id != request_id {
-            return Err(js_error("FSP4 response request id did not match"));
-        }
-        if !matches!(response.message, Message::Response(_)) {
-            return Err(js_error("incoming FSP4 frame is not a response"));
-        }
-        Ok(Uint8Array::from(incoming.as_slice()))
+        Ok(incoming)
     }
 
     #[wasm_bindgen(getter, js_name = wireBytes)]
     #[must_use]
     pub fn wire_bytes(&self) -> u64 {
-        self.wire_bytes
+        self.core.wire_bytes()
     }
 
     #[wasm_bindgen(getter, js_name = peakResponseBytes)]
     #[must_use]
     pub fn peak_response_bytes(&self) -> usize {
-        self.peak_response_bytes
+        self.core.peak_response_bytes()
     }
 
     #[wasm_bindgen(getter, js_name = lastReconnectMilliseconds)]
@@ -185,10 +317,29 @@ fn validate_hash(hash: &[u8]) -> Result<(), JsValue> {
     }
 }
 
-fn protocol_error(error: fluid_service_protocol::ProtocolError) -> JsValue {
-    js_error(&format!("FSP4 frame validation failed: {error}"))
+fn required_method(target: &JsValue, name: &str) -> Result<Function, JsValue> {
+    Reflect::get(target, &JsValue::from_str(name))?
+        .dyn_into::<Function>()
+        .map_err(|_| js_error(&format!("transport must provide a {name} method")))
 }
 
-fn js_error(message: &str) -> JsValue {
-    js_sys::Error::new(message).into()
+fn call_method(target: &JsValue, name: &str, arguments: &[JsValue]) -> Result<JsValue, JsValue> {
+    let method = required_method(target, name)?;
+    match arguments {
+        [] => method.call0(target),
+        [argument] => method.call1(target, argument),
+        _ => Err(js_error("transport method received unsupported arguments")),
+    }
+}
+
+fn call_optional_method(target: &JsValue, name: &str) -> Result<(), JsValue> {
+    let method = Reflect::get(target, &JsValue::from_str(name))?;
+    if method.is_null() || method.is_undefined() {
+        return Ok(());
+    }
+    method
+        .dyn_into::<Function>()
+        .map_err(|_| js_error(&format!("transport {name} member is not a function")))?
+        .call0(target)?;
+    Ok(())
 }

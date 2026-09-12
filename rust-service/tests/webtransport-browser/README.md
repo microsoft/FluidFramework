@@ -1,6 +1,6 @@
 # WebTransport browser validation
 
-This harness runs the browser-WASM client against the native HTTP/3 server without disabling certificate validation. The generated ECDSA P-256 certificate is valid for 13 days, and both clients pin its SHA-256 digest. Generated certificates, private keys, service data, browser profiles, evidence, and WASM bindings are ignored.
+This harness runs the `BrowserClient` adapter from the same WASM package as the environment-neutral `InjectedClient` against the native HTTP/3 server without disabling certificate validation. The generated ECDSA P-256 certificate is valid for 13 days, and both clients pin its SHA-256 digest. Generated certificates, private keys, service data, browser profiles, evidence, and WASM bindings are ignored.
 
 Run all Cargo commands from an exact disposable copy of `rust-service`, add `crates/protocol`, `crates/service`, `crates/wrappers/webtransport-native`, and `crates/wrappers/webtransport-browser` to that copy's workspace members, and use isolated `CARGO_TARGET_DIR` values. The source root manifest and lockfile must remain unchanged.
 
