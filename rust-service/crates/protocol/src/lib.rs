@@ -1,4 +1,8 @@
-#![doc = "Bounded, versioned, transport-neutral frames for the native Fluid service."]
+//! Bounded, versioned, transport-neutral frames for the native Fluid service.
+//!
+//! Each encoded buffer contains exactly one complete FSP4 frame. Decoding rejects bytes outside
+//! the declared body, unconsumed bytes inside it, malformed discriminants, and values exceeding
+//! the supplied [`Limits`]. Request kinds and field encodings are wire compatibility boundaries.
 
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use thiserror::Error;
@@ -1427,6 +1431,42 @@ mod tests {
         assert_eq!(
             decode(&invalid, Limits::default()),
             Err(ProtocolError::UnsupportedVersion)
+        );
+    }
+
+    #[test]
+    fn every_truncation_and_trailing_byte_is_rejected() {
+        let frame = Frame {
+            request_id: 7,
+            message: Message::Request(Request::Submit(Submission {
+                document: Bytes::from_static(b"doc"),
+                writer: Bytes::from_static(b"writer"),
+                session: Bytes::from_static(b"session"),
+                submission: Bytes::from_static(b"submission"),
+                local_sequence_number: 1,
+                reference: Reference::Initial,
+                payload: Bytes::from_static(b"payload"),
+            })),
+        };
+        let encoded = encode(&frame, Limits::default()).unwrap();
+
+        for length in 0..encoded.len() {
+            assert!(decode(&encoded[..length], Limits::default()).is_err());
+        }
+
+        let mut outside_body = encoded.to_vec();
+        outside_body.push(0);
+        assert_eq!(
+            decode(&outside_body, Limits::default()),
+            Err(ProtocolError::TrailingBytes)
+        );
+
+        let mut inside_body = outside_body;
+        let body_length = u32::from_be_bytes(inside_body[16..20].try_into().unwrap());
+        inside_body[16..20].copy_from_slice(&(body_length + 1).to_be_bytes());
+        assert_eq!(
+            decode(&inside_body, Limits::default()),
+            Err(ProtocolError::TrailingBytes)
         );
     }
 

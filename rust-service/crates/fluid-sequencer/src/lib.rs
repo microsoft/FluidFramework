@@ -1,4 +1,9 @@
-#![doc = "A valid-only authoritative Fluid sequencer over opaque appends."]
+//! A valid-only authoritative Fluid sequencer over opaque appends.
+//!
+//! Session starts and accepted submissions are the only canonical log entries. Validation occurs
+//! while the current fence is held, before append. Exact submission retries are append-free;
+//! conflicting identities, stale sessions or references, and local sequence gaps are rejected.
+//! Ambiguous appends require replay before another append, including session-start retries.
 
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -786,6 +791,7 @@ where
     fence: FenceToken,
     state: SequencerState,
     unresolved: Option<Submission>,
+    unresolved_session_start: Option<LogEntry>,
     recovery_required: bool,
 }
 
@@ -813,6 +819,7 @@ where
             fence,
             state,
             unresolved: None,
+            unresolved_session_start: None,
             recovery_required: false,
         })
     }
@@ -829,8 +836,31 @@ where
         session_id: SessionId,
         reference_position: SnapshotPosition<PositionToken>,
     ) -> Result<(), ServiceError<S::Error>> {
+        let pending = LogEntry::SessionStart {
+            writer_id: writer_id.clone(),
+            session_id: session_id.clone(),
+            reference_position: reference_position.clone(),
+        };
         if self.recovery_required {
-            return Err(ServiceError::RecoveryRequired);
+            if self.unresolved_session_start.as_ref() != Some(&pending) {
+                return Err(ServiceError::RecoveryRequired);
+            }
+            let guard = self
+                .storage
+                .lock_current(self.fence)
+                .map_err(map_fence_acquire_error)?;
+            let recovered = replay(&guard).await?;
+            drop(guard);
+            let committed = recovered
+                .writers
+                .get(&writer_id)
+                .is_some_and(|writer| writer.session_id == session_id);
+            self.state = recovered;
+            self.unresolved_session_start = None;
+            self.recovery_required = false;
+            if committed {
+                return Ok(());
+            }
         }
         let guard = self
             .storage
@@ -843,6 +873,7 @@ where
         let frame = encode_entry(&entry).map_err(ServiceError::CorruptLog)?;
         let receipt = match guard.append(frame).await.map_err(ServiceError::Storage) {
             Err(ServiceError::Storage(error)) if error.kind() == ErrorKind::Ambiguous => {
+                self.unresolved_session_start = Some(entry);
                 self.recovery_required = true;
                 return Err(ServiceError::Storage(error));
             }
@@ -1468,6 +1499,62 @@ mod tests {
         assert_eq!(stream.len(), stored);
     });
 
+    async_test!(identity_and_reference_failures_are_append_free, {
+        let (stream, _, mut sequencer, writer_id, session_id) = setup().await;
+        let stored = stream.len();
+        assert!(matches!(
+            sequencer
+                .connect(
+                    writer(b"bob"),
+                    session_id.clone(),
+                    SnapshotPosition::Initial,
+                )
+                .await,
+            Err(ServiceError::Rejected(Rejection::SessionAlreadyUsed))
+        ));
+        let unknown = PositionToken::new(Bytes::copy_from_slice(&100_u64.to_be_bytes())).unwrap();
+        assert!(matches!(
+            sequencer
+                .submit(submission(
+                    &writer_id,
+                    &session_id,
+                    b"unknown-reference",
+                    1,
+                    SnapshotPosition::At(unknown),
+                ))
+                .await,
+            Err(ServiceError::Rejected(Rejection::UnknownReferencePosition))
+        ));
+        assert_eq!(stream.len(), stored);
+
+        let original = submission(
+            &writer_id,
+            &session_id,
+            b"stable-id",
+            1,
+            SnapshotPosition::Initial,
+        );
+        let accepted = sequencer.submit(original.clone()).await.unwrap();
+        let stored = stream.len();
+        assert!(matches!(accepted, SubmitOutcome::Accepted(_)));
+        assert!(matches!(
+            sequencer.submit(original.clone()).await.unwrap(),
+            SubmitOutcome::Duplicate(_)
+        ));
+        assert!(matches!(
+            sequencer
+                .submit(Submission {
+                    payload: Bytes::from_static(b"conflict"),
+                    ..original
+                })
+                .await,
+            Err(ServiceError::Rejected(
+                Rejection::SubmissionIdentityConflict
+            ))
+        ));
+        assert_eq!(stream.len(), stored);
+    });
+
     async_test!(stale_client_reconnects_and_regenerates_submission, {
         let (stream, _, mut sequencer, alice, alice_session) = setup().await;
         let bob = writer(b"bob");
@@ -1641,6 +1728,50 @@ mod tests {
         ));
         assert_eq!(stream.len(), stored + 1);
     });
+
+    async_test!(
+        ambiguous_session_start_can_retry_without_duplicate_append,
+        {
+            for outcome in [
+                NextAppend::AmbiguousCommitted,
+                NextAppend::AmbiguousNotCommitted,
+            ] {
+                let stream = TestStream::default();
+                let storage = FencedStream::new(stream.clone());
+                let fence = storage.issue_fence();
+                let mut sequencer = AuthoritativeSequencer::recover(storage, fence)
+                    .await
+                    .unwrap();
+                let writer_id = writer(b"alice");
+                let session_id = session(b"session-1");
+                stream.fail_next(outcome);
+
+                assert!(matches!(
+                    sequencer
+                        .connect(
+                            writer_id.clone(),
+                            session_id.clone(),
+                            SnapshotPosition::Initial,
+                        )
+                        .await,
+                    Err(ServiceError::Storage(TestError::Ambiguous))
+                ));
+                let stored = stream.len();
+                sequencer
+                    .connect(writer_id, session_id, SnapshotPosition::Initial)
+                    .await
+                    .unwrap();
+                assert_eq!(
+                    stream.len(),
+                    if matches!(outcome, NextAppend::AmbiguousCommitted) {
+                        stored
+                    } else {
+                        stored + 1
+                    }
+                );
+            }
+        }
+    );
 
     async_test!(projected_pages_advance_across_administrative_records, {
         let (stream, _, mut sequencer, writer_id, session_id) = setup().await;

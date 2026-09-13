@@ -1,4 +1,10 @@
-#![doc = "Single-host native Fluid service assembly."]
+//! Single-host native Fluid service assembly.
+//!
+//! Documents own independent logs, sequencers, fences, and projected-operation notification
+//! channels. Unary requests route by their embedded document identity. Transport adapters own
+//! long-lived stream framing and bind submission streams to one document before calling this
+//! service. Projected subscriptions register before catch-up reads, recover from notification lag
+//! by cursor, and report cancellation before returning another pending operation.
 
 use std::{
     collections::{BTreeMap, VecDeque},
@@ -1856,6 +1862,54 @@ mod tests {
             }
         ));
         assert_eq!(resumed.next().await.unwrap().sequence_number, 9);
+    }
+
+    #[tokio::test]
+    async fn projected_subscriptions_are_document_bound_and_validate_cursors() {
+        let directory = TempDirectory::new();
+        let service = Arc::new(NativeService::new(ServiceConfig::new(&directory.0)));
+        create_and_open(&service, b"one", b"session-one").await;
+        create_and_open(&service, b"two", b"session-two").await;
+        let Response::ProjectedRead {
+            cursor: Some(after_one),
+            ..
+        } = service
+            .handle(Request::ReadProjected {
+                document: bytes(b"one"),
+                after: None,
+            })
+            .await
+        else {
+            panic!("document one did not return an initial cursor");
+        };
+        let mut subscription = service
+            .subscribe_projected(bytes(b"one"), Some(after_one))
+            .await
+            .unwrap();
+
+        assert!(matches!(
+            service.handle(submit(b"two", b"session-two", 1)).await,
+            Response::Submitted { .. }
+        ));
+        assert!(matches!(
+            service.handle(submit(b"one", b"session-one", 1)).await,
+            Response::Submitted { .. }
+        ));
+        let operation = subscription.next().await.unwrap();
+        assert_eq!(operation.payload, bytes(b"payload-1"));
+        assert_eq!(operation.session, bytes(b"session-one"));
+
+        let future = Bytes::copy_from_slice(&100_u64.to_be_bytes());
+        let mut invalid = service
+            .subscribe_projected(bytes(b"one"), Some(future))
+            .await
+            .unwrap();
+        assert_eq!(
+            invalid.next().await,
+            Err(ProjectedSubscriptionError::Service(
+                ErrorCode::InvalidPosition
+            ))
+        );
     }
 
     #[tokio::test]
