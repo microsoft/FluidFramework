@@ -368,10 +368,17 @@ test("actual WASM package backs the minimal Fluid driver contract", async () => 
 	} as IClient)) as MinimalWasmDeltaConnection;
 	assert.equal(first.mode, "write");
 	assert.equal(second.mode, "read");
-	assert.equal(second.initialMessages.filter(({ type }) => type === "join").length, 1);
+	assert.equal(second.initialMessages.filter(({ type }) => type === "join").length, 2);
 	const readJoin = second.initialMessages[0];
 	assert(readJoin !== undefined);
 	assert.equal(JSON.parse(readJoin.data ?? "").detail.mode, "write");
+	second.dispose();
+	const replacement = (await secondService.connectToDeltaStream({
+		mode: "write",
+	} as IClient)) as MinimalWasmDeltaConnection;
+	assert.equal(replacement.mode, "write");
+	assert.notEqual(replacement.clientId, second.clientId);
+	assert.equal(replacement.clientId, "remote-service-client");
 	const message = (clientSequenceNumber: number, delta: number): IDocumentMessage => ({
 		clientSequenceNumber,
 		referenceSequenceNumber: 0,
@@ -379,17 +386,22 @@ test("actual WASM package backs the minimal Fluid driver contract", async () => 
 		contents: { delta },
 	});
 	first.submit([message(1, 1)]);
-	second.submit([message(1, 2)]);
-	await Promise.all([first.waitForIdle(), second.waitForIdle()]);
+	replacement.submit([message(2, 20)]);
+	replacement.submit([message(1, 2)]);
+	await Promise.all([first.waitForIdle(), replacement.waitForIdle()]);
+	assert.deepEqual(
+		backend.operations.map(({ localSequenceNumber }) => localSequenceNumber),
+		[1n, 1n, 2n],
+	);
 	const firstMessages = await first.synchronize();
-	const secondMessages = await second.synchronize();
+	const secondMessages = await replacement.synchronize();
 	assert.deepEqual(
 		firstMessages.map(({ clientSequenceNumber }) => clientSequenceNumber),
-		[1, 2],
+		[1, 1, 2],
 	);
 	assert.deepEqual(
 		secondMessages.map(({ clientSequenceNumber }) => clientSequenceNumber),
-		[1, 1],
+		[1, 1, 2],
 	);
 
 	first.disconnect();
@@ -408,7 +420,7 @@ test("actual WASM package backs the minimal Fluid driver contract", async () => 
 	first.disconnect();
 	await first.reconnect(new Transport(backend));
 	assert.equal((await first.recoverPending()).get(3)?.kind, "committed");
-	assert.equal(backend.operations.length, 4);
+	assert.equal(backend.operations.length, 5);
 
 	const history = await loaded.connectToDeltaStorage();
 	const page = await history.fetchMessages(2, 4).read();

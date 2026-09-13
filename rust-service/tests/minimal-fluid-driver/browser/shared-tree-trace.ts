@@ -286,10 +286,6 @@ async function run(): Promise<Record<string, unknown>> {
 			urlResolver,
 			documentServiceFactory,
 			codeLoader,
-			configProvider: {
-				getRawConfig: (name) =>
-					name === "Fluid.Container.ForceWriteConnection" ? true : undefined,
-			},
 			logger: {
 				send: (event) => {
 					telemetry.push(event);

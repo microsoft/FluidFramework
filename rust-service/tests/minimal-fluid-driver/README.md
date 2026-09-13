@@ -17,7 +17,7 @@ This isolated package adapts the generated `fluid-webtransport-browser` WASM pac
 - Summary upload accepts full trees only. Incremental handle reuse and parent concurrency are not implemented.
 - `getSnapshot`, caching, auth, production certificates, Routerlicious, and ODSP compatibility are not implemented or claimed.
 - The native server owns a bounded set of concurrent connection futures. The SharedTree Chromium trace uses three independent Fluid containers and three generated `BrowserClient` transport sessions. Each document service serializes access to its non-reentrant generated client; serialization is not shared across containers.
-- Browser loading uses Fluid's `Fluid.Container.ForceWriteConnection` host gate. Default read-to-write reconnect cursor transfer is not implemented or claimed. Node contracts cover read-mode membership plus disconnected-before-commit and committed-after-response-loss recovery.
+- Browser loading uses Fluid's default read-to-write replacement. The document service preserves one projected identity, session, cursor, and last position across replacement; read-first services reuse the explicitly synthetic remote member because FSP4 does not yet carry production membership operations. Node contracts cover replacement plus disconnected-before-commit and committed-after-response-loss recovery.
 
 ## Validation
 
@@ -112,4 +112,4 @@ The generated WASM, bundles, certificates, service data, and local `benchmark-re
 
 The first clean provisional run is recorded in the [SharedTree comparison evidence](../../benchmarks/shared-tree/13401fe0de3/README.md).
 
-These results are provisional until the planned default read-to-write lifecycle replaces the Rust fixture's `Fluid.Container.ForceWriteConnection` gate. The Rust adapter also synchronizes explicitly, while Tinylicious receives pushed operations, and only the Rust binding currently exposes wire-byte counters. Compare convergence, startup, and observed edit latency with those differences labeled; do not present the numbers as production capacity, durability, or equivalent Routerlicious/ODSP evidence.
+These results are provisional because they predate the default read-to-write lifecycle and the Rust adapter synchronizes explicitly, while Tinylicious receives pushed operations. Only the Rust binding currently exposes wire-byte counters. Compare convergence, startup, and observed edit latency with those differences labeled; do not present the numbers as production capacity, durability, or equivalent Routerlicious/ODSP evidence.

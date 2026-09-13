@@ -39,6 +39,7 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 const summaryType = { tree: 1, blob: 2 } as const;
 const remoteClientId = "remote-service-client";
+const externalClientId = "external-service-client";
 const applicationSequenceOffset = 2;
 
 type Listener = (...args: readonly unknown[]) => void;
@@ -322,6 +323,8 @@ function toSequenced(
 	operation: ProjectedOperation,
 	localWriter?: Uint8Array,
 	localClientId?: string,
+	projectedRemoteClientId = remoteClientId,
+	remoteClientSequenceNumber = Number(operation.sequenceNumber),
 ): ISequencedDocumentMessage {
 	const message = JSON.parse(decoder.decode(operation.payload)) as IDocumentMessage;
 	const isLocal =
@@ -330,10 +333,8 @@ function toSequenced(
 		bytesEqual(operation.writer, localWriter);
 	return {
 		...message,
-		clientId: isLocal ? localClientId : remoteClientId,
-		clientSequenceNumber: isLocal
-			? message.clientSequenceNumber
-			: Number(operation.sequenceNumber),
+		clientId: isLocal ? localClientId : projectedRemoteClientId,
+		clientSequenceNumber: isLocal ? message.clientSequenceNumber : remoteClientSequenceNumber,
 		sequenceNumber: Number(operation.sequenceNumber) + applicationSequenceOffset,
 		minimumSequenceNumber: applicationSequenceOffset,
 		timestamp: 0,
@@ -353,6 +354,7 @@ class ProjectedMessageStream implements IStream<ISequencedDocumentMessage[]> {
 		private readonly document: Uint8Array,
 		private readonly from: number,
 		private readonly to: number | undefined,
+		private readonly project: (operation: ProjectedOperation) => ISequencedDocumentMessage,
 	) {}
 
 	public async read(): Promise<
@@ -371,7 +373,7 @@ class ProjectedMessageStream implements IStream<ISequencedDocumentMessage[]> {
 					(this.to === undefined ||
 						Number(sequenceNumber) + applicationSequenceOffset < this.to),
 			)
-			.map((operation) => toSequenced(operation));
+			.map(this.project);
 		return messages.length === 0 && this.done
 			? { done: true }
 			: { done: false, value: messages };
@@ -382,19 +384,56 @@ export class MinimalWasmDeltaStorage implements IDocumentDeltaStorageService {
 	public constructor(
 		private readonly client: WasmProtocolClient,
 		private readonly document: Uint8Array,
+		private readonly project: (
+			operation: ProjectedOperation,
+		) => ISequencedDocumentMessage = toSequenced,
 	) {}
 
 	public fetchMessages(
 		from: number,
 		to: number | undefined,
 	): IStream<ISequencedDocumentMessage[]> {
-		return new ProjectedMessageStream(this.client, this.document, from, to);
+		return new ProjectedMessageStream(this.client, this.document, from, to, this.project);
 	}
 }
 
 interface PendingSubmission {
 	readonly identity: Uint8Array;
 	readonly message: IDocumentMessage;
+}
+
+interface DeltaConnectionLifecycle {
+	readonly clientId: string;
+	readonly remoteClientId: string;
+	readonly writer: Uint8Array;
+	readonly session: Uint8Array;
+	cursor: Uint8Array | undefined;
+	lastPosition: Uint8Array | undefined;
+	remoteClientSequenceNumber: number;
+	readonly remoteSequenceNumbers: Map<string, number>;
+}
+
+function projectOperation(
+	lifecycle: DeltaConnectionLifecycle,
+	operation: ProjectedOperation,
+): ISequencedDocumentMessage {
+	const isLocal = bytesEqual(operation.writer, lifecycle.writer);
+	let remoteSequenceNumber = lifecycle.remoteClientSequenceNumber;
+	if (!isLocal) {
+		const position = bytesToHex(operation.position);
+		remoteSequenceNumber = lifecycle.remoteSequenceNumbers.get(position) ?? 0;
+		if (remoteSequenceNumber === 0) {
+			remoteSequenceNumber = ++lifecycle.remoteClientSequenceNumber;
+			lifecycle.remoteSequenceNumbers.set(position, remoteSequenceNumber);
+		}
+	}
+	return toSequenced(
+		operation,
+		lifecycle.writer,
+		lifecycle.clientId,
+		lifecycle.remoteClientId,
+		remoteSequenceNumber,
+	);
 }
 
 export class MinimalWasmDeltaConnection extends Events implements IDocumentDeltaConnection {
@@ -418,16 +457,15 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 	public readonly serviceConfiguration = {} as IClientConfiguration;
 	public checkpointSequenceNumber = 0;
 	public readonly pending = new Map<number, PendingSubmission>();
-	private readonly writer: Uint8Array;
-	private readonly session: Uint8Array;
-	private cursor: Uint8Array | undefined;
-	private lastPosition: Uint8Array | undefined;
+	private readonly queuedSubmissions = new Map<number, PendingSubmission>();
+	private nextClientSequenceNumber = 1;
 	private submitChain: Promise<void> = Promise.resolve();
 	private pollingGeneration = 0;
 	public disposed = false;
 
 	public constructor(
 		public readonly clientId: string,
+		private readonly lifecycle: DeltaConnectionLifecycle,
 		private readonly document: Uint8Array,
 		private readonly client: WasmProtocolClient,
 		private readonly protocol: ProtocolClient,
@@ -442,9 +480,6 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 		) => void,
 	) {
 		super();
-		this.writer = encoder.encode(clientId);
-		this.session = encoder.encode(`${clientId}-${Date.now()}`);
-		const firstJoinClientId = mode === "write" ? clientId : remoteClientId;
 		const remoteFluidClient = { ...fluidClient, mode: "write" } satisfies IClient;
 		this.initialMessages = [
 			{
@@ -457,32 +492,24 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 				contents: "",
 				timestamp: 0,
 				data: JSON.stringify({
-					clientId: firstJoinClientId,
-					detail: mode === "write" ? fluidClient : remoteFluidClient,
+					clientId: lifecycle.clientId,
+					detail: remoteFluidClient,
 				}),
 			} satisfies ISequencedDocumentSystemMessage,
-			mode === "write"
-				? {
-						sequenceNumber: 2,
-						minimumSequenceNumber: 0,
-						clientSequenceNumber: 0,
-						type: MessageType.ClientJoin,
-						clientId: null,
-						referenceSequenceNumber: 0,
-						contents: "",
-						timestamp: 0,
-						data: JSON.stringify({ clientId: remoteClientId, detail: remoteFluidClient }),
-					}
-				: {
-						sequenceNumber: 2,
-						minimumSequenceNumber: 0,
-						clientSequenceNumber: 0,
-						type: MessageType.NoOp,
-						clientId: remoteClientId,
-						referenceSequenceNumber: 1,
-						contents: "",
-						timestamp: 0,
-					},
+			{
+				sequenceNumber: 2,
+				minimumSequenceNumber: 0,
+				clientSequenceNumber: 0,
+				type: MessageType.ClientJoin,
+				clientId: null,
+				referenceSequenceNumber: 0,
+				contents: "",
+				timestamp: 0,
+				data: JSON.stringify({
+					clientId: lifecycle.remoteClientId,
+					detail: remoteFluidClient,
+				}),
+			},
 		];
 		this.checkpointSequenceNumber = applicationSequenceOffset;
 		this.claims = {
@@ -499,9 +526,9 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 	public async open(): Promise<void> {
 		await this.protocol.openSession(
 			this.document,
-			this.writer,
-			this.session,
-			this.lastPosition,
+			this.lifecycle.writer,
+			this.lifecycle.session,
+			this.lifecycle.lastPosition,
 		);
 		this.startPolling();
 	}
@@ -509,18 +536,33 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 	public submit(messages: IDocumentMessage[]): void {
 		for (const message of messages) {
 			const identity = encoder.encode(`${this.clientId}-${message.clientSequenceNumber}`);
-			this.pending.set(message.clientSequenceNumber, { identity, message });
+			const pending = { identity, message };
+			this.pending.set(message.clientSequenceNumber, pending);
+			this.queuedSubmissions.set(message.clientSequenceNumber, pending);
+		}
+		this.scheduleQueuedSubmissions();
+	}
+
+	private scheduleQueuedSubmissions(): void {
+		for (;;) {
+			const pending = this.queuedSubmissions.get(this.nextClientSequenceNumber);
+			if (pending === undefined) {
+				return;
+			}
+			const { identity, message } = pending;
+			this.queuedSubmissions.delete(this.nextClientSequenceNumber);
+			this.nextClientSequenceNumber++;
 			this.submitChain = this.submitChain.then(async () => {
 				const position = await this.protocol.submit(
 					this.document,
-					this.writer,
-					this.session,
+					this.lifecycle.writer,
+					this.lifecycle.session,
 					identity,
 					message.clientSequenceNumber,
 					encoder.encode(JSON.stringify(message)),
-					this.lastPosition,
+					this.lifecycle.lastPosition,
 				);
-				this.lastPosition = position;
+				this.lifecycle.lastPosition = position;
 				this.pending.delete(message.clientSequenceNumber);
 			});
 		}
@@ -535,10 +577,10 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 	}
 
 	public async synchronize(): Promise<ISequencedDocumentMessage[]> {
-		const page = await this.client.readProjected(this.document, this.cursor);
-		this.cursor = page.cursor;
+		const page = await this.client.readProjected(this.document, this.lifecycle.cursor);
+		this.lifecycle.cursor = page.cursor;
 		const messages = page.operations.map((operation) =>
-			toSequenced(operation, this.writer, this.clientId),
+			projectOperation(this.lifecycle, operation),
 		);
 		if (messages.length > 0) {
 			this.checkpointSequenceNumber =
@@ -554,13 +596,13 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 		for (const [sequenceNumber, pending] of this.pending) {
 			const resolution = await this.client.resolveSubmission(
 				this.document,
-				this.writer,
-				this.session,
+				this.lifecycle.writer,
+				this.lifecycle.session,
 				pending.identity,
 			);
 			resolutions.set(sequenceNumber, resolution);
 			if (resolution.kind === "committed") {
-				this.lastPosition = resolution.position;
+				this.lifecycle.lastPosition = resolution.position;
 				this.pending.delete(sequenceNumber);
 			}
 		}
@@ -577,14 +619,14 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 		}
 		const position = await this.protocol.submit(
 			this.document,
-			this.writer,
-			this.session,
+			this.lifecycle.writer,
+			this.lifecycle.session,
 			pending.identity,
 			sequenceNumber,
 			encoder.encode(JSON.stringify(pending.message)),
-			this.lastPosition,
+			this.lifecycle.lastPosition,
 		);
-		this.lastPosition = position;
+		this.lifecycle.lastPosition = position;
 		this.pending.delete(sequenceNumber);
 		if (this.pending.size === 0) {
 			this.submitChain = Promise.resolve();
@@ -667,6 +709,7 @@ export class MinimalWasmDocumentService extends Events implements IDocumentServi
 	public readonly policies = { summarizeProtocolTree: true };
 	private client: WasmProtocolClient | undefined;
 	private clientPromise: Promise<WasmProtocolClient> | undefined;
+	private deltaLifecycle: DeltaConnectionLifecycle | undefined;
 
 	public constructor(
 		public readonly resolvedUrl: IResolvedUrl,
@@ -687,15 +730,21 @@ export class MinimalWasmDocumentService extends Events implements IDocumentServi
 
 	public async connectToDeltaStorage(): Promise<MinimalWasmDeltaStorage> {
 		const client = await this.getClient("history");
-		return new MinimalWasmDeltaStorage(client, documentId(this.resolvedUrl));
+		const lifecycle = this.getDeltaLifecycle("read");
+		return new MinimalWasmDeltaStorage(client, documentId(this.resolvedUrl), (operation) =>
+			projectOperation(lifecycle, operation),
+		);
 	}
 
 	public async connectToDeltaStream(client: IClient): Promise<MinimalWasmDeltaConnection> {
-		const clientId = `client-${crypto.randomUUID()}`;
-		const wasm = await this.getClient(clientId);
 		const mode = client.mode ?? "write";
+		const lifecycle = this.getDeltaLifecycle(mode);
+		const logicalClientId = lifecycle.clientId;
+		const clientId = mode === "read" ? `client-${crypto.randomUUID()}` : logicalClientId;
+		const wasm = await this.getClient(clientId);
 		const connection = new MinimalWasmDeltaConnection(
 			clientId,
+			lifecycle,
 			documentId(this.resolvedUrl),
 			wasm,
 			new ProtocolClient(wasm),
@@ -727,6 +776,23 @@ export class MinimalWasmDocumentService extends Events implements IDocumentServi
 			return client;
 		});
 		return this.clientPromise;
+	}
+
+	private getDeltaLifecycle(mode: ConnectionMode): DeltaConnectionLifecycle {
+		if (this.deltaLifecycle === undefined) {
+			const clientId = mode === "read" ? remoteClientId : `client-${crypto.randomUUID()}`;
+			this.deltaLifecycle = {
+				clientId,
+				remoteClientId: clientId === remoteClientId ? externalClientId : remoteClientId,
+				writer: encoder.encode(clientId),
+				session: encoder.encode(`${clientId}-${crypto.randomUUID()}`),
+				cursor: undefined,
+				lastPosition: undefined,
+				remoteClientSequenceNumber: 0,
+				remoteSequenceNumbers: new Map(),
+			};
+		}
+		return this.deltaLifecycle;
 	}
 }
 
