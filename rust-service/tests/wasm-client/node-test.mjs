@@ -46,7 +46,7 @@ function frame(requestId, kind, ...body) {
 	const payload = concat(...body);
 	return concat(
 		encoder.encode("FSP4"),
-		new Uint8Array([0, 1, kind, 0]),
+		new Uint8Array([0, 2, kind, 0]),
 		u64(requestId),
 		u32(payload.length),
 		payload,

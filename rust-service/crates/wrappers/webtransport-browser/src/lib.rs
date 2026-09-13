@@ -3,9 +3,12 @@
 
 mod core;
 
-use std::{cell::RefCell, rc::Rc};
+use std::{
+    cell::{Cell, RefCell},
+    rc::Rc,
+};
 
-use core::{ProtocolCore, js_error};
+use core::{ClientMetrics, ProtocolCore, js_error};
 use fluid_service_protocol::{
     ProjectedOperation as ProtocolProjectedOperation, Reference, Resolution,
     SummaryEntry as ProtocolSummaryEntry,
@@ -22,9 +25,15 @@ use web_sys::{
 const TYPESCRIPT_TRANSPORT: &str = r#"
 export interface AsyncRequestTransport {
     request(frame: Uint8Array): Promise<Uint8Array>;
+    subscribe?(frame: Uint8Array): AsyncSubscriptionTransport;
     cancel?(): void;
     disconnect?(): void;
     shutdown?(): void;
+}
+
+export interface AsyncSubscriptionTransport {
+    next(): Promise<Uint8Array>;
+    cancel(): void | Promise<void>;
 }
 
 export type SummaryEntries = ReadonlyArray<SummaryEntry>;
@@ -191,6 +200,50 @@ pub struct ProjectedReadPage {
 }
 
 #[wasm_bindgen]
+pub struct InjectedProjectedSubscription {
+    transport: JsValue,
+    limits: fluid_service_protocol::Limits,
+    request_id: u64,
+    cancelled: Cell<bool>,
+    metrics: Rc<ClientMetrics>,
+}
+
+#[wasm_bindgen]
+impl InjectedProjectedSubscription {
+    /// Waits for the next projected operation.
+    ///
+    /// # Errors
+    ///
+    /// Rejects cancellation, transport failures, and invalid response frames.
+    pub async fn next(&self) -> Result<ProjectedOperation, JsValue> {
+        if self.cancelled.get() {
+            return Err(js_error("projected subscription is cancelled"));
+        }
+        let incoming = call_method(&self.transport, "next", &[])?;
+        let incoming = JsFuture::from(Promise::resolve(&incoming)).await?;
+        if !incoming.is_instance_of::<Uint8Array>() {
+            return Err(js_error("subscription frame is not a Uint8Array"));
+        }
+        let incoming = Uint8Array::new(&incoming).to_vec();
+        self.metrics.record_subscription_frame(incoming.len(), 1);
+        projected_operation(self.limits, self.request_id, &incoming)
+    }
+
+    /// Cancels the subscription and its injected transport.
+    ///
+    /// # Errors
+    ///
+    /// Rejects if the injected transport cannot be cancelled.
+    pub async fn cancel(&self) -> Result<(), JsValue> {
+        if !self.cancelled.replace(true) {
+            let cancelled = call_method(&self.transport, "cancel", &[])?;
+            JsFuture::from(Promise::resolve(&cancelled)).await?;
+        }
+        Ok(())
+    }
+}
+
+#[wasm_bindgen]
 impl ProjectedReadPage {
     #[wasm_bindgen(getter)]
     pub fn operations(&self) -> Array {
@@ -349,6 +402,41 @@ impl InjectedClient {
         projected_read_page(&self.core.borrow(), &response.to_vec())
     }
 
+    /// Starts a projected-operation subscription over the injected transport.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid fields and invalid injected transport state.
+    #[allow(clippy::needless_pass_by_value)] // wasm-bindgen exports JS arrays by value.
+    #[wasm_bindgen(js_name = subscribeProjected)]
+    pub fn subscribe_projected(
+        &self,
+        document: Uint8Array,
+        after: Option<Uint8Array>,
+    ) -> Result<InjectedProjectedSubscription, JsValue> {
+        let document = document.to_vec();
+        let request = self
+            .core
+            .borrow_mut()
+            .subscribe_projected_request(document, after.map(|value| value.to_vec()))?;
+        let request_id = self.core.borrow().request_id(&request)?;
+        self.core.borrow().metrics().record_outgoing(request.len());
+        let transport = call_method(
+            &self.transport.borrow(),
+            "subscribe",
+            &[Uint8Array::from(request.as_slice()).into()],
+        )?;
+        required_method(&transport, "next")?;
+        required_method(&transport, "cancel")?;
+        Ok(InjectedProjectedSubscription {
+            transport,
+            limits: self.core.borrow().limits(),
+            request_id,
+            cancelled: Cell::new(false),
+            metrics: self.core.borrow().metrics(),
+        })
+    }
+
     /// Resolves one stable submission identity without retrying the submission.
     ///
     /// # Errors
@@ -497,6 +585,18 @@ impl InjectedClient {
     pub fn peak_response_bytes(&self) -> usize {
         self.core.borrow().peak_response_bytes()
     }
+
+    #[wasm_bindgen(getter, js_name = peakSubscriptionFrameBytes)]
+    #[must_use]
+    pub fn peak_subscription_frame_bytes(&self) -> usize {
+        self.core.borrow().peak_subscription_frame_bytes()
+    }
+
+    #[wasm_bindgen(getter, js_name = peakSubscriptionQueueDepth)]
+    #[must_use]
+    pub fn peak_subscription_queue_depth(&self) -> usize {
+        self.core.borrow().peak_subscription_queue_depth()
+    }
 }
 
 #[wasm_bindgen]
@@ -506,6 +606,54 @@ pub struct BrowserClient {
     transport: WebTransport,
     core: ProtocolCore,
     last_reconnect_milliseconds: f64,
+}
+
+#[wasm_bindgen]
+pub struct BrowserProjectedSubscription {
+    reader: ReadableStreamDefaultReader,
+    limits: fluid_service_protocol::Limits,
+    request_id: u64,
+    buffered: RefCell<Vec<u8>>,
+    cancelled: Cell<bool>,
+    metrics: Rc<ClientMetrics>,
+}
+
+#[wasm_bindgen]
+impl BrowserProjectedSubscription {
+    /// Waits for the next projected operation.
+    ///
+    /// # Errors
+    ///
+    /// Rejects cancellation, transport failures, and invalid response frames.
+    pub async fn next(&self) -> Result<ProjectedOperation, JsValue> {
+        if self.cancelled.get() {
+            return Err(js_error("projected subscription is cancelled"));
+        }
+        let mut buffered = self.buffered.take();
+        let result = read_subscription_frame(
+            &self.reader,
+            &mut buffered,
+            self.limits.max_frame_bytes,
+            &self.metrics,
+        )
+        .await;
+        self.buffered.replace(buffered);
+        let incoming = result?;
+        projected_operation(self.limits, self.request_id, &incoming)
+    }
+
+    /// Cancels the subscription and releases its stream reader.
+    ///
+    /// # Errors
+    ///
+    /// Rejects if the browser stream cannot be cancelled.
+    pub async fn cancel(&self) -> Result<(), JsValue> {
+        if !self.cancelled.replace(true) {
+            JsFuture::from(self.reader.cancel()).await?;
+            self.reader.release_lock();
+        }
+        Ok(())
+    }
 }
 
 #[wasm_bindgen]
@@ -589,6 +737,42 @@ impl BrowserClient {
             .read_projected_request(document.to_vec(), after.map(|value| value.to_vec()))?;
         let response = self.request(Uint8Array::from(request.as_slice())).await?;
         projected_read_page(&self.core, &response.to_vec())
+    }
+
+    #[wasm_bindgen(js_name = subscribeProjected)]
+    /// Starts a projected-operation subscription on a dedicated stream.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid fields, transport failures, and invalid stream state.
+    pub async fn subscribe_projected(
+        &mut self,
+        document: Uint8Array,
+        after: Option<Uint8Array>,
+    ) -> Result<BrowserProjectedSubscription, JsValue> {
+        let request = self
+            .core
+            .subscribe_projected_request(document.to_vec(), after.map(|value| value.to_vec()))?;
+        let request_id = self.core.request_id(&request)?;
+        self.core.metrics().record_outgoing(request.len());
+        let stream = JsFuture::from(self.transport.create_bidirectional_stream())
+            .await?
+            .dyn_into::<WebTransportBidirectionalStream>()?;
+        let writable: WritableStream = stream.writable().unchecked_into();
+        let writer = writable.get_writer()?;
+        let outgoing = Uint8Array::from(request.as_slice());
+        JsFuture::from(writer.write_with_chunk(outgoing.as_ref())).await?;
+        JsFuture::from(writer.close()).await?;
+        writer.release_lock();
+        let readable: ReadableStream = stream.readable().unchecked_into();
+        Ok(BrowserProjectedSubscription {
+            reader: readable.get_reader().unchecked_into(),
+            limits: self.core.limits(),
+            request_id,
+            buffered: RefCell::new(Vec::new()),
+            cancelled: Cell::new(false),
+            metrics: self.core.metrics(),
+        })
     }
 
     /// Resolves one stable submission identity without retrying the submission.
@@ -699,6 +883,18 @@ impl BrowserClient {
         self.core.peak_response_bytes()
     }
 
+    #[wasm_bindgen(getter, js_name = peakSubscriptionFrameBytes)]
+    #[must_use]
+    pub fn peak_subscription_frame_bytes(&self) -> usize {
+        self.core.peak_subscription_frame_bytes()
+    }
+
+    #[wasm_bindgen(getter, js_name = peakSubscriptionQueueDepth)]
+    #[must_use]
+    pub fn peak_subscription_queue_depth(&self) -> usize {
+        self.core.peak_subscription_queue_depth()
+    }
+
     #[wasm_bindgen(getter, js_name = lastReconnectMilliseconds)]
     #[must_use]
     pub fn last_reconnect_milliseconds(&self) -> f64 {
@@ -715,6 +911,17 @@ fn projected_read_page(core: &ProtocolCore, response: &[u8]) -> Result<Projected
             .collect(),
         cursor,
         has_more,
+    })
+}
+
+fn projected_operation(
+    limits: fluid_service_protocol::Limits,
+    request_id: u64,
+    response: &[u8],
+) -> Result<ProjectedOperation, JsValue> {
+    let core = ProtocolCore::new(limits.max_frame_bytes)?;
+    Ok(ProjectedOperation {
+        inner: core.projected_operation_response(response, request_id)?,
     })
 }
 
@@ -841,6 +1048,82 @@ async fn read_bounded(
         bytes.resize(next_length, 0);
         chunk.copy_to(&mut bytes[next_length - chunk.length() as usize..]);
     }
+}
+
+async fn read_subscription_frame(
+    reader: &ReadableStreamDefaultReader,
+    buffered: &mut Vec<u8>,
+    max_frame_bytes: usize,
+    metrics: &ClientMetrics,
+) -> Result<Vec<u8>, JsValue> {
+    let max_buffered_bytes = max_frame_bytes
+        .checked_mul(2)
+        .ok_or_else(|| js_error("subscription buffer limit overflowed"))?;
+    loop {
+        if buffered.len() >= fluid_service_protocol::HEADER_BYTES {
+            let body_bytes = usize::try_from(u32::from_be_bytes(
+                buffered[fluid_service_protocol::HEADER_BYTES - 4
+                    ..fluid_service_protocol::HEADER_BYTES]
+                    .try_into()
+                    .map_err(|_| js_error("subscription frame header is invalid"))?,
+            ))
+            .map_err(|_| js_error("subscription frame length is invalid"))?;
+            let frame_bytes = fluid_service_protocol::HEADER_BYTES
+                .checked_add(body_bytes)
+                .ok_or_else(|| js_error("subscription frame length overflowed"))?;
+            if frame_bytes > max_frame_bytes {
+                return Err(js_error("subscription frame exceeded the configured limit"));
+            }
+            if buffered.len() >= frame_bytes {
+                let frame = buffered.drain(..frame_bytes).collect::<Vec<_>>();
+                metrics.record_subscription_frame(frame.len(), complete_frame_count(buffered));
+                return Ok(frame);
+            }
+        }
+        let result = JsFuture::from(reader.read()).await?;
+        let done = Reflect::get(&result, &JsValue::from_str("done"))?
+            .as_bool()
+            .ok_or_else(|| js_error("browser stream returned an invalid done flag"))?;
+        if done {
+            return Err(js_error("projected subscription ended"));
+        }
+        let value = Reflect::get(&result, &JsValue::from_str("value"))?;
+        let chunk = Uint8Array::new(&value);
+        let next_length = buffered
+            .len()
+            .checked_add(chunk.length() as usize)
+            .ok_or_else(|| js_error("subscription buffer limit overflowed"))?;
+        if next_length > max_buffered_bytes {
+            JsFuture::from(reader.cancel()).await?;
+            return Err(js_error("subscription buffer exceeded two frames"));
+        }
+        buffered.resize(next_length, 0);
+        chunk.copy_to(&mut buffered[next_length - chunk.length() as usize..]);
+        if complete_frame_count(buffered) > 3 {
+            JsFuture::from(reader.cancel()).await?;
+            return Err(js_error("subscription buffer exceeded two pending frames"));
+        }
+    }
+}
+
+fn complete_frame_count(mut bytes: &[u8]) -> usize {
+    let mut count = 0;
+    while bytes.len() >= fluid_service_protocol::HEADER_BYTES {
+        let body_bytes = u32::from_be_bytes(
+            bytes[fluid_service_protocol::HEADER_BYTES - 4..fluid_service_protocol::HEADER_BYTES]
+                .try_into()
+                .expect("the bounded header slice has four bytes"),
+        ) as usize;
+        let Some(frame_bytes) = fluid_service_protocol::HEADER_BYTES.checked_add(body_bytes) else {
+            break;
+        };
+        if bytes.len() < frame_bytes {
+            break;
+        }
+        count += 1;
+        bytes = &bytes[frame_bytes..];
+    }
+    count
 }
 
 fn validate_hash(hash: &[u8]) -> Result<(), JsValue> {

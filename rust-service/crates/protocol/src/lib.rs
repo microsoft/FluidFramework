@@ -3,7 +3,7 @@
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use thiserror::Error;
 
-pub const VERSION: u16 = 1;
+pub const VERSION: u16 = 2;
 pub const HEADER_BYTES: usize = 20;
 const MAGIC: &[u8; 4] = b"FSP4";
 
@@ -20,6 +20,7 @@ const UPLOAD_BLOB: u8 = 10;
 const FETCH_BLOB: u8 = 11;
 const PUBLISH_SUMMARY: u8 = 12;
 const FETCH_SUMMARY: u8 = 13;
+const SUBSCRIBE_PROJECTED: u8 = 14;
 const ACKNOWLEDGED: u8 = 64;
 const SUBMITTED: u8 = 65;
 const READ_RESULT: u8 = 66;
@@ -30,6 +31,7 @@ const BLOB_UPLOADED: u8 = 70;
 const BLOB_RESULT: u8 = 71;
 const SUMMARY_PUBLISHED: u8 = 72;
 const SUMMARY_RESULT: u8 = 73;
+const PROJECTED_OPERATION: u8 = 74;
 const ERROR: u8 = 127;
 
 const CONTENT_DIGEST_BYTES: usize = 32;
@@ -101,6 +103,10 @@ pub enum Request {
         after: Option<Bytes>,
     },
     ReadProjected {
+        document: Bytes,
+        after: Option<Bytes>,
+    },
+    SubscribeProjected {
         document: Bytes,
         after: Option<Bytes>,
     },
@@ -242,6 +248,7 @@ pub enum Response {
         cursor: Option<Bytes>,
         has_more: bool,
     },
+    ProjectedOperation(ProjectedOperation),
     Resolved(Resolution),
     Snapshot(Option<PublishedSnapshot>),
     BlobUploaded {
@@ -406,6 +413,10 @@ fn encode_message(message: &Message, limits: Limits) -> Result<(u8, Bytes), Prot
             encode_projected_read(&mut body, operations, cursor.as_ref(), *has_more, limits)?;
             PROJECTED_READ_RESULT
         }
+        Message::Response(Response::ProjectedOperation(operation)) => {
+            encode_projected_operation(&mut body, operation, limits)?;
+            PROJECTED_OPERATION
+        }
         Message::Response(Response::Resolved(resolution)) => {
             encode_resolution(&mut body, resolution, limits)?;
             RESOLUTION_RESULT
@@ -498,6 +509,11 @@ fn encode_request_message(request: &Request, limits: Limits) -> Result<(u8, Byte
             put_optional_bytes(&mut body, after.as_ref(), limits.max_position_bytes)?;
             READ_PROJECTED
         }
+        Request::SubscribeProjected { document, after } => {
+            put_bytes(&mut body, document, limits.max_document_bytes)?;
+            put_optional_bytes(&mut body, after.as_ref(), limits.max_position_bytes)?;
+            SUBSCRIBE_PROJECTED
+        }
         Request::ResolveSubmission {
             document,
             writer,
@@ -563,18 +579,27 @@ fn encode_projected_read(
     }
     body.put_u32(u32::try_from(operations.len()).map_err(|_| ProtocolError::TooManyRecords)?);
     for operation in operations {
-        put_bytes(body, &operation.position, limits.max_position_bytes)?;
-        body.put_u64(operation.sequence_number);
-        put_reference(body, &operation.minimum_reference, limits)?;
-        put_bytes(body, &operation.writer, limits.max_identity_bytes)?;
-        put_bytes(body, &operation.session, limits.max_identity_bytes)?;
-        put_bytes(body, &operation.submission, limits.max_identity_bytes)?;
-        body.put_u64(operation.local_sequence_number);
-        put_reference(body, &operation.reference, limits)?;
-        put_bytes(body, &operation.payload, limits.max_payload_bytes)?;
+        encode_projected_operation(body, operation, limits)?;
     }
     put_optional_bytes(body, cursor, limits.max_position_bytes)?;
     body.put_u8(u8::from(has_more));
+    Ok(())
+}
+
+fn encode_projected_operation(
+    body: &mut BytesMut,
+    operation: &ProjectedOperation,
+    limits: Limits,
+) -> Result<(), ProtocolError> {
+    put_bytes(body, &operation.position, limits.max_position_bytes)?;
+    body.put_u64(operation.sequence_number);
+    put_reference(body, &operation.minimum_reference, limits)?;
+    put_bytes(body, &operation.writer, limits.max_identity_bytes)?;
+    put_bytes(body, &operation.session, limits.max_identity_bytes)?;
+    put_bytes(body, &operation.submission, limits.max_identity_bytes)?;
+    body.put_u64(operation.local_sequence_number);
+    put_reference(body, &operation.reference, limits)?;
+    put_bytes(body, &operation.payload, limits.max_payload_bytes)?;
     Ok(())
 }
 
@@ -601,7 +626,7 @@ fn encode_resolution(
 }
 
 fn decode_message(kind: u8, mut body: Bytes, limits: Limits) -> Result<Message, ProtocolError> {
-    let message = if kind <= FETCH_SUMMARY {
+    let message = if kind <= SUBSCRIBE_PROJECTED {
         Message::Request(decode_request(kind, &mut body, limits)?)
     } else {
         Message::Response(decode_response(kind, &mut body, limits)?)
@@ -649,6 +674,10 @@ fn decode_request(kind: u8, body: &mut Bytes, limits: Limits) -> Result<Request,
             after: take_optional_bytes(body, limits.max_position_bytes)?,
         },
         READ_PROJECTED => Request::ReadProjected {
+            document: take_bytes(body, limits.max_document_bytes)?,
+            after: take_optional_bytes(body, limits.max_position_bytes)?,
+        },
+        SUBSCRIBE_PROJECTED => Request::SubscribeProjected {
             document: take_bytes(body, limits.max_document_bytes)?,
             after: take_optional_bytes(body, limits.max_position_bytes)?,
         },
@@ -731,6 +760,9 @@ fn decode_response(kind: u8, body: &mut Bytes, limits: Limits) -> Result<Respons
             Response::Read { records }
         }
         PROJECTED_READ_RESULT => decode_projected_read(body, limits)?,
+        PROJECTED_OPERATION => {
+            Response::ProjectedOperation(decode_projected_operation(body, limits)?)
+        }
         RESOLUTION_RESULT => Response::Resolved(decode_resolution(body, limits)?),
         SNAPSHOT_RESULT => {
             let snapshot = match take_u8(body)? {
@@ -778,32 +810,7 @@ fn decode_projected_read(body: &mut Bytes, limits: Limits) -> Result<Response, P
     }
     let mut operations = Vec::with_capacity(count);
     for _ in 0..count {
-        let position = take_bytes(body, limits.max_position_bytes)?;
-        if body.remaining() < 8 {
-            return Err(ProtocolError::Truncated);
-        }
-        let sequence_number = body.get_u64();
-        let minimum_reference = take_reference(body, limits)?;
-        let writer = take_bytes(body, limits.max_identity_bytes)?;
-        let session = take_bytes(body, limits.max_identity_bytes)?;
-        let submission = take_bytes(body, limits.max_identity_bytes)?;
-        if body.remaining() < 8 {
-            return Err(ProtocolError::Truncated);
-        }
-        let local_sequence_number = body.get_u64();
-        let reference = take_reference(body, limits)?;
-        let payload = take_bytes(body, limits.max_payload_bytes)?;
-        operations.push(ProjectedOperation {
-            position,
-            sequence_number,
-            minimum_reference,
-            writer,
-            session,
-            submission,
-            local_sequence_number,
-            reference,
-            payload,
-        });
+        operations.push(decode_projected_operation(body, limits)?);
     }
     let cursor = take_optional_bytes(body, limits.max_position_bytes)?;
     let has_more = match take_u8(body)? {
@@ -815,6 +822,38 @@ fn decode_projected_read(body: &mut Bytes, limits: Limits) -> Result<Response, P
         operations,
         cursor,
         has_more,
+    })
+}
+
+fn decode_projected_operation(
+    body: &mut Bytes,
+    limits: Limits,
+) -> Result<ProjectedOperation, ProtocolError> {
+    let position = take_bytes(body, limits.max_position_bytes)?;
+    if body.remaining() < 8 {
+        return Err(ProtocolError::Truncated);
+    }
+    let sequence_number = body.get_u64();
+    let minimum_reference = take_reference(body, limits)?;
+    let writer = take_bytes(body, limits.max_identity_bytes)?;
+    let session = take_bytes(body, limits.max_identity_bytes)?;
+    let submission = take_bytes(body, limits.max_identity_bytes)?;
+    if body.remaining() < 8 {
+        return Err(ProtocolError::Truncated);
+    }
+    let local_sequence_number = body.get_u64();
+    let reference = take_reference(body, limits)?;
+    let payload = take_bytes(body, limits.max_payload_bytes)?;
+    Ok(ProjectedOperation {
+        position,
+        sequence_number,
+        minimum_reference,
+        writer,
+        session,
+        submission,
+        local_sequence_number,
+        reference,
+        payload,
     })
 }
 
@@ -1066,7 +1105,7 @@ mod tests {
         };
         assert_eq!(
             encode(&frame, Limits::default()).unwrap().as_ref(),
-            b"FSP4\0\x01\x01\0\0\0\0\0\0\0\0\x01\0\0\0\x05\0\0\0\x01a"
+            b"FSP4\0\x02\x01\0\0\0\0\0\0\0\0\x01\0\0\0\x05\0\0\0\x01a"
         );
     }
 
@@ -1092,6 +1131,10 @@ mod tests {
             after: Some(Bytes::from_static(b"position")),
         }));
         round_trip(Message::Request(Request::ReadProjected {
+            document: Bytes::from_static(b"doc"),
+            after: Some(Bytes::from_static(b"position")),
+        }));
+        round_trip(Message::Request(Request::SubscribeProjected {
             document: Bytes::from_static(b"doc"),
             after: Some(Bytes::from_static(b"position")),
         }));
@@ -1160,6 +1203,19 @@ mod tests {
             cursor: Some(Bytes::from_static(b"cursor")),
             has_more: true,
         }));
+        round_trip(Message::Response(Response::ProjectedOperation(
+            ProjectedOperation {
+                position: Bytes::from_static(b"position"),
+                sequence_number: 3,
+                minimum_reference: Reference::Initial,
+                writer: Bytes::from_static(b"writer"),
+                session: Bytes::from_static(b"session"),
+                submission: Bytes::from_static(b"submission"),
+                local_sequence_number: 2,
+                reference: Reference::At(Bytes::from_static(b"reference")),
+                payload: Bytes::from_static(b"payload"),
+            },
+        )));
         round_trip(Message::Response(Response::Resolved(
             Resolution::Committed {
                 position: Bytes::from_static(b"position"),
@@ -1294,6 +1350,42 @@ mod tests {
     }
 
     #[test]
+    fn projected_subscription_kinds_are_additive_and_stable() {
+        let request = encode(
+            &Frame {
+                request_id: 1,
+                message: Message::Request(Request::SubscribeProjected {
+                    document: Bytes::from_static(b"doc"),
+                    after: None,
+                }),
+            },
+            Limits::default(),
+        )
+        .unwrap();
+        assert_eq!(request[6], 14);
+
+        let response = encode(
+            &Frame {
+                request_id: 1,
+                message: Message::Response(Response::ProjectedOperation(ProjectedOperation {
+                    position: Bytes::from_static(b"position"),
+                    sequence_number: 1,
+                    minimum_reference: Reference::Initial,
+                    writer: Bytes::from_static(b"writer"),
+                    session: Bytes::from_static(b"session"),
+                    submission: Bytes::from_static(b"submission"),
+                    local_sequence_number: 1,
+                    reference: Reference::Initial,
+                    payload: Bytes::from_static(b"payload"),
+                })),
+            },
+            Limits::default(),
+        )
+        .unwrap();
+        assert_eq!(response[6], 74);
+    }
+
+    #[test]
     fn malformed_and_oversized_frames_are_rejected() {
         let limits = Limits {
             max_frame_bytes: HEADER_BYTES,
@@ -1317,7 +1409,7 @@ mod tests {
             Err(ProtocolError::InvalidMagic)
         );
         invalid[0] = b'F';
-        invalid[5] = 2;
+        invalid[5] = 3;
         assert_eq!(
             decode(&invalid, Limits::default()),
             Err(ProtocolError::UnsupportedVersion)

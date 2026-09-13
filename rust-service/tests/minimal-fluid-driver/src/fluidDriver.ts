@@ -30,6 +30,7 @@ import type {
 import { ProtocolClient } from "./protocolClient.js";
 import type {
 	ProjectedOperation,
+	ProjectedOperationSubscription,
 	SubmissionResolution,
 	SummaryEntry,
 	WasmProtocolClient,
@@ -55,6 +56,10 @@ class SerializedWasmProtocolClient implements WasmProtocolClient {
 
 	public readProjected(document: Uint8Array, after?: Uint8Array) {
 		return this.enqueue(async () => this.inner.readProjected(document, after));
+	}
+
+	public subscribeProjected(document: Uint8Array, after?: Uint8Array) {
+		return this.enqueue(async () => this.inner.subscribeProjected(document, after));
 	}
 
 	public resolveSubmission(
@@ -98,6 +103,14 @@ class SerializedWasmProtocolClient implements WasmProtocolClient {
 
 	public get peakResponseBytes(): number {
 		return this.inner.peakResponseBytes;
+	}
+
+	public get peakSubscriptionFrameBytes(): number {
+		return this.inner.peakSubscriptionFrameBytes;
+	}
+
+	public get peakSubscriptionQueueDepth(): number {
+		return this.inner.peakSubscriptionQueueDepth;
 	}
 
 	private enqueue<T>(operation: () => Promise<T>): Promise<T> {
@@ -460,7 +473,8 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 	private readonly queuedSubmissions = new Map<number, PendingSubmission>();
 	private nextClientSequenceNumber = 1;
 	private submitChain: Promise<void> = Promise.resolve();
-	private pollingGeneration = 0;
+	private subscription: ProjectedOperationSubscription | undefined;
+	private subscriptionPump: Promise<void> | undefined;
 	public disposed = false;
 
 	public constructor(
@@ -472,7 +486,6 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 		fluidClient: IClient,
 		public readonly mode: ConnectionMode,
 		public readonly initialClients: ISignalClient[],
-		private readonly autoSynchronizeIntervalMs?: number,
 		private readonly onSynchronizationError?: (error: unknown) => void,
 		private readonly onSynchronized?: (
 			clientId: string,
@@ -530,7 +543,11 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 			this.lifecycle.session,
 			this.lifecycle.lastPosition,
 		);
-		this.startPolling();
+		this.subscription = await this.client.subscribeProjected(
+			this.document,
+			this.lifecycle.cursor,
+		);
+		this.subscriptionPump = this.consumeSubscription(this.subscription);
 	}
 
 	public submit(messages: IDocumentMessage[]): void {
@@ -574,6 +591,13 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 
 	public async waitForIdle(): Promise<void> {
 		await this.submitChain;
+	}
+
+	public async restartSubscription(): Promise<boolean> {
+		const resumedFromCursor = this.lifecycle.cursor !== undefined;
+		await this.stopSubscription();
+		await this.open();
+		return resumedFromCursor;
 	}
 
 	public async synchronize(): Promise<ISequencedDocumentMessage[]> {
@@ -634,7 +658,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 	}
 
 	public disconnect(): void {
-		this.pollingGeneration++;
+		void this.stopSubscription();
 		this.client.disconnect();
 		this.emit("disconnect", new Error("explicit disconnect"));
 	}
@@ -647,7 +671,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 	public dispose(error?: Error): void {
 		if (!this.disposed) {
 			this.disposed = true;
-			this.pollingGeneration++;
+			void this.stopSubscription();
 			this.emit(
 				"disconnect",
 				error ?? Object.assign(new Error("delta connection disposed"), { canRetry: true }),
@@ -655,26 +679,37 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 		}
 	}
 
-	private startPolling(): void {
-		if (this.autoSynchronizeIntervalMs === undefined) {
-			return;
-		}
-		const generation = ++this.pollingGeneration;
-		void this.poll(generation);
-	}
-
-	private async poll(generation: number): Promise<void> {
+	private async consumeSubscription(
+		subscription: ProjectedOperationSubscription,
+	): Promise<void> {
 		try {
-			while (!this.disposed && generation === this.pollingGeneration) {
-				await this.synchronize();
-				await new Promise((resolve) => setTimeout(resolve, this.autoSynchronizeIntervalMs));
+			while (!this.disposed && this.subscription === subscription) {
+				const operation = await subscription.next();
+				if (this.disposed || this.subscription !== subscription) {
+					return;
+				}
+				this.lifecycle.cursor = operation.position;
+				const message = projectOperation(this.lifecycle, operation);
+				this.checkpointSequenceNumber = message.sequenceNumber;
+				this.emit("op", decoder.decode(this.document), [message]);
+				this.onSynchronized?.(this.clientId, [message]);
 			}
 		} catch (error) {
-			if (!this.disposed && generation === this.pollingGeneration) {
+			if (!this.disposed && this.subscription === subscription) {
 				this.onSynchronizationError?.(error);
 				this.emit("disconnect", error);
 			}
 		}
+	}
+
+	private async stopSubscription(): Promise<void> {
+		const subscription = this.subscription;
+		this.subscription = undefined;
+		if (subscription !== undefined) {
+			await subscription.cancel();
+		}
+		await this.subscriptionPump;
+		this.subscriptionPump = undefined;
 	}
 }
 
@@ -684,7 +719,6 @@ export type WasmClientFactory = (
 ) => Promise<WasmProtocolClient>;
 
 export interface MinimalWasmDriverOptions {
-	readonly autoSynchronizeIntervalMs?: number;
 	readonly onSynchronizationError?: (error: unknown) => void;
 	readonly onSynchronized?: (
 		clientId: string,
@@ -751,7 +785,6 @@ export class MinimalWasmDocumentService extends Events implements IDocumentServi
 			client,
 			mode,
 			[{ clientId, client }],
-			this.options.autoSynchronizeIntervalMs,
 			this.options.onSynchronizationError,
 			this.options.onSynchronized,
 		);

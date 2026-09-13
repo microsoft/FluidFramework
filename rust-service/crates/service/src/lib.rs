@@ -1,7 +1,7 @@
 #![doc = "Single-host native Fluid service assembly."]
 
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, VecDeque},
     fs::{self, OpenOptions},
     future::Future,
     io::{Cursor, Read, Write},
@@ -32,7 +32,7 @@ use snapshotted_stream_core::{
     Snapshot, SnapshotId, SnapshotPosition, SnapshotStore,
 };
 use snapshotted_stream_durable_log_spike::{DurableLog, DurableLogError, DurablePosition};
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, broadcast, watch};
 
 const SCOPE_FILE: &str = "service.scope";
 const SCOPE_BYTES: usize = 16;
@@ -45,6 +45,94 @@ const MAX_PROJECTED_ENCODED_BYTES: usize = 768 * 1024;
 const MAX_BLOB_BYTES: u64 = 512 * 1024;
 const MAX_MANIFEST_BYTES: u64 = 4 * 1024 * 1024;
 const CONTENT_COPY_BUFFER_BYTES: usize = 64 * 1024;
+const PROJECTED_SUBSCRIPTION_NOTIFICATIONS: usize = 1;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ProjectedSubscriptionError {
+    Cancelled,
+    Service(ErrorCode),
+}
+
+pub struct ProjectedSubscription {
+    service: Arc<NativeService>,
+    document: Bytes,
+    cursor: Option<Bytes>,
+    pending: VecDeque<ProjectedOperation>,
+    notifications: broadcast::Receiver<()>,
+    cancellation: watch::Receiver<bool>,
+    cancel: watch::Sender<bool>,
+}
+
+impl ProjectedSubscription {
+    /// Returns the next accepted projected operation after the subscription cursor.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Cancelled` after explicit cancellation or a classified service error when
+    /// cursor validation, projected reading, or document ownership fails.
+    pub async fn next(&mut self) -> Result<ProjectedOperation, ProjectedSubscriptionError> {
+        loop {
+            if *self.cancellation.borrow() {
+                return Err(ProjectedSubscriptionError::Cancelled);
+            }
+            if let Some(operation) = self.pending.pop_front() {
+                return Ok(operation);
+            }
+            match self
+                .service
+                .handle(Request::ReadProjected {
+                    document: self.document.clone(),
+                    after: self.cursor.clone(),
+                })
+                .await
+            {
+                Response::ProjectedRead {
+                    operations,
+                    cursor,
+                    has_more,
+                } => {
+                    self.cursor = cursor;
+                    self.pending.extend(operations);
+                    if let Some(operation) = self.pending.pop_front() {
+                        return Ok(operation);
+                    }
+                    if has_more {
+                        continue;
+                    }
+                }
+                Response::Error(code) => return Err(ProjectedSubscriptionError::Service(code)),
+                _ => {
+                    return Err(ProjectedSubscriptionError::Service(
+                        ErrorCode::InvalidRequest,
+                    ));
+                }
+            }
+            tokio::select! {
+                biased;
+                changed = self.cancellation.changed() => {
+                    if changed.is_err() || *self.cancellation.borrow() {
+                        return Err(ProjectedSubscriptionError::Cancelled);
+                    }
+                }
+                notification = self.notifications.recv() => match notification {
+                    Ok(()) | Err(broadcast::error::RecvError::Lagged(_)) => {}
+                    Err(broadcast::error::RecvError::Closed) => {
+                        return Err(ProjectedSubscriptionError::Service(ErrorCode::Unavailable));
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn cancel(&self) {
+        self.cancel.send_replace(true);
+    }
+
+    #[must_use]
+    pub fn cursor(&self) -> Option<&Bytes> {
+        self.cursor.as_ref()
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct ServiceConfig {
@@ -88,6 +176,43 @@ impl NativeService {
             Ok(response) => response,
             Err(code) => Response::Error(code),
         }
+    }
+
+    /// Registers a bounded projected-operation subscription for one document and opaque cursor.
+    ///
+    /// # Errors
+    ///
+    /// Returns a classified service error when the document cannot be found or opened.
+    pub async fn subscribe_projected(
+        self: &Arc<Self>,
+        document: Bytes,
+        after: Option<Bytes>,
+    ) -> Result<ProjectedSubscription, ErrorCode> {
+        let mut documents = self.documents.lock().await;
+        if !documents.contains_key(&document) {
+            let path = self.document_path(&document);
+            if !path.exists() {
+                return Err(ErrorCode::DocumentNotFound);
+            }
+            let opened = Document::open(path, self.authority_path(&document)).await?;
+            documents.insert(document.clone(), opened);
+        }
+        let notifications = documents
+            .get(&document)
+            .ok_or(ErrorCode::DocumentNotFound)?
+            .projected_notifications
+            .subscribe();
+        drop(documents);
+        let (cancel, cancellation) = watch::channel(false);
+        Ok(ProjectedSubscription {
+            service: Arc::clone(self),
+            document,
+            cursor: after,
+            pending: VecDeque::new(),
+            notifications,
+            cancellation,
+            cancel,
+        })
     }
 
     async fn handle_result(&self, request: Request) -> Result<Response, ErrorCode> {
@@ -228,6 +353,7 @@ fn request_document(request: &Request) -> Option<&Bytes> {
         Request::OpenSession { document, .. }
         | Request::Read { document, .. }
         | Request::ReadProjected { document, .. }
+        | Request::SubscribeProjected { document, .. }
         | Request::ResolveSubmission { document, .. }
         | Request::LatestSnapshot { document }
         | Request::PublishSnapshot { document, .. } => Some(document),
@@ -244,6 +370,7 @@ fn request_document(request: &Request) -> Option<&Bytes> {
 struct Document {
     storage: ServiceStorage,
     sequencer: AuthoritativeSequencer<ServiceStorage>,
+    projected_notifications: broadcast::Sender<()>,
 }
 
 impl Document {
@@ -294,7 +421,12 @@ impl Document {
         let sequencer = AuthoritativeSequencer::recover(fenced, fence)
             .await
             .map_err(map_sequencer_error)?;
-        Ok(Self { storage, sequencer })
+        let (projected_notifications, _) = broadcast::channel(PROJECTED_SUBSCRIPTION_NOTIFICATIONS);
+        Ok(Self {
+            storage,
+            sequencer,
+            projected_notifications,
+        })
     }
 
     async fn handle(&mut self, request: Request) -> Result<Response, ErrorCode> {
@@ -325,6 +457,7 @@ impl Document {
                     .await
             }
             Request::Create { .. }
+            | Request::SubscribeProjected { .. }
             | Request::UploadBlob { .. }
             | Request::FetchBlob { .. }
             | Request::PublishSummary { .. }
@@ -373,6 +506,9 @@ impl Document {
             SubmitOutcome::Accepted(message) => (SubmissionDisposition::Accepted, message),
             SubmitOutcome::Duplicate(message) => (SubmissionDisposition::Duplicate, message),
         };
+        if disposition == SubmissionDisposition::Accepted {
+            let _ = self.projected_notifications.send(());
+        }
         Ok(submitted_response(disposition, message))
     }
 
@@ -1025,6 +1161,123 @@ mod tests {
                 has_more: false,
             } if operations.is_empty() && cursor == end_cursor
         ));
+    }
+
+    #[tokio::test]
+    async fn projected_subscription_atomically_catches_up_and_tails_across_boundary() {
+        let directory = TempDirectory::new();
+        let service = Arc::new(NativeService::new(ServiceConfig::new(&directory.0)));
+        create_and_open(&service, b"doc", b"session-one").await;
+        assert!(matches!(
+            service.handle(submit(b"doc", b"session-one", 1)).await,
+            Response::Submitted { .. }
+        ));
+        let Response::ProjectedRead {
+            cursor: Some(after_a),
+            ..
+        } = service
+            .handle(Request::ReadProjected {
+                document: bytes(b"doc"),
+                after: None,
+            })
+            .await
+        else {
+            panic!("projected read did not return a cursor after A");
+        };
+
+        let mut subscription = service
+            .subscribe_projected(bytes(b"doc"), Some(after_a))
+            .await
+            .unwrap();
+        assert!(matches!(
+            service.handle(submit(b"doc", b"session-one", 2)).await,
+            Response::Submitted { .. }
+        ));
+        let operation_b = subscription.next().await.unwrap();
+        assert_eq!(operation_b.sequence_number, 2);
+        assert_eq!(operation_b.payload, bytes(b"payload-2"));
+
+        assert!(matches!(
+            service.handle(submit(b"doc", b"session-one", 3)).await,
+            Response::Submitted { .. }
+        ));
+        let operation_c = subscription.next().await.unwrap();
+        assert_eq!(operation_c.sequence_number, 3);
+        assert_eq!(operation_c.payload, bytes(b"payload-3"));
+        assert_ne!(operation_b.position, operation_c.position);
+
+        subscription.cancel();
+        assert_eq!(
+            subscription.next().await,
+            Err(ProjectedSubscriptionError::Cancelled)
+        );
+    }
+
+    #[tokio::test]
+    async fn projected_subscription_recovers_from_lag_and_rejects_duplicate_and_gap() {
+        let directory = TempDirectory::new();
+        let service = Arc::new(NativeService::new(ServiceConfig::new(&directory.0)));
+        create_and_open(&service, b"doc", b"session-one").await;
+        let Response::ProjectedRead {
+            cursor: Some(initial_cursor),
+            ..
+        } = service
+            .handle(Request::ReadProjected {
+                document: bytes(b"doc"),
+                after: None,
+            })
+            .await
+        else {
+            panic!("initial projected cursor was missing");
+        };
+        let mut subscription = service
+            .subscribe_projected(bytes(b"doc"), Some(initial_cursor))
+            .await
+            .unwrap();
+
+        for sequence in 1..=8 {
+            assert!(matches!(
+                service
+                    .handle(submit(b"doc", b"session-one", sequence))
+                    .await,
+                Response::Submitted {
+                    disposition: SubmissionDisposition::Accepted,
+                    ..
+                }
+            ));
+        }
+        assert!(matches!(
+            service.handle(submit(b"doc", b"session-one", 8)).await,
+            Response::Submitted {
+                disposition: SubmissionDisposition::Duplicate,
+                ..
+            }
+        ));
+        assert_eq!(
+            service.handle(submit(b"doc", b"session-one", 10)).await,
+            Response::Error(ErrorCode::LocalSequenceGap)
+        );
+
+        let mut sequences = Vec::new();
+        for _ in 0..8 {
+            sequences.push(subscription.next().await.unwrap().sequence_number);
+        }
+        assert_eq!(sequences, (1..=8).collect::<Vec<_>>());
+        let after_b = subscription.cursor().cloned().unwrap();
+        subscription.cancel();
+
+        let mut resumed = service
+            .subscribe_projected(bytes(b"doc"), Some(after_b))
+            .await
+            .unwrap();
+        assert!(matches!(
+            service.handle(submit(b"doc", b"session-one", 9)).await,
+            Response::Submitted {
+                disposition: SubmissionDisposition::Accepted,
+                ..
+            }
+        ));
+        assert_eq!(resumed.next().await.unwrap().sequence_number, 9);
     }
 
     #[tokio::test]

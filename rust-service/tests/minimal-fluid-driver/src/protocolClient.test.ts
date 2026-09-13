@@ -17,6 +17,14 @@ function fakeWasm(responses: Uint8Array[]): WasmProtocolClient {
 		async readProjected() {
 			return { operations: [], hasMore: false };
 		},
+		subscribeProjected() {
+			return {
+				async next() {
+					throw new Error("fixture subscription has no operations");
+				},
+				cancel() {},
+			};
+		},
 		async resolveSubmission() {
 			return { kind: "notCommitted" };
 		},
@@ -41,6 +49,8 @@ function fakeWasm(responses: Uint8Array[]): WasmProtocolClient {
 		reconnect() {},
 		wireBytes: 0n,
 		peakResponseBytes: 0,
+		peakSubscriptionFrameBytes: 0,
+		peakSubscriptionQueueDepth: 0,
 	};
 }
 

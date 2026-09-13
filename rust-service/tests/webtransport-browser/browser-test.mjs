@@ -62,7 +62,7 @@ function frame(requestId, kind, ...body) {
 	const payload = concat(...body);
 	return concat(
 		encoder.encode("FSP4"),
-		new Uint8Array([0, 1, kind, 0]),
+		new Uint8Array([0, 2, kind, 0]),
 		u64(requestId),
 		u32(payload.length),
 		payload,
@@ -72,7 +72,7 @@ function frame(requestId, kind, ...body) {
 function parseFrame(bytes) {
 	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 	assert(new TextDecoder().decode(bytes.slice(0, 4)) === "FSP4", "response magic mismatch");
-	assert(view.getUint16(4) === 1, "response version mismatch");
+	assert(view.getUint16(4) === 2, "response version mismatch");
 	assert(view.getUint32(16) + 20 === bytes.length, "response length mismatch");
 	return { kind: bytes[6], body: bytes.slice(20) };
 }

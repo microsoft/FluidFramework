@@ -112,6 +112,8 @@ async function run() {
 		transportSessionCount: 1,
 		wireBytes: sharedClient.wireBytes.toString(),
 		peakResponseBytes: sharedClient.peakResponseBytes,
+		peakSubscriptionFrameBytes: sharedClient.peakSubscriptionFrameBytes,
+		peakSubscriptionQueueDepth: sharedClient.peakSubscriptionQueueDepth,
 		firstPage: firstPage.length,
 		secondPage: secondPage.length,
 		afterReconnect: afterReconnect.length,

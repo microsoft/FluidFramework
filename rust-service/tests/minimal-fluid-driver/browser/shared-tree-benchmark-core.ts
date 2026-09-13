@@ -4,6 +4,7 @@ export interface SharedTreeBenchmarkPair {
 	setValue(clientIndex: number, value: number): void;
 	values(): readonly number[];
 	synchronize(): Promise<void>;
+	prepare?(): Promise<void>;
 	close(): void;
 	metrics(): Record<string, unknown>;
 }
@@ -44,6 +45,7 @@ export async function runSharedTreeBenchmark(
 	const startupMilliseconds = performance.now() - startupStarted;
 
 	try {
+		await pair.prepare?.();
 		let value = Math.max(...pair.values());
 		for (let index = 0; index < options.warmupOperationCount; index++) {
 			value++;

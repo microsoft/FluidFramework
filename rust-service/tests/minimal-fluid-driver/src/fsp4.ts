@@ -50,7 +50,7 @@ export function frame(
 	const header = new Uint8Array(headerBytes);
 	header.set(encoder.encode("FSP4"));
 	const view = new DataView(header.buffer);
-	view.setUint16(4, 1);
+	view.setUint16(4, 2);
 	header[6] = kind;
 	view.setBigUint64(8, requestId);
 	view.setUint32(16, payload.length);
@@ -67,7 +67,7 @@ export function parseFrame(bytes: Uint8Array): ParsedFrame {
 		throw new Error("invalid FSP4 response header");
 	}
 	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-	if (view.getUint16(4) !== 1 || view.getUint32(16) + headerBytes !== bytes.length) {
+	if (view.getUint16(4) !== 2 || view.getUint32(16) + headerBytes !== bytes.length) {
 		throw new Error("invalid FSP4 response envelope");
 	}
 	return { kind: bytes[6] ?? 0, body: bytes.slice(headerBytes) };

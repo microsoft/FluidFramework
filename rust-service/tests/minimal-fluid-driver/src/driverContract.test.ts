@@ -98,6 +98,7 @@ function digest(payload: Uint8Array): Uint8Array {
 
 class ContractService {
 	public readonly operations: StoredOperation[] = [];
+	private readonly operationListeners = new Set<() => void>();
 	private readonly blobs = new Map<string, Uint8Array>();
 	private readonly summaries = new Map<
 		string,
@@ -164,6 +165,9 @@ class ContractService {
 			};
 			this.operations.push(operation);
 			this.submissions.set(identity, operation);
+			for (const listener of this.operationListeners) {
+				listener();
+			}
 		}
 		assert(operation !== undefined);
 		return frame(
@@ -302,6 +306,68 @@ class ContractService {
 					field(this.latestSnapshot.payload),
 				);
 	}
+
+	public async operationAt(index: number, cancelled: () => boolean): Promise<StoredOperation> {
+		while (!cancelled()) {
+			const operation = this.operations[index];
+			if (operation !== undefined) {
+				return operation;
+			}
+			await new Promise<void>((resolve) => {
+				const listener = (): void => {
+					this.operationListeners.delete(listener);
+					resolve();
+				};
+				this.operationListeners.add(listener);
+			});
+		}
+		throw new Error("subscription cancelled");
+	}
+
+	public wakeSubscriptions(): void {
+		for (const listener of this.operationListeners) {
+			listener();
+		}
+	}
+}
+
+class ContractSubscription {
+	private cancelled = false;
+	private index: number;
+
+	public constructor(
+		private readonly service: ContractService,
+		private readonly requestId: bigint,
+		after: Uint8Array | undefined,
+	) {
+		this.index =
+			after === undefined
+				? 0
+				: service.operations.findIndex(({ position }) => key(position) === key(after)) + 1;
+	}
+
+	public async next(): Promise<Uint8Array> {
+		const operation = await this.service.operationAt(this.index, () => this.cancelled);
+		this.index++;
+		return frame(
+			this.requestId,
+			74,
+			field(operation.position),
+			u64(operation.sequenceNumber),
+			reference(operation.position),
+			field(operation.writer),
+			field(operation.session),
+			field(operation.submission),
+			u64(operation.localSequenceNumber),
+			reference(operation.reference),
+			field(operation.payload),
+		);
+	}
+
+	public cancel(): void {
+		this.cancelled = true;
+		this.service.wakeSubscriptions();
+	}
 }
 
 class Transport {
@@ -320,6 +386,18 @@ class Transport {
 			throw new Error("response lost after commit");
 		}
 		return response;
+	}
+
+	public subscribe(request: Uint8Array): ContractSubscription {
+		if (!this.connected) {
+			throw new Error("transport disconnected");
+		}
+		const parsed = parseFrame(request);
+		assert.equal(parsed.kind, 14);
+		const requestId = new DataView(request.buffer, request.byteOffset + 8, 8).getBigUint64(0);
+		const reader = new Reader(parsed.body);
+		reader.field();
+		return new ContractSubscription(this.service, requestId, reader.optionalField());
 	}
 
 	public disconnect(): void {
@@ -385,6 +463,14 @@ test("actual WASM package backs the minimal Fluid driver contract", async () => 
 		type: "op",
 		contents: { delta },
 	});
+	const firstMessages: { clientSequenceNumber: number }[] = [];
+	const secondMessages: { clientSequenceNumber: number }[] = [];
+	first.on("op", (_documentId, messages) => {
+		firstMessages.push(...messages);
+	});
+	replacement.on("op", (_documentId, messages) => {
+		secondMessages.push(...messages);
+	});
 	first.submit([message(1, 1)]);
 	replacement.submit([message(2, 20)]);
 	replacement.submit([message(1, 2)]);
@@ -393,8 +479,7 @@ test("actual WASM package backs the minimal Fluid driver contract", async () => 
 		backend.operations.map(({ localSequenceNumber }) => localSequenceNumber),
 		[1n, 1n, 2n],
 	);
-	const firstMessages = await first.synchronize();
-	const secondMessages = await replacement.synchronize();
+	await waitUntil(() => firstMessages.length === 3 && secondMessages.length === 3);
 	assert.deepEqual(
 		firstMessages.map(({ clientSequenceNumber }) => clientSequenceNumber),
 		[1, 1, 2],
@@ -436,3 +521,13 @@ test("actual WASM package backs the minimal Fluid driver contract", async () => 
 		true,
 	);
 });
+
+async function waitUntil(check: () => boolean): Promise<void> {
+	const deadline = Date.now() + 2_000;
+	while (!check()) {
+		if (Date.now() >= deadline) {
+			throw new Error("timed out waiting for pushed operations");
+		}
+		await new Promise((resolve) => setTimeout(resolve, 1));
+	}
+}

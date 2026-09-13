@@ -51,6 +51,7 @@ const deltaConnections: MinimalWasmDeltaConnection[] = [];
 const containerStates: Record<string, unknown> = {};
 const protocolCounts = {
 	projectedReads: 0,
+	projectedSubscriptions: 0,
 	resolutions: 0,
 	uploadedBlobs: 0,
 	fetchedBlobs: 0,
@@ -101,6 +102,29 @@ function adaptBrowserClient(client: BrowserClient): WasmProtocolClient {
 				hasMore: page.hasMore,
 			};
 		},
+		subscribeProjected: async (document, after) => {
+			protocolCounts.projectedSubscriptions++;
+			const subscription = await client.subscribeProjected(document, after);
+			return {
+				next: async () => {
+					const operation = await subscription.next();
+					return {
+						position: operation.position,
+						sequenceNumber: operation.sequenceNumber,
+						...(operation.minimumReference === undefined
+							? {}
+							: { minimumReference: operation.minimumReference }),
+						writer: operation.writer,
+						session: operation.session,
+						submission: operation.submission,
+						localSequenceNumber: operation.localSequenceNumber,
+						...(operation.reference === undefined ? {} : { reference: operation.reference }),
+						payload: operation.payload,
+					};
+				},
+				cancel: async () => subscription.cancel(),
+			};
+		},
 		resolveSubmission: async (document, writer, session, submission) => {
 			protocolCounts.resolutions++;
 			const resolution = await client.resolveSubmission(document, writer, session, submission);
@@ -148,31 +172,18 @@ function adaptBrowserClient(client: BrowserClient): WasmProtocolClient {
 		get peakResponseBytes() {
 			return client.peakResponseBytes;
 		},
+		get peakSubscriptionFrameBytes() {
+			return client.peakSubscriptionFrameBytes;
+		},
+		get peakSubscriptionQueueDepth() {
+			return client.peakSubscriptionQueueDepth;
+		},
 	};
 }
 
 async function waitUntil(check: () => boolean, message: string): Promise<void> {
 	const deadline = performance.now() + 10_000;
 	while (!check()) {
-		if (performance.now() >= deadline) {
-			throw new Error(message);
-		}
-		await new Promise((resolve) => setTimeout(resolve, 10));
-	}
-}
-
-async function synchronizeUntil(
-	check: () => boolean,
-	connections: readonly MinimalWasmDeltaConnection[],
-	message: string,
-): Promise<void> {
-	const deadline = performance.now() + 10_000;
-	while (!check()) {
-		const activeConnections = connections.filter((connection) => !connection.disposed);
-		await Promise.all(activeConnections.map(async (connection) => connection.waitForIdle()));
-		for (const connection of activeConnections) {
-			await connection.synchronize();
-		}
 		if (performance.now() >= deadline) {
 			throw new Error(message);
 		}
@@ -331,16 +342,16 @@ async function run(): Promise<Record<string, unknown>> {
 
 	setStage("converging-first-edit");
 	firstView.root.value = 1;
-	await synchronizeUntil(
+	await firstConnection.waitForIdle();
+	await waitUntil(
 		() => secondView.root.value === 1,
-		deltaConnections,
 		"second client did not receive first edit",
 	);
 	setStage("converging-second-edit");
 	secondView.root.value = 2;
-	await synchronizeUntil(
+	await secondConnection.waitForIdle();
+	await waitUntil(
 		() => firstView.root.value === 2,
-		deltaConnections,
 		"first client did not receive second edit",
 	);
 
@@ -364,9 +375,9 @@ async function run(): Promise<Record<string, unknown>> {
 		"disconnected edit was not authoritatively notCommitted",
 	);
 	await firstConnection.resubmitPending(pendingSequenceNumber);
-	await synchronizeUntil(
+	await firstConnection.waitForIdle();
+	await waitUntil(
 		() => secondView.root.value === 3,
-		deltaConnections,
 		"second client did not receive recovered edit",
 	);
 
@@ -386,6 +397,12 @@ async function run(): Promise<Record<string, unknown>> {
 	const peakResponseBytes = Math.max(
 		...transports.map((transport) => transport.peakResponseBytes),
 	);
+	const peakSubscriptionFrameBytes = Math.max(
+		...transports.map((transport) => transport.peakSubscriptionFrameBytes),
+	);
+	const peakSubscriptionQueueDepth = Math.max(
+		...transports.map((transport) => transport.peakSubscriptionQueueDepth),
+	);
 	firstView.dispose();
 	secondView.dispose();
 	reloadedView.dispose();
@@ -404,6 +421,8 @@ async function run(): Promise<Record<string, unknown>> {
 		synchronizedSequences,
 		wireBytes: wireBytes.toString(),
 		peakResponseBytes,
+		peakSubscriptionFrameBytes,
+		peakSubscriptionQueueDepth,
 		startupMilliseconds: performance.now() - started,
 	};
 }

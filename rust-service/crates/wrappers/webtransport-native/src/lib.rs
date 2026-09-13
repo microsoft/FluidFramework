@@ -10,10 +10,10 @@ use std::{
 };
 
 use bytes::Bytes;
-use fluid_native_service::NativeService;
+use fluid_native_service::{NativeService, ProjectedSubscriptionError};
 use fluid_service_protocol::{
-    ErrorCode, Frame, HEADER_BYTES, Limits, Message, ProtocolError, Request, Response, decode,
-    encode,
+    ErrorCode, Frame, HEADER_BYTES, Limits, Message, ProjectedOperation, ProtocolError, Request,
+    Response, decode, encode,
 };
 use futures_util::{StreamExt, stream::FuturesUnordered};
 use thiserror::Error;
@@ -200,6 +200,10 @@ pub enum WebTransportError {
     Protocol(#[from] ProtocolError),
     #[error("received a request where a response was required")]
     UnexpectedRequest,
+    #[error("received an unexpected subscription response")]
+    UnexpectedResponse,
+    #[error("service rejected the subscription: {0:?}")]
+    Service(ErrorCode),
     #[error("the server is no longer available for shutdown")]
     ShutdownUnavailable,
 }
@@ -370,19 +374,34 @@ async fn serve_connection(
     metrics: Arc<Metrics>,
 ) -> Result<(), WebTransportError> {
     let _active = metrics.enter_connection();
+    let mut streams = FuturesUnordered::new();
     loop {
-        let Ok((send, receive)) = connection.accept_bi().await else {
-            return Ok(());
-        };
-        let _active = metrics.enter_stream();
-        serve_stream(send, receive, &service, &config, &metrics).await?;
+        tokio::select! {
+            accepted = connection.accept_bi(), if streams.len() < config.max_streams_per_connection => {
+                let Ok((send, receive)) = accepted else {
+                    return Ok(());
+                };
+                let service = Arc::clone(&service);
+                let config = config.clone();
+                let metrics = Arc::clone(&metrics);
+                streams.push(async move {
+                    let _active = metrics.enter_stream();
+                    serve_stream(send, receive, &service, &config, &metrics).await
+                });
+            }
+            result = streams.next(), if !streams.is_empty() => {
+                if let Some(result) = result {
+                    result?;
+                }
+            }
+        }
     }
 }
 
 async fn serve_stream(
     mut send: wtransport::SendStream,
     mut receive: wtransport::RecvStream,
-    service: &NativeService,
+    service: &Arc<NativeService>,
     config: &TransportConfig,
     metrics: &Metrics,
 ) -> Result<(), WebTransportError> {
@@ -390,6 +409,15 @@ async fn serve_stream(
     metrics.add_wire_bytes(request_bytes.len());
     let decoded = decode(&request_bytes, config.limits);
     let response = match decoded {
+        Ok(Frame {
+            request_id,
+            message: Message::Request(Request::SubscribeProjected { document, after }),
+        }) => {
+            return serve_projected_subscription(
+                &mut send, service, request_id, document, after, config, metrics,
+            )
+            .await;
+        }
         Ok(Frame {
             request_id,
             message: Message::Request(request),
@@ -412,6 +440,60 @@ async fn serve_stream(
     Ok(())
 }
 
+async fn serve_projected_subscription(
+    send: &mut wtransport::SendStream,
+    service: &Arc<NativeService>,
+    request_id: u64,
+    document: Bytes,
+    after: Option<Bytes>,
+    config: &TransportConfig,
+    metrics: &Metrics,
+) -> Result<(), WebTransportError> {
+    let mut subscription = match service.subscribe_projected(document, after).await {
+        Ok(subscription) => subscription,
+        Err(code) => {
+            let response = encode(
+                &Frame {
+                    request_id,
+                    message: Message::Response(Response::Error(code)),
+                },
+                config.limits,
+            )?;
+            write_frame(send, &response, config.operation_timeout).await?;
+            metrics.add_wire_bytes(response.len());
+            return Ok(());
+        }
+    };
+    loop {
+        let operation = tokio::select! {
+            biased;
+            _ = send.stopped() => {
+                subscription.cancel();
+                return Ok(());
+            }
+            operation = subscription.next() => operation,
+        };
+        let terminal = matches!(operation, Err(ProjectedSubscriptionError::Service(_)));
+        let response = match operation {
+            Ok(operation) => Response::ProjectedOperation(operation),
+            Err(ProjectedSubscriptionError::Cancelled) => return Ok(()),
+            Err(ProjectedSubscriptionError::Service(code)) => Response::Error(code),
+        };
+        let response = encode(
+            &Frame {
+                request_id,
+                message: Message::Response(response),
+            },
+            config.limits,
+        )?;
+        write_stream_frame(send, &response, config.operation_timeout).await?;
+        metrics.add_wire_bytes(response.len());
+        if terminal {
+            return Ok(());
+        }
+    }
+}
+
 pub struct WebTransportClient {
     endpoint: Endpoint<Client>,
     connection: Connection,
@@ -420,6 +502,59 @@ pub struct WebTransportClient {
     config: TransportConfig,
     request_id: AtomicU64,
     metrics: Arc<Metrics>,
+}
+
+pub struct ProjectedOperationSubscription {
+    request_id: u64,
+    send: wtransport::SendStream,
+    receive: Option<wtransport::RecvStream>,
+    limits: Limits,
+    metrics: Arc<Metrics>,
+    cancelled: bool,
+}
+
+impl ProjectedOperationSubscription {
+    /// Returns the next projected operation frame from the live stream.
+    ///
+    /// # Errors
+    ///
+    /// Returns a transport, protocol, service, or cancellation error when delivery cannot
+    /// continue.
+    pub async fn next(&mut self) -> Result<ProjectedOperation, WebTransportError> {
+        if self.cancelled {
+            return Err(WebTransportError::Disconnected);
+        }
+        let receive = self
+            .receive
+            .as_mut()
+            .ok_or(WebTransportError::Disconnected)?;
+        let response_bytes = read_stream_frame(receive, &self.limits).await?;
+        self.metrics.add_wire_bytes(response_bytes.len());
+        let response = decode(&response_bytes, self.limits)?;
+        if response.request_id != self.request_id {
+            return Err(WebTransportError::Disconnected);
+        }
+        match response.message {
+            Message::Response(Response::ProjectedOperation(operation)) => Ok(operation),
+            Message::Response(Response::Error(code)) => Err(WebTransportError::Service(code)),
+            _ => Err(WebTransportError::UnexpectedResponse),
+        }
+    }
+
+    /// Cancels the subscription stream without retrying or advancing its cursor.
+    ///
+    /// # Errors
+    ///
+    /// This operation is currently infallible; the result preserves API compatibility with
+    /// transport implementations whose reset operation can fail.
+    pub fn cancel(&mut self) -> Result<(), WebTransportError> {
+        self.cancelled = true;
+        if let Some(receive) = self.receive.take() {
+            receive.stop(CLOSE_CODE);
+        }
+        let _ = self.send.reset(CLOSE_CODE);
+        Ok(())
+    }
 }
 
 impl WebTransportClient {
@@ -510,6 +645,47 @@ impl WebTransportClient {
         }
     }
 
+    /// Starts one projected-operation stream after an opaque cursor.
+    ///
+    /// # Errors
+    ///
+    /// Returns a transport or protocol error if the stream cannot be opened or the request
+    /// cannot be encoded and sent.
+    pub async fn subscribe_projected(
+        &self,
+        document: Bytes,
+        after: Option<Bytes>,
+    ) -> Result<ProjectedOperationSubscription, WebTransportError> {
+        let request_id = self.request_id.fetch_add(1, Ordering::Relaxed);
+        let request_bytes = encode(
+            &Frame {
+                request_id,
+                message: Message::Request(Request::SubscribeProjected { document, after }),
+            },
+            self.config.limits,
+        )?;
+        let (mut send, receive) = timeout(self.config.operation_timeout, async {
+            self.connection
+                .open_bi()
+                .await
+                .map_err(transport_error)?
+                .await
+                .map_err(transport_error)
+        })
+        .await
+        .map_err(|_| WebTransportError::Timeout)??;
+        write_frame(&mut send, &request_bytes, self.config.operation_timeout).await?;
+        self.metrics.add_wire_bytes(request_bytes.len());
+        Ok(ProjectedOperationSubscription {
+            request_id,
+            send,
+            receive: Some(receive),
+            limits: self.config.limits,
+            metrics: Arc::clone(&self.metrics),
+            cancelled: false,
+        })
+    }
+
     #[must_use]
     pub fn measurement(&self) -> TransportMeasurement {
         self.metrics.snapshot()
@@ -548,36 +724,24 @@ async fn write_frame(
     .map_err(|_| WebTransportError::Timeout)?
 }
 
+async fn write_stream_frame(
+    send: &mut wtransport::SendStream,
+    bytes: &[u8],
+    operation_timeout: Duration,
+) -> Result<(), WebTransportError> {
+    timeout(operation_timeout, send.write_all(bytes))
+        .await
+        .map_err(|_| WebTransportError::Timeout)?
+        .map_err(|error| WebTransportError::Transport(error.to_string()))
+}
+
 async fn read_frame(
     receive: &mut wtransport::RecvStream,
     limits: &Limits,
     operation_timeout: Duration,
 ) -> Result<Bytes, WebTransportError> {
     timeout(operation_timeout, async {
-        let mut header = [0_u8; HEADER_BYTES];
-        receive
-            .read_exact(&mut header)
-            .await
-            .map_err(transport_error)?;
-        let body_bytes = usize::try_from(u32::from_be_bytes(
-            header[HEADER_BYTES - 4..]
-                .try_into()
-                .map_err(|_| WebTransportError::Disconnected)?,
-        ))
-        .map_err(|_| WebTransportError::Protocol(ProtocolError::FrameTooLarge))?;
-        let frame_bytes = HEADER_BYTES
-            .checked_add(body_bytes)
-            .ok_or(WebTransportError::Protocol(ProtocolError::FrameTooLarge))?;
-        if frame_bytes > limits.max_frame_bytes {
-            return Err(WebTransportError::Protocol(ProtocolError::FrameTooLarge));
-        }
-        let mut bytes = Vec::with_capacity(frame_bytes);
-        bytes.extend_from_slice(&header);
-        bytes.resize(frame_bytes, 0);
-        receive
-            .read_exact(&mut bytes[HEADER_BYTES..])
-            .await
-            .map_err(transport_error)?;
+        let bytes = read_stream_frame(receive, limits).await?;
         let mut trailing = [0_u8; 1];
         if receive
             .read(&mut trailing)
@@ -587,10 +751,41 @@ async fn read_frame(
         {
             return Err(WebTransportError::Protocol(ProtocolError::TrailingBytes));
         }
-        Ok(Bytes::from(bytes))
+        Ok(bytes)
     })
     .await
     .map_err(|_| WebTransportError::Timeout)?
+}
+
+async fn read_stream_frame(
+    receive: &mut wtransport::RecvStream,
+    limits: &Limits,
+) -> Result<Bytes, WebTransportError> {
+    let mut header = [0_u8; HEADER_BYTES];
+    receive
+        .read_exact(&mut header)
+        .await
+        .map_err(transport_error)?;
+    let body_bytes = usize::try_from(u32::from_be_bytes(
+        header[HEADER_BYTES - 4..]
+            .try_into()
+            .map_err(|_| WebTransportError::Disconnected)?,
+    ))
+    .map_err(|_| WebTransportError::Protocol(ProtocolError::FrameTooLarge))?;
+    let frame_bytes = HEADER_BYTES
+        .checked_add(body_bytes)
+        .ok_or(WebTransportError::Protocol(ProtocolError::FrameTooLarge))?;
+    if frame_bytes > limits.max_frame_bytes {
+        return Err(WebTransportError::Protocol(ProtocolError::FrameTooLarge));
+    }
+    let mut bytes = Vec::with_capacity(frame_bytes);
+    bytes.extend_from_slice(&header);
+    bytes.resize(frame_bytes, 0);
+    receive
+        .read_exact(&mut bytes[HEADER_BYTES..])
+        .await
+        .map_err(transport_error)?;
+    Ok(Bytes::from(bytes))
 }
 
 fn request_id_from_header(bytes: &[u8]) -> Option<u64> {
@@ -667,6 +862,117 @@ mod tests {
         })
         .await
         .unwrap();
+    }
+
+    #[allow(clippy::too_many_lines)]
+    #[tokio::test(flavor = "current_thread")]
+    async fn native_subscription_catches_up_tails_cancels_and_shuts_down() {
+        tokio::task::LocalSet::new()
+            .run_until(async {
+                let directory = TempDirectory::new();
+                let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
+                let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
+                let server = WebTransportServer::bind(
+                    "127.0.0.1:0".parse().unwrap(),
+                    identity,
+                    Arc::new(NativeService::new(ServiceConfig::new(&directory.0))),
+                    TransportConfig::default(),
+                )
+                .unwrap();
+                let address = server.local_addr().unwrap();
+                let metrics = server.measurement_handle();
+                let shutdown = server.shutdown_handle();
+                let server_task = tokio::task::spawn_local(server.serve_until_shutdown());
+                let client = WebTransportClient::connect(
+                    format!("https://{address}/fluid"),
+                    certificate_hash,
+                    TransportConfig::default(),
+                )
+                .await
+                .unwrap();
+                assert_eq!(
+                    client
+                        .request(Request::Create {
+                            document: bytes(b"document"),
+                        })
+                        .await
+                        .unwrap(),
+                    Response::Acknowledged(Acknowledgement::Created)
+                );
+                assert_eq!(
+                    client
+                        .request(Request::OpenSession {
+                            document: bytes(b"document"),
+                            writer: bytes(b"writer"),
+                            session: bytes(b"session"),
+                            reference: Reference::Initial,
+                        })
+                        .await
+                        .unwrap(),
+                    Response::Acknowledged(Acknowledgement::SessionOpened)
+                );
+                assert!(matches!(
+                    client
+                        .request(submission(1, Reference::Initial))
+                        .await
+                        .unwrap(),
+                    Response::Submitted { .. }
+                ));
+                let Response::ProjectedRead {
+                    cursor: Some(after_a),
+                    ..
+                } = client
+                    .request(Request::ReadProjected {
+                        document: bytes(b"document"),
+                        after: None,
+                    })
+                    .await
+                    .unwrap()
+                else {
+                    panic!("projected read did not return the cursor after A");
+                };
+
+                let mut subscription = client
+                    .subscribe_projected(bytes(b"document"), Some(after_a))
+                    .await
+                    .unwrap();
+                assert!(matches!(
+                    client
+                        .request(submission(2, Reference::Initial))
+                        .await
+                        .unwrap(),
+                    Response::Submitted { .. }
+                ));
+                let operation_b = timeout(Duration::from_secs(2), subscription.next())
+                    .await
+                    .unwrap()
+                    .unwrap();
+                assert_eq!(operation_b.sequence_number, 2);
+                assert!(matches!(
+                    client
+                        .request(submission(3, Reference::Initial))
+                        .await
+                        .unwrap(),
+                    Response::Submitted { .. }
+                ));
+                let operation_c = timeout(Duration::from_secs(2), subscription.next())
+                    .await
+                    .unwrap()
+                    .unwrap();
+                assert_eq!(operation_c.sequence_number, 3);
+                assert_ne!(operation_b.position, operation_c.position);
+
+                subscription.cancel().unwrap();
+                assert!(matches!(
+                    subscription.next().await,
+                    Err(WebTransportError::Disconnected)
+                ));
+                shutdown.shutdown(ShutdownMode::Immediate).unwrap();
+                let outcome = server_task.await.unwrap().unwrap();
+                assert_eq!(outcome.disposition, ShutdownDisposition::Cancelled);
+                assert_eq!(metrics.snapshot().active_connections, 0);
+            })
+            .await;
     }
 
     #[tokio::test(flavor = "current_thread")]

@@ -1,3 +1,5 @@
+use std::{cell::Cell, rc::Rc};
+
 use fluid_service_protocol::{
     Frame, Limits, Message, Request, Resolution, Response, SummaryEntry, decode, encode,
 };
@@ -22,8 +24,30 @@ pub(crate) struct ProtocolCore {
     active_operation: Option<u64>,
     next_operation: u64,
     next_request_id: u64,
-    wire_bytes: u64,
-    peak_response_bytes: usize,
+    metrics: Rc<ClientMetrics>,
+}
+
+pub(crate) struct ClientMetrics {
+    wire_bytes: Cell<u64>,
+    peak_response_bytes: Cell<usize>,
+    peak_subscription_frame_bytes: Cell<usize>,
+    peak_subscription_queue_depth: Cell<usize>,
+}
+
+impl ClientMetrics {
+    pub(crate) fn record_outgoing(&self, bytes: usize) {
+        self.wire_bytes
+            .set(self.wire_bytes.get().saturating_add(bytes as u64));
+    }
+
+    pub(crate) fn record_subscription_frame(&self, bytes: usize, queue_depth: usize) {
+        self.wire_bytes
+            .set(self.wire_bytes.get().saturating_add(bytes as u64));
+        self.peak_subscription_frame_bytes
+            .set(self.peak_subscription_frame_bytes.get().max(bytes));
+        self.peak_subscription_queue_depth
+            .set(self.peak_subscription_queue_depth.get().max(queue_depth));
+    }
 }
 
 impl ProtocolCore {
@@ -40,8 +64,12 @@ impl ProtocolCore {
             active_operation: None,
             next_operation: 1,
             next_request_id: 1,
-            wire_bytes: 0,
-            peak_response_bytes: 0,
+            metrics: Rc::new(ClientMetrics {
+                wire_bytes: Cell::new(0),
+                peak_response_bytes: Cell::new(0),
+                peak_subscription_frame_bytes: Cell::new(0),
+                peak_subscription_queue_depth: Cell::new(0),
+            }),
         })
     }
 
@@ -51,6 +79,17 @@ impl ProtocolCore {
         after: Option<Vec<u8>>,
     ) -> Result<Vec<u8>, JsValue> {
         self.encode_request(Request::ReadProjected {
+            document: document.into(),
+            after: after.map(Into::into),
+        })
+    }
+
+    pub(crate) fn subscribe_projected_request(
+        &mut self,
+        document: Vec<u8>,
+        after: Option<Vec<u8>>,
+    ) -> Result<Vec<u8>, JsValue> {
+        self.encode_request(Request::SubscribeProjected {
             document: document.into(),
             after: after.map(Into::into),
         })
@@ -113,6 +152,33 @@ impl ProtocolCore {
                 Err(js_error(&format!("FSP4 service error: {code:?}")))
             }
             _ => Err(js_error("FSP4 response is not a projected read result")),
+        }
+    }
+
+    pub(crate) fn projected_operation_response(
+        &self,
+        incoming: &[u8],
+        request_id: u64,
+    ) -> Result<fluid_service_protocol::ProjectedOperation, JsValue> {
+        let frame = decode(incoming, self.limits).map_err(protocol_error)?;
+        if frame.request_id != request_id {
+            return Err(js_error("FSP4 subscription request id did not match"));
+        }
+        match frame.message {
+            Message::Response(Response::ProjectedOperation(operation)) => Ok(operation),
+            Message::Response(Response::Error(code)) => {
+                Err(js_error(&format!("FSP4 service error: {code:?}")))
+            }
+            _ => Err(js_error("FSP4 response is not a projected operation")),
+        }
+    }
+
+    pub(crate) fn request_id(&self, outgoing: &[u8]) -> Result<u64, JsValue> {
+        let frame = decode(outgoing, self.limits).map_err(protocol_error)?;
+        if matches!(frame.message, Message::Request(_)) {
+            Ok(frame.request_id)
+        } else {
+            Err(js_error("outgoing FSP4 frame is not a request"))
         }
     }
 
@@ -250,7 +316,7 @@ impl ProtocolCore {
         let operation = self.next_operation;
         self.next_operation = self.next_operation.wrapping_add(1);
         self.active_operation = Some(operation);
-        self.wire_bytes = self.wire_bytes.saturating_add(outgoing.len() as u64);
+        self.metrics.record_outgoing(outgoing.len());
         Ok((frame.request_id, operation))
     }
 
@@ -264,8 +330,15 @@ impl ProtocolCore {
             return Err(js_error("request was cancelled"));
         }
         self.active_operation = None;
-        self.wire_bytes = self.wire_bytes.saturating_add(incoming.len() as u64);
-        self.peak_response_bytes = self.peak_response_bytes.max(incoming.len());
+        self.metrics.wire_bytes.set(
+            self.metrics
+                .wire_bytes
+                .get()
+                .saturating_add(incoming.len() as u64),
+        );
+        self.metrics
+            .peak_response_bytes
+            .set(self.metrics.peak_response_bytes.get().max(incoming.len()));
         let response = decode(incoming, self.limits).map_err(protocol_error)?;
         if response.request_id != request_id {
             return Err(js_error("FSP4 response request id did not match"));
@@ -321,15 +394,31 @@ impl ProtocolCore {
     }
 
     pub(crate) fn wire_bytes(&self) -> u64 {
-        self.wire_bytes
+        self.metrics.wire_bytes.get()
     }
 
     pub(crate) fn peak_response_bytes(&self) -> usize {
-        self.peak_response_bytes
+        self.metrics.peak_response_bytes.get()
+    }
+
+    pub(crate) fn peak_subscription_frame_bytes(&self) -> usize {
+        self.metrics.peak_subscription_frame_bytes.get()
+    }
+
+    pub(crate) fn peak_subscription_queue_depth(&self) -> usize {
+        self.metrics.peak_subscription_queue_depth.get()
     }
 
     pub(crate) fn max_frame_bytes(&self) -> usize {
         self.limits.max_frame_bytes
+    }
+
+    pub(crate) fn limits(&self) -> Limits {
+        self.limits
+    }
+
+    pub(crate) fn metrics(&self) -> Rc<ClientMetrics> {
+        Rc::clone(&self.metrics)
     }
 }
 

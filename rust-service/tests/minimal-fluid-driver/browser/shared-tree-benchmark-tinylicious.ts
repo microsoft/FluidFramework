@@ -51,6 +51,11 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 			browser: navigator.userAgent,
 			wireBytes: null,
 			peakResponseBytes: null,
+			peakSubscriptionFrameBytes: null,
+			peakSubscriptionQueueDepth: null,
+			resumeOpenMilliseconds: null,
+			resumeFirstDeliveryMilliseconds: null,
+			resumeCursorCount: null,
 			forceWriteConnection: false,
 		}),
 	};

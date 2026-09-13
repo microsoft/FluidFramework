@@ -8,12 +8,12 @@ This isolated package adapts the generated `fluid-webtransport-browser` WASM pac
 - `IDocumentService`: storage, bounded delta storage, and explicit delta connection creation.
 - `IDocumentStorageService`: versions, snapshot trees, immutable blob create/read, full summary upload/download.
 - `IDocumentDeltaStorageService`: bounded projected pages filtered to the requested sequence interval.
-- `IDocumentDeltaConnection`: submission and operation events through explicit `synchronize()` calls.
+- `IDocumentDeltaConnection`: submission and push-driven operation events through one bounded projected-operation subscription.
 - Explicit lifecycle extensions: `waitForIdle()`, `disconnect()`, `reconnect()`, `recoverPending()`, and caller-driven `resubmitPending()`.
 
 ## Unsupported interfaces and semantics
 
-- Signals, nacks, presence, automatic live-tail polling, automatic reconnect, hidden retry, offline merge, summary handles, summary attachments, loading groups, and GC/retention guarantees.
+- Signals, nacks, presence, automatic reconnect, hidden retry, offline merge, summary handles, summary attachments, loading groups, and GC/retention guarantees.
 - Summary upload accepts full trees only. Incremental handle reuse and parent concurrency are not implemented.
 - `getSnapshot`, caching, auth, production certificates, Routerlicious, and ODSP compatibility are not implemented or claimed.
 - The native server owns a bounded set of concurrent connection futures. The SharedTree Chromium trace uses three independent Fluid containers and three generated `BrowserClient` transport sessions. Each document service serializes access to its non-reentrant generated client; serialization is not shared across containers.
@@ -112,4 +112,4 @@ The generated WASM, bundles, certificates, service data, and local `benchmark-re
 
 The first clean provisional run is recorded in the [SharedTree comparison evidence](../../benchmarks/shared-tree/13401fe0de3/README.md).
 
-These results are provisional because they predate the default read-to-write lifecycle and the Rust adapter synchronizes explicitly, while Tinylicious receives pushed operations. Only the Rust binding currently exposes wire-byte counters. Compare convergence, startup, and observed edit latency with those differences labeled; do not present the numbers as production capacity, durability, or equivalent Routerlicious/ODSP evidence.
+These baseline results are provisional because they predate the default read-to-write lifecycle and projected-operation subscription. The retained iteration 0008 evidence compares the same workload after both changes. Only the Rust binding currently exposes wire-byte counters. Compare convergence, startup, and observed edit latency with those differences labeled; do not present the numbers as production capacity, durability, or equivalent Routerlicious/ODSP evidence.
