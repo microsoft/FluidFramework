@@ -2,7 +2,8 @@
 
 Status: complete
 Phase 2 integration commit: `7dfcdf9ec3c56b35fbf5b5801c2764a859c8a997`
-Phase 3 commit: pending final Phase 3 record commit
+Phase 3 commit: `7331e44a61b91322cf19bb354ea761d3223d3fa2` (this completed
+report follows as a documentation-only commit)
 
 ## Evidence Summary
 
