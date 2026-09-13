@@ -477,9 +477,8 @@ async fn serve_submission_stream(
     metrics: &Metrics,
 ) -> Result<(), WebTransportError> {
     loop {
-        let request_bytes = match read_stream_frame(receive, &config.limits).await {
-            Ok(request_bytes) => request_bytes,
-            Err(_) => return Ok(()),
+        let Some(request_bytes) = read_optional_stream_frame(receive, &config.limits).await? else {
+            return Ok(());
         };
         metrics.add_wire_bytes(request_bytes.len());
         let decoded = decode(&request_bytes, config.limits);
@@ -859,9 +858,26 @@ async fn read_stream_frame(
     receive: &mut wtransport::RecvStream,
     limits: &Limits,
 ) -> Result<Bytes, WebTransportError> {
+    read_optional_stream_frame(receive, limits)
+        .await?
+        .ok_or(WebTransportError::Disconnected)
+}
+
+async fn read_optional_stream_frame(
+    receive: &mut wtransport::RecvStream,
+    limits: &Limits,
+) -> Result<Option<Bytes>, WebTransportError> {
     let mut header = [0_u8; HEADER_BYTES];
+    if receive
+        .read(&mut header[..1])
+        .await
+        .map_err(transport_error)?
+        .is_none()
+    {
+        return Ok(None);
+    }
     receive
-        .read_exact(&mut header)
+        .read_exact(&mut header[1..])
         .await
         .map_err(transport_error)?;
     let body_bytes = usize::try_from(u32::from_be_bytes(
@@ -883,7 +899,7 @@ async fn read_stream_frame(
         .read_exact(&mut bytes[HEADER_BYTES..])
         .await
         .map_err(transport_error)?;
-    Ok(Bytes::from(bytes))
+    Ok(Some(Bytes::from(bytes)))
 }
 
 fn request_id_from_header(bytes: &[u8]) -> Option<u64> {
@@ -962,6 +978,7 @@ mod tests {
         .unwrap();
     }
 
+    #[allow(clippy::too_many_lines)]
     #[tokio::test(flavor = "current_thread")]
     async fn submission_stream_pipelines_ordered_requests() {
         tokio::task::LocalSet::new()
@@ -1065,6 +1082,115 @@ mod tests {
                     server_task.await.unwrap().unwrap().disposition,
                     ShutdownDisposition::Cancelled
                 );
+            })
+            .await;
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn submission_stream_clean_eof_keeps_server_available() {
+        tokio::task::LocalSet::new()
+            .run_until(async {
+                let directory = TempDirectory::new();
+                let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
+                let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
+                let server = WebTransportServer::bind(
+                    "127.0.0.1:0".parse().unwrap(),
+                    identity,
+                    Arc::new(NativeService::new(ServiceConfig::new(&directory.0))),
+                    TransportConfig::default(),
+                )
+                .unwrap();
+                let address = server.local_addr().unwrap();
+                let shutdown = server.shutdown_handle();
+                let server_task = tokio::task::spawn_local(server.serve_until_shutdown());
+                let client = WebTransportClient::connect(
+                    format!("https://{address}/fluid"),
+                    certificate_hash,
+                    TransportConfig::default(),
+                )
+                .await
+                .unwrap();
+
+                let (mut send, _receive) =
+                    client.connection.open_bi().await.unwrap().await.unwrap();
+                let open = encode(
+                    &Frame {
+                        request_id: 100,
+                        message: Message::Request(Request::OpenSubmissionStream {
+                            document: bytes(b"document"),
+                        }),
+                    },
+                    Limits::default(),
+                )
+                .unwrap();
+                write_stream_frame(&mut send, &open, Duration::from_secs(2))
+                    .await
+                    .unwrap();
+                send.finish().await.unwrap();
+
+                assert_eq!(
+                    client
+                        .request(Request::Create {
+                            document: bytes(b"after-clean-eof"),
+                        })
+                        .await
+                        .unwrap(),
+                    Response::Acknowledged(Acknowledgement::Created)
+                );
+                shutdown.shutdown(ShutdownMode::Immediate).unwrap();
+                server_task.await.unwrap().unwrap();
+            })
+            .await;
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn submission_stream_partial_frame_eof_is_rejected() {
+        tokio::task::LocalSet::new()
+            .run_until(async {
+                let directory = TempDirectory::new();
+                let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
+                let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
+                let server = WebTransportServer::bind(
+                    "127.0.0.1:0".parse().unwrap(),
+                    identity,
+                    Arc::new(NativeService::new(ServiceConfig::new(&directory.0))),
+                    TransportConfig::default(),
+                )
+                .unwrap();
+                let address = server.local_addr().unwrap();
+                let server_task = tokio::task::spawn_local(server.serve_until_shutdown());
+                let client = WebTransportClient::connect(
+                    format!("https://{address}/fluid"),
+                    certificate_hash,
+                    TransportConfig::default(),
+                )
+                .await
+                .unwrap();
+
+                let (mut send, _receive) =
+                    client.connection.open_bi().await.unwrap().await.unwrap();
+                let open = encode(
+                    &Frame {
+                        request_id: 100,
+                        message: Message::Request(Request::OpenSubmissionStream {
+                            document: bytes(b"document"),
+                        }),
+                    },
+                    Limits::default(),
+                )
+                .unwrap();
+                write_stream_frame(&mut send, &open, Duration::from_secs(2))
+                    .await
+                    .unwrap();
+                send.write_all(b"FSP4partial").await.unwrap();
+                send.finish().await.unwrap();
+
+                let error = timeout(Duration::from_secs(2), server_task)
+                    .await
+                    .expect("partial frame EOF was silently accepted")
+                    .unwrap()
+                    .unwrap_err();
+                assert!(matches!(error, WebTransportError::Transport(_)));
             })
             .await;
     }

@@ -629,6 +629,7 @@ pub struct BrowserSubmissionStream {
     request_ids: RefCell<VecDeque<u64>>,
     sending: Cell<bool>,
     receiving: Cell<bool>,
+    receive_ended: Cell<bool>,
     closed: Cell<bool>,
 }
 
@@ -675,10 +676,13 @@ impl BrowserSubmissionStream {
     ///
     /// Rejects missing requests, concurrent reads, invalid responses, and transport failures.
     pub async fn next(&self) -> Result<Uint8Array, JsValue> {
+        if self.receive_ended.get() {
+            return Err(js_error("submission response stream has ended"));
+        }
         if self.receiving.replace(true) {
             return Err(js_error("submission stream already has an active read"));
         }
-        let Some(request_id) = self.request_ids.borrow_mut().pop_front() else {
+        let Some(request_id) = self.request_ids.borrow().front().copied() else {
             self.receiving.set(false);
             return Err(js_error("submission stream has no pending request"));
         };
@@ -687,10 +691,22 @@ impl BrowserSubmissionStream {
             read_stream_frame(&self.reader, &mut buffered, self.limits.max_frame_bytes).await;
         self.buffered.replace(buffered);
         self.receiving.set(false);
-        let (incoming, _) = result?;
-        self.core
+        let (incoming, _) = match result {
+            Ok(incoming) => incoming,
+            Err(error) => {
+                self.receive_ended.set(true);
+                return Err(error);
+            }
+        };
+        if let Err(error) = self
+            .core
             .borrow()
-            .submission_response(&incoming, request_id)?;
+            .submission_response(&incoming, request_id)
+        {
+            self.receive_ended.set(true);
+            return Err(error);
+        }
+        self.request_ids.borrow_mut().pop_front();
         self.core.borrow().metrics().record_response(incoming.len());
         Ok(Uint8Array::from(incoming.as_slice()))
     }
@@ -898,6 +914,7 @@ impl BrowserClient {
             request_ids: RefCell::new(VecDeque::new()),
             sending: Cell::new(false),
             receiving: Cell::new(false),
+            receive_ended: Cell::new(false),
             closed: Cell::new(false),
         })
     }
@@ -1221,7 +1238,11 @@ async fn read_stream_frame(
             .as_bool()
             .ok_or_else(|| js_error("browser stream returned an invalid done flag"))?;
         if done {
-            return Err(js_error("projected subscription ended"));
+            return Err(if buffered.is_empty() {
+                js_error("browser stream ended")
+            } else {
+                js_error("browser stream ended with a partial frame")
+            });
         }
         let value = Reflect::get(&result, &JsValue::from_str("value"))?;
         let chunk = Uint8Array::new(&value);

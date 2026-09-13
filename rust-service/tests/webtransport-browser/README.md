@@ -19,6 +19,6 @@ node tests/webtransport-browser/run-headless.mjs tests/webtransport-browser \
   "$(cat tests/webtransport-browser/.certs/cert.sha256)"
 ```
 
-The browser flow exercises document/session operations, projected reconnect behavior, blob upload/fetch, and summary publish/fetch against the native service. Blob and summary fetches validate the echoed digest before exposing content to JavaScript.
+The browser flow exercises document/session operations, projected reconnect behavior, ordered submission-stream responses, write-side close, one-shot response EOF, blob upload/fetch, and summary publish/fetch against the native service. It pipelines three submissions before reading their responses, then verifies that a terminal stream error exposes EOF once and remains terminal. Blob and summary fetches validate the echoed digest before exposing content to JavaScript.
 
 `wireBytes` counts encoded FSP4 request and response bytes. Browser APIs do not expose HTTP/3, QUIC, UDP, or TLS byte totals, so the harness does not mislabel application bytes as network overhead. The process transport uses a separate protocol with a four-byte length prefix; its byte count is therefore not directly comparable to FSP4 without packet capture.

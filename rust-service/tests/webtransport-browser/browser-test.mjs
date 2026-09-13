@@ -74,7 +74,7 @@ function parseFrame(bytes) {
 	assert(new TextDecoder().decode(bytes.slice(0, 4)) === "FSP4", "response magic mismatch");
 	assert(view.getUint16(4) === 2, "response version mismatch");
 	assert(view.getUint32(16) + 20 === bytes.length, "response length mismatch");
-	return { kind: bytes[6], body: bytes.slice(20) };
+	return { requestId: view.getBigUint64(8), kind: bytes[6], body: bytes.slice(20) };
 }
 
 function takeField(state) {
@@ -262,6 +262,98 @@ async function run() {
 	assert(equalBytes(summary[0].path, summaryPath), "summary path mismatch");
 	assert(equalBytes(summary[0].blob, upload.digest), "summary blob identity mismatch");
 	const contentWireBytes = client.wireBytes - contentWireStart;
+	const submissionStream = await client.openSubmissionStream(
+		encoder.encode("browser-document"),
+	);
+	for (let localSequenceNumber = 2; localSequenceNumber <= 4; localSequenceNumber++) {
+		await submissionStream.send(
+			frame(
+				100 + localSequenceNumber,
+				3,
+				field("browser-document"),
+				field("browser-writer"),
+				field("browser-session"),
+				field(`browser-stream-submission-${localSequenceNumber}`),
+				u64(localSequenceNumber),
+				reference(firstPosition),
+				field(`browser-stream-payload-${localSequenceNumber}`),
+			),
+		);
+	}
+	await submissionStream.close();
+	for (let localSequenceNumber = 2; localSequenceNumber <= 4; localSequenceNumber++) {
+		const response = parseFrame(await submissionStream.next());
+		assert(response.requestId === BigInt(100 + localSequenceNumber), "submission response order mismatch");
+		assert(response.kind === 65, "submission stream did not return a submitted response");
+	}
+	let sendAfterCloseRejected = false;
+	try {
+		await submissionStream.send(
+			frame(
+				105,
+				3,
+				field("browser-document"),
+				field("browser-writer"),
+				field("browser-session"),
+				field("browser-stream-submission-5"),
+				u64(5),
+				reference(firstPosition),
+				field("browser-stream-payload-5"),
+			),
+		);
+	} catch (error) {
+		sendAfterCloseRejected = String(error).includes("submission stream is closed");
+	}
+	assert(sendAfterCloseRejected, "submission stream accepted a write after close");
+
+	const terminalStream = await client.openSubmissionStream(encoder.encode("browser-document"));
+	await terminalStream.send(
+		frame(
+			200,
+			3,
+			field("wrong-document"),
+			field("browser-writer"),
+			field("browser-session"),
+			field("terminal-submission"),
+			u64(5),
+			reference(firstPosition),
+			field("terminal-payload"),
+		),
+	);
+	await terminalStream.send(
+		frame(
+			201,
+			3,
+			field("browser-document"),
+			field("browser-writer"),
+			field("browser-session"),
+			field("unanswered-submission"),
+			u64(5),
+			reference(firstPosition),
+			field("unanswered-payload"),
+		),
+	);
+	await terminalStream.close();
+	const terminalResponse = parseFrame(await terminalStream.next());
+	assert(terminalResponse.requestId === 200n, "terminal response request ID mismatch");
+	assert(terminalResponse.kind === 127, "invalid stream submission did not return an error");
+	let firstEof;
+	try {
+		await terminalStream.next();
+	} catch (error) {
+		firstEof = String(error);
+	}
+	assert(firstEof?.includes("browser stream ended"), "terminal stream did not expose EOF");
+	let repeatedEof;
+	try {
+		await terminalStream.next();
+	} catch (error) {
+		repeatedEof = String(error);
+	}
+	assert(
+		repeatedEof?.includes("submission response stream has ended"),
+		"terminal stream attempted to read EOF more than once",
+	);
 
 	client.disconnect();
 	let disconnected = false;
@@ -310,6 +402,8 @@ async function run() {
 		blobBytes: blobPayload.length,
 		summaryEntries: summary.length,
 		contentWireBytes: contentWireBytes.toString(),
+		orderedSubmissionResponses: 3,
+		oneShotSubmissionEof: true,
 	};
 }
 
