@@ -10,7 +10,7 @@ Coordinator: <!-- TODO(required): record the coordinator -->
 
 ## Active Workstreams
 
-<!-- TODO(required): list each active workstream, owner, dependencies, writable paths, expected evidence, and stopping condition -->
+<!-- TODO(required): organize active workstreams into dependency waves, then list each owner, dependencies, writable paths, expected evidence, and stopping condition. Workstreams within a wave run concurrently; later waves name the accepted artifact or demonstrated runtime capability they require. -->
 
 ## Deferred Scope
 
@@ -18,7 +18,7 @@ Coordinator: <!-- TODO(required): record the coordinator -->
 
 ## Shared Validation
 
-<!-- TODO(required): list formatting, linting, build, test, example, conformance, and artifact-validation commands that apply -->
+<!-- TODO(required): list the canonical workspace formatting, all-target/all-feature linting, build, test, example, conformance, fresh generated-consumer, and retained-artifact validation commands that apply. Define expected files and domain invariants for machine-readable evidence. -->
 
 ## Risks and Escalation
 

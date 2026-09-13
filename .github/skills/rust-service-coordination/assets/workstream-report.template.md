@@ -25,7 +25,7 @@ Started and finished: <!-- TODO(required): record known timestamps or unknown --
 
 ## Validation Evidence
 
-<!-- TODO(required): list exact commands, outcomes, relevant test names, and retained machine-readable output -->
+<!-- TODO(required): list exact commands, outcomes, relevant test names, and retained machine-readable output. For retained output, record expected-file/count, nonzero-size, parse, provenance, and domain-invariant checks. -->
 
 ## Notable Events
 

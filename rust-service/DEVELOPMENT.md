@@ -4,9 +4,11 @@ The Rust service is an application workspace and commits its root `Cargo.lock`. 
 
 The toolchain is pinned by `rust-toolchain.toml` and includes `rustfmt` and Clippy. Run commands from `rust-service/`.
 
-## Foundation Commands
+## Canonical Workspace Commands
 
-These commands become required once Phase 1 creates `Cargo.toml` and the initial example:
+Run these commands before completing the foundation and at every Phase 2
+integration boundary. Package-scoped checks remain useful during a workstream,
+but do not replace this workspace-wide gate.
 
 ```bash
 cargo fmt --all -- --check

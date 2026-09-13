@@ -7,7 +7,7 @@ Integration commit: <!-- TODO(required): record the immutable Phase 2 integratio
 
 ## Accepted Work
 
-<!-- TODO(required): list accepted workstream commit ranges in dependency order -->
+<!-- TODO(required): list accepted workstream commit ranges in dependency order and record direct Git-object/path review against ownership -->
 
 ## Rejected or Deferred Work
 
@@ -19,7 +19,7 @@ Integration commit: <!-- TODO(required): record the immutable Phase 2 integratio
 
 ## Validation Evidence
 
-<!-- TODO(required): list artifact validation plus workspace build, test, lint, conformance, and integration results -->
+<!-- TODO(required): list artifact validation; canonical workspace format, all-target/all-feature lint, build, test, and example results; conformance and integration results; fresh generated-consumer execution; and retained-evidence size, parse, provenance, and domain-invariant checks when applicable -->
 
 ## Cross-Workstream Findings
 
@@ -27,4 +27,4 @@ Integration commit: <!-- TODO(required): record the immutable Phase 2 integratio
 
 ## Artifact Check
 
-<!-- TODO(required): confirm every active workstream report and intentional uncommitted artifact is accounted for -->
+<!-- TODO(required): confirm every active workstream report and intentional uncommitted artifact is accounted for, temporary validation state is removed, owned processes are stopped, and the integration checkout is clean -->

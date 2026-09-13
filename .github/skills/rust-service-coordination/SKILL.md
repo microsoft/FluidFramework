@@ -108,7 +108,12 @@ Before the foundation commit:
 5. Run `node .github/skills/rust-service-coordination/scripts/iteration-records.mjs validate NNNN start`.
 6. Commit the initialized records as the iteration kickoff, then create the integration branch and isolated worktrees from that kickoff commit using the naming rules in `rust-service/PLAN.md`.
 7. Give each agent its generated instruction file and report path.
-8. Dispatch every dependency-independent workstream concurrently. Delay only workstreams whose instructions name an unmet prerequisite, and record that dependency in the charter.
+8. Use write-capable agents for implementation workstreams. Reserve read-only
+   exploration agents for audits, review, and status reporting.
+9. Dispatch every dependency-independent workstream concurrently. Organize
+   dependent work into explicit charter waves, and run the cheapest end-to-end
+   prerequisite probe before dispatching a consumer whose primary evidence
+   depends on unproven runtime behavior.
 
 Use [iteration charter template](./assets/iteration-charter.template.md) and [workstream instructions template](./assets/workstream-instructions.template.md) for field guidance.
 
@@ -151,6 +156,17 @@ Never use forced removal to bypass uncommitted or untracked files. Do not delete
 
 For delegated commands in repositories with multiple worktrees, make the command itself use the assigned absolute path and print the absolute worktree path, `git branch --show-current`, HEAD, and status before running work. Assert the expected branch and base when applicable, and stop on mismatch. Do not accept summarized validation output that omits this guard output, exit status, or the requested test result. When the workstream may edit a crate manifest but does not own the shared lockfile, validate in an exact disposable copy and immediately verify that the assigned worktree's lockfile is unchanged.
 
+When accepting a delegated implementation or review, inspect the named Git
+object directly and compare its changed paths with the workstream ownership and
+report. Review prose without evidence of the named commit or checkout is not
+integration evidence.
+
+When a workstream retains machine-readable evidence, directly verify the
+expected files, nonzero size, parse success, provenance, and declared domain
+invariants before accepting the producer's summary. The workstream instructions
+must define those invariants because benchmark, trace, and comparison schemas
+differ.
+
 Use [workstream report template](./assets/workstream-report.template.md).
 
 ## Integrate Phase 2
@@ -166,6 +182,16 @@ Use [workstream report template](./assets/workstream-report.template.md).
 
 5. Run workspace-level validation and commit the integration boundary only after the artifact check passes.
 
+Workspace-level validation must include the canonical format, strict
+workspace/all-target/all-feature Clippy, build, test, and example commands in
+`rust-service/DEVELOPMENT.md`. Package-scoped checks do not replace this gate.
+When downstream tests consume ignored generated packages or build outputs,
+regenerate them in the integration checkout and execute or inspect the exact
+consumer artifact rather than relying on a source build or cached output.
+Explicitly remove temporary symlinks, copied dependencies, processes, and
+command-scoped environment overrides; persistent terminals may not run shell
+exit traps when expected.
+
 Use [integration report template](./assets/integration-report.template.md).
 
 ## Conduct Phase 3
@@ -176,7 +202,12 @@ Use [integration report template](./assets/integration-report.template.md).
 4. Create or update decision records and link them from the Phase 3 report.
 5. Decide interactively which workstreams to keep, remove, replace, or add next.
 6. Complete the retrospective and promote durable lessons to `rust-service/LEARNINGS.md`.
-7. Review candidate skills and coordination friction. Record accepted, rejected, and deferred skill changes in `skill-review.md`; update this skill only for approved changes supported by evidence.
+7. Review candidate skills and coordination friction, including unresolved
+   candidates and next-review triggers from prior iterations. Record accepted,
+   rejected, and deferred changes in `skill-review.md`. For each accepted
+   lesson, verify whether it belongs in this skill, a generated template,
+   validation policy, `LEARNINGS.md`, or only local instructions; apply it to
+   the reusable surface when supported by evidence, and record the validation.
 8. Create instructions for each next-iteration workstream with:
 
    ```bash
@@ -201,6 +232,9 @@ Use the [Phase 3 report](./assets/phase-3-report.template.md), [retrospective](.
 - **Dirty worktree:** never discard unknown changes. Enumerate them in the report and ask the coordinator to resolve ownership.
 - **Partial integration:** record accepted commit ranges and unresolved conflicts before resuming; do not force-push or rewrite reported workstream history.
 - **Missing report:** do not reconstruct unsupported details. Mark unknown fields explicitly and capture only evidence that remains available.
+- **Temporary validation state:** do not rely on shell exit traps in persistent
+   terminals. Explicitly remove temporary files and symlinks, stop owned
+   processes, restore command-scoped environment, and verify checkout status.
 
 ## Validation
 
