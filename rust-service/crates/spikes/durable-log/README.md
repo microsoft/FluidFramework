@@ -1,0 +1,14 @@
+# Durable Log Spike
+
+This crate is a single-process research implementation used to test checksummed append framing, sync-before-acknowledgement, deterministic crash points, snapshot lineage, and reopen behavior. It is not a production storage backend.
+
+From `rust-service/`, run:
+
+```bash
+cargo test -p snapshotted-stream-durable-log-spike --all-targets --all-features
+cargo clippy -p snapshotted-stream-durable-log-spike --all-targets --all-features -- -D warnings
+```
+
+The test suite includes real child-process termination around append and snapshot boundaries. It uses atomic marker files for deterministic coordination and has a 10-second failure timeout. Run it on a local filesystem that supports file synchronization and atomic rename within one directory.
+
+Successful tests demonstrate recovery after process termination while the operating system remains running. They do not demonstrate survival across power loss, filesystem or hardware failure, multi-process writer safety, retention, replication, or remote storage semantics. Persisted-size output is structural evidence for this encoding, not a capacity or throughput claim.

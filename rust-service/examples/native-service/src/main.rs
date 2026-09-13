@@ -94,13 +94,27 @@ async fn serve_one(
 }
 
 fn parse_arguments() -> Result<Arguments, Box<dyn Error>> {
+    parse_arguments_from(env::args().skip(1))
+}
+
+fn parse_arguments_from(
+    arguments: impl IntoIterator<Item = String>,
+) -> Result<Arguments, Box<dyn Error>> {
     let mut root = None;
     let mut socket = None;
-    let mut arguments = env::args().skip(1);
+    let mut arguments = arguments.into_iter();
     while let Some(argument) = arguments.next() {
         match argument.as_str() {
-            "--root" => root = arguments.next().map(PathBuf::from),
-            "--socket" => socket = arguments.next().map(PathBuf::from),
+            "--root" => {
+                root = Some(PathBuf::from(
+                    arguments.next().ok_or("missing value for --root")?,
+                ));
+            }
+            "--socket" => {
+                socket = Some(PathBuf::from(
+                    arguments.next().ok_or("missing value for --socket")?,
+                ));
+            }
             _ => return Err(format!("unknown argument: {argument}").into()),
         }
     }
@@ -108,4 +122,30 @@ fn parse_arguments() -> Result<Arguments, Box<dyn Error>> {
         root: root.ok_or("--root is required")?,
         socket: socket.ok_or("--socket is required")?,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_required_paths() {
+        let arguments =
+            parse_arguments_from(["--root", "data", "--socket", "service.sock"].map(str::to_owned))
+                .expect("valid paths should parse");
+
+        assert_eq!(arguments.root, PathBuf::from("data"));
+        assert_eq!(arguments.socket, PathBuf::from("service.sock"));
+    }
+
+    #[test]
+    fn reports_missing_option_values() {
+        for option in ["--root", "--socket"] {
+            let error = parse_arguments_from([option.to_owned()])
+                .err()
+                .expect("missing value should fail");
+
+            assert_eq!(error.to_string(), format!("missing value for {option}"));
+        }
+    }
 }

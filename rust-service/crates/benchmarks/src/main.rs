@@ -61,7 +61,7 @@ impl KeyProvider for BenchmarkKey {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct Config {
     backend: Backend,
     fixture: FixtureKind,
@@ -71,6 +71,13 @@ struct Config {
     snapshot_frequency: Option<u64>,
     repetitions: u32,
     warmups: u32,
+}
+
+#[derive(Debug, Eq, PartialEq)]
+enum BenchmarkCommand {
+    Help,
+    Smoke,
+    Measure(Config),
 }
 
 #[derive(Debug)]
@@ -102,9 +109,33 @@ async fn main() {
 
 async fn run() -> Result<(), String> {
     let arguments = env::args().skip(1).collect::<Vec<_>>();
-    match arguments.first().map(String::as_str) {
-        Some("smoke") => smoke().await,
-        Some("measure") => measure(parse_config(&arguments[1..])?).await,
+    match parse_command(&arguments)? {
+        BenchmarkCommand::Help => {
+            println!("{}", usage());
+            Ok(())
+        }
+        BenchmarkCommand::Smoke => smoke().await,
+        BenchmarkCommand::Measure(config) => measure(config).await,
+    }
+}
+
+fn parse_command(arguments: &[String]) -> Result<BenchmarkCommand, String> {
+    match arguments {
+        [argument] if matches!(argument.as_str(), "help" | "--help" | "-h") => {
+            Ok(BenchmarkCommand::Help)
+        }
+        [command] if command == "smoke" => Ok(BenchmarkCommand::Smoke),
+        [command, argument]
+            if command == "measure" && matches!(argument.as_str(), "--help" | "-h") =>
+        {
+            Ok(BenchmarkCommand::Help)
+        }
+        [command, arguments @ ..] if command == "measure" => {
+            parse_config(arguments).map(BenchmarkCommand::Measure)
+        }
+        [command, ..] if command == "smoke" => {
+            Err(format!("smoke accepts no options\n{}", usage()))
+        }
         _ => Err(usage()),
     }
 }
@@ -725,6 +756,29 @@ fn cpu_model() -> String {
             })
         })
         .unwrap_or_else(|| "unknown".to_owned())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn command_parser_accepts_help_for_program_and_measurement() {
+        for arguments in [&["--help"][..], &["-h"], &["help"], &["measure", "--help"]] {
+            let arguments = arguments
+                .iter()
+                .map(|value| (*value).to_owned())
+                .collect::<Vec<_>>();
+            assert_eq!(parse_command(&arguments), Ok(BenchmarkCommand::Help));
+        }
+    }
+
+    #[test]
+    fn command_parser_rejects_ignored_smoke_options() {
+        let arguments = ["smoke".to_owned(), "--records".to_owned(), "1".to_owned()];
+
+        assert!(parse_command(&arguments).is_err());
+    }
 }
 
 fn memory_bytes() -> Option<u64> {
