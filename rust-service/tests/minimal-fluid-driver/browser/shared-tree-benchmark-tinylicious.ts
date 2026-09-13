@@ -1,4 +1,5 @@
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
+import { Tree } from "@fluidframework/tree";
 
 import {
 	runSharedTreeBenchmark,
@@ -24,7 +25,7 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		"2.0.0",
 	);
 	const firstView = firstContainer.initialObjects.tree.viewWith(benchmarkTreeConfiguration);
-	firstView.initialize([]);
+	firstView.initialize({ value: 0 });
 	const containerId = await firstContainer.attach();
 	const { container: secondContainer } = await client.getContainer(
 		containerId,
@@ -32,17 +33,22 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		"2.0.0",
 	);
 	const secondView = secondContainer.initialObjects.tree.viewWith(benchmarkTreeConfiguration);
+	const editCounts: [number, number] = [0, 0];
+	const unsubscribeFirst = Tree.on(firstView.root, "nodeChanged", () => editCounts[0]++);
+	const unsubscribeSecond = Tree.on(secondView.root, "nodeChanged", () => editCounts[1]++);
 
 	return {
 		backend: "tinylicious-client",
 		clientCount: 2,
-		appendEdit: (clientIndex, value) => {
-			(clientIndex === 0 ? firstView : secondView).root.insertAtEnd(value);
+		applyEdit: (clientIndex, value) => {
+			(clientIndex === 0 ? firstView : secondView).root.value = value;
 		},
-		editCounts: () => [firstView.root.length, secondView.root.length],
-		lastValues: () => [firstView.root.at(-1), secondView.root.at(-1)],
+		appliedEditCounts: () => editCounts,
+		lastValues: () => [firstView.root.value, secondView.root.value],
 		synchronize: async () => {},
 		close: () => {
+			unsubscribeFirst();
+			unsubscribeSecond();
 			firstView.dispose();
 			secondView.dispose();
 			firstContainer.dispose();

@@ -3,13 +3,12 @@ import { SharedTree } from "@fluidframework/tree/legacy";
 
 const schemaFactory = new SchemaFactory("fluid.experimental.shared-tree-benchmark");
 
-export class BenchmarkEdits extends schemaFactory.array(
-	"BenchmarkEdits",
-	schemaFactory.number,
-) {}
+export class BenchmarkState extends schemaFactory.object("BenchmarkState", {
+	value: schemaFactory.number,
+}) {}
 
 export const benchmarkTreeConfiguration = new TreeViewConfiguration({
-	schema: BenchmarkEdits,
+	schema: BenchmarkState,
 });
 
 export const benchmarkContainerSchema = {

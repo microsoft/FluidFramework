@@ -10,6 +10,7 @@ import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 } from "@fluidframework/fluid-static/internal";
+import { Tree } from "@fluidframework/tree";
 
 import init, {
 	BrowserClient,
@@ -320,7 +321,7 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	const firstView = firstFluidContainer.initialObjects.tree.viewWith(
 		benchmarkTreeConfiguration,
 	);
-	firstView.initialize([]);
+	firstView.initialize({ value: 0 });
 	await firstContainer.attach({ url: resolvedUrl.url });
 	await waitForConnected(firstContainer);
 
@@ -332,6 +333,9 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	const secondView = secondFluidContainer.initialObjects.tree.viewWith(
 		benchmarkTreeConfiguration,
 	);
+	const editCounts: [number, number] = [0, 0];
+	const unsubscribeFirst = Tree.on(firstView.root, "nodeChanged", () => editCounts[0]++);
+	const unsubscribeSecond = Tree.on(secondView.root, "nodeChanged", () => editCounts[1]++);
 	let resumeOpenMilliseconds: number | undefined;
 	let resumeFirstDeliveryMilliseconds: number | undefined;
 	let resumeCursorCount = 0;
@@ -341,10 +345,10 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	): Promise<void> => {
 		const deadline = performance.now() + 10_000;
 		while (
-			firstView.root.length !== expectedCount ||
-			secondView.root.length !== expectedCount ||
-			firstView.root.at(-1) !== expectedValue ||
-			secondView.root.at(-1) !== expectedValue
+			editCounts[0] !== expectedCount ||
+			editCounts[1] !== expectedCount ||
+			firstView.root.value !== expectedValue ||
+			secondView.root.value !== expectedValue
 		) {
 			for (const connection of deltaConnections.filter((candidate) => !candidate.disposed)) {
 				await connection.waitForIdle();
@@ -361,11 +365,11 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 			? "rust-service-local-memory-force-write"
 			: `rust-service-webtransport-${parameters.get("storage") ?? "unknown"}-force-write`,
 		clientCount: 2,
-		appendEdit: (clientIndex, value) => {
-			(clientIndex === 0 ? firstView : secondView).root.insertAtEnd(value);
+		applyEdit: (clientIndex, value) => {
+			(clientIndex === 0 ? firstView : secondView).root.value = value;
 		},
-		editCounts: () => [firstView.root.length, secondView.root.length],
-		lastValues: () => [firstView.root.at(-1), secondView.root.at(-1)],
+		appliedEditCounts: () => editCounts,
+		lastValues: () => [firstView.root.value, secondView.root.value],
 		synchronize: async () => {
 			for (const connection of deltaConnections.filter((candidate) => !candidate.disposed)) {
 				await connection.waitForIdle();
@@ -373,10 +377,9 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		},
 		prepare: async () => {
 			const connections = deltaConnections.filter((candidate) => !candidate.disposed);
-			let probeValue =
-				Math.max(0, firstView.root.at(-1) ?? 0, secondView.root.at(-1) ?? 0) + 1;
-			firstView.root.insertAtEnd(probeValue);
-			await waitForConvergence(firstView.root.length, probeValue);
+			let probeValue = Math.max(0, firstView.root.value, secondView.root.value) + 1;
+			firstView.root.value = probeValue;
+			await waitForConvergence(editCounts[0], probeValue);
 			const started = performance.now();
 			const resumed = await Promise.all(
 				connections.map(async (connection) => connection.restartSubscription()),
@@ -388,11 +391,13 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 			}
 			probeValue++;
 			const deliveryStarted = performance.now();
-			firstView.root.insertAtEnd(probeValue);
-			await waitForConvergence(firstView.root.length, probeValue);
+			firstView.root.value = probeValue;
+			await waitForConvergence(editCounts[0], probeValue);
 			resumeFirstDeliveryMilliseconds = performance.now() - deliveryStarted;
 		},
 		close: () => {
+			unsubscribeFirst();
+			unsubscribeSecond();
 			firstView.dispose();
 			secondView.dispose();
 			firstContainer.close();

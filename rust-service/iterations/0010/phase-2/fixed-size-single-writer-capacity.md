@@ -1,15 +1,15 @@
 # Iteration 0010: fixed-size-single-writer-capacity Report
 
 Status: in progress
-Branch: `rust-service/iteration-0010/fixed-size-single-writer-capacity`
-Worktree: <!-- TODO(required): record the worktree path -->
-Base commit: <!-- TODO(required): record the base commit -->
+Branch: `rust-service-iteration-0010-fixed-size-single-writer-capacity`
+Worktree: `/workspaces/FluidFramework-rust-service-iteration-0010-fixed-size-single-writer-capacity`
+Base commit: `1e9fd4532e7`
 Final commit: <!-- TODO(required): record the final commit or explain why none exists -->
-Agent or owner: <!-- TODO(required): record the agent or owner -->
-Model and tool version: <!-- TODO(required): record known values; use unknown when unavailable -->
-Instruction source: <!-- TODO(required): link the assigned instruction file and record its commit -->
-Session or transcript reference: <!-- TODO(required): record a safe reference when useful; otherwise none -->
-Started and finished: <!-- TODO(required): record known timestamps or unknown -->
+Agent or owner: GitHub Copilot
+Model and tool version: GitHub Copilot; model version unknown
+Instruction source: [`instructions/fixed-size-single-writer-capacity.md`](instructions/fixed-size-single-writer-capacity.md) at `1e9fd4532e7`
+Session or transcript reference: none
+Started and finished: started 2026-09-13; finish in progress
 
 ## Outcome
 
@@ -33,7 +33,8 @@ Record an event when a hypothesis is falsified, three similar attempts fail, sub
 
 | Type | Attempt or event | Evidence | Impact | Resolution or state | Reusable lesson |
 | --- | --- | --- | --- | --- | --- |
-| <!-- TODO(required): replace with a notable event or an explicit none-reviewed row --> | | | | | |
+| Human correction | Iteration `0009` used append-only array growth to prove every logical edit survived. | The user identified that SharedTree append cost scales with sequence size and can dominate the service overhead under study. | The retained `0009` results remain valid for growing-sequence application throughput but not as the desired service-overhead isolation. | Iteration `0010` replaces the array with one numeric field, validates final-value convergence, and retains writer/observer `nodeChanged` counts as batching diagnostics. | Correctness instrumentation must not change the asymptotic application workload being measured. |
+| Falsified correctness check | Writer and observer `nodeChanged` events were expected to count every synchronous field overwrite. | A one-edit local-service smoke reported `[1, 1]`, while two or more edits timed out waiting for the observer count; default turn-based Fluid processing coalesces remote change notification. | Event count cannot prove every logical assignment on the observer without changing flush behavior. | Final scalar convergence is authoritative; writer/observer change-event counts remain diagnostics. All arms retain standard runtime batching because `TinyliciousClient` does not expose runtime options. | Do not infer logical operation count from observer change events when runtime batching can squash notification delivery. |
 
 ## Contract and Integration Friction
 

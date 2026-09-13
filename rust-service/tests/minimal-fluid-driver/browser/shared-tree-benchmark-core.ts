@@ -1,8 +1,8 @@
 export interface SharedTreeBenchmarkPair {
 	readonly backend: string;
 	readonly clientCount: number;
-	appendEdit(clientIndex: number, value: number): void;
-	editCounts(): readonly number[];
+	applyEdit(clientIndex: number, value: number): void;
+	appliedEditCounts(): readonly number[];
 	lastValues(): readonly (number | undefined)[];
 	synchronize(): Promise<void>;
 	prepare?(): Promise<void>;
@@ -29,7 +29,9 @@ export interface SharedTreeBenchmarkResult extends Record<string, unknown> {
 	readonly operationsPerSecond: number;
 	readonly writerIndex: 0;
 	readonly observerIndex: 1;
+	readonly initialValue: number;
 	readonly finalEditCount: number;
+	readonly observedChangeCounts: readonly number[];
 	readonly finalValue: number;
 }
 
@@ -49,39 +51,30 @@ export async function runSharedTreeBenchmark(
 		if (pair.clientCount !== 2) {
 			throw new Error(`${pair.backend} must expose exactly one writer and one observer`);
 		}
-		const baselineCounts = pair.editCounts();
-		if (!baselineCounts.every((count) => count === baselineCounts[0])) {
-			throw new Error(`${pair.backend} did not start converged: ${baselineCounts.join(", ")}`);
-		}
-		const baselineCount = baselineCounts[0];
-		if (baselineCount === undefined) {
-			throw new Error(`${pair.backend} did not expose a writer baseline`);
-		}
+		const baselineCounts = [...pair.appliedEditCounts()];
 		let value = Math.max(0, ...pair.lastValues().filter((item) => item !== undefined));
+		const initialValue = value;
 		for (let index = 0; index < options.warmupOperationCount; index++) {
 			value++;
-			pair.appendEdit(0, value);
+			pair.applyEdit(0, value);
 		}
-		await waitForConvergence(
-			pair,
-			baselineCount + options.warmupOperationCount,
-			value,
-			timeoutMilliseconds,
-		);
+		await waitForConvergence(pair, value, timeoutMilliseconds);
 
 		const operationsStarted = performance.now();
 		const submissionStarted = performance.now();
 		for (let index = 0; index < options.operationCount; index++) {
 			value++;
-			pair.appendEdit(0, value);
+			pair.applyEdit(0, value);
 		}
 		const submissionMilliseconds = performance.now() - submissionStarted;
 		const convergenceStarted = performance.now();
-		const finalEditCount =
-			baselineCount + options.warmupOperationCount + options.operationCount;
-		await waitForConvergence(pair, finalEditCount, value, timeoutMilliseconds);
+		const finalEditCount = options.warmupOperationCount + options.operationCount;
+		await waitForConvergence(pair, value, timeoutMilliseconds);
 		const convergenceMilliseconds = performance.now() - convergenceStarted;
 		const totalOperationMilliseconds = performance.now() - operationsStarted;
+		const observedChangeCounts = pair
+			.appliedEditCounts()
+			.map((count, index) => count - (baselineCounts[index] ?? 0));
 
 		return {
 			status: "passed",
@@ -96,7 +89,9 @@ export async function runSharedTreeBenchmark(
 			operationsPerSecond: (options.operationCount * 1_000) / totalOperationMilliseconds,
 			writerIndex: 0,
 			observerIndex: 1,
+			initialValue,
 			finalEditCount,
+			observedChangeCounts,
 			finalValue: value,
 			...pair.metrics(),
 		};
@@ -107,19 +102,15 @@ export async function runSharedTreeBenchmark(
 
 async function waitForConvergence(
 	pair: SharedTreeBenchmarkPair,
-	expectedCount: number,
 	value: number,
 	timeoutMilliseconds: number,
 ): Promise<void> {
 	const deadline = performance.now() + timeoutMilliseconds;
-	while (
-		!pair.editCounts().every((count) => count === expectedCount) ||
-		!pair.lastValues().every((current) => current === value)
-	) {
+	while (!pair.lastValues().every((current) => current === value)) {
 		await pair.synchronize();
 		if (performance.now() >= deadline) {
 			throw new Error(
-				`${pair.backend} did not converge ${expectedCount} edits ending at ${value}: counts=${pair.editCounts().join(", ")} values=${pair.lastValues().join(", ")}`,
+				`${pair.backend} did not converge at ${value}: observedChanges=${pair.appliedEditCounts().join(", ")} values=${pair.lastValues().join(", ")}`,
 			);
 		}
 		await new Promise((resolve) => setTimeout(resolve, 1));
