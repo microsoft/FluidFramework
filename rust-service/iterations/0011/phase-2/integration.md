@@ -3,7 +3,7 @@
 Status: complete
 Integration branch: `rust-service-iteration-0011`
 Iteration base commit: `c3d0aeb25bcd347af9742391cac1d809ab45f4a7`
-Integration commit: pending Phase 2 record commit
+Integration commit: `fd37f19cf4ee1e9c46fde01f5d8ec3e420786f01`
 
 ## Accepted Work
 

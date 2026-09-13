@@ -149,7 +149,7 @@ Never use forced removal to bypass uncommitted or untracked files. Do not delete
 5. Create a decision record from [the decision template](./assets/decision-record.template.md) when the outcome changes shared semantics, APIs, crate boundaries, conformance, iteration scope, or coordination policy.
 6. Finish with the report template complete and the worktree clean, or enumerate every remaining artifact.
 
-For delegated commands in repositories with multiple worktrees, print or capture `git branch --show-current` and the absolute worktree path with the result. When the workstream may edit a crate manifest but does not own the shared lockfile, validate in an exact disposable copy and immediately verify that the assigned worktree's lockfile is unchanged. Do not accept summarized validation output that omits checkout identity, exit status, or the requested test result.
+For delegated commands in repositories with multiple worktrees, make the command itself use the assigned absolute path and print the absolute worktree path, `git branch --show-current`, HEAD, and status before running work. Assert the expected branch and base when applicable, and stop on mismatch. Do not accept summarized validation output that omits this guard output, exit status, or the requested test result. When the workstream may edit a crate manifest but does not own the shared lockfile, validate in an exact disposable copy and immediately verify that the assigned worktree's lockfile is unchanged.
 
 Use [workstream report template](./assets/workstream-report.template.md).
 

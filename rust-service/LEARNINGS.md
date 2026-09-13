@@ -34,6 +34,9 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 - **Confirmed:** Valid-only service sequencing does not require payload-aware conditional append when one fencing authority remains exclusive through append; cross-process enforcement is still required before this becomes a deployment claim. [Evidence](iterations/0002/phase-2/authoritative-sequencer.md#hypothesis-results)
 - **Confirmed:** Portable WASM client logic can use injected transport tests in Node, but browser WebTransport, certificate pinning, streams, and reconnect still require authoritative real-browser integration evidence. [Evidence](iterations/0004/phase-2/webtransport.md#validation-evidence)
 - **Confirmed:** A cancellable async WASM resource cannot hold an exclusive object borrow across its long-lived wait; `next()` and `cancel()` need independently accessible, narrowly borrowed state with no interior borrow crossing `await`. [Evidence](iterations/0008/phase-2/live-projected-operation-streaming.md#notable-events)
+- **Confirmed:** Optional transport capabilities must be forwarded structurally through every decorator; forwarding required methods while dropping an optional method can silently select a weaker fallback path. [Evidence](iterations/0011/phase-2/fluid-driver-quality.md#hypothesis-results)
+- **Confirmed:** Authoritative projected delivery can acknowledge a matching local submission before its explicit response is observed; recovery must preserve ambiguity only until either delivery or resolution proves commitment, and must not duplicate the append. [Evidence](iterations/0011/phase-2/integration.md#cross-workstream-findings)
+- **Confirmed:** Package-scoped strict linting does not replace a final workspace all-target/all-feature gate; integration selection can expose test-code lints absent from every owned package check. [Evidence](iterations/0011/phase-2/integration.md#conflict-resolution-and-adaptation)
 
 ## Performance and Operations
 

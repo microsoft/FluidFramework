@@ -21,6 +21,12 @@ Document identities are allocated or reserved by the service and are never reuse
 - A future prefix-truncation scheme must not renumber retained events.
 - Generic storage implementations still need generation-scoped opaque codecs at their independent boundaries.
 
+## Options and Evidence
+
+- Retain service-scope-prefixed backend positions and reconstruct ordinal rank maps. Profiling showed repeated position collection, linear ranking, and projected replay dominated Rust local throughput, so this option was rejected.
+- Use document-local absolute event ordinals with cached authoritative sequencing and projected-read state. This was selected because document identities are never reused, routing establishes the document boundary, and the log is append-only. The paced comparison after implementation placed Rust local memory within 1.8% of TypeScript local service throughput. [Evidence](../benchmarks/shared-tree/8a1d4e690e4/README.md)
+- Expose backend byte offsets directly. Absolute offsets can remain stable with a retained truncation base, but they are not a uniform representation for every backend and are unnecessary at the service protocol boundary. They remain an implementation option beneath the selected ordinal contract.
+
 ## Decision
 
 The assembled Fluid service uses a one-based absolute `u64` event ordinal as its document-local canonical position. Its protocol representation is exactly eight big-endian bytes. Document identity is carried by the selected document or bound connection and is not repeated in each position token.
