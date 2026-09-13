@@ -19,6 +19,14 @@ This isolated package adapts the generated `fluid-webtransport-browser` WASM pac
 - The native server owns a bounded set of concurrent connection futures. The SharedTree Chromium trace uses three independent Fluid containers and three generated `BrowserClient` transport sessions. Each document service serializes access to its non-reentrant generated client; serialization is not shared across containers.
 - Browser loading uses Fluid's default read-to-write replacement. The document service preserves one projected identity, session, cursor, and last position across replacement; read-first services reuse the explicitly synthetic remote member because FSP4 does not yet carry production membership operations. Node contracts cover replacement plus disconnected-before-commit and committed-after-response-loss recovery.
 
+## Submission and subscription lifecycle
+
+When the generated client provides `openSubmissionStream`, the driver writes contiguous client sequence numbers to one stream and consumes acknowledgements in the same order. A submission remains in `pending` until its acknowledgement arrives or projected local operation is observed. Write failures and response loss reject `waitForIdle()` without discarding pending identity, so callers can use `recoverPending()` and explicitly `resubmitPending()` when the service reports `notCommitted`. Resubmission intentionally uses the unary request path.
+
+Clients without `openSubmissionStream` continue to submit through unary requests. Reconnect closes the old submission stream, cancels the old projected-operation subscription, reconnects the generated client, and opens replacements. Explicit disconnect and disposal also close and cancel their owned resources. Subscription restart and explicit synchronization resume from the last projected cursor.
+
+The driver does not automatically retry, recover, or resubmit ambiguous writes. Callers must wait for a failed submission chain, reconnect, resolve each pending identity, and resubmit only `notCommitted` operations. Disposal is synchronous at the Fluid interface boundary while stream close and subscription cancellation complete asynchronously.
+
 ## Validation
 
 The package is registered in the root pnpm workspace. Build `@fluidframework/core-interfaces` and `@fluidframework/driver-definitions` first so their generated declarations exist, then validate the package through its pnpm scripts.
@@ -40,6 +48,8 @@ pnpm run typecheck
 pnpm run build
 pnpm test
 ```
+
+The unit suite includes an injected TypeScript submission-stream fixture. It deterministically holds acknowledgements, rejects writes or responses, records stream and subscription disposal, and verifies unary fallback without requiring a live service.
 
 For Chromium, generate `--target web` bindings into this package's ignored `pkg/`, generate the existing browser harness certificate, start `fluid-webtransport-native`, build the SharedTree bundle, and run:
 

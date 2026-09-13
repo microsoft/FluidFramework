@@ -48,8 +48,15 @@ type Listener = (...args: readonly unknown[]) => void;
 
 class SerializedWasmProtocolClient implements WasmProtocolClient {
 	private tail: Promise<void> = Promise.resolve();
+	public readonly openSubmissionStream?: (document: Uint8Array) => Promise<SubmissionStream>;
 
-	public constructor(private readonly inner: WasmProtocolClient) {}
+	public constructor(private readonly inner: WasmProtocolClient) {
+		const openSubmissionStream = inner.openSubmissionStream;
+		if (openSubmissionStream !== undefined) {
+			this.openSubmissionStream = (document) =>
+				this.enqueue(async () => openSubmissionStream.call(inner, document));
+		}
+	}
 
 	public request(frame: Uint8Array): Promise<Uint8Array> {
 		return this.enqueue(async () => this.inner.request(frame));
@@ -685,14 +692,14 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 	}
 
 	public disconnect(): void {
-		void this.stopSubscription();
+		void Promise.all([this.stopSubscription(), this.stopSubmissionStream()]);
 		this.client.disconnect();
 		this.emit("disconnect", new Error("explicit disconnect"));
 	}
 
 	public async reconnect(...args: readonly unknown[]): Promise<void> {
+		await Promise.all([this.stopSubscription(), this.stopSubmissionStream()]);
 		await this.client.reconnect(...args);
-		this.submissionStream = undefined;
 		this.submissionWriteChain = Promise.resolve();
 		await this.open();
 	}
@@ -700,7 +707,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 	public dispose(error?: Error): void {
 		if (!this.disposed) {
 			this.disposed = true;
-			void this.stopSubscription();
+			void Promise.all([this.stopSubscription(), this.stopSubmissionStream()]);
 			this.emit(
 				"disconnect",
 				error ?? Object.assign(new Error("delta connection disposed"), { canRetry: true }),
@@ -745,6 +752,14 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 		}
 		await this.subscriptionPump;
 		this.subscriptionPump = undefined;
+	}
+
+	private async stopSubmissionStream(): Promise<void> {
+		const submissionStream = this.submissionStream;
+		this.submissionStream = undefined;
+		if (submissionStream !== undefined) {
+			await submissionStream.close();
+		}
 	}
 }
 
