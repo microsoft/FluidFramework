@@ -276,6 +276,25 @@ async function run() {
 		await request(client, requestId++, 4, field("browser-document"), optional(firstPosition)),
 	);
 	assert(resumedCount > 0, "explicit reconnect did not resume after the opaque token");
+	window.__shutdownProbe = {
+		async existingRequest() {
+			try {
+				await request(client, requestId++, 5, field("browser-document"));
+				return "succeeded";
+			} catch {
+				return "rejected";
+			}
+		},
+		async thirdSession() {
+			try {
+				const thirdClient = await BrowserClient.connect(transportUrl, hash, 1024 * 1024);
+				await request(thirdClient, 1, 5, field("browser-document"));
+				return "unexpected-success";
+			} catch {
+				return "rejected";
+			}
+		},
+	};
 
 	return {
 		status: "passed",

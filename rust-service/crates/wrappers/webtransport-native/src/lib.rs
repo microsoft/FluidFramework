@@ -17,7 +17,10 @@ use fluid_service_protocol::{
 };
 use futures_util::{StreamExt, stream::FuturesUnordered};
 use thiserror::Error;
-use tokio::time::timeout;
+use tokio::{
+    sync::watch,
+    time::{Instant, timeout, timeout_at},
+};
 use wtransport::{
     ClientConfig, Connection, Endpoint, Identity, ServerConfig, VarInt,
     endpoint::endpoint_side::{Client, Server as ServerSide},
@@ -32,6 +35,60 @@ pub struct TransportMeasurement {
     pub active_connections: usize,
     pub peak_active_connections: usize,
     pub peak_active_streams: usize,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ShutdownMode {
+    Immediate,
+    Drain { timeout: Duration },
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ShutdownDisposition {
+    Drained,
+    Cancelled,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ShutdownOutcome {
+    pub disposition: ShutdownDisposition,
+    pub owned_connections: usize,
+    pub cancelled_connections: usize,
+    pub elapsed: Duration,
+}
+
+#[derive(Clone, Debug)]
+pub struct ShutdownHandle {
+    request: watch::Sender<Option<ShutdownMode>>,
+    accepting: watch::Receiver<bool>,
+}
+
+impl ShutdownHandle {
+    /// Requests either immediate connection cancellation or a bounded drain.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the server has already stopped.
+    pub fn shutdown(&self, mode: ShutdownMode) -> Result<(), WebTransportError> {
+        self.request
+            .send(Some(mode))
+            .map_err(|_| WebTransportError::ShutdownUnavailable)
+    }
+
+    /// Waits until the server has stopped accepting sessions.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the server stops without acknowledging shutdown.
+    pub async fn wait_stopped_accepting(&mut self) -> Result<(), WebTransportError> {
+        while *self.accepting.borrow_and_update() {
+            self.accepting
+                .changed()
+                .await
+                .map_err(|_| WebTransportError::ShutdownUnavailable)?;
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Default)]
@@ -143,6 +200,8 @@ pub enum WebTransportError {
     Protocol(#[from] ProtocolError),
     #[error("received a request where a response was required")]
     UnexpectedRequest,
+    #[error("the server is no longer available for shutdown")]
+    ShutdownUnavailable,
 }
 
 pub struct WebTransportServer {
@@ -150,6 +209,9 @@ pub struct WebTransportServer {
     service: Arc<NativeService>,
     config: TransportConfig,
     metrics: Arc<Metrics>,
+    shutdown_request: watch::Sender<Option<ShutdownMode>>,
+    shutdown_receiver: watch::Receiver<Option<ShutdownMode>>,
+    accepting: watch::Sender<bool>,
 }
 
 impl WebTransportServer {
@@ -173,11 +235,16 @@ impl WebTransportServer {
                 .build(),
         )
         .map_err(transport_error)?;
+        let (shutdown_request, shutdown_receiver) = watch::channel(None);
+        let (accepting, _) = watch::channel(true);
         Ok(Self {
             endpoint,
             service,
             config,
             metrics: Arc::new(Metrics::default()),
+            shutdown_request,
+            shutdown_receiver,
+            accepting,
         })
     }
 
@@ -200,41 +267,99 @@ impl WebTransportServer {
         MeasurementHandle(Arc::clone(&self.metrics))
     }
 
-    /// Serves accepted WebTransport sessions until the endpoint is closed.
+    #[must_use]
+    pub fn shutdown_handle(&self) -> ShutdownHandle {
+        ShutdownHandle {
+            request: self.shutdown_request.clone(),
+            accepting: self.accepting.subscribe(),
+        }
+    }
+
+    /// Serves accepted WebTransport sessions until explicit shutdown.
     ///
     /// # Errors
     ///
-    /// Returns an error when the endpoint is closed while waiting for a session.
+    /// Returns the first terminal connection error.
     pub async fn serve(self) -> Result<(), WebTransportError> {
-        let mut connections = FuturesUnordered::new();
-        loop {
-            if connections.len() == self.config.max_connections {
-                connections.next().await;
-                continue;
-            }
+        self.serve_until_shutdown().await.map(|_| ())
+    }
 
+    /// Serves sessions until explicit shutdown and reports drain versus cancellation.
+    ///
+    /// Once shutdown is acknowledged, no new session is accepted. `Immediate` closes the
+    /// endpoint and cancels every owned connection. `Drain` continues polling only already-owned
+    /// connection futures until they finish or the deadline expires, then cancels any remainder.
+    ///
+    /// # Errors
+    ///
+    /// Returns the first terminal connection error.
+    pub async fn serve_until_shutdown(mut self) -> Result<ShutdownOutcome, WebTransportError> {
+        let mut connections = FuturesUnordered::new();
+        let mode = loop {
             tokio::select! {
-                incoming = self.endpoint.accept() => {
+                incoming = self.endpoint.accept(), if connections.len() < self.config.max_connections => {
                     let service = Arc::clone(&self.service);
                     let config = self.config.clone();
                     let metrics = Arc::clone(&self.metrics);
                     connections.push(async move {
-                        let Ok(request) = incoming.await else {
-                            return;
-                        };
+                        let request = incoming.await.map_err(transport_error)?;
                         if request.path() != "/fluid" {
                             request.forbidden().await;
-                            return;
+                            return Ok(());
                         }
-                        let Ok(connection) = request.accept().await else {
-                            return;
-                        };
-                        serve_connection(connection, service, config, metrics).await;
+                        let connection = request.accept().await.map_err(transport_error)?;
+                        serve_connection(connection, service, config, metrics).await
                     });
                 }
-                _ = connections.next(), if !connections.is_empty() => {}
+                result = connections.next(), if !connections.is_empty() => {
+                    if let Some(result) = result {
+                        result?;
+                    }
+                }
+                changed = self.shutdown_receiver.changed() => {
+                    changed.map_err(|_| WebTransportError::ShutdownUnavailable)?;
+                    if let Some(mode) = *self.shutdown_receiver.borrow_and_update() {
+                        break mode;
+                    }
+                }
+            }
+        };
+        let started = Instant::now();
+        self.accepting.send_replace(false);
+        let owned_connections = connections.len();
+        let deadline = match mode {
+            ShutdownMode::Immediate => started,
+            ShutdownMode::Drain { timeout } => started + timeout,
+        };
+
+        while !connections.is_empty() {
+            match timeout_at(deadline, connections.next()).await {
+                Ok(Some(result)) => result?,
+                Ok(None) => break,
+                Err(_) => {
+                    let cancelled_connections = connections.len();
+                    self.endpoint
+                        .close(CLOSE_CODE, b"server shutdown deadline elapsed");
+                    drop(connections);
+                    self.endpoint.wait_idle().await;
+                    return Ok(ShutdownOutcome {
+                        disposition: ShutdownDisposition::Cancelled,
+                        owned_connections,
+                        cancelled_connections,
+                        elapsed: started.elapsed(),
+                    });
+                }
             }
         }
+
+        self.endpoint.close(CLOSE_CODE, b"server shutdown complete");
+        self.endpoint.wait_idle().await;
+        Ok(ShutdownOutcome {
+            disposition: ShutdownDisposition::Drained,
+            owned_connections,
+            cancelled_connections: 0,
+            elapsed: started.elapsed(),
+        })
     }
 }
 
@@ -243,14 +368,14 @@ async fn serve_connection(
     service: Arc<NativeService>,
     config: TransportConfig,
     metrics: Arc<Metrics>,
-) {
+) -> Result<(), WebTransportError> {
     let _active = metrics.enter_connection();
     loop {
         let Ok((send, receive)) = connection.accept_bi().await else {
-            return;
+            return Ok(());
         };
         let _active = metrics.enter_stream();
-        let _ = serve_stream(send, receive, &service, &config, &metrics).await;
+        serve_stream(send, receive, &service, &config, &metrics).await?;
     }
 }
 
@@ -532,6 +657,291 @@ mod tests {
             reference,
             payload: Bytes::from(format!("payload-{sequence}")),
         })
+    }
+
+    async fn wait_for_active_connections(metrics: &MeasurementHandle, expected: usize) {
+        timeout(Duration::from_secs(2), async {
+            while metrics.snapshot().active_connections != expected {
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .unwrap();
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn shutdown_stops_accepting_and_drains_owned_connections() {
+        tokio::task::LocalSet::new()
+            .run_until(async {
+                let directory = TempDirectory::new();
+                let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
+                let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
+                let server = WebTransportServer::bind(
+                    "127.0.0.1:0".parse().unwrap(),
+                    identity,
+                    Arc::new(NativeService::new(ServiceConfig::new(&directory.0))),
+                    TransportConfig {
+                        max_connections: 2,
+                        operation_timeout: Duration::from_secs(1),
+                        ..TransportConfig::default()
+                    },
+                )
+                .unwrap();
+                let address = server.local_addr().unwrap();
+                let metrics = server.measurement_handle();
+                let mut shutdown = server.shutdown_handle();
+                let server_task = tokio::task::spawn_local(server.serve_until_shutdown());
+                let client_config = TransportConfig {
+                    operation_timeout: Duration::from_secs(1),
+                    ..TransportConfig::default()
+                };
+                let first = WebTransportClient::connect(
+                    format!("https://{address}/fluid"),
+                    certificate_hash.clone(),
+                    client_config.clone(),
+                )
+                .await
+                .unwrap();
+                let second = WebTransportClient::connect(
+                    format!("https://{address}/fluid"),
+                    certificate_hash.clone(),
+                    client_config.clone(),
+                )
+                .await
+                .unwrap();
+                wait_for_active_connections(&metrics, 2).await;
+
+                shutdown
+                    .shutdown(ShutdownMode::Drain {
+                        timeout: Duration::from_secs(2),
+                    })
+                    .unwrap();
+                shutdown.wait_stopped_accepting().await.unwrap();
+                let third = WebTransportClient::connect(
+                    format!("https://{address}/fluid"),
+                    certificate_hash,
+                    client_config,
+                )
+                .await;
+
+                assert_eq!(
+                    first
+                        .request(Request::Create {
+                            document: bytes(b"drain-document"),
+                        })
+                        .await
+                        .unwrap(),
+                    Response::Acknowledged(Acknowledgement::Created)
+                );
+                assert!(matches!(
+                    second
+                        .request(Request::LatestSnapshot {
+                            document: bytes(b"drain-document"),
+                        })
+                        .await
+                        .unwrap(),
+                    Response::Snapshot(None)
+                ));
+                first.disconnect();
+                second.disconnect();
+
+                let outcome = server_task.await.unwrap().unwrap();
+                assert_eq!(outcome.disposition, ShutdownDisposition::Drained);
+                assert_eq!(outcome.owned_connections, 2);
+                assert_eq!(outcome.cancelled_connections, 0);
+                let measurement = metrics.snapshot();
+                assert_eq!(measurement.active_connections, 0);
+                assert_eq!(measurement.peak_active_connections, 2);
+                if let Ok(third) = third {
+                    assert!(third
+                        .request(Request::LatestSnapshot {
+                            document: bytes(b"drain-document"),
+                        })
+                        .await
+                        .is_err());
+                }
+                println!(
+                    "SHUTDOWN_DRAIN_EVIDENCE disposition={:?} owned_connections={} cancelled_connections={} elapsed_milliseconds={} active_connections={} peak_active_connections={}",
+                    outcome.disposition,
+                    outcome.owned_connections,
+                    outcome.cancelled_connections,
+                    outcome.elapsed.as_millis(),
+                    measurement.active_connections,
+                    measurement.peak_active_connections
+                );
+            })
+            .await;
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn shutdown_deadline_cancels_remaining_connections() {
+        tokio::task::LocalSet::new()
+            .run_until(async {
+                let directory = TempDirectory::new();
+                let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
+                let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
+                let server = WebTransportServer::bind(
+                    "127.0.0.1:0".parse().unwrap(),
+                    identity,
+                    Arc::new(NativeService::new(ServiceConfig::new(&directory.0))),
+                    TransportConfig::default(),
+                )
+                .unwrap();
+                let address = server.local_addr().unwrap();
+                let metrics = server.measurement_handle();
+                let mut shutdown = server.shutdown_handle();
+                let server_task = tokio::task::spawn_local(server.serve_until_shutdown());
+                let first = WebTransportClient::connect(
+                    format!("https://{address}/fluid"),
+                    certificate_hash.clone(),
+                    TransportConfig::default(),
+                )
+                .await
+                .unwrap();
+                let second = WebTransportClient::connect(
+                    format!("https://{address}/fluid"),
+                    certificate_hash,
+                    TransportConfig::default(),
+                )
+                .await
+                .unwrap();
+                wait_for_active_connections(&metrics, 2).await;
+
+                shutdown
+                    .shutdown(ShutdownMode::Drain {
+                        timeout: Duration::from_millis(50),
+                    })
+                    .unwrap();
+                shutdown.wait_stopped_accepting().await.unwrap();
+                let outcome = server_task.await.unwrap().unwrap();
+
+                assert_eq!(outcome.disposition, ShutdownDisposition::Cancelled);
+                assert_eq!(outcome.owned_connections, 2);
+                assert_eq!(outcome.cancelled_connections, 2);
+                assert!(outcome.elapsed < Duration::from_secs(1));
+                assert_eq!(metrics.snapshot().active_connections, 0);
+                assert!(first
+                    .request(Request::LatestSnapshot {
+                        document: bytes(b"cancelled-document"),
+                    })
+                    .await
+                    .is_err());
+                assert!(second
+                    .request(Request::LatestSnapshot {
+                        document: bytes(b"cancelled-document"),
+                    })
+                    .await
+                    .is_err());
+                println!(
+                    "SHUTDOWN_TIMEOUT_EVIDENCE disposition={:?} owned_connections={} cancelled_connections={} elapsed_milliseconds={} active_connections={}",
+                    outcome.disposition,
+                    outcome.owned_connections,
+                    outcome.cancelled_connections,
+                    outcome.elapsed.as_millis(),
+                    metrics.snapshot().active_connections
+                );
+            })
+            .await;
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn immediate_shutdown_cancels_owned_connection() {
+        tokio::task::LocalSet::new()
+            .run_until(async {
+                let directory = TempDirectory::new();
+                let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
+                let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
+                let server = WebTransportServer::bind(
+                    "127.0.0.1:0".parse().unwrap(),
+                    identity,
+                    Arc::new(NativeService::new(ServiceConfig::new(&directory.0))),
+                    TransportConfig::default(),
+                )
+                .unwrap();
+                let address = server.local_addr().unwrap();
+                let metrics = server.measurement_handle();
+                let shutdown = server.shutdown_handle();
+                let server_task = tokio::task::spawn_local(server.serve_until_shutdown());
+                let client = WebTransportClient::connect(
+                    format!("https://{address}/fluid"),
+                    certificate_hash,
+                    TransportConfig::default(),
+                )
+                .await
+                .unwrap();
+                wait_for_active_connections(&metrics, 1).await;
+
+                shutdown.shutdown(ShutdownMode::Immediate).unwrap();
+                let outcome = server_task.await.unwrap().unwrap();
+
+                assert_eq!(outcome.disposition, ShutdownDisposition::Cancelled);
+                assert_eq!(outcome.owned_connections, 1);
+                assert_eq!(outcome.cancelled_connections, 1);
+                assert!(outcome.elapsed < Duration::from_secs(1));
+                assert_eq!(metrics.snapshot().active_connections, 0);
+                assert!(client
+                    .request(Request::LatestSnapshot {
+                        document: bytes(b"immediate-document"),
+                    })
+                    .await
+                    .is_err());
+                println!(
+                    "SHUTDOWN_IMMEDIATE_EVIDENCE disposition={:?} owned_connections={} cancelled_connections={} elapsed_milliseconds={} active_connections={}",
+                    outcome.disposition,
+                    outcome.owned_connections,
+                    outcome.cancelled_connections,
+                    outcome.elapsed.as_millis(),
+                    metrics.snapshot().active_connections
+                );
+            })
+            .await;
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn terminal_stream_error_stops_server() {
+        tokio::task::LocalSet::new()
+            .run_until(async {
+                let directory = TempDirectory::new();
+                let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
+                let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
+                let server = WebTransportServer::bind(
+                    "127.0.0.1:0".parse().unwrap(),
+                    identity,
+                    Arc::new(NativeService::new(ServiceConfig::new(&directory.0))),
+                    TransportConfig::default(),
+                )
+                .unwrap();
+                let address = server.local_addr().unwrap();
+                let metrics = server.measurement_handle();
+                let server_task = tokio::task::spawn_local(server.serve_until_shutdown());
+                let endpoint = Endpoint::client(
+                    ClientConfig::builder()
+                        .with_bind_default()
+                        .with_server_certificate_hashes([certificate_hash])
+                        .build(),
+                )
+                .unwrap();
+                let connection = endpoint
+                    .connect(format!("https://{address}/fluid"))
+                    .await
+                    .unwrap();
+                let (mut send, _receive) = connection.open_bi().await.unwrap().await.unwrap();
+                send.write_all(b"short frame").await.unwrap();
+                send.finish().await.unwrap();
+
+                let error = timeout(Duration::from_secs(2), server_task)
+                    .await
+                    .unwrap()
+                    .unwrap()
+                    .unwrap_err();
+                assert!(matches!(error, WebTransportError::Transport(_)));
+                assert_eq!(metrics.snapshot().active_connections, 0);
+                println!(
+                    "SHUTDOWN_TERMINAL_ERROR_EVIDENCE error={error} active_connections={}",
+                    metrics.snapshot().active_connections
+                );
+            })
+            .await;
     }
 
     #[allow(clippy::too_many_lines)]

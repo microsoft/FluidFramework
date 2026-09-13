@@ -1,11 +1,11 @@
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { extname, join, normalize } from "node:path";
 import { createServer as createNetServer } from "node:net";
 
-const [siteRoot, transportUrl, certificateHash] = process.argv.slice(2);
+const [siteRoot, transportUrl, certificateHash, shutdownMarker] = process.argv.slice(2);
 if (!siteRoot || !transportUrl || !/^[0-9a-f]{64}$/i.test(certificateHash ?? "")) {
     throw new Error("usage: node run-headless.mjs <site-root> <transport-url> <certificate-sha256-hex>");
 }
@@ -40,6 +40,19 @@ async function waitForJson(url, browserExit, attempts = 300) {
         await delay(100);
     }
     throw lastError ?? new Error(`timed out waiting for ${url}`);
+}
+
+async function waitForFile(path, attempts = 200) {
+    let lastError;
+    for (let attempt = 0; attempt < attempts; attempt++) {
+        try {
+            return await readFile(path, "utf8");
+        } catch (error) {
+            lastError = error;
+        }
+        await delay(25);
+    }
+    throw lastError ?? new Error(`timed out waiting for ${path}`);
 }
 
 class CdpClient {
@@ -152,6 +165,39 @@ try {
     const result = evaluation.result.value;
     console.log(`BROWSER_EVIDENCE=${JSON.stringify(result)}`);
     if (result?.status !== "passed") process.exitCode = 1;
+    if (result?.status === "passed" && shutdownMarker) {
+        await writeFile(shutdownMarker, "shutdown requested\n");
+        const acknowledgement = await waitForFile(`${shutdownMarker.replace(/\.[^/.]+$/, "")}.ack`);
+        const duringDrain = await client.send("Runtime.evaluate", {
+            expression: `(async () => {
+                const existingSession = await window.__shutdownProbe.existingRequest();
+                window.__thirdSessionResult = window.__shutdownProbe.thirdSession();
+                return existingSession;
+            })()`,
+            awaitPromise: true,
+            returnByValue: true,
+        });
+        await delay(5500);
+        const afterDeadline = await client.send("Runtime.evaluate", {
+            expression: `(async () => ({
+                existingSession: await window.__shutdownProbe.existingRequest(),
+                thirdSession: await window.__thirdSessionResult,
+            }))()`,
+            awaitPromise: true,
+            returnByValue: true,
+        });
+        const shutdownResult = {
+            status: duringDrain.result.value === "succeeded" &&
+                afterDeadline.result.value.existingSession === "rejected" &&
+                afterDeadline.result.value.thirdSession === "rejected" ? "passed" : "failed",
+            acknowledgement: acknowledgement.trim(),
+            duringDrainExistingSession: duringDrain.result.value,
+            afterDeadlineExistingSession: afterDeadline.result.value.existingSession,
+            postShutdownThirdSession: afterDeadline.result.value.thirdSession,
+        };
+        console.log(`BROWSER_SHUTDOWN_EVIDENCE=${JSON.stringify(shutdownResult)}`);
+        if (shutdownResult.status !== "passed") process.exitCode = 1;
+    }
 } catch (error) {
     console.error(`BROWSER_RUNNER_ERROR=${error.stack ?? error}`);
     console.error(chromiumErrors);
