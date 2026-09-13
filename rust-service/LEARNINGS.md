@@ -24,6 +24,7 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 - **Confirmed:** Opaque DDS payload transport still requires the adapter to preserve the host framework's summary, identity, membership, sequence, and batch-envelope semantics; byte delivery alone does not imply application convergence. [Evidence](iterations/0006/phase-2/direct-shared-tree-integration.md#notable-events)
 - **Confirmed:** When multiple upstream writers are collapsed to one projected identity, every author-scoped monotonic field must be translated into one shared order; preserving writer-local sequence numbers creates replay corruption. [Evidence](iterations/0006/phase-2/direct-shared-tree-integration.md#notable-events)
 - **Confirmed:** A replacement connection must share deterministic operation envelopes between history and live delivery, while each projected member retains a contiguous client-sequence domain; otherwise catch-up can reinterpret an already processed server sequence and close the client. [Evidence](iterations/0007/phase-2/fluid-read-reconnect-lifecycle.md#notable-events)
+- **Confirmed:** An atomic catch-up-and-tail stream can use a bounded advisory wakeup when opaque cursor reads remain authoritative; coalesced or lagged notifications must trigger catch-up rather than carry exact delivery state. [Evidence](decisions/0009-projected-operation-subscription.md)
 
 ## Correctness and Testing
 
@@ -32,6 +33,7 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 - **Confirmed:** Durable acknowledgment must classify failures after write begins as ambiguous and return success only after the implementation's documented sync policy completes. [Evidence](iterations/0001/phase-2/durable-log.md#contract-and-integration-friction)
 - **Confirmed:** Valid-only service sequencing does not require payload-aware conditional append when one fencing authority remains exclusive through append; cross-process enforcement is still required before this becomes a deployment claim. [Evidence](iterations/0002/phase-2/authoritative-sequencer.md#hypothesis-results)
 - **Confirmed:** Portable WASM client logic can use injected transport tests in Node, but browser WebTransport, certificate pinning, streams, and reconnect still require authoritative real-browser integration evidence. [Evidence](iterations/0004/phase-2/webtransport.md#validation-evidence)
+- **Confirmed:** A cancellable async WASM resource cannot hold an exclusive object borrow across its long-lived wait; `next()` and `cancel()` need independently accessible, narrowly borrowed state with no interior borrow crossing `await`. [Evidence](iterations/0008/phase-2/live-projected-operation-streaming.md#notable-events)
 
 ## Performance and Operations
 
