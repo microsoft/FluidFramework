@@ -2,14 +2,16 @@
 
 use std::{
     collections::{BTreeMap, VecDeque},
+    error::Error,
+    fmt,
     fs::{self, OpenOptions},
     future::Future,
     io::{Cursor, Read, Write},
     path::PathBuf,
     sync::{Arc, RwLock},
-    time::{SystemTime, UNIX_EPOCH},
 };
 
+use async_trait::async_trait;
 use bytes::Bytes;
 use fluid_sequencer::{
     AuthoritativeSequencer, FencedStream, PositionToken, ProjectedOperation as SequencerOperation,
@@ -24,14 +26,16 @@ use fluid_service_protocol::{
 };
 use futures_util::StreamExt;
 use snapshotted_stream_content_addressed::{
-    ContentDigest, ContentStore, StoreConfig, StoreError, SummaryEntry as StoreSummaryEntry,
-    SummaryManifest,
+    BlobReceipt, ContentDigest, ContentStore, StoreConfig, StoreError,
+    SummaryEntry as StoreSummaryEntry, SummaryManifest, SummaryReceipt,
 };
 use snapshotted_stream_core::{
     AppendReceipt, AppendStream, ClassifiedError, ErrorKind, PublishedSnapshot, ReadRecord,
     Snapshot, SnapshotId, SnapshotPosition, SnapshotStore,
 };
 use snapshotted_stream_durable_log_spike::{DurableLog, DurableLogError, DurablePosition};
+use snapshotted_stream_file_simple::{FileError, FilePosition, FileStream};
+use snapshotted_stream_memory::{MemoryError, MemoryPosition, MemoryStream};
 use tokio::sync::{Mutex, broadcast, watch};
 
 const SCOPE_FILE: &str = "service.scope";
@@ -46,6 +50,7 @@ const MAX_BLOB_BYTES: u64 = 512 * 1024;
 const MAX_MANIFEST_BYTES: u64 = 4 * 1024 * 1024;
 const CONTENT_COPY_BUFFER_BYTES: usize = 64 * 1024;
 const PROJECTED_SUBSCRIPTION_NOTIFICATIONS: usize = 1;
+const SUMMARY_MANIFEST_MAGIC: [u8; 8] = *b"CSUM001\0";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ProjectedSubscriptionError {
@@ -137,33 +142,156 @@ impl ProjectedSubscription {
 #[derive(Clone, Debug)]
 pub struct ServiceConfig {
     pub root: PathBuf,
+    pub storage_mode: StorageMode,
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum StorageMode {
+    Memory,
+    BufferedFile,
+    #[default]
+    DurableFile,
+}
+
+impl StorageMode {
+    #[must_use]
+    pub fn from_name(value: &str) -> Option<Self> {
+        match value {
+            "memory" => Some(Self::Memory),
+            "buffered-file" => Some(Self::BufferedFile),
+            "durable-file" => Some(Self::DurableFile),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::Memory => "memory",
+            Self::BufferedFile => "buffered-file",
+            Self::DurableFile => "durable-file",
+        }
+    }
 }
 
 impl ServiceConfig {
     #[must_use]
     pub fn new(root: impl Into<PathBuf>) -> Self {
-        Self { root: root.into() }
+        Self {
+            root: root.into(),
+            storage_mode: StorageMode::default(),
+        }
+    }
+
+    #[must_use]
+    pub fn with_storage_mode(mut self, storage_mode: StorageMode) -> Self {
+        self.storage_mode = storage_mode;
+        self
     }
 }
 
 pub struct NativeService {
     config: ServiceConfig,
-    content: Result<ContentStore, ErrorCode>,
+    content: ServiceContentStore,
     documents: Mutex<BTreeMap<Bytes, Document>>,
+}
+
+enum ServiceContentStore {
+    Memory(MemoryContentStore),
+    Durable(Result<ContentStore, ErrorCode>),
+}
+
+#[derive(Default)]
+struct MemoryContentStore {
+    blobs: RwLock<BTreeMap<ContentDigest, Bytes>>,
+    summaries: RwLock<BTreeMap<ContentDigest, SummaryManifest>>,
+}
+
+impl MemoryContentStore {
+    fn put_blob(&self, payload: Bytes) -> Result<BlobReceipt, ErrorCode> {
+        let size_bytes = u64::try_from(payload.len()).map_err(|_| ErrorCode::ContentTooLarge)?;
+        if size_bytes > MAX_BLOB_BYTES {
+            return Err(ErrorCode::ContentTooLarge);
+        }
+        let digest = ContentDigest::of(&payload);
+        let deduplicated = self
+            .blobs
+            .write()
+            .map_err(|_| ErrorCode::Unavailable)?
+            .insert(digest, payload)
+            .is_some();
+        Ok(BlobReceipt {
+            digest,
+            size_bytes,
+            deduplicated,
+        })
+    }
+
+    fn fetch_blob(&self, digest: ContentDigest) -> Result<Bytes, ErrorCode> {
+        self.blobs
+            .read()
+            .map_err(|_| ErrorCode::Unavailable)?
+            .get(&digest)
+            .cloned()
+            .ok_or(ErrorCode::BlobNotFound)
+    }
+
+    fn publish_summary(&self, manifest: SummaryManifest) -> Result<SummaryReceipt, ErrorCode> {
+        let encoded = encode_summary_manifest(&manifest)?;
+        let blobs = self.blobs.read().map_err(|_| ErrorCode::Unavailable)?;
+        if manifest
+            .entries
+            .iter()
+            .any(|entry| !blobs.contains_key(&entry.blob))
+        {
+            return Err(ErrorCode::BlobNotFound);
+        }
+        drop(blobs);
+        let digest = ContentDigest::of(&encoded);
+        let entry_count = manifest.entries.len();
+        let persisted_bytes =
+            u64::try_from(encoded.len()).map_err(|_| ErrorCode::ContentTooLarge)?;
+        let deduplicated = self
+            .summaries
+            .write()
+            .map_err(|_| ErrorCode::Unavailable)?
+            .insert(digest, manifest)
+            .is_some();
+        Ok(SummaryReceipt {
+            digest,
+            entry_count,
+            persisted_bytes,
+            deduplicated,
+        })
+    }
+
+    fn fetch_summary(&self, digest: ContentDigest) -> Result<SummaryManifest, ErrorCode> {
+        self.summaries
+            .read()
+            .map_err(|_| ErrorCode::Unavailable)?
+            .get(&digest)
+            .cloned()
+            .ok_or(ErrorCode::SummaryNotFound)
+    }
 }
 
 impl NativeService {
     #[must_use]
     pub fn new(config: ServiceConfig) -> Self {
-        let content = ContentStore::open(
-            config.root.join("content"),
-            StoreConfig {
-                max_blob_bytes: MAX_BLOB_BYTES,
-                max_manifest_bytes: MAX_MANIFEST_BYTES,
-                copy_buffer_bytes: CONTENT_COPY_BUFFER_BYTES,
-            },
-        )
-        .map_err(|error| map_content_error(&error));
+        let content = match config.storage_mode {
+            StorageMode::Memory => ServiceContentStore::Memory(MemoryContentStore::default()),
+            StorageMode::BufferedFile | StorageMode::DurableFile => ServiceContentStore::Durable(
+                ContentStore::open(
+                    config.root.join("content"),
+                    StoreConfig {
+                        max_blob_bytes: MAX_BLOB_BYTES,
+                        max_manifest_bytes: MAX_MANIFEST_BYTES,
+                        copy_buffer_bytes: CONTENT_COPY_BUFFER_BYTES,
+                    },
+                )
+                .map_err(|error| map_content_error(&error)),
+            ),
+        };
         Self {
             config,
             content,
@@ -191,10 +319,15 @@ impl NativeService {
         let mut documents = self.documents.lock().await;
         if !documents.contains_key(&document) {
             let path = self.document_path(&document);
-            if !path.exists() {
+            if !self.document_exists(&path) {
                 return Err(ErrorCode::DocumentNotFound);
             }
-            let opened = Document::open(path, self.authority_path(&document)).await?;
+            let opened = Document::open(
+                path,
+                self.authority_path(&document),
+                self.config.storage_mode,
+            )
+            .await?;
             documents.insert(document.clone(), opened);
         }
         let notifications = documents
@@ -223,12 +356,14 @@ impl NativeService {
             Request::FetchSummary { digest } => self.fetch_summary(&digest),
             Request::Create { document } => {
                 let mut documents = self.documents.lock().await;
-                if documents.contains_key(&document) || self.document_path(&document).exists() {
+                let path = self.document_path(&document);
+                if documents.contains_key(&document) || self.document_exists(&path) {
                     return Err(ErrorCode::DocumentAlreadyExists);
                 }
                 let opened = Document::create(
-                    self.document_path(&document),
+                    path,
                     self.authority_path(&document),
+                    self.config.storage_mode,
                 )
                 .await?;
                 documents.insert(document, opened);
@@ -240,10 +375,15 @@ impl NativeService {
                 let mut documents = self.documents.lock().await;
                 if !documents.contains_key(document_id) {
                     let path = self.document_path(document_id);
-                    if !path.exists() {
+                    if !self.document_exists(&path) {
                         return Err(ErrorCode::DocumentNotFound);
                     }
-                    let opened = Document::open(path, self.authority_path(document_id)).await?;
+                    let opened = Document::open(
+                        path,
+                        self.authority_path(document_id),
+                        self.config.storage_mode,
+                    )
+                    .await?;
                     documents.insert(document_id.clone(), opened);
                 }
                 documents
@@ -256,10 +396,14 @@ impl NativeService {
     }
 
     fn upload_blob(&self, payload: Bytes) -> Result<Response, ErrorCode> {
-        let receipt = self
-            .content_store()?
-            .put_blob(Cursor::new(payload))
-            .map_err(|error| map_content_error(&error))?;
+        let receipt = match &self.content {
+            ServiceContentStore::Memory(content) => content.put_blob(payload)?,
+            ServiceContentStore::Durable(content) => content
+                .as_ref()
+                .map_err(|code| *code)?
+                .put_blob(Cursor::new(payload))
+                .map_err(|error| map_content_error(&error))?,
+        };
         Ok(Response::BlobUploaded {
             digest: Bytes::copy_from_slice(receipt.digest.as_bytes()),
             size_bytes: receipt.size_bytes,
@@ -269,16 +413,23 @@ impl NativeService {
 
     fn fetch_blob(&self, digest: &[u8]) -> Result<Response, ErrorCode> {
         let digest = ContentDigest::from_bytes(digest).map_err(|_| ErrorCode::InvalidDigest)?;
-        let mut reader = self
-            .content_store()?
-            .open_blob(digest)
-            .map_err(|error| map_content_error(&error))?;
-        let mut payload = Vec::with_capacity(
-            usize::try_from(reader.size_bytes()).map_err(|_| ErrorCode::ContentTooLarge)?,
-        );
-        reader
-            .read_to_end(&mut payload)
-            .map_err(|_| ErrorCode::Unavailable)?;
+        let payload = match &self.content {
+            ServiceContentStore::Memory(content) => content.fetch_blob(digest)?.to_vec(),
+            ServiceContentStore::Durable(content) => {
+                let mut reader = content
+                    .as_ref()
+                    .map_err(|code| *code)?
+                    .open_blob(digest)
+                    .map_err(|error| map_content_error(&error))?;
+                let mut payload = Vec::with_capacity(
+                    usize::try_from(reader.size_bytes()).map_err(|_| ErrorCode::ContentTooLarge)?,
+                );
+                reader
+                    .read_to_end(&mut payload)
+                    .map_err(|_| ErrorCode::Unavailable)?;
+                payload
+            }
+        };
         Ok(Response::Blob {
             digest: Bytes::copy_from_slice(digest.as_bytes()),
             payload: Bytes::from(payload),
@@ -300,10 +451,15 @@ impl NativeService {
                 })
             })
             .collect::<Result<Vec<_>, ErrorCode>>()?;
-        let receipt = self
-            .content_store()?
-            .publish_summary(&SummaryManifest { entries })
-            .map_err(|error| map_content_error(&error))?;
+        let manifest = SummaryManifest { entries };
+        let receipt = match &self.content {
+            ServiceContentStore::Memory(content) => content.publish_summary(manifest)?,
+            ServiceContentStore::Durable(content) => content
+                .as_ref()
+                .map_err(|code| *code)?
+                .publish_summary(&manifest)
+                .map_err(|error| map_content_error(&error))?,
+        };
         Ok(Response::SummaryPublished {
             digest: Bytes::copy_from_slice(receipt.digest.as_bytes()),
             entry_count: u32::try_from(receipt.entry_count)
@@ -315,10 +471,14 @@ impl NativeService {
 
     fn fetch_summary(&self, digest: &[u8]) -> Result<Response, ErrorCode> {
         let digest = ContentDigest::from_bytes(digest).map_err(|_| ErrorCode::InvalidDigest)?;
-        let manifest = self
-            .content_store()?
-            .load_summary(digest)
-            .map_err(|error| map_content_error(&error))?;
+        let manifest = match &self.content {
+            ServiceContentStore::Memory(content) => content.fetch_summary(digest)?,
+            ServiceContentStore::Durable(content) => content
+                .as_ref()
+                .map_err(|code| *code)?
+                .load_summary(digest)
+                .map_err(|error| map_content_error(&error))?,
+        };
         Ok(Response::Summary {
             digest: Bytes::copy_from_slice(digest.as_bytes()),
             entries: manifest
@@ -332,8 +492,8 @@ impl NativeService {
         })
     }
 
-    fn content_store(&self) -> Result<&ContentStore, ErrorCode> {
-        self.content.as_ref().map_err(|code| *code)
+    fn document_exists(&self, path: &std::path::Path) -> bool {
+        self.config.storage_mode != StorageMode::Memory && path.exists()
     }
 
     fn document_path(&self, document: &[u8]) -> PathBuf {
@@ -346,6 +506,32 @@ impl NativeService {
             .join("authorities")
             .join(format!("{}.epoch", hex(document)))
     }
+}
+
+fn encode_summary_manifest(manifest: &SummaryManifest) -> Result<Vec<u8>, ErrorCode> {
+    let entry_count =
+        u32::try_from(manifest.entries.len()).map_err(|_| ErrorCode::InvalidManifest)?;
+    let mut encoded = Vec::from(SUMMARY_MANIFEST_MAGIC);
+    encoded.extend_from_slice(&entry_count.to_be_bytes());
+    let mut previous: Option<&str> = None;
+    for entry in &manifest.entries {
+        if entry.path.is_empty()
+            || entry.path.as_bytes().contains(&0)
+            || previous.is_some_and(|path| path >= entry.path.as_str())
+        {
+            return Err(ErrorCode::InvalidManifest);
+        }
+        previous = Some(&entry.path);
+        let path = entry.path.as_bytes();
+        let path_length = u32::try_from(path.len()).map_err(|_| ErrorCode::InvalidManifest)?;
+        encoded.extend_from_slice(&path_length.to_be_bytes());
+        encoded.extend_from_slice(path);
+        encoded.extend_from_slice(entry.blob.as_bytes());
+        if u64::try_from(encoded.len()).map_or(true, |length| length > MAX_MANIFEST_BYTES) {
+            return Err(ErrorCode::ContentTooLarge);
+        }
+    }
+    Ok(encoded)
 }
 
 fn request_document(request: &Request) -> Option<&Bytes> {
@@ -374,9 +560,17 @@ struct Document {
 }
 
 impl Document {
-    async fn create(path: PathBuf, authority_path: PathBuf) -> Result<Self, ErrorCode> {
+    async fn create(
+        path: PathBuf,
+        authority_path: PathBuf,
+        storage_mode: StorageMode,
+    ) -> Result<Self, ErrorCode> {
+        if storage_mode == StorageMode::Memory {
+            let scope = new_scope().map_err(|()| ErrorCode::Unavailable)?;
+            return Self::open_with_scope(path, authority_path, scope, storage_mode).await;
+        }
         fs::create_dir_all(&path).map_err(|_| ErrorCode::Unavailable)?;
-        let scope = new_scope().map_err(|_| ErrorCode::Unavailable)?;
+        let scope = new_scope().map_err(|()| ErrorCode::Unavailable)?;
         let scope_path = path.join(SCOPE_FILE);
         let mut file = OpenOptions::new()
             .write(true)
@@ -385,10 +579,17 @@ impl Document {
             .map_err(|_| ErrorCode::DocumentAlreadyExists)?;
         file.write_all(&scope).map_err(|_| ErrorCode::Unavailable)?;
         file.sync_all().map_err(|_| ErrorCode::Unavailable)?;
-        Self::open_with_scope(path, authority_path, scope).await
+        Self::open_with_scope(path, authority_path, scope, storage_mode).await
     }
 
-    async fn open(path: PathBuf, authority_path: PathBuf) -> Result<Self, ErrorCode> {
+    async fn open(
+        path: PathBuf,
+        authority_path: PathBuf,
+        storage_mode: StorageMode,
+    ) -> Result<Self, ErrorCode> {
+        if storage_mode == StorageMode::Memory {
+            return Err(ErrorCode::DocumentNotFound);
+        }
         let mut scope = [0_u8; SCOPE_BYTES];
         let mut file = OpenOptions::new()
             .read(true)
@@ -400,21 +601,29 @@ impl Document {
         if file.read(&mut trailing).map_err(|_| ErrorCode::Corrupt)? != 0 {
             return Err(ErrorCode::Corrupt);
         }
-        Self::open_with_scope(path, authority_path, scope).await
+        Self::open_with_scope(path, authority_path, scope, storage_mode).await
     }
 
     async fn open_with_scope(
         path: PathBuf,
         authority_path: PathBuf,
         scope: [u8; SCOPE_BYTES],
+        storage_mode: StorageMode,
     ) -> Result<Self, ErrorCode> {
-        if let Some(parent) = authority_path.parent() {
+        if storage_mode == StorageMode::DurableFile
+            && let Some(parent) = authority_path.parent()
+        {
             fs::create_dir_all(parent).map_err(|_| ErrorCode::Unavailable)?;
         }
-        let log = DurableLog::open(path).map_err(|error| map_storage_error(&error))?;
+        let log =
+            ServiceLog::open(storage_mode, path).map_err(|error| map_storage_error(&error))?;
         let storage = ServiceStorage::new(log, scope).await?;
-        let fenced = FencedStream::with_deployment_authority(storage.clone(), authority_path)
-            .map_err(|_| ErrorCode::Unavailable)?;
+        let fenced = if storage_mode == StorageMode::DurableFile {
+            FencedStream::with_deployment_authority(storage.clone(), authority_path)
+                .map_err(|_| ErrorCode::Unavailable)?
+        } else {
+            FencedStream::new(storage.clone())
+        };
         let fence = fenced
             .try_issue_fence()
             .map_err(|_| ErrorCode::Unavailable)?;
@@ -642,7 +851,7 @@ impl Document {
 
     fn protocol_snapshot(
         &self,
-        snapshot: PublishedSnapshot<DurablePosition>,
+        snapshot: PublishedSnapshot<ServicePosition>,
     ) -> Result<ProtocolSnapshot, ErrorCode> {
         Ok(ProtocolSnapshot {
             id: snapshot.id.as_bytes().clone(),
@@ -655,15 +864,343 @@ impl Document {
     }
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+enum ServicePosition {
+    Memory(MemoryPosition),
+    Buffered(FilePosition),
+    Durable(DurablePosition),
+}
+
+#[derive(Debug)]
+enum ServiceLogError {
+    Memory(MemoryError),
+    Buffered(FileError),
+    Durable(DurableLogError),
+    WrongPositionMode,
+}
+
+impl fmt::Display for ServiceLogError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Memory(error) => write!(formatter, "memory log failed: {error}"),
+            Self::Buffered(error) => write!(formatter, "buffered log failed: {error}"),
+            Self::Durable(error) => write!(formatter, "durable log failed: {error}"),
+            Self::WrongPositionMode => {
+                formatter.write_str("position belongs to another storage mode")
+            }
+        }
+    }
+}
+
+impl Error for ServiceLogError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::Memory(error) => Some(error),
+            Self::Buffered(error) => Some(error),
+            Self::Durable(error) => Some(error),
+            Self::WrongPositionMode => None,
+        }
+    }
+}
+
+impl ClassifiedError for ServiceLogError {
+    fn kind(&self) -> ErrorKind {
+        match self {
+            Self::Memory(error) => error.kind(),
+            Self::Buffered(error) => error.kind(),
+            Self::Durable(error) => error.kind(),
+            Self::WrongPositionMode => ErrorKind::InvalidPosition,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+enum ServiceLog {
+    Memory(MemoryStream),
+    Buffered(FileStream),
+    Durable(DurableLog),
+}
+
+impl ServiceLog {
+    fn open(storage_mode: StorageMode, path: PathBuf) -> Result<Self, ServiceLogError> {
+        match storage_mode {
+            StorageMode::Memory => Ok(Self::Memory(MemoryStream::new())),
+            StorageMode::BufferedFile => FileStream::open(path)
+                .map(Self::Buffered)
+                .map_err(ServiceLogError::Buffered),
+            StorageMode::DurableFile => DurableLog::open(path)
+                .map(Self::Durable)
+                .map_err(ServiceLogError::Durable),
+        }
+    }
+}
+
+#[async_trait]
+impl AppendStream for ServiceLog {
+    type Position = ServicePosition;
+    type Error = ServiceLogError;
+
+    fn capabilities(&self) -> snapshotted_stream_core::Capabilities {
+        match self {
+            Self::Memory(log) => log.capabilities(),
+            Self::Buffered(log) => log.capabilities(),
+            Self::Durable(log) => log.capabilities(),
+        }
+    }
+
+    async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
+        match self {
+            Self::Memory(log) => log
+                .append(value)
+                .await
+                .map(|receipt| AppendReceipt {
+                    position: ServicePosition::Memory(receipt.position),
+                    durability: receipt.durability,
+                })
+                .map_err(ServiceLogError::Memory),
+            Self::Buffered(log) => log
+                .append(value)
+                .await
+                .map(|receipt| AppendReceipt {
+                    position: ServicePosition::Buffered(receipt.position),
+                    durability: receipt.durability,
+                })
+                .map_err(ServiceLogError::Buffered),
+            Self::Durable(log) => log
+                .append(value)
+                .await
+                .map(|receipt| AppendReceipt {
+                    position: ServicePosition::Durable(receipt.position),
+                    durability: receipt.durability,
+                })
+                .map_err(ServiceLogError::Durable),
+        }
+    }
+
+    async fn read(
+        &self,
+        after: Option<&Self::Position>,
+    ) -> Result<snapshotted_stream_core::StreamReader<Self::Position, Self::Error>, Self::Error>
+    {
+        match (self, after) {
+            (Self::Memory(log), None | Some(ServicePosition::Memory(_))) => {
+                let after = after.map(|position| match position {
+                    ServicePosition::Memory(position) => position,
+                    _ => unreachable!(),
+                });
+                let reader = log.read(after).await.map_err(ServiceLogError::Memory)?;
+                Ok(Box::pin(reader.map(|record| {
+                    record
+                        .map(|record| ReadRecord {
+                            position: ServicePosition::Memory(record.position),
+                            payload: record.payload,
+                        })
+                        .map_err(ServiceLogError::Memory)
+                })))
+            }
+            (Self::Buffered(log), None | Some(ServicePosition::Buffered(_))) => {
+                let after = after.map(|position| match position {
+                    ServicePosition::Buffered(position) => position,
+                    _ => unreachable!(),
+                });
+                let reader = log.read(after).await.map_err(ServiceLogError::Buffered)?;
+                Ok(Box::pin(reader.map(|record| {
+                    record
+                        .map(|record| ReadRecord {
+                            position: ServicePosition::Buffered(record.position),
+                            payload: record.payload,
+                        })
+                        .map_err(ServiceLogError::Buffered)
+                })))
+            }
+            (Self::Durable(log), None | Some(ServicePosition::Durable(_))) => {
+                let after = after.map(|position| match position {
+                    ServicePosition::Durable(position) => position,
+                    _ => unreachable!(),
+                });
+                let reader = log.read(after).await.map_err(ServiceLogError::Durable)?;
+                Ok(Box::pin(reader.map(|record| {
+                    record
+                        .map(|record| ReadRecord {
+                            position: ServicePosition::Durable(record.position),
+                            payload: record.payload,
+                        })
+                        .map_err(ServiceLogError::Durable)
+                })))
+            }
+            _ => Err(ServiceLogError::WrongPositionMode),
+        }
+    }
+
+    async fn head(&self) -> Result<Option<Self::Position>, Self::Error> {
+        match self {
+            Self::Memory(log) => log
+                .head()
+                .await
+                .map(|position| position.map(ServicePosition::Memory))
+                .map_err(ServiceLogError::Memory),
+            Self::Buffered(log) => log
+                .head()
+                .await
+                .map(|position| position.map(ServicePosition::Buffered))
+                .map_err(ServiceLogError::Buffered),
+            Self::Durable(log) => log
+                .head()
+                .await
+                .map(|position| position.map(ServicePosition::Durable))
+                .map_err(ServiceLogError::Durable),
+        }
+    }
+}
+
+#[async_trait]
+impl SnapshotStore for ServiceLog {
+    type Position = ServicePosition;
+    type Error = ServiceLogError;
+
+    async fn latest(&self) -> Result<Option<PublishedSnapshot<Self::Position>>, Self::Error> {
+        match self {
+            Self::Memory(log) => log
+                .latest()
+                .await
+                .map(|snapshot| {
+                    snapshot.map(|snapshot| PublishedSnapshot {
+                        id: snapshot.id,
+                        snapshot: Snapshot {
+                            includes_through: map_snapshot_position(
+                                snapshot.snapshot.includes_through,
+                                ServicePosition::Memory,
+                            ),
+                            payload: snapshot.snapshot.payload,
+                        },
+                    })
+                })
+                .map_err(ServiceLogError::Memory),
+            Self::Buffered(log) => log
+                .latest()
+                .await
+                .map(|snapshot| {
+                    snapshot.map(|snapshot| PublishedSnapshot {
+                        id: snapshot.id,
+                        snapshot: Snapshot {
+                            includes_through: map_snapshot_position(
+                                snapshot.snapshot.includes_through,
+                                ServicePosition::Buffered,
+                            ),
+                            payload: snapshot.snapshot.payload,
+                        },
+                    })
+                })
+                .map_err(ServiceLogError::Buffered),
+            Self::Durable(log) => log
+                .latest()
+                .await
+                .map(|snapshot| {
+                    snapshot.map(|snapshot| PublishedSnapshot {
+                        id: snapshot.id,
+                        snapshot: Snapshot {
+                            includes_through: map_snapshot_position(
+                                snapshot.snapshot.includes_through,
+                                ServicePosition::Durable,
+                            ),
+                            payload: snapshot.snapshot.payload,
+                        },
+                    })
+                })
+                .map_err(ServiceLogError::Durable),
+        }
+    }
+
+    async fn publish(
+        &self,
+        snapshot: Snapshot<Self::Position>,
+        expected_parent: Option<&SnapshotId>,
+    ) -> Result<SnapshotId, Self::Error> {
+        match (self, snapshot.includes_through) {
+            (Self::Memory(log), SnapshotPosition::Initial) => log
+                .publish(
+                    Snapshot {
+                        includes_through: SnapshotPosition::Initial,
+                        payload: snapshot.payload,
+                    },
+                    expected_parent,
+                )
+                .await
+                .map_err(ServiceLogError::Memory),
+            (Self::Memory(log), SnapshotPosition::At(ServicePosition::Memory(position))) => log
+                .publish(
+                    Snapshot {
+                        includes_through: SnapshotPosition::At(position),
+                        payload: snapshot.payload,
+                    },
+                    expected_parent,
+                )
+                .await
+                .map_err(ServiceLogError::Memory),
+            (Self::Buffered(log), SnapshotPosition::Initial) => log
+                .publish(
+                    Snapshot {
+                        includes_through: SnapshotPosition::Initial,
+                        payload: snapshot.payload,
+                    },
+                    expected_parent,
+                )
+                .await
+                .map_err(ServiceLogError::Buffered),
+            (Self::Buffered(log), SnapshotPosition::At(ServicePosition::Buffered(position))) => log
+                .publish(
+                    Snapshot {
+                        includes_through: SnapshotPosition::At(position),
+                        payload: snapshot.payload,
+                    },
+                    expected_parent,
+                )
+                .await
+                .map_err(ServiceLogError::Buffered),
+            (Self::Durable(log), SnapshotPosition::Initial) => log
+                .publish(
+                    Snapshot {
+                        includes_through: SnapshotPosition::Initial,
+                        payload: snapshot.payload,
+                    },
+                    expected_parent,
+                )
+                .await
+                .map_err(ServiceLogError::Durable),
+            (Self::Durable(log), SnapshotPosition::At(ServicePosition::Durable(position))) => log
+                .publish(
+                    Snapshot {
+                        includes_through: SnapshotPosition::At(position),
+                        payload: snapshot.payload,
+                    },
+                    expected_parent,
+                )
+                .await
+                .map_err(ServiceLogError::Durable),
+            _ => Err(ServiceLogError::WrongPositionMode),
+        }
+    }
+}
+
+fn map_snapshot_position<P>(
+    position: SnapshotPosition<P>,
+    map: impl FnOnce(P) -> ServicePosition,
+) -> SnapshotPosition<ServicePosition> {
+    match position {
+        SnapshotPosition::Initial => SnapshotPosition::Initial,
+        SnapshotPosition::At(position) => SnapshotPosition::At(map(position)),
+    }
+}
+
 #[derive(Clone)]
 struct ServiceStorage {
-    log: DurableLog,
+    log: ServiceLog,
     scope: [u8; SCOPE_BYTES],
-    positions: Arc<RwLock<Vec<DurablePosition>>>,
+    positions: Arc<RwLock<Vec<ServicePosition>>>,
 }
 
 impl ServiceStorage {
-    async fn new(log: DurableLog, scope: [u8; SCOPE_BYTES]) -> Result<Self, ErrorCode> {
+    async fn new(log: ServiceLog, scope: [u8; SCOPE_BYTES]) -> Result<Self, ErrorCode> {
         let storage = Self {
             log,
             scope,
@@ -676,7 +1213,7 @@ impl ServiceStorage {
         Ok(storage)
     }
 
-    async fn refresh(&self) -> Result<Vec<ReadRecord<DurablePosition>>, DurableLogError> {
+    async fn refresh(&self) -> Result<Vec<ReadRecord<ServicePosition>>, ServiceLogError> {
         let mut reader = self.log.read(None).await?;
         let mut records = Vec::new();
         while let Some(record) = reader.next().await {
@@ -693,7 +1230,7 @@ impl ServiceStorage {
         Ok(records)
     }
 
-    fn token_for(&self, position: &DurablePosition) -> Result<Bytes, ErrorCode> {
+    fn token_for(&self, position: &ServicePosition) -> Result<Bytes, ErrorCode> {
         let positions = self
             .positions
             .read()
@@ -709,7 +1246,7 @@ impl ServiceStorage {
         Ok(Bytes::from(token))
     }
 
-    async fn decode_position(&self, token: &[u8]) -> Result<DurablePosition, ErrorCode> {
+    async fn decode_position(&self, token: &[u8]) -> Result<ServicePosition, ErrorCode> {
         if token.len() != TOKEN_BYTES || token[..SCOPE_BYTES] != self.scope {
             return Err(ErrorCode::InvalidPosition);
         }
@@ -734,8 +1271,8 @@ impl ServiceStorage {
 }
 
 impl SequencerStorage for ServiceStorage {
-    type Position = DurablePosition;
-    type Error = DurableLogError;
+    type Position = ServicePosition;
+    type Error = ServiceLogError;
 
     async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
         let receipt = self.log.append(value).await?;
@@ -754,7 +1291,7 @@ impl SequencerStorage for ServiceStorage {
 
     fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error> {
         self.token_for(position)
-            .map_err(|_| DurableLogError::InvalidPosition)
+            .map_err(|_| ServiceLogError::WrongPositionMode)
     }
 }
 
@@ -797,7 +1334,7 @@ fn protocol_reference_position(reference: SnapshotPosition<PositionToken>) -> Re
     }
 }
 
-fn map_sequencer_error(error: SequencerError<DurableLogError>) -> ErrorCode {
+fn map_sequencer_error(error: SequencerError<ServiceLogError>) -> ErrorCode {
     match error {
         SequencerError::Rejected(rejection) | SequencerError::InvalidCommittedEntry(rejection) => {
             map_rejection(&rejection)
@@ -826,7 +1363,7 @@ fn map_rejection(rejection: &Rejection) -> ErrorCode {
     }
 }
 
-fn map_storage_error(error: &DurableLogError) -> ErrorCode {
+fn map_storage_error(error: &ServiceLogError) -> ErrorCode {
     match error.kind() {
         ErrorKind::InvalidPosition => ErrorCode::InvalidPosition,
         ErrorKind::StalePosition => ErrorCode::StalePosition,
@@ -856,9 +1393,20 @@ fn map_content_error(error: &StoreError) -> ErrorCode {
     }
 }
 
-fn new_scope() -> Result<[u8; SCOPE_BYTES], std::time::SystemTimeError> {
-    let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
+#[cfg(not(target_arch = "wasm32"))]
+fn new_scope() -> Result<[u8; SCOPE_BYTES], ()> {
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_err(|_| ())?
+        .as_nanos();
     Ok((timestamp ^ (u128::from(std::process::id()) << 64)).to_be_bytes())
+}
+
+#[cfg(target_arch = "wasm32")]
+fn new_scope() -> Result<[u8; SCOPE_BYTES], ()> {
+    static NEXT_SCOPE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+    let scope = NEXT_SCOPE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    Ok(u128::from(scope).to_be_bytes())
 }
 
 fn hex(value: &[u8]) -> String {
@@ -878,6 +1426,61 @@ mod tests {
     use fluid_service_protocol::{Request, Submission};
 
     use super::*;
+
+    #[test]
+    fn service_config_defaults_to_durable_storage() {
+        let config = ServiceConfig::new("service-data");
+        assert_eq!(config.storage_mode, StorageMode::DurableFile);
+        assert_eq!(
+            config.with_storage_mode(StorageMode::Memory).storage_mode,
+            StorageMode::Memory
+        );
+        assert_eq!(StorageMode::from_name("memory"), Some(StorageMode::Memory));
+        assert_eq!(
+            StorageMode::from_name("buffered-file"),
+            Some(StorageMode::BufferedFile)
+        );
+        assert_eq!(
+            StorageMode::from_name("durable-file"),
+            Some(StorageMode::DurableFile)
+        );
+        assert_eq!(StorageMode::from_name("unknown"), None);
+    }
+
+    #[tokio::test]
+    async fn storage_modes_create_submit_and_project() {
+        for storage_mode in [
+            StorageMode::Memory,
+            StorageMode::BufferedFile,
+            StorageMode::DurableFile,
+        ] {
+            let directory = TempDirectory::new();
+            let service = NativeService::new(
+                ServiceConfig::new(&directory.0).with_storage_mode(storage_mode),
+            );
+            create_and_open(&service, b"document", b"session").await;
+            assert!(matches!(
+                service.handle(submit(b"document", b"session", 1)).await,
+                Response::Submitted {
+                    sequence_number: 1,
+                    ..
+                }
+            ));
+            assert!(matches!(
+                service
+                    .handle(Request::ReadProjected {
+                        document: bytes(b"document"),
+                        after: None,
+                    })
+                    .await,
+                Response::ProjectedRead {
+                    operations,
+                    has_more: false,
+                    ..
+                } if operations.len() == 1 && operations[0].payload == bytes(b"payload-1")
+            ));
+        }
+    }
 
     static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(1);
 
@@ -1468,5 +2071,51 @@ mod tests {
                 .await,
             Response::Error(ErrorCode::InvalidDigest)
         );
+    }
+
+    #[tokio::test]
+    async fn memory_content_matches_durable_identities() {
+        let directory = TempDirectory::new();
+        let durable = NativeService::new(ServiceConfig::new(&directory.0));
+        let memory = NativeService::new(
+            ServiceConfig::new(PathBuf::new()).with_storage_mode(StorageMode::Memory),
+        );
+        let upload = Request::UploadBlob {
+            payload: bytes(b"blob payload"),
+        };
+        let durable_upload = durable.handle(upload.clone()).await;
+        let memory_upload = memory.handle(upload).await;
+        assert_eq!(memory_upload, durable_upload);
+        let Response::BlobUploaded { digest, .. } = memory_upload else {
+            panic!("memory upload failed");
+        };
+        let summary = Request::PublishSummary {
+            entries: vec![fluid_service_protocol::SummaryEntry {
+                path: bytes(b"root/data"),
+                blob: digest.clone(),
+            }],
+        };
+        let durable_summary = durable.handle(summary.clone()).await;
+        let memory_summary = memory.handle(summary).await;
+        assert_eq!(memory_summary, durable_summary);
+        let Response::SummaryPublished {
+            digest: summary_digest,
+            ..
+        } = memory_summary
+        else {
+            panic!("memory summary publication failed");
+        };
+        assert!(matches!(
+            memory.handle(Request::FetchBlob { digest }).await,
+            Response::Blob { payload, .. } if payload == bytes(b"blob payload")
+        ));
+        assert!(matches!(
+            memory
+                .handle(Request::FetchSummary {
+                    digest: summary_digest,
+                })
+                .await,
+            Response::Summary { entries, .. } if entries.len() == 1
+        ));
     }
 }

@@ -52,9 +52,14 @@ class CdpClient {
 	constructor(url) {
 		this.id = 1;
 		this.pending = new Map();
+		this.events = [];
 		this.socket = new WebSocket(url);
 		this.socket.addEventListener("message", ({ data }) => {
 			const message = JSON.parse(data);
+			if (message.id === undefined) {
+				this.events.push(message);
+				return;
+			}
 			const pending = this.pending.get(message.id);
 			if (pending) {
 				this.pending.delete(message.id);
@@ -146,14 +151,23 @@ try {
 	client = new CdpClient(page.webSocketDebuggerUrl);
 	await client.ready();
 	await client.send("Runtime.enable");
+	await client.send("Log.enable");
 	const evaluation = await client.send("Runtime.evaluate", {
 		expression: `(async () => { const property = ${JSON.stringify(resultProperty)}; const timeout = error => ({ status: "failed", stage: window.__sharedTreeStage, error, telemetry: window.__sharedTreeTelemetry?.slice(-20) }); const deadline = Date.now() + 30000; while (!window[property] && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 25)); if (!window[property]) return timeout("timed out waiting for " + property); return Promise.race([window[property], new Promise(resolve => setTimeout(() => resolve(timeout("timed out awaiting " + property)), 30000))]); })()`,
 		awaitPromise: true,
 		returnByValue: true,
 	});
 	if (evaluation.exceptionDetails) throw new Error(evaluation.exceptionDetails.text);
-	console.log(`BROWSER_EVIDENCE=${JSON.stringify(evaluation.result.value)}`);
-	if (evaluation.result.value?.status !== "passed") process.exitCode = 1;
+	const result = evaluation.result.value;
+	if (result?.status !== "passed") {
+		result.browserDiagnostics = client.events
+			.filter(
+				({ method }) => method === "Runtime.exceptionThrown" || method === "Log.entryAdded",
+			)
+			.map(({ method, params }) => ({ method, params }));
+	}
+	console.log(`BROWSER_EVIDENCE=${JSON.stringify(result)}`);
+	if (result?.status !== "passed") process.exitCode = 1;
 } catch (error) {
 	console.error(error.stack ?? error, errors);
 	process.exitCode = 1;

@@ -13,8 +13,12 @@ import {
 
 import init, {
 	BrowserClient,
+	InjectedClient,
 	SummaryEntry as GeneratedSummaryEntry,
 } from "../pkg/fluid_webtransport_browser.js";
+import initLocalService, {
+	LocalServiceTransport,
+} from "../pkg-local/fluid_native_service_browser.js";
 import {
 	type MinimalWasmDeltaConnection,
 	MinimalWasmDocumentServiceFactory,
@@ -124,6 +128,95 @@ function adaptBrowserClient(client: BrowserClient): WasmProtocolClient {
 	};
 }
 
+function adaptInjectedClient(
+	client: InjectedClient,
+	transport: LocalServiceTransport,
+): WasmProtocolClient {
+	return {
+		request: async (frame) => client.request(frame),
+		readProjected: async (document, after) => {
+			const page = await client.readProjected(document, after);
+			return {
+				operations: page.operations.map((operation) => ({
+					position: operation.position,
+					sequenceNumber: operation.sequenceNumber,
+					...(operation.minimumReference === undefined
+						? {}
+						: { minimumReference: operation.minimumReference }),
+					writer: operation.writer,
+					session: operation.session,
+					submission: operation.submission,
+					localSequenceNumber: operation.localSequenceNumber,
+					...(operation.reference === undefined ? {} : { reference: operation.reference }),
+					payload: operation.payload,
+				})),
+				...(page.cursor === undefined ? {} : { cursor: page.cursor }),
+				hasMore: page.hasMore,
+			};
+		},
+		subscribeProjected: async (document, after) => {
+			const subscription = client.subscribeProjected(document, after);
+			return {
+				next: async () => {
+					const operation = await subscription.next();
+					return {
+						position: operation.position,
+						sequenceNumber: operation.sequenceNumber,
+						...(operation.minimumReference === undefined
+							? {}
+							: { minimumReference: operation.minimumReference }),
+						writer: operation.writer,
+						session: operation.session,
+						submission: operation.submission,
+						localSequenceNumber: operation.localSequenceNumber,
+						...(operation.reference === undefined ? {} : { reference: operation.reference }),
+						payload: operation.payload,
+					};
+				},
+				cancel: async () => subscription.cancel(),
+			};
+		},
+		resolveSubmission: async (document, writer, session, submission) => {
+			const resolution = await client.resolveSubmission(document, writer, session, submission);
+			if (resolution.kind === "committed") {
+				if (resolution.position === undefined || resolution.sequenceNumber === undefined) {
+					throw new Error("committed resolution omitted its position or sequence number");
+				}
+				return {
+					kind: resolution.kind,
+					position: resolution.position,
+					sequenceNumber: resolution.sequenceNumber,
+				};
+			}
+			if (resolution.kind !== "notCommitted" && resolution.kind !== "stillUncertain") {
+				throw new Error(`unknown submission resolution ${resolution.kind}`);
+			}
+			return { kind: resolution.kind };
+		},
+		uploadBlob: async (payload) => client.uploadBlob(payload),
+		fetchBlob: async (digest) => client.fetchBlob(digest),
+		publishSummary: async (entries) =>
+			client.publishSummary(
+				entries.map((entry) => new GeneratedSummaryEntry(entry.path, entry.blob)),
+			),
+		fetchSummary: async (digest) => client.fetchSummary(digest),
+		disconnect: () => client.disconnect(),
+		reconnect: async () => client.reconnect(transport),
+		get wireBytes() {
+			return client.wireBytes;
+		},
+		get peakResponseBytes() {
+			return client.peakResponseBytes;
+		},
+		get peakSubscriptionFrameBytes() {
+			return client.peakSubscriptionFrameBytes;
+		},
+		get peakSubscriptionQueueDepth() {
+			return client.peakSubscriptionQueueDepth;
+		},
+	};
+}
+
 async function waitForConnected(container: {
 	readonly connectionState: ConnectionState;
 	on(event: "connected", listener: () => void): void;
@@ -147,16 +240,21 @@ async function waitForConnected(container: {
 }
 
 async function createPair(): Promise<SharedTreeBenchmarkPair> {
+	const local = parameters.get("local") === "true";
 	const transportUrl = parameters.get("transport");
 	const certificateHex = parameters.get("hash");
-	if (transportUrl === null || certificateHex?.length !== 64) {
+	if (!local && (transportUrl === null || certificateHex?.length !== 64)) {
 		throw new Error("missing Rust-service transport URL or certificate hash");
 	}
 	await init();
-	const hash = Uint8Array.from(certificateHex.match(/../gu) ?? [], (value) =>
+	if (local) {
+		await initLocalService();
+	}
+	const hash = Uint8Array.from(certificateHex?.match(/../gu) ?? [], (value) =>
 		Number.parseInt(value, 16),
 	);
-	const transports: BrowserClient[] = [];
+	const transports: Array<BrowserClient | InjectedClient> = [];
+	const localService = local ? new LocalServiceTransport(1024 * 1024) : undefined;
 	const deltaConnections: MinimalWasmDeltaConnection[] = [];
 	const documentId = `shared-tree-benchmark-${Date.now()}`;
 	const resolvedUrl: IResolvedUrl = {
@@ -172,6 +270,14 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	};
 	const documentServiceFactory = new MinimalWasmDocumentServiceFactory(
 		async () => {
+			if (localService !== undefined) {
+				const client = new InjectedClient(localService, 1024 * 1024);
+				transports.push(client);
+				return adaptInjectedClient(client, localService);
+			}
+			if (transportUrl === null) {
+				throw new Error("missing Rust-service transport URL");
+			}
 			const transport = await BrowserClient.connect(transportUrl, hash, 1024 * 1024);
 			transports.push(transport);
 			return adaptBrowserClient(transport);
@@ -214,7 +320,7 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	const firstView = firstFluidContainer.initialObjects.tree.viewWith(
 		benchmarkTreeConfiguration,
 	);
-	firstView.initialize({ value: 0 });
+	firstView.initialize([]);
 	await firstContainer.attach({ url: resolvedUrl.url });
 	await waitForConnected(firstContainer);
 
@@ -229,26 +335,37 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	let resumeOpenMilliseconds: number | undefined;
 	let resumeFirstDeliveryMilliseconds: number | undefined;
 	let resumeCursorCount = 0;
-	const waitForConvergence = async (expected: number): Promise<void> => {
+	const waitForConvergence = async (
+		expectedCount: number,
+		expectedValue: number,
+	): Promise<void> => {
 		const deadline = performance.now() + 10_000;
-		while (firstView.root.value !== expected || secondView.root.value !== expected) {
+		while (
+			firstView.root.length !== expectedCount ||
+			secondView.root.length !== expectedCount ||
+			firstView.root.at(-1) !== expectedValue ||
+			secondView.root.at(-1) !== expectedValue
+		) {
 			for (const connection of deltaConnections.filter((candidate) => !candidate.disposed)) {
 				await connection.waitForIdle();
 			}
 			if (performance.now() >= deadline) {
-				throw new Error(`resume probe did not converge value ${expected}`);
+				throw new Error(`resume probe did not converge edit ${expectedValue}`);
 			}
 			await new Promise((resolve) => setTimeout(resolve, 1));
 		}
 	};
 
 	return {
-		backend: "rust-service-minimal-driver-force-write",
+		backend: local
+			? "rust-service-local-memory-force-write"
+			: `rust-service-webtransport-${parameters.get("storage") ?? "unknown"}-force-write`,
 		clientCount: 2,
-		setValue: (clientIndex, value) => {
-			(clientIndex === 0 ? firstView : secondView).root.value = value;
+		appendEdit: (clientIndex, value) => {
+			(clientIndex === 0 ? firstView : secondView).root.insertAtEnd(value);
 		},
-		values: () => [firstView.root.value, secondView.root.value],
+		editCounts: () => [firstView.root.length, secondView.root.length],
+		lastValues: () => [firstView.root.at(-1), secondView.root.at(-1)],
 		synchronize: async () => {
 			for (const connection of deltaConnections.filter((candidate) => !candidate.disposed)) {
 				await connection.waitForIdle();
@@ -256,9 +373,10 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		},
 		prepare: async () => {
 			const connections = deltaConnections.filter((candidate) => !candidate.disposed);
-			let probeValue = Math.max(firstView.root.value, secondView.root.value) + 1;
-			firstView.root.value = probeValue;
-			await waitForConvergence(probeValue);
+			let probeValue =
+				Math.max(0, firstView.root.at(-1) ?? 0, secondView.root.at(-1) ?? 0) + 1;
+			firstView.root.insertAtEnd(probeValue);
+			await waitForConvergence(firstView.root.length, probeValue);
 			const started = performance.now();
 			const resumed = await Promise.all(
 				connections.map(async (connection) => connection.restartSubscription()),
@@ -270,8 +388,8 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 			}
 			probeValue++;
 			const deliveryStarted = performance.now();
-			secondView.root.value = probeValue;
-			await waitForConvergence(probeValue);
+			firstView.root.insertAtEnd(probeValue);
+			await waitForConvergence(firstView.root.length, probeValue);
 			resumeFirstDeliveryMilliseconds = performance.now() - deliveryStarted;
 		},
 		close: () => {

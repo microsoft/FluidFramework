@@ -11,7 +11,12 @@ bytes.workspace = true
 futures-util.workspace = true
 snapshotted-stream-core = { path = "../core" }
 thiserror.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio.workspace = true
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+tokio = { version = "1.47.1", features = ["sync"] }
 
 [dev-dependencies]
 snapshotted-stream-conformance = { path = "../conformance" }

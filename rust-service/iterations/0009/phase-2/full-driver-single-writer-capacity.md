@@ -1,15 +1,15 @@
 # Iteration 0009: full-driver-single-writer-capacity Report
 
 Status: in progress
-Branch: `rust-service/iteration-0009/full-driver-single-writer-capacity`
-Worktree: <!-- TODO(required): record the worktree path -->
-Base commit: <!-- TODO(required): record the base commit -->
+Branch: `rust-service-iteration-0009-full-driver-single-writer-capacity`
+Worktree: `/workspaces/FluidFramework-rust-service-iteration-0009-full-driver-single-writer-capacity`
+Base commit: `0f3d24a8d363e03463b4e6ab9046e10c75cdfe7f`
 Final commit: <!-- TODO(required): record the final commit or explain why none exists -->
-Agent or owner: <!-- TODO(required): record the agent or owner -->
-Model and tool version: <!-- TODO(required): record known values; use unknown when unavailable -->
-Instruction source: <!-- TODO(required): link the assigned instruction file and record its commit -->
-Session or transcript reference: <!-- TODO(required): record a safe reference when useful; otherwise none -->
-Started and finished: <!-- TODO(required): record known timestamps or unknown -->
+Agent or owner: GitHub Copilot
+Model and tool version: GitHub Copilot; model version unknown
+Instruction source: [`instructions/full-driver-single-writer-capacity.md`](instructions/full-driver-single-writer-capacity.md) at `0f3d24a8d363e03463b4e6ab9046e10c75cdfe7f`
+Session or transcript reference: none
+Started and finished: started 2026-09-13; finish in progress
 
 ## Outcome
 
@@ -33,7 +33,9 @@ Record an event when a hypothesis is falsified, three similar attempts fail, sub
 
 | Type | Attempt or event | Evidence | Impact | Resolution or state | Reusable lesson |
 | --- | --- | --- | --- | --- | --- |
-| <!-- TODO(required): replace with a notable event or an explicit none-reviewed row --> | | | | | |
+| Falsified hypothesis | A root install with `--lockfile=false` was expected to link newly declared workspace dependencies. | The benchmark package lacked `@fluidframework/local-driver` and `@fluidframework/server-local-server`; TypeScript reported uniform `TS2307` failures. | Delayed validation of the TypeScript local-service arm. | Allowed pnpm to update the root importer, used workspace `local-driver`, and pinned published `server-local-server@7.0.1` because the server tree is outside the root workspace. | Verify actual package links and generated outputs after delegated installs; a zero exit code does not prove the intended importer changed. |
+| Costly environment issue | Fluid-build incremental state survived the copied worktree while ignored generated `lib/` outputs did not. | Fluid-build reported success in 0.27 seconds, but direct TypeScript resolution still lacked declarations from every linked Fluid package. | Required regeneration of the dependency closure before benchmark validation. | Ran the pnpm dependency-closure build and retained direct package checks as authoritative. | In copied worktrees, invalidate or bypass task caches when generated outputs are absent. |
+| Supported hypothesis | The existing native service could back a browser-local memory arm without a second sequencer implementation. | After making Tokio features target-specific in the service and memory crates, `cargo check -p fluid-native-service --lib --target wasm32-unknown-unknown` passed. | Preserved the same native service semantics and full Fluid driver while removing WebTransport from one arm. | Added a raw-frame browser-WASM transport over one memory-configured `NativeService`; separate `InjectedClient` instances share that service. | Probe target compatibility before duplicating a service; dependency feature unions can look like architectural incompatibility. |
 
 ## Contract and Integration Friction
 

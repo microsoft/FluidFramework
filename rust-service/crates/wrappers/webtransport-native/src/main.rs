@@ -6,7 +6,7 @@ use std::{
     time::Duration,
 };
 
-use fluid_native_service::{NativeService, ServiceConfig};
+use fluid_native_service::{NativeService, ServiceConfig, StorageMode};
 use fluid_webtransport_native::{ShutdownMode, TransportConfig, WebTransportServer};
 use wtransport::{Identity, tls::Sha256DigestFmt};
 
@@ -26,19 +26,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let identity = Identity::load_pemfiles(certificate, private_key).await?;
+    let storage_mode_name = env::var("FLUID_SERVICE_STORAGE_MODE")
+        .unwrap_or_else(|_| StorageMode::DurableFile.name().to_owned());
+    let storage_mode = StorageMode::from_name(&storage_mode_name).ok_or_else(|| {
+        format!(
+            "invalid FLUID_SERVICE_STORAGE_MODE {storage_mode_name:?}; expected memory, buffered-file, or durable-file"
+        )
+    })?;
     let certificate_hash = identity.certificate_chain().as_slice()[0]
         .hash()
         .fmt(Sha256DigestFmt::DottedHex);
     let server = WebTransportServer::bind(
         bind,
         identity,
-        Arc::new(NativeService::new(ServiceConfig::new(data))),
+        Arc::new(NativeService::new(
+            ServiceConfig::new(data).with_storage_mode(storage_mode),
+        )),
         TransportConfig::default(),
     )?;
     let address = server.local_addr()?;
     let mut shutdown = server.shutdown_handle();
     println!("WEBTRANSPORT_URL=https://{address}/fluid");
     println!("CERTIFICATE_SHA256={certificate_hash}");
+    println!("STORAGE_MODE={}", storage_mode.name());
     if let Some(marker) = &shutdown_marker {
         println!("SHUTDOWN_MARKER={}", marker.display());
     }

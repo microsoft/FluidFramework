@@ -352,6 +352,7 @@ dependencies = [
 name = "fluid-native-service"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "bytes",
  "fluid-sequencer",
  "fluid-service-protocol",
@@ -359,7 +360,22 @@ dependencies = [
  "snapshotted-stream-content-addressed",
  "snapshotted-stream-core",
  "snapshotted-stream-durable-log-spike",
+ "snapshotted-stream-file-simple",
+ "snapshotted-stream-memory",
  "tokio",
+]
+
+[[package]]
+name = "fluid-native-service-browser"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "fluid-native-service",
+ "fluid-service-protocol",
+ "js-sys",
+ "tokio",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
 ]
 
 [[package]]

@@ -10,9 +10,14 @@ const [
 	transport,
 	hash,
 ] = process.argv.slice(2);
-if (backend !== "rust" && backend !== "tinylicious") {
+if (
+	backend !== "rust-local" &&
+	backend !== "rust" &&
+	backend !== "local" &&
+	backend !== "tinylicious"
+) {
 	throw new Error(
-		"usage: node run-shared-tree-benchmark.mjs <rust|tinylicious> [repetitions] [operations] [warmup] [rust-transport-url] [rust-certificate-sha256-hex]",
+		"usage: node run-shared-tree-benchmark.mjs <rust-local|rust|local|tinylicious> [repetitions] [operations] [warmup] [rust-transport-url] [rust-certificate-sha256-hex]",
 	);
 }
 const repetitions = positiveInteger(repetitionsText, "repetitions");
@@ -23,7 +28,7 @@ if (backend === "rust" && (!transport || !/^[0-9a-f]{64}$/iu.test(hash ?? ""))) 
 }
 
 const packageRoot = resolve(import.meta.dirname, "..");
-const page = `shared-tree-benchmark-${backend}.html`;
+const page = `shared-tree-benchmark-${backend === "rust-local" ? "rust" : backend}.html`;
 const sourceCommit = spawnSync("git", ["rev-parse", "HEAD"], {
 	cwd: packageRoot,
 	encoding: "utf8",
@@ -47,6 +52,10 @@ for (let repetition = 0; repetition < repetitions; repetition++) {
 			new URLSearchParams({
 				operations: String(operations),
 				warmup: String(warmup),
+				...(backend === "rust-local" ? { local: "true", storage: "memory" } : {}),
+				...(backend === "rust"
+					? { storage: process.env.FLUID_SERVICE_STORAGE_MODE ?? "durable-file" }
+					: {}),
 			}).toString(),
 		],
 		{ encoding: "utf8", maxBuffer: 10 * 1024 * 1024 },
@@ -86,13 +95,9 @@ const output = {
 	},
 	aggregates: {
 		startupMilliseconds: distribution(values((sample) => sample.startupMilliseconds)),
+		submissionMilliseconds: distribution(values((sample) => sample.submissionMilliseconds)),
+		convergenceMilliseconds: distribution(values((sample) => sample.convergenceMilliseconds)),
 		operationsPerSecond: distribution(values((sample) => sample.operationsPerSecond)),
-		medianOperationLatencyMilliseconds: distribution(
-			values((sample) => sample.latencyMilliseconds.median),
-		),
-		p95OperationLatencyMilliseconds: distribution(
-			values((sample) => sample.latencyMilliseconds.p95),
-		),
 	},
 	samples,
 };

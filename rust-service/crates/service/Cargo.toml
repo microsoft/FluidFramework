@@ -6,6 +6,7 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+async-trait.workspace = true
 bytes.workspace = true
 fluid-sequencer = { path = "../fluid-sequencer" }
 fluid-service-protocol = { path = "../protocol" }
@@ -13,9 +14,16 @@ futures-util.workspace = true
 snapshotted-stream-content-addressed = { path = "../content-addressed" }
 snapshotted-stream-core = { path = "../core" }
 snapshotted-stream-durable-log-spike = { path = "../spikes/durable-log" }
+snapshotted-stream-file-simple = { path = "../file-simple" }
+snapshotted-stream-memory = { path = "../memory" }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio.workspace = true
 
-[dev-dependencies]
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+tokio = { version = "1.47.1", features = ["macros", "sync"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 tokio.workspace = true
 
 [lints]

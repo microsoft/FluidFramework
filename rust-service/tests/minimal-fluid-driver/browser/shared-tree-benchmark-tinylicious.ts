@@ -24,7 +24,7 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		"2.0.0",
 	);
 	const firstView = firstContainer.initialObjects.tree.viewWith(benchmarkTreeConfiguration);
-	firstView.initialize({ value: 0 });
+	firstView.initialize([]);
 	const containerId = await firstContainer.attach();
 	const { container: secondContainer } = await client.getContainer(
 		containerId,
@@ -36,10 +36,11 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	return {
 		backend: "tinylicious-client",
 		clientCount: 2,
-		setValue: (clientIndex, value) => {
-			(clientIndex === 0 ? firstView : secondView).root.value = value;
+		appendEdit: (clientIndex, value) => {
+			(clientIndex === 0 ? firstView : secondView).root.insertAtEnd(value);
 		},
-		values: () => [firstView.root.value, secondView.root.value],
+		editCounts: () => [firstView.root.length, secondView.root.length],
+		lastValues: () => [firstView.root.at(-1), secondView.root.at(-1)],
 		synchronize: async () => {},
 		close: () => {
 			firstView.dispose();
