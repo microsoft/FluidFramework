@@ -110,4 +110,6 @@ pnpm --silent run benchmark:tinylicious 10 100 10 > benchmark-results/tinyliciou
 
 The generated WASM, bundles, certificates, service data, and local `benchmark-results/` directory are intentionally ignored. To retain benchmark evidence, run from a clean committed harness, verify `sourceDirty` is `false`, and copy the JSON into a tracked evidence directory with a report describing the environment and semantic differences.
 
+The first clean provisional run is recorded in the [SharedTree comparison evidence](../../benchmarks/shared-tree/13401fe0de3/README.md).
+
 These results are provisional until the planned default read-to-write lifecycle replaces the Rust fixture's `Fluid.Container.ForceWriteConnection` gate. The Rust adapter also synchronizes explicitly, while Tinylicious receives pushed operations, and only the Rust binding currently exposes wire-byte counters. Compare convergence, startup, and observed edit latency with those differences labeled; do not present the numbers as production capacity, durability, or equivalent Routerlicious/ODSP evidence.
