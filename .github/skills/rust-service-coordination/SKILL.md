@@ -1,12 +1,53 @@
 ---
 name: rust-service-coordination
-description: 'Coordinate the Rust service Phase 1 foundation and Phase 2 or Phase 3 iterations, including implementation, validation, workstreams, worktrees, integration, reports, retrospectives, decision records, learning logs, skill reviews, and next-iteration instructions. Use when starting, implementing, validating, integrating, recovering, or closing the rust-service foundation or an iteration, or when recording costly issues and agentic-development lessons.'
-argument-hint: 'run or validate the foundation, iteration, integration, or review workflow'
+description: 'Choose between lightweight direct work and a full Rust service iteration, or coordinate Phase 1 and Phase 2 or Phase 3 iterations including validation, workstreams, worktrees, integration, reports, retrospectives, and decisions. Use when deciding whether iteration overhead is justified, or when starting, implementing, validating, integrating, recovering, or closing the rust-service foundation or an iteration.'
+argument-hint: 'choose lightweight work or run an iteration, integration, or review workflow'
 ---
 
 # Rust Service Coordination
 
-Use this workflow for every numbered iteration under `rust-service/iterations/`.
+Use this workflow to decide whether work needs a numbered iteration and to run
+every numbered iteration under `rust-service/iterations/`.
+
+## Choose the Workflow
+
+Do not initialize an iteration merely because work follows a completed iteration
+or concerns the Rust service. Choose the lightest workflow that preserves the
+evidence and coordination the task needs.
+
+Use lightweight direct work on the current branch when all of these are true:
+
+- one owner can perform the work sequentially;
+- there are no dependency-independent implementation workstreams worth running
+   concurrently;
+- no separate integration branch or cross-workstream reconciliation is needed;
+- the task does not need an immutable Phase 2 boundary followed by a distinct
+   multi-input Phase 3 synthesis; and
+- focused commits, tests, and proportionate documentation can preserve the
+   result.
+
+For lightweight work, do not create iteration records, an integration branch, or
+workstream worktrees. Keep normal implementation and validation evidence in the
+most local durable artifact: code and tests for a fix, an adjacent README or
+benchmark report for retained measurements, and a decision or `LEARNINGS.md`
+entry only when their existing triggers apply.
+
+A full iteration may provide material value when work has two or more genuinely
+independent workstreams, benefits from parallel agents, has meaningful ownership
+or integration risk, compares multiple implementations that need normalized
+reports, or needs an explicit implementation-to-synthesis decision boundary.
+One sequential workstream by itself is not sufficient justification.
+
+Honor an explicit user request to use or avoid an iteration. When a full
+iteration may provide material value but the user has not explicitly requested
+one, present the lightweight and iteration options with the concrete benefit and
+overhead, then ask the user which workflow to use before creating iteration
+records, branches, or worktrees. Do not silently decide either way. If iteration
+value emerges after lightweight work begins, pause before converting the task
+and ask the same question.
+
+Once the user selects a full iteration, follow the remaining sections of this
+skill. Existing iteration records remain append-only historical artifacts.
 
 ## Invariants
 
@@ -53,7 +94,9 @@ Before the foundation commit:
 
 ## Start an Iteration
 
-1. Confirm the foundation or previous Phase 3 commit passes its documented checks.
+1. Identify and validate the latest approved repository state. This is the
+   foundation or previous Phase 3 commit plus any accepted lightweight commits
+   that must be included in the new work.
 2. Select active workstreams and pre-register their hypotheses, dependencies, expected evidence, and stopping conditions.
 3. Run:
 
@@ -61,7 +104,7 @@ Before the foundation commit:
    node .github/skills/rust-service-coordination/scripts/iteration-records.mjs init NNNN workstream-name...
    ```
 
-4. Set `sourceCommit` to the approved foundation or previous Phase 3 commit, complete `charter.md` and each generated instruction, and set manifest status to `active`.
+4. Set `sourceCommit` to that approved base commit, complete `charter.md` and each generated instruction, and set manifest status to `active`.
 5. Run `node .github/skills/rust-service-coordination/scripts/iteration-records.mjs validate NNNN start`.
 6. Commit the initialized records as the iteration kickoff, then create the integration branch and isolated worktrees from that kickoff commit using the naming rules in `rust-service/PLAN.md`.
 7. Give each agent its generated instruction file and report path.

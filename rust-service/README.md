@@ -34,11 +34,11 @@ The `fluid-sequencer` adapter will provide optional multi-writer protocol semant
 
 The native Rust client starts as an idiomatic facade over the raw append and snapshot traits. Optional typed codecs, catch-up and live-subscription helpers, and safe resubmission policies are added only when implementations demonstrate common requirements; Fluid protocol semantics remain in `fluid-sequencer`.
 
-Development begins with an interactive foundation phase that creates the Rust workspace, core traits, initial tests, stub crates, and a project coordination skill while resolving design questions as they become concrete. Parallel implementation follows. Each implementation agent works in an isolated branch and worktree, makes reviewable commits, and produces a structured report covering correctness, integration, architectural friction, complexity, and performance.
+Development begins with an interactive foundation phase that creates the Rust workspace, core traits, initial tests, stub crates, and a project coordination skill while resolving design questions as they become concrete. Work that benefits from parallel implementation uses numbered iterations: each implementation agent works in an isolated branch and worktree, makes reviewable commits, and produces a structured report covering correctness, integration, architectural friction, complexity, and performance. Sequential fixes and experiments use a lighter current-branch workflow with focused validation and proportionate local evidence.
 
 A third, interactive review phase integrates and synthesizes those reports before any shared abstractions or crate boundaries change. Approved adjustments, the numbered review report, updated coordination guidance, and new scoped instructions are committed separately before another parallel implementation iteration. The Phase 2/3 loop ends only when the reports, tests, documentation, and measurements justify making no further changes.
 
-Because agentic development is itself part of the research, each iteration pre-registers hypotheses and retains structured reports, costly failures, human interventions, decisions, retrospectives, and skill changes. A validator makes those records part of the Phase 2 and Phase 3 completion gates.
+Because agentic development is itself part of the research, each approved iteration pre-registers hypotheses and retains structured reports, costly failures, human interventions, decisions, retrospectives, and skill changes. A validator makes those records part of the Phase 2 and Phase 3 completion gates. When an iteration could provide material value but the user did not request one, the coordinator explains the lightweight and iteration options and asks the user before choosing or initializing either workflow.
 
 ## Project Status
 
@@ -57,7 +57,7 @@ node .github/skills/rust-service-coordination/scripts/iteration-records.mjs init
 
 The kickoff workflow must then set the generated manifest's `sourceCommit`, complete the charter and workstream instructions from the approved plans above, set its status to `active`, validate the start records, commit them, and create the integration and isolated workstream branches as described by the coordination skill. Do not run the initializer from a dirty worktree or without first confirming the iteration `0006` completion checks.
 
-Each iteration uses a dedicated integration branch and one isolated branch/worktree per Phase 2 workstream. Workstream agents commit only their assigned scope and report; a coordinator integrates accepted commits and records Phase 3 decisions under a sequentially numbered `iterations/NNNN/` directory. The next iteration always starts from the approved Phase 3 commit.
+Each approved iteration uses a dedicated integration branch and one isolated branch/worktree per Phase 2 workstream. Workstream agents commit only their assigned scope and report; a coordinator integrates accepted commits and records Phase 3 decisions under a sequentially numbered `iterations/NNNN/` directory. Lightweight work does not create these artifacts. The next approved iteration starts from the applicable accepted repository state.
 
 ## Documents
 

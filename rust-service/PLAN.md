@@ -205,7 +205,7 @@ These references are implementation evidence, not normative requirements for the
 
 ## Research and Agentic Development Record
 
-The project treats its development process as a research subject. Concise structured records are required deliverables, not optional notes reconstructed after implementation. Full chat transcripts may be linked when they materially support a finding and contain no sensitive data, but they are not the primary record.
+The project treats its development process as a research subject. Durable evidence is required, but its structure is proportional to the coordination problem. A full numbered iteration retains charters, workstream reports, integration, synthesis, retrospective, and skill review. Lightweight sequential work retains focused commits, tests, and the most local applicable report, benchmark README, decision record, or learning entry without manufacturing iteration artifacts. Full chat transcripts may be linked when they materially support a finding and contain no sensitive data, but they are not the primary record.
 
 During Phase 1, `foundation-report.md` records the initial hypotheses, API decisions, failed approaches, human interventions, validation evidence, and readiness assessment. Before a later iteration begins, its charter records the selected questions, falsifiable hypotheses, cheapest discriminating checks, expected evidence, dependencies, stopping conditions, and deferred scope. Each workstream records its assignment and agent or owner provenance, branch and commits, commands and results, hypothesis outcomes, and integration dependencies.
 
@@ -383,9 +383,9 @@ Phase 3 proceeds in this order:
 9. Complete the iteration retrospective, including costly issues, failed approaches, human interventions, and durable agentic-development lessons.
 10. Review Phase 2 feedback about coordination, complete the skill review, and apply approved skill improvements.
 11. Promote reusable findings to `LEARNINGS.md` and create or update append-only decision records.
-12. Review the Phase 2 research backlog and decide interactively whether the next iteration should keep, remove, replace, or expand its active workstreams.
-13. Update the workstream manifest with the selected scope, dependencies, research questions, expected evidence, and explicit deferrals.
-14. Prepare scoped instructions for each selected Phase 2 agent or workstream, validate the complete iteration record, then begin another Phase 2 iteration.
+12. Review the research backlog and decide interactively whether the next work should use lightweight direct execution or a full iteration, and whether an iteration should keep, remove, replace, or expand its active workstreams.
+13. When the user approves another iteration, update the workstream manifest with the selected scope, dependencies, research questions, expected evidence, and explicit deferrals.
+14. Prepare scoped instructions for each selected Phase 2 agent or workstream, validate the complete iteration record, then begin the user-approved Phase 2 iteration. Otherwise, close the iteration and perform later lightweight work directly.
 
 Expansion is not automatic after a successful iteration. A workstream is added only when its prerequisite contracts are sufficiently stable and it answers a prioritized question that the current implementations cannot answer more cheaply. Phase 3 may also narrow the next iteration, repeat a spike, or defer expansion when results expose unresolved kernel semantics.
 
@@ -486,7 +486,29 @@ Reports should include reproducible commands and machine-readable benchmark outp
 
 ## Iteration and Git Workflow
 
-Phase 2 and Phase 3 work is organized into sequentially numbered iterations using four digits, beginning with `0001`. Each iteration starts from the approved result of the previous Phase 3 review.
+Numbered Phase 2 and Phase 3 work is organized into sequentially numbered iterations using four digits, beginning with `0001`. Each iteration starts from the latest approved repository state: normally the previous Phase 3 result plus any accepted lightweight commits that the new work must include. Not every follow-up task is an iteration.
+
+### Workflow selection gate
+
+Use lightweight direct work for one-owner sequential fixes, profiling,
+measurements, documentation, and focused experiments that do not benefit from
+parallel workstreams or a separate integration and synthesis boundary. Such work
+uses the current branch, focused commits and validation, and a local durable
+evidence artifact when needed. It does not create an iteration directory,
+integration branch, workstream report set, or temporary worktrees.
+
+Use a full iteration when there are multiple genuinely independent workstreams,
+parallel execution would shorten the critical path, ownership or integration
+risk merits isolation, multiple reports need synthesis, or an immutable Phase 2
+boundary is useful before shared decisions. A single sequential workstream is
+not enough by itself.
+
+If the user explicitly chooses a workflow, follow that choice. If an iteration
+could provide material value but was not specifically requested, the coordinator
+must explain the concrete benefits and overhead of both paths and ask the user
+whether to initialize it. No iteration records, branches, or worktrees are
+created before that answer. If the need becomes apparent during lightweight
+work, ask before converting it into an iteration.
 
 ### Branch and worktree model
 
@@ -552,11 +574,11 @@ The coordinator initializes each iteration with `.github/skills/rust-service-coo
 
 Phase 3 produces one synthesis report, a retrospective, a skill review, applicable decision records and learning-index updates, plus scoped instructions for every continuing or newly created workstream. User-approved architecture, implementation, documentation, test, or coordination-skill changes may use additional focused commits. Phase 3 ends with a distinct commit containing the final records and next-iteration instructions; that commit is the immutable base for the next iteration.
 
-Iteration reports and accepted decision records are append-only historical records. Later iterations may supersede conclusions but must not rewrite earlier records. The next iteration branches from the approved Phase 3 commit, ensuring every agent starts from the same decisions and instructions.
+Iteration reports and accepted decision records are append-only historical records. Later iterations may supersede conclusions but must not rewrite earlier records. The next iteration branches from one approved base commit that includes the applicable Phase 3 result and accepted lightweight follow-up work, ensuring every agent starts from the same decisions and instructions.
 
 ### Coordination skill
 
-The repository-scoped skill at `.github/skills/rust-service-coordination/SKILL.md` governs starting, executing, integrating, and reporting an iteration. Phase 1 validates it against the implemented workspace, and later Phase 3 reviews maintain it. Its description must include the concrete Phase 2, Phase 3, worktree, integration, and iteration trigger terms that agents will use to discover it. The skill provides:
+The repository-scoped skill at `.github/skills/rust-service-coordination/SKILL.md` governs choosing between lightweight work and an iteration, then starting, executing, integrating, and reporting an approved iteration. Phase 1 validates it against the implemented workspace, and later Phase 3 reviews maintain it. Its description must include workflow-selection, Phase 2, Phase 3, worktree, integration, and iteration trigger terms that agents will use to discover it. The skill provides:
 
 - branch, worktree, and artifact naming rules;
 - commands or scripts for creating and removing worktrees safely;
@@ -568,6 +590,7 @@ The repository-scoped skill at `.github/skills/rust-service-coordination/SKILL.m
 - integration order and conflict-handling guidance;
 - a Phase 3 synthesis and next-iteration instruction template; and
 - recovery guidance for abandoned, blocked, or partially integrated workstreams.
+- criteria and a user decision gate for selecting lightweight work or a full iteration.
 
 Phase 2 reports include feedback on the skill and coordination process. During Phase 3, that feedback is evaluated alongside observed integration problems. User-approved improvements to the skill are committed with the Phase 3 artifacts so the next iteration automatically receives the revised workflow.
 
