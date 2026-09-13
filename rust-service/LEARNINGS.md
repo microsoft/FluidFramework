@@ -23,6 +23,7 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 - **Confirmed:** An immutable summary can be acknowledged safely only after every content-addressed reference is present and verified and the canonical manifest is durably published; retention is a separate policy. [Evidence](iterations/0005/phase-2/content-addressed-blobs-summaries.md#hypothesis-results)
 - **Confirmed:** Opaque DDS payload transport still requires the adapter to preserve the host framework's summary, identity, membership, sequence, and batch-envelope semantics; byte delivery alone does not imply application convergence. [Evidence](iterations/0006/phase-2/direct-shared-tree-integration.md#notable-events)
 - **Confirmed:** When multiple upstream writers are collapsed to one projected identity, every author-scoped monotonic field must be translated into one shared order; preserving writer-local sequence numbers creates replay corruption. [Evidence](iterations/0006/phase-2/direct-shared-tree-integration.md#notable-events)
+- **Confirmed:** A replacement connection must share deterministic operation envelopes between history and live delivery, while each projected member retains a contiguous client-sequence domain; otherwise catch-up can reinterpret an already processed server sequence and close the client. [Evidence](iterations/0007/phase-2/fluid-read-reconnect-lifecycle.md#notable-events)
 
 ## Correctness and Testing
 
@@ -36,6 +37,7 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 
 - **Confirmed:** Compare storage results only with guarantee differences visible; the minimal and durable logs used equivalent record workloads but intentionally different acknowledgment semantics. [Evidence](iterations/0001/phase-3-report.md#comparative-results)
 - **Confirmed:** Deterministic injected failures provide reproducible recovery evidence but must not be presented as process-termination or power-loss evidence. [Evidence](iterations/0002/phase-2/durable-snapshots.md#remaining-work-and-risks)
+- **Confirmed:** Graceful server shutdown requires ownership and continued polling of every accepted connection future; a control acknowledgement produced inside the server future cannot complete while its caller awaits without polling that future. [Evidence](iterations/0007/phase-2/native-graceful-shutdown.md#notable-events)
 
 ## Agentic Development
 
@@ -47,3 +49,4 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 - **Confirmed:** A set of parallel deliverables is not necessarily dependency-independent; instructions must distinguish concurrent groundwork from later integration and consumer waves. [Evidence](iterations/0004/phase-3-report.md#next-iteration-scope)
 - **Confirmed:** Probe a runtime prerequisite such as independent transport-session concurrency before dispatching a consumer whose primary evidence requires it. [Evidence](iterations/0005/retrospective.md#costly-issues-and-dead-ends)
 - **Confirmed:** Generated artifacts and cached build metadata are not evidence of readiness; execute or inspect the exact downstream artifact, using checkout-specific build targets in multi-worktree repositories. [Evidence](iterations/0005/retrospective.md#costly-issues-and-dead-ends)
+- **Confirmed:** Recover an interrupted workstream from observed worktree identity, running processes, retained logs, dirty paths, and report markers before rerunning or editing; this preserves useful partial evidence without reconstructing unsupported state. [Evidence](iterations/0007/retrospective.md#costly-issues-and-dead-ends)
