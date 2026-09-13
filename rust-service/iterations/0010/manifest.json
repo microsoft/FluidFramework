@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "iteration": "0010",
+  "status": "active",
+  "sourceCommit": "d5238a5a93098f8fe8cd14f7828e311450aa4aa2",
+  "createdAt": "2026-09-13T05:46:40.301Z",
+  "activeWorkstreams": [
+    {
+      "name": "fixed-size-single-writer-capacity",
+      "instructions": "phase-2/instructions/fixed-size-single-writer-capacity.md",
+      "report": "phase-2/fixed-size-single-writer-capacity.md"
+    }
+  ],
+  "deferredWorkstreams": [
+    "production-membership",
+    "multi-writer-capacity",
+    "multi-document-capacity",
+    "multi-node-capacity",
+    "power-loss-qualification",
+    "routerlicious-odsp-capacity"
+  ],
+  "nextWorkstreams": []
+}
