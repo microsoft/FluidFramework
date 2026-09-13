@@ -5,5 +5,5 @@
 		"rootDir": ".",
 		"skipLibCheck": true,
 	},
-	"include": ["browser/shared-tree-trace.ts", "src/**/*.ts"],
+	"include": ["browser/shared-tree-*.ts", "src/**/*.ts"],
 }

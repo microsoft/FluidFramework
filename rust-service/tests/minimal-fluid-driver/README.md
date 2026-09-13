@@ -48,3 +48,66 @@ pnpm run typecheck:shared-tree
 pnpm run build:shared-tree
 node browser/run-headless.mjs "$PWD" <WEBTRANSPORT_URL> <CERTIFICATE_SHA256_WITHOUT_COLONS> __sharedTreeResult shared-tree.html
 ```
+
+## Deterministic SharedTree comparison benchmark
+
+The benchmark runs the same two-client, sequential round-robin SharedTree workload through either the minimal WASM driver and Rust service or the existing `TinyliciousClient` and Tinylicious service. Each operation is timed from the local edit until both views converge. Warmup operations are excluded. The runner emits one JSON document containing every repetition, environment and source metadata, startup and operation distributions, and Rust FSP4 byte counts when available.
+
+From a clean repository checkout, install the root workspace and build the benchmark's Fluid dependencies:
+
+```bash
+pnpm install --frozen-lockfile
+node node_modules/@fluidframework/build-tools/dist/fluidBuild/fluidBuild.js \
+  --root "$PWD" --vscode rust-service/tests/minimal-fluid-driver
+```
+
+Generate the browser WASM package, native server, certificate, and browser bundles. The `wasm-bindgen` CLI version must match the workspace's `wasm-bindgen` crate version.
+
+```bash
+cd rust-service
+sh tests/webtransport-browser/generate-cert.sh tests/webtransport-browser/.certs
+CARGO_TARGET_DIR=/tmp/fluid-shared-tree-benchmark-wasm-target \
+  RUSTFLAGS='--cfg=web_sys_unstable_apis' \
+  cargo build --locked -p fluid-webtransport-browser --target wasm32-unknown-unknown --release
+wasm-bindgen \
+  /tmp/fluid-shared-tree-benchmark-wasm-target/wasm32-unknown-unknown/release/fluid_webtransport_browser.wasm \
+  --target web --out-name fluid_webtransport_browser \
+  --out-dir tests/minimal-fluid-driver/pkg
+CARGO_TARGET_DIR=/tmp/fluid-shared-tree-benchmark-native-target \
+  cargo build --locked -p fluid-webtransport-native --release
+cd tests/minimal-fluid-driver
+pnpm run build:benchmarks
+```
+
+Start the native service from the repository root. Use the URL and certificate hash printed by the process in the Rust benchmark command below.
+
+```bash
+rm -rf /tmp/fluid-shared-tree-benchmark-data
+mkdir -p /tmp/fluid-shared-tree-benchmark-data
+/tmp/fluid-shared-tree-benchmark-native-target/release/fluid-webtransport-native \
+  127.0.0.1:0 \
+  rust-service/tests/webtransport-browser/.certs/cert.pem \
+  rust-service/tests/webtransport-browser/.certs/key.pem \
+  /tmp/fluid-shared-tree-benchmark-data
+```
+
+Tinylicious has a separate pnpm workspace. Install and build it with Node.js 22, which satisfies its transitive dependency engine ranges, then start it on its default port from the repository root:
+
+```bash
+cd server/routerlicious
+pnpm install --frozen-lockfile
+pnpm exec fluid-build packages/tinylicious --task compile
+node packages/tinylicious/dist/index.js
+```
+
+With each service running separately, execute ten repetitions of 100 measured operations after ten warmups from `rust-service/tests/minimal-fluid-driver`:
+
+```bash
+mkdir -p benchmark-results
+pnpm --silent run benchmark:rust 10 100 10 <WEBTRANSPORT_URL> <CERTIFICATE_SHA256_WITHOUT_COLONS> > benchmark-results/rust.json
+pnpm --silent run benchmark:tinylicious 10 100 10 > benchmark-results/tinylicious.json
+```
+
+The generated WASM, bundles, certificates, service data, and local `benchmark-results/` directory are intentionally ignored. To retain benchmark evidence, run from a clean committed harness, verify `sourceDirty` is `false`, and copy the JSON into a tracked evidence directory with a report describing the environment and semantic differences.
+
+These results are provisional until the planned default read-to-write lifecycle replaces the Rust fixture's `Fluid.Container.ForceWriteConnection` gate. The Rust adapter also synchronizes explicitly, while Tinylicious receives pushed operations, and only the Rust binding currently exposes wire-byte counters. Compare convergence, startup, and observed edit latency with those differences labeled; do not present the numbers as production capacity, durability, or equivalent Routerlicious/ODSP evidence.

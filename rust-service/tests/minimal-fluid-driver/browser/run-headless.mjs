@@ -11,6 +11,7 @@ const [
 	certificateHash,
 	resultProperty = "__minimalFluidDriverResult",
 	page = "index.html",
+	query = "",
 ] = process.argv.slice(2);
 if (
 	!siteRoot ||
@@ -20,7 +21,7 @@ if (
 	!/^[A-Za-z0-9._-]+$/u.test(page)
 ) {
 	throw new Error(
-		"usage: node run-headless.mjs <site-root> <transport-url> <certificate-sha256-hex> [result-property] [page]",
+		"usage: node run-headless.mjs <site-root> <transport-url> <certificate-sha256-hex> [result-property] [page] [query]",
 	);
 }
 
@@ -112,7 +113,10 @@ await new Promise((resolve, reject) => {
 });
 const debugPort = await freePort();
 const profile = await mkdtemp(join(tmpdir(), "minimal-fluid-driver-"));
-const pageUrl = `http://localhost:${httpPort}/${page}?transport=${encodeURIComponent(transportUrl)}&hash=${certificateHash}`;
+const pageParameters = new URLSearchParams(query);
+pageParameters.set("transport", transportUrl);
+pageParameters.set("hash", certificateHash);
+const pageUrl = `http://localhost:${httpPort}/${page}?${pageParameters}`;
 const chromium = spawn(
 	"chromium",
 	[

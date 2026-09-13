@@ -5,9 +5,14 @@
 	"type": "module",
 	"scripts": {
 		"build": "tsc --project tsconfig.json",
+		"build:benchmark:rust": "esbuild browser/shared-tree-benchmark-rust.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-benchmark-rust.js --external:../pkg/*",
+		"build:benchmark:tinylicious": "esbuild browser/shared-tree-benchmark-tinylicious.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-benchmark-tinylicious.js",
+		"build:benchmarks": "pnpm run build:benchmark:rust && pnpm run build:benchmark:tinylicious",
+		"benchmark:rust": "node browser/run-shared-tree-benchmark.mjs rust",
+		"benchmark:tinylicious": "node browser/run-shared-tree-benchmark.mjs tinylicious",
 		"build:shared-tree": "esbuild browser/shared-tree-trace.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-trace.js --external:../pkg/*",
-		"check:format": "biome format src browser package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html",
-		"format": "biome format src browser package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html --write",
+		"check:format": "biome format src browser package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html shared-tree-benchmark-rust.html shared-tree-benchmark-tinylicious.html",
+		"format": "biome format src browser package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html shared-tree-benchmark-rust.html shared-tree-benchmark-tinylicious.html --write",
 		"lint": "biome lint src browser",
 		"test": "node --test lib/*.test.js",
 		"typecheck": "tsc --project tsconfig.json --noEmit",
@@ -18,6 +23,7 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
+		"@fluidframework/tinylicious-client": "workspace:~",
 		"@fluidframework/tree": "workspace:~"
 	},
 	"devDependencies": {

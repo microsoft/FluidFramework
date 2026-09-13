@@ -1,3 +1,4 @@
 lib/
 pkg/
+benchmark-results/
 *.tsbuildinfo

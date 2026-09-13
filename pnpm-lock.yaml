@@ -16626,6 +16626,9 @@ importers:
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-static
+      '@fluidframework/tinylicious-client':
+        specifier: workspace:~
+        version: link:../../../packages/service-clients/tinylicious-client
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
