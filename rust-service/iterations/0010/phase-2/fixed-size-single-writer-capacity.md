@@ -4,7 +4,8 @@ Status: complete
 Branch: `rust-service-iteration-0010-fixed-size-single-writer-capacity`
 Worktree: `/workspaces/FluidFramework-rust-service-iteration-0010-fixed-size-single-writer-capacity`
 Base commit: `1e9fd4532e7`
-Final commit: pending evidence/report commit
+Final commit: `2887ed16b99ab07e373e2966b26704221197573e` (retained evidence; this
+completed report follows as a documentation-only commit)
 Agent or owner: GitHub Copilot
 Model and tool version: GitHub Copilot; model version unknown
 Instruction source: [`instructions/fixed-size-single-writer-capacity.md`](instructions/fixed-size-single-writer-capacity.md) at `1e9fd4532e7`
@@ -44,8 +45,8 @@ intermediate scalar value.
 1. `26186ca79751d4db3261e24d549b5b9b1e2db2c0` - fixed-size schema,
    overwrite workload, final-value convergence, batching diagnostics, and
    initial workstream record.
-2. Pending evidence/report commit - six retained JSON artifacts, comparison,
-   and completed workstream report.
+2. `2887ed16b99ab07e373e2966b26704221197573e` - six retained JSON
+	artifacts, comparison, and completed workstream report.
 
 ## Validation Evidence
 
