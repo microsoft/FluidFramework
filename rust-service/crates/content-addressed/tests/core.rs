@@ -52,6 +52,10 @@ fn manifest(blob: ContentDigest) -> SummaryManifest {
 fn digest_parsing_is_canonical_and_rejects_malformed_values() {
     let digest = ContentDigest::of(b"content");
     assert_eq!(
+        ContentDigest::from_bytes(digest.as_bytes()).unwrap(),
+        digest
+    );
+    assert_eq!(
         ContentDigest::from_str(&digest.to_string()).unwrap(),
         digest
     );
@@ -65,6 +69,14 @@ fn digest_parsing_is_canonical_and_rejects_malformed_values() {
     ));
     assert!(matches!(
         ContentDigest::from_str(&"z".repeat(64)),
+        Err(StoreError::InvalidDigest)
+    ));
+    assert!(matches!(
+        ContentDigest::from_bytes(&[0; 31]),
+        Err(StoreError::InvalidDigest)
+    ));
+    assert!(matches!(
+        ContentDigest::from_bytes(&[0; 33]),
         Err(StoreError::InvalidDigest)
     ));
 }
@@ -263,6 +275,23 @@ fn malformed_and_oversized_manifests_are_rejected() {
             }],
         }),
         Err(StoreError::ManifestTooLarge { limit: 48 })
+    ));
+}
+
+#[test]
+fn empty_manifest_respects_encoded_size_limit() {
+    let directory = TestDirectory::new("empty-manifest-limit");
+    let config = StoreConfig {
+        max_manifest_bytes: 11,
+        ..StoreConfig::default()
+    };
+    let store = ContentStore::open(&directory, config).unwrap();
+
+    assert!(matches!(
+        store.publish_summary(&SummaryManifest {
+            entries: Vec::new(),
+        }),
+        Err(StoreError::ManifestTooLarge { limit: 11 })
     ));
 }
 

@@ -1,4 +1,7 @@
 #![doc = "In-memory reference implementation of the snapshotted stream contracts."]
+#![doc = ""]
+#![doc = "Appends are visible to handles in this process and report memory durability;"]
+#![doc = "records and snapshots are lost when the last handle is dropped."]
 
 use std::sync::{
     Arc,
@@ -405,6 +408,14 @@ mod tests {
             b"malformed",
         )
         .await;
+    }
+
+    #[tokio::test]
+    async fn append_reports_memory_durability() {
+        let stream = MemoryStream::new();
+        let receipt = stream.append(Bytes::from_static(b"value")).await.unwrap();
+
+        assert_eq!(receipt.durability, Durability::Memory);
     }
 
     #[tokio::test]

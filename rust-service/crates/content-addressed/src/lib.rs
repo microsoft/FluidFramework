@@ -629,6 +629,9 @@ fn encode_manifest(manifest: &SummaryManifest, limit: u64) -> Result<Vec<u8>, St
     let mut bytes = Vec::new();
     bytes.extend_from_slice(&MANIFEST_MAGIC);
     bytes.extend_from_slice(&entry_count.to_be_bytes());
+    if u64::try_from(bytes.len()).map_or(true, |length| length > limit) {
+        return Err(StoreError::ManifestTooLarge { limit });
+    }
     for entry in &manifest.entries {
         let path = entry.path.as_bytes();
         let path_length = u32::try_from(path.len())

@@ -54,8 +54,10 @@ where
     append_order_and_boundaries(&make_stream).await;
     concurrent_appends_are_contiguous(&make_stream).await;
     read_is_finite(&make_stream).await;
+    read_after_head_is_empty(&make_stream).await;
     readers_are_independent_and_cancellable(&make_stream).await;
     positions_are_generation_scoped(&make_stream).await;
+    snapshot_positions_are_generation_scoped(&make_stream).await;
     snapshots_require_lineage_and_monotonicity(&make_stream).await;
     snapshot_recovery_reads_only_subsequent_records(&make_stream).await;
     deterministic_reference_model_trace(&make_stream).await;
@@ -295,6 +297,28 @@ where
     assert_eq!(records[0].payload, Bytes::from_static(b"captured"));
 }
 
+async fn read_after_head_is_empty<S, F>(make_stream: &F)
+where
+    S: AppendStream,
+    <S as AppendStream>::Error: Debug,
+    F: Fn() -> S,
+{
+    let stream = make_stream();
+    let head = stream
+        .append(Bytes::from_static(b"head"))
+        .await
+        .expect("head append")
+        .position;
+    let records = stream
+        .read(Some(&head))
+        .await
+        .expect("reader after head")
+        .try_collect::<Vec<_>>()
+        .await
+        .expect("records after head");
+    assert!(records.is_empty());
+}
+
 async fn readers_are_independent_and_cancellable<S, F>(make_stream: &F)
 where
     S: AppendStream,
@@ -341,6 +365,36 @@ where
     let Err(error) = second.read(Some(&receipt.position)).await else {
         panic!("position from another stream generation was accepted");
     };
+    assert!(matches!(
+        error.kind(),
+        ErrorKind::InvalidPosition | ErrorKind::StalePosition
+    ));
+}
+
+async fn snapshot_positions_are_generation_scoped<S, F>(make_stream: &F)
+where
+    S: AppendStream
+        + SnapshotStore<Position = <S as AppendStream>::Position, Error = <S as AppendStream>::Error>,
+    <S as AppendStream>::Error: Debug,
+    F: Fn() -> S,
+{
+    let first = make_stream();
+    let second = make_stream();
+    let position = first
+        .append(Bytes::from_static(b"value"))
+        .await
+        .expect("append")
+        .position;
+    let error = second
+        .publish(
+            Snapshot {
+                includes_through: SnapshotPosition::At(position),
+                payload: Bytes::from_static(b"foreign-position"),
+            },
+            None,
+        )
+        .await
+        .expect_err("foreign snapshot position should be rejected");
     assert!(matches!(
         error.kind(),
         ErrorKind::InvalidPosition | ErrorKind::StalePosition

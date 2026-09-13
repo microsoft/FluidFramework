@@ -93,20 +93,34 @@ pub trait ClassifiedError: Error + Send + Sync + 'static {
 pub type StreamReader<P, E> = Pin<Box<dyn Stream<Item = Result<ReadRecord<P>, E>> + Send>>;
 
 #[async_trait]
+/// An ordered append-only stream with opaque, generation-scoped positions.
 pub trait AppendStream: Send + Sync {
     type Position: StreamPosition;
     type Error: ClassifiedError;
 
     fn capabilities(&self) -> Capabilities;
 
+    /// Appends one record while preserving its boundary, including for an empty payload.
+    ///
+    /// A successful receipt means the record is visible to subsequent readers at the
+    /// reported [`Durability`].
     async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error>;
 
     /// Reads committed records strictly after `after`, or from the retained beginning.
+    ///
+    /// The returned reader is finite and ends at the head captured when this method begins.
+    /// Dropping it does not affect the stream or other readers.
+    ///
+    /// # Errors
+    ///
+    /// Returns an invalid- or stale-position error when `after` is not readable in this stream
+    /// generation.
     async fn read(
         &self,
         after: Option<&Self::Position>,
     ) -> Result<StreamReader<Self::Position, Self::Error>, Self::Error>;
 
+    /// Returns the latest committed position, or `None` when the stream is empty.
     async fn head(&self) -> Result<Option<Self::Position>, Self::Error>;
 }
 
@@ -164,12 +178,24 @@ pub struct PublishedSnapshot<P> {
 }
 
 #[async_trait]
+/// A latest-snapshot register coupled to an append-stream position domain.
 pub trait SnapshotStore: Send + Sync {
     type Position: StreamPosition;
     type Error: ClassifiedError;
 
+    /// Returns the latest successfully published snapshot.
     async fn latest(&self) -> Result<Option<PublishedSnapshot<Self::Position>>, Self::Error>;
 
+    /// Publishes a snapshot when its position and expected parent remain valid.
+    ///
+    /// `expected_parent` must equal the latest snapshot identifier, or be `None` when no
+    /// snapshot exists. The included position must be committed in this generation and must not
+    /// regress behind the latest snapshot.
+    ///
+    /// # Errors
+    ///
+    /// Returns a conflict for a parent mismatch or position regression, and an invalid- or
+    /// stale-position error for an uncommitted or foreign position.
     async fn publish(
         &self,
         snapshot: Snapshot<Self::Position>,
