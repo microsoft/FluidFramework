@@ -605,7 +605,7 @@ function addInputNodeAttachStatesForFields(
 
 			nodeAttachStates.set([normalizedNodeId.revision, normalizedNodeId.localId], attachState);
 
-			const nodeChangeset = nodeChangeFromId(nodes, normalizedNodeId);
+			const nodeChangeset = nodeChangeFromId(nodes, normalizedNodeId, nodeAliases);
 			if (nodeChangeset.fieldChanges !== undefined) {
 				addInputNodeAttachStatesForFields(
 					attachState,
@@ -688,7 +688,7 @@ function addNodeInfoForFields(
 				setInChangeAtomIdMap(rootIdToNodeId, detachId, normalizedNodeId);
 			}
 
-			const nodeChangeset = nodeChangeFromId(nodes, normalizedNodeId);
+			const nodeChangeset = nodeChangeFromId(nodes, normalizedNodeId, nodeAliases);
 			if (nodeChangeset.fieldChanges !== undefined) {
 				addNodeInfoForFields(
 					isPartOfBuild,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	areEqualChangeAtomIdOpts,
 	areEqualChangeAtomIds,
@@ -15,7 +15,18 @@ import {
 	type RevisionTag,
 	type TaggedChange,
 } from "../../core/index.js";
-import { brand, type Mutable, type RangeQueryResult } from "../../util/index.js";
+import {
+	addToNestedSet,
+	brand,
+	getOrCreateInNestedMap,
+	hasSome,
+	nestedSetContains,
+	populatedNestedSet,
+	type Mutable,
+	type NestedMap,
+	type NestedSet,
+	type RangeQueryResult,
+} from "../../util/index.js";
 import {
 	getFromChangeAtomIdMap,
 	newChangeAtomIdBTree,
@@ -279,6 +290,7 @@ export function updateConstraintsForFields(
 	parentInputAttachState: NodeAttachState,
 	constraintState: ConstraintState,
 	nodes: ChangeAtomIdBTree<NodeChangeset>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): void {
 	for (const field of fields.values()) {
@@ -290,7 +302,14 @@ export function updateConstraintsForFields(
 					? NodeAttachState.Detached
 					: NodeAttachState.Attached;
 
-			updateConstraintsForNode(nodeId, inputAttachState, nodes, constraintState, fieldKinds);
+			updateConstraintsForNode(
+				nodeId,
+				inputAttachState,
+				nodes,
+				nodeAliases,
+				constraintState,
+				fieldKinds,
+			);
 		}
 	}
 }
@@ -299,11 +318,11 @@ function updateConstraintsForNode(
 	nodeId: NodeId,
 	inputAttachState: NodeAttachState,
 	nodes: ChangeAtomIdBTree<NodeChangeset>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	constraintState: ConstraintState,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): void {
-	const node =
-		nodes.get([nodeId.revision, nodeId.localId]) ?? fail(0xb24 /* Unknown node ID */);
+	const node = nodeChangeFromId(nodes, nodeId, nodeAliases);
 	if (node.nodeExistsConstraint !== undefined) {
 		const isNowViolated = inputAttachState === NodeAttachState.Detached;
 		if (node.nodeExistsConstraint.violated !== isNowViolated) {
@@ -321,6 +340,7 @@ function updateConstraintsForNode(
 			inputAttachState,
 			constraintState,
 			nodes,
+			nodeAliases,
 			fieldKinds,
 		);
 	}
@@ -329,8 +349,10 @@ function updateConstraintsForNode(
 export function nodeChangeFromId(
 	nodes: ChangeAtomIdBTree<NodeChangeset>,
 	id: NodeId,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 ): NodeChangeset {
-	const node = getFromChangeAtomIdMap(nodes, id);
+	const normalizedId = normalizeNodeId(id, nodeAliases);
+	const node = getFromChangeAtomIdMap(nodes, normalizedId);
 	assert(node !== undefined, 0x9ca /* Unknown node ID */);
 	return node;
 }
@@ -355,28 +377,42 @@ export function normalizeNodeId(
 	}
 }
 
-export function addAlias(
+/**
+ * Updates `nodeAliases` so that `alias1` and `alias2` are considered equivalent.
+ * @param nodeAliases - The set of aliases to update.
+ * @param alias1 - The first node ID to be considered equivalent.
+ * @param alias2 - The second node ID to be considered equivalent.
+ * @returns The normalized ID that both `alias1` and `alias2` map to as a result of unification.
+ */
+export function unifyAliases(
 	nodeAliases: ChangeAtomIdBTree<NodeId>,
-	alias: NodeId,
-	target: NodeId,
-): boolean {
-	const normalizedAlias = normalizeNodeId(alias, nodeAliases);
-	const normalizedTarget = normalizeNodeId(target, nodeAliases);
-	if (areEqualChangeAtomIds(normalizedAlias, normalizedTarget)) {
-		return false;
+	alias1: NodeId,
+	alias2: NodeId,
+): NodeId {
+	const normalizedAlias1 = normalizeNodeId(alias1, nodeAliases);
+	const normalizedAlias2 = normalizeNodeId(alias2, nodeAliases);
+	if (!areEqualChangeAtomIds(normalizedAlias1, normalizedAlias2)) {
+		nodeAliases.set([normalizedAlias1.revision, normalizedAlias1.localId], normalizedAlias2);
 	}
-	nodeAliases.set([normalizedAlias.revision, normalizedAlias.localId], normalizedTarget);
-	return true;
+	return normalizedAlias2;
 }
 
 export function makeChangesetInversions(
 	fields: FieldChangeMap,
 	nodes: ChangeAtomIdBTree<NodeChangeset>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 ): { crossFieldKeys: CrossFieldKeyTable; nodeToParent: ChangeAtomIdBTree<FieldId> } {
 	const crossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();
 	const nodeToParent: ChangeAtomIdBTree<FieldId> = newChangeAtomIdBTree();
-	populateInversionsFromFieldMap(fields, undefined, fieldKinds, crossFieldKeys, nodeToParent);
+	populateInversionsFromFieldMap(
+		fields,
+		undefined,
+		fieldKinds,
+		crossFieldKeys,
+		nodeToParent,
+		nodeAliases,
+	);
 
 	nodes.forEachPair(([revision, localId], node) => {
 		if (node.fieldChanges !== undefined) {
@@ -389,6 +425,7 @@ export function makeChangesetInversions(
 				fieldKinds,
 				crossFieldKeys,
 				nodeToParent,
+				nodeAliases,
 			);
 		}
 	});
@@ -402,6 +439,7 @@ function populateInversionsFromFieldMap(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	crossFieldKeys: CrossFieldKeyTable,
 	nodeToParent: ChangeAtomIdBTree<FieldId>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 ): void {
 	for (const [fieldKey, fieldChange] of fields) {
 		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
@@ -410,7 +448,11 @@ function populateInversionsFromFieldMap(
 		}
 
 		for (const { nodeId } of handler.getNestedChanges(fieldChange.change)) {
-			nodeToParent.set([nodeId.revision, nodeId.localId], { nodeId: parent, field: fieldKey });
+			const normalizedNodeId = normalizeNodeId(nodeId, nodeAliases);
+			nodeToParent.set([normalizedNodeId.revision, normalizedNodeId.localId], {
+				nodeId: parent,
+				field: fieldKey,
+			});
 		}
 	}
 }
@@ -419,7 +461,14 @@ export function validateChangeset(
 	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): void {
-	let numNodes = validateFieldChanges(change, change.fieldChanges, undefined, fieldKinds);
+	for (const [revision, localId] of change.nodeChanges.keys()) {
+		assert(
+			!change.nodeAliases.has([revision, localId]),
+			"Node change table contains non-normalized node",
+		);
+	}
+
+	const allChildren = validateFieldChanges(change, change.fieldChanges, undefined, fieldKinds);
 
 	for (const [[revision, localId], node] of change.nodeChanges.entries()) {
 		if (node.fieldChanges === undefined) {
@@ -427,15 +476,25 @@ export function validateChangeset(
 		}
 
 		const nodeId: NodeId = { revision, localId };
-		const numChildren = validateFieldChanges(change, node.fieldChanges, nodeId, fieldKinds);
+		const fieldChildren = validateFieldChanges(change, node.fieldChanges, nodeId, fieldKinds);
 
-		numNodes += numChildren;
+		populatedNestedSet(fieldChildren, allChildren);
 	}
 
-	assert(
-		numNodes === change.nodeChanges.size,
-		0xa4d /* Node table contains unparented nodes */,
-	);
+	for (const [revision, localId] of change.nodeChanges.keys()) {
+		assert(
+			nestedSetContains(allChildren, revision, localId),
+			"Node change table contains unparented node",
+		);
+	}
+	for (const [revision, innerMap] of allChildren.entries()) {
+		for (const localId of innerMap.keys()) {
+			assert(
+				change.nodeChanges.has([revision, localId]),
+				"Node change table is missing a parented node",
+			);
+		}
+	}
 }
 
 /**
@@ -448,21 +507,22 @@ function validateFieldChanges(
 	fieldChanges: FieldChangeMap,
 	nodeParent: NodeId | undefined,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-): number {
-	let numChildren = 0;
+): NestedSet<NodeId["revision"], NodeId["localId"]> {
+	const children: NestedSet<NodeId["revision"], NodeId["localId"]> = new Map();
 	for (const [field, fieldChange] of fieldChanges.entries()) {
 		const fieldId = normalizeFieldId({ nodeId: nodeParent, field }, change.nodeAliases);
 		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
 		for (const { nodeId } of handler.getNestedChanges(fieldChange.change)) {
+			const normalizedNodeId = normalizeNodeId(nodeId, change.nodeAliases);
 			const parentFieldId = normalizeFieldId(
-				getParentFieldId(change, nodeId),
+				getParentFieldId(change, normalizedNodeId),
 				change.nodeAliases,
 			);
 			assert(
 				areEqualFieldIds(parentFieldId, fieldId),
 				0xa4e /* Inconsistent node parentage */,
 			);
-			numChildren += 1;
+			addToNestedSet(children, normalizedNodeId.revision, normalizedNodeId.localId);
 		}
 
 		for (const keyRange of handler.getCrossFieldKeys(fieldChange.change)) {
@@ -474,11 +534,84 @@ function validateFieldChanges(
 		}
 	}
 
-	return numChildren;
+	return children;
 }
 
+export interface ChangeStructure {
+	readonly root: NodeChangeStructure;
+	readonly aliases: readonly [NodeId, readonly NodeId[]][];
+}
+export type NodeChangeStructure = Readonly<Record<FieldKey, FieldChangeStructure>>;
+export type FieldChangeStructure = readonly (readonly [NodeId, NodeId, NodeChangeStructure])[];
+export function getChangeStructure(
+	change: ModularChangeset,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+): ChangeStructure {
+	const aliasMap: NestedMap<NodeId["revision"], NodeId["localId"], NodeId[]> = new Map();
+	for (const [[revision, localId], nodeId] of change.nodeAliases.entries()) {
+		const normal = normalizeNodeId(nodeId, change.nodeAliases);
+		const aliases = getOrCreateInNestedMap(
+			aliasMap,
+			normal.revision,
+			normal.localId,
+			() => [],
+		);
+		aliases.push({ revision, localId });
+	}
+	const aliasArray: [NodeId, readonly NodeId[]][] = [];
+	for (const [revision, localMap] of aliasMap) {
+		for (const [localId, nodeIds] of localMap) {
+			aliasArray.push([{ revision, localId }, nodeIds]);
+		}
+	}
+	return {
+		root: getNodeChangeStructure(change, change.fieldChanges, fieldKinds),
+		aliases: aliasArray,
+	};
+}
+
+export function getNodeChangeStructure(
+	change: ModularChangeset,
+	field: FieldChangeMap,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+): NodeChangeStructure {
+	const nodeChangeStructure: Record<FieldKey, FieldChangeStructure> = {};
+	for (const [fieldKey, fieldChange] of field) {
+		nodeChangeStructure[fieldKey] = getFieldChangeStructure(change, fieldChange, fieldKinds);
+	}
+	return nodeChangeStructure;
+}
+
+export function getFieldChangeStructure(
+	change: ModularChangeset,
+	fieldChange: FieldChange,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+): FieldChangeStructure {
+	const fieldChangeStructure: (readonly [NodeId, NodeId, NodeChangeStructure])[] = [];
+	const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
+
+	for (const { nodeId } of handler.getNestedChanges(fieldChange.change)) {
+		const normalized = normalizeNodeId(nodeId, change.nodeAliases);
+		const nodeChanges = change.nodeChanges.get([normalized.revision, normalized.localId]);
+		assert(nodeChanges !== undefined, "missing nested changes");
+		fieldChangeStructure.push([
+			nodeId,
+			normalized,
+			getNodeChangeStructure(change, nodeChanges.fieldChanges ?? new Map(), fieldKinds),
+		]);
+	}
+	return fieldChangeStructure;
+}
+
+/**
+ * Retrieves the normalized field ID of the parent field containing the specified node.
+ * @param changeset - The modular changeset containing the node.
+ * @param nodeId - The ID of the node whose parent field ID is to be retrieved. This ID need not be normalized.
+ * @returns The normalized field ID of the parent field containing the specified node.
+ */
 export function getParentFieldId(changeset: ModularChangeset, nodeId: NodeId): FieldId {
-	const parentId = getFromChangeAtomIdMap(changeset.nodeToParent, nodeId);
+	const normalizedNodeId = normalizeNodeId(nodeId, changeset.nodeAliases);
+	const parentId = getFromChangeAtomIdMap(changeset.nodeToParent, normalizedNodeId);
 	assert(parentId !== undefined, 0x9cb /* Parent field should be defined */);
 	return normalizeFieldId(parentId, changeset.nodeAliases);
 }
@@ -498,9 +631,22 @@ export function getFieldsForCrossFieldKey(
 	count: number,
 ): FieldId[] {
 	const fieldIds: FieldId[] = [];
-	for (const { value: fieldId } of changeset.crossFieldKeys.getAll(key, count)) {
+	let nextOffset: number | undefined;
+	for (const { value: fieldId, length, offset } of changeset.crossFieldKeys.getAll(
+		key,
+		count,
+	)) {
 		if (fieldId !== undefined) {
-			fieldIds.push(normalizeFieldId(fieldId, changeset.nodeAliases));
+			const normalizedFieldId = normalizeFieldId(fieldId, changeset.nodeAliases);
+			const previous = fieldIds.at(-1);
+			const isContiguous =
+				previous !== undefined &&
+				areEqualFieldIds(previous, normalizedFieldId) &&
+				offset === nextOffset;
+			if (!isContiguous) {
+				fieldIds.push(normalizedFieldId);
+			}
+			nextOffset = offset + length;
 		}
 	}
 

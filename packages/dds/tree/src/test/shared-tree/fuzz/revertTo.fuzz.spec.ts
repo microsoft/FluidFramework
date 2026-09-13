@@ -39,7 +39,7 @@ const weights: Partial<EditGeneratorOpWeights> = {
 	revertTo: 10,
 };
 
-describe.only("Fuzz - revertTo", () => {
+describe("Fuzz - revertTo", () => {
 	const generatorFactory = (): AsyncGenerator<Operation, FuzzTestState> =>
 		takeAsync(opsPerRun, makeOpGenerator(weights));
 

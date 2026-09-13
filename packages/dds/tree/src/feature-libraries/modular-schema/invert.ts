@@ -35,6 +35,7 @@ import {
 	newConstraintState,
 	newCrossFieldTable,
 	updateConstraintsForFields,
+	validateChangeset,
 	type CrossFieldTable,
 } from "./modularChangeUtils.js";
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
@@ -149,6 +150,7 @@ export function invertModularChange(
 		invertedFields,
 		invertedNodes,
 		fieldKinds,
+		change.change.nodeAliases,
 	);
 
 	const constraintState = newConstraintState(0);
@@ -157,10 +159,11 @@ export function invertModularChange(
 		NodeAttachState.Attached,
 		constraintState,
 		invertedNodes,
+		change.change.nodeAliases,
 		fieldKinds,
 	);
 
-	return makeModularChangeset({
+	const inverse = makeModularChangeset({
 		fieldChanges: invertedFields,
 		nodeChanges: invertedNodes,
 		nodeToParent,
@@ -173,6 +176,8 @@ export function invertModularChange(
 		noChangeConstraintOnRevert,
 		destroys,
 	});
+	validateChangeset(inverse, fieldKinds);
+	return inverse;
 }
 
 function invertFieldMap(

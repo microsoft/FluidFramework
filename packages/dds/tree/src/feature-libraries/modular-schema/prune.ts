@@ -14,7 +14,12 @@ import type {
 	NodeChangeset,
 	NodeId,
 } from "./modularChangeTypes.js";
-import { getChangeHandler, nodeChangeFromId, normalizeNodeId } from "./modularChangeUtils.js";
+import {
+	getChangeHandler,
+	nodeChangeFromId,
+	normalizeNodeId,
+	validateChangeset,
+} from "./modularChangeUtils.js";
 
 export function pruneChangeset(
 	changeset: ModularChangeset,
@@ -36,6 +41,7 @@ export function pruneChangeset(
 			fieldKinds,
 		) ?? new Map();
 
+	validateChangeset(prunedChangeset, fieldKinds);
 	return prunedChangeset;
 }
 
@@ -73,7 +79,7 @@ function pruneNodeChange(
 	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): NodeId | undefined {
-	const changeset = nodeChangeFromId(nodeMap, nodeId);
+	const changeset = nodeChangeFromId(nodeMap, nodeId, nodeAliases);
 	const prunedFields =
 		changeset.fieldChanges === undefined
 			? undefined
