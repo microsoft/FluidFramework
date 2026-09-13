@@ -1,4 +1,24 @@
-#![doc = "Transparent authenticated encryption for snapshotted streams."]
+//! Transparent authenticated encryption for snapshotted streams.
+//!
+//! Each record and snapshot is encrypted independently with AES-256-GCM-SIV.
+//! The stored envelope contains a magic value, format and algorithm versions,
+//! a record-or-snapshot context, a non-secret key identifier, a 96-bit nonce,
+//! ciphertext, and a 128-bit authentication tag. The header is authenticated,
+//! and the distinct contexts prevent swapping records with snapshots. Positions,
+//! capabilities, and underlying error classifications pass through unchanged.
+//!
+//! [`OsNonceSource`] is the production default. Custom [`NonceSource`]
+//! implementations must provide a fresh nonce for every payload written with a
+//! given key; deterministic sources are suitable only for tests. A [`KeyProvider`]
+//! must retain every historical key needed by stored envelopes and protect key
+//! material outside this wrapper. Missing keys are unavailable, while malformed
+//! or unauthenticated envelopes are corrupt without exposing authentication detail.
+//!
+//! Encryption and decryption allocate one complete payload-sized buffer and do
+//! not impose a payload-size limit. A returned reader decrypts only the item being
+//! polled and adds no stream buffer or background task; dropping it cancels further
+//! wrapper work. Compression should wrap encryption so plaintext is compressed
+//! before encryption; encrypting first generally prevents useful compression.
 
 use std::fmt;
 
@@ -400,7 +420,7 @@ mod tests {
     use snapshotted_stream_core::{
         AppendStream, ClassifiedError, ErrorKind, Snapshot, SnapshotPosition, SnapshotStore,
     };
-    use snapshotted_stream_memory::MemoryStream;
+    use snapshotted_stream_memory::{MemoryError, MemoryStream};
 
     use super::*;
 
@@ -460,6 +480,15 @@ mod tests {
     impl NonceSource for FixedNonce {
         fn generate_nonce(&self) -> Result<[u8; NONCE_LENGTH], NonceUnavailable> {
             Ok(self.0)
+        }
+    }
+
+    #[derive(Clone, Copy, Debug)]
+    struct UnavailableNonce;
+
+    impl NonceSource for UnavailableNonce {
+        fn generate_nonce(&self) -> Result<[u8; NONCE_LENGTH], NonceUnavailable> {
+            Err(NonceUnavailable)
         }
     }
 
@@ -680,6 +709,87 @@ mod tests {
             assert_eq!(error.kind(), ErrorKind::Corrupt);
             assert_eq!(error.to_string(), "encrypted payload is corrupt");
         }
+    }
+
+    #[test]
+    fn every_truncated_envelope_is_corrupt() {
+        let keys = TestKeys::new();
+        let encoded = encrypt_payload::<MemoryError, _, _>(
+            &keys,
+            &FixedNonce([12; NONCE_LENGTH]),
+            &Bytes::from_static(b"complete payload"),
+            PayloadContext::Record,
+        )
+        .unwrap();
+
+        for end in 0..encoded.len() {
+            let error = decrypt_payload::<MemoryError, _>(
+                &keys,
+                &encoded.slice(..end),
+                PayloadContext::Record,
+            )
+            .unwrap_err();
+            assert_eq!(error.kind(), ErrorKind::Corrupt, "prefix length {end}");
+        }
+    }
+
+    #[tokio::test]
+    async fn nonce_failure_rejects_records_and_snapshots_without_writing() {
+        let inner = MemoryStream::new();
+        let stream =
+            EncryptionStream::with_nonce_source(inner.clone(), TestKeys::new(), UnavailableNonce);
+
+        let append_error = stream
+            .append(Bytes::from_static(b"record"))
+            .await
+            .unwrap_err();
+        assert_eq!(append_error.kind(), ErrorKind::Unavailable);
+        assert_eq!(inner.head().await.unwrap(), None);
+
+        let publish_error = stream
+            .publish(
+                Snapshot {
+                    includes_through: SnapshotPosition::Initial,
+                    payload: Bytes::from_static(b"snapshot"),
+                },
+                None,
+            )
+            .await
+            .unwrap_err();
+        assert_eq!(publish_error.kind(), ErrorKind::Unavailable);
+        assert!(inner.latest().await.unwrap().is_none());
+    }
+
+    #[tokio::test]
+    async fn decrypts_records_lazily_at_poll_boundary() {
+        let inner = MemoryStream::new();
+        EncryptionStream::with_nonce_source(
+            inner.clone(),
+            TestKeys::new(),
+            FixedNonce([13; NONCE_LENGTH]),
+        )
+        .append(Bytes::from_static(b"first"))
+        .await
+        .unwrap();
+        inner
+            .append(Bytes::from_static(b"corrupt second envelope"))
+            .await
+            .unwrap();
+        let stream = EncryptionStream::with_nonce_source(
+            inner,
+            TestKeys::new(),
+            FixedNonce([14; NONCE_LENGTH]),
+        );
+        let mut reader = stream.read(None).await.unwrap();
+
+        assert_eq!(
+            reader.next().await.unwrap().unwrap().payload,
+            Bytes::from_static(b"first")
+        );
+        assert_eq!(
+            reader.next().await.unwrap().unwrap_err().kind(),
+            ErrorKind::Corrupt
+        );
     }
 
     #[tokio::test]

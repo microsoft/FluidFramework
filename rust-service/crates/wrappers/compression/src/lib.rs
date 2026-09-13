@@ -1,4 +1,19 @@
-#![doc = "Transparent per-record compression for snapshotted streams."]
+//! Transparent per-payload zlib compression for snapshotted streams.
+//!
+//! Each record and snapshot is one independent zlib frame. Positions, snapshot
+//! boundaries, capabilities, and underlying error classifications pass through
+//! unchanged; stored payload bytes do not. Reads reject malformed, truncated,
+//! or extended frames as [`ErrorKind::Corrupt`].
+//!
+//! Encoding and decoding buffer one complete payload in memory. This wrapper
+//! does not impose a decoded-size bound, so callers handling untrusted storage
+//! should enforce a payload limit in another layer. A returned reader decodes
+//! only the item being polled and adds no stream buffer or background task;
+//! dropping it cancels further wrapper work, while underlying cancellation and
+//! backpressure behavior remain the store's responsibility.
+//!
+//! Compression should normally wrap encryption so compression happens before
+//! encryption. Reversing that order generally prevents useful compression.
 
 use std::io::{Read, Write};
 
@@ -73,6 +88,12 @@ fn decompress_payload(payload: &Bytes) -> Result<Bytes, std::io::Error> {
     let mut decoder = ZlibDecoder::new(payload.as_ref());
     let mut output = Vec::new();
     decoder.read_to_end(&mut output)?;
+    if decoder.total_in() != payload.len() as u64 {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "trailing bytes after zlib frame",
+        ));
+    }
     Ok(Bytes::from(output))
 }
 
@@ -209,6 +230,29 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn empty_small_and_large_records_round_trip() {
+        let stream = CompressionStream::new(MemoryStream::new());
+        let payloads = [
+            Bytes::new(),
+            Bytes::from_static(b"x"),
+            Bytes::from(vec![0x5a; 1024 * 1024]),
+        ];
+        for payload in &payloads {
+            stream.append(payload.clone()).await.unwrap();
+        }
+
+        let decoded = stream
+            .read(None)
+            .await
+            .unwrap()
+            .map_ok(|record| record.payload)
+            .try_collect::<Vec<_>>()
+            .await
+            .unwrap();
+        assert_eq!(decoded, payloads);
+    }
+
+    #[tokio::test]
     async fn snapshot_supports_counter_equivalent_recovery() {
         let stream = CompressionStream::new(MemoryStream::new());
         stream
@@ -276,6 +320,69 @@ mod tests {
             .unwrap()
             .unwrap_err();
         assert_eq!(error.kind(), ErrorKind::Corrupt);
+    }
+
+    #[test]
+    fn rejects_truncated_and_extended_frames() {
+        let encoded = compress_payload(&Bytes::from_static(b"complete payload")).unwrap();
+
+        for end in 0..encoded.len() {
+            assert!(
+                decompress_payload(&encoded.slice(..end)).is_err(),
+                "accepted frame truncated to {end} bytes"
+            );
+        }
+
+        let mut extended = encoded.to_vec();
+        extended.extend_from_slice(b"trailing bytes");
+        assert!(decompress_payload(&Bytes::from(extended)).is_err());
+    }
+
+    #[tokio::test]
+    async fn classifies_truncated_and_extended_snapshots_as_corrupt() {
+        let encoded = compress_payload(&Bytes::from_static(b"snapshot payload")).unwrap();
+        let mut extended = encoded.to_vec();
+        extended.extend_from_slice(b"trailing bytes");
+
+        for malformed in [encoded.slice(..encoded.len() - 1), Bytes::from(extended)] {
+            let inner = MemoryStream::new();
+            inner
+                .publish(
+                    Snapshot {
+                        includes_through: SnapshotPosition::Initial,
+                        payload: malformed,
+                    },
+                    None,
+                )
+                .await
+                .unwrap();
+            let error = CompressionStream::new(inner).latest().await.unwrap_err();
+            assert_eq!(error.kind(), ErrorKind::Corrupt);
+        }
+    }
+
+    #[tokio::test]
+    async fn decodes_records_lazily_at_poll_boundary() {
+        let inner = MemoryStream::new();
+        inner
+            .append(compress_payload(&Bytes::from_static(b"first")).unwrap())
+            .await
+            .unwrap();
+        inner
+            .append(Bytes::from_static(b"corrupt second frame"))
+            .await
+            .unwrap();
+        let stream = CompressionStream::new(inner);
+        let mut reader = stream.read(None).await.unwrap();
+
+        assert_eq!(
+            reader.next().await.unwrap().unwrap().payload,
+            Bytes::from_static(b"first")
+        );
+        assert_eq!(
+            reader.next().await.unwrap().unwrap_err().kind(),
+            ErrorKind::Corrupt
+        );
     }
 
     #[tokio::test]

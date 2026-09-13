@@ -1,4 +1,22 @@
-#![doc = "Bounded dictionary compression with independently restartable records."]
+//! Bounded dictionary compression with independently restartable payloads.
+//!
+//! Each record and snapshot is one independent zstd frame prefixed by a wrapper
+//! header containing a magic value, format version, dictionary fingerprint, and
+//! declared decoded length. Reopening requires the same immutable dictionary and
+//! configured decoded-size bound; no earlier record or mutable codec state is
+//! needed. Positions, capabilities, and underlying errors pass through unchanged.
+//!
+//! The dictionary is limited to [`MAX_DICTIONARY_BYTES`], and the configured
+//! decoded-size bound cannot exceed [`MAX_DECODED_BYTES`]. The declared length is
+//! checked before decompression, the zstd window is capped from the configured
+//! bound, and the actual decoded length must match. The complete stored frame and
+//! decoded payload are nevertheless held in memory. A returned reader decodes
+//! only the item being polled and adds no stream buffer or background task;
+//! dropping it cancels further wrapper work.
+//!
+//! The dictionary fingerprint detects accidental mismatch but is not a
+//! cryptographic authenticator. Use authenticated encryption outside this wrapper
+//! when storage is untrusted; this ordering compresses plaintext before encryption.
 
 use async_trait::async_trait;
 use bytes::{BufMut, Bytes, BytesMut};
@@ -627,6 +645,39 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn rejects_oversize_snapshot_without_replacing_latest() {
+        let inner = MemoryStream::new();
+        let stream = wrap(inner);
+        let maximum = Bytes::from(vec![7; MAX_PAYLOAD]);
+        let snapshot_id = stream
+            .publish(
+                Snapshot {
+                    includes_through: SnapshotPosition::Initial,
+                    payload: maximum.clone(),
+                },
+                None,
+            )
+            .await
+            .unwrap();
+
+        let error = stream
+            .publish(
+                Snapshot {
+                    includes_through: SnapshotPosition::Initial,
+                    payload: Bytes::from(vec![8; MAX_PAYLOAD + 1]),
+                },
+                Some(&snapshot_id),
+            )
+            .await
+            .unwrap_err();
+        assert_eq!(error.kind(), ErrorKind::Rejected);
+
+        let latest = stream.latest().await.unwrap().unwrap();
+        assert_eq!(latest.id, snapshot_id);
+        assert_eq!(latest.snapshot.payload, maximum);
+    }
+
+    #[tokio::test]
     async fn classifies_truncation_malformed_frames_and_wrong_dictionary_as_corrupt() {
         let malformed = MemoryStream::new();
         malformed
@@ -676,6 +727,83 @@ mod tests {
             .await
             .unwrap_err();
         assert_eq!(mismatch.kind(), ErrorKind::Corrupt);
+    }
+
+    #[test]
+    fn rejects_truncated_extended_and_false_length_frames() {
+        let stream = wrap(MemoryStream::new());
+        let payload = Bytes::from_static(b"complete payload");
+        let encoded = stream.compress(&payload).unwrap();
+
+        for end in 0..encoded.len() {
+            assert!(
+                stream.decompress(&encoded.slice(..end)).is_err(),
+                "prefix length {end}"
+            );
+        }
+
+        let mut extended = encoded.to_vec();
+        extended.extend_from_slice(b"trailing bytes");
+        assert!(stream.decompress(&Bytes::from(extended)).is_err());
+
+        let length_offset = MAGIC.len() + 1 + 8;
+        for declared_length in [payload.len() + 1, MAX_PAYLOAD + 1] {
+            let mut false_length = encoded.to_vec();
+            false_length[length_offset..HEADER_LEN]
+                .copy_from_slice(&(declared_length as u64).to_be_bytes());
+            assert!(stream.decompress(&Bytes::from(false_length)).is_err());
+        }
+    }
+
+    #[tokio::test]
+    async fn classifies_truncated_and_extended_snapshots_as_corrupt() {
+        let encoder = wrap(MemoryStream::new());
+        let encoded = encoder
+            .compress(&Bytes::from_static(b"snapshot payload"))
+            .unwrap();
+        let mut extended = encoded.to_vec();
+        extended.extend_from_slice(b"trailing bytes");
+
+        for malformed in [encoded.slice(..encoded.len() - 1), Bytes::from(extended)] {
+            let inner = MemoryStream::new();
+            inner
+                .publish(
+                    Snapshot {
+                        includes_through: SnapshotPosition::Initial,
+                        payload: malformed,
+                    },
+                    None,
+                )
+                .await
+                .unwrap();
+            let error = wrap(inner).latest().await.unwrap_err();
+            assert_eq!(error.kind(), ErrorKind::Corrupt);
+        }
+    }
+
+    #[tokio::test]
+    async fn decodes_records_lazily_at_poll_boundary() {
+        let inner = MemoryStream::new();
+        let encoder = wrap(MemoryStream::new());
+        inner
+            .append(encoder.compress(&Bytes::from_static(b"first")).unwrap())
+            .await
+            .unwrap();
+        inner
+            .append(Bytes::from_static(b"corrupt second frame"))
+            .await
+            .unwrap();
+        let stream = wrap(inner);
+        let mut reader = stream.read(None).await.unwrap();
+
+        assert_eq!(
+            reader.next().await.unwrap().unwrap().payload,
+            Bytes::from_static(b"first")
+        );
+        assert_eq!(
+            reader.next().await.unwrap().unwrap_err().kind(),
+            ErrorKind::Corrupt
+        );
     }
 
     #[tokio::test]
