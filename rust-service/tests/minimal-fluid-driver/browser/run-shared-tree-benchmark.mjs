@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { cpus, platform, release } from "node:os";
 import { resolve } from "node:path";
 
@@ -48,6 +49,7 @@ const sourceDirty =
 			encoding: "utf8",
 		},
 	).stdout.trim().length > 0;
+const serviceProcessBefore = readServiceProcess();
 const samples = [];
 for (let repetition = 0; repetition < repetitions; repetition++) {
 	const execution = spawnSync(
@@ -84,6 +86,7 @@ for (let repetition = 0; repetition < repetitions; repetition++) {
 }
 
 const cpu = cpus()[0];
+const serviceProcessAfter = readServiceProcess();
 const values = (select) => samples.map(select);
 const output = {
 	schemaVersion: 1,
@@ -102,6 +105,17 @@ const output = {
 		cpuModel: cpu?.model ?? "unknown",
 		node: process.version,
 		browser: samples[0].browser,
+		serviceProcess:
+			serviceProcessBefore === null || serviceProcessAfter === null
+				? null
+				: {
+						pid: serviceProcessAfter.pid,
+						cpuSeconds:
+							(serviceProcessAfter.cpuTicks - serviceProcessBefore.cpuTicks) /
+							serviceProcessAfter.clockTicksPerSecond,
+						residentSetKiB: serviceProcessAfter.residentSetKiB,
+						peakResidentSetKiB: serviceProcessAfter.peakResidentSetKiB,
+					},
 	},
 	aggregates: {
 		startupMilliseconds: distribution(values((sample) => sample.startupMilliseconds)),
@@ -112,6 +126,35 @@ const output = {
 	samples,
 };
 console.log(JSON.stringify(output, undefined, 2));
+
+function readServiceProcess() {
+	const pid = Number(process.env.BENCHMARK_SERVER_PID);
+	if (!Number.isSafeInteger(pid) || pid <= 0) {
+		return null;
+	}
+	try {
+		const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
+		const fields = stat
+			.slice(stat.lastIndexOf(")") + 2)
+			.trim()
+			.split(/\s+/u);
+		const status = readFileSync(`/proc/${pid}/status`, "utf8");
+		const valueKiB = (name) =>
+			Number(status.match(new RegExp(`^${name}:\\s+(\\d+)`, "mu"))?.[1]);
+		const clockTicksPerSecond = Number(
+			spawnSync("getconf", ["CLK_TCK"], { encoding: "utf8" }).stdout.trim(),
+		);
+		return {
+			pid,
+			cpuTicks: Number(fields[11]) + Number(fields[12]),
+			clockTicksPerSecond,
+			residentSetKiB: valueKiB("VmRSS"),
+			peakResidentSetKiB: valueKiB("VmHWM"),
+		};
+	} catch {
+		return null;
+	}
+}
 
 function distribution(samples) {
 	const sorted = [...samples].sort((left, right) => left - right);
