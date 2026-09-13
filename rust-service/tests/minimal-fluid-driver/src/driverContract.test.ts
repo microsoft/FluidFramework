@@ -502,9 +502,11 @@ test("actual WASM package backs the minimal Fluid driver contract", async () => 
 	await first.reconnect(ambiguousTransport);
 	first.submit([message(3, 8)]);
 	await assert.rejects(first.waitForIdle(), /response lost after commit/);
+	await waitUntil(() => firstMessages.length === 5);
+	assert.equal(first.pending.has(3), false);
 	first.disconnect();
 	await first.reconnect(new Transport(backend));
-	assert.equal((await first.recoverPending()).get(3)?.kind, "committed");
+	assert.equal((await first.recoverPending()).has(3), false);
 	assert.equal(backend.operations.length, 5);
 
 	const history = await loaded.connectToDeltaStorage();

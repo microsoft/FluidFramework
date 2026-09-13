@@ -758,29 +758,6 @@ fn cpu_model() -> String {
         .unwrap_or_else(|| "unknown".to_owned())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn command_parser_accepts_help_for_program_and_measurement() {
-        for arguments in [&["--help"][..], &["-h"], &["help"], &["measure", "--help"]] {
-            let arguments = arguments
-                .iter()
-                .map(|value| (*value).to_owned())
-                .collect::<Vec<_>>();
-            assert_eq!(parse_command(&arguments), Ok(BenchmarkCommand::Help));
-        }
-    }
-
-    #[test]
-    fn command_parser_rejects_ignored_smoke_options() {
-        let arguments = ["smoke".to_owned(), "--records".to_owned(), "1".to_owned()];
-
-        assert!(parse_command(&arguments).is_err());
-    }
-}
-
 fn memory_bytes() -> Option<u64> {
     proc_status_value("/proc/meminfo", "MemTotal:").map(|kilobytes| kilobytes * 1_024)
 }
@@ -857,4 +834,27 @@ fn display_error(error: impl std::fmt::Display) -> String {
 
 fn usage() -> String {
     "usage: snapshotted-stream-benchmarks smoke | measure [--backend memory|file|network-memory|compression|stateful-compression|encryption|stateful-compression-encryption|native-service|native-webtransport] [--fixture empty|small-compressible|small-incompressible|large-compressible|large-incompressible|snapshot] [--seed N] [--records N] [--writers N] [--snapshot-frequency N] [--warmups N] [--repetitions N]".to_owned()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn command_parser_accepts_help_for_program_and_measurement() {
+        for arguments in [&["--help"][..], &["-h"], &["help"], &["measure", "--help"]] {
+            let arguments = arguments
+                .iter()
+                .map(|value| (*value).to_owned())
+                .collect::<Vec<_>>();
+            assert_eq!(parse_command(&arguments), Ok(BenchmarkCommand::Help));
+        }
+    }
+
+    #[test]
+    fn command_parser_rejects_ignored_smoke_options() {
+        let arguments = ["smoke".to_owned(), "--records".to_owned(), "1".to_owned()];
+
+        assert!(parse_command(&arguments).is_err());
+    }
 }

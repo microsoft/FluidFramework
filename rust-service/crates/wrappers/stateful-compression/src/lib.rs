@@ -757,14 +757,17 @@ mod tests {
 
     #[tokio::test]
     async fn classifies_truncated_and_extended_snapshots_as_corrupt() {
-        let encoder = wrap(MemoryStream::new());
-        let encoded = encoder
+        let stream = wrap(MemoryStream::new());
+        let compressed = stream
             .compress(&Bytes::from_static(b"snapshot payload"))
             .unwrap();
-        let mut extended = encoded.to_vec();
+        let mut extended = compressed.to_vec();
         extended.extend_from_slice(b"trailing bytes");
 
-        for malformed in [encoded.slice(..encoded.len() - 1), Bytes::from(extended)] {
+        for malformed in [
+            compressed.slice(..compressed.len() - 1),
+            Bytes::from(extended),
+        ] {
             let inner = MemoryStream::new();
             inner
                 .publish(
