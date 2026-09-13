@@ -21,6 +21,7 @@ const FETCH_BLOB: u8 = 11;
 const PUBLISH_SUMMARY: u8 = 12;
 const FETCH_SUMMARY: u8 = 13;
 const SUBSCRIBE_PROJECTED: u8 = 14;
+const OPEN_SUBMISSION_STREAM: u8 = 15;
 const ACKNOWLEDGED: u8 = 64;
 const SUBMITTED: u8 = 65;
 const READ_RESULT: u8 = 66;
@@ -109,6 +110,9 @@ pub enum Request {
     SubscribeProjected {
         document: Bytes,
         after: Option<Bytes>,
+    },
+    OpenSubmissionStream {
+        document: Bytes,
     },
     ResolveSubmission {
         document: Bytes,
@@ -514,6 +518,10 @@ fn encode_request_message(request: &Request, limits: Limits) -> Result<(u8, Byte
             put_optional_bytes(&mut body, after.as_ref(), limits.max_position_bytes)?;
             SUBSCRIBE_PROJECTED
         }
+        Request::OpenSubmissionStream { document } => {
+            put_bytes(&mut body, document, limits.max_document_bytes)?;
+            OPEN_SUBMISSION_STREAM
+        }
         Request::ResolveSubmission {
             document,
             writer,
@@ -626,7 +634,7 @@ fn encode_resolution(
 }
 
 fn decode_message(kind: u8, mut body: Bytes, limits: Limits) -> Result<Message, ProtocolError> {
-    let message = if kind <= SUBSCRIBE_PROJECTED {
+    let message = if kind <= OPEN_SUBMISSION_STREAM {
         Message::Request(decode_request(kind, &mut body, limits)?)
     } else {
         Message::Response(decode_response(kind, &mut body, limits)?)
@@ -680,6 +688,9 @@ fn decode_request(kind: u8, body: &mut Bytes, limits: Limits) -> Result<Request,
         SUBSCRIBE_PROJECTED => Request::SubscribeProjected {
             document: take_bytes(body, limits.max_document_bytes)?,
             after: take_optional_bytes(body, limits.max_position_bytes)?,
+        },
+        OPEN_SUBMISSION_STREAM => Request::OpenSubmissionStream {
+            document: take_bytes(body, limits.max_document_bytes)?,
         },
         RESOLVE_SUBMISSION => Request::ResolveSubmission {
             document: take_bytes(body, limits.max_document_bytes)?,
@@ -1137,6 +1148,9 @@ mod tests {
         round_trip(Message::Request(Request::SubscribeProjected {
             document: Bytes::from_static(b"doc"),
             after: Some(Bytes::from_static(b"position")),
+        }));
+        round_trip(Message::Request(Request::OpenSubmissionStream {
+            document: Bytes::from_static(b"doc"),
         }));
         round_trip(Message::Request(Request::ResolveSubmission {
             document: Bytes::from_static(b"doc"),

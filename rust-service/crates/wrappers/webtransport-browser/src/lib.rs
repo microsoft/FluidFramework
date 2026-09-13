@@ -5,6 +5,7 @@ mod core;
 
 use std::{
     cell::{Cell, RefCell},
+    collections::VecDeque,
     rc::Rc,
 };
 
@@ -18,7 +19,7 @@ use wasm_bindgen::{JsCast, prelude::*};
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{
     ReadableStream, ReadableStreamDefaultReader, WebTransport, WebTransportBidirectionalStream,
-    WebTransportHash, WebTransportOptions, WritableStream,
+    WebTransportHash, WebTransportOptions, WritableStream, WritableStreamDefaultWriter,
 };
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -619,6 +620,96 @@ pub struct BrowserProjectedSubscription {
 }
 
 #[wasm_bindgen]
+pub struct BrowserSubmissionStream {
+    writer: WritableStreamDefaultWriter,
+    reader: ReadableStreamDefaultReader,
+    limits: fluid_service_protocol::Limits,
+    core: Rc<RefCell<ProtocolCore>>,
+    buffered: RefCell<Vec<u8>>,
+    request_ids: RefCell<VecDeque<u64>>,
+    sending: Cell<bool>,
+    receiving: Cell<bool>,
+    closed: Cell<bool>,
+}
+
+#[wasm_bindgen]
+impl BrowserSubmissionStream {
+    /// Writes one ordered submission frame, waiting only for transport backpressure.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid frames, concurrent writes, closed streams, and transport failures.
+    pub async fn send(&self, frame: Uint8Array) -> Result<(), JsValue> {
+        if self.closed.get() {
+            return Err(js_error("submission stream is closed"));
+        }
+        if self.sending.replace(true) {
+            return Err(js_error("submission stream already has an active write"));
+        }
+        let outgoing = frame.to_vec();
+        let request_id = match self.core.borrow().submission_request_id(&outgoing) {
+            Ok(request_id) => request_id,
+            Err(error) => {
+                self.sending.set(false);
+                return Err(error);
+            }
+        };
+        self.core.borrow().metrics().record_outgoing(outgoing.len());
+        self.request_ids.borrow_mut().push_back(request_id);
+        let result = JsFuture::from(
+            self.writer
+                .write_with_chunk(Uint8Array::from(outgoing.as_slice()).as_ref()),
+        )
+        .await;
+        self.sending.set(false);
+        if let Err(error) = result {
+            self.request_ids.borrow_mut().pop_back();
+            return Err(error);
+        }
+        Ok(())
+    }
+
+    /// Reads the next ordered submission result.
+    ///
+    /// # Errors
+    ///
+    /// Rejects missing requests, concurrent reads, invalid responses, and transport failures.
+    pub async fn next(&self) -> Result<Uint8Array, JsValue> {
+        if self.receiving.replace(true) {
+            return Err(js_error("submission stream already has an active read"));
+        }
+        let Some(request_id) = self.request_ids.borrow_mut().pop_front() else {
+            self.receiving.set(false);
+            return Err(js_error("submission stream has no pending request"));
+        };
+        let mut buffered = self.buffered.take();
+        let result =
+            read_stream_frame(&self.reader, &mut buffered, self.limits.max_frame_bytes).await;
+        self.buffered.replace(buffered);
+        self.receiving.set(false);
+        let (incoming, _) = result?;
+        self.core
+            .borrow()
+            .submission_response(&incoming, request_id)?;
+        self.core.borrow().metrics().record_response(incoming.len());
+        Ok(Uint8Array::from(incoming.as_slice()))
+    }
+
+    /// Closes the submission side after all queued writes.
+    ///
+    /// # Errors
+    ///
+    /// Rejects if the browser stream cannot be closed.
+    pub async fn close(&self) -> Result<(), JsValue> {
+        if !self.closed.replace(true) {
+            JsFuture::from(self.writer.close()).await?;
+            self.writer.release_lock();
+        }
+        Ok(())
+    }
+}
+
+#[wasm_bindgen]
 impl BrowserProjectedSubscription {
     /// Waits for the next projected operation.
     ///
@@ -630,15 +721,12 @@ impl BrowserProjectedSubscription {
             return Err(js_error("projected subscription is cancelled"));
         }
         let mut buffered = self.buffered.take();
-        let result = read_subscription_frame(
-            &self.reader,
-            &mut buffered,
-            self.limits.max_frame_bytes,
-            &self.metrics,
-        )
-        .await;
+        let result =
+            read_stream_frame(&self.reader, &mut buffered, self.limits.max_frame_bytes).await;
         self.buffered.replace(buffered);
-        let incoming = result?;
+        let (incoming, queue_depth) = result?;
+        self.metrics
+            .record_subscription_frame(incoming.len(), queue_depth);
         projected_operation(self.limits, self.request_id, &incoming)
     }
 
@@ -775,6 +863,42 @@ impl BrowserClient {
             buffered: RefCell::new(Vec::new()),
             cancelled: Cell::new(false),
             metrics: self.core.borrow().metrics(),
+        })
+    }
+
+    /// Opens one ordered, document-bound submission stream.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid fields and browser transport failures.
+    #[wasm_bindgen(js_name = openSubmissionStream)]
+    pub async fn open_submission_stream(
+        &self,
+        document: Uint8Array,
+    ) -> Result<BrowserSubmissionStream, JsValue> {
+        let request = self
+            .core
+            .borrow_mut()
+            .open_submission_stream_request(document.to_vec())?;
+        self.core.borrow().metrics().record_outgoing(request.len());
+        let stream = JsFuture::from(self.transport.create_bidirectional_stream())
+            .await?
+            .dyn_into::<WebTransportBidirectionalStream>()?;
+        let writable: WritableStream = stream.writable().unchecked_into();
+        let writer = writable.get_writer()?;
+        JsFuture::from(writer.write_with_chunk(Uint8Array::from(request.as_slice()).as_ref()))
+            .await?;
+        let readable: ReadableStream = stream.readable().unchecked_into();
+        Ok(BrowserSubmissionStream {
+            writer,
+            reader: readable.get_reader().unchecked_into(),
+            limits: self.core.borrow().limits(),
+            core: Rc::clone(&self.core),
+            buffered: RefCell::new(Vec::new()),
+            request_ids: RefCell::new(VecDeque::new()),
+            sending: Cell::new(false),
+            receiving: Cell::new(false),
+            closed: Cell::new(false),
         })
     }
 
@@ -1064,12 +1188,11 @@ async fn read_bounded(
     }
 }
 
-async fn read_subscription_frame(
+async fn read_stream_frame(
     reader: &ReadableStreamDefaultReader,
     buffered: &mut Vec<u8>,
     max_frame_bytes: usize,
-    metrics: &ClientMetrics,
-) -> Result<Vec<u8>, JsValue> {
+) -> Result<(Vec<u8>, usize), JsValue> {
     let max_buffered_bytes = max_frame_bytes
         .checked_mul(2)
         .ok_or_else(|| js_error("subscription buffer limit overflowed"))?;
@@ -1090,8 +1213,7 @@ async fn read_subscription_frame(
             }
             if buffered.len() >= frame_bytes {
                 let frame = buffered.drain(..frame_bytes).collect::<Vec<_>>();
-                metrics.record_subscription_frame(frame.len(), complete_frame_count(buffered));
-                return Ok(frame);
+                return Ok((frame, complete_frame_count(buffered)));
             }
         }
         let result = JsFuture::from(reader.read()).await?;

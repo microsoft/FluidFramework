@@ -46,6 +46,14 @@ const codeDetails = { package: "shared-tree-rust-service-benchmark", config: {} 
 function adaptBrowserClient(client: BrowserClient): WasmProtocolClient {
 	return {
 		request: async (frame) => client.request(frame),
+		openSubmissionStream: async (document) => {
+			const stream = await client.openSubmissionStream(document);
+			return {
+				send: async (frame) => stream.send(frame),
+				next: async () => stream.next(),
+				close: async () => stream.close(),
+			};
+		},
 		readProjected: async (document, after) => {
 			const page = await client.readProjected(document, after);
 			return {

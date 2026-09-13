@@ -31,6 +31,7 @@ import { ProtocolClient } from "./protocolClient.js";
 import type {
 	ProjectedOperation,
 	ProjectedOperationSubscription,
+	SubmissionStream,
 	SubmissionResolution,
 	SummaryEntry,
 	WasmProtocolClient,
@@ -473,6 +474,8 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 	private readonly queuedSubmissions = new Map<number, PendingSubmission>();
 	private nextClientSequenceNumber = 1;
 	private submitChain: Promise<void> = Promise.resolve();
+	private submissionWriteChain: Promise<void> = Promise.resolve();
+	private submissionStream: SubmissionStream | undefined;
 	private subscription: ProjectedOperationSubscription | undefined;
 	private subscriptionPump: Promise<void> | undefined;
 	public disposed = false;
@@ -543,6 +546,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 			this.lifecycle.session,
 			this.lifecycle.lastPosition,
 		);
+		this.submissionStream ??= await this.client.openSubmissionStream?.(this.document);
 		this.subscription = await this.client.subscribeProjected(
 			this.document,
 			this.lifecycle.cursor,
@@ -569,6 +573,29 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 			const { identity, message } = pending;
 			this.queuedSubmissions.delete(this.nextClientSequenceNumber);
 			this.nextClientSequenceNumber++;
+			const submissionStream = this.submissionStream;
+			if (submissionStream !== undefined) {
+				const request = this.protocol.submissionRequest(
+					this.document,
+					this.lifecycle.writer,
+					this.lifecycle.session,
+					identity,
+					message.clientSequenceNumber,
+					encoder.encode(JSON.stringify(message)),
+					this.lifecycle.lastPosition,
+				);
+				const write = this.submissionWriteChain.then(async () =>
+					submissionStream.send(request),
+				);
+				this.submissionWriteChain = write;
+				this.submitChain = this.submitChain.then(async () => {
+					await write;
+					const position = this.protocol.submissionPosition(await submissionStream.next());
+					this.lifecycle.lastPosition = position;
+					this.pending.delete(message.clientSequenceNumber);
+				});
+				continue;
+			}
 			this.submitChain = this.submitChain.then(async () => {
 				const position = await this.protocol.submit(
 					this.document,
@@ -665,6 +692,8 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 
 	public async reconnect(...args: readonly unknown[]): Promise<void> {
 		await this.client.reconnect(...args);
+		this.submissionStream = undefined;
+		this.submissionWriteChain = Promise.resolve();
 		await this.open();
 	}
 
@@ -689,6 +718,12 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 					return;
 				}
 				this.lifecycle.cursor = operation.position;
+				if (
+					bytesEqual(operation.writer, this.lifecycle.writer) &&
+					bytesEqual(operation.session, this.lifecycle.session)
+				) {
+					this.pending.delete(Number(operation.localSequenceNumber));
+				}
 				const message = projectOperation(this.lifecycle, operation);
 				this.checkpointSequenceNumber = message.sequenceNumber;
 				this.emit("op", decoder.decode(this.document), [message]);

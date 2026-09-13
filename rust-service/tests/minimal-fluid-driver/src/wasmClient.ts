@@ -21,6 +21,12 @@ export interface ProjectedOperationSubscription {
 	cancel(): void | Promise<void>;
 }
 
+export interface SubmissionStream {
+	send(frame: Uint8Array): Promise<void>;
+	next(): Promise<Uint8Array>;
+	close(): void | Promise<void>;
+}
+
 export type SubmissionResolution =
 	| {
 			readonly kind: "committed";
@@ -49,6 +55,7 @@ export interface SummaryPublication {
 
 export interface WasmProtocolClient {
 	request(frame: Uint8Array): Promise<Uint8Array>;
+	openSubmissionStream?(document: Uint8Array): Promise<SubmissionStream>;
 	readProjected(document: Uint8Array, after?: Uint8Array): Promise<ProjectedReadPage>;
 	subscribeProjected(
 		document: Uint8Array,

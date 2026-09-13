@@ -405,9 +405,23 @@ async fn serve_stream(
     config: &TransportConfig,
     metrics: &Metrics,
 ) -> Result<(), WebTransportError> {
-    let request_bytes = read_frame(&mut receive, &config.limits, config.operation_timeout).await?;
+    let request_bytes = timeout(
+        config.operation_timeout,
+        read_stream_frame(&mut receive, &config.limits),
+    )
+    .await
+    .map_err(|_| WebTransportError::Timeout)??;
     metrics.add_wire_bytes(request_bytes.len());
     let decoded = decode(&request_bytes, config.limits);
+    if !matches!(
+        &decoded,
+        Ok(Frame {
+            message: Message::Request(Request::OpenSubmissionStream { .. }),
+            ..
+        })
+    ) {
+        expect_stream_end(&mut receive, config.operation_timeout).await?;
+    }
     let response = match decoded {
         Ok(Frame {
             request_id,
@@ -415,6 +429,20 @@ async fn serve_stream(
         }) => {
             return serve_projected_subscription(
                 &mut send, service, request_id, document, after, config, metrics,
+            )
+            .await;
+        }
+        Ok(Frame {
+            message: Message::Request(Request::OpenSubmissionStream { document }),
+            ..
+        }) => {
+            return serve_submission_stream(
+                &mut send,
+                &mut receive,
+                service,
+                document,
+                config,
+                metrics,
             )
             .await;
         }
@@ -438,6 +466,54 @@ async fn serve_stream(
     write_frame(&mut send, &response_bytes, config.operation_timeout).await?;
     metrics.add_wire_bytes(response_bytes.len());
     Ok(())
+}
+
+async fn serve_submission_stream(
+    send: &mut wtransport::SendStream,
+    receive: &mut wtransport::RecvStream,
+    service: &Arc<NativeService>,
+    document: Bytes,
+    config: &TransportConfig,
+    metrics: &Metrics,
+) -> Result<(), WebTransportError> {
+    loop {
+        let request_bytes = match read_stream_frame(receive, &config.limits).await {
+            Ok(request_bytes) => request_bytes,
+            Err(_) => return Ok(()),
+        };
+        metrics.add_wire_bytes(request_bytes.len());
+        let decoded = decode(&request_bytes, config.limits);
+        let (request_id, response, terminal) = match decoded {
+            Ok(Frame {
+                request_id,
+                message: Message::Request(Request::Submit(submission)),
+            }) if submission.document == document => {
+                let response = service.handle(Request::Submit(submission)).await;
+                let terminal = matches!(response, Response::Error(_));
+                (request_id, response, terminal)
+            }
+            Ok(Frame { request_id, .. }) => {
+                (request_id, Response::Error(ErrorCode::InvalidRequest), true)
+            }
+            Err(error) => (
+                request_id_from_header(&request_bytes).unwrap_or(0),
+                Response::Error(protocol_error_code(error)),
+                true,
+            ),
+        };
+        let response = encode(
+            &Frame {
+                request_id,
+                message: Message::Response(response),
+            },
+            config.limits,
+        )?;
+        write_stream_frame(send, &response, config.operation_timeout).await?;
+        metrics.add_wire_bytes(response.len());
+        if terminal {
+            return Ok(());
+        }
+    }
 }
 
 async fn serve_projected_subscription(
@@ -748,19 +824,35 @@ async fn read_frame(
 ) -> Result<Bytes, WebTransportError> {
     timeout(operation_timeout, async {
         let bytes = read_stream_frame(receive, limits).await?;
-        let mut trailing = [0_u8; 1];
-        if receive
-            .read(&mut trailing)
-            .await
-            .map_err(transport_error)?
-            .is_some()
-        {
-            return Err(WebTransportError::Protocol(ProtocolError::TrailingBytes));
-        }
+        expect_stream_end_unbounded(receive).await?;
         Ok(bytes)
     })
     .await
     .map_err(|_| WebTransportError::Timeout)?
+}
+
+async fn expect_stream_end(
+    receive: &mut wtransport::RecvStream,
+    operation_timeout: Duration,
+) -> Result<(), WebTransportError> {
+    timeout(operation_timeout, expect_stream_end_unbounded(receive))
+        .await
+        .map_err(|_| WebTransportError::Timeout)?
+}
+
+async fn expect_stream_end_unbounded(
+    receive: &mut wtransport::RecvStream,
+) -> Result<(), WebTransportError> {
+    let mut trailing = [0_u8; 1];
+    if receive
+        .read(&mut trailing)
+        .await
+        .map_err(transport_error)?
+        .is_some()
+    {
+        return Err(WebTransportError::Protocol(ProtocolError::TrailingBytes));
+    }
+    Ok(())
 }
 
 async fn read_stream_frame(
@@ -868,6 +960,113 @@ mod tests {
         })
         .await
         .unwrap();
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn submission_stream_pipelines_ordered_requests() {
+        tokio::task::LocalSet::new()
+            .run_until(async {
+                let directory = TempDirectory::new();
+                let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
+                let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
+                let server = WebTransportServer::bind(
+                    "127.0.0.1:0".parse().unwrap(),
+                    identity,
+                    Arc::new(NativeService::new(ServiceConfig::new(&directory.0))),
+                    TransportConfig::default(),
+                )
+                .unwrap();
+                let address = server.local_addr().unwrap();
+                let shutdown = server.shutdown_handle();
+                let server_task = tokio::task::spawn_local(server.serve_until_shutdown());
+                let client = WebTransportClient::connect(
+                    format!("https://{address}/fluid"),
+                    certificate_hash,
+                    TransportConfig::default(),
+                )
+                .await
+                .unwrap();
+                assert!(matches!(
+                    client
+                        .request(Request::Create {
+                            document: bytes(b"document"),
+                        })
+                        .await
+                        .unwrap(),
+                    Response::Acknowledged(Acknowledgement::Created)
+                ));
+                assert!(matches!(
+                    client
+                        .request(Request::OpenSession {
+                            document: bytes(b"document"),
+                            writer: bytes(b"writer"),
+                            session: bytes(b"session"),
+                            reference: Reference::Initial,
+                        })
+                        .await
+                        .unwrap(),
+                    Response::Acknowledged(Acknowledgement::SessionOpened)
+                ));
+
+                let (mut send, mut receive) =
+                    client.connection.open_bi().await.unwrap().await.unwrap();
+                let limits = Limits::default();
+                let open = encode(
+                    &Frame {
+                        request_id: 100,
+                        message: Message::Request(Request::OpenSubmissionStream {
+                            document: bytes(b"document"),
+                        }),
+                    },
+                    limits,
+                )
+                .unwrap();
+                write_stream_frame(&mut send, &open, Duration::from_secs(2))
+                    .await
+                    .unwrap();
+                for sequence in 1..=3 {
+                    let request = encode(
+                        &Frame {
+                            request_id: 100 + sequence,
+                            message: Message::Request(submission(sequence, Reference::Initial)),
+                        },
+                        limits,
+                    )
+                    .unwrap();
+                    write_stream_frame(&mut send, &request, Duration::from_secs(2))
+                        .await
+                        .unwrap();
+                }
+                for sequence in 1..=3 {
+                    let response = decode(
+                        &timeout(
+                            Duration::from_secs(2),
+                            read_stream_frame(&mut receive, &limits),
+                        )
+                        .await
+                        .unwrap()
+                        .unwrap(),
+                        limits,
+                    )
+                    .unwrap();
+                    assert_eq!(response.request_id, 100 + sequence);
+                    assert!(matches!(
+                        response.message,
+                        Message::Response(Response::Submitted {
+                            disposition: SubmissionDisposition::Accepted,
+                            sequence_number,
+                            ..
+                        }) if sequence_number == sequence
+                    ));
+                }
+
+                shutdown.shutdown(ShutdownMode::Immediate).unwrap();
+                assert_eq!(
+                    server_task.await.unwrap().unwrap().disposition,
+                    ShutdownDisposition::Cancelled
+                );
+            })
+            .await;
     }
 
     #[allow(clippy::too_many_lines)]

@@ -48,6 +48,13 @@ impl ClientMetrics {
         self.peak_subscription_queue_depth
             .set(self.peak_subscription_queue_depth.get().max(queue_depth));
     }
+
+    pub(crate) fn record_response(&self, bytes: usize) {
+        self.wire_bytes
+            .set(self.wire_bytes.get().saturating_add(bytes as u64));
+        self.peak_response_bytes
+            .set(self.peak_response_bytes.get().max(bytes));
+    }
 }
 
 impl ProtocolCore {
@@ -92,6 +99,15 @@ impl ProtocolCore {
         self.encode_request(Request::SubscribeProjected {
             document: document.into(),
             after: after.map(Into::into),
+        })
+    }
+
+    pub(crate) fn open_submission_stream_request(
+        &mut self,
+        document: Vec<u8>,
+    ) -> Result<Vec<u8>, JsValue> {
+        self.encode_request(Request::OpenSubmissionStream {
+            document: document.into(),
         })
     }
 
@@ -179,6 +195,38 @@ impl ProtocolCore {
             Ok(frame.request_id)
         } else {
             Err(js_error("outgoing FSP4 frame is not a request"))
+        }
+    }
+
+    pub(crate) fn submission_request_id(&self, outgoing: &[u8]) -> Result<u64, JsValue> {
+        let frame = decode(outgoing, self.limits).map_err(protocol_error)?;
+        if matches!(frame.message, Message::Request(Request::Submit(_))) {
+            Ok(frame.request_id)
+        } else {
+            Err(js_error("submission stream frame is not a submit request"))
+        }
+    }
+
+    pub(crate) fn submission_response(
+        &self,
+        incoming: &[u8],
+        request_id: u64,
+    ) -> Result<(), JsValue> {
+        let frame = decode(incoming, self.limits).map_err(protocol_error)?;
+        if frame.request_id != request_id {
+            return Err(js_error(
+                "submission stream response request id did not match",
+            ));
+        }
+        if matches!(
+            frame.message,
+            Message::Response(Response::Submitted { .. } | Response::Error(_))
+        ) {
+            Ok(())
+        } else {
+            Err(js_error(
+                "submission stream returned an unexpected response",
+            ))
         }
     }
 
@@ -330,15 +378,7 @@ impl ProtocolCore {
             return Err(js_error("request was cancelled"));
         }
         self.active_operation = None;
-        self.metrics.wire_bytes.set(
-            self.metrics
-                .wire_bytes
-                .get()
-                .saturating_add(incoming.len() as u64),
-        );
-        self.metrics
-            .peak_response_bytes
-            .set(self.metrics.peak_response_bytes.get().max(incoming.len()));
+        self.metrics.record_response(incoming.len());
         let response = decode(incoming, self.limits).map_err(protocol_error)?;
         if response.request_id != request_id {
             return Err(js_error("FSP4 response request id did not match"));

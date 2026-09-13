@@ -43,18 +43,45 @@ export class ProtocolClient {
 		payload: Uint8Array,
 		referencePosition?: Uint8Array,
 	): Promise<Uint8Array> {
-		return submittedPosition(
-			await this.send(
-				requestKinds.submit,
-				field(document),
-				field(writer),
-				field(session),
-				field(submission),
-				u64(localSequenceNumber),
-				reference(referencePosition),
-				field(payload),
+		return this.submissionPosition(
+			await this.wasm.request(
+				this.submissionRequest(
+					document,
+					writer,
+					session,
+					submission,
+					localSequenceNumber,
+					payload,
+					referencePosition,
+				),
 			),
 		);
+	}
+
+	public submissionRequest(
+		document: Uint8Array,
+		writer: Uint8Array,
+		session: Uint8Array,
+		submission: Uint8Array,
+		localSequenceNumber: number,
+		payload: Uint8Array,
+		referencePosition?: Uint8Array,
+	): Uint8Array {
+		return frame(
+			this.nextRequestId++,
+			requestKinds.submit,
+			field(document),
+			field(writer),
+			field(session),
+			field(submission),
+			u64(localSequenceNumber),
+			reference(referencePosition),
+			field(payload),
+		);
+	}
+
+	public submissionPosition(response: Uint8Array): Uint8Array {
+		return submittedPosition(response);
 	}
 
 	public async publishSnapshot(

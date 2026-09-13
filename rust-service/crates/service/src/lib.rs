@@ -539,6 +539,7 @@ fn request_document(request: &Request) -> Option<&Bytes> {
         | Request::Read { document, .. }
         | Request::ReadProjected { document, .. }
         | Request::SubscribeProjected { document, .. }
+        | Request::OpenSubmissionStream { document }
         | Request::ResolveSubmission { document, .. }
         | Request::LatestSnapshot { document }
         | Request::PublishSnapshot { document, .. } => Some(document),
@@ -666,6 +667,7 @@ impl Document {
             }
             Request::Create { .. }
             | Request::SubscribeProjected { .. }
+            | Request::OpenSubmissionStream { .. }
             | Request::UploadBlob { .. }
             | Request::FetchBlob { .. }
             | Request::PublishSummary { .. }
