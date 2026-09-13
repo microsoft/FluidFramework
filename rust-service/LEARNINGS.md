@@ -40,6 +40,7 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 - **Confirmed:** Compare storage results only with guarantee differences visible; the minimal and durable logs used equivalent record workloads but intentionally different acknowledgment semantics. [Evidence](iterations/0001/phase-3-report.md#comparative-results)
 - **Confirmed:** Deterministic injected failures provide reproducible recovery evidence but must not be presented as process-termination or power-loss evidence. [Evidence](iterations/0002/phase-2/durable-snapshots.md#remaining-work-and-risks)
 - **Confirmed:** Graceful server shutdown requires ownership and continued polling of every accepted connection future; a control acknowledgement produced inside the server future cannot complete while its caller awaits without polling that future. [Evidence](iterations/0007/phase-2/native-graceful-shutdown.md#notable-events)
+- **Confirmed:** Logical-operation capacity needs an independently countable application-state invariant and final observer convergence; batching can make application edit count differ from protocol message count. [Evidence](iterations/0009/phase-3-report.md#evidence-summary)
 
 ## Agentic Development
 
