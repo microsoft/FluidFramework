@@ -42,14 +42,20 @@ Because agentic development is itself part of the research, each iteration pre-r
 
 ## Project Status
 
-Phase 1 implementation is complete and approved. The workspace contains core traits, an in-memory reference, a reusable conformance baseline, a raw client helper, a recovering counter example, and compiling boundaries for iteration `0001`. The immediate milestones are:
+Phase 1 and iterations `0001` through `0006` are complete. Iteration `0006` added bounded concurrent native WebTransport sessions and proved real SharedTree convergence, explicit disconnected-edit recovery, and cold replay over independent browser sessions. Its [Phase 3 report](iterations/0006/phase-3-report.md) records the accepted evidence and remaining limits.
 
-1. Create the validated foundation commit and initialize iteration `0001` from it.
-2. In iteration `0001`, implement a maximally simple file store and focused durable-log, compression-wrapper, and `fluid-sequencer` feasibility spikes.
-4. During each Phase 3 review, select whether to keep, replace, narrow, or expand the active workstreams from the broader research backlog.
-5. Collect structured reports from every parallel workstream.
-6. Review findings and proposed architectural changes interactively before applying them.
-7. Repeat implementation and review until tests, documentation, and comparative evidence support convergence.
+Iteration `0007` is planned but has not been initialized. Its two dependency-independent workstreams may run concurrently:
+
+- [fluid-read-reconnect-lifecycle](iterations/0006/next-phase-2-instructions/fluid-read-reconnect-lifecycle.md) removes the force-write browser exception and tests Fluid's default read-to-write reconnect lifecycle.
+- [native-graceful-shutdown](iterations/0006/next-phase-2-instructions/native-graceful-shutdown.md) adds and validates an explicit bounded shutdown/drain contract for the native WebTransport server.
+
+To kick off iteration `0007`, use the `rust-service-coordination` skill and ask GitHub Copilot to start iteration `0007` from the completed iteration `0006` Phase 3 commit. The equivalent record initializer is:
+
+```bash
+node .github/skills/rust-service-coordination/scripts/iteration-records.mjs init 0007 fluid-read-reconnect-lifecycle native-graceful-shutdown
+```
+
+The kickoff workflow must then set the generated manifest's `sourceCommit`, complete the charter and workstream instructions from the approved plans above, set its status to `active`, validate the start records, commit them, and create the integration and isolated workstream branches as described by the coordination skill. Do not run the initializer from a dirty worktree or without first confirming the iteration `0006` completion checks.
 
 Each iteration uses a dedicated integration branch and one isolated branch/worktree per Phase 2 workstream. Workstream agents commit only their assigned scope and report; a coordinator integrates accepted commits and records Phase 3 decisions under a sequentially numbered `iterations/NNNN/` directory. The next iteration always starts from the approved Phase 3 commit.
 
