@@ -34,10 +34,20 @@ const sourceCommit = spawnSync("git", ["rev-parse", "HEAD"], {
 	encoding: "utf8",
 }).stdout.trim();
 const sourceDirty =
-	spawnSync("git", ["status", "--porcelain"], {
-		cwd: packageRoot,
-		encoding: "utf8",
-	}).stdout.trim().length > 0;
+	spawnSync(
+		"git",
+		[
+			"status",
+			"--porcelain",
+			"--",
+			":(top)**",
+			":(exclude,top)rust-service/benchmarks/shared-tree/**",
+		],
+		{
+			cwd: packageRoot,
+			encoding: "utf8",
+		},
+	).stdout.trim().length > 0;
 const samples = [];
 for (let repetition = 0; repetition < repetitions; repetition++) {
 	const execution = spawnSync(
