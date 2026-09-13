@@ -41,6 +41,7 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 - **Confirmed:** Deterministic injected failures provide reproducible recovery evidence but must not be presented as process-termination or power-loss evidence. [Evidence](iterations/0002/phase-2/durable-snapshots.md#remaining-work-and-risks)
 - **Confirmed:** Graceful server shutdown requires ownership and continued polling of every accepted connection future; a control acknowledgement produced inside the server future cannot complete while its caller awaits without polling that future. [Evidence](iterations/0007/phase-2/native-graceful-shutdown.md#notable-events)
 - **Confirmed:** Logical-operation capacity needs an independently countable application-state invariant and final observer convergence; batching can make application edit count differ from protocol message count. [Evidence](iterations/0009/phase-3-report.md#evidence-summary)
+- **Confirmed:** A fixed-size last-writer-wins workload can isolate sequence-growth cost, but final scalar convergence and coalesced change notifications prove only final state; report requested application edits rather than independently preserved logical operations. [Evidence](iterations/0010/phase-3-report.md#evidence-summary)
 
 ## Agentic Development
 
@@ -53,3 +54,4 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 - **Confirmed:** Probe a runtime prerequisite such as independent transport-session concurrency before dispatching a consumer whose primary evidence requires it. [Evidence](iterations/0005/retrospective.md#costly-issues-and-dead-ends)
 - **Confirmed:** Generated artifacts and cached build metadata are not evidence of readiness; execute or inspect the exact downstream artifact, using checkout-specific build targets in multi-worktree repositories. [Evidence](iterations/0005/retrospective.md#costly-issues-and-dead-ends)
 - **Confirmed:** Recover an interrupted workstream from observed worktree identity, running processes, retained logs, dirty paths, and report markers before rerunning or editing; this preserves useful partial evidence without reconstructing unsupported state. [Evidence](iterations/0007/retrospective.md#costly-issues-and-dead-ends)
+- **Confirmed:** Retained machine-readable evidence requires direct expected-file, nonzero-size, parse, provenance, and domain-invariant checks; a delegated success summary can coexist with empty artifacts. [Evidence](iterations/0010/retrospective.md#costly-issues-and-dead-ends)

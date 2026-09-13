@@ -1,6 +1,6 @@
 # Iteration 0010 Charter
 
-Status: active
+Status: complete
 Source commit: `d5238a5a93098f8fe8cd14f7828e311450aa4aa2`
 Coordinator: GitHub Copilot
 
