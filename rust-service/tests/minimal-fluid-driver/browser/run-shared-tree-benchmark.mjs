@@ -24,6 +24,10 @@ if (
 const repetitions = positiveInteger(repetitionsText, "repetitions");
 const operations = positiveInteger(operationsText, "operations");
 const warmup = nonnegativeInteger(warmupText, "warmup");
+const operationsPerTurn =
+	process.env.BENCHMARK_OPERATIONS_PER_TURN === undefined
+		? undefined
+		: positiveInteger(process.env.BENCHMARK_OPERATIONS_PER_TURN, "operationsPerTurn");
 if (backend === "rust" && (!transport || !/^[0-9a-f]{64}$/iu.test(hash ?? ""))) {
 	throw new Error("the Rust backend requires a transport URL and certificate SHA-256 hash");
 }
@@ -64,6 +68,9 @@ for (let repetition = 0; repetition < repetitions; repetition++) {
 			new URLSearchParams({
 				operations: String(operations),
 				warmup: String(warmup),
+				...(operationsPerTurn === undefined
+					? {}
+					: { operationsPerTurn: String(operationsPerTurn) }),
 				...(backend === "rust-local" ? { local: "true", storage: "memory" } : {}),
 				...(backend === "rust"
 					? { storage: process.env.FLUID_SERVICE_STORAGE_MODE ?? "durable-file" }
@@ -95,7 +102,13 @@ const output = {
 	backend: samples[0].backend,
 	sourceCommit,
 	sourceDirty,
-	configuration: { repetitions, operations, warmup, clients: samples[0].clientCount },
+	configuration: {
+		repetitions,
+		operations,
+		warmup,
+		operationsPerTurn: operationsPerTurn ?? null,
+		clients: samples[0].clientCount,
+	},
 	environment: {
 		capturedAt: new Date().toISOString(),
 		platform: platform(),

@@ -41,6 +41,13 @@ pub struct FilePosition {
     ordinal: u64,
 }
 
+impl FilePosition {
+    #[must_use]
+    pub const fn ordinal(&self) -> u64 {
+        self.ordinal
+    }
+}
+
 /// Errors returned by the minimal file implementation.
 #[derive(Debug, Error)]
 pub enum FileError {
@@ -144,6 +151,20 @@ impl FileStream {
             return Err(FileError::InvalidPosition);
         }
         Ok(())
+    }
+
+    /// Resolves a one-based event ordinal in this stream generation.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`FileError::InvalidPosition`] when the ordinal is not committed.
+    pub fn position_at(&self, ordinal: u64) -> Result<FilePosition, FileError> {
+        let position = FilePosition {
+            generation: self.generation,
+            ordinal,
+        };
+        self.validate_position(&position, self.state()?.records.len())?;
+        Ok(position)
     }
 }
 

@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { extname, join, normalize } from "node:path";
 import { createServer as createNetServer } from "node:net";
@@ -23,6 +23,12 @@ if (
 	throw new Error(
 		"usage: node run-headless.mjs <site-root> <transport-url> <certificate-sha256-hex> [result-property] [page] [query]",
 	);
+}
+const benchmarkTimeoutMilliseconds = Number(
+	process.env.BENCHMARK_BROWSER_TIMEOUT_MS ?? 30_000,
+);
+if (!Number.isSafeInteger(benchmarkTimeoutMilliseconds) || benchmarkTimeoutMilliseconds <= 0) {
+	throw new Error("BENCHMARK_BROWSER_TIMEOUT_MS must be a positive integer");
 }
 
 function freePort() {
@@ -122,6 +128,7 @@ const pageParameters = new URLSearchParams(query);
 pageParameters.set("transport", transportUrl);
 pageParameters.set("hash", certificateHash);
 const pageUrl = `http://localhost:${httpPort}/${page}?${pageParameters}`;
+const cpuProfilePath = process.env.BENCHMARK_CPU_PROFILE_PATH;
 const chromium = spawn(
 	"chromium",
 	[
@@ -131,7 +138,7 @@ const chromium = spawn(
 		"--disable-dev-shm-usage",
 		`--user-data-dir=${profile}`,
 		`--remote-debugging-port=${debugPort}`,
-		pageUrl,
+		cpuProfilePath === undefined ? pageUrl : "about:blank",
 	],
 	{ stdio: ["ignore", "ignore", "pipe"] },
 );
@@ -144,6 +151,7 @@ chromium.once("exit", () => {
 	exited.value = true;
 });
 let client;
+let cpuProfileStarted = false;
 try {
 	const targets = await waitForJson(`http://127.0.0.1:${debugPort}/json/list`, exited);
 	const page = targets.find((target) => target.type === "page");
@@ -152,8 +160,16 @@ try {
 	await client.ready();
 	await client.send("Runtime.enable");
 	await client.send("Log.enable");
+	if (cpuProfilePath !== undefined) {
+		await client.send("Page.enable");
+		await client.send("Profiler.enable");
+		await client.send("Profiler.setSamplingInterval", { interval: 100 });
+		await client.send("Profiler.start");
+		cpuProfileStarted = true;
+		await client.send("Page.navigate", { url: pageUrl });
+	}
 	const evaluation = await client.send("Runtime.evaluate", {
-		expression: `(async () => { const property = ${JSON.stringify(resultProperty)}; const timeout = error => ({ status: "failed", stage: window.__sharedTreeStage, error, telemetry: window.__sharedTreeTelemetry?.slice(-20) }); const deadline = Date.now() + 30000; while (!window[property] && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 25)); if (!window[property]) return timeout("timed out waiting for " + property); return Promise.race([window[property], new Promise(resolve => setTimeout(() => resolve(timeout("timed out awaiting " + property)), 30000))]); })()`,
+		expression: `(async () => { const property = ${JSON.stringify(resultProperty)}; const timeout = error => ({ status: "failed", stage: window.__sharedTreeStage, error, telemetry: window.__sharedTreeTelemetry?.slice(-20) }); const deadline = Date.now() + ${benchmarkTimeoutMilliseconds}; while (!window[property] && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 25)); if (!window[property]) return timeout("timed out waiting for " + property); return Promise.race([window[property], new Promise(resolve => setTimeout(() => resolve(timeout("timed out awaiting " + property)), ${benchmarkTimeoutMilliseconds}))]); })()`,
 		awaitPromise: true,
 		returnByValue: true,
 	});
@@ -172,6 +188,10 @@ try {
 	console.error(error.stack ?? error, errors);
 	process.exitCode = 1;
 } finally {
+	if (cpuProfileStarted) {
+		const { profile: cpuProfile } = await client.send("Profiler.stop");
+		await writeFile(cpuProfilePath, JSON.stringify(cpuProfile));
+	}
 	client?.close();
 	if (!exited.value) {
 		chromium.kill("SIGTERM");

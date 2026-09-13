@@ -33,15 +33,14 @@ use snapshotted_stream_core::{
     AppendReceipt, AppendStream, ClassifiedError, ErrorKind, PublishedSnapshot, ReadRecord,
     Snapshot, SnapshotId, SnapshotPosition, SnapshotStore,
 };
-use snapshotted_stream_durable_log_spike::{DurableLog, DurableLogError, DurablePosition};
-use snapshotted_stream_file_simple::{FileError, FilePosition, FileStream};
-use snapshotted_stream_memory::{MemoryError, MemoryPosition, MemoryStream};
+use snapshotted_stream_durable_log_spike::{DurableLog, DurableLogError};
+use snapshotted_stream_file_simple::{FileError, FileStream};
+use snapshotted_stream_memory::{MemoryError, MemoryStream};
 use tokio::sync::{Mutex, broadcast, watch};
 
 const SCOPE_FILE: &str = "service.scope";
 const SCOPE_BYTES: usize = 16;
-const ORDINAL_BYTES: usize = 8;
-const TOKEN_BYTES: usize = SCOPE_BYTES + ORDINAL_BYTES;
+const TOKEN_BYTES: usize = 8;
 const MAX_READ_RECORDS: usize = 1024;
 const MAX_READ_PAYLOAD_BYTES: usize = 768 * 1024;
 const MAX_PROJECTED_CANONICAL_RECORDS: usize = 1024;
@@ -607,7 +606,7 @@ impl Document {
     async fn open_with_scope(
         path: PathBuf,
         authority_path: PathBuf,
-        scope: [u8; SCOPE_BYTES],
+        _scope: [u8; SCOPE_BYTES],
         storage_mode: StorageMode,
     ) -> Result<Self, ErrorCode> {
         if storage_mode == StorageMode::DurableFile
@@ -617,7 +616,7 @@ impl Document {
         }
         let log =
             ServiceLog::open(storage_mode, path).map_err(|error| map_storage_error(&error))?;
-        let storage = ServiceStorage::new(log, scope).await?;
+        let storage = ServiceStorage { log };
         let fenced = if storage_mode == StorageMode::DurableFile {
             FencedStream::with_deployment_authority(storage.clone(), authority_path)
                 .map_err(|_| ErrorCode::Unavailable)?
@@ -648,7 +647,7 @@ impl Document {
             } => self.open_session(writer, session, reference).await,
             Request::Submit(submission) => self.submit(submission).await,
             Request::Read { after, .. } => self.read(after).await,
-            Request::ReadProjected { after, .. } => self.read_projected(after).await,
+            Request::ReadProjected { after, .. } => self.read_projected(after),
             Request::ResolveSubmission {
                 writer,
                 session,
@@ -745,14 +744,14 @@ impl Document {
             }
             payload_bytes = next_payload_bytes;
             records.push(CommittedRecord {
-                position: self.storage.token_for(&record.position)?,
+                position: record.position.encode(),
                 payload: record.payload,
             });
         }
         Ok(Response::Read { records })
     }
 
-    async fn read_projected(&self, after: Option<Bytes>) -> Result<Response, ErrorCode> {
+    fn read_projected(&self, after: Option<Bytes>) -> Result<Response, ErrorCode> {
         let after = after
             .map(PositionToken::new)
             .transpose()
@@ -764,7 +763,6 @@ impl Document {
                 MAX_PROJECTED_CANONICAL_RECORDS,
                 MAX_PROJECTED_ENCODED_BYTES,
             )
-            .await
             .map_err(map_sequencer_error)?;
         Ok(Response::ProjectedRead {
             operations: page
@@ -815,11 +813,7 @@ impl Document {
             .latest()
             .await
             .map_err(|error| map_storage_error(&error))?;
-        Ok(Response::Snapshot(
-            latest
-                .map(|snapshot| self.protocol_snapshot(snapshot))
-                .transpose()?,
-        ))
+        Ok(Response::Snapshot(latest.map(Self::protocol_snapshot)))
     }
 
     async fn publish_snapshot(
@@ -849,26 +843,25 @@ impl Document {
         Ok(Response::Acknowledged(Acknowledgement::SnapshotPublished))
     }
 
-    fn protocol_snapshot(
-        &self,
-        snapshot: PublishedSnapshot<ServicePosition>,
-    ) -> Result<ProtocolSnapshot, ErrorCode> {
-        Ok(ProtocolSnapshot {
+    fn protocol_snapshot(snapshot: PublishedSnapshot<EventPosition>) -> ProtocolSnapshot {
+        ProtocolSnapshot {
             id: snapshot.id.as_bytes().clone(),
             includes_through: match snapshot.snapshot.includes_through {
                 SnapshotPosition::Initial => Reference::Initial,
-                SnapshotPosition::At(position) => Reference::At(self.storage.token_for(&position)?),
+                SnapshotPosition::At(position) => Reference::At(position.encode()),
             },
             payload: snapshot.snapshot.payload,
-        })
+        }
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-enum ServicePosition {
-    Memory(MemoryPosition),
-    Buffered(FilePosition),
-    Durable(DurablePosition),
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct EventPosition(u64);
+
+impl EventPosition {
+    fn encode(self) -> Bytes {
+        Bytes::copy_from_slice(&self.0.to_be_bytes())
+    }
 }
 
 #[derive(Debug)]
@@ -933,11 +926,38 @@ impl ServiceLog {
                 .map_err(ServiceLogError::Durable),
         }
     }
+
+    async fn position_at(
+        &self,
+        position: EventPosition,
+    ) -> Result<BackendPosition, ServiceLogError> {
+        match self {
+            Self::Memory(log) => log
+                .position_at(position.0)
+                .await
+                .map(BackendPosition::Memory)
+                .map_err(ServiceLogError::Memory),
+            Self::Buffered(log) => log
+                .position_at(position.0)
+                .map(BackendPosition::Buffered)
+                .map_err(ServiceLogError::Buffered),
+            Self::Durable(log) => log
+                .position_at(position.0)
+                .map(BackendPosition::Durable)
+                .map_err(ServiceLogError::Durable),
+        }
+    }
+}
+
+enum BackendPosition {
+    Memory(snapshotted_stream_memory::MemoryPosition),
+    Buffered(snapshotted_stream_file_simple::FilePosition),
+    Durable(snapshotted_stream_durable_log_spike::DurablePosition),
 }
 
 #[async_trait]
 impl AppendStream for ServiceLog {
-    type Position = ServicePosition;
+    type Position = EventPosition;
     type Error = ServiceLogError;
 
     fn capabilities(&self) -> snapshotted_stream_core::Capabilities {
@@ -954,7 +974,7 @@ impl AppendStream for ServiceLog {
                 .append(value)
                 .await
                 .map(|receipt| AppendReceipt {
-                    position: ServicePosition::Memory(receipt.position),
+                    position: EventPosition(receipt.position.ordinal()),
                     durability: receipt.durability,
                 })
                 .map_err(ServiceLogError::Memory),
@@ -962,7 +982,7 @@ impl AppendStream for ServiceLog {
                 .append(value)
                 .await
                 .map(|receipt| AppendReceipt {
-                    position: ServicePosition::Buffered(receipt.position),
+                    position: EventPosition(receipt.position.ordinal()),
                     durability: receipt.durability,
                 })
                 .map_err(ServiceLogError::Buffered),
@@ -970,7 +990,7 @@ impl AppendStream for ServiceLog {
                 .append(value)
                 .await
                 .map(|receipt| AppendReceipt {
-                    position: ServicePosition::Durable(receipt.position),
+                    position: EventPosition(receipt.position.ordinal()),
                     durability: receipt.durability,
                 })
                 .map_err(ServiceLogError::Durable),
@@ -982,47 +1002,51 @@ impl AppendStream for ServiceLog {
         after: Option<&Self::Position>,
     ) -> Result<snapshotted_stream_core::StreamReader<Self::Position, Self::Error>, Self::Error>
     {
-        match (self, after) {
-            (Self::Memory(log), None | Some(ServicePosition::Memory(_))) => {
-                let after = after.map(|position| match position {
-                    ServicePosition::Memory(position) => position,
+        let after = match after {
+            Some(position) => Some(self.position_at(*position).await?),
+            None => None,
+        };
+        match (self, after.as_ref()) {
+            (Self::Memory(log), None | Some(BackendPosition::Memory(_))) => {
+                let after = after.as_ref().map(|position| match position {
+                    BackendPosition::Memory(position) => position,
                     _ => unreachable!(),
                 });
                 let reader = log.read(after).await.map_err(ServiceLogError::Memory)?;
                 Ok(Box::pin(reader.map(|record| {
                     record
                         .map(|record| ReadRecord {
-                            position: ServicePosition::Memory(record.position),
+                            position: EventPosition(record.position.ordinal()),
                             payload: record.payload,
                         })
                         .map_err(ServiceLogError::Memory)
                 })))
             }
-            (Self::Buffered(log), None | Some(ServicePosition::Buffered(_))) => {
-                let after = after.map(|position| match position {
-                    ServicePosition::Buffered(position) => position,
+            (Self::Buffered(log), None | Some(BackendPosition::Buffered(_))) => {
+                let after = after.as_ref().map(|position| match position {
+                    BackendPosition::Buffered(position) => position,
                     _ => unreachable!(),
                 });
                 let reader = log.read(after).await.map_err(ServiceLogError::Buffered)?;
                 Ok(Box::pin(reader.map(|record| {
                     record
                         .map(|record| ReadRecord {
-                            position: ServicePosition::Buffered(record.position),
+                            position: EventPosition(record.position.ordinal()),
                             payload: record.payload,
                         })
                         .map_err(ServiceLogError::Buffered)
                 })))
             }
-            (Self::Durable(log), None | Some(ServicePosition::Durable(_))) => {
-                let after = after.map(|position| match position {
-                    ServicePosition::Durable(position) => position,
+            (Self::Durable(log), None | Some(BackendPosition::Durable(_))) => {
+                let after = after.as_ref().map(|position| match position {
+                    BackendPosition::Durable(position) => position,
                     _ => unreachable!(),
                 });
                 let reader = log.read(after).await.map_err(ServiceLogError::Durable)?;
                 Ok(Box::pin(reader.map(|record| {
                     record
                         .map(|record| ReadRecord {
-                            position: ServicePosition::Durable(record.position),
+                            position: EventPosition(record.position.ordinal()),
                             payload: record.payload,
                         })
                         .map_err(ServiceLogError::Durable)
@@ -1037,17 +1061,17 @@ impl AppendStream for ServiceLog {
             Self::Memory(log) => log
                 .head()
                 .await
-                .map(|position| position.map(ServicePosition::Memory))
+                .map(|position| position.map(|position| EventPosition(position.ordinal())))
                 .map_err(ServiceLogError::Memory),
             Self::Buffered(log) => log
                 .head()
                 .await
-                .map(|position| position.map(ServicePosition::Buffered))
+                .map(|position| position.map(|position| EventPosition(position.ordinal())))
                 .map_err(ServiceLogError::Buffered),
             Self::Durable(log) => log
                 .head()
                 .await
-                .map(|position| position.map(ServicePosition::Durable))
+                .map(|position| position.map(|position| EventPosition(position.ordinal())))
                 .map_err(ServiceLogError::Durable),
         }
     }
@@ -1055,7 +1079,7 @@ impl AppendStream for ServiceLog {
 
 #[async_trait]
 impl SnapshotStore for ServiceLog {
-    type Position = ServicePosition;
+    type Position = EventPosition;
     type Error = ServiceLogError;
 
     async fn latest(&self) -> Result<Option<PublishedSnapshot<Self::Position>>, Self::Error> {
@@ -1069,7 +1093,7 @@ impl SnapshotStore for ServiceLog {
                         snapshot: Snapshot {
                             includes_through: map_snapshot_position(
                                 snapshot.snapshot.includes_through,
-                                ServicePosition::Memory,
+                                |position| EventPosition(position.ordinal()),
                             ),
                             payload: snapshot.snapshot.payload,
                         },
@@ -1085,7 +1109,7 @@ impl SnapshotStore for ServiceLog {
                         snapshot: Snapshot {
                             includes_through: map_snapshot_position(
                                 snapshot.snapshot.includes_through,
-                                ServicePosition::Buffered,
+                                |position| EventPosition(position.ordinal()),
                             ),
                             payload: snapshot.snapshot.payload,
                         },
@@ -1101,7 +1125,7 @@ impl SnapshotStore for ServiceLog {
                         snapshot: Snapshot {
                             includes_through: map_snapshot_position(
                                 snapshot.snapshot.includes_through,
-                                ServicePosition::Durable,
+                                |position| EventPosition(position.ordinal()),
                             ),
                             payload: snapshot.snapshot.payload,
                         },
@@ -1116,8 +1140,12 @@ impl SnapshotStore for ServiceLog {
         snapshot: Snapshot<Self::Position>,
         expected_parent: Option<&SnapshotId>,
     ) -> Result<SnapshotId, Self::Error> {
-        match (self, snapshot.includes_through) {
-            (Self::Memory(log), SnapshotPosition::Initial) => log
+        let includes_through = match snapshot.includes_through {
+            SnapshotPosition::Initial => None,
+            SnapshotPosition::At(position) => Some(self.position_at(position).await?),
+        };
+        match (self, includes_through) {
+            (Self::Memory(log), None) => log
                 .publish(
                     Snapshot {
                         includes_through: SnapshotPosition::Initial,
@@ -1127,7 +1155,7 @@ impl SnapshotStore for ServiceLog {
                 )
                 .await
                 .map_err(ServiceLogError::Memory),
-            (Self::Memory(log), SnapshotPosition::At(ServicePosition::Memory(position))) => log
+            (Self::Memory(log), Some(BackendPosition::Memory(position))) => log
                 .publish(
                     Snapshot {
                         includes_through: SnapshotPosition::At(position),
@@ -1137,7 +1165,7 @@ impl SnapshotStore for ServiceLog {
                 )
                 .await
                 .map_err(ServiceLogError::Memory),
-            (Self::Buffered(log), SnapshotPosition::Initial) => log
+            (Self::Buffered(log), None) => log
                 .publish(
                     Snapshot {
                         includes_through: SnapshotPosition::Initial,
@@ -1147,7 +1175,7 @@ impl SnapshotStore for ServiceLog {
                 )
                 .await
                 .map_err(ServiceLogError::Buffered),
-            (Self::Buffered(log), SnapshotPosition::At(ServicePosition::Buffered(position))) => log
+            (Self::Buffered(log), Some(BackendPosition::Buffered(position))) => log
                 .publish(
                     Snapshot {
                         includes_through: SnapshotPosition::At(position),
@@ -1157,7 +1185,7 @@ impl SnapshotStore for ServiceLog {
                 )
                 .await
                 .map_err(ServiceLogError::Buffered),
-            (Self::Durable(log), SnapshotPosition::Initial) => log
+            (Self::Durable(log), None) => log
                 .publish(
                     Snapshot {
                         includes_through: SnapshotPosition::Initial,
@@ -1167,7 +1195,7 @@ impl SnapshotStore for ServiceLog {
                 )
                 .await
                 .map_err(ServiceLogError::Durable),
-            (Self::Durable(log), SnapshotPosition::At(ServicePosition::Durable(position))) => log
+            (Self::Durable(log), Some(BackendPosition::Durable(position))) => log
                 .publish(
                     Snapshot {
                         includes_through: SnapshotPosition::At(position),
@@ -1184,8 +1212,8 @@ impl SnapshotStore for ServiceLog {
 
 fn map_snapshot_position<P>(
     position: SnapshotPosition<P>,
-    map: impl FnOnce(P) -> ServicePosition,
-) -> SnapshotPosition<ServicePosition> {
+    map: impl FnOnce(P) -> EventPosition,
+) -> SnapshotPosition<EventPosition> {
     match position {
         SnapshotPosition::Initial => SnapshotPosition::Initial,
         SnapshotPosition::At(position) => SnapshotPosition::At(map(position)),
@@ -1195,103 +1223,48 @@ fn map_snapshot_position<P>(
 #[derive(Clone)]
 struct ServiceStorage {
     log: ServiceLog,
-    scope: [u8; SCOPE_BYTES],
-    positions: Arc<RwLock<Vec<ServicePosition>>>,
 }
 
 impl ServiceStorage {
-    async fn new(log: ServiceLog, scope: [u8; SCOPE_BYTES]) -> Result<Self, ErrorCode> {
-        let storage = Self {
-            log,
-            scope,
-            positions: Arc::new(RwLock::new(Vec::new())),
-        };
-        storage
-            .refresh()
-            .await
-            .map_err(|error| map_storage_error(&error))?;
-        Ok(storage)
-    }
-
-    async fn refresh(&self) -> Result<Vec<ReadRecord<ServicePosition>>, ServiceLogError> {
+    async fn read_all(&self) -> Result<Vec<ReadRecord<EventPosition>>, ServiceLogError> {
         let mut reader = self.log.read(None).await?;
         let mut records = Vec::new();
         while let Some(record) = reader.next().await {
             records.push(record?);
         }
-        let positions = records
-            .iter()
-            .map(|record| record.position.clone())
-            .collect();
-        *self
-            .positions
-            .write()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = positions;
         Ok(records)
     }
 
-    fn token_for(&self, position: &ServicePosition) -> Result<Bytes, ErrorCode> {
-        let positions = self
-            .positions
-            .read()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let index = positions
-            .iter()
-            .position(|candidate| candidate == position)
-            .ok_or(ErrorCode::InvalidPosition)?;
-        let ordinal = u64::try_from(index + 1).map_err(|_| ErrorCode::InvalidPosition)?;
-        let mut token = Vec::with_capacity(TOKEN_BYTES);
-        token.extend_from_slice(&self.scope);
-        token.extend_from_slice(&ordinal.to_be_bytes());
-        Ok(Bytes::from(token))
-    }
-
-    async fn decode_position(&self, token: &[u8]) -> Result<ServicePosition, ErrorCode> {
-        if token.len() != TOKEN_BYTES || token[..SCOPE_BYTES] != self.scope {
+    async fn decode_position(&self, token: &[u8]) -> Result<EventPosition, ErrorCode> {
+        if token.len() != TOKEN_BYTES {
             return Err(ErrorCode::InvalidPosition);
         }
-        let ordinal = u64::from_be_bytes(
-            token[SCOPE_BYTES..]
-                .try_into()
-                .map_err(|_| ErrorCode::InvalidPosition)?,
-        );
-        if ordinal == 0 {
-            return Err(ErrorCode::InvalidPosition);
-        }
-        let records = self
-            .refresh()
+        let ordinal = u64::from_be_bytes(token.try_into().map_err(|_| ErrorCode::InvalidPosition)?);
+        let position = EventPosition(ordinal);
+        self.log
+            .position_at(position)
             .await
             .map_err(|error| map_storage_error(&error))?;
-        let index = usize::try_from(ordinal - 1).map_err(|_| ErrorCode::InvalidPosition)?;
-        records
-            .get(index)
-            .map(|record| record.position.clone())
-            .ok_or(ErrorCode::InvalidPosition)
+        Ok(position)
     }
 }
 
 impl SequencerStorage for ServiceStorage {
-    type Position = ServicePosition;
+    type Position = EventPosition;
     type Error = ServiceLogError;
 
     async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
-        let receipt = self.log.append(value).await?;
-        self.positions
-            .write()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .push(receipt.position.clone());
-        Ok(receipt)
+        self.log.append(value).await
     }
 
     fn read_all(
         &self,
     ) -> impl Future<Output = Result<Vec<ReadRecord<Self::Position>>, Self::Error>> + Send {
-        self.refresh()
+        self.read_all()
     }
 
     fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error> {
-        self.token_for(position)
-            .map_err(|_| ServiceLogError::WrongPositionMode)
+        Ok(position.encode())
     }
 }
 
@@ -1552,23 +1525,23 @@ mod tests {
         let service = NativeService::new(ServiceConfig::new(&directory.0));
         create_and_open(&service, b"one", b"session-one").await;
         create_and_open(&service, b"two", b"session-two").await;
-        assert!(matches!(
-            service.handle(submit(b"one", b"session-one", 1)).await,
-            Response::Submitted {
-                sequence_number: 1,
-                ..
-            }
-        ));
-        assert!(matches!(
-            service.handle(submit(b"two", b"session-two", 1)).await,
-            Response::Submitted {
-                sequence_number: 1,
-                ..
-            }
-        ));
+        let expected_position = Bytes::copy_from_slice(&2_u64.to_be_bytes());
+        for (document, session) in [
+            (b"one".as_slice(), b"session-one".as_slice()),
+            (b"two".as_slice(), b"session-two".as_slice()),
+        ] {
+            assert!(matches!(
+                service.handle(submit(document, session, 1)).await,
+                Response::Submitted {
+                    position,
+                    sequence_number: 1,
+                    ..
+                } if position == expected_position
+            ));
+        }
         for document in [b"one".as_slice(), b"two".as_slice()] {
             assert!(
-                matches!(service.handle(Request::Read { document: Bytes::copy_from_slice(document), after: None }).await, Response::Read { records } if records.len() == 2)
+                matches!(service.handle(Request::Read { document: Bytes::copy_from_slice(document), after: None }).await, Response::Read { records } if records.len() == 2 && records[0].position == Bytes::copy_from_slice(&1_u64.to_be_bytes()) && records[1].position == expected_position)
             );
         }
     }

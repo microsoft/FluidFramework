@@ -24,6 +24,13 @@ pub struct MemoryPosition {
     ordinal: u64,
 }
 
+impl MemoryPosition {
+    #[must_use]
+    pub const fn ordinal(&self) -> u64 {
+        self.ordinal
+    }
+}
+
 #[derive(Debug, Error)]
 pub enum MemoryError {
     #[error("position belongs to another stream generation")]
@@ -89,6 +96,20 @@ impl MemoryStream {
             return Err(MemoryError::InvalidPosition);
         }
         Ok(())
+    }
+
+    /// Resolves a one-based event ordinal in this stream generation.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MemoryError::InvalidPosition`] when the ordinal is not committed.
+    pub async fn position_at(&self, ordinal: u64) -> Result<MemoryPosition, MemoryError> {
+        let position = MemoryPosition {
+            generation: self.generation,
+            ordinal,
+        };
+        self.validate_position(&position, self.state.lock().await.records.len())?;
+        Ok(position)
     }
 }
 

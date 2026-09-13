@@ -13,6 +13,7 @@ export interface SharedTreeBenchmarkPair {
 export interface SharedTreeBenchmarkOptions {
 	readonly operationCount: number;
 	readonly warmupOperationCount: number;
+	readonly operationsPerTurn?: number;
 	readonly timeoutMilliseconds?: number;
 }
 
@@ -22,6 +23,7 @@ export interface SharedTreeBenchmarkResult extends Record<string, unknown> {
 	readonly clientCount: number;
 	readonly operationCount: number;
 	readonly warmupOperationCount: number;
+	readonly operationsPerTurn: number | null;
 	readonly startupMilliseconds: number;
 	readonly submissionMilliseconds: number;
 	readonly convergenceMilliseconds: number;
@@ -41,6 +43,10 @@ export async function runSharedTreeBenchmark(
 ): Promise<SharedTreeBenchmarkResult> {
 	assertPositiveInteger(options.operationCount, "operationCount");
 	assertNonnegativeInteger(options.warmupOperationCount, "warmupOperationCount");
+	const operationsPerTurn = options.operationsPerTurn ?? Number.POSITIVE_INFINITY;
+	if (operationsPerTurn !== Number.POSITIVE_INFINITY) {
+		assertPositiveInteger(operationsPerTurn, "operationsPerTurn");
+	}
 	const timeoutMilliseconds = options.timeoutMilliseconds ?? 120_000;
 	const startupStarted = performance.now();
 	const pair = await createPair();
@@ -54,18 +60,12 @@ export async function runSharedTreeBenchmark(
 		const baselineCounts = [...pair.appliedEditCounts()];
 		let value = Math.max(0, ...pair.lastValues().filter((item) => item !== undefined));
 		const initialValue = value;
-		for (let index = 0; index < options.warmupOperationCount; index++) {
-			value++;
-			pair.applyEdit(0, value);
-		}
+		value = await applyEdits(pair, options.warmupOperationCount, operationsPerTurn, value);
 		await waitForConvergence(pair, value, timeoutMilliseconds);
 
 		const operationsStarted = performance.now();
 		const submissionStarted = performance.now();
-		for (let index = 0; index < options.operationCount; index++) {
-			value++;
-			pair.applyEdit(0, value);
-		}
+		value = await applyEdits(pair, options.operationCount, operationsPerTurn, value);
 		const submissionMilliseconds = performance.now() - submissionStarted;
 		const convergenceStarted = performance.now();
 		const finalEditCount = options.warmupOperationCount + options.operationCount;
@@ -82,6 +82,8 @@ export async function runSharedTreeBenchmark(
 			clientCount: pair.clientCount,
 			operationCount: options.operationCount,
 			warmupOperationCount: options.warmupOperationCount,
+			operationsPerTurn:
+				operationsPerTurn === Number.POSITIVE_INFINITY ? null : operationsPerTurn,
 			startupMilliseconds,
 			submissionMilliseconds,
 			convergenceMilliseconds,
@@ -100,14 +102,33 @@ export async function runSharedTreeBenchmark(
 	}
 }
 
+async function applyEdits(
+	pair: SharedTreeBenchmarkPair,
+	operationCount: number,
+	operationsPerTurn: number,
+	value: number,
+): Promise<number> {
+	for (let index = 0; index < operationCount; index++) {
+		value++;
+		pair.applyEdit(0, value);
+		if ((index + 1) % operationsPerTurn === 0) {
+			await Promise.resolve();
+		}
+	}
+	return value;
+}
+
 async function waitForConvergence(
 	pair: SharedTreeBenchmarkPair,
 	value: number,
 	timeoutMilliseconds: number,
 ): Promise<void> {
 	const deadline = performance.now() + timeoutMilliseconds;
-	while (!pair.lastValues().every((current) => current === value)) {
+	for (;;) {
 		await pair.synchronize();
+		if (pair.lastValues().every((current) => current === value)) {
+			return;
+		}
 		if (performance.now() >= deadline) {
 			throw new Error(
 				`${pair.backend} did not converge at ${value}: observedChanges=${pair.appliedEditCounts().join(", ")} values=${pair.lastValues().join(", ")}`,

@@ -205,6 +205,13 @@ pub struct DurablePosition {
     ordinal: u64,
 }
 
+impl DurablePosition {
+    #[must_use]
+    pub const fn ordinal(&self) -> u64 {
+        self.ordinal
+    }
+}
+
 /// Errors exposed by the durable-log spike.
 #[derive(Debug, Error)]
 pub enum DurableLogError {
@@ -340,6 +347,20 @@ impl DurableLog {
             return Err(DurableLogError::InvalidPosition);
         }
         Ok(())
+    }
+
+    /// Resolves a one-based event ordinal in this log generation.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`DurableLogError::InvalidPosition`] when the ordinal is not committed.
+    pub fn position_at(&self, ordinal: u64) -> Result<DurablePosition, DurableLogError> {
+        let position = DurablePosition {
+            generation: self.generation,
+            ordinal,
+        };
+        self.validate_position(&position, self.state()?.records.len())?;
+        Ok(position)
     }
 }
 

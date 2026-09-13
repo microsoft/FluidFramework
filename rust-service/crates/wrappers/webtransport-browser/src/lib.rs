@@ -604,7 +604,7 @@ pub struct BrowserClient {
     url: String,
     certificate_hash: Vec<u8>,
     transport: WebTransport,
-    core: ProtocolCore,
+    core: Rc<RefCell<ProtocolCore>>,
     last_reconnect_milliseconds: f64,
 }
 
@@ -677,14 +677,14 @@ impl BrowserClient {
             url,
             certificate_hash,
             transport,
-            core,
+            core: Rc::new(RefCell::new(core)),
             last_reconnect_milliseconds: 0.0,
         })
     }
 
-    pub fn disconnect(&mut self) {
+    pub fn disconnect(&self) {
         self.transport.close();
-        self.core.disconnect();
+        self.core.borrow_mut().disconnect();
     }
 
     /// Replaces the current browser session with an explicit new connection.
@@ -696,7 +696,7 @@ impl BrowserClient {
         let started = Date::now();
         let transport = open_transport(&self.url, &self.certificate_hash).await?;
         self.transport = transport;
-        self.core.reconnect()?;
+        self.core.borrow_mut().reconnect()?;
         self.last_reconnect_milliseconds = Date::now() - started;
         Ok(())
     }
@@ -706,17 +706,18 @@ impl BrowserClient {
     /// # Errors
     ///
     /// Rejects malformed or oversized frames and propagates browser stream failures.
-    pub async fn request(&mut self, frame_bytes: Uint8Array) -> Result<Uint8Array, JsValue> {
+    pub async fn request(&self, frame_bytes: Uint8Array) -> Result<Uint8Array, JsValue> {
         let outgoing = frame_bytes.to_vec();
-        let (request_id, operation) = self.core.begin_request(&outgoing)?;
+        let (request_id, operation) = self.core.borrow_mut().begin_request(&outgoing)?;
         let incoming = match self.request_transport(&outgoing).await {
             Ok(incoming) => incoming,
             Err(error) => {
-                self.core.transport_failed(operation);
+                self.core.borrow_mut().transport_failed(operation);
                 return Err(error);
             }
         };
         self.core
+            .borrow_mut()
             .finish_response(operation, request_id, &incoming)?;
         Ok(Uint8Array::from(incoming.as_slice()))
     }
@@ -728,15 +729,16 @@ impl BrowserClient {
     /// Rejects invalid fields, transport failures, and invalid responses.
     #[wasm_bindgen(js_name = readProjected)]
     pub async fn read_projected(
-        &mut self,
+        &self,
         document: Uint8Array,
         after: Option<Uint8Array>,
     ) -> Result<ProjectedReadPage, JsValue> {
         let request = self
             .core
+            .borrow_mut()
             .read_projected_request(document.to_vec(), after.map(|value| value.to_vec()))?;
         let response = self.request(Uint8Array::from(request.as_slice())).await?;
-        projected_read_page(&self.core, &response.to_vec())
+        projected_read_page(&self.core.borrow(), &response.to_vec())
     }
 
     #[wasm_bindgen(js_name = subscribeProjected)]
@@ -746,15 +748,16 @@ impl BrowserClient {
     ///
     /// Rejects invalid fields, transport failures, and invalid stream state.
     pub async fn subscribe_projected(
-        &mut self,
+        &self,
         document: Uint8Array,
         after: Option<Uint8Array>,
     ) -> Result<BrowserProjectedSubscription, JsValue> {
         let request = self
             .core
+            .borrow_mut()
             .subscribe_projected_request(document.to_vec(), after.map(|value| value.to_vec()))?;
-        let request_id = self.core.request_id(&request)?;
-        self.core.metrics().record_outgoing(request.len());
+        let request_id = self.core.borrow().request_id(&request)?;
+        self.core.borrow().metrics().record_outgoing(request.len());
         let stream = JsFuture::from(self.transport.create_bidirectional_stream())
             .await?
             .dyn_into::<WebTransportBidirectionalStream>()?;
@@ -767,11 +770,11 @@ impl BrowserClient {
         let readable: ReadableStream = stream.readable().unchecked_into();
         Ok(BrowserProjectedSubscription {
             reader: readable.get_reader().unchecked_into(),
-            limits: self.core.limits(),
+            limits: self.core.borrow().limits(),
             request_id,
             buffered: RefCell::new(Vec::new()),
             cancelled: Cell::new(false),
-            metrics: self.core.metrics(),
+            metrics: self.core.borrow().metrics(),
         })
     }
 
@@ -782,20 +785,20 @@ impl BrowserClient {
     /// Rejects invalid identities, transport failures, and invalid responses.
     #[wasm_bindgen(js_name = resolveSubmission)]
     pub async fn resolve_submission(
-        &mut self,
+        &self,
         document: Uint8Array,
         writer: Uint8Array,
         session: Uint8Array,
         submission: Uint8Array,
     ) -> Result<SubmissionResolution, JsValue> {
-        let request = self.core.resolve_submission_request(
+        let request = self.core.borrow_mut().resolve_submission_request(
             document.to_vec(),
             writer.to_vec(),
             session.to_vec(),
             submission.to_vec(),
         )?;
         let response = self.request(Uint8Array::from(request.as_slice())).await?;
-        submission_resolution(&self.core, &response.to_vec())
+        submission_resolution(&self.core.borrow(), &response.to_vec())
     }
 
     /// Uploads one bounded immutable blob.
@@ -804,10 +807,13 @@ impl BrowserClient {
     ///
     /// Rejects oversized content, transport failures, and invalid responses.
     #[wasm_bindgen(js_name = uploadBlob)]
-    pub async fn upload_blob(&mut self, payload: Uint8Array) -> Result<BlobUpload, JsValue> {
-        let request = self.core.upload_blob_request(payload.to_vec())?;
+    pub async fn upload_blob(&self, payload: Uint8Array) -> Result<BlobUpload, JsValue> {
+        let request = self
+            .core
+            .borrow_mut()
+            .upload_blob_request(payload.to_vec())?;
         let response = self.request(Uint8Array::from(request.as_slice())).await?;
-        blob_upload(&self.core, &response.to_vec())
+        blob_upload(&self.core.borrow(), &response.to_vec())
     }
 
     /// Fetches one blob and validates its echoed digest.
@@ -816,11 +822,14 @@ impl BrowserClient {
     ///
     /// Rejects invalid digests, transport failures, and mismatched response identities.
     #[wasm_bindgen(js_name = fetchBlob)]
-    pub async fn fetch_blob(&mut self, digest: Uint8Array) -> Result<Uint8Array, JsValue> {
+    pub async fn fetch_blob(&self, digest: Uint8Array) -> Result<Uint8Array, JsValue> {
         let expected_digest = digest.to_vec();
-        let request = self.core.fetch_blob_request(expected_digest.clone())?;
+        let request = self
+            .core
+            .borrow_mut()
+            .fetch_blob_request(expected_digest.clone())?;
         let response = self.request(Uint8Array::from(request.as_slice())).await?;
-        blob_payload(&self.core, &response.to_vec(), &expected_digest)
+        blob_payload(&self.core.borrow(), &response.to_vec(), &expected_digest)
     }
 
     /// Publishes one bounded canonical summary manifest.
@@ -830,14 +839,15 @@ impl BrowserClient {
     /// Rejects invalid entries, transport failures, and invalid responses.
     #[wasm_bindgen(js_name = publishSummary)]
     pub async fn publish_summary(
-        &mut self,
+        &self,
         entries: SummaryEntries,
     ) -> Result<SummaryPublication, JsValue> {
         let request = self
             .core
+            .borrow_mut()
             .publish_summary_request(protocol_summary_entries(entries)?)?;
         let response = self.request(Uint8Array::from(request.as_slice())).await?;
-        summary_publication(&self.core, &response.to_vec())
+        summary_publication(&self.core.borrow(), &response.to_vec())
     }
 
     /// Fetches one summary and validates its echoed digest.
@@ -846,11 +856,14 @@ impl BrowserClient {
     ///
     /// Rejects invalid digests, transport failures, and mismatched response identities.
     #[wasm_bindgen(js_name = fetchSummary)]
-    pub async fn fetch_summary(&mut self, digest: Uint8Array) -> Result<SummaryEntries, JsValue> {
+    pub async fn fetch_summary(&self, digest: Uint8Array) -> Result<SummaryEntries, JsValue> {
         let expected_digest = digest.to_vec();
-        let request = self.core.fetch_summary_request(expected_digest.clone())?;
+        let request = self
+            .core
+            .borrow_mut()
+            .fetch_summary_request(expected_digest.clone())?;
         let response = self.request(Uint8Array::from(request.as_slice())).await?;
-        summary_entries(&self.core, &response.to_vec(), &expected_digest)
+        summary_entries(&self.core.borrow(), &response.to_vec(), &expected_digest)
     }
 
     async fn request_transport(&self, outgoing: &[u8]) -> Result<Vec<u8>, JsValue> {
@@ -866,7 +879,8 @@ impl BrowserClient {
 
         let readable: ReadableStream = stream.readable().unchecked_into();
         let reader: ReadableStreamDefaultReader = readable.get_reader().unchecked_into();
-        let incoming = read_bounded(&reader, self.core.max_frame_bytes()).await?;
+        let max_frame_bytes = self.core.borrow().max_frame_bytes();
+        let incoming = read_bounded(&reader, max_frame_bytes).await?;
         reader.release_lock();
         Ok(incoming)
     }
@@ -874,25 +888,25 @@ impl BrowserClient {
     #[wasm_bindgen(getter, js_name = wireBytes)]
     #[must_use]
     pub fn wire_bytes(&self) -> u64 {
-        self.core.wire_bytes()
+        self.core.borrow().wire_bytes()
     }
 
     #[wasm_bindgen(getter, js_name = peakResponseBytes)]
     #[must_use]
     pub fn peak_response_bytes(&self) -> usize {
-        self.core.peak_response_bytes()
+        self.core.borrow().peak_response_bytes()
     }
 
     #[wasm_bindgen(getter, js_name = peakSubscriptionFrameBytes)]
     #[must_use]
     pub fn peak_subscription_frame_bytes(&self) -> usize {
-        self.core.peak_subscription_frame_bytes()
+        self.core.borrow().peak_subscription_frame_bytes()
     }
 
     #[wasm_bindgen(getter, js_name = peakSubscriptionQueueDepth)]
     #[must_use]
     pub fn peak_subscription_queue_depth(&self) -> usize {
-        self.core.peak_subscription_queue_depth()
+        self.core.borrow().peak_subscription_queue_depth()
     }
 
     #[wasm_bindgen(getter, js_name = lastReconnectMilliseconds)]

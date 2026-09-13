@@ -96,28 +96,56 @@ impl SubmissionId {
     }
 }
 
-/// A serialized kernel stream position, opaque to this adapter.
+/// A document-local canonical event position with its protocol encoding.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PositionToken(Bytes);
+pub struct PositionToken {
+    ordinal: u64,
+    encoded: Bytes,
+}
 
 impl PositionToken {
-    /// Creates a non-empty serialized position.
+    fn from_ordinal(ordinal: u64) -> Self {
+        debug_assert_ne!(ordinal, 0);
+        Self {
+            ordinal,
+            encoded: Bytes::copy_from_slice(&ordinal.to_be_bytes()),
+        }
+    }
+
+    /// Parses an eight-byte, one-based canonical event position.
     ///
     /// # Errors
     ///
-    /// Returns [`ValueError::EmptyPosition`] when `value` is empty.
+    /// Returns a value error when `value` is empty, malformed, or zero.
     pub fn new(value: impl Into<Bytes>) -> Result<Self, ValueError> {
         let value = value.into();
         if value.is_empty() {
             return Err(ValueError::EmptyPosition);
         }
-        Ok(Self(value))
+        let ordinal = u64::from_be_bytes(
+            value
+                .as_ref()
+                .try_into()
+                .map_err(|_| ValueError::InvalidPosition)?,
+        );
+        if ordinal == 0 {
+            return Err(ValueError::InvalidPosition);
+        }
+        Ok(Self {
+            ordinal,
+            encoded: value,
+        })
     }
 
     /// Returns the opaque serialized position bytes.
     #[must_use]
     pub fn as_bytes(&self) -> &Bytes {
-        &self.0
+        &self.encoded
+    }
+
+    #[must_use]
+    pub const fn ordinal(&self) -> u64 {
+        self.ordinal
     }
 }
 
@@ -128,6 +156,7 @@ pub enum ValueError {
     EmptySessionId,
     EmptySubmissionId,
     EmptyPosition,
+    InvalidPosition,
 }
 
 /// A writer submission before final sequencing metadata is assigned.
@@ -201,7 +230,7 @@ impl From<SequencedMessage> for ProjectedOperation {
 
 impl ProjectedOperation {
     fn encoded_size(&self) -> usize {
-        self.stream_position.0.len()
+        self.stream_position.encoded.len()
             + self.writer_id.0.len()
             + self.session_id.0.len()
             + self.submission_id.0.len()
@@ -218,7 +247,7 @@ impl ProjectedOperation {
 fn reference_size(reference: &SnapshotPosition<PositionToken>) -> usize {
     match reference {
         SnapshotPosition::Initial => 1,
-        SnapshotPosition::At(position) => 1 + 4 + position.0.len(),
+        SnapshotPosition::At(position) => 1 + 4 + position.encoded.len(),
     }
 }
 
@@ -255,7 +284,8 @@ enum LogEntry {
 
 #[derive(Debug, Default)]
 struct SequencerState {
-    observed_positions: Vec<PositionToken>,
+    observed_head: Option<PositionToken>,
+    canonical_submissions: Vec<Option<SubmissionId>>,
     writers: BTreeMap<WriterId, WriterState>,
     seen_sessions: BTreeSet<SessionId>,
     accepted: BTreeMap<SubmissionId, SequencedMessage>,
@@ -312,8 +342,8 @@ impl SequencerState {
             });
         }
         self.validate_reference(&submission.reference_position)?;
-        if self.reference_rank(&submission.reference_position)
-            < self.reference_rank(&writer.reference_position)
+        if Self::reference_rank(&submission.reference_position)
+            < Self::reference_rank(&writer.reference_position)
             || self.is_below_minimum(&submission.reference_position)
         {
             return Err(Rejection::StaleReferencePosition);
@@ -371,19 +401,23 @@ impl SequencerState {
                 Some(message)
             }
         };
-        self.observed_positions.push(stream_position);
+        self.canonical_submissions.push(
+            result
+                .as_ref()
+                .map(|message| message.submission.submission_id.clone()),
+        );
+        self.observed_head = Some(stream_position);
         Ok(result)
     }
 
     fn minimum_reference_position(&self) -> SnapshotPosition<PositionToken> {
         self.writers
             .values()
-            .min_by_key(|writer| self.reference_rank(&writer.reference_position))
+            .min_by_key(|writer| Self::reference_rank(&writer.reference_position))
             .map_or_else(
                 || {
-                    self.observed_positions
-                        .last()
-                        .cloned()
+                    self.observed_head
+                        .clone()
                         .map_or(SnapshotPosition::Initial, SnapshotPosition::At)
                 },
                 |writer| writer.reference_position.clone(),
@@ -394,7 +428,7 @@ impl SequencerState {
         &self,
         reference: &SnapshotPosition<PositionToken>,
     ) -> Result<(), Rejection> {
-        if matches!(reference, SnapshotPosition::At(position) if self.position_index(position).is_none())
+        if matches!(reference, SnapshotPosition::At(position) if self.observed_head.as_ref().is_none_or(|head| position.ordinal() > head.ordinal()))
         {
             return Err(Rejection::UnknownReferencePosition);
         }
@@ -402,22 +436,14 @@ impl SequencerState {
     }
 
     fn is_below_minimum(&self, reference: &SnapshotPosition<PositionToken>) -> bool {
-        self.reference_rank(reference) < self.reference_rank(&self.minimum_reference_position())
+        Self::reference_rank(reference) < Self::reference_rank(&self.minimum_reference_position())
     }
 
-    fn reference_rank(&self, reference: &SnapshotPosition<PositionToken>) -> usize {
+    fn reference_rank(reference: &SnapshotPosition<PositionToken>) -> u64 {
         match reference {
             SnapshotPosition::Initial => 0,
-            SnapshotPosition::At(position) => self
-                .position_index(position)
-                .map_or(usize::MAX, |index| index + 1),
+            SnapshotPosition::At(position) => position.ordinal(),
         }
-    }
-
-    fn position_index(&self, position: &PositionToken) -> Option<usize> {
-        self.observed_positions
-            .iter()
-            .position(|observed| observed == position)
     }
 }
 
@@ -810,8 +836,8 @@ where
             .storage
             .lock_current(self.fence)
             .map_err(map_fence_acquire_error)?;
-        let mut state = replay(&guard).await?;
-        let entry = state
+        let entry = self
+            .state
             .validate_session_start(writer_id, session_id, reference_position)
             .map_err(ServiceError::Rejected)?;
         let frame = encode_entry(&entry).map_err(ServiceError::CorruptLog)?;
@@ -822,16 +848,11 @@ where
             }
             result => result?,
         };
-        let position = guard
-            .stream()
-            .encode_position(&receipt.position)
-            .map(PositionToken)
-            .map_err(ServiceError::Storage)?;
-        state
+        let position = position_token(guard.stream(), &receipt.position)?;
+        self.state
             .apply(position, entry)
             .map_err(ServiceError::InvalidCommittedEntry)?;
         drop(guard);
-        self.state = state;
         Ok(())
     }
 
@@ -853,8 +874,8 @@ where
             .storage
             .lock_current(self.fence)
             .map_err(map_fence_acquire_error)?;
-        let mut state = replay(&guard).await?;
-        let entry = match state
+        let entry = match self
+            .state
             .validate_submission(submission.clone())
             .map_err(ServiceError::Rejected)?
         {
@@ -870,19 +891,15 @@ where
             }
             result => result?,
         };
-        let position = guard
-            .stream()
-            .encode_position(&receipt.position)
-            .map(PositionToken)
-            .map_err(ServiceError::Storage)?;
-        let Some(message) = state
+        let position = position_token(guard.stream(), &receipt.position)?;
+        let Some(message) = self
+            .state
             .apply(position, entry)
             .map_err(ServiceError::InvalidCommittedEntry)?
         else {
             return Err(ServiceError::RecoveryRequired);
         };
         drop(guard);
-        self.state = state;
         Ok(SubmitOutcome::Accepted(message))
     }
 
@@ -894,7 +911,7 @@ where
     ///
     /// Returns an invalid-position or invalid-limit error, or a fence, storage, framing, or
     /// committed-entry validation error when projection cannot complete authoritatively.
-    pub async fn read_projected(
+    pub fn read_projected(
         &self,
         after: Option<&PositionToken>,
         max_canonical_records: usize,
@@ -907,42 +924,31 @@ where
             .storage
             .lock_current(self.fence)
             .map_err(map_fence_acquire_error)?;
-        let records = guard
-            .stream()
-            .read_all()
-            .await
-            .map_err(ServiceError::Storage)?;
-        let record_count = records.len();
-        let mut state = SequencerState::default();
-        let mut cursor_found = after.is_none();
+        let reference = after
+            .cloned()
+            .map_or(SnapshotPosition::Initial, SnapshotPosition::At);
+        self.state
+            .validate_reference(&reference)
+            .map_err(|_| ServiceError::InvalidPosition)?;
+        let start = after.map_or(Ok(0), |position| {
+            usize::try_from(position.ordinal()).map_err(|_| ServiceError::InvalidPosition)
+        })?;
+        let record_count = self.state.canonical_submissions.len();
         let mut cursor = after.cloned();
-        let mut scanned = 0_usize;
         let mut encoded_bytes = 0_usize;
         let mut operations = Vec::new();
         let mut has_more = false;
 
-        for (index, record) in records.into_iter().enumerate() {
-            let entry = decode_entry(record.payload).map_err(ServiceError::CorruptLog)?;
-            let position = guard
-                .stream()
-                .encode_position(&record.position)
-                .map(PositionToken)
-                .map_err(ServiceError::Storage)?;
-            let message = state
-                .apply(position.clone(), entry)
-                .map_err(ServiceError::InvalidCommittedEntry)?;
-
-            if !cursor_found {
-                if after == Some(&position) {
-                    cursor_found = true;
-                }
-                continue;
-            }
+        for (scanned, index) in (start..record_count).enumerate() {
             if scanned == max_canonical_records {
                 has_more = true;
                 break;
             }
-            let operation = message.map(ProjectedOperation::from);
+            let operation = self.state.canonical_submissions[index]
+                .as_ref()
+                .and_then(|submission_id| self.state.accepted.get(submission_id))
+                .cloned()
+                .map(ProjectedOperation::from);
             if let Some(operation) = operation.as_ref() {
                 let next_encoded_bytes = encoded_bytes.saturating_add(operation.encoded_size());
                 if !operations.is_empty() && next_encoded_bytes > max_encoded_bytes {
@@ -951,7 +957,8 @@ where
                 }
                 encoded_bytes = next_encoded_bytes;
             }
-            scanned += 1;
+            let ordinal = u64::try_from(index + 1).map_err(|_| ServiceError::InvalidPosition)?;
+            let position = PositionToken::from_ordinal(ordinal);
             cursor = Some(position);
             if let Some(operation) = operation {
                 operations.push(operation);
@@ -959,9 +966,7 @@ where
             has_more = index + 1 < record_count;
         }
 
-        if !cursor_found {
-            return Err(ServiceError::InvalidPosition);
-        }
+        drop(guard);
         Ok(ProjectedPage {
             operations,
             cursor,
@@ -1051,6 +1056,19 @@ fn map_fence_acquire_error<E>(error: FenceAcquireError) -> ServiceError<E> {
     }
 }
 
+fn position_token<S>(
+    storage: &S,
+    position: &S::Position,
+) -> Result<PositionToken, ServiceError<S::Error>>
+where
+    S: SequencerStorage,
+{
+    let encoded = storage
+        .encode_position(position)
+        .map_err(ServiceError::Storage)?;
+    PositionToken::new(encoded).map_err(|_| ServiceError::InvalidPosition)
+}
+
 async fn replay<S>(guard: &FenceGuard<'_, S>) -> Result<SequencerState, ServiceError<S::Error>>
 where
     S: SequencerStorage,
@@ -1060,10 +1078,7 @@ where
     let mut state = SequencerState::default();
     for record in records {
         let entry = decode_entry(record.payload).map_err(ServiceError::CorruptLog)?;
-        let position = storage
-            .encode_position(&record.position)
-            .map(PositionToken)
-            .map_err(ServiceError::Storage)?;
+        let position = position_token(storage, &record.position)?;
         state
             .apply(position, entry)
             .map_err(ServiceError::InvalidCommittedEntry)?;
@@ -1177,7 +1192,7 @@ fn put_reference(
         SnapshotPosition::Initial => frame.put_u8(0),
         SnapshotPosition::At(position) => {
             frame.put_u8(1);
-            put_u16_bytes(frame, &position.0)?;
+            put_u16_bytes(frame, &position.encoded)?;
         }
     }
     Ok(())
@@ -1641,14 +1656,13 @@ mod tests {
                 .await
                 .unwrap(),
         );
-        let first_page = sequencer.read_projected(None, 1, 1024).await.unwrap();
+        let first_page = sequencer.read_projected(None, 1, 1024).unwrap();
         assert!(first_page.operations.is_empty());
         assert!(first_page.has_more);
         let first_cursor = first_page.cursor.unwrap();
 
         let second_page = sequencer
             .read_projected(Some(&first_cursor), 1, 1024)
-            .await
             .unwrap();
         assert_eq!(second_page.operations.len(), 1);
         assert_eq!(second_page.operations[0].sequence_number, 1);
@@ -1660,7 +1674,6 @@ mod tests {
         assert!(!second_page.has_more);
         let end_page = sequencer
             .read_projected(second_page.cursor.as_ref(), 1, 1024)
-            .await
             .unwrap();
         assert!(end_page.operations.is_empty());
         assert_eq!(end_page.cursor, second_page.cursor);
@@ -1668,11 +1681,12 @@ mod tests {
         assert_eq!(stream.len(), 2);
     });
 
-    async_test!(projected_read_rejects_foreign_cursor, {
+    async_test!(projected_read_rejects_cursor_beyond_head, {
         let (_, _, sequencer, _, _) = setup().await;
-        let foreign = PositionToken::new(Bytes::from_static(b"foreign")).unwrap();
+        let beyond_head =
+            PositionToken::new(Bytes::copy_from_slice(&1000_u64.to_be_bytes())).unwrap();
         assert!(matches!(
-            sequencer.read_projected(Some(&foreign), 1, 1024).await,
+            sequencer.read_projected(Some(&beyond_head), 1, 1024),
             Err(ServiceError::InvalidPosition)
         ));
     });
@@ -1691,15 +1705,13 @@ mod tests {
                 .await
                 .unwrap();
         }
-        let administrative = sequencer.read_projected(None, 1, usize::MAX).await.unwrap();
+        let administrative = sequencer.read_projected(None, 1, usize::MAX).unwrap();
         let full = sequencer
             .read_projected(administrative.cursor.as_ref(), 2, usize::MAX)
-            .await
             .unwrap();
         let first_size = full.operations[0].encoded_size();
         let bounded = sequencer
             .read_projected(administrative.cursor.as_ref(), 2, first_size)
-            .await
             .unwrap();
         assert_eq!(bounded.operations.len(), 1);
         assert!(bounded.has_more);
@@ -1709,7 +1721,6 @@ mod tests {
         );
         let resumed = sequencer
             .read_projected(bounded.cursor.as_ref(), 2, first_size)
-            .await
             .unwrap();
         assert_eq!(resumed.operations.len(), 1);
         assert_eq!(resumed.operations[0], full.operations[1]);

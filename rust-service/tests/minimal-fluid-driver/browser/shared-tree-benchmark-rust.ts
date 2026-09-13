@@ -433,4 +433,8 @@ function numberParameter(name: string, fallback: number): number {
 window.__sharedTreeBenchmarkResult = runSharedTreeBenchmark(createPair, {
 	operationCount: numberParameter("operations", 100),
 	warmupOperationCount: numberParameter("warmup", 10),
-}).catch((error: unknown) => ({ status: "failed", error: String(error) }));
+	operationsPerTurn: numberParameter("operationsPerTurn", Number.POSITIVE_INFINITY),
+}).catch((error: unknown) => ({
+	status: "failed",
+	error: error instanceof Error ? (error.stack ?? error.message) : String(error),
+}));

@@ -486,7 +486,13 @@ async fn serve_projected_subscription(
             },
             config.limits,
         )?;
-        write_stream_frame(send, &response, config.operation_timeout).await?;
+        if write_stream_frame(send, &response, config.operation_timeout)
+            .await
+            .is_err()
+        {
+            subscription.cancel();
+            return Ok(());
+        }
         metrics.add_wire_bytes(response.len());
         if terminal {
             return Ok(());
