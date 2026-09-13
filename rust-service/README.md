@@ -42,20 +42,32 @@ Because agentic development is itself part of the research, each approved iterat
 
 ## Project Status
 
-Phase 1 and iterations `0001` through `0006` are complete. Iteration `0006` added bounded concurrent native WebTransport sessions and proved real SharedTree convergence, explicit disconnected-edit recovery, and cold replay over independent browser sessions. Its [Phase 3 report](iterations/0006/phase-3-report.md) records the accepted evidence and remaining limits.
+Phase 1 and iterations `0001` through `0011` are complete. Iterations `0001`
+through `0006` established the kernel, storage implementations, wrappers,
+service protocol, native and browser transports, Fluid driver, and real
+SharedTree convergence. Their reports remain under [iterations/](iterations/).
 
-Iteration `0007` is planned but has not been initialized. Its two dependency-independent workstreams may run concurrently:
+Later iterations completed the end-to-end lifecycle and measurement work:
 
-- [fluid-read-reconnect-lifecycle](iterations/0006/next-phase-2-instructions/fluid-read-reconnect-lifecycle.md) removes the force-write browser exception and tests Fluid's default read-to-write reconnect lifecycle.
-- [native-graceful-shutdown](iterations/0006/next-phase-2-instructions/native-graceful-shutdown.md) adds and validates an explicit bounded shutdown/drain contract for the native WebTransport server.
+- [Iteration `0007`](iterations/0007/phase-3-report.md) proved Fluid read-to-write
+    reconnect, ambiguity recovery, cold replay, and bounded native WebTransport
+    shutdown.
+- [Iteration `0008`](iterations/0008/phase-3-report.md) added atomic projected
+    catch-up and live streaming with bounded buffering and explicit cancellation.
+- [Iteration `0009`](iterations/0009/phase-3-report.md) measured equivalent
+    full-driver single-writer SharedTree capacity across six service and storage
+    configurations.
+- [Iteration `0010`](iterations/0010/phase-3-report.md) replaced the growing-state
+    workload with fixed-size numeric overwrites and documented the limits of
+    notification-based operation accounting.
+- [Iteration `0011`](iterations/0011/phase-3-report.md) audited every Rust workspace
+    area and the minimal TypeScript driver, fixed six boundary and lifecycle defect
+    classes, and expanded tests and operational documentation.
 
-To kick off iteration `0007`, use the `rust-service-coordination` skill and ask GitHub Copilot to start iteration `0007` from the completed iteration `0006` Phase 3 commit. The equivalent record initializer is:
-
-```bash
-node .github/skills/rust-service-coordination/scripts/iteration-records.mjs init 0007 fluid-read-reconnect-lifecycle native-graceful-shutdown
-```
-
-The kickoff workflow must then set the generated manifest's `sourceCommit`, complete the charter and workstream instructions from the approved plans above, set its status to `active`, validate the start records, commit them, and create the integration and isolated workstream branches as described by the coordination skill. Do not run the initializer from a dirty worktree or without first confirming the iteration `0006` completion checks.
+No next iteration is currently approved. Performance expansion, decoded-size
+policy, awaitable Fluid teardown, retention, cross-host fencing, power-loss
+qualification, production membership, authentication, and deployment work
+remain explicit future triggers rather than incomplete iteration deliverables.
 
 Each approved iteration uses a dedicated integration branch and one isolated branch/worktree per Phase 2 workstream. Workstream agents commit only their assigned scope and report; a coordinator integrates accepted commits and records Phase 3 decisions under a sequentially numbered `iterations/NNNN/` directory. Lightweight work does not create these artifacts. The next approved iteration starts from the applicable accepted repository state.
 

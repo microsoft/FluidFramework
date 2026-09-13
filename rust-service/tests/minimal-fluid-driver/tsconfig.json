@@ -5,20 +5,6 @@
 		"declaration": true,
 		"ignoreDeprecations": "6.0",
 		"outDir": "lib",
-		"paths": {
-			"@fluidframework/core-interfaces": [
-				"../../../packages/common/core-interfaces/lib/public.d.ts",
-			],
-			"@fluidframework/core-interfaces/internal": [
-				"../../../packages/common/core-interfaces/lib/internal.d.ts",
-			],
-			"@fluidframework/driver-definitions": [
-				"../../../packages/common/driver-definitions/lib/public.d.ts",
-			],
-			"@fluidframework/driver-definitions/internal": [
-				"../../../packages/common/driver-definitions/lib/index.d.ts",
-			],
-		},
 		"rootDir": "src",
 		"typeRoots": ["../../../node_modules/.pnpm/node_modules/@types"],
 		"types": ["node"],

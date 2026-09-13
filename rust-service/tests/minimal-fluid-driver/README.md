@@ -29,29 +29,35 @@ The driver does not automatically retry, recover, or resubmit ambiguous writes. 
 
 ## Validation
 
-The package is registered in the root pnpm workspace. Build `@fluidframework/core-interfaces` and `@fluidframework/driver-definitions` first so their generated declarations exist, then validate the package through its pnpm scripts.
+The package is registered in the root pnpm workspace. Install that workspace,
+then use its Fluid build graph to build client dependencies, generate the Rust
+WASM packages, typecheck the driver and SharedTree harnesses, and build the
+browser bundles in dependency order.
 
 From the repository root:
 
 ```bash
-node node_modules/@fluidframework/build-tools/dist/fluidBuild/fluidBuild.js --root "$PWD" --vscode packages/common/driver-definitions
-cd rust-service
-CARGO_TARGET_DIR=/tmp/fluid-minimal-driver-wasm-target \
-  RUSTFLAGS='--cfg=web_sys_unstable_apis' \
-  cargo build --locked -p fluid-webtransport-browser --target wasm32-unknown-unknown --release
-wasm-bindgen /tmp/fluid-minimal-driver-wasm-target/wasm32-unknown-unknown/release/fluid_webtransport_browser.wasm \
-  --target nodejs --out-name fluid_webtransport_browser --out-dir tests/wasm-client/pkg
-cd tests/minimal-fluid-driver
-pnpm run check:format
-pnpm run lint
-pnpm run typecheck
-pnpm run build
-pnpm test
+pnpm install --frozen-lockfile
+pnpm --dir rust-service/tests/minimal-fluid-driver run build
+pnpm --dir rust-service/tests/minimal-fluid-driver test
 ```
+
+The package's `build:wasm` task uses Fluid build's declarative input/output
+tracking. It invokes Cargo and `wasm-bindgen` only when the Rust workspace inputs
+or generated Node/web packages change; Cargo provides an additional incremental
+cache when the task does run. The installed `wasm-bindgen` CLI version must match
+the workspace crate version.
+
+A future first-class Cargo/WASM Fluid build task could derive narrower inputs
+from Cargo metadata, validate Rust target and `wasm-bindgen` tool versions, and
+model individual generated packages without package-owned globs. The current
+declarative task already provides hash-based incremental execution, so this is a
+tooling refinement rather than a prerequisite for reliable client builds.
 
 The unit suite includes an injected TypeScript submission-stream fixture. It deterministically holds acknowledgements, rejects writes or responses, records stream and subscription disposal, and verifies unary fallback without requiring a live service.
 
-For Chromium, generate `--target web` bindings into this package's ignored `pkg/`, generate the existing browser harness certificate, start `fluid-webtransport-native`, build the SharedTree bundle, and run:
+For Chromium, generate the existing browser harness certificate, start
+`fluid-webtransport-native`, and run:
 
 ```bash
 pnpm run typecheck:shared-tree
