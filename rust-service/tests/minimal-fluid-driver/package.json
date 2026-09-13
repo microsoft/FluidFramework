@@ -27,7 +27,7 @@
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
-		"@fluidframework/server-local-server": "7.0.1",
+		"@fluidframework/server-local-server": "^7.0.1",
 		"@fluidframework/tinylicious-client": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"process": "0.11.10"

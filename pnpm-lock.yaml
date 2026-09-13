@@ -16630,7 +16630,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/drivers/local-driver
       '@fluidframework/server-local-server':
-        specifier: 7.0.1
+        specifier: ^7.0.1
         version: 7.0.1(supports-color@10.2.2)
       '@fluidframework/tinylicious-client':
         specifier: workspace:~
