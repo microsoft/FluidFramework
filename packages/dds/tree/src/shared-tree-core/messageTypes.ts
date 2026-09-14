@@ -4,6 +4,7 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
+import type { IdCreationRange } from "@fluidframework/id-compressor/internal";
 
 import type { GraphCommit } from "../core/index.js";
 
@@ -25,4 +26,14 @@ export interface BranchMessage extends MessageBase {
 	type: "branch";
 	branchId: BranchId;
 	branchName?: string;
+}
+
+/** One independently sequenced encoded SharedTree message for runtime-free integration. */
+export interface SequencedSharedTreeMessage {
+	readonly contents: unknown;
+	readonly idCreationRange?: IdCreationRange;
+	readonly sequenceNumber: number;
+	readonly referenceSequenceNumber: number;
+	readonly minimumSequenceNumber: number;
+	readonly local: boolean;
 }

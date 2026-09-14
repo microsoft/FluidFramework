@@ -11,3 +11,8 @@
 // case).
 
 export * from "../index.js";
+export {
+	createDirectSharedTree,
+	type DirectSharedTreeOptions,
+	type SharedTreeKernelView,
+} from "../shared-tree/sharedTree.js";

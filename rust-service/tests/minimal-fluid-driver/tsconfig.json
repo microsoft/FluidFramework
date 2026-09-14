@@ -6,6 +6,7 @@
 		"ignoreDeprecations": "6.0",
 		"outDir": "lib",
 		"rootDir": "src",
+		"skipLibCheck": true,
 		"typeRoots": ["../../../node_modules/.pnpm/node_modules/@types"],
 		"types": ["mocha", "node"],
 	},

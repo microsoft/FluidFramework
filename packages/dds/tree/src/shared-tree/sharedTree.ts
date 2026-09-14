@@ -96,7 +96,7 @@ import {
 	type SchemaType,
 } from "../simple-tree/index.js";
 import {
-	type Breakable,
+	Breakable,
 	breakingClass,
 	type JsonCompatible,
 	throwIfBroken,
@@ -475,6 +475,69 @@ export class SharedTreeKernel
 	}
 
 	public onDisconnect(): void {}
+}
+
+/** Options for constructing a runtime-free collaborative SharedTree kernel. */
+export interface DirectSharedTreeOptions extends SharedTreeOptionsInternal {
+	/** ID compressor whose session identifies locally authored commits. */
+	readonly idCompressor: IIdCompressor;
+	/** Receives each encoded SharedTree message for sequencing by the host. */
+	readonly submitLocalMessage: (content: unknown) => void;
+	/** Stable local identifier used for diagnostics. */
+	readonly id?: string;
+	/** Last canonical sequence number already applied by the host. */
+	readonly lastSequenceNumber?: () => number | undefined;
+}
+
+/**
+ * Creates a production SharedTree kernel whose sequencing lifecycle is owned by its host.
+ *
+ * @remarks
+ * This internal integration surface does not create a Fluid SharedObject or runtime. The host is
+ * responsible for durably sequencing submitted messages, carrying ID creation ranges, replaying
+ * sequenced messages through {@link SharedTreeCore.processSequencedMessages}, and persistence.
+ *
+ * @internal
+ */
+export function createDirectSharedTree(options: DirectSharedTreeOptions): SharedTreeKernelView {
+	const {
+		idCompressor,
+		submitLocalMessage,
+		id = "direct-shared-tree",
+		lastSequenceNumber = () => undefined,
+		...treeOptions
+	} = options;
+	const sharedObject = {
+		attributes: {
+			packageVersion: "direct",
+			snapshotFormatVersion: "direct",
+			type: "DirectSharedTree",
+		},
+		handle: undefined as never,
+		id,
+		isAttached: () => true,
+		get IFluidLoadable() {
+			return this;
+		},
+	} satisfies IChannelView & IFluidLoadable;
+	const serializer: IFluidSerializer = {
+		decode: (input) => input,
+		encode: (input) => input,
+		parse: (input) => JSON.parse(input) as unknown,
+		stringify: (input) => JSON.stringify(input),
+	};
+	const kernel = new SharedTreeKernel(
+		new Breakable("DirectSharedTree"),
+		sharedObject,
+		serializer,
+		submitLocalMessage,
+		lastSequenceNumber,
+		lastSequenceNumber() ?? 0,
+		idCompressor,
+		treeOptions,
+	);
+	kernel.didAttach();
+	return kernel.view;
 }
 
 export function exportSimpleSchema(
