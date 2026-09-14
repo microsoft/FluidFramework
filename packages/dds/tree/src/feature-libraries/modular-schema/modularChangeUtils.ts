@@ -18,11 +18,9 @@ import {
 import {
 	addToNestedSet,
 	brand,
-	getOrCreateInNestedMap,
 	nestedSetContains,
 	populatedNestedSet,
 	type Mutable,
-	type NestedMap,
 	type NestedSet,
 	type RangeQueryResult,
 } from "../../util/index.js";
@@ -379,8 +377,8 @@ export function normalizeNodeId(
 /**
  * Updates `nodeAliases` so that `alias1` and `alias2` are considered equivalent.
  * @param nodeAliases - The set of aliases to update.
- * @param alias1 - The first node ID to be considered equivalent.
- * @param alias2 - The second node ID to be considered equivalent.
+ * @param alias1 - The first node ID to be considered equivalent. Need not be normalized so long as `nodeAliases` can be used to normalize it.
+ * @param alias2 - The second node ID to be considered equivalent. Need not be normalized so long as `nodeAliases` can be used to normalize it.
  * @returns The normalized ID that both `alias1` and `alias2` map to as a result of unification.
  */
 export function unifyAliases(
@@ -505,7 +503,7 @@ export function validateChangeset(
 /**
  * Asserts that each child and cross field key in each field has a correct entry in
  * `nodeToParent` or `crossFieldKeyTable`.
- * @returns the number of children found.
+ * @returns the set of normalized child node IDs found in the given field changes.
  */
 function validateFieldChanges(
 	change: ModularChangeset,
@@ -540,72 +538,6 @@ function validateFieldChanges(
 	}
 
 	return children;
-}
-
-export interface ChangeStructure {
-	readonly root: NodeChangeStructure;
-	readonly aliases: readonly [NodeId, readonly NodeId[]][];
-}
-export type NodeChangeStructure = Readonly<Record<FieldKey, FieldChangeStructure>>;
-export type FieldChangeStructure = readonly (readonly [NodeId, NodeId, NodeChangeStructure])[];
-export function getChangeStructure(
-	change: ModularChangeset,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-): ChangeStructure {
-	const aliasMap: NestedMap<NodeId["revision"], NodeId["localId"], NodeId[]> = new Map();
-	for (const [[revision, localId], nodeId] of change.nodeAliases.entries()) {
-		const normal = normalizeNodeId(nodeId, change.nodeAliases);
-		const aliases = getOrCreateInNestedMap(
-			aliasMap,
-			normal.revision,
-			normal.localId,
-			() => [],
-		);
-		aliases.push({ revision, localId });
-	}
-	const aliasArray: [NodeId, readonly NodeId[]][] = [];
-	for (const [revision, localMap] of aliasMap) {
-		for (const [localId, nodeIds] of localMap) {
-			aliasArray.push([{ revision, localId }, nodeIds]);
-		}
-	}
-	return {
-		root: getNodeChangeStructure(change, change.fieldChanges, fieldKinds),
-		aliases: aliasArray,
-	};
-}
-
-export function getNodeChangeStructure(
-	change: ModularChangeset,
-	field: FieldChangeMap,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-): NodeChangeStructure {
-	const nodeChangeStructure: Record<FieldKey, FieldChangeStructure> = {};
-	for (const [fieldKey, fieldChange] of field) {
-		nodeChangeStructure[fieldKey] = getFieldChangeStructure(change, fieldChange, fieldKinds);
-	}
-	return nodeChangeStructure;
-}
-
-export function getFieldChangeStructure(
-	change: ModularChangeset,
-	fieldChange: FieldChange,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-): FieldChangeStructure {
-	const fieldChangeStructure: (readonly [NodeId, NodeId, NodeChangeStructure])[] = [];
-	const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
-
-	for (const { nodeId } of handler.getNestedChanges(fieldChange.change)) {
-		const normalized = normalizeNodeId(nodeId, change.nodeAliases);
-		const nodeChanges = change.nodeChanges.get([normalized.revision, normalized.localId]);
-		assert(nodeChanges !== undefined, "missing nested changes");
-		fieldChangeStructure.push([
-			nodeId,
-			normalized,
-			getNodeChangeStructure(change, nodeChanges.fieldChanges ?? new Map(), fieldKinds),
-		]);
-	}
-	return fieldChangeStructure;
 }
 
 /**

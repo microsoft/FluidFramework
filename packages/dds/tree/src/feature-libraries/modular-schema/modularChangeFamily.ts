@@ -261,8 +261,7 @@ export class ModularChangeFamily
 			destroys: allDestroys,
 			refreshers: allRefreshers,
 		});
-		// console.log("Composed Change:", getChangeStructure(composed, this.fieldKinds));
-		// validateChangeset(composed, this.fieldKinds);
+		validateChangeset(composed, this.fieldKinds);
 		return composed;
 	}
 
@@ -303,9 +302,6 @@ export class ModularChangeFamily
 				{ revision: aliasRevision, localId: aliasLocalId },
 				target,
 			);
-		}
-		for (const [_, target] of composedNodeAliases.entries()) {
-			normalizeNodeId(target, composedNodeAliases);
 		}
 
 		const crossFieldTable = newComposeTable(
@@ -623,24 +619,6 @@ export class ModularChangeFamily
 					setInChangeAtomIdMap(crossFieldTable.newToBaseNodeId, child2, child1);
 					crossFieldTable.pendingCompositions.nodeIdsToCompose.push([child1, child2]);
 				}
-
-				// if (child1 !== undefined) {
-				// 	const normalizedId1 = normalizeNodeId(
-				// 		child1,
-				// 		crossFieldTable.baseChange.nodeAliases,
-				// 	);
-				// 	if (!areEqualChangeAtomIds(child1, normalizedId1)) {
-				// 		debugger;
-				// 	}
-				// }
-
-				// if (child2 !== undefined) {
-				// 	const normalizedId2 = normalizeNodeId(child2, crossFieldTable.newChange.nodeAliases);
-				// 	if (!areEqualChangeAtomIds(child2, normalizedId2)) {
-				// 		debugger;
-				// 	}
-				// }
-
 				return child1 ?? child2 ?? fail(0xb23 /* Should not compose two undefined nodes */);
 			},
 			idAllocator,
@@ -697,13 +675,6 @@ export class ModularChangeFamily
 			revisionMetadata,
 		);
 
-		// if (!areEqualChangeAtomIds(id1, normalizedId1)) {
-		// 	debugger;
-		// }
-		// if (!areEqualChangeAtomIds(id2, normalizedId2)) {
-		// 	debugger;
-		// }
-
 		const parentInChange1 = getParentFieldId(crossFieldTable.baseChange, normalizedId1);
 		// While `parentInChange1` is normalized with respect to the base change,
 		// it may not be normalized with respect to the composed changeset.
@@ -715,15 +686,6 @@ export class ModularChangeFamily
 		composedNodeToParent.delete([normalizedId2.revision, normalizedId2.localId]);
 		setInChangeAtomIdMap(composedNodes, composedId, composedNodeChangeset);
 		setInChangeAtomIdMap(composedNodeToParent, composedId, normalizedParentInComposedChange);
-
-		// if (!areEqualChangeAtomIds(id1, id2)) {
-		// 	composedNodes.delete([id2.revision, id2.localId]);
-		// 	composedNodeToParent.delete([id2.revision, id2.localId]);
-		// 	setInChangeAtomIdMap(nodeAliases, id2, id1);
-
-		// 	// We need to delete id1 to avoid forming a cycle in case id1 already had an alias.
-		// 	nodeAliases.delete([id1.revision, id1.localId]);
-		// }
 
 		crossFieldTable.composedNodes.add(composedNodeChangeset);
 	}
