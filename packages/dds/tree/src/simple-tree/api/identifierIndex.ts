@@ -17,6 +17,10 @@ import type { TreeView } from "./tree.js";
 /**
  * An index that returns tree nodes given their associated identifiers.
  *
+ * @remarks
+ * Create an identifier index with {@link createIdentifierIndex} to index fields defined using
+ * {@link SchemaFactory.identifier}.
+ *
  * @beta
  */
 export type IdentifierIndex = TreeIndex<string, TreeNode>;
@@ -27,6 +31,11 @@ function isStringKey(key: TreeIndexKey): key is string {
 
 /**
  * Creates an {@link IdentifierIndex} for a given {@link TreeView}.
+ *
+ * @remarks
+ * All identifier fields reachable from the view's schema are indexed automatically, and the index remains up to date
+ * as nodes are inserted, removed, or changed. Looking up an identifier shared by multiple nodes throws a
+ * `UsageError`. Call {@link TreeIndex.dispose} when the index is no longer needed.
  *
  * @beta
  */
