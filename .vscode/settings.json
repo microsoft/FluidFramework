@@ -79,7 +79,7 @@
 		"unaugmented",
 		"undoprovider",
 		"unsequenced",
-		"validatable"
+		"validatable",
 	],
 
 	// Enable biome as default formatter, and disable rules that disagree with it
