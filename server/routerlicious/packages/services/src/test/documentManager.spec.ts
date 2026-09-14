@@ -72,7 +72,9 @@ describe("DocumentManager", () => {
 
 	it("does not write static cache during readDocument", async () => {
 		const document = createDocument("tenant-a", "shared-id");
-		server = createServer((_request, response) => {
+		let authorizationHeader: string | undefined;
+		server = createServer((request, response) => {
+			authorizationHeader = request.headers.authorization;
 			response.writeHead(200, { "Content-Type": "application/json" });
 			response.end(JSON.stringify(document));
 		});
@@ -80,9 +82,10 @@ describe("DocumentManager", () => {
 		await new Promise<void>((resolve) => activeServer.listen(0, "127.0.0.1", resolve));
 		const address = activeServer.address() as AddressInfo;
 		const tenantManager = sandbox.createStubInstance(TenantManager);
-		tenantManager.signToken.resolves(
-			generateToken("tenant-a", "shared-id", "test-key", [ScopeType.DocRead]),
-		);
+		const accessToken = generateToken("tenant-a", "shared-id", "test-key", [
+			ScopeType.DocRead,
+		]);
+		tenantManager.signToken.resolves(accessToken);
 		const cache = new RecordingCache();
 		const manager = new DocumentManager(
 			`http://127.0.0.1:${address.port}`,
@@ -91,7 +94,97 @@ describe("DocumentManager", () => {
 		);
 
 		assert.deepStrictEqual(await manager.readDocument("tenant-a", "shared-id"), document);
+		assert.strictEqual(authorizationHeader, `Basic ${accessToken}`);
+		sinon.assert.calledOnce(tenantManager.signToken);
 		assert.deepStrictEqual(cache.sets, []);
+	});
+
+	it("uses a provided access token without minting an internal token", async () => {
+		const document = createDocument("tenant-a", "shared-id");
+		const accessToken = "customer.jwt";
+		let authorizationHeader: string | undefined;
+		server = createServer((request, response) => {
+			authorizationHeader = request.headers.authorization;
+			response.writeHead(200, { "Content-Type": "application/json" });
+			response.end(JSON.stringify(document));
+		});
+		const activeServer = server;
+		await new Promise<void>((resolve) => activeServer.listen(0, "127.0.0.1", resolve));
+		const address = activeServer.address() as AddressInfo;
+		const tenantManager = sandbox.createStubInstance(TenantManager);
+		const manager = new DocumentManager(
+			`http://127.0.0.1:${address.port}`,
+			tenantManager,
+		);
+
+		assert.deepStrictEqual(
+			await manager.readDocument("tenant-a", "shared-id", { accessToken }),
+			document,
+		);
+		assert.strictEqual(authorizationHeader, `Basic ${accessToken}`);
+		sinon.assert.notCalled(tenantManager.signToken);
+	});
+
+	for (const statusCode of [401, 403, 503]) {
+		it(`does not fall back to an internal token after an Alfred ${statusCode}`, async () => {
+			const accessToken = "customer.jwt";
+			const authorizationHeaders: (string | undefined)[] = [];
+			server = createServer((request, response) => {
+				authorizationHeaders.push(request.headers.authorization);
+				response.writeHead(statusCode, { "Content-Type": "application/json" });
+				response.end(JSON.stringify({ message: "rejected" }));
+			});
+			const activeServer = server;
+			await new Promise<void>((resolve) => activeServer.listen(0, "127.0.0.1", resolve));
+			const address = activeServer.address() as AddressInfo;
+			const tenantManager = sandbox.createStubInstance(TenantManager);
+			tenantManager.signToken.resolves("internal.jwt");
+			const manager = new DocumentManager(
+				`http://127.0.0.1:${address.port}`,
+				tenantManager,
+			);
+
+			await assert.rejects(
+				manager.readDocument("tenant-a", "shared-id", { accessToken }),
+			);
+			assert.deepStrictEqual(authorizationHeaders, [`Basic ${accessToken}`]);
+			sinon.assert.notCalled(tenantManager.signToken);
+		});
+	}
+
+	it("preserves internal token refresh when no access token is provided", async () => {
+		const document = createDocument("tenant-a", "shared-id");
+		const expiredToken = generateToken(
+			"tenant-a",
+			"shared-id",
+			"test-key",
+			[ScopeType.DocRead],
+			undefined,
+			-60,
+		);
+		const refreshedToken = generateToken("tenant-a", "shared-id", "test-key", [
+			ScopeType.DocRead,
+		]);
+		let authorizationHeader: string | undefined;
+		server = createServer((request, response) => {
+			authorizationHeader = request.headers.authorization;
+			response.writeHead(200, { "Content-Type": "application/json" });
+			response.end(JSON.stringify(document));
+		});
+		const activeServer = server;
+		await new Promise<void>((resolve) => activeServer.listen(0, "127.0.0.1", resolve));
+		const address = activeServer.address() as AddressInfo;
+		const tenantManager = sandbox.createStubInstance(TenantManager);
+		tenantManager.signToken.onFirstCall().resolves(expiredToken);
+		tenantManager.signToken.onSecondCall().resolves(refreshedToken);
+		const manager = new DocumentManager(
+			`http://127.0.0.1:${address.port}`,
+			tenantManager,
+		);
+
+		assert.deepStrictEqual(await manager.readDocument("tenant-a", "shared-id"), document);
+		assert.strictEqual(authorizationHeader, `Basic ${refreshedToken}`);
+		sinon.assert.calledTwice(tenantManager.signToken);
 	});
 
 	it("uses distinct static entries for duplicate document IDs across tenants", async () => {
