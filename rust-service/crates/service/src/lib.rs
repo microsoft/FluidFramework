@@ -44,17 +44,29 @@ use snapshotted_stream_file_simple::{FileError, FileStream};
 use snapshotted_stream_memory::{MemoryError, MemoryStream};
 use tokio::sync::{Mutex, broadcast, watch};
 
+/// File containing a durable document's generated scope identifier.
 const SCOPE_FILE: &str = "service.scope";
+/// Byte length of a generated document scope identifier.
 const SCOPE_BYTES: usize = 16;
+/// Byte length of canonical event position tokens.
 const TOKEN_BYTES: usize = 8;
+/// Maximum canonical records returned by one raw read.
 const MAX_READ_RECORDS: usize = 1024;
+/// Target maximum payload bytes returned by one raw read.
 const MAX_READ_PAYLOAD_BYTES: usize = 768 * 1024;
+/// Maximum canonical entries scanned by one projected read.
 const MAX_PROJECTED_CANONICAL_RECORDS: usize = 1024;
+/// Target maximum encoded operation bytes returned by one projected read.
 const MAX_PROJECTED_ENCODED_BYTES: usize = 768 * 1024;
+/// Maximum accepted content-addressed blob size.
 const MAX_BLOB_BYTES: u64 = 512 * 1024;
+/// Maximum encoded summary manifest size.
 const MAX_MANIFEST_BYTES: u64 = 4 * 1024 * 1024;
+/// Buffer size used while copying durable content.
 const CONTENT_COPY_BUFFER_BYTES: usize = 64 * 1024;
+/// Notification capacity; lag is recovered by reading from the cursor.
 const PROJECTED_SUBSCRIPTION_NOTIFICATIONS: usize = 1;
+/// Identifies the canonical in-memory summary encoding.
 const SUMMARY_MANIFEST_MAGIC: [u8; 8] = *b"CSUM001\0";
 
 /// Terminal errors returned while consuming a projected-operation subscription.
@@ -68,12 +80,19 @@ pub enum ProjectedSubscriptionError {
 
 /// A cursor-based stream of accepted operations for one document.
 pub struct ProjectedSubscription {
+    /// Shared service used for cursor-based catch-up reads.
     service: Arc<NativeService>,
+    /// Document to which the subscription is bound.
     document: Bytes,
+    /// Last canonical position scanned.
     cursor: Option<Bytes>,
+    /// Accepted operations already fetched but not yet returned.
     pending: VecDeque<ProjectedOperation>,
+    /// Best-effort notification receiver; lag is repaired by cursor reads.
     notifications: broadcast::Receiver<()>,
+    /// Cancellation state observed by `next`.
     cancellation: watch::Receiver<bool>,
+    /// Cancellation sender retained by the subscription handle.
     cancel: watch::Sender<bool>,
 }
 
@@ -214,23 +233,33 @@ impl ServiceConfig {
 
 /// A single-host registry of isolated document sequencers and shared content storage.
 pub struct NativeService {
+    /// Storage and root-directory policy.
     config: ServiceConfig,
+    /// Service-wide blob and summary storage.
     content: ServiceContentStore,
+    /// Lazily opened document state by opaque identifier.
     documents: Mutex<BTreeMap<Bytes, Document>>,
 }
 
+/// Selects ephemeral or durable content-addressed storage.
 enum ServiceContentStore {
+    /// Process-local content storage.
     Memory(MemoryContentStore),
+    /// Durable store or its retained initialization failure.
     Durable(Result<ContentStore, ErrorCode>),
 }
 
+/// Process-local content-addressed blobs and summary manifests.
 #[derive(Default)]
 struct MemoryContentStore {
+    /// Blob bytes indexed by content digest.
     blobs: RwLock<BTreeMap<ContentDigest, Bytes>>,
+    /// Summary manifests indexed by canonical digest.
     summaries: RwLock<BTreeMap<ContentDigest, SummaryManifest>>,
 }
 
 impl MemoryContentStore {
+    /// Stores or deduplicates one bounded blob.
     fn put_blob(&self, payload: Bytes) -> Result<BlobReceipt, ErrorCode> {
         let size_bytes = u64::try_from(payload.len()).map_err(|_| ErrorCode::ContentTooLarge)?;
         if size_bytes > MAX_BLOB_BYTES {
@@ -250,6 +279,7 @@ impl MemoryContentStore {
         })
     }
 
+    /// Fetches one blob or reports that its digest is absent.
     fn fetch_blob(&self, digest: ContentDigest) -> Result<Bytes, ErrorCode> {
         self.blobs
             .read()
@@ -259,6 +289,7 @@ impl MemoryContentStore {
             .ok_or(ErrorCode::BlobNotFound)
     }
 
+    /// Validates blob references and stores a canonical summary manifest.
     fn publish_summary(&self, manifest: SummaryManifest) -> Result<SummaryReceipt, ErrorCode> {
         let encoded = encode_summary_manifest(&manifest)?;
         let blobs = self.blobs.read().map_err(|_| ErrorCode::Unavailable)?;
@@ -288,6 +319,7 @@ impl MemoryContentStore {
         })
     }
 
+    /// Fetches one summary manifest or reports that its digest is absent.
     fn fetch_summary(&self, digest: ContentDigest) -> Result<SummaryManifest, ErrorCode> {
         self.summaries
             .read()
@@ -373,6 +405,7 @@ impl NativeService {
         })
     }
 
+    /// Handles service-wide requests or routes document-scoped requests.
     async fn handle_result(&self, request: Request) -> Result<Response, ErrorCode> {
         match request {
             Request::UploadBlob { payload } => self.upload_blob(payload),
@@ -420,6 +453,7 @@ impl NativeService {
         }
     }
 
+    /// Stores a blob in the configured content backend and builds its receipt response.
     fn upload_blob(&self, payload: Bytes) -> Result<Response, ErrorCode> {
         let receipt = match &self.content {
             ServiceContentStore::Memory(content) => content.put_blob(payload)?,
@@ -436,6 +470,7 @@ impl NativeService {
         })
     }
 
+    /// Fetches a validated digest from the configured content backend.
     fn fetch_blob(&self, digest: &[u8]) -> Result<Response, ErrorCode> {
         let digest = ContentDigest::from_bytes(digest).map_err(|_| ErrorCode::InvalidDigest)?;
         let payload = match &self.content {
@@ -461,6 +496,7 @@ impl NativeService {
         })
     }
 
+    /// Converts and publishes a protocol summary manifest.
     fn publish_summary(
         &self,
         entries: Vec<fluid_service_protocol::SummaryEntry>,
@@ -494,6 +530,7 @@ impl NativeService {
         })
     }
 
+    /// Fetches and converts a summary manifest for the protocol response.
     fn fetch_summary(&self, digest: &[u8]) -> Result<Response, ErrorCode> {
         let digest = ContentDigest::from_bytes(digest).map_err(|_| ErrorCode::InvalidDigest)?;
         let manifest = match &self.content {
@@ -517,14 +554,17 @@ impl NativeService {
         })
     }
 
+    /// Reports whether a file-backed document can be opened at `path`.
     fn document_exists(&self, path: &std::path::Path) -> bool {
         self.config.storage_mode != StorageMode::Memory && path.exists()
     }
 
+    /// Maps an opaque document identifier to its isolated storage directory.
     fn document_path(&self, document: &[u8]) -> PathBuf {
         self.config.root.join("documents").join(hex(document))
     }
 
+    /// Maps a document identifier to its persisted fencing authority.
     fn authority_path(&self, document: &[u8]) -> PathBuf {
         self.config
             .root
@@ -533,6 +573,7 @@ impl NativeService {
     }
 }
 
+/// Encodes a sorted, unique summary manifest for in-memory digest parity.
 fn encode_summary_manifest(manifest: &SummaryManifest) -> Result<Vec<u8>, ErrorCode> {
     let entry_count =
         u32::try_from(manifest.entries.len()).map_err(|_| ErrorCode::InvalidManifest)?;
@@ -559,6 +600,7 @@ fn encode_summary_manifest(manifest: &SummaryManifest) -> Result<Vec<u8>, ErrorC
     Ok(encoded)
 }
 
+/// Returns the embedded document identifier for a document-scoped request.
 fn request_document(request: &Request) -> Option<&Bytes> {
     match request {
         Request::OpenSession { document, .. }
@@ -579,13 +621,18 @@ fn request_document(request: &Request) -> Option<&Bytes> {
     }
 }
 
+/// Open storage, sequencer, and notification state for one document.
 struct Document {
+    /// Backend-neutral access to the document log and snapshots.
     storage: ServiceStorage,
+    /// Authoritative sequencer recovered from the document log.
     sequencer: AuthoritativeSequencer<ServiceStorage>,
+    /// Best-effort wakeups for projected subscribers.
     projected_notifications: broadcast::Sender<()>,
 }
 
 impl Document {
+    /// Creates a document scope and opens its empty state.
     async fn create(
         path: PathBuf,
         authority_path: PathBuf,
@@ -608,6 +655,7 @@ impl Document {
         Self::open_with_scope(path, authority_path, scope, storage_mode).await
     }
 
+    /// Opens and validates an existing file-backed document scope.
     async fn open(
         path: PathBuf,
         authority_path: PathBuf,
@@ -630,6 +678,7 @@ impl Document {
         Self::open_with_scope(path, authority_path, scope, storage_mode).await
     }
 
+    /// Opens storage and recovers sequencer state for a validated scope.
     async fn open_with_scope(
         path: PathBuf,
         authority_path: PathBuf,
@@ -664,6 +713,7 @@ impl Document {
         })
     }
 
+    /// Dispatches one request already routed to this document.
     async fn handle(&mut self, request: Request) -> Result<Response, ErrorCode> {
         match request {
             Request::OpenSession {
@@ -702,6 +752,7 @@ impl Document {
         }
     }
 
+    /// Validates and appends one writer session start.
     async fn open_session(
         &mut self,
         writer: Bytes,
@@ -719,6 +770,7 @@ impl Document {
         Ok(Response::Acknowledged(Acknowledgement::SessionOpened))
     }
 
+    /// Validates, sequences, and announces one operation submission.
     async fn submit(
         &mut self,
         submission: fluid_service_protocol::Submission,
@@ -748,6 +800,7 @@ impl Document {
         Ok(submitted_response(disposition, message))
     }
 
+    /// Reads a bounded page of opaque canonical records.
     async fn read(&self, after: Option<Bytes>) -> Result<Response, ErrorCode> {
         let after = match after {
             Some(token) => Some(self.storage.decode_position(&token).await?),
@@ -779,6 +832,7 @@ impl Document {
         Ok(Response::Read { records })
     }
 
+    /// Reads a bounded page of accepted operations after a canonical cursor.
     fn read_projected(&self, after: Option<Bytes>) -> Result<Response, ErrorCode> {
         let after = after
             .map(PositionToken::new)
@@ -803,6 +857,7 @@ impl Document {
         })
     }
 
+    /// Resolves a stable submission identity without appending.
     async fn resolve_submission(
         &mut self,
         writer: Bytes,
@@ -834,6 +889,7 @@ impl Document {
         Ok(Response::Resolved(resolution))
     }
 
+    /// Fetches and converts the latest published snapshot.
     async fn latest_snapshot(&self) -> Result<Response, ErrorCode> {
         let latest = self
             .storage
@@ -844,6 +900,7 @@ impl Document {
         Ok(Response::Snapshot(latest.map(Self::protocol_snapshot)))
     }
 
+    /// Validates protocol tokens and publishes a snapshot.
     async fn publish_snapshot(
         &self,
         includes_through: Reference,
@@ -871,6 +928,7 @@ impl Document {
         Ok(Response::Acknowledged(Acknowledgement::SnapshotPublished))
     }
 
+    /// Converts a storage snapshot into its protocol representation.
     fn protocol_snapshot(snapshot: PublishedSnapshot<EventPosition>) -> ProtocolSnapshot {
         ProtocolSnapshot {
             id: snapshot.id.as_bytes().clone(),
@@ -883,24 +941,32 @@ impl Document {
     }
 }
 
+/// Backend-neutral one-based canonical event ordinal.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 struct EventPosition(u64);
 
 impl EventPosition {
+    /// Encodes this ordinal as an eight-byte big-endian token.
     fn encode(self) -> Bytes {
         Bytes::copy_from_slice(&self.0.to_be_bytes())
     }
 }
 
+/// Classified failures from the selected document log backend.
 #[derive(Debug)]
 enum ServiceLogError {
+    /// In-memory backend failure.
     Memory(MemoryError),
+    /// Buffered file backend failure.
     Buffered(FileError),
+    /// Durable-log backend failure.
     Durable(DurableLogError),
+    /// A neutral position was paired with a different backend.
     WrongPositionMode,
 }
 
 impl fmt::Display for ServiceLogError {
+    /// Formats the selected backend failure without losing its source.
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Memory(error) => write!(formatter, "memory log failed: {error}"),
@@ -914,6 +980,7 @@ impl fmt::Display for ServiceLogError {
 }
 
 impl Error for ServiceLogError {
+    /// Returns the underlying backend error when one exists.
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Memory(error) => Some(error),
@@ -925,6 +992,7 @@ impl Error for ServiceLogError {
 }
 
 impl ClassifiedError for ServiceLogError {
+    /// Preserves the selected backend's stable error classification.
     fn kind(&self) -> ErrorKind {
         match self {
             Self::Memory(error) => error.kind(),
@@ -935,14 +1003,19 @@ impl ClassifiedError for ServiceLogError {
     }
 }
 
+/// Runtime-selected append and snapshot backend.
 #[derive(Clone, Debug)]
 enum ServiceLog {
+    /// Process-local append and snapshot backend.
     Memory(MemoryStream),
+    /// Buffered file append and snapshot backend.
     Buffered(FileStream),
+    /// Durable append and snapshot backend.
     Durable(DurableLog),
 }
 
 impl ServiceLog {
+    /// Opens the backend selected by `storage_mode`.
     fn open(storage_mode: StorageMode, path: PathBuf) -> Result<Self, ServiceLogError> {
         match storage_mode {
             StorageMode::Memory => Ok(Self::Memory(MemoryStream::new())),
@@ -955,6 +1028,7 @@ impl ServiceLog {
         }
     }
 
+    /// Resolves a neutral ordinal to the selected backend's position type.
     async fn position_at(
         &self,
         position: EventPosition,
@@ -977,17 +1051,24 @@ impl ServiceLog {
     }
 }
 
+/// Position value paired with its originating backend.
 enum BackendPosition {
+    /// Position owned by the in-memory backend.
     Memory(snapshotted_stream_memory::MemoryPosition),
+    /// Position owned by the buffered file backend.
     Buffered(snapshotted_stream_file_simple::FilePosition),
+    /// Position owned by the durable-log backend.
     Durable(snapshotted_stream_durable_log_spike::DurablePosition),
 }
 
 #[async_trait]
 impl AppendStream for ServiceLog {
+    /// Neutral position type exposed by the service.
     type Position = EventPosition;
+    /// Error wrapper preserving backend classifications.
     type Error = ServiceLogError;
 
+    /// Returns the capabilities of the selected backend.
     fn capabilities(&self) -> snapshotted_stream_core::Capabilities {
         match self {
             Self::Memory(log) => log.capabilities(),
@@ -996,6 +1077,7 @@ impl AppendStream for ServiceLog {
         }
     }
 
+    /// Appends through the selected backend and normalizes its position.
     async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
         match self {
             Self::Memory(log) => log
@@ -1025,6 +1107,7 @@ impl AppendStream for ServiceLog {
         }
     }
 
+    /// Reads through the selected backend and normalizes returned positions.
     async fn read(
         &self,
         after: Option<&Self::Position>,
@@ -1084,6 +1167,7 @@ impl AppendStream for ServiceLog {
         }
     }
 
+    /// Returns the selected backend's head as a neutral ordinal.
     async fn head(&self) -> Result<Option<Self::Position>, Self::Error> {
         match self {
             Self::Memory(log) => log
@@ -1107,9 +1191,12 @@ impl AppendStream for ServiceLog {
 
 #[async_trait]
 impl SnapshotStore for ServiceLog {
+    /// Neutral position type exposed by service snapshots.
     type Position = EventPosition;
+    /// Error wrapper preserving backend classifications.
     type Error = ServiceLogError;
 
+    /// Fetches the selected backend's latest snapshot and normalizes its position.
     async fn latest(&self) -> Result<Option<PublishedSnapshot<Self::Position>>, Self::Error> {
         match self {
             Self::Memory(log) => log
@@ -1163,6 +1250,7 @@ impl SnapshotStore for ServiceLog {
         }
     }
 
+    /// Converts neutral positions and publishes through the selected backend.
     async fn publish(
         &self,
         snapshot: Snapshot<Self::Position>,
@@ -1238,6 +1326,7 @@ impl SnapshotStore for ServiceLog {
     }
 }
 
+/// Maps the positioned case while preserving an initial snapshot position.
 fn map_snapshot_position<P>(
     position: SnapshotPosition<P>,
     map: impl FnOnce(P) -> EventPosition,
@@ -1248,12 +1337,15 @@ fn map_snapshot_position<P>(
     }
 }
 
+/// Sequencer adapter over the runtime-selected document log.
 #[derive(Clone)]
 struct ServiceStorage {
+    /// Runtime-selected document log.
     log: ServiceLog,
 }
 
 impl ServiceStorage {
+    /// Reads all canonical records for sequencer replay.
     async fn read_all(&self) -> Result<Vec<ReadRecord<EventPosition>>, ServiceLogError> {
         let mut reader = self.log.read(None).await?;
         let mut records = Vec::new();
@@ -1263,6 +1355,7 @@ impl ServiceStorage {
         Ok(records)
     }
 
+    /// Validates and resolves an opaque protocol position token.
     async fn decode_position(&self, token: &[u8]) -> Result<EventPosition, ErrorCode> {
         if token.len() != TOKEN_BYTES {
             return Err(ErrorCode::InvalidPosition);
@@ -1278,24 +1371,30 @@ impl ServiceStorage {
 }
 
 impl SequencerStorage for ServiceStorage {
+    /// Backend-neutral canonical position type.
     type Position = EventPosition;
+    /// Selected backend's classified error wrapper.
     type Error = ServiceLogError;
 
+    /// Appends one canonical sequencer entry.
     async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
         self.log.append(value).await
     }
 
+    /// Returns all canonical records for sequencer replay.
     fn read_all(
         &self,
     ) -> impl Future<Output = Result<Vec<ReadRecord<Self::Position>>, Self::Error>> + Send {
         self.read_all()
     }
 
+    /// Encodes a neutral canonical position for protocol transport.
     fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error> {
         Ok(position.encode())
     }
 }
 
+/// Validates and converts a protocol reference for the sequencer.
 fn protocol_reference(reference: Reference) -> Result<SnapshotPosition<PositionToken>, ErrorCode> {
     match reference {
         Reference::Initial => Ok(SnapshotPosition::Initial),
@@ -1305,6 +1404,7 @@ fn protocol_reference(reference: Reference) -> Result<SnapshotPosition<PositionT
     }
 }
 
+/// Converts sequencer acceptance metadata into a protocol response.
 fn submitted_response(disposition: SubmissionDisposition, message: SequencedMessage) -> Response {
     Response::Submitted {
         disposition,
@@ -1314,6 +1414,7 @@ fn submitted_response(disposition: SubmissionDisposition, message: SequencedMess
     }
 }
 
+/// Converts a sequencer projection into its protocol representation.
 fn protocol_operation(operation: SequencerOperation) -> ProjectedOperation {
     ProjectedOperation {
         position: operation.stream_position.as_bytes().clone(),
@@ -1328,6 +1429,7 @@ fn protocol_operation(operation: SequencerOperation) -> ProjectedOperation {
     }
 }
 
+/// Converts a sequencer reference into its protocol representation.
 fn protocol_reference_position(reference: SnapshotPosition<PositionToken>) -> Reference {
     match reference {
         SnapshotPosition::Initial => Reference::Initial,
@@ -1335,6 +1437,7 @@ fn protocol_reference_position(reference: SnapshotPosition<PositionToken>) -> Re
     }
 }
 
+/// Maps sequencer and storage failures to stable protocol classifications.
 fn map_sequencer_error(error: SequencerError<ServiceLogError>) -> ErrorCode {
     match error {
         SequencerError::Rejected(rejection) | SequencerError::InvalidCommittedEntry(rejection) => {
@@ -1351,6 +1454,7 @@ fn map_sequencer_error(error: SequencerError<ServiceLogError>) -> ErrorCode {
     }
 }
 
+/// Maps each sequencer rejection to its dedicated protocol code.
 fn map_rejection(rejection: &Rejection) -> ErrorCode {
     match rejection {
         Rejection::SessionAlreadyUsed => ErrorCode::SessionAlreadyUsed,
@@ -1364,6 +1468,7 @@ fn map_rejection(rejection: &Rejection) -> ErrorCode {
     }
 }
 
+/// Maps a classified log failure to its protocol code.
 fn map_storage_error(error: &ServiceLogError) -> ErrorCode {
     match error.kind() {
         ErrorKind::InvalidPosition => ErrorCode::InvalidPosition,
@@ -1376,6 +1481,7 @@ fn map_storage_error(error: &ServiceLogError) -> ErrorCode {
     }
 }
 
+/// Maps content-store failures to stable protocol classifications.
 fn map_content_error(error: &StoreError) -> ErrorCode {
     match error {
         StoreError::InvalidDigest => ErrorCode::InvalidDigest,
@@ -1395,6 +1501,7 @@ fn map_content_error(error: &StoreError) -> ErrorCode {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
+/// Generates a process-and-time-derived document scope on native targets.
 fn new_scope() -> Result<[u8; SCOPE_BYTES], ()> {
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -1404,13 +1511,16 @@ fn new_scope() -> Result<[u8; SCOPE_BYTES], ()> {
 }
 
 #[cfg(target_arch = "wasm32")]
+/// Generates a process-local monotonically unique document scope on WASM.
 fn new_scope() -> Result<[u8; SCOPE_BYTES], ()> {
     static NEXT_SCOPE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
     let scope = NEXT_SCOPE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     Ok(u128::from(scope).to_be_bytes())
 }
 
+/// Encodes arbitrary identifier bytes as a filesystem-safe lowercase path segment.
 fn hex(value: &[u8]) -> String {
+    /// Lowercase hexadecimal alphabet used for document paths.
     const DIGITS: &[u8; 16] = b"0123456789abcdef";
     let mut encoded = String::with_capacity(value.len() * 2);
     for byte in value {

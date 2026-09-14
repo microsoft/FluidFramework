@@ -22,8 +22,11 @@ use snapshotted_stream_core::{
     SnapshotPosition, StreamPosition,
 };
 
+/// Identifies a canonical sequencer entry before kind decoding.
 const FRAME_MAGIC: &[u8; 4] = b"FSQ2";
+/// Canonical entry tag for a writer session start.
 const SESSION_START_TAG: u8 = 0;
+/// Canonical entry tag for an accepted submission.
 const SUBMISSION_TAG: u8 = 1;
 
 /// A stable writer identity carried in every submitted frame.
@@ -109,6 +112,7 @@ pub struct PositionToken {
 }
 
 impl PositionToken {
+    /// Creates a canonical position from a trusted nonzero ordinal.
     fn from_ordinal(ordinal: u64) -> Self {
         debug_assert_ne!(ordinal, 0);
         Self {
@@ -206,10 +210,14 @@ pub enum FrameError {
     TrailingBytes,
 }
 
+/// Last accepted session state for one writer.
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct WriterState {
+    /// Current session accepted for the writer.
     session_id: SessionId,
+    /// Last accepted writer-local sequence number.
     local_sequence_number: u64,
+    /// Most recent accepted reference position.
     reference_position: SnapshotPosition<PositionToken>,
 }
 
@@ -250,6 +258,7 @@ pub struct ProjectedOperation {
 }
 
 impl From<SequencedMessage> for ProjectedOperation {
+    /// Projects an accepted message into its public operation fields.
     fn from(message: SequencedMessage) -> Self {
         Self {
             stream_position: message.stream_position,
@@ -266,6 +275,7 @@ impl From<SequencedMessage> for ProjectedOperation {
 }
 
 impl ProjectedOperation {
+    /// Estimates this operation's encoded protocol body contribution.
     fn encoded_size(&self) -> usize {
         self.stream_position.encoded.len()
             + self.writer_id.0.len()
@@ -281,6 +291,7 @@ impl ProjectedOperation {
     }
 }
 
+/// Returns the encoded canonical-frame size of a reference.
 fn reference_size(reference: &SnapshotPosition<PositionToken>) -> usize {
     match reference {
         SnapshotPosition::Initial => 1,
@@ -330,27 +341,41 @@ pub enum Rejection {
     SubmissionIdentityConflict,
 }
 
+/// A validated canonical entry before or after persistence.
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum LogEntry {
+    /// Establishes a fresh current session for a writer.
     SessionStart {
+        /// Stable writer identity.
         writer_id: WriterId,
+        /// Fresh session identity.
         session_id: SessionId,
+        /// Canonical state from which the session begins.
         reference_position: SnapshotPosition<PositionToken>,
     },
+    /// Records one accepted operation submission.
     Submission(Submission),
 }
 
+/// Authoritative state reconstructed by replaying canonical entries.
 #[derive(Debug, Default)]
 struct SequencerState {
+    /// Last canonical position observed during replay or append.
     observed_head: Option<PositionToken>,
+    /// Submission identity at each canonical ordinal, with session entries represented by `None`.
     canonical_submissions: Vec<Option<SubmissionId>>,
+    /// Current accepted session state by writer.
     writers: BTreeMap<WriterId, WriterState>,
+    /// Every session identity ever committed, preventing reuse.
     seen_sessions: BTreeSet<SessionId>,
+    /// Accepted messages indexed by stable submission identity.
     accepted: BTreeMap<SubmissionId, SequencedMessage>,
+    /// Last assigned accepted-operation sequence number.
     sequence_number: u64,
 }
 
 impl SequencerState {
+    /// Validates a proposed session start without mutating state.
     fn validate_session_start(
         &self,
         writer_id: WriterId,
@@ -371,6 +396,7 @@ impl SequencerState {
         })
     }
 
+    /// Classifies a submission as appendable, an exact duplicate, or rejected.
     fn validate_submission(&self, submission: Submission) -> Result<Preflight, Rejection> {
         if let Some(accepted) = self.accepted.get(&submission.submission_id) {
             return if accepted.submission == submission {
@@ -409,6 +435,7 @@ impl SequencerState {
         Ok(Preflight::Append(LogEntry::Submission(submission)))
     }
 
+    /// Applies one committed canonical entry at its final stream position.
     fn apply(
         &mut self,
         stream_position: PositionToken,
@@ -468,6 +495,7 @@ impl SequencerState {
         Ok(result)
     }
 
+    /// Computes the minimum reference across active writers.
     fn minimum_reference_position(&self) -> SnapshotPosition<PositionToken> {
         self.writers
             .values()
@@ -482,6 +510,7 @@ impl SequencerState {
             )
     }
 
+    /// Rejects references beyond the observed canonical head.
     fn validate_reference(
         &self,
         reference: &SnapshotPosition<PositionToken>,
@@ -493,10 +522,12 @@ impl SequencerState {
         Ok(())
     }
 
+    /// Reports whether a reference precedes the current minimum.
     fn is_below_minimum(&self, reference: &SnapshotPosition<PositionToken>) -> bool {
         Self::reference_rank(reference) < Self::reference_rank(&self.minimum_reference_position())
     }
 
+    /// Maps initial and positioned references to comparable ordinals.
     fn reference_rank(reference: &SnapshotPosition<PositionToken>) -> u64 {
         match reference {
             SnapshotPosition::Initial => 0,
@@ -505,8 +536,11 @@ impl SequencerState {
     }
 }
 
+/// Result of validating a submission before storage access.
 enum Preflight {
+    /// The validated entry must be appended.
     Append(LogEntry),
+    /// The submission exactly matches an existing accepted message.
     Duplicate(SequencedMessage),
 }
 
@@ -543,9 +577,12 @@ impl<S> SequencerStorage for KernelStream<S>
 where
     S: AppendStream + PositionCodec,
 {
+    /// Position type delegated to the wrapped stream.
     type Position = S::Position;
+    /// Error type delegated to the wrapped stream.
     type Error = S::Error;
 
+    /// Delegates append to the wrapped stream.
     fn append(
         &self,
         value: Bytes,
@@ -553,6 +590,7 @@ where
         self.0.append(value)
     }
 
+    /// Consumes one finite reader from the beginning of the wrapped stream.
     async fn read_all(&self) -> Result<Vec<ReadRecord<Self::Position>>, Self::Error> {
         let mut reader = self.0.read(None).await?;
         let mut records = Vec::new();
@@ -564,6 +602,7 @@ where
         Ok(records)
     }
 
+    /// Delegates position encoding to the wrapped stream.
     fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error> {
         self.0.encode_position(position)
     }
@@ -585,6 +624,7 @@ pub enum FenceAuthorityError {
 }
 
 impl fmt::Display for FenceAuthorityError {
+    /// Formats a stable description of the fencing authority failure.
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Io(error) => write!(formatter, "fencing authority I/O failed: {error}"),
@@ -595,6 +635,7 @@ impl fmt::Display for FenceAuthorityError {
 }
 
 impl Error for FenceAuthorityError {
+    /// Returns the underlying I/O error when one exists.
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Io(error) => Some(error),
@@ -604,25 +645,33 @@ impl Error for FenceAuthorityError {
 }
 
 impl From<std::io::Error> for FenceAuthorityError {
+    /// Classifies authority I/O failures without discarding their source.
     fn from(error: std::io::Error) -> Self {
         Self::Io(error)
     }
 }
 
+/// Selects process-local or persisted same-host fencing.
 #[derive(Clone)]
 enum FenceAuthority {
+    /// An epoch protected by an in-process read-write lock.
     Process,
+    /// A persisted epoch protected by an operating-system file lock.
     Deployment(Arc<PathBuf>),
 }
 
 /// A service-level gate that keeps fence validation atomic with replay, validation, and append.
 pub struct FencedStream<S> {
+    /// Shared storage protected by the authority.
     stream: Arc<S>,
+    /// Process-local epoch and operation gate.
     process_epoch: Arc<RwLock<u64>>,
+    /// Configured authority implementation.
     authority: FenceAuthority,
 }
 
 impl<S> Clone for FencedStream<S> {
+    /// Clones shared stream and authority ownership.
     fn clone(&self) -> Self {
         Self {
             stream: Arc::clone(&self.stream),
@@ -632,19 +681,29 @@ impl<S> Clone for FencedStream<S> {
     }
 }
 
+/// Internal result of acquiring the configured fence.
 #[derive(Debug)]
 enum FenceAcquireError {
+    /// The supplied token is no longer current.
     Lost,
+    /// The persisted authority could not be accessed.
     Authority(FenceAuthorityError),
 }
 
+/// Guard that holds fence ownership while storage is accessed.
 enum FenceGuard<'a, S> {
+    /// In-process guard retaining a read lock on the current epoch.
     Process {
+        /// Protected storage implementation.
         stream: &'a S,
+        /// Epoch read lock held through the storage operation.
         _epoch: RwLockReadGuard<'a, u64>,
     },
+    /// Same-host guard retaining an exclusive authority file lock.
     Deployment {
+        /// Protected storage implementation.
         stream: &'a S,
+        /// Locked authority file held through the storage operation.
         _lock: File,
     },
 }
@@ -653,12 +712,14 @@ impl<S> FenceGuard<'_, S>
 where
     S: SequencerStorage,
 {
+    /// Returns the protected storage implementation.
     fn stream(&self) -> &S {
         match self {
             Self::Process { stream, .. } | Self::Deployment { stream, .. } => stream,
         }
     }
 
+    /// Appends while retaining the fence guard for the operation's duration.
     async fn append(&self, value: Bytes) -> Result<AppendReceipt<S::Position>, S::Error> {
         self.stream().append(value).await
     }
@@ -743,6 +804,7 @@ where
         }
     }
 
+    /// Acquires the authority and verifies that `fence` is still current.
     fn lock_current(&self, fence: FenceToken) -> Result<FenceGuard<'_, S>, FenceAcquireError> {
         match &self.authority {
             FenceAuthority::Process => {
@@ -773,6 +835,7 @@ where
     }
 }
 
+/// Opens and exclusively locks the persisted epoch authority.
 fn open_locked_authority(path: &Path) -> Result<File, FenceAuthorityError> {
     let file = OpenOptions::new()
         .read(true)
@@ -784,6 +847,7 @@ fn open_locked_authority(path: &Path) -> Result<File, FenceAuthorityError> {
     Ok(file)
 }
 
+/// Reads exactly one big-endian epoch from a locked authority file.
 fn read_epoch(file: &mut File) -> Result<u64, FenceAuthorityError> {
     file.seek(SeekFrom::Start(0))?;
     let mut bytes = Vec::new();
@@ -794,6 +858,7 @@ fn read_epoch(file: &mut File) -> Result<u64, FenceAuthorityError> {
     Ok(u64::from_be_bytes(bytes))
 }
 
+/// Replaces and synchronizes the epoch in a locked authority file.
 fn write_epoch(file: &mut File, epoch: u64) -> Result<(), FenceAuthorityError> {
     file.seek(SeekFrom::Start(0))?;
     file.write_all(&epoch.to_be_bytes())?;
@@ -863,11 +928,17 @@ pub struct AuthoritativeSequencer<S>
 where
     S: SequencerStorage,
 {
+    /// Fenced canonical storage.
     storage: FencedStream<S>,
+    /// Lease token held by this sequencer instance.
     fence: FenceToken,
+    /// State reconstructed from and kept consistent with canonical storage.
     state: SequencerState,
+    /// Submission awaiting authoritative resolution after an ambiguous append.
     unresolved: Option<Submission>,
+    /// Session start awaiting replay after an ambiguous append.
     unresolved_session_start: Option<LogEntry>,
+    /// Whether appends are blocked pending replay.
     recovery_required: bool,
 }
 
@@ -1156,6 +1227,7 @@ where
     }
 }
 
+/// Maps an internal fence acquisition failure to the service error contract.
 fn map_fence_acquire_error<E>(error: FenceAcquireError) -> ServiceError<E> {
     match error {
         FenceAcquireError::Lost => ServiceError::FenceLost,
@@ -1163,6 +1235,7 @@ fn map_fence_acquire_error<E>(error: FenceAcquireError) -> ServiceError<E> {
     }
 }
 
+/// Converts a storage-owned position into the sequencer's opaque token.
 fn position_token<S>(
     storage: &S,
     position: &S::Position,
@@ -1176,6 +1249,7 @@ where
     PositionToken::new(encoded).map_err(|_| ServiceError::InvalidPosition)
 }
 
+/// Reconstructs authoritative state from every canonical entry under a fence.
 async fn replay<S>(guard: &FenceGuard<'_, S>) -> Result<SequencerState, ServiceError<S::Error>>
 where
     S: SequencerStorage,
@@ -1193,6 +1267,7 @@ where
     Ok(state)
 }
 
+/// Encodes one canonical session or submission entry.
 fn encode_entry(entry: &LogEntry) -> Result<Bytes, FrameError> {
     let mut frame = BytesMut::new();
     frame.extend_from_slice(FRAME_MAGIC);
@@ -1223,6 +1298,7 @@ fn encode_entry(entry: &LogEntry) -> Result<Bytes, FrameError> {
     Ok(frame.freeze())
 }
 
+/// Decodes exactly one canonical session or submission entry.
 fn decode_entry(mut frame: Bytes) -> Result<LogEntry, FrameError> {
     if frame.remaining() < FRAME_MAGIC.len() + 1 || &frame[..FRAME_MAGIC.len()] != FRAME_MAGIC {
         return Err(FrameError::InvalidMagic);
@@ -1273,6 +1349,7 @@ fn decode_entry(mut frame: Bytes) -> Result<LogEntry, FrameError> {
     Ok(entry)
 }
 
+/// Encodes a byte field with a 16-bit length prefix.
 fn put_u16_bytes(frame: &mut BytesMut, value: &[u8]) -> Result<(), FrameError> {
     let length = u16::try_from(value.len()).map_err(|_| FrameError::FieldTooLarge)?;
     frame.put_u16(length);
@@ -1280,6 +1357,7 @@ fn put_u16_bytes(frame: &mut BytesMut, value: &[u8]) -> Result<(), FrameError> {
     Ok(())
 }
 
+/// Decodes a byte field with a 16-bit length prefix.
 fn take_u16_bytes(frame: &mut Bytes) -> Result<Bytes, FrameError> {
     if frame.remaining() < 2 {
         return Err(FrameError::Truncated);
@@ -1291,6 +1369,7 @@ fn take_u16_bytes(frame: &mut Bytes) -> Result<Bytes, FrameError> {
     Ok(frame.split_to(length))
 }
 
+/// Encodes an initial or positioned canonical reference.
 fn put_reference(
     frame: &mut BytesMut,
     reference: &SnapshotPosition<PositionToken>,
@@ -1305,6 +1384,7 @@ fn put_reference(
     Ok(())
 }
 
+/// Decodes an initial or positioned canonical reference.
 fn take_reference(frame: &mut Bytes) -> Result<SnapshotPosition<PositionToken>, FrameError> {
     if !frame.has_remaining() {
         return Err(FrameError::Truncated);

@@ -11,36 +11,65 @@ use thiserror::Error;
 pub const VERSION: u16 = 2;
 /// The fixed byte length of an FSP4 frame header.
 pub const HEADER_BYTES: usize = 20;
+/// Identifies an FSP4 frame before version and kind decoding.
 const MAGIC: &[u8; 4] = b"FSP4";
 
+/// Wire kind for [`Request::Create`].
 const CREATE: u8 = 1;
+/// Wire kind for [`Request::OpenSession`].
 const OPEN_SESSION: u8 = 2;
+/// Wire kind for [`Request::Submit`].
 const SUBMIT: u8 = 3;
+/// Wire kind for [`Request::Read`].
 const READ: u8 = 4;
+/// Wire kind for [`Request::LatestSnapshot`].
 const LATEST_SNAPSHOT: u8 = 5;
+/// Wire kind for [`Request::PublishSnapshot`].
 const PUBLISH_SNAPSHOT: u8 = 6;
+/// Wire kind for [`Request::Shutdown`].
 const SHUTDOWN: u8 = 7;
+/// Wire kind for [`Request::ReadProjected`].
 const READ_PROJECTED: u8 = 8;
+/// Wire kind for [`Request::ResolveSubmission`].
 const RESOLVE_SUBMISSION: u8 = 9;
+/// Wire kind for [`Request::UploadBlob`].
 const UPLOAD_BLOB: u8 = 10;
+/// Wire kind for [`Request::FetchBlob`].
 const FETCH_BLOB: u8 = 11;
+/// Wire kind for [`Request::PublishSummary`].
 const PUBLISH_SUMMARY: u8 = 12;
+/// Wire kind for [`Request::FetchSummary`].
 const FETCH_SUMMARY: u8 = 13;
+/// Wire kind for [`Request::SubscribeProjected`].
 const SUBSCRIBE_PROJECTED: u8 = 14;
+/// Wire kind for [`Request::OpenSubmissionStream`].
 const OPEN_SUBMISSION_STREAM: u8 = 15;
+/// Wire kind for [`Response::Acknowledged`].
 const ACKNOWLEDGED: u8 = 64;
+/// Wire kind for [`Response::Submitted`].
 const SUBMITTED: u8 = 65;
+/// Wire kind for [`Response::Read`].
 const READ_RESULT: u8 = 66;
+/// Wire kind for [`Response::Snapshot`].
 const SNAPSHOT_RESULT: u8 = 67;
+/// Wire kind for [`Response::ProjectedRead`].
 const PROJECTED_READ_RESULT: u8 = 68;
+/// Wire kind for [`Response::Resolved`].
 const RESOLUTION_RESULT: u8 = 69;
+/// Wire kind for [`Response::BlobUploaded`].
 const BLOB_UPLOADED: u8 = 70;
+/// Wire kind for [`Response::Blob`].
 const BLOB_RESULT: u8 = 71;
+/// Wire kind for [`Response::SummaryPublished`].
 const SUMMARY_PUBLISHED: u8 = 72;
+/// Wire kind for [`Response::Summary`].
 const SUMMARY_RESULT: u8 = 73;
+/// Wire kind for [`Response::ProjectedOperation`].
 const PROJECTED_OPERATION: u8 = 74;
+/// Wire kind for [`Response::Error`].
 const ERROR: u8 = 127;
 
+/// Byte length of every supported content digest.
 const CONTENT_DIGEST_BYTES: usize = 32;
 
 /// Configurable upper bounds applied while encoding and decoding frames.
@@ -71,6 +100,7 @@ pub struct Limits {
 }
 
 impl Default for Limits {
+    /// Returns the service's default frame and field bounds.
     fn default() -> Self {
         Self {
             max_frame_bytes: 1024 * 1024,
@@ -561,6 +591,7 @@ pub fn decode(bytes: &[u8], limits: Limits) -> Result<Frame, ProtocolError> {
     })
 }
 
+/// Encodes a message body and returns its stable wire kind.
 fn encode_message(message: &Message, limits: Limits) -> Result<(u8, Bytes), ProtocolError> {
     let mut body = BytesMut::new();
     let kind = match message {
@@ -657,6 +688,7 @@ fn encode_message(message: &Message, limits: Limits) -> Result<(u8, Bytes), Prot
     Ok((kind, body.freeze()))
 }
 
+/// Encodes a request body and returns its stable wire kind.
 fn encode_request_message(request: &Request, limits: Limits) -> Result<(u8, Bytes), ProtocolError> {
     let mut body = BytesMut::new();
     let kind = match request {
@@ -758,6 +790,7 @@ fn encode_request_message(request: &Request, limits: Limits) -> Result<(u8, Byte
     Ok((kind, body.freeze()))
 }
 
+/// Encodes a bounded projected-read response body.
 fn encode_projected_read(
     body: &mut BytesMut,
     operations: &[ProjectedOperation],
@@ -777,6 +810,7 @@ fn encode_projected_read(
     Ok(())
 }
 
+/// Encodes one projected operation into an existing body.
 fn encode_projected_operation(
     body: &mut BytesMut,
     operation: &ProjectedOperation,
@@ -794,6 +828,7 @@ fn encode_projected_operation(
     Ok(())
 }
 
+/// Encodes one submission resolution into an existing body.
 fn encode_resolution(
     body: &mut BytesMut,
     resolution: &Resolution,
@@ -816,6 +851,7 @@ fn encode_resolution(
     Ok(())
 }
 
+/// Decodes exactly one request or response body for `kind`.
 fn decode_message(kind: u8, mut body: Bytes, limits: Limits) -> Result<Message, ProtocolError> {
     let message = if kind <= OPEN_SUBMISSION_STREAM {
         Message::Request(decode_request(kind, &mut body, limits)?)
@@ -828,6 +864,7 @@ fn decode_message(kind: u8, mut body: Bytes, limits: Limits) -> Result<Message, 
     Ok(message)
 }
 
+/// Decodes one request body for its stable wire kind.
 fn decode_request(kind: u8, body: &mut Bytes, limits: Limits) -> Result<Request, ProtocolError> {
     Ok(match kind {
         CREATE => Request::Create {
@@ -907,6 +944,7 @@ fn decode_request(kind: u8, body: &mut Bytes, limits: Limits) -> Result<Request,
     })
 }
 
+/// Decodes one response body for its stable wire kind.
 fn decode_response(kind: u8, body: &mut Bytes, limits: Limits) -> Result<Response, ProtocolError> {
     Ok(match kind {
         ACKNOWLEDGED => Response::Acknowledged(match take_u8(body)? {
@@ -994,6 +1032,7 @@ fn decode_response(kind: u8, body: &mut Bytes, limits: Limits) -> Result<Respons
     })
 }
 
+/// Decodes a bounded projected-read response body.
 fn decode_projected_read(body: &mut Bytes, limits: Limits) -> Result<Response, ProtocolError> {
     if body.remaining() < 4 {
         return Err(ProtocolError::Truncated);
@@ -1019,6 +1058,7 @@ fn decode_projected_read(body: &mut Bytes, limits: Limits) -> Result<Response, P
     })
 }
 
+/// Decodes one projected operation from a response body.
 fn decode_projected_operation(
     body: &mut Bytes,
     limits: Limits,
@@ -1051,6 +1091,7 @@ fn decode_projected_operation(
     })
 }
 
+/// Decodes one submission resolution from a response body.
 fn decode_resolution(body: &mut Bytes, limits: Limits) -> Result<Resolution, ProtocolError> {
     Ok(match take_u8(body)? {
         1 => {
@@ -1070,6 +1111,7 @@ fn decode_resolution(body: &mut Bytes, limits: Limits) -> Result<Resolution, Pro
     })
 }
 
+/// Encodes an initial or opaque canonical reference.
 fn put_reference(
     body: &mut BytesMut,
     reference: &Reference,
@@ -1085,6 +1127,7 @@ fn put_reference(
     Ok(())
 }
 
+/// Decodes an initial or opaque canonical reference.
 fn take_reference(body: &mut Bytes, limits: Limits) -> Result<Reference, ProtocolError> {
     match take_u8(body)? {
         0 => Ok(Reference::Initial),
@@ -1093,6 +1136,7 @@ fn take_reference(body: &mut Bytes, limits: Limits) -> Result<Reference, Protoco
     }
 }
 
+/// Encodes presence followed by an optional bounded byte field.
 fn put_optional_bytes(
     body: &mut BytesMut,
     value: Option<&Bytes>,
@@ -1105,6 +1149,7 @@ fn put_optional_bytes(
     Ok(())
 }
 
+/// Decodes presence followed by an optional bounded byte field.
 fn take_optional_bytes(body: &mut Bytes, limit: usize) -> Result<Option<Bytes>, ProtocolError> {
     match take_u8(body)? {
         0 => Ok(None),
@@ -1113,6 +1158,7 @@ fn take_optional_bytes(body: &mut Bytes, limit: usize) -> Result<Option<Bytes>, 
     }
 }
 
+/// Encodes a required non-empty length-prefixed byte field.
 fn put_bytes(body: &mut BytesMut, value: &Bytes, limit: usize) -> Result<(), ProtocolError> {
     if value.is_empty() {
         return Err(ProtocolError::EmptyField);
@@ -1125,6 +1171,7 @@ fn put_bytes(body: &mut BytesMut, value: &Bytes, limit: usize) -> Result<(), Pro
     Ok(())
 }
 
+/// Decodes a required non-empty length-prefixed byte field.
 fn take_bytes(body: &mut Bytes, limit: usize) -> Result<Bytes, ProtocolError> {
     if body.remaining() < 4 {
         return Err(ProtocolError::Truncated);
@@ -1142,6 +1189,7 @@ fn take_bytes(body: &mut Bytes, limit: usize) -> Result<Bytes, ProtocolError> {
     Ok(body.split_to(length))
 }
 
+/// Decodes one byte after checking for truncation.
 fn take_u8(body: &mut Bytes) -> Result<u8, ProtocolError> {
     if !body.has_remaining() {
         return Err(ProtocolError::Truncated);
@@ -1149,6 +1197,7 @@ fn take_u8(body: &mut Bytes) -> Result<u8, ProtocolError> {
     Ok(body.get_u8())
 }
 
+/// Decodes one big-endian 32-bit integer after checking for truncation.
 fn take_u32(body: &mut Bytes) -> Result<u32, ProtocolError> {
     if body.remaining() < 4 {
         return Err(ProtocolError::Truncated);
@@ -1156,6 +1205,7 @@ fn take_u32(body: &mut Bytes) -> Result<u32, ProtocolError> {
     Ok(body.get_u32())
 }
 
+/// Decodes one big-endian 64-bit integer after checking for truncation.
 fn take_u64(body: &mut Bytes) -> Result<u64, ProtocolError> {
     if body.remaining() < 8 {
         return Err(ProtocolError::Truncated);
@@ -1163,6 +1213,7 @@ fn take_u64(body: &mut Bytes) -> Result<u64, ProtocolError> {
     Ok(body.get_u64())
 }
 
+/// Decodes a Boolean represented by exactly zero or one.
 fn take_bool(body: &mut Bytes) -> Result<bool, ProtocolError> {
     match take_u8(body)? {
         0 => Ok(false),
@@ -1171,6 +1222,7 @@ fn take_bool(body: &mut Bytes) -> Result<bool, ProtocolError> {
     }
 }
 
+/// Encodes a fixed-length content digest.
 fn put_digest(body: &mut BytesMut, digest: &Bytes) -> Result<(), ProtocolError> {
     if digest.len() != CONTENT_DIGEST_BYTES {
         return Err(ProtocolError::InvalidDiscriminant);
@@ -1179,6 +1231,7 @@ fn put_digest(body: &mut BytesMut, digest: &Bytes) -> Result<(), ProtocolError> 
     Ok(())
 }
 
+/// Decodes a fixed-length content digest.
 fn take_digest(body: &mut Bytes) -> Result<Bytes, ProtocolError> {
     if body.remaining() < CONTENT_DIGEST_BYTES {
         return Err(ProtocolError::Truncated);
@@ -1186,6 +1239,7 @@ fn take_digest(body: &mut Bytes) -> Result<Bytes, ProtocolError> {
     Ok(body.split_to(CONTENT_DIGEST_BYTES))
 }
 
+/// Encodes a length-prefixed blob, permitting empty content.
 fn put_blob_bytes(body: &mut BytesMut, value: &Bytes, limit: usize) -> Result<(), ProtocolError> {
     if value.len() > limit {
         return Err(ProtocolError::FieldTooLarge);
@@ -1195,6 +1249,7 @@ fn put_blob_bytes(body: &mut BytesMut, value: &Bytes, limit: usize) -> Result<()
     Ok(())
 }
 
+/// Decodes a bounded length-prefixed blob, permitting empty content.
 fn take_blob_bytes(body: &mut Bytes, limit: usize) -> Result<Bytes, ProtocolError> {
     let length = usize::try_from(take_u32(body)?).map_err(|_| ProtocolError::FieldTooLarge)?;
     if length > limit {
@@ -1206,6 +1261,7 @@ fn take_blob_bytes(body: &mut Bytes, limit: usize) -> Result<Bytes, ProtocolErro
     Ok(body.split_to(length))
 }
 
+/// Encodes a bounded sequence of summary entries.
 fn put_summary_entries(
     body: &mut BytesMut,
     entries: &[SummaryEntry],
@@ -1222,6 +1278,7 @@ fn put_summary_entries(
     Ok(())
 }
 
+/// Decodes a bounded sequence of summary entries.
 fn take_summary_entries(
     body: &mut Bytes,
     limits: Limits,
@@ -1240,6 +1297,7 @@ fn take_summary_entries(
     Ok(entries)
 }
 
+/// Decodes a stable service error code discriminant.
 fn take_error_code(body: &mut Bytes) -> Result<ErrorCode, ProtocolError> {
     if body.remaining() < 2 {
         return Err(ProtocolError::Truncated);
