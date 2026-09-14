@@ -12,83 +12,131 @@ use snapshotted_stream_core::{
 use thiserror::Error;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+/// The current phase of the explicit native-client lifecycle.
 pub enum LifecycleState {
+    /// No transport session is active, so a fresh session may be opened.
     Disconnected,
+    /// An open-session request is awaiting its response.
     Connecting,
+    /// The session is open and may submit or read operations.
     Connected,
+    /// A submission is awaiting its first authoritative response.
     Submitting,
+    /// A resolution request for an ambiguous submission is in flight.
     Recovering,
+    /// A submission may have committed and must be resolved or abandoned explicitly.
     Ambiguous,
+    /// The client has shut down permanently.
     Closed,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+/// Stable submission data retained until the operation is committed or abandoned.
 pub struct PendingSubmission {
+    /// Session identity under which the submission was created.
     pub session: Bytes,
+    /// Stable identity used to resolve or deduplicate the submission.
     pub submission: Bytes,
+    /// Session-local sequence number supplied with the submission.
     pub local_sequence_number: u64,
+    /// Stream position against which the submission was authored.
     pub reference: Reference,
+    /// Opaque application operation bytes.
     pub payload: Bytes,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+/// Authoritative metadata returned for a committed or duplicate submission.
 pub struct SubmissionAcknowledgement {
+    /// Whether the service newly committed the submission or recognized a duplicate.
     pub disposition: SubmissionDisposition,
+    /// Opaque position assigned to the committed operation.
     pub position: Bytes,
+    /// Document sequence number assigned to the operation.
     pub sequence_number: u64,
+    /// Minimum reference position reported by the service.
     pub minimum_reference: Reference,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+/// A successful lifecycle transition or an authoritative service outcome.
 pub enum LifecycleEvent {
+    /// The requested session opened successfully.
     Connected,
+    /// The service rejected the session without opening it.
     SessionRejected(ErrorCode),
+    /// The pending submission committed or was already committed.
     SubmissionAcknowledged(SubmissionAcknowledgement),
+    /// Resolution proved that the pending submission did not commit.
     SubmissionNotCommitted,
+    /// The service definitively rejected the pending submission.
     SubmissionRejected(ErrorCode),
+    /// The submission outcome remains ambiguous and requires explicit recovery.
     SubmissionUncertain(ErrorCode),
 }
 
 #[derive(Clone, Debug, Error, Eq, PartialEq)]
+/// Local lifecycle-policy errors detected before or while applying a response.
 pub enum LifecycleError {
+    /// The requested action is not valid in the current state.
     #[error("cannot {action} while client is {state:?}")]
     InvalidTransition {
+        /// State in which the action was attempted.
         state: LifecycleState,
+        /// Human-readable action rejected by the state machine.
         action: &'static str,
     },
+    /// A reconnect attempted to reuse a session identity.
     #[error("reconnect requires a fresh session identity")]
     SessionNotFresh,
+    /// A new submission was attempted while another remains pending.
     #[error("a pending submission already exists")]
     PendingSubmissionExists,
+    /// An operation requiring retained submission data found none.
     #[error("there is no pending submission")]
     NoPendingSubmission,
+    /// Regeneration attempted to reuse the rejected submission identity.
     #[error("regeneration requires a fresh submission identity")]
     SubmissionIdentityNotFresh,
+    /// A response kind did not match the operation represented by the current state.
     #[error("response does not match the operation in state {0:?}")]
     UnexpectedResponse(LifecycleState),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+/// Metadata returned after publishing a content-addressed blob.
 pub struct BlobUpload {
+    /// Service-computed digest identifying the blob.
     pub digest: Bytes,
+    /// Number of payload bytes accepted by the service.
     pub size_bytes: u64,
+    /// Whether the digest already existed and no new blob was persisted.
     pub deduplicated: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+/// Metadata returned after publishing a content-addressed summary manifest.
 pub struct SummaryPublication {
+    /// Service-computed digest identifying the summary.
     pub digest: Bytes,
+    /// Number of entries in the published manifest.
     pub entry_count: u32,
+    /// Number of manifest bytes newly persisted by the service.
     pub persisted_bytes: u64,
+    /// Whether the digest already existed and no new manifest was persisted.
     pub deduplicated: bool,
 }
 
 #[derive(Clone, Debug, Error, Eq, PartialEq)]
+/// Errors produced while constructing or validating content-service responses.
 pub enum ContentClientError {
+    /// The service returned an explicit operation error.
     #[error("content service rejected the operation: {0:?}")]
     Service(ErrorCode),
+    /// The response kind did not match the requested content operation.
     #[error("content service returned an unexpected response kind")]
     UnexpectedResponse,
+    /// A fetch response carried a digest other than the requested identity.
     #[error("content response identity does not match the requested digest")]
     DigestMismatch,
 }
@@ -97,21 +145,25 @@ pub enum ContentClientError {
 pub struct ContentClient;
 
 impl ContentClient {
+    /// Constructs a request to publish `payload` by content digest.
     #[must_use]
     pub fn upload_blob(payload: Bytes) -> Request {
         Request::UploadBlob { payload }
     }
 
+    /// Constructs a request to fetch the blob identified by `digest`.
     #[must_use]
     pub fn fetch_blob(digest: Bytes) -> Request {
         Request::FetchBlob { digest }
     }
 
+    /// Constructs a request to publish a summary manifest.
     #[must_use]
     pub fn publish_summary(entries: Vec<SummaryEntry>) -> Request {
         Request::PublishSummary { entries }
     }
 
+    /// Constructs a request to fetch the summary identified by `digest`.
     #[must_use]
     pub fn fetch_summary(digest: Bytes) -> Request {
         Request::FetchSummary { digest }
@@ -204,6 +256,7 @@ pub struct NativeClient {
 }
 
 impl NativeClient {
+    /// Creates a disconnected lifecycle for one document and writer identity.
     #[must_use]
     pub fn new(document: Bytes, writer: Bytes) -> Self {
         Self {
@@ -216,11 +269,13 @@ impl NativeClient {
         }
     }
 
+    /// Returns the current lifecycle state.
     #[must_use]
     pub fn state(&self) -> LifecycleState {
         self.state
     }
 
+    /// Returns the submission retained for retry, recovery, or abandonment.
     #[must_use]
     pub fn pending(&self) -> Option<&PendingSubmission> {
         self.pending.as_ref()
@@ -567,13 +622,17 @@ fn uncertain_error(code: ErrorCode) -> bool {
 }
 
 #[derive(Debug, Error)]
+/// Errors produced by the stream-backed counter helper.
 pub enum CounterError<E> {
+    /// The underlying append stream or snapshot store failed.
     #[error("stream operation failed: {0}")]
     Stream(E),
+    /// A record or snapshot did not contain one big-endian `i64`.
     #[error("counter record must contain exactly eight bytes")]
     InvalidRecord,
 }
 
+/// Counter operations built from an append stream and its snapshot store.
 pub struct CounterClient<'a, S> {
     stream: &'a S,
 }
@@ -583,6 +642,7 @@ where
     S: AppendStream
         + SnapshotStore<Position = <S as AppendStream>::Position, Error = <S as AppendStream>::Error>,
 {
+    /// Creates a counter helper borrowing `stream`.
     #[must_use]
     pub fn new(stream: &'a S) -> Self {
         Self { stream }

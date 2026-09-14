@@ -15,6 +15,7 @@ use tokio::sync::Mutex;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
+/// In-process implementation of the injected browser client's request transport.
 pub struct LocalServiceTransport {
     service: Arc<NativeService>,
     limits: Limits,
@@ -22,6 +23,7 @@ pub struct LocalServiceTransport {
 
 #[wasm_bindgen]
 impl LocalServiceTransport {
+    /// Creates an isolated memory-backed service with the supplied FSP4 frame bound.
     #[wasm_bindgen(constructor)]
     #[must_use]
     pub fn new(max_frame_bytes: usize) -> Self {
@@ -91,14 +93,18 @@ impl LocalServiceTransport {
         })
     }
 
+    /// Accepts the optional cancellation hook; unary in-process requests are not interruptible.
     pub fn cancel(&self) {}
 
+    /// Accepts the optional disconnect hook; the in-process service has no connection to close.
     pub fn disconnect(&self) {}
 
+    /// Accepts the optional shutdown hook; dropping the transport owns service teardown.
     pub fn shutdown(&self) {}
 }
 
 #[wasm_bindgen]
+/// Lazily initialized projected-operation subscription for the in-process service.
 pub struct LocalProjectedSubscription {
     service: Arc<NativeService>,
     request_id: u64,
@@ -138,6 +144,7 @@ impl LocalProjectedSubscription {
         self.response(response)
     }
 
+    /// Cancels the initialized subscription, or does nothing before the first read.
     pub async fn cancel(&self) {
         if let Some(subscription) = self.subscription.lock().await.as_ref() {
             subscription.cancel();

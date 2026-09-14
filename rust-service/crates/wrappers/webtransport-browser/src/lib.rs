@@ -24,19 +24,29 @@ use web_sys::{
 
 #[wasm_bindgen(typescript_custom_section)]
 const TYPESCRIPT_TRANSPORT: &str = r#"
+/** Supplies complete FSP4 request and response frames to `InjectedClient`. */
 export interface AsyncRequestTransport {
+    /** Sends one complete request frame and resolves to one complete response frame. */
     request(frame: Uint8Array): Promise<Uint8Array>;
+    /** Opens a projected-operation stream when subscription support is available. */
     subscribe?(frame: Uint8Array): AsyncSubscriptionTransport;
+    /** Cancels the active operation when the transport supports cancellation. */
     cancel?(): void;
+    /** Disconnects the current transport session without reconnecting. */
     disconnect?(): void;
+    /** Permanently releases transport resources. */
     shutdown?(): void;
 }
 
+/** Supplies complete projected-operation response frames in stream order. */
 export interface AsyncSubscriptionTransport {
+    /** Resolves to the next complete response frame. */
     next(): Promise<Uint8Array>;
+    /** Stops the subscription and releases its transport resources. */
     cancel(): void | Promise<void>;
 }
 
+/** Immutable summary entries accepted by `publishSummary`. */
 export type SummaryEntries = ReadonlyArray<SummaryEntry>;
 "#;
 
@@ -50,18 +60,21 @@ pub struct BlobUpload {
 
 #[wasm_bindgen]
 impl BlobUpload {
+    /// Returns the service-computed content digest.
     #[wasm_bindgen(getter)]
     #[must_use]
     pub fn digest(&self) -> Uint8Array {
         Uint8Array::from(self.digest.as_slice())
     }
 
+    /// Returns the accepted payload size in bytes.
     #[wasm_bindgen(getter, js_name = sizeBytes)]
     #[must_use]
     pub fn size_bytes(&self) -> u64 {
         self.size_bytes
     }
 
+    /// Returns whether the service reused an existing blob.
     #[wasm_bindgen(getter)]
     #[must_use]
     pub fn deduplicated(&self) -> bool {
@@ -77,6 +90,7 @@ pub struct SummaryEntry {
 
 #[wasm_bindgen]
 impl SummaryEntry {
+    /// Creates one summary entry from an opaque path and blob digest.
     #[wasm_bindgen(constructor)]
     #[must_use]
     pub fn new(path: &Uint8Array, blob: &Uint8Array) -> Self {
@@ -88,12 +102,14 @@ impl SummaryEntry {
         }
     }
 
+    /// Returns the entry path bytes.
     #[wasm_bindgen(getter)]
     #[must_use]
     pub fn path(&self) -> Uint8Array {
         Uint8Array::from(self.inner.path.as_ref())
     }
 
+    /// Returns the referenced blob digest.
     #[wasm_bindgen(getter)]
     #[must_use]
     pub fn blob(&self) -> Uint8Array {
@@ -112,24 +128,28 @@ pub struct SummaryPublication {
 
 #[wasm_bindgen]
 impl SummaryPublication {
+    /// Returns the service-computed summary digest.
     #[wasm_bindgen(getter)]
     #[must_use]
     pub fn digest(&self) -> Uint8Array {
         Uint8Array::from(self.digest.as_slice())
     }
 
+    /// Returns the number of manifest entries.
     #[wasm_bindgen(getter, js_name = entryCount)]
     #[must_use]
     pub fn entry_count(&self) -> u32 {
         self.entry_count
     }
 
+    /// Returns the number of manifest bytes newly persisted.
     #[wasm_bindgen(getter, js_name = persistedBytes)]
     #[must_use]
     pub fn persisted_bytes(&self) -> u64 {
         self.persisted_bytes
     }
 
+    /// Returns whether the service reused an existing summary.
     #[wasm_bindgen(getter)]
     #[must_use]
     pub fn deduplicated(&self) -> bool {
@@ -146,46 +166,55 @@ pub struct ProjectedOperation {
 
 #[wasm_bindgen]
 impl ProjectedOperation {
+    /// Returns the operation's opaque committed position.
     #[wasm_bindgen(getter)]
     pub fn position(&self) -> Uint8Array {
         Uint8Array::from(self.inner.position.as_ref())
     }
 
+    /// Returns the document sequence number.
     #[wasm_bindgen(getter, js_name = sequenceNumber)]
     pub fn sequence_number(&self) -> u64 {
         self.inner.sequence_number
     }
 
+    /// Returns the minimum reference position, or `undefined` for the initial position.
     #[wasm_bindgen(getter, js_name = minimumReference)]
     pub fn minimum_reference(&self) -> Option<Uint8Array> {
         reference_position(&self.inner.minimum_reference)
     }
 
+    /// Returns the writer identity.
     #[wasm_bindgen(getter)]
     pub fn writer(&self) -> Uint8Array {
         Uint8Array::from(self.inner.writer.as_ref())
     }
 
+    /// Returns the session identity.
     #[wasm_bindgen(getter)]
     pub fn session(&self) -> Uint8Array {
         Uint8Array::from(self.inner.session.as_ref())
     }
 
+    /// Returns the stable submission identity.
     #[wasm_bindgen(getter)]
     pub fn submission(&self) -> Uint8Array {
         Uint8Array::from(self.inner.submission.as_ref())
     }
 
+    /// Returns the session-local sequence number.
     #[wasm_bindgen(getter, js_name = localSequenceNumber)]
     pub fn local_sequence_number(&self) -> u64 {
         self.inner.local_sequence_number
     }
 
+    /// Returns the authored reference, or `undefined` for the initial position.
     #[wasm_bindgen(getter)]
     pub fn reference(&self) -> Option<Uint8Array> {
         reference_position(&self.inner.reference)
     }
 
+    /// Returns the opaque application operation bytes.
     #[wasm_bindgen(getter)]
     pub fn payload(&self) -> Uint8Array {
         Uint8Array::from(self.inner.payload.as_ref())
@@ -201,6 +230,7 @@ pub struct ProjectedReadPage {
 }
 
 #[wasm_bindgen]
+/// Projected-operation subscription backed by a caller-provided JavaScript transport.
 pub struct InjectedProjectedSubscription {
     transport: JsValue,
     limits: fluid_service_protocol::Limits,
@@ -246,16 +276,19 @@ impl InjectedProjectedSubscription {
 
 #[wasm_bindgen]
 impl ProjectedReadPage {
+    /// Returns the accepted operations in document order.
     #[wasm_bindgen(getter)]
     pub fn operations(&self) -> Array {
         self.operations.iter().cloned().map(JsValue::from).collect()
     }
 
+    /// Returns the opaque resume cursor, when the page advances it.
     #[wasm_bindgen(getter)]
     pub fn cursor(&self) -> Option<Uint8Array> {
         self.cursor.as_deref().map(Uint8Array::from)
     }
 
+    /// Returns whether another bounded page is available.
     #[wasm_bindgen(getter, js_name = hasMore)]
     #[must_use]
     pub fn has_more(&self) -> bool {
@@ -271,6 +304,7 @@ pub struct SubmissionResolution {
 
 #[wasm_bindgen]
 impl SubmissionResolution {
+    /// Returns `committed`, `notCommitted`, or `stillUncertain`.
     #[wasm_bindgen(getter)]
     pub fn kind(&self) -> String {
         match self.resolution {
@@ -281,6 +315,7 @@ impl SubmissionResolution {
         .to_owned()
     }
 
+    /// Returns the committed position only for a committed result.
     #[wasm_bindgen(getter)]
     pub fn position(&self) -> Option<Uint8Array> {
         match &self.resolution {
@@ -289,6 +324,7 @@ impl SubmissionResolution {
         }
     }
 
+    /// Returns the sequence number only for a committed result.
     #[wasm_bindgen(getter, js_name = sequenceNumber)]
     pub fn sequence_number(&self) -> Option<u64> {
         match self.resolution {
@@ -299,6 +335,7 @@ impl SubmissionResolution {
         }
     }
 
+    /// Returns the committed result's minimum reference, when non-initial.
     #[wasm_bindgen(getter, js_name = minimumReference)]
     pub fn minimum_reference(&self) -> Option<Uint8Array> {
         match &self.resolution {
@@ -312,9 +349,11 @@ impl SubmissionResolution {
 
 #[wasm_bindgen]
 extern "C" {
+    /// JavaScript transport contract accepted by [`InjectedClient`].
     #[wasm_bindgen(typescript_type = "AsyncRequestTransport")]
     pub type AsyncRequestTransport;
 
+    /// Read-only JavaScript collection of [`SummaryEntry`] values.
     #[wasm_bindgen(typescript_type = "SummaryEntries")]
     pub type SummaryEntries;
 }
@@ -569,30 +608,35 @@ impl InjectedClient {
         call_optional_method(&self.transport.borrow(), "shutdown")
     }
 
+    /// Returns the lifecycle state used to gate requests and reconnects.
     #[wasm_bindgen(getter)]
     #[must_use]
     pub fn state(&self) -> String {
         self.core.borrow().state().to_owned()
     }
 
+    /// Returns encoded FSP4 bytes sent and received, excluding transport overhead.
     #[wasm_bindgen(getter, js_name = wireBytes)]
     #[must_use]
     pub fn wire_bytes(&self) -> u64 {
         self.core.borrow().wire_bytes()
     }
 
+    /// Returns the largest complete unary response observed.
     #[wasm_bindgen(getter, js_name = peakResponseBytes)]
     #[must_use]
     pub fn peak_response_bytes(&self) -> usize {
         self.core.borrow().peak_response_bytes()
     }
 
+    /// Returns the largest complete subscription frame observed.
     #[wasm_bindgen(getter, js_name = peakSubscriptionFrameBytes)]
     #[must_use]
     pub fn peak_subscription_frame_bytes(&self) -> usize {
         self.core.borrow().peak_subscription_frame_bytes()
     }
 
+    /// Returns the highest buffered subscription-frame count observed.
     #[wasm_bindgen(getter, js_name = peakSubscriptionQueueDepth)]
     #[must_use]
     pub fn peak_subscription_queue_depth(&self) -> usize {
@@ -601,6 +645,7 @@ impl InjectedClient {
 }
 
 #[wasm_bindgen]
+/// Browser WebTransport client with certificate pinning and explicit reconnect policy.
 pub struct BrowserClient {
     url: String,
     certificate_hash: Vec<u8>,
@@ -610,6 +655,7 @@ pub struct BrowserClient {
 }
 
 #[wasm_bindgen]
+/// Projected-operation subscription backed by one browser readable stream.
 pub struct BrowserProjectedSubscription {
     reader: ReadableStreamDefaultReader,
     limits: fluid_service_protocol::Limits,
@@ -620,6 +666,7 @@ pub struct BrowserProjectedSubscription {
 }
 
 #[wasm_bindgen]
+/// Ordered, document-bound submission stream with explicit write-side close.
 pub struct BrowserSubmissionStream {
     writer: WritableStreamDefaultWriter,
     reader: ReadableStreamDefaultReader,
@@ -786,6 +833,7 @@ impl BrowserClient {
         })
     }
 
+    /// Closes the current browser session without retrying outstanding work.
     pub fn disconnect(&self) {
         self.transport.close();
         self.core.borrow_mut().disconnect();
@@ -1026,30 +1074,35 @@ impl BrowserClient {
         Ok(incoming)
     }
 
+    /// Returns encoded FSP4 bytes sent and received, excluding transport overhead.
     #[wasm_bindgen(getter, js_name = wireBytes)]
     #[must_use]
     pub fn wire_bytes(&self) -> u64 {
         self.core.borrow().wire_bytes()
     }
 
+    /// Returns the largest complete unary response observed.
     #[wasm_bindgen(getter, js_name = peakResponseBytes)]
     #[must_use]
     pub fn peak_response_bytes(&self) -> usize {
         self.core.borrow().peak_response_bytes()
     }
 
+    /// Returns the largest complete subscription frame observed.
     #[wasm_bindgen(getter, js_name = peakSubscriptionFrameBytes)]
     #[must_use]
     pub fn peak_subscription_frame_bytes(&self) -> usize {
         self.core.borrow().peak_subscription_frame_bytes()
     }
 
+    /// Returns the highest buffered subscription-frame count observed.
     #[wasm_bindgen(getter, js_name = peakSubscriptionQueueDepth)]
     #[must_use]
     pub fn peak_subscription_queue_depth(&self) -> usize {
         self.core.borrow().peak_subscription_queue_depth()
     }
 
+    /// Returns the elapsed time of the most recent successful explicit reconnect.
     #[wasm_bindgen(getter, js_name = lastReconnectMilliseconds)]
     #[must_use]
     pub fn last_reconnect_milliseconds(&self) -> f64 {

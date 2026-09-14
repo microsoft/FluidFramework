@@ -30,34 +30,54 @@ use wtransport::{
 const CLOSE_CODE: VarInt = VarInt::from_u32(1);
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+/// Point-in-time transport activity and high-water measurements.
 pub struct TransportMeasurement {
+    /// Total encoded FSP4 bytes read or written, excluding QUIC overhead.
     pub wire_bytes: u64,
+    /// Connections currently owned by the server.
     pub active_connections: usize,
+    /// Highest number of concurrently owned connections observed.
     pub peak_active_connections: usize,
+    /// Highest number of concurrently active bidirectional streams observed.
     pub peak_active_streams: usize,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+/// Policy requested when stopping a WebTransport server.
 pub enum ShutdownMode {
+    /// Stop accepting and cancel all owned connections immediately.
     Immediate,
-    Drain { timeout: Duration },
+    /// Stop accepting and allow owned connections to finish until the deadline.
+    Drain {
+        /// Maximum time to wait for owned connections to finish.
+        timeout: Duration,
+    },
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+/// How the server completed an explicit shutdown request.
 pub enum ShutdownDisposition {
+    /// Every owned connection completed before the deadline.
     Drained,
+    /// One or more owned connections remained and were cancelled.
     Cancelled,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+/// Evidence describing the completion of server shutdown.
 pub struct ShutdownOutcome {
+    /// Whether all owned connections drained or some were cancelled.
     pub disposition: ShutdownDisposition,
+    /// Connections owned when the server stopped accepting new sessions.
     pub owned_connections: usize,
+    /// Connections cancelled after immediate shutdown or deadline expiry.
     pub cancelled_connections: usize,
+    /// Time spent draining after the server stopped accepting sessions.
     pub elapsed: Duration,
 }
 
 #[derive(Clone, Debug)]
+/// Cloneable control channel for requesting and observing server shutdown.
 pub struct ShutdownHandle {
     request: watch::Sender<Option<ShutdownMode>>,
     accepting: watch::Receiver<bool>,
@@ -101,9 +121,11 @@ struct Metrics {
 }
 
 #[derive(Clone, Debug)]
+/// Cloneable view of server or client transport measurements.
 pub struct MeasurementHandle(Arc<Metrics>);
 
 impl MeasurementHandle {
+    /// Returns a point-in-time snapshot of the shared measurements.
     #[must_use]
     pub fn snapshot(&self) -> TransportMeasurement {
         self.0.snapshot()
@@ -156,10 +178,15 @@ impl Drop for ActiveStream<'_> {
 }
 
 #[derive(Clone, Debug)]
+/// Bounds and timeouts applied by native WebTransport clients and servers.
 pub struct TransportConfig {
+    /// FSP4 framing and field limits enforced before dispatch.
     pub limits: Limits,
+    /// Maximum sessions the server owns concurrently.
     pub max_connections: usize,
+    /// Maximum active bidirectional streams per connection.
     pub max_streams_per_connection: usize,
+    /// Timeout applied to connection establishment and framed I/O operations.
     pub operation_timeout: Duration,
 }
 
@@ -187,27 +214,38 @@ impl TransportConfig {
 }
 
 #[derive(Debug, Error)]
+/// Failures from native HTTP/3 WebTransport setup, framing, service, or shutdown.
 pub enum WebTransportError {
+    /// A configured bound is zero or cannot contain an FSP4 header.
     #[error("transport configuration is invalid")]
     InvalidConfig,
+    /// Connection establishment or framed I/O exceeded the operation timeout.
     #[error("transport operation timed out")]
     Timeout,
+    /// The peer closed or the local client cancelled the connection.
     #[error("transport disconnected")]
     Disconnected,
+    /// The underlying HTTP/3 or QUIC implementation failed.
     #[error("transport failed: {0}")]
     Transport(String),
+    /// An FSP4 frame failed bounded encoding or decoding.
     #[error("protocol frame failed validation: {0}")]
     Protocol(#[from] ProtocolError),
+    /// A client received an FSP4 request where a response was required.
     #[error("received a request where a response was required")]
     UnexpectedRequest,
+    /// A subscription stream carried a non-operation response.
     #[error("received an unexpected subscription response")]
     UnexpectedResponse,
+    /// The service terminated a projected-operation subscription.
     #[error("service rejected the subscription: {0:?}")]
     Service(ErrorCode),
+    /// The server stopped before accepting a shutdown request or acknowledgement.
     #[error("the server is no longer available for shutdown")]
     ShutdownUnavailable,
 }
 
+/// Native WebTransport endpoint serving FSP4 requests for one service instance.
 pub struct WebTransportServer {
     endpoint: Endpoint<ServerSide>,
     service: Arc<NativeService>,
@@ -261,16 +299,19 @@ impl WebTransportServer {
         self.endpoint.local_addr().map_err(transport_error)
     }
 
+    /// Returns a point-in-time snapshot of server transport activity.
     #[must_use]
     pub fn measurement(&self) -> TransportMeasurement {
         self.metrics.snapshot()
     }
 
+    /// Returns a cloneable handle that remains usable while the server is running.
     #[must_use]
     pub fn measurement_handle(&self) -> MeasurementHandle {
         MeasurementHandle(Arc::clone(&self.metrics))
     }
 
+    /// Returns a cloneable channel for initiating server shutdown.
     #[must_use]
     pub fn shutdown_handle(&self) -> ShutdownHandle {
         ShutdownHandle {
@@ -575,6 +616,7 @@ async fn serve_projected_subscription(
     }
 }
 
+/// Certificate-pinned native WebTransport client for unary and subscription FSP4 streams.
 pub struct WebTransportClient {
     endpoint: Endpoint<Client>,
     connection: Connection,
@@ -585,6 +627,7 @@ pub struct WebTransportClient {
     metrics: Arc<Metrics>,
 }
 
+/// A live projected-operation stream that requires explicit cancellation when abandoned early.
 pub struct ProjectedOperationSubscription {
     request_id: u64,
     send: wtransport::SendStream,
@@ -681,6 +724,7 @@ impl WebTransportClient {
         Ok(())
     }
 
+    /// Closes the current connection without retrying outstanding operations.
     pub fn disconnect(&self) {
         self.connection.close(CLOSE_CODE, b"explicit disconnect");
     }
@@ -767,6 +811,7 @@ impl WebTransportClient {
         })
     }
 
+    /// Returns a point-in-time snapshot of client wire-byte activity.
     #[must_use]
     pub fn measurement(&self) -> TransportMeasurement {
         self.metrics.snapshot()

@@ -7,8 +7,10 @@ Run all Cargo commands from `rust-service/` with isolated `CARGO_TARGET_DIR` val
 ```bash
 rustup target add wasm32-unknown-unknown
 cargo install wasm-bindgen-cli --version 0.2.128 --locked
-RUSTFLAGS='--cfg=web_sys_unstable_apis' cargo build -p fluid-webtransport-browser --target wasm32-unknown-unknown --release
-wasm-bindgen target/wasm32-unknown-unknown/release/fluid_webtransport_browser.wasm \
+CARGO_TARGET_DIR=/tmp/fluid-webtransport-browser-target \
+  RUSTFLAGS='--cfg=web_sys_unstable_apis' \
+  cargo build --locked -p fluid-webtransport-browser --target wasm32-unknown-unknown --release
+wasm-bindgen /tmp/fluid-webtransport-browser-target/wasm32-unknown-unknown/release/fluid_webtransport_browser.wasm \
   --target web --out-name fluid_webtransport_browser --out-dir tests/webtransport-browser/pkg
 sh tests/webtransport-browser/generate-cert.sh tests/webtransport-browser/.certs
 cargo run -p fluid-webtransport-native --bin fluid-webtransport-native -- \
