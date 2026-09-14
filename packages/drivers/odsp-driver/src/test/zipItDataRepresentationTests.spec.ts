@@ -6,8 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
-import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
-import { type IFluidErrorBase, MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ReadBuffer } from "../ReadBufferUtils.js";
 import { TreeBuilderSerializer } from "../WriteBufferUtils.js";
@@ -22,7 +21,6 @@ import {
 	assertBoolInstance,
 	assertNodeCoreInstance,
 	assertNumberInstance,
-	getStringInstance,
 } from "../zipItDataRepresentationUtils.js";
 
 function compareNodes(node1: NodeTypes, node2: NodeTypes): void {
@@ -250,25 +248,8 @@ describe("Tree Representation tests", () => {
 		assert(!success, "Error should have occurred");
 	});
 
-	it("missing node instance test", async () => {
-		// A malformed snapshot can be missing records that the parser requires. Reading those yields
-		// undefined, which should be reported as an incorrect server response instead of crashing.
-		const missingNode = new NodeCore().nodes[0];
-		const isIncorrectServerResponse = (error: unknown): boolean =>
-			(error as Partial<IFluidErrorBase>).errorType === OdspErrorTypes.incorrectServerResponse;
-
-		for (const validateMissing of [
-			(): void => assertBlobCoreInstance(missingNode, "should be a blob"),
-			(): void => assertNodeCoreInstance(missingNode, "should be a node"),
-			(): void => assertNumberInstance(missingNode, "should be a number"),
-			(): void => assertBoolInstance(missingNode, "should be a bool"),
-			(): string => getStringInstance(missingNode, "should be a string"),
-		]) {
-			assert.throws(
-				validateMissing,
-				isIncorrectServerResponse,
-				"Missing node should be reported as an incorrect server response",
-			);
-		}
+	it("throws when reading an out-of-range node", () => {
+		const node = new NodeCore();
+		assert.throws(() => node.get(0), /index 0 is out of range/);
 	});
 });

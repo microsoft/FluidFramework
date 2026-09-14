@@ -78,7 +78,9 @@ function convertCreateNewSummaryTreeToTreeAndBlobsCore(
 	const keys = Object.keys(summary.tree);
 	for (const key of keys) {
 		const summaryObject = summary.tree[key];
-		assert(summaryObject !== undefined, "Summary tree entry should exist");
+		if (summaryObject === undefined) {
+			throw new Error(`Summary tree entry '${key}' is missing`);
+		}
 
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {
@@ -157,7 +159,9 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
 	for (const key of keys) {
 		assert(!key.includes("/"), 0x9cc /* id should not include slashes */);
 		const summaryObject = summary.tree[key];
-		assert(summaryObject !== undefined, "Summary tree entry should exist");
+		if (summaryObject === undefined) {
+			throw new Error(`Summary tree entry '${key}' is missing`);
+		}
 
 		let value: OdspSummaryTreeValue;
 		// Tracks if an entry is unreferenced. Currently, only tree entries can be marked as unreferenced. If the

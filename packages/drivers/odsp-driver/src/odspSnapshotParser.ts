@@ -28,7 +28,10 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): ISnapshotTree {
 		const entryPathBase = entry.path.slice(lastIndex + 1);
 
 		// ODSP snapshots are created breadth-first so we can assume we see tree nodes prior to their contents
-		const node = lookup[entryPathDir]!;
+		const node = lookup[entryPathDir];
+		if (node === undefined) {
+			throw new Error(`Snapshot tree entry '${entry.path}' has no parent node`);
+		}
 
 		// Add in either the blob or tree
 		if (entry.type === "tree") {
@@ -69,8 +72,10 @@ export function convertOdspSnapshotToSnapshotTreeAndBlobs(
 		}
 	}
 
-	// The root tree is always present in an ODSP snapshot.
-	const rootTree = odspSnapshot.trees[0]!;
+	const rootTree = odspSnapshot.trees[0];
+	if (rootTree === undefined) {
+		throw new Error("ODSP snapshot did not contain a root tree");
+	}
 	const sequenceNumber = rootTree.sequenceNumber;
 
 	const val: ISnapshot = {

@@ -185,7 +185,9 @@ export class OdspSummaryUploadManager {
 		for (const key of keys) {
 			assert(!key.includes("/"), 0x9cd /* id should not include slashes */);
 			const summaryObject = tree.tree[key];
-			assert(summaryObject !== undefined, "Summary tree entry should exist");
+			if (summaryObject === undefined) {
+				throw new Error(`Summary tree entry '${key}' is missing`);
+			}
 
 			let id: string | undefined;
 			let value: OdspSummaryTreeValue | undefined;

@@ -42,7 +42,7 @@ export interface ISnapshotContentsWithProps extends ISnapshot {
  * Recreates blobs section of the tree.
  * @param node - tree node to read blob section from
  */
-function readBlobSection(node: NodeTypes | undefined): {
+function readBlobSection(node: NodeTypes): {
 	blobContents: Map<string, ArrayBuffer>;
 	slowBlobStructureCount: number;
 } {
@@ -74,7 +74,13 @@ function readBlobSection(node: NodeTypes | undefined): {
 			 */
 			slowBlobStructureCount += 1;
 			const records = getNodeProps(blob);
+			if (records.data === undefined) {
+				throw new Error("Compact snapshot blob is missing the data record");
+			}
 			assertBlobCoreInstance(records.data, "data should be of BlobCore type");
+			if (records.id === undefined) {
+				throw new Error("Compact snapshot blob is missing the id record");
+			}
 			const id = getStringInstance(records.id, "blob id should be string");
 			blobContents.set(id, ArrayBufferLikeToArrayBuffer(records.data.arrayBuffer));
 		}
@@ -90,7 +96,13 @@ function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 	assertNodeCoreInstance(node, "Deltas should be of type NodeCore");
 	const ops: ISequencedDocumentMessage[] = [];
 	const records = getNodeProps(node);
+	if (records.firstSequenceNumber === undefined) {
+		throw new Error("Compact snapshot ops are missing the firstSequenceNumber record");
+	}
 	assertNumberInstance(records.firstSequenceNumber, "Seq number should be a number");
+	if (records.deltas === undefined) {
+		throw new Error("Compact snapshot ops are missing the deltas record");
+	}
 	assertNodeCoreInstance(records.deltas, "Deltas should be a Node");
 	for (let i = 0; i < records.deltas.length; ++i) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -205,6 +217,9 @@ function readTreeSection(node: NodeCore): {
 			snapshotTree.unreferenced = true;
 		}
 
+		if (records.name === undefined) {
+			throw new Error("Compact snapshot tree entry is missing the name record");
+		}
 		const path = getStringInstance(records.name, "Path name should be string");
 		if (records.value !== undefined) {
 			snapshotTree.blobs[path] = getStringInstance(
@@ -234,7 +249,7 @@ function readTreeSection(node: NodeCore): {
  * Recreates snapshot tree out of tree representation.
  * @param node - tree node to de-serialize from
  */
-function readSnapshotSection(node: NodeTypes | undefined): {
+function readSnapshotSection(node: NodeTypes): {
 	sequenceNumber: number;
 	snapshotTree: ISnapshotTree;
 	slowTreeStructureCount: number;
@@ -243,10 +258,19 @@ function readSnapshotSection(node: NodeTypes | undefined): {
 	assertNodeCoreInstance(node, "Snapshot should be of type NodeCore");
 	const records = getNodeProps(node);
 
+	if (records.treeNodes === undefined) {
+		throw new Error("Compact snapshot is missing the treeNodes record");
+	}
 	assertNodeCoreInstance(records.treeNodes, "TreeNodes should be of type NodeCore");
+	if (records.sequenceNumber === undefined) {
+		throw new Error("Compact snapshot is missing the sequenceNumber record");
+	}
 	assertNumberInstance(records.sequenceNumber, "sequenceNumber should be of type number");
 	const { snapshotTree, slowTreeStructureCount, treeStructureCountWithGroupId } =
 		readTreeSection(records.treeNodes);
+	if (records.id === undefined) {
+		throw new Error("Compact snapshot is missing the snapshot id record");
+	}
 	snapshotTree.id = getStringInstance(records.id, "snapshotId should be string");
 	const sequenceNumber = records.sequenceNumber.valueOf();
 	return {
@@ -273,7 +297,13 @@ export function parseCompactSnapshotResponse(
 
 	const records = getNodeProps(root);
 
+	if (records.mrv === undefined) {
+		throw new Error("Compact snapshot is missing the minReadVersion record");
+	}
 	const mrv = getStringInstance(records.mrv, "minReadVersion should be string");
+	if (records.cv === undefined) {
+		throw new Error("Compact snapshot is missing the createVersion record");
+	}
 	const cv = getStringInstance(records.cv, "createVersion should be string");
 	if (records.lsn !== undefined) {
 		assertNumberInstance(records.lsn, "lsn should be a number");
@@ -292,10 +322,17 @@ export function parseCompactSnapshotResponse(
 		0x2c2 /* "Create Version should be equal to currentReadVersion" */,
 	);
 
-	const [snapshot, durationSnapshotTree] = measure(() =>
-		readSnapshotSection(records.snapshot),
-	);
-	const [blobContents, durationBlobs] = measure(() => readBlobSection(records.blobs));
+	const snapshotNode = records.snapshot;
+	if (snapshotNode === undefined) {
+		throw new Error("Compact snapshot is missing the snapshot record");
+	}
+	const blobsNode = records.blobs;
+	if (blobsNode === undefined) {
+		throw new Error("Compact snapshot is missing the blobs record");
+	}
+
+	const [snapshot, durationSnapshotTree] = measure(() => readSnapshotSection(snapshotNode));
+	const [blobContents, durationBlobs] = measure(() => readBlobSection(blobsNode));
 
 	return {
 		...snapshot,
