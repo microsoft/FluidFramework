@@ -45,6 +45,7 @@
 	// Custom dictionary for 'streetsidesoftware.code-spell-checker' extension.
 	"cSpell.words": [
 		"boop",
+		"constructability",
 		"contoso",
 		"corecursive",
 		"debuggability",
@@ -78,7 +79,7 @@
 		"unaugmented",
 		"undoprovider",
 		"unsequenced",
-		"validatable",
+		"validatable"
 	],
 
 	// Enable biome as default formatter, and disable rules that disagree with it
