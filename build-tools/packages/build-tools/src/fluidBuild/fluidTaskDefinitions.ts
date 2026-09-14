@@ -296,6 +296,17 @@ const detectInvalid = (
 	}
 };
 
+const validateGlobSeparators = (
+	globs: readonly string[],
+	kind: "inputGlob" | "outputGlob",
+): void => {
+	for (const glob of globs) {
+		if (glob.includes("\\")) {
+			throw new Error(`${kind} '${glob}' contains backslashes; use '/' in fluidBuild globs.`);
+		}
+	}
+};
+
 export function normalizeGlobalTaskDefinitions(
 	globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk | undefined,
 ): TaskDefinitions {
@@ -360,6 +371,8 @@ export function normalizeGlobalTaskDefinitions(
 						true,
 					);
 				}
+				validateGlobSeparators(full.files.inputGlobs, "inputGlob");
+				validateGlobSeparators(full.files.outputGlobs, "outputGlob");
 			}
 			taskDefinitions[name] = full;
 		}
@@ -504,6 +517,10 @@ export function getTaskDefinitions(
 						currentFiles?.additionalConfigFiles,
 					);
 				}
+			}
+			if (full.files !== undefined) {
+				validateGlobSeparators(full.files.inputGlobs, "inputGlob");
+				validateGlobSeparators(full.files.outputGlobs, "outputGlob");
 			}
 			taskDefinitions[name] = full;
 		}

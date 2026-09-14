@@ -29,7 +29,7 @@ const REPO_ROOT_REGEX = /\$\{repoRoot\}/g;
  */
 export function replaceRepoRootToken(pathOrGlob: string, repoRoot: string): string {
 	const normalizedRepoRoot = repoRoot.replace(/\\/g, "/").replace(/\/+$/, "");
-	return pathOrGlob.replace(REPO_ROOT_REGEX, normalizedRepoRoot).replace(/\\/g, "/");
+	return pathOrGlob.replace(REPO_ROOT_REGEX, normalizedRepoRoot);
 }
 
 /**
