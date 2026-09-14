@@ -120,7 +120,7 @@ async function main(): Promise<void> {
 // eslint-disable-next-line unicorn/prefer-top-level-await -- This is a script entry point
 main().catch((e: unknown) => {
 	console.error("ERROR: unexpected error", JSON.stringify(e, undefined, 2));
-	const { stack } = e as Partial<Error>;
+	const stack = e instanceof Error ? e.stack : undefined;
 	if (stack) {
 		console.error(`Stack:\n${stack}`);
 	}

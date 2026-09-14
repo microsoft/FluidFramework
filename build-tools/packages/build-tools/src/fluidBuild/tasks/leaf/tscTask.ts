@@ -291,7 +291,9 @@ export class TscTask extends LeafTask {
 				configFileNames.delete(tscUtils.getCanonicalFileName(path.normalize(fullPath)));
 			} catch (e) {
 				this.traceTrigger(
-					`exception generating hash for ${fileName}\n\t${(e as Partial<Error>).stack}`,
+					`exception generating hash for ${fileName}\n\t${
+						e instanceof Error ? (e.stack ?? e.message) : String(e)
+					}`,
 				);
 				return false;
 			}

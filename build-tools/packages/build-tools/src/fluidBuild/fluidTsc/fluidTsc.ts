@@ -55,7 +55,9 @@ main().catch((e: unknown): void => {
 	const message = e instanceof Error ? e.message : String(e);
 	const stack = e instanceof Error ? e.stack : undefined;
 	error(`Unexpected error. ${message}`);
-	error(`${stack}`);
+	if (stack !== undefined) {
+		error(stack);
+	}
 	// eslint-disable-next-line unicorn/no-process-exit -- CLI entrypoint: exit with error code on unhandled exception
 	process.exit(1);
 });

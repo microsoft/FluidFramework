@@ -721,7 +721,9 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			});
 			return JSON.stringify({ srcFiles: allSrcFiles, dstFiles, srcInfo, dstInfo });
 		} catch (e) {
-			this.traceError(`error comparing file times: ${(e as Partial<Error>).message}`);
+			this.traceError(
+				`error comparing file times: ${e instanceof Error ? e.message : String(e)}`,
+			);
 			this.traceTrigger("failed to get file stats");
 			throw e;
 		}
@@ -752,7 +754,9 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 				dstHashes,
 			});
 		} catch (e) {
-			this.traceError(`error calculating file hashes: ${(e as Partial<Error>).message}`);
+			this.traceError(
+				`error calculating file hashes: ${e instanceof Error ? e.message : String(e)}`,
+			);
 			this.traceTrigger("failed to get file hash");
 			throw e;
 		}

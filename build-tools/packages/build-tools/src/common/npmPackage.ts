@@ -38,7 +38,8 @@ export type FluidPackageJson = {
 	/**
 	 * nyc config
 	 */
-	nyc?: unknown;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Preserve the existing public PackageJson API for tool-owned configuration.
+	nyc?: any;
 
 	/**
 	 * fluid-build config. Some properties only apply when set in the root or release group root package.json.
