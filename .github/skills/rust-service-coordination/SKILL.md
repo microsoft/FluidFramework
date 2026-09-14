@@ -167,6 +167,16 @@ invariants before accepting the producer's summary. The workstream instructions
 must define those invariants because benchmark, trace, and comparison schemas
 differ.
 
+For Node or pnpm validation in an isolated worktree, prefer a worktree-local
+`pnpm install --frozen-lockfile` so workspace-relative package links resolve
+inside that checkout. If the full install is disproportionate, link each required
+package to an absolute installed target and record the workaround and cleanup;
+do not rely on an outer `node_modules` symlink because pnpm's nested relative
+links may resolve against the wrong worktree. In either case, verify shared
+lockfiles are unchanged. A successful cached build does not prove ignored
+worktree-local outputs exist: generate or verify nonzero exact outputs and execute
+the exact consumer.
+
 Use [workstream report template](./assets/workstream-report.template.md).
 
 ## Integrate Phase 2

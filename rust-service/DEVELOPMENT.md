@@ -13,12 +13,36 @@ but do not replace this workspace-wide gate.
 ```bash
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
+RUSTDOCFLAGS='-D warnings' cargo doc --workspace --all-features --no-deps
 cargo build --workspace --all-targets
 cargo test --workspace --all-targets --all-features
 cargo run -p snapshotted-stream-counter
+node scripts/check-documentation.mjs
 ```
 
 The initial example package name is provisional until the Phase 1 workspace manifest is created. If Phase 1 selects another name, update this document and the foundation report in the same commit.
+
+## Documentation Policy
+
+Every hand-authored named Rust or TypeScript type, field, variant, trait or
+interface member, function, method, constructor, and public module should have a
+concise useful doc comment. A short sentence is sufficient when it explains
+purpose, semantics, an invariant, or a constraint rather than restating the
+identifier. Generated files, anonymous structural types, obvious local
+variables, callbacks, and trivial test bodies do not require comments.
+
+Use layered evidence for a documentation audit:
+
+- compiler `missing_docs` diagnostics establish the public Rust baseline;
+- a language-aware declaration/member inventory covers private Rust and
+	TypeScript surfaces that normal linting does not enforce; and
+- package and grouping READMEs explain purpose, entry points, guarantees,
+	limitations, relationships, and executable validation commands.
+
+Record the inventory rule and every exemption when claiming complete coverage.
+The documentation checker verifies README presence and local filesystem targets;
+it does not validate Markdown anchors, external URLs, declaration coverage, or
+semantic accuracy.
 
 ## Research Records
 

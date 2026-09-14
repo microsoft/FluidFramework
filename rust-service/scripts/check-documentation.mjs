@@ -6,18 +6,19 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 const rustServiceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const defaultRoots = [
-	"crates/benchmarks",
-	"crates/spikes/durable-log",
-	"examples/counter",
-	"examples/native-service",
+const groupingRoots = [
+	"crates",
+	"crates/wrappers",
+	"crates/spikes",
+	"examples",
+	"tests",
 	"benchmarks",
 	"scripts",
 ];
 const requestedRoots = process.argv.slice(2);
-const roots = requestedRoots.length === 0 ? defaultRoots : requestedRoots;
 const markdownLink = /\[[^\]]*\]\(([^)]+)\)/g;
 const failures = [];
+const checkedReadmePaths = new Set();
 let checkedLinks = 0;
 let checkedReadmes = 0;
 
@@ -43,7 +44,38 @@ function readmesUnder(directory) {
 	return readmes;
 }
 
+function cargoPackageRoots(directory) {
+	const roots = [];
+	for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+		if (entry.name === "target") {
+			continue;
+		}
+		const entryPath = path.join(directory, entry.name);
+		if (entry.isDirectory()) {
+			roots.push(...cargoPackageRoots(entryPath));
+		} else if (
+			entry.isFile() &&
+			entry.name === "Cargo.toml" &&
+			directory !== rustServiceRoot
+		) {
+			roots.push(path.relative(rustServiceRoot, directory));
+		}
+	}
+	return roots;
+}
+
+function childDirectoryRoots(directory) {
+	return fs
+		.readdirSync(directory, { withFileTypes: true })
+		.filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
+		.map((entry) => path.relative(rustServiceRoot, path.join(directory, entry.name)));
+}
+
 function checkLinks(readme) {
+	if (checkedReadmePaths.has(readme)) {
+		return;
+	}
+	checkedReadmePaths.add(readme);
 	checkedReadmes += 1;
 	const contents = fs.readFileSync(readme, "utf8");
 	for (const match of contents.matchAll(markdownLink)) {
@@ -88,6 +120,18 @@ function checkRoot(root) {
 		checkLinks(nestedReadme);
 	}
 }
+
+const roots =
+	requestedRoots.length === 0
+		? [
+				...new Set([
+					...groupingRoots,
+					...cargoPackageRoots(path.join(rustServiceRoot, "crates")),
+					...cargoPackageRoots(path.join(rustServiceRoot, "examples")),
+					...childDirectoryRoots(path.join(rustServiceRoot, "tests")),
+				]),
+			].sort()
+		: requestedRoots;
 
 for (const root of roots) {
 	try {
