@@ -6,19 +6,21 @@
 import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
+	EmptyKey,
+	type FieldKey,
 	type FieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	Multiplicity,
 	ObjectNodeStoredSchema,
 	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	type TreeTypeSet,
 	type ValueSchema,
 	storedEmptyFieldSchema,
 } from "../../core/index.js";
-import { compareSets } from "../../util/index.js";
 
 import type { FullSchemaPolicy } from "./fieldKind.js";
 import { isNeverField, isNeverTree } from "./isNeverTree.js";
@@ -36,23 +38,73 @@ export function allowsTreeSuperset(
 	original: TreeNodeStoredSchema | undefined,
 	superset: TreeNodeStoredSchema | undefined,
 ): boolean {
+	return (
+		getTreeSupersetFailures(policy, originalData, original, superset).next().done === true
+	);
+}
+
+/**
+ * A failed stored-field comparison, independent of the public diagnostic representation.
+ */
+export type FieldSupersetFailure =
+	| { readonly mismatch: "fieldKind" }
+	| { readonly mismatch: "allowedType"; readonly allowedType: TreeNodeSchemaIdentifier };
+
+/**
+ * A failed node comparison. Maps use {@link EmptyKey} for their implicit field.
+ */
+export type NodeSupersetFailure =
+	| { readonly mismatch: "nodeKind" | "valueSchema" }
+	| (FieldSupersetFailure & { readonly fieldKey: FieldKey });
+
+/**
+ * A failed stored-schema comparison. Undefined identifiers identify the root field, which uses {@link EmptyKey}.
+ */
+export type StoredSchemaSupersetFailure =
+	| (FieldSupersetFailure & {
+			readonly identifier: undefined;
+			readonly fieldKey: typeof EmptyKey;
+	  })
+	| (NodeSupersetFailure & { readonly identifier: TreeNodeSchemaIdentifier });
+
+/**
+ * Reports node constraints that prevent a superset transition.
+ *
+ * @param policy - Field-kind definitions and upgrade rules.
+ * @param originalData - Stored schema used to determine constructibility on both sides.
+ * @param original - Node definition whose content must remain supported.
+ * @param superset - Proposed replacement, or undefined for a missing definition.
+ * @returns Failures at this node, without recursively expanding referenced definitions.
+ * Boolean callers stop at the first failure; diagnostic callers consume the complete iterator.
+ */
+function* getTreeSupersetFailures(
+	policy: FullSchemaPolicy,
+	originalData: TreeStoredSchema,
+	original: TreeNodeStoredSchema | undefined,
+	superset: TreeNodeStoredSchema | undefined,
+): Generator<NodeSupersetFailure> {
 	if (isNeverTree(policy, originalData, original)) {
-		return true;
+		return;
 	}
-	if (isNeverTree(policy, originalData, superset)) {
-		return false;
+	if (superset === undefined) {
+		yield { mismatch: "nodeKind" };
+		return;
 	}
 	assert(original !== undefined, 0x716 /* only never trees have undefined schema */);
-	assert(superset !== undefined, 0x717 /* only never trees have undefined schema */);
 	if (original instanceof LeafNodeStoredSchema) {
 		if (superset instanceof LeafNodeStoredSchema) {
-			return allowsValueSuperset(original.leafValue, superset.leafValue);
+			if (!allowsValueSuperset(original.leafValue, superset.leafValue)) {
+				yield { mismatch: "valueSchema" };
+			}
+		} else {
+			yield { mismatch: "nodeKind" };
 		}
-		return false;
+		return;
 	}
 
 	if (superset instanceof LeafNodeStoredSchema) {
-		return false;
+		yield { mismatch: "nodeKind" };
+		return;
 	}
 
 	assert(
@@ -64,51 +116,45 @@ export function allowsTreeSuperset(
 		0x894 /* unsupported node kind */,
 	);
 
-	if (original instanceof MapNodeStoredSchema) {
-		if (superset instanceof MapNodeStoredSchema) {
-			return allowsFieldSuperset(policy, originalData, original.mapFields, superset.mapFields);
-		}
-		return false;
+	if (original instanceof MapNodeStoredSchema && superset instanceof ObjectNodeStoredSchema) {
+		yield { mismatch: "nodeKind" };
+		return;
 	}
 
-	assert(original instanceof ObjectNodeStoredSchema, 0x895 /* unsupported node kind */);
-	if (superset instanceof MapNodeStoredSchema) {
-		for (const [_key, field] of original.objectNodeFields) {
-			if (!allowsFieldSuperset(policy, originalData, field, superset.mapFields)) {
-				return false;
-			}
+	const targetIsNever = isNeverTree(policy, originalData, superset);
+	let reported = false;
+	const keys: Iterable<FieldKey> =
+		original instanceof MapNodeStoredSchema
+			? [EmptyKey]
+			: new Set([
+					...original.objectNodeFields.keys(),
+					...(superset instanceof ObjectNodeStoredSchema
+						? superset.objectNodeFields.keys()
+						: []),
+				]);
+	for (const fieldKey of keys) {
+		const originalField =
+			original instanceof MapNodeStoredSchema
+				? original.mapFields
+				: (original.objectNodeFields.get(fieldKey) ?? storedEmptyFieldSchema);
+		const supersetField =
+			superset instanceof MapNodeStoredSchema
+				? superset.mapFields
+				: (superset.objectNodeFields.get(fieldKey) ?? storedEmptyFieldSchema);
+		for (const failure of getFieldSupersetFailures(
+			policy,
+			originalData,
+			originalField,
+			supersetField,
+		)) {
+			reported = true;
+			yield { ...failure, fieldKey };
 		}
-		return true;
 	}
-	assert(superset instanceof ObjectNodeStoredSchema, 0x896 /* unsupported node kind */);
-
-	return compareSets({
-		a: original.objectNodeFields,
-		b: superset.objectNodeFields,
-		aExtra: (originalField) =>
-			allowsFieldSuperset(
-				policy,
-				originalData,
-				original.objectNodeFields.get(originalField) ??
-					fail(0xb17 /* missing expected field */),
-				storedEmptyFieldSchema,
-			),
-		bExtra: (supersetField) =>
-			allowsFieldSuperset(
-				policy,
-				originalData,
-				storedEmptyFieldSchema,
-				superset.objectNodeFields.get(supersetField) ??
-					fail(0xb18 /* missing expected field */),
-			),
-		same: (sameField) =>
-			allowsFieldSuperset(
-				policy,
-				originalData,
-				original.objectNodeFields.get(sameField) ?? fail(0xb19 /* missing expected field */),
-				superset.objectNodeFields.get(sameField) ?? fail(0xb1a /* missing expected field */),
-			),
-	});
+	// Constructibility can reject a transition even when its individual field rules permit it.
+	if (targetIsNever && !reported) {
+		yield { mismatch: "nodeKind" };
+	}
 }
 
 /**
@@ -145,18 +191,43 @@ export function allowsFieldSuperset(
 	superset: TreeFieldStoredSchema,
 	monotonicOnly: boolean = true,
 ): boolean {
+	return (
+		getFieldSupersetFailures(policy, originalData, original, superset, monotonicOnly).next()
+			.done === true
+	);
+}
+
+/**
+ * Reports field constraints that reject a superset transition.
+ *
+ * @param policy - Field-kind definitions and upgrade rules.
+ * @param originalData - Stored schema used to determine whether the original field is constructible.
+ * @param original - Field whose content must remain supported.
+ * @param superset - Proposed replacement field.
+ * @param monotonicOnly - Whether different field kinds require an explicit monotonic upgrade.
+ * @returns Every removed type identifier and any rejected field-kind transition.
+ */
+function* getFieldSupersetFailures(
+	policy: FullSchemaPolicy,
+	originalData: TreeStoredSchema,
+	original: TreeFieldStoredSchema,
+	superset: TreeFieldStoredSchema,
+	monotonicOnly: boolean = true,
+): Generator<FieldSupersetFailure> {
 	// Without monotonic upgrade restrictions, a field with no valid content is a subset of any field.
 	if (!monotonicOnly && isNeverField(policy, originalData, original)) {
-		return true;
+		return;
 	}
 
 	// Require the superset to allow every type identifier allowed by the original field.
-	if (!allowsTreeSchemaIdentifierSuperset(original.types, superset.types)) {
-		return false;
+	for (const allowedType of getMissingTypes(original.types, superset.types)) {
+		yield { mismatch: "allowedType", allowedType };
 	}
 
 	// Check that the field-kind transition is allowed under the selected upgrade rules.
-	return allowsFieldKindSuperset(policy, original.kind, superset.kind, monotonicOnly);
+	if (!allowsFieldKindSuperset(policy, original.kind, superset.kind, monotonicOnly)) {
+		yield { mismatch: "fieldKind" };
+	}
 }
 
 /**
@@ -217,12 +288,25 @@ export function allowsTreeSchemaIdentifierSuperset(
 	original: TreeTypeSet,
 	superset: TreeTypeSet,
 ): boolean {
+	return getMissingTypes(original, superset).next().done === true;
+}
+
+/**
+ * Enumerates the allowed type identifiers removed by a proposed replacement.
+ *
+ * @param original - Allowed type identifiers whose support must be retained.
+ * @param superset - Allowed type identifiers in the proposed replacement.
+ * @returns Missing identifiers in their original iteration order.
+ */
+function* getMissingTypes(
+	original: TreeTypeSet,
+	superset: TreeTypeSet,
+): Generator<TreeNodeSchemaIdentifier> {
 	for (const originalType of original) {
 		if (!superset.has(originalType)) {
-			return false;
+			yield originalType;
 		}
 	}
-	return true;
 }
 
 /**
@@ -239,29 +323,45 @@ export function allowsRepoSuperset(
 	original: TreeStoredSchema,
 	superset: TreeStoredSchema,
 ): boolean {
-	{
-		if (
-			!allowsFieldSuperset(
-				policy,
-				original,
-				original.rootFieldSchema,
-				superset.rootFieldSchema,
-			)
-		) {
-			return false;
-		}
+	return getStoredSchemaSupersetFailures(policy, original, superset).next().done === true;
+}
+
+/**
+ * Reports every constraint that prevents a stored schema from being upgraded to a superset.
+ *
+ * @param policy - Field-kind definitions and upgrade rules.
+ * @param original - Stored schema whose content must remain supported, including detached nodes.
+ * @param superset - Proposed replacement stored schema.
+ * @returns Located failures from the root field and every original node definition.
+ */
+export function* getStoredSchemaSupersetFailures(
+	policy: FullSchemaPolicy,
+	original: TreeStoredSchema,
+	superset: TreeStoredSchema,
+): Generator<StoredSchemaSupersetFailure> {
+	for (const failure of getFieldSupersetFailures(
+		policy,
+		original,
+		original.rootFieldSchema,
+		superset.rootFieldSchema,
+	)) {
+		yield { ...failure, identifier: undefined, fieldKey: EmptyKey };
 	}
 	// Check if all schema in original are included in superset, and permit a superset of the node content.
 	// Note that any schema from `original.nodeSchema` can be used as the schema for a node at the root of a detached field,
 	// so we must check all of them, even if they are not reachable from the root field schema.
 	for (const [key, schema] of original.nodeSchema) {
-		if (!allowsTreeSuperset(policy, original, schema, superset.nodeSchema.get(key))) {
-			return false;
+		for (const failure of getTreeSupersetFailures(
+			policy,
+			original,
+			schema,
+			superset.nodeSchema.get(key),
+		)) {
+			yield { ...failure, identifier: key };
 		}
 	}
 	// Any schema in superset not in original are already known to be superset of original since they are "never" due to being missing.
 	// Therefore, we do not need to check them.
-	return true;
 }
 
 /**

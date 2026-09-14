@@ -81,6 +81,8 @@ export {
 	type SchemaCompatibilityStatusAlpha,
 	type SchemaComparisonStatusAlpha,
 	type CompleteSchemaDiscrepanciesAlpha,
+	collectSchemaDiagnostics,
+	getDiscrepanciesInAllowedContent,
 	type SchemaDiscrepancyAlpha,
 	type SchemaDiscrepancyValues,
 	type SchemaNodeKindDescription,
@@ -330,6 +332,7 @@ export {
 } from "./prepareForInsertion.js";
 export {
 	toStoredSchema,
+	resolveStoredSchemaGenerationOptions,
 	convertFieldKind,
 	toUpgradeSchema,
 	toInitialSchema,

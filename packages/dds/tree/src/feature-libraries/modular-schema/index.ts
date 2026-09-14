@@ -5,6 +5,7 @@
 
 export {
 	allowsRepoSuperset,
+	getStoredSchemaSupersetFailures,
 	allowsTreeSchemaIdentifierSuperset,
 	allowsFieldSuperset,
 	allowsFieldKindSuperset,

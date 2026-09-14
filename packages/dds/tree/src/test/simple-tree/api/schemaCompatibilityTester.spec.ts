@@ -29,6 +29,9 @@ import {
 	StagedSchemaUpgradePolicy,
 	TreeViewConfigurationAlpha,
 	toUpgradeSchema,
+	resolveStoredSchemaGenerationOptions,
+	collectSchemaDiagnostics,
+	getDiscrepanciesInAllowedContent,
 } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
 import { SchemaFactoryAlpha } from "../../../simple-tree/index.js";
@@ -41,13 +44,22 @@ const emptySchema: TreeStoredSchema = {
 
 const factory = new SchemaFactoryAlpha("");
 
+/**
+ * Checks compatibility expectations and the diagnostic contract for a schema pair.
+ *
+ * @param inputs - View schema and current stored schema to compare.
+ * @param expected - Expected compatibility flags and enabled upgrades. Enabled upgrades default to an empty map.
+ * @param stagedSchemaUpgrades - Staging policy passed to the compatibility check.
+ * @returns The checked status for additional fixture-specific assertions.
+ */
 function expectCompatibility(
-	{ view, stored }: { view: ImplicitFieldSchema; stored: TreeStoredSchema },
+	inputs: { view: ImplicitFieldSchema; stored: TreeStoredSchema },
 	expected: Omit<SchemaCompatibilityStatus, "canInitialize"> & {
 		enabledUpgrades?: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
 	},
 	stagedSchemaUpgrades?: Parameters<typeof checkSchemaCompatibility>[2],
 ) {
+	const { view, stored } = inputs;
 	const viewSchema = new TreeViewConfigurationAlpha({ schema: view });
 	const compatibility = checkSchemaCompatibility(viewSchema, stored, stagedSchemaUpgrades);
 	const { discrepancies, canView, canUpgrade, isEquivalent, enabledUpgrades } = compatibility;
@@ -62,6 +74,34 @@ function expectCompatibility(
 		...expected,
 	});
 	assert.equal(discrepancies === undefined, compatibility.canView);
+
+	// Reconstruct the effective target, including already-enabled upgrades when the policy retains them.
+	const configuredPolicy = resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades);
+	const target = toUpgradeSchema(viewSchema.root, {
+		includeStaged: (upgrade) =>
+			configuredPolicy.includeStaged(upgrade) ||
+			(configuredPolicy.includeAlreadyEnabledUpgrades === true &&
+				enabledUpgrades.has(upgrade)),
+		includeStagedOptional: (upgrade) =>
+			configuredPolicy.includeStagedOptional(upgrade) ||
+			(configuredPolicy.includeAlreadyEnabledUpgrades === true &&
+				enabledUpgrades.has(upgrade)),
+	});
+	// Compare raw blocker lists with the viewing and stored-schema rules, including successful checks.
+	const raw = [...getDiscrepanciesInAllowedContent(viewSchema, stored)];
+	const diagnostics = collectSchemaDiagnostics(viewSchema, stored, target, raw);
+	assert.equal(diagnostics.view.length === 0, raw.length === 0);
+	assert.equal(
+		diagnostics.upgrade.length === 0,
+		allowsRepoSuperset(defaultSchemaPolicy, stored, target),
+	);
+	assert.equal(
+		diagnostics.equivalence.length === 0,
+		raw.length === 0 &&
+			allowsRepoSuperset(defaultSchemaPolicy, stored, target) &&
+			allowsRepoSuperset(defaultSchemaPolicy, target, stored),
+	);
+	// Public subsets exist only for failed checks and reuse entries from the complete list.
 	for (const [flag, property] of [
 		["canView", "viewDiscrepancies"],
 		["canUpgrade", "upgradeDiscrepancies"],
@@ -77,6 +117,7 @@ function expectCompatibility(
 			}
 		}
 	}
+	// Diagnostic entries must survive JSON serialization without data loss or duplicate entries.
 	assert.deepEqual(
 		JSON.parse(JSON.stringify(compatibility.allDiscrepancies)),
 		compatibility.allDiscrepancies,
@@ -346,6 +387,20 @@ describe("checkSchemaCompatibility", () => {
 		assert.deepEqual(
 			status.equivalenceDiscrepancies.map(({ mismatch }) => mismatch),
 			["nodeKind"],
+		);
+	});
+
+	it("preserves empty-string object field locations in object-to-map failures", () => {
+		const view = factory.map("EmptyObjectKeyDiagnostics", factory.number);
+		const stored = factory.object("EmptyObjectKeyDiagnostics", { "": factory.string });
+		const status = expectCompatibility(
+			{ view, stored: toUpgradeSchema(stored) },
+			{ canView: false, canUpgrade: false, isEquivalent: false },
+		);
+		assert(!status.canUpgrade);
+		assert.deepEqual(
+			status.upgradeDiscrepancies.map(({ location }) => location),
+			[{ nodeType: view.identifier, fieldKey: "" }, { nodeType: factory.string.identifier }],
 		);
 	});
 

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	EmptyKey,
 	LeafNodeStoredSchema,
@@ -15,10 +17,9 @@ import {
 	ValueSchema,
 } from "../../core/index.js";
 import {
-	allowsFieldKindSuperset,
 	defaultSchemaPolicy,
 	FieldKinds,
-	isNeverTree,
+	getStoredSchemaSupersetFailures,
 } from "../../feature-libraries/index.js";
 import { brand, type JsonCompatibleReadOnly } from "../../util/index.js";
 import { NodeKind, StagedSchemaUpgradePolicy } from "../core/index.js";
@@ -409,7 +410,7 @@ function fieldsOf(
  * @remarks
  * Viewing blockers come from the existing compatibility check to preserve its staging and policy rules.
  * Upgrade and reverse-comparison blockers use the stored schema rules.
- * The collector does not calculate the public compatibility flags.
+ * The caller derives public compatibility flags from the presence of blockers in these results.
  *
  * Schema differences include persisted metadata and explicit staging annotations.
  * Non-persisted custom metadata and descriptions are not read.
@@ -438,19 +439,22 @@ export function collectSchemaDiagnostics(
 	const viewed = toUpgradeSchema(view.root, StagedSchemaUpgradePolicy.permissive);
 	const entries = new Map<string, SchemaDiscrepancyAlpha>();
 	const blockers = new Map<SchemaDiscrepancyAlpha, Set<Blocker>>();
-	// Index viewing failures once so each field does not scan every failure.
-	const failureIndex = new Map<string, Discrepancy[]>();
-	for (const failure of viewFailures) {
-		const key = JSON.stringify([
-			failure.identifier,
-			"fieldKey" in failure ? failure.fieldKey : undefined,
-		]);
-		const group = failureIndex.get(key);
-		if (group === undefined) {
-			failureIndex.set(key, [failure]);
-		} else {
-			group.push(failure);
-		}
+	const byAspect = new Map<string, SchemaDiscrepancyAlpha>();
+
+	/**
+	 * Identifies an aspect without including its values or comparison direction.
+	 *
+	 * @param location - Schema element containing the difference.
+	 * @param mismatch - Aspect being compared at this location.
+	 * @param allowedType - Type identifier for allowed-type and staged-type differences; otherwise omitted.
+	 * @returns A serialized key used to match compatibility blockers to diagnostic entries.
+	 */
+	function aspectKey(
+		location: SchemaDiscrepancyLocationAlpha,
+		mismatch: SchemaDiscrepancyAlpha["mismatch"],
+		allowedType?: string,
+	): string {
+		return JSON.stringify([location, mismatch, allowedType]);
 	}
 
 	/**
@@ -507,6 +511,7 @@ export function collectSchemaDiagnostics(
 			return previous;
 		}
 		entries.set(key, entry);
+		byAspect.set(aspectKey(location, mismatch, allowedType), entry);
 		blockers.set(entry, new Set());
 		return entry;
 	}
@@ -514,54 +519,58 @@ export function collectSchemaDiagnostics(
 	/**
 	 * Associates an existing difference with a failed check without changing its public payload.
 	 *
-	 * @param entry - Entry returned by `add`, or undefined when no difference was recorded.
+	 * @param location - Location of the failed comparison.
+	 * @param mismatch - Aspect rejected by the authoritative comparison.
 	 * @param check - Check blocked by the difference.
+	 * @param allowedType - Identifier for an allowed-type failure.
 	 */
-	function mark(entry: SchemaDiscrepancyAlpha | undefined, check: Blocker): void {
-		if (entry !== undefined) {
-			blockers.get(entry)?.add(check);
-		}
+	function mark(
+		location: SchemaDiscrepancyLocationAlpha,
+		mismatch: SchemaDiscrepancyAlpha["mismatch"],
+		check: Blocker,
+		allowedType?: string,
+	): void {
+		const entry =
+			byAspect.get(aspectKey(location, mismatch, allowedType)) ??
+			byAspect.get(aspectKey(location, "missingNode")) ??
+			byAspect.get(aspectKey(location, "fieldPresence"));
+		assert(entry !== undefined, "Every compatibility failure must have a diagnostic entry");
+		blockers.get(entry)?.add(check);
 	}
 
 	/**
-	 * Finds viewing failures using the location conventions of the existing discrepancy checker.
+	 * Converts stored comparison field locations to the public diagnostic representation.
 	 *
-	 * @param location - Diagnostic location to translate to a viewing-failure index key.
-	 * @returns The failures at that location, or an empty array if none exist.
+	 * @param identifier - Containing node identifier, or undefined for the root field.
+	 * @param fieldKey - Stored field key. Stored-schema failures use EmptyKey for the root and implicit map fields.
+	 * Viewing failures can use undefined for these locations.
+	 * @returns The corresponding public field location.
 	 */
-	function viewingFailures(location: SchemaDiscrepancyLocationAlpha): readonly Discrepancy[] {
-		// Beta failures use EmptyKey for array fields and undefined for map fields or node locations.
-		const key = JSON.stringify(
-			location === "root"
-				? [undefined, undefined]
-				: [
-						location.nodeType,
-						location.fieldKey === null &&
-						(view.definitions.get(location.nodeType)?.kind === NodeKind.Array ||
-							nodeKind(stored.nodeSchema.get(brand(location.nodeType))) === "array")
-							? EmptyKey
-							: (location.fieldKey ?? undefined),
-					],
-		);
-		return failureIndex.get(key) ?? [];
+	function fieldLocation(
+		identifier: string | undefined,
+		fieldKey: string | undefined,
+	): SchemaDiscrepancyLocationAlpha {
+		if (identifier === undefined) return "root";
+		return {
+			nodeType: identifier,
+			fieldKey:
+				fieldKey === EmptyKey &&
+				(view.definitions.get(identifier)?.kind === NodeKind.Array ||
+					nodeKind(stored.nodeSchema.get(brand(identifier))) === "array" ||
+					(view.definitions.get(identifier)?.kind === NodeKind.Map &&
+						stored.nodeSchema.get(brand(identifier)) instanceof MapNodeStoredSchema))
+					? null
+					: (fieldKey ?? null),
+		};
 	}
 
 	/**
-	 * Records field differences and classifies blockers for the applicable comparison directions.
+	 * Records structural field differences without evaluating compatibility policy.
 	 *
 	 * @param location - Location shared by the fields being compared.
 	 * @param fields - Explicit field definitions on each side, before substituting absent fields.
-	 * @param upgrade - Whether to classify stored-to-target blockers at this field.
-	 * @param reverse - Whether to classify target-to-stored blockers at this field for equivalence.
 	 */
-	function compareFields(
-		location: SchemaDiscrepancyLocationAlpha,
-		fields: Fields,
-		upgrade: boolean,
-		reverse: boolean,
-	): void {
-		const failures = viewingFailures(location);
-		const viewKindFailure = failures.some((failure) => failure.mismatch === "fieldKind");
+	function compareFields(location: SchemaDiscrepancyLocationAlpha, fields: Fields): void {
 		// Preserve absent-versus-explicit differences even when both fields forbid all content.
 		add("fieldPresence", location, {
 			view: fields.view !== undefined,
@@ -574,31 +583,17 @@ export function collectSchemaDiagnostics(
 			stored: fields.stored ?? storedEmptyFieldSchema,
 			target: fields.target ?? storedEmptyFieldSchema,
 		};
-		const kind = add("fieldKind", location, {
+		add("fieldKind", location, {
 			view: actual.view.kind,
 			stored: actual.stored.kind,
 			target: actual.target.kind,
 		});
-		if (viewKindFailure) {
-			mark(kind, "view");
-		}
-		for (const [check, original, superset, active] of [
-			["upgrade", actual.stored, actual.target, upgrade],
-			["reverse", actual.target, actual.stored, reverse],
-		] as const) {
-			if (
-				active &&
-				!allowsFieldKindSuperset(defaultSchemaPolicy, original.kind, superset.kind)
-			) {
-				mark(kind, check);
-			}
-		}
 		for (const type of new Set([
 			...actual.view.types,
 			...actual.stored.types,
 			...actual.target.types,
 		])) {
-			const entry = add(
+			add(
 				"allowedType",
 				location,
 				{
@@ -608,22 +603,6 @@ export function collectSchemaDiagnostics(
 				},
 				type,
 			);
-			if (
-				failures.some(
-					(failure) =>
-						failure.mismatch === "allowedTypes" &&
-						(failure.view.some(({ type: schema }) => schema.identifier === type) ||
-							failure.stored.includes(type)),
-				)
-			) {
-				mark(entry, "view");
-			}
-			if (upgrade && actual.stored.types.has(type) && !actual.target.types.has(type)) {
-				mark(entry, "upgrade");
-			}
-			if (reverse && actual.target.types.has(type) && !actual.stored.types.has(type)) {
-				mark(entry, "reverse");
-			}
 		}
 		add("persistedMetadata", location, {
 			view: fields.view?.persistedMetadata,
@@ -649,16 +628,11 @@ export function collectSchemaDiagnostics(
 		}
 	}
 
-	compareFields(
-		"root",
-		{
-			view: viewed.rootFieldSchema,
-			stored: stored.rootFieldSchema,
-			target: target.rootFieldSchema,
-		},
-		true,
-		true,
-	);
+	compareFields("root", {
+		view: viewed.rootFieldSchema,
+		stored: stored.rootFieldSchema,
+		target: target.rootFieldSchema,
+	});
 	staging("root", view.root);
 	// Compare every definition, including stored definitions unreachable from the root.
 	for (const identifier of new Set([
@@ -678,64 +652,27 @@ export function collectSchemaDiagnostics(
 			target: nodeKind(nodes.target),
 		};
 		const missing = Object.values(nodes).includes(undefined);
-		const kind = add(missing ? "missingNode" : "nodeKind", location, {
+		add(missing ? "missingNode" : "nodeKind", location, {
 			view: kinds.view === undefined ? undefined : { kind: kinds.view },
 			stored: kinds.stored === undefined ? undefined : { kind: kinds.stored },
 			target: kinds.target === undefined ? undefined : { kind: kinds.target },
 		});
-		const failures = viewingFailures(location);
-		if (failures.some((failure) => failure.mismatch === "nodeKind")) {
-			mark(kind, "view");
-		}
-		// Classify descendant blockers only when the node-kind comparison permits that direction.
-		const active = { upgrade: false, reverse: false };
-		for (const [check, original, superset, data] of [
-			["upgrade", nodes.stored, nodes.target, stored],
-			["reverse", nodes.target, nodes.stored, target],
-		] as const) {
-			// Missing or unconstructible original nodes impose no content constraints on a superset.
-			if (original === undefined || isNeverTree(defaultSchemaPolicy, data, original)) {
-				continue;
-			}
-			if (
-				superset === undefined ||
-				original instanceof LeafNodeStoredSchema !==
-					superset instanceof LeafNodeStoredSchema ||
-				(original instanceof MapNodeStoredSchema && superset instanceof ObjectNodeStoredSchema)
-			) {
-				mark(kind, check);
-				continue;
-			}
-			active[check] = true;
-		}
 		// Avoid expanding a missing definition or a leaf/non-leaf mismatch into value details.
-		const value =
-			kinds.view === "leaf" && kinds.stored === "leaf"
-				? add("valueSchema", location, {
-						view:
-							nodes.view instanceof LeafNodeStoredSchema
-								? ValueSchema[nodes.view.leafValue]
-								: undefined,
-						stored:
-							nodes.stored instanceof LeafNodeStoredSchema
-								? ValueSchema[nodes.stored.leafValue]
-								: undefined,
-						target:
-							nodes.target instanceof LeafNodeStoredSchema
-								? ValueSchema[nodes.target.leafValue]
-								: undefined,
-					})
-				: undefined;
-		if (failures.some((failure) => failure.mismatch === "valueSchema")) {
-			mark(value, "view");
-		}
-		if (
-			nodes.stored instanceof LeafNodeStoredSchema &&
-			nodes.target instanceof LeafNodeStoredSchema &&
-			nodes.stored.leafValue !== nodes.target.leafValue
-		) {
-			if (active.upgrade) mark(value, "upgrade");
-			if (active.reverse) mark(value, "reverse");
+		if (kinds.view === "leaf" && kinds.stored === "leaf") {
+			add("valueSchema", location, {
+				view:
+					nodes.view instanceof LeafNodeStoredSchema
+						? ValueSchema[nodes.view.leafValue]
+						: undefined,
+				stored:
+					nodes.stored instanceof LeafNodeStoredSchema
+						? ValueSchema[nodes.stored.leafValue]
+						: undefined,
+				target:
+					nodes.target instanceof LeafNodeStoredSchema
+						? ValueSchema[nodes.target.leafValue]
+						: undefined,
+			});
 		}
 		add("persistedMetadata", location, {
 			view: nodes.view?.metadata,
@@ -789,8 +726,6 @@ export function collectSchemaDiagnostics(
 								? fields.target.get(null)
 								: undefined),
 					},
-					active.upgrade,
-					active.reverse,
 				);
 			}
 		}
@@ -818,6 +753,42 @@ export function collectSchemaDiagnostics(
 					);
 				}
 			}
+		}
+	}
+	// Reuse viewing decisions and beta context from the pre-target analysis.
+	for (const failure of viewFailures) {
+		if (failure.mismatch === "allowedTypes") {
+			const location = fieldLocation(failure.identifier, failure.fieldKey);
+			for (const { type } of failure.view)
+				mark(location, "allowedType", "view", type.identifier);
+			for (const type of failure.stored) mark(location, "allowedType", "view", type);
+		} else if (failure.mismatch === "fieldKind") {
+			mark(fieldLocation(failure.identifier, failure.fieldKey), "fieldKind", "view");
+		} else {
+			mark({ nodeType: failure.identifier }, failure.mismatch, "view");
+		}
+	}
+
+	// These failure streams are also the source of truth for boolean-only stored-schema comparisons.
+	for (const [check, original, superset] of [
+		["upgrade", stored, target],
+		["reverse", target, stored],
+	] as const) {
+		for (const failure of getStoredSchemaSupersetFailures(
+			defaultSchemaPolicy,
+			original,
+			superset,
+		)) {
+			const location =
+				"fieldKey" in failure
+					? fieldLocation(failure.identifier, failure.fieldKey)
+					: { nodeType: failure.identifier };
+			mark(
+				location,
+				failure.mismatch,
+				check,
+				"allowedType" in failure ? failure.allowedType : undefined,
+			);
 		}
 	}
 	// Sort once so every subset preserves the complete list's order and entry identities.

@@ -1,6 +1,8 @@
 # Alpha Schema Compatibility Diagnostics Plan
 
-Status: The first eager implementation is checked in as a draft. Compatibility-analysis consolidation is the agreed next phase and has not started. Performance acceptance remains open.
+Status: The first eager implementation is checked in as a draft.
+Compatibility-analysis consolidation is implemented and has passed focused tests and differential checks.
+Performance acceptance remains open.
 
 ## Goal
 
@@ -87,12 +89,11 @@ The report omits the field's allowed-type difference.
 An explicitly forbidden field can produce both diagnostics.
 These equivalent representations therefore produce different levels of detail.
 
-[The compatibility checker](../../src/simple-tree/api/schemaCompatibilityTester.ts) derives `canView` from the existing report.
-It derives `canUpgrade` from `allowsRepoSuperset`.
-That comparison stops at the first failure.
-It derives `isEquivalent` from `canView`, `canUpgrade`, and the reverse `allowsRepoSuperset` comparison from the upgrade target to the stored schema.
-The boolean expression skips later checks after a failure.
-Exhaustive diagnostics must evaluate all three checks without changing their results.
+Before consolidation, [the compatibility checker](../../src/simple-tree/api/schemaCompatibilityTester.ts) derived `canView` from the existing report.
+It derived `canUpgrade` from `allowsRepoSuperset`, which stops at the first failure.
+It derived `isEquivalent` from `canView`, `canUpgrade`, and the reverse `allowsRepoSuperset` comparison from the upgrade target to the stored schema.
+The boolean expression skipped later checks after a failure.
+The consolidated checker evaluates all three checks through diagnostic-producing comparisons and derives the flags from their blocker subsets.
 
 [The upgrade comparison](../../src/feature-libraries/modular-schema/comparison.ts) checks every stored node definition.
 Detached trees can use definitions that the root cannot reach.
@@ -297,9 +298,9 @@ Where structures correspond, compare their staging and metadata even when a cont
 
 ### Authoritative Compatibility Analysis
 
-The first draft preserves the original compatibility calculations and then collects complete diagnostics in a separate pass.
-The collector uses viewing failures from the first pass and independently repeats some stored-schema comparison rules.
-This protects existing results during the initial addition, but it duplicates semantic work.
+The first draft preserved the original compatibility calculations and then collected complete diagnostics in a separate pass.
+The collector used viewing failures from the first pass and independently repeated some stored-schema comparison rules.
+This protected existing results during the initial addition, but it duplicated semantic work.
 
 Consolidate these paths before considering lazy evaluation or other performance optimizations.
 Use one authoritative analysis to produce compatibility decisions and the diagnostic information that explains them.
@@ -342,6 +343,30 @@ Verify exact flag agreement and beta-output preservation independently of the ne
 Existing tests that only compare a derived flag with its own blocker list are not sufficient to prove compatibility preservation.
 After agreement is established, remove redundant production boolean checks and duplicated classification rules.
 Retain independent regression expectations without maintaining a second permanent policy implementation.
+
+### Consolidation Results
+
+The temporary differential baseline is commit `3905cd61102adff4ba4945091e42fa1d0cddd02d`.
+The comparison tools loaded the baseline modules from Git in memory.
+No baseline policy implementation remains in production or test files.
+
+The viewing walk supplies raw failures, beta details, and staged-upgrade location counts before target construction.
+The diagnostic collector reuses these viewing decisions without repeating their policy checks.
+It separately discovers accepted structural, staging, and metadata differences for the complete list.
+The modular-schema layer supplies located failures for both stored-schema comparison directions.
+Boolean-only callers consume the same comparison iterators and stop at the first failure.
+The collector maps semantic failures to shared complete-list entries and asserts that no failure lacks an entry.
+The checker derives all three flags from the blocker subsets.
+
+Differential verification matched the baseline for 4,802 schema and policy combinations, including flags, exact beta output, and upgrade statuses.
+A second check matched 104,991 modular-schema cases across node, repository, and field comparisons.
+These cases included recursive, missing, forbidden, identifier, and unconstructible definitions.
+Permanent regression tests cover complete failure locations, multiple failures at one field, detached definitions, map and object directionality, leaf values, and constructibility rejection.
+Tree source and test compilation pass after a forced project-reference rebuild removed stale incremental output.
+The affected comparison, viewing, staging, helper, live-view, and benchmark smoke suites pass with 416 tests passed and 11 pending.
+The current and legacy API-report checks pass without report changes.
+Eager evaluation remains unchanged.
+The recorded performance measurements still describe the first draft, not the consolidated implementation.
 
 ### Complete List And Classification
 
