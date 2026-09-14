@@ -311,14 +311,12 @@ export class ModularChangeFamily
 			normalizeNodeId(target, composedNodeAliases);
 		}
 
-		// const composedNodeAliases: ChangeAtomIdBTree<NodeId> = brand(
-		// 	mergeTupleBTrees(change1.nodeAliases, change2.nodeAliases),
-		// );
-		// for (const [_, target] of composedNodeAliases.entries()) {
-		// 	normalizeNodeId(target, composedNodeAliases);
-		// }
-
-		const crossFieldTable = newComposeTable(change1, change2, composedNodeToParent);
+		const crossFieldTable = newComposeTable(
+			change1,
+			change2,
+			composedNodeToParent,
+			composedNodeAliases,
+		);
 
 		const composedFields = this.composeFieldMaps(
 			change1.fieldChanges,
@@ -1080,9 +1078,10 @@ export class ModularChangeFamily
 			}
 
 			if (base !== undefined) {
+				const normalizedBase = normalizeNodeId(base, crossFieldTable.baseChange.nodeAliases);
 				for (const id of context.baseNodeIds) {
-					if (areEqualChangeAtomIds(base, id)) {
-						return base;
+					if (areEqualChangeAtomIds(normalizedBase, id)) {
+						return normalizedBase;
 					}
 				}
 			}
@@ -1185,10 +1184,13 @@ export class ModularChangeFamily
 		const rebasedChangeset = handler.rebaser.rebase(
 			handler.createEmpty(),
 			baseFieldChange.change,
-			(_idNew, idBase) =>
-				idBase !== undefined && areEqualChangeAtomIds(idBase, baseNodeId)
-					? baseNodeId
-					: undefined,
+			(_idNew, idBase) => {
+				if (idBase === undefined) {
+					return undefined;
+				}
+				const normalizedBase = normalizeNodeId(idBase, table.baseChange.nodeAliases);
+				return areEqualChangeAtomIds(normalizedBase, baseNodeId) ? baseNodeId : undefined;
+			},
 			idAllocator,
 			new RebaseManager(table, baseFieldChange, rebasedFieldId),
 			metadata,
@@ -1946,6 +1948,7 @@ function newComposeTable(
 	baseChange: ModularChangeset,
 	newChange: ModularChangeset,
 	composedNodeToParent: ChangeAtomIdBTree<FieldId>,
+	composedNodeAliases: ChangeAtomIdBTree<NodeId>,
 ): ComposeTable {
 	return {
 		...newCrossFieldTable<FieldChange>(),
@@ -1955,6 +1958,7 @@ function newComposeTable(
 		newFieldToBaseField: new Map(),
 		newToBaseNodeId: newChangeAtomIdBTree(),
 		composedNodes: new Set(),
+		composedNodeAliases,
 		composedNodeToParent,
 		pendingCompositions: {
 			nodeIdsToCompose: [],
@@ -1974,6 +1978,7 @@ interface ComposeTable extends CrossFieldTable<FieldChange> {
 	readonly fieldToContext: Map<FieldChange, ComposeFieldContext>;
 	readonly newFieldToBaseField: Map<FieldChange, FieldChange>;
 	readonly newToBaseNodeId: ChangeAtomIdBTree<NodeId>;
+	readonly composedNodeAliases: ChangeAtomIdBTree<NodeId>;
 	readonly composedNodes: Set<NodeChangeset>;
 	readonly composedNodeToParent: ChangeAtomIdBTree<FieldId>;
 	readonly pendingCompositions: PendingCompositions;
@@ -2155,7 +2160,11 @@ class ComposeManager extends CrossFieldManagerI<FieldChange> {
 	}
 
 	public override onMoveIn(id: ChangeAtomId): void {
-		setInChangeAtomIdMap(this.table.composedNodeToParent, id, this.fieldId);
+		setInChangeAtomIdMap(
+			this.table.composedNodeToParent,
+			normalizeNodeId(id, this.table.composedNodeAliases),
+			this.fieldId,
+		);
 	}
 
 	public override moveKey(

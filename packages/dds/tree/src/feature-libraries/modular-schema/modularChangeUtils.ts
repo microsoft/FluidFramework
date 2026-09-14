@@ -464,7 +464,13 @@ export function validateChangeset(
 	for (const [revision, localId] of change.nodeChanges.keys()) {
 		assert(
 			!change.nodeAliases.has([revision, localId]),
-			"Node change table contains non-normalized node",
+			"Node change table contains a non-normalized node key",
+		);
+	}
+	for (const [revision, localId] of change.nodeToParent.keys()) {
+		assert(
+			!change.nodeAliases.has([revision, localId]),
+			"Node parentage table contains a non-normalized node key",
 		);
 	}
 
