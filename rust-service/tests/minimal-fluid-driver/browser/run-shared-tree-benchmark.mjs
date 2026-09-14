@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { cpus, platform, release } from "node:os";
-import { resolve } from "node:path";
+import { extname, resolve } from "node:path";
 
 const [
 	backend,
@@ -28,34 +28,43 @@ const operationsPerTurn =
 	process.env.BENCHMARK_OPERATIONS_PER_TURN === undefined
 		? undefined
 		: positiveInteger(process.env.BENCHMARK_OPERATIONS_PER_TURN, "operationsPerTurn");
+const synchronizePerTurn = booleanEnvironmentVariable("BENCHMARK_SYNCHRONIZE_PER_TURN");
+if (synchronizePerTurn && operationsPerTurn === undefined) {
+	throw new Error("BENCHMARK_SYNCHRONIZE_PER_TURN=1 requires BENCHMARK_OPERATIONS_PER_TURN");
+}
 if (backend === "rust" && (!transport || !/^[0-9a-f]{64}$/iu.test(hash ?? ""))) {
 	throw new Error("the Rust backend requires a transport URL and certificate SHA-256 hash");
 }
 
 const packageRoot = resolve(import.meta.dirname, "..");
 const page = `shared-tree-benchmark-${backend === "rust-local" ? "rust" : backend}.html`;
-const sourceCommit = spawnSync("git", ["rev-parse", "HEAD"], {
+const sourceCommitResult = spawnSync("git", ["rev-parse", "HEAD"], {
 	cwd: packageRoot,
 	encoding: "utf8",
-}).stdout.trim();
-const sourceDirty =
-	spawnSync(
-		"git",
-		[
-			"status",
-			"--porcelain",
-			"--",
-			":(top)**",
-			":(exclude,top)rust-service/benchmarks/shared-tree/**",
-		],
-		{
-			cwd: packageRoot,
-			encoding: "utf8",
-		},
-	).stdout.trim().length > 0;
+});
+const sourceStatusResult = spawnSync(
+	"git",
+	["status", "--porcelain", "--untracked-files=normal"],
+	{
+		cwd: packageRoot,
+		encoding: "utf8",
+	},
+);
+if (sourceCommitResult.status !== 0 || sourceStatusResult.status !== 0) {
+	throw new Error(
+		`failed to capture source provenance:\n${sourceCommitResult.stderr}${sourceStatusResult.stderr}`,
+	);
+}
+const sourceCommit = sourceCommitResult.stdout.trim();
+const sourceDirty = sourceStatusResult.stdout.trim().length > 0;
 const serviceProcessBefore = readServiceProcess();
 const samples = [];
 for (let repetition = 0; repetition < repetitions; repetition++) {
+	const cpuProfilePath = profilePathForRepetition(
+		process.env.BENCHMARK_CPU_PROFILE_PATH,
+		repetition + 1,
+		repetitions,
+	);
 	const execution = spawnSync(
 		process.execPath,
 		[
@@ -71,13 +80,26 @@ for (let repetition = 0; repetition < repetitions; repetition++) {
 				...(operationsPerTurn === undefined
 					? {}
 					: { operationsPerTurn: String(operationsPerTurn) }),
+				...(synchronizePerTurn ? { synchronizePerTurn: "true" } : {}),
+				...(backend === "tinylicious" && process.env.BENCHMARK_TINYLICIOUS_PORT !== undefined
+					? { tinyliciousPort: process.env.BENCHMARK_TINYLICIOUS_PORT }
+					: {}),
 				...(backend === "rust-local" ? { local: "true", storage: "memory" } : {}),
 				...(backend === "rust"
 					? { storage: process.env.FLUID_SERVICE_STORAGE_MODE ?? "durable-file" }
 					: {}),
 			}).toString(),
 		],
-		{ encoding: "utf8", maxBuffer: 10 * 1024 * 1024 },
+		{
+			encoding: "utf8",
+			env: {
+				...process.env,
+				...(cpuProfilePath === undefined
+					? {}
+					: { BENCHMARK_CPU_PROFILE_PATH: cpuProfilePath }),
+			},
+			maxBuffer: 10 * 1024 * 1024,
+		},
 	);
 	const evidence = execution.stdout.match(/^BROWSER_EVIDENCE=(.*)$/mu)?.[1];
 	if (execution.status !== 0 || evidence === undefined) {
@@ -107,6 +129,7 @@ const output = {
 		operations,
 		warmup,
 		operationsPerTurn: operationsPerTurn ?? null,
+		synchronizePerTurn,
 		clients: samples[0].clientCount,
 	},
 	environment: {
@@ -193,6 +216,15 @@ function percentile(sorted, fraction) {
 	return sorted[Math.ceil(fraction * sorted.length) - 1];
 }
 
+function profilePathForRepetition(basePath, repetition, repetitionCount) {
+	if (basePath === undefined || repetitionCount === 1) {
+		return basePath;
+	}
+	const extension = extname(basePath);
+	const stem = extension === "" ? basePath : basePath.slice(0, -extension.length);
+	return resolve(`${stem}-${repetition}${extension || ".cpuprofile"}`);
+}
+
 function positiveInteger(text, name) {
 	const value = Number(text);
 	if (!Number.isSafeInteger(value) || value <= 0) {
@@ -207,4 +239,15 @@ function nonnegativeInteger(text, name) {
 		throw new Error(`${name} must be a nonnegative integer`);
 	}
 	return value;
+}
+
+function booleanEnvironmentVariable(name) {
+	const value = process.env[name];
+	if (value === undefined || value === "0") {
+		return false;
+	}
+	if (value === "1") {
+		return true;
+	}
+	throw new Error(`${name} must be 0 or 1`);
 }

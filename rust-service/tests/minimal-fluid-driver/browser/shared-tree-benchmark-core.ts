@@ -14,6 +14,7 @@ export interface SharedTreeBenchmarkOptions {
 	readonly operationCount: number;
 	readonly warmupOperationCount: number;
 	readonly operationsPerTurn?: number;
+	readonly synchronizePerTurn?: boolean;
 	readonly timeoutMilliseconds?: number;
 }
 
@@ -24,6 +25,7 @@ export interface SharedTreeBenchmarkResult extends Record<string, unknown> {
 	readonly operationCount: number;
 	readonly warmupOperationCount: number;
 	readonly operationsPerTurn: number | null;
+	readonly synchronizePerTurn: boolean;
 	readonly startupMilliseconds: number;
 	readonly submissionMilliseconds: number;
 	readonly convergenceMilliseconds: number;
@@ -47,6 +49,10 @@ export async function runSharedTreeBenchmark(
 	if (operationsPerTurn !== Number.POSITIVE_INFINITY) {
 		assertPositiveInteger(operationsPerTurn, "operationsPerTurn");
 	}
+	const synchronizePerTurn = options.synchronizePerTurn ?? false;
+	if (synchronizePerTurn && operationsPerTurn === Number.POSITIVE_INFINITY) {
+		throw new Error("synchronizePerTurn requires a finite operationsPerTurn");
+	}
 	const timeoutMilliseconds = options.timeoutMilliseconds ?? 120_000;
 	const startupStarted = performance.now();
 	const pair = await createPair();
@@ -60,12 +66,26 @@ export async function runSharedTreeBenchmark(
 		const baselineCounts = [...pair.appliedEditCounts()];
 		let value = Math.max(0, ...pair.lastValues().filter((item) => item !== undefined));
 		const initialValue = value;
-		value = await applyEdits(pair, options.warmupOperationCount, operationsPerTurn, value);
+		value = await applyEdits(
+			pair,
+			options.warmupOperationCount,
+			operationsPerTurn,
+			synchronizePerTurn,
+			timeoutMilliseconds,
+			value,
+		);
 		await waitForConvergence(pair, value, timeoutMilliseconds);
 
 		const operationsStarted = performance.now();
 		const submissionStarted = performance.now();
-		value = await applyEdits(pair, options.operationCount, operationsPerTurn, value);
+		value = await applyEdits(
+			pair,
+			options.operationCount,
+			operationsPerTurn,
+			synchronizePerTurn,
+			timeoutMilliseconds,
+			value,
+		);
 		const submissionMilliseconds = performance.now() - submissionStarted;
 		const convergenceStarted = performance.now();
 		const finalEditCount = options.warmupOperationCount + options.operationCount;
@@ -84,6 +104,7 @@ export async function runSharedTreeBenchmark(
 			warmupOperationCount: options.warmupOperationCount,
 			operationsPerTurn:
 				operationsPerTurn === Number.POSITIVE_INFINITY ? null : operationsPerTurn,
+			synchronizePerTurn,
 			startupMilliseconds,
 			submissionMilliseconds,
 			convergenceMilliseconds,
@@ -106,6 +127,8 @@ async function applyEdits(
 	pair: SharedTreeBenchmarkPair,
 	operationCount: number,
 	operationsPerTurn: number,
+	synchronizePerTurn: boolean,
+	timeoutMilliseconds: number,
 	value: number,
 ): Promise<number> {
 	for (let index = 0; index < operationCount; index++) {
@@ -113,6 +136,9 @@ async function applyEdits(
 		pair.applyEdit(0, value);
 		if ((index + 1) % operationsPerTurn === 0) {
 			await Promise.resolve();
+			if (synchronizePerTurn) {
+				await waitForConvergence(pair, value, timeoutMilliseconds);
+			}
 		}
 	}
 	return value;

@@ -6,14 +6,8 @@
 		"ignoreDeprecations": "6.0",
 		"outDir": "lib",
 		"rootDir": "src",
-		"typeRoots": [
-			"../../../node_modules/.pnpm/node_modules/@types"
-		],
-		"types": [
-			"node"
-		],
+		"typeRoots": ["../../../node_modules/.pnpm/node_modules/@types"],
+		"types": ["mocha", "node"],
 	},
-	"include": [
-		"src/**/*.ts"
-	],
+	"include": ["src/**/*.ts"],
 }

@@ -19,7 +19,9 @@ declare global {
 const parameters = new URLSearchParams(location.search);
 
 async function createPair(): Promise<SharedTreeBenchmarkPair> {
-	const client = new TinyliciousClient();
+	const client = new TinyliciousClient({
+		connection: { port: numberParameter("tinyliciousPort", 7070) },
+	});
 	const { container: firstContainer } = await client.createContainer(
 		benchmarkContainerSchema,
 		"2.0.0",
@@ -77,4 +79,5 @@ window.__sharedTreeBenchmarkResult = runSharedTreeBenchmark(createPair, {
 	operationCount: numberParameter("operations", 100),
 	warmupOperationCount: numberParameter("warmup", 10),
 	operationsPerTurn: numberParameter("operationsPerTurn", Number.POSITIVE_INFINITY),
+	synchronizePerTurn: parameters.get("synchronizePerTurn") === "true",
 }).catch((error: unknown) => ({ status: "failed", error: String(error) }));

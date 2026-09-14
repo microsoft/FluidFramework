@@ -442,6 +442,7 @@ window.__sharedTreeBenchmarkResult = runSharedTreeBenchmark(createPair, {
 	operationCount: numberParameter("operations", 100),
 	warmupOperationCount: numberParameter("warmup", 10),
 	operationsPerTurn: numberParameter("operationsPerTurn", Number.POSITIVE_INFINITY),
+	synchronizePerTurn: parameters.get("synchronizePerTurn") === "true",
 }).catch((error: unknown) => ({
 	status: "failed",
 	error: error instanceof Error ? (error.stack ?? error.message) : String(error),

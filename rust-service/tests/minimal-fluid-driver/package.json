@@ -12,6 +12,9 @@
 		"build:benchmarks": "pnpm run build:benchmark:rust && pnpm run build:benchmark:local && pnpm run build:benchmark:tinylicious",
 		"build:typescript": "tsc --project tsconfig.json",
 		"build:wasm": "node scripts/build-wasm.mjs",
+		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha --parentProcess",
+		"bench:build": "fluid-build . --task build:typescript --task build:benchmarks",
+		"bench:run": "node scripts/run-benchmark.mjs",
 		"benchmark:rust-local": "node browser/run-shared-tree-benchmark.mjs rust-local",
 		"benchmark:rust": "node browser/run-shared-tree-benchmark.mjs rust",
 		"benchmark:local": "node browser/run-shared-tree-benchmark.mjs local",
@@ -38,8 +41,14 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",
+		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-tools/benchmark": "^0.59.0",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
+		"cross-env": "^10.1.0",
 		"esbuild": "0.28.2",
+		"mocha": "^11.7.5",
+		"mocha-multi-reporters": "^1.5.1",
 		"typescript": "~6.0.3"
 	},
 	"fluidBuild": {

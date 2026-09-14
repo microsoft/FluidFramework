@@ -67,64 +67,105 @@ node browser/run-headless.mjs "$PWD" <WEBTRANSPORT_URL> <CERTIFICATE_SHA256_WITH
 
 ## Deterministic SharedTree comparison benchmark
 
-The benchmark runs the same two-client, sequential round-robin SharedTree workload through either the minimal WASM driver and Rust service or the existing `TinyliciousClient` and Tinylicious service. Each operation is timed from the local edit until both views converge. Warmup operations are excluded. The runner emits one JSON document containing every repetition, environment and source metadata, startup and operation distributions, and Rust FSP4 byte counts when available.
+The benchmark runs the same two-client SharedTree workload through the Rust local service, TypeScript local service, Rust WebTransport service, or Tinylicious. It uses the repository's standard Mocha benchmark tooling, so cases are selected with `--grep` and results are written through the standard benchmark reporter. The harness owns temporary data, ports, certificates, Chromium, and service processes.
 
-From a clean repository checkout, install the root workspace and build the benchmark's Fluid dependencies:
+Install the root workspace and incrementally build the benchmark package from the repository root:
 
 ```bash
 pnpm install --frozen-lockfile
-node node_modules/@fluidframework/build-tools/dist/fluidBuild/fluidBuild.js \
-  --root "$PWD" --vscode rust-service/tests/minimal-fluid-driver
+pnpm --dir rust-service/tests/minimal-fluid-driver run bench:build
 ```
 
-Generate the browser WASM package, native server, certificate, and browser bundles. The `wasm-bindgen` CLI version must match the workspace's `wasm-bindgen` crate version.
+The build uses Fluid build's dependency graph and declarative WASM task. Unchanged TypeScript dependencies, browser bundles, Rust crates, and generated WASM packages reuse their normal build caches. The installed `wasm-bindgen` CLI version must match the workspace crate version.
+
+Tinylicious belongs to the separate Routerlicious pnpm workspace. Install that workspace once before selecting the Tinylicious case:
 
 ```bash
-cd rust-service
-sh tests/webtransport-browser/generate-cert.sh tests/webtransport-browser/.certs
-CARGO_TARGET_DIR=/tmp/fluid-shared-tree-benchmark-wasm-target \
-  RUSTFLAGS='--cfg=web_sys_unstable_apis' \
-  cargo build --locked -p fluid-webtransport-browser --target wasm32-unknown-unknown --release
-wasm-bindgen \
-  /tmp/fluid-shared-tree-benchmark-wasm-target/wasm32-unknown-unknown/release/fluid_webtransport_browser.wasm \
-  --target web --out-name fluid_webtransport_browser \
-  --out-dir tests/minimal-fluid-driver/pkg
-CARGO_TARGET_DIR=/tmp/fluid-shared-tree-benchmark-native-target \
-  cargo build --locked -p fluid-webtransport-native --release
-cd tests/minimal-fluid-driver
-pnpm run build:benchmarks
+pnpm --dir server/routerlicious install --frozen-lockfile
 ```
 
-Start the native service from the repository root. Use the URL and certificate hash printed by the process in the Rust benchmark command below.
+Run all six cases with the default performance configuration of eight repetitions, 1,000 measured edits, 100 warmup edits, and the batched workload:
 
 ```bash
-rm -rf /tmp/fluid-shared-tree-benchmark-data
-mkdir -p /tmp/fluid-shared-tree-benchmark-data
-/tmp/fluid-shared-tree-benchmark-native-target/release/fluid-webtransport-native \
-  127.0.0.1:0 \
-  rust-service/tests/webtransport-browser/.certs/cert.pem \
-  rust-service/tests/webtransport-browser/.certs/key.pem \
-  /tmp/fluid-shared-tree-benchmark-data
+pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run
 ```
 
-Tinylicious has a separate pnpm workspace. Install and build it with Node.js 22, which satisfies its transitive dependency engine ranges, then start it on its default port from the repository root:
+Use case aliases and flags for focused runs:
 
 ```bash
-cd server/routerlicious
-pnpm install --frozen-lockfile
-pnpm exec fluid-build packages/tinylicious --task compile
-node packages/tinylicious/dist/index.js
+pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run -- \
+  --case rust-memory,rust-durable \
+  --workload messages \
+  --operations 1000 \
+  --warmup 100
 ```
 
-With each service running separately, execute ten repetitions of 100 measured operations after ten warmups from `rust-service/tests/minimal-fluid-driver`:
+Run `pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run -- --help` for all flags. Case aliases are:
+
+- `rust-local`: Rust local memory
+- `local`: TypeScript local service
+- `rust-memory`: Rust WebTransport memory
+- `rust-buffered`: Rust WebTransport buffered file
+- `rust-durable`: Rust WebTransport durable file
+- `tinylicious`: Tinylicious
+
+`--case` accepts comma-separated aliases and may be repeated. For arbitrary selection, `--grep <pattern>` passes a regular expression to Mocha. The lower-level `bench` script remains available for standard Mocha flags and environment-only automation.
+
+Configure the workload through environment variables:
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `BENCHMARK_REPETITIONS` | `8` | Browser samples per selected case. |
+| `BENCHMARK_OPERATIONS` | `1000` | Measured edits per sample. |
+| `BENCHMARK_WARMUP` | `100` | Unmeasured edits per sample. |
+| `BENCHMARK_WORKLOAD` | `batched` | `batched`, `turns`, or `messages`. |
+| `BENCHMARK_OPERATIONS_PER_TURN` | workload default | Override edits per JavaScript turn. |
+| `BENCHMARK_SYNCHRONIZE_PER_TURN` | workload default | Override observer convergence after each turn. |
+| `BENCHMARK_BROWSER_TIMEOUT_MS` | `30000` or `180000` | Per-sample browser timeout. |
+| `BENCHMARK_ARTIFACT_DIR` | `benchmark-results` | Detailed JSON output directory, relative to this package unless absolute. |
+| `BENCHMARK_CPU_PROFILE_PATH` | unset | Chromium CPU profile base path. |
+| `BENCHMARK_SKIP_BUILD` | unset | Skip selected-case native or Tinylicious incremental builds. |
+
+`batched` submits all edits in one JavaScript turn and permits Fluid batching. `turns` defaults to one edit per turn without backpressure and is useful for stressing bounded queues. `messages` also defaults to one edit per turn but waits for both containers to observe every edit before continuing, providing an unambiguous one-operation-per-convergence workload.
+
+For example, compare selected cases using strict message delivery:
 
 ```bash
-mkdir -p benchmark-results
-pnpm --silent run benchmark:rust 10 100 10 <WEBTRANSPORT_URL> <CERTIFICATE_SHA256_WITHOUT_COLONS> > benchmark-results/rust.json
-pnpm --silent run benchmark:tinylicious 10 100 10 > benchmark-results/tinylicious.json
+pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run -- \
+  --case rust-memory,local \
+  --workload messages \
+  --operations 1000 \
+  --warmup 100
 ```
 
-The generated WASM, bundles, certificates, service data, and local `benchmark-results/` directory are intentionally ignored. To retain benchmark evidence, run from a clean committed harness, verify `sourceDirty` is `false`, and copy the JSON into a tracked evidence directory with a report describing the environment and semantic differences.
+After a successful setup run, pass `--skip-build` for the shortest rerun path. The harness still starts fresh service processes and uses fresh temporary data for every selected case.
+
+### Profiling
+
+Select one configuration and provide a Chromium profile base path:
+
+```bash
+pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run -- \
+  --case rust-memory \
+  --workload messages \
+  --operations 1000 \
+  --repetitions 3 \
+  --skip-build \
+  --profile benchmark-results/browser.cpuprofile
+```
+
+The case slug is added to the profile filename and each repetition is retained, such as `browser-rust-webtransport-memory-1.cpuprofile` through `browser-rust-webtransport-memory-3.cpuprofile`. A one-repetition run keeps the case-specific name without a numeric suffix. The detailed JSON also records Linux service CPU and peak RSS when the harness owns an external service.
+
+### Results and agent use
+
+Mocha writes its standard aggregate report to `benchmarkOutput.json` by default. The harness additionally writes one detailed artifact per case and workload under `benchmark-results/`, including every repetition, environment and source metadata, workload semantics, distributions, observed values, and Rust FSP4 counters when available. Both paths are ignored locally.
+
+For retained evidence, agents and humans should:
+
+1. Build once, then use explicit `--case` aliases for the intended cases.
+2. Set workload and counts explicitly and use a unique standard report path with `--report <path>`.
+3. Parse both the standard report and each detailed artifact, verify `status`, configuration, sample count, and final observed values, and confirm no owned service remains.
+4. Run from a clean committed harness so `sourceDirty` is `false`, then copy the detailed artifacts into a tracked evidence directory with a report describing the environment and semantic differences.
 
 The first clean provisional run is recorded in the [SharedTree comparison evidence](../../benchmarks/shared-tree/13401fe0de3/README.md).
 

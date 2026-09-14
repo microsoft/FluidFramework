@@ -16645,12 +16645,30 @@ importers:
       '@biomejs/biome':
         specifier: ~2.4.5
         version: 2.4.5
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../../packages/test/mocha-test-setup
+      '@fluid-tools/benchmark':
+        specifier: ^0.59.0
+        version: 0.59.0
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
       esbuild:
         specifier: 0.28.2
         version: 0.28.2
+      mocha:
+        specifier: ^11.7.5
+        version: 11.7.5
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
@@ -29733,7 +29751,7 @@ snapshots:
       '@fluidframework/driver-definitions': 2.116.0
       '@fluidframework/driver-utils': 2.116.0(supports-color@10.2.2)
       '@fluidframework/telemetry-utils': 2.116.0(supports-color@10.2.2)
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       double-ended-queue: 2.1.0-0
       events_pkg: events@3.3.0
       uuid: 11.1.1
@@ -33918,7 +33936,7 @@ snapshots:
 
   babel-jest@29.7.0(@babel/core@7.29.7)(supports-color@10.2.2):
     dependencies:
-      '@babel/core': 7.29.7(supports-color@10.2.2)
+      '@babel/core': 7.29.7(supports-color@8.1.1)
       '@jest/transform': 29.7.0(supports-color@10.2.2)
       '@types/babel__core': 7.20.5
       babel-plugin-istanbul: 6.1.1(supports-color@10.2.2)
