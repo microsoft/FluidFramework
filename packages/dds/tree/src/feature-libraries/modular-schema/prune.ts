@@ -20,6 +20,7 @@ export function pruneChangeset(
 	changeset: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
+	// validateChangeset(changeset, fieldKinds);
 	const prunedChangeset: Mutable<ModularChangeset> = {
 		...changeset,
 		nodeChanges: changeset.nodeChanges.clone(),
@@ -36,6 +37,7 @@ export function pruneChangeset(
 			fieldKinds,
 		) ?? new Map();
 
+	// validateChangeset(prunedChangeset, fieldKinds);
 	return prunedChangeset;
 }
 
@@ -73,7 +75,7 @@ function pruneNodeChange(
 	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): NodeId | undefined {
-	const changeset = nodeChangeFromId(nodeMap, nodeId);
+	const changeset = nodeChangeFromId(nodeMap, nodeId, nodeAliases);
 	const prunedFields =
 		changeset.fieldChanges === undefined
 			? undefined

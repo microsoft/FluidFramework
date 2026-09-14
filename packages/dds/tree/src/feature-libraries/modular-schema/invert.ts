@@ -54,6 +54,8 @@ export function invertModularChange(
 	revisionForInvert: RevisionTag,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
+	// validateChangeset(change.change, fieldKinds);
+
 	// Rollback changesets destroy the nodes created by the change being rolled back.
 	const destroys = isRollback ? invertBuilds(change.change.builds) : undefined;
 
@@ -149,6 +151,7 @@ export function invertModularChange(
 		invertedFields,
 		invertedNodes,
 		fieldKinds,
+		change.change.nodeAliases,
 	);
 
 	const constraintState = newConstraintState(0);
@@ -157,10 +160,11 @@ export function invertModularChange(
 		NodeAttachState.Attached,
 		constraintState,
 		invertedNodes,
+		change.change.nodeAliases,
 		fieldKinds,
 	);
 
-	return makeModularChangeset({
+	const inverse = makeModularChangeset({
 		fieldChanges: invertedFields,
 		nodeChanges: invertedNodes,
 		nodeToParent,
@@ -173,6 +177,8 @@ export function invertModularChange(
 		noChangeConstraintOnRevert,
 		destroys,
 	});
+	// validateChangeset(inverse, fieldKinds);
+	return inverse;
 }
 
 function invertFieldMap(
