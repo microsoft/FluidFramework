@@ -25,6 +25,11 @@ dist/
 !tenant-admin/bundle/
 !tenant-admin/bundle/tenant-admin.cjs
 
+# AFR to self-hosted data copy
+copy-data/inventory/document-inventory.json
+copy-data/configuration/parameters/copy-data.config.json
+copy-data/results/*.json
+
 # OS
 .DS_Store
 Thumbs.db
