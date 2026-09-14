@@ -21,17 +21,22 @@ import {
 import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils/internal";
 
 /**
- * Forces point-in-time snapshot reads to bypass caches while forwarding all other storage operations
- * to the selected historical document service.
+ * Serves the snapshot already fetched during base selection while forwarding all other storage
+ * operations to the selected historical document service. The legacy `getVersions` path still
+ * bypasses caches.
  */
 class PointInTimeDocumentStorageService extends DocumentStorageServiceProxy {
+	public constructor(
+		storage: IDocumentStorageService,
+		private readonly snapshot: ISnapshot,
+	) {
+		super(storage);
+	}
+
 	public override async getSnapshot(
-		snapshotFetchOptions?: ISnapshotFetchOptions,
+		_snapshotFetchOptions?: ISnapshotFetchOptions,
 	): Promise<ISnapshot> {
-		return super.getSnapshot({
-			...snapshotFetchOptions,
-			fetchSource: FetchSource.noCache,
-		});
+		return this.snapshot;
 	}
 
 	public override async getVersions(
@@ -77,6 +82,7 @@ export class OdspPointInTimeDocumentService
 		private readonly recoverableDocumentService: IDocumentService,
 		private readonly liveDocumentService: IDocumentService,
 		private readonly targetSequenceNumber: number,
+		private readonly snapshot: ISnapshot,
 	) {
 		super();
 		this.liveDocumentService.on("metadataUpdate", this.metadataUpdateHandler);
@@ -94,7 +100,7 @@ export class OdspPointInTimeDocumentService
 
 	public async connectToStorage(): Promise<IDocumentStorageService> {
 		const storage = await this.recoverableDocumentService.connectToStorage();
-		return new PointInTimeDocumentStorageService(storage);
+		return new PointInTimeDocumentStorageService(storage, this.snapshot);
 	}
 
 	public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {

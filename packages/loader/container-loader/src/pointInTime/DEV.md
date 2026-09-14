@@ -44,9 +44,11 @@ The result is a historical view with these invariants:
 2. The loader structurally checks whether the supplied `IDocumentServiceFactory` implements `createPointInTimeDocumentService`.
 3. `PointInTimeDocumentServiceFactory` adapts that capability to the normal `createDocumentService` call used by container loading, preserving the requested target sequence number.
 4. The driver creates a point-in-time document service:
-   - storage serves a recoverable snapshot whose sequence number is at or before the target;
-   - the initial snapshot read bypasses persistent and in-memory prefetched snapshot caches so they
-     cannot replace the selected recoverable snapshot with a newer snapshot;
+   - version selection fetches and parses a recoverable snapshot whose sequence number is at or
+     before the target;
+   - storage reuses that selected snapshot for the initial container load rather than downloading it
+     again; the legacy `getVersions` path still bypasses persistent and in-memory prefetched snapshot
+     caches so they cannot replace the selected recoverable snapshot with a newer snapshot;
    - delta storage serves the live document's retained ops, bounded so replay cannot pass the target;
    - the service is storage-only, preventing a live delta-stream connection.
 5. `loadContainerPaused` loads the selected snapshot with automatic op processing disabled and forces the container into read-only mode.
@@ -54,6 +56,20 @@ The result is a historical view with these invariants:
 7. At the target, the loader pauses both delta-manager queues, disconnects, removes its listeners, and returns the historical container.
 
 If the chosen snapshot is already at the target, the loader pauses immediately. A snapshot newer than the target is rejected because replay cannot move backward.
+
+## Measuring load performance
+
+Every `loadContainerToSequenceNumber` call emits a `PointInTimeLoad` performance event. Its `duration`
+is the end-to-end wall-clock load time, including base discovery, snapshot parsing, container
+initialization, and op replay. The event also records:
+
+- `targetSequenceNumber`: requested historical point;
+- `baseSequenceNumber`: sequence number of the selected recoverable snapshot;
+- `opsReplayed`: `targetSequenceNumber - baseSequenceNumber`.
+
+Compare duration at similar `opsReplayed` values to separate fixed setup cost from replay cost. ODSP's
+existing snapshot and delta-fetch telemetry can then identify whether a slow sample is dominated by
+version/snapshot requests or op retrieval.
 
 ## Delta replay batching and unpersisted ops
 

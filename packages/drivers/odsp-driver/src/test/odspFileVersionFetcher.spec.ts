@@ -192,21 +192,21 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 		assert.deepEqual(result, [], "a missing value field is treated as an empty version list");
 	});
 
-	it("resolveSequenceNumber reads trees[0].sequenceNumber and calls the versioned snapshot URL", async () => {
+	it("resolveVersion returns the parsed snapshot and calls the versioned snapshot URL", async () => {
 		// @q F-RESOLVE-01
 		const { result, urls } = await withFetch(
 			[await createResponse(jsonHeaders, snapshotWithSeq(448), 200)],
-			async () => fetcher.resolveSequenceNumber("42.0"),
+			async () => fetcher.resolveVersion("42.0"),
 		);
 
-		assert.equal(result, 448);
+		assert.equal(result.snapshot.sequenceNumber, 448);
 		assert.ok(
 			urls[0]?.includes(`/versions/42.0/opStream/snapshots/trees/latest?blobs=2`),
 			`expected the fileVersion snapshot URL, got ${urls[0]}`,
 		);
 	});
 
-	it("resolveSequenceNumber throws (does not return a wrong value) when the snapshot has no sequence number", async () => {
+	it("resolveVersion throws (does not return a wrong value) when the snapshot has no sequence number", async () => {
 		// @q F-RESOLVE-02
 		// The typed incorrectServerResponse error is retried once by getWithRetryForTokenRefresh, so two
 		// responses are stubbed; the retry hits the same missing-seq snapshot and the error propagates.
@@ -217,13 +217,13 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 						await createResponse(jsonHeaders, snapshotMissingSeq, 200),
 						await createResponse(jsonHeaders, snapshotMissingSeq, 200),
 					],
-					async () => fetcher.resolveSequenceNumber("42.0"),
+					async () => fetcher.resolveVersion("42.0"),
 				),
 			/42\.0/,
 		);
 	});
 
-	it("resolveSequenceNumber throws when the snapshot's sequence number is not a valid integer", async () => {
+	it("resolveVersion throws when the snapshot's sequence number is not a valid integer", async () => {
 		// @q F-RESOLVE-06
 		// A present-but-malformed sequence number must be rejected, not coerced into base selection. A
 		// non-integer number reaches the validation (the parser passes numbers through); incorrectServerResponse
@@ -240,22 +240,22 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 						await createResponse(jsonHeaders, snapshotBadSeq, 200),
 						await createResponse(jsonHeaders, snapshotBadSeq, 200),
 					],
-					async () => fetcher.resolveSequenceNumber("42.0"),
+					async () => fetcher.resolveVersion("42.0"),
 				),
 			/invalid sequenceNumber/,
 		);
 	});
 
-	it("resolveSequenceNumber parses an application/ms-fluid (binary) snapshot", async () => {
+	it("resolveVersion parses an application/ms-fluid (binary) snapshot", async () => {
 		// @q F-RESOLVE-03
 		const { result } = await withFetch(
 			[await createResponse(msFluidHeaders, compactSnapshotBytesWithSeq(448), 200)],
-			async () => fetcher.resolveSequenceNumber("42.0"),
+			async () => fetcher.resolveVersion("42.0"),
 		);
-		assert.equal(result, 448);
+		assert.equal(result.snapshot.sequenceNumber, 448);
 	});
 
-	it("resolveSequenceNumber rejects on an unexpected content-type instead of mis-parsing", async () => {
+	it("resolveVersion rejects on an unexpected content-type instead of mis-parsing", async () => {
 		// @q F-RESOLVE-04
 		// The typed incorrectServerResponse error is retried once by getWithRetryForTokenRefresh, so two
 		// responses are stubbed; the retry hits the same content-type and the error propagates.
@@ -266,17 +266,17 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 						await createResponse({ "content-type": "text/html" }, "<html></html>", 200),
 						await createResponse({ "content-type": "text/html" }, "<html></html>", 200),
 					],
-					async () => fetcher.resolveSequenceNumber("42.0"),
+					async () => fetcher.resolveVersion("42.0"),
 				),
 			/unexpected content-type/,
 		);
 	});
 
-	it("resolveSequenceNumber percent-encodes the version label in the snapshot URL", async () => {
+	it("resolveVersion percent-encodes the version label in the snapshot URL", async () => {
 		// @q F-RESOLVE-05
 		const { urls } = await withFetch(
 			[await createResponse(jsonHeaders, snapshotWithSeq(448), 200)],
-			async () => fetcher.resolveSequenceNumber("42 0#draft"),
+			async () => fetcher.resolveVersion("42 0#draft"),
 		);
 		assert.ok(
 			urls[0]?.includes("/versions/42%200%23draft/opStream/"),
@@ -291,7 +291,7 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 		);
 	});
 
-	it("resolveSequenceNumber refreshes the token and retries after an auth failure", async () => {
+	it("resolveVersion refreshes the token and retries after an auth failure", async () => {
 		// @q F-ERROR-02
 		const refreshFlags: boolean[] = [];
 		const trackingAuth: InstrumentedStorageTokenFetcher = async (options) => {
@@ -309,9 +309,9 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 				await createResponse(jsonHeaders, undefined, 401), // auth failure -> triggers a token refresh
 				await createResponse(jsonHeaders, snapshotWithSeq(448), 200), // retry succeeds
 			],
-			async () => authRetryFetcher.resolveSequenceNumber("42.0"),
+			async () => authRetryFetcher.resolveVersion("42.0"),
 		);
-		assert.equal(result, 448);
+		assert.equal(result.snapshot.sequenceNumber, 448);
 		assert.deepEqual(
 			refreshFlags,
 			[false, true],
@@ -319,10 +319,10 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 		);
 	});
 
-	it("resolveSequenceNumber surfaces a non-success response as an error", async () => {
+	it("resolveVersion surfaces a non-success response as an error", async () => {
 		// @q F-ERROR-03
 		await assert.rejects(async () =>
-			withFetch([await notFound()], async () => fetcher.resolveSequenceNumber("42.0")),
+			withFetch([await notFound()], async () => fetcher.resolveVersion("42.0")),
 		);
 	});
 
@@ -382,26 +382,28 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 		}
 	});
 
-	it("getRecoverableVersionEpoch reads x-fluid-epoch from the versioned snapshot endpoint", async () => {
+	it("resolveVersion returns the epoch from the same versioned snapshot response", async () => {
 		// @q F-EPOCH-02
 		const { result, urls } = await withFetch(
-			[await createResponse(epochHeaders("epoch-old"), new Uint8Array(0), 200)],
-			async () => fetcher.getRecoverableVersionEpoch("40.0"),
+			[await createResponse(epochHeaders("epoch-old"), snapshotWithSeq(418), 200)],
+			async () => fetcher.resolveVersion("40.0"),
 		);
-		assert.equal(result, "epoch-old");
+		assert.equal(result.epoch, "epoch-old");
+		assert.equal(result.snapshot.sequenceNumber, 418);
+		assert.equal(urls.length, 1, "snapshot and epoch should come from one request");
 		assert.ok(
 			urls[0]?.includes(`/versions/40.0/opStream/snapshots/trees/latest`),
 			`expected the versioned snapshot URL, got ${urls[0]}`,
 		);
 	});
 
-	it("getRecoverableVersionEpoch returns undefined when the server sends no epoch header", async () => {
+	it("resolveVersion returns an undefined epoch when the server sends no epoch header", async () => {
 		// @q F-EPOCH-03
 		const { result } = await withFetch(
-			[await createResponse(jsonHeaders, new Uint8Array(0), 200)],
-			async () => fetcher.getRecoverableVersionEpoch("40.0"),
+			[await createResponse(jsonHeaders, snapshotWithSeq(418), 200)],
+			async () => fetcher.resolveVersion("40.0"),
 		);
-		assert.equal(result, undefined);
+		assert.equal(result.epoch, undefined);
 	});
 
 	it("listFileVersions refreshes the token and retries after an auth failure", async () => {

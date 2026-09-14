@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
@@ -23,20 +24,31 @@ function ref(versionId: string): OdspFileVersionRef {
 	return { versionId, lastModifiedDateTime: "2026-01-01T00:00:00.000Z" };
 }
 
+function snapshotWithSeq(
+	sequenceNumber: number,
+): ISnapshot & { readonly sequenceNumber: number } {
+	return {
+		snapshotTree: { blobs: {}, trees: {} },
+		blobContents: new Map(),
+		ops: [],
+		sequenceNumber,
+		latestSequenceNumber: sequenceNumber,
+		snapshotFormatV: 1,
+	};
+}
+
 interface FakeFetcher extends IOdspFileVersionFetcher {
 	/** Number of times the version list was fetched. */
 	readonly listCalls: () => number;
-	/** Version ids passed to resolveSequenceNumber, in call order. */
+	/** Version ids passed to resolveVersion, in call order. */
 	readonly resolvedIds: () => string[];
 	/** Number of times the live document's epoch was read. */
 	readonly liveEpochCalls: () => number;
-	/** Version ids passed to getRecoverableVersionEpoch, in call order. */
-	readonly versionEpochIds: () => string[];
 }
 
 /**
  * Optional epoch behavior for {@link makeManager}, used by the lineage-validation tests.
- * `liveEpoch`/`versionEpochs` back the epoch getters compared by `findBaseForSeq`'s lineage check.
+ * `liveEpoch`/`versionEpochs` back the epochs compared by `findBaseForSeq`'s lineage check.
  */
 interface ReplayConfig {
 	readonly liveEpoch?: string;
@@ -46,8 +58,8 @@ interface ReplayConfig {
 /*
  * Create a manager backed by in-memory fakes so the selection logic can be tested without ODSP.
  * `versions` is the newest-first list the fake `listFileVersions` returns; `seqByVersion` maps a
- * versionId to the sequence number the fake `resolveSequenceNumber` returns (a missing id makes it
- * throw, modelling a parse failure). `replay` configures the epoch getters used by `findBaseForSeq`'s
+ * versionId to the sequence number the fake `resolveVersion` returns (a missing id makes it throw,
+ * modelling a parse failure). `replay` configures the epochs used by `findBaseForSeq`'s
  * lineage check; it defaults to a single shared epoch so selection tests pass the check by default.
  */
 function makeManager(
@@ -60,35 +72,32 @@ function makeManager(
 	let listCallCount = 0;
 	const resolved: string[] = [];
 	let liveEpochCallCount = 0;
-	const versionEpochResolved: string[] = [];
 	const logger = new MockLogger();
 	const fetcher: FakeFetcher = {
 		listFileVersions: async () => {
 			listCallCount++;
 			return versions;
 		},
-		resolveSequenceNumber: async (versionId: string) => {
+		resolveVersion: async (versionId: string) => {
 			resolved.push(versionId);
 			const seq: number | undefined = seqByVersion[versionId];
 			if (seq === undefined) {
 				throw new Error(`no sequence number configured for version ${versionId}`);
 			}
-			return seq;
+			return {
+				snapshot: snapshotWithSeq(seq),
+				epoch: replayConfig.versionEpochs
+					? replayConfig.versionEpochs[versionId]
+					: replayConfig.liveEpoch,
+			};
 		},
 		getLiveDocumentEpoch: async () => {
 			liveEpochCallCount++;
 			return replayConfig.liveEpoch;
 		},
-		getRecoverableVersionEpoch: async (versionId: string) => {
-			versionEpochResolved.push(versionId);
-			return replayConfig.versionEpochs
-				? replayConfig.versionEpochs[versionId]
-				: replayConfig.liveEpoch;
-		},
 		listCalls: () => listCallCount,
 		resolvedIds: () => [...resolved],
 		liveEpochCalls: () => liveEpochCallCount,
-		versionEpochIds: () => [...versionEpochResolved],
 	};
 	return {
 		manager: new OdspVersionManager(fetcher),
@@ -200,6 +209,49 @@ describe("OdspVersionManager", () => {
 			assert.deepEqual(fetcher.resolvedIds(), ["43.0", "42.0"]);
 		});
 
+		it("uses logarithmic snapshot fetches for a target deep in version history", async () => {
+			// @q M-SEARCH-01
+			const sealedVersions = Array.from({ length: 64 }, (_, index) => {
+				const sequenceNumber = (64 - index) * 10;
+				return {
+					version: ref(`v${sequenceNumber / 10}`),
+					sequenceNumber,
+				};
+			});
+			const versions = [ref("tip"), ...sealedVersions.map(({ version }) => version)];
+			const seqs = Object.fromEntries(
+				sealedVersions.map(({ version, sequenceNumber }) => [
+					version.versionId,
+					sequenceNumber,
+				]),
+			);
+			const { manager, fetcher } = makeManager(versions, seqs);
+
+			const result = await manager.findBaseForSeq(20);
+
+			assert.equal(result.kind === "found" && result.base.versionId, "v2");
+			assert.ok(
+				fetcher.resolvedIds().length <= 12,
+				`expected logarithmic fetches, got ${fetcher.resolvedIds().length}`,
+			);
+		});
+
+		it("falls back to a full scan when an ordering inversion hides a valid base", async () => {
+			// @q M-SEARCH-02
+			const versions = [ref("tip"), ref("v5"), ref("v4"), ref("v3"), ref("v2")];
+			const { manager } = makeManager(versions, {
+				v5: 500,
+				v4: 450,
+				v3: 300,
+				v2: 400,
+			});
+
+			const result = await manager.findBaseForSeq(350);
+
+			assert.equal(result.kind === "found" && result.base.versionId, "v3");
+			assert.equal(result.kind === "found" && result.base.sequenceNumber, 300);
+		});
+
 		it("caches resolved sequence numbers across calls but re-enumerates the list each call", async () => {
 			// @q M-CACHE-01
 			const versions = [ref("44.0"), ref("43.0"), ref("42.0"), ref("40.0")];
@@ -226,9 +278,11 @@ describe("OdspVersionManager", () => {
 					}
 					return [ref("44.0"), ref("43.0")];
 				},
-				resolveSequenceNumber: async (versionId: string) => Number.parseInt(versionId, 10),
+				resolveVersion: async (versionId: string) => ({
+					snapshot: snapshotWithSeq(Number.parseInt(versionId, 10)),
+					epoch: "epoch",
+				}),
 				getLiveDocumentEpoch: async () => "epoch",
-				getRecoverableVersionEpoch: async () => "epoch",
 			};
 			const manager = new OdspVersionManager(fetcher);
 			await assert.rejects(async () => manager.findBaseForSeq(0), /transient list failure/);
@@ -245,7 +299,7 @@ describe("OdspVersionManager", () => {
 	describe("error handling", () => {
 		it("propagates (does not swallow) a failure to resolve a version's sequence number", async () => {
 			// @q M-ERR-01
-			// 42.0 has no configured seq -> resolveSequenceNumber throws.
+			// 42.0 has no configured seq -> resolveVersion throws.
 			const versions = [ref("44.0"), ref("43.0"), ref("42.0"), ref("40.0")];
 			const seqs = { "43.0": 460, "40.0": 418 };
 			const { manager } = makeManager(versions, seqs);
@@ -257,15 +311,14 @@ describe("OdspVersionManager", () => {
 			let attempts = 0;
 			const fetcher: IOdspFileVersionFetcher = {
 				listFileVersions: async () => [ref("44.0"), ref("43.0")],
-				resolveSequenceNumber: async () => {
+				resolveVersion: async () => {
 					attempts++;
 					if (attempts === 1) {
 						throw new Error("transient");
 					}
-					return 448;
+					return { snapshot: snapshotWithSeq(448), epoch: "epoch" };
 				},
 				getLiveDocumentEpoch: async () => "epoch",
-				getRecoverableVersionEpoch: async () => "epoch",
 			};
 			const manager = new OdspVersionManager(fetcher);
 			await assert.rejects(async () => manager.findBaseForSeq(500), /transient/);
@@ -329,14 +382,13 @@ describe("OdspVersionManager", () => {
 				{ liveEpoch: "epoch-A" },
 			);
 			const result = await manager.findBaseForSeq(430);
-			assert.deepEqual(result, {
-				kind: "found",
-				base: {
-					versionId: "40.0",
-					sequenceNumber: 418,
-					lastModifiedDateTime: "2026-01-01T00:00:00.000Z",
-				},
+			assert.equal(result.kind, "found");
+			assert.deepEqual(result.kind === "found" && result.base, {
+				versionId: "40.0",
+				sequenceNumber: 418,
+				lastModifiedDateTime: "2026-01-01T00:00:00.000Z",
 			});
+			assert.equal(result.kind === "found" && result.snapshot.sequenceNumber, 418);
 		});
 
 		it("throws when the chosen base is on a different epoch than the live document", async () => {
@@ -365,7 +417,7 @@ describe("OdspVersionManager", () => {
 
 		it("throws (fails closed) when an epoch is unknown", async () => {
 			// @q M-VALIDATE-03
-			// Both getLiveDocumentEpoch and getRecoverableVersionEpoch resolve undefined.
+			// Both the live epoch and the epoch returned with the base snapshot are undefined.
 			const { manager } = makeManager(
 				[ref("tip"), ref("40.0")],
 				{ tip: 460, "40.0": 418 },
@@ -436,11 +488,11 @@ describe("OdspVersionManager", () => {
 		});
 	});
 
-	describe("findBaseForSeq: epoch caching", () => {
-		it("caches a numbered version's epoch but re-reads the live epoch each time", async () => {
+	describe("findBaseForSeq: version caching", () => {
+		it("caches a numbered version's snapshot and epoch but re-reads the live epoch", async () => {
 			// @q M-VALIDATE-CACHE-01
-			// A numbered version's snapshot is immutable, so its epoch is read once and cached; the live
-			// document's epoch can change (restore/reupload) and must be read fresh on every check.
+			// A numbered version's snapshot is immutable, so the snapshot and its epoch are fetched once
+			// and cached; the live epoch can change and must be read fresh on every check.
 			const versions = [ref("tip"), ref("42.0"), ref("40.0")];
 			const seqs = { tip: 460, "42.0": 448, "40.0": 418 };
 			const { manager, fetcher } = makeManager(versions, seqs, { liveEpoch: "epoch" });
@@ -449,9 +501,9 @@ describe("OdspVersionManager", () => {
 			await manager.findBaseForSeq(430); // base 40.0 again - epoch should come from cache
 
 			assert.deepEqual(
-				fetcher.versionEpochIds(),
-				["40.0"],
-				"the chosen base's epoch should be fetched once and then served from cache",
+				fetcher.resolvedIds(),
+				["42.0", "40.0"],
+				"each scanned sealed-version snapshot and epoch should be fetched once and then cached",
 			);
 			assert.equal(
 				fetcher.liveEpochCalls(),

@@ -6,6 +6,7 @@
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/driver-utils/internal";
+import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import type {
 	IContainerDriverServices,
@@ -93,10 +94,25 @@ export async function loadContainerToSequenceNumber(
 		loadToSequenceNumber,
 	);
 
-	return loadContainerPaused(
-		{ ...props, documentServiceFactory: pointInTimeFactory },
-		props.request,
-		loadToSequenceNumber,
-		props.signal,
+	return PerformanceEvent.timedExecAsync(
+		createChildLogger({ logger: props.logger }),
+		{
+			eventName: "PointInTimeLoad",
+			targetSequenceNumber: loadToSequenceNumber,
+		},
+		async (event) => {
+			const container = await loadContainerPaused(
+				{ ...props, documentServiceFactory: pointInTimeFactory },
+				props.request,
+				loadToSequenceNumber,
+				props.signal,
+			);
+			const baseSequenceNumber = container.deltaManager.initialSequenceNumber;
+			event.end({
+				baseSequenceNumber,
+				opsReplayed: loadToSequenceNumber - baseSequenceNumber,
+			});
+			return container;
+		},
 	);
 }

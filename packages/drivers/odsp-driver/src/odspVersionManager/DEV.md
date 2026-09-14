@@ -146,7 +146,8 @@ these behaviors are tested with an in-memory fake.
 The list is newest-first, and the tip (index 0, the newest version) is excluded: it is the one version
 whose sequence number is not yet static, so it cannot be a stable base. Among the remaining (sealed)
 versions the answer is the closest one at or before the target — the greatest sequence number at or before
-the target when version order tracks sequence order, which an early-stop newest-first scan finds.
+the target when version order tracks sequence order. Selection probes exponentially from the newest
+sealed version, then binary-searches the resulting interval.
 
 - **Target between two versions?** The closer, older one. `M-SELECT-01`
 - **Target equal to a version?** That version, an exact match (zero ops to replay). `M-SELECT-02`
@@ -166,14 +167,25 @@ the target when version order tracks sequence order, which an early-stop newest-
 
 ### What work does it avoid when scanning?
 
-- **Resolving more versions than needed?** It stops at the first version at or before the target and does
-  not resolve older ones. `M-STOP-01`
+- **Resolving versions older than the selected base?** The search never resolves them. `M-STOP-01`
+- **A target deep in a long history?** Exponential probing followed by binary search resolves
+  logarithmically many snapshots rather than linearly scanning every newer version. `M-SEARCH-01`
+- **An ordering inversion hides a valid base from the probes?** Before returning `noBaseVersion`, a
+  full newest-first fallback scan finds it. `M-SEARCH-02`
+
+The exponential first phase is intentional rather than starting at the midpoint: recent targets still
+resolve the newest sealed version with one snapshot request, while deep targets establish a search
+interval in logarithmically many requests. If the probes find no base, the manager falls back to a full
+newest-first scan before returning `noBaseVersion`; this preserves correctness if the version list has a
+rare ordering inversion. If binary search finds a valid but not strictly closest base because of an
+undetected local inversion, replay remains correct but may include extra ops, matching the previous
+ordering caveat.
 
 ### What is cached, and what is re-fetched?
 
-Resolved sequence numbers are memoized; the version list is not. A sealed version's sequence number never
-changes, so once resolved it is reused for the manager's lifetime rather than re-fetched. The version
-list, by contrast, changes as new versions are cut, so it is **re-enumerated on every query**. This
+Resolved sealed-version snapshots and their epochs are memoized; the version list is not. A sealed
+version never changes, so once fetched it is reused for the manager's lifetime rather than re-fetched.
+The version list, by contrast, changes as new versions are cut, so it is **re-enumerated on every query**. This
 mirrors how Page History (`host-page-history`) works: its `PageHistoryVersionManager` pulls the ODSP
 version list fresh on each navigation (`refreshVersions()`), caching only the expensive loaded *content* —
 not the list. Page History's `#getOdspVersions` likewise dedups and drops the tip (`slice(1)`), the same
@@ -182,8 +194,8 @@ two rules applied here.
 The manager is short-lived — the point-in-time document service factory creates one per load and calls
 `findBaseForSeq` once, then drops it — so the memoization caches never grow large and need no eviction.
 
-- **Re-resolving a sequence number across calls?** Each version's number is memoized, so a later query
-  reuses it rather than re-fetching. `M-CACHE-01`
+- **Re-resolving a sealed version across calls?** Its parsed snapshot and epoch are memoized, so a
+  later query reuses them rather than re-fetching. `M-CACHE-01`
 - **A version-list fetch that fails?** It propagates rather than being read as empty; the list is
   re-enumerated on the next call. `M-CACHE-02`
 
@@ -219,9 +231,9 @@ them.
 - **Either epoch unknown?** Fails closed — without both epochs the shared-lineage claim cannot be proven.
   `M-VALIDATE-03`
 
-A numbered version's snapshot is immutable, so its epoch is read once and memoized per versionId; the
-live document's epoch can change (a restore or download-and-reupload bumps it) and is therefore read
-fresh on every lineage check, never cached. `M-VALIDATE-CACHE-01`
+A numbered version's snapshot is immutable, so its snapshot and epoch are fetched together once and
+memoized per versionId. The live document's epoch can change (a restore or download-and-reupload bumps
+it) and is therefore read fresh on every lineage check, never cached. `M-VALIDATE-CACHE-01`
 
 **Op availability.** This is _not_ re-checked up front, and Component B adds no check of its own. Op
 retention trims a contiguous _prefix_ from the oldest end of the stream, and op sequence numbers are
@@ -277,24 +289,25 @@ field yields an empty list rather than an error. `F-LIST-03`
 
 ### How does it read a version's or the live document's lineage (epoch)?
 
-The ODSP `x-fluid-epoch` header identifies the file's binary lineage. It is read with the raw fetch
-helper — deliberately **not** `epochTracker.fetch`, whose whole job is to pin the first epoch and reject
-a divergent one, which would make comparing two epochs impossible — and the response body is consumed and
-discarded, keeping only the header.
+The ODSP `x-fluid-epoch` header identifies the file's binary lineage. The selected version's epoch is
+captured from the same `blobs=2` response that supplies its parsed snapshot and sequence number, avoiding
+a second version-scoped request. The live epoch is read with the raw fetch helper — deliberately **not**
+`epochTracker.fetch`, whose whole job is to pin the first epoch and reject a divergent one, which would
+make comparing two epochs impossible — and the response body is consumed and discarded.
 
 - **The live document's epoch?** From the unversioned live snapshot endpoint (`blobs=0`), never a
   versioned URL. `F-EPOCH-01`
-- **A specific version's epoch?** From that version's snapshot endpoint
-  (`.../versions/{label}/opStream/snapshots/trees/latest?blobs=0`). `F-EPOCH-02`
+- **A specific version's epoch?** From the same version snapshot response already fetched to resolve
+  its sequence number (`.../versions/{label}/opStream/snapshots/trees/latest?blobs=2`). `F-EPOCH-02`
 - **The server sends no epoch header?** Returns `undefined` rather than throwing; the caller fails closed
   on an unknown epoch. `F-EPOCH-03`
 
 ### How does it verify a base shares the live document's lineage?
 
-Versions carry their own ODSP epoch (`x-fluid-epoch`). `getLiveDocumentEpoch` and
-`getRecoverableVersionEpoch(versionId)` read that header from the live and version-scoped snapshot
-endpoints (`...?blobs=0`, metadata only). The version manager compares the two; a mismatch means a
-restore or download-then-reupload renumbered the op stream, so the base is a different lineage.
+Versions carry their own ODSP epoch (`x-fluid-epoch`). `resolveVersion` returns the parsed version
+snapshot and its response epoch together, while `getLiveDocumentEpoch` reads the live endpoint with
+`blobs=0`. The version manager compares the two; a mismatch means a restore or
+download-then-reupload renumbered the op stream, so the base is a different lineage.
 
 Op availability is deliberately _not_ fetched here — it is enforced by the delta-storage stack against
 the ops the loader reads (see Part V), which also gives the creation snapshot's ops for free.
@@ -302,27 +315,6 @@ the ops the loader reads (see Part V), which also gives the creation snapshot's 
 ## Part IV — Directional
 
 Aspirational behaviors, written as questions that cannot yet be answered "yes".
-
-### Should sequence-number resolution be lazy or binary-search, rather than eager?
-
-Resolving each version costs one snapshot fetch. With up to ~50 versions, an eager newest-to-oldest
-scan can fetch more than necessary. The public contract (`findBaseForSeq`) already hides the strategy,
-so a binary search over versions could replace it without changing callers.
-
-The version list is effectively a sorted array: it is newest-first, and a version's sequence number is
-monotonically non-increasing toward older versions (a newer version is a later state). That makes it
-searchable for "the greatest sequence number at or before the target". The search must be "fuzzy" rather
-than textbook, for two reasons: versions can share a sequence number (a metadata-only re-save leaves it
-unchanged), so it is a sorted array with duplicates; and the ordering can have small local inversions.
-The robust shape is therefore binary/interpolation to get close, then a short local walk (older if the
-probe overshot the target, newer while still at or before it) to pin the exact base and absorb ties and
-inversions.
-
-Two further refinements reduce fetches. First, a version's sequence number never changes, so once
-resolved it can be cached indefinitely; refreshing only needs to reconcile which versions still exist
-(dropping ones that aged out), not re-resolve sequence numbers. Second, selection does not need the exact
-closest version — any version within a bounded number of ops of the target is "close enough", because the
-recomposed driver replays the remaining ops anyway; a tolerance lets the search stop early.
 
 ### Could the version list's `lastModifiedDateTime` seed the search?
 
@@ -567,15 +559,16 @@ The injected implementation:
    [Part II](#how-does-it-verify-a-chosen-base-can-be-replayed-to-the-target)); a cross-lineage base
    throws the non-retryable `fileOverwrittenInStorage` error. A `noBaseVersion` result becomes a
    `UsageError` naming the target and the oldest resolved sequence number.
-2. Resolve the chosen file version into a version-scoped resolved URL, then create two ordinary ODSP
+2. Reuse the parsed snapshot returned by base selection, resolve the chosen file version into a
+   version-scoped resolved URL, then create two ordinary ODSP
    document services: a **recoverable** one bound to that base version (its storage is the base
    snapshot) and a **live** one (its delta storage supplies the ops to replay). Both are created via
    `createDocumentServiceCore` with a **single shared** `EpochTracker` (the same one the version
    manager reads through) — this is the structural lineage guard; see the next question. The
-   point-in-time storage wrapper forces the recoverable service's initial snapshot read to bypass
-   both the persistent latest-snapshot cache and the in-memory snapshot-prefetch cache so the
-   selected base cannot be replaced by a newer cached live snapshot. Both loader snapshot paths
-   (`getSnapshot` and the legacy `getVersions` + `getSnapshotTree` path) apply this rule.
+   point-in-time storage wrapper returns the already selected snapshot from memory on the
+   `getSnapshot` path, eliminating a duplicate network fetch. The legacy `getVersions` +
+   `getSnapshotTree` path bypasses both the persistent latest-snapshot cache and the in-memory
+   snapshot-prefetch cache so the selected base cannot be replaced by a newer cached live snapshot.
 3. Return an `OdspPointInTimeDocumentService` composing the two.
 
 It lives in this package rather than a generic wrapping driver (e.g. `@fluidframework/replay-driver`)

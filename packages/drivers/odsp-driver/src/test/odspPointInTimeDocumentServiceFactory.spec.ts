@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IDocumentService } from "@fluidframework/driver-definitions/internal";
+import type { IDocumentService, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import type {
 	IOdspResolvedUrl,
 	OdspResourceTokenFetchOptions,
@@ -62,6 +62,15 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 		};
 		return service as unknown as IDocumentService;
 	}
+
+	const baseSnapshot = {
+		snapshotTree: { blobs: {}, trees: {} },
+		blobContents: new Map(),
+		ops: [],
+		sequenceNumber: 5,
+		latestSequenceNumber: 5,
+		snapshotFormatV: 1,
+	} satisfies ISnapshot;
 
 	it("does not expose point-in-time loading unless the consumer injects it", () => {
 		const factory = createOdspDocumentServiceFactory({
@@ -129,6 +138,7 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 					sequenceNumber: 5,
 					lastModifiedDateTime: "2026-01-01T00:00:00Z",
 				},
+				snapshot: baseSnapshot,
 			}),
 		};
 		const capturedCacheAndTrackers: ICacheAndTracker[] = [];
@@ -179,6 +189,7 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 								sequenceNumber: 5,
 								lastModifiedDateTime: "2026-01-01T00:00:00Z",
 							},
+							snapshot: baseSnapshot,
 						}),
 					}),
 					resolveFileVersion: () => recoverableResolvedUrl,
@@ -215,6 +226,7 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 							sequenceNumber: 5,
 							lastModifiedDateTime: "2026-01-01T00:00:00Z",
 						},
+						snapshot: baseSnapshot,
 					}),
 				}),
 			},

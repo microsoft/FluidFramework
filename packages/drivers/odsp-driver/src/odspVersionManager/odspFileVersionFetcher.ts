@@ -8,15 +8,16 @@
  * - GET /_api/v2.1/.../versions -- enumerate the file's versions.
  * - GET /_api/v2.1/.../versions/{label}/opStream/snapshots/trees/latest?blobs=2 -- fetch a version's
  *   snapshot and read its sequence number, parsed with the driver's snapshot parser.
- * - GET /_api/v2.1/.../[versions/{label}/]opStream/snapshots/trees/latest?blobs=0 -- read a version's
- *   or the live document's ODSP epoch (`x-fluid-epoch`) to compare their lineage.
+ * - GET /_api/v2.1/.../opStream/snapshots/trees/latest?blobs=0 -- read the live document's ODSP
+ *   epoch (`x-fluid-epoch`) to compare it with the epoch on the resolved version snapshot.
  */
 
+import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
-import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
-import type {
-	IOdspUrlParts,
-	InstrumentedStorageTokenFetcher,
+import {
+	OdspErrorTypes,
+	type IOdspUrlParts,
+	type InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -45,8 +46,9 @@ export interface OdspFileVersionRef {
 }
 
 /**
- * Provides a file's versions and resolves each version's Fluid sequence number. Injected into
- * the version manager so the selection logic does not depend on how versions are fetched.
+ * Provides a file's versions and resolves each version's snapshot, sequence number, and epoch.
+ * Injected into the version manager so the selection logic does not depend on how versions are
+ * fetched.
  */
 export interface IOdspFileVersionFetcher {
 	/**
@@ -54,22 +56,19 @@ export interface IOdspFileVersionFetcher {
 	 */
 	listFileVersions(): Promise<OdspFileVersionRef[]>;
 	/**
-	 * Resolve a single version's Fluid sequence number. Throws on failure rather than returning a
-	 * wrong value.
+	 * Resolve a single version's snapshot and ODSP epoch. Throws on failure rather than returning a
+	 * malformed snapshot.
 	 */
-	resolveSequenceNumber(versionId: string): Promise<number>;
+	resolveVersion(versionId: string): Promise<{
+		readonly snapshot: ISnapshot & { readonly sequenceNumber: number };
+		readonly epoch: string | undefined;
+	}>;
 	/**
 	 * Read the live document's current ODSP epoch (`x-fluid-epoch`), or `undefined`. Epoch identifies
-	 * the file's binary lineage and changes on a version restore or download-then-reupload; compared
-	 * with {@link IOdspFileVersionFetcher.getRecoverableVersionEpoch} to confirm a base is on the live
-	 * document's lineage.
+	 * the file's binary lineage and changes on a version restore or download-then-reupload. It is
+	 * compared with the epoch returned by {@link IOdspFileVersionFetcher.resolveVersion}.
 	 */
 	getLiveDocumentEpoch(): Promise<string | undefined>;
-	/**
-	 * Read the ODSP epoch of a specific file version, or `undefined`. See
-	 * {@link IOdspFileVersionFetcher.getLiveDocumentEpoch}.
-	 */
-	getRecoverableVersionEpoch(versionId: string): Promise<string | undefined>;
 }
 
 /**
@@ -140,7 +139,12 @@ export function createOdspFileVersionFetcher(
 			return versions;
 		});
 
-	const resolveSequenceNumber = async (versionId: string): Promise<number> =>
+	const resolveVersion = async (
+		versionId: string,
+	): Promise<{
+		snapshot: ISnapshot & { readonly sequenceNumber: number };
+		epoch: string | undefined;
+	}> =>
 		getWithRetryForTokenRefresh(async (options) => {
 			// The sequence number lives in the version snapshot's `.protocol/attributes` blob, so fetch the
 			// version-scoped snapshot with `blobs=2` to inline it. No op stream needed.
@@ -158,16 +162,15 @@ export function createOdspFileVersionFetcher(
 			headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
 			const response = await epochTracker.fetch(url, { method, headers }, "treesLatest");
 			const contentType = response.headers.get("content-type") ?? "";
-			let sequenceNumber: number | undefined;
+			let snapshot: ISnapshot;
 			if (contentType.includes("application/json")) {
 				// JSON framing: read it with the driver's JSON snapshot parser.
 				const snapshotJson = (await response.content.json()) as IOdspSnapshot;
-				sequenceNumber =
-					convertOdspSnapshotToSnapshotTreeAndBlobs(snapshotJson).sequenceNumber;
+				snapshot = convertOdspSnapshotToSnapshotTreeAndBlobs(snapshotJson);
 			} else if (contentType.includes("application/ms-fluid")) {
 				// ms-fluid framing: the compact binary form; read it with the driver's compact-snapshot parser.
 				const bytes = new Uint8Array(await response.content.arrayBuffer());
-				sequenceNumber = parseCompactSnapshotResponse(bytes, logger).sequenceNumber;
+				snapshot = parseCompactSnapshotResponse(bytes, logger);
 			} else {
 				// Neither framing (e.g. an HTML error page). Throw the driver's typed bad-response error
 				// (like fetchSnapshot.ts): canRetry=false stops the loader re-driving, while the
@@ -180,12 +183,11 @@ export function createOdspFileVersionFetcher(
 			}
 			// The sequence number must be a non-negative integer; a missing or malformed one throws the same
 			// typed error as above rather than feeding a wrong value into base selection.
+			const { sequenceNumber } = snapshot;
 			if (
-				!(
-					typeof sequenceNumber === "number" &&
-					Number.isInteger(sequenceNumber) &&
-					sequenceNumber >= 0
-				)
+				typeof sequenceNumber !== "number" ||
+				!Number.isInteger(sequenceNumber) ||
+				sequenceNumber < 0
 			) {
 				throw new NonRetryableError(
 					`ODSP file version ${versionId} snapshot has a missing or invalid sequenceNumber (${String(sequenceNumber)})`,
@@ -193,7 +195,10 @@ export function createOdspFileVersionFetcher(
 					{ driverVersion, contentType, accept: headers.accept },
 				);
 			}
-			return sequenceNumber;
+			return {
+				snapshot: { ...snapshot, sequenceNumber },
+				epoch: response.headers.get("x-fluid-epoch") ?? undefined,
+			};
 		});
 
 	const itemRoot = `${getApiRoot(new URL(siteUrl))}/drives/${driveId}/items/${itemId}`;
@@ -223,16 +228,9 @@ export function createOdspFileVersionFetcher(
 		// document's epoch. `blobs=0` keeps the response to the tree metadata.
 		readEpoch(`${itemRoot}/opStream/snapshots/trees/latest?blobs=0`, "LiveEpoch");
 
-	const getRecoverableVersionEpoch = async (versionId: string): Promise<string | undefined> =>
-		readEpoch(
-			`${itemRoot}/versions/${encodeURIComponent(versionId)}/opStream/snapshots/trees/latest?blobs=0`,
-			"FileVersionEpoch",
-		);
-
 	return {
 		listFileVersions,
-		resolveSequenceNumber,
+		resolveVersion,
 		getLiveDocumentEpoch,
-		getRecoverableVersionEpoch,
 	};
 }

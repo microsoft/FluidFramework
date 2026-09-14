@@ -193,5 +193,6 @@ export async function createPointInTimeDocumentServiceCore(
 		recoverableDocumentService,
 		liveDocumentService,
 		targetSequenceNumber,
+		baseResult.snapshot,
 	);
 }

@@ -113,18 +113,20 @@ class FakeLiveDocumentService {
 class FakeRecoverableDocumentService {
 	public disposeCount = 0;
 	public connectToStorageCount = 0;
+	public getSnapshotCount = 0;
 	public snapshotFetchOptions: ISnapshotFetchOptions | undefined;
 	public versionsFetchSource: FetchSource | undefined;
 	public readonly snapshot = {
 		snapshotTree: { blobs: {}, trees: {} },
 		blobContents: new Map(),
 		ops: [],
-		sequenceNumber: 0,
-		latestSequenceNumber: 0,
+		sequenceNumber: 200,
+		latestSequenceNumber: 200,
 		snapshotFormatV: 1,
 	} satisfies ISnapshot;
 	public readonly storage = {
 		getSnapshot: async (snapshotFetchOptions?: ISnapshotFetchOptions) => {
+			this.getSnapshotCount++;
 			this.snapshotFetchOptions = snapshotFetchOptions;
 			return this.snapshot;
 		},
@@ -173,17 +175,27 @@ function makeService(
 	calls: FetchCall[];
 	live: FakeLiveDocumentService;
 	recoverable: FakeRecoverableDocumentService;
+	selectedSnapshot: ISnapshot;
 } {
 	const { service: deltaStorage, calls } = fakeDeltaStorage(inner);
 	const live = new FakeLiveDocumentService(deltaStorage);
 	const recoverable = new FakeRecoverableDocumentService();
+	const selectedSnapshot = {
+		snapshotTree: { blobs: {}, trees: {} },
+		blobContents: new Map(),
+		ops: [],
+		sequenceNumber: 50,
+		latestSequenceNumber: 50,
+		snapshotFormatV: 1,
+	} satisfies ISnapshot;
 	const service = new OdspPointInTimeDocumentService(
 		{} as IResolvedUrl,
 		recoverable as unknown as IDocumentService,
 		live as unknown as IDocumentService,
 		target,
+		selectedSnapshot,
 	);
-	return { service, calls, live, recoverable };
+	return { service, calls, live, recoverable, selectedSnapshot };
 }
 
 /** Read a stream to completion, returning the sequence numbers observed across all batches. */
@@ -251,15 +263,24 @@ describe("OdspPointInTimeDocumentService", () => {
 			assert.equal(service.policies?.storageOnly, true);
 		});
 
-		it("serves the recoverable snapshot without consulting snapshot caches", async () => {
-			const { service, recoverable } = makeService(100, streamFromBatches([]));
+		it("reuses the selected snapshot even when underlying storage offers a newer snapshot", async () => {
+			const { service, recoverable, selectedSnapshot } = makeService(
+				100,
+				streamFromBatches([]),
+			);
 			const storage = await service.connectToStorage();
 			const snapshot = await storage.getSnapshot?.({ scenarioName: "point-in-time-test" });
-			assert.equal(snapshot, recoverable.snapshot);
-			assert.deepEqual(recoverable.snapshotFetchOptions, {
-				scenarioName: "point-in-time-test",
-				fetchSource: FetchSource.noCache,
-			});
+			assert.equal(snapshot, selectedSnapshot);
+			assert.notEqual(
+				snapshot,
+				recoverable.snapshot,
+				"a newer cached snapshot must not replace the selected historical base",
+			);
+			assert.equal(
+				recoverable.getSnapshotCount,
+				0,
+				"the historical snapshot should not be downloaded a second time",
+			);
 			assert.equal(recoverable.connectToStorageCount, 1);
 		});
 
