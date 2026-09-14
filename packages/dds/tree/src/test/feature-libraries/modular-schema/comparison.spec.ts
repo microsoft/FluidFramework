@@ -184,7 +184,7 @@ describe("Schema Comparison", () => {
 			);
 		});
 
-		it("preserves constructibility rejection even when there are no object fields to compare", () => {
+		it("preserves constructability rejection even when there are no object fields to compare", () => {
 			const original = repository(emptyTree.schema);
 			const target = repository(new MapNodeStoredSchema(fieldRequiredEmptyTree));
 			assert.deepEqual(

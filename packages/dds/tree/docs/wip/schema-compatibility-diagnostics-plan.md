@@ -360,8 +360,8 @@ The checker derives all three flags from the blocker subsets.
 
 Differential verification matched the baseline for 4,802 schema and policy combinations, including flags, exact beta output, and upgrade statuses.
 A second check matched 104,991 modular-schema cases across node, repository, and field comparisons.
-These cases included recursive, missing, forbidden, identifier, and unconstructible definitions.
-Permanent regression tests cover complete failure locations, multiple failures at one field, detached definitions, map and object directionality, leaf values, and constructibility rejection.
+These cases included recursive, missing, forbidden, identifier, and un-constructable definitions.
+Permanent regression tests cover complete failure locations, multiple failures at one field, detached definitions, map and object directionality, leaf values, and constructability rejection.
 Tree source and test compilation pass after a forced project-reference rebuild removed stale incremental output.
 The affected comparison, viewing, staging, helper, live-view, and benchmark smoke suites pass with 416 tests passed and 11 pending.
 The current and legacy API-report checks pass without report changes.

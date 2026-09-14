@@ -71,7 +71,7 @@ export type StoredSchemaSupersetFailure =
  * Reports node constraints that prevent a superset transition.
  *
  * @param policy - Field-kind definitions and upgrade rules.
- * @param originalData - Stored schema used to determine constructibility on both sides.
+ * @param originalData - Stored schema used to determine constructability on both sides.
  * @param original - Node definition whose content must remain supported.
  * @param superset - Proposed replacement, or undefined for a missing definition.
  * @returns Failures at this node, without recursively expanding referenced definitions.
@@ -151,7 +151,7 @@ function* getTreeSupersetFailures(
 			yield { ...failure, fieldKey };
 		}
 	}
-	// Constructibility can reject a transition even when its individual field rules permit it.
+	// Constructability can reject a transition even when its individual field rules permit it.
 	if (targetIsNever && !reported) {
 		yield { mismatch: "nodeKind" };
 	}

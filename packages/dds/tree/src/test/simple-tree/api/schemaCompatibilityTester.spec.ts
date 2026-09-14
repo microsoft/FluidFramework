@@ -287,7 +287,7 @@ describe("checkSchemaCompatibility", () => {
 		);
 	});
 
-	it("produces nonempty subsets across node-kind and constructibility transitions", () => {
+	it("produces nonempty subsets across node-kind and constructability transitions", () => {
 		const identifier = "DiagnosticMatrix";
 		const schemas = [
 			factory.object(identifier, {}),
