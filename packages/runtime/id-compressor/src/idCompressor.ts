@@ -250,11 +250,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		return this.updateToRange(range);
 	}
 
-	public takeUnfinalizedCreationRange(): IdCreationRange {
-		this.resetUnfinalizedCreationRange();
-		return this.takeNextCreationRange();
-	}
-
 	public resetUnfinalizedCreationRange(): void {
 		assert(
 			!this.ongoingGhostSession,
