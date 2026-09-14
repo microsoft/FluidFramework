@@ -82,9 +82,7 @@ describe("DocumentManager", () => {
 		await new Promise<void>((resolve) => activeServer.listen(0, "127.0.0.1", resolve));
 		const address = activeServer.address() as AddressInfo;
 		const tenantManager = sandbox.createStubInstance(TenantManager);
-		const accessToken = generateToken("tenant-a", "shared-id", "test-key", [
-			ScopeType.DocRead,
-		]);
+		const accessToken = generateToken("tenant-a", "shared-id", "test-key", [ScopeType.DocRead]);
 		tenantManager.signToken.resolves(accessToken);
 		const cache = new RecordingCache();
 		const manager = new DocumentManager(
@@ -112,10 +110,7 @@ describe("DocumentManager", () => {
 		await new Promise<void>((resolve) => activeServer.listen(0, "127.0.0.1", resolve));
 		const address = activeServer.address() as AddressInfo;
 		const tenantManager = sandbox.createStubInstance(TenantManager);
-		const manager = new DocumentManager(
-			`http://127.0.0.1:${address.port}`,
-			tenantManager,
-		);
+		const manager = new DocumentManager(`http://127.0.0.1:${address.port}`, tenantManager);
 
 		assert.deepStrictEqual(
 			await manager.readDocument("tenant-a", "shared-id", { accessToken }),
@@ -139,14 +134,9 @@ describe("DocumentManager", () => {
 			const address = activeServer.address() as AddressInfo;
 			const tenantManager = sandbox.createStubInstance(TenantManager);
 			tenantManager.signToken.resolves("internal.jwt");
-			const manager = new DocumentManager(
-				`http://127.0.0.1:${address.port}`,
-				tenantManager,
-			);
+			const manager = new DocumentManager(`http://127.0.0.1:${address.port}`, tenantManager);
 
-			await assert.rejects(
-				manager.readDocument("tenant-a", "shared-id", { accessToken }),
-			);
+			await assert.rejects(manager.readDocument("tenant-a", "shared-id", { accessToken }));
 			assert.deepStrictEqual(authorizationHeaders, [`Basic ${accessToken}`]);
 			sinon.assert.notCalled(tenantManager.signToken);
 		});
@@ -177,10 +167,7 @@ describe("DocumentManager", () => {
 		const tenantManager = sandbox.createStubInstance(TenantManager);
 		tenantManager.signToken.onFirstCall().resolves(expiredToken);
 		tenantManager.signToken.onSecondCall().resolves(refreshedToken);
-		const manager = new DocumentManager(
-			`http://127.0.0.1:${address.port}`,
-			tenantManager,
-		);
+		const manager = new DocumentManager(`http://127.0.0.1:${address.port}`, tenantManager);
 
 		assert.deepStrictEqual(await manager.readDocument("tenant-a", "shared-id"), document);
 		assert.strictEqual(authorizationHeader, `Basic ${refreshedToken}`);

@@ -32,9 +32,7 @@ const documentId = "testDocumentId";
 const tenantKey = "testTenantKey";
 const testUrl = "http://localhost/historian";
 const defaultCache = new TestCache();
-const createTestProvider = (
-	reuseCustomerAccessTokenForSummaryOwnership = false,
-): nconf.Provider =>
+const createTestProvider = (reuseCustomerAccessTokenForSummaryOwnership = false): nconf.Provider =>
 	new nconf.Provider({}).defaults({
 		auth: {
 			maxTokenLifetimeSec: 1000000,

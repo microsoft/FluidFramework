@@ -39,7 +39,7 @@ export class DocumentManager implements IDocumentManager {
 		}
 	}
 
-	// eslint-disable-next-line @rushstack/no-new-null
+	/* eslint-disable @rushstack/no-new-null */
 	public async readDocument(
 		tenantId: string,
 		documentId: string,
@@ -56,6 +56,7 @@ export class DocumentManager implements IDocumentManager {
 
 		return document;
 	}
+	/* eslint-enable @rushstack/no-new-null */
 
 	public async readStaticProperties(
 		tenantId: string,
@@ -161,7 +162,8 @@ export class DocumentManager implements IDocumentManager {
 					tenantId,
 					scopes,
 					"documentManager",
-				);
+			  );
+		const refreshDefaultHeaders = usesProvidedAccessToken ? undefined : getDefaultHeaders;
 
 		const restWrapper = new BasicRestWrapper(
 			this.internalAlfredUrl,
@@ -171,9 +173,7 @@ export class DocumentManager implements IDocumentManager {
 			getDefaultHeaders(),
 			undefined /* Axios */,
 			undefined /* refreshDefaultQueryString */,
-			usesProvidedAccessToken
-				? undefined
-				: getDefaultHeaders /* refreshDefaultHeaders */,
+			refreshDefaultHeaders,
 			() => getGlobalTelemetryContext().getProperties().correlationId /* getCorrelationId */,
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
 			refreshTokenIfNeeded /* refreshTokenIfNeeded */,

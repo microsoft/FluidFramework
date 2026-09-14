@@ -62,12 +62,11 @@ export type CommonRouteParams = [
 export type SummaryOperation = "get" | "post" | "delete";
 export type SummaryRouteType = "latest" | "sha" | "notApplicable";
 type DocumentManagerWithReadOptions = IDocumentManager & {
-	// eslint-disable-next-line @rushstack/no-new-null
 	readDocument(
 		tenantId: string,
 		documentId: string,
 		options?: { accessToken?: string },
-	): Promise<IDocument | null>;
+	): Promise<IDocument | null>; // eslint-disable-line @rushstack/no-new-null
 };
 type SummaryOwnershipOutcome =
 	| "allowed"
@@ -374,15 +373,16 @@ export async function validateSummaryDocument({
 }: IValidateSummaryDocumentArgs): Promise<IDocument> {
 	const { accessToken, documentId } = getTokenDocumentIdentity(tenantId, authorization);
 	const documentManagerWithReadOptions: DocumentManagerWithReadOptions = documentManager;
+	const readDocument = reuseCustomerAccessToken
+		? async () =>
+				documentManagerWithReadOptions.readDocument(tenantId, documentId, {
+					accessToken,
+				})
+		: async () => documentManager.readDocument(tenantId, documentId);
 	let document: IDocument | null;
 	try {
 		document = await runWithRetry(
-			async () =>
-				reuseCustomerAccessToken
-					? documentManagerWithReadOptions.readDocument(tenantId, documentId, {
-							accessToken,
-						})
-					: documentManager.readDocument(tenantId, documentId),
+			readDocument,
 			"utils.validateSummaryDocument.readDocument",
 			3,
 			1000,
