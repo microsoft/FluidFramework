@@ -28,7 +28,7 @@ import {
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 
-const runsPerBatch = 200;
+const runsPerBatch = 20;
 const opsPerRun = 50;
 
 const weights: Partial<EditGeneratorOpWeights> = {
