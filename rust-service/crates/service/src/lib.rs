@@ -78,6 +78,19 @@ pub enum ProjectedSubscriptionError {
     Service(ErrorCode),
 }
 
+/// Cloneable cancellation handle for a projected-operation subscription.
+#[derive(Clone)]
+pub struct ProjectedSubscriptionCancellation {
+    cancel: watch::Sender<bool>,
+}
+
+impl ProjectedSubscriptionCancellation {
+    /// Cancels the associated subscription and wakes any pending read.
+    pub fn cancel(&self) {
+        self.cancel.send_replace(true);
+    }
+}
+
 /// A cursor-based stream of accepted operations for one document.
 pub struct ProjectedSubscription {
     /// Shared service used for cursor-based catch-up reads.
@@ -222,6 +235,14 @@ impl ProjectedSubscription {
     /// Cancels the subscription and causes the next read to return `Cancelled`.
     pub fn cancel(&self) {
         self.cancel.send_replace(true);
+    }
+
+    /// Returns an independently owned handle that can cancel a pending read.
+    #[must_use]
+    pub fn cancellation_handle(&self) -> ProjectedSubscriptionCancellation {
+        ProjectedSubscriptionCancellation {
+            cancel: self.cancel.clone(),
+        }
     }
 
     /// Returns the last canonical cursor scanned by the subscription.
@@ -1987,6 +2008,26 @@ mod tests {
             subscription.next().await,
             Err(ProjectedSubscriptionError::Cancelled)
         );
+    }
+
+    #[tokio::test]
+    async fn projected_subscription_handle_cancels_a_pending_read() {
+        let directory = TempDirectory::new();
+        let service = Arc::new(NativeService::new(ServiceConfig::new(&directory.0)));
+        create_and_open(&service, b"doc", b"session-one").await;
+        let mut subscription = service
+            .subscribe_projected(bytes(b"doc"), None)
+            .await
+            .unwrap();
+        let cancellation = subscription.cancellation_handle();
+        let read = subscription.next();
+        let cancel = async {
+            tokio::task::yield_now().await;
+            cancellation.cancel();
+        };
+        let (result, ()) = tokio::join!(read, cancel);
+
+        assert_eq!(result, Err(ProjectedSubscriptionError::Cancelled));
     }
 
     #[tokio::test]

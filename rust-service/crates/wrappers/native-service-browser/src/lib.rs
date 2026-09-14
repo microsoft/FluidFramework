@@ -1,11 +1,18 @@
 #![doc = "Browser WASM transport for an in-process memory-backed native Fluid service."]
 #![cfg(target_arch = "wasm32")]
 
-use std::{path::PathBuf, sync::Arc};
+use std::{
+    path::PathBuf,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+};
 
 use bytes::Bytes;
 use fluid_native_service::{
-    NativeService, ProjectedSubscription, ProjectedSubscriptionError, ServiceConfig, StorageMode,
+    NativeService, ProjectedSubscription, ProjectedSubscriptionCancellation,
+    ProjectedSubscriptionError, ServiceConfig, StorageMode,
 };
 use fluid_service_protocol::{
     ErrorCode, Frame, Limits, Message, Request, Response, decode, encode,
@@ -90,6 +97,8 @@ impl LocalServiceTransport {
             after,
             limits: self.limits,
             subscription: Mutex::new(None),
+            cancellation: Mutex::new(None),
+            cancelled: AtomicBool::new(false),
         })
     }
 
@@ -112,6 +121,8 @@ pub struct LocalProjectedSubscription {
     after: Option<Bytes>,
     limits: Limits,
     subscription: Mutex<Option<ProjectedSubscription>>,
+    cancellation: Mutex<Option<ProjectedSubscriptionCancellation>>,
+    cancelled: AtomicBool,
 }
 
 #[wasm_bindgen]
@@ -129,7 +140,14 @@ impl LocalProjectedSubscription {
                 .subscribe_projected(self.document.clone(), self.after.clone())
                 .await
             {
-                Ok(created) => *subscription = Some(created),
+                Ok(created) => {
+                    let cancellation = created.cancellation_handle();
+                    *self.cancellation.lock().await = Some(cancellation.clone());
+                    if self.cancelled.load(Ordering::Acquire) {
+                        cancellation.cancel();
+                    }
+                    *subscription = Some(created);
+                }
                 Err(code) => return self.response(Response::Error(code)),
             }
         }
@@ -162,7 +180,14 @@ impl LocalProjectedSubscription {
                 .subscribe_projected(self.document.clone(), self.after.clone())
                 .await
             {
-                Ok(created) => *subscription = Some(created),
+                Ok(created) => {
+                    let cancellation = created.cancellation_handle();
+                    *self.cancellation.lock().await = Some(cancellation.clone());
+                    if self.cancelled.load(Ordering::Acquire) {
+                        cancellation.cancel();
+                    }
+                    *subscription = Some(created);
+                }
                 Err(code) => return Err(js_error(format!("subscription failed: {code:?}"))),
             }
         }
@@ -189,10 +214,11 @@ impl LocalProjectedSubscription {
         Ok(frames)
     }
 
-    /// Cancels the initialized subscription, or does nothing before the first read.
+    /// Cancels the subscription and wakes an initialized pending read.
     pub async fn cancel(&self) {
-        if let Some(subscription) = self.subscription.lock().await.as_ref() {
-            subscription.cancel();
+        self.cancelled.store(true, Ordering::Release);
+        if let Some(cancellation) = self.cancellation.lock().await.as_ref() {
+            cancellation.cancel();
         }
     }
 }
