@@ -371,7 +371,7 @@ export function normalizeNodeId(
 		if (dealiased === undefined) {
 			return currentId;
 		}
-		assert(!visited.has([dealiased.revision, dealiased.localId]), "Node alias loop");
+		assert(!visited.has([dealiased.revision, dealiased.localId]), 0xd42 /* Node alias loop */);
 
 		currentId = dealiased;
 	}
@@ -473,13 +473,13 @@ export function validateChangeset(
 	for (const [revision, localId] of change.nodeChanges.keys()) {
 		assert(
 			!change.nodeAliases.has([revision, localId]),
-			"Node change table contains a non-normalized node key",
+			0xd43 /* Node change table contains a non-normalized node key */,
 		);
 	}
 	for (const [revision, localId] of change.nodeToParent.keys()) {
 		assert(
 			!change.nodeAliases.has([revision, localId]),
-			"Node parentage table contains a non-normalized node key",
+			0xd44 /* Node parentage table contains a non-normalized node key */,
 		);
 	}
 
@@ -511,14 +511,14 @@ export function validateChangeset(
 	for (const [revision, localId] of change.nodeChanges.keys()) {
 		assert(
 			nestedSetContains(allChildren, revision, localId),
-			"Node change table contains unparented node",
+			0xd45 /* Node change table contains unparented node */,
 		);
 	}
 	for (const [revision, innerMap] of allChildren.entries()) {
 		for (const localId of innerMap.keys()) {
 			assert(
 				change.nodeChanges.has([revision, localId]),
-				"Node change table is missing a parented node",
+				0xd46 /* Node change table is missing a parented node */,
 			);
 		}
 	}
@@ -557,10 +557,10 @@ function validateFieldChanges(
 			const keysInChange = handler.getCrossFieldKeys(fieldChange.change);
 			for (const keyRange of keysInChange) {
 				const fields = getFieldsForCrossFieldKey(change, keyRange.key, keyRange.count);
-				assert(hasSome(fields), "Cross-field key table is missing an entry");
+				assert(hasSome(fields), 0xd47 /* Cross-field key table is missing an entry */);
 				assert(
 					fields.every((f) => areEqualFieldIds(f, fieldId)),
-					"Cross-field key table is pointing to the wrong field",
+					0xd48 /* Cross-field key table is pointing to the wrong field */,
 				);
 			}
 
@@ -573,7 +573,7 @@ function validateFieldChanges(
 			const countInTable = keysInTable.reduce((acc, { length }) => acc + length, 0);
 			assert(
 				countInChange === countInTable,
-				"Mismatch between cross-field key table and changeset",
+				0xd49 /* Mismatch between cross-field key table and changeset */,
 			);
 		}
 	}
