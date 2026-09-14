@@ -1217,7 +1217,7 @@ export function verifyExpectedPartialLengths(
 			continue;
 		}
 		if (thisNode.isLeaf()) {
-			expected += mergeTree["nodeLength"](thisNode, perspective) ?? 0;
+			expected += mergeTree.leafLength(thisNode, perspective) ?? 0;
 		} else {
 			nodesToVisit.push(...thisNode.children.slice(0, thisNode.childCount));
 		}
