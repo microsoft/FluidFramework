@@ -10,13 +10,18 @@ use tokio::{
     time::timeout,
 };
 
+/// Maximum time allowed for one complete request/response exchange.
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
 
+/// Required data-root and Unix-socket paths for one service process.
 struct Arguments {
+    /// Root directory for document state.
     root: PathBuf,
+    /// Unix-domain socket path owned by the process.
     socket: PathBuf,
 }
 
+/// Binds the socket and serves one bounded FSP4 request per connection.
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let arguments = parse_arguments()?;
@@ -46,6 +51,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+/// Decodes, dispatches, and responds to one length-prefixed FSP4 frame.
 async fn serve_one(
     mut stream: UnixStream,
     service: &NativeService,
@@ -93,10 +99,12 @@ async fn serve_one(
     Ok(shutdown)
 }
 
+/// Parses process arguments from the environment.
 fn parse_arguments() -> Result<Arguments, Box<dyn Error>> {
     parse_arguments_from(env::args().skip(1))
 }
 
+/// Parses required paths from an injected argument sequence for testability.
 fn parse_arguments_from(
     arguments: impl IntoIterator<Item = String>,
 ) -> Result<Arguments, Box<dyn Error>> {

@@ -28,23 +28,36 @@ use tokio::task::JoinSet;
 
 mod integrated;
 
+/// Monotonic suffix for process-local temporary benchmark paths.
 static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(1);
 
+/// Storage or transport composition exercised by one workload.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Backend {
+    /// In-process reference stream.
     Memory,
+    /// Buffered single-process file stream.
     File,
+    /// Bounded local transport over the memory stream.
     NetworkMemory,
+    /// Independent zlib records over the file stream.
     Compression,
+    /// Immutable-dictionary zstd records over the file stream.
     StatefulCompression,
+    /// Authenticated encryption over the file stream.
     Encryption,
+    /// Dictionary compression followed by authenticated encryption.
     StatefulCompressionEncryption,
+    /// Direct in-process native-service dispatch.
     NativeService,
+    /// Native HTTP/3 WebTransport connected to the native service.
     NativeWebTransport,
 }
 
+/// Fixed representative dictionary shared by stateful-compression cells.
 const DICTIONARY: &[u8] = b"tenant=alpha;document=shared;operation=insert;path=/items/;value=collaborative-content;sequence=00000000";
 
+/// Fixed non-production key provider used only by encryption benchmark cells.
 #[derive(Clone, Debug)]
 struct BenchmarkKey;
 
@@ -61,44 +74,74 @@ impl KeyProvider for BenchmarkKey {
     }
 }
 
+/// Validated command-line inputs for one benchmark workload.
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct Config {
+    /// Backend composition to exercise.
     backend: Backend,
+    /// Payload shape for each record.
     fixture: FixtureKind,
+    /// Deterministic payload seed.
     seed: u64,
+    /// Records appended per repetition.
     records: u64,
+    /// Concurrent append producers.
     writers: usize,
+    /// Appends between snapshots, or `None` when disabled.
     snapshot_frequency: Option<u64>,
+    /// Recorded repetitions.
     repetitions: u32,
+    /// Unrecorded repetitions.
     warmups: u32,
 }
 
+/// Top-level operation selected by the command line.
 #[derive(Debug, Eq, PartialEq)]
 enum BenchmarkCommand {
+    /// Print command usage.
     Help,
+    /// Run bounded correctness workloads.
     Smoke,
+    /// Execute the supplied measurement configuration.
     Measure(Config),
 }
 
+/// Raw observations collected before conversion to the public result schema.
 #[derive(Debug)]
 struct RunMeasurements {
+    /// Backend construction time in microseconds.
     startup_microseconds: f64,
+    /// Individual acknowledged append latencies in microseconds.
     append_latencies: Vec<f64>,
+    /// Wall-clock duration of the append phase in seconds.
     append_elapsed_seconds: f64,
+    /// Finite-read duration in microseconds.
     finite_read_microseconds: f64,
+    /// Records observed by the finite read.
     finite_read_records: u64,
+    /// Total snapshot publication time, when exercised.
     snapshot_publish_microseconds: Option<f64>,
+    /// Clean reopen and verification time, when supported.
     recovery_microseconds: Option<f64>,
+    /// Explicit reconnect time, when supported.
     reconnect_microseconds: Option<f64>,
+    /// Process CPU consumed by the workload, when observable.
     process_cpu_microseconds: Option<f64>,
+    /// Process-wide peak resident memory, when observable.
     peak_resident_memory_bytes: Option<u64>,
+    /// Total application payload bytes submitted.
     logical_payload_bytes: u64,
+    /// Recursive persisted file size, when applicable.
     persisted_bytes: Option<u64>,
+    /// Bytes observed at the measured transport boundary.
     wire_bytes: Option<u64>,
+    /// Peak queued records for bounded local transport.
     peak_queued_records: Option<usize>,
+    /// Peak active request streams for server transport.
     peak_active_streams: Option<usize>,
 }
 
+/// Parses the command line and exits unsuccessfully on a harness error.
 #[tokio::main]
 async fn main() {
     if let Err(error) = run().await {
@@ -107,6 +150,7 @@ async fn main() {
     }
 }
 
+/// Dispatches the selected help, smoke, or measurement command.
 async fn run() -> Result<(), String> {
     let arguments = env::args().skip(1).collect::<Vec<_>>();
     match parse_command(&arguments)? {
@@ -119,6 +163,7 @@ async fn run() -> Result<(), String> {
     }
 }
 
+/// Parses the top-level command without reading process-global arguments.
 fn parse_command(arguments: &[String]) -> Result<BenchmarkCommand, String> {
     match arguments {
         [argument] if matches!(argument.as_str(), "help" | "--help" | "-h") => {
@@ -140,6 +185,7 @@ fn parse_command(arguments: &[String]) -> Result<BenchmarkCommand, String> {
     }
 }
 
+/// Runs bounded correctness workloads across every supported backend.
 async fn smoke() -> Result<(), String> {
     let concurrent = Config {
         backend: Backend::Memory,
@@ -197,6 +243,7 @@ async fn smoke() -> Result<(), String> {
     Ok(())
 }
 
+/// Executes warmups and emits one JSON result per measured repetition.
 async fn measure(config: Config) -> Result<(), String> {
     for _ in 0..config.warmups {
         run_backend(&config).await?;
@@ -264,6 +311,7 @@ async fn measure(config: Config) -> Result<(), String> {
     Ok(())
 }
 
+/// Constructs and exercises the configured backend composition.
 #[allow(clippy::too_many_lines)]
 async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
     let cpu_started = process_cpu_microseconds();
@@ -410,6 +458,7 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
     Ok(measurements)
 }
 
+/// Runs the append, optional snapshot, and finite-read workload on a stream.
 async fn run_stream<S>(
     stream: &S,
     config: &Config,
@@ -522,6 +571,7 @@ where
     })
 }
 
+/// Verifies record count and an order-independent digest of generated payloads.
 fn verify_payloads<P>(
     records: &[snapshotted_stream_core::ReadRecord<P>],
     generator: &FixtureGenerator,
@@ -548,6 +598,7 @@ fn verify_payloads<P>(
     Ok(())
 }
 
+/// Verifies that the plain file stream preserved records and a snapshot.
 async fn verify_reopened(stream: &FileStream, expected_records: u64) -> Result<(), String> {
     let records = stream
         .read(None)
@@ -567,6 +618,7 @@ async fn verify_reopened(stream: &FileStream, expected_records: u64) -> Result<(
     Ok(())
 }
 
+/// Verifies records and optional snapshot state after reopening a wrapper stack.
 async fn verify_reopened_stream<S>(stream: &S, config: &Config) -> Result<(), String>
 where
     S: AppendStream
@@ -589,6 +641,7 @@ where
     Ok(())
 }
 
+/// Parses and validates measurement options from argument pairs.
 fn parse_config(arguments: &[String]) -> Result<Config, String> {
     let mut config = Config {
         backend: Backend::Memory,
@@ -627,6 +680,7 @@ fn parse_config(arguments: &[String]) -> Result<Config, String> {
     Ok(config)
 }
 
+/// Maps a stable command-line backend name to its composition.
 fn parse_backend(value: &str) -> Result<Backend, String> {
     match value {
         "memory" => Ok(Backend::Memory),
@@ -642,6 +696,7 @@ fn parse_backend(value: &str) -> Result<Backend, String> {
     }
 }
 
+/// Maps a stable command-line fixture name to its payload shape.
 fn parse_fixture(value: &str) -> Result<FixtureKind, String> {
     match value {
         "empty" => Ok(FixtureKind::Empty),
@@ -654,6 +709,7 @@ fn parse_fixture(value: &str) -> Result<FixtureKind, String> {
     }
 }
 
+/// Describes guarantees active for the selected backend result.
 fn guarantees(backend: Backend) -> Vec<String> {
     match backend {
         Backend::Memory => vec![
@@ -705,6 +761,7 @@ fn guarantees(backend: Backend) -> Vec<String> {
     }
 }
 
+/// Builds the common guarantee list for file-backed wrappers.
 fn wrapper_guarantees(wrapper: &str) -> Vec<String> {
     vec![
         "single-process ownership".to_owned(),
@@ -715,6 +772,7 @@ fn wrapper_guarantees(wrapper: &str) -> Vec<String> {
     ]
 }
 
+/// Captures available build and host metadata without inventing missing values.
 fn environment() -> Environment {
     Environment {
         source_commit: env::var("BENCHMARK_SOURCE_COMMIT").unwrap_or_else(|_| "unknown".to_owned()),
@@ -736,6 +794,7 @@ fn environment() -> Environment {
     }
 }
 
+/// Captures trimmed command output or returns `unknown` on failure.
 fn command_output(program: &str, arguments: &[&str]) -> String {
     Command::new(program)
         .args(arguments)
@@ -746,6 +805,7 @@ fn command_output(program: &str, arguments: &[&str]) -> String {
         .map_or_else(|| "unknown".to_owned(), |value| value.trim().to_owned())
 }
 
+/// Reads the first Linux CPU model description when available.
 fn cpu_model() -> String {
     fs::read_to_string("/proc/cpuinfo")
         .ok()
@@ -758,14 +818,17 @@ fn cpu_model() -> String {
         .unwrap_or_else(|| "unknown".to_owned())
 }
 
+/// Reads total host memory from Linux procfs when available.
 fn memory_bytes() -> Option<u64> {
     proc_status_value("/proc/meminfo", "MemTotal:").map(|kilobytes| kilobytes * 1_024)
 }
 
+/// Reads process-wide peak resident memory from Linux procfs when available.
 fn peak_resident_memory_bytes() -> Option<u64> {
     proc_status_value("/proc/self/status", "VmHWM:").map(|kilobytes| kilobytes * 1_024)
 }
 
+/// Reads a numeric kilobyte value with the supplied procfs line prefix.
 fn proc_status_value(path: &str, prefix: &str) -> Option<u64> {
     fs::read_to_string(path).ok()?.lines().find_map(|line| {
         line.strip_prefix(prefix)?
@@ -776,6 +839,7 @@ fn proc_status_value(path: &str, prefix: &str) -> Option<u64> {
     })
 }
 
+/// Sums file sizes recursively without following directory symlinks.
 fn directory_bytes(directory: &Path) -> Result<u64, String> {
     fs::read_dir(directory)
         .map_err(display_error)?
@@ -790,6 +854,7 @@ fn directory_bytes(directory: &Path) -> Result<u64, String> {
         })
 }
 
+/// Reads cumulative user and system CPU time from Linux procfs.
 fn process_cpu_microseconds() -> Option<f64> {
     static CLOCK_TICKS: OnceLock<Option<f64>> = OnceLock::new();
     let ticks_per_second = *CLOCK_TICKS.get_or_init(|| {
@@ -810,6 +875,7 @@ fn process_cpu_microseconds() -> Option<f64> {
     Some(f64::from(process_ticks) * 1_000_000.0 / ticks_per_second?)
 }
 
+/// Returns a process-unique temporary path for one backend run.
 fn unique_directory(label: &str) -> PathBuf {
     let sequence = NEXT_DIRECTORY.fetch_add(1, Ordering::Relaxed);
     env::temp_dir().join(format!(
@@ -818,20 +884,24 @@ fn unique_directory(label: &str) -> PathBuf {
     ))
 }
 
+/// Computes a stable non-cryptographic payload digest for correctness checks.
 fn payload_digest(payload: &[u8]) -> u64 {
     payload.iter().fold(0xcbf2_9ce4_8422_2325, |hash, byte| {
         (hash ^ u64::from(*byte)).wrapping_mul(0x1000_0000_01b3)
     })
 }
 
+/// Converts elapsed monotonic time to microseconds.
 fn elapsed_microseconds(started: Instant) -> f64 {
     started.elapsed().as_secs_f64() * 1_000_000.0
 }
 
+/// Adapts displayable errors to the harness's string error boundary.
 fn display_error(error: impl std::fmt::Display) -> String {
     error.to_string()
 }
 
+/// Returns the complete command-line grammar.
 fn usage() -> String {
     "usage: snapshotted-stream-benchmarks smoke | measure [--backend memory|file|network-memory|compression|stateful-compression|encryption|stateful-compression-encryption|native-service|native-webtransport] [--fixture empty|small-compressible|small-incompressible|large-compressible|large-incompressible|snapshot] [--seed N] [--records N] [--writers N] [--snapshot-frequency N] [--warmups N] [--repetitions N]".to_owned()
 }

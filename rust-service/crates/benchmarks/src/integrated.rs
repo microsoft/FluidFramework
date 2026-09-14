@@ -17,20 +17,26 @@ use super::{
     unique_directory,
 };
 
+/// Minimal request boundary shared by direct and WebTransport service workloads.
 #[async_trait(?Send)]
 trait RequestTransport {
+    /// Sends one complete protocol request and returns its response.
     async fn request(&mut self, request: Request) -> Result<Response, String>;
 
+    /// Re-establishes the transport when the backend supports explicit reconnect.
     async fn reconnect(&mut self) -> Result<(), String> {
         Ok(())
     }
 
+    /// Returns transport-specific byte and peak-stream observations.
     fn observations(&self) -> (Option<u64>, Option<usize>) {
         (None, None)
     }
 }
 
+/// In-process adapter around the native service request boundary.
 struct DirectTransport {
+    /// Service receiving requests without protocol serialization.
     service: Arc<NativeService>,
 }
 
@@ -41,9 +47,13 @@ impl RequestTransport for DirectTransport {
     }
 }
 
+/// Native HTTP/3 adapter and the server-side measurement handles it owns.
 struct WebTransport {
+    /// Client used for request/response exchanges.
     client: WebTransportClient,
+    /// Server-side transport counters shared with the runner.
     server_metrics: MeasurementHandle,
+    /// Local server task aborted after the workload completes.
     server_task: tokio::task::JoinHandle<()>,
 }
 
@@ -69,6 +79,7 @@ impl RequestTransport for WebTransport {
     }
 }
 
+/// Exercises and reopens the native service through direct in-process dispatch.
 pub(super) async fn run_native_service(config: &Config) -> Result<RunMeasurements, String> {
     validate_service_config(config)?;
     let directory = unique_directory("native-service");
@@ -97,6 +108,7 @@ pub(super) async fn run_native_service(config: &Config) -> Result<RunMeasurement
     Ok(measurements)
 }
 
+/// Verifies that clean reopen recovers the expected latest snapshot state.
 async fn verify_recovered_snapshot<T: RequestTransport>(
     transport: &mut T,
     config: &Config,
@@ -121,6 +133,7 @@ async fn verify_recovered_snapshot<T: RequestTransport>(
     }
 }
 
+/// Exercises the native service through a loopback WebTransport connection.
 pub(super) async fn run_native_webtransport(config: &Config) -> Result<RunMeasurements, String> {
     validate_service_config(config)?;
     tokio::task::LocalSet::new()
@@ -166,6 +179,7 @@ pub(super) async fn run_native_webtransport(config: &Config) -> Result<RunMeasur
         .await
 }
 
+/// Rejects workload shapes unsupported by the single-writer service lifecycle.
 fn validate_service_config(config: &Config) -> Result<(), String> {
     if config.writers != 1 {
         return Err("native service workloads require exactly one lifecycle writer".to_owned());
@@ -176,6 +190,7 @@ fn validate_service_config(config: &Config) -> Result<(), String> {
     Ok(())
 }
 
+/// Runs the common create, submit, snapshot, read, and reconnect lifecycle.
 async fn exercise_service<T: RequestTransport>(
     transport: &mut T,
     config: &Config,
@@ -278,6 +293,7 @@ async fn exercise_service<T: RequestTransport>(
     })
 }
 
+/// Publishes a snapshot and returns the identifier observed by a subsequent read.
 async fn publish_snapshot<T: RequestTransport>(
     transport: &mut T,
     document: &Bytes,
@@ -307,6 +323,7 @@ async fn publish_snapshot<T: RequestTransport>(
     }
 }
 
+/// Reads canonical records to the finite end and verifies acknowledged coverage.
 async fn verify_read<T: RequestTransport>(
     transport: &mut T,
     config: &Config,
@@ -341,12 +358,14 @@ async fn verify_read<T: RequestTransport>(
     Ok(count)
 }
 
+/// Applies a protocol response to the lifecycle client.
 fn apply_response(client: &mut NativeClient, response: Response) -> Result<LifecycleEvent, String> {
     client
         .handle_response(response)
         .map_err(super::display_error)
 }
 
+/// Requires a response to contain the expected acknowledgement.
 fn expect_acknowledgement(response: &Response, expected: Acknowledgement) -> Result<(), String> {
     if response == &Response::Acknowledged(expected) {
         Ok(())

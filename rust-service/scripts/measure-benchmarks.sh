@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# Build once in a disposable copy and emit one requested measurement workload to stdout.
+
 set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/benchmark-common.sh"

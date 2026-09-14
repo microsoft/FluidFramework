@@ -29,21 +29,35 @@ use thiserror::Error;
 #[cfg(test)]
 use std::time::{Duration, Instant};
 
+/// Versioned log-file marker.
 const MAGIC: [u8; 8] = *b"SDLOG002";
+/// Bytes occupied by the log marker and generation.
 const HEADER_LEN: usize = 24;
+/// Marker opening a record frame.
 const FRAME_MAGIC: [u8; 4] = *b"RECD";
+/// Marker closing a record frame.
 const FRAME_TRAILER_MAGIC: [u8; 4] = *b"ENDR";
+/// Bytes occupied by one copy of record framing evidence.
 const FRAME_HEADER_LEN: usize = 28;
+/// Bytes occupied by the duplicated trailing framing evidence.
 const FRAME_TRAILER_LEN: usize = 28;
 /// Persisted framing bytes added to every record payload.
 pub const RECORD_FRAME_OVERHEAD_BYTES: usize = FRAME_HEADER_LEN + FRAME_TRAILER_LEN;
+/// Append-log filename within the owned directory.
 const LOG_FILE: &str = "stream.log";
+/// Published snapshot filename within the owned directory.
 const SNAPSHOT_FILE: &str = "snapshot.current";
+/// Pending snapshot filename used before atomic publication.
 const SNAPSHOT_TEMP_FILE: &str = "snapshot.pending";
+/// Versioned snapshot-file marker.
 const SNAPSHOT_MAGIC: [u8; 8] = *b"SDSNP001";
+/// Marker closing a snapshot record.
 const SNAPSHOT_TRAILER_MAGIC: [u8; 4] = *b"ENDS";
+/// Encoded bytes in a snapshot identifier.
 const SNAPSHOT_ID_LEN: usize = 36;
+/// Bytes preceding the payload in a snapshot record.
 const SNAPSHOT_HEADER_LEN: usize = 93;
+/// Monotonic process-local contribution to new generation identifiers.
 static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
 
 /// Deterministic boundaries at which a configured operation simulates a crash.
@@ -84,6 +98,7 @@ pub enum CrashPoint {
 /// An ordered, one-shot deterministic crash plan shared by cloned log handles.
 #[derive(Debug, Default)]
 pub struct CrashInjector {
+    /// Remaining crash points consumed in declaration order.
     points: Mutex<VecDeque<CrashPoint>>,
     #[cfg(test)]
     process_boundary: Option<(CrashPoint, Arc<ProcessBoundary>)>,
@@ -99,6 +114,7 @@ impl CrashInjector {
         }
     }
 
+    /// Consumes and fails at `point` when it is next in the crash plan.
     fn hit(&self, point: CrashPoint) -> std::io::Result<()> {
         #[cfg(test)]
         if let Some((target, boundary)) = &self.process_boundary
@@ -132,9 +148,13 @@ impl CrashInjector {
 #[cfg(test)]
 #[derive(Debug)]
 struct ProcessBoundary {
+    /// Marker written when the child reaches the armed crash point.
     ready: PathBuf,
+    /// Parent-written instruction selecting abort, exit, or kill.
     control: PathBuf,
+    /// Marker confirming that the child observed the control instruction.
     armed: PathBuf,
+    /// Maximum coordination wait before the child reports failure.
     timeout: Duration,
 }
 
@@ -201,11 +221,14 @@ fn write_marker(path: &Path, value: &str) -> std::io::Result<()> {
 /// An opaque ordinal tied to one persisted log generation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct DurablePosition {
+    /// Persisted log generation that owns the position.
     generation: u128,
+    /// One-based record index within the generation.
     ordinal: u64,
 }
 
 impl DurablePosition {
+    /// Returns the one-based record ordinal within this log generation.
     #[must_use]
     pub const fn ordinal(&self) -> u64 {
         self.ordinal
@@ -215,22 +238,31 @@ impl DurablePosition {
 /// Errors exposed by the durable-log spike.
 #[derive(Debug, Error)]
 pub enum DurableLogError {
+    /// An I/O operation failed before an ambiguous durability boundary.
     #[error("log I/O failed: {0}")]
     Io(#[from] std::io::Error),
+    /// An append failed after it may have reached durable storage.
     #[error("append outcome may be committed: {0}")]
     AmbiguousAppend(std::io::Error),
+    /// Snapshot publication failed after it may have become durable.
     #[error("snapshot outcome may be published: {0}")]
     AmbiguousSnapshot(std::io::Error),
+    /// Persisted framing or checksums violate the supported format.
     #[error("stored log is corrupt: {0}")]
     Corrupt(&'static str),
+    /// A supplied position belongs to another log generation.
     #[error("position belongs to another log generation")]
     ForeignPosition,
+    /// A supplied position is zero or beyond the committed head.
     #[error("position is beyond the committed head")]
     InvalidPosition,
+    /// The expected snapshot parent differs from the latest publication.
     #[error("snapshot parent does not match the latest snapshot")]
     SnapshotConflict,
+    /// A snapshot boundary precedes the latest published boundary.
     #[error("snapshot position regresses behind the latest snapshot")]
     SnapshotRegression,
+    /// Shared in-process state cannot be accessed after mutex poisoning.
     #[error("durable log mutex was poisoned")]
     Poisoned,
 }
@@ -247,20 +279,29 @@ impl ClassifiedError for DurableLogError {
     }
 }
 
+/// Mutable append, recovery, snapshot, and crash-injection state behind the log lock.
 #[derive(Debug)]
 struct State {
+    /// Recovered and newly acknowledged payloads in append order.
     records: Vec<Bytes>,
+    /// Append-only handle for the current log generation.
     writer: File,
+    /// Most recently published and recovered snapshot.
     latest_snapshot: Option<PublishedSnapshot<DurablePosition>>,
+    /// Shared deterministic crash plan.
     crashes: Arc<CrashInjector>,
 }
 
 /// A single-process append log that syncs record data before returning success.
 #[derive(Clone, Debug)]
 pub struct DurableLog {
+    /// Generation persisted in the log header.
     generation: u128,
+    /// Directory containing log and snapshot files.
     directory: PathBuf,
+    /// Path of the append-log file.
     path: PathBuf,
+    /// Synchronized mutable writer and recovered state.
     state: Arc<Mutex<State>>,
 }
 
@@ -329,10 +370,12 @@ impl DurableLog {
         &self.path
     }
 
+    /// Locks mutable log state and classifies mutex poisoning.
     fn state(&self) -> Result<MutexGuard<'_, State>, DurableLogError> {
         self.state.lock().map_err(|_| DurableLogError::Poisoned)
     }
 
+    /// Ensures a position belongs to this generation and committed range.
     fn validate_position(
         &self,
         position: &DurablePosition,
@@ -530,6 +573,7 @@ impl SnapshotStore for DurableLog {
     }
 }
 
+/// Converts an initial or positioned snapshot boundary to its persisted ordinal.
 fn snapshot_ordinal(snapshot: &Snapshot<DurablePosition>) -> u64 {
     match &snapshot.includes_through {
         SnapshotPosition::Initial => 0,
@@ -537,6 +581,7 @@ fn snapshot_ordinal(snapshot: &Snapshot<DurablePosition>) -> u64 {
     }
 }
 
+/// Derives the stable snapshot identifier from lineage and payload evidence.
 fn snapshot_id(
     generation: u128,
     ordinal: u64,
@@ -552,6 +597,7 @@ fn snapshot_id(
     Ok(SnapshotId::from_bytes(Bytes::from(bytes)))
 }
 
+/// Encodes a complete checksummed snapshot record with duplicated framing evidence.
 fn encode_snapshot(
     generation: u128,
     ordinal: u64,
@@ -590,6 +636,7 @@ fn encode_snapshot(
     Ok(bytes)
 }
 
+/// Checksums snapshot lineage and payload fields in persisted order.
 fn snapshot_checksum(
     generation: u128,
     ordinal: u64,
@@ -606,6 +653,7 @@ fn snapshot_checksum(
     checksum.finalize()
 }
 
+/// Parses and validates one complete snapshot record against the recovered log.
 fn parse_snapshot(
     bytes: &[u8],
     expected_generation: u128,
@@ -705,6 +753,7 @@ fn parse_snapshot(
     })
 }
 
+/// Creates and syncs a new log header for one generation.
 fn initialize(path: &Path, generation: u128) -> Result<(), DurableLogError> {
     let mut file = File::create(path)?;
     file.write_all(&MAGIC)?;
@@ -713,6 +762,7 @@ fn initialize(path: &Path, generation: u128) -> Result<(), DurableLogError> {
     Ok(())
 }
 
+/// Produces a process-local generation value from time, process, and sequence data.
 fn new_generation() -> Result<u128, DurableLogError> {
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -723,12 +773,14 @@ fn new_generation() -> Result<u128, DurableLogError> {
     Ok(timestamp ^ process ^ sequence)
 }
 
+/// Reads a complete owned persistence file for recovery validation.
 fn read_all(path: &Path) -> Result<Vec<u8>, DurableLogError> {
     let mut bytes = Vec::new();
     File::open(path)?.read_to_end(&mut bytes)?;
     Ok(bytes)
 }
 
+/// Recovers complete records and returns the byte length safe to retain.
 fn parse_log(bytes: &[u8]) -> Result<(u128, Vec<Bytes>, u64), DurableLogError> {
     if bytes.len() < HEADER_LEN {
         return Err(DurableLogError::Corrupt("incomplete log header"));
@@ -782,6 +834,7 @@ fn parse_log(bytes: &[u8]) -> Result<(u128, Vec<Bytes>, u64), DurableLogError> {
     Ok((generation, records, valid_length))
 }
 
+/// Validates duplicated frame metadata and returns payload length and checksum.
 fn parse_frame_fields(
     bytes: &[u8],
     expected_magic: [u8; 4],
@@ -817,6 +870,7 @@ fn parse_frame_fields(
     Ok((length, checksum))
 }
 
+/// Encodes a frame marker and complemented length/checksum evidence.
 fn frame_fields(magic: [u8; 4], length: u64, checksum: u32) -> [u8; FRAME_HEADER_LEN] {
     let mut fields = [0_u8; FRAME_HEADER_LEN];
     fields[..4].copy_from_slice(&magic);
@@ -827,6 +881,7 @@ fn frame_fields(magic: [u8; 4], length: u64, checksum: u32) -> [u8; FRAME_HEADER
     fields
 }
 
+/// Writes one framed record while exposing deterministic crash boundaries.
 fn write_record(
     writer: &mut impl Write,
     payload: &[u8],

@@ -1,6 +1,7 @@
 use snapshotted_stream_client::CounterClient;
 use snapshotted_stream_memory::MemoryStream;
 
+/// Runs the bounded append, snapshot, and recovery demonstration.
 #[tokio::main]
 async fn main() {
     let stream = MemoryStream::new();

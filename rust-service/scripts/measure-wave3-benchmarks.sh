@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# Emit the fixed Wave 3 measurement matrix from a release build in a disposable copy.
+
 set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/benchmark-common.sh"
@@ -29,6 +31,7 @@ BENCHMARK_FILESYSTEM=$(stat -f -c %T "$source_root")
 cargo build --release -p snapshotted-stream-benchmarks
 benchmark="$target_root/release/snapshotted-stream-benchmarks"
 
+# Print a reproducible cell header, then emit its five measured JSON repetitions.
 run_cell() {
 	printf '# cell:'
 	printf ' %q' "$@"

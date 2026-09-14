@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 
+# Shared disposable-workspace helpers for benchmark validation and measurement.
+
 set -euo pipefail
 
+# Print the absolute rust-service source root containing this script.
 benchmark_source_root() {
 	cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd
 }
 
+# Copy rust-service and register the excluded benchmark crate in the copy only.
 prepare_benchmark_copy() {
 	local source_root="$1"
 	local copy_root="$2"
@@ -25,6 +29,7 @@ if (!manifest.includes("\"crates/benchmarks\"")) {
 ' "$copy_root/Cargo.toml"
 }
 
+# Prove benchmark commands did not alter the assigned workspace manifest or lockfile.
 verify_assigned_roots_unchanged() {
 	local source_root="$1"
 	git -C "$source_root/.." diff --exit-code HEAD -- rust-service/Cargo.toml rust-service/Cargo.lock

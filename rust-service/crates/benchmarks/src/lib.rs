@@ -2,21 +2,31 @@
 
 use serde::{Deserialize, Serialize};
 
+/// Version of the newline-delimited JSON result schema emitted by the harness.
 pub const SCHEMA_VERSION: u32 = 2;
+/// Default deterministic fixture seed recorded in benchmark results.
 pub const DEFAULT_SEED: u64 = 0x4d59_5df4_d0f3_3173;
 
+/// Payload shape generated for each benchmark record.
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum FixtureKind {
+    /// A zero-byte payload.
     Empty,
+    /// A repeating 64-byte payload suitable for compression.
     SmallCompressible,
+    /// A deterministic pseudorandom 64-byte payload.
     SmallIncompressible,
+    /// A repeating 65,536-byte payload suitable for compression.
     LargeCompressible,
+    /// A deterministic pseudorandom 65,536-byte payload.
     LargeIncompressible,
+    /// An eight-byte big-endian record index used as snapshot state.
     Snapshot,
 }
 
 impl FixtureKind {
+    /// Returns the exact number of bytes generated for one payload of this kind.
     #[must_use]
     pub const fn payload_size(self) -> usize {
         match self {
@@ -27,23 +37,27 @@ impl FixtureKind {
         }
     }
 
+    /// Reports whether this fixture repeats a short pattern.
     #[must_use]
     pub const fn is_compressible(self) -> bool {
         matches!(self, Self::SmallCompressible | Self::LargeCompressible)
     }
 }
 
+/// Generates reproducible benchmark payloads from a seed and record index.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FixtureGenerator {
     seed: u64,
 }
 
 impl FixtureGenerator {
+    /// Creates a fixture generator with the supplied deterministic seed.
     #[must_use]
     pub const fn new(seed: u64) -> Self {
         Self { seed }
     }
 
+    /// Generates the payload for `kind` at `record_index`.
     #[must_use]
     pub fn payload(&self, kind: FixtureKind, record_index: u64) -> Vec<u8> {
         let size = kind.payload_size();
@@ -72,74 +86,130 @@ impl Default for FixtureGenerator {
     }
 }
 
+/// Host and build metadata needed to reproduce and interpret a measurement.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Environment {
+    /// Repository commit containing the measured implementation.
     pub source_commit: String,
+    /// Full Rust compiler version string.
     pub rustc: String,
+    /// Cargo profile used to build the benchmark executable.
     pub cargo_profile: String,
+    /// Cargo feature selection used for the build.
     pub cargo_features: String,
+    /// Host operating-system name.
     pub operating_system: String,
+    /// Host kernel release.
     pub kernel: String,
+    /// Host CPU model description.
     pub cpu_model: String,
+    /// Number of logical processors visible to the process.
     pub logical_cpus: usize,
+    /// Total host memory in bytes, when observable.
     pub memory_bytes: Option<u64>,
+    /// Storage device containing the benchmark working directory.
     pub storage_device: String,
+    /// Filesystem type containing the benchmark working directory.
     pub filesystem: String,
+    /// Name and version of the measurement harness.
     pub measurement_tool: String,
 }
 
+/// Inputs that define one benchmark workload.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Workload {
+    /// Payload shape used for submitted records.
     pub fixture: FixtureKind,
+    /// Deterministic payload seed.
     pub seed: u64,
+    /// Number of records appended per repetition.
     pub records: u64,
+    /// Number of concurrent append producers.
     pub writers: usize,
+    /// Number of finite readers exercised by the harness.
     pub readers: usize,
+    /// Maximum number of concurrent operations admitted by the transport.
     pub bounded_concurrency: usize,
+    /// Number of appends between snapshots, or `None` when snapshots are disabled.
     pub snapshot_frequency: Option<u64>,
+    /// Unrecorded repetitions run before measurement.
     pub warmup_repetitions: u32,
+    /// Recorded repetitions requested for the workload.
     pub measured_repetitions: u32,
 }
 
+/// Descriptive statistics for one non-empty set of observations.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Distribution {
+    /// Number of observations summarized.
     pub samples: usize,
+    /// Smallest observation.
     pub minimum: f64,
+    /// Nearest-rank 50th percentile.
     pub median: f64,
+    /// Nearest-rank 95th percentile.
     pub p95: f64,
+    /// Largest observation.
     pub maximum: f64,
+    /// Arithmetic mean of the observations.
     pub mean: f64,
+    /// Sample standard deviation with Bessel's correction.
     pub sample_standard_deviation: f64,
+    /// Sample standard deviation divided by the mean, or zero for a zero mean.
     pub coefficient_of_variation: f64,
 }
 
+/// Observations collected during one benchmark repetition.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Measurements {
+    /// Backend construction time in microseconds.
     pub startup_microseconds: f64,
+    /// Distribution of acknowledged append latency in microseconds.
     pub append_latency_microseconds: Distribution,
+    /// Records acknowledged per second across the append phase.
     pub append_throughput_records_per_second: f64,
+    /// Time in microseconds to consume a finite read to its end.
     pub finite_read_microseconds: f64,
+    /// Records observed by the finite read.
     pub finite_read_records: u64,
+    /// Sum of snapshot publication durations in microseconds, when exercised.
     pub snapshot_publish_microseconds: Option<f64>,
+    /// Clean reopen and verification duration in microseconds, when supported.
     pub recovery_microseconds: Option<f64>,
+    /// Explicit reconnect duration in microseconds, when supported.
     pub reconnect_microseconds: Option<f64>,
+    /// Process CPU consumed by the measured workload in microseconds, when observable.
     pub process_cpu_microseconds: Option<f64>,
+    /// Process-wide peak resident memory in bytes, when observable.
     pub peak_resident_memory_bytes: Option<u64>,
+    /// Sum of application payload bytes submitted by the workload.
     pub logical_payload_bytes: u64,
+    /// Recursive size of persisted backend files in bytes, when applicable.
     pub persisted_bytes: Option<u64>,
+    /// Bytes observed at the measured transport boundary, when available.
     pub wire_bytes: Option<u64>,
+    /// Highest number of records waiting in a bounded local transport queue.
     pub peak_queued_records: Option<usize>,
+    /// Highest number of active request streams observed by a server transport.
     pub peak_active_streams: Option<usize>,
 }
 
+/// One self-contained, schema-versioned benchmark repetition.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct BenchmarkResult {
+    /// [`SCHEMA_VERSION`] used to encode this result.
     pub schema_version: u32,
+    /// One-based repetition number within the invocation.
     pub repetition: u32,
+    /// Stable backend identifier.
     pub implementation: String,
+    /// Guarantees active for this backend and composition.
     pub active_guarantees: Vec<String>,
+    /// Build and host metadata for the run.
     pub environment: Environment,
+    /// Inputs defining the measured workload.
     pub workload: Workload,
+    /// Observations produced by the repetition.
     pub measurements: Measurements,
 }
 

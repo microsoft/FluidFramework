@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# Validate the benchmark crate and run its bounded correctness smoke in a disposable copy.
+
 set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/benchmark-common.sh"
