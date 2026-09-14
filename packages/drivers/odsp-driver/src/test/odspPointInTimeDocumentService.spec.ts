@@ -166,14 +166,22 @@ describe("OdspPointInTimeDocumentService", () => {
 			const { service, calls } = makeService(100, streamFromBatches([]));
 			const deltaStorage = await service.connectToDeltaStorage();
 			deltaStorage.fetchMessages(10, 500);
-			assert.equal(calls[0]!.to, 101);
+			const firstCall = calls[0];
+			if (firstCall === undefined) {
+				throw new Error("fetchMessages was not called");
+			}
+			assert.equal(firstCall.to, 101);
 		});
 
 		it("leaves a `to` that is before the target unchanged", async () => {
 			const { service, calls } = makeService(100, streamFromBatches([]));
 			const deltaStorage = await service.connectToDeltaStorage();
 			deltaStorage.fetchMessages(10, 50);
-			assert.equal(calls[0]!.to, 50);
+			const firstCall = calls[0];
+			if (firstCall === undefined) {
+				throw new Error("fetchMessages was not called");
+			}
+			assert.equal(firstCall.to, 50);
 		});
 	});
 

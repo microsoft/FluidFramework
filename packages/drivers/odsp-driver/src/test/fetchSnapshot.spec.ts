@@ -54,6 +54,14 @@ import {
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
+function getFirstCall<T>(calls: readonly T[]): T {
+	const firstCall = calls[0];
+	if (firstCall === undefined) {
+		throw new Error("downloadSnapshot was not called");
+	}
+	return firstCall;
+}
+
 describe("Tests1 for snapshot fetch", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
 	const driveId = "driveId";
@@ -155,10 +163,8 @@ describe("Tests1 for snapshot fetch", () => {
 			try {
 				return await callback();
 			} finally {
-				assert(
-					getDownloadSnapshotStub.args[0]![4]?.mds === undefined,
-					"mds should be undefined",
-				);
+				const firstCall = getFirstCall(getDownloadSnapshotStub.args);
+				assert(firstCall[4]?.mds === undefined, "mds should be undefined");
 				success = true;
 				getDownloadSnapshotStub.restore();
 			}
@@ -287,10 +293,8 @@ describe("Tests1 for snapshot fetch", () => {
 				return await callback();
 			} finally {
 				getDownloadSnapshotStub.restore();
-				assert(
-					getDownloadSnapshotStub.args[0]![3]?.length === 0,
-					"should ask for ungroupedData",
-				);
+				const firstCall = getFirstCall(getDownloadSnapshotStub.args);
+				assert(firstCall[3]?.length === 0, "should ask for ungroupedData");
 				ungroupedData = true;
 			}
 		}
@@ -353,7 +357,8 @@ describe("Tests1 for snapshot fetch", () => {
 				return await callback();
 			} finally {
 				getDownloadSnapshotStub.restore();
-				assert(getDownloadSnapshotStub.args[0]![3]?.[0] === "g1", "should ask for g1 groupId");
+				const firstCall = getFirstCall(getDownloadSnapshotStub.args);
+				assert(firstCall[3]?.[0] === "g1", "should ask for g1 groupId");
 				success = true;
 			}
 		}

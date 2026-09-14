@@ -546,7 +546,13 @@ export class NodeCore {
 
 		for (const el of stringsToResolve) {
 			for (let it = el.startPos; it < el.endPos; it++) {
-				stringBuffer[length] = input[it]!;
+				const byte = input[it];
+				if (byte === undefined) {
+					throw new Error(
+						`String element range [${el.startPos}, ${el.endPos}) is outside the buffer`,
+					);
+				}
+				stringBuffer[length] = byte;
 				length++;
 			}
 			stringBuffer[length] = 0;
