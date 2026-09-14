@@ -4,17 +4,56 @@
  */
 
 import { strict as assert } from "node:assert";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 
-import { getDockerfileCopyText } from "../../../library/repoPolicyCheck/dockerfilePackages.js";
+import { afterEach, beforeEach, describe, it } from "mocha";
+
+import { handler } from "../../../library/repoPolicyCheck/dockerfilePackages.js";
 
 describe("dockerfile-packages policy check", () => {
-	it("generates the POSIX COPY text that the resolver must write for Windows paths", () => {
-		const copyText = getDockerfileCopyText("packages\\routerlicious\\package.json");
+	let testDir: string;
 
-		assert.doesNotMatch(copyText, /\\/);
-		assert.equal(
-			copyText,
-			"COPY packages/routerlicious/package*.json packages/routerlicious/",
+	beforeEach(async () => {
+		testDir = await mkdtemp(path.join(tmpdir(), "dockerfile-packages-test-"));
+	});
+
+	afterEach(async () => {
+		await rm(testDir, { recursive: true, force: true });
+	});
+
+	it("writes POSIX COPY text when fixing a Windows-style relative path", async function () {
+		if (path.sep !== "\\") {
+			this.skip();
+		}
+
+		const dockerfileDir = path.join(testDir, "server/routerlicious");
+		const packageDir = path.join(dockerfileDir, "packages/foo");
+		await mkdir(packageDir, { recursive: true });
+		await writeFile(
+			path.join(dockerfileDir, "Dockerfile"),
+			[
+				"COPY packages/a/package*.json packages/a/",
+				"COPY packages/b/package*.json packages/b/",
+				"COPY packages/c/package*.json packages/c/",
+				"",
+				"",
+			].join("\n"),
 		);
+		const packageJsonPath = path.join(packageDir, "package.json");
+		await writeFile(packageJsonPath, "");
+
+		const originalCwd = process.cwd();
+		process.chdir(testDir);
+		try {
+			handler.resolver?.(packageJsonPath, testDir);
+		} finally {
+			process.chdir(originalCwd);
+		}
+
+		const dockerfile = await readFile(path.join(dockerfileDir, "Dockerfile"), "utf8");
+		assert.match(dockerfile, /COPY packages\/foo\/package\*\.json packages\/foo\//);
+		assert.doesNotMatch(dockerfile, /COPY packages\\foo/);
 	});
 });
