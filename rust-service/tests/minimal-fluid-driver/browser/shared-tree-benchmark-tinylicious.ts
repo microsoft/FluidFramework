@@ -10,15 +10,21 @@ import {
 	benchmarkTreeConfiguration,
 } from "./shared-tree-benchmark-schema.js";
 
+/** Browser result hook read by the headless benchmark runner. */
 declare global {
+	/** Benchmark-specific browser globals. */
 	interface Window {
+		/** Promise resolving to the detailed benchmark sample. */
 		__sharedTreeBenchmarkResult?: Promise<Record<string, unknown>>;
 	}
 }
 
+/** Browser query parameters supplied by the headless benchmark runner. */
 const parameters = new URLSearchParams(location.search);
+/** DDS implementation selected for this benchmark sample. */
 const dataStructure = parseBenchmarkDataStructure(parameters.get("dds"));
 
+/** Creates the two-client Tinylicious benchmark backend. */
 async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	const containerSchema = benchmarkContainerSchema(dataStructure);
 	const client = new TinyliciousClient({
@@ -72,6 +78,7 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	};
 }
 
+/** Reads a numeric browser parameter or returns its workload default. */
 function numberParameter(name: string, fallback: number): number {
 	const value = parameters.get(name);
 	return value === null ? fallback : Number(value);

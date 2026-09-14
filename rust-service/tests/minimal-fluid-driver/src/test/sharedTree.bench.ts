@@ -13,66 +13,100 @@ import {
 	ValueType,
 } from "@fluid-tools/benchmark";
 
+/** One selectable service backend and its stable artifact identity. */
 interface BenchmarkCase {
+	/** Human-readable title used by the standard benchmark reporter. */
 	readonly title: string;
+	/** Filesystem-safe identity used for detailed artifacts and profiles. */
 	readonly slug: string;
+	/** Browser backend selected by the headless runner. */
 	readonly backend: "rust-local" | "rust" | "local" | "tinylicious";
+	/** Rust service persistence mode, when the case starts WebTransport. */
 	readonly storageMode?: "memory" | "buffered-file" | "durable-file";
 }
 
+/** Validated detailed output emitted by the browser benchmark runner. */
 interface BenchmarkOutput {
+	/** Successful browser samples report the passed status. */
 	readonly status: "passed";
+	/** Aggregate timing and throughput distributions. */
 	readonly aggregates: {
 		readonly startupMilliseconds: Distribution;
 		readonly submissionMilliseconds: Distribution;
 		readonly convergenceMilliseconds: Distribution;
 		readonly operationsPerSecond: Distribution;
 	};
+	/** Environment metadata captured alongside the sample. */
 	readonly environment: {
 		readonly serviceProcess: null | {
 			readonly cpuSeconds: number;
 			readonly peakResidentSetKiB: number;
 		};
 	};
+	/** Individual browser repetitions retained for diagnostics. */
 	readonly samples: readonly Record<string, unknown>[];
 }
 
+/** Aggregate distribution fields consumed by the standard benchmark reporter. */
 interface Distribution {
+	/** Arithmetic mean across successful repetitions. */
 	readonly mean: number;
 }
 
+/** External service process and connection metadata owned by one benchmark case. */
 interface RunningService {
+	/** Child process whose lifetime is bounded by the benchmark case. */
 	readonly process: ChildProcess;
+	/** WebTransport endpoint reported by the Rust service. */
 	readonly transportUrl?: string;
+	/** SHA-256 certificate hash trusted by Chromium. */
 	readonly certificateHash?: string;
+	/** Dynamically allocated Tinylicious port. */
 	readonly port?: number;
+	/** Stops the process and removes temporary data. */
 	stop(): Promise<void>;
 }
 
+/** Effective workload configuration derived from benchmark environment variables. */
 interface BenchmarkConfiguration {
+	/** DDS implementation selected for the workload. */
 	readonly dataStructure: "dummy" | "shared-tree";
+	/** Browser sample count per selected case. */
 	readonly repetitions: number;
+	/** Timed edits per sample. */
 	readonly operations: number;
+	/** Untimed edits per sample. */
 	readonly warmup: number;
+	/** Batching and convergence policy selected for the workload. */
 	readonly workload: "batched" | "turns" | "messages";
+	/** Edits per Fluid batch, when explicitly bounded. */
 	readonly operationsPerTurn: number | undefined;
+	/** Whether every batch waits for both clients to converge. */
 	readonly synchronizePerTurn: boolean;
+	/** Maximum duration of one browser sample. */
 	readonly browserTimeoutMilliseconds: number;
+	/** Whether case-specific incremental prerequisite builds are skipped. */
 	readonly skipBuild: boolean;
 }
 
+/** Absolute package root containing browser runners and benchmark artifacts. */
 const packageDirectory = path.resolve(import.meta.dirname, "../..");
+/** Absolute Fluid Framework repository root. */
 const repositoryDirectory = path.resolve(packageDirectory, "../../..");
+/** Absolute Rust service workspace root. */
 const rustServiceDirectory = path.join(repositoryDirectory, "rust-service");
+/** Routerlicious package root used to build and launch Tinylicious. */
 const tinyliciousDirectory = path.join(
 	repositoryDirectory,
 	"server/routerlicious/packages/tinylicious",
 );
+/** Browser transport test root containing reusable development certificates. */
 const webTransportTestDirectory = path.join(
 	rustServiceDirectory,
 	"tests/webtransport-browser",
 );
 
+/** Complete set of service backends exercised by the comparison benchmark. */
 const cases: readonly BenchmarkCase[] = [
 	{ title: "Rust local memory", slug: "rust-local-memory", backend: "rust-local" },
 	{ title: "TypeScript local service", slug: "typescript-local", backend: "local" },
@@ -97,6 +131,7 @@ const cases: readonly BenchmarkCase[] = [
 	{ title: "Tinylicious", slug: "tinylicious", backend: "tinylicious" },
 ];
 
+/** Validated workload configuration shared by every registered benchmark case. */
 const configuration = readConfiguration();
 
 describe(configurationSuiteName(configuration), () => {
@@ -110,6 +145,7 @@ describe(configurationSuiteName(configuration), () => {
 	}
 });
 
+/** Builds, starts, executes, records, and cleans up one selected benchmark case. */
 async function runCase(
 	benchmarkCase: BenchmarkCase,
 	configuration: BenchmarkConfiguration,
@@ -180,6 +216,7 @@ async function runCase(
 	}
 }
 
+/** Parses and validates the effective benchmark environment configuration. */
 function readConfiguration(): BenchmarkConfiguration {
 	const performance = currentBenchmarkMode === BenchmarkMode.Performance;
 	const workload = process.env.BENCHMARK_WORKLOAD ?? "turns";
@@ -209,10 +246,12 @@ function readConfiguration(): BenchmarkConfiguration {
 	};
 }
 
+/** Encodes effective workload semantics into the standard benchmark suite name. */
 function configurationSuiteName(configuration: BenchmarkConfiguration): string {
 	return `Fluid service benchmark (dds=${configuration.dataStructure}, workload=${configuration.workload}, operations=${configuration.operations}, warmup=${configuration.warmup}, operationsPerTurn=${configuration.operationsPerTurn ?? "unbounded"}, synchronizePerTurn=${configuration.synchronizePerTurn}, repetitions=${configuration.repetitions})`;
 }
 
+/** Parses the selected benchmark DDS. */
 function dataStructureEnvironmentVariable(): "dummy" | "shared-tree" {
 	const value = process.env.BENCHMARK_DDS ?? "dummy";
 	if (value !== "dummy" && value !== "shared-tree") {
@@ -221,6 +260,7 @@ function dataStructureEnvironmentVariable(): "dummy" | "shared-tree" {
 	return value;
 }
 
+/** Incrementally builds native or Tinylicious prerequisites for a case. */
 function buildPrerequisites(benchmarkCase: BenchmarkCase): void {
 	if (benchmarkCase.backend === "rust") {
 		run("cargo", ["build", "--locked", "-p", "fluid-webtransport-native", "--release"], {
@@ -240,6 +280,7 @@ function buildPrerequisites(benchmarkCase: BenchmarkCase): void {
 	}
 }
 
+/** Starts the external service required by a case, when any. */
 async function startService(
 	benchmarkCase: BenchmarkCase,
 ): Promise<RunningService | undefined> {
@@ -252,6 +293,7 @@ async function startService(
 	return undefined;
 }
 
+/** Starts an isolated Rust WebTransport service with temporary storage. */
 async function startRustService(storageMode: string): Promise<RunningService> {
 	ensureCertificate();
 	const temporaryDirectory = await mkdtemp(path.join(tmpdir(), "fluid-rust-benchmark-"));
@@ -294,6 +336,7 @@ async function startRustService(storageMode: string): Promise<RunningService> {
 	};
 }
 
+/** Starts an isolated Tinylicious process on a dynamically allocated port. */
 async function startTinylicious(): Promise<RunningService> {
 	const port = await freePort();
 	const temporaryDirectory = await mkdtemp(
@@ -324,6 +367,7 @@ async function startTinylicious(): Promise<RunningService> {
 	};
 }
 
+/** Generates the existing browser-test certificate when it is absent. */
 function ensureCertificate(): void {
 	const certificateDirectory = path.join(webTransportTestDirectory, ".certs");
 	if (
@@ -338,6 +382,7 @@ function ensureCertificate(): void {
 	});
 }
 
+/** Converts detailed browser evidence into the standard benchmark measurements. */
 function measurements(output: BenchmarkOutput): CollectedData {
 	const data: Array<{
 		name: string;
@@ -395,6 +440,7 @@ function measurements(output: BenchmarkOutput): CollectedData {
 	return data as unknown as CollectedData;
 }
 
+/** Parses and minimally validates structured browser benchmark output. */
 function parseOutput(stdout: string): BenchmarkOutput {
 	const start = stdout.indexOf("{");
 	if (start === -1) {
@@ -411,6 +457,7 @@ function parseOutput(stdout: string): BenchmarkOutput {
 	return output as BenchmarkOutput;
 }
 
+/** Adds the case slug to an optional Chromium CPU profile path. */
 function profilePathForCase(slug: string): string | undefined {
 	const configuredPath = process.env.BENCHMARK_CPU_PROFILE_PATH;
 	if (configuredPath === undefined) {
@@ -420,6 +467,7 @@ function profilePathForCase(slug: string): string | undefined {
 	return path.join(parsed.dir, `${parsed.name}-${slug}${parsed.ext || ".cpuprofile"}`);
 }
 
+/** Runs a prerequisite command and preserves its diagnostics on failure. */
 function run(
 	command: string,
 	argumentsList: readonly string[],
@@ -436,6 +484,7 @@ function run(
 	}
 }
 
+/** Waits for a service stdout pattern or rejects on timeout or early exit. */
 function waitForOutput(
 	child: ChildProcess,
 	pattern: RegExp,
@@ -477,6 +526,7 @@ function waitForOutput(
 	});
 }
 
+/** Waits for Tinylicious to accept TCP connections or exit. */
 async function waitForPort(
 	child: ChildProcess,
 	port: number,
@@ -495,6 +545,7 @@ async function waitForPort(
 	throw new Error(`timed out waiting for Tinylicious on port ${port}`);
 }
 
+/** Probes whether localhost accepts a connection on the given port. */
 function canConnect(port: number): Promise<boolean> {
 	return new Promise((resolve) => {
 		const socket = createConnection({ host: "127.0.0.1", port });
@@ -513,6 +564,7 @@ function canConnect(port: number): Promise<boolean> {
 	});
 }
 
+/** Asks the OS for an unused localhost TCP port. */
 function freePort(): Promise<number> {
 	return new Promise((resolve, reject) => {
 		const server = createServer();
@@ -529,6 +581,7 @@ function freePort(): Promise<number> {
 	});
 }
 
+/** Terminates an owned service, escalating after a bounded grace period. */
 async function stopProcess(child: ChildProcess): Promise<void> {
 	if (child.exitCode !== null || child.signalCode !== null) {
 		return;
@@ -545,6 +598,7 @@ async function stopProcess(child: ChildProcess): Promise<void> {
 	}
 }
 
+/** Reads a positive integer environment setting. */
 function positiveInteger(name: string, fallback: number): number {
 	const value = process.env[name] === undefined ? fallback : Number(process.env[name]);
 	if (!Number.isSafeInteger(value) || value <= 0) {
@@ -553,10 +607,12 @@ function positiveInteger(name: string, fallback: number): number {
 	return value;
 }
 
+/** Reads an optional positive integer environment setting. */
 function optionalPositiveInteger(name: string): number | undefined {
 	return process.env[name] === undefined ? undefined : positiveInteger(name, 1);
 }
 
+/** Reads a nonnegative integer environment setting. */
 function nonnegativeInteger(name: string, fallback: number): number {
 	const value = process.env[name] === undefined ? fallback : Number(process.env[name]);
 	if (!Number.isSafeInteger(value) || value < 0) {
@@ -565,6 +621,7 @@ function nonnegativeInteger(name: string, fallback: number): number {
 	return value;
 }
 
+/** Reads an optional boolean environment setting. */
 function booleanEnvironmentVariable(name: string): boolean | undefined {
 	const value = process.env[name];
 	if (value === undefined) {
@@ -579,6 +636,7 @@ function booleanEnvironmentVariable(name: string): boolean | undefined {
 	throw new Error(`${name} must be 0, 1, true, or false`);
 }
 
+/** Throws an invariant failure from an expression context. */
 function fail(message: string): never {
 	throw new Error(message);
 }

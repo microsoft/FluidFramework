@@ -34,16 +34,23 @@ import {
 	benchmarkTreeConfiguration,
 } from "./shared-tree-benchmark-schema.js";
 
+/** Browser result hook read by the headless benchmark runner. */
 declare global {
+	/** Benchmark-specific browser globals. */
 	interface Window {
+		/** Promise resolving to the detailed benchmark sample. */
 		__sharedTreeBenchmarkResult?: Promise<Record<string, unknown>>;
 	}
 }
 
+/** Browser query parameters supplied by the headless benchmark runner. */
 const parameters = new URLSearchParams(location.search);
+/** DDS implementation selected for this benchmark sample. */
 const dataStructure = parseBenchmarkDataStructure(parameters.get("dds"));
+/** Fluid code identity shared by both Rust-service benchmark containers. */
 const codeDetails = { package: "shared-tree-rust-service-benchmark", config: {} };
 
+/** Adapts the WebTransport-generated browser client to the minimal driver contract. */
 function adaptBrowserClient(client: BrowserClient): WasmProtocolClient {
 	return {
 		request: async (frame) => client.request(frame),
@@ -123,21 +130,26 @@ function adaptBrowserClient(client: BrowserClient): WasmProtocolClient {
 		fetchSummary: async (digest) => client.fetchSummary(digest),
 		disconnect: () => client.disconnect(),
 		reconnect: async () => client.reconnect(),
+		/** Total FSP4 bytes read and written by the generated client. */
 		get wireBytes() {
 			return client.wireBytes;
 		},
+		/** Largest unary response read by the generated client. */
 		get peakResponseBytes() {
 			return client.peakResponseBytes;
 		},
+		/** Largest projected-subscription frame read by the generated client. */
 		get peakSubscriptionFrameBytes() {
 			return client.peakSubscriptionFrameBytes;
 		},
+		/** Largest projected-operation queue depth observed by the generated client. */
 		get peakSubscriptionQueueDepth() {
 			return client.peakSubscriptionQueueDepth;
 		},
 	};
 }
 
+/** Adapts the in-process native-service client to the minimal driver contract. */
 function adaptInjectedClient(
 	client: InjectedClient,
 	transport: LocalServiceTransport,
@@ -212,21 +224,26 @@ function adaptInjectedClient(
 		fetchSummary: async (digest) => client.fetchSummary(digest),
 		disconnect: () => client.disconnect(),
 		reconnect: async () => client.reconnect(transport),
+		/** Total FSP4 bytes read and written by the injected client. */
 		get wireBytes() {
 			return client.wireBytes;
 		},
+		/** Largest unary response read by the injected client. */
 		get peakResponseBytes() {
 			return client.peakResponseBytes;
 		},
+		/** Largest projected-subscription frame read by the injected client. */
 		get peakSubscriptionFrameBytes() {
 			return client.peakSubscriptionFrameBytes;
 		},
+		/** Largest projected-operation queue depth observed by the injected client. */
 		get peakSubscriptionQueueDepth() {
 			return client.peakSubscriptionQueueDepth;
 		},
 	};
 }
 
+/** Waits for a Rust-service-backed container to reach Fluid's connected state. */
 async function waitForConnected(container: {
 	readonly connectionState: ConnectionState;
 	on(event: "connected", listener: () => void): void;
@@ -249,6 +266,7 @@ async function waitForConnected(container: {
 	});
 }
 
+/** Creates a two-client Rust local or WebTransport benchmark backend. */
 async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	const local = parameters.get("local") === "true";
 	const transportUrl = parameters.get("transport");
@@ -434,6 +452,7 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	};
 }
 
+/** Reads a numeric browser parameter or returns its workload default. */
 function numberParameter(name: string, fallback: number): number {
 	const value = parameters.get(name);
 	return value === null ? fallback : Number(value);

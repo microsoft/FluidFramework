@@ -17,39 +17,58 @@ import {
 import { concat, field, frame, optionalField, parseFrame, reference, u64 } from "./fsp4.js";
 import type { WasmProtocolClient } from "./wasmClient.js";
 
+/** UTF-8 encoder used for fixture identities and payloads. */
 const encoder = new TextEncoder();
+/** UTF-8 decoder used to assert retrieved snapshot contents. */
 const decoder = new TextDecoder();
+/** CommonJS loader used to import the generated WASM package at runtime. */
 const require = createRequire(import.meta.url);
 
+/** Generated injected-client constructor loaded from the ignored WASM package. */
 interface GeneratedPackage {
+	/** Creates a generated client over the in-memory contract transport. */
 	readonly InjectedClient: new (
 		transport: Transport,
 		maxFrameBytes: number,
 	) => WasmProtocolClient;
 }
 
+/** Canonical operation retained by the in-memory FSP4 contract service. */
 interface StoredOperation {
+	/** Opaque service position assigned at commit. */
 	readonly position: Uint8Array;
+	/** Monotonic document sequence number assigned at commit. */
 	readonly sequenceNumber: bigint;
+	/** Writer identity supplied by the submission. */
 	readonly writer: Uint8Array;
+	/** Session identity supplied by the submission. */
 	readonly session: Uint8Array;
+	/** Submission identity used for idempotent resolution. */
 	readonly submission: Uint8Array;
+	/** Writer-local ordering number supplied by the submission. */
 	readonly localSequenceNumber: bigint;
+	/** Optional opaque reference position supplied by the writer. */
 	readonly reference?: Uint8Array;
+	/** Uninterpreted Fluid operation payload. */
 	readonly payload: Uint8Array;
 }
 
+/** Sequential decoder for the bounded FSP4 fixture fields used by the contract service. */
 class Reader {
+	/** Current byte offset within the frame body. */
 	private offset = 0;
 
+	/** Creates a reader positioned at the first byte of a frame body. */
 	public constructor(private readonly bytes: Uint8Array) {}
 
+	/** Reads one byte and advances the cursor. */
 	public byte(): number {
 		const value = this.bytes[this.offset++];
 		assert(value !== undefined);
 		return value;
 	}
 
+	/** Reads one big-endian 32-bit unsigned integer. */
 	public u32(): number {
 		const value = new DataView(
 			this.bytes.buffer,
@@ -60,6 +79,7 @@ class Reader {
 		return value;
 	}
 
+	/** Reads one big-endian 64-bit unsigned integer. */
 	public u64(): bigint {
 		const value = new DataView(
 			this.bytes.buffer,
@@ -70,6 +90,7 @@ class Reader {
 		return value;
 	}
 
+	/** Reads one length-prefixed byte field. */
 	public field(): Uint8Array {
 		const length = this.u32();
 		const value = this.bytes.slice(this.offset, this.offset + length);
@@ -77,10 +98,12 @@ class Reader {
 		return value;
 	}
 
+	/** Reads an optional length-prefixed byte field. */
 	public optionalField(): Uint8Array | undefined {
 		return this.byte() === 0 ? undefined : this.field();
 	}
 
+	/** Reads one fixed-width SHA-256 digest. */
 	public digest(): Uint8Array {
 		const value = this.bytes.slice(this.offset, this.offset + 32);
 		this.offset += 32;
@@ -88,25 +111,35 @@ class Reader {
 	}
 }
 
+/** Converts opaque bytes to a stable map key. */
 function key(bytes: Uint8Array): string {
 	return Buffer.from(bytes).toString("hex");
 }
 
+/** Computes the content identity used by blob and summary fixture storage. */
 function digest(payload: Uint8Array): Uint8Array {
 	return new Uint8Array(createHash("sha256").update(payload).digest());
 }
 
+/** In-memory FSP4 service that exercises the generated client's driver contract. */
 class ContractService {
+	/** Committed operations in projected sequence order. */
 	public readonly operations: StoredOperation[] = [];
+	/** Waiters notified when an operation commits or a subscription is cancelled. */
 	private readonly operationListeners = new Set<() => void>();
+	/** Immutable blob payloads keyed by digest. */
 	private readonly blobs = new Map<string, Uint8Array>();
+	/** Published summary entries keyed by summary digest. */
 	private readonly summaries = new Map<
 		string,
 		readonly { path: Uint8Array; blob: Uint8Array }[]
 	>();
+	/** Committed operations keyed by writer, session, and submission identity. */
 	private readonly submissions = new Map<string, StoredOperation>();
+	/** Most recently published snapshot envelope. */
 	private latestSnapshot: { id: Uint8Array; payload: Uint8Array } | undefined;
 
+	/** Routes one unary FSP4 request to the corresponding fixture operation. */
 	public request(request: Uint8Array): Uint8Array {
 		const parsed = parseFrame(request);
 		const requestId = new DataView(request.buffer, request.byteOffset + 8, 8).getBigUint64(0);
@@ -140,6 +173,7 @@ class ContractService {
 		}
 	}
 
+	/** Commits a new submission once and returns its stable disposition. */
 	private submit(requestId: bigint, reader: Reader): Uint8Array {
 		reader.field();
 		const writer = reader.field();
@@ -180,6 +214,7 @@ class ContractService {
 		);
 	}
 
+	/** Returns projected operations strictly after the requested cursor. */
 	private readProjected(requestId: bigint, reader: Reader): Uint8Array {
 		reader.field();
 		const after = reader.optionalField();
@@ -210,6 +245,7 @@ class ContractService {
 		);
 	}
 
+	/** Resolves a submission identity as committed or not committed. */
 	private resolve(requestId: bigint, reader: Reader): Uint8Array {
 		reader.field();
 		const writer = reader.field();
@@ -230,6 +266,7 @@ class ContractService {
 				);
 	}
 
+	/** Stores an immutable blob and reports content deduplication. */
 	private uploadBlob(requestId: bigint, reader: Reader): Uint8Array {
 		const payload = reader.field();
 		const identity = digest(payload);
@@ -244,6 +281,7 @@ class ContractService {
 		);
 	}
 
+	/** Fetches an uploaded blob by its fixed-width digest. */
 	private fetchBlob(requestId: bigint, reader: Reader): Uint8Array {
 		const identity = reader.digest();
 		const payload = this.blobs.get(key(identity));
@@ -251,6 +289,7 @@ class ContractService {
 		return frame(requestId, 71, identity, field(payload));
 	}
 
+	/** Publishes a summary manifest under its content digest. */
 	private publishSummary(requestId: bigint, reader: Reader): Uint8Array {
 		const count = reader.u32();
 		const entries = Array.from({ length: count }, () => ({
@@ -272,6 +311,7 @@ class ContractService {
 		);
 	}
 
+	/** Fetches a published summary manifest by digest. */
 	private fetchSummary(requestId: bigint, reader: Reader): Uint8Array {
 		const identity = reader.digest();
 		const entries = this.summaries.get(key(identity));
@@ -285,6 +325,7 @@ class ContractService {
 		);
 	}
 
+	/** Replaces the latest full snapshot retained by the fixture. */
 	private publishSnapshot(requestId: bigint, reader: Reader): Uint8Array {
 		reader.field();
 		reader.optionalField();
@@ -294,6 +335,7 @@ class ContractService {
 		return frame(requestId, 64, new Uint8Array([3]));
 	}
 
+	/** Returns the latest snapshot or an explicit missing result. */
 	private latest(requestId: bigint): Uint8Array {
 		return this.latestSnapshot === undefined
 			? frame(requestId, 67, new Uint8Array([0]))
@@ -307,6 +349,7 @@ class ContractService {
 				);
 	}
 
+	/** Waits for the operation at an index unless the subscription is cancelled. */
 	public async operationAt(index: number, cancelled: () => boolean): Promise<StoredOperation> {
 		while (!cancelled()) {
 			const operation = this.operations[index];
@@ -324,6 +367,7 @@ class ContractService {
 		throw new Error("subscription cancelled");
 	}
 
+	/** Wakes projected-operation subscriptions after commit or cancellation. */
 	public wakeSubscriptions(): void {
 		for (const listener of this.operationListeners) {
 			listener();
@@ -331,10 +375,14 @@ class ContractService {
 	}
 }
 
+/** Cursor-bearing projected-operation subscription for the contract fixture. */
 class ContractSubscription {
+	/** Whether cancellation should abort the next pending read. */
 	private cancelled = false;
+	/** Index of the next projected operation to return. */
 	private index: number;
 
+	/** Starts after the supplied cursor, or at the beginning when it is absent. */
 	public constructor(
 		private readonly service: ContractService,
 		private readonly requestId: bigint,
@@ -346,6 +394,7 @@ class ContractSubscription {
 				: service.operations.findIndex(({ position }) => key(position) === key(after)) + 1;
 	}
 
+	/** Returns the next committed operation as a subscription frame. */
 	public async next(): Promise<Uint8Array> {
 		const operation = await this.service.operationAt(this.index, () => this.cancelled);
 		this.index++;
@@ -364,18 +413,24 @@ class ContractSubscription {
 		);
 	}
 
+	/** Cancels pending reads and wakes the service waiter. */
 	public cancel(): void {
 		this.cancelled = true;
 		this.service.wakeSubscriptions();
 	}
 }
 
+/** Disconnectable injected transport with deterministic response-loss injection. */
 class Transport {
+	/** Whether requests and subscriptions may currently reach the fixture service. */
 	public connected = true;
+	/** Whether the next submit response is lost after the service commits it. */
 	public failAfterCommit = false;
 
+	/** Creates a transport over one shared contract service. */
 	public constructor(private readonly service: ContractService) {}
 
+	/** Executes a unary request and optionally injects post-commit response loss. */
 	public async request(request: Uint8Array): Promise<Uint8Array> {
 		if (!this.connected) {
 			throw new Error("transport disconnected");
@@ -388,6 +443,7 @@ class Transport {
 		return response;
 	}
 
+	/** Opens a projected-operation subscription from the request cursor. */
 	public subscribe(request: Uint8Array): ContractSubscription {
 		if (!this.connected) {
 			throw new Error("transport disconnected");
@@ -400,6 +456,7 @@ class Transport {
 		return new ContractSubscription(this.service, requestId, reader.optionalField());
 	}
 
+	/** Rejects subsequent requests and subscriptions on this transport. */
 	public disconnect(): void {
 		this.connected = false;
 	}
@@ -524,6 +581,7 @@ test("actual WASM package backs the minimal Fluid driver contract", async () => 
 	);
 });
 
+/** Polls until pushed operations satisfy the contract assertion. */
 async function waitUntil(check: () => boolean): Promise<void> {
 	const deadline = Date.now() + 2_000;
 	while (!check()) {

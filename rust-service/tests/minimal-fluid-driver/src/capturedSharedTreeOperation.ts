@@ -1,6 +1,10 @@
+/** Mutable fields in one captured optimized-forest SharedTree replacement operation. */
 export interface CapturedSharedTreeOperation {
+	/** Revision identifier rewritten for each benchmark edit. */
 	revision: number;
+	/** Original captured originator identity. */
 	originatorId: string;
+	/** Captured modular changeset and encoded replacement build. */
 	changeset: Array<{
 		data: {
 			maxId: number;
@@ -18,6 +22,7 @@ export interface CapturedSharedTreeOperation {
 			};
 		};
 	}>;
+	/** Captured SharedTree operation format version. */
 	version: number;
 }
 
@@ -29,6 +34,7 @@ export const capturedSharedTreeOperation = JSON.parse(
 	'{"revision":0,"originatorId":"00000000-0000-0000-0000-000000000000","changeset":[{"data":{"maxId":0,"changes":[{"fieldKey":"rootFieldKey","fieldKind":"ModularEditBuilder.Generic","change":[[0,{"fieldChanges":[{"fieldKey":"value","fieldKind":"Value","change":{"r":{"e":false,"d":0,"s":0}}}]}]]}],"builds":{"builds":[[[[0,0]]]],"trees":{"version":1,"identifiers":[],"shapes":[{"c":{"type":"com.fluidframework.leaf.number","value":true}}],"data":[[0,0]]}}}}],"version":3}',
 ) as CapturedSharedTreeOperation;
 
+/** Clones the capture and rewrites its revision, IDs, and scalar payload. */
 export function sharedTreeOperationForValue(value: number): CapturedSharedTreeOperation {
 	const operation = structuredClone(capturedSharedTreeOperation);
 	operation.revision = value;

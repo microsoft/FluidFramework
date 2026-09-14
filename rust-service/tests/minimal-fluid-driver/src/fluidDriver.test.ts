@@ -20,12 +20,15 @@ import type {
 	WasmProtocolClient,
 } from "./wasmClient.js";
 
+/** UTF-8 encoder used for deterministic fixture identities and payloads. */
 const encoder = new TextEncoder();
 
+/** Reads the request identity from an encoded FSP4 frame header. */
 function requestId(request: Uint8Array): bigint {
 	return new DataView(request.buffer, request.byteOffset + 8, 8).getBigUint64(0);
 }
 
+/** Extracts the submission identity and local sequence number from an FSP4 request. */
 function submissionMetadata(request: Uint8Array): {
 	identity: Uint8Array;
 	sequenceNumber: number;
@@ -49,10 +52,12 @@ function submissionMetadata(request: Uint8Array): {
 	return { identity, sequenceNumber };
 }
 
+/** Converts opaque submission identity bytes to a stable set key. */
 function byteKey(bytes: Uint8Array): string {
 	return Buffer.from(bytes).toString("hex");
 }
 
+/** Encodes an accepted-submission response for the supplied request. */
 function submissionResponse(request: Uint8Array, sequenceNumber: number): Uint8Array {
 	return frame(
 		requestId(request),
@@ -64,9 +69,13 @@ function submissionResponse(request: Uint8Array, sequenceNumber: number): Uint8A
 	);
 }
 
+/** Controllable projected-operation subscription used to verify cursor and disposal behavior. */
 class TestSubscription implements ProjectedOperationSubscription {
+	/** Number of times the driver cancelled this subscription. */
 	public cancelCount = 0;
+	/** Operations waiting for the driver to consume them. */
 	private readonly queued: ProjectedOperation[] = [];
+	/** Pending consumer completed by a pushed operation or cancellation. */
 	private pending:
 		| {
 				resolve: (operation: ProjectedOperation) => void;
@@ -74,8 +83,10 @@ class TestSubscription implements ProjectedOperationSubscription {
 		  }
 		| undefined;
 
+	/** Creates a subscription beginning strictly after the supplied cursor. */
 	public constructor(public readonly after: Uint8Array | undefined) {}
 
+	/** Returns a queued operation or waits for the fixture to push one. */
 	public next(): Promise<ProjectedOperation> {
 		const operation = this.queued.shift();
 		if (operation !== undefined) {
@@ -86,6 +97,7 @@ class TestSubscription implements ProjectedOperationSubscription {
 		});
 	}
 
+	/** Delivers an operation immediately or queues it for the next read. */
 	public push(operation: ProjectedOperation): void {
 		if (this.pending === undefined) {
 			this.queued.push(operation);
@@ -96,6 +108,7 @@ class TestSubscription implements ProjectedOperationSubscription {
 		}
 	}
 
+	/** Rejects any pending read and records resource disposal. */
 	public cancel(): void {
 		this.cancelCount++;
 		this.pending?.reject(new Error("subscription cancelled"));
@@ -103,13 +116,20 @@ class TestSubscription implements ProjectedOperationSubscription {
 	}
 }
 
+/** Controllable ordered submission stream with write and response failure injection. */
 class TestSubmissionStream implements SubmissionStream {
+	/** Encoded submission requests written by the driver in stream order. */
 	public readonly sent: Uint8Array[] = [];
+	/** Number of times the driver closed this stream. */
 	public closeCount = 0;
+	/** Acknowledgements queued before the driver requests them. */
 	private readonly responses: Uint8Array[] = [];
+	/** Pending acknowledgement consumer, when one exists. */
 	private pendingNext: ((response: Uint8Array) => void) | undefined;
+	/** Index of the next sent request to acknowledge. */
 	private acknowledged = 0;
 
+	/** Configures automatic responses and deterministic write or response failure. */
 	public constructor(
 		private readonly client: TestClient,
 		private readonly autoRespond: boolean,
@@ -117,6 +137,7 @@ class TestSubmissionStream implements SubmissionStream {
 		private failNext = false,
 	) {}
 
+	/** Records and commits a write unless its sequence number is selected to fail. */
 	public async send(request: Uint8Array): Promise<void> {
 		this.sent.push(request);
 		const { sequenceNumber } = submissionMetadata(request);
@@ -129,6 +150,7 @@ class TestSubmissionStream implements SubmissionStream {
 		}
 	}
 
+	/** Returns the next acknowledgement or injects one post-commit response loss. */
 	public async next(): Promise<Uint8Array> {
 		if (this.failNext) {
 			this.failNext = false;
@@ -138,6 +160,7 @@ class TestSubmissionStream implements SubmissionStream {
 		return response ?? new Promise((resolve) => (this.pendingNext = resolve));
 	}
 
+	/** Acknowledges the next unacknowledged request in submission order. */
 	public respondNext(): void {
 		const request = this.sent[this.acknowledged++];
 		assert(request !== undefined);
@@ -152,27 +175,41 @@ class TestSubmissionStream implements SubmissionStream {
 		}
 	}
 
+	/** Records that the driver released this submission stream. */
 	public close(): void {
 		this.closeCount++;
 	}
 }
 
+/** Failure and response policy for a lifecycle test client. */
 interface TestClientOptions {
+	/** Whether stream writes immediately make acknowledgements available. */
 	readonly autoRespond?: boolean;
+	/** Local sequence number whose stream write should fail before commit. */
 	readonly failWriteSequence?: number;
+	/** Whether the first stream response should fail after commit. */
 	readonly failNext?: boolean;
 }
 
+/** In-memory generated-client double that records driver lifecycle interactions. */
 class TestClient implements WasmProtocolClient {
+	/** Unary FSP4 request kinds observed by the fixture. */
 	public readonly requestKinds: number[] = [];
+	/** Submission streams opened across initial connection and reconnects. */
 	public readonly streams: TestSubmissionStream[] = [];
+	/** Projected subscriptions opened across initial connection and restarts. */
 	public readonly subscriptions: TestSubscription[] = [];
+	/** Cursors supplied to explicit projected reads. */
 	public readonly projectedReadAfters: (Uint8Array | undefined)[] = [];
+	/** Operations returned by explicit projected reads. */
 	public projectedReadOperations: readonly ProjectedOperation[] = [];
+	/** Submission identities committed by stream or unary requests. */
 	private readonly committed = new Set<string>();
 
+	/** Creates a client with deterministic stream behavior. */
 	public constructor(private readonly options: TestClientOptions = {}) {}
 
+	/** Handles open-session and unary-submit requests used by the driver. */
 	public async request(request: Uint8Array): Promise<Uint8Array> {
 		const kind = parseFrame(request).kind;
 		this.requestKinds.push(kind);
@@ -186,6 +223,7 @@ class TestClient implements WasmProtocolClient {
 		throw new Error(`unexpected request kind ${kind}`);
 	}
 
+	/** Opens and records a submission stream configured from the client options. */
 	public async openSubmissionStream(): Promise<TestSubmissionStream> {
 		const stream = new TestSubmissionStream(
 			this,
@@ -197,6 +235,7 @@ class TestClient implements WasmProtocolClient {
 		return stream;
 	}
 
+	/** Records the cursor and returns the configured projected page. */
 	public async readProjected(_document: Uint8Array, after?: Uint8Array) {
 		this.projectedReadAfters.push(after);
 		const cursor = this.projectedReadOperations.at(-1)?.position ?? after;
@@ -207,6 +246,7 @@ class TestClient implements WasmProtocolClient {
 		};
 	}
 
+	/** Opens and records a projected-operation subscription. */
 	public subscribeProjected(
 		_document: Uint8Array,
 		after?: Uint8Array,
@@ -216,6 +256,7 @@ class TestClient implements WasmProtocolClient {
 		return subscription;
 	}
 
+	/** Resolves identities previously committed by this fixture. */
 	public async resolveSubmission(
 		_document: Uint8Array,
 		_writer: Uint8Array,
@@ -231,18 +272,22 @@ class TestClient implements WasmProtocolClient {
 			: ({ kind: "notCommitted" } as const);
 	}
 
+	/** Marks the submission identity in an encoded request as committed. */
 	public commit(request: Uint8Array): void {
 		this.committed.add(byteKey(submissionMetadata(request).identity));
 	}
 
+	/** Echoes blob bytes as their fixture digest and records no persistence overhead. */
 	public async uploadBlob(payload: Uint8Array) {
 		return { digest: payload, sizeBytes: BigInt(payload.length), deduplicated: false };
 	}
 
+	/** Echoes the fixture digest as blob contents. */
 	public async fetchBlob(digest: Uint8Array) {
 		return digest;
 	}
 
+	/** Returns a stable empty-summary publication receipt. */
 	public async publishSummary() {
 		return {
 			digest: new Uint8Array(32),
@@ -252,18 +297,26 @@ class TestClient implements WasmProtocolClient {
 		};
 	}
 
+	/** Returns the empty summary represented by the fixture receipt. */
 	public async fetchSummary() {
 		return [];
 	}
 
+	/** Performs no transport work in the in-memory fixture. */
 	public disconnect(): void {}
+	/** Performs no transport work in the in-memory fixture. */
 	public reconnect(): void {}
+	/** Fixture clients do not record encoded traffic volume. */
 	public readonly wireBytes = 0n;
+	/** Fixture clients do not record unary response sizes. */
 	public readonly peakResponseBytes = 0;
+	/** Fixture clients do not record subscription frame sizes. */
 	public readonly peakSubscriptionFrameBytes = 0;
+	/** Fixture clients do not queue generated subscription frames. */
 	public readonly peakSubscriptionQueueDepth = 0;
 }
 
+/** Stable resolved URL shared by lifecycle test connections. */
 const resolvedUrl: IResolvedUrl = {
 	type: "fluid",
 	id: "stream-test-document",
@@ -272,6 +325,7 @@ const resolvedUrl: IResolvedUrl = {
 	endpoints: {},
 };
 
+/** Creates one Fluid operation with the requested local sequence number. */
 function message(clientSequenceNumber: number): IDocumentMessage {
 	return {
 		clientSequenceNumber,
@@ -423,6 +477,7 @@ test("clients without submission streaming retain unary fallback", async () => {
 	connection.dispose();
 });
 
+/** Connects a write-mode delta connection over the supplied generated-client fixture. */
 async function connect(client: WasmProtocolClient): Promise<MinimalWasmDeltaConnection> {
 	const factory = new MinimalWasmDocumentServiceFactory(async () => client);
 	const service = (await factory.createDocumentService(
@@ -433,6 +488,7 @@ async function connect(client: WasmProtocolClient): Promise<MinimalWasmDeltaConn
 	} as IClient)) as MinimalWasmDeltaConnection;
 }
 
+/** Creates one projected remote operation at a deterministic cursor and sequence. */
 function operation(sequenceNumber: number): ProjectedOperation {
 	return {
 		position: encoder.encode(`cursor-${sequenceNumber}`),
@@ -445,6 +501,7 @@ function operation(sequenceNumber: number): ProjectedOperation {
 	};
 }
 
+/** Polls until asynchronous lifecycle work reaches the asserted fixture state. */
 async function waitUntil(check: () => boolean): Promise<void> {
 	const deadline = Date.now() + 2_000;
 	while (!check()) {

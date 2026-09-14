@@ -24,31 +24,50 @@ import {
 } from "../src/index.js";
 import type { WasmProtocolClient } from "../src/wasmClient.js";
 
+/** Browser hooks used by the headless trace runner and failure diagnostics. */
 declare global {
+	/** Trace-specific browser globals. */
 	interface Window {
+		/** Promise resolving to the final trace evidence. */
 		__sharedTreeResult?: Promise<Record<string, unknown>>;
+		/** Current lifecycle stage for timeout diagnostics. */
 		__sharedTreeStage?: string;
+		/** Recent Fluid telemetry retained for failure diagnostics. */
 		__sharedTreeTelemetry?: ITelemetryBaseEvent[];
 	}
 }
 
+/** Browser query parameters supplied by the headless trace runner. */
 const parameters = new URLSearchParams(location.search);
+/** Namespace owner for trace-only SharedTree schema identifiers. */
 const schemaFactory = new SchemaFactory("fluid.experimental.wasm-driver");
+/** SharedTree root used by the browser lifecycle trace. */
 class SharedState extends schemaFactory.object("SharedState", {
 	value: schemaFactory.number,
 }) {}
+/** SharedTree view configuration used by all trace containers. */
 const treeConfiguration = new TreeViewConfiguration({ schema: SharedState });
+/** Fluid container schema exposing the trace SharedTree as its initial object. */
 const containerSchema = {
 	initialObjects: { tree: SharedTree },
 } satisfies ContainerSchema;
+/** Fluid code identity shared by the trace containers. */
 const codeDetails = { package: "shared-tree-wasm-driver", config: {} };
+/** Recent Fluid telemetry retained for trace failure diagnostics. */
 const telemetry: ITelemetryBaseEvent[] = [];
+/** Generated clients whose transport metrics and lifetimes are reported by the trace. */
 const transports: BrowserClient[] = [];
+/** Explicit synchronization failures retained in final trace evidence. */
 const synchronizationErrors: string[] = [];
+/** Sequence numbers observed by each explicit synchronization point. */
 const synchronizedSequences: Record<string, number[]> = {};
+/** Operation envelopes observed by each explicit synchronization point. */
 const synchronizedEnvelopes: Record<string, Record<string, unknown>[]> = {};
+/** Minimal-driver connections whose lifecycle state is exercised by the trace. */
 const deltaConnections: MinimalWasmDeltaConnection[] = [];
+/** Container lifecycle snapshots retained for diagnostics. */
 const containerStates: Record<string, unknown> = {};
+/** Counts generated-client protocol methods exercised by the trace. */
 const protocolCounts = {
 	projectedReads: 0,
 	projectedSubscriptions: 0,
@@ -58,26 +77,31 @@ const protocolCounts = {
 	publishedSummaries: 0,
 	fetchedSummaries: 0,
 };
+/** Current trace phase exposed to timeout diagnostics. */
 let stage = "initializing";
 window.__sharedTreeTelemetry = telemetry;
 
+/** Records the current trace phase for browser failure diagnostics. */
 function setStage(value: string): void {
 	stage = value;
 	window.__sharedTreeStage = value;
 }
 
+/** Narrows a trace invariant or fails with a diagnostic message. */
 function assert(condition: unknown, message: string): asserts condition {
 	if (!condition) {
 		throw new Error(message);
 	}
 }
 
+/** Renders the final structured trace result into the browser harness. */
 function showResult(result: Record<string, unknown>): void {
 	const output = document.querySelector("#result");
 	assert(output !== null, "missing result element");
 	output.textContent = JSON.stringify(result);
 }
 
+/** Adapts a generated WebTransport client while recording protocol usage. */
 function adaptBrowserClient(client: BrowserClient): WasmProtocolClient {
 	return {
 		request: async (frame) => client.request(frame),
@@ -166,21 +190,26 @@ function adaptBrowserClient(client: BrowserClient): WasmProtocolClient {
 		},
 		disconnect: () => client.disconnect(),
 		reconnect: async () => client.reconnect(),
+		/** Total FSP4 bytes read and written during the trace. */
 		get wireBytes() {
 			return client.wireBytes;
 		},
+		/** Largest unary response read during the trace. */
 		get peakResponseBytes() {
 			return client.peakResponseBytes;
 		},
+		/** Largest projected-subscription frame read during the trace. */
 		get peakSubscriptionFrameBytes() {
 			return client.peakSubscriptionFrameBytes;
 		},
+		/** Largest projected-operation queue depth observed during the trace. */
 		get peakSubscriptionQueueDepth() {
 			return client.peakSubscriptionQueueDepth;
 		},
 	};
 }
 
+/** Polls a trace condition until it succeeds or the diagnostic timeout expires. */
 async function waitUntil(check: () => boolean, message: string): Promise<void> {
 	const deadline = performance.now() + 10_000;
 	while (!check()) {
@@ -191,6 +220,7 @@ async function waitUntil(check: () => boolean, message: string): Promise<void> {
 	}
 }
 
+/** Waits for a trace container to connect and reports its lifecycle on timeout. */
 async function waitForConnected(container: {
 	readonly connectionState: ConnectionState;
 	readonly attachState: string;
@@ -219,6 +249,7 @@ async function waitForConnected(container: {
 	});
 }
 
+/** Executes the browser lifecycle trace and returns its structured evidence. */
 async function run(): Promise<Record<string, unknown>> {
 	const transportUrl = parameters.get("transport");
 	const certificateHex = parameters.get("hash");

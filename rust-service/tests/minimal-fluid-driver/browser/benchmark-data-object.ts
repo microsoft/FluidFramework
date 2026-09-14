@@ -8,20 +8,30 @@ import type {
 } from "./shared-tree-benchmark-schema.js";
 import { sharedTreeOperationForValue } from "../src/capturedSharedTreeOperation.js";
 
+/** Data structure implementation selected for a benchmark run. */
 export type BenchmarkDataStructure = "dummy" | "shared-tree";
 
+/** Common observable and mutation surface used by every benchmark DDS. */
 export interface BenchmarkDataObject {
+	/** Number of operations applied since this adapter was created. */
 	readonly appliedOpCount: number;
+	/** Current scalar value exposed by the selected DDS. */
 	readonly value: number;
+	/** Submits an edit that replaces the scalar value. */
 	set(value: number): void;
+	/** Releases listeners and views owned by the adapter. */
 	dispose(): void;
 }
 
+/** Minimal SharedTree view surface needed by the benchmark adapter. */
 interface SharedTreeView {
+	/** Root object containing the benchmark's scalar state. */
 	readonly root: BenchmarkState;
+	/** Releases the underlying tree view. */
 	dispose(): void;
 }
 
+/** Parses and validates the DDS selector from the browser query string. */
 export function parseBenchmarkDataStructure(value: string | null): BenchmarkDataStructure {
 	if (value === null || value === "dummy") {
 		return "dummy";
@@ -32,6 +42,7 @@ export function parseBenchmarkDataStructure(value: string | null): BenchmarkData
 	throw new Error(`unsupported data structure ${JSON.stringify(value)}`);
 }
 
+/** Adapts the captured-payload SharedObject to the common benchmark surface. */
 export function adaptDummy(object: IBenchmarkSharedObject): BenchmarkDataObject {
 	let value = object.appliedOpCount;
 	const listener = (count: number): void => {
@@ -39,9 +50,11 @@ export function adaptDummy(object: IBenchmarkSharedObject): BenchmarkDataObject 
 	};
 	object.on("opApplied", listener);
 	return {
+		/** Number of operations applied by the wrapped benchmark SharedObject. */
 		get appliedOpCount() {
 			return object.appliedOpCount;
 		},
+		/** Latest count observed from the wrapped benchmark SharedObject. */
 		get value() {
 			return value;
 		},
@@ -50,13 +63,16 @@ export function adaptDummy(object: IBenchmarkSharedObject): BenchmarkDataObject 
 	};
 }
 
+/** Adapts a SharedTree scalar view to the common benchmark surface. */
 export function adaptSharedTree(view: SharedTreeView): BenchmarkDataObject {
 	let appliedOpCount = 0;
 	const unsubscribe = Tree.on(view.root, "nodeChanged", () => appliedOpCount++);
 	return {
+		/** Number of SharedTree changes observed by this adapter. */
 		get appliedOpCount() {
 			return appliedOpCount;
 		},
+		/** Current scalar stored at the benchmark tree root. */
 		get value() {
 			return view.root.value;
 		},
@@ -70,6 +86,7 @@ export function adaptSharedTree(view: SharedTreeView): BenchmarkDataObject {
 	};
 }
 
+/** Adapts and, when requested, initializes a container's benchmark object. */
 export function adaptInitialObject(
 	object: IBenchmarkSharedObject | ITree,
 	dataStructure: BenchmarkDataStructure,
