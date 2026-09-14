@@ -12,7 +12,11 @@ import type {
 
 export class TestDocumentManager implements IDocumentManager {
 	// eslint-disable-next-line @rushstack/no-new-null
-	public async readDocument(tenantId: string, documentId: string): Promise<IDocument | null> {
+	public async readDocument(
+		tenantId: string,
+		documentId: string,
+		options?: { accessToken?: string },
+	): Promise<IDocument | null> {
 		throw new NetworkError(501, "Not implemented", false, true);
 	}
 

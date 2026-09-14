@@ -61,6 +61,14 @@ export type CommonRouteParams = [
 
 export type SummaryOperation = "get" | "post" | "delete";
 export type SummaryRouteType = "latest" | "sha" | "notApplicable";
+type DocumentManagerWithReadOptions = IDocumentManager & {
+	// eslint-disable-next-line @rushstack/no-new-null
+	readDocument(
+		tenantId: string,
+		documentId: string,
+		options?: { accessToken?: string },
+	): Promise<IDocument | null>;
+};
 type SummaryOwnershipOutcome =
 	| "allowed"
 	| "notFound"
@@ -76,6 +84,7 @@ export interface IValidateSummaryDocumentArgs {
 	routeType: SummaryRouteType;
 	ephemeralDocumentTTLSec: number;
 	ignoreEphemeralFlag?: boolean;
+	reuseCustomerAccessToken?: boolean;
 }
 
 function getEphemeralContainerCacheKey(tenantId: string, documentId: string): string {
@@ -265,19 +274,26 @@ async function checkAndCacheIsEphemeral({
 const ownershipEventName = "HistorianSummaryDocumentOwnershipValidation";
 const documentUnavailableMessage = "Document is deleted and cannot be accessed.";
 
-function getTokenDocumentId(tenantId: string, authorization: string | undefined): string {
+function getTokenDocumentIdentity(
+	tenantId: string,
+	authorization: string | undefined,
+): { accessToken: string; documentId: string } {
 	if (!authorization) {
 		throw new NetworkError(403, "Authorization header is missing.");
 	}
-	const token = parseToken(tenantId, authorization);
-	if (!token) {
+	const accessToken = parseToken(tenantId, authorization);
+	if (!accessToken) {
 		throw new NetworkError(403, "Authorization token is missing.");
 	}
-	const documentId = (decode(token) as ITokenClaims).documentId;
+	const documentId = (decode(accessToken) as ITokenClaims).documentId;
 	if (containsPathTraversal(documentId)) {
 		throw new NetworkError(400, `Invalid document id: ${documentId}`);
 	}
-	return documentId;
+	return { accessToken, documentId };
+}
+
+function getTokenDocumentId(tenantId: string, authorization: string | undefined): string {
+	return getTokenDocumentIdentity(tenantId, authorization).documentId;
 }
 
 function logOwnershipOutcome(
@@ -354,12 +370,19 @@ export async function validateSummaryDocument({
 	routeType,
 	ephemeralDocumentTTLSec,
 	ignoreEphemeralFlag = false,
+	reuseCustomerAccessToken = false,
 }: IValidateSummaryDocumentArgs): Promise<IDocument> {
-	const documentId = getTokenDocumentId(tenantId, authorization);
+	const { accessToken, documentId } = getTokenDocumentIdentity(tenantId, authorization);
+	const documentManagerWithReadOptions: DocumentManagerWithReadOptions = documentManager;
 	let document: IDocument | null;
 	try {
 		document = await runWithRetry(
-			async () => documentManager.readDocument(tenantId, documentId),
+			async () =>
+				reuseCustomerAccessToken
+					? documentManagerWithReadOptions.readDocument(tenantId, documentId, {
+							accessToken,
+						})
+					: documentManager.readDocument(tenantId, documentId),
 			"utils.validateSummaryDocument.readDocument",
 			3,
 			1000,

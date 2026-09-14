@@ -21,13 +21,14 @@ import { TestCache, TestDocumentManager, TestTenantService } from "./utils";
 
 const tenantId = "tenant/a";
 const documentId = "shared:id";
+const accessToken = generateToken(tenantId, documentId, "tenant-key", [
+	ScopeType.DocRead,
+	ScopeType.DocWrite,
+	ScopeType.SummaryWrite,
+]);
 const authorization = getAuthorizationTokenFromCredentials({
 	user: tenantId,
-	password: generateToken(tenantId, documentId, "tenant-key", [
-		ScopeType.DocRead,
-		ScopeType.DocWrite,
-		ScopeType.SummaryWrite,
-	]),
+	password: accessToken,
 });
 const activeDocument: IDocument = {
 	version: "1.0",
@@ -69,6 +70,26 @@ describe("summary ownership", function () {
 		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
 	});
 
+	it("forwards the customer access token when reuse is enabled", async () => {
+		const documentManager = new TestDocumentManager();
+		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
+
+		const result = await validateSummaryDocument({
+			tenantId,
+			authorization,
+			documentManager,
+			operation: "get",
+			routeType: "latest",
+			ephemeralDocumentTTLSec: 24 * 60 * 60,
+			reuseCustomerAccessToken: true,
+		});
+
+		assert.strictEqual(result, activeDocument);
+		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId, {
+			accessToken,
+		});
+	});
+
 	for (const testCase of [
 		{ name: "missing", document: null, outcome: "notFound" },
 		{
@@ -92,7 +113,9 @@ describe("summary ownership", function () {
 	]) {
 		it(`returns the same 404 for ${testCase.name}`, async () => {
 			const documentManager = new TestDocumentManager();
-			sandbox.stub(documentManager, "readDocument").resolves(testCase.document);
+			const readDocument = sandbox
+				.stub(documentManager, "readDocument")
+				.resolves(testCase.document);
 			const info = sandbox.spy(Lumberjack, "info");
 
 			await assert.rejects(
@@ -103,12 +126,16 @@ describe("summary ownership", function () {
 					operation: "get",
 					routeType: "sha",
 					ephemeralDocumentTTLSec: 24 * 60 * 60,
+					reuseCustomerAccessToken: true,
 				}),
 				(error: unknown) =>
 					error instanceof NetworkError &&
 					error.code === 404 &&
 					error.message === "Document is deleted and cannot be accessed.",
 			);
+			sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId, {
+				accessToken,
+			});
 			sinon.assert.calledWithMatch(
 				info,
 				"HistorianSummaryDocumentOwnershipValidation",
@@ -140,6 +167,7 @@ describe("summary ownership", function () {
 				operation: "post",
 				routeType: "notApplicable",
 				ephemeralDocumentTTLSec: 1,
+				reuseCustomerAccessToken: true,
 			}),
 			(error: NetworkError) => error.code === 404,
 		);
@@ -235,12 +263,16 @@ describe("summary ownership", function () {
 					operation: "delete",
 					routeType: "notApplicable",
 					ephemeralDocumentTTLSec: 24 * 60 * 60,
+					reuseCustomerAccessToken: true,
 				}),
 				(error) => error === testCase.error,
 			);
 			await clock.runAllAsync();
 			await rejection;
 			sinon.assert.callCount(readDocument, testCase.expectedCallCount);
+			sinon.assert.alwaysCalledWithExactly(readDocument, tenantId, documentId, {
+				accessToken,
+			});
 			sinon.assert.calledWithMatch(
 				logError,
 				"HistorianSummaryDocumentOwnershipValidation",
@@ -270,6 +302,7 @@ describe("summary ownership", function () {
 				operation: "get",
 				routeType: "latest",
 				ephemeralDocumentTTLSec: 24 * 60 * 60,
+				reuseCustomerAccessToken: true,
 			}),
 			(error: unknown) =>
 				error instanceof NetworkError &&
@@ -278,7 +311,9 @@ describe("summary ownership", function () {
 		);
 		await clock.runAllAsync();
 		await rejection;
-		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
+		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId, {
+			accessToken,
+		});
 		sinon.assert.calledWithMatch(
 			info,
 			"HistorianSummaryDocumentOwnershipValidation",
@@ -306,6 +341,7 @@ describe("summary ownership", function () {
 				operation: "get",
 				routeType: "latest",
 				ephemeralDocumentTTLSec: 24 * 60 * 60,
+				reuseCustomerAccessToken: true,
 			}),
 			(error: unknown) =>
 				error instanceof NetworkError &&
@@ -323,6 +359,37 @@ describe("summary ownership", function () {
 			}),
 		);
 	});
+
+	for (const statusCode of [401, 403]) {
+		it(`does not retry or change credentials after an Alfred ${statusCode}`, async () => {
+			const dependencyError = new NetworkError(
+				statusCode,
+				"Alfred rejected customer token",
+				false,
+				true,
+			);
+			const documentManager = new TestDocumentManager();
+			const readDocument = sandbox
+				.stub(documentManager, "readDocument")
+				.rejects(dependencyError);
+
+			await assert.rejects(
+				validateSummaryDocument({
+					tenantId,
+					authorization,
+					documentManager,
+					operation: "get",
+					routeType: "latest",
+					ephemeralDocumentTTLSec: 24 * 60 * 60,
+					reuseCustomerAccessToken: true,
+				}),
+				(error) => error === dependencyError,
+			);
+			sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId, {
+				accessToken,
+			});
+		});
+	}
 
 	it("treats an ephemeral document as durable when the flag is ignored", async () => {
 		const cache = new TestCache();
