@@ -3,10 +3,7 @@
 #![doc = "Appends are visible to handles in this process and report memory durability;"]
 #![doc = "records and snapshots are lost when the last handle is dropped."]
 
-use std::sync::{
-    Arc,
-    atomic::{AtomicU64, Ordering},
-};
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use bytes::Bytes;
@@ -19,19 +16,15 @@ use snapshotted_stream_core::{
 use thiserror::Error;
 use tokio::sync::Mutex;
 
-static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
-
-/// An opaque one-based position scoped to one in-memory stream generation.
+/// An opaque one-based record ordinal within an in-memory stream.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MemoryPosition {
-    /// Identity of the stream instance that created the position.
-    generation: u64,
-    /// One-based record index within the generation.
+    /// One-based record index within the stream.
     ordinal: u64,
 }
 
 impl MemoryPosition {
-    /// Returns the one-based record index within this position's generation.
+    /// Returns the one-based record index within the stream.
     #[must_use]
     pub const fn ordinal(&self) -> u64 {
         self.ordinal
@@ -41,9 +34,6 @@ impl MemoryPosition {
 /// Failures produced by the in-memory stream and snapshot store.
 #[derive(Debug, Error)]
 pub enum MemoryError {
-    /// A position or token belongs to a different stream instance.
-    #[error("position belongs to another stream generation")]
-    ForeignPosition,
     /// A position does not identify a committed record.
     #[error("position is beyond the committed head")]
     InvalidPosition,
@@ -61,15 +51,13 @@ pub enum MemoryError {
 impl ClassifiedError for MemoryError {
     fn kind(&self) -> ErrorKind {
         match self {
-            Self::ForeignPosition | Self::InvalidPosition | Self::InvalidPositionToken => {
-                ErrorKind::InvalidPosition
-            }
+            Self::InvalidPosition | Self::InvalidPositionToken => ErrorKind::InvalidPosition,
             Self::SnapshotConflict | Self::SnapshotRegression => ErrorKind::Conflict,
         }
     }
 }
 
-/// Mutable state shared by cloned handles to one generation.
+/// Mutable state shared by cloned handles to one stream.
 #[derive(Debug)]
 struct State {
     /// Committed payloads in append order.
@@ -83,8 +71,6 @@ struct State {
 /// A cloneable, process-local implementation of append and snapshot contracts.
 #[derive(Clone, Debug)]
 pub struct MemoryStream {
-    /// Identity shared by handles cloned from this stream.
-    generation: u64,
     /// Append records and snapshot state shared by cloned handles.
     state: Arc<Mutex<State>>,
 }
@@ -96,11 +82,10 @@ impl Default for MemoryStream {
 }
 
 impl MemoryStream {
-    /// Creates an empty stream with a fresh generation identity.
+    /// Creates an empty stream.
     #[must_use]
     pub fn new() -> Self {
         Self {
-            generation: NEXT_GENERATION.fetch_add(1, Ordering::Relaxed),
             state: Arc::new(Mutex::new(State {
                 records: Vec::new(),
                 latest_snapshot: None,
@@ -109,28 +94,22 @@ impl MemoryStream {
         }
     }
 
-    /// Rejects foreign, zero, and beyond-head positions.
-    fn validate_position(&self, position: &MemoryPosition, len: usize) -> Result<(), MemoryError> {
-        if position.generation != self.generation {
-            return Err(MemoryError::ForeignPosition);
-        }
+    /// Rejects zero and beyond-head positions.
+    fn validate_position(position: &MemoryPosition, len: usize) -> Result<(), MemoryError> {
         if position.ordinal == 0 || position.ordinal > len as u64 {
             return Err(MemoryError::InvalidPosition);
         }
         Ok(())
     }
 
-    /// Resolves a one-based event ordinal in this stream generation.
+    /// Resolves a one-based event ordinal in this stream.
     ///
     /// # Errors
     ///
     /// Returns [`MemoryError::InvalidPosition`] when the ordinal is not committed.
     pub async fn position_at(&self, ordinal: u64) -> Result<MemoryPosition, MemoryError> {
-        let position = MemoryPosition {
-            generation: self.generation,
-            ordinal,
-        };
-        self.validate_position(&position, self.state.lock().await.records.len())?;
+        let position = MemoryPosition { ordinal };
+        Self::validate_position(&position, self.state.lock().await.records.len())?;
         Ok(position)
     }
 }
@@ -148,7 +127,6 @@ impl AppendStream for MemoryStream {
         let mut state = self.state.lock().await;
         state.records.push(value);
         let position = MemoryPosition {
-            generation: self.generation,
             ordinal: state.records.len() as u64,
         };
         Ok(AppendReceipt {
@@ -164,7 +142,7 @@ impl AppendStream for MemoryStream {
         let state = self.state.lock().await;
         let start = match after {
             Some(position) => {
-                self.validate_position(position, state.records.len())?;
+                Self::validate_position(position, state.records.len())?;
                 usize::try_from(position.ordinal).map_err(|_| MemoryError::InvalidPosition)?
             }
             None => 0,
@@ -172,7 +150,6 @@ impl AppendStream for MemoryStream {
         let end = state.records.len();
         drop(state);
 
-        let generation = self.generation;
         let shared = Arc::clone(&self.state);
         Ok(Box::pin(stream::unfold(start, move |index| {
             let shared = Arc::clone(&shared);
@@ -183,7 +160,6 @@ impl AppendStream for MemoryStream {
                 let payload = shared.lock().await.records[index].clone();
                 let record = ReadRecord {
                     position: MemoryPosition {
-                        generation,
                         ordinal: index as u64 + 1,
                     },
                     payload,
@@ -196,7 +172,6 @@ impl AppendStream for MemoryStream {
     async fn head(&self) -> Result<Option<Self::Position>, Self::Error> {
         let len = self.state.lock().await.records.len();
         Ok((len > 0).then_some(MemoryPosition {
-            generation: self.generation,
             ordinal: len as u64,
         }))
     }
@@ -204,39 +179,18 @@ impl AppendStream for MemoryStream {
 
 impl PositionCodec for MemoryStream {
     fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error> {
-        if position.generation != self.generation {
-            return Err(MemoryError::ForeignPosition);
-        }
-        let mut token = [0_u8; 16];
-        token[..8].copy_from_slice(&position.generation.to_be_bytes());
-        token[8..].copy_from_slice(&position.ordinal.to_be_bytes());
-        Ok(Bytes::copy_from_slice(&token))
+        Ok(Bytes::copy_from_slice(&position.ordinal.to_be_bytes()))
     }
 
     fn decode_position(&self, token: &[u8]) -> Result<Self::Position, Self::Error> {
-        let token: [u8; 16] = token
+        let token: [u8; 8] = token
             .try_into()
             .map_err(|_| MemoryError::InvalidPositionToken)?;
-        let generation = u64::from_be_bytes(
-            token[..8]
-                .try_into()
-                .map_err(|_| MemoryError::InvalidPositionToken)?,
-        );
-        if generation != self.generation {
-            return Err(MemoryError::ForeignPosition);
-        }
-        let ordinal = u64::from_be_bytes(
-            token[8..]
-                .try_into()
-                .map_err(|_| MemoryError::InvalidPositionToken)?,
-        );
+        let ordinal = u64::from_be_bytes(token);
         if ordinal == 0 {
             return Err(MemoryError::InvalidPositionToken);
         }
-        Ok(MemoryPosition {
-            generation,
-            ordinal,
-        })
+        Ok(MemoryPosition { ordinal })
     }
 }
 
@@ -260,7 +214,7 @@ impl SnapshotStore for MemoryStream {
             return Err(MemoryError::SnapshotConflict);
         }
         if let SnapshotPosition::At(position) = &snapshot.includes_through {
-            self.validate_position(position, state.records.len())?;
+            Self::validate_position(position, state.records.len())?;
         }
         if let Some(previous) = &state.latest_snapshot {
             let previous_ordinal = match &previous.snapshot.includes_through {
@@ -290,7 +244,7 @@ impl SnapshotStore for MemoryStream {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::atomic::AtomicBool;
+    use std::sync::atomic::{AtomicBool, Ordering};
 
     use futures_util::{StreamExt, TryStreamExt};
     use snapshotted_stream_core::{
@@ -553,6 +507,7 @@ mod tests {
         let stream = MemoryStream::new();
         let receipt = stream.append(Bytes::from_static(b"value")).await.unwrap();
         let token = stream.encode_position(&receipt.position).unwrap();
+        assert_eq!(token.len(), 8);
         assert_eq!(stream.decode_position(&token).unwrap(), receipt.position);
         assert_eq!(
             stream.decode_position(b"short").unwrap_err().kind(),
@@ -560,14 +515,8 @@ mod tests {
         );
 
         let other = MemoryStream::new();
-        assert_eq!(
-            other.decode_position(&token).unwrap_err().kind(),
-            ErrorKind::InvalidPosition
-        );
-        assert_eq!(
-            other.encode_position(&receipt.position).unwrap_err().kind(),
-            ErrorKind::InvalidPosition
-        );
+        assert_eq!(other.decode_position(&token).unwrap(), receipt.position);
+        assert_eq!(other.encode_position(&receipt.position).unwrap(), token);
     }
 
     #[tokio::test]
@@ -608,15 +557,22 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn rejects_positions_from_another_generation() {
+    async fn accepts_positions_from_another_stream_when_ordinal_exists() {
         let first = MemoryStream::new();
         let second = MemoryStream::new();
         let receipt = first.append(Bytes::from_static(b"value")).await.unwrap();
+        second.append(Bytes::from_static(b"other")).await.unwrap();
+        second.append(Bytes::from_static(b"next")).await.unwrap();
 
-        let Err(error) = second.read(Some(&receipt.position)).await else {
-            panic!("foreign position was accepted");
-        };
-        assert_eq!(error.kind(), ErrorKind::InvalidPosition);
+        let records = second
+            .read(Some(&receipt.position))
+            .await
+            .unwrap()
+            .try_collect::<Vec<_>>()
+            .await
+            .unwrap();
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].payload, Bytes::from_static(b"next"));
     }
 
     #[tokio::test]

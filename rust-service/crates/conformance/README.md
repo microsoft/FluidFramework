@@ -4,9 +4,9 @@
 
 ## Coverage
 
-`run_conformance` checks append ordering and boundaries, contiguous concurrent commits, finite independent readers, generation-scoped positions, snapshot lineage and monotonicity, snapshot recovery, and a deterministic reference-model trace. `run_position_codec_conformance` additionally checks token round trips plus malformed and foreign-generation rejection.
+`run_conformance` checks append ordering and boundaries, contiguous concurrent commits, finite independent readers, committed position ranges, snapshot lineage and monotonicity, snapshot recovery, and a deterministic reference-model trace. `run_position_codec_conformance` additionally checks token round trips and malformed-token rejection.
 
-Factories must return a fresh, empty generation for each call. The suite panics on a contract violation and is intended to be invoked from an implementation's async tests.
+Factories must return a fresh, empty stream for each call. The suite panics on a contract violation and is intended to be invoked from an implementation's async tests.
 
 ## Relationships and Limits
 

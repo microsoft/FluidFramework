@@ -9,11 +9,7 @@ use std::{
     fs::{self, File, OpenOptions},
     io::{Read, Write},
     path::{Path, PathBuf},
-    sync::{
-        Arc, Mutex, MutexGuard,
-        atomic::{AtomicU64, Ordering},
-    },
-    time::{SystemTime, UNIX_EPOCH},
+    sync::{Arc, Mutex, MutexGuard},
 };
 
 use async_trait::async_trait;
@@ -30,9 +26,9 @@ use thiserror::Error;
 use std::time::{Duration, Instant};
 
 /// Versioned log-file marker.
-const MAGIC: [u8; 8] = *b"SDLOG002";
-/// Bytes occupied by the log marker and generation.
-const HEADER_LEN: usize = 24;
+const MAGIC: [u8; 8] = *b"SDLOG003";
+/// Bytes occupied by the log marker.
+const HEADER_LEN: usize = 8;
 /// Marker opening a record frame.
 const FRAME_MAGIC: [u8; 4] = *b"RECD";
 /// Marker closing a record frame.
@@ -50,15 +46,13 @@ const SNAPSHOT_FILE: &str = "snapshot.current";
 /// Pending snapshot filename used before atomic publication.
 const SNAPSHOT_TEMP_FILE: &str = "snapshot.pending";
 /// Versioned snapshot-file marker.
-const SNAPSHOT_MAGIC: [u8; 8] = *b"SDSNP001";
+const SNAPSHOT_MAGIC: [u8; 8] = *b"SDSNP002";
 /// Marker closing a snapshot record.
 const SNAPSHOT_TRAILER_MAGIC: [u8; 4] = *b"ENDS";
 /// Encoded bytes in a snapshot identifier.
-const SNAPSHOT_ID_LEN: usize = 36;
+const SNAPSHOT_ID_LEN: usize = 20;
 /// Bytes preceding the payload in a snapshot record.
-const SNAPSHOT_HEADER_LEN: usize = 93;
-/// Monotonic process-local contribution to new generation identifiers.
-static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
+const SNAPSHOT_HEADER_LEN: usize = 61;
 
 /// Deterministic boundaries at which a configured operation simulates a crash.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -218,17 +212,15 @@ fn write_marker(path: &Path, value: &str) -> std::io::Result<()> {
     fs::rename(pending, path)
 }
 
-/// An opaque ordinal tied to one persisted log generation.
+/// An opaque one-based record ordinal within a durable log.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct DurablePosition {
-    /// Persisted log generation that owns the position.
-    generation: u128,
-    /// One-based record index within the generation.
+    /// One-based record index within the log.
     ordinal: u64,
 }
 
 impl DurablePosition {
-    /// Returns the one-based record ordinal within this log generation.
+    /// Returns the one-based record ordinal within the log.
     #[must_use]
     pub const fn ordinal(&self) -> u64 {
         self.ordinal
@@ -250,9 +242,6 @@ pub enum DurableLogError {
     /// Persisted framing or checksums violate the supported format.
     #[error("stored log is corrupt: {0}")]
     Corrupt(&'static str),
-    /// A supplied position belongs to another log generation.
-    #[error("position belongs to another log generation")]
-    ForeignPosition,
     /// A supplied position is zero or beyond the committed head.
     #[error("position is beyond the committed head")]
     InvalidPosition,
@@ -272,7 +261,7 @@ impl ClassifiedError for DurableLogError {
         match self {
             Self::AmbiguousAppend(_) | Self::AmbiguousSnapshot(_) => ErrorKind::Ambiguous,
             Self::Corrupt(_) => ErrorKind::Corrupt,
-            Self::ForeignPosition | Self::InvalidPosition => ErrorKind::InvalidPosition,
+            Self::InvalidPosition => ErrorKind::InvalidPosition,
             Self::SnapshotConflict | Self::SnapshotRegression => ErrorKind::Conflict,
             Self::Io(_) | Self::Poisoned => ErrorKind::Unavailable,
         }
@@ -284,7 +273,7 @@ impl ClassifiedError for DurableLogError {
 struct State {
     /// Recovered and newly acknowledged payloads in append order.
     records: Vec<Bytes>,
-    /// Append-only handle for the current log generation.
+    /// Append-only handle for the current log.
     writer: File,
     /// Most recently published and recovered snapshot.
     latest_snapshot: Option<PublishedSnapshot<DurablePosition>>,
@@ -295,8 +284,6 @@ struct State {
 /// A single-process append log that syncs record data before returning success.
 #[derive(Clone, Debug)]
 pub struct DurableLog {
-    /// Generation persisted in the log header.
-    generation: u128,
     /// Directory containing log and snapshot files.
     directory: PathBuf,
     /// Path of the append-log file.
@@ -330,12 +317,12 @@ impl DurableLog {
         fs::create_dir_all(directory.as_ref())?;
         let path = directory.as_ref().join(LOG_FILE);
         if !path.exists() {
-            initialize(&path, new_generation()?)?;
+            initialize(&path)?;
         }
 
         let bytes = read_all(&path)?;
         crashes.hit(CrashPoint::OpenAfterLogRead)?;
-        let (generation, records, valid_length) = parse_log(&bytes)?;
+        let (records, valid_length) = parse_log(&bytes)?;
         let writer = OpenOptions::new().read(true).append(true).open(&path)?;
         if writer.metadata()?.len() != valid_length {
             writer.set_len(valid_length)?;
@@ -345,14 +332,13 @@ impl DurableLog {
         let latest_snapshot = if snapshot_path.exists() {
             let snapshot_bytes = read_all(&snapshot_path)?;
             crashes.hit(CrashPoint::OpenAfterSnapshotRead)?;
-            Some(parse_snapshot(&snapshot_bytes, generation, records.len())?)
+            Some(parse_snapshot(&snapshot_bytes, records.len())?)
         } else {
             crashes.hit(CrashPoint::OpenAfterSnapshotRead)?;
             None
         };
 
         Ok(Self {
-            generation,
             directory: directory.as_ref().to_owned(),
             path,
             state: Arc::new(Mutex::new(State {
@@ -375,15 +361,11 @@ impl DurableLog {
         self.state.lock().map_err(|_| DurableLogError::Poisoned)
     }
 
-    /// Ensures a position belongs to this generation and committed range.
+    /// Ensures a position belongs to the committed range.
     fn validate_position(
-        &self,
         position: &DurablePosition,
         record_count: usize,
     ) -> Result<(), DurableLogError> {
-        if position.generation != self.generation {
-            return Err(DurableLogError::ForeignPosition);
-        }
         let record_count =
             u64::try_from(record_count).map_err(|_| DurableLogError::InvalidPosition)?;
         if position.ordinal == 0 || position.ordinal > record_count {
@@ -392,17 +374,14 @@ impl DurableLog {
         Ok(())
     }
 
-    /// Resolves a one-based event ordinal in this log generation.
+    /// Resolves a one-based event ordinal in this log.
     ///
     /// # Errors
     ///
     /// Returns [`DurableLogError::InvalidPosition`] when the ordinal is not committed.
     pub fn position_at(&self, ordinal: u64) -> Result<DurablePosition, DurableLogError> {
-        let position = DurablePosition {
-            generation: self.generation,
-            ordinal,
-        };
-        self.validate_position(&position, self.state()?.records.len())?;
+        let position = DurablePosition { ordinal };
+        Self::validate_position(&position, self.state()?.records.len())?;
         Ok(position)
     }
 }
@@ -435,10 +414,7 @@ impl AppendStream for DurableLog {
         let ordinal = u64::try_from(state.records.len())
             .map_err(|_| DurableLogError::Corrupt("record count exceeds position range"))?;
         Ok(AppendReceipt {
-            position: DurablePosition {
-                generation: self.generation,
-                ordinal,
-            },
+            position: DurablePosition { ordinal },
             durability: Durability::Durable,
         })
     }
@@ -450,7 +426,7 @@ impl AppendStream for DurableLog {
         let state = self.state()?;
         let start = match after {
             Some(position) => {
-                self.validate_position(position, state.records.len())?;
+                Self::validate_position(position, state.records.len())?;
                 usize::try_from(position.ordinal).map_err(|_| DurableLogError::InvalidPosition)?
             }
             None => 0,
@@ -458,7 +434,6 @@ impl AppendStream for DurableLog {
         let end = state.records.len();
         drop(state);
 
-        let generation = self.generation;
         let shared = Arc::clone(&self.state);
         Ok(Box::pin(stream::unfold(start, move |index| {
             let shared = Arc::clone(&shared);
@@ -474,10 +449,7 @@ impl AppendStream for DurableLog {
                             DurableLogError::Corrupt("record count exceeds position range")
                         })?;
                         Ok(ReadRecord {
-                            position: DurablePosition {
-                                generation,
-                                ordinal,
-                            },
+                            position: DurablePosition { ordinal },
                             payload: state.records[index].clone(),
                         })
                     });
@@ -490,10 +462,7 @@ impl AppendStream for DurableLog {
         let record_count = self.state()?.records.len();
         let ordinal = u64::try_from(record_count)
             .map_err(|_| DurableLogError::Corrupt("record count exceeds position range"))?;
-        Ok((ordinal > 0).then_some(DurablePosition {
-            generation: self.generation,
-            ordinal,
-        }))
+        Ok((ordinal > 0).then_some(DurablePosition { ordinal }))
     }
 }
 
@@ -515,7 +484,7 @@ impl SnapshotStore for DurableLog {
         let ordinal = match &snapshot.includes_through {
             SnapshotPosition::Initial => 0,
             SnapshotPosition::At(position) => {
-                self.validate_position(position, state.records.len())?;
+                Self::validate_position(position, state.records.len())?;
                 position.ordinal
             }
         };
@@ -535,8 +504,8 @@ impl SnapshotStore for DurableLog {
             return Err(DurableLogError::SnapshotRegression);
         }
 
-        let id = snapshot_id(self.generation, ordinal, &snapshot.payload)?;
-        let encoded = encode_snapshot(self.generation, ordinal, actual_parent, &snapshot.payload)?;
+        let id = snapshot_id(ordinal, &snapshot.payload)?;
+        let encoded = encode_snapshot(ordinal, actual_parent, &snapshot.payload)?;
         let pending_path = self.directory.join(SNAPSHOT_TEMP_FILE);
         let current_path = self.directory.join(SNAPSHOT_FILE);
         let mut pending = File::create(&pending_path)?;
@@ -582,15 +551,10 @@ fn snapshot_ordinal(snapshot: &Snapshot<DurablePosition>) -> u64 {
 }
 
 /// Derives the stable snapshot identifier from lineage and payload evidence.
-fn snapshot_id(
-    generation: u128,
-    ordinal: u64,
-    payload: &[u8],
-) -> Result<SnapshotId, DurableLogError> {
+fn snapshot_id(ordinal: u64, payload: &[u8]) -> Result<SnapshotId, DurableLogError> {
     let length = u64::try_from(payload.len())
         .map_err(|_| DurableLogError::Corrupt("snapshot payload exceeds length range"))?;
     let mut bytes = Vec::with_capacity(SNAPSHOT_ID_LEN);
-    bytes.extend_from_slice(&generation.to_be_bytes());
     bytes.extend_from_slice(&ordinal.to_be_bytes());
     bytes.extend_from_slice(&length.to_be_bytes());
     bytes.extend_from_slice(&crc32fast::hash(payload).to_be_bytes());
@@ -599,7 +563,6 @@ fn snapshot_id(
 
 /// Encodes a complete checksummed snapshot record with duplicated framing evidence.
 fn encode_snapshot(
-    generation: u128,
     ordinal: u64,
     parent: Option<&SnapshotId>,
     payload: &[u8],
@@ -615,7 +578,7 @@ fn encode_snapshot(
         Some(_) => return Err(DurableLogError::Corrupt("invalid snapshot parent id")),
         None => 0,
     };
-    let checksum = snapshot_checksum(generation, ordinal, parent_present, &parent_bytes, payload);
+    let checksum = snapshot_checksum(ordinal, parent_present, &parent_bytes, payload);
     let mut bytes = Vec::with_capacity(
         SNAPSHOT_HEADER_LEN
             .checked_add(payload.len())
@@ -623,7 +586,6 @@ fn encode_snapshot(
             .ok_or(DurableLogError::Corrupt("snapshot length overflow"))?,
     );
     bytes.extend_from_slice(&SNAPSHOT_MAGIC);
-    bytes.extend_from_slice(&generation.to_be_bytes());
     bytes.extend_from_slice(&ordinal.to_be_bytes());
     bytes.push(parent_present);
     bytes.extend_from_slice(&parent_bytes);
@@ -638,14 +600,12 @@ fn encode_snapshot(
 
 /// Checksums snapshot lineage and payload fields in persisted order.
 fn snapshot_checksum(
-    generation: u128,
     ordinal: u64,
     parent_present: u8,
     parent: &[u8; SNAPSHOT_ID_LEN],
     payload: &[u8],
 ) -> u32 {
     let mut checksum = crc32fast::Hasher::new();
-    checksum.update(&generation.to_be_bytes());
     checksum.update(&ordinal.to_be_bytes());
     checksum.update(&[parent_present]);
     checksum.update(parent);
@@ -656,7 +616,6 @@ fn snapshot_checksum(
 /// Parses and validates one complete snapshot record against the recovered log.
 fn parse_snapshot(
     bytes: &[u8],
-    expected_generation: u128,
     record_count: usize,
 ) -> Result<PublishedSnapshot<DurablePosition>, DurableLogError> {
     if bytes.len() < SNAPSHOT_HEADER_LEN + FRAME_TRAILER_LEN {
@@ -665,40 +624,32 @@ fn parse_snapshot(
     if bytes[..8] != SNAPSHOT_MAGIC {
         return Err(DurableLogError::Corrupt("invalid snapshot header"));
     }
-    let generation = u128::from_be_bytes(
-        bytes[8..24]
-            .try_into()
-            .map_err(|_| DurableLogError::Corrupt("invalid snapshot generation"))?,
-    );
-    if generation != expected_generation {
-        return Err(DurableLogError::Corrupt("snapshot generation mismatch"));
-    }
     let ordinal = u64::from_be_bytes(
-        bytes[24..32]
+        bytes[8..16]
             .try_into()
             .map_err(|_| DurableLogError::Corrupt("invalid snapshot ordinal"))?,
     );
-    let parent_present = bytes[32];
-    if parent_present > 1 || (parent_present == 0 && bytes[33..69] != [0_u8; SNAPSHOT_ID_LEN]) {
+    let parent_present = bytes[16];
+    if parent_present > 1 || (parent_present == 0 && bytes[17..37] != [0_u8; SNAPSHOT_ID_LEN]) {
         return Err(DurableLogError::Corrupt("invalid snapshot parent framing"));
     }
     let length = u64::from_be_bytes(
-        bytes[69..77]
+        bytes[37..45]
             .try_into()
             .map_err(|_| DurableLogError::Corrupt("invalid snapshot length"))?,
     );
     let inverse_length = u64::from_be_bytes(
-        bytes[77..85]
+        bytes[45..53]
             .try_into()
             .map_err(|_| DurableLogError::Corrupt("invalid inverse snapshot length"))?,
     );
     let checksum = u32::from_be_bytes(
-        bytes[85..89]
+        bytes[53..57]
             .try_into()
             .map_err(|_| DurableLogError::Corrupt("invalid snapshot checksum"))?,
     );
     let inverse_checksum = u32::from_be_bytes(
-        bytes[89..93]
+        bytes[57..61]
             .try_into()
             .map_err(|_| DurableLogError::Corrupt("invalid inverse snapshot checksum"))?,
     );
@@ -723,10 +674,10 @@ fn parse_snapshot(
         return Err(DurableLogError::Corrupt("snapshot framing mismatch"));
     }
     let payload = &bytes[SNAPSHOT_HEADER_LEN..trailer_start];
-    let parent = bytes[33..69]
+    let parent = bytes[17..37]
         .try_into()
         .map_err(|_| DurableLogError::Corrupt("invalid snapshot parent"))?;
-    if snapshot_checksum(generation, ordinal, parent_present, parent, payload) != checksum {
+    if snapshot_checksum(ordinal, parent_present, parent, payload) != checksum {
         return Err(DurableLogError::Corrupt("snapshot checksum mismatch"));
     }
     let record_count = u64::try_from(record_count)
@@ -739,13 +690,10 @@ fn parse_snapshot(
     let includes_through = if ordinal == 0 {
         SnapshotPosition::Initial
     } else {
-        SnapshotPosition::At(DurablePosition {
-            generation,
-            ordinal,
-        })
+        SnapshotPosition::At(DurablePosition { ordinal })
     };
     Ok(PublishedSnapshot {
-        id: snapshot_id(generation, ordinal, payload)?,
+        id: snapshot_id(ordinal, payload)?,
         snapshot: Snapshot {
             includes_through,
             payload: Bytes::copy_from_slice(payload),
@@ -753,24 +701,12 @@ fn parse_snapshot(
     })
 }
 
-/// Creates and syncs a new log header for one generation.
-fn initialize(path: &Path, generation: u128) -> Result<(), DurableLogError> {
+/// Creates and syncs a new log header.
+fn initialize(path: &Path) -> Result<(), DurableLogError> {
     let mut file = File::create(path)?;
     file.write_all(&MAGIC)?;
-    file.write_all(&generation.to_be_bytes())?;
     file.sync_data()?;
     Ok(())
-}
-
-/// Produces a process-local generation value from time, process, and sequence data.
-fn new_generation() -> Result<u128, DurableLogError> {
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_err(|_| DurableLogError::Corrupt("system clock is before the Unix epoch"))?
-        .as_nanos();
-    let process = u128::from(std::process::id()) << 64;
-    let sequence = u128::from(NEXT_GENERATION.fetch_add(1, Ordering::Relaxed));
-    Ok(timestamp ^ process ^ sequence)
 }
 
 /// Reads a complete owned persistence file for recovery validation.
@@ -781,24 +717,19 @@ fn read_all(path: &Path) -> Result<Vec<u8>, DurableLogError> {
 }
 
 /// Recovers complete records and returns the byte length safe to retain.
-fn parse_log(bytes: &[u8]) -> Result<(u128, Vec<Bytes>, u64), DurableLogError> {
+fn parse_log(bytes: &[u8]) -> Result<(Vec<Bytes>, u64), DurableLogError> {
     if bytes.len() < HEADER_LEN {
         return Err(DurableLogError::Corrupt("incomplete log header"));
     }
     if bytes[..8] != MAGIC {
         return Err(DurableLogError::Corrupt("invalid log header"));
     }
-    let generation = u128::from_be_bytes(
-        bytes[8..HEADER_LEN]
-            .try_into()
-            .map_err(|_| DurableLogError::Corrupt("invalid generation"))?,
-    );
     let mut cursor = HEADER_LEN;
     let mut records = Vec::new();
     while cursor < bytes.len() {
         let record_start = cursor;
         let Some(frame_header) = bytes.get(cursor..cursor.saturating_add(FRAME_HEADER_LEN)) else {
-            return Ok((generation, records, record_start as u64));
+            return Ok((records, record_start as u64));
         };
         let (length, checksum) = parse_frame_fields(frame_header, FRAME_MAGIC)?;
         let length = usize::try_from(length)
@@ -807,7 +738,7 @@ fn parse_log(bytes: &[u8]) -> Result<(u128, Vec<Bytes>, u64), DurableLogError> {
             .checked_add(FRAME_HEADER_LEN)
             .ok_or(DurableLogError::Corrupt("record length overflow"))?;
         let Some(payload) = bytes.get(cursor..cursor.saturating_add(length)) else {
-            return Ok((generation, records, record_start as u64));
+            return Ok((records, record_start as u64));
         };
         let trailer_start = cursor
             .checked_add(length)
@@ -815,7 +746,7 @@ fn parse_log(bytes: &[u8]) -> Result<(u128, Vec<Bytes>, u64), DurableLogError> {
         let Some(frame_trailer) =
             bytes.get(trailer_start..trailer_start.saturating_add(FRAME_TRAILER_LEN))
         else {
-            return Ok((generation, records, record_start as u64));
+            return Ok((records, record_start as u64));
         };
         let trailer_fields = parse_frame_fields(frame_trailer, FRAME_TRAILER_MAGIC)?;
         if trailer_fields != (length as u64, checksum) {
@@ -831,7 +762,7 @@ fn parse_log(bytes: &[u8]) -> Result<(u128, Vec<Bytes>, u64), DurableLogError> {
     }
     let valid_length = u64::try_from(cursor)
         .map_err(|_| DurableLogError::Corrupt("log length exceeds file range"))?;
-    Ok((generation, records, valid_length))
+    Ok((records, valid_length))
 }
 
 /// Validates duplicated frame metadata and returns payload length and checksum.
@@ -1204,7 +1135,7 @@ mod tests {
                         SnapshotPosition::Initial => panic!("attempted snapshot lost its position"),
                     };
                     (
-                        snapshot_id(reopened.generation, position.ordinal, b"attempted").unwrap(),
+                        snapshot_id(position.ordinal, b"attempted").unwrap(),
                         position,
                         vec![Bytes::from_static(b"third")],
                     )
