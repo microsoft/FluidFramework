@@ -50,15 +50,46 @@ interface ITsBuildInfo {
 
 /**
  * A JSON object as parsed from a tsbuildinfo file.
- *
- * @remarks
- * Values are left `unknown` so that the truthiness checks in {@link normalizeTsBuildInfo} remain the
- * only validation performed, matching what tsc itself writes.
  */
 type RawJsonObject = Record<string, unknown>;
 
 function isRawJsonObject(value: unknown): value is RawJsonObject {
-	return typeof value === "object" && value !== null;
+	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isFileInfo(
+	value: unknown,
+): value is string | { version: string; affectsGlobalScope?: true; impliedFormat?: number } {
+	if (typeof value === "string") {
+		return true;
+	}
+	return isRawJsonObject(value) && typeof value["version"] === "string";
+}
+
+function isOptionalArray(value: unknown): value is unknown[] | undefined {
+	return value === undefined || Array.isArray(value);
+}
+
+function isNumberArray(value: unknown): value is number[] {
+	return Array.isArray(value) && value.every((item) => typeof item === "number");
+}
+
+function isBuildInfoProgram(value: unknown): value is ITsBuildInfo["program"] {
+	if (!isRawJsonObject(value)) {
+		return false;
+	}
+
+	return (
+		Array.isArray(value["fileNames"]) &&
+		value["fileNames"].every((item) => typeof item === "string") &&
+		Array.isArray(value["fileInfos"]) &&
+		value["fileInfos"].every(isFileInfo) &&
+		isRawJsonObject(value["options"]) &&
+		isOptionalArray(value["affectedFilesPendingEmit"]) &&
+		isOptionalArray(value["emitDiagnosticsPerFile"]) &&
+		isOptionalArray(value["semanticDiagnosticsPerFile"]) &&
+		(value["changeFileSet"] === undefined || isNumberArray(value["changeFileSet"]))
+	);
 }
 
 /**
@@ -74,30 +105,22 @@ export function normalizeTsBuildInfo(raw: unknown): ITsBuildInfo | undefined {
 	}
 	// TS5 format: { program: { fileNames, fileInfos, options, ... }, version }
 	const program = raw["program"];
-	if (
-		isRawJsonObject(program) &&
-		program["fileNames"] &&
-		program["fileInfos"] &&
-		program["options"]
-	) {
-		// The individual field types are not validated: the file is written by tsc.
-		return raw as unknown as ITsBuildInfo;
+	if (isBuildInfoProgram(program) && typeof raw["version"] === "string") {
+		return { program, version: raw["version"] };
 	}
 	// TS6 format: { fileNames, fileInfos, options, ..., version }
-	if (raw["fileNames"] && raw["fileInfos"] && raw["options"]) {
-		// The individual field types are not validated: the file is written by tsc.
-		const flat = raw as unknown as ITsBuildInfo["program"] & Pick<ITsBuildInfo, "version">;
+	if (isBuildInfoProgram(raw) && typeof raw["version"] === "string") {
 		return {
 			program: {
-				fileNames: flat.fileNames,
-				fileInfos: flat.fileInfos,
-				options: flat.options,
-				affectedFilesPendingEmit: flat.affectedFilesPendingEmit,
-				emitDiagnosticsPerFile: flat.emitDiagnosticsPerFile,
-				semanticDiagnosticsPerFile: flat.semanticDiagnosticsPerFile,
-				changeFileSet: flat.changeFileSet,
+				fileNames: raw.fileNames,
+				fileInfos: raw.fileInfos,
+				options: raw.options,
+				affectedFilesPendingEmit: raw.affectedFilesPendingEmit,
+				emitDiagnosticsPerFile: raw.emitDiagnosticsPerFile,
+				semanticDiagnosticsPerFile: raw.semanticDiagnosticsPerFile,
+				changeFileSet: raw.changeFileSet,
 			},
-			version: flat.version,
+			version: raw["version"],
 		};
 	}
 	return undefined;

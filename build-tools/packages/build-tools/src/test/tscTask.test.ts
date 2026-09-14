@@ -133,6 +133,40 @@ describe("normalizeTsBuildInfo", () => {
 		assert.equal(normalizeTsBuildInfo(invalid), undefined);
 	});
 
+	it("returns undefined for malformed required fields", () => {
+		const malformedPrograms = [
+			{ fileNames: "not an array", fileInfos: ["abc123"], options: {} },
+			{ fileNames: ["./src/index.ts"], fileInfos: "not an array", options: {} },
+			{ fileNames: ["./src/index.ts"], fileInfos: [42], options: {} },
+			{ fileNames: ["./src/index.ts"], fileInfos: ["abc123"], options: "not an object" },
+		];
+
+		for (const program of malformedPrograms) {
+			assert.equal(normalizeTsBuildInfo({ ...program, version: "6.0.3" }), undefined);
+			assert.equal(normalizeTsBuildInfo({ program, version: "5.4.5" }), undefined);
+		}
+	});
+
+	it("returns undefined for malformed optional array fields", () => {
+		const optionalFields = [
+			"affectedFilesPendingEmit",
+			"emitDiagnosticsPerFile",
+			"semanticDiagnosticsPerFile",
+			"changeFileSet",
+		] as const;
+
+		for (const field of optionalFields) {
+			const malformed = {
+				fileNames: ["./src/index.ts"],
+				fileInfos: ["abc123"],
+				options: {},
+				[field]: "not an array",
+				version: "6.0.3",
+			};
+			assert.equal(normalizeTsBuildInfo(malformed), undefined);
+		}
+	});
+
 	it("handles TS6 format with semanticDiagnosticsPerFile errors", () => {
 		const ts6WithErrors = {
 			fileNames: ["./src/index.ts"],

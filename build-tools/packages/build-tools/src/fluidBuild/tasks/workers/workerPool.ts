@@ -20,14 +20,8 @@ export interface WorkerExecResultWithOutput extends WorkerExecResult {
 	stderr: string;
 }
 
-/**
- * The listener signature accepted by {@link EventEmitter.on} / {@link EventEmitter.off}.
- *
- * @remarks
- * Derived from the Node typings rather than written out so that arbitrary handlers remain
- * assignable without introducing an explicit `any`.
- */
-type EventListener = Parameters<EventEmitter["on"]>[1];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Matches Node's EventEmitter listener type.
+type EventListener = (...args: any[]) => void;
 
 export class WorkerPool {
 	private readonly threadWorkerPool: Worker[] = [];

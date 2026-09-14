@@ -182,7 +182,8 @@ function buildResultString(buildResult: BuildResult): string {
 
 // eslint-disable-next-line unicorn/prefer-top-level-await -- top-level await requires ESM; this package emits CommonJS
 main().catch((e: unknown) => {
-	const { message, stack } = e as Partial<Error>;
+	const message = e instanceof Error ? e.message : String(e);
+	const stack = e instanceof Error ? e.stack : undefined;
 	error(`Unexpected error. ${message}`);
 	error(`${stack}`);
 	// eslint-disable-next-line unicorn/no-process-exit -- exit with error code on unhandled exception

@@ -402,11 +402,12 @@ export function getTscUtils(path: string): TscUtil {
 		tscUtilLibPathCache.set(tsPath, tscUtil);
 		return tscUtil;
 	} catch (e) {
-		// The thrown value is not necessarily an Error. Add context by mutating `message` on
-		// whatever was thrown, preserving the original value and throw semantics.
-		const thrown = e as { message: unknown };
-		thrown.message = `Failed to load typescript module for '${path}'. 'typescript' dependency may be missing.: ${thrown.message}`;
-		throw e;
+		const prefix = `Failed to load typescript module for '${path}'. 'typescript' dependency may be missing.`;
+		if (e instanceof Error) {
+			e.message = `${prefix}: ${e.message}`;
+			throw e;
+		}
+		throw new Error(`${prefix}: ${String(e)}`);
 	}
 }
 

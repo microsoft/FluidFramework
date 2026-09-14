@@ -60,7 +60,7 @@ export async function lint(message: WorkerMessage): Promise<WorkerExecResult> {
 		try {
 			formatter = await engine.loadFormatter("stylish");
 		} catch (e) {
-			console.error((e as Partial<Error>).message);
+			console.error(e instanceof Error ? e.message : e);
 			return { code: 2 };
 		}
 

@@ -42,6 +42,19 @@ const workers: { [key: string]: (message: WorkerMessage) => Promise<WorkerExecRe
 	"api-extractor": apiExtractorWorker,
 };
 
+function serializeWorkerError(value: unknown): WorkerError {
+	if (typeof value !== "object" || value === null) {
+		return {};
+	}
+
+	const error = value as Record<string, unknown>;
+	return {
+		name: typeof error["name"] === "string" ? error["name"] : undefined,
+		message: typeof error["message"] === "string" ? error["message"] : undefined,
+		stack: typeof error["stack"] === "string" ? error["stack"] : undefined,
+	};
+}
+
 let collectMemoryUsage = false;
 
 async function messageHandler(msg: WorkerMessage): Promise<WorkerExecResult> {
@@ -56,15 +69,9 @@ async function messageHandler(msg: WorkerMessage): Promise<WorkerExecResult> {
 		}
 	} catch (e) {
 		// any unhandled exception thrown is going to rerun on main thread.
-		// The thrown value is not necessarily an Error, so read the fields it would have without
-		// coercing it: non-Errors leave them undefined, which is the pre-existing behavior.
-		const thrown = e as Partial<Error>;
 		res = {
-			error: {
-				name: thrown.name,
-				message: thrown.message,
-				stack: thrown.stack,
-			},
+			// Non-object and non-string fields remain undefined, preserving the existing IPC shape.
+			error: serializeWorkerError(e),
 			code: -1,
 		};
 	}
