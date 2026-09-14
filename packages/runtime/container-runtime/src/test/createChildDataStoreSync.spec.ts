@@ -45,6 +45,7 @@ describe("createChildDataStore", () => {
 		public getAttachSummary = throwNYI;
 		public getAttachGCData = throwNYI;
 		public getAttachData = throwNYI;
+		public getAttachDataVersion = throwNYI;
 		protected channel = new Proxy({} as unknown as IFluidDataStoreChannel, { get: throwNYI });
 		protected channelP = new LazyPromise(async () => this.channel);
 	};

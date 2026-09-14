@@ -151,6 +151,8 @@ export interface IFluidDataStoreContextPrivate extends FluidDataStoreContextInte
 	 */
 	getAttachData(telemetryContext?: ITelemetryContext): IFluidDataStoreAttachData;
 
+	getAttachDataVersion(): number | undefined;
+
 	getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
 	realize(): Promise<IFluidDataStoreChannel>;
@@ -1089,6 +1091,8 @@ export abstract class FluidDataStoreContext
 		telemetryContext?: ITelemetryContext,
 	): IFluidDataStoreAttachData;
 
+	public abstract getAttachDataVersion(): number | undefined;
+
 	public abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
 	// eslint-disable-next-line jsdoc/require-description
@@ -1403,6 +1407,10 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	public getAttachData(telemetryContext?: ITelemetryContext): IFluidDataStoreAttachData {
 		throw new Error("Cannot attach remote store");
 	}
+
+	public getAttachDataVersion(): undefined {
+		return undefined;
+	}
 }
 
 /**
@@ -1501,7 +1509,10 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	 */
 	public getAttachData(telemetryContext?: ITelemetryContext): IFluidDataStoreAttachData {
 		const channel: IFluidDataStoreChannelInternal | undefined = this.channel;
-		assert(channel !== undefined, "There should be a channel when generating attach data");
+		assert(
+			channel !== undefined,
+			0xd42 /* There should be a channel when generating attach data */,
+		);
 
 		const attachData = channel.getAttachData?.(telemetryContext);
 		if (attachData === undefined) {
@@ -1517,7 +1528,13 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		return {
 			attachSummary: this.decorateAttachSummary(attachData.attachSummary),
 			attachGCData: attachData.attachGCData,
+			attachDataVersion: attachData.attachDataVersion,
 		};
+	}
+
+	public getAttachDataVersion(): number | undefined {
+		const channel: IFluidDataStoreChannelInternal | undefined = this.channel;
+		return channel?.getAttachDataVersion?.();
 	}
 
 	/**

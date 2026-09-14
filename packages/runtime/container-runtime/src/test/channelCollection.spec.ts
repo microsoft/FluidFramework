@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import type { ConfigTypes } from "@fluidframework/core-interfaces";
-import { SummaryType } from "@fluidframework/driver-definitions";
+import { type SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	ISnapshotTree,
 	ISequencedDocumentMessage,
@@ -434,11 +434,17 @@ describe("Runtime", () => {
 				id: string,
 				bound: boolean,
 				onAttachCapture?: () => void,
-			): { readonly id: string; summarizeCount: number } {
+				versioned: boolean = true,
+			): {
+				readonly id: string;
+				summarizeCount: number;
+				attachDataVersion: number;
+			} {
 				const context = {
 					id,
 					isLoaded: true,
 					summarizeCount: 0,
+					attachDataVersion: 0,
 					getAttachSummary: () => {
 						context.summarizeCount++;
 						onAttachCapture?.();
@@ -450,10 +456,25 @@ describe("Runtime", () => {
 								totalBlobSize: 0,
 								unreferencedBlobSize: 0,
 							},
-							summary: { type: SummaryType.Tree, tree: {} },
+							summary: {
+								type: SummaryType.Tree,
+								tree:
+									context.attachDataVersion === 0
+										? {}
+										: { lateBound: { type: SummaryType.Tree, tree: {} } },
+							},
 						};
 					},
 					getAttachGCData: () => ({ gcNodes: { "/": [] } }),
+					getAttachData: () => {
+						const attachSummary = context.getAttachSummary();
+						return {
+							attachSummary,
+							attachGCData: context.getAttachGCData(),
+							attachDataVersion: context.attachDataVersion,
+						};
+					},
+					getAttachDataVersion: () => (versioned ? context.attachDataVersion : undefined),
 				};
 				contexts.addUnbound(context as unknown as LocalFluidDataStoreContext);
 				if (bound) {
@@ -549,6 +570,134 @@ describe("Runtime", () => {
 					gcCaptured,
 					summarized,
 					"The GC data must cover exactly the summarized data stores",
+				);
+			});
+
+			it("recaptures a data store when a later summary binds one of its children", () => {
+				const capturedFirst = addContext("capturedFirst", /* bound */ true);
+				let sideEffectsDone = false;
+				addContext("capturedLater", /* bound */ true, () => {
+					if (sideEffectsDone) {
+						return;
+					}
+					sideEffectsDone = true;
+					capturedFirst.attachDataVersion++;
+				});
+
+				const attachSummary = channelCollection.getAttachSummary();
+
+				assert.strictEqual(
+					capturedFirst.summarizeCount,
+					2,
+					"A data store whose bound children changed after capture must be recaptured",
+				);
+				assert(
+					attachSummary.summary.type === SummaryType.Tree,
+					"Attach summary should be a tree",
+				);
+				const capturedFirstSummary: SummaryObject | undefined =
+					attachSummary.summary.tree.capturedFirst;
+				assert(
+					capturedFirstSummary?.type === SummaryType.Tree,
+					"Captured data store summary should be a tree",
+				);
+				assert(
+					capturedFirstSummary.tree.lateBound !== undefined,
+					"The recaptured summary must include the late-bound child",
+				);
+			});
+
+			it("recaptures an unversioned data store after later summaries run", () => {
+				const capturedFirst = addContext(
+					"legacyCapturedFirst",
+					/* bound */ true,
+					undefined,
+					/* versioned */ false,
+				);
+				addContext("legacyCapturedLater", /* bound */ true, () => {
+					capturedFirst.attachDataVersion++;
+				});
+
+				const attachSummary = channelCollection.getAttachSummary();
+
+				assert.strictEqual(
+					capturedFirst.summarizeCount,
+					3,
+					"An unversioned data store must be recaptured until its summary is stable",
+				);
+				assert(
+					attachSummary.summary.type === SummaryType.Tree,
+					"Attach summary should be a tree",
+				);
+				const capturedFirstSummary: SummaryObject | undefined =
+					attachSummary.summary.tree.legacyCapturedFirst;
+				assert(
+					capturedFirstSummary?.type === SummaryType.Tree,
+					"Captured data store summary should be a tree",
+				);
+				assert(
+					capturedFirstSummary.tree.lateBound !== undefined,
+					"The legacy recapture must include the late-bound child",
+				);
+			});
+
+			it("recaptures unversioned data stores until transitive late bindings stabilize", () => {
+				const capturedFirst = addContext(
+					"legacyFirst",
+					/* bound */ true,
+					undefined,
+					/* versioned */ false,
+				);
+				let firstBindingDone = false;
+				const capturedSecond = addContext(
+					"legacySecond",
+					/* bound */ true,
+					() => {
+						if (capturedSecond.attachDataVersion > 0 && !firstBindingDone) {
+							firstBindingDone = true;
+							capturedFirst.attachDataVersion++;
+						}
+					},
+					/* versioned */ false,
+				);
+				let secondBindingDone = false;
+				addContext(
+					"legacyThird",
+					/* bound */ true,
+					() => {
+						if (!secondBindingDone) {
+							secondBindingDone = true;
+							capturedSecond.attachDataVersion++;
+						}
+					},
+					/* versioned */ false,
+				);
+
+				const attachSummary = channelCollection.getAttachSummary();
+
+				assert(
+					attachSummary.summary.type === SummaryType.Tree,
+					"Attach summary should be a tree",
+				);
+				const capturedFirstSummary: SummaryObject | undefined =
+					attachSummary.summary.tree.legacyFirst;
+				assert(
+					capturedFirstSummary?.type === SummaryType.Tree,
+					"First data store summary should be a tree",
+				);
+				assert(
+					capturedFirstSummary.tree.lateBound !== undefined,
+					"The first data store must include the transitively late-bound child",
+				);
+				const capturedSecondSummary: SummaryObject | undefined =
+					attachSummary.summary.tree.legacySecond;
+				assert(
+					capturedSecondSummary?.type === SummaryType.Tree,
+					"Second data store summary should be a tree",
+				);
+				assert(
+					capturedSecondSummary.tree.lateBound !== undefined,
+					"The second data store must include its late-bound child",
 				);
 			});
 			/* eslint-enable @typescript-eslint/consistent-type-assertions */

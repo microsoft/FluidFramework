@@ -3,13 +3,15 @@
 "@fluidframework/datastore": minor
 "__section": fix
 ---
-Data store attach messages now include DDSes created while the attach message is generated
+Attach summaries now include DDSes bound while the summary is generated
 
-Generating a data store's attach message captured the data store's summary and its garbage collection data in two
-separate passes. A DDS that synchronously created another DDS while either pass ran could end up in only one of
-them. The new DDS still became visible locally and started sending ops, but remote clients never learned about it
-from the attach message and failed to process those ops.
+Generating a detached container's attach summary visits its data stores in sequence. Summarizing a later data store
+can bind a DDS owned by an earlier data store through normal handle serialization. The earlier data store's
+already-captured summary then omits the DDS even though it becomes visible locally and can send ops after attach.
 
-The summary and the garbage collection data are now captured together and always describe the same, complete set
-of DDSes. Relatedly, processing an op for an unknown DDS now throws a `DataProcessingError` with diagnostics
-instead of an assert.
+Attach capture now tracks changes to each data store's set of bound DDSes and recaptures data stores until the
+container-wide summary is stable. Within each data store, the summary and garbage collection data are also captured
+together so custom channels cannot make the two disagree by binding a DDS during either pass.
+
+Processing an op for an unknown DDS now throws a `DataProcessingError` with detailed diagnostics instead of an
+opaque assert, making any remaining causes easier to identify.

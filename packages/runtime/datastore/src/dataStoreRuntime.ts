@@ -337,6 +337,7 @@ export class FluidDataStoreRuntime
 	private readonly deferredAttached = new Deferred<void>();
 	private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
 	private readonly notBoundedChannelContextSet = new Set<string>();
+	private attachDataVersion = 0;
 	private _attachState: AttachState;
 	public visibilityState: VisibilityState;
 	// A list of handles that are bound when the data store is not visible. We have to make them visible when the data
@@ -794,6 +795,7 @@ export class FluidDataStoreRuntime
 			0x17b /* "Channel to be bound should be in not bounded set" */,
 		);
 		this.notBoundedChannelContextSet.delete(channel.id);
+		this.attachDataVersion++;
 		// If our data store is attached, then attach the channel.
 		if (this.isAttached) {
 			this.makeChannelLocallyVisible(channel);
@@ -1279,7 +1281,7 @@ export class FluidDataStoreRuntime
 				const context = this.contexts.get(contextId);
 				assert(
 					context instanceof LocalChannelContextBase,
-					"Should only be called with local channel handles",
+					0xd43 /* Should only be called with local channel handles */,
 				);
 				this.addContextAttachGCData(gcDataBuilder, contextId, context, telemetryContext);
 			}
@@ -1290,7 +1292,12 @@ export class FluidDataStoreRuntime
 		return {
 			attachSummary: summaryBuilder.getSummaryTree(),
 			attachGCData: gcDataBuilder.getGCData(),
+			attachDataVersion: this.getAttachDataVersion(),
 		};
+	}
+
+	private getAttachDataVersion(): number {
+		return this.attachDataVersion;
 	}
 
 	/**

@@ -17,6 +17,7 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import { assert, fail, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	ISnapshot,
 	ISnapshotTree,
@@ -46,7 +47,6 @@ import type {
 	InboundAttachMessage,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
-	ISummarizeResult,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	OldestSupportedClientVersion,
@@ -1294,16 +1294,14 @@ export class ChannelCollection
 	 * Create a summary. Used when attaching or serializing a detached container.
 	 */
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
-		const builder = new SummaryTreeBuilder();
-		this.visitLocalBoundContextsDuringAttach(
-			new Set<string>(),
-			(contextId: string, context: FluidDataStoreContext) => {
-				builder.addWithStats(
-					contextId,
-					this.getContextAttachSummary(contextId, context, telemetryContext),
-				);
-			},
+		const capturedAttachData = this.captureLocalBoundContextsDuringAttach(
+			false,
+			telemetryContext,
 		);
+		const builder = new SummaryTreeBuilder();
+		for (const [contextId, { attachSummary }] of capturedAttachData) {
+			builder.addWithStats(contextId, attachSummary);
+		}
 		return builder.getSummaryTree();
 	}
 
@@ -1330,48 +1328,16 @@ export class ChannelCollection
 	 * {@inheritdoc @fluidframework/runtime-definitions#IFluidDataStoreChannelInternal.getAttachData}
 	 */
 	public getAttachData(telemetryContext?: ITelemetryContext): IFluidDataStoreAttachData {
+		const capturedAttachData = this.captureLocalBoundContextsDuringAttach(
+			true,
+			telemetryContext,
+		);
 		const summaryBuilder = new SummaryTreeBuilder();
 		const gcDataBuilder = new GCDataBuilder();
-		// Contexts whose summary has already been captured in `summaryBuilder`.
-		const summarizedContexts = new Set<string>();
-		// Contexts whose GC data has already been captured in `gcDataBuilder`.
-		const gcCapturedContexts = new Set<string>();
-
-		/**
-		 * A data store's summary or GC data callback may synchronously create and bind more data stores. Keep
-		 * alternating between draining summaries and draining GC data until neither makes progress, so that the
-		 * returned summary and GC data describe the same complete set of data stores.
-		 */
-		let progressed: boolean;
-		do {
-			progressed = this.visitLocalBoundContextsDuringAttach(
-				summarizedContexts,
-				(contextId: string, context: FluidDataStoreContext) => {
-					summaryBuilder.addWithStats(
-						contextId,
-						this.getContextAttachSummary(contextId, context, telemetryContext),
-					);
-				},
-			);
-
-			// Only contexts that made it into the summary contribute GC data, so that the two always agree.
-			// The summary drain above has already visited every currently bound context.
-			for (const contextId of [...summarizedContexts]) {
-				if (gcCapturedContexts.has(contextId)) {
-					continue;
-				}
-				gcCapturedContexts.add(contextId);
-				progressed = true;
-
-				const context = this.contexts.get(contextId);
-				assert(
-					context !== undefined,
-					"Summarized data store context must still exist when capturing attach data",
-				);
-				const contextGCData = context.getAttachGCData(telemetryContext);
-				gcDataBuilder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
-			}
-		} while (progressed);
+		for (const [contextId, { attachSummary, attachGCData }] of capturedAttachData) {
+			summaryBuilder.addWithStats(contextId, attachSummary);
+			gcDataBuilder.prefixAndAddNodes(contextId, attachGCData.gcNodes);
+		}
 
 		// Get the outbound routes (aliased data stores) and add a GC node for this channel.
 		gcDataBuilder.addNode("/", [...this.aliasedDataStores]);
@@ -1383,13 +1349,110 @@ export class ChannelCollection
 	}
 
 	/**
+	 * Captures every bound data store to a fixed point. A later data store's summary can bind a DDS in a data
+	 * store that was captured earlier, so versioned data stores are recaptured whenever their bound-child set
+	 * changes.
+	 */
+	private captureLocalBoundContextsDuringAttach(
+		includeGCData: boolean,
+		telemetryContext?: ITelemetryContext,
+	): Map<string, IFluidDataStoreAttachData> {
+		const capturedAttachData = new Map<string, IFluidDataStoreAttachData>();
+		const unversionedCaptureFingerprints = new Map<string, string>();
+		let capturePasses = 0;
+		while (true) {
+			assert(capturePasses++ < 100, 0xd44 /* Data store attach capture failed to stabilize */);
+			let progressed = false;
+			for (const [contextId, context] of this.contexts) {
+				if (
+					this.contexts.isNotBound(contextId) ||
+					this.attachOpFiredForDataStore.has(contextId)
+				) {
+					continue;
+				}
+
+				const previousCapture = capturedAttachData.get(contextId);
+				if (previousCapture !== undefined && !context.isLoaded) {
+					// An unloaded detached context is captured directly from its immutable base snapshot.
+					continue;
+				}
+				const currentVersion = context.getAttachDataVersion();
+				if (
+					previousCapture !== undefined &&
+					currentVersion !== undefined &&
+					previousCapture.attachDataVersion === currentVersion
+				) {
+					continue;
+				}
+
+				const attachData: IFluidDataStoreAttachData = context.isLoaded
+					? includeGCData
+						? context.getAttachData(telemetryContext)
+						: {
+								attachSummary: context.getAttachSummary(telemetryContext),
+								attachGCData: { gcNodes: {} },
+								attachDataVersion: context.getAttachDataVersion(),
+							}
+					: {
+							attachSummary: this.getContextAttachSummary(
+								contextId,
+								context,
+								telemetryContext,
+							),
+							attachGCData: includeGCData
+								? context.getAttachGCData(telemetryContext)
+								: { gcNodes: {} },
+						};
+				capturedAttachData.set(contextId, attachData);
+				if (!context.isLoaded) {
+					progressed = true;
+				} else if (currentVersion === undefined) {
+					const fingerprint = JSON.stringify(attachData);
+					if (unversionedCaptureFingerprints.get(contextId) !== fingerprint) {
+						unversionedCaptureFingerprints.set(contextId, fingerprint);
+						progressed = true;
+					}
+				} else {
+					progressed = true;
+				}
+			}
+
+			if (!progressed) {
+				break;
+			}
+		}
+
+		for (const [contextId, context] of this.contexts) {
+			if (
+				this.contexts.isNotBound(contextId) ||
+				this.attachOpFiredForDataStore.has(contextId)
+			) {
+				continue;
+			}
+
+			const attachData = capturedAttachData.get(contextId);
+			assert(
+				attachData !== undefined,
+				0xd3f /* Every bound data store must be captured for attach */,
+			);
+			const currentVersion = context.getAttachDataVersion();
+			assert(
+				currentVersion === undefined || attachData.attachDataVersion === currentVersion,
+				0xd40 /* Data store attach data must include every currently bound child */,
+			);
+		}
+
+		return capturedAttachData;
+	}
+
+	/**
 	 * Generates the attach summary for a single data store context.
 	 */
 	private getContextAttachSummary(
 		contextId: string,
 		context: FluidDataStoreContext,
 		telemetryContext?: ITelemetryContext,
-	): ISummarizeResult {
+	): ISummaryTreeWithStats {
 		if (context.isLoaded) {
 			return context.getAttachSummary(telemetryContext);
 		}
@@ -1400,9 +1463,14 @@ export class ChannelCollection
 			!!this.baseSnapshot,
 			0x166 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
 		);
-		return convertSnapshotTreeToSummaryTree(
+		const attachSummary = convertSnapshotTreeToSummaryTree(
 			getSnapshotTree(this.baseSnapshot).trees[contextId],
 		);
+		assert(
+			attachSummary.summary.type === SummaryType.Tree,
+			0xd41 /* Data store attach summary must be a tree */,
+		);
+		return { stats: attachSummary.stats, summary: attachSummary.summary };
 	}
 
 	/**

@@ -211,7 +211,7 @@ class ChildDataStoreFactory implements IFluidDataStoreFactory {
 		runtime: IFluidDataStoreChannel;
 		entrypoint: ChildDataStore;
 	} {
-		const runtime = new FluidDataStoreRuntime(
+		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
 			context,
 			this.sharedObjectRegistry,
 			/* existing */ false,
@@ -219,6 +219,157 @@ class ChildDataStoreFactory implements IFluidDataStoreFactory {
 		);
 		const entrypoint = ChildDataStore.create(runtime);
 		return { runtime, entrypoint };
+	}
+}
+
+const handleOwnerDataStoreType = "HandleOwnerDataStore";
+const handleBinderDataStoreType = "HandleBinderDataStore";
+const binderRootMapId = "binderRoot";
+const lateHandleKey = "lateHandle";
+
+/**
+ * Owns a SharedMap that starts unbound. Another data store binds it while that other store's summary is generated.
+ */
+class HandleOwnerDataStore {
+	public static create(runtime: IFluidDataStoreRuntime): HandleOwnerDataStore {
+		const lateMap = SharedMap.create(runtime, lateChannelId);
+		return new HandleOwnerDataStore(runtime, lateMap);
+	}
+
+	public static load(runtime: IFluidDataStoreRuntime): HandleOwnerDataStore {
+		return new HandleOwnerDataStore(runtime);
+	}
+
+	private constructor(
+		private readonly runtime: IFluidDataStoreRuntime,
+		private readonly localLateMap?: ISharedMap,
+	) {}
+
+	public get HandleOwnerDataStore(): HandleOwnerDataStore {
+		return this;
+	}
+
+	public get handle(): IFluidHandle<FluidObject> {
+		return this.runtime.entryPoint;
+	}
+
+	public get lateMapHandle(): IFluidHandle {
+		fluidAssert(this.localLateMap !== undefined, "late map must exist in the creating client");
+		return this.localLateMap.handle;
+	}
+
+	public async getLateMap(): Promise<ISharedMap> {
+		return (
+			this.localLateMap ??
+			((await this.runtime.getChannel(lateChannelId)) as unknown as ISharedMap)
+		);
+	}
+}
+
+class HandleOwnerDataStoreFactory implements IFluidDataStoreFactory {
+	public readonly type = handleOwnerDataStoreType;
+	private readonly sharedObjectRegistry = new Map<string, IChannelFactory>([
+		[SharedMap.getFactory().type, SharedMap.getFactory()],
+	]);
+
+	public get IFluidDataStoreFactory(): this {
+		return this;
+	}
+
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<IFluidDataStoreChannel> {
+		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
+			context,
+			this.sharedObjectRegistry,
+			existing,
+			async () => dataStore,
+		);
+		const dataStore = existing
+			? HandleOwnerDataStore.load(runtime)
+			: HandleOwnerDataStore.create(runtime);
+		return runtime;
+	}
+
+	public createDataStore(context: IFluidDataStoreContext): {
+		runtime: IFluidDataStoreChannel;
+		entrypoint: HandleOwnerDataStore;
+	} {
+		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
+			context,
+			this.sharedObjectRegistry,
+			/* existing */ false,
+			async () => entrypoint,
+		);
+		const entrypoint = HandleOwnerDataStore.create(runtime);
+		return { runtime, entrypoint };
+	}
+}
+
+/**
+ * Stores the owner data store's unbound SharedMap handle in a bound SharedMap. Serializing this map's summary binds
+ * the owner's map through the ordinary SharedObject handle serialization path.
+ */
+class HandleBinderDataStoreFactory implements IFluidDataStoreFactory {
+	public readonly type = handleBinderDataStoreType;
+	private readonly sharedObjectRegistry = new Map<string, IChannelFactory>([
+		[SharedMap.getFactory().type, SharedMap.getFactory()],
+	]);
+	private handleToBind: IFluidHandle | undefined;
+
+	public get IFluidDataStoreFactory(): this {
+		return this;
+	}
+
+	public setHandleToBind(handle: IFluidHandle): void {
+		this.handleToBind = handle;
+	}
+
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<IFluidDataStoreChannel> {
+		const runtime = new FluidDataStoreRuntime(
+			context,
+			this.sharedObjectRegistry,
+			existing,
+			async () => dataStore,
+		);
+		const dataStore: HandleBinderDataStore = new HandleBinderDataStore(runtime);
+		if (!existing) {
+			const rootMap = SharedMap.create(runtime, binderRootMapId);
+			rootMap.bindToContext();
+			fluidAssert(this.handleToBind !== undefined, "handle to bind must be configured");
+			rootMap.set(lateHandleKey, this.handleToBind);
+		}
+		return runtime;
+	}
+
+	public createDataStore(context: IFluidDataStoreContext): {
+		runtime: IFluidDataStoreChannel;
+		entrypoint: HandleBinderDataStore;
+	} {
+		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
+			context,
+			this.sharedObjectRegistry,
+			/* existing */ false,
+			async () => entrypoint,
+		);
+		const entrypoint: HandleBinderDataStore = new HandleBinderDataStore(runtime);
+		const rootMap = SharedMap.create(runtime, binderRootMapId);
+		rootMap.bindToContext();
+		fluidAssert(this.handleToBind !== undefined, "handle to bind must be configured");
+		rootMap.set(lateHandleKey, this.handleToBind);
+		return { runtime, entrypoint };
+	}
+}
+
+class HandleBinderDataStore {
+	public constructor(private readonly runtime: IFluidDataStoreRuntime) {}
+
+	public get handle(): IFluidHandle<FluidObject> {
+		return this.runtime.entryPoint;
 	}
 }
 
@@ -239,8 +390,34 @@ class ParentDataObject extends DataObject {
 		return entrypoint;
 	}
 
-	public getChild(name: string): IFluidHandle<ChildDataStore> | undefined {
-		return this.root.get<IFluidHandle<ChildDataStore>>(name);
+	public createHandleOwner(
+		name: string,
+		childFactory: HandleOwnerDataStoreFactory,
+	): HandleOwnerDataStore {
+		fluidAssert(
+			this.context.createChildDataStore !== undefined,
+			"this.context.createChildDataStore",
+		);
+		const { entrypoint } = this.context.createChildDataStore(childFactory);
+		this.root.set(name, entrypoint.handle);
+		return entrypoint;
+	}
+
+	public createHandleBinder(
+		name: string,
+		childFactory: HandleBinderDataStoreFactory,
+	): HandleBinderDataStore {
+		fluidAssert(
+			this.context.createChildDataStore !== undefined,
+			"this.context.createChildDataStore",
+		);
+		const { entrypoint } = this.context.createChildDataStore(childFactory);
+		this.root.set(name, entrypoint.handle);
+		return entrypoint;
+	}
+
+	public getChild<T = ChildDataStore>(name: string): IFluidHandle<T> | undefined {
+		return this.root.get<IFluidHandle<T>>(name);
 	}
 }
 
@@ -249,6 +426,45 @@ function createRuntimeFactory(childFactory: ChildDataStoreFactory): IRuntimeFact
 		type: "ParentDataObject",
 		ctor: ParentDataObject,
 		registryEntries: [[childFactory.type, childFactory]],
+	});
+
+	return {
+		get IRuntimeFactory() {
+			return this;
+		},
+		instantiateRuntime: async (context, existing) =>
+			loadContainerRuntime({
+				context,
+				existing,
+				oldestSupportedClient: defaultTestOldestSupportedClient,
+				registryEntries: [
+					[parentDataObjectFactory.type, Promise.resolve(parentDataObjectFactory)],
+				],
+				provideEntryPoint: async (rt) => {
+					const maybeRoot = await rt.getAliasedDataStoreEntryPoint("default");
+					if (maybeRoot === undefined) {
+						const ds = await rt.createDataStore(parentDataObjectFactory.type);
+						await ds.trySetAlias("default");
+					}
+					const root = await rt.getAliasedDataStoreEntryPoint("default");
+					fluidAssert(root !== undefined, "default must exist");
+					return root.get();
+				},
+			}),
+	};
+}
+
+function createCrossStoreRuntimeFactory(
+	ownerFactory: HandleOwnerDataStoreFactory,
+	binderFactory: HandleBinderDataStoreFactory,
+): IRuntimeFactory {
+	const parentDataObjectFactory = new DataObjectFactory({
+		type: "CrossStoreParentDataObject",
+		ctor: ParentDataObject,
+		registryEntries: [
+			[ownerFactory.type, ownerFactory],
+			[binderFactory.type, binderFactory],
+		],
 	});
 
 	return {
@@ -327,6 +543,63 @@ describe("Data store attach message completeness", () => {
 			lateMap2.get(lateChannelKey),
 			"hello",
 			"The DDS created during attach must round trip to remote clients",
+		);
+
+		container2.dispose();
+	});
+
+	it("recaptures an earlier data store when a later summary binds one of its DDSes", async () => {
+		const ownerFactory = new HandleOwnerDataStoreFactory();
+		const binderFactory = new HandleBinderDataStoreFactory();
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+		const { loaderProps, codeDetails, urlResolver } = createLoader({
+			deltaConnectionServer,
+			runtimeFactory: createCrossStoreRuntimeFactory(ownerFactory, binderFactory),
+		});
+
+		const container = await createDetachedContainer({ ...loaderProps, codeDetails });
+		const entrypoint: FluidObject<ParentDataObject> = await container.getEntryPoint();
+		fluidAssert(
+			entrypoint.ParentDataObject !== undefined,
+			"container entrypoint must be ParentDataObject",
+		);
+
+		// The owner is created first, so its data store summary is captured before the binder's.
+		const owner = entrypoint.ParentDataObject.createHandleOwner("owner", ownerFactory);
+		binderFactory.setHandleToBind(owner.lateMapHandle);
+		entrypoint.ParentDataObject.createHandleBinder("binder", binderFactory);
+
+		await container.attach(urlResolver.createCreateNewRequest("crossStoreAttachCompleteness"));
+
+		const lateMap = await owner.getLateMap();
+		lateMap.set(lateChannelKey, "hello");
+		while (container.isDirty) {
+			await new Promise<void>((resolve) => container.once("saved", () => resolve()));
+		}
+
+		const url = await container.getAbsoluteUrl("");
+		fluidAssert(url !== undefined, "container must have url");
+		container.dispose();
+
+		const container2 = await loadExistingContainer({ ...loaderProps, request: { url } });
+		await waitContainerToCatchUp(container2);
+		const entrypoint2: FluidObject<ParentDataObject> = await container2.getEntryPoint();
+		fluidAssert(
+			entrypoint2.ParentDataObject !== undefined,
+			"container2 entrypoint must be ParentDataObject",
+		);
+		const ownerHandle = entrypoint2.ParentDataObject.getChild<HandleOwnerDataStore>("owner");
+		fluidAssert(ownerHandle !== undefined, "owner handle must exist");
+		const owner2 = await ownerHandle.get();
+		fluidAssert(
+			owner2.HandleOwnerDataStore !== undefined,
+			"owner must be a HandleOwnerDataStore",
+		);
+		const lateMap2 = await owner2.HandleOwnerDataStore.getLateMap();
+		assert.strictEqual(
+			lateMap2.get(lateChannelKey),
+			"hello",
+			"The DDS bound by a later data store's summary must round trip",
 		);
 
 		container2.dispose();

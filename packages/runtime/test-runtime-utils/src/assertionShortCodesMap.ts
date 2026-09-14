@@ -1987,5 +1987,11 @@ export const shortCodeMap = {
 	"0xd3b": "TODO: Handle chunks which are only partially attached",
 	"0xd3c": "AttachAndDetach marks in changesets should always represent MoveIn + Remove",
 	"0xd3d": "A supported client version must be defined",
-	"0xd3e": "Enabled upgrades must be available for an active view"
+	"0xd3e": "Enabled upgrades must be available for an active view",
+	"0xd3f": "Every bound data store must be captured for attach",
+	"0xd40": "Data store attach data must include every currently bound child",
+	"0xd41": "Data store attach summary must be a tree",
+	"0xd42": "There should be a channel when generating attach data",
+	"0xd43": "Should only be called with local channel handles",
+	"0xd44": "Data store attach capture failed to stabilize"
 };

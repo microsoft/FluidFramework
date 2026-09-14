@@ -540,6 +540,13 @@ export interface IFluidDataStoreAttachData {
 	 * The outbound routes present in the data store channel's initial state.
 	 */
 	readonly attachGCData: IGarbageCollectionData;
+	/**
+	 * A monotonically increasing version of the set of bound children captured in this data.
+	 *
+	 * @remarks
+	 * Optional for back-compat with data store runtimes that predate versioned attach capture.
+	 */
+	readonly attachDataVersion?: number;
 }
 
 /**
@@ -569,6 +576,17 @@ export interface IFluidDataStoreChannelInternal extends IFluidDataStoreChannel {
 	 * Optional for back-compat with data store runtimes that predate this method.
 	 */
 	getAttachData?(telemetryContext?: ITelemetryContext): IFluidDataStoreAttachData;
+
+	/**
+	 * Returns the current version of the set of bound children.
+	 *
+	 * @remarks
+	 * Callers can compare this with {@link IFluidDataStoreAttachData.attachDataVersion} to detect that another
+	 * component synchronously bound a child after the attach data was captured.
+	 *
+	 * Optional for back-compat with data store runtimes that predate versioned attach capture.
+	 */
+	getAttachDataVersion?(): number;
 }
 
 /**
