@@ -5,9 +5,8 @@
 
 // Minimal JSON-over-HTTP client used to talk to riddler and gitrest.
 //
-// Deliberately dependency-free (node:http / node:https only) so the CLI can be dropped into the
-// routerlicious container image and run with `node` -- no npm install, no node_modules to ship
-// into the cluster. See ../README.md ("Why zero dependencies").
+// This transport stays on Node's built-ins; Azure Identity is the CLI's only runtime dependency.
+// Keeping the service client small also limits the self-contained bundle's dependency surface.
 //
 // Two behaviours worth calling out:
 //   - every request carries an x-correlation-id, so a tenant operation can be traced across

@@ -45,6 +45,8 @@ The result is a historical view with these invariants:
 3. `PointInTimeDocumentServiceFactory` adapts that capability to the normal `createDocumentService` call used by container loading, preserving the requested target sequence number.
 4. The driver creates a point-in-time document service:
    - storage serves a recoverable snapshot whose sequence number is at or before the target;
+   - the initial snapshot read bypasses persistent and in-memory prefetched snapshot caches so they
+     cannot replace the selected recoverable snapshot with a newer snapshot;
    - delta storage serves the live document's retained ops, bounded so replay cannot pass the target;
    - the service is storage-only, preventing a live delta-stream connection.
 5. `loadContainerPaused` loads the selected snapshot with automatic op processing disabled and forces the container into read-only mode.
@@ -237,7 +239,9 @@ ODSP unit coverage exercises base selection, no-base failures, version URL resol
 Real-service ODSP coverage lives under [`packages/test/test-end-to-end-tests/src/test/pointInTime/`](../../../../test/test-end-to-end-tests/src/test/pointInTime/):
 
 - `loadToSequenceNumber.spec.ts` covers exact version boundaries, replay to a mid-stream target, and distinct historical targets.
-- `loadSuccess.spec.ts` covers the earliest recoverable state, deterministic repeated loads, a frozen read-only result, and deep-history replay.
+- `loadSuccess.spec.ts` covers the earliest recoverable state, deterministic repeated loads, a
+  first historical load with a newer live snapshot already in persistent cache, a frozen read-only
+  result, and deep-history replay.
 - `epochMismatch.spec.ts` and `loadFailure.spec.ts` cover lineage changes, unavailable ops, malformed targets, and cancellation during replay.
 - `odspVersionApi.spec.ts` verifies the real-service version-history test setup.
 - `pointInTimeTestUtils.ts` supplies the shared counter runtime, summarizer, version-snapshot helpers, and point-in-time load wrapper.
@@ -251,7 +255,10 @@ The following loading behaviors are covered by unit or integration tests, inferr
 1. **Boundary targets:** Load sequence number `0` and the current live tip. Existing successful tests use a non-zero recoverable point and advance the document past the target before loading.
 2. **Complex runtime op representations:** Load across grouped, compressed, and chunked batches, including a large payload that genuinely uses the chunk-reassembly path. The current `SharedCounter` scenarios generate small operations. This is separate from delta-fetch page batching below.
 3. **Attachment and blob state:** Create an attachment or blob-backed handle after the base snapshot, load to a target after its attach op, and verify the historical container can read the expected content.
-4. **Cache and load isolation:** Run concurrent loads to different targets, then perform a normal live load with the same factory credentials. Verify each historical view remains pinned to its own target and no historical snapshot leaks through shared or persisted caches.
+4. **Cache and load isolation:** A first historical load with a newer live snapshot already in the
+   same persistent cache is covered. Still run concurrent loads to different targets, then perform a
+   normal live load with the same factory credentials. Verify each historical view remains pinned to
+   its own target and no historical snapshot leaks through shared or persisted caches.
 5. **Cancellation entry and propagation:** Pass an already-aborted signal and verify no storage work begins. During replay, propagate cancellation through the delta-storage fetch rather than only rejecting the loader's wait promise, and verify retries and network reads stop promptly. The existing cancellation test aborts only after replay has begun and observes that storage retries can continue racing teardown.
 6. **Read-only enforcement:** Attempt a DDS mutation and call `connect()` on the returned historical container, then verify no op is submitted, no live connection is established, and the view does not advance. Existing coverage checks the exposed read-only and disconnected state without attempting either action.
 7. **Mid-load lineage change:** Trigger a file restore after base-version discovery but before or during live-op replay and verify the shared `EpochTracker` rejects the mixed lineage. Existing epoch tests restore before the point-in-time load starts.

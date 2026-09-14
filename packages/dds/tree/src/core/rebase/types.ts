@@ -132,6 +132,12 @@ export function offsetChangeAtomId<T extends ChangeAtomId>(id: T, offset: number
 	return { ...id, localId: offsetChangesetLocalId(id.localId, offset) };
 }
 
+/**
+ * Offsets a changeset local ID by the specified amount.
+ * @param value - The original changeset local ID.
+ * @param offset - The amount by which to offset the local ID.
+ * @returns The offset changeset local ID.
+ */
 export function offsetChangesetLocalId(
 	value: ChangesetLocalId,
 	offset: number,

@@ -34,7 +34,7 @@ import {
 	numberSchema,
 	allowUnused,
 } from "../../../simple-tree/index.js";
-import { testDocuments } from "../../testTrees.js";
+import { testSchema } from "../../testTrees.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { inMemorySnapshotFileSystem } from "../../utils.js";
 
@@ -64,16 +64,12 @@ describe("snapshotCompatibilityChecker", () => {
 	describe("parse and snapshot preserve test schemas", () => {
 		// TODO:AB#82814: Fix compatibility logic and enable these staged optional cases, which are currently skipped below.
 		const stagedOptionalTestCases = new Set([
-			"HasStagedOptionalFieldBeforeUpdate",
-			"HasStagedOptionalFieldAfterUpdate",
-			"Staged optional in root",
-			"Staged optional empty root",
-			"NestedStagedOptional with no upgrades",
-			"NestedStagedOptional with one upgrade",
-			"NestedStagedOptional with all upgrades",
+			"hasStagedOptionalField",
+			"stagedOptionalRoot",
+			"nestedStagedOptional",
 		]);
 
-		for (const testCase of testDocuments) {
+		for (const testCase of testSchema) {
 			// TODO:AB#82814: Fix compatibility logic and enable the staged optional cases.
 			const test = stagedOptionalTestCases.has(testCase.name) ? it.skip : it;
 			test(testCase.name, () => {
