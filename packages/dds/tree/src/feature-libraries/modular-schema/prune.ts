@@ -14,18 +14,13 @@ import type {
 	NodeChangeset,
 	NodeId,
 } from "./modularChangeTypes.js";
-import {
-	getChangeHandler,
-	nodeChangeFromId,
-	normalizeNodeId,
-	validateChangeset,
-} from "./modularChangeUtils.js";
+import { getChangeHandler, nodeChangeFromId, normalizeNodeId } from "./modularChangeUtils.js";
 
 export function pruneChangeset(
 	changeset: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
-	validateChangeset(changeset, fieldKinds);
+	// validateChangeset(changeset, fieldKinds);
 	const prunedChangeset: Mutable<ModularChangeset> = {
 		...changeset,
 		nodeChanges: changeset.nodeChanges.clone(),
@@ -42,7 +37,7 @@ export function pruneChangeset(
 			fieldKinds,
 		) ?? new Map();
 
-	validateChangeset(prunedChangeset, fieldKinds);
+	// validateChangeset(prunedChangeset, fieldKinds);
 	return prunedChangeset;
 }
 

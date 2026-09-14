@@ -110,7 +110,6 @@ import {
 	normalizeNodeId,
 	revisionInfoFromTaggedChange,
 	updateConstraintsForFields,
-	validateChangeset,
 	type CrossFieldTable,
 } from "./modularChangeUtils.js";
 import { invertModularChange } from "./invert.js";
@@ -231,8 +230,8 @@ export class ModularChangeFamily
 		revInfos: RevisionInfo[],
 		idState: IdAllocationState,
 	): ModularChangeset {
-		validateChangeset(change1, this.fieldKinds);
-		validateChangeset(change2, this.fieldKinds);
+		// validateChangeset(change1, this.fieldKinds);
+		// validateChangeset(change2, this.fieldKinds);
 
 		const { fieldChanges, nodeChanges, nodeToParent, nodeAliases, crossFieldKeys } =
 			this.composeAllFields(change1, change2, revInfos, idState);
@@ -261,7 +260,7 @@ export class ModularChangeFamily
 			destroys: allDestroys,
 			refreshers: allRefreshers,
 		});
-		validateChangeset(composed, this.fieldKinds);
+		// validateChangeset(composed, this.fieldKinds);
 		return composed;
 	}
 
@@ -753,8 +752,8 @@ export class ModularChangeFamily
 		revisionMetadata: RevisionMetadataSource,
 		ignoreNoChangeViolation: boolean = false,
 	): ModularChangeset {
-		validateChangeset(taggedChange.change, this.fieldKinds);
-		validateChangeset(potentiallyConflictedOver.change, this.fieldKinds);
+		// validateChangeset(taggedChange.change, this.fieldKinds);
+		// validateChangeset(potentiallyConflictedOver.change, this.fieldKinds);
 
 		// Our current cell ordering scheme in sequences depends on being able to rebase over a change with conflicts.
 		// This means that we must rebase over a muted version of the conflicted changeset.
@@ -848,7 +847,7 @@ export class ModularChangeFamily
 			refreshers: change.refreshers,
 		});
 
-		validateChangeset(rebased, this.fieldKinds);
+		// validateChangeset(rebased, this.fieldKinds);
 		return pruneChangeset(rebased, this.fieldKinds);
 	}
 

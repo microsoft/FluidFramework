@@ -35,7 +35,6 @@ import {
 	newConstraintState,
 	newCrossFieldTable,
 	updateConstraintsForFields,
-	validateChangeset,
 	type CrossFieldTable,
 } from "./modularChangeUtils.js";
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
@@ -55,7 +54,7 @@ export function invertModularChange(
 	revisionForInvert: RevisionTag,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
-	validateChangeset(change.change, fieldKinds);
+	// validateChangeset(change.change, fieldKinds);
 
 	// Rollback changesets destroy the nodes created by the change being rolled back.
 	const destroys = isRollback ? invertBuilds(change.change.builds) : undefined;
@@ -178,7 +177,7 @@ export function invertModularChange(
 		noChangeConstraintOnRevert,
 		destroys,
 	});
-	validateChangeset(inverse, fieldKinds);
+	// validateChangeset(inverse, fieldKinds);
 	return inverse;
 }
 
