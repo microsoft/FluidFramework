@@ -455,9 +455,18 @@ function populateInversionsFromFieldMap(
 	}
 }
 
+export interface ValidationOptions {
+	/**
+	 * When set to true, the cross field table will not be validated.
+	 * @defaultValue `false`
+	 */
+	ignoreCrossFieldTable?: boolean;
+}
+
 export function validateChangeset(
 	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	options: ValidationOptions = {},
 ): void {
 	for (const [revision, localId] of change.nodeChanges.keys()) {
 		assert(
@@ -472,7 +481,13 @@ export function validateChangeset(
 		);
 	}
 
-	const allChildren = validateFieldChanges(change, change.fieldChanges, undefined, fieldKinds);
+	const allChildren = validateFieldChanges(
+		change,
+		change.fieldChanges,
+		undefined,
+		fieldKinds,
+		options,
+	);
 
 	for (const [[revision, localId], node] of change.nodeChanges.entries()) {
 		if (node.fieldChanges === undefined) {
@@ -480,7 +495,13 @@ export function validateChangeset(
 		}
 
 		const nodeId: NodeId = { revision, localId };
-		const fieldChildren = validateFieldChanges(change, node.fieldChanges, nodeId, fieldKinds);
+		const fieldChildren = validateFieldChanges(
+			change,
+			node.fieldChanges,
+			nodeId,
+			fieldKinds,
+			options,
+		);
 
 		populatedNestedSet(fieldChildren, allChildren);
 	}
@@ -511,6 +532,7 @@ function validateFieldChanges(
 	fieldChanges: FieldChangeMap,
 	nodeParent: NodeId | undefined,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	options: ValidationOptions = {},
 ): NestedSet<NodeId["revision"], NodeId["localId"]> {
 	const children: NestedSet<NodeId["revision"], NodeId["localId"]> = new Map();
 	for (const [field, fieldChange] of fieldChanges.entries()) {
@@ -529,27 +551,29 @@ function validateFieldChanges(
 			addToNestedSet(children, normalizedNodeId.revision, normalizedNodeId.localId);
 		}
 
-		const keysInChange = handler.getCrossFieldKeys(fieldChange.change);
-		for (const keyRange of keysInChange) {
-			const fields = getFieldsForCrossFieldKey(change, keyRange.key, keyRange.count);
-			assert(hasSome(fields), "Cross-field key table is missing an entry");
+		if (!(options.ignoreCrossFieldTable ?? false)) {
+			const keysInChange = handler.getCrossFieldKeys(fieldChange.change);
+			for (const keyRange of keysInChange) {
+				const fields = getFieldsForCrossFieldKey(change, keyRange.key, keyRange.count);
+				assert(hasSome(fields), "Cross-field key table is missing an entry");
+				assert(
+					fields.every((f) => areEqualFieldIds(f, fieldId)),
+					"Cross-field key table is pointing to the wrong field",
+				);
+			}
+
+			const countInChange = keysInChange.reduce((acc, { count }) => acc + count, 0);
+			const keysInTable = change.crossFieldKeys
+				.entries()
+				.filter(({ value }) =>
+					areEqualFieldIds(normalizeFieldId(value, change.nodeAliases), fieldId),
+				);
+			const countInTable = keysInTable.reduce((acc, { length }) => acc + length, 0);
 			assert(
-				fields.every((f) => areEqualFieldIds(f, fieldId)),
-				"Cross-field key table is pointing to the wrong field",
+				countInChange === countInTable,
+				"Mismatch between cross-field key table and changeset",
 			);
 		}
-
-		const countInChange = keysInChange.reduce((acc, { count }) => acc + count, 0);
-		const keysInTable = change.crossFieldKeys
-			.entries()
-			.filter(({ value }) =>
-				areEqualFieldIds(normalizeFieldId(value, change.nodeAliases), fieldId),
-			);
-		const countInTable = keysInTable.reduce((acc, { length }) => acc + length, 0);
-		assert(
-			countInChange === countInTable,
-			"Mismatch between cross-field key table and changeset",
-		);
 	}
 
 	return children;
