@@ -25,7 +25,8 @@ class SnapshotableQueue<T> extends SnapshotableArray<T> implements IOrderedColle
 		if (this.size() === 0) {
 			throw new Error("SnapshotableQueue is empty");
 		}
-		return this.data.shift() as T;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this.data.shift()!.data;
 	}
 }
 
