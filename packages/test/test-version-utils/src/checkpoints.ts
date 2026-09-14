@@ -103,6 +103,12 @@ export const checkpoints: readonly Checkpoint[] = [
 		lowerBoundVersion: "2.80.0",
 		startDate: "2026-01-06",
 	},
+	{
+		name: "CC#5",
+		index: 5,
+		lowerBoundVersion: "3.0.0",
+		startDate: "2026-09-03",
+	},
 ];
 
 /**
@@ -113,13 +119,6 @@ export const checkpoints: readonly Checkpoint[] = [
  * {@link checkpoints} above (and update its `startDate` to the actual release date).
  */
 const futureCheckpoints: readonly DocumentedCheckpoint[] = [
-	{
-		name: "CC#5",
-		index: 5,
-		lowerBoundVersion: "3.0.0",
-		startDate: "2026-08-24",
-		status: "tbd",
-	},
 	{
 		name: "CC#6",
 		index: 6,
