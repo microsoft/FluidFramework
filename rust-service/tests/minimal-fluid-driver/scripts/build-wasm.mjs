@@ -19,6 +19,7 @@ run(
 	"cargo",
 	[
 		"build",
+		"--quiet",
 		"--locked",
 		"-p",
 		"fluid-webtransport-browser",

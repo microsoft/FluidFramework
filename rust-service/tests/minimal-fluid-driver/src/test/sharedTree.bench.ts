@@ -49,6 +49,17 @@ interface RunningService {
 	stop(): Promise<void>;
 }
 
+interface BenchmarkConfiguration {
+	readonly repetitions: number;
+	readonly operations: number;
+	readonly warmup: number;
+	readonly workload: "batched" | "turns" | "messages";
+	readonly operationsPerTurn: number | undefined;
+	readonly synchronizePerTurn: boolean;
+	readonly browserTimeoutMilliseconds: number;
+	readonly skipBuild: boolean;
+}
+
 const packageDirectory = path.resolve(import.meta.dirname, "../..");
 const repositoryDirectory = path.resolve(packageDirectory, "../../..");
 const rustServiceDirectory = path.join(repositoryDirectory, "rust-service");
@@ -85,17 +96,23 @@ const cases: readonly BenchmarkCase[] = [
 	{ title: "Tinylicious", slug: "tinylicious", backend: "tinylicious" },
 ];
 
-for (const benchmarkCase of cases) {
-	benchmarkIt({
-		title: benchmarkCase.title,
-		category: "SharedTree service",
-		correctnessTimeoutMs: 120_000,
-		run: async () => runCase(benchmarkCase),
-	});
-}
+const configuration = readConfiguration();
 
-async function runCase(benchmarkCase: BenchmarkCase): Promise<CollectedData> {
-	const configuration = readConfiguration();
+describe(configurationSuiteName(configuration), () => {
+	for (const benchmarkCase of cases) {
+		benchmarkIt({
+			title: benchmarkCase.title,
+			category: "SharedTree service",
+			correctnessTimeoutMs: 120_000,
+			run: async () => runCase(benchmarkCase, configuration),
+		});
+	}
+});
+
+async function runCase(
+	benchmarkCase: BenchmarkCase,
+	configuration: BenchmarkConfiguration,
+): Promise<CollectedData> {
 	const profilePath = profilePathForCase(benchmarkCase.slug);
 	if (profilePath !== undefined) {
 		await mkdir(path.dirname(profilePath), { recursive: true });
@@ -161,16 +178,7 @@ async function runCase(benchmarkCase: BenchmarkCase): Promise<CollectedData> {
 	}
 }
 
-function readConfiguration(): {
-	readonly repetitions: number;
-	readonly operations: number;
-	readonly warmup: number;
-	readonly workload: "batched" | "turns" | "messages";
-	readonly operationsPerTurn: number | undefined;
-	readonly synchronizePerTurn: boolean;
-	readonly browserTimeoutMilliseconds: number;
-	readonly skipBuild: boolean;
-} {
+function readConfiguration(): BenchmarkConfiguration {
 	const performance = currentBenchmarkMode === BenchmarkMode.Performance;
 	const workload = process.env.BENCHMARK_WORKLOAD ?? "batched";
 	if (workload !== "batched" && workload !== "turns" && workload !== "messages") {
@@ -184,9 +192,9 @@ function readConfiguration(): {
 		throw new Error("per-turn synchronization requires BENCHMARK_OPERATIONS_PER_TURN");
 	}
 	return {
-		repetitions: positiveInteger("BENCHMARK_REPETITIONS", performance ? 8 : 1),
-		operations: positiveInteger("BENCHMARK_OPERATIONS", performance ? 1_000 : 10),
-		warmup: nonnegativeInteger("BENCHMARK_WARMUP", performance ? 100 : 1),
+		repetitions: positiveInteger("BENCHMARK_REPETITIONS", performance ? 3 : 1),
+		operations: positiveInteger("BENCHMARK_OPERATIONS", performance ? 250 : 10),
+		warmup: nonnegativeInteger("BENCHMARK_WARMUP", performance ? 10 : 1),
 		workload,
 		operationsPerTurn,
 		synchronizePerTurn,
@@ -196,6 +204,10 @@ function readConfiguration(): {
 		),
 		skipBuild: booleanEnvironmentVariable("BENCHMARK_SKIP_BUILD") ?? false,
 	};
+}
+
+function configurationSuiteName(configuration: BenchmarkConfiguration): string {
+	return `SharedTree service (workload=${configuration.workload}, operations=${configuration.operations}, warmup=${configuration.warmup}, operationsPerTurn=${configuration.operationsPerTurn ?? "unbounded"}, synchronizePerTurn=${configuration.synchronizePerTurn}, repetitions=${configuration.repetitions})`;
 }
 
 function buildPrerequisites(benchmarkCase: BenchmarkCase): void {

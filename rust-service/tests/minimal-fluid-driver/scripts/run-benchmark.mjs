@@ -159,9 +159,9 @@ Selection:
 
 Workload:
 	--workload <name>            batched, turns, or messages (default: batched, 10 edits/turn)
-  --repetitions <count>        Browser samples per case (default: 8)
-  --operations <count>         Measured edits per sample (default: 1000)
-  --warmup <count>             Warmup edits per sample (default: 100)
+	--repetitions <count>        Browser samples per case (default: 3)
+	--operations <count>         Measured edits per sample (default: 250)
+	--warmup <count>             Warmup edits per sample (default: 10)
   --operations-per-turn <n>    Override edits per JavaScript turn
 	--synchronize-per-turn       Wait for observer convergence after every turn (batched default)
   --no-synchronize-per-turn    Disable per-turn convergence
