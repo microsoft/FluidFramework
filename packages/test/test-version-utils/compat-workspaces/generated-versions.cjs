@@ -9,7 +9,7 @@
 // .cjs (CommonJS) so it can be loaded synchronously via createRequire() in versionUtils.ts.
 module.exports = {
 	"versions": [
-		"2.117.0",
+		"2.118.1",
 		"2.103.0",
 		"2.93.0",
 		"2.83.0",
