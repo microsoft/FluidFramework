@@ -107,7 +107,9 @@ impl SubmissionId {
 /// A document-local canonical event position with its protocol encoding.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PositionToken {
+    /// One-based canonical event ordinal.
     ordinal: u64,
+    /// Stable big-endian protocol encoding of `ordinal`.
     encoded: Bytes,
 }
 
