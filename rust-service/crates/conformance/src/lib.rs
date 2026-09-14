@@ -63,14 +63,14 @@ where
     read_is_finite(&make_stream).await;
     read_after_head_is_empty(&make_stream).await;
     readers_are_independent_and_cancellable(&make_stream).await;
-    positions_are_generation_scoped(&make_stream).await;
-    snapshot_positions_are_generation_scoped(&make_stream).await;
+    positions_require_committed_ordinals(&make_stream).await;
+    snapshot_positions_require_committed_ordinals(&make_stream).await;
     snapshots_require_lineage_and_monotonicity(&make_stream).await;
     snapshot_recovery_reads_only_subsequent_records(&make_stream).await;
     deterministic_reference_model_trace(&make_stream).await;
 }
 
-/// Runs position-codec laws against fresh stream generations.
+/// Runs position-codec round-trip and malformed-token laws.
 ///
 /// `malformed_token` must be a token the implementation documents as malformed.
 ///
@@ -104,16 +104,6 @@ where
         .decode_position(malformed_token)
         .expect_err("malformed token should be rejected");
     assert_eq!(malformed.kind(), ErrorKind::InvalidPosition);
-
-    let second = make_stream();
-    let foreign_decode = second
-        .decode_position(&token)
-        .expect_err("foreign-generation token should be rejected");
-    assert_eq!(foreign_decode.kind(), ErrorKind::InvalidPosition);
-    let foreign_encode = second
-        .encode_position(&receipt.position)
-        .expect_err("foreign-generation position should be rejected");
-    assert_eq!(foreign_encode.kind(), ErrorKind::InvalidPosition);
 }
 
 /// Compares a deterministic mixed append/read/snapshot trace with the reference model.
@@ -363,8 +353,8 @@ where
     );
 }
 
-/// Verifies that positions cannot be reused across fresh stream generations.
-async fn positions_are_generation_scoped<S, F>(make_stream: &F)
+/// Verifies that a position must identify a committed ordinal.
+async fn positions_require_committed_ordinals<S, F>(make_stream: &F)
 where
     S: AppendStream,
     <S as AppendStream>::Error: Debug,
@@ -377,7 +367,7 @@ where
         .await
         .expect("append");
     let Err(error) = second.read(Some(&receipt.position)).await else {
-        panic!("position from another stream generation was accepted");
+        panic!("position beyond the committed head was accepted");
     };
     assert!(matches!(
         error.kind(),
@@ -385,8 +375,8 @@ where
     ));
 }
 
-/// Verifies that snapshot publication rejects positions from another generation.
-async fn snapshot_positions_are_generation_scoped<S, F>(make_stream: &F)
+/// Verifies that snapshot publication rejects uncommitted positions.
+async fn snapshot_positions_require_committed_ordinals<S, F>(make_stream: &F)
 where
     S: AppendStream
         + SnapshotStore<Position = <S as AppendStream>::Position, Error = <S as AppendStream>::Error>,
@@ -409,7 +399,7 @@ where
             None,
         )
         .await
-        .expect_err("foreign snapshot position should be rejected");
+        .expect_err("uncommitted snapshot position should be rejected");
     assert!(matches!(
         error.kind(),
         ErrorKind::InvalidPosition | ErrorKind::StalePosition

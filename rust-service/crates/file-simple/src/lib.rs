@@ -10,11 +10,7 @@ use std::{
     fs::{self, File, OpenOptions},
     io::{BufWriter, Read, Write},
     path::Path,
-    sync::{
-        Arc, Mutex, MutexGuard,
-        atomic::{AtomicU64, Ordering},
-    },
-    time::{SystemTime, UNIX_EPOCH},
+    sync::{Arc, Mutex, MutexGuard},
 };
 
 use async_trait::async_trait;
@@ -27,22 +23,20 @@ use snapshotted_stream_core::{
 };
 use thiserror::Error;
 
-const STREAM_MAGIC: [u8; 8] = *b"SSTRM001";
-const SNAPSHOT_MAGIC: [u8; 8] = *b"SSNAP001";
-const HEADER_LEN: usize = 24;
+const STREAM_MAGIC: [u8; 8] = *b"SSTRM002";
+const SNAPSHOT_MAGIC: [u8; 8] = *b"SSNAP002";
+const HEADER_LEN: usize = 8;
 const STREAM_FILE: &str = "stream.log";
 const SNAPSHOT_FILE: &str = "snapshots.log";
-static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
 
-/// An opaque ordinal tied to the generation persisted in a file store.
+/// An opaque one-based record ordinal within a file stream.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FilePosition {
-    generation: u128,
     ordinal: u64,
 }
 
 impl FilePosition {
-    /// Returns the one-based record index within this position's generation.
+    /// Returns the one-based record index within the file stream.
     #[must_use]
     pub const fn ordinal(&self) -> u64 {
         self.ordinal
@@ -58,9 +52,6 @@ pub enum FileError {
     /// Persisted bytes violate the file format or internal range constraints.
     #[error("stored data is corrupt: {0}")]
     Corrupt(&'static str),
-    /// A position belongs to another persisted stream generation.
-    #[error("position belongs to another stream generation")]
-    ForeignPosition,
     /// A position does not identify a committed record.
     #[error("position is beyond the committed head")]
     InvalidPosition,
@@ -80,7 +71,7 @@ impl ClassifiedError for FileError {
         match self {
             Self::Io(_) | Self::Poisoned => ErrorKind::Unavailable,
             Self::Corrupt(_) => ErrorKind::Corrupt,
-            Self::ForeignPosition | Self::InvalidPosition => ErrorKind::InvalidPosition,
+            Self::InvalidPosition => ErrorKind::InvalidPosition,
             Self::SnapshotConflict | Self::SnapshotRegression => ErrorKind::Conflict,
         }
     }
@@ -108,8 +99,6 @@ struct State {
 /// Concurrent independent opens of the same directory are unsupported.
 #[derive(Clone, Debug)]
 pub struct FileStream {
-    /// Persistent identity stored in both file headers.
-    generation: u128,
     /// Parsed state and writers shared by cloned handles.
     state: Arc<Mutex<State>>,
 }
@@ -128,22 +117,20 @@ impl FileStream {
         let stream_path = directory.as_ref().join(STREAM_FILE);
         let snapshot_path = directory.as_ref().join(SNAPSHOT_FILE);
 
-        let (generation, records) = if stream_path.exists() {
+        let records = if stream_path.exists() {
             parse_stream(&read_all(&stream_path)?)?
         } else {
-            let generation = new_generation()?;
-            write_header(&stream_path, STREAM_MAGIC, generation)?;
-            (generation, Vec::new())
+            write_header(&stream_path, STREAM_MAGIC)?;
+            Vec::new()
         };
         let (latest_snapshot, next_snapshot_id) = if snapshot_path.exists() {
-            parse_snapshots(&read_all(&snapshot_path)?, generation, records.len())?
+            parse_snapshots(&read_all(&snapshot_path)?, records.len())?
         } else {
-            write_header(&snapshot_path, SNAPSHOT_MAGIC, generation)?;
+            write_header(&snapshot_path, SNAPSHOT_MAGIC)?;
             (None, 1)
         };
 
         Ok(Self {
-            generation,
             state: Arc::new(Mutex::new(State {
                 records,
                 stream_writer: append_writer(&stream_path)?,
@@ -159,11 +146,8 @@ impl FileStream {
         self.state.lock().map_err(|_| FileError::Poisoned)
     }
 
-    /// Rejects foreign, zero, and beyond-head positions.
-    fn validate_position(&self, position: &FilePosition, len: usize) -> Result<(), FileError> {
-        if position.generation != self.generation {
-            return Err(FileError::ForeignPosition);
-        }
+    /// Rejects zero and beyond-head positions.
+    fn validate_position(position: &FilePosition, len: usize) -> Result<(), FileError> {
         let len = u64::try_from(len).map_err(|_| FileError::InvalidPosition)?;
         if position.ordinal == 0 || position.ordinal > len {
             return Err(FileError::InvalidPosition);
@@ -171,17 +155,14 @@ impl FileStream {
         Ok(())
     }
 
-    /// Resolves a one-based event ordinal in this stream generation.
+    /// Resolves a one-based event ordinal in this stream.
     ///
     /// # Errors
     ///
     /// Returns [`FileError::InvalidPosition`] when the ordinal is not committed.
     pub fn position_at(&self, ordinal: u64) -> Result<FilePosition, FileError> {
-        let position = FilePosition {
-            generation: self.generation,
-            ordinal,
-        };
-        self.validate_position(&position, self.state()?.records.len())?;
+        let position = FilePosition { ordinal };
+        Self::validate_position(&position, self.state()?.records.len())?;
         Ok(position)
     }
 }
@@ -203,10 +184,7 @@ impl AppendStream for FileStream {
         let ordinal = u64::try_from(state.records.len())
             .map_err(|_| FileError::Corrupt("record count exceeds position range"))?;
         Ok(AppendReceipt {
-            position: FilePosition {
-                generation: self.generation,
-                ordinal,
-            },
+            position: FilePosition { ordinal },
             durability: Durability::Buffered,
         })
     }
@@ -218,7 +196,7 @@ impl AppendStream for FileStream {
         let state = self.state()?;
         let start = match after {
             Some(position) => {
-                self.validate_position(position, state.records.len())?;
+                Self::validate_position(position, state.records.len())?;
                 usize::try_from(position.ordinal).map_err(|_| FileError::InvalidPosition)?
             }
             None => 0,
@@ -226,7 +204,6 @@ impl AppendStream for FileStream {
         let end = state.records.len();
         drop(state);
 
-        let generation = self.generation;
         let shared = Arc::clone(&self.state);
         Ok(Box::pin(stream::unfold(start, move |index| {
             let shared = Arc::clone(&shared);
@@ -242,10 +219,7 @@ impl AppendStream for FileStream {
                             FileError::Corrupt("record count exceeds position range")
                         })?;
                         Ok(ReadRecord {
-                            position: FilePosition {
-                                generation,
-                                ordinal,
-                            },
+                            position: FilePosition { ordinal },
                             payload: state.records[index].clone(),
                         })
                     });
@@ -258,10 +232,7 @@ impl AppendStream for FileStream {
         let len = self.state()?.records.len();
         let ordinal = u64::try_from(len)
             .map_err(|_| FileError::Corrupt("record count exceeds position range"))?;
-        Ok((ordinal > 0).then_some(FilePosition {
-            generation: self.generation,
-            ordinal,
-        }))
+        Ok((ordinal > 0).then_some(FilePosition { ordinal }))
     }
 }
 
@@ -284,7 +255,7 @@ impl SnapshotStore for FileStream {
             return Err(FileError::SnapshotConflict);
         }
         if let SnapshotPosition::At(position) = &snapshot.includes_through {
-            self.validate_position(position, state.records.len())?;
+            Self::validate_position(position, state.records.len())?;
         }
         let previous_ordinal = state
             .latest_snapshot
@@ -328,17 +299,6 @@ fn snapshot_id(value: u64) -> SnapshotId {
     SnapshotId::from_bytes(Bytes::copy_from_slice(&value.to_be_bytes()))
 }
 
-/// Produces a process-local generation candidate for a newly created store.
-fn new_generation() -> Result<u128, FileError> {
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_err(|_| FileError::Corrupt("system clock is before the Unix epoch"))?
-        .as_nanos();
-    let process = u128::from(std::process::id()) << 64;
-    let sequence = u128::from(NEXT_GENERATION.fetch_add(1, Ordering::Relaxed));
-    Ok(timestamp ^ process ^ sequence)
-}
-
 /// Reads a complete store file for strict validation during open.
 fn read_all(path: &Path) -> Result<Vec<u8>, FileError> {
     let mut bytes = Vec::new();
@@ -347,10 +307,9 @@ fn read_all(path: &Path) -> Result<Vec<u8>, FileError> {
 }
 
 /// Creates and flushes a store file header.
-fn write_header(path: &Path, magic: [u8; 8], generation: u128) -> Result<(), FileError> {
+fn write_header(path: &Path, magic: [u8; 8]) -> Result<(), FileError> {
     let mut writer = BufWriter::new(File::create(path)?);
     writer.write_all(&magic)?;
-    writer.write_all(&generation.to_be_bytes())?;
     writer.flush()?;
     Ok(())
 }
@@ -360,43 +319,34 @@ fn append_writer(path: &Path) -> Result<BufWriter<File>, FileError> {
     Ok(BufWriter::new(OpenOptions::new().append(true).open(path)?))
 }
 
-/// Validates a file header and returns its generation.
-fn parse_header(bytes: &[u8], magic: [u8; 8]) -> Result<u128, FileError> {
+/// Validates a file header.
+fn parse_header(bytes: &[u8], magic: [u8; 8]) -> Result<(), FileError> {
     if bytes.len() < HEADER_LEN {
         return Err(FileError::Corrupt("incomplete file header"));
     }
     if bytes[..8] != magic {
         return Err(FileError::Corrupt("invalid file header"));
     }
-    Ok(u128::from_be_bytes(
-        bytes[8..HEADER_LEN]
-            .try_into()
-            .map_err(|_| FileError::Corrupt("invalid generation"))?,
-    ))
+    Ok(())
 }
 
 /// Strictly parses every length-framed stream record.
-fn parse_stream(bytes: &[u8]) -> Result<(u128, Vec<Bytes>), FileError> {
-    let generation = parse_header(bytes, STREAM_MAGIC)?;
+fn parse_stream(bytes: &[u8]) -> Result<Vec<Bytes>, FileError> {
+    parse_header(bytes, STREAM_MAGIC)?;
     let mut cursor = HEADER_LEN;
     let mut records = Vec::new();
     while cursor < bytes.len() {
         records.push(Bytes::copy_from_slice(read_frame(bytes, &mut cursor)?));
     }
-    Ok((generation, records))
+    Ok(records)
 }
 
-/// Strictly parses snapshots and validates generation, IDs, and monotonic positions.
+/// Strictly parses snapshots and validates IDs and monotonic positions.
 fn parse_snapshots(
     bytes: &[u8],
-    generation: u128,
     record_count: usize,
 ) -> Result<(Option<PublishedSnapshot<FilePosition>>, u64), FileError> {
-    if parse_header(bytes, SNAPSHOT_MAGIC)? != generation {
-        return Err(FileError::Corrupt(
-            "snapshot generation does not match stream",
-        ));
-    }
+    parse_header(bytes, SNAPSHOT_MAGIC)?;
     let record_count = u64::try_from(record_count)
         .map_err(|_| FileError::Corrupt("record count exceeds position range"))?;
     let mut cursor = HEADER_LEN;
@@ -419,10 +369,7 @@ fn parse_snapshots(
                 includes_through: if ordinal == 0 {
                     SnapshotPosition::Initial
                 } else {
-                    SnapshotPosition::At(FilePosition {
-                        generation,
-                        ordinal,
-                    })
+                    SnapshotPosition::At(FilePosition { ordinal })
                 },
                 payload,
             },
@@ -577,7 +524,7 @@ mod tests {
             + RECORD_COUNT * (8 + u64::try_from(PAYLOAD_SIZE).unwrap());
         assert_eq!(stream_bytes, expected_stream_bytes);
         assert_eq!(snapshot_bytes, u64::try_from(HEADER_LEN).unwrap());
-        assert_eq!(stream_bytes + snapshot_bytes, 720_048);
+        assert_eq!(stream_bytes + snapshot_bytes, 720_016);
         let reopened = FileStream::open(&directory).unwrap();
         assert_eq!(
             reopened.head().await.unwrap().unwrap().ordinal,
