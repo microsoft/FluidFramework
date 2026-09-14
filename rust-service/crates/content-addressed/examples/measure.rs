@@ -10,7 +10,9 @@ use snapshotted_stream_content_addressed::{
 
 const LARGE_BYTES: u64 = 16 * 1024 * 1024;
 
+/// A zero-allocation source that emits a fixed number of deterministic bytes.
 struct GeneratedReader {
+    /// Bytes that have not yet been emitted.
     remaining: u64,
 }
 
@@ -25,6 +27,7 @@ impl Read for GeneratedReader {
     }
 }
 
+/// Measures persisted sizes and process high-water memory for representative blobs.
 fn main() {
     let root = measurement_directory();
     let _ = fs::remove_dir_all(&root);
@@ -84,10 +87,12 @@ fn main() {
     fs::remove_dir_all(root).expect("remove measurement store");
 }
 
+/// Returns the process-specific temporary store used by this measurement.
 fn measurement_directory() -> PathBuf {
     std::env::temp_dir().join(format!("content-addressed-measure-{}", std::process::id()))
 }
 
+/// Reads Linux's process high-water resident memory, or zero when unavailable.
 fn resident_high_water_kib() -> u64 {
     fs::read_to_string("/proc/self/status")
         .ok()

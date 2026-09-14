@@ -11,25 +11,32 @@ use snapshotted_stream_core::{
 
 const MODEL_TRACE_SEED: u64 = 0x5eed_0002_d15c_a11e;
 
+/// A deterministic oracle for append, snapshot, and recovery results.
 #[derive(Debug, Default)]
 struct ReferenceModel {
+    /// Payloads in commit order.
     records: Vec<Bytes>,
+    /// The included record count and payload of the latest snapshot.
     snapshot: Option<(usize, Bytes)>,
 }
 
 impl ReferenceModel {
+    /// Commits one payload to the model.
     fn append(&mut self, payload: Bytes) {
         self.records.push(payload);
     }
 
+    /// Returns model records after a zero-based included-record count.
     fn read_after(&self, after: Option<usize>) -> &[Bytes] {
         &self.records[after.unwrap_or(0)..]
     }
 
+    /// Replaces the model's latest snapshot.
     fn publish(&mut self, includes_through: usize, payload: Bytes) {
         self.snapshot = Some((includes_through, payload));
     }
 
+    /// Returns records that must be replayed after the latest snapshot.
     fn recover(&self) -> Vec<Bytes> {
         let includes_through = self
             .snapshot
@@ -109,6 +116,7 @@ where
     assert_eq!(foreign_encode.kind(), ErrorKind::InvalidPosition);
 }
 
+/// Compares a deterministic mixed append/read/snapshot trace with the reference model.
 async fn deterministic_reference_model_trace<S, F>(make_stream: &F)
 where
     S: AppendStream
@@ -205,6 +213,7 @@ where
     );
 }
 
+/// Verifies that concurrent commits form one complete prefix without gaps or loss.
 async fn concurrent_appends_are_contiguous<S, F>(make_stream: &F)
 where
     S: AppendStream,
@@ -241,6 +250,7 @@ where
     assert_eq!(concurrent_values, (0_u8..32).collect::<Vec<_>>());
 }
 
+/// Verifies commit order, empty-record preservation, and exclusive resume positions.
 async fn append_order_and_boundaries<S, F>(make_stream: &F)
 where
     S: AppendStream,
@@ -276,6 +286,7 @@ where
     assert_eq!(records[1].payload, Bytes::from_static(b"third"));
 }
 
+/// Verifies that a reader ends at the head captured when reading begins.
 async fn read_is_finite<S, F>(make_stream: &F)
 where
     S: AppendStream,
@@ -297,6 +308,7 @@ where
     assert_eq!(records[0].payload, Bytes::from_static(b"captured"));
 }
 
+/// Verifies that resuming from the current head yields no records.
 async fn read_after_head_is_empty<S, F>(make_stream: &F)
 where
     S: AppendStream,
@@ -319,6 +331,7 @@ where
     assert!(records.is_empty());
 }
 
+/// Verifies that dropping one reader cannot cancel or mutate another reader.
 async fn readers_are_independent_and_cancellable<S, F>(make_stream: &F)
 where
     S: AppendStream,
@@ -350,6 +363,7 @@ where
     );
 }
 
+/// Verifies that positions cannot be reused across fresh stream generations.
 async fn positions_are_generation_scoped<S, F>(make_stream: &F)
 where
     S: AppendStream,
@@ -371,6 +385,7 @@ where
     ));
 }
 
+/// Verifies that snapshot publication rejects positions from another generation.
 async fn snapshot_positions_are_generation_scoped<S, F>(make_stream: &F)
 where
     S: AppendStream
@@ -401,6 +416,7 @@ where
     ));
 }
 
+/// Verifies optimistic parent matching and monotonic snapshot positions.
 async fn snapshots_require_lineage_and_monotonicity<S, F>(make_stream: &F)
 where
     S: AppendStream
@@ -463,6 +479,7 @@ where
     assert_eq!(regression.kind(), ErrorKind::Conflict);
 }
 
+/// Verifies that recovery replays only records after the published snapshot.
 async fn snapshot_recovery_reads_only_subsequent_records<S, F>(make_stream: &F)
 where
     S: AppendStream

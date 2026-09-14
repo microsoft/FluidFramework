@@ -12,9 +12,11 @@ use snapshotted_stream_content_addressed::{
     SummaryManifest,
 };
 
+/// A temporary store root removed when its test completes.
 struct TestDirectory(PathBuf);
 
 impl TestDirectory {
+    /// Creates a process-unique directory carrying the test label.
     fn new(label: &str) -> Self {
         static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
         let sequence = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
@@ -39,6 +41,7 @@ impl Drop for TestDirectory {
     }
 }
 
+/// Builds the canonical one-entry manifest used by publication tests.
 fn manifest(blob: ContentDigest) -> SummaryManifest {
     SummaryManifest {
         entries: vec![SummaryEntry {
@@ -118,13 +121,18 @@ fn bounded_streaming_round_trips_small_and_large_blobs_after_reopen() {
     );
 }
 
+/// A deterministic source that asserts each read stays within a memory bound.
 struct BoundedGeneratedReader {
+    /// Bytes not yet emitted.
     remaining: usize,
+    /// Total bytes emitted for the final completeness assertion.
     bytes_read: usize,
+    /// Largest read request accepted from the store.
     maximum_request: usize,
 }
 
 impl BoundedGeneratedReader {
+    /// Creates a source with a fixed length and maximum accepted request size.
     fn new(length: usize, maximum_request: usize) -> Self {
         Self {
             remaining: length,
@@ -383,6 +391,7 @@ fn summary_faults_reopen_to_absent_or_fully_valid_manifest() {
     }
 }
 
+/// Independently encodes the one-entry fixture to derive its expected digest.
 fn expected_summary_digest(summary: &SummaryManifest) -> ContentDigest {
     let entry = &summary.entries[0];
     let mut encoded = Vec::new();

@@ -42,6 +42,7 @@ pub struct FilePosition {
 }
 
 impl FilePosition {
+    /// Returns the one-based record index within this position's generation.
     #[must_use]
     pub const fn ordinal(&self) -> u64 {
         self.ordinal
@@ -51,18 +52,25 @@ impl FilePosition {
 /// Errors returned by the minimal file implementation.
 #[derive(Debug, Error)]
 pub enum FileError {
+    /// A filesystem operation failed.
     #[error("file I/O failed: {0}")]
     Io(#[from] std::io::Error),
+    /// Persisted bytes violate the file format or internal range constraints.
     #[error("stored data is corrupt: {0}")]
     Corrupt(&'static str),
+    /// A position belongs to another persisted stream generation.
     #[error("position belongs to another stream generation")]
     ForeignPosition,
+    /// A position does not identify a committed record.
     #[error("position is beyond the committed head")]
     InvalidPosition,
+    /// The supplied expected parent is not the latest snapshot.
     #[error("snapshot parent does not match the latest snapshot")]
     SnapshotConflict,
+    /// A snapshot includes fewer records than its predecessor.
     #[error("snapshot position regresses behind the latest snapshot")]
     SnapshotRegression,
+    /// Another thread panicked while holding the store mutex.
     #[error("file store mutex was poisoned")]
     Poisoned,
 }
@@ -78,12 +86,18 @@ impl ClassifiedError for FileError {
     }
 }
 
+/// Parsed records and append handles protected by the store mutex.
 #[derive(Debug)]
 struct State {
+    /// Records reconstructed at open and extended after successful flushes.
     records: Vec<Bytes>,
+    /// Append-only buffered writer for stream records.
     stream_writer: BufWriter<File>,
+    /// Latest snapshot reconstructed from the snapshot log.
     latest_snapshot: Option<PublishedSnapshot<FilePosition>>,
+    /// Contiguous numeric identity for the next snapshot.
     next_snapshot_id: u64,
+    /// Append-only buffered writer for snapshot records.
     snapshot_writer: BufWriter<File>,
 }
 
@@ -94,7 +108,9 @@ struct State {
 /// Concurrent independent opens of the same directory are unsupported.
 #[derive(Clone, Debug)]
 pub struct FileStream {
+    /// Persistent identity stored in both file headers.
     generation: u128,
+    /// Parsed state and writers shared by cloned handles.
     state: Arc<Mutex<State>>,
 }
 
@@ -138,10 +154,12 @@ impl FileStream {
         })
     }
 
+    /// Acquires the shared state or classifies mutex poisoning.
     fn state(&self) -> Result<MutexGuard<'_, State>, FileError> {
         self.state.lock().map_err(|_| FileError::Poisoned)
     }
 
+    /// Rejects foreign, zero, and beyond-head positions.
     fn validate_position(&self, position: &FilePosition, len: usize) -> Result<(), FileError> {
         if position.generation != self.generation {
             return Err(FileError::ForeignPosition);
@@ -297,6 +315,7 @@ impl SnapshotStore for FileStream {
     }
 }
 
+/// Converts an initial or positioned snapshot to its persisted ordinal.
 fn snapshot_ordinal(snapshot: &Snapshot<FilePosition>) -> u64 {
     match &snapshot.includes_through {
         SnapshotPosition::Initial => 0,
@@ -304,10 +323,12 @@ fn snapshot_ordinal(snapshot: &Snapshot<FilePosition>) -> u64 {
     }
 }
 
+/// Encodes a numeric snapshot identity as opaque bytes.
 fn snapshot_id(value: u64) -> SnapshotId {
     SnapshotId::from_bytes(Bytes::copy_from_slice(&value.to_be_bytes()))
 }
 
+/// Produces a process-local generation candidate for a newly created store.
 fn new_generation() -> Result<u128, FileError> {
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -318,12 +339,14 @@ fn new_generation() -> Result<u128, FileError> {
     Ok(timestamp ^ process ^ sequence)
 }
 
+/// Reads a complete store file for strict validation during open.
 fn read_all(path: &Path) -> Result<Vec<u8>, FileError> {
     let mut bytes = Vec::new();
     File::open(path)?.read_to_end(&mut bytes)?;
     Ok(bytes)
 }
 
+/// Creates and flushes a store file header.
 fn write_header(path: &Path, magic: [u8; 8], generation: u128) -> Result<(), FileError> {
     let mut writer = BufWriter::new(File::create(path)?);
     writer.write_all(&magic)?;
@@ -332,10 +355,12 @@ fn write_header(path: &Path, magic: [u8; 8], generation: u128) -> Result<(), Fil
     Ok(())
 }
 
+/// Opens a buffered append handle for an initialized store file.
 fn append_writer(path: &Path) -> Result<BufWriter<File>, FileError> {
     Ok(BufWriter::new(OpenOptions::new().append(true).open(path)?))
 }
 
+/// Validates a file header and returns its generation.
 fn parse_header(bytes: &[u8], magic: [u8; 8]) -> Result<u128, FileError> {
     if bytes.len() < HEADER_LEN {
         return Err(FileError::Corrupt("incomplete file header"));
@@ -350,6 +375,7 @@ fn parse_header(bytes: &[u8], magic: [u8; 8]) -> Result<u128, FileError> {
     ))
 }
 
+/// Strictly parses every length-framed stream record.
 fn parse_stream(bytes: &[u8]) -> Result<(u128, Vec<Bytes>), FileError> {
     let generation = parse_header(bytes, STREAM_MAGIC)?;
     let mut cursor = HEADER_LEN;
@@ -360,6 +386,7 @@ fn parse_stream(bytes: &[u8]) -> Result<(u128, Vec<Bytes>), FileError> {
     Ok((generation, records))
 }
 
+/// Strictly parses snapshots and validates generation, IDs, and monotonic positions.
 fn parse_snapshots(
     bytes: &[u8],
     generation: u128,
@@ -408,6 +435,7 @@ fn parse_snapshots(
     Ok((latest, expected_id))
 }
 
+/// Reads one big-endian integer while advancing a checked cursor.
 fn read_u64(bytes: &[u8], cursor: &mut usize, error: &'static str) -> Result<u64, FileError> {
     let end = cursor.checked_add(8).ok_or(FileError::Corrupt(error))?;
     let value = bytes.get(*cursor..end).ok_or(FileError::Corrupt(error))?;
@@ -417,6 +445,7 @@ fn read_u64(bytes: &[u8], cursor: &mut usize, error: &'static str) -> Result<u64
     ))
 }
 
+/// Reads one length-prefixed frame without accepting an incomplete payload.
 fn read_frame<'a>(bytes: &'a [u8], cursor: &mut usize) -> Result<&'a [u8], FileError> {
     let length = read_u64(bytes, cursor, "incomplete frame header")?;
     let length = usize::try_from(length).map_err(|_| FileError::Corrupt("frame is too large"))?;
@@ -430,6 +459,7 @@ fn read_frame<'a>(bytes: &'a [u8], cursor: &mut usize) -> Result<&'a [u8], FileE
     Ok(payload)
 }
 
+/// Writes one big-endian length-prefixed payload.
 fn write_frame(writer: &mut impl Write, payload: &[u8]) -> Result<(), FileError> {
     let length = u64::try_from(payload.len())
         .map_err(|_| FileError::Corrupt("payload exceeds frame length range"))?;
@@ -438,6 +468,7 @@ fn write_frame(writer: &mut impl Write, payload: &[u8]) -> Result<(), FileError>
     Ok(())
 }
 
+/// Writes one snapshot record in the persisted log format.
 fn write_snapshot(
     writer: &mut impl Write,
     id: u64,
@@ -464,6 +495,7 @@ mod tests {
 
     static NEXT_TEST_DIRECTORY: AtomicU64 = AtomicU64::new(1);
 
+    /// Creates a process-unique path for one file-store test.
     fn test_directory(label: &str) -> PathBuf {
         let id = NEXT_TEST_DIRECTORY.fetch_add(1, Ordering::Relaxed);
         std::env::temp_dir().join(format!(

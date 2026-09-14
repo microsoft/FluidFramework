@@ -21,29 +21,39 @@ use tokio::sync::Mutex;
 
 static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
 
+/// An opaque one-based position scoped to one in-memory stream generation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MemoryPosition {
+    /// Identity of the stream instance that created the position.
     generation: u64,
+    /// One-based record index within the generation.
     ordinal: u64,
 }
 
 impl MemoryPosition {
+    /// Returns the one-based record index within this position's generation.
     #[must_use]
     pub const fn ordinal(&self) -> u64 {
         self.ordinal
     }
 }
 
+/// Failures produced by the in-memory stream and snapshot store.
 #[derive(Debug, Error)]
 pub enum MemoryError {
+    /// A position or token belongs to a different stream instance.
     #[error("position belongs to another stream generation")]
     ForeignPosition,
+    /// A position does not identify a committed record.
     #[error("position is beyond the committed head")]
     InvalidPosition,
+    /// A position token has the wrong length or encodes ordinal zero.
     #[error("position token is malformed")]
     InvalidPositionToken,
+    /// The supplied expected parent is not the latest snapshot.
     #[error("snapshot parent does not match the latest snapshot")]
     SnapshotConflict,
+    /// A snapshot includes fewer records than its predecessor.
     #[error("snapshot position regresses behind the latest snapshot")]
     SnapshotRegression,
 }
@@ -59,16 +69,23 @@ impl ClassifiedError for MemoryError {
     }
 }
 
+/// Mutable state shared by cloned handles to one generation.
 #[derive(Debug)]
 struct State {
+    /// Committed payloads in append order.
     records: Vec<Bytes>,
+    /// The latest published snapshot, if any.
     latest_snapshot: Option<PublishedSnapshot<MemoryPosition>>,
+    /// The numeric identity assigned to the next snapshot.
     next_snapshot_id: u64,
 }
 
+/// A cloneable, process-local implementation of append and snapshot contracts.
 #[derive(Clone, Debug)]
 pub struct MemoryStream {
+    /// Identity shared by handles cloned from this stream.
     generation: u64,
+    /// Append records and snapshot state shared by cloned handles.
     state: Arc<Mutex<State>>,
 }
 
@@ -79,6 +96,7 @@ impl Default for MemoryStream {
 }
 
 impl MemoryStream {
+    /// Creates an empty stream with a fresh generation identity.
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -91,6 +109,7 @@ impl MemoryStream {
         }
     }
 
+    /// Rejects foreign, zero, and beyond-head positions.
     fn validate_position(&self, position: &MemoryPosition, len: usize) -> Result<(), MemoryError> {
         if position.generation != self.generation {
             return Err(MemoryError::ForeignPosition);
@@ -281,18 +300,25 @@ mod tests {
 
     use super::*;
 
+    /// Selects whether an injected ambiguous append fails before or after commit.
     #[derive(Clone, Copy, Debug)]
     enum AmbiguousAppend {
+        /// Return ambiguity without committing the payload.
         BeforeCommit,
+        /// Commit the payload before returning ambiguity.
         AfterCommit,
     }
 
+    /// Error surface used to exercise client reconciliation and reader interruption.
     #[derive(Debug, thiserror::Error)]
     enum FaultError {
+        /// A failure from the underlying in-memory implementation.
         #[error(transparent)]
         Memory(#[from] MemoryError),
+        /// An append whose commit outcome is deliberately hidden.
         #[error("append outcome is ambiguous")]
         Ambiguous,
+        /// A reader that becomes unavailable after yielding one record.
         #[error("reader was interrupted")]
         Interrupted,
     }
@@ -307,14 +333,19 @@ mod tests {
         }
     }
 
+    /// A test adapter that injects one append or read failure mode.
     #[derive(Clone, Debug)]
     struct FaultingMemoryStream {
+        /// The implementation under test.
         inner: MemoryStream,
+        /// Optional ambiguous outcome for every append through this adapter.
         ambiguous_append: Option<AmbiguousAppend>,
+        /// Shared one-shot flag that interrupts the next reader.
         interrupt_next_read: Arc<AtomicBool>,
     }
 
     impl FaultingMemoryStream {
+        /// Wraps a stream with a selected ambiguous append outcome.
         fn ambiguous(inner: MemoryStream, outcome: AmbiguousAppend) -> Self {
             Self {
                 inner,
@@ -323,6 +354,7 @@ mod tests {
             }
         }
 
+        /// Wraps a stream so the next reader fails after its first record.
         fn interrupt_next_read(inner: MemoryStream) -> Self {
             Self {
                 inner,

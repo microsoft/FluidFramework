@@ -53,6 +53,7 @@ impl ContentDigest {
         Ok(Self(bytes))
     }
 
+    /// Finalizes an incremental SHA-256 computation.
     fn from_hash(hash: Sha256) -> Self {
         Self(hash.finalize().into())
     }
@@ -82,6 +83,7 @@ impl FromStr for ContentDigest {
     }
 }
 
+/// Decodes one ASCII hexadecimal digit.
 fn hex_nibble(byte: u8) -> Result<u8, StoreError> {
     match byte {
         b'0'..=b'9' => Ok(byte - b'0'),
@@ -115,27 +117,41 @@ impl Default for StoreConfig {
 /// Deterministic persistence boundaries available to focused fault tests.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum FaultPoint {
+    /// Immediately after creating a pending blob file.
     BlobAfterCreate,
+    /// After writing the first nonempty blob chunk.
     BlobDuringWrite,
+    /// After writing the complete blob but before syncing it.
     BlobAfterWrite,
+    /// After syncing blob contents but before publication.
     BlobAfterFileSync,
+    /// After atomically publishing a blob but before syncing its directory.
     BlobAfterPublish,
+    /// After syncing the blob directory.
     BlobAfterDirectorySync,
+    /// Immediately after creating a pending summary file.
     SummaryAfterCreate,
+    /// Between the first and remaining summary writes.
     SummaryDuringWrite,
+    /// After writing the complete summary but before syncing it.
     SummaryAfterWrite,
+    /// After syncing summary contents but before publication.
     SummaryAfterFileSync,
+    /// After atomically publishing a summary but before syncing its directory.
     SummaryAfterPublish,
+    /// After syncing the summary directory.
     SummaryAfterDirectorySync,
 }
 
 /// An ordered, one-shot fault plan shared by cloned store handles.
 #[derive(Debug, Default)]
 pub struct FaultInjector {
+    /// Fault points still waiting to be triggered, in required order.
     points: Mutex<VecDeque<FaultPoint>>,
 }
 
 impl FaultInjector {
+    /// Creates a plan that triggers each supplied point once and in order.
     #[must_use]
     pub fn new(points: impl IntoIterator<Item = FaultPoint>) -> Self {
         Self {
@@ -143,6 +159,7 @@ impl FaultInjector {
         }
     }
 
+    /// Triggers and consumes `point` when it is next in the plan.
     fn hit(&self, point: FaultPoint) -> Result<(), StoreError> {
         let mut points = self.points.lock().map_err(|_| StoreError::Poisoned)?;
         if points.front() == Some(&point) {
@@ -168,58 +185,87 @@ impl FaultInjector {
 /// A path-to-blob entry in a summary manifest.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SummaryEntry {
+    /// Logical summary path, which must be nonempty, NUL-free, and ordered.
     pub path: String,
+    /// Identity of the immutable blob stored at `path`.
     pub blob: ContentDigest,
 }
 
 /// A canonical summary. Entries must be strictly ordered by path.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SummaryManifest {
+    /// Entries in strictly increasing path order.
     pub entries: Vec<SummaryEntry>,
 }
 
 /// Evidence returned after a durable blob publication.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct BlobReceipt {
+    /// SHA-256 identity of the published bytes.
     pub digest: ContentDigest,
+    /// Number of source bytes consumed and persisted.
     pub size_bytes: u64,
+    /// Whether an identical immutable object already existed.
     pub deduplicated: bool,
 }
 
 /// Evidence returned after a durable summary publication.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct SummaryReceipt {
+    /// SHA-256 identity of the canonical manifest encoding.
     pub digest: ContentDigest,
+    /// Number of entries in the published manifest.
     pub entry_count: usize,
+    /// Number of bytes in the canonical persisted encoding.
     pub persisted_bytes: u64,
+    /// Whether an identical immutable manifest already existed.
     pub deduplicated: bool,
 }
 
 /// Stable failure categories for content-addressed operations.
 #[derive(Debug)]
 pub enum StoreError {
+    /// A filesystem operation failed.
     Io(std::io::Error),
+    /// Store limits or buffer sizing are invalid.
     InvalidConfig(&'static str),
+    /// A digest has the wrong length or contains non-hexadecimal text.
     InvalidDigest,
+    /// A manifest violates framing, path, ordering, or count constraints.
     InvalidManifest(&'static str),
+    /// A blob exceeded its configured byte limit.
     BlobTooLarge {
+        /// Configured maximum blob size.
         limit: u64,
     },
+    /// An encoded manifest exceeded its configured byte limit.
     ManifestTooLarge {
+        /// Configured maximum manifest size.
         limit: u64,
     },
+    /// No blob exists for the requested identity.
     MissingBlob(ContentDigest),
+    /// No summary exists for the requested identity.
     MissingSummary(ContentDigest),
+    /// Persisted blob bytes do not match their requested identity.
     CorruptBlob {
+        /// Identity used to locate the object.
         expected: ContentDigest,
+        /// Identity recomputed from persisted bytes.
         actual: ContentDigest,
     },
+    /// Persisted summary bytes do not match their requested identity.
     CorruptSummary {
+        /// Identity used to locate the object.
         expected: ContentDigest,
+        /// Identity recomputed from persisted bytes.
         actual: ContentDigest,
     },
+    /// A deterministic fault occurred before atomic publication.
     Injected(FaultPoint),
+    /// A deterministic fault occurred at or after publication.
     Ambiguous(FaultPoint),
+    /// Another thread panicked while holding the fault-plan mutex.
     Poisoned,
 }
 
@@ -279,11 +325,14 @@ impl From<std::io::Error> for StoreError {
 /// A verified, seekable blob reader backed by an immutable file handle.
 #[derive(Debug)]
 pub struct BlobReader {
+    /// Immutable published object opened for reading.
     file: File,
+    /// Verified byte length of the object.
     size_bytes: u64,
 }
 
 impl BlobReader {
+    /// Returns the verified blob size in bytes.
     #[must_use]
     pub const fn size_bytes(&self) -> u64 {
         self.size_bytes
@@ -299,11 +348,17 @@ impl Read for BlobReader {
 /// A cloneable handle to one durable filesystem content store.
 #[derive(Clone, Debug)]
 pub struct ContentStore {
+    /// Package root used for cleanup and diagnostics.
     root: PathBuf,
+    /// Directory containing immutable blobs named by digest.
     blobs: PathBuf,
+    /// Directory containing immutable manifests named by digest.
     summaries: PathBuf,
+    /// Directory containing unpublished temporary files.
     temporary: PathBuf,
+    /// Limits applied to writes and verification reads.
     config: StoreConfig,
+    /// Optional deterministic fault plan shared by cloned handles.
     faults: Arc<FaultInjector>,
 }
 
@@ -353,6 +408,7 @@ impl ContentStore {
         })
     }
 
+    /// Returns the store's root directory.
     #[must_use]
     pub fn root(&self) -> &Path {
         &self.root
@@ -373,6 +429,7 @@ impl ContentStore {
         result
     }
 
+    /// Implements staged blob publication and leaves cleanup to the caller.
     fn put_blob_inner(
         &self,
         source: &mut impl Read,
@@ -492,6 +549,7 @@ impl ContentStore {
         result
     }
 
+    /// Implements staged manifest publication and leaves cleanup to the caller.
     fn publish_summary_inner(
         &self,
         manifest: &SummaryManifest,
@@ -556,16 +614,19 @@ impl ContentStore {
         Ok(manifest)
     }
 
+    /// Returns the immutable path used for `digest` without checking existence.
     #[must_use]
     pub fn blob_path(&self, digest: ContentDigest) -> PathBuf {
         self.blobs.join(digest.to_string())
     }
 
+    /// Returns the immutable summary path used for `digest` without checking existence.
     #[must_use]
     pub fn summary_path(&self, digest: ContentDigest) -> PathBuf {
         self.summaries.join(digest.to_string())
     }
 
+    /// Produces a process-unique pending-file path for one publication attempt.
     fn temporary_path(&self, kind: &str) -> PathBuf {
         let sequence = NEXT_TEMP_FILE.fetch_add(1, Ordering::Relaxed);
         self.temporary
@@ -573,10 +634,12 @@ impl ContentStore {
     }
 }
 
+/// Creates a pending file without replacing an existing path.
 fn create_new(path: &Path) -> Result<File, StoreError> {
     Ok(OpenOptions::new().write(true).create_new(true).open(path)?)
 }
 
+/// Hard-links a pending file into place and reports whether it was deduplicated.
 fn publish_immutable(temporary: &Path, destination: &Path) -> Result<bool, StoreError> {
     match fs::hard_link(temporary, destination) {
         Ok(()) => {
@@ -591,6 +654,7 @@ fn publish_immutable(temporary: &Path, destination: &Path) -> Result<bool, Store
     }
 }
 
+/// Hashes a reader with memory bounded by `buffer_size`.
 fn hash_reader(reader: &mut impl Read, buffer_size: usize) -> Result<ContentDigest, StoreError> {
     let mut hash = Sha256::new();
     let mut buffer = vec![0_u8; buffer_size];
@@ -604,6 +668,7 @@ fn hash_reader(reader: &mut impl Read, buffer_size: usize) -> Result<ContentDige
     Ok(ContentDigest::from_hash(hash))
 }
 
+/// Validates path contents and strict canonical ordering.
 fn validate_manifest(manifest: &SummaryManifest) -> Result<(), StoreError> {
     let mut previous: Option<&str> = None;
     for entry in &manifest.entries {
@@ -623,6 +688,7 @@ fn validate_manifest(manifest: &SummaryManifest) -> Result<(), StoreError> {
     Ok(())
 }
 
+/// Encodes a validated manifest while enforcing the configured size limit.
 fn encode_manifest(manifest: &SummaryManifest, limit: u64) -> Result<Vec<u8>, StoreError> {
     let entry_count = u32::try_from(manifest.entries.len())
         .map_err(|_| StoreError::InvalidManifest("entry count exceeds format range"))?;
@@ -646,6 +712,7 @@ fn encode_manifest(manifest: &SummaryManifest, limit: u64) -> Result<Vec<u8>, St
     Ok(bytes)
 }
 
+/// Decodes a complete canonical manifest and rejects trailing or malformed bytes.
 fn decode_manifest(bytes: &[u8]) -> Result<SummaryManifest, StoreError> {
     if bytes.len() < MANIFEST_HEADER_BYTES || bytes[..MANIFEST_MAGIC.len()] != MANIFEST_MAGIC {
         return Err(StoreError::InvalidManifest("invalid header"));
@@ -709,6 +776,7 @@ fn decode_manifest(bytes: &[u8]) -> Result<SummaryManifest, StoreError> {
     Ok(manifest)
 }
 
+/// Reads one big-endian integer while advancing a checked manifest cursor.
 fn read_u32(bytes: &[u8], cursor: &mut usize, error: &'static str) -> Result<u32, StoreError> {
     let end = cursor
         .checked_add(4)
@@ -724,6 +792,7 @@ fn read_u32(bytes: &[u8], cursor: &mut usize, error: &'static str) -> Result<u32
     ))
 }
 
+/// Reads a manifest only when its metadata length is within `limit`.
 fn read_limited(path: &Path, limit: u64, missing: StoreError) -> Result<Vec<u8>, StoreError> {
     let mut file = File::open(path).map_err(|error| {
         if error.kind() == std::io::ErrorKind::NotFound {

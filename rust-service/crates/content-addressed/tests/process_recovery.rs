@@ -11,9 +11,11 @@ use snapshotted_stream_content_addressed::{
 
 const CHILD_TEST: &str = "process_restart_child";
 
+/// A process-recovery store root removed when its test completes.
 struct TestDirectory(PathBuf);
 
 impl TestDirectory {
+    /// Creates a deterministic path after removing residue from a prior failed run.
     fn new() -> Self {
         let path =
             std::env::temp_dir().join(format!("content-addressed-process-{}", std::process::id()));
