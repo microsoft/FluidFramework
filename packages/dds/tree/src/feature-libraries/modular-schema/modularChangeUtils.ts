@@ -18,6 +18,7 @@ import {
 import {
 	addToNestedSet,
 	brand,
+	hasSome,
 	nestedSetContains,
 	populatedNestedSet,
 	type Mutable,
@@ -528,13 +529,27 @@ function validateFieldChanges(
 			addToNestedSet(children, normalizedNodeId.revision, normalizedNodeId.localId);
 		}
 
-		for (const keyRange of handler.getCrossFieldKeys(fieldChange.change)) {
+		const keysInChange = handler.getCrossFieldKeys(fieldChange.change);
+		for (const keyRange of keysInChange) {
 			const fields = getFieldsForCrossFieldKey(change, keyRange.key, keyRange.count);
+			assert(hasSome(fields), "Cross-field key table is missing an entry");
 			assert(
-				fields.length === 1 && fields[0] !== undefined && areEqualFieldIds(fields[0], fieldId),
-				0xa4f /* Inconsistent cross field keys */,
+				fields.every((f) => areEqualFieldIds(f, fieldId)),
+				"Cross-field key table is pointing to the wrong field",
 			);
 		}
+
+		const countInChange = keysInChange.reduce((acc, { count }) => acc + count, 0);
+		const keysInTable = change.crossFieldKeys
+			.entries()
+			.filter(({ value }) =>
+				areEqualFieldIds(normalizeFieldId(value, change.nodeAliases), fieldId),
+			);
+		const countInTable = keysInTable.reduce((acc, { length }) => acc + length, 0);
+		assert(
+			countInChange === countInTable,
+			"Mismatch between cross-field key table and changeset",
+		);
 	}
 
 	return children;
@@ -562,28 +577,23 @@ export function normalizeFieldId(
 		: { ...fieldId, nodeId: normalizeNodeId(fieldId.nodeId, nodeAliases) };
 }
 
+/**
+ * Retrieves the list of normalized field IDs associated with a given cross-field key.
+ * @param changeset - The modular changeset containing the cross-field key table.
+ * @param key - The cross-field key for which to retrieve the associated fields.
+ * @param count - The number of contiguous IDs to retrieve the fields for.
+ * @returns The list of normalized field IDs where the cross-field key is present.
+ * The same field ID may appear multiple times in the list.
+ */
 export function getFieldsForCrossFieldKey(
 	changeset: ModularChangeset,
 	key: CrossFieldKey,
 	count: number,
 ): FieldId[] {
 	const fieldIds: FieldId[] = [];
-	let nextOffset: number | undefined;
-	for (const { value: fieldId, length, offset } of changeset.crossFieldKeys.getAll(
-		key,
-		count,
-	)) {
+	for (const { value: fieldId } of changeset.crossFieldKeys.getAll(key, count)) {
 		if (fieldId !== undefined) {
-			const normalizedFieldId = normalizeFieldId(fieldId, changeset.nodeAliases);
-			const previous = fieldIds.at(-1);
-			const isContiguous =
-				previous !== undefined &&
-				areEqualFieldIds(previous, normalizedFieldId) &&
-				offset === nextOffset;
-			if (!isContiguous) {
-				fieldIds.push(normalizedFieldId);
-			}
-			nextOffset = offset + length;
+			fieldIds.push(normalizeFieldId(fieldId, changeset.nodeAliases));
 		}
 	}
 
