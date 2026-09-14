@@ -312,8 +312,7 @@ export class NodeCore {
 	}
 
 	public getMaybeString(index: number): string | undefined {
-		const node = this.children[index];
-		return getMaybeStringInstance(node);
+		return getMaybeStringInstance(this.get(index));
 	}
 
 	public getBlob(index: number): BlobCore {
@@ -596,9 +595,9 @@ export class TreeBuilder extends NodeCore {
 	}
 }
 
-export function getMaybeStringInstance(node: NodeTypes | undefined): string | undefined {
-	const maybeString = node as IStringElement | undefined;
-	if (maybeString?._stringElement === true) {
+export function getMaybeStringInstance(node: NodeTypes): string | undefined {
+	const maybeString = node as IStringElement;
+	if (maybeString._stringElement) {
 		return maybeString.content;
 	}
 }
@@ -608,7 +607,7 @@ export function getStringInstance(node: NodeTypes | undefined, message: string):
 	if (maybeString?._stringElement === true) {
 		return maybeString.content;
 	}
-	throwBufferParseException(node, "String", message);
+	throwBufferParseException(node, "BlobCore", message);
 }
 
 export function assertBlobCoreInstance(

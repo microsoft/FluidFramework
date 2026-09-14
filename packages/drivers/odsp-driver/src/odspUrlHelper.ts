@@ -86,8 +86,7 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 	// Joinsession like URL
 	// Pick a regex based on the hostname
 	// TODO This will only support ODC using api.onedrive.com, update to handle the future (share links etc)
-	let driveId: string | undefined;
-	let itemId: string | undefined;
+	let joinSessionMatch: RegExpExecArray | null;
 	if (hasOdcOrigin(url)) {
 		// Capture groups:
 		// 0: match
@@ -96,49 +95,37 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 		// 3: optional captured drive ID
 		// 4: Item ID
 		// 5: Drive ID portion of Item ID
-		const joinSessionMatch =
+		joinSessionMatch =
 			/(.*)\/v2\.1\/drive(s\/([\dA-Za-z]+))?\/items\/(([\dA-Za-z]+)!\d+)/.exec(pathname);
 
 		if (joinSessionMatch === null) {
 			// Try again but with the OData format ( `/drives('ABC123')/items('ABC123!456')` )
-			// Capture groups:
-			// 0: match
-			// 1: origin
-			// 2: Drive ID
-			// 3: Item ID
-			// 4: Drive ID portion of Item ID
-			const odataMatch =
+			joinSessionMatch =
 				/(.*)\/v2\.1\/drives\('([\dA-Za-z]+)'\)\/items\('(([\dA-Za-z]+)!\d+)'\)/.exec(
 					pathname,
 				);
 
-			if (odataMatch === null) {
+			if (joinSessionMatch === null) {
 				return undefined;
 			}
-
-			driveId = odataMatch[2];
-			itemId = odataMatch[3];
-		} else {
-			driveId = joinSessionMatch[3] ?? joinSessionMatch[5];
-			itemId = joinSessionMatch[4];
 		}
+
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Preserve the existing fallback behavior.
+		const driveId = (joinSessionMatch[3] || joinSessionMatch[5])!;
+		const itemId = joinSessionMatch[4]!;
+
+		return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
 	} else {
-		const joinSessionMatch = /(.*)\/_api\/v2\.1\/drives\/([^/]*)\/items\/([^/]*)(.*)/.exec(
-			pathname,
-		);
+		joinSessionMatch = /(.*)\/_api\/v2\.1\/drives\/([^/]*)\/items\/([^/]*)(.*)/.exec(pathname);
 
 		if (joinSessionMatch === null) {
 			return undefined;
 		}
-		driveId = joinSessionMatch[2];
-		itemId = joinSessionMatch[3];
-	}
+		const driveId = joinSessionMatch[2]!;
+		const itemId = joinSessionMatch[3]!;
 
-	if (driveId === undefined || itemId === undefined) {
-		return undefined;
+		return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
 	}
-
-	return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
 }
 
 /**

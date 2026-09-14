@@ -241,7 +241,9 @@ export function decodeOdspUrl(url: string): {
 	containerPackageName?: string;
 	fileVersion?: string;
 } {
-	const [siteUrl = "", queryString] = url.split("?");
+	const urlParts = url.split("?");
+	const siteUrl = urlParts[0]!;
+	const queryString = urlParts[1];
 
 	const searchParams = new URLSearchParams(queryString);
 

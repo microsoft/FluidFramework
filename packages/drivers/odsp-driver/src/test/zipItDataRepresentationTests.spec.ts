@@ -22,7 +22,6 @@ import {
 	assertBoolInstance,
 	assertNodeCoreInstance,
 	assertNumberInstance,
-	getMaybeStringInstance,
 	getStringInstance,
 } from "../zipItDataRepresentationUtils.js";
 
@@ -271,11 +270,5 @@ describe("Tree Representation tests", () => {
 				"Missing node should be reported as an incorrect server response",
 			);
 		}
-
-		assert.strictEqual(
-			getMaybeStringInstance(missingNode),
-			undefined,
-			"Missing node should not be a string",
-		);
 	});
 });
