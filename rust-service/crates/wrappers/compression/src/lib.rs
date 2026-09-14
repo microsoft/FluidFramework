@@ -57,6 +57,7 @@ where
 /// Compresses every record and snapshot independently over an underlying store.
 #[derive(Clone, Debug)]
 pub struct CompressionStream<S> {
+    /// Store that receives compressed frames and owns positions and capabilities.
     inner: S,
 }
 
@@ -78,12 +79,14 @@ impl<S> From<S> for CompressionStream<S> {
     }
 }
 
+/// Encodes one logical payload as one complete zlib frame.
 fn compress_payload(payload: &Bytes) -> Result<Bytes, std::io::Error> {
     let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
     encoder.write_all(payload)?;
     encoder.finish().map(Bytes::from)
 }
 
+/// Decodes one complete zlib frame and rejects trailing bytes.
 fn decompress_payload(payload: &Bytes) -> Result<Bytes, std::io::Error> {
     let mut decoder = ZlibDecoder::new(payload.as_ref());
     let mut output = Vec::new();
@@ -105,10 +108,12 @@ where
     type Position = S::Position;
     type Error = CompressionError<S::Error>;
 
+    /// Reports the underlying store's capabilities unchanged.
     fn capabilities(&self) -> Capabilities {
         self.inner.capabilities()
     }
 
+    /// Compresses and appends one record without changing its receipt.
     async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
         let encoded = compress_payload(&value).map_err(CompressionError::Encode)?;
         self.inner
@@ -117,6 +122,7 @@ where
             .map_err(CompressionError::Store)
     }
 
+    /// Opens an underlying reader that decompresses each record when polled.
     async fn read(
         &self,
         after: Option<&Self::Position>,
@@ -138,6 +144,7 @@ where
         })))
     }
 
+    /// Returns the underlying stream head unchanged.
     async fn head(&self) -> Result<Option<Self::Position>, Self::Error> {
         self.inner.head().await.map_err(CompressionError::Store)
     }
@@ -151,6 +158,7 @@ where
     type Position = S::Position;
     type Error = CompressionError<S::Error>;
 
+    /// Returns the latest snapshot after decompressing its payload.
     async fn latest(&self) -> Result<Option<PublishedSnapshot<Self::Position>>, Self::Error> {
         self.inner
             .latest()
@@ -170,6 +178,7 @@ where
             .transpose()
     }
 
+    /// Compresses a snapshot payload before delegating publication.
     async fn publish(
         &self,
         snapshot: Snapshot<Self::Position>,

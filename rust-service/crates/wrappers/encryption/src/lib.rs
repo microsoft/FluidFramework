@@ -37,12 +37,19 @@ use snapshotted_stream_core::{
 use thiserror::Error;
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
+/// Identifies an encrypted envelope before version and algorithm parsing.
 const MAGIC: &[u8; 4] = b"SSE1";
+/// Current envelope format version.
 const VERSION: u8 = 1;
+/// Envelope algorithm identifier for AES-256-GCM-SIV.
 const ALGORITHM_AES_256_GCM_SIV: u8 = 1;
+/// Fixed byte width of a non-secret key identifier.
 const KEY_ID_LENGTH: usize = 16;
+/// Fixed AES-GCM-SIV nonce width.
 const NONCE_LENGTH: usize = 12;
+/// Fixed AES-GCM-SIV authentication tag width.
 const TAG_LENGTH: usize = 16;
+/// Authenticated envelope header width before ciphertext.
 const HEADER_LENGTH: usize = MAGIC.len() + 3 + KEY_ID_LENGTH + NONCE_LENGTH;
 
 /// The encoded bytes added to every encrypted payload.
@@ -50,7 +57,9 @@ pub const ENVELOPE_OVERHEAD: usize = HEADER_LENGTH + TAG_LENGTH;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 enum PayloadContext {
+    /// Domain separator for append-stream records.
     Record = 1,
+    /// Domain separator for snapshot payloads.
     Snapshot = 2,
 }
 
@@ -145,7 +154,10 @@ pub enum EncryptionError<E> {
     Store(#[source] E),
     /// Required key material is unavailable. Key bytes are never retained.
     #[error("encryption key is unavailable for key identifier {key_id:?}")]
-    KeyUnavailable { key_id: Option<KeyId> },
+    KeyUnavailable {
+        /// Requested historical key, or `None` when no active write key exists.
+        key_id: Option<KeyId>,
+    },
     /// The secure nonce source failed.
     #[error(transparent)]
     NonceUnavailable(#[from] NonceUnavailable),
@@ -174,8 +186,11 @@ where
 /// Encrypts every record and snapshot independently over an underlying store.
 #[derive(Clone, Debug)]
 pub struct EncryptionStream<S, K, N = OsNonceSource> {
+    /// Store that receives encrypted envelopes and owns positions and capabilities.
     inner: S,
+    /// Provider for active and historical encryption keys.
     keys: K,
+    /// Source of per-envelope nonces.
     nonces: N,
 }
 
@@ -206,6 +221,7 @@ impl<S, K, N> EncryptionStream<S, K, N> {
     }
 }
 
+/// Builds and authenticates one record or snapshot envelope.
 fn encrypt_payload<E, K, N>(
     keys: &K,
     nonces: &N,
@@ -237,6 +253,7 @@ where
     Ok(Bytes::from(header))
 }
 
+/// Validates and decrypts one envelope for the expected payload context.
 fn decrypt_payload<E, K>(
     keys: &K,
     envelope: &Bytes,
@@ -292,10 +309,12 @@ where
     type Position = S::Position;
     type Error = EncryptionError<S::Error>;
 
+    /// Reports the underlying store's capabilities unchanged.
     fn capabilities(&self) -> Capabilities {
         self.inner.capabilities()
     }
 
+    /// Encrypts and appends one record without changing its receipt.
     async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
         let envelope = encrypt_payload::<S::Error, _, _>(
             &self.keys,
@@ -309,6 +328,7 @@ where
             .map_err(EncryptionError::Store)
     }
 
+    /// Opens an underlying reader that decrypts each record when polled.
     async fn read(
         &self,
         after: Option<&Self::Position>,
@@ -331,6 +351,7 @@ where
         })))
     }
 
+    /// Returns the underlying stream head unchanged.
     async fn head(&self) -> Result<Option<Self::Position>, Self::Error> {
         self.inner.head().await.map_err(EncryptionError::Store)
     }
@@ -342,12 +363,14 @@ where
     K: KeyProvider + Clone + 'static,
     N: NonceSource,
 {
+    /// Delegates position encoding without encrypting the opaque token.
     fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error> {
         self.inner
             .encode_position(position)
             .map_err(EncryptionError::Store)
     }
 
+    /// Delegates position decoding without interpreting the opaque token.
     fn decode_position(&self, token: &[u8]) -> Result<Self::Position, Self::Error> {
         self.inner
             .decode_position(token)
@@ -365,6 +388,7 @@ where
     type Position = S::Position;
     type Error = EncryptionError<S::Error>;
 
+    /// Returns the latest snapshot after authenticating and decrypting its payload.
     async fn latest(&self) -> Result<Option<PublishedSnapshot<Self::Position>>, Self::Error> {
         self.inner
             .latest()
@@ -387,6 +411,7 @@ where
             .transpose()
     }
 
+    /// Encrypts a snapshot with the snapshot domain before delegating publication.
     async fn publish(
         &self,
         snapshot: Snapshot<Self::Position>,
@@ -426,26 +451,31 @@ mod tests {
 
     const FIRST_ID: KeyId = KeyId::new([1; KEY_ID_LENGTH]);
     const SECOND_ID: KeyId = KeyId::new([2; KEY_ID_LENGTH]);
+    /// Mutable active-key identity and retained test key material.
     type TestKeyState = (KeyId, Vec<(KeyId, [u8; 32])>);
 
+    /// Rotatable in-memory key provider used to exercise key lifecycle behavior.
     #[derive(Clone, Debug)]
     struct TestKeys {
         state: Arc<Mutex<TestKeyState>>,
     }
 
     impl TestKeys {
+        /// Creates a provider with the first key active.
         fn new() -> Self {
             Self {
                 state: Arc::new(Mutex::new((FIRST_ID, vec![(FIRST_ID, [7; 32])]))),
             }
         }
 
+        /// Creates a provider whose key identifier matches but key material does not.
         fn wrong() -> Self {
             Self {
                 state: Arc::new(Mutex::new((FIRST_ID, vec![(FIRST_ID, [9; 32])]))),
             }
         }
 
+        /// Retains the first key and makes a second key active.
         fn rotate(&self) {
             let mut state = self.state.lock().unwrap();
             state.1.push((SECOND_ID, [8; 32]));
@@ -474,6 +504,7 @@ mod tests {
         }
     }
 
+    /// Deterministic nonce source for reproducible envelope tests.
     #[derive(Clone, Debug)]
     struct FixedNonce([u8; NONCE_LENGTH]);
 
@@ -483,6 +514,7 @@ mod tests {
         }
     }
 
+    /// Nonce source that always reports secure randomness as unavailable.
     #[derive(Clone, Copy, Debug)]
     struct UnavailableNonce;
 
@@ -492,6 +524,7 @@ mod tests {
         }
     }
 
+    /// Builds the standard deterministic encrypted memory stream fixture.
     fn stream() -> EncryptionStream<MemoryStream, TestKeys, FixedNonce> {
         EncryptionStream::with_nonce_source(
             MemoryStream::new(),

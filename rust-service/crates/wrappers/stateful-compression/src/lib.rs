@@ -27,9 +27,13 @@ use snapshotted_stream_core::{
 };
 use thiserror::Error;
 
+/// Identifies a dictionary-compressed frame before version parsing.
 const MAGIC: &[u8; 4] = b"SSDZ";
+/// Current dictionary-frame format version.
 const VERSION: u8 = 1;
+/// Wrapper header width before the zstd frame.
 const HEADER_LEN: usize = MAGIC.len() + 1 + 8 + 8;
+/// Fixed zstd compression level used for stored payloads.
 const COMPRESSION_LEVEL: i32 = 3;
 
 /// Maximum caller-supplied dictionary size retained by a wrapper.
@@ -45,10 +49,20 @@ pub enum ConfigurationError {
     ZeroPayloadBound,
     /// The immutable dictionary exceeds the wrapper's hard memory bound.
     #[error("dictionary has {actual} bytes; maximum is {maximum}")]
-    DictionaryTooLarge { actual: usize, maximum: usize },
+    DictionaryTooLarge {
+        /// Supplied dictionary size.
+        actual: usize,
+        /// Hard dictionary-size ceiling.
+        maximum: usize,
+    },
     /// The decoded payload bound exceeds the wrapper's hard memory ceiling.
     #[error("decoded payload bound is {actual} bytes; maximum is {maximum}")]
-    PayloadBoundTooLarge { actual: usize, maximum: usize },
+    PayloadBoundTooLarge {
+        /// Supplied decoded payload bound.
+        actual: usize,
+        /// Hard decoded payload ceiling.
+        maximum: usize,
+    },
 }
 
 /// An error produced by dictionary compression or its underlying store.
@@ -59,7 +73,12 @@ pub enum StatefulCompressionError<E> {
     Store(#[source] E),
     /// The logical payload exceeds the configured decoded-size bound.
     #[error("payload has {actual} bytes; configured maximum is {maximum}")]
-    PayloadTooLarge { actual: usize, maximum: usize },
+    PayloadTooLarge {
+        /// Logical payload size presented by the caller.
+        actual: usize,
+        /// Configured decoded payload bound.
+        maximum: usize,
+    },
     /// A payload could not be encoded before storage.
     #[error("failed to compress payload: {0}")]
     Encode(#[source] std::io::Error),
@@ -84,9 +103,13 @@ where
 /// Compresses each record and snapshot as an independent zstd frame using one immutable dictionary.
 #[derive(Clone, Debug)]
 pub struct StatefulCompressionStream<S> {
+    /// Store that receives framed compressed payloads and owns positions.
     inner: S,
+    /// Immutable dictionary required to encode and decode every payload.
     dictionary: Bytes,
+    /// Stable non-cryptographic identity recorded in each wrapper header.
     dictionary_fingerprint: u64,
+    /// Configured maximum logical payload size for writes and reads.
     max_decoded_bytes: usize,
 }
 
@@ -131,6 +154,7 @@ impl<S> StatefulCompressionStream<S> {
         self.inner
     }
 
+    /// Compresses one payload and prefixes its restart metadata.
     fn compress(&self, payload: &Bytes) -> Result<Bytes, std::io::Error> {
         let mut compressor =
             zstd::bulk::Compressor::with_dictionary(COMPRESSION_LEVEL, &self.dictionary)?;
@@ -144,6 +168,7 @@ impl<S> StatefulCompressionStream<S> {
         Ok(framed.freeze())
     }
 
+    /// Decompresses one independently restartable wrapper frame.
     fn decompress(&self, framed: &Bytes) -> Result<Bytes, String> {
         decompress_frame(
             framed,
@@ -154,6 +179,7 @@ impl<S> StatefulCompressionStream<S> {
     }
 }
 
+/// Validates wrapper metadata and decodes one bounded zstd frame.
 fn decompress_frame(
     framed: &Bytes,
     dictionary: &[u8],
@@ -207,6 +233,7 @@ fn decompress_frame(
     Ok(Bytes::from(decoded))
 }
 
+/// Computes the stable dictionary fingerprint stored in wrapper headers.
 fn fingerprint(bytes: &[u8]) -> u64 {
     bytes.iter().fold(0xcbf2_9ce4_8422_2325, |hash, byte| {
         (hash ^ u64::from(*byte)).wrapping_mul(0x0000_0100_0000_01b3)
@@ -221,10 +248,12 @@ where
     type Position = S::Position;
     type Error = StatefulCompressionError<S::Error>;
 
+    /// Reports the underlying store's capabilities unchanged.
     fn capabilities(&self) -> Capabilities {
         self.inner.capabilities()
     }
 
+    /// Bounds, compresses, and appends one record without changing its receipt.
     async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
         if value.len() > self.max_decoded_bytes {
             return Err(StatefulCompressionError::PayloadTooLarge {
@@ -241,6 +270,7 @@ where
             .map_err(StatefulCompressionError::Store)
     }
 
+    /// Opens an underlying reader that decodes each bounded frame when polled.
     async fn read(
         &self,
         after: Option<&Self::Position>,
@@ -272,6 +302,7 @@ where
         })))
     }
 
+    /// Returns the underlying stream head unchanged.
     async fn head(&self) -> Result<Option<Self::Position>, Self::Error> {
         self.inner
             .head()
@@ -284,12 +315,14 @@ impl<S> PositionCodec for StatefulCompressionStream<S>
 where
     S: PositionCodec,
 {
+    /// Delegates position encoding without interpreting the opaque token.
     fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error> {
         self.inner
             .encode_position(position)
             .map_err(StatefulCompressionError::Store)
     }
 
+    /// Delegates position decoding without interpreting the opaque token.
     fn decode_position(&self, token: &[u8]) -> Result<Self::Position, Self::Error> {
         self.inner
             .decode_position(token)
@@ -305,6 +338,7 @@ where
     type Position = S::Position;
     type Error = StatefulCompressionError<S::Error>;
 
+    /// Returns the latest snapshot after validating and decoding its frame.
     async fn latest(&self) -> Result<Option<PublishedSnapshot<Self::Position>>, Self::Error> {
         self.inner
             .latest()
@@ -324,6 +358,7 @@ where
             .transpose()
     }
 
+    /// Bounds and compresses a snapshot before delegating publication.
     async fn publish(
         &self,
         snapshot: Snapshot<Self::Position>,
@@ -368,11 +403,13 @@ mod tests {
     const MAX_PAYLOAD: usize = 16 * 1024;
     const DICTIONARY: &[u8] = b"tenant=alpha;document=shared;operation=insert;path=/items/;value=collaborative-content;sequence=00000000";
 
+    /// Wraps a memory stream with the standard dictionary and payload bound.
     fn wrap(inner: MemoryStream) -> StatefulCompressionStream<MemoryStream> {
         StatefulCompressionStream::new(inner, Bytes::from_static(DICTIONARY), MAX_PAYLOAD)
             .expect("valid test configuration")
     }
 
+    /// Produces records sharing dictionary-friendly field names and values.
     fn repeated_records(count: usize) -> Vec<Bytes> {
         (0..count)
             .map(|index| {
@@ -383,6 +420,7 @@ mod tests {
             .collect()
     }
 
+    /// Produces deterministic pseudo-random records for incompressible comparisons.
     fn incompressible_records(count: usize, len: usize) -> Vec<Bytes> {
         let mut state = 0x4d59_5df4_d0f3_3173_u64;
         (0..count)
@@ -401,6 +439,7 @@ mod tests {
             .collect()
     }
 
+    /// Collects encoded record payloads directly from the underlying memory stream.
     async fn stored_bytes(inner: &MemoryStream) -> Vec<Bytes> {
         inner
             .read(None)
@@ -412,10 +451,12 @@ mod tests {
             .expect("raw records")
     }
 
+    /// Applies the reversible transform used by the composition test store.
     fn xor(payload: &Bytes, key: u8) -> Bytes {
         Bytes::from(payload.iter().map(|byte| byte ^ key).collect::<Vec<_>>())
     }
 
+    /// Minimal reversible store wrapper used to verify transformation ordering.
     #[derive(Clone, Debug)]
     struct XorStream {
         inner: MemoryStream,
