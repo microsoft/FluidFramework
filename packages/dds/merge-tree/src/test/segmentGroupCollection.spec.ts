@@ -5,7 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import { assignChild, MergeBlock, type ISegmentPrivate } from "../mergeTreeNodes.js";
+import {
+	assignChild,
+	MergeBlock,
+	type ISegmentPrivate,
+	type SegmentGroup,
+} from "../mergeTreeNodes.js";
 import { SegmentGroupCollection } from "../segmentGroupCollection.js";
 import { type IHasInsertionInfo, overwriteInfo } from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
@@ -91,5 +96,36 @@ describe("segmentGroupCollection", () => {
 			assert.equal(segmentGroup.segments[0], segment);
 			assert.equal(segmentGroup.segments[1], segmentCopy);
 		}
+	});
+
+	it(".copyTo preserves the previous properties for the source segment", () => {
+		const [precedingSegment, segmentCopy] = ["before", "copy"].map((text) => {
+			const leaf = overwriteInfo<IHasInsertionInfo>(TextSegment.make(text), {
+				insert: {
+					type: "insert",
+					clientId: 0,
+					seq: 1,
+				},
+			});
+			assignChild(parent, leaf, parent.childCount++);
+			return leaf;
+		});
+		const previousProps = { key: "source" };
+		const segmentGroup: SegmentGroup = {
+			segments: [precedingSegment],
+			previousProps: [{ key: "before" }, previousProps],
+			localSeq: 1,
+			refSeq: 0,
+		};
+		segmentGroups.enqueue(segmentGroup);
+		const segmentGroupCopy = new SegmentGroupCollection(segmentCopy);
+
+		segmentGroups.copyTo(segmentGroupCopy);
+
+		assert.equal(segmentGroupCopy.dequeue(), segmentGroup);
+		assert.deepEqual(segmentGroup.segments, [precedingSegment, segment, segmentCopy]);
+		assert.equal(segmentGroup.previousProps?.length, 3);
+		assert.equal(segmentGroup.previousProps?.[2], previousProps);
+		assert.equal(segmentGroups.dequeue(), segmentGroup);
 	});
 });
