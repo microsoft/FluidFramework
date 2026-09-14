@@ -193,7 +193,7 @@ function removeStaleVersionDirs(workspaceDir: string, keepVersions: Set<string>)
 
 function pnpmInstallWorkspace(workspaceDir: string): void {
 	console.log(`\nRunning pnpm install in ${path.relative(pkgRoot, workspaceDir)} ...`);
-	execSync(`pnpm install --no-frozen-lockfile`, {
+	execSync(`pnpm --config.minimum-release-age=10080 install --no-frozen-lockfile`, {
 		cwd: workspaceDir,
 		env: { ...process.env, NODE_OPTIONS: "" },
 		stdio: "inherit",
