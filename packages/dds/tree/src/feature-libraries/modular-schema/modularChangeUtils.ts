@@ -362,14 +362,16 @@ export function normalizeNodeId(
 	nodeId: NodeId,
 	nodeAliases: ChangeAtomIdBTree<NodeId>,
 ): NodeId {
+	const visited = newChangeAtomIdBTree<true>();
 	let currentId = nodeId;
 
 	while (true) {
+		visited.set([currentId.revision, currentId.localId], true);
 		const dealiased = getFromChangeAtomIdMap(nodeAliases, currentId);
 		if (dealiased === undefined) {
 			return currentId;
 		}
-		assert(!areEqualChangeAtomIds(dealiased, nodeId), "Node alias loop");
+		assert(!visited.has([dealiased.revision, dealiased.localId]), "Node alias loop");
 
 		currentId = dealiased;
 	}
