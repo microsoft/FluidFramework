@@ -797,7 +797,6 @@ export class ModularChangeFamily
 		const rebasedFields = this.rebaseIntersectingFields(
 			crossFieldTable,
 			rebasedNodes,
-			change.nodeAliases,
 			genId,
 			rebaseMetadata,
 		);
@@ -856,7 +855,6 @@ export class ModularChangeFamily
 	private rebaseIntersectingFields(
 		crossFieldTable: RebaseTable,
 		rebasedNodes: ChangeAtomIdBTree<NodeChangeset>,
-		nodeAliases: ChangeAtomIdBTree<NodeId>,
 		genId: IdAllocator,
 		metadata: RebaseRevisionMetadata,
 	): FieldChangeMap {
@@ -882,7 +880,7 @@ export class ModularChangeFamily
 				metadata,
 			);
 
-			const normalizedNewId = normalizeNodeId(newId, nodeAliases);
+			const normalizedNewId = normalizeNodeId(newId, crossFieldTable.newChange.nodeAliases);
 			setInChangeAtomIdMap(rebasedNodes, normalizedNewId, rebasedNode);
 		}
 
