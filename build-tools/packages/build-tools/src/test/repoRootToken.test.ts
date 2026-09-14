@@ -8,6 +8,7 @@ import {
 	REPO_ROOT_TOKEN,
 	replaceRepoRootToken,
 	replaceRepoRootTokens,
+	validateDeclarativeTaskGlobSeparators,
 } from "../fluidBuild/fluidBuildConfig.js";
 
 describe("Repo Root Token", () => {
@@ -53,6 +54,19 @@ describe("Repo Root Token", () => {
 				"/home/user/repo/.eslintrc.cjs",
 				"/home/user/repo/common/config.json",
 			]);
+		});
+
+		describe("validateDeclarativeTaskGlobSeparators", () => {
+			it("rejects backslashes in declarative task globs", () => {
+				assert.throws(
+					() =>
+						validateDeclarativeTaskGlobSeparators({
+							inputGlobs: ["${repoRoot}\\src\\**\\*.ts"],
+							outputGlobs: [],
+						}),
+					/inputGlob .* contains backslashes; use '\/' in fluidBuild globs\./,
+				);
+			});
 		});
 
 		it("handles mixed array with and without tokens", () => {

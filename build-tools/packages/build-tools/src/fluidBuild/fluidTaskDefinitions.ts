@@ -4,6 +4,7 @@
  */
 
 import type { PackageJson } from "../common/npmPackage.js";
+import { validateDeclarativeTaskGlobSeparators } from "./fluidBuildConfig.js";
 import { isConcurrentlyCommand, parseConcurrentlyCommand } from "./parseCommands.js";
 
 /**
@@ -296,17 +297,6 @@ const detectInvalid = (
 	}
 };
 
-const validateGlobSeparators = (
-	globs: readonly string[],
-	kind: "inputGlob" | "outputGlob",
-): void => {
-	for (const glob of globs) {
-		if (glob.includes("\\")) {
-			throw new Error(`${kind} '${glob}' contains backslashes; use '/' in fluidBuild globs.`);
-		}
-	}
-};
-
 export function normalizeGlobalTaskDefinitions(
 	globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk | undefined,
 ): TaskDefinitions {
@@ -371,8 +361,7 @@ export function normalizeGlobalTaskDefinitions(
 						true,
 					);
 				}
-				validateGlobSeparators(full.files.inputGlobs, "inputGlob");
-				validateGlobSeparators(full.files.outputGlobs, "outputGlob");
+				validateDeclarativeTaskGlobSeparators(full.files);
 			}
 			taskDefinitions[name] = full;
 		}
@@ -519,8 +508,7 @@ export function getTaskDefinitions(
 				}
 			}
 			if (full.files !== undefined) {
-				validateGlobSeparators(full.files.inputGlobs, "inputGlob");
-				validateGlobSeparators(full.files.outputGlobs, "outputGlob");
+				validateDeclarativeTaskGlobSeparators(full.files);
 			}
 			taskDefinitions[name] = full;
 		}
