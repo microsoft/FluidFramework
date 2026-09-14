@@ -151,7 +151,7 @@ export class ConsensusRegisterCollection<T>
 	 * Creates a new register or writes a new value.
 	 * Returns a promise that will resolve when the write is acked.
 	 *
-	 * @returns Promise<true> if write was non-concurrent
+	 * @returns A promise resolving to `true` if the write was non-concurrent
 	 */
 	public async write(key: string, value: T): Promise<boolean> {
 		if (this.runtime.disposed) {

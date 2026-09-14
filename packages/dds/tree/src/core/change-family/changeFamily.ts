@@ -10,14 +10,31 @@ import type { SchemaAndPolicy } from "../../core/index.js";
 import type { IdentifierHealingConfig, JsonCompatibleReadOnly } from "../../util/index.js";
 import type { ChangeRebaser, RevisionTag, TaggedChange } from "../rebase/index.js";
 
-export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
+export type ProcessChangeFn<TChange, TChangeProcessingContext> =
+	TChangeProcessingContext extends never
+		? (change: TChange) => TChange
+		: (change: TChange, context: TChangeProcessingContext) => TChange;
+
+export interface ChangeFamily<
+	TEditor extends ChangeFamilyEditor,
+	TChange,
+	// For simplicity, may be a concrete ChangeFamily implementation such as
+	// ChangeFamilyFoo implements ChangeFamily<EditorFoo, ChangeFoo, ChangeFamilyFoo>
+	// to provide all details and helpers that processFn for ChangeFoo
+	// may require, but there is no requirement to follow that pattern.
+	TChangeProcessingContext = never,
+> {
 	buildEditor(
 		mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<TChange>) => void,
 	): TEditor;
 
 	readonly rebaser: ChangeRebaser<TChange>;
-	readonly codecs: ICodecFamily<TChange, ChangeEncodingContext>;
+	readonly codecs: ICodecFamily<TChange, ChangeEncodingContext, ChangeDecodingContext>;
+
+	buildProcessor(
+		processFn: ProcessChangeFn<TChange, TChangeProcessingContext>,
+	): (change: TChange) => TChange;
 }
 
 export interface ChangeEncodingContext {
@@ -36,18 +53,29 @@ export interface ChangeEncodingContext {
 	 * (possibly broken) attach-summary blob, never when applying ops.
 	 */
 	readonly isSummary: boolean;
+}
+
+/**
+ * Context provided to change codecs when decoding.
+ * @remarks
+ * The same as {@link ChangeEncodingContext} except that it omits `schema` (only consulted when
+ * *encoding*, for schema-aware compression) and adds `healing` (only consulted when *decoding*, to
+ * recover unresolvable identifiers from a summary blob).
+ */
+export type ChangeDecodingContext = Omit<ChangeEncodingContext, "schema"> & {
 	/**
 	 * Heal-on-decode workaround configuration. See {@link IdentifierHealingConfig}.
 	 * Only takes effect when `isSummary` is also `true`.
 	 */
 	readonly healing?: IdentifierHealingConfig;
-}
+};
 
 export type ChangeFamilyCodec<TChange> = IJsonCodec<
 	TChange,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
-	ChangeEncodingContext
+	ChangeEncodingContext,
+	ChangeDecodingContext
 >;
 
 export interface ChangeFamilyEditor {

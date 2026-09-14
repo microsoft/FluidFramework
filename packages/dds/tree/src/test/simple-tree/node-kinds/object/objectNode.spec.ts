@@ -25,7 +25,7 @@ import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	typeSchemaSymbol,
 	type LeafSchema,
 	type NodeBuilderData,
@@ -825,6 +825,20 @@ describeHydration(
 			assert.notEqual(id, id2);
 		});
 
+		it("generates an identifier when SchemaFactoryAlpha.identifier is omitted", () => {
+			const alphaSchemaFactory = new SchemaFactoryAlpha("AlphaTest");
+			class HasId extends alphaSchemaFactory.object("hasID", {
+				id: SchemaFactoryAlpha.identifier(),
+			}) {}
+
+			const first = new HasId({}).id;
+			const second = new HasId({}).id;
+
+			assert(isStableId(first));
+			assert(isStableId(second));
+			assert.notEqual(first, second);
+		});
+
 		it("unhydrated default identifier access via shortId returns UUID", () => {
 			class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
 			const newNode = new HasId({});
@@ -851,7 +865,7 @@ describeHydration(
 			const Pojo = schemaFactory.object("A", {});
 			const node = new Pojo({});
 			assert.equal(Tree.schema(node), Pojo);
-			assert.equal(node[typeNameSymbol], Pojo.identifier);
+			assert.equal(node[schemaIdentifierBrand], Pojo.identifier);
 			assert.equal(node[typeSchemaSymbol], Pojo);
 		});
 
@@ -859,7 +873,7 @@ describeHydration(
 			const Customizable = schemaFactory.object("A", {});
 			const node = new Customizable({});
 			assert.equal(Tree.schema(node), Customizable);
-			assert.equal(node[typeNameSymbol], Customizable.identifier);
+			assert.equal(node[schemaIdentifierBrand], Customizable.identifier);
 			assert.equal(node[typeSchemaSymbol], Customizable);
 		});
 

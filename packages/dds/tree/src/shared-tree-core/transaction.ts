@@ -15,13 +15,24 @@ import {
 	mintCommit,
 	rebaseBranch,
 	tagChange,
+	CommitKind,
 	type ChangeFamilyEditor,
+	type CustomMetadataTree,
 	type GraphCommit,
+	type ProcessChangeFn,
 	type RevisionTag,
 } from "../core/index.js";
-import { getLast, getOrCreate } from "../util/index.js";
+import { getLast, getOrCreate, type JsonCompatibleReadOnlyObject } from "../util/index.js";
 
 import type { SharedTreeBranch, SharedTreeBranchEvents } from "./branch.js";
+
+/**
+ * A {@link CustomMetadataTree} under construction.
+ */
+interface MutableCustomMetadataTree {
+	metadata: JsonCompatibleReadOnlyObject | undefined;
+	children: MutableCustomMetadataTree[];
+}
 
 /**
  * Describes the result of a transaction.
@@ -263,7 +274,7 @@ export enum ChangeProcessorApplicability {
  * (see the conversion helpers in the `shared-tree` layer) so that its internal
  * change representation does not leak into the public API.
  */
-export interface ChangeProcessor<TChange> {
+export interface ChangeProcessor<TChange, TChangeProcessingContext> {
 	/**
 	 * Informs what context it should be invoked for.
 	 */
@@ -271,13 +282,13 @@ export interface ChangeProcessor<TChange> {
 	/**
 	 * Processes the given change, returning a change with the same observable effect.
 	 */
-	readonly processChange: (change: TChange) => TChange;
+	readonly processChange: ProcessChangeFn<TChange, TChangeProcessingContext>;
 }
 
 /**
  * Options for {@link Transactor.start | starting} a transaction.
  */
-export interface SquashingTransactionOptions<TChange> {
+export interface SquashingTransactionOptions<TChange, TChangeProcessingContext> {
 	/**
 	 * An optional {@link ChangeProcessor} applied to the squashed change produced when a transaction that was started
 	 * with this option is committed.
@@ -288,7 +299,16 @@ export interface SquashingTransactionOptions<TChange> {
 	 * How often the processor is invoked across nested transactions is governed by its
 	 * {@link ChangeProcessor.applicability | applicability}.
 	 */
-	readonly postProcessor?: ChangeProcessor<TChange>;
+	readonly postProcessor?: ChangeProcessor<TChange, TChangeProcessingContext>;
+
+	/**
+	 * Arbitrary, application-defined metadata to attach to the commit that this transaction produces.
+	 *
+	 * @remarks
+	 * Each transaction in the stack contributes a node to the resulting {@link CustomMetadataTree}. If
+	 * the transaction produces no commit, the metadata is discarded.
+	 */
+	readonly customMetadata?: JsonCompatibleReadOnlyObject;
 }
 
 /**
@@ -300,8 +320,9 @@ export interface SquashingTransactionOptions<TChange> {
 export class SquashingTransactionStack<
 	TEditor extends ChangeFamilyEditor,
 	TChange,
-> extends TransactionStack<SquashingTransactionOptions<TChange>> {
-	#transactionBranch?: SharedTreeBranch<TEditor, TChange>;
+	TChangeProcessingContext,
+> extends TransactionStack<SquashingTransactionOptions<TChange, TChangeProcessingContext>> {
+	#transactionBranch?: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>;
 
 	/**
 	 * An editor for whichever branch is currently the {@link SquashingTransactionStack.activeBranch | active branch}.
@@ -317,7 +338,7 @@ export class SquashingTransactionStack<
 	/**
 	 * Get the "active branch" for this transactor - either the transaction branch if a transaction is in progress, or the original branch otherwise.
 	 */
-	public get activeBranch(): SharedTreeBranch<TEditor, TChange> {
+	public get activeBranch(): SharedTreeBranch<TEditor, TChange, TChangeProcessingContext> {
 		return this.#transactionBranch ?? this.branch;
 	}
 
@@ -326,10 +347,16 @@ export class SquashingTransactionStack<
 	 * @remarks When the active branch changes, the listeners for these events will automatically be transferred to the new active branch.
 	 * In contrast, binding an event to the {@link SquashingTransactionStack.activeBranch | active branch} directly will not automatically transfer the listener when the active branch changes.
 	 */
-	public get activeBranchEvents(): Listenable<SharedTreeBranchEvents<TEditor, TChange>> {
+	public get activeBranchEvents(): Listenable<
+		SharedTreeBranchEvents<TEditor, TChange, TChangeProcessingContext>
+	> {
 		const off = (
-			eventName: keyof SharedTreeBranchEvents<TEditor, TChange>,
-			listener: SharedTreeBranchEvents<TEditor, TChange>[typeof eventName],
+			eventName: keyof SharedTreeBranchEvents<TEditor, TChange, TChangeProcessingContext>,
+			listener: SharedTreeBranchEvents<
+				TEditor,
+				TChange,
+				TChangeProcessingContext
+			>[typeof eventName],
 		): void => {
 			this.activeBranch.events.off(eventName, listener);
 			const listeners = this.#activeBranchEvents.get(eventName);
@@ -349,9 +376,13 @@ export class SquashingTransactionStack<
 		};
 	}
 	readonly #activeBranchEvents = new Map<
-		keyof SharedTreeBranchEvents<TEditor, TChange>,
+		keyof SharedTreeBranchEvents<TEditor, TChange, TChangeProcessingContext>,
 		Set<
-			SharedTreeBranchEvents<TEditor, TChange>[keyof SharedTreeBranchEvents<TEditor, TChange>]
+			SharedTreeBranchEvents<
+				TEditor,
+				TChange,
+				TChangeProcessingContext
+			>[keyof SharedTreeBranchEvents<TEditor, TChange, TChangeProcessingContext>]
 		>
 	>();
 
@@ -365,20 +396,23 @@ export class SquashingTransactionStack<
 	 * options rather than baked into this stack, so different transactions may supply different post-processors (or none).
 	 */
 	public constructor(
-		public readonly branch: SharedTreeBranch<TEditor, TChange>,
+		public readonly branch: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>,
 		mintRevisionTag: () => RevisionTag,
 		onPush?: () => OnPopWithViewUpdate<TChange> | void,
 	) {
 		// A stack of the post-processors to apply when each in-progress transaction commits, ordered from outermost to
 		// innermost. Each in-progress transaction contributes exactly one entry: either the processor to apply when it
 		// commits, or `undefined` when none should be applied.
-		const postProcessorStack: (ChangeProcessor<TChange> | undefined)[] = [];
+		const postProcessorStack: (
+			| ChangeProcessor<TChange, TChangeProcessingContext>
+			| undefined
+		)[] = [];
 		// Determines the entry to push for a transaction that was started with the given `requested` processor (if any).
 		// A processor with "outermost" applicability that is already active in an enclosing transaction resolves to
 		// `undefined` so that it is only applied once (at the outermost transaction that supplied it).
 		const resolvePostProcessor = (
-			requested: ChangeProcessor<TChange> | undefined,
-		): ChangeProcessor<TChange> | undefined => {
+			requested: ChangeProcessor<TChange, TChangeProcessingContext> | undefined,
+		): ChangeProcessor<TChange, TChangeProcessingContext> | undefined => {
 			if (
 				requested?.applicability === ChangeProcessorApplicability.IfOutermost &&
 				postProcessorStack.includes(requested)
@@ -391,12 +425,22 @@ export class SquashingTransactionStack<
 		super(
 			// Invoked when an outer transaction starts
 			(
-				startOptions?: SquashingTransactionOptions<TChange>,
-			): Callbacks<SquashingTransactionOptions<TChange>> => {
+				startOptions?: SquashingTransactionOptions<TChange, TChangeProcessingContext>,
+			): Callbacks<SquashingTransactionOptions<TChange, TChangeProcessingContext>> => {
 				postProcessorStack.push(resolvePostProcessor(startOptions?.postProcessor));
+				// Each transaction in the stack contributes a node to a tree mirroring the nesting, which is
+				// attached to the single commit they produce. `openMetadataNode` is the innermost open node.
+				const rootMetadataNode: MutableCustomMetadataTree = {
+					metadata: startOptions?.customMetadata,
+					children: [],
+				};
+				let openMetadataNode = rootMetadataNode;
+				const hasCustomMetadata = (node: CustomMetadataTree): boolean =>
+					node.metadata !== undefined || node.children.some(hasCustomMetadata);
 				// Keep track of the commit that each transaction was on when it started
 				const startHead = this.activeBranch.getHead();
-				const rebaser = this.branch.changeFamily.rebaser;
+				const changeFamily = this.branch.changeFamily;
+				const rebaser = changeFamily.rebaser;
 				const outerOnPop = onPush?.();
 				let transactionRevision: RevisionTag | undefined;
 				const transactionBranch = this.branch.fork(
@@ -462,18 +506,43 @@ export class SquashingTransactionStack<
 								// Apply this transaction's post-processor (if any) to the squashed change (for example, to
 								// "minimize" it so that it contains no extraneous information).
 								const change =
-									postProcessor === undefined ? squash : postProcessor.processChange(squash);
+									postProcessor === undefined
+										? squash
+										: changeFamily.buildProcessor(postProcessor.processChange)(squash);
 
+								if (change !== squash) {
+									// The post-processor produced a change that differs from the
+									// one that was applied to the view as the transaction's edits
+									// were made. Roll back the transaction's changes on the transaction
+									// branch (which rolls back the view) and apply the post-processed
+									// change in their place so that the view fully reflects the modified
+									// `change`.
+									transactionBranch.removeAfter(startHead);
+									transactionBranch.apply(
+										tagChange(change, transactionRevision),
+										CommitKind.Default,
+										undefined,
+									);
+								}
+
+								const customMetadata = hasCustomMetadata(rootMetadataNode)
+									? rootMetadataNode
+									: undefined;
 								if (targetPath.length === 0) {
 									// No changes were made on the original branch since the transaction began
 									// The transaction commit can be applied directly
-									this.branch.apply(tagChange(change, transactionRevision));
+									this.branch.apply(
+										tagChange(change, transactionRevision),
+										CommitKind.Default,
+										customMetadata,
+									);
 									// The view is already up-to-date so there's nothing more to do
 								} else {
 									// Some changes were made on `branch` since the transaction began
 									const unrebasedHead = mintCommit(startHead, {
 										change,
 										revision: transactionRevision,
+										customMetadata,
 									});
 									// We need to rebase the transaction commit on top of the new changes
 									const rebased = rebaseBranch(
@@ -486,7 +555,7 @@ export class SquashingTransactionStack<
 										rebased.newSourceHead.revision === transactionRevision,
 										0xcd0 /* The transaction commit should be rebased to the tip */,
 									);
-									this.branch.apply(rebased.newSourceHead);
+									this.branch.apply(rebased.newSourceHead, CommitKind.Default, customMetadata);
 									viewUpdate = rebased.sourceChange;
 								}
 							} else {
@@ -513,10 +582,17 @@ export class SquashingTransactionStack<
 					outerOnPop?.(result, viewUpdate);
 				};
 				// Invoked when a nested transaction begins
-				const onNestedTransactionPush: OnPush<SquashingTransactionOptions<TChange>> = (
-					nestedStartOptions,
-				) => {
+				const onNestedTransactionPush: OnPush<
+					SquashingTransactionOptions<TChange, TChangeProcessingContext>
+				> = (nestedStartOptions) => {
 					postProcessorStack.push(resolvePostProcessor(nestedStartOptions?.postProcessor));
+					const nestedMetadataNode: MutableCustomMetadataTree = {
+						metadata: nestedStartOptions?.customMetadata,
+						children: [],
+					};
+					const metadataParent = openMetadataNode;
+					metadataParent.children.push(nestedMetadataNode);
+					openMetadataNode = nestedMetadataNode;
 					const nestedStartHead = this.activeBranch.getHead();
 					const nestedOuterOnPop = onPush?.();
 					transactionBranch.editor.enterTransaction();
@@ -524,9 +600,12 @@ export class SquashingTransactionStack<
 						// Invoked when a nested transaction ends
 						onPop: (result) => {
 							const nestedPostProcessor = postProcessorStack.pop();
+							openMetadataNode = metadataParent;
 							transactionBranch.editor.exitTransaction();
 							switch (result) {
 								case TransactionResult.Abort: {
+									// The aborted transaction contributed nothing; its node is necessarily the last child.
+									metadataParent.children.pop();
 									// When a transaction is aborted, roll back all the transaction's changes on the current branch
 									transactionBranch.removeAfter(nestedStartHead);
 									break;
@@ -544,12 +623,22 @@ export class SquashingTransactionStack<
 										if (nestedSteps.length > 0) {
 											assert(
 												transactionRevision !== undefined,
-												"Expected transaction revision in the presence of transaction steps",
+												0xd07 /* Expected transaction revision in the presence of transaction steps */,
 											);
 											const squash = rebaser.compose(nestedSteps);
-											const processedSquash = nestedPostProcessor.processChange(squash);
-											transactionBranch.removeAfter(nestedStartHead);
-											transactionBranch.apply(tagChange(processedSquash, transactionRevision));
+											const processedSquash = changeFamily.buildProcessor(
+												nestedPostProcessor.processChange,
+											)(squash);
+											// Roll back the transaction branch to the nested start head and apply the
+											// processed change if it differs from the original change.
+											if (processedSquash !== squash) {
+												transactionBranch.removeAfter(nestedStartHead);
+												transactionBranch.apply(
+													tagChange(processedSquash, transactionRevision),
+													CommitKind.Default,
+													undefined,
+												);
+											}
 										}
 									}
 									break;
@@ -569,7 +658,9 @@ export class SquashingTransactionStack<
 
 	/** Updates the transaction branch (and therefore the active branch) and rebinds the branch events. */
 	private setTransactionBranch(
-		transactionBranch: SharedTreeBranch<TEditor, TChange> | undefined,
+		transactionBranch:
+			| SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>
+			| undefined,
 	): void {
 		const oldActiveBranch = this.activeBranch;
 		this.#transactionBranch = transactionBranch;

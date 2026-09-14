@@ -17,12 +17,14 @@ parameters:
 steps:
 # Test - With coverage
 - ${{ if and(parameters.testCoverage, startsWith(parameters.taskTestStep, 'ci:test')) }}:
-  - task: Npm@1
+  - task: Bash@3
     displayName: npm run ${{ parameters.taskTestStep }}:coverage
     inputs:
-      command: 'custom'
-      workingDir: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-      customCommand: 'run ${{ parameters.taskTestStep }}:coverage'
+      targetType: inline
+      workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+      script: |
+        set -eu -o pipefail
+        npm run ${{ parameters.taskTestStep }}:coverage
     condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
     env:
       # Tests can use this environment variable to behave differently when running from a test branch
@@ -33,12 +35,14 @@ steps:
 
 # Test - No coverage
 - ${{ else }}:
-  - task: Npm@1
+  - task: Bash@3
     displayName: npm run ${{ parameters.taskTestStep }}
     inputs:
-      command: 'custom'
-      workingDir: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-      customCommand: 'run ${{ parameters.taskTestStep }}'
+      targetType: inline
+      workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+      script: |
+        set -eu -o pipefail
+        npm run ${{ parameters.taskTestStep }}
     condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
     env:
       # Tests can use this environment variable to behave differently when running from a test branch

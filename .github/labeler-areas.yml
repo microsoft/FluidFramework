@@ -4,7 +4,7 @@
 # see how this config file is used.
 
 "area: build":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file:
       - ".github/*"
       - ".github/workflows/**"
@@ -14,121 +14,121 @@
       - "tools/pipelines/**"
 
 "area: contributor experience":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file: ".vscode/**"
 
 "area: dds":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file:
       - experimental/dds/**
       - packages/dds/**
 
 "area: dds: tree":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file:
       - experimental/dds/tree/**
       - experimental/dds/tree2/**
       - packages/dds/tree/**
 
 "area: dds: propertydds":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file: experimental/PropertyDDS/**
 
 "area: dds: sharedstring":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file: packages/dds/sequence/**
 
 "area: definitions":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file:
       - common/lib/container-definitions/**
       - common/lib/core-interfaces/**
       - common/lib/driver-definitions/**
 
 "area: dev experience":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file: experimental/framework/**
 
 "area: driver":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file: packages/drivers/**
 
 "area: examples":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file:
       - examples/**
       - experimental/examples/**
 
 "area: framework":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file: packages/framework/**
 
 "area: loader":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file: packages/loader/**
 
 "area: odsp-driver":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file:
       - packages/drivers/*odsp*/**
       - packages/utils/odsp-doclib-utils/**
 
 # Add "area: repo" label to any root or .github changes
 "area: repo":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file:
       - "*"
       - ".github/**"
       - "!BREAKING.md"
 
 "area: runtime":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file: packages/runtime/**
 
 "area: server":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file: server/**
 
 "area: tests":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file: packages/test/**
 
 "area: tools":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file:
       - common/build/**
       - tools/**
       - "!tools/markdown-magic/**"
 
 "area: website":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file:
       - website/**
       - "!website/docs/**"
 
 "breaking change":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file: BREAKING.md
 
 "changeset-present":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file:
       - .changeset/**
       - server/routerlicious/.changeset/**
 
 dependencies:
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file:
       - package-lock.json
       - pnpm-lock.yaml
 
 documentation:
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file:
       - website/docs/**
       - website/src/**
 
 # flag changes to public APIs so they can be reviewed to see if they're breaking
 "public api change":
-  changed-files:
+  - changed-files:
     - any-glob-to-any-file: "**/api-report/**"

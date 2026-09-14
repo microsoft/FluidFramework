@@ -20,7 +20,6 @@ import {
 	type IEditableForest,
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
-	type RevisionTagCodec,
 	TreeNavigationResult,
 	applyDelta,
 	forEachField,
@@ -33,8 +32,10 @@ import {
 	type SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 import {
+	breakingMethod,
 	idAllocatorFromMaxId,
 	readAndParseSnapshotBlob,
+	type Breakable,
 	type JsonCompatibleReadOnly,
 } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -71,6 +72,13 @@ export class ForestSummarizer
 {
 	private readonly codec: ForestCodec;
 
+	/**
+	 * This object is broken if and only if the forest it owns is broken.
+	 */
+	public get breaker(): Breakable {
+		return this.forest.breaker;
+	}
+
 	private readonly incrementalSummaryBuilder: ForestIncrementalSummaryBuilder;
 	private readonly forestRootSummaryContentKey: string;
 
@@ -79,7 +87,6 @@ export class ForestSummarizer
 	 */
 	public constructor(
 		private readonly forest: IEditableForest,
-		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly encoderContext: FieldBatchEncodingContext,
 		private readonly decoderContext: FieldBatchDecodingContext,
 		options: CodecWriteOptions,
@@ -180,6 +187,7 @@ export class ForestSummarizer
 		});
 	}
 
+	@breakingMethod
 	protected async loadInternal(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
@@ -240,7 +248,7 @@ export class ForestSummarizer
 			{ build, fields: new Map(fieldChanges) },
 			undefined,
 			this.forest,
-			makeDetachedFieldIndex("init", this.revisionTagCodec, this.idCompressor),
+			makeDetachedFieldIndex("init"),
 		);
 	}
 }

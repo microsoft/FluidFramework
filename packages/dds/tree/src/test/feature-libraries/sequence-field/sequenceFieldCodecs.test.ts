@@ -7,7 +7,10 @@ import type { SessionId } from "@fluidframework/id-compressor";
 
 import { withSchemaValidation } from "../../../codec/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import type { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
+import type {
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext,
+} from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldChangeCodecFactory } from "../../../feature-libraries/sequence-field/sequenceFieldCodecs.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -27,7 +30,7 @@ import { generatePopulatedMarks } from "./populatedMarks.js";
 import { ChangeMaker as Change, cases, MarkMaker as Mark } from "./testEdits.js";
 import { assertChangesetsEqual, inlineRevision } from "./utils.js";
 
-type TestCase = [string, Changeset, FieldChangeEncodingContext];
+type TestCase = [string, Changeset, FieldChangeEncodingContext & FieldChangeDecodingContext];
 
 const tag1 = mintRevisionTag();
 const tag2 = mintRevisionTag();
@@ -39,7 +42,7 @@ const baseContext = {
 };
 const encodedTag1 = testRevisionTagCodec.encode(tag1);
 const encodedTag2 = testRevisionTagCodec.encode(tag2);
-const context: FieldChangeEncodingContext = {
+const context: FieldChangeEncodingContext & FieldChangeDecodingContext = {
 	baseContext,
 	encodeNode: (node) => TestNodeId.encode(node, baseContext),
 	decodeNode: (node) => TestNodeId.decode(node, baseContext),
@@ -47,7 +50,11 @@ const context: FieldChangeEncodingContext = {
 
 const changes = TestNodeId.create({ localId: brand(2) }, TestChange.mint([], 1));
 
-const encodingTestData: EncodingTestData<Changeset, unknown, FieldChangeEncodingContext> = {
+const encodingTestData: EncodingTestData<
+	Changeset,
+	unknown,
+	FieldChangeEncodingContext & FieldChangeDecodingContext
+> = {
 	successes: [
 		["with child change", inlineRevision(Change.modify(1, changes), tag1), context],
 		["without child change", inlineRevision(Change.remove(2, 2, tag1), tag1), context],

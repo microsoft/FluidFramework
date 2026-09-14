@@ -8,7 +8,7 @@
 /* eslint quotes: 0 */
 /* eslint key-spacing: 0 */
 /* eslint max-len: 0 */
-const parentChangeSet = {
+export const parentChangeSet = {
 	insert: {
 		"NodeProperty": {
 			styles: {
@@ -27182,7 +27182,7 @@ const parentChangeSet = {
 	},
 };
 
-const originalChangeSet = {
+export const originalChangeSet = {
 	modify: {
 		"autodesk.titanium:vertical-1.0.0": {
 			"fee9d9df-94bb-ec9c-7bb7-5be207dccb9c": {
@@ -27509,9 +27509,4 @@ const originalChangeSet = {
 			},
 		},
 	},
-};
-
-module.exports = {
-	parentChangeSet,
-	originalChangeSet,
 };

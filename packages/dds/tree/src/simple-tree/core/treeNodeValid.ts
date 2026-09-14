@@ -4,7 +4,7 @@
  */
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { tagSchemaArtifacts, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type FlexTreeNode, isFlexTreeNode } from "../../feature-libraries/index.js";
 
@@ -135,6 +135,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 			}) which derived from the same SchemaFactory generated class (${JSON.stringify(
 				this.identifier,
 			)}). This is invalid.`,
+			tagSchemaArtifacts({ schemaIdentifier: this.identifier }),
 		);
 	}
 
@@ -237,6 +238,7 @@ export function schemaAsTreeNodeValid(
 			`Schema for ${JSON.stringify(
 				schema.identifier,
 			)} does not extend a SchemaFactory generated class. This is invalid.`,
+			tagSchemaArtifacts({ schemaIdentifier: schema.identifier }),
 		);
 	}
 

@@ -20,6 +20,38 @@ import { filterFlags, type PackageSelectionDefault, selectionFlags } from "./fla
 import { BaseCommand } from "./library/commands/base.js";
 
 /**
+ * Details about a failure that occurred while processing a package.
+ */
+export interface PackageProcessingError {
+	/**
+	 * The name of the package that was being processed when the error occurred, or `undefined` if the error is not
+	 * associated with a specific package.
+	 */
+	readonly packageName: string | undefined;
+
+	/**
+	 * The full details of the error, including any output captured from the failed operation.
+	 */
+	readonly details: string;
+}
+
+/**
+ * Formats an unknown error thrown while processing a package into a complete, human-readable string.
+ *
+ * @remarks
+ *
+ * For {@link Error} instances, the `stack` property is used because it includes the error message (which, for command
+ * execution errors such as those thrown by execa, contains any captured command output) in addition to the stack trace.
+ * This makes it the most complete single-string representation of the failure.
+ */
+function formatProcessingError(error: unknown): string {
+	if (error instanceof Error) {
+		return error.stack ?? error.message;
+	}
+	return String(error);
+}
+
+/**
  * Commands that run operations per project.
  */
 export abstract class PackageCommand<
@@ -111,10 +143,7 @@ export abstract class PackageCommand<
 
 		const errors = await this.processPackages(this.filteredPackages);
 		if (errors.length > 0) {
-			this.errorLog(`Completed with ${errors.length} errors.`);
-			for (const error of errors) {
-				this.errorLog(error);
-			}
+			this.reportErrors(errors);
 			this.exit(1);
 		}
 
@@ -122,15 +151,46 @@ export abstract class PackageCommand<
 	}
 
 	/**
+	 * Logs a summary of the packages that failed to process, followed by the full details of each failure.
+	 *
+	 * @remarks
+	 *
+	 * The concise list of failed package names is logged first so it's easy to see what needs attention without having
+	 * to scroll through the (potentially long) detailed output that follows.
+	 */
+	protected reportErrors(errors: PackageProcessingError[]): void {
+		this.errorLog(`Completed with ${errors.length} error(s).`);
+
+		const failedPackageNames = errors
+			.map((error) => error.packageName)
+			.filter((name): name is string => name !== undefined);
+		if (failedPackageNames.length > 0) {
+			this.errorLog(`Failed packages (${failedPackageNames.length}):`);
+			for (const name of failedPackageNames) {
+				this.errorLog(`  - ${name}`);
+			}
+		}
+
+		// Full details for each failure, separated by a horizontal rule for readability.
+		for (const { packageName, details } of errors) {
+			this.logHr();
+			this.errorLog(packageName === undefined ? "Error:" : `Error in ${packageName}:`);
+			this.log(details);
+		}
+	}
+
+	/**
 	 * Runs the processPackage method on each package in the provided array.
 	 *
 	 * @returns An array of error strings. If the array is not empty, at least one of the calls to processPackage failed.
 	 */
-	protected async processPackages(packages: PackageWithKind[]): Promise<string[]> {
+	protected async processPackages(
+		packages: PackageWithKind[],
+	): Promise<PackageProcessingError[]> {
 		let started = 0;
 		let finished = 0;
 		let succeeded = 0;
-		const errors: string[] = [];
+		const errors: PackageProcessingError[] = [];
 
 		// In verbose mode, we output a log line per package. In non-verbose mode, we want to display an activity
 		// spinner, so we only start the spinner if verbose is false.
@@ -159,11 +219,9 @@ export abstract class PackageCommand<
 					await this.processPackage(pkg, pkg.kind);
 					succeeded += 1;
 				} catch (error: unknown) {
-					const errorString = `Error updating ${pkg.name}: '${error}'\nStack: ${
-						(error as Error).stack
-					}`;
-					errors.push(errorString);
-					this.verbose(errorString);
+					const details = formatProcessingError(error);
+					errors.push({ packageName: pkg.name, details });
+					this.verbose(`Error processing ${pkg.name}:\n${details}`);
 				} finally {
 					finished += 1;
 					updateStatus();

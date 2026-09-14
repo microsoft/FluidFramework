@@ -5,11 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { TreeViewConfiguration } from "@fluidframework/tree";
+import { Tree, TreeViewConfiguration } from "@fluidframework/tree";
 import {
 	independentView,
-	FormattedTextAsTreeDefault,
-	FormattedTextAsTree,
+	FormattedTextDefault,
+	FormattedText,
 } from "@fluidframework/tree/internal";
 import DeltaPackage from "quill-delta";
 
@@ -22,15 +22,15 @@ const Delta = DeltaPackage.default;
 type Delta = DeltaPackage.default;
 
 /**
- * Build a fresh, independent (unhydrated) `FormattedTextAsTreeDefault.Tree` initialized from `initial`.
+ * Build a fresh, independent (unhydrated) `FormattedTextDefault.Tree` initialized from `initial`.
  * Independent views give us an isolated tree per test without pulling in container/runtime fixtures.
  */
-function makeTree(initial: string = ""): FormattedTextAsTreeDefault.Tree {
+function makeTree(initial: string = ""): FormattedTextDefault.Tree {
 	const view = independentView(
-		new TreeViewConfiguration({ schema: FormattedTextAsTreeDefault.Tree }),
+		new TreeViewConfiguration({ schema: FormattedTextDefault.Tree }),
 		{},
 	);
-	view.initialize(FormattedTextAsTreeDefault.Tree.fromString(initial));
+	view.initialize(FormattedTextDefault.Tree.fromString(initial));
 	return view.root;
 }
 
@@ -38,7 +38,7 @@ function makeTree(initial: string = ""): FormattedTextAsTreeDefault.Tree {
  * Build a tree containing a single `StringLineAtom` with the given line tag,
  * mirroring what `Quill` would emit when the user applies a header/list to an empty document.
  */
-function lineAtomTree(tag: "h1" | "h2" | "h3" | "h4" | "h5"): FormattedTextAsTreeDefault.Tree {
+function lineAtomTree(tag: "h1" | "h2" | "h3" | "h4" | "h5"): FormattedTextDefault.Tree {
 	const tree = makeTree("");
 	applyQuillDeltaToTree(tree, new Delta().insert("\n", { header: Number(tag.slice(1)) }));
 	return tree;
@@ -108,7 +108,7 @@ describe("applyQuillDeltaToTree", () => {
 		applyQuillDeltaToTree(tree, new Delta().insert("\n", { header: 1 }));
 		assert.equal(tree.fullString(), "\n");
 		const atom = tree.charactersWithFormatting()[0]?.content;
-		assert(atom instanceof FormattedTextAsTreeDefault.StringLineAtom);
+		assert(atom instanceof FormattedTextDefault.StringLineAtom);
 		assert.equal(atom.tag.value, "h1");
 	});
 
@@ -118,7 +118,7 @@ describe("applyQuillDeltaToTree", () => {
 		applyQuillDeltaToTree(tree, new Delta().retain(5).retain(1, { header: 2 }));
 		assert.equal(tree.fullString(), "hello\n");
 		const atom = tree.charactersWithFormatting()[5]?.content;
-		assert(atom instanceof FormattedTextAsTreeDefault.StringLineAtom);
+		assert(atom instanceof FormattedTextDefault.StringLineAtom);
 		assert.equal(atom.tag.value, "h2");
 	});
 
@@ -128,17 +128,16 @@ describe("applyQuillDeltaToTree", () => {
 		applyQuillDeltaToTree(tree, new Delta().retain(5).retain(1, { header: 3 }));
 		assert.equal(tree.fullString(), "hello\n");
 		const atom = tree.charactersWithFormatting()[5]?.content;
-		assert(atom instanceof FormattedTextAsTreeDefault.StringLineAtom);
+		assert(atom instanceof FormattedTextDefault.StringLineAtom);
 		assert.equal(atom.tag.value, "h3");
 	});
 
 	it("clears line formatting (case 4: line atom -> plain newline)", () => {
 		const tree = lineAtomTree("h1");
-		// Quill emits header: null when clearing line formatting.
-		// eslint-disable-next-line unicorn/no-null
+		// eslint-disable-next-line unicorn/no-null -- Quill emits header: null when clearing line formatting.
 		applyQuillDeltaToTree(tree, new Delta().retain(1, { header: null }));
 		const atom = tree.charactersWithFormatting()[0]?.content;
-		assert(atom instanceof FormattedTextAsTree.StringTextAtom);
+		assert(Tree.is(atom, FormattedText.StringTextAtom));
 		assert.equal(tree.fullString(), "\n");
 	});
 
@@ -146,7 +145,7 @@ describe("applyQuillDeltaToTree", () => {
 		const tree = lineAtomTree("h1");
 		applyQuillDeltaToTree(tree, new Delta().retain(1, { indent: 2 }));
 		const atom = tree.charactersWithFormatting()[0]?.content;
-		assert(atom instanceof FormattedTextAsTreeDefault.StringLineAtom);
+		assert(atom instanceof FormattedTextDefault.StringLineAtom);
 		assert.equal(atom.indent, 2);
 	});
 

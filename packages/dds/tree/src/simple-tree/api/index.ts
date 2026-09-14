@@ -6,22 +6,31 @@
 export type {
 	ITreeViewConfiguration,
 	ITreeConfigurationOptions,
+	ITreeViewConfigurationAlpha,
 } from "./configuration.js";
 export {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 } from "./configuration.js";
 export type {
+	CommitRevision,
 	ITree,
 	TreeView,
 	ViewableTree,
 	TreeViewEvents,
 	SchemaCompatibilityStatus,
+	SchemaCompatibilityStatusBeta,
+	SchemaDiscrepancy,
 	TreeViewAlpha,
 	TreeViewBeta,
+	UntypedTreeView,
 	TreeBranch,
 	TreeBranchAlpha,
+	UntypedTreeViewAlpha,
 	TreeBranchEvents,
+	TreeBranchCommitMetadata,
+	TreeBranchHistory,
+	TreeContextBeta,
 	TreeContextAlpha,
 	ITreeAlpha,
 } from "./tree.js";
@@ -66,7 +75,6 @@ export {
 	createCustomizedFluidFrameworkScopedFactory,
 } from "./schemaCreationUtilities.js";
 export {
-	deltaMarksToArrayOps,
 	getIdentifierFromNode,
 	getPropertyKeyFromStoredKey,
 	getStoredKey,
@@ -100,7 +108,11 @@ export {
 export type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
-export { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
+export {
+	checkSchemaCompatibility,
+	getSchemaIncompatibilityDetails,
+} from "./schemaCompatibilityTester.js";
+export { type StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 export type {
 	Unenforced,
 	FieldSchemaAlphaUnsafe,
@@ -146,27 +158,20 @@ export {
 	replaceConciseTreeHandles,
 } from "./conciseTree.js";
 
-export {
-	borrowCursorFromTreeNodeOrValue,
-	exportConcise,
-	importConcise,
-	type NodeChangedData,
-	TreeBeta,
-	type TreeChangeEventsBeta,
-} from "./treeBeta.js";
-export {
-	type ArrayNodeDeltaOp,
-	type ArrayNodeInsertOp,
-	type ArrayNodeRemoveOp,
-	type ArrayNodeRetainOp,
-	type ArrayNodeTreeChangedDeltaOp,
-	type ArrayNodeTreeChangedRetainOp,
-	type NodeChangedDataAlpha,
-	type NodeChangedDataDelta,
-	type NodeChangedDataProperties,
-	type NodeChangedDataTreeDelta,
-	type TreeChangeEventsAlpha,
-} from "./treeAlpha.js";
+export { cloneTree } from "./cloneTree.js";
+export type {
+	ArrayNodeDeltaOp,
+	ArrayNodeInsertOp,
+	ArrayNodeRemoveOp,
+	ArrayNodeRetainOp,
+	ArrayNodeTreeChangedDeltaOp,
+	ArrayNodeTreeChangedRetainOp,
+	NodeChangedData,
+	NodeChangedDataDelta,
+	NodeChangedDataProperties,
+	NodeChangedDataTreeDelta,
+	TreeChangeEventsBeta,
+} from "./treeChangeEventsBeta.js";
 export { createTreeIndex, type TreeIndexKey } from "./simpleTreeIndex.js";
 export {
 	createIdentifierIndex,
@@ -181,18 +186,21 @@ export {
 export {
 	type NoChangeConstraint,
 	type NodeInDocumentConstraint,
-	type RunTransactionParams,
-	type TransactionCallbackStatus,
+	rollback,
+	type RunTransactionParamsAlpha,
+	type RunTransactionParamsBeta,
+	type TransactionCallbackStatusAlpha,
+	type TransactionCallbackStatusBeta,
 	type TransactionConstraint,
 	type TransactionConstraintAlpha,
 	type TransactionPostProcessor,
-	type TransactionResult,
-	type TransactionResultExt,
 	type TransactionResultFailed,
 	type TransactionResultSuccess,
-	type VoidTransactionCallbackStatus,
+	type TransactionValueResult,
+	type TransactionVoidResult,
+	type VoidTransactionCallbackStatusAlpha,
+	type VoidTransactionCallbackStatusBeta,
 	type WithValue,
-	rollback,
 } from "./transactionTypes.js";
 
 export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";

@@ -4,7 +4,7 @@
  */
 
 import { fail } from "@fluidframework/core-utils/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 
 import {
 	type CodecTree,
@@ -16,7 +16,11 @@ import {
 	makeCodecFamily,
 	withSchemaValidation,
 } from "../codec/index.js";
-import type { ChangeEncodingContext, TreeStoredSchema } from "../core/index.js";
+import type {
+	ChangeEncodingContext,
+	ChangeDecodingContext,
+	TreeStoredSchema,
+} from "../core/index.js";
 import {
 	ModularChangeFormatVersion,
 	type ModularChangeset,
@@ -39,9 +43,13 @@ import {
 import type { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChangeTypes.js";
 
 export function makeSharedTreeChangeCodecFamily(
-	modularChangeCodecFamily: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
+	modularChangeCodecFamily: ICodecFamily<
+		ModularChangeset,
+		ChangeEncodingContext,
+		ChangeDecodingContext
+	>,
 	options: CodecWriteOptions,
-): ICodecFamily<SharedTreeChange, ChangeEncodingContext> {
+): ICodecFamily<SharedTreeChange, ChangeEncodingContext, ChangeDecodingContext> {
 	const versions: [
 		FormatVersion,
 		IJsonCodec<
@@ -122,7 +130,7 @@ export const dependenciesForChangeFormat = new Map<
 
 export function getCodecTreeForChangeFormat(
 	version: SharedTreeChangeFormatVersion,
-	clientVersion: MinimumVersionForCollab,
+	clientVersion: OldestSupportedClientVersion,
 ): CodecTree {
 	const { modularChange } =
 		dependenciesForChangeFormat.get(version) ?? fail(0xc78 /* Unknown change format */);

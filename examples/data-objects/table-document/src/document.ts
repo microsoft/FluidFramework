@@ -12,13 +12,10 @@ import {
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/legacy";
-// eslint-disable-next-line import-x/no-internal-modules -- #26904: `sequence` internals used in examples
-import { createEndpointIndex } from "@fluidframework/sequence/internal";
 import {
 	PropertySet,
 	ReferencePosition,
 	SequenceDeltaEvent,
-	SharedString,
 } from "@fluidframework/sequence/legacy";
 
 import { CellRange } from "./cellrange.js";
@@ -96,11 +93,8 @@ export class TableDocument
 	}
 
 	public async getRange(label: string): Promise<CellRange> {
-		const endpointIndex = createEndpointIndex(this.matrix as unknown as SharedString);
 		const intervals = this.matrix.getIntervalCollection(label);
-		intervals.attachIndex(endpointIndex);
-		const interval = endpointIndex.nextInterval(0);
-		intervals.detachIndex(endpointIndex);
+		const interval = intervals.nextInterval(0);
 		return new CellRange(interval, this.localRefToRowCol);
 	}
 

@@ -2,7 +2,11 @@
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 
 	"compiler": {
-		"tsconfigFilePath": "<projectFolder>/tsconfig.json"
+		"tsconfigFilePath": "<projectFolder>/tsconfig.json",
+		// Skip type-checking of .d.ts files during API Extractor's analysis. The production build
+		// (tsc/build:esnext) already type-checks declarations with skipLibCheck off, so re-checking
+		// them here is redundant; disabling it roughly halves each API Extractor run without changing output.
+		"skipLibCheck": true
 	},
 
 	/**

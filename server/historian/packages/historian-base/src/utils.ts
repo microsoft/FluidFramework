@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "path";
-
 import type { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
@@ -89,15 +87,6 @@ export function parseToken(
 	}
 
 	return token;
-}
-
-/**
- * Check a given path string for path traversal (e.g. "../" or "/").
- * TODO: replace with containsPathTraversal from services-shared
- */
-export function containsPathTraversal(path: string): boolean {
-	const parsedPath = parse(path);
-	return parsedPath.dir.includes("..") || parsedPath.dir.startsWith("/");
 }
 
 /**

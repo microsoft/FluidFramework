@@ -19,10 +19,11 @@ import {
 const lockdownSymbol = Symbol.for("tree-agent.ses.locked");
 
 /**
- * Create an implementation of {@link @fluidframework/tree-agent#SemanticAgentOptions.executeEdit} that uses the SES library
+ * Creates an editor for {@link @fluidframework/tree-agent#TreeAgentOptions.editor} and
+ * {@link @fluidframework/tree-agent#ExecuteSemanticEditingOptions.editor} that uses the SES library
  * to run the provided code in a secure environment.
  * @param options - Optional configuration for the underlying SES compartment and lockdown invocation.
- * @returns A function that can be used as the {@link @fluidframework/tree-agent#SemanticAgentOptions.executeEdit | executeEdit} callback.
+ * @returns A function that can be used as a tree-agent `editor`.
  * @remarks This function will call the SES `lockdown` API the first time it is invoked. For best performance, create the executor once during application initialization.
  * @alpha
  */

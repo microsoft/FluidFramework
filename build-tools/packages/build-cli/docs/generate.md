@@ -127,16 +127,22 @@ Build and collect a bundle, either from the outer enlistment (local mode) or fro
 ```
 USAGE
   $ flub generate bundleAnalysisRepo [-v | --quiet] [--revision <value> | --merge-base <value>] [--package-dir <value>]
+    [--webpack-dir <value>]
 
 FLAGS
   --merge-base=<value>   Collect a bundle for the merge-base of HEAD and this committish (the fork point). Selects
                          revision mode and is mutually exclusive with --revision. Also used as the label (the
                          subdirectory name the bundle's stats are saved under).
-  --package-dir=<value>  [default: .] Package root whose webpack bundles are built and whose analyzer.json is collected.
+  --package-dir=<value>  [default: .] Package root whose 'build:compile' is run to compile the package and its
+                         dependencies.
   --revision=<value>     Collect a bundle for this committish (branch, tag, commit SHA, or any committish like HEAD~2),
                          resolved as-is via 'git rev-parse'. Selects revision mode and is mutually exclusive with
                          --merge-base; omit both to collect the local working tree. Also used as the label (the
                          subdirectory name the bundle's stats are saved under).
+  --webpack-dir=<value>  Directory whose 'webpack' build is run and whose analyzer.json is collected. Defaults to
+                         --package-dir. Set this when the webpack config lives in a different directory than the package
+                         being compiled (e.g. a scenario subdirectory that reuses its parent package's compiled output).
+                         The collected stats are saved under this directory's compareBundlesOutput.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -168,7 +174,7 @@ Collect the local bundle and the base-revision (merge-base) bundle, then compare
 ```
 USAGE
   $ flub generate bundleAnalysisReposWithComparison [-v | --quiet] [--base-revision <value>] [--exact-base] [--package-dir <value>]
-    [--keep-base-repo]
+    [--webpack-dir <value>] [--keep-base-repo]
 
 FLAGS
   --base-revision=<value>
@@ -188,7 +194,12 @@ FLAGS
       to inspect the inner repo's working tree or build output (e.g. when a build is failing inside the inner repo).
 
   --package-dir=<value>
-      [default: .] Package root whose webpack bundles are built and compared.
+      [default: .] Package root whose 'build:compile' is run to compile the package and its dependencies.
+
+  --webpack-dir=<value>
+      Directory whose 'webpack' build is run and compared. Defaults to --package-dir. Set this when the webpack config
+      lives in a different directory than the package being compiled (e.g. a scenario subdirectory). The comparison
+      reports are written under this directory's compareBundlesOutput.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

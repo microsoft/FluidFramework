@@ -5,11 +5,10 @@
 
 import type { TaggedChange } from "../rebase/index.js";
 
-import type { ChangeFamily, ChangeFamilyEditor } from "./changeFamily.js";
+import type { ChangeFamilyEditor } from "./changeFamily.js";
 
 export abstract class EditBuilder<TChange> implements ChangeFamilyEditor {
 	public constructor(
-		protected readonly changeFamily: ChangeFamily<ChangeFamilyEditor, TChange>,
 		private readonly changeReceiver: (change: TaggedChange<TChange>) => void,
 	) {}
 

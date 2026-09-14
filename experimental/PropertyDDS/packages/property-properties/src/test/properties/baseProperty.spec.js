@@ -8,18 +8,20 @@
  * described in /src/properties/baseProperty.js
  */
 
-var PropertyFactory, ChangeSet, MSG, BaseProperty;
+import { ChangeSet } from "@fluid-experimental/property-changeset";
+import { constants } from "@fluid-experimental/property-common";
+
+// Ideally this would import from "@fluid-experimental/property-properties", but these
+// tests use internal APIs that are not part of the typed API that comes with the package.
+import { BaseProperty, PropertyFactory } from "../../index.js";
+
+const { MSG } = constants;
 
 describe("BaseProperty", function () {
 	/**
 	 * Get all the objects we need in this test here.
 	 */
 	before(function () {
-		PropertyFactory = require("../..").PropertyFactory;
-		ChangeSet = require("@fluid-experimental/property-changeset").ChangeSet;
-		MSG = require("@fluid-experimental/property-common").constants.MSG;
-		BaseProperty = require("../..").BaseProperty;
-
 		var TestPropertyObject = {
 			typeid: "autodesk.tests:property.with.special.characters-1.0.0",
 			properties: [
@@ -502,10 +504,9 @@ describe("BaseProperty", function () {
 
 	// Other aspects of traverseDown function are already tested. Missing BREAK_TRAVERSAL and paths only.
 	describe("traverseDown, hasPendingChanges and getPendingChanges", function () {
-		var BREAK_TRAVERSAL;
+		var BREAK_TRAVERSAL = BaseProperty.BREAK_TRAVERSAL;
 
 		before(function () {
-			BREAK_TRAVERSAL = require("../..").BaseProperty.BREAK_TRAVERSAL;
 			var TestTraversalObject = {
 				typeid: "autodesk.tests:property.traversal-1.0.0",
 				properties: [

@@ -1,0 +1,8 @@
+# Normalize line endings across platforms.
+* text=auto
+
+# Shell scripts must stay LF so they run on Linux/macOS regardless of checkout OS.
+*.sh text eol=lf
+
+# PowerShell scripts are fine with CRLF on Windows.
+*.ps1 text eol=crlf

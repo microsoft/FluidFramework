@@ -38,7 +38,7 @@ jobs:
       - name: Download metadata
         if: github.event_name == 'workflow_run'
         # release notes: https://github.com/dawidd6/action-download-artifact/releases/tag/v11
-        uses: dawidd6/action-download-artifact@8305c0f1062bb0d184d09ef4493ecb9288447732 # ratchet:dawidd6/action-download-artifact@v20
+        uses: dawidd6/action-download-artifact@8305c0f1062bb0d184d09ef4493ecb9288447732 # v20
         with:
           workflow: release-branches.yml
           run_id: ${{ github.event.workflow_run.id }}
@@ -80,7 +80,7 @@ jobs:
         id: workflow_dispatch_load_commit_sha
         if: github.event_name == 'workflow_dispatch'
         # release notes: https://github.com/actions/github-script/releases/tag/v8
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PR_NUMBER: ${{ steps.workflow_dispatch_load_pr.outputs.pr_num }}
         with:
@@ -107,7 +107,7 @@ jobs:
       # workflow is not directly triggered by the PR.
       - name: Set commit status as pending
         # release notes: https://github.com/myrotvorets/set-commit-status-action/releases/tag/v2.0.1
-        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2.0.1
+        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # v2.0.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           sha: ${{ needs.metadata.outputs.commit_sha }}
@@ -115,7 +115,7 @@ jobs:
           context: Check PR approval
 
       # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           # The default ref when triggered by the workflow_run event is the default branch -- main
           # This means the build-tools from the main branch will always be used.
@@ -124,10 +124,10 @@ jobs:
 
       # install and configure node, pnpm and the changeset tools
       # release notes: https://github.com/pnpm/action-setup/releases/tag/v5.0.0
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # ratchet:pnpm/action-setup@v5
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
 
       # release notes: https://github.com/actions/setup-node/releases/tag/v6.3.0
-      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version-file: .nvmrc
           cache: "pnpm"
@@ -169,7 +169,7 @@ jobs:
       - name: Set commit status as success
         if: steps.check-pr.outcome == 'success'
         # release notes: https://github.com/myrotvorets/set-commit-status-action/releases/tag/v2.0.1
-        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2.0.1
+        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # v2.0.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           sha: ${{ needs.metadata.outputs.commit_sha }}
@@ -179,7 +179,7 @@ jobs:
       - name: Set commit status as failure
         if: steps.check-pr.outcome != 'success'
         # release notes: https://github.com/myrotvorets/set-commit-status-action/releases/tag/v2.0.1
-        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2.0.1
+        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # v2.0.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           sha: ${{ needs.metadata.outputs.commit_sha }}

@@ -77,13 +77,13 @@ import {
 	incrementalSummaryHint,
 	numberSchema,
 	SchemaFactoryAlpha,
+	StagedSchemaUpgradePolicy,
 	stringSchema,
 	TreeViewConfigurationAlpha,
 	type UnsafeUnknownSchema,
 } from "../../../../simple-tree/index.js";
 import {
 	toStoredSchema,
-	restrictiveStoredSchemaGenerationOptions,
 	toInitialSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/toStoredSchema.js";
@@ -241,7 +241,7 @@ describe("schemaBasedEncoding", () => {
 
 			const storedSchema = toStoredSchema(
 				SchemaFactoryAlpha.identifier(),
-				restrictiveStoredSchemaGenerationOptions,
+				StagedSchemaUpgradePolicy.restrictive,
 			);
 
 			const fieldEncoder = getFieldEncoder(

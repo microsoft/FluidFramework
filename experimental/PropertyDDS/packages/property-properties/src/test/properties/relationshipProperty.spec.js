@@ -7,7 +7,7 @@
  * @fileoverview In this file, we will test the relationship property added to /src/property_factory.js
  */
 
-const { PropertyFactory } = require("../..");
+import { PropertyFactory } from "../../index.js";
 
 describe("RelationshipProperty", function () {
 	it("should be able to add a relationship property whithin a schema", function () {

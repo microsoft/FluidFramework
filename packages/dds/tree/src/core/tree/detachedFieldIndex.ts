@@ -4,17 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-
-import {
-	type CodecWriteOptions,
-	FluidClientVersion,
-	FormatValidatorNoOp,
-	type IJsonCodec,
-} from "../../codec/index.js";
 import {
 	type IdAllocator,
-	type JsonCompatibleReadOnly,
 	type NestedMap,
 	brand,
 	deleteFromNestedMap,
@@ -24,11 +15,10 @@ import {
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util/index.js";
-import type { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
+import type { RevisionTag } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type * as Delta from "./delta.js";
-import { detachedFieldIndexCodecBuilder } from "./detachedFieldIndexCodecs.js";
 import type {
 	DetachedField,
 	DetachedFieldSummaryData,
@@ -92,9 +82,6 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 		Delta.DetachedNodeId
 	> = new Map();
 
-	private readonly codec: IJsonCodec<DetachedFieldSummaryData>;
-	private readonly options: CodecWriteOptions;
-
 	/**
 	 * The process for loading `DetachedFieldIndex` data from a summary is split into two steps:
 	 * 1. Call {@link loadData}
@@ -112,28 +99,12 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 	public constructor(
 		private readonly name: string,
 		private rootIdAllocator: IdAllocator<ForestRootId>,
-		private readonly revisionTagCodec: RevisionTagCodec,
-		private readonly idCompressor: IIdCompressor,
-		options?: CodecWriteOptions,
-	) {
-		this.options = options ?? {
-			jsonValidator: FormatValidatorNoOp,
-			minVersionForCollab: FluidClientVersion.v2_0,
-		};
-		this.codec = detachedFieldIndexCodecBuilder.build({
-			...this.options,
-			revisionTagCodec,
-			idCompressor,
-		});
-	}
+	) {}
 
 	public clone(): DetachedFieldIndex {
 		const clone = new DetachedFieldIndex(
 			this.name,
 			idAllocatorFromMaxId(this.rootIdAllocator.getMaxId()) as IdAllocator<ForestRootId>,
-			this.revisionTagCodec,
-			this.idCompressor,
-			this.options,
 		);
 		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField, true);
 		populateNestedMap(
@@ -307,19 +278,17 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 		});
 	}
 
-	public encode(): JsonCompatibleReadOnly {
-		return this.codec.encode({
+	public getSummaryData(): DetachedFieldSummaryData {
+		return {
 			data: this.detachedNodeToField,
 			maxId: this.rootIdAllocator.getMaxId(),
-		});
+		};
 	}
 
 	/**
-	 * Loads the tree index from the given string, this overrides any existing data.
+	 * Loads the tree index from summary data, this overrides any existing data.
 	 */
-	public loadData(data: JsonCompatibleReadOnly): void {
-		const detachedFieldIndex: DetachedFieldSummaryData = this.codec.decode(data);
-
+	public loadData(detachedFieldIndex: DetachedFieldSummaryData): void {
 		this.rootIdAllocator = idAllocatorFromMaxId(
 			detachedFieldIndex.maxId,
 		) as IdAllocator<ForestRootId>;

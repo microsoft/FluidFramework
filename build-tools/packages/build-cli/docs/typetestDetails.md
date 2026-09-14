@@ -43,8 +43,6 @@ Generating type tests has two parts: the prepare phase and the generate phase. T
 See the [`flub typetests`](./typetests.md) and [`flub generate:typetests`](./generate.md#flub-generate-typetests)
 reference documentation for details about the flags and options they provide.
 
-[api type validation]: https://github.com/microsoft/FluidFramework/wiki/API-Type-Validation
-
 ## The prepare phase: resetting tests and updating the previous version
 
 The prepare phase determines the baseline previous version to use, updates the previous version devDependency in
@@ -92,3 +90,6 @@ details about the flags and options available.
 > The `generate:typetests` command is designed to produce a single output file - the type tests - per invocation, and to
 > generate tests for a single entrypoint. If you want to generate tests for both the alpha entrypoint and the legacy
 > entrypoint, for example, you will need to use `generate:typetests` twice, once for each entrypoint.
+
+<!-- Links -->
+[api type validation]: ../../../../docs/content/Contributing/API-Type-Validation.md

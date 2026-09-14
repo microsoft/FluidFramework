@@ -49,15 +49,6 @@ export class DocumentManager implements IDocumentManager {
 			return null;
 		}
 
-		if (this.documentStaticDataCache) {
-			// Cache the static properties of the document
-			const staticProps: IDocumentStaticProperties =
-				DocumentManager.getStaticPropsFromDoc(document);
-			const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
-			await this.documentStaticDataCache.set(staticPropsKey, JSON.stringify(staticProps));
-		}
-
-		// Return the original document that was retrieved
 		return document;
 	}
 
@@ -65,7 +56,6 @@ export class DocumentManager implements IDocumentManager {
 		tenantId: string,
 		documentId: string,
 	): Promise<IDocumentStaticProperties | undefined> {
-		// If the cache is undefined, fetch the document from the database
 		if (!this.documentStaticDataCache) {
 			Lumberjack.verbose(
 				"Falling back to database after attempting to read cached static document data, because the DocumentManager cache is undefined.",
@@ -74,12 +64,9 @@ export class DocumentManager implements IDocumentManager {
 			return this.getDocumentStaticProperties(tenantId, documentId);
 		}
 
-		// Retrieve cached static document props
-		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
-		const staticPropsStr: string | undefined =
+		const staticPropsKey = DocumentManager.getDocumentStaticKey(tenantId, documentId);
+		const staticPropsStr =
 			(await this.documentStaticDataCache.get(staticPropsKey)) ?? undefined;
-
-		// If there are no cached static document props, fetch the document from the database
 		if (!staticPropsStr) {
 			Lumberjack.verbose(
 				"Falling back to database after attempting to read cached static document data.",
@@ -88,15 +75,18 @@ export class DocumentManager implements IDocumentManager {
 			return this.getDocumentStaticProperties(tenantId, documentId);
 		}
 
-		// Return the static data, parsed into a JSON object
-		const staticProps: IDocumentStaticProperties = JSON.parse(
-			staticPropsStr,
-		) as IDocumentStaticProperties;
+		const staticProps = JSON.parse(staticPropsStr) as IDocumentStaticProperties;
+		if (staticProps.tenantId !== tenantId || staticProps.documentId !== documentId) {
+			Lumberjack.warning(
+				"Cached static document identity does not match the requested identity.",
+				getLumberBaseProperties(documentId, tenantId),
+			);
+			return undefined;
+		}
 		return staticProps;
 	}
 
-	public async purgeStaticCache(documentId: string): Promise<void> {
-		// If the cache is undefined, do nothing, because there are no cached static properties to purge
+	public async purgeStaticCache(tenantId: string, documentId: string): Promise<void> {
 		if (!this.documentStaticDataCache) {
 			Lumberjack.error(
 				"Cannot purge document static properties cache, because the DocumentManager cache is undefined.",
@@ -110,7 +100,7 @@ export class DocumentManager implements IDocumentManager {
 			return;
 		}
 
-		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
+		const staticPropsKey = DocumentManager.getDocumentStaticKey(tenantId, documentId);
 		await this.documentStaticDataCache.delete(staticPropsKey);
 	}
 
@@ -126,7 +116,20 @@ export class DocumentManager implements IDocumentManager {
 			);
 			return undefined;
 		}
-		return DocumentManager.getStaticPropsFromDoc(document);
+		if (document.tenantId !== tenantId || document.documentId !== documentId) {
+			Lumberjack.warning(
+				"Alfred document identity does not match the requested identity.",
+				getLumberBaseProperties(documentId, tenantId),
+			);
+			return undefined;
+		}
+
+		const staticProps = DocumentManager.getStaticPropsFromDoc(document);
+		if (this.documentStaticDataCache) {
+			const staticPropsKey = DocumentManager.getDocumentStaticKey(tenantId, documentId);
+			await this.documentStaticDataCache.set(staticPropsKey, JSON.stringify(staticProps));
+		}
+		return staticProps;
 	}
 
 	private async getBasicRestWrapper(tenantId: string, documentId: string) {
@@ -165,13 +168,14 @@ export class DocumentManager implements IDocumentManager {
 	}
 
 	/**
-	 * Creates a cache key to retreive static data from a document
+	 * Creates a cache key for one tenant/document identity.
 	 *
-	 * @param documentId - ID of the document to create an access key for
-	 * @returns - A cache key to access static data for [documentId]
+	 * @param tenantId - Tenant that owns the document
+	 * @param documentId - Document whose static data is cached
+	 * @returns An unambiguous tenant-qualified static-data cache key
 	 */
-	private static getDocumentStaticKey(documentId: string): string {
-		return `staticData:${documentId}`;
+	private static getDocumentStaticKey(tenantId: string, documentId: string): string {
+		return `staticData:${encodeURIComponent(tenantId)}:${encodeURIComponent(documentId)}`;
 	}
 
 	/**

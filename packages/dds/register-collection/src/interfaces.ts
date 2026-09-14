@@ -55,7 +55,7 @@ export interface IConsensusRegisterCollection<T = any>
 	 * Attempts to write a register with a value. Returns a promise to indicate the roundtrip completion.
 	 * For a non existent register, it will attempt to create a new register with the specified value.
 	 *
-	 * @returns Promise<true> if write was non-concurrent
+	 * @returns A promise resolving to `true` if the write was non-concurrent
 	 */
 	write(key: string, value: T): Promise<boolean>;
 

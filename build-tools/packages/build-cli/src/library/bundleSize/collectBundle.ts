@@ -14,7 +14,7 @@ import {
 } from "node:fs";
 import { dirname, relative, resolve } from "node:path";
 
-import { findGitRootSync } from "@fluid-tools/build-infrastructure";
+import { findGitRootSync, type PackageJson } from "@fluid-tools/build-infrastructure";
 import { simpleGit } from "simple-git";
 
 import { pickFreshestRemote } from "../git/pickFreshestRemote.js";
@@ -67,9 +67,17 @@ export interface CollectBundleOptions {
 	 */
 	readonly forceCleanBuild: boolean;
 	/**
-	 * Package root whose webpack bundles are built and whose `analyzer.json` is collected.
+	 * Package root whose `build:compile` is run to compile the package and its dependencies.
 	 */
 	readonly packageDir: string;
+	/**
+	 * Directory whose `webpack` build is run and whose `analyzer.json` is collected. Defaults to
+	 * {@link CollectBundleOptions.packageDir} when not specified, so a single directory can serve as
+	 * both the compiled package and the webpack root. Set this when the webpack config lives in a
+	 * different directory than the package being compiled (e.g. a scenario subdirectory that shares
+	 * its parent package's compiled output).
+	 */
+	readonly webpackDir?: string;
 	/**
 	 * Directory under which per-label analyzer stats are saved.
 	 */
@@ -210,15 +218,45 @@ function cleanWorkspace(repoRoot: string): void {
 }
 
 /**
- * Compiles this package and its dependencies, then builds its webpack bundles. Uses
- * `build:compile` (not the full `build`) to skip the lint / docs / api-report tasks, which are
+ * Throws a user-facing error unless the package at `packageRoot` declares `webpack` as a
+ * devDependency. The scenario bundle is built with `pnpm exec webpack` from this package, so webpack
+ * must be one of its devDependencies.
+ */
+function ensureWebpackInstalled(packageRoot: string): void {
+	const packageJsonPath = resolve(packageRoot, "package.json");
+	const { name, devDependencies } = JSON.parse(
+		readFileSync(packageJsonPath, "utf8"),
+	) as PackageJson;
+	if (devDependencies?.webpack === undefined) {
+		throw new Error(
+			`webpack is required to build the bundle but is not a devDependency of ${name} (${packageRoot}). ` +
+				`Add "webpack" (and "webpack-cli") to that package's devDependencies and run \`pnpm install\`.`,
+		);
+	}
+}
+
+/**
+ * Compiles the package and its dependencies (in `packageRoot`), then builds the webpack bundles
+ * (in `webpackRoot`). These are usually the same directory, but may differ when the webpack config
+ * lives in a separate directory (e.g. a scenario) that reuses its parent package's compiled output.
+ * Uses `build:compile` (not the full `build`) to skip the lint / docs / api-report tasks, which are
  * unnecessary here and prone to unrelated failures across revisions.
  */
-function buildPackage(packageRoot: string): void {
-	console.log(`\nCompiling bundle-size-tests and its dependencies in ${packageRoot}...`);
+function buildPackage(packageRoot: string, webpackRoot: string): void {
+	console.log(`\nCompiling the package and its dependencies in ${packageRoot}...`);
 	run("npm run build:compile", packageRoot);
-	console.log(`\nBuilding bundles with webpack in ${packageRoot}...`);
-	run("npm run webpack", packageRoot);
+	console.log(`\nBuilding bundles with webpack in ${webpackRoot}...`);
+	ensureWebpackInstalled(packageRoot);
+	if (resolve(webpackRoot) === resolve(packageRoot)) {
+		// Same directory: run the package's own `webpack` script.
+		run("npm run webpack", webpackRoot);
+	} else {
+		// The scenario dir has no package.json, so `pnpm exec` there falls back to a workspace-
+		// recursive exec and fails. Run webpack from packageRoot instead and point it at the
+		// scenario config with --config.
+		const scenarioConfig = resolve(webpackRoot, "webpack.config.cjs");
+		run(`pnpm exec webpack --config "${scenarioConfig}"`, packageRoot);
+	}
 }
 
 // --- Environment prep ---
@@ -255,13 +293,28 @@ async function captureLocalPatch(repoRoot: string, labelDirectory: string): Prom
  * so no network is involved and every commit in the outer repo — including merge-base
  * SHAs that aren't branch tips — is already available. Callers pass an already-resolved
  * SHA, so any committish is handled uniformly. Never touches the outer repo's git state.
+ *
+ * On a reused inner repo, the outer enlistment may have advanced since the clone (e.g. new
+ * commits landed on a branch, or `sha` is a freshly-resolved merge-base) so the requested
+ * commit might not yet exist inside the inner repo — `git checkout` would then fail with
+ * "fatal: unable to read tree". To avoid re-cloning, re-fetch the outer repo's branch refs
+ * first, which brings the inner repo's object database to parity with a fresh clone (every
+ * commit reachable from an outer branch head, including merge-base SHAs that are ancestors
+ * of those heads). The fetch reads only the outer enlistment on disk, so it stays offline.
  */
 async function ensureInnerRepoAtRevision(
 	sha: string,
 	outerRepoRoot: string,
 	innerRepoRoot: string,
 ): Promise<void> {
-	if (!existsSync(resolve(innerRepoRoot, ".git"))) {
+	if (existsSync(resolve(innerRepoRoot, ".git"))) {
+		// Reusing an existing inner clone: refresh its branch refs from the outer repo so any
+		// commit the outer repo now has (including a newly-resolved merge-base) is available
+		// before checkout. `--no-tags` mirrors the clone; `--prune` drops branches the outer
+		// repo has since deleted. `origin` is the outer enlistment path the clone was made from.
+		console.log(`\nReusing inner repo; fetching latest refs from ${outerRepoRoot}...`);
+		await simpleGit(innerRepoRoot).raw(["fetch", "origin", "--no-tags", "--prune"]);
+	} else {
 		mkdirSync(dirname(innerRepoRoot), { recursive: true });
 		console.log(`\nCloning inner repo from ${outerRepoRoot} into ${innerRepoRoot}...`);
 		await simpleGit(dirname(innerRepoRoot)).clone(outerRepoRoot, innerRepoRoot, [
@@ -282,10 +335,11 @@ async function prepareRevisionBuild(
 	sha: string,
 	outerRepoRoot: string,
 	packageDir: string,
+	webpackDir: string,
 	innerRepoRoot: string,
-): Promise<{ repoRoot: string; packageRoot: string }> {
+): Promise<{ repoRoot: string; packageRoot: string; webpackRoot: string }> {
 	await ensureInnerRepoAtRevision(sha, outerRepoRoot, innerRepoRoot);
-	// Same package inside the inner repo, via its path relative to the repo root.
+	// Same package/webpack directories inside the inner repo, via their paths relative to the repo root.
 	const packageRoot = resolve(innerRepoRoot, relative(outerRepoRoot, packageDir));
 	if (!existsSync(packageRoot)) {
 		throw new Error(
@@ -293,8 +347,15 @@ async function prepareRevisionBuild(
 				`The revision "${sha}" may predate this package.`,
 		);
 	}
+	const webpackRoot = resolve(innerRepoRoot, relative(outerRepoRoot, webpackDir));
+	if (!existsSync(webpackRoot)) {
+		throw new Error(
+			`Expected webpack directory not found in inner repo at ${webpackRoot}. ` +
+				`The revision "${sha}" may predate it.`,
+		);
+	}
 	installDependencies(innerRepoRoot);
-	return { repoRoot: innerRepoRoot, packageRoot };
+	return { repoRoot: innerRepoRoot, packageRoot, webpackRoot };
 }
 
 // --- Output ---
@@ -368,6 +429,7 @@ function logCollectionComplete(mode: string, label: string, labelDirectory: stri
  */
 export async function collectBundle(options: CollectBundleOptions): Promise<string> {
 	const { mode, revision, mergeBaseOf, forceCleanBuild, packageDir, analysisDir } = options;
+	const webpackDir = options.webpackDir ?? packageDir;
 
 	const outerRepoRoot = findGitRootSync(packageDir);
 	const innerRepoRoot = options.baseRepoDir ?? resolve(analysisDir, "base-repo");
@@ -419,13 +481,15 @@ export async function collectBundle(options: CollectBundleOptions): Promise<stri
 	// Prepare the build environment: the local working tree, or the inner repo at the revision.
 	let repoRoot = outerRepoRoot;
 	let packageRoot = packageDir;
+	let webpackRoot = webpackDir;
 	if (mode === "local") {
 		await captureLocalPatch(outerRepoRoot, labelDirectory);
 	} else {
-		({ repoRoot, packageRoot } = await prepareRevisionBuild(
+		({ repoRoot, packageRoot, webpackRoot } = await prepareRevisionBuild(
 			resolvedRevision as string,
 			outerRepoRoot,
 			packageDir,
+			webpackDir,
 			innerRepoRoot,
 		));
 	}
@@ -434,10 +498,10 @@ export async function collectBundle(options: CollectBundleOptions): Promise<stri
 	if (forceCleanBuild) {
 		cleanWorkspace(repoRoot);
 	}
-	buildPackage(packageRoot);
+	buildPackage(packageRoot, webpackRoot);
 
 	// Save stats, recording the SHA so a later run against the same revision can skip the rebuild.
-	saveStats(label, packageRoot, analysisDir);
+	saveStats(label, webpackRoot, analysisDir);
 	if (resolvedRevision !== undefined) {
 		writeFileSync(resolve(labelDirectory, revisionMarkerFileName), `${resolvedRevision}\n`);
 	}

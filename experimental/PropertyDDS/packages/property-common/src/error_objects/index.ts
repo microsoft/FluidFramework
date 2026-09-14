@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { FlaggedError } from "./flaggedError";
-export { HTTPError } from "./httpError";
-export { HTTPErrorNoStack } from "./httpErrorNoStack";
-export { OperationError } from "./operationError";
+export { FlaggedError } from "./flaggedError.js";
+export { HTTPError } from "./httpError.js";
+export { HTTPErrorNoStack } from "./httpErrorNoStack.js";
+export { OperationError } from "./operationError.js";

@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type { ReactElement } from "react";
+
+import { FluentReactComponents } from "../FluentUi.cjs";
+import { useTelemetryOptIn } from "../TelemetryUtils.js";
+import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
+
+const {
 	Dropdown,
 	Link,
 	Option,
@@ -12,11 +18,7 @@ import {
 	teamsHighContrastTheme,
 	webDarkTheme,
 	webLightTheme,
-} from "@fluentui/react-components";
-import type { ReactElement } from "react";
-
-import { useTelemetryOptIn } from "../TelemetryUtils.js";
-import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
+} = FluentReactComponents;
 
 const useStyles = makeStyles({
 	root: {

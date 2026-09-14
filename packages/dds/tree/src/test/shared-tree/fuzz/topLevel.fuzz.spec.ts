@@ -11,7 +11,7 @@ import {
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { baseTreeModel, optimizedForestTreeModel, runsPerBatch } from "./baseModel.js";
+import { baseTreeModel, comparisonForestTreeModel, runsPerBatch } from "./baseModel.js";
 import {
 	deterministicIdCompressorFactory,
 	failureDirectory,
@@ -69,7 +69,7 @@ describe("Fuzz - Top-Level", () => {
 		createDDSFuzzSuite(baseTreeModel, options);
 	});
 
-	describe("Everything - Optimized Forest", () => {
+	describe("Everything - Comparison Forest", () => {
 		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,
 			defaultTestCount: runsPerBatch,
@@ -91,7 +91,7 @@ describe("Fuzz - Top-Level", () => {
 				...[30], //  0x92a
 			],
 		};
-		createDDSFuzzSuite(optimizedForestTreeModel, options);
+		createDDSFuzzSuite(comparisonForestTreeModel, options);
 	});
 
 	describe("Batch rebasing", () => {

@@ -41,7 +41,7 @@ import {
 	SchemaFactory,
 	stringSchema,
 	toInitialSchema,
-	restrictiveStoredSchemaGenerationOptions,
+	StagedSchemaUpgradePolicy,
 	toStoredSchema,
 } from "../../../simple-tree/index.js";
 import { brand, disposeSymbol } from "../../../util/index.js";
@@ -448,7 +448,7 @@ describe("LazyField", () => {
 			persistedMetadata: undefined,
 		};
 		const schema: TreeStoredSchema = {
-			...toStoredSchema(numberSchema, restrictiveStoredSchemaGenerationOptions),
+			...toStoredSchema(numberSchema, StagedSchemaUpgradePolicy.restrictive),
 			rootFieldSchema: rootSchema,
 		};
 

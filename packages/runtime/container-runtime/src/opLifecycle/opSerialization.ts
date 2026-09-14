@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	MessageType,
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	encodeHandleForSerialization,
 	isFluidHandle,
@@ -27,6 +30,24 @@ export function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMes
 	if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
 		mutableMessage.contents = JSON.parse(mutableMessage.contents);
 	}
+}
+
+/**
+ * If `message` is a modern runtime-envelope op (type "op" with a client id), returns a shallow copy
+ * with its contents deserialized ({@link ensureContentsDeserialized}); otherwise `undefined`.
+ *
+ * @remarks Only runtime ops may be deserialized (system ops carry non-JSON payloads), and copying keeps
+ * the caller's op untouched for the unpack pipeline. Shared so callers don't re-derive the invariant.
+ */
+export function tryGetDeserializedRuntimeOpCopy(
+	message: ISequencedDocumentMessage,
+): (ISequencedDocumentMessage & { clientId: string }) | undefined {
+	if (message.type !== MessageType.Operation || typeof message.clientId !== "string") {
+		return undefined;
+	}
+	const messageCopy = { ...message };
+	ensureContentsDeserialized(messageCopy);
+	return messageCopy as ISequencedDocumentMessage & { clientId: string };
 }
 
 /**

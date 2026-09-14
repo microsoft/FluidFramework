@@ -157,10 +157,10 @@ export const reactConfig = [
 		files: [...reactFilePatterns],
 		rules: {
 			...reactRecommendedTypeScript.rules,
-			"@eslint-react/dom/no-unsafe-target-blank": "error",
-			"@eslint-react/no-children-prop": "error",
-			"@eslint-react/no-useless-fragment": "error",
+			"@eslint-react/dom-no-unsafe-target-blank": "error",
+			"@eslint-react/jsx-no-children-prop": "error",
 			"@eslint-react/jsx-no-comment-textnodes": "error",
+			"@eslint-react/jsx-no-useless-fragment": "error",
 		},
 	},
 	// react-hooks/recommended rules with custom overrides

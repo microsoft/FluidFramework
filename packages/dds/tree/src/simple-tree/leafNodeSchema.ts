@@ -125,7 +125,12 @@ export interface LeafSchema<Name extends string, T extends TreeLeafValue>
 	> {}
 
 // Leaf schema shared between all SchemaFactory instances.
-export const stringSchema = makeLeaf("string", ValueSchema.String);
+/**
+ * A {@link LeafSchema} for a `string`.
+ * @system @sealed @alpha
+ */
+export type StringSchema = LeafSchema<"string", string> & SimpleLeafNodeSchema;
+export const stringSchema: StringSchema = makeLeaf("string", ValueSchema.String);
 export const numberSchema = makeLeaf("number", ValueSchema.Number);
 export const booleanSchema = makeLeaf("boolean", ValueSchema.Boolean);
 export const nullSchema = makeLeaf("null", ValueSchema.Null);

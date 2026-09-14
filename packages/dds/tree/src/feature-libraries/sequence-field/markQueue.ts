@@ -3,20 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
-import { type MoveEffectTable, splitMarkForMoveEffects } from "./moveEffectTable.js";
+import { getFirstMoveEffectLength, type MoveEffectTable } from "./moveEffectTable.js";
 import type { Mark } from "./types.js";
 import { splitMark } from "./utils.js";
 
-export class MarkQueue {
+export class MarkQueueBase {
 	private readonly stack: Mark[] = [];
 	private index = 0;
 
-	public constructor(
-		private readonly list: readonly Mark[],
-		private readonly moveEffects: MoveEffectTable,
-	) {
+	public constructor(private readonly list: readonly Mark[]) {
 		this.list = list;
 	}
 
@@ -36,11 +33,14 @@ export class MarkQueue {
 			return undefined;
 		}
 
-		const splitMarks = splitMarkForMoveEffects(mark, this.moveEffects);
-		for (let i = splitMarks.length - 1; i > 0; i--) {
-			this.stack.push(splitMarks[i] ?? oob());
+		const splitLength = this.getLengthForSplit(mark);
+		if (splitLength < mark.count) {
+			const [part1, part2] = splitMark(mark, splitLength);
+			this.stack.push(part2);
+			return part1;
 		}
-		return splitMarks[0];
+
+		return mark;
 	}
 
 	/**
@@ -65,5 +65,22 @@ export class MarkQueue {
 			this.stack.push(mark);
 		}
 		return mark;
+	}
+
+	protected getLengthForSplit(mark: Mark): number {
+		return mark.count;
+	}
+}
+
+export class MarkQueue extends MarkQueueBase {
+	public constructor(
+		list: readonly Mark[],
+		private readonly moveEffects: MoveEffectTable,
+	) {
+		super(list);
+	}
+
+	protected override getLengthForSplit(mark: Mark): number {
+		return getFirstMoveEffectLength(mark, mark.count, this.moveEffects);
 	}
 }

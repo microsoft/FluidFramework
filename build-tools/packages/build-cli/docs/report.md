@@ -43,15 +43,16 @@ _See code: [src/commands/report/codeCoverage.ts](https://github.com/microsoft/Fl
 
 ## `flub report comparePipelineBundleArtifacts`
 
-Download ADO bundle-size artifacts for two commits and emit their per-package, per-bundle differences as JSON. Base-side artifacts come from the `Build - Client bundle size artifacts` pipeline (runs on main/release pushes); head-side artifacts come from the `Build - client packages` pipeline (runs on PR commits). Intended for the PR-comment CI workflow; for local inner-dev-loop comparisons use `check bundleSize` instead.
+Download ADO bundle-size artifacts for a PR's CI build and its baseline and emit their per-package, per-bundle differences as JSON. Head-side artifacts come from the `Build - client packages` pipeline (runs on PR commits); base-side artifacts come from the `Build - Client bundle size artifacts` pipeline (runs on main/release pushes). The base commit is the target-branch commit the PR build actually built against — a PR build builds `refs/pull/<n>/merge`, i.e. the PR HEAD merged into the target branch tip at queue time, so that tip (not the merge-base) is the only baseline that isolates the PR's own delta. Intended for the PR-comment CI workflow; for local inner-dev-loop comparisons use `check bundleSize` instead.
 
 ```
 USAGE
-  $ flub report comparePipelineBundleArtifacts --base <value> --head <value> [--json] [-v | --quiet]
+  $ flub report comparePipelineBundleArtifacts --githubToken <value> --head <value> [--json] [-v | --quiet]
 
 FLAGS
-  --base=<value>  (required) Base commit SHA — the merge-base on the target branch. The baseline of the comparison.
-  --head=<value>  (required) Head commit SHA — the PR's latest commit. The compare side of the comparison.
+  --githubToken=<value>  (required) [env: GITHUB_TOKEN] GitHub access token used to resolve the PR build's test-merge
+                         commit.
+  --head=<value>         (required) Head commit SHA — the PR's latest commit. The compare side of the comparison.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -61,10 +62,13 @@ GLOBAL FLAGS
   --json  Format output as json.
 
 DESCRIPTION
-  Download ADO bundle-size artifacts for two commits and emit their per-package, per-bundle differences as JSON.
-  Base-side artifacts come from the `Build - Client bundle size artifacts` pipeline (runs on main/release pushes);
-  head-side artifacts come from the `Build - client packages` pipeline (runs on PR commits). Intended for the PR-comment
-  CI workflow; for local inner-dev-loop comparisons use `check bundleSize` instead.
+  Download ADO bundle-size artifacts for a PR's CI build and its baseline and emit their per-package, per-bundle
+  differences as JSON. Head-side artifacts come from the `Build - client packages` pipeline (runs on PR commits);
+  base-side artifacts come from the `Build - Client bundle size artifacts` pipeline (runs on main/release pushes). The
+  base commit is the target-branch commit the PR build actually built against — a PR build builds `refs/pull/<n>/merge`,
+  i.e. the PR HEAD merged into the target branch tip at queue time, so that tip (not the merge-base) is the only
+  baseline that isolates the PR's own delta. Intended for the PR-comment CI workflow; for local inner-dev-loop
+  comparisons use `check bundleSize` instead.
 ```
 
 _See code: [src/commands/report/comparePipelineBundleArtifacts.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/report/comparePipelineBundleArtifacts.ts)_

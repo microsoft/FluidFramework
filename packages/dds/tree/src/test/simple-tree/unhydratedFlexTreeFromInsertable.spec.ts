@@ -157,7 +157,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 	it("Fails when referenced schema has not yet been instantiated", () => {
 		const schemaFactory = new SchemaFactory("test");
 
-		let Bar: TreeNodeSchema;
+		const Bar = undefined as unknown as TreeNodeSchema;
 		class Foo extends schemaFactory.objectRecursive("Foo", {
 			x: schemaFactory.optionalRecursive([() => Bar]),
 		}) {}

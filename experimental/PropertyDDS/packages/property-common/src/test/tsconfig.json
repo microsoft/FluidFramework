@@ -1,11 +1,19 @@
 {
-	"extends": "../../../../../../common/build/build-common/ts-common-config.json",
+	"extends": [
+		"../../../../../../common/build/build-common/tsconfig.node20.json",
+		"../../../../../../common/build/build-common/tsconfig.test.json",
+	],
 	"compilerOptions": {
-		"declaration": false,
-		"declarationMap": false,
+		// PropertyDDS relies on legacy class field semantics, which TypeScript enables by
+		// default at target ES2022+. Keep them by disabling useDefineForClassFields.
+		"useDefineForClassFields": false,
 		"rootDir": "./",
-		"outDir": "../../dist/test",
-		"types": ["node", "mocha"],
+		"outDir": "../../lib/test",
+		"types": ["mocha", "node"],
+		"noImplicitAny": true,
+		"noUnusedLocals": true,
+		"noImplicitOverride": true,
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["./**/*"],
 	"references": [

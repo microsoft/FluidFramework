@@ -25,7 +25,6 @@ import type {
 	TreeAgentOptions,
 	ExecuteSemanticEditingOptions,
 	EditResult,
-	SemanticAgentOptions,
 	Logger,
 	AsynchronousEditor,
 	Context,
@@ -44,7 +43,7 @@ import {
 
 /**
  * The default maximum number of sequential edits the LLM can make before we assume it's stuck in a loop.
- * @remarks This can be overridden by passing {@link SemanticAgentOptions.maximumSequentialEdits | maximumSequentialEdits} to {@link createSemanticAgent}.
+ * @remarks This can be overridden with the `maximumSequentialEdits` option.
  */
 const defaultMaxSequentialEdits = 20;
 
@@ -78,121 +77,6 @@ function treeChangedText(stringified: string): string {
 }
 
 // #endregion
-
-/**
- * An agent that uses a {@link SharedTreeChatModel} to interact with a SharedTree.
- * @remarks This class forwards user queries to the chat model, and handles the application of any edits to the tree that the model requests.
- * @alpha @sealed
- */
-export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
-	private readonly outerTree: Subtree<TSchema>;
-	private readonly editor: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
-	private isDirty = false;
-
-	public constructor(
-		private readonly client: SharedTreeChatModel,
-		tree: ViewOrTree<TSchema>,
-		private readonly options?: Readonly<SemanticAgentOptions<TSchema>>,
-	) {
-		this.outerTree = new Subtree(tree);
-		this.outerTree.onTreeChanged(() => {
-			this.isDirty = true;
-		});
-		this.editor = this.options?.editor ?? createDefaultEditor();
-
-		const prompt = getPrompt({
-			subtree: this.outerTree,
-			editToolName: this.client.editToolName,
-			domainHints: this.options?.domainHints,
-		});
-
-		logAgentHeader(this.options?.logger, this.client.name);
-		this.client.appendContext?.(prompt);
-		this.options?.logger?.log(`## System Prompt\n\n${prompt}\n\n`);
-	}
-
-	/**
-	 * Given a user prompt, return a response.
-	 *
-	 * @param userPrompt - The prompt to send to the agent.
-	 * @returns The agent's response.
-	 */
-	public async query(userPrompt: string): Promise<string> {
-		this.options?.logger?.log(`## User Query\n\n${userPrompt}\n\n`);
-
-		if (this.isDirty) {
-			const stringified = stringifyTree(this.outerTree.field);
-			const text = treeChangedText(stringified);
-			this.client.appendContext?.(text);
-			this.options?.logger?.log(
-				`### Latest Tree State\n\nThe Tree was edited by a local or remote user since the previous query. The latest state is:\n\n\`\`\`JSON\n${stringified}\n\`\`\`\n\n`,
-			);
-			this.isDirty = false;
-		}
-
-		// Fork a branch that will live for the lifetime of this query (which can be multiple LLM calls if the there are errors or the LLM decides to take multiple steps to accomplish a task).
-		// The branch will be merged back into the outer branch if and only if the query succeeds.
-		const queryTree = this.outerTree.fork();
-		const maxEditCount = this.options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
-		let active = true;
-		let editCount = 0;
-		let lastEditFailed = false;
-		const { editToolName } = this.client;
-		const edit = async (editCode: string): Promise<EditResult> => {
-			if (editToolName === undefined) {
-				return {
-					type: "disabledError",
-					message: "Editing is not enabled for this model.",
-				};
-			}
-			if (!active) {
-				return {
-					type: "expiredError",
-					message: `The query has already completed. Further edits are not allowed.`,
-				};
-			}
-
-			if (++editCount > maxEditCount) {
-				lastEditFailed = true;
-				return {
-					type: "tooManyEditsError",
-					message: `The maximum number of edits (${maxEditCount}) for this query has been exceeded.`,
-				};
-			}
-
-			const editResult = await applyTreeFunction(
-				queryTree,
-				editCode,
-				this.editor,
-				this.options?.logger,
-			);
-
-			lastEditFailed = editResult.type !== "success";
-			return editResult;
-		};
-
-		if (this.client.query === undefined) {
-			throw new UsageError(
-				"The provided SharedTreeChatModel does not implement query(). Use createTreeAgent instead.",
-			);
-		}
-		const responseMessage = await this.client.query({
-			text: userPrompt,
-			edit,
-		});
-		active = false;
-
-		if (lastEditFailed) {
-			queryTree.branch.dispose();
-		} else {
-			this.outerTree.branch.merge(queryTree.branch);
-			this.isDirty = false;
-		}
-		this.options?.logger?.log(`## Response\n\n`);
-		this.options?.logger?.log(`${responseMessage}\n\n`);
-		return responseMessage;
-	}
-}
 
 /**
  * Creates an unhydrated node of the given schema with the given value.
@@ -568,8 +452,7 @@ async function runEditLoop<TSchema extends ImplicitFieldSchema>(
 			options.logger?.log(`## Cancel\n\n${cutoffMessage}\n\n`);
 			return { response: cutoffMessage, lastEditFailed: true };
 		}
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const response = await model.invoke!(history);
+		const response = await model.invoke(history);
 
 		if (response.role === "assistant") {
 			history.push(response);

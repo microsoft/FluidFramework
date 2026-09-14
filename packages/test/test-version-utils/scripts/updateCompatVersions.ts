@@ -48,6 +48,7 @@ import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { findGitRootSync } from "@fluid-tools/build-infrastructure";
+import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import * as semver from "semver";
 
 // Re-use version arithmetic and package list from the main source to keep them in sync.
@@ -224,7 +225,7 @@ async function main(): Promise<void> {
 	// in-window checkpoints follow.
 	for (const checkpoint of [
 		currentCheckpoint,
-		...getInWindowPriorCheckpoints(currentCheckpoint),
+		...getInWindowPriorCheckpoints(currentCheckpoint, lowestMinVersionForCollab),
 	]) {
 		const range = checkpointResolutionRange(checkpoint);
 		// Unlike the back-compat deltas below, designated checkpoints are expected to always

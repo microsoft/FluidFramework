@@ -7,6 +7,7 @@ import {
 	type IFluidMountableView,
 	type IFluidMountableViewEntryPoint,
 	MountableView,
+	exampleOldestSupportedClient,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/legacy";
@@ -42,6 +43,7 @@ class SmdeContainerFactory extends RuntimeFactoryHelper {
 			context,
 			registryEntries,
 			existing,
+			oldestSupportedClient: exampleOldestSupportedClient,
 			containerScope: context.scope,
 			provideEntryPoint: async (
 				containerRuntime: IContainerRuntime,

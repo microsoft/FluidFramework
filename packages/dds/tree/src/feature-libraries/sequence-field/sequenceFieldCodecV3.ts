@@ -19,6 +19,7 @@ import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import {
 	EncodedNodeChangeset,
 	type FieldChangeEncodingContext,
+	type FieldChangeDecodingContext,
 } from "../modular-schema/index.js";
 
 import { Changeset as ChangesetSchema, type Encoded } from "./formatV3.js";
@@ -36,7 +37,8 @@ export function makeV3Codec(
 	Changeset,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
-	FieldChangeEncodingContext
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext
 > {
 	const {
 		changeAtomIdCodec: atomIdCodec,
@@ -115,7 +117,7 @@ export function makeV3Codec(
 		},
 		decode: (
 			changeset: Encoded.Changeset<NodeChangeSchema>,
-			context: FieldChangeEncodingContext,
+			context: FieldChangeDecodingContext,
 		): Changeset => {
 			const marks: Changeset = [];
 			for (const mark of changeset) {

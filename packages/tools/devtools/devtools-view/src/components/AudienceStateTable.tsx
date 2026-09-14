@@ -3,18 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHeader,
-	TableRow,
-	makeStyles,
-	tokens,
-} from "@fluentui/react-components";
-import { EditRegular, Person12Regular, Search12Regular } from "@fluentui/react-icons";
 import { type ReactElement, useContext } from "react";
 
+import { FluentReactComponents, FluentReactIcons } from "../FluentUi.cjs";
 import { ThemeContext, ThemeOption } from "../ThemeHelper.js";
 
 import type { TransformedAudienceStateData } from "./AudienceView.js";
@@ -25,6 +16,10 @@ import {
 	userIdTooltipText,
 } from "./TooltipTexts.js";
 import { LabelCellLayout } from "./utility-components/index.js";
+
+const { Table, TableBody, TableCell, TableHeader, TableRow, makeStyles, tokens } =
+	FluentReactComponents;
+const { EditRegular, Person12Regular, Search12Regular } = FluentReactIcons;
 
 const audienceStateStyle = makeStyles({
 	currentUser: {

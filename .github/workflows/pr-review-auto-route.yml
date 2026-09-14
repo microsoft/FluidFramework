@@ -62,7 +62,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout base branch
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           # Default ref under pull_request_target is the base branch — trusted.
           # Do NOT change to pull_request.head.sha (see security invariant above).
@@ -167,7 +167,7 @@ jobs:
       - name: Post confirmation comment
         if: steps.prior.outputs.start_checked != 'true'
         # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
         with:
           header: pr-review-confirm
           path: /tmp/confirm-body.md

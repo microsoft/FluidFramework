@@ -29,13 +29,7 @@ import {
 } from "../../../core/index.js";
 import { stringSchema } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
-import {
-	applyTestDelta,
-	chunkFromJsonableTrees,
-	expectEqualPaths,
-	testIdCompressor,
-	testRevisionTagCodec,
-} from "../../utils.js";
+import { applyTestDelta, chunkFromJsonableTrees, expectEqualPaths } from "../../utils.js";
 
 const fieldFoo: FieldKey = brand("foo");
 const fieldBar: FieldKey = brand("bar");
@@ -256,11 +250,7 @@ describe("AnchorSet", () => {
 			count: 1,
 			detach: detachId,
 		};
-		const detachedFieldIndex = makeDetachedFieldIndex(
-			"repair",
-			testRevisionTagCodec,
-			testIdCompressor,
-		);
+		const detachedFieldIndex = makeDetachedFieldIndex("repair");
 
 		applyTestDelta(makeDelta(detachMark, makePath([fieldFoo, 3])), anchors, {
 			detachedFieldIndex,
@@ -290,11 +280,7 @@ describe("AnchorSet", () => {
 			count: 3,
 			detach: detachId,
 		};
-		const detachedFieldIndex = makeDetachedFieldIndex(
-			"repair",
-			testRevisionTagCodec,
-			testIdCompressor,
-		);
+		const detachedFieldIndex = makeDetachedFieldIndex("repair");
 
 		applyTestDelta(makeDelta(detachMark, makePath([fieldFoo, 3])), anchors, {
 			detachedFieldIndex,

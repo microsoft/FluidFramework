@@ -9,8 +9,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { markEager } from "./flexList.js";
 import { tryGetTreeNodeSchema } from "./treeNodeKernel.js";
 import { NodeKind, type TreeNodeSchemaClass } from "./treeNodeSchema.js";
-// eslint-disable-next-line import-x/no-deprecated
-import { type WithType, typeNameSymbol, type typeSchemaSymbol } from "./withType.js";
+import type { WithType, schemaIdentifierBrand, typeSchemaSymbol } from "./withType.js";
 
 /**
  * A non-{@link NodeKind.Leaf|leaf} SharedTree node. Includes objects, arrays, and maps.
@@ -72,22 +71,19 @@ export abstract class TreeNode implements WithType {
 	 * someone could manually (or via Intellisense auto-implement completion, or in response to a type error)
 	 * make an object literal with the [type] field and pass it off as a node: this private brand prevents that.
 	 */
-	// eslint-disable-next-line no-unused-private-class-members
+	// eslint-disable-next-line no-unused-private-class-members -- Exists for type checking sideeffect. See private remarks above.
 	readonly #brand!: unknown;
 
 	/**
-	 * Adds a type symbol for stronger typing.
-	 * @privateRemarks
-	 * Subclasses provide more specific strings for this to get strong typing of otherwise type compatible nodes.
-	 * @deprecated Use {@link typeSchemaSymbol} instead.
+	 * Adds a `schemaIdentifierBrand` for stronger and more efficient type checking.
+	 * @privateRemarks Subclasses provide more specific values to distinguish otherwise type-compatible nodes.
 	 */
-	// eslint-disable-next-line import-x/no-deprecated
-	public abstract get [typeNameSymbol](): string;
+	public abstract get [schemaIdentifierBrand](): string;
 
 	/**
-	 * Adds a type symbol for stronger typing.
+	 * {@inheritDoc typeSchemaSymbol}
 	 * @privateRemarks
-	 * Subclasses provide more specific strings for this to get strong typing of otherwise type compatible nodes.
+	 * Subclasses provide more specific values for this to get strong typing of otherwise type compatible nodes.
 	 */
 	public abstract get [typeSchemaSymbol](): TreeNodeSchemaClass;
 
@@ -152,7 +148,7 @@ export const privateToken = {};
  * @param base - prototype to search for
  * @returns true iff `base` is in the prototype chain starting at `derived`.
  */
-// eslint-disable-next-line @rushstack/no-new-null
+// eslint-disable-next-line @rushstack/no-new-null -- getPrototypeOf uses null.
 export function inPrototypeChain(derived: object | null, base: object): boolean {
 	let checking = derived;
 	while (checking !== null) {

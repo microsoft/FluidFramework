@@ -15,6 +15,7 @@ import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 
@@ -155,7 +156,7 @@ describe("Error Logging", () => {
 					value: "someUserData",
 				},
 			};
-			adaptedLogger.send(event);
+			adaptedLogger.send(event, LogLevel.essential);
 			assert.strictEqual(
 				events[0].userDataObject,
 				"REDACTED (UserData)",
@@ -172,11 +173,28 @@ describe("Error Logging", () => {
 					value: "somePackageData",
 				},
 			};
-			adaptedLogger.send(event);
+			adaptedLogger.send(event, LogLevel.essential);
 			assert.strictEqual(
 				events[0].packageDataObject,
 				"somePackageData",
 				"somePackageData should be preserved",
+			);
+			events.pop();
+		});
+		it("TaggedLoggerAdapter - tagged SchemaArtifact are preserved", () => {
+			const event = {
+				category: "cat",
+				eventName: "event",
+				schemaDataObject: {
+					tag: TelemetryDataTag.SchemaArtifact,
+					value: "someSchemaData",
+				},
+			};
+			adaptedLogger.send(event, LogLevel.essential);
+			assert.strictEqual(
+				events[0].schemaDataObject,
+				"someSchemaData",
+				"someSchemaData should be preserved",
 			);
 			events.pop();
 		});
@@ -189,7 +207,7 @@ describe("Error Logging", () => {
 					value: "someEvilData",
 				},
 			};
-			adaptedLogger.send(event);
+			adaptedLogger.send(event, LogLevel.essential);
 			assert.strictEqual(
 				events[0].unknownTaggedObject,
 				"REDACTED (unknown tag)",
@@ -202,6 +220,7 @@ describe("Error Logging", () => {
 		it("Ensure backwards compatibility", () => {
 			// The values of the enum should never change (even if the keys are renamed)
 			assert(TelemetryDataTag.CodeArtifact === ("CodeArtifact" as TelemetryDataTag));
+			assert(TelemetryDataTag.SchemaArtifact === ("SchemaArtifact" as TelemetryDataTag));
 			assert(TelemetryDataTag.UserData === ("UserData" as TelemetryDataTag));
 		});
 	});

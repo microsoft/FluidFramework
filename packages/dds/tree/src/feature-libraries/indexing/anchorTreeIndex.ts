@@ -329,7 +329,7 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 			if (errorMessage !== undefined) {
 				throw new Error(errorMessage);
 			}
-			assert(false, 0xa8f /* invalid operation on a disposed index */);
+			fail(0xa8f /* invalid operation on a disposed index */);
 		}
 	}
 

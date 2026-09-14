@@ -227,11 +227,9 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			riddlerEndpoint,
 			"http://invalid-api-use" /* internalHistorianUrl (explicitly invalid to avoid circular reference) */,
 		);
-		const documentManager: core.IDocumentManager = new services.DocumentManager(
-			alfredEndpoint,
-			tenantManager,
-			gitCache,
-		);
+		const documentManager: core.IDocumentManager =
+			customizations?.documentManager ??
+			new services.DocumentManager(alfredEndpoint, tenantManager, gitCache);
 		const simplifiedCustomDataRetriever =
 			customizations?.simplifiedCustomDataRetriever ??
 			new historianServices.SimplifiedCustomDataRetriever();

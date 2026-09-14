@@ -62,7 +62,7 @@ import {
 	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
 	type IFluidDataStorePolicies,
-	type MinimumVersionForCollab,
+	type OldestSupportedClientVersion,
 	currentSummarizeStepPrefix,
 	currentSummarizeStepPropertyName,
 } from "@fluidframework/runtime-definitions/internal";
@@ -391,7 +391,7 @@ export class FluidDataStoreRuntime
 	 * and we keep this property as private, but consumers may optimistically cast
 	 * to the internal interface to access this property.
 	 */
-	public readonly minVersionForCollab: MinimumVersionForCollab;
+	public readonly minVersionForCollab: OldestSupportedClientVersion;
 
 	/**
 	 * Create an instance of a DataStore runtime.
@@ -1660,6 +1660,9 @@ export const mixinRequestHandler = (
  * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @legacy @beta
+ * @deprecated This API is deprecated and will be removed in a future release. There is no replacement for it.
+ * @privateRemarks
+ * This should not be removed until all consumers are migrated off using it. See AB#78575.
  */
 export const mixinSummaryHandler = (
 	handler: (

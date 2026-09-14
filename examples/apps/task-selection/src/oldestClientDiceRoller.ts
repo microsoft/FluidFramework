@@ -6,7 +6,6 @@
 // Lint rule can be disabled once eslint config is upgraded to 5.3.0+
 import { OldestClientObserver } from "@fluid-experimental/oldest-client-observer/legacy";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import { assert } from "@fluidframework/core-utils/legacy";
 
 import type { IDiceRoller } from "./interface.js";
 
@@ -47,13 +46,17 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
 	}
 
 	private get oldestClientObserver(): OldestClientObserver {
-		assert(this._oldestClientObserver !== undefined, "OldestClientObserver not initialized");
+		if (this._oldestClientObserver === undefined) {
+			throw new Error("OldestClientObserver not initialized");
+		}
 		return this._oldestClientObserver;
 	}
 
 	public get value(): number {
 		const value = this.root.get<number>(diceValueKey);
-		assert(value !== undefined, "Dice value not initialized");
+		if (value === undefined) {
+			throw new Error("Dice value not initialized");
+		}
 		return value;
 	}
 

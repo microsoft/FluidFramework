@@ -26,7 +26,7 @@ const arg2: any = "arg2";
 const arg3: any = "arg3";
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
+const throwingFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
 	buildEditor: (
 		mintRevisionTagArg: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<string>) => void,
@@ -61,8 +61,15 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 		},
 	},
 	codecs: {} as unknown as ICodecFamily<string, ChangeEncodingContext>,
+	buildProcessor: (context: unknown): ((change: string) => string) => {
+		assert.equal(context, arg1);
+		return (change: string) => {
+			assert.equal(change, arg2);
+			throw new Error("buildProcessor return invocation");
+		};
+	},
 };
-const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
+const returningFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
 	buildEditor: (
 		mintRevisionTagArg: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<string>) => void,
@@ -97,6 +104,13 @@ const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 		},
 	},
 	codecs: {} as unknown as ICodecFamily<string, ChangeEncodingContext>,
+	buildProcessor: (context: unknown): ((change: string) => string) => {
+		assert.equal(context, arg1);
+		return (change: string) => {
+			assert.equal(change, arg2);
+			return "buildProcessor";
+		};
+	},
 };
 
 const errorLog: unknown[] = [];
@@ -134,6 +148,9 @@ describe("makeMitigatedChangeFamily", () => {
 			mitigatedReturningRebaser.changeRevision(arg1, arg2),
 			returningRebaser.changeRevision(arg1, arg2),
 		);
+		const mitigatedProcessor = mitigatedReturningFamily.buildProcessor(arg1);
+		const returningProcessor = returningFamily.buildProcessor(arg1);
+		assert.equal(mitigatedProcessor(arg2), returningProcessor(arg2));
 	});
 	describe("catches errors from", () => {
 		it("rebase", () => {
@@ -160,6 +177,12 @@ describe("makeMitigatedChangeFamily", () => {
 			errorLog.length = 0;
 			assert.equal(mitigatedThrowingRebaser.changeRevision(arg1, arg2), fallback);
 			assert.deepEqual(errorLog, ["changeRevision"]);
+		});
+		it("buildProcessor return invocation", () => {
+			errorLog.length = 0;
+			const processor = mitigatedThrowingFamily.buildProcessor(arg1);
+			assert.equal(processor(arg2), fallback);
+			assert.deepEqual(errorLog, ["buildProcessor return invocation"]);
 		});
 	});
 	it("does not catch errors from buildEditor", () => {

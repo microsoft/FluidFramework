@@ -28,8 +28,8 @@ export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: Change
 		{
 			version: Type.Literal(EditManagerFormatVersion.vSharedBranches),
 			originator: SessionIdSchema,
-			main: EncodedSharedBranch(tChange),
-			branches: Type.Optional(Type.Array(EncodedSharedBranch(tChange))),
+			main: EncodedSharedBranch(tChange, true),
+			branches: Type.Optional(Type.Array(EncodedSharedBranch(tChange, true))),
 		},
 		noAdditionalProps,
 	);
