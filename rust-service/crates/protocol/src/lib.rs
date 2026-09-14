@@ -7,7 +7,9 @@
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use thiserror::Error;
 
+/// The protocol version encoded in every FSP4 frame header.
 pub const VERSION: u16 = 2;
+/// The fixed byte length of an FSP4 frame header.
 pub const HEADER_BYTES: usize = 20;
 const MAGIC: &[u8; 4] = b"FSP4";
 
@@ -41,18 +43,30 @@ const ERROR: u8 = 127;
 
 const CONTENT_DIGEST_BYTES: usize = 32;
 
+/// Configurable upper bounds applied while encoding and decoding frames.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Limits {
+    /// Maximum total frame size, including the header.
     pub max_frame_bytes: usize,
+    /// Maximum encoded document identifier length.
     pub max_document_bytes: usize,
+    /// Maximum writer, session, or submission identifier length.
     pub max_identity_bytes: usize,
+    /// Maximum opaque position or snapshot identifier length.
     pub max_position_bytes: usize,
+    /// Maximum submitted operation payload length.
     pub max_payload_bytes: usize,
+    /// Maximum canonical record payload length returned by a read.
     pub max_record_bytes: usize,
+    /// Maximum snapshot payload length.
     pub max_snapshot_bytes: usize,
+    /// Maximum number of records or projected operations in one response.
     pub max_read_records: usize,
+    /// Maximum content-addressed blob length.
     pub max_blob_bytes: usize,
+    /// Maximum number of entries in a summary manifest.
     pub max_summary_entries: usize,
+    /// Maximum UTF-8 path length in a summary entry.
     pub max_summary_path_bytes: usize,
 }
 
@@ -74,247 +88,412 @@ impl Default for Limits {
     }
 }
 
+/// A reference to the initial document state or a canonical position.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Reference {
+    /// Refers to the state before the first canonical record.
     Initial,
+    /// Refers to the canonical position represented by the opaque bytes.
     At(Bytes),
 }
 
+/// A writer operation submitted for authoritative sequencing.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Submission {
+    /// Document that owns the submission.
     pub document: Bytes,
+    /// Stable writer identity.
     pub writer: Bytes,
+    /// Connection-scoped session identity.
     pub session: Bytes,
+    /// Stable identity for deduplication and later resolution.
     pub submission: Bytes,
+    /// Writer-local sequence number, starting at one and increasing contiguously.
     pub local_sequence_number: u64,
+    /// Canonical state on which the operation was based.
     pub reference: Reference,
+    /// Opaque operation payload.
     pub payload: Bytes,
 }
 
+/// A client request carried by one FSP4 frame.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Request {
+    /// Creates a new document.
     Create {
+        /// Identifier of the document to create.
         document: Bytes,
     },
+    /// Starts a fresh writer session at a known reference position.
     OpenSession {
+        /// Document that owns the session.
         document: Bytes,
+        /// Stable writer identity.
         writer: Bytes,
+        /// Fresh connection-scoped session identity.
         session: Bytes,
+        /// Canonical state from which the session begins.
         reference: Reference,
     },
+    /// Submits one operation for sequencing.
     Submit(Submission),
+    /// Reads canonical records after an optional opaque position.
     Read {
+        /// Document whose canonical log is read.
         document: Bytes,
+        /// Exclusive resume position, or the beginning when absent.
         after: Option<Bytes>,
     },
+    /// Reads accepted operations projected from the canonical log.
     ReadProjected {
+        /// Document whose operations are projected.
         document: Bytes,
+        /// Exclusive canonical resume cursor, or the beginning when absent.
         after: Option<Bytes>,
     },
+    /// Opens a projected-operation subscription after an optional cursor.
     SubscribeProjected {
+        /// Document whose accepted operations are subscribed to.
         document: Bytes,
+        /// Exclusive canonical resume cursor, or the beginning when absent.
         after: Option<Bytes>,
     },
+    /// Opens a transport-managed submission stream bound to one document.
     OpenSubmissionStream {
+        /// Document to which all stream submissions belong.
         document: Bytes,
     },
+    /// Resolves a stable submission identity without appending it again.
     ResolveSubmission {
+        /// Document that owns the submission.
         document: Bytes,
+        /// Writer identity supplied with the original submission.
         writer: Bytes,
+        /// Session identity supplied with the original submission.
         session: Bytes,
+        /// Stable submission identity to resolve.
         submission: Bytes,
     },
+    /// Fetches the latest published snapshot for a document.
     LatestSnapshot {
+        /// Document whose snapshot is requested.
         document: Bytes,
     },
+    /// Publishes a snapshot with optimistic parent validation.
     PublishSnapshot {
+        /// Document that owns the snapshot.
         document: Bytes,
+        /// Canonical position included by the snapshot.
         includes_through: Reference,
+        /// Expected current snapshot identifier, or no parent for first publication.
         expected_parent: Option<Bytes>,
+        /// Opaque snapshot payload.
         payload: Bytes,
     },
+    /// Stores a content-addressed blob.
     UploadBlob {
+        /// Blob bytes; empty blobs are permitted.
         payload: Bytes,
     },
+    /// Fetches a blob by its content digest.
     FetchBlob {
+        /// Fixed-length content digest.
         digest: Bytes,
     },
+    /// Publishes an ordered summary manifest whose blobs already exist.
     PublishSummary {
+        /// Canonically ordered path-to-blob entries.
         entries: Vec<SummaryEntry>,
     },
+    /// Fetches a summary manifest by its content digest.
     FetchSummary {
+        /// Fixed-length summary digest.
         digest: Bytes,
     },
+    /// Requests graceful service shutdown from the transport host.
     Shutdown,
 }
 
+/// Successful acknowledgement kinds for requests without result payloads.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u8)]
 pub enum Acknowledgement {
+    /// A document was created.
     Created = 1,
+    /// A writer session was opened.
     SessionOpened = 2,
+    /// A snapshot was published.
     SnapshotPublished = 3,
+    /// The service accepted a shutdown request.
     ShuttingDown = 4,
 }
 
+/// Whether a successful submission appended or matched an existing entry.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u8)]
 pub enum SubmissionDisposition {
+    /// The submission was newly appended.
     Accepted = 1,
+    /// An identical submission was already committed and no append occurred.
     Duplicate = 2,
 }
 
+/// One opaque record from a document's canonical log.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CommittedRecord {
+    /// Opaque canonical position of the record.
     pub position: Bytes,
+    /// Encoded canonical record payload.
     pub payload: Bytes,
 }
 
+/// One accepted operation projected from the canonical log.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ProjectedOperation {
+    /// Opaque canonical position of the underlying submission record.
     pub position: Bytes,
+    /// Contiguous sequence number among accepted operations.
     pub sequence_number: u64,
+    /// Minimum reference position across active writers after acceptance.
     pub minimum_reference: Reference,
+    /// Stable writer identity.
     pub writer: Bytes,
+    /// Connection-scoped session identity.
     pub session: Bytes,
+    /// Stable submission identity.
     pub submission: Bytes,
+    /// Writer-local sequence number.
     pub local_sequence_number: u64,
+    /// Canonical state on which the operation was based.
     pub reference: Reference,
+    /// Opaque operation payload.
     pub payload: Bytes,
 }
 
+/// Authoritative result of resolving a stable submission identity.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Resolution {
+    /// The submission is committed with final sequence metadata.
     Committed {
+        /// Opaque canonical position of the submission.
         position: Bytes,
+        /// Contiguous accepted-operation sequence number.
         sequence_number: u64,
+        /// Minimum reference position after acceptance.
         minimum_reference: Reference,
     },
+    /// The authoritative log does not contain the submission.
     NotCommitted,
+    /// Storage or fencing prevented an authoritative answer.
     StillUncertain,
 }
 
+/// The latest published snapshot and its opaque identifier.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PublishedSnapshot {
+    /// Snapshot identifier used for optimistic parent validation.
     pub id: Bytes,
+    /// Canonical position included by the snapshot.
     pub includes_through: Reference,
+    /// Opaque snapshot payload.
     pub payload: Bytes,
 }
 
+/// One path-to-blob entry in a summary manifest.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SummaryEntry {
+    /// UTF-8 summary path encoded as bytes on the wire.
     pub path: Bytes,
+    /// Fixed-length digest of an uploaded blob.
     pub blob: Bytes,
 }
 
+/// Stable service error classifications encoded on the wire.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u16)]
 pub enum ErrorCode {
+    /// The request fields or request context are invalid.
     InvalidRequest = 1,
+    /// The requested document does not exist.
     DocumentNotFound = 2,
+    /// The requested document already exists.
     DocumentAlreadyExists = 3,
+    /// A position token is malformed or not recognized.
     InvalidPosition = 4,
+    /// A valid position has fallen outside the retained range.
     StalePosition = 5,
+    /// Optimistic state did not match current state.
     Conflict = 6,
+    /// The operation was rejected by a storage or policy boundary.
     Rejected = 7,
+    /// The operation may or may not have committed.
     Ambiguous = 8,
+    /// A required resource is temporarily unavailable.
     Unavailable = 9,
+    /// Persisted state is malformed or inconsistent.
     Corrupt = 10,
+    /// A session identity has already appeared in the document log.
     SessionAlreadyUsed = 11,
+    /// No session has been opened for the writer.
     UnknownWriter = 12,
+    /// The submission names a session that is no longer current for its writer.
     StaleSession = 13,
+    /// The local sequence number is not greater than the last accepted number.
     DuplicateLocalSequence = 14,
+    /// The local sequence number skipped the next expected number.
     LocalSequenceGap = 15,
+    /// The reference points beyond the observed canonical head.
     UnknownReferencePosition = 16,
+    /// The reference precedes the current minimum reference position.
     StaleReferencePosition = 17,
+    /// A submission identity was reused with different content or context.
     SubmissionIdentityConflict = 18,
+    /// The service no longer owns the sequencer fence.
     FenceLost = 19,
+    /// An earlier ambiguous operation must be resolved before continuing.
     RecoveryRequired = 20,
+    /// The complete frame exceeds the configured bound.
     FrameTooLarge = 21,
+    /// The frame declares an unsupported protocol version.
     UnsupportedVersion = 22,
+    /// The requested blob digest is not present.
     BlobNotFound = 23,
+    /// The requested summary digest is not present.
     SummaryNotFound = 24,
+    /// Blob or summary content exceeds a configured bound.
     ContentTooLarge = 25,
+    /// A content digest has an invalid representation.
     InvalidDigest = 26,
+    /// A summary manifest is malformed or noncanonical.
     InvalidManifest = 27,
 }
 
+/// A service response carried by one FSP4 frame.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Response {
+    /// A request completed with the given acknowledgement.
     Acknowledged(Acknowledgement),
+    /// A submission was accepted or matched an identical committed submission.
     Submitted {
+        /// Whether the submission appended or was an exact retry.
         disposition: SubmissionDisposition,
+        /// Opaque canonical position of the committed submission.
         position: Bytes,
+        /// Contiguous accepted-operation sequence number.
         sequence_number: u64,
+        /// Minimum reference position after acceptance.
         minimum_reference: Reference,
     },
+    /// A bounded page of opaque canonical records.
     Read {
+        /// Records following the request's exclusive resume position.
         records: Vec<CommittedRecord>,
     },
+    /// A bounded page of accepted projected operations.
     ProjectedRead {
+        /// Accepted operations encountered in the scanned canonical range.
         operations: Vec<ProjectedOperation>,
+        /// Opaque cursor through all scanned canonical records.
         cursor: Option<Bytes>,
+        /// Whether more canonical records remain after the cursor.
         has_more: bool,
     },
+    /// One accepted operation delivered by a subscription.
     ProjectedOperation(ProjectedOperation),
+    /// Authoritative or explicitly uncertain submission resolution.
     Resolved(Resolution),
+    /// The latest snapshot, or `None` when none has been published.
     Snapshot(Option<PublishedSnapshot>),
+    /// Receipt for an uploaded content-addressed blob.
     BlobUploaded {
+        /// Digest computed from the blob content.
         digest: Bytes,
+        /// Number of bytes in the blob.
         size_bytes: u64,
+        /// Whether identical content already existed.
         deduplicated: bool,
     },
+    /// Blob content returned for a requested digest.
     Blob {
+        /// Digest requested by the client.
         digest: Bytes,
+        /// Stored blob bytes.
         payload: Bytes,
     },
+    /// Receipt for a published summary manifest.
     SummaryPublished {
+        /// Digest computed from the canonical manifest.
         digest: Bytes,
+        /// Number of entries in the manifest.
         entry_count: u32,
+        /// Number of bytes in the persisted canonical manifest.
         persisted_bytes: u64,
+        /// Whether an identical manifest already existed.
         deduplicated: bool,
     },
+    /// Summary manifest returned for a requested digest.
     Summary {
+        /// Digest requested by the client.
         digest: Bytes,
+        /// Canonically ordered manifest entries.
         entries: Vec<SummaryEntry>,
     },
+    /// A request failed with a stable service classification.
     Error(ErrorCode),
 }
 
+/// The request or response payload of an FSP4 frame.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Message {
+    /// A client-to-service request.
     Request(Request),
+    /// A service-to-client response.
     Response(Response),
 }
 
+/// One complete FSP4 message with its caller-assigned correlation identifier.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Frame {
+    /// Correlation identifier echoed between a request and its response.
     pub request_id: u64,
+    /// Request or response body.
     pub message: Message,
 }
 
+/// A framing, bounds, or wire-value failure while encoding or decoding FSP4.
 #[derive(Clone, Copy, Debug, Eq, Error, PartialEq)]
 pub enum ProtocolError {
+    /// The complete encoded or received frame exceeds `max_frame_bytes`.
     #[error("frame exceeds the configured limit")]
     FrameTooLarge,
+    /// The frame ends before a declared fixed or variable-length value.
     #[error("frame is truncated")]
     Truncated,
+    /// The header does not begin with the FSP4 magic bytes.
     #[error("frame has invalid magic")]
     InvalidMagic,
+    /// The header's protocol version does not equal [`VERSION`].
     #[error("protocol version is unsupported")]
     UnsupportedVersion,
+    /// The message kind byte is not assigned by this protocol version.
     #[error("message kind is invalid")]
     InvalidKind,
+    /// Reserved header bits are nonzero.
     #[error("reserved header bits are nonzero")]
     InvalidReserved,
+    /// A length-prefixed field that requires content is empty.
     #[error("field is empty")]
     EmptyField,
+    /// A field exceeds its configured bound or representable length.
     #[error("field exceeds its configured limit")]
     FieldTooLarge,
+    /// An enum or Boolean field contains an unknown discriminant.
     #[error("enum discriminant is invalid")]
     InvalidDiscriminant,
+    /// Bytes remain beyond the declared body or decoded message.
     #[error("frame has trailing bytes")]
     TrailingBytes,
+    /// A read, projected read, or summary contains too many entries.
     #[error("read result has too many records")]
     TooManyRecords,
 }

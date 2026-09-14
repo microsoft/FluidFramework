@@ -57,12 +57,16 @@ const CONTENT_COPY_BUFFER_BYTES: usize = 64 * 1024;
 const PROJECTED_SUBSCRIPTION_NOTIFICATIONS: usize = 1;
 const SUMMARY_MANIFEST_MAGIC: [u8; 8] = *b"CSUM001\0";
 
+/// Terminal errors returned while consuming a projected-operation subscription.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ProjectedSubscriptionError {
+    /// The caller explicitly cancelled the subscription.
     Cancelled,
+    /// Catch-up or tailing failed with a classified service error.
     Service(ErrorCode),
 }
 
+/// A cursor-based stream of accepted operations for one document.
 pub struct ProjectedSubscription {
     service: Arc<NativeService>,
     document: Bytes,
@@ -134,31 +138,41 @@ impl ProjectedSubscription {
         }
     }
 
+    /// Cancels the subscription and causes the next read to return `Cancelled`.
     pub fn cancel(&self) {
         self.cancel.send_replace(true);
     }
 
+    /// Returns the last canonical cursor scanned by the subscription.
     #[must_use]
     pub fn cursor(&self) -> Option<&Bytes> {
         self.cursor.as_ref()
     }
 }
 
+/// Filesystem and storage policy used to construct a [`NativeService`].
 #[derive(Clone, Debug)]
 pub struct ServiceConfig {
+    /// Root directory for durable content, documents, and fencing authorities.
     pub root: PathBuf,
+    /// Backend used for document logs and content.
     pub storage_mode: StorageMode,
 }
 
+/// Persistence backend used by the single-host service.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum StorageMode {
+    /// Process-local storage intended for tests and ephemeral use.
     Memory,
+    /// Buffered file storage without deployment-level fencing or durable append acknowledgement.
     BufferedFile,
+    /// Durable file storage with persisted fencing authority.
     #[default]
     DurableFile,
 }
 
 impl StorageMode {
+    /// Parses a command-line storage mode name.
     #[must_use]
     pub fn from_name(value: &str) -> Option<Self> {
         match value {
@@ -169,6 +183,7 @@ impl StorageMode {
         }
     }
 
+    /// Returns the stable command-line name of this storage mode.
     #[must_use]
     pub const fn name(self) -> &'static str {
         match self {
@@ -180,6 +195,7 @@ impl StorageMode {
 }
 
 impl ServiceConfig {
+    /// Creates a configuration using durable file storage below `root`.
     #[must_use]
     pub fn new(root: impl Into<PathBuf>) -> Self {
         Self {
@@ -188,6 +204,7 @@ impl ServiceConfig {
         }
     }
 
+    /// Replaces the configured storage backend.
     #[must_use]
     pub fn with_storage_mode(mut self, storage_mode: StorageMode) -> Self {
         self.storage_mode = storage_mode;
@@ -195,6 +212,7 @@ impl ServiceConfig {
     }
 }
 
+/// A single-host registry of isolated document sequencers and shared content storage.
 pub struct NativeService {
     config: ServiceConfig,
     content: ServiceContentStore,
@@ -281,6 +299,7 @@ impl MemoryContentStore {
 }
 
 impl NativeService {
+    /// Creates a lazily opened service using the supplied storage configuration.
     #[must_use]
     pub fn new(config: ServiceConfig) -> Self {
         let content = match config.storage_mode {
@@ -304,6 +323,7 @@ impl NativeService {
         }
     }
 
+    /// Routes one unary request and converts classified failures into protocol responses.
     pub async fn handle(&self, request: Request) -> Response {
         match self.handle_result(request).await {
             Ok(response) => response,

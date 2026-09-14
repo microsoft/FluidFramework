@@ -148,6 +148,7 @@ impl PositionToken {
         &self.encoded
     }
 
+    /// Returns the one-based ordinal represented by this token.
     #[must_use]
     pub const fn ordinal(&self) -> u64 {
         self.ordinal
@@ -157,33 +158,51 @@ impl PositionToken {
 /// Invalid strongly typed values.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ValueError {
+    /// A writer identity was empty.
     EmptyWriterId,
+    /// A session identity was empty.
     EmptySessionId,
+    /// A submission identity was empty.
     EmptySubmissionId,
+    /// A position token was empty.
     EmptyPosition,
+    /// A position token was not an eight-byte nonzero ordinal.
     InvalidPosition,
 }
 
 /// A writer submission before final sequencing metadata is assigned.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Submission {
+    /// Stable identity of the submitting writer.
     pub writer_id: WriterId,
+    /// Current connection-scoped session identity.
     pub session_id: SessionId,
+    /// Stable identity used for deduplication and resolution.
     pub submission_id: SubmissionId,
+    /// Contiguous writer-local sequence number.
     pub local_sequence_number: u64,
+    /// Canonical state on which the submission was based.
     pub reference_position: SnapshotPosition<PositionToken>,
+    /// Opaque operation payload.
     pub payload: Bytes,
 }
 
 /// Failures while encoding or decoding a submission frame.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum FrameError {
+    /// A length-prefixed field exceeds its representation.
     FieldTooLarge,
+    /// A canonical entry does not begin with the sequencer magic bytes.
     InvalidMagic,
+    /// A canonical entry ends before a declared value.
     Truncated,
+    /// A reference uses an unknown discriminant.
     InvalidReferenceTag,
+    /// A strongly typed identity or position is invalid.
     InvalidValue(ValueError),
+    /// A canonical entry uses an unknown entry kind.
     InvalidEntryTag,
+    /// Bytes remain after decoding one canonical entry.
     TrailingBytes,
 }
 
@@ -197,23 +216,36 @@ struct WriterState {
 /// Final sequence metadata deterministically derived from committed append order.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SequencedMessage {
+    /// Canonical position of the accepted submission entry.
     pub stream_position: PositionToken,
+    /// Contiguous sequence number among accepted submissions.
     pub sequence_number: u64,
+    /// Minimum reference position across active writers after acceptance.
     pub minimum_reference_position: SnapshotPosition<PositionToken>,
+    /// Original accepted submission.
     pub submission: Submission,
 }
 
 /// One accepted Fluid operation projected from the private canonical log.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ProjectedOperation {
+    /// Canonical position of the accepted submission entry.
     pub stream_position: PositionToken,
+    /// Contiguous sequence number among accepted submissions.
     pub sequence_number: u64,
+    /// Minimum reference position across active writers after acceptance.
     pub minimum_reference_position: SnapshotPosition<PositionToken>,
+    /// Stable writer identity.
     pub writer_id: WriterId,
+    /// Connection-scoped session identity.
     pub session_id: SessionId,
+    /// Stable submission identity.
     pub submission_id: SubmissionId,
+    /// Contiguous writer-local sequence number.
     pub local_sequence_number: u64,
+    /// Canonical state on which the operation was based.
     pub reference_position: SnapshotPosition<PositionToken>,
+    /// Opaque operation payload.
     pub payload: Bytes,
 }
 
@@ -259,21 +291,42 @@ fn reference_size(reference: &SnapshotPosition<PositionToken>) -> usize {
 /// A bounded projected read and its opaque canonical resume cursor.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ProjectedPage {
+    /// Accepted operations encountered in the scanned canonical range.
     pub operations: Vec<ProjectedOperation>,
+    /// Last canonical position scanned, including administrative entries.
     pub cursor: Option<PositionToken>,
+    /// Whether canonical entries remain after the cursor.
     pub has_more: bool,
 }
 
 /// A protocol-level rejection produced before an invalid operation is appended.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Rejection {
+    /// The proposed session identity has already appeared in the log.
     SessionAlreadyUsed,
+    /// No session has been opened for the writer.
     UnknownWriter,
+    /// The submission does not use the writer's current session.
     StaleSession,
-    DuplicateLocalSequence { last_accepted: u64, received: u64 },
-    LocalSequenceGap { expected: u64, received: u64 },
+    /// The local sequence does not advance beyond the last accepted value.
+    DuplicateLocalSequence {
+        /// Last accepted local sequence number.
+        last_accepted: u64,
+        /// Rejected local sequence number.
+        received: u64,
+    },
+    /// The local sequence skips the next expected value.
+    LocalSequenceGap {
+        /// Required next local sequence number.
+        expected: u64,
+        /// Rejected local sequence number.
+        received: u64,
+    },
+    /// The reference points beyond the observed canonical head.
     UnknownReferencePosition,
+    /// The reference precedes the minimum reference position.
     StaleReferencePosition,
+    /// The submission identity is already bound to different content or context.
     SubmissionIdentityConflict,
 }
 
@@ -459,14 +512,18 @@ enum Preflight {
 
 /// The finite-read, append, and position-codec boundary consumed by the sequencer service.
 pub trait SequencerStorage: Send + Sync {
+    /// Stream-owned canonical position type.
     type Position: StreamPosition;
+    /// Classified storage error type.
     type Error: ClassifiedError;
 
+    /// Appends one encoded canonical entry.
     fn append(
         &self,
         value: Bytes,
     ) -> impl Future<Output = Result<AppendReceipt<Self::Position>, Self::Error>> + Send;
 
+    /// Reads all canonical entries in order as a finite collection.
     fn read_all(
         &self,
     ) -> impl Future<Output = Result<Vec<ReadRecord<Self::Position>>, Self::Error>> + Send;
@@ -519,8 +576,11 @@ pub struct FenceToken(u64);
 /// Failures while accessing a deployment fencing authority.
 #[derive(Debug)]
 pub enum FenceAuthorityError {
+    /// The authority file could not be accessed or persisted.
     Io(std::io::Error),
+    /// The persisted authority epoch is malformed.
     CorruptEpoch,
+    /// The authority cannot issue another monotonically increasing epoch.
     EpochExhausted,
 }
 
@@ -749,36 +809,52 @@ pub struct FenceLost;
 /// A service failure. Protocol rejections occur before append.
 #[derive(Debug)]
 pub enum ServiceError<E> {
+    /// Protocol validation rejected the operation before append.
     Rejected(Rejection),
+    /// A supplied canonical position is invalid.
     InvalidPosition,
+    /// A projected-read limit is zero or otherwise invalid.
     InvalidPageLimit,
+    /// The service no longer owns its sequencer lease.
     FenceLost,
+    /// The deployment fencing authority failed.
     Authority(FenceAuthorityError),
+    /// Storage failed with a classified error.
     Storage(E),
+    /// Storage may have committed the named submission.
     StorageAmbiguous(SubmissionId),
+    /// An ambiguous operation must be resolved before another append.
     RecoveryRequired,
+    /// A canonical entry could not be decoded.
     CorruptLog(FrameError),
+    /// A committed entry violates sequencer invariants during replay.
     InvalidCommittedEntry(Rejection),
 }
 
 /// A successful submission response.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum SubmitOutcome {
+    /// The submission was newly appended and sequenced.
     Accepted(SequencedMessage),
+    /// An identical committed submission was returned without appending.
     Duplicate(SequencedMessage),
 }
 
 /// Resolution of an append whose storage response was ambiguous.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum RecoveryOutcome {
+    /// Replay found the ambiguous submission committed.
     Committed(SequencedMessage),
+    /// Replay proved the submission absent and returns it for caller disposition.
     NotCommitted(Submission),
 }
 
 /// Authoritative resolution for a stable submission identity.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ResolutionOutcome {
+    /// The stable submission identity is committed.
     Committed(Box<SequencedMessage>),
+    /// The stable submission identity is absent from the authoritative log.
     NotCommitted,
 }
 
