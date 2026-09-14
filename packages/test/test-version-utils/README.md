@@ -147,8 +147,7 @@ default set of legacy versions whether it is necessary or not.
 
 ## Updating compat versions
 
-After a Fluid Framework version bump or after a new compatibility checkpoint is designated, run from this package's
-directory:
+After a Fluid Framework version bump or after a new compatibility checkpoint is designated, build client packages and then, run from this package's directory:
 
 ```
 pnpm run update-compat-versions

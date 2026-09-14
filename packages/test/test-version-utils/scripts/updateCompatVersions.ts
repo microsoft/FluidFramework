@@ -12,6 +12,10 @@
  *   checkpoint, correcting a date, or adjusting a future estimate), since step 7
  *   regenerates the `CompatibilityCheckpoints.md` table from that file
  *
+ * Before running this script, make sure the repo is sufficiently built by executing:
+ *   pnpm exec fluid-build build:compile:esm:packages --task test-version-utils
+ *
+ * Running the update script:
  *   pnpm -r --filter @fluid-private/test-version-utils run update-compat-versions
  *
  * The script:
