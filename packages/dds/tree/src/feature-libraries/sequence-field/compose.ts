@@ -21,7 +21,7 @@ import {
 
 import type { MoveMarkEffect } from "./helperTypes.js";
 import { MarkListFactory } from "./markListFactory.js";
-import { MarkQueue } from "./markQueue.js";
+import { MarkSegmentTree } from "./markSegmentTree.js";
 import {
 	type MoveEffect,
 	type MoveEffectTable,
@@ -33,6 +33,7 @@ import {
 	isMoveOut,
 	setMoveEffect,
 } from "./moveEffectTable.js";
+import { SegmentMarkQueue } from "./segmentMarkQueue.js";
 import {
 	type Attach,
 	type CellMark,
@@ -51,7 +52,6 @@ import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
 	asAttachAndDetach,
-	cellSourcesFromMarks,
 	compareCellPositionsUsingTombstones,
 	extractMarkEffect,
 	getEndpoint,
@@ -109,16 +109,23 @@ function composeMarkLists(
 	moveEffects: MoveEffectTable,
 	revisionMetadata: RevisionMetadataSource,
 ): MarkList {
-	const factory = new MarkListFactory();
+	// MarkSegmentTrees when a reusable subtree is encountered in the queue.
+	// Marks are used when following normal path.
+	const segments: (Mark | MarkSegmentTree)[] = [];
 	const queue = new ComposeQueue(baseMarkList, newMarkList, moveEffects, revisionMetadata);
 	while (!queue.isEmpty()) {
+		const reused = queue.tryPopReusable();
+		if (reused !== undefined) {
+			segments.push(reused);
+			continue;
+		}
 		const { baseMark, newMark } = queue.pop();
 		if (newMark === undefined) {
 			assert(
 				baseMark !== undefined,
 				0x4db /* Non-empty queue should not return two undefined marks */,
 			);
-			factory.push(
+			segments.push(
 				composeMark(baseMark, moveEffects, (node: NodeId) =>
 					composeChildChanges(node, undefined, composeChild),
 				),
@@ -128,7 +135,7 @@ function composeMarkLists(
 			// It is therefore safe to remove any intentions that have no impact in the context they apply to.
 			const settledNewMark = settleMark(newMark);
 			if (baseMark === undefined) {
-				factory.push(
+				segments.push(
 					composeMark(settledNewMark, moveEffects, (node: NodeId) =>
 						composeChildChanges(undefined, node, composeChild),
 					),
@@ -144,11 +151,23 @@ function composeMarkLists(
 					composeChild,
 					moveEffects,
 				);
-				factory.push(composedMark);
+				segments.push(composedMark);
 			}
 		}
 	}
 
+	// Changesets are still arrays. Preserve shared subtrees until this final
+	// traversal, including normalization at the boundaries of reused segments.
+	const factory = new MarkListFactory();
+	for (const segment of segments) {
+		if (segment instanceof MarkSegmentTree) {
+			for (const mark of segment) {
+				factory.push(mark);
+			}
+		} else {
+			factory.push(segment);
+		}
+	}
 	return factory.list;
 }
 
@@ -509,8 +528,8 @@ function composeMark<TMark extends Mark>(
 }
 
 export class ComposeQueue {
-	private readonly baseMarks: MarkQueue;
-	private readonly newMarks: MarkQueue;
+	private readonly baseMarks: SegmentMarkQueue;
+	private readonly newMarks: SegmentMarkQueue;
 	private readonly baseMarksCellSources: ReadonlySet<RevisionTag | undefined>;
 	private readonly newMarksCellSources: ReadonlySet<RevisionTag | undefined>;
 
@@ -520,14 +539,44 @@ export class ComposeQueue {
 		private readonly moveEffects: MoveEffectTable,
 		private readonly revisionMetadata: RevisionMetadataSource,
 	) {
-		this.baseMarks = new MarkQueue(baseMarks, moveEffects);
-		this.newMarks = new MarkQueue(newMarks, moveEffects);
-		this.baseMarksCellSources = cellSourcesFromMarks(baseMarks, getOutputCellId);
-		this.newMarksCellSources = cellSourcesFromMarks(newMarks, getInputCellId);
+		const baseTree = MarkSegmentTree.fromMarks(baseMarks);
+		const newTree = MarkSegmentTree.fromMarks(newMarks);
+		this.baseMarks = new SegmentMarkQueue(baseTree, moveEffects);
+		this.newMarks = new SegmentMarkQueue(newTree, moveEffects);
+		this.baseMarksCellSources = baseTree.getCellSources("output");
+		this.newMarksCellSources = newTree.getCellSources("input");
 	}
 
 	public isEmpty(): boolean {
 		return this.baseMarks.isEmpty() && this.newMarks.isEmpty();
+	}
+
+	/**
+	 * Reuses blocks without visiting their marks. Marks requiring child callbacks,
+	 * move effects, or settling are left for the ordinary pairing path.
+	 */
+	public tryPopReusable(): MarkSegmentTree | undefined {
+		const baseMark = this.baseMarks.peek();
+		const newMark = this.newMarks.peek();
+		if (baseMark === undefined || (isNoopMark(baseMark) && baseMark.changes === undefined)) {
+			const reused = this.newMarks.tryDequeueReusable(baseMark, "input");
+			if (reused !== undefined) {
+				if (baseMark !== undefined) {
+					this.baseMarks.dequeueUpTo(reused.count);
+				}
+				return reused;
+			}
+		}
+		if (newMark === undefined || (isNoopMark(newMark) && newMark.changes === undefined)) {
+			const reused = this.baseMarks.tryDequeueReusable(newMark, "output");
+			if (reused !== undefined) {
+				if (newMark !== undefined) {
+					this.newMarks.dequeueUpTo(reused.count);
+				}
+				return reused;
+			}
+		}
+		return undefined;
 	}
 
 	public pop(): ComposeMarks {
