@@ -152,7 +152,7 @@ steps:
       fi
       echo "pnpm registry: $pnpm_registry"
       echo "Pnpm user config location: $NPM_CONFIG_USERCONFIG"
-      pnpm config set store-dir ${{ parameters.pnpmStorePath }}
+      pnpm config set store-dir "${{ parameters.pnpmStorePath }}"
       echo "Pnpm store: ${{ parameters.pnpmStorePath }}"
       # CI uses mirrored registries that may not preserve trust metadata consistently.
       # Disable pnpm trust downgrade checks in CI as a workaround.

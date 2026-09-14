@@ -10,8 +10,15 @@ parameters:
   default: '22.22.2'
 
 steps:
+- task: UseNode@1
+  displayName: Use Node ${{ parameters.version }}
+  condition: eq(variables['Agent.OS'], 'Windows_NT')
+  inputs:
+    version: ${{ parameters.version }}
+
 - task: Bash@3
   displayName: Set node version
+  condition: ne(variables['Agent.OS'], 'Windows_NT')
   inputs:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)
