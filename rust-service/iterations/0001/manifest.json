@@ -1,48 +1,48 @@
 {
-  "schemaVersion": 1,
-  "iteration": "0001",
-  "status": "complete",
-  "sourceCommit": "59f5069b43a6f2ede193f5affa8cda3a267628ff",
-  "createdAt": "2026-09-12T08:01:04.690Z",
-  "activeWorkstreams": [
-    {
-      "name": "reference-conformance",
-      "instructions": "phase-2/instructions/reference-conformance.md",
-      "report": "phase-2/reference-conformance.md"
-    },
-    {
-      "name": "file-simple",
-      "instructions": "phase-2/instructions/file-simple.md",
-      "report": "phase-2/file-simple.md"
-    },
-    {
-      "name": "durable-log",
-      "instructions": "phase-2/instructions/durable-log.md",
-      "report": "phase-2/durable-log.md"
-    },
-    {
-      "name": "compression",
-      "instructions": "phase-2/instructions/compression.md",
-      "report": "phase-2/compression.md"
-    },
-    {
-      "name": "fluid-sequencer",
-      "instructions": "phase-2/instructions/fluid-sequencer.md",
-      "report": "phase-2/fluid-sequencer.md"
-    }
-  ],
-  "deferredWorkstreams": [
-    "network-transport",
-    "encryption",
-    "browser-storage",
-    "caching",
-    "retention",
-    "full-fluid-integration"
-  ],
-  "nextWorkstreams": [
-    "reference-model-faults",
-    "durable-snapshots",
-    "network-transport",
-    "authoritative-sequencer"
-  ]
+	"schemaVersion": 1,
+	"iteration": "0001",
+	"status": "complete",
+	"sourceCommit": "59f5069b43a6f2ede193f5affa8cda3a267628ff",
+	"createdAt": "2026-09-12T08:01:04.690Z",
+	"activeWorkstreams": [
+		{
+			"name": "reference-conformance",
+			"instructions": "phase-2/instructions/reference-conformance.md",
+			"report": "phase-2/reference-conformance.md"
+		},
+		{
+			"name": "file-simple",
+			"instructions": "phase-2/instructions/file-simple.md",
+			"report": "phase-2/file-simple.md"
+		},
+		{
+			"name": "durable-log",
+			"instructions": "phase-2/instructions/durable-log.md",
+			"report": "phase-2/durable-log.md"
+		},
+		{
+			"name": "compression",
+			"instructions": "phase-2/instructions/compression.md",
+			"report": "phase-2/compression.md"
+		},
+		{
+			"name": "fluid-sequencer",
+			"instructions": "phase-2/instructions/fluid-sequencer.md",
+			"report": "phase-2/fluid-sequencer.md"
+		}
+	],
+	"deferredWorkstreams": [
+		"network-transport",
+		"encryption",
+		"browser-storage",
+		"caching",
+		"retention",
+		"full-fluid-integration"
+	],
+	"nextWorkstreams": [
+		"reference-model-faults",
+		"durable-snapshots",
+		"network-transport",
+		"authoritative-sequencer"
+	]
 }

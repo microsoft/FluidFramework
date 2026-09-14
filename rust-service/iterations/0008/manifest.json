@@ -1,24 +1,24 @@
 {
-  "schemaVersion": 1,
-  "iteration": "0008",
-  "status": "complete",
-  "sourceCommit": "4dd96bf3178264eb48fb4a1d23ca32b5102a193e",
-  "createdAt": "2026-09-13T02:17:37.346Z",
-  "activeWorkstreams": [
-    {
-      "name": "live-projected-operation-streaming",
-      "instructions": "phase-2/instructions/live-projected-operation-streaming.md",
-      "report": "phase-2/live-projected-operation-streaming.md"
-    }
-  ],
-  "deferredWorkstreams": [
-    "production-membership",
-    "submission-pipelining-and-batching",
-    "retention-and-garbage-collection",
-    "authentication-authorization",
-    "node-webtransport-adapter",
-    "routerlicious-odsp-compatibility",
-    "broad-optimization"
-  ],
-  "nextWorkstreams": []
+	"schemaVersion": 1,
+	"iteration": "0008",
+	"status": "complete",
+	"sourceCommit": "4dd96bf3178264eb48fb4a1d23ca32b5102a193e",
+	"createdAt": "2026-09-13T02:17:37.346Z",
+	"activeWorkstreams": [
+		{
+			"name": "live-projected-operation-streaming",
+			"instructions": "phase-2/instructions/live-projected-operation-streaming.md",
+			"report": "phase-2/live-projected-operation-streaming.md"
+		}
+	],
+	"deferredWorkstreams": [
+		"production-membership",
+		"submission-pipelining-and-batching",
+		"retention-and-garbage-collection",
+		"authentication-authorization",
+		"node-webtransport-adapter",
+		"routerlicious-odsp-compatibility",
+		"broad-optimization"
+	],
+	"nextWorkstreams": []
 }
