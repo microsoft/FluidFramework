@@ -1,6 +1,6 @@
 ---
 title: How to Enable Staged Schema Upgrades with Feature Flags
-sidebar\_position: 6
+sidebar_position: 6
 ---
 
 import { ApiLink, PackageLink } from "@site/src/components/shortLinks";
@@ -48,6 +48,7 @@ const view = tree.viewWith(
 ```
 
 When a view is constructed with enabled staged upgrades:
+
 - <ApiLink package="fluid-framework" api="(TreeViewAlpha:interface).initialize">`initialize()`</ApiLink> includes the enabled staged changes in the new document's stored schema.
 - <ApiLink package="fluid-framework" api="TreeView.upgradeSchema">`upgradeSchema()`</ApiLink> includes them when upgrading an existing document.
 - `compatibility` reflects the enabled upgrades when determining what actions are possible.
@@ -126,6 +127,7 @@ function openDocument(tree, featureFlags) {
 1. **Deploy** the new code. With the feature flag **off**, the app behaves identically to before — `RgbColor` is excluded from stored schema, and `upgradeSchema()` is a no-op for the staged type.
 
 2. **Turn on the feature flag.** New views are constructed with `rgbUpgrade` enabled:
+
     - **New documents** are initialized with stored schema that includes `RgbColor`.
     - **Existing documents** are upgraded to include `RgbColor` when `upgradeSchema()` is called.
     - Users can now assign RGB colors to notes.

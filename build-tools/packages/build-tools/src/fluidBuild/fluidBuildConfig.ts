@@ -28,8 +28,8 @@ const REPO_ROOT_REGEX = /\$\{repoRoot\}/g;
  * result is safe for globbing libraries (fast-glob treats backslashes as escape characters).
  */
 export function replaceRepoRootToken(pathOrGlob: string, repoRoot: string): string {
-	const normalized = repoRoot.replace(/\\/g, "/").replace(/\/+$/, "");
-	return pathOrGlob.replace(REPO_ROOT_REGEX, normalized);
+	const normalizedRepoRoot = repoRoot.replace(/\\/g, "/").replace(/\/+$/, "");
+	return pathOrGlob.replace(REPO_ROOT_REGEX, normalizedRepoRoot).replace(/\\/g, "/");
 }
 
 /**
