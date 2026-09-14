@@ -1,6 +1,6 @@
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
-import { Tree } from "@fluidframework/tree";
 
+import { adaptInitialObject, parseBenchmarkDataStructure } from "./benchmark-data-object.js";
 import {
 	runSharedTreeBenchmark,
 	type SharedTreeBenchmarkPair,
@@ -17,42 +17,44 @@ declare global {
 }
 
 const parameters = new URLSearchParams(location.search);
+const dataStructure = parseBenchmarkDataStructure(parameters.get("dds"));
 
 async function createPair(): Promise<SharedTreeBenchmarkPair> {
+	const containerSchema = benchmarkContainerSchema(dataStructure);
 	const client = new TinyliciousClient({
 		connection: { port: numberParameter("tinyliciousPort", 7070) },
 	});
-	const { container: firstContainer } = await client.createContainer(
-		benchmarkContainerSchema,
-		"2.0.0",
+	const { container: firstContainer } = await client.createContainer(containerSchema, "2.0.0");
+	const firstData = adaptInitialObject(
+		firstContainer.initialObjects.data,
+		dataStructure,
+		true,
+		benchmarkTreeConfiguration,
 	);
-	const firstView = firstContainer.initialObjects.tree.viewWith(benchmarkTreeConfiguration);
-	firstView.initialize({ value: 0 });
 	const containerId = await firstContainer.attach();
 	const { container: secondContainer } = await client.getContainer(
 		containerId,
-		benchmarkContainerSchema,
+		containerSchema,
 		"2.0.0",
 	);
-	const secondView = secondContainer.initialObjects.tree.viewWith(benchmarkTreeConfiguration);
-	const editCounts: [number, number] = [0, 0];
-	const unsubscribeFirst = Tree.on(firstView.root, "nodeChanged", () => editCounts[0]++);
-	const unsubscribeSecond = Tree.on(secondView.root, "nodeChanged", () => editCounts[1]++);
+	const secondData = adaptInitialObject(
+		secondContainer.initialObjects.data,
+		dataStructure,
+		false,
+		benchmarkTreeConfiguration,
+	);
 
 	return {
+		dataStructure,
 		backend: "tinylicious-client",
 		clientCount: 2,
-		applyEdit: (clientIndex, value) => {
-			(clientIndex === 0 ? firstView : secondView).root.value = value;
-		},
-		appliedEditCounts: () => editCounts,
-		lastValues: () => [firstView.root.value, secondView.root.value],
+		applyEdit: (clientIndex, value) => (clientIndex === 0 ? firstData : secondData).set(value),
+		appliedEditCounts: () => [firstData.appliedOpCount, secondData.appliedOpCount],
+		lastValues: () => [firstData.value, secondData.value],
 		synchronize: async () => {},
 		close: () => {
-			unsubscribeFirst();
-			unsubscribeSecond();
-			firstView.dispose();
-			secondView.dispose();
+			firstData.dispose();
+			secondData.dispose();
 			firstContainer.dispose();
 			secondContainer.dispose();
 		},

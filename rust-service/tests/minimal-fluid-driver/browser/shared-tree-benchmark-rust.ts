@@ -10,7 +10,6 @@ import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 } from "@fluidframework/fluid-static/internal";
-import { Tree } from "@fluidframework/tree";
 
 import init, {
 	BrowserClient,
@@ -25,6 +24,7 @@ import {
 	MinimalWasmDocumentServiceFactory,
 } from "../src/index.js";
 import type { WasmProtocolClient } from "../src/wasmClient.js";
+import { adaptInitialObject, parseBenchmarkDataStructure } from "./benchmark-data-object.js";
 import {
 	runSharedTreeBenchmark,
 	type SharedTreeBenchmarkPair,
@@ -41,6 +41,7 @@ declare global {
 }
 
 const parameters = new URLSearchParams(location.search);
+const dataStructure = parseBenchmarkDataStructure(parameters.get("dds"));
 const codeDetails = { package: "shared-tree-rust-service-benchmark", config: {} };
 
 function adaptBrowserClient(client: BrowserClient): WasmProtocolClient {
@@ -293,8 +294,9 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		},
 		{ onDeltaConnection: (connection) => deltaConnections.push(connection) },
 	);
+	const containerSchema = benchmarkContainerSchema(dataStructure);
 	const runtimeFactory = createDOProviderContainerRuntimeFactory({
-		schema: benchmarkContainerSchema,
+		schema: containerSchema,
 		minVersionForCollaboration: "2.0.0",
 		runtimeOptionOverrides: {
 			summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
@@ -323,27 +325,29 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		});
 
 	const firstContainer = await makeLoader().createDetachedContainer(codeDetails);
-	const firstFluidContainer = await createFluidContainer<typeof benchmarkContainerSchema>({
+	const firstFluidContainer = await createFluidContainer<typeof containerSchema>({
 		container: firstContainer,
 	});
-	const firstView = firstFluidContainer.initialObjects.tree.viewWith(
+	const firstData = adaptInitialObject(
+		firstFluidContainer.initialObjects.data,
+		dataStructure,
+		true,
 		benchmarkTreeConfiguration,
 	);
-	firstView.initialize({ value: 0 });
 	await firstContainer.attach({ url: resolvedUrl.url });
 	await waitForConnected(firstContainer);
 
 	const secondContainer = await makeLoader().resolve({ url: resolvedUrl.url });
 	await waitForConnected(secondContainer);
-	const secondFluidContainer = await createFluidContainer<typeof benchmarkContainerSchema>({
+	const secondFluidContainer = await createFluidContainer<typeof containerSchema>({
 		container: secondContainer,
 	});
-	const secondView = secondFluidContainer.initialObjects.tree.viewWith(
+	const secondData = adaptInitialObject(
+		secondFluidContainer.initialObjects.data,
+		dataStructure,
+		false,
 		benchmarkTreeConfiguration,
 	);
-	const editCounts: [number, number] = [0, 0];
-	const unsubscribeFirst = Tree.on(firstView.root, "nodeChanged", () => editCounts[0]++);
-	const unsubscribeSecond = Tree.on(secondView.root, "nodeChanged", () => editCounts[1]++);
 	let resumeOpenMilliseconds: number | undefined;
 	let resumeFirstDeliveryMilliseconds: number | undefined;
 	let resumeCursorCount = 0;
@@ -353,10 +357,10 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	): Promise<void> => {
 		const deadline = performance.now() + 10_000;
 		while (
-			editCounts[0] !== expectedCount ||
-			editCounts[1] !== expectedCount ||
-			firstView.root.value !== expectedValue ||
-			secondView.root.value !== expectedValue
+			firstData.appliedOpCount !== expectedCount ||
+			secondData.appliedOpCount !== expectedCount ||
+			firstData.value !== expectedValue ||
+			secondData.value !== expectedValue
 		) {
 			for (const connection of deltaConnections.filter((candidate) => !candidate.disposed)) {
 				await connection.waitForIdle();
@@ -369,15 +373,14 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	};
 
 	return {
+		dataStructure,
 		backend: local
 			? "rust-service-local-memory-force-write"
 			: `rust-service-webtransport-${parameters.get("storage") ?? "unknown"}-force-write`,
 		clientCount: 2,
-		applyEdit: (clientIndex, value) => {
-			(clientIndex === 0 ? firstView : secondView).root.value = value;
-		},
-		appliedEditCounts: () => editCounts,
-		lastValues: () => [firstView.root.value, secondView.root.value],
+		applyEdit: (clientIndex, value) => (clientIndex === 0 ? firstData : secondData).set(value),
+		appliedEditCounts: () => [firstData.appliedOpCount, secondData.appliedOpCount],
+		lastValues: () => [firstData.value, secondData.value],
 		synchronize: async () => {
 			for (const connection of deltaConnections.filter((candidate) => !candidate.disposed)) {
 				await connection.waitForIdle();
@@ -385,9 +388,9 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		},
 		prepare: async () => {
 			const connections = deltaConnections.filter((candidate) => !candidate.disposed);
-			let probeValue = Math.max(0, firstView.root.value, secondView.root.value) + 1;
-			firstView.root.value = probeValue;
-			await waitForConvergence(editCounts[0], probeValue);
+			let probeValue = Math.max(0, firstData.value, secondData.value) + 1;
+			firstData.set(probeValue);
+			await waitForConvergence(firstData.appliedOpCount, probeValue);
 			const started = performance.now();
 			const resumed = await Promise.all(
 				connections.map(async (connection) => connection.restartSubscription()),
@@ -399,15 +402,13 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 			}
 			probeValue++;
 			const deliveryStarted = performance.now();
-			firstView.root.value = probeValue;
-			await waitForConvergence(editCounts[0], probeValue);
+			firstData.set(probeValue);
+			await waitForConvergence(firstData.appliedOpCount, probeValue);
 			resumeFirstDeliveryMilliseconds = performance.now() - deliveryStarted;
 		},
 		close: () => {
-			unsubscribeFirst();
-			unsubscribeSecond();
-			firstView.dispose();
-			secondView.dispose();
+			firstData.dispose();
+			secondData.dispose();
 			firstContainer.close();
 			secondContainer.close();
 		},

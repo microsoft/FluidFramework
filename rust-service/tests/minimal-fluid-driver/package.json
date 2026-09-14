@@ -31,10 +31,13 @@
 	"dependencies": {
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
+		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/server-local-server": "^7.0.1",
+		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"process": "0.11.10"

@@ -1,4 +1,5 @@
 export interface SharedTreeBenchmarkPair {
+	readonly dataStructure: "dummy" | "shared-tree";
 	readonly backend: string;
 	readonly clientCount: number;
 	applyEdit(clientIndex: number, value: number): void;
@@ -20,6 +21,7 @@ export interface SharedTreeBenchmarkOptions {
 
 export interface SharedTreeBenchmarkResult extends Record<string, unknown> {
 	readonly status: "passed";
+	readonly dataStructure: "dummy" | "shared-tree";
 	readonly backend: string;
 	readonly clientCount: number;
 	readonly operationCount: number;
@@ -98,6 +100,7 @@ export async function runSharedTreeBenchmark(
 
 		return {
 			status: "passed",
+			dataStructure: pair.dataStructure,
 			backend: pair.backend,
 			clientCount: pair.clientCount,
 			operationCount: options.operationCount,

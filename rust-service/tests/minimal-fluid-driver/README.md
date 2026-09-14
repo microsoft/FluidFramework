@@ -65,9 +65,13 @@ pnpm run build:shared-tree
 node browser/run-headless.mjs "$PWD" <WEBTRANSPORT_URL> <CERTIFICATE_SHA256_WITHOUT_COLONS> __sharedTreeResult shared-tree.html
 ```
 
-## Deterministic SharedTree comparison benchmark
+## Deterministic Fluid service comparison benchmark
 
-The benchmark runs the same two-client SharedTree workload through the Rust local service, TypeScript local service, Rust WebTransport service, or Tinylicious. It uses the repository's standard Mocha benchmark tooling, so cases are selected with `--grep` and results are written through the standard benchmark reporter. The harness owns temporary data, ports, certificates, Chromium, and service processes.
+The benchmark runs the same two-client operation workload through the Rust local service, TypeScript local service, Rust WebTransport service, or Tinylicious. By default it uses a minimal benchmark SharedObject that counts applied operations and submits a captured SharedTree operation body. It also generates one compressed ID per operation, causing Fluid's runtime to add the same ID-allocation message and grouped-batch envelope observed in the SharedTree workload. This keeps service and Fluid runtime serialization costs representative while removing SharedTree processing from the default measurement.
+
+Pass `--dds shared-tree` to use a real SharedTree with the optimized forest implementation. Both modes use the same benchmark loop and validate writer/observer convergence. The selected DDS is recorded in the suite name and detailed JSON configuration.
+
+The harness uses the repository's standard Mocha benchmark tooling, so cases are selected with `--grep` and results are written through the standard benchmark reporter. It owns temporary data, ports, certificates, Chromium, and service processes.
 
 Install the root workspace and incrementally build the benchmark package from the repository root:
 
@@ -95,6 +99,7 @@ Use case aliases and flags for focused runs:
 ```bash
 pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run -- \
   --case rust-memory,rust-durable \
+	--dds shared-tree \
   --workload messages \
   --operations 1000 \
   --warmup 100
@@ -115,6 +120,7 @@ Configure the workload through environment variables:
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
+| `BENCHMARK_DDS` | `dummy` | `dummy` for the captured-payload counting SharedObject or `shared-tree` for real SharedTree. |
 | `BENCHMARK_REPETITIONS` | `3` | Browser samples per selected case. |
 | `BENCHMARK_OPERATIONS` | `250` | Measured edits per sample. |
 | `BENCHMARK_WARMUP` | `10` | Unmeasured edits per sample. |

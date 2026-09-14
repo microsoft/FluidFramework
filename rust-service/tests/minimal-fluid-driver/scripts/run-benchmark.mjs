@@ -42,6 +42,9 @@ for (let index = 0; index < process.argv.slice(2).length; index++) {
 		case "--workload":
 			environment.BENCHMARK_WORKLOAD = value("--workload");
 			break;
+		case "--dds":
+			environment.BENCHMARK_DDS = value("--dds");
+			break;
 		case "--repetitions":
 			environment.BENCHMARK_REPETITIONS = value("--repetitions");
 			break;
@@ -158,6 +161,7 @@ Selection:
   --list-cases                 Print aliases and exit
 
 Workload:
+	--dds <name>                 dummy or shared-tree (default: dummy)
 	--workload <name>            batched, turns, or messages (default: turns, 1 edit/turn)
 	--repetitions <count>        Browser samples per case (default: 3)
 	--operations <count>         Measured edits per sample (default: 250)
@@ -176,6 +180,7 @@ Output and setup:
 
 Examples:
   pnpm run bench:run -- --case rust-local --operations 100
+	pnpm run bench:run -- --case rust-local --dds shared-tree
   pnpm run bench:run -- --case rust-memory,local --workload messages
   pnpm run bench:run -- --case rust-memory --repetitions 3 --profile
 `);

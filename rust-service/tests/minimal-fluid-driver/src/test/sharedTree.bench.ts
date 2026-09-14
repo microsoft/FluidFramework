@@ -50,6 +50,7 @@ interface RunningService {
 }
 
 interface BenchmarkConfiguration {
+	readonly dataStructure: "dummy" | "shared-tree";
 	readonly repetitions: number;
 	readonly operations: number;
 	readonly warmup: number;
@@ -102,7 +103,7 @@ describe(configurationSuiteName(configuration), () => {
 	for (const benchmarkCase of cases) {
 		benchmarkIt({
 			title: benchmarkCase.title,
-			category: "SharedTree service",
+			category: "Fluid service",
 			correctnessTimeoutMs: 120_000,
 			run: async () => runCase(benchmarkCase, configuration),
 		});
@@ -125,6 +126,7 @@ async function runCase(
 	try {
 		const environment = {
 			...process.env,
+			BENCHMARK_DDS: configuration.dataStructure,
 			BENCHMARK_BROWSER_TIMEOUT_MS: String(configuration.browserTimeoutMilliseconds),
 			BENCHMARK_OPERATIONS_PER_TURN:
 				configuration.operationsPerTurn === undefined
@@ -192,6 +194,7 @@ function readConfiguration(): BenchmarkConfiguration {
 		throw new Error("per-turn synchronization requires BENCHMARK_OPERATIONS_PER_TURN");
 	}
 	return {
+		dataStructure: dataStructureEnvironmentVariable(),
 		repetitions: positiveInteger("BENCHMARK_REPETITIONS", performance ? 3 : 1),
 		operations: positiveInteger("BENCHMARK_OPERATIONS", performance ? 250 : 10),
 		warmup: nonnegativeInteger("BENCHMARK_WARMUP", performance ? 10 : 1),
@@ -207,7 +210,15 @@ function readConfiguration(): BenchmarkConfiguration {
 }
 
 function configurationSuiteName(configuration: BenchmarkConfiguration): string {
-	return `SharedTree service (workload=${configuration.workload}, operations=${configuration.operations}, warmup=${configuration.warmup}, operationsPerTurn=${configuration.operationsPerTurn ?? "unbounded"}, synchronizePerTurn=${configuration.synchronizePerTurn}, repetitions=${configuration.repetitions})`;
+	return `Fluid service benchmark (dds=${configuration.dataStructure}, workload=${configuration.workload}, operations=${configuration.operations}, warmup=${configuration.warmup}, operationsPerTurn=${configuration.operationsPerTurn ?? "unbounded"}, synchronizePerTurn=${configuration.synchronizePerTurn}, repetitions=${configuration.repetitions})`;
+}
+
+function dataStructureEnvironmentVariable(): "dummy" | "shared-tree" {
+	const value = process.env.BENCHMARK_DDS ?? "dummy";
+	if (value !== "dummy" && value !== "shared-tree") {
+		throw new Error("BENCHMARK_DDS must be dummy or shared-tree");
+	}
+	return value;
 }
 
 function buildPrerequisites(benchmarkCase: BenchmarkCase): void {

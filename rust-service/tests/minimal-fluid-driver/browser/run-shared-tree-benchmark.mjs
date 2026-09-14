@@ -29,6 +29,10 @@ const operationsPerTurn =
 		? undefined
 		: positiveInteger(process.env.BENCHMARK_OPERATIONS_PER_TURN, "operationsPerTurn");
 const synchronizePerTurn = booleanEnvironmentVariable("BENCHMARK_SYNCHRONIZE_PER_TURN");
+const dataStructure = process.env.BENCHMARK_DDS ?? "dummy";
+if (dataStructure !== "dummy" && dataStructure !== "shared-tree") {
+	throw new Error("BENCHMARK_DDS must be dummy or shared-tree");
+}
 if (synchronizePerTurn && operationsPerTurn === undefined) {
 	throw new Error("BENCHMARK_SYNCHRONIZE_PER_TURN=1 requires BENCHMARK_OPERATIONS_PER_TURN");
 }
@@ -75,6 +79,7 @@ for (let repetition = 0; repetition < repetitions; repetition++) {
 			"__sharedTreeBenchmarkResult",
 			page,
 			new URLSearchParams({
+				dds: dataStructure,
 				operations: String(operations),
 				warmup: String(warmup),
 				...(operationsPerTurn === undefined
@@ -125,6 +130,7 @@ const output = {
 	sourceCommit,
 	sourceDirty,
 	configuration: {
+		dataStructure,
 		repetitions,
 		operations,
 		warmup,

@@ -12,8 +12,8 @@ import {
 	LocalResolver,
 } from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { Tree } from "@fluidframework/tree";
 
+import { adaptInitialObject, parseBenchmarkDataStructure } from "./benchmark-data-object.js";
 import {
 	runSharedTreeBenchmark,
 	type SharedTreeBenchmarkPair,
@@ -30,6 +30,7 @@ declare global {
 }
 
 const parameters = new URLSearchParams(location.search);
+const dataStructure = parseBenchmarkDataStructure(parameters.get("dds"));
 const codeDetails = { package: "shared-tree-local-service-benchmark", config: {} };
 
 async function waitForConnected(container: {
@@ -59,8 +60,9 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	const urlResolver = new LocalResolver();
 	const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
 	const documentServiceFactory = new LocalDocumentServiceFactory(localServer);
+	const containerSchema = benchmarkContainerSchema(dataStructure);
 	const runtimeFactory = createDOProviderContainerRuntimeFactory({
-		schema: benchmarkContainerSchema,
+		schema: containerSchema,
 		minVersionForCollaboration: "2.0.0",
 		runtimeOptionOverrides: {
 			summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
@@ -80,13 +82,15 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		new Loader({ urlResolver, documentServiceFactory, codeLoader, options: { client } });
 
 	const firstContainer = await makeLoader().createDetachedContainer(codeDetails);
-	const firstFluidContainer = await createFluidContainer<typeof benchmarkContainerSchema>({
+	const firstFluidContainer = await createFluidContainer<typeof containerSchema>({
 		container: firstContainer,
 	});
-	const firstView = firstFluidContainer.initialObjects.tree.viewWith(
+	const firstData = adaptInitialObject(
+		firstFluidContainer.initialObjects.data,
+		dataStructure,
+		true,
 		benchmarkTreeConfiguration,
 	);
-	firstView.initialize({ value: 0 });
 	await firstContainer.attach(createLocalResolverCreateNewRequest(documentId));
 	await waitForConnected(firstContainer);
 
@@ -94,30 +98,27 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		url: `https://localhost/${documentId}`,
 	});
 	await waitForConnected(secondContainer);
-	const secondFluidContainer = await createFluidContainer<typeof benchmarkContainerSchema>({
+	const secondFluidContainer = await createFluidContainer<typeof containerSchema>({
 		container: secondContainer,
 	});
-	const secondView = secondFluidContainer.initialObjects.tree.viewWith(
+	const secondData = adaptInitialObject(
+		secondFluidContainer.initialObjects.data,
+		dataStructure,
+		false,
 		benchmarkTreeConfiguration,
 	);
-	const editCounts: [number, number] = [0, 0];
-	const unsubscribeFirst = Tree.on(firstView.root, "nodeChanged", () => editCounts[0]++);
-	const unsubscribeSecond = Tree.on(secondView.root, "nodeChanged", () => editCounts[1]++);
 
 	return {
+		dataStructure,
 		backend: "local-driver-local-service",
 		clientCount: 2,
-		applyEdit: (clientIndex, value) => {
-			(clientIndex === 0 ? firstView : secondView).root.value = value;
-		},
-		appliedEditCounts: () => editCounts,
-		lastValues: () => [firstView.root.value, secondView.root.value],
+		applyEdit: (clientIndex, value) => (clientIndex === 0 ? firstData : secondData).set(value),
+		appliedEditCounts: () => [firstData.appliedOpCount, secondData.appliedOpCount],
+		lastValues: () => [firstData.value, secondData.value],
 		synchronize: async () => {},
 		close: async () => {
-			unsubscribeFirst();
-			unsubscribeSecond();
-			firstView.dispose();
-			secondView.dispose();
+			firstData.dispose();
+			secondData.dispose();
 			firstContainer.close();
 			secondContainer.close();
 			await localServer.close();
