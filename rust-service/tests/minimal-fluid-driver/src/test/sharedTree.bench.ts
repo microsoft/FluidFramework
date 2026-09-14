@@ -180,14 +180,14 @@ async function runCase(
 
 function readConfiguration(): BenchmarkConfiguration {
 	const performance = currentBenchmarkMode === BenchmarkMode.Performance;
-	const workload = process.env.BENCHMARK_WORKLOAD ?? "batched";
+	const workload = process.env.BENCHMARK_WORKLOAD ?? "turns";
 	if (workload !== "batched" && workload !== "turns" && workload !== "messages") {
 		throw new Error("BENCHMARK_WORKLOAD must be batched, turns, or messages");
 	}
 	const configuredOperationsPerTurn = optionalPositiveInteger("BENCHMARK_OPERATIONS_PER_TURN");
-	const operationsPerTurn = configuredOperationsPerTurn ?? (workload === "batched" ? 10 : 1);
+	const operationsPerTurn = configuredOperationsPerTurn ?? 1;
 	const synchronizePerTurn =
-		booleanEnvironmentVariable("BENCHMARK_SYNCHRONIZE_PER_TURN") ?? workload !== "turns";
+		booleanEnvironmentVariable("BENCHMARK_SYNCHRONIZE_PER_TURN") ?? workload === "messages";
 	if (synchronizePerTurn && operationsPerTurn === undefined) {
 		throw new Error("per-turn synchronization requires BENCHMARK_OPERATIONS_PER_TURN");
 	}

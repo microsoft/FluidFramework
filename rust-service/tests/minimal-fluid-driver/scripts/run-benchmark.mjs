@@ -158,12 +158,12 @@ Selection:
   --list-cases                 Print aliases and exit
 
 Workload:
-	--workload <name>            batched, turns, or messages (default: batched, 10 edits/turn)
+	--workload <name>            batched, turns, or messages (default: turns, 1 edit/turn)
 	--repetitions <count>        Browser samples per case (default: 3)
 	--operations <count>         Measured edits per sample (default: 250)
 	--warmup <count>             Warmup edits per sample (default: 10)
-  --operations-per-turn <n>    Override edits per JavaScript turn
-	--synchronize-per-turn       Wait for observer convergence after every turn (batched default)
+	--operations-per-turn <n>    Override edits per Fluid batch
+	--synchronize-per-turn       Wait for observer convergence after every turn
   --no-synchronize-per-turn    Disable per-turn convergence
   --browser-timeout-ms <ms>    Per-sample browser timeout
 

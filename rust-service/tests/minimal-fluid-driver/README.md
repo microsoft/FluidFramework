@@ -84,7 +84,7 @@ Tinylicious belongs to the separate Routerlicious pnpm workspace. Install that w
 pnpm --dir server/routerlicious install --frozen-lockfile
 ```
 
-Run all six cases with the quick default performance configuration of three repetitions, 250 measured edits, 10 warmup edits, and observer-converged batches of 10 edits:
+Run all six cases with the quick default performance configuration of three repetitions, 250 measured edits, 10 warmup edits, and one edit per Fluid batch without per-batch synchronization:
 
 ```bash
 pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run
@@ -118,17 +118,17 @@ Configure the workload through environment variables:
 | `BENCHMARK_REPETITIONS` | `3` | Browser samples per selected case. |
 | `BENCHMARK_OPERATIONS` | `250` | Measured edits per sample. |
 | `BENCHMARK_WARMUP` | `10` | Unmeasured edits per sample. |
-| `BENCHMARK_WORKLOAD` | `batched` | `batched`, `turns`, or `messages`. |
-| `BENCHMARK_OPERATIONS_PER_TURN` | `10` for `batched`; otherwise `1` | Override edits per JavaScript turn. |
-| `BENCHMARK_SYNCHRONIZE_PER_TURN` | enabled for `batched` and `messages` | Override observer convergence after each turn. |
+| `BENCHMARK_WORKLOAD` | `turns` | `batched`, `turns`, or `messages`. |
+| `BENCHMARK_OPERATIONS_PER_TURN` | `1` | Override edits per Fluid batch. |
+| `BENCHMARK_SYNCHRONIZE_PER_TURN` | enabled for `messages` | Override observer convergence after each turn. |
 | `BENCHMARK_BROWSER_TIMEOUT_MS` | `30000` or `180000` | Per-sample browser timeout. |
 | `BENCHMARK_ARTIFACT_DIR` | `benchmark-results` | Detailed JSON output directory, relative to this package unless absolute. |
 | `BENCHMARK_CPU_PROFILE_PATH` | unset | Chromium CPU profile base path. |
 | `BENCHMARK_SKIP_BUILD` | unset | Skip selected-case native or Tinylicious incremental builds. |
 
-`batched` defaults to 10 edits per JavaScript turn and waits for both containers to observe each batch before continuing. This permits Fluid batching while respecting bounded protocol frames and subscription queues across every backend. `turns` defaults to one edit per turn without backpressure and is useful for stressing bounded queues. `messages` also defaults to one edit per turn but waits for both containers to observe every edit before continuing, providing an unambiguous one-operation-per-convergence workload.
+`turns` is the default throughput workload: it flushes one edit per Fluid batch without waiting for observer convergence after each edit, then waits for final convergence. `batched` has the same synchronization behavior but is intended for an explicit `BENCHMARK_OPERATIONS_PER_TURN` or `--operations-per-turn` value above one. `messages` waits for both containers to observe every edit before continuing, providing an unambiguous one-operation-per-convergence latency workload.
 
-The defaults favor quick directional comparisons. Increase repetitions and operations explicitly when collecting more stable performance data. Unsynchronized one-operation turns intentionally stress subscription backpressure and can exceed the Rust WebTransport client's bounded pending-frame queue, so they are not the all-backend default.
+The defaults favor quick directional throughput comparisons. Increase repetitions and operations explicitly when collecting more stable performance data.
 
 The `bench:run` wrapper enables complete failure diagnostics and writes both reporter streams to stdout, so redirecting it with `> log.txt` retains the full errors.
 The report suite name includes the effective workload, operation count, warmup count, operations per turn, synchronization behavior, and repetition count.

@@ -135,13 +135,17 @@ async function applyEdits(
 		value++;
 		pair.applyEdit(0, value);
 		if ((index + 1) % operationsPerTurn === 0) {
-			await Promise.resolve();
+			await yieldFluidBatchBoundary();
 			if (synchronizePerTurn) {
 				await waitForConvergence(pair, value, timeoutMilliseconds);
 			}
 		}
 	}
 	return value;
+}
+
+async function yieldFluidBatchBoundary(): Promise<void> {
+	await Promise.resolve();
 }
 
 async function waitForConvergence(

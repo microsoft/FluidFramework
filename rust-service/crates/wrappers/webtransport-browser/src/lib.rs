@@ -1256,10 +1256,6 @@ async fn read_stream_frame(
         }
         buffered.resize(next_length, 0);
         chunk.copy_to(&mut buffered[next_length - chunk.length() as usize..]);
-        if complete_frame_count(buffered) > 3 {
-            JsFuture::from(reader.cancel()).await?;
-            return Err(js_error("subscription buffer exceeded two pending frames"));
-        }
     }
 }
 
