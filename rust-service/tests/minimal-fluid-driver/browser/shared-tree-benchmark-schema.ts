@@ -1,5 +1,8 @@
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
-import { SharedTree } from "@fluidframework/tree/legacy";
+import {
+	ForestTypeOptimized,
+	configuredSharedTreeBetaLegacy,
+} from "@fluidframework/tree/legacy";
 
 const schemaFactory = new SchemaFactory("fluid.experimental.shared-tree-benchmark");
 
@@ -12,5 +15,7 @@ export const benchmarkTreeConfiguration = new TreeViewConfiguration({
 });
 
 export const benchmarkContainerSchema = {
-	initialObjects: { tree: SharedTree },
+	initialObjects: {
+		tree: configuredSharedTreeBetaLegacy({ forest: ForestTypeOptimized }),
+	},
 };
