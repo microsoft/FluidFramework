@@ -55,6 +55,8 @@ export function invertModularChange(
 	revisionForInvert: RevisionTag,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
+	validateChangeset(change.change, fieldKinds);
+
 	// Rollback changesets destroy the nodes created by the change being rolled back.
 	const destroys = isRollback ? invertBuilds(change.change.builds) : undefined;
 

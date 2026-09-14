@@ -25,6 +25,7 @@ export function pruneChangeset(
 	changeset: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
+	validateChangeset(changeset, fieldKinds);
 	const prunedChangeset: Mutable<ModularChangeset> = {
 		...changeset,
 		nodeChanges: changeset.nodeChanges.clone(),

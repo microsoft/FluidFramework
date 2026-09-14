@@ -98,7 +98,6 @@ import {
 	unifyAliases,
 	CrossFieldManagerI,
 	getChangeHandler,
-	getChangeStructure,
 	getFieldsForCrossFieldKey,
 	getParentFieldId,
 	getRevInfoFromTaggedChanges,
@@ -232,8 +231,6 @@ export class ModularChangeFamily
 		revInfos: RevisionInfo[],
 		idState: IdAllocationState,
 	): ModularChangeset {
-		console.log("Change 1:", getChangeStructure(change1, this.fieldKinds));
-		console.log("Change 2:", getChangeStructure(change2, this.fieldKinds));
 		validateChangeset(change1, this.fieldKinds);
 		validateChangeset(change2, this.fieldKinds);
 
@@ -264,8 +261,8 @@ export class ModularChangeFamily
 			destroys: allDestroys,
 			refreshers: allRefreshers,
 		});
-		console.log("Composed Change:", getChangeStructure(composed, this.fieldKinds));
-		validateChangeset(composed, this.fieldKinds);
+		// console.log("Composed Change:", getChangeStructure(composed, this.fieldKinds));
+		// validateChangeset(composed, this.fieldKinds);
 		return composed;
 	}
 

@@ -95,6 +95,7 @@ class ModularChangeMinimizer {
 		private readonly change: ModularChangeset,
 		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	) {
+		validateChangeset(change, fieldKinds);
 		this.outputAttachStates = getOutputNodeAttachStates(change, fieldKinds);
 		const nodeInfo = getNodeInfo(change, fieldKinds);
 		this.builtNodeIds = nodeInfo.builtNodeIds;
