@@ -1,5 +1,15 @@
 # @fluidframework/container-runtime-definitions
 
+## 3.1.0
+
+### Minor Changes
+
+- Expose the version mark resolver on IContainerRuntimeBase ([#28168](https://github.com/microsoft/FluidFramework/pull/28168)) [c1f54dbc511](https://github.com/microsoft/FluidFramework/commit/c1f54dbc51170408ea4e4707aff1a5df4a0e48a1)
+
+  `IContainerRuntimeBase` now exposes `versionMarkResolver: IVersionMarkResolver`, the supported access point for the version mark resolver APIs ([`IVersionMarkResolver`](https://fluidframework.com/docs/api/runtime-definitions/iversionmarkresolver-interface), [`ResolveResult`](https://fluidframework.com/docs/api/runtime-definitions/resolveresult-typealias), [`VersionMarkCapture`](https://fluidframework.com/docs/api/runtime-definitions/versionmarkcapture-typealias)), which now live in `@fluidframework/runtime-definitions`. Hosts and data stores obtain the resolver from the runtime instead of the concrete `ContainerRuntime` class.
+
+  `ResolveResult`'s `pending` and `unresolvable` results also gain an optional `reason?: string`, an opaque diagnostic string for logging only. Hosts drive behavior from `kind`. `reason` is not a contract and must not be branched on.
+
 ## 3.0.0
 
 ### Minor Changes
