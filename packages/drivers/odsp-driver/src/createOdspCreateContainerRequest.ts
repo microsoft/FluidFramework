@@ -22,6 +22,7 @@ import { buildOdspShareLinkReqParams, getContainerPackageName } from "./odspUtil
  * will be deprecated soon, so for any new implementation please provide createShareLinkType of type ShareLink
  * @param containerPackageInfo - Container package information which will be used to extract the container package name.
  * If not given that means that the container package does not have a name.
+ * @param progId - Programmatic identifier that ODSP can use to route the created file to the intended experience.
  * @legacy
  * @beta
  */
@@ -32,12 +33,17 @@ export function createOdspCreateContainerRequest(
 	fileName: string,
 	createShareLinkType?: ISharingLinkKind,
 	containerPackageInfo?: IContainerPackageInfo | undefined,
+	progId?: string,
 ): IRequest {
 	const shareLinkRequestParams = buildOdspShareLinkReqParams(createShareLinkType);
+	const containerPackageParam = containerPackageInfo
+		? `&containerPackageName=${getContainerPackageName(containerPackageInfo)}`
+		: "";
+	const progIdParam = progId === undefined ? "" : `&progId=${encodeURIComponent(progId)}`;
 	const createNewRequest: IRequest = {
 		url: `${siteUrl}?driveId=${encodeURIComponent(driveId)}&path=${encodeURIComponent(
 			filePath,
-		)}${containerPackageInfo ? `&containerPackageName=${getContainerPackageName(containerPackageInfo)}` : ""}${shareLinkRequestParams ? `&${shareLinkRequestParams}` : ""}`,
+		)}${containerPackageParam}${shareLinkRequestParams ? `&${shareLinkRequestParams}` : ""}${progIdParam}`,
 		headers: {
 			[DriverHeader.createNew]: {
 				fileName,

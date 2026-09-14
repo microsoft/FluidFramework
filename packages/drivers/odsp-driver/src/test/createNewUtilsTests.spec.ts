@@ -19,6 +19,7 @@ import {
 	SharingLinkScope,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { stub } from "sinon";
 
 import { useCreateNewModule } from "../createFile/index.js";
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
@@ -38,7 +39,7 @@ import {
 	getOdspResolvedUrl,
 } from "../odspUtils.js";
 
-import { mockFetchOk, mockFetchOKIf } from "./mockFetch.js";
+import { mockFetchOk, mockFetchOKIf, okResponse } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
@@ -295,6 +296,52 @@ describe("Create New Utils Tests", () => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		test(snapshot);
 		await epochTracker.removeEntries().catch(() => {});
+	});
+
+	it("Should pass progId as a query parameter when creating a Fluid file", async () => {
+		const progId = "Cowork Prog/Id";
+		newFileParams.progId = progId;
+		newFileParams.createLinkType = createLinkType;
+		const fetchStub = stub(globalThis, "fetch");
+		fetchStub.callsFake(async (url) => {
+			const requestUrl = new URL(url as string);
+			assert.strictEqual(requestUrl.searchParams.get("progId"), progId, "ProgID should match");
+			assert.strictEqual(
+				requestUrl.searchParams.get("createLinkScope"),
+				createLinkType.scope,
+				"Share link scope should still be present",
+			);
+			assert.strictEqual(
+				requestUrl.searchParams.get("createLinkRole"),
+				createLinkType.role,
+				"Share link role should still be present",
+			);
+			assert(
+				requestUrl.href.includes(`progId=${encodeURIComponent(progId)}`),
+				"ProgID should be encoded in the ODSP create URL",
+			);
+			return okResponse(
+				{ "x-fluid-epoch": "epoch1" },
+				{ itemId: "itemId1", id: "Summary handle" },
+			) as unknown as Promise<Response>;
+		});
+
+		try {
+			await useCreateNewModule(createChildLogger(), async (module) =>
+				module.createNewFluidFile(
+					async (_options) => "token",
+					newFileParams,
+					createChildLogger(),
+					createSummary(),
+					epochTracker,
+					fileEntry,
+					false /* createNewCaching */,
+					false /* forceAccessTokenViaAuthorizationHeader */,
+				),
+			);
+		} finally {
+			fetchStub.restore();
+		}
 	});
 
 	it("Should save 'sharing' information received during createNewFluidFile", async () => {
