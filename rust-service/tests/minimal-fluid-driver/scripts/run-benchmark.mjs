@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,7 +15,7 @@ const caseTitles = new Map([
 ]);
 
 const selectedCases = new Set();
-const environment = { ...process.env };
+const environment = { FLUID_TEST_VERBOSE: "1", ...process.env };
 let grep;
 let reportPath;
 
@@ -122,15 +122,17 @@ if (reportPath !== undefined) {
 	mkdirSync(path.dirname(path.resolve(packageDirectory, reportPath)), { recursive: true });
 	mochaArguments.push("--reporterOptions", `reportFile=${reportPath}`);
 }
-const result = spawnSync("pnpm", ["run", "bench", "--", ...mochaArguments], {
+const child = spawn("pnpm", ["run", "bench", "--", ...mochaArguments], {
 	cwd: packageDirectory,
 	env: environment,
-	stdio: "inherit",
+	stdio: ["inherit", "pipe", "pipe"],
 });
-if (result.error !== undefined) {
-	throw result.error;
-}
-process.exitCode = result.status ?? 1;
+child.stdout.pipe(process.stdout, { end: false });
+child.stderr.pipe(process.stdout, { end: false });
+process.exitCode = await new Promise((resolve, reject) => {
+	child.once("error", reject);
+	child.once("close", (code) => resolve(code ?? 1));
+});
 
 function escapeRegularExpression(value) {
 	return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
@@ -156,12 +158,12 @@ Selection:
   --list-cases                 Print aliases and exit
 
 Workload:
-  --workload <name>            batched, turns, or messages (default: batched)
+	--workload <name>            batched, turns, or messages (default: batched, 10 edits/turn)
   --repetitions <count>        Browser samples per case (default: 8)
   --operations <count>         Measured edits per sample (default: 1000)
   --warmup <count>             Warmup edits per sample (default: 100)
   --operations-per-turn <n>    Override edits per JavaScript turn
-  --synchronize-per-turn       Wait for observer convergence after every turn
+	--synchronize-per-turn       Wait for observer convergence after every turn (batched default)
   --no-synchronize-per-turn    Disable per-turn convergence
   --browser-timeout-ms <ms>    Per-sample browser timeout
 
