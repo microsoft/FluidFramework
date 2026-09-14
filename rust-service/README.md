@@ -42,7 +42,7 @@ Because agentic development is itself part of the research, each approved iterat
 
 ## Project Status
 
-Phase 1 and iterations `0001` through `0011` are complete. Iterations `0001`
+Phase 1 and iterations `0001` through `0012` are complete. Iterations `0001`
 through `0006` established the kernel, storage implementations, wrappers,
 service protocol, native and browser transports, Fluid driver, and real
 SharedTree convergence. Their reports remain under [iterations/](iterations/).
@@ -63,6 +63,9 @@ Later iterations completed the end-to-end lifecycle and measurement work:
 - [Iteration `0011`](iterations/0011/phase-3-report.md) audited every Rust workspace
     area and the minimal TypeScript driver, fixed six boundary and lifecycle defect
     classes, and expanded tests and operational documentation.
+- [Iteration `0012`](iterations/0012/phase-3-report.md) documented hand-authored
+    Rust and minimal-driver TypeScript declarations, added package and grouping
+    READMEs, and introduced a lightweight documentation-structure check.
 
 No next iteration is currently approved. Performance expansion, decoded-size
 policy, awaitable Fluid teardown, retention, cross-host fencing, power-loss

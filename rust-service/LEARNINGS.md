@@ -28,6 +28,7 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 
 ## Correctness and Testing
 
+- **Confirmed:** Mixed-language declaration documentation needs layered evidence: compiler missing-doc diagnostics cover public Rust, while private Rust and TypeScript require language-aware inventories; README presence alone does not prove source coverage. [Evidence](iterations/0012/phase-3-report.md#shared-abstraction-findings)
 - **Confirmed:** One implementation-independent conformance function can validate direct and transparent-wrapper implementations without copied tests. [Evidence](iterations/0001/phase-2/compression.md#hypothesis-results)
 - **Confirmed:** Specialized crash or transport suites do not replace shared semantic conformance; applying a concurrently expanded model directly to durable storage exposed an error-classification defect during integration. [Evidence](iterations/0002/phase-2/integration.md#conflict-resolution-and-adaptation)
 - **Confirmed:** Durable acknowledgment must classify failures after write begins as ambiguous and return success only after the implementation's documented sync policy completes. [Evidence](iterations/0001/phase-2/durable-log.md#contract-and-integration-friction)
