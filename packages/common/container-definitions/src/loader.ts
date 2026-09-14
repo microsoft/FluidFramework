@@ -470,8 +470,14 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * The container's {@link IContainer.closed} property must be false and the container must not
 	 * be {@link IContainer.disposed}; otherwise the implementation throws `UsageError`.
 	 *
-	 * WARNING: misuse of this API can result in duplicate op submission and potential
-	 * document corruption. To prevent container forking, callers must:
+	 * WARNING: Use `isPendingLocalStateReusable` from `@fluidframework/container-runtime/legacy` to
+	 * determine whether the returned state can safely be used to load multiple containers.
+	 * Reusable pending state is generally limited to containers that have not made edits. This can
+	 * be useful for communicating across processes or machines some exact container state to load
+	 *
+	 * Unless `isPendingLocalStateReusable` returns `true`, misuse of this API can result in
+	 * duplicate op submission and potential document corruption. To prevent container forking,
+	 * callers must:
 	 *
 	 * - Regenerate the serialization on every reconnect and replace any previously stored copy.
 	 * - Wait until the original container has been closed before rehydrating from its serialized state.
@@ -584,8 +590,12 @@ export interface ILoader extends Partial<IProvideLoader> {
 	 * When `pendingLocalState` is provided, the resolved container is rehydrated from a blob
 	 * previously produced by {@link IContainer.getPendingLocalState}.
 	 *
-	 * WARNING: misuse of `pendingLocalState` can result in duplicate op submission and potential
-	 * document corruption. To prevent container forking, callers must:
+	 * Use `isPendingLocalStateReusable` from `@fluidframework/container-runtime/legacy` to
+	 * determine whether `pendingLocalState` can safely be used to load multiple containers.
+	 *
+	 * Unless `isPendingLocalStateReusable` returns `true`, misuse of `pendingLocalState` can result
+	 * in duplicate op submission and potential document corruption. To prevent container forking,
+	 * callers must:
 	 *
 	 * - Pass the most recent blob produced for that container and discard any older serializations.
 	 * - Ensure the original container has been closed before rehydrating from its serialized state.

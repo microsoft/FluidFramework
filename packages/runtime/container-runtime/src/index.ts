@@ -123,6 +123,7 @@ export {
 	DefaultSummaryConfiguration,
 } from "./summary/index.js";
 export { type IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
+export { isPendingLocalStateReusable } from "./pendingLocalState.js";
 export {
 	type IVersionMarkResolver,
 	type ResolveResult,
