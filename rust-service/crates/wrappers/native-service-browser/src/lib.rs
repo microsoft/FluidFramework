@@ -10,7 +10,7 @@ use fluid_native_service::{
 use fluid_service_protocol::{
     ErrorCode, Frame, Limits, Message, Request, Response, decode, encode,
 };
-use js_sys::Uint8Array;
+use js_sys::{Array, Uint8Array};
 use tokio::sync::Mutex;
 use wasm_bindgen::prelude::*;
 
@@ -142,6 +142,51 @@ impl LocalProjectedSubscription {
             Err(ProjectedSubscriptionError::Service(code)) => Response::Error(code),
         };
         self.response(response)
+    }
+
+    /// Returns a bounded batch beginning with the next projected operation.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid limits, subscription failures, and response framing failures.
+    #[wasm_bindgen(js_name = nextBatch)]
+    pub async fn next_batch(
+        &self,
+        max_operations: usize,
+        max_payload_bytes: usize,
+    ) -> Result<Array, JsValue> {
+        let mut subscription = self.subscription.lock().await;
+        if subscription.is_none() {
+            match self
+                .service
+                .subscribe_projected(self.document.clone(), self.after.clone())
+                .await
+            {
+                Ok(created) => *subscription = Some(created),
+                Err(code) => return Err(js_error(format!("subscription failed: {code:?}"))),
+            }
+        }
+        let Some(subscription) = subscription.as_mut() else {
+            return Err(js_error("subscription initialization failed"));
+        };
+        let operations = subscription
+            .next_batch(max_operations, max_payload_bytes)
+            .await
+            .map_err(|error| match error {
+                ProjectedSubscriptionError::Cancelled => js_error("subscription is cancelled"),
+                ProjectedSubscriptionError::Service(code) => {
+                    js_error(format!("subscription failed: {code:?}"))
+                }
+            })?;
+        let frames = Array::new();
+        for operation in operations {
+            frames.push(
+                &self
+                    .response(Response::ProjectedOperation(operation))?
+                    .into(),
+            );
+        }
+        Ok(frames)
     }
 
     /// Cancels the initialized subscription, or does nothing before the first read.

@@ -7,10 +7,14 @@ const packageDirectory = fileURLToPath(new URL("..", import.meta.url));
 
 const caseTitles = new Map([
 	["rust-local", "Rust local memory"],
+	["rust-local-direct", "Rust local memory direct"],
 	["local", "TypeScript local service"],
 	["rust-memory", "Rust WebTransport memory"],
+	["rust-memory-direct", "Rust WebTransport memory direct"],
 	["rust-buffered", "Rust WebTransport buffered file"],
+	["rust-buffered-direct", "Rust WebTransport buffered file direct"],
 	["rust-durable", "Rust WebTransport durable file"],
+	["rust-durable-direct", "Rust WebTransport durable file direct"],
 	["tinylicious", "Tinylicious"],
 ]);
 
@@ -114,7 +118,7 @@ if (selectedCases.size > 0 && !selectedCases.has("all")) {
 		}
 		return escapeRegularExpression(title);
 	});
-	grep = titles.join("|");
+	grep = `(?:${titles.join("|")})(?= :ff-cat:)`;
 }
 
 const mochaArguments = [];
@@ -125,7 +129,7 @@ if (reportPath !== undefined) {
 	mkdirSync(path.dirname(path.resolve(packageDirectory, reportPath)), { recursive: true });
 	mochaArguments.push("--reporterOptions", `reportFile=${reportPath}`);
 }
-const child = spawn("pnpm", ["run", "bench", "--", ...mochaArguments], {
+const child = spawn("pnpm", ["run", "bench", ...mochaArguments], {
 	cwd: packageDirectory,
 	env: environment,
 	stdio: ["inherit", "pipe", "pipe"],
@@ -180,7 +184,8 @@ Output and setup:
 
 Examples:
   pnpm run bench:run -- --case rust-local --operations 100
-	pnpm run bench:run -- --case rust-local --dds shared-tree
+	pnpm run bench:run -- --case rust-local-direct --dds shared-tree
+	pnpm run bench:run -- --case rust-local-direct --dds dummy
   pnpm run bench:run -- --case rust-memory,local --workload messages
   pnpm run bench:run -- --case rust-memory --repetitions 3 --profile
 `);

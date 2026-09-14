@@ -260,6 +260,55 @@ impl InjectedProjectedSubscription {
         projected_operation(self.limits, self.request_id, &incoming)
     }
 
+    /// Waits for one operation and returns it with operations already queued by the transport.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid limits, cancellation, transport failures, and invalid response frames.
+    #[wasm_bindgen(js_name = nextBatch)]
+    pub async fn next_batch(
+        &self,
+        max_operations: usize,
+        max_payload_bytes: usize,
+    ) -> Result<Array, JsValue> {
+        if self.cancelled.get() {
+            return Err(js_error("projected subscription is cancelled"));
+        }
+        if max_operations == 0 || max_payload_bytes == 0 {
+            return Err(js_error(
+                "projected subscription batch limits must be positive",
+            ));
+        }
+        let batch_method = Reflect::get(&self.transport, &JsValue::from_str("nextBatch"))?;
+        if batch_method.is_null() || batch_method.is_undefined() {
+            let operations = Array::new();
+            operations.push(&self.next().await?.into());
+            return Ok(operations);
+        }
+        let incoming = call_method(
+            &self.transport,
+            "nextBatch",
+            &[
+                JsValue::from_f64(max_operations as f64),
+                JsValue::from_f64(max_payload_bytes as f64),
+            ],
+        )?;
+        let incoming = JsFuture::from(Promise::resolve(&incoming)).await?;
+        if !incoming.is_instance_of::<Array>() {
+            return Err(js_error("subscription batch is not an array"));
+        }
+        let operations = Array::new();
+        for frame in Array::from(&incoming) {
+            if !frame.is_instance_of::<Uint8Array>() {
+                return Err(js_error("subscription batch frame is not a Uint8Array"));
+            }
+            let frame = Uint8Array::new(&frame).to_vec();
+            self.metrics.record_subscription_frame(frame.len(), 1);
+            operations.push(&projected_operation(self.limits, self.request_id, &frame)?.into());
+        }
+        Ok(operations)
+    }
+
     /// Cancels the subscription and its injected transport.
     ///
     /// # Errors
@@ -661,6 +710,7 @@ pub struct BrowserProjectedSubscription {
     limits: fluid_service_protocol::Limits,
     request_id: u64,
     buffered: RefCell<Vec<u8>>,
+    pending: RefCell<Option<ProjectedOperation>>,
     cancelled: Cell<bool>,
     metrics: Rc<ClientMetrics>,
 }
@@ -783,6 +833,9 @@ impl BrowserProjectedSubscription {
         if self.cancelled.get() {
             return Err(js_error("projected subscription is cancelled"));
         }
+        if let Some(operation) = self.pending.borrow_mut().take() {
+            return Ok(operation);
+        }
         let mut buffered = self.buffered.take();
         let result =
             read_stream_frame(&self.reader, &mut buffered, self.limits.max_frame_bytes).await;
@@ -791,6 +844,50 @@ impl BrowserProjectedSubscription {
         self.metrics
             .record_subscription_frame(incoming.len(), queue_depth);
         projected_operation(self.limits, self.request_id, &incoming)
+    }
+
+    /// Waits for one operation and drains complete operations already buffered by the stream.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid limits, cancellation, transport failures, and invalid response frames.
+    #[wasm_bindgen(js_name = nextBatch)]
+    pub async fn next_batch(
+        &self,
+        max_operations: usize,
+        max_payload_bytes: usize,
+    ) -> Result<Array, JsValue> {
+        if max_operations == 0 || max_payload_bytes == 0 {
+            return Err(js_error(
+                "projected subscription batch limits must be positive",
+            ));
+        }
+
+        let operations = Array::new();
+        let mut payload_bytes = 0usize;
+        loop {
+            let operation = self.next().await?;
+            let next_payload_bytes = payload_bytes
+                .checked_add(operation.inner.payload.len())
+                .ok_or_else(|| js_error("projected subscription batch size overflowed"))?;
+            if next_payload_bytes > max_payload_bytes {
+                self.pending.replace(Some(operation));
+                if operations.length() == 0 {
+                    return Err(js_error(
+                        "next projected operation exceeds the subscription batch byte limit",
+                    ));
+                }
+                break;
+            }
+            payload_bytes = next_payload_bytes;
+            operations.push(&operation.into());
+            if operations.length() as usize >= max_operations
+                || complete_frame_count(&self.buffered.borrow()) == 0
+            {
+                break;
+            }
+        }
+        Ok(operations)
     }
 
     /// Cancels the subscription and releases its stream reader.
@@ -925,6 +1022,7 @@ impl BrowserClient {
             limits: self.core.borrow().limits(),
             request_id,
             buffered: RefCell::new(Vec::new()),
+            pending: RefCell::new(None),
             cancelled: Cell::new(false),
             metrics: self.core.borrow().metrics(),
         })
@@ -1351,6 +1449,7 @@ fn call_method(target: &JsValue, name: &str, arguments: &[JsValue]) -> Result<Js
     match arguments {
         [] => method.call0(target),
         [argument] => method.call1(target, argument),
+        [first, second] => method.call2(target, first, second),
         _ => Err(js_error("transport method received unsupported arguments")),
     }
 }

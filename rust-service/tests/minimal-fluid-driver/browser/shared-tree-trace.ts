@@ -146,6 +146,20 @@ function adaptBrowserClient(client: BrowserClient): WasmProtocolClient {
 						payload: operation.payload,
 					};
 				},
+				nextBatch: async (maxOperations, maxBytes) =>
+					(await subscription.nextBatch(maxOperations, maxBytes)).map((operation) => ({
+						position: operation.position,
+						sequenceNumber: operation.sequenceNumber,
+						...(operation.minimumReference === undefined
+							? {}
+							: { minimumReference: operation.minimumReference }),
+						writer: operation.writer,
+						session: operation.session,
+						submission: operation.submission,
+						localSequenceNumber: operation.localSequenceNumber,
+						...(operation.reference === undefined ? {} : { reference: operation.reference }),
+						payload: operation.payload,
+					})),
 				cancel: async () => subscription.cancel(),
 			};
 		},

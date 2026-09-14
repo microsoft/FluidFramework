@@ -49,6 +49,8 @@ const remoteClientId = "remote-service-client";
 const externalClientId = "external-service-client";
 /** Number of initial join messages preceding application operations. */
 const applicationSequenceOffset = 2;
+const defaultSubscriptionBatchMaxOperations = 64;
+const defaultSubscriptionBatchMaxPayloadBytes = 1024 * 1024;
 
 /** Listener shape used by the minimal event emitter. */
 type Listener = (...args: readonly unknown[]) => void;
@@ -583,6 +585,10 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 	private subscriptionPump: Promise<void> | undefined;
 	/** Whether the Fluid connection has been synchronously disposed. */
 	public disposed = false;
+	/** Number of projected-operation batches delivered to Fluid. */
+	public subscriptionBatchCount = 0;
+	/** Largest projected-operation batch delivered to Fluid. */
+	public peakSubscriptionBatchOperations = 0;
 
 	/** Creates a connection over document-scoped lifecycle state and one client. */
 	public constructor(
@@ -599,6 +605,8 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 			clientId: string,
 			messages: readonly ISequencedDocumentMessage[],
 		) => void,
+		private readonly subscriptionBatchMaxOperations = defaultSubscriptionBatchMaxOperations,
+		private readonly subscriptionBatchMaxPayloadBytes = defaultSubscriptionBatchMaxPayloadBytes,
 	) {
 		super();
 		const remoteFluidClient = { ...fluidClient, mode: "write" } satisfies IClient;
@@ -831,21 +839,37 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 	): Promise<void> {
 		try {
 			while (!this.disposed && this.subscription === subscription) {
-				const operation = await subscription.next();
+				const operations =
+					subscription.nextBatch === undefined
+						? [await subscription.next()]
+						: await subscription.nextBatch(
+								this.subscriptionBatchMaxOperations,
+								this.subscriptionBatchMaxPayloadBytes,
+							);
 				if (this.disposed || this.subscription !== subscription) {
 					return;
 				}
-				this.lifecycle.cursor = operation.position;
-				if (
-					bytesEqual(operation.writer, this.lifecycle.writer) &&
-					bytesEqual(operation.session, this.lifecycle.session)
-				) {
-					this.pending.delete(Number(operation.localSequenceNumber));
+				if (operations.length === 0) {
+					throw new Error("projected subscription returned an empty batch");
 				}
-				const message = projectOperation(this.lifecycle, operation);
-				this.checkpointSequenceNumber = message.sequenceNumber;
-				this.emit("op", decoder.decode(this.document), [message]);
-				this.onSynchronized?.(this.clientId, [message]);
+				const messages = operations.map((operation) => {
+					this.lifecycle.cursor = operation.position;
+					if (
+						bytesEqual(operation.writer, this.lifecycle.writer) &&
+						bytesEqual(operation.session, this.lifecycle.session)
+					) {
+						this.pending.delete(Number(operation.localSequenceNumber));
+					}
+					return projectOperation(this.lifecycle, operation);
+				});
+				this.subscriptionBatchCount++;
+				this.peakSubscriptionBatchOperations = Math.max(
+					this.peakSubscriptionBatchOperations,
+					messages.length,
+				);
+				this.checkpointSequenceNumber = messages.at(-1)?.sequenceNumber ?? 0;
+				this.emit("op", decoder.decode(this.document), messages);
+				this.onSynchronized?.(this.clientId, messages);
 			}
 		} catch (error) {
 			if (!this.disposed && this.subscription === subscription) {
@@ -893,6 +917,10 @@ export interface MinimalWasmDriverOptions {
 	) => void;
 	/** Receives each opened delta connection for lifecycle probes. */
 	readonly onDeltaConnection?: (connection: MinimalWasmDeltaConnection) => void;
+	/** Maximum operations delivered in one projected-subscription event. */
+	readonly subscriptionBatchMaxOperations?: number;
+	/** Maximum aggregate operation payload bytes delivered in one subscription event. */
+	readonly subscriptionBatchMaxPayloadBytes?: number;
 }
 
 /** Document-scoped Fluid service sharing one serialized generated client and lifecycle. */
@@ -967,6 +995,8 @@ export class MinimalWasmDocumentService extends Events implements IDocumentServi
 			[{ clientId, client }],
 			this.options.onSynchronizationError,
 			this.options.onSynchronized,
+			this.options.subscriptionBatchMaxOperations,
+			this.options.subscriptionBatchMaxPayloadBytes,
 		);
 		await connection.open();
 		this.options.onDeltaConnection?.(connection);

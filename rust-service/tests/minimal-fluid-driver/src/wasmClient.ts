@@ -36,6 +36,8 @@ export interface ProjectedOperationSubscription {
 	next(): Promise<ProjectedOperation>;
 	/** Cancels the subscription and releases its transport resources. */
 	cancel(): void | Promise<void>;
+	/** Optionally retrieves a batch of projected operations. */
+	nextBatch?(maxOperations: number, maxBytes: number): Promise<readonly ProjectedOperation[]>;
 }
 
 /** An ordered request/acknowledgement stream for submission frames. */

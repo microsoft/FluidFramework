@@ -21,6 +21,8 @@ interface BenchmarkCase {
 	readonly slug: string;
 	/** Browser backend selected by the headless runner. */
 	readonly backend: "rust-local" | "rust" | "local" | "tinylicious";
+	/** Integration layer used by Rust service cases. */
+	readonly integration?: "fluid" | "direct";
 	/** Rust service persistence mode, when the case starts WebTransport. */
 	readonly storageMode?: "memory" | "buffered-file" | "durable-file";
 }
@@ -108,25 +110,60 @@ const webTransportTestDirectory = path.join(
 
 /** Complete set of service backends exercised by the comparison benchmark. */
 const cases: readonly BenchmarkCase[] = [
-	{ title: "Rust local memory", slug: "rust-local-memory", backend: "rust-local" },
+	{
+		title: "Rust local memory",
+		slug: "rust-local-memory",
+		backend: "rust-local",
+		integration: "fluid",
+	},
+	{
+		title: "Rust local memory direct",
+		slug: "rust-local-memory-direct",
+		backend: "rust-local",
+		integration: "direct",
+	},
 	{ title: "TypeScript local service", slug: "typescript-local", backend: "local" },
 	{
 		title: "Rust WebTransport memory",
 		slug: "rust-webtransport-memory",
 		backend: "rust",
 		storageMode: "memory",
+		integration: "fluid",
+	},
+	{
+		title: "Rust WebTransport memory direct",
+		slug: "rust-webtransport-memory-direct",
+		backend: "rust",
+		storageMode: "memory",
+		integration: "direct",
 	},
 	{
 		title: "Rust WebTransport buffered file",
 		slug: "rust-webtransport-buffered-file",
 		backend: "rust",
 		storageMode: "buffered-file",
+		integration: "fluid",
+	},
+	{
+		title: "Rust WebTransport buffered file direct",
+		slug: "rust-webtransport-buffered-file-direct",
+		backend: "rust",
+		storageMode: "buffered-file",
+		integration: "direct",
 	},
 	{
 		title: "Rust WebTransport durable file",
 		slug: "rust-webtransport-durable-file",
 		backend: "rust",
 		storageMode: "durable-file",
+		integration: "fluid",
+	},
+	{
+		title: "Rust WebTransport durable file direct",
+		slug: "rust-webtransport-durable-file-direct",
+		backend: "rust",
+		storageMode: "durable-file",
+		integration: "direct",
 	},
 	{ title: "Tinylicious", slug: "tinylicious", backend: "tinylicious" },
 ];
@@ -163,6 +200,7 @@ async function runCase(
 		const environment = {
 			...process.env,
 			BENCHMARK_DDS: configuration.dataStructure,
+			BENCHMARK_INTEGRATION: benchmarkCase.integration,
 			BENCHMARK_BROWSER_TIMEOUT_MS: String(configuration.browserTimeoutMilliseconds),
 			BENCHMARK_OPERATIONS_PER_TURN:
 				configuration.operationsPerTurn === undefined

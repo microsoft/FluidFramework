@@ -29,6 +29,17 @@ const operationsPerTurn =
 		? undefined
 		: positiveInteger(process.env.BENCHMARK_OPERATIONS_PER_TURN, "operationsPerTurn");
 const synchronizePerTurn = booleanEnvironmentVariable("BENCHMARK_SYNCHRONIZE_PER_TURN");
+const subscriptionBatchOperations =
+	process.env.BENCHMARK_SUBSCRIPTION_BATCH_OPERATIONS === undefined
+		? 64
+		: positiveInteger(
+				process.env.BENCHMARK_SUBSCRIPTION_BATCH_OPERATIONS,
+				"subscriptionBatchOperations",
+			);
+const integration = process.env.BENCHMARK_INTEGRATION ?? "fluid";
+if (integration !== "fluid" && integration !== "direct") {
+	throw new Error("BENCHMARK_INTEGRATION must be fluid or direct");
+}
 const dataStructure = process.env.BENCHMARK_DDS ?? "dummy";
 if (dataStructure !== "dummy" && dataStructure !== "shared-tree") {
 	throw new Error("BENCHMARK_DDS must be dummy or shared-tree");
@@ -82,6 +93,8 @@ for (let repetition = 0; repetition < repetitions; repetition++) {
 				dds: dataStructure,
 				operations: String(operations),
 				warmup: String(warmup),
+				subscriptionBatchOperations: String(subscriptionBatchOperations),
+				integration,
 				...(operationsPerTurn === undefined
 					? {}
 					: { operationsPerTurn: String(operationsPerTurn) }),
@@ -136,6 +149,8 @@ const output = {
 		warmup,
 		operationsPerTurn: operationsPerTurn ?? null,
 		synchronizePerTurn,
+		subscriptionBatchOperations,
+		integration,
 		clients: samples[0].clientCount,
 	},
 	environment: {

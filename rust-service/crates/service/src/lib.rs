@@ -104,12 +104,74 @@ impl ProjectedSubscription {
     /// Returns `Cancelled` after explicit cancellation or a classified service error when
     /// cursor validation, projected reading, or document ownership fails.
     pub async fn next(&mut self) -> Result<ProjectedOperation, ProjectedSubscriptionError> {
+        self.fill_pending().await?;
+        self.pending
+            .pop_front()
+            .ok_or(ProjectedSubscriptionError::Service(
+                ErrorCode::InvalidRequest,
+            ))
+    }
+
+    /// Returns a bounded batch beginning with the next accepted projected operation.
+    ///
+    /// The call waits until one operation is available, then drains only operations already
+    /// fetched by the same projected read. `max_payload_bytes` bounds the sum of payload bytes.
+    ///
+    /// # Errors
+    ///
+    /// Returns `InvalidRequest` for zero limits or when the next operation exceeds the payload
+    /// limit. Otherwise returns the same cancellation and service errors as [`Self::next`].
+    pub async fn next_batch(
+        &mut self,
+        max_operations: usize,
+        max_payload_bytes: usize,
+    ) -> Result<Vec<ProjectedOperation>, ProjectedSubscriptionError> {
+        if max_operations == 0 || max_payload_bytes == 0 {
+            return Err(ProjectedSubscriptionError::Service(
+                ErrorCode::InvalidRequest,
+            ));
+        }
+        self.fill_pending().await?;
+        if self
+            .pending
+            .front()
+            .is_some_and(|operation| operation.payload.len() > max_payload_bytes)
+        {
+            return Err(ProjectedSubscriptionError::Service(
+                ErrorCode::InvalidRequest,
+            ));
+        }
+
+        let mut payload_bytes = 0usize;
+        let mut operations = Vec::new();
+        while operations.len() < max_operations {
+            let Some(operation) = self.pending.front() else {
+                break;
+            };
+            let Some(next_payload_bytes) = payload_bytes.checked_add(operation.payload.len())
+            else {
+                break;
+            };
+            if next_payload_bytes > max_payload_bytes {
+                break;
+            }
+            payload_bytes = next_payload_bytes;
+            operations.push(
+                self.pending
+                    .pop_front()
+                    .expect("the projected operation was just observed"),
+            );
+        }
+        Ok(operations)
+    }
+
+    async fn fill_pending(&mut self) -> Result<(), ProjectedSubscriptionError> {
         loop {
             if *self.cancellation.borrow() {
                 return Err(ProjectedSubscriptionError::Cancelled);
             }
-            if let Some(operation) = self.pending.pop_front() {
-                return Ok(operation);
+            if !self.pending.is_empty() {
+                return Ok(());
             }
             match self
                 .service
@@ -126,8 +188,8 @@ impl ProjectedSubscription {
                 } => {
                     self.cursor = cursor;
                     self.pending.extend(operations);
-                    if let Some(operation) = self.pending.pop_front() {
-                        return Ok(operation);
+                    if !self.pending.is_empty() {
+                        return Ok(());
                     }
                     if has_more {
                         continue;
@@ -1972,8 +2034,30 @@ mod tests {
             Response::Error(ErrorCode::LocalSequenceGap)
         );
 
-        let mut sequences = Vec::new();
-        for _ in 0..8 {
+        assert_eq!(
+            subscription.next_batch(0, usize::MAX).await,
+            Err(ProjectedSubscriptionError::Service(
+                ErrorCode::InvalidRequest
+            ))
+        );
+        assert_eq!(
+            subscription.next_batch(3, 8).await,
+            Err(ProjectedSubscriptionError::Service(
+                ErrorCode::InvalidRequest
+            ))
+        );
+        let first_batch = subscription.next_batch(3, 18).await.unwrap();
+        assert_eq!(
+            first_batch
+                .iter()
+                .map(|operation| operation.sequence_number)
+                .collect::<Vec<_>>(),
+            [1, 2]
+        );
+        let second_batch = subscription.next_batch(1, usize::MAX).await.unwrap();
+        assert_eq!(second_batch[0].sequence_number, 3);
+        let mut sequences = vec![1, 2, 3];
+        for _ in 3..8 {
             sequences.push(subscription.next().await.unwrap().sequence_number);
         }
         assert_eq!(sequences, (1..=8).collect::<Vec<_>>());

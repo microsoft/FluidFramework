@@ -20,11 +20,17 @@ import initLocalService, {
 	LocalServiceTransport,
 } from "../pkg-local/fluid_native_service_browser.js";
 import {
+	DirectDummyClient,
+	DirectSharedTreeClient,
 	type MinimalWasmDeltaConnection,
 	MinimalWasmDocumentServiceFactory,
 } from "../src/index.js";
 import type { WasmProtocolClient } from "../src/wasmClient.js";
-import { adaptInitialObject, parseBenchmarkDataStructure } from "./benchmark-data-object.js";
+import {
+	adaptInitialObject,
+	adaptSharedTree,
+	parseBenchmarkDataStructure,
+} from "./benchmark-data-object.js";
 import {
 	runSharedTreeBenchmark,
 	type SharedTreeBenchmarkPair,
@@ -45,16 +51,59 @@ declare global {
 
 /** Browser query parameters supplied by the headless benchmark runner. */
 const parameters = new URLSearchParams(location.search);
+/** UTF-8 encoder for direct rust-service document identifiers. */
+const encoder = new TextEncoder();
 /** DDS implementation selected for this benchmark sample. */
 const dataStructure = parseBenchmarkDataStructure(parameters.get("dds"));
+/** Maximum projected operations delivered to Fluid per subscription event. */
+const subscriptionBatchMaxOperations = numberParameter("subscriptionBatchOperations", 64);
+/** SharedTree integration path selected for this sample. */
+const integration = parameters.get("integration") ?? "fluid";
 /** Fluid code identity shared by both Rust-service benchmark containers. */
 const codeDetails = { package: "shared-tree-rust-service-benchmark", config: {} };
 
-/** Adapts the WebTransport-generated browser client to the minimal driver contract. */
-function adaptBrowserClient(client: BrowserClient): WasmProtocolClient {
+interface TransportActivity {
+	readonly unaryRequests: Record<string, number>;
+	submissionStreams: number;
+	projectedSubscriptions: number;
+}
+
+function recordUnaryRequest(activity: TransportActivity, name: string): void {
+	activity.unaryRequests[name] = (activity.unaryRequests[name] ?? 0) + 1;
+}
+
+function snapshotTransportActivity(activity: TransportActivity): TransportActivity {
 	return {
-		request: async (frame) => client.request(frame),
+		unaryRequests: { ...activity.unaryRequests },
+		submissionStreams: activity.submissionStreams,
+		projectedSubscriptions: activity.projectedSubscriptions,
+	};
+}
+
+function encodedRequestName(frame: Uint8Array): string {
+	return (
+		{
+			1: "createDocument",
+			2: "openSession",
+			3: "submit",
+			5: "latestSnapshot",
+			6: "publishSnapshot",
+		}[frame[6] ?? 0] ?? `fsp4-${frame[6] ?? 0}`
+	);
+}
+
+/** Adapts the WebTransport-generated browser client to the minimal driver contract. */
+function adaptBrowserClient(
+	client: BrowserClient,
+	activity: TransportActivity,
+): WasmProtocolClient {
+	return {
+		request: async (frame) => {
+			recordUnaryRequest(activity, encodedRequestName(frame));
+			return client.request(frame);
+		},
 		openSubmissionStream: async (document) => {
+			activity.submissionStreams++;
 			const stream = await client.openSubmissionStream(document);
 			return {
 				send: async (frame) => stream.send(frame),
@@ -63,6 +112,7 @@ function adaptBrowserClient(client: BrowserClient): WasmProtocolClient {
 			};
 		},
 		readProjected: async (document, after) => {
+			recordUnaryRequest(activity, "readProjected");
 			const page = await client.readProjected(document, after);
 			return {
 				operations: page.operations.map((operation) => ({
@@ -83,6 +133,7 @@ function adaptBrowserClient(client: BrowserClient): WasmProtocolClient {
 			};
 		},
 		subscribeProjected: async (document, after) => {
+			activity.projectedSubscriptions++;
 			const subscription = await client.subscribeProjected(document, after);
 			return {
 				next: async () => {
@@ -101,10 +152,25 @@ function adaptBrowserClient(client: BrowserClient): WasmProtocolClient {
 						payload: operation.payload,
 					};
 				},
+				nextBatch: async (maxOperations, maxBytes) =>
+					(await subscription.nextBatch(maxOperations, maxBytes)).map((operation) => ({
+						position: operation.position,
+						sequenceNumber: operation.sequenceNumber,
+						...(operation.minimumReference === undefined
+							? {}
+							: { minimumReference: operation.minimumReference }),
+						writer: operation.writer,
+						session: operation.session,
+						submission: operation.submission,
+						localSequenceNumber: operation.localSequenceNumber,
+						...(operation.reference === undefined ? {} : { reference: operation.reference }),
+						payload: operation.payload,
+					})),
 				cancel: async () => subscription.cancel(),
 			};
 		},
 		resolveSubmission: async (document, writer, session, submission) => {
+			recordUnaryRequest(activity, "resolveSubmission");
 			const resolution = await client.resolveSubmission(document, writer, session, submission);
 			if (resolution.kind === "committed") {
 				if (resolution.position === undefined || resolution.sequenceNumber === undefined) {
@@ -121,13 +187,24 @@ function adaptBrowserClient(client: BrowserClient): WasmProtocolClient {
 			}
 			return { kind: resolution.kind };
 		},
-		uploadBlob: async (payload) => client.uploadBlob(payload),
-		fetchBlob: async (digest) => client.fetchBlob(digest),
-		publishSummary: async (entries) =>
-			client.publishSummary(
+		uploadBlob: async (payload) => {
+			recordUnaryRequest(activity, "uploadBlob");
+			return client.uploadBlob(payload);
+		},
+		fetchBlob: async (digest) => {
+			recordUnaryRequest(activity, "fetchBlob");
+			return client.fetchBlob(digest);
+		},
+		publishSummary: async (entries) => {
+			recordUnaryRequest(activity, "publishSummary");
+			return client.publishSummary(
 				entries.map((entry) => new GeneratedSummaryEntry(entry.path, entry.blob)),
-			),
-		fetchSummary: async (digest) => client.fetchSummary(digest),
+			);
+		},
+		fetchSummary: async (digest) => {
+			recordUnaryRequest(activity, "fetchSummary");
+			return client.fetchSummary(digest);
+		},
 		disconnect: () => client.disconnect(),
 		reconnect: async () => client.reconnect(),
 		/** Total FSP4 bytes read and written by the generated client. */
@@ -153,10 +230,15 @@ function adaptBrowserClient(client: BrowserClient): WasmProtocolClient {
 function adaptInjectedClient(
 	client: InjectedClient,
 	transport: LocalServiceTransport,
+	activity: TransportActivity,
 ): WasmProtocolClient {
 	return {
-		request: async (frame) => client.request(frame),
+		request: async (frame) => {
+			recordUnaryRequest(activity, encodedRequestName(frame));
+			return client.request(frame);
+		},
 		readProjected: async (document, after) => {
+			recordUnaryRequest(activity, "readProjected");
 			const page = await client.readProjected(document, after);
 			return {
 				operations: page.operations.map((operation) => ({
@@ -177,6 +259,7 @@ function adaptInjectedClient(
 			};
 		},
 		subscribeProjected: async (document, after) => {
+			activity.projectedSubscriptions++;
 			const subscription = client.subscribeProjected(document, after);
 			return {
 				next: async () => {
@@ -195,10 +278,25 @@ function adaptInjectedClient(
 						payload: operation.payload,
 					};
 				},
+				nextBatch: async (maxOperations, maxBytes) =>
+					(await subscription.nextBatch(maxOperations, maxBytes)).map((operation) => ({
+						position: operation.position,
+						sequenceNumber: operation.sequenceNumber,
+						...(operation.minimumReference === undefined
+							? {}
+							: { minimumReference: operation.minimumReference }),
+						writer: operation.writer,
+						session: operation.session,
+						submission: operation.submission,
+						localSequenceNumber: operation.localSequenceNumber,
+						...(operation.reference === undefined ? {} : { reference: operation.reference }),
+						payload: operation.payload,
+					})),
 				cancel: async () => subscription.cancel(),
 			};
 		},
 		resolveSubmission: async (document, writer, session, submission) => {
+			recordUnaryRequest(activity, "resolveSubmission");
 			const resolution = await client.resolveSubmission(document, writer, session, submission);
 			if (resolution.kind === "committed") {
 				if (resolution.position === undefined || resolution.sequenceNumber === undefined) {
@@ -215,13 +313,24 @@ function adaptInjectedClient(
 			}
 			return { kind: resolution.kind };
 		},
-		uploadBlob: async (payload) => client.uploadBlob(payload),
-		fetchBlob: async (digest) => client.fetchBlob(digest),
-		publishSummary: async (entries) =>
-			client.publishSummary(
+		uploadBlob: async (payload) => {
+			recordUnaryRequest(activity, "uploadBlob");
+			return client.uploadBlob(payload);
+		},
+		fetchBlob: async (digest) => {
+			recordUnaryRequest(activity, "fetchBlob");
+			return client.fetchBlob(digest);
+		},
+		publishSummary: async (entries) => {
+			recordUnaryRequest(activity, "publishSummary");
+			return client.publishSummary(
 				entries.map((entry) => new GeneratedSummaryEntry(entry.path, entry.blob)),
-			),
-		fetchSummary: async (digest) => client.fetchSummary(digest),
+			);
+		},
+		fetchSummary: async (digest) => {
+			recordUnaryRequest(activity, "fetchSummary");
+			return client.fetchSummary(digest);
+		},
 		disconnect: () => client.disconnect(),
 		reconnect: async () => client.reconnect(transport),
 		/** Total FSP4 bytes read and written by the injected client. */
@@ -282,9 +391,47 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		Number.parseInt(value, 16),
 	);
 	const transports: Array<BrowserClient | InjectedClient> = [];
+	const transportActivity: TransportActivity = {
+		unaryRequests: {},
+		submissionStreams: 0,
+		projectedSubscriptions: 0,
+	};
 	const localService = local ? new LocalServiceTransport(1024 * 1024) : undefined;
+	const createWasmClient = async (): Promise<WasmProtocolClient> => {
+		if (localService !== undefined) {
+			const client = new InjectedClient(localService, 1024 * 1024);
+			transports.push(client);
+			return adaptInjectedClient(client, localService, transportActivity);
+		}
+		if (transportUrl === null) {
+			throw new Error("missing Rust-service transport URL");
+		}
+		const transport = await BrowserClient.connect(transportUrl, hash, 1024 * 1024);
+		transports.push(transport);
+		return adaptBrowserClient(transport, transportActivity);
+	};
 	const deltaConnections: MinimalWasmDeltaConnection[] = [];
 	const documentId = `shared-tree-benchmark-${Date.now()}`;
+	if (integration === "direct") {
+		return dataStructure === "shared-tree"
+			? createDirectSharedTreePair(
+					encoder.encode(documentId),
+					createWasmClient,
+					transports,
+					transportActivity,
+					local,
+				)
+			: createDirectDummyPair(
+					encoder.encode(documentId),
+					createWasmClient,
+					transports,
+					transportActivity,
+					local,
+				);
+	}
+	if (integration !== "fluid") {
+		throw new Error(`unsupported SharedTree integration ${JSON.stringify(integration)}`);
+	}
 	const resolvedUrl: IResolvedUrl = {
 		type: "fluid",
 		id: documentId,
@@ -296,22 +443,10 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		resolve: async (_request: IRequest) => resolvedUrl,
 		getAbsoluteUrl: async (_resolvedUrl: IResolvedUrl, relativeUrl: string) => relativeUrl,
 	};
-	const documentServiceFactory = new MinimalWasmDocumentServiceFactory(
-		async () => {
-			if (localService !== undefined) {
-				const client = new InjectedClient(localService, 1024 * 1024);
-				transports.push(client);
-				return adaptInjectedClient(client, localService);
-			}
-			if (transportUrl === null) {
-				throw new Error("missing Rust-service transport URL");
-			}
-			const transport = await BrowserClient.connect(transportUrl, hash, 1024 * 1024);
-			transports.push(transport);
-			return adaptBrowserClient(transport);
-		},
-		{ onDeltaConnection: (connection) => deltaConnections.push(connection) },
-	);
+	const documentServiceFactory = new MinimalWasmDocumentServiceFactory(createWasmClient, {
+		onDeltaConnection: (connection) => deltaConnections.push(connection),
+		subscriptionBatchMaxOperations,
+	});
 	const containerSchema = benchmarkContainerSchema(dataStructure);
 	const runtimeFactory = createDOProviderContainerRuntimeFactory({
 		schema: containerSchema,
@@ -366,6 +501,7 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		false,
 		benchmarkTreeConfiguration,
 	);
+	const startupTransportActivity = snapshotTransportActivity(transportActivity);
 	let resumeOpenMilliseconds: number | undefined;
 	let resumeFirstDeliveryMilliseconds: number | undefined;
 	let resumeCursorCount = 0;
@@ -432,6 +568,8 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		},
 		metrics: () => ({
 			browser: navigator.userAgent,
+			startupTransportActivity,
+			transportActivity: snapshotTransportActivity(transportActivity),
 			wireBytes: transports
 				.reduce((total, transport) => total + transport.wireBytes, 0n)
 				.toString(),
@@ -444,12 +582,187 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 			peakSubscriptionQueueDepth: Math.max(
 				...transports.map((transport) => transport.peakSubscriptionQueueDepth),
 			),
+			subscriptionBatchMaxOperations,
+			subscriptionBatchCount: deltaConnections.reduce(
+				(total, connection) => total + connection.subscriptionBatchCount,
+				0,
+			),
+			peakSubscriptionBatchOperations: Math.max(
+				...deltaConnections.map((connection) => connection.peakSubscriptionBatchOperations),
+			),
 			resumeOpenMilliseconds,
 			resumeFirstDeliveryMilliseconds,
 			resumeCursorCount,
 			forceWriteConnection: true,
 		}),
 	};
+}
+
+/** Creates two production SharedTree kernels connected directly to rust-service. */
+async function createDirectSharedTreePair(
+	document: Uint8Array,
+	createClient: () => Promise<WasmProtocolClient>,
+	transports: Array<BrowserClient | InjectedClient>,
+	transportActivity: TransportActivity,
+	local: boolean,
+): Promise<SharedTreeBenchmarkPair> {
+	const writer = await DirectSharedTreeClient.create(
+		await createClient(),
+		document,
+		subscriptionBatchMaxOperations,
+		1024 * 1024,
+		true,
+	);
+	const observer = await DirectSharedTreeClient.create(
+		await createClient(),
+		document,
+		subscriptionBatchMaxOperations,
+		1024 * 1024,
+		false,
+	);
+	const writerView = writer.tree.viewWith(benchmarkTreeConfiguration);
+	writerView.initialize({ value: 0 });
+	await writer.waitForIdle();
+	await waitUntil(
+		() => observer.lastAppliedSequenceNumber >= writer.lastAppliedSequenceNumber,
+	);
+	const observerView = observer.tree.viewWith(benchmarkTreeConfiguration);
+	const writerData = adaptSharedTree(writerView);
+	const observerData = adaptSharedTree(observerView);
+	const startupTransportActivity = snapshotTransportActivity(transportActivity);
+	const synchronize = async (): Promise<void> => {
+		await writer.waitForIdle();
+		await observer.waitForIdle();
+		await waitUntil(
+			() => observer.lastAppliedSequenceNumber >= writer.lastAppliedSequenceNumber,
+		);
+	};
+
+	return {
+		dataStructure: "shared-tree",
+		backend: local
+			? "rust-service-local-memory-direct-shared-tree"
+			: `rust-service-webtransport-${parameters.get("storage") ?? "unknown"}-direct-shared-tree`,
+		clientCount: 2,
+		applyEdit: (clientIndex, value) =>
+			(clientIndex === 0 ? writerData : observerData).set(value),
+		appliedEditCounts: () => [writerData.appliedOpCount, observerData.appliedOpCount],
+		lastValues: () => [writerData.value, observerData.value],
+		synchronize,
+		prepare: synchronize,
+		close: async () => {
+			writerData.dispose();
+			observerData.dispose();
+			await Promise.all([writer.dispose(), observer.dispose()]);
+		},
+		metrics: () => ({
+			browser: navigator.userAgent,
+			integration: "direct",
+			startupTransportActivity,
+			transportActivity: snapshotTransportActivity(transportActivity),
+			wireBytes: transports
+				.reduce((total, transport) => total + transport.wireBytes, 0n)
+				.toString(),
+			peakResponseBytes: Math.max(
+				...transports.map((transport) => transport.peakResponseBytes),
+			),
+			peakSubscriptionFrameBytes: Math.max(
+				...transports.map((transport) => transport.peakSubscriptionFrameBytes),
+			),
+			peakSubscriptionQueueDepth: Math.max(
+				...transports.map((transport) => transport.peakSubscriptionQueueDepth),
+			),
+			subscriptionBatchMaxOperations,
+			subscriptionBatchCount: writer.deliveredBatchCount + observer.deliveredBatchCount,
+			peakSubscriptionBatchOperations: Math.max(
+				writer.peakDeliveredBatchOperations,
+				observer.peakDeliveredBatchOperations,
+			),
+		}),
+	};
+}
+
+/** Creates two runtime-free scalar clients connected directly to rust-service. */
+async function createDirectDummyPair(
+	document: Uint8Array,
+	createClient: () => Promise<WasmProtocolClient>,
+	transports: Array<BrowserClient | InjectedClient>,
+	transportActivity: TransportActivity,
+	local: boolean,
+): Promise<SharedTreeBenchmarkPair> {
+	const writer = await DirectDummyClient.create(
+		await createClient(),
+		document,
+		subscriptionBatchMaxOperations,
+		1024 * 1024,
+		true,
+	);
+	const observer = await DirectDummyClient.create(
+		await createClient(),
+		document,
+		subscriptionBatchMaxOperations,
+		1024 * 1024,
+		false,
+	);
+	const synchronize = async (): Promise<void> => {
+		await writer.waitForIdle();
+		await observer.waitForIdle();
+		await waitUntil(
+			() => observer.lastAppliedSequenceNumber >= writer.lastAppliedSequenceNumber,
+		);
+	};
+	const startupTransportActivity = snapshotTransportActivity(transportActivity);
+
+	return {
+		dataStructure: "dummy",
+		backend: local
+			? "rust-service-local-memory-direct-dummy"
+			: `rust-service-webtransport-${parameters.get("storage") ?? "unknown"}-direct-dummy`,
+		clientCount: 2,
+		applyEdit: (clientIndex, value) => (clientIndex === 0 ? writer : observer).set(value),
+		appliedEditCounts: () => [writer.appliedOpCount, observer.appliedOpCount],
+		lastValues: () => [writer.value, observer.value],
+		synchronize,
+		prepare: synchronize,
+		close: async () => {
+			await Promise.all([writer.dispose(), observer.dispose()]);
+		},
+		metrics: () => ({
+			browser: navigator.userAgent,
+			integration: "direct",
+			startupTransportActivity,
+			transportActivity: snapshotTransportActivity(transportActivity),
+			wireBytes: transports
+				.reduce((total, transport) => total + transport.wireBytes, 0n)
+				.toString(),
+			peakResponseBytes: Math.max(
+				...transports.map((transport) => transport.peakResponseBytes),
+			),
+			peakSubscriptionFrameBytes: Math.max(
+				...transports.map((transport) => transport.peakSubscriptionFrameBytes),
+			),
+			peakSubscriptionQueueDepth: Math.max(
+				...transports.map((transport) => transport.peakSubscriptionQueueDepth),
+			),
+			subscriptionBatchMaxOperations,
+			subscriptionBatchCount: writer.deliveredBatchCount + observer.deliveredBatchCount,
+			peakSubscriptionBatchOperations: Math.max(
+				writer.peakDeliveredBatchOperations,
+				observer.peakDeliveredBatchOperations,
+			),
+		}),
+	};
+}
+
+/** Waits for a direct-integration state predicate with a bounded timeout. */
+async function waitUntil(predicate: () => boolean): Promise<void> {
+	const deadline = performance.now() + 10_000;
+	while (!predicate()) {
+		if (performance.now() >= deadline) {
+			throw new Error("timed out waiting for direct SharedTree synchronization");
+		}
+		await new Promise((resolve) => setTimeout(resolve, 0));
+	}
 }
 
 /** Reads a numeric browser parameter or returns its workload default. */

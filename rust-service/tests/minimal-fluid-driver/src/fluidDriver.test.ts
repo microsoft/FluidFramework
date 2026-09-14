@@ -12,6 +12,10 @@ import {
 	type MinimalWasmDocumentService,
 	MinimalWasmDocumentServiceFactory,
 } from "./fluidDriver.js";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+
+import { DirectDummyClient } from "./directDummy.js";
+import { DirectSharedTreeClient } from "./directSharedTree.js";
 import { field, frame, parseFrame, reference, u64 } from "./fsp4.js";
 import type {
 	ProjectedOperation,
@@ -22,6 +26,14 @@ import type {
 
 /** UTF-8 encoder used for deterministic fixture identities and payloads. */
 const encoder = new TextEncoder();
+
+const directSchema = new SchemaFactory("fluid.experimental.direct-shared-tree-test");
+
+class DirectTestState extends directSchema.object("DirectTestState", {
+	value: directSchema.number,
+}) {}
+
+const directTreeConfiguration = new TreeViewConfiguration({ schema: DirectTestState });
 
 /** Reads the request identity from an encoded FSP4 frame header. */
 function requestId(request: Uint8Array): bigint {
@@ -50,6 +62,43 @@ function submissionMetadata(request: Uint8Array): {
 		new DataView(body.buffer, body.byteOffset + offset, 8).getBigUint64(0),
 	);
 	return { identity, sequenceNumber };
+}
+
+/** Projects one captured direct submission as a service-sequenced operation. */
+function projectedSubmission(request: Uint8Array, sequenceNumber: number): ProjectedOperation {
+	const body = parseFrame(request).body;
+	let offset = 0;
+	const readField = (): Uint8Array => {
+		const length = new DataView(body.buffer, body.byteOffset + offset, 4).getUint32(0);
+		offset += 4;
+		const value = body.slice(offset, offset + length);
+		offset += length;
+		return value;
+	};
+	readField();
+	const writer = readField();
+	const session = readField();
+	const submission = readField();
+	const localSequence = new DataView(body.buffer, body.byteOffset + offset, 8).getBigUint64(0);
+	offset += 8;
+	const referencePresent = body[offset++] === 1;
+	const referenceValue = referencePresent ? readField() : undefined;
+	const payload = readField();
+	return {
+		position: encoder.encode(`direct-position-${sequenceNumber}`),
+		sequenceNumber: BigInt(sequenceNumber),
+		writer,
+		session,
+		submission,
+		localSequenceNumber: localSequence,
+		...(referenceValue === undefined ? {} : { reference: referenceValue }),
+		payload,
+	};
+}
+
+/** Returns submissions captured through either the persistent or unary path. */
+function capturedSubmissions(client: TestClient): readonly Uint8Array[] {
+	return client.streams[0]?.sent ?? client.unarySubmissions;
 }
 
 /** Converts opaque submission identity bytes to a stable set key. */
@@ -82,9 +131,34 @@ class TestSubscription implements ProjectedOperationSubscription {
 				reject: (error: Error) => void;
 		  }
 		| undefined;
+	/** Optional batch reader installed for batch-capable fixture clients. */
+	public readonly nextBatch?: (
+		maxOperations: number,
+		maxBytes: number,
+	) => Promise<readonly ProjectedOperation[]>;
 
 	/** Creates a subscription beginning strictly after the supplied cursor. */
-	public constructor(public readonly after: Uint8Array | undefined) {}
+	public constructor(
+		public readonly after: Uint8Array | undefined,
+		batching: boolean,
+	) {
+		if (batching) {
+			this.nextBatch = async (maxOperations, maxBytes) => {
+				const first = await this.next();
+				const operations = [first];
+				let payloadBytes = first.payload.length;
+				while (operations.length < maxOperations) {
+					const operation = this.queued[0];
+					if (operation === undefined || payloadBytes + operation.payload.length > maxBytes) {
+						break;
+					}
+					operations.push(this.queued.shift() as ProjectedOperation);
+					payloadBytes += operation.payload.length;
+				}
+				return operations;
+			};
+		}
+	}
 
 	/** Returns a queued operation or waits for the fixture to push one. */
 	public next(): Promise<ProjectedOperation> {
@@ -189,6 +263,8 @@ interface TestClientOptions {
 	readonly failWriteSequence?: number;
 	/** Whether the first stream response should fail after commit. */
 	readonly failNext?: boolean;
+	/** Whether projected subscriptions expose bounded batch reads. */
+	readonly batchSubscriptions?: boolean;
 }
 
 /** In-memory generated-client double that records driver lifecycle interactions. */
@@ -201,6 +277,8 @@ class TestClient implements WasmProtocolClient {
 	public readonly subscriptions: TestSubscription[] = [];
 	/** Cursors supplied to explicit projected reads. */
 	public readonly projectedReadAfters: (Uint8Array | undefined)[] = [];
+	/** Unary submissions captured for direct SharedTree projection tests. */
+	public readonly unarySubmissions: Uint8Array[] = [];
 	/** Operations returned by explicit projected reads. */
 	public projectedReadOperations: readonly ProjectedOperation[] = [];
 	/** Submission identities committed by stream or unary requests. */
@@ -217,6 +295,7 @@ class TestClient implements WasmProtocolClient {
 			return frame(requestId(request), 64, new Uint8Array([2]));
 		}
 		if (kind === 3) {
+			this.unarySubmissions.push(request);
 			this.commit(request);
 			return submissionResponse(request, submissionMetadata(request).sequenceNumber);
 		}
@@ -251,7 +330,7 @@ class TestClient implements WasmProtocolClient {
 		_document: Uint8Array,
 		after?: Uint8Array,
 	): ProjectedOperationSubscription {
-		const subscription = new TestSubscription(after);
+		const subscription = new TestSubscription(after, this.options.batchSubscriptions ?? false);
 		this.subscriptions.push(subscription);
 		return subscription;
 	}
@@ -460,6 +539,204 @@ test("synchronization advances the cursor used to restart a subscription", async
 	connection.dispose();
 });
 
+test("batched subscriptions deliver ready operations in one ordered event", async () => {
+	const client = new TestClient({ batchSubscriptions: true });
+	const connection = await connect(client);
+	const received: number[][] = [];
+	connection.on("op", (_documentId, messages) => {
+		received.push(messages.map(({ sequenceNumber }) => sequenceNumber));
+	});
+
+	client.subscriptions[0]?.push(operation(1));
+	client.subscriptions[0]?.push(operation(2));
+	await waitUntil(() => received.length === 1);
+	assert.deepEqual(received, [[3, 4]]);
+	assert.equal(connection.subscriptionBatchCount, 1);
+	assert.equal(connection.peakSubscriptionBatchOperations, 2);
+	assert.equal(connection.checkpointSequenceNumber, 4);
+	connection.dispose();
+});
+
+test("direct SharedTree applies ready acknowledgements as one ordered batch", async () => {
+	const client = new TestClient({ batchSubscriptions: true });
+	const direct = await DirectSharedTreeClient.create(
+		client,
+		encoder.encode("direct-tree-document"),
+		64,
+		1024 * 1024,
+		false,
+	);
+	const view = direct.tree.viewWith(directTreeConfiguration);
+	view.initialize({ value: 0 });
+	view.root.value = 1;
+	await waitUntilStable(() => capturedSubmissions(client).length);
+	const submissions = capturedSubmissions(client);
+	assert(submissions.length > 1);
+	assert.equal(client.streams.length, 1);
+
+	for (const [index, request] of submissions.entries()) {
+		client.subscriptions[0]?.push(projectedSubmission(request, index + 1));
+	}
+	await direct.waitForIdle();
+	const initialSubmissionCount = submissions.length;
+
+	assert.equal(direct.deliveredBatchCount, 1);
+	assert.equal(direct.peakDeliveredBatchOperations, initialSubmissionCount);
+	assert.equal(direct.lastAppliedSequenceNumber, initialSubmissionCount);
+	assert.equal(view.root.value, 1);
+
+	view.root.value = 2;
+	view.root.value = 3;
+	await waitUntilStable(() => capturedSubmissions(client).length);
+	assert.equal(capturedSubmissions(client).length, initialSubmissionCount + 2);
+	const priorPosition = encoder.encode(`direct-position-${initialSubmissionCount}`);
+	for (
+		let index = initialSubmissionCount;
+		index < capturedSubmissions(client).length;
+		index++
+	) {
+		const operation = projectedSubmission(
+			capturedSubmissions(client)[index] as Uint8Array,
+			index + 1,
+		);
+		assert.deepEqual(operation.reference, priorPosition);
+		client.subscriptions[0]?.push({ ...operation, minimumReference: priorPosition });
+	}
+	await direct.waitForIdle();
+
+	assert.equal(direct.deliveredBatchCount, 2);
+	assert.equal(direct.lastAppliedSequenceNumber, initialSubmissionCount + 2);
+	assert.equal(view.root.value, 3);
+	view.dispose();
+	await direct.dispose();
+	assert.equal(client.subscriptions[0]?.cancelCount, 1);
+});
+
+test("direct SharedTree sessions converge independent writer batches", async () => {
+	const firstClient = new TestClient({ batchSubscriptions: true });
+	const secondClient = new TestClient({ batchSubscriptions: true });
+	const document = encoder.encode("direct-multi-writer-document");
+	const first = await DirectSharedTreeClient.create(
+		firstClient,
+		document,
+		64,
+		1024 * 1024,
+		false,
+	);
+	const second = await DirectSharedTreeClient.create(
+		secondClient,
+		document,
+		64,
+		1024 * 1024,
+		false,
+	);
+	const firstView = first.tree.viewWith(directTreeConfiguration);
+	firstView.initialize({ value: 0 });
+	firstView.root.value = 1;
+	await waitUntilStable(() => capturedSubmissions(firstClient).length);
+	const firstSubmissions = capturedSubmissions(firstClient);
+
+	for (const [index, request] of firstSubmissions.entries()) {
+		const operation = projectedSubmission(request, index + 1);
+		firstClient.subscriptions[0]?.push(operation);
+		secondClient.subscriptions[0]?.push(operation);
+	}
+	await first.waitForIdle();
+	await waitUntil(() => second.lastAppliedSequenceNumber === firstSubmissions.length);
+	const secondView = second.tree.viewWith(directTreeConfiguration);
+	assert.equal(secondView.root.value, 1);
+
+	secondView.root.value = 2;
+	await waitUntilStable(() => capturedSubmissions(secondClient).length);
+	assert.equal(capturedSubmissions(secondClient).length, 1);
+	const nextSequenceNumber = firstSubmissions.length + 1;
+	const operation = projectedSubmission(
+		capturedSubmissions(secondClient)[0] as Uint8Array,
+		nextSequenceNumber,
+	);
+	assert.deepEqual(
+		operation.reference,
+		encoder.encode(`direct-position-${nextSequenceNumber - 1}`),
+	);
+	firstClient.subscriptions[0]?.push(operation);
+	secondClient.subscriptions[0]?.push(operation);
+	await second.waitForIdle();
+	await waitUntil(() => first.lastAppliedSequenceNumber === nextSequenceNumber);
+
+	assert.equal(firstView.root.value, 2);
+	assert.equal(secondView.root.value, 2);
+	assert.equal(first.deliveredBatchCount, 2);
+	assert.equal(second.deliveredBatchCount, 2);
+	firstView.dispose();
+	secondView.dispose();
+	await Promise.all([first.dispose(), second.dispose()]);
+});
+
+test("direct dummy sessions converge independent writer batches", async () => {
+	const firstClient = new TestClient({ batchSubscriptions: true });
+	const secondClient = new TestClient({ batchSubscriptions: true });
+	const document = encoder.encode("direct-dummy-document");
+	const first = await DirectDummyClient.create(firstClient, document, 64, 1024 * 1024, false);
+	const second = await DirectDummyClient.create(
+		secondClient,
+		document,
+		64,
+		1024 * 1024,
+		false,
+	);
+	first.set(1);
+	first.set(2);
+	await waitUntilStable(() => capturedSubmissions(firstClient).length);
+	const firstSubmissions = capturedSubmissions(firstClient);
+	assert.equal(firstClient.streams.length, 1);
+
+	for (const [index, request] of firstSubmissions.entries()) {
+		const operation = projectedSubmission(request, index + 1);
+		firstClient.subscriptions[0]?.push(operation);
+		secondClient.subscriptions[0]?.push(operation);
+	}
+	await first.waitForIdle();
+	await waitUntil(() => second.lastAppliedSequenceNumber === 2);
+
+	assert.equal(first.value, 2);
+	assert.equal(second.value, 2);
+	assert.equal(first.appliedOpCount, 2);
+	assert.equal(second.appliedOpCount, 2);
+	assert.equal(first.deliveredBatchCount, 1);
+	assert.equal(second.deliveredBatchCount, 1);
+	assert.equal(first.peakDeliveredBatchOperations, 2);
+	assert.equal(second.peakDeliveredBatchOperations, 2);
+	await Promise.all([first.dispose(), second.dispose()]);
+});
+
+test("direct dummy retains unary submission fallback", async () => {
+	const backingClient = new TestClient({ batchSubscriptions: true });
+	const client = new Proxy(backingClient, {
+		get(target, property, receiver) {
+			return property === "openSubmissionStream"
+				? undefined
+				: Reflect.get(target, property, receiver);
+		},
+	}) as WasmProtocolClient;
+	const direct = await DirectDummyClient.create(
+		client,
+		encoder.encode("direct-dummy-unary-document"),
+		64,
+		1024 * 1024,
+		false,
+	);
+	direct.set(1);
+	await waitUntilStable(() => backingClient.unarySubmissions.length);
+	assert.equal(backingClient.streams.length, 0);
+	assert.equal(backingClient.unarySubmissions.length, 1);
+	backingClient.subscriptions[0]?.push(
+		projectedSubmission(backingClient.unarySubmissions[0] as Uint8Array, 1),
+	);
+	await direct.waitForIdle();
+	assert.equal(direct.value, 1);
+	await direct.dispose();
+});
+
 test("clients without submission streaming retain unary fallback", async () => {
 	const backingClient = new TestClient();
 	const client = new Proxy(backingClient, {
@@ -510,4 +787,15 @@ async function waitUntil(check: () => boolean): Promise<void> {
 		}
 		await new Promise((resolve) => setTimeout(resolve, 1));
 	}
+}
+
+/** Waits until a synchronously produced count remains unchanged across one event-loop turn. */
+async function waitUntilStable(readCount: () => number): Promise<void> {
+	let previous = -1;
+	await waitUntil(() => {
+		const current = readCount();
+		const stable = current > 0 && current === previous;
+		previous = current;
+		return stable;
+	});
 }

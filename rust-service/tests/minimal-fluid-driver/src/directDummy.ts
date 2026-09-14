@@ -1,0 +1,194 @@
+import { ProtocolClient } from "./protocolClient.js";
+import type {
+	ProjectedOperation,
+	ProjectedOperationSubscription,
+	SubmissionStream,
+	WasmProtocolClient,
+} from "./wasmClient.js";
+
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+
+interface DirectDummyPayload {
+	readonly value: number;
+}
+
+/** Runtime-free scalar benchmark client hosted directly over rust-service. */
+export class DirectDummyClient {
+	/** Number of local and remote edits applied by this client. */
+	public appliedOpCount = 0;
+	/** Current scalar value. */
+	public value = 0;
+	/** Number of projected batches consumed by this client. */
+	public deliveredBatchCount = 0;
+	/** Largest projected batch consumed by this client. */
+	public peakDeliveredBatchOperations = 0;
+	/** Highest canonical service sequence applied by this client. */
+	public lastAppliedSequenceNumber = 0;
+
+	private readonly protocol: ProtocolClient;
+	private readonly writer: Uint8Array;
+	private readonly session: Uint8Array;
+	private subscription: ProjectedOperationSubscription | undefined;
+	private subscriptionPump: Promise<void> | undefined;
+	private submissionStream: SubmissionStream | undefined;
+	private submissionWriteChain: Promise<void> = Promise.resolve();
+	private submissionChain: Promise<void> = Promise.resolve();
+	private synchronizationError: unknown;
+	private cursor: Uint8Array | undefined;
+	private localSequenceNumber = 0;
+	private acknowledgedLocalSequenceNumber = 0;
+	private disposed = false;
+
+	private constructor(
+		private readonly client: WasmProtocolClient,
+		private readonly document: Uint8Array,
+		private readonly batchMaxOperations: number,
+		private readonly batchMaxPayloadBytes: number,
+	) {
+		this.protocol = new ProtocolClient(client);
+		this.writer = encoder.encode(crypto.randomUUID());
+		this.session = this.writer;
+	}
+
+	/** Creates and opens one direct dummy client. */
+	public static async create(
+		client: WasmProtocolClient,
+		document: Uint8Array,
+		batchMaxOperations: number,
+		batchMaxPayloadBytes: number,
+		createDocument: boolean,
+	): Promise<DirectDummyClient> {
+		const host = new DirectDummyClient(
+			client,
+			document,
+			batchMaxOperations,
+			batchMaxPayloadBytes,
+		);
+		if (createDocument) {
+			await host.protocol.create(document);
+		}
+		await host.protocol.openSession(document, host.writer, host.session);
+		host.submissionStream = await client.openSubmissionStream?.(document);
+		host.subscription = await client.subscribeProjected(document);
+		host.subscriptionPump = host.consumeSubscription(host.subscription);
+		return host;
+	}
+
+	/** Applies and submits one scalar replacement. */
+	public set(value: number): void {
+		this.value = value;
+		this.appliedOpCount++;
+		const localSequenceNumber = ++this.localSequenceNumber;
+		const reference = this.cursor?.slice();
+		const submission = encoder.encode(
+			`${decoder.decode(this.session)}-${localSequenceNumber}`,
+		);
+		const payload = encoder.encode(JSON.stringify({ value } satisfies DirectDummyPayload));
+		const submissionStream = this.submissionStream;
+		if (submissionStream !== undefined) {
+			const request = this.protocol.submissionRequest(
+				this.document,
+				this.writer,
+				this.session,
+				submission,
+				localSequenceNumber,
+				payload,
+				reference,
+			);
+			const write = this.submissionWriteChain.then(async () => submissionStream.send(request));
+			this.submissionWriteChain = write;
+			this.submissionChain = this.submissionChain.then(async () => {
+				await write;
+				this.protocol.submissionPosition(await submissionStream.next());
+			});
+			return;
+		}
+		this.submissionChain = this.submissionChain.then(async () => {
+			await this.protocol.submit(
+				this.document,
+				this.writer,
+				this.session,
+				submission,
+				localSequenceNumber,
+				payload,
+				reference,
+			);
+		});
+	}
+
+	/** Waits until every local edit is submitted, acknowledged, and applied. */
+	public async waitForIdle(): Promise<void> {
+		await this.submissionChain;
+		while (this.acknowledgedLocalSequenceNumber < this.localSequenceNumber) {
+			this.throwSynchronizationError();
+			await new Promise((resolve) => setTimeout(resolve, 0));
+		}
+		this.throwSynchronizationError();
+	}
+
+	/** Stops projected delivery and disconnects the transport. */
+	public async dispose(): Promise<void> {
+		if (!this.disposed) {
+			this.disposed = true;
+			await Promise.all([this.subscription?.cancel(), this.submissionStream?.close()]);
+			await this.subscriptionPump;
+			this.client.disconnect();
+		}
+	}
+
+	private async consumeSubscription(
+		subscription: ProjectedOperationSubscription,
+	): Promise<void> {
+		try {
+			while (!this.disposed && this.subscription === subscription) {
+				const operations =
+					subscription.nextBatch === undefined
+						? [await subscription.next()]
+						: await subscription.nextBatch(this.batchMaxOperations, this.batchMaxPayloadBytes);
+				if (this.disposed || this.subscription !== subscription) {
+					return;
+				}
+				if (operations.length === 0) {
+					throw new Error("direct dummy subscription returned an empty batch");
+				}
+				this.applyOperations(operations);
+			}
+		} catch (error) {
+			if (!this.disposed && this.subscription === subscription) {
+				this.synchronizationError = error;
+			}
+		}
+	}
+
+	private applyOperations(operations: readonly ProjectedOperation[]): void {
+		for (const operation of operations) {
+			if (bytesEqual(operation.session, this.session)) {
+				this.acknowledgedLocalSequenceNumber = Number(operation.localSequenceNumber);
+			} else {
+				const payload = JSON.parse(decoder.decode(operation.payload)) as DirectDummyPayload;
+				this.value = payload.value;
+				this.appliedOpCount++;
+			}
+		}
+		this.cursor = operations.at(-1)?.position;
+		this.lastAppliedSequenceNumber = Number(
+			operations.at(-1)?.sequenceNumber ?? this.lastAppliedSequenceNumber,
+		);
+		this.deliveredBatchCount++;
+		this.peakDeliveredBatchOperations = Math.max(
+			this.peakDeliveredBatchOperations,
+			operations.length,
+		);
+	}
+
+	private throwSynchronizationError(): void {
+		if (this.synchronizationError !== undefined) {
+			throw this.synchronizationError;
+		}
+	}
+}
+
+function bytesEqual(left: Uint8Array, right: Uint8Array): boolean {
+	return left.length === right.length && left.every((byte, index) => byte === right[index]);
+}
