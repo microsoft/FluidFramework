@@ -5,7 +5,7 @@
 
 import * as fs from "fs";
 
-import type { IFluidFileConverter } from "./codeLoaderBundle.js";
+import type { FluidFileConverter } from "./codeLoaderBundle.js";
 
 /**
  * Is the given snapshot in JSON format
@@ -34,7 +34,7 @@ export function getSnapshotFileContent(filePath: string): string | Buffer {
  */
 export function validateCommandLineArgs(
 	codeLoader?: string,
-	fluidFileConverter?: IFluidFileConverter,
+	fluidFileConverter?: FluidFileConverter,
 ): string | undefined {
 	if (codeLoader && fluidFileConverter !== undefined) {
 		return '"codeLoader" and "fluidFileConverter" cannot both be provided. See README for details.';
