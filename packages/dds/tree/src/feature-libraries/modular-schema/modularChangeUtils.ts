@@ -19,7 +19,6 @@ import {
 	addToNestedSet,
 	brand,
 	getOrCreateInNestedMap,
-	hasSome,
 	nestedSetContains,
 	populatedNestedSet,
 	type Mutable,
