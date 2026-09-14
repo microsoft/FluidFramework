@@ -1,10 +1,10 @@
 # Iteration 0012: transformation-quality-docs Report
 
-Status: in progress
+Status: complete
 Branch: `rust-service-iteration-0012-transformation-quality-docs`
 Worktree: `/workspaces/FluidFramework-rust-service-iteration-0012-transformation-quality-docs`
 Base commit: `5eb11d6dab6d3c9f9850fa4a3d45a8f7edb3c075`
-Final commit: pending implementation commit; the report-completion commit will follow
+Final commit: implementation `8a9e3a675512780f9dbe85b6b20508018051f8d4`; report completion is the immediate successor commit
 Agent or owner: GitHub Copilot
 Model and tool version: GitHub Copilot; tool version unknown
 Instruction source: [`instructions/transformation-quality-docs.md`](./instructions/transformation-quality-docs.md) at actual kickoff commit `5eb11d6dab6d3c9f9850fa4a3d45a8f7edb3c075`; its recorded iteration source commit is `1625f1d161a8f1eca2e51c811bb6b29e15ac1fd5`
@@ -26,7 +26,7 @@ Documented all 111 inventoried production declarations and members in the three 
 
 ## Deliverables and Commits
 
-- Implementation commit: pending.
+- Implementation commit: `8a9e3a675512780f9dbe85b6b20508018051f8d4` (`docs(rust-service): document transformation wrappers`).
 - Added `crates/wrappers/compression/README.md`, `encryption/README.md`, and `stateful-compression/README.md`.
 - Completed declaration/member rustdoc in each package's `src/lib.rs`, including private format helpers and non-obvious test fixtures.
 - Inventory rule: count named constants, types, fields, variants, traits, functions, and methods in hand-authored production source before `#[cfg(test)]`. Exclude imports, locals, impl blocks, associated types in trait implementations, anonymous tuple fields, and macro-generated declarations.
