@@ -1,0 +1,33 @@
+{
+	"schemaVersion": 1,
+	"iteration": "0007",
+	"status": "complete",
+	"sourceCommit": "9c65ff3e7b6439a844461d215826491b36bb15e1",
+	"createdAt": "2026-09-13T01:06:12.931Z",
+	"activeWorkstreams": [
+		{
+			"name": "fluid-read-reconnect-lifecycle",
+			"instructions": "phase-2/instructions/fluid-read-reconnect-lifecycle.md",
+			"report": "phase-2/fluid-read-reconnect-lifecycle.md"
+		},
+		{
+			"name": "native-graceful-shutdown",
+			"instructions": "phase-2/instructions/native-graceful-shutdown.md",
+			"report": "phase-2/native-graceful-shutdown.md"
+		}
+	],
+	"deferredWorkstreams": [
+		"live-projected-streaming",
+		"submission-pipelining-and-batching",
+		"retention-and-garbage-collection",
+		"browser-storage",
+		"distributed-fencing",
+		"hardware-power-loss",
+		"cloud-blob-storage",
+		"authentication-authorization",
+		"node-webtransport-adapter",
+		"production-package-publication",
+		"broad-optimization"
+	],
+	"nextWorkstreams": ["live-projected-operation-streaming"]
+}

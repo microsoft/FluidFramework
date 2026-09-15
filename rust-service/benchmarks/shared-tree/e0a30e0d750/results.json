@@ -1,0 +1,127 @@
+{
+	"schemaVersion": 1,
+	"status": "passed",
+	"provisional": true,
+	"backend": "rust-service-webtransport-memory-force-write",
+	"implementationCommit": "e0a30e0d75058b39103315441a2fb99e86e501c5",
+	"collectionSourceReportedCommit": "fb2b1137de77a73dacc5aad0932b38ae72c9a1d9",
+	"collectionSourceDirty": true,
+	"configuration": {
+		"successfulSamples": 8,
+		"attempts": 9,
+		"excludedSetupProbeFailures": 1,
+		"operations": 5000,
+		"warmup": 500,
+		"operationsPerTurn": 10,
+		"clients": 2
+	},
+	"environment": {
+		"platform": "linux",
+		"kernel": "6.8.0-1064-azure",
+		"architecture": "x64",
+		"logicalCpuCount": 32,
+		"cpuModel": "AMD EPYC 7763 64-Core Processor",
+		"node": "v22.23.2",
+		"browser": "HeadlessChrome/152.0.0.0"
+	},
+	"aggregates": {
+		"startupMilliseconds": {
+			"minimum": 964.0,
+			"mean": 1151.5625,
+			"median": 1180.9,
+			"p95": 1305.2,
+			"maximum": 1305.2,
+			"sampleStandardDeviation": 130.7282452538198
+		},
+		"submissionMilliseconds": {
+			"minimum": 901.0,
+			"mean": 920.5375,
+			"median": 924.25,
+			"p95": 931.6,
+			"maximum": 931.6,
+			"sampleStandardDeviation": 10.044463649149248
+		},
+		"convergenceMilliseconds": {
+			"minimum": 11731.0,
+			"mean": 12020.2375,
+			"median": 11981.7,
+			"p95": 12385.1,
+			"maximum": 12385.1,
+			"sampleStandardDeviation": 246.0010507380395
+		},
+		"totalOperationMilliseconds": {
+			"minimum": 12662.6,
+			"mean": 12940.775,
+			"median": 12902.35,
+			"p95": 13311.4,
+			"maximum": 13311.4,
+			"sampleStandardDeviation": 248.76357536541207
+		},
+		"operationsPerSecond": {
+			"minimum": 375.6178914313941,
+			"mean": 386.49928626083954,
+			"median": 387.5277993118834,
+			"p95": 394.8636141076988,
+			"maximum": 394.8636141076988,
+			"sampleStandardDeviation": 7.352721921086316
+		}
+	},
+	"samples": [
+		{
+			"startupMilliseconds": 1097.7,
+			"submissionMilliseconds": 931.6,
+			"convergenceMilliseconds": 11731.0,
+			"totalOperationMilliseconds": 12662.6,
+			"operationsPerSecond": 394.8636141076988
+		},
+		{
+			"startupMilliseconds": 964.0,
+			"submissionMilliseconds": 901.0,
+			"convergenceMilliseconds": 11837.1,
+			"totalOperationMilliseconds": 12738.1,
+			"operationsPerSecond": 392.5232177483126
+		},
+		{
+			"startupMilliseconds": 1253.3,
+			"submissionMilliseconds": 912.4,
+			"convergenceMilliseconds": 12054.6,
+			"totalOperationMilliseconds": 12967.0,
+			"operationsPerSecond": 385.594200663222
+		},
+		{
+			"startupMilliseconds": 1305.2,
+			"submissionMilliseconds": 928.1,
+			"convergenceMilliseconds": 12375.5,
+			"totalOperationMilliseconds": 13303.6,
+			"operationsPerSecond": 375.8381190053925
+		},
+		{
+			"startupMilliseconds": 1185.7,
+			"submissionMilliseconds": 924.9,
+			"convergenceMilliseconds": 12002.8,
+			"totalOperationMilliseconds": 12927.7,
+			"operationsPerSecond": 386.76640082924945
+		},
+		{
+			"startupMilliseconds": 968.3,
+			"submissionMilliseconds": 926.3,
+			"convergenceMilliseconds": 12385.1,
+			"totalOperationMilliseconds": 13311.4,
+			"operationsPerSecond": 375.6178914313941
+		},
+		{
+			"startupMilliseconds": 1262.2,
+			"submissionMilliseconds": 923.6,
+			"convergenceMilliseconds": 11815.2,
+			"totalOperationMilliseconds": 12738.8,
+			"operationsPerSecond": 392.5016485069295
+		},
+		{
+			"startupMilliseconds": 1176.1,
+			"submissionMilliseconds": 916.4,
+			"convergenceMilliseconds": 11960.6,
+			"totalOperationMilliseconds": 12877.0,
+			"operationsPerSecond": 388.28919779451735
+		}
+	]
+}

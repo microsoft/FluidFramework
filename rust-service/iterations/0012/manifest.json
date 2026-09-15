@@ -1,0 +1,41 @@
+{
+	"schemaVersion": 1,
+	"iteration": "0012",
+	"status": "complete",
+	"sourceCommit": "1625f1d161a8f1eca2e51c811bb6b29e15ac1fd5",
+	"createdAt": "2026-09-14T06:43:56.306Z",
+	"activeWorkstreams": [
+		{
+			"name": "kernel-storage-quality-docs",
+			"instructions": "phase-2/instructions/kernel-storage-quality-docs.md",
+			"report": "phase-2/kernel-storage-quality-docs.md"
+		},
+		{
+			"name": "protocol-service-quality-docs",
+			"instructions": "phase-2/instructions/protocol-service-quality-docs.md",
+			"report": "phase-2/protocol-service-quality-docs.md"
+		},
+		{
+			"name": "transformation-quality-docs",
+			"instructions": "phase-2/instructions/transformation-quality-docs.md",
+			"report": "phase-2/transformation-quality-docs.md"
+		},
+		{
+			"name": "transport-client-quality-docs",
+			"instructions": "phase-2/instructions/transport-client-quality-docs.md",
+			"report": "phase-2/transport-client-quality-docs.md"
+		},
+		{
+			"name": "fluid-driver-quality-docs",
+			"instructions": "phase-2/instructions/fluid-driver-quality-docs.md",
+			"report": "phase-2/fluid-driver-quality-docs.md"
+		},
+		{
+			"name": "examples-benchmarks-quality-docs",
+			"instructions": "phase-2/instructions/examples-benchmarks-quality-docs.md",
+			"report": "phase-2/examples-benchmarks-quality-docs.md"
+		}
+	],
+	"deferredWorkstreams": [],
+	"nextWorkstreams": []
+}

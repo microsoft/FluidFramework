@@ -124,7 +124,8 @@
 				"dirs": [
 					"packages/test/",
 					"azure/packages/test/",
-					"packages/service-clients/end-to-end-tests"
+					"packages/service-clients/end-to-end-tests",
+					"rust-service/tests/"
 				]
 			},
 			"Test-Utils": {

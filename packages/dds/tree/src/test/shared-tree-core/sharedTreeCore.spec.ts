@@ -14,9 +14,15 @@ import {
 	type SummaryObject,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import {
+	createIdCompressor,
+	type IdCreationRange,
+	toIdCompressorWithCore,
+} from "@fluidframework/id-compressor/internal";
 import type {
 	IGarbageCollectionData,
+	IRuntimeMessageCollection,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -83,6 +89,75 @@ import { createTree, createTreeSharedObject, TestSharedTreeCore } from "./utils.
 const enableSchemaValidation = true;
 
 describe("SharedTreeCore", () => {
+	it("direct sequenced messages match singleton runtime delivery", () => {
+		const submitted: { contents: unknown; idCreationRange: IdCreationRange }[] = [];
+		const senderCompressor = createIdCompressor();
+		const sender = createTree({
+			indexes: [],
+			idCompressor: senderCompressor,
+			isAttached: true,
+			submitLocalMessage: (contents) =>
+				submitted.push({
+					contents,
+					idCreationRange: toIdCompressorWithCore(senderCompressor).takeNextCreationRange(),
+				}),
+		});
+		const singletonReceiverCompressor = createIdCompressor();
+		const singletonReceiver = createTree({
+			indexes: [],
+			idCompressor: singletonReceiverCompressor,
+		});
+		const directReceiver = createTree({ indexes: [] });
+		sender.didAttach();
+
+		changeTree(sender);
+		changeTree(sender);
+		assert.equal(submitted.length, 2);
+		const messages = submitted.map(({ contents, idCreationRange }, index) => ({
+			contents,
+			idCreationRange,
+			sequenceNumber: index + 1,
+			referenceSequenceNumber: index,
+			minimumSequenceNumber: 0,
+			local: false,
+		}));
+
+		for (const message of messages) {
+			toIdCompressorWithCore(singletonReceiverCompressor).finalizeCreationRange(
+				message.idCreationRange,
+			);
+			const envelope: IRuntimeMessageCollection["envelope"] = {
+				clientId: "client",
+				sequenceNumber: message.sequenceNumber,
+				referenceSequenceNumber: message.referenceSequenceNumber,
+				minimumSequenceNumber: message.minimumSequenceNumber,
+				timestamp: message.sequenceNumber,
+				type: MessageType.Operation,
+			};
+			singletonReceiver.processMessagesCore({
+				envelope,
+				local: false,
+				messagesContent: [
+					{
+						contents: message.contents,
+						clientSequenceNumber: 0,
+						localOpMetadata: undefined,
+					},
+				],
+			});
+		}
+		directReceiver.processSequencedMessages(messages);
+		sender.processSequencedMessages(messages.map((message) => ({ ...message, local: true })));
+
+		assert.equal(getTrunkLength(singletonReceiver), 2);
+		assert.equal(getTrunkLength(directReceiver), 2);
+		assert.equal(getTrunkLength(sender), 2);
+		assert.deepEqual(
+			directReceiver.getLocalBranch().getHead().change,
+			singletonReceiver.getLocalBranch().getHead().change,
+		);
+	});
+
 	it("summarizes without indexes", async () => {
 		const tree = createTree({ indexes: [] });
 		const { summary, stats } = tree.summarizeCore(mockSerializer);

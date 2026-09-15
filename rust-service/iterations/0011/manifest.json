@@ -1,0 +1,41 @@
+{
+	"schemaVersion": 1,
+	"iteration": "0011",
+	"status": "complete",
+	"sourceCommit": "0d2c7e367767978b267831ca34aba6e398948bdf",
+	"createdAt": "2026-09-13T18:33:39.137Z",
+	"activeWorkstreams": [
+		{
+			"name": "kernel-storage-quality",
+			"instructions": "phase-2/instructions/kernel-storage-quality.md",
+			"report": "phase-2/kernel-storage-quality.md"
+		},
+		{
+			"name": "fluid-service-quality",
+			"instructions": "phase-2/instructions/fluid-service-quality.md",
+			"report": "phase-2/fluid-service-quality.md"
+		},
+		{
+			"name": "transformation-wrappers-quality",
+			"instructions": "phase-2/instructions/transformation-wrappers-quality.md",
+			"report": "phase-2/transformation-wrappers-quality.md"
+		},
+		{
+			"name": "transport-client-quality",
+			"instructions": "phase-2/instructions/transport-client-quality.md",
+			"report": "phase-2/transport-client-quality.md"
+		},
+		{
+			"name": "fluid-driver-quality",
+			"instructions": "phase-2/instructions/fluid-driver-quality.md",
+			"report": "phase-2/fluid-driver-quality.md"
+		},
+		{
+			"name": "examples-benchmarks-quality",
+			"instructions": "phase-2/instructions/examples-benchmarks-quality.md",
+			"report": "phase-2/examples-benchmarks-quality.md"
+		}
+	],
+	"deferredWorkstreams": [],
+	"nextWorkstreams": []
+}

@@ -1,0 +1,21 @@
+[package]
+name = "fluid-native-service-browser"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+bytes.workspace = true
+fluid-native-service = { path = "../../fluid-native-service" }
+fluid-service-protocol = { path = "../../fluid-service-protocol" }
+js-sys = "=0.3.105"
+tokio = { version = "1.47.1", features = ["sync"] }
+wasm-bindgen = "=0.2.128"
+wasm-bindgen-futures = "=0.4.78"
+
+[lints]
+workspace = true

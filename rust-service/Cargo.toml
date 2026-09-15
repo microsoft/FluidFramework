@@ -1,0 +1,45 @@
+[workspace]
+members = [
+    "crates/snapshotted-stream-benchmarks",
+    "crates/snapshotted-stream-client",
+    "crates/snapshotted-stream-conformance",
+    "crates/snapshotted-stream-content-addressed",
+    "crates/snapshotted-stream-core",
+    "crates/snapshotted-stream-file-simple",
+    "crates/fluid-sequencer",
+    "crates/snapshotted-stream-memory",
+    "crates/fluid-service-protocol",
+    "crates/fluid-native-service",
+    "crates/fluid-service-storage",
+    "crates/spikes/snapshotted-stream-durable-log-spike",
+    "crates/wrappers/snapshotted-stream-compression",
+    "crates/wrappers/snapshotted-stream-encryption",
+    "crates/wrappers/snapshotted-stream-network",
+    "crates/wrappers/fluid-native-service-browser",
+    "crates/wrappers/snapshotted-stream-stateful-compression",
+    "crates/wrappers/fluid-webtransport-browser",
+    "crates/wrappers/fluid-webtransport-native",
+    "examples/snapshotted-stream-counter",
+    "examples/fluid-native-service-example",
+]
+resolver = "3"
+
+[workspace.package]
+edition = "2024"
+license = "MIT"
+rust-version = "1.98.1"
+
+[workspace.dependencies]
+async-trait = "0.1.89"
+bytes = "1.10.1"
+futures-core = "0.3.31"
+futures-util = "0.3.31"
+thiserror = "2.0.16"
+tokio = { version = "1.47.1", features = ["io-util", "macros", "net", "rt-multi-thread", "sync", "time"] }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = "warn"
+pedantic = "warn"

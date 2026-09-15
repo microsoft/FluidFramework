@@ -1,5 +1,6 @@
 {
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"root": true,
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
@@ -33,6 +34,7 @@
 			"!**/snapshots/**/*.json",
 			"!**/snapshots/content",
 			"!**/domain-schema-compatibility-snapshots/*/*.json",
+			"!rust-service/benchmarks/shared-tree/**/*.json",
 
 			// Generated files
 			"!**/src/**/test/types/**/*.generated.ts",
@@ -142,7 +144,6 @@
 	},
 	"formatter": {
 		"enabled": true,
-		"includes": ["**", "!**/dist/**", "!**/lib/**"],
 		// Enabling this will cause Biome to format code that is not valid, which can sometimes make the code even worse
 		// syntactically. This is especially annoying when using format-on-save, so we disable it by default.
 		"formatWithErrors": false,

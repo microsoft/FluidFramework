@@ -13,6 +13,7 @@ import type {
 	SessionSpaceCompressedId,
 	StableId,
 } from "@fluidframework/id-compressor";
+import { toIdCompressorWithCore } from "@fluidframework/id-compressor/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	IRuntimeMessageCollection,
@@ -58,7 +59,7 @@ import type { EditManagerFormatVersion, SeqNumber } from "./editManagerFormatCom
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
 import { type MessageEncodingContext, makeMessageCodecBuilder } from "./messageCodecs.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
-import type { DecodedMessage } from "./messageTypes.js";
+import type { DecodedMessage, SequencedSharedTreeMessage } from "./messageTypes.js";
 import type { ResubmitMachine } from "./resubmitMachine.js";
 import {
 	minVersionToSharedTreeSummaryFormatVersion,
@@ -75,6 +76,7 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 	schema: TreeStoredSchemaRepository;
 }
 
+/** @internal */
 export interface SharedTreeCoreOptionsInternal extends CodecWriteOptions {
 	/**
 	 * See {@link SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode}.
@@ -516,6 +518,53 @@ export class SharedTreeCore<
 		}
 
 		this.editManager.advanceMinimumSequenceNumber(brand(envelope.minimumSequenceNumber));
+	}
+
+	/**
+	 * Processes independently sequenced encoded messages without a Fluid runtime envelope.
+	 *
+	 * @remarks
+	 * This internal integration surface preserves the sequence and reference metadata of each
+	 * message. Unlike {@link processMessagesCore}, entries are not required to belong to one Fluid
+	 * grouped batch.
+	 */
+	public processSequencedMessages(messages: readonly SequencedSharedTreeMessage[]): void {
+		for (const message of messages) {
+			if (message.idCreationRange !== undefined) {
+				toIdCompressorWithCore(this.idCompressor).finalizeCreationRange(
+					message.idCreationRange,
+				);
+			}
+			const decoded = this.messageCodec.decode(message.contents, {
+				idCompressor: this.idCompressor,
+			});
+			switch (decoded.type) {
+				case "commit": {
+					this.processCommits(
+						decoded.sessionId,
+						brand(message.sequenceNumber),
+						brand(message.referenceSequenceNumber),
+						message.local,
+						decoded.branchId,
+						[decoded.commit],
+					);
+					break;
+				}
+				case "branch": {
+					this.editManager.sequenceBranchCreation(
+						decoded.sessionId,
+						brand(message.referenceSequenceNumber),
+						decoded.branchId,
+						decoded.branchName,
+					);
+					break;
+				}
+				default: {
+					unreachableCase(decoded);
+				}
+			}
+			this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
+		}
 	}
 
 	private processCommits(

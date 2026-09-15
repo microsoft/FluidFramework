@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "provisional": true,
+  "backend": "rust-service-webtransport-memory-force-write",
+  "sourceCommit": "8a1d4e690e48e08c112bcafefcfe58807ee6d236",
+  "sourceDirty": false,
+  "configuration": {
+    "repetitions": 1,
+    "operations": 1000,
+    "warmup": 100,
+    "operationsPerTurn": 1,
+    "clients": 2
+  },
+  "environment": {
+    "capturedAt": "2026-09-13T17:07:17.096Z",
+    "platform": "linux",
+    "kernel": "6.8.0-1064-azure",
+    "architecture": "x64",
+    "logicalCpuCount": 32,
+    "cpuModel": "AMD EPYC 7763 64-Core Processor",
+    "node": "v22.23.2",
+    "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+    "serviceProcess": null
+  },
+  "aggregates": {
+    "startupMilliseconds": {
+      "minimum": 1458.1000000000931,
+      "mean": 1458.1000000000931,
+      "median": 1458.1000000000931,
+      "p95": 1458.1000000000931,
+      "maximum": 1458.1000000000931,
+      "sampleStandardDeviation": 0
+    },
+    "submissionMilliseconds": {
+      "minimum": 303.10000000009313,
+      "mean": 303.10000000009313,
+      "median": 303.10000000009313,
+      "p95": 303.10000000009313,
+      "maximum": 303.10000000009313,
+      "sampleStandardDeviation": 0
+    },
+    "convergenceMilliseconds": {
+      "minimum": 19150.899999999907,
+      "mean": 19150.899999999907,
+      "median": 19150.899999999907,
+      "p95": 19150.899999999907,
+      "maximum": 19150.899999999907,
+      "sampleStandardDeviation": 0
+    },
+    "operationsPerSecond": {
+      "minimum": 51.403310373188035,
+      "mean": 51.403310373188035,
+      "median": 51.403310373188035,
+      "p95": 51.403310373188035,
+      "maximum": 51.403310373188035,
+      "sampleStandardDeviation": 0
+    }
+  },
+  "samples": [
+    {
+      "status": "passed",
+      "backend": "rust-service-webtransport-memory-force-write",
+      "clientCount": 2,
+      "operationCount": 1000,
+      "warmupOperationCount": 100,
+      "operationsPerTurn": 1,
+      "startupMilliseconds": 1458.1000000000931,
+      "submissionMilliseconds": 303.10000000009313,
+      "convergenceMilliseconds": 19150.899999999907,
+      "totalOperationMilliseconds": 19454,
+      "operationsPerSecond": 51.403310373188035,
+      "writerIndex": 0,
+      "observerIndex": 1,
+      "initialValue": 2,
+      "finalEditCount": 1100,
+      "observedChangeCounts": [
+        1100,
+        1100
+      ],
+      "finalValue": 1102,
+      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+      "wireBytes": "4702008",
+      "peakResponseBytes": 1499,
+      "peakSubscriptionFrameBytes": 1403,
+      "peakSubscriptionQueueDepth": 1,
+      "resumeOpenMilliseconds": 29.899999999906868,
+      "resumeFirstDeliveryMilliseconds": 4.399999999906868,
+      "resumeCursorCount": 2,
+      "forceWriteConnection": true
+    }
+  ]
+}

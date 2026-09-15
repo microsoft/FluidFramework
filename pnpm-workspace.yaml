@@ -254,6 +254,7 @@ packages:
   - "examples/**"
   - "experimental/**"
   - "packages/**"
+  - "rust-service/tests/minimal-fluid-driver"
   - "tools/markdown-magic"
 
   # exclude bundle-analysis output directories, which can contain package.json files from
