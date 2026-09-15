@@ -302,39 +302,41 @@ export class NodeCore {
 	}
 
 	public get(index: number): NodeTypes {
-		return this.children[index];
+		const node = this.children[index];
+		if (node === undefined) {
+			throw new Error(`NodeCore index ${index} is out of range`);
+		}
+		return node;
 	}
 
 	public getString(index: number): string {
-		const node = this.children[index];
-		return getStringInstance(node, "getString should return string");
+		return getStringInstance(this.get(index), "getString should return string");
 	}
 
 	public getMaybeString(index: number): string | undefined {
-		const node = this.children[index];
-		return getMaybeStringInstance(node);
+		return getMaybeStringInstance(this.get(index));
 	}
 
 	public getBlob(index: number): BlobCore {
-		const node = this.children[index];
+		const node = this.get(index);
 		assertBlobCoreInstance(node, "getBlob should return a blob");
 		return node;
 	}
 
 	public getNode(index: number): NodeCore {
-		const node = this.children[index];
+		const node = this.get(index);
 		assertNodeCoreInstance(node, "getNode should return a node");
 		return node;
 	}
 
 	public getNumber(index: number): number {
-		const node = this.children[index];
+		const node = this.get(index);
 		assertNumberInstance(node, "getNumber should return a number");
 		return node;
 	}
 
 	public getBool(index: number): boolean {
-		const node = this.children[index];
+		const node = this.get(index);
 		assertBoolInstance(node, "getBool should return a boolean");
 		return node;
 	}
@@ -544,7 +546,13 @@ export class NodeCore {
 
 		for (const el of stringsToResolve) {
 			for (let it = el.startPos; it < el.endPos; it++) {
-				stringBuffer[length] = input[it];
+				const byte = input[it];
+				if (byte === undefined) {
+					throw new Error(
+						`String element range [${el.startPos}, ${el.endPos}) is outside the buffer`,
+					);
+				}
+				stringBuffer[length] = byte;
 				length++;
 			}
 			stringBuffer[length] = 0;
@@ -556,7 +564,12 @@ export class NodeCore {
 		if (result.length === stringsToResolve.length + 1) {
 			// All is good, we expect all the cases to get here
 			for (let i = 0; i < stringsToResolve.length; i++) {
-				stringsToResolve[i].content = result[i];
+				const element = stringsToResolve[i];
+				const content = result[i];
+				if (element === undefined || content === undefined) {
+					throw new Error(`Parsed string at index ${i} is missing`);
+				}
+				element.content = content;
 			}
 		} else {
 			// String content has \0 chars!
@@ -601,7 +614,10 @@ export function getMaybeStringInstance(node: NodeTypes): string | undefined {
 	}
 }
 
-export function getStringInstance(node: NodeTypes, message: string): string {
+export function getStringInstance(node: NodeTypes | undefined, message: string): string {
+	if (node === undefined) {
+		throwBufferParseException(node, "BlobCore", message);
+	}
 	const maybeString = node as IStringElement;
 	if (maybeString._stringElement) {
 		return maybeString.content;
@@ -610,7 +626,7 @@ export function getStringInstance(node: NodeTypes, message: string): string {
 }
 
 export function assertBlobCoreInstance(
-	node: NodeTypes,
+	node: NodeTypes | undefined,
 	message: string,
 ): asserts node is BlobCore {
 	if (node instanceof BlobCore) {
@@ -620,7 +636,7 @@ export function assertBlobCoreInstance(
 }
 
 export function assertNodeCoreInstance(
-	node: NodeTypes,
+	node: NodeTypes | undefined,
 	message: string,
 ): asserts node is NodeCore {
 	if (node instanceof NodeCore) {
@@ -630,7 +646,7 @@ export function assertNodeCoreInstance(
 }
 
 export function assertNumberInstance(
-	node: NodeTypes,
+	node: NodeTypes | undefined,
 	message: string,
 ): asserts node is number {
 	if (typeof node === "number") {
@@ -639,7 +655,10 @@ export function assertNumberInstance(
 	throwBufferParseException(node, "Number", message);
 }
 
-export function assertBoolInstance(node: NodeTypes, message: string): asserts node is boolean {
+export function assertBoolInstance(
+	node: NodeTypes | undefined,
+	message: string,
+): asserts node is boolean {
 	if (typeof node === "boolean") {
 		return;
 	}
@@ -647,7 +666,7 @@ export function assertBoolInstance(node: NodeTypes, message: string): asserts no
 }
 
 function throwBufferParseException(
-	node: NodeTypes,
+	node: NodeTypes | undefined,
 	expectedNodeType: NodeType,
 	message: string,
 ): never {
@@ -662,8 +681,10 @@ function throwBufferParseException(
 	);
 }
 
-function getNodeType(value: NodeTypes): NodeType {
-	if (typeof value === "number") {
+function getNodeType(value: NodeTypes | undefined): NodeType | undefined {
+	if (value === undefined) {
+		return undefined;
+	} else if (typeof value === "number") {
 		return "Number";
 	} else if (value instanceof BlobCore) {
 		return "BlobCore";

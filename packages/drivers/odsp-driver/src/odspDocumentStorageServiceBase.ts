@@ -198,7 +198,11 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 				// eslint-disable-next-line unicorn/no-null
 				return null;
 			}
-			id = versions[0].id;
+			const latestVersion = versions[0];
+			if (latestVersion === undefined) {
+				throw new Error("Non-empty versions array contained an undefined version");
+			}
+			id = latestVersion.id;
 		}
 
 		const snapshotTree = await this.readTree(id, scenarioName);
@@ -259,6 +263,9 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		// When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
 		// So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
 		const hierarchicalAppTree = snapshotTree.trees[".app"];
+		if (hierarchicalAppTree === undefined) {
+			throw new Error("Snapshot tree is missing the .app tree");
+		}
 		const hierarchicalProtocolTree = snapshotTree.trees[".protocol"];
 		const summarySnapshotTree: ISnapshotTree = {
 			blobs: {

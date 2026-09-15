@@ -23,8 +23,12 @@ describe("getHeadersWithAuth", () => {
 		token: string,
 		result: { [index: string]: string },
 	): void => {
+		const authorization = result.Authorization;
+		if (authorization === undefined) {
+			throw new Error("Returned headers did not contain Authorization");
+		}
 		assert.strictEqual(
-			result.Authorization.endsWith(token),
+			authorization.endsWith(token),
 			true,
 			"Returned header must contain token",
 		);

@@ -38,7 +38,12 @@ export class LocalOdspDeltaStorageService implements IDocumentDeltaStorageServic
 		);
 		validateMessages("cached", messages, from, this.logger);
 
-		if (messages.length === 0 || messages[0].sequenceNumber !== from) {
+		const firstMessage = messages[0];
+		if (messages.length > 0 && firstMessage === undefined) {
+			throw new Error("Non-empty messages array contained an undefined first message");
+		}
+		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Keep the missing-message case explicit.
+		if (firstMessage === undefined || firstMessage.sequenceNumber !== from) {
 			this.snapshotOps = [];
 		}
 		this.snapshotOps = this.snapshotOps.filter(

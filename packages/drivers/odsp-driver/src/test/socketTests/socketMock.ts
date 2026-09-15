@@ -134,29 +134,39 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 						break;
 					}
 					case "connect_document_success": {
-						const iConnected: IConnected = this.mockSocketConnectResponse.connect_document
-							.connectMessage ?? {
-							clientId: uuid(),
-							existing: true,
-							initialClients: [],
-							initialMessages: [],
-							initialSignals: [],
-							maxMessageSize: 1000,
-							mode: connectMessage.mode,
-							version: connectMessage.versions[0],
-							serviceConfiguration: { maxMessageSize: 1000, blockSize: 1000 },
-							claims: {
-								documentId: connectMessage.id,
-								scopes: [ScopeType.DocWrite, ScopeType.DocRead, ScopeType.SummaryWrite],
-								tenantId: connectMessage.tenantId,
-								ver: "1.0.0",
-								iat: 10,
-								exp: 10,
-								user: connectMessage.client.user,
-							},
-							supportedVersions: connectMessage.versions,
-							epoch: "testEpoch",
-						};
+						const suppliedConnection =
+							this.mockSocketConnectResponse.connect_document.connectMessage;
+						let iConnected: IConnected;
+						if (suppliedConnection === undefined) {
+							const version = connectMessage.versions[0];
+							if (version === undefined) {
+								throw new Error("Connect message did not include a protocol version");
+							}
+							iConnected = {
+								clientId: uuid(),
+								existing: true,
+								initialClients: [],
+								initialMessages: [],
+								initialSignals: [],
+								maxMessageSize: 1000,
+								mode: connectMessage.mode,
+								version,
+								serviceConfiguration: { maxMessageSize: 1000, blockSize: 1000 },
+								claims: {
+									documentId: connectMessage.id,
+									scopes: [ScopeType.DocWrite, ScopeType.DocRead, ScopeType.SummaryWrite],
+									tenantId: connectMessage.tenantId,
+									ver: "1.0.0",
+									iat: 10,
+									exp: 10,
+									user: connectMessage.client.user,
+								},
+								supportedVersions: connectMessage.versions,
+								epoch: "testEpoch",
+							};
+						} else {
+							iConnected = suppliedConnection;
+						}
 						this.emit("connect_document_success", iConnected);
 						break;
 					}

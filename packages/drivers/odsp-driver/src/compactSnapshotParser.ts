@@ -99,10 +99,16 @@ function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 	// Due to a bug at service side, in an edge case service was serializing deltas even
 	// when there are no ops. So just make the code resilient to that bug. Service has also
 	// fixed that bug.
-	assert(
-		ops.length === 0 || records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber,
-		0x280 /* "Validate first op seq number" */,
-	);
+	if (ops.length > 0) {
+		const firstOp = ops[0];
+		if (firstOp === undefined) {
+			throw new Error("Compact snapshot ops contained an undefined first op");
+		}
+		assert(
+			records.firstSequenceNumber.valueOf() === firstOp.sequenceNumber,
+			0x280 /* "Validate first op seq number" */,
+		);
+	}
 	return ops;
 }
 
@@ -292,10 +298,17 @@ export function parseCompactSnapshotResponse(
 		0x2c2 /* "Create Version should be equal to currentReadVersion" */,
 	);
 
-	const [snapshot, durationSnapshotTree] = measure(() =>
-		readSnapshotSection(records.snapshot),
-	);
-	const [blobContents, durationBlobs] = measure(() => readBlobSection(records.blobs));
+	const snapshotNode = records.snapshot;
+	if (snapshotNode === undefined) {
+		throw new Error("Compact snapshot is missing the snapshot record");
+	}
+	const blobsNode = records.blobs;
+	if (blobsNode === undefined) {
+		throw new Error("Compact snapshot is missing the blobs record");
+	}
+
+	const [snapshot, durationSnapshotTree] = measure(() => readSnapshotSection(snapshotNode));
+	const [blobContents, durationBlobs] = measure(() => readBlobSection(blobsNode));
 
 	return {
 		...snapshot,

@@ -242,6 +242,9 @@ export function decodeOdspUrl(url: string): {
 	fileVersion?: string;
 } {
 	const [siteUrl, queryString] = url.split("?");
+	if (siteUrl === undefined) {
+		throw new Error("ODSP URL did not contain a site URL");
+	}
 
 	const searchParams = new URLSearchParams(queryString);
 

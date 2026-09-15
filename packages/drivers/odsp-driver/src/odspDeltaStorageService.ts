@@ -106,8 +106,12 @@ export class OdspDeltaStorageService {
 						);
 					clearTimeout(timer);
 					const deltaStorageResponse = response.content;
+					const firstValue = deltaStorageResponse.value[0];
+					if (deltaStorageResponse.value.length > 0 && firstValue === undefined) {
+						throw new Error("Non-empty delta storage response contained an undefined value");
+					}
 					const messages =
-						deltaStorageResponse.value.length > 0 && "op" in deltaStorageResponse.value[0]
+						firstValue !== undefined && "op" in firstValue
 							? (deltaStorageResponse.value as ISequencedDeltaOpMessage[]).map(
 									(operation) => operation.op,
 								)
@@ -188,7 +192,12 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 					(op) => op.sequenceNumber >= from && op.sequenceNumber < to,
 				);
 				validateMessages("cached", messages, from, this.logger);
-				if (messages.length > 0 && messages[0].sequenceNumber === from) {
+				const firstMessage = messages[0];
+				if (messages.length > 0 && firstMessage === undefined) {
+					throw new Error("Non-empty messages array contained an undefined first message");
+				}
+				// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Keep the missing-message case explicit.
+				if (firstMessage !== undefined && firstMessage.sequenceNumber === from) {
 					this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
 					opsFromSnapshot += messages.length;
 					return { messages, partialResult: true };

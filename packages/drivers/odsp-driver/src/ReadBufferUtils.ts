@@ -47,7 +47,11 @@ export class ReadBuffer {
 		let length = lengthArg;
 		while (length > 0) {
 			assert(!this.eof, 0x223 /* "unexpected end of buffer" */);
-			res += this.data[this.index] * multiplier;
+			const value = this.data[this.index];
+			if (value === undefined) {
+				throw new Error(`ReadBuffer index ${this.index} is out of range`);
+			}
+			res += value * multiplier;
 			this.index++;
 			multiplier *= 256;
 			length--;

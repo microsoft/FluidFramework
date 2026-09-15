@@ -544,10 +544,14 @@ async function fetchLatestSnapshotCore(
 				odspResponse.headers.get("disablebrowsercachingofusercontent") !== "true" &&
 				!fetchSnapshotForLoadingGroup;
 			const sequenceNumber: number = snapshot.sequenceNumber ?? 0;
-			const seqNumberFromOps =
-				snapshot.ops && snapshot.ops.length > 0
-					? snapshot.ops[0].sequenceNumber - 1
-					: undefined;
+			let seqNumberFromOps: number | undefined;
+			if (snapshot.ops !== undefined && snapshot.ops.length > 0) {
+				const firstOp = snapshot.ops[0];
+				if (firstOp === undefined) {
+					throw new Error("Non-empty snapshot ops array contained an undefined first op");
+				}
+				seqNumberFromOps = firstOp.sequenceNumber - 1;
+			}
 
 			if (
 				!Number.isInteger(sequenceNumber) ||
