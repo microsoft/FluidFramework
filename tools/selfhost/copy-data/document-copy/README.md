@@ -10,6 +10,9 @@ refs, write Cosmos DB records, or copy Azure Fluid Relay deli/scribe state. If
 the self-hosted service cannot preserve the requested document ID, the results
 file records the Azure Fluid Relay-to-self-hosted ID mapping.
 
+If the self-hosted document already exists, the copy is skipped and recorded as a
+warning instead of attempting to create it.
+
 ## Prerequisites
 
 - Complete the [inventory step](../inventory/README.md) and review its

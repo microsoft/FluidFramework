@@ -12,7 +12,12 @@ import {
 	withSelfHostTenantKey2,
 } from "../configuration/credentials.mjs";
 import { classifyError, createFailure, logAndAddError } from "../configuration/errors.mjs";
-import { createResults, recordSuccess, writeStageResults } from "../configuration/results.mjs";
+import {
+	createResults,
+	recordSuccess,
+	recordWarning,
+	writeStageResults,
+} from "../configuration/results.mjs";
 
 // The Azure Fluid Relay summary read and self-hosted document creation need these document-scoped permissions.
 const scopes = ["doc:read", "doc:write", "summary:write"];
@@ -105,6 +110,29 @@ async function requestJson(url, authorization, endpoint, fetchImplementation, op
 	} catch {
 		throw new CopyError("Copy API response could not be parsed as JSON", undefined, endpoint);
 	}
+}
+
+async function documentExists(url, authorization, fetchImplementation) {
+	let response;
+	try {
+		response = await fetchImplementation(url, { headers: { Authorization: authorization } });
+	} catch {
+		throw new CopyError("Copy API request failed", undefined, "self-host");
+	}
+	if (!response || !Number.isInteger(response.status)) {
+		throw new CopyError(
+			"Copy API response did not include an HTTP status",
+			undefined,
+			"self-host",
+		);
+	}
+	if (response.status === 200) return true;
+	if (response.status === 404) return false;
+	throw new CopyError(
+		`Copy API request failed with HTTP ${response.status}`,
+		response.status,
+		"self-host",
+	);
 }
 
 // Build the tenant-scoped Historian repository base URL.
@@ -342,9 +370,29 @@ export async function copyDocument({
 	selfHostKey,
 	fetchImplementation = fetch,
 }) {
-	let step = "azure-fluid-relay-discovery";
+	let step = "self-host-document-read";
 	try {
+		const selfHostDocumentAuth = selfHostAuthorization(
+			selfHostTenantId,
+			documentId,
+			selfHostKey,
+		);
+		if (
+			await documentExists(
+				`${selfHostEndpoint.replace(/\/$/, "")}/documents/${encodeURIComponent(selfHostTenantId)}/${encodeURIComponent(documentId)}`,
+				selfHostDocumentAuth,
+				fetchImplementation,
+			)
+		) {
+			return {
+				result: "warning",
+				documentId,
+				message: "The self-hosted document already exists",
+			};
+		}
+
 		// Discover the Azure Fluid Relay storage host, then load the most recent summary commit and payload.
+		step = "azure-fluid-relay-discovery";
 		const azureFluidRelayHistorianEndpoint = await discoverAzureFluidRelayHistorian(
 			azureFluidRelayEndpoint,
 			azureFluidRelayTenantId,
@@ -391,7 +439,7 @@ export async function copyDocument({
 		step = "self-host-create";
 		const created = await requestJson(
 			`${selfHostEndpoint.replace(/\/$/, "")}/documents/${encodeURIComponent(selfHostTenantId)}`,
-			selfHostAuthorization(selfHostTenantId, documentId, selfHostKey),
+			selfHostAuthorization(selfHostTenantId, undefined, selfHostKey),
 			"self-host",
 			fetchImplementation,
 			{
@@ -411,7 +459,7 @@ export async function copyDocument({
 				"self-host",
 			);
 		}
-		return selfHostDocumentId;
+		return { result: "success", documentId: selfHostDocumentId };
 	} catch (error) {
 		if (error instanceof CopyError) throw error;
 		const endpoint = step.startsWith("self-host")
@@ -465,6 +513,7 @@ export async function main(argv) {
 	const resultsDirectory = path.resolve(configDirectory, config.resultsDirectory);
 	for (const warning of warnings) console.warn(`Warning: ${warning}`);
 	const results = createResults(inventory);
+	let resultsPath;
 	// Process one tenant and document at a time so keys have the shortest practical lifetime.
 	for (const [azureFluidRelayTenantId, tenant] of Object.entries(inventory.tenants)) {
 		const azureFluidRelayTenant = config.azureFluidRelayTenants[azureFluidRelayTenantId];
@@ -475,7 +524,7 @@ export async function main(argv) {
 			let failureContext = { endpoint: "azure-fluid-relay-credentials" };
 			try {
 				// Retrieve each tenant key only around the corresponding document operation.
-				const selfHostDocumentId = await withAzureFluidRelayTenantKey2(
+				const copyResult = await withAzureFluidRelayTenantKey2(
 					azureFluidRelayTenant,
 					(azureFluidRelayKey) => {
 						failureContext = { endpoint: "self-host-credentials" };
@@ -500,8 +549,13 @@ export async function main(argv) {
 						);
 					},
 				);
-				recordSuccess(results, azureFluidRelayTenantId, documentId, selfHostDocumentId);
-				console.log(`Copied document ${documentId} as ${selfHostDocumentId}.`);
+				if (copyResult.result === "success") {
+					recordSuccess(results, azureFluidRelayTenantId, documentId, copyResult.documentId);
+					console.log(`Copied document ${documentId} as ${copyResult.documentId}.`);
+				} else if (copyResult.result === "warning") {
+					recordWarning(results, azureFluidRelayTenantId, documentId, copyResult);
+					console.warn(`Warning: ${copyResult.message}.`);
+				}
 			} catch (error) {
 				const failure = createFailure(documentId, "document-copy", error, failureContext);
 				const tenantResults = results.tenants[azureFluidRelayTenantId];
@@ -513,9 +567,10 @@ export async function main(argv) {
 				);
 			}
 			// Write the result to the result file
-			await writeStageResults(resultsDirectory, "document-copy", results);
+			resultsPath = await writeStageResults(resultsDirectory, "document-copy", results);
 		}
 	}
+	console.log(`Wrote copy results to ${resultsPath}`);
 	if (Object.values(results.tenants).some((tenant) => tenant.failed.length > 0))
 		process.exitCode = 1;
 }

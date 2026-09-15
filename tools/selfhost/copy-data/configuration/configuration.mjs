@@ -26,8 +26,12 @@ async function readJson(filePath, name, errors) {
 	let text;
 	try {
 		text = await readFile(filePath, "utf8");
-	} catch {
-		errors.push(`Unable to read ${name}`);
+	} catch (error) {
+		errors.push(
+			name === "inventory file" && error?.code === "ENOENT"
+				? "Inventory file does not exist. Run node inventory.mjs before node copy-data.mjs --execute"
+				: `Unable to read ${name}`,
+		);
 		return undefined;
 	}
 
