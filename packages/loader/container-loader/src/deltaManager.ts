@@ -212,6 +212,40 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private opsSize: number = 0;
 	private prevEnqueueMessagesReason: string | undefined;
 	private previouslyProcessedMessage: ISequencedDocumentMessage | undefined;
+	/**
+	 * Sequence number already reflected in the loaded snapshot or restored state.
+	 * Set by attachOpHandler from lastProcessedSequenceNumber, which defaults to the snapshot
+	 * sequence number but may be higher for restored state. Undefined until initialization.
+	 *
+	 * Retained unchanged across message processing and reconnects for self-join error telemetry.
+	 * This is not the per-connection validation baseline, which may include subsequently queued ops.
+	 */
+	private loadedSequenceNumber: number | undefined;
+	/**
+	 * Driver-reported checkpoint for the most recently observed connection, before ConnectionManager
+	 * normalizes it using initial messages. Updated by incomingOpHandler, including for an empty
+	 * initial batch; undefined if the driver does not provide a checkpoint.
+	 *
+	 * Used only for self-join error telemetry. It may legitimately lag or reflect regressed service
+	 * history, so it neither determines the immutable connection baseline nor triggers closure.
+	 */
+	private serviceCheckpointSequenceNumber: number | undefined;
+	/**
+	 * Pre-enqueue baselines for joins accepted from storage while a stream connection is being
+	 * established. Its client ID is not known yet, and storage may deliver its join first.
+	 * Only newly accepted joins are recorded, so overlap cannot lower the loaded baseline.
+	 * Discarded when the connection is identified, cancelled, disconnected, or closed.
+	 */
+	private pendingConnectionJoinBaselines: Map<string, number> | undefined;
+	/**
+	 * Sequence state known before processing messages from the current connection.
+	 */
+	private connectionSequenceBaseline:
+		| {
+				clientId: string;
+				sequenceNumber: number | undefined;
+		  }
+		| undefined;
 
 	// The sequence number we initially loaded from
 	// In case of reading from a snapshot or pending state, its value will be equal to
@@ -436,8 +470,14 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.close(normalizeError(error));
 		});
 		const props: IConnectionManagerFactoryArgs = {
-			incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => {
+			incomingOpHandler: (
+				messages: ISequencedDocumentMessage[],
+				reason: string,
+				clientId: string,
+				serviceCheckpointSequenceNumber: number | undefined,
+			) => {
 				try {
+					this.captureConnectionSequenceBaseline(clientId, serviceCheckpointSequenceNumber);
 					this.enqueueMessages(messages, reason);
 				} catch (error) {
 					this.logger.sendErrorEvent({ eventName: "EnqueueMessages_Exception" }, error);
@@ -510,10 +550,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	}
 
 	private cancelEstablishingConnection(reason: IConnectionStateChangeReason): void {
+		this.pendingConnectionJoinBaselines = undefined;
 		this.emit("cancelEstablishingConnection", reason);
 	}
 
 	private establishingConnection(reason: IConnectionStateChangeReason): void {
+		this.pendingConnectionJoinBaselines = new Map();
 		this.emit("establishingConnection", reason);
 	}
 
@@ -596,6 +638,19 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		this.minSequenceNumber = minSequenceNumber;
 		this.lastQueuedSequenceNumber = lastProcessedSequenceNumber;
 		this.lastObservedSeqNumber = lastProcessedSequenceNumber;
+		this.loadedSequenceNumber = lastProcessedSequenceNumber;
+		const connectionSequenceBaseline = this.connectionSequenceBaseline;
+		if (
+			connectionSequenceBaseline !== undefined &&
+			connectionSequenceBaseline.sequenceNumber === undefined
+		) {
+			connectionSequenceBaseline.sequenceNumber = lastProcessedSequenceNumber;
+			// Connection messages may arrive before the loaded sequence state is known.
+			// Now that the baseline is available, reject incompatible buffered self-joins before replay.
+			if (this.pending.some((message) => this.validateSelfJoinSequenceNumber(message))) {
+				return;
+			}
+		}
 
 		// We will use same check in other places to make sure all the seq number above are set properly.
 		assert(
@@ -826,6 +881,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	}
 
 	private clearQueues(): void {
+		this.pendingConnectionJoinBaselines = undefined;
 		this.closeAbortController.abort("DeltaManager is closed");
 
 		this._inbound.clear();
@@ -849,6 +905,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	private disconnectHandler(reason: IConnectionStateChangeReason): void {
 		this.messageBuffer.length = 0;
+		this.connectionSequenceBaseline = undefined;
+		this.pendingConnectionJoinBaselines = undefined;
 		this.emit("disconnect", reason.text, reason.error);
 	}
 
@@ -1040,6 +1098,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		);
 
 		for (const message of messages) {
+			// A newly assigned connection's self-join must follow the client's pre-connection state.
+			// Check before duplicate filtering can discard evidence of incompatible history. The
+			// immutable baseline still allows duplicate delivery of a valid join after later ops.
+			if (this.validateSelfJoinSequenceNumber(message)) {
+				return;
+			}
 			// Check that the messages are arriving in the expected order
 			if (message.sequenceNumber <= this.lastQueuedSequenceNumber) {
 				// Validate that we do not have data loss, i.e. sequencing is reset and started again
@@ -1072,6 +1136,18 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				}
 			} else if (message.sequenceNumber === this.lastQueuedSequenceNumber + 1) {
 				this.validateClientSequenceNumberConsistency(message);
+				if (this.pendingConnectionJoinBaselines !== undefined) {
+					const joiningClientId = this.getClientJoinId(message);
+					if (
+						joiningClientId !== undefined &&
+						!this.pendingConnectionJoinBaselines.has(joiningClientId)
+					) {
+						this.pendingConnectionJoinBaselines.set(
+							joiningClientId,
+							this.lastQueuedSequenceNumber,
+						);
+					}
+				}
 				this.lastQueuedSequenceNumber = message.sequenceNumber;
 				this.previouslyProcessedMessage = message;
 				this._inbound.push(message);
@@ -1085,6 +1161,87 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		// of prior ops. But if we have some out of order ops (this.pending), then reporting current reason
 		// becomes not accurate, as the gap existed before current batch, so we should just report "unknown".
 		this.prevEnqueueMessagesReason = this.pending.length > 0 ? "unknown" : reason;
+	}
+
+	/**
+	 * Captures the immutable sequence baseline before this connection's first messages are enqueued.
+	 * If storage already delivered its join during connection setup, uses the baseline saved before
+	 * that join was accepted instead of a sequence number advanced by the same connection's history.
+	 */
+	private captureConnectionSequenceBaseline(
+		clientId: string,
+		serviceCheckpointSequenceNumber: number | undefined,
+	): void {
+		if (this.connectionSequenceBaseline?.clientId !== clientId) {
+			this.connectionSequenceBaseline = {
+				clientId,
+				sequenceNumber:
+					this.handler === undefined
+						? undefined
+						: (this.pendingConnectionJoinBaselines?.get(clientId) ??
+							this.lastQueuedSequenceNumber),
+			};
+		}
+		this.pendingConnectionJoinBaselines = undefined;
+		this.serviceCheckpointSequenceNumber = serviceCheckpointSequenceNumber;
+	}
+
+	/**
+	 * Reads only the embedded client ID from a ClientJoin system message.
+	 * Returns undefined for other messages or a join without a string client ID.
+	 */
+	private getClientJoinId(message: ISequencedDocumentMessage): string | undefined {
+		if (message.type !== MessageType.ClientJoin) {
+			return undefined;
+		}
+		const systemJoinMessage = message as ISequencedDocumentSystemMessage;
+		const join = JSON.parse(systemJoinMessage.data) as { clientId: unknown };
+		return typeof join.clientId === "string" ? join.clientId : undefined;
+	}
+
+	/**
+	 * Closes when the current connection's self-join is incompatible with its captured baseline.
+	 *
+	 * @param message - An incoming or buffered sequenced message to inspect before duplicate
+	 * filtering. Only ClientJoin messages whose embedded client ID matches the current
+	 * connection's client ID are subject to this check.
+	 * @returns true if a matching self-join is at or below the immutable pre-connection baseline
+	 * and this method closes the DeltaManager; the caller must stop processing messages.
+	 * Returns false if no violation is detected, including when the baseline is not yet
+	 * initialized. A false result does not imply that the message is otherwise valid.
+	 */
+	private validateSelfJoinSequenceNumber(message: ISequencedDocumentMessage): boolean {
+		const baseline = this.connectionSequenceBaseline;
+		if (
+			baseline?.sequenceNumber === undefined ||
+			message.type !== MessageType.ClientJoin ||
+			message.sequenceNumber > baseline.sequenceNumber
+		) {
+			return false;
+		}
+
+		if (this.getClientJoinId(message) !== baseline.clientId) {
+			return false;
+		}
+
+		this.close(
+			new NonRetryableError(
+				"The current connection's self-join predates the client's pre-connection state",
+				DriverErrorTypes.fileOverwrittenInStorage,
+				{
+					clientId: baseline.clientId,
+					selfJoinSequenceNumber: message.sequenceNumber,
+					connectionSequenceBaseline: baseline.sequenceNumber,
+					snapshotSequenceNumber: this.initSequenceNumber,
+					loadedSequenceNumber: this.loadedSequenceNumber,
+					lastProcessedSequenceNumber: this.lastProcessedSequenceNumber,
+					lastQueuedSequenceNumber: this.lastQueuedSequenceNumber,
+					serviceCheckpointSequenceNumber: this.serviceCheckpointSequenceNumber,
+					driverVersion: undefined,
+				},
+			),
+		);
+		return true;
 	}
 
 	private processInboundMessage(message: ISequencedDocumentMessage): void {
