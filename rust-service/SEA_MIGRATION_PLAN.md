@@ -5,10 +5,10 @@
 - **Plan status:** Approved.
 - **Execution mode:** Lightweight sequential work on the current branch.
 - **Compatibility:** No API, wire-format, persisted-data, package-name, or executable compatibility is required.
-- **Completed checkpoint:** 3. Package names, references, and current documentation.
-- **Validation:** The canonical workspace format, Clippy, rustdoc, build, test, `sea-counter`, and documentation gate passed.
-- **Decisions or TODOs changed:** None.
-- **Next checkpoint:** 4. Practical file moves and deletions.
+- **Completed checkpoint:** 4. Practical file moves and deletions.
+- **Validation:** Workspace format, strict Clippy, build, tests, `sea-webtransport-server` binary build, and documentation checks passed.
+- **Decisions or TODOs changed:** The existing WebTransport executable moved unchanged to the new `sea-webtransport-server` package.
+- **Next checkpoint:** 5. Mechanical identifier and terminology renames.
 - **Plan commit:** `d1a9915141bfeb8e61fb3550e795a27c9f15d816`.
 
 Update this section in every implementation commit. Each update must identify the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint. Keep completed checklist entries in this file so it remains the migration record.
@@ -207,12 +207,12 @@ Validation: run the canonical workspace gate in [DEVELOPMENT.md](DEVELOPMENT.md)
 
 ### 4. Practical file moves and deletions
 
-- [ ] Delete `fluid-native-service-example` and its Unix-socket tests.
-- [ ] Remove the Unix process transport from transitional `sea-network`.
-- [ ] Move source modules whose final owner is already unambiguous and whose movement does not require semantic redesign.
-- [ ] Create skeleton package locations for `sea-webtransport-server` or other final owners only when the move can remain behavior-preserving.
-- [ ] Keep moves separate from identifier renames whenever Git can represent them clearly.
-- [ ] Update only references required by the moves.
+- [x] Delete `fluid-native-service-example` and its Unix-socket tests.
+- [x] Remove the Unix process transport from transitional `sea-network`.
+- [x] Move source modules whose final owner is already unambiguous and whose movement does not require semantic redesign.
+- [x] Create skeleton package locations for `sea-webtransport-server` or other final owners only when the move can remain behavior-preserving.
+- [x] Keep moves separate from identifier renames whenever Git can represent them clearly.
+- [x] Update only references required by the moves.
 
 Candidate behavior-preserving moves:
 

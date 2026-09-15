@@ -19,8 +19,8 @@ members = [
     "crates/sea-stateful-compression",
     "crates/sea-webtransport-browser",
     "crates/sea-webtransport",
+    "crates/sea-webtransport-server",
     "examples/sea-counter",
-    "examples/fluid-native-service-example",
 ]
 resolver = "3"
 

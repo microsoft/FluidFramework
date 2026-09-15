@@ -1,8 +1,5 @@
 #![doc = "A bounded local transport for snapshotted stream contracts."]
 
-#[cfg(unix)]
-pub mod process;
-
 use std::sync::{
     Arc,
     atomic::{AtomicU64, AtomicUsize, Ordering},

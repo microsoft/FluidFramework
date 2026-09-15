@@ -7,6 +7,7 @@ This folder contains the Rust packages that implement the snapshotted append str
 - [`sea-memory/`](sea-memory/), [`sea-file/`](sea-file/), and [`sea-content-addressed/`](sea-content-addressed/) provide storage implementations and content storage.
 - [`sea-protocol/`](sea-protocol/), [`sea-sequencer/`](sea-sequencer/), and [`sea-service/`](sea-service/) implement the Fluid-facing protocol and native service.
 - [`sea-client/`](sea-client/) provides the native Rust client facade.
+- [`sea-webtransport-server/`](sea-webtransport-server/) provides the native server executable.
 - [`wrappers/`](wrappers/) contains transformation and transport adapters.
 - [`sea-benchmarks/`](sea-benchmarks/) and [`spikes/`](spikes/) contain measurement tooling and explicitly experimental implementations.
 
