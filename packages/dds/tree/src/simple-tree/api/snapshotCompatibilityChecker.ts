@@ -20,11 +20,15 @@ import {
 	encodeSchemaCompatibilitySnapshot,
 } from "./simpleSchemaCodec.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
+import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
 
 /**
  * Compute the compatibility of using `view` to {@link ViewableTree.viewWith | view a tree} who's {@link ITreeAlpha.exportSimpleSchema | stored schema} could be derived from `viewWhichCreatedStoredSchema` via either {@link TreeView.initialize} or {@link TreeView.upgradeSchema}.
  *
  * @remarks See {@link SchemaCompatibilityStatus} for details on the compatibility results.
+ * The complete discrepancy list includes available persisted metadata and staging differences.
+ * Non-persisted custom metadata and descriptions are not compared, even if both inputs contain them.
+ * Persisted metadata differences do not affect compatibility flags.
  *
  * @example This example demonstrates checking the compatibility of a historical schema against a current schema.
  * In this case, the historical schema is a Point2D object with x and y fields, while the current schema is a Point3D object
@@ -75,7 +79,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
 export function checkCompatibility(
 	viewWhichCreatedStoredSchema: TreeViewConfiguration,
 	view: TreeViewConfiguration,
-): Omit<SchemaCompatibilityStatus, "canInitialize"> {
+): SchemaComparisonStatusAlpha {
 	const viewAsAlpha = new TreeViewConfigurationAlpha({ schema: view.schema });
 	const stored = toInitialSchema(viewWhichCreatedStoredSchema.schema);
 	return checkSchemaCompatibility(viewAsAlpha, stored);

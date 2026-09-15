@@ -125,9 +125,17 @@ describe("SchematizingSimpleTreeView", () => {
 				assert.equal(view.compatibility.canView, false);
 				assert.equal(view.compatibility.canUpgrade, false);
 				assert.equal(view.compatibility.canInitialize, true);
+				const beforeInitialization = view.compatibility;
+				const serializedBefore = JSON.stringify(beforeInitialization);
 
 				view.initialize({ content: 5 });
 				assert.equal(view.root.content, 5);
+				assert.equal(JSON.stringify(beforeInitialization), serializedBefore);
+				assert.notEqual(view.compatibility, beforeInitialization);
+				assert.deepEqual(view.compatibility.allDiscrepancies, []);
+				const initialized = view.compatibility;
+				view.root.content = 6;
+				assert.equal(view.compatibility, initialized);
 			});
 			it("Initialize node with hydration", () => {
 				const checkout = checkoutWithContent(emptyContent);
@@ -345,9 +353,10 @@ describe("SchematizingSimpleTreeView", () => {
 			["schemaChanged", "SchemaCompatibilityStatus canView: false canUpgrade: false"],
 		]);
 		log.length = 0;
-		assert.equal(view.compatibility.isEquivalent, false);
-		assert.equal(view.compatibility.canUpgrade, false);
-		assert.equal(view.compatibility.canView, false);
+		const incompatibleStatus = view.compatibility;
+		assert.equal(incompatibleStatus.isEquivalent, false);
+		assert.equal(incompatibleStatus.canUpgrade, false);
+		assert.equal(incompatibleStatus.canView, false);
 
 		assert.throws(
 			() => view.upgradeSchema(),
@@ -400,13 +409,18 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 
-		assert.deepEqual(viewSpecific.compatibility, {
-			canView: true,
-			canUpgrade: false,
-			isEquivalent: false,
-			canInitialize: false,
-			discrepancies: undefined,
-		});
+		const { canView, canUpgrade, isEquivalent, canInitialize, discrepancies } =
+			viewSpecific.compatibility;
+		assert.deepEqual(
+			{ canView, canUpgrade, isEquivalent, canInitialize, discrepancies },
+			{
+				canView: true,
+				canUpgrade: false,
+				isEquivalent: false,
+				canInitialize: false,
+				discrepancies: undefined,
+			},
+		);
 
 		assert.equal(Object.keys(viewSpecific.root).length, 2);
 		assert.equal(Object.entries(viewSpecific.root).length, 2);
@@ -420,6 +434,7 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 		assert.deepEqual(viewGeneralized.compatibility, {
+			allDiscrepancies: [],
 			canView: true,
 			canUpgrade: true,
 			isEquivalent: true,
@@ -466,13 +481,18 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 
-		assert.deepEqual(viewSpecific.compatibility, {
-			canView: true,
-			canUpgrade: false,
-			isEquivalent: false,
-			canInitialize: false,
-			discrepancies: undefined,
-		});
+		const { canView, canUpgrade, isEquivalent, canInitialize, discrepancies } =
+			viewSpecific.compatibility;
+		assert.deepEqual(
+			{ canView, canUpgrade, isEquivalent, canInitialize, discrepancies },
+			{
+				canView: true,
+				canUpgrade: false,
+				isEquivalent: false,
+				canInitialize: false,
+				discrepancies: undefined,
+			},
+		);
 
 		viewSpecific.root.moveRangeToEnd(0, 1);
 
@@ -489,6 +509,7 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 		assert.deepEqual(viewGeneralized.compatibility, {
+			allDiscrepancies: [],
 			canView: true,
 			canUpgrade: true,
 			isEquivalent: true,
@@ -594,10 +615,11 @@ describe("SchematizingSimpleTreeView", () => {
 		const log: [string, unknown][] = [];
 		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
 
-		assert.equal(view.compatibility.canView, false);
-		assert.equal(view.compatibility.canUpgrade, true);
-		assert.equal(view.compatibility.isEquivalent, false);
-		assert.deepEqual(view.compatibility.discrepancies, [
+		const beforeUpgrade = view.compatibility;
+		assert.equal(beforeUpgrade.canView, false);
+		assert.equal(beforeUpgrade.canUpgrade, true);
+		assert.equal(beforeUpgrade.isEquivalent, false);
+		assert.deepEqual(beforeUpgrade.discrepancies, [
 			{
 				mismatch: "allowedTypes",
 				location: "root",
