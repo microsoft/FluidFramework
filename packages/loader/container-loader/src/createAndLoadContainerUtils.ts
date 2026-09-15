@@ -419,8 +419,7 @@ export async function loadFrozenContainerFromPendingState(
 	if (driverWiring === "none") {
 		// Offline: synthesize the driver wiring from the URL captured in pending state.
 		// The container's load pipeline is reused unchanged — the synthesized resolver
-		// returns a resolved URL whose `url` equals `pendingLocalState.url`, so the
-		// identity guard in `Loader.resolveCore` is trivially satisfied.
+		// returns a resolved URL whose `url` equals `pendingLocalState.url`.
 		const pending = getAttachedContainerStateFromSerializedContainer(pendingLocalState);
 		if (pending.blobContentsMode === "reference") {
 			throw new UsageError(
@@ -467,9 +466,7 @@ export async function loadFrozenContainerFromPendingState(
 		return loadExistingContainer({
 			...props,
 			// `request.url` is unused: `synthesizedUrlResolver.resolve()` returns
-			// `synthesizedResolvedUrl` regardless of input, and the identity
-			// guard in `Loader.resolveCore` compares the resolver's output URL
-			// against `pendingLocalState.url` — both equal `pending.url` here.
+			// `synthesizedResolvedUrl` regardless of input.
 			// Using a recognizable opaque placeholder instead of the resolved-form
 			// URL avoids implying that any downstream stage interprets it as a
 			// request-form URL.
@@ -740,6 +737,7 @@ export async function captureFullContainerState({
 			pendingRuntimeState: undefined,
 			savedOps,
 			url: resolvedUrl.url,
+			driverState: documentService.driverStatePersistence?.get(),
 		};
 		return JSON.stringify(pendingState);
 	} finally {

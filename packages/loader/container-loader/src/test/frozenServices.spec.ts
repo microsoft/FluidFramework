@@ -169,6 +169,70 @@ describe("FrozenDocumentService.connectToDeltaStream", () => {
 	});
 });
 
+describe("FrozenDocumentService driver state", () => {
+	it("preserves state without an inner document service", async () => {
+		const service = await new FrozenDocumentServiceFactory(false).createDocumentService(
+			fakeUrl,
+		);
+		const state = { epoch: "epoch1" };
+
+		service.driverStatePersistence?.set(state);
+
+		assert.deepStrictEqual(service.driverStatePersistence?.get(), state);
+	});
+
+	it("uses the inner service state when its persistence capability is present", async () => {
+		let innerState: unknown;
+		const innerService = {
+			resolvedUrl: fakeUrl,
+			policies: {},
+			driverStatePersistence: {
+				get: () => innerState,
+				set: () => {},
+			},
+		} as unknown as IDocumentService;
+		const innerFactory: IDocumentServiceFactory = {
+			createDocumentService: async () => innerService,
+			createContainer: async () => {
+				throw new Error("not used in this test");
+			},
+		};
+		const service = await new FrozenDocumentServiceFactory(
+			false,
+			innerFactory,
+		).createDocumentService(fakeUrl);
+
+		service.driverStatePersistence?.set({ epoch: "restored" });
+		assert.strictEqual(service.driverStatePersistence?.get(), undefined);
+
+		const nullState: unknown = JSON.parse("null");
+		innerState = nullState;
+		assert.strictEqual(service.driverStatePersistence?.get(), nullState);
+
+		innerState = { epoch: "live" };
+		assert.deepStrictEqual(service.driverStatePersistence?.get(), innerState);
+	});
+
+	it("does not expose persistence when the inner service cannot validate state", async () => {
+		const innerService = {
+			resolvedUrl: fakeUrl,
+			policies: {},
+		} as unknown as IDocumentService;
+		const innerFactory: IDocumentServiceFactory = {
+			createDocumentService: async () => innerService,
+			createContainer: async () => {
+				throw new Error("not used in this test");
+			},
+		};
+		const service = await new FrozenDocumentServiceFactory(
+			false,
+			innerFactory,
+		).createDocumentService(fakeUrl);
+
+		assert.strictEqual(service.driverStatePersistence, undefined);
+	});
+});
+
 describe("FrozenDocumentService disposal", () => {
 	it("dispose() rejects in-flight createBlob promises on writable-frozen storage", async () => {
 		// The writable-frozen `createBlob` returns a never-resolving promise so the
