@@ -1,4 +1,4 @@
-#![doc = "Implementation-independent conformance checks for snapshotted streams."]
+#![doc = "Implementation-independent conformance checks for Sea event archives."]
 
 use std::fmt::Debug;
 

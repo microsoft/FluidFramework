@@ -21,9 +21,7 @@ import init, {
 	InjectedClient,
 	SummaryEntry as GeneratedSummaryEntry,
 } from "../pkg/sea_webtransport_browser.js";
-import initLocalService, {
-	LocalServiceTransport,
-} from "../pkg-local/sea_service_browser.js";
+import initLocalService, { LocalServiceTransport } from "../pkg-local/sea_service_browser.js";
 import {
 	DirectDummyClient,
 	DirectSharedTreeClient,
