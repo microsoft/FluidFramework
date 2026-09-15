@@ -9,6 +9,7 @@ import { gunzipSync } from "node:zlib";
 import { untar } from "@andrewbranch/untar.js";
 import type { Logger, PackageJson } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
+import async from "async";
 import execa from "execa";
 import globby from "globby";
 import latestVersion from "latest-version";
@@ -16,11 +17,95 @@ import { BaseCommand } from "../../library/commands/base.js";
 import { getTarballName } from "../../library/package.js";
 import { readLines } from "../../library/text.js";
 
-interface TarballMetadata {
-	name: string;
-	version: string;
-	filePath: string;
-	fileName: string;
+/**
+ * Package metadata extracted from a tarball before publishing.
+ */
+export interface TarballMetadata {
+	/**
+	 * The npm package name (for example `@fluidframework/core-utils`).
+	 */
+	readonly name: string;
+
+	/**
+	 * The package version (for example `2.0.0`).
+	 */
+	readonly version: string;
+
+	/**
+	 * The absolute path to the tarball on disk.
+	 */
+	readonly filePath: string;
+
+	/**
+	 * The tarball file name (for example `fluidframework-core-utils-2.0.0.tgz`).
+	 */
+	readonly fileName: string;
+}
+
+/**
+ * Default maximum number of initial registry preflight checks to execute concurrently.
+ */
+const publishPreflightConcurrency = 10;
+
+/**
+ * Hooks and options used by {@link publishTarballsInOrder} to orchestrate tarball publishing.
+ */
+export interface PublishTarballsOptions {
+	/**
+	 * Number of times to retry a failed publish after the first attempt.
+	 * Must be greater than or equal to 0.
+	 */
+	readonly retry: number;
+
+	/**
+	 * Checks whether a package version is already available in the registry.
+	 *
+	 * @param tarball - The tarball metadata to check.
+	 * @returns `true` if the version exists in the registry; otherwise `false`.
+	 */
+	readonly isPublished: (tarball: TarballMetadata) => Promise<boolean>;
+
+	/**
+	 * Publishes one tarball to the registry.
+	 *
+	 * @param tarball - The tarball to publish.
+	 * @returns The resulting {@link PublishStatus}.
+	 */
+	readonly publish: (tarball: TarballMetadata) => Promise<PublishStatus>;
+
+	/**
+	 * Optional callback invoked immediately before each publish attempt.
+	 *
+	 * @param tarball - The tarball being attempted.
+	 * @param attempt - The 1-based attempt number (1 for initial attempt, 2 for first retry, etc.).
+	 */
+	readonly onPublishAttempt?: (tarball: TarballMetadata, attempt: number) => void;
+
+	/**
+	 * Maximum number of initial registry preflight checks to execute concurrently.
+	 * Defaults to `10` when omitted.
+	 */
+	readonly preflightConcurrency?: number;
+}
+
+/**
+ * Result for one tarball processed by {@link publishTarballsInOrder}.
+ */
+export interface PublishTarballResult {
+	/**
+	 * The final publish status for the tarball.
+	 */
+	readonly status: PublishStatus;
+
+	/**
+	 * The tarball metadata that was processed.
+	 */
+	readonly tarball: TarballMetadata;
+
+	/**
+	 * The total number of publish attempts made (0 if skipped via preflight check).
+	 */
+	readonly tryCount: number;
 }
 
 /**
@@ -59,6 +144,7 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 		retry: Flags.integer({
 			description: `Number of times to retry publishing a package that fails to publish.`,
 			default: 0,
+			min: 0,
 		}),
 		dryRun: Flags.boolean({
 			aliases: ["dry-run"],
@@ -118,27 +204,26 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 		}
 		await Promise.all(mapPromises);
 
-		for (const entry of packageOrder) {
-			const lookupEntry = orderFileIsTarballs ? entry : getTarballName(entry);
-			const toPublish = tarballMetadata.get(lookupEntry);
-			if (toPublish === undefined) {
-				this.error(`No tarball found matching '${entry}'`, { exit: 1 });
-			}
+		let tarballsToPublish: TarballMetadata[];
+		try {
+			tarballsToPublish = getTarballsToPublish(
+				packageOrder,
+				tarballMetadata,
+				orderFileIsTarballs,
+			);
+		} catch (error) {
+			this.error((error as Error).message, { exit: 1 });
+		}
 
-			let tryCount = 0;
-			let status: PublishStatus;
+		const results = await publishTarballsInOrder(tarballsToPublish, {
+			retry,
+			isPublished: async (tarball) => isTarballPublished(tarball, this.logger),
+			publish: async (tarball) => publishTarball(tarball, this.logger, publishArgs),
+			onPublishAttempt: (tarball, attempt) =>
+				this.info(`Publishing ${tarball.fileName}, attempt ${attempt}`),
+		});
 
-			do {
-				this.info(`Publishing ${toPublish.fileName}, attempt ${tryCount + 1}`);
-				// We publish one package at a time, in order, and we don't continue until the current package is successfully
-				// published. This ensures that no packages are published to npm without their dependencies first being
-				// published. Note that despite publishing in order, npm itself may still make packages available in a different
-				// order - but we have no control over that.
-				// eslint-disable-next-line no-await-in-loop
-				status = await publishTarball(toPublish, this.logger, publishArgs);
-				tryCount++;
-			} while (status === "Error" && tryCount <= retry);
-
+		for (const { status, tarball: toPublish, tryCount } of results) {
 			switch (status) {
 				case "AlreadyPublished": {
 					this.info(`Already published ${toPublish.fileName}, skipping`);
@@ -166,10 +251,13 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 }
 
 /**
- * Reads package.json from a gzipped tarball.
+ * Reads and parses `package.json` from a gzipped tarball archive.
  *
- * Implementation from
+ * Implementation adapted from
  * https://github.com/arethetypeswrong/arethetypeswrong.github.io/blob/3729bc2a3ca2ef7dda5c22fef81f89e1abe5dacf/packages/core/src/createPackage.ts#L296
+ *
+ * @param tarballPath - Absolute path to the `.tgz` tarball file.
+ * @returns Parsed `package.json` object.
  */
 async function extractPackageJsonFromTarball(
 	tarballPath: string,
@@ -188,25 +276,136 @@ async function extractPackageJsonFromTarball(
 	return packageJson;
 }
 
-type PublishStatus = "SuccessfullyPublished" | "AlreadyPublished" | "Error";
+/**
+ * Final outcome of a tarball publish operation.
+ *
+ * - `"SuccessfullyPublished"`: The package was published to the registry in this run.
+ * - `"AlreadyPublished"`: The package version already existed in the registry and was skipped.
+ * - `"Error"`: An error occurred and could not be resolved within the retry budget.
+ */
+export type PublishStatus = "SuccessfullyPublished" | "AlreadyPublished" | "Error";
 
+/**
+ * Resolves and deduplicates the list of tarballs to publish based on an ordered list of names.
+ *
+ * Retains only the first occurrence of each lookup key so duplicate entries in the order file
+ * are published only once while preserving the original relative order.
+ *
+ * @param packageOrder - Ordered list of package names or tarball file names from the order file.
+ * @param tarballMetadata - Map of tarball lookup names to metadata.
+ * @param orderFileIsTarballs - Whether `packageOrder` contains tarball file names rather than package names.
+ * @returns Ordered, deduplicated array of tarball metadata to publish.
+ * @throws `Error` if any entry in `packageOrder` does not have matching tarball metadata.
+ */
+export function getTarballsToPublish(
+	packageOrder: readonly string[],
+	tarballMetadata: ReadonlyMap<string, TarballMetadata>,
+	orderFileIsTarballs: boolean,
+): TarballMetadata[] {
+	const tarballsToPublish: TarballMetadata[] = [];
+	const seenTarballs = new Set<string>();
+	for (const entry of packageOrder) {
+		const lookupEntry = orderFileIsTarballs ? entry : getTarballName(entry);
+		const toPublish = tarballMetadata.get(lookupEntry);
+		if (toPublish === undefined) {
+			throw new Error(`No tarball found matching '${entry}'`);
+		}
+		if (!seenTarballs.has(lookupEntry)) {
+			seenTarballs.add(lookupEntry);
+			tarballsToPublish.push(toPublish);
+		}
+	}
+	return tarballsToPublish;
+}
+
+/**
+ * Executes publish orchestration for a list of tarballs.
+ *
+ * Runs initial registry preflight checks concurrently up to `options.preflightConcurrency`
+ * (default 10) to determine which packages are already published, then publishes unpublished
+ * packages sequentially in the provided dependency order.
+ *
+ * If a publish attempt fails, the registry is checked again to recover from lost responses
+ * or concurrent publication. If a tarball exhausts retries with an unrecoverable error,
+ * publishing stops immediately to avoid publishing downstream packages with broken dependencies.
+ *
+ * @param tarballs - Ordered list of tarballs to publish.
+ * @param options - Configuration and callbacks for publishing and retries.
+ * @returns Array of publish results corresponding to each attempted tarball up to first fatal error.
+ * @throws `RangeError` if `options.retry` is negative.
+ */
+export async function publishTarballsInOrder(
+	tarballs: readonly TarballMetadata[],
+	options: PublishTarballsOptions,
+): Promise<PublishTarballResult[]> {
+	const { isPublished, onPublishAttempt, preflightConcurrency, publish, retry } = options;
+	if (retry < 0) {
+		throw new RangeError(`retry must be greater than or equal to 0`);
+	}
+
+	// The registry check is independent for every package, unlike publishing which must remain
+	// dependency-ordered. Bound the concurrent requests to avoid overwhelming the registry.
+	// eslint-disable-next-line import-x/no-named-as-default-member -- async.mapLimit is the idiomatic usage
+	const alreadyPublished = await async.mapLimit(
+		[...tarballs],
+		preflightConcurrency ?? publishPreflightConcurrency,
+		async (tarball: TarballMetadata) => isPublished(tarball),
+	);
+	const results: PublishTarballResult[] = [];
+
+	for (const [index, tarball] of tarballs.entries()) {
+		if (alreadyPublished[index]) {
+			results.push({ status: "AlreadyPublished", tarball, tryCount: 0 });
+			continue;
+		}
+
+		let tryCount = 0;
+		let status: PublishStatus = "Error";
+
+		while (tryCount <= retry) {
+			onPublishAttempt?.(tarball, tryCount + 1);
+			// We publish one package at a time, in order, and we don't continue until the current package is successfully
+			// published. This ensures that no packages are published to npm without their dependencies first being
+			// published. Note that despite publishing in order, npm itself may still make packages available in a different
+			// order - but we have no control over that.
+			// eslint-disable-next-line no-await-in-loop
+			status = await publish(tarball);
+			tryCount++;
+			if (status !== "Error") {
+				break;
+			}
+
+			// A package may become available after the upfront preflight has completed, either because
+			// a concurrent publisher won the race or because this publish succeeded but lost its response.
+			// eslint-disable-next-line no-await-in-loop
+			if (await isPublished(tarball)) {
+				status = "AlreadyPublished";
+				break;
+			}
+		}
+
+		results.push({ status, tarball, tryCount });
+		if (status === "Error") {
+			break;
+		}
+	}
+
+	return results;
+}
+
+/**
+ * Invokes `npm publish` for a single tarball archive.
+ *
+ * @param tarball - Tarball metadata including file path and name.
+ * @param log - Logger instance for recording verbose output and errors.
+ * @param publishArgs - Additional CLI arguments to pass to `npm publish`.
+ * @returns Status indicating whether publication succeeded or resulted in an error.
+ */
 async function publishTarball(
 	tarball: TarballMetadata,
 	log: Logger,
 	publishArgs: string[],
 ): Promise<PublishStatus> {
-	try {
-		const publishedVersion = await latestVersion(tarball.name, {
-			version: tarball.version,
-		});
-		if (publishedVersion !== "" && publishedVersion !== undefined) {
-			return "AlreadyPublished";
-		}
-	} catch (error) {
-		// Assume package or version is not published, so just continue and try to publish
-		log.verbose(`Version appears unpublished; expected error: ${error}`);
-	}
-
 	const args = ["publish", tarball.fileName, "--access", "public"];
 	if (publishArgs !== undefined) {
 		args.push(...publishArgs);
@@ -229,6 +428,35 @@ async function publishTarball(
 	return "SuccessfullyPublished";
 }
 
+/**
+ * Queries the package registry to determine if a specific version of a package is already published.
+ *
+ * @param tarball - Tarball metadata containing the package name and version.
+ * @param log - Logger instance for debug output.
+ * @returns `true` if the version is found in the registry; otherwise `false`.
+ */
+async function isTarballPublished(tarball: TarballMetadata, log: Logger): Promise<boolean> {
+	try {
+		const publishedVersion = await latestVersion(tarball.name, {
+			version: tarball.version,
+		});
+		return publishedVersion !== "" && publishedVersion !== undefined;
+	} catch (error) {
+		// Assume package or version is not published, so just continue and try to publish.
+		log.verbose(`Version appears unpublished; expected error: ${error}`);
+		return false;
+	}
+}
+
+/**
+ * Logs details about a failed publish attempt and returns an error status.
+ *
+ * @param log - Logger instance.
+ * @param name - Package name that failed to publish.
+ * @param message - Primary error message or stderr output.
+ * @param stack - Optional stack trace.
+ * @returns Always returns `"Error"`.
+ */
 function handlePublishError(
 	log: Logger,
 	name: string,
