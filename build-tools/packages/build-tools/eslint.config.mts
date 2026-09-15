@@ -58,8 +58,9 @@ export default [
 		rules: {
 			"@typescript-eslint/switch-exhaustiveness-check": "error",
 
-			// AB#58049: type-safety rules. Severity-only entries so that any options configured by the
-			// shared config (e.g. no-explicit-any's `ignoreRestArgs`) are preserved.
+			// The shared config enables these rules as warnings, but this package's lint command uses
+			// --quiet. Set them to errors so they are enforced while preserving shared rule options
+			// such as no-explicit-any's `ignoreRestArgs`.
 			"@typescript-eslint/no-explicit-any": "error",
 			"@typescript-eslint/no-unsafe-argument": "error",
 			"@typescript-eslint/no-unsafe-assignment": "error",

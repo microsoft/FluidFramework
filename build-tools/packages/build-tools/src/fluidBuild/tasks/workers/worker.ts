@@ -16,8 +16,6 @@ export interface WorkerMessage {
 	cwd: string;
 }
 
-export type { WorkerError } from "./workerError.js";
-
 export interface WorkerExecResult {
 	code: number;
 	error?: WorkerError; // unhandled exception, main thread should rerun it.
