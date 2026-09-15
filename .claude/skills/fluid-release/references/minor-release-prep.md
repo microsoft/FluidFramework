@@ -137,7 +137,7 @@ pnpm install --no-frozen-lockfile
 The compat-test workspaces under `packages/test/test-version-utils/compat-workspaces/` are pinned to specific prior versions and must be refreshed after every version bump (per the docstring in `packages/test/test-version-utils/scripts/updateCompatVersions.ts`):
 
 ```bash
-pnpm exec fluid-build build:compile:esm:packages --task test-version-utils
+pnpm exec fluid-build --task build:esm /test-version-utils$
 pnpm run --filter=@fluid-private/test-version-utils update-compat-versions
 ```
 

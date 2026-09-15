@@ -9,7 +9,7 @@
  * Designated checkpoints drive the runtime test matrix. Future / TBD checkpoints are
  * listed below for documentation purposes only. Both sets populate the table in
  * `CompatibilityCheckpoints.md` at the repo root; from a sufficiently built repo
- * (`pnpm exec fluid-build build:compile:esm:packages --task test-version-utils`), run
+ * (`pnpm exec fluid-build --task build:esm /test-version-utils$`), run
  * `pnpm -r --filter @fluid-private/test-version-utils run update-compat-versions`
  * after any change to regenerate that table (and the compat workspaces).
  *

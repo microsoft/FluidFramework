@@ -199,7 +199,7 @@ A new checkpoint should be designated no less than 6 months after the previous o
 **To designate a new checkpoint:**
 
 1. Add the new checkpoint to `checkpoints` in [`packages/test/test-version-utils/src/checkpoints.ts`](./packages/test/test-version-utils/src/checkpoints.ts), and remove the corresponding future (TBD) estimate from the `futureCheckpoints` array in the same file.
-2. Run `pnpm exec fluid-build build:compile:esm:packages --task test-version-utils` from client root.
+2. Run `pnpm exec fluid-build --task build:esm /test-version-utils$`.
 3. Run `pnpm -r --filter @fluid-private/test-version-utils run update-compat-versions` (from any directory in the client workspace) to refresh the per-version compat workspaces, update the installed versions used by e2e tests, and regenerate the table in [`CompatibilityCheckpoints.md`](./CompatibilityCheckpoints.md). Do **not** edit that table by hand.
 4. Modify past release notes to note the new boundary if a changeset was not created prior to that version's release.
 
