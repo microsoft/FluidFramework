@@ -106,5 +106,6 @@ Compression and encryption require an explicit digest and transformation domain 
 ## Notes
 
 The service and each storage implementation need an internal total order to validate references and select a snapshot at or before a required position.
-Public stream positions should remain opaque and generation-scoped: clients must not compare them with `Ord`, perform arithmetic, or compare positions from different streams.
-Operations that require ordering should be exposed by the implementation that owns the position domain.
+Public stream positions should remain opaque, but Sea does not require them to encode or validate a document or generation identity.
+Clients may compare positions with `Ord`, but not perform arithmetic on them, or assume that a position's acceptance or rejection by one stream predicts its behavior in another.
+Implementations validate only what they need to interpret a position safely, such as its encoding, retention, and whether the represented location is available in the selected archive.

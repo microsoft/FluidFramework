@@ -7,7 +7,7 @@
 - Cloned handles share one generation, ordered records, and latest snapshot.
 - Appends become visible in process and report `Durability::Memory`.
 - Readers are finite at their captured head and can be dropped independently.
-- Positions use one-based ordinals scoped to a generated stream identity. Encoded tokens are opaque 16-byte generation/ordinal values and reject malformed or foreign input.
+- Positions use one-based ordinals. Encoded tokens are opaque 8-byte ordinal values; malformed values and positions beyond the selected stream's committed head are rejected, while the same committed ordinal may be used with another stream.
 - Snapshot publication enforces expected-parent equality, committed positions, and non-regression.
 
 ## Limits
