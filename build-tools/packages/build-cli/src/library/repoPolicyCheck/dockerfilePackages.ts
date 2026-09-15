@@ -10,7 +10,7 @@ import { type Handler, readFile, writeFile } from "./common.js";
 
 const serverPath = "server/routerlicious/";
 
-export function getDockerfileCopyText(packageFilePath: string): string {
+function getDockerfileCopyText(packageFilePath: string): string {
 	const packageDir = TscUtils.normalizeSlashes(packageFilePath)
 		.split("/")
 		.slice(0, -1)

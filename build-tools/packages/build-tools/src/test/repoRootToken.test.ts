@@ -132,6 +132,14 @@ describe("Repo Root Token", () => {
 			assert.strictEqual(result, "C:/Users/dev/repo/.eslintrc.cjs");
 		});
 
+		it("only normalizes the repository root, not a configured suffix", () => {
+			const result = replaceRepoRootToken(
+				"${repoRoot}\\common\\**\\*.ts",
+				"C:\\Users\\dev\\repo",
+			);
+			assert.strictEqual(result, "C:/Users/dev/repo\\common\\**\\*.ts");
+		});
+
 		it("normalizes Windows backslashes in replaceRepoRootTokens", () => {
 			const result = replaceRepoRootTokens(
 				["${repoRoot}/.eslintrc.cjs", "${repoRoot}/common/**/*.ts"],
