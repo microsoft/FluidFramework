@@ -681,9 +681,9 @@ function throwBufferParseException(
 	);
 }
 
-function getNodeType(value: NodeTypes | undefined): NodeType {
+function getNodeType(value: NodeTypes | undefined): NodeType | undefined {
 	if (value === undefined) {
-		return "Undefined";
+		return undefined;
 	} else if (typeof value === "number") {
 		return "Number";
 	} else if (value instanceof BlobCore) {
@@ -698,11 +698,4 @@ function getNodeType(value: NodeTypes | undefined): NodeType {
 	return "UnknownType";
 }
 
-type NodeType =
-	| "Number"
-	| "BlobCore"
-	| "NodeCore"
-	| "Boolean"
-	| "UnknownType"
-	| "String"
-	| "Undefined";
+type NodeType = "Number" | "BlobCore" | "NodeCore" | "Boolean" | "UnknownType" | "String";
