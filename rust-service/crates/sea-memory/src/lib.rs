@@ -8,7 +8,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::stream;
-use snapshotted_stream_core::{
+use sea_core::{
     AppendReceipt, AppendStream, Capabilities, ClassifiedError, Durability, ErrorKind,
     PositionCodec, PublishedSnapshot, ReadRecord, Snapshot, SnapshotId, SnapshotPosition,
     SnapshotStore, StreamReader,
@@ -120,7 +120,7 @@ impl AppendStream for MemoryStream {
     type Error = MemoryError;
 
     fn capabilities(&self) -> Capabilities {
-        Capabilities::NONE.with(snapshotted_stream_core::Capability::PositionSerialization)
+        Capabilities::NONE.with(sea_core::Capability::PositionSerialization)
     }
 
     async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
@@ -247,7 +247,7 @@ mod tests {
     use std::sync::atomic::{AtomicBool, Ordering};
 
     use futures_util::{StreamExt, TryStreamExt};
-    use snapshotted_stream_core::{
+    use sea_core::{
         AppendReceipt, AppendStream, Capabilities, ClassifiedError, ErrorKind, PublishedSnapshot,
         Snapshot, SnapshotId, SnapshotPosition, SnapshotStore, StreamReader,
     };
@@ -384,12 +384,12 @@ mod tests {
 
     #[tokio::test]
     async fn passes_shared_conformance() {
-        snapshotted_stream_conformance::run_conformance(MemoryStream::new).await;
+        sea_conformance::run_conformance(MemoryStream::new).await;
     }
 
     #[tokio::test]
     async fn passes_position_codec_conformance() {
-        snapshotted_stream_conformance::run_position_codec_conformance(
+        sea_conformance::run_position_codec_conformance(
             MemoryStream::new,
             b"malformed",
         )

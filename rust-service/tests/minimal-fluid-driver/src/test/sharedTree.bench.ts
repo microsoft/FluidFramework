@@ -306,7 +306,7 @@ function dataStructureEnvironmentVariable(): "dummy" | "shared-tree" {
 /** Incrementally builds native or Tinylicious prerequisites for a case. */
 function buildPrerequisites(benchmarkCase: BenchmarkCase): void {
 	if (benchmarkCase.backend === "rust") {
-		run("cargo", ["build", "--locked", "-p", "fluid-webtransport-native", "--release"], {
+		run("cargo", ["build", "--locked", "-p", "sea-webtransport", "--release"], {
 			cwd: rustServiceDirectory,
 		});
 		ensureCertificate();
@@ -342,7 +342,7 @@ async function startRustService(storageMode: string): Promise<RunningService> {
 	const temporaryDirectory = await mkdtemp(path.join(tmpdir(), "fluid-rust-benchmark-"));
 	const certificateDirectory = path.join(webTransportTestDirectory, ".certs");
 	const child = spawn(
-		path.join(rustServiceDirectory, "target/release/fluid-webtransport-native"),
+		path.join(rustServiceDirectory, "target/release/sea-webtransport"),
 		[
 			"127.0.0.1:0",
 			path.join(certificateDirectory, "cert.pem"),

@@ -11,19 +11,19 @@ use std::{
 
 use bytes::Bytes;
 use futures_util::TryStreamExt;
-use snapshotted_stream_benchmarks::{
+use sea_benchmarks::{
     BenchmarkResult, DEFAULT_SEED, Environment, FixtureGenerator, FixtureKind, Measurements,
     SCHEMA_VERSION, Workload, summarize,
 };
-use snapshotted_stream_compression::CompressionStream;
-use snapshotted_stream_core::{AppendStream, Snapshot, SnapshotPosition, SnapshotStore};
-use snapshotted_stream_encryption::{
+use sea_compression::CompressionStream;
+use sea_core::{AppendStream, Snapshot, SnapshotPosition, SnapshotStore};
+use sea_encryption::{
     ActiveKey, EncryptionKey, EncryptionStream, KeyId, KeyProvider,
 };
-use snapshotted_stream_file_simple::FileStream;
-use snapshotted_stream_memory::MemoryStream;
-use snapshotted_stream_network::local_transport;
-use snapshotted_stream_stateful_compression::StatefulCompressionStream;
+use sea_file::FileStream;
+use sea_memory::MemoryStream;
+use sea_network::local_transport;
+use sea_stateful_compression::StatefulCompressionStream;
 use tokio::task::JoinSet;
 
 mod integrated;
@@ -573,7 +573,7 @@ where
 
 /// Verifies record count and an order-independent digest of generated payloads.
 fn verify_payloads<P>(
-    records: &[snapshotted_stream_core::ReadRecord<P>],
+    records: &[sea_core::ReadRecord<P>],
     generator: &FixtureGenerator,
     config: &Config,
 ) -> Result<(), String> {
@@ -788,7 +788,7 @@ fn environment() -> Environment {
             .unwrap_or_else(|_| "unknown".to_owned()),
         filesystem: env::var("BENCHMARK_FILESYSTEM").unwrap_or_else(|_| "unknown".to_owned()),
         measurement_tool: format!(
-            "snapshotted-stream-benchmarks/{}",
+            "sea-benchmarks/{}",
             env!("CARGO_PKG_VERSION")
         ),
     }
@@ -903,7 +903,7 @@ fn display_error(error: impl std::fmt::Display) -> String {
 
 /// Returns the complete command-line grammar.
 fn usage() -> String {
-    "usage: snapshotted-stream-benchmarks smoke | measure [--backend memory|file|network-memory|compression|stateful-compression|encryption|stateful-compression-encryption|native-service|native-webtransport] [--fixture empty|small-compressible|small-incompressible|large-compressible|large-incompressible|snapshot] [--seed N] [--records N] [--writers N] [--snapshot-frequency N] [--warmups N] [--repetitions N]".to_owned()
+    "usage: sea-benchmarks smoke | measure [--backend memory|file|network-memory|compression|stateful-compression|encryption|stateful-compression-encryption|native-service|native-webtransport] [--fixture empty|small-compressible|small-incompressible|large-compressible|large-incompressible|snapshot] [--seed N] [--records N] [--writers N] [--snapshot-frequency N] [--warmups N] [--repetitions N]".to_owned()
 }
 
 #[cfg(test)]

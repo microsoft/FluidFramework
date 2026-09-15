@@ -1,6 +1,6 @@
 # Fluid Service Protocol
 
-`fluid-service-protocol` defines FSP4, the bounded binary request/response protocol used by the native Fluid service. It contains transport-neutral frame types and deterministic encode/decode functions; it does not perform I/O or own service state.
+`sea-protocol` defines FSP4, the bounded binary request/response protocol used by the native Fluid service. It contains transport-neutral frame types and deterministic encode/decode functions; it does not perform I/O or own service state.
 
 ## Frame contract
 
@@ -27,9 +27,9 @@ Positions, identities, digests, and payloads remain opaque byte strings at this 
 From `rust-service/`:
 
 ```bash
-cargo test -p fluid-service-protocol
-cargo rustc -p fluid-service-protocol --lib -- -D missing-docs
-RUSTDOCFLAGS="-D warnings" cargo doc -p fluid-service-protocol --all-features --no-deps
+cargo test -p sea-protocol
+cargo rustc -p sea-protocol --lib -- -D missing-docs
+RUSTDOCFLAGS="-D warnings" cargo doc -p sea-protocol --all-features --no-deps
 ```
 
 The unit tests pin fixture bytes and additive message kinds, round-trip every request and response family, and exercise bounds, malformed frames, truncation, and trailing-byte rejection.

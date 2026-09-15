@@ -15,7 +15,7 @@ use std::{
 use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::stream;
-use snapshotted_stream_core::{
+use sea_core::{
     AppendReceipt, AppendStream, Capabilities, ClassifiedError, Durability, ErrorKind,
     PositionCodec, PublishedSnapshot, ReadRecord, Snapshot, SnapshotId, SnapshotPosition,
     SnapshotStore, StreamReader,
@@ -392,7 +392,7 @@ impl AppendStream for DurableLog {
     type Error = DurableLogError;
 
     fn capabilities(&self) -> Capabilities {
-        Capabilities::NONE.with(snapshotted_stream_core::Capability::PositionSerialization)
+        Capabilities::NONE.with(sea_core::Capability::PositionSerialization)
     }
 
     async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
@@ -863,7 +863,7 @@ mod tests {
     };
 
     use futures_util::TryStreamExt;
-    use snapshotted_stream_core::{AppendStream, ClassifiedError};
+    use sea_core::{AppendStream, ClassifiedError};
 
     use super::*;
 
@@ -1186,7 +1186,7 @@ mod tests {
     #[tokio::test]
     async fn passes_shared_conformance() {
         let directories = std::sync::Mutex::new(Vec::new());
-        snapshotted_stream_conformance::run_conformance(|| {
+        sea_conformance::run_conformance(|| {
             let directory = test_directory("conformance");
             directories.lock().unwrap().push(directory.clone());
             DurableLog::open(directory).unwrap()

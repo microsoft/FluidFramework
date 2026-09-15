@@ -349,92 +349,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "fluid-native-service"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "fluid-sequencer",
- "fluid-service-protocol",
- "fluid-service-storage",
- "futures-util",
- "snapshotted-stream-core",
- "tokio",
-]
-
-[[package]]
-name = "fluid-native-service-browser"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "fluid-native-service",
- "fluid-service-protocol",
- "js-sys",
- "tokio",
- "wasm-bindgen",
- "wasm-bindgen-futures",
-]
-
-[[package]]
 name = "fluid-native-service-example"
 version = "0.1.0"
 dependencies = [
  "bytes",
- "fluid-native-service",
- "fluid-service-protocol",
+ "sea-protocol",
+ "sea-service",
  "tokio",
-]
-
-[[package]]
-name = "fluid-sequencer"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "snapshotted-stream-core",
-]
-
-[[package]]
-name = "fluid-service-protocol"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "thiserror",
-]
-
-[[package]]
-name = "fluid-service-storage"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "bytes",
- "snapshotted-stream-content-addressed",
- "snapshotted-stream-core",
- "snapshotted-stream-durable-log-spike",
- "snapshotted-stream-file-simple",
- "snapshotted-stream-memory",
-]
-
-[[package]]
-name = "fluid-webtransport-browser"
-version = "0.1.0"
-dependencies = [
- "fluid-service-protocol",
- "js-sys",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
-]
-
-[[package]]
-name = "fluid-webtransport-native"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "fluid-native-service",
- "fluid-service-protocol",
- "futures-util",
- "thiserror",
- "tokio",
- "wtransport",
 ]
 
 [[package]]
@@ -1083,6 +1004,263 @@ dependencies = [
 ]
 
 [[package]]
+name = "sea-benchmarks"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "futures-util",
+ "sea-client",
+ "sea-compression",
+ "sea-core",
+ "sea-encryption",
+ "sea-file",
+ "sea-memory",
+ "sea-network",
+ "sea-protocol",
+ "sea-service",
+ "sea-stateful-compression",
+ "sea-webtransport",
+ "serde",
+ "serde_json",
+ "tokio",
+ "wtransport",
+]
+
+[[package]]
+name = "sea-client"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "futures-util",
+ "sea-core",
+ "sea-protocol",
+ "sea-service",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "sea-compression"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "flate2",
+ "futures-util",
+ "sea-conformance",
+ "sea-core",
+ "sea-memory",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "sea-conformance"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "futures-util",
+ "sea-core",
+]
+
+[[package]]
+name = "sea-content-addressed"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "sea-core",
+ "sha2 0.10.9",
+]
+
+[[package]]
+name = "sea-core"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "futures-core",
+ "futures-util",
+]
+
+[[package]]
+name = "sea-counter"
+version = "0.1.0"
+dependencies = [
+ "sea-client",
+ "sea-memory",
+ "tokio",
+]
+
+[[package]]
+name = "sea-encryption"
+version = "0.1.0"
+dependencies = [
+ "aes-gcm-siv",
+ "async-trait",
+ "bytes",
+ "futures-util",
+ "rand_core 0.6.4",
+ "sea-compression",
+ "sea-conformance",
+ "sea-core",
+ "sea-memory",
+ "thiserror",
+ "tokio",
+ "zeroize",
+]
+
+[[package]]
+name = "sea-file"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "futures-util",
+ "sea-conformance",
+ "sea-core",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "sea-file-durable"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "crc32fast",
+ "futures-util",
+ "sea-conformance",
+ "sea-core",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "sea-memory"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "futures-util",
+ "sea-conformance",
+ "sea-core",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "sea-network"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "futures-util",
+ "sea-compression",
+ "sea-conformance",
+ "sea-core",
+ "sea-memory",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "sea-protocol"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "thiserror",
+]
+
+[[package]]
+name = "sea-sequencer"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "sea-core",
+]
+
+[[package]]
+name = "sea-service"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "futures-util",
+ "sea-core",
+ "sea-protocol",
+ "sea-sequencer",
+ "sea-storage",
+ "tokio",
+]
+
+[[package]]
+name = "sea-service-browser"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "js-sys",
+ "sea-protocol",
+ "sea-service",
+ "tokio",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+]
+
+[[package]]
+name = "sea-stateful-compression"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "futures-util",
+ "sea-compression",
+ "sea-conformance",
+ "sea-core",
+ "sea-memory",
+ "thiserror",
+ "tokio",
+ "zstd",
+]
+
+[[package]]
+name = "sea-storage"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "sea-content-addressed",
+ "sea-core",
+ "sea-file",
+ "sea-file-durable",
+ "sea-memory",
+]
+
+[[package]]
+name = "sea-webtransport"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "futures-util",
+ "sea-protocol",
+ "sea-service",
+ "thiserror",
+ "tokio",
+ "wtransport",
+]
+
+[[package]]
+name = "sea-webtransport-browser"
+version = "0.1.0"
+dependencies = [
+ "js-sys",
+ "sea-protocol",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
 name = "security-framework"
 version = "3.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1193,184 +1371,6 @@ name = "smallvec"
 version = "1.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba467056f1b547ed52077911161fc86985becbc60e8e1857c8a144dab0def891"
-
-[[package]]
-name = "snapshotted-stream-benchmarks"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "bytes",
- "fluid-native-service",
- "fluid-service-protocol",
- "fluid-webtransport-native",
- "futures-util",
- "serde",
- "serde_json",
- "snapshotted-stream-client",
- "snapshotted-stream-compression",
- "snapshotted-stream-core",
- "snapshotted-stream-encryption",
- "snapshotted-stream-file-simple",
- "snapshotted-stream-memory",
- "snapshotted-stream-network",
- "snapshotted-stream-stateful-compression",
- "tokio",
- "wtransport",
-]
-
-[[package]]
-name = "snapshotted-stream-client"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "fluid-native-service",
- "fluid-service-protocol",
- "futures-util",
- "snapshotted-stream-core",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "snapshotted-stream-compression"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "bytes",
- "flate2",
- "futures-util",
- "snapshotted-stream-conformance",
- "snapshotted-stream-core",
- "snapshotted-stream-memory",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "snapshotted-stream-conformance"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "futures-util",
- "snapshotted-stream-core",
-]
-
-[[package]]
-name = "snapshotted-stream-content-addressed"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "sha2 0.10.9",
- "snapshotted-stream-core",
-]
-
-[[package]]
-name = "snapshotted-stream-core"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "bytes",
- "futures-core",
- "futures-util",
-]
-
-[[package]]
-name = "snapshotted-stream-counter"
-version = "0.1.0"
-dependencies = [
- "snapshotted-stream-client",
- "snapshotted-stream-memory",
- "tokio",
-]
-
-[[package]]
-name = "snapshotted-stream-durable-log-spike"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "bytes",
- "crc32fast",
- "futures-util",
- "snapshotted-stream-conformance",
- "snapshotted-stream-core",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "snapshotted-stream-encryption"
-version = "0.1.0"
-dependencies = [
- "aes-gcm-siv",
- "async-trait",
- "bytes",
- "futures-util",
- "rand_core 0.6.4",
- "snapshotted-stream-compression",
- "snapshotted-stream-conformance",
- "snapshotted-stream-core",
- "snapshotted-stream-memory",
- "thiserror",
- "tokio",
- "zeroize",
-]
-
-[[package]]
-name = "snapshotted-stream-file-simple"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "bytes",
- "futures-util",
- "snapshotted-stream-conformance",
- "snapshotted-stream-core",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "snapshotted-stream-memory"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "bytes",
- "futures-util",
- "snapshotted-stream-conformance",
- "snapshotted-stream-core",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "snapshotted-stream-network"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "bytes",
- "futures-util",
- "snapshotted-stream-compression",
- "snapshotted-stream-conformance",
- "snapshotted-stream-core",
- "snapshotted-stream-memory",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "snapshotted-stream-stateful-compression"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "bytes",
- "futures-util",
- "snapshotted-stream-compression",
- "snapshotted-stream-conformance",
- "snapshotted-stream-core",
- "snapshotted-stream-memory",
- "thiserror",
- "tokio",
- "zstd",
-]
 
 [[package]]
 name = "socket2"

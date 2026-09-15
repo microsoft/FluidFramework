@@ -10,8 +10,8 @@ use std::{
 };
 
 use bytes::Bytes;
-use fluid_native_service::{NativeService, ProjectedSubscriptionError};
-use fluid_service_protocol::{
+use sea_service::{NativeService, ProjectedSubscriptionError};
+use sea_protocol::{
     ErrorCode, Frame, HEADER_BYTES, Limits, Message, ProjectedOperation, ProtocolError, Request,
     Response, decode, encode,
 };
@@ -970,8 +970,8 @@ fn transport_error(error: impl std::fmt::Display) -> WebTransportError {
 mod tests {
     use std::{fs, path::PathBuf, sync::atomic::AtomicU64, time::Instant};
 
-    use fluid_native_service::ServiceConfig;
-    use fluid_service_protocol::{Acknowledgement, Reference, Submission, SubmissionDisposition};
+    use sea_service::ServiceConfig;
+    use sea_protocol::{Acknowledgement, Reference, Submission, SubmissionDisposition};
 
     use super::*;
 

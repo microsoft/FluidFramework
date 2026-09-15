@@ -1,6 +1,6 @@
 # Stateful Compression Wrapper
 
-`snapshotted-stream-stateful-compression` uses one immutable zstd dictionary to
+`sea-stateful-compression` uses one immutable zstd dictionary to
 compress records and snapshots. Despite the package name, decoding does not
 depend on mutable history: every stored payload is an independent frame with
 the metadata needed to restart from that item.
@@ -40,9 +40,9 @@ plaintext before the encrypted inner store persists the frame.
 From `rust-service/`:
 
 ```console
-cargo test -p snapshotted-stream-stateful-compression --all-targets --all-features
-cargo clippy -p snapshotted-stream-stateful-compression --all-targets --all-features -- -D warnings
-RUSTDOCFLAGS="-D warnings" cargo doc -p snapshotted-stream-stateful-compression --all-features --no-deps
+cargo test -p sea-stateful-compression --all-targets --all-features
+cargo clippy -p sea-stateful-compression --all-targets --all-features -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc -p sea-stateful-compression --all-features --no-deps
 ```
 
 The test suite covers shared stream, snapshot, and position-codec conformance;

@@ -15,7 +15,7 @@ project remains an experimental research project.
 - **Area:** Service composition
 - **Evidence:** Compression, encryption, and stateful compression implement the
   core contracts and are documented as layers between sequencing and storage,
-  but `fluid-native-service` neither depends on them nor provides configuration
+  but `sea-service` neither depends on them nor provides configuration
   for composing them with a selected backend.
 - **Impact:** Wrapper compositions are available to direct users and benchmarks
   but cannot be selected in the standard native service. The documented
@@ -35,7 +35,7 @@ project remains an experimental research project.
 - **Area:** Durability contract
 - **Evidence:** `StorageMode::DurableFile` is the default service mode and is
   described as durable file storage. Its implementation is
-  `snapshotted-stream-durable-log-spike`, whose README explicitly limits its
+  `sea-file-durable`, whose README explicitly limits its
   evidence to recovery after process termination while the operating system
   remains running. It does not demonstrate power-loss, filesystem or hardware
   failure, multi-process writer safety, retention, or replication.
@@ -50,8 +50,8 @@ project remains an experimental research project.
 - **Status:** Open
 - **Severity:** Medium
 - **Area:** Source organization
-- **Evidence:** `fluid-sequencer`, `fluid-native-service`, and
-  `fluid-service-protocol` each combine their public model, implementation,
+- **Evidence:** `sea-sequencer`, `sea-service`, and
+  `sea-protocol` each combine their public model, implementation,
   codecs or storage adaptation, and extensive tests in one `lib.rs`. Several
   transport and client crates follow the same pattern.
 - **Impact:** Navigation, code ownership, and focused review become harder as
@@ -68,7 +68,7 @@ project remains an experimental research project.
 - **Severity:** Medium
 - **Area:** Service configuration
 - **Evidence:** Canonical and projected read limits, content limits, and buffer
-  sizes are constants in `crates/fluid-native-service/src/lib.rs`. `ServiceConfig` exposes
+  sizes are constants in `crates/sea-service/src/lib.rs`. `ServiceConfig` exposes
   only the root path and storage mode, while the protocol independently defines
   decoding limits.
 - **Impact:** Deployments with different workload or resource constraints need

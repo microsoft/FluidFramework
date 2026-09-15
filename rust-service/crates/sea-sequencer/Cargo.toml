@@ -1,5 +1,5 @@
 [package]
-name = "fluid-sequencer"
+name = "sea-sequencer"
 version = "0.1.0"
 edition.workspace = true
 license.workspace = true
@@ -7,7 +7,7 @@ rust-version.workspace = true
 
 [dependencies]
 bytes.workspace = true
-snapshotted-stream-core = { path = "../sea-core" }
+sea-core = { path = "../sea-core" }
 
 [lints]
 workspace = true

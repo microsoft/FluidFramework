@@ -1,6 +1,6 @@
 # Snapshotted Stream Conformance
 
-`snapshotted-stream-conformance` provides implementation-independent checks for the contracts in `snapshotted-stream-core`.
+`sea-conformance` provides implementation-independent checks for the contracts in `sea-core`.
 
 ## Coverage
 
@@ -19,6 +19,6 @@ See [`src/lib.rs`](src/lib.rs) for generic bounds and panic conditions.
 From `rust-service/`:
 
 ```bash
-cargo test -p snapshotted-stream-conformance
-RUSTDOCFLAGS='-D warnings' cargo doc -p snapshotted-stream-conformance --no-deps
+cargo test -p sea-conformance
+RUSTDOCFLAGS='-D warnings' cargo doc -p sea-conformance --no-deps
 ```

@@ -1,6 +1,6 @@
 # Compression Wrapper
 
-`snapshotted-stream-compression` transparently applies independent zlib
+`sea-compression` transparently applies independent zlib
 compression to every record and snapshot in a snapshotted stream. The wrapped
 store continues to own positions, snapshot lineage, capabilities, cancellation,
 and backpressure.
@@ -25,8 +25,8 @@ the order attempts to compress ciphertext and normally removes the size benefit.
 ## Use
 
 ```rust
-use snapshotted_stream_compression::CompressionStream;
-use snapshotted_stream_memory::MemoryStream;
+use sea_compression::CompressionStream;
+use sea_memory::MemoryStream;
 
 let stream = CompressionStream::new(MemoryStream::new());
 ```
@@ -39,9 +39,9 @@ the underlying store does. `into_inner` returns the wrapped store.
 From `rust-service/`:
 
 ```console
-cargo test -p snapshotted-stream-compression --all-targets --all-features
-cargo clippy -p snapshotted-stream-compression --all-targets --all-features -- -D warnings
-RUSTDOCFLAGS="-D warnings" cargo doc -p snapshotted-stream-compression --all-features --no-deps
+cargo test -p sea-compression --all-targets --all-features
+cargo clippy -p sea-compression --all-targets --all-features -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc -p sea-compression --all-features --no-deps
 ```
 
 The test suite covers shared stream and snapshot conformance, empty and large

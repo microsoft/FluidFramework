@@ -28,8 +28,8 @@ BENCHMARK_STORAGE_DEVICE=$(df --output=source "$source_root" | tail -1 | xargs)
 export BENCHMARK_FILESYSTEM
 BENCHMARK_FILESYSTEM=$(stat -f -c %T "$source_root")
 
-cargo build --release -p snapshotted-stream-benchmarks
-benchmark="$target_root/release/snapshotted-stream-benchmarks"
+cargo build --release -p sea-benchmarks
+benchmark="$target_root/release/sea-benchmarks"
 
 # Print a reproducible cell header, then emit its five measured JSON repetitions.
 run_cell() {

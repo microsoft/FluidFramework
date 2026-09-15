@@ -11,9 +11,9 @@ Server shutdown first stops acceptance. `Immediate` cancels owned connections; `
 Run from `rust-service/`:
 
 ```bash
-cargo test -p fluid-webtransport-native --all-targets --all-features
-cargo clippy -p fluid-webtransport-native --all-targets --all-features -- -D warnings
-RUSTDOCFLAGS='-D warnings -D missing_docs' cargo doc -p fluid-webtransport-native --no-deps
+cargo test -p sea-webtransport --all-targets --all-features
+cargo clippy -p sea-webtransport --all-targets --all-features -- -D warnings
+RUSTDOCFLAGS='-D warnings -D missing_docs' cargo doc -p sea-webtransport --no-deps
 ```
 
-The end-to-end browser setup is documented in the [browser harness](../../../tests/webtransport-browser/README.md).
+The end-to-end browser setup is documented in the [browser harness](../../tests/webtransport-browser/README.md).

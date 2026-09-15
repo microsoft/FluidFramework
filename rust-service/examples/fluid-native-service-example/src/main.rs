@@ -1,7 +1,7 @@
 use std::{env, error::Error, io, path::PathBuf, time::Duration};
 
-use fluid_native_service::{NativeService, ServiceConfig};
-use fluid_service_protocol::{
+use sea_service::{NativeService, ServiceConfig};
+use sea_protocol::{
     ErrorCode, Frame, Limits, Message, Request, Response, decode, encode,
 };
 use tokio::{

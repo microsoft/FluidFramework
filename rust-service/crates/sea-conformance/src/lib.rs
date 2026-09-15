@@ -4,7 +4,7 @@ use std::fmt::Debug;
 
 use bytes::Bytes;
 use futures_util::{StreamExt, TryStreamExt, future::join_all};
-use snapshotted_stream_core::{
+use sea_core::{
     AppendStream, Capability, ClassifiedError, ErrorKind, PositionCodec, Snapshot,
     SnapshotPosition, SnapshotStore,
 };

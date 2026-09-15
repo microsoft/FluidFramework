@@ -1,7 +1,7 @@
 //! Built-in storage composition for the single-host Fluid service.
 //!
 //! This crate owns concrete backend selection and filesystem layout. Service behavior depends only
-//! on the storage contracts in `snapshotted-stream-core`.
+//! on the storage contracts in `sea-core`.
 
 use std::{
     collections::BTreeMap,
@@ -13,8 +13,8 @@ use std::{
 
 use async_trait::async_trait;
 use bytes::Bytes;
-use snapshotted_stream_content_addressed::{ContentStore, MemoryContentStore, StoreConfig};
-use snapshotted_stream_core::{
+use sea_content_addressed::{ContentStore, MemoryContentStore, StoreConfig};
+use sea_core::{
     ErrorKind,
     storage::{
         ContentId, ContentReceipt, ContentStorage, ContentSummaryEntry, ContentSummaryReceipt,
@@ -22,9 +22,9 @@ use snapshotted_stream_core::{
         OpenedDocumentStorage, ServiceStorage, StorageError, StorageErrorKind,
     },
 };
-use snapshotted_stream_durable_log_spike::DurableLog;
-use snapshotted_stream_file_simple::FileStream;
-use snapshotted_stream_memory::MemoryStream;
+use sea_file_durable::DurableLog;
+use sea_file::FileStream;
+use sea_memory::MemoryStream;
 
 const SCOPE_FILE: &str = "service.scope";
 const SCOPE_BYTES: usize = 16;

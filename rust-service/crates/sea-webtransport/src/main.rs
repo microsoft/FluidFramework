@@ -6,8 +6,8 @@ use std::{
     time::Duration,
 };
 
-use fluid_native_service::{NativeService, ServiceConfig, StorageMode};
-use fluid_webtransport_native::{ShutdownMode, TransportConfig, WebTransportServer};
+use sea_service::{NativeService, ServiceConfig, StorageMode};
+use sea_webtransport::{ShutdownMode, TransportConfig, WebTransportServer};
 use wtransport::{Identity, tls::Sha256DigestFmt};
 
 #[tokio::main]
@@ -15,7 +15,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut arguments = env::args().skip(1);
     let bind: SocketAddr = arguments
         .next()
-        .ok_or("usage: fluid-webtransport-native <bind> <cert.pem> <key.pem> <data-dir>")?
+        .ok_or("usage: sea-webtransport <bind> <cert.pem> <key.pem> <data-dir>")?
         .parse()?;
     let certificate = PathBuf::from(arguments.next().ok_or("missing certificate path")?);
     let private_key = PathBuf::from(arguments.next().ok_or("missing private-key path")?);
@@ -91,7 +91,7 @@ async fn wait_for_shutdown_marker(marker: &Path) {
     println!("SHUTDOWN_MARKER_DETECTED={}", marker.display());
 }
 
-fn print_shutdown_outcome(outcome: fluid_webtransport_native::ShutdownOutcome) {
+fn print_shutdown_outcome(outcome: sea_webtransport::ShutdownOutcome) {
     println!(
         "SHUTDOWN_EVIDENCE disposition={:?} owned_connections={} cancelled_connections={} elapsed_milliseconds={}",
         outcome.disposition,

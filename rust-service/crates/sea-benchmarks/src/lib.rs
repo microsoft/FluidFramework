@@ -313,7 +313,7 @@ mod tests {
                 memory_bytes: None,
                 storage_device: "unknown".to_owned(),
                 filesystem: "unknown".to_owned(),
-                measurement_tool: "snapshotted-stream-benchmarks/0.1.0".to_owned(),
+                measurement_tool: "sea-benchmarks/0.1.0".to_owned(),
             },
             workload: Workload {
                 fixture: FixtureKind::Empty,

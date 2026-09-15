@@ -1,6 +1,6 @@
 # Minimal WASM Fluid driver
 
-This isolated package adapts the generated `fluid-webtransport-browser` WASM package to the smallest Fluid driver surface exercised by the iteration trace. It does not decode FSQ2. TypeScript constructs only the documented FSP4 create, open-session, submit, latest-snapshot, and publish-snapshot envelopes that the generated package validates; projected reads, ambiguity resolution, blobs, and summaries use generated WASM methods.
+This isolated package adapts the generated `sea-webtransport-browser` WASM package to the smallest Fluid driver surface exercised by the iteration trace. It does not decode FSQ2. TypeScript constructs only the documented FSP4 create, open-session, submit, latest-snapshot, and publish-snapshot envelopes that the generated package validates; projected reads, ambiguity resolution, blobs, and summaries use generated WASM methods.
 
 ## Implemented interfaces
 
@@ -57,7 +57,7 @@ tooling refinement rather than a prerequisite for reliable client builds.
 The unit suite includes an injected TypeScript submission-stream fixture. It deterministically holds acknowledgements, rejects writes or responses, records stream and subscription disposal, and verifies unary fallback without requiring a live service.
 
 For Chromium, generate the existing browser harness certificate, start
-`fluid-webtransport-native`, and run:
+`sea-webtransport`, and run:
 
 ```bash
 pnpm run typecheck:shared-tree

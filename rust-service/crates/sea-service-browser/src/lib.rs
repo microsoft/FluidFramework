@@ -10,11 +10,11 @@ use std::{
 };
 
 use bytes::Bytes;
-use fluid_native_service::{
+use sea_service::{
     NativeService, ProjectedSubscription, ProjectedSubscriptionCancellation,
     ProjectedSubscriptionError, ServiceConfig, StorageMode,
 };
-use fluid_service_protocol::{
+use sea_protocol::{
     ErrorCode, Frame, Limits, Message, Request, Response, decode, encode,
 };
 use js_sys::{Array, Uint8Array};

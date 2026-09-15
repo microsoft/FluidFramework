@@ -7,7 +7,7 @@ This crate provides deterministic fixtures, correctness smoke workloads, and new
 From `rust-service/`:
 
 ```bash
-cargo run -p snapshotted-stream-benchmarks -- measure --help
+cargo run -p sea-benchmarks -- measure --help
 bash scripts/validate-benchmarks.sh
 bash scripts/measure-benchmarks.sh --backend memory --fixture small-compressible --records 10000 --writers 1 --warmups 1 --repetitions 5
 bash scripts/measure-benchmarks.sh --backend file --fixture small-compressible --records 10000 --writers 1 --warmups 1 --repetitions 5
@@ -19,7 +19,7 @@ The validation command runs formatting, unit tests, strict Clippy, and correctne
 For a smallest local measurement that does not retain evidence or require an external service, run:
 
 ```bash
-cargo run -p snapshotted-stream-benchmarks -- measure --backend memory --fixture small-incompressible --records 8 --writers 2 --snapshot-frequency 0 --warmups 0 --repetitions 1
+cargo run -p sea-benchmarks -- measure --backend memory --fixture small-incompressible --records 8 --writers 2 --snapshot-frequency 0 --warmups 0 --repetitions 1
 ```
 
 Help exits successfully. Unknown options, missing values, zero records/writers/repetitions, and options supplied to `smoke` exit unsuccessfully with a diagnostic. A successful measurement emits one JSON line per measured repetition; a successful smoke emits one human-readable summary line. Treat any other standard output shape as a harness failure rather than benchmark evidence.

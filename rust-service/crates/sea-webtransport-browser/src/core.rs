@@ -1,6 +1,6 @@
 use std::{cell::Cell, rc::Rc};
 
-use fluid_service_protocol::{
+use sea_protocol::{
     Frame, Limits, Message, Request, Resolution, Response, SummaryEntry, decode, encode,
 };
 use wasm_bindgen::prelude::*;
@@ -13,7 +13,7 @@ enum ClientState {
 }
 
 type ProjectedReadResponse = (
-    Vec<fluid_service_protocol::ProjectedOperation>,
+    Vec<sea_protocol::ProjectedOperation>,
     Option<Vec<u8>>,
     bool,
 );
@@ -59,7 +59,7 @@ impl ClientMetrics {
 
 impl ProtocolCore {
     pub(crate) fn new(max_frame_bytes: usize) -> Result<Self, JsValue> {
-        if max_frame_bytes < fluid_service_protocol::HEADER_BYTES {
+        if max_frame_bytes < sea_protocol::HEADER_BYTES {
             return Err(js_error("max_frame_bytes is smaller than the FSP4 header"));
         }
         Ok(Self {
@@ -175,7 +175,7 @@ impl ProtocolCore {
         &self,
         incoming: &[u8],
         request_id: u64,
-    ) -> Result<fluid_service_protocol::ProjectedOperation, JsValue> {
+    ) -> Result<sea_protocol::ProjectedOperation, JsValue> {
         let frame = decode(incoming, self.limits).map_err(protocol_error)?;
         if frame.request_id != request_id {
             return Err(js_error("FSP4 subscription request id did not match"));
@@ -462,7 +462,7 @@ impl ProtocolCore {
     }
 }
 
-fn protocol_error(error: fluid_service_protocol::ProtocolError) -> JsValue {
+fn protocol_error(error: sea_protocol::ProtocolError) -> JsValue {
     js_error(&format!("FSP4 frame validation failed: {error}"))
 }
 

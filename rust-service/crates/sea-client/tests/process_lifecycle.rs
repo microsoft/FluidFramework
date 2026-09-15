@@ -10,12 +10,12 @@ use std::{
 };
 
 use bytes::Bytes;
-use fluid_native_service::{NativeService, ServiceConfig};
-use fluid_service_protocol::{
+use sea_service::{NativeService, ServiceConfig};
+use sea_protocol::{
     Acknowledgement, Frame, Limits, Message, Reference, Request, Resolution, Response,
     SubmissionDisposition, SummaryEntry, decode, encode,
 };
-use snapshotted_stream_client::{ContentClient, LifecycleEvent, LifecycleState, NativeClient};
+use sea_client::{ContentClient, LifecycleEvent, LifecycleState, NativeClient};
 
 const SERVER_SOCKET: &str = "FLUID_NATIVE_CLIENT_TEST_SOCKET";
 const SERVER_ROOT: &str = "FLUID_NATIVE_CLIENT_TEST_ROOT";

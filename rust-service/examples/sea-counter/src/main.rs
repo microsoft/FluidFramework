@@ -1,5 +1,5 @@
-use snapshotted_stream_client::CounterClient;
-use snapshotted_stream_memory::MemoryStream;
+use sea_client::CounterClient;
+use sea_memory::MemoryStream;
 
 /// Runs the bounded append, snapshot, and recovery demonstration.
 #[tokio::main]

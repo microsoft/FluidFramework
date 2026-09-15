@@ -5,8 +5,8 @@ This bounded in-memory example appends `2`, appends `3`, publishes a snapshot at
 From `rust-service/`, run:
 
 ```bash
-cargo run -p snapshotted-stream-counter
-cargo test -p snapshotted-stream-counter --all-targets
+cargo run -p sea-counter
+cargo test -p sea-counter --all-targets
 ```
 
 The executable succeeds only after asserting the recovered value and prints:

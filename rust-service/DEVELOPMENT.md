@@ -16,7 +16,7 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 RUSTDOCFLAGS='-D warnings' cargo doc --workspace --all-features --no-deps
 cargo build --workspace --all-targets
 cargo test --workspace --all-targets --all-features
-cargo run -p snapshotted-stream-counter
+cargo run -p sea-counter
 node scripts/check-documentation.mjs
 ```
 

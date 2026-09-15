@@ -1,5 +1,5 @@
 [package]
-name = "snapshotted-stream-content-addressed"
+name = "sea-content-addressed"
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
@@ -8,7 +8,7 @@ rust-version = "1.98.1"
 [dependencies]
 bytes.workspace = true
 sha2 = "0.10.9"
-snapshotted-stream-core = { path = "../sea-core" }
+sea-core = { path = "../sea-core" }
 
 [lints.rust]
 unsafe_code = "forbid"

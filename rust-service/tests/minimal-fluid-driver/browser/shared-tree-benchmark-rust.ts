@@ -20,10 +20,10 @@ import init, {
 	BrowserClient,
 	InjectedClient,
 	SummaryEntry as GeneratedSummaryEntry,
-} from "../pkg/fluid_webtransport_browser.js";
+} from "../pkg/sea_webtransport_browser.js";
 import initLocalService, {
 	LocalServiceTransport,
-} from "../pkg-local/fluid_native_service_browser.js";
+} from "../pkg-local/sea_service_browser.js";
 import {
 	DirectDummyClient,
 	DirectSharedTreeClient,

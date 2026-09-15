@@ -1,8 +1,8 @@
 # Snapshotted Stream Content Addressed
 
-`snapshotted-stream-content-addressed` stores immutable SHA-256 blobs and canonical summary manifests in memory or on a local filesystem.
+`sea-content-addressed` stores immutable SHA-256 blobs and canonical summary manifests in memory or on a local filesystem.
 
-Both `MemoryContentStore` and `ContentStore` implement the common `ContentStorage` contract from `snapshotted-stream-core`.
+Both `MemoryContentStore` and `ContentStore` implement the common `ContentStorage` contract from `sea-core`.
 They share digest calculation, manifest validation, and canonical encoding.
 
 ## Publication and Verification
@@ -24,7 +24,7 @@ See [`src/lib.rs`](src/lib.rs) for the API, [`tests/core.rs`](tests/core.rs) for
 From `rust-service/`:
 
 ```bash
-cargo test -p snapshotted-stream-content-addressed --all-targets
-cargo clippy -p snapshotted-stream-content-addressed --all-targets -- -D warnings
-RUSTDOCFLAGS='-D warnings' cargo doc -p snapshotted-stream-content-addressed --no-deps
+cargo test -p sea-content-addressed --all-targets
+cargo clippy -p sea-content-addressed --all-targets -- -D warnings
+RUSTDOCFLAGS='-D warnings' cargo doc -p sea-content-addressed --no-deps
 ```

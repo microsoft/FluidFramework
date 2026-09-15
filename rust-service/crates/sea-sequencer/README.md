@@ -1,6 +1,6 @@
 # Fluid Sequencer
 
-`fluid-sequencer` provides authoritative ordering and validation for Fluid submissions over an opaque append-only storage implementation. It stores only valid session-start and accepted-submission entries in the canonical log.
+`sea-sequencer` provides authoritative ordering and validation for Fluid submissions over an opaque append-only storage implementation. It stores only valid session-start and accepted-submission entries in the canonical log.
 
 ## Session and submission model
 
@@ -25,9 +25,9 @@ Storage failures classified as ambiguous put the sequencer into recovery-require
 From `rust-service/`:
 
 ```bash
-cargo test -p fluid-sequencer
-cargo rustc -p fluid-sequencer --lib -- -D missing-docs
-RUSTDOCFLAGS="-D warnings" cargo doc -p fluid-sequencer --all-features --no-deps
+cargo test -p sea-sequencer
+cargo rustc -p sea-sequencer --lib -- -D missing-docs
+RUSTDOCFLAGS="-D warnings" cargo doc -p sea-sequencer --all-features --no-deps
 ```
 
 Tests cover pre-append rejection, exact retries, ambiguous committed and uncommitted outcomes, replay, stale fences, same-host deployment fencing, and bounded projected pagination.

@@ -9,9 +9,9 @@ On Unix, the `process` module provides a process-isolated adapter over a version
 Run from `rust-service/`:
 
 ```bash
-cargo test -p snapshotted-stream-network --all-targets --all-features
-cargo clippy -p snapshotted-stream-network --all-targets --all-features -- -D warnings
-RUSTDOCFLAGS='-D warnings -D missing_docs' cargo doc -p snapshotted-stream-network --no-deps
+cargo test -p sea-network --all-targets --all-features
+cargo clippy -p sea-network --all-targets --all-features -- -D warnings
+RUSTDOCFLAGS='-D warnings -D missing_docs' cargo doc -p sea-network --no-deps
 ```
 
 The process adapter and its tests require Unix-domain sockets.

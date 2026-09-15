@@ -19,7 +19,7 @@ use std::{
 
 use bytes::Bytes;
 use sha2::{Digest as _, Sha256};
-use snapshotted_stream_core::{
+use sea_core::{
     ErrorKind,
     storage::{
         ContentId, ContentReceipt, ContentStorage, ContentSummaryEntry, ContentSummaryReceipt,

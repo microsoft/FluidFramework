@@ -5,8 +5,8 @@ This crate is a single-process research implementation used to test checksummed 
 From `rust-service/`, run:
 
 ```bash
-cargo test -p snapshotted-stream-durable-log-spike --all-targets --all-features
-cargo clippy -p snapshotted-stream-durable-log-spike --all-targets --all-features -- -D warnings
+cargo test -p sea-file-durable --all-targets --all-features
+cargo clippy -p sea-file-durable --all-targets --all-features -- -D warnings
 ```
 
 The test suite includes real child-process termination around append and snapshot boundaries. It uses atomic marker files for deterministic coordination and has a 10-second failure timeout. Run it on a local filesystem that supports file synchronization and atomic rename within one directory.

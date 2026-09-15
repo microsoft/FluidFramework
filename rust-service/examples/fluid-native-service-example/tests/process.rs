@@ -9,7 +9,7 @@ use std::{
 };
 
 use bytes::Bytes;
-use fluid_service_protocol::{
+use sea_protocol::{
     Acknowledgement, ErrorCode, Frame, Limits, Message, Reference, Request, Response, Submission,
     decode, encode,
 };
@@ -40,7 +40,7 @@ fn spawn_server(root: &Path, socket: &Path) -> Child {
     if socket.exists() {
         fs::remove_file(socket).unwrap();
     }
-    let child = Command::new(env!("CARGO_BIN_EXE_fluid-native-service"))
+    let child = Command::new(env!("CARGO_BIN_EXE_sea-service"))
         .arg("--root")
         .arg(root)
         .arg("--socket")

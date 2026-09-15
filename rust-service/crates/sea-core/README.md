@@ -1,6 +1,6 @@
 # Snapshotted Stream Core
 
-`snapshotted-stream-core` defines transport- and storage-independent contracts for an ordered append-only stream, its latest client-authored snapshot, and service-level storage composition.
+`sea-core` defines transport- and storage-independent contracts for an ordered append-only stream, its latest client-authored snapshot, and service-level storage composition.
 
 ## Contracts
 
@@ -29,6 +29,6 @@ See [`src/lib.rs`](src/lib.rs) for the complete API contract.
 From `rust-service/`:
 
 ```bash
-cargo test -p snapshotted-stream-core
-RUSTDOCFLAGS='-D warnings' cargo doc -p snapshotted-stream-core --no-deps
+cargo test -p sea-core
+RUSTDOCFLAGS='-D warnings' cargo doc -p sea-core --no-deps
 ```

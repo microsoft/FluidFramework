@@ -1,6 +1,6 @@
 # Encryption Wrapper
 
-`snapshotted-stream-encryption` transparently encrypts every record and snapshot
+`sea-encryption` transparently encrypts every record and snapshot
 with AES-256-GCM-SIV. Each payload has an independent authenticated envelope;
 the wrapped store continues to own positions, snapshot lineage, capabilities,
 cancellation, and backpressure.
@@ -41,9 +41,9 @@ compresses plaintext before the inner encryption wrapper persists it.
 From `rust-service/`:
 
 ```console
-cargo test -p snapshotted-stream-encryption --all-targets --all-features
-cargo clippy -p snapshotted-stream-encryption --all-targets --all-features -- -D warnings
-RUSTDOCFLAGS="-D warnings" cargo doc -p snapshotted-stream-encryption --all-features --no-deps
+cargo test -p sea-encryption --all-targets --all-features
+cargo clippy -p sea-encryption --all-targets --all-features -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc -p sea-encryption --all-features --no-deps
 ```
 
 The test suite covers shared stream, snapshot, and position-codec conformance;

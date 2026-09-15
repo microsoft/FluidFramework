@@ -21,7 +21,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use flate2::{Compression, read::ZlibDecoder, write::ZlibEncoder};
 use futures_util::StreamExt;
-use snapshotted_stream_core::{
+use sea_core::{
     AppendReceipt, AppendStream, Capabilities, ClassifiedError, ErrorKind, PublishedSnapshot,
     ReadRecord, Snapshot, SnapshotId, SnapshotStore, StreamReader,
 };
@@ -201,16 +201,16 @@ where
 #[cfg(test)]
 mod tests {
     use futures_util::{StreamExt, TryStreamExt};
-    use snapshotted_stream_core::{
+    use sea_core::{
         AppendStream, ClassifiedError, ErrorKind, Snapshot, SnapshotPosition, SnapshotStore,
     };
-    use snapshotted_stream_memory::MemoryStream;
+    use sea_memory::MemoryStream;
 
     use super::*;
 
     #[tokio::test]
     async fn passes_shared_conformance() {
-        snapshotted_stream_conformance::run_conformance(|| {
+        sea_conformance::run_conformance(|| {
             CompressionStream::new(MemoryStream::new())
         })
         .await;

@@ -1,13 +1,13 @@
 [package]
-name = "snapshotted-stream-counter"
+name = "sea-counter"
 version = "0.1.0"
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-snapshotted-stream-client = { path = "../../crates/sea-client" }
-snapshotted-stream-memory = { path = "../../crates/sea-memory" }
+sea-client = { path = "../../crates/sea-client" }
+sea-memory = { path = "../../crates/sea-memory" }
 tokio.workspace = true
 
 [lints]

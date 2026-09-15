@@ -4,7 +4,7 @@ use std::{
     path::PathBuf,
 };
 
-use snapshotted_stream_content_addressed::{
+use sea_content_addressed::{
     ContentStore, StoreConfig, SummaryEntry, SummaryManifest,
 };
 

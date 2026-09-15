@@ -2,14 +2,14 @@ use std::{fs, sync::Arc, time::Instant};
 
 use async_trait::async_trait;
 use bytes::Bytes;
-use fluid_native_service::{NativeService, ServiceConfig};
-use fluid_service_protocol::{
+use sea_service::{NativeService, ServiceConfig};
+use sea_protocol::{
     Acknowledgement, Reference, Request, Response, SubmissionDisposition,
 };
-use fluid_webtransport_native::{
+use sea_webtransport::{
     MeasurementHandle, TransportConfig, WebTransportClient, WebTransportServer,
 };
-use snapshotted_stream_client::{LifecycleEvent, NativeClient};
+use sea_client::{LifecycleEvent, NativeClient};
 use wtransport::Identity;
 
 use super::{

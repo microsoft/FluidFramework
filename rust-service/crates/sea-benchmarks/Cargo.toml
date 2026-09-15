@@ -1,5 +1,5 @@
 [package]
-name = "snapshotted-stream-benchmarks"
+name = "sea-benchmarks"
 version = "0.1.0"
 edition.workspace = true
 license.workspace = true
@@ -9,20 +9,20 @@ publish = false
 [dependencies]
 async-trait.workspace = true
 bytes.workspace = true
-fluid-native-service = { path = "../sea-service" }
-fluid-service-protocol = { path = "../sea-protocol" }
-fluid-webtransport-native = { path = "../sea-webtransport" }
+sea-service = { path = "../sea-service" }
+sea-protocol = { path = "../sea-protocol" }
+sea-webtransport = { path = "../sea-webtransport" }
 futures-util.workspace = true
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.143"
-snapshotted-stream-compression = { path = "../sea-compression" }
-snapshotted-stream-core = { path = "../sea-core" }
-snapshotted-stream-encryption = { path = "../sea-encryption" }
-snapshotted-stream-file-simple = { path = "../sea-file" }
-snapshotted-stream-memory = { path = "../sea-memory" }
-snapshotted-stream-client = { path = "../sea-client" }
-snapshotted-stream-network = { path = "../sea-network" }
-snapshotted-stream-stateful-compression = { path = "../sea-stateful-compression" }
+sea-compression = { path = "../sea-compression" }
+sea-core = { path = "../sea-core" }
+sea-encryption = { path = "../sea-encryption" }
+sea-file = { path = "../sea-file" }
+sea-memory = { path = "../sea-memory" }
+sea-client = { path = "../sea-client" }
+sea-network = { path = "../sea-network" }
+sea-stateful-compression = { path = "../sea-stateful-compression" }
 tokio.workspace = true
 wtransport = "=0.7.2"
 

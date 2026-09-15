@@ -10,7 +10,7 @@ use std::{
 };
 
 use core::{ClientMetrics, ProtocolCore, js_error};
-use fluid_service_protocol::{
+use sea_protocol::{
     ProjectedOperation as ProtocolProjectedOperation, Reference, Resolution,
     SummaryEntry as ProtocolSummaryEntry,
 };
@@ -233,7 +233,7 @@ pub struct ProjectedReadPage {
 /// Projected-operation subscription backed by a caller-provided JavaScript transport.
 pub struct InjectedProjectedSubscription {
     transport: JsValue,
-    limits: fluid_service_protocol::Limits,
+    limits: sea_protocol::Limits,
     request_id: u64,
     cancelled: Cell<bool>,
     metrics: Rc<ClientMetrics>,
@@ -707,7 +707,7 @@ pub struct BrowserClient {
 /// Projected-operation subscription backed by one browser readable stream.
 pub struct BrowserProjectedSubscription {
     reader: ReadableStreamDefaultReader,
-    limits: fluid_service_protocol::Limits,
+    limits: sea_protocol::Limits,
     request_id: u64,
     buffered: RefCell<Vec<u8>>,
     pending: RefCell<Option<ProjectedOperation>>,
@@ -720,7 +720,7 @@ pub struct BrowserProjectedSubscription {
 pub struct BrowserSubmissionStream {
     writer: WritableStreamDefaultWriter,
     reader: ReadableStreamDefaultReader,
-    limits: fluid_service_protocol::Limits,
+    limits: sea_protocol::Limits,
     core: Rc<RefCell<ProtocolCore>>,
     buffered: RefCell<Vec<u8>>,
     request_ids: RefCell<VecDeque<u64>>,
@@ -1221,7 +1221,7 @@ fn projected_read_page(core: &ProtocolCore, response: &[u8]) -> Result<Projected
 }
 
 fn projected_operation(
-    limits: fluid_service_protocol::Limits,
+    limits: sea_protocol::Limits,
     request_id: u64,
     response: &[u8],
 ) -> Result<ProjectedOperation, JsValue> {
@@ -1365,15 +1365,15 @@ async fn read_stream_frame(
         .checked_mul(2)
         .ok_or_else(|| js_error("subscription buffer limit overflowed"))?;
     loop {
-        if buffered.len() >= fluid_service_protocol::HEADER_BYTES {
+        if buffered.len() >= sea_protocol::HEADER_BYTES {
             let body_bytes = usize::try_from(u32::from_be_bytes(
-                buffered[fluid_service_protocol::HEADER_BYTES - 4
-                    ..fluid_service_protocol::HEADER_BYTES]
+                buffered[sea_protocol::HEADER_BYTES - 4
+                    ..sea_protocol::HEADER_BYTES]
                     .try_into()
                     .map_err(|_| js_error("subscription frame header is invalid"))?,
             ))
             .map_err(|_| js_error("subscription frame length is invalid"))?;
-            let frame_bytes = fluid_service_protocol::HEADER_BYTES
+            let frame_bytes = sea_protocol::HEADER_BYTES
                 .checked_add(body_bytes)
                 .ok_or_else(|| js_error("subscription frame length overflowed"))?;
             if frame_bytes > max_frame_bytes {
@@ -1412,13 +1412,13 @@ async fn read_stream_frame(
 
 fn complete_frame_count(mut bytes: &[u8]) -> usize {
     let mut count = 0;
-    while bytes.len() >= fluid_service_protocol::HEADER_BYTES {
+    while bytes.len() >= sea_protocol::HEADER_BYTES {
         let body_bytes = u32::from_be_bytes(
-            bytes[fluid_service_protocol::HEADER_BYTES - 4..fluid_service_protocol::HEADER_BYTES]
+            bytes[sea_protocol::HEADER_BYTES - 4..sea_protocol::HEADER_BYTES]
                 .try_into()
                 .expect("the bounded header slice has four bytes"),
         ) as usize;
-        let Some(frame_bytes) = fluid_service_protocol::HEADER_BYTES.checked_add(body_bytes) else {
+        let Some(frame_bytes) = sea_protocol::HEADER_BYTES.checked_add(body_bytes) else {
             break;
         };
         if bytes.len() < frame_bytes {

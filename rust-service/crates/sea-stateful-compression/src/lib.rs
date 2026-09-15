@@ -21,7 +21,7 @@
 use async_trait::async_trait;
 use bytes::{BufMut, Bytes, BytesMut};
 use futures_util::StreamExt;
-use snapshotted_stream_core::{
+use sea_core::{
     AppendReceipt, AppendStream, Capabilities, ClassifiedError, ErrorKind, PositionCodec,
     PublishedSnapshot, ReadRecord, Snapshot, SnapshotId, SnapshotStore, StreamReader,
 };
@@ -391,12 +391,12 @@ mod tests {
     use std::time::Instant;
 
     use futures_util::{StreamExt, TryStreamExt};
-    use snapshotted_stream_compression::CompressionStream;
-    use snapshotted_stream_core::{
+    use sea_compression::CompressionStream;
+    use sea_core::{
         AppendReceipt, AppendStream, Capabilities, ClassifiedError, ErrorKind, PublishedSnapshot,
         ReadRecord, Snapshot, SnapshotId, SnapshotPosition, SnapshotStore, StreamReader,
     };
-    use snapshotted_stream_memory::{MemoryError, MemoryPosition, MemoryStream};
+    use sea_memory::{MemoryError, MemoryPosition, MemoryStream};
 
     use super::*;
 
@@ -532,12 +532,12 @@ mod tests {
 
     #[tokio::test]
     async fn passes_shared_conformance_directly() {
-        snapshotted_stream_conformance::run_conformance(|| wrap(MemoryStream::new())).await;
+        sea_conformance::run_conformance(|| wrap(MemoryStream::new())).await;
     }
 
     #[tokio::test]
     async fn passes_position_codec_conformance_directly() {
-        snapshotted_stream_conformance::run_position_codec_conformance(
+        sea_conformance::run_position_codec_conformance(
             || wrap(MemoryStream::new()),
             b"malformed",
         )

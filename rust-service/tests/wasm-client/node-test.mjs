@@ -8,7 +8,7 @@ import { createRequire } from "node:module";
 import test from "node:test";
 
 const require = createRequire(import.meta.url);
-const { InjectedClient, SummaryEntry } = require("./pkg/fluid_webtransport_browser.js");
+const { InjectedClient, SummaryEntry } = require("./pkg/sea_webtransport_browser.js");
 const encoder = new TextEncoder();
 
 function concat(...parts) {

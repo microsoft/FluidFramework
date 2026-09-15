@@ -1,6 +1,6 @@
 # WASM client package validation
 
-The `fluid-webtransport-browser` crate generates one TypeScript-facing WASM package with two clients:
+The `sea-webtransport-browser` crate generates one TypeScript-facing WASM package with two clients:
 
 - `InjectedClient` is environment-neutral. Its `AsyncRequestTransport.request` method receives a validated complete FSP4 request and returns a promise for a complete FSP4 response. The WASM core validates response framing and request identity and owns bounded request/lifecycle state.
 - `BrowserClient` retains the browser WebTransport adapter, certificate pinning, stream I/O, explicit disconnect, and explicit reconnect behavior.
@@ -21,9 +21,9 @@ Build and test the Node distribution from `rust-service/` with an isolated targe
 ```bash
 CARGO_TARGET_DIR=/tmp/fluid-wasm-client-target \
   RUSTFLAGS='--cfg=web_sys_unstable_apis' \
-  cargo build --locked -p fluid-webtransport-browser --target wasm32-unknown-unknown --release
-wasm-bindgen /tmp/fluid-wasm-client-target/wasm32-unknown-unknown/release/fluid_webtransport_browser.wasm \
-  --target nodejs --out-name fluid_webtransport_browser --out-dir tests/wasm-client/pkg
+  cargo build --locked -p sea-webtransport-browser --target wasm32-unknown-unknown --release
+wasm-bindgen /tmp/fluid-wasm-client-target/wasm32-unknown-unknown/release/sea_webtransport_browser.wasm \
+  --target nodejs --out-name sea_webtransport_browser --out-dir tests/wasm-client/pkg
 node --test tests/wasm-client/node-test.mjs
 ```
 

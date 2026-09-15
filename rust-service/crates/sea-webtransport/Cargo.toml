@@ -1,5 +1,5 @@
 [package]
-name = "fluid-webtransport-native"
+name = "sea-webtransport"
 version = "0.1.0"
 edition.workspace = true
 license.workspace = true
@@ -7,8 +7,8 @@ rust-version.workspace = true
 
 [dependencies]
 bytes.workspace = true
-fluid-native-service = { path = "../sea-service" }
-fluid-service-protocol = { path = "../sea-protocol" }
+sea-service = { path = "../sea-service" }
+sea-protocol = { path = "../sea-protocol" }
 futures-util.workspace = true
 thiserror.workspace = true
 tokio.workspace = true

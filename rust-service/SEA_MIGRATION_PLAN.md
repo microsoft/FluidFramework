@@ -5,10 +5,10 @@
 - **Plan status:** Approved.
 - **Execution mode:** Lightweight sequential work on the current branch.
 - **Compatibility:** No API, wire-format, persisted-data, package-name, or executable compatibility is required.
-- **Completed checkpoint:** 2. Directory moves.
-- **Validation:** `cargo metadata --no-deps --format-version 1` resolved all 21 workspace packages.
+- **Completed checkpoint:** 3. Package names, references, and current documentation.
+- **Validation:** The canonical workspace format, Clippy, rustdoc, build, test, `sea-counter`, and documentation gate passed.
 - **Decisions or TODOs changed:** None.
-- **Next checkpoint:** 3. Package names, references, and current documentation.
+- **Next checkpoint:** 4. Practical file moves and deletions.
 - **Plan commit:** `d1a9915141bfeb8e61fb3550e795a27c9f15d816`.
 
 Update this section in every implementation commit. Each update must identify the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint. Keep completed checklist entries in this file so it remains the migration record.
@@ -196,12 +196,12 @@ Require all workspace packages to resolve from their new directories. Package na
 
 ### 3. Package names, references, and current documentation
 
-- [ ] Rename Cargo package declarations to the mechanical Sea names.
-- [ ] Update dependency keys, package aliases, Rust crate imports, feature references, package-scoped commands, scripts, tests, benchmarks, and current Markdown links.
-- [ ] Update `WORKSTREAMS.md`, `DEVELOPMENT.md`, grouping READMEs, package READMEs, and current top-level architecture prose.
-- [ ] Do not rewrite append-only decisions, completed iteration records, or historical reports.
-- [ ] Update `Cargo.lock` through Cargo rather than manual editing.
-- [ ] Assert that each retained package directory basename equals its package name.
+- [x] Rename Cargo package declarations to the mechanical Sea names.
+- [x] Update dependency keys, package aliases, Rust crate imports, feature references, package-scoped commands, scripts, tests, benchmarks, and current Markdown links.
+- [x] Update `WORKSTREAMS.md`, `DEVELOPMENT.md`, grouping READMEs, package READMEs, and current top-level architecture prose.
+- [x] Do not rewrite append-only decisions, completed iteration records, or historical reports.
+- [x] Update `Cargo.lock` through Cargo rather than manual editing.
+- [x] Assert that each retained package directory basename equals its package name.
 
 Validation: run the canonical workspace gate in [DEVELOPMENT.md](DEVELOPMENT.md), adjusted in the same commit for renamed packages.
 

@@ -15,21 +15,21 @@ use std::{
 };
 
 use bytes::Bytes;
-use fluid_sequencer::{
+use sea_sequencer::{
     AuthoritativeSequencer, FencedStream, PositionToken, ProjectedOperation as SequencerOperation,
     Rejection, ResolutionOutcome, SequencedMessage, SequencerStorage,
     ServiceError as SequencerError, SessionId, Submission as SequencerSubmission, SubmissionId,
     SubmitOutcome, WriterId,
 };
-use fluid_service_protocol::{
+use sea_protocol::{
     Acknowledgement, CommittedRecord, ErrorCode, ProjectedOperation,
     PublishedSnapshot as ProtocolSnapshot, Reference, Request, Resolution, Response,
     SubmissionDisposition,
 };
-pub use fluid_service_storage::StorageMode;
-use fluid_service_storage::{BuiltInServiceStorage, StorageConfig};
+pub use sea_storage::StorageMode;
+use sea_storage::{BuiltInServiceStorage, StorageConfig};
 use futures_util::StreamExt;
-use snapshotted_stream_core::{
+use sea_core::{
     AppendReceipt, ClassifiedError, ErrorKind, PublishedSnapshot, ReadRecord, Snapshot, SnapshotId,
     SnapshotPosition,
     storage::{
@@ -408,7 +408,7 @@ impl NativeService {
     /// Converts and publishes a protocol summary manifest.
     fn publish_summary(
         &self,
-        entries: Vec<fluid_service_protocol::SummaryEntry>,
+        entries: Vec<sea_protocol::SummaryEntry>,
     ) -> Result<Response, ErrorCode> {
         let entries = entries
             .into_iter()
@@ -445,7 +445,7 @@ impl NativeService {
             digest: digest.as_bytes().clone(),
             entries: entries
                 .into_iter()
-                .map(|entry| fluid_service_protocol::SummaryEntry {
+                .map(|entry| sea_protocol::SummaryEntry {
                     path: entry.path,
                     blob: entry.content.as_bytes().clone(),
                 })
@@ -575,7 +575,7 @@ impl Document {
     /// Validates, sequences, and announces one operation submission.
     async fn submit(
         &mut self,
-        submission: fluid_service_protocol::Submission,
+        submission: sea_protocol::Submission,
     ) -> Result<Response, ErrorCode> {
         let outcome = self
             .sequencer
@@ -775,7 +775,7 @@ impl SequencerStorage for SequencerStorageAdapter {
     fn read_all(
         &self,
     ) -> impl Future<Output = Result<Vec<ReadRecord<Self::Position>>, Self::Error>> + Send {
-        snapshotted_stream_core::storage::read_all(self.storage.as_ref())
+        sea_core::storage::read_all(self.storage.as_ref())
     }
 
     /// Encodes a neutral canonical position for protocol transport.
@@ -886,7 +886,7 @@ fn map_core_storage_error(error: StorageError) -> ErrorCode {
 mod tests {
     use std::sync::atomic::{AtomicU64, Ordering};
 
-    use fluid_service_protocol::{Request, Submission};
+    use sea_protocol::{Request, Submission};
 
     use super::*;
 
@@ -897,12 +897,12 @@ mod tests {
     }
 
     impl CoreServiceStorage for ObservedStorage {
-        fn documents(&self) -> &dyn snapshotted_stream_core::storage::DocumentStorageFactory {
+        fn documents(&self) -> &dyn sea_core::storage::DocumentStorageFactory {
             self.document_accesses.fetch_add(1, Ordering::Relaxed);
             self.inner.documents()
         }
 
-        fn content(&self) -> &dyn snapshotted_stream_core::storage::ContentStorage {
+        fn content(&self) -> &dyn sea_core::storage::ContentStorage {
             self.content_accesses.fetch_add(1, Ordering::Relaxed);
             self.inner.content()
         }
@@ -1599,7 +1599,7 @@ mod tests {
         ));
         let summary_digest = match service
             .handle(Request::PublishSummary {
-                entries: vec![fluid_service_protocol::SummaryEntry {
+                entries: vec![sea_protocol::SummaryEntry {
                     path: bytes(b"root/data"),
                     blob: digest.clone(),
                 }],
@@ -1617,7 +1617,7 @@ mod tests {
         assert!(matches!(
             service
                 .handle(Request::PublishSummary {
-                    entries: vec![fluid_service_protocol::SummaryEntry {
+                    entries: vec![sea_protocol::SummaryEntry {
                         path: bytes(b"root/data"),
                         blob: digest.clone(),
                     }],
@@ -1633,7 +1633,7 @@ mod tests {
         assert_eq!(
             service
                 .handle(Request::PublishSummary {
-                    entries: vec![fluid_service_protocol::SummaryEntry {
+                    entries: vec![sea_protocol::SummaryEntry {
                         path: bytes(b"missing"),
                         blob: Bytes::from_static(&[9; 32]),
                     }],
@@ -1662,7 +1662,7 @@ mod tests {
                 })
                 .await,
             Response::Summary { entries, .. }
-                if entries == vec![fluid_service_protocol::SummaryEntry {
+                if entries == vec![sea_protocol::SummaryEntry {
                     path: bytes(b"root/data"),
                     blob: digest,
                 }]
@@ -1694,7 +1694,7 @@ mod tests {
             panic!("memory upload failed");
         };
         let summary = Request::PublishSummary {
-            entries: vec![fluid_service_protocol::SummaryEntry {
+            entries: vec![sea_protocol::SummaryEntry {
                 path: bytes(b"root/data"),
                 blob: digest.clone(),
             }],

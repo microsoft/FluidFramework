@@ -14,9 +14,9 @@ The tests launch real service processes in temporary directories, exercise kill/
 For manual protocol experiments, start the server with paths dedicated to the run:
 
 ```bash
-cargo run -p fluid-native-service-example --bin fluid-native-service -- \
+cargo run -p fluid-native-service-example --bin sea-service -- \
   --root /tmp/fluid-native-service-data \
-  --socket /tmp/fluid-native-service.sock
+  --socket /tmp/sea-service.sock
 ```
 
 The process runs until it receives a valid FSP4 `Shutdown` request or encounters an error. It is a local integration example, not a production daemon: it has no authentication, network listener, service manager integration, or concurrent request handling.

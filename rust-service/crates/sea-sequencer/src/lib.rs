@@ -17,7 +17,7 @@ use std::{
 };
 
 use bytes::{Buf, BufMut, Bytes, BytesMut};
-use snapshotted_stream_core::{
+use sea_core::{
     AppendReceipt, AppendStream, ClassifiedError, ErrorKind, PositionCodec, ReadRecord,
     SnapshotPosition, StreamPosition,
 };
@@ -1416,7 +1416,7 @@ mod tests {
         time::{Duration, Instant, SystemTime, UNIX_EPOCH},
     };
 
-    use snapshotted_stream_core::Durability;
+    use sea_core::Durability;
 
     use super::*;
 

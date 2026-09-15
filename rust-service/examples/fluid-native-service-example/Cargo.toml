@@ -6,12 +6,12 @@ license.workspace = true
 rust-version.workspace = true
 
 [[bin]]
-name = "fluid-native-service"
+name = "sea-service"
 path = "src/main.rs"
 
 [dependencies]
-fluid-native-service = { path = "../../crates/sea-service" }
-fluid-service-protocol = { path = "../../crates/sea-protocol" }
+sea-service = { path = "../../crates/sea-service" }
+sea-protocol = { path = "../../crates/sea-protocol" }
 tokio.workspace = true
 
 [dev-dependencies]

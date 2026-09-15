@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import init, { BrowserClient, SummaryEntry } from "./pkg/fluid_webtransport_browser.js";
+import init, { BrowserClient, SummaryEntry } from "./pkg/sea_webtransport_browser.js";
 
 const encoder = new TextEncoder();
 const parameters = new URLSearchParams(location.search);

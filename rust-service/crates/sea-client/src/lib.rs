@@ -1,12 +1,12 @@
 #![doc = "Transport-neutral lifecycle policy and native helpers for Fluid service clients."]
 
 use bytes::Bytes;
-use fluid_service_protocol::{
+use sea_protocol::{
     Acknowledgement, ErrorCode, Reference, Request, Resolution, Response, Submission,
     SubmissionDisposition, SummaryEntry,
 };
 use futures_util::TryStreamExt;
-use snapshotted_stream_core::{
+use sea_core::{
     AppendStream, PublishedSnapshot, Snapshot, SnapshotPosition, SnapshotStore,
 };
 use thiserror::Error;

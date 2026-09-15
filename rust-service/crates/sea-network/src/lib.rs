@@ -11,7 +11,7 @@ use std::sync::{
 use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::StreamExt;
-use snapshotted_stream_core::{
+use sea_core::{
     AppendReceipt, AppendStream, Capabilities, ClassifiedError, ErrorKind, PositionCodec,
     PublishedSnapshot, ReadRecord, Snapshot, SnapshotId, SnapshotStore, StreamReader,
 };
@@ -404,11 +404,11 @@ where
 #[cfg(test)]
 mod tests {
     use futures_util::{StreamExt, TryStreamExt};
-    use snapshotted_stream_compression::CompressionStream;
-    use snapshotted_stream_core::{
+    use sea_compression::CompressionStream;
+    use sea_core::{
         AppendStream, ClassifiedError, ErrorKind, Snapshot, SnapshotPosition, SnapshotStore,
     };
-    use snapshotted_stream_memory::MemoryStream;
+    use sea_memory::MemoryStream;
 
     use super::*;
 
@@ -418,12 +418,12 @@ mod tests {
 
     #[tokio::test]
     async fn passes_shared_conformance() {
-        snapshotted_stream_conformance::run_conformance(|| connected_memory(2).0).await;
+        sea_conformance::run_conformance(|| connected_memory(2).0).await;
     }
 
     #[tokio::test]
     async fn passes_position_codec_conformance() {
-        snapshotted_stream_conformance::run_position_codec_conformance(
+        sea_conformance::run_position_codec_conformance(
             || connected_memory(2).0,
             b"invalid-memory-position",
         )

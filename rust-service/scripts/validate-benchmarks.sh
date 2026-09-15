@@ -20,8 +20,8 @@ prepare_benchmark_copy "$source_root" "$copy_root"
 cd "$copy_root"
 export CARGO_TARGET_DIR="$target_root"
 cargo fmt --all -- --check
-cargo test -p snapshotted-stream-benchmarks --all-targets
-cargo clippy -p snapshotted-stream-benchmarks --all-targets -- -D warnings
-cargo run -p snapshotted-stream-benchmarks -- smoke
+cargo test -p sea-benchmarks --all-targets
+cargo clippy -p sea-benchmarks --all-targets -- -D warnings
+cargo run -p sea-benchmarks -- smoke
 
 verify_assigned_roots_unchanged "$source_root"

@@ -5,7 +5,7 @@ use std::{
     process::{Command, Stdio},
 };
 
-use snapshotted_stream_content_addressed::{
+use sea_content_addressed::{
     ContentDigest, ContentStore, StoreConfig, SummaryEntry, SummaryManifest,
 };
 

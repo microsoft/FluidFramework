@@ -6,11 +6,11 @@ This WASM-only crate exposes FSP4 clients to JavaScript without changing protoco
 
 Submission-stream writes wait for browser transport backpressure. Responses remain ordered by request ID; concurrent reads or writes are rejected. Closing ends only the write side after queued writes. Subscription cancellation releases its reader. Unary responses and streamed frames are bounded by the configured FSP4 maximum. Metrics count encoded FSP4 bytes, not HTTP/3, QUIC, UDP, or TLS overhead.
 
-The hand-authored TypeScript transport interfaces live in `src/lib.rs`. Generated bindings are ignored artifacts and must not be edited. See the [Node WASM harness](../../../tests/wasm-client/README.md) and [browser harness](../../../tests/webtransport-browser/README.md) for fresh-consumer commands.
+The hand-authored TypeScript transport interfaces live in `src/lib.rs`. Generated bindings are ignored artifacts and must not be edited. See the [Node WASM harness](../../tests/wasm-client/README.md) and [browser harness](../../tests/webtransport-browser/README.md) for fresh-consumer commands.
 
 Run the Rust target check from `rust-service/`:
 
 ```bash
 RUSTFLAGS='--cfg=web_sys_unstable_apis' cargo build --locked \
-  -p fluid-webtransport-browser --target wasm32-unknown-unknown
+  -p sea-webtransport-browser --target wasm32-unknown-unknown
 ```

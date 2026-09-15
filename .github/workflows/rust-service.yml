@@ -38,6 +38,6 @@ jobs:
       - name: Test workspace
         run: cargo test --workspace --all-targets --all-features
       - name: Run counter example
-        run: cargo run -p snapshotted-stream-counter
+        run: cargo run -p sea-counter
       - name: Validate foundation records
         run: node ../.github/skills/rust-service-coordination/scripts/iteration-records.mjs validate-foundation

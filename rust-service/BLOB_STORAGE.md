@@ -1,7 +1,7 @@
 # Content-addressed blob storage
 
 This document proposes a unified content-addressed storage contract for binary blobs, directory blobs, Fluid summaries, and content referenced by events.
-It describes a target architecture rather than the behavior of the current `snapshotted-stream-content-addressed` crate.
+It describes a target architecture rather than the behavior of the current `sea-content-addressed` crate.
 
 The design separates correctness requirements from backend mechanisms.
 An in-memory implementation can maintain explicit reference counts, while a local-filesystem implementation can use hard links and inode link counts for most reference tracking and garbage collection.

@@ -22,7 +22,7 @@ import { SharedTree } from "@fluidframework/tree/legacy";
 import init, {
 	BrowserClient,
 	SummaryEntry as GeneratedSummaryEntry,
-} from "../pkg/fluid_webtransport_browser.js";
+} from "../pkg/sea_webtransport_browser.js";
 import {
 	type MinimalWasmDeltaConnection,
 	MinimalWasmDocumentServiceFactory,

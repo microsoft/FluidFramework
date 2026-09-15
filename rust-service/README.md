@@ -21,7 +21,7 @@ The expected architecture is a small kernel plus optional capabilities:
 ```text
 Fluid and other application adapters
                  |
-fluid-sequencer: framing, writers, and reference stream positions
+sea-sequencer: framing, writers, and reference stream positions
                  |
 Compression, encryption, transport, caching, and replication
                  |
@@ -30,9 +30,9 @@ Snapshotted append stream contract
 In-memory, file, browser, cloud, and replicated implementations
 ```
 
-The `fluid-sequencer` adapter will provide optional multi-writer protocol semantics such as message framing, join/leave events, local and final ordering, reference stream positions, minimum-reference tracking, and eviction of writers that fall behind. Fluid drivers and direct SharedTree integration can build on this adapter without introducing Fluid concepts into storage implementations.
+The `sea-sequencer` adapter will provide optional multi-writer protocol semantics such as message framing, join/leave events, local and final ordering, reference stream positions, minimum-reference tracking, and eviction of writers that fall behind. Fluid drivers and direct SharedTree integration can build on this adapter without introducing Fluid concepts into storage implementations.
 
-The native Rust client starts as an idiomatic facade over the raw append and snapshot traits. Optional typed codecs, catch-up and live-subscription helpers, and safe resubmission policies are added only when implementations demonstrate common requirements; Fluid protocol semantics remain in `fluid-sequencer`.
+The native Rust client starts as an idiomatic facade over the raw append and snapshot traits. Optional typed codecs, catch-up and live-subscription helpers, and safe resubmission policies are added only when implementations demonstrate common requirements; Fluid protocol semantics remain in `sea-sequencer`.
 
 Development begins with an interactive foundation phase that creates the Rust workspace, core traits, initial tests, stub crates, and a project coordination skill while resolving design questions as they become concrete. Work that benefits from parallel implementation uses numbered iterations: each implementation agent works in an isolated branch and worktree, makes reviewable commits, and produces a structured report covering correctness, integration, architectural friction, complexity, and performance. Sequential fixes and experiments use a lighter current-branch workflow with focused validation and proportionate local evidence.
 

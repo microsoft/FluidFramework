@@ -9,11 +9,11 @@ rustup target add wasm32-unknown-unknown
 cargo install wasm-bindgen-cli --version 0.2.128 --locked
 CARGO_TARGET_DIR=/tmp/fluid-webtransport-browser-target \
   RUSTFLAGS='--cfg=web_sys_unstable_apis' \
-  cargo build --locked -p fluid-webtransport-browser --target wasm32-unknown-unknown --release
-wasm-bindgen /tmp/fluid-webtransport-browser-target/wasm32-unknown-unknown/release/fluid_webtransport_browser.wasm \
-  --target web --out-name fluid_webtransport_browser --out-dir tests/webtransport-browser/pkg
+  cargo build --locked -p sea-webtransport-browser --target wasm32-unknown-unknown --release
+wasm-bindgen /tmp/fluid-webtransport-browser-target/wasm32-unknown-unknown/release/sea_webtransport_browser.wasm \
+  --target web --out-name sea_webtransport_browser --out-dir tests/webtransport-browser/pkg
 sh tests/webtransport-browser/generate-cert.sh tests/webtransport-browser/.certs
-cargo run -p fluid-webtransport-native --bin fluid-webtransport-native -- \
+cargo run -p sea-webtransport --bin sea-webtransport -- \
   127.0.0.1:0 tests/webtransport-browser/.certs/cert.pem \
   tests/webtransport-browser/.certs/key.pem tests/webtransport-browser/artifacts/service-data
 node tests/webtransport-browser/run-headless.mjs tests/webtransport-browser \

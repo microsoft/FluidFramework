@@ -14,7 +14,7 @@ use std::{
 use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::StreamExt;
-use snapshotted_stream_core::{
+use sea_core::{
     AppendReceipt, AppendStream, Capabilities, Capability, ClassifiedError, Durability, ErrorKind,
     PositionCodec, PublishedSnapshot, ReadRecord, Snapshot, SnapshotId, SnapshotPosition,
     SnapshotStore, StreamReader,
@@ -1239,8 +1239,8 @@ mod tests {
     };
 
     use futures_util::{StreamExt, TryStreamExt};
-    use snapshotted_stream_compression::CompressionStream;
-    use snapshotted_stream_memory::MemoryStream;
+    use sea_compression::CompressionStream;
+    use sea_memory::MemoryStream;
 
     use super::*;
 
@@ -1421,7 +1421,7 @@ mod tests {
         let (first, _first_server, _first_path) = spawned().await;
         let (second, _second_server, _second_path) = spawned().await;
         let clients = Arc::new(StdMutex::new(VecDeque::from([first, second])));
-        snapshotted_stream_conformance::run_position_codec_conformance(
+        sea_conformance::run_position_codec_conformance(
             || clients.lock().unwrap().pop_front().unwrap(),
             b"not-a-process-position",
         )

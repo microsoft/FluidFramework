@@ -469,7 +469,7 @@ class Transport {
 
 test("actual WASM package backs the minimal Fluid driver contract", async () => {
 	const generated =
-		require("../../wasm-client/pkg/fluid_webtransport_browser.js") as GeneratedPackage;
+		require("../../wasm-client/pkg/sea_webtransport_browser.js") as GeneratedPackage;
 	const backend = new ContractService();
 	const transports: Transport[] = [];
 	const factory = new MinimalWasmDocumentServiceFactory(async () => {

@@ -1,6 +1,6 @@
 # Proposed WebTransport flows
 
-This document sketches a target network protocol for the [native WebTransport adapter](crates/wrappers/fluid-webtransport-native/) and the [`fluid-sequencer`](crates/fluid-sequencer/).
+This document sketches a target network protocol for the [native WebTransport adapter](crates/wrappers/sea-webtransport/) and the [`sea-sequencer`](crates/sea-sequencer/).
 It is prospective: the current FSP4 protocol implements parts of these flows, but not the complete load, membership, snapshot, or content behavior described here.
 
 The transport adapter should own WebTransport stream lifecycle, framing, timeouts, cancellation, and flow control.

@@ -1,6 +1,6 @@
 # Snapshotted Stream Memory
 
-`snapshotted-stream-memory` is the process-local reference implementation of the append-stream, snapshot-store, and position-codec contracts.
+`sea-memory` is the process-local reference implementation of the append-stream, snapshot-store, and position-codec contracts.
 
 ## Behavior
 
@@ -14,13 +14,13 @@
 
 All records and snapshots are lost when the final handle is dropped. There is no retention, live tailing, durable persistence, or idempotent append identity. This implementation is suitable for tests, examples, and process-local state, not crash recovery.
 
-See [`src/lib.rs`](src/lib.rs) for the API and focused fault-adapter tests. Shared laws come from [`../snapshotted-stream-conformance`](../snapshotted-stream-conformance/README.md).
+See [`src/lib.rs`](src/lib.rs) for the API and focused fault-adapter tests. Shared laws come from [`../sea-conformance`](../sea-conformance/README.md).
 
 ## Validation
 
 From `rust-service/`:
 
 ```bash
-cargo test -p snapshotted-stream-memory --all-features
-RUSTDOCFLAGS='-D warnings' cargo doc -p snapshotted-stream-memory --all-features --no-deps
+cargo test -p sea-memory --all-features
+RUSTDOCFLAGS='-D warnings' cargo doc -p sea-memory --all-features --no-deps
 ```

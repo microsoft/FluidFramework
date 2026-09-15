@@ -1,6 +1,6 @@
 # Fluid Native Service
 
-`fluid-native-service` assembles the FSP4 protocol, authoritative sequencer, injected document and content storage, and projected-operation subscriptions into a single-host service.
+`sea-service` assembles the FSP4 protocol, authoritative sequencer, injected document and content storage, and projected-operation subscriptions into a single-host service.
 
 ## Ownership and routing
 
@@ -10,10 +10,10 @@ Each document owns an independent log, sequencer state, fence, snapshots, and pr
 
 ## Storage modes
 
-`NativeService::with_storage` accepts any `ServiceStorage` composition from `snapshotted-stream-core`.
+`NativeService::with_storage` accepts any `ServiceStorage` composition from `sea-core`.
 The service depends only on those focused storage contracts.
 
-`NativeService::new` is a convenience constructor over the built-in composition in `fluid-service-storage`:
+`NativeService::new` is a convenience constructor over the built-in composition in `sea-storage`:
 
 - `Memory` keeps document and content state in process memory and is intended for tests or ephemeral use.
 - `BufferedFile` uses the simple file backend without deployment-level fencing or durable append acknowledgement.
@@ -36,9 +36,9 @@ The built-in composition is single-host; its file authority is not a distributed
 From `rust-service/`:
 
 ```bash
-cargo test -p fluid-native-service
-cargo rustc -p fluid-native-service --lib -- -D missing-docs
-RUSTDOCFLAGS="-D warnings" cargo doc -p fluid-native-service --all-features --no-deps
+cargo test -p sea-service
+cargo rustc -p sea-service --lib -- -D missing-docs
+RUSTDOCFLAGS="-D warnings" cargo doc -p sea-service --all-features --no-deps
 ```
 
 Tests cover all storage modes, isolated documents, stale-session rejection before append, snapshot restart recovery, stale-owner fencing, cursor validation, projected subscription catch-up, lag recovery, document binding, and cancellation.
