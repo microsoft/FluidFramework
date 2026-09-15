@@ -279,42 +279,48 @@ export function createTreeIndexWithDependencyScope<
 			? keyFieldSelector
 			: keyFieldSelector.get.bind(keyFieldSelector);
 
+	// Resolve and validate every selected key field before constructing the index. AnchorTreeIndex
+	// subscribes to forest updates, so deferring this work could surface an invalid schema during a
+	// later edit and break the checkout instead of rejecting the index at creation time.
+	const keyFinders = new Map<string, KeyFinder<TKey>>();
+	for (const schema of indexableSchemaMap.values()) {
+		// The property key for the field which contains the index key on nodes with this schema.
+		const keyLocation = keyFieldSelectorFunction(schema);
+		if (keyLocation !== undefined) {
+			if (!(schema instanceof ObjectNodeSchema)) {
+				throw new UsageError(
+					`The property key "${keyLocation}" selected for schema "${schema.identifier}" cannot be used because the schema is not an object node schema.`,
+				);
+			}
+			const fieldSchema = schema.fields.get(keyLocation);
+			if (fieldSchema === undefined) {
+				throw new UsageError(
+					`The property key "${keyLocation}" selected for schema "${schema.identifier}" does not exist.`,
+				);
+			}
+			const fieldKind =
+				convertFieldKind.get(fieldSchema.kind) ?? fail("Unknown Simple Tree field kind");
+			if (fieldKind.multiplicity !== Multiplicity.Single) {
+				throw new UsageError(
+					`The property key "${keyLocation}" selected for schema "${schema.identifier}" must refer to a field that always contains exactly one value.`,
+				);
+			}
+			if ([...fieldSchema.allowedTypeSet].some((type) => type.kind !== NodeKind.Leaf)) {
+				throw new UsageError(
+					`The property key "${keyLocation}" selected for schema "${schema.identifier}" must refer to a field that only allows leaf values.`,
+				);
+			}
+
+			keyFinders.set(
+				schema.identifier,
+				makeGenericKeyFinder<TKey>(brand(fieldSchema.storedKey), isKeyValid),
+			);
+		}
+	}
+
 	const schemaIndexer = (
 		schemaIdentifier: TreeNodeSchemaIdentifier,
-	): KeyFinder<TKey> | undefined => {
-		const schema = indexableSchemaMap.get(schemaIdentifier);
-		if (schema !== undefined) {
-			// The property key for the field which contains the index key on nodes with this schema.
-			const keyLocation = keyFieldSelectorFunction(schema);
-			if (keyLocation !== undefined) {
-				if (!(schema instanceof ObjectNodeSchema)) {
-					throw new UsageError(
-						`The property key "${keyLocation}" selected for schema "${schema.identifier}" cannot be used because the schema is not an object node schema.`,
-					);
-				}
-				const fieldSchema = schema.fields.get(keyLocation);
-				if (fieldSchema === undefined) {
-					throw new UsageError(
-						`The property key "${keyLocation}" selected for schema "${schema.identifier}" does not exist.`,
-					);
-				}
-				const fieldKind =
-					convertFieldKind.get(fieldSchema.kind) ?? fail("Unknown Simple Tree field kind");
-				if (fieldKind.multiplicity !== Multiplicity.Single) {
-					throw new UsageError(
-						`The property key "${keyLocation}" selected for schema "${schema.identifier}" must refer to a field that always contains exactly one value.`,
-					);
-				}
-				if ([...fieldSchema.allowedTypeSet].some((type) => type.kind !== NodeKind.Leaf)) {
-					throw new UsageError(
-						`The property key "${keyLocation}" selected for schema "${schema.identifier}" must refer to a field that only allows leaf values.`,
-					);
-				}
-
-				return makeGenericKeyFinder<TKey>(brand(fieldSchema.storedKey), isKeyValid);
-			}
-		}
-	};
+	): KeyFinder<TKey> | undefined => keyFinders.get(schemaIdentifier);
 
 	const index = new AnchorTreeIndex<TKey, TValue>(
 		(view as SchematizingSimpleTreeView<TFieldSchema>).checkout.forest,

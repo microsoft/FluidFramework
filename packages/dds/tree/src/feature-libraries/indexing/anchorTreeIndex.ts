@@ -114,19 +114,21 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 		private readonly checkTreeStatus: (node: AnchorNode) => TreeStatus | undefined,
 		private readonly keyFinderDependencyScope = KeyFinderDependencyScope.Subtree,
 	) {
-		this.forest.registerAnnouncedVisitor(this.keyFinder);
-
 		// index all existing trees (this includes the primary document tree and all other detached/removed trees)
 		const detachedFieldsCursor = forest.getCursorAboveDetachedFields();
 		const cursor = forest.allocateCursor();
-		forEachField(detachedFieldsCursor, (field) => {
-			forest.tryMoveCursorToField(
-				{ fieldKey: field.getFieldKey(), parent: undefined },
-				cursor,
-			);
-			this.indexField(cursor);
+		forest.breaker.run(() => {
+			forEachField(detachedFieldsCursor, (field) => {
+				forest.tryMoveCursorToField(
+					{ fieldKey: field.getFieldKey(), parent: undefined },
+					cursor,
+				);
+				this.indexField(cursor);
+			});
+			cursor.free();
 		});
-		cursor.free();
+
+		this.forest.registerAnnouncedVisitor(this.keyFinder);
 	}
 
 	/**
@@ -136,60 +138,68 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 		this.checkNotDisposed(
 			"visitor getter should be deregistered from the forest when index is disposed",
 		);
+		const run = <T>(callback: () => T): T => this.forest.breaker.run(callback);
 		let parentField: FieldKey | undefined;
 		let parent: UpPath | undefined;
 
 		return createAnnouncedVisitor({
 			// nodes (and their entire subtrees) are added to the index as soon as they are created
-			afterCreate: (content: readonly ITreeCursorSynchronous[], destination: FieldKey) => {
-				const detachedCursor = this.forest.allocateCursor();
-				assert(
-					this.forest.tryMoveCursorToField(
-						{ fieldKey: destination, parent: undefined },
-						detachedCursor,
-					) === TreeNavigationResult.Ok,
-					0xa8a /* destination of created nodes must be a valid detached field */,
-				);
-				this.indexField(detachedCursor);
-				detachedCursor.free();
-			},
-			afterAttach: () => {
-				assert(parent !== undefined, 0xa99 /* must have a parent */);
-				this.reIndexSpine(parent);
-			},
-			afterDetach: (_source, _count_, _destination, isReplaced) => {
-				if (isReplaced) {
-					// If the node will be replaced, we defer re-indexing until the corresponding attach event.
-					// This has performance benefits but is also required to avoid experiencing the error case where the field that is used as the indexing key is empty.
-				} else {
-					assert(parent !== undefined, 0xa9a /* must have a parent */);
+			afterCreate: (content: readonly ITreeCursorSynchronous[], destination: FieldKey) =>
+				run(() => {
+					const detachedCursor = this.forest.allocateCursor();
+					assert(
+						this.forest.tryMoveCursorToField(
+							{ fieldKey: destination, parent: undefined },
+							detachedCursor,
+						) === TreeNavigationResult.Ok,
+						0xa8a /* destination of created nodes must be a valid detached field */,
+					);
+					this.indexField(detachedCursor);
+					detachedCursor.free();
+				}),
+			afterAttach: () =>
+				run(() => {
+					assert(parent !== undefined, 0xa99 /* must have a parent */);
 					this.reIndexSpine(parent);
-				}
-			},
+				}),
+			afterDetach: (_source, _count_, _destination, isReplaced) =>
+				run(() => {
+					if (isReplaced) {
+						// If the node will be replaced, we defer re-indexing until the corresponding attach event.
+						// This has performance benefits but is also required to avoid experiencing the error case where the field that is used as the indexing key is empty.
+					} else {
+						assert(parent !== undefined, 0xa9a /* must have a parent */);
+						this.reIndexSpine(parent);
+					}
+				}),
 			// the methods below are used to keep track of the path that has been traversed by the visitor
 			// this is required so that cursors can be moved to the correct location when index updates are required
-			enterNode(index: number): void {
-				assert(parentField !== undefined, 0xa8d /* must be in a field to enter node */);
+			enterNode: (index: number): void =>
+				run(() => {
+					assert(parentField !== undefined, 0xa8d /* must be in a field to enter node */);
 
-				parent = {
-					parent,
-					parentField,
-					parentIndex: index,
-				};
-				parentField = undefined;
-			},
-			exitNode(index: number): void {
-				assert(parent !== undefined, 0xa8e /* must have parent node */);
-				const temp = parent;
-				parentField = temp.parentField;
-				parent = temp.parent;
-			},
-			enterField: (key: FieldKey) => {
-				parentField = key;
-			},
-			exitField(key: FieldKey): void {
-				parentField = undefined;
-			},
+					parent = {
+						parent,
+						parentField,
+						parentIndex: index,
+					};
+					parentField = undefined;
+				}),
+			exitNode: (_index: number): void =>
+				run(() => {
+					assert(parent !== undefined, 0xa8e /* must have parent node */);
+					const temp = parent;
+					parentField = temp.parentField;
+					parent = temp.parent;
+				}),
+			enterField: (key: FieldKey) =>
+				run(() => {
+					parentField = key;
+				}),
+			exitField: (_key: FieldKey): void =>
+				run(() => {
+					parentField = undefined;
+				}),
 		});
 	}
 

@@ -331,6 +331,34 @@ describe("simple tree indexes", () => {
 			);
 		});
 
+		it("validates selected schemas before they are instantiated", () => {
+			class OptionalName extends exampleSchemaFactory.object("UninstantiatedOptionalName", {
+				name: exampleSchemaFactory.optional(exampleSchemaFactory.string),
+			}) {}
+			class EmptyContent extends exampleSchemaFactory.array("InitiallyEmptyContent", [
+				OptionalName,
+			]) {}
+			const view = getView(new TreeViewConfiguration({ schema: EmptyContent }));
+			view.initialize([]);
+
+			assert.throws(
+				() =>
+					createTreeIndex(
+						view,
+						(schema) => (schema === OptionalName ? "name" : undefined),
+						(nodes) => nodes,
+						isStringKey,
+					),
+				(error: Error) =>
+					error instanceof UsageError &&
+					error.message.endsWith(
+						"must refer to a field that always contains exactly one value.",
+					),
+			);
+
+			assert.doesNotThrow(() => view.root.insertAtEnd({ name: "Alex" }));
+		});
+
 		it("rejects a selected non-leaf name field with a UsageError", () => {
 			class Child extends exampleSchemaFactory.object("Child", {
 				value: exampleSchemaFactory.string,
@@ -373,6 +401,40 @@ describe("simple tree indexes", () => {
 					error instanceof UsageError &&
 					error.message.includes('The value in key field "name" selected for schema') &&
 					error.message.endsWith("was rejected by isKeyValid."),
+			);
+		});
+
+		it("breaks the checkout when an index update fails", () => {
+			class NumericName extends exampleSchemaFactory.object("InsertedNumericName", {
+				name: exampleSchemaFactory.number,
+			}) {}
+			class EmptyContent extends exampleSchemaFactory.array("EmptyNumericContent", [
+				NumericName,
+			]) {}
+			const view = getView(new TreeViewConfiguration({ schema: EmptyContent }));
+			view.initialize([]);
+			createTreeIndex(
+				view,
+				(schema) => (schema === NumericName ? "name" : undefined),
+				(nodes) => nodes,
+				isStringKey,
+			);
+			let updateError: Error | undefined;
+
+			assert.throws(
+				() => view.root.insertAtEnd({ name: 42 }),
+				(error: Error) => {
+					updateError = error;
+					return (
+						error instanceof UsageError &&
+						error.message.endsWith("was rejected by isKeyValid.")
+					);
+				},
+			);
+			assert.throws(
+				() => view.root,
+				(error: Error) =>
+					error instanceof UsageError && (error as { cause?: unknown }).cause === updateError,
 			);
 		});
 

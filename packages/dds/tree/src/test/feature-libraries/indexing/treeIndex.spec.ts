@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	forEachNode,
 	type AnchorNode,
@@ -412,8 +414,9 @@ describe("tree indexes", () => {
 	});
 
 	it("throw if given a key finder that does not return a cursor's path", () => {
-		const { view } = createView(new IndexableChild({ childKey: childId }));
+		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
 		const { forest } = view.checkout;
+		let constructionError: Error | undefined;
 
 		assert.throws(
 			() =>
@@ -421,9 +424,13 @@ describe("tree indexes", () => {
 					forest,
 					(schemaId) => {
 						if (schemaId === IndexableParent.identifier) {
+							return (cursor) => readStringField(cursor, parentKey);
+						}
+						if (schemaId === IndexableChild.identifier) {
 							// return a key finder that modifies the cursor
 							return (cursor) => {
-								cursor.firstField();
+								cursor.exitNode();
+								cursor.exitField();
 								return "test";
 							};
 						}
@@ -436,6 +443,19 @@ describe("tree indexes", () => {
 						}
 					},
 				),
+			(error: Error) => {
+				constructionError = error;
+				return error.message === "key finder should be pure and functional";
+			},
+		);
+
+		assert.throws(
+			() => {
+				parent.child = new IndexableChild({ childKey: "replacement" });
+			},
+			(error: Error) =>
+				error instanceof UsageError &&
+				(error as { cause?: unknown }).cause === constructionError,
 		);
 	});
 
