@@ -40,10 +40,15 @@ export interface ResolvedVersion extends OdspFileVersionRef {
 	readonly sequenceNumber: number;
 }
 
-type ResolvedVersionData = {
+interface ResolvedVersionData {
 	readonly snapshot: ISnapshot & { readonly sequenceNumber: number };
 	readonly epoch: string | undefined;
-};
+}
+
+interface ResolvedCandidate {
+	readonly version: OdspFileVersionRef;
+	readonly resolved: ResolvedVersionData;
+}
 
 /**
  * Result of resolving the base version for a target sequence number.
@@ -116,7 +121,7 @@ export class OdspVersionManager implements IOdspVersionManager {
 			return { kind: "noBaseVersion" };
 		}
 
-		const resolveCandidate = async (index: number) => {
+		const resolveCandidate = async (index: number): Promise<ResolvedCandidate> => {
 			const version = candidates[index];
 			assert(version !== undefined, "Point-in-time version candidate index is out of bounds");
 			return {
@@ -133,8 +138,8 @@ export class OdspVersionManager implements IOdspVersionManager {
 		let upperBound:
 			| {
 					readonly index: number;
-					readonly version: OdspFileVersionRef;
-					readonly resolved: ResolvedVersionData;
+					readonly version: ResolvedCandidate["version"];
+					readonly resolved: ResolvedCandidate["resolved"];
 			  }
 			| undefined;
 		while (probeIndex < candidates.length) {
@@ -156,15 +161,18 @@ export class OdspVersionManager implements IOdspVersionManager {
 			let oldestResolvedSeq: number | undefined;
 			for (let index = 0; index < candidates.length; index++) {
 				const candidate = await resolveCandidate(index);
-				const { sequenceNumber } = candidate.resolved.snapshot;
+				const candidateSequenceNumber = candidate.resolved.snapshot.sequenceNumber;
 				oldestResolvedSeq =
 					oldestResolvedSeq === undefined
-						? sequenceNumber
-						: Math.min(oldestResolvedSeq, sequenceNumber);
-				if (sequenceNumber <= target) {
-					const base = { ...candidate.version, sequenceNumber };
-					await this.validateLineageEpoch(base, candidate.resolved.epoch);
-					return { kind: "found", base, snapshot: candidate.resolved.snapshot };
+						? candidateSequenceNumber
+						: Math.min(oldestResolvedSeq, candidateSequenceNumber);
+				if (candidateSequenceNumber <= target) {
+					const candidateBase = {
+						...candidate.version,
+						sequenceNumber: candidateSequenceNumber,
+					};
+					await this.validateLineageEpoch(candidateBase, candidate.resolved.epoch);
+					return { kind: "found", base: candidateBase, snapshot: candidate.resolved.snapshot };
 				}
 			}
 			return { kind: "noBaseVersion", oldestResolvedSeq };
@@ -233,15 +241,18 @@ export class OdspVersionManager implements IOdspVersionManager {
 		// Resolution order does not matter, so resolve concurrently; the newest-first array order is
 		// preserved by Promise.all regardless of completion order.
 		return Promise.all(
-			versions.map(async (version, index) => ({
-				...version,
+			versions.map(async (version, index) => {
 				// Resolve the tip (index 0) fresh each call, since its sequence number can still change;
 				// sealed versions come from the cache.
-				sequenceNumber:
+				const resolved =
 					index === 0
-						? (await this.fetcher.resolveVersion(version.versionId)).snapshot.sequenceNumber
-						: (await this.resolveVersion(version.versionId)).snapshot.sequenceNumber,
-			})),
+						? await this.fetcher.resolveVersion(version.versionId)
+						: await this.resolveVersion(version.versionId);
+				return {
+					...version,
+					sequenceNumber: resolved.snapshot.sequenceNumber,
+				};
+			}),
 		);
 	}
 
