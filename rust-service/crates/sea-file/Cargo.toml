@@ -1,0 +1,20 @@
+[package]
+name = "snapshotted-stream-file-simple"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+bytes.workspace = true
+futures-util.workspace = true
+snapshotted-stream-core = { path = "../sea-core" }
+thiserror.workspace = true
+
+[dev-dependencies]
+snapshotted-stream-conformance = { path = "../sea-conformance" }
+tokio.workspace = true
+
+[lints]
+workspace = true

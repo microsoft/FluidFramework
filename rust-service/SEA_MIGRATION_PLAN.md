@@ -5,11 +5,11 @@
 - **Plan status:** Approved.
 - **Execution mode:** Lightweight sequential work on the current branch.
 - **Compatibility:** No API, wire-format, persisted-data, package-name, or executable compatibility is required.
-- **Completed checkpoint:** 1. Plan-only commit.
-- **Validation:** `node scripts/check-documentation.mjs`.
-- **Decisions or TODOs changed:** None; the reviewed plan is approved as written.
-- **Next checkpoint:** 2. Directory moves.
-- **Plan commit:** This plan-only commit; record its immutable hash in the checkpoint 2 status update because a commit cannot contain its own hash.
+- **Completed checkpoint:** 2. Directory moves.
+- **Validation:** `cargo metadata --no-deps --format-version 1` resolved all 21 workspace packages.
+- **Decisions or TODOs changed:** None.
+- **Next checkpoint:** 3. Package names, references, and current documentation.
+- **Plan commit:** `d1a9915141bfeb8e61fb3550e795a27c9f15d816`.
 
 Update this section in every implementation commit. Each update must identify the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint. Keep completed checklist entries in this file so it remains the migration record.
 
@@ -170,7 +170,7 @@ Every commit must update **Status** and this checklist. Prefer a buildable repos
 
 - [x] Review and approve this plan.
 - [x] Commit only `SEA_MIGRATION_PLAN.md`.
-- [ ] Record the plan commit hash in **Status** during checkpoint 2.
+- [x] Record the plan commit hash in **Status** during checkpoint 2.
 
 Validation:
 
@@ -180,11 +180,11 @@ node scripts/check-documentation.mjs
 
 ### 2. Directory moves
 
-- [ ] Move package directories to the mechanical names in **Initial Rename Map** using `git mv`.
-- [ ] Do not rename Rust identifiers, package declarations, dependency keys, or prose in this commit.
-- [ ] Update only workspace member paths and relative path dependency locations needed for Cargo to discover the moved packages.
-- [ ] Preserve grouping directories only where they remain meaningful. Prefer a flat `crates/<package-name>/` layout for final Sea packages; defer disruptive source regrouping to checkpoint 4 when needed.
-- [ ] Leave historical iteration and decision records unchanged.
+- [x] Move package directories to the mechanical names in **Initial Rename Map** using `git mv`.
+- [x] Do not rename Rust identifiers, package declarations, dependency keys, or prose in this commit.
+- [x] Update only workspace member paths and relative path dependency locations needed for Cargo to discover the moved packages.
+- [x] Preserve grouping directories only where they remain meaningful. Prefer a flat `crates/<package-name>/` layout for final Sea packages; defer disruptive source regrouping to checkpoint 4 when needed.
+- [x] Leave historical iteration and decision records unchanged.
 
 Validation:
 
