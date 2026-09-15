@@ -78,15 +78,21 @@ export function convertOdspSnapshotToSnapshotTreeAndBlobs(
 	}
 	const sequenceNumber = rootTree.sequenceNumber;
 
+	let latestSequenceNumber = sequenceNumber;
+	if (odspSnapshot.ops !== undefined && odspSnapshot.ops.length > 0) {
+		const lastOp = odspSnapshot.ops[odspSnapshot.ops.length - 1];
+		if (lastOp === undefined) {
+			throw new Error("Non-empty snapshot ops array contained an undefined last op");
+		}
+		latestSequenceNumber = lastOp.sequenceNumber;
+	}
+
 	const val: ISnapshot = {
 		blobContents: blobsWithBufferContent,
 		ops: odspSnapshot.ops?.map((op) => op.op) ?? [],
 		sequenceNumber,
 		snapshotTree: buildHierarchy(rootTree),
-		latestSequenceNumber:
-			odspSnapshot.ops && odspSnapshot.ops.length > 0
-				? odspSnapshot.ops[odspSnapshot.ops.length - 1]!.sequenceNumber
-				: sequenceNumber,
+		latestSequenceNumber,
 		snapshotFormatV: 1,
 	};
 	return val;

@@ -130,7 +130,11 @@ function writeSnapshotSection(
 function writeOpsSection(rootNode: NodeCore, ops: ISequencedDocumentMessage[]): void {
 	let firstSequenceNumber: number | undefined;
 	if (ops.length > 0) {
-		firstSequenceNumber = ops[0]!.sequenceNumber;
+		const firstOp = ops[0];
+		if (firstOp === undefined) {
+			throw new Error("Non-empty ops array contained an undefined first op");
+		}
+		firstSequenceNumber = firstOp.sequenceNumber;
 	}
 	if (firstSequenceNumber !== undefined) {
 		rootNode.addDictionaryString("deltas");
@@ -161,10 +165,15 @@ export function convertToCompactSnapshot(snapshotContents: ISnapshot): Uint8Arra
 	let latestSequenceNumber = snapshotContents.latestSequenceNumber;
 	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 	if (latestSequenceNumber === undefined) {
-		latestSequenceNumber =
-			snapshotContents.ops.length > 0
-				? snapshotContents.ops[snapshotContents.ops.length - 1]!.sequenceNumber
-				: snapshotContents.sequenceNumber;
+		if (snapshotContents.ops.length > 0) {
+			const lastOp = snapshotContents.ops[snapshotContents.ops.length - 1];
+			if (lastOp === undefined) {
+				throw new Error("Non-empty ops array contained an undefined last op");
+			}
+			latestSequenceNumber = lastOp.sequenceNumber;
+		} else {
+			latestSequenceNumber = snapshotContents.sequenceNumber;
+		}
 	}
 
 	writeSnapshotProps(rootNode, latestSequenceNumber);

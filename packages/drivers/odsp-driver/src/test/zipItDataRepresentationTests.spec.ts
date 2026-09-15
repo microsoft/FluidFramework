@@ -21,6 +21,7 @@ import {
 	assertBoolInstance,
 	assertNodeCoreInstance,
 	assertNumberInstance,
+	getStringInstance,
 } from "../zipItDataRepresentationUtils.js";
 
 function compareNodes(node1: NodeTypes, node2: NodeTypes): void {
@@ -251,5 +252,14 @@ describe("Tree Representation tests", () => {
 	it("throws when reading an out-of-range node", () => {
 		const node = new NodeCore();
 		assert.throws(() => node.get(0), /index 0 is out of range/);
+	});
+
+	it("throws when validating an undefined node", () => {
+		const node = new NodeCore().nodes[0];
+		assert.throws(() => assertBlobCoreInstance(node, "should be a blob"));
+		assert.throws(() => assertNodeCoreInstance(node, "should be a node"));
+		assert.throws(() => assertNumberInstance(node, "should be a number"));
+		assert.throws(() => assertBoolInstance(node, "should be a boolean"));
+		assert.throws(() => getStringInstance(node, "should be a string"));
 	});
 });

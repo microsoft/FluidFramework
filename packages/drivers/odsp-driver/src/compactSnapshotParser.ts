@@ -74,13 +74,7 @@ function readBlobSection(node: NodeTypes): {
 			 */
 			slowBlobStructureCount += 1;
 			const records = getNodeProps(blob);
-			if (records.data === undefined) {
-				throw new Error("Compact snapshot blob is missing the data record");
-			}
 			assertBlobCoreInstance(records.data, "data should be of BlobCore type");
-			if (records.id === undefined) {
-				throw new Error("Compact snapshot blob is missing the id record");
-			}
 			const id = getStringInstance(records.id, "blob id should be string");
 			blobContents.set(id, ArrayBufferLikeToArrayBuffer(records.data.arrayBuffer));
 		}
@@ -96,13 +90,7 @@ function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 	assertNodeCoreInstance(node, "Deltas should be of type NodeCore");
 	const ops: ISequencedDocumentMessage[] = [];
 	const records = getNodeProps(node);
-	if (records.firstSequenceNumber === undefined) {
-		throw new Error("Compact snapshot ops are missing the firstSequenceNumber record");
-	}
 	assertNumberInstance(records.firstSequenceNumber, "Seq number should be a number");
-	if (records.deltas === undefined) {
-		throw new Error("Compact snapshot ops are missing the deltas record");
-	}
 	assertNodeCoreInstance(records.deltas, "Deltas should be a Node");
 	for (let i = 0; i < records.deltas.length; ++i) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -111,10 +99,16 @@ function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 	// Due to a bug at service side, in an edge case service was serializing deltas even
 	// when there are no ops. So just make the code resilient to that bug. Service has also
 	// fixed that bug.
-	assert(
-		ops.length === 0 || records.firstSequenceNumber.valueOf() === ops[0]!.sequenceNumber,
-		0x280 /* "Validate first op seq number" */,
-	);
+	if (ops.length > 0) {
+		const firstOp = ops[0];
+		if (firstOp === undefined) {
+			throw new Error("Compact snapshot ops contained an undefined first op");
+		}
+		assert(
+			records.firstSequenceNumber.valueOf() === firstOp.sequenceNumber,
+			0x280 /* "Validate first op seq number" */,
+		);
+	}
 	return ops;
 }
 
@@ -217,9 +211,6 @@ function readTreeSection(node: NodeCore): {
 			snapshotTree.unreferenced = true;
 		}
 
-		if (records.name === undefined) {
-			throw new Error("Compact snapshot tree entry is missing the name record");
-		}
 		const path = getStringInstance(records.name, "Path name should be string");
 		if (records.value !== undefined) {
 			snapshotTree.blobs[path] = getStringInstance(
@@ -258,19 +249,10 @@ function readSnapshotSection(node: NodeTypes): {
 	assertNodeCoreInstance(node, "Snapshot should be of type NodeCore");
 	const records = getNodeProps(node);
 
-	if (records.treeNodes === undefined) {
-		throw new Error("Compact snapshot is missing the treeNodes record");
-	}
 	assertNodeCoreInstance(records.treeNodes, "TreeNodes should be of type NodeCore");
-	if (records.sequenceNumber === undefined) {
-		throw new Error("Compact snapshot is missing the sequenceNumber record");
-	}
 	assertNumberInstance(records.sequenceNumber, "sequenceNumber should be of type number");
 	const { snapshotTree, slowTreeStructureCount, treeStructureCountWithGroupId } =
 		readTreeSection(records.treeNodes);
-	if (records.id === undefined) {
-		throw new Error("Compact snapshot is missing the snapshot id record");
-	}
 	snapshotTree.id = getStringInstance(records.id, "snapshotId should be string");
 	const sequenceNumber = records.sequenceNumber.valueOf();
 	return {
@@ -297,13 +279,7 @@ export function parseCompactSnapshotResponse(
 
 	const records = getNodeProps(root);
 
-	if (records.mrv === undefined) {
-		throw new Error("Compact snapshot is missing the minReadVersion record");
-	}
 	const mrv = getStringInstance(records.mrv, "minReadVersion should be string");
-	if (records.cv === undefined) {
-		throw new Error("Compact snapshot is missing the createVersion record");
-	}
 	const cv = getStringInstance(records.cv, "createVersion should be string");
 	if (records.lsn !== undefined) {
 		assertNumberInstance(records.lsn, "lsn should be a number");

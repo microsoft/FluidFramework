@@ -110,9 +110,11 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 			}
 		}
 
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- Preserve the existing fallback behavior.
-		const driveId = (joinSessionMatch[3] || joinSessionMatch[5])!;
-		const itemId = joinSessionMatch[4]!;
+		const driveId = joinSessionMatch[3] ?? joinSessionMatch[5];
+		const itemId = joinSessionMatch[4];
+		if (driveId === undefined || itemId === undefined) {
+			throw new Error("ODC URL matched without drive and item ID capture groups");
+		}
 
 		return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
 	} else {
@@ -121,8 +123,11 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 		if (joinSessionMatch === null) {
 			return undefined;
 		}
-		const driveId = joinSessionMatch[2]!;
-		const itemId = joinSessionMatch[3]!;
+		const driveId = joinSessionMatch[2];
+		const itemId = joinSessionMatch[3];
+		if (driveId === undefined || itemId === undefined) {
+			throw new Error("ODSP URL matched without drive and item ID capture groups");
+		}
 
 		return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
 	}
