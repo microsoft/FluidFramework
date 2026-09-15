@@ -290,10 +290,14 @@ describe("Tests for prefetching snapshot", () => {
 					),
 			);
 
+			const firstTree = odspSnapshot.trees[0];
+			if (firstTree === undefined) {
+				throw new Error("Expected the ODSP snapshot to contain a tree");
+			}
 			const networkSnapshot: IOdspSnapshot = {
 				...odspSnapshot,
 				id: "network-id",
-				trees: [{ ...odspSnapshot.trees[0], id: "network-id" }],
+				trees: [{ ...firstTree, id: "network-id" }],
 			};
 			const version = await mockFetchSingle(
 				async () => service.getVersions(null, 1, undefined, FetchSource.noCache),
