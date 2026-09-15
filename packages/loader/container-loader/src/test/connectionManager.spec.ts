@@ -101,12 +101,39 @@ describe("connectionManager", () => {
 		return new ConnectionManager(
 			() => mockDocumentService,
 			() => false,
+			() => false,
 			client as IClient,
 			true /* reconnectAllowed */,
 			mockLogger.toTelemetryLogger(),
 			customProps ?? props,
 		);
 	}
+
+	it("distinguishes aggregate dirty state from pending operations", () => {
+		const logger = new MockLogger();
+		const connectionManager = new ConnectionManager(
+			() => mockDocumentService,
+			() => true,
+			() => false,
+			client as IClient,
+			true,
+			logger.toTelemetryLogger(),
+			props,
+		);
+
+		assert.strictEqual(
+			connectionManager.shouldJoinWrite(),
+			true,
+			"Aggregate dirty state should request a write connection",
+		);
+		assert.strictEqual(
+			connectionManager.hasPendingOps(),
+			false,
+			"Non-op work must not be mistaken for a previous-client operation",
+		);
+		logger.assertMatchNone([{ eventName: "DesiredConnectionModeMismatch" }]);
+		connectionManager.dispose();
+	});
 
 	it("reconnectOnError - exceptions invoke closeHandler", async () => {
 		// Arrange

@@ -76,6 +76,9 @@ export interface IContainerContextConfig
 	// fetchOps is an internal-only capability (IContainerContextInternal), not part of the public
 	// IContainerContext contract. Optional: hosts may not provide op reading.
 	readonly fetchOps: IContainerContextInternal["fetchOps"];
+	readonly updatePendingOpState: NonNullable<
+		IContainerContextInternal["updatePendingOpState"]
+	>;
 }
 
 /**
@@ -85,7 +88,7 @@ export class ContainerContext
 	implements
 		Required<Omit<IContainerContext, "snapshotWithContents">>,
 		Pick<IContainerContext, "snapshotWithContents">,
-		Pick<IContainerContextInternal, "fetchOps">,
+		Pick<IContainerContextInternal, "fetchOps" | "updatePendingOpState">,
 		IProvideLayerCompatDetails
 {
 	/**
@@ -136,6 +139,9 @@ export class ContainerContext
 		targetClientId?: string,
 	) => void;
 	public readonly fetchOps: IContainerContextInternal["fetchOps"];
+	public readonly updatePendingOpState: NonNullable<
+		IContainerContextInternal["updatePendingOpState"]
+	>;
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
 	public readonly updateDirtyContainerState: (dirty: boolean) => void;
@@ -196,6 +202,7 @@ export class ContainerContext
 		this.submitBatchFn = config.submitBatchFn;
 		this.submitSignalFn = config.submitSignalFn;
 		this.fetchOps = config.fetchOps;
+		this.updatePendingOpState = config.updatePendingOpState;
 		this.disposeFn = config.disposeFn;
 		this.closeFn = config.closeFn;
 		this.updateDirtyContainerState = config.updateDirtyContainerState;
