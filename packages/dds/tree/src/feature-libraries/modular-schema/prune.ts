@@ -20,7 +20,9 @@ export function pruneChangeset(
 	changeset: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
+	// Uncomment the following line to facilitate debugging
 	// validateChangeset(changeset, fieldKinds);
+
 	const prunedChangeset: Mutable<ModularChangeset> = {
 		...changeset,
 		nodeChanges: changeset.nodeChanges.clone(),
@@ -37,6 +39,7 @@ export function pruneChangeset(
 			fieldKinds,
 		) ?? new Map();
 
+	// Uncomment the following line to facilitate debugging
 	// validateChangeset(prunedChangeset, fieldKinds);
 	return prunedChangeset;
 }

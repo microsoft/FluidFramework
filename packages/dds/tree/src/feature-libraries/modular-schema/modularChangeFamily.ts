@@ -230,6 +230,7 @@ export class ModularChangeFamily
 		revInfos: RevisionInfo[],
 		idState: IdAllocationState,
 	): ModularChangeset {
+		// Uncomment the following lines to facilitate debugging
 		// validateChangeset(change1, this.fieldKinds);
 		// validateChangeset(change2, this.fieldKinds);
 
@@ -260,7 +261,10 @@ export class ModularChangeFamily
 			destroys: allDestroys,
 			refreshers: allRefreshers,
 		});
+
+		// Uncomment the following line to facilitate debugging
 		// validateChangeset(composed, this.fieldKinds);
+
 		return composed;
 	}
 
@@ -752,6 +756,7 @@ export class ModularChangeFamily
 		revisionMetadata: RevisionMetadataSource,
 		ignoreNoChangeViolation: boolean = false,
 	): ModularChangeset {
+		// Uncomment the following lines to facilitate debugging
 		// validateChangeset(taggedChange.change, this.fieldKinds);
 		// validateChangeset(potentiallyConflictedOver.change, this.fieldKinds);
 
@@ -846,7 +851,9 @@ export class ModularChangeFamily
 			refreshers: change.refreshers,
 		});
 
+		// Uncomment the following line to facilitate debugging
 		// validateChangeset(rebased, this.fieldKinds);
+
 		return pruneChangeset(rebased, this.fieldKinds);
 	}
 
