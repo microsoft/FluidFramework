@@ -15,16 +15,14 @@ import Mocha from "mocha";
 import { findRepoRoot, FluidXunitReporter } from "../xunitReporter.js";
 
 /**
- * `mocha-multi-reporters` (and thus every CJS-variant test run in this repo, i.e. anything run with
- * `FLUID_TEST_MODULE_SYSTEM=CJS`) loads this package's reporter via a plain CommonJS `require()` of
- * {@link file://../../xunit-reporter-cjswrapper.cjs}, not via the ESM import used above. Loading it the
- * same way here (rather than just re-using the `FluidXunitReporter` already imported above) ensures that
- * real-world path - and the wrapper file itself - are actually exercised by these tests.
+ * `mocha-multi-reporters` loads this package's reporter via a plain CommonJS `require()` of the package
+ * export subpath, not via the ESM import used above. Loading the exact production specifier here ensures
+ * both the package's conditional export mapping and its CommonJS wrapper are exercised by these tests.
  */
 const requireFromHere = createRequire(import.meta.url);
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- the `.cjs` wrapper has no type declarations of its own; it re-exports `FluidXunitReporter` as its module.exports default.
 const FluidXunitReporterViaCjsWrapper: typeof FluidXunitReporter = requireFromHere(
-	"../../xunit-reporter-cjswrapper.cjs",
+	"@fluid-internal/mocha-test-setup/xunit-reporter",
 );
 
 /**
