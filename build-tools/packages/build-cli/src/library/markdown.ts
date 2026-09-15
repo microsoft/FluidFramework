@@ -49,17 +49,17 @@ export function addHeadingLinks(): (tree: Node) => void {
 }
 
 /**
- * A regular expression that matches a supported GitHub admonition marker when it occupies the first line of a text
- * node.
+ * A regular expression that matches a supported GitHub alert marker when it occupies the first line of a text node.
  *
  * Capture group 1 is the admonition type/title (from the leading `[!` all the way to the trailing `]`).
  *
  * @remarks
  *
- * GitHub requires the marker to be the first content in the blockquote and to be followed only by optional whitespace
- * before the line break. The line break is part of the match so it can be preserved while other soft breaks are removed.
+ * GitHub requires the marker to be followed only by optional whitespace before the line break. The line break is part
+ * of the match so it can be preserved while other soft breaks are removed. Marker matching is case-insensitive to match
+ * GitHub's renderer.
  */
-const ADMONITION_REGEX = /^(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])[^\S\n]*\n/;
+const ADMONITION_REGEX = /^(\[!(?:caution|important|note|tip|warning)])[^\S\n]*\n/i;
 
 /**
  * A regular expression to remove single line breaks from text. This is used to remove extraneous line breaks in text
@@ -85,22 +85,30 @@ export function stripSoftBreaks(): (tree: Node) => void {
 	return (tree: Node): void => {
 		const admonitionTitles = new Map<Text, RegExpExecArray>();
 
-		visit(tree, "blockquote", (node: Blockquote) => {
-			const firstBlock = node.children[0];
-			if (firstBlock?.type !== "paragraph") {
-				return;
-			}
+		visit(
+			tree,
+			"blockquote",
+			(node: Blockquote, _index: number | undefined, parent: Parent | undefined) => {
+				if (parent?.type !== "root") {
+					return;
+				}
 
-			const firstInline = firstBlock.children[0];
-			if (firstInline?.type !== "text") {
-				return;
-			}
+				const firstBlock = node.children[0];
+				if (firstBlock?.type !== "paragraph") {
+					return;
+				}
 
-			const match = ADMONITION_REGEX.exec(firstInline.value);
-			if (match !== null) {
-				admonitionTitles.set(firstInline, match);
-			}
-		});
+				const firstInline = firstBlock.children[0];
+				if (firstInline?.type !== "text") {
+					return;
+				}
+
+				const match = ADMONITION_REGEX.exec(firstInline.value);
+				if (match !== null) {
+					admonitionTitles.set(firstInline, match);
+				}
+			},
+		);
 
 		visit(tree, "text", (node: Text) => {
 			const match = admonitionTitles.get(node);
