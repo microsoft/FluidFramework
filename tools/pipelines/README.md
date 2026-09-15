@@ -3,6 +3,21 @@
 Azure Pipelines definitions and shared [`templates/`](./templates) for building, testing, and
 releasing the Fluid Framework.
 
+## Installing dependencies
+
+Use `templates/include-install.yml` for pnpm dependency installs. It logs the working directory,
+includes it in the task name, uses `--frozen-lockfile`, and retries failures four times.
+Set `installWorkspaceRootOnly: true` when only root dependencies are needed.
+
+By default, it also configures pnpm, registry authentication, and the store cache via
+`include-install-pnpm.yml`. If setup must happen earlier in the job, call that template separately
+and use `installPnpm: false` for the dependency install. This reuses the existing pnpm, registry,
+and store configuration; it does not apply setup parameters again. Preserve setup order and
+multi-workspace cache keys when migrating callers. Keep build and link commands in separate tasks.
+
+Include `tools/pipelines/templates/include-install.yml` in both CI and PR path filters where the
+pipeline uses explicit include lists. Pipelines without PR triggers still need explicit validation.
+
 ## Mirroring base container images for the server pipelines
 
 The `server-*` pipelines run on a 1ES build pool whose network isolation blocks egress to Docker

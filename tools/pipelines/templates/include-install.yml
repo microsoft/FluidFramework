@@ -1,9 +1,11 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# include-install template for the install step in client build and test stability pipeline
+# Shared dependency installation for pnpm-based pipelines.
 
 parameters:
+# Directory relative to $(Pipeline.Workspace), e.g. s/FluidFramework/build-tools.
+# This template prepends $(Pipeline.Workspace)/; do not supply an absolute path.
 - name: buildDirectory
   type: string
 
@@ -14,6 +16,10 @@ parameters:
 - name: installPnpm
   type: boolean
   default: true
+
+- name: installWorkspaceRootOnly
+  type: boolean
+  default: false
 
 - name: primaryRegistry
   type: string
@@ -40,11 +46,18 @@ steps:
           requiredCacheKey: '"${{ replace(parameters.additionalLockFilePaths, '' | '', ''" | "'') }}"'
 
   - task: Bash@3
-    displayName: ${{ parameters.installDependenciesDescription }}
+    displayName: '${{ parameters.installDependenciesDescription }} (${{ parameters.buildDirectory }})'
     retryCountOnTaskFailure: 4
     inputs:
+      # Keep this inline: template expansion does not check out FluidFramework on the agent.
+      # Some callers check out only ff_pipeline_host; a script file would require another checkout.
       targetType: 'inline'
       workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
       script: |
         set -eu -o pipefail
-        pnpm i --frozen-lockfile
+        pwd
+        args=(--frozen-lockfile)
+        if [ '${{ parameters.installWorkspaceRootOnly }}' = 'True' ]; then
+          args+=(--workspace-root)
+        fi
+        pnpm install "${args[@]}"
