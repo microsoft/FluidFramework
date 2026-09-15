@@ -1,10 +1,13 @@
-## [Unreleased]
+## Unreleased
 
+### Other Changes
+
+* **build-tools:** Enable type-safety ESLint rules.
 
 ### Bug Fixes
 
-* **fluid-build:** Reject backslashes in declarative task globs instead of relying on OS-specific behavior
-* **check:policy:** Normalize Dockerfile package paths consistently when fixing policy violations
+* **fluid-build:** Reject backslashes in declarative task globs instead of relying on OS-specific behavior.
+* **check:policy:** Normalize Dockerfile package paths consistently when fixing policy violations.
 
 ## [0.61.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.60.0...build-tools_v0.61.0) (2025-12-03)
 

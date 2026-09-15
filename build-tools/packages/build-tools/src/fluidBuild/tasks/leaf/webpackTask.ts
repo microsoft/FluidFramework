@@ -12,9 +12,15 @@ import { LeafWithDoneFileTask } from "./leafTask.js";
 
 interface DoneFileContent {
 	version: string;
-	config: any;
+	config: unknown;
 	sources: { [srcFile: string]: string };
 }
+
+/**
+ * A webpack config module may export a factory that produces the config from the `--env` arguments
+ * instead of exporting the config object directly.
+ */
+type WebpackConfigFactory = (env: Record<string, string | boolean>) => unknown;
 export class WebpackTask extends LeafWithDoneFileTask {
 	protected get taskWeight(): number {
 		return 5; // generally expensive relative to other tasks
@@ -28,7 +34,11 @@ export class WebpackTask extends LeafWithDoneFileTask {
 			const config = await loadModule(this.configFileFullPath, this.package.packageJson.type);
 			const content: DoneFileContent = {
 				version: await this.getVersion(),
-				config: typeof config === "function" ? config(this.getEnvArguments()) : config,
+				// The config module is loaded dynamically, so its type is not statically known.
+				config:
+					typeof config === "function"
+						? (config as WebpackConfigFactory)(this.getEnvArguments())
+						: config,
 				sources: {},
 			};
 
