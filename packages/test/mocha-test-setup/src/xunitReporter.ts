@@ -6,11 +6,7 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 
-// Mocha's built-in `xunit` reporter has no dedicated named export; its package has no `exports` map
-// restricting deep imports, so it's required the same way `mocha-multi-reporters` resolves a reporter
-// given by name (`require("mocha/lib/reporters/xunit")`).
-// eslint-disable-next-line import-x/no-internal-modules -- mocha's built-in `xunit` reporter is only reachable via its implementation file; the package exposes no public export for it.
-import MochaXUnitReporter from "mocha/lib/reporters/xunit.js";
+import Mocha from "mocha";
 
 /**
  * Walks up from `startDir` looking for the repo root, identified by the presence of
@@ -68,7 +64,7 @@ interface XUnitReporterInstance {
 	test(test: JUnitTestLike, options?: unknown): void;
 }
 
-const XUnitReporterCtor = MochaXUnitReporter as unknown as new (
+const XUnitReporterCtor = Mocha.reporters.XUnit as unknown as new (
 	runner: unknown,
 	options: unknown,
 ) => XUnitReporterInstance;

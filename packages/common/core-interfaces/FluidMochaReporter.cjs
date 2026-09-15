@@ -31,7 +31,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-const MochaXUnitReporter = require("mocha/lib/reporters/xunit");
+const MochaXUnitReporter = require("mocha").reporters.XUnit;
 
 /**
  * Walks up from `startDir` looking for the repo root, identified by the presence of
