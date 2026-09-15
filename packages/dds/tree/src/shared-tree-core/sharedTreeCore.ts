@@ -76,6 +76,7 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 	schema: TreeStoredSchemaRepository;
 }
 
+/** @internal */
 export interface SharedTreeCoreOptionsInternal extends CodecWriteOptions {
 	/**
 	 * See {@link SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode}.
@@ -562,9 +563,7 @@ export class SharedTreeCore<
 					unreachableCase(decoded);
 				}
 			}
-			this.editManager.advanceMinimumSequenceNumber(
-				brand(message.minimumSequenceNumber),
-			);
+			this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 		}
 	}
 

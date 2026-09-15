@@ -13,6 +13,12 @@
 export * from "../index.js";
 export {
 	createDirectSharedTree,
+	type DirectSharedTreeKernel,
 	type DirectSharedTreeOptions,
+	type SharedTreeOptionsInternal,
 	type SharedTreeKernelView,
 } from "../shared-tree/sharedTree.js";
+export {
+	type SequencedSharedTreeMessage,
+	type SharedTreeCoreOptionsInternal,
+} from "../shared-tree-core/index.js";

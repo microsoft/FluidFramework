@@ -28,7 +28,10 @@ export interface BranchMessage extends MessageBase {
 	branchName?: string;
 }
 
-/** One independently sequenced encoded SharedTree message for runtime-free integration. */
+/**
+ * One independently sequenced encoded SharedTree message for runtime-free integration.
+ * @internal
+ */
 export interface SequencedSharedTreeMessage {
 	readonly contents: unknown;
 	readonly idCreationRange?: IdCreationRange;

@@ -14,6 +14,7 @@ import {
 	type SummaryObject,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import {
 	createIdCompressor,
 	type IdCreationRange,
@@ -125,12 +126,16 @@ describe("SharedTreeCore", () => {
 			toIdCompressorWithCore(singletonReceiverCompressor).finalizeCreationRange(
 				message.idCreationRange,
 			);
+			const envelope: IRuntimeMessageCollection["envelope"] = {
+				clientId: "client",
+				sequenceNumber: message.sequenceNumber,
+				referenceSequenceNumber: message.referenceSequenceNumber,
+				minimumSequenceNumber: message.minimumSequenceNumber,
+				timestamp: message.sequenceNumber,
+				type: MessageType.Operation,
+			};
 			singletonReceiver.processMessagesCore({
-				envelope: {
-					sequenceNumber: message.sequenceNumber,
-					referenceSequenceNumber: message.referenceSequenceNumber,
-					minimumSequenceNumber: message.minimumSequenceNumber,
-				} as IRuntimeMessageCollection["envelope"],
+				envelope,
 				local: false,
 				messagesContent: [
 					{
