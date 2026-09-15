@@ -193,6 +193,41 @@ describe("Tests for prefetching snapshot", () => {
 			snapshotPrefetchResultCache.remove(snapshotPrefetchCacheKey);
 		});
 
+		it("prefetch applies the factory's immutable request header copy", async () => {
+			const mutableHeaders = { "X-Agent-Id": "original-agent" };
+			const factory = new OdspDocumentServiceFactory(
+				async () => "token",
+				async () => "token",
+				localCache,
+				{ ...GetHostStoragePolicyInternal(), hostProvidedRequestHeaders: mutableHeaders },
+			);
+			mutableHeaders["X-Agent-Id"] = "mutated-agent";
+
+			await mockFetchSingle(
+				async () =>
+					prefetchLatestSnapshot(
+						resolved,
+						async () => "token",
+						localCache,
+						true,
+						mockLogger,
+						undefined,
+						false,
+						undefined,
+						undefined,
+						factory,
+					),
+				async (headers) => {
+					assert.strictEqual(headers?.["x-agent-id"], "original-agent");
+					return createResponse(
+						{ "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+						odspSnapshot,
+						200,
+					);
+				},
+			);
+		});
+
 		it("prefetching snapshot should result in snapshot source as cache as prefetch adds to cache", async () => {
 			await mockFetchSingle(
 				async () =>
@@ -229,6 +264,51 @@ describe("Tests for prefetching snapshot", () => {
 					{ eventName: "OdspDriver:ObtainSnapshot_end", method: "cache" },
 				]),
 				"Source should be cache",
+			);
+		});
+
+		it("noCache bypasses a prefetched snapshot", async () => {
+			await mockFetchSingle(
+				async () =>
+					prefetchLatestSnapshot(
+						resolved,
+						async (_options) => "token",
+						localCache,
+						true,
+						mockLogger,
+						undefined,
+						false,
+						undefined,
+						undefined,
+						odspDocumentServiceFactory,
+					),
+				async () =>
+					createResponse(
+						{ "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+						odspSnapshot,
+						200,
+					),
+			);
+
+			const networkSnapshot: IOdspSnapshot = {
+				...odspSnapshot,
+				id: "network-id",
+				trees: [{ ...odspSnapshot.trees[0], id: "network-id" }],
+			};
+			const version = await mockFetchSingle(
+				async () => service.getVersions(null, 1, undefined, FetchSource.noCache),
+				async () =>
+					createResponse(
+						{ "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+						networkSnapshot,
+						200,
+					),
+			);
+
+			assert.deepStrictEqual(
+				version,
+				[{ id: "network-id", treeId: undefined! }],
+				"noCache should return the network snapshot rather than the prefetched snapshot",
 			);
 		});
 

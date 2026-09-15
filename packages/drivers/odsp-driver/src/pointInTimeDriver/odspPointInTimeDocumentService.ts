@@ -4,16 +4,45 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type {
-	IClient,
-	IDocumentDeltaConnection,
-	IDocumentDeltaStorageService,
-	IDocumentService,
-	IDocumentServiceEvents,
-	IDocumentServicePolicies,
-	IDocumentStorageService,
-	IResolvedUrl,
+import {
+	FetchSource,
+	type IClient,
+	type IDocumentDeltaConnection,
+	type IDocumentDeltaStorageService,
+	type IDocumentService,
+	type IDocumentServiceEvents,
+	type IDocumentServicePolicies,
+	type IDocumentStorageService,
+	type IResolvedUrl,
+	type ISnapshot,
+	type ISnapshotFetchOptions,
+	type IVersion,
 } from "@fluidframework/driver-definitions/internal";
+import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils/internal";
+
+/**
+ * Forces point-in-time snapshot reads to bypass caches while forwarding all other storage operations
+ * to the selected historical document service.
+ */
+class PointInTimeDocumentStorageService extends DocumentStorageServiceProxy {
+	public override async getSnapshot(
+		snapshotFetchOptions?: ISnapshotFetchOptions,
+	): Promise<ISnapshot> {
+		return super.getSnapshot({
+			...snapshotFetchOptions,
+			fetchSource: FetchSource.noCache,
+		});
+	}
+
+	public override async getVersions(
+		// eslint-disable-next-line @rushstack/no-new-null -- IDocumentStorageService is a legacy API that requires null.
+		versionId: string | null,
+		count: number,
+		scenarioName?: string,
+	): Promise<IVersion[]> {
+		return super.getVersions(versionId, count, scenarioName, FetchSource.noCache);
+	}
+}
 
 /**
  * A read-only document service that materializes a document at a target sequence number by combining
@@ -64,7 +93,8 @@ export class OdspPointInTimeDocumentService
 	}
 
 	public async connectToStorage(): Promise<IDocumentStorageService> {
-		return this.recoverableDocumentService.connectToStorage();
+		const storage = await this.recoverableDocumentService.connectToStorage();
+		return new PointInTimeDocumentStorageService(storage);
 	}
 
 	public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {

@@ -66,7 +66,12 @@ export function filterEdits(
 	);
 
 	const { crossFieldKeys: filteredCrossFieldKeys, nodeToParent: filteredNodeToParent } =
-		makeChangesetInversions(filteredFieldChanges, filteredNodeChanges, fieldKinds);
+		makeChangesetInversions(
+			filteredFieldChanges,
+			filteredNodeChanges,
+			fieldKinds,
+			change.nodeAliases,
+		);
 
 	return pruneChangeset(
 		{
