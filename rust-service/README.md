@@ -80,6 +80,7 @@ Each approved iteration uses a dedicated integration branch and one isolated bra
 - [DEVELOPMENT.md](DEVELOPMENT.md) defines the pinned toolchain, lockfile policy, and required foundation commands.
 - [WORKSTREAMS.md](WORKSTREAMS.md) records crate dependencies, iteration ownership, deliverables, and composition coverage.
 - [BENCHMARKS.md](BENCHMARKS.md) defines initial workloads, measurement procedure, and required environment metadata.
+- [BLOB_STORAGE.md](BLOB_STORAGE.md) proposes the unified content-addressed blob contract, retention model, filesystem implementation, and Fluid mapping.
 - [KNOWN_ISSUES.md](KNOWN_ISSUES.md) tracks unresolved architecture and organization issues and their resolution status.
 - [foundation-report.md](foundation-report.md) records Phase 1 hypotheses, decisions, costly issues, validation, and readiness.
 - [LEARNINGS.md](LEARNINGS.md) indexes durable architecture and agentic-development findings with links to evidence.
