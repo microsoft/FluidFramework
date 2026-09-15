@@ -8,18 +8,18 @@ import { SortedSet } from "@fluidframework/merge-tree/internal";
 import type { SequenceInterval } from "../intervals/index.js";
 
 /**
- * A set of intervals ordered by their end position, then by interval id.
+ * A set of intervals ordered by their end position, then by interval ID.
  *
- * The id is included so that the ordering is total. Without it, distinct intervals sharing an
+ * The ID is included so that the ordering is total. Without it, distinct intervals sharing an
  * end position would compare equal, and a set cannot store or remove entries it cannot tell apart.
  *
- * Queries, however, must not consider the id. Every query here is expressed in terms of a
+ * Queries, however, must not consider the ID. Every query here is expressed in terms of a
  * position, and is answered by locating the boundaries of the run of intervals sharing that end
  * position via {@link SequenceIntervalEndSet.lowerBound} and
  * {@link SequenceIntervalEndSet.upperBound}, which compare end positions alone. This is well
  * defined precisely because the set is ordered by end position first. It also means callers can
- * probe with a transient interval whose id is arbitrary, which matters because
- * `createTransientIntervalFromSequence` assigns transients a freshly generated id.
+ * probe with a transient interval whose ID is arbitrary, which matters because
+ * `createTransientIntervalFromSequence` assigns transients a freshly generated ID.
  */
 export class SequenceIntervalEndSet extends SortedSet<SequenceInterval> {
 	protected compare(a: SequenceInterval, b: SequenceInterval): number {
@@ -28,8 +28,8 @@ export class SequenceIntervalEndSet extends SortedSet<SequenceInterval> {
 			return endResult;
 		}
 
-		// Ordinal rather than locale comparison: this must never report distinct ids as equal,
-		// which is a guarantee `localeCompare` does not make. Ids are unique, so comparing equal
+		// Ordinal rather than locale comparison: this must never report distinct IDs as equal,
+		// which is a guarantee `localeCompare` does not make. IDs are unique, so comparing equal
 		// here means the same interval, which is exactly what `SortedSet` assumes by default.
 		const aId = a.getIntervalId();
 		const bId = b.getIntervalId();
@@ -61,7 +61,7 @@ export class SequenceIntervalEndSet extends SortedSet<SequenceInterval> {
 	}
 
 	/**
-	 * Binary searches on end position alone, ignoring ids.
+	 * Binary searches on end position alone, ignoring IDs.
 	 *
 	 * @returns the index of the first interval whose end is not before `probe`'s.
 	 */
@@ -70,7 +70,7 @@ export class SequenceIntervalEndSet extends SortedSet<SequenceInterval> {
 	}
 
 	/**
-	 * Binary searches on end position alone, ignoring ids.
+	 * Binary searches on end position alone, ignoring IDs.
 	 *
 	 * @returns the index of the first interval whose end is after `probe`'s.
 	 */

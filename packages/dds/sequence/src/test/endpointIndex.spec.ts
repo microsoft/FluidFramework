@@ -168,9 +168,9 @@ describe("EndpointIndex", () => {
 		});
 	});
 
-	// Storage is ordered by (end position, interval id), a total order, so intervals
+	// Storage is ordered by (end position, interval ID), a total order, so intervals
 	// sharing an end position each occupy their own entry and stay individually
-	// addressable. Endpoint probes deliberately ignore the id and compare end positions
+	// addressable. Endpoint probes deliberately ignore the ID and compare end positions
 	// alone, so previousInterval/nextInterval remain well defined across such a group.
 	describe("with multiple intervals sharing an end position", () => {
 		it("retains every interval ending at that position", () => {
@@ -234,7 +234,7 @@ describe("EndpointIndex", () => {
 			const original = createTestInterval(1, 5);
 			endpointIndex.add(original);
 
-			// Same id and end position, so the set treats it as already present. Adding it
+			// Same ID and end position, so the set treats it as already present. Adding it
 			// must not replace the stored instance, nor create a second entry for it.
 			const duplicate = createTestSequenceInterval(sharedString, 2, 5);
 			duplicate.getIntervalId = () => original.getIntervalId();
