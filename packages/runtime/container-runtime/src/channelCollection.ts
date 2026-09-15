@@ -33,7 +33,9 @@ import type {
 	FluidDataStoreMessage,
 	IAttachMessage,
 	IEnvelope,
+	IFluidDataStoreAttachData,
 	IFluidDataStoreChannel,
+	IFluidDataStoreChannelInternal,
 	IFluidDataStoreContext,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreFactory,
@@ -317,7 +319,9 @@ export function getLocalDataStoreType(localDataStore: LocalFluidDataStoreContext
  * @internal
  */
 export class ChannelCollection
-	implements Omit<IFluidDataStoreChannel, "entryPoint" | "reSubmit" | "rollback">, IDisposable
+	implements
+		Omit<IFluidDataStoreChannelInternal, "entryPoint" | "reSubmit" | "rollback">,
+		IDisposable
 {
 	// Stores tracked by the Domain
 	private readonly pendingAttach = new Map<string, IAttachMessage>();
@@ -635,11 +639,12 @@ export class ChannelCollection
 	 * Package up the context's attach summary etc into an IAttachMessage
 	 */
 	private generateAttachMessage(localContext: LocalFluidDataStoreContext): IAttachMessage {
-		// Get the attach summary.
-		const attachSummary = localContext.getAttachSummary();
+		// Get the attach summary and the GC data together. They must describe the same set of channels: if a
+		// channel only made it into one of them, it would become visible locally (and start sending ops) without
+		// remote clients ever learning about it from this attach message.
+		const { attachSummary, attachGCData } = localContext.getAttachData();
 
-		// Get the GC data and add it to the attach summary.
-		const attachGCData = localContext.getAttachGCData();
+		// Add the GC data to the attach summary.
 		addBlobToSummary(attachSummary, gcDataBlobKey, JSON.stringify(attachGCData));
 
 		// Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
@@ -1291,22 +1296,12 @@ export class ChannelCollection
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
 		this.visitLocalBoundContextsDuringAttach(
+			new Set<string>(),
 			(contextId: string, context: FluidDataStoreContext) => {
-				let dataStoreSummary: ISummarizeResult;
-				if (context.isLoaded) {
-					dataStoreSummary = context.getAttachSummary(telemetryContext);
-				} else {
-					// If this data store is not yet loaded, then there should be no changes in the snapshot from
-					// which it was created as it is detached container. So just use the previous snapshot.
-					assert(
-						!!this.baseSnapshot,
-						0x166 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
-					);
-					dataStoreSummary = convertSnapshotTreeToSummaryTree(
-						getSnapshotTree(this.baseSnapshot).trees[contextId],
-					);
-				}
-				builder.addWithStats(contextId, dataStoreSummary);
+				builder.addWithStats(
+					contextId,
+					this.getContextAttachSummary(contextId, context, telemetryContext),
+				);
 			},
 		);
 		return builder.getSummaryTree();
@@ -1318,6 +1313,7 @@ export class ChannelCollection
 	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		const builder = new GCDataBuilder();
 		this.visitLocalBoundContextsDuringAttach(
+			new Set<string>(),
 			(contextId: string, context: FluidDataStoreContext) => {
 				const contextGCData = context.getAttachGCData(telemetryContext);
 				// Prefix the child's id to the ids of its GC nodes so they can be identified as belonging to the child.
@@ -1331,24 +1327,110 @@ export class ChannelCollection
 	}
 
 	/**
+	 * {@inheritdoc @fluidframework/runtime-definitions#IFluidDataStoreChannelInternal.getAttachData}
+	 */
+	public getAttachData(telemetryContext?: ITelemetryContext): IFluidDataStoreAttachData {
+		const summaryBuilder = new SummaryTreeBuilder();
+		const gcDataBuilder = new GCDataBuilder();
+		// Contexts whose summary has already been captured in `summaryBuilder`.
+		const summarizedContexts = new Set<string>();
+		// Contexts whose GC data has already been captured in `gcDataBuilder`.
+		const gcCapturedContexts = new Set<string>();
+
+		/**
+		 * A data store's summary or GC data callback may synchronously create and bind more data stores. Keep
+		 * alternating between draining summaries and draining GC data until neither makes progress, so that the
+		 * returned summary and GC data describe the same complete set of data stores.
+		 */
+		let progressed: boolean;
+		do {
+			progressed = this.visitLocalBoundContextsDuringAttach(
+				summarizedContexts,
+				(contextId: string, context: FluidDataStoreContext) => {
+					summaryBuilder.addWithStats(
+						contextId,
+						this.getContextAttachSummary(contextId, context, telemetryContext),
+					);
+				},
+			);
+
+			// Only contexts that made it into the summary contribute GC data, so that the two always agree.
+			// The summary drain above has already visited every currently bound context.
+			for (const contextId of [...summarizedContexts]) {
+				if (gcCapturedContexts.has(contextId)) {
+					continue;
+				}
+				gcCapturedContexts.add(contextId);
+				progressed = true;
+
+				const context = this.contexts.get(contextId);
+				assert(
+					context !== undefined,
+					"Summarized data store context must still exist when capturing attach data",
+				);
+				const contextGCData = context.getAttachGCData(telemetryContext);
+				gcDataBuilder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
+			}
+		} while (progressed);
+
+		// Get the outbound routes (aliased data stores) and add a GC node for this channel.
+		gcDataBuilder.addNode("/", [...this.aliasedDataStores]);
+
+		return {
+			attachSummary: summaryBuilder.getSummaryTree(),
+			attachGCData: gcDataBuilder.getGCData(),
+		};
+	}
+
+	/**
+	 * Generates the attach summary for a single data store context.
+	 */
+	private getContextAttachSummary(
+		contextId: string,
+		context: FluidDataStoreContext,
+		telemetryContext?: ITelemetryContext,
+	): ISummarizeResult {
+		if (context.isLoaded) {
+			return context.getAttachSummary(telemetryContext);
+		}
+
+		// If this data store is not yet loaded, then there should be no changes in the snapshot from
+		// which it was created as it is detached container. So just use the previous snapshot.
+		assert(
+			!!this.baseSnapshot,
+			0x166 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
+		);
+		return convertSnapshotTreeToSummaryTree(
+			getSnapshotTree(this.baseSnapshot).trees[contextId],
+		);
+	}
+
+	/**
 	 * Helper method for preparing to attach this channel.
-	 * Runs the callback for each bound context to incorporate its data however the caller specifies
+	 * Runs the callback for each bound context that is not already in `visitedContexts`, adding each visited
+	 * context to that set.
+	 * @param visitedContexts - The set of context ids that have already been visited. Mutated by this method.
+	 * @param visitor - Called for each newly visited context to incorporate its data however the caller specifies.
+	 * @returns Whether any context was visited.
 	 */
 	private visitLocalBoundContextsDuringAttach(
+		visitedContexts: Set<string>,
 		visitor: (contextId: string, context: FluidDataStoreContext) => void,
-	): void {
-		const visitedContexts = new Set<string>();
+	): boolean {
+		let visitedAny = false;
 		let visitedLength = -1;
 		let notBoundContextsLength = -1;
 		while (
-			visitedLength !== visitedContexts.size &&
+			visitedLength !== visitedContexts.size ||
 			notBoundContextsLength !== this.contexts.notBoundLength()
 		) {
 			// detect changes in the visitedContexts set, as on visiting a context
 			// it could could make contexts available by removing other contexts
 			// from the not bound context list, so we need to ensure those get processed as well.
-			// only once the loop can run with no new contexts added to the visitedContexts set do we
-			// know for sure all possible contexts have been visited.
+			// Both counts are checked because they can compensate for each other: a visit can bind one
+			// context while creating another unbound one, leaving the not bound count unchanged.
+			// only once the loop can run with neither count changing do we know for sure all possible
+			// contexts have been visited.
 			visitedLength = visitedContexts.size;
 			notBoundContextsLength = this.contexts.notBoundLength();
 			for (const [contextId, context] of this.contexts) {
@@ -1361,9 +1443,11 @@ export class ChannelCollection
 				) {
 					visitor(contextId, context);
 					visitedContexts.add(contextId);
+					visitedAny = true;
 				}
 			}
 		}
+		return visitedAny;
 	}
 
 	/**
@@ -1756,7 +1840,7 @@ export function detectOutboundReferences(
  */
 export class ComposableChannelCollection
 	extends ChannelCollection
-	implements IFluidDataStoreChannel
+	implements IFluidDataStoreChannelInternal
 {
 	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
