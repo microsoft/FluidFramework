@@ -4,6 +4,7 @@
  */
 
 import type { PackageJson } from "../common/npmPackage.js";
+import { validateDeclarativeTaskGlobSeparators } from "./fluidBuildConfig.js";
 import { isConcurrentlyCommand, parseConcurrentlyCommand } from "./parseCommands.js";
 
 /**
@@ -360,6 +361,7 @@ export function normalizeGlobalTaskDefinitions(
 						true,
 					);
 				}
+				validateDeclarativeTaskGlobSeparators(full.files);
 			}
 			taskDefinitions[name] = full;
 		}
@@ -504,6 +506,9 @@ export function getTaskDefinitions(
 						currentFiles?.additionalConfigFiles,
 					);
 				}
+			}
+			if (full.files !== undefined) {
+				validateDeclarativeTaskGlobSeparators(full.files);
 			}
 			taskDefinitions[name] = full;
 		}

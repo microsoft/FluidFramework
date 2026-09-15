@@ -31,7 +31,7 @@ import {
 import type { GitIgnoreSetting } from "../../fluidTaskDefinitions.js";
 import { options } from "../../options.js";
 import { Task, type TaskExec } from "../task.js";
-import { globWithGitignore } from "../taskUtils.js";
+import { globWithGitignore, toPosixPath } from "../taskUtils.js";
 
 const { log } = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");
@@ -602,7 +602,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 		return this.node
 			.getAdditionalConfigFiles(this.taskName)
 			.map((configPath) =>
-				this.getPackageFileFullPath(replaceRepoRootToken(configPath, repoRoot)),
+				this.getPackageFileFullPath(toPosixPath(replaceRepoRootToken(configPath, repoRoot))),
 			);
 	}
 

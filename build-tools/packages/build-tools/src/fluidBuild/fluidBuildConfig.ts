@@ -24,12 +24,13 @@ const REPO_ROOT_REGEX = /\$\{repoRoot\}/g;
  * Replace the {@link REPO_ROOT_TOKEN} in a path or glob with the actual repository root path.
  *
  * @remarks
- * The repo root is normalized to forward slashes and trailing separators are removed, so the
- * result is safe for globbing libraries (fast-glob treats backslashes as escape characters).
+ * Only the dynamically resolved repository root is normalized. Callers that pass globs must
+ * validate that those globs use forward slashes because fast-glob treats backslashes as escape
+ * characters.
  */
 export function replaceRepoRootToken(pathOrGlob: string, repoRoot: string): string {
 	const normalizedRepoRoot = repoRoot.replace(/\\/g, "/").replace(/\/+$/, "");
-	return pathOrGlob.replace(REPO_ROOT_REGEX, normalizedRepoRoot).replace(/\\/g, "/");
+	return pathOrGlob.replace(REPO_ROOT_REGEX, normalizedRepoRoot);
 }
 
 /**
@@ -40,6 +41,27 @@ export function replaceRepoRootTokens(
 	repoRoot: string,
 ): string[] {
 	return pathsOrGlobs.map((p) => replaceRepoRootToken(p, repoRoot));
+}
+
+/**
+ * Validate the glob separators used by a declarative task.
+ *
+ * @param task - The declarative task to validate.
+ * @throws If an input or output glob contains a backslash.
+ */
+export function validateDeclarativeTaskGlobSeparators(task: TaskFileDependencies): void {
+	for (const [kind, globs] of [
+		["inputGlob", task.inputGlobs],
+		["outputGlob", task.outputGlobs],
+	] as const) {
+		for (const glob of globs) {
+			if (glob.includes("\\")) {
+				throw new Error(
+					`${kind} '${glob}' contains backslashes; use '/' in fluidBuild globs.`,
+				);
+			}
+		}
+	}
 }
 
 /**
