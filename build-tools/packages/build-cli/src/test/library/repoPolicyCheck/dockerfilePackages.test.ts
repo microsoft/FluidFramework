@@ -23,11 +23,10 @@ describe("dockerfile-packages policy check", () => {
 		await rm(testDir, { recursive: true, force: true });
 	});
 
-	it("writes POSIX COPY text when fixing a Windows-style relative path", async function () {
-		if (path.sep !== "\\") {
-			this.skip();
-		}
-
+	async function writeDockerfileFixture(): Promise<{
+		dockerfileDir: string;
+		packageDir: string;
+	}> {
 		const dockerfileDir = path.join(testDir, "server/routerlicious");
 		const packageDir = path.join(dockerfileDir, "packages/foo");
 		await mkdir(packageDir, { recursive: true });
@@ -41,8 +40,11 @@ describe("dockerfile-packages policy check", () => {
 				"",
 			].join("\n"),
 		);
-		const packageJsonPath = path.join(packageDir, "package.json");
-		await writeFile(packageJsonPath, "");
+		return { dockerfileDir, packageDir };
+	}
+
+	async function runResolver(packageJsonPath: string): Promise<string> {
+		const dockerfilePath = path.join(testDir, "server/routerlicious", "Dockerfile");
 
 		const originalCwd = process.cwd();
 		process.chdir(testDir);
@@ -52,8 +54,31 @@ describe("dockerfile-packages policy check", () => {
 			process.chdir(originalCwd);
 		}
 
-		const dockerfile = await readFile(path.join(dockerfileDir, "Dockerfile"), "utf8");
+		return readFile(dockerfilePath, "utf8");
+	}
+
+	it("writes POSIX COPY text when fixing a Windows-style relative path", async function () {
+		if (path.sep !== "\\") {
+			this.skip();
+		}
+
+		const { packageDir } = await writeDockerfileFixture();
+		const packageJsonPath = path.join(packageDir, "package.json");
+		await writeFile(packageJsonPath, "");
+
+		const dockerfile = await runResolver(packageJsonPath);
+
 		assert.match(dockerfile, /COPY packages\/foo\/package\*\.json packages\/foo\//);
 		assert.doesNotMatch(dockerfile, /COPY packages\\foo/);
+	});
+
+	it("normalizes backslash-containing package paths on any platform", async () => {
+		const { dockerfileDir } = await writeDockerfileFixture();
+		const packageJsonPath = path.join(dockerfileDir, "packages\\bar", "package.json");
+
+		const dockerfile = await runResolver(packageJsonPath);
+
+		assert.match(dockerfile, /COPY packages\/bar\/package\*\.json packages\/bar\//);
+		assert.doesNotMatch(dockerfile, /COPY packages\\bar/);
 	});
 });
