@@ -5,8 +5,8 @@ use std::fmt::Debug;
 use bytes::Bytes;
 use futures_util::{StreamExt, TryStreamExt, future::join_all};
 use sea_core::{
-    AppendStream, Capability, ClassifiedError, ErrorKind, PositionCodec, Snapshot,
-    SnapshotPosition, SnapshotStore,
+    Capability, ClassifiedError, ErrorKind, EventStream, PositionCodec, Snapshot, SnapshotPosition,
+    SnapshotStore,
 };
 
 const MODEL_TRACE_SEED: u64 = 0x5eed_0002_d15c_a11e;
@@ -32,17 +32,14 @@ impl ReferenceModel {
     }
 
     /// Replaces the model's latest snapshot.
-    fn publish(&mut self, includes_through: usize, payload: Bytes) {
-        self.snapshot = Some((includes_through, payload));
+    fn publish(&mut self, at_event: usize, payload: Bytes) {
+        self.snapshot = Some((at_event, payload));
     }
 
     /// Returns records that must be replayed after the latest snapshot.
     fn recover(&self) -> Vec<Bytes> {
-        let includes_through = self
-            .snapshot
-            .as_ref()
-            .map_or(0, |(includes_through, _)| *includes_through);
-        self.read_after(Some(includes_through)).to_vec()
+        let at_event = self.snapshot.as_ref().map_or(0, |(at_event, _)| *at_event);
+        self.read_after(Some(at_event)).to_vec()
     }
 }
 
@@ -53,9 +50,9 @@ impl ReferenceModel {
 /// Panics when the implementation violates a required semantic law.
 pub async fn run_conformance<S, F>(make_stream: F)
 where
-    S: AppendStream
-        + SnapshotStore<Position = <S as AppendStream>::Position, Error = <S as AppendStream>::Error>,
-    <S as AppendStream>::Error: Debug,
+    S: EventStream
+        + SnapshotStore<Position = <S as EventStream>::Position, Error = <S as EventStream>::Error>,
+    <S as EventStream>::Error: Debug,
     F: Fn() -> S,
 {
     append_order_and_boundaries(&make_stream).await;
@@ -79,8 +76,8 @@ where
 /// Panics when the implementation violates a required position-codec law.
 pub async fn run_position_codec_conformance<S, F>(make_stream: F, malformed_token: &[u8])
 where
-    S: AppendStream + PositionCodec,
-    <S as AppendStream>::Error: Debug,
+    S: EventStream + PositionCodec,
+    <S as EventStream>::Error: Debug,
     F: Fn() -> S,
 {
     let first = make_stream();
@@ -109,9 +106,9 @@ where
 /// Compares a deterministic mixed append/read/snapshot trace with the reference model.
 async fn deterministic_reference_model_trace<S, F>(make_stream: &F)
 where
-    S: AppendStream
-        + SnapshotStore<Position = <S as AppendStream>::Position, Error = <S as AppendStream>::Error>,
-    <S as AppendStream>::Error: Debug,
+    S: EventStream
+        + SnapshotStore<Position = <S as EventStream>::Position, Error = <S as EventStream>::Error>,
+    <S as EventStream>::Error: Debug,
     F: Fn() -> S,
 {
     let stream = make_stream();
@@ -154,15 +151,13 @@ where
         }
 
         if matches!(step, 7 | 15) {
-            let includes_through = positions.len();
+            let at_event = positions.len();
             let snapshot_payload = Bytes::copy_from_slice(&state.to_be_bytes());
             parent = Some(
                 stream
                     .publish(
                         Snapshot {
-                            includes_through: SnapshotPosition::At(
-                                positions[includes_through - 1].clone(),
-                            ),
+                            at_event: SnapshotPosition::At(positions[at_event - 1].clone()),
                             payload: snapshot_payload.clone(),
                         },
                         parent.as_ref(),
@@ -170,7 +165,7 @@ where
                     .await
                     .expect("model trace snapshot publication"),
             );
-            model.publish(includes_through, snapshot_payload);
+            model.publish(at_event, snapshot_payload);
         }
     }
 
@@ -179,7 +174,7 @@ where
         .await
         .expect("model trace latest snapshot")
         .expect("model trace published snapshot");
-    let SnapshotPosition::At(position) = latest.snapshot.includes_through else {
+    let SnapshotPosition::At(position) = latest.snapshot.at_event else {
         panic!("model trace snapshot should include a committed position");
     };
     assert_eq!(
@@ -206,8 +201,8 @@ where
 /// Verifies that concurrent commits form one complete prefix without gaps or loss.
 async fn concurrent_appends_are_contiguous<S, F>(make_stream: &F)
 where
-    S: AppendStream,
-    <S as AppendStream>::Error: Debug,
+    S: EventStream,
+    <S as EventStream>::Error: Debug,
     F: Fn() -> S,
 {
     let stream = make_stream();
@@ -243,8 +238,8 @@ where
 /// Verifies commit order, empty-record preservation, and exclusive resume positions.
 async fn append_order_and_boundaries<S, F>(make_stream: &F)
 where
-    S: AppendStream,
-    <S as AppendStream>::Error: Debug,
+    S: EventStream,
+    <S as EventStream>::Error: Debug,
     F: Fn() -> S,
 {
     let stream = make_stream();
@@ -279,8 +274,8 @@ where
 /// Verifies that a reader ends at the head captured when reading begins.
 async fn read_is_finite<S, F>(make_stream: &F)
 where
-    S: AppendStream,
-    <S as AppendStream>::Error: Debug,
+    S: EventStream,
+    <S as EventStream>::Error: Debug,
     F: Fn() -> S,
 {
     let stream = make_stream();
@@ -301,8 +296,8 @@ where
 /// Verifies that resuming from the current head yields no records.
 async fn read_after_head_is_empty<S, F>(make_stream: &F)
 where
-    S: AppendStream,
-    <S as AppendStream>::Error: Debug,
+    S: EventStream,
+    <S as EventStream>::Error: Debug,
     F: Fn() -> S,
 {
     let stream = make_stream();
@@ -324,8 +319,8 @@ where
 /// Verifies that dropping one reader cannot cancel or mutate another reader.
 async fn readers_are_independent_and_cancellable<S, F>(make_stream: &F)
 where
-    S: AppendStream,
-    <S as AppendStream>::Error: Debug,
+    S: EventStream,
+    <S as EventStream>::Error: Debug,
     F: Fn() -> S,
 {
     let stream = make_stream();
@@ -356,8 +351,8 @@ where
 /// Verifies that a position must identify a committed ordinal.
 async fn positions_require_committed_ordinals<S, F>(make_stream: &F)
 where
-    S: AppendStream,
-    <S as AppendStream>::Error: Debug,
+    S: EventStream,
+    <S as EventStream>::Error: Debug,
     F: Fn() -> S,
 {
     let first = make_stream();
@@ -378,9 +373,9 @@ where
 /// Verifies that snapshot publication rejects uncommitted positions.
 async fn snapshot_positions_require_committed_ordinals<S, F>(make_stream: &F)
 where
-    S: AppendStream
-        + SnapshotStore<Position = <S as AppendStream>::Position, Error = <S as AppendStream>::Error>,
-    <S as AppendStream>::Error: Debug,
+    S: EventStream
+        + SnapshotStore<Position = <S as EventStream>::Position, Error = <S as EventStream>::Error>,
+    <S as EventStream>::Error: Debug,
     F: Fn() -> S,
 {
     let first = make_stream();
@@ -393,7 +388,7 @@ where
     let error = second
         .publish(
             Snapshot {
-                includes_through: SnapshotPosition::At(position),
+                at_event: SnapshotPosition::At(position),
                 payload: Bytes::from_static(b"foreign-position"),
             },
             None,
@@ -409,16 +404,16 @@ where
 /// Verifies optimistic parent matching and monotonic snapshot positions.
 async fn snapshots_require_lineage_and_monotonicity<S, F>(make_stream: &F)
 where
-    S: AppendStream
-        + SnapshotStore<Position = <S as AppendStream>::Position, Error = <S as AppendStream>::Error>,
-    <S as AppendStream>::Error: Debug,
+    S: EventStream
+        + SnapshotStore<Position = <S as EventStream>::Position, Error = <S as EventStream>::Error>,
+    <S as EventStream>::Error: Debug,
     F: Fn() -> S,
 {
     let stream = make_stream();
     let initial_parent = stream
         .publish(
             Snapshot {
-                includes_through: SnapshotPosition::Initial,
+                at_event: SnapshotPosition::Initial,
                 payload: Bytes::from_static(b"initial-state"),
             },
             None,
@@ -436,7 +431,7 @@ where
     let parent = stream
         .publish(
             Snapshot {
-                includes_through: SnapshotPosition::At(second.position),
+                at_event: SnapshotPosition::At(second.position),
                 payload: Bytes::from_static(b"state-2"),
             },
             Some(&initial_parent),
@@ -447,7 +442,7 @@ where
     let conflict = stream
         .publish(
             Snapshot {
-                includes_through: SnapshotPosition::At(first.position.clone()),
+                at_event: SnapshotPosition::At(first.position.clone()),
                 payload: Bytes::from_static(b"stale-parent"),
             },
             None,
@@ -459,7 +454,7 @@ where
     let regression = stream
         .publish(
             Snapshot {
-                includes_through: SnapshotPosition::At(first.position),
+                at_event: SnapshotPosition::At(first.position),
                 payload: Bytes::from_static(b"regression"),
             },
             Some(&parent),
@@ -472,9 +467,9 @@ where
 /// Verifies that recovery replays only records after the published snapshot.
 async fn snapshot_recovery_reads_only_subsequent_records<S, F>(make_stream: &F)
 where
-    S: AppendStream
-        + SnapshotStore<Position = <S as AppendStream>::Position, Error = <S as AppendStream>::Error>,
-    <S as AppendStream>::Error: Debug,
+    S: EventStream
+        + SnapshotStore<Position = <S as EventStream>::Position, Error = <S as EventStream>::Error>,
+    <S as EventStream>::Error: Debug,
     F: Fn() -> S,
 {
     let stream = make_stream();
@@ -490,7 +485,7 @@ where
     stream
         .publish(
             Snapshot {
-                includes_through: SnapshotPosition::At(snapshot_position),
+                at_event: SnapshotPosition::At(snapshot_position),
                 payload: Bytes::copy_from_slice(&5_i64.to_be_bytes()),
             },
             None,
@@ -507,7 +502,7 @@ where
         .await
         .expect("latest snapshot")
         .expect("published snapshot");
-    let SnapshotPosition::At(position) = snapshot.snapshot.includes_through else {
+    let SnapshotPosition::At(position) = snapshot.snapshot.at_event else {
         panic!("counter snapshot should include a committed position");
     };
     let records = stream

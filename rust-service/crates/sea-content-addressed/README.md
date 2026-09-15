@@ -1,4 +1,4 @@
-# Snapshotted Stream Content Addressed
+# Sea Content Addressed
 
 `sea-content-addressed` stores immutable SHA-256 blobs and canonical summary manifests in memory or on a local filesystem.
 

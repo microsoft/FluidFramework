@@ -16,8 +16,8 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::stream;
 use sea_core::{
-    AppendReceipt, AppendStream, Capabilities, ClassifiedError, Durability, ErrorKind,
-    PositionCodec, PublishedSnapshot, ReadRecord, Snapshot, SnapshotId, SnapshotPosition,
+    Capabilities, ClassifiedError, CommittedEvent, Durability, ErrorKind, EventReceipt,
+    EventStream, PositionCodec, PublishedSnapshot, Snapshot, SnapshotId, SnapshotPosition,
     SnapshotStore, StreamReader,
 };
 use thiserror::Error;
@@ -387,7 +387,7 @@ impl DurableLog {
 }
 
 #[async_trait]
-impl AppendStream for DurableLog {
+impl EventStream for DurableLog {
     type Position = DurablePosition;
     type Error = DurableLogError;
 
@@ -395,7 +395,7 @@ impl AppendStream for DurableLog {
         Capabilities::NONE.with(sea_core::Capability::PositionSerialization)
     }
 
-    async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
+    async fn append(&self, value: Bytes) -> Result<EventReceipt<Self::Position>, Self::Error> {
         let mut state = self.state()?;
         let crashes = Arc::clone(&state.crashes);
         write_record(&mut state.writer, &value, &crashes)
@@ -413,7 +413,7 @@ impl AppendStream for DurableLog {
         state.records.push(value);
         let ordinal = u64::try_from(state.records.len())
             .map_err(|_| DurableLogError::Corrupt("record count exceeds position range"))?;
-        Ok(AppendReceipt {
+        Ok(EventReceipt {
             position: DurablePosition { ordinal },
             durability: Durability::Durable,
         })
@@ -448,7 +448,7 @@ impl AppendStream for DurableLog {
                         let ordinal = u64::try_from(index + 1).map_err(|_| {
                             DurableLogError::Corrupt("record count exceeds position range")
                         })?;
-                        Ok(ReadRecord {
+                        Ok(CommittedEvent {
                             position: DurablePosition { ordinal },
                             payload: state.records[index].clone(),
                         })
@@ -499,7 +499,7 @@ impl SnapshotStore for DurableLog {
         expected_parent: Option<&SnapshotId>,
     ) -> Result<SnapshotId, Self::Error> {
         let mut state = self.state()?;
-        let ordinal = match &snapshot.includes_through {
+        let ordinal = match &snapshot.at_event {
             SnapshotPosition::Initial => 0,
             SnapshotPosition::At(position) => {
                 Self::validate_position(position, state.records.len())?;
@@ -562,7 +562,7 @@ impl SnapshotStore for DurableLog {
 
 /// Converts an initial or positioned snapshot boundary to its persisted ordinal.
 fn snapshot_ordinal(snapshot: &Snapshot<DurablePosition>) -> u64 {
-    match &snapshot.includes_through {
+    match &snapshot.at_event {
         SnapshotPosition::Initial => 0,
         SnapshotPosition::At(position) => position.ordinal,
     }
@@ -705,7 +705,7 @@ fn parse_snapshot(
             "snapshot position is beyond the log head",
         ));
     }
-    let includes_through = if ordinal == 0 {
+    let at_event = if ordinal == 0 {
         SnapshotPosition::Initial
     } else {
         SnapshotPosition::At(DurablePosition { ordinal })
@@ -713,7 +713,7 @@ fn parse_snapshot(
     Ok(PublishedSnapshot {
         id: snapshot_id(ordinal, payload)?,
         snapshot: Snapshot {
-            includes_through,
+            at_event,
             payload: Bytes::copy_from_slice(payload),
         },
     })
@@ -863,7 +863,7 @@ mod tests {
     };
 
     use futures_util::TryStreamExt;
-    use sea_core::{AppendStream, ClassifiedError};
+    use sea_core::{ClassifiedError, EventStream};
 
     use super::*;
 
@@ -892,7 +892,7 @@ mod tests {
     fn test_directory(label: &str) -> PathBuf {
         let id = NEXT_TEST_DIRECTORY.fetch_add(1, Ordering::Relaxed);
         std::env::temp_dir().join(format!(
-            "snapshotted-stream-durable-log-{}-{label}-{id}",
+            "sea-file-durable-{}-{label}-{id}",
             std::process::id()
         ))
     }
@@ -1039,7 +1039,7 @@ mod tests {
                 let parent = log.latest().await.unwrap().unwrap().id;
                 log.publish(
                     Snapshot {
-                        includes_through: SnapshotPosition::At(position),
+                        at_event: SnapshotPosition::At(position),
                         payload: Bytes::from_static(b"attempted"),
                     },
                     Some(&parent),
@@ -1122,7 +1122,7 @@ mod tests {
             let baseline_id = log
                 .publish(
                     Snapshot {
-                        includes_through: SnapshotPosition::At(first.position.clone()),
+                        at_event: SnapshotPosition::At(first.position.clone()),
                         payload: Bytes::from_static(b"baseline"),
                     },
                     None,
@@ -1148,7 +1148,7 @@ mod tests {
                         Bytes::from_static(b"attempted"),
                         "{boundary}"
                     );
-                    let position = match &recovered.snapshot.includes_through {
+                    let position = match &recovered.snapshot.at_event {
                         SnapshotPosition::At(position) => position.clone(),
                         SnapshotPosition::Initial => panic!("attempted snapshot lost its position"),
                     };
@@ -1421,7 +1421,7 @@ mod tests {
         let second = log.append(Bytes::from_static(b"second")).await.unwrap();
         let third = log.append(Bytes::from_static(b"third")).await.unwrap();
         let snapshot = Snapshot {
-            includes_through: SnapshotPosition::At(second.position.clone()),
+            at_event: SnapshotPosition::At(second.position.clone()),
             payload: Bytes::from_static(b"state-at-second"),
         };
         let id = log.publish(snapshot.clone(), None).await.unwrap();
@@ -1436,7 +1436,7 @@ mod tests {
             })
         );
         let replay = reopened
-            .read(match &snapshot.includes_through {
+            .read(match &snapshot.at_event {
                 SnapshotPosition::At(position) => Some(position),
                 SnapshotPosition::Initial => None,
             })
@@ -1460,7 +1460,7 @@ mod tests {
         let latest_id = log
             .publish(
                 Snapshot {
-                    includes_through: SnapshotPosition::At(second.position.clone()),
+                    at_event: SnapshotPosition::At(second.position.clone()),
                     payload: Bytes::from_static(b"newer"),
                 },
                 None,
@@ -1472,7 +1472,7 @@ mod tests {
         let conflict = log
             .publish(
                 Snapshot {
-                    includes_through: SnapshotPosition::At(second.position),
+                    at_event: SnapshotPosition::At(second.position),
                     payload: Bytes::from_static(b"conflict"),
                 },
                 Some(&wrong_parent),
@@ -1484,7 +1484,7 @@ mod tests {
         let regression = log
             .publish(
                 Snapshot {
-                    includes_through: SnapshotPosition::At(first.position),
+                    at_event: SnapshotPosition::At(first.position),
                     payload: Bytes::from_static(b"older"),
                 },
                 Some(&latest_id),
@@ -1515,7 +1515,7 @@ mod tests {
             let baseline_id = log
                 .publish(
                     Snapshot {
-                        includes_through: SnapshotPosition::At(first.position),
+                        at_event: SnapshotPosition::At(first.position),
                         payload: Bytes::from_static(b"baseline"),
                     },
                     None,
@@ -1527,7 +1527,7 @@ mod tests {
             let injector = Arc::new(CrashInjector::new([point]));
             let log = DurableLog::open_with_crash_injector(&directory, injector).unwrap();
             let attempted = Snapshot {
-                includes_through: SnapshotPosition::At(second.position),
+                at_event: SnapshotPosition::At(second.position),
                 payload: Bytes::from_static(b"attempted"),
             };
             assert!(log.publish(attempted, Some(&baseline_id)).await.is_err());
@@ -1551,7 +1551,7 @@ mod tests {
         let receipt = log.append(Bytes::from_static(b"record")).await.unwrap();
         log.publish(
             Snapshot {
-                includes_through: SnapshotPosition::At(receipt.position),
+                at_event: SnapshotPosition::At(receipt.position),
                 payload: Bytes::from_static(b"snapshot-payload"),
             },
             None,
@@ -1580,7 +1580,7 @@ mod tests {
         let payload = Bytes::from(vec![0x5a; 1024]);
         log.publish(
             Snapshot {
-                includes_through: SnapshotPosition::At(receipt.position),
+                at_event: SnapshotPosition::At(receipt.position),
                 payload: payload.clone(),
             },
             None,
@@ -1604,7 +1604,7 @@ mod tests {
         let receipt = log.append(Bytes::from_static(b"record")).await.unwrap();
         log.publish(
             Snapshot {
-                includes_through: SnapshotPosition::At(receipt.position),
+                at_event: SnapshotPosition::At(receipt.position),
                 payload: Bytes::from_static(b"snapshot"),
             },
             None,

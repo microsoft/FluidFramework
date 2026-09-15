@@ -2,14 +2,12 @@ use std::{fs, sync::Arc, time::Instant};
 
 use async_trait::async_trait;
 use bytes::Bytes;
+use sea_client::{LifecycleEvent, NativeClient};
+use sea_protocol::{Acknowledgement, Reference, Request, Response, SubmissionDisposition};
 use sea_service::{NativeService, ServiceConfig};
-use sea_protocol::{
-    Acknowledgement, Reference, Request, Response, SubmissionDisposition,
-};
 use sea_webtransport::{
     MeasurementHandle, TransportConfig, WebTransportClient, WebTransportServer,
 };
-use sea_client::{LifecycleEvent, NativeClient};
 use wtransport::Identity;
 
 use super::{

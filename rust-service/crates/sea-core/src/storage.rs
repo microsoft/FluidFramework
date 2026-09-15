@@ -11,8 +11,8 @@ use bytes::Bytes;
 use futures_util::StreamExt as _;
 
 use crate::{
-    AppendReceipt, AppendStream, Capabilities, ClassifiedError, ErrorKind, PositionCodec,
-    PublishedSnapshot, ReadRecord, Snapshot, SnapshotId, SnapshotPosition, SnapshotStore,
+    Capabilities, ClassifiedError, CommittedEvent, ErrorKind, EventReceipt, EventStream,
+    PositionCodec, PublishedSnapshot, Snapshot, SnapshotId, SnapshotPosition, SnapshotStore,
     StreamReader,
 };
 
@@ -125,7 +125,7 @@ pub trait DocumentStorage: Send + Sync {
     fn capabilities(&self) -> Capabilities;
 
     /// Appends one record and returns its opaque service position.
-    async fn append(&self, value: Bytes) -> Result<AppendReceipt<StoragePosition>, StorageError>;
+    async fn append(&self, value: Bytes) -> Result<EventReceipt<StoragePosition>, StorageError>;
 
     /// Reads records strictly after `after`, or from the retained beginning when absent.
     async fn read(
@@ -167,27 +167,27 @@ impl<S> DocumentStorageAdapter<S> {
 #[async_trait]
 impl<S> DocumentStorage for DocumentStorageAdapter<S>
 where
-    S: AppendStream
+    S: EventStream
         + PositionCodec
-        + SnapshotStore<Position = <S as AppendStream>::Position, Error = <S as AppendStream>::Error>
+        + SnapshotStore<Position = <S as EventStream>::Position, Error = <S as EventStream>::Error>
         + Clone
         + Send
         + Sync
         + 'static,
-    <S as AppendStream>::Position: Send + Sync + 'static,
-    <S as AppendStream>::Error: Send + Sync + 'static,
+    <S as EventStream>::Position: Send + Sync + 'static,
+    <S as EventStream>::Error: Send + Sync + 'static,
 {
     fn capabilities(&self) -> Capabilities {
         self.inner.capabilities()
     }
 
-    async fn append(&self, value: Bytes) -> Result<AppendReceipt<StoragePosition>, StorageError> {
+    async fn append(&self, value: Bytes) -> Result<EventReceipt<StoragePosition>, StorageError> {
         let receipt = self
             .inner
             .append(value)
             .await
             .map_err(|error| StorageError::from_classified(&error))?;
-        Ok(AppendReceipt {
+        Ok(EventReceipt {
             position: self.encode_position(&receipt.position)?,
             durability: receipt.durability,
         })
@@ -208,7 +208,7 @@ where
         let inner = self.inner.clone();
         Ok(Box::pin(reader.map(move |record| {
             let record = record.map_err(|error| StorageError::from_classified(&error))?;
-            Ok(ReadRecord {
+            Ok(CommittedEvent {
                 position: Self::encode_with(&inner, &record.position)?,
                 payload: record.payload,
             })
@@ -233,7 +233,7 @@ where
                 Ok(PublishedSnapshot {
                     id: published.id,
                     snapshot: Snapshot {
-                        includes_through: match published.snapshot.includes_through {
+                        at_event: match published.snapshot.at_event {
                             SnapshotPosition::Initial => SnapshotPosition::Initial,
                             SnapshotPosition::At(position) => {
                                 SnapshotPosition::At(self.encode_position(&position)?)
@@ -251,7 +251,7 @@ where
         snapshot: Snapshot<StoragePosition>,
         expected_parent: Option<&SnapshotId>,
     ) -> Result<SnapshotId, StorageError> {
-        let includes_through = match snapshot.includes_through {
+        let at_event = match snapshot.at_event {
             SnapshotPosition::Initial => SnapshotPosition::Initial,
             SnapshotPosition::At(position) => {
                 SnapshotPosition::At(self.decode_position(&position)?)
@@ -260,7 +260,7 @@ where
         self.inner
             .publish(
                 Snapshot {
-                    includes_through,
+                    at_event,
                     payload: snapshot.payload,
                 },
                 expected_parent,
@@ -286,12 +286,12 @@ where
 
 impl<S> DocumentStorageAdapter<S>
 where
-    S: AppendStream + PositionCodec,
+    S: EventStream + PositionCodec,
 {
     /// Encodes one backend position into its opaque storage form.
     fn encode_position(
         &self,
-        position: &<S as AppendStream>::Position,
+        position: &<S as EventStream>::Position,
     ) -> Result<StoragePosition, StorageError> {
         Self::encode_with(&self.inner, position)
     }
@@ -299,7 +299,7 @@ where
     /// Encodes one backend position without borrowing the adapter.
     fn encode_with(
         inner: &S,
-        position: &<S as AppendStream>::Position,
+        position: &<S as EventStream>::Position,
     ) -> Result<StoragePosition, StorageError> {
         inner
             .encode_position(position)
@@ -311,7 +311,7 @@ where
     fn decode_position(
         &self,
         position: &StoragePosition,
-    ) -> Result<<S as AppendStream>::Position, StorageError> {
+    ) -> Result<<S as EventStream>::Position, StorageError> {
         self.inner
             .decode_position(position.token())
             .map_err(|error| StorageError::from_classified(&error))
@@ -449,7 +449,7 @@ pub trait ServiceStorage: Send + Sync {
 /// Returns the first storage failure produced while opening or consuming the read.
 pub async fn read_all(
     storage: &dyn DocumentStorage,
-) -> Result<Vec<ReadRecord<StoragePosition>>, StorageError> {
+) -> Result<Vec<CommittedEvent<StoragePosition>>, StorageError> {
     let mut reader = storage.read(None).await?;
     let mut records = Vec::new();
     while let Some(record) =

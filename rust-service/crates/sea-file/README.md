@@ -1,4 +1,4 @@
-# Snapshotted Stream File Simple
+# Sea File Simple
 
 `sea-file` is a minimal single-process filesystem implementation of the append-stream and snapshot-store contracts.
 

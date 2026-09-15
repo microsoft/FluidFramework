@@ -1,13 +1,11 @@
 #![doc = "Transport-neutral lifecycle policy and native helpers for Fluid service clients."]
 
 use bytes::Bytes;
+use futures_util::TryStreamExt;
+use sea_core::{EventStream, PublishedSnapshot, Snapshot, SnapshotPosition, SnapshotStore};
 use sea_protocol::{
     Acknowledgement, ErrorCode, Reference, Request, Resolution, Response, Submission,
     SubmissionDisposition, SummaryEntry,
-};
-use futures_util::TryStreamExt;
-use sea_core::{
-    AppendStream, PublishedSnapshot, Snapshot, SnapshotPosition, SnapshotStore,
 };
 use thiserror::Error;
 
@@ -639,8 +637,8 @@ pub struct CounterClient<'a, S> {
 
 impl<'a, S> CounterClient<'a, S>
 where
-    S: AppendStream
-        + SnapshotStore<Position = <S as AppendStream>::Position, Error = <S as AppendStream>::Error>,
+    S: EventStream
+        + SnapshotStore<Position = <S as EventStream>::Position, Error = <S as EventStream>::Error>,
 {
     /// Creates a counter helper borrowing `stream`.
     #[must_use]
@@ -656,7 +654,7 @@ where
     pub async fn append_delta(
         &self,
         delta: i64,
-    ) -> Result<<S as AppendStream>::Position, CounterError<<S as AppendStream>::Error>> {
+    ) -> Result<<S as EventStream>::Position, CounterError<<S as EventStream>::Error>> {
         self.stream
             .append(Bytes::copy_from_slice(&delta.to_be_bytes()))
             .await
@@ -671,10 +669,8 @@ where
     /// Returns an implementation error or `InvalidRecord` for malformed counter bytes.
     pub async fn recover(
         &self,
-    ) -> Result<
-        (i64, Option<<S as AppendStream>::Position>),
-        CounterError<<S as AppendStream>::Error>,
-    > {
+    ) -> Result<(i64, Option<<S as EventStream>::Position>), CounterError<<S as EventStream>::Error>>
+    {
         let latest = self.stream.latest().await.map_err(CounterError::Stream)?;
         let (mut value, after) = decode_snapshot(latest.as_ref())?;
         let records = self
@@ -701,14 +697,14 @@ where
     pub async fn publish_snapshot(
         &self,
         value: i64,
-        includes_through: Option<<S as AppendStream>::Position>,
-    ) -> Result<(), CounterError<<S as AppendStream>::Error>> {
+        at_event: Option<<S as EventStream>::Position>,
+    ) -> Result<(), CounterError<<S as EventStream>::Error>> {
         let parent = self.stream.latest().await.map_err(CounterError::Stream)?;
-        let position = includes_through.map_or(SnapshotPosition::Initial, SnapshotPosition::At);
+        let position = at_event.map_or(SnapshotPosition::Initial, SnapshotPosition::At);
         self.stream
             .publish(
                 Snapshot {
-                    includes_through: position,
+                    at_event: position,
                     payload: Bytes::copy_from_slice(&value.to_be_bytes()),
                 },
                 parent.as_ref().map(|value| &value.id),
@@ -728,7 +724,7 @@ fn decode_snapshot<P: Clone, E>(
         return Ok((0, None));
     };
     let value = decode_i64(&snapshot.snapshot.payload)?;
-    let position = match &snapshot.snapshot.includes_through {
+    let position = match &snapshot.snapshot.at_event {
         SnapshotPosition::Initial => None,
         SnapshotPosition::At(position) => Some(position.clone()),
     };

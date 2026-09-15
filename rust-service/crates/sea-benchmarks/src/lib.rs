@@ -1,4 +1,4 @@
-#![doc = "Deterministic fixtures and result schema for snapshotted-stream benchmarks."]
+#![doc = "Deterministic fixtures and result schema for Sea benchmarks."]
 
 use serde::{Deserialize, Serialize};
 

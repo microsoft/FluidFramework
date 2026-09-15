@@ -1,4 +1,4 @@
-//! Transparent authenticated encryption for snapshotted streams.
+//! Transparent authenticated encryption for Sea event archives.
 //!
 //! Each record and snapshot is encrypted independently with AES-256-GCM-SIV.
 //! The stored envelope contains a magic value, format and algorithm versions,
@@ -31,8 +31,8 @@ use bytes::Bytes;
 use futures_util::StreamExt;
 use rand_core::{OsRng, RngCore};
 use sea_core::{
-    AppendReceipt, AppendStream, Capabilities, ClassifiedError, ErrorKind, PositionCodec,
-    PublishedSnapshot, ReadRecord, Snapshot, SnapshotId, SnapshotStore, StreamReader,
+    Capabilities, ClassifiedError, CommittedEvent, ErrorKind, EventReceipt, EventStream,
+    PositionCodec, PublishedSnapshot, Snapshot, SnapshotId, SnapshotStore, StreamReader,
 };
 use thiserror::Error;
 use zeroize::{Zeroize, ZeroizeOnDrop};
@@ -300,9 +300,9 @@ where
 }
 
 #[async_trait]
-impl<S, K, N> AppendStream for EncryptionStream<S, K, N>
+impl<S, K, N> EventStream for EncryptionStream<S, K, N>
 where
-    S: AppendStream,
+    S: EventStream,
     K: KeyProvider + Clone + 'static,
     N: NonceSource,
 {
@@ -315,7 +315,7 @@ where
     }
 
     /// Encrypts and appends one record without changing its receipt.
-    async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
+    async fn append(&self, value: Bytes) -> Result<EventReceipt<Self::Position>, Self::Error> {
         let envelope = encrypt_payload::<S::Error, _, _>(
             &self.keys,
             &self.nonces,
@@ -342,7 +342,7 @@ where
         Ok(Box::pin(reader.map(move |result| {
             result.map_err(EncryptionError::Store).and_then(|record| {
                 decrypt_payload::<S::Error, _>(&keys, &record.payload, PayloadContext::Record).map(
-                    |payload| ReadRecord {
+                    |payload| CommittedEvent {
                         position: record.position,
                         payload,
                     },
@@ -403,7 +403,7 @@ where
                 .map(|payload| PublishedSnapshot {
                     id: published.id,
                     snapshot: Snapshot {
-                        includes_through: published.snapshot.includes_through,
+                        at_event: published.snapshot.at_event,
                         payload,
                     },
                 })
@@ -426,7 +426,7 @@ where
         self.inner
             .publish(
                 Snapshot {
-                    includes_through: snapshot.includes_through,
+                    at_event: snapshot.at_event,
                     payload: envelope,
                 },
                 expected_parent,
@@ -443,7 +443,7 @@ mod tests {
     use futures_util::{StreamExt, TryStreamExt};
     use sea_compression::CompressionStream;
     use sea_core::{
-        AppendStream, ClassifiedError, ErrorKind, Snapshot, SnapshotPosition, SnapshotStore,
+        ClassifiedError, ErrorKind, EventStream, Snapshot, SnapshotPosition, SnapshotStore,
     };
     use sea_memory::{MemoryError, MemoryStream};
 
@@ -571,7 +571,7 @@ mod tests {
         stream
             .publish(
                 Snapshot {
-                    includes_through: SnapshotPosition::At(position.clone()),
+                    at_event: SnapshotPosition::At(position.clone()),
                     payload: Bytes::from_static(b"snapshot"),
                 },
                 None,
@@ -580,10 +580,7 @@ mod tests {
             .unwrap();
         let latest = stream.latest().await.unwrap().unwrap();
         assert_eq!(latest.snapshot.payload, Bytes::from_static(b"snapshot"));
-        assert_eq!(
-            latest.snapshot.includes_through,
-            SnapshotPosition::At(position)
-        );
+        assert_eq!(latest.snapshot.at_event, SnapshotPosition::At(position));
     }
 
     #[tokio::test]
@@ -592,7 +589,7 @@ mod tests {
         inner
             .publish(
                 Snapshot {
-                    includes_through: SnapshotPosition::Initial,
+                    at_event: SnapshotPosition::Initial,
                     payload: Bytes::from_static(b"not an encrypted envelope"),
                 },
                 None,
@@ -782,7 +779,7 @@ mod tests {
         let publish_error = stream
             .publish(
                 Snapshot {
-                    includes_through: SnapshotPosition::Initial,
+                    at_event: SnapshotPosition::Initial,
                     payload: Bytes::from_static(b"snapshot"),
                 },
                 None,

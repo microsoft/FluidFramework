@@ -1,6 +1,6 @@
-# Fluid Service Protocol
+# Transitional Sea Protocol
 
-`sea-protocol` defines FSP4, the bounded binary request/response protocol used by the native Fluid service. It contains transport-neutral frame types and deterministic encode/decode functions; it does not perform I/O or own service state.
+`sea-protocol` defines FSP4, the bounded binary request/response protocol used by the Sea service. It contains transport-neutral frame types and deterministic encode/decode functions; it does not perform I/O or own service state.
 
 ## Frame contract
 

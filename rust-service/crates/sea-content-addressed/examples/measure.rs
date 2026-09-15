@@ -4,9 +4,7 @@ use std::{
     path::PathBuf,
 };
 
-use sea_content_addressed::{
-    ContentStore, StoreConfig, SummaryEntry, SummaryManifest,
-};
+use sea_content_addressed::{ContentStore, StoreConfig, SummaryEntry, SummaryManifest};
 
 const LARGE_BYTES: u64 = 16 * 1024 * 1024;
 

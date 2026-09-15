@@ -16,10 +16,8 @@ use sea_benchmarks::{
     SCHEMA_VERSION, Workload, summarize,
 };
 use sea_compression::CompressionStream;
-use sea_core::{AppendStream, Snapshot, SnapshotPosition, SnapshotStore};
-use sea_encryption::{
-    ActiveKey, EncryptionKey, EncryptionStream, KeyId, KeyProvider,
-};
+use sea_core::{EventStream, Snapshot, SnapshotPosition, SnapshotStore};
+use sea_encryption::{ActiveKey, EncryptionKey, EncryptionStream, KeyId, KeyProvider};
 use sea_file::FileStream;
 use sea_memory::MemoryStream;
 use sea_network::local_transport;
@@ -465,8 +463,8 @@ async fn run_stream<S>(
     startup_microseconds: f64,
 ) -> Result<RunMeasurements, String>
 where
-    S: AppendStream
-        + SnapshotStore<Position = <S as AppendStream>::Position, Error = <S as AppendStream>::Error>
+    S: EventStream
+        + SnapshotStore<Position = <S as EventStream>::Position, Error = <S as EventStream>::Error>
         + Clone
         + 'static,
 {
@@ -493,7 +491,7 @@ where
                         stream
                             .publish(
                                 Snapshot {
-                                    includes_through: SnapshotPosition::At(receipt.position),
+                                    at_event: SnapshotPosition::At(receipt.position),
                                     payload: Bytes::from(
                                         generator.payload(FixtureKind::Snapshot, index + 1),
                                     ),
@@ -573,7 +571,7 @@ where
 
 /// Verifies record count and an order-independent digest of generated payloads.
 fn verify_payloads<P>(
-    records: &[sea_core::ReadRecord<P>],
+    records: &[sea_core::CommittedEvent<P>],
     generator: &FixtureGenerator,
     config: &Config,
 ) -> Result<(), String> {
@@ -621,8 +619,8 @@ async fn verify_reopened(stream: &FileStream, expected_records: u64) -> Result<(
 /// Verifies records and optional snapshot state after reopening a wrapper stack.
 async fn verify_reopened_stream<S>(stream: &S, config: &Config) -> Result<(), String>
 where
-    S: AppendStream
-        + SnapshotStore<Position = <S as AppendStream>::Position, Error = <S as AppendStream>::Error>,
+    S: EventStream
+        + SnapshotStore<Position = <S as EventStream>::Position, Error = <S as EventStream>::Error>,
 {
     let generator = FixtureGenerator::new(config.seed);
     let records = stream
@@ -787,10 +785,7 @@ fn environment() -> Environment {
         storage_device: env::var("BENCHMARK_STORAGE_DEVICE")
             .unwrap_or_else(|_| "unknown".to_owned()),
         filesystem: env::var("BENCHMARK_FILESYSTEM").unwrap_or_else(|_| "unknown".to_owned()),
-        measurement_tool: format!(
-            "sea-benchmarks/{}",
-            env!("CARGO_PKG_VERSION")
-        ),
+        measurement_tool: format!("sea-benchmarks/{}", env!("CARGO_PKG_VERSION")),
     }
 }
 
@@ -879,7 +874,7 @@ fn process_cpu_microseconds() -> Option<f64> {
 fn unique_directory(label: &str) -> PathBuf {
     let sequence = NEXT_DIRECTORY.fetch_add(1, Ordering::Relaxed);
     env::temp_dir().join(format!(
-        "snapshotted-stream-benchmark-{}-{label}-{sequence}",
+        "sea-benchmark-{}-{label}-{sequence}",
         std::process::id()
     ))
 }

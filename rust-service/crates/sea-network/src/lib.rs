@@ -1,4 +1,4 @@
-#![doc = "A bounded local transport for snapshotted stream contracts."]
+#![doc = "A bounded local transport for Sea event archive contracts."]
 
 use std::sync::{
     Arc,
@@ -9,8 +9,8 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::StreamExt;
 use sea_core::{
-    AppendReceipt, AppendStream, Capabilities, ClassifiedError, ErrorKind, PositionCodec,
-    PublishedSnapshot, ReadRecord, Snapshot, SnapshotId, SnapshotStore, StreamReader,
+    Capabilities, ClassifiedError, CommittedEvent, ErrorKind, EventReceipt, EventStream,
+    PositionCodec, PublishedSnapshot, Snapshot, SnapshotId, SnapshotStore, StreamReader,
 };
 use thiserror::Error;
 use tokio::{
@@ -79,7 +79,7 @@ impl Metrics {
 }
 
 enum ReadMessage<P, E> {
-    Record(Result<ReadRecord<P>, E>),
+    Record(Result<CommittedEvent<P>, E>),
     End,
 }
 
@@ -88,7 +88,7 @@ type ReadReceiver<P, E> = mpsc::Receiver<ReadMessage<P, E>>;
 enum Request<P, E> {
     Append {
         value: Bytes,
-        reply: oneshot::Sender<Result<AppendReceipt<P>, E>>,
+        reply: oneshot::Sender<Result<EventReceipt<P>, E>>,
     },
     Read {
         after: Option<P>,
@@ -111,7 +111,7 @@ enum Request<P, E> {
 #[derive(Debug)]
 pub struct NetworkClient<S>
 where
-    S: AppendStream,
+    S: EventStream,
 {
     requests: mpsc::Sender<Request<S::Position, S::Error>>,
     codec: S,
@@ -121,7 +121,7 @@ where
 
 impl<S> Clone for NetworkClient<S>
 where
-    S: AppendStream + Clone,
+    S: EventStream + Clone,
 {
     fn clone(&self) -> Self {
         Self {
@@ -135,7 +135,7 @@ where
 
 impl<S> NetworkClient<S>
 where
-    S: AppendStream,
+    S: EventStream,
 {
     /// Returns current byte and queue measurements for this connection.
     #[must_use]
@@ -182,10 +182,10 @@ impl NetworkServer {
 pub fn local_transport<S>(
     backend: S,
     capacity: usize,
-) -> Result<(NetworkClient<S>, NetworkServer), NetworkError<<S as AppendStream>::Error>>
+) -> Result<(NetworkClient<S>, NetworkServer), NetworkError<<S as EventStream>::Error>>
 where
-    S: AppendStream
-        + SnapshotStore<Position = <S as AppendStream>::Position, Error = <S as AppendStream>::Error>
+    S: EventStream
+        + SnapshotStore<Position = <S as EventStream>::Position, Error = <S as EventStream>::Error>
         + Clone
         + 'static,
 {
@@ -211,14 +211,12 @@ where
 
 async fn serve<S>(
     backend: S,
-    mut requests: mpsc::Receiver<
-        Request<<S as AppendStream>::Position, <S as AppendStream>::Error>,
-    >,
+    mut requests: mpsc::Receiver<Request<<S as EventStream>::Position, <S as EventStream>::Error>>,
     capacity: usize,
     metrics: Arc<Metrics>,
 ) where
-    S: AppendStream
-        + SnapshotStore<Position = <S as AppendStream>::Position, Error = <S as AppendStream>::Error>
+    S: EventStream
+        + SnapshotStore<Position = <S as EventStream>::Position, Error = <S as EventStream>::Error>
         + 'static,
 {
     let mut readers = JoinSet::new();
@@ -282,18 +280,18 @@ async fn serve<S>(
 }
 
 #[async_trait]
-impl<S> AppendStream for NetworkClient<S>
+impl<S> EventStream for NetworkClient<S>
 where
-    S: AppendStream + Clone,
+    S: EventStream + Clone,
 {
-    type Position = <S as AppendStream>::Position;
-    type Error = NetworkError<<S as AppendStream>::Error>;
+    type Position = <S as EventStream>::Position;
+    type Error = NetworkError<<S as EventStream>::Error>;
 
     fn capabilities(&self) -> Capabilities {
         self.capabilities
     }
 
-    async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
+    async fn append(&self, value: Bytes) -> Result<EventReceipt<Self::Position>, Self::Error> {
         let (reply, response) = oneshot::channel();
         self.send_request(Request::Append { value, reply }).await?;
         response
@@ -363,12 +361,12 @@ where
 #[async_trait]
 impl<S> SnapshotStore for NetworkClient<S>
 where
-    S: AppendStream
-        + SnapshotStore<Position = <S as AppendStream>::Position, Error = <S as AppendStream>::Error>
+    S: EventStream
+        + SnapshotStore<Position = <S as EventStream>::Position, Error = <S as EventStream>::Error>
         + Clone,
 {
-    type Position = <S as AppendStream>::Position;
-    type Error = NetworkError<<S as AppendStream>::Error>;
+    type Position = <S as EventStream>::Position;
+    type Error = NetworkError<<S as EventStream>::Error>;
 
     async fn latest(&self) -> Result<Option<PublishedSnapshot<Self::Position>>, Self::Error> {
         let (reply, response) = oneshot::channel();
@@ -403,7 +401,7 @@ mod tests {
     use futures_util::{StreamExt, TryStreamExt};
     use sea_compression::CompressionStream;
     use sea_core::{
-        AppendStream, ClassifiedError, ErrorKind, Snapshot, SnapshotPosition, SnapshotStore,
+        ClassifiedError, ErrorKind, EventStream, Snapshot, SnapshotPosition, SnapshotStore,
     };
     use sea_memory::MemoryStream;
 
@@ -515,7 +513,7 @@ mod tests {
         client
             .publish(
                 Snapshot {
-                    includes_through: SnapshotPosition::At(through.position.clone()),
+                    at_event: SnapshotPosition::At(through.position.clone()),
                     payload: Bytes::from_static(b"state-two"),
                 },
                 None,
@@ -526,7 +524,7 @@ mod tests {
 
         let latest = client.latest().await.unwrap().unwrap();
         assert_eq!(latest.snapshot.payload, Bytes::from_static(b"state-two"));
-        let SnapshotPosition::At(position) = latest.snapshot.includes_through else {
+        let SnapshotPosition::At(position) = latest.snapshot.at_event else {
             panic!("snapshot should include a committed position");
         };
         let tail = client

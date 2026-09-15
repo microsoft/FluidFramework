@@ -1,6 +1,6 @@
-# Snapshotted stream network transports
+# Sea network transports
 
-This crate provides bounded transport adapters for the snapshotted-stream traits.
+This crate provides bounded transport adapters for the Sea event archive traits.
 
 `local_transport` places a typed request queue between a `NetworkClient` and a task-owned backend. It forwards the backend's `Capabilities` unchanged, preserves error classification, bounds read buffering by the configured capacity, and reports payload/token bytes plus the peak queued-record count. Dropping or explicitly disconnecting the server terminates active readers; operations are not retried.
 

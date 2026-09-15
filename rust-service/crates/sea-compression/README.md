@@ -1,7 +1,7 @@
 # Compression Wrapper
 
 `sea-compression` transparently applies independent zlib
-compression to every record and snapshot in a snapshotted stream. The wrapped
+compression to every event and snapshot in a Sea archive. The wrapped
 store continues to own positions, snapshot lineage, capabilities, cancellation,
 and backpressure.
 
@@ -31,7 +31,7 @@ use sea_memory::MemoryStream;
 let stream = CompressionStream::new(MemoryStream::new());
 ```
 
-The wrapper implements `AppendStream` and implements `SnapshotStore` whenever
+The wrapper implements `EventStream` and implements `SnapshotStore` whenever
 the underlying store does. `into_inner` returns the wrapped store.
 
 ## Validation

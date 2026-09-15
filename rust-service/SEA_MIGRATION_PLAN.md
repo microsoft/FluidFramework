@@ -5,10 +5,10 @@
 - **Plan status:** Approved.
 - **Execution mode:** Lightweight sequential work on the current branch.
 - **Compatibility:** No API, wire-format, persisted-data, package-name, or executable compatibility is required.
-- **Completed checkpoint:** 4. Practical file moves and deletions.
-- **Validation:** Workspace format, strict Clippy, build, tests, `sea-webtransport-server` binary build, and documentation checks passed.
-- **Decisions or TODOs changed:** The existing WebTransport executable moved unchanged to the new `sea-webtransport-server` package.
-- **Next checkpoint:** 5. Mechanical identifier and terminology renames.
+- **Completed checkpoint:** 5. Mechanical identifier and terminology renames.
+- **Validation:** The canonical workspace gate and the `sea-webtransport-server` binary build passed.
+- **Decisions or TODOs changed:** Renamed the existing stream API to `EventStream`, `EventReceipt`, and `CommittedEvent`, and renamed `Snapshot::includes_through` to `at_event`. Flat `SummaryManifest`/`SummaryEntry` identifiers remain only until checkpoint 6 replaces their representation with blob trees; FSP4 wire terminology remains until checkpoint 9.
+- **Next checkpoint:** 6. Define the Sea core model and interfaces.
 - **Plan commit:** `d1a9915141bfeb8e61fb3550e795a27c9f15d816`.
 
 Update this section in every implementation commit. Each update must identify the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint. Keep completed checklist entries in this file so it remains the migration record.
@@ -224,12 +224,12 @@ If a candidate move requires meaningful API changes, defer it to its semantic ch
 
 ### 5. Mechanical identifier and terminology renames
 
-- [ ] Rename existing application-independent types and modules from Fluid or snapshotted-stream terminology to Sea terminology where semantics are unchanged.
-- [ ] Rename `summary` concepts to `snapshot` wherever they represent Sea snapshots.
-- [ ] Distinguish binary `Blob` leaves from `BlobDirectory` inner nodes and `BlobTree` roots in identifiers and documentation.
-- [ ] Rename executable, environment-variable, log-output, and configuration terminology to Sea.
-- [ ] Keep semantic redesign out of this commit; defer types that cannot be renamed without changing their representation or contract.
-- [ ] Update current docs alongside identifier renames.
+- [x] Rename existing application-independent types and modules from Fluid or snapshotted-stream terminology to Sea terminology where semantics are unchanged.
+- [x] Rename `summary` concepts to `snapshot` wherever they represent Sea snapshots.
+- [x] Distinguish binary `Blob` leaves from `BlobDirectory` inner nodes and `BlobTree` roots in identifiers and documentation, deferring the flat manifest representation itself to checkpoint 6.
+- [x] Rename executable, environment-variable, log-output, and configuration terminology to Sea.
+- [x] Keep semantic redesign out of this commit; defer types that cannot be renamed without changing their representation or contract.
+- [x] Update current docs alongside identifier renames.
 
 Use language-aware symbol renames where available. Validate that no active nonhistorical `fluid-*`, `snapshotted-stream-*`, FSP4, summary-manifest, or ambiguous directory-as-blob terminology remains unless a TODO names its later checkpoint.
 

@@ -10,12 +10,12 @@ use std::{
 };
 
 use bytes::Bytes;
-use sea_service::{NativeService, ProjectedSubscriptionError};
+use futures_util::{StreamExt, stream::FuturesUnordered};
 use sea_protocol::{
     ErrorCode, Frame, HEADER_BYTES, Limits, Message, ProjectedOperation, ProtocolError, Request,
     Response, decode, encode,
 };
-use futures_util::{StreamExt, stream::FuturesUnordered};
+use sea_service::{NativeService, ProjectedSubscriptionError};
 use thiserror::Error;
 use tokio::{
     sync::watch,
@@ -970,8 +970,8 @@ fn transport_error(error: impl std::fmt::Display) -> WebTransportError {
 mod tests {
     use std::{fs, path::PathBuf, sync::atomic::AtomicU64, time::Instant};
 
-    use sea_service::ServiceConfig;
     use sea_protocol::{Acknowledgement, Reference, Submission, SubmissionDisposition};
+    use sea_service::ServiceConfig;
 
     use super::*;
 
@@ -982,10 +982,8 @@ mod tests {
     impl TempDirectory {
         fn new() -> Self {
             let value = NEXT_DIRECTORY.fetch_add(1, Ordering::Relaxed);
-            let path = std::env::temp_dir().join(format!(
-                "fluid-webtransport-native-{}-{value}",
-                std::process::id()
-            ));
+            let path = std::env::temp_dir()
+                .join(format!("sea-webtransport-{}-{value}", std::process::id()));
             fs::create_dir_all(&path).unwrap();
             Self(path)
         }

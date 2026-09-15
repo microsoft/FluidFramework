@@ -18,7 +18,6 @@ use std::{
 };
 
 use bytes::Bytes;
-use sha2::{Digest as _, Sha256};
 use sea_core::{
     ErrorKind,
     storage::{
@@ -26,6 +25,7 @@ use sea_core::{
         StorageError, StorageErrorKind,
     },
 };
+use sha2::{Digest as _, Sha256};
 
 const DIGEST_BYTES: usize = 32;
 const DIGEST_HEX_BYTES: usize = DIGEST_BYTES * 2;

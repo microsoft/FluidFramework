@@ -12,11 +12,7 @@ enum ClientState {
     Closed,
 }
 
-type ProjectedReadResponse = (
-    Vec<sea_protocol::ProjectedOperation>,
-    Option<Vec<u8>>,
-    bool,
-);
+type ProjectedReadResponse = (Vec<sea_protocol::ProjectedOperation>, Option<Vec<u8>>, bool);
 
 pub(crate) struct ProtocolCore {
     limits: Limits,

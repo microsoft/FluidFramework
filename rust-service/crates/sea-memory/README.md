@@ -1,4 +1,4 @@
-# Snapshotted Stream Memory
+# Sea Memory
 
 `sea-memory` is the process-local reference implementation of the append-stream, snapshot-store, and position-codec contracts.
 

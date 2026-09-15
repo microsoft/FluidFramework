@@ -1,4 +1,4 @@
-#![doc = "A minimal buffered file implementation of the snapshotted stream contracts."]
+#![doc = "A minimal buffered file implementation of the Sea event archive contracts."]
 #![doc = ""]
 #![doc = "The stream and snapshot logs use fixed headers followed by big-endian"]
 #![doc = "length-framed records. Successful writes are flushed through `BufWriter`,"]
@@ -17,8 +17,8 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::stream;
 use sea_core::{
-    AppendReceipt, AppendStream, Capabilities, ClassifiedError, Durability, ErrorKind,
-    PositionCodec, PublishedSnapshot, ReadRecord, Snapshot, SnapshotId, SnapshotPosition,
+    Capabilities, ClassifiedError, CommittedEvent, Durability, ErrorKind, EventReceipt,
+    EventStream, PositionCodec, PublishedSnapshot, Snapshot, SnapshotId, SnapshotPosition,
     SnapshotStore, StreamReader,
 };
 use thiserror::Error;
@@ -168,7 +168,7 @@ impl FileStream {
 }
 
 #[async_trait]
-impl AppendStream for FileStream {
+impl EventStream for FileStream {
     type Position = FilePosition;
     type Error = FileError;
 
@@ -176,14 +176,14 @@ impl AppendStream for FileStream {
         Capabilities::NONE.with(sea_core::Capability::PositionSerialization)
     }
 
-    async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
+    async fn append(&self, value: Bytes) -> Result<EventReceipt<Self::Position>, Self::Error> {
         let mut state = self.state()?;
         write_frame(&mut state.stream_writer, &value)?;
         state.stream_writer.flush()?;
         state.records.push(value);
         let ordinal = u64::try_from(state.records.len())
             .map_err(|_| FileError::Corrupt("record count exceeds position range"))?;
-        Ok(AppendReceipt {
+        Ok(EventReceipt {
             position: FilePosition { ordinal },
             durability: Durability::Buffered,
         })
@@ -218,7 +218,7 @@ impl AppendStream for FileStream {
                         let ordinal = u64::try_from(index + 1).map_err(|_| {
                             FileError::Corrupt("record count exceeds position range")
                         })?;
-                        Ok(ReadRecord {
+                        Ok(CommittedEvent {
                             position: FilePosition { ordinal },
                             payload: state.records[index].clone(),
                         })
@@ -270,7 +270,7 @@ impl SnapshotStore for FileStream {
         if state.latest_snapshot.as_ref().map(|value| &value.id) != expected_parent {
             return Err(FileError::SnapshotConflict);
         }
-        if let SnapshotPosition::At(position) = &snapshot.includes_through {
+        if let SnapshotPosition::At(position) = &snapshot.at_event {
             Self::validate_position(position, state.records.len())?;
         }
         let previous_ordinal = state
@@ -304,7 +304,7 @@ impl SnapshotStore for FileStream {
 
 /// Converts an initial or positioned snapshot to its persisted ordinal.
 fn snapshot_ordinal(snapshot: &Snapshot<FilePosition>) -> u64 {
-    match &snapshot.includes_through {
+    match &snapshot.at_event {
         SnapshotPosition::Initial => 0,
         SnapshotPosition::At(position) => position.ordinal,
     }
@@ -382,7 +382,7 @@ fn parse_snapshots(
         latest = Some(PublishedSnapshot {
             id: snapshot_id(id),
             snapshot: Snapshot {
-                includes_through: if ordinal == 0 {
+                at_event: if ordinal == 0 {
                     SnapshotPosition::Initial
                 } else {
                     SnapshotPosition::At(FilePosition { ordinal })
@@ -452,7 +452,7 @@ mod tests {
     };
 
     use futures_util::TryStreamExt;
-    use sea_core::{AppendStream, ClassifiedError, SnapshotStore};
+    use sea_core::{ClassifiedError, EventStream, SnapshotStore};
 
     use super::*;
 
@@ -461,10 +461,7 @@ mod tests {
     /// Creates a process-unique path for one file-store test.
     fn test_directory(label: &str) -> PathBuf {
         let id = NEXT_TEST_DIRECTORY.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!(
-            "snapshotted-stream-file-simple-{}-{label}-{id}",
-            std::process::id()
-        ))
+        std::env::temp_dir().join(format!("sea-file-{}-{label}-{id}", std::process::id()))
     }
 
     #[tokio::test]
@@ -489,7 +486,7 @@ mod tests {
         let snapshot_id = stream
             .publish(
                 Snapshot {
-                    includes_through: SnapshotPosition::At(first.position.clone()),
+                    at_event: SnapshotPosition::At(first.position.clone()),
                     payload: Bytes::from_static(b"state-after-first"),
                 },
                 None,

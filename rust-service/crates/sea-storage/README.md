@@ -1,6 +1,6 @@
-# Fluid Service Storage
+# Sea Storage
 
-`sea-storage` provides the built-in storage composition for the single-host native Fluid service.
+`sea-storage` provides the built-in storage composition for the single-host Sea service.
 It owns concrete backend selection, document filesystem layout, scope markers, content initialization, and fencing policy.
 
 ## Composition

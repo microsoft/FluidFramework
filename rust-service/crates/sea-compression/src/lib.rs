@@ -1,4 +1,4 @@
-//! Transparent per-payload zlib compression for snapshotted streams.
+//! Transparent per-payload zlib compression for Sea event archives.
 //!
 //! Each record and snapshot is one independent zlib frame. Positions, snapshot
 //! boundaries, capabilities, and underlying error classifications pass through
@@ -22,8 +22,8 @@ use bytes::Bytes;
 use flate2::{Compression, read::ZlibDecoder, write::ZlibEncoder};
 use futures_util::StreamExt;
 use sea_core::{
-    AppendReceipt, AppendStream, Capabilities, ClassifiedError, ErrorKind, PublishedSnapshot,
-    ReadRecord, Snapshot, SnapshotId, SnapshotStore, StreamReader,
+    Capabilities, ClassifiedError, CommittedEvent, ErrorKind, EventReceipt, EventStream,
+    PublishedSnapshot, Snapshot, SnapshotId, SnapshotStore, StreamReader,
 };
 use thiserror::Error;
 
@@ -101,9 +101,9 @@ fn decompress_payload(payload: &Bytes) -> Result<Bytes, std::io::Error> {
 }
 
 #[async_trait]
-impl<S> AppendStream for CompressionStream<S>
+impl<S> EventStream for CompressionStream<S>
 where
-    S: AppendStream,
+    S: EventStream,
 {
     type Position = S::Position;
     type Error = CompressionError<S::Error>;
@@ -114,7 +114,7 @@ where
     }
 
     /// Compresses and appends one record without changing its receipt.
-    async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
+    async fn append(&self, value: Bytes) -> Result<EventReceipt<Self::Position>, Self::Error> {
         let encoded = compress_payload(&value).map_err(CompressionError::Encode)?;
         self.inner
             .append(encoded)
@@ -135,7 +135,7 @@ where
         Ok(Box::pin(reader.map(|result| {
             result.map_err(CompressionError::Store).and_then(|record| {
                 decompress_payload(&record.payload)
-                    .map(|payload| ReadRecord {
+                    .map(|payload| CommittedEvent {
                         position: record.position,
                         payload,
                     })
@@ -169,7 +169,7 @@ where
                     .map(|payload| PublishedSnapshot {
                         id: published.id,
                         snapshot: Snapshot {
-                            includes_through: published.snapshot.includes_through,
+                            at_event: published.snapshot.at_event,
                             payload,
                         },
                     })
@@ -188,7 +188,7 @@ where
         self.inner
             .publish(
                 Snapshot {
-                    includes_through: snapshot.includes_through,
+                    at_event: snapshot.at_event,
                     payload: encoded,
                 },
                 expected_parent,
@@ -202,7 +202,7 @@ where
 mod tests {
     use futures_util::{StreamExt, TryStreamExt};
     use sea_core::{
-        AppendStream, ClassifiedError, ErrorKind, Snapshot, SnapshotPosition, SnapshotStore,
+        ClassifiedError, ErrorKind, EventStream, Snapshot, SnapshotPosition, SnapshotStore,
     };
     use sea_memory::MemoryStream;
 
@@ -210,10 +210,7 @@ mod tests {
 
     #[tokio::test]
     async fn passes_shared_conformance() {
-        sea_conformance::run_conformance(|| {
-            CompressionStream::new(MemoryStream::new())
-        })
-        .await;
+        sea_conformance::run_conformance(|| CompressionStream::new(MemoryStream::new())).await;
     }
 
     #[tokio::test]
@@ -275,7 +272,7 @@ mod tests {
         let snapshot_id = stream
             .publish(
                 Snapshot {
-                    includes_through: SnapshotPosition::At(second.position.clone()),
+                    at_event: SnapshotPosition::At(second.position.clone()),
                     payload: Bytes::copy_from_slice(&3_i64.to_be_bytes()),
                 },
                 None,
@@ -294,7 +291,7 @@ mod tests {
             Bytes::copy_from_slice(&3_i64.to_be_bytes())
         );
         assert_eq!(
-            latest.snapshot.includes_through,
+            latest.snapshot.at_event,
             SnapshotPosition::At(second.position.clone())
         );
         let tail = stream
@@ -358,7 +355,7 @@ mod tests {
             inner
                 .publish(
                     Snapshot {
-                        includes_through: SnapshotPosition::Initial,
+                        at_event: SnapshotPosition::Initial,
                         payload: malformed,
                     },
                     None,

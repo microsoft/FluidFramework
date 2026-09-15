@@ -1,4 +1,4 @@
-# Snapshotted Stream Core
+# Sea Core
 
 `sea-core` defines transport- and storage-independent contracts for an ordered append-only stream, its latest client-authored snapshot, and service-level storage composition.
 

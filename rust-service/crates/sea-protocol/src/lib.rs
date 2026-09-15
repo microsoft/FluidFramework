@@ -1,4 +1,4 @@
-//! Bounded, versioned, transport-neutral frames for the native Fluid service.
+//! Bounded, versioned, transport-neutral frames for the Sea service.
 //!
 //! Each encoded buffer contains exactly one complete FSP4 frame. Decoding rejects bytes outside
 //! the declared body, unconsumed bytes inside it, malformed discriminants, and values exceeding

@@ -10,15 +10,15 @@ use std::{
 };
 
 use bytes::Bytes;
-use sea_service::{NativeService, ServiceConfig};
+use sea_client::{ContentClient, LifecycleEvent, LifecycleState, NativeClient};
 use sea_protocol::{
     Acknowledgement, Frame, Limits, Message, Reference, Request, Resolution, Response,
     SubmissionDisposition, SummaryEntry, decode, encode,
 };
-use sea_client::{ContentClient, LifecycleEvent, LifecycleState, NativeClient};
+use sea_service::{NativeService, ServiceConfig};
 
-const SERVER_SOCKET: &str = "FLUID_NATIVE_CLIENT_TEST_SOCKET";
-const SERVER_ROOT: &str = "FLUID_NATIVE_CLIENT_TEST_ROOT";
+const SERVER_SOCKET: &str = "SEA_CLIENT_TEST_SOCKET";
+const SERVER_ROOT: &str = "SEA_CLIENT_TEST_ROOT";
 static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(1);
 
 struct TempDirectory(PathBuf);

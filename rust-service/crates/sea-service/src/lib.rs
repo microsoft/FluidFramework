@@ -1,4 +1,4 @@
-//! Single-host native Fluid service assembly.
+//! Single-host Sea service assembly.
 //!
 //! Documents own independent logs, sequencers, fences, and projected-operation notification
 //! channels. Unary requests route by their embedded document identity. Transport adapters own
@@ -15,28 +15,28 @@ use std::{
 };
 
 use bytes::Bytes;
-use sea_sequencer::{
-    AuthoritativeSequencer, FencedStream, PositionToken, ProjectedOperation as SequencerOperation,
-    Rejection, ResolutionOutcome, SequencedMessage, SequencerStorage,
-    ServiceError as SequencerError, SessionId, Submission as SequencerSubmission, SubmissionId,
-    SubmitOutcome, WriterId,
+use futures_util::StreamExt;
+use sea_core::{
+    ClassifiedError, CommittedEvent, ErrorKind, EventReceipt, PublishedSnapshot, Snapshot,
+    SnapshotId, SnapshotPosition,
+    storage::{
+        ContentId, ContentSummaryEntry, DocumentFencing, DocumentStorage, OpenedDocumentStorage,
+        ServiceStorage as CoreServiceStorage, StorageError, StorageErrorKind, StoragePosition,
+    },
 };
 use sea_protocol::{
     Acknowledgement, CommittedRecord, ErrorCode, ProjectedOperation,
     PublishedSnapshot as ProtocolSnapshot, Reference, Request, Resolution, Response,
     SubmissionDisposition,
 };
+use sea_sequencer::{
+    AuthoritativeSequencer, FencedStream, PositionToken, ProjectedOperation as SequencerOperation,
+    Rejection, ResolutionOutcome, SequencedMessage, SequencerStorage,
+    ServiceError as SequencerError, SessionId, Submission as SequencerSubmission, SubmissionId,
+    SubmitOutcome, WriterId,
+};
 pub use sea_storage::StorageMode;
 use sea_storage::{BuiltInServiceStorage, StorageConfig};
-use futures_util::StreamExt;
-use sea_core::{
-    AppendReceipt, ClassifiedError, ErrorKind, PublishedSnapshot, ReadRecord, Snapshot, SnapshotId,
-    SnapshotPosition,
-    storage::{
-        ContentId, ContentSummaryEntry, DocumentFencing, DocumentStorage, OpenedDocumentStorage,
-        ServiceStorage as CoreServiceStorage, StorageError, StorageErrorKind, StoragePosition,
-    },
-};
 use tokio::sync::{Mutex, broadcast, watch};
 
 /// Maximum canonical records returned by one raw read.
@@ -720,7 +720,7 @@ impl Document {
             .storage
             .publish(
                 Snapshot {
-                    includes_through,
+                    at_event: includes_through,
                     payload,
                 },
                 expected_parent.as_ref(),
@@ -734,7 +734,7 @@ impl Document {
     fn protocol_snapshot(snapshot: PublishedSnapshot<StoragePosition>) -> ProtocolSnapshot {
         ProtocolSnapshot {
             id: snapshot.id.as_bytes().clone(),
-            includes_through: match snapshot.snapshot.includes_through {
+            includes_through: match snapshot.snapshot.at_event {
                 SnapshotPosition::Initial => Reference::Initial,
                 SnapshotPosition::At(position) => Reference::At(position.token().clone()),
             },
@@ -767,14 +767,14 @@ impl SequencerStorage for SequencerStorageAdapter {
     type Error = StorageError;
 
     /// Appends one canonical sequencer entry.
-    async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
+    async fn append(&self, value: Bytes) -> Result<EventReceipt<Self::Position>, Self::Error> {
         self.storage.append(value).await
     }
 
     /// Returns all canonical records for sequencer replay.
     fn read_all(
         &self,
-    ) -> impl Future<Output = Result<Vec<ReadRecord<Self::Position>>, Self::Error>> + Send {
+    ) -> impl Future<Output = Result<Vec<CommittedEvent<Self::Position>>, Self::Error>> + Send {
         sea_core::storage::read_all(self.storage.as_ref())
     }
 
@@ -1003,10 +1003,8 @@ mod tests {
     impl TempDirectory {
         fn new() -> Self {
             let value = NEXT_DIRECTORY.fetch_add(1, Ordering::Relaxed);
-            let path = std::env::temp_dir().join(format!(
-                "fluid-native-service-{}-{value}",
-                std::process::id()
-            ));
+            let path =
+                std::env::temp_dir().join(format!("sea-service-{}-{value}", std::process::id()));
             fs::create_dir_all(&path).unwrap();
             Self(path)
         }

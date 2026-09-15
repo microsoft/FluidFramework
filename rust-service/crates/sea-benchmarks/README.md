@@ -1,4 +1,4 @@
-# Snapshotted Stream Benchmark Harness
+# Sea Benchmark Harness
 
 This crate provides deterministic fixtures, correctness smoke workloads, and newline-delimited JSON measurements. It is intentionally absent from the root workspace membership during its workstream; the scripts register it only in an exact disposable copy.
 

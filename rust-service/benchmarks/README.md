@@ -13,7 +13,7 @@ The commit-named directories are provenance boundaries. Compare results only aft
 ## Creating Evidence
 
 Benchmark commands and output contracts are documented by the relevant harness.
-For the Rust snapshotted-stream harness, see [`../crates/sea-benchmarks/README.md`](../crates/sea-benchmarks/README.md).
+For the Rust Sea harness, see [`../crates/sea-benchmarks/README.md`](../crates/sea-benchmarks/README.md).
 SharedTree evidence is produced by the benchmark tooling outside this directory and reviewed before retention.
 
 Do not direct exploratory runs into this directory. Capture output elsewhere, verify its provenance and schema, add a run-specific README, and retain it through review. Existing payloads are historical evidence and must not be rewritten to match newer schemas or procedures.

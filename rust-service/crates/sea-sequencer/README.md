@@ -1,4 +1,4 @@
-# Fluid Sequencer
+# Sea Sequencer
 
 `sea-sequencer` provides authoritative ordering and validation for Fluid submissions over an opaque append-only storage implementation. It stores only valid session-start and accepted-submission entries in the canonical log.
 
@@ -12,7 +12,7 @@ Storage failures classified as ambiguous put the sequencer into recovery-require
 
 ## Storage and fencing
 
-`SequencerStorage` is the finite-read and append boundary. `KernelStream` adapts an `AppendStream` plus `PositionCodec`. `FencedStream` keeps fence validation, replay, validation, and append under one service-owned gate.
+`SequencerStorage` is the finite-read and append boundary. `KernelStream` adapts an `EventStream` plus `PositionCodec`. `FencedStream` keeps fence validation, replay, validation, and append under one service-owned gate.
 
 `FencedStream::new` provides process-local fencing. `FencedStream::with_deployment_authority` adds a same-host locked epoch file; all competing processes must use the same authority path and storage resource. This is not a distributed consensus or multi-host lease.
 

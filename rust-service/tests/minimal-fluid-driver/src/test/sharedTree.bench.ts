@@ -214,7 +214,7 @@ async function runCase(
 			BENCHMARK_SYNCHRONIZE_PER_TURN: configuration.synchronizePerTurn ? "1" : "0",
 			BENCHMARK_TINYLICIOUS_PORT:
 				service?.port === undefined ? undefined : String(service.port),
-			FLUID_SERVICE_STORAGE_MODE: benchmarkCase.storageMode,
+			SEA_STORAGE_MODE: benchmarkCase.storageMode,
 			BENCHMARK_SERVER_PID:
 				service?.process.pid === undefined ? undefined : String(service.process.pid),
 			BENCHMARK_CPU_PROFILE_PATH: profilePath,
@@ -351,7 +351,7 @@ async function startRustService(storageMode: string): Promise<RunningService> {
 		],
 		{
 			cwd: repositoryDirectory,
-			env: { ...process.env, FLUID_SERVICE_STORAGE_MODE: storageMode },
+			env: { ...process.env, SEA_STORAGE_MODE: storageMode },
 			stdio: ["ignore", "pipe", "pipe"],
 		},
 	);

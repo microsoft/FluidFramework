@@ -18,7 +18,7 @@ use std::{
 
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use sea_core::{
-    AppendReceipt, AppendStream, ClassifiedError, ErrorKind, PositionCodec, ReadRecord,
+    ClassifiedError, CommittedEvent, ErrorKind, EventReceipt, EventStream, PositionCodec,
     SnapshotPosition, StreamPosition,
 };
 
@@ -557,12 +557,12 @@ pub trait SequencerStorage: Send + Sync {
     fn append(
         &self,
         value: Bytes,
-    ) -> impl Future<Output = Result<AppendReceipt<Self::Position>, Self::Error>> + Send;
+    ) -> impl Future<Output = Result<EventReceipt<Self::Position>, Self::Error>> + Send;
 
     /// Reads all canonical entries in order as a finite collection.
     fn read_all(
         &self,
-    ) -> impl Future<Output = Result<Vec<ReadRecord<Self::Position>>, Self::Error>> + Send;
+    ) -> impl Future<Output = Result<Vec<CommittedEvent<Self::Position>>, Self::Error>> + Send;
 
     /// Encodes one stream-owned position as an opaque token.
     ///
@@ -577,7 +577,7 @@ pub struct KernelStream<S>(pub S);
 
 impl<S> SequencerStorage for KernelStream<S>
 where
-    S: AppendStream + PositionCodec,
+    S: EventStream + PositionCodec,
 {
     /// Position type delegated to the wrapped stream.
     type Position = S::Position;
@@ -588,12 +588,12 @@ where
     fn append(
         &self,
         value: Bytes,
-    ) -> impl Future<Output = Result<AppendReceipt<Self::Position>, Self::Error>> + Send {
+    ) -> impl Future<Output = Result<EventReceipt<Self::Position>, Self::Error>> + Send {
         self.0.append(value)
     }
 
     /// Consumes one finite reader from the beginning of the wrapped stream.
-    async fn read_all(&self) -> Result<Vec<ReadRecord<Self::Position>>, Self::Error> {
+    async fn read_all(&self) -> Result<Vec<CommittedEvent<Self::Position>>, Self::Error> {
         let mut reader = self.0.read(None).await?;
         let mut records = Vec::new();
         while let Some(record) =
@@ -722,7 +722,7 @@ where
     }
 
     /// Appends while retaining the fence guard for the operation's duration.
-    async fn append(&self, value: Bytes) -> Result<AppendReceipt<S::Position>, S::Error> {
+    async fn append(&self, value: Bytes) -> Result<EventReceipt<S::Position>, S::Error> {
         self.stream().append(value).await
     }
 }
@@ -1543,7 +1543,7 @@ mod tests {
         fn append(
             &self,
             value: Bytes,
-        ) -> impl Future<Output = Result<AppendReceipt<Self::Position>, Self::Error>> + Send
+        ) -> impl Future<Output = Result<EventReceipt<Self::Position>, Self::Error>> + Send
         {
             let mut state = self
                 .state
@@ -1562,7 +1562,7 @@ mod tests {
             ) {
                 return std::future::ready(Err(TestError::Ambiguous));
             }
-            std::future::ready(Ok(AppendReceipt {
+            std::future::ready(Ok(EventReceipt {
                 position: TestPosition(state.records.len() as u64),
                 durability: Durability::Memory,
             }))
@@ -1570,7 +1570,7 @@ mod tests {
 
         fn read_all(
             &self,
-        ) -> impl Future<Output = Result<Vec<ReadRecord<Self::Position>>, Self::Error>> + Send
+        ) -> impl Future<Output = Result<Vec<CommittedEvent<Self::Position>>, Self::Error>> + Send
         {
             let state = self
                 .state
@@ -1580,7 +1580,7 @@ mod tests {
                 .records
                 .iter()
                 .enumerate()
-                .map(|(index, payload)| ReadRecord {
+                .map(|(index, payload)| CommittedEvent {
                     position: TestPosition((index + 1) as u64),
                     payload: payload.clone(),
                 })
@@ -2145,12 +2145,12 @@ mod tests {
         }
 
         fn pause_after_fence_validation() -> Result<(), ProcessFileError> {
-            let Ok(marker) = env::var("FLUID_FENCE_VALIDATED_MARKER") else {
+            let Ok(marker) = env::var("SEA_FENCE_VALIDATED_MARKER") else {
                 return Ok(());
             };
             fs::write(marker, b"validated")?;
             let release = PathBuf::from(
-                env::var("FLUID_FENCE_RELEASE_MARKER")
+                env::var("SEA_FENCE_RELEASE_MARKER")
                     .map_err(|_| ProcessFileError::MissingEnvironment)?,
             );
             wait_for_path(&release, Duration::from_secs(10));
@@ -2211,7 +2211,7 @@ mod tests {
         fn append(
             &self,
             value: Bytes,
-        ) -> impl Future<Output = Result<AppendReceipt<Self::Position>, Self::Error>> + Send
+        ) -> impl Future<Output = Result<EventReceipt<Self::Position>, Self::Error>> + Send
         {
             let result = (|| {
                 Self::pause_after_fence_validation()?;
@@ -2237,7 +2237,7 @@ mod tests {
                     if ambiguity.as_deref() == Some("committed") {
                         return Err(ProcessFileError::Ambiguous);
                     }
-                    return Ok(AppendReceipt {
+                    return Ok(EventReceipt {
                         position: TestPosition(
                             u64::try_from(ordinal).map_err(|_| ProcessFileError::CorruptLog)?,
                         ),
@@ -2251,14 +2251,14 @@ mod tests {
 
         fn read_all(
             &self,
-        ) -> impl Future<Output = Result<Vec<ReadRecord<Self::Position>>, Self::Error>> + Send
+        ) -> impl Future<Output = Result<Vec<CommittedEvent<Self::Position>>, Self::Error>> + Send
         {
             let result = self.records().and_then(|records| {
                 records
                     .into_iter()
                     .enumerate()
                     .map(|(index, payload)| {
-                        Ok(ReadRecord {
+                        Ok(CommittedEvent {
                             position: TestPosition(
                                 u64::try_from(index + 1)
                                     .map_err(|_| ProcessFileError::CorruptLog)?,
@@ -2322,9 +2322,9 @@ mod tests {
                 "--ignored",
                 "--nocapture",
             ])
-            .env("FLUID_FENCE_TEST_DIRECTORY", directory)
-            .env("FLUID_FENCE_TEST_ROLE", role)
-            .env("FLUID_FENCE_TEST_EPOCH", epoch.to_string())
+            .env("SEA_FENCE_TEST_DIRECTORY", directory)
+            .env("SEA_FENCE_TEST_ROLE", role)
+            .env("SEA_FENCE_TEST_EPOCH", epoch.to_string())
             .spawn()
             .unwrap()
     }
@@ -2345,11 +2345,11 @@ mod tests {
     #[test]
     #[ignore = "launched by deployment_file_authority_fences_independent_processes"]
     fn deployment_fencing_process_worker() {
-        let Ok(role) = env::var("FLUID_FENCE_TEST_ROLE") else {
+        let Ok(role) = env::var("SEA_FENCE_TEST_ROLE") else {
             return;
         };
-        let directory = PathBuf::from(env::var("FLUID_FENCE_TEST_DIRECTORY").unwrap());
-        let epoch = env::var("FLUID_FENCE_TEST_EPOCH")
+        let directory = PathBuf::from(env::var("SEA_FENCE_TEST_DIRECTORY").unwrap());
+        let epoch = env::var("SEA_FENCE_TEST_EPOCH")
             .unwrap()
             .parse::<u64>()
             .unwrap();
@@ -2441,11 +2441,11 @@ mod tests {
                 "--ignored",
                 "--nocapture",
             ])
-            .env("FLUID_FENCE_TEST_DIRECTORY", &directory)
-            .env("FLUID_FENCE_TEST_ROLE", "old-owner")
-            .env("FLUID_FENCE_TEST_EPOCH", "1")
-            .env("FLUID_FENCE_VALIDATED_MARKER", &validated)
-            .env("FLUID_FENCE_RELEASE_MARKER", &release)
+            .env("SEA_FENCE_TEST_DIRECTORY", &directory)
+            .env("SEA_FENCE_TEST_ROLE", "old-owner")
+            .env("SEA_FENCE_TEST_EPOCH", "1")
+            .env("SEA_FENCE_VALIDATED_MARKER", &validated)
+            .env("SEA_FENCE_RELEASE_MARKER", &release)
             .spawn()
             .unwrap();
         wait_for_path(&validated, Duration::from_secs(10));

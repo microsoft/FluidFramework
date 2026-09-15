@@ -1,4 +1,4 @@
-#![doc = "In-memory reference implementation of the snapshotted stream contracts."]
+#![doc = "In-memory reference implementation of the Sea event archive contracts."]
 #![doc = ""]
 #![doc = "Appends are visible to handles in this process and report memory durability;"]
 #![doc = "records and snapshots are lost when the last handle is dropped."]
@@ -9,8 +9,8 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::stream;
 use sea_core::{
-    AppendReceipt, AppendStream, Capabilities, ClassifiedError, Durability, ErrorKind,
-    PositionCodec, PublishedSnapshot, ReadRecord, Snapshot, SnapshotId, SnapshotPosition,
+    Capabilities, ClassifiedError, CommittedEvent, Durability, ErrorKind, EventReceipt,
+    EventStream, PositionCodec, PublishedSnapshot, Snapshot, SnapshotId, SnapshotPosition,
     SnapshotStore, StreamReader,
 };
 use thiserror::Error;
@@ -115,7 +115,7 @@ impl MemoryStream {
 }
 
 #[async_trait]
-impl AppendStream for MemoryStream {
+impl EventStream for MemoryStream {
     type Position = MemoryPosition;
     type Error = MemoryError;
 
@@ -123,13 +123,13 @@ impl AppendStream for MemoryStream {
         Capabilities::NONE.with(sea_core::Capability::PositionSerialization)
     }
 
-    async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
+    async fn append(&self, value: Bytes) -> Result<EventReceipt<Self::Position>, Self::Error> {
         let mut state = self.state.lock().await;
         state.records.push(value);
         let position = MemoryPosition {
             ordinal: state.records.len() as u64,
         };
-        Ok(AppendReceipt {
+        Ok(EventReceipt {
             position,
             durability: Durability::Memory,
         })
@@ -158,7 +158,7 @@ impl AppendStream for MemoryStream {
                     return None;
                 }
                 let payload = shared.lock().await.records[index].clone();
-                let record = ReadRecord {
+                let record = CommittedEvent {
                     position: MemoryPosition {
                         ordinal: index as u64 + 1,
                     },
@@ -213,15 +213,15 @@ impl SnapshotStore for MemoryStream {
         if actual_parent != expected_parent {
             return Err(MemoryError::SnapshotConflict);
         }
-        if let SnapshotPosition::At(position) = &snapshot.includes_through {
+        if let SnapshotPosition::At(position) = &snapshot.at_event {
             Self::validate_position(position, state.records.len())?;
         }
         if let Some(previous) = &state.latest_snapshot {
-            let previous_ordinal = match &previous.snapshot.includes_through {
+            let previous_ordinal = match &previous.snapshot.at_event {
                 SnapshotPosition::Initial => 0,
                 SnapshotPosition::At(position) => position.ordinal,
             };
-            let next_ordinal = match &snapshot.includes_through {
+            let next_ordinal = match &snapshot.at_event {
                 SnapshotPosition::Initial => 0,
                 SnapshotPosition::At(position) => position.ordinal,
             };
@@ -248,7 +248,7 @@ mod tests {
 
     use futures_util::{StreamExt, TryStreamExt};
     use sea_core::{
-        AppendReceipt, AppendStream, Capabilities, ClassifiedError, ErrorKind, PublishedSnapshot,
+        Capabilities, ClassifiedError, ErrorKind, EventReceipt, EventStream, PublishedSnapshot,
         Snapshot, SnapshotId, SnapshotPosition, SnapshotStore, StreamReader,
     };
 
@@ -319,7 +319,7 @@ mod tests {
     }
 
     #[async_trait]
-    impl AppendStream for FaultingMemoryStream {
+    impl EventStream for FaultingMemoryStream {
         type Position = MemoryPosition;
         type Error = FaultError;
 
@@ -327,7 +327,7 @@ mod tests {
             self.inner.capabilities()
         }
 
-        async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
+        async fn append(&self, value: Bytes) -> Result<EventReceipt<Self::Position>, Self::Error> {
             match self.ambiguous_append {
                 Some(AmbiguousAppend::BeforeCommit) => Err(FaultError::Ambiguous),
                 Some(AmbiguousAppend::AfterCommit) => {
@@ -389,11 +389,7 @@ mod tests {
 
     #[tokio::test]
     async fn passes_position_codec_conformance() {
-        sea_conformance::run_position_codec_conformance(
-            MemoryStream::new,
-            b"malformed",
-        )
-        .await;
+        sea_conformance::run_position_codec_conformance(MemoryStream::new, b"malformed").await;
     }
 
     #[tokio::test]
@@ -470,7 +466,7 @@ mod tests {
         inner
             .publish(
                 Snapshot {
-                    includes_through: SnapshotPosition::At(position),
+                    at_event: SnapshotPosition::At(position),
                     payload: Bytes::from_static(b"state-at-snapshot"),
                 },
                 None,
@@ -488,7 +484,7 @@ mod tests {
         );
 
         let latest = stream.latest().await.unwrap().unwrap();
-        let SnapshotPosition::At(position) = latest.snapshot.includes_through else {
+        let SnapshotPosition::At(position) = latest.snapshot.at_event else {
             panic!("snapshot should include a committed position");
         };
         let recovered = stream
@@ -583,7 +579,7 @@ mod tests {
         let first_id = stream
             .publish(
                 Snapshot {
-                    includes_through: SnapshotPosition::At(second.position),
+                    at_event: SnapshotPosition::At(second.position),
                     payload: Bytes::from_static(b"2"),
                 },
                 None,
@@ -594,7 +590,7 @@ mod tests {
         let conflict = stream
             .publish(
                 Snapshot {
-                    includes_through: SnapshotPosition::At(first.position.clone()),
+                    at_event: SnapshotPosition::At(first.position.clone()),
                     payload: Bytes::from_static(b"1"),
                 },
                 None,
@@ -605,7 +601,7 @@ mod tests {
         let regression = stream
             .publish(
                 Snapshot {
-                    includes_through: SnapshotPosition::At(first.position),
+                    at_event: SnapshotPosition::At(first.position),
                     payload: Bytes::from_static(b"1"),
                 },
                 Some(&first_id),

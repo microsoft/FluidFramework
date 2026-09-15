@@ -22,8 +22,8 @@ use async_trait::async_trait;
 use bytes::{BufMut, Bytes, BytesMut};
 use futures_util::StreamExt;
 use sea_core::{
-    AppendReceipt, AppendStream, Capabilities, ClassifiedError, ErrorKind, PositionCodec,
-    PublishedSnapshot, ReadRecord, Snapshot, SnapshotId, SnapshotStore, StreamReader,
+    Capabilities, ClassifiedError, CommittedEvent, ErrorKind, EventReceipt, EventStream,
+    PositionCodec, PublishedSnapshot, Snapshot, SnapshotId, SnapshotStore, StreamReader,
 };
 use thiserror::Error;
 
@@ -241,9 +241,9 @@ fn fingerprint(bytes: &[u8]) -> u64 {
 }
 
 #[async_trait]
-impl<S> AppendStream for StatefulCompressionStream<S>
+impl<S> EventStream for StatefulCompressionStream<S>
 where
-    S: AppendStream,
+    S: EventStream,
 {
     type Position = S::Position;
     type Error = StatefulCompressionError<S::Error>;
@@ -254,7 +254,7 @@ where
     }
 
     /// Bounds, compresses, and appends one record without changing its receipt.
-    async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
+    async fn append(&self, value: Bytes) -> Result<EventReceipt<Self::Position>, Self::Error> {
         if value.len() > self.max_decoded_bytes {
             return Err(StatefulCompressionError::PayloadTooLarge {
                 actual: value.len(),
@@ -293,7 +293,7 @@ where
                         dictionary_fingerprint,
                         max_decoded_bytes,
                     )
-                    .map(|payload| ReadRecord {
+                    .map(|payload| CommittedEvent {
                         position: record.position,
                         payload,
                     })
@@ -349,7 +349,7 @@ where
                     .map(|payload| PublishedSnapshot {
                         id: published.id,
                         snapshot: Snapshot {
-                            includes_through: published.snapshot.includes_through,
+                            at_event: published.snapshot.at_event,
                             payload,
                         },
                     })
@@ -376,7 +376,7 @@ where
         self.inner
             .publish(
                 Snapshot {
-                    includes_through: snapshot.includes_through,
+                    at_event: snapshot.at_event,
                     payload: encoded,
                 },
                 expected_parent,
@@ -393,8 +393,8 @@ mod tests {
     use futures_util::{StreamExt, TryStreamExt};
     use sea_compression::CompressionStream;
     use sea_core::{
-        AppendReceipt, AppendStream, Capabilities, ClassifiedError, ErrorKind, PublishedSnapshot,
-        ReadRecord, Snapshot, SnapshotId, SnapshotPosition, SnapshotStore, StreamReader,
+        Capabilities, ClassifiedError, CommittedEvent, ErrorKind, EventReceipt, EventStream,
+        PublishedSnapshot, Snapshot, SnapshotId, SnapshotPosition, SnapshotStore, StreamReader,
     };
     use sea_memory::{MemoryError, MemoryPosition, MemoryStream};
 
@@ -464,7 +464,7 @@ mod tests {
     }
 
     #[async_trait]
-    impl AppendStream for XorStream {
+    impl EventStream for XorStream {
         type Position = MemoryPosition;
         type Error = MemoryError;
 
@@ -472,7 +472,7 @@ mod tests {
             self.inner.capabilities()
         }
 
-        async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
+        async fn append(&self, value: Bytes) -> Result<EventReceipt<Self::Position>, Self::Error> {
             self.inner.append(xor(&value, self.key)).await
         }
 
@@ -482,7 +482,7 @@ mod tests {
         ) -> Result<StreamReader<Self::Position, Self::Error>, Self::Error> {
             let key = self.key;
             Ok(Box::pin(self.inner.read(after).await?.map(move |result| {
-                result.map(|record| ReadRecord {
+                result.map(|record| CommittedEvent {
                     position: record.position,
                     payload: xor(&record.payload, key),
                 })
@@ -507,7 +507,7 @@ mod tests {
                 .map(|published| PublishedSnapshot {
                     id: published.id,
                     snapshot: Snapshot {
-                        includes_through: published.snapshot.includes_through,
+                        at_event: published.snapshot.at_event,
                         payload: xor(&published.snapshot.payload, self.key),
                     },
                 }))
@@ -521,7 +521,7 @@ mod tests {
             self.inner
                 .publish(
                     Snapshot {
-                        includes_through: snapshot.includes_through,
+                        at_event: snapshot.at_event,
                         payload: xor(&snapshot.payload, self.key),
                     },
                     expected_parent,
@@ -537,11 +537,8 @@ mod tests {
 
     #[tokio::test]
     async fn passes_position_codec_conformance_directly() {
-        sea_conformance::run_position_codec_conformance(
-            || wrap(MemoryStream::new()),
-            b"malformed",
-        )
-        .await;
+        sea_conformance::run_position_codec_conformance(|| wrap(MemoryStream::new()), b"malformed")
+            .await;
     }
 
     #[tokio::test]
@@ -606,7 +603,7 @@ mod tests {
         let initial = stream
             .publish(
                 Snapshot {
-                    includes_through: SnapshotPosition::Initial,
+                    at_event: SnapshotPosition::Initial,
                     payload: Bytes::from_static(b"initial-state"),
                 },
                 None,
@@ -617,7 +614,7 @@ mod tests {
         let at_first = stream
             .publish(
                 Snapshot {
-                    includes_through: SnapshotPosition::At(first.position.clone()),
+                    at_event: SnapshotPosition::At(first.position.clone()),
                     payload: Bytes::from_static(b"state-at-first"),
                 },
                 Some(&initial),
@@ -628,7 +625,7 @@ mod tests {
         stream
             .publish(
                 Snapshot {
-                    includes_through: SnapshotPosition::At(second.position.clone()),
+                    at_event: SnapshotPosition::At(second.position.clone()),
                     payload: Bytes::from_static(b"state-after-boundary"),
                 },
                 Some(&at_first),
@@ -644,7 +641,7 @@ mod tests {
             Bytes::from_static(b"state-after-boundary")
         );
         assert_eq!(
-            latest.snapshot.includes_through,
+            latest.snapshot.at_event,
             SnapshotPosition::At(second.position.clone())
         );
         assert!(
@@ -693,7 +690,7 @@ mod tests {
         let snapshot_id = stream
             .publish(
                 Snapshot {
-                    includes_through: SnapshotPosition::Initial,
+                    at_event: SnapshotPosition::Initial,
                     payload: maximum.clone(),
                 },
                 None,
@@ -704,7 +701,7 @@ mod tests {
         let error = stream
             .publish(
                 Snapshot {
-                    includes_through: SnapshotPosition::Initial,
+                    at_event: SnapshotPosition::Initial,
                     payload: Bytes::from(vec![8; MAX_PAYLOAD + 1]),
                 },
                 Some(&snapshot_id),
@@ -813,7 +810,7 @@ mod tests {
             inner
                 .publish(
                     Snapshot {
-                        includes_through: SnapshotPosition::Initial,
+                        at_event: SnapshotPosition::Initial,
                         payload: malformed,
                     },
                     None,
@@ -865,7 +862,7 @@ mod tests {
         stream
             .publish(
                 Snapshot {
-                    includes_through: SnapshotPosition::At(receipt.position),
+                    at_event: SnapshotPosition::At(receipt.position),
                     payload: Bytes::from_static(b"encrypted snapshot"),
                 },
                 None,

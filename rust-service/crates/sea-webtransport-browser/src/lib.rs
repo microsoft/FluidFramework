@@ -10,11 +10,11 @@ use std::{
 };
 
 use core::{ClientMetrics, ProtocolCore, js_error};
+use js_sys::{Array, Date, Function, Promise, Reflect, Uint8Array};
 use sea_protocol::{
     ProjectedOperation as ProtocolProjectedOperation, Reference, Resolution,
     SummaryEntry as ProtocolSummaryEntry,
 };
-use js_sys::{Array, Date, Function, Promise, Reflect, Uint8Array};
 use wasm_bindgen::{JsCast, prelude::*};
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{
@@ -1367,8 +1367,7 @@ async fn read_stream_frame(
     loop {
         if buffered.len() >= sea_protocol::HEADER_BYTES {
             let body_bytes = usize::try_from(u32::from_be_bytes(
-                buffered[sea_protocol::HEADER_BYTES - 4
-                    ..sea_protocol::HEADER_BYTES]
+                buffered[sea_protocol::HEADER_BYTES - 4..sea_protocol::HEADER_BYTES]
                     .try_into()
                     .map_err(|_| js_error("subscription frame header is invalid"))?,
             ))

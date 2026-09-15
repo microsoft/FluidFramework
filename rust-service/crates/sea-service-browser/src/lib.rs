@@ -1,4 +1,4 @@
-#![doc = "Browser WASM transport for an in-process memory-backed native Fluid service."]
+#![doc = "Browser WASM transport for an in-process memory-backed Sea service."]
 #![cfg(target_arch = "wasm32")]
 
 use std::{
@@ -10,14 +10,12 @@ use std::{
 };
 
 use bytes::Bytes;
+use js_sys::{Array, Uint8Array};
+use sea_protocol::{ErrorCode, Frame, Limits, Message, Request, Response, decode, encode};
 use sea_service::{
     NativeService, ProjectedSubscription, ProjectedSubscriptionCancellation,
     ProjectedSubscriptionError, ServiceConfig, StorageMode,
 };
-use sea_protocol::{
-    ErrorCode, Frame, Limits, Message, Request, Response, decode, encode,
-};
-use js_sys::{Array, Uint8Array};
 use tokio::sync::Mutex;
 use wasm_bindgen::prelude::*;
 

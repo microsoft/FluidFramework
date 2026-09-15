@@ -22,8 +22,8 @@ use sea_core::{
         OpenedDocumentStorage, ServiceStorage, StorageError, StorageErrorKind,
     },
 };
-use sea_file_durable::DurableLog;
 use sea_file::FileStream;
+use sea_file_durable::DurableLog;
 use sea_memory::MemoryStream;
 
 const SCOPE_FILE: &str = "service.scope";

@@ -1,4 +1,4 @@
-# Snapshotted Stream Conformance
+# Sea Conformance
 
 `sea-conformance` provides implementation-independent checks for the contracts in `sea-core`.
 

@@ -109,7 +109,7 @@ for (let repetition = 0; repetition < repetitions; repetition++) {
 					: {}),
 				...(backend === "rust-local" ? { local: "true", storage: "memory" } : {}),
 				...(backend === "rust"
-					? { storage: process.env.FLUID_SERVICE_STORAGE_MODE ?? "durable-file" }
+					? { storage: process.env.SEA_STORAGE_MODE ?? "durable-file" }
 					: {}),
 			}).toString(),
 		],

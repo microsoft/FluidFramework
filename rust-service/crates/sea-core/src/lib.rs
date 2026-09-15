@@ -24,21 +24,21 @@ pub enum Durability {
     Durable,
 }
 
-/// The committed position and durability established by an append.
+/// The committed position and durability established for an event.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct AppendReceipt<P> {
-    /// The opaque position assigned to the appended record.
+pub struct EventReceipt<P> {
+    /// The opaque position assigned to the committed event.
     pub position: P,
-    /// The persistence guarantee completed before the append returned.
+    /// The persistence guarantee completed before event submission returned.
     pub durability: Durability,
 }
 
-/// One append returned by a reader. Append boundaries are preserved.
+/// One committed event returned by a reader. Event boundaries are preserved.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ReadRecord<P> {
-    /// The opaque position assigned when this record was committed.
+pub struct CommittedEvent<P> {
+    /// The opaque position assigned when this event was committed.
     pub position: P,
-    /// The exact bytes supplied by the corresponding append.
+    /// The exact bytes supplied for the corresponding event.
     pub payload: Bytes,
 }
 
@@ -71,7 +71,7 @@ pub enum Capability {
     /// Committed records can be removed while preserving a readable suffix.
     Retention,
     /// Repeating an append identity cannot commit the payload more than once.
-    IdempotentAppend,
+    IdempotentEvents,
 }
 
 /// A compact set of optional capabilities.
@@ -101,7 +101,7 @@ const fn capability_mask(capability: Capability) -> u8 {
         Capability::LiveTailing => 1 << 0,
         Capability::PositionSerialization => 1 << 1,
         Capability::Retention => 1 << 2,
-        Capability::IdempotentAppend => 1 << 3,
+        Capability::IdempotentEvents => 1 << 3,
     }
 }
 
@@ -112,11 +112,11 @@ pub trait ClassifiedError: Error + Send + Sync + 'static {
 }
 
 /// A finite, backpressured read of data committed when `read` begins.
-pub type StreamReader<P, E> = Pin<Box<dyn Stream<Item = Result<ReadRecord<P>, E>> + Send>>;
+pub type StreamReader<P, E> = Pin<Box<dyn Stream<Item = Result<CommittedEvent<P>, E>> + Send>>;
 
 #[async_trait]
-/// An ordered append-only stream with opaque, implementation-defined positions.
-pub trait AppendStream: Send + Sync {
+/// An ordered event stream with opaque, implementation-defined positions.
+pub trait EventStream: Send + Sync {
     /// The opaque position type produced by this stream implementation.
     type Position: StreamPosition;
     /// The implementation-specific error type with a stable classification.
@@ -125,13 +125,13 @@ pub trait AppendStream: Send + Sync {
     /// Reports the optional behaviors supported by this implementation.
     fn capabilities(&self) -> Capabilities;
 
-    /// Appends one record while preserving its boundary, including for an empty payload.
+    /// Appends one event while preserving its boundary, including for an empty payload.
     ///
-    /// A successful receipt means the record is visible to subsequent readers at the
+    /// A successful receipt means the event is visible to subsequent readers at the
     /// reported [`Durability`].
-    async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error>;
+    async fn append(&self, value: Bytes) -> Result<EventReceipt<Self::Position>, Self::Error>;
 
-    /// Reads committed records strictly after `after`, or from the retained beginning.
+    /// Reads committed events strictly after `after`, or from the retained beginning.
     ///
     /// The returned reader is finite and ends at the head captured when this method begins.
     /// Dropping it does not affect the stream or other readers.
@@ -157,7 +157,7 @@ pub trait AppendStream: Send + Sync {
 /// Tokens and their position domain are implementation-defined.
 /// Consumers must not inspect, compare, or construct them, or assume that another stream accepts
 /// or rejects them.
-pub trait PositionCodec: AppendStream {
+pub trait PositionCodec: EventStream {
     /// Encodes a position as an opaque resume or reference token.
     ///
     /// # Errors
@@ -186,7 +186,7 @@ pub enum SnapshotPosition<P> {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Snapshot<P> {
     /// The latest committed record reflected in `payload`.
-    pub includes_through: SnapshotPosition<P>,
+    pub at_event: SnapshotPosition<P>,
     /// Opaque state bytes interpreted by the snapshot producer and consumer.
     pub payload: Bytes,
 }
