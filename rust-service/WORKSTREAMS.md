@@ -1,46 +1,54 @@
-# Workstream Manifest
+# Workspace Architecture
 
-This manifest records the crate graph and proposed iteration `0001` ownership. The coordinator assigns one agent to each owner role when iteration records are initialized; until then, the coordinator owns changes to shared files.
+This document records the current Rust workspace package graph.
+Cargo manifests are authoritative when this summary and the workspace differ.
 
-## Crate Graph
+## Current Package Graph
+
+The dependency column lists direct production dependencies on other workspace packages.
+Development-only conformance fixtures and integration-test dependencies are described after the table.
+
+| Package | Location | Direct workspace dependencies | Role |
+| --- | --- | --- | --- |
+| `snapshotted-stream-core` | `crates/core/` | None | Storage-independent append, position, snapshot, capability, and error contracts. |
+| `snapshotted-stream-conformance` | `crates/conformance/` | `snapshotted-stream-core` | Reusable semantic tests for stream implementations and transparent wrappers. |
+| `snapshotted-stream-memory` | `crates/memory/` | `snapshotted-stream-core` | In-process reference storage. |
+| `snapshotted-stream-file-simple` | `crates/file-simple/` | `snapshotted-stream-core` | Buffered single-process file storage. |
+| `snapshotted-stream-durable-log-spike` | `crates/spikes/durable-log/` | `snapshotted-stream-core` | Research implementation for sync-before-acknowledgement and process-crash recovery. |
+| `snapshotted-stream-content-addressed` | `crates/content-addressed/` | None | Immutable filesystem blobs and summary manifests. |
+| `snapshotted-stream-compression` | `crates/wrappers/compression/` | `snapshotted-stream-core` | Transparent per-record compression. |
+| `snapshotted-stream-encryption` | `crates/wrappers/encryption/` | `snapshotted-stream-core` | Transparent authenticated per-record encryption. |
+| `snapshotted-stream-stateful-compression` | `crates/wrappers/stateful-compression/` | `snapshotted-stream-core` | Per-record compression with an immutable shared dictionary. |
+| `snapshotted-stream-network` | `crates/wrappers/network/` | `snapshotted-stream-core` | In-process and Unix-process transports for the core contracts. |
+| `fluid-service-protocol` | `crates/protocol/` | None | Transport-independent FSP4 request, response, framing, and limit definitions. |
+| `fluid-sequencer` | `crates/fluid-sequencer/` | `snapshotted-stream-core` | Authoritative Fluid sessions, submissions, projection, ambiguity recovery, and fencing. |
+| `fluid-native-service` | `crates/service/` | `fluid-sequencer`, `fluid-service-protocol`, `snapshotted-stream-content-addressed`, `snapshotted-stream-core`, `snapshotted-stream-durable-log-spike`, `snapshotted-stream-file-simple`, `snapshotted-stream-memory` | Single-host document, sequencing, storage, content, and subscription assembly. |
+| `snapshotted-stream-client` | `crates/client/` | `fluid-service-protocol`, `snapshotted-stream-core` | Transport-independent client lifecycle, recovery policy, and content requests. |
+| `fluid-webtransport-native` | `crates/wrappers/webtransport-native/` | `fluid-native-service`, `fluid-service-protocol` | Native WebTransport server and client adapter. |
+| `fluid-webtransport-browser` | `crates/wrappers/webtransport-browser/` | `fluid-service-protocol` | Browser-WASM WebTransport client. |
+| `fluid-native-service-browser` | `crates/wrappers/native-service-browser/` | `fluid-native-service`, `fluid-service-protocol` | Browser-WASM adapter for an in-process native service. |
+| `snapshotted-stream-counter` | `examples/counter/` | `snapshotted-stream-client`, `snapshotted-stream-memory` | Snapshot and replay example. |
+| `fluid-native-service-example` | `examples/native-service/` | `fluid-native-service`, `fluid-service-protocol` | Process-hosted native service example. |
+| `snapshotted-stream-benchmarks` | `crates/benchmarks/` | Service, protocol, client, native WebTransport, storage implementations, and storage wrappers | Cross-layer workload and measurement harness. |
+
+Storage implementations and transparent wrappers use `snapshotted-stream-conformance` as a development dependency.
+Their focused tests use memory and wrapper compositions where needed.
+The client uses `fluid-native-service` only for integration tests, not as a production dependency.
+
+At runtime, the primary service path is:
 
 ```text
-snapshotted-stream-core
-├── snapshotted-stream-conformance (test specification)
-├── snapshotted-stream-memory
-├── snapshotted-stream-file-simple
-├── snapshotted-stream-durable-log-spike
-├── snapshotted-stream-compression
-├── snapshotted-stream-client
-│   └── snapshotted-stream-counter
-└── fluid-sequencer
+client or Fluid adapter
+	-> FSP4 protocol
+	-> native or browser transport
+	-> fluid-native-service
+	-> fluid-sequencer
+	-> selected append and snapshot implementation
+
+fluid-native-service
+	-> content-addressed blob and summary storage
 ```
 
-Implementation crates use `snapshotted-stream-conformance` only as a development dependency. The counter selects an implementation at the application edge; neither core nor client depends on memory, storage, wrappers, or Fluid semantics.
-
-## Iteration 0001 Workstreams
-
-| Workstream | Owner role | Writable paths | Dependencies | Expected evidence and deliverable |
-| --- | --- | --- | --- | --- |
-| `reference-conformance` | reference and conformance agent | `crates/memory/`, `crates/conformance/`, `crates/client/`, `examples/counter/` | core contract | Concurrent-reader/writer, cancellation, boundary, generation, and snapshot tests; counter recovers only through public traits; completed reference path. |
-| `file-simple` | minimal file agent | `crates/file-simple/` | core and conformance | Restart test after clean close, explicit rejection of incomplete data, conformance results, persisted format notes, and no crash-durability claim. |
-| `durable-log` | durable-log spike agent | `crates/spikes/durable-log/` | core and conformance | Prototype or minimized failing requirement covering opaque positions, receipt timing, tail recovery, and durability; document every guarantee not demonstrated. |
-| `compression` | compression wrapper agent | `crates/wrappers/compression/` | core, conformance, then one reference implementation for integration tests | Transparent per-record compression, preservation of append boundaries and outer positions, conformance results, and size/throughput evidence. |
-| `fluid-sequencer` | Fluid feasibility agent | `crates/fluid-sequencer/` | core contract; Fluid precedents in `PLAN.md` | Spike for final sequence metadata, writer-local order, reference positions, and minimum reference; minimized requirements for any missing conditional or service-side primitive. |
-
-Shared edits to `Cargo.toml`, `crates/core/`, this manifest, or conformance semantics are coordinator-owned and follow the Phase 2 escalation process.
-
-## Dependency Order
-
-`reference-conformance`, `file-simple`, `durable-log`, and `fluid-sequencer` can begin from the iteration kickoff. `compression` may build its wrapper immediately but waits for the reference implementation's concurrent conformance additions before claiming compatibility. Counter integration depends on the reference path. No workstream depends on another storage spike.
-
-## Composition Matrix
-
-| Composition | Iteration | Required check |
-| --- | --- | --- |
-| counter framing -> raw client -> memory | foundation | Snapshot and replay example plus shared conformance. |
-| counter framing -> per-record compression -> memory | `0001` | Integration test proving transparent recovery and append-boundary preservation. |
-| framing -> compression -> transport -> persistence | deferred | Network workstream must preserve backpressure and stale-position detection. |
-| framing -> compression -> authenticated encryption -> transport -> persistence | deferred | Encryption workstream must define nonce/key behavior and prove wrapper ordering. Compression precedes encryption. |
-
-Caching, block/stateful compression, browser storage, full networking, encryption, and complete Fluid integration are explicitly deferred.
+The native service currently selects concrete storage implementations directly.
+Storage transformations are independently composable through the core contracts but are not selectable through the native service.
+These limitations are tracked in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).

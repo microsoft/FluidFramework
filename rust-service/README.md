@@ -78,7 +78,7 @@ Each approved iteration uses a dedicated integration branch and one isolated bra
 
 - [PLAN.md](PLAN.md) defines the architecture, semantics, iterative work phases, reporting contract, review loop, and success criteria.
 - [DEVELOPMENT.md](DEVELOPMENT.md) defines the pinned toolchain, lockfile policy, and required foundation commands.
-- [WORKSTREAMS.md](WORKSTREAMS.md) records crate dependencies, iteration ownership, deliverables, and composition coverage.
+- [WORKSTREAMS.md](WORKSTREAMS.md) records the current package graph and runtime composition.
 - [BENCHMARKS.md](BENCHMARKS.md) defines initial workloads, measurement procedure, and required environment metadata.
 - [BLOB_STORAGE.md](BLOB_STORAGE.md) proposes the unified content-addressed blob contract, retention model, filesystem implementation, and Fluid mapping.
 - [KNOWN_ISSUES.md](KNOWN_ISSUES.md) tracks unresolved architecture and organization issues and their resolution status.

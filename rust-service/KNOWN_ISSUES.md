@@ -77,22 +77,6 @@ project remains an experimental research project.
 - **Resolution direction:** Define a focused content-store contract and provide
   memory and filesystem implementations behind the service composition root.
 
-## RS-005: The documented crate graph is stale
-
-- **Status:** Open
-- **Severity:** Medium
-- **Area:** Project documentation
-- **Evidence:** The top-level README describes `WORKSTREAMS.md` as the record of
-  crate dependencies and composition coverage, but that document still presents
-  the iteration `0001` graph. It omits the current protocol, service,
-  content-addressed, encryption, stateful-compression, transport, and browser
-  crates and the later integration paths.
-- **Impact:** A reader using the designated architecture map receives an
-  incomplete view and must reconstruct the current graph from Cargo manifests.
-- **Resolution direction:** Replace or supplement the historical iteration graph
-  with a current generated or maintained architecture graph. Clearly label
-  historical ownership information as such.
-
 ## RS-006: Large crates concentrate unrelated responsibilities in `lib.rs`
 
 - **Status:** Open
