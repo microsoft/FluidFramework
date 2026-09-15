@@ -167,6 +167,19 @@ describe("normalizeTsBuildInfo", () => {
 		}
 	});
 
+	it("returns undefined for missing or malformed versions", () => {
+		const program = {
+			fileNames: ["./src/index.ts"],
+			fileInfos: ["abc123"],
+			options: {},
+		};
+
+		assert.equal(normalizeTsBuildInfo({ program }), undefined);
+		assert.equal(normalizeTsBuildInfo({ program, version: 123 }), undefined);
+		assert.equal(normalizeTsBuildInfo(program), undefined);
+		assert.equal(normalizeTsBuildInfo({ ...program, version: 123 }), undefined);
+	});
+
 	it("handles TS6 format with semanticDiagnosticsPerFile errors", () => {
 		const ts6WithErrors = {
 			fileNames: ["./src/index.ts"],
