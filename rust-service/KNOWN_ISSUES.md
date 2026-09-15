@@ -68,7 +68,7 @@ project remains an experimental research project.
 - **Severity:** Medium
 - **Area:** Service configuration
 - **Evidence:** Canonical and projected read limits, content limits, and buffer
-  sizes are constants in `crates/service/src/lib.rs`. `ServiceConfig` exposes
+  sizes are constants in `crates/fluid-native-service/src/lib.rs`. `ServiceConfig` exposes
   only the root path and storage mode, while the protocol independently defines
   decoding limits.
 - **Impact:** Deployments with different workload or resource constraints need

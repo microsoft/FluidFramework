@@ -10,27 +10,27 @@ Development-only conformance fixtures and integration-test dependencies are desc
 
 | Package | Location | Direct workspace dependencies | Role |
 | --- | --- | --- | --- |
-| `snapshotted-stream-core` | `crates/core/` | None | Storage-independent append, position, snapshot, capability, error, and service storage composition contracts. |
-| `snapshotted-stream-conformance` | `crates/conformance/` | `snapshotted-stream-core` | Reusable semantic tests for stream implementations and transparent wrappers. |
-| `snapshotted-stream-memory` | `crates/memory/` | `snapshotted-stream-core` | In-process reference storage. |
-| `snapshotted-stream-file-simple` | `crates/file-simple/` | `snapshotted-stream-core` | Buffered single-process file storage. |
-| `snapshotted-stream-durable-log-spike` | `crates/spikes/durable-log/` | `snapshotted-stream-core` | Research implementation for sync-before-acknowledgement and process-crash recovery. |
-| `snapshotted-stream-content-addressed` | `crates/content-addressed/` | `snapshotted-stream-core` | Immutable in-memory and filesystem blobs and summary manifests behind the common content contract. |
-| `snapshotted-stream-compression` | `crates/wrappers/compression/` | `snapshotted-stream-core` | Transparent per-record compression. |
-| `snapshotted-stream-encryption` | `crates/wrappers/encryption/` | `snapshotted-stream-core` | Transparent authenticated per-record encryption. |
-| `snapshotted-stream-stateful-compression` | `crates/wrappers/stateful-compression/` | `snapshotted-stream-core` | Per-record compression with an immutable shared dictionary. |
-| `snapshotted-stream-network` | `crates/wrappers/network/` | `snapshotted-stream-core` | In-process and Unix-process transports for the core contracts. |
-| `fluid-service-protocol` | `crates/protocol/` | None | Transport-independent FSP4 request, response, framing, and limit definitions. |
+| `snapshotted-stream-core` | `crates/snapshotted-stream-core/` | None | Storage-independent append, position, snapshot, capability, error, and service storage composition contracts. |
+| `snapshotted-stream-conformance` | `crates/snapshotted-stream-conformance/` | `snapshotted-stream-core` | Reusable semantic tests for stream implementations and transparent wrappers. |
+| `snapshotted-stream-memory` | `crates/snapshotted-stream-memory/` | `snapshotted-stream-core` | In-process reference storage. |
+| `snapshotted-stream-file-simple` | `crates/snapshotted-stream-file-simple/` | `snapshotted-stream-core` | Buffered single-process file storage. |
+| `snapshotted-stream-durable-log-spike` | `crates/spikes/snapshotted-stream-durable-log-spike/` | `snapshotted-stream-core` | Research implementation for sync-before-acknowledgement and process-crash recovery. |
+| `snapshotted-stream-content-addressed` | `crates/snapshotted-stream-content-addressed/` | `snapshotted-stream-core` | Immutable in-memory and filesystem blobs and summary manifests behind the common content contract. |
+| `snapshotted-stream-compression` | `crates/wrappers/snapshotted-stream-compression/` | `snapshotted-stream-core` | Transparent per-record compression. |
+| `snapshotted-stream-encryption` | `crates/wrappers/snapshotted-stream-encryption/` | `snapshotted-stream-core` | Transparent authenticated per-record encryption. |
+| `snapshotted-stream-stateful-compression` | `crates/wrappers/snapshotted-stream-stateful-compression/` | `snapshotted-stream-core` | Per-record compression with an immutable shared dictionary. |
+| `snapshotted-stream-network` | `crates/wrappers/snapshotted-stream-network/` | `snapshotted-stream-core` | In-process and Unix-process transports for the core contracts. |
+| `fluid-service-protocol` | `crates/fluid-service-protocol/` | None | Transport-independent FSP4 request, response, framing, and limit definitions. |
 | `fluid-sequencer` | `crates/fluid-sequencer/` | `snapshotted-stream-core` | Authoritative Fluid sessions, submissions, projection, ambiguity recovery, and fencing. |
-| `fluid-service-storage` | `crates/storage/` | `snapshotted-stream-content-addressed`, `snapshotted-stream-core`, `snapshotted-stream-durable-log-spike`, `snapshotted-stream-file-simple`, `snapshotted-stream-memory` | Built-in backend selection, document factory, filesystem layout, content composition, and fencing policy. |
-| `fluid-native-service` | `crates/service/` | `fluid-sequencer`, `fluid-service-protocol`, `fluid-service-storage`, `snapshotted-stream-core` | Single-host document, sequencing, content, and subscription behavior over injected storage. |
-| `snapshotted-stream-client` | `crates/client/` | `fluid-service-protocol`, `snapshotted-stream-core` | Transport-independent client lifecycle, recovery policy, and content requests. |
-| `fluid-webtransport-native` | `crates/wrappers/webtransport-native/` | `fluid-native-service`, `fluid-service-protocol` | Native WebTransport server and client adapter. |
-| `fluid-webtransport-browser` | `crates/wrappers/webtransport-browser/` | `fluid-service-protocol` | Browser-WASM WebTransport client. |
-| `fluid-native-service-browser` | `crates/wrappers/native-service-browser/` | `fluid-native-service`, `fluid-service-protocol` | Browser-WASM adapter for an in-process native service. |
-| `snapshotted-stream-counter` | `examples/counter/` | `snapshotted-stream-client`, `snapshotted-stream-memory` | Snapshot and replay example. |
-| `fluid-native-service-example` | `examples/native-service/` | `fluid-native-service`, `fluid-service-protocol` | Process-hosted native service example. |
-| `snapshotted-stream-benchmarks` | `crates/benchmarks/` | Service, protocol, client, native WebTransport, storage implementations, and storage wrappers | Cross-layer workload and measurement harness. |
+| `fluid-service-storage` | `crates/fluid-service-storage/` | `snapshotted-stream-content-addressed`, `snapshotted-stream-core`, `snapshotted-stream-durable-log-spike`, `snapshotted-stream-file-simple`, `snapshotted-stream-memory` | Built-in backend selection, document factory, filesystem layout, content composition, and fencing policy. |
+| `fluid-native-service` | `crates/fluid-native-service/` | `fluid-sequencer`, `fluid-service-protocol`, `fluid-service-storage`, `snapshotted-stream-core` | Single-host document, sequencing, content, and subscription behavior over injected storage. |
+| `snapshotted-stream-client` | `crates/snapshotted-stream-client/` | `fluid-service-protocol`, `snapshotted-stream-core` | Transport-independent client lifecycle, recovery policy, and content requests. |
+| `fluid-webtransport-native` | `crates/wrappers/fluid-webtransport-native/` | `fluid-native-service`, `fluid-service-protocol` | Native WebTransport server and client adapter. |
+| `fluid-webtransport-browser` | `crates/wrappers/fluid-webtransport-browser/` | `fluid-service-protocol` | Browser-WASM WebTransport client. |
+| `fluid-native-service-browser` | `crates/wrappers/fluid-native-service-browser/` | `fluid-native-service`, `fluid-service-protocol` | Browser-WASM adapter for an in-process native service. |
+| `snapshotted-stream-counter` | `examples/snapshotted-stream-counter/` | `snapshotted-stream-client`, `snapshotted-stream-memory` | Snapshot and replay example. |
+| `fluid-native-service-example` | `examples/fluid-native-service-example/` | `fluid-native-service`, `fluid-service-protocol` | Process-hosted native service example. |
+| `snapshotted-stream-benchmarks` | `crates/snapshotted-stream-benchmarks/` | Service, protocol, client, native WebTransport, storage implementations, and storage wrappers | Cross-layer workload and measurement harness. |
 
 Storage implementations and transparent wrappers use `snapshotted-stream-conformance` as a development dependency.
 Their focused tests use memory and wrapper compositions where needed.

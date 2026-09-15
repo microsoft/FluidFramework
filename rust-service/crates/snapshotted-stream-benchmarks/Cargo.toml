@@ -1,0 +1,30 @@
+[package]
+name = "snapshotted-stream-benchmarks"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+async-trait.workspace = true
+bytes.workspace = true
+fluid-native-service = { path = "../fluid-native-service" }
+fluid-service-protocol = { path = "../fluid-service-protocol" }
+fluid-webtransport-native = { path = "../wrappers/fluid-webtransport-native" }
+futures-util.workspace = true
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.143"
+snapshotted-stream-compression = { path = "../wrappers/snapshotted-stream-compression" }
+snapshotted-stream-core = { path = "../snapshotted-stream-core" }
+snapshotted-stream-encryption = { path = "../wrappers/snapshotted-stream-encryption" }
+snapshotted-stream-file-simple = { path = "../snapshotted-stream-file-simple" }
+snapshotted-stream-memory = { path = "../snapshotted-stream-memory" }
+snapshotted-stream-client = { path = "../snapshotted-stream-client" }
+snapshotted-stream-network = { path = "../wrappers/snapshotted-stream-network" }
+snapshotted-stream-stateful-compression = { path = "../wrappers/snapshotted-stream-stateful-compression" }
+tokio.workspace = true
+wtransport = "=0.7.2"
+
+[lints]
+workspace = true

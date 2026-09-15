@@ -1,0 +1,25 @@
+[package]
+name = "snapshotted-stream-encryption"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+aes-gcm-siv = { version = "0.11.1", default-features = false, features = ["aes", "alloc", "getrandom"] }
+async-trait.workspace = true
+bytes.workspace = true
+futures-util.workspace = true
+rand_core = { version = "0.6.4", features = ["getrandom"] }
+snapshotted-stream-core = { path = "../../snapshotted-stream-core" }
+thiserror.workspace = true
+zeroize = { version = "1.8.1", features = ["derive"] }
+
+[dev-dependencies]
+snapshotted-stream-compression = { path = "../snapshotted-stream-compression" }
+snapshotted-stream-conformance = { path = "../../snapshotted-stream-conformance" }
+snapshotted-stream-memory = { path = "../../snapshotted-stream-memory" }
+tokio.workspace = true
+
+[lints]
+workspace = true
