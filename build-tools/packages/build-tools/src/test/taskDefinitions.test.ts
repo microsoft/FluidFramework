@@ -456,7 +456,24 @@ describe("Task Definitions", () => {
 							},
 						},
 					}),
-				/contains backslashes; use '\/' in fluidBuild globs\./,
+				/contains backslashes; use '\/' in fluidBuild configuration\./,
+			);
+		});
+
+		it("rejects backslashes in additional config files", () => {
+			assert.throws(
+				() =>
+					normalizeGlobalTaskDefinitions({
+						myTask: {
+							dependsOn: [],
+							files: {
+								inputGlobs: [],
+								outputGlobs: [],
+								additionalConfigFiles: ["${repoRoot}\\common\\config.json"],
+							},
+						},
+					}),
+				/contains backslashes; use '\/' in fluidBuild configuration\./,
 			);
 		});
 	});
@@ -637,7 +654,7 @@ describe("Task Definitions", () => {
 							isReleaseGroupRoot: false,
 						},
 					),
-				/contains backslashes; use '\/' in fluidBuild globs\./,
+				/contains backslashes; use '\/' in fluidBuild configuration\./,
 			);
 		});
 	});

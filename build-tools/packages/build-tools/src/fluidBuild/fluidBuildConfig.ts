@@ -44,20 +44,21 @@ export function replaceRepoRootTokens(
 }
 
 /**
- * Validate the glob separators used by a declarative task.
+ * Validate the path separators used by a declarative task.
  *
  * @param task - The declarative task to validate.
- * @throws If an input or output glob contains a backslash.
+ * @throws If a declarative glob or additional config file contains a backslash.
  */
 export function validateDeclarativeTaskGlobSeparators(task: TaskFileDependencies): void {
-	for (const [kind, globs] of [
+	for (const [kind, paths] of [
 		["inputGlob", task.inputGlobs],
 		["outputGlob", task.outputGlobs],
+		["additionalConfigFile", task.additionalConfigFiles],
 	] as const) {
-		for (const glob of globs) {
-			if (glob.includes("\\")) {
+		for (const value of paths ?? []) {
+			if (value.includes("\\")) {
 				throw new Error(
-					`${kind} '${glob}' contains backslashes; use '/' in fluidBuild globs.`,
+					`${kind} '${value}' contains backslashes; use '/' in fluidBuild configuration.`,
 				);
 			}
 		}
