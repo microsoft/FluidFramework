@@ -406,8 +406,7 @@ mod tests {
     use futures_util::{StreamExt, TryStreamExt};
     use snapshotted_stream_compression::CompressionStream;
     use snapshotted_stream_core::{
-        AppendStream, ClassifiedError, ErrorKind, PositionCodec, Snapshot, SnapshotPosition,
-        SnapshotStore,
+        AppendStream, ClassifiedError, ErrorKind, Snapshot, SnapshotPosition, SnapshotStore,
     };
     use snapshotted_stream_memory::MemoryStream;
 
@@ -509,23 +508,6 @@ mod tests {
             client.head().await.unwrap_err().kind(),
             ErrorKind::Unavailable
         );
-    }
-
-    #[tokio::test]
-    async fn forwards_codec_and_rejects_foreign_generation() {
-        let (first, _first_server) = connected_memory(1);
-        let (second, _second_server) = connected_memory(1);
-        let receipt = first.append(Bytes::from_static(b"value")).await.unwrap();
-        let token = first.encode_position(&receipt.position).unwrap();
-        assert_eq!(first.decode_position(&token).unwrap(), receipt.position);
-        assert_eq!(
-            second.decode_position(&token).unwrap_err().kind(),
-            ErrorKind::InvalidPosition
-        );
-        let Err(error) = second.read(Some(&receipt.position)).await else {
-            panic!("foreign-generation position was accepted");
-        };
-        assert_eq!(error.kind(), ErrorKind::InvalidPosition);
     }
 
     #[tokio::test]

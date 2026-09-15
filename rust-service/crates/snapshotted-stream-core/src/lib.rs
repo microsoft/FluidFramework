@@ -8,7 +8,7 @@ use futures_core::Stream;
 
 pub mod storage;
 
-/// An opaque position scoped to one stream generation.
+/// An opaque position in an implementation-defined stream position domain.
 pub trait StreamPosition: Clone + Debug + Eq + Send + Sync + 'static {}
 
 impl<T> StreamPosition for T where T: Clone + Debug + Eq + Send + Sync + 'static {}
@@ -115,7 +115,7 @@ pub trait ClassifiedError: Error + Send + Sync + 'static {
 pub type StreamReader<P, E> = Pin<Box<dyn Stream<Item = Result<ReadRecord<P>, E>> + Send>>;
 
 #[async_trait]
-/// An ordered append-only stream with opaque, generation-scoped positions.
+/// An ordered append-only stream with opaque, implementation-defined positions.
 pub trait AppendStream: Send + Sync {
     /// The opaque position type produced by this stream implementation.
     type Position: StreamPosition;
@@ -138,8 +138,7 @@ pub trait AppendStream: Send + Sync {
     ///
     /// # Errors
     ///
-    /// Returns an invalid- or stale-position error when `after` is not readable in this stream
-    /// generation.
+    /// Returns an invalid- or stale-position error when `after` is not readable by this stream.
     async fn read(
         &self,
         after: Option<&Self::Position>,
@@ -155,21 +154,22 @@ pub trait AppendStream: Send + Sync {
 
 /// Optional serialization for opaque positions that cross a process boundary.
 ///
-/// Tokens are implementation-defined and remain scoped to one stream generation.
-/// Consumers must not inspect, compare, or construct them.
+/// Tokens and their position domain are implementation-defined.
+/// Consumers must not inspect, compare, or construct them, or assume that another stream accepts
+/// or rejects them.
 pub trait PositionCodec: AppendStream {
     /// Encodes a position as an opaque resume or reference token.
     ///
     /// # Errors
     ///
-    /// Returns an invalid-position error when the position is not owned by this stream.
+    /// Returns an invalid-position error when the implementation cannot encode the position.
     fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error>;
 
     /// Decodes an opaque token produced by this implementation.
     ///
     /// # Errors
     ///
-    /// Returns an invalid-position error for malformed or foreign-generation tokens.
+    /// Returns an invalid-position error for tokens outside the implementation's accepted domain.
     fn decode_position(&self, token: &[u8]) -> Result<Self::Position, Self::Error>;
 }
 
@@ -236,13 +236,13 @@ pub trait SnapshotStore: Send + Sync {
     /// Publishes a snapshot when its position and expected parent remain valid.
     ///
     /// `expected_parent` must equal the latest snapshot identifier, or be `None` when no
-    /// snapshot exists. The included position must be committed in this generation and must not
-    /// regress behind the latest snapshot.
+    /// snapshot exists. The included position must be committed in the associated stream and must
+    /// not regress behind the latest snapshot.
     ///
     /// # Errors
     ///
     /// Returns a conflict for a parent mismatch or position regression, and an invalid- or
-    /// stale-position error for an uncommitted or foreign position.
+    /// stale-position error for a position that is not readable by the associated stream.
     async fn publish(
         &self,
         snapshot: Snapshot<Self::Position>,
