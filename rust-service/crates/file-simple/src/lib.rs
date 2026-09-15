@@ -18,8 +18,8 @@ use bytes::Bytes;
 use futures_util::stream;
 use snapshotted_stream_core::{
     AppendReceipt, AppendStream, Capabilities, ClassifiedError, Durability, ErrorKind,
-    PublishedSnapshot, ReadRecord, Snapshot, SnapshotId, SnapshotPosition, SnapshotStore,
-    StreamReader,
+    PositionCodec, PublishedSnapshot, ReadRecord, Snapshot, SnapshotId, SnapshotPosition,
+    SnapshotStore, StreamReader,
 };
 use thiserror::Error;
 
@@ -173,7 +173,7 @@ impl AppendStream for FileStream {
     type Error = FileError;
 
     fn capabilities(&self) -> Capabilities {
-        Capabilities::NONE
+        Capabilities::NONE.with(snapshotted_stream_core::Capability::PositionSerialization)
     }
 
     async fn append(&self, value: Bytes) -> Result<AppendReceipt<Self::Position>, Self::Error> {
@@ -233,6 +233,22 @@ impl AppendStream for FileStream {
         let ordinal = u64::try_from(len)
             .map_err(|_| FileError::Corrupt("record count exceeds position range"))?;
         Ok((ordinal > 0).then_some(FilePosition { ordinal }))
+    }
+}
+
+impl PositionCodec for FileStream {
+    fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error> {
+        Self::validate_position(position, self.state()?.records.len())?;
+        Ok(Bytes::copy_from_slice(&position.ordinal.to_be_bytes()))
+    }
+
+    fn decode_position(&self, token: &[u8]) -> Result<Self::Position, Self::Error> {
+        let token: [u8; 8] = token.try_into().map_err(|_| FileError::InvalidPosition)?;
+        let position = FilePosition {
+            ordinal: u64::from_be_bytes(token),
+        };
+        Self::validate_position(&position, self.state()?.records.len())?;
+        Ok(position)
     }
 }
 

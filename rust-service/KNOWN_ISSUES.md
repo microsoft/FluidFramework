@@ -1,29 +1,12 @@
 # Known Issues
 
 This file tracks known architecture and organization issues in the Rust service.
-Add new issues with a stable identifier, status, severity, evidence, impact, and
-resolution direction. When an issue is resolved, retain the entry, set its
-status to `Resolved`, and link the validating change or report.
+Add new issues with a stable identifier, status, severity, evidence, impact, and resolution direction.
+Remove resolved entries after their validating change has passed focused tests.
 
 Statuses are `Open`, `In progress`, `Resolved`, and `Deferred`. Severity records
 the issue's architectural or maintenance impact, not production readiness; this
 project remains an experimental research project.
-
-## RS-001: Service construction is coupled to concrete storage backends
-
-- **Status:** Open
-- **Severity:** High
-- **Area:** Service composition
-- **Evidence:** `crates/service/Cargo.toml` depends directly on the memory,
-  file-simple, and durable-log implementations. `ServiceLog` in
-  `crates/service/src/lib.rs` is a private enum over those implementations, and
-  `ServiceLog::open` selects among them through `StorageMode`.
-- **Impact:** Adding an external backend or changing the storage composition
-  requires modifying the service crate. The core storage contracts are
-  pluggable, but that extensibility does not reach the primary service assembly.
-- **Resolution direction:** Introduce a service-facing storage factory or
-  registration boundary that preserves concrete position and error handling
-  without requiring every backend to be compiled into the service.
 
 ## RS-002: Storage wrappers are not composable through the native service
 
@@ -61,21 +44,6 @@ project remains an experimental research project.
 - **Resolution direction:** Rename the service mode or make its qualification
   prominent at the API and service README boundaries. Define the durability
   vocabulary precisely before presenting this backend as production-capable.
-
-## RS-004: Content storage has no common substitution boundary
-
-- **Status:** Open
-- **Severity:** High
-- **Area:** Content storage
-- **Evidence:** The service switches between a private `MemoryContentStore` and
-  the filesystem `ContentStore` through the private `ServiceContentStore` enum.
-  The content-addressed crate provides concrete storage types rather than a
-  shared service-facing trait.
-- **Impact:** Alternative content stores require service changes, memory and
-  filesystem policy are split across crates, and callers cannot reuse a common
-  abstraction independently of the service.
-- **Resolution direction:** Define a focused content-store contract and provide
-  memory and filesystem implementations behind the service composition root.
 
 ## RS-006: Large crates concentrate unrelated responsibilities in `lib.rs`
 

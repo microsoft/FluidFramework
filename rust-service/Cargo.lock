@@ -352,16 +352,12 @@ dependencies = [
 name = "fluid-native-service"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "bytes",
  "fluid-sequencer",
  "fluid-service-protocol",
+ "fluid-service-storage",
  "futures-util",
- "snapshotted-stream-content-addressed",
  "snapshotted-stream-core",
- "snapshotted-stream-durable-log-spike",
- "snapshotted-stream-file-simple",
- "snapshotted-stream-memory",
  "tokio",
 ]
 
@@ -402,6 +398,19 @@ version = "0.1.0"
 dependencies = [
  "bytes",
  "thiserror",
+]
+
+[[package]]
+name = "fluid-service-storage"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "snapshotted-stream-content-addressed",
+ "snapshotted-stream-core",
+ "snapshotted-stream-durable-log-spike",
+ "snapshotted-stream-file-simple",
+ "snapshotted-stream-memory",
 ]
 
 [[package]]
@@ -1250,7 +1259,9 @@ dependencies = [
 name = "snapshotted-stream-content-addressed"
 version = "0.1.0"
 dependencies = [
+ "bytes",
  "sha2 0.10.9",
+ "snapshotted-stream-core",
 ]
 
 [[package]]
@@ -1260,6 +1271,7 @@ dependencies = [
  "async-trait",
  "bytes",
  "futures-core",
+ "futures-util",
 ]
 
 [[package]]

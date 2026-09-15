@@ -6,6 +6,8 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_core::Stream;
 
+pub mod storage;
+
 /// An opaque position scoped to one stream generation.
 pub trait StreamPosition: Clone + Debug + Eq + Send + Sync + 'static {}
 

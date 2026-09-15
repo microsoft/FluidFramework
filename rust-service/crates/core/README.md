@@ -1,6 +1,6 @@
 # Snapshotted Stream Core
 
-`snapshotted-stream-core` defines transport- and storage-independent contracts for an ordered append-only stream and its latest client-authored snapshot.
+`snapshotted-stream-core` defines transport- and storage-independent contracts for an ordered append-only stream, its latest client-authored snapshot, and service-level storage composition.
 
 ## Contracts
 
@@ -12,9 +12,15 @@
 
 Optional behavior is advertised through `Capabilities`. In particular, only implementations with `PositionSerialization` support opaque position tokens.
 
+The `storage` module defines focused object-safe contracts for document factories, document streams, and immutable content.
+`ServiceStorage` composes those contracts without requiring the service to know concrete backends.
+`DocumentStorageAdapter` type-erases implementations of the kernel append, snapshot, and position-codec traits.
+
 ## Relationships and Limits
 
-The `memory` and `file-simple` packages implement these contracts. The `conformance` package tests their shared semantic laws. This crate defines no persistence, retention, recovery, or live-tailing policy beyond the guarantees expressed by its traits.
+The memory, file-simple, and durable-log packages implement the kernel contracts.
+The conformance package tests their shared semantic laws.
+This crate defines no persistence, filesystem layout, retention, recovery, or live-tailing policy beyond the guarantees expressed by its traits.
 
 See [`src/lib.rs`](src/lib.rs) for the complete API contract.
 

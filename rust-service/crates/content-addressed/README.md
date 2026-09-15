@@ -1,6 +1,9 @@
 # Snapshotted Stream Content Addressed
 
-`snapshotted-stream-content-addressed` stores immutable SHA-256 blobs and canonical summary manifests on a local filesystem.
+`snapshotted-stream-content-addressed` stores immutable SHA-256 blobs and canonical summary manifests in memory or on a local filesystem.
+
+Both `MemoryContentStore` and `ContentStore` implement the common `ContentStorage` contract from `snapshotted-stream-core`.
+They share digest calculation, manifest validation, and canonical encoding.
 
 ## Publication and Verification
 

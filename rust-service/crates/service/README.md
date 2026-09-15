@@ -1,6 +1,6 @@
 # Fluid Native Service
 
-`fluid-native-service` assembles the FSP4 protocol, authoritative sequencer, append and snapshot storage, content-addressed blobs and summaries, and projected-operation subscriptions into a single-host service.
+`fluid-native-service` assembles the FSP4 protocol, authoritative sequencer, injected document and content storage, and projected-operation subscriptions into a single-host service.
 
 ## Ownership and routing
 
@@ -10,11 +10,18 @@ Each document owns an independent log, sequencer state, fence, snapshots, and pr
 
 ## Storage modes
 
+`NativeService::with_storage` accepts any `ServiceStorage` composition from `snapshotted-stream-core`.
+The service depends only on those focused storage contracts.
+
+`NativeService::new` is a convenience constructor over the built-in composition in `fluid-service-storage`:
+
 - `Memory` keeps document and content state in process memory and is intended for tests or ephemeral use.
 - `BufferedFile` uses the simple file backend without deployment-level fencing or durable append acknowledgement.
 - `DurableFile` is the default and uses the durable-log backend plus a persisted same-host fencing epoch.
 
-File-backed modes store document state beneath `ServiceConfig::root`. Durable content blobs and summaries are stored beneath the same root. The service is a single-host assembly; the file authority is not a distributed coordination mechanism.
+File-backed modes store document state beneath `ServiceConfig::root`.
+Durable content blobs and summaries are stored beneath the same root.
+The built-in composition is single-host; its file authority is not a distributed coordination mechanism.
 
 ## Typical flow
 

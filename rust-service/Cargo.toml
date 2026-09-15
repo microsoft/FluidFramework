@@ -10,6 +10,7 @@ members = [
     "crates/memory",
     "crates/protocol",
     "crates/service",
+    "crates/storage",
     "crates/spikes/durable-log",
     "crates/wrappers/compression",
     "crates/wrappers/encryption",

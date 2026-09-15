@@ -5,19 +5,27 @@
 #![doc = "and directory-synced before acknowledgment. There is intentionally no GC."]
 
 use std::{
-    collections::VecDeque,
+    collections::{BTreeMap, VecDeque},
     fmt,
     fs::{self, File, OpenOptions},
     io::{Read, Seek, SeekFrom, Write},
     path::{Path, PathBuf},
     str::FromStr,
     sync::{
-        Arc, Mutex,
+        Arc, Mutex, RwLock,
         atomic::{AtomicU64, Ordering},
     },
 };
 
+use bytes::Bytes;
 use sha2::{Digest as _, Sha256};
+use snapshotted_stream_core::{
+    ErrorKind,
+    storage::{
+        ContentId, ContentReceipt, ContentStorage, ContentSummaryEntry, ContentSummaryReceipt,
+        StorageError, StorageErrorKind,
+    },
+};
 
 const DIGEST_BYTES: usize = 32;
 const DIGEST_HEX_BYTES: usize = DIGEST_BYTES * 2;
@@ -80,6 +88,121 @@ impl FromStr for ContentDigest {
             bytes[index] = (hex_nibble(pair[0])? << 4) | hex_nibble(pair[1])?;
         }
         Ok(Self(bytes))
+    }
+}
+
+impl ContentStorage for ContentStore {
+    fn put_blob(&self, payload: Bytes) -> Result<ContentReceipt, StorageError> {
+        let receipt = ContentStore::put_blob(self, std::io::Cursor::new(payload))
+            .map_err(|error| map_storage_error(&error))?;
+        Ok(ContentReceipt {
+            id: content_id(receipt.digest),
+            size_bytes: receipt.size_bytes,
+            deduplicated: receipt.deduplicated,
+        })
+    }
+
+    fn get_blob(&self, id: &ContentId) -> Result<Bytes, StorageError> {
+        let digest = content_digest(id)?;
+        let mut reader = self
+            .open_blob(digest)
+            .map_err(|error| map_storage_error(&error))?;
+        let capacity = usize::try_from(reader.size_bytes()).map_err(|_| {
+            StorageError::categorized(
+                StorageErrorKind::ContentTooLarge,
+                "blob size exceeds the addressable memory range",
+            )
+        })?;
+        let mut payload = Vec::with_capacity(capacity);
+        reader
+            .read_to_end(&mut payload)
+            .map_err(|error| StorageError::new(ErrorKind::Unavailable, error.to_string()))?;
+        Ok(Bytes::from(payload))
+    }
+
+    fn put_summary(
+        &self,
+        entries: Vec<ContentSummaryEntry>,
+    ) -> Result<ContentSummaryReceipt, StorageError> {
+        let entries = entries
+            .into_iter()
+            .map(|entry| {
+                Ok(SummaryEntry {
+                    path: String::from_utf8(entry.path.to_vec()).map_err(|error| {
+                        StorageError::categorized(
+                            StorageErrorKind::InvalidManifest,
+                            error.to_string(),
+                        )
+                    })?,
+                    blob: content_digest(&entry.content)?,
+                })
+            })
+            .collect::<Result<Vec<_>, StorageError>>()?;
+        let receipt = self
+            .publish_summary(&SummaryManifest { entries })
+            .map_err(|error| map_storage_error(&error))?;
+        Ok(ContentSummaryReceipt {
+            id: content_id(receipt.digest),
+            entry_count: receipt.entry_count,
+            persisted_bytes: receipt.persisted_bytes,
+            deduplicated: receipt.deduplicated,
+        })
+    }
+
+    fn get_summary(&self, id: &ContentId) -> Result<Vec<ContentSummaryEntry>, StorageError> {
+        let manifest = self
+            .load_summary(content_digest(id)?)
+            .map_err(|error| map_storage_error(&error))?;
+        Ok(manifest
+            .entries
+            .into_iter()
+            .map(|entry| ContentSummaryEntry {
+                path: Bytes::from(entry.path),
+                content: content_id(entry.blob),
+            })
+            .collect())
+    }
+}
+
+/// Converts an implementation digest to its storage-boundary representation.
+fn content_id(digest: ContentDigest) -> ContentId {
+    ContentId::from_bytes(Bytes::copy_from_slice(digest.as_bytes()))
+}
+
+/// Validates and converts a storage-boundary content identity.
+fn content_digest(id: &ContentId) -> Result<ContentDigest, StorageError> {
+    ContentDigest::from_bytes(id.as_bytes()).map_err(|error| {
+        StorageError::categorized(StorageErrorKind::InvalidContentId, error.to_string())
+    })
+}
+
+/// Preserves content-specific failures while erasing implementation details.
+fn map_storage_error(error: &StoreError) -> StorageError {
+    let message = error.to_string();
+    match error {
+        StoreError::InvalidDigest => {
+            StorageError::categorized(StorageErrorKind::InvalidContentId, message)
+        }
+        StoreError::InvalidManifest(_) => {
+            StorageError::categorized(StorageErrorKind::InvalidManifest, message)
+        }
+        StoreError::BlobTooLarge { .. } | StoreError::ManifestTooLarge { .. } => {
+            StorageError::categorized(StorageErrorKind::ContentTooLarge, message)
+        }
+        StoreError::MissingBlob(_) => {
+            StorageError::categorized(StorageErrorKind::BlobNotFound, message)
+        }
+        StoreError::MissingSummary(_) => {
+            StorageError::categorized(StorageErrorKind::SummaryNotFound, message)
+        }
+        StoreError::CorruptBlob { .. } | StoreError::CorruptSummary { .. } => {
+            StorageError::new(ErrorKind::Corrupt, message)
+        }
+        StoreError::Ambiguous(_) => StorageError::new(ErrorKind::Ambiguous, message),
+        StoreError::Io(_)
+        | StoreError::InvalidConfig(_)
+        | StoreError::Injected(_)
+        | StoreError::Poisoned => StorageError::new(ErrorKind::Unavailable, message),
     }
 }
 
@@ -329,6 +452,167 @@ pub struct BlobReader {
     file: File,
     /// Verified byte length of the object.
     size_bytes: u64,
+}
+
+/// Process-local content storage using the same identities and manifest encoding as [`ContentStore`].
+#[derive(Debug)]
+pub struct MemoryContentStore {
+    /// Limits applied consistently with the durable implementation.
+    config: StoreConfig,
+    /// Immutable blobs indexed by digest.
+    blobs: RwLock<BTreeMap<ContentDigest, Bytes>>,
+    /// Canonical summary manifests indexed by digest.
+    summaries: RwLock<BTreeMap<ContentDigest, SummaryManifest>>,
+}
+
+impl MemoryContentStore {
+    /// Creates an empty process-local store with the supplied limits.
+    #[must_use]
+    pub fn new(config: StoreConfig) -> Self {
+        Self {
+            config,
+            blobs: RwLock::new(BTreeMap::new()),
+            summaries: RwLock::new(BTreeMap::new()),
+        }
+    }
+}
+
+impl Default for MemoryContentStore {
+    fn default() -> Self {
+        Self::new(StoreConfig::default())
+    }
+}
+
+impl ContentStorage for MemoryContentStore {
+    fn put_blob(&self, payload: Bytes) -> Result<ContentReceipt, StorageError> {
+        let size_bytes = u64::try_from(payload.len()).map_err(|_| {
+            StorageError::categorized(StorageErrorKind::ContentTooLarge, "blob size exceeds range")
+        })?;
+        if size_bytes > self.config.max_blob_bytes {
+            return Err(StorageError::categorized(
+                StorageErrorKind::ContentTooLarge,
+                format!(
+                    "blob exceeds configured limit of {} bytes",
+                    self.config.max_blob_bytes
+                ),
+            ));
+        }
+        let digest = ContentDigest::of(&payload);
+        let deduplicated = self
+            .blobs
+            .write()
+            .map_err(|_| storage_unavailable("blob store lock was poisoned"))?
+            .insert(digest, payload)
+            .is_some();
+        Ok(ContentReceipt {
+            id: content_id(digest),
+            size_bytes,
+            deduplicated,
+        })
+    }
+
+    fn get_blob(&self, id: &ContentId) -> Result<Bytes, StorageError> {
+        let digest = content_digest(id)?;
+        self.blobs
+            .read()
+            .map_err(|_| storage_unavailable("blob store lock was poisoned"))?
+            .get(&digest)
+            .cloned()
+            .ok_or_else(|| {
+                StorageError::categorized(
+                    StorageErrorKind::BlobNotFound,
+                    format!("blob {digest} is missing"),
+                )
+            })
+    }
+
+    fn put_summary(
+        &self,
+        entries: Vec<ContentSummaryEntry>,
+    ) -> Result<ContentSummaryReceipt, StorageError> {
+        let manifest = SummaryManifest {
+            entries: entries
+                .into_iter()
+                .map(|entry| {
+                    Ok(SummaryEntry {
+                        path: String::from_utf8(entry.path.to_vec()).map_err(|error| {
+                            StorageError::categorized(
+                                StorageErrorKind::InvalidManifest,
+                                error.to_string(),
+                            )
+                        })?,
+                        blob: content_digest(&entry.content)?,
+                    })
+                })
+                .collect::<Result<Vec<_>, StorageError>>()?,
+        };
+        let encoded = encode_manifest(&manifest, self.config.max_manifest_bytes)
+            .map_err(|error| map_storage_error(&error))?;
+        let blobs = self
+            .blobs
+            .read()
+            .map_err(|_| storage_unavailable("blob store lock was poisoned"))?;
+        if let Some(entry) = manifest
+            .entries
+            .iter()
+            .find(|entry| !blobs.contains_key(&entry.blob))
+        {
+            return Err(StorageError::categorized(
+                StorageErrorKind::BlobNotFound,
+                format!("blob {} is missing", entry.blob),
+            ));
+        }
+        drop(blobs);
+        let digest = ContentDigest::of(&encoded);
+        let entry_count = manifest.entries.len();
+        let persisted_bytes = u64::try_from(encoded.len()).map_err(|_| {
+            StorageError::categorized(
+                StorageErrorKind::ContentTooLarge,
+                "manifest size exceeds range",
+            )
+        })?;
+        let deduplicated = self
+            .summaries
+            .write()
+            .map_err(|_| storage_unavailable("summary store lock was poisoned"))?
+            .insert(digest, manifest)
+            .is_some();
+        Ok(ContentSummaryReceipt {
+            id: content_id(digest),
+            entry_count,
+            persisted_bytes,
+            deduplicated,
+        })
+    }
+
+    fn get_summary(&self, id: &ContentId) -> Result<Vec<ContentSummaryEntry>, StorageError> {
+        let digest = content_digest(id)?;
+        let manifest = self
+            .summaries
+            .read()
+            .map_err(|_| storage_unavailable("summary store lock was poisoned"))?
+            .get(&digest)
+            .cloned()
+            .ok_or_else(|| {
+                StorageError::categorized(
+                    StorageErrorKind::SummaryNotFound,
+                    format!("summary {digest} is missing"),
+                )
+            })?;
+        Ok(manifest
+            .entries
+            .into_iter()
+            .map(|entry| ContentSummaryEntry {
+                path: Bytes::from(entry.path),
+                content: content_id(entry.blob),
+            })
+            .collect())
+    }
+}
+
+/// Creates an unavailable storage error for failed in-process synchronization.
+fn storage_unavailable(message: &'static str) -> StorageError {
+    StorageError::new(ErrorKind::Unavailable, message)
 }
 
 impl BlobReader {

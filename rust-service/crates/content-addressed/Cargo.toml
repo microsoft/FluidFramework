@@ -6,7 +6,9 @@ license = "MIT"
 rust-version = "1.98.1"
 
 [dependencies]
+bytes.workspace = true
 sha2 = "0.10.9"
+snapshotted-stream-core = { path = "../core" }
 
 [lints.rust]
 unsafe_code = "forbid"
