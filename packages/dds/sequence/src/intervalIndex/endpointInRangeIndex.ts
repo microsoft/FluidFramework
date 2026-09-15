@@ -3,17 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { PropertyAction } from "@fluidframework/merge-tree/internal";
-import { RedBlackTree } from "@fluidframework/merge-tree/internal";
-
 import type { SequenceInterval } from "../intervals/index.js";
 import { createTransientIntervalFromSequence } from "../intervals/index.js";
 import type { ISharedSegmentSequence } from "../sequence.js";
 import type { ISharedString } from "../sharedString.js";
 
 import type { SequenceIntervalIndex } from "./intervalIndex.js";
-import type { HasComparisonOverride } from "./intervalIndexUtils.js";
-import { compareOverrideables, forceCompare } from "./intervalIndexUtils.js";
+import { SequenceIntervalEndSet } from "./sequenceIntervalEndpointSet.js";
 
 /**
  * Collection of intervals.
@@ -29,66 +25,27 @@ export interface IEndpointInRangeIndex extends SequenceIntervalIndex {
 }
 
 export class EndpointInRangeIndex implements IEndpointInRangeIndex {
-	private readonly intervalTree;
+	private readonly intervals = new SequenceIntervalEndSet();
 
-	constructor(private readonly sequence: ISharedSegmentSequence<any>) {
-		this.intervalTree = new RedBlackTree<SequenceInterval, SequenceInterval>(
-			(a: SequenceInterval, b: SequenceInterval) => {
-				const compareEndsResult = a.compareEnd(b);
-				if (compareEndsResult !== 0) {
-					return compareEndsResult;
-				}
-
-				const overrideablesComparison = compareOverrideables(
-					a as Partial<HasComparisonOverride>,
-					b as Partial<HasComparisonOverride>,
-				);
-				if (overrideablesComparison !== 0) {
-					return overrideablesComparison;
-				}
-
-				const aId = a.getIntervalId();
-				const bId = b.getIntervalId();
-				if (aId !== undefined && bId !== undefined) {
-					return aId.localeCompare(bId);
-				}
-				return 0;
-			},
-		);
-	}
+	constructor(private readonly sequence: ISharedSegmentSequence<any>) {}
 
 	public add(interval: SequenceInterval): void {
-		this.intervalTree.put(interval, interval);
+		this.intervals.addOrUpdate(interval);
 	}
 
 	public remove(interval: SequenceInterval): void {
-		this.intervalTree.remove(interval);
+		this.intervals.remove(interval);
 	}
 
 	public findIntervalsWithEndpointInRange(start: number, end: number): SequenceInterval[] {
-		if (start <= 0 || start > end || this.intervalTree.isEmpty()) {
+		if (start <= 0 || start > end || this.intervals.size === 0) {
 			return [];
 		}
-		const results: SequenceInterval[] = [];
-		const action: PropertyAction<SequenceInterval, SequenceInterval> = (node) => {
-			results.push(node.data);
-			return true;
-		};
 
-		const transientStartInterval = createTransientIntervalFromSequence(
-			start,
-			start,
-			this.sequence,
+		return this.intervals.range(
+			createTransientIntervalFromSequence(start, start, this.sequence),
+			createTransientIntervalFromSequence(end, end, this.sequence),
 		);
-
-		const transientEndInterval = createTransientIntervalFromSequence(end, end, this.sequence);
-
-		// Add comparison overrides to the transient intervals
-		(transientStartInterval as Partial<HasComparisonOverride>)[forceCompare] = -1;
-		(transientEndInterval as Partial<HasComparisonOverride>)[forceCompare] = 1;
-
-		this.intervalTree.mapRange(action, results, transientStartInterval, transientEndInterval);
-		return results;
 	}
 }
 
