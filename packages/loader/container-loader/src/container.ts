@@ -173,6 +173,10 @@ const detachedContainerRefSeqNumber = 0;
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
+interface IPendingOpStateEvents extends IEvent {
+	(event: "saved", listener: () => void): void;
+}
+
 const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 /**
@@ -572,6 +576,9 @@ export class Container
 	private readonly connectionTransitionTimes: number[] = [];
 	private _loadedFromVersion: IVersion | undefined;
 	private _dirtyContainer = false;
+	private _hasPendingOps = false;
+	private hasSeparatePendingOpState = false;
+	private readonly pendingOpStateEvents = new TypedEventEmitter<IPendingOpStateEvents>();
 	private attachmentData: AttachmentData = { state: AttachState.Detached };
 	private readonly serializedStateManager: SerializedStateManager;
 	private readonly _containerId: string;
@@ -901,7 +908,7 @@ export class Container
 						);
 					}
 				},
-				shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
+				hasPendingOps: () => this._deltaManager.connectionManager.hasPendingOps(),
 				maxClientLeaveWaitTime: options.maxClientLeaveWaitTime,
 				logConnectionIssue: (
 					eventName: string,
@@ -959,10 +966,6 @@ export class Container
 			pendingLocalState?.clientId,
 		);
 
-		this.on(savedContainerEvent, () => {
-			this.connectionStateHandler.containerSaved();
-		});
-
 		// We expose our storage publicly, so it's possible others may call uploadSummaryWithContext() with a
 		// non-combined summary tree (in particular, ContainerRuntime.submitSummary).  We'll intercept those calls
 		// using this callback and fix them up.
@@ -999,8 +1002,8 @@ export class Container
 			this.subLogger,
 			this.storageAdapter,
 			offlineLoadEnabled,
-			this,
-			() => this._deltaManager.connectionManager.shouldJoinWrite(),
+			this.pendingOpStateEvents,
+			() => this._deltaManager.connectionManager.hasPendingOps(),
 			() => this.supportGetSnapshotApi(),
 			this.mc.config.getNumber("Fluid.Container.snapshotRefreshTimeoutMs"),
 		);
@@ -2045,6 +2048,7 @@ export class Container
 			logger: this.subLogger,
 			active: () => this.activeConnection(),
 			containerDirty: () => this.isDirty,
+			containerOpDirty: () => this._hasPendingOps,
 			client: this.client,
 			reconnectAllowed: this._canReconnect,
 			maxInitialConnectionAttempts: disableLoadConnectionRetries ? 1 : undefined,
@@ -2472,6 +2476,7 @@ export class Container
 				disposeFn: (error?: ICriticalContainerError) => this.dispose(error),
 				closeFn: (error?: ICriticalContainerError) => this.close(error),
 				updateDirtyContainerState: this.updateDirtyContainerState,
+				updatePendingOpState: this.updatePendingOpState,
 				getAbsoluteUrl: this.getAbsoluteUrl,
 				getContainerDiagnosticId: () => this.resolvedUrl?.id,
 				getClientId: () => this.clientId,
@@ -2505,11 +2510,52 @@ export class Container
 	}
 
 	private readonly updateDirtyContainerState = (dirty: boolean): void => {
-		if (this._dirtyContainer === dirty) {
+		if (this.hasSeparatePendingOpState) {
+			if (this._dirtyContainer !== dirty) {
+				this._dirtyContainer = dirty;
+				this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
+			}
 			return;
 		}
-		this._dirtyContainer = dirty;
-		this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
+
+		// Older runtimes only report the original op-only dirty state. Going dirty cannot release any
+		// callbacks, so commit both states before notifying the host.
+		if (dirty) {
+			const dirtyChanged = !this._dirtyContainer;
+			this._dirtyContainer = true;
+			this.setPendingOpState(true);
+			if (dirtyChanged) {
+				this.emit(dirtyContainerEvent);
+			}
+			return;
+		}
+
+		// Going clean can release reconnect waiters and synchronously raise "connected", whose listeners may
+		// submit another op. Keep the public dirty state unchanged until that callback returns; a reentrant
+		// dirty update restores _hasPendingOps and prevents a stale "saved" event.
+		this.setPendingOpState(false);
+		if (!this._hasPendingOps && this._dirtyContainer) {
+			this._dirtyContainer = false;
+			this.emit(savedContainerEvent);
+		}
+	};
+
+	private readonly updatePendingOpState = (pending: boolean): void => {
+		this.hasSeparatePendingOpState = true;
+		this.setPendingOpState(pending);
+	};
+
+	private readonly setPendingOpState = (pending: boolean): void => {
+		if (this._hasPendingOps === pending) {
+			return;
+		}
+		this._hasPendingOps = pending;
+		if (!pending) {
+			this.connectionStateHandler.pendingOpsSaved();
+			if (!this._hasPendingOps) {
+				this.pendingOpStateEvents.emit("saved");
+			}
+		}
 	};
 
 	/**
