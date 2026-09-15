@@ -33,7 +33,11 @@ function streamFromBatches(batches: number[][]): IStream<ISequencedDocumentMessa
 	return {
 		read: async (): Promise<IStreamResult<ISequencedDocumentMessage[]>> => {
 			if (index < batches.length) {
-				return { done: false, value: batches[index++]!.map(msg) };
+				const batch = batches[index++];
+				if (batch === undefined) {
+					throw new Error("Expected a batch at the current stream index");
+				}
+				return { done: false, value: batch.map(msg) };
 			}
 			return { done: true };
 		},

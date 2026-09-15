@@ -134,6 +134,14 @@ describe("Tests for prefetching snapshot", () => {
 		},
 	};
 
+	function getRequiredSnapshotTree(name: ".app" | ".protocol"): ISnapshotTree {
+		const tree = snapshotTreeWithGroupId.trees[name];
+		if (tree === undefined) {
+			throw new Error(`Expected ${name} snapshot tree`);
+		}
+		return tree;
+	}
+
 	const blobContents = new Map<string, ArrayBuffer>([
 		[
 			"bARD4RKvW4LL1KmaUKp6hUMSp",
@@ -639,11 +647,13 @@ describe("Tests for prefetching snapshot", () => {
 			version: persistedCacheValueVersion,
 		};
 		const odspCompactSnapshotWithGroupId = convertToCompactSnapshot(snapshotWithGroupId);
+		const appTree = getRequiredSnapshotTree(".app");
+		const protocolTree = getRequiredSnapshotTree(".protocol");
 		const snapshotTreeWithGroupIdToCompare: ISnapshotTree = {
-			blobs: { ...snapshotTreeWithGroupId.trees[".app"]!.blobs },
+			blobs: { ...appTree.blobs },
 			trees: {
-				...snapshotTreeWithGroupId.trees[".app"]!.trees,
-				".protocol": snapshotTreeWithGroupId.trees[".protocol"]!,
+				...appTree.trees,
+				".protocol": protocolTree,
 			},
 			id: "SnapshotId",
 		};
@@ -891,11 +901,13 @@ describe("Tests for prefetching snapshot", () => {
 			snapshotFormatV: 1,
 		};
 		const odspCompactSnapshotWithGroupId = convertToCompactSnapshot(snapshotWithGroupId);
+		const appTree = getRequiredSnapshotTree(".app");
+		const protocolTree = getRequiredSnapshotTree(".protocol");
 		const snapshotTreeWithGroupIdToCompare: ISnapshotTree = {
-			blobs: { ...snapshotTreeWithGroupId.trees[".app"]!.blobs },
+			blobs: { ...appTree.blobs },
 			trees: {
-				...snapshotTreeWithGroupId.trees[".app"]!.trees,
-				".protocol": snapshotTreeWithGroupId.trees[".protocol"]!,
+				...appTree.trees,
+				".protocol": protocolTree,
 			},
 			id: "SnapshotId",
 		};
