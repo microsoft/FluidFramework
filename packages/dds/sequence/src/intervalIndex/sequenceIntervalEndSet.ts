@@ -28,47 +28,12 @@ export class SequenceIntervalEndSet extends SortedSet<SequenceInterval> {
 			return endResult;
 		}
 
+		// Ordinal rather than locale comparison: this must never report distinct ids as equal,
+		// which is a guarantee `localeCompare` does not make. Ids are unique, so comparing equal
+		// here means the same interval, which is exactly what `SortedSet` assumes by default.
 		const aId = a.getIntervalId();
 		const bId = b.getIntervalId();
-		if (aId === undefined || bId === undefined) {
-			// Without ids there is nothing left to order by; `onFindEquivalent` disambiguates.
-			return 0;
-		}
-		// Ordinal rather than locale comparison: this must never report distinct ids as equal,
-		// which is a guarantee `localeCompare` does not make.
 		return aId === bId ? 0 : aId < bId ? -1 : 1;
-	}
-
-	/**
-	 * Reached only when `compare` cannot separate two intervals, which for intervals with ids
-	 * means they are the same interval. Intervals without ids fall back to scanning the run of
-	 * equal entries for this exact instance, so that they remain individually addressable rather
-	 * than collapsing onto one entry.
-	 */
-	protected onFindEquivalent(
-		item: SequenceInterval,
-		index: number,
-	): { exists: boolean; index: number } {
-		if (item.getIntervalId() !== undefined) {
-			return { exists: true, index };
-		}
-
-		let runStart = index;
-		while (runStart > 0 && this.compare(item, this.sortedItems[runStart - 1]) === 0) {
-			runStart--;
-		}
-
-		for (
-			let i = runStart;
-			i < this.sortedItems.length && this.compare(item, this.sortedItems[i]) === 0;
-			i++
-		) {
-			if (this.sortedItems[i] === item) {
-				return { exists: true, index: i };
-			}
-		}
-
-		return { exists: false, index };
 	}
 
 	// #region Binary search
