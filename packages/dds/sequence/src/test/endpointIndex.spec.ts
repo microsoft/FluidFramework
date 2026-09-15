@@ -29,14 +29,20 @@ describe("EndpointIndex", () => {
 		expected: SequenceInterval | undefined,
 		message: string,
 	): void {
-		const describeInterval = (interval: SequenceInterval | undefined): string | undefined =>
+		const describeInterval = (interval: SequenceInterval | undefined): string =>
 			interval === undefined
-				? undefined
+				? "undefined"
 				: `[${sharedString.localReferencePositionToPosition(
 						interval.start,
 					)}, ${sharedString.localReferencePositionToPosition(interval.end)}] (id ${interval.getIntervalId()})`;
 
-		assert.equal(describeInterval(actual), describeInterval(expected), message);
+		// Compares instances, not endpoints: two intervals can share both endpoints and still be
+		// distinct entries in this set.
+		assert.strictEqual(
+			actual,
+			expected,
+			`${message} (actual ${describeInterval(actual)}, expected ${describeInterval(expected)})`,
+		);
 	}
 
 	beforeEach(() => {
