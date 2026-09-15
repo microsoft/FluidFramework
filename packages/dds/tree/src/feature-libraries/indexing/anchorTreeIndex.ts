@@ -30,6 +30,19 @@ import { TreeStatus } from "../flex-tree/index.js";
 import type { TreeIndex, TreeIndexNodes } from "./types.js";
 
 /**
+ * Describes which mutable data a {@link KeyFinder} may depend on, determining how broadly an
+ * {@link AnchorTreeIndex} must invalidate entries after edits.
+ */
+export enum KeyFinderDependencyScope {
+	/** The key depends only on data that cannot change during the indexed node's lifetime. */
+	Immutable,
+	/** The key may depend on fields directly under the indexed node. */
+	Node,
+	/** The key may depend on any data in the indexed node's subtree. */
+	Subtree,
+}
+
+/**
  * A function that gets the value to index a node on, must be pure and functional.
  * The given cursor should point to the node that will be indexed.
  *
@@ -39,6 +52,10 @@ import type { TreeIndex, TreeIndexNodes } from "./types.js";
  * This function does not own the cursor in any way, it walks the cursor to find the key the node is indexed on
  * but returns the cursor to the state it was in before being passed to the function. It should also not be disposed by this function
  * and must be disposed elsewhere.
+ *
+ * What this function may inspect is constrained by the {@link KeyFinderDependencyScope} configured on the
+ * {@link AnchorTreeIndex} that uses it. Reading data outside that scope can leave stale entries because the
+ * corresponding edits do not invalidate the indexed node.
  */
 export type KeyFinder<TKey> = (tree: ITreeSubscriptionCursor) => TKey;
 
@@ -85,8 +102,8 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 	 * @param getValue - a pure and functional function that returns the associated value of one or more anchor nodes, can be used to map and filter the indexed anchor nodes
 	 * so that the values returned from the index are more usable
 	 * @param checkTreeStatus - a function that gets the tree status from an anchor node, used for filtering out detached nodes
-	 * @param isShallowIndex - indicates if this index is shallow, meaning that it only allows nodes to be keyed off of fields directly under them rather than anywhere in their subtree.
-	 * As a performance optimization, re-indexing up the spine can be turned off for shallow indexes.
+	 * @param keyFinderDependencyScope - The mutable data each key finder may depend on. This determines whether edits
+	 * re-index no existing nodes, the node containing the edited field, or that node and its ancestors.
 	 */
 	public constructor(
 		private readonly forest: IForestSubscription,
@@ -95,23 +112,21 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 		) => KeyFinder<TKey> | undefined,
 		private readonly getValue: (anchorNodes: TreeIndexNodes<AnchorNode>) => TValue | undefined,
 		private readonly checkTreeStatus: (node: AnchorNode) => TreeStatus | undefined,
-		private readonly isShallowIndex = false,
+		private readonly keyFinderDependencyScope = KeyFinderDependencyScope.Subtree,
 	) {
 		this.forest.registerAnnouncedVisitor(this.keyFinder);
 
-		const detachedFieldKeys: FieldKey[] = [];
-		const detachedFieldsCursor = forest.getCursorAboveDetachedFields();
-		forEachField(detachedFieldsCursor, (field) => {
-			detachedFieldKeys.push(field.getFieldKey());
-		});
-
 		// index all existing trees (this includes the primary document tree and all other detached/removed trees)
-		for (const fieldKey of detachedFieldKeys) {
-			const cursor = forest.allocateCursor();
-			forest.tryMoveCursorToField({ fieldKey, parent: undefined }, cursor);
+		const detachedFieldsCursor = forest.getCursorAboveDetachedFields();
+		const cursor = forest.allocateCursor();
+		forEachField(detachedFieldsCursor, (field) => {
+			forest.tryMoveCursorToField(
+				{ fieldKey: field.getFieldKey(), parent: undefined },
+				cursor,
+			);
 			this.indexField(cursor);
-			cursor.free();
-		}
+		});
+		cursor.free();
 	}
 
 	/**
@@ -309,6 +324,9 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 	 * Checks if the spine needs to be re-indexed and if so, re-indexes it starting from the given path.
 	 */
 	private reIndexSpine(path: UpPath): void {
+		if (this.keyFinderDependencyScope === KeyFinderDependencyScope.Immutable) {
+			return;
+		}
 		const cursor = this.forest.allocateCursor();
 		this.forest.moveCursorToPath(path, cursor);
 		assert(
@@ -318,7 +336,7 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 		cursor.exitNode();
 		// TODO ADO:36390 avoid re-indexing the whole field when not necessary
 		this.indexField(cursor);
-		if (!this.isShallowIndex) {
+		if (this.keyFinderDependencyScope === KeyFinderDependencyScope.Subtree) {
 			this.indexSpine(cursor);
 		}
 		cursor.clear();
