@@ -94,6 +94,34 @@ test("uses the Azure Fluid Relay tenant ID when selfHostTenantId is missing", as
 	}
 });
 
+test("requires inventory before copying data", async () => {
+	const directory = await mkdtemp(path.join(os.tmpdir(), "copy-data-config-"));
+	try {
+		await writeJson(directory, "config.json", {
+			inventoryPath: "missing-inventory.json",
+			selfHostNamespace: "default",
+			resultsDirectory: "results",
+			selfHost: {
+				alfredEndpoint: "https://self-host.example",
+				historianEndpoint: "https://self-host.example",
+				subscriptionId: "subscription",
+				resourceGroup: "resource-group",
+				aksName: "aks",
+				contact: "owner@example.com",
+			},
+		});
+
+		await assert.rejects(loadConfiguration(path.join(directory, "config.json")), (error) => {
+			assert.ok(error instanceof ConfigurationError);
+			return error.message.includes(
+				"Inventory file does not exist. Run node inventory.mjs before node copy-data.mjs --execute",
+			);
+		});
+	} finally {
+		await rm(directory, { recursive: true, force: true });
+	}
+});
+
 test("rejects an Azure Fluid Relay tenant missing from the inventory", async () => {
 	const directory = await mkdtemp(path.join(os.tmpdir(), "copy-data-config-"));
 	try {
