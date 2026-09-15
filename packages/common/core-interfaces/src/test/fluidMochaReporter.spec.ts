@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+// This test mirrors the relevant output assertions in
+// mocha-test-setup/src/test/xunitReporter.spec.ts for the duplicated reporter implementation in this
+// package. Keep the two test suites aligned when changing the reporters.
+
 import { strict as assert } from "node:assert";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
