@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import path from "node:path";

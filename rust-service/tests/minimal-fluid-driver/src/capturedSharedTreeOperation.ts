@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /** Mutable fields in one captured optimized-forest SharedTree replacement operation. */
 export interface CapturedSharedTreeOperation {
 	/** Revision identifier rewritten for each benchmark edit. */

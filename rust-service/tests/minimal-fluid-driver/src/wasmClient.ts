@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /** A service operation projected into the Fluid driver's sequenced-message model. */
 export interface ProjectedOperation {
 	/** Opaque service position that can resume projected reads and subscriptions. */

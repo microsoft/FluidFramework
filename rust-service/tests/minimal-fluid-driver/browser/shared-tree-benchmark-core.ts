@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /** Backend-specific pair of Fluid clients driven by the common workload loop. */
 export interface SharedTreeBenchmarkPair {
 	/** DDS implementation used by both clients. */

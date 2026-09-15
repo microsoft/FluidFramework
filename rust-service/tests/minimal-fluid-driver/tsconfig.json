@@ -4,6 +4,8 @@
 		"baseUrl": ".",
 		"declaration": true,
 		"ignoreDeprecations": "6.0",
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
 		"outDir": "lib",
 		"rootDir": "src",
 		"skipLibCheck": true,

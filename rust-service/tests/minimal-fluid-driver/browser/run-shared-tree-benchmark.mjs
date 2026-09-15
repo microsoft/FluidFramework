@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { cpus, platform, release } from "node:os";

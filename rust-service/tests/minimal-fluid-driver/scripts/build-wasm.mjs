@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import path from "node:path";

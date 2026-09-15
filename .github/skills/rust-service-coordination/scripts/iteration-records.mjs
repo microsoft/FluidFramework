@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 import { access, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
@@ -105,7 +109,10 @@ async function init(iteration, workstreamArguments) {
 
 	await mkdir(resolve(iterationRoot, "phase-2/instructions"), { recursive: true });
 	await mkdir(resolve(iterationRoot, "next-phase-2-instructions"), { recursive: true });
-	await writeNew(resolve(iterationRoot, "manifest.json"), `${JSON.stringify(manifest, undefined, 2)}\n`);
+	await writeNew(
+		resolve(iterationRoot, "manifest.json"),
+		`${JSON.stringify(manifest, undefined, 2)}\n`,
+	);
 	await writeNew(
 		resolve(iterationRoot, "charter.md"),
 		await renderTemplate(templates.charter, replacements),
@@ -311,7 +318,13 @@ async function validate(iteration, phase) {
 
 	await validateMarkdown(
 		resolve(iterationRoot, "charter.md"),
-		["Questions and Hypotheses", "Active Workstreams", "Deferred Scope", "Shared Validation", "Risks and Escalation"],
+		[
+			"Questions and Hypotheses",
+			"Active Workstreams",
+			"Deferred Scope",
+			"Shared Validation",
+			"Risks and Escalation",
+		],
 		errors,
 	);
 	for (const entry of manifest.activeWorkstreams) {
@@ -321,13 +334,32 @@ async function validate(iteration, phase) {
 		}
 		await validateMarkdown(
 			resolve(iterationRoot, entry.instructions),
-			["Assignment", "Ownership", "Expected Evidence", "Validation", "Escalation and Stopping Conditions", "Reporting Requirements"],
+			[
+				"Assignment",
+				"Ownership",
+				"Expected Evidence",
+				"Validation",
+				"Escalation and Stopping Conditions",
+				"Reporting Requirements",
+			],
 			errors,
 		);
 		if (phase !== "start") {
 			await validateMarkdown(
 				resolve(iterationRoot, entry.report),
-				["Outcome", "Hypothesis Results", "Deliverables and Commits", "Validation Evidence", "Notable Events", "Contract and Integration Friction", "Human Interventions", "Measurements", "Proposed Decisions", "Candidate Skills and Process Changes", "Remaining Work and Risks"],
+				[
+					"Outcome",
+					"Hypothesis Results",
+					"Deliverables and Commits",
+					"Validation Evidence",
+					"Notable Events",
+					"Contract and Integration Friction",
+					"Human Interventions",
+					"Measurements",
+					"Proposed Decisions",
+					"Candidate Skills and Process Changes",
+					"Remaining Work and Risks",
+				],
 				errors,
 			);
 		}
@@ -336,7 +368,14 @@ async function validate(iteration, phase) {
 	if (phase !== "start") {
 		await validateMarkdown(
 			resolve(iterationRoot, "phase-2/integration.md"),
-			["Accepted Work", "Rejected or Deferred Work", "Conflict Resolution and Adaptation", "Validation Evidence", "Cross-Workstream Findings", "Artifact Check"],
+			[
+				"Accepted Work",
+				"Rejected or Deferred Work",
+				"Conflict Resolution and Adaptation",
+				"Validation Evidence",
+				"Cross-Workstream Findings",
+				"Artifact Check",
+			],
 			errors,
 		);
 	}
@@ -357,17 +396,41 @@ async function validate(iteration, phase) {
 	if (phase === "complete") {
 		await validateMarkdown(
 			resolve(iterationRoot, "phase-3-report.md"),
-			["Evidence Summary", "Implementation Defects", "Shared Abstraction Findings", "Decisions", "Comparative Results", "Learning and Process Findings", "Skill Changes", "Next Iteration Scope", "Convergence Assessment"],
+			[
+				"Evidence Summary",
+				"Implementation Defects",
+				"Shared Abstraction Findings",
+				"Decisions",
+				"Comparative Results",
+				"Learning and Process Findings",
+				"Skill Changes",
+				"Next Iteration Scope",
+				"Convergence Assessment",
+			],
 			errors,
 		);
 		await validateMarkdown(
 			resolve(iterationRoot, "retrospective.md"),
-			["What We Expected", "What We Observed", "Costly Issues and Dead Ends", "Agentic Development Findings", "Practices to Keep, Change, or Stop", "Durable Lessons", "Open Questions"],
+			[
+				"What We Expected",
+				"What We Observed",
+				"Costly Issues and Dead Ends",
+				"Agentic Development Findings",
+				"Practices to Keep, Change, or Stop",
+				"Durable Lessons",
+				"Open Questions",
+			],
 			errors,
 		);
 		await validateMarkdown(
 			resolve(iterationRoot, "skill-review.md"),
-			["Evidence Reviewed", "Candidate Skills or Changes", "Decisions", "Applied Changes", "Next Review Triggers"],
+			[
+				"Evidence Reviewed",
+				"Candidate Skills or Changes",
+				"Decisions",
+				"Applied Changes",
+				"Next Review Triggers",
+			],
 			errors,
 		);
 
@@ -383,7 +446,13 @@ async function validate(iteration, phase) {
 				}
 				await validateMarkdown(
 					resolve(iterationRoot, `next-phase-2-instructions/${name}.md`),
-					["Approved Scope", "Prior Evidence", "Hypothesis and Discriminating Check", "Ownership and Dependencies", "Deliverables and Validation"],
+					[
+						"Approved Scope",
+						"Prior Evidence",
+						"Hypothesis and Discriminating Check",
+						"Ownership and Dependencies",
+						"Deliverables and Validation",
+					],
 					errors,
 				);
 			}
@@ -402,7 +471,14 @@ async function validate(iteration, phase) {
 		for (const decisionFile of decisionFiles) {
 			await validateMarkdown(
 				resolve(projectRoot, "decisions", decisionFile),
-				["Context", "Decision Drivers", "Options and Evidence", "Decision", "Consequences", "Validation and Follow-Up"],
+				[
+					"Context",
+					"Decision Drivers",
+					"Options and Evidence",
+					"Decision",
+					"Consequences",
+					"Validation and Follow-Up",
+				],
 				errors,
 			);
 		}

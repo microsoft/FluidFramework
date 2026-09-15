@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import type { IEventTransformer, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";

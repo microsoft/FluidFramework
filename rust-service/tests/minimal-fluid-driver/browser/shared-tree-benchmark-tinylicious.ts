@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
 import { adaptInitialObject, parseBenchmarkDataStructure } from "./benchmark-data-object.js";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import init, { BrowserClient } from "../pkg/fluid_webtransport_browser.js";
 import {
 	MinimalWasmDeltaConnection,

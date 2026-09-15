@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /** UTF-8 encoder for string-valued FSP4 fields. */
 const encoder = new TextEncoder();
 /** UTF-8 decoder for diagnostic FSP4 field values. */

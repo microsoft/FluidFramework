@@ -29,7 +29,7 @@ Low COGS service and driver.
 - Delete old summaries: check oldest summary for byte offset into op stream: delete unneeded op files. Truncate op file if needed (for compliance to purge old data, and/or free up space).
 - Store all blobs by hash in cache folder. GC it by looping through and checking hard link count: if one, delete.
 - Can we get away with storing only the latest summary, and for old/offline only keeping ops? (no old blobs, not old summaries)
-- General blobs + ops + summaries service. Write fluid driver against that.
+- General blobs + ops + summaries service. Write Fluid driver against that.
 - Second driver/client: directly use shared tree. No datastores. No separate summary client. Oldest client is session summarizes. Include id compressor as index in shared tree in this mode?
 - Maybe optional hack to optionally download latest summary before making a new one, and reply ops, assert state is equal to local before summarizing.
 

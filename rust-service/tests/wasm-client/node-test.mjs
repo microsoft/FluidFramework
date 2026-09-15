@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import test from "node:test";

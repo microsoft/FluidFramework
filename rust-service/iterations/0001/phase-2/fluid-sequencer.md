@@ -27,7 +27,7 @@ The narrower service-contract concern was supported. `protocol_rejection_is_only
 
 ## Deliverables and Commits
 
-- `e75220a89c57f64595a0fdaa29febae80437eb1f` - `feat(rust-service): spike fluid sequencing projection`
+- `e75220a89c57f64595a0fdaa29febae80437eb1f` - `feat(rust-service): spike Fluid sequencing projection`
 - Binary `FSQ1` submission framing with strict decode validation.
 - Deterministic `Sequencer` replay state for final sequence assignment, writer-local ordering, reference validation, active-writer minimum tracking, and leave behavior.
 - Five minimized unit tests, including the authoritative-acceptance counterexample.

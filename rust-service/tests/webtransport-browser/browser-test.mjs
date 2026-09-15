@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import init, { BrowserClient, SummaryEntry } from "./pkg/fluid_webtransport_browser.js";
 
 const encoder = new TextEncoder();
@@ -283,7 +288,10 @@ async function run() {
 	await submissionStream.close();
 	for (let localSequenceNumber = 2; localSequenceNumber <= 4; localSequenceNumber++) {
 		const response = parseFrame(await submissionStream.next());
-		assert(response.requestId === BigInt(100 + localSequenceNumber), "submission response order mismatch");
+		assert(
+			response.requestId === BigInt(100 + localSequenceNumber),
+			"submission response order mismatch",
+		);
 		assert(response.kind === 65, "submission stream did not return a submitted response");
 	}
 	let sendAfterCloseRejected = false;

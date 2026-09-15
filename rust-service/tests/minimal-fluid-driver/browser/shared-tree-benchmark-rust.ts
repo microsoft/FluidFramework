@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ConnectionState } from "@fluidframework/container-loader";
 import { Loader } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
