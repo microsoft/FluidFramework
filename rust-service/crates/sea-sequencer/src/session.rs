@@ -25,6 +25,9 @@ use sea_core::{
 };
 use tokio::sync::{Mutex, broadcast, watch};
 
+/// Default number of live events retained for each lagging subscriber.
+pub const DEFAULT_EVENT_LAG_LIMIT: usize = 256;
+
 const ENVELOPE_MAGIC: &[u8; 5] = b"SEAQ1";
 const SESSION_OPEN: u8 = 0;
 const SUBMISSION: u8 = 1;
@@ -205,14 +208,29 @@ where
     ///
     /// Returns a storage or committed-envelope validation failure.
     pub async fn recover(storage: Arc<S>) -> Result<Arc<Self>, SessionError<S::Error>> {
+        Self::recover_with_event_lag(storage, DEFAULT_EVENT_LAG_LIMIT).await
+    }
+
+    /// Replays one archive with an explicit live-event lag limit.
+    ///
+    /// # Errors
+    ///
+    /// Returns a storage or committed-envelope validation failure.
+    pub async fn recover_with_event_lag(
+        storage: Arc<S>,
+        max_event_lag: usize,
+    ) -> Result<Arc<Self>, SessionError<S::Error>> {
         let state = replay(storage.as_ref()).await?;
         let latest_snapshot = storage
             .latest_snapshot()
             .await
             .map_err(SessionError::Storage)?;
-        let (events, _) = broadcast::channel(256);
+        let (events, _) = broadcast::channel(max_event_lag);
         let (snapshots, _) = watch::channel(latest_snapshot);
         let mut state = state;
+        state.authors.clear();
+        state.publishers.clear();
+        state.coordination.nominee = None;
         state.next_snapshot_fence = 1;
         state.coordination.latest.clone_from(&snapshots.borrow());
         let (coordination, _) = watch::channel(state.coordination.clone());
@@ -1168,6 +1186,59 @@ mod tests {
             )
             .await;
         assert!(matches!(stale, Err(SessionError::Rejected(_))));
+    }
+
+    #[tokio::test]
+    async fn recovery_revokes_connection_scoped_session_state() {
+        let storage = Arc::new(MemoryStream::new());
+        let sequencer = LocalSequencer::recover(Arc::clone(&storage)).await.unwrap();
+        let stale_session = session(b"pre-restart-session");
+        let active = sequencer
+            .open_session(author(b"pre-restart-author"), stale_session.clone(), None)
+            .await
+            .unwrap();
+        let mut coordination = active.coordinate_snapshots(true, true).await.unwrap();
+        assert!(coordination.next().await.unwrap().unwrap().fence.is_some());
+        drop(active);
+        drop(sequencer);
+
+        let recovered = LocalSequencer::recover(storage).await.unwrap();
+        let state = recovered.state.lock().await;
+        assert!(state.authors.is_empty());
+        assert!(state.publishers.is_empty());
+        assert_eq!(state.coordination.nominee, None);
+        drop(state);
+        assert!(matches!(
+            recovered
+                .open_session(author(b"restarted-author"), stale_session, None)
+                .await,
+            Err(SessionError::Rejected("session identity was already used"))
+        ));
+    }
+
+    #[tokio::test]
+    async fn configured_event_lag_evicts_a_slow_subscriber() {
+        let sequencer = LocalSequencer::recover_with_event_lag(Arc::new(MemoryStream::new()), 1)
+            .await
+            .unwrap();
+        let session = sequencer
+            .open_session(author(b"lag-author"), session(b"lag-session"), None)
+            .await
+            .unwrap();
+        let mut events = session.load(None).await.unwrap();
+        assert!(matches!(
+            events.next().await.unwrap().unwrap(),
+            LoadEvent::CaughtUp(_)
+        ));
+        let first = session.submit(submission(b"lag-one", None)).await.unwrap();
+        session
+            .submit(submission(b"lag-two", Some(first.position)))
+            .await
+            .unwrap();
+        assert!(matches!(
+            events.next().await,
+            Some(Err(SessionError::Lagged))
+        ));
     }
 
     #[tokio::test]

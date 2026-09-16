@@ -361,6 +361,12 @@ impl NetworkFrameDecoder {
         self.buffered.extend_from_slice(bytes);
     }
 
+    /// Returns whether bytes from an incomplete frame are buffered.
+    #[must_use]
+    pub fn has_partial_frame(&self) -> bool {
+        !self.buffered.is_empty()
+    }
+
     /// Returns the next complete frame, retaining bytes for subsequent frames.
     ///
     /// # Errors

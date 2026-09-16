@@ -15,9 +15,11 @@ use sea_file_durable::DurableLog;
 use sea_memory::MemoryStream;
 use sea_sequencer::session::{LocalSequencer, LocalSession};
 use sea_webtransport::protocol;
-use tokio::sync::Mutex;
+use tokio::{sync::Mutex, time::sleep};
 
-use crate::{SeaConnectionService, SeaResponseStream, SeaServiceHost, SessionDispatcher};
+use crate::{
+    LivenessPolicy, SeaConnectionService, SeaResponseStream, SeaServiceHost, SessionDispatcher,
+};
 
 enum Archive {
     Memory(Arc<LocalSequencer<MemoryStream>>),
@@ -129,8 +131,10 @@ impl BuiltInSeaHost {
         author: AuthorId,
         session: SessionId,
         reference: Option<EventPosition>,
+        max_event_lag: usize,
     ) -> Result<Arc<dyn SeaConnectionService>, protocol::Response> {
-        self.ensure_archive(&archive_id, intent).await?;
+        self.ensure_archive(&archive_id, intent, max_event_lag)
+            .await?;
         let state = self.inner.state.lock().await;
         state
             .archives
@@ -144,6 +148,7 @@ impl BuiltInSeaHost {
         &self,
         archive_id: &[u8],
         intent: protocol::ArchiveIntent,
+        max_event_lag: usize,
     ) -> Result<(), protocol::Response> {
         if archive_id.is_empty() || archive_id.len() > 256 {
             return Err(invalid("archive identity must contain 1 to 256 bytes"));
@@ -167,21 +172,26 @@ impl BuiltInSeaHost {
         if !state.archives.contains_key(archive_id) {
             let archive = match self.inner.mode {
                 StorageMode::Memory => Archive::Memory(
-                    LocalSequencer::recover(Arc::new(MemoryStream::new()))
-                        .await
-                        .map_err(error_response)?,
+                    LocalSequencer::recover_with_event_lag(
+                        Arc::new(MemoryStream::new()),
+                        max_event_lag,
+                    )
+                    .await
+                    .map_err(error_response)?,
                 ),
                 StorageMode::BufferedFile => Archive::Buffered(
-                    LocalSequencer::recover(Arc::new(
-                        FileStream::open(path).map_err(error_response)?,
-                    ))
+                    LocalSequencer::recover_with_event_lag(
+                        Arc::new(FileStream::open(path).map_err(error_response)?),
+                        max_event_lag,
+                    )
                     .await
                     .map_err(error_response)?,
                 ),
                 StorageMode::DurableFile => Archive::Durable(
-                    LocalSequencer::recover(Arc::new(
-                        DurableLog::open(path).map_err(error_response)?,
-                    ))
+                    LocalSequencer::recover_with_event_lag(
+                        Arc::new(DurableLog::open(path).map_err(error_response)?),
+                        max_event_lag,
+                    )
                     .await
                     .map_err(error_response)?,
                 ),
@@ -193,10 +203,11 @@ impl BuiltInSeaHost {
 }
 
 impl SeaServiceHost for BuiltInSeaHost {
-    fn connect(&self) -> Arc<dyn SeaConnectionService> {
+    fn connect(&self, liveness: LivenessPolicy) -> Arc<dyn SeaConnectionService> {
         Arc::new(HostedConnection {
             host: self.clone(),
             session: Mutex::new(None),
+            liveness,
         })
     }
 }
@@ -204,6 +215,7 @@ impl SeaServiceHost for BuiltInSeaHost {
 struct HostedConnection {
     host: BuiltInSeaHost,
     session: Mutex<Option<HostedSession>>,
+    liveness: LivenessPolicy,
 }
 
 struct HostedSession {
@@ -213,6 +225,21 @@ struct HostedSession {
 
 #[async_trait]
 impl SeaConnectionService for HostedConnection {
+    async fn connection_closed(&self, allow_reconnect_grace: bool) {
+        if let Some(session) = self.session.lock().await.clone() {
+            session.service.revoke_snapshot_publisher().await;
+            if allow_reconnect_grace {
+                sleep(self.liveness.reconnect_grace).await;
+            }
+        }
+        if let Some(session) = self.session.lock().await.take() {
+            let _ = session
+                .service
+                .author_request(protocol::Request::Close)
+                .await;
+        }
+    }
+
     async fn open_event_stream(
         &self,
         request: protocol::Request,
@@ -248,6 +275,7 @@ impl SeaConnectionService for HostedConnection {
                     author,
                     session_id,
                     resume_after.map(EventPosition::new),
+                    self.liveness.max_event_lag,
                 )
                 .await?;
             let authority = new_authority();
@@ -279,7 +307,11 @@ impl SeaConnectionService for HostedConnection {
                 None => invalid("OpenEventStream is required before OpenAuthorStream"),
             };
         }
-        let session = self.session.lock().await.clone();
+        let session = if matches!(request, protocol::Request::Close) {
+            self.session.lock().await.take()
+        } else {
+            self.session.lock().await.clone()
+        };
         match session {
             Some(session) => session.service.author_request(request).await,
             None => invalid("OpenEventStream is required before author operations"),
@@ -453,7 +485,10 @@ mod tests {
     };
 
     use super::{BuiltInSeaHost, StorageMode};
-    use crate::{SeaServiceHost, ShutdownMode, TransportConfig, WebTransportServer};
+    use crate::{
+        LivenessPolicy, SeaServiceHost, ShutdownDisposition, ShutdownMode, TransportConfig,
+        WebTransportServer,
+    };
 
     #[tokio::test]
     async fn archive_create_and_open_intent_is_explicit() {
@@ -533,7 +568,7 @@ mod tests {
         ));
         let _ = std::fs::remove_dir_all(&root);
         let host = BuiltInSeaHost::new(root.clone(), StorageMode::Memory);
-        let first_connection = host.connect();
+        let first_connection = host.connect(LivenessPolicy::default());
         let mut first_stream = first_connection
             .open_event_stream(protocol::Request::OpenEventStream {
                 version: protocol::PROTOCOL_VERSION,
@@ -576,7 +611,7 @@ mod tests {
             Some(protocol::Response::CaughtUp(Some(_)))
         ));
 
-        let second = host.connect();
+        let second = host.connect(LivenessPolicy::default());
         let mut second_stream = second
             .open_event_stream(protocol::Request::OpenEventStream {
                 version: protocol::PROTOCOL_VERSION,
@@ -649,7 +684,18 @@ mod tests {
                 ..
             }
         ));
-        first_connection.revoke_snapshot_publisher().await;
+        first_connection.connection_closed(false).await;
+        assert!(matches!(
+            first_connection
+                .author_request(protocol::Request::ResolveSubmission {
+                    operation: b"closed-author".to_vec(),
+                })
+                .await,
+            protocol::Response::Error {
+                kind: protocol::ErrorKind::Invalid,
+                ..
+            }
+        ));
         assert!(matches!(
             second_snapshots.next().await,
             Some(protocol::Response::SnapshotCoordination {
@@ -657,6 +703,50 @@ mod tests {
                 ..
             }) if fence > first_fence
         ));
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[tokio::test]
+    async fn concurrent_close_is_idempotent_during_reconnect_grace() {
+        let root = std::env::temp_dir().join(format!(
+            "sea-webtransport-concurrent-close-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&root);
+        let host = BuiltInSeaHost::new(root.clone(), StorageMode::Memory);
+        let connection = host.connect(LivenessPolicy {
+            reconnect_grace: Duration::from_millis(25),
+            ..LivenessPolicy::default()
+        });
+        let mut events = connection
+            .open_event_stream(protocol::Request::OpenEventStream {
+                version: protocol::PROTOCOL_VERSION,
+                archive: b"archive".to_vec(),
+                intent: protocol::ArchiveIntent::Create,
+                author: b"author".to_vec(),
+                session: b"session".to_vec(),
+                resume_after: None,
+            })
+            .await
+            .unwrap();
+        let protocol::Response::EventStreamOpened { authority } =
+            events.next().await.expect("event authority")
+        else {
+            panic!("event stream must return authority");
+        };
+        assert_eq!(
+            connection
+                .author_request(protocol::Request::OpenAuthorStream { authority })
+                .await,
+            protocol::Response::Acknowledged
+        );
+        let cleanup = connection.connection_closed(true);
+        let explicit = async {
+            tokio::task::yield_now().await;
+            connection.author_request(protocol::Request::Close).await
+        };
+        let ((), response) = tokio::join!(cleanup, explicit);
+        assert_eq!(response, protocol::Response::Acknowledged);
         let _ = std::fs::remove_dir_all(root);
     }
 
@@ -675,7 +765,7 @@ mod tests {
         session: &[u8],
     ) -> protocol::Response {
         match host
-            .connect()
+            .connect(LivenessPolicy::default())
             .open_event_stream(protocol::Request::OpenEventStream {
                 version,
                 archive: b"archive".to_vec(),
@@ -701,7 +791,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn native_client_round_trips_every_storage_mode() {
+    async fn idle_stream_outlives_operation_deadline_in_every_storage_mode() {
         for mode in [
             StorageMode::Memory,
             StorageMode::BufferedFile,
@@ -709,6 +799,60 @@ mod tests {
         ] {
             native_client_round_trip(mode).await;
         }
+    }
+
+    #[tokio::test]
+    async fn immediate_shutdown_releases_session_without_reconnect_grace() {
+        let root = std::env::temp_dir().join(format!(
+            "sea-webtransport-immediate-shutdown-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&root);
+        let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
+        let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
+        let server = WebTransportServer::bind(
+            "127.0.0.1:0".parse::<SocketAddr>().unwrap(),
+            identity,
+            Arc::new(BuiltInSeaHost::new(root.clone(), StorageMode::Memory)),
+            TransportConfig {
+                liveness: LivenessPolicy {
+                    reconnect_grace: Duration::from_secs(30),
+                    ..LivenessPolicy::default()
+                },
+                ..TransportConfig::default()
+            },
+        )
+        .unwrap();
+        let address = server.local_addr().unwrap();
+        let shutdown = server.shutdown_handle();
+        let measurements = server.measurement_handle();
+        let serving = server.serve_until_shutdown();
+        let exercise = async {
+            let client = NativeSeaClient::connect(
+                format!("https://{address}/sea"),
+                certificate_hash,
+                ClientTransportConfig::default(),
+                NativeSessionOpen {
+                    archive: Bytes::from_static(b"shutdown-archive"),
+                    intent: protocol::ArchiveIntent::Create,
+                    author: AuthorId::new(Bytes::from_static(b"shutdown-author")).unwrap(),
+                    session: SessionId::new(Bytes::from_static(b"shutdown-session")).unwrap(),
+                    reference: None,
+                },
+            )
+            .await
+            .unwrap();
+            shutdown.shutdown(ShutdownMode::Immediate).unwrap();
+            client
+        };
+        let (outcome, client) = tokio::join!(serving, exercise);
+        drop(client);
+        let outcome = outcome.unwrap();
+        assert_eq!(outcome.disposition, ShutdownDisposition::Cancelled);
+        assert_eq!(outcome.owned_connections, 1);
+        assert_eq!(outcome.cancelled_connections, 1);
+        assert_eq!(measurements.snapshot().connection_cleanups, 1);
+        let _ = std::fs::remove_dir_all(root);
     }
 
     async fn native_client_round_trip(mode: StorageMode) {
@@ -794,7 +938,10 @@ mod tests {
             "127.0.0.1:0".parse::<SocketAddr>().unwrap(),
             identity,
             Arc::new(BuiltInSeaHost::new(root.clone(), StorageMode::Memory)),
-            TransportConfig::default(),
+            TransportConfig {
+                operation_timeout: Duration::from_millis(50),
+                ..TransportConfig::default()
+            },
         )
         .unwrap();
         let address = server.local_addr().unwrap();
@@ -802,7 +949,7 @@ mod tests {
         let serving = server.serve_until_shutdown();
         let exercise = async {
             send_malformed_stream(address, certificate_hash.clone()).await;
-            reset_in_flight_request(address, certificate_hash.clone()).await;
+            timeout_in_flight_frame(address, certificate_hash.clone()).await;
             let client = NativeSeaClient::connect(
                 format!("https://{address}/sea"),
                 certificate_hash.clone(),
@@ -843,13 +990,14 @@ mod tests {
         connection.close(0_u32.into(), b"fault injected");
     }
 
-    async fn reset_in_flight_request(
+    async fn timeout_in_flight_frame(
         address: SocketAddr,
         certificate_hash: wtransport::tls::Sha256Digest,
     ) {
         let (_endpoint, connection) = raw_connection(address, certificate_hash).await;
         let (mut send, receive) = connection.open_bi().await.unwrap().await.unwrap();
         send.write_all(b"SE").await.unwrap();
+        tokio::time::sleep(Duration::from_millis(100)).await;
         drop(send);
         drop(receive);
         connection.close(0_u32.into(), b"in-flight read cancelled");

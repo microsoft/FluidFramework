@@ -45,6 +45,10 @@ where
         + Sync
         + 'static,
 {
+    async fn connection_closed(&self, _allow_reconnect_grace: bool) {
+        let _ = self.session.close().await;
+    }
+
     async fn open_event_stream(
         &self,
         _request: protocol::Request,

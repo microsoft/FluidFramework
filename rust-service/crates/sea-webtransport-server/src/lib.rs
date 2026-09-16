@@ -7,7 +7,7 @@ mod server;
 pub use dispatch::SessionDispatcher;
 pub use host::{BuiltInSeaHost, StorageMode};
 pub use server::{
-    MeasurementHandle, SeaConnectionService, SeaResponseStream, SeaServiceHost,
+    LivenessPolicy, MeasurementHandle, SeaConnectionService, SeaResponseStream, SeaServiceHost,
     ShutdownDisposition, ShutdownHandle, ShutdownMode, ShutdownOutcome, TransportConfig,
     TransportMeasurement, WebTransportError, WebTransportServer,
 };

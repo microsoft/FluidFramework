@@ -44,11 +44,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         TransportConfig::default(),
     )?;
     let address = server.local_addr()?;
+    let liveness = server.liveness_policy();
     let mut shutdown = server.shutdown_handle();
     println!("WEBTRANSPORT_URL=https://{address}/sea");
     println!("CERTIFICATE_SHA256={certificate_hash}");
     println!("STORAGE_MODE={}", storage_mode.name());
     println!("PROTOCOL=sea");
+    println!(
+        "LIVENESS heartbeat_ms={} inactivity_ms={} reconnect_grace_ms={} max_event_lag={}",
+        liveness.heartbeat_interval.as_millis(),
+        liveness.inactivity_timeout.as_millis(),
+        liveness.reconnect_grace.as_millis(),
+        liveness.max_event_lag,
+    );
     if let Some(marker) = &shutdown_marker {
         println!("SHUTDOWN_MARKER={}", marker.display());
     }

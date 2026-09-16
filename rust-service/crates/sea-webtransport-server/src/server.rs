@@ -1,6 +1,7 @@
 #![doc = "Native Sea WebTransport server endpoint and dispatch."]
 
 use std::{
+    collections::BTreeMap,
     net::SocketAddr,
     pin::Pin,
     sync::{
@@ -37,6 +38,8 @@ pub struct TransportMeasurement {
     pub peak_active_connections: usize,
     /// Highest number of concurrently active bidirectional streams observed.
     pub peak_active_streams: usize,
+    /// Connections whose session membership cleanup completed.
+    pub connection_cleanups: u64,
 }
 
 /// Policy requested when stopping a WebTransport server.
@@ -115,6 +118,7 @@ struct Metrics {
     peak_active_connections: AtomicUsize,
     active_streams: AtomicUsize,
     peak_active_streams: AtomicUsize,
+    connection_cleanups: AtomicU64,
 }
 
 /// Cloneable view of transport measurements.
@@ -148,12 +152,17 @@ impl Metrics {
         self.wire_bytes.fetch_add(count as u64, Ordering::Relaxed);
     }
 
+    fn record_connection_cleanup(&self) {
+        self.connection_cleanups.fetch_add(1, Ordering::Relaxed);
+    }
+
     fn snapshot(&self) -> TransportMeasurement {
         TransportMeasurement {
             wire_bytes: self.wire_bytes.load(Ordering::Relaxed),
             active_connections: self.active_connections.load(Ordering::Relaxed),
             peak_active_connections: self.peak_active_connections.load(Ordering::Relaxed),
             peak_active_streams: self.peak_active_streams.load(Ordering::Relaxed),
+            connection_cleanups: self.connection_cleanups.load(Ordering::Relaxed),
         }
     }
 }
@@ -174,6 +183,30 @@ impl Drop for ActiveStream<'_> {
     }
 }
 
+/// Server-owned thresholds for connection and session liveness.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct LivenessPolicy {
+    /// Interval between QUIC PING frames while a connection is otherwise idle.
+    pub heartbeat_interval: Duration,
+    /// Maximum time without peer responsiveness before QUIC closes the connection.
+    pub inactivity_timeout: Duration,
+    /// Time an inactive author may remain before its membership is released.
+    pub reconnect_grace: Duration,
+    /// Buffered live events allowed before a lagging subscriber is evicted.
+    pub max_event_lag: usize,
+}
+
+impl Default for LivenessPolicy {
+    fn default() -> Self {
+        Self {
+            heartbeat_interval: Duration::from_secs(3),
+            inactivity_timeout: Duration::from_secs(15),
+            reconnect_grace: Duration::ZERO,
+            max_event_lag: sea_sequencer::session::DEFAULT_EVENT_LAG_LIMIT,
+        }
+    }
+}
+
 /// Bounded frame and lifecycle configuration.
 #[derive(Clone, Debug)]
 pub struct TransportConfig {
@@ -185,6 +218,8 @@ pub struct TransportConfig {
     pub max_streams_per_connection: usize,
     /// Timeout for connection establishment and framed I/O.
     pub operation_timeout: Duration,
+    /// Connection heartbeat, inactivity, reconnect, and lag policy.
+    pub liveness: LivenessPolicy,
 }
 
 impl Default for TransportConfig {
@@ -194,6 +229,7 @@ impl Default for TransportConfig {
             max_connections: 16,
             max_streams_per_connection: 16,
             operation_timeout: Duration::from_secs(5),
+            liveness: LivenessPolicy::default(),
         }
     }
 }
@@ -203,6 +239,10 @@ impl TransportConfig {
         if self.max_frame_bytes < sea_v1::MIN_FRAME_BYTES
             || self.max_connections == 0
             || self.max_streams_per_connection == 0
+            || self.operation_timeout.is_zero()
+            || self.liveness.heartbeat_interval.is_zero()
+            || self.liveness.inactivity_timeout <= self.liveness.heartbeat_interval
+            || self.liveness.max_event_lag == 0
         {
             return Err(WebTransportError::InvalidConfig);
         }
@@ -242,6 +282,9 @@ pub type SeaResponseStream = Pin<Box<dyn Stream<Item = sea_v1::Response> + Send 
 /// Per-connection final Sea protocol dispatcher.
 #[async_trait]
 pub trait SeaConnectionService: Send + Sync {
+    /// Releases all session state owned by this network connection.
+    async fn connection_closed(&self, allow_reconnect_grace: bool);
+
     /// Opens the gap-free recovery and live event stream.
     async fn open_event_stream(
         &self,
@@ -282,7 +325,7 @@ pub trait SeaConnectionService: Send + Sync {
 /// Creates isolated Sea protocol state for each WebTransport connection.
 pub trait SeaServiceHost: Send + Sync {
     /// Creates one connection-scoped dispatcher.
-    fn connect(&self) -> Arc<dyn SeaConnectionService>;
+    fn connect(&self, liveness: LivenessPolicy) -> Arc<dyn SeaConnectionService>;
 }
 
 /// Native WebTransport endpoint serving final Sea sessions at `/sea`.
@@ -309,14 +352,14 @@ impl WebTransportServer {
         config: TransportConfig,
     ) -> Result<Self, WebTransportError> {
         config.validate()?;
-        let endpoint = Endpoint::server(
-            ServerConfig::builder()
-                .with_bind_address(address)
-                .with_identity(identity)
-                .keep_alive_interval(Some(Duration::from_secs(3)))
-                .build(),
-        )
-        .map_err(transport_error)?;
+        let server_config = ServerConfig::builder()
+            .with_bind_address(address)
+            .with_identity(identity)
+            .keep_alive_interval(Some(config.liveness.heartbeat_interval))
+            .max_idle_timeout(Some(config.liveness.inactivity_timeout))
+            .map_err(transport_error)?
+            .build();
+        let endpoint = Endpoint::server(server_config).map_err(transport_error)?;
         let (shutdown_request, shutdown_receiver) = watch::channel(None);
         let (accepting, _) = watch::channel(true);
         Ok(Self {
@@ -351,6 +394,12 @@ impl WebTransportServer {
         MeasurementHandle(Arc::clone(&self.metrics))
     }
 
+    /// Returns the configured connection and session liveness thresholds.
+    #[must_use]
+    pub const fn liveness_policy(&self) -> LivenessPolicy {
+        self.config.liveness
+    }
+
     /// Returns a cloneable shutdown handle.
     #[must_use]
     pub fn shutdown_handle(&self) -> ShutdownHandle {
@@ -376,25 +425,42 @@ impl WebTransportServer {
     /// Returns the first terminal connection error.
     pub async fn serve_until_shutdown(mut self) -> Result<ShutdownOutcome, WebTransportError> {
         let mut connections = FuturesUnordered::new();
+        let mut active_services = BTreeMap::new();
+        let mut next_connection_id = 1_u64;
         let mode = loop {
             tokio::select! {
                 incoming = self.endpoint.accept(), if connections.len() < self.config.max_connections => {
-                    let service = self.service.connect();
+                    let service = self.service.connect(self.config.liveness);
+                    let connection_id = next_connection_id;
+                    next_connection_id = next_connection_id.wrapping_add(1).max(1);
+                    active_services.insert(connection_id, Arc::clone(&service));
                     let config = self.config.clone();
                     let metrics = Arc::clone(&self.metrics);
                     connections.push(async move {
-                        let request = incoming.await.map_err(transport_error)?;
-                        if request.path() != "/sea" {
-                            request.forbidden().await;
-                            return Ok(());
+                        let result = async {
+                            let request = incoming.await.map_err(transport_error)?;
+                            if request.path() != "/sea" {
+                                request.forbidden().await;
+                                return Ok(());
+                            }
+                            let connection = request.accept().await.map_err(transport_error)?;
+                            serve_connection(connection, service, config, metrics).await
                         }
-                        let connection = request.accept().await.map_err(transport_error)?;
-                        serve_connection(connection, service, config, metrics).await
+                        .await;
+                        (connection_id, result)
                     });
                 }
                 result = connections.next(), if !connections.is_empty() => {
-                    if let Some(result) = result {
-                        result?;
+                    match result {
+                        Some((connection_id, Ok(()))) => {
+                            active_services.remove(&connection_id);
+                        }
+                        Some((connection_id, Err(error))) => {
+                            active_services.remove(&connection_id);
+                            cleanup_services(active_services, &self.metrics).await;
+                            return Err(error);
+                        }
+                        None => {}
                     }
                 }
                 changed = self.shutdown_receiver.changed() => {
@@ -414,13 +480,21 @@ impl WebTransportServer {
         };
         while !connections.is_empty() {
             match timeout_at(deadline, connections.next()).await {
-                Ok(Some(result)) => result?,
+                Ok(Some((connection_id, Ok(())))) => {
+                    active_services.remove(&connection_id);
+                }
+                Ok(Some((connection_id, Err(error)))) => {
+                    active_services.remove(&connection_id);
+                    cleanup_services(active_services, &self.metrics).await;
+                    return Err(error);
+                }
                 Ok(None) => break,
                 Err(_) => {
                     let cancelled_connections = connections.len();
                     self.endpoint
                         .close(CLOSE_CODE, b"server shutdown deadline elapsed");
                     drop(connections);
+                    cleanup_services(active_services, &self.metrics).await;
                     self.endpoint.wait_idle().await;
                     return Ok(ShutdownOutcome {
                         disposition: ShutdownDisposition::Cancelled,
@@ -442,6 +516,19 @@ impl WebTransportServer {
     }
 }
 
+async fn cleanup_services(
+    services: BTreeMap<u64, Arc<dyn SeaConnectionService>>,
+    metrics: &Metrics,
+) {
+    let mut cleanups = FuturesUnordered::new();
+    for service in services.into_values() {
+        cleanups.push(async move { service.connection_closed(false).await });
+    }
+    while cleanups.next().await.is_some() {
+        metrics.record_connection_cleanup();
+    }
+}
+
 async fn serve_connection(
     connection: Connection,
     service: Arc<dyn SeaConnectionService>,
@@ -449,6 +536,24 @@ async fn serve_connection(
     metrics: Arc<Metrics>,
 ) -> Result<(), WebTransportError> {
     let _active = metrics.enter_connection();
+    let result = serve_connection_streams(
+        connection,
+        Arc::clone(&service),
+        config,
+        Arc::clone(&metrics),
+    )
+    .await;
+    service.connection_closed(true).await;
+    metrics.record_connection_cleanup();
+    result
+}
+
+async fn serve_connection_streams(
+    connection: Connection,
+    service: Arc<dyn SeaConnectionService>,
+    config: TransportConfig,
+    metrics: Arc<Metrics>,
+) -> Result<(), WebTransportError> {
     let mut streams = FuturesUnordered::new();
     loop {
         tokio::select! {
@@ -645,17 +750,20 @@ async fn serve_author_stream(
     }
     let mut decoder = sea_v1::NetworkFrameDecoder::new(limits);
     loop {
-        let frame = match read_next_network_frame(&mut receive, &mut decoder).await {
-            Ok(Some(frame)) => frame,
-            Ok(None) => {
-                let _ = service.author_request(sea_v1::Request::Close).await;
-                return send.finish().await.map_err(transport_error);
-            }
-            Err(error) => {
-                let _ = service.author_request(sea_v1::Request::Close).await;
-                return Err(error);
-            }
-        };
+        let frame =
+            match read_next_network_frame(&mut receive, &mut decoder, config.operation_timeout)
+                .await
+            {
+                Ok(Some(frame)) => frame,
+                Ok(None) => {
+                    let _ = service.author_request(sea_v1::Request::Close).await;
+                    return send.finish().await.map_err(transport_error);
+                }
+                Err(error) => {
+                    let _ = service.author_request(sea_v1::Request::Close).await;
+                    return Err(error);
+                }
+            };
         let request = sea_v1::decode_request_frame(role, &frame)?;
         if matches!(request, sea_v1::Request::OpenAuthorStream { .. }) {
             return Err(sea_v1::ProtocolError::WrongStream {
@@ -728,7 +836,7 @@ async fn serve_snapshot_stream(
     let mut decoder = sea_v1::NetworkFrameDecoder::new(limits);
     loop {
         tokio::select! {
-            frame = read_next_network_frame(&mut receive, &mut decoder) => {
+            frame = read_next_network_frame(&mut receive, &mut decoder, config.operation_timeout) => {
                 let frame = match frame {
                     Ok(Some(frame)) => frame,
                     Ok(None) => break,
@@ -800,7 +908,9 @@ async fn serve_content_stream(
         return send.finish().await.map_err(transport_error);
     }
     let mut decoder = sea_v1::NetworkFrameDecoder::new(limits);
-    while let Some(frame) = read_next_network_frame(&mut receive, &mut decoder).await? {
+    while let Some(frame) =
+        read_next_network_frame(&mut receive, &mut decoder, config.operation_timeout).await?
+    {
         let request = sea_v1::decode_request_frame(role, &frame)?;
         metrics.add_wire_bytes(4 + 1 + 8 + frame.payload.len());
         let mut responses = match service.content_request(request).await {
@@ -838,13 +948,22 @@ async fn serve_content_stream(
 async fn read_next_network_frame(
     receive: &mut wtransport::RecvStream,
     decoder: &mut sea_v1::NetworkFrameDecoder,
+    operation_timeout: Duration,
 ) -> Result<Option<sea_v1::NetworkFrame>, WebTransportError> {
     let mut buffer = [0_u8; 8192];
     loop {
         if let Some(frame) = decoder.next_frame()? {
             return Ok(Some(frame));
         }
-        let Some(count) = receive.read(&mut buffer).await.map_err(transport_error)? else {
+        let read = receive.read(&mut buffer);
+        let result = if decoder.has_partial_frame() {
+            timeout(operation_timeout, read)
+                .await
+                .map_err(|_| WebTransportError::Timeout)?
+        } else {
+            read.await
+        };
+        let Some(count) = result.map_err(transport_error)? else {
             decoder.finish()?;
             return Ok(None);
         };

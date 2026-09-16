@@ -17,3 +17,6 @@ An optional fifth argument is a shutdown-marker path used by process harnesses.
 
 On startup the process prints `WEBTRANSPORT_URL`, `CERTIFICATE_SHA256`, `STORAGE_MODE`, and `PROTOCOL=sea`.
 Clients connect to the printed `/sea` URL and pin the printed SHA-256 certificate digest.
+It also prints the configured QUIC heartbeat interval, inactivity timeout, author reconnect grace, and live-event lag limit.
+Heartbeat uses QUIC PING frames; a peer is responsive when QUIC receives authenticated traffic before the inactivity timeout.
+Connection loss immediately revokes snapshot nomination, then releases author membership after reconnect grace.

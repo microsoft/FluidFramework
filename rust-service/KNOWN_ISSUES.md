@@ -23,16 +23,6 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Impact:** Storage grows monotonically and stale-position or unavailable-history behavior cannot yet be exercised.
 - **Trigger:** Add leases, retention boundaries, and collection when a bounded deployment supplies concrete lifetime requirements.
 
-## RS-017: Session eviction is explicit, not time based
-
-- **Status:** Deferred
-- **Severity:** Medium
-- **Area:** Sequencing
-- **Evidence:** `sea-sequencer` persists session activation, replacement, explicit close, and reference state.
-  It terminates lagged subscribers but does not expire inactive authors or persist a clock-based reconnect grace policy.
-- **Impact:** An abandoned author can pin the reported minimum reference until replacement or explicit close.
-- **Trigger:** Define authoritative timeout and reconnect policies before minimum reference is used to delete retained history.
-
 ## RS-018: Authentication and tenant policy are host work
 
 - **Status:** Deferred

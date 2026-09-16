@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 7. Explicit liveness and cleanup.
-- **Last completed checkpoint:** 6f. Remove old transport paths.
-- **Last validation:** Checkpoint 6f focused Rust tests and strict Clippy, generated WASM/Node behavior, TypeScript typecheck, and the real Chromium 152 WebTransport flow passed on 2026-09-16; canonical workspace validation is recorded in the implementation commit.
-- **Latest checkpoint notes:** The server accepts only the centralized length-delimited message-kind and correlation envelope. The `SEA1` outer codec, EOF-delimited helpers, generic per-operation client and service APIs, control role, and superseded archive/session/load/snapshot request variants are deleted. Event opening carries archive intent, and all known network clients use persistent event, author, snapshot, and content streams.
+- **Current checkpoint:** 8. Promote and reorganize the WASM bindings.
+- **Last completed checkpoint:** 7. Explicit liveness and cleanup.
+- **Last validation:** Checkpoint 7 focused sequencer/server tests and strict Clippy passed on 2026-09-16; canonical workspace and browser validation is recorded in the implementation commit.
+- **Latest checkpoint notes:** `LivenessPolicy` configures QUIC PING heartbeat, inactivity timeout, author reconnect grace, and live-event lag capacity at the server boundary. Idle streams have no operation deadline, while partial-frame reads and writes remain bounded. Connection loss immediately revokes snapshot nomination, author cleanup honors grace, forced shutdown bypasses grace, and recovery clears all connection-scoped author and nomination state while retaining stable operation identities and used session IDs. Cleanup counts and startup policy output make lifecycle behavior observable.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 7. Explicit liveness and cleanup.
+- **Next checkpoint:** 8. Promote and reorganize the WASM bindings.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -611,19 +611,19 @@ node tests/wasm-client/node-test.mjs
 
 ### 7. Implement explicit liveness and cleanup
 
-- [ ] Separate active I/O deadlines from idle stream lifetime.
-- [ ] Define session liveness, heartbeat, inactivity, lag, and reconnect-grace policy.
-- [ ] Implement liveness policy in `sea-webtransport-server` and make it observable and configurable at that server boundary.
-- [ ] Disconnect an unresponsive nominated snapshot publisher before selecting another.
-- [ ] Ensure connection loss, explicit close, replacement, and server shutdown release author membership.
-- [ ] Ensure the same paths revoke snapshot nomination.
-- [ ] Define heartbeat messages and responsiveness rules without introducing a snapshot-generation request.
-- [ ] Test an otherwise healthy persistent stream remains open while idle for longer than an active-operation deadline.
-- [ ] Persist only lifecycle state needed for authoritative recovery; never restore a pre-restart connection or nomination as active.
-- [ ] On restart, revoke all connection-scoped nomination authority before selecting from newly connected eligible clients.
-- [ ] Ensure stale author and snapshot fencing tokens cannot commit after reconnect or replacement.
-- [ ] Preserve classified errors and safe client-facing context through server dispatch and clients without exposing private server error chains.
-- [ ] Test graceful close, reset, timeout, restart, and concurrent close.
+- [x] Separate active I/O deadlines from idle stream lifetime.
+- [x] Define session liveness, heartbeat, inactivity, lag, and reconnect-grace policy.
+- [x] Implement liveness policy in `sea-webtransport-server` and make it observable and configurable at that server boundary.
+- [x] Disconnect an unresponsive nominated snapshot publisher before selecting another.
+- [x] Ensure connection loss, explicit close, replacement, and server shutdown release author membership.
+- [x] Ensure the same paths revoke snapshot nomination.
+- [x] Define heartbeat messages and responsiveness rules without introducing a snapshot-generation request.
+- [x] Test an otherwise healthy persistent stream remains open while idle for longer than an active-operation deadline.
+- [x] Persist only lifecycle state needed for authoritative recovery; never restore a pre-restart connection or nomination as active.
+- [x] On restart, revoke all connection-scoped nomination authority before selecting from newly connected eligible clients.
+- [x] Ensure stale author and snapshot fencing tokens cannot commit after reconnect or replacement.
+- [x] Preserve classified errors and safe client-facing context through server dispatch and clients without exposing private server error chains.
+- [x] Test graceful close, reset, timeout, restart, and concurrent close.
 
 Validation:
 
