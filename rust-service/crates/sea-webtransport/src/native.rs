@@ -1,11 +1,6 @@
 //! Native certificate-pinned [`SeaSession`] client.
 
-use std::{
-    collections::BTreeMap,
-    error::Error,
-    fmt,
-    sync::atomic::{AtomicBool, AtomicU64, Ordering},
-};
+use std::{collections::BTreeMap, error::Error, fmt, sync::Arc};
 
 use async_trait::async_trait;
 use bytes::Bytes;
@@ -24,8 +19,10 @@ use tokio::time::timeout;
 use wtransport::{Connection, Endpoint, endpoint::endpoint_side::Client, tls::Sha256Digest};
 
 use crate::{
-    CLOSE_CODE, TransportConfig, WebTransportError, connect_once, protocol, read_sea_stream_frame,
-    read_sea_unary_frame, transport_error, write_frame,
+    CLOSE_CODE, TransportConfig, WebTransportError,
+    client::{ClientState, ClientStateError},
+    connect_once, protocol, read_sea_stream_frame, read_sea_unary_frame, transport_error,
+    write_frame,
 };
 
 /// Failure from a native typed Sea client.
@@ -93,13 +90,24 @@ impl From<protocol::ProtocolError> for SeaClientError {
     }
 }
 
+impl From<ClientStateError> for SeaClientError {
+    fn from(error: ClientStateError) -> Self {
+        match error {
+            ClientStateError::Closed => Self::Closed,
+            ClientStateError::Protocol(error) => error.into(),
+            ClientStateError::Poisoned => Self::Transport(WebTransportError::Transport(
+                "shared client state is unavailable".to_owned(),
+            )),
+        }
+    }
+}
+
 /// Native WebTransport client bound to one open Sea archive session.
 pub struct NativeSeaClient {
     _endpoint: Endpoint<Client>,
     connection: Connection,
     config: TransportConfig,
-    request_id: AtomicU64,
-    closed: AtomicBool,
+    state: Arc<ClientState>,
 }
 
 /// Values that identify and initialize one native archive-bound session.
@@ -136,8 +144,7 @@ impl NativeSeaClient {
             _endpoint: endpoint,
             connection,
             config,
-            request_id: AtomicU64::new(1),
-            closed: AtomicBool::new(false),
+            state: Arc::new(ClientState::default()),
         };
         match client
             .request(protocol::Request::OpenSession {
@@ -159,8 +166,8 @@ impl NativeSeaClient {
         &self,
         request: protocol::Request,
     ) -> Result<protocol::Response, SeaClientError> {
-        self.ensure_open()?;
-        let request_id = self.request_id.fetch_add(1, Ordering::Relaxed);
+        let pending = self.state.begin(request.stream_role())?;
+        let request_id = pending.id();
         let limits = self.sea_limits();
         let request = protocol::encode(
             &protocol::Frame {
@@ -186,15 +193,17 @@ impl NativeSeaClient {
         )
         .await
         .map_err(|_| WebTransportError::Timeout)??;
-        decode_response_frame(request_id, &response, limits)
+        let response = decode_response_frame(request_id, &response, limits);
+        pending.complete(request_id)?;
+        response
     }
 
     async fn stream_request(
         &self,
         request: protocol::Request,
     ) -> Result<SessionStream<protocol::Response, SeaClientError>, SeaClientError> {
-        self.ensure_open()?;
-        let request_id = self.request_id.fetch_add(1, Ordering::Relaxed);
+        let pending = self.state.begin(request.stream_role())?;
+        let request_id = pending.id();
         let limits = self.sea_limits();
         let request = protocol::encode(
             &protocol::Frame {
@@ -215,15 +224,19 @@ impl NativeSeaClient {
         .map_err(|_| WebTransportError::Timeout)??;
         write_frame(&mut send, &request, self.config.operation_timeout).await?;
         Ok(Box::pin(stream::try_unfold(
-            receive,
-            move |mut receive| async move {
+            (receive, Some(pending)),
+            move |(mut receive, mut pending)| async move {
                 let Some(bytes) =
                     read_sea_stream_frame(&mut receive, limits.max_frame_bytes).await?
                 else {
+                    pending
+                        .take()
+                        .expect("active stream correlation")
+                        .complete(request_id)?;
                     return Ok(None);
                 };
                 let response = decode_response_frame(request_id, &bytes, limits)?;
-                Ok(Some((response, receive)))
+                Ok(Some((response, (receive, pending))))
             },
         )))
     }
@@ -231,14 +244,6 @@ impl NativeSeaClient {
     const fn sea_limits(&self) -> protocol::Limits {
         protocol::Limits {
             max_frame_bytes: self.config.max_frame_bytes,
-        }
-    }
-
-    fn ensure_open(&self) -> Result<(), SeaClientError> {
-        if self.closed.load(Ordering::Acquire) {
-            Err(SeaClientError::Closed)
-        } else {
-            Ok(())
         }
     }
 }
@@ -416,12 +421,12 @@ impl SeaAuthorSession for NativeSeaClient {
     }
 
     async fn close(&self) -> Result<(), Self::Error> {
-        if self.closed.load(Ordering::Acquire) {
+        if self.state.is_closed()? {
             return Ok(());
         }
         match self.request(protocol::Request::Close).await? {
             protocol::Response::Acknowledged => {
-                self.closed.store(true, Ordering::Release);
+                self.state.close()?;
                 self.connection.close(CLOSE_CODE, b"Sea session closed");
                 Ok(())
             }

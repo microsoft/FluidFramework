@@ -8,7 +8,7 @@
 - **Current checkpoint:** 6a. Establish the shared client.
 - **Last completed checkpoint:** 5. Introduce the centralized network message codec.
 - **Last validation:** Checkpoint 5 formatting, strict workspace Clippy, Rust workspace build/tests/docs, counter and benchmark smoke, WASM/Node and TypeScript validation, real Chromium WebTransport, policy, and repository build passed on 2026-09-16.
-- **Latest checkpoint notes:** Request kinds `1..=16`, response kinds `128..=138`, and error kind `255` use `u32 length | u8 kind | u64 correlation | typed payload`. Correlation tracking rejects zero requests, active reuse, and mismatched completion. The production server accepts the shared codec alongside the temporary old path. Generated load cases use `SeaLoadKind`. No established Rust-service fuzz harness exists, so no fuzz target was added. Old framing remains until checkpoint 6f.
+- **Latest checkpoint notes:** Checkpoint 6a introduced platform-independent `ClientState`. Native and injected WASM clients now share request allocation, per-role correlation tracking, cancellation-safe pending guards, mismatch validation, and terminal close rejection. Dropping a native or injected response stream abandons its pending correlation. Logical stream ownership, reconnect transitions, and transport primitives remain in the next 6a slice.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
 - **Next checkpoint:** 6a. Establish the shared client.

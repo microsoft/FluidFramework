@@ -87,7 +87,7 @@ impl From<MessageKind> for u8 {
 }
 
 /// Logical stream on which a message is valid.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum StreamRole {
     Control,
     Event,

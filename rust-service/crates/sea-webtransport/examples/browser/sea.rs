@@ -40,6 +40,7 @@ use web_sys::{
 use crate::{
     AsyncRequestTransport, call_method, open_transport, read_bounded, sea_protocol_v1 as protocol,
 };
+use sea_webtransport::client::{ClientState, PendingCorrelation};
 
 /// A typed immutable blob-tree identity.
 #[wasm_bindgen]
@@ -310,6 +311,7 @@ impl SeaLoadItem {
 pub struct SeaInjectedStream {
     transport: JsValue,
     request_id: u64,
+    pending: RefCell<Option<PendingCorrelation>>,
     limits: protocol::Limits,
     cancelled: Cell<bool>,
 }
@@ -510,6 +512,11 @@ impl SeaInjectedStream {
         let incoming = call_method(&self.transport, "next", &[])?;
         let incoming = JsFuture::from(Promise::resolve(&incoming)).await?;
         if incoming.is_null() || incoming.is_undefined() {
+            if let Some(pending) = self.pending.take() {
+                pending
+                    .complete(self.request_id)
+                    .map_err(|error| js_error(&error.to_string()))?;
+            }
             return Ok(None);
         }
         if !incoming.is_instance_of::<Uint8Array>() {
@@ -542,6 +549,7 @@ impl SeaInjectedStream {
     /// Cancels the stream and injected transport.
     pub async fn cancel(&self) -> Result<(), JsValue> {
         if !self.cancelled.replace(true) {
+            self.pending.take();
             let cancelled = call_method(&self.transport, "cancel", &[])?;
             JsFuture::from(Promise::resolve(&cancelled)).await?;
         }
@@ -553,7 +561,7 @@ impl SeaInjectedStream {
 #[wasm_bindgen]
 pub struct SeaInjectedClient {
     transport: Rc<RefCell<JsValue>>,
-    next_request_id: Cell<u64>,
+    state: Arc<ClientState>,
     limits: protocol::Limits,
 }
 
@@ -561,7 +569,7 @@ pub struct SeaInjectedClient {
 #[wasm_bindgen]
 pub struct SeaInjectedSubmissionStream {
     transport: JsValue,
-    next_request_id: Cell<u64>,
+    state: Arc<ClientState>,
     limits: protocol::Limits,
     closed: Cell<bool>,
 }
@@ -992,7 +1000,7 @@ impl SeaInjectedClient {
         }
         Ok(Self {
             transport: Rc::new(RefCell::new(transport.into())),
-            next_request_id: Cell::new(1),
+            state: Arc::new(ClientState::default()),
             limits: protocol::Limits { max_frame_bytes },
         })
     }
@@ -1073,7 +1081,7 @@ impl SeaInjectedClient {
         let transport = JsFuture::from(Promise::resolve(&transport)).await?;
         Ok(SeaInjectedSubmissionStream {
             transport,
-            next_request_id: Cell::new(1),
+            state: Arc::clone(&self.state),
             limits: self.limits,
             closed: Cell::new(false),
         })
@@ -1274,7 +1282,10 @@ impl SeaInjectedClient {
     /// Explicitly closes this logical session.
     pub async fn close(&self) -> Result<(), JsValue> {
         let response = self.request(protocol::Request::Close).await?;
-        expect_acknowledged(&response)
+        expect_acknowledged(&response)?;
+        self.state
+            .close()
+            .map_err(|error| js_error(&error.to_string()))
     }
 
     /// Replaces the injected transport after an explicit reconnect.
@@ -1303,8 +1314,11 @@ impl SeaInjectedSubmissionStream {
         if self.closed.get() {
             return Err(js_error("Sea submission stream is closed"));
         }
-        let request_id = self.next_request_id.get();
-        self.next_request_id.set(request_id.wrapping_add(1).max(1));
+        let pending = self
+            .state
+            .begin(protocol::StreamRole::Author)
+            .map_err(|error| js_error(&error.to_string()))?;
+        let request_id = pending.id();
         let outgoing = protocol::encode(
             &protocol::Frame {
                 request_id,
@@ -1329,11 +1343,15 @@ impl SeaInjectedSubmissionStream {
         if !incoming.is_instance_of::<Uint8Array>() {
             return Err(js_error("Sea submission response is not a Uint8Array"));
         }
-        match decode_response(
+        let response = decode_response(
             request_id,
             &Uint8Array::new(&incoming).to_vec(),
             self.limits,
-        )? {
+        );
+        pending
+            .complete(request_id)
+            .map_err(|error| js_error(&error.to_string()))?;
+        match response? {
             protocol::Response::EventCommitted {
                 position,
                 durability,
@@ -1357,7 +1375,11 @@ impl SeaInjectedSubmissionStream {
 
 impl SeaInjectedClient {
     async fn request(&self, request: protocol::Request) -> Result<protocol::Response, JsValue> {
-        let request_id = self.next_id();
+        let pending = self
+            .state
+            .begin(request.stream_role())
+            .map_err(|error| js_error(&error.to_string()))?;
+        let request_id = pending.id();
         let outgoing = protocol::encode(
             &protocol::Frame {
                 request_id,
@@ -1375,15 +1397,23 @@ impl SeaInjectedClient {
         if !incoming.is_instance_of::<Uint8Array>() {
             return Err(js_error("Sea response is not a Uint8Array"));
         }
-        decode_response(
+        let response = decode_response(
             request_id,
             &Uint8Array::new(&incoming).to_vec(),
             self.limits,
-        )
+        );
+        pending
+            .complete(request_id)
+            .map_err(|error| js_error(&error.to_string()))?;
+        response
     }
 
     async fn open_stream(&self, request: protocol::Request) -> Result<SeaInjectedStream, JsValue> {
-        let request_id = self.next_id();
+        let pending = self
+            .state
+            .begin(request.stream_role())
+            .map_err(|error| js_error(&error.to_string()))?;
+        let request_id = pending.id();
         let outgoing = protocol::encode(
             &protocol::Frame {
                 request_id,
@@ -1401,15 +1431,10 @@ impl SeaInjectedClient {
         Ok(SeaInjectedStream {
             transport,
             request_id,
+            pending: RefCell::new(Some(pending)),
             limits: self.limits,
             cancelled: Cell::new(false),
         })
-    }
-
-    fn next_id(&self) -> u64 {
-        let current = self.next_request_id.get();
-        self.next_request_id.set(current.wrapping_add(1).max(1));
-        current
     }
 }
 
