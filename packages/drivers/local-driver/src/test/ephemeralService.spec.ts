@@ -12,6 +12,7 @@ import {
 	getDefaultEphemeralService,
 	startEphemeralService,
 	getSessionService,
+	resetSessionServiceForTesting,
 	type EphemeralService,
 	EphemeralServiceContainer,
 } from "../ephemeralService.js";
@@ -256,6 +257,11 @@ describe("EphemeralService", () => {
 			});
 		});
 
+		afterEach(async () => {
+			await resetSessionServiceForTesting();
+			storedValues.clear();
+		});
+
 		// Restore the environment so this global mock does not leak into other suites.
 		after(() => {
 			if (sessionStorageDescriptor === undefined) {
@@ -291,6 +297,22 @@ describe("EphemeralService", () => {
 
 			// Fluid document cleanup must leave unrelated session storage untouched.
 			assert.strictEqual(storedValues.get("documents-unrelated"), "not JSON");
+		});
+
+		it("loads a persisted document after recreating the service", async () => {
+			const firstService = getSessionService();
+			const firstContainer =
+				await firstService.defaultClient.createAttachedContainer(stubFactory);
+			const { id } = firstContainer;
+			await firstService.synchronize();
+			firstContainer.close();
+
+			await resetSessionServiceForTesting();
+
+			const secondService = getSessionService();
+			assert.notStrictEqual(secondService, firstService);
+			const secondContainer = await secondService.defaultClient.loadContainer(id, stubFactory);
+			assert.strictEqual(secondContainer.id, id);
 		});
 	});
 });

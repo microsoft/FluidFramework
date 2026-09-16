@@ -92,6 +92,12 @@ export function getSessionService(): SessionService {
 	));
 }
 
+/** Closes and clears the current session service for test isolation. */
+export async function resetSessionServiceForTesting(): Promise<void> {
+	await sessionService?.close();
+	sessionService = undefined;
+}
+
 /**
  * Cleans up the service passed in {@link startEphemeralService}, or the {@link getDefaultEphemeralService|default} if none is passed.
  * @remarks
