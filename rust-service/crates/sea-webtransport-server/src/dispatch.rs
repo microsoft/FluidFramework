@@ -133,7 +133,7 @@ where
                     .map_err(error_response)?;
                 Ok(protocol::Response::EventCommitted {
                     position: receipt.position.get(),
-                    durability: durability_name(receipt.durability).to_owned(),
+                    durability: durability_to_wire(receipt.durability),
                 })
             }
             protocol::Request::ResolveSubmission { operation } => {
@@ -146,7 +146,7 @@ where
                     position: receipt.as_ref().map(|receipt| receipt.position.get()),
                     durability: receipt
                         .as_ref()
-                        .map(|receipt| durability_name(receipt.durability).to_owned()),
+                        .map(|receipt| durability_to_wire(receipt.durability)),
                 })
             }
             protocol::Request::GetSnapshot { id } => {
@@ -343,11 +343,11 @@ fn snapshot_to_wire(snapshot: PublishedSnapshot) -> protocol::Snapshot {
     }
 }
 
-const fn durability_name(durability: Durability) -> &'static str {
+const fn durability_to_wire(durability: Durability) -> protocol::WireDurability {
     match durability {
-        Durability::Memory => "memory",
-        Durability::Buffered => "buffered",
-        Durability::Durable => "durable",
+        Durability::Memory => protocol::WireDurability::Memory,
+        Durability::Buffered => protocol::WireDurability::Buffered,
+        Durability::Durable => protocol::WireDurability::Durable,
     }
 }
 
@@ -437,7 +437,7 @@ mod tests {
         else {
             panic!("submission should commit");
         };
-        assert_eq!(durability, "memory");
+        assert_eq!(durability, protocol::WireDurability::Memory);
         assert!(position > 0);
         assert_eq!(
             dispatcher
@@ -447,7 +447,7 @@ mod tests {
                 .await,
             protocol::Response::SubmissionResolved {
                 position: Some(position),
-                durability: Some("memory".to_owned())
+                durability: Some(protocol::WireDurability::Memory)
             }
         );
 

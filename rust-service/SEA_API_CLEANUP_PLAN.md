@@ -8,7 +8,7 @@
 - **Current checkpoint:** 5. Introduce the centralized network message codec.
 - **Last completed checkpoint:** 4b. Split service responsibilities.
 - **Last validation:** Checkpoint 4b formatting, strict workspace Clippy, full Rust workspace tests, counter and benchmark smoke, generated WASM/Node tests, TypeScript checks, documentation links, policy, and repository build passed on 2026-09-16.
-- **Latest checkpoint notes:** Checkpoint 5 assigned request kinds `1..=16`, response kinds `128..=138`, and error kind `255`; the new bounded envelope is `u32 length | u8 kind | u64 correlation | payload`. Archive creation and session opening carry protocol version `2` and reject unsupported versions before archive or author state. The old active transport framing remains until typed payloads and all transport paths switch.
+- **Latest checkpoint notes:** Checkpoint 5 assigned request kinds `1..=16`, response kinds `128..=138`, and error kind `255`; the new bounded envelope is `u32 length | u8 kind | u64 correlation | payload`. Archive creation and session opening carry protocol version `2` and reject unsupported versions before state. Wire durability is an enum explicitly serialized as bytes `1..=3`. The old active transport framing remains until typed payloads and all transport paths switch.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
 - **Next checkpoint:** 5. Introduce the centralized network message codec.
@@ -527,7 +527,7 @@ Commit the codec and message definitions before switching transports.
 - [ ] Include a correlation ID in every frame, reserve zero for unsolicited notifications, and reject invalid or mismatched correlation IDs.
 - [x] Define which message kinds are valid on each logical stream.
 - [x] Return a classified protocol error for a message on the wrong stream.
-- [ ] Replace string durability with a generated enum or explicit numeric wire enum.
+- [x] Replace string durability with a generated enum or explicit numeric wire enum.
 - [ ] Replace load-item string kinds with explicit generated case types.
 - [x] Add exhaustive codec, fragmentation, coalescing, limit, and wrong-stream tests.
 - [x] Test every assigned message-kind byte and rejection of every unassigned byte.

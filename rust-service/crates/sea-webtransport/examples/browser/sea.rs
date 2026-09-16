@@ -1040,7 +1040,7 @@ impl SeaInjectedClient {
                 durability,
             } => Ok(SeaEventReceipt {
                 position,
-                durability,
+                durability: durability.name().to_owned(),
             }),
             _ => Err(js_error("Sea response is not an event receipt")),
         }
@@ -1076,7 +1076,7 @@ impl SeaInjectedClient {
                 durability: Some(durability),
             } => Ok(Some(SeaEventReceipt {
                 position,
-                durability,
+                durability: durability.name().to_owned(),
             })),
             protocol::Response::SubmissionResolved {
                 position: None,
@@ -1319,7 +1319,7 @@ impl SeaInjectedSubmissionStream {
                 durability,
             } => Ok(SeaEventReceipt {
                 position,
-                durability,
+                durability: durability.name().to_owned(),
             }),
             _ => Err(js_error("Sea submission response is not an event receipt")),
         }

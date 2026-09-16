@@ -429,6 +429,50 @@ pub enum ArchiveIntent {
     Open,
 }
 
+/// Explicitly encoded event durability on the Sea wire.
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[repr(u8)]
+#[serde(try_from = "u8", into = "u8")]
+pub enum WireDurability {
+    /// Visible only in process.
+    Memory = 1,
+    /// Flushed to operating-system-backed storage.
+    Buffered = 2,
+    /// Persisted according to the backend durability contract.
+    Durable = 3,
+}
+
+impl TryFrom<u8> for WireDurability {
+    type Error = ProtocolError;
+
+    fn try_from(value: u8) -> Result<Self, ProtocolError> {
+        match value {
+            1 => Ok(Self::Memory),
+            2 => Ok(Self::Buffered),
+            3 => Ok(Self::Durable),
+            _ => Err(ProtocolError::UnknownDurability(value)),
+        }
+    }
+}
+
+impl From<WireDurability> for u8 {
+    fn from(value: WireDurability) -> Self {
+        value as Self
+    }
+}
+
+impl WireDurability {
+    /// Returns the stable generated-client display name.
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::Memory => "memory",
+            Self::Buffered => "buffered",
+            Self::Durable => "durable",
+        }
+    }
+}
+
 /// One request on a Sea session control or operation stream.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Request {
@@ -538,15 +582,15 @@ pub enum Response {
     EventCommitted {
         /// Stable event position.
         position: u64,
-        /// `memory`, `buffered`, or `durable`.
-        durability: String,
+        /// Explicit durability class.
+        durability: WireDurability,
     },
     /// Submission resolution result.
     SubmissionResolved {
         /// Committed position, or `None` when definitively absent.
         position: Option<u64>,
         /// Original durability class when the submission committed.
-        durability: Option<String>,
+        durability: Option<WireDurability>,
     },
     /// Published blob identity.
     BlobStored {
@@ -613,6 +657,9 @@ pub enum ProtocolError {
     /// A network message kind byte has no assigned meaning.
     #[error("unknown Sea message kind {0}")]
     UnknownMessageKind(u8),
+    /// A durability byte has no assigned meaning.
+    #[error("unknown Sea durability {0}")]
+    UnknownDurability(u8),
     /// A known message kind is invalid on the selected logical stream.
     #[error("Sea message {kind:?} is invalid on {role:?} stream")]
     WrongStream { kind: MessageKind, role: StreamRole },

@@ -384,7 +384,7 @@ impl SeaAuthorSession for NativeSeaClient {
                 durability,
             } => Ok(EventReceipt {
                 position: EventPosition::new(position),
-                durability: durability_from_wire(&durability)?,
+                durability: durability_from_wire(durability),
             }),
             response => Err(response_error(response)),
         }
@@ -406,7 +406,7 @@ impl SeaAuthorSession for NativeSeaClient {
             } => match (position, durability) {
                 (Some(position), Some(durability)) => Ok(Some(EventReceipt {
                     position: EventPosition::new(position),
-                    durability: durability_from_wire(&durability)?,
+                    durability: durability_from_wire(durability),
                 })),
                 (None, None) => Ok(None),
                 _ => Err(SeaClientError::UnexpectedResponse),
@@ -577,12 +577,11 @@ fn snapshot_position_to_wire(position: SnapshotPosition) -> protocol::SnapshotPo
     }
 }
 
-fn durability_from_wire(value: &str) -> Result<Durability, SeaClientError> {
+const fn durability_from_wire(value: protocol::WireDurability) -> Durability {
     match value {
-        "memory" => Ok(Durability::Memory),
-        "buffered" => Ok(Durability::Buffered),
-        "durable" => Ok(Durability::Durable),
-        _ => Err(SeaClientError::UnexpectedResponse),
+        protocol::WireDurability::Memory => Durability::Memory,
+        protocol::WireDurability::Buffered => Durability::Buffered,
+        protocol::WireDurability::Durable => Durability::Durable,
     }
 }
 
