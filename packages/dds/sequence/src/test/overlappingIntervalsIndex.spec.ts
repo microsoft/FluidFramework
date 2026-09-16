@@ -26,24 +26,36 @@ describe("OverlappingIntervalsIndex", () => {
 	let createTestInterval: (p1: number, p2: number) => SequenceInterval;
 
 	/**
-	 * Renders intervals as `[start, end]` position pairs so that assertion failures report
-	 * something readable.
+	 * Renders intervals as `[start, end] (id)` so that assertion failures report something
+	 * readable.
 	 */
 	function describeIntervals(intervals: readonly SequenceInterval[]): string[] {
 		return intervals.map(
 			(interval) =>
 				`[${sharedString.localReferencePositionToPosition(
 					interval.start,
-				)}, ${sharedString.localReferencePositionToPosition(interval.end)}]`,
+				)}, ${sharedString.localReferencePositionToPosition(interval.end)}] (id ${interval.getIntervalId()})`,
 		);
 	}
 
+	/**
+	 * Asserts that `actual` holds the same interval instances as `expected`, in the same order.
+	 */
 	function assertIntervals(
 		actual: readonly SequenceInterval[],
 		expected: readonly SequenceInterval[],
 		message: string,
 	): void {
-		assert.deepEqual(describeIntervals(actual), describeIntervals(expected), message);
+		// Compares instances, not endpoints or structure: intervals sharing a start and end are
+		// still distinct entries, and comparing either rendered positions or object shape would
+		// fail to tell them apart.
+		const detail = `${message} (actual ${describeIntervals(actual).join(
+			", ",
+		)}; expected ${describeIntervals(expected).join(", ")})`;
+		assert.strictEqual(actual.length, expected.length, detail);
+		for (const [i, interval] of expected.entries()) {
+			assert.strictEqual(actual[i], interval, detail);
+		}
 	}
 
 	beforeEach(() => {
@@ -122,11 +134,18 @@ describe("OverlappingIntervalsIndex", () => {
 				index.add(interval);
 			}
 
+			const results = index.findOverlappingIntervals(10, 20);
+			// Three results which include all three intervals must be exactly those three, so
+			// there is no need to check distinctness separately. Their relative order depends on
+			// their generated IDs, so it isn't asserted here.
 			assert.equal(
-				index.findOverlappingIntervals(10, 20).length,
+				results.length,
 				3,
 				"expected intervals sharing endpoints to be stored individually",
 			);
+			for (const interval of [first, second, third]) {
+				assert(results.includes(interval), "expected every interval to be returned");
+			}
 		});
 
 		it("finds a document-spanning interval from a query at the end of the document", () => {

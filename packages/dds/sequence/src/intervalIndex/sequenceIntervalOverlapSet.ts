@@ -23,7 +23,7 @@ const compareEndpoints = (a: BaseSequenceInterval, b: BaseSequenceInterval): num
  * range?".
  *
  * The intervals are kept in an array sorted by {@link BaseSequenceInterval.compare} - by start
- * position, then end position, then interval id.
+ * position, then end position, then interval ID.
  *
  * An interval can only overlap the query if it starts at or before the query's end, so a binary
  * search narrows the search to the front of the array. Not every interval in that portion
@@ -57,10 +57,6 @@ export class SequenceIntervalOverlapSet {
 	 */
 	public get intervals(): readonly BaseSequenceInterval[] {
 		return this.ordered;
-	}
-
-	public get size(): number {
-		return this.ordered.length;
 	}
 
 	public isEmpty(): boolean {
@@ -118,21 +114,21 @@ export class SequenceIntervalOverlapSet {
 
 	/**
 	 * Locates an interval already in this set.
+	 *
+	 * `compareIntervals` orders on start, end and ID, so at most one entry can compare equal to
+	 * `interval`. Its ID is checked rather than its identity so that a second instance carrying
+	 * an ID already in this set is recognised as the interval it identifies.
+	 *
 	 * @returns the index holding `interval`, or undefined if this set does not contain it.
 	 */
 	private indexOf(interval: BaseSequenceInterval): number | undefined {
-		const id = interval.getIntervalId();
-		for (
-			let i = this.lowerBound(interval, compareIntervals);
-			i < this.ordered.length && compareIntervals(this.ordered[i], interval) === 0;
-			i++
-		) {
-			const candidate = this.ordered[i];
-			if (candidate === interval || candidate.getIntervalId() === id) {
-				return i;
-			}
-		}
-		return undefined;
+		const index = this.lowerBound(interval, compareIntervals);
+		const candidate = this.ordered[index];
+		return candidate !== undefined &&
+			compareIntervals(candidate, interval) === 0 &&
+			candidate.getIntervalId() === interval.getIntervalId()
+			? index
+			: undefined;
 	}
 
 	public add(interval: BaseSequenceInterval): void {
@@ -261,7 +257,7 @@ export class SequenceIntervalOverlapSet {
 
 	/**
 	 * Finds the intervals spanning exactly the same range as the given interval.
-	 * @returns every interval whose start and end both match `query`'s, in order. Interval ids
+	 * @returns every interval whose start and end both match `query`'s, in order. Interval IDs
 	 * are not considered, so an interval created solely to describe the range being searched for
 	 * will still match the intervals in this set.
 	 */
