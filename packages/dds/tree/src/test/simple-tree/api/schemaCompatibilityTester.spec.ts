@@ -265,6 +265,29 @@ describe("getSchemaIncompatibilityDetails", () => {
 });
 
 describe("checkSchemaCompatibility", () => {
+	it("reports leaf value differences on all sides and in each blocker subset", () => {
+		const identifier = "LeafValueDiagnostics";
+		const view = new LeafNodeSchema(identifier, ValueSchema.Number);
+		const stored = toUpgradeSchema(new LeafNodeSchema(identifier, ValueSchema.String));
+		const status = expectCompatibility(
+			{ view, stored },
+			{ canView: false, canUpgrade: false, isEquivalent: false },
+		);
+		assert.deepEqual(status.allDiscrepancies, [
+			{
+				mismatch: "valueSchema",
+				location: { nodeType: identifier },
+				view: "Number",
+				stored: "String",
+				target: "Number",
+			},
+		]);
+		assert(!status.canView && !status.canUpgrade && !status.isEquivalent);
+		assert.deepEqual(status.viewDiscrepancies, status.allDiscrepancies);
+		assert.deepEqual(status.upgradeDiscrepancies, status.allDiscrepancies);
+		assert.deepEqual(status.equivalenceDiscrepancies, status.allDiscrepancies);
+	});
+
 	it("does not classify staged types as viewing blockers for an absent field", () => {
 		const view = factory.objectAlpha("AbsentStagedField", {
 			value: factory.types([factory.number, factory.staged(factory.string)]),
@@ -875,10 +898,28 @@ describe("checkSchemaCompatibility", () => {
 					y: factory.number,
 					z: factory.optional(factory.number),
 				}) {}
-				expectCompatibility(
+				const status = expectCompatibility(
 					{ view: Point2D, stored: toUpgradeSchema(Point3D) },
 					{ canView: true, canUpgrade: false, isEquivalent: false },
 				);
+				const policyDifferences = status.allDiscrepancies.filter(
+					(entry) => entry.mismatch === "allowUnknownOptionalFields",
+				);
+				assert.deepEqual(policyDifferences, [
+					{
+						mismatch: "allowUnknownOptionalFields",
+						location: { nodeType: Point2D.identifier },
+						view: true,
+						stored: false,
+						target: false,
+					},
+				]);
+				assert(!status.canUpgrade && !status.isEquivalent);
+				assert.equal("viewDiscrepancies" in status, false);
+				for (const entry of policyDifferences) {
+					assert(!status.upgradeDiscrepancies.includes(entry));
+					assert(!status.equivalenceDiscrepancies.includes(entry));
+				}
 			});
 		});
 
@@ -1223,9 +1264,30 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 		);
 
 		const config = new TreeViewConfigurationAlpha({ schema: schemaStaged });
-		const { enabledUpgrades } = checkSchemaCompatibility(config, stored);
+		const status = checkSchemaCompatibility(config, stored);
+		const { enabledUpgrades } = status;
 		assert.equal(enabledUpgrades.size, 1);
 		assert.equal(enabledUpgrades.get(optionalUpgrade), "enabled");
+		assert.deepEqual(status.allDiscrepancies, [
+			{
+				mismatch: "fieldKind",
+				location: { nodeType: ObjStaged.identifier, fieldKey: "value" },
+				view: "Optional",
+				stored: "Optional",
+				target: "Value",
+			},
+			{
+				mismatch: "stagedOptional",
+				location: { nodeType: ObjStaged.identifier, fieldKey: "value" },
+				view: true,
+				stored: false,
+				target: false,
+			},
+		]);
+		assert(status.canView && !status.canUpgrade && !status.isEquivalent);
+		assert.equal("viewDiscrepancies" in status, false);
+		assert.deepEqual(status.upgradeDiscrepancies, [status.allDiscrepancies[0]]);
+		assert.deepEqual(status.equivalenceDiscrepancies, [status.allDiscrepancies[0]]);
 	});
 
 	it("does not detect staged optional when stored field is still required", () => {
@@ -1245,8 +1307,42 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 		);
 
 		const config = new TreeViewConfigurationAlpha({ schema: schemaStaged });
-		const { enabledUpgrades } = checkSchemaCompatibility(config, stored);
+		const status = checkSchemaCompatibility(config, stored);
+		const { enabledUpgrades } = status;
 		assert.equal(enabledUpgrades.size, 0);
+		const stagedDifference = {
+			mismatch: "stagedOptional",
+			location: { nodeType: ObjStaged.identifier, fieldKey: "value" },
+			view: true,
+			stored: false,
+			target: false,
+		};
+		assert.deepEqual(
+			status.allDiscrepancies.filter((entry) => entry.mismatch === "stagedOptional"),
+			[stagedDifference],
+		);
+		assert(status.canView && status.canUpgrade && status.isEquivalent);
+		assert.equal("equivalenceDiscrepancies" in status, false);
+
+		const upgrading = checkSchemaCompatibility(
+			config,
+			stored,
+			StagedSchemaUpgradePolicy.enabledStagedUpgrades(optionalUpgrade),
+		);
+		assert.deepEqual(
+			upgrading.allDiscrepancies.filter((entry) => entry.mismatch === "stagedOptional"),
+			[stagedDifference],
+		);
+		assert(upgrading.canView && upgrading.canUpgrade && !upgrading.isEquivalent);
+		assert.deepEqual(upgrading.equivalenceDiscrepancies, [
+			{
+				mismatch: "fieldKind",
+				location: { nodeType: ObjStaged.identifier, fieldKey: "value" },
+				view: "Optional",
+				stored: "Value",
+				target: "Optional",
+			},
+		]);
 	});
 
 	it("returns multiple upgrades when several are enabled", () => {
