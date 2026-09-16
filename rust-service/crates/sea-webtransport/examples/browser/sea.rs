@@ -13,6 +13,7 @@ use std::{
     sync::Arc,
 };
 
+use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{
     StreamExt as _,
@@ -32,15 +33,15 @@ use sea_memory::MemoryStream;
 use sea_sequencer::session::{LocalSequencer, LocalSession};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
-use web_sys::{
-    ReadableStream, ReadableStreamDefaultReader, WebTransport, WebTransportBidirectionalStream,
-    WritableStream, WritableStreamDefaultWriter,
-};
 
-use crate::{
-    AsyncRequestTransport, call_method, open_transport, read_bounded, sea_protocol_v1 as protocol,
+use crate::{AsyncRequestTransport, call_method, sea_protocol_v1 as protocol};
+use sea_webtransport::{
+    client::{Client, ClientError, ClientState, ResponseStream},
+    transport::{
+        BidirectionalStream, ClientTransport,
+        browser::{BrowserBidirectionalStream, BrowserTransport},
+    },
 };
-use sea_webtransport::client::{ClientState, PendingCorrelation};
 
 /// A typed immutable blob-tree identity.
 #[wasm_bindgen]
@@ -309,25 +310,27 @@ impl SeaLoadItem {
 /// Cancellable typed load or snapshot stream over an injected transport.
 #[wasm_bindgen]
 pub struct SeaInjectedStream {
-    transport: JsValue,
-    request_id: u64,
-    pending: RefCell<Option<PendingCorrelation>>,
-    limits: protocol::Limits,
+    inner: RefCell<Option<ResponseStream<InjectedBidirectionalStream>>>,
     cancelled: Cell<bool>,
 }
 
 /// Raw browser WebTransport adapter consumed by [`SeaInjectedClient`].
 #[wasm_bindgen]
 pub struct SeaBrowserTransport {
-    transport: WebTransport,
+    transport: Rc<BrowserTransport>,
     max_frame_bytes: usize,
+}
+
+/// Raw browser WebTransport bidirectional byte stream.
+#[wasm_bindgen]
+pub struct SeaBrowserBidirectionalStream {
+    inner: RefCell<Option<BrowserBidirectionalStream>>,
 }
 
 /// Long-lived browser WebTransport stream for ordered event submissions.
 #[wasm_bindgen]
 pub struct SeaBrowserSubmissionStream {
-    writer: WritableStreamDefaultWriter,
-    reader: ReadableStreamDefaultReader,
+    stream: RefCell<Option<BrowserBidirectionalStream>>,
     buffered: RefCell<Vec<u8>>,
     max_frame_bytes: usize,
     closed: Cell<bool>,
@@ -352,55 +355,26 @@ impl SeaBrowserTransport {
             return Err(js_error("certificate hash must contain exactly 32 bytes"));
         }
         Ok(Self {
-            transport: open_transport(&url, &certificate_hash).await?,
+            transport: Rc::new(BrowserTransport::connect(&url, &certificate_hash).await?),
             max_frame_bytes,
         })
     }
 
-    /// Sends one complete Sea request and returns one complete response.
-    pub async fn request(&self, frame: Uint8Array) -> Result<Uint8Array, JsValue> {
-        validate_request(&frame.to_vec(), self.max_frame_bytes)?;
-        let stream = self.open_stream(&frame.to_vec()).await?;
-        let readable: ReadableStream = stream.readable().unchecked_into();
-        let reader: ReadableStreamDefaultReader = readable.get_reader().unchecked_into();
-        let response = read_bounded(&reader, self.max_frame_bytes).await?;
-        reader.release_lock();
-        protocol::decode::<protocol::Frame<protocol::Response>>(
-            &response,
-            protocol::Limits {
-                max_frame_bytes: self.max_frame_bytes,
-            },
-        )
-        .map_err(|error| js_error(&error.to_string()))?;
-        Ok(Uint8Array::from(response.as_slice()))
-    }
-
-    /// Opens one complete Sea load or snapshot-subscription request.
-    pub async fn subscribe(&self, frame: Uint8Array) -> Result<SeaBrowserStream, JsValue> {
-        validate_request(&frame.to_vec(), self.max_frame_bytes)?;
-        let stream = self.open_stream(&frame.to_vec()).await?;
-        let readable: ReadableStream = stream.readable().unchecked_into();
-        Ok(SeaBrowserStream {
-            reader: readable.get_reader().unchecked_into(),
-            buffered: RefCell::new(Vec::new()),
-            max_frame_bytes: self.max_frame_bytes,
-            cancelled: Cell::new(false),
+    /// Opens one raw browser WebTransport bidirectional stream.
+    #[wasm_bindgen(js_name = openBidirectional)]
+    pub async fn open_bidirectional(&self) -> Result<SeaBrowserBidirectionalStream, JsValue> {
+        Ok(SeaBrowserBidirectionalStream {
+            inner: RefCell::new(Some(self.transport.open_bidirectional().await?)),
         })
     }
 
     /// Opens one long-lived ordered event-submission stream.
     #[wasm_bindgen(js_name = openSubmissionStream)]
     pub async fn open_submission_stream(&self) -> Result<SeaBrowserSubmissionStream, JsValue> {
-        let stream = JsFuture::from(self.transport.create_bidirectional_stream())
-            .await?
-            .dyn_into::<WebTransportBidirectionalStream>()?;
-        let writable: WritableStream = stream.writable().unchecked_into();
-        let writer: WritableStreamDefaultWriter = writable.get_writer()?.unchecked_into();
-        JsFuture::from(writer.write_with_chunk(Uint8Array::from(&b"SEAS"[..]).as_ref())).await?;
-        let readable: ReadableStream = stream.readable().unchecked_into();
+        let mut stream = self.transport.open_bidirectional().await?;
+        stream.send(b"SEAS").await?;
         Ok(SeaBrowserSubmissionStream {
-            writer,
-            reader: readable.get_reader().unchecked_into(),
+            stream: RefCell::new(Some(stream)),
             buffered: RefCell::new(Vec::new()),
             max_frame_bytes: self.max_frame_bytes,
             closed: Cell::new(false),
@@ -409,7 +383,7 @@ impl SeaBrowserTransport {
 
     /// Closes the browser WebTransport connection.
     pub fn disconnect(&self) {
-        self.transport.close();
+        let _ = self.transport.disconnect();
     }
 }
 
@@ -427,79 +401,74 @@ impl SeaBrowserSubmissionStream {
         let mut outgoing = Vec::with_capacity(4 + frame.len());
         outgoing.extend_from_slice(&length.to_be_bytes());
         outgoing.extend_from_slice(&frame);
-        JsFuture::from(
-            self.writer
-                .write_with_chunk(Uint8Array::from(outgoing.as_slice()).as_ref()),
-        )
-        .await?;
+        let mut stream = self
+            .stream
+            .take()
+            .ok_or_else(|| js_error("Sea submission stream is closed"))?;
+        stream.send(&outgoing).await?;
         let mut buffered = self.buffered.take();
-        let response = read_length_delimited(&self.reader, &mut buffered, self.max_frame_bytes)
+        let response = read_length_delimited(&mut stream, &mut buffered, self.max_frame_bytes)
             .await?
             .ok_or_else(|| js_error("Sea submission stream ended before its receipt"))?;
         self.buffered.replace(buffered);
+        self.stream.replace(Some(stream));
         Ok(Uint8Array::from(response.as_slice()))
     }
 
     /// Closes the author stream and releases its browser stream locks.
     pub async fn close(&self) -> Result<(), JsValue> {
         if !self.closed.replace(true) {
-            JsFuture::from(self.writer.close()).await?;
-            self.writer.release_lock();
-            JsFuture::from(self.reader.cancel()).await?;
-            self.reader.release_lock();
+            if let Some(mut stream) = self.stream.take() {
+                stream.cancel().await?;
+            }
         }
         Ok(())
     }
 }
 
-impl SeaBrowserTransport {
-    async fn open_stream(
-        &self,
-        outgoing: &[u8],
-    ) -> Result<WebTransportBidirectionalStream, JsValue> {
-        let stream = JsFuture::from(self.transport.create_bidirectional_stream())
-            .await?
-            .dyn_into::<WebTransportBidirectionalStream>()?;
-        let writable: WritableStream = stream.writable().unchecked_into();
-        let writer = writable.get_writer()?;
-        let outgoing = Uint8Array::from(outgoing);
-        JsFuture::from(writer.write_with_chunk(outgoing.as_ref())).await?;
-        JsFuture::from(writer.close()).await?;
-        writer.release_lock();
-        Ok(stream)
-    }
-}
-
-/// Raw browser stream returning complete Sea response frames.
 #[wasm_bindgen]
-pub struct SeaBrowserStream {
-    reader: ReadableStreamDefaultReader,
-    buffered: RefCell<Vec<u8>>,
-    max_frame_bytes: usize,
-    cancelled: Cell<bool>,
-}
-
-#[wasm_bindgen]
-impl SeaBrowserStream {
-    /// Returns the next complete Sea response frame.
-    pub async fn next(&self) -> Result<Option<Uint8Array>, JsValue> {
-        if self.cancelled.get() {
-            return Err(js_error("Sea browser stream is cancelled"));
-        }
-        let mut buffered = self.buffered.take();
-        let result = read_length_delimited(&self.reader, &mut buffered, self.max_frame_bytes).await;
-        self.buffered.replace(buffered);
-        Ok(result?.map(|frame| Uint8Array::from(frame.as_slice())))
+impl SeaBrowserBidirectionalStream {
+    /// Sends one arbitrary byte chunk.
+    pub async fn send(&self, bytes: Uint8Array) -> Result<(), JsValue> {
+        let mut stream = take_browser_stream(&self.inner)?;
+        let result = stream.send(&bytes.to_vec()).await;
+        self.inner.replace(Some(stream));
+        result?;
+        Ok(())
     }
 
-    /// Cancels the stream and releases its reader.
+    /// Finishes the stream's send direction.
+    pub async fn finish(&self) -> Result<(), JsValue> {
+        let mut stream = take_browser_stream(&self.inner)?;
+        let result = stream.finish().await;
+        self.inner.replace(Some(stream));
+        result?;
+        Ok(())
+    }
+
+    /// Receives the next arbitrary byte chunk.
+    pub async fn receive(&self) -> Result<Option<Uint8Array>, JsValue> {
+        let mut stream = take_browser_stream(&self.inner)?;
+        let result = stream.receive().await;
+        self.inner.replace(Some(stream));
+        Ok(result?.map(|bytes| Uint8Array::from(bytes.as_slice())))
+    }
+
+    /// Cancels both stream directions and releases their locks.
     pub async fn cancel(&self) -> Result<(), JsValue> {
-        if !self.cancelled.replace(true) {
-            JsFuture::from(self.reader.cancel()).await?;
-            self.reader.release_lock();
+        if let Some(mut stream) = self.inner.take() {
+            stream.cancel().await?;
         }
         Ok(())
     }
+}
+
+fn take_browser_stream(
+    stream: &RefCell<Option<BrowserBidirectionalStream>>,
+) -> Result<BrowserBidirectionalStream, JsValue> {
+    stream
+        .take()
+        .ok_or_else(|| js_error("Sea browser stream is unavailable"))
 }
 
 #[wasm_bindgen]
@@ -509,49 +478,37 @@ impl SeaInjectedStream {
         if self.cancelled.get() {
             return Err(js_error("Sea stream is cancelled"));
         }
-        let incoming = call_method(&self.transport, "next", &[])?;
-        let incoming = JsFuture::from(Promise::resolve(&incoming)).await?;
-        if incoming.is_null() || incoming.is_undefined() {
-            if let Some(pending) = self.pending.take() {
-                pending
-                    .complete(self.request_id)
-                    .map_err(|error| js_error(&error.to_string()))?;
-            }
+        let mut stream = self
+            .inner
+            .take()
+            .ok_or_else(|| js_error("Sea stream has ended"))?;
+        let response = stream.next().await.map_err(client_error)?;
+        if response.is_some() {
+            self.inner.replace(Some(stream));
+        }
+        let Some(response) = response else {
             return Ok(None);
-        }
-        if !incoming.is_instance_of::<Uint8Array>() {
-            return Err(js_error("Sea stream frame is not a Uint8Array"));
-        }
-        let frame = protocol::decode::<protocol::Frame<protocol::Response>>(
-            &Uint8Array::new(&incoming).to_vec(),
-            self.limits,
-        )
-        .map_err(|error| js_error(&error.to_string()))?;
-        if frame.request_id != self.request_id {
-            return Err(js_error("Sea stream request identity did not match"));
-        }
-        if let protocol::Response::Error { message, .. } = frame.message {
+        };
+        if let protocol::Response::Error { message, .. } = response {
             return Err(js_error(&message));
         }
         if !matches!(
-            frame.message,
+            response,
             protocol::Response::LoadSnapshot(_)
                 | protocol::Response::LoadEvent(_)
                 | protocol::Response::CaughtUp(_)
         ) {
             return Err(js_error("Sea stream response is not a load item"));
         }
-        Ok(Some(SeaLoadItem {
-            inner: frame.message,
-        }))
+        Ok(Some(SeaLoadItem { inner: response }))
     }
 
     /// Cancels the stream and injected transport.
     pub async fn cancel(&self) -> Result<(), JsValue> {
         if !self.cancelled.replace(true) {
-            self.pending.take();
-            let cancelled = call_method(&self.transport, "cancel", &[])?;
-            JsFuture::from(Promise::resolve(&cancelled)).await?;
+            if let Some(stream) = self.inner.take() {
+                stream.cancel().await.map_err(client_error)?;
+            }
         }
         Ok(())
     }
@@ -561,6 +518,7 @@ impl SeaInjectedStream {
 #[wasm_bindgen]
 pub struct SeaInjectedClient {
     transport: Rc<RefCell<JsValue>>,
+    client: Client<InjectedTransport>,
     state: Arc<ClientState>,
     limits: protocol::Limits,
 }
@@ -572,6 +530,67 @@ pub struct SeaInjectedSubmissionStream {
     state: Arc<ClientState>,
     limits: protocol::Limits,
     closed: Cell<bool>,
+}
+
+#[derive(Clone, Debug)]
+struct InjectedTransport {
+    inner: Rc<RefCell<JsValue>>,
+}
+
+#[derive(Debug)]
+struct InjectedBidirectionalStream {
+    inner: JsValue,
+}
+
+#[async_trait(?Send)]
+impl ClientTransport for InjectedTransport {
+    type Stream = InjectedBidirectionalStream;
+    type Error = JsValue;
+
+    async fn open_bidirectional(&self) -> Result<Self::Stream, Self::Error> {
+        let stream = call_method(&self.inner.borrow(), "openBidirectional", &[])?;
+        let stream = JsFuture::from(Promise::resolve(&stream)).await?;
+        Ok(InjectedBidirectionalStream { inner: stream })
+    }
+
+    fn disconnect(&self) -> Result<(), Self::Error> {
+        call_method(&self.inner.borrow(), "disconnect", &[]).map(|_| ())
+    }
+}
+
+#[async_trait(?Send)]
+impl BidirectionalStream for InjectedBidirectionalStream {
+    type Error = JsValue;
+
+    async fn send(&mut self, bytes: &[u8]) -> Result<(), Self::Error> {
+        let sent = call_method(&self.inner, "send", &[Uint8Array::from(bytes).into()])?;
+        JsFuture::from(Promise::resolve(&sent)).await?;
+        Ok(())
+    }
+
+    async fn finish(&mut self) -> Result<(), Self::Error> {
+        let finished = call_method(&self.inner, "finish", &[])?;
+        JsFuture::from(Promise::resolve(&finished)).await?;
+        Ok(())
+    }
+
+    async fn receive(&mut self) -> Result<Option<Vec<u8>>, Self::Error> {
+        let received = call_method(&self.inner, "receive", &[])?;
+        let received = JsFuture::from(Promise::resolve(&received)).await?;
+        if received.is_null() || received.is_undefined() {
+            return Ok(None);
+        }
+        if !received.is_instance_of::<Uint8Array>() {
+            return Err(js_error("Sea transport chunk is not a Uint8Array"));
+        }
+        Ok(Some(Uint8Array::new(&received).to_vec()))
+    }
+
+    async fn cancel(&mut self) -> Result<(), Self::Error> {
+        let cancelled = call_method(&self.inner, "cancel", &[])?;
+        JsFuture::from(Promise::resolve(&cancelled)).await?;
+        Ok(())
+    }
 }
 
 /// Shared in-process memory service for local generated Sea clients.
@@ -998,10 +1017,21 @@ impl SeaInjectedClient {
                 "max_frame_bytes is smaller than the Sea frame header",
             ));
         }
+        let transport = Rc::new(RefCell::new(transport.into()));
+        let state = Arc::new(ClientState::default());
+        let limits = protocol::Limits { max_frame_bytes };
+        let client = Client::with_state(
+            InjectedTransport {
+                inner: Rc::clone(&transport),
+            },
+            Arc::clone(&state),
+            limits,
+        );
         Ok(Self {
-            transport: Rc::new(RefCell::new(transport.into())),
-            state: Arc::new(ClientState::default()),
-            limits: protocol::Limits { max_frame_bytes },
+            transport,
+            client,
+            state,
+            limits,
         })
     }
 
@@ -1283,21 +1313,24 @@ impl SeaInjectedClient {
     pub async fn close(&self) -> Result<(), JsValue> {
         let response = self.request(protocol::Request::Close).await?;
         expect_acknowledged(&response)?;
-        self.state
+        self.client
             .close()
             .map_err(|error| js_error(&error.to_string()))
     }
 
     /// Replaces the injected transport after an explicit reconnect.
     #[wasm_bindgen(js_name = replaceTransport)]
-    pub fn replace_transport(&self, transport: AsyncRequestTransport) {
+    pub fn replace_transport(&self, transport: AsyncRequestTransport) -> Result<(), JsValue> {
+        self.client
+            .reconnect()
+            .map_err(|error| js_error(&error.to_string()))?;
         self.transport.replace(transport.into());
+        Ok(())
     }
 
     /// Forwards explicit disconnection to the injected transport.
     pub fn disconnect(&self) -> Result<(), JsValue> {
-        let transport = self.transport.borrow();
-        call_method(&transport, "disconnect", &[]).map(|_| ())
+        self.client.disconnect().map_err(client_error)
     }
 }
 
@@ -1375,66 +1408,32 @@ impl SeaInjectedSubmissionStream {
 
 impl SeaInjectedClient {
     async fn request(&self, request: protocol::Request) -> Result<protocol::Response, JsValue> {
-        let pending = self
-            .state
-            .begin(request.stream_role())
-            .map_err(|error| js_error(&error.to_string()))?;
-        let request_id = pending.id();
-        let outgoing = protocol::encode(
-            &protocol::Frame {
-                request_id,
-                message: request,
-            },
-            self.limits,
-        )
-        .map_err(|error| js_error(&error.to_string()))?;
-        let incoming = call_method(
-            &self.transport.borrow(),
-            "request",
-            &[Uint8Array::from(outgoing.as_slice()).into()],
-        )?;
-        let incoming = JsFuture::from(Promise::resolve(&incoming)).await?;
-        if !incoming.is_instance_of::<Uint8Array>() {
-            return Err(js_error("Sea response is not a Uint8Array"));
+        let response = self.client.request(request).await.map_err(client_error)?;
+        match response {
+            protocol::Response::Error { message, .. } => Err(js_error(&message)),
+            response => Ok(response),
         }
-        let response = decode_response(
-            request_id,
-            &Uint8Array::new(&incoming).to_vec(),
-            self.limits,
-        );
-        pending
-            .complete(request_id)
-            .map_err(|error| js_error(&error.to_string()))?;
-        response
     }
 
     async fn open_stream(&self, request: protocol::Request) -> Result<SeaInjectedStream, JsValue> {
-        let pending = self
-            .state
-            .begin(request.stream_role())
-            .map_err(|error| js_error(&error.to_string()))?;
-        let request_id = pending.id();
-        let outgoing = protocol::encode(
-            &protocol::Frame {
-                request_id,
-                message: request,
-            },
-            self.limits,
-        )
-        .map_err(|error| js_error(&error.to_string()))?;
-        let transport = call_method(
-            &self.transport.borrow(),
-            "subscribe",
-            &[Uint8Array::from(outgoing.as_slice()).into()],
-        )?;
-        let transport = JsFuture::from(Promise::resolve(&transport)).await?;
+        let stream = self
+            .client
+            .request_stream(request)
+            .await
+            .map_err(client_error)?;
         Ok(SeaInjectedStream {
-            transport,
-            request_id,
-            pending: RefCell::new(Some(pending)),
-            limits: self.limits,
+            inner: RefCell::new(Some(stream)),
             cancelled: Cell::new(false),
         })
+    }
+}
+
+fn client_error(error: ClientError<JsValue>) -> JsValue {
+    match error {
+        ClientError::State(error) => js_error(&error.to_string()),
+        ClientError::Protocol(error) => js_error(&error.to_string()),
+        ClientError::Transport(error) => error,
+        ClientError::ResponseEnded => js_error("Sea response stream ended before its response"),
     }
 }
 
@@ -1464,7 +1463,7 @@ fn validate_request(bytes: &[u8], max_frame_bytes: usize) -> Result<(), JsValue>
 }
 
 async fn read_length_delimited(
-    reader: &ReadableStreamDefaultReader,
+    stream: &mut BrowserBidirectionalStream,
     buffered: &mut Vec<u8>,
     max_frame_bytes: usize,
 ) -> Result<Option<Vec<u8>>, JsValue> {
@@ -1488,22 +1487,16 @@ async fn read_length_delimited(
                 return Ok(Some(frame));
             }
         }
-        let result = JsFuture::from(reader.read()).await?;
-        let done = Reflect::get(&result, &JsValue::from_str("done"))?
-            .as_bool()
-            .ok_or_else(|| js_error("browser stream returned an invalid done flag"))?;
-        if done {
+        let Some(chunk) = stream.receive().await? else {
             return if buffered.is_empty() {
                 Ok(None)
             } else {
                 Err(js_error("Sea stream ended in a partial frame"))
             };
-        }
-        let value = Reflect::get(&result, &JsValue::from_str("value"))?;
-        let chunk = Uint8Array::new(&value);
+        };
         let next_length = buffered
             .len()
-            .checked_add(chunk.length() as usize)
+            .checked_add(chunk.len())
             .ok_or_else(|| js_error("Sea stream buffer length overflow"))?;
         let max_buffered = max_frame_bytes
             .checked_add(4)
@@ -1511,8 +1504,7 @@ async fn read_length_delimited(
         if next_length > max_buffered {
             return Err(js_error("Sea stream buffer exceeds its configured limit"));
         }
-        buffered.resize(next_length, 0);
-        chunk.copy_to(&mut buffered[next_length - chunk.length() as usize..]);
+        buffered.extend_from_slice(&chunk);
     }
 }
 

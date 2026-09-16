@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 6a. Establish the shared client.
-- **Last completed checkpoint:** 5. Introduce the centralized network message codec.
-- **Last validation:** Checkpoint 5 formatting, strict workspace Clippy, Rust workspace build/tests/docs, counter and benchmark smoke, WASM/Node and TypeScript validation, real Chromium WebTransport, policy, and repository build passed on 2026-09-16.
-- **Latest checkpoint notes:** Checkpoint 6a introduced platform-independent `ClientState`. Native and injected WASM clients now share request allocation, per-role correlation tracking, cancellation-safe pending guards, mismatch validation, and terminal close rejection. Dropping a native or injected response stream abandons its pending correlation. Logical stream ownership, reconnect transitions, and transport primitives remain in the next 6a slice.
+- **Current checkpoint:** 6b. Event stream.
+- **Last completed checkpoint:** 6a. Establish the shared client.
+- **Last validation:** Checkpoint 6a formatting, paired client/server tests, strict native and WASM Clippy, generated WASM/Node behavior, TypeScript typecheck, and the real Chromium 152 WebTransport flow passed on 2026-09-16.
+- **Latest checkpoint notes:** Platform-independent `Client` and `ClientState` own request encoding, incremental response decoding, per-role correlation, stream cancellation, explicit connected/disconnected/closed transitions, and recovery admission. Native and browser modules implement only connection and bidirectional byte-stream primitives. Native Rust and injected WASM clients delegate unary and response-stream behavior to the shared engine. The temporary `SEAS` author stream remains isolated until checkpoint 6c.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 6a. Establish the shared client.
+- **Next checkpoint:** 6b. Event stream.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -554,11 +554,11 @@ Do not retain the old per-operation implementation after its final consumer move
 
 #### 6a. Establish the shared client
 
-- [ ] Move connection state, frame correlation, logical-stream ownership, recovery, and close behavior into one platform-independent `client` module.
-- [ ] Define the narrow internal transport interface used by that client.
-- [ ] Implement only connection and bidirectional-stream primitives in the native and browser transport modules.
-- [ ] Make native Rust and WASM exports delegate to the same client state machines.
-- [ ] Run the reusable observable-behavior suite through both transport implementations.
+- [x] Move connection state, frame correlation, logical-stream ownership, recovery, and close behavior into one platform-independent `client` module.
+- [x] Define the narrow internal transport interface used by that client.
+- [x] Implement only connection and bidirectional-stream primitives in the native and browser transport modules.
+- [x] Make native Rust and WASM exports delegate to the same client state machines.
+- [x] Run the reusable observable-behavior suite through both transport implementations.
 
 #### 6b. Event stream
 
