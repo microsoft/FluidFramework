@@ -299,13 +299,9 @@ export function parseCompactSnapshotResponse(
 	);
 
 	const snapshotNode = records.snapshot;
-	if (snapshotNode === undefined) {
-		throw new Error("Compact snapshot is missing the snapshot record");
-	}
+	assertNodeCoreInstance(snapshotNode, "snapshot should be of type NodeCore");
 	const blobsNode = records.blobs;
-	if (blobsNode === undefined) {
-		throw new Error("Compact snapshot is missing the blobs record");
-	}
+	assertNodeCoreInstance(blobsNode, "blobs should be of type NodeCore");
 
 	const [snapshot, durationSnapshotTree] = measure(() => readSnapshotSection(snapshotNode));
 	const [blobContents, durationBlobs] = measure(() => readBlobSection(blobsNode));
