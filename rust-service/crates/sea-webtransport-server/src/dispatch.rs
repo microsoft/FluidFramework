@@ -9,9 +9,9 @@ use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, Durability, ErrorKind,
     Event, EventPosition, SnapshotId,
     archive::{
-        EventSubmission, LoadEvent, OperationId, PublishedSnapshot, SeaSession,
-        Snapshot as ArchiveSnapshot, SnapshotPosition as ArchiveSnapshotPosition,
-        SnapshotPublication,
+        EventSubmission, LoadEvent, OperationId, PublishedSnapshot, SeaArchive, SeaAuthorSession,
+        SeaEventSubscription, SeaService, SeaSnapshotCoordinator, Snapshot as ArchiveSnapshot,
+        SnapshotPosition as ArchiveSnapshotPosition, SnapshotPublication,
     },
 };
 
@@ -19,12 +19,12 @@ use sea_webtransport::protocol;
 
 use crate::{SeaConnectionService, SeaResponseStream};
 
-/// Adapts one open [`SeaSession`] to typed wire requests.
-pub struct SessionDispatcher<S: SeaSession> {
+/// Adapts narrow Sea service responsibilities to typed wire requests.
+pub struct SessionDispatcher<S: SeaService> {
     session: Arc<S>,
 }
 
-impl<S: SeaSession> SessionDispatcher<S> {
+impl<S: SeaService> SessionDispatcher<S> {
     /// Wraps one already-open session.
     #[must_use]
     pub const fn new(session: Arc<S>) -> Self {
@@ -35,7 +35,13 @@ impl<S: SeaSession> SessionDispatcher<S> {
 #[async_trait]
 impl<S> SeaConnectionService for SessionDispatcher<S>
 where
-    S: SeaSession + Send + Sync + 'static,
+    S: SeaArchive
+        + SeaAuthorSession
+        + SeaEventSubscription
+        + SeaSnapshotCoordinator
+        + Send
+        + Sync
+        + 'static,
 {
     async fn request(&self, request: protocol::Request) -> protocol::Response {
         match self.request_inner(request).await {
@@ -100,7 +106,7 @@ where
 
 impl<S> SessionDispatcher<S>
 where
-    S: SeaSession,
+    S: SeaArchive + SeaAuthorSession + SeaEventSubscription + SeaSnapshotCoordinator,
 {
     async fn request_inner(
         &self,

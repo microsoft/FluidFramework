@@ -296,6 +296,93 @@ pub trait SessionBounds {}
 #[cfg(target_arch = "wasm32")]
 impl<T> SessionBounds for T {}
 
+/// Common classified error associated with one Sea service surface.
+pub trait SeaService: SessionBounds {
+    /// Classified service error.
+    type Error: ClassifiedError;
+}
+
+/// Archive-scoped content, historical reads, and snapshot lookup.
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+pub trait SeaArchive: SeaService {
+    /// Reads committed application events strictly after `after` through `through`.
+    async fn read(
+        &self,
+        after: Option<EventPosition>,
+        through: Option<EventPosition>,
+    ) -> Result<SessionStream<SessionCommittedEvent, Self::Error>, Self::Error>;
+
+    /// Publishes or deduplicates one immutable blob.
+    async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error>;
+
+    /// Fetches one authorized immutable blob.
+    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error>;
+
+    /// Publishes or deduplicates one immutable directory.
+    async fn put_directory(&self, directory: BlobDirectory)
+    -> Result<BlobDirectoryId, Self::Error>;
+
+    /// Fetches one authorized immutable directory.
+    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error>;
+
+    /// Returns one retained snapshot by publication identity.
+    async fn snapshot(&self, id: &SnapshotId) -> Result<Option<PublishedSnapshot>, Self::Error>;
+}
+
+/// Gap-free snapshot, catch-up, and live event delivery.
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+pub trait SeaEventSubscription: SeaService {
+    /// Starts a gap-free snapshot, catch-up, and live event stream.
+    async fn load(
+        &self,
+        required: Option<EventPosition>,
+    ) -> Result<SessionStream<LoadEvent, Self::Error>, Self::Error>;
+}
+
+/// Ordered author submission, ambiguity resolution, and lifecycle.
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+pub trait SeaAuthorSession: SeaService {
+    /// Submits one event under a stable retry identity.
+    async fn submit(&self, submission: EventSubmission) -> Result<EventReceipt, Self::Error>;
+
+    /// Resolves a possibly ambiguous event submission.
+    async fn resolve_submission(
+        &self,
+        operation_id: &OperationId,
+    ) -> Result<Option<EventReceipt>, Self::Error>;
+
+    /// Explicitly closes this author session.
+    async fn close(&self) -> Result<(), Self::Error>;
+}
+
+/// Snapshot lookup notifications, conditional publication, and ambiguity resolution.
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+pub trait SeaSnapshotCoordinator: SeaService {
+    /// Returns the latest retained snapshot.
+    async fn latest_snapshot(&self) -> Result<Option<PublishedSnapshot>, Self::Error>;
+
+    /// Conditionally publishes a snapshot under a stable retry identity.
+    async fn publish_snapshot(
+        &self,
+        publication: SnapshotPublication,
+    ) -> Result<PublishedSnapshot, Self::Error>;
+
+    /// Resolves a possibly ambiguous snapshot publication.
+    async fn resolve_snapshot_publication(
+        &self,
+        operation_id: &OperationId,
+    ) -> Result<Option<PublishedSnapshot>, Self::Error>;
+
+    /// Subscribes to latest-value snapshot updates.
+    async fn subscribe_snapshots(
+        &self,
+    ) -> Result<SessionStream<PublishedSnapshot, Self::Error>, Self::Error>;
+}
+
 /// Individual-user operations for one archive.
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
@@ -363,4 +450,116 @@ pub trait SeaSession: SessionBounds {
 
     /// Explicitly closes this logical session and its streams.
     async fn close(&self) -> Result<(), Self::Error>;
+}
+
+impl<S> SeaService for S
+where
+    S: SeaSession,
+{
+    type Error = S::Error;
+}
+
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S> SeaArchive for S
+where
+    S: SeaSession,
+{
+    async fn read(
+        &self,
+        after: Option<EventPosition>,
+        through: Option<EventPosition>,
+    ) -> Result<SessionStream<SessionCommittedEvent, Self::Error>, Self::Error> {
+        SeaSession::read(self, after, through).await
+    }
+
+    async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {
+        SeaSession::put_blob(self, payload).await
+    }
+
+    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
+        SeaSession::get_blob(self, id).await
+    }
+
+    async fn put_directory(
+        &self,
+        directory: BlobDirectory,
+    ) -> Result<BlobDirectoryId, Self::Error> {
+        SeaSession::put_directory(self, directory).await
+    }
+
+    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
+        SeaSession::get_directory(self, id).await
+    }
+
+    async fn snapshot(&self, id: &SnapshotId) -> Result<Option<PublishedSnapshot>, Self::Error> {
+        SeaSession::snapshot(self, id).await
+    }
+}
+
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S> SeaEventSubscription for S
+where
+    S: SeaSession,
+{
+    async fn load(
+        &self,
+        required: Option<EventPosition>,
+    ) -> Result<SessionStream<LoadEvent, Self::Error>, Self::Error> {
+        SeaSession::load(self, required).await
+    }
+}
+
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S> SeaAuthorSession for S
+where
+    S: SeaSession,
+{
+    async fn submit(&self, submission: EventSubmission) -> Result<EventReceipt, Self::Error> {
+        SeaSession::submit(self, submission).await
+    }
+
+    async fn resolve_submission(
+        &self,
+        operation_id: &OperationId,
+    ) -> Result<Option<EventReceipt>, Self::Error> {
+        SeaSession::resolve_submission(self, operation_id).await
+    }
+
+    async fn close(&self) -> Result<(), Self::Error> {
+        SeaSession::close(self).await
+    }
+}
+
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S> SeaSnapshotCoordinator for S
+where
+    S: SeaSession,
+{
+    async fn latest_snapshot(&self) -> Result<Option<PublishedSnapshot>, Self::Error> {
+        SeaSession::latest_snapshot(self).await
+    }
+
+    async fn publish_snapshot(
+        &self,
+        publication: SnapshotPublication,
+    ) -> Result<PublishedSnapshot, Self::Error> {
+        SeaSession::publish_snapshot(self, publication).await
+    }
+
+    async fn resolve_snapshot_publication(
+        &self,
+        operation_id: &OperationId,
+    ) -> Result<Option<PublishedSnapshot>, Self::Error> {
+        SeaSession::resolve_snapshot_publication(self, operation_id).await
+    }
+
+    async fn subscribe_snapshots(
+        &self,
+    ) -> Result<SessionStream<PublishedSnapshot, Self::Error>, Self::Error> {
+        SeaSession::subscribe_snapshots(self).await
+    }
 }
