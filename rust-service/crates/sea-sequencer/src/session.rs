@@ -946,6 +946,22 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn local_session_matches_observable_behavior() {
+        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
+            .await
+            .unwrap();
+        let session = sequencer
+            .open_session(
+                author(b"observable-author"),
+                session(b"observable-session"),
+                None,
+            )
+            .await
+            .unwrap();
+        sea_conformance::run_sea_session_observable_behavior(&session).await;
+    }
+
+    #[tokio::test]
     async fn local_sessions_retry_load_replace_and_recover() {
         let storage = Arc::new(MemoryStream::new());
         let sequencer = LocalSequencer::recover(Arc::clone(&storage)).await.unwrap();

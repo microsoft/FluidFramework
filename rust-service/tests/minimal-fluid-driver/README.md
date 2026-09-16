@@ -80,8 +80,10 @@ model individual generated packages without package-owned globs. The current
 declarative task already provides hash-based incremental execution, so this is a
 tooling refinement rather than a prerequisite for reliable client builds.
 
-The unit suite includes an injected TypeScript submission-stream fixture. It deterministically holds acknowledgements, rejects writes or responses, records stream and subscription disposal, and verifies unary fallback without requiring a live service.
-It also includes a summary-storage fixture that verifies mixed incremental tree and blob handles, attachment reuse and validation, historical snapshot loading, and stale-parent rejection.
+The generated Node suite exercises the process-local client, including cancellation of a pending read.
+The real Chromium harness exercises the injected client over `SeaBrowserTransport`, including persistent submission, stream cancellation, explicit disconnect, and reconnect.
+Rust transport tests inject fragmented, coalesced, delayed, reset, malformed, and abandoned-response inputs without requiring browser timing.
+The TypeScript unit suite also includes a summary-storage fixture that verifies mixed incremental tree and blob handles, attachment reuse and validation, historical snapshot loading, and stale-parent rejection.
 
 For Chromium, generate the existing browser harness certificate, start
 `sea-webtransport-server`, and run:

@@ -172,16 +172,7 @@ impl NativeSeaClient {
         )
         .await
         .map_err(|_| WebTransportError::Timeout)??;
-        let frame = protocol::decode::<protocol::Frame<protocol::Response>>(&response, limits)?;
-        if frame.request_id != request_id {
-            return Err(SeaClientError::UnexpectedResponse);
-        }
-        match frame.message {
-            protocol::Response::Error { kind, message } => {
-                Err(SeaClientError::Service(kind, message))
-            }
-            response => Ok(response),
-        }
+        decode_response_frame(request_id, &response, limits)
     }
 
     async fn stream_request(
@@ -217,17 +208,8 @@ impl NativeSeaClient {
                 else {
                     return Ok(None);
                 };
-                let frame =
-                    protocol::decode::<protocol::Frame<protocol::Response>>(&bytes, limits)?;
-                if frame.request_id != request_id {
-                    return Err(SeaClientError::UnexpectedResponse);
-                }
-                match frame.message {
-                    protocol::Response::Error { kind, message } => {
-                        Err(SeaClientError::Service(kind, message))
-                    }
-                    response => Ok(Some((response, receive))),
-                }
+                let response = decode_response_frame(request_id, &bytes, limits)?;
+                Ok(Some((response, receive)))
             },
         )))
     }
@@ -578,5 +560,72 @@ fn response_error(response: protocol::Response) -> SeaClientError {
     match response {
         protocol::Response::Error { kind, message } => SeaClientError::Service(kind, message),
         _ => SeaClientError::UnexpectedResponse,
+    }
+}
+
+fn decode_response_frame(
+    request_id: u64,
+    bytes: &[u8],
+    limits: protocol::Limits,
+) -> Result<protocol::Response, SeaClientError> {
+    let frame = protocol::decode::<protocol::Frame<protocol::Response>>(bytes, limits)?;
+    if frame.request_id != request_id {
+        return Err(SeaClientError::UnexpectedResponse);
+    }
+    match frame.message {
+        protocol::Response::Error { kind, message } => Err(SeaClientError::Service(kind, message)),
+        response => Ok(response),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{SeaClientError, decode_response_frame, load_from_wire};
+    use crate::protocol::{self, Frame, Limits, Response};
+
+    #[test]
+    fn response_frame_rejects_mismatched_request_id() {
+        let limits = Limits::default();
+        let bytes = protocol::encode(
+            &Frame {
+                request_id: 8,
+                message: Response::Acknowledged,
+            },
+            limits,
+        )
+        .expect("response encoding");
+        assert!(matches!(
+            decode_response_frame(7, &bytes, limits),
+            Err(SeaClientError::UnexpectedResponse)
+        ));
+    }
+
+    #[test]
+    fn response_frame_preserves_service_error() {
+        let limits = Limits::default();
+        let bytes = protocol::encode(
+            &Frame {
+                request_id: 7,
+                message: Response::Error {
+                    kind: protocol::ErrorKind::Conflict,
+                    message: "conflict".to_owned(),
+                },
+            },
+            limits,
+        )
+        .expect("response encoding");
+        assert!(matches!(
+            decode_response_frame(7, &bytes, limits),
+            Err(SeaClientError::Service(protocol::ErrorKind::Conflict, message))
+                if message == "conflict"
+        ));
+    }
+
+    #[test]
+    fn load_rejects_unexpected_response_kind() {
+        assert!(matches!(
+            load_from_wire(Response::Acknowledged),
+            Err(SeaClientError::UnexpectedResponse)
+        ));
     }
 }

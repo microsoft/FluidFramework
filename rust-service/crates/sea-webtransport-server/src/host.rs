@@ -277,16 +277,20 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::{net::SocketAddr, sync::Arc, time::Duration};
+    use std::{collections::BTreeMap, net::SocketAddr, sync::Arc, time::Duration};
 
     use bytes::Bytes;
-    use futures_util::StreamExt as _;
     use sea_core::{
-        Event,
-        archive::{AuthorId, EventSubmission, LoadEvent, OperationId, SeaSession, SessionId},
+        BlobDirectory, BlobTreeId,
+        archive::{AuthorId, EventReceipt, OperationId, SeaSession, SessionId},
     };
-    use sea_webtransport::{NativeSeaClient, ShutdownMode, TransportConfig, WebTransportServer};
-    use wtransport::Identity;
+    use sea_webtransport::{
+        NativeSeaClient, ShutdownMode, TransportConfig, WebTransportServer, protocol,
+    };
+    use tokio::time::timeout;
+    use wtransport::{
+        ClientConfig, Connection, Endpoint, Identity, endpoint::endpoint_side::Client,
+    };
 
     use super::{BuiltInSeaHost, StorageMode};
 
@@ -332,30 +336,54 @@ mod tests {
             )
             .await
             .unwrap();
-            let receipt = client
-                .submit(EventSubmission {
-                    operation_id: OperationId::new(Bytes::from_static(b"operation")).unwrap(),
-                    reference: None,
-                    event: Event {
-                        payload: Bytes::from_static(b"payload"),
-                        blob_tree: None,
-                    },
+            sea_conformance::run_sea_session_observable_behavior(&client).await;
+            shutdown
+                .shutdown(ShutdownMode::Drain {
+                    timeout: Duration::from_secs(2),
                 })
-                .await
                 .unwrap();
-            let mut load = client.load(None).await.unwrap();
-            let LoadEvent::Event(event) = load.next().await.unwrap().unwrap() else {
-                panic!("load should begin with the committed event");
-            };
-            assert_eq!(event.committed.position, receipt.position);
-            assert_eq!(
-                event.committed.event.payload,
-                Bytes::from_static(b"payload")
-            );
-            assert!(matches!(
-                load.next().await.unwrap().unwrap(),
-                LoadEvent::CaughtUp(Some(_))
-            ));
+        };
+        let (result, ()) = tokio::join!(serving, exercise);
+        result.unwrap();
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[tokio::test]
+    async fn server_survives_malformed_and_abandoned_response_streams() {
+        let root = std::env::temp_dir().join(format!(
+            "sea-webtransport-server-fault-test-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&root);
+        let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
+        let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
+        let server = WebTransportServer::bind(
+            "127.0.0.1:0".parse::<SocketAddr>().unwrap(),
+            identity,
+            Arc::new(BuiltInSeaHost::new(root.clone(), StorageMode::Memory)),
+            TransportConfig::default(),
+        )
+        .unwrap();
+        let address = server.local_addr().unwrap();
+        let shutdown = server.shutdown_handle();
+        let serving = server.serve_until_shutdown();
+        let exercise = async {
+            send_malformed_stream(address, certificate_hash.clone()).await;
+            reset_in_flight_request(address, certificate_hash.clone()).await;
+            let client = NativeSeaClient::connect(
+                format!("https://{address}/sea"),
+                certificate_hash.clone(),
+                TransportConfig::default(),
+                Bytes::from_static(b"fault-archive"),
+                AuthorId::new(Bytes::from_static(b"observer-author")).unwrap(),
+                SessionId::new(Bytes::from_static(b"observer-session")).unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+            let receipt =
+                abandon_submission_and_resolve(address, certificate_hash.clone(), &client).await;
+            abandon_snapshot_and_resolve(address, certificate_hash, &client, receipt).await;
             client.close().await.unwrap();
             shutdown
                 .shutdown(ShutdownMode::Drain {
@@ -366,6 +394,215 @@ mod tests {
         let (result, ()) = tokio::join!(serving, exercise);
         result.unwrap();
         let _ = std::fs::remove_dir_all(root);
+    }
+
+    async fn send_malformed_stream(
+        address: SocketAddr,
+        certificate_hash: wtransport::tls::Sha256Digest,
+    ) {
+        let (_endpoint, connection) = raw_connection(address, certificate_hash).await;
+        let (mut send, receive) = connection.open_bi().await.unwrap().await.unwrap();
+        send.write_all(b"bad!").await.unwrap();
+        send.finish().await.unwrap();
+        drop(receive);
+        connection.close(0_u32.into(), b"fault injected");
+    }
+
+    async fn reset_in_flight_request(
+        address: SocketAddr,
+        certificate_hash: wtransport::tls::Sha256Digest,
+    ) {
+        let (_endpoint, connection) = raw_connection(address, certificate_hash).await;
+        let (mut send, receive) = connection.open_bi().await.unwrap().await.unwrap();
+        send.write_all(b"SE").await.unwrap();
+        drop(send);
+        drop(receive);
+        connection.close(0_u32.into(), b"in-flight read cancelled");
+    }
+
+    async fn abandon_submission_and_resolve(
+        address: SocketAddr,
+        certificate_hash: wtransport::tls::Sha256Digest,
+        client: &NativeSeaClient,
+    ) -> EventReceipt {
+        let operation = OperationId::new(Bytes::from_static(b"lost-event-ack")).unwrap();
+        let (_endpoint, connection) = raw_connection(address, certificate_hash).await;
+        open_raw_session(
+            &connection,
+            b"fault-archive",
+            b"submission-author",
+            b"submission-session",
+        )
+        .await;
+        abandon_response(
+            &connection,
+            2,
+            protocol::Request::Submit {
+                operation: operation.as_bytes().to_vec(),
+                reference: None,
+                event: protocol::Event {
+                    payload: b"committed-without-ack".to_vec(),
+                    blob_tree: None,
+                },
+            },
+        )
+        .await;
+        connection.close(0_u32.into(), b"response abandoned");
+        timeout(Duration::from_secs(2), async {
+            loop {
+                if let Some(receipt) = client.resolve_submission(&operation).await.unwrap() {
+                    break receipt;
+                }
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .expect("submission should remain resolvable after acknowledgement loss")
+    }
+
+    async fn abandon_snapshot_and_resolve(
+        address: SocketAddr,
+        certificate_hash: wtransport::tls::Sha256Digest,
+        client: &NativeSeaClient,
+        receipt: EventReceipt,
+    ) {
+        let blob = client
+            .put_blob(Bytes::from_static(b"snapshot-content"))
+            .await
+            .unwrap();
+        let root = client
+            .put_directory(
+                BlobDirectory::new(BTreeMap::from([(
+                    "leaf".to_owned(),
+                    BlobTreeId::Blob(blob),
+                )]))
+                .unwrap(),
+            )
+            .await
+            .unwrap();
+        let operation = OperationId::new(Bytes::from_static(b"lost-snapshot-ack")).unwrap();
+        let (_endpoint, connection) = raw_connection(address, certificate_hash).await;
+        open_raw_session(
+            &connection,
+            b"fault-archive",
+            b"snapshot-author",
+            b"snapshot-session",
+        )
+        .await;
+        abandon_response(
+            &connection,
+            2,
+            protocol::Request::PublishSnapshot {
+                operation: operation.as_bytes().to_vec(),
+                expected_parent: None,
+                at_event: protocol::SnapshotPosition::At(receipt.position.get()),
+                root: protocol::TreeId::Directory(*root.as_bytes()),
+            },
+        )
+        .await;
+        connection.close(0_u32.into(), b"response abandoned");
+        timeout(Duration::from_secs(2), async {
+            loop {
+                if client
+                    .resolve_snapshot_publication(&operation)
+                    .await
+                    .unwrap()
+                    .is_some()
+                {
+                    break;
+                }
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .expect("snapshot should remain resolvable after acknowledgement loss");
+    }
+
+    async fn raw_connection(
+        address: SocketAddr,
+        certificate_hash: wtransport::tls::Sha256Digest,
+    ) -> (Endpoint<Client>, Connection) {
+        let endpoint = Endpoint::client(
+            ClientConfig::builder()
+                .with_bind_default()
+                .with_server_certificate_hashes([certificate_hash])
+                .build(),
+        )
+        .unwrap();
+        let connection = endpoint
+            .connect(format!("https://{address}/sea"))
+            .await
+            .unwrap();
+        (endpoint, connection)
+    }
+
+    async fn open_raw_session(
+        connection: &Connection,
+        archive: &[u8],
+        author: &[u8],
+        session: &[u8],
+    ) {
+        assert_eq!(
+            raw_request(
+                connection,
+                1,
+                protocol::Request::OpenSession {
+                    archive: archive.to_vec(),
+                    author: author.to_vec(),
+                    session: session.to_vec(),
+                    reference: None,
+                },
+            )
+            .await,
+            protocol::Response::Acknowledged
+        );
+    }
+
+    async fn raw_request(
+        connection: &Connection,
+        request_id: u64,
+        request: protocol::Request,
+    ) -> protocol::Response {
+        let (mut send, mut receive) = connection.open_bi().await.unwrap().await.unwrap();
+        let limits = protocol::Limits::default();
+        let bytes = protocol::encode(
+            &protocol::Frame {
+                request_id,
+                message: request,
+            },
+            limits,
+        )
+        .unwrap();
+        send.write_all(&bytes).await.unwrap();
+        send.finish().await.unwrap();
+        let mut response = Vec::new();
+        let mut buffer = [0_u8; 1024];
+        while let Some(count) = receive.read(&mut buffer).await.unwrap() {
+            response.extend_from_slice(&buffer[..count]);
+        }
+        let frame =
+            protocol::decode::<protocol::Frame<protocol::Response>>(&response, limits).unwrap();
+        assert_eq!(frame.request_id, request_id);
+        frame.message
+    }
+
+    async fn abandon_response(
+        connection: &Connection,
+        request_id: u64,
+        request: protocol::Request,
+    ) {
+        let (mut send, receive) = connection.open_bi().await.unwrap().await.unwrap();
+        let bytes = protocol::encode(
+            &protocol::Frame {
+                request_id,
+                message: request,
+            },
+            protocol::Limits::default(),
+        )
+        .unwrap();
+        send.write_all(&bytes).await.unwrap();
+        send.finish().await.unwrap();
+        drop(receive);
     }
 
     #[test]

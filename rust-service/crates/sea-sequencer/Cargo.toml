@@ -18,6 +18,7 @@ tokio.workspace = true
 tokio = { version = "1.47.1", features = ["sync"] }
 
 [dev-dependencies]
+sea-conformance = { path = "../sea-conformance" }
 sea-memory = { path = "../sea-memory" }
 
 [lints]

@@ -23,6 +23,7 @@ wtransport = "=0.7.2"
 
 [dev-dependencies]
 futures-util.workspace = true
+sea-conformance = { path = "../sea-conformance" }
 
 [lints]
 workspace = true

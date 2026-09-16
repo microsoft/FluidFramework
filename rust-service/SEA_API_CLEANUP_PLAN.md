@@ -2,15 +2,16 @@
 
 ## Status
 
-- **Plan status:** Proposed.
+- **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 2. Capture current behavior and test infrastructure.
-- **Last completed checkpoint:** 1. Preserve the persistent-author-stream baseline.
-- **Last validation:** Checkpoint 1 benchmark provenance and documentation links passed on 2026-09-16; implementation validation has not started.
+- **Current checkpoint:** 3a. Migrate conformance and benchmarks.
+- **Last completed checkpoint:** 2. Capture current behavior and test infrastructure.
+- **Last validation:** Checkpoint 2 strict Rust lint, full Rust workspace tests, minimal Fluid driver tests, generated Node tests, and real Chromium WebTransport validation passed on 2026-09-16.
+- **Latest checkpoint notes:** No settled architecture decisions changed. Current behavior is now captured by reusable `SeaSession` conformance, incremental frame fixtures, native response validation, and raw transport fault tests; generated local and browser/injected paths retain separate platform-specific lifecycle coverage.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 2. Capture current behavior and test infrastructure.
+- **Next checkpoint:** 3a. Migrate conformance and benchmarks.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -430,14 +431,14 @@ Then run the complete certificate, server, and Chromium procedure documented in 
 Commit tests for behavior that exists before changing APIs or framing.
 Tests for new message kinds, shared client internals, nomination, and liveness belong in the checkpoints that introduce those concepts; this checkpoint must not invent placeholder production APIs or commit expected failures.
 
-- [ ] Add reusable transport fixtures that can fragment, coalesce, delay, reset, and drop frames or acknowledgements.
-- [ ] Characterize current bounded frame decoding under fragmented and coalesced input.
-- [ ] Test current request-ID mismatch rejection and unexpected response-kind rejection.
-- [ ] Test stream cancellation during an in-flight read and write.
-- [ ] Test server survival after one malformed stream and one disconnected client.
-- [ ] Test existing stable-identity resolution after event and snapshot acknowledgement loss.
-- [ ] Define a reusable observable-behavior suite for archive open, load, submit, content, snapshots, close, and recovery without requiring the future shared client implementation.
-- [ ] Run that suite against every currently applicable native, browser, injected, and process-local path and record intentional capability differences.
+- [x] Add reusable transport fixtures that can fragment, coalesce, delay, reset, and drop frames or acknowledgements.
+- [x] Characterize current bounded frame decoding under fragmented and coalesced input.
+- [x] Test current request-ID mismatch rejection and unexpected response-kind rejection.
+- [x] Test stream cancellation during an in-flight read and write.
+- [x] Test server survival after one malformed stream and one disconnected client.
+- [x] Test existing stable-identity resolution after event and snapshot acknowledgement loss.
+- [x] Define a reusable observable-behavior suite for archive open, load, submit, content, snapshots, close, and recovery without requiring the future shared client implementation.
+- [x] Run that suite against every currently applicable native, browser, injected, and process-local path and record intentional capability differences.
 
 Validation:
 

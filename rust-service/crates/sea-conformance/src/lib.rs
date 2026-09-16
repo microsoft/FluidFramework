@@ -8,12 +8,214 @@ use sea_core::{
     BlobDirectory, BlobId, BlobTreeId, Capability, ClassifiedError, ErrorKind, Event,
     EventPosition, EventStream, PositionCodec, Snapshot, SnapshotPosition, SnapshotStore,
     archive::{
-        OperationId, SeaStorage, Snapshot as ArchiveSnapshot,
-        SnapshotPosition as ArchiveSnapshotPosition, SnapshotPublication,
+        EventSubmission, LoadEvent, OperationId, SeaSession, SeaStorage,
+        Snapshot as ArchiveSnapshot, SnapshotPosition as ArchiveSnapshotPosition,
+        SnapshotPublication,
     },
 };
 
 const MODEL_TRACE_SEED: u64 = 0x5eed_0002_d15c_a11e;
+
+/// Runs the current session's observable behavior against a fresh archive session.
+///
+/// # Panics
+///
+/// Panics when submission recovery, content access, snapshot recovery, streaming, or close
+/// behavior differs between session implementations.
+pub async fn run_sea_session_observable_behavior<S>(session: &S)
+where
+    S: SeaSession,
+    S::Error: Debug,
+{
+    assert_eq!(
+        session.latest_snapshot().await.expect("initial snapshot"),
+        None
+    );
+    let directory_id = round_trip_session_content(session).await;
+    let first = submit_and_resolve_first_event(session, directory_id).await;
+    let published = publish_and_resolve_snapshot(session, directory_id, first.position).await;
+
+    let second = session
+        .submit(EventSubmission {
+            operation_id: OperationId::new(Bytes::from_static(b"observable-event-two"))
+                .expect("operation identity"),
+            reference: Some(first.position),
+            event: Event {
+                payload: Bytes::from_static(b"second"),
+                blob_tree: None,
+            },
+        })
+        .await
+        .expect("second submission");
+    let history = session
+        .read(Some(first.position), Some(second.position))
+        .await
+        .expect("bounded read")
+        .try_collect::<Vec<_>>()
+        .await
+        .expect("bounded read events");
+    assert_eq!(history.len(), 1);
+    assert_eq!(history[0].committed.position, second.position);
+
+    let mut load = session.load(None).await.expect("snapshot recovery load");
+    assert!(matches!(
+        load.next().await.expect("load snapshot").expect("load result"),
+        LoadEvent::Snapshot(snapshot) if snapshot == published
+    ));
+    assert!(matches!(
+        load.next().await.expect("load event").expect("load result"),
+        LoadEvent::Event(event) if event.committed.position == second.position
+    ));
+    assert!(matches!(
+        load.next().await.expect("caught-up marker").expect("load result"),
+        LoadEvent::CaughtUp(Some(position)) if position == second.position
+    ));
+
+    session.close().await.expect("session close");
+    let closed_probe =
+        OperationId::new(Bytes::from_static(b"closed-session-probe")).expect("operation identity");
+    assert_eq!(
+        session
+            .resolve_submission(&closed_probe)
+            .await
+            .expect_err("closed session operation")
+            .kind(),
+        ErrorKind::Rejected
+    );
+}
+
+async fn round_trip_session_content<S>(session: &S) -> sea_core::BlobDirectoryId
+where
+    S: SeaSession,
+    S::Error: Debug,
+{
+    let blob_payload = Bytes::from_static(b"observable-blob");
+    let blob = session
+        .put_blob(blob_payload.clone())
+        .await
+        .expect("blob publication");
+    assert_eq!(
+        session.get_blob(blob).await.expect("blob retrieval"),
+        blob_payload
+    );
+    let directory = BlobDirectory::new(BTreeMap::from([(
+        "leaf".to_owned(),
+        BlobTreeId::Blob(blob),
+    )]))
+    .expect("directory");
+    let directory_id = session
+        .put_directory(directory.clone())
+        .await
+        .expect("directory publication");
+    assert_eq!(
+        session
+            .get_directory(directory_id)
+            .await
+            .expect("directory retrieval"),
+        directory
+    );
+    directory_id
+}
+
+async fn submit_and_resolve_first_event<S>(
+    session: &S,
+    directory_id: sea_core::BlobDirectoryId,
+) -> sea_core::archive::EventReceipt
+where
+    S: SeaSession,
+    S::Error: Debug,
+{
+    let submission = EventSubmission {
+        operation_id: OperationId::new(Bytes::from_static(b"observable-event-one"))
+            .expect("operation identity"),
+        reference: None,
+        event: Event {
+            payload: Bytes::from_static(b"first"),
+            blob_tree: Some(BlobTreeId::Directory(directory_id)),
+        },
+    };
+    let receipt = session
+        .submit(submission.clone())
+        .await
+        .expect("first submission");
+    assert_eq!(
+        session
+            .resolve_submission(&submission.operation_id)
+            .await
+            .expect("submission resolution"),
+        Some(receipt.clone())
+    );
+    assert_eq!(
+        session
+            .submit(submission)
+            .await
+            .expect("idempotent submission retry"),
+        receipt
+    );
+    receipt
+}
+
+async fn publish_and_resolve_snapshot<S>(
+    session: &S,
+    directory_id: sea_core::BlobDirectoryId,
+    position: EventPosition,
+) -> sea_core::archive::PublishedSnapshot
+where
+    S: SeaSession,
+    S::Error: Debug,
+{
+    let mut snapshots = session
+        .subscribe_snapshots()
+        .await
+        .expect("snapshot subscription");
+    let publication = SnapshotPublication {
+        operation_id: OperationId::new(Bytes::from_static(b"observable-snapshot"))
+            .expect("snapshot operation identity"),
+        expected_parent: None,
+        snapshot: ArchiveSnapshot {
+            at_event: ArchiveSnapshotPosition::At(position),
+            root: BlobTreeId::Directory(directory_id),
+        },
+    };
+    let published = session
+        .publish_snapshot(publication.clone())
+        .await
+        .expect("snapshot publication");
+    assert_eq!(
+        snapshots
+            .next()
+            .await
+            .expect("snapshot notification")
+            .expect("snapshot notification result"),
+        published
+    );
+    assert_eq!(
+        session
+            .publish_snapshot(publication.clone())
+            .await
+            .expect("idempotent snapshot retry"),
+        published
+    );
+    assert_eq!(
+        session
+            .resolve_snapshot_publication(&publication.operation_id)
+            .await
+            .expect("snapshot resolution"),
+        Some(published.clone())
+    );
+    assert_eq!(
+        session
+            .snapshot(&published.id)
+            .await
+            .expect("snapshot lookup"),
+        Some(published.clone())
+    );
+    assert_eq!(
+        session.latest_snapshot().await.expect("latest snapshot"),
+        Some(published.clone())
+    );
+    published
+}
 
 /// Runs the final trusted-backend laws against a fresh archive.
 ///
