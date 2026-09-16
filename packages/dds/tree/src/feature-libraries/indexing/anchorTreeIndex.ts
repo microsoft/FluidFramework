@@ -135,7 +135,7 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 	 * Creates an announced visitor that responds to edits to the forest and updates the index accordingly.
 	 */
 	private acquireVisitor(): AnnouncedVisitor {
-		this.checkNotDisposed(
+		this.checkValid(
 			"visitor getter should be deregistered from the forest when index is disposed",
 		);
 		const run = <T>(callback: () => T): T => this.forest.breaker.run(callback);
@@ -207,7 +207,7 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 	 * Returns the value associated with the given key if it has been indexed
 	 */
 	public get(key: TKey): TValue | undefined {
-		this.checkNotDisposed();
+		this.checkValid();
 		return this.getFilteredValue(this.keyToNodes.get(key));
 	}
 
@@ -215,7 +215,7 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 	 * Returns true iff the key exists in the index
 	 */
 	public has(key: TKey): boolean {
-		this.checkNotDisposed();
+		this.checkValid();
 		return this.get(key) !== undefined;
 	}
 
@@ -223,7 +223,7 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 	 * Returns the number of values that are indexed
 	 */
 	public get size(): number {
-		this.checkNotDisposed();
+		this.checkValid();
 		let s = 0;
 		for (const nodes of this.keyToNodes.values()) {
 			if (this.getFilteredValue(nodes) !== undefined) {
@@ -237,7 +237,7 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 	 * Returns all keys in the index
 	 */
 	public *keys(): IterableIterator<TKey> {
-		this.checkNotDisposed();
+		this.checkValid();
 		for (const [key, nodes] of this.keyToNodes.entries()) {
 			if (this.getFilteredValue(nodes) !== undefined) {
 				yield key;
@@ -249,7 +249,7 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 	 * Returns an iterable of values in the index
 	 */
 	public *values(): IterableIterator<TValue> {
-		this.checkNotDisposed();
+		this.checkValid();
 		for (const nodes of this.keyToNodes.values()) {
 			const filtered = this.getFilteredValue(nodes);
 			if (filtered !== undefined) {
@@ -262,7 +262,7 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 	 * Returns an iterable of key, value pairs for every entry in the index
 	 */
 	public *entries(): IterableIterator<[TKey, TValue]> {
-		this.checkNotDisposed();
+		this.checkValid();
 		for (const [key, nodes] of this.keyToNodes.entries()) {
 			const filtered = this.getFilteredValue(nodes);
 			if (filtered !== undefined) {
@@ -272,7 +272,7 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 	}
 
 	public [Symbol.iterator](): IterableIterator<[TKey, TValue]> {
-		this.checkNotDisposed();
+		this.checkValid();
 		return this.entries();
 	}
 
@@ -283,7 +283,7 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 		callbackfn: (value: TValue, key: TKey, map: AnchorTreeIndex<TKey, TValue>) => void,
 		thisArg?: unknown,
 	): void {
-		this.checkNotDisposed();
+		this.checkValid();
 		for (const [key, nodes] of this.keyToNodes.entries()) {
 			const filtered = this.getFilteredValue(nodes);
 			if (filtered !== undefined) {
@@ -297,7 +297,7 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 	 * This function should only be used for testing purposes, it is not exposed as part of the public {@link TreeIndex} API.
 	 */
 	public *allEntries(): IterableIterator<[TKey, TValue]> {
-		this.checkNotDisposed();
+		this.checkValid();
 		for (const [key, nodes] of this.keyToNodes.entries()) {
 			assert(
 				hasElement(nodes),
@@ -318,7 +318,7 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 	 * Disposes this index and all the anchors it holds onto.
 	 */
 	public [disposeSymbol](): void {
-		this.checkNotDisposed("index is already disposed");
+		this.checkValid("index is already disposed");
 		for (const anchors of this.anchors.values()) {
 			for (const anchor of anchors) {
 				this.forest.forgetAnchor(anchor);
@@ -352,13 +352,14 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 		cursor.clear();
 	}
 
-	private checkNotDisposed(errorMessage?: string): void {
+	private checkValid(errorMessage?: string): void {
 		if (this.disposed) {
 			if (errorMessage !== undefined) {
 				throw new Error(errorMessage);
 			}
 			fail(0xa8f /* invalid operation on a disposed index */);
 		}
+		this.forest.breaker.use();
 	}
 
 	/**

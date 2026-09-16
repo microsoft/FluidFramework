@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	forEachNode,
@@ -453,9 +454,52 @@ describe("tree indexes", () => {
 			() => {
 				parent.child = new IndexableChild({ childKey: "replacement" });
 			},
-			(error: Error) =>
-				error instanceof UsageError &&
-				(error as { cause?: unknown }).cause === constructionError,
+			(error: Error) => error instanceof UsageError && error.cause === constructionError,
+		);
+	});
+
+	it("cannot be read after a key finder throws while updating", () => {
+		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
+		const { forest } = view.checkout;
+		const updateError = new Error("key finder update failed");
+		let failKeyFinder = false;
+		const index = new AnchorTreeIndex(
+			forest,
+			(schemaId) => {
+				if (schemaId === IndexableParent.identifier) {
+					return (cursor) => readStringField(cursor, parentKey);
+				}
+				if (schemaId === IndexableChild.identifier) {
+					return (cursor) => {
+						if (failKeyFinder) {
+							throw updateError;
+						}
+						return readStringField(cursor, childKey);
+					};
+				}
+			},
+			() => 3,
+			(anchorNode: AnchorNode) => {
+				const simpleTree = getOrCreateTreeNode(anchorNode, forest, view);
+				if (!isTreeValue(simpleTree)) {
+					return Tree.status(simpleTree);
+				}
+			},
+		);
+
+		failKeyFinder = true;
+		const child = parent.child;
+		assert(child !== undefined);
+		assert.throws(() => {
+			child.childKey = "replacement";
+		}, updateError);
+		const validateBrokenIndexError = validateUsageError(/invalid state by another error/);
+		assert.throws(
+			() => index.get(childId),
+			(error: Error) => {
+				assert.equal(error.cause, updateError);
+				return validateBrokenIndexError(error);
+			},
 		);
 	});
 
