@@ -982,6 +982,7 @@ impl SeaInjectedClient {
     pub async fn create_archive(&self, archive: Uint8Array) -> Result<(), JsValue> {
         let response = self
             .request(protocol::Request::CreateArchive {
+                version: protocol::PROTOCOL_VERSION,
                 archive: archive.to_vec(),
             })
             .await?;
@@ -1000,6 +1001,7 @@ impl SeaInjectedClient {
     ) -> Result<(), JsValue> {
         let response = self
             .request(protocol::Request::OpenSession {
+                version: protocol::PROTOCOL_VERSION,
                 archive: archive.to_vec(),
                 intent: if create {
                     protocol::ArchiveIntent::Create

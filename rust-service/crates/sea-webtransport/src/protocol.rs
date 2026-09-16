@@ -434,11 +434,15 @@ pub enum ArchiveIntent {
 pub enum Request {
     /// Creates one archive without opening an author session.
     CreateArchive {
+        /// Protocol version proposed before archive state is created.
+        version: u16,
         /// Archive identity that must not already exist.
         archive: Vec<u8>,
     },
     /// Opens one archive-bound author session.
     OpenSession {
+        /// Protocol version proposed before session state is created.
+        version: u16,
         /// Archive selected for this session.
         archive: Vec<u8>,
         /// Explicit archive lifecycle intent.

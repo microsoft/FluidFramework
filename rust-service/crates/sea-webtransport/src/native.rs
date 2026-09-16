@@ -141,6 +141,7 @@ impl NativeSeaClient {
         };
         match client
             .request(protocol::Request::OpenSession {
+                version: protocol::PROTOCOL_VERSION,
                 archive: open.archive.to_vec(),
                 intent: open.intent,
                 author: open.author.as_bytes().to_vec(),

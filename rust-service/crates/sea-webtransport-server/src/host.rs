@@ -207,7 +207,10 @@ struct HostedConnection {
 #[async_trait]
 impl SeaConnectionService for HostedConnection {
     async fn request(&self, request: protocol::Request) -> protocol::Response {
-        if let protocol::Request::CreateArchive { archive } = request {
+        if let protocol::Request::CreateArchive { version, archive } = request {
+            if version != protocol::PROTOCOL_VERSION {
+                return unsupported_version(version);
+            }
             return match self
                 .host
                 .ensure_archive(&archive, protocol::ArchiveIntent::Create)
@@ -218,6 +221,7 @@ impl SeaConnectionService for HostedConnection {
             };
         }
         if let protocol::Request::OpenSession {
+            version,
             archive,
             intent,
             author,
@@ -225,6 +229,9 @@ impl SeaConnectionService for HostedConnection {
             reference,
         } = request
         {
+            if version != protocol::PROTOCOL_VERSION {
+                return unsupported_version(version);
+            }
             let Ok(author) = AuthorId::new(Bytes::from(author)) else {
                 return invalid("author identity is empty");
             };
@@ -303,6 +310,10 @@ fn rejected(message: &str) -> protocol::Response {
     }
 }
 
+fn unsupported_version(version: u16) -> protocol::Response {
+    rejected(&format!("unsupported protocol version {version}"))
+}
+
 fn error_response(error: impl ClassifiedError) -> protocol::Response {
     let kind = error.kind();
     let message = error.to_string();
@@ -372,9 +383,22 @@ mod tests {
                     ..
                 }
             ));
+            assert!(matches!(
+                host.connect()
+                    .request(protocol::Request::CreateArchive {
+                        version: protocol::PROTOCOL_VERSION + 1,
+                        archive: b"archive".to_vec(),
+                    })
+                    .await,
+                protocol::Response::Error {
+                    kind: protocol::ErrorKind::Rejected,
+                    ..
+                }
+            ));
             assert_eq!(
                 host.connect()
                     .request(protocol::Request::CreateArchive {
+                        version: protocol::PROTOCOL_VERSION,
                         archive: b"archive".to_vec(),
                     })
                     .await,
@@ -383,6 +407,7 @@ mod tests {
             assert!(matches!(
                 host.connect()
                     .request(protocol::Request::CreateArchive {
+                        version: protocol::PROTOCOL_VERSION,
                         archive: b"archive".to_vec(),
                     })
                     .await,
@@ -420,6 +445,7 @@ mod tests {
     ) -> protocol::Response {
         host.connect()
             .request(protocol::Request::OpenSession {
+                version: protocol::PROTOCOL_VERSION,
                 archive: b"archive".to_vec(),
                 intent,
                 author: session.to_vec(),
@@ -688,6 +714,7 @@ mod tests {
                 connection,
                 1,
                 protocol::Request::OpenSession {
+                    version: protocol::PROTOCOL_VERSION,
                     archive: archive.to_vec(),
                     intent: protocol::ArchiveIntent::Open,
                     author: author.to_vec(),
