@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-const fluidRoute = require("@fluid-example/webpack-fluid-loader");
-const { merge } = require("webpack-merge");
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-module.exports = (env) =>
-	merge(fluidRoute.commonExampleConfig(__dirname, env), {
-		entry: {
-			main: "./src/index.tsx",
-		},
+import { commonExampleConfig } from "@fluid-example/webpack-fluid-loader";
+import { merge } from "webpack-merge";
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export default (env) =>
+	merge(commonExampleConfig(dirname, env), {
 		module: {
 			rules: [
 				{
@@ -22,5 +24,4 @@ module.exports = (env) =>
 				},
 			],
 		},
-		devServer: { devMiddleware: { stats: "minimal" } },
 	});

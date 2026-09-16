@@ -25,7 +25,6 @@
 		"check:are-the-types-wrong": "attw --pack . --profile esm-only",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
-		"check:types:require-esm": "fluid-tsc commonjs --project ./tsconfig.cjs.json --noEmit --skipLibCheck --emitDeclarationOnly false --tsBuildInfoFile ./tsconfig.require-esm.tsbuildinfo",
 		"clean": "rimraf --glob bundle dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -39,7 +38,7 @@
 		"test:mocha": "npm run test:mocha:esm",
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"webpack": "webpack --color --config webpack.config.cjs"
+		"webpack": "webpack --color --config webpack.config.js"
 	},
 	"c8": {
 		"all": true,

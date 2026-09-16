@@ -3,13 +3,17 @@
  * Licensed under the MIT License.
  */
 
-const fluidRoute = require("@fluid-example/webpack-fluid-loader");
-const path = require("path");
-const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-module.exports = (env) => {
+import { devServerConfig } from "@fluid-example/webpack-fluid-loader";
+import MonacoWebpackPlugin from "monaco-editor-webpack-plugin";
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export default (env) => {
 	return {
-		...fluidRoute.devServerConfig(__dirname, env),
+		...devServerConfig(dirname, env),
 		entry: {
 			main: "./src/index.ts",
 		},
@@ -22,8 +26,8 @@ module.exports = (env) => {
 		},
 		resolveLoader: {
 			alias: {
-				"blob-url-loader": require.resolve("./loaders/blobUrl"),
-				"compile-loader": require.resolve("./loaders/compile"),
+				"blob-url-loader": fileURLToPath(import.meta.resolve("./loaders/blobUrl.js")),
+				"compile-loader": fileURLToPath(import.meta.resolve("./loaders/compile.js")),
 			},
 		},
 		module: {
@@ -69,7 +73,7 @@ module.exports = (env) => {
 		},
 		output: {
 			filename: "[name].bundle.js",
-			path: path.resolve(__dirname, "bundle"),
+			path: path.resolve(dirname, "bundle"),
 			library: { name: "[name]", type: "umd" },
 			chunkFilename: "[name].async.js",
 			publicPath: "/app/",
