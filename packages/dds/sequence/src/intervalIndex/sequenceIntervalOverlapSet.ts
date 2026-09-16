@@ -29,10 +29,10 @@ export class SequenceIntervalOverlapSet {
 
 	/**
 	 * Implicit segment tree over `ordered`: root 1, children of `n` at `2n` and `2n + 1`. Each
-	 * node holds the interval with the greatest end position in its range.
+	 * node holds the interval with the greatest end position in its range. Empty when a rebuild
+	 * is owed, which every mutation arranges by discarding it.
 	 */
 	private readonly maxEnds: SequenceInterval[] = [];
-	private maxEndsStale = false;
 
 	public get intervals(): readonly SequenceInterval[] {
 		return this.ordered;
@@ -103,20 +103,29 @@ export class SequenceIntervalOverlapSet {
 			return;
 		}
 		this.ordered.splice(index, 0, interval);
-		this.maxEndsStale = true;
+		this.discardMaxEnds();
 	}
 
 	public remove(interval: SequenceInterval): void {
 		const { index, exists } = this.locate(interval);
 		if (exists) {
 			this.ordered.splice(index, 1);
-			this.maxEndsStale = true;
+			this.discardMaxEnds();
 		}
 	}
 
 	// #endregion Add and remove
 
 	// #region Overlap search
+
+	/**
+	 * Discards the segment tree so the next query rebuilds it. Emptying it rather than flagging
+	 * it matters because its nodes hold intervals: a removed interval would otherwise stay
+	 * reachable until a query rebuilt over it, and a set emptied of intervals is never queried.
+	 */
+	private discardMaxEnds(): void {
+		this.maxEnds.length = 0;
+	}
 
 	/** Builds node `node`, covering `[lo, hi)`, and returns its greatest-end interval. */
 	private buildMaxEnds(node: number, lo: number, hi: number): SequenceInterval {
@@ -134,11 +143,10 @@ export class SequenceIntervalOverlapSet {
 	}
 
 	private rebuildMaxEndsIfStale(): void {
-		if (this.maxEndsStale) {
+		if (this.maxEnds.length === 0) {
 			// 4n bounds the node indices this layout reaches for any leaf count.
 			this.maxEnds.length = this.ordered.length * 4;
 			this.buildMaxEnds(1, 0, this.ordered.length);
-			this.maxEndsStale = false;
 		}
 	}
 

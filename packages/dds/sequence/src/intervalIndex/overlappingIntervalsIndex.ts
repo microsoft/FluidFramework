@@ -71,8 +71,12 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 			}
 		}
 
+		// Appended one at a time rather than spread: spreading passes one argument per interval,
+		// which overflows the call stack on a large collection.
 		if (iteratesForward) {
-			results.push(...matches);
+			for (const interval of matches) {
+				results.push(interval);
+			}
 		} else {
 			for (let i = matches.length - 1; i >= 0; i--) {
 				results.push(matches[i]);

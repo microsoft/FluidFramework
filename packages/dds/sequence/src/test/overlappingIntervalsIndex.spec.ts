@@ -54,6 +54,26 @@ describe("OverlappingIntervalsIndex", () => {
 		}
 	}
 
+	/**
+	 * Asserts that `actual` holds the same interval instances as `expected`, in any order. Used
+	 * where the expected intervals share endpoints: {@link SequenceInterval.compare} breaks that
+	 * tie on interval ID, which the test helper generates, so their relative order is not a
+	 * property of this index.
+	 */
+	function assertSameIntervals(
+		actual: readonly SequenceInterval[],
+		expected: readonly SequenceInterval[],
+		message: string,
+	): void {
+		const detail = `${message} (actual ${describeIntervals(actual).join(
+			", ",
+		)}; expected ${describeIntervals(expected).join(", ")})`;
+		assert.strictEqual(actual.length, expected.length, detail);
+		for (const interval of expected) {
+			assert(actual.includes(interval), detail);
+		}
+	}
+
 	beforeEach(() => {
 		const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
 		sharedString = new SharedStringClass(
@@ -131,16 +151,11 @@ describe("OverlappingIntervalsIndex", () => {
 			}
 
 			const results = index.findOverlappingIntervals(10, 20);
-			// Three results containing all three intervals must be exactly those three. Their
-			// order depends on generated IDs, so it isn't asserted.
-			assert.equal(
-				results.length,
-				3,
+			assertSameIntervals(
+				results,
+				[first, second, third],
 				"expected intervals sharing endpoints to be stored individually",
 			);
-			for (const interval of [first, second, third]) {
-				assert(results.includes(interval), "expected every interval to be returned");
-			}
 		});
 
 		it("finds a document-spanning interval from a query at the end of the document", () => {
@@ -197,6 +212,30 @@ describe("OverlappingIntervalsIndex", () => {
 				[added],
 				"expected the added interval to survive an unrelated removal",
 			);
+		});
+
+		it("holds no reference to a removed interval", () => {
+			// Retention has no effect on results, so this reaches for the segment tree directly.
+			// Its nodes hold intervals, and a set which has been emptied is never queried, so
+			// without discarding them on removal the last build's intervals stay reachable.
+			const intervals = Array.from({ length: 6 }, (_, i) =>
+				createTestInterval(i * 5, i * 5 + 4),
+			);
+			for (const interval of intervals) {
+				index.add(interval);
+			}
+			index.findOverlappingIntervals(0, stringLength - 1);
+
+			for (const interval of intervals) {
+				index.remove(interval);
+			}
+
+			const { maxEnds } = (
+				index as unknown as {
+					intervalSet: { maxEnds: readonly SequenceInterval[] };
+				}
+			).intervalSet;
+			assert.deepEqual([...maxEnds], [], "expected the removed intervals to be discarded");
 		});
 
 		it("agrees with a brute force scan over random intervals and queries", () => {
@@ -333,7 +372,7 @@ describe("OverlappingIntervalsIndex", () => {
 			const results: SequenceInterval[] = [];
 			index.gatherIterationResults(results, true, 10, 20);
 
-			assertIntervals(
+			assertSameIntervals(
 				results,
 				[first, alsoFirst],
 				"expected every interval spanning exactly the queried range",
