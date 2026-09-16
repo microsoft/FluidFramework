@@ -5,15 +5,13 @@
 
 import { compareReferencePositions } from "@fluidframework/merge-tree/internal";
 
-import type { BaseSequenceInterval } from "../intervals/index.js";
+import type { SequenceInterval } from "../intervals/index.js";
 
-const compareIntervals = (a: BaseSequenceInterval, b: BaseSequenceInterval): number =>
-	a.compare(b);
+const compareIntervals = (a: SequenceInterval, b: SequenceInterval): number => a.compare(b);
 
-const compareStarts = (a: BaseSequenceInterval, b: BaseSequenceInterval): number =>
-	a.compareStart(b);
+const compareStarts = (a: SequenceInterval, b: SequenceInterval): number => a.compareStart(b);
 
-const compareEndpoints = (a: BaseSequenceInterval, b: BaseSequenceInterval): number => {
+const compareEndpoints = (a: SequenceInterval, b: SequenceInterval): number => {
 	const startResult = a.compareStart(b);
 	return startResult === 0 ? a.compareEnd(b) : startResult;
 };
@@ -22,7 +20,7 @@ const compareEndpoints = (a: BaseSequenceInterval, b: BaseSequenceInterval): num
  * A set of intervals that can efficiently answer "which of these intervals overlap the given
  * range?".
  *
- * The intervals are kept in an array sorted by {@link BaseSequenceInterval.compare} - by start
+ * The intervals are kept in an array sorted by {@link SequenceInterval.compare} - by start
  * position, then end position, then interval ID.
  *
  * An interval can only overlap the query if it starts at or before the query's end, so a binary
@@ -42,20 +40,20 @@ const compareEndpoints = (a: BaseSequenceInterval, b: BaseSequenceInterval): num
  * than immediately, so a batch of changes only pays for one rebuild.
  */
 export class SequenceIntervalOverlapSet {
-	private readonly ordered: BaseSequenceInterval[] = [];
+	private readonly ordered: SequenceInterval[] = [];
 
 	/**
 	 * Segment tree over {@link SequenceIntervalOverlapSet.ordered}, stored as an implicit binary
 	 * tree rooted at index 1 with the children of node `n` at `2n` and `2n + 1`. Each entry is
 	 * the interval with the greatest end position within that node's range.
 	 */
-	private readonly maxEnds: BaseSequenceInterval[] = [];
+	private readonly maxEnds: SequenceInterval[] = [];
 	private maxEndsStale = false;
 
 	/**
 	 * The intervals in this set, in order. Callers must not mutate the returned array.
 	 */
-	public get intervals(): readonly BaseSequenceInterval[] {
+	public get intervals(): readonly SequenceInterval[] {
 		return this.ordered;
 	}
 
@@ -72,7 +70,7 @@ export class SequenceIntervalOverlapSet {
 	 * @returns the index of the first interval `matches` accepts, or this set's size if it
 	 * accepts none.
 	 */
-	private firstIndexWhere(matches: (interval: BaseSequenceInterval) => boolean): number {
+	private firstIndexWhere(matches: (interval: SequenceInterval) => boolean): number {
 		let lo = 0;
 		let hi = this.ordered.length;
 		while (lo < hi) {
@@ -91,8 +89,8 @@ export class SequenceIntervalOverlapSet {
 	 * @returns the index of the first interval not ordered before `query` by `compare`.
 	 */
 	private lowerBound(
-		query: BaseSequenceInterval,
-		compare: (a: BaseSequenceInterval, b: BaseSequenceInterval) => number,
+		query: SequenceInterval,
+		compare: (a: SequenceInterval, b: SequenceInterval) => number,
 	): number {
 		return this.firstIndexWhere((interval) => compare(interval, query) >= 0);
 	}
@@ -102,8 +100,8 @@ export class SequenceIntervalOverlapSet {
 	 * @returns the index of the first interval ordered after `query` by `compare`.
 	 */
 	private upperBound(
-		query: BaseSequenceInterval,
-		compare: (a: BaseSequenceInterval, b: BaseSequenceInterval) => number,
+		query: SequenceInterval,
+		compare: (a: SequenceInterval, b: SequenceInterval) => number,
 	): number {
 		return this.firstIndexWhere((interval) => compare(interval, query) > 0);
 	}
@@ -121,7 +119,7 @@ export class SequenceIntervalOverlapSet {
 	 *
 	 * @returns the index holding `interval`, or undefined if this set does not contain it.
 	 */
-	private indexOf(interval: BaseSequenceInterval): number | undefined {
+	private indexOf(interval: SequenceInterval): number | undefined {
 		const index = this.lowerBound(interval, compareIntervals);
 		const candidate = this.ordered[index];
 		return candidate !== undefined &&
@@ -131,7 +129,7 @@ export class SequenceIntervalOverlapSet {
 			: undefined;
 	}
 
-	public add(interval: BaseSequenceInterval): void {
+	public add(interval: SequenceInterval): void {
 		if (this.indexOf(interval) !== undefined) {
 			return;
 		}
@@ -139,7 +137,7 @@ export class SequenceIntervalOverlapSet {
 		this.maxEndsStale = true;
 	}
 
-	public remove(interval: BaseSequenceInterval): void {
+	public remove(interval: SequenceInterval): void {
 		const index = this.indexOf(interval);
 		if (index !== undefined) {
 			this.ordered.splice(index, 1);
@@ -155,8 +153,8 @@ export class SequenceIntervalOverlapSet {
 	 * Populates the segment tree rooted at `node`, which covers `[lo, hi)`.
 	 * @returns the interval with the greatest end position in `[lo, hi)`.
 	 */
-	private buildMaxEnds(node: number, lo: number, hi: number): BaseSequenceInterval {
-		let maxEnd: BaseSequenceInterval;
+	private buildMaxEnds(node: number, lo: number, hi: number): SequenceInterval {
+		let maxEnd: SequenceInterval;
 		if (hi - lo === 1) {
 			maxEnd = this.ordered[lo];
 		} else {
@@ -186,12 +184,12 @@ export class SequenceIntervalOverlapSet {
 	 * beyond `limit` or which end before `query` begins.
 	 */
 	private gatherOverlapping(
-		query: BaseSequenceInterval,
+		query: SequenceInterval,
 		node: number,
 		lo: number,
 		hi: number,
 		limit: number,
-		results: BaseSequenceInterval[],
+		results: SequenceInterval[],
 	): void {
 		if (lo >= limit || compareReferencePositions(this.maxEnds[node].end, query.start) < 0) {
 			return;
@@ -211,10 +209,10 @@ export class SequenceIntervalOverlapSet {
 	 * Finds the intervals overlapping the given range.
 	 * @returns every interval overlapping `query`, in order. Two intervals overlap when neither
 	 * ends before the other begins; interval sides are not considered, matching
-	 * {@link BaseSequenceInterval.overlaps}.
+	 * {@link SequenceInterval.overlaps}.
 	 */
-	public findOverlapping(query: BaseSequenceInterval): BaseSequenceInterval[] {
-		const results: BaseSequenceInterval[] = [];
+	public findOverlapping(query: SequenceInterval): SequenceInterval[] {
+		const results: SequenceInterval[] = [];
 		// Only intervals starting at or before the query's end can overlap it, so the first one
 		// starting after it bounds the portion of the array worth descending into.
 		const limit = this.firstIndexWhere(
@@ -238,9 +236,9 @@ export class SequenceIntervalOverlapSet {
 	 * so that those intervals are contiguous.
 	 */
 	private equalRange(
-		query: BaseSequenceInterval,
-		compare: (a: BaseSequenceInterval, b: BaseSequenceInterval) => number,
-	): BaseSequenceInterval[] {
+		query: SequenceInterval,
+		compare: (a: SequenceInterval, b: SequenceInterval) => number,
+	): SequenceInterval[] {
 		return this.ordered.slice(
 			this.lowerBound(query, compare),
 			this.upperBound(query, compare),
@@ -251,7 +249,7 @@ export class SequenceIntervalOverlapSet {
 	 * Finds the intervals starting where the given interval starts.
 	 * @returns every interval whose start matches `query`'s, in order.
 	 */
-	public withSameStart(query: BaseSequenceInterval): BaseSequenceInterval[] {
+	public withSameStart(query: SequenceInterval): SequenceInterval[] {
 		return this.equalRange(query, compareStarts);
 	}
 
@@ -261,7 +259,7 @@ export class SequenceIntervalOverlapSet {
 	 * are not considered, so an interval created solely to describe the range being searched for
 	 * will still match the intervals in this set.
 	 */
-	public withSameEndpoints(query: BaseSequenceInterval): BaseSequenceInterval[] {
+	public withSameEndpoints(query: SequenceInterval): SequenceInterval[] {
 		return this.equalRange(query, compareEndpoints);
 	}
 

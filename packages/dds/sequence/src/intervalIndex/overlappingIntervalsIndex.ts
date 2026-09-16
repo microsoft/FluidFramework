@@ -6,7 +6,7 @@
 import type { SequencePlace } from "@fluidframework/merge-tree/internal";
 import { endpointPosAndSide } from "@fluidframework/merge-tree/internal";
 
-import type { SequenceInterval, BaseSequenceInterval } from "../intervals/index.js";
+import type { SequenceInterval } from "../intervals/index.js";
 import { createTransientIntervalFromSequence } from "../intervals/index.js";
 import type { ISharedSegmentSequence } from "../sequence.js";
 import type { ISharedString } from "../sharedString.js";
@@ -50,12 +50,12 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 			return;
 		}
 
-		let matches: readonly BaseSequenceInterval[];
+		let matches: readonly SequenceInterval[];
 		if (start === undefined && end === undefined) {
 			// No start/end provided. Gather everything.
 			matches = this.intervalSet.intervals;
 		} else {
-			const transientInterval: BaseSequenceInterval = createTransientIntervalFromSequence(
+			const transientInterval: SequenceInterval = createTransientIntervalFromSequence(
 				start ?? "start",
 				end ?? "end",
 				this.sequence,
@@ -105,11 +105,11 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 		return this.intervalSet.findOverlapping(transientInterval);
 	}
 
-	public remove(interval: BaseSequenceInterval) {
+	public remove(interval: SequenceInterval): void {
 		this.intervalSet.remove(interval);
 	}
 
-	public add(interval: BaseSequenceInterval) {
+	public add(interval: SequenceInterval): void {
 		this.intervalSet.add(interval);
 	}
 }
