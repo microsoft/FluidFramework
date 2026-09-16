@@ -32,6 +32,7 @@ pub enum MessageKind {
     OpenAuthorStream = 18,
     OpenSnapshotStream = 19,
     PublishNominatedSnapshot = 20,
+    OpenContentStream = 21,
     Acknowledged = 128,
     EventCommitted = 129,
     SubmissionResolved = 130,
@@ -45,6 +46,7 @@ pub enum MessageKind {
     CaughtUp = 138,
     EventStreamOpened = 139,
     SnapshotCoordination = 140,
+    ResponseComplete = 141,
     Error = 255,
 }
 
@@ -73,6 +75,7 @@ impl TryFrom<u8> for MessageKind {
             18 => Ok(Self::OpenAuthorStream),
             19 => Ok(Self::OpenSnapshotStream),
             20 => Ok(Self::PublishNominatedSnapshot),
+            21 => Ok(Self::OpenContentStream),
             128 => Ok(Self::Acknowledged),
             129 => Ok(Self::EventCommitted),
             130 => Ok(Self::SubmissionResolved),
@@ -86,6 +89,7 @@ impl TryFrom<u8> for MessageKind {
             138 => Ok(Self::CaughtUp),
             139 => Ok(Self::EventStreamOpened),
             140 => Ok(Self::SnapshotCoordination),
+            141 => Ok(Self::ResponseComplete),
             255 => Ok(Self::Error),
             _ => Err(ProtocolError::UnknownMessageKind(value)),
         }
@@ -110,7 +114,7 @@ pub enum StreamRole {
 
 impl MessageKind {
     /// Every assigned message kind in numeric order.
-    pub const ALL: [Self; 34] = [
+    pub const ALL: [Self; 36] = [
         Self::CreateArchive,
         Self::OpenSession,
         Self::Submit,
@@ -131,6 +135,7 @@ impl MessageKind {
         Self::OpenAuthorStream,
         Self::OpenSnapshotStream,
         Self::PublishNominatedSnapshot,
+        Self::OpenContentStream,
         Self::Acknowledged,
         Self::EventCommitted,
         Self::SubmissionResolved,
@@ -144,6 +149,7 @@ impl MessageKind {
         Self::CaughtUp,
         Self::EventStreamOpened,
         Self::SnapshotCoordination,
+        Self::ResponseComplete,
         Self::Error,
     ];
 
@@ -195,6 +201,7 @@ impl MessageKind {
             StreamRole::Content => matches!(
                 self,
                 Kind::Read
+                    | Kind::OpenContentStream
                     | Kind::PutBlob
                     | Kind::GetBlob
                     | Kind::PutDirectory
@@ -207,6 +214,8 @@ impl MessageKind {
                     | Kind::Snapshot
                     | Kind::LoadEvent
                     | Kind::CaughtUp
+                    | Kind::ResponseComplete
+                    | Kind::Acknowledged
                     | Kind::Error
             ),
         }
@@ -222,6 +231,7 @@ impl MessageKind {
                 Some(StreamRole::Author)
             }
             Self::Read
+            | Self::OpenContentStream
             | Self::PutBlob
             | Self::GetBlob
             | Self::PutDirectory
@@ -887,6 +897,11 @@ pub enum Request {
         /// Authority returned by the event stream.
         authority: Vec<u8>,
     },
+    /// Opens reusable content operations for an established logical session.
+    OpenContentStream {
+        /// Authority returned by the event stream.
+        authority: Vec<u8>,
+    },
     /// Opens latest-value snapshot coordination for an established session.
     OpenSnapshotStream {
         /// Authority returned by the event stream.
@@ -971,6 +986,8 @@ pub enum Response {
         /// Current fence when this client is nominated.
         fence: Option<u64>,
     },
+    /// Marks the end of one bounded correlated response.
+    ResponseComplete,
 }
 
 impl Request {
@@ -982,6 +999,7 @@ impl Request {
             Self::OpenSession { .. } => MessageKind::OpenSession,
             Self::OpenEventStream { .. } => MessageKind::OpenEventStream,
             Self::OpenAuthorStream { .. } => MessageKind::OpenAuthorStream,
+            Self::OpenContentStream { .. } => MessageKind::OpenContentStream,
             Self::OpenSnapshotStream { .. } => MessageKind::OpenSnapshotStream,
             Self::PublishNominatedSnapshot { .. } => MessageKind::PublishNominatedSnapshot,
             Self::Submit { .. } => MessageKind::Submit,
@@ -1014,6 +1032,7 @@ impl Request {
             | Self::ResolveSubmission { .. }
             | Self::Close => StreamRole::Author,
             Self::Read { .. }
+            | Self::OpenContentStream { .. }
             | Self::PutBlob { .. }
             | Self::GetBlob { .. }
             | Self::PutDirectory { .. }
@@ -1037,6 +1056,7 @@ impl Response {
             Self::Acknowledged => MessageKind::Acknowledged,
             Self::EventStreamOpened { .. } => MessageKind::EventStreamOpened,
             Self::SnapshotCoordination { .. } => MessageKind::SnapshotCoordination,
+            Self::ResponseComplete => MessageKind::ResponseComplete,
             Self::EventCommitted { .. } => MessageKind::EventCommitted,
             Self::SubmissionResolved { .. } => MessageKind::SubmissionResolved,
             Self::BlobStored { .. } => MessageKind::BlobStored,
@@ -1142,15 +1162,17 @@ pub fn encode_request_frame(
             },
             limits,
         ),
-        Request::OpenAuthorStream { authority } => encode_typed_payload(
-            role,
-            request.kind(),
-            correlation_id,
-            &wire::SessionAuthority {
-                authority: authority.clone(),
-            },
-            limits,
-        ),
+        Request::OpenAuthorStream { authority } | Request::OpenContentStream { authority } => {
+            encode_typed_payload(
+                role,
+                request.kind(),
+                correlation_id,
+                &wire::SessionAuthority {
+                    authority: authority.clone(),
+                },
+                limits,
+            )
+        }
         Request::OpenSnapshotStream {
             authority,
             eligible,
@@ -1343,6 +1365,12 @@ pub fn decode_request_frame(
                 authority: value.authority,
             }
         }
+        MessageKind::OpenContentStream => {
+            let value: wire::SessionAuthority = decode_typed_payload(frame)?;
+            Request::OpenContentStream {
+                authority: value.authority,
+            }
+        }
         MessageKind::OpenSnapshotStream => {
             let value: wire::OpenSnapshotStream = decode_typed_payload(frame)?;
             Request::OpenSnapshotStream {
@@ -1457,7 +1485,7 @@ pub fn encode_response_frame(
 ) -> Result<Vec<u8>, ProtocolError> {
     use payload as wire;
     match response {
-        Response::Acknowledged => {
+        Response::Acknowledged | Response::ResponseComplete => {
             encode_typed_payload(role, response.kind(), correlation_id, &wire::Empty, limits)
         }
         Response::EventStreamOpened { authority } => encode_typed_payload(
@@ -1603,6 +1631,10 @@ pub fn decode_response_network_frame(
         MessageKind::Acknowledged => {
             let _: wire::Empty = decode_typed_payload(frame)?;
             Response::Acknowledged
+        }
+        MessageKind::ResponseComplete => {
+            let _: wire::Empty = decode_typed_payload(frame)?;
+            Response::ResponseComplete
         }
         MessageKind::EventStreamOpened => {
             let value: wire::EventStreamOpened = decode_typed_payload(frame)?;
@@ -2044,6 +2076,12 @@ mod tests {
                 },
             ),
             (
+                StreamRole::Content,
+                Request::OpenContentStream {
+                    authority: vec![7; 32],
+                },
+            ),
+            (
                 StreamRole::Snapshot,
                 Request::OpenSnapshotStream {
                     authority: vec![7; 32],
@@ -2147,6 +2185,7 @@ mod tests {
         };
         let cases = vec![
             (StreamRole::Control, Response::Acknowledged),
+            (StreamRole::Content, Response::ResponseComplete),
             (
                 StreamRole::Event,
                 Response::EventStreamOpened {

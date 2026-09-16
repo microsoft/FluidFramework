@@ -149,13 +149,7 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 	): Promise<void> {
 		await this.closeEventStream();
 		const reference = decodePosition(resumeAfter);
-		await this.client.openSession(
-			document,
-			false,
-			writer,
-			session,
-			reference,
-		);
+		await this.client.openSession(document, false, writer, session, reference);
 		this.eventStream = await this.client.load(reference);
 		this.eventResumeAfter = reference;
 	}

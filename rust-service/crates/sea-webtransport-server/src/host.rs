@@ -384,6 +384,33 @@ impl SeaConnectionService for HostedConnection {
             session.service.revoke_snapshot_publisher().await;
         }
     }
+
+    async fn open_content_stream(&self, request: protocol::Request) -> protocol::Response {
+        let protocol::Request::OpenContentStream { ref authority } = request else {
+            return invalid("content stream requires OpenContentStream");
+        };
+        let session = self.session.lock().await.clone();
+        match session {
+            Some(session) if session.authority == *authority => {
+                session.service.open_content_stream(request).await
+            }
+            Some(_) => rejected("content stream authority does not match"),
+            None => invalid("OpenEventStream is required before OpenContentStream"),
+        }
+    }
+
+    async fn content_request(
+        &self,
+        request: protocol::Request,
+    ) -> Result<SeaResponseStream, protocol::Response> {
+        let session = self.session.lock().await.clone();
+        match session {
+            Some(session) => session.service.content_request(request).await,
+            None => Err(invalid(
+                "OpenEventStream is required before content operations",
+            )),
+        }
+    }
 }
 
 impl Clone for HostedSession {

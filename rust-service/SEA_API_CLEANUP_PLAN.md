@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 6e. Content stream.
-- **Last completed checkpoint:** 6d. Snapshot coordination stream.
-- **Last validation:** Checkpoint 6d formatting, 26 sequencer/client/server tests, strict native and WASM Clippy, generated WASM/Node behavior, TypeScript typecheck, and the real Chromium 152 WebTransport flow passed on 2026-09-16.
-- **Latest checkpoint notes:** `OpenSnapshotStream` binds latest-value coordination to event authority and advertises publisher eligibility and willingness. `sea-sequencer` deterministically selects the lowest eligible session, issues monotonic fences, rejects non-nominees and stale fences, and reassigns on revocation or session close. Correlation-zero updates expose latest accepted snapshot plus this client's fence through shared native/browser state; publication and resolution use correlated requests on the same stream. No server snapshot-generation request kind exists.
+- **Current checkpoint:** 6f. Remove old transport paths.
+- **Last completed checkpoint:** 6e. Content stream.
+- **Last validation:** Checkpoint 6e formatting, strict workspace Clippy and rustdoc, workspace build and tests, example and documentation checks, generated WASM/Node behavior, TypeScript format/lint/typecheck/build/test consumers, repository policy and `build:fast`, and the real Chromium 152 WebTransport flow passed on 2026-09-16.
+- **Latest checkpoint notes:** `OpenContentStream` lazily binds one reusable content stream to event authority. Bounded history, blob, directory, and snapshot lookup requests use nonzero correlation IDs and terminate with `ResponseComplete`; clients serialize requests on that stream to preserve backpressure while independent logical streams can progress concurrently. Shared native and browser clients no longer open a transport stream per content operation.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 6e. Content stream.
+- **Next checkpoint:** 6f. Remove old transport paths.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -588,10 +588,10 @@ Do not retain the old per-operation implementation after its final consumer move
 
 #### 6e. Content stream
 
-- [ ] Open one reusable content stream lazily and bind it to the session authority returned by the event stream.
-- [ ] Correlate bounded history, blob, directory, and snapshot lookup operations by request ID.
-- [ ] Define bounded response completion explicitly.
-- [ ] Preserve backpressure and permit safe concurrency where useful.
+- [x] Open one reusable content stream lazily and bind it to the session authority returned by the event stream.
+- [x] Correlate bounded history, blob, directory, and snapshot lookup operations by request ID.
+- [x] Define bounded response completion explicitly.
+- [x] Preserve backpressure and permit safe concurrency where useful.
 
 #### 6f. Remove old transport paths
 

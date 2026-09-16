@@ -8,7 +8,7 @@
 
 use std::{
     cell::{Cell, RefCell},
-    collections::BTreeMap,
+    collections::{BTreeMap, VecDeque},
     rc::Rc,
     sync::Arc,
 };
@@ -37,7 +37,8 @@ use wasm_bindgen_futures::JsFuture;
 use crate::{AsyncRequestTransport, call_method, sea_protocol_v1 as protocol};
 use sea_webtransport::{
     client::{
-        AuthorStream, Client, ClientError, ClientState, EventStream, ResponseStream, SnapshotStream,
+        AuthorStream, Client, ClientError, ClientState, ContentStream, EventStream, ResponseStream,
+        SnapshotStream,
     },
     transport::{
         BidirectionalStream, ClientTransport,
@@ -313,6 +314,7 @@ impl SeaLoadItem {
 #[wasm_bindgen]
 pub struct SeaInjectedStream {
     inner: RefCell<Option<ResponseStream<InjectedBidirectionalStream>>>,
+    buffered: RefCell<VecDeque<protocol::Response>>,
     cancelled: Cell<bool>,
 }
 
@@ -477,6 +479,12 @@ impl SeaInjectedStream {
         if self.cancelled.get() {
             return Err(js_error("Sea stream is cancelled"));
         }
+        if let Some(response) = self.buffered.borrow_mut().pop_front() {
+            return load_item(response).map(Some);
+        }
+        if self.inner.borrow().is_none() {
+            return Ok(None);
+        }
         let mut stream = self
             .inner
             .take()
@@ -488,18 +496,7 @@ impl SeaInjectedStream {
         let Some(response) = response else {
             return Ok(None);
         };
-        if let protocol::Response::Error { message, .. } = response {
-            return Err(js_error(&message));
-        }
-        if !matches!(
-            response,
-            protocol::Response::LoadSnapshot(_)
-                | protocol::Response::LoadEvent(_)
-                | protocol::Response::CaughtUp(_)
-        ) {
-            return Err(js_error("Sea stream response is not a load item"));
-        }
-        Ok(Some(SeaLoadItem { inner: response }))
+        load_item(response).map(Some)
     }
 
     /// Cancels the stream and injected transport.
@@ -521,6 +518,7 @@ pub struct SeaInjectedClient {
     event_stream: RefCell<Option<EventStream<InjectedBidirectionalStream>>>,
     author_stream: RefCell<Option<AuthorStream<InjectedBidirectionalStream>>>,
     snapshot_stream: Rc<RefCell<Option<SnapshotStream<InjectedBidirectionalStream>>>>,
+    content_stream: RefCell<Option<ContentStream<InjectedBidirectionalStream>>>,
     resume_after: Cell<Option<u64>>,
 }
 
@@ -1026,6 +1024,7 @@ impl SeaInjectedClient {
             event_stream: RefCell::new(None),
             author_stream: RefCell::new(None),
             snapshot_stream: Rc::new(RefCell::new(None)),
+            content_stream: RefCell::new(None),
             resume_after: Cell::new(None),
         })
     }
@@ -1057,6 +1056,7 @@ impl SeaInjectedClient {
         }
         self.author_stream.take();
         self.snapshot_stream.take();
+        self.content_stream.take();
         let event_stream = self
             .client
             .open_event_stream(protocol::Request::OpenEventStream {
@@ -1153,15 +1153,21 @@ impl SeaInjectedClient {
         after: Option<u64>,
         through: Option<u64>,
     ) -> Result<SeaInjectedStream, JsValue> {
-        self.open_stream(protocol::Request::Read { after, through })
-            .await
+        let responses = self
+            .content_request(protocol::Request::Read { after, through })
+            .await?;
+        Ok(SeaInjectedStream {
+            inner: RefCell::new(None),
+            buffered: RefCell::new(responses.into()),
+            cancelled: Cell::new(false),
+        })
     }
 
     /// Uploads one immutable blob and returns its stored identity.
     #[wasm_bindgen(js_name = putBlob)]
     pub async fn put_blob(&self, payload: Uint8Array) -> Result<SeaTreeId, JsValue> {
         match self
-            .request(protocol::Request::PutBlob {
+            .one_content_response(protocol::Request::PutBlob {
                 payload: payload.to_vec(),
             })
             .await?
@@ -1179,7 +1185,10 @@ impl SeaInjectedClient {
         let protocol::TreeId::Blob(id) = id.inner else {
             return Err(js_error("getBlob requires a blob identity"));
         };
-        match self.request(protocol::Request::GetBlob { id }).await? {
+        match self
+            .one_content_response(protocol::Request::GetBlob { id })
+            .await?
+        {
             protocol::Response::Blob(payload) => Ok(Uint8Array::from(payload.as_slice())),
             _ => Err(js_error("Sea response is not a blob")),
         }
@@ -1191,7 +1200,10 @@ impl SeaInjectedClient {
         let protocol::TreeId::Directory(id) = id.inner else {
             return Err(js_error("getDirectory requires a directory identity"));
         };
-        match self.request(protocol::Request::GetDirectory { id }).await? {
+        match self
+            .one_content_response(protocol::Request::GetDirectory { id })
+            .await?
+        {
             protocol::Response::Directory(entries) => Ok(entries
                 .into_iter()
                 .map(|entry| {
@@ -1220,7 +1232,7 @@ impl SeaInjectedClient {
             });
         }
         match self
-            .request(protocol::Request::PutDirectory { entries: values })
+            .one_content_response(protocol::Request::PutDirectory { entries: values })
             .await?
         {
             protocol::Response::DirectoryStored { id } => Ok(SeaTreeId {
@@ -1267,7 +1279,7 @@ impl SeaInjectedClient {
     #[wasm_bindgen(js_name = getSnapshot)]
     pub async fn get_snapshot(&self, id: Uint8Array) -> Result<Option<SeaSnapshot>, JsValue> {
         match self
-            .request(protocol::Request::GetSnapshot { id: id.to_vec() })
+            .one_content_response(protocol::Request::GetSnapshot { id: id.to_vec() })
             .await?
         {
             protocol::Response::Snapshot(snapshot) => {
@@ -1324,6 +1336,7 @@ impl SeaInjectedClient {
         std::future::ready(()).await;
         Ok(SeaInjectedStream {
             inner: RefCell::new(Some(event_stream.into_responses())),
+            buffered: RefCell::new(VecDeque::new()),
             cancelled: Cell::new(false),
         })
     }
@@ -1342,6 +1355,9 @@ impl SeaInjectedClient {
     pub async fn close(&self) -> Result<(), JsValue> {
         if let Some(snapshot) = self.snapshot_stream.take() {
             snapshot.close().await.map_err(client_error)?;
+        }
+        if let Some(content) = self.content_stream.take() {
+            content.close().await.map_err(client_error)?;
         }
         let author = self
             .author_stream
@@ -1375,18 +1391,6 @@ impl SeaInjectedClient {
         }
     }
 
-    async fn open_stream(&self, request: protocol::Request) -> Result<SeaInjectedStream, JsValue> {
-        let stream = self
-            .client
-            .request_stream(request)
-            .await
-            .map_err(client_error)?;
-        Ok(SeaInjectedStream {
-            inner: RefCell::new(Some(stream)),
-            cancelled: Cell::new(false),
-        })
-    }
-
     async fn author_request(
         &self,
         request: protocol::Request,
@@ -1418,6 +1422,44 @@ impl SeaInjectedClient {
             response => Ok(response),
         }
     }
+
+    async fn content_request(
+        &self,
+        request: protocol::Request,
+    ) -> Result<Vec<protocol::Response>, JsValue> {
+        if self.content_stream.borrow().is_none() {
+            let content_stream = self
+                .client
+                .open_content_stream()
+                .await
+                .map_err(client_error)?;
+            self.content_stream.replace(Some(content_stream));
+        }
+        let mut stream = self
+            .content_stream
+            .take()
+            .ok_or_else(|| js_error("Sea content stream is not open"))?;
+        let response = stream.request(request).await;
+        self.content_stream.replace(Some(stream));
+        let responses = response.map_err(client_error)?;
+        if let Some(protocol::Response::Error { message, .. }) = responses.first() {
+            return Err(js_error(message));
+        }
+        Ok(responses)
+    }
+
+    async fn one_content_response(
+        &self,
+        request: protocol::Request,
+    ) -> Result<protocol::Response, JsValue> {
+        let mut responses = self.content_request(request).await?;
+        if responses.len() != 1 {
+            return Err(js_error(
+                "Sea content operation returned an invalid response count",
+            ));
+        }
+        Ok(responses.remove(0))
+    }
 }
 
 fn client_error(error: ClientError<JsValue>) -> JsValue {
@@ -1431,6 +1473,21 @@ fn client_error(error: ClientError<JsValue>) -> JsValue {
         }
         ClientError::UnexpectedResponse(_) => js_error("Sea response did not match its request"),
     }
+}
+
+fn load_item(response: protocol::Response) -> Result<SeaLoadItem, JsValue> {
+    if let protocol::Response::Error { message, .. } = response {
+        return Err(js_error(&message));
+    }
+    if !matches!(
+        response,
+        protocol::Response::LoadSnapshot(_)
+            | protocol::Response::LoadEvent(_)
+            | protocol::Response::CaughtUp(_)
+    ) {
+        return Err(js_error("Sea stream response is not a load item"));
+    }
+    Ok(SeaLoadItem { inner: response })
 }
 
 fn expect_acknowledged(response: &protocol::Response) -> Result<(), JsValue> {

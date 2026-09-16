@@ -4,7 +4,7 @@ use std::{collections::BTreeMap, sync::Arc};
 
 use async_trait::async_trait;
 use bytes::Bytes;
-use futures_util::StreamExt as _;
+use futures_util::{StreamExt as _, stream};
 use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, Durability, ErrorKind,
     Event, EventPosition, SnapshotId,
@@ -198,6 +198,26 @@ where
     async fn revoke_snapshot_publisher(&self) {
         let _ = self.session.revoke_snapshot_publisher().await;
     }
+
+    async fn open_content_stream(&self, request: protocol::Request) -> protocol::Response {
+        if matches!(request, protocol::Request::OpenContentStream { .. }) {
+            protocol::Response::Acknowledged
+        } else {
+            invalid("content stream requires OpenContentStream")
+        }
+    }
+
+    async fn content_request(
+        &self,
+        request: protocol::Request,
+    ) -> Result<SeaResponseStream, protocol::Response> {
+        if matches!(request, protocol::Request::Read { .. }) {
+            return self.stream(request).await;
+        }
+        self.request_inner(request)
+            .await
+            .map(|response| Box::pin(stream::once(async move { response })) as SeaResponseStream)
+    }
 }
 
 impl<S> SessionDispatcher<S>
@@ -307,6 +327,7 @@ where
             | protocol::Request::OpenAuthorStream { .. }
             | protocol::Request::OpenSnapshotStream { .. }
             | protocol::Request::PublishNominatedSnapshot { .. }
+            | protocol::Request::OpenContentStream { .. }
             | protocol::Request::Read { .. }
             | protocol::Request::Load { .. }
             | protocol::Request::SubscribeSnapshots => Err(invalid(

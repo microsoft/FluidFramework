@@ -229,6 +229,46 @@ where
         Ok(snapshot)
     }
 
+    /// Opens the reusable content stream bound to event-stream authority.
+    pub async fn open_content_stream(
+        &self,
+    ) -> Result<ContentStream<Transport::Stream>, ClientError<Transport::Error>> {
+        let authority = self.state.authority()?;
+        let pending = self.state.begin(StreamRole::Content)?;
+        let correlation_id = pending.id();
+        let request = Request::OpenContentStream { authority };
+        let outgoing = protocol::encode_request_frame(
+            StreamRole::Content,
+            correlation_id,
+            &request,
+            self.limits,
+        )?;
+        let mut stream = self
+            .transport
+            .open_bidirectional()
+            .await
+            .map_err(ClientError::Transport)?;
+        stream
+            .send(&outgoing)
+            .await
+            .map_err(ClientError::Transport)?;
+        let mut decoder = NetworkFrameDecoder::new(self.limits);
+        let frame = receive_next_frame(&mut stream, &mut decoder)
+            .await?
+            .ok_or(ClientError::ResponseEnded)?;
+        pending.complete(frame.correlation_id)?;
+        let response = protocol::decode_response_network_frame(StreamRole::Content, &frame)?;
+        if response != Response::Acknowledged {
+            return Err(ClientError::UnexpectedResponse(response));
+        }
+        Ok(ContentStream {
+            stream,
+            state: Arc::clone(&self.state),
+            limits: self.limits,
+            decoder,
+        })
+    }
+
     /// Marks the logical client closed and rejects future requests.
     pub fn close(&self) -> Result<(), ClientStateError> {
         self.state.close()
@@ -277,6 +317,59 @@ pub struct SnapshotStream<Stream> {
     decoder: NetworkFrameDecoder,
     latest: Option<protocol::Snapshot>,
     fence: Option<u64>,
+}
+
+/// Correlated bounded operations on one reusable content stream.
+#[derive(Debug)]
+pub struct ContentStream<Stream> {
+    stream: Stream,
+    state: Arc<ClientState>,
+    limits: protocol::Limits,
+    decoder: NetworkFrameDecoder,
+}
+
+impl<Stream> ContentStream<Stream>
+where
+    Stream: BidirectionalStream,
+{
+    /// Sends one content operation and collects responses through explicit completion.
+    pub async fn request(
+        &mut self,
+        request: Request,
+    ) -> Result<Vec<Response>, ClientError<Stream::Error>> {
+        let pending = self.state.begin(StreamRole::Content)?;
+        let correlation_id = pending.id();
+        let outgoing = protocol::encode_request_frame(
+            StreamRole::Content,
+            correlation_id,
+            &request,
+            self.limits,
+        )?;
+        self.stream
+            .send(&outgoing)
+            .await
+            .map_err(ClientError::Transport)?;
+        let mut responses = Vec::new();
+        loop {
+            let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
+                .await?
+                .ok_or(ClientError::ResponseEnded)?;
+            if frame.correlation_id != correlation_id {
+                return Err(ProtocolError::UnknownCorrelation(frame.correlation_id).into());
+            }
+            let response = protocol::decode_response_network_frame(StreamRole::Content, &frame)?;
+            if response == Response::ResponseComplete {
+                pending.complete(correlation_id)?;
+                return Ok(responses);
+            }
+            responses.push(response);
+        }
+    }
+
+    /// Finishes the reusable content stream.
+    pub async fn close(mut self) -> Result<(), ClientError<Stream::Error>> {
+        self.stream.finish().await.map_err(ClientError::Transport)
+    }
 }
 
 impl<Stream> SnapshotStream<Stream>

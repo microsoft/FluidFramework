@@ -13,7 +13,7 @@ use std::{
 use async_trait::async_trait;
 use bytes::Bytes;
 use futures_core::Stream;
-use futures_util::{StreamExt as _, stream::FuturesUnordered};
+use futures_util::{StreamExt as _, stream, stream::FuturesUnordered};
 use thiserror::Error;
 use tokio::{
     sync::watch,
@@ -270,6 +270,15 @@ pub trait SeaConnectionService: Send + Sync {
 
     /// Revokes snapshot publisher membership after stream loss.
     async fn revoke_snapshot_publisher(&self);
+
+    /// Validates content-stream authority.
+    async fn open_content_stream(&self, request: sea_v1::Request) -> sea_v1::Response;
+
+    /// Handles one bounded content operation.
+    async fn content_request(
+        &self,
+        request: sea_v1::Request,
+    ) -> Result<SeaResponseStream, sea_v1::Response>;
 }
 
 /// Creates isolated Sea protocol state for each WebTransport connection.
@@ -603,6 +612,19 @@ async fn serve_network_stream(
         )
         .await;
     }
+    if matches!(request, sea_v1::Request::OpenContentStream { .. }) {
+        return serve_content_stream(
+            send,
+            receive,
+            service,
+            config,
+            metrics,
+            role,
+            frame.correlation_id,
+            request,
+        )
+        .await;
+    }
     if matches!(
         request,
         sea_v1::Request::OpenEventStream { .. }
@@ -818,6 +840,71 @@ async fn serve_snapshot_stream(
         }
     }
     service.revoke_snapshot_publisher().await;
+    send.finish().await.map_err(transport_error)
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn serve_content_stream(
+    mut send: wtransport::SendStream,
+    mut receive: wtransport::RecvStream,
+    service: Arc<dyn SeaConnectionService>,
+    config: &TransportConfig,
+    metrics: &Metrics,
+    role: sea_v1::StreamRole,
+    correlation_id: u64,
+    opening: sea_v1::Request,
+) -> Result<(), WebTransportError> {
+    let limits = sea_v1::Limits {
+        max_frame_bytes: config.max_frame_bytes,
+    };
+    let response = service.open_content_stream(opening).await;
+    write_network_response(
+        &mut send,
+        role,
+        correlation_id,
+        &response,
+        limits,
+        config.operation_timeout,
+        metrics,
+        false,
+    )
+    .await?;
+    if matches!(response, sea_v1::Response::Error { .. }) {
+        return send.finish().await.map_err(transport_error);
+    }
+    let mut decoder = sea_v1::NetworkFrameDecoder::new(limits);
+    while let Some(frame) = read_next_network_frame(&mut receive, &mut decoder).await? {
+        let request = sea_v1::decode_request_frame(role, &frame)?;
+        metrics.add_wire_bytes(4 + 1 + 8 + frame.payload.len());
+        let mut responses = match service.content_request(request).await {
+            Ok(responses) => responses,
+            Err(response) => Box::pin(stream::once(async move { response })),
+        };
+        while let Some(response) = responses.next().await {
+            write_network_response(
+                &mut send,
+                role,
+                frame.correlation_id,
+                &response,
+                limits,
+                config.operation_timeout,
+                metrics,
+                false,
+            )
+            .await?;
+        }
+        write_network_response(
+            &mut send,
+            role,
+            frame.correlation_id,
+            &sea_v1::Response::ResponseComplete,
+            limits,
+            config.operation_timeout,
+            metrics,
+            false,
+        )
+        .await?;
+    }
     send.finish().await.map_err(transport_error)
 }
 

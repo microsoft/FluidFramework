@@ -20,7 +20,10 @@ use wtransport::tls::Sha256Digest;
 
 use crate::{
     TransportConfig, WebTransportError,
-    client::{AuthorStream, Client, ClientError, ClientStateError, EventStream, SnapshotStream},
+    client::{
+        AuthorStream, Client, ClientError, ClientStateError, ContentStream, EventStream,
+        SnapshotStream,
+    },
     connect_once, protocol,
     transport::native::{NativeBidirectionalStream, NativeTransport},
 };
@@ -122,8 +125,8 @@ pub struct NativeSeaClient {
     event_stream: Mutex<Option<EventStream<NativeBidirectionalStream>>>,
     author_stream: Mutex<Option<AuthorStream<NativeBidirectionalStream>>>,
     snapshot_stream: Arc<Mutex<SnapshotStream<NativeBidirectionalStream>>>,
+    content_stream: Mutex<Option<ContentStream<NativeBidirectionalStream>>>,
     resume_after: Option<EventPosition>,
-    operation_timeout: std::time::Duration,
 }
 
 /// Values that identify and initialize one native archive-bound session.
@@ -190,38 +193,36 @@ impl NativeSeaClient {
             event_stream: Mutex::new(Some(event_stream)),
             author_stream: Mutex::new(Some(author_stream)),
             snapshot_stream: Arc::new(Mutex::new(snapshot_stream)),
+            content_stream: Mutex::new(None),
             resume_after,
-            operation_timeout: config.operation_timeout,
         })
     }
 
-    async fn request(
+    async fn content_request(
         &self,
         request: protocol::Request,
-    ) -> Result<protocol::Response, SeaClientError> {
-        timeout(self.operation_timeout, self.client.request(request))
+    ) -> Result<Vec<protocol::Response>, SeaClientError> {
+        let mut content_stream = self.content_stream.lock().await;
+        if content_stream.is_none() {
+            *content_stream = Some(self.client.open_content_stream().await?);
+        }
+        content_stream
+            .as_mut()
+            .expect("content stream was initialized")
+            .request(request)
             .await
-            .map_err(|_| WebTransportError::Timeout)?
             .map_err(Into::into)
     }
 
-    async fn stream_request(
+    async fn one_content_response(
         &self,
         request: protocol::Request,
-    ) -> Result<SessionStream<protocol::Response, SeaClientError>, SeaClientError> {
-        let responses = timeout(self.operation_timeout, self.client.request_stream(request))
-            .await
-            .map_err(|_| WebTransportError::Timeout)??;
-        Ok(Box::pin(stream::try_unfold(
-            responses,
-            |mut responses| async move {
-                Ok(responses
-                    .next()
-                    .await
-                    .map_err(SeaClientError::from)?
-                    .map(|response| (response, responses)))
-            },
-        )))
+    ) -> Result<protocol::Response, SeaClientError> {
+        let mut responses = self.content_request(request).await?;
+        if responses.len() != 1 {
+            return Err(SeaClientError::UnexpectedResponse);
+        }
+        Ok(responses.remove(0))
     }
 }
 
@@ -269,21 +270,23 @@ impl SeaArchive for NativeSeaClient {
         after: Option<EventPosition>,
         through: Option<EventPosition>,
     ) -> Result<SessionStream<SessionCommittedEvent, Self::Error>, Self::Error> {
-        let stream = self
-            .stream_request(protocol::Request::Read {
+        let responses = self
+            .content_request(protocol::Request::Read {
                 after: after.map(EventPosition::get),
                 through: through.map(EventPosition::get),
             })
             .await?;
-        Ok(Box::pin(stream.map(|result| match result? {
-            protocol::Response::LoadEvent(event) => session_event_from_wire(*event),
-            response => Err(response_error(response)),
-        })))
+        Ok(Box::pin(stream::iter(responses.into_iter().map(
+            |response| match response {
+                protocol::Response::LoadEvent(event) => session_event_from_wire(*event),
+                response => Err(response_error(response)),
+            },
+        ))))
     }
 
     async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {
         match self
-            .request(protocol::Request::PutBlob {
+            .one_content_response(protocol::Request::PutBlob {
                 payload: payload.to_vec(),
             })
             .await?
@@ -297,7 +300,7 @@ impl SeaArchive for NativeSeaClient {
 
     async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
         match self
-            .request(protocol::Request::GetBlob { id: *id.as_bytes() })
+            .one_content_response(protocol::Request::GetBlob { id: *id.as_bytes() })
             .await?
         {
             protocol::Response::Blob(payload) => Ok(Bytes::from(payload)),
@@ -318,7 +321,7 @@ impl SeaArchive for NativeSeaClient {
             })
             .collect();
         match self
-            .request(protocol::Request::PutDirectory { entries })
+            .one_content_response(protocol::Request::PutDirectory { entries })
             .await?
         {
             protocol::Response::DirectoryStored { id } => {
@@ -330,7 +333,7 @@ impl SeaArchive for NativeSeaClient {
 
     async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
         match self
-            .request(protocol::Request::GetDirectory { id: *id.as_bytes() })
+            .one_content_response(protocol::Request::GetDirectory { id: *id.as_bytes() })
             .await?
         {
             protocol::Response::Directory(entries) => {
@@ -351,7 +354,7 @@ impl SeaArchive for NativeSeaClient {
 
     async fn snapshot(&self, id: &SnapshotId) -> Result<Option<PublishedSnapshot>, Self::Error> {
         match self
-            .request(protocol::Request::GetSnapshot {
+            .one_content_response(protocol::Request::GetSnapshot {
                 id: id.as_bytes().to_vec(),
             })
             .await?
