@@ -20,7 +20,7 @@ import {
 	NodeMoveType,
 	type NodeId,
 	type CrossFieldKeyRange,
-	type NestedChangesIndices,
+	type ChildChangeInfo,
 } from "../modular-schema/index.js";
 
 import type { DetachOfRemovedNodes, EmptyInputCellMark } from "./helperTypes.js";
@@ -53,16 +53,13 @@ export function createEmpty(): Changeset {
 	return [];
 }
 
-export function getNestedChanges(change: Changeset): NestedChangesIndices {
-	const output: NestedChangesIndices[number][] = [];
-	let inputIndex = 0;
+export function getNestedChanges(change: Changeset): ChildChangeInfo[] {
+	const output: ChildChangeInfo[] = [];
+
 	for (const mark of change) {
-		const { changes, count } = mark;
-		if (changes !== undefined) {
-			output.push([changes, inputIndex]);
-		}
-		if (!areInputCellsEmpty(mark)) {
-			inputIndex += count;
+		if (mark.changes !== undefined) {
+			const detachId = isDetach(mark) ? getDetachedRootId(mark) : undefined;
+			output.push({ nodeId: mark.changes, detachId });
 		}
 	}
 	return output;

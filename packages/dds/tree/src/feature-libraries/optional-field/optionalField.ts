@@ -25,6 +25,7 @@ import {
 	requiredIdentifier,
 } from "../fieldKindIdentifiers.js";
 import {
+	EditFilterStatus,
 	type FieldChangeHandler,
 	type FieldChangeRebaser,
 	type FieldEditor,
@@ -33,7 +34,6 @@ import {
 	type NodeChangeRebaser,
 	type NodeId,
 	type ToDelta,
-	type NestedChangesIndices,
 	type RebaseNodeManager,
 	type ComposeNodeManager,
 	type InvertNodeManager,
@@ -42,6 +42,9 @@ import {
 	type RebaseVersion,
 	type RebaseRevisionMetadata,
 	FlexFieldKind,
+	type FilterDetachFunc,
+	type FilterAttachFunc,
+	type ChildChangeInfo,
 } from "../modular-schema/index.js";
 
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
@@ -194,9 +197,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		return updated;
 	},
 
-	mute: (change: OptionalChangeset): OptionalChangeset => {
-		return { childChange: change.childChange };
-	},
+	filterEdits,
 };
 
 function compose(
@@ -518,6 +519,19 @@ function squash(
 	return change;
 }
 
+function getNestedChanges(change: OptionalChangeset): ChildChangeInfo[] {
+	if (change.childChange === undefined) {
+		return [];
+	}
+
+	return [
+		{
+			nodeId: change.childChange,
+			detachId: getEffectiveDetachId(change),
+		},
+	];
+}
+
 function isPin(
 	change: OptionalChangeset,
 	getInputRootId: (id: ChangeAtomId, count: number) => RangeQueryResult<ChangeAtomId>,
@@ -547,14 +561,6 @@ function getCrossFieldKeys(change: OptionalChangeset): CrossFieldKeyRange[] {
 	}
 
 	return keys;
-}
-
-function getNestedChanges(change: OptionalChangeset): NestedChangesIndices {
-	if (change.childChange === undefined) {
-		return [];
-	}
-
-	return [[change.childChange, 0]];
 }
 
 function invertAttachId(
@@ -587,3 +593,40 @@ export const optional: Optional = new FlexFieldKind(
 		]),
 	},
 );
+
+function filterEdits(
+	change: OptionalChangeset,
+	options: {
+		filterDetach: FilterDetachFunc;
+		filterAttach: FilterAttachFunc;
+		preserveOtherEdits: boolean;
+	},
+): OptionalChangeset {
+	const filtered: Mutable<OptionalChangeset> = { ...change };
+	if (change.valueReplace !== undefined) {
+		const detachId = getEffectiveDetachId(change);
+		const detachResult =
+			detachId === undefined ? undefined : options.filterDetach(detachId, 1).value;
+
+		const attachId = change.valueReplace.src;
+		const attachResult =
+			attachId === undefined ? undefined : options.filterAttach(attachId, 1).value.action;
+
+		if (detachResult?.action === EditFilterStatus.Remove) {
+			assert(
+				attachId === undefined || attachResult === EditFilterStatus.Remove,
+				0xd0e /* Cannot remove detach without also removing attach */,
+			);
+
+			delete filtered.valueReplace;
+			if (detachResult.shouldRemoveChild === true) {
+				delete filtered.childChange;
+			}
+		} else if (attachResult === EditFilterStatus.Remove) {
+			filtered.valueReplace = { ...change.valueReplace };
+			delete (filtered.valueReplace as Mutable<Replace>).src;
+		}
+	}
+
+	return filtered;
+}

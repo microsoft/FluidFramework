@@ -11,6 +11,7 @@ import {
 	type SimpleClient,
 	type IBubble,
 } from "@fluid-example/bubblebench-common";
+import type { FluidIterable } from "@fluidframework/core-interfaces";
 import type { Change, SharedTree } from "@fluid-experimental/tree";
 
 import { type TreeArrayProxy, TreeObjectProxy, fromJson } from "./proxy/index.js";
@@ -68,7 +69,7 @@ export class AppState implements IAppState {
 		return this._height;
 	}
 
-	public get clients(): Iterable<IClient> {
+	public get clients(): FluidIterable<IClient> {
 		return this.root.clients;
 	}
 

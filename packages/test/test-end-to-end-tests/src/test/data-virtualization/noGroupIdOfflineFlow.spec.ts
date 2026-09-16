@@ -13,6 +13,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
+	defaultTestOldestSupportedClient,
 	getRequiredPendingLocalState,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
@@ -63,6 +64,7 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
 		registryEntries: [dataObjectFactory.registryEntry],
 		runtimeOptions,
 	});

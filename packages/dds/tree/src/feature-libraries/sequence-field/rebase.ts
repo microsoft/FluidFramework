@@ -271,7 +271,7 @@ function addMovedMarkEffect(mark: Mark, effect: Detach): Mark {
 	} else if (isTombstone(mark)) {
 		return { ...mark, ...effect };
 	}
-	assert(false, 0x818 /* Unexpected combination of mark effects at source and destination */);
+	fail(0x818 /* Unexpected combination of mark effects at source and destination */);
 }
 
 /**

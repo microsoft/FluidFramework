@@ -1,0 +1,8 @@
+{
+	// This config must be used in a "type": "commonjs" environment. (Use fluid-tsc commonjs.)
+	"extends": "./tsconfig.crossPackage.base.json",
+	"compilerOptions": {
+		"outDir": "./dist/crossPackage/node20",
+		"module": "node20",
+	},
+}

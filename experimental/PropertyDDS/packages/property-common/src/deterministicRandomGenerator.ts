@@ -11,8 +11,8 @@
 
 import _ from "lodash";
 
-import { GuidUtils } from "./guidUtils";
-import { calculateHash } from "./hashCalculator";
+import { GuidUtils } from "./guidUtils.js";
+import { calculateHash } from "./hashCalculator.js";
 
 /**
  * Random number generator that creates a deterministic sequence of random numbers based on an initial seed GUID.

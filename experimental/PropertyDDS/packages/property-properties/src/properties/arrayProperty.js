@@ -7,24 +7,28 @@
  * @fileoverview Definition of the array property class
  */
 
-const {
+import {
 	ArrayChangeSetIterator,
 	ChangeSet,
 	PathHelper,
 	TypeIdHelper,
-} = require("@fluid-experimental/property-changeset");
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const { UniversalDataArray, ConsoleUtils } = require("@fluid-experimental/property-common");
-const _ = require("lodash");
+} from "@fluid-experimental/property-changeset";
+import {
+	UniversalDataArray,
+	ConsoleUtils,
+	constants,
+} from "@fluid-experimental/property-common";
+import _ from "lodash";
+
+import { deserializeNonPrimitiveArrayElements } from "../containerSerializer.js";
+import { validationsEnabled } from "../enableValidations.js";
+
+import { AbstractStaticCollectionProperty } from "./abstractStaticCollectionProperty.js";
+import { BaseProperty } from "./baseProperty.js";
+import { LazyLoadedProperties as Property } from "./lazyLoadedProperties.js";
+
+const { MSG } = constants;
 const { cloneDeep: deepCopy } = _;
-
-const { deserializeNonPrimitiveArrayElements } = require("../containerSerializer");
-const { validationsEnabled } = require("../enableValidations");
-
-const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
-const { BaseProperty } = require("./baseProperty");
-const { LazyLoadedProperties: Property } = require("./lazyLoadedProperties");
-
 var MODIFIED_STATE_FLAGS = BaseProperty.MODIFIED_STATE_FLAGS;
 
 // Some global constant objects that are used to indicate a few special

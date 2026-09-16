@@ -11,6 +11,10 @@ import { Worker } from "node:worker_threads";
 
 import type { WorkerExecResult, WorkerMessage } from "./worker.js";
 
+// Resolve the worker entry point relative to this module so it loads as ESM
+// (the nearest package.json declares "type": "module").
+const workerUrl = new URL("./worker.js", import.meta.url);
+
 export interface WorkerExecResultWithOutput extends WorkerExecResult {
 	stdout: string;
 	stderr: string;
@@ -27,7 +31,7 @@ export class WorkerPool {
 	private getThreadWorker(): Worker {
 		let worker: Worker | undefined = this.threadWorkerPool.pop();
 		if (!worker) {
-			worker = new Worker(`${__dirname}/worker.js`, { stdout: true, stderr: true });
+			worker = new Worker(workerUrl, { stdout: true, stderr: true });
 		}
 		return worker;
 	}
@@ -36,7 +40,7 @@ export class WorkerPool {
 		let worker: ChildProcess | undefined = this.processWorkerPool.pop();
 		if (!worker) {
 			worker = fork(
-				`${__dirname}/worker.js`,
+				workerUrl,
 				this.memoryUsageLimit !== Number.POSITIVE_INFINITY ? ["--memoryUsage"] : undefined,
 				{ silent: true },
 			);

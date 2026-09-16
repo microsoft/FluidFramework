@@ -4,13 +4,12 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { SessionSpaceCompressedId, IIdCompressor } from "@fluidframework/id-compressor";
+import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor";
 
 import {
 	type DeltaRoot,
 	type IEditableForest,
 	type ITreeCursorSynchronous,
-	type RevisionTagCodec,
 	combineVisitors,
 	deltaForRootInitialization,
 	makeDetachedFieldIndex,
@@ -31,8 +30,6 @@ import { combineChunks } from "../../feature-libraries/index.js";
 export function initializeForest(
 	forest: IEditableForest,
 	content: ITreeCursorSynchronous,
-	revisionTagCodec: RevisionTagCodec,
-	idCompressor: IIdCompressor,
 	visitAnchors = false,
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
@@ -48,11 +45,6 @@ export function initializeForest(
 
 	// any detached trees built here are immediately attached so the revision used here doesn't matter
 	// we use a dummy revision to make correctness checks in the detached field index easier
-	visitDelta(
-		delta,
-		visitor,
-		makeDetachedFieldIndex("init", revisionTagCodec, idCompressor),
-		0 as SessionSpaceCompressedId,
-	);
+	visitDelta(delta, visitor, makeDetachedFieldIndex("init"), 0 as SessionSpaceCompressedId);
 	visitor.free();
 }

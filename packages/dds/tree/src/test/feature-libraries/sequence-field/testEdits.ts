@@ -406,12 +406,13 @@ function createTomb(
 	revision: RevisionTag | undefined,
 	localId: ChangesetLocalId = brand(0),
 	count: number = 1,
+	overrides?: Partial<SF.CellMark<SF.NoopMark>>,
 ): SF.CellMark<SF.NoopMark> {
 	const cellId: Mutable<SF.CellId> = { localId };
 	if (revision !== undefined) {
 		cellId.revision = revision;
 	}
-	return { count, cellId };
+	return { count, cellId, ...overrides };
 }
 
 function overrideCellId<TMark extends SF.HasMarkFields>(

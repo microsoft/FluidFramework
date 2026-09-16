@@ -20,6 +20,7 @@ import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import {
 	EncodedNodeChangeset,
 	type FieldChangeEncodingContext,
+	type FieldChangeDecodingContext,
 } from "../modular-schema/index.js";
 
 import { Changeset as ChangesetSchema, type Encoded } from "./formatV3.js";
@@ -42,7 +43,8 @@ export function makeV3Codec(
 	Changeset,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
-	FieldChangeEncodingContext
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext
 > {
 	const {
 		changeAtomIdCodec: atomIdCodec,
@@ -71,7 +73,7 @@ export function makeV3Codec(
 		encoded: Encoded.MarkEffect,
 		count: number,
 		cellId: ChangeAtomId | undefined,
-		context: FieldChangeEncodingContext,
+		context: FieldChangeDecodingContext,
 	): MarkEffect {
 		return decoderLibrary.dispatch(encoded, count, cellId, context);
 	}
@@ -81,7 +83,7 @@ export function makeV3Codec(
 		/* args */ [
 			count: number,
 			cellId: ChangeAtomId | undefined,
-			context: FieldChangeEncodingContext,
+			context: FieldChangeDecodingContext,
 		],
 		MarkEffect
 	>({
@@ -90,7 +92,7 @@ export function makeV3Codec(
 			encoded: Encoded.Rename,
 			count: number,
 			cellId: ChangeAtomId | undefined,
-			context: FieldChangeEncodingContext,
+			context: FieldChangeDecodingContext,
 		): Rename {
 			return {
 				type: "Rename",
@@ -120,7 +122,7 @@ export function makeV3Codec(
 			),
 		decode: (
 			changeset: Encoded.Changeset<NodeChangeSchema>,
-			context: FieldChangeEncodingContext,
+			context: FieldChangeDecodingContext,
 		): Changeset => decodeSequenceChangeset(changeset, context, atomIdCodec, decodeMarkEffect),
 		encodedSchema: ChangesetSchema(EncodedNodeChangeset),
 	};

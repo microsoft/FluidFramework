@@ -44,9 +44,10 @@ import { newGenericChangeset } from "../../feature-libraries/modular-schema/gene
 import {
 	ModularChangeFamily,
 	intoDelta,
-	validateChangeset,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { validateChangeset } from "../../feature-libraries/modular-schema/modularChangeUtils.js";
 import type {
 	NodeId,
 	// eslint-disable-next-line import-x/no-internal-modules

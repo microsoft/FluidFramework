@@ -40,17 +40,13 @@ trigger:
     - common/build/build-common
     - tools/pipelines/build-build-common.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
-    - tools/pipelines/templates/include-publish-npm-package.yml
-    - tools/pipelines/templates/include-publish-npm-package-deployment.yml
-    - tools/pipelines/templates/include-publish-npm-package-steps.yml
-    - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-policy-check.yml
-    - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
 
 pr:
@@ -66,13 +62,13 @@ pr:
     - common/build/build-common
     - tools/pipelines/build-build-common.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-policy-check.yml
-    - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
 
 variables:
@@ -86,6 +82,7 @@ extends:
   parameters:
     publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
+    publishAsPartOfBuild: false
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}/common/build/build-common

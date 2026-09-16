@@ -31,6 +31,7 @@ import {
 	type RevisionInfo,
 	type NormalizedFieldUpPath,
 	type NormalizedUpPath,
+	type ChangeAtomIdMap,
 } from "../../../core/index.js";
 import {
 	type FieldChangeHandler,
@@ -56,11 +57,13 @@ import {
 	fieldKindConfigurations,
 	newChangeAtomIdBTree,
 	ModularChangeFormatVersion,
+	type ChangeAtomIdBTree,
 } from "../../../feature-libraries/index.js";
 import type {
 	EncodedModularChangesetV1,
 	EncodedNodeChangeset,
 	FieldChangeEncodingContext,
+	FieldChangeDecodingContext,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
@@ -68,15 +71,25 @@ import {
 	updateRefreshers,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import type {
-	NodeChangeset,
+// eslint-disable-next-line import-x/no-internal-modules
+import { getChangeHandler } from "../../../feature-libraries/modular-schema/modularChangeUtils.js";
+import {
+	newCrossFieldRangeTable,
+	type CrossFieldKeyTable,
+	type FieldChangeMap,
+	type FieldId,
+	type NodeChangeset,
+	type NodeLocation,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
 	brand,
 	brandConst,
+	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
+	setInNestedMap,
 	tryGetFromNestedMap,
+	type Mutable,
 } from "../../../util/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
@@ -108,7 +121,7 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 			? undefined
 			: composeChild(change1, change2),
 	invert: (change) => change,
-	mute: (change: SingleNodeChangeset) => change,
+	filterEdits: (change: SingleNodeChangeset) => change,
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
 	replaceRevisions: (change, replacer) =>
@@ -128,7 +141,8 @@ const singleNodeCodec: IJsonCodec<
 	SingleNodeChangeset,
 	EncodedNodeChangeset | "",
 	EncodedNodeChangeset | "",
-	FieldChangeEncodingContext
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext
 > = {
 	encode: (change, context) => {
 		return change === undefined ? emptyEncodedChange : context.encodeNode(change);
@@ -150,7 +164,10 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	// We create changesets by composing an empty single node field with a change to the child.
 	// We don't want the temporarily empty single node field to be pruned away leaving us with a generic field instead.
 	isEmpty: (change) => false,
-	getNestedChanges: (change) => (change === undefined ? [] : [[change, 0]]),
+	getNestedChanges: (change) =>
+		change === undefined
+			? []
+			: [{ nodeId: change, inputRootId: undefined, detachId: undefined }],
 	createEmpty: () => undefined,
 	getCrossFieldKeys: (_change) => [],
 	squash: (change) => change,
@@ -1184,6 +1201,17 @@ describe("ModularChangeFamily", () => {
 			return tryGetFromNestedMap(nodeMap, major, minor);
 		};
 
+		it("preserves no-change constraints", () => {
+			const input: ModularChangeset = {
+				...Change.empty(),
+				noChangeConstraint: { violated: false },
+				noChangeConstraintOnRevert: { violated: false },
+			};
+
+			const updated = updateRefreshers(input, getDetachedNode, []);
+			assert.deepEqual(updated, input);
+		});
+
 		it("preserves relevant refreshers that are present in the input", () => {
 			const input: ModularChangeset = {
 				...Change.empty(),
@@ -1310,8 +1338,8 @@ describe("ModularChangeFamily", () => {
 
 	describe("Encoding", () => {
 		function assertEquivalent(change1: ModularChangeset, change2: ModularChangeset) {
-			const normalized1 = normalizeChangeset(change1, fieldKinds);
-			const normalized2 = normalizeChangeset(change2, fieldKinds);
+			const normalized1 = normalizeChangeset(change1);
+			const normalized2 = normalizeChangeset(change2);
 			assertEqual(normalized1, normalized2);
 		}
 
@@ -1453,16 +1481,6 @@ describe("ModularChangeFamily", () => {
 		assertEqual(changes, [expectedChange.change]);
 	});
 });
-
-function deepCloneChunkedTree(chunk: TreeChunk): TreeChunk {
-	const jsonable = jsonableTreeFromFieldCursor(chunk.cursor());
-	const cursor = cursorForJsonableTreeField(jsonable);
-	const clone = chunkFieldSingle(cursor, {
-		policy: defaultChunkPolicy,
-		idCompressor: testIdCompressor,
-	});
-	return clone;
-}
 
 function inlineRevision(change: ModularChangeset, revision: RevisionTag): ModularChangeset {
 	return family.changeRevision(

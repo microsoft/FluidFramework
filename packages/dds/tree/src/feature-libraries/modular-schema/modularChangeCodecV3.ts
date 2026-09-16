@@ -39,7 +39,11 @@ import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import type { FieldBatchCodec } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
-import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
+import type {
+	FieldChangeDecodingContext,
+	FieldChangeEncodingContext,
+	FieldChangeHandler,
+} from "./fieldChangeHandler.js";
 import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
 import { genericFieldKind } from "./genericFieldKind.js";
 import {
@@ -50,7 +54,7 @@ import {
 	getFieldChangesetCodecs,
 	makeFieldEncodingContextFactory,
 } from "./modularChangeCodecV1.js";
-import { addNodeRename, newRootTable } from "./modularChangeFamily.js";
+import { addNodeRename, newRootTable } from "./modularChangeUtils.js";
 import type {
 	EncodedFieldChange,
 	EncodedFieldChangeMap,
@@ -85,7 +89,8 @@ type FieldCodec = IJsonCodec<
 	FieldChangeset,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
-	FieldChangeEncodingContext
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext
 >;
 
 export function makeModularChangeCodecV3(
@@ -221,17 +226,8 @@ export function makeModularChangeCodecV3(
 				field: field.fieldKey,
 			};
 
-			const fieldContext: FieldChangeEncodingContext = {
+			const fieldContext: FieldChangeDecodingContext = {
 				baseContext: context,
-				rootNodeChanges: newChangeAtomIdBTree(),
-				rootRenames: newChangeAtomIdTransform(),
-
-				encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
-				getInputRootId: () => fail("Should not query during decoding"),
-				getOutputRootId: () => fail("Should not query during decoding"),
-				getFirstRenameId: () => fail("Should not query during decoding"),
-				isAttachId: () => fail("Should not query during decoding"),
-				isDetachId: () => fail("Should not query during decoding"),
 
 				decodeNode: (encodedNode: EncodedNodeChangeset): NodeId =>
 					decodeNode(encodedNode, { field: fieldId }),

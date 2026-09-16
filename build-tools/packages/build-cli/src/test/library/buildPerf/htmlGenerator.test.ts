@@ -90,8 +90,8 @@ describe("generateStandaloneHtml", () => {
 		// tsc may emit these artifacts in compiled output; htmlGenerator must strip
 		// them because the JS is inlined in a <script> tag, not loaded as a module.
 		expect(html).to.not.include("export {};");
-		expect(html).to.not.include('"use strict";');
-		expect(html).to.not.include("sourceMappingURL");
+		expect(html).to.not.match(/"use strict";\s*function switchTab/u);
+		expect(html).to.not.include("sourceMappingURL=dashboard.js.map");
 	});
 
 	for (const mode of ["public", "internal"] as BuildPerfMode[]) {
@@ -106,8 +106,11 @@ describe("generateStandaloneHtml", () => {
 			expect(html).to.include("</body>");
 			expect(html).to.include("</html>");
 
-			// Should contain Chart.js CDN references
-			expect(html).to.include("chart.js@4.4.1");
+			// Chart dependencies should be inlined so opening the dashboard does not require network access.
+			expect(html).to.include("Chart.js v4.4.1");
+			expect(html).to.include("chartjs-adapter-date-fns v3.0.0");
+			expect(html).to.not.include("cdn.jsdelivr.net");
+			expect(html).to.not.match(/<script[^>]+src=["']https?:\/\//u);
 		});
 	}
 });

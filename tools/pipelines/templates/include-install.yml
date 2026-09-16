@@ -15,10 +15,6 @@ parameters:
   type: boolean
   default: true
 
-- name: packageManagerInstallCommand
-  type: string
-  default: 'pnpm i --frozen-lockfile'
-
 - name: primaryRegistry
   type: string
   default: $(ado-feeds-primary-registry)
@@ -51,4 +47,4 @@ steps:
       workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
       script: |
         set -eu -o pipefail
-        ${{ parameters.packageManagerInstallCommand }}
+        pnpm i --frozen-lockfile

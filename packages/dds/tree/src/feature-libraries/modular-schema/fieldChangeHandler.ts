@@ -26,7 +26,14 @@ import type {
 import type { EncodedNodeChangeset } from "./modularChangeFormatV1.js";
 import type { CrossFieldKeyRange, NodeId, RebaseVersion } from "./modularChangeTypes.js";
 
-export type NestedChangesIndices = readonly (readonly [NodeId, inputIndex: number])[];
+export interface ChildChangeInfo {
+	nodeId: NodeId;
+
+	/**
+	 * The ID this changeset detaches this node with.
+	 */
+	detachId: ChangeAtomId | undefined;
+}
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -44,7 +51,7 @@ export interface FieldChangeHandler<
 			typeof RevisionTagSchema,
 			ChangeEncodingContext
 		>,
-	) => ICodecFamily<TChangeset, FieldChangeEncodingContext>;
+	) => ICodecFamily<TChangeset, FieldChangeEncodingContext, FieldChangeDecodingContext>;
 	readonly editor: TEditor;
 	intoDelta(change: TChangeset, deltaFromChild: ToDelta): DeltaFieldChanges;
 
@@ -67,7 +74,7 @@ export interface FieldChangeHandler<
 	 * the indices are are ordered from smallest to largest (with no duplicates).
 	 * The returned array is owned by the caller.
 	 */
-	getNestedChanges(change: TChangeset): NestedChangesIndices;
+	getNestedChanges(change: TChangeset): ChildChangeInfo[];
 
 	/**
 	 * @returns A list of all cross-field keys contained in the change.
@@ -141,10 +148,89 @@ export interface FieldChangeRebaser<TChangeset> {
 	replaceRevisions(change: TChangeset, replacer: RevisionReplacer): TChangeset;
 
 	/**
-	 * Returns a copy of the given changeset with the same declarations (e.g., new cells) but no actual changes.
-	 * This is a kludge. TODO: remove once AB#46104 is completed.
+	 * Returns a copy of the given changeset with edits removed as specified.
+	 * @param change - The change to filter edits from
+	 * @param filterDetach - This should be called for each range of detaches in the changeset,
+	 * and the detach should be preserved, removed, or converted to a non-move detach as specified.
+	 * If the returned result does not cover the entire detach range, the remainder should be queried again.
+	 * @param filterAttach - This should be called for each range of attaches in the changeset,
+	 * and the attach should be preserved, removed, or converted to a non-move attach as specified.
+	 * If the returned result does not cover the entire detach range, the remainder should be queried again.
+	 * @param preserveOtherEdits - Whether edits other than attaches and detaches (e.g. root renames),
+	 * should be preserved or removed.
 	 */
-	mute(change: TChangeset): TChangeset;
+	filterEdits(
+		change: TChangeset,
+		options: {
+			filterDetach: FilterDetachFunc;
+			filterAttach: FilterAttachFunc;
+			preserveOtherEdits: boolean;
+		},
+	): TChangeset;
+}
+
+export type FilterDetachFunc = (
+	/**
+	 * The ID of the detach being queried.
+	 */
+	detachId: ChangeAtomId,
+	count: number,
+) => RangeQueryResult<FilterDetachResult>;
+
+export type FilterAttachFunc = (
+	/**
+	 * The ID of the attach being queried.
+	 */
+	attachId: ChangeAtomId,
+	count: number,
+) => RangeQueryResult<FilterAttachResult>;
+
+export interface FilterDetachResult {
+	readonly action: EditFilterStatus;
+
+	/**
+	 * If true, the filtered change should also remove any child changes for the detached nodes.
+	 * This will only be set when `action` is `EditFilterStatus.Remove`.
+	 */
+	readonly shouldRemoveChild?: boolean;
+}
+
+export interface FilterAttachResult {
+	readonly action: EditFilterStatus;
+
+	/**
+	 * When `action` is `EditFilterStatus.PreserveWithoutMove`,
+	 * the filtered change should include a child change with this ID.
+	 */
+	readonly nodeId?: NodeId;
+
+	/**
+	 * When `action` is `EditFilterStatus.PreserveWithoutMove`,
+	 * this ID should be used as the attach ID for the filtered change.
+	 */
+	readonly newAttachId?: ChangeAtomId;
+}
+
+/**
+ * Used to describe what should be done with a particular attach or detach during `filterEdits`.
+ */
+export enum EditFilterStatus {
+	/**
+	 * The edit should be removed from the filtered changeset.
+	 */
+	Remove,
+
+	/**
+	 * The edit should be preserved in the filtered changeset.
+	 */
+	Preserve,
+
+	/**
+	 * This should only be used for an attach or detach which is part of a move.
+	 * The edit should be preserved, but should be adjusted, if necessary,
+	 * to reflect that the other endpoint of the move has been filtered out.
+	 */
+	PreserveWithoutMove,
 }
 
 /**
@@ -155,13 +241,13 @@ export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
 	compose: (change1: TChangeset, change2: TChangeset) => TChangeset;
 	invert: (change: TChangeset) => TChangeset;
 	rebase: (change: TChangeset, over: TChangeset) => TChangeset;
-	mute: (change: TChangeset) => TChangeset;
+	filterEdits: FieldChangeRebaser<TChangeset>["filterEdits"];
 }): FieldChangeRebaser<TChangeset> {
 	return isolatedFieldChangeRebaser({
 		compose: (change1, change2, _composeChild, _genId) => data.compose(change1, change2),
 		invert: (change, _invertChild, _genId) => data.invert(change),
 		rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over),
-		mute: (change) => data.mute(change),
+		filterEdits: (change, options) => data.filterEdits(change, options),
 	});
 }
 
@@ -169,7 +255,7 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 	compose: FieldChangeRebaser<TChangeset>["compose"];
 	invert: FieldChangeRebaser<TChangeset>["invert"];
 	rebase: FieldChangeRebaser<TChangeset>["rebase"];
-	mute: FieldChangeRebaser<TChangeset>["mute"];
+	filterEdits: FieldChangeRebaser<TChangeset>["filterEdits"];
 }): FieldChangeRebaser<TChangeset> {
 	return {
 		...data,
@@ -293,6 +379,15 @@ export interface FieldChangeEncodingContext {
 	isDetachId(id: ChangeAtomId, count: number): RangeQueryResult<boolean>;
 
 	// This should only be called during decoding.
+}
+
+/**
+ * Context provided to field change codecs when decoding.
+ * @remarks
+ * The decode-side counterpart of {@link FieldChangeEncodingContext}.
+ */
+export interface FieldChangeDecodingContext {
+	readonly baseContext: ChangeEncodingContext;
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
 
 	/**

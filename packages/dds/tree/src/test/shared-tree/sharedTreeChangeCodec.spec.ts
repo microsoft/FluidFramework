@@ -22,6 +22,7 @@ import type {
 } from "../../feature-libraries/chunked-forest/index.js";
 import {
 	type FieldBatch,
+	type FieldBatchDecodingContext,
 	type FieldBatchEncodingContext,
 	FieldBatchFormatVersion,
 	FieldKinds,
@@ -32,7 +33,7 @@ import {
 	newChangeAtomIdBTree,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { newRootTable } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
+import { newRootTable } from "../../feature-libraries/modular-schema/modularChangeUtils.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { newCrossFieldRangeTable } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -119,13 +120,11 @@ describe("sharedTreeChangeCodec", () => {
 			},
 			decode: (
 				data: EncodedFieldBatchV1OrV2,
-				context: FieldBatchEncodingContext,
+				context: FieldBatchDecodingContext,
 			): FieldBatch => {
-				return decode(data, {
-					idCompressor: context.idCompressor,
-					originatorId: context.originatorId,
-					isSummary: false,
-				}).map((chunk) => chunk.cursor());
+				return decode(data, context.idDecodingContext, context.incrementalDecoder).map(
+					(chunk) => chunk.cursor(),
+				);
 			},
 			writeVersion: FieldBatchFormatVersion.v2,
 		};

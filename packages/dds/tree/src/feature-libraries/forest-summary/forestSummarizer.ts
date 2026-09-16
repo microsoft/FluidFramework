@@ -20,7 +20,6 @@ import {
 	type IEditableForest,
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
-	type RevisionTagCodec,
 	TreeNavigationResult,
 	applyDelta,
 	forEachField,
@@ -33,14 +32,17 @@ import {
 	type SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 import {
+	breakingMethod,
 	idAllocatorFromMaxId,
 	readAndParseSnapshotBlob,
+	type Breakable,
 	type JsonCompatibleReadOnly,
 } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
 import {
 	defaultIncrementalEncodingPolicy,
+	type FieldBatchDecodingContext,
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../chunked-forest/index.js";
@@ -70,6 +72,13 @@ export class ForestSummarizer
 {
 	private readonly codec: ForestCodec;
 
+	/**
+	 * This object is broken if and only if the forest it owns is broken.
+	 */
+	public get breaker(): Breakable {
+		return this.forest.breaker;
+	}
+
 	private readonly incrementalSummaryBuilder: ForestIncrementalSummaryBuilder;
 	private readonly forestRootSummaryContentKey: string;
 
@@ -78,8 +87,8 @@ export class ForestSummarizer
 	 */
 	public constructor(
 		private readonly forest: IEditableForest,
-		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly encoderContext: FieldBatchEncodingContext,
+		private readonly decoderContext: FieldBatchDecodingContext,
 		options: CodecWriteOptions,
 		private readonly idCompressor: IIdCompressor,
 		initialSequenceNumber: number,
@@ -160,7 +169,7 @@ export class ForestSummarizer
 		});
 		const encoderContext: FieldBatchEncodingContext = {
 			...this.encoderContext,
-			incrementalEncoderDecoder:
+			incrementalEncoder:
 				incrementalSummaryBehavior === ForestIncrementalSummaryBehavior.Incremental
 					? this.incrementalSummaryBuilder
 					: undefined,
@@ -178,6 +187,7 @@ export class ForestSummarizer
 		});
 	}
 
+	@breakingMethod
 	protected async loadInternal(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
@@ -212,10 +222,7 @@ export class ForestSummarizer
 				parse,
 				// TODO: this type cast assumes there are no handles, which should probably be enforced at runtime or the need for this cast should be removed altogether.
 			)) as JsonCompatibleReadOnly,
-			{
-				...this.encoderContext,
-				incrementalEncoderDecoder: this.incrementalSummaryBuilder,
-			},
+			this.decoderContext.withIncrementalDecoder(this.incrementalSummaryBuilder),
 		);
 		const allocator = idAllocatorFromMaxId();
 		const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
@@ -241,7 +248,7 @@ export class ForestSummarizer
 			{ build, fields: new Map(fieldChanges) },
 			undefined,
 			this.forest,
-			makeDetachedFieldIndex("init", this.revisionTagCodec, this.idCompressor),
+			makeDetachedFieldIndex("init"),
 		);
 	}
 }

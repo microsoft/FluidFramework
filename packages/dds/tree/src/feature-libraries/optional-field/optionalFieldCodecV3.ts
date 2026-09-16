@@ -15,6 +15,7 @@ import type { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import {
 	EncodedNodeChangeset,
+	type FieldChangeDecodingContext,
 	type FieldChangeEncodingContext,
 } from "../modular-schema/index.js";
 
@@ -31,7 +32,8 @@ export function makeOptionalFieldCodec(
 	OptionalChangeset,
 	EncodedOptionalChangeset<TAnySchema>,
 	EncodedOptionalChangeset<TAnySchema>,
-	FieldChangeEncodingContext
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext
 > {
 	const changeAtomIdCodec = makeChangeAtomIdCodec(revisionTagCodec);
 
@@ -63,7 +65,7 @@ export function makeOptionalFieldCodec(
 
 		decode: (
 			encoded: EncodedOptionalChangeset<TAnySchema>,
-			context: FieldChangeEncodingContext,
+			context: FieldChangeDecodingContext,
 		) => {
 			const decoded: Mutable<OptionalChangeset> = {};
 

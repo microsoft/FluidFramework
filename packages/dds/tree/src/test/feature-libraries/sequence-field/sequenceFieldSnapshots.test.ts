@@ -39,7 +39,6 @@ export function testSnapshots(): void {
 						const encoded = codec.encode(changeset, {
 							baseContext,
 							encodeNode: (node) => TestNodeId.encode(node, baseContext),
-							decodeNode: (node) => TestNodeId.decode(node, baseContext),
 							rootNodeChanges: newChangeAtomIdBTree(),
 							rootRenames: newChangeAtomIdTransform(),
 							getInputRootId: (id, count) => ({ start: id, value: id, length: count }),
@@ -59,10 +58,6 @@ export function testSnapshots(): void {
 								value: false,
 								length: count,
 							}),
-							decodeRootNodeChange: () => {},
-							decodeRootRename: () => {},
-							decodeMoveAndDetach: () => {},
-							generateId: () => ({ localId: brand(0) }),
 						});
 						takeJsonSnapshot(encoded);
 					});

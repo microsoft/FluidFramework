@@ -16,6 +16,7 @@ import {
 import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 import {
 	type FieldChangeEncodingContext,
+	type FieldChangeDecodingContext,
 	type NodeId,
 	type RebaseRevisionMetadata,
 	genericChangeHandler,
@@ -205,7 +206,7 @@ describe("GenericField", () => {
 		const encodingTestData: EncodingTestData<
 			GenericChangeset,
 			unknown,
-			FieldChangeEncodingContext
+			FieldChangeEncodingContext & FieldChangeDecodingContext
 		> = {
 			successes: [
 				[

@@ -94,9 +94,6 @@ export interface SchemaStaticsBeta {
 	 * A full code example of the schema migration process can be found in our {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts | tests}.
 	 *
 	 * @privateRemarks
-	 * TODO:#44317 staged allowed types rely on schema validation of stored schema to output errors, these errors are not very
-	 * user friendly and should be improved, particularly in the case of staged allowed types
-	 *
 	 * TODO: AB#45711: Update the docs above when recursive type support is added.
 	 */
 	readonly staged: <const T extends LazyItem<TreeNodeSchema>>(

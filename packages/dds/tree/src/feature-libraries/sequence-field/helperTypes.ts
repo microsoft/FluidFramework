@@ -6,12 +6,16 @@
 import type { DiscriminatedUnionLibrary, IJsonCodec } from "../../codec/index.js";
 import type {
 	ChangeAtomId,
+	ChangeDecodingContext,
 	ChangeEncodingContext,
 	EncodedChangeAtomId,
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../../core/index.js";
-import type { FieldChangeEncodingContext } from "../modular-schema/index.js";
+import type {
+	FieldChangeDecodingContext,
+	FieldChangeEncodingContext,
+} from "../modular-schema/index.js";
 
 import type { Encoded } from "./formatV2.js";
 import type {
@@ -53,12 +57,12 @@ export interface SequenceCodecHelpers {
 		encoded: Encoded.MarkEffect,
 		count: number,
 		cellId: ChangeAtomId | undefined,
-		context: FieldChangeEncodingContext,
+		context: FieldChangeDecodingContext,
 	) => MarkEffect;
 
 	readonly decodeRevision: (
 		encodedRevision: EncodedRevisionTag | undefined,
-		context: ChangeEncodingContext,
+		context: ChangeDecodingContext,
 	) => RevisionTag;
 
 	readonly decoderLibrary: DiscriminatedUnionLibrary<
@@ -66,7 +70,7 @@ export interface SequenceCodecHelpers {
 		/* args */ [
 			count: number,
 			cellId: ChangeAtomId | undefined,
-			context: FieldChangeEncodingContext,
+			context: FieldChangeDecodingContext,
 		],
 		MarkEffect
 	>;

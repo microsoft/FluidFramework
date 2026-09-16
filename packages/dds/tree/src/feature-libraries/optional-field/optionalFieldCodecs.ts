@@ -9,7 +9,10 @@ import type {
 	RevisionTag,
 	RevisionTagSchema,
 } from "../../core/index.js";
-import type { FieldChangeEncodingContext } from "../modular-schema/index.js";
+import type {
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext,
+} from "../modular-schema/index.js";
 
 import type { OptionalChangeset } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodec as makeV2Codec } from "./optionalFieldCodecV2.js";
@@ -21,7 +24,7 @@ export const makeOptionalFieldCodecFamily = (
 		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
-): ICodecFamily<OptionalChangeset, FieldChangeEncodingContext> =>
+): ICodecFamily<OptionalChangeset, FieldChangeEncodingContext, FieldChangeDecodingContext> =>
 	makeCodecFamily([
 		[2, makeV2Codec(revisionTagCodec)],
 		[3, makeV3Codec(revisionTagCodec)],

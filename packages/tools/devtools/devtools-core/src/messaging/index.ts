@@ -17,6 +17,7 @@ export { devtoolsMessageSource } from "./Constants.js";
 export {
 	AudienceSummary,
 	CloseContainer,
+	CloseDataVisualization,
 	ConnectContainer,
 	ContainerDevtoolsFeatures,
 	ContainerStateChange,

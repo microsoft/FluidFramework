@@ -85,7 +85,6 @@ export enum SnapshotFormatSupportType {
  * @param snapshotUrl - snapshot url from where the odsp snapshot will be fetched
  * @param versionId - id of specific snapshot to be fetched
  * @param fetchFullSnapshot - whether we want to fetch full snapshot(with blobs)
- * @param forceAccessTokenViaAuthorizationHeader - Deprecated and not used, true value always used instead. Whether to force passing given token via authorization header
  * @param snapshotDownloader - Implementation of the get/post methods used to fetch the snapshot. snapshotDownloader is responsible for generating the appropriate headers (including Authorization header) as well as handling any token refreshes before retrying.
  * @returns A promise of the snapshot and the status code of the response
  */
@@ -93,7 +92,6 @@ export async function fetchSnapshot(
 	snapshotUrl: string,
 	versionId: string,
 	fetchFullSnapshot: boolean,
-	forceAccessTokenViaAuthorizationHeader: boolean,
 	logger: TelemetryLoggerExt,
 	snapshotDownloader: (url: string) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshot> {
@@ -120,7 +118,6 @@ export async function fetchSnapshotWithRedeem(
 	odspResolvedUrl: IOdspResolvedUrl,
 	storageTokenFetcher: InstrumentedStorageTokenFetcher,
 	snapshotOptions: ISnapshotOptions | undefined,
-	forceAccessTokenViaAuthorizationHeader: boolean,
 	logger: TelemetryLoggerExt,
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
@@ -411,7 +408,7 @@ async function fetchLatestSnapshotCore(
 									}
 									return res;
 								})
-								.catch((error) =>
+								.catch((_error) =>
 									// Parsing can fail and message could contain full request URI, including
 									// tokens, etc. So do not log error object itself.
 									throwOdspNetworkError(
@@ -455,7 +452,7 @@ async function fetchLatestSnapshotCore(
 									}
 									return res;
 								})
-								.catch((error) =>
+								.catch((_error) =>
 									// Parsing can fail and message could contain full request URI, including
 									// tokens, etc. So do not log error object itself.
 									throwOdspNetworkError(

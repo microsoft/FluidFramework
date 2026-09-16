@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentService,
 	IResolvedUrl,
@@ -42,12 +40,7 @@ export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryC
 		throw toThrow;
 	}
 
-	public createContainer(
-		_createNewSummary: ISummaryTree | undefined,
-		_createNewResolvedUrl: IResolvedUrl,
-		logger?: ITelemetryBaseLogger,
-		_clientIsSummarizer?: boolean,
-	): never {
+	public createContainer(): never {
 		const toThrow = new UsageError(
 			'"createContainer" is not supported by LocalOdspDocumentServiceFactory',
 		);

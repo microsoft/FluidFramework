@@ -4,7 +4,7 @@
 
 ```ts
 
-// @public
+// @public @sealed
 export interface IIdCompressor {
     decompress(id: SessionSpaceCompressedId): StableId;
     generateCompressedId(): SessionSpaceCompressedId;
@@ -13,6 +13,7 @@ export interface IIdCompressor {
     normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
     normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
     recompress(uncompressed: StableId): SessionSpaceCompressedId;
+    tryNormalizeToSessionSpaceWithoutSession(id: OpSpaceCompressedId): SessionSpaceCompressedId | undefined;
     tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
 }
 

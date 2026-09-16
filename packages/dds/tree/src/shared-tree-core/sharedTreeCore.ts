@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidLoadable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
@@ -11,6 +11,7 @@ import type {
 	IIdCompressor,
 	SessionId,
 	SessionSpaceCompressedId,
+	StableId,
 } from "@fluidframework/id-compressor";
 import type {
 	IExperimentalIncrementalSummaryContext,
@@ -23,12 +24,13 @@ import type {
 	IChannelView,
 	IFluidSerializer,
 } from "@fluidframework/shared-object-base/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { CodecWriteOptions, DependentFormatVersion, IJsonCodec } from "../codec/index.js";
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
+	CommitKind,
 	type GraphCommit,
 	replaceChange,
 	type RevisionTag,
@@ -78,6 +80,20 @@ export interface SharedTreeCoreOptionsInternal extends CodecWriteOptions {
 	 * See {@link SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode}.
 	 */
 	readonly healUnresolvableIdentifiersOnDecode?: boolean;
+
+	/**
+	 * {@inheritDoc SharedTreeOptions.retainHistory}
+	 */
+	readonly retainHistory?: boolean;
+
+	/**
+	 * {@inheritDoc SharedTreeOptions.validateCommitsOnFirstSubmission}
+	 */
+	readonly validateCommitsOnFirstSubmission?: boolean;
+	/**
+	 * {@inheritDoc SharedTreeOptions.validateRebasedCommitsBeforeResubmission}
+	 */
+	readonly validateRebasedCommitsBeforeResubmission?: boolean;
 }
 
 export interface EnrichmentConfig<TChange> {
@@ -89,12 +105,19 @@ export interface EnrichmentConfig<TChange> {
  * Generic shared tree, which needs to be configured with indexes, field kinds and other configuration.
  */
 @breakingClass
-export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
+export class SharedTreeCore<
+		TEditor extends ChangeFamilyEditor,
+		TChange,
+		TChangeProcessingContext,
+	>
 	extends VersionedSummarizer<SharedTreeSummaryFormatVersion>
 	implements WithBreakable, Summarizable
 {
-	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
-	private readonly summarizables: readonly [EditManagerSummarizer<TChange>, ...Summarizable[]];
+	private readonly editManager: EditManager<TEditor, TChange, TChangeProcessingContext>;
+	private readonly summarizables: readonly [
+		EditManagerSummarizer<TChange, TChangeProcessingContext>,
+		...Summarizable[],
+	];
 	/**
 	 * The sequence number that this instance is at.
 	 * This number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
@@ -124,6 +147,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 	private readonly schemaAndPolicy: ClonableSchemaAndPolicy;
 
+	private static readonly maxBranchNameLength = 1024;
+
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
@@ -137,10 +162,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		public readonly sharedObject: IChannelView & IFluidLoadable,
 		public readonly serializer: IFluidSerializer,
 		public readonly submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
-		logger: ITelemetryBaseLogger | undefined,
 		summarizables: readonly Summarizable[],
-		protected readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		options: SharedTreeCoreOptionsInternal,
+		protected readonly changeFamily: ChangeFamily<TEditor, TChange, TChangeProcessingContext>,
+		private readonly coreOptions: SharedTreeCoreOptionsInternal,
 		changeFormatVersionForEditManager: DependentFormatVersion<EditManagerFormatVersion>,
 		changeFormatVersionForMessage: DependentFormatVersion<MessageFormatVersion>,
 		protected readonly idCompressor: IIdCompressor,
@@ -151,7 +175,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	) {
 		super(
 			summarizablesTreeKey,
-			minVersionToSharedTreeSummaryFormatVersion(options.minVersionForCollab),
+			minVersionToSharedTreeSummaryFormatVersion(coreOptions.minVersionForCollab),
 			supportedSharedTreeSummaryFormatVersions,
 			true /* supportPreVersioningFormat */,
 		);
@@ -160,6 +184,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			schema,
 			policy: schemaPolicy,
 		};
+
+		const logger = breaker.logger;
 
 		const rebaseLogger = createChildLogger({
 			logger,
@@ -179,13 +205,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			this.mintRevisionTag,
 			(branchId) => this.registerSharedBranch(branchId),
 			rebaseLogger,
+			coreOptions.retainHistory ?? false,
 		);
 
 		this.registerSharedBranch("main");
 
 		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const editManagerCodec = makeEditManagerCodecBuilder<TChange>().build({
-			...options,
+			...coreOptions,
 			changeCodecs: this.editManager.changeFamily.codecs,
 			dependentChangeFormatVersion: changeFormatVersionForEditManager,
 			revisionTagCodec,
@@ -195,10 +222,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				this.editManager,
 				editManagerCodec,
 				this.idCompressor,
-				options.minVersionForCollab,
+				coreOptions.minVersionForCollab,
 				this.schemaAndPolicy,
-				options.healUnresolvableIdentifiersOnDecode,
-				sharedObject.id,
+				coreOptions.healUnresolvableIdentifiersOnDecode === true
+					? { sharedObjectId: sharedObject.id, logger }
+					: undefined,
 			),
 			...summarizables,
 		];
@@ -208,7 +236,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		);
 
 		this.messageCodec = makeMessageCodecBuilder<TChange>().build({
-			...options,
+			...coreOptions,
 			changeCodecs: changeFamily.codecs,
 			dependentChangeFormatVersion: changeFormatVersionForMessage,
 			revisionTagCodec: new RevisionTagCodec(idCompressor),
@@ -318,7 +346,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			if (change.type === "append") {
 				if (this.detachedRevision === undefined) {
 					// Commit enrichment is only necessary for changes that will be submitted as ops, and changes issued while detached are not submitted.
-					this.getCommitEnricher(branchId).prepareChanges(change.newCommits);
+					this.getCommitEnricher(branchId).prepareChanges(
+						change.newCommits,
+						this.coreOptions.validateCommitsOnFirstSubmission ?? false,
+					);
 				}
 
 				for (const commit of change.newCommits) {
@@ -390,9 +421,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.getResubmitMachine(branchId).onCommitSubmitted(enrichedCommit);
 	}
 
-	protected submitBranchCreation(branchId: BranchId): void {
+	protected submitBranchCreation(branchId: BranchId, branchName?: string): void {
 		this.submitMessage(
-			{ type: "branch", sessionId: this.editManager.localSessionId, branchId },
+			{ type: "branch", sessionId: this.editManager.localSessionId, branchId, branchName },
 			this.schemaAndPolicy,
 		);
 	}
@@ -470,6 +501,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 						messagesSessionId,
 						brand(envelope.referenceSequenceNumber),
 						message.branchId,
+						message.branchName,
 					);
 					break;
 				}
@@ -508,7 +540,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		}
 	}
 
-	public getLocalBranch(): SharedTreeBranch<TEditor, TChange> {
+	public getLocalBranch(): SharedTreeBranch<TEditor, TChange, TChangeProcessingContext> {
 		return this.editManager.getLocalBranch("main");
 	}
 
@@ -518,19 +550,34 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			.filter((id): id is SessionSpaceCompressedId => id !== "main")
 			.map((id) => this.idCompressor.decompress(id));
 	}
-	public createSharedBranch(): string {
+	public createSharedBranch(branchName?: string): string {
+		if (branchName !== undefined && branchName.length > SharedTreeCore.maxBranchNameLength) {
+			throw new UsageError(
+				`Branch name is too long: ${branchName.length} > maxBranchNameLength`,
+			);
+		}
 		const branchId = this.idCompressor.generateCompressedId();
-		this.addBranch(branchId);
-		this.submitBranchCreation(branchId);
+		this.addBranch(branchId, branchName);
+		this.submitBranchCreation(branchId, branchName);
 		return this.idCompressor.decompress(branchId);
 	}
 
-	protected addBranch(branchId: BranchId): void {
-		this.editManager.addNewBranch(branchId);
+	protected addBranch(branchId: BranchId, branchName?: string): void {
+		this.editManager.addNewBranch(branchId, branchName);
 	}
 
-	public getSharedBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChange> {
+	public getSharedBranch(
+		branchId: BranchId,
+	): SharedTreeBranch<TEditor, TChange, TChangeProcessingContext> {
 		return this.editManager.getLocalBranch(branchId);
+	}
+
+	public getSharedBranchName(branchId: string): string | undefined {
+		const compressedId = this.idCompressor.tryRecompress(branchId as StableId);
+		if (compressedId === undefined) {
+			throw new UsageError(`No branch found with id: ${branchId}`);
+		}
+		return this.editManager.getSharedBranchName(compressedId);
 	}
 
 	public didAttach(): void {
@@ -573,7 +620,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				break;
 			}
 			case "branch": {
-				this.submitBranchCreation(message.branchId);
+				this.submitBranchCreation(message.branchId, message.branchName);
 				break;
 			}
 			default: {
@@ -623,14 +670,16 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		switch (type) {
 			case "commit": {
 				const {
-					commit: { revision, change },
+					commit: { revision, change, customMetadata },
 					branchId,
 				} = message;
-				this.editManager.getLocalBranch(branchId).apply({ change, revision });
+				this.editManager
+					.getLocalBranch(branchId)
+					.apply({ change, revision }, CommitKind.Default, customMetadata);
 				break;
 			}
 			case "branch": {
-				this.editManager.addNewBranch(message.branchId);
+				this.editManager.addNewBranch(message.branchId, message.branchName);
 				break;
 			}
 			default: {
@@ -648,7 +697,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		assert(!this.enrichers.has(branchId), 0xc6d /* Branch already registered */);
 		this.enrichers.set(branchId, {
 			enricher: commitEnricher,
-			resubmitMachine: resubmitMachine ?? new DefaultResubmitMachine(enricher),
+			resubmitMachine:
+				resubmitMachine ??
+				new DefaultResubmitMachine(
+					enricher,
+					this.coreOptions.validateRebasedCommitsBeforeResubmission ?? false,
+				),
 		});
 	}
 

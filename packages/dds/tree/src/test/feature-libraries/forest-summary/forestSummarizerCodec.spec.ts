@@ -41,7 +41,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { EmptyObject } from "../../cursorTestSuite.js";
-import { testIdCompressor } from "../../utils.js";
+import { makeTestFieldBatchContexts, testIdCompressor } from "../../utils.js";
 
 const codecOptionsOld: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
@@ -55,12 +55,9 @@ const codecOptionsCurrent: CodecWriteOptions = {
 
 const fieldBatchCodecOld = fieldBatchCodecBuilder.build(codecOptionsOld);
 const fieldBatchCodecCurrent = fieldBatchCodecBuilder.build(codecOptionsCurrent);
-const context = {
+const { encode: context, decode: decodeContext } = makeTestFieldBatchContexts({
 	encodeType: TreeCompressionStrategy.Uncompressed,
-	originatorId: testIdCompressor.localSessionId,
-	isSummary: false,
-	idCompressor: testIdCompressor,
-};
+});
 
 const codecOld = forestCodecBuilder.build({
 	...codecOptionsOld,
@@ -193,12 +190,12 @@ describe("ForestSummarizerCodec", () => {
 						} else {
 							// Should be able to decode the expected data with either codec,
 							// since codec should be able to decode all formats, not just the one it encodes.
-							const decodedData2 = codec.decode(expected, context);
+							const decodedData2 = codec.decode(expected, decodeContext);
 							assert.deepEqual(decodedData2, data);
 						}
 					}
 
-					const decodedData = codec.decode(encodedData, context);
+					const decodedData = codec.decode(encodedData, decodeContext);
 					assert.deepEqual(decodedData, data);
 				});
 			}
@@ -223,7 +220,7 @@ describe("ForestSummarizerCodec", () => {
 							fields: fieldBatchCodecOld.encode([], context),
 							keys: [],
 						},
-						context,
+						decodeContext,
 					),
 				validateUsageError(
 					/Unsupported version 2\.5 encountered while decoding Forest data. Supported versions for this data are: \[1,2]\./,
@@ -245,7 +242,7 @@ describe("ForestSummarizerCodec", () => {
 							keys: [],
 							fields: invalidFields,
 						},
-						context,
+						decodeContext,
 					),
 				validateUsageError(
 					/Unsupported version 2\.5 encountered while decoding FieldBatch data/,
@@ -261,7 +258,7 @@ describe("ForestSummarizerCodec", () => {
 							version: brand<ForestFormatVersion>(ForestFormatVersion.v1),
 							keys: [],
 						} as unknown as FormatCommon,
-						context,
+						decodeContext,
 					),
 				validateAssertionError("Data being decoded should validate"),
 			);
@@ -277,7 +274,7 @@ describe("ForestSummarizerCodec", () => {
 							keys: [],
 							wrong: 5,
 						} as unknown as FormatCommon,
-						context,
+						decodeContext,
 					),
 				validateAssertionError("Data being decoded should validate"),
 			);

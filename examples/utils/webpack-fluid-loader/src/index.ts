@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { devServerConfig } from "./routes.js";
+export { commonExampleConfig, devServerConfig } from "./routes.js";

@@ -67,15 +67,8 @@ export function testSnapshots(): void {
 								length: count,
 							}),
 							encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
-							decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
 							rootNodeChanges: newChangeAtomIdBTree(),
 							rootRenames: newChangeAtomIdTransform(),
-							decodeRootNodeChange: () => {},
-							decodeRootRename: () => {},
-							decodeMoveAndDetach: () => {},
-							generateId: () => ({
-								localId: brand(0),
-							}),
 						});
 						takeJsonSnapshot(encoded);
 					});

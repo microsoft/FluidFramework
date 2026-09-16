@@ -9,7 +9,7 @@
 
 import { expect } from "chai";
 
-import { HTTPError } from "../..";
+import { HTTPError } from "../../index.js";
 
 describe("property-common.HTTPError", function () {
 	const errorMsg = "a test error message";

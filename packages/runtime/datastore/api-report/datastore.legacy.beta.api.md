@@ -72,7 +72,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get logger(): ITelemetryLoggerExt;
     makeVisibleAndAttachGraph(): void;
-    readonly minVersionForCollab: MinimumVersionForCollab;
+    readonly minVersionForCollab: OldestSupportedClientVersion;
     notifyReadOnlyState(readonly: boolean): void;
     // (undocumented)
     get objectsRoutingContext(): this;
@@ -132,7 +132,7 @@ export interface ISharedObjectRegistry {
 // @beta @legacy
 export const mixinRequestHandler: (requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>, Base?: typeof FluidDataStoreRuntime) => typeof FluidDataStoreRuntime;
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export const mixinSummaryHandler: (handler: (runtime: FluidDataStoreRuntime, setCurrentSummarizeStep: (currentStep: string) => void) => Promise<{
     path: string[];
     content: string;

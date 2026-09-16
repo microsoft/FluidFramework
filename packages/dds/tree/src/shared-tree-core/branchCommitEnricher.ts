@@ -28,12 +28,16 @@ export class BranchCommitEnricher<TChange> {
 	/**
 	 * Process the given commits for later {@link BranchCommitEnricher.retrieveChange | retrieval}.
 	 * @param commits - The commits to prepare.
+	 * @param forceValidation - Attempt to {@link SharedTreeOptions.validateCommitsOnFirstSubmission|validate} commits before submission in order to fail (throw) locally rather than risk corrupting persisted data.
 	 */
-	public prepareChanges(commits: readonly GraphCommit<TChange>[]): void {
+	public prepareChanges(
+		commits: readonly GraphCommit<TChange>[],
+		forceValidation: boolean,
+	): void {
 		if (hasSome(commits)) {
 			const startingState = commits[0].parent;
 			assert(startingState !== undefined, 0xcc1 /* New commits must have a parent. */);
-			const enrichedCommits = this.enricher.enrich(startingState, commits);
+			const enrichedCommits = this.enricher.enrich(startingState, commits, forceValidation);
 			for (const [index, commit] of commits.entries()) {
 				const enrichedCommit = enrichedCommits[index];
 				assert(enrichedCommit !== undefined, 0xcc2 /* Missing enriched commit. */);

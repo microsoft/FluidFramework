@@ -21,19 +21,13 @@ import {
 	type VerboseTree,
 	type VerboseTreeNode,
 } from "@fluidframework/tree/internal";
-import {
-	SharedTreeSemanticAgent,
-	createTreeAgent,
-	executeSemanticEditing,
-	type TreeView,
-	type ViewOrTree,
-} from "@fluidframework/tree-agent/alpha";
+import { createTreeAgent, type TreeView } from "@fluidframework/tree-agent/alpha";
 import { ChatAnthropic } from "@langchain/anthropic";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models"; // eslint-disable-line import-x/no-internal-modules
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatOpenAI } from "@langchain/openai";
 
-import { createLangchainChatModel, createLegacyLangchainChatModel } from "../chatModel.js";
+import { createLangchainChatModel } from "../chatModel.js";
 
 import { _dirname } from "./dirname.cjs";
 
@@ -106,13 +100,6 @@ export function createLlmClient(provider: LlmProvider): BaseChatModel {
 }
 
 /**
- * The API implementation to use when querying the LLM.
- * - `"new"`: Uses the new stateless `createLangchainChatModel` + `createTreeAgent` + `message()`.
- * - `"legacy"`: Uses the legacy stateful `createLegacyLangchainChatModel` + `SharedTreeSemanticAgent` + `query()`.
- */
-export type ApiImplementation = "new" | "legacy" | "freeFunction";
-
-/**
  * Queries the LLM with the specified prompt and logs the results to a file.
  * @remarks Use the following environment variables to set the LLM API keys:
  * - `OPENAI_API_KEY` for OpenAI
@@ -128,49 +115,25 @@ async function queryDomain<TSchema extends ImplicitFieldSchema>(
 		subtree?: (root: ReadableField<TSchema>) => TreeNode;
 		domainHints?: string;
 		readonly log?: (text: string) => void;
-		readonly api?: ApiImplementation;
 	},
 ): Promise<TreeView<TSchema>> {
 	const view = independentView(new TreeViewConfiguration({ schema }));
 	view.initialize(initialTree);
 	const logger = options?.log === undefined ? undefined : { log: options.log };
 	const subtree = options?.subtree?.(view.root);
-	const api = options?.api ?? "new";
-
-	if (api === "legacy") {
-		const client = createLegacyLangchainChatModel(createLlmClient(provider));
-		const agent =
-			subtree === undefined
-				? new SharedTreeSemanticAgent(client, view, {
-						logger,
-						domainHints: options?.domainHints,
-					})
-				: new SharedTreeSemanticAgent(client, subtree, {
-						logger,
-						domainHints: options?.domainHints,
-					});
-		await agent.query(prompt);
-	} else if (api === "freeFunction") {
-		const client = createLangchainChatModel(createLlmClient(provider));
-		await executeSemanticEditing(client, (subtree ?? view) as ViewOrTree<TSchema>, prompt, {
-			logger,
-			domainHints: options?.domainHints,
-		});
-	} else {
-		const client = createLangchainChatModel(createLlmClient(provider));
-		const agent =
-			subtree === undefined
-				? createTreeAgent(client, view, {
-						logger,
-						domainHints: options?.domainHints,
-					})
-				: createTreeAgent(client, subtree, {
-						logger,
-						domainHints: options?.domainHints,
-					});
-		await agent.message(prompt);
-		agent.dispose();
-	}
+	const client = createLangchainChatModel(createLlmClient(provider));
+	const agent =
+		subtree === undefined
+			? createTreeAgent(client, view, {
+					logger,
+					domainHints: options?.domainHints,
+				})
+			: createTreeAgent(client, subtree, {
+					logger,
+					domainHints: options?.domainHints,
+				});
+	await agent.message(prompt);
+	agent.dispose();
 
 	return view;
 }
@@ -220,9 +183,8 @@ function formatDate(date: Date): string {
  */
 export function describeIntegrationTests(
 	tests: LLMIntegrationTest<UnsafeUnknownSchema>[],
-	api: ApiImplementation = "new",
 ): void {
-	describe.skip(`LLM integration tests (${api})`, () => {
+	describe.skip("LLM integration tests", () => {
 		const results: TestResult[] = [];
 		let startTime: Date | undefined;
 		before(() => {
@@ -383,16 +345,11 @@ export function describeIntegrationTests(
 			test: LLMIntegrationTest<UnsafeUnknownSchema>,
 			provider: LlmProvider,
 			result: { score: number; duration: number },
-			apiOverride: ApiImplementation = api,
 		): Promise<void> {
 			assert(startTime !== undefined, "Expected startTime to be set");
 			const { name, schema, initialTree, prompt, expected, options } = test;
 			const fd = openSync(
-				join(
-					resultsFolderPath,
-					formatDate(startTime),
-					`${name}-${provider}-${apiOverride}.md`,
-				),
+				join(resultsFolderPath, formatDate(startTime), `${name}-${provider}.md`),
 				"w",
 			);
 			const view = await queryDomain(
@@ -403,7 +360,6 @@ export function describeIntegrationTests(
 				{
 					subtree: options?.subtree,
 					domainHints: options?.domainHints,
-					api: apiOverride,
 					log: (text) => {
 						appendFileSync(fd, text, { encoding: "utf8" });
 					},

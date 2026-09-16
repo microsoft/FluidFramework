@@ -119,10 +119,14 @@ stages:
         # Checkout the FluidFramework repo (for workspace scripts and source code)
         - checkout: self
           path: $(FluidFrameworkDirectory)
+          fetchDepth: 1
+          fetchTags: false
 
         # Checkout ff_pipeline_host (provides telemetry-generator and trips-setup/cleanup)
         - checkout: ff_pipeline_host
           path: $(FFPipelineHostDirectory)
+          fetchDepth: 1
+          fetchTags: false
 
         - task: Bash@3
           displayName: Print parameter/variable values for troubleshooting

@@ -10,7 +10,7 @@
 import { expect } from "chai";
 import sinon from "sinon";
 
-import { Chronometer } from "../chronometer";
+import { Chronometer } from "../chronometer.js";
 
 describe("property-common.Chronometer", function () {
 	it("should exist", function () {
@@ -58,7 +58,7 @@ describe("property-common.Chronometer", function () {
 			const clock = sinon.useFakeTimers();
 			const expectedElapsedMilliSec = 50;
 			const expectedResult = 199999;
-			let resolve;
+			let resolve: (value: unknown) => void;
 			const promise = new Promise((_resolve) => {
 				resolve = _resolve;
 			});

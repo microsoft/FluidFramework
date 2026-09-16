@@ -8,10 +8,10 @@
  * /src/shared/property_sets/properties/int_property.js
  */
 
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const { Uint64 } = require("@fluid-experimental/property-common");
+import { constants, Uint64 } from "@fluid-experimental/property-common";
+const { MSG } = constants;
 
-const { PropertyFactory } = require("../..");
+import { PropertyFactory } from "../../index.js";
 
 describe("Test Uint64Property", function () {
 	it("should correctly setValue when passed a number", function () {

@@ -6,6 +6,7 @@
 import {
 	IFluidMountableViewEntryPoint,
 	MountableView,
+	exampleOldestSupportedClient,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/legacy";
@@ -42,6 +43,7 @@ class ProseMirrorRuntimeFactory extends RuntimeFactoryHelper {
 			context,
 			registryEntries,
 			existing,
+			oldestSupportedClient: exampleOldestSupportedClient,
 			containerScope: context.scope,
 			provideEntryPoint: async (
 				containerRuntime: IContainerRuntime,

@@ -24,6 +24,7 @@ import {
 	type Value,
 } from "../../../core/index.js";
 import type { ISharedTree } from "../../../treeFactory.js";
+import { ForestTypeExpensiveDebug } from "../../../shared-tree/index.js";
 import {
 	SharedTreeTestFactory,
 	toJsonableTree,
@@ -79,7 +80,9 @@ describe("Fuzz - revert", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "revert sequenced commits last-to-first",
-			factory: SharedTreeTestFactory.build(createOnCreate(populatedInitialState)),
+			factory: SharedTreeTestFactory.build(createOnCreate(populatedInitialState), undefined, {
+				forest: ForestTypeExpensiveDebug,
+			}),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,

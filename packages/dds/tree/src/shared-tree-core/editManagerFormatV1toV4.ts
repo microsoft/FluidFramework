@@ -11,6 +11,7 @@ import { SessionIdSchema } from "../core/index.js";
 
 import {
 	EditManagerFormatVersion,
+	type EncodedSequencedCommit,
 	type EncodedSummarySessionBranch,
 	SequencedCommit,
 	SummarySessionBranch,
@@ -22,7 +23,7 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 export interface EncodedEditManager<TChangeset> {
-	readonly trunk: readonly Readonly<SequencedCommit<TChangeset>>[];
+	readonly trunk: readonly Readonly<EncodedSequencedCommit<TChangeset>>[];
 	readonly branches: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
 	readonly version:
 		| typeof EditManagerFormatVersion.v1
@@ -30,10 +31,14 @@ export interface EncodedEditManager<TChangeset> {
 		| typeof EditManagerFormatVersion.v3
 		| typeof EditManagerFormatVersion.v4
 		| typeof EditManagerFormatVersion.v6
+		| typeof EditManagerFormatVersion.v7
 		| typeof EditManagerFormatVersion.vDetachedRoots;
 }
 
-export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+export const EncodedEditManager = <ChangeSchema extends TSchema>(
+	tChange: ChangeSchema,
+	includeCustomMetadata: boolean,
+) =>
 	Type.Object(
 		{
 			version: Type.Union([
@@ -42,10 +47,13 @@ export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: Change
 				Type.Literal(EditManagerFormatVersion.v3),
 				Type.Literal(EditManagerFormatVersion.v4),
 				Type.Literal(EditManagerFormatVersion.v6),
+				Type.Literal(EditManagerFormatVersion.v7),
 				Type.Literal(EditManagerFormatVersion.vDetachedRoots),
 			]),
-			trunk: Type.Array(SequencedCommit(tChange)),
-			branches: Type.Array(Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)])),
+			trunk: Type.Array(SequencedCommit(tChange, includeCustomMetadata)),
+			branches: Type.Array(
+				Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange, includeCustomMetadata)]),
+			),
 		},
 		noAdditionalProps,
 	);

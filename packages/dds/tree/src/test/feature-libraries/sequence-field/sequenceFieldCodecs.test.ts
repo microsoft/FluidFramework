@@ -9,8 +9,9 @@ import { withSchemaValidation } from "../../../codec/index.js";
 import { newChangeAtomIdTransform } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
-	newChangeAtomIdBTree,
 	type FieldChangeEncodingContext,
+	type FieldChangeDecodingContext,
+	newChangeAtomIdBTree,
 } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldChangeCodecFactory } from "../../../feature-libraries/sequence-field/sequenceFieldCodecs.js";
@@ -31,7 +32,7 @@ import { generatePopulatedMarks } from "./populatedMarks.js";
 import { ChangeMaker as Change, cases, MarkMaker as Mark } from "./testEdits.js";
 import { assertChangesetsEqual, inlineRevision } from "./utils.js";
 
-type TestCase = [string, Changeset, FieldChangeEncodingContext];
+type TestCase = [string, Changeset, FieldChangeEncodingContext & FieldChangeDecodingContext];
 
 const tag1 = mintRevisionTag();
 const tag2 = mintRevisionTag();
@@ -43,7 +44,7 @@ const baseContext = {
 };
 const encodedTag1 = testRevisionTagCodec.encode(tag1);
 const encodedTag2 = testRevisionTagCodec.encode(tag2);
-const context: FieldChangeEncodingContext = {
+const context: FieldChangeEncodingContext & FieldChangeDecodingContext = {
 	baseContext,
 	encodeNode: (node) => TestNodeId.encode(node, baseContext),
 	getInputRootId: (id, count) => ({ start: id, value: id, length: count }),
@@ -76,7 +77,11 @@ const context: FieldChangeEncodingContext = {
 
 const changes = TestNodeId.create({ localId: brand(2) }, TestChange.mint([], 1));
 
-const encodingTestData: EncodingTestData<Changeset, unknown, FieldChangeEncodingContext> = {
+const encodingTestData: EncodingTestData<
+	Changeset,
+	unknown,
+	FieldChangeEncodingContext & FieldChangeDecodingContext
+> = {
 	successes: [
 		["with child change", inlineRevision(Change.modify(1, changes), tag1), context],
 		["without child change", inlineRevision(Change.remove(2, 2, tag1), tag1), context],

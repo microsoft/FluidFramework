@@ -38,13 +38,13 @@ export class FluidRepo {
 			if (typeof item === "string") {
 				return {
 					directory: path.join(resolvedRoot, item),
-					ignoredDirs: undefined,
 				};
 			}
 			const directory = path.join(resolvedRoot, item.directory);
+			const ignoredDirs = item.ignoredDirs?.map((dir) => path.join(directory, dir));
 			return {
 				directory,
-				ignoredDirs: item.ignoredDirs?.map((dir) => path.join(directory, dir)),
+				...(ignoredDirs === undefined ? {} : { ignoredDirs }),
 			};
 		};
 		const loadOneEntry = (item: IFluidBuildDir, group: string): Package[] => {

@@ -40,17 +40,20 @@ import {
 	type TreeChunk,
 } from "../../../feature-libraries/index.js";
 import {
-	addNodeRename,
 	cloneRootTable,
-	getChangeHandler,
 	getFieldKind,
 	getNodeParent,
-	newRootTable,
-	normalizeFieldId,
-	normalizeNodeId,
 	type RenameDescription,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import {
+	addNodeRename,
+	getChangeHandler,
+	newRootTable,
+	normalizeFieldId,
+	normalizeNodeId,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeUtils.js";
 import {
 	newCrossFieldRangeTable,
 	type CrossFieldKey,

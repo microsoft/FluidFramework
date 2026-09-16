@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performanceNow } from "@fluid-internal/client-utils";
+import { ArrayBufferLikeToArrayBuffer, performanceNow } from "@fluid-internal/client-utils";
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
@@ -158,7 +158,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						this.epochTracker.fetchAndParseAsJSON<ICreateBlobResponse>(
 							url,
 							{
-								body: file,
+								body: ArrayBufferLikeToArrayBuffer(file),
 								headers,
 								method,
 							},
@@ -662,7 +662,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				this.odspResolvedUrl,
 				this.getAuthHeader,
 				snapshotOptions,
-				!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 				this.logger,
 				snapshotDownloader,
 				putInCache,
@@ -704,7 +703,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					this.odspResolvedUrl,
 					this.getAuthHeader,
 					snapshotOptionsWithoutBlobs,
-					!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 					this.logger,
 					snapshotDownloader,
 					putInCache,
@@ -886,7 +884,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				this.snapshotUrl!,
 				id,
 				this.fetchFullSnapshot,
-				!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 				this.logger,
 				snapshotDownloader,
 			);

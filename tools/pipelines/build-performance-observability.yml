@@ -94,6 +94,8 @@ extends:
         steps:
         - checkout: self
           clean: true
+          fetchDepth: 1
+          fetchTags: false
           path: ${{ variables.FluidFrameworkDirectory }}
 
         - template: /tools/pipelines/templates/include-use-node-version.yml@self

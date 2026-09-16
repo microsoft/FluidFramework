@@ -69,10 +69,10 @@ module.exports = (env) => {
 		},
 		output: {
 			filename: "[name].bundle.js",
-			path: path.resolve(__dirname, "dist"),
+			path: path.resolve(__dirname, "bundle"),
 			library: { name: "[name]", type: "umd" },
 			chunkFilename: "[name].async.js",
-			publicPath: "/dist/",
+			publicPath: "/app/",
 			globalObject: "self",
 		},
 		plugins: [new MonacoWebpackPlugin()],

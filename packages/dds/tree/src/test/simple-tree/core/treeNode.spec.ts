@@ -14,7 +14,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/treeNode.js";
 import {
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	typeSchemaSymbol,
 	type TreeNodeSchema,
 	SchemaFactory,
@@ -23,17 +23,21 @@ import {
 describe("simple-tree core types", () => {
 	describe("TreeNode", () => {
 		it("Assignability", () => {
+			class TestClass extends new SchemaFactory("Test").object("test", {}) {}
+
 			// @ts-expect-error TreeNode should not allow non-node objects.
 			const n: TreeNode = {};
-			// @ts-expect-error TreeNode should not allow non-node objects.
+			// @ts-expect-error TreeNode should not allow non-node objects, even with schema.
 			const n2: TreeNode = {
-				[typeNameSymbol]: "",
+				[schemaIdentifierBrand]: "Test.test",
+				[typeSchemaSymbol]: TestClass,
 			};
 
 			// Declared as a separate implicitly typed variable to avoid "Object literal may only specify known properties" error
 			// (which is good, but not what we are testing for here).
 			const n3 = {
-				[typeNameSymbol]: "",
+				[schemaIdentifierBrand]: "",
+				[typeSchemaSymbol]: TestClass,
 				"#brand": undefined,
 			};
 			// @ts-expect-error TreeNode should not allow non-node objects, even if you use "add missing properties" refactor.
@@ -42,7 +46,7 @@ describe("simple-tree core types", () => {
 
 		it("subclassing", () => {
 			class Subclass extends TreeNode {
-				public override get [typeNameSymbol](): string {
+				public override get [schemaIdentifierBrand](): string {
 					throw new Error("Method not implemented.");
 				}
 				public override get [typeSchemaSymbol](): never {

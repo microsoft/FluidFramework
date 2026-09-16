@@ -7,15 +7,16 @@
  * @fileoverview Definition of the set property class
  */
 
-const { PathHelper, TypeIdHelper } = require("@fluid-experimental/property-changeset");
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const _ = require("lodash");
+import { PathHelper, TypeIdHelper } from "@fluid-experimental/property-changeset";
+import { constants } from "@fluid-experimental/property-common";
+import _ from "lodash";
 
-const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
-const { BaseProperty } = require("./baseProperty");
-const { IndexedCollectionBaseProperty } = require("./indexedCollectionBaseProperty");
-const { LazyLoadedProperties: Property } = require("./lazyLoadedProperties");
+import { AbstractStaticCollectionProperty } from "./abstractStaticCollectionProperty.js";
+import { BaseProperty } from "./baseProperty.js";
+import { IndexedCollectionBaseProperty } from "./indexedCollectionBaseProperty.js";
+import { LazyLoadedProperties as Property } from "./lazyLoadedProperties.js";
 
+const { MSG } = constants;
 var PATH_TOKENS = BaseProperty.PATH_TOKENS;
 
 /**

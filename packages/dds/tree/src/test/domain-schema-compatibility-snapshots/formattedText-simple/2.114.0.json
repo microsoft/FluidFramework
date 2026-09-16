@@ -1,0 +1,122 @@
+{
+	"version": 1,
+	"root": {
+		"kind": 1,
+		"simpleAllowedTypes": {
+			"com.fluidframework.text.formatted<basic>.Text": {
+				"isStaged": false
+			}
+		}
+	},
+	"definitions": {
+		"com.fluidframework.leaf.string": {
+			"leaf": {
+				"kind": 3,
+				"leafKind": 1
+			}
+		},
+		"com.fluidframework.text.formatted.StringTextAtom": {
+			"object": {
+				"kind": 2,
+				"fields": {
+					"content": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.leaf.string": {
+								"isStaged": false
+							}
+						},
+						"storedKey": ""
+					}
+				},
+				"allowUnknownOptionalFields": false
+			}
+		},
+		"basic.Atom": {
+			"object": {
+				"kind": 2,
+				"fields": {},
+				"allowUnknownOptionalFields": false
+			}
+		},
+		"com.fluidframework.leaf.boolean": {
+			"leaf": {
+				"kind": 3,
+				"leafKind": 2
+			}
+		},
+		"basic.Format": {
+			"object": {
+				"kind": 2,
+				"fields": {
+					"bold": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.leaf.boolean": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "bold"
+					}
+				},
+				"allowUnknownOptionalFields": false
+			}
+		},
+		"com.fluidframework.text.formatted<basic>.StringAtom": {
+			"object": {
+				"kind": 2,
+				"fields": {
+					"content": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.text.formatted.StringTextAtom": {
+								"isStaged": false
+							},
+							"basic.Atom": {
+								"isStaged": false
+							}
+						},
+						"storedKey": ""
+					},
+					"format": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"basic.Format": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "format"
+					}
+				},
+				"allowUnknownOptionalFields": false
+			}
+		},
+		"com.fluidframework.text.formatted<basic>.StringArray": {
+			"array": {
+				"kind": 1,
+				"simpleAllowedTypes": {
+					"com.fluidframework.text.formatted<basic>.StringAtom": {
+						"isStaged": false
+					}
+				}
+			}
+		},
+		"com.fluidframework.text.formatted<basic>.Text": {
+			"object": {
+				"kind": 2,
+				"fields": {
+					"content": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.text.formatted<basic>.StringArray": {
+								"isStaged": false
+							}
+						},
+						"storedKey": ""
+					}
+				},
+				"allowUnknownOptionalFields": false
+			}
+		}
+	}
+}

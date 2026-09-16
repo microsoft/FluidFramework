@@ -16,7 +16,7 @@ import {
 	type FieldSchema,
 	type FieldSchemaAlpha,
 } from "../fieldSchema.js";
-import type { LeafSchema } from "../leafNodeSchema.js";
+import type { LeafSchema, StringSchema } from "../leafNodeSchema.js";
 import {
 	stringSchema,
 	numberSchema,
@@ -252,7 +252,7 @@ export const schemaStatics = {
 		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
 	): FieldSchemaAlpha<
 		FieldKind.Identifier,
-		typeof stringSchema,
+		StringSchema,
 		TCustomMetadata,
 		FieldPropsAlpha<TCustomMetadata>
 	> => {
