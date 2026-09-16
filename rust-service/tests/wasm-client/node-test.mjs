@@ -17,7 +17,11 @@ async function clients() {
 	const first = service.connect();
 	const second = service.connect();
 	const archive = encoder.encode("node-archive");
-	await first.openSession(archive, encoder.encode("first-author"), encoder.encode("first-session"));
+	await first.openSession(
+		archive,
+		encoder.encode("first-author"),
+		encoder.encode("first-session"),
+	);
 	return { archive, first, second };
 }
 

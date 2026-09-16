@@ -20,8 +20,9 @@ import init, {
 	SeaBrowserTransport,
 	SeaDirectoryEntry,
 	SeaInjectedClient,
+	SeaLocalService,
+	SeaTreeId,
 	type SeaLocalClient,
-	type SeaTreeId,
 } from "../pkg/sea_webtransport.js";
 import {
 	DirectDummyClient,

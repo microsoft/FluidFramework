@@ -14,7 +14,7 @@
 	"type": "module",
 	"scripts": {
 		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha --parentProcess",
-		"bench:build": "fluid-build . --task build:typescript --task build:benchmarks",
+		"bench:build": "fluid-build . --task build:esm --task build:benchmarks",
 		"bench:run": "node scripts/run-benchmark.mjs",
 		"benchmark:local": "node browser/run-shared-tree-benchmark.mjs local",
 		"benchmark:rust": "node browser/run-shared-tree-benchmark.mjs rust",
@@ -26,11 +26,12 @@
 		"build:benchmark:tinylicious": "esbuild browser/shared-tree-benchmark-tinylicious.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-benchmark-tinylicious.js --log-level=warning --log-override:package.json=silent",
 		"build:benchmarks": "pnpm run build:benchmark:rust && pnpm run build:benchmark:local && pnpm run build:benchmark:tinylicious",
 		"build:compile": "fluid-build . --task compile",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"build:shared-tree": "esbuild browser/shared-tree-trace.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-trace.js --external:../pkg/* --log-level=warning --log-override:package.json=silent",
-		"build:typescript": "rimraf lib tsconfig.tsbuildinfo && tsc --project tsconfig.json",
 		"build:wasm": "node scripts/build-wasm.mjs",
 		"check:format": "biome format src browser scripts package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html shared-tree-benchmark-rust.html shared-tree-benchmark-local.html shared-tree-benchmark-tinylicious.html",
 		"clean": "rimraf --glob dist lib pkg \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"clean:typescript": "rimraf lib tsconfig.tsbuildinfo",
 		"format": "biome format src browser scripts package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html shared-tree-benchmark-rust.html shared-tree-benchmark-local.html shared-tree-benchmark-tinylicious.html --write",
 		"lint": "biome lint src browser scripts",
 		"test": "fluid-build . --task test",
@@ -98,16 +99,17 @@
 			},
 			"compile": {
 				"dependsOn": [
-					"build:typescript",
+					"build:esm",
 					"typecheck:shared-tree",
 					"build:shared-tree",
 					"build:benchmarks"
 				],
 				"script": false
 			},
-			"build:typescript": [
+			"build:esm": [
 				"^build:package:esm",
-				"build:wasm"
+				"build:wasm",
+				"clean:typescript"
 			],
 			"typecheck": [
 				"^build:package:esm"
@@ -131,7 +133,7 @@
 				"script": false
 			},
 			"test:node": [
-				"build:typescript",
+				"build:esm",
 				"build:wasm"
 			]
 		}

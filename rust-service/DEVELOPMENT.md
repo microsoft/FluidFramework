@@ -29,11 +29,21 @@ pnpm --dir tests/minimal-fluid-driver run check:format
 pnpm --dir tests/minimal-fluid-driver run lint
 pnpm --dir tests/minimal-fluid-driver run typecheck
 pnpm --dir tests/minimal-fluid-driver run typecheck:shared-tree
-pnpm --dir tests/minimal-fluid-driver run build:typescript
+pnpm --dir tests/minimal-fluid-driver run build:esm
 pnpm --dir tests/minimal-fluid-driver run test:node
 pnpm --dir tests/minimal-fluid-driver run build:shared-tree
 pnpm --dir tests/minimal-fluid-driver run build:benchmarks
 ```
+
+Run repository policy validation from the repository root after every Rust-service change:
+
+```bash
+pnpm policy-check --path rust-service
+```
+
+Also run `pnpm build:fast` from the repository root when a change affects a registered pnpm package or a declared input to its build tasks.
+For the minimal Fluid driver, those inputs include Rust-service Cargo manifests, `Cargo.lock`, and Rust sources used to generate the WASM clients.
+Documentation-only Rust-service changes do not require the repository build.
 
 The installed `wasm-bindgen` CLI must match the crate version pinned by `sea-webtransport`.
 See the [browser harness](tests/webtransport-browser/README.md) for the real Chromium WebTransport command and the [minimal Fluid driver](tests/minimal-fluid-driver/README.md) for the SharedTree trace.

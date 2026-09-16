@@ -32,6 +32,21 @@ most local durable artifact: code and tests for a fix, an adjacent README or
 benchmark report for retained measurements, and a decision or `LEARNINGS.md`
 entry only when their existing triggers apply.
 
+Before completing any Rust-service implementation or integration, run the
+canonical validation in `rust-service/DEVELOPMENT.md` and, from the repository
+root, run:
+
+```bash
+pnpm policy-check --path rust-service
+```
+
+Run `pnpm build:fast` from the repository root when changed files affect a
+registered pnpm package or any declared input to its build tasks. This includes
+changes to package manifests, task definitions, workspace or lock files, and
+Rust sources or manifests consumed by generated WASM tasks. A package-scoped
+build does not replace this check. Documentation-only changes outside registered
+package build inputs do not require the repository build.
+
 A full iteration may provide material value when work has two or more genuinely
 independent workstreams, benefits from parallel agents, has meaningful ownership
 or integration risk, compares multiple implementations that need normalized
@@ -195,6 +210,9 @@ Use [workstream report template](./assets/workstream-report.template.md).
 Workspace-level validation must include the canonical format, strict
 workspace/all-target/all-feature Clippy, build, test, and example commands in
 `rust-service/DEVELOPMENT.md`. Package-scoped checks do not replace this gate.
+It must also include the scoped repository policy check and, when the changed
+files affect the registered pnpm or declarative build graph, the repository-root
+`pnpm build:fast` command described there.
 When downstream tests consume ignored generated packages or build outputs,
 regenerate them in the integration checkout and execute or inspect the exact
 consumer artifact rather than relying on a source build or cached output.

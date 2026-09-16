@@ -6,3 +6,25 @@ description: This skill should be used when the user asks to "run policy check",
 Run `pnpm policy-check --path <relative-path>` from the repo root to check a specific package. Do NOT `cd` into the package directory.
 
 Even when changes are applied to a single package, repository-wide checks (`pnpm policy-check` without `--path`) are still appropriate since changes in one package can cause policy failures in others.
+
+After changing a package manifest or build task, rerun the focused policy check
+for that package before broader validation. For Rust-service changes, run this
+from the repository root:
+
+```bash
+pnpm policy-check --path rust-service
+```
+
+TypeScript compilation tasks must use repository-recognized task names and
+dependency declarations. Prefer the established `build:esm` script with a
+`tsc --project ./tsconfig.json` command. The generating command must start with
+`tsc` or `fluid-tsc`; do not prefix it with cleanup or another chained command.
+When clean emission is required, put cleanup in a separate script and declare
+that script as a `fluidBuild.tasks.build:esm` dependency.
+
+If changed files affect a registered pnpm package or a declared input to one of
+its build tasks, policy success is not sufficient. Run `pnpm build:fast` from
+the repository root as well. This applies to package/task/dependency changes,
+workspace or lockfile changes, and generated-client inputs such as Rust sources
+listed by a declarative WASM task. Documentation-only changes outside build
+inputs do not require the repository build.
