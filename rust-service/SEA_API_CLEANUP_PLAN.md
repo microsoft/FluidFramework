@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 4a. Restore the server crate boundary.
-- **Last completed checkpoint:** 3c. Delete the legacy generation.
-- **Last validation:** Checkpoint 3c formatting, strict workspace Clippy, full Rust workspace tests, benchmark smoke, documentation links, policy, and repository build passed on 2026-09-16.
-- **Latest checkpoint notes:** Checkpoint 3b commit `cda2cb6447d` removed the active legacy traits, adapters, backend implementations, decorator implementations, and old sequencer. Checkpoint 3c physically removed the remaining disabled legacy conformance, storage, and decorator test bodies. Rust source now has one `EventPosition` and no `EventStream`, `PositionCodec`, or `SnapshotStore` references.
+- **Current checkpoint:** 4b. Split service responsibilities.
+- **Last completed checkpoint:** 4a. Restore the server crate boundary.
+- **Last validation:** Checkpoint 4a formatting, strict transport/server Clippy, all transport/server tests, native cross-backend round trips, and the `wasm32-unknown-unknown` client-library build passed on 2026-09-16.
+- **Latest checkpoint notes:** `sea-webtransport-server` now owns endpoint binding, connection acceptance, server dispatch, host composition, measurements, and shutdown. `sea-webtransport` retains the shared protocol/frame codec and native client. The crate-level native cfg and browser protocol path import are removed; the WASM library build cannot reach server, sequencer, or storage dependencies.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 4a. Restore the server crate boundary.
+- **Next checkpoint:** 4b. Split service responsibilities.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -489,11 +489,11 @@ This checkpoint may be split into the following ordered commits.
 
 #### 4a. Restore the server crate boundary
 
-- [ ] Move `WebTransportServer`, endpoint acceptance, native server connection handling, `SeaServiceHost`, and server-side dispatch from `sea-webtransport` to `sea-webtransport-server`.
-- [ ] Keep only shared protocol/frame values and client implementation in `sea-webtransport`.
-- [ ] Remove the crate-level `cfg(not(target_arch = "wasm32"))` structure that currently forces the browser artifact to path-import protocol source.
-- [ ] Preserve server behavior and the one-way dependency from `sea-webtransport-server` to `sea-webtransport`.
-- [ ] Verify the WASM build cannot reach server, storage-backend, or sequencer code.
+- [x] Move `WebTransportServer`, endpoint acceptance, native server connection handling, `SeaServiceHost`, and server-side dispatch from `sea-webtransport` to `sea-webtransport-server`.
+- [x] Keep only shared protocol/frame values and client implementation in `sea-webtransport`.
+- [x] Remove the crate-level `cfg(not(target_arch = "wasm32"))` structure that currently forces the browser artifact to path-import protocol source.
+- [x] Preserve server behavior and the one-way dependency from `sea-webtransport-server` to `sea-webtransport`.
+- [x] Verify the WASM build cannot reach server, storage-backend, or sequencer code.
 
 #### 4b. Split service responsibilities
 

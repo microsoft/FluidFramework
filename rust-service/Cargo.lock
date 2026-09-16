@@ -1265,7 +1265,6 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "bytes",
- "futures-core",
  "futures-util",
  "js-sys",
  "postcard",
@@ -1287,6 +1286,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "bytes",
+ "futures-core",
  "futures-util",
  "sea-conformance",
  "sea-core",
@@ -1295,6 +1295,7 @@ dependencies = [
  "sea-memory",
  "sea-sequencer",
  "sea-webtransport",
+ "thiserror",
  "tokio",
  "wtransport",
 ]

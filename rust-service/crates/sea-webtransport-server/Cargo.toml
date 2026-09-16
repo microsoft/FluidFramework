@@ -12,6 +12,8 @@ path = "src/main.rs"
 [dependencies]
 async-trait.workspace = true
 bytes.workspace = true
+futures-core.workspace = true
+futures-util.workspace = true
 sea-core = { path = "../sea-core" }
 sea-file = { path = "../sea-file" }
 sea-file-durable = { path = "../sea-file-durable" }
@@ -19,10 +21,10 @@ sea-memory = { path = "../sea-memory" }
 sea-sequencer = { path = "../sea-sequencer" }
 sea-webtransport = { path = "../sea-webtransport" }
 tokio.workspace = true
+thiserror.workspace = true
 wtransport = "=0.7.2"
 
 [dev-dependencies]
-futures-util.workspace = true
 sea-conformance = { path = "../sea-conformance" }
 
 [lints]

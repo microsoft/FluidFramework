@@ -15,7 +15,9 @@ use sea_core::{
     },
 };
 
-use crate::{SeaConnectionService, SeaResponseStream, protocol};
+use sea_webtransport::protocol;
+
+use crate::{SeaConnectionService, SeaResponseStream};
 
 /// Adapts one open [`SeaSession`] to typed wire requests.
 pub struct SessionDispatcher<S: SeaSession> {
@@ -378,7 +380,9 @@ mod tests {
     use sea_sequencer::session::LocalSequencer;
 
     use super::SessionDispatcher;
-    use crate::{SeaConnectionService, protocol};
+    use sea_webtransport::protocol;
+
+    use crate::SeaConnectionService;
 
     #[tokio::test]
     async fn dispatches_typed_operations_and_load_streams() {

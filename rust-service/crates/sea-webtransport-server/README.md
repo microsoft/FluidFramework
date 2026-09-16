@@ -1,7 +1,8 @@
 # Sea WebTransport Server
 
-This native-only package owns the deployable Sea WebTransport server executable.
-It owns listener and TLS setup, runtime storage selection, archive routing, and graceful shutdown.
+This native-only crate owns the deployable Sea WebTransport server library and executable.
+It owns listener and TLS setup, connection and stream dispatch, runtime storage selection, archive routing, measurements, and graceful shutdown.
+It depends on `sea-webtransport` only for shared wire values and framing; the client crate does not depend on this server crate.
 
 Run from `rust-service/`:
 

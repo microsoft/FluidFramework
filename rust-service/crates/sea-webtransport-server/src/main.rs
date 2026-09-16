@@ -6,12 +6,10 @@ use std::{
     time::Duration,
 };
 
-use sea_webtransport::{ShutdownMode, TransportConfig, WebTransportServer};
+use sea_webtransport_server::{
+    BuiltInSeaHost, ShutdownMode, StorageMode, TransportConfig, WebTransportServer,
+};
 use wtransport::{Identity, tls::Sha256DigestFmt};
-
-mod host;
-
-use host::{BuiltInSeaHost, StorageMode};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -93,7 +91,7 @@ async fn wait_for_shutdown_marker(marker: &Path) {
     println!("SHUTDOWN_MARKER_DETECTED={}", marker.display());
 }
 
-fn print_shutdown_outcome(outcome: sea_webtransport::ShutdownOutcome) {
+fn print_shutdown_outcome(outcome: sea_webtransport_server::ShutdownOutcome) {
     println!(
         "SHUTDOWN_EVIDENCE disposition={:?} owned_connections={} cancelled_connections={} elapsed_milliseconds={}",
         outcome.disposition,

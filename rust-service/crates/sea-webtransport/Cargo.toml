@@ -19,7 +19,6 @@ thiserror.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 async-trait.workspace = true
-futures-core.workspace = true
 futures-util.workspace = true
 tokio.workspace = true
 wtransport = "=0.7.2"

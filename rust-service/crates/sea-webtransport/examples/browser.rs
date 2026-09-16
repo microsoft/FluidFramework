@@ -4,8 +4,7 @@
 #[path = "browser/sea.rs"]
 mod sea;
 
-#[path = "../src/protocol.rs"]
-mod sea_protocol_v1;
+pub use sea_webtransport::protocol as sea_protocol_v1;
 
 pub use sea::*;
 

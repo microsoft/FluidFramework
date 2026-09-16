@@ -12,10 +12,10 @@ use sea_file::FileStream;
 use sea_file_durable::DurableLog;
 use sea_memory::MemoryStream;
 use sea_sequencer::session::{LocalSequencer, LocalSession};
-use sea_webtransport::{
-    SeaConnectionService, SeaResponseStream, SeaServiceHost, SessionDispatcher, protocol,
-};
+use sea_webtransport::protocol;
 use tokio::sync::Mutex;
+
+use crate::{SeaConnectionService, SeaResponseStream, SeaServiceHost, SessionDispatcher};
 
 enum Archive {
     Memory(Arc<LocalSequencer<MemoryStream>>),
@@ -37,6 +37,7 @@ pub enum StorageMode {
 
 impl StorageMode {
     /// Parses one stable command-line backend name.
+    #[must_use]
     pub fn from_name(value: &str) -> Option<Self> {
         match value {
             "memory" => Some(Self::Memory),
@@ -47,6 +48,7 @@ impl StorageMode {
     }
 
     /// Returns the stable command-line backend name.
+    #[must_use]
     pub const fn name(self) -> &'static str {
         match self {
             Self::Memory => "memory",
@@ -284,15 +286,14 @@ mod tests {
         BlobDirectory, BlobTreeId,
         archive::{AuthorId, EventReceipt, OperationId, SeaSession, SessionId},
     };
-    use sea_webtransport::{
-        NativeSeaClient, ShutdownMode, TransportConfig, WebTransportServer, protocol,
-    };
+    use sea_webtransport::{NativeSeaClient, TransportConfig as ClientTransportConfig, protocol};
     use tokio::time::timeout;
     use wtransport::{
         ClientConfig, Connection, Endpoint, Identity, endpoint::endpoint_side::Client,
     };
 
     use super::{BuiltInSeaHost, StorageMode};
+    use crate::{ShutdownMode, TransportConfig, WebTransportServer};
 
     #[tokio::test]
     async fn native_client_round_trips_every_storage_mode() {
@@ -328,7 +329,7 @@ mod tests {
             let client = NativeSeaClient::connect(
                 format!("https://{address}/sea"),
                 certificate_hash,
-                TransportConfig::default(),
+                ClientTransportConfig::default(),
                 Bytes::from_static(b"archive"),
                 AuthorId::new(Bytes::from_static(b"author")).unwrap(),
                 SessionId::new(Bytes::from_static(b"session")).unwrap(),
@@ -373,7 +374,7 @@ mod tests {
             let client = NativeSeaClient::connect(
                 format!("https://{address}/sea"),
                 certificate_hash.clone(),
-                TransportConfig::default(),
+                ClientTransportConfig::default(),
                 Bytes::from_static(b"fault-archive"),
                 AuthorId::new(Bytes::from_static(b"observer-author")).unwrap(),
                 SessionId::new(Bytes::from_static(b"observer-session")).unwrap(),
