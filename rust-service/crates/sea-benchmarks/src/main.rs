@@ -19,8 +19,8 @@ use sea_compression::CompressionSession;
 use sea_core::{
     BlobTreeId, Event,
     archive::{
-        AuthorId, EventSubmission, OperationId, SeaSession, SeaStorage, SessionId,
-        Snapshot as ArchiveSnapshot, SnapshotPosition as ArchiveSnapshotPosition,
+        AuthorId, EventSubmission, OperationId, SeaAuthorSession, SeaSession, SeaStorage,
+        SessionId, Snapshot as ArchiveSnapshot, SnapshotPosition as ArchiveSnapshotPosition,
         SnapshotPublication,
     },
 };

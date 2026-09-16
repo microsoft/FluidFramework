@@ -18,7 +18,8 @@ use sea_core::{
     EventPosition, SnapshotId,
     archive::{
         AuthorId, CommittedEvent, EventReceipt, EventSubmission, LoadEvent, OperationId,
-        PublishedSnapshot, SeaSession, SeaStorage, SessionCommittedEvent, SessionId, SessionStream,
+        PublishedSnapshot, SeaArchive, SeaAuthorSession, SeaEventSubscription, SeaService,
+        SeaSnapshotCoordinator, SeaStorage, SessionCommittedEvent, SessionId, SessionStream,
         SnapshotPublication,
     },
 };
@@ -240,14 +241,19 @@ impl<S: SeaStorage> LocalSession<S> {
     }
 }
 
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-impl<S> SeaSession for LocalSession<S>
+impl<S> SeaService for LocalSession<S>
 where
     S: SeaStorage + 'static,
 {
     type Error = SessionError<S::Error>;
+}
 
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S> SeaEventSubscription for LocalSession<S>
+where
+    S: SeaStorage + 'static,
+{
     async fn load(
         &self,
         required: Option<EventPosition>,
@@ -295,7 +301,14 @@ where
             });
         Ok(Box::pin(stream::iter(initial).chain(live_stream)))
     }
+}
 
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S> SeaArchive for LocalSession<S>
+where
+    S: SeaStorage + 'static,
+{
     async fn read(
         &self,
         after: Option<EventPosition>,
@@ -320,6 +333,61 @@ where
         })))
     }
 
+    async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {
+        self.ensure_open()?;
+        self.sequencer
+            .storage
+            .put_blob(payload)
+            .await
+            .map_err(SessionError::Storage)
+    }
+
+    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
+        self.ensure_open()?;
+        self.sequencer
+            .storage
+            .get_blob(id)
+            .await
+            .map_err(SessionError::Storage)
+    }
+
+    async fn put_directory(
+        &self,
+        directory: BlobDirectory,
+    ) -> Result<BlobDirectoryId, Self::Error> {
+        self.ensure_open()?;
+        self.sequencer
+            .storage
+            .put_directory(directory)
+            .await
+            .map_err(SessionError::Storage)
+    }
+
+    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
+        self.ensure_open()?;
+        self.sequencer
+            .storage
+            .get_directory(id)
+            .await
+            .map_err(SessionError::Storage)
+    }
+
+    async fn snapshot(&self, id: &SnapshotId) -> Result<Option<PublishedSnapshot>, Self::Error> {
+        self.ensure_open()?;
+        self.sequencer
+            .storage
+            .snapshot(id)
+            .await
+            .map_err(SessionError::Storage)
+    }
+}
+
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S> SeaAuthorSession for LocalSession<S>
+where
+    S: SeaStorage + 'static,
+{
     async fn submit(&self, submission: EventSubmission) -> Result<EventReceipt, Self::Error> {
         self.ensure_open()?;
         let mut state = self.sequencer.state.lock().await;
@@ -412,54 +480,37 @@ where
             .map(|accepted| accepted.receipt.clone()))
     }
 
-    async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {
-        self.ensure_open()?;
-        self.sequencer
-            .storage
-            .put_blob(payload)
-            .await
-            .map_err(SessionError::Storage)
+    async fn close(&self) -> Result<(), Self::Error> {
+        if self.closed.swap(true, Ordering::AcqRel) {
+            return Ok(());
+        }
+        let mut state = self.sequencer.state.lock().await;
+        if state
+            .authors
+            .get(&self.author_id)
+            .is_some_and(|author| author.session_id == self.session_id)
+        {
+            let envelope = encode_close(&self.author_id, &self.session_id)?;
+            self.sequencer
+                .storage
+                .append(Event {
+                    payload: envelope,
+                    blob_tree: None,
+                })
+                .await
+                .map_err(SessionError::Storage)?;
+            state.authors.remove(&self.author_id);
+        }
+        Ok(())
     }
+}
 
-    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
-        self.ensure_open()?;
-        self.sequencer
-            .storage
-            .get_blob(id)
-            .await
-            .map_err(SessionError::Storage)
-    }
-
-    async fn put_directory(
-        &self,
-        directory: BlobDirectory,
-    ) -> Result<BlobDirectoryId, Self::Error> {
-        self.ensure_open()?;
-        self.sequencer
-            .storage
-            .put_directory(directory)
-            .await
-            .map_err(SessionError::Storage)
-    }
-
-    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
-        self.ensure_open()?;
-        self.sequencer
-            .storage
-            .get_directory(id)
-            .await
-            .map_err(SessionError::Storage)
-    }
-
-    async fn snapshot(&self, id: &SnapshotId) -> Result<Option<PublishedSnapshot>, Self::Error> {
-        self.ensure_open()?;
-        self.sequencer
-            .storage
-            .snapshot(id)
-            .await
-            .map_err(SessionError::Storage)
-    }
-
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S> SeaSnapshotCoordinator for LocalSession<S>
+where
+    S: SeaStorage + 'static,
+{
     async fn latest_snapshot(&self) -> Result<Option<PublishedSnapshot>, Self::Error> {
         self.ensure_open()?;
         self.sequencer
@@ -521,30 +572,6 @@ where
                 }
             },
         )))
-    }
-
-    async fn close(&self) -> Result<(), Self::Error> {
-        if self.closed.swap(true, Ordering::AcqRel) {
-            return Ok(());
-        }
-        let mut state = self.sequencer.state.lock().await;
-        if state
-            .authors
-            .get(&self.author_id)
-            .is_some_and(|author| author.session_id == self.session_id)
-        {
-            let envelope = encode_close(&self.author_id, &self.session_id)?;
-            self.sequencer
-                .storage
-                .append(Event {
-                    payload: envelope,
-                    blob_tree: None,
-                })
-                .await
-                .map_err(SessionError::Storage)?;
-            state.authors.remove(&self.author_id);
-        }
-        Ok(())
     }
 }
 
@@ -917,7 +944,10 @@ mod tests {
     use futures_util::StreamExt as _;
     use sea_core::{
         Durability, Event,
-        archive::{AuthorId, EventSubmission, LoadEvent, OperationId, SeaSession, SessionId},
+        archive::{
+            AuthorId, EventSubmission, LoadEvent, OperationId, SeaAuthorSession,
+            SeaEventSubscription, SessionId,
+        },
     };
     use sea_memory::MemoryStream;
 

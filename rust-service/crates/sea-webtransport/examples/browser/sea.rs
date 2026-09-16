@@ -22,7 +22,8 @@ use js_sys::{Array, Promise, Reflect, Uint8Array};
 use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, Event, EventPosition, SnapshotId,
     archive::{
-        AuthorId, EventSubmission, LoadEvent, OperationId, SeaSession, SessionId, SessionStream,
+        AuthorId, EventSubmission, LoadEvent, OperationId, SeaArchive, SeaAuthorSession,
+        SeaEventSubscription, SeaSnapshotCoordinator, SessionId, SessionStream,
         Snapshot as ArchiveSnapshot, SnapshotPosition as ArchiveSnapshotPosition,
         SnapshotPublication,
     },

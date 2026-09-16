@@ -25,7 +25,8 @@ use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, ClassifiedError, ErrorKind, SnapshotId,
     archive::{
         EventReceipt as SessionEventReceipt, EventSubmission, LoadEvent, OperationId,
-        PublishedSnapshot as SessionPublishedSnapshot, SeaSession, SessionStream,
+        PublishedSnapshot as SessionPublishedSnapshot, SeaArchive, SeaAuthorSession,
+        SeaEventSubscription, SeaService, SeaSnapshotCoordinator, SessionStream,
         SnapshotPublication,
     },
 };
@@ -171,14 +172,19 @@ impl<S> StatefulCompressionSession<S> {
     }
 }
 
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-impl<S> SeaSession for StatefulCompressionSession<S>
+impl<S> SeaService for StatefulCompressionSession<S>
 where
-    S: SeaSession,
+    S: SeaService,
 {
     type Error = StatefulCompressionError<S::Error>;
+}
 
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S> SeaEventSubscription for StatefulCompressionSession<S>
+where
+    S: SeaEventSubscription,
+{
     async fn load(
         &self,
         required: Option<sea_core::EventPosition>,
@@ -207,7 +213,14 @@ where
                 })
         })))
     }
+}
 
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S> SeaArchive for StatefulCompressionSession<S>
+where
+    S: SeaArchive,
+{
     async fn read(
         &self,
         after: Option<sea_core::EventPosition>,
@@ -235,35 +248,6 @@ where
                     Ok(event)
                 })
         })))
-    }
-
-    async fn submit(
-        &self,
-        mut submission: EventSubmission,
-    ) -> Result<SessionEventReceipt, Self::Error> {
-        if submission.event.payload.len() > self.max_decoded_bytes {
-            return Err(StatefulCompressionError::PayloadTooLarge {
-                actual: submission.event.payload.len(),
-                maximum: self.max_decoded_bytes,
-            });
-        }
-        submission.event.payload = self
-            .compress(&submission.event.payload)
-            .map_err(StatefulCompressionError::Encode)?;
-        self.inner
-            .submit(submission)
-            .await
-            .map_err(StatefulCompressionError::Store)
-    }
-
-    async fn resolve_submission(
-        &self,
-        operation_id: &OperationId,
-    ) -> Result<Option<SessionEventReceipt>, Self::Error> {
-        self.inner
-            .resolve_submission(operation_id)
-            .await
-            .map_err(StatefulCompressionError::Store)
     }
 
     async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {
@@ -318,7 +302,57 @@ where
             .await
             .map_err(StatefulCompressionError::Store)
     }
+}
 
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S> SeaAuthorSession for StatefulCompressionSession<S>
+where
+    S: SeaAuthorSession,
+{
+    async fn submit(
+        &self,
+        mut submission: EventSubmission,
+    ) -> Result<SessionEventReceipt, Self::Error> {
+        if submission.event.payload.len() > self.max_decoded_bytes {
+            return Err(StatefulCompressionError::PayloadTooLarge {
+                actual: submission.event.payload.len(),
+                maximum: self.max_decoded_bytes,
+            });
+        }
+        submission.event.payload = self
+            .compress(&submission.event.payload)
+            .map_err(StatefulCompressionError::Encode)?;
+        self.inner
+            .submit(submission)
+            .await
+            .map_err(StatefulCompressionError::Store)
+    }
+
+    async fn resolve_submission(
+        &self,
+        operation_id: &OperationId,
+    ) -> Result<Option<SessionEventReceipt>, Self::Error> {
+        self.inner
+            .resolve_submission(operation_id)
+            .await
+            .map_err(StatefulCompressionError::Store)
+    }
+
+    async fn close(&self) -> Result<(), Self::Error> {
+        self.inner
+            .close()
+            .await
+            .map_err(StatefulCompressionError::Store)
+    }
+}
+
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S> SeaSnapshotCoordinator for StatefulCompressionSession<S>
+where
+    S: SeaSnapshotCoordinator,
+{
     async fn latest_snapshot(&self) -> Result<Option<SessionPublishedSnapshot>, Self::Error> {
         self.inner
             .latest_snapshot()
@@ -357,13 +391,6 @@ where
         Ok(Box::pin(
             stream.map(|item| item.map_err(StatefulCompressionError::Store)),
         ))
-    }
-
-    async fn close(&self) -> Result<(), Self::Error> {
-        self.inner
-            .close()
-            .await
-            .map_err(StatefulCompressionError::Store)
     }
 }
 
@@ -435,7 +462,7 @@ mod current_tests {
     use bytes::Bytes;
     use sea_core::{
         ClassifiedError, ErrorKind,
-        archive::{AuthorId, SeaSession, SessionId},
+        archive::{AuthorId, SeaArchive, SessionId},
     };
     use sea_memory::MemoryStream;
     use sea_sequencer::session::LocalSequencer;

@@ -335,7 +335,10 @@ mod tests {
     use bytes::Bytes;
     use sea_core::{
         BlobDirectory, BlobTreeId,
-        archive::{AuthorId, EventReceipt, OperationId, SeaSession, SessionId},
+        archive::{
+            AuthorId, EventReceipt, OperationId, SeaArchive, SeaAuthorSession,
+            SeaSnapshotCoordinator, SessionId,
+        },
     };
     use sea_webtransport::{
         NativeSeaClient, NativeSessionOpen, TransportConfig as ClientTransportConfig, protocol,

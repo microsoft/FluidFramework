@@ -15,7 +15,8 @@ use sea_core::{
     Event, EventPosition, SnapshotId,
     archive::{
         AuthorId, CommittedEvent, EventReceipt, EventSubmission, LoadEvent, OperationId,
-        PublishedSnapshot, SeaSession, SessionCommittedEvent, SessionId, SessionStream, Snapshot,
+        PublishedSnapshot, SeaArchive, SeaAuthorSession, SeaEventSubscription, SeaService,
+        SeaSnapshotCoordinator, SessionCommittedEvent, SessionId, SessionStream, Snapshot,
         SnapshotPosition, SnapshotPublication,
     },
 };
@@ -242,9 +243,13 @@ impl NativeSeaClient {
 }
 
 #[async_trait]
-impl SeaSession for NativeSeaClient {
+impl SeaService for NativeSeaClient {
     type Error = SeaClientError;
+}
 
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl SeaEventSubscription for NativeSeaClient {
     async fn load(
         &self,
         required: Option<EventPosition>,
@@ -258,7 +263,11 @@ impl SeaSession for NativeSeaClient {
             stream.map(|result| result.and_then(load_from_wire)),
         ))
     }
+}
 
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl SeaArchive for NativeSeaClient {
     async fn read(
         &self,
         after: Option<EventPosition>,
@@ -274,51 +283,6 @@ impl SeaSession for NativeSeaClient {
             protocol::Response::LoadEvent(event) => session_event_from_wire(*event),
             response => Err(response_error(response)),
         })))
-    }
-
-    async fn submit(&self, submission: EventSubmission) -> Result<EventReceipt, Self::Error> {
-        match self
-            .request(protocol::Request::Submit {
-                operation: submission.operation_id.as_bytes().to_vec(),
-                reference: submission.reference.map(EventPosition::get),
-                event: event_to_wire(&submission.event),
-            })
-            .await?
-        {
-            protocol::Response::EventCommitted {
-                position,
-                durability,
-            } => Ok(EventReceipt {
-                position: EventPosition::new(position),
-                durability: durability_from_wire(&durability)?,
-            }),
-            response => Err(response_error(response)),
-        }
-    }
-
-    async fn resolve_submission(
-        &self,
-        operation_id: &OperationId,
-    ) -> Result<Option<EventReceipt>, Self::Error> {
-        match self
-            .request(protocol::Request::ResolveSubmission {
-                operation: operation_id.as_bytes().to_vec(),
-            })
-            .await?
-        {
-            protocol::Response::SubmissionResolved {
-                position,
-                durability,
-            } => match (position, durability) {
-                (Some(position), Some(durability)) => Ok(Some(EventReceipt {
-                    position: EventPosition::new(position),
-                    durability: durability_from_wire(&durability)?,
-                })),
-                (None, None) => Ok(None),
-                _ => Err(SeaClientError::UnexpectedResponse),
-            },
-            response => Err(response_error(response)),
-        }
     }
 
     async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {
@@ -400,7 +364,74 @@ impl SeaSession for NativeSeaClient {
             response => Err(response_error(response)),
         }
     }
+}
 
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl SeaAuthorSession for NativeSeaClient {
+    async fn submit(&self, submission: EventSubmission) -> Result<EventReceipt, Self::Error> {
+        match self
+            .request(protocol::Request::Submit {
+                operation: submission.operation_id.as_bytes().to_vec(),
+                reference: submission.reference.map(EventPosition::get),
+                event: event_to_wire(&submission.event),
+            })
+            .await?
+        {
+            protocol::Response::EventCommitted {
+                position,
+                durability,
+            } => Ok(EventReceipt {
+                position: EventPosition::new(position),
+                durability: durability_from_wire(&durability)?,
+            }),
+            response => Err(response_error(response)),
+        }
+    }
+
+    async fn resolve_submission(
+        &self,
+        operation_id: &OperationId,
+    ) -> Result<Option<EventReceipt>, Self::Error> {
+        match self
+            .request(protocol::Request::ResolveSubmission {
+                operation: operation_id.as_bytes().to_vec(),
+            })
+            .await?
+        {
+            protocol::Response::SubmissionResolved {
+                position,
+                durability,
+            } => match (position, durability) {
+                (Some(position), Some(durability)) => Ok(Some(EventReceipt {
+                    position: EventPosition::new(position),
+                    durability: durability_from_wire(&durability)?,
+                })),
+                (None, None) => Ok(None),
+                _ => Err(SeaClientError::UnexpectedResponse),
+            },
+            response => Err(response_error(response)),
+        }
+    }
+
+    async fn close(&self) -> Result<(), Self::Error> {
+        if self.closed.load(Ordering::Acquire) {
+            return Ok(());
+        }
+        match self.request(protocol::Request::Close).await? {
+            protocol::Response::Acknowledged => {
+                self.closed.store(true, Ordering::Release);
+                self.connection.close(CLOSE_CODE, b"Sea session closed");
+                Ok(())
+            }
+            response => Err(response_error(response)),
+        }
+    }
+}
+
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl SeaSnapshotCoordinator for NativeSeaClient {
     async fn latest_snapshot(&self) -> Result<Option<PublishedSnapshot>, Self::Error> {
         match self.request(protocol::Request::LatestSnapshot).await? {
             protocol::Response::Snapshot(snapshot) => Ok(snapshot.map(snapshot_from_wire)),
@@ -453,20 +484,6 @@ impl SeaSession for NativeSeaClient {
             protocol::Response::Snapshot(Some(snapshot)) => Ok(snapshot_from_wire(snapshot)),
             response => Err(response_error(response)),
         })))
-    }
-
-    async fn close(&self) -> Result<(), Self::Error> {
-        if self.closed.load(Ordering::Acquire) {
-            return Ok(());
-        }
-        match self.request(protocol::Request::Close).await? {
-            protocol::Response::Acknowledged => {
-                self.closed.store(true, Ordering::Release);
-                self.connection.close(CLOSE_CODE, b"Sea session closed");
-                Ok(())
-            }
-            response => Err(response_error(response)),
-        }
     }
 }
 

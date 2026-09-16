@@ -8,7 +8,7 @@
 - **Current checkpoint:** 4b. Split service responsibilities.
 - **Last completed checkpoint:** 4a. Restore the server crate boundary.
 - **Last validation:** Checkpoint 4a formatting, strict transport/server Clippy, all transport/server tests, native cross-backend round trips, and the `wasm32-unknown-unknown` client-library build passed on 2026-09-16.
-- **Latest checkpoint notes:** Checkpoint 4b requires explicit archive create versus open intent before creating author state; duplicate create conflicts and missing open is rejected across native, injected, browser, and process-local bindings. A dedicated `CreateArchive` operation replaces the Fluid adapter's fake `storage` author session. `SeaArchive`, `SeaAuthorSession`, `SeaEventSubscription`, and `SeaSnapshotCoordinator` express separate responsibilities, and server dispatch depends on their composition rather than the broad `SeaSession`. Blanket adaptation temporarily keeps current implementations buildable while direct narrow implementations replace it.
+- **Latest checkpoint notes:** Checkpoint 4b requires explicit archive create versus open intent before creating author state; duplicate create conflicts and missing open is rejected across native, injected, browser, and process-local bindings. A dedicated `CreateArchive` operation replaces the Fluid adapter's fake `storage` author session. Local, native, compression, encryption, and stateful-compression implementations now implement `SeaArchive`, `SeaAuthorSession`, `SeaEventSubscription`, and `SeaSnapshotCoordinator` directly; `SeaSession` is only a convenience marker over that composition. Encryption author retries explicitly require archive read access to compare committed plaintext.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
 - **Next checkpoint:** 4b. Split service responsibilities.
@@ -497,15 +497,15 @@ This checkpoint may be split into the following ordered commits.
 
 #### 4b. Split service responsibilities
 
-- [ ] Introduce narrow archive, author-session, event-subscription, and snapshot-coordination contracts.
-- [ ] Move content and historical reads out of the author-session contract.
-- [ ] Move snapshot lookup out of the author-session contract.
-- [ ] Preserve stable submission and snapshot-publication identities.
+- [x] Introduce narrow archive, author-session, event-subscription, and snapshot-coordination contracts.
+- [x] Move content and historical reads out of the author-session contract.
+- [x] Move snapshot lookup out of the author-session contract.
+- [x] Preserve stable submission and snapshot-publication identities.
 - [x] Replace fake archive creation through a `storage` author with an explicit archive operation.
 - [x] Distinguish explicit archive creation from opening an existing archive so a load cannot silently create missing state; settle exact retry/conflict results in conformance tests before implementation.
 - [ ] Define teardown ownership for every session and subscription.
 - [ ] Ensure event-payload decorators only wrap event/content payload operations they actually transform.
-- [ ] Update all local Rust implementations and conformance tests.
+- [x] Update all local Rust implementations and conformance tests.
 
 Validation:
 

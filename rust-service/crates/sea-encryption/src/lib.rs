@@ -34,7 +34,8 @@ use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, ClassifiedError, ErrorKind, SnapshotId,
     archive::{
         EventReceipt as SessionEventReceipt, EventSubmission, LoadEvent, OperationId,
-        PublishedSnapshot as SessionPublishedSnapshot, SeaSession, SessionStream,
+        PublishedSnapshot as SessionPublishedSnapshot, SeaArchive, SeaAuthorSession,
+        SeaEventSubscription, SeaService, SeaSnapshotCoordinator, SessionStream,
         SnapshotPublication,
     },
 };
@@ -226,16 +227,23 @@ impl<S, K, N> EncryptionSession<S, K, N> {
     }
 }
 
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-impl<S, K, N> SeaSession for EncryptionSession<S, K, N>
+impl<S, K, N> SeaService for EncryptionSession<S, K, N>
 where
-    S: SeaSession,
+    S: SeaService,
     K: KeyProvider + Clone + 'static,
     N: NonceSource,
 {
     type Error = EncryptionError<S::Error>;
+}
 
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S, K, N> SeaEventSubscription for EncryptionSession<S, K, N>
+where
+    S: SeaEventSubscription,
+    K: KeyProvider + Clone + 'static,
+    N: NonceSource,
+{
     async fn load(
         &self,
         required: Option<sea_core::EventPosition>,
@@ -259,7 +267,16 @@ where
             })
         })))
     }
+}
 
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S, K, N> SeaArchive for EncryptionSession<S, K, N>
+where
+    S: SeaArchive,
+    K: KeyProvider + Clone + 'static,
+    N: NonceSource,
+{
     async fn read(
         &self,
         after: Option<sea_core::EventPosition>,
@@ -284,6 +301,59 @@ where
         })))
     }
 
+    async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {
+        let payload = encrypt_payload(&self.keys, &self.nonces, &payload, PayloadContext::Blob)?;
+        self.inner
+            .put_blob(payload)
+            .await
+            .map_err(EncryptionError::Store)
+    }
+
+    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
+        let payload = self
+            .inner
+            .get_blob(id)
+            .await
+            .map_err(EncryptionError::Store)?;
+        decrypt_payload(&self.keys, &payload, PayloadContext::Blob)
+    }
+
+    async fn put_directory(
+        &self,
+        directory: BlobDirectory,
+    ) -> Result<BlobDirectoryId, Self::Error> {
+        self.inner
+            .put_directory(directory)
+            .await
+            .map_err(EncryptionError::Store)
+    }
+
+    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
+        self.inner
+            .get_directory(id)
+            .await
+            .map_err(EncryptionError::Store)
+    }
+
+    async fn snapshot(
+        &self,
+        id: &SnapshotId,
+    ) -> Result<Option<SessionPublishedSnapshot>, Self::Error> {
+        self.inner
+            .snapshot(id)
+            .await
+            .map_err(EncryptionError::Store)
+    }
+}
+
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S, K, N> SeaAuthorSession for EncryptionSession<S, K, N>
+where
+    S: SeaArchive + SeaAuthorSession,
+    K: KeyProvider + Clone + 'static,
+    N: NonceSource,
+{
     async fn submit(
         &self,
         mut submission: EventSubmission,
@@ -345,50 +415,19 @@ where
             .map_err(EncryptionError::Store)
     }
 
-    async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {
-        let payload = encrypt_payload(&self.keys, &self.nonces, &payload, PayloadContext::Blob)?;
-        self.inner
-            .put_blob(payload)
-            .await
-            .map_err(EncryptionError::Store)
+    async fn close(&self) -> Result<(), Self::Error> {
+        self.inner.close().await.map_err(EncryptionError::Store)
     }
+}
 
-    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
-        let payload = self
-            .inner
-            .get_blob(id)
-            .await
-            .map_err(EncryptionError::Store)?;
-        decrypt_payload(&self.keys, &payload, PayloadContext::Blob)
-    }
-
-    async fn put_directory(
-        &self,
-        directory: BlobDirectory,
-    ) -> Result<BlobDirectoryId, Self::Error> {
-        self.inner
-            .put_directory(directory)
-            .await
-            .map_err(EncryptionError::Store)
-    }
-
-    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
-        self.inner
-            .get_directory(id)
-            .await
-            .map_err(EncryptionError::Store)
-    }
-
-    async fn snapshot(
-        &self,
-        id: &SnapshotId,
-    ) -> Result<Option<SessionPublishedSnapshot>, Self::Error> {
-        self.inner
-            .snapshot(id)
-            .await
-            .map_err(EncryptionError::Store)
-    }
-
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S, K, N> SeaSnapshotCoordinator for EncryptionSession<S, K, N>
+where
+    S: SeaSnapshotCoordinator,
+    K: KeyProvider + Clone + 'static,
+    N: NonceSource,
+{
     async fn latest_snapshot(&self) -> Result<Option<SessionPublishedSnapshot>, Self::Error> {
         self.inner
             .latest_snapshot()
@@ -427,10 +466,6 @@ where
         Ok(Box::pin(
             stream.map(|item| item.map_err(EncryptionError::Store)),
         ))
-    }
-
-    async fn close(&self) -> Result<(), Self::Error> {
-        self.inner.close().await.map_err(EncryptionError::Store)
     }
 }
 
@@ -519,7 +554,10 @@ mod tests {
     use futures_util::StreamExt;
     use sea_core::{
         ClassifiedError, ErrorKind,
-        archive::{AuthorId, EventSubmission, LoadEvent, OperationId, SeaSession, SessionId},
+        archive::{
+            AuthorId, EventSubmission, LoadEvent, OperationId, SeaArchive, SeaAuthorSession,
+            SeaEventSubscription, SessionId,
+        },
     };
     use sea_memory::{MemoryError, MemoryStream};
     use sea_sequencer::session::LocalSequencer;

@@ -5,8 +5,9 @@ use futures_util::StreamExt as _;
 use sea_core::{
     BlobTreeId, Event,
     archive::{
-        AuthorId, EventSubmission, LoadEvent, OperationId, SeaSession, SessionId, Snapshot,
-        SnapshotPosition, SnapshotPublication,
+        AuthorId, EventSubmission, LoadEvent, OperationId, SeaArchive, SeaAuthorSession,
+        SeaEventSubscription, SeaSnapshotCoordinator, SessionId, Snapshot, SnapshotPosition,
+        SnapshotPublication,
     },
 };
 use sea_memory::MemoryStream;
