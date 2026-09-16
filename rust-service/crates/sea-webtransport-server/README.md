@@ -19,4 +19,5 @@ On startup the process prints `WEBTRANSPORT_URL`, `CERTIFICATE_SHA256`, `STORAGE
 Clients connect to the printed `/sea` URL and pin the printed SHA-256 certificate digest.
 It also prints the configured QUIC heartbeat interval, inactivity timeout, author reconnect grace, and live-event lag limit.
 Heartbeat uses QUIC PING frames; a peer is responsive when QUIC receives authenticated traffic before the inactivity timeout.
-Connection loss immediately revokes snapshot nomination, then releases author membership after reconnect grace.
+Connection loss immediately removes snapshot participation, then releases author membership after reconnect grace.
+Read-only streams cannot publish; client-selected streams retain application-managed election; Sea-selected streams receive a deterministic fence only while no client-selected publisher is active.

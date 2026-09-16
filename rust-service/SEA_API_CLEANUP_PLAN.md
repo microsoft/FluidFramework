@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 12. Documentation and terminology completion.
-- **Last completed checkpoint:** 11. Integrate snapshot coordination with Fluid.
-- **Last validation:** Checkpoint 11 focused Rust, server, WASM, Node, TypeScript, client-selected Chromium, Sea-selected Chromium, local direct SharedTree, and regular Fluid SharedTree WebTransport checks passed on 2026-09-16; canonical validation is recorded in the implementation commit.
-- **Latest checkpoint notes:** Snapshot streams declare immutable `ReadOnly`, `SeaSelected`, or `ClientSelected` participation. Any active client-selected publisher suppresses Sea nomination; Sea deterministically selects a Sea-selected publisher only when none remain. Regular `SeaDriver` uses `ClientSelected` so Fluid retains its election and cadence, while direct SharedTree uses `SeaSelected`. Both publication paths remain session-bound, expected-parent checked, and stable-operation recoverable.
+- **Current checkpoint:** 13. Performance and final validation.
+- **Last completed checkpoint:** 12. Documentation and terminology completion.
+- **Last validation:** Checkpoint 12 documentation structure, local links, and active terminology/path scans passed on 2026-09-16.
+- **Latest checkpoint notes:** Active documentation now defines the shared client first, four persistent stream roles, frame envelope, lifecycle ownership, native/browser/test-support targets, and the three snapshot participation policies. Root, server, browser, development, Fluid driver, known-issues, and WebTransport flow documents use current commands and paths. Active `typed`, `unary`, `SEA1`, `SEAS`, old example paths, and old generator paths are absent.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 12. Documentation and terminology completion.
+- **Next checkpoint:** 13. Performance and final validation.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -766,16 +766,16 @@ pnpm --dir tests/minimal-fluid-driver run build:shared-tree
 
 ### 12. Documentation and terminology completion
 
-- [ ] Rewrite the `sea-webtransport` README around architecture, stream roles, framing, lifecycle, and targets.
-- [ ] Document the single shared Sea client first, then document native and browser transport bindings and any local test support as thin environment-specific adapters.
-- [ ] Add exact build and execution commands for every runnable artifact.
-- [ ] Update [notes4.md](notes4.md) from prospective language where behavior is now settled.
-- [ ] Document snapshot nomination as authority selection, never server-directed snapshot scheduling.
-- [ ] Define every remaining use of “session,” “stream,” “client,” and “protocol.”
-- [ ] Remove remaining “typed” and “unary” wording unless it names a real, documented distinction.
-- [ ] Update the minimal Fluid driver README with its reduced layering and snapshot-coordination responsibilities.
-- [ ] Update [DEVELOPMENT.md](DEVELOPMENT.md), [README.md](README.md), and [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
-- [ ] Verify every local Markdown link and every documented command.
+- [x] Rewrite the `sea-webtransport` README around architecture, stream roles, framing, lifecycle, and targets.
+- [x] Document the single shared Sea client first, then document native and browser transport bindings and any local test support as thin environment-specific adapters.
+- [x] Add exact build and execution commands for every runnable artifact.
+- [x] Update [notes4.md](notes4.md) from prospective language where behavior is now settled.
+- [x] Document snapshot nomination as authority selection, never server-directed snapshot scheduling.
+- [x] Define every remaining use of “session,” “stream,” “client,” and “protocol.”
+- [x] Remove remaining “typed” and “unary” wording unless it names a real, documented distinction.
+- [x] Update the minimal Fluid driver README with its reduced layering and snapshot-coordination responsibilities.
+- [x] Update [DEVELOPMENT.md](DEVELOPMENT.md), [README.md](README.md), and [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+- [x] Verify every local Markdown link and every documented command.
 
 Validation:
 

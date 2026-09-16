@@ -53,21 +53,12 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Impact:** Encryption does not hide archive shape or directory names, and dictionary rotation requires replacing decorator configuration.
 - **Trigger:** Design encrypted directories, plaintext identity, or Sea-managed dictionaries only for a concrete consumer requirement.
 
-## RS-021: Legacy append-stream traits remain for benchmarks
-
-- **Status:** Deferred
-- **Severity:** Low
-- **Area:** API cleanup
-- **Evidence:** Service, transport, generated clients, and examples use `SeaStorage` and `SeaSession`, but the benchmark harness and compatibility tests still use `EventStream`, `SnapshotStore`, and backend-specific position wrappers.
-- **Impact:** `sea-core` and storage packages expose two experimental API generations.
-- **Trigger:** Port the remaining benchmark matrix to archive/session APIs, then remove the legacy traits and wrappers in one mechanical cleanup.
-
 ## RS-022: The Fluid adapter is not a production driver
 
 - **Status:** Deferred
 - **Severity:** High
 - **Area:** Fluid integration
-- **Evidence:** The adapter passes typed local-client and real Chromium SharedTree traces, recursive summary reconstruction, handle reuse, explicit reconnect, and caller-driven resubmission.
+- **Evidence:** The adapter passes generated local-client and real Chromium SharedTree traces, recursive summary reconstruction, handle reuse, explicit reconnect, and caller-driven resubmission.
   It still uses synthetic membership and omits authentication, signals, presence, automatic reconnect, offline merge, loading groups, and GC policy.
 - **Impact:** The adapter is integration evidence, not a Routerlicious or ODSP replacement.
 - **Trigger:** Define production membership and connection policy before broadening the supported Fluid surface.

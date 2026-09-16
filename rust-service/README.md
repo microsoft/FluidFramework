@@ -20,11 +20,11 @@ The current architecture is:
 ```text
 Fluid and other application adapters
                  |
-sea-webtransport: native/browser clients and Sea v1 framing
+sea-webtransport: shared native/browser client and versioned framing
                  |
 compression, encryption, or stateful-compression session decorators
                  |
-sea-sequencer: authors, sessions, stable submissions, load and subscriptions
+sea-sequencer: authors, stable operations, snapshot participation, and streams
                  |
 SeaStorage: memory, buffered-file, or durable-file
 ```
@@ -33,6 +33,12 @@ SeaStorage: memory, buffered-file, or durable-file
 Snapshots may represent initial state or state through one event.
 A load atomically selects a compatible snapshot and catch-up head, emits every later event through that head, emits a caught-up marker, and then continues live without a gap.
 Uploaded content, events, and snapshots are retained in the initial implementation.
+
+Snapshot streams declare immutable `ReadOnly`, `SeaSelected`, or `ClientSelected` participation.
+Sea-selected publishers receive one deterministic fencing token only when no client-selected publisher is active.
+Client-selected publishers retain application-managed election and scheduling; the regular Fluid `SeaDriver` uses this mode, while direct SharedTree integration uses Sea selection.
+Nomination selects publication authority and never schedules snapshot generation.
+See [Decision 0012](decisions/0012-fluid-snapshot-election-integration.md).
 
 Development begins with an interactive foundation phase that creates the Rust workspace, core traits, initial tests, stub crates, and a project coordination skill while resolving design questions as they become concrete. Work that benefits from parallel implementation uses numbered iterations: each implementation agent works in an isolated branch and worktree, makes reviewable commits, and produces a structured report covering correctness, integration, architectural friction, complexity, and performance. Sequential fixes and experiments use a lighter current-branch workflow with focused validation and proportionate local evidence.
 

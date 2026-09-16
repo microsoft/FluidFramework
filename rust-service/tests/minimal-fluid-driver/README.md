@@ -19,7 +19,7 @@ The same adapter accepts local, injected, and browser WebTransport clients.
 - Signals, nacks, presence, automatic reconnect, hidden retry, offline merge, loading groups, and GC/retention guarantees.
 - Summary download materializes a full tree. It does not preserve handles or distinguish separately uploaded attachments from other blob leaves in the returned tree.
 - `getSnapshot`, caching, auth, production certificates, Routerlicious, and ODSP compatibility are not implemented or claimed.
-- The native server owns a bounded set of concurrent connection futures. The SharedTree Chromium trace uses three independent Fluid containers and three generated `BrowserClient` transport sessions. Each document service serializes access to its non-reentrant generated client; serialization is not shared across containers.
+- The native server owns a bounded set of concurrent connection futures. The SharedTree Chromium trace uses three independent Fluid containers and three generated browser transport sessions. Each generated client owns independent persistent event, author, snapshot, and content streams; stream owners preserve their own ordering without a global serialization wrapper.
 - Browser loading uses Fluid's default read-to-write replacement. Each replacement opens a fresh Sea session identity while preserving the adapter's Fluid projection state. Production Fluid membership is not implemented.
 
 ## Summary storage semantics
@@ -54,6 +54,17 @@ Explicit disconnect and disposal also close or cancel their owned resources.
 Subscription restart and explicit synchronization resume from the last projected cursor.
 
 The driver does not automatically retry, recover, or resubmit ambiguous writes. Callers must wait for a failed submission chain, reconnect, resolve each pending identity, and resubmit only `notCommitted` operations. Disposal is synchronous at the Fluid interface boundary while stream close and subscription cancellation complete asynchronously.
+
+## Snapshot Coordination
+
+Every generated client opens snapshot coordination with an explicit participation policy.
+The regular `SeaDriver` uses `ClientSelected`, so Fluid's existing summarizer election and client-side cadence remain authoritative; Sea permits publication from active client-selected streams without granting a nomination fence.
+The direct SharedTree benchmark uses `SeaSelected`, so Sea deterministically grants one current publisher fence when no client-selected publisher is active.
+Both modes receive accepted-snapshot coordination updates.
+`ReadOnly` is available to clients that need updates but must never publish.
+
+The TypeScript implementation is split by ownership: `SeaDriver` and `SeaDocumentService` compose `SeaDocumentStorage`, `SeaDeltaStorage`, and `SeaDeltaConnection`, with shared lifecycle helpers in a separate module.
+`GeneratedSeaBindingAdapter` is package-internal and only converts generated values to this driver contract.
 
 ## Validation
 
