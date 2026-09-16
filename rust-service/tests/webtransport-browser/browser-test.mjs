@@ -60,18 +60,16 @@ async function run() {
 		undefined,
 		encoder.encode("first-payload"),
 	);
-	const authorStream = await first.openSubmissionStream();
-	const firstStreamedReceipt = await authorStream.submit(
+	const firstStreamedReceipt = await first.submit(
 		encoder.encode("browser-operation-stream-1"),
 		firstReceipt.position,
 		encoder.encode("first-streamed-payload"),
 	);
-	const secondStreamedReceipt = await authorStream.submit(
+	const secondStreamedReceipt = await first.submit(
 		encoder.encode("browser-operation-stream-2"),
 		firstStreamedReceipt.position,
 		encoder.encode("second-streamed-payload"),
 	);
-	await authorStream.close();
 	assert(
 		firstReceipt.position < firstStreamedReceipt.position &&
 			firstStreamedReceipt.position < secondStreamedReceipt.position,

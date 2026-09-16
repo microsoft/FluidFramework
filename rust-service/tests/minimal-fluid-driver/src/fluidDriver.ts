@@ -763,7 +763,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 		};
 	}
 
-	/** Opens the protocol session, submission stream, and projected subscription. */
+	/** Opens the protocol session's persistent event, author, and projected streams. */
 	public async open(): Promise<void> {
 		await this.protocol.openSession(
 			this.document,

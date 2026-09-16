@@ -53,17 +53,6 @@ interface GeneratedSeaStream {
 	cancel(): Promise<void>;
 }
 
-/** Structural generated ordered event-submission stream. */
-interface GeneratedSeaSubmissionStream<TTree extends GeneratedSeaTreeId> {
-	submit(
-		operation: Uint8Array,
-		reference: bigint | undefined,
-		payload: Uint8Array,
-		blobTree?: TTree,
-	): Promise<GeneratedSeaReceipt>;
-	close(): Promise<void>;
-}
-
 /** Structural generated typed Sea client. */
 export interface GeneratedSeaClient<TTree extends GeneratedSeaTreeId = GeneratedSeaTreeId> {
 	createArchive(archive: Uint8Array): Promise<void>;
@@ -80,7 +69,6 @@ export interface GeneratedSeaClient<TTree extends GeneratedSeaTreeId = Generated
 		payload: Uint8Array,
 		blobTree?: TTree,
 	): Promise<GeneratedSeaReceipt>;
-	openSubmissionStream?(): Promise<GeneratedSeaSubmissionStream<TTree>>;
 	resolveSubmission(operation: Uint8Array): Promise<GeneratedSeaReceipt | undefined>;
 	putBlob(payload: Uint8Array): Promise<TTree>;
 	getBlob(id: TTree): Promise<Uint8Array>;
@@ -135,7 +123,6 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 	private readonly sequencePositions = new Map<bigint, bigint>();
 	private readonly operationLocalSequences = new Map<string, bigint>();
 	private nextSequence = 1n;
-	private submissionStream: GeneratedSeaSubmissionStream<TTree> | undefined;
 	private eventStream: GeneratedSeaStream | undefined;
 	private eventResumeAfter: bigint | undefined;
 
@@ -160,7 +147,6 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 		session: Uint8Array,
 		resumeAfter?: Uint8Array,
 	): Promise<void> {
-		await this.closeSubmissionStream();
 		await this.closeEventStream();
 		const reference = decodePosition(resumeAfter);
 		await this.client.openSession(
@@ -172,7 +158,6 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 		);
 		this.eventStream = await this.client.load(reference);
 		this.eventResumeAfter = reference;
-		this.submissionStream = await this.client.openSubmissionStream?.();
 	}
 
 	public async submitEvent(
@@ -185,7 +170,7 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 		referencePosition?: Uint8Array,
 	): Promise<Uint8Array> {
 		this.operationLocalSequences.set(bytesKey(submission), BigInt(localSequenceNumber));
-		const receipt = await (this.submissionStream ?? this.client).submit(
+		const receipt = await this.client.submit(
 			submission,
 			decodePosition(referencePosition),
 			payload,
@@ -343,7 +328,6 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 	}
 
 	public disconnect(): void {
-		void this.closeSubmissionStream();
 		void this.closeEventStream();
 		this.client.disconnect();
 	}
@@ -361,12 +345,6 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 			throw new Error("no Sea reconnect transport factory was configured");
 		}
 		this.client.replaceTransport(await this.reconnectTransport());
-	}
-
-	private async closeSubmissionStream(): Promise<void> {
-		const stream = this.submissionStream;
-		this.submissionStream = undefined;
-		await stream?.close();
 	}
 
 	private async closeEventStream(): Promise<void> {

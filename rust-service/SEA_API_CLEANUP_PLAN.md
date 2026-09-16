@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 6c. Author stream.
-- **Last completed checkpoint:** 6b. Event stream.
-- **Last validation:** Checkpoint 6b formatting, paired client/server tests, strict native and WASM Clippy, generated WASM/Node behavior, TypeScript typecheck, and the real Chromium 152 WebTransport flow passed on 2026-09-16.
-- **Latest checkpoint notes:** `OpenEventStream` now carries explicit archive intent and the resume/loading boundary. The server atomically opens the underlying session and recovery stream, returns a fresh 256-bit opaque authority first, and then delivers snapshot selection, finite catch-up, `CaughtUp`, and live events. Native and injected WASM clients use the same authority-first event-stream state machine. The temporary postcard `OpenSession`, `Load`, and `SEAS` paths remain only for raw/local support pending their planned removal in checkpoints 6c and 6f.
+- **Current checkpoint:** 6d. Snapshot coordination stream.
+- **Last completed checkpoint:** 6c. Author stream.
+- **Last validation:** Checkpoint 6c formatting, 23 paired client/server tests, strict native and WASM Clippy, generated WASM/Node behavior, TypeScript typecheck, idle author liveness across all storage backends, and the real Chromium 152 WebTransport flow passed on 2026-09-16.
+- **Latest checkpoint notes:** `OpenAuthorStream` binds one ordered author stream to the opaque authority returned by the event stream. Native and browser clients use the same persistent submit, ambiguity-resolution, and close state machine; the optional stream API, per-submission fallback, `SEAS` marker, and extra length framing are removed. Healthy author streams remain open while idle beyond the operation timeout, and transport loss or EOF closes authoritative membership. The temporary postcard `OpenSession` and `Load` paths remain only for raw/local support until checkpoint 6f.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 6c. Author stream.
+- **Next checkpoint:** 6d. Snapshot coordination stream.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -569,11 +569,11 @@ Do not retain the old per-operation implementation after its final consumer move
 
 #### 6c. Author stream
 
-- [ ] Open with an `OpenAuthorStream` message bound to the session authority returned by the event stream.
-- [ ] Carry ordered submissions and ordered receipts on one stream.
-- [ ] Preserve ambiguity resolution and stable operation identity.
-- [ ] Remove the optional stream API and per-submission fallback.
-- [ ] Make native and browser transports use the same shared author-stream implementation.
+- [x] Open with an `OpenAuthorStream` message bound to the session authority returned by the event stream.
+- [x] Carry ordered submissions and ordered receipts on one stream.
+- [x] Preserve ambiguity resolution and stable operation identity.
+- [x] Remove the optional stream API and per-submission fallback.
+- [x] Make native and browser transports use the same shared author-stream implementation.
 
 #### 6d. Snapshot coordination stream
 

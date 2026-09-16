@@ -29,6 +29,7 @@ pub enum MessageKind {
     SubscribeSnapshots = 15,
     Close = 16,
     OpenEventStream = 17,
+    OpenAuthorStream = 18,
     Acknowledged = 128,
     EventCommitted = 129,
     SubmissionResolved = 130,
@@ -66,6 +67,7 @@ impl TryFrom<u8> for MessageKind {
             15 => Ok(Self::SubscribeSnapshots),
             16 => Ok(Self::Close),
             17 => Ok(Self::OpenEventStream),
+            18 => Ok(Self::OpenAuthorStream),
             128 => Ok(Self::Acknowledged),
             129 => Ok(Self::EventCommitted),
             130 => Ok(Self::SubmissionResolved),
@@ -102,7 +104,7 @@ pub enum StreamRole {
 
 impl MessageKind {
     /// Every assigned message kind in numeric order.
-    pub const ALL: [Self; 30] = [
+    pub const ALL: [Self; 31] = [
         Self::CreateArchive,
         Self::OpenSession,
         Self::Submit,
@@ -120,6 +122,7 @@ impl MessageKind {
         Self::SubscribeSnapshots,
         Self::Close,
         Self::OpenEventStream,
+        Self::OpenAuthorStream,
         Self::Acknowledged,
         Self::EventCommitted,
         Self::SubmissionResolved,
@@ -157,7 +160,8 @@ impl MessageKind {
             ),
             StreamRole::Author => matches!(
                 self,
-                Kind::Submit
+                Kind::OpenAuthorStream
+                    | Kind::Submit
                     | Kind::ResolveSubmission
                     | Kind::EventCommitted
                     | Kind::SubmissionResolved
@@ -202,7 +206,9 @@ impl MessageKind {
         match self {
             Self::CreateArchive => Some(StreamRole::Control),
             Self::OpenSession | Self::Load | Self::OpenEventStream => Some(StreamRole::Event),
-            Self::Submit | Self::ResolveSubmission | Self::Close => Some(StreamRole::Author),
+            Self::OpenAuthorStream | Self::Submit | Self::ResolveSubmission | Self::Close => {
+                Some(StreamRole::Author)
+            }
             Self::Read
             | Self::PutBlob
             | Self::GetBlob
@@ -592,6 +598,12 @@ pub mod payload {
         pub authority: Vec<u8>,
     }
 
+    /// Opaque event-stream authority used to bind another logical stream.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct SessionAuthority {
+        pub authority: Vec<u8>,
+    }
+
     /// Ordered event submission payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct Submit {
@@ -829,6 +841,11 @@ pub enum Request {
         /// Latest event already incorporated by this client.
         resume_after: Option<u64>,
     },
+    /// Opens the ordered author stream for an established logical session.
+    OpenAuthorStream {
+        /// Authority returned by the event stream.
+        authority: Vec<u8>,
+    },
 }
 
 /// One response or streamed result from a Sea session.
@@ -894,6 +911,7 @@ impl Request {
             Self::CreateArchive { .. } => MessageKind::CreateArchive,
             Self::OpenSession { .. } => MessageKind::OpenSession,
             Self::OpenEventStream { .. } => MessageKind::OpenEventStream,
+            Self::OpenAuthorStream { .. } => MessageKind::OpenAuthorStream,
             Self::Submit { .. } => MessageKind::Submit,
             Self::ResolveSubmission { .. } => MessageKind::ResolveSubmission,
             Self::Read { .. } => MessageKind::Read,
@@ -919,9 +937,10 @@ impl Request {
             Self::OpenSession { .. } | Self::OpenEventStream { .. } | Self::Load { .. } => {
                 StreamRole::Event
             }
-            Self::Submit { .. } | Self::ResolveSubmission { .. } | Self::Close => {
-                StreamRole::Author
-            }
+            Self::OpenAuthorStream { .. }
+            | Self::Submit { .. }
+            | Self::ResolveSubmission { .. }
+            | Self::Close => StreamRole::Author,
             Self::Read { .. }
             | Self::PutBlob { .. }
             | Self::GetBlob { .. }
@@ -1045,6 +1064,15 @@ pub fn encode_request_frame(
                 author: author.clone(),
                 session: session.clone(),
                 resume_after: *resume_after,
+            },
+            limits,
+        ),
+        Request::OpenAuthorStream { authority } => encode_typed_payload(
+            role,
+            request.kind(),
+            correlation_id,
+            &wire::SessionAuthority {
+                authority: authority.clone(),
             },
             limits,
         ),
@@ -1196,6 +1224,12 @@ pub fn decode_request_frame(
                 author: value.author,
                 session: value.session,
                 resume_after: value.resume_after,
+            }
+        }
+        MessageKind::OpenAuthorStream => {
+            let value: wire::SessionAuthority = decode_typed_payload(frame)?;
+            Request::OpenAuthorStream {
+                authority: value.authority,
             }
         }
         MessageKind::Submit => {
@@ -1817,6 +1851,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn every_request_payload_round_trips_without_outer_enum_encoding() {
         let event = Event {
             payload: b"payload".to_vec(),
@@ -1854,6 +1889,12 @@ mod tests {
                     author: b"author".to_vec(),
                     session: b"session".to_vec(),
                     resume_after: Some(1),
+                },
+            ),
+            (
+                StreamRole::Author,
+                Request::OpenAuthorStream {
+                    authority: vec![7; 32],
                 },
             ),
             (

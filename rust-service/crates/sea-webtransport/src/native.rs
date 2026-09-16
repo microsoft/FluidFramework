@@ -20,7 +20,7 @@ use wtransport::tls::Sha256Digest;
 
 use crate::{
     TransportConfig, WebTransportError,
-    client::{Client, ClientError, ClientStateError, EventStream},
+    client::{AuthorStream, Client, ClientError, ClientStateError, EventStream},
     connect_once, protocol,
     transport::native::{NativeBidirectionalStream, NativeTransport},
 };
@@ -95,6 +95,7 @@ impl From<ClientStateError> for SeaClientError {
         match error {
             ClientStateError::Closed => Self::Closed,
             ClientStateError::Disconnected => WebTransportError::Disconnected.into(),
+            ClientStateError::MissingAuthority => Self::UnexpectedResponse,
             ClientStateError::Protocol(error) => error.into(),
             ClientStateError::Poisoned => Self::Transport(WebTransportError::Transport(
                 "shared client state is unavailable".to_owned(),
@@ -119,6 +120,7 @@ impl From<ClientError<WebTransportError>> for SeaClientError {
 pub struct NativeSeaClient {
     client: Client<NativeTransport>,
     event_stream: Mutex<Option<EventStream<NativeBidirectionalStream>>>,
+    author_stream: Mutex<Option<AuthorStream<NativeBidirectionalStream>>>,
     resume_after: Option<EventPosition>,
     operation_timeout: std::time::Duration,
 }
@@ -173,9 +175,13 @@ impl NativeSeaClient {
         )
         .await
         .map_err(|_| WebTransportError::Timeout)??;
+        let author_stream = timeout(config.operation_timeout, client.open_author_stream())
+            .await
+            .map_err(|_| WebTransportError::Timeout)??;
         Ok(Self {
             client,
             event_stream: Mutex::new(Some(event_stream)),
+            author_stream: Mutex::new(Some(author_stream)),
             resume_after,
             operation_timeout: config.operation_timeout,
         })
@@ -353,6 +359,11 @@ impl SeaArchive for NativeSeaClient {
 impl SeaAuthorSession for NativeSeaClient {
     async fn submit(&self, submission: EventSubmission) -> Result<EventReceipt, Self::Error> {
         match self
+            .author_stream
+            .lock()
+            .await
+            .as_mut()
+            .ok_or(SeaClientError::Closed)?
             .request(protocol::Request::Submit {
                 operation: submission.operation_id.as_bytes().to_vec(),
                 reference: submission.reference.map(EventPosition::get),
@@ -376,6 +387,11 @@ impl SeaAuthorSession for NativeSeaClient {
         operation_id: &OperationId,
     ) -> Result<Option<EventReceipt>, Self::Error> {
         match self
+            .author_stream
+            .lock()
+            .await
+            .as_mut()
+            .ok_or(SeaClientError::Closed)?
             .request(protocol::Request::ResolveSubmission {
                 operation: operation_id.as_bytes().to_vec(),
             })
@@ -400,14 +416,15 @@ impl SeaAuthorSession for NativeSeaClient {
         if self.client.is_closed()? {
             return Ok(());
         }
-        match self.request(protocol::Request::Close).await? {
-            protocol::Response::Acknowledged => {
-                self.client.close()?;
-                self.client.disconnect()?;
-                Ok(())
-            }
-            response => Err(response_error(response)),
-        }
+        let author = self
+            .author_stream
+            .lock()
+            .await
+            .take()
+            .ok_or(SeaClientError::Closed)?;
+        author.close().await?;
+        self.client.disconnect()?;
+        Ok(())
     }
 }
 

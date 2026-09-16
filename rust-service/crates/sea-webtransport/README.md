@@ -1,18 +1,18 @@
 # Sea WebTransport
 
-This crate owns the bounded, versioned Sea protocol, shared frame codec, and native WebTransport client.
+This crate owns the bounded, versioned Sea protocol, shared client state machines, native and browser transport primitives, and native WebTransport client.
 Its `sea-webtransport-browser` WASM example generates the web and Node bindings used by browser, injected-transport, and process-local clients.
 
 The native listener, server dispatch, archive routing, connection measurements, and shutdown policy belong to `sea-webtransport-server`.
-Unary requests require request-side EOF before dispatch.
-Streaming responses use four-byte length framing and terminate on cancellation, service closure, or write failure.
-The browser binding also opens an ordered event-author stream identified by `SEAS`.
-Each request and receipt on that stream uses the same four-byte length framing, allowing one bidirectional WebTransport stream to carry multiple submissions without a stream-open round trip per event.
+The event stream opens the logical session, returns an opaque authority, and carries recovery plus live events.
+The authority binds one ordered author stream carrying submissions, resolution requests, and acknowledgements without per-operation stream creation.
+Native and browser clients use the same frame codec, correlation, lifecycle, event-stream, and author-stream state machines.
 Protocol or transport failure closes the owning connection without terminating the server endpoint.
 
-`WebTransportClient` pins a SHA-256 certificate hash and implements `SeaSession`.
+`NativeSeaClient` pins a SHA-256 certificate hash and implements `SeaSession`.
 Disconnect and reconnect are explicit; operations are never retried automatically.
-The protocol uses `SEA1` magic, version 1, postcard payloads, and a configured maximum frame size.
+The current network envelope uses explicit message-kind and correlation fields with typed postcard payloads and a configured maximum frame size.
+The temporary old `SEA1` path remains only until checkpoint 6f.
 
 Run from `rust-service/`:
 

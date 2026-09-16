@@ -123,6 +123,15 @@ where
             Err(error) => error_response(error),
         })))
     }
+
+    async fn author_request(&self, request: protocol::Request) -> protocol::Response {
+        match request {
+            protocol::Request::Submit { .. }
+            | protocol::Request::ResolveSubmission { .. }
+            | protocol::Request::Close => self.request(request).await,
+            _ => invalid("request is not valid on an open author stream"),
+        }
+    }
 }
 
 impl<S> SessionDispatcher<S>
@@ -224,6 +233,7 @@ where
             protocol::Request::CreateArchive { .. }
             | protocol::Request::OpenSession { .. }
             | protocol::Request::OpenEventStream { .. }
+            | protocol::Request::OpenAuthorStream { .. }
             | protocol::Request::Read { .. }
             | protocol::Request::Load { .. }
             | protocol::Request::SubscribeSnapshots => Err(invalid(

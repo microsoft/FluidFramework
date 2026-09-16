@@ -43,13 +43,15 @@ The implementation would need to preserve the driver's `.app` and `.protocol` pa
 
 ## Submission and subscription lifecycle
 
-The generated browser WebTransport client provides `openSubmissionStream`, so the driver writes contiguous client sequence numbers to one long-lived event-author stream and consumes acknowledgements in the same order.
-Clients without that capability, including the local generated client, retain the unary request fallback.
+The generated browser WebTransport client opens one authority-bound author stream with the session and sends contiguous client sequence numbers on it.
+Submission acknowledgements arrive in the same order through the shared native/browser author-stream state machine.
 A submission remains in `pending` until its acknowledgement arrives or projected local operation is observed.
 Write failures and response loss reject `waitForIdle()` without discarding pending identity, so callers can use `recoverPending()` and explicitly `resubmitPending()` when the service reports `notCommitted`.
-Resubmission intentionally uses the unary request path.
+Resubmission uses the same persistent author stream.
 
-Clients without `openSubmissionStream` continue to submit through unary requests. Reconnect closes the old submission stream, cancels the old projected-operation subscription, reconnects the generated client, and opens replacements. Explicit disconnect and disposal also close and cancel their owned resources. Subscription restart and explicit synchronization resume from the last projected cursor.
+Reconnect cancels the old projected-operation subscription, reconnects the generated client, and opens replacement event and author streams.
+Explicit disconnect and disposal also close or cancel their owned resources.
+Subscription restart and explicit synchronization resume from the last projected cursor.
 
 The driver does not automatically retry, recover, or resubmit ambiguous writes. Callers must wait for a failed submission chain, reconnect, resolve each pending identity, and resubmit only `notCommitted` operations. Disposal is synchronous at the Fluid interface boundary while stream close and subscription cancellation complete asynchronously.
 

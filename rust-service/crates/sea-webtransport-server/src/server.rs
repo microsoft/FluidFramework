@@ -27,8 +27,6 @@ use wtransport::{
 use sea_webtransport::protocol as sea_v1;
 
 pub(crate) const CLOSE_CODE: VarInt = VarInt::from_u32(1);
-const SUBMISSION_STREAM_MAGIC: [u8; 4] = *b"SEAS";
-
 /// Point-in-time transport activity and high-water measurements.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct TransportMeasurement {
@@ -257,6 +255,9 @@ pub trait SeaConnectionService: Send + Sync {
         &self,
         resume_after: Option<u64>,
     ) -> Result<SeaResponseStream, sea_v1::Response>;
+
+    /// Validates author-stream authority or handles one ordered author operation.
+    async fn author_request(&self, request: sea_v1::Request) -> sea_v1::Response;
 }
 
 /// Creates isolated Sea protocol state for each WebTransport connection.
@@ -445,8 +446,7 @@ async fn serve_connection(
                 });
             }
             result = streams.next(), if !streams.is_empty() => {
-                if let Some(Err(error)) = result {
-                    eprintln!("Sea stream failed: {error}");
+                if matches!(result, Some(Err(_))) {
                     return Ok(());
                 }
             }
@@ -461,14 +461,11 @@ async fn serve_sea_stream(
     config: &TransportConfig,
     metrics: &Metrics,
 ) -> Result<(), WebTransportError> {
-    let mut prefix = [0_u8; SUBMISSION_STREAM_MAGIC.len()];
+    let mut prefix = [0_u8; 4];
     timeout(config.operation_timeout, receive.read_exact(&mut prefix))
         .await
         .map_err(|_| WebTransportError::Timeout)?
         .map_err(transport_error)?;
-    if prefix == SUBMISSION_STREAM_MAGIC {
-        return serve_submission_stream(send, receive, service, config, metrics).await;
-    }
     if prefix != sea_v1::MAGIC {
         return serve_network_stream(send, receive, prefix, service, config, metrics).await;
     }
@@ -567,6 +564,19 @@ async fn serve_network_stream(
     let correlation_id = frame.correlation_id;
     let request = sea_v1::decode_request_frame(role, &frame)?;
     metrics.add_wire_bytes(4 + 1 + 8 + frame.payload.len());
+    if matches!(request, sea_v1::Request::OpenAuthorStream { .. }) {
+        return serve_author_stream(
+            send,
+            receive,
+            service,
+            config,
+            metrics,
+            role,
+            frame.correlation_id,
+            request,
+        )
+        .await;
+    }
     if matches!(
         request,
         sea_v1::Request::OpenEventStream { .. }
@@ -629,6 +639,93 @@ async fn serve_network_stream(
     .await
 }
 
+#[allow(clippy::too_many_arguments)]
+async fn serve_author_stream(
+    mut send: wtransport::SendStream,
+    mut receive: wtransport::RecvStream,
+    service: Arc<dyn SeaConnectionService>,
+    config: &TransportConfig,
+    metrics: &Metrics,
+    role: sea_v1::StreamRole,
+    correlation_id: u64,
+    opening: sea_v1::Request,
+) -> Result<(), WebTransportError> {
+    let limits = sea_v1::Limits {
+        max_frame_bytes: config.max_frame_bytes,
+    };
+    let response = service.author_request(opening).await;
+    write_network_response(
+        &mut send,
+        role,
+        correlation_id,
+        &response,
+        limits,
+        config.operation_timeout,
+        metrics,
+        false,
+    )
+    .await?;
+    if matches!(response, sea_v1::Response::Error { .. }) {
+        return send.finish().await.map_err(transport_error);
+    }
+    let mut decoder = sea_v1::NetworkFrameDecoder::new(limits);
+    loop {
+        let frame = match read_next_network_frame(&mut receive, &mut decoder).await {
+            Ok(Some(frame)) => frame,
+            Ok(None) => {
+                let _ = service.author_request(sea_v1::Request::Close).await;
+                return send.finish().await.map_err(transport_error);
+            }
+            Err(error) => {
+                let _ = service.author_request(sea_v1::Request::Close).await;
+                return Err(error);
+            }
+        };
+        let request = sea_v1::decode_request_frame(role, &frame)?;
+        if matches!(request, sea_v1::Request::OpenAuthorStream { .. }) {
+            return Err(sea_v1::ProtocolError::WrongStream {
+                kind: request.kind(),
+                role,
+            }
+            .into());
+        }
+        metrics.add_wire_bytes(4 + 1 + 8 + frame.payload.len());
+        let close = matches!(request, sea_v1::Request::Close);
+        let response = service.author_request(request).await;
+        write_network_response(
+            &mut send,
+            role,
+            frame.correlation_id,
+            &response,
+            limits,
+            config.operation_timeout,
+            metrics,
+            false,
+        )
+        .await?;
+        if close {
+            return send.finish().await.map_err(transport_error);
+        }
+    }
+}
+
+async fn read_next_network_frame(
+    receive: &mut wtransport::RecvStream,
+    decoder: &mut sea_v1::NetworkFrameDecoder,
+) -> Result<Option<sea_v1::NetworkFrame>, WebTransportError> {
+    let mut buffer = [0_u8; 8192];
+    loop {
+        if let Some(frame) = decoder.next_frame()? {
+            return Ok(Some(frame));
+        }
+        let Some(count) = receive.read(&mut buffer).await.map_err(transport_error)? else {
+            decoder.finish()?;
+            return Ok(None);
+        };
+        decoder.push(&buffer[..count]);
+    }
+}
+
 async fn read_one_network_frame(
     receive: &mut wtransport::RecvStream,
     prefix: [u8; 4],
@@ -672,48 +769,6 @@ async fn write_network_response(
     .map_err(|_| WebTransportError::Timeout)??;
     metrics.add_wire_bytes(encoded.len());
     Ok(())
-}
-
-async fn serve_submission_stream(
-    mut send: wtransport::SendStream,
-    mut receive: wtransport::RecvStream,
-    service: Arc<dyn SeaConnectionService>,
-    config: &TransportConfig,
-    metrics: &Metrics,
-) -> Result<(), WebTransportError> {
-    let limits = sea_v1::Limits {
-        max_frame_bytes: config.max_frame_bytes,
-    };
-    loop {
-        let Some(request_bytes) = timeout(
-            config.operation_timeout,
-            read_sea_stream_frame(&mut receive, config.max_frame_bytes),
-        )
-        .await
-        .map_err(|_| WebTransportError::Timeout)??
-        else {
-            return Ok(());
-        };
-        metrics.add_wire_bytes(request_bytes.len());
-        let frame = sea_v1::decode::<sea_v1::Frame<sea_v1::Request>>(&request_bytes, limits)?;
-        let response = if matches!(frame.message, sea_v1::Request::Submit { .. }) {
-            service.request(frame.message).await
-        } else {
-            sea_v1::Response::Error {
-                kind: sea_v1::ErrorKind::Rejected,
-                message: "submission stream accepts only submit requests".to_owned(),
-            }
-        };
-        let response = sea_v1::encode(
-            &sea_v1::Frame {
-                request_id: frame.request_id,
-                message: response,
-            },
-            limits,
-        )?;
-        write_sea_stream_frame(&mut send, &response, config.operation_timeout).await?;
-        metrics.add_wire_bytes(response.len());
-    }
 }
 
 async fn write_unary_response(
@@ -786,97 +841,6 @@ async fn read_sea_unary_frame_with_prefix(
         bytes.extend_from_slice(&buffer[..count]);
     }
     Ok(Bytes::from(bytes))
-}
-
-pub(crate) async fn read_sea_stream_frame(
-    receive: &mut wtransport::RecvStream,
-    max_frame_bytes: usize,
-) -> Result<Option<Bytes>, WebTransportError> {
-    let mut decoder = StreamFrameDecoder::new(max_frame_bytes);
-    let mut buffer = [0_u8; 8192];
-    loop {
-        if let Some(frame) = decoder.next_frame()? {
-            return Ok(Some(frame));
-        }
-        let read_length = decoder.bytes_needed()?.min(buffer.len());
-        let Some(count) = receive
-            .read(&mut buffer[..read_length])
-            .await
-            .map_err(transport_error)?
-        else {
-            return decoder.finish();
-        };
-        decoder.push(&buffer[..count]);
-    }
-}
-
-struct StreamFrameDecoder {
-    buffered: Vec<u8>,
-    max_frame_bytes: usize,
-}
-
-impl StreamFrameDecoder {
-    const fn new(max_frame_bytes: usize) -> Self {
-        Self {
-            buffered: Vec::new(),
-            max_frame_bytes,
-        }
-    }
-
-    fn push(&mut self, bytes: &[u8]) {
-        self.buffered.extend_from_slice(bytes);
-    }
-
-    fn next_frame(&mut self) -> Result<Option<Bytes>, WebTransportError> {
-        let Some(length_bytes) = self.buffered.get(..4) else {
-            return Ok(None);
-        };
-        let length = usize::try_from(u32::from_be_bytes(
-            length_bytes
-                .try_into()
-                .expect("frame length has four bytes"),
-        ))
-        .map_err(|_| WebTransportError::FrameTooLarge)?;
-        if length > self.max_frame_bytes {
-            return Err(WebTransportError::FrameTooLarge);
-        }
-        let frame_end = 4_usize
-            .checked_add(length)
-            .ok_or(WebTransportError::FrameTooLarge)?;
-        if self.buffered.len() < frame_end {
-            return Ok(None);
-        }
-        let frame = Bytes::copy_from_slice(&self.buffered[4..frame_end]);
-        self.buffered.drain(..frame_end);
-        Ok(Some(frame))
-    }
-
-    fn bytes_needed(&self) -> Result<usize, WebTransportError> {
-        let Some(length_bytes) = self.buffered.get(..4) else {
-            return Ok(4 - self.buffered.len());
-        };
-        let length = usize::try_from(u32::from_be_bytes(
-            length_bytes
-                .try_into()
-                .expect("frame length has four bytes"),
-        ))
-        .map_err(|_| WebTransportError::FrameTooLarge)?;
-        if length > self.max_frame_bytes {
-            return Err(WebTransportError::FrameTooLarge);
-        }
-        4_usize
-            .checked_add(length)
-            .and_then(|frame_end| frame_end.checked_sub(self.buffered.len()))
-            .ok_or(WebTransportError::FrameTooLarge)
-    }
-
-    fn finish(&mut self) -> Result<Option<Bytes>, WebTransportError> {
-        if self.buffered.is_empty() {
-            Ok(None)
-        } else {
-            Err(WebTransportError::Disconnected)
-        }
-    }
 }
 
 pub(crate) fn transport_error(error: impl std::fmt::Display) -> WebTransportError {

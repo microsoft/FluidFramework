@@ -335,6 +335,22 @@ impl SeaConnectionService for HostedConnection {
     ) -> Result<SeaResponseStream, protocol::Response> {
         Err(invalid("event stream must be opened with OpenEventStream"))
     }
+
+    async fn author_request(&self, request: protocol::Request) -> protocol::Response {
+        if let protocol::Request::OpenAuthorStream { authority } = request {
+            let session = self.session.lock().await;
+            return match session.as_ref() {
+                Some(session) if session.authority == authority => protocol::Response::Acknowledged,
+                Some(_) => rejected("author stream authority does not match"),
+                None => invalid("OpenEventStream is required before OpenAuthorStream"),
+            };
+        }
+        let session = self.session.lock().await.clone();
+        match session {
+            Some(session) => session.service.author_request(request).await,
+            None => invalid("OpenEventStream is required before author operations"),
+        }
+    }
 }
 
 impl Clone for HostedSession {
@@ -529,8 +545,8 @@ mod tests {
         ));
         let _ = std::fs::remove_dir_all(&root);
         let host = BuiltInSeaHost::new(root.clone(), StorageMode::Memory);
-        let first = host.connect();
-        let mut first_stream = first
+        let first_connection = host.connect();
+        let mut first_stream = first_connection
             .stream(protocol::Request::OpenEventStream {
                 version: protocol::PROTOCOL_VERSION,
                 archive: b"archive".to_vec(),
@@ -541,12 +557,32 @@ mod tests {
             })
             .await
             .expect("first event stream");
-        let protocol::Response::EventStreamOpened { authority: first } =
-            first_stream.next().await.expect("opening authority")
+        let protocol::Response::EventStreamOpened {
+            authority: first_authority,
+        } = first_stream.next().await.expect("opening authority")
         else {
             panic!("event stream must return its authority first");
         };
-        assert_eq!(first.len(), 32);
+        assert_eq!(first_authority.len(), 32);
+        assert!(matches!(
+            first_connection
+                .author_request(protocol::Request::OpenAuthorStream {
+                    authority: vec![0; 32],
+                })
+                .await,
+            protocol::Response::Error {
+                kind: protocol::ErrorKind::Rejected,
+                ..
+            }
+        ));
+        assert_eq!(
+            first_connection
+                .author_request(protocol::Request::OpenAuthorStream {
+                    authority: first_authority.clone(),
+                })
+                .await,
+            protocol::Response::Acknowledged
+        );
         assert!(matches!(
             first_stream.next().await,
             Some(protocol::Response::CaughtUp(Some(_)))
@@ -570,7 +606,7 @@ mod tests {
             panic!("event stream must return its authority first");
         };
         assert_eq!(second.len(), 32);
-        assert_ne!(first, second);
+        assert_ne!(first_authority, second);
         let _ = std::fs::remove_dir_all(root);
     }
 
@@ -615,7 +651,10 @@ mod tests {
             "127.0.0.1:0".parse::<SocketAddr>().unwrap(),
             identity,
             Arc::new(BuiltInSeaHost::new(root.clone(), mode)),
-            TransportConfig::default(),
+            TransportConfig {
+                operation_timeout: Duration::from_millis(50),
+                ..TransportConfig::default()
+            },
         )
         .unwrap();
         let address = server.local_addr().unwrap();
@@ -655,6 +694,7 @@ mod tests {
                 events.next().await.unwrap().unwrap(),
                 LoadEvent::CaughtUp(Some(_))
             ));
+            tokio::time::sleep(Duration::from_millis(100)).await;
             let receipt = client
                 .submit(EventSubmission {
                     operation_id: OperationId::new(Bytes::from_static(b"native-event")).unwrap(),

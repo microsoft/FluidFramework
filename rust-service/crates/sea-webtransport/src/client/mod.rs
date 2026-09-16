@@ -139,6 +139,46 @@ where
         })
     }
 
+    /// Opens the ordered author stream bound to this client's event-stream authority.
+    pub async fn open_author_stream(
+        &self,
+    ) -> Result<AuthorStream<Transport::Stream>, ClientError<Transport::Error>> {
+        let authority = self.state.authority()?;
+        let pending = self.state.begin(StreamRole::Author)?;
+        let correlation_id = pending.id();
+        let request = Request::OpenAuthorStream { authority };
+        let outgoing = protocol::encode_request_frame(
+            StreamRole::Author,
+            correlation_id,
+            &request,
+            self.limits,
+        )?;
+        let mut stream = self
+            .transport
+            .open_bidirectional()
+            .await
+            .map_err(ClientError::Transport)?;
+        stream
+            .send(&outgoing)
+            .await
+            .map_err(ClientError::Transport)?;
+        let mut decoder = NetworkFrameDecoder::new(self.limits);
+        let frame = receive_next_frame(&mut stream, &mut decoder)
+            .await?
+            .ok_or(ClientError::ResponseEnded)?;
+        pending.complete(frame.correlation_id)?;
+        let response = protocol::decode_response_network_frame(StreamRole::Author, &frame)?;
+        if response != Response::Acknowledged {
+            return Err(ClientError::UnexpectedResponse(response));
+        }
+        Ok(AuthorStream {
+            stream,
+            state: Arc::clone(&self.state),
+            limits: self.limits,
+            decoder,
+        })
+    }
+
     /// Marks the logical client closed and rejects future requests.
     pub fn close(&self) -> Result<(), ClientStateError> {
         self.state.close()
@@ -167,6 +207,81 @@ where
 pub struct EventStream<Stream> {
     authority: Vec<u8>,
     responses: ResponseStream<Stream>,
+}
+
+/// Ordered author requests and receipts on one persistent transport stream.
+#[derive(Debug)]
+pub struct AuthorStream<Stream> {
+    stream: Stream,
+    state: Arc<ClientState>,
+    limits: protocol::Limits,
+    decoder: NetworkFrameDecoder,
+}
+
+impl<Stream> AuthorStream<Stream>
+where
+    Stream: BidirectionalStream,
+{
+    /// Sends one author-role request and receives its ordered response.
+    pub async fn request(
+        &mut self,
+        request: Request,
+    ) -> Result<Response, ClientError<Stream::Error>> {
+        if request.stream_role() != StreamRole::Author
+            || matches!(request, Request::OpenAuthorStream { .. })
+        {
+            return Err(ProtocolError::WrongStream {
+                kind: request.kind(),
+                role: StreamRole::Author,
+            }
+            .into());
+        }
+        let pending = self.state.begin(StreamRole::Author)?;
+        let correlation_id = pending.id();
+        let outgoing = protocol::encode_request_frame(
+            StreamRole::Author,
+            correlation_id,
+            &request,
+            self.limits,
+        )?;
+        self.stream
+            .send(&outgoing)
+            .await
+            .map_err(ClientError::Transport)?;
+        let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
+            .await?
+            .ok_or(ClientError::ResponseEnded)?;
+        pending.complete(frame.correlation_id)?;
+        protocol::decode_response_network_frame(StreamRole::Author, &frame).map_err(Into::into)
+    }
+
+    /// Finishes the author stream and closes shared client state.
+    pub async fn close(mut self) -> Result<(), ClientError<Stream::Error>> {
+        let pending = self.state.begin(StreamRole::Author)?;
+        let correlation_id = pending.id();
+        let request = Request::Close;
+        let outgoing = protocol::encode_request_frame(
+            StreamRole::Author,
+            correlation_id,
+            &request,
+            self.limits,
+        )?;
+        self.stream
+            .send(&outgoing)
+            .await
+            .map_err(ClientError::Transport)?;
+        let _ = self.stream.finish().await;
+        let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
+            .await?
+            .ok_or(ClientError::ResponseEnded)?;
+        pending.complete(frame.correlation_id)?;
+        let response = protocol::decode_response_network_frame(StreamRole::Author, &frame)?;
+        if response != Response::Acknowledged {
+            return Err(ClientError::UnexpectedResponse(response));
+        }
+        self.state.close()?;
+        Ok(())
+    }
 }
 
 impl<Stream> EventStream<Stream>
@@ -270,6 +385,25 @@ where
     }
 }
 
+async fn receive_next_frame<Stream>(
+    stream: &mut Stream,
+    decoder: &mut NetworkFrameDecoder,
+) -> Result<Option<protocol::NetworkFrame>, ClientError<Stream::Error>>
+where
+    Stream: BidirectionalStream,
+{
+    loop {
+        if let Some(frame) = decoder.next_frame()? {
+            return Ok(Some(frame));
+        }
+        let Some(chunk) = stream.receive().await.map_err(ClientError::Transport)? else {
+            decoder.finish()?;
+            return Ok(None);
+        };
+        decoder.push(&chunk);
+    }
+}
+
 /// Failure from shared client connection or correlation state.
 #[derive(Debug, Error)]
 pub enum ClientStateError {
@@ -279,6 +413,9 @@ pub enum ClientStateError {
     /// The logical client must reconnect before issuing requests.
     #[error("Sea client is disconnected")]
     Disconnected,
+    /// An event stream must establish authority before another logical stream opens.
+    #[error("Sea event stream is not open")]
+    MissingAuthority,
     /// A stream-scoped correlation invariant failed.
     #[error(transparent)]
     Protocol(#[from] ProtocolError),
@@ -407,6 +544,15 @@ impl ClientState {
         Ok(())
     }
 
+    fn authority(&self) -> Result<Vec<u8>, ClientStateError> {
+        self.inner
+            .lock()
+            .map_err(|_| ClientStateError::Poisoned)?
+            .authority
+            .clone()
+            .ok_or(ClientStateError::MissingAuthority)
+    }
+
     fn abandon(&self, role: StreamRole, correlation_id: u64) {
         if let Ok(mut state) = self.inner.lock() {
             let _ = state
@@ -459,7 +605,11 @@ impl Drop for PendingCorrelation {
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::VecDeque, convert::Infallible, sync::Arc};
+    use std::{
+        collections::VecDeque,
+        convert::Infallible,
+        sync::{Arc, Mutex},
+    };
 
     use async_trait::async_trait;
 
@@ -477,6 +627,11 @@ mod tests {
         chunks: VecDeque<Vec<u8>>,
     }
 
+    #[derive(Debug)]
+    struct SequencedTransport {
+        streams: Mutex<VecDeque<Vec<Vec<u8>>>>,
+    }
+
     #[async_trait]
     impl ClientTransport for ScriptedTransport {
         type Stream = ScriptedStream;
@@ -485,6 +640,28 @@ mod tests {
         async fn open_bidirectional(&self) -> Result<Self::Stream, Self::Error> {
             Ok(ScriptedStream {
                 chunks: self.chunks.clone().into(),
+            })
+        }
+
+        fn disconnect(&self) -> Result<(), Self::Error> {
+            Ok(())
+        }
+    }
+
+    #[async_trait]
+    impl ClientTransport for SequencedTransport {
+        type Stream = ScriptedStream;
+        type Error = Infallible;
+
+        async fn open_bidirectional(&self) -> Result<Self::Stream, Self::Error> {
+            Ok(ScriptedStream {
+                chunks: self
+                    .streams
+                    .lock()
+                    .expect("scripted streams")
+                    .pop_front()
+                    .expect("another scripted stream")
+                    .into(),
             })
         }
 
@@ -661,6 +838,74 @@ mod tests {
         assert_eq!(
             event_stream.next().await.expect("event item"),
             Some(Response::CaughtUp(Some(2)))
+        );
+    }
+
+    #[tokio::test]
+    async fn shared_author_stream_binds_authority_and_orders_receipts() {
+        let limits = protocol::Limits::default();
+        let event_opened = protocol::encode_response_frame(
+            StreamRole::Event,
+            1,
+            &Response::EventStreamOpened {
+                authority: vec![9; 32],
+            },
+            limits,
+        )
+        .expect("event opening");
+        let author_opened =
+            protocol::encode_response_frame(StreamRole::Author, 2, &Response::Acknowledged, limits)
+                .expect("author opening");
+        let committed = protocol::encode_response_frame(
+            StreamRole::Author,
+            3,
+            &Response::EventCommitted {
+                position: 4,
+                durability: protocol::WireDurability::Durable,
+            },
+            limits,
+        )
+        .expect("author receipt");
+        let client = Client::new(
+            SequencedTransport {
+                streams: Mutex::new(
+                    vec![
+                        vec![event_opened],
+                        vec![[author_opened, committed].concat()],
+                    ]
+                    .into(),
+                ),
+            },
+            limits,
+        );
+        let _events = client
+            .open_event_stream(Request::OpenEventStream {
+                version: protocol::PROTOCOL_VERSION,
+                archive: b"archive".to_vec(),
+                intent: protocol::ArchiveIntent::Open,
+                author: b"author".to_vec(),
+                session: b"session".to_vec(),
+                resume_after: None,
+            })
+            .await
+            .expect("event stream");
+        let mut author = client.open_author_stream().await.expect("author stream");
+        assert_eq!(
+            author
+                .request(Request::Submit {
+                    operation: b"operation".to_vec(),
+                    reference: None,
+                    event: protocol::Event {
+                        payload: b"event".to_vec(),
+                        blob_tree: None,
+                    },
+                })
+                .await
+                .expect("submission"),
+            Response::EventCommitted {
+                position: 4,
+                durability: protocol::WireDurability::Durable,
+            }
         );
     }
 }
