@@ -601,6 +601,51 @@ describe("checkSchemaCompatibility", () => {
 		assert.equal("equivalenceDiscrepancies" in status, false);
 	});
 
+	it("reports nested staged constructability blockers without a node-kind mismatch", () => {
+		const originalChild = factory.object("NestedStagedChild", { value: factory.number });
+		const stagedNumber = factory.staged(factory.number);
+		const upgrade = stagedNumber.metadata.stagedSchemaUpgrade;
+		assert(upgrade !== undefined);
+		const proposedChild = factory.object("NestedStagedChild", {
+			value: factory.types([stagedNumber]),
+		});
+		const original = factory.object("NestedStagedParent", { child: originalChild });
+		const view = factory.object("NestedStagedParent", { child: proposedChild });
+		// The restrictive target removes the child's only required type, making it un-constructible.
+		// The staged view can still read existing numbers, but the target cannot preserve them.
+		const status = expectCompatibility(
+			{ view, stored: toUpgradeSchema(original) },
+			{
+				canView: true,
+				canUpgrade: false,
+				isEquivalent: false,
+				enabledUpgrades: new Map([[upgrade, "enabled"]]),
+			},
+		);
+		assert(!status.canUpgrade);
+		assert.deepEqual(status.upgradeDiscrepancies, [
+			{
+				mismatch: "allowedType",
+				location: { nodeType: proposedChild.identifier, fieldKey: "value" },
+				allowedType: factory.number.identifier,
+				view: true,
+				stored: true,
+				target: false,
+			},
+			{
+				mismatch: "missingNode",
+				location: { nodeType: factory.number.identifier },
+				missingFrom: ["target"],
+				view: { kind: "leaf" },
+				stored: { kind: "leaf" },
+			},
+		]);
+		assert(!status.isEquivalent);
+		assert.deepEqual(status.equivalenceDiscrepancies, status.upgradeDiscrepancies);
+		// The parent and child remain objects; constructability must not invent a node-kind difference.
+		assert(!status.allDiscrepancies.some(({ mismatch }) => mismatch === "nodeKind"));
+	});
+
 	it("reports no alpha discrepancies for identical schemas", () => {
 		const schema = new TreeViewConfigurationAlpha({ schema: factory.number });
 		const status = checkSchemaCompatibility(schema, toUpgradeSchema(factory.number));
