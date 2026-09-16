@@ -32,6 +32,7 @@ background task or stream buffer.
 
 Directories, event metadata, and snapshot metadata remain visible so the server can validate ordering and reachability.
 For compression plus encryption, wrap an `EncryptionSession` in `CompressionSession` so compression processes plaintext first.
+Snapshot coordination is composed from the undecorated session handle because this decorator encrypts event and blob payloads, not nomination or publication metadata.
 
 ## Validation
 

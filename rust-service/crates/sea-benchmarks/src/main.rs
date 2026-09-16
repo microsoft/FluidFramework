@@ -19,9 +19,9 @@ use sea_compression::CompressionSession;
 use sea_core::{
     BlobTreeId, Event,
     archive::{
-        AuthorId, EventSubmission, OperationId, SeaAuthorSession, SeaSession, SeaStorage,
-        SessionId, Snapshot as ArchiveSnapshot, SnapshotPosition as ArchiveSnapshotPosition,
-        SnapshotPublication,
+        AuthorId, EventSubmission, OperationId, SeaArchive, SeaAuthorSession, SeaEventSubscription,
+        SeaSnapshotCoordinator, SeaStorage, SessionId, Snapshot as ArchiveSnapshot,
+        SnapshotPosition as ArchiveSnapshotPosition, SnapshotPublication,
     },
 };
 use sea_encryption::{ActiveKey, EncryptionKey, EncryptionSession, KeyId, KeyProvider};
@@ -338,17 +338,24 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
         Backend::Compression => {
             let directory = unique_directory("compression");
             let startup = Instant::now();
-            let sessions = open_local_sessions(
+            let coordinators = open_local_sessions(
                 Arc::new(FileStream::open(&directory).map_err(display_error)?),
                 config.writers,
                 "compression",
             )
-            .await?
-            .into_iter()
-            .map(CompressionSession::new)
-            .collect();
-            let mut measurements =
-                run_session(sessions, config, elapsed_microseconds(startup)).await?;
+            .await?;
+            let sessions = coordinators
+                .iter()
+                .cloned()
+                .map(CompressionSession::new)
+                .collect();
+            let mut measurements = run_session(
+                sessions,
+                &coordinators,
+                config,
+                elapsed_microseconds(startup),
+            )
+            .await?;
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
             let reopened = open_local_sessions(
@@ -359,9 +366,9 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
             .await?
             .pop()
             .expect("one reopened session");
-            let reopened = CompressionSession::new(reopened);
-            verify_reopened_session(&reopened, config).await?;
-            reopened.close().await.map_err(display_error)?;
+            let decorated = CompressionSession::new(reopened.clone());
+            verify_reopened_session(&decorated, &reopened, config).await?;
+            decorated.close().await.map_err(display_error)?;
             measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
             fs::remove_dir_all(&directory).map_err(display_error)?;
             measurements
@@ -369,20 +376,31 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
         Backend::StatefulCompression => {
             let directory = unique_directory("stateful-compression");
             let startup = Instant::now();
-            let sessions = open_local_sessions(
+            let coordinators = open_local_sessions(
                 Arc::new(FileStream::open(&directory).map_err(display_error)?),
                 config.writers,
                 "stateful-compression",
             )
-            .await?
-            .into_iter()
-            .map(|session| {
-                StatefulCompressionSession::new(session, Bytes::from_static(DICTIONARY), 128 * 1024)
+            .await?;
+            let sessions = coordinators
+                .iter()
+                .cloned()
+                .map(|session| {
+                    StatefulCompressionSession::new(
+                        session,
+                        Bytes::from_static(DICTIONARY),
+                        128 * 1024,
+                    )
                     .map_err(display_error)
-            })
-            .collect::<Result<Vec<_>, _>>()?;
-            let mut measurements =
-                run_session(sessions, config, elapsed_microseconds(startup)).await?;
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            let mut measurements = run_session(
+                sessions,
+                &coordinators,
+                config,
+                elapsed_microseconds(startup),
+            )
+            .await?;
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
             let reopened = open_local_sessions(
@@ -393,14 +411,14 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
             .await?
             .pop()
             .expect("one reopened session");
-            let reopened = StatefulCompressionSession::new(
-                reopened,
+            let decorated = StatefulCompressionSession::new(
+                reopened.clone(),
                 Bytes::from_static(DICTIONARY),
                 128 * 1024,
             )
             .map_err(display_error)?;
-            verify_reopened_session(&reopened, config).await?;
-            reopened.close().await.map_err(display_error)?;
+            verify_reopened_session(&decorated, &reopened, config).await?;
+            decorated.close().await.map_err(display_error)?;
             measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
             fs::remove_dir_all(&directory).map_err(display_error)?;
             measurements
@@ -408,17 +426,24 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
         Backend::Encryption => {
             let directory = unique_directory("encryption");
             let startup = Instant::now();
-            let sessions = open_local_sessions(
+            let coordinators = open_local_sessions(
                 Arc::new(FileStream::open(&directory).map_err(display_error)?),
                 config.writers,
                 "encryption",
             )
-            .await?
-            .into_iter()
-            .map(|session| EncryptionSession::new(session, BenchmarkKey))
-            .collect();
-            let mut measurements =
-                run_session(sessions, config, elapsed_microseconds(startup)).await?;
+            .await?;
+            let sessions = coordinators
+                .iter()
+                .cloned()
+                .map(|session| EncryptionSession::new(session, BenchmarkKey))
+                .collect();
+            let mut measurements = run_session(
+                sessions,
+                &coordinators,
+                config,
+                elapsed_microseconds(startup),
+            )
+            .await?;
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
             let reopened = open_local_sessions(
@@ -429,9 +454,9 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
             .await?
             .pop()
             .expect("one reopened session");
-            let reopened = EncryptionSession::new(reopened, BenchmarkKey);
-            verify_reopened_session(&reopened, config).await?;
-            reopened.close().await.map_err(display_error)?;
+            let decorated = EncryptionSession::new(reopened.clone(), BenchmarkKey);
+            verify_reopened_session(&decorated, &reopened, config).await?;
+            decorated.close().await.map_err(display_error)?;
             measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
             fs::remove_dir_all(&directory).map_err(display_error)?;
             measurements
@@ -439,24 +464,31 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
         Backend::StatefulCompressionEncryption => {
             let directory = unique_directory("stateful-compression-encryption");
             let startup = Instant::now();
-            let sessions = open_local_sessions(
+            let coordinators = open_local_sessions(
                 Arc::new(FileStream::open(&directory).map_err(display_error)?),
                 config.writers,
                 "stateful-compression-encryption",
             )
-            .await?
-            .into_iter()
-            .map(|session| {
-                StatefulCompressionSession::new(
-                    EncryptionSession::new(session, BenchmarkKey),
-                    Bytes::from_static(DICTIONARY),
-                    128 * 1024,
-                )
-                .map_err(display_error)
-            })
-            .collect::<Result<Vec<_>, _>>()?;
-            let mut measurements =
-                run_session(sessions, config, elapsed_microseconds(startup)).await?;
+            .await?;
+            let sessions = coordinators
+                .iter()
+                .cloned()
+                .map(|session| {
+                    StatefulCompressionSession::new(
+                        EncryptionSession::new(session, BenchmarkKey),
+                        Bytes::from_static(DICTIONARY),
+                        128 * 1024,
+                    )
+                    .map_err(display_error)
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            let mut measurements = run_session(
+                sessions,
+                &coordinators,
+                config,
+                elapsed_microseconds(startup),
+            )
+            .await?;
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
             let reopened = open_local_sessions(
@@ -467,14 +499,14 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
             .await?
             .pop()
             .expect("one reopened session");
-            let reopened = StatefulCompressionSession::new(
-                EncryptionSession::new(reopened, BenchmarkKey),
+            let decorated = StatefulCompressionSession::new(
+                EncryptionSession::new(reopened.clone(), BenchmarkKey),
                 Bytes::from_static(DICTIONARY),
                 128 * 1024,
             )
             .map_err(display_error)?;
-            verify_reopened_session(&reopened, config).await?;
-            reopened.close().await.map_err(display_error)?;
+            verify_reopened_session(&decorated, &reopened, config).await?;
+            decorated.close().await.map_err(display_error)?;
             measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
             fs::remove_dir_all(&directory).map_err(display_error)?;
             measurements
@@ -515,15 +547,17 @@ where
 
 /// Runs submission, optional snapshot, and finite-read work through sequenced sessions.
 #[allow(clippy::too_many_lines)]
-async fn run_session<S>(
+async fn run_session<S, C>(
     sessions: Vec<S>,
+    coordinators: &[C],
     config: &Config,
     startup_microseconds: f64,
 ) -> Result<RunMeasurements, String>
 where
-    S: SeaSession + 'static,
+    S: SeaArchive + SeaAuthorSession + SeaEventSubscription + 'static,
+    C: SeaSnapshotCoordinator,
 {
-    if sessions.len() != config.writers {
+    if sessions.len() != config.writers || coordinators.len() != config.writers {
         return Err("session count did not match writer count".to_owned());
     }
     let sessions = sessions.into_iter().map(Arc::new).collect::<Vec<_>>();
@@ -537,6 +571,7 @@ where
                 return Err("periodic snapshots require exactly one writer".to_owned());
             }
             let session = &sessions[0];
+            let coordinator = &coordinators[0];
             let mut latencies = Vec::with_capacity(record_capacity);
             let mut snapshot_elapsed = 0.0;
             let mut parent = None;
@@ -565,7 +600,7 @@ where
                         .await
                         .map_err(display_error)?;
                     parent = Some(
-                        session
+                        coordinator
                             .publish_snapshot(SnapshotPublication {
                                 operation_id: benchmark_operation_id(b"session-snapshot", index),
                                 expected_parent: parent,
@@ -660,9 +695,14 @@ where
     })
 }
 
-async fn verify_reopened_session<S>(session: &S, config: &Config) -> Result<(), String>
+async fn verify_reopened_session<S, C>(
+    session: &S,
+    coordinator: &C,
+    config: &Config,
+) -> Result<(), String>
 where
-    S: SeaSession,
+    S: SeaArchive,
+    C: SeaSnapshotCoordinator,
 {
     let generator = FixtureGenerator::new(config.seed);
     let records = session
@@ -674,7 +714,7 @@ where
         .map_err(display_error)?;
     verify_session_payloads(&records, &generator, config)?;
     if config.snapshot_frequency.is_some()
-        && session
+        && coordinator
             .latest_snapshot()
             .await
             .map_err(display_error)?

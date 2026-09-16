@@ -8,7 +8,8 @@
 - `BlobId` and `BlobDirectoryId` use domain-separated identities, while `BlobTreeId` preserves the leaf-or-directory kind.
 - `SnapshotPosition` represents initial state or state through one committed event. `SnapshotId` identifies a publication independently of its tree root.
 - `SeaStorage` is the trusted backend contract. It atomically validates and records event and snapshot tree references and supports retained snapshot history.
-- `SeaSession` is the archive-bound user contract. It adds authors, session and operation identities, submission recovery, gap-free load, subscriptions, and explicit close.
+- `SeaArchive`, `SeaAuthorSession`, `SeaEventSubscription`, and `SeaSnapshotCoordinator` separate content/history, ordered authors, event cursors, and snapshot coordination. `SeaSession` is only their convenience marker.
+- Event and snapshot streams own their subscriptions and cancel on drop. The author facet owns idempotent logical-session close shared by cloned facets; archive handles require no asynchronous teardown.
 - `ErrorKind` exposes stable caller decisions while implementations retain detailed error types.
 
 ## Relationships and Limits

@@ -35,8 +35,7 @@ use sea_core::{
     archive::{
         EventReceipt as SessionEventReceipt, EventSubmission, LoadEvent, OperationId,
         PublishedSnapshot as SessionPublishedSnapshot, SeaArchive, SeaAuthorSession,
-        SeaEventSubscription, SeaService, SeaSnapshotCoordinator, SessionStream,
-        SnapshotPublication,
+        SeaEventSubscription, SeaService, SessionStream,
     },
 };
 use thiserror::Error;
@@ -420,55 +419,6 @@ where
     }
 }
 
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-impl<S, K, N> SeaSnapshotCoordinator for EncryptionSession<S, K, N>
-where
-    S: SeaSnapshotCoordinator,
-    K: KeyProvider + Clone + 'static,
-    N: NonceSource,
-{
-    async fn latest_snapshot(&self) -> Result<Option<SessionPublishedSnapshot>, Self::Error> {
-        self.inner
-            .latest_snapshot()
-            .await
-            .map_err(EncryptionError::Store)
-    }
-
-    async fn publish_snapshot(
-        &self,
-        publication: SnapshotPublication,
-    ) -> Result<SessionPublishedSnapshot, Self::Error> {
-        self.inner
-            .publish_snapshot(publication)
-            .await
-            .map_err(EncryptionError::Store)
-    }
-
-    async fn resolve_snapshot_publication(
-        &self,
-        operation_id: &OperationId,
-    ) -> Result<Option<SessionPublishedSnapshot>, Self::Error> {
-        self.inner
-            .resolve_snapshot_publication(operation_id)
-            .await
-            .map_err(EncryptionError::Store)
-    }
-
-    async fn subscribe_snapshots(
-        &self,
-    ) -> Result<SessionStream<SessionPublishedSnapshot, Self::Error>, Self::Error> {
-        let stream = self
-            .inner
-            .subscribe_snapshots()
-            .await
-            .map_err(EncryptionError::Store)?;
-        Ok(Box::pin(
-            stream.map(|item| item.map_err(EncryptionError::Store)),
-        ))
-    }
-}
-
 /// Builds and authenticates one record or snapshot envelope.
 fn encrypt_payload<E, K, N>(
     keys: &K,
@@ -697,8 +647,8 @@ mod tests {
             )
             .await
             .unwrap();
-        let encrypted = EncryptionSession::new(session, TestKeys::new());
-        sea_conformance::run_sea_session_observable_behavior(&encrypted).await;
+        let encrypted = EncryptionSession::new(session.clone(), TestKeys::new());
+        sea_conformance::run_sea_responsibility_observable_behavior(&encrypted, &session).await;
     }
 
     #[test]

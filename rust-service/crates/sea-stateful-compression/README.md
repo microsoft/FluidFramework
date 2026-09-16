@@ -30,6 +30,7 @@ record when polled and add no background task or stream buffer.
 
 Directories and snapshot metadata remain visible.
 For authenticated storage, wrap an encrypted session in `StatefulCompressionSession` so compression processes plaintext before encryption.
+Snapshot coordination is composed from the undecorated session handle because dictionary compression does not transform nomination, publication, or notification state.
 
 ## Validation
 

@@ -218,17 +218,18 @@ where
             sequencer: Arc::clone(self),
             author_id,
             session_id,
-            closed: AtomicBool::new(false),
+            closed: Arc::new(AtomicBool::new(false)),
         })
     }
 }
 
 /// One individual-user session backed by a shared local sequencer.
+#[derive(Clone)]
 pub struct LocalSession<S: SeaStorage> {
     sequencer: Arc<LocalSequencer<S>>,
     author_id: AuthorId,
     session_id: SessionId,
-    closed: AtomicBool,
+    closed: Arc<AtomicBool>,
 }
 
 impl<S: SeaStorage> LocalSession<S> {

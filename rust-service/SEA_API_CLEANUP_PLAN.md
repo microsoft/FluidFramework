@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 4b. Split service responsibilities.
-- **Last completed checkpoint:** 4a. Restore the server crate boundary.
-- **Last validation:** Checkpoint 4a formatting, strict transport/server Clippy, all transport/server tests, native cross-backend round trips, and the `wasm32-unknown-unknown` client-library build passed on 2026-09-16.
-- **Latest checkpoint notes:** Checkpoint 4b requires explicit archive create versus open intent before creating author state; duplicate create conflicts and missing open is rejected across native, injected, browser, and process-local bindings. A dedicated `CreateArchive` operation replaces the Fluid adapter's fake `storage` author session. Local, native, compression, encryption, and stateful-compression implementations now implement `SeaArchive`, `SeaAuthorSession`, `SeaEventSubscription`, and `SeaSnapshotCoordinator` directly; `SeaSession` is only a convenience marker over that composition. Encryption author retries explicitly require archive read access to compare committed plaintext.
+- **Current checkpoint:** 5. Introduce the centralized network message codec.
+- **Last completed checkpoint:** 4b. Split service responsibilities.
+- **Last validation:** Checkpoint 4b formatting, strict workspace Clippy, full Rust workspace tests, counter and benchmark smoke, generated WASM/Node tests, TypeScript checks, documentation links, policy, and repository build passed on 2026-09-16.
+- **Latest checkpoint notes:** Archive creation is explicit and creates no fake author. Local, native, compression, encryption, and stateful-compression implementations use direct narrow contracts; `SeaSession` is only their marker composition. Cloned local facets share author-owned close state. Event and snapshot streams cancel on drop. Payload decorators wrap archive/author/event facets, while undecorated handles own snapshot coordination.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 4b. Split service responsibilities.
+- **Next checkpoint:** 5. Introduce the centralized network message codec.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -503,8 +503,8 @@ This checkpoint may be split into the following ordered commits.
 - [x] Preserve stable submission and snapshot-publication identities.
 - [x] Replace fake archive creation through a `storage` author with an explicit archive operation.
 - [x] Distinguish explicit archive creation from opening an existing archive so a load cannot silently create missing state; settle exact retry/conflict results in conformance tests before implementation.
-- [ ] Define teardown ownership for every session and subscription.
-- [ ] Ensure event-payload decorators only wrap event/content payload operations they actually transform.
+- [x] Define teardown ownership for every session and subscription.
+- [x] Ensure event-payload decorators only wrap event/content payload operations they actually transform.
 - [x] Update all local Rust implementations and conformance tests.
 
 Validation:

@@ -16,6 +16,7 @@ The wrapped `SeaSession` continues to own event positions, blob-tree identities,
 
 Directories and snapshot metadata remain visible so the server can validate reachability.
 For compression plus encryption, wrap an encrypted session in `CompressionSession`; the outer compression layer processes plaintext before the inner encryption layer stores it.
+Snapshot coordination is composed from the undecorated session handle because this decorator transforms no nomination, publication, or notification state.
 
 ## Use
 

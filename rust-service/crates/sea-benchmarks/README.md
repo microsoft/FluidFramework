@@ -42,6 +42,7 @@ For periodic snapshot workloads, commit throughput includes snapshot publication
 
 The `memory` and `file` cells measure trusted backend operations directly through `SeaStorage`.
 Compression, stateful compression, encryption, and the composed compression-before-encryption cell measure `SeaSession` decorators over a common `LocalSequencer<FileStream>`.
+Their payload facets use decorated cloned handles, while snapshot coordination uses the undecorated handle for the same logical session.
 Their commit measurements therefore include sequencing and author-session work and are not directly comparable with schema-version-2 raw-stream decorator results.
 File-backed cells report recursive persisted size; decorator cells report process CPU used by the submit/read/snapshot workload.
 The benchmark key is a fixed non-production key used only in memory and is never emitted; encryption nonces come from the operating system.

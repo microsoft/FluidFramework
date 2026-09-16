@@ -303,6 +303,9 @@ pub trait SeaService: SessionBounds {
 }
 
 /// Archive-scoped content, historical reads, and snapshot lookup.
+///
+/// This surface owns no author membership or live subscription.
+/// Dropping an archive handle therefore requires no asynchronous teardown.
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 pub trait SeaArchive: SeaService {
@@ -331,6 +334,9 @@ pub trait SeaArchive: SeaService {
 }
 
 /// Gap-free snapshot, catch-up, and live event delivery.
+///
+/// Each returned stream owns its cursor and subscription.
+/// Dropping the stream cancels that subscription without closing other session facets.
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 pub trait SeaEventSubscription: SeaService {
@@ -342,6 +348,9 @@ pub trait SeaEventSubscription: SeaService {
 }
 
 /// Ordered author submission, ambiguity resolution, and lifecycle.
+///
+/// The author surface owns logical-session teardown.
+/// Closing one cloned facet is idempotent and invalidates every facet sharing that session.
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 pub trait SeaAuthorSession: SeaService {
@@ -359,6 +368,9 @@ pub trait SeaAuthorSession: SeaService {
 }
 
 /// Snapshot lookup notifications, conditional publication, and ambiguity resolution.
+///
+/// Each returned notification stream owns its subscription and cancels on drop.
+/// The coordinator shares the author session's logical lifetime and does not close it.
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 pub trait SeaSnapshotCoordinator: SeaService {

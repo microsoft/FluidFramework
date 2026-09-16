@@ -7,7 +7,8 @@ use futures_util::{StreamExt, TryStreamExt, future::join_all};
 use sea_core::{
     BlobDirectory, BlobId, BlobTreeId, ClassifiedError, ErrorKind, Event, EventPosition,
     archive::{
-        EventSubmission, LoadEvent, OperationId, SeaSession, SeaStorage,
+        EventSubmission, LoadEvent, OperationId, SeaArchive, SeaAuthorSession,
+        SeaEventSubscription, SeaSession, SeaSnapshotCoordinator, SeaStorage,
         Snapshot as ArchiveSnapshot, SnapshotPosition as ArchiveSnapshotPosition,
         SnapshotPublication,
     },
@@ -24,13 +25,29 @@ where
     S: SeaSession,
     S::Error: Debug,
 {
+    run_sea_responsibility_observable_behavior(session, session).await;
+}
+
+/// Runs observable behavior across separately composed session and snapshot responsibilities.
+///
+/// # Panics
+///
+/// Panics when the composed responsibilities do not preserve current Sea behavior.
+pub async fn run_sea_responsibility_observable_behavior<S, C>(session: &S, snapshots: &C)
+where
+    S: SeaArchive + SeaAuthorSession + SeaEventSubscription,
+    S::Error: Debug,
+    C: SeaSnapshotCoordinator,
+    C::Error: Debug,
+{
     assert_eq!(
-        session.latest_snapshot().await.expect("initial snapshot"),
+        snapshots.latest_snapshot().await.expect("initial snapshot"),
         None
     );
     let directory_id = round_trip_session_content(session).await;
     let first = submit_and_resolve_first_event(session, directory_id).await;
-    let published = publish_and_resolve_snapshot(session, directory_id, first.position).await;
+    let published =
+        publish_and_resolve_snapshot(session, snapshots, directory_id, first.position).await;
 
     let second = session
         .submit(EventSubmission {
@@ -68,6 +85,7 @@ where
         LoadEvent::CaughtUp(Some(position)) if position == second.position
     ));
 
+    drop(load);
     session.close().await.expect("session close");
     let closed_probe =
         OperationId::new(Bytes::from_static(b"closed-session-probe")).expect("operation identity");
@@ -79,11 +97,19 @@ where
             .kind(),
         ErrorKind::Rejected
     );
+    assert_eq!(
+        snapshots
+            .latest_snapshot()
+            .await
+            .expect_err("closed snapshot coordinator")
+            .kind(),
+        ErrorKind::Rejected
+    );
 }
 
 async fn round_trip_session_content<S>(session: &S) -> sea_core::BlobDirectoryId
 where
-    S: SeaSession,
+    S: SeaArchive,
     S::Error: Debug,
 {
     let blob_payload = Bytes::from_static(b"observable-blob");
@@ -119,7 +145,7 @@ async fn submit_and_resolve_first_event<S>(
     directory_id: sea_core::BlobDirectoryId,
 ) -> sea_core::archive::EventReceipt
 where
-    S: SeaSession,
+    S: SeaAuthorSession,
     S::Error: Debug,
 {
     let submission = EventSubmission {
@@ -162,16 +188,19 @@ where
     receipt
 }
 
-async fn publish_and_resolve_snapshot<S>(
-    session: &S,
+async fn publish_and_resolve_snapshot<S, C>(
+    archive: &S,
+    coordinator: &C,
     directory_id: sea_core::BlobDirectoryId,
     position: EventPosition,
 ) -> sea_core::archive::PublishedSnapshot
 where
-    S: SeaSession,
+    S: SeaArchive,
     S::Error: Debug,
+    C: SeaSnapshotCoordinator,
+    C::Error: Debug,
 {
-    let mut snapshots = session
+    let mut snapshots = coordinator
         .subscribe_snapshots()
         .await
         .expect("snapshot subscription");
@@ -184,7 +213,7 @@ where
             root: BlobTreeId::Directory(directory_id),
         },
     };
-    let published = session
+    let published = coordinator
         .publish_snapshot(publication.clone())
         .await
         .expect("snapshot publication");
@@ -197,28 +226,31 @@ where
         published
     );
     assert_eq!(
-        session
+        coordinator
             .publish_snapshot(publication.clone())
             .await
             .expect("idempotent snapshot retry"),
         published
     );
     assert_eq!(
-        session
+        coordinator
             .resolve_snapshot_publication(&publication.operation_id)
             .await
             .expect("snapshot resolution"),
         Some(published.clone())
     );
     assert_eq!(
-        session
+        archive
             .snapshot(&published.id)
             .await
             .expect("snapshot lookup"),
         Some(published.clone())
     );
     assert_eq!(
-        session.latest_snapshot().await.expect("latest snapshot"),
+        coordinator
+            .latest_snapshot()
+            .await
+            .expect("latest snapshot"),
         Some(published.clone())
     );
     published
