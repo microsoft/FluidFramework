@@ -300,9 +300,10 @@ export function createTreeIndexWithDependencyScope<
 			}
 			const fieldKind =
 				convertFieldKind.get(fieldSchema.kind) ?? fail("Unknown Simple Tree field kind");
+			// Rather than testing for just "required" we test the multiplicity to ensure we correctly handle other field kinds, like identifier, which always have one value.
 			if (fieldKind.multiplicity !== Multiplicity.Single) {
 				throw new UsageError(
-					`The property key "${keyLocation}" selected for schema "${schema.identifier}" must refer to a field that always contains exactly one value.`,
+					`The property key "${keyLocation}" selected for schema "${schema.identifier}" must have a schema who's kind ensures it contains exactly one value (For example "required" or "identifier").`,
 				);
 			}
 			if ([...fieldSchema.allowedTypeSet].some((type) => type.kind !== NodeKind.Leaf)) {
