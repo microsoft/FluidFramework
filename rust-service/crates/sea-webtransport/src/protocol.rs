@@ -3,17 +3,345 @@
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
+/// Current Sea logical-stream opening version.
+pub const PROTOCOL_VERSION: u16 = 2;
+
+/// Explicit wire identity of every Sea network message.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[repr(u8)]
+pub enum MessageKind {
+    CreateArchive = 1,
+    OpenSession = 2,
+    Submit = 3,
+    ResolveSubmission = 4,
+    Read = 5,
+    PutBlob = 6,
+    GetBlob = 7,
+    PutDirectory = 8,
+    GetDirectory = 9,
+    GetSnapshot = 10,
+    LatestSnapshot = 11,
+    PublishSnapshot = 12,
+    ResolveSnapshot = 13,
+    Load = 14,
+    SubscribeSnapshots = 15,
+    Close = 16,
+    Acknowledged = 128,
+    EventCommitted = 129,
+    SubmissionResolved = 130,
+    BlobStored = 131,
+    Blob = 132,
+    DirectoryStored = 133,
+    Directory = 134,
+    Snapshot = 135,
+    LoadSnapshot = 136,
+    LoadEvent = 137,
+    CaughtUp = 138,
+    Error = 255,
+}
+
+impl TryFrom<u8> for MessageKind {
+    type Error = ProtocolError;
+
+    fn try_from(value: u8) -> Result<Self, ProtocolError> {
+        match value {
+            1 => Ok(Self::CreateArchive),
+            2 => Ok(Self::OpenSession),
+            3 => Ok(Self::Submit),
+            4 => Ok(Self::ResolveSubmission),
+            5 => Ok(Self::Read),
+            6 => Ok(Self::PutBlob),
+            7 => Ok(Self::GetBlob),
+            8 => Ok(Self::PutDirectory),
+            9 => Ok(Self::GetDirectory),
+            10 => Ok(Self::GetSnapshot),
+            11 => Ok(Self::LatestSnapshot),
+            12 => Ok(Self::PublishSnapshot),
+            13 => Ok(Self::ResolveSnapshot),
+            14 => Ok(Self::Load),
+            15 => Ok(Self::SubscribeSnapshots),
+            16 => Ok(Self::Close),
+            128 => Ok(Self::Acknowledged),
+            129 => Ok(Self::EventCommitted),
+            130 => Ok(Self::SubmissionResolved),
+            131 => Ok(Self::BlobStored),
+            132 => Ok(Self::Blob),
+            133 => Ok(Self::DirectoryStored),
+            134 => Ok(Self::Directory),
+            135 => Ok(Self::Snapshot),
+            136 => Ok(Self::LoadSnapshot),
+            137 => Ok(Self::LoadEvent),
+            138 => Ok(Self::CaughtUp),
+            255 => Ok(Self::Error),
+            _ => Err(ProtocolError::UnknownMessageKind(value)),
+        }
+    }
+}
+
+impl From<MessageKind> for u8 {
+    fn from(value: MessageKind) -> Self {
+        value as Self
+    }
+}
+
+/// Logical stream on which a message is valid.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum StreamRole {
+    Control,
+    Event,
+    Author,
+    Snapshot,
+    Content,
+}
+
+impl MessageKind {
+    /// Every assigned message kind in numeric order.
+    pub const ALL: [Self; 28] = [
+        Self::CreateArchive,
+        Self::OpenSession,
+        Self::Submit,
+        Self::ResolveSubmission,
+        Self::Read,
+        Self::PutBlob,
+        Self::GetBlob,
+        Self::PutDirectory,
+        Self::GetDirectory,
+        Self::GetSnapshot,
+        Self::LatestSnapshot,
+        Self::PublishSnapshot,
+        Self::ResolveSnapshot,
+        Self::Load,
+        Self::SubscribeSnapshots,
+        Self::Close,
+        Self::Acknowledged,
+        Self::EventCommitted,
+        Self::SubmissionResolved,
+        Self::BlobStored,
+        Self::Blob,
+        Self::DirectoryStored,
+        Self::Directory,
+        Self::Snapshot,
+        Self::LoadSnapshot,
+        Self::LoadEvent,
+        Self::CaughtUp,
+        Self::Error,
+    ];
+
+    /// Returns whether this message kind is valid on `role`.
+    #[must_use]
+    pub const fn is_valid_on(self, role: StreamRole) -> bool {
+        use MessageKind as Kind;
+        match role {
+            StreamRole::Control => {
+                matches!(self, Kind::CreateArchive | Kind::Acknowledged | Kind::Error)
+            }
+            StreamRole::Event => matches!(
+                self,
+                Kind::OpenSession
+                    | Kind::Load
+                    | Kind::LoadSnapshot
+                    | Kind::LoadEvent
+                    | Kind::CaughtUp
+                    | Kind::Acknowledged
+                    | Kind::Error
+            ),
+            StreamRole::Author => matches!(
+                self,
+                Kind::Submit
+                    | Kind::ResolveSubmission
+                    | Kind::EventCommitted
+                    | Kind::SubmissionResolved
+                    | Kind::Close
+                    | Kind::Acknowledged
+                    | Kind::Error
+            ),
+            StreamRole::Snapshot => matches!(
+                self,
+                Kind::SubscribeSnapshots
+                    | Kind::LatestSnapshot
+                    | Kind::PublishSnapshot
+                    | Kind::ResolveSnapshot
+                    | Kind::Snapshot
+                    | Kind::Close
+                    | Kind::Acknowledged
+                    | Kind::Error
+            ),
+            StreamRole::Content => matches!(
+                self,
+                Kind::Read
+                    | Kind::PutBlob
+                    | Kind::GetBlob
+                    | Kind::PutDirectory
+                    | Kind::GetDirectory
+                    | Kind::GetSnapshot
+                    | Kind::BlobStored
+                    | Kind::Blob
+                    | Kind::DirectoryStored
+                    | Kind::Directory
+                    | Kind::Snapshot
+                    | Kind::LoadEvent
+                    | Kind::CaughtUp
+                    | Kind::Error
+            ),
+        }
+    }
+
+    /// Rejects this message when it is invalid on `role`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProtocolError::WrongStream`] when the kind is not valid on `role`.
+    pub fn validate_on(self, role: StreamRole) -> Result<(), ProtocolError> {
+        self.is_valid_on(role)
+            .then_some(())
+            .ok_or(ProtocolError::WrongStream { kind: self, role })
+    }
+}
+
 /// Marker identifying one Sea protocol frame.
 pub const MAGIC: [u8; 4] = *b"SEA1";
 /// Current Sea protocol version.
 pub const VERSION: u8 = 1;
 const HEADER_BYTES: usize = MAGIC.len() + 1;
+const NETWORK_LENGTH_BYTES: usize = 4;
+const NETWORK_HEADER_BYTES: usize = 1 + 8;
 
 /// Maximum accepted encoded frame size.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Limits {
     /// Maximum header and payload bytes in one frame.
     pub max_frame_bytes: usize,
+}
+
+/// One explicitly identified and correlated network frame.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct NetworkFrame {
+    /// Explicit message kind encoded as one assigned byte.
+    pub kind: MessageKind,
+    /// Stream-scoped request/response identity, or zero for an unsolicited notification.
+    pub correlation_id: u64,
+    /// Message-kind-specific postcard payload without an outer enum discriminator.
+    pub payload: Vec<u8>,
+}
+
+/// Encodes one complete bounded network envelope.
+///
+/// # Errors
+///
+/// Returns an error for an invalid opening correlation ID, length overflow, or configured limit.
+pub fn encode_network_frame(
+    frame: &NetworkFrame,
+    limits: Limits,
+) -> Result<Vec<u8>, ProtocolError> {
+    validate_correlation(frame.kind, frame.correlation_id)?;
+    let declared_length = NETWORK_HEADER_BYTES
+        .checked_add(frame.payload.len())
+        .ok_or(ProtocolError::FrameTooLarge)?;
+    let complete_length = NETWORK_LENGTH_BYTES
+        .checked_add(declared_length)
+        .ok_or(ProtocolError::FrameTooLarge)?;
+    if complete_length > limits.max_frame_bytes {
+        return Err(ProtocolError::FrameTooLarge);
+    }
+    let declared_length =
+        u32::try_from(declared_length).map_err(|_| ProtocolError::FrameTooLarge)?;
+    let mut encoded = Vec::with_capacity(complete_length);
+    encoded.extend_from_slice(&declared_length.to_be_bytes());
+    encoded.push(frame.kind.into());
+    encoded.extend_from_slice(&frame.correlation_id.to_be_bytes());
+    encoded.extend_from_slice(&frame.payload);
+    Ok(encoded)
+}
+
+fn validate_correlation(kind: MessageKind, correlation_id: u64) -> Result<(), ProtocolError> {
+    if correlation_id == 0 && matches!(kind, MessageKind::CreateArchive | MessageKind::OpenSession)
+    {
+        Err(ProtocolError::InvalidCorrelationId)
+    } else {
+        Ok(())
+    }
+}
+
+/// Incrementally decodes bounded network envelopes while retaining coalesced trailing bytes.
+#[derive(Debug)]
+pub struct NetworkFrameDecoder {
+    buffered: Vec<u8>,
+    limits: Limits,
+}
+
+impl NetworkFrameDecoder {
+    /// Creates an empty decoder with a complete-frame byte limit.
+    #[must_use]
+    pub const fn new(limits: Limits) -> Self {
+        Self {
+            buffered: Vec::new(),
+            limits,
+        }
+    }
+
+    /// Adds one arbitrarily fragmented or coalesced input chunk.
+    pub fn push(&mut self, bytes: &[u8]) {
+        self.buffered.extend_from_slice(bytes);
+    }
+
+    /// Returns the next complete frame, retaining bytes for subsequent frames.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for malformed lengths, excessive frames, unknown kinds, or invalid
+    /// opening correlations.
+    pub fn next_frame(&mut self) -> Result<Option<NetworkFrame>, ProtocolError> {
+        let Some(length_bytes) = self.buffered.get(..NETWORK_LENGTH_BYTES) else {
+            return Ok(None);
+        };
+        let declared_length = usize::try_from(u32::from_be_bytes(
+            length_bytes
+                .try_into()
+                .map_err(|_| ProtocolError::IncompleteFrame)?,
+        ))
+        .map_err(|_| ProtocolError::FrameTooLarge)?;
+        if declared_length < NETWORK_HEADER_BYTES {
+            return Err(ProtocolError::IncompleteFrame);
+        }
+        let complete_length = NETWORK_LENGTH_BYTES
+            .checked_add(declared_length)
+            .ok_or(ProtocolError::FrameTooLarge)?;
+        if complete_length > self.limits.max_frame_bytes {
+            return Err(ProtocolError::FrameTooLarge);
+        }
+        if self.buffered.len() < complete_length {
+            return Ok(None);
+        }
+        let kind = MessageKind::try_from(self.buffered[NETWORK_LENGTH_BYTES])?;
+        let correlation_start = NETWORK_LENGTH_BYTES + 1;
+        let payload_start = NETWORK_LENGTH_BYTES + NETWORK_HEADER_BYTES;
+        let correlation_id = u64::from_be_bytes(
+            self.buffered[correlation_start..payload_start]
+                .try_into()
+                .map_err(|_| ProtocolError::IncompleteFrame)?,
+        );
+        validate_correlation(kind, correlation_id)?;
+        let payload = self.buffered[payload_start..complete_length].to_vec();
+        self.buffered.drain(..complete_length);
+        Ok(Some(NetworkFrame {
+            kind,
+            correlation_id,
+            payload,
+        }))
+    }
+
+    /// Accepts clean frame-boundary EOF and rejects a truncated envelope.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProtocolError::IncompleteFrame`] when buffered bytes remain.
+    pub fn finish(&self) -> Result<(), ProtocolError> {
+        if self.buffered.is_empty() {
+            Ok(())
+        } else {
+            Err(ProtocolError::IncompleteFrame)
+        }
+    }
 }
 
 impl Default for Limits {
@@ -278,6 +606,18 @@ pub struct Frame<T> {
 /// Failure to encode or decode one bounded Sea protocol frame.
 #[derive(Debug, Error)]
 pub enum ProtocolError {
+    /// A network message kind byte has no assigned meaning.
+    #[error("unknown Sea message kind {0}")]
+    UnknownMessageKind(u8),
+    /// A known message kind is invalid on the selected logical stream.
+    #[error("Sea message {kind:?} is invalid on {role:?} stream")]
+    WrongStream { kind: MessageKind, role: StreamRole },
+    /// A correlation ID violates envelope rules.
+    #[error("Sea frame correlation ID is invalid")]
+    InvalidCorrelationId,
+    /// A length-delimited envelope ended before its declared boundary.
+    #[error("Sea network frame is incomplete")]
+    IncompleteFrame,
     /// The configured limit cannot contain a frame header.
     #[error("maximum frame size is smaller than the Sea protocol header")]
     InvalidLimit,
@@ -342,7 +682,8 @@ pub fn decode<T: DeserializeOwned>(bytes: &[u8], limits: Limits) -> Result<T, Pr
 #[cfg(test)]
 mod tests {
     use super::{
-        Event, Frame, Limits, MAGIC, ProtocolError, Request, TreeId, VERSION, decode, encode,
+        Event, Frame, Limits, MAGIC, MessageKind, NetworkFrame, NetworkFrameDecoder, ProtocolError,
+        Request, StreamRole, TreeId, VERSION, decode, encode, encode_network_frame,
     };
 
     #[test]
@@ -393,6 +734,104 @@ mod tests {
         assert!(matches!(
             decode::<Frame<Request>>(&encoded, Limits::default()),
             Err(ProtocolError::UnsupportedVersion(_))
+        ));
+    }
+
+    #[test]
+    fn every_message_kind_has_one_explicit_byte() {
+        for byte in 0_u8..=u8::MAX {
+            let decoded = MessageKind::try_from(byte);
+            if let Some(kind) = MessageKind::ALL
+                .iter()
+                .copied()
+                .find(|kind| u8::from(*kind) == byte)
+            {
+                assert_eq!(decoded.expect("assigned message kind"), kind);
+            } else {
+                assert!(matches!(
+                    decoded,
+                    Err(ProtocolError::UnknownMessageKind(value)) if value == byte
+                ));
+            }
+        }
+    }
+
+    #[test]
+    fn network_frames_handle_fragmentation_and_coalescing() {
+        let limits = Limits {
+            max_frame_bytes: 64,
+        };
+        let first = NetworkFrame {
+            kind: MessageKind::Submit,
+            correlation_id: 7,
+            payload: b"first".to_vec(),
+        };
+        let second = NetworkFrame {
+            kind: MessageKind::Acknowledged,
+            correlation_id: 7,
+            payload: Vec::new(),
+        };
+        let mut bytes = encode_network_frame(&first, limits).expect("first frame");
+        bytes.extend(encode_network_frame(&second, limits).expect("second frame"));
+        let mut decoder = NetworkFrameDecoder::new(limits);
+        decoder.push(&bytes[..2]);
+        assert_eq!(decoder.next_frame().expect("partial length"), None);
+        decoder.push(&bytes[2..11]);
+        assert_eq!(decoder.next_frame().expect("partial frame"), None);
+        decoder.push(&bytes[11..]);
+        assert_eq!(decoder.next_frame().expect("first decoded"), Some(first));
+        assert_eq!(decoder.next_frame().expect("second decoded"), Some(second));
+        decoder.finish().expect("clean boundary");
+    }
+
+    #[test]
+    fn network_frames_reject_limits_correlation_and_wrong_streams() {
+        let opening = NetworkFrame {
+            kind: MessageKind::OpenSession,
+            correlation_id: 0,
+            payload: Vec::new(),
+        };
+        assert!(matches!(
+            encode_network_frame(&opening, Limits::default()),
+            Err(ProtocolError::InvalidCorrelationId)
+        ));
+        let oversized = NetworkFrame {
+            kind: MessageKind::Blob,
+            correlation_id: 1,
+            payload: vec![0; 16],
+        };
+        assert!(matches!(
+            encode_network_frame(
+                &oversized,
+                Limits {
+                    max_frame_bytes: 16,
+                }
+            ),
+            Err(ProtocolError::FrameTooLarge)
+        ));
+        assert!(matches!(
+            MessageKind::Submit.validate_on(StreamRole::Content),
+            Err(ProtocolError::WrongStream { .. })
+        ));
+        assert!(MessageKind::Submit.validate_on(StreamRole::Author).is_ok());
+    }
+
+    #[test]
+    fn network_decoder_rejects_declared_limit_before_payload_arrives() {
+        let mut decoder = NetworkFrameDecoder::new(Limits {
+            max_frame_bytes: 32,
+        });
+        decoder.push(&u32::MAX.to_be_bytes());
+        assert!(matches!(
+            decoder.next_frame(),
+            Err(ProtocolError::FrameTooLarge)
+        ));
+
+        let mut truncated = NetworkFrameDecoder::new(Limits::default());
+        truncated.push(&[0, 0, 0, 9, u8::from(MessageKind::Submit)]);
+        assert!(matches!(
+            truncated.finish(),
+            Err(ProtocolError::IncompleteFrame)
         ));
     }
 }

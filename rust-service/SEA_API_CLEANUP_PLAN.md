@@ -8,7 +8,7 @@
 - **Current checkpoint:** 5. Introduce the centralized network message codec.
 - **Last completed checkpoint:** 4b. Split service responsibilities.
 - **Last validation:** Checkpoint 4b formatting, strict workspace Clippy, full Rust workspace tests, counter and benchmark smoke, generated WASM/Node tests, TypeScript checks, documentation links, policy, and repository build passed on 2026-09-16.
-- **Latest checkpoint notes:** Archive creation is explicit and creates no fake author. Local, native, compression, encryption, and stateful-compression implementations use direct narrow contracts; `SeaSession` is only their marker composition. Cloned local facets share author-owned close state. Event and snapshot streams cancel on drop. Payload decorators wrap archive/author/event facets, while undecorated handles own snapshot coordination.
+- **Latest checkpoint notes:** Archive creation is explicit and creates no fake author. Local, native, compression, encryption, and stateful-compression implementations use direct narrow contracts. Checkpoint 5 assigned request kinds `1..=16`, response kinds `128..=138`, and error kind `255`; the new bounded envelope is `u32 length | u8 kind | u64 correlation | payload`. The old active transport framing remains until typed payloads and all transport paths switch.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
 - **Next checkpoint:** 5. Introduce the centralized network message codec.
@@ -519,20 +519,20 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 Commit the codec and message definitions before switching transports.
 
-- [ ] Define `MessageKind` with `#[repr(u8)]` and explicit assigned values.
-- [ ] Add fallible `u8` conversion that rejects unknown values.
+- [x] Define `MessageKind` with `#[repr(u8)]` and explicit assigned values.
+- [x] Add fallible `u8` conversion that rejects unknown values.
 - [ ] Define payload structures separately from the kind byte.
-- [ ] Implement one bounded length-delimited frame encoder and incremental decoder.
+- [x] Implement one bounded length-delimited frame encoder and incremental decoder.
 - [ ] Define a protocol-version value carried by every logical-stream opening message and reject unsupported versions before creating service state.
 - [ ] Include a correlation ID in every frame, reserve zero for unsolicited notifications, and reject invalid or mismatched correlation IDs.
-- [ ] Define which message kinds are valid on each logical stream.
-- [ ] Return a classified protocol error for a message on the wrong stream.
+- [x] Define which message kinds are valid on each logical stream.
+- [x] Return a classified protocol error for a message on the wrong stream.
 - [ ] Replace string durability with a generated enum or explicit numeric wire enum.
 - [ ] Replace load-item string kinds with explicit generated case types.
-- [ ] Add exhaustive codec, fragmentation, coalescing, limit, and wrong-stream tests.
-- [ ] Test every assigned message-kind byte and rejection of every unassigned byte.
-- [ ] Remove implicit serializer-assigned request/response case indexes from the outer wire envelope.
-- [ ] Keep the codec and message definitions WASM-compatible and free of server/storage dependencies.
+- [x] Add exhaustive codec, fragmentation, coalescing, limit, and wrong-stream tests.
+- [x] Test every assigned message-kind byte and rejection of every unassigned byte.
+- [x] Remove implicit serializer-assigned request/response case indexes from the outer wire envelope.
+- [x] Keep the codec and message definitions WASM-compatible and free of server/storage dependencies.
 - [ ] Consume the same public codec from `sea-webtransport-server` without moving server dispatch into `sea-webtransport`.
 
 Do not remove old framing in the first codec commit if doing so would make the repository unbuildable.
