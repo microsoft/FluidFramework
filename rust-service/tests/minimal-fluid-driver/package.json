@@ -31,7 +31,6 @@
 		"build:wasm": "node scripts/build-wasm.mjs",
 		"check:format": "biome format src browser scripts package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html shared-tree-benchmark-rust.html shared-tree-benchmark-local.html shared-tree-benchmark-tinylicious.html",
 		"clean": "rimraf --glob dist lib pkg \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
-		"clean:typescript": "rimraf lib tsconfig.tsbuildinfo",
 		"format": "biome format src browser scripts package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html shared-tree-benchmark-rust.html shared-tree-benchmark-local.html shared-tree-benchmark-tinylicious.html --write",
 		"lint": "biome lint src browser scripts",
 		"test": "fluid-build . --task test",
@@ -108,8 +107,7 @@
 			},
 			"build:esm": [
 				"^build:package:esm",
-				"build:wasm",
-				"clean:typescript"
+				"build:wasm"
 			],
 			"typecheck": [
 				"^build:package:esm"
