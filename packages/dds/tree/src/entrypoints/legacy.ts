@@ -149,6 +149,7 @@ export {
 	TreeIndex, 
 	TreeIndexKey, 
 	TreeIndexNodes, 
+	TreeIndexKeyFieldSelector,
 	TreeRecordNode, 
 	TreeRecordNodeUnsafe, 
 	TreeViewBeta, 

@@ -20,6 +20,9 @@ export interface WorkerExecResultWithOutput extends WorkerExecResult {
 	stderr: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Matches Node's EventEmitter listener type.
+type EventListener = (...args: any[]) => void;
+
 export class WorkerPool {
 	private readonly threadWorkerPool: Worker[] = [];
 	private readonly processWorkerPool: ChildProcess[] = [];
@@ -58,7 +61,7 @@ export class WorkerPool {
 		const installTemporaryListener = (
 			object: EventEmitter | Readable,
 			event: string,
-			handler: any,
+			handler: EventListener,
 		): void => {
 			object.on(event, handler);
 			cleanup.push(() => object.off(event, handler));
@@ -71,12 +74,12 @@ export class WorkerPool {
 			let stderr = "";
 
 			if (worker.stdout) {
-				installTemporaryListener(worker.stdout, "data", (chunk: any) => {
+				installTemporaryListener(worker.stdout, "data", (chunk: string | Buffer) => {
 					stdout += chunk;
 				});
 			}
 			if (worker.stderr) {
-				installTemporaryListener(worker.stderr, "data", (chunk: any) => {
+				installTemporaryListener(worker.stderr, "data", (chunk: string | Buffer) => {
 					stderr += chunk;
 				});
 			}

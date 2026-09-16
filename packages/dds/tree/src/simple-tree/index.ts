@@ -124,6 +124,7 @@ export {
 	type IdentifierIndex,
 	createTreeIndex,
 	createIdentifierIndex,
+	type TreeIndexKeyFieldSelector,
 	type TreeIndexKey,
 	type DirtyTreeStatus,
 	trackDirtyNodes,
