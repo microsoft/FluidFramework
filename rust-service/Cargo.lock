@@ -1288,6 +1288,7 @@ dependencies = [
  "bytes",
  "futures-core",
  "futures-util",
+ "rand_core 0.6.4",
  "sea-conformance",
  "sea-core",
  "sea-file",

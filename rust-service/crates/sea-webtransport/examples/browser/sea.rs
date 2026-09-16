@@ -36,7 +36,7 @@ use wasm_bindgen_futures::JsFuture;
 
 use crate::{AsyncRequestTransport, call_method, sea_protocol_v1 as protocol};
 use sea_webtransport::{
-    client::{Client, ClientError, ClientState, ResponseStream},
+    client::{Client, ClientError, ClientState, EventStream, ResponseStream},
     transport::{
         BidirectionalStream, ClientTransport,
         browser::{BrowserBidirectionalStream, BrowserTransport},
@@ -519,6 +519,8 @@ impl SeaInjectedStream {
 pub struct SeaInjectedClient {
     transport: Rc<RefCell<JsValue>>,
     client: Client<InjectedTransport>,
+    event_stream: RefCell<Option<EventStream<InjectedBidirectionalStream>>>,
+    resume_after: Cell<Option<u64>>,
     state: Arc<ClientState>,
     limits: protocol::Limits,
 }
@@ -1030,6 +1032,8 @@ impl SeaInjectedClient {
         Ok(Self {
             transport,
             client,
+            event_stream: RefCell::new(None),
+            resume_after: Cell::new(None),
             state,
             limits,
         })
@@ -1047,7 +1051,7 @@ impl SeaInjectedClient {
         expect_acknowledged(&response)
     }
 
-    /// Opens one archive-bound author session.
+    /// Opens one archive-bound recovery and live event stream.
     #[wasm_bindgen(js_name = openSession)]
     pub async fn open_session(
         &self,
@@ -1057,8 +1061,12 @@ impl SeaInjectedClient {
         session: Uint8Array,
         reference: Option<u64>,
     ) -> Result<(), JsValue> {
-        let response = self
-            .request(protocol::Request::OpenSession {
+        if let Some(previous) = self.event_stream.take() {
+            previous.cancel().await.map_err(client_error)?;
+        }
+        let event_stream = self
+            .client
+            .open_event_stream(protocol::Request::OpenEventStream {
                 version: protocol::PROTOCOL_VERSION,
                 archive: archive.to_vec(),
                 intent: if create {
@@ -1068,10 +1076,13 @@ impl SeaInjectedClient {
                 },
                 author: author.to_vec(),
                 session: session.to_vec(),
-                reference,
+                resume_after: reference,
             })
-            .await?;
-        expect_acknowledged(&response)
+            .await
+            .map_err(client_error)?;
+        self.resume_after.set(reference);
+        self.event_stream.replace(Some(event_stream));
+        Ok(())
     }
 
     /// Submits one event under a stable operation identity.
@@ -1299,7 +1310,19 @@ impl SeaInjectedClient {
 
     /// Opens a gap-free snapshot, catch-up, and live event stream.
     pub async fn load(&self, required: Option<u64>) -> Result<SeaInjectedStream, JsValue> {
-        self.open_stream(protocol::Request::Load { required }).await
+        if required != self.resume_after.get() {
+            return Err(js_error(
+                "load position must match the opened event stream resume position",
+            ));
+        }
+        let event_stream = self
+            .event_stream
+            .take()
+            .ok_or_else(|| js_error("Sea event stream is not open"))?;
+        Ok(SeaInjectedStream {
+            inner: RefCell::new(Some(event_stream.into_responses())),
+            cancelled: Cell::new(false),
+        })
     }
 
     /// Opens a latest-value snapshot subscription.
@@ -1434,6 +1457,10 @@ fn client_error(error: ClientError<JsValue>) -> JsValue {
         ClientError::Protocol(error) => js_error(&error.to_string()),
         ClientError::Transport(error) => error,
         ClientError::ResponseEnded => js_error("Sea response stream ended before its response"),
+        ClientError::UnexpectedResponse(protocol::Response::Error { message, .. }) => {
+            js_error(&message)
+        }
+        ClientError::UnexpectedResponse(_) => js_error("Sea response did not match its request"),
     }
 }
 

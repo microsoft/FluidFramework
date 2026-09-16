@@ -49,6 +49,12 @@ async function run() {
 		encoder.encode("browser-author"),
 		encoder.encode("browser-session"),
 	);
+	const load = await first.load();
+	const initialCaughtUp = await load.next();
+	assert(
+		initialCaughtUp.kind === SeaLoadKind.CaughtUp,
+		"load omitted its initial caught-up marker",
+	);
 	const firstReceipt = await first.submit(
 		encoder.encode("browser-operation-1"),
 		undefined,
@@ -73,7 +79,6 @@ async function run() {
 	);
 	const resolved = await first.resolveSubmission(encoder.encode("browser-operation-1"));
 	assert(resolved?.position === firstReceipt.position, "submission resolution mismatch");
-	const load = await first.load();
 	const firstLoaded = await load.next();
 	assert(firstLoaded.kind === SeaLoadKind.Event, "load omitted the first event");
 	assert(
@@ -84,12 +89,6 @@ async function run() {
 		(await load.next()).kind === SeaLoadKind.Event,
 		"load omitted the second streamed event",
 	);
-	const initialCaughtUp = await load.next();
-	assert(
-		initialCaughtUp.kind === SeaLoadKind.CaughtUp,
-		"load omitted its initial caught-up marker",
-	);
-
 	await second.openSession(
 		archive,
 		false,
@@ -97,6 +96,17 @@ async function run() {
 		encoder.encode("second-session"),
 		secondStreamedReceipt.position,
 	);
+	const secondLoad = await second.load(secondStreamedReceipt.position);
+	let secondCaughtUp;
+	for (;;) {
+		const item = await secondLoad.next();
+		if (item.kind === SeaLoadKind.CaughtUp) {
+			secondCaughtUp = item;
+			break;
+		}
+		assert(item.kind === SeaLoadKind.Event, "second event stream returned an invalid item");
+	}
+	assert(secondCaughtUp !== undefined, "second event stream omitted its caught-up marker");
 	const secondReceipt = await second.submit(
 		encoder.encode("browser-operation-2"),
 		secondStreamedReceipt.position,
@@ -146,6 +156,11 @@ async function run() {
 		encoder.encode("browser-author"),
 		encoder.encode("browser-session-reconnected"),
 		secondReceipt.position,
+	);
+	const recovered = await first.load(secondReceipt.position);
+	assert(
+		(await recovered.next()).kind === SeaLoadKind.Snapshot,
+		"reconnected event stream omitted the recovery snapshot",
 	);
 	assert((await first.latestSnapshot()) !== undefined, "reconnected snapshot lookup failed");
 

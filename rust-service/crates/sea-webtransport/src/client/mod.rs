@@ -23,6 +23,8 @@ pub enum ClientError<TransportError> {
     Transport(TransportError),
     /// A unary request ended before its response arrived.
     ResponseEnded,
+    /// An event stream did not begin with its authority response.
+    UnexpectedResponse(Response),
 }
 
 impl<TransportError> From<ClientStateError> for ClientError<TransportError> {
@@ -120,6 +122,23 @@ where
         })
     }
 
+    /// Opens an event stream and consumes its authority handshake.
+    pub async fn open_event_stream(
+        &self,
+        request: Request,
+    ) -> Result<EventStream<Transport::Stream>, ClientError<Transport::Error>> {
+        let mut responses = self.request_stream(request).await?;
+        let response = responses.next().await?.ok_or(ClientError::ResponseEnded)?;
+        let Response::EventStreamOpened { authority } = response else {
+            return Err(ClientError::UnexpectedResponse(response));
+        };
+        self.state.set_authority(authority.clone())?;
+        Ok(EventStream {
+            authority,
+            responses,
+        })
+    }
+
     /// Marks the logical client closed and rejects future requests.
     pub fn close(&self) -> Result<(), ClientStateError> {
         self.state.close()
@@ -140,6 +159,39 @@ where
     /// Re-enables requests after the caller explicitly replaces or reconnects the transport.
     pub fn reconnect(&self) -> Result<(), ClientStateError> {
         self.state.reconnect()
+    }
+}
+
+/// Open event stream after its authority handshake has completed.
+#[derive(Debug)]
+pub struct EventStream<Stream> {
+    authority: Vec<u8>,
+    responses: ResponseStream<Stream>,
+}
+
+impl<Stream> EventStream<Stream>
+where
+    Stream: BidirectionalStream,
+{
+    /// Returns the opaque authority used to bind later logical streams.
+    #[must_use]
+    pub fn authority(&self) -> &[u8] {
+        &self.authority
+    }
+
+    /// Receives the next recovery or live event-stream response.
+    pub async fn next(&mut self) -> Result<Option<Response>, ClientError<Stream::Error>> {
+        self.responses.next().await
+    }
+
+    /// Cancels this event stream and abandons its correlation.
+    pub async fn cancel(self) -> Result<(), ClientError<Stream::Error>> {
+        self.responses.cancel().await
+    }
+
+    /// Returns the recovery/live response stream after preserving its authority in client state.
+    pub fn into_responses(self) -> ResponseStream<Stream> {
+        self.responses
     }
 }
 
@@ -238,6 +290,7 @@ pub enum ClientStateError {
 #[derive(Debug)]
 struct State {
     status: ConnectionStatus,
+    authority: Option<Vec<u8>>,
     next_correlation_id: u64,
     correlations: BTreeMap<StreamRole, CorrelationTracker>,
 }
@@ -260,6 +313,7 @@ impl Default for ClientState {
         Self {
             inner: Mutex::new(State {
                 status: ConnectionStatus::Connected,
+                authority: None,
                 next_correlation_id: 1,
                 correlations: BTreeMap::new(),
             }),
@@ -298,6 +352,7 @@ impl ClientState {
     pub fn close(&self) -> Result<(), ClientStateError> {
         let mut state = self.inner.lock().map_err(|_| ClientStateError::Poisoned)?;
         state.status = ConnectionStatus::Closed;
+        state.authority = None;
         state.correlations.clear();
         Ok(())
     }
@@ -307,6 +362,7 @@ impl ClientState {
         let mut state = self.inner.lock().map_err(|_| ClientStateError::Poisoned)?;
         if state.status != ConnectionStatus::Closed {
             state.status = ConnectionStatus::Disconnected;
+            state.authority = None;
             state.correlations.clear();
         }
         Ok(())
@@ -342,6 +398,12 @@ impl ClientState {
             .entry(role)
             .or_default()
             .complete(correlation_id)?;
+        Ok(())
+    }
+
+    fn set_authority(&self, authority: Vec<u8>) -> Result<(), ClientStateError> {
+        let mut state = self.inner.lock().map_err(|_| ClientStateError::Poisoned)?;
+        state.authority = Some(authority);
         Ok(())
     }
 
@@ -561,5 +623,44 @@ mod tests {
             Some(Response::CaughtUp(Some(2)))
         );
         assert_eq!(responses.next().await.expect("stream EOF"), None);
+
+        let opened = protocol::encode_response_frame(
+            StreamRole::Event,
+            1,
+            &Response::EventStreamOpened {
+                authority: vec![9; 32],
+            },
+            limits,
+        )
+        .expect("event stream opening");
+        let caught_up = protocol::encode_response_frame(
+            StreamRole::Event,
+            1,
+            &Response::CaughtUp(Some(2)),
+            limits,
+        )
+        .expect("event stream item");
+        let event_client = Client::new(
+            ScriptedTransport {
+                chunks: vec![[opened, caught_up].concat()],
+            },
+            limits,
+        );
+        let mut event_stream = event_client
+            .open_event_stream(Request::OpenEventStream {
+                version: protocol::PROTOCOL_VERSION,
+                archive: b"archive".to_vec(),
+                intent: protocol::ArchiveIntent::Open,
+                author: b"author".to_vec(),
+                session: b"session".to_vec(),
+                resume_after: Some(1),
+            })
+            .await
+            .expect("event stream");
+        assert_eq!(event_stream.authority(), &[9; 32]);
+        assert_eq!(
+            event_stream.next().await.expect("event item"),
+            Some(Response::CaughtUp(Some(2)))
+        );
     }
 }

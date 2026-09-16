@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 6b. Event stream.
-- **Last completed checkpoint:** 6a. Establish the shared client.
-- **Last validation:** Checkpoint 6a formatting, paired client/server tests, strict native and WASM Clippy, generated WASM/Node behavior, TypeScript typecheck, and the real Chromium 152 WebTransport flow passed on 2026-09-16.
-- **Latest checkpoint notes:** Platform-independent `Client` and `ClientState` own request encoding, incremental response decoding, per-role correlation, stream cancellation, explicit connected/disconnected/closed transitions, and recovery admission. Native and browser modules implement only connection and bidirectional byte-stream primitives. Native Rust and injected WASM clients delegate unary and response-stream behavior to the shared engine. The temporary `SEAS` author stream remains isolated until checkpoint 6c.
+- **Current checkpoint:** 6c. Author stream.
+- **Last completed checkpoint:** 6b. Event stream.
+- **Last validation:** Checkpoint 6b formatting, paired client/server tests, strict native and WASM Clippy, generated WASM/Node behavior, TypeScript typecheck, and the real Chromium 152 WebTransport flow passed on 2026-09-16.
+- **Latest checkpoint notes:** `OpenEventStream` now carries explicit archive intent and the resume/loading boundary. The server atomically opens the underlying session and recovery stream, returns a fresh 256-bit opaque authority first, and then delivers snapshot selection, finite catch-up, `CaughtUp`, and live events. Native and injected WASM clients use the same authority-first event-stream state machine. The temporary postcard `OpenSession`, `Load`, and `SEAS` paths remain only for raw/local support pending their planned removal in checkpoints 6c and 6f.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 6b. Event stream.
+- **Next checkpoint:** 6c. Author stream.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -562,10 +562,10 @@ Do not retain the old per-operation implementation after its final consumer move
 
 #### 6b. Event stream
 
-- [ ] Open with an `OpenEventStream` message carrying archive, resume position, and loading hints.
-- [ ] Make archive create versus open-existing intent explicit and return the opaque session authority that binds later logical streams.
-- [ ] Preserve atomic snapshot selection, finite catch-up, caught-up marker, and live continuation.
-- [ ] Implement event-stream behavior once in the shared client and exercise it through native and browser transport primitives and the separate server crate.
+- [x] Open with an `OpenEventStream` message carrying archive, resume position, and loading hints.
+- [x] Make archive create versus open-existing intent explicit and return the opaque session authority that binds later logical streams.
+- [x] Preserve atomic snapshot selection, finite catch-up, caught-up marker, and live continuation.
+- [x] Implement event-stream behavior once in the shared client and exercise it through native and browser transport primitives and the separate server crate.
 
 #### 6c. Author stream
 

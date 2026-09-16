@@ -15,14 +15,14 @@ use sea_core::{
         SnapshotPosition, SnapshotPublication,
     },
 };
-use tokio::time::timeout;
+use tokio::{sync::Mutex, time::timeout};
 use wtransport::tls::Sha256Digest;
 
 use crate::{
     TransportConfig, WebTransportError,
-    client::{Client, ClientError, ClientStateError},
+    client::{Client, ClientError, ClientStateError, EventStream},
     connect_once, protocol,
-    transport::native::NativeTransport,
+    transport::native::{NativeBidirectionalStream, NativeTransport},
 };
 
 /// Failure from a native typed Sea client.
@@ -110,6 +110,7 @@ impl From<ClientError<WebTransportError>> for SeaClientError {
             ClientError::Protocol(error) => error.into(),
             ClientError::Transport(error) => error.into(),
             ClientError::ResponseEnded => WebTransportError::Disconnected.into(),
+            ClientError::UnexpectedResponse(response) => response_error(response),
         }
     }
 }
@@ -117,6 +118,8 @@ impl From<ClientError<WebTransportError>> for SeaClientError {
 /// Native WebTransport client bound to one open Sea archive session.
 pub struct NativeSeaClient {
     client: Client<NativeTransport>,
+    event_stream: Mutex<Option<EventStream<NativeBidirectionalStream>>>,
+    resume_after: Option<EventPosition>,
     operation_timeout: std::time::Duration,
 }
 
@@ -150,29 +153,32 @@ impl NativeSeaClient {
         let url = url.into();
         let (endpoint, connection) =
             connect_once(&url, certificate_hash, config.operation_timeout).await?;
-        let client = Self {
-            client: Client::new(
-                NativeTransport::new(endpoint, connection),
-                protocol::Limits {
-                    max_frame_bytes: config.max_frame_bytes,
-                },
-            ),
-            operation_timeout: config.operation_timeout,
-        };
-        match client
-            .request(protocol::Request::OpenSession {
+        let client = Client::new(
+            NativeTransport::new(endpoint, connection),
+            protocol::Limits {
+                max_frame_bytes: config.max_frame_bytes,
+            },
+        );
+        let resume_after = open.reference;
+        let event_stream = timeout(
+            config.operation_timeout,
+            client.open_event_stream(protocol::Request::OpenEventStream {
                 version: protocol::PROTOCOL_VERSION,
                 archive: open.archive.to_vec(),
                 intent: open.intent,
                 author: open.author.as_bytes().to_vec(),
                 session: open.session.as_bytes().to_vec(),
-                reference: open.reference.map(EventPosition::get),
-            })
-            .await?
-        {
-            protocol::Response::Acknowledged => Ok(client),
-            response => Err(response_error(response)),
-        }
+                resume_after: resume_after.map(EventPosition::get),
+            }),
+        )
+        .await
+        .map_err(|_| WebTransportError::Timeout)??;
+        Ok(Self {
+            client,
+            event_stream: Mutex::new(Some(event_stream)),
+            resume_after,
+            operation_timeout: config.operation_timeout,
+        })
     }
 
     async fn request(
@@ -217,11 +223,24 @@ impl SeaEventSubscription for NativeSeaClient {
         &self,
         required: Option<EventPosition>,
     ) -> Result<SessionStream<LoadEvent, Self::Error>, Self::Error> {
-        let stream = self
-            .stream_request(protocol::Request::Load {
-                required: required.map(EventPosition::get),
-            })
-            .await?;
+        if required != self.resume_after {
+            return Err(SeaClientError::UnexpectedResponse);
+        }
+        let responses = self
+            .event_stream
+            .lock()
+            .await
+            .take()
+            .ok_or(SeaClientError::UnexpectedResponse)?
+            .into_responses();
+        let stream: SessionStream<protocol::Response, SeaClientError> =
+            Box::pin(stream::try_unfold(responses, |mut responses| async move {
+                Ok(responses
+                    .next()
+                    .await
+                    .map_err(SeaClientError::from)?
+                    .map(|response| (response, responses)))
+            }));
         Ok(Box::pin(
             stream.map(|result| result.and_then(load_from_wire)),
         ))

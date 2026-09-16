@@ -102,6 +102,27 @@ where
             }),
         }
     }
+
+    async fn event_stream(
+        &self,
+        resume_after: Option<u64>,
+    ) -> Result<SeaResponseStream, protocol::Response> {
+        let stream = self
+            .session
+            .load(resume_after.map(EventPosition::new))
+            .await
+            .map_err(error_response)?;
+        Ok(Box::pin(stream.map(|item| match item {
+            Ok(LoadEvent::Snapshot(snapshot)) => {
+                protocol::Response::LoadSnapshot(snapshot_to_wire(snapshot))
+            }
+            Ok(LoadEvent::Event(event)) => session_event_to_wire(&event),
+            Ok(LoadEvent::CaughtUp(head)) => {
+                protocol::Response::CaughtUp(head.map(EventPosition::get))
+            }
+            Err(error) => error_response(error),
+        })))
+    }
 }
 
 impl<S> SessionDispatcher<S>
@@ -202,6 +223,7 @@ where
             }
             protocol::Request::CreateArchive { .. }
             | protocol::Request::OpenSession { .. }
+            | protocol::Request::OpenEventStream { .. }
             | protocol::Request::Read { .. }
             | protocol::Request::Load { .. }
             | protocol::Request::SubscribeSnapshots => Err(invalid(

@@ -251,6 +251,12 @@ pub trait SeaConnectionService: Send + Sync {
     /// Opens one server-to-client response stream.
     async fn stream(&self, request: sea_v1::Request)
     -> Result<SeaResponseStream, sea_v1::Response>;
+
+    /// Opens the gap-free recovery and live event stream for an established session.
+    async fn event_stream(
+        &self,
+        resume_after: Option<u64>,
+    ) -> Result<SeaResponseStream, sea_v1::Response>;
 }
 
 /// Creates isolated Sea protocol state for each WebTransport connection.
@@ -439,7 +445,8 @@ async fn serve_connection(
                 });
             }
             result = streams.next(), if !streams.is_empty() => {
-                if matches!(result, Some(Err(_))) {
+                if let Some(Err(error)) = result {
+                    eprintln!("Sea stream failed: {error}");
                     return Ok(());
                 }
             }
@@ -479,7 +486,8 @@ async fn serve_sea_stream(
     let request_id = frame.request_id;
     if matches!(
         frame.message,
-        sea_v1::Request::Load { .. }
+        sea_v1::Request::OpenEventStream { .. }
+            | sea_v1::Request::Load { .. }
             | sea_v1::Request::Read { .. }
             | sea_v1::Request::SubscribeSnapshots
     ) {
@@ -561,7 +569,8 @@ async fn serve_network_stream(
     metrics.add_wire_bytes(4 + 1 + 8 + frame.payload.len());
     if matches!(
         request,
-        sea_v1::Request::Load { .. }
+        sea_v1::Request::OpenEventStream { .. }
+            | sea_v1::Request::Load { .. }
             | sea_v1::Request::Read { .. }
             | sea_v1::Request::SubscribeSnapshots
     ) {

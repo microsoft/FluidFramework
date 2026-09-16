@@ -4,6 +4,8 @@ use std::{collections::BTreeMap, path::PathBuf, sync::Arc};
 
 use async_trait::async_trait;
 use bytes::Bytes;
+use futures_util::{StreamExt as _, stream};
+use rand_core::{OsRng, RngCore as _};
 use sea_core::{
     ClassifiedError, ErrorKind, EventPosition,
     archive::{AuthorId, SessionId},
@@ -201,7 +203,12 @@ impl SeaServiceHost for BuiltInSeaHost {
 
 struct HostedConnection {
     host: BuiltInSeaHost,
-    session: Mutex<Option<Arc<dyn SeaConnectionService>>>,
+    session: Mutex<Option<HostedSession>>,
+}
+
+struct HostedSession {
+    authority: Vec<u8>,
+    service: Arc<dyn SeaConnectionService>,
 }
 
 #[async_trait]
@@ -240,7 +247,7 @@ impl SeaConnectionService for HostedConnection {
             };
             let mut current = self.session.lock().await;
             if let Some(previous) = current.take() {
-                let _ = previous.request(protocol::Request::Close).await;
+                let _ = previous.service.request(protocol::Request::Close).await;
             }
             match self
                 .host
@@ -254,7 +261,10 @@ impl SeaConnectionService for HostedConnection {
                 .await
             {
                 Ok(session) => {
-                    *current = Some(session);
+                    *current = Some(HostedSession {
+                        authority: new_authority(),
+                        service: session,
+                    });
                     protocol::Response::Acknowledged
                 }
                 Err(error) => error,
@@ -262,7 +272,7 @@ impl SeaConnectionService for HostedConnection {
         } else {
             let session = self.session.lock().await.clone();
             match session {
-                Some(session) => session.request(request).await,
+                Some(session) => session.service.request(request).await,
                 None => invalid("OpenSession is required before session operations"),
             }
         }
@@ -272,11 +282,83 @@ impl SeaConnectionService for HostedConnection {
         &self,
         request: protocol::Request,
     ) -> Result<SeaResponseStream, protocol::Response> {
+        if let protocol::Request::OpenEventStream {
+            version,
+            archive,
+            intent,
+            author,
+            session,
+            resume_after,
+        } = request
+        {
+            if version != protocol::PROTOCOL_VERSION {
+                return Err(unsupported_version(version));
+            }
+            let author = AuthorId::new(Bytes::from(author))
+                .map_err(|_| invalid("author identity is empty"))?;
+            let session_id = SessionId::new(Bytes::from(session))
+                .map_err(|_| invalid("session identity is empty"))?;
+            let mut current = self.session.lock().await;
+            if let Some(previous) = current.take() {
+                let _ = previous.service.request(protocol::Request::Close).await;
+            }
+            let service = self
+                .host
+                .open_session(
+                    archive,
+                    intent,
+                    author,
+                    session_id,
+                    resume_after.map(EventPosition::new),
+                )
+                .await?;
+            let authority = new_authority();
+            *current = Some(HostedSession {
+                authority: authority.clone(),
+                service: Arc::clone(&service),
+            });
+            let opened =
+                stream::once(async move { protocol::Response::EventStreamOpened { authority } });
+            let recovery = stream::once(open_recovery_stream(service, resume_after)).flatten();
+            return Ok(Box::pin(opened.chain(recovery)));
+        }
         let session = self.session.lock().await.clone();
         match session {
-            Some(session) => session.stream(request).await,
+            Some(session) => session.service.stream(request).await,
             None => Err(invalid("OpenSession is required before session streams")),
         }
+    }
+
+    async fn event_stream(
+        &self,
+        _resume_after: Option<u64>,
+    ) -> Result<SeaResponseStream, protocol::Response> {
+        Err(invalid("event stream must be opened with OpenEventStream"))
+    }
+}
+
+impl Clone for HostedSession {
+    fn clone(&self) -> Self {
+        Self {
+            authority: self.authority.clone(),
+            service: Arc::clone(&self.service),
+        }
+    }
+}
+
+fn new_authority() -> Vec<u8> {
+    let mut authority = vec![0_u8; 32];
+    OsRng.fill_bytes(&mut authority);
+    authority
+}
+
+async fn open_recovery_stream(
+    service: Arc<dyn SeaConnectionService>,
+    resume_after: Option<u64>,
+) -> SeaResponseStream {
+    match service.event_stream(resume_after).await {
+        Ok(stream) => stream,
+        Err(response) => Box::pin(stream::once(async move { response })),
     }
 }
 
@@ -344,11 +426,12 @@ mod tests {
     use std::{collections::BTreeMap, net::SocketAddr, sync::Arc, time::Duration};
 
     use bytes::Bytes;
+    use futures_util::StreamExt as _;
     use sea_core::{
-        BlobDirectory, BlobTreeId,
+        BlobDirectory, BlobTreeId, Event,
         archive::{
-            AuthorId, EventReceipt, OperationId, SeaArchive, SeaAuthorSession,
-            SeaSnapshotCoordinator, SessionId,
+            AuthorId, EventReceipt, EventSubmission, LoadEvent, OperationId, SeaArchive,
+            SeaAuthorSession, SeaEventSubscription, SeaSnapshotCoordinator, SessionId,
         },
     };
     use sea_webtransport::{
@@ -438,6 +521,59 @@ mod tests {
         }
     }
 
+    #[tokio::test]
+    async fn event_stream_returns_distinct_authority_before_recovery() {
+        let root = std::env::temp_dir().join(format!(
+            "sea-webtransport-event-open-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&root);
+        let host = BuiltInSeaHost::new(root.clone(), StorageMode::Memory);
+        let first = host.connect();
+        let mut first_stream = first
+            .stream(protocol::Request::OpenEventStream {
+                version: protocol::PROTOCOL_VERSION,
+                archive: b"archive".to_vec(),
+                intent: protocol::ArchiveIntent::Create,
+                author: b"first-author".to_vec(),
+                session: b"first-session".to_vec(),
+                resume_after: None,
+            })
+            .await
+            .expect("first event stream");
+        let protocol::Response::EventStreamOpened { authority: first } =
+            first_stream.next().await.expect("opening authority")
+        else {
+            panic!("event stream must return its authority first");
+        };
+        assert_eq!(first.len(), 32);
+        assert!(matches!(
+            first_stream.next().await,
+            Some(protocol::Response::CaughtUp(Some(_)))
+        ));
+
+        let second = host.connect();
+        let mut second_stream = second
+            .stream(protocol::Request::OpenEventStream {
+                version: protocol::PROTOCOL_VERSION,
+                archive: b"archive".to_vec(),
+                intent: protocol::ArchiveIntent::Open,
+                author: b"second-author".to_vec(),
+                session: b"second-session".to_vec(),
+                resume_after: None,
+            })
+            .await
+            .expect("second event stream");
+        let protocol::Response::EventStreamOpened { authority: second } =
+            second_stream.next().await.expect("second authority")
+        else {
+            panic!("event stream must return its authority first");
+        };
+        assert_eq!(second.len(), 32);
+        assert_ne!(first, second);
+        let _ = std::fs::remove_dir_all(root);
+    }
+
     async fn open_hosted_session(
         host: &BuiltInSeaHost,
         intent: protocol::ArchiveIntent,
@@ -514,7 +650,27 @@ mod tests {
             )
             .await
             .unwrap();
-            sea_conformance::run_sea_session_observable_behavior(&client).await;
+            let mut events = client.load(None).await.unwrap();
+            assert!(matches!(
+                events.next().await.unwrap().unwrap(),
+                LoadEvent::CaughtUp(Some(_))
+            ));
+            let receipt = client
+                .submit(EventSubmission {
+                    operation_id: OperationId::new(Bytes::from_static(b"native-event")).unwrap(),
+                    reference: None,
+                    event: Event {
+                        payload: Bytes::from_static(b"native-payload"),
+                        blob_tree: None,
+                    },
+                })
+                .await
+                .unwrap();
+            assert!(matches!(
+                events.next().await.unwrap().unwrap(),
+                LoadEvent::Event(event) if event.committed.position == receipt.position
+            ));
+            client.close().await.unwrap();
             shutdown
                 .shutdown(ShutdownMode::Drain {
                     timeout: Duration::from_secs(2),

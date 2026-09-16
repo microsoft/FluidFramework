@@ -28,6 +28,7 @@ pub enum MessageKind {
     Load = 14,
     SubscribeSnapshots = 15,
     Close = 16,
+    OpenEventStream = 17,
     Acknowledged = 128,
     EventCommitted = 129,
     SubmissionResolved = 130,
@@ -39,6 +40,7 @@ pub enum MessageKind {
     LoadSnapshot = 136,
     LoadEvent = 137,
     CaughtUp = 138,
+    EventStreamOpened = 139,
     Error = 255,
 }
 
@@ -63,6 +65,7 @@ impl TryFrom<u8> for MessageKind {
             14 => Ok(Self::Load),
             15 => Ok(Self::SubscribeSnapshots),
             16 => Ok(Self::Close),
+            17 => Ok(Self::OpenEventStream),
             128 => Ok(Self::Acknowledged),
             129 => Ok(Self::EventCommitted),
             130 => Ok(Self::SubmissionResolved),
@@ -74,6 +77,7 @@ impl TryFrom<u8> for MessageKind {
             136 => Ok(Self::LoadSnapshot),
             137 => Ok(Self::LoadEvent),
             138 => Ok(Self::CaughtUp),
+            139 => Ok(Self::EventStreamOpened),
             255 => Ok(Self::Error),
             _ => Err(ProtocolError::UnknownMessageKind(value)),
         }
@@ -98,7 +102,7 @@ pub enum StreamRole {
 
 impl MessageKind {
     /// Every assigned message kind in numeric order.
-    pub const ALL: [Self; 28] = [
+    pub const ALL: [Self; 30] = [
         Self::CreateArchive,
         Self::OpenSession,
         Self::Submit,
@@ -115,6 +119,7 @@ impl MessageKind {
         Self::Load,
         Self::SubscribeSnapshots,
         Self::Close,
+        Self::OpenEventStream,
         Self::Acknowledged,
         Self::EventCommitted,
         Self::SubmissionResolved,
@@ -126,6 +131,7 @@ impl MessageKind {
         Self::LoadSnapshot,
         Self::LoadEvent,
         Self::CaughtUp,
+        Self::EventStreamOpened,
         Self::Error,
     ];
 
@@ -140,10 +146,12 @@ impl MessageKind {
             StreamRole::Event => matches!(
                 self,
                 Kind::OpenSession
+                    | Kind::OpenEventStream
                     | Kind::Load
                     | Kind::LoadSnapshot
                     | Kind::LoadEvent
                     | Kind::CaughtUp
+                    | Kind::EventStreamOpened
                     | Kind::Acknowledged
                     | Kind::Error
             ),
@@ -193,7 +201,7 @@ impl MessageKind {
     pub const fn request_role(self) -> Option<StreamRole> {
         match self {
             Self::CreateArchive => Some(StreamRole::Control),
-            Self::OpenSession | Self::Load => Some(StreamRole::Event),
+            Self::OpenSession | Self::Load | Self::OpenEventStream => Some(StreamRole::Event),
             Self::Submit | Self::ResolveSubmission | Self::Close => Some(StreamRole::Author),
             Self::Read
             | Self::PutBlob
@@ -567,6 +575,23 @@ pub mod payload {
         pub reference: Option<u64>,
     }
 
+    /// Archive-bound event-stream opening payload.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct OpenEventStream {
+        pub version: u16,
+        pub archive: Vec<u8>,
+        pub intent: ArchiveIntent,
+        pub author: Vec<u8>,
+        pub session: Vec<u8>,
+        pub resume_after: Option<u64>,
+    }
+
+    /// Opaque authority returned when an event stream opens.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct EventStreamOpened {
+        pub authority: Vec<u8>,
+    }
+
     /// Ordered event submission payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct Submit {
@@ -789,6 +814,21 @@ pub enum Request {
     SubscribeSnapshots,
     /// Explicitly closes the logical session.
     Close,
+    /// Opens the archive-bound recovery and live event stream.
+    OpenEventStream {
+        /// Protocol version proposed before archive state is created.
+        version: u16,
+        /// Archive selected for this logical connection.
+        archive: Vec<u8>,
+        /// Explicit archive lifecycle intent.
+        intent: ArchiveIntent,
+        /// Stable author identity used by the later author stream.
+        author: Vec<u8>,
+        /// Fresh logical session identity.
+        session: Vec<u8>,
+        /// Latest event already incorporated by this client.
+        resume_after: Option<u64>,
+    },
 }
 
 /// One response or streamed result from a Sea session.
@@ -839,6 +879,11 @@ pub enum Response {
         /// Human-readable diagnostic.
         message: String,
     },
+    /// The event stream opened with this opaque logical-session authority.
+    EventStreamOpened {
+        /// Capability required to bind later logical streams.
+        authority: Vec<u8>,
+    },
 }
 
 impl Request {
@@ -848,6 +893,7 @@ impl Request {
         match self {
             Self::CreateArchive { .. } => MessageKind::CreateArchive,
             Self::OpenSession { .. } => MessageKind::OpenSession,
+            Self::OpenEventStream { .. } => MessageKind::OpenEventStream,
             Self::Submit { .. } => MessageKind::Submit,
             Self::ResolveSubmission { .. } => MessageKind::ResolveSubmission,
             Self::Read { .. } => MessageKind::Read,
@@ -870,7 +916,9 @@ impl Request {
     pub const fn stream_role(&self) -> StreamRole {
         match self {
             Self::CreateArchive { .. } => StreamRole::Control,
-            Self::OpenSession { .. } | Self::Load { .. } => StreamRole::Event,
+            Self::OpenSession { .. } | Self::OpenEventStream { .. } | Self::Load { .. } => {
+                StreamRole::Event
+            }
             Self::Submit { .. } | Self::ResolveSubmission { .. } | Self::Close => {
                 StreamRole::Author
             }
@@ -894,6 +942,7 @@ impl Response {
     pub const fn kind(&self) -> MessageKind {
         match self {
             Self::Acknowledged => MessageKind::Acknowledged,
+            Self::EventStreamOpened { .. } => MessageKind::EventStreamOpened,
             Self::EventCommitted { .. } => MessageKind::EventCommitted,
             Self::SubmissionResolved { .. } => MessageKind::SubmissionResolved,
             Self::BlobStored { .. } => MessageKind::BlobStored,
@@ -975,6 +1024,27 @@ pub fn encode_request_frame(
                 author: author.clone(),
                 session: session.clone(),
                 reference: *reference,
+            },
+            limits,
+        ),
+        Request::OpenEventStream {
+            version,
+            archive,
+            intent,
+            author,
+            session,
+            resume_after,
+        } => encode_typed_payload(
+            role,
+            request.kind(),
+            correlation_id,
+            &wire::OpenEventStream {
+                version: *version,
+                archive: archive.clone(),
+                intent: *intent,
+                author: author.clone(),
+                session: session.clone(),
+                resume_after: *resume_after,
             },
             limits,
         ),
@@ -1117,6 +1187,17 @@ pub fn decode_request_frame(
                 reference: value.reference,
             }
         }
+        MessageKind::OpenEventStream => {
+            let value: wire::OpenEventStream = decode_typed_payload(frame)?;
+            Request::OpenEventStream {
+                version: value.version,
+                archive: value.archive,
+                intent: value.intent,
+                author: value.author,
+                session: value.session,
+                resume_after: value.resume_after,
+            }
+        }
         MessageKind::Submit => {
             let value: wire::Submit = decode_typed_payload(frame)?;
             Request::Submit {
@@ -1216,6 +1297,15 @@ pub fn encode_response_frame(
         Response::Acknowledged => {
             encode_typed_payload(role, response.kind(), correlation_id, &wire::Empty, limits)
         }
+        Response::EventStreamOpened { authority } => encode_typed_payload(
+            role,
+            response.kind(),
+            correlation_id,
+            &wire::EventStreamOpened {
+                authority: authority.clone(),
+            },
+            limits,
+        ),
         Response::EventCommitted {
             position,
             durability,
@@ -1340,6 +1430,12 @@ pub fn decode_response_network_frame(
         MessageKind::Acknowledged => {
             let _: wire::Empty = decode_typed_payload(frame)?;
             Response::Acknowledged
+        }
+        MessageKind::EventStreamOpened => {
+            let value: wire::EventStreamOpened = decode_typed_payload(frame)?;
+            Response::EventStreamOpened {
+                authority: value.authority,
+            }
         }
         MessageKind::EventCommitted => {
             let value: wire::EventCommitted = decode_typed_payload(frame)?;
@@ -1750,6 +1846,17 @@ mod tests {
                 },
             ),
             (
+                StreamRole::Event,
+                Request::OpenEventStream {
+                    version: PROTOCOL_VERSION,
+                    archive: b"archive".to_vec(),
+                    intent: ArchiveIntent::Open,
+                    author: b"author".to_vec(),
+                    session: b"session".to_vec(),
+                    resume_after: Some(1),
+                },
+            ),
+            (
                 StreamRole::Author,
                 Request::Submit {
                     operation: b"operation".to_vec(),
@@ -1835,6 +1942,12 @@ mod tests {
         };
         let cases = vec![
             (StreamRole::Control, Response::Acknowledged),
+            (
+                StreamRole::Event,
+                Response::EventStreamOpened {
+                    authority: vec![7; 32],
+                },
+            ),
             (
                 StreamRole::Author,
                 Response::EventCommitted {

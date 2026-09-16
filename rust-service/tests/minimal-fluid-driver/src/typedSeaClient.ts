@@ -136,6 +136,8 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 	private readonly operationLocalSequences = new Map<string, bigint>();
 	private nextSequence = 1n;
 	private submissionStream: GeneratedSeaSubmissionStream<TTree> | undefined;
+	private eventStream: GeneratedSeaStream | undefined;
+	private eventResumeAfter: bigint | undefined;
 
 	public constructor(
 		private readonly client: GeneratedSeaClient<TTree>,
@@ -159,13 +161,17 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 		resumeAfter?: Uint8Array,
 	): Promise<void> {
 		await this.closeSubmissionStream();
+		await this.closeEventStream();
+		const reference = decodePosition(resumeAfter);
 		await this.client.openSession(
 			document,
 			false,
 			writer,
 			session,
-			decodePosition(resumeAfter),
+			reference,
 		);
+		this.eventStream = await this.client.load(reference);
+		this.eventResumeAfter = reference;
 		this.submissionStream = await this.client.openSubmissionStream?.();
 	}
 
@@ -267,7 +273,14 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 		_document: Uint8Array,
 		after?: Uint8Array,
 	): Promise<ProjectedOperationSubscription> {
-		const stream = await this.client.load(decodePosition(after));
+		if (decodePosition(after) !== this.eventResumeAfter) {
+			throw new Error("Sea subscription position does not match its opened event stream");
+		}
+		const stream = this.eventStream;
+		if (stream === undefined) {
+			throw new Error("Sea event stream is not open");
+		}
+		this.eventStream = undefined;
 		return {
 			next: async () => {
 				for (;;) {
@@ -331,6 +344,7 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 
 	public disconnect(): void {
 		void this.closeSubmissionStream();
+		void this.closeEventStream();
 		this.client.disconnect();
 	}
 
@@ -353,6 +367,13 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 		const stream = this.submissionStream;
 		this.submissionStream = undefined;
 		await stream?.close();
+	}
+
+	private async closeEventStream(): Promise<void> {
+		const stream = this.eventStream;
+		this.eventStream = undefined;
+		this.eventResumeAfter = undefined;
+		await stream?.cancel();
 	}
 
 	private project(item: GeneratedSeaLoadItem): ProjectedOperation {
