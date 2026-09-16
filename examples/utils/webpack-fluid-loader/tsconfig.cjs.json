@@ -3,9 +3,12 @@
 	"extends": "./tsconfig.json",
 	// These exclusions are a kludge to skip checking ESM-specific code that uses import.meta.
 	// This config is only used for checking require-esm support - basically no
-	// top-level await. Ideally there would instead be a linter rule, but no such
-	// rule appears to exist for eslint as of 2026-08-27. (oxlint has one.)
-	// And it is sad that we are excluding ESM-targeting files.
+	// top-level await. The repository does not currently use a dedicated lint rule for this, though
+	// eslint-plugin-es-x provides one:
+	// https://eslint-community.github.io/eslint-plugin-es-x/rules/no-top-level-await.html
+	// PR 28235 migrates webpack-fluid-loader and all of its consumer webpack configurations to ESM,
+	// then removes this CommonJS compatibility check and its exclusions:
+	// https://github.com/microsoft/FluidFramework/pull/28235
 	"exclude": ["src/index.ts", "src/routes.ts", "src/appConfig.ts", "src/test/**/*"],
 	"compilerOptions": {
 		"noEmit": true,
