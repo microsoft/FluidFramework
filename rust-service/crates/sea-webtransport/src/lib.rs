@@ -36,6 +36,7 @@ use wtransport::{
 use crate::protocol as sea_v1;
 
 pub(crate) const CLOSE_CODE: VarInt = VarInt::from_u32(1);
+const SUBMISSION_STREAM_MAGIC: [u8; 4] = *b"SEAS";
 
 /// Point-in-time transport activity and high-water measurements.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -447,8 +448,8 @@ async fn serve_connection(
                 });
             }
             result = streams.next(), if !streams.is_empty() => {
-                if let Some(result) = result {
-                    result?;
+                if matches!(result, Some(Err(_))) {
+                    return Ok(());
                 }
             }
         }
@@ -462,9 +463,17 @@ async fn serve_sea_stream(
     config: &TransportConfig,
     metrics: &Metrics,
 ) -> Result<(), WebTransportError> {
+    let mut prefix = [0_u8; SUBMISSION_STREAM_MAGIC.len()];
+    timeout(config.operation_timeout, receive.read_exact(&mut prefix))
+        .await
+        .map_err(|_| WebTransportError::Timeout)?
+        .map_err(transport_error)?;
+    if prefix == SUBMISSION_STREAM_MAGIC {
+        return serve_submission_stream(send, receive, service, config, metrics).await;
+    }
     let request_bytes = timeout(
         config.operation_timeout,
-        read_sea_unary_frame(&mut receive, config.max_frame_bytes),
+        read_sea_unary_frame_with_prefix(&mut receive, &prefix, config.max_frame_bytes),
     )
     .await
     .map_err(|_| WebTransportError::Timeout)??;
@@ -527,6 +536,48 @@ async fn serve_sea_stream(
         metrics,
     )
     .await
+}
+
+async fn serve_submission_stream(
+    mut send: wtransport::SendStream,
+    mut receive: wtransport::RecvStream,
+    service: Arc<dyn SeaConnectionService>,
+    config: &TransportConfig,
+    metrics: &Metrics,
+) -> Result<(), WebTransportError> {
+    let limits = sea_v1::Limits {
+        max_frame_bytes: config.max_frame_bytes,
+    };
+    loop {
+        let Some(request_bytes) = timeout(
+            config.operation_timeout,
+            read_sea_stream_frame(&mut receive, config.max_frame_bytes),
+        )
+        .await
+        .map_err(|_| WebTransportError::Timeout)??
+        else {
+            return Ok(());
+        };
+        metrics.add_wire_bytes(request_bytes.len());
+        let frame = sea_v1::decode::<sea_v1::Frame<sea_v1::Request>>(&request_bytes, limits)?;
+        let response = if matches!(frame.message, sea_v1::Request::Submit { .. }) {
+            service.request(frame.message).await
+        } else {
+            sea_v1::Response::Error {
+                kind: sea_v1::ErrorKind::Rejected,
+                message: "submission stream accepts only submit requests".to_owned(),
+            }
+        };
+        let response = sea_v1::encode(
+            &sea_v1::Frame {
+                request_id: frame.request_id,
+                message: response,
+            },
+            limits,
+        )?;
+        write_sea_stream_frame(&mut send, &response, config.operation_timeout).await?;
+        metrics.add_wire_bytes(response.len());
+    }
 }
 
 async fn write_unary_response(
@@ -601,7 +652,18 @@ pub(crate) async fn read_sea_unary_frame(
     receive: &mut wtransport::RecvStream,
     max_frame_bytes: usize,
 ) -> Result<Bytes, WebTransportError> {
-    let mut bytes = Vec::new();
+    read_sea_unary_frame_with_prefix(receive, &[], max_frame_bytes).await
+}
+
+async fn read_sea_unary_frame_with_prefix(
+    receive: &mut wtransport::RecvStream,
+    prefix: &[u8],
+    max_frame_bytes: usize,
+) -> Result<Bytes, WebTransportError> {
+    if prefix.len() > max_frame_bytes {
+        return Err(WebTransportError::FrameTooLarge);
+    }
+    let mut bytes = prefix.to_vec();
     let mut buffer = [0_u8; 8192];
     while let Some(count) = receive.read(&mut buffer).await.map_err(transport_error)? {
         let next_length = bytes

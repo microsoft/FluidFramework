@@ -17,6 +17,6 @@ node tests/webtransport-browser/run-headless.mjs tests/webtransport-browser \
   "$(cat tests/webtransport-browser/.certs/cert.sha256)"
 ```
 
-The browser flow exercises archive/session operations, gap-free load, live events, blob and directory round trips, snapshots, explicit disconnect, and reconnect against the native service.
+The browser flow exercises archive/session operations, multiple ordered submissions on one event-author stream, gap-free load, live events, blob and directory round trips, snapshots, explicit disconnect, and reconnect against the native service.
 
 Browser APIs do not expose HTTP/3, QUIC, UDP, or TLS byte totals, so the harness does not infer unavailable network measurements.

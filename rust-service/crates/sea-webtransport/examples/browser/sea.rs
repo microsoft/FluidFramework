@@ -33,7 +33,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{
     ReadableStream, ReadableStreamDefaultReader, WebTransport, WebTransportBidirectionalStream,
-    WritableStream,
+    WritableStream, WritableStreamDefaultWriter,
 };
 
 use crate::{
@@ -308,6 +308,16 @@ pub struct SeaBrowserTransport {
     max_frame_bytes: usize,
 }
 
+/// Long-lived browser WebTransport stream for ordered event submissions.
+#[wasm_bindgen]
+pub struct SeaBrowserSubmissionStream {
+    writer: WritableStreamDefaultWriter,
+    reader: ReadableStreamDefaultReader,
+    buffered: RefCell<Vec<u8>>,
+    max_frame_bytes: usize,
+    closed: Cell<bool>,
+}
+
 #[wasm_bindgen]
 impl SeaBrowserTransport {
     /// Connects to a native `/sea` endpoint with one certificate pin.
@@ -363,9 +373,67 @@ impl SeaBrowserTransport {
         })
     }
 
+    /// Opens one long-lived ordered event-submission stream.
+    #[wasm_bindgen(js_name = openSubmissionStream)]
+    pub async fn open_submission_stream(&self) -> Result<SeaBrowserSubmissionStream, JsValue> {
+        let stream = JsFuture::from(self.transport.create_bidirectional_stream())
+            .await?
+            .dyn_into::<WebTransportBidirectionalStream>()?;
+        let writable: WritableStream = stream.writable().unchecked_into();
+        let writer: WritableStreamDefaultWriter = writable.get_writer()?.unchecked_into();
+        JsFuture::from(writer.write_with_chunk(Uint8Array::from(&b"SEAS"[..]).as_ref())).await?;
+        let readable: ReadableStream = stream.readable().unchecked_into();
+        Ok(SeaBrowserSubmissionStream {
+            writer,
+            reader: readable.get_reader().unchecked_into(),
+            buffered: RefCell::new(Vec::new()),
+            max_frame_bytes: self.max_frame_bytes,
+            closed: Cell::new(false),
+        })
+    }
+
     /// Closes the browser WebTransport connection.
     pub fn disconnect(&self) {
         self.transport.close();
+    }
+}
+
+#[wasm_bindgen]
+impl SeaBrowserSubmissionStream {
+    /// Sends one submission frame and waits for its ordered receipt.
+    pub async fn request(&self, frame: Uint8Array) -> Result<Uint8Array, JsValue> {
+        if self.closed.get() {
+            return Err(js_error("Sea submission stream is closed"));
+        }
+        let frame = frame.to_vec();
+        validate_request(&frame, self.max_frame_bytes)?;
+        let length = u32::try_from(frame.len())
+            .map_err(|_| js_error("Sea submission frame length exceeds u32"))?;
+        let mut outgoing = Vec::with_capacity(4 + frame.len());
+        outgoing.extend_from_slice(&length.to_be_bytes());
+        outgoing.extend_from_slice(&frame);
+        JsFuture::from(
+            self.writer
+                .write_with_chunk(Uint8Array::from(outgoing.as_slice()).as_ref()),
+        )
+        .await?;
+        let mut buffered = self.buffered.take();
+        let response = read_length_delimited(&self.reader, &mut buffered, self.max_frame_bytes)
+            .await?
+            .ok_or_else(|| js_error("Sea submission stream ended before its receipt"))?;
+        self.buffered.replace(buffered);
+        Ok(Uint8Array::from(response.as_slice()))
+    }
+
+    /// Closes the author stream and releases its browser stream locks.
+    pub async fn close(&self) -> Result<(), JsValue> {
+        if !self.closed.replace(true) {
+            JsFuture::from(self.writer.close()).await?;
+            self.writer.release_lock();
+            JsFuture::from(self.reader.cancel()).await?;
+            self.reader.release_lock();
+        }
+        Ok(())
     }
 }
 
@@ -466,6 +534,15 @@ pub struct SeaInjectedClient {
     transport: Rc<RefCell<JsValue>>,
     next_request_id: Cell<u64>,
     limits: protocol::Limits,
+}
+
+/// Typed ordered event-submission stream over an injected transport stream.
+#[wasm_bindgen]
+pub struct SeaInjectedSubmissionStream {
+    transport: JsValue,
+    next_request_id: Cell<u64>,
+    limits: protocol::Limits,
+    closed: Cell<bool>,
 }
 
 /// Shared in-process memory service for local generated Sea clients.
@@ -922,6 +999,19 @@ impl SeaInjectedClient {
         }
     }
 
+    /// Opens a long-lived stream for ordered event submissions.
+    #[wasm_bindgen(js_name = openSubmissionStream)]
+    pub async fn open_submission_stream(&self) -> Result<SeaInjectedSubmissionStream, JsValue> {
+        let transport = call_method(&self.transport.borrow(), "openSubmissionStream", &[])?;
+        let transport = JsFuture::from(Promise::resolve(&transport)).await?;
+        Ok(SeaInjectedSubmissionStream {
+            transport,
+            next_request_id: Cell::new(1),
+            limits: self.limits,
+            closed: Cell::new(false),
+        })
+    }
+
     /// Resolves one stable event operation to its committed position.
     #[wasm_bindgen(js_name = resolveSubmission)]
     pub async fn resolve_submission(
@@ -1130,6 +1220,71 @@ impl SeaInjectedClient {
     pub fn disconnect(&self) -> Result<(), JsValue> {
         let transport = self.transport.borrow();
         call_method(&transport, "disconnect", &[]).map(|_| ())
+    }
+}
+
+#[wasm_bindgen]
+impl SeaInjectedSubmissionStream {
+    /// Submits one event and returns its ordered commit receipt.
+    pub async fn submit(
+        &self,
+        operation: Uint8Array,
+        reference: Option<u64>,
+        payload: Uint8Array,
+        blob_tree: Option<SeaTreeId>,
+    ) -> Result<SeaEventReceipt, JsValue> {
+        if self.closed.get() {
+            return Err(js_error("Sea submission stream is closed"));
+        }
+        let request_id = self.next_request_id.get();
+        self.next_request_id.set(request_id.wrapping_add(1).max(1));
+        let outgoing = protocol::encode(
+            &protocol::Frame {
+                request_id,
+                message: protocol::Request::Submit {
+                    operation: operation.to_vec(),
+                    reference,
+                    event: protocol::Event {
+                        payload: payload.to_vec(),
+                        blob_tree: blob_tree.map(|value| value.inner),
+                    },
+                },
+            },
+            self.limits,
+        )
+        .map_err(|error| js_error(&error.to_string()))?;
+        let incoming = call_method(
+            &self.transport,
+            "request",
+            &[Uint8Array::from(outgoing.as_slice()).into()],
+        )?;
+        let incoming = JsFuture::from(Promise::resolve(&incoming)).await?;
+        if !incoming.is_instance_of::<Uint8Array>() {
+            return Err(js_error("Sea submission response is not a Uint8Array"));
+        }
+        match decode_response(
+            request_id,
+            &Uint8Array::new(&incoming).to_vec(),
+            self.limits,
+        )? {
+            protocol::Response::EventCommitted {
+                position,
+                durability,
+            } => Ok(SeaEventReceipt {
+                position,
+                durability,
+            }),
+            _ => Err(js_error("Sea submission response is not an event receipt")),
+        }
+    }
+
+    /// Closes the injected author stream.
+    pub async fn close(&self) -> Result<(), JsValue> {
+        if !self.closed.replace(true) {
+            let closed = call_method(&self.transport, "close", &[])?;
+            JsFuture::from(Promise::resolve(&closed)).await?;
+        }
+        Ok(())
     }
 }
 
