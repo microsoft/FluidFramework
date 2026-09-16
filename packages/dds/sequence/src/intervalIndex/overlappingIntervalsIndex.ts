@@ -62,8 +62,7 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 			);
 
 			if (start === undefined) {
-				// Only an end position was provided. The intervals are not ordered by end position,
-				// so every one of them has to be examined.
+				// The set is ordered by start, so an end-only query has to examine every interval.
 				matches = this.intervalSet.intervals.filter(
 					(interval) => transientInterval.compareEnd(interval) === 0,
 				);

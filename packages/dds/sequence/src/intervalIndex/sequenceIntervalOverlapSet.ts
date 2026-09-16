@@ -17,42 +17,21 @@ const compareEndpoints = (a: SequenceInterval, b: SequenceInterval): number => {
 };
 
 /**
- * A set of intervals that can efficiently answer "which of these intervals overlap the given
- * range?".
- *
- * The intervals are kept in an array sorted by {@link SequenceInterval.compare} - by start
- * position, then end position, then interval ID.
- *
- * An interval can only overlap the query if it starts at or before the query's end, so a binary
- * search narrows the search to the front of the array. Not every interval in that portion
- * overlaps, though: an interval also has to end at or after the query's start, and the ones that
- * don't are scattered throughout. Checking each of them one by one would get slower the further
- * into the document the query is, no matter how few intervals actually match.
- *
- * To avoid that, the set also maintains a segment tree over the array. Each node of that tree
- * covers a range of the array and records the greatest end position among the intervals in that
- * range. If that end position falls before the query's start, none of the intervals under the
- * node can overlap, and the query skips the whole range at once.
- *
- * Both the sort order and the segment tree hold references to intervals rather than resolved
- * positions, so they stay correct as text edits move interval endpoints around. Only adding or
- * removing an interval invalidates the segment tree, and it is rebuilt on the next query rather
- * than immediately, so a batch of changes only pays for one rebuild.
+ * Intervals sorted by (start, end, interval ID), with a max-end segment tree used to prune
+ * overlap searches. Both hold intervals rather than resolved positions, and edits preserve the
+ * relative order of reference positions, so neither needs rebuilding when the text changes.
+ * Adding or removing does invalidate the tree; the next overlap query rebuilds it.
  */
 export class SequenceIntervalOverlapSet {
 	private readonly ordered: SequenceInterval[] = [];
 
 	/**
-	 * Segment tree over {@link SequenceIntervalOverlapSet.ordered}, stored as an implicit binary
-	 * tree rooted at index 1 with the children of node `n` at `2n` and `2n + 1`. Each entry is
-	 * the interval with the greatest end position within that node's range.
+	 * Implicit segment tree over `ordered`: root 1, children of `n` at `2n` and `2n + 1`. Each
+	 * node holds the interval with the greatest end position in its range.
 	 */
 	private readonly maxEnds: SequenceInterval[] = [];
 	private maxEndsStale = false;
 
-	/**
-	 * The intervals in this set, in order. Callers must not mutate the returned array.
-	 */
 	public get intervals(): readonly SequenceInterval[] {
 		return this.ordered;
 	}
@@ -64,11 +43,8 @@ export class SequenceIntervalOverlapSet {
 	// #region Binary search
 
 	/**
-	 * Binary searches for the point where `matches` starts holding. It must be false for some
-	 * (possibly empty) run of intervals at the front of the array and true for all the rest,
-	 * which holds for any predicate that only grows more true as the ordering advances.
-	 * @returns the index of the first interval `matches` accepts, or this set's size if it
-	 * accepts none.
+	 * Requires `matches` to be false over a prefix and true thereafter. Returns the first
+	 * matching index, or this set's size when nothing matches.
 	 */
 	private firstIndexWhere(matches: (interval: SequenceInterval) => boolean): number {
 		let lo = 0;
@@ -84,10 +60,6 @@ export class SequenceIntervalOverlapSet {
 		return lo;
 	}
 
-	/**
-	 * Binary searches for the start of the run of intervals equal to the given one.
-	 * @returns the index of the first interval not ordered before `query` by `compare`.
-	 */
 	private lowerBound(
 		query: SequenceInterval,
 		compare: (a: SequenceInterval, b: SequenceInterval) => number,
@@ -95,10 +67,6 @@ export class SequenceIntervalOverlapSet {
 		return this.firstIndexWhere((interval) => compare(interval, query) >= 0);
 	}
 
-	/**
-	 * Binary searches for the end of the run of intervals equal to the given one.
-	 * @returns the index of the first interval ordered after `query` by `compare`.
-	 */
 	private upperBound(
 		query: SequenceInterval,
 		compare: (a: SequenceInterval, b: SequenceInterval) => number,
@@ -111,14 +79,9 @@ export class SequenceIntervalOverlapSet {
 	// #region Add and remove
 
 	/**
-	 * Locates where an interval belongs, and whether this set already holds it.
-	 *
-	 * `compareIntervals` orders on start, end and ID, so at most one entry can compare equal to
-	 * `interval`, and `lowerBound` lands on it when it is present and on its insertion point
-	 * when it is not. One search therefore answers both questions.
-	 *
-	 * The ID is checked rather than the identity so that a second instance carrying an ID
-	 * already in this set is recognised as the interval it identifies.
+	 * Returns the interval's index if present, or its insertion point if not. Matches on
+	 * endpoints and ID rather than object identity, since callers may pass a second instance of
+	 * an interval this set already holds.
 	 */
 	private locate(interval: SequenceInterval): { index: number; exists: boolean } {
 		const index = this.lowerBound(interval, compareIntervals);
@@ -153,10 +116,7 @@ export class SequenceIntervalOverlapSet {
 
 	// #region Overlap search
 
-	/**
-	 * Populates the segment tree rooted at `node`, which covers `[lo, hi)`.
-	 * @returns the interval with the greatest end position in `[lo, hi)`.
-	 */
+	/** Builds node `node`, covering `[lo, hi)`, and returns its greatest-end interval. */
 	private buildMaxEnds(node: number, lo: number, hi: number): SequenceInterval {
 		let maxEnd: SequenceInterval;
 		if (hi - lo === 1) {
@@ -173,10 +133,7 @@ export class SequenceIntervalOverlapSet {
 
 	private rebuildMaxEndsIfStale(): void {
 		if (this.maxEndsStale) {
-			// 4n is the standard safe bound for a segment tree indexed from 1 with children at
-			// 2n and 2n + 1. When the interval count isn't a power of two the recursive split
-			// leaves the tree unbalanced, pushing its deepest indices past 2n, and 4n is the
-			// smallest simple bound that always covers them.
+			// 4n bounds the node indices this layout reaches for any leaf count.
 			this.maxEnds.length = this.ordered.length * 4;
 			this.buildMaxEnds(1, 0, this.ordered.length);
 			this.maxEndsStale = false;
@@ -184,8 +141,9 @@ export class SequenceIntervalOverlapSet {
 	}
 
 	/**
-	 * Collects the intervals in `[lo, hi)` overlapping `query`, skipping subtrees which start
-	 * beyond `limit` or which end before `query` begins.
+	 * Collects intervals overlapping `query` from node `node`, covering `[lo, hi)`. `limit` is
+	 * the first index whose start is after `query`'s end, so ranges beginning at or after it
+	 * cannot overlap and are skipped, as are subtrees whose greatest end precedes `query`.
 	 */
 	private gatherOverlapping(
 		query: SequenceInterval,
@@ -199,8 +157,6 @@ export class SequenceIntervalOverlapSet {
 			return;
 		}
 		if (hi - lo === 1) {
-			// `lo < limit` already established that this interval starts at or before the query's
-			// end, and the check above that it ends at or after the query's start.
 			results.push(this.ordered[lo]);
 			return;
 		}
@@ -210,15 +166,11 @@ export class SequenceIntervalOverlapSet {
 	}
 
 	/**
-	 * Finds the intervals overlapping the given range.
-	 * @returns every interval overlapping `query`, in order. Two intervals overlap when neither
-	 * ends before the other begins; interval sides are not considered, matching
-	 * {@link SequenceInterval.overlaps}.
+	 * Returns the overlapping intervals in set order. Touching endpoints count as overlapping and
+	 * interval sides are ignored, matching {@link SequenceInterval.overlaps}.
 	 */
 	public findOverlapping(query: SequenceInterval): SequenceInterval[] {
 		const results: SequenceInterval[] = [];
-		// Only intervals starting at or before the query's end can overlap it, so the first one
-		// starting after it bounds the portion of the array worth descending into.
 		const limit = this.firstIndexWhere(
 			(interval) => compareReferencePositions(interval.start, query.end) > 0,
 		);
@@ -234,10 +186,9 @@ export class SequenceIntervalOverlapSet {
 	// #region Endpoint queries
 
 	/**
-	 * Slices out the run of intervals which compare equal to the given one.
-	 * @returns the intervals comparing equal to `query` under `compare`, which must order
-	 * intervals consistently with (i.e. be a prefix of the keys used by) this set's own ordering
-	 * so that those intervals are contiguous.
+	 * Returns the run of intervals comparing equal to `query`. `compare` must agree with this
+	 * set's ordering - comparing a leading prefix of its keys does - so that both bound
+	 * predicates stay monotone and the run is contiguous.
 	 */
 	private equalRange(
 		query: SequenceInterval,
@@ -249,20 +200,10 @@ export class SequenceIntervalOverlapSet {
 		);
 	}
 
-	/**
-	 * Finds the intervals starting where the given interval starts.
-	 * @returns every interval whose start matches `query`'s, in order.
-	 */
 	public withSameStart(query: SequenceInterval): SequenceInterval[] {
 		return this.equalRange(query, compareStarts);
 	}
 
-	/**
-	 * Finds the intervals spanning exactly the same range as the given interval.
-	 * @returns every interval whose start and end both match `query`'s, in order. Interval IDs
-	 * are not considered, so an interval created solely to describe the range being searched for
-	 * will still match the intervals in this set.
-	 */
 	public withSameEndpoints(query: SequenceInterval): SequenceInterval[] {
 		return this.equalRange(query, compareEndpoints);
 	}

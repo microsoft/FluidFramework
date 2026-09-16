@@ -25,10 +25,7 @@ describe("OverlappingIntervalsIndex", () => {
 	let sharedString: ISharedString;
 	let createTestInterval: (p1: number, p2: number) => SequenceInterval;
 
-	/**
-	 * Renders intervals as `[start, end] (id)` so that assertion failures report something
-	 * readable.
-	 */
+	/** Renders intervals as `[start, end] (id)` so failures are readable. */
 	function describeIntervals(intervals: readonly SequenceInterval[]): string[] {
 		return intervals.map(
 			(interval) =>
@@ -46,9 +43,8 @@ describe("OverlappingIntervalsIndex", () => {
 		expected: readonly SequenceInterval[],
 		message: string,
 	): void {
-		// Compares instances, not endpoints or structure: intervals sharing a start and end are
-		// still distinct entries, and comparing either rendered positions or object shape would
-		// fail to tell them apart.
+		// Instances, not endpoints or structure: intervals sharing a start and end are distinct
+		// entries, and neither rendered positions nor object shape would tell them apart.
 		const detail = `${message} (actual ${describeIntervals(actual).join(
 			", ",
 		)}; expected ${describeIntervals(expected).join(", ")})`;
@@ -135,9 +131,8 @@ describe("OverlappingIntervalsIndex", () => {
 			}
 
 			const results = index.findOverlappingIntervals(10, 20);
-			// Three results which include all three intervals must be exactly those three, so
-			// there is no need to check distinctness separately. Their relative order depends on
-			// their generated IDs, so it isn't asserted here.
+			// Three results containing all three intervals must be exactly those three. Their
+			// order depends on generated IDs, so it isn't asserted.
 			assert.equal(
 				results.length,
 				3,
