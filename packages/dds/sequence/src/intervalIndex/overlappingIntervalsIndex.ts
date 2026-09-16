@@ -52,25 +52,22 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 
 		let matches: readonly SequenceInterval[];
 		if (start === undefined && end === undefined) {
-			// No start/end provided. Gather everything.
+			// Neither endpoint constrains the results, so gather everything.
 			matches = this.intervalSet.intervals;
 		} else {
-			const transientInterval: SequenceInterval = createTransientIntervalFromSequence(
+			// The transient interval carries both endpoints, standing in for whichever the caller
+			// left open; which of them was specified selects the query.
+			const query = createTransientIntervalFromSequence(
 				start ?? "start",
 				end ?? "end",
 				this.sequence,
 			);
-
 			if (start === undefined) {
-				// The set is ordered by start, so an end-only query has to examine every interval.
-				matches = this.intervalSet.intervals.filter(
-					(interval) => transientInterval.compareEnd(interval) === 0,
-				);
+				matches = this.intervalSet.withSameEnd(query);
+			} else if (end === undefined) {
+				matches = this.intervalSet.withSameStart(query);
 			} else {
-				matches =
-					end === undefined
-						? this.intervalSet.withSameStart(transientInterval)
-						: this.intervalSet.withSameEndpoints(transientInterval);
+				matches = this.intervalSet.withSameEndpoints(query);
 			}
 		}
 

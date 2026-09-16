@@ -11,6 +11,8 @@ const compareIntervals = (a: SequenceInterval, b: SequenceInterval): number => a
 
 const compareStarts = (a: SequenceInterval, b: SequenceInterval): number => a.compareStart(b);
 
+const compareEnds = (a: SequenceInterval, b: SequenceInterval): number => a.compareEnd(b);
+
 const compareEndpoints = (a: SequenceInterval, b: SequenceInterval): number => {
 	const startResult = a.compareStart(b);
 	return startResult === 0 ? a.compareEnd(b) : startResult;
@@ -206,6 +208,14 @@ export class SequenceIntervalOverlapSet {
 
 	public withSameEndpoints(query: SequenceInterval): SequenceInterval[] {
 		return this.equalRange(query, compareEndpoints);
+	}
+
+	/**
+	 * Unlike its siblings this scans every interval, because the set is ordered by start and so
+	 * intervals sharing an end are not contiguous.
+	 */
+	public withSameEnd(query: SequenceInterval): SequenceInterval[] {
+		return this.ordered.filter((interval) => compareEnds(interval, query) === 0);
 	}
 
 	// #endregion Endpoint queries
