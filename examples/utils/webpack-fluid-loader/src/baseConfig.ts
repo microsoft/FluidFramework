@@ -10,6 +10,14 @@ import type { Configuration as WebpackConfiguration } from "webpack";
 import type { Configuration as DevServerConfiguration } from "webpack-dev-server";
 
 /**
+ * Axios publishes its browser CommonJS bundle with a reference to `axios.cjs.map`, but does not
+ * include that map in the package. Exclude only that bundle so source-map-loader continues to
+ * process source maps from other dependencies without emitting a missing-file warning for Axios.
+ */
+const axiosBrowserBundleWithoutSourceMap =
+	/node_modules[/\\]axios[/\\]dist[/\\]browser[/\\]axios\.cjs$/;
+
+/**
  * Environment options used to configure an example webpack build.
  * @internal
  */
@@ -33,6 +41,13 @@ export interface BaseExampleConfigOptions {
 				/** The title of the generated application page. */
 				title?: string;
 		  };
+	/** Package-relative loader paths supplied by the ESM-specific configurations. */
+	loaderPaths?: {
+		/** Path to source-map-loader. */
+		sourceMapLoader: string;
+		/** Path to ts-loader. */
+		typescriptLoader: string;
+	};
 }
 
 /**
@@ -81,11 +96,12 @@ export function baseExampleConfig(
 			rules: [
 				{
 					test: /\.tsx?$/,
-					loader: require.resolve("ts-loader"),
+					loader: options.loaderPaths?.typescriptLoader ?? "ts-loader",
 				},
 				{
 					test: /\.[cm]?js$/,
-					use: [require.resolve("source-map-loader")],
+					exclude: axiosBrowserBundleWithoutSourceMap,
+					use: [options.loaderPaths?.sourceMapLoader ?? "source-map-loader"],
 					enforce: "pre",
 				},
 			],

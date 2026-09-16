@@ -365,7 +365,13 @@ export function commonExampleConfig(
 	baseDir: string,
 	env: RouteOptions & { production?: boolean },
 ): WebpackConfiguration {
-	const config = baseExampleConfig(baseDir, env, { html: false });
+	const config = baseExampleConfig(baseDir, env, {
+		html: false,
+		loaderPaths: {
+			sourceMapLoader: sourceMapLoaderPath,
+			typescriptLoader: tsLoaderPath,
+		},
+	});
 	return {
 		...config,
 		...devServerConfig(baseDir, env),

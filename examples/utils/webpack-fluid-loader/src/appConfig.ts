@@ -32,7 +32,13 @@ export function exampleAppConfig(
 	env: ExampleWebpackEnvironment,
 	options: BaseExampleConfigOptions = {},
 ): WebpackConfiguration {
-	const config = baseExampleConfig(baseDir, env, options);
+	const config = baseExampleConfig(baseDir, env, {
+		...options,
+		loaderPaths: {
+			sourceMapLoader: fileURLToPath(import.meta.resolve("source-map-loader")),
+			typescriptLoader: fileURLToPath(import.meta.resolve("ts-loader")),
+		},
+	});
 
 	return {
 		...config,
