@@ -12,7 +12,6 @@ import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 
 import { MinimalWasmStorage } from "./fluidDriver.js";
-import { ProtocolClient } from "./protocolClient.js";
 import type {
 	BlobUpload,
 	ProjectedOperationSubscription,
@@ -313,7 +312,6 @@ function createStorage(client: SummaryFixtureClient): MinimalWasmStorage {
 	return new MinimalWasmStorage(
 		encoder.encode("summary-test-document"),
 		client,
-		new ProtocolClient(client),
 	);
 }
 

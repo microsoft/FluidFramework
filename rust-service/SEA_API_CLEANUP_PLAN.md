@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 10. Simplify the Fluid TypeScript adapter.
-- **Last completed checkpoint:** 9. Generated TypeScript APIs.
-- **Last validation:** Checkpoint 9 strict WASM Clippy, production and test-support generation, Node behavior, TypeScript declaration-shape and SharedTree typechecks, package format/lint/build/tests, and real Chromium 152 WebTransport passed on 2026-09-16; canonical workspace validation is recorded in the implementation commit.
-- **Latest checkpoint notes:** Generated bindings expose closed `SeaDurability`, `SeaTreeKind`, `SeaLoadKind`, and `SeaErrorKind` enums; load results are a discriminated union with case-required fields, and directory operations use `SeaDirectoryEntries`. JavaScript service errors retain their classified kind. The Fluid adapter imports generated production/test-support declarations directly, its handwritten client/value mirror and optional event-field checks are deleted, and a type-only fixture verifies narrowing and closed API shapes. Vague `TypedSeaClientAdapter` terminology is replaced by `GeneratedSeaBindingAdapter`.
+- **Current checkpoint:** 10b. Replace the client abstraction.
+- **Last completed checkpoint:** 10a. Remove forwarding wrappers.
+- **Last validation:** Checkpoint 10a package format, lint, TypeScript and SharedTree typechecks, ESM build, and Node tests passed on 2026-09-16.
+- **Latest checkpoint notes:** The forwarding `ProtocolClient` class and export are deleted. Direct clients, storage, delta connections, and document creation call the narrow client contract directly. Snapshot publication identity is owned by `MinimalWasmStorage` and canonically length-prefixes its domain, document, expected parent, event boundary, and content root.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 10. Simplify the Fluid TypeScript adapter.
+- **Next checkpoint:** 10b. Replace the client abstraction.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -684,11 +684,11 @@ This checkpoint may be split into small deletion-oriented commits.
 
 #### 10a. Remove forwarding wrappers
 
-- [ ] Delete `ProtocolClient` and its export.
-- [ ] Move canonical snapshot-operation identity generation to the Fluid summary owner.
-- [ ] Encode operation identity fields canonically with explicit lengths or a structured hash domain.
-- [ ] Include every identity component required by the publication scope.
-- [ ] Call the documented underlying client API directly where no adaptation is required.
+- [x] Delete `ProtocolClient` and its export.
+- [x] Move canonical snapshot-operation identity generation to the Fluid summary owner.
+- [x] Encode operation identity fields canonically with explicit lengths or a structured hash domain.
+- [x] Include every identity component required by the publication scope.
+- [x] Call the documented underlying client API directly where no adaptation is required.
 
 #### 10b. Replace the client abstraction
 

@@ -14,7 +14,6 @@ import {
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 
-import { ProtocolClient } from "./protocolClient.js";
 import type {
 	ProjectedOperation,
 	ProjectedOperationSubscription,
@@ -40,7 +39,6 @@ export class DirectSharedTreeClient {
 	/** Highest canonical service sequence applied to this kernel. */
 	public lastAppliedSequenceNumber = 0;
 
-	private readonly protocol: ProtocolClient;
 	private readonly writer: Uint8Array;
 	private readonly session: Uint8Array;
 	private readonly positions = new Map<string, number>();
@@ -62,7 +60,6 @@ export class DirectSharedTreeClient {
 		writer: Uint8Array,
 		session: Uint8Array,
 	) {
-		this.protocol = new ProtocolClient(client);
 		this.tree = tree;
 		this.writer = writer;
 		this.session = session;
@@ -100,9 +97,9 @@ export class DirectSharedTreeClient {
 			session,
 		);
 		if (createDocument) {
-			await host.protocol.create(document);
+			await client.create(document);
 		}
-		await host.protocol.openSession(document, writer, session);
+		await client.openSession(document, writer, session);
 		host.subscription = await client.subscribeProjected(document);
 		host.subscriptionPump = host.consumeSubscription(host.subscription);
 		return host;
@@ -144,7 +141,7 @@ export class DirectSharedTreeClient {
 			`${decoder.decode(this.session)}-${localSequenceNumber}`,
 		);
 		this.submissionChain = this.submissionChain.then(async () => {
-			await this.protocol.submit(
+			await this.client.submitEvent(
 				this.document,
 				this.writer,
 				this.session,

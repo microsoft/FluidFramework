@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ProtocolClient } from "./protocolClient.js";
 import type {
 	ProjectedOperation,
 	ProjectedOperationSubscription,
@@ -30,7 +29,6 @@ export class DirectDummyClient {
 	/** Highest canonical service sequence applied by this client. */
 	public lastAppliedSequenceNumber = 0;
 
-	private readonly protocol: ProtocolClient;
 	private readonly writer: Uint8Array;
 	private readonly session: Uint8Array;
 	private subscription: ProjectedOperationSubscription | undefined;
@@ -48,7 +46,6 @@ export class DirectDummyClient {
 		private readonly batchMaxOperations: number,
 		private readonly batchMaxPayloadBytes: number,
 	) {
-		this.protocol = new ProtocolClient(client);
 		this.writer = encoder.encode(crypto.randomUUID());
 		this.session = this.writer;
 	}
@@ -68,9 +65,9 @@ export class DirectDummyClient {
 			batchMaxPayloadBytes,
 		);
 		if (createDocument) {
-			await host.protocol.create(document);
+			await client.create(document);
 		}
-		await host.protocol.openSession(document, host.writer, host.session);
+		await client.openSession(document, host.writer, host.session);
 		host.subscription = await client.subscribeProjected(document);
 		host.subscriptionPump = host.consumeSubscription(host.subscription);
 		return host;
@@ -87,7 +84,7 @@ export class DirectDummyClient {
 		);
 		const payload = encoder.encode(JSON.stringify({ value } satisfies DirectDummyPayload));
 		this.submissionChain = this.submissionChain.then(async () => {
-			await this.protocol.submit(
+			await this.client.submitEvent(
 				this.document,
 				this.writer,
 				this.session,

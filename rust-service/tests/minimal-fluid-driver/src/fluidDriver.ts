@@ -32,7 +32,6 @@ import type {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 
-import { ProtocolClient } from "./protocolClient.js";
 import type {
 	ProjectedOperation,
 	ProjectedOperationSubscription,
@@ -262,6 +261,33 @@ function documentId(resolvedUrl: IResolvedUrl): Uint8Array {
 	return encoder.encode(resolvedUrl.id);
 }
 
+/** Encodes a collision-free snapshot publication identity for one summary scope. */
+function snapshotOperationIdentity(
+	document: Uint8Array,
+	expectedParent: Uint8Array | undefined,
+	atEvent: Uint8Array | undefined,
+	root: Uint8Array,
+): Uint8Array {
+	const fields = [
+		encoder.encode("fluid-sea-snapshot-v1"),
+		document,
+		expectedParent ?? new Uint8Array(),
+		atEvent ?? new Uint8Array(),
+		root,
+	];
+	const size = fields.reduce((total, field) => total + 4 + field.length, 0);
+	const result = new Uint8Array(size);
+	const view = new DataView(result.buffer);
+	let offset = 0;
+	for (const field of fields) {
+		view.setUint32(offset, field.length);
+		offset += 4;
+		result.set(field, offset);
+		offset += field.length;
+	}
+	return result;
+}
+
 /** A published summary and the entries used to construct it. */
 interface UploadedSummary {
 	/** Content digest returned by summary publication. */
@@ -279,7 +305,6 @@ export class MinimalWasmStorage implements IDocumentStorageService {
 	public constructor(
 		private readonly document: Uint8Array,
 		private readonly client: WasmProtocolClient,
-		private readonly protocol: ProtocolClient,
 	) {}
 
 	/** Resolves the latest summary or a caller-provided content digest. */
@@ -289,13 +314,12 @@ export class MinimalWasmStorage implements IDocumentStorageService {
 		}
 		const snapshot =
 			versionId === null
-				? await this.protocol.latestSnapshot()
-				: await this.protocol.snapshot(hexToBytes(versionId));
+				? await this.client.latestSnapshot()
+				: await this.client.snapshot(hexToBytes(versionId));
 		if (snapshot !== undefined) {
 			return [{ id: bytesToHex(snapshot.id), treeId: bytesToHex(snapshot.root) }];
 		}
-		const digest =
-			versionId === null ? await this.protocol.latestSummaryDigest(this.document) : undefined;
+		const digest = versionId === null ? (await this.client.latestSnapshot())?.root : undefined;
 		return digest === undefined
 			? []
 			: [{ id: bytesToHex(digest), treeId: bytesToHex(digest) }];
@@ -332,7 +356,7 @@ export class MinimalWasmStorage implements IDocumentStorageService {
 		const parentSnapshot =
 			parentHandle === undefined
 				? undefined
-				: await this.protocol.snapshot(hexToBytes(parentHandle));
+				: await this.client.snapshot(hexToBytes(parentHandle));
 		const parentEntries =
 			parentSnapshot === undefined
 				? undefined
@@ -348,11 +372,16 @@ export class MinimalWasmStorage implements IDocumentStorageService {
 				`no Sea position is mapped to Fluid sequence ${context.referenceSequenceNumber}`,
 			);
 		}
-		const snapshotId = await this.protocol.publishSnapshot(
-			this.document,
-			uploaded.digest,
-			atEvent,
+		const snapshotId = await this.client.publishSnapshotRoot(
+			snapshotOperationIdentity(
+				this.document,
+				parentSnapshot?.id,
+				atEvent,
+				uploaded.digest,
+			),
 			parentSnapshot?.id,
+			atEvent,
+			uploaded.digest,
 		);
 		return bytesToHex(snapshotId);
 	}
@@ -362,7 +391,7 @@ export class MinimalWasmStorage implements IDocumentStorageService {
 		if (handle.handleType !== summaryType.tree) {
 			throw new Error("only full summary-tree handles are supported");
 		}
-		const snapshot = await this.protocol.snapshot(hexToBytes(handle.handle));
+		const snapshot = await this.client.snapshot(hexToBytes(handle.handle));
 		const entries = await this.client.fetchSummary(
 			snapshot?.root ?? hexToBytes(handle.handle),
 		);
@@ -383,7 +412,12 @@ export class MinimalWasmStorage implements IDocumentStorageService {
 	/** Uploads and publishes the detached container's initial full summary. */
 	public async uploadInitialSummary(summary: ISummaryTree): Promise<void> {
 		const uploaded = await this.uploadSummary(summary);
-		await this.protocol.publishSnapshot(this.document, uploaded.digest);
+		await this.client.publishSnapshotRoot(
+			snapshotOperationIdentity(this.document, undefined, undefined, uploaded.digest),
+			undefined,
+			undefined,
+			uploaded.digest,
+		);
 	}
 
 	/** Flattens, uploads, and publishes a full summary in canonical path order. */
@@ -707,7 +741,6 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 		private session: Uint8Array,
 		private readonly document: Uint8Array,
 		private readonly client: WasmProtocolClient,
-		private readonly protocol: ProtocolClient,
 		fluidClient: IClient,
 		public readonly mode: ConnectionMode,
 		public readonly initialClients: ISignalClient[],
@@ -765,7 +798,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 
 	/** Opens the protocol session's persistent event, author, and projected streams. */
 	public async open(): Promise<void> {
-		await this.protocol.openSession(
+		await this.client.openSession(
 			this.document,
 			this.lifecycle.writer,
 			this.session,
@@ -805,7 +838,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 			this.queuedSubmissions.delete(this.nextClientSequenceNumber);
 			this.nextClientSequenceNumber++;
 			this.submitChain = this.submitChain.then(async () => {
-				const position = await this.protocol.submit(
+				const position = await this.client.submitEvent(
 					this.document,
 					this.lifecycle.writer,
 					this.session,
@@ -882,7 +915,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 		if (pending === undefined) {
 			throw new Error(`no pending submission ${sequenceNumber}`);
 		}
-		const position = await this.protocol.submit(
+		const position = await this.client.submitEvent(
 			this.document,
 			this.lifecycle.writer,
 			this.session,
@@ -1044,11 +1077,7 @@ export class MinimalWasmDocumentService extends Events implements IDocumentServi
 	/** Connects the content-addressed storage adapter. */
 	public async connectToStorage(): Promise<MinimalWasmStorage> {
 		const client = await this.getClient("storage");
-		return new MinimalWasmStorage(
-			documentId(this.resolvedUrl),
-			client,
-			new ProtocolClient(client),
-		);
+		return new MinimalWasmStorage(documentId(this.resolvedUrl), client);
 	}
 
 	/** Connects bounded projected-operation history. */
@@ -1074,7 +1103,6 @@ export class MinimalWasmDocumentService extends Events implements IDocumentServi
 			session,
 			documentId(this.resolvedUrl),
 			wasm,
-			new ProtocolClient(wasm),
 			client,
 			mode,
 			[{ clientId, client }],
@@ -1096,7 +1124,7 @@ export class MinimalWasmDocumentService extends Events implements IDocumentServi
 	/** Creates this service's document before initial summary upload. */
 	public async createDocument(): Promise<void> {
 		const client = await this.getClient("create");
-		await new ProtocolClient(client).create(documentId(this.resolvedUrl));
+		await client.create(documentId(this.resolvedUrl));
 	}
 
 	/** Lazily creates the one serialized generated client shared by this service. */
