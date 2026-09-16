@@ -666,7 +666,6 @@ function getNodeInfo(
 		for (const [rootIdKey, chunk] of change.builds.entries()) {
 			const rootId = makeChangeAtomId(rootIdKey[1], rootIdKey[0]);
 			builtRootIds.set(rootId, chunk.topLevelLength, true);
-			addBuiltNodeIdsRecursive(rootId, change.nodeChanges, change.nodeAliases, builtNodeIds);
 		}
 	}
 
@@ -679,12 +678,13 @@ function getNodeInfo(
 		rootIdToNodeId,
 	);
 
-	for (const [rootId, nodeId] of change.rootNodes.nodeChanges.entries()) {
-		setInChangeAtomIdMap(
-			rootIdToNodeId,
-			makeChangeAtomId(rootId[1], rootId[0]),
-			normalizeNodeId(nodeId, change.nodeAliases),
-		);
+	for (const [rootIdKey, nodeId] of change.rootNodes.nodeChanges.entries()) {
+		const rootId = makeChangeAtomId(rootIdKey[1], rootIdKey[0]);
+		setInChangeAtomIdMap(rootIdToNodeId, rootId, normalizeNodeId(nodeId, change.nodeAliases));
+
+		if (builtRootIds.getFirst(rootId, 1).value) {
+			addBuiltNodeIdsRecursive(nodeId, change.nodeChanges, change.nodeAliases, builtNodeIds);
+		}
 	}
 
 	return { builtRootIds, builtNodeIds, rootIdToNodeId };
