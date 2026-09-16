@@ -1338,8 +1338,8 @@ describe("ModularChangeFamily", () => {
 
 	describe("Encoding", () => {
 		function assertEquivalent(change1: ModularChangeset, change2: ModularChangeset) {
-			const normalized1 = normalizeChangeset(change1);
-			const normalized2 = normalizeChangeset(change2);
+			const normalized1 = normalizeChangeset(change1, fieldKinds);
+			const normalized2 = normalizeChangeset(change2, fieldKinds);
 			assertEqual(normalized1, normalized2);
 		}
 
