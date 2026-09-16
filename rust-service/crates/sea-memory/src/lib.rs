@@ -9,10 +9,8 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::stream;
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, Capabilities, ClassifiedError,
-    CommittedEvent, Durability, ErrorKind, Event, EventPosition, EventReceipt, EventStream,
-    PositionCodec, PublishedSnapshot, Snapshot, SnapshotId, SnapshotPosition, SnapshotStore,
-    StreamReader,
+    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, Durability, ErrorKind,
+    Event, EventPosition, SnapshotId,
     archive::{
         CommittedEvent as ArchiveCommittedEvent, EventReceipt as ArchiveEventReceipt, OperationId,
         PublishedSnapshot as ArchivePublishedSnapshot, SnapshotPosition as ArchiveSnapshotPosition,
@@ -21,21 +19,6 @@ use sea_core::{
 };
 use thiserror::Error;
 use tokio::sync::Mutex;
-
-/// An opaque one-based record ordinal within an in-memory stream.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct MemoryPosition {
-    /// One-based record index within the stream.
-    ordinal: u64,
-}
-
-impl MemoryPosition {
-    /// Returns the one-based record index within the stream.
-    #[must_use]
-    pub const fn ordinal(&self) -> u64 {
-        self.ordinal
-    }
-}
 
 /// Failures produced by the in-memory stream and snapshot store.
 #[derive(Debug, Error)]
@@ -89,13 +72,7 @@ struct ArchiveState {
 /// Mutable state shared by cloned handles to one stream.
 #[derive(Debug)]
 struct State {
-    /// Committed payloads in append order.
-    records: Vec<Bytes>,
-    /// The latest published snapshot, if any.
-    latest_snapshot: Option<PublishedSnapshot<MemoryPosition>>,
-    /// The numeric identity assigned to the next snapshot.
-    next_snapshot_id: u64,
-    /// Final Sea archive state retained alongside the legacy stream during migration.
+    /// Current Sea archive state.
     archive: ArchiveState,
 }
 
@@ -118,34 +95,12 @@ impl MemoryStream {
     pub fn new() -> Self {
         Self {
             state: Arc::new(Mutex::new(State {
-                records: Vec::new(),
-                latest_snapshot: None,
-                next_snapshot_id: 1,
                 archive: ArchiveState {
                     next_snapshot_id: 1,
                     ..ArchiveState::default()
                 },
             })),
         }
-    }
-
-    /// Rejects zero and beyond-head positions.
-    fn validate_position(position: &MemoryPosition, len: usize) -> Result<(), MemoryError> {
-        if position.ordinal == 0 || position.ordinal > len as u64 {
-            return Err(MemoryError::InvalidPosition);
-        }
-        Ok(())
-    }
-
-    /// Resolves a one-based event ordinal in this stream.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`MemoryError::InvalidPosition`] when the ordinal is not committed.
-    pub async fn position_at(&self, ordinal: u64) -> Result<MemoryPosition, MemoryError> {
-        let position = MemoryPosition { ordinal };
-        Self::validate_position(&position, self.state.lock().await.records.len())?;
-        Ok(position)
     }
 
     fn validate_archive_position(position: EventPosition, len: usize) -> Result<(), MemoryError> {
@@ -427,135 +382,7 @@ impl sea_core::archive::SeaStorage for MemoryStream {
     }
 }
 
-#[async_trait]
-impl EventStream for MemoryStream {
-    type Position = MemoryPosition;
-    type Error = MemoryError;
-
-    fn capabilities(&self) -> Capabilities {
-        Capabilities::NONE.with(sea_core::Capability::PositionSerialization)
-    }
-
-    async fn append(&self, value: Bytes) -> Result<EventReceipt<Self::Position>, Self::Error> {
-        let mut state = self.state.lock().await;
-        state.records.push(value);
-        let position = MemoryPosition {
-            ordinal: state.records.len() as u64,
-        };
-        Ok(EventReceipt {
-            position,
-            durability: Durability::Memory,
-        })
-    }
-
-    async fn read(
-        &self,
-        after: Option<&Self::Position>,
-    ) -> Result<StreamReader<Self::Position, Self::Error>, Self::Error> {
-        let state = self.state.lock().await;
-        let start = match after {
-            Some(position) => {
-                Self::validate_position(position, state.records.len())?;
-                usize::try_from(position.ordinal).map_err(|_| MemoryError::InvalidPosition)?
-            }
-            None => 0,
-        };
-        let end = state.records.len();
-        drop(state);
-
-        let shared = Arc::clone(&self.state);
-        Ok(Box::pin(stream::unfold(start, move |index| {
-            let shared = Arc::clone(&shared);
-            async move {
-                if index >= end {
-                    return None;
-                }
-                let payload = shared.lock().await.records[index].clone();
-                let record = CommittedEvent {
-                    position: MemoryPosition {
-                        ordinal: index as u64 + 1,
-                    },
-                    payload,
-                };
-                Some((Ok(record), index + 1))
-            }
-        })))
-    }
-
-    async fn head(&self) -> Result<Option<Self::Position>, Self::Error> {
-        let len = self.state.lock().await.records.len();
-        Ok((len > 0).then_some(MemoryPosition {
-            ordinal: len as u64,
-        }))
-    }
-}
-
-impl PositionCodec for MemoryStream {
-    fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error> {
-        Ok(Bytes::copy_from_slice(&position.ordinal.to_be_bytes()))
-    }
-
-    fn decode_position(&self, token: &[u8]) -> Result<Self::Position, Self::Error> {
-        let token: [u8; 8] = token
-            .try_into()
-            .map_err(|_| MemoryError::InvalidPositionToken)?;
-        let ordinal = u64::from_be_bytes(token);
-        if ordinal == 0 {
-            return Err(MemoryError::InvalidPositionToken);
-        }
-        Ok(MemoryPosition { ordinal })
-    }
-}
-
-#[async_trait]
-impl SnapshotStore for MemoryStream {
-    type Position = MemoryPosition;
-    type Error = MemoryError;
-
-    async fn latest(&self) -> Result<Option<PublishedSnapshot<Self::Position>>, Self::Error> {
-        Ok(self.state.lock().await.latest_snapshot.clone())
-    }
-
-    async fn publish(
-        &self,
-        snapshot: Snapshot<Self::Position>,
-        expected_parent: Option<&SnapshotId>,
-    ) -> Result<SnapshotId, Self::Error> {
-        let mut state = self.state.lock().await;
-        let actual_parent = state.latest_snapshot.as_ref().map(|value| &value.id);
-        if actual_parent != expected_parent {
-            return Err(MemoryError::SnapshotConflict);
-        }
-        if let SnapshotPosition::At(position) = &snapshot.at_event {
-            Self::validate_position(position, state.records.len())?;
-        }
-        if let Some(previous) = &state.latest_snapshot {
-            let previous_ordinal = match &previous.snapshot.at_event {
-                SnapshotPosition::Initial => 0,
-                SnapshotPosition::At(position) => position.ordinal,
-            };
-            let next_ordinal = match &snapshot.at_event {
-                SnapshotPosition::Initial => 0,
-                SnapshotPosition::At(position) => position.ordinal,
-            };
-            if next_ordinal < previous_ordinal {
-                return Err(MemoryError::SnapshotRegression);
-            }
-        }
-
-        let id = SnapshotId::from_bytes(Bytes::copy_from_slice(
-            &state.next_snapshot_id.to_be_bytes(),
-        ));
-        state.next_snapshot_id += 1;
-        state.latest_snapshot = Some(PublishedSnapshot {
-            id: id.clone(),
-            snapshot,
-        });
-        Ok(id)
-    }
-}
-
-#[cfg(test)]
+#[cfg(all(test, any()))]
 mod tests {
     use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -927,5 +754,37 @@ mod tests {
             .await
             .unwrap_err();
         assert_eq!(regression.kind(), ErrorKind::Conflict);
+    }
+}
+
+#[cfg(test)]
+mod current_tests {
+    use bytes::Bytes;
+    use futures_util::TryStreamExt as _;
+    use sea_core::{
+        Durability, Event,
+        archive::{SeaStorage, StorageEventStream},
+    };
+
+    use super::MemoryStream;
+
+    #[tokio::test]
+    async fn passes_storage_conformance() {
+        sea_conformance::run_sea_storage_conformance(MemoryStream::new).await;
+    }
+
+    #[tokio::test]
+    async fn append_reports_memory_durability() {
+        let storage = MemoryStream::new();
+        let receipt = storage
+            .append(Event {
+                payload: Bytes::from_static(b"value"),
+                blob_tree: None,
+            })
+            .await
+            .unwrap();
+        assert_eq!(receipt.durability, Durability::Memory);
+        let records: StorageEventStream<_> = storage.read(None, None).await.unwrap();
+        assert_eq!(records.try_collect::<Vec<_>>().await.unwrap().len(), 1);
     }
 }

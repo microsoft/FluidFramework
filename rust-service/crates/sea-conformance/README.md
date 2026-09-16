@@ -6,7 +6,6 @@
 
 `run_sea_storage_conformance` checks blob and directory identity, missing-tree rejection, event ordering, initial and historical snapshots, conditional and idempotent snapshot publication, publication resolution, and snapshot-plus-tail load.
 `run_sea_session_observable_behavior` checks the current `SeaSession` contract for submission and publication identity recovery, bounded and recovery reads, live snapshot notifications, content access, and close behavior.
-The older `run_conformance` and `run_position_codec_conformance` suites continue to cover the experimental append-stream traits used by benchmarks.
 
 Factories must return a fresh, empty stream for each call, and the session suite requires a fresh archive session.
 The suites panic on a contract violation and are intended to be invoked from an implementation's async tests.
@@ -22,7 +21,7 @@ The legacy append-stream laws map to the current contracts as follows:
 | Committed position validation | Ported to `run_sea_storage_conformance`. |
 | Snapshot position, parent, and monotonicity validation | Ported to `run_sea_storage_conformance` using content-addressed roots. |
 | Snapshot recovery | Covered by the atomic snapshot-plus-tail storage load and the session observable-behavior suite. |
-| Position codec round trip | Replaced by the canonical `EventPosition::to_bytes` and `EventPosition::from_bytes` assertion. The obsolete fallible token codec has no current equivalent. |
+| Position codec round trip | Replaced by the canonical `EventPosition::to_bytes` and `EventPosition::from_bytes` assertion. The obsolete fallible token codec was removed. |
 | Deterministic mixed legacy model trace | Not mechanically ported because it combines the obsolete inline-snapshot value model with laws covered independently above. Deterministic current-API workloads remain in `sea-benchmarks`. |
 
 ## Relationships and Limits

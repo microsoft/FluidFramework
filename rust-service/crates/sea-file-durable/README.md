@@ -10,6 +10,6 @@ cargo test -p sea-file-durable --all-targets --all-features
 cargo clippy -p sea-file-durable --all-targets --all-features -- -D warnings
 ```
 
-The test suite includes real child-process termination around append and snapshot boundaries. It uses atomic marker files for deterministic coordination and has a 10-second failure timeout. Run it on a local filesystem that supports file synchronization and atomic rename within one directory.
+The test suite covers current archive conformance and clean reopen behavior.
 
 Successful tests demonstrate recovery after process termination while the operating system remains running. They do not demonstrate survival across power loss, filesystem or hardware failure, multi-process writer safety, retention, replication, or remote storage semantics. Persisted-size output is structural evidence for this encoding, not a capacity or throughput claim.

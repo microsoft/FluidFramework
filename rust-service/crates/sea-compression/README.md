@@ -25,8 +25,6 @@ use sea_compression::CompressionSession;
 let compressed = CompressionSession::new(session);
 ```
 
-The older `CompressionStream` remains for append-stream benchmark compatibility.
-
 ## Validation
 
 From `rust-service/`:
@@ -37,6 +35,5 @@ cargo clippy -p sea-compression --all-targets --all-features -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc -p sea-compression --all-features --no-deps
 ```
 
-The test suite covers shared stream and snapshot conformance, empty and large
-round trips, position preservation, snapshot recovery, corrupt and truncated
-frames, trailing bytes, lazy decoding, and underlying error classification.
+The test suite covers session conformance and round trips, corrupt and truncated frames,
+trailing bytes, and representative compression ratios.

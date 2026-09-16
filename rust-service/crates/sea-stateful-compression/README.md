@@ -18,7 +18,7 @@ wrong-dictionary frames classify as `ErrorKind::Corrupt`.
 
 - `MAX_DICTIONARY_BYTES` is the hard maximum retained dictionary size.
 - `MAX_DECODED_BYTES` is the hard ceiling for a configured decoded payload bound.
-- `StatefulCompressionStream::new` rejects an empty bound, a bound above the
+- `StatefulCompressionSession::new` rejects an empty bound, a bound above the
   hard ceiling, or a dictionary above its hard maximum.
 - Event and blob payloads above the configured bound are rejected
   before writing. Reads reject a declared or actual decoded length outside the
@@ -41,7 +41,5 @@ cargo clippy -p sea-stateful-compression --all-targets --all-features -- -D warn
 RUSTDOCFLAGS="-D warnings" cargo doc -p sea-stateful-compression --all-features --no-deps
 ```
 
-The test suite covers shared stream, snapshot, and position-codec conformance;
-reopen and retained-record restart; configured limits; malformed, truncated,
-extended, false-length, and wrong-dictionary frames; lazy decoding; snapshots;
-and compression-before-encryption composition.
+The test suite covers session conformance, configured limits, and malformed,
+truncated, false-length, and wrong-dictionary frames.

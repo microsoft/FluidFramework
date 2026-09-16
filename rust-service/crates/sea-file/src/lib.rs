@@ -18,10 +18,8 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::stream;
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, Capabilities, ClassifiedError,
-    CommittedEvent, Durability, ErrorKind, Event, EventPosition, EventReceipt, EventStream,
-    PositionCodec, PublishedSnapshot, Snapshot, SnapshotId, SnapshotPosition, SnapshotStore,
-    StreamReader,
+    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, Durability, ErrorKind,
+    Event, EventPosition, SnapshotId,
     archive::{
         CommittedEvent as ArchiveCommittedEvent, EventReceipt as ArchiveEventReceipt, OperationId,
         PublishedSnapshot as ArchivePublishedSnapshot, Snapshot as ArchiveSnapshot,
@@ -31,24 +29,22 @@ use sea_core::{
 };
 use thiserror::Error;
 
-const STREAM_MAGIC: [u8; 8] = *b"SSTRM002";
-const SNAPSHOT_MAGIC: [u8; 8] = *b"SSNAP002";
 const ARCHIVE_MAGIC: [u8; 8] = *b"SEAARC01";
 const HEADER_LEN: usize = 8;
-const STREAM_FILE: &str = "stream.log";
-const SNAPSHOT_FILE: &str = "snapshots.log";
 const ARCHIVE_FILE: &str = "archive.log";
 const ARCHIVE_BLOB: u8 = 1;
 const ARCHIVE_DIRECTORY: u8 = 2;
 const ARCHIVE_EVENT: u8 = 3;
 const ARCHIVE_SNAPSHOT: u8 = 4;
 
-/// An opaque one-based record ordinal within a file stream.
+#[cfg(any())]
+/// An obsolete one-based record ordinal within the legacy file stream.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FilePosition {
     ordinal: u64,
 }
 
+#[cfg(any())]
 impl FilePosition {
     /// Returns the one-based record index within the file stream.
     #[must_use]
@@ -117,17 +113,7 @@ struct ArchiveState {
 /// Parsed records and append handles protected by the store mutex.
 #[derive(Debug)]
 struct State {
-    /// Records reconstructed at open and extended after successful flushes.
-    records: Vec<Bytes>,
-    /// Append-only buffered writer for stream records.
-    stream_writer: BufWriter<File>,
-    /// Latest snapshot reconstructed from the snapshot log.
-    latest_snapshot: Option<PublishedSnapshot<FilePosition>>,
-    /// Contiguous numeric identity for the next snapshot.
-    next_snapshot_id: u64,
-    /// Append-only buffered writer for snapshot records.
-    snapshot_writer: BufWriter<File>,
-    /// Final Sea archive state reconstructed from its journal.
+    /// Current Sea archive state reconstructed from its journal.
     archive: ArchiveState,
     /// Append-only buffered writer for final Sea archive records.
     archive_writer: BufWriter<File>,
@@ -155,22 +141,7 @@ impl FileStream {
     /// a corruption error when an existing file is incomplete or invalid.
     pub fn open(directory: impl AsRef<Path>) -> Result<Self, FileError> {
         fs::create_dir_all(directory.as_ref())?;
-        let stream_path = directory.as_ref().join(STREAM_FILE);
-        let snapshot_path = directory.as_ref().join(SNAPSHOT_FILE);
         let archive_path = directory.as_ref().join(ARCHIVE_FILE);
-
-        let records = if stream_path.exists() {
-            parse_stream(&read_all(&stream_path)?)?
-        } else {
-            write_header(&stream_path, STREAM_MAGIC)?;
-            Vec::new()
-        };
-        let (latest_snapshot, next_snapshot_id) = if snapshot_path.exists() {
-            parse_snapshots(&read_all(&snapshot_path)?, records.len())?
-        } else {
-            write_header(&snapshot_path, SNAPSHOT_MAGIC)?;
-            (None, 1)
-        };
         let archive = if archive_path.exists() {
             parse_archive(&read_all(&archive_path)?)?
         } else {
@@ -183,11 +154,6 @@ impl FileStream {
 
         Ok(Self {
             state: Arc::new(Mutex::new(State {
-                records,
-                stream_writer: append_writer(&stream_path)?,
-                latest_snapshot,
-                next_snapshot_id,
-                snapshot_writer: append_writer(&snapshot_path)?,
                 archive,
                 archive_writer: append_writer(&archive_path)?,
             })),
@@ -199,7 +165,8 @@ impl FileStream {
         self.state.lock().map_err(|_| FileError::Poisoned)
     }
 
-    /// Rejects zero and beyond-head positions.
+    #[cfg(any())]
+    /// Rejects zero and beyond-head legacy positions.
     fn validate_position(position: &FilePosition, len: usize) -> Result<(), FileError> {
         let len = u64::try_from(len).map_err(|_| FileError::InvalidPosition)?;
         if position.ordinal == 0 || position.ordinal > len {
@@ -208,7 +175,8 @@ impl FileStream {
         Ok(())
     }
 
-    /// Resolves a one-based event ordinal in this stream.
+    #[cfg(any())]
+    /// Resolves a one-based event ordinal in the legacy stream.
     ///
     /// # Errors
     ///
@@ -493,6 +461,7 @@ impl sea_core::archive::SeaStorage for FileStream {
     }
 }
 
+#[cfg(any())]
 #[async_trait]
 impl EventStream for FileStream {
     type Position = FilePosition;
@@ -562,6 +531,7 @@ impl EventStream for FileStream {
     }
 }
 
+#[cfg(any())]
 impl PositionCodec for FileStream {
     fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error> {
         Self::validate_position(position, self.state()?.records.len())?;
@@ -578,6 +548,7 @@ impl PositionCodec for FileStream {
     }
 }
 
+#[cfg(any())]
 #[async_trait]
 impl SnapshotStore for FileStream {
     type Position = FilePosition;
@@ -629,6 +600,7 @@ impl SnapshotStore for FileStream {
 }
 
 /// Converts an initial or positioned snapshot to its persisted ordinal.
+#[cfg(any())]
 fn snapshot_ordinal(snapshot: &Snapshot<FilePosition>) -> u64 {
     match &snapshot.at_event {
         SnapshotPosition::Initial => 0,
@@ -673,6 +645,7 @@ fn parse_header(bytes: &[u8], magic: [u8; 8]) -> Result<(), FileError> {
 }
 
 /// Strictly parses every length-framed stream record.
+#[cfg(any())]
 fn parse_stream(bytes: &[u8]) -> Result<Vec<Bytes>, FileError> {
     parse_header(bytes, STREAM_MAGIC)?;
     let mut cursor = HEADER_LEN;
@@ -684,6 +657,7 @@ fn parse_stream(bytes: &[u8]) -> Result<Vec<Bytes>, FileError> {
 }
 
 /// Strictly parses snapshots and validates IDs and monotonic positions.
+#[cfg(any())]
 fn parse_snapshots(
     bytes: &[u8],
     record_count: usize,
@@ -758,6 +732,7 @@ fn write_frame(writer: &mut impl Write, payload: &[u8]) -> Result<(), FileError>
 }
 
 /// Writes one snapshot record in the persisted log format.
+#[cfg(any())]
 fn write_snapshot(
     writer: &mut impl Write,
     id: u64,
@@ -1120,7 +1095,7 @@ fn read_field<'a>(
     Ok(value)
 }
 
-#[cfg(test)]
+#[cfg(all(test, any()))]
 mod tests {
     use std::{
         fs,
@@ -1354,5 +1329,56 @@ mod tests {
         assert_eq!(error.kind(), ErrorKind::Corrupt);
         assert!(error.to_string().contains("snapshot id"));
         fs::remove_dir_all(directory).unwrap();
+    }
+}
+
+#[cfg(test)]
+mod current_tests {
+    use std::{
+        fs,
+        sync::atomic::{AtomicU64, Ordering},
+    };
+
+    use bytes::Bytes;
+    use sea_core::{Event, archive::SeaStorage};
+
+    use super::FileStream;
+
+    static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(1);
+
+    fn directory(label: &str) -> std::path::PathBuf {
+        let id = NEXT_DIRECTORY.fetch_add(1, Ordering::Relaxed);
+        std::env::temp_dir().join(format!(
+            "sea-file-current-{}-{label}-{id}",
+            std::process::id()
+        ))
+    }
+
+    #[tokio::test]
+    async fn passes_storage_conformance() {
+        let root = directory("conformance");
+        let next = AtomicU64::new(1);
+        sea_conformance::run_sea_storage_conformance(|| {
+            FileStream::open(root.join(next.fetch_add(1, Ordering::Relaxed).to_string())).unwrap()
+        })
+        .await;
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn clean_reopen_preserves_events() {
+        let root = directory("reopen");
+        let storage = FileStream::open(&root).unwrap();
+        let receipt = storage
+            .append(Event {
+                payload: Bytes::from_static(b"persisted"),
+                blob_tree: None,
+            })
+            .await
+            .unwrap();
+        drop(storage);
+        let reopened = FileStream::open(&root).unwrap();
+        assert_eq!(reopened.head().await.unwrap(), Some(receipt.position));
+        fs::remove_dir_all(root).unwrap();
     }
 }

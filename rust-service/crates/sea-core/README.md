@@ -11,12 +11,9 @@
 - `SeaSession` is the archive-bound user contract. It adds authors, session and operation identities, submission recovery, gap-free load, subscriptions, and explicit close.
 - `ErrorKind` exposes stable caller decisions while implementations retain detailed error types.
 
-The older `EventStream`, `SnapshotStore`, and position-codec traits remain for storage experiments and benchmarks.
-New service code uses the contracts in `archive`.
-
 ## Relationships and Limits
 
-The memory, buffered-file, and durable-file packages implement `SeaStorage` and the older experimental traits.
+The memory, buffered-file, and durable-file packages implement `SeaStorage`.
 The conformance package tests their shared semantic laws.
 This crate defines no persistence layout, authentication policy, retention policy, or replication mechanism beyond the guarantees expressed by its traits.
 

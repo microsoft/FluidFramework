@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 3b. Migrate storage and decorators.
-- **Last completed checkpoint:** 3a. Migrate conformance and benchmarks.
-- **Last validation:** Checkpoint 3a formatting, strict workspace Clippy, full Rust workspace tests, benchmark smoke, documentation links, and representative schema-version-3 storage/session measurements passed on 2026-09-16.
-- **Latest checkpoint notes:** Benchmark schema version 3 distinguishes direct `SeaStorage` measurements from sequenced `SeaSession` decorator measurements; version-2 raw-stream decorator results are not comparable. Current storage conformance absorbs the meaningful legacy laws. `EncryptionSession` now validates committed plaintext before returning a stable-ID retry receipt, preserving idempotency across fresh nonces and rejecting changed input.
+- **Current checkpoint:** 3c. Delete the legacy generation.
+- **Last completed checkpoint:** 3b. Migrate storage and decorators.
+- **Last validation:** Checkpoint 3b formatting, strict workspace Clippy, full Rust workspace tests, benchmark smoke, and documentation links passed on 2026-09-16.
+- **Latest checkpoint notes:** Memory, buffered-file, and durable-file compile only their `SeaStorage` implementations and use canonical `EventPosition`. Compression, encryption, and stateful compression compile only their `SeaSession` decorators. The obsolete public traits, storage adapter, and old sequencer are removed; disabled legacy test bodies remain to be physically deleted in checkpoint 3c.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 3b. Migrate storage and decorators.
+- **Next checkpoint:** 3c. Delete the legacy generation.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -461,15 +461,15 @@ This checkpoint may be split into the following ordered commits while keeping bo
 
 #### 3b. Migrate storage and decorators
 
-- [ ] Remove old-trait implementations from memory, buffered-file, and durable-file storage after their consumers move.
-- [ ] Retain one position type and one canonical position codec.
-- [ ] Remove legacy `EventStream`/`SnapshotStore` implementations from compression, encryption, and stateful compression after benchmark and conformance consumers move.
-- [ ] Keep their current `SeaSession` implementations working until checkpoint 4 introduces narrower boundaries.
+- [x] Remove old-trait implementations from memory, buffered-file, and durable-file storage after their consumers move.
+- [x] Retain one position type and one canonical position codec.
+- [x] Remove legacy `EventStream`/`SnapshotStore` implementations from compression, encryption, and stateful compression after benchmark and conformance consumers move.
+- [x] Keep their current `SeaSession` implementations working until checkpoint 4 introduces narrower boundaries.
 
 #### 3c. Delete the legacy generation
 
-- [ ] Delete `EventStream`, `PositionCodec`, `SnapshotStore`, old snapshot values, and old capabilities that have current equivalents.
-- [ ] Delete the old sequencer implementation and its private frame format.
+- [x] Delete `EventStream`, `PositionCodec`, `SnapshotStore`, old snapshot values, and old capabilities that have current equivalents.
+- [x] Delete the old sequencer implementation and its private frame format.
 - [ ] Delete duplicate conformance laws and tests.
 - [ ] Remove stale migration TODOs and update crate READMEs.
 - [ ] Verify no active code imports the deleted generation.

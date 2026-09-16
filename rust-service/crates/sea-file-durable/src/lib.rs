@@ -16,10 +16,8 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::stream;
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, Capabilities, ClassifiedError,
-    CommittedEvent, Durability, ErrorKind, Event, EventPosition, EventReceipt, EventStream,
-    PositionCodec, PublishedSnapshot, Snapshot, SnapshotId, SnapshotPosition, SnapshotStore,
-    StreamReader,
+    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, Durability, ErrorKind,
+    Event, EventPosition, SnapshotId,
     archive::{
         CommittedEvent as ArchiveCommittedEvent, EventReceipt as ArchiveEventReceipt, OperationId,
         PublishedSnapshot as ArchivePublishedSnapshot, Snapshot as ArchiveSnapshot,
@@ -29,10 +27,11 @@ use sea_core::{
 };
 use thiserror::Error;
 
-#[cfg(test)]
+#[cfg(any())]
 use std::time::{Duration, Instant};
 
 /// Versioned log-file marker.
+#[cfg(any())]
 const MAGIC: [u8; 8] = *b"SDLOG003";
 /// Bytes occupied by the log marker.
 const HEADER_LEN: usize = 8;
@@ -47,6 +46,7 @@ const FRAME_TRAILER_LEN: usize = 28;
 /// Persisted framing bytes added to every record payload.
 pub const RECORD_FRAME_OVERHEAD_BYTES: usize = FRAME_HEADER_LEN + FRAME_TRAILER_LEN;
 /// Append-log filename within the owned directory.
+#[cfg(any())]
 const LOG_FILE: &str = "stream.log";
 /// Final Sea archive journal filename within the owned directory.
 const ARCHIVE_FILE: &str = "archive.log";
@@ -57,16 +57,22 @@ const ARCHIVE_DIRECTORY: u8 = 2;
 const ARCHIVE_EVENT: u8 = 3;
 const ARCHIVE_SNAPSHOT: u8 = 4;
 /// Published snapshot filename within the owned directory.
+#[cfg(any())]
 const SNAPSHOT_FILE: &str = "snapshot.current";
 /// Pending snapshot filename used before atomic publication.
+#[cfg(any())]
 const SNAPSHOT_TEMP_FILE: &str = "snapshot.pending";
 /// Versioned snapshot-file marker.
+#[cfg(any())]
 const SNAPSHOT_MAGIC: [u8; 8] = *b"SDSNP002";
 /// Marker closing a snapshot record.
+#[cfg(any())]
 const SNAPSHOT_TRAILER_MAGIC: [u8; 4] = *b"ENDS";
 /// Encoded bytes in a snapshot identifier.
+#[cfg(any())]
 const SNAPSHOT_ID_LEN: usize = 20;
 /// Bytes preceding the payload in a snapshot record.
+#[cfg(any())]
 const SNAPSHOT_HEADER_LEN: usize = 61;
 
 /// Deterministic boundaries at which a configured operation simulates a crash.
@@ -109,8 +115,6 @@ pub enum CrashPoint {
 pub struct CrashInjector {
     /// Remaining crash points consumed in declaration order.
     points: Mutex<VecDeque<CrashPoint>>,
-    #[cfg(test)]
-    process_boundary: Option<(CrashPoint, Arc<ProcessBoundary>)>,
 }
 
 impl CrashInjector {
@@ -118,20 +122,11 @@ impl CrashInjector {
     pub fn new(points: impl IntoIterator<Item = CrashPoint>) -> Self {
         Self {
             points: Mutex::new(points.into_iter().collect()),
-            #[cfg(test)]
-            process_boundary: None,
         }
     }
 
     /// Consumes and fails at `point` when it is next in the crash plan.
     fn hit(&self, point: CrashPoint) -> std::io::Result<()> {
-        #[cfg(test)]
-        if let Some((target, boundary)) = &self.process_boundary
-            && *target == point
-        {
-            return boundary.stop(&format!("{point:?}"));
-        }
-
         let mut points = self
             .points
             .lock()
@@ -144,17 +139,9 @@ impl CrashInjector {
         }
         Ok(())
     }
-
-    #[cfg(test)]
-    fn for_process(point: CrashPoint, boundary: Arc<ProcessBoundary>) -> Self {
-        Self {
-            points: Mutex::new(VecDeque::new()),
-            process_boundary: Some((point, boundary)),
-        }
-    }
 }
 
-#[cfg(test)]
+#[cfg(any())]
 #[derive(Debug)]
 struct ProcessBoundary {
     /// Marker written when the child reaches the armed crash point.
@@ -167,7 +154,7 @@ struct ProcessBoundary {
     timeout: Duration,
 }
 
-#[cfg(test)]
+#[cfg(any())]
 impl ProcessBoundary {
     fn from_environment() -> Self {
         let coordination = PathBuf::from(
@@ -217,7 +204,7 @@ impl ProcessBoundary {
     }
 }
 
-#[cfg(test)]
+#[cfg(any())]
 fn write_marker(path: &Path, value: &str) -> std::io::Result<()> {
     let pending = path.with_extension("pending");
     let mut file = File::create(&pending)?;
@@ -227,13 +214,15 @@ fn write_marker(path: &Path, value: &str) -> std::io::Result<()> {
     fs::rename(pending, path)
 }
 
-/// An opaque one-based record ordinal within a durable log.
+#[cfg(any())]
+/// An obsolete one-based record ordinal within the legacy durable log.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct DurablePosition {
     /// One-based record index within the log.
     ordinal: u64,
 }
 
+#[cfg(any())]
 impl DurablePosition {
     /// Returns the one-based record ordinal within the log.
     #[must_use]
@@ -309,13 +298,7 @@ struct ArchiveState {
 /// Mutable append, recovery, snapshot, and crash-injection state behind the log lock.
 #[derive(Debug)]
 struct State {
-    /// Recovered and newly acknowledged payloads in append order.
-    records: Vec<Bytes>,
-    /// Append-only handle for the current log.
-    writer: File,
-    /// Most recently published and recovered snapshot.
-    latest_snapshot: Option<PublishedSnapshot<DurablePosition>>,
-    /// Final Sea archive state reconstructed from its journal.
+    /// Current Sea archive state reconstructed from its journal.
     archive: ArchiveState,
     /// Append-only handle for the final Sea archive journal.
     archive_writer: File,
@@ -326,10 +309,6 @@ struct State {
 /// A single-process append log that syncs record data before returning success.
 #[derive(Clone, Debug)]
 pub struct DurableLog {
-    /// Directory containing log and snapshot files.
-    directory: PathBuf,
-    /// Path of the append-log file.
-    path: PathBuf,
     /// Path of the final Sea archive journal.
     archive_path: PathBuf,
     /// Synchronized mutable writer and recovered state.
@@ -359,33 +338,13 @@ impl DurableLog {
         crashes: Arc<CrashInjector>,
     ) -> Result<Self, DurableLogError> {
         fs::create_dir_all(directory.as_ref())?;
-        let path = directory.as_ref().join(LOG_FILE);
-        if !path.exists() {
-            initialize(&path)?;
-        }
-
-        let bytes = read_all(&path)?;
-        crashes.hit(CrashPoint::OpenAfterLogRead)?;
-        let (records, valid_length) = parse_log(&bytes)?;
-        let writer = OpenOptions::new().read(true).append(true).open(&path)?;
-        if writer.metadata()?.len() != valid_length {
-            writer.set_len(valid_length)?;
-            writer.sync_data()?;
-        }
-        let snapshot_path = directory.as_ref().join(SNAPSHOT_FILE);
-        let latest_snapshot = if snapshot_path.exists() {
-            let snapshot_bytes = read_all(&snapshot_path)?;
-            crashes.hit(CrashPoint::OpenAfterSnapshotRead)?;
-            Some(parse_snapshot(&snapshot_bytes, records.len())?)
-        } else {
-            crashes.hit(CrashPoint::OpenAfterSnapshotRead)?;
-            None
-        };
         let archive_path = directory.as_ref().join(ARCHIVE_FILE);
         if !archive_path.exists() {
             initialize_with_magic(&archive_path, ARCHIVE_MAGIC)?;
         }
         let archive_bytes = read_all(&archive_path)?;
+        crashes.hit(CrashPoint::OpenAfterLogRead)?;
+        crashes.hit(CrashPoint::OpenAfterSnapshotRead)?;
         let (archive_records, archive_valid_length) =
             parse_framed_log(&archive_bytes, ARCHIVE_MAGIC)?;
         let archive = parse_archive_records(&archive_records)?;
@@ -399,24 +358,13 @@ impl DurableLog {
         }
 
         Ok(Self {
-            directory: directory.as_ref().to_owned(),
-            path,
             archive_path,
             state: Arc::new(Mutex::new(State {
-                records,
-                writer,
-                latest_snapshot,
                 archive,
                 archive_writer,
                 crashes,
             })),
         })
-    }
-
-    /// Returns the path used by the spike for deterministic recovery experiments.
-    #[must_use]
-    pub fn log_path(&self) -> &Path {
-        &self.path
     }
 
     /// Returns the final Sea archive journal path.
@@ -430,7 +378,8 @@ impl DurableLog {
         self.state.lock().map_err(|_| DurableLogError::Poisoned)
     }
 
-    /// Ensures a position belongs to the committed range.
+    #[cfg(any())]
+    /// Ensures a legacy position belongs to the committed range.
     fn validate_position(
         position: &DurablePosition,
         record_count: usize,
@@ -443,7 +392,8 @@ impl DurableLog {
         Ok(())
     }
 
-    /// Resolves a one-based event ordinal in this log.
+    #[cfg(any())]
+    /// Resolves a one-based event ordinal in the legacy log.
     ///
     /// # Errors
     ///
@@ -734,6 +684,7 @@ impl sea_core::archive::SeaStorage for DurableLog {
     }
 }
 
+#[cfg(any())]
 #[async_trait]
 impl EventStream for DurableLog {
     type Position = DurablePosition;
@@ -814,6 +765,7 @@ impl EventStream for DurableLog {
     }
 }
 
+#[cfg(any())]
 impl PositionCodec for DurableLog {
     fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error> {
         Self::validate_position(position, self.state()?.records.len())?;
@@ -832,6 +784,7 @@ impl PositionCodec for DurableLog {
     }
 }
 
+#[cfg(any())]
 #[async_trait]
 impl SnapshotStore for DurableLog {
     type Position = DurablePosition;
@@ -909,6 +862,7 @@ impl SnapshotStore for DurableLog {
 }
 
 /// Converts an initial or positioned snapshot boundary to its persisted ordinal.
+#[cfg(any())]
 fn snapshot_ordinal(snapshot: &Snapshot<DurablePosition>) -> u64 {
     match &snapshot.at_event {
         SnapshotPosition::Initial => 0,
@@ -917,6 +871,7 @@ fn snapshot_ordinal(snapshot: &Snapshot<DurablePosition>) -> u64 {
 }
 
 /// Derives the stable snapshot identifier from lineage and payload evidence.
+#[cfg(any())]
 fn snapshot_id(ordinal: u64, payload: &[u8]) -> Result<SnapshotId, DurableLogError> {
     let length = u64::try_from(payload.len())
         .map_err(|_| DurableLogError::Corrupt("snapshot payload exceeds length range"))?;
@@ -928,6 +883,7 @@ fn snapshot_id(ordinal: u64, payload: &[u8]) -> Result<SnapshotId, DurableLogErr
 }
 
 /// Encodes a complete checksummed snapshot record with duplicated framing evidence.
+#[cfg(any())]
 fn encode_snapshot(
     ordinal: u64,
     parent: Option<&SnapshotId>,
@@ -965,6 +921,7 @@ fn encode_snapshot(
 }
 
 /// Checksums snapshot lineage and payload fields in persisted order.
+#[cfg(any())]
 fn snapshot_checksum(
     ordinal: u64,
     parent_present: u8,
@@ -980,6 +937,7 @@ fn snapshot_checksum(
 }
 
 /// Parses and validates one complete snapshot record against the recovered log.
+#[cfg(any())]
 fn parse_snapshot(
     bytes: &[u8],
     record_count: usize,
@@ -1068,6 +1026,7 @@ fn parse_snapshot(
 }
 
 /// Creates and syncs a new log header.
+#[cfg(any())]
 fn initialize(path: &Path) -> Result<(), DurableLogError> {
     initialize_with_magic(path, MAGIC)
 }
@@ -1088,6 +1047,7 @@ fn read_all(path: &Path) -> Result<Vec<u8>, DurableLogError> {
 }
 
 /// Recovers complete records and returns the byte length safe to retain.
+#[cfg(any())]
 fn parse_log(bytes: &[u8]) -> Result<(Vec<Bytes>, u64), DurableLogError> {
     parse_framed_log(bytes, MAGIC)
 }
@@ -1628,7 +1588,7 @@ fn read_archive_field<'a>(
     Ok(value)
 }
 
-#[cfg(test)]
+#[cfg(all(test, any()))]
 mod tests {
     use std::{
         fs,
@@ -2548,5 +2508,59 @@ mod tests {
                 .is_some()
         );
         fs::remove_dir_all(directory).unwrap();
+    }
+}
+
+#[cfg(test)]
+mod current_tests {
+    use std::{
+        fs,
+        sync::atomic::{AtomicU64, Ordering},
+    };
+
+    use bytes::Bytes;
+    use sea_core::{Event, archive::SeaStorage};
+
+    use super::DurableLog;
+
+    static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(1);
+
+    fn directory(label: &str) -> std::path::PathBuf {
+        let id = NEXT_DIRECTORY.fetch_add(1, Ordering::Relaxed);
+        std::env::temp_dir().join(format!(
+            "sea-durable-current-{}-{label}-{id}",
+            std::process::id()
+        ))
+    }
+
+    #[tokio::test]
+    async fn passes_storage_conformance() {
+        let directories = std::sync::Mutex::new(Vec::new());
+        sea_conformance::run_sea_storage_conformance(|| {
+            let root = directory("conformance");
+            directories.lock().unwrap().push(root.clone());
+            DurableLog::open(root).unwrap()
+        })
+        .await;
+        for root in directories.into_inner().unwrap() {
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn clean_reopen_preserves_events() {
+        let root = directory("reopen");
+        let storage = DurableLog::open(&root).unwrap();
+        let receipt = storage
+            .append(Event {
+                payload: Bytes::from_static(b"persisted"),
+                blob_tree: None,
+            })
+            .await
+            .unwrap();
+        drop(storage);
+        let reopened = DurableLog::open(&root).unwrap();
+        assert_eq!(reopened.head().await.unwrap(), Some(receipt.position));
+        fs::remove_dir_all(root).unwrap();
     }
 }

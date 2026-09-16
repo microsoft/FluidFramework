@@ -1,6 +1,6 @@
 //! Transparent authenticated encryption for Sea event archives.
 //!
-//! Each record and snapshot is encrypted independently with AES-256-GCM-SIV.
+//! Each event payload and blob is encrypted independently with AES-256-GCM-SIV.
 //! The stored envelope contains a magic value, format and algorithm versions,
 //! a record-or-snapshot context, a non-secret key identifier, a 96-bit nonce,
 //! ciphertext, and a 128-bit authentication tag. The header is authenticated,
@@ -31,9 +31,7 @@ use bytes::Bytes;
 use futures_util::StreamExt;
 use rand_core::{OsRng, RngCore};
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, Capabilities, ClassifiedError, CommittedEvent,
-    ErrorKind, EventReceipt, EventStream, PositionCodec, PublishedSnapshot, Snapshot, SnapshotId,
-    SnapshotStore, StreamReader,
+    BlobDirectory, BlobDirectoryId, BlobId, ClassifiedError, ErrorKind, SnapshotId,
     archive::{
         EventReceipt as SessionEventReceipt, EventSubmission, LoadEvent, OperationId,
         PublishedSnapshot as SessionPublishedSnapshot, SeaSession, SessionStream,
@@ -63,10 +61,8 @@ pub const ENVELOPE_OVERHEAD: usize = HEADER_LENGTH + TAG_LENGTH;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 enum PayloadContext {
-    /// Domain separator for append-stream records.
+    /// Domain separator for event records.
     Record = 1,
-    /// Domain separator for snapshot payloads.
-    Snapshot = 2,
     /// Domain separator for immutable blob leaves.
     Blob = 3,
 }
@@ -192,44 +188,6 @@ where
             Self::OperationConflict => ErrorKind::Conflict,
             Self::CorruptEnvelope => ErrorKind::Corrupt,
         }
-    }
-}
-
-/// Encrypts every record and snapshot independently over an underlying store.
-#[derive(Clone, Debug)]
-pub struct EncryptionStream<S, K, N = OsNonceSource> {
-    /// Store that receives encrypted envelopes and owns positions and capabilities.
-    inner: S,
-    /// Provider for active and historical encryption keys.
-    keys: K,
-    /// Source of per-envelope nonces.
-    nonces: N,
-}
-
-impl<S, K> EncryptionStream<S, K, OsNonceSource> {
-    /// Wraps a store using operating-system-generated nonces.
-    pub const fn new(inner: S, keys: K) -> Self {
-        Self {
-            inner,
-            keys,
-            nonces: OsNonceSource,
-        }
-    }
-}
-
-impl<S, K, N> EncryptionStream<S, K, N> {
-    /// Wraps a store using an injected nonce source.
-    pub const fn with_nonce_source(inner: S, keys: K, nonces: N) -> Self {
-        Self {
-            inner,
-            keys,
-            nonces,
-        }
-    }
-
-    /// Returns the underlying store, key provider, and nonce source.
-    pub fn into_parts(self) -> (S, K, N) {
-        (self.inner, self.keys, self.nonces)
     }
 }
 
@@ -554,151 +512,13 @@ where
     Ok(Bytes::from(plaintext))
 }
 
-#[async_trait]
-impl<S, K, N> EventStream for EncryptionStream<S, K, N>
-where
-    S: EventStream,
-    K: KeyProvider + Clone + 'static,
-    N: NonceSource,
-{
-    type Position = S::Position;
-    type Error = EncryptionError<S::Error>;
-
-    /// Reports the underlying store's capabilities unchanged.
-    fn capabilities(&self) -> Capabilities {
-        self.inner.capabilities()
-    }
-
-    /// Encrypts and appends one record without changing its receipt.
-    async fn append(&self, value: Bytes) -> Result<EventReceipt<Self::Position>, Self::Error> {
-        let envelope = encrypt_payload::<S::Error, _, _>(
-            &self.keys,
-            &self.nonces,
-            &value,
-            PayloadContext::Record,
-        )?;
-        self.inner
-            .append(envelope)
-            .await
-            .map_err(EncryptionError::Store)
-    }
-
-    /// Opens an underlying reader that decrypts each record when polled.
-    async fn read(
-        &self,
-        after: Option<&Self::Position>,
-    ) -> Result<StreamReader<Self::Position, Self::Error>, Self::Error> {
-        let reader = self
-            .inner
-            .read(after)
-            .await
-            .map_err(EncryptionError::Store)?;
-        let keys = self.keys.clone();
-        Ok(Box::pin(reader.map(move |result| {
-            result.map_err(EncryptionError::Store).and_then(|record| {
-                decrypt_payload::<S::Error, _>(&keys, &record.payload, PayloadContext::Record).map(
-                    |payload| CommittedEvent {
-                        position: record.position,
-                        payload,
-                    },
-                )
-            })
-        })))
-    }
-
-    /// Returns the underlying stream head unchanged.
-    async fn head(&self) -> Result<Option<Self::Position>, Self::Error> {
-        self.inner.head().await.map_err(EncryptionError::Store)
-    }
-}
-
-impl<S, K, N> PositionCodec for EncryptionStream<S, K, N>
-where
-    S: PositionCodec,
-    K: KeyProvider + Clone + 'static,
-    N: NonceSource,
-{
-    /// Delegates position encoding without encrypting the opaque token.
-    fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error> {
-        self.inner
-            .encode_position(position)
-            .map_err(EncryptionError::Store)
-    }
-
-    /// Delegates position decoding without interpreting the opaque token.
-    fn decode_position(&self, token: &[u8]) -> Result<Self::Position, Self::Error> {
-        self.inner
-            .decode_position(token)
-            .map_err(EncryptionError::Store)
-    }
-}
-
-#[async_trait]
-impl<S, K, N> SnapshotStore for EncryptionStream<S, K, N>
-where
-    S: SnapshotStore,
-    K: KeyProvider,
-    N: NonceSource,
-{
-    type Position = S::Position;
-    type Error = EncryptionError<S::Error>;
-
-    /// Returns the latest snapshot after authenticating and decrypting its payload.
-    async fn latest(&self) -> Result<Option<PublishedSnapshot<Self::Position>>, Self::Error> {
-        self.inner
-            .latest()
-            .await
-            .map_err(EncryptionError::Store)?
-            .map(|published| {
-                decrypt_payload::<S::Error, _>(
-                    &self.keys,
-                    &published.snapshot.payload,
-                    PayloadContext::Snapshot,
-                )
-                .map(|payload| PublishedSnapshot {
-                    id: published.id,
-                    snapshot: Snapshot {
-                        at_event: published.snapshot.at_event,
-                        payload,
-                    },
-                })
-            })
-            .transpose()
-    }
-
-    /// Encrypts a snapshot with the snapshot domain before delegating publication.
-    async fn publish(
-        &self,
-        snapshot: Snapshot<Self::Position>,
-        expected_parent: Option<&SnapshotId>,
-    ) -> Result<SnapshotId, Self::Error> {
-        let envelope = encrypt_payload::<S::Error, _, _>(
-            &self.keys,
-            &self.nonces,
-            &snapshot.payload,
-            PayloadContext::Snapshot,
-        )?;
-        self.inner
-            .publish(
-                Snapshot {
-                    at_event: snapshot.at_event,
-                    payload: envelope,
-                },
-                expected_parent,
-            )
-            .await
-            .map_err(EncryptionError::Store)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use std::sync::{Arc, Mutex};
 
-    use futures_util::{StreamExt, TryStreamExt};
-    use sea_compression::CompressionStream;
+    use futures_util::StreamExt;
     use sea_core::{
-        ClassifiedError, ErrorKind, EventStream, Snapshot, SnapshotPosition, SnapshotStore,
+        ClassifiedError, ErrorKind,
         archive::{AuthorId, EventSubmission, LoadEvent, OperationId, SeaSession, SessionId},
     };
     use sea_memory::{MemoryError, MemoryStream};
@@ -781,15 +601,6 @@ mod tests {
         }
     }
 
-    /// Builds the standard deterministic encrypted memory stream fixture.
-    fn stream() -> EncryptionStream<MemoryStream, TestKeys, FixedNonce> {
-        EncryptionStream::with_nonce_source(
-            MemoryStream::new(),
-            TestKeys::new(),
-            FixedNonce([3; 12]),
-        )
-    }
-
     #[tokio::test]
     async fn session_decorator_round_trips_events_and_blobs() {
         let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
@@ -852,212 +663,63 @@ mod tests {
         sea_conformance::run_sea_session_observable_behavior(&encrypted).await;
     }
 
-    #[tokio::test]
-    async fn passes_shared_conformance() {
-        sea_conformance::run_conformance(stream).await;
-    }
-
-    #[tokio::test]
-    async fn passes_position_codec_conformance() {
-        sea_conformance::run_position_codec_conformance(stream, b"malformed").await;
-    }
-
-    #[tokio::test]
-    async fn empty_and_large_records_round_trip() {
-        let stream = stream();
-        let large = Bytes::from(vec![0x5a; 1024 * 1024]);
-        stream.append(Bytes::new()).await.unwrap();
-        stream.append(large.clone()).await.unwrap();
-        let records = stream
-            .read(None)
-            .await
-            .unwrap()
-            .try_collect::<Vec<_>>()
-            .await
-            .unwrap();
-        assert_eq!(records[0].payload, Bytes::new());
-        assert_eq!(records[1].payload, large);
-    }
-
-    #[tokio::test]
-    async fn snapshots_round_trip_with_separate_context() {
-        let stream = stream();
-        let position = stream
-            .append(Bytes::from_static(b"record"))
-            .await
-            .unwrap()
-            .position;
-        stream
-            .publish(
-                Snapshot {
-                    at_event: SnapshotPosition::At(position.clone()),
-                    payload: Bytes::from_static(b"snapshot"),
-                },
-                None,
-            )
-            .await
-            .unwrap();
-        let latest = stream.latest().await.unwrap().unwrap();
-        assert_eq!(latest.snapshot.payload, Bytes::from_static(b"snapshot"));
-        assert_eq!(latest.snapshot.at_event, SnapshotPosition::At(position));
-    }
-
-    #[tokio::test]
-    async fn corrupted_snapshot_has_the_common_corruption_error() {
-        let inner = MemoryStream::new();
-        inner
-            .publish(
-                Snapshot {
-                    at_event: SnapshotPosition::Initial,
-                    payload: Bytes::from_static(b"not an encrypted envelope"),
-                },
-                None,
-            )
-            .await
-            .unwrap();
-        let stream =
-            EncryptionStream::with_nonce_source(inner, TestKeys::new(), FixedNonce([0; 12]));
-        let error = stream.latest().await.unwrap_err();
-        assert_eq!(error.kind(), ErrorKind::Corrupt);
-        assert_eq!(error.to_string(), "encrypted payload is corrupt");
-    }
-
-    #[tokio::test]
-    async fn wrong_key_has_one_corruption_error() {
-        let inner = MemoryStream::new();
-        EncryptionStream::with_nonce_source(inner.clone(), TestKeys::new(), FixedNonce([4; 12]))
-            .append(Bytes::from_static(b"secret"))
-            .await
-            .unwrap();
-        let wrong =
-            EncryptionStream::with_nonce_source(inner, TestKeys::wrong(), FixedNonce([5; 12]));
-        let error = wrong
-            .read(None)
-            .await
-            .unwrap()
-            .next()
-            .await
-            .unwrap()
-            .unwrap_err();
-        assert_eq!(error.kind(), ErrorKind::Corrupt);
-        assert_eq!(error.to_string(), "encrypted payload is corrupt");
-    }
-
-    #[tokio::test]
-    async fn unavailable_key_is_distinguishable_without_key_material() {
-        let inner = MemoryStream::new();
-        EncryptionStream::with_nonce_source(inner.clone(), TestKeys::new(), FixedNonce([4; 12]))
-            .append(Bytes::from_static(b"secret"))
-            .await
-            .unwrap();
-        let missing = TestKeys {
-            state: Arc::new(Mutex::new((SECOND_ID, vec![(SECOND_ID, [8; 32])]))),
-        };
-        let reader = EncryptionStream::with_nonce_source(inner, missing, FixedNonce([5; 12]));
-        let error = reader
-            .read(None)
-            .await
-            .unwrap()
-            .next()
-            .await
-            .unwrap()
-            .unwrap_err();
-        assert_eq!(error.kind(), ErrorKind::Unavailable);
-        assert!(!format!("{error:?}").contains("7, 7, 7"));
-    }
-
-    #[tokio::test]
-    async fn rotation_reads_old_and_new_envelopes() {
+    #[test]
+    fn envelope_round_trips_across_key_rotation() {
         let keys = TestKeys::new();
-        let stream = EncryptionStream::with_nonce_source(
-            MemoryStream::new(),
-            keys.clone(),
-            FixedNonce([6; 12]),
-        );
-        stream.append(Bytes::from_static(b"old")).await.unwrap();
+        let old = encrypt_payload::<MemoryError, _, _>(
+            &keys,
+            &FixedNonce([6; 12]),
+            &Bytes::from_static(b"old"),
+            PayloadContext::Record,
+        )
+        .unwrap();
         keys.rotate();
-        stream.append(Bytes::from_static(b"new")).await.unwrap();
-        let payloads = stream
-            .read(None)
-            .await
-            .unwrap()
-            .map_ok(|record| record.payload)
-            .try_collect::<Vec<_>>()
-            .await
-            .unwrap();
+        let new = encrypt_payload::<MemoryError, _, _>(
+            &keys,
+            &FixedNonce([7; 12]),
+            &Bytes::from_static(b"new"),
+            PayloadContext::Record,
+        )
+        .unwrap();
         assert_eq!(
-            payloads,
-            [Bytes::from_static(b"old"), Bytes::from_static(b"new")]
+            decrypt_payload::<MemoryError, _>(&keys, &old, PayloadContext::Record).unwrap(),
+            Bytes::from_static(b"old")
+        );
+        assert_eq!(
+            decrypt_payload::<MemoryError, _>(&keys, &new, PayloadContext::Record).unwrap(),
+            Bytes::from_static(b"new")
         );
     }
 
-    #[tokio::test]
-    async fn cloned_store_can_be_reopened_with_the_same_keys() {
-        let inner = MemoryStream::new();
+    #[test]
+    fn wrong_key_tampering_and_context_share_corruption_errors() {
         let keys = TestKeys::new();
-        EncryptionStream::with_nonce_source(inner.clone(), keys.clone(), FixedNonce([7; 12]))
-            .append(Bytes::from_static(b"persisted"))
-            .await
-            .unwrap();
-        let reopened = EncryptionStream::with_nonce_source(inner, keys, FixedNonce([8; 12]));
-        let record = reopened
-            .read(None)
-            .await
-            .unwrap()
-            .next()
-            .await
-            .unwrap()
-            .unwrap();
-        assert_eq!(record.payload, Bytes::from_static(b"persisted"));
-    }
-
-    #[tokio::test]
-    async fn truncation_and_bit_flips_share_one_error() {
-        let raw = MemoryStream::new();
-        let writer =
-            EncryptionStream::with_nonce_source(raw.clone(), TestKeys::new(), FixedNonce([9; 12]));
-        writer
-            .append(Bytes::from_static(b"authenticated"))
-            .await
-            .unwrap();
-        let encoded = raw
-            .read(None)
-            .await
-            .unwrap()
-            .next()
-            .await
-            .unwrap()
-            .unwrap()
-            .payload;
-
-        for corrupted in [
-            encoded.slice(..encoded.len() - 1),
-            {
-                let mut value = encoded.to_vec();
-                value[HEADER_LENGTH] ^= 1;
-                Bytes::from(value)
-            },
-            {
-                let mut value = encoded.to_vec();
-                value[MAGIC.len()] ^= 1;
-                Bytes::from(value)
-            },
-        ] {
-            let inner = MemoryStream::new();
-            inner.append(corrupted).await.unwrap();
-            let reader =
-                EncryptionStream::with_nonce_source(inner, TestKeys::new(), FixedNonce([0; 12]));
-            let error = reader
-                .read(None)
-                .await
-                .unwrap()
-                .next()
-                .await
-                .unwrap()
+        let encoded = encrypt_payload::<MemoryError, _, _>(
+            &keys,
+            &FixedNonce([9; 12]),
+            &Bytes::from_static(b"authenticated"),
+            PayloadContext::Record,
+        )
+        .unwrap();
+        let wrong_key =
+            decrypt_payload::<MemoryError, _>(&TestKeys::wrong(), &encoded, PayloadContext::Record)
                 .unwrap_err();
-            assert_eq!(error.kind(), ErrorKind::Corrupt);
-            assert_eq!(error.to_string(), "encrypted payload is corrupt");
-        }
+        assert_eq!(wrong_key.kind(), ErrorKind::Corrupt);
+        let wrong_context =
+            decrypt_payload::<MemoryError, _>(&keys, &encoded, PayloadContext::Blob).unwrap_err();
+        assert_eq!(wrong_context.kind(), ErrorKind::Corrupt);
+        let mut tampered = encoded.to_vec();
+        tampered[HEADER_LENGTH] ^= 1;
+        assert_eq!(
+            decrypt_payload::<MemoryError, _>(
+                &keys,
+                &Bytes::from(tampered),
+                PayloadContext::Record,
+            )
+            .unwrap_err()
+            .kind(),
+            ErrorKind::Corrupt
+        );
     }
 
     #[test]
@@ -1082,149 +744,16 @@ mod tests {
         }
     }
 
-    #[tokio::test]
-    async fn nonce_failure_rejects_records_and_snapshots_without_writing() {
-        let inner = MemoryStream::new();
-        let stream =
-            EncryptionStream::with_nonce_source(inner.clone(), TestKeys::new(), UnavailableNonce);
-
-        let append_error = stream
-            .append(Bytes::from_static(b"record"))
-            .await
-            .unwrap_err();
-        assert_eq!(append_error.kind(), ErrorKind::Unavailable);
-        assert_eq!(inner.head().await.unwrap(), None);
-
-        let publish_error = stream
-            .publish(
-                Snapshot {
-                    at_event: SnapshotPosition::Initial,
-                    payload: Bytes::from_static(b"snapshot"),
-                },
-                None,
-            )
-            .await
-            .unwrap_err();
-        assert_eq!(publish_error.kind(), ErrorKind::Unavailable);
-        assert!(inner.latest().await.unwrap().is_none());
-    }
-
-    #[tokio::test]
-    async fn decrypts_records_lazily_at_poll_boundary() {
-        let inner = MemoryStream::new();
-        EncryptionStream::with_nonce_source(
-            inner.clone(),
-            TestKeys::new(),
-            FixedNonce([13; NONCE_LENGTH]),
+    #[test]
+    fn nonce_failure_is_unavailable() {
+        let error = encrypt_payload::<MemoryError, _, _>(
+            &TestKeys::new(),
+            &UnavailableNonce,
+            &Bytes::from_static(b"record"),
+            PayloadContext::Record,
         )
-        .append(Bytes::from_static(b"first"))
-        .await
-        .unwrap();
-        inner
-            .append(Bytes::from_static(b"corrupt second envelope"))
-            .await
-            .unwrap();
-        let stream = EncryptionStream::with_nonce_source(
-            inner,
-            TestKeys::new(),
-            FixedNonce([14; NONCE_LENGTH]),
-        );
-        let mut reader = stream.read(None).await.unwrap();
-
-        assert_eq!(
-            reader.next().await.unwrap().unwrap().payload,
-            Bytes::from_static(b"first")
-        );
-        assert_eq!(
-            reader.next().await.unwrap().unwrap_err().kind(),
-            ErrorKind::Corrupt
-        );
-    }
-
-    #[tokio::test]
-    async fn key_id_and_context_are_authenticated() {
-        let raw = MemoryStream::new();
-        let keys = TestKeys::new();
-        keys.rotate();
-        let writer =
-            EncryptionStream::with_nonce_source(raw.clone(), keys.clone(), FixedNonce([10; 12]));
-        writer.append(Bytes::from_static(b"value")).await.unwrap();
-        let encoded = raw
-            .read(None)
-            .await
-            .unwrap()
-            .next()
-            .await
-            .unwrap()
-            .unwrap()
-            .payload;
-        let mut changed_id = encoded.to_vec();
-        changed_id[MAGIC.len() + 3..MAGIC.len() + 3 + KEY_ID_LENGTH]
-            .copy_from_slice(FIRST_ID.as_bytes());
-        let inner = MemoryStream::new();
-        inner.append(Bytes::from(changed_id)).await.unwrap();
-        let reader = EncryptionStream::with_nonce_source(inner, keys, FixedNonce([0; 12]));
-        assert_eq!(
-            reader
-                .read(None)
-                .await
-                .unwrap()
-                .next()
-                .await
-                .unwrap()
-                .unwrap_err()
-                .kind(),
-            ErrorKind::Corrupt
-        );
-    }
-
-    #[tokio::test]
-    async fn deterministic_nonce_reuse_fixture_preserves_authentication() {
-        let stream = stream();
-        stream.append(Bytes::from_static(b"first")).await.unwrap();
-        stream.append(Bytes::from_static(b"second")).await.unwrap();
-        let payloads = stream
-            .read(None)
-            .await
-            .unwrap()
-            .map_ok(|record| record.payload)
-            .try_collect::<Vec<_>>()
-            .await
-            .unwrap();
-        assert_eq!(
-            payloads,
-            [Bytes::from_static(b"first"), Bytes::from_static(b"second")]
-        );
-    }
-
-    #[tokio::test]
-    async fn compression_is_inside_encryption() {
-        let raw = MemoryStream::new();
-        let encrypted =
-            EncryptionStream::with_nonce_source(raw.clone(), TestKeys::new(), FixedNonce([11; 12]));
-        let stream = CompressionStream::new(encrypted);
-        let payload = Bytes::from(vec![b'a'; 16 * 1024]);
-        stream.append(payload.clone()).await.unwrap();
-        let stored = raw
-            .read(None)
-            .await
-            .unwrap()
-            .next()
-            .await
-            .unwrap()
-            .unwrap()
-            .payload;
-        assert_eq!(&stored[..MAGIC.len()], MAGIC);
-        assert!(stored.len() < payload.len() / 4);
-        let record = stream
-            .read(None)
-            .await
-            .unwrap()
-            .next()
-            .await
-            .unwrap()
-            .unwrap();
-        assert_eq!(record.payload, payload);
+        .unwrap_err();
+        assert_eq!(error.kind(), ErrorKind::Unavailable);
     }
 
     #[test]

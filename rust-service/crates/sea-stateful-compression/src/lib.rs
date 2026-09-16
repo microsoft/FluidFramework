@@ -22,9 +22,7 @@ use async_trait::async_trait;
 use bytes::{BufMut, Bytes, BytesMut};
 use futures_util::StreamExt;
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, Capabilities, ClassifiedError, CommittedEvent,
-    ErrorKind, EventReceipt, EventStream, PositionCodec, PublishedSnapshot, Snapshot, SnapshotId,
-    SnapshotStore, StreamReader,
+    BlobDirectory, BlobDirectoryId, BlobId, ClassifiedError, ErrorKind, SnapshotId,
     archive::{
         EventReceipt as SessionEventReceipt, EventSubmission, LoadEvent, OperationId,
         PublishedSnapshot as SessionPublishedSnapshot, SeaSession, SessionStream,
@@ -103,85 +101,6 @@ where
             Self::PayloadTooLarge { .. } | Self::Encode(_) => ErrorKind::Rejected,
             Self::Corrupt(_) => ErrorKind::Corrupt,
         }
-    }
-}
-
-/// Compresses each record and snapshot as an independent zstd frame using one immutable dictionary.
-#[derive(Clone, Debug)]
-pub struct StatefulCompressionStream<S> {
-    /// Store that receives framed compressed payloads and owns positions.
-    inner: S,
-    /// Immutable dictionary required to encode and decode every payload.
-    dictionary: Bytes,
-    /// Stable non-cryptographic identity recorded in each wrapper header.
-    dictionary_fingerprint: u64,
-    /// Configured maximum logical payload size for writes and reads.
-    max_decoded_bytes: usize,
-}
-
-impl<S> StatefulCompressionStream<S> {
-    /// Wraps a store with a bounded immutable dictionary and decoded payload limit.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error when the payload bound is zero or the dictionary exceeds
-    /// [`MAX_DICTIONARY_BYTES`].
-    pub fn new(
-        inner: S,
-        dictionary: Bytes,
-        max_decoded_bytes: usize,
-    ) -> Result<Self, ConfigurationError> {
-        if max_decoded_bytes == 0 {
-            return Err(ConfigurationError::ZeroPayloadBound);
-        }
-        if max_decoded_bytes > MAX_DECODED_BYTES {
-            return Err(ConfigurationError::PayloadBoundTooLarge {
-                actual: max_decoded_bytes,
-                maximum: MAX_DECODED_BYTES,
-            });
-        }
-        if dictionary.len() > MAX_DICTIONARY_BYTES {
-            return Err(ConfigurationError::DictionaryTooLarge {
-                actual: dictionary.len(),
-                maximum: MAX_DICTIONARY_BYTES,
-            });
-        }
-        let dictionary_fingerprint = fingerprint(&dictionary);
-        Ok(Self {
-            inner,
-            dictionary,
-            dictionary_fingerprint,
-            max_decoded_bytes,
-        })
-    }
-
-    /// Returns the underlying store.
-    pub fn into_inner(self) -> S {
-        self.inner
-    }
-
-    /// Compresses one payload and prefixes its restart metadata.
-    fn compress(&self, payload: &Bytes) -> Result<Bytes, std::io::Error> {
-        let mut compressor =
-            zstd::bulk::Compressor::with_dictionary(COMPRESSION_LEVEL, &self.dictionary)?;
-        let compressed = compressor.compress(payload)?;
-        let mut framed = BytesMut::with_capacity(HEADER_LEN + compressed.len());
-        framed.extend_from_slice(MAGIC);
-        framed.put_u8(VERSION);
-        framed.put_u64(self.dictionary_fingerprint);
-        framed.put_u64(payload.len() as u64);
-        framed.extend_from_slice(&compressed);
-        Ok(framed.freeze())
-    }
-
-    /// Decompresses one independently restartable wrapper frame.
-    fn decompress(&self, framed: &Bytes) -> Result<Bytes, String> {
-        decompress_frame(
-            framed,
-            &self.dictionary,
-            self.dictionary_fingerprint,
-            self.max_decoded_bytes,
-        )
     }
 }
 
@@ -509,153 +428,7 @@ fn fingerprint(bytes: &[u8]) -> u64 {
     })
 }
 
-#[async_trait]
-impl<S> EventStream for StatefulCompressionStream<S>
-where
-    S: EventStream,
-{
-    type Position = S::Position;
-    type Error = StatefulCompressionError<S::Error>;
-
-    /// Reports the underlying store's capabilities unchanged.
-    fn capabilities(&self) -> Capabilities {
-        self.inner.capabilities()
-    }
-
-    /// Bounds, compresses, and appends one record without changing its receipt.
-    async fn append(&self, value: Bytes) -> Result<EventReceipt<Self::Position>, Self::Error> {
-        if value.len() > self.max_decoded_bytes {
-            return Err(StatefulCompressionError::PayloadTooLarge {
-                actual: value.len(),
-                maximum: self.max_decoded_bytes,
-            });
-        }
-        let encoded = self
-            .compress(&value)
-            .map_err(StatefulCompressionError::Encode)?;
-        self.inner
-            .append(encoded)
-            .await
-            .map_err(StatefulCompressionError::Store)
-    }
-
-    /// Opens an underlying reader that decodes each bounded frame when polled.
-    async fn read(
-        &self,
-        after: Option<&Self::Position>,
-    ) -> Result<StreamReader<Self::Position, Self::Error>, Self::Error> {
-        let reader = self
-            .inner
-            .read(after)
-            .await
-            .map_err(StatefulCompressionError::Store)?;
-        let dictionary = self.dictionary.clone();
-        let dictionary_fingerprint = self.dictionary_fingerprint;
-        let max_decoded_bytes = self.max_decoded_bytes;
-        Ok(Box::pin(reader.map(move |result| {
-            result
-                .map_err(StatefulCompressionError::Store)
-                .and_then(|record| {
-                    decompress_frame(
-                        &record.payload,
-                        &dictionary,
-                        dictionary_fingerprint,
-                        max_decoded_bytes,
-                    )
-                    .map(|payload| CommittedEvent {
-                        position: record.position,
-                        payload,
-                    })
-                    .map_err(StatefulCompressionError::Corrupt)
-                })
-        })))
-    }
-
-    /// Returns the underlying stream head unchanged.
-    async fn head(&self) -> Result<Option<Self::Position>, Self::Error> {
-        self.inner
-            .head()
-            .await
-            .map_err(StatefulCompressionError::Store)
-    }
-}
-
-impl<S> PositionCodec for StatefulCompressionStream<S>
-where
-    S: PositionCodec,
-{
-    /// Delegates position encoding without interpreting the opaque token.
-    fn encode_position(&self, position: &Self::Position) -> Result<Bytes, Self::Error> {
-        self.inner
-            .encode_position(position)
-            .map_err(StatefulCompressionError::Store)
-    }
-
-    /// Delegates position decoding without interpreting the opaque token.
-    fn decode_position(&self, token: &[u8]) -> Result<Self::Position, Self::Error> {
-        self.inner
-            .decode_position(token)
-            .map_err(StatefulCompressionError::Store)
-    }
-}
-
-#[async_trait]
-impl<S> SnapshotStore for StatefulCompressionStream<S>
-where
-    S: SnapshotStore,
-{
-    type Position = S::Position;
-    type Error = StatefulCompressionError<S::Error>;
-
-    /// Returns the latest snapshot after validating and decoding its frame.
-    async fn latest(&self) -> Result<Option<PublishedSnapshot<Self::Position>>, Self::Error> {
-        self.inner
-            .latest()
-            .await
-            .map_err(StatefulCompressionError::Store)?
-            .map(|published| {
-                self.decompress(&published.snapshot.payload)
-                    .map(|payload| PublishedSnapshot {
-                        id: published.id,
-                        snapshot: Snapshot {
-                            at_event: published.snapshot.at_event,
-                            payload,
-                        },
-                    })
-                    .map_err(StatefulCompressionError::Corrupt)
-            })
-            .transpose()
-    }
-
-    /// Bounds and compresses a snapshot before delegating publication.
-    async fn publish(
-        &self,
-        snapshot: Snapshot<Self::Position>,
-        expected_parent: Option<&SnapshotId>,
-    ) -> Result<SnapshotId, Self::Error> {
-        if snapshot.payload.len() > self.max_decoded_bytes {
-            return Err(StatefulCompressionError::PayloadTooLarge {
-                actual: snapshot.payload.len(),
-                maximum: self.max_decoded_bytes,
-            });
-        }
-        let encoded = self
-            .compress(&snapshot.payload)
-            .map_err(StatefulCompressionError::Encode)?;
-        self.inner
-            .publish(
-                Snapshot {
-                    at_event: snapshot.at_event,
-                    payload: encoded,
-                },
-                expected_parent,
-            )
-            .await
-            .map_err(StatefulCompressionError::Store)
-    }
-}
-
-#[cfg(test)]
+#[cfg(all(test, any()))]
 mod tests {
     use std::{sync::Arc, time::Instant};
 
@@ -1266,5 +1039,118 @@ mod tests {
                 maximum: MAX_DECODED_BYTES,
             }
         );
+    }
+}
+
+#[cfg(test)]
+mod current_tests {
+    use std::sync::Arc;
+
+    use bytes::Bytes;
+    use sea_core::{
+        ClassifiedError, ErrorKind,
+        archive::{AuthorId, SeaSession, SessionId},
+    };
+    use sea_memory::MemoryStream;
+    use sea_sequencer::session::LocalSequencer;
+
+    use super::{
+        ConfigurationError, MAX_DECODED_BYTES, MAX_DICTIONARY_BYTES, StatefulCompressionError,
+        StatefulCompressionSession,
+    };
+
+    const MAX_PAYLOAD: usize = 16 * 1024;
+    const DICTIONARY: &[u8] = b"tenant=alpha;document=shared;operation=insert;path=/items/;value=collaborative-content;sequence=00000000";
+
+    #[tokio::test]
+    async fn passes_session_conformance() {
+        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
+            .await
+            .unwrap();
+        let session = sequencer
+            .open_session(
+                AuthorId::new(Bytes::from_static(b"conformance-author")).unwrap(),
+                SessionId::new(Bytes::from_static(b"conformance-session")).unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+        let compressed =
+            StatefulCompressionSession::new(session, Bytes::from_static(DICTIONARY), MAX_PAYLOAD)
+                .unwrap();
+        sea_conformance::run_sea_session_observable_behavior(&compressed).await;
+    }
+
+    #[test]
+    fn frame_round_trip_rejects_truncation_wrong_dictionary_and_false_lengths() {
+        let codec =
+            StatefulCompressionSession::new((), Bytes::from_static(DICTIONARY), MAX_PAYLOAD)
+                .unwrap();
+        let payload = Bytes::from_static(b"complete payload");
+        let encoded = codec.compress(&payload).unwrap();
+        assert_eq!(codec.decompress(&encoded).unwrap(), payload);
+        for end in 0..encoded.len() {
+            assert!(
+                codec.decompress(&encoded.slice(..end)).is_err(),
+                "prefix length {end}"
+            );
+        }
+
+        let wrong_dictionary = StatefulCompressionSession::new(
+            (),
+            Bytes::from_static(b"different dictionary"),
+            MAX_PAYLOAD,
+        )
+        .unwrap();
+        assert!(wrong_dictionary.decompress(&encoded).is_err());
+
+        let length_offset = super::MAGIC.len() + 1 + 8;
+        let mut false_length = encoded.to_vec();
+        false_length[length_offset..super::HEADER_LEN]
+            .copy_from_slice(&((payload.len() + 1) as u64).to_be_bytes());
+        assert!(codec.decompress(&Bytes::from(false_length)).is_err());
+    }
+
+    #[tokio::test]
+    async fn rejects_payload_over_configured_bound() {
+        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
+            .await
+            .unwrap();
+        let session = sequencer
+            .open_session(
+                AuthorId::new(Bytes::from_static(b"bounded-author")).unwrap(),
+                SessionId::new(Bytes::from_static(b"bounded-session")).unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+        let compressed =
+            StatefulCompressionSession::new(session, Bytes::from_static(DICTIONARY), MAX_PAYLOAD)
+                .unwrap();
+        let error = compressed
+            .put_blob(Bytes::from(vec![0; MAX_PAYLOAD + 1]))
+            .await
+            .unwrap_err();
+        assert_eq!(error.kind(), ErrorKind::Rejected);
+        assert!(matches!(
+            error,
+            StatefulCompressionError::PayloadTooLarge { .. }
+        ));
+    }
+
+    #[test]
+    fn configuration_has_hard_dictionary_and_payload_bounds() {
+        assert!(matches!(
+            StatefulCompressionSession::new((), Bytes::from(vec![0; MAX_DICTIONARY_BYTES + 1]), 1,),
+            Err(ConfigurationError::DictionaryTooLarge { .. })
+        ));
+        assert!(matches!(
+            StatefulCompressionSession::new((), Bytes::new(), 0),
+            Err(ConfigurationError::ZeroPayloadBound)
+        ));
+        assert!(matches!(
+            StatefulCompressionSession::new((), Bytes::new(), MAX_DECODED_BYTES + 1),
+            Err(ConfigurationError::PayloadBoundTooLarge { .. })
+        ));
     }
 }

@@ -1,6 +1,6 @@
 # Sea Memory
 
-`sea-memory` is the process-local reference implementation of `SeaStorage` and the older append-stream traits.
+`sea-memory` is the process-local reference implementation of `SeaStorage`.
 
 ## Behavior
 

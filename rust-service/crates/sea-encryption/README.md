@@ -6,7 +6,7 @@ Each payload has an independent authenticated envelope; the wrapped session cont
 ## Envelope And Errors
 
 The envelope authenticates its magic value, format and algorithm versions,
-record-or-snapshot context, non-secret key identifier, nonce, and ciphertext.
+event-or-blob context, non-secret key identifier, nonce, and ciphertext.
 The distinct contexts prevent swapping a stored event with a blob.
 `ENVELOPE_OVERHEAD` is the fixed number of bytes added before accounting for
 ciphertext, whose length equals the plaintext length.
@@ -43,7 +43,5 @@ cargo clippy -p sea-encryption --all-targets --all-features -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc -p sea-encryption --all-features --no-deps
 ```
 
-The test suite covers shared stream, snapshot, and position-codec conformance;
-key rotation and reopen; missing and wrong keys; nonce failure without writes;
-truncation, tampering, and context separation; lazy decryption; redaction; and
-compression-before-encryption composition.
+The test suite covers session conformance and stable retries, key rotation, wrong keys,
+nonce failure, truncation, tampering, context separation, and key redaction.

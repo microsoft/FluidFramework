@@ -1,6 +1,6 @@
 # Sea File
 
-`sea-file` is a buffered single-process filesystem implementation of `SeaStorage` and the older append-stream traits.
+`sea-file` is a buffered single-process filesystem implementation of `SeaStorage`.
 
 ## Persistence Model
 
