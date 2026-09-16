@@ -172,6 +172,21 @@ On the same Linux host and Chromium 152, a three-repetition `rust-memory-direct`
 Mean final convergence fell from 2,642.5 ms to 44.27 ms while all clients still observed all 110 warmup and measured edits.
 These are directional development measurements comparing baseline commit `b16f8d980bbebfe1e39b118fc9dcccb50a3e2a59` with this change, not production capacity claims.
 
+The comparison used this command in a clean checkout of each source commit:
+
+```bash
+pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run -- \
+  --case rust-memory-direct \
+  --dds dummy \
+  --repetitions 3 \
+  --operations 100 \
+  --warmup 10
+```
+
+Before commit `30940207bc7e10081a3d9f364c9033b601c2cf5b`, every submission opened and closed a WebTransport bidirectional stream.
+That commit reused one browser submission stream for ordered requests and acknowledgements while retaining the per-operation path as a temporary fallback.
+The exact Linux distribution, kernel, CPU, memory, Node version, and raw per-repetition artifacts were not retained and are therefore unknown.
+
 The `bench:run` wrapper enables complete failure diagnostics and writes both reporter streams to stdout, so redirecting it with `> log.txt` retains the full errors.
 The report suite name includes the effective workload, operation count, warmup count, operations per turn, synchronization behavior, and repetition count.
 

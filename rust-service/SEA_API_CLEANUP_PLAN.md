@@ -5,12 +5,12 @@
 - **Plan status:** Proposed.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 0. Review and commit this plan.
-- **Last completed checkpoint:** None.
-- **Last validation:** Architecture/specification audit, documentation links, Markdown diagnostics, and diff integrity passed on 2026-09-16; implementation validation has not started.
-- **Plan commit:** Not committed.
+- **Current checkpoint:** 2. Capture current behavior and test infrastructure.
+- **Last completed checkpoint:** 1. Preserve the persistent-author-stream baseline.
+- **Last validation:** Checkpoint 1 benchmark provenance and documentation links passed on 2026-09-16; implementation validation has not started.
+- **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 0. Review and commit this plan.
+- **Next checkpoint:** 2. Capture current behavior and test infrastructure.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -392,10 +392,10 @@ Do not combine later cleanup into an earlier checkpoint merely because files ove
 
 ### 0. Plan-only commit
 
-- [ ] Review and approve this plan.
-- [ ] Run the documentation link checker.
-- [ ] Commit only `SEA_API_CLEANUP_PLAN.md`.
-- [ ] Record the plan commit hash in **Status** during checkpoint 1.
+- [x] Review and approve this plan.
+- [x] Run the documentation link checker.
+- [x] Commit only `SEA_API_CLEANUP_PLAN.md`.
+- [x] Record the plan commit hash in **Status** during checkpoint 1.
 
 Validation:
 
@@ -411,7 +411,7 @@ It adds persistent submission only to the generated browser WebTransport path; t
 
 - [x] Commit the existing long-lived author-stream fix and its current documentation separately from cleanup work.
 - [x] Retain the measured browser direct-dummy baseline: 37.86 operations/s and 2,642.5 ms mean convergence before the fix, versus 2,295.24 operations/s and 44.27 ms after it for 100 measured operations and 10 warmup operations over three repetitions.
-- [ ] Record the exact benchmark command, environment, source state, convergence counts, and before/after stream behavior in adjacent benchmark documentation.
+- [x] Record the exact benchmark command, environment, source state, convergence counts, and before/after stream behavior in adjacent benchmark documentation.
 - [x] Confirm no generated or ignored benchmark artifacts are committed accidentally.
 - [x] Treat its `SEA1`/`SEAS` markers and unary fallback as temporary implementation to be removed after the replacement codec and streams are active in checkpoint 6f.
 
