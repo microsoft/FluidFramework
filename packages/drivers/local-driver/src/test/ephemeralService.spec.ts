@@ -232,12 +232,14 @@ describe("EphemeralService", () => {
 	});
 
 	describe("SessionService", () => {
+		// Back the sessionStorage mock with shared state so service calls observe persisted values.
 		const storedValues = new Map<string, string>();
 		const sessionStorageDescriptor = Object.getOwnPropertyDescriptor(
 			globalThis,
 			"sessionStorage",
 		);
 
+		// Install a minimal sessionStorage implementation for this suite.
 		before(() => {
 			Object.defineProperty(globalThis, "sessionStorage", {
 				configurable: true,
@@ -254,6 +256,7 @@ describe("EphemeralService", () => {
 			});
 		});
 
+		// Restore the environment so this global mock does not leak into other suites.
 		after(() => {
 			if (sessionStorageDescriptor === undefined) {
 				Reflect.deleteProperty(globalThis, "sessionStorage");
@@ -263,6 +266,9 @@ describe("EphemeralService", () => {
 		});
 
 		it("shares one service and manages persisted documents", async () => {
+			// A malformed same-origin value using the old generic prefix must be ignored.
+			storedValues.set("documents-unrelated", "not JSON");
+
 			const firstService = getSessionService();
 			const firstClient = firstService.newClient(options);
 			assert.strictEqual(firstClient.service, firstService);
@@ -282,6 +288,9 @@ describe("EphemeralService", () => {
 			secondContainer.close();
 			await secondService.deleteDocument(id);
 			assert.deepStrictEqual(await secondService.listDocumentIds(), []);
+
+			// Fluid document cleanup must leave unrelated session storage untouched.
+			assert.strictEqual(storedValues.get("documents-unrelated"), "not JSON");
 		});
 	});
 });
