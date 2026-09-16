@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 3c. Delete the legacy generation.
-- **Last completed checkpoint:** 3b. Migrate storage and decorators.
-- **Last validation:** Checkpoint 3b formatting, strict workspace Clippy, full Rust workspace tests, benchmark smoke, and documentation links passed on 2026-09-16.
-- **Latest checkpoint notes:** Memory, buffered-file, and durable-file compile only their `SeaStorage` implementations and use canonical `EventPosition`. Compression, encryption, and stateful compression compile only their `SeaSession` decorators. The obsolete public traits, storage adapter, and old sequencer are removed; disabled legacy test bodies remain to be physically deleted in checkpoint 3c.
+- **Current checkpoint:** 4a. Restore the server crate boundary.
+- **Last completed checkpoint:** 3c. Delete the legacy generation.
+- **Last validation:** Checkpoint 3c formatting, strict workspace Clippy, full Rust workspace tests, benchmark smoke, documentation links, policy, and repository build passed on 2026-09-16.
+- **Latest checkpoint notes:** Checkpoint 3b commit `cda2cb6447d` removed the active legacy traits, adapters, backend implementations, decorator implementations, and old sequencer. Checkpoint 3c physically removed the remaining disabled legacy conformance, storage, and decorator test bodies. Rust source now has one `EventPosition` and no `EventStream`, `PositionCodec`, or `SnapshotStore` references.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 3c. Delete the legacy generation.
+- **Next checkpoint:** 4a. Restore the server crate boundary.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -470,9 +470,9 @@ This checkpoint may be split into the following ordered commits while keeping bo
 
 - [x] Delete `EventStream`, `PositionCodec`, `SnapshotStore`, old snapshot values, and old capabilities that have current equivalents.
 - [x] Delete the old sequencer implementation and its private frame format.
-- [ ] Delete duplicate conformance laws and tests.
-- [ ] Remove stale migration TODOs and update crate READMEs.
-- [ ] Verify no active code imports the deleted generation.
+- [x] Delete duplicate conformance laws and tests.
+- [x] Remove stale migration TODOs and update crate READMEs.
+- [x] Verify no active code imports the deleted generation.
 
 Validation after each subcommit:
 
