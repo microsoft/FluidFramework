@@ -68,3 +68,100 @@ if (!status.canView) {
 
 Use [comparePersistedSchema](https://fluidframework.com/docs/api/tree/#comparepersistedschema-function) when the original schema is available in persisted form.
 Its result supports the same diagnostic properties and flag narrowing.
+
+For the number-to-string comparison above, `allDiscrepancies` contains:
+
+```json
+[
+	{
+		"mismatch": "allowedType",
+		"location": "root",
+		"allowedType": "com.fluidframework.leaf.number",
+		"view": false,
+		"stored": true,
+		"target": false
+	},
+	{
+		"mismatch": "allowedType",
+		"location": "root",
+		"allowedType": "com.fluidframework.leaf.string",
+		"view": true,
+		"stored": false,
+		"target": true
+	},
+	{
+		"mismatch": "missingNode",
+		"location": {
+			"nodeType": "com.fluidframework.leaf.number"
+		},
+		"missingFrom": ["view", "target"],
+		"stored": { "kind": "leaf" }
+	},
+	{
+		"mismatch": "missingNode",
+		"location": {
+			"nodeType": "com.fluidframework.leaf.string"
+		},
+		"missingFrom": ["stored"],
+		"view": { "kind": "leaf" },
+		"target": { "kind": "leaf" }
+	}
+]
+```
+
+All three compatibility flags are false.
+`viewDiscrepancies` contains the two `allowedType` entries.
+`upgradeDiscrepancies` contains the number `allowedType` entry and the missing number definition.
+`equivalenceDiscrepancies` contains all four entries.
+The missing definitions are reported separately because stored-schema comparisons also cover detached nodes.
+
+### Compare a persisted metadata change
+
+This example keeps the same node identifier and field schema but changes the persisted metadata.
+Both configurations describe `example.Item`, so the comparison reports a metadata difference on that definition.
+
+```typescript
+import {
+	checkCompatibility,
+	SchemaFactoryAlpha,
+	TreeViewConfiguration,
+} from "@fluidframework/tree/alpha";
+
+const factory = new SchemaFactoryAlpha("example");
+const previousSchema = factory.objectAlpha(
+	"Item",
+	{ value: factory.number },
+	{ persistedMetadata: { version: 1 } },
+);
+const proposedSchema = factory.objectAlpha(
+	"Item",
+	{ value: factory.number },
+	{ persistedMetadata: { version: 2 } },
+);
+const previous = new TreeViewConfiguration({ schema: previousSchema });
+const proposed = new TreeViewConfiguration({ schema: proposedSchema });
+const status = checkCompatibility(previous, proposed);
+
+console.log(JSON.stringify(status.allDiscrepancies, undefined, 2));
+```
+
+The output is:
+
+```json
+[
+	{
+		"mismatch": "persistedMetadata",
+		"location": {
+			"nodeType": "example.Item"
+		},
+		"view": { "version": 2 },
+		"stored": { "version": 1 },
+		"target": { "version": 2 }
+	}
+]
+```
+
+All three compatibility flags are true because persisted metadata does not affect compatibility.
+The `viewDiscrepancies`, `upgradeDiscrepancies`, and `equivalenceDiscrepancies` properties are absent.
+In both examples, `target` matches `view` because neither schema uses staged upgrades.
+The entry order shown here is illustrative; callers must not depend on a particular sorting rule.
