@@ -45,9 +45,9 @@ export type {
 	CompleteSchemaDiscrepanciesAlpha,
 	SchemaCompatibilityStatusAlpha,
 	SchemaComparisonStatusAlpha,
-	ViewableStatus,
-	UpgradeableStatus,
-	EquivalenceStatus,
+	SchemaCompatibilityViewableStatus,
+	SchemaCompatibilityUpgradeableStatus,
+	SchemaCompatibilityEquivalenceStatus,
 } from "./schemaDiagnostics.js";
 export { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 export {

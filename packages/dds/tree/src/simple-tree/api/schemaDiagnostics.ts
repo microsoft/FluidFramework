@@ -179,7 +179,7 @@ export interface SchemaNodeKindDescription {
  * @sealed
  * @alpha
  */
-export type ViewableStatus =
+export type SchemaCompatibilityViewableStatus =
 	| {
 			/**
 			 * The view schema permits access to the stored document.
@@ -208,7 +208,7 @@ export type ViewableStatus =
  * @sealed
  * @alpha
  */
-export type UpgradeableStatus =
+export type SchemaCompatibilityUpgradeableStatus =
 	| {
 			/**
 			 * The stored schema can be upgraded to the effective target.
@@ -237,7 +237,7 @@ export type UpgradeableStatus =
  * @sealed
  * @alpha
  */
-export type EquivalenceStatus =
+export type SchemaCompatibilityEquivalenceStatus =
 	| {
 			/**
 			 * The schemas are equivalent under the document compatibility rules.
@@ -292,9 +292,9 @@ export interface CompleteSchemaDiscrepanciesAlpha {
  */
 export type SchemaCompatibilityStatusAlpha = SchemaCompatibilityStatusBeta &
 	CompleteSchemaDiscrepanciesAlpha &
-	ViewableStatus &
-	UpgradeableStatus &
-	EquivalenceStatus;
+	SchemaCompatibilityViewableStatus &
+	SchemaCompatibilityUpgradeableStatus &
+	SchemaCompatibilityEquivalenceStatus;
 
 /**
  * Reports schema comparison results without document initialization state.
@@ -311,9 +311,9 @@ export type SchemaComparisonStatusAlpha = Omit<
 	"canInitialize"
 > &
 	CompleteSchemaDiscrepanciesAlpha &
-	ViewableStatus &
-	UpgradeableStatus &
-	EquivalenceStatus;
+	SchemaCompatibilityViewableStatus &
+	SchemaCompatibilityUpgradeableStatus &
+	SchemaCompatibilityEquivalenceStatus;
 
 type SchemaSide = "view" | "stored" | "target";
 type Values = Record<SchemaSide, JsonCompatibleReadOnly | undefined>;

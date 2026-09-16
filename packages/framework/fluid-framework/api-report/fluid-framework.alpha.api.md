@@ -426,14 +426,6 @@ export function enumFromStrings<TScope extends string, const Members extends rea
         }, Record<string, never>, true, Record<string, never>, undefined>; }[Members[number]] : never>;
 };
 
-// @alpha @sealed
-export type EquivalenceStatus = {
-    readonly isEquivalent: true;
-} | {
-    readonly isEquivalent: false;
-    readonly equivalenceDiscrepancies: readonly SchemaDiscrepancyAlpha[];
-};
-
 // @beta @sealed @system
 export abstract class ErasedBaseType<out Name = unknown> {
     protected constructor();
@@ -1822,7 +1814,15 @@ export interface RunTransactionParamsBeta {
 }
 
 // @alpha @sealed
-export type SchemaComparisonStatusAlpha = Omit<SchemaCompatibilityStatusBeta, "canInitialize"> & CompleteSchemaDiscrepanciesAlpha & ViewableStatus & UpgradeableStatus & EquivalenceStatus;
+export type SchemaComparisonStatusAlpha = Omit<SchemaCompatibilityStatusBeta, "canInitialize"> & CompleteSchemaDiscrepanciesAlpha & SchemaCompatibilityViewableStatus & SchemaCompatibilityUpgradeableStatus & SchemaCompatibilityEquivalenceStatus;
+
+// @alpha @sealed
+export type SchemaCompatibilityEquivalenceStatus = {
+    readonly isEquivalent: true;
+} | {
+    readonly isEquivalent: false;
+    readonly equivalenceDiscrepancies: readonly SchemaDiscrepancyAlpha[];
+};
 
 // @public @sealed
 export interface SchemaCompatibilityStatus {
@@ -1833,12 +1833,28 @@ export interface SchemaCompatibilityStatus {
 }
 
 // @alpha @sealed
-export type SchemaCompatibilityStatusAlpha = SchemaCompatibilityStatusBeta & CompleteSchemaDiscrepanciesAlpha & ViewableStatus & UpgradeableStatus & EquivalenceStatus;
+export type SchemaCompatibilityStatusAlpha = SchemaCompatibilityStatusBeta & CompleteSchemaDiscrepanciesAlpha & SchemaCompatibilityViewableStatus & SchemaCompatibilityUpgradeableStatus & SchemaCompatibilityEquivalenceStatus;
 
 // @beta @sealed
 export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
     readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
 }
+
+// @alpha @sealed
+export type SchemaCompatibilityUpgradeableStatus = {
+    readonly canUpgrade: true;
+} | {
+    readonly canUpgrade: false;
+    readonly upgradeDiscrepancies: readonly SchemaDiscrepancyAlpha[];
+};
+
+// @alpha @sealed
+export type SchemaCompatibilityViewableStatus = {
+    readonly canView: true;
+} | {
+    readonly canView: false;
+    readonly viewDiscrepancies: readonly SchemaDiscrepancyAlpha[];
+};
 
 // @beta @sealed
 export type SchemaDiscrepancy = {
@@ -2965,14 +2981,6 @@ export interface UntypedTreeViewAlpha extends Omit<UntypedTreeView, "runTransact
     runTransactionAsync(transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>, params?: RunTransactionParamsAlpha): Promise<TransactionVoidResult>;
 }
 
-// @alpha @sealed
-export type UpgradeableStatus = {
-    readonly canUpgrade: true;
-} | {
-    readonly canUpgrade: false;
-    readonly upgradeDiscrepancies: readonly SchemaDiscrepancyAlpha[];
-};
-
 // @alpha
 export function utf16LengthForCodePoints(value: string, start: number, count: number): number;
 
@@ -3020,14 +3028,6 @@ export interface VerboseTreeNode<THandle = IFluidHandle> {
     };
     type: string;
 }
-
-// @alpha @sealed
-export type ViewableStatus = {
-    readonly canView: true;
-} | {
-    readonly canView: false;
-    readonly viewDiscrepancies: readonly SchemaDiscrepancyAlpha[];
-};
 
 // @public @sealed @system
 export interface ViewableTree {
