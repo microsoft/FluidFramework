@@ -45,16 +45,6 @@ export interface ProjectedOperationSubscription {
 	nextBatch?(maxOperations: number, maxBytes: number): Promise<readonly ProjectedOperation[]>;
 }
 
-/** An ordered request/acknowledgement stream for submission frames. */
-export interface SubmissionStream {
-	/** Writes one complete FSP4 submission frame. */
-	send(frame: Uint8Array): Promise<void>;
-	/** Waits for the next acknowledgement in submission order. */
-	next(): Promise<Uint8Array>;
-	/** Closes the stream and releases its transport resources. */
-	close(): void | Promise<void>;
-}
-
 /** The authoritative outcome of resolving a possibly ambiguous submission. */
 export type SubmissionResolution =
 	| {
@@ -102,10 +92,52 @@ export interface SummaryPublication {
 
 /** Minimal generated-client surface consumed by the Fluid driver adapter. */
 export interface WasmProtocolClient {
-	/** Sends one unary FSP4 request and resolves with its complete response frame. */
-	request(frame: Uint8Array): Promise<Uint8Array>;
-	/** Opens an ordered submission stream when the generated client supports streaming. */
-	openSubmissionStream?(document: Uint8Array): Promise<SubmissionStream>;
+	/** Creates an archive when the selected deployment requires explicit creation. */
+	create(document: Uint8Array): Promise<void>;
+	/** Opens one archive-bound author session. */
+	openSession(
+		document: Uint8Array,
+		writer: Uint8Array,
+		session: Uint8Array,
+		resumeAfter?: Uint8Array,
+	): Promise<void>;
+	/** Submits one opaque event and returns its canonical position. */
+	submitEvent(
+		document: Uint8Array,
+		writer: Uint8Array,
+		session: Uint8Array,
+		submission: Uint8Array,
+		localSequenceNumber: number,
+		payload: Uint8Array,
+		referencePosition?: Uint8Array,
+	): Promise<Uint8Array>;
+	/** Returns the latest snapshot publication and root. */
+	latestSnapshot(): Promise<
+		| {
+				readonly id: Uint8Array;
+				readonly root: Uint8Array;
+				readonly atEvent?: Uint8Array;
+		  }
+		| undefined
+	>;
+	/** Returns one retained snapshot publication and root. */
+	snapshot(id: Uint8Array): Promise<
+		| {
+				readonly id: Uint8Array;
+				readonly root: Uint8Array;
+				readonly atEvent?: Uint8Array;
+		  }
+		| undefined
+	>;
+	/** Conditionally publishes one directory root as a snapshot. */
+	publishSnapshotRoot(
+		operation: Uint8Array,
+		expectedParent: Uint8Array | undefined,
+		atEvent: Uint8Array | undefined,
+		root: Uint8Array,
+	): Promise<Uint8Array>;
+	/** Resolves the Sea position mapped to one Fluid sequence number. */
+	positionForSequence(sequenceNumber: number): Uint8Array | undefined;
 	/** Reads a bounded page of projected operations after an optional cursor. */
 	readProjected(document: Uint8Array, after?: Uint8Array): Promise<ProjectedReadPage>;
 	/** Subscribes to projected operations after an optional cursor. */

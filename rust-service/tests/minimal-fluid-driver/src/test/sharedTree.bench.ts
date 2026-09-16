@@ -342,7 +342,7 @@ async function startRustService(storageMode: string): Promise<RunningService> {
 	const temporaryDirectory = await mkdtemp(path.join(tmpdir(), "fluid-rust-benchmark-"));
 	const certificateDirectory = path.join(webTransportTestDirectory, ".certs");
 	const child = spawn(
-		path.join(rustServiceDirectory, "target/release/sea-webtransport"),
+		path.join(rustServiceDirectory, "target/release/sea-webtransport-server"),
 		[
 			"127.0.0.1:0",
 			path.join(certificateDirectory, "cert.pem"),
@@ -351,7 +351,7 @@ async function startRustService(storageMode: string): Promise<RunningService> {
 		],
 		{
 			cwd: repositoryDirectory,
-			env: { ...process.env, SEA_STORAGE_MODE: storageMode },
+			env: { ...process.env, SEA_PROTOCOL: "sea", SEA_STORAGE_MODE: storageMode },
 			stdio: ["ignore", "pipe", "pipe"],
 		},
 	);

@@ -5,7 +5,7 @@
 #![doc = "multi-process access are out of scope."]
 
 use std::{
-    collections::VecDeque,
+    collections::{BTreeMap, VecDeque},
     fs::{self, File, OpenOptions},
     io::{Read, Write},
     path::{Path, PathBuf},
@@ -16,9 +16,16 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::stream;
 use sea_core::{
-    Capabilities, ClassifiedError, CommittedEvent, Durability, ErrorKind, EventReceipt,
-    EventStream, PositionCodec, PublishedSnapshot, Snapshot, SnapshotId, SnapshotPosition,
-    SnapshotStore, StreamReader,
+    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, Capabilities, ClassifiedError,
+    CommittedEvent, Durability, ErrorKind, Event, EventPosition, EventReceipt, EventStream,
+    PositionCodec, PublishedSnapshot, Snapshot, SnapshotId, SnapshotPosition, SnapshotStore,
+    StreamReader,
+    archive::{
+        CommittedEvent as ArchiveCommittedEvent, EventReceipt as ArchiveEventReceipt, OperationId,
+        PublishedSnapshot as ArchivePublishedSnapshot, Snapshot as ArchiveSnapshot,
+        SnapshotPosition as ArchiveSnapshotPosition, SnapshotPublication, StorageEventStream,
+        StorageLoad,
+    },
 };
 use thiserror::Error;
 
@@ -41,6 +48,14 @@ const FRAME_TRAILER_LEN: usize = 28;
 pub const RECORD_FRAME_OVERHEAD_BYTES: usize = FRAME_HEADER_LEN + FRAME_TRAILER_LEN;
 /// Append-log filename within the owned directory.
 const LOG_FILE: &str = "stream.log";
+/// Final Sea archive journal filename within the owned directory.
+const ARCHIVE_FILE: &str = "archive.log";
+/// Versioned final Sea archive journal marker.
+const ARCHIVE_MAGIC: [u8; 8] = *b"SEAARD01";
+const ARCHIVE_BLOB: u8 = 1;
+const ARCHIVE_DIRECTORY: u8 = 2;
+const ARCHIVE_EVENT: u8 = 3;
+const ARCHIVE_SNAPSHOT: u8 = 4;
 /// Published snapshot filename within the owned directory.
 const SNAPSHOT_FILE: &str = "snapshot.current";
 /// Pending snapshot filename used before atomic publication.
@@ -254,6 +269,15 @@ pub enum DurableLogError {
     /// Shared in-process state cannot be accessed after mutex poisoning.
     #[error("durable log mutex was poisoned")]
     Poisoned,
+    /// A referenced blob-tree node is unavailable.
+    #[error("referenced blob-tree node is unavailable")]
+    MissingBlobTree,
+    /// A stable operation identity was reused with different publication input.
+    #[error("operation identity is already bound to different input")]
+    OperationConflict,
+    /// This archive cannot assign another numeric identity.
+    #[error("numeric identity space is exhausted")]
+    IdentityExhausted,
 }
 
 impl ClassifiedError for DurableLogError {
@@ -262,10 +286,24 @@ impl ClassifiedError for DurableLogError {
             Self::AmbiguousAppend(_) | Self::AmbiguousSnapshot(_) => ErrorKind::Ambiguous,
             Self::Corrupt(_) => ErrorKind::Corrupt,
             Self::InvalidPosition => ErrorKind::InvalidPosition,
-            Self::SnapshotConflict | Self::SnapshotRegression => ErrorKind::Conflict,
+            Self::SnapshotConflict | Self::SnapshotRegression | Self::OperationConflict => {
+                ErrorKind::Conflict
+            }
+            Self::MissingBlobTree | Self::IdentityExhausted => ErrorKind::Rejected,
             Self::Io(_) | Self::Poisoned => ErrorKind::Unavailable,
         }
     }
+}
+
+/// Recovered final-contract state from the durable archive journal.
+#[derive(Debug, Default)]
+struct ArchiveState {
+    events: Vec<ArchiveCommittedEvent>,
+    blobs: BTreeMap<BlobId, Bytes>,
+    directories: BTreeMap<BlobDirectoryId, BlobDirectory>,
+    snapshots: Vec<ArchivePublishedSnapshot>,
+    snapshot_operations: BTreeMap<OperationId, (SnapshotPublication, ArchivePublishedSnapshot)>,
+    next_snapshot_id: u64,
 }
 
 /// Mutable append, recovery, snapshot, and crash-injection state behind the log lock.
@@ -277,6 +315,10 @@ struct State {
     writer: File,
     /// Most recently published and recovered snapshot.
     latest_snapshot: Option<PublishedSnapshot<DurablePosition>>,
+    /// Final Sea archive state reconstructed from its journal.
+    archive: ArchiveState,
+    /// Append-only handle for the final Sea archive journal.
+    archive_writer: File,
     /// Shared deterministic crash plan.
     crashes: Arc<CrashInjector>,
 }
@@ -288,6 +330,8 @@ pub struct DurableLog {
     directory: PathBuf,
     /// Path of the append-log file.
     path: PathBuf,
+    /// Path of the final Sea archive journal.
+    archive_path: PathBuf,
     /// Synchronized mutable writer and recovered state.
     state: Arc<Mutex<State>>,
 }
@@ -337,14 +381,33 @@ impl DurableLog {
             crashes.hit(CrashPoint::OpenAfterSnapshotRead)?;
             None
         };
+        let archive_path = directory.as_ref().join(ARCHIVE_FILE);
+        if !archive_path.exists() {
+            initialize_with_magic(&archive_path, ARCHIVE_MAGIC)?;
+        }
+        let archive_bytes = read_all(&archive_path)?;
+        let (archive_records, archive_valid_length) =
+            parse_framed_log(&archive_bytes, ARCHIVE_MAGIC)?;
+        let archive = parse_archive_records(&archive_records)?;
+        let archive_writer = OpenOptions::new()
+            .read(true)
+            .append(true)
+            .open(&archive_path)?;
+        if archive_writer.metadata()?.len() != archive_valid_length {
+            archive_writer.set_len(archive_valid_length)?;
+            archive_writer.sync_data()?;
+        }
 
         Ok(Self {
             directory: directory.as_ref().to_owned(),
             path,
+            archive_path,
             state: Arc::new(Mutex::new(State {
                 records,
                 writer,
                 latest_snapshot,
+                archive,
+                archive_writer,
                 crashes,
             })),
         })
@@ -354,6 +417,12 @@ impl DurableLog {
     #[must_use]
     pub fn log_path(&self) -> &Path {
         &self.path
+    }
+
+    /// Returns the final Sea archive journal path.
+    #[must_use]
+    pub fn archive_path(&self) -> &Path {
+        &self.archive_path
     }
 
     /// Locks mutable log state and classifies mutex poisoning.
@@ -383,6 +452,285 @@ impl DurableLog {
         let position = DurablePosition { ordinal };
         Self::validate_position(&position, self.state()?.records.len())?;
         Ok(position)
+    }
+
+    fn validate_archive_position(
+        position: EventPosition,
+        record_count: usize,
+    ) -> Result<(), DurableLogError> {
+        let record_count =
+            u64::try_from(record_count).map_err(|_| DurableLogError::InvalidPosition)?;
+        if position.get() == 0 || position.get() > record_count {
+            return Err(DurableLogError::InvalidPosition);
+        }
+        Ok(())
+    }
+
+    fn validate_tree(state: &ArchiveState, root: BlobTreeId) -> Result<(), DurableLogError> {
+        match root {
+            BlobTreeId::Blob(id) => state
+                .blobs
+                .contains_key(&id)
+                .then_some(())
+                .ok_or(DurableLogError::MissingBlobTree),
+            BlobTreeId::Directory(id) => {
+                let directory = state
+                    .directories
+                    .get(&id)
+                    .ok_or(DurableLogError::MissingBlobTree)?;
+                for child in directory.entries().values() {
+                    Self::validate_tree(state, *child)?;
+                }
+                Ok(())
+            }
+        }
+    }
+}
+
+#[async_trait]
+impl sea_core::archive::SeaStorage for DurableLog {
+    type Error = DurableLogError;
+
+    fn durability(&self) -> Durability {
+        Durability::Durable
+    }
+
+    async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {
+        let mut state = self.state()?;
+        let id = BlobId::for_bytes(&payload);
+        if state.archive.blobs.contains_key(&id) {
+            return Ok(id);
+        }
+        let mut body = Vec::with_capacity(32 + payload.len());
+        body.extend_from_slice(id.as_bytes());
+        body.extend_from_slice(&payload);
+        persist_archive_record(&mut state, ARCHIVE_BLOB, &body, false)?;
+        state.archive.blobs.insert(id, payload);
+        archive_post_sync(&state, false)?;
+        Ok(id)
+    }
+
+    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
+        self.state()?
+            .archive
+            .blobs
+            .get(&id)
+            .cloned()
+            .ok_or(DurableLogError::MissingBlobTree)
+    }
+
+    async fn put_directory(
+        &self,
+        directory: BlobDirectory,
+    ) -> Result<BlobDirectoryId, Self::Error> {
+        let mut state = self.state()?;
+        for child in directory.entries().values() {
+            Self::validate_tree(&state.archive, *child)?;
+        }
+        let id = directory
+            .id()
+            .map_err(|_| DurableLogError::Corrupt("directory cannot be encoded"))?;
+        if state.archive.directories.contains_key(&id) {
+            return Ok(id);
+        }
+        let encoded = directory
+            .encode()
+            .map_err(|_| DurableLogError::Corrupt("directory cannot be encoded"))?;
+        let mut body = Vec::with_capacity(32 + encoded.len());
+        body.extend_from_slice(id.as_bytes());
+        body.extend_from_slice(&encoded);
+        persist_archive_record(&mut state, ARCHIVE_DIRECTORY, &body, false)?;
+        state.archive.directories.insert(id, directory);
+        archive_post_sync(&state, false)?;
+        Ok(id)
+    }
+
+    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
+        self.state()?
+            .archive
+            .directories
+            .get(&id)
+            .cloned()
+            .ok_or(DurableLogError::MissingBlobTree)
+    }
+
+    async fn append(&self, event: Event) -> Result<ArchiveEventReceipt, Self::Error> {
+        let mut state = self.state()?;
+        if let Some(root) = event.blob_tree {
+            Self::validate_tree(&state.archive, root)?;
+        }
+        let ordinal = u64::try_from(state.archive.events.len())
+            .ok()
+            .and_then(|value| value.checked_add(1))
+            .ok_or(DurableLogError::IdentityExhausted)?;
+        let position = EventPosition::new(ordinal);
+        let body = encode_archive_event(position, &event);
+        persist_archive_record(&mut state, ARCHIVE_EVENT, &body, false)?;
+        state
+            .archive
+            .events
+            .push(ArchiveCommittedEvent { position, event });
+        archive_post_sync(&state, false)?;
+        Ok(ArchiveEventReceipt {
+            position,
+            durability: Durability::Durable,
+        })
+    }
+
+    async fn read(
+        &self,
+        after: Option<EventPosition>,
+        through: Option<EventPosition>,
+    ) -> Result<StorageEventStream<Self::Error>, Self::Error> {
+        let state = self.state()?;
+        if let Some(position) = after {
+            Self::validate_archive_position(position, state.archive.events.len())?;
+        }
+        if let Some(position) = through {
+            Self::validate_archive_position(position, state.archive.events.len())?;
+        }
+        let start = after
+            .map(|position| usize::try_from(position.get()))
+            .transpose()
+            .map_err(|_| DurableLogError::InvalidPosition)?
+            .unwrap_or(0);
+        let end = through
+            .map(|position| usize::try_from(position.get()))
+            .transpose()
+            .map_err(|_| DurableLogError::InvalidPosition)?
+            .unwrap_or(state.archive.events.len());
+        if end < start {
+            return Err(DurableLogError::InvalidPosition);
+        }
+        let events = state.archive.events[start..end].to_vec();
+        Ok(Box::pin(stream::iter(events.into_iter().map(Ok))))
+    }
+
+    async fn head(&self) -> Result<Option<EventPosition>, Self::Error> {
+        Ok(self
+            .state()?
+            .archive
+            .events
+            .last()
+            .map(|event| event.position))
+    }
+
+    async fn snapshot(
+        &self,
+        id: &SnapshotId,
+    ) -> Result<Option<ArchivePublishedSnapshot>, Self::Error> {
+        Ok(self
+            .state()?
+            .archive
+            .snapshots
+            .iter()
+            .find(|snapshot| &snapshot.id == id)
+            .cloned())
+    }
+
+    async fn latest_snapshot(&self) -> Result<Option<ArchivePublishedSnapshot>, Self::Error> {
+        Ok(self.state()?.archive.snapshots.last().cloned())
+    }
+
+    async fn snapshot_at_or_before(
+        &self,
+        position: EventPosition,
+    ) -> Result<Option<ArchivePublishedSnapshot>, Self::Error> {
+        let state = self.state()?;
+        Self::validate_archive_position(position, state.archive.events.len())?;
+        Ok(select_archive_snapshot(&state.archive.snapshots, position))
+    }
+
+    async fn publish_snapshot(
+        &self,
+        publication: SnapshotPublication,
+    ) -> Result<ArchivePublishedSnapshot, Self::Error> {
+        let mut state = self.state()?;
+        if let Some((original, published)) = state
+            .archive
+            .snapshot_operations
+            .get(&publication.operation_id)
+        {
+            return if original == &publication {
+                Ok(published.clone())
+            } else {
+                Err(DurableLogError::OperationConflict)
+            };
+        }
+        if state.archive.snapshots.last().map(|snapshot| &snapshot.id)
+            != publication.expected_parent.as_ref()
+        {
+            return Err(DurableLogError::SnapshotConflict);
+        }
+        if let ArchiveSnapshotPosition::At(position) = publication.snapshot.at_event {
+            Self::validate_archive_position(position, state.archive.events.len())?;
+        }
+        if state
+            .archive
+            .snapshots
+            .last()
+            .is_some_and(|previous| previous.snapshot.at_event > publication.snapshot.at_event)
+        {
+            return Err(DurableLogError::SnapshotRegression);
+        }
+        Self::validate_tree(&state.archive, publication.snapshot.root)?;
+        let id_number = state.archive.next_snapshot_id;
+        let published = ArchivePublishedSnapshot {
+            id: archive_snapshot_id(id_number),
+            parent: publication.expected_parent.clone(),
+            snapshot: publication.snapshot.clone(),
+        };
+        let body = encode_archive_snapshot(&publication, &published)?;
+        persist_archive_record(&mut state, ARCHIVE_SNAPSHOT, &body, true)?;
+        state.archive.next_snapshot_id = id_number
+            .checked_add(1)
+            .ok_or(DurableLogError::IdentityExhausted)?;
+        state.archive.snapshots.push(published.clone());
+        state.archive.snapshot_operations.insert(
+            publication.operation_id.clone(),
+            (publication, published.clone()),
+        );
+        archive_post_sync(&state, true)?;
+        Ok(published)
+    }
+
+    async fn resolve_snapshot_publication(
+        &self,
+        operation_id: &OperationId,
+    ) -> Result<Option<ArchivePublishedSnapshot>, Self::Error> {
+        Ok(self
+            .state()?
+            .archive
+            .snapshot_operations
+            .get(operation_id)
+            .map(|(_, published)| published.clone()))
+    }
+
+    async fn load(
+        &self,
+        required: Option<EventPosition>,
+    ) -> Result<StorageLoad<Self::Error>, Self::Error> {
+        let state = self.state()?;
+        if let Some(position) = required {
+            Self::validate_archive_position(position, state.archive.events.len())?;
+        }
+        let snapshot = required.map_or_else(
+            || state.archive.snapshots.last().cloned(),
+            |position| select_archive_snapshot(&state.archive.snapshots, position),
+        );
+        let start = match snapshot.as_ref().map(|snapshot| snapshot.snapshot.at_event) {
+            None | Some(ArchiveSnapshotPosition::Initial) => 0,
+            Some(ArchiveSnapshotPosition::At(position)) => {
+                usize::try_from(position.get()).map_err(|_| DurableLogError::InvalidPosition)?
+            }
+        };
+        let head = state.archive.events.last().map(|event| event.position);
+        let events = state.archive.events[start..].to_vec();
+        Ok(StorageLoad {
+            snapshot,
+            head,
+            events: Box::pin(stream::iter(events.into_iter().map(Ok))),
+        })
     }
 }
 
@@ -721,8 +1069,13 @@ fn parse_snapshot(
 
 /// Creates and syncs a new log header.
 fn initialize(path: &Path) -> Result<(), DurableLogError> {
+    initialize_with_magic(path, MAGIC)
+}
+
+/// Creates and syncs a new framed-log header with the supplied format marker.
+fn initialize_with_magic(path: &Path, magic: [u8; 8]) -> Result<(), DurableLogError> {
     let mut file = File::create(path)?;
-    file.write_all(&MAGIC)?;
+    file.write_all(&magic)?;
     file.sync_data()?;
     Ok(())
 }
@@ -736,10 +1089,15 @@ fn read_all(path: &Path) -> Result<Vec<u8>, DurableLogError> {
 
 /// Recovers complete records and returns the byte length safe to retain.
 fn parse_log(bytes: &[u8]) -> Result<(Vec<Bytes>, u64), DurableLogError> {
+    parse_framed_log(bytes, MAGIC)
+}
+
+/// Recovers complete records from a checksummed log with the supplied marker.
+fn parse_framed_log(bytes: &[u8], magic: [u8; 8]) -> Result<(Vec<Bytes>, u64), DurableLogError> {
     if bytes.len() < HEADER_LEN {
         return Err(DurableLogError::Corrupt("incomplete log header"));
     }
-    if bytes[..8] != MAGIC {
+    if bytes[..8] != magic {
         return Err(DurableLogError::Corrupt("invalid log header"));
     }
     let mut cursor = HEADER_LEN;
@@ -849,6 +1207,425 @@ fn write_record(
     crashes.hit(CrashPoint::RecordAfterPayloadWrite)?;
     writer.write_all(&frame_fields(FRAME_TRAILER_MAGIC, length, checksum))?;
     crashes.hit(CrashPoint::RecordAfterTrailerWrite)
+}
+
+/// Writes and syncs one final archive record up to the acknowledgement boundary.
+fn persist_archive_record(
+    state: &mut State,
+    kind: u8,
+    body: &[u8],
+    snapshot: bool,
+) -> Result<(), DurableLogError> {
+    let mut record = Vec::with_capacity(1 + body.len());
+    record.push(kind);
+    record.extend_from_slice(body);
+    let crashes = Arc::clone(&state.crashes);
+    let map_error = |error| {
+        if snapshot {
+            DurableLogError::AmbiguousSnapshot(error)
+        } else {
+            DurableLogError::AmbiguousAppend(error)
+        }
+    };
+    write_record(&mut state.archive_writer, &record, &crashes).map_err(map_error)?;
+    crashes
+        .hit(CrashPoint::RecordBeforeSync)
+        .map_err(map_error)?;
+    state.archive_writer.sync_data().map_err(map_error)
+}
+
+/// Applies the post-sync ambiguity boundary after in-memory state reflects the commit.
+fn archive_post_sync(state: &State, snapshot: bool) -> Result<(), DurableLogError> {
+    state
+        .crashes
+        .hit(CrashPoint::RecordAfterSync)
+        .map_err(|error| {
+            if snapshot {
+                DurableLogError::AmbiguousSnapshot(error)
+            } else {
+                DurableLogError::AmbiguousAppend(error)
+            }
+        })
+}
+
+fn archive_snapshot_id(value: u64) -> SnapshotId {
+    SnapshotId::from_bytes(Bytes::copy_from_slice(&value.to_be_bytes()))
+}
+
+fn encode_archive_event(position: EventPosition, event: &Event) -> Vec<u8> {
+    let mut body = Vec::with_capacity(8 + 33 + event.payload.len());
+    body.extend_from_slice(&position.to_bytes());
+    encode_optional_tree_id(&mut body, event.blob_tree);
+    body.extend_from_slice(&event.payload);
+    body
+}
+
+fn encode_archive_snapshot(
+    publication: &SnapshotPublication,
+    published: &ArchivePublishedSnapshot,
+) -> Result<Vec<u8>, DurableLogError> {
+    let mut body = Vec::new();
+    encode_field(&mut body, publication.operation_id.as_bytes())?;
+    encode_field(&mut body, published.id.as_bytes())?;
+    match &published.parent {
+        Some(parent) => {
+            body.push(1);
+            encode_field(&mut body, parent.as_bytes())?;
+        }
+        None => body.push(0),
+    }
+    match published.snapshot.at_event {
+        ArchiveSnapshotPosition::Initial => body.push(0),
+        ArchiveSnapshotPosition::At(position) => {
+            body.push(1);
+            body.extend_from_slice(&position.to_bytes());
+        }
+    }
+    encode_tree_id(&mut body, published.snapshot.root);
+    Ok(body)
+}
+
+fn encode_field(output: &mut Vec<u8>, value: &[u8]) -> Result<(), DurableLogError> {
+    let length = u32::try_from(value.len())
+        .map_err(|_| DurableLogError::Corrupt("archive field exceeds length range"))?;
+    output.extend_from_slice(&length.to_be_bytes());
+    output.extend_from_slice(value);
+    Ok(())
+}
+
+fn encode_tree_id(output: &mut Vec<u8>, id: BlobTreeId) {
+    match id {
+        BlobTreeId::Blob(id) => {
+            output.push(0);
+            output.extend_from_slice(id.as_bytes());
+        }
+        BlobTreeId::Directory(id) => {
+            output.push(1);
+            output.extend_from_slice(id.as_bytes());
+        }
+    }
+}
+
+fn encode_optional_tree_id(output: &mut Vec<u8>, id: Option<BlobTreeId>) {
+    match id {
+        None => output.push(0),
+        Some(BlobTreeId::Blob(id)) => {
+            output.push(1);
+            output.extend_from_slice(id.as_bytes());
+        }
+        Some(BlobTreeId::Directory(id)) => {
+            output.push(2);
+            output.extend_from_slice(id.as_bytes());
+        }
+    }
+}
+
+/// Reconstructs final-contract state from complete durable journal records.
+fn parse_archive_records(records: &[Bytes]) -> Result<ArchiveState, DurableLogError> {
+    let mut state = ArchiveState {
+        next_snapshot_id: 1,
+        ..ArchiveState::default()
+    };
+    for record in records {
+        let (&kind, body) = record
+            .split_first()
+            .ok_or(DurableLogError::Corrupt("empty archive record"))?;
+        parse_archive_record(&mut state, kind, body)?;
+    }
+    Ok(state)
+}
+
+fn parse_archive_record(
+    state: &mut ArchiveState,
+    kind: u8,
+    body: &[u8],
+) -> Result<(), DurableLogError> {
+    match kind {
+        ARCHIVE_BLOB => {
+            let (id_bytes, payload) = body
+                .split_at_checked(32)
+                .ok_or(DurableLogError::Corrupt("truncated archive blob"))?;
+            let id = BlobId::from_bytes(id_bytes)
+                .map_err(|_| DurableLogError::Corrupt("invalid archive blob identity"))?;
+            if BlobId::for_bytes(payload) != id {
+                return Err(DurableLogError::Corrupt("archive blob identity mismatch"));
+            }
+            let payload = Bytes::copy_from_slice(payload);
+            if state
+                .blobs
+                .get(&id)
+                .is_some_and(|existing| existing != &payload)
+            {
+                return Err(DurableLogError::Corrupt("conflicting archive blob record"));
+            }
+            state.blobs.entry(id).or_insert(payload);
+        }
+        ARCHIVE_DIRECTORY => {
+            let (id_bytes, encoded) = body
+                .split_at_checked(32)
+                .ok_or(DurableLogError::Corrupt("truncated archive directory"))?;
+            let id = BlobDirectoryId::from_bytes(id_bytes)
+                .map_err(|_| DurableLogError::Corrupt("invalid archive directory identity"))?;
+            let directory = BlobDirectory::decode(encoded)
+                .map_err(|_| DurableLogError::Corrupt("invalid archive directory"))?;
+            if directory
+                .id()
+                .map_err(|_| DurableLogError::Corrupt("invalid archive directory"))?
+                != id
+            {
+                return Err(DurableLogError::Corrupt(
+                    "archive directory identity mismatch",
+                ));
+            }
+            for child in directory.entries().values() {
+                DurableLog::validate_tree(state, *child).map_err(|_| {
+                    DurableLogError::Corrupt("archive directory has a missing child")
+                })?;
+            }
+            if state
+                .directories
+                .get(&id)
+                .is_some_and(|existing| existing != &directory)
+            {
+                return Err(DurableLogError::Corrupt(
+                    "conflicting archive directory record",
+                ));
+            }
+            state.directories.entry(id).or_insert(directory);
+        }
+        ARCHIVE_EVENT => parse_archive_event(state, body)?,
+        ARCHIVE_SNAPSHOT => parse_archive_snapshot_record(state, body)?,
+        _ => return Err(DurableLogError::Corrupt("unknown archive record kind")),
+    }
+    Ok(())
+}
+
+fn parse_archive_event(state: &mut ArchiveState, body: &[u8]) -> Result<(), DurableLogError> {
+    let mut cursor = 0;
+    let position = EventPosition::from_bytes(read_archive_array::<8>(
+        body,
+        &mut cursor,
+        "truncated archive event position",
+    )?);
+    let expected = u64::try_from(state.events.len())
+        .ok()
+        .and_then(|value| value.checked_add(1))
+        .ok_or(DurableLogError::Corrupt(
+            "archive event count exceeds position range",
+        ))?;
+    if position.get() != expected {
+        return Err(DurableLogError::Corrupt(
+            "archive event positions are not contiguous",
+        ));
+    }
+    let blob_tree = decode_optional_tree_id(body, &mut cursor)?;
+    if let Some(root) = blob_tree {
+        DurableLog::validate_tree(state, root)
+            .map_err(|_| DurableLogError::Corrupt("archive event has a missing tree"))?;
+    }
+    state.events.push(ArchiveCommittedEvent {
+        position,
+        event: Event {
+            payload: Bytes::copy_from_slice(&body[cursor..]),
+            blob_tree,
+        },
+    });
+    Ok(())
+}
+
+fn parse_archive_snapshot_record(
+    state: &mut ArchiveState,
+    body: &[u8],
+) -> Result<(), DurableLogError> {
+    let mut cursor = 0;
+    let operation_id = OperationId::new(Bytes::copy_from_slice(read_archive_field(
+        body,
+        &mut cursor,
+        "truncated archive snapshot operation identity",
+    )?))
+    .map_err(|_| DurableLogError::Corrupt("empty archive snapshot operation identity"))?;
+    let id = SnapshotId::from_bytes(Bytes::copy_from_slice(read_archive_field(
+        body,
+        &mut cursor,
+        "truncated archive snapshot identity",
+    )?));
+    let parent = match read_archive_byte(body, &mut cursor, "truncated snapshot parent tag")? {
+        0 => None,
+        1 => Some(SnapshotId::from_bytes(Bytes::copy_from_slice(
+            read_archive_field(body, &mut cursor, "truncated archive snapshot parent")?,
+        ))),
+        _ => return Err(DurableLogError::Corrupt("invalid snapshot parent tag")),
+    };
+    let at_event = match read_archive_byte(body, &mut cursor, "truncated snapshot position tag")? {
+        0 => ArchiveSnapshotPosition::Initial,
+        1 => ArchiveSnapshotPosition::At(EventPosition::from_bytes(read_archive_array::<8>(
+            body,
+            &mut cursor,
+            "truncated archive snapshot position",
+        )?)),
+        _ => return Err(DurableLogError::Corrupt("invalid snapshot position tag")),
+    };
+    let root = decode_tree_id(body, &mut cursor)?;
+    if cursor != body.len() {
+        return Err(DurableLogError::Corrupt(
+            "archive snapshot has trailing bytes",
+        ));
+    }
+    let snapshot = ArchiveSnapshot { at_event, root };
+    let publication = SnapshotPublication {
+        operation_id: operation_id.clone(),
+        expected_parent: parent.clone(),
+        snapshot: snapshot.clone(),
+    };
+    let published = ArchivePublishedSnapshot {
+        id,
+        parent,
+        snapshot,
+    };
+    if let Some((original, existing)) = state.snapshot_operations.get(&operation_id) {
+        return if original == &publication && existing == &published {
+            Ok(())
+        } else {
+            Err(DurableLogError::Corrupt(
+                "conflicting snapshot operation identity",
+            ))
+        };
+    }
+    if published.id != archive_snapshot_id(state.next_snapshot_id) {
+        return Err(DurableLogError::Corrupt(
+            "archive snapshot ids are not contiguous",
+        ));
+    }
+    if state.snapshots.last().map(|snapshot| &snapshot.id) != published.parent.as_ref() {
+        return Err(DurableLogError::Corrupt("invalid archive snapshot lineage"));
+    }
+    if let ArchiveSnapshotPosition::At(position) = at_event {
+        DurableLog::validate_archive_position(position, state.events.len())
+            .map_err(|_| DurableLogError::Corrupt("invalid archive snapshot position"))?;
+    }
+    if state
+        .snapshots
+        .last()
+        .is_some_and(|previous| previous.snapshot.at_event > at_event)
+    {
+        return Err(DurableLogError::Corrupt(
+            "archive snapshot position regressed",
+        ));
+    }
+    DurableLog::validate_tree(state, root)
+        .map_err(|_| DurableLogError::Corrupt("archive snapshot has a missing tree"))?;
+    state.snapshots.push(published.clone());
+    state
+        .snapshot_operations
+        .insert(operation_id, (publication, published));
+    state.next_snapshot_id =
+        state
+            .next_snapshot_id
+            .checked_add(1)
+            .ok_or(DurableLogError::Corrupt(
+                "archive snapshot id range exhausted",
+            ))?;
+    Ok(())
+}
+
+fn select_archive_snapshot(
+    snapshots: &[ArchivePublishedSnapshot],
+    position: EventPosition,
+) -> Option<ArchivePublishedSnapshot> {
+    snapshots
+        .iter()
+        .rev()
+        .find(|snapshot| match snapshot.snapshot.at_event {
+            ArchiveSnapshotPosition::Initial => true,
+            ArchiveSnapshotPosition::At(at_event) => at_event <= position,
+        })
+        .cloned()
+}
+
+fn decode_tree_id(bytes: &[u8], cursor: &mut usize) -> Result<BlobTreeId, DurableLogError> {
+    let tag = read_archive_byte(bytes, cursor, "truncated tree identity tag")?;
+    let id = read_archive_array::<32>(bytes, cursor, "truncated tree identity")?;
+    match tag {
+        0 => BlobId::from_bytes(&id)
+            .map(BlobTreeId::Blob)
+            .map_err(|_| DurableLogError::Corrupt("invalid blob identity")),
+        1 => BlobDirectoryId::from_bytes(&id)
+            .map(BlobTreeId::Directory)
+            .map_err(|_| DurableLogError::Corrupt("invalid directory identity")),
+        _ => Err(DurableLogError::Corrupt("invalid tree identity tag")),
+    }
+}
+
+fn decode_optional_tree_id(
+    bytes: &[u8],
+    cursor: &mut usize,
+) -> Result<Option<BlobTreeId>, DurableLogError> {
+    match read_archive_byte(bytes, cursor, "truncated optional tree identity tag")? {
+        0 => Ok(None),
+        1 => Ok(Some(BlobTreeId::Blob(
+            BlobId::from_bytes(&read_archive_array::<32>(
+                bytes,
+                cursor,
+                "truncated blob identity",
+            )?)
+            .map_err(|_| DurableLogError::Corrupt("invalid blob identity"))?,
+        ))),
+        2 => Ok(Some(BlobTreeId::Directory(
+            BlobDirectoryId::from_bytes(&read_archive_array::<32>(
+                bytes,
+                cursor,
+                "truncated directory identity",
+            )?)
+            .map_err(|_| DurableLogError::Corrupt("invalid directory identity"))?,
+        ))),
+        _ => Err(DurableLogError::Corrupt(
+            "invalid optional tree identity tag",
+        )),
+    }
+}
+
+fn read_archive_byte(
+    bytes: &[u8],
+    cursor: &mut usize,
+    error: &'static str,
+) -> Result<u8, DurableLogError> {
+    let value = *bytes.get(*cursor).ok_or(DurableLogError::Corrupt(error))?;
+    *cursor += 1;
+    Ok(value)
+}
+
+fn read_archive_array<const N: usize>(
+    bytes: &[u8],
+    cursor: &mut usize,
+    error: &'static str,
+) -> Result<[u8; N], DurableLogError> {
+    let end = cursor
+        .checked_add(N)
+        .ok_or(DurableLogError::Corrupt(error))?;
+    let value = bytes
+        .get(*cursor..end)
+        .ok_or(DurableLogError::Corrupt(error))?;
+    *cursor = end;
+    value
+        .try_into()
+        .map_err(|_| DurableLogError::Corrupt(error))
+}
+
+fn read_archive_field<'a>(
+    bytes: &'a [u8],
+    cursor: &mut usize,
+    error: &'static str,
+) -> Result<&'a [u8], DurableLogError> {
+    let length = u32::from_be_bytes(read_archive_array::<4>(bytes, cursor, error)?);
+    let length = usize::try_from(length).map_err(|_| DurableLogError::Corrupt(error))?;
+    let end = cursor
+        .checked_add(length)
+        .ok_or(DurableLogError::Corrupt(error))?;
+    let value = bytes
+        .get(*cursor..end)
+        .ok_or(DurableLogError::Corrupt(error))?;
+    *cursor = end;
+    Ok(value)
 }
 
 #[cfg(test)]
@@ -1196,6 +1973,153 @@ mod tests {
         for directory in directories.into_inner().unwrap() {
             fs::remove_dir_all(directory).unwrap();
         }
+    }
+
+    #[tokio::test]
+    async fn passes_final_storage_conformance() {
+        let directories = std::sync::Mutex::new(Vec::new());
+        sea_conformance::run_sea_storage_conformance(|| {
+            let directory = test_directory("archive-conformance");
+            directories.lock().unwrap().push(directory.clone());
+            DurableLog::open(directory).unwrap()
+        })
+        .await;
+
+        for directory in directories.into_inner().unwrap() {
+            fs::remove_dir_all(directory).unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn durable_archive_reopens_content_events_and_publications() {
+        use std::collections::BTreeMap;
+
+        use sea_core::{
+            BlobTreeId, Event,
+            archive::{
+                OperationId, SeaStorage, Snapshot as ArchiveSnapshot,
+                SnapshotPosition as ArchiveSnapshotPosition, SnapshotPublication,
+            },
+        };
+
+        let directory = test_directory("archive-reopen");
+        let log = DurableLog::open(&directory).unwrap();
+        let blob = SeaStorage::put_blob(&log, Bytes::from_static(b"durable-content"))
+            .await
+            .unwrap();
+        let tree = SeaStorage::put_directory(
+            &log,
+            BlobDirectory::new(BTreeMap::from([(
+                "leaf".to_owned(),
+                BlobTreeId::Blob(blob),
+            )]))
+            .unwrap(),
+        )
+        .await
+        .unwrap();
+        let event = SeaStorage::append(
+            &log,
+            Event {
+                payload: Bytes::from_static(b"durable-event"),
+                blob_tree: Some(BlobTreeId::Directory(tree)),
+            },
+        )
+        .await
+        .unwrap();
+        let operation_id = OperationId::new(Bytes::from_static(b"durable-publication")).unwrap();
+        let published = SeaStorage::publish_snapshot(
+            &log,
+            SnapshotPublication {
+                operation_id: operation_id.clone(),
+                expected_parent: None,
+                snapshot: ArchiveSnapshot {
+                    at_event: ArchiveSnapshotPosition::At(event.position),
+                    root: BlobTreeId::Directory(tree),
+                },
+            },
+        )
+        .await
+        .unwrap();
+        drop(log);
+
+        let reopened = DurableLog::open(&directory).unwrap();
+        assert_eq!(
+            SeaStorage::get_blob(&reopened, blob).await.unwrap(),
+            Bytes::from_static(b"durable-content")
+        );
+        assert_eq!(
+            SeaStorage::head(&reopened).await.unwrap(),
+            Some(event.position)
+        );
+        assert_eq!(
+            SeaStorage::resolve_snapshot_publication(&reopened, &operation_id)
+                .await
+                .unwrap(),
+            Some(published)
+        );
+        drop(reopened);
+        fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[tokio::test]
+    async fn post_sync_snapshot_ambiguity_is_resolvable() {
+        use sea_core::{
+            BlobTreeId,
+            archive::{
+                OperationId, SeaStorage, Snapshot as ArchiveSnapshot,
+                SnapshotPosition as ArchiveSnapshotPosition, SnapshotPublication,
+            },
+        };
+
+        let directory = test_directory("archive-ambiguous-snapshot");
+        let setup = DurableLog::open(&directory).unwrap();
+        let root = SeaStorage::put_blob(&setup, Bytes::from_static(b"root"))
+            .await
+            .unwrap();
+        drop(setup);
+
+        let operation_id = OperationId::new(Bytes::from_static(b"ambiguous-publication")).unwrap();
+        let publication = SnapshotPublication {
+            operation_id: operation_id.clone(),
+            expected_parent: None,
+            snapshot: ArchiveSnapshot {
+                at_event: ArchiveSnapshotPosition::Initial,
+                root: BlobTreeId::Blob(root),
+            },
+        };
+        let log = DurableLog::open_with_crash_injector(
+            &directory,
+            Arc::new(CrashInjector::new([CrashPoint::RecordAfterSync])),
+        )
+        .unwrap();
+        assert_eq!(
+            SeaStorage::publish_snapshot(&log, publication.clone())
+                .await
+                .unwrap_err()
+                .kind(),
+            ErrorKind::Ambiguous
+        );
+        let resolved = SeaStorage::resolve_snapshot_publication(&log, &operation_id)
+            .await
+            .unwrap()
+            .expect("post-sync publication must be visible");
+        assert_eq!(
+            SeaStorage::publish_snapshot(&log, publication)
+                .await
+                .unwrap(),
+            resolved
+        );
+        drop(log);
+
+        let reopened = DurableLog::open(&directory).unwrap();
+        assert_eq!(
+            SeaStorage::resolve_snapshot_publication(&reopened, &operation_id)
+                .await
+                .unwrap(),
+            Some(resolved)
+        );
+        drop(reopened);
+        fs::remove_dir_all(directory).unwrap();
     }
 
     #[tokio::test]

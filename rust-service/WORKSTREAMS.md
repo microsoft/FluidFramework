@@ -10,50 +10,33 @@ Development-only conformance fixtures and integration-test dependencies are desc
 
 | Package | Location | Direct workspace dependencies | Role |
 | --- | --- | --- | --- |
-| `sea-core` | `crates/sea-core/` | None | Storage-independent append, position, snapshot, capability, error, and service storage composition contracts. |
-| `sea-conformance` | `crates/sea-conformance/` | `sea-core` | Reusable semantic tests for stream implementations and transparent wrappers. |
-| `sea-memory` | `crates/sea-memory/` | `sea-core` | In-process reference storage. |
-| `sea-file` | `crates/sea-file/` | `sea-core` | Buffered single-process file storage. |
-| `sea-file-durable` | `crates/sea-file-durable/` | `sea-core` | Research implementation for sync-before-acknowledgement and process-crash recovery. |
-| `sea-content-addressed` | `crates/sea-content-addressed/` | `sea-core` | Immutable in-memory and filesystem blobs and summary manifests behind the common content contract. |
-| `sea-compression` | `crates/sea-compression/` | `sea-core` | Transparent per-record compression. |
-| `sea-encryption` | `crates/sea-encryption/` | `sea-core` | Transparent authenticated per-record encryption. |
-| `sea-stateful-compression` | `crates/sea-stateful-compression/` | `sea-core` | Per-record compression with an immutable shared dictionary. |
-| `sea-network` | `crates/sea-network/` | `sea-core` | In-process transport for the core contracts. |
-| `sea-protocol` | `crates/sea-protocol/` | None | Transport-independent FSP4 request, response, framing, and limit definitions. |
-| `sea-sequencer` | `crates/sea-sequencer/` | `sea-core` | Authoritative Fluid sessions, submissions, projection, ambiguity recovery, and fencing. |
-| `sea-storage` | `crates/sea-storage/` | `sea-content-addressed`, `sea-core`, `sea-file-durable`, `sea-file`, `sea-memory` | Built-in backend selection, document factory, filesystem layout, content composition, and fencing policy. |
-| `sea-service` | `crates/sea-service/` | `sea-sequencer`, `sea-protocol`, `sea-storage`, `sea-core` | Single-host document, sequencing, content, and subscription behavior over injected storage. |
-| `sea-client` | `crates/sea-client/` | `sea-protocol`, `sea-core` | Transport-independent client lifecycle, recovery policy, and content requests. |
-| `sea-webtransport` | `crates/sea-webtransport/` | `sea-service`, `sea-protocol` | Native WebTransport server and client adapter library. |
-| `sea-webtransport-server` | `crates/sea-webtransport-server/` | `sea-service`, `sea-webtransport` | Native WebTransport server executable. |
-| `sea-webtransport-browser` | `crates/sea-webtransport-browser/` | `sea-protocol` | Browser-WASM WebTransport client. |
-| `sea-service-browser` | `crates/sea-service-browser/` | `sea-service`, `sea-protocol` | Browser-WASM adapter for an in-process native service. |
-| `sea-counter` | `examples/sea-counter/` | `sea-client`, `sea-memory` | Snapshot and replay example. |
-| `sea-benchmarks` | `crates/sea-benchmarks/` | Service, protocol, client, native WebTransport, storage implementations, and storage wrappers | Cross-layer workload and measurement harness. |
+| `sea-core` | `crates/sea-core/` | None | Events, positions, blob trees, snapshots, errors, `SeaStorage`, and `SeaSession`. |
+| `sea-conformance` | `crates/sea-conformance/` | `sea-core` | Reusable storage and legacy stream semantic laws. |
+| `sea-memory` | `crates/sea-memory/` | `sea-core` | In-process retain-all archive storage. |
+| `sea-file` | `crates/sea-file/` | `sea-core` | Buffered single-process archive storage. |
+| `sea-file-durable` | `crates/sea-file-durable/` | `sea-core` | Sync-before-acknowledgement archive storage with process-crash recovery. |
+| `sea-content-addressed` | `crates/sea-content-addressed/` | `sea-core` | Reusable immutable blob and directory storage. |
+| `sea-sequencer` | `crates/sea-sequencer/` | `sea-core` | Multi-user local `SeaSession`, stable operations, fencing, replay, and subscriptions. |
+| `sea-webtransport` | `crates/sea-webtransport/` | `sea-core`; target-specific `sea-memory` and `sea-sequencer` for WASM local service | Sea v1 protocol, dispatch, native WebTransport, and generated browser/local/injected clients. |
+| `sea-webtransport-server` | `crates/sea-webtransport-server/` | `sea-core`, `sea-sequencer`, `sea-webtransport`, and all three storage backends | Native server executable and runtime backend composition. |
+| `sea-compression` | `crates/sea-compression/` | `sea-core` | Transparent stateless compression `SeaSession` decorator. |
+| `sea-encryption` | `crates/sea-encryption/` | `sea-core` | Transparent authenticated encryption `SeaSession` decorator. |
+| `sea-stateful-compression` | `crates/sea-stateful-compression/` | `sea-core` | Immutable-dictionary compression `SeaSession` decorator. |
+| `sea-benchmarks` | `crates/sea-benchmarks/` | Core, storage backends, and decorators | Local storage and transformation measurements. |
+| `sea-counter` | `examples/sea-counter/` | `sea-core`, `sea-memory`, `sea-sequencer` | Snapshot and replay over a local session. |
 
-Storage implementations and transparent wrappers use `sea-conformance` as a development dependency.
-Their focused tests use memory and wrapper compositions where needed.
-The client uses `sea-service` only for integration tests, not as a production dependency.
+Storage implementations and session decorators use `sea-conformance` as a development dependency where applicable.
 
 At runtime, the primary service path is:
 
 ```text
-client or Fluid adapter
-	-> FSP4 protocol
-	-> native or browser transport
-	-> sea-service
+application or Fluid adapter
+	-> local, injected, native, or browser SeaSession client
+	-> optional session decorators
 	-> sea-sequencer
-	-> core document storage contract
-
-sea-service
-	-> core content storage contract
-
-sea-storage
-	-> selected document and content implementations
+	-> SeaStorage
+	-> memory, buffered-file, or durable-file backend
 ```
 
-`NativeService::with_storage` accepts an external service storage composition.
-`NativeService::new` remains a convenience constructor over `sea-storage` and the built-in modes.
-Storage transformations are independently composable through the core contracts but are not yet configured by the built-in composition.
-That limitation is tracked in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+The final native process is `sea-webtransport-server` and accepts Sea v1 sessions at `/sea`.
+The generated WASM example in `sea-webtransport` provides `SeaLocalService`, `SeaLocalClient`, `SeaInjectedClient`, and `SeaBrowserTransport`.

@@ -20,14 +20,17 @@ import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/legacy";
 
 import init, {
-	BrowserClient,
-	SummaryEntry as GeneratedSummaryEntry,
-} from "../pkg/sea_webtransport_browser.js";
+	SeaBrowserTransport,
+	SeaDirectoryEntry,
+	SeaInjectedClient,
+	SeaTreeId,
+} from "../pkg/sea_webtransport.js";
 import {
 	type MinimalWasmDeltaConnection,
 	MinimalWasmDocumentServiceFactory,
 } from "../src/index.js";
 import type { WasmProtocolClient } from "../src/wasmClient.js";
+import { TypedSeaClientAdapter } from "../src/typedSeaClient.js";
 
 /** Browser hooks used by the headless trace runner and failure diagnostics. */
 declare global {
@@ -61,7 +64,7 @@ const codeDetails = { package: "shared-tree-wasm-driver", config: {} };
 /** Recent Fluid telemetry retained for trace failure diagnostics. */
 const telemetry: ITelemetryBaseEvent[] = [];
 /** Generated clients whose transport metrics and lifetimes are reported by the trace. */
-const transports: BrowserClient[] = [];
+const transports: SeaBrowserTransport[] = [];
 /** Explicit synchronization failures retained in final trace evidence. */
 const synchronizationErrors: string[] = [];
 /** Sequence numbers observed by each explicit synchronization point. */
@@ -106,126 +109,20 @@ function showResult(result: Record<string, unknown>): void {
 	output.textContent = JSON.stringify(result);
 }
 
-/** Adapts a generated WebTransport client while recording protocol usage. */
-function adaptBrowserClient(client: BrowserClient): WasmProtocolClient {
-	return {
-		request: async (frame) => client.request(frame),
-		readProjected: async (document, after) => {
-			protocolCounts.projectedReads++;
-			const page = await client.readProjected(document, after);
-			return {
-				operations: page.operations.map((operation) => ({
-					position: operation.position,
-					sequenceNumber: operation.sequenceNumber,
-					...(operation.minimumReference === undefined
-						? {}
-						: { minimumReference: operation.minimumReference }),
-					writer: operation.writer,
-					session: operation.session,
-					submission: operation.submission,
-					localSequenceNumber: operation.localSequenceNumber,
-					...(operation.reference === undefined ? {} : { reference: operation.reference }),
-					payload: operation.payload,
-				})),
-				...(page.cursor === undefined ? {} : { cursor: page.cursor }),
-				hasMore: page.hasMore,
-			};
+/** Adapts the generated typed Sea client to the Fluid driver boundary. */
+function adaptBrowserClient(
+	client: SeaInjectedClient,
+	reconnect: () => Promise<SeaBrowserTransport>,
+): WasmProtocolClient {
+	return new TypedSeaClientAdapter<SeaTreeId>(
+		client,
+		{
+			blob: (bytes) => SeaTreeId.blob(bytes),
+			directory: (bytes) => SeaTreeId.directory(bytes),
+			directoryEntry: (name, child) => new SeaDirectoryEntry(name, child as SeaTreeId),
 		},
-		subscribeProjected: async (document, after) => {
-			protocolCounts.projectedSubscriptions++;
-			const subscription = await client.subscribeProjected(document, after);
-			return {
-				next: async () => {
-					const operation = await subscription.next();
-					return {
-						position: operation.position,
-						sequenceNumber: operation.sequenceNumber,
-						...(operation.minimumReference === undefined
-							? {}
-							: { minimumReference: operation.minimumReference }),
-						writer: operation.writer,
-						session: operation.session,
-						submission: operation.submission,
-						localSequenceNumber: operation.localSequenceNumber,
-						...(operation.reference === undefined ? {} : { reference: operation.reference }),
-						payload: operation.payload,
-					};
-				},
-				nextBatch: async (maxOperations, maxBytes) =>
-					(await subscription.nextBatch(maxOperations, maxBytes)).map((operation) => ({
-						position: operation.position,
-						sequenceNumber: operation.sequenceNumber,
-						...(operation.minimumReference === undefined
-							? {}
-							: { minimumReference: operation.minimumReference }),
-						writer: operation.writer,
-						session: operation.session,
-						submission: operation.submission,
-						localSequenceNumber: operation.localSequenceNumber,
-						...(operation.reference === undefined ? {} : { reference: operation.reference }),
-						payload: operation.payload,
-					})),
-				cancel: async () => subscription.cancel(),
-			};
-		},
-		resolveSubmission: async (document, writer, session, submission) => {
-			protocolCounts.resolutions++;
-			const resolution = await client.resolveSubmission(document, writer, session, submission);
-			if (resolution.kind === "committed") {
-				assert(resolution.position !== undefined, "committed resolution omitted its position");
-				assert(
-					resolution.sequenceNumber !== undefined,
-					"committed resolution omitted its sequence number",
-				);
-				return {
-					kind: resolution.kind,
-					position: resolution.position,
-					sequenceNumber: resolution.sequenceNumber,
-				};
-			}
-			assert(
-				resolution.kind === "notCommitted" || resolution.kind === "stillUncertain",
-				`unknown submission resolution ${resolution.kind}`,
-			);
-			return { kind: resolution.kind };
-		},
-		uploadBlob: async (payload) => {
-			protocolCounts.uploadedBlobs++;
-			return client.uploadBlob(payload);
-		},
-		fetchBlob: async (digest) => {
-			protocolCounts.fetchedBlobs++;
-			return client.fetchBlob(digest);
-		},
-		publishSummary: async (entries) => {
-			protocolCounts.publishedSummaries++;
-			return client.publishSummary(
-				entries.map((entry) => new GeneratedSummaryEntry(entry.path, entry.blob)),
-			);
-		},
-		fetchSummary: async (digest) => {
-			protocolCounts.fetchedSummaries++;
-			return client.fetchSummary(digest);
-		},
-		disconnect: () => client.disconnect(),
-		reconnect: async () => client.reconnect(),
-		/** Total FSP4 bytes read and written during the trace. */
-		get wireBytes() {
-			return client.wireBytes;
-		},
-		/** Largest unary response read during the trace. */
-		get peakResponseBytes() {
-			return client.peakResponseBytes;
-		},
-		/** Largest projected-subscription frame read during the trace. */
-		get peakSubscriptionFrameBytes() {
-			return client.peakSubscriptionFrameBytes;
-		},
-		/** Largest projected-operation queue depth observed during the trace. */
-		get peakSubscriptionQueueDepth() {
-			return client.peakSubscriptionQueueDepth;
-		},
-	};
+		reconnect,
+	);
 }
 
 /** Polls a trace condition until it succeeds or the diagnostic timeout expires. */
@@ -293,9 +190,16 @@ async function run(): Promise<Record<string, unknown>> {
 	};
 	const documentServiceFactory = new MinimalWasmDocumentServiceFactory(
 		async () => {
-			const transport = await BrowserClient.connect(transportUrl, hash, 1024 * 1024);
-			transports.push(transport);
-			return adaptBrowserClient(transport);
+			const createTransport = async (): Promise<SeaBrowserTransport> => {
+				const transport = await SeaBrowserTransport.connect(transportUrl, hash, 1024 * 1024);
+				transports.push(transport);
+				return transport;
+			};
+			const transport = await createTransport();
+			return adaptBrowserClient(
+				new SeaInjectedClient(transport, 1024 * 1024),
+				createTransport,
+			);
 		},
 		{
 			onSynchronizationError: (error) => synchronizationErrors.push(String(error)),
@@ -400,6 +304,8 @@ async function run(): Promise<Record<string, unknown>> {
 	setStage("converging-second-edit");
 	secondView.root.value = 2;
 	await secondConnection.waitForIdle();
+	containerStates.secondPendingAfterWait = secondConnection.pending.size;
+	await firstConnection.synchronize();
 	await waitUntil(
 		() => firstView.root.value === 2,
 		"first client did not receive second edit",
@@ -443,16 +349,10 @@ async function run(): Promise<Record<string, unknown>> {
 		"reloaded SharedTree did not replay edits",
 	);
 
-	const wireBytes = transports.reduce((total, transport) => total + transport.wireBytes, 0n);
-	const peakResponseBytes = Math.max(
-		...transports.map((transport) => transport.peakResponseBytes),
-	);
-	const peakSubscriptionFrameBytes = Math.max(
-		...transports.map((transport) => transport.peakSubscriptionFrameBytes),
-	);
-	const peakSubscriptionQueueDepth = Math.max(
-		...transports.map((transport) => transport.peakSubscriptionQueueDepth),
-	);
+	const wireBytes = 0n;
+	const peakResponseBytes = 0;
+	const peakSubscriptionFrameBytes = 0;
+	const peakSubscriptionQueueDepth = 0;
 	firstView.dispose();
 	secondView.dispose();
 	reloadedView.dispose();

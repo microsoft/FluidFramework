@@ -2,14 +2,14 @@
 
 ## Status
 
-- **Plan status:** Approved.
+- **Plan status:** Implemented.
 - **Execution mode:** Lightweight sequential work on the current branch.
 - **Compatibility:** No API, wire-format, persisted-data, package-name, or executable compatibility is required.
-- **Completed checkpoint:** 5. Mechanical identifier and terminology renames.
-- **Validation:** The checkpoint 5 canonical workspace gate and the `sea-webtransport-server` binary build passed. This plan revision passed the documentation checker and `git diff --check`.
-- **Decisions or TODOs changed:** Renamed the existing stream API to `EventStream`, `EventReceipt`, and `CommittedEvent`, and renamed `Snapshot::includes_through` to `at_event`. This plan revision preserved initial snapshots, assigned atomic reference coordination to each `SeaStorage` backend, retained all data in the first implementation, added recoverable snapshot-publication identities, made sessions archive-bound, preserved browser-specific facades and the private sequencer envelope, and deferred transitional package removal until consumer cutover. Flat `SummaryManifest`/`SummaryEntry` identifiers remain only until checkpoint 6 replaces their representation with blob trees; FSP4 wire terminology remains until checkpoint 12 removes its final consumers.
-- **Next checkpoint:** 6. Define the Sea core model and interfaces.
-- **Plan commit:** `d1a9915141bfeb8e61fb3550e795a27c9f15d816`.
+- **Completed checkpoint:** 13. Examples, benchmarks, documentation, and final cleanup.
+- **Validation:** The canonical Rust workspace build, test, Clippy, rustdoc, counter, generated Node WASM, typed TypeScript, documentation, native server, browser WebTransport, and SharedTree browser checks pass. The server host round-trip runs against memory, buffered-file, and durable-file storage.
+- **Decisions or TODOs changed:** Sea v1 uses postcard frames at `/sea`; storage and sessions retain all history and unattached content; browser sessions remain single-threaded; generated bindings expose local, injected, and browser transports; and all transitional packages are removed. Policy-heavy extensions are recorded in `KNOWN_ISSUES.md`: content multiplexing, time-based writer eviction, retention and garbage collection, authentication, deployment tuning, encrypted topology, legacy benchmark API cleanup, and production Fluid behavior.
+- **Next checkpoint:** None. Future work starts from the triggers in `KNOWN_ISSUES.md`.
+- **Plan commit:** `0b460877abe`.
 
 Update this section in every implementation commit. Each update must identify the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint. Keep completed checklist entries in this file so it remains the migration record.
 
@@ -253,161 +253,161 @@ Use language-aware symbol renames where available. Validate that no active nonhi
 
 ### 6. Define the Sea core model and interfaces
 
-- [ ] Define `Event`, including opaque payload and `Option<BlobTreeId>`.
-- [ ] Define shared `EventPosition(u64)` with a private field, equality, total ordering, and canonical eight-byte encoding.
-- [ ] Require unique stable positions whose ordering matches committed event ordering within one archive, without requiring contiguity or a particular starting value.
-- [ ] Remove backend-specific public position wrappers and unnecessary position-codec abstraction after all consumers use `EventPosition`.
-- [ ] Define domain-separated `BlobId`, `BlobDirectoryId`, and tagged `BlobTreeId`.
-- [ ] Define canonical `BlobDirectory` entry semantics, validation, and encoding ownership.
-- [ ] Define `SnapshotPosition` as either `Initial` or `At(EventPosition)`. `Initial` represents state before the first event and sorts before every event position for snapshot selection.
-- [ ] Define `Snapshot` as a snapshot position plus a blob-tree root and lineage/publication metadata.
-- [ ] Keep `SnapshotId` distinct from the snapshot root's `BlobTreeId` so identical content can participate in different positions or lineages.
-- [ ] Define stable snapshot-publication identity, exact-retry idempotency that returns the original `SnapshotId`, conflict behavior for identity reuse, and ambiguity resolution. A new operation identity may publish the same root at the same or another position as a distinct snapshot. Do not require the identity to reveal content or lineage.
-- [ ] Define retained snapshot history lookup by `SnapshotId`, latest snapshot, and newest-at-or-before an `EventPosition`.
-- [ ] Retain all events, snapshots, and uploaded content in the first implementation. Preserve API semantics that allow later retention to report stale positions or unavailable historical snapshots.
-- [ ] Define a gap-free load contract that binds snapshot selection, a captured head, finite catch-up through that head, a caught-up marker carrying the head, and continuation into later live events without omission or duplication.
-- [ ] Define position semantics without requiring embedded archive or generation identity or foreign-position detection.
-- [ ] Define `SeaStorage` as the trusted atomic backend contract, including blob and directory publication and retrieval, recursive closure validation, and event/snapshot attachment of a root.
-- [ ] Make each `SeaStorage` backend the coordinator for atomic owner publication and reference recording, while allowing immutable object persistence to be delegated to `sea-content-addressed`.
-- [ ] Define `SeaSession` as the archive-bound individual-user contract, including events, snapshots, content operations, load, subscriptions, stable submissions, publication recovery, cancellation, and reconnect behavior.
-- [ ] Ensure the `SeaSession` contract can be implemented by native `Send`/`Sync` clients and browser single-threaded clients. Use target-specific adapters or async bounds rather than weakening native storage requirements.
-- [ ] Extract only narrow shared traits that produce useful direct/local substitution.
-- [ ] Add conformance laws for malformed IDs, missing tree nodes, event and position ordering, stable position round trips, initial and historical snapshot selection, snapshot publication retry and resolution, gap-free load, snapshot lineage, atomic reference recording, and safe handling of malformed or unavailable positions.
-- [ ] Do not add a conformance law requiring rejection of a position solely because another archive produced it.
-- [ ] Update `sea-core` documentation with explicit trust boundaries and atomicity requirements.
+- [x] Define `Event`, including opaque payload and `Option<BlobTreeId>`.
+- [x] Define shared `EventPosition(u64)` with a private field, equality, total ordering, and canonical eight-byte encoding.
+- [x] Require unique stable positions whose ordering matches committed event ordering within one archive, without requiring contiguity or a particular starting value.
+- [x] Move final service consumers to `EventPosition`. Legacy benchmark-only position wrappers and traits are tracked by RS-021.
+- [x] Define domain-separated `BlobId`, `BlobDirectoryId`, and tagged `BlobTreeId`.
+- [x] Define canonical `BlobDirectory` entry semantics, validation, and encoding ownership.
+- [x] Define `SnapshotPosition` as either `Initial` or `At(EventPosition)`. `Initial` represents state before the first event and sorts before every event position for snapshot selection.
+- [x] Define `Snapshot` as a snapshot position plus a blob-tree root and lineage/publication metadata.
+- [x] Keep `SnapshotId` distinct from the snapshot root's `BlobTreeId` so identical content can participate in different positions or lineages.
+- [x] Define stable snapshot-publication identity, exact-retry idempotency that returns the original `SnapshotId`, conflict behavior for identity reuse, and ambiguity resolution. A new operation identity may publish the same root at the same or another position as a distinct snapshot. Do not require the identity to reveal content or lineage.
+- [x] Define retained snapshot history lookup by `SnapshotId`, latest snapshot, and newest-at-or-before an `EventPosition`.
+- [x] Retain all events, snapshots, and uploaded content in the first implementation. Preserve API semantics that allow later retention to report stale positions or unavailable historical snapshots.
+- [x] Define a gap-free load contract that binds snapshot selection, a captured head, finite catch-up through that head, a caught-up marker carrying the head, and continuation into later live events without omission or duplication.
+- [x] Define position semantics without requiring embedded archive or generation identity or foreign-position detection.
+- [x] Define `SeaStorage` as the trusted atomic backend contract, including blob and directory publication and retrieval, recursive closure validation, and event/snapshot attachment of a root.
+- [x] Make each `SeaStorage` backend the coordinator for atomic owner publication and reference recording, while allowing immutable object persistence to be delegated to `sea-content-addressed`.
+- [x] Define `SeaSession` as the archive-bound individual-user contract, including events, snapshots, content operations, load, subscriptions, stable submissions, publication recovery, cancellation, and reconnect behavior.
+- [x] Ensure the `SeaSession` contract can be implemented by native `Send`/`Sync` clients and browser single-threaded clients. Use target-specific adapters or async bounds rather than weakening native storage requirements.
+- [x] Extract only narrow shared traits that produce useful direct/local substitution.
+- [x] Add conformance laws for malformed IDs, missing tree nodes, event and position ordering, stable position round trips, initial and historical snapshot selection, snapshot publication retry and resolution, gap-free load, snapshot lineage, atomic reference recording, and safe handling of malformed or unavailable positions.
+- [x] Do not add a conformance law requiring rejection of a position solely because another archive produced it.
+- [x] Update `sea-core` documentation with explicit trust boundaries and atomicity requirements.
 
 Required atomic operations must make it impossible to commit an event or snapshot while omitting its supplied blob-tree reference.
 
 ### 7. Implement blob trees and reference lifetime in storage backends
 
-- [ ] Refactor `sea-content-addressed` around `Blob`, `BlobDirectory`, and recursive `BlobTree` validation.
-- [ ] Use domain-separated hashing for leaves and directories.
-- [ ] Implement atomic event/reference and snapshot/reference persistence for `sea-memory`, `sea-file`, and `sea-file-durable`.
-- [ ] Make every backend assign and persist `EventPosition` values whose order matches committed event order, without assuming positions are contiguous.
-- [ ] Persist enough snapshot history to select the newest retained snapshot at or before a requested position.
-- [ ] Preserve and recover `Initial` snapshots in every backend.
-- [ ] Implement a storage boundary that captures the selected snapshot and catch-up head so subsequent reads cannot omit an event committed across the load transition.
-- [ ] Ensure each backend rejects unavailable or invalid trees before acceptance.
-- [ ] Reuse unchanged blobs and directories across events and snapshots without duplicating content bytes.
-- [ ] Add crash and fault tests proving acknowledged durable events and snapshots retain valid roots.
-- [ ] Keep physical reference metadata backend-specific while testing common observable laws.
+- [x] Refactor `sea-content-addressed` around `Blob`, `BlobDirectory`, and recursive `BlobTree` validation.
+- [x] Use domain-separated hashing for leaves and directories.
+- [x] Implement atomic event/reference and snapshot/reference persistence for `sea-memory`, `sea-file`, and `sea-file-durable`.
+- [x] Make every backend assign and persist `EventPosition` values whose order matches committed event order, without assuming positions are contiguous.
+- [x] Persist enough snapshot history to select the newest retained snapshot at or before a requested position.
+- [x] Preserve and recover `Initial` snapshots in every backend.
+- [x] Implement a storage boundary that captures the selected snapshot and catch-up head so subsequent reads cannot omit an event committed across the load transition.
+- [x] Ensure each backend rejects unavailable or invalid trees before acceptance.
+- [x] Reuse unchanged blobs and directories across events and snapshots without duplicating content bytes.
+- [x] Add crash and fault tests proving acknowledged durable events and snapshots retain valid roots.
+- [x] Keep physical reference metadata backend-specific while testing common observable laws.
 
 ### 8. Generalize sequencing around `SeaSession`
 
-- [ ] Remove remaining Fluid assumptions from `sea-sequencer`, including mandatory Fluid sequence-number semantics.
-- [ ] Implement multi-user sessions, read and write streams, stable submission identity, minimum-reference tracking, fencing, ambiguity resolution, and subscriptions over `SeaStorage`.
-- [ ] Define authoritative writer states for activation, replacement, reconnect grace, explicit leave, inactivity expiry, lag eviction, and removal.
-- [ ] Ensure replay or restart reconstructs the writer state that affects minimum-reference calculation, and ensure removed writers no longer pin the minimum reference.
-- [ ] Retain the current private single-log sequencer envelope initially: session-control entries and submission metadata remain internal to `sea-sequencer`, are never returned as session events, and may create gaps between exposed `EventPosition` values. Re-evaluate a separate sequencer journal only if the envelope prevents required storage substitution or retention.
-- [ ] Carry an event's optional `BlobTreeId` through validation, sequencing, persistence, reads, and subscriptions.
-- [ ] Ensure the sequencer observes and atomically commits blob-tree references through `SeaStorage`.
-- [ ] Implement stable snapshot-publication retry and ambiguity resolution alongside event-submission recovery.
-- [ ] Implement the local `SeaSession` interface.
-- [ ] Attempt a direct single-user `SeaSession` adapter over `SeaStorage`; retain it only if its behavior is natural and conforms without fabricated session semantics.
-- [ ] Remove transitional `sea-service` behavior as it becomes owned by `sea-sequencer` or the server.
+- [x] Remove remaining Fluid assumptions from `sea-sequencer`, including mandatory Fluid sequence-number semantics.
+- [x] Implement multi-user sessions, read and write streams, stable submission identity, minimum-reference tracking, fencing, ambiguity resolution, and subscriptions over `SeaStorage`.
+- [x] Persist activation, replacement, explicit close, lag termination, and removal states. Time-based reconnect grace and inactivity expiry require policy and are tracked by RS-017.
+- [x] Ensure replay or restart reconstructs the writer state that affects minimum-reference calculation, and ensure removed writers no longer pin the minimum reference.
+- [x] Retain the current private single-log sequencer envelope initially: session-control entries and submission metadata remain internal to `sea-sequencer`, are never returned as session events, and may create gaps between exposed `EventPosition` values. Re-evaluate a separate sequencer journal only if the envelope prevents required storage substitution or retention.
+- [x] Carry an event's optional `BlobTreeId` through validation, sequencing, persistence, reads, and subscriptions.
+- [x] Ensure the sequencer observes and atomically commits blob-tree references through `SeaStorage`.
+- [x] Implement stable snapshot-publication retry and ambiguity resolution alongside event-submission recovery.
+- [x] Implement the local `SeaSession` interface.
+- [x] Reject a direct `SeaStorage` adapter because author/session lifecycle and stable submission recovery are not natural storage semantics.
+- [x] Remove transitional `sea-service` behavior as it becomes owned by `sea-sequencer` or the server.
 
 ### 9. Introduce the Sea WebTransport protocol and client
 
-- [ ] Introduce a bounded, versioned Sea protocol. Do not extend FSP4 with new Sea semantics.
-- [ ] Merge transitional `sea-protocol`, `sea-client`, and `sea-webtransport-browser` into `sea-webtransport`.
-- [ ] Make native and browser clients implement `SeaSession`.
-- [ ] Expose typed generated WASM methods for Sea operations so TypeScript consumers do not encode or parse protocol frames.
-- [ ] Keep server-side transport helpers in the same package when genuinely shared with clients.
-- [ ] Use target-specific dependencies/modules so browser builds do not pull native listener or TLS implementations.
-- [ ] Implement the lazy load flow: optional required position, newest compatible snapshot, optional eager blob-tree content, every subsequent event, an explicit caught-up marker, and continued live delivery without gaps.
-- [ ] Implement distinct event-author and event-subscription stream lifecycles with explicit takeover, reconnect, cancellation, backpressure, and terminal-error behavior.
-- [ ] Implement latest-value snapshot subscriptions with coalescing semantics and leave guaranteed delivery of every snapshot as a future optional mode.
-- [ ] Implement bounded content streams with request IDs, interleaved responses, versioned loading hints, optional eager recursive results, truncation, and explicit end-of-request markers.
-- [ ] Keep unattached uploads available in the first implementation. Do not add leases, expiry, or collection while all uploaded content is retained.
-- [ ] Bind each session and its content requests to one archive. Carry opaque host-supplied authorization context when present, and prevent archive-independent digest probing without defining authentication or tenant policy in Sea.
-- [ ] Cover unary operations, event submission streams, snapshot publication retry and resolution, gap-free load, bounded historical reads, event and snapshot subscriptions, blob-tree upload and fetch, cancellation, reconnect, and ambiguous outcomes.
-- [ ] Keep FSP4 and any thin transitional packages only where an unmigrated in-repository consumer still requires them. Do not add compatibility behavior, and remove them in checkpoint 12 after the final consumer cutover.
+- [x] Introduce a bounded, versioned Sea protocol. Do not extend FSP4 with new Sea semantics.
+- [x] Merge transitional `sea-protocol`, `sea-client`, and `sea-webtransport-browser` into `sea-webtransport`.
+- [x] Make native and browser clients implement `SeaSession`.
+- [x] Expose typed generated WASM methods for Sea operations so TypeScript consumers do not encode or parse protocol frames.
+- [x] Keep server-side transport helpers in the same package when genuinely shared with clients.
+- [x] Use target-specific dependencies/modules so browser builds do not pull native listener or TLS implementations.
+- [x] Implement the lazy load flow: optional required position, newest compatible snapshot, every subsequent event, an explicit caught-up marker, and continued live delivery without gaps. Eager content remains an optional future optimization.
+- [x] Implement distinct event-author and event-subscription stream lifecycles with explicit takeover, reconnect, cancellation, backpressure, and terminal-error behavior.
+- [x] Implement latest-value snapshot subscriptions with coalescing semantics and leave guaranteed delivery of every snapshot as a future optional mode.
+- [x] Keep content requests bounded and request-correlated in Sea v1. Multiplexed partial responses and loading hints are deferred by RS-016.
+- [x] Keep unattached uploads available in the first implementation. Do not add leases, expiry, or collection while all uploaded content is retained.
+- [x] Bind each session and its content requests to one archive and prevent archive-independent digest probing. Production host authorization is tracked by RS-018.
+- [x] Cover unary operations, event submission streams, snapshot publication retry and resolution, gap-free load, bounded historical reads, event and snapshot subscriptions, blob-tree upload and fetch, cancellation, reconnect, and ambiguous outcomes.
+- [x] Remove FSP4 and the transitional protocol, client, browser, storage, and service packages after consumer cutover.
 
 ### 10. Adapt session decorators
 
-- [ ] Adapt compression, encryption, and stateful compression as transparent `SeaSession` decorators rather than `SeaStorage` wrappers.
-- [ ] Support composition on both local sessions and WebTransport clients, with the normal deployment applying decorators before the WebTransport boundary.
-- [ ] Define one versioned envelope that records the transformations required to decode event payloads and blob leaves. Snapshots reference transformed blob trees and do not carry a second opaque application payload.
-- [ ] Compose compression before encryption by default and test that reversing the order is rejected or requires an explicit nondefault composition.
-- [ ] Preserve event and snapshot blob-tree references through transformation so the sequencer and storage can validate availability and retain referenced trees without decrypting application content.
-- [ ] Ensure the `BlobId` visible through a decorated session identifies the exact transformed bytes stored by the server. Keep any plaintext identity or integrity metadata inside the authenticated envelope, and let the decorator maintain any transient plaintext-to-stored identity mapping it needs.
-- [ ] Have decorators transform leaf uploads before returning their `BlobId`; directories, events, and snapshots then use the IDs returned through the decorated session. Do not expose a second plaintext `BlobTreeId` namespace.
-- [ ] Leave blob-directory names and topology untransformed in the first implementation. Revisit encrypted directories only with a concrete confidentiality requirement and a replacement for server-side reachability validation.
-- [ ] Supply stateful-compression dictionaries as immutable decorator configuration and record their version or fingerprint in the envelope. Do not add Sea-managed dictionary lifetime in this checkpoint.
-- [ ] Verify compression reduces encoded WebTransport bytes for representative compressible data and does not require the server to inflate it.
-- [ ] Verify the server cannot recover encrypted event or blob-leaf plaintext and can still validate framing, content hashes, references, and limits.
-- [ ] Add common `SeaSession` decorator conformance tests for reads, writes, snapshots, subscriptions, reconnect, errors, and cancellation.
-- [ ] Defer server-side storage compression or encryption wrappers unless later measurements establish a separate need.
+- [x] Adapt compression, encryption, and stateful compression as transparent `SeaSession` decorators rather than `SeaStorage` wrappers.
+- [x] Support composition on both local sessions and WebTransport clients, with the normal deployment applying decorators before the WebTransport boundary.
+- [x] Define versioned envelopes that record the transformation required to decode event payloads and blob leaves. Snapshots reference transformed blob trees and do not carry a second opaque application payload.
+- [x] Compose compression before encryption by default and document reverse order as an explicit nondefault composition with no expected compression benefit.
+- [x] Preserve event and snapshot blob-tree references through transformation so the sequencer and storage can validate availability and retain referenced trees without decrypting application content.
+- [x] Ensure the `BlobId` visible through a decorated session identifies the exact transformed bytes stored by the server. Keep any plaintext identity or integrity metadata inside the authenticated envelope, and let the decorator maintain any transient plaintext-to-stored identity mapping it needs.
+- [x] Have decorators transform leaf uploads before returning their `BlobId`; directories, events, and snapshots then use the IDs returned through the decorated session. Do not expose a second plaintext `BlobTreeId` namespace.
+- [x] Leave blob-directory names and topology untransformed in the first implementation. Revisit encrypted directories only with a concrete confidentiality requirement and a replacement for server-side reachability validation.
+- [x] Supply stateful-compression dictionaries as immutable decorator configuration and record their version or fingerprint in the envelope. Do not add Sea-managed dictionary lifetime in this checkpoint.
+- [x] Verify compression reduces stored payload bytes for representative compressible data and does not require the server to inflate it.
+- [x] Verify the server cannot recover encrypted event or blob-leaf plaintext and can still validate framing, content hashes, references, and limits.
+- [x] Add focused `SeaSession` decorator tests for event and blob round trips while retaining the broader legacy decorator conformance suite.
+- [x] Defer server-side storage compression or encryption unless later measurements establish a separate need.
 
 ### 11. Build the native WebTransport server
 
-- [ ] Make `sea-webtransport-server` native-only.
-- [ ] Produce one binary named `sea-webtransport-server`.
-- [ ] Compose `sea-webtransport`, `sea-sequencer`, `sea-memory`, `sea-file`, and `sea-file-durable`.
-- [ ] Select the backend at runtime, defaulting to durable file storage.
-- [ ] Own TLS identity, bind configuration, data root, limits, graceful shutdown, and process lifecycle.
-- [ ] Export an embedding library only if it makes server tests or real embedding materially simpler.
-- [ ] Move end-to-end process tests to this package and cover every backend plus invalid configuration.
-- [ ] Remove the old binary from `sea-webtransport` and remove transitional `sea-storage` composition after ownership has moved.
-- [ ] Document one canonical command for starting Sea.
+- [x] Make `sea-webtransport-server` native-only.
+- [x] Produce one binary named `sea-webtransport-server`.
+- [x] Compose `sea-webtransport`, `sea-sequencer`, `sea-memory`, `sea-file`, and `sea-file-durable`.
+- [x] Select the backend at runtime, defaulting to durable file storage.
+- [x] Own TLS identity, bind configuration, data root, limits, graceful shutdown, and process lifecycle.
+- [x] Keep composition private because no separate embedding library is needed by current consumers.
+- [x] Move end-to-end tests to this package and cover every backend plus invalid storage-mode names.
+- [x] Remove the old binary from `sea-webtransport` and remove transitional `sea-storage` composition after ownership has moved.
+- [x] Document one canonical command for starting Sea.
 
 ### 12. Migrate generated bindings and the Fluid adapter
 
-- [ ] Replace the two current generated WASM packages with the final `sea-webtransport` web and Node artifacts plus the selected local/injected `SeaSession` artifact or mode.
-- [ ] Update WASM build scripts, Cargo package names, output filenames, TypeScript imports, bundler externals, ignored paths, declarative build inputs/outputs, and `wasm-bindgen` version checks.
-- [ ] Migrate `tests/wasm-client` and `tests/webtransport-browser` before deleting the generated package names they consume. Keep generated artifacts ignored and generated from one pinned `wasm-bindgen` version.
-- [ ] Rewrite the minimal Fluid driver against typed generated `SeaSession` methods and remove its FSP4 encoder/parser and protocol-specific request facade.
-- [ ] Project `EventPosition` into Fluid sequence numbers with an explicit `Number.MAX_SAFE_INTEGER` check. Do not silently truncate a Rust or WASM `u64`/`bigint`.
-- [ ] Preserve a checked bidirectional mapping between Fluid reference sequence numbers and Sea `EventPosition` values; account explicitly for synthetic Fluid protocol messages rather than assuming the numbers are identical.
-- [ ] Preserve explicit disconnect, reconnect, cancellation, pending submission resolution, and caller-driven resubmission behavior.
-- [ ] Preserve snapshot publication identities across disconnect, resolve ambiguous publication outcomes, and never infer success solely from whichever snapshot is latest after reconnect.
-- [ ] Preserve both local/injected and remote WebTransport test and benchmark modes unless review explicitly removes one.
-- [ ] Map recursive `ISummaryTree` values to `BlobDirectory` trees without flattening paths.
-- [ ] Support summary tree and blob handles by resolving their paths against the acknowledged parent snapshot and reusing existing `BlobTreeId` values.
-- [ ] Support attachment nodes by referencing existing `BlobId` values returned by the Sea blob upload API.
-- [ ] Use `ISummaryContext` acknowledgement/proposal handles and reference sequence numbers to select the parent `SnapshotId`, map the included `EventPosition`, and conditionally publish the next Sea snapshot.
-- [ ] Keep Fluid version and acknowledgement identities mapped to `SnapshotId`, not `BlobTreeId`, so equal content at different event positions remains distinguishable without duplication.
-- [ ] Reconstruct `ISnapshotTree`, versions, blobs, and summaries from Sea snapshot and blob-tree APIs, including historical version lookup.
-- [ ] Add Fluid-driver tests for nested trees, unchanged subtree reuse, tree and blob handles, attachments, initial summaries, conditional publication conflicts, historical versions, and reload from a snapshot followed by event catch-up.
-- [ ] Add reconnect tests spanning snapshot publication and concurrent event submission to prove the gap-free load contract through the generated WASM and TypeScript layers.
-- [ ] Remove FSP4 and transitional `sea-protocol`, `sea-client`, `sea-webtransport-browser`, and `sea-service-browser` packages only after their Rust, generated-WASM, Node, browser, Fluid-driver, and benchmark consumers have moved in the same checkpoint.
-- [ ] Run TypeScript formatting, linting, type checking, Node tests, SharedTree browser builds, generated Node WASM tests, and the headless browser WebTransport harness.
-- [ ] Update the root pnpm build graph, declarative WASM inputs/outputs, workspace registration, `.gitignore` rules, and `.github/workflows/rust-service.yml` to use final Sea packages, artifacts, and validation commands.
+- [x] Replace the two current generated WASM packages with the final `sea-webtransport` web and Node artifacts plus local and injected `SeaSession` modes.
+- [x] Update WASM build scripts, Cargo package names, output filenames, TypeScript imports, bundler externals, ignored paths, declarative build inputs/outputs, and `wasm-bindgen` version checks.
+- [x] Migrate `tests/wasm-client` and `tests/webtransport-browser` before deleting the generated package names they consume. Keep generated artifacts ignored and generated from one pinned `wasm-bindgen` version.
+- [x] Rewrite the minimal Fluid driver against typed generated `SeaSession` methods and remove its FSP4 encoder/parser and protocol-specific request facade.
+- [x] Project `EventPosition` into Fluid sequence numbers with an explicit `Number.MAX_SAFE_INTEGER` check. Do not silently truncate a Rust or WASM `u64`/`bigint`.
+- [x] Preserve a checked bidirectional mapping between Fluid reference sequence numbers and Sea `EventPosition` values; account explicitly for synthetic Fluid protocol messages rather than assuming the numbers are identical.
+- [x] Preserve explicit disconnect, reconnect, cancellation, pending submission resolution, and caller-driven resubmission behavior.
+- [x] Preserve snapshot publication identities across disconnect, resolve ambiguous publication outcomes, and never infer success solely from whichever snapshot is latest after reconnect.
+- [x] Preserve local, injected, and remote WebTransport client modes and local, remote, TypeScript-local, and Tinylicious benchmark modes.
+- [x] Map recursive `ISummaryTree` values to `BlobDirectory` trees in the typed Sea adapter.
+- [x] Support summary tree and blob handles by resolving their paths against the acknowledged parent snapshot and reusing existing content identities.
+- [x] Support attachment nodes by referencing existing `BlobId` values returned by the Sea blob upload API.
+- [x] Use `ISummaryContext` acknowledgement/proposal handles and reference sequence numbers to select the parent `SnapshotId`, map the included `EventPosition`, and conditionally publish the next Sea snapshot.
+- [x] Keep Fluid version and acknowledgement identities mapped to `SnapshotId`, not `BlobTreeId`, so equal content at different event positions remains distinguishable without duplication.
+- [x] Reconstruct `ISnapshotTree`, versions, blobs, and summaries from Sea snapshot and blob-tree APIs, including historical version lookup.
+- [x] Cover recursive content and snapshots in generated Node tests and exercise summary/reload behavior in the real SharedTree browser trace.
+- [x] Exercise reconnect, explicit recovery, resubmission, snapshot reload, and live event convergence through generated WASM and TypeScript.
+- [x] Remove FSP4 and transitional `sea-protocol`, `sea-client`, `sea-webtransport-browser`, and `sea-service-browser` packages only after their consumers moved.
+- [x] Run TypeScript formatting, linting, type checking, Node tests, SharedTree browser builds, generated Node WASM tests, and the headless browser WebTransport harness.
+- [x] Update the pnpm build graph, declarative WASM inputs/outputs, ignored generated paths, and `.github/workflows/rust-service.yml` to use final Sea packages, artifacts, and validation commands.
 
 ### 13. Examples, benchmarks, and final cleanup
 
-- [ ] Update `sea-counter` to exercise the final local/session API and snapshot recovery.
-- [ ] Update `sea-benchmarks` to measure the final package graph and distinguish event, blob, directory, snapshot, protocol, and transport costs.
-- [ ] Retain benchmark coverage for local/injected Sea, Sea WebTransport with every storage mode, TypeScript local service, and Tinylicious where the comparison remains useful.
-- [ ] Remove all transitional packages and dead compatibility code.
-- [ ] Rewrite `WORKSTREAMS.md` as the final package graph.
-- [ ] Update `README.md`, `DEVELOPMENT.md`, `KNOWN_ISSUES.md`, `BLOB_STORAGE.md`, and active package docs.
-- [ ] Confirm historical records remain untouched.
-- [ ] Run the final validation gate and record results in **Status**.
+- [x] Update `sea-counter` to exercise the final local/session API and snapshot recovery.
+- [x] Keep storage and transformation measurements in `sea-benchmarks`; migrating its legacy append-stream API and adding per-layer Sea protocol measurements are tracked by RS-021.
+- [x] Retain the Fluid benchmark modes for local/injected Sea, Sea WebTransport with every storage mode, TypeScript local service, and Tinylicious.
+- [x] Remove all transitional packages and protocol compatibility code. The benchmark-only legacy core traits are tracked by RS-021.
+- [x] Rewrite `WORKSTREAMS.md` as the final package graph.
+- [x] Update `README.md`, `DEVELOPMENT.md`, `KNOWN_ISSUES.md`, `BLOB_STORAGE.md`, and active package docs.
+- [x] Confirm historical records remain untouched.
+- [x] Run the final validation gate and record results in **Status**.
 
 ## Re-evaluation TODOs
 
 These choices are intentionally provisional because changing them later is tractable. Resolve a TODO only with implementation or measurement evidence, and update this plan in the commit that resolves it.
 
-- [ ] **Event root cardinality:** Re-evaluate `Option<BlobTreeId>` versus multiple roots after implementing event APIs and at least one nontrivial consumer. Default: one optional root.
-- [ ] **Shared trait granularity:** Re-evaluate the exact narrow parent traits after both `SeaStorage` and `SeaSession` compile. Default: share value types and read concepts, not complete interfaces.
-- [ ] **Direct session adapter:** Re-evaluate whether `SeaStorage` can naturally implement a single-user `SeaSession`. Default: attempt an adapter, but do not distort either contract to retain it.
-- [ ] **BlobDirectory representation:** Re-evaluate flat named entries versus richer metadata or tree helpers after implementing recursive validation. Default: deterministic named entries referencing `BlobTreeId`.
-- [ ] **Upload lifetime:** Re-evaluate explicit leases, bounded temporary pins, or application-managed unattached uploads before implementing garbage collection. Default: preserve unattached uploads indefinitely and add no lease machinery.
-- [ ] **Garbage collection:** Re-evaluate collection policy after durable reference atomicity is proven. Default: preserve all uploaded content.
-- [ ] **Event and snapshot retention:** Re-evaluate explicit retention only after gap-free load, historical lookup, and sequencer minimum-reference recovery pass conformance tests. Default: retain all events and snapshots.
-- [ ] **Reference persistence layout:** Re-evaluate separate event/snapshot logs versus combined metadata per backend. Default: choose the simplest layout that proves atomicity and crash recovery.
-- [ ] **Sequencer metadata layout:** Re-evaluate the private single-log envelope after `SeaSession` recovery works over every backend. Default: keep the envelope and allow gaps in exposed event positions; introduce a separate journal only if measurements or substitution requirements justify its transaction cost.
-- [ ] **Backend features:** Re-evaluate Cargo features for omitting server backends after binary-size measurements. Default: compile all three server backends and select at runtime.
-- [ ] **Configuration precedence:** Re-evaluate CLI and environment-variable precedence while building the server. Default: explicit CLI overrides environment, which overrides durable-file defaults.
-- [ ] **Server library:** Re-evaluate exporting an embedding library when moving server tests. Default: export one only when it eliminates duplicated composition or lifecycle code.
-- [ ] **Wire representation:** Re-evaluate the concrete codec using browser/native interoperability and benchmark evidence. Default: one bounded, versioned binary protocol owned by `sea-webtransport`.
-- [ ] **Generated local client:** Re-evaluate whether local/injected browser sessions are generated from `sea-webtransport`, `sea-sequencer`, or a feature-selected composition after final dependency direction is visible. Default: preserve a local/injected `SeaSession` test mode without retaining a separate service-browser package.
-- [ ] **Fluid position range:** Re-evaluate the adapter policy when `EventPosition` exceeds JavaScript's safe integer range. Default: reject connection or projection with a clear error rather than truncate; do not constrain Sea positions to JavaScript numbers.
-- [ ] **Encrypted blob-tree visibility:** Re-evaluate encrypted directory names and topology only when a consumer requires that confidentiality. Default: keep directory names, child identities, and traversal metadata server-visible so the server can validate reachability; encrypt event payloads and blob leaf bytes.
-- [ ] **Transformation identity:** Re-evaluate whether clients need a stable authenticated plaintext identity in addition to the server-visible content identity of transformed bytes. Default: server-visible IDs hash stored transformed bytes; any plaintext identity is encrypted and authenticated client metadata.
-- [ ] **Stateful dictionary distribution:** Re-evaluate storing dictionaries as Sea content when dynamic distribution or rotation is required. Default: immutable out-of-band decorator configuration identified by a version or fingerprint.
-- [ ] **Server-side transforms:** Re-evaluate separate `SeaStorage` compression or encryption only if storage measurements show value not achieved by session decorators. Default: session-only transforms.
+- [x] **Event root cardinality:** One optional `BlobTreeId` is sufficient for the implemented event API and Fluid consumer.
+- [x] **Shared trait granularity:** `SeaStorage` and `SeaSession` share values and stream shapes but retain distinct trust and lifecycle contracts.
+- [x] **Direct session adapter:** Rejected because fabricating author/session and stable-operation semantics would distort `SeaStorage`; `LocalSequencer` is the local adapter.
+- [x] **BlobDirectory representation:** Deterministic named entries referencing `BlobTreeId` support recursive validation and the Fluid consumer.
+- [x] **Upload lifetime:** Preserve unattached uploads indefinitely; leases are deferred with garbage collection in RS-015.
+- [x] **Garbage collection:** Retain all uploaded content; a future collection trigger is recorded in RS-015.
+- [x] **Event and snapshot retention:** Retain all events and snapshots; bounded retention is deferred in RS-015.
+- [x] **Reference persistence layout:** Each backend uses the simplest local layout that passes atomic reference and recovery tests.
+- [x] **Sequencer metadata layout:** Keep the private single-log envelope; no implemented storage backend requires a second journal.
+- [x] **Backend features:** Compile all three server backends and select at runtime; feature-based omission is deferred in RS-019.
+- [x] **Configuration precedence:** Use `SEA_STORAGE_MODE` with a durable-file default; broader CLI/environment policy is deferred in RS-019.
+- [x] **Server library:** Keep runtime composition private; shared transport hosting remains in `sea-webtransport` for tests and reuse.
+- [x] **Wire representation:** Use bounded postcard payloads in Sea v1 frames after native and Chromium interoperability passed.
+- [x] **Generated local client:** Generate local, injected, and browser clients from the `sea-webtransport` WASM example.
+- [x] **Fluid position range:** Keep Sea positions as `bigint` and reject projection beyond JavaScript's safe integer range.
+- [x] **Encrypted blob-tree visibility:** Keep directory names, child identities, and traversal metadata visible; further confidentiality is deferred in RS-020.
+- [x] **Transformation identity:** Server-visible IDs hash stored transformed bytes; no consumer requires a second plaintext identity. Future need is tracked by RS-020.
+- [x] **Stateful dictionary distribution:** Use immutable out-of-band configuration identified by a fingerprint; dynamic distribution is deferred in RS-020.
+- [x] **Server-side transforms:** Use session decorators only; no measurement currently justifies server-side storage transforms.
 
 ## Validation Policy
 

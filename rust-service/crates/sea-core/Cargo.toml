@@ -10,6 +10,7 @@ async-trait.workspace = true
 bytes.workspace = true
 futures-core.workspace = true
 futures-util.workspace = true
+sha2 = "0.10.9"
 
 [lints]
 workspace = true

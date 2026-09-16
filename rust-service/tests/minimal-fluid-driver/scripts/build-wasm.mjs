@@ -27,9 +27,9 @@ run(
 		"--quiet",
 		"--locked",
 		"-p",
+		"sea-webtransport",
+		"--example",
 		"sea-webtransport-browser",
-		"-p",
-		"sea-service-browser",
 		"--target",
 		"wasm32-unknown-unknown",
 		"--release",
@@ -43,29 +43,29 @@ run(
 );
 
 run("wasm-bindgen", [
-	path.join(releaseDirectory, "sea_webtransport_browser.wasm"),
+	path.join(releaseDirectory, "examples/sea_webtransport_browser.wasm"),
 	"--target",
 	"web",
 	"--out-name",
-	"sea_webtransport_browser",
+	"sea_webtransport",
 	"--out-dir",
 	path.join(packageDirectory, "pkg"),
 ]);
 run("wasm-bindgen", [
-	path.join(releaseDirectory, "sea_webtransport_browser.wasm"),
+	path.join(releaseDirectory, "examples/sea_webtransport_browser.wasm"),
 	"--target",
 	"nodejs",
 	"--out-name",
-	"sea_webtransport_browser",
+	"sea_webtransport",
 	"--out-dir",
 	path.join(rustServiceDirectory, "tests/wasm-client/pkg"),
 ]);
 run("wasm-bindgen", [
-	path.join(releaseDirectory, "sea_service_browser.wasm"),
+	path.join(releaseDirectory, "examples/sea_webtransport_browser.wasm"),
 	"--target",
 	"web",
 	"--out-name",
-	"sea_service_browser",
+	"sea_webtransport",
 	"--out-dir",
-	path.join(packageDirectory, "pkg-local"),
+	path.join(rustServiceDirectory, "tests/webtransport-browser/pkg"),
 ]);

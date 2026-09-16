@@ -22,8 +22,14 @@ use async_trait::async_trait;
 use bytes::{BufMut, Bytes, BytesMut};
 use futures_util::StreamExt;
 use sea_core::{
-    Capabilities, ClassifiedError, CommittedEvent, ErrorKind, EventReceipt, EventStream,
-    PositionCodec, PublishedSnapshot, Snapshot, SnapshotId, SnapshotStore, StreamReader,
+    BlobDirectory, BlobDirectoryId, BlobId, Capabilities, ClassifiedError, CommittedEvent,
+    ErrorKind, EventReceipt, EventStream, PositionCodec, PublishedSnapshot, Snapshot, SnapshotId,
+    SnapshotStore, StreamReader,
+    archive::{
+        EventReceipt as SessionEventReceipt, EventSubmission, LoadEvent, OperationId,
+        PublishedSnapshot as SessionPublishedSnapshot, SeaSession, SessionStream,
+        SnapshotPublication,
+    },
 };
 use thiserror::Error;
 
@@ -176,6 +182,269 @@ impl<S> StatefulCompressionStream<S> {
             self.dictionary_fingerprint,
             self.max_decoded_bytes,
         )
+    }
+}
+
+/// Compresses event payloads and blob leaves using one immutable shared dictionary.
+#[derive(Clone, Debug)]
+pub struct StatefulCompressionSession<S> {
+    inner: S,
+    dictionary: Bytes,
+    dictionary_fingerprint: u64,
+    max_decoded_bytes: usize,
+}
+
+impl<S> StatefulCompressionSession<S> {
+    /// Wraps a session with bounded immutable-dictionary compression.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for an invalid dictionary or decoded payload bound.
+    pub fn new(
+        inner: S,
+        dictionary: Bytes,
+        max_decoded_bytes: usize,
+    ) -> Result<Self, ConfigurationError> {
+        if max_decoded_bytes == 0 {
+            return Err(ConfigurationError::ZeroPayloadBound);
+        }
+        if max_decoded_bytes > MAX_DECODED_BYTES {
+            return Err(ConfigurationError::PayloadBoundTooLarge {
+                actual: max_decoded_bytes,
+                maximum: MAX_DECODED_BYTES,
+            });
+        }
+        if dictionary.len() > MAX_DICTIONARY_BYTES {
+            return Err(ConfigurationError::DictionaryTooLarge {
+                actual: dictionary.len(),
+                maximum: MAX_DICTIONARY_BYTES,
+            });
+        }
+        let dictionary_fingerprint = fingerprint(&dictionary);
+        Ok(Self {
+            inner,
+            dictionary,
+            dictionary_fingerprint,
+            max_decoded_bytes,
+        })
+    }
+
+    fn compress(&self, payload: &Bytes) -> Result<Bytes, std::io::Error> {
+        let mut compressor =
+            zstd::bulk::Compressor::with_dictionary(COMPRESSION_LEVEL, &self.dictionary)?;
+        let compressed = compressor.compress(payload)?;
+        let mut framed = BytesMut::with_capacity(HEADER_LEN + compressed.len());
+        framed.extend_from_slice(MAGIC);
+        framed.put_u8(VERSION);
+        framed.put_u64(self.dictionary_fingerprint);
+        framed.put_u64(payload.len() as u64);
+        framed.extend_from_slice(&compressed);
+        Ok(framed.freeze())
+    }
+
+    fn decompress(&self, framed: &Bytes) -> Result<Bytes, String> {
+        decompress_frame(
+            framed,
+            &self.dictionary,
+            self.dictionary_fingerprint,
+            self.max_decoded_bytes,
+        )
+    }
+}
+
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S> SeaSession for StatefulCompressionSession<S>
+where
+    S: SeaSession,
+{
+    type Error = StatefulCompressionError<S::Error>;
+
+    async fn load(
+        &self,
+        required: Option<sea_core::EventPosition>,
+    ) -> Result<SessionStream<LoadEvent, Self::Error>, Self::Error> {
+        let stream = self
+            .inner
+            .load(required)
+            .await
+            .map_err(StatefulCompressionError::Store)?;
+        let dictionary = self.dictionary.clone();
+        let dictionary_fingerprint = self.dictionary_fingerprint;
+        let max_decoded_bytes = self.max_decoded_bytes;
+        Ok(Box::pin(stream.map(move |item| {
+            item.map_err(StatefulCompressionError::Store)
+                .and_then(|mut item| {
+                    if let LoadEvent::Event(event) = &mut item {
+                        event.committed.event.payload = decompress_frame(
+                            &event.committed.event.payload,
+                            &dictionary,
+                            dictionary_fingerprint,
+                            max_decoded_bytes,
+                        )
+                        .map_err(StatefulCompressionError::Corrupt)?;
+                    }
+                    Ok(item)
+                })
+        })))
+    }
+
+    async fn read(
+        &self,
+        after: Option<sea_core::EventPosition>,
+        through: Option<sea_core::EventPosition>,
+    ) -> Result<SessionStream<sea_core::archive::SessionCommittedEvent, Self::Error>, Self::Error>
+    {
+        let stream = self
+            .inner
+            .read(after, through)
+            .await
+            .map_err(StatefulCompressionError::Store)?;
+        let dictionary = self.dictionary.clone();
+        let dictionary_fingerprint = self.dictionary_fingerprint;
+        let max_decoded_bytes = self.max_decoded_bytes;
+        Ok(Box::pin(stream.map(move |item| {
+            item.map_err(StatefulCompressionError::Store)
+                .and_then(|mut event| {
+                    event.committed.event.payload = decompress_frame(
+                        &event.committed.event.payload,
+                        &dictionary,
+                        dictionary_fingerprint,
+                        max_decoded_bytes,
+                    )
+                    .map_err(StatefulCompressionError::Corrupt)?;
+                    Ok(event)
+                })
+        })))
+    }
+
+    async fn submit(
+        &self,
+        mut submission: EventSubmission,
+    ) -> Result<SessionEventReceipt, Self::Error> {
+        if submission.event.payload.len() > self.max_decoded_bytes {
+            return Err(StatefulCompressionError::PayloadTooLarge {
+                actual: submission.event.payload.len(),
+                maximum: self.max_decoded_bytes,
+            });
+        }
+        submission.event.payload = self
+            .compress(&submission.event.payload)
+            .map_err(StatefulCompressionError::Encode)?;
+        self.inner
+            .submit(submission)
+            .await
+            .map_err(StatefulCompressionError::Store)
+    }
+
+    async fn resolve_submission(
+        &self,
+        operation_id: &OperationId,
+    ) -> Result<Option<SessionEventReceipt>, Self::Error> {
+        self.inner
+            .resolve_submission(operation_id)
+            .await
+            .map_err(StatefulCompressionError::Store)
+    }
+
+    async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {
+        if payload.len() > self.max_decoded_bytes {
+            return Err(StatefulCompressionError::PayloadTooLarge {
+                actual: payload.len(),
+                maximum: self.max_decoded_bytes,
+            });
+        }
+        let payload = self
+            .compress(&payload)
+            .map_err(StatefulCompressionError::Encode)?;
+        self.inner
+            .put_blob(payload)
+            .await
+            .map_err(StatefulCompressionError::Store)
+    }
+
+    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
+        let payload = self
+            .inner
+            .get_blob(id)
+            .await
+            .map_err(StatefulCompressionError::Store)?;
+        self.decompress(&payload)
+            .map_err(StatefulCompressionError::Corrupt)
+    }
+
+    async fn put_directory(
+        &self,
+        directory: BlobDirectory,
+    ) -> Result<BlobDirectoryId, Self::Error> {
+        self.inner
+            .put_directory(directory)
+            .await
+            .map_err(StatefulCompressionError::Store)
+    }
+
+    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
+        self.inner
+            .get_directory(id)
+            .await
+            .map_err(StatefulCompressionError::Store)
+    }
+
+    async fn snapshot(
+        &self,
+        id: &SnapshotId,
+    ) -> Result<Option<SessionPublishedSnapshot>, Self::Error> {
+        self.inner
+            .snapshot(id)
+            .await
+            .map_err(StatefulCompressionError::Store)
+    }
+
+    async fn latest_snapshot(&self) -> Result<Option<SessionPublishedSnapshot>, Self::Error> {
+        self.inner
+            .latest_snapshot()
+            .await
+            .map_err(StatefulCompressionError::Store)
+    }
+
+    async fn publish_snapshot(
+        &self,
+        publication: SnapshotPublication,
+    ) -> Result<SessionPublishedSnapshot, Self::Error> {
+        self.inner
+            .publish_snapshot(publication)
+            .await
+            .map_err(StatefulCompressionError::Store)
+    }
+
+    async fn resolve_snapshot_publication(
+        &self,
+        operation_id: &OperationId,
+    ) -> Result<Option<SessionPublishedSnapshot>, Self::Error> {
+        self.inner
+            .resolve_snapshot_publication(operation_id)
+            .await
+            .map_err(StatefulCompressionError::Store)
+    }
+
+    async fn subscribe_snapshots(
+        &self,
+    ) -> Result<SessionStream<SessionPublishedSnapshot, Self::Error>, Self::Error> {
+        let stream = self
+            .inner
+            .subscribe_snapshots()
+            .await
+            .map_err(StatefulCompressionError::Store)?;
+        Ok(Box::pin(
+            stream.map(|item| item.map_err(StatefulCompressionError::Store)),
+        ))
+    }
+
+    async fn close(&self) -> Result<(), Self::Error> {
+        self.inner
+            .close()
+            .await
+            .map_err(StatefulCompressionError::Store)
     }
 }
 

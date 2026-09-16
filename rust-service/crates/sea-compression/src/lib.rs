@@ -22,8 +22,14 @@ use bytes::Bytes;
 use flate2::{Compression, read::ZlibDecoder, write::ZlibEncoder};
 use futures_util::StreamExt;
 use sea_core::{
-    Capabilities, ClassifiedError, CommittedEvent, ErrorKind, EventReceipt, EventStream,
-    PublishedSnapshot, Snapshot, SnapshotId, SnapshotStore, StreamReader,
+    BlobDirectory, BlobDirectoryId, BlobId, Capabilities, ClassifiedError, CommittedEvent,
+    ErrorKind, EventReceipt, EventStream, PublishedSnapshot, Snapshot, SnapshotId, SnapshotStore,
+    StreamReader,
+    archive::{
+        EventReceipt as SessionEventReceipt, EventSubmission, LoadEvent, OperationId,
+        PublishedSnapshot as SessionPublishedSnapshot, SeaSession, SessionStream,
+        SnapshotPublication,
+    },
 };
 use thiserror::Error;
 
@@ -76,6 +82,184 @@ impl<S> CompressionStream<S> {
 impl<S> From<S> for CompressionStream<S> {
     fn from(inner: S) -> Self {
         Self::new(inner)
+    }
+}
+
+/// Compresses event payloads and blob leaves through an individual Sea session.
+#[derive(Clone, Debug)]
+pub struct CompressionSession<S> {
+    inner: S,
+}
+
+impl<S> CompressionSession<S> {
+    /// Wraps one session with independent zlib frames.
+    pub const fn new(inner: S) -> Self {
+        Self { inner }
+    }
+
+    /// Returns the underlying uncompressed session.
+    pub fn into_inner(self) -> S {
+        self.inner
+    }
+}
+
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S> SeaSession for CompressionSession<S>
+where
+    S: SeaSession,
+{
+    type Error = CompressionError<S::Error>;
+
+    async fn load(
+        &self,
+        required: Option<sea_core::EventPosition>,
+    ) -> Result<SessionStream<LoadEvent, Self::Error>, Self::Error> {
+        let stream = self
+            .inner
+            .load(required)
+            .await
+            .map_err(CompressionError::Store)?;
+        Ok(Box::pin(stream.map(|item| {
+            item.map_err(CompressionError::Store).and_then(|mut item| {
+                if let LoadEvent::Event(event) = &mut item {
+                    event.committed.event.payload =
+                        decompress_payload(&event.committed.event.payload)
+                            .map_err(CompressionError::Corrupt)?;
+                }
+                Ok(item)
+            })
+        })))
+    }
+
+    async fn read(
+        &self,
+        after: Option<sea_core::EventPosition>,
+        through: Option<sea_core::EventPosition>,
+    ) -> Result<SessionStream<sea_core::archive::SessionCommittedEvent, Self::Error>, Self::Error>
+    {
+        let stream = self
+            .inner
+            .read(after, through)
+            .await
+            .map_err(CompressionError::Store)?;
+        Ok(Box::pin(stream.map(|item| {
+            item.map_err(CompressionError::Store).and_then(|mut event| {
+                event.committed.event.payload = decompress_payload(&event.committed.event.payload)
+                    .map_err(CompressionError::Corrupt)?;
+                Ok(event)
+            })
+        })))
+    }
+
+    async fn submit(
+        &self,
+        mut submission: EventSubmission,
+    ) -> Result<SessionEventReceipt, Self::Error> {
+        submission.event.payload =
+            compress_payload(&submission.event.payload).map_err(CompressionError::Encode)?;
+        self.inner
+            .submit(submission)
+            .await
+            .map_err(CompressionError::Store)
+    }
+
+    async fn resolve_submission(
+        &self,
+        operation_id: &OperationId,
+    ) -> Result<Option<SessionEventReceipt>, Self::Error> {
+        self.inner
+            .resolve_submission(operation_id)
+            .await
+            .map_err(CompressionError::Store)
+    }
+
+    async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {
+        let payload = compress_payload(&payload).map_err(CompressionError::Encode)?;
+        self.inner
+            .put_blob(payload)
+            .await
+            .map_err(CompressionError::Store)
+    }
+
+    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
+        let payload = self
+            .inner
+            .get_blob(id)
+            .await
+            .map_err(CompressionError::Store)?;
+        decompress_payload(&payload).map_err(CompressionError::Corrupt)
+    }
+
+    async fn put_directory(
+        &self,
+        directory: BlobDirectory,
+    ) -> Result<BlobDirectoryId, Self::Error> {
+        self.inner
+            .put_directory(directory)
+            .await
+            .map_err(CompressionError::Store)
+    }
+
+    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
+        self.inner
+            .get_directory(id)
+            .await
+            .map_err(CompressionError::Store)
+    }
+
+    async fn snapshot(
+        &self,
+        id: &SnapshotId,
+    ) -> Result<Option<SessionPublishedSnapshot>, Self::Error> {
+        self.inner
+            .snapshot(id)
+            .await
+            .map_err(CompressionError::Store)
+    }
+
+    async fn latest_snapshot(&self) -> Result<Option<SessionPublishedSnapshot>, Self::Error> {
+        self.inner
+            .latest_snapshot()
+            .await
+            .map_err(CompressionError::Store)
+    }
+
+    async fn publish_snapshot(
+        &self,
+        publication: SnapshotPublication,
+    ) -> Result<SessionPublishedSnapshot, Self::Error> {
+        self.inner
+            .publish_snapshot(publication)
+            .await
+            .map_err(CompressionError::Store)
+    }
+
+    async fn resolve_snapshot_publication(
+        &self,
+        operation_id: &OperationId,
+    ) -> Result<Option<SessionPublishedSnapshot>, Self::Error> {
+        self.inner
+            .resolve_snapshot_publication(operation_id)
+            .await
+            .map_err(CompressionError::Store)
+    }
+
+    async fn subscribe_snapshots(
+        &self,
+    ) -> Result<SessionStream<SessionPublishedSnapshot, Self::Error>, Self::Error> {
+        let stream = self
+            .inner
+            .subscribe_snapshots()
+            .await
+            .map_err(CompressionError::Store)?;
+        Ok(Box::pin(
+            stream.map(|item| item.map_err(CompressionError::Store)),
+        ))
+    }
+
+    async fn close(&self) -> Result<(), Self::Error> {
+        self.inner.close().await.map_err(CompressionError::Store)
     }
 }
 
@@ -200,13 +384,63 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use futures_util::{StreamExt, TryStreamExt};
     use sea_core::{
         ClassifiedError, ErrorKind, EventStream, Snapshot, SnapshotPosition, SnapshotStore,
+        archive::{AuthorId, EventSubmission, LoadEvent, OperationId, SeaSession, SessionId},
     };
     use sea_memory::MemoryStream;
+    use sea_sequencer::session::LocalSequencer;
 
     use super::*;
+
+    #[tokio::test]
+    async fn session_decorator_round_trips_events_and_blobs() {
+        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
+            .await
+            .unwrap();
+        let session = sequencer
+            .open_session(
+                AuthorId::new(Bytes::from_static(b"author")).unwrap(),
+                SessionId::new(Bytes::from_static(b"session")).unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+        let compressed = CompressionSession::new(session);
+        let blob = compressed
+            .put_blob(Bytes::from_static(
+                b"compressible compressible compressible",
+            ))
+            .await
+            .unwrap();
+        assert_eq!(
+            compressed.get_blob(blob).await.unwrap(),
+            Bytes::from_static(b"compressible compressible compressible")
+        );
+        let receipt = compressed
+            .submit(EventSubmission {
+                operation_id: OperationId::new(Bytes::from_static(b"operation")).unwrap(),
+                reference: None,
+                event: sea_core::Event {
+                    payload: Bytes::from_static(b"event event event"),
+                    blob_tree: None,
+                },
+            })
+            .await
+            .unwrap();
+        let mut load = compressed.load(None).await.unwrap();
+        let LoadEvent::Event(event) = load.next().await.unwrap().unwrap() else {
+            panic!("load should begin with the event");
+        };
+        assert_eq!(event.committed.position, receipt.position);
+        assert_eq!(
+            event.committed.event.payload,
+            Bytes::from_static(b"event event event")
+        );
+    }
 
     #[tokio::test]
     async fn passes_shared_conformance() {

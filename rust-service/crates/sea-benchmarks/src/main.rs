@@ -20,11 +20,8 @@ use sea_core::{EventStream, Snapshot, SnapshotPosition, SnapshotStore};
 use sea_encryption::{ActiveKey, EncryptionKey, EncryptionStream, KeyId, KeyProvider};
 use sea_file::FileStream;
 use sea_memory::MemoryStream;
-use sea_network::local_transport;
 use sea_stateful_compression::StatefulCompressionStream;
 use tokio::task::JoinSet;
-
-mod integrated;
 
 /// Monotonic suffix for process-local temporary benchmark paths.
 static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(1);
@@ -36,8 +33,6 @@ enum Backend {
     Memory,
     /// Buffered single-process file stream.
     File,
-    /// Bounded local transport over the memory stream.
-    NetworkMemory,
     /// Independent zlib records over the file stream.
     Compression,
     /// Immutable-dictionary zstd records over the file stream.
@@ -46,10 +41,6 @@ enum Backend {
     Encryption,
     /// Dictionary compression followed by authenticated encryption.
     StatefulCompressionEncryption,
-    /// Direct in-process native-service dispatch.
-    NativeService,
-    /// Native HTTP/3 WebTransport connected to the native service.
-    NativeWebTransport,
 }
 
 /// Fixed representative dictionary shared by stateful-compression cells.
@@ -224,13 +215,10 @@ async fn smoke() -> Result<(), String> {
     integrated.records = 8;
     integrated.snapshot_frequency = Some(4);
     for backend in [
-        Backend::NetworkMemory,
         Backend::Compression,
         Backend::StatefulCompression,
         Backend::Encryption,
         Backend::StatefulCompressionEncryption,
-        Backend::NativeService,
-        Backend::NativeWebTransport,
     ] {
         integrated.backend = backend;
         run_backend(&integrated).await?;
@@ -263,15 +251,12 @@ async fn measure(config: Config) -> Result<(), String> {
             implementation: match config.backend {
                 Backend::Memory => "memory".to_owned(),
                 Backend::File => "file-simple".to_owned(),
-                Backend::NetworkMemory => "network-memory".to_owned(),
                 Backend::Compression => "file-compression".to_owned(),
                 Backend::StatefulCompression => "file-stateful-compression".to_owned(),
                 Backend::Encryption => "file-encryption".to_owned(),
                 Backend::StatefulCompressionEncryption => {
                     "file-stateful-compression-encryption".to_owned()
                 }
-                Backend::NativeService => "native-service".to_owned(),
-                Backend::NativeWebTransport => "native-webtransport".to_owned(),
             },
             active_guarantees: guarantees(config.backend),
             environment: environment.clone(),
@@ -333,18 +318,6 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
             measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
             drop(reopened);
             fs::remove_dir_all(&directory).map_err(display_error)?;
-            measurements
-        }
-        Backend::NetworkMemory => {
-            let startup = Instant::now();
-            let (stream, server) = local_transport(MemoryStream::new(), config.writers.max(1))
-                .map_err(display_error)?;
-            let mut measurements =
-                run_stream(&stream, config, elapsed_microseconds(startup)).await?;
-            let transport = stream.measurement();
-            measurements.wire_bytes = Some(transport.wire_bytes);
-            measurements.peak_queued_records = Some(transport.peak_queued_records);
-            server.disconnect();
             measurements
         }
         Backend::Compression => {
@@ -447,8 +420,6 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
             fs::remove_dir_all(&directory).map_err(display_error)?;
             measurements
         }
-        Backend::NativeService => integrated::run_native_service(config).await?,
-        Backend::NativeWebTransport => integrated::run_native_webtransport(config).await?,
     };
     measurements.process_cpu_microseconds = cpu_started
         .zip(process_cpu_microseconds())
@@ -683,13 +654,10 @@ fn parse_backend(value: &str) -> Result<Backend, String> {
     match value {
         "memory" => Ok(Backend::Memory),
         "file" => Ok(Backend::File),
-        "network-memory" => Ok(Backend::NetworkMemory),
         "compression" => Ok(Backend::Compression),
         "stateful-compression" => Ok(Backend::StatefulCompression),
         "encryption" => Ok(Backend::Encryption),
         "stateful-compression-encryption" => Ok(Backend::StatefulCompressionEncryption),
-        "native-service" => Ok(Backend::NativeService),
-        "native-webtransport" => Ok(Backend::NativeWebTransport),
         _ => Err(format!("unknown backend: {value}")),
     }
 }
@@ -723,12 +691,6 @@ fn guarantees(backend: Backend) -> Vec<String> {
             "finite reads".to_owned(),
             "snapshot publication".to_owned(),
         ],
-        Backend::NetworkMemory => vec![
-            "bounded in-process transport".to_owned(),
-            "memory durability".to_owned(),
-            "finite reads".to_owned(),
-            "payload-byte accounting".to_owned(),
-        ],
         Backend::Compression => wrapper_guarantees("independent zlib compression"),
         Backend::StatefulCompression => {
             wrapper_guarantees("bounded immutable-dictionary zstd compression")
@@ -741,20 +703,6 @@ fn guarantees(backend: Backend) -> Vec<String> {
             "AES-256-GCM-SIV authenticated encryption".to_owned(),
             "finite reads".to_owned(),
             "snapshot publication".to_owned(),
-        ],
-        Backend::NativeService => vec![
-            "assembled durable native service".to_owned(),
-            "sequenced submissions".to_owned(),
-            "explicit native client lifecycle".to_owned(),
-            "clean service restart".to_owned(),
-            "snapshot publication".to_owned(),
-        ],
-        Backend::NativeWebTransport => vec![
-            "assembled durable native service".to_owned(),
-            "HTTP/3 WebTransport with pinned self-signed certificate".to_owned(),
-            "sequenced submissions".to_owned(),
-            "explicit native client and transport reconnect".to_owned(),
-            "FSP4 frame-byte accounting".to_owned(),
         ],
     }
 }
@@ -898,7 +846,7 @@ fn display_error(error: impl std::fmt::Display) -> String {
 
 /// Returns the complete command-line grammar.
 fn usage() -> String {
-    "usage: sea-benchmarks smoke | measure [--backend memory|file|network-memory|compression|stateful-compression|encryption|stateful-compression-encryption|native-service|native-webtransport] [--fixture empty|small-compressible|small-incompressible|large-compressible|large-incompressible|snapshot] [--seed N] [--records N] [--writers N] [--snapshot-frequency N] [--warmups N] [--repetitions N]".to_owned()
+    "usage: sea-benchmarks smoke | measure [--backend memory|file|compression|stateful-compression|encryption|stateful-compression-encryption] [--fixture empty|small-compressible|small-incompressible|large-compressible|large-incompressible|snapshot] [--seed N] [--records N] [--writers N] [--snapshot-frequency N] [--warmups N] [--repetitions N]".to_owned()
 }
 
 #[cfg(test)]

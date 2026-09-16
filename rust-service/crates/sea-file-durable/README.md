@@ -1,6 +1,7 @@
-# Durable Log Spike
+# Sea Durable File
 
-This crate is a single-process research implementation used to test checksummed append framing, sync-before-acknowledgement, deterministic crash points, snapshot lineage, and reopen behavior. It is not a production storage backend.
+This crate is a single-process `SeaStorage` implementation with checksummed framing, sync-before-acknowledgement, deterministic crash points, blob-tree references, retained snapshot history, and reopen behavior.
+It remains experimental rather than a production storage backend.
 
 From `rust-service/`, run:
 

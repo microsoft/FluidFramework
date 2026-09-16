@@ -1,15 +1,13 @@
 # Encryption Wrapper
 
-`sea-encryption` transparently encrypts every record and snapshot
-with AES-256-GCM-SIV. Each payload has an independent authenticated envelope;
-the wrapped store continues to own positions, snapshot lineage, capabilities,
-cancellation, and backpressure.
+`sea-encryption` transparently encrypts event payloads and blob leaves through `EncryptionSession<S, K, N>` using AES-256-GCM-SIV.
+Each payload has an independent authenticated envelope; the wrapped session continues to own positions, blob-tree identities, snapshot lineage, operation recovery, cancellation, and backpressure.
 
 ## Envelope And Errors
 
 The envelope authenticates its magic value, format and algorithm versions,
 record-or-snapshot context, non-secret key identifier, nonce, and ciphertext.
-The distinct contexts prevent swapping a stored record with a snapshot.
+The distinct contexts prevent swapping a stored event with a blob.
 `ENVELOPE_OVERHEAD` is the fixed number of bytes added before accounting for
 ciphertext, whose length equals the plaintext length.
 
@@ -29,12 +27,11 @@ The default `OsNonceSource` uses the operating-system CSPRNG. An injected
 deterministic sources are only appropriate for tests.
 
 The wrapper buffers one complete payload for encryption or decryption and has
-no payload-size limit. Reads decrypt one record when polled and do not add a
+no payload-size limit. Reads decrypt one event when polled and do not add a
 background task or stream buffer.
 
-For compression plus encryption, use
-`CompressionStream<EncryptionStream<...>>`: the outer compression wrapper
-compresses plaintext before the inner encryption wrapper persists it.
+Directories, event metadata, and snapshot metadata remain visible so the server can validate ordering and reachability.
+For compression plus encryption, wrap an `EncryptionSession` in `CompressionSession` so compression processes plaintext first.
 
 ## Validation
 

@@ -6,8 +6,11 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-sea-client = { path = "../../crates/sea-client" }
+bytes.workspace = true
+futures-util.workspace = true
+sea-core = { path = "../../crates/sea-core" }
 sea-memory = { path = "../../crates/sea-memory" }
+sea-sequencer = { path = "../../crates/sea-sequencer" }
 tokio.workspace = true
 
 [lints]

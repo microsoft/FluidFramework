@@ -10,10 +10,19 @@ name = "sea-webtransport-server"
 path = "src/main.rs"
 
 [dependencies]
-sea-service = { path = "../sea-service" }
+async-trait.workspace = true
+bytes.workspace = true
+sea-core = { path = "../sea-core" }
+sea-file = { path = "../sea-file" }
+sea-file-durable = { path = "../sea-file-durable" }
+sea-memory = { path = "../sea-memory" }
+sea-sequencer = { path = "../sea-sequencer" }
 sea-webtransport = { path = "../sea-webtransport" }
 tokio.workspace = true
 wtransport = "=0.7.2"
+
+[dev-dependencies]
+futures-util.workspace = true
 
 [lints]
 workspace = true

@@ -1,7 +1,11 @@
-# Content-addressed blob storage
+# Blob-tree Storage
 
-This document proposes a unified content-addressed storage contract for binary blobs, directory blobs, Fluid summaries, and content referenced by events.
-It describes a target architecture rather than the behavior of the current `sea-content-addressed` crate.
+Sea implements a unified content-addressed contract for binary blobs, immutable directories, snapshots, and content referenced by events.
+`sea-core` owns the typed identities and observable `SeaStorage`/`SeaSession` behavior.
+The storage backends validate a referenced tree's complete closure before atomically committing an event or snapshot reference.
+
+The initial implementation retains every uploaded and referenced object.
+The garbage-collection and hard-link material below describes a future compatible lifetime design, not behavior required from the current backends.
 
 The design separates correctness requirements from backend mechanisms.
 An in-memory implementation can maintain explicit reference counts, while a local-filesystem implementation can use hard links and inode link counts for most reference tracking and garbage collection.
@@ -12,7 +16,7 @@ An in-memory implementation can maintain explicit reference counts, while a loca
 - Reuse unchanged content across snapshots, events, and documents without uploading or copying it again.
 - Represent directory structure as immutable content so unchanged subtrees retain the same digest.
 - Unify Fluid attachment blobs and summary blobs under one storage and retrieval contract.
-- Keep pending uploads alive long enough to be referenced asynchronously without retaining abandoned uploads forever.
+- Keep pending uploads available for later asynchronous reference; the initial implementation retains them indefinitely.
 - Retain every object reachable from a live event or snapshot and reclaim objects that have no live references.
 - Permit backend-specific deduplication and garbage collection without exposing filesystem paths or reference counts to clients.
 
@@ -93,7 +97,7 @@ That choice controls deduplication, key rotation, server-side reference validati
 Storage-record wrappers cannot be assumed to apply correctly to content objects.
 Record transformation, content transformation, and transport encoding are separate composition boundaries.
 
-## Backend-independent implementation model
+## Future retention model
 
 Every backend needs four logical components:
 

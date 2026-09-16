@@ -1,15 +1,12 @@
 # Compression Wrapper
 
-`sea-compression` transparently applies independent zlib
-compression to every event and snapshot in a Sea archive. The wrapped
-store continues to own positions, snapshot lineage, capabilities, cancellation,
-and backpressure.
+`sea-compression` transparently compresses event payloads and blob leaves through `CompressionSession<S>`.
+The wrapped `SeaSession` continues to own event positions, blob-tree identities, snapshot lineage, operation recovery, cancellation, and backpressure.
 
 ## Behavior
 
-- Each logical payload is stored as one complete zlib frame, so records and
-  snapshots can be decoded independently.
-- Reads decode one record when that item is polled. Dropping the reader stops
+- Each logical payload is stored as one complete zlib frame, so events and blobs can be decoded independently.
+- Reads decode one event when that item is polled. Dropping the reader stops
   further wrapper work; no background task or additional stream buffer is used.
 - Malformed, truncated, and extended frames produce `ErrorKind::Corrupt`.
 - Compression and decompression buffer one complete payload and do not impose a
@@ -17,22 +14,18 @@ and backpressure.
 - Underlying store errors retain their original `ErrorKind`; local encoding
   failures are `Rejected`.
 
-For compression plus encryption, use
-`CompressionStream<EncryptionStream<...>>`. The outer compression wrapper
-compresses plaintext before the inner encryption wrapper stores it. Reversing
-the order attempts to compress ciphertext and normally removes the size benefit.
+Directories and snapshot metadata remain visible so the server can validate reachability.
+For compression plus encryption, wrap an encrypted session in `CompressionSession`; the outer compression layer processes plaintext before the inner encryption layer stores it.
 
 ## Use
 
 ```rust
-use sea_compression::CompressionStream;
-use sea_memory::MemoryStream;
+use sea_compression::CompressionSession;
 
-let stream = CompressionStream::new(MemoryStream::new());
+let compressed = CompressionSession::new(session);
 ```
 
-The wrapper implements `EventStream` and implements `SnapshotStore` whenever
-the underlying store does. `into_inner` returns the wrapped store.
+The older `CompressionStream` remains for append-stream benchmark compatibility.
 
 ## Validation
 

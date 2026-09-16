@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import init, { BrowserClient } from "../pkg/sea_webtransport_browser.js";
+import init, { BrowserClient } from "../pkg/sea_webtransport.js";
 import {
 	MinimalWasmDeltaConnection,
 	MinimalWasmDocumentServiceFactory,

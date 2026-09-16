@@ -1,26 +1,24 @@
 # Sea Core
 
-`sea-core` defines transport- and storage-independent contracts for an ordered append-only stream, its latest client-authored snapshot, and service-level storage composition.
+`sea-core` defines transport- and storage-independent contracts for snapshotted event archives.
 
 ## Contracts
 
-- Each successful append preserves one payload boundary and returns an opaque, implementation-defined position plus the durability completed before acknowledgement.
-- `read` returns a finite, backpressured view ending at the head captured when the call begins. Its optional position is exclusive.
-- Positions are implementation values. Callers compare them for equality but must not infer ordering or construct them.
-- `SnapshotStore::publish` uses an expected parent for optimistic concurrency and requires snapshot positions to be committed in the associated stream and not regress.
-- `ErrorKind` exposes stable client decisions while each implementation retains its detailed error type.
+- `EventPosition` is an ordered `u64` newtype with a canonical eight-byte encoding. Ordering is meaningful only within one archive; adjacency and a starting value are not part of the contract.
+- `BlobId` and `BlobDirectoryId` use domain-separated identities, while `BlobTreeId` preserves the leaf-or-directory kind.
+- `SnapshotPosition` represents initial state or state through one committed event. `SnapshotId` identifies a publication independently of its tree root.
+- `SeaStorage` is the trusted backend contract. It atomically validates and records event and snapshot tree references and supports retained snapshot history.
+- `SeaSession` is the archive-bound user contract. It adds authors, session and operation identities, submission recovery, gap-free load, subscriptions, and explicit close.
+- `ErrorKind` exposes stable caller decisions while implementations retain detailed error types.
 
-Optional behavior is advertised through `Capabilities`. In particular, only implementations with `PositionSerialization` support opaque position tokens.
-
-The `storage` module defines focused object-safe contracts for document factories, document streams, and immutable content.
-`ServiceStorage` composes those contracts without requiring the service to know concrete backends.
-`DocumentStorageAdapter` type-erases implementations of the kernel append, snapshot, and position-codec traits.
+The older `EventStream`, `SnapshotStore`, and position-codec traits remain for storage experiments and benchmarks.
+New service code uses the contracts in `archive`.
 
 ## Relationships and Limits
 
-The memory, file-simple, and durable-log packages implement the kernel contracts.
+The memory, buffered-file, and durable-file packages implement `SeaStorage` and the older experimental traits.
 The conformance package tests their shared semantic laws.
-This crate defines no persistence, filesystem layout, retention, recovery, or live-tailing policy beyond the guarantees expressed by its traits.
+This crate defines no persistence layout, authentication policy, retention policy, or replication mechanism beyond the guarantees expressed by its traits.
 
 See [`src/lib.rs`](src/lib.rs) for the complete API contract.
 

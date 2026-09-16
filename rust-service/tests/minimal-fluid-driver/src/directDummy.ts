@@ -7,7 +7,6 @@ import { ProtocolClient } from "./protocolClient.js";
 import type {
 	ProjectedOperation,
 	ProjectedOperationSubscription,
-	SubmissionStream,
 	WasmProtocolClient,
 } from "./wasmClient.js";
 
@@ -36,8 +35,6 @@ export class DirectDummyClient {
 	private readonly session: Uint8Array;
 	private subscription: ProjectedOperationSubscription | undefined;
 	private subscriptionPump: Promise<void> | undefined;
-	private submissionStream: SubmissionStream | undefined;
-	private submissionWriteChain: Promise<void> = Promise.resolve();
 	private submissionChain: Promise<void> = Promise.resolve();
 	private synchronizationError: unknown;
 	private cursor: Uint8Array | undefined;
@@ -74,7 +71,6 @@ export class DirectDummyClient {
 			await host.protocol.create(document);
 		}
 		await host.protocol.openSession(document, host.writer, host.session);
-		host.submissionStream = await client.openSubmissionStream?.(document);
 		host.subscription = await client.subscribeProjected(document);
 		host.subscriptionPump = host.consumeSubscription(host.subscription);
 		return host;
@@ -90,25 +86,6 @@ export class DirectDummyClient {
 			`${decoder.decode(this.session)}-${localSequenceNumber}`,
 		);
 		const payload = encoder.encode(JSON.stringify({ value } satisfies DirectDummyPayload));
-		const submissionStream = this.submissionStream;
-		if (submissionStream !== undefined) {
-			const request = this.protocol.submissionRequest(
-				this.document,
-				this.writer,
-				this.session,
-				submission,
-				localSequenceNumber,
-				payload,
-				reference,
-			);
-			const write = this.submissionWriteChain.then(async () => submissionStream.send(request));
-			this.submissionWriteChain = write;
-			this.submissionChain = this.submissionChain.then(async () => {
-				await write;
-				this.protocol.submissionPosition(await submissionStream.next());
-			});
-			return;
-		}
 		this.submissionChain = this.submissionChain.then(async () => {
 			await this.protocol.submit(
 				this.document,
@@ -136,7 +113,7 @@ export class DirectDummyClient {
 	public async dispose(): Promise<void> {
 		if (!this.disposed) {
 			this.disposed = true;
-			await Promise.all([this.subscription?.cancel(), this.submissionStream?.close()]);
+			await this.subscription?.cancel();
 			await this.subscriptionPump;
 			this.client.disconnect();
 		}

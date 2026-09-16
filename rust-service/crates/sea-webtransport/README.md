@@ -1,10 +1,15 @@
-# Native WebTransport service adapter
+# Sea WebTransport
 
-This crate serves and consumes unchanged FSP4 frames over HTTP/3 WebTransport.
+This crate owns the bounded, versioned Sea v1 protocol, server dispatch, and native WebTransport client/server transport.
+Its `sea-webtransport-browser` WASM example generates the web and Node bindings used by browser, injected-transport, and process-local clients.
 
-`WebTransportServer` accepts sessions only on `/fluid`, bounds concurrent connections and streams, and dispatches unary requests, projected subscriptions, and document-bound submission streams to `NativeService`. A unary request occupies one bidirectional stream and requires request-side EOF before dispatch. Submission streams accept ordered submissions until EOF or a terminal error. Projected subscriptions stop when the peer closes the send stream, the service terminates, or writing fails.
+`WebTransportServer` accepts sessions only on `/sea`, bounds concurrent connections and streams, and dispatches requests to an archive-bound `SeaSession`.
+Unary requests require request-side EOF before dispatch.
+Streaming responses use four-byte length framing and terminate on cancellation, service closure, or write failure.
 
-`WebTransportClient` pins a SHA-256 certificate hash. It opens a fresh reliable bidirectional stream per unary request and provides a dedicated projected-subscription stream. Disconnect and reconnect are explicit; operations are never retried automatically. `TransportMeasurement` counts encoded FSP4 bytes and transport concurrency, excluding HTTP/3, QUIC, UDP, and TLS overhead.
+`WebTransportClient` pins a SHA-256 certificate hash and implements `SeaSession`.
+Disconnect and reconnect are explicit; operations are never retried automatically.
+The protocol uses `SEA1` magic, version 1, postcard payloads, and a configured maximum frame size.
 
 Server shutdown first stops acceptance. `Immediate` cancels owned connections; `Drain` allows existing connections to finish until its deadline and then cancels the remainder. The returned `ShutdownOutcome` records which path completed.
 

@@ -1,15 +1,205 @@
 #![doc = "Implementation-independent conformance checks for Sea event archives."]
 
-use std::fmt::Debug;
+use std::{collections::BTreeMap, fmt::Debug};
 
 use bytes::Bytes;
 use futures_util::{StreamExt, TryStreamExt, future::join_all};
 use sea_core::{
-    Capability, ClassifiedError, ErrorKind, EventStream, PositionCodec, Snapshot, SnapshotPosition,
-    SnapshotStore,
+    BlobDirectory, BlobId, BlobTreeId, Capability, ClassifiedError, ErrorKind, Event,
+    EventPosition, EventStream, PositionCodec, Snapshot, SnapshotPosition, SnapshotStore,
+    archive::{
+        OperationId, SeaStorage, Snapshot as ArchiveSnapshot,
+        SnapshotPosition as ArchiveSnapshotPosition, SnapshotPublication,
+    },
 };
 
 const MODEL_TRACE_SEED: u64 = 0x5eed_0002_d15c_a11e;
+
+/// Runs the final trusted-backend laws against a fresh archive.
+///
+/// # Panics
+///
+/// Panics when the backend violates content, atomicity, history, idempotency, or load laws.
+pub async fn run_sea_storage_conformance<S, F>(make_storage: F)
+where
+    S: SeaStorage,
+    S::Error: Debug,
+    F: Fn() -> S,
+{
+    let storage = make_storage();
+    let directory_id = prepare_blob_tree(&storage).await;
+    reject_missing_event_tree(&storage).await;
+
+    let initial_request = SnapshotPublication {
+        operation_id: OperationId::new(Bytes::from_static(b"initial-publication"))
+            .expect("operation identity"),
+        expected_parent: None,
+        snapshot: ArchiveSnapshot {
+            at_event: ArchiveSnapshotPosition::Initial,
+            root: BlobTreeId::Directory(directory_id),
+        },
+    };
+    let initial = storage
+        .publish_snapshot(initial_request)
+        .await
+        .expect("initial snapshot");
+
+    let first = storage
+        .append(Event {
+            payload: Bytes::from_static(b"first"),
+            blob_tree: Some(BlobTreeId::Directory(directory_id)),
+        })
+        .await
+        .expect("first event");
+    let second = storage
+        .append(Event {
+            payload: Bytes::from_static(b"second"),
+            blob_tree: None,
+        })
+        .await
+        .expect("second event");
+    assert!(first.position < second.position);
+    assert_eq!(
+        EventPosition::from_bytes(first.position.to_bytes()),
+        first.position
+    );
+
+    let positioned_request = SnapshotPublication {
+        operation_id: OperationId::new(Bytes::from_static(b"positioned-publication"))
+            .expect("operation identity"),
+        expected_parent: Some(initial.id.clone()),
+        snapshot: ArchiveSnapshot {
+            at_event: ArchiveSnapshotPosition::At(first.position),
+            root: BlobTreeId::Directory(directory_id),
+        },
+    };
+    let positioned = storage
+        .publish_snapshot(positioned_request.clone())
+        .await
+        .expect("positioned snapshot");
+    let retry = storage
+        .publish_snapshot(positioned_request.clone())
+        .await
+        .expect("exact publication retry");
+    assert_eq!(retry, positioned);
+    assert_eq!(
+        storage
+            .resolve_snapshot_publication(&positioned_request.operation_id)
+            .await
+            .expect("publication resolution"),
+        Some(positioned.clone())
+    );
+
+    let conflicting = SnapshotPublication {
+        snapshot: ArchiveSnapshot {
+            at_event: ArchiveSnapshotPosition::At(second.position),
+            root: BlobTreeId::Directory(directory_id),
+        },
+        ..positioned_request
+    };
+    let conflict = storage
+        .publish_snapshot(conflicting)
+        .await
+        .expect_err("operation identity reuse must conflict");
+    assert_eq!(conflict.kind(), ErrorKind::Conflict);
+    assert_eq!(
+        storage
+            .snapshot(&positioned.id)
+            .await
+            .expect("snapshot by id"),
+        Some(positioned.clone())
+    );
+    assert_eq!(
+        storage
+            .snapshot_at_or_before(first.position)
+            .await
+            .expect("historical selection"),
+        Some(positioned.clone())
+    );
+    assert_captured_load(&storage, positioned, first.position, second.position).await;
+}
+
+async fn prepare_blob_tree<S>(storage: &S) -> sea_core::BlobDirectoryId
+where
+    S: SeaStorage,
+    S::Error: Debug,
+{
+    let blob = storage
+        .put_blob(Bytes::from_static(b"shared-content"))
+        .await
+        .expect("blob publication");
+    assert_eq!(
+        storage.get_blob(blob).await.expect("blob retrieval"),
+        Bytes::from_static(b"shared-content")
+    );
+
+    let directory = BlobDirectory::new(BTreeMap::from([(
+        "leaf".to_owned(),
+        BlobTreeId::Blob(blob),
+    )]))
+    .expect("valid directory");
+    let directory_id = storage
+        .put_directory(directory.clone())
+        .await
+        .expect("directory publication");
+    assert_eq!(
+        storage
+            .get_directory(directory_id)
+            .await
+            .expect("directory retrieval"),
+        directory
+    );
+    directory_id
+}
+
+async fn reject_missing_event_tree<S>(storage: &S)
+where
+    S: SeaStorage,
+    S::Error: Debug,
+{
+    let missing = BlobId::from_bytes(&[0xa5; 32]).expect("synthetic missing identity");
+    let missing_error = storage
+        .append(Event {
+            payload: Bytes::from_static(b"must-not-commit"),
+            blob_tree: Some(BlobTreeId::Blob(missing)),
+        })
+        .await
+        .expect_err("missing tree must reject the event");
+    assert_eq!(missing_error.kind(), ErrorKind::Rejected);
+    assert_eq!(storage.head().await.expect("head after rejection"), None);
+}
+
+async fn assert_captured_load<S>(
+    storage: &S,
+    snapshot: sea_core::archive::PublishedSnapshot,
+    snapshot_position: EventPosition,
+    captured_head: EventPosition,
+) where
+    S: SeaStorage,
+    S::Error: Debug,
+{
+    let load = storage
+        .load(Some(snapshot_position))
+        .await
+        .expect("captured load");
+    assert_eq!(load.snapshot, Some(snapshot));
+    assert_eq!(load.head, Some(captured_head));
+    storage
+        .append(Event {
+            payload: Bytes::from_static(b"after-captured-head"),
+            blob_tree: None,
+        })
+        .await
+        .expect("post-load event");
+    let loaded = load
+        .events
+        .try_collect::<Vec<_>>()
+        .await
+        .expect("load events");
+    assert_eq!(loaded.len(), 1);
+    assert_eq!(loaded[0].position, captured_head);
+    assert_eq!(loaded[0].event.payload, Bytes::from_static(b"second"));
+}
 
 /// A deterministic oracle for append, snapshot, and recovery results.
 #[derive(Debug, Default)]

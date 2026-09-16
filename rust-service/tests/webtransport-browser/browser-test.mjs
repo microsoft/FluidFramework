@@ -3,19 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import init, { BrowserClient, SummaryEntry } from "./pkg/sea_webtransport_browser.js";
+import init, {
+	SeaBrowserTransport,
+	SeaDirectoryEntry,
+	SeaInjectedClient,
+} from "./pkg/sea_webtransport.js";
 
 const encoder = new TextEncoder();
+const decoder = new TextDecoder();
 const parameters = new URLSearchParams(location.search);
 const transportUrl = parameters.get("transport");
 const certificateHex = parameters.get("hash");
 
-function fail(message) {
-	throw new Error(message);
-}
-
 function assert(condition, message) {
-	if (!condition) fail(message);
+	if (!condition) throw new Error(message);
 }
 
 function equalBytes(actual, expected) {
@@ -25,361 +26,101 @@ function equalBytes(actual, expected) {
 	);
 }
 
-function concat(...parts) {
-	const length = parts.reduce((sum, part) => sum + part.length, 0);
-	const bytes = new Uint8Array(length);
-	let offset = 0;
-	for (const part of parts) {
-		bytes.set(part, offset);
-		offset += part.length;
-	}
-	return bytes;
-}
-
-function u32(value) {
-	const bytes = new Uint8Array(4);
-	new DataView(bytes.buffer).setUint32(0, value);
-	return bytes;
-}
-
-function u64(value) {
-	const bytes = new Uint8Array(8);
-	new DataView(bytes.buffer).setBigUint64(0, BigInt(value));
-	return bytes;
-}
-
-function field(value) {
-	const bytes = typeof value === "string" ? encoder.encode(value) : value;
-	return concat(u32(bytes.length), bytes);
-}
-
-function reference(position) {
-	return position === undefined
-		? new Uint8Array([0])
-		: concat(new Uint8Array([1]), field(position));
-}
-
-function optional(value) {
-	return value === undefined ? new Uint8Array([0]) : concat(new Uint8Array([1]), field(value));
-}
-
-function frame(requestId, kind, ...body) {
-	const payload = concat(...body);
-	return concat(
-		encoder.encode("FSP4"),
-		new Uint8Array([0, 2, kind, 0]),
-		u64(requestId),
-		u32(payload.length),
-		payload,
-	);
-}
-
-function parseFrame(bytes) {
-	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-	assert(new TextDecoder().decode(bytes.slice(0, 4)) === "FSP4", "response magic mismatch");
-	assert(view.getUint16(4) === 2, "response version mismatch");
-	assert(view.getUint32(16) + 20 === bytes.length, "response length mismatch");
-	return { requestId: view.getBigUint64(8), kind: bytes[6], body: bytes.slice(20) };
-}
-
-function takeField(state) {
-	const view = new DataView(
-		state.bytes.buffer,
-		state.bytes.byteOffset,
-		state.bytes.byteLength,
-	);
-	const length = view.getUint32(state.offset);
-	state.offset += 4;
-	const value = state.bytes.slice(state.offset, state.offset + length);
-	state.offset += length;
-	return value;
-}
-
-function submittedPosition(response) {
-	const parsed = parseFrame(response);
-	assert(parsed.kind === 65, `expected submitted response, received ${parsed.kind}`);
-	const state = { bytes: parsed.body, offset: 1 };
-	return takeField(state);
-}
-
-function readCount(response) {
-	const parsed = parseFrame(response);
-	assert(parsed.kind === 66, `expected read response, received ${parsed.kind}`);
-	return new DataView(
-		parsed.body.buffer,
-		parsed.body.byteOffset,
-		parsed.body.byteLength,
-	).getUint32(0);
-}
-
-function errorCode(response) {
-	const parsed = parseFrame(response);
-	assert(parsed.kind === 127, `expected error response, received ${parsed.kind}`);
-	return new DataView(
-		parsed.body.buffer,
-		parsed.body.byteOffset,
-		parsed.body.byteLength,
-	).getUint16(0);
-}
-
-async function request(client, requestId, kind, ...body) {
-	return client.request(frame(requestId, kind, ...body));
+async function connect(hash) {
+	return SeaBrowserTransport.connect(transportUrl, hash, 1024 * 1024);
 }
 
 async function run() {
 	assert(transportUrl, "missing transport URL");
 	assert(certificateHex?.length === 64, "missing SHA-256 certificate hash");
 	await init();
-	const hash = Uint8Array.from(certificateHex.match(/../g), (value) =>
+	const hash = Uint8Array.from(certificateHex.match(/../gu), (value) =>
 		Number.parseInt(value, 16),
 	);
-	const client = await BrowserClient.connect(transportUrl, hash, 1024 * 1024);
-	const secondClient = await BrowserClient.connect(transportUrl, hash, 1024 * 1024);
-	let requestId = 1;
-	let secondRequestId = 1;
-
-	assert(
-		parseFrame(await request(client, requestId++, 1, field("browser-document"))).kind === 64,
-		"create failed",
-	);
-	assert(
-		parseFrame(
-			await request(
-				client,
-				requestId++,
-				2,
-				field("browser-document"),
-				field("browser-writer"),
-				field("browser-session"),
-				reference(),
-			),
-		).kind === 64,
-		"open session failed",
-	);
-
-	const firstPosition = submittedPosition(
-		await request(
-			client,
-			requestId++,
-			3,
-			field("browser-document"),
-			field("browser-writer"),
-			field("browser-session"),
-			field("browser-submission-1"),
-			u64(1),
-			reference(),
-			field("equivalent-payload"),
-		),
-	);
-	const ambiguityResolution = await client.resolveSubmission(
-		encoder.encode("browser-document"),
-		encoder.encode("browser-writer"),
+	const firstTransport = await connect(hash);
+	const secondTransport = await connect(hash);
+	const first = new SeaInjectedClient(firstTransport, 1024 * 1024);
+	const second = new SeaInjectedClient(secondTransport, 1024 * 1024);
+	const archive = encoder.encode("browser-archive");
+	await first.openSession(
+		archive,
+		encoder.encode("browser-author"),
 		encoder.encode("browser-session"),
-		encoder.encode("browser-submission-1"),
 	);
-	assert(ambiguityResolution.kind === "committed", "submission resolution was not committed");
-	assert(
-		equalBytes(ambiguityResolution.position, firstPosition),
-		"submission resolution position mismatch",
+	const firstReceipt = await first.submit(
+		encoder.encode("browser-operation-1"),
+		undefined,
+		encoder.encode("first-payload"),
 	);
-	assert(
-		parseFrame(
-			await request(
-				secondClient,
-				secondRequestId++,
-				2,
-				field("browser-document"),
-				field("second-browser-writer"),
-				field("second-browser-session"),
-				reference(firstPosition),
-			),
-		).kind === 64,
-		"second client open session failed",
-	);
-	submittedPosition(
-		await request(
-			secondClient,
-			secondRequestId++,
-			3,
-			field("browser-document"),
-			field("second-browser-writer"),
-			field("second-browser-session"),
-			field("browser-submission-2"),
-			u64(1),
-			reference(firstPosition),
-			field("second-payload"),
-		),
-	);
-	assert(
-		readCount(await request(client, requestId++, 4, field("browser-document"), optional())) >
-			0,
-		"read was empty",
-	);
-	assert(
-		errorCode(
-			await request(
-				client,
-				requestId++,
-				4,
-				field("browser-document"),
-				optional(encoder.encode("malformed-token")),
-			),
-		) === 4,
-		"malformed token was not rejected",
-	);
-	assert(
-		parseFrame(
-			await request(
-				client,
-				requestId++,
-				6,
-				field("browser-document"),
-				reference(firstPosition),
-				optional(),
-				field("browser-snapshot"),
-			),
-		).kind === 64,
-		"snapshot publication failed",
-	);
-	assert(
-		parseFrame(await request(client, requestId++, 5, field("browser-document"))).kind === 67,
-		"latest snapshot failed",
-	);
+	const resolved = await first.resolveSubmission(encoder.encode("browser-operation-1"));
+	assert(resolved?.position === firstReceipt.position, "submission resolution mismatch");
+	const load = await first.load();
+	const firstLoaded = await load.next();
+	assert(firstLoaded.kind === "event", "load omitted the first event");
+	const initialCaughtUp = await load.next();
+	assert(initialCaughtUp.kind === "caughtUp", "load omitted its initial caught-up marker");
 
-	const contentWireStart = client.wireBytes;
+	await second.openSession(
+		archive,
+		encoder.encode("second-author"),
+		encoder.encode("second-session"),
+		firstReceipt.position,
+	);
+	const secondReceipt = await second.submit(
+		encoder.encode("browser-operation-2"),
+		firstReceipt.position,
+		encoder.encode("second-payload"),
+	);
+	assert(secondReceipt.position > firstReceipt.position, "event positions did not increase");
+	const live = await load.next();
+	assert(live.kind === "event", "load omitted the live second-client event");
+	assert(decoder.decode(live.payload) === "second-payload", "live event payload mismatch");
+	await load.cancel();
+
 	const blobPayload = encoder.encode("browser-content-addressed-payload");
-	const upload = await client.uploadBlob(blobPayload);
-	assert(upload.digest.length === 32, "blob upload returned an invalid digest");
-	assert(upload.sizeBytes === BigInt(blobPayload.length), "blob upload size mismatch");
-	assert(
-		equalBytes(await client.fetchBlob(upload.digest), blobPayload),
-		"blob fetch payload mismatch",
-	);
+	const blob = await first.putBlob(blobPayload);
+	assert(equalBytes(await first.getBlob(blob), blobPayload), "blob round trip failed");
+	const directory = await first.putDirectory([new SeaDirectoryEntry("leaf", blob)]);
+	const entries = await first.getDirectory(directory);
+	assert(entries.length === 1, "directory entry count mismatch");
+	assert(entries[0].name === "leaf", "directory entry name mismatch");
+	assert(equalBytes(entries[0].child.bytes, blob.bytes), "directory child mismatch");
 
-	const summaryPath = encoder.encode("content/root");
-	const publication = await client.publishSummary([
-		new SummaryEntry(summaryPath, upload.digest),
-	]);
-	assert(publication.digest.length === 32, "summary publication returned an invalid digest");
-	assert(publication.entryCount === 1, "summary publication entry count mismatch");
-	const summary = await client.fetchSummary(publication.digest);
-	assert(summary.length === 1, "summary fetch entry count mismatch");
-	assert(equalBytes(summary[0].path, summaryPath), "summary path mismatch");
-	assert(equalBytes(summary[0].blob, upload.digest), "summary blob identity mismatch");
-	const contentWireBytes = client.wireBytes - contentWireStart;
-	const submissionStream = await client.openSubmissionStream(
-		encoder.encode("browser-document"),
+	const snapshot = await first.publishSnapshot(
+		encoder.encode("browser-snapshot-operation"),
+		undefined,
+		secondReceipt.position,
+		directory,
 	);
-	for (let localSequenceNumber = 2; localSequenceNumber <= 4; localSequenceNumber++) {
-		await submissionStream.send(
-			frame(
-				100 + localSequenceNumber,
-				3,
-				field("browser-document"),
-				field("browser-writer"),
-				field("browser-session"),
-				field(`browser-stream-submission-${localSequenceNumber}`),
-				u64(localSequenceNumber),
-				reference(firstPosition),
-				field(`browser-stream-payload-${localSequenceNumber}`),
-			),
-		);
-	}
-	await submissionStream.close();
-	for (let localSequenceNumber = 2; localSequenceNumber <= 4; localSequenceNumber++) {
-		const response = parseFrame(await submissionStream.next());
-		assert(
-			response.requestId === BigInt(100 + localSequenceNumber),
-			"submission response order mismatch",
-		);
-		assert(response.kind === 65, "submission stream did not return a submitted response");
-	}
-	let sendAfterCloseRejected = false;
-	try {
-		await submissionStream.send(
-			frame(
-				105,
-				3,
-				field("browser-document"),
-				field("browser-writer"),
-				field("browser-session"),
-				field("browser-stream-submission-5"),
-				u64(5),
-				reference(firstPosition),
-				field("browser-stream-payload-5"),
-			),
-		);
-	} catch (error) {
-		sendAfterCloseRejected = String(error).includes("submission stream is closed");
-	}
-	assert(sendAfterCloseRejected, "submission stream accepted a write after close");
+	const latest = await first.latestSnapshot();
+	assert(latest !== undefined, "latest snapshot was missing");
+	assert(equalBytes(latest.id, snapshot.id), "latest snapshot identity mismatch");
+	const fetched = await first.getSnapshot(snapshot.id);
+	assert(fetched !== undefined, "snapshot lookup failed");
+	assert(equalBytes(fetched.root.bytes, directory.bytes), "snapshot root mismatch");
 
-	const terminalStream = await client.openSubmissionStream(encoder.encode("browser-document"));
-	await terminalStream.send(
-		frame(
-			200,
-			3,
-			field("wrong-document"),
-			field("browser-writer"),
-			field("browser-session"),
-			field("terminal-submission"),
-			u64(5),
-			reference(firstPosition),
-			field("terminal-payload"),
-		),
-	);
-	await terminalStream.send(
-		frame(
-			201,
-			3,
-			field("browser-document"),
-			field("browser-writer"),
-			field("browser-session"),
-			field("unanswered-submission"),
-			u64(5),
-			reference(firstPosition),
-			field("unanswered-payload"),
-		),
-	);
-	await terminalStream.close();
-	const terminalResponse = parseFrame(await terminalStream.next());
-	assert(terminalResponse.requestId === 200n, "terminal response request ID mismatch");
-	assert(terminalResponse.kind === 127, "invalid stream submission did not return an error");
-	let firstEof;
-	try {
-		await terminalStream.next();
-	} catch (error) {
-		firstEof = String(error);
-	}
-	assert(firstEof?.includes("browser stream ended"), "terminal stream did not expose EOF");
-	let repeatedEof;
-	try {
-		await terminalStream.next();
-	} catch (error) {
-		repeatedEof = String(error);
-	}
-	assert(
-		repeatedEof?.includes("submission response stream has ended"),
-		"terminal stream attempted to read EOF more than once",
-	);
-
-	client.disconnect();
+	first.disconnect();
 	let disconnected = false;
 	try {
-		await request(client, requestId++, 5, field("browser-document"));
+		await first.latestSnapshot();
 	} catch {
 		disconnected = true;
 	}
 	assert(disconnected, "request unexpectedly retried after disconnect");
-	await client.reconnect();
-	const resumedCount = readCount(
-		await request(client, requestId++, 4, field("browser-document"), optional(firstPosition)),
+	const replacement = await connect(hash);
+	first.replaceTransport(replacement);
+	await first.openSession(
+		archive,
+		encoder.encode("browser-author"),
+		encoder.encode("browser-session-reconnected"),
+		secondReceipt.position,
 	);
-	assert(resumedCount > 0, "explicit reconnect did not resume after the opaque token");
+	assert((await first.latestSnapshot()) !== undefined, "reconnected snapshot lookup failed");
+
 	window.__shutdownProbe = {
 		async existingRequest() {
 			try {
-				await request(client, requestId++, 5, field("browser-document"));
+				await first.latestSnapshot();
 				return "succeeded";
 			} catch {
 				return "rejected";
@@ -387,8 +128,13 @@ async function run() {
 		},
 		async thirdSession() {
 			try {
-				const thirdClient = await BrowserClient.connect(transportUrl, hash, 1024 * 1024);
-				await request(thirdClient, 1, 5, field("browser-document"));
+				const transport = await connect(hash);
+				const client = new SeaInjectedClient(transport, 1024 * 1024);
+				await client.openSession(
+					archive,
+					encoder.encode("third-author"),
+					encoder.encode("third-session"),
+				);
 				return "unexpected-success";
 			} catch {
 				return "rejected";
@@ -399,19 +145,13 @@ async function run() {
 	return {
 		status: "passed",
 		browser: navigator.userAgent,
-		transportSessionCount: 2,
-		wireBytes: (client.wireBytes + secondClient.wireBytes).toString(),
-		firstSessionWireBytes: client.wireBytes.toString(),
-		secondSessionWireBytes: secondClient.wireBytes.toString(),
-		peakResponseBytes: Math.max(client.peakResponseBytes, secondClient.peakResponseBytes),
-		reconnectMilliseconds: client.lastReconnectMilliseconds,
-		resumedRecords: resumedCount,
-		ambiguityResolution: ambiguityResolution.kind,
+		transportSessionCount: 3,
+		firstPosition: firstReceipt.position.toString(),
+		secondPosition: secondReceipt.position.toString(),
+		caughtUp: initialCaughtUp.position.toString(),
 		blobBytes: blobPayload.length,
-		summaryEntries: summary.length,
-		contentWireBytes: contentWireBytes.toString(),
-		orderedSubmissionResponses: 3,
-		oneShotSubmissionEof: true,
+		directoryEntries: entries.length,
+		snapshotIdBytes: snapshot.id.length,
 	};
 }
 

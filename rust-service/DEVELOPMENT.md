@@ -20,7 +20,23 @@ cargo run -p sea-counter
 node scripts/check-documentation.mjs
 ```
 
-The initial example package name is provisional until the Phase 1 workspace manifest is created. If Phase 1 selects another name, update this document and the foundation report in the same commit.
+Generated and TypeScript consumers add these checks:
+
+```bash
+pnpm --dir tests/minimal-fluid-driver run build:wasm
+node tests/wasm-client/node-test.mjs
+pnpm --dir tests/minimal-fluid-driver run check:format
+pnpm --dir tests/minimal-fluid-driver run lint
+pnpm --dir tests/minimal-fluid-driver run typecheck
+pnpm --dir tests/minimal-fluid-driver run typecheck:shared-tree
+pnpm --dir tests/minimal-fluid-driver run build:typescript
+pnpm --dir tests/minimal-fluid-driver run test:node
+pnpm --dir tests/minimal-fluid-driver run build:shared-tree
+pnpm --dir tests/minimal-fluid-driver run build:benchmarks
+```
+
+The installed `wasm-bindgen` CLI must match the crate version pinned by `sea-webtransport`.
+See the [browser harness](tests/webtransport-browser/README.md) for the real Chromium WebTransport command and the [minimal Fluid driver](tests/minimal-fluid-driver/README.md) for the SharedTree trace.
 
 ## Documentation Policy
 

@@ -22,15 +22,15 @@
 		"benchmark:tinylicious": "node browser/run-shared-tree-benchmark.mjs tinylicious",
 		"build": "fluid-build . --task build",
 		"build:benchmark:local": "esbuild browser/shared-tree-benchmark-local.ts --bundle --format=esm --platform=browser --inject:browser/process-shim.ts --outfile=dist/shared-tree-benchmark-local.js --log-level=warning --log-override:package.json=silent",
-		"build:benchmark:rust": "esbuild browser/shared-tree-benchmark-rust.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-benchmark-rust.js --external:../pkg/* --external:../pkg-local/* --log-level=warning --log-override:package.json=silent",
+		"build:benchmark:rust": "esbuild browser/shared-tree-benchmark-rust.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-benchmark-rust.js --external:../pkg/* --log-level=warning --log-override:package.json=silent",
 		"build:benchmark:tinylicious": "esbuild browser/shared-tree-benchmark-tinylicious.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-benchmark-tinylicious.js --log-level=warning --log-override:package.json=silent",
 		"build:benchmarks": "pnpm run build:benchmark:rust && pnpm run build:benchmark:local && pnpm run build:benchmark:tinylicious",
 		"build:compile": "fluid-build . --task compile",
 		"build:shared-tree": "esbuild browser/shared-tree-trace.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-trace.js --external:../pkg/* --log-level=warning --log-override:package.json=silent",
-		"build:typescript": "tsc --project tsconfig.json",
+		"build:typescript": "rimraf lib tsconfig.tsbuildinfo && tsc --project tsconfig.json",
 		"build:wasm": "node scripts/build-wasm.mjs",
 		"check:format": "biome format src browser scripts package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html shared-tree-benchmark-rust.html shared-tree-benchmark-local.html shared-tree-benchmark-tinylicious.html",
-		"clean": "rimraf --glob dist lib pkg pkg-local \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"clean": "rimraf --glob dist lib pkg \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"format": "biome format src browser scripts package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html shared-tree-benchmark-rust.html shared-tree-benchmark-local.html shared-tree-benchmark-tinylicious.html --write",
 		"lint": "biome lint src browser scripts",
 		"test": "fluid-build . --task test",
@@ -81,8 +81,8 @@
 				],
 				"outputGlobs": [
 					"pkg/**",
-					"pkg-local/**",
-					"../wasm-client/pkg/**"
+					"../wasm-client/pkg/**",
+					"../webtransport-browser/pkg/**"
 				],
 				"includeLockFiles": false
 			}

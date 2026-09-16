@@ -1,21 +1,114 @@
-use sea_client::CounterClient;
+use std::sync::Arc;
+
+use bytes::Bytes;
+use futures_util::StreamExt as _;
+use sea_core::{
+    BlobTreeId, Event,
+    archive::{
+        AuthorId, EventSubmission, LoadEvent, OperationId, SeaSession, SessionId, Snapshot,
+        SnapshotPosition, SnapshotPublication,
+    },
+};
 use sea_memory::MemoryStream;
+use sea_sequencer::session::{LocalSequencer, LocalSession};
 
-/// Runs the bounded append, snapshot, and recovery demonstration.
-#[tokio::main]
-async fn main() {
-    let stream = MemoryStream::new();
-    let client = CounterClient::new(&stream);
+type CounterSession = LocalSession<MemoryStream>;
 
-    client.append_delta(2).await.expect("append 2");
-    let snapshot_position = client.append_delta(3).await.expect("append 3");
-    client
-        .publish_snapshot(5, Some(snapshot_position))
+async fn counter_session(storage: Arc<MemoryStream>) -> CounterSession {
+    LocalSequencer::recover(storage)
+        .await
+        .expect("recover sequencer")
+        .open_session(
+            AuthorId::new(Bytes::from_static(b"counter-author")).expect("author"),
+            SessionId::new(Bytes::from_static(b"counter-session")).expect("session"),
+            None,
+        )
+        .await
+        .expect("open session")
+}
+
+async fn append_delta(session: &CounterSession, operation: &'static [u8], delta: i64) {
+    session
+        .submit(EventSubmission {
+            operation_id: OperationId::new(Bytes::from_static(operation)).expect("operation"),
+            reference: None,
+            event: Event {
+                payload: Bytes::copy_from_slice(&delta.to_be_bytes()),
+                blob_tree: None,
+            },
+        })
+        .await
+        .expect("append delta");
+}
+
+async fn publish_snapshot(
+    session: &CounterSession,
+    operation: &'static [u8],
+    value: i64,
+    at_event: SnapshotPosition,
+) {
+    let root = session
+        .put_blob(Bytes::copy_from_slice(&value.to_be_bytes()))
+        .await
+        .expect("put snapshot blob");
+    session
+        .publish_snapshot(SnapshotPublication {
+            operation_id: OperationId::new(Bytes::from_static(operation)).expect("operation"),
+            expected_parent: None,
+            snapshot: Snapshot {
+                at_event,
+                root: BlobTreeId::Blob(root),
+            },
+        })
         .await
         .expect("publish snapshot");
-    client.append_delta(-1).await.expect("append -1");
+}
 
-    let (value, _) = client.recover().await.expect("recover counter");
+async fn recover(session: &CounterSession) -> i64 {
+    let mut load = session.load(None).await.expect("load counter");
+    let mut value = 0_i64;
+    while let Some(item) = load.next().await {
+        match item.expect("load item") {
+            LoadEvent::Snapshot(snapshot) => {
+                let BlobTreeId::Blob(root) = snapshot.snapshot.root else {
+                    panic!("counter snapshot root must be a blob");
+                };
+                let bytes = session.get_blob(root).await.expect("get snapshot blob");
+                value = i64::from_be_bytes(bytes.as_ref().try_into().expect("snapshot value"));
+            }
+            LoadEvent::Event(event) => {
+                value += i64::from_be_bytes(
+                    event
+                        .committed
+                        .event
+                        .payload
+                        .as_ref()
+                        .try_into()
+                        .expect("counter delta"),
+                );
+            }
+            LoadEvent::CaughtUp(_) => break,
+        }
+    }
+    value
+}
+
+/// Runs the snapshot and replay demonstration.
+#[tokio::main]
+async fn main() {
+    let session = counter_session(Arc::new(MemoryStream::new())).await;
+    append_delta(&session, b"delta-1", 2).await;
+    append_delta(&session, b"delta-2", 3).await;
+    let position = session
+        .resolve_submission(&OperationId::new(Bytes::from_static(b"delta-2")).unwrap())
+        .await
+        .unwrap()
+        .unwrap()
+        .position;
+    publish_snapshot(&session, b"snapshot", 5, SnapshotPosition::At(position)).await;
+    append_delta(&session, b"delta-3", -1).await;
+
+    let value = recover(&session).await;
     assert_eq!(value, 4);
     println!("recovered counter: {value}");
 }
@@ -26,35 +119,25 @@ mod tests {
 
     #[tokio::test]
     async fn recovers_from_initial_snapshot() {
-        let stream = MemoryStream::new();
-        let client = CounterClient::new(&stream);
-        client
-            .publish_snapshot(10, None)
-            .await
-            .expect("publish initial snapshot");
-        client.append_delta(-3).await.expect("append delta");
-
-        let (value, head) = client.recover().await.expect("recover counter");
-
-        assert_eq!(value, 7);
-        assert!(head.is_some());
+        let session = counter_session(Arc::new(MemoryStream::new())).await;
+        publish_snapshot(&session, b"initial", 10, SnapshotPosition::Initial).await;
+        append_delta(&session, b"delta", -3).await;
+        assert_eq!(recover(&session).await, 7);
     }
 
     #[tokio::test]
-    async fn recovers_only_records_after_later_snapshot() {
-        let stream = MemoryStream::new();
-        let client = CounterClient::new(&stream);
-        client.append_delta(2).await.expect("append first delta");
-        let snapshot_position = client.append_delta(3).await.expect("append second delta");
-        client
-            .publish_snapshot(5, Some(snapshot_position))
+    async fn recovers_only_events_after_later_snapshot() {
+        let session = counter_session(Arc::new(MemoryStream::new())).await;
+        append_delta(&session, b"first", 2).await;
+        append_delta(&session, b"second", 3).await;
+        let position = session
+            .resolve_submission(&OperationId::new(Bytes::from_static(b"second")).unwrap())
             .await
-            .expect("publish later snapshot");
-        let expected_head = client.append_delta(-1).await.expect("append final delta");
-
-        let (value, head) = client.recover().await.expect("recover counter");
-
-        assert_eq!(value, 4);
-        assert_eq!(head, Some(expected_head));
+            .unwrap()
+            .unwrap()
+            .position;
+        publish_snapshot(&session, b"later", 5, SnapshotPosition::At(position)).await;
+        append_delta(&session, b"final", -1).await;
+        assert_eq!(recover(&session).await, 4);
     }
 }

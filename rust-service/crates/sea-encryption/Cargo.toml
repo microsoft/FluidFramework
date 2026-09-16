@@ -19,6 +19,7 @@ zeroize = { version = "1.8.1", features = ["derive"] }
 sea-compression = { path = "../sea-compression" }
 sea-conformance = { path = "../sea-conformance" }
 sea-memory = { path = "../sea-memory" }
+sea-sequencer = { path = "../sea-sequencer" }
 tokio.workspace = true
 
 [lints]

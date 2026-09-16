@@ -6,16 +6,19 @@ use std::{
     time::Duration,
 };
 
-use sea_service::{NativeService, ServiceConfig, StorageMode};
 use sea_webtransport::{ShutdownMode, TransportConfig, WebTransportServer};
 use wtransport::{Identity, tls::Sha256DigestFmt};
+
+mod host;
+
+use host::{BuiltInSeaHost, StorageMode};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut arguments = env::args().skip(1);
     let bind: SocketAddr = arguments
         .next()
-        .ok_or("usage: sea-webtransport <bind> <cert.pem> <key.pem> <data-dir>")?
+        .ok_or("usage: sea-webtransport-server <bind> <cert.pem> <key.pem> <data-dir>")?
         .parse()?;
     let certificate = PathBuf::from(arguments.next().ok_or("missing certificate path")?);
     let private_key = PathBuf::from(arguments.next().ok_or("missing private-key path")?);
@@ -39,16 +42,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let server = WebTransportServer::bind(
         bind,
         identity,
-        Arc::new(NativeService::new(
-            ServiceConfig::new(data).with_storage_mode(storage_mode),
-        )),
+        Arc::new(BuiltInSeaHost::new(data, storage_mode)),
         TransportConfig::default(),
     )?;
     let address = server.local_addr()?;
     let mut shutdown = server.shutdown_handle();
-    println!("WEBTRANSPORT_URL=https://{address}/fluid");
+    println!("WEBTRANSPORT_URL=https://{address}/sea");
     println!("CERTIFICATE_SHA256={certificate_hash}");
     println!("STORAGE_MODE={}", storage_mode.name());
+    println!("PROTOCOL=sea");
     if let Some(marker) = &shutdown_marker {
         println!("SHUTDOWN_MARKER={}", marker.display());
     }

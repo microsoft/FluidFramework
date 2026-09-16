@@ -17,11 +17,12 @@ import {
 } from "@fluidframework/fluid-static/internal";
 
 import init, {
-	BrowserClient,
-	InjectedClient,
-	SummaryEntry as GeneratedSummaryEntry,
-} from "../pkg/sea_webtransport_browser.js";
-import initLocalService, { LocalServiceTransport } from "../pkg-local/sea_service_browser.js";
+	SeaBrowserTransport,
+	SeaDirectoryEntry,
+	SeaInjectedClient,
+	type SeaLocalClient,
+	type SeaTreeId,
+} from "../pkg/sea_webtransport.js";
 import {
 	DirectDummyClient,
 	DirectSharedTreeClient,
@@ -29,6 +30,7 @@ import {
 	MinimalWasmDocumentServiceFactory,
 } from "../src/index.js";
 import type { WasmProtocolClient } from "../src/wasmClient.js";
+import { TypedSeaClientAdapter } from "../src/typedSeaClient.js";
 import {
 	adaptInitialObject,
 	adaptSharedTree,
@@ -71,10 +73,6 @@ interface TransportActivity {
 	projectedSubscriptions: number;
 }
 
-function recordUnaryRequest(activity: TransportActivity, name: string): void {
-	activity.unaryRequests[name] = (activity.unaryRequests[name] ?? 0) + 1;
-}
-
 function snapshotTransportActivity(activity: TransportActivity): TransportActivity {
 	return {
 		unaryRequests: { ...activity.unaryRequests },
@@ -83,276 +81,20 @@ function snapshotTransportActivity(activity: TransportActivity): TransportActivi
 	};
 }
 
-function encodedRequestName(frame: Uint8Array): string {
-	return (
+/** Adapts a generated remote Sea client to the minimal driver contract. */
+function adaptSeaBrowserClient(
+	client: SeaInjectedClient,
+	reconnect: () => Promise<SeaBrowserTransport>,
+): WasmProtocolClient {
+	return new TypedSeaClientAdapter<SeaTreeId>(
+		client,
 		{
-			1: "createDocument",
-			2: "openSession",
-			3: "submit",
-			5: "latestSnapshot",
-			6: "publishSnapshot",
-		}[frame[6] ?? 0] ?? `fsp4-${frame[6] ?? 0}`
+			blob: (bytes) => SeaTreeId.blob(bytes),
+			directory: (bytes) => SeaTreeId.directory(bytes),
+			directoryEntry: (name, child) => new SeaDirectoryEntry(name, child),
+		},
+		reconnect,
 	);
-}
-
-/** Adapts the WebTransport-generated browser client to the minimal driver contract. */
-function adaptBrowserClient(
-	client: BrowserClient,
-	activity: TransportActivity,
-): WasmProtocolClient {
-	return {
-		request: async (frame) => {
-			recordUnaryRequest(activity, encodedRequestName(frame));
-			return client.request(frame);
-		},
-		openSubmissionStream: async (document) => {
-			activity.submissionStreams++;
-			const stream = await client.openSubmissionStream(document);
-			return {
-				send: async (frame) => stream.send(frame),
-				next: async () => stream.next(),
-				close: async () => stream.close(),
-			};
-		},
-		readProjected: async (document, after) => {
-			recordUnaryRequest(activity, "readProjected");
-			const page = await client.readProjected(document, after);
-			return {
-				operations: page.operations.map((operation) => ({
-					position: operation.position,
-					sequenceNumber: operation.sequenceNumber,
-					...(operation.minimumReference === undefined
-						? {}
-						: { minimumReference: operation.minimumReference }),
-					writer: operation.writer,
-					session: operation.session,
-					submission: operation.submission,
-					localSequenceNumber: operation.localSequenceNumber,
-					...(operation.reference === undefined ? {} : { reference: operation.reference }),
-					payload: operation.payload,
-				})),
-				...(page.cursor === undefined ? {} : { cursor: page.cursor }),
-				hasMore: page.hasMore,
-			};
-		},
-		subscribeProjected: async (document, after) => {
-			activity.projectedSubscriptions++;
-			const subscription = await client.subscribeProjected(document, after);
-			return {
-				next: async () => {
-					const operation = await subscription.next();
-					return {
-						position: operation.position,
-						sequenceNumber: operation.sequenceNumber,
-						...(operation.minimumReference === undefined
-							? {}
-							: { minimumReference: operation.minimumReference }),
-						writer: operation.writer,
-						session: operation.session,
-						submission: operation.submission,
-						localSequenceNumber: operation.localSequenceNumber,
-						...(operation.reference === undefined ? {} : { reference: operation.reference }),
-						payload: operation.payload,
-					};
-				},
-				nextBatch: async (maxOperations, maxBytes) =>
-					(await subscription.nextBatch(maxOperations, maxBytes)).map((operation) => ({
-						position: operation.position,
-						sequenceNumber: operation.sequenceNumber,
-						...(operation.minimumReference === undefined
-							? {}
-							: { minimumReference: operation.minimumReference }),
-						writer: operation.writer,
-						session: operation.session,
-						submission: operation.submission,
-						localSequenceNumber: operation.localSequenceNumber,
-						...(operation.reference === undefined ? {} : { reference: operation.reference }),
-						payload: operation.payload,
-					})),
-				cancel: async () => subscription.cancel(),
-			};
-		},
-		resolveSubmission: async (document, writer, session, submission) => {
-			recordUnaryRequest(activity, "resolveSubmission");
-			const resolution = await client.resolveSubmission(document, writer, session, submission);
-			if (resolution.kind === "committed") {
-				if (resolution.position === undefined || resolution.sequenceNumber === undefined) {
-					throw new Error("committed resolution omitted its position or sequence number");
-				}
-				return {
-					kind: resolution.kind,
-					position: resolution.position,
-					sequenceNumber: resolution.sequenceNumber,
-				};
-			}
-			if (resolution.kind !== "notCommitted" && resolution.kind !== "stillUncertain") {
-				throw new Error(`unknown submission resolution ${resolution.kind}`);
-			}
-			return { kind: resolution.kind };
-		},
-		uploadBlob: async (payload) => {
-			recordUnaryRequest(activity, "uploadBlob");
-			return client.uploadBlob(payload);
-		},
-		fetchBlob: async (digest) => {
-			recordUnaryRequest(activity, "fetchBlob");
-			return client.fetchBlob(digest);
-		},
-		publishSummary: async (entries) => {
-			recordUnaryRequest(activity, "publishSummary");
-			return client.publishSummary(
-				entries.map((entry) => new GeneratedSummaryEntry(entry.path, entry.blob)),
-			);
-		},
-		fetchSummary: async (digest) => {
-			recordUnaryRequest(activity, "fetchSummary");
-			return client.fetchSummary(digest);
-		},
-		disconnect: () => client.disconnect(),
-		reconnect: async () => client.reconnect(),
-		/** Total FSP4 bytes read and written by the generated client. */
-		get wireBytes() {
-			return client.wireBytes;
-		},
-		/** Largest unary response read by the generated client. */
-		get peakResponseBytes() {
-			return client.peakResponseBytes;
-		},
-		/** Largest projected-subscription frame read by the generated client. */
-		get peakSubscriptionFrameBytes() {
-			return client.peakSubscriptionFrameBytes;
-		},
-		/** Largest projected-operation queue depth observed by the generated client. */
-		get peakSubscriptionQueueDepth() {
-			return client.peakSubscriptionQueueDepth;
-		},
-	};
-}
-
-/** Adapts the in-process native-service client to the minimal driver contract. */
-function adaptInjectedClient(
-	client: InjectedClient,
-	transport: LocalServiceTransport,
-	activity: TransportActivity,
-): WasmProtocolClient {
-	return {
-		request: async (frame) => {
-			recordUnaryRequest(activity, encodedRequestName(frame));
-			return client.request(frame);
-		},
-		readProjected: async (document, after) => {
-			recordUnaryRequest(activity, "readProjected");
-			const page = await client.readProjected(document, after);
-			return {
-				operations: page.operations.map((operation) => ({
-					position: operation.position,
-					sequenceNumber: operation.sequenceNumber,
-					...(operation.minimumReference === undefined
-						? {}
-						: { minimumReference: operation.minimumReference }),
-					writer: operation.writer,
-					session: operation.session,
-					submission: operation.submission,
-					localSequenceNumber: operation.localSequenceNumber,
-					...(operation.reference === undefined ? {} : { reference: operation.reference }),
-					payload: operation.payload,
-				})),
-				...(page.cursor === undefined ? {} : { cursor: page.cursor }),
-				hasMore: page.hasMore,
-			};
-		},
-		subscribeProjected: async (document, after) => {
-			activity.projectedSubscriptions++;
-			const subscription = client.subscribeProjected(document, after);
-			return {
-				next: async () => {
-					const operation = await subscription.next();
-					return {
-						position: operation.position,
-						sequenceNumber: operation.sequenceNumber,
-						...(operation.minimumReference === undefined
-							? {}
-							: { minimumReference: operation.minimumReference }),
-						writer: operation.writer,
-						session: operation.session,
-						submission: operation.submission,
-						localSequenceNumber: operation.localSequenceNumber,
-						...(operation.reference === undefined ? {} : { reference: operation.reference }),
-						payload: operation.payload,
-					};
-				},
-				nextBatch: async (maxOperations, maxBytes) =>
-					(await subscription.nextBatch(maxOperations, maxBytes)).map((operation) => ({
-						position: operation.position,
-						sequenceNumber: operation.sequenceNumber,
-						...(operation.minimumReference === undefined
-							? {}
-							: { minimumReference: operation.minimumReference }),
-						writer: operation.writer,
-						session: operation.session,
-						submission: operation.submission,
-						localSequenceNumber: operation.localSequenceNumber,
-						...(operation.reference === undefined ? {} : { reference: operation.reference }),
-						payload: operation.payload,
-					})),
-				cancel: async () => subscription.cancel(),
-			};
-		},
-		resolveSubmission: async (document, writer, session, submission) => {
-			recordUnaryRequest(activity, "resolveSubmission");
-			const resolution = await client.resolveSubmission(document, writer, session, submission);
-			if (resolution.kind === "committed") {
-				if (resolution.position === undefined || resolution.sequenceNumber === undefined) {
-					throw new Error("committed resolution omitted its position or sequence number");
-				}
-				return {
-					kind: resolution.kind,
-					position: resolution.position,
-					sequenceNumber: resolution.sequenceNumber,
-				};
-			}
-			if (resolution.kind !== "notCommitted" && resolution.kind !== "stillUncertain") {
-				throw new Error(`unknown submission resolution ${resolution.kind}`);
-			}
-			return { kind: resolution.kind };
-		},
-		uploadBlob: async (payload) => {
-			recordUnaryRequest(activity, "uploadBlob");
-			return client.uploadBlob(payload);
-		},
-		fetchBlob: async (digest) => {
-			recordUnaryRequest(activity, "fetchBlob");
-			return client.fetchBlob(digest);
-		},
-		publishSummary: async (entries) => {
-			recordUnaryRequest(activity, "publishSummary");
-			return client.publishSummary(
-				entries.map((entry) => new GeneratedSummaryEntry(entry.path, entry.blob)),
-			);
-		},
-		fetchSummary: async (digest) => {
-			recordUnaryRequest(activity, "fetchSummary");
-			return client.fetchSummary(digest);
-		},
-		disconnect: () => client.disconnect(),
-		reconnect: async () => client.reconnect(transport),
-		/** Total FSP4 bytes read and written by the injected client. */
-		get wireBytes() {
-			return client.wireBytes;
-		},
-		/** Largest unary response read by the injected client. */
-		get peakResponseBytes() {
-			return client.peakResponseBytes;
-		},
-		/** Largest projected-subscription frame read by the injected client. */
-		get peakSubscriptionFrameBytes() {
-			return client.peakSubscriptionFrameBytes;
-		},
-		/** Largest projected-operation queue depth observed by the injected client. */
-		get peakSubscriptionQueueDepth() {
-			return client.peakSubscriptionQueueDepth;
-		},
-	};
 }
 
 /** Waits for a Rust-service-backed container to reach Fluid's connected state. */
@@ -387,31 +129,39 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		throw new Error("missing Rust-service transport URL or certificate hash");
 	}
 	await init();
-	if (local) {
-		await initLocalService();
-	}
 	const hash = Uint8Array.from(certificateHex?.match(/../gu) ?? [], (value) =>
 		Number.parseInt(value, 16),
 	);
-	const transports: Array<BrowserClient | InjectedClient> = [];
+	const transports: WasmProtocolClient[] = [];
 	const transportActivity: TransportActivity = {
 		unaryRequests: {},
 		submissionStreams: 0,
 		projectedSubscriptions: 0,
 	};
-	const localService = local ? new LocalServiceTransport(1024 * 1024) : undefined;
+	const localService = local ? await SeaLocalService.create() : undefined;
 	const createWasmClient = async (): Promise<WasmProtocolClient> => {
 		if (localService !== undefined) {
-			const client = new InjectedClient(localService, 1024 * 1024);
-			transports.push(client);
-			return adaptInjectedClient(client, localService, transportActivity);
+			const client: SeaLocalClient = localService.connect();
+			const adapted = new TypedSeaClientAdapter<SeaTreeId>(client, {
+				blob: (bytes) => SeaTreeId.blob(bytes),
+				directory: (bytes) => SeaTreeId.directory(bytes),
+				directoryEntry: (name, child) => new SeaDirectoryEntry(name, child),
+			});
+			transports.push(adapted);
+			return adapted;
 		}
 		if (transportUrl === null) {
 			throw new Error("missing Rust-service transport URL");
 		}
-		const transport = await BrowserClient.connect(transportUrl, hash, 1024 * 1024);
-		transports.push(transport);
-		return adaptBrowserClient(transport, transportActivity);
+		const createTransport = async (): Promise<SeaBrowserTransport> =>
+			SeaBrowserTransport.connect(transportUrl, hash, 1024 * 1024);
+		const transport = await createTransport();
+		const adapted = adaptSeaBrowserClient(
+			new SeaInjectedClient(transport, 1024 * 1024),
+			createTransport,
+		);
+		transports.push(adapted);
+		return adapted;
 	};
 	const deltaConnections: MinimalWasmDeltaConnection[] = [];
 	const documentId = `shared-tree-benchmark-${Date.now()}`;
@@ -605,7 +355,7 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 async function createDirectSharedTreePair(
 	document: Uint8Array,
 	createClient: () => Promise<WasmProtocolClient>,
-	transports: Array<BrowserClient | InjectedClient>,
+	transports: WasmProtocolClient[],
 	transportActivity: TransportActivity,
 	local: boolean,
 ): Promise<SharedTreeBenchmarkPair> {
@@ -689,7 +439,7 @@ async function createDirectSharedTreePair(
 async function createDirectDummyPair(
 	document: Uint8Array,
 	createClient: () => Promise<WasmProtocolClient>,
-	transports: Array<BrowserClient | InjectedClient>,
+	transports: WasmProtocolClient[],
 	transportActivity: TransportActivity,
 	local: boolean,
 ): Promise<SharedTreeBenchmarkPair> {

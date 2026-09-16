@@ -31,8 +31,14 @@ use bytes::Bytes;
 use futures_util::StreamExt;
 use rand_core::{OsRng, RngCore};
 use sea_core::{
-    Capabilities, ClassifiedError, CommittedEvent, ErrorKind, EventReceipt, EventStream,
-    PositionCodec, PublishedSnapshot, Snapshot, SnapshotId, SnapshotStore, StreamReader,
+    BlobDirectory, BlobDirectoryId, BlobId, Capabilities, ClassifiedError, CommittedEvent,
+    ErrorKind, EventReceipt, EventStream, PositionCodec, PublishedSnapshot, Snapshot, SnapshotId,
+    SnapshotStore, StreamReader,
+    archive::{
+        EventReceipt as SessionEventReceipt, EventSubmission, LoadEvent, OperationId,
+        PublishedSnapshot as SessionPublishedSnapshot, SeaSession, SessionStream,
+        SnapshotPublication,
+    },
 };
 use thiserror::Error;
 use zeroize::{Zeroize, ZeroizeOnDrop};
@@ -61,6 +67,8 @@ enum PayloadContext {
     Record = 1,
     /// Domain separator for snapshot payloads.
     Snapshot = 2,
+    /// Domain separator for immutable blob leaves.
+    Blob = 3,
 }
 
 /// A non-secret identifier for a 256-bit encryption key.
@@ -218,6 +226,214 @@ impl<S, K, N> EncryptionStream<S, K, N> {
     /// Returns the underlying store, key provider, and nonce source.
     pub fn into_parts(self) -> (S, K, N) {
         (self.inner, self.keys, self.nonces)
+    }
+}
+
+/// Encrypts event payloads and blob leaves through an individual Sea session.
+#[derive(Clone, Debug)]
+pub struct EncryptionSession<S, K, N = OsNonceSource> {
+    inner: S,
+    keys: K,
+    nonces: N,
+}
+
+impl<S, K> EncryptionSession<S, K, OsNonceSource> {
+    /// Wraps a session using operating-system-generated nonces.
+    pub const fn new(inner: S, keys: K) -> Self {
+        Self {
+            inner,
+            keys,
+            nonces: OsNonceSource,
+        }
+    }
+}
+
+impl<S, K, N> EncryptionSession<S, K, N> {
+    /// Wraps a session using an injected nonce source.
+    pub const fn with_nonce_source(inner: S, keys: K, nonces: N) -> Self {
+        Self {
+            inner,
+            keys,
+            nonces,
+        }
+    }
+
+    /// Returns the underlying session, key provider, and nonce source.
+    pub fn into_parts(self) -> (S, K, N) {
+        (self.inner, self.keys, self.nonces)
+    }
+}
+
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S, K, N> SeaSession for EncryptionSession<S, K, N>
+where
+    S: SeaSession,
+    K: KeyProvider + Clone + 'static,
+    N: NonceSource,
+{
+    type Error = EncryptionError<S::Error>;
+
+    async fn load(
+        &self,
+        required: Option<sea_core::EventPosition>,
+    ) -> Result<SessionStream<LoadEvent, Self::Error>, Self::Error> {
+        let stream = self
+            .inner
+            .load(required)
+            .await
+            .map_err(EncryptionError::Store)?;
+        let keys = self.keys.clone();
+        Ok(Box::pin(stream.map(move |item| {
+            item.map_err(EncryptionError::Store).and_then(|mut item| {
+                if let LoadEvent::Event(event) = &mut item {
+                    event.committed.event.payload = decrypt_payload(
+                        &keys,
+                        &event.committed.event.payload,
+                        PayloadContext::Record,
+                    )?;
+                }
+                Ok(item)
+            })
+        })))
+    }
+
+    async fn read(
+        &self,
+        after: Option<sea_core::EventPosition>,
+        through: Option<sea_core::EventPosition>,
+    ) -> Result<SessionStream<sea_core::archive::SessionCommittedEvent, Self::Error>, Self::Error>
+    {
+        let stream = self
+            .inner
+            .read(after, through)
+            .await
+            .map_err(EncryptionError::Store)?;
+        let keys = self.keys.clone();
+        Ok(Box::pin(stream.map(move |item| {
+            item.map_err(EncryptionError::Store).and_then(|mut event| {
+                event.committed.event.payload = decrypt_payload(
+                    &keys,
+                    &event.committed.event.payload,
+                    PayloadContext::Record,
+                )?;
+                Ok(event)
+            })
+        })))
+    }
+
+    async fn submit(
+        &self,
+        mut submission: EventSubmission,
+    ) -> Result<SessionEventReceipt, Self::Error> {
+        submission.event.payload = encrypt_payload(
+            &self.keys,
+            &self.nonces,
+            &submission.event.payload,
+            PayloadContext::Record,
+        )?;
+        self.inner
+            .submit(submission)
+            .await
+            .map_err(EncryptionError::Store)
+    }
+
+    async fn resolve_submission(
+        &self,
+        operation_id: &OperationId,
+    ) -> Result<Option<SessionEventReceipt>, Self::Error> {
+        self.inner
+            .resolve_submission(operation_id)
+            .await
+            .map_err(EncryptionError::Store)
+    }
+
+    async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {
+        let payload = encrypt_payload(&self.keys, &self.nonces, &payload, PayloadContext::Blob)?;
+        self.inner
+            .put_blob(payload)
+            .await
+            .map_err(EncryptionError::Store)
+    }
+
+    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
+        let payload = self
+            .inner
+            .get_blob(id)
+            .await
+            .map_err(EncryptionError::Store)?;
+        decrypt_payload(&self.keys, &payload, PayloadContext::Blob)
+    }
+
+    async fn put_directory(
+        &self,
+        directory: BlobDirectory,
+    ) -> Result<BlobDirectoryId, Self::Error> {
+        self.inner
+            .put_directory(directory)
+            .await
+            .map_err(EncryptionError::Store)
+    }
+
+    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
+        self.inner
+            .get_directory(id)
+            .await
+            .map_err(EncryptionError::Store)
+    }
+
+    async fn snapshot(
+        &self,
+        id: &SnapshotId,
+    ) -> Result<Option<SessionPublishedSnapshot>, Self::Error> {
+        self.inner
+            .snapshot(id)
+            .await
+            .map_err(EncryptionError::Store)
+    }
+
+    async fn latest_snapshot(&self) -> Result<Option<SessionPublishedSnapshot>, Self::Error> {
+        self.inner
+            .latest_snapshot()
+            .await
+            .map_err(EncryptionError::Store)
+    }
+
+    async fn publish_snapshot(
+        &self,
+        publication: SnapshotPublication,
+    ) -> Result<SessionPublishedSnapshot, Self::Error> {
+        self.inner
+            .publish_snapshot(publication)
+            .await
+            .map_err(EncryptionError::Store)
+    }
+
+    async fn resolve_snapshot_publication(
+        &self,
+        operation_id: &OperationId,
+    ) -> Result<Option<SessionPublishedSnapshot>, Self::Error> {
+        self.inner
+            .resolve_snapshot_publication(operation_id)
+            .await
+            .map_err(EncryptionError::Store)
+    }
+
+    async fn subscribe_snapshots(
+        &self,
+    ) -> Result<SessionStream<SessionPublishedSnapshot, Self::Error>, Self::Error> {
+        let stream = self
+            .inner
+            .subscribe_snapshots()
+            .await
+            .map_err(EncryptionError::Store)?;
+        Ok(Box::pin(
+            stream.map(|item| item.map_err(EncryptionError::Store)),
+        ))
+    }
+
+    async fn close(&self) -> Result<(), Self::Error> {
+        self.inner.close().await.map_err(EncryptionError::Store)
     }
 }
 
@@ -444,8 +660,10 @@ mod tests {
     use sea_compression::CompressionStream;
     use sea_core::{
         ClassifiedError, ErrorKind, EventStream, Snapshot, SnapshotPosition, SnapshotStore,
+        archive::{AuthorId, EventSubmission, LoadEvent, OperationId, SeaSession, SessionId},
     };
     use sea_memory::{MemoryError, MemoryStream};
+    use sea_sequencer::session::LocalSequencer;
 
     use super::*;
 
@@ -531,6 +749,51 @@ mod tests {
             TestKeys::new(),
             FixedNonce([3; 12]),
         )
+    }
+
+    #[tokio::test]
+    async fn session_decorator_round_trips_events_and_blobs() {
+        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
+            .await
+            .unwrap();
+        let session = sequencer
+            .open_session(
+                AuthorId::new(Bytes::from_static(b"author")).unwrap(),
+                SessionId::new(Bytes::from_static(b"session")).unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+        let encrypted =
+            EncryptionSession::with_nonce_source(session, TestKeys::new(), FixedNonce([3; 12]));
+        let blob = encrypted
+            .put_blob(Bytes::from_static(b"secret blob"))
+            .await
+            .unwrap();
+        assert_eq!(
+            encrypted.get_blob(blob).await.unwrap(),
+            Bytes::from_static(b"secret blob")
+        );
+        let receipt = encrypted
+            .submit(EventSubmission {
+                operation_id: OperationId::new(Bytes::from_static(b"operation")).unwrap(),
+                reference: None,
+                event: sea_core::Event {
+                    payload: Bytes::from_static(b"secret event"),
+                    blob_tree: None,
+                },
+            })
+            .await
+            .unwrap();
+        let mut load = encrypted.load(None).await.unwrap();
+        let LoadEvent::Event(event) = load.next().await.unwrap().unwrap() else {
+            panic!("load should begin with the event");
+        };
+        assert_eq!(event.committed.position, receipt.position);
+        assert_eq!(
+            event.committed.event.payload,
+            Bytes::from_static(b"secret event")
+        );
     }
 
     #[tokio::test]

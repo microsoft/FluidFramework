@@ -5,6 +5,8 @@
 //! conflicting identities, stale sessions or references, and local sequence gaps are rejected.
 //! Ambiguous appends require replay before another append, including session-start retries.
 
+pub mod session;
+
 use std::{
     collections::{BTreeMap, BTreeSet},
     error::Error,

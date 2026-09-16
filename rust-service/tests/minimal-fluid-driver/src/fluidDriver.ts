@@ -36,7 +36,6 @@ import { ProtocolClient } from "./protocolClient.js";
 import type {
 	ProjectedOperation,
 	ProjectedOperationSubscription,
-	SubmissionStream,
 	SubmissionResolution,
 	SummaryEntry,
 	WasmProtocolClient,
@@ -64,21 +63,62 @@ type Listener = (...args: readonly unknown[]) => void;
 class SerializedWasmProtocolClient implements WasmProtocolClient {
 	/** Tail of the serialized operation chain, normalized to never reject. */
 	private tail: Promise<void> = Promise.resolve();
-	/** Serialized submission-stream opener when supported by the inner client. */
-	public readonly openSubmissionStream?: (document: Uint8Array) => Promise<SubmissionStream>;
+	public constructor(private readonly inner: WasmProtocolClient) {}
 
-	/** Wraps one generated client and preserves its optional streaming capability. */
-	public constructor(private readonly inner: WasmProtocolClient) {
-		const openSubmissionStream = inner.openSubmissionStream;
-		if (openSubmissionStream !== undefined) {
-			this.openSubmissionStream = (document) =>
-				this.enqueue(async () => openSubmissionStream.call(inner, document));
-		}
+	public create(document: Uint8Array) {
+		return this.enqueue(async () => this.inner.create(document));
 	}
 
-	/** Serializes a unary request with all other generated-client operations. */
-	public request(frame: Uint8Array): Promise<Uint8Array> {
-		return this.enqueue(async () => this.inner.request(frame));
+	public openSession(
+		document: Uint8Array,
+		writer: Uint8Array,
+		session: Uint8Array,
+		resumeAfter?: Uint8Array,
+	) {
+		return this.enqueue(async () =>
+			this.inner.openSession(document, writer, session, resumeAfter),
+		);
+	}
+
+	public submitEvent(
+		document: Uint8Array,
+		writer: Uint8Array,
+		session: Uint8Array,
+		submission: Uint8Array,
+		localSequenceNumber: number,
+		payload: Uint8Array,
+		referencePosition?: Uint8Array,
+	) {
+		return this.enqueue(async () =>
+			this.inner.submitEvent(
+				document,
+				writer,
+				session,
+				submission,
+				localSequenceNumber,
+				payload,
+				referencePosition,
+			),
+		);
+	}
+
+	public latestSnapshot() {
+		return this.enqueue(async () => this.inner.latestSnapshot());
+	}
+
+	public snapshot(id: Uint8Array) {
+		return this.enqueue(async () => this.inner.snapshot(id));
+	}
+
+	public publishSnapshotRoot(
+		operation: Uint8Array,
+		expectedParent: Uint8Array | undefined,
+		atEvent: Uint8Array | undefined,
+		root: Uint8Array,
+	) {
+		return this.enqueue(async () =>
+			this.inner.publishSnapshotRoot(operation, expectedParent, atEvent, root),
+		);
 	}
 
 	/** Serializes a projected history read. */
@@ -153,6 +193,10 @@ class SerializedWasmProtocolClient implements WasmProtocolClient {
 		return this.inner.peakSubscriptionQueueDepth;
 	}
 
+	public positionForSequence(sequenceNumber: number): Uint8Array | undefined {
+		return this.inner.positionForSequence(sequenceNumber);
+	}
+
 	/** Appends an operation while keeping the chain usable after rejection. */
 	private enqueue<T>(operation: () => Promise<T>): Promise<T> {
 		const result = this.tail.then(operation, operation);
@@ -205,10 +249,10 @@ function bytesToHex(bytes: Uint8Array): string {
 	return Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
 }
 
-/** Parses a 32-byte hexadecimal content digest. */
+/** Parses a nonempty even-length hexadecimal identity. */
 function hexToBytes(value: string): Uint8Array {
-	if (!/^[0-9a-f]{64}$/u.test(value)) {
-		throw new Error(`invalid content digest: ${value}`);
+	if (value.length === 0 || value.length % 2 !== 0 || !/^[0-9a-f]+$/u.test(value)) {
+		throw new Error(`invalid hexadecimal identity: ${value}`);
 	}
 	return Uint8Array.from(value.match(/../gu) ?? [], (byte) => Number.parseInt(byte, 16));
 }
@@ -243,10 +287,15 @@ export class MinimalWasmStorage implements IDocumentStorageService {
 		if (count <= 0) {
 			return [];
 		}
-		const digest =
+		const snapshot =
 			versionId === null
-				? await this.protocol.latestSummaryDigest(this.document)
-				: hexToBytes(versionId);
+				? await this.protocol.latestSnapshot()
+				: await this.protocol.snapshot(hexToBytes(versionId));
+		if (snapshot !== undefined) {
+			return [{ id: bytesToHex(snapshot.id), treeId: bytesToHex(snapshot.root) }];
+		}
+		const digest =
+			versionId === null ? await this.protocol.latestSummaryDigest(this.document) : undefined;
 		return digest === undefined
 			? []
 			: [{ id: bytesToHex(digest), treeId: bytesToHex(digest) }];
@@ -259,7 +308,7 @@ export class MinimalWasmStorage implements IDocumentStorageService {
 		if (selected === undefined) {
 			return null;
 		}
-		const entries = await this.client.fetchSummary(hexToBytes(selected.id));
+		const entries = await this.client.fetchSummary(hexToBytes(selected.treeId ?? selected.id));
 		return this.snapshotTree(selected.id, entries);
 	}
 
@@ -277,11 +326,35 @@ export class MinimalWasmStorage implements IDocumentStorageService {
 	/** Uploads a full summary and publishes it as the latest snapshot. */
 	public async uploadSummaryWithContext(
 		summary: ISummaryTree,
-		_context: ISummaryContext,
+		context: ISummaryContext,
 	): Promise<string> {
-		const uploaded = await this.uploadSummary(summary);
-		await this.protocol.publishSnapshot(this.document, uploaded.digest);
-		return bytesToHex(uploaded.digest);
+		const parentHandle = context.ackHandle ?? context.proposalHandle;
+		const parentSnapshot =
+			parentHandle === undefined
+				? undefined
+				: await this.protocol.snapshot(hexToBytes(parentHandle));
+		const parentEntries =
+			parentSnapshot === undefined
+				? undefined
+				: await this.client.fetchSummary(parentSnapshot.root);
+		const uploaded = await this.uploadSummary(summary, parentEntries);
+		const eventSequenceNumber = context.referenceSequenceNumber - applicationSequenceOffset;
+		const atEvent =
+			eventSequenceNumber <= 0
+				? undefined
+				: this.client.positionForSequence(eventSequenceNumber);
+		if (eventSequenceNumber > 0 && atEvent === undefined) {
+			throw new Error(
+				`no Sea position is mapped to Fluid sequence ${context.referenceSequenceNumber}`,
+			);
+		}
+		const snapshotId = await this.protocol.publishSnapshot(
+			this.document,
+			uploaded.digest,
+			atEvent,
+			parentSnapshot?.id,
+		);
+		return bytesToHex(snapshotId);
 	}
 
 	/** Reconstructs a full summary tree from a published summary handle. */
@@ -289,7 +362,10 @@ export class MinimalWasmStorage implements IDocumentStorageService {
 		if (handle.handleType !== summaryType.tree) {
 			throw new Error("only full summary-tree handles are supported");
 		}
-		const entries = await this.client.fetchSummary(hexToBytes(handle.handle));
+		const snapshot = await this.protocol.snapshot(hexToBytes(handle.handle));
+		const entries = await this.client.fetchSummary(
+			snapshot?.root ?? hexToBytes(handle.handle),
+		);
 		const tree: ISummaryTree = { type: summaryType.tree, tree: {} };
 		for (const entry of entries) {
 			this.insertSummaryBlob(
@@ -311,15 +387,18 @@ export class MinimalWasmStorage implements IDocumentStorageService {
 	}
 
 	/** Flattens, uploads, and publishes a full summary in canonical path order. */
-	private async uploadSummary(summary: ISummaryTree): Promise<UploadedSummary> {
+	private async uploadSummary(
+		summary: ISummaryTree,
+		parentEntries?: readonly SummaryEntry[],
+	): Promise<UploadedSummary> {
 		const entries: SummaryEntry[] = [];
 		const app = summary.tree[".app"];
 		const protocol = summary.tree[".protocol"];
 		if (app?.type === summaryType.tree && protocol?.type === summaryType.tree) {
-			await this.flattenSummary(app, "", entries);
-			await this.flattenSummary(protocol, ".protocol", entries);
+			await this.flattenSummary(app, "", entries, parentEntries);
+			await this.flattenSummary(protocol, ".protocol", entries, parentEntries);
 		} else {
-			await this.flattenSummary(summary, "", entries);
+			await this.flattenSummary(summary, "", entries, parentEntries);
 		}
 		entries.sort((left, right) => compareBytes(left.path, right.path));
 		const publication = await this.client.publishSummary(entries);
@@ -331,18 +410,50 @@ export class MinimalWasmStorage implements IDocumentStorageService {
 		summary: ISummaryTree,
 		prefix: string,
 		entries: SummaryEntry[],
+		parentEntries?: readonly SummaryEntry[],
 	): Promise<void> {
 		for (const [name, object] of Object.entries(summary.tree)) {
 			const path = prefix.length === 0 ? name : `${prefix}/${name}`;
 			if (object.type === summaryType.tree) {
-				await this.flattenSummary(object, path, entries);
+				await this.flattenSummary(object, path, entries, parentEntries);
 			} else if (object.type === summaryType.blob) {
 				const payload =
 					typeof object.content === "string" ? encoder.encode(object.content) : object.content;
 				const upload = await this.client.uploadBlob(payload);
 				entries.push({ path: encoder.encode(path), blob: upload.digest });
-			} else {
-				throw new Error("summary handles and attachments are unsupported");
+			} else if (object.type === 4) {
+				entries.push({ path: encoder.encode(path), blob: hexToBytes(object.id) });
+			} else if (object.type === 3) {
+				if (parentEntries === undefined) {
+					throw new Error("summary handle requires an acknowledged parent snapshot");
+				}
+				const target = object.handle.replace(/^\//u, "");
+				if (object.handleType === summaryType.blob || object.handleType === 4) {
+					const referenced = parentEntries.find(
+						(entry) => decoder.decode(entry.path) === target,
+					);
+					if (referenced === undefined) {
+						throw new Error(`summary handle does not resolve: ${object.handle}`);
+					}
+					entries.push({ path: encoder.encode(path), blob: referenced.blob });
+				} else if (object.handleType === summaryType.tree) {
+					const targetPrefix = target.length === 0 ? "" : `${target}/`;
+					const referenced = parentEntries.filter((entry) =>
+						decoder.decode(entry.path).startsWith(targetPrefix),
+					);
+					if (referenced.length === 0) {
+						throw new Error(`summary tree handle does not resolve: ${object.handle}`);
+					}
+					for (const entry of referenced) {
+						const suffix = decoder.decode(entry.path).slice(targetPrefix.length);
+						entries.push({
+							path: encoder.encode(suffix.length === 0 ? path : `${path}/${suffix}`),
+							blob: entry.blob,
+						});
+					}
+				} else {
+					throw new Error("nested summary handles are unsupported");
+				}
 			}
 		}
 	}
@@ -506,7 +617,7 @@ interface DeltaConnectionLifecycle {
 	/** Stable protocol writer identity. */
 	readonly writer: Uint8Array;
 	/** Stable protocol session identity. */
-	readonly session: Uint8Array;
+	session: Uint8Array;
 	/** Last projected cursor consumed by reads or subscriptions. */
 	cursor: Uint8Array | undefined;
 	/** Last committed local submission position. */
@@ -580,10 +691,6 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 	private nextClientSequenceNumber = 1;
 	/** Ordered acknowledgement chain observed by waitForIdle. */
 	private submitChain: Promise<void> = Promise.resolve();
-	/** Ordered write chain that allows multiple acknowledgements to remain pending. */
-	private submissionWriteChain: Promise<void> = Promise.resolve();
-	/** Current ordered submission stream, when the generated client supports one. */
-	private submissionStream: SubmissionStream | undefined;
 	/** Current projected-operation subscription. */
 	private subscription: ProjectedOperationSubscription | undefined;
 	/** Pump consuming the current projected-operation subscription. */
@@ -665,7 +772,6 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 			this.lifecycle.session,
 			this.lifecycle.lastPosition,
 		);
-		this.submissionStream ??= await this.client.openSubmissionStream?.(this.document);
 		this.subscription = await this.client.subscribeProjected(
 			this.document,
 			this.lifecycle.cursor,
@@ -694,29 +800,6 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 			const { identity, message } = pending;
 			this.queuedSubmissions.delete(this.nextClientSequenceNumber);
 			this.nextClientSequenceNumber++;
-			const submissionStream = this.submissionStream;
-			if (submissionStream !== undefined) {
-				const request = this.protocol.submissionRequest(
-					this.document,
-					this.lifecycle.writer,
-					this.lifecycle.session,
-					identity,
-					message.clientSequenceNumber,
-					encoder.encode(JSON.stringify(message)),
-					this.lifecycle.lastPosition,
-				);
-				const write = this.submissionWriteChain.then(async () =>
-					submissionStream.send(request),
-				);
-				this.submissionWriteChain = write;
-				this.submitChain = this.submitChain.then(async () => {
-					await write;
-					const position = this.protocol.submissionPosition(await submissionStream.next());
-					this.lifecycle.lastPosition = position;
-					this.pending.delete(message.clientSequenceNumber);
-				});
-				continue;
-			}
 			this.submitChain = this.submitChain.then(async () => {
 				const position = await this.protocol.submit(
 					this.document,
@@ -813,16 +896,18 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 
 	/** Disconnects transport resources while preserving recoverable lifecycle state. */
 	public disconnect(): void {
-		void Promise.all([this.stopSubscription(), this.stopSubmissionStream()]);
+		void this.stopSubscription();
 		this.client.disconnect();
 		this.emit("disconnect", new Error("explicit disconnect"));
 	}
 
 	/** Reconnects the generated client and replaces its streams and subscription. */
 	public async reconnect(...args: readonly unknown[]): Promise<void> {
-		await Promise.all([this.stopSubscription(), this.stopSubmissionStream()]);
+		await this.stopSubscription();
 		await this.client.reconnect(...args);
-		this.submissionWriteChain = Promise.resolve();
+		this.lifecycle.session = encoder.encode(
+			`${this.clientId}-session-${Date.now()}-${Math.random()}`,
+		);
 		await this.open();
 	}
 
@@ -830,7 +915,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 	public dispose(error?: Error): void {
 		if (!this.disposed) {
 			this.disposed = true;
-			void Promise.all([this.stopSubscription(), this.stopSubmissionStream()]);
+			void this.stopSubscription();
 			this.emit(
 				"disconnect",
 				error ?? Object.assign(new Error("delta connection disposed"), { canRetry: true }),
@@ -893,15 +978,6 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 		}
 		await this.subscriptionPump;
 		this.subscriptionPump = undefined;
-	}
-
-	/** Closes the current ordered submission stream. */
-	private async stopSubmissionStream(): Promise<void> {
-		const submissionStream = this.submissionStream;
-		this.submissionStream = undefined;
-		if (submissionStream !== undefined) {
-			await submissionStream.close();
-		}
 	}
 }
 
@@ -988,6 +1064,7 @@ export class MinimalWasmDocumentService extends Events implements IDocumentServi
 		const lifecycle = this.getDeltaLifecycle(mode);
 		const logicalClientId = lifecycle.clientId;
 		const clientId = mode === "read" ? `client-${crypto.randomUUID()}` : logicalClientId;
+		lifecycle.session = encoder.encode(`${clientId}-session-${crypto.randomUUID()}`);
 		const wasm = await this.getClient(clientId);
 		const connection = new MinimalWasmDeltaConnection(
 			clientId,

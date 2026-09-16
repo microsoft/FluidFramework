@@ -1,17 +1,14 @@
 # Stateful Compression Wrapper
 
-`sea-stateful-compression` uses one immutable zstd dictionary to
-compress records and snapshots. Despite the package name, decoding does not
-depend on mutable history: every stored payload is an independent frame with
-the metadata needed to restart from that item.
+`sea-stateful-compression` uses one immutable zstd dictionary to compress event payloads and blob leaves through `StatefulCompressionSession<S>`.
+Despite the package name, decoding does not depend on mutable history: every stored payload is an independent frame with the metadata needed to restart from that item.
 
 ## Framing And Restart
 
 Each payload is prefixed with a wrapper magic value, format version, dictionary
 fingerprint, and declared decoded length. Reopening requires the same dictionary
 and configured decoded-size bound, but no preceding records or codec state.
-Positions, position tokens, snapshot lineage, capabilities, cancellation, and
-backpressure remain owned by the wrapped store.
+Positions, blob-tree identities, snapshot lineage, operation recovery, cancellation, and backpressure remain owned by the wrapped session.
 
 The dictionary fingerprint detects accidental mismatch; it is not an
 authentication mechanism. Malformed, truncated, extended, wrongly sized, or
@@ -23,7 +20,7 @@ wrong-dictionary frames classify as `ErrorKind::Corrupt`.
 - `MAX_DECODED_BYTES` is the hard ceiling for a configured decoded payload bound.
 - `StatefulCompressionStream::new` rejects an empty bound, a bound above the
   hard ceiling, or a dictionary above its hard maximum.
-- Appends and snapshot publications above the configured bound are rejected
+- Event and blob payloads above the configured bound are rejected
   before writing. Reads reject a declared or actual decoded length outside the
   configured bound.
 
@@ -31,9 +28,8 @@ The zstd decoder's window is capped from the configured bound. The complete
 stored frame and decoded payload are still held in memory. Reads decode one
 record when polled and add no background task or stream buffer.
 
-For authenticated storage, place encryption inside this wrapper, for example
-`StatefulCompressionStream<EncryptionStream<...>>`. Compression then processes
-plaintext before the encrypted inner store persists the frame.
+Directories and snapshot metadata remain visible.
+For authenticated storage, wrap an encrypted session in `StatefulCompressionSession` so compression processes plaintext before encryption.
 
 ## Validation
 

@@ -6,8 +6,19 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+async-trait.workspace = true
 bytes.workspace = true
+futures-util.workspace = true
 sea-core = { path = "../sea-core" }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio.workspace = true
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+tokio = { version = "1.47.1", features = ["sync"] }
+
+[dev-dependencies]
+sea-memory = { path = "../sea-memory" }
 
 [lints]
 workspace = true

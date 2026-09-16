@@ -1,18 +1,21 @@
 # Sea Memory
 
-`sea-memory` is the process-local reference implementation of the append-stream, snapshot-store, and position-codec contracts.
+`sea-memory` is the process-local reference implementation of `SeaStorage` and the older append-stream traits.
 
 ## Behavior
 
-- Cloned handles share one generation, ordered records, and latest snapshot.
+- Cloned handles share ordered events, immutable content, and retained snapshot history.
 - Appends become visible in process and report `Durability::Memory`.
-- Readers are finite at their captured head and can be dropped independently.
-- Positions use one-based ordinals. Encoded tokens are opaque 8-byte ordinal values; malformed values and positions beyond the selected stream's committed head are rejected, while the same committed ordinal may be used with another stream.
-- Snapshot publication enforces expected-parent equality, committed positions, and non-regression.
+- Event and snapshot publication validates the complete referenced blob-tree closure before commit.
+- Readers are finite at their captured head; `load` atomically pairs snapshot selection with that head.
+- Snapshot publication enforces expected-parent equality, committed positions, stable operation identity, and non-regression.
 
 ## Limits
 
-All records and snapshots are lost when the final handle is dropped. There is no retention, live tailing, durable persistence, or idempotent append identity. This implementation is suitable for tests, examples, and process-local state, not crash recovery.
+All events, snapshots, and content are lost when the final handle is dropped.
+The backend retains all committed and uploaded values while alive.
+Live tailing and multi-user operation identities belong to `sea-sequencer`.
+This implementation is suitable for tests, examples, and process-local state, not crash recovery.
 
 See [`src/lib.rs`](src/lib.rs) for the API and focused fault-adapter tests. Shared laws come from [`../sea-conformance`](../sea-conformance/README.md).
 

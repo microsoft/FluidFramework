@@ -7,8 +7,8 @@ rust-version = "1.98.1"
 
 [dependencies]
 bytes.workspace = true
-sha2 = "0.10.9"
 sea-core = { path = "../sea-core" }
+thiserror.workspace = true
 
 [lints.rust]
 unsafe_code = "forbid"
