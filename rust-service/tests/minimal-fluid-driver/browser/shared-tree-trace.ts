@@ -23,6 +23,7 @@ import init, {
 	SeaBrowserTransport,
 	SeaDirectoryEntry,
 	SeaInjectedClient,
+	SeaLoadKind,
 	SeaTreeId,
 } from "../pkg/sea_webtransport.js";
 import {
@@ -117,6 +118,11 @@ function adaptBrowserClient(
 	return new TypedSeaClientAdapter<SeaTreeId>(
 		client,
 		{
+			loadKind: {
+				snapshot: SeaLoadKind.Snapshot,
+				event: SeaLoadKind.Event,
+				caughtUp: SeaLoadKind.CaughtUp,
+			},
 			blob: (bytes) => SeaTreeId.blob(bytes),
 			directory: (bytes) => SeaTreeId.directory(bytes),
 			directoryEntry: (name, child) => new SeaDirectoryEntry(name, child as SeaTreeId),

@@ -7,6 +7,7 @@ import init, {
 	SeaBrowserTransport,
 	SeaDirectoryEntry,
 	SeaInjectedClient,
+	SeaLoadKind,
 } from "./pkg/sea_webtransport.js";
 
 const encoder = new TextEncoder();
@@ -74,11 +75,20 @@ async function run() {
 	assert(resolved?.position === firstReceipt.position, "submission resolution mismatch");
 	const load = await first.load();
 	const firstLoaded = await load.next();
-	assert(firstLoaded.kind === "event", "load omitted the first event");
-	assert((await load.next()).kind === "event", "load omitted the first streamed event");
-	assert((await load.next()).kind === "event", "load omitted the second streamed event");
+	assert(firstLoaded.kind === SeaLoadKind.Event, "load omitted the first event");
+	assert(
+		(await load.next()).kind === SeaLoadKind.Event,
+		"load omitted the first streamed event",
+	);
+	assert(
+		(await load.next()).kind === SeaLoadKind.Event,
+		"load omitted the second streamed event",
+	);
 	const initialCaughtUp = await load.next();
-	assert(initialCaughtUp.kind === "caughtUp", "load omitted its initial caught-up marker");
+	assert(
+		initialCaughtUp.kind === SeaLoadKind.CaughtUp,
+		"load omitted its initial caught-up marker",
+	);
 
 	await second.openSession(
 		archive,
@@ -94,7 +104,7 @@ async function run() {
 	);
 	assert(secondReceipt.position > firstReceipt.position, "event positions did not increase");
 	const live = await load.next();
-	assert(live.kind === "event", "load omitted the live second-client event");
+	assert(live.kind === SeaLoadKind.Event, "load omitted the live second-client event");
 	assert(decoder.decode(live.payload) === "second-payload", "live event payload mismatch");
 	await load.cancel();
 

@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 5. Introduce the centralized network message codec.
-- **Last completed checkpoint:** 4b. Split service responsibilities.
-- **Last validation:** Checkpoint 4b formatting, strict workspace Clippy, full Rust workspace tests, counter and benchmark smoke, generated WASM/Node tests, TypeScript checks, documentation links, policy, and repository build passed on 2026-09-16.
-- **Latest checkpoint notes:** Checkpoint 5 assigned request kinds `1..=16`, response kinds `128..=138`, and error kind `255`; the bounded envelope is `u32 length | u8 kind | u64 correlation | payload`. Every request/response variant encodes a separate typed postcard payload without serializing its outer enum. Stream-scoped correlation tracking rejects zero requests, active reuse, and mismatched completion; zero is reserved for event/snapshot notifications. The old active transport framing remains until all transport paths switch.
+- **Current checkpoint:** 6a. Establish the shared client.
+- **Last completed checkpoint:** 5. Introduce the centralized network message codec.
+- **Last validation:** Checkpoint 5 formatting, strict workspace Clippy, Rust workspace build/tests/docs, counter and benchmark smoke, WASM/Node and TypeScript validation, real Chromium WebTransport, policy, and repository build passed on 2026-09-16.
+- **Latest checkpoint notes:** Request kinds `1..=16`, response kinds `128..=138`, and error kind `255` use `u32 length | u8 kind | u64 correlation | typed payload`. Correlation tracking rejects zero requests, active reuse, and mismatched completion. The production server accepts the shared codec alongside the temporary old path. Generated load cases use `SeaLoadKind`. No established Rust-service fuzz harness exists, so no fuzz target was added. Old framing remains until checkpoint 6f.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 5. Introduce the centralized network message codec.
+- **Next checkpoint:** 6a. Establish the shared client.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -528,12 +528,12 @@ Commit the codec and message definitions before switching transports.
 - [x] Define which message kinds are valid on each logical stream.
 - [x] Return a classified protocol error for a message on the wrong stream.
 - [x] Replace string durability with a generated enum or explicit numeric wire enum.
-- [ ] Replace load-item string kinds with explicit generated case types.
+- [x] Replace load-item string kinds with explicit generated case types.
 - [x] Add exhaustive codec, fragmentation, coalescing, limit, and wrong-stream tests.
 - [x] Test every assigned message-kind byte and rejection of every unassigned byte.
 - [x] Remove implicit serializer-assigned request/response case indexes from the outer wire envelope.
 - [x] Keep the codec and message definitions WASM-compatible and free of server/storage dependencies.
-- [ ] Consume the same public codec from `sea-webtransport-server` without moving server dispatch into `sea-webtransport`.
+- [x] Consume the same public codec from `sea-webtransport-server` without moving server dispatch into `sea-webtransport`.
 
 Do not remove old framing in the first codec commit if doing so would make the repository unbuildable.
 Remove it in checkpoint 6f immediately after all transports switch.

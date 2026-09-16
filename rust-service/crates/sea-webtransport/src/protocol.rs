@@ -188,6 +188,27 @@ impl MessageKind {
         }
     }
 
+    /// Returns the owning role when this is a request kind.
+    #[must_use]
+    pub const fn request_role(self) -> Option<StreamRole> {
+        match self {
+            Self::CreateArchive => Some(StreamRole::Control),
+            Self::OpenSession | Self::Load => Some(StreamRole::Event),
+            Self::Submit | Self::ResolveSubmission | Self::Close => Some(StreamRole::Author),
+            Self::Read
+            | Self::PutBlob
+            | Self::GetBlob
+            | Self::PutDirectory
+            | Self::GetDirectory
+            | Self::GetSnapshot => Some(StreamRole::Content),
+            Self::LatestSnapshot
+            | Self::PublishSnapshot
+            | Self::ResolveSnapshot
+            | Self::SubscribeSnapshots => Some(StreamRole::Snapshot),
+            _ => None,
+        }
+    }
+
     /// Rejects this message when it is invalid on `role`.
     ///
     /// # Errors
@@ -841,6 +862,28 @@ impl Request {
             Self::Load { .. } => MessageKind::Load,
             Self::SubscribeSnapshots => MessageKind::SubscribeSnapshots,
             Self::Close => MessageKind::Close,
+        }
+    }
+
+    /// Returns the logical stream that owns this request.
+    #[must_use]
+    pub const fn stream_role(&self) -> StreamRole {
+        match self {
+            Self::CreateArchive { .. } => StreamRole::Control,
+            Self::OpenSession { .. } | Self::Load { .. } => StreamRole::Event,
+            Self::Submit { .. } | Self::ResolveSubmission { .. } | Self::Close => {
+                StreamRole::Author
+            }
+            Self::Read { .. }
+            | Self::PutBlob { .. }
+            | Self::GetBlob { .. }
+            | Self::PutDirectory { .. }
+            | Self::GetDirectory { .. }
+            | Self::GetSnapshot { .. } => StreamRole::Content,
+            Self::LatestSnapshot
+            | Self::PublishSnapshot { .. }
+            | Self::ResolveSnapshot { .. }
+            | Self::SubscribeSnapshots => StreamRole::Snapshot,
         }
     }
 }

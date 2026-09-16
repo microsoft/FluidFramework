@@ -182,22 +182,34 @@ impl SeaSnapshot {
 
 /// One item from a gap-free Sea load stream.
 #[wasm_bindgen]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u8)]
+pub enum SeaLoadKind {
+    /// A selected recovery snapshot.
+    Snapshot = 1,
+    /// One catch-up or live event.
+    Event = 2,
+    /// The finite catch-up boundary.
+    CaughtUp = 3,
+}
+
+/// One item from a gap-free Sea load stream.
+#[wasm_bindgen]
 pub struct SeaLoadItem {
     inner: protocol::Response,
 }
 
 #[wasm_bindgen]
 impl SeaLoadItem {
-    /// Returns `snapshot`, `event`, or `caughtUp`.
+    /// Returns the closed load-item case.
     #[wasm_bindgen(getter)]
-    pub fn kind(&self) -> String {
+    pub fn kind(&self) -> SeaLoadKind {
         match self.inner {
-            protocol::Response::LoadSnapshot(_) => "snapshot",
-            protocol::Response::LoadEvent(_) => "event",
-            protocol::Response::CaughtUp(_) => "caughtUp",
-            _ => "unexpected",
+            protocol::Response::LoadSnapshot(_) => SeaLoadKind::Snapshot,
+            protocol::Response::LoadEvent(_) => SeaLoadKind::Event,
+            protocol::Response::CaughtUp(_) => SeaLoadKind::CaughtUp,
+            _ => unreachable!("SeaLoadItem is constructed only from load responses"),
         }
-        .to_owned()
     }
 
     /// Returns the selected snapshot when this is a snapshot item.
@@ -513,6 +525,14 @@ impl SeaInjectedStream {
         }
         if let protocol::Response::Error { message, .. } = frame.message {
             return Err(js_error(&message));
+        }
+        if !matches!(
+            frame.message,
+            protocol::Response::LoadSnapshot(_)
+                | protocol::Response::LoadEvent(_)
+                | protocol::Response::CaughtUp(_)
+        ) {
+            return Err(js_error("Sea stream response is not a load item"));
         }
         Ok(Some(SeaLoadItem {
             inner: frame.message,

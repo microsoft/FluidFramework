@@ -486,13 +486,27 @@ mod tests {
         let shutdown = server.shutdown_handle();
         let serving = server.serve_until_shutdown();
         let exercise = async {
+            let (_endpoint, setup) = raw_connection(address, certificate_hash.clone()).await;
+            assert_eq!(
+                network_request(
+                    &setup,
+                    1,
+                    protocol::Request::CreateArchive {
+                        version: protocol::PROTOCOL_VERSION,
+                        archive: b"archive".to_vec(),
+                    },
+                )
+                .await,
+                protocol::Response::Acknowledged
+            );
+            setup.close(0_u32.into(), b"setup complete");
             let client = NativeSeaClient::connect(
                 format!("https://{address}/sea"),
                 certificate_hash,
                 ClientTransportConfig::default(),
                 NativeSessionOpen {
                     archive: Bytes::from_static(b"archive"),
-                    intent: protocol::ArchiveIntent::Create,
+                    intent: protocol::ArchiveIntent::Open,
                     author: AuthorId::new(Bytes::from_static(b"author")).unwrap(),
                     session: SessionId::new(Bytes::from_static(b"session")).unwrap(),
                     reference: None,
@@ -753,6 +767,38 @@ mod tests {
             protocol::decode::<protocol::Frame<protocol::Response>>(&response, limits).unwrap();
         assert_eq!(frame.request_id, request_id);
         frame.message
+    }
+
+    async fn network_request(
+        connection: &Connection,
+        correlation_id: u64,
+        request: protocol::Request,
+    ) -> protocol::Response {
+        let role = request.stream_role();
+        let bytes = protocol::encode_request_frame(
+            role,
+            correlation_id,
+            &request,
+            protocol::Limits::default(),
+        )
+        .unwrap();
+        let (mut send, mut receive) = connection.open_bi().await.unwrap().await.unwrap();
+        send.write_all(&bytes).await.unwrap();
+        send.finish().await.unwrap();
+        let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
+        let mut buffer = [0_u8; 1024];
+        loop {
+            if let Some(frame) = decoder.next_frame().unwrap() {
+                assert_eq!(frame.correlation_id, correlation_id);
+                return protocol::decode_response_network_frame(role, &frame).unwrap();
+            }
+            let count = receive
+                .read(&mut buffer)
+                .await
+                .unwrap()
+                .expect("response frame");
+            decoder.push(&buffer[..count]);
+        }
     }
 
     async fn abandon_response(

@@ -8,7 +8,11 @@ import { createRequire } from "node:module";
 import test from "node:test";
 
 const require = createRequire(import.meta.url);
-const { SeaDirectoryEntry, SeaLocalService } = require("./pkg/sea_webtransport.js");
+const {
+	SeaDirectoryEntry,
+	SeaLoadKind,
+	SeaLocalService,
+} = require("./pkg/sea_webtransport.js");
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
@@ -39,7 +43,7 @@ test("generated local clients submit, resolve, read, and tail events", async () 
 	);
 	const load = await first.load();
 	assert.equal(decoder.decode((await load.next()).payload), "first");
-	assert.equal((await load.next()).kind, "caughtUp");
+	assert.equal((await load.next()).kind, SeaLoadKind.CaughtUp);
 	await second.openSession(
 		archive,
 		false,
@@ -141,7 +145,7 @@ test("generated local clients require explicit archive creation", async () => {
 test("generated local stream cancellation wakes a pending read", async () => {
 	const { first } = await clients();
 	const load = await first.load();
-	assert.equal((await load.next()).kind, "caughtUp");
+	assert.equal((await load.next()).kind, SeaLoadKind.CaughtUp);
 	const pending = load.next();
 	await load.cancel();
 	assert.equal(await pending, undefined);

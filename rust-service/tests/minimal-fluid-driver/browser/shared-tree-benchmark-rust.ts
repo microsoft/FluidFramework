@@ -20,6 +20,7 @@ import init, {
 	SeaBrowserTransport,
 	SeaDirectoryEntry,
 	SeaInjectedClient,
+	SeaLoadKind,
 	SeaLocalService,
 	SeaTreeId,
 	type SeaLocalClient,
@@ -90,6 +91,11 @@ function adaptSeaBrowserClient(
 	return new TypedSeaClientAdapter<SeaTreeId>(
 		client,
 		{
+			loadKind: {
+				snapshot: SeaLoadKind.Snapshot,
+				event: SeaLoadKind.Event,
+				caughtUp: SeaLoadKind.CaughtUp,
+			},
 			blob: (bytes) => SeaTreeId.blob(bytes),
 			directory: (bytes) => SeaTreeId.directory(bytes),
 			directoryEntry: (name, child) => new SeaDirectoryEntry(name, child),
@@ -144,6 +150,11 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		if (localService !== undefined) {
 			const client: SeaLocalClient = localService.connect();
 			const adapted = new TypedSeaClientAdapter<SeaTreeId>(client, {
+				loadKind: {
+					snapshot: SeaLoadKind.Snapshot,
+					event: SeaLoadKind.Event,
+					caughtUp: SeaLoadKind.CaughtUp,
+				},
 				blob: (bytes) => SeaTreeId.blob(bytes),
 				directory: (bytes) => SeaTreeId.directory(bytes),
 				directoryEntry: (name, child) => new SeaDirectoryEntry(name, child),
