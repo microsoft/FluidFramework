@@ -18,21 +18,27 @@ const compareEndpoints = (a: SequenceInterval, b: SequenceInterval): number => {
 	return startResult === 0 ? a.compareEnd(b) : startResult;
 };
 
+/** Stands in for an index where none is valid, marking the segment tree as owing a rebuild. */
+const STALE = -1;
+
 /**
  * Intervals sorted by (start, end, interval ID), with a max-end segment tree used to prune
- * overlap searches. Both hold intervals rather than resolved positions, and edits preserve the
- * relative order of reference positions, so neither needs rebuilding when the text changes.
- * Adding or removing does invalidate the tree; the next overlap query rebuilds it.
+ * overlap searches. Neither records a resolved position - the order is over reference positions,
+ * and the tree over indices into that order - and edits preserve the relative order of reference
+ * positions, so neither needs rebuilding when the text changes. Adding or removing does
+ * invalidate the tree; the next overlap query rebuilds it.
  */
 export class SequenceIntervalOverlapSet {
 	private readonly ordered: SequenceInterval[] = [];
 
 	/**
 	 * Implicit segment tree over `ordered`: root 1, children of `n` at `2n` and `2n + 1`. Each
-	 * node holds the interval with the greatest end position in its range. Empty when a rebuild
-	 * is owed, which every mutation arranges by discarding it.
+	 * node holds the *index* of the interval with the greatest end position in its range. Indices
+	 * rather than intervals so that a stale entry cannot keep a removed interval alive, which in
+	 * turn lets a mutation mark the tree rather than discard it. A negative root means a rebuild
+	 * is owed.
 	 */
-	private readonly maxEnds: SequenceInterval[] = [];
+	private readonly maxEnds: number[] = [STALE, STALE];
 
 	public get intervals(): readonly SequenceInterval[] {
 		return this.ordered;
@@ -119,32 +125,45 @@ export class SequenceIntervalOverlapSet {
 	// #region Overlap search
 
 	/**
-	 * Discards the segment tree so the next query rebuilds it. Emptying it rather than flagging
-	 * it matters because its nodes hold intervals: a removed interval would otherwise stay
-	 * reachable until a query rebuilt over it, and a set emptied of intervals is never queried.
+	 * Marks the segment tree as owing a rebuild. The nodes are left in place: they are indices, so
+	 * they hold nothing alive, and retaining the array means a rebuild at the same size reuses it
+	 * rather than reallocating.
+	 *
+	 * A set which has been emptied gives the array up, since nothing will query it and so nothing
+	 * will rebuild over it - `detachIndex` empties an index one interval at a time, so this is a
+	 * path the API drives itself. Trimming to two rather than none keeps the array packed, since
+	 * the root written below is at index 1.
 	 */
 	private discardMaxEnds(): void {
-		this.maxEnds.length = 0;
+		if (this.ordered.length === 0) {
+			this.maxEnds.length = 2;
+		}
+		this.maxEnds[1] = STALE;
 	}
 
-	/** Builds node `node`, covering `[lo, hi)`, and returns its greatest-end interval. */
-	private buildMaxEnds(node: number, lo: number, hi: number): SequenceInterval {
-		let maxEnd: SequenceInterval;
+	/** Builds node `node`, covering `[lo, hi)`, and returns the index of its greatest end. */
+	private buildMaxEnds(node: number, lo: number, hi: number): number {
+		let maxEnd: number;
 		if (hi - lo === 1) {
-			maxEnd = this.ordered[lo];
+			maxEnd = lo;
 		} else {
 			const mid = lo + Math.floor((hi - lo) / 2);
 			const left = this.buildMaxEnds(node * 2, lo, mid);
 			const right = this.buildMaxEnds(node * 2 + 1, mid, hi);
-			maxEnd = compareReferencePositions(left.end, right.end) >= 0 ? left : right;
+			maxEnd =
+				compareReferencePositions(this.ordered[left].end, this.ordered[right].end) >= 0
+					? left
+					: right;
 		}
 		this.maxEnds[node] = maxEnd;
 		return maxEnd;
 	}
 
 	private rebuildMaxEndsIfStale(): void {
-		if (this.maxEnds.length === 0) {
-			// 4n bounds the node indices this layout reaches for any leaf count.
+		if (this.maxEnds[1] === STALE) {
+			// 4n bounds the node indices this layout reaches for any leaf count. Assigning the
+			// length it already has is a no-op, so a rebuild at an unchanged size allocates
+			// nothing.
 			this.maxEnds.length = this.ordered.length * 4;
 			this.buildMaxEnds(1, 0, this.ordered.length);
 		}
@@ -163,7 +182,10 @@ export class SequenceIntervalOverlapSet {
 		limit: number,
 		results: SequenceInterval[],
 	): void {
-		if (lo >= limit || compareReferencePositions(this.maxEnds[node].end, query.start) < 0) {
+		if (
+			lo >= limit ||
+			compareReferencePositions(this.ordered[this.maxEnds[node]].end, query.start) < 0
+		) {
 			return;
 		}
 		if (hi - lo === 1) {

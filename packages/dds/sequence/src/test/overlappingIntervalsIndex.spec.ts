@@ -214,10 +214,9 @@ describe("OverlappingIntervalsIndex", () => {
 			);
 		});
 
-		it("holds no reference to a removed interval", () => {
-			// Retention has no effect on results, so this reaches for the segment tree directly.
-			// Its nodes hold intervals, and a set which has been emptied is never queried, so
-			// without discarding them on removal the last build's intervals stay reachable.
+		it("gives up its overlap search cache once emptied", () => {
+			// The cache holds indices, so it cannot retain a removed interval; what it can retain
+			// is its own array, which grows with the set. Emptying the set should release it.
 			const intervals = Array.from({ length: 6 }, (_, i) =>
 				createTestInterval(i * 5, i * 5 + 4),
 			);
@@ -230,12 +229,9 @@ describe("OverlappingIntervalsIndex", () => {
 				index.remove(interval);
 			}
 
-			const { maxEnds } = (
-				index as unknown as {
-					intervalSet: { maxEnds: readonly SequenceInterval[] };
-				}
-			).intervalSet;
-			assert.deepEqual([...maxEnds], [], "expected the removed intervals to be discarded");
+			const { maxEnds } = (index as unknown as { intervalSet: { maxEnds: number[] } })
+				.intervalSet;
+			assert.strictEqual(maxEnds.length, 2, "expected the segment tree to be released");
 		});
 
 		it("agrees with a brute force scan over random intervals and queries", () => {
