@@ -41,8 +41,8 @@ export function generateGettingStarted(
 	];
 	if (usesServiceClient) {
 		steps.push(
-			"1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser. The app uses an ephemeral in-browser service by default and stores the container ID in the URL hash.",
-			"1. To retain data across reloads in the current browser tab, run `pnpm start:session` and open <http://localhost:8080/?fluidClient=session>.",
+			"1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser. The app uses a session-storage-backed in-browser service by default and stores the container ID in the URL hash.",
+			"1. To select the session-backed service explicitly, run `pnpm start:session` and open <http://localhost:8080/?fluidClient=session>.",
 		);
 		if (usesTinylicious) {
 			steps.push(
