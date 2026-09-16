@@ -107,7 +107,7 @@ export function makeMitigatedRebaser<TChange>(
 		},
 		changeRevision: (change: TChange, replacer: RevisionReplacer): TChange =>
 			withFallback(() => unmitigatedRebaser.changeRevision(change, replacer)),
-		squash: (change: TChange): TChange =>
-			withFallback(() => unmitigatedRebaser.squash(change)),
+		ensureCompatibility: (change: TChange): TChange =>
+			withFallback(() => unmitigatedRebaser.ensureCompatibility(change)),
 	};
 }

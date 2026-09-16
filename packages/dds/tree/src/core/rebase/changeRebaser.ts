@@ -104,7 +104,7 @@ export interface ChangeRebaser<TChangeset> {
 	 * This also allows the ChangeRebaser an opportunity to replace any operations in the changeset
 	 * which are not backward compatible with older supported client versions.
 	 */
-	squash(change: TChangeset): TChangeset;
+	ensureCompatibility(change: TChangeset): TChangeset;
 
 	/**
 	 * Retrieves the set of revisions associated with the given change.

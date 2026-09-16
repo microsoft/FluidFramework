@@ -491,7 +491,7 @@ export const optionalChangeHandler: FieldChangeHandler<
 		change.nodeDetach === undefined,
 
 	getNestedChanges,
-	squash,
+	ensureCompatibility: squash,
 
 	createEmpty: () => ({}),
 	getCrossFieldKeys,

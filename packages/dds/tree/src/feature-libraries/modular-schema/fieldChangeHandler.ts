@@ -89,7 +89,7 @@ export interface FieldChangeHandler<
 	 * The returned change must produce the same delta as `change`, but may have different rebasing behavior.
 	 * The returned change should be compatible with `rebaseVersion`.
 	 */
-	squash(
+	ensureCompatibility(
 		change: TChangeset,
 		rebaseVersion: RebaseVersion,
 		getInputRootId: (id: ChangeAtomId, count: number) => RangeQueryResult<ChangeAtomId>,

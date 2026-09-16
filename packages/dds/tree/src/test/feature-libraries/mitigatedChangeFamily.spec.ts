@@ -59,7 +59,7 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
 			assert.equal(replacer, arg2);
 			throw new Error("changeRevision");
 		},
-		squash: (change: string): string => change,
+		ensureCompatibility: (change: string): string => change,
 	},
 	codecs: {} as unknown as ICodecFamily<string, ChangeEncodingContext>,
 	buildProcessor: (context: unknown): ((change: string) => string) => {
@@ -103,7 +103,7 @@ const returningFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
 			assert.equal(replacer, arg2);
 			return "changeRevision";
 		},
-		squash: (change) => change,
+		ensureCompatibility: (change) => change,
 	},
 	codecs: {} as unknown as ICodecFamily<string, ChangeEncodingContext>,
 	buildProcessor: (context: unknown): ((change: string) => string) => {

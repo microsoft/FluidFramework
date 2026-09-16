@@ -170,7 +170,7 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 			: [{ nodeId: change, inputRootId: undefined, detachId: undefined }],
 	createEmpty: () => undefined,
 	getCrossFieldKeys: (_change) => [],
-	squash: (change) => change,
+	ensureCompatibility: (change) => change,
 };
 
 const singleNodeField = new FlexFieldKind(

@@ -23,5 +23,5 @@ export const sequenceFieldChangeHandler: SequenceFieldChangeHandler = {
 	getNestedChanges,
 	createEmpty,
 	getCrossFieldKeys,
-	squash,
+	ensureCompatibility: squash,
 };

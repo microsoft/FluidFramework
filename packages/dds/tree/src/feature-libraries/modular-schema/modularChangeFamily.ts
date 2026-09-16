@@ -1455,52 +1455,55 @@ export class ModularChangeFamily
 		return aggregated;
 	}
 
-	public squash(change: ModularChangeset): ModularChangeset {
+	public ensureCompatibility(change: ModularChangeset): ModularChangeset {
 		const getInputRootId = (id: ChangeAtomId, count: number): RangeQueryResult<ChangeAtomId> =>
 			firstDetachIdFromAttachId(change.rootNodes, id, count);
 
 		return {
 			...change,
-			fieldChanges: this.squashFieldChanges(
+			fieldChanges: this.ensureCompatForFieldChanges(
 				change.fieldChanges,
 				change.rebaseVersion,
 				getInputRootId,
 			),
 			nodeChanges: brand(
 				change.nodeChanges.mapValues((nodeChange) =>
-					this.squashNodeChangeset(nodeChange, change.rebaseVersion, getInputRootId),
+					this.ensureCompatForNodeChangeset(nodeChange, change.rebaseVersion, getInputRootId),
 				),
 			),
 		};
 	}
 
-	private squashFieldChanges(
+	private ensureCompatForFieldChanges(
 		change: FieldChangeMap,
 		rebaseVersion: RebaseVersion,
 		getInputRootId: (id: ChangeAtomId, count: number) => RangeQueryResult<ChangeAtomId>,
 	): FieldChangeMap {
 		const updated: FieldChangeMap = new Map();
 		for (const [field, fieldChange] of change.entries()) {
-			updated.set(field, this.squashFieldChange(fieldChange, rebaseVersion, getInputRootId));
+			updated.set(
+				field,
+				this.ensureCompatForFieldChange(fieldChange, rebaseVersion, getInputRootId),
+			);
 		}
 
 		return updated;
 	}
 
-	private squashFieldChange(
+	private ensureCompatForFieldChange(
 		change: FieldChange,
 		rebaseVersion: RebaseVersion,
 		getInputRootId: (id: ChangeAtomId, count: number) => RangeQueryResult<ChangeAtomId>,
 	): FieldChange {
-		const squashedChange = this.getChangeHandler(change.fieldKind).squash(
+		const updatedChange = this.getChangeHandler(change.fieldKind).ensureCompatibility(
 			change.change,
 			rebaseVersion,
 			getInputRootId,
 		);
-		return { ...change, change: brand(squashedChange) };
+		return { ...change, change: brand(updatedChange) };
 	}
 
-	private squashNodeChangeset(
+	private ensureCompatForNodeChangeset(
 		change: NodeChangeset,
 		rebaseVersion: RebaseVersion,
 		getInputRootId: (id: ChangeAtomId, count: number) => RangeQueryResult<ChangeAtomId>,
@@ -1509,7 +1512,7 @@ export class ModularChangeFamily
 			? change
 			: {
 					...change,
-					fieldChanges: this.squashFieldChanges(
+					fieldChanges: this.ensureCompatForFieldChanges(
 						change.fieldChanges,
 						rebaseVersion,
 						getInputRootId,

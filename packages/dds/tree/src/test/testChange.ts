@@ -262,7 +262,7 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 		return change;
 	}
 
-	public squash(change: TestChange): TestChange {
+	public ensureCompatibility(change: TestChange): TestChange {
 		return change;
 	}
 }

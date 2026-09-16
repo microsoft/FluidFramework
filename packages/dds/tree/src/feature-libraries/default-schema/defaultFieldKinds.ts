@@ -46,7 +46,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	getNestedChanges: (change: 0) => [],
 	createEmpty: () => 0,
 	getCrossFieldKeys: () => [],
-	squash: (change) => change,
+	ensureCompatibility: (change) => change,
 };
 
 /**

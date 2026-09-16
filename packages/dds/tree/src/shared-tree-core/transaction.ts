@@ -501,9 +501,9 @@ export class SquashingTransactionStack<
 										0xcaf /* Unexpected commit in transaction */,
 									);
 								}
-								// XXX: Handle version compatibility.
+
 								// Squash all the new commits on the transaction branch into a new commit on the original branch
-								const squash = rebaser.compose(transactionSteps);
+								const squash = rebaser.ensureCompatibility(rebaser.compose(transactionSteps));
 								// Apply this transaction's post-processor (if any) to the squashed change (for example, to
 								// "minimize" it so that it contains no extraneous information).
 								const change =

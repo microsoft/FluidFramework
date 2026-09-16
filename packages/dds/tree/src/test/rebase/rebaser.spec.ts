@@ -45,7 +45,7 @@ export class DummyChangeRebaser implements ChangeRebaser<typeof dummyChange> {
 		return {};
 	}
 
-	public squash(): typeof dummyChange {
+	public ensureCompatibility(): typeof dummyChange {
 		return {};
 	}
 }
