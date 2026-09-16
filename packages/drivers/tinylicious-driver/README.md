@@ -28,12 +28,12 @@ npm i @fluidframework/tinylicious-driver
 
 ## Importing from this package
 
-This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
-For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+This package uses [package.json exports](https://nodejs.org/api/packages.html#exports) to separate APIs by support level.
+For information about the support guarantees, read [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
 
-To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/tinylicious-driver` like normal.
+Import the `public` APIs from `@fluidframework/tinylicious-driver`.
 
-To access the `alpha` APIs, import via `@fluidframework/tinylicious-driver/alpha`.
+Import the `alpha` APIs from `@fluidframework/tinylicious-driver/alpha`.
 
 ## API Documentation
 

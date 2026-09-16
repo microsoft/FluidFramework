@@ -10,13 +10,14 @@ Minimal sample demonstrating use of the SharedTree API.
 
 Complete these steps to run the example:
 
-1. Enable [corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html) by running `corepack enable`.
-1. Run `pnpm install` and `pnpm run build:fast --nolint` from the `FluidFramework` root directory.
-    - For an even faster build, you can add the package name to the build command, like this:
-      `pnpm run build:fast --nolint @fluid-example/inventory-app`
-1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser. The app uses an ephemeral in-browser service by default and stores the container ID in the URL hash.
-1. To retain data across reloads in the current browser tab, run `pnpm start:session` and open <http://localhost:8080/?fluidClient=session>.
-1. To share data between browser sessions, start Tinylicious in a separate terminal by running `pnpm tinylicious` in this directory, then run `pnpm start:tinylicious` and open <http://localhost:8080/?fluidClient=tinylicious>. In GitHub Codespaces, set the forwarded Tinylicious port 7070 visibility to **Public** before opening the app.
+1. Run `corepack enable` to enable [Corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html).
+2. From the `FluidFramework` root directory, run `pnpm install`.
+3. From the `FluidFramework` root directory, run `pnpm run build:fast --nolint`.
+   - To build only this package, add the package name to the command:
+     `pnpm run build:fast --nolint @fluid-example/inventory-app`
+4. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser. The app uses an ephemeral in-browser service by default and stores the container ID in the URL hash.
+5. To retain data across reloads in the current browser tab, run `pnpm start:session` and open <http://localhost:8080/?fluidClient=session>.
+6. To share data between browser sessions, start Tinylicious in a separate terminal by running `pnpm tinylicious` in this directory, then run `pnpm start:tinylicious` and open <http://localhost:8080/?fluidClient=tinylicious>. If you use GitHub Codespaces in a browser, set the visibility of the Tinylicious port (7070) to `public`. Do not use `Private to Organization`. For instructions, read [Sharing a port](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace#sharing-a-port).
 
 <!-- prettier-ignore-end -->
 <!-- markdown-magic:end -->
