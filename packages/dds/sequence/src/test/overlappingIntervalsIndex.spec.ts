@@ -354,6 +354,17 @@ describe("OverlappingIntervalsIndex", () => {
 			assertIntervals(results, [first, second], "expected the intervals starting at 10");
 		});
 
+		it("reverses a bounded gather when iterating backward", () => {
+			const results: SequenceInterval[] = [];
+			index.gatherIterationResults(results, false, 10);
+
+			assertIntervals(
+				results,
+				[second, first],
+				"expected the intervals starting at 10, reversed",
+			);
+		});
+
 		it("gathers the intervals ending at the given position", () => {
 			const results: SequenceInterval[] = [];
 			index.gatherIterationResults(results, true, undefined, 30);
