@@ -5,15 +5,9 @@
 
 /**
  * Stores events during a call to {@link withBufferedTreeEvents}.
- *
- * @remarks
- * The system sends content events before derived events.
- * Thus, all listeners observe the final tree.
  */
 export interface TreeEventBuffer {
-	/** Sends events that report direct content changes. */
-	flushContent?(): void;
-	/** Sends events that report the final tree state. */
+	/** Sends all pending events. */
 	flush(): void;
 	/** Removes all pending events. */
 	discard(): void;
@@ -27,13 +21,19 @@ let bufferTreeEvents: boolean = false;
 /**
  * Adds an event buffer to the active {@link withBufferedTreeEvents} call.
  *
+ * @param flushAfterTreeNodeEvents - Set this for derived events that must observe all buffered
+ * tree node events before they are sent.
  * @returns True if the function adds the buffer.
  */
-export function bufferTreeEvent(buffer: TreeEventBuffer): boolean {
+export function bufferTreeEvent(
+	buffer: TreeEventBuffer,
+	flushAfterTreeNodeEvents: boolean = false,
+): boolean {
 	if (!bufferTreeEvents) {
 		return false;
 	}
-	activeBuffers.add(buffer);
+	const buffers = flushAfterTreeNodeEvents ? derivedEventBuffers : treeNodeEventBuffers;
+	buffers.add(buffer);
 	return true;
 }
 
@@ -41,14 +41,15 @@ export function bufferTreeEvent(buffer: TreeEventBuffer): boolean {
  * Removes an event buffer from the active {@link withBufferedTreeEvents} call.
  */
 export function removeTreeEventBuffer(buffer: TreeEventBuffer): void {
-	activeBuffers.delete(buffer);
+	treeNodeEventBuffers.delete(buffer);
+	derivedEventBuffers.delete(buffer);
 }
 
 /**
  * Returns true if an event buffer is active.
  */
 export function isTreeEventBufferActive(buffer: TreeEventBuffer): boolean {
-	return activeBuffers.has(buffer);
+	return treeNodeEventBuffers.has(buffer) || derivedEventBuffers.has(buffer);
 }
 
 /**
@@ -78,49 +79,34 @@ export function withBufferedTreeEvents(callback: () => void): void {
 	}
 
 	bufferTreeEvents = false;
-	flushTreeEventBuffers(takeActiveBuffers());
+	for (const buffer of takeActiveBuffers()) {
+		buffer.flush();
+	}
 }
 
 function takeActiveBuffers(): TreeEventBuffer[] {
-	const buffers = [...activeBuffers];
-	activeBuffers.clear();
+	const buffers = [...treeNodeEventBuffers, ...derivedEventBuffers];
+	treeNodeEventBuffers.clear();
+	derivedEventBuffers.clear();
 	return buffers;
 }
 
 /**
- * Sends all buffered events.
- *
- * @remarks
- * An error from one listener does not stop other event buffers.
- * If listeners throw errors, this function throws the first error.
- * Some event buffers complete disposal after they send their events.
- */
-function flushTreeEventBuffers(buffers: readonly TreeEventBuffer[]): void {
-	const errors: unknown[] = [];
-	for (const flush of [
-		(buffer: TreeEventBuffer): void => buffer.flushContent?.(),
-		(buffer: TreeEventBuffer): void => buffer.flush(),
-	]) {
-		for (const buffer of buffers) {
-			try {
-				flush(buffer);
-			} catch (error) {
-				errors.push(error);
-			}
-		}
-	}
-	if (errors.length > 0) {
-		throw errors[0];
-	}
-}
-
-/**
- * Contains event buffers that have pending events.
+ * Contains tree node event buffers that have pending events.
  *
  * @remarks
  * The set is empty when no call to {@link withBufferedTreeEvents} is active.
  */
-const activeBuffers: Set<TreeEventBuffer> = new Set();
+const treeNodeEventBuffers: Set<TreeEventBuffer> = new Set();
+
+/**
+ * Contains derived event buffers that must flush after tree node events.
+ *
+ * @remarks
+ * Parent location events can subscribe to tree node events. Flushing them last allows a parent
+ * buffer to coalesce events produced while tree node buffers are flushed.
+ */
+const derivedEventBuffers: Set<TreeEventBuffer> = new Set();
 
 /**
  * Gets the number of active event buffers.
@@ -129,5 +115,5 @@ const activeBuffers: Set<TreeEventBuffer> = new Set();
  * Use this function only in tests.
  */
 export function getActiveBufferCountForTest(): number {
-	return activeBuffers.size;
+	return treeNodeEventBuffers.size + derivedEventBuffers.size;
 }

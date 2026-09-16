@@ -192,30 +192,6 @@ describe("withBufferedTreeEvents", () => {
 		assert.equal(eventCounter, 1); // Only a single event should have been raised.
 	});
 
-	it("flushes all buffers when an event listener throws", () => {
-		const first = hydrate(MyObject, new MyObject({ foo: "first", bar: true }));
-		const second = hydrate(MyObject, new MyObject({ foo: "second", bar: true }));
-		let secondListenerCalled = false;
-		TreeBeta.on(first, "nodeChanged", () => {
-			throw new Error("listener failure");
-		});
-		TreeBeta.on(second, "nodeChanged", () => {
-			secondListenerCalled = true;
-		});
-
-		assert.throws(
-			() =>
-				withBufferedTreeEvents(() => {
-					first.foo = "updated first";
-					second.foo = "updated second";
-				}),
-			/listener failure/,
-		);
-
-		assert.equal(secondListenerCalled, true);
-		assert.equal(getActiveBufferCountForTest(), 0);
-	});
-
 	it("discards buffered events when the callback throws", () => {
 		const myObject = hydrate(MyObject, new MyObject({ foo: "hi", bar: true }));
 		let listenerCalled = false;
@@ -234,25 +210,6 @@ describe("withBufferedTreeEvents", () => {
 
 		assert.equal(listenerCalled, false);
 		assert.equal(getActiveBufferCountForTest(), 0);
-	});
-
-	it("delivers pending events when another flush listener disposes their kernel", () => {
-		const first = hydrate(MyObject, new MyObject({ foo: "first", bar: true }));
-		const second = hydrate(MyObject, new MyObject({ foo: "second", bar: true }));
-		const secondKernel = getKernel(second);
-		let secondListenerCalled = false;
-		TreeBeta.on(first, "nodeChanged", () => secondKernel.dispose());
-		TreeBeta.on(second, "nodeChanged", () => {
-			secondListenerCalled = true;
-		});
-
-		withBufferedTreeEvents(() => {
-			first.foo = "updated first";
-			second.foo = "updated second";
-		});
-
-		assert.equal(secondListenerCalled, true);
-		assert.throws(() => secondKernel.getInnerNode(), /Cannot access a deleted node/);
 	});
 
 	// Regression tests for a leak where KernelEventBuffers were retained indefinitely

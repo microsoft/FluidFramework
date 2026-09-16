@@ -48,30 +48,41 @@ type ParentLocation =
  * @remarks
  * Parent events describe the final tree state.
  * This class uses {@link TreeEventBuffer} to buffer these events.
- * It does not buffer content events.
  */
 export class ParentKernel implements Listenable<ParentEvents>, TreeEventBuffer {
+	/** Emits events for this parent location. */
 	readonly #events = createEmitter<ParentEvents>();
+	/** Tracks node-change listeners so they can be removed when the location is invalidated. */
 	readonly #nodeChangedListeners = new Set<ParentEvents["nodeChanged"]>();
+	/** Tracks tree-change listeners so they can be removed when the location is invalidated. */
 	readonly #treeChangedListeners = new Set<ParentEvents["treeChanged"]>();
+	/** Events accumulated during the current buffering window. */
 	readonly #pendingEvents = new Set<keyof ParentEvents>();
+	/** Stops observing changes to the represented location. */
 	#locationObservationOff: Off | undefined;
+	/** Stops observing changes within a document root. */
 	#treeObservationOff: Off | undefined;
+	/** The last document root observed by this kernel. */
 	#lastRoot: TreeNode | TreeLeafValue | undefined;
+	/** True after a removed or unhydrated location ceases to exist. */
 	#invalidated = false;
 
+	/** Creates a kernel for the specified parent location. */
 	private constructor(private readonly location: ParentLocation) {}
 
+	/** Creates a kernel for a document root. */
 	public static documentRoot(
 		branch: SchematizingSimpleTreeView<ImplicitFieldSchema>,
 	): ParentKernel {
 		return new ParentKernel({ type: "document", branch });
 	}
 
+	/** Creates a kernel for a root in a removed field. */
 	public static removedRoot(node: TreeNode, detachedField: DetachedField): ParentKernel {
 		return new ParentKernel({ type: "removed", node, detachedField });
 	}
 
+	/** Creates a kernel for the root of an unhydrated tree. */
 	public static unhydratedRoot(node: TreeNode): ParentKernel {
 		return new ParentKernel({ type: "unhydrated", node });
 	}
@@ -113,32 +124,17 @@ export class ParentKernel implements Listenable<ParentEvents>, TreeEventBuffer {
 		return this.off.bind(this, eventName, listener);
 	}
 
-	/**
-	 * Sends parent location events after the system sends all buffered content events.
-	 */
+	/** Sends pending parent location events. */
 	public flush(): void {
 		const pendingEvents = [...this.#pendingEvents];
 		this.#pendingEvents.clear();
 
-		let firstError: unknown;
 		try {
 			for (const eventName of pendingEvents) {
-				try {
-					this.#emitNow(eventName);
-				} catch (error) {
-					firstError ??= error;
-				}
+				this.#emitNow(eventName);
 			}
 		} finally {
 			this.#clearInvalidatedLocationListeners();
-		}
-		if (firstError !== undefined) {
-			if (firstError instanceof Error) {
-				throw firstError;
-			}
-			throw new Error("Parent event listener threw a non-Error value", {
-				cause: firstError,
-			});
 		}
 	}
 
@@ -374,7 +370,7 @@ export class ParentKernel implements Listenable<ParentEvents>, TreeEventBuffer {
 		if (!this.#events.hasListeners(eventName)) {
 			return;
 		}
-		if (bufferTreeEvent(this) || this.#pendingEvents.size > 0) {
+		if (bufferTreeEvent(this, true) || this.#pendingEvents.size > 0) {
 			this.#pendingEvents.add(eventName);
 		} else {
 			this.#emitNow(eventName);

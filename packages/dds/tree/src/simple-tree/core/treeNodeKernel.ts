@@ -37,7 +37,11 @@ import type { TreeNode } from "./treeNode.js";
 import type { TreeNodeSchema } from "./treeNodeSchema.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
 import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
-import { bufferTreeEvent, isTreeEventBufferActive } from "./treeEventBuffer.js";
+import {
+	bufferTreeEvent,
+	isTreeEventBufferActive,
+	type TreeEventBuffer,
+} from "./treeEventBuffer.js";
 import { notifyTreeNodeHydrated } from "./treeNodeLifecycle.js";
 
 const treeNodeToKernel = new WeakMap<TreeNode, TreeNodeKernel>();
@@ -94,12 +98,6 @@ interface HydratedState {
 /** State within a {@link TreeNodeKernel} that is related to the hydration process */
 type HydrationState = UnhydratedState | HydratedState;
 
-enum KernelLifecycle {
-	Active,
-	DisposeRequested,
-	Disposed,
-}
-
 /** True if and only if the given {@link HydrationState} is post-hydration */
 function isHydrated(state: HydrationState): state is HydratedState {
 	return state.innerNode.isHydrated();
@@ -111,14 +109,7 @@ function isHydrated(state: HydrationState): state is HydratedState {
  * The kernel has the same lifetime as the node and spans both its unhydrated and hydrated states.
  */
 export class TreeNodeKernel {
-	/**
-	 * The kernel lifecycle.
-	 *
-	 * @remarks
-	 * Disposal can wait for buffered events to flush. The kernel rejects new listeners while disposal
-	 * is pending, but existing listeners can inspect it until the flush ends.
-	 */
-	#lifecycle = KernelLifecycle.Active;
+	private disposed = false;
 
 	/**
 	 * Generation number which is incremented any time we have an edit on the node.
@@ -199,10 +190,7 @@ export class TreeNodeKernel {
 	 * Cleans up mappings to {@link UnhydratedFlexTreeNode} - it is assumed that they are no longer needed once this node has an anchor node.
 	 */
 	public hydrate(inner: HydratedFlexTreeNode): void {
-		assert(
-			this.#lifecycle === KernelLifecycle.Active,
-			0xa2a /* cannot hydrate a disposed node */,
-		);
+		assert(!this.disposed, 0xa2a /* cannot hydrate a disposed node */);
 		assert(!isHydrated(this.#hydrationState), 0xa2b /* hydration should only happen once */);
 
 		this.#hydrationState = this.createHydratedState(inner);
@@ -233,7 +221,7 @@ export class TreeNodeKernel {
 	}
 
 	public getStatus(): TreeStatus {
-		if (this.#lifecycle === KernelLifecycle.Disposed) {
+		if (this.disposed) {
 			return TreeStatus.Deleted;
 		}
 		if (!isHydrated(this.#hydrationState)) {
@@ -253,10 +241,7 @@ export class TreeNodeKernel {
 	}
 
 	public get events(): Listenable<KernelEvents> {
-		assert(
-			this.#lifecycle === KernelLifecycle.Active,
-			"Cannot register events on a disposed node",
-		);
+		assert(!this.disposed, 0xcfa /* Cannot register events on a disposed node */);
 		// Allocate the buffer on first access. See {@link TreeNodeKernel.#eventBuffer} for rationale.
 		if (this.#eventBuffer === undefined) {
 			const eventSource = isHydrated(this.#hydrationState)
@@ -268,29 +253,14 @@ export class TreeNodeKernel {
 	}
 
 	public dispose(): void {
-		debugAssert(
-			() =>
-				this.#lifecycle === KernelLifecycle.Active || "Cannot dispose a kernel more than once",
-		);
-		if (this.#lifecycle !== KernelLifecycle.Active) {
-			return;
-		}
-		this.#lifecycle = KernelLifecycle.DisposeRequested;
-
-		if (this.#eventBuffer === undefined) {
-			this.#finishDispose();
-		} else {
-			this.#eventBuffer.dispose(this.#finishDispose.bind(this));
-		}
-	}
-
-	#finishDispose(): void {
-		this.#lifecycle = KernelLifecycle.Disposed;
+		debugAssert(() => !this.disposed || "Cannot dispose a disposed node");
+		this.disposed = true;
 		if (isHydrated(this.#hydrationState)) {
 			for (const off of this.#hydrationState.offAnchorNode) {
 				off();
 			}
 		}
+		this.#eventBuffer?.dispose();
 		// TODO: go to the context and remove myself from withAnchors
 	}
 
@@ -323,7 +293,7 @@ export class TreeNodeKernel {
 			return this.#hydrationState.innerNode; // Unhydrated case
 		}
 
-		if (this.#lifecycle === KernelLifecycle.Disposed) {
+		if (this.disposed) {
 			throw new UsageError("Cannot access a deleted node.");
 		}
 
@@ -344,28 +314,18 @@ export class TreeNodeKernel {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const kernelEvents = ["childrenChangedAfterBatch", "subtreeChangedAfterBatch"] as const;
 
-type KernelContentEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
-
-type KernelEvents = KernelContentEvents;
+type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
 
 // #region TreeNodeEventBuffer
 
-/**
- * Event emitter for {@link TreeNodeKernel}, which optionally buffers events based on {@link bufferTreeEvents}.
- * @remarks When buffering is active, this adds itself to {@link activeBuffers} so that
- * {@link withBufferedTreeEvents} can flush it at the end of the buffering window.
- */
-class KernelEventBuffer implements Listenable<KernelEvents> {
+/** Event emitter for {@link TreeNodeKernel} that supports {@link withBufferedTreeEvents}. */
+class KernelEventBuffer implements Listenable<KernelEvents>, TreeEventBuffer {
 	#disposed: boolean = false;
-	/** True while this buffer has events in the current flush cycle. */
-	#flushPending: boolean = false;
-	/** Completes kernel disposal after pending events flush. */
-	#disposeAfterFlush: (() => void) | undefined;
 
 	readonly #events = createEmitter<KernelEvents>();
 
-	#eventSource: Listenable<KernelContentEvents> & HasListeners<KernelContentEvents>;
-	readonly #disposeSourceListeners: Map<keyof KernelContentEvents, Off> = new Map();
+	#eventSource: Listenable<KernelEvents> & HasListeners<KernelEvents>;
+	readonly #disposeSourceListeners: Map<keyof KernelEvents, Off> = new Map();
 
 	/**
 	 * Buffer of fields that have changed since events were paused.
@@ -401,7 +361,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		 * Subscriptions will be created on-demand when listeners are added to this.events,
 		 * and those subscriptions will be cleaned up when all corresponding listeners have been removed.
 		 */
-		eventSource: Listenable<KernelContentEvents> & HasListeners<KernelContentEvents>,
+		eventSource: Listenable<KernelEvents> & HasListeners<KernelEvents>,
 	) {
 		this.#eventSource = eventSource;
 	}
@@ -414,7 +374,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	 * Binds events to the new source for each event with active listeners.
 	 */
 	public migrateEventSource(
-		newSource: Listenable<KernelContentEvents> & HasListeners<KernelContentEvents>,
+		newSource: Listenable<KernelEvents> & HasListeners<KernelEvents>,
 	): void {
 		// Unsubscribe from the old source
 		for (const off of this.#disposeSourceListeners.values()) {
@@ -428,13 +388,13 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 			const off = this.#eventSource.on(
 				"childrenChangedAfterBatch",
 				({ changedFields, fieldMarks }) =>
-					this.#emitContent("childrenChangedAfterBatch", { changedFields, fieldMarks }),
+					this.#emit("childrenChangedAfterBatch", { changedFields, fieldMarks }),
 			);
 			this.#disposeSourceListeners.set("childrenChangedAfterBatch", off);
 		}
 		if (this.#events.hasListeners("subtreeChangedAfterBatch")) {
 			const off = this.#eventSource.on("subtreeChangedAfterBatch", () =>
-				this.#emitContent("subtreeChangedAfterBatch"),
+				this.#emit("subtreeChangedAfterBatch"),
 			);
 			this.#disposeSourceListeners.set("subtreeChangedAfterBatch", off);
 		}
@@ -453,8 +413,8 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 
 			const off: Off =
 				eventName === "childrenChangedAfterBatch"
-					? this.#eventSource.on(eventName, (args) => this.#emitContent(eventName, args))
-					: this.#eventSource.on(eventName, () => this.#emitContent(eventName));
+					? this.#eventSource.on(eventName, (args) => this.#emit(eventName, args))
+					: this.#eventSource.on(eventName, () => this.#emit(eventName));
 			this.#disposeSourceListeners.set(eventName, off);
 		}
 
@@ -476,8 +436,8 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		}
 	}
 
-	#emitContent(
-		eventName: keyof KernelContentEvents,
+	#emit(
+		eventName: keyof KernelEvents,
 		arg?: {
 			changedFields: ReadonlySet<FieldKey>;
 			fieldMarks: ReadonlyMap<FieldKey, readonly DeltaMark[]>;
@@ -503,7 +463,6 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		fieldMarks: ReadonlyMap<FieldKey, readonly DeltaMark[]>,
 	): void {
 		if (bufferTreeEvent(this)) {
-			this.#flushPending = true;
 			for (const fieldKey of changedFields) {
 				this.#childrenChangedBuffer.add(fieldKey);
 			}
@@ -531,7 +490,6 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 
 	#handleSubtreeChangedAfterBatch(): void {
 		if (bufferTreeEvent(this)) {
-			this.#flushPending = true;
 			this.#subTreeChangedBuffer = true;
 		} else {
 			this.#events.emit("subtreeChangedAfterBatch");
@@ -541,54 +499,22 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	/**
 	 * Flushes any events buffered due to {@link withBufferedTreeEvents}.
 	 */
-	public flushContent(): void {
-		this.#assertNotDisposed();
-
-		const childrenChanged =
-			this.#childrenChangedBuffer.size === 0
-				? undefined
-				: {
-						changedFields: new Set(this.#childrenChangedBuffer),
-						fieldMarks: new Map(this.#fieldMarksBuffer),
-					};
-		const subtreeChanged = this.#subTreeChangedBuffer;
-		this.#childrenChangedBuffer.clear();
-		this.#fieldMarksBuffer.clear();
-		this.#invalidatedFieldMarkKeys.clear();
-		this.#subTreeChangedBuffer = false;
-
-		let emitError: unknown;
-		let emitThrew = false;
-		const emit = (callback: () => void): void => {
-			try {
-				callback();
-			} catch (error) {
-				if (!emitThrew) {
-					emitError = error;
-					emitThrew = true;
-				}
-			}
-		};
-
-		if (childrenChanged !== undefined) {
-			emit(() => this.#events.emit("childrenChangedAfterBatch", childrenChanged));
-		}
-		if (subtreeChanged) {
-			emit(() => this.#events.emit("subtreeChangedAfterBatch"));
-		}
-		if (emitThrew) {
-			throw emitError;
-		}
-	}
-
-	/**
-	 * Completes the current flush cycle after all content events have been delivered.
-	 */
 	public flush(): void {
 		this.#assertNotDisposed();
-		this.#flushPending = false;
-		if (this.#disposeAfterFlush !== undefined) {
-			this.#finishDispose();
+
+		if (this.#childrenChangedBuffer.size > 0) {
+			this.#events.emit("childrenChangedAfterBatch", {
+				changedFields: this.#childrenChangedBuffer,
+				fieldMarks: this.#fieldMarksBuffer,
+			});
+			this.#childrenChangedBuffer.clear();
+			this.#fieldMarksBuffer.clear();
+			this.#invalidatedFieldMarkKeys.clear();
+		}
+
+		if (this.#subTreeChangedBuffer) {
+			this.#events.emit("subtreeChangedAfterBatch");
+			this.#subTreeChangedBuffer = false;
 		}
 	}
 
@@ -596,14 +522,6 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	 * Discards pending events after the buffered callback fails.
 	 */
 	public discard(): void {
-		this.#clearBufferedEvents();
-		this.#flushPending = false;
-		if (this.#disposeAfterFlush !== undefined) {
-			this.#finishDispose();
-		}
-	}
-
-	#clearBufferedEvents(): void {
 		this.#childrenChangedBuffer.clear();
 		this.#fieldMarksBuffer.clear();
 		this.#invalidatedFieldMarkKeys.clear();
@@ -614,29 +532,11 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		assert(!this.#disposed, 0xc51 /* Event handler disposed. */);
 	}
 
-	/**
-	 * Stops this buffer after pending events flush.
-	 */
-	public dispose(afterDispose: () => void): void {
+	public dispose(): void {
 		if (this.#disposed) {
-			afterDispose();
 			return;
 		}
 
-		if (this.#flushPending) {
-			this.#disposeAfterFlush = afterDispose;
-			for (const off of this.#disposeSourceListeners.values()) {
-				off();
-			}
-			this.#disposeSourceListeners.clear();
-			return;
-		}
-
-		this.#finishDispose();
-		afterDispose();
-	}
-
-	#finishDispose(): void {
 		debugAssert(
 			() =>
 				(this.#childrenChangedBuffer.size === 0 && !this.#subTreeChangedBuffer) ||
@@ -652,13 +552,12 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		}
 		this.#disposeSourceListeners.clear();
 
-		this.#clearBufferedEvents();
-		this.#flushPending = false;
+		this.#childrenChangedBuffer.clear();
+		this.#fieldMarksBuffer.clear();
+		this.#invalidatedFieldMarkKeys.clear();
+		this.#subTreeChangedBuffer = false;
 
 		this.#disposed = true;
-		const afterDispose = this.#disposeAfterFlush;
-		this.#disposeAfterFlush = undefined;
-		afterDispose?.();
 	}
 }
 
