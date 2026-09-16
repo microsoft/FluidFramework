@@ -594,7 +594,7 @@ module.exports = {
 				"^packages/.+/.mocharc.js$",
 				"^examples/utils/webpack-fluid-loader/.mocharc.js$",
 
-				// Rename the webpack configs to .mjs and remove this after built-tools 0.68.0 is released and integrated
+				// Rename the webpack configs to .mjs and remove this after build-tools 0.68.0 is released and integrated
 				// (Which includes https://github.com/microsoft/FluidFramework/pull/28234).
 				"^examples/.+/webpack.config.js$",
 
