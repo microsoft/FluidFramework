@@ -58,7 +58,7 @@ impl Default for TransportConfig {
 #[cfg(not(target_arch = "wasm32"))]
 impl TransportConfig {
     pub(crate) fn validate(&self) -> Result<(), WebTransportError> {
-        if self.max_frame_bytes < sea_v1::MAGIC.len() + 1
+        if self.max_frame_bytes < sea_v1::MIN_FRAME_BYTES
             || self.max_connections == 0
             || self.max_streams_per_connection == 0
         {

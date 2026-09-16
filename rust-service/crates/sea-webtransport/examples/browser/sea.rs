@@ -399,7 +399,7 @@ impl SeaBrowserTransport {
         certificate_hash: Uint8Array,
         max_frame_bytes: usize,
     ) -> Result<SeaBrowserTransport, JsValue> {
-        if max_frame_bytes < protocol::MAGIC.len() + 1 {
+        if max_frame_bytes < protocol::MIN_FRAME_BYTES {
             return Err(js_error(
                 "max_frame_bytes is smaller than the Sea frame header",
             ));
@@ -519,6 +519,7 @@ pub struct SeaInjectedClient {
     author_stream: RefCell<Option<AuthorStream<InjectedBidirectionalStream>>>,
     snapshot_stream: Rc<RefCell<Option<SnapshotStream<InjectedBidirectionalStream>>>>,
     content_stream: RefCell<Option<ContentStream<InjectedBidirectionalStream>>>,
+    pending_archive_creation: RefCell<Option<Vec<u8>>>,
     resume_after: Cell<Option<u64>>,
 }
 
@@ -1025,6 +1026,7 @@ impl SeaInjectedClient {
             author_stream: RefCell::new(None),
             snapshot_stream: Rc::new(RefCell::new(None)),
             content_stream: RefCell::new(None),
+            pending_archive_creation: RefCell::new(None),
             resume_after: Cell::new(None),
         })
     }
@@ -1032,13 +1034,13 @@ impl SeaInjectedClient {
     /// Creates an archive without opening an author session.
     #[wasm_bindgen(js_name = createArchive)]
     pub async fn create_archive(&self, archive: Uint8Array) -> Result<(), JsValue> {
-        let response = self
-            .request(protocol::Request::CreateArchive {
-                version: protocol::PROTOCOL_VERSION,
-                archive: archive.to_vec(),
-            })
-            .await?;
-        expect_acknowledged(&response)
+        if self.pending_archive_creation.borrow().is_some() {
+            return Err(js_error("archive creation is already pending"));
+        }
+        self.pending_archive_creation
+            .replace(Some(archive.to_vec()));
+        std::future::ready(()).await;
+        Ok(())
     }
 
     /// Opens one archive-bound recovery and live event stream.
@@ -1057,11 +1059,22 @@ impl SeaInjectedClient {
         self.author_stream.take();
         self.snapshot_stream.take();
         self.content_stream.take();
+        let archive = archive.to_vec();
+        let pending_create = self.pending_archive_creation.borrow();
+        if let Some(pending_archive) = pending_create.as_ref()
+            && pending_archive != &archive
+        {
+            return Err(js_error(
+                "pending archive creation does not match the session",
+            ));
+        }
+        let create = create || pending_create.is_some();
+        drop(pending_create);
         let event_stream = self
             .client
             .open_event_stream(protocol::Request::OpenEventStream {
                 version: protocol::PROTOCOL_VERSION,
-                archive: archive.to_vec(),
+                archive,
                 intent: if create {
                     protocol::ArchiveIntent::Create
                 } else {
@@ -1073,6 +1086,7 @@ impl SeaInjectedClient {
             })
             .await
             .map_err(client_error)?;
+        self.pending_archive_creation.take();
         let author_stream = self
             .client
             .open_author_stream()
@@ -1383,14 +1397,6 @@ impl SeaInjectedClient {
 }
 
 impl SeaInjectedClient {
-    async fn request(&self, request: protocol::Request) -> Result<protocol::Response, JsValue> {
-        let response = self.client.request(request).await.map_err(client_error)?;
-        match response {
-            protocol::Response::Error { message, .. } => Err(js_error(&message)),
-            response => Ok(response),
-        }
-    }
-
     async fn author_request(
         &self,
         request: protocol::Request,

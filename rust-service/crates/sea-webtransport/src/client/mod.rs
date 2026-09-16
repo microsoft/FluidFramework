@@ -21,7 +21,7 @@ pub enum ClientError<TransportError> {
     Protocol(ProtocolError),
     /// A transport primitive failed.
     Transport(TransportError),
-    /// A unary request ended before its response arrived.
+    /// A correlated response ended before its required value arrived.
     ResponseEnded,
     /// An event stream did not begin with its authority response.
     UnexpectedResponse(Response),
@@ -69,65 +69,35 @@ where
         }
     }
 
-    /// Sends one request and receives its single correlated response.
-    pub async fn request(
-        &self,
-        request: Request,
-    ) -> Result<Response, ClientError<Transport::Error>> {
-        let role = request.stream_role();
-        let pending = self.state.begin(role)?;
-        let correlation_id = pending.id();
-        let outgoing = protocol::encode_request_frame(role, correlation_id, &request, self.limits)?;
-        let mut stream = self
-            .transport
-            .open_bidirectional()
-            .await
-            .map_err(ClientError::Transport)?;
-        stream
-            .send(&outgoing)
-            .await
-            .map_err(ClientError::Transport)?;
-        stream.finish().await.map_err(ClientError::Transport)?;
-        let frame = receive_frame(&mut stream, self.limits)
-            .await?
-            .ok_or(ClientError::ResponseEnded)?;
-        pending.complete(frame.correlation_id)?;
-        protocol::decode_response_network_frame(role, &frame).map_err(Into::into)
-    }
-
-    /// Starts one request whose correlated responses continue until stream EOF.
-    pub async fn request_stream(
-        &self,
-        request: Request,
-    ) -> Result<ResponseStream<Transport::Stream>, ClientError<Transport::Error>> {
-        let role = request.stream_role();
-        let pending = self.state.begin(role)?;
-        let correlation_id = pending.id();
-        let outgoing = protocol::encode_request_frame(role, correlation_id, &request, self.limits)?;
-        let mut stream = self
-            .transport
-            .open_bidirectional()
-            .await
-            .map_err(ClientError::Transport)?;
-        stream
-            .send(&outgoing)
-            .await
-            .map_err(ClientError::Transport)?;
-        stream.finish().await.map_err(ClientError::Transport)?;
-        Ok(ResponseStream {
-            stream,
-            role,
-            pending: Some(pending),
-            decoder: NetworkFrameDecoder::new(self.limits),
-        })
-    }
-
     /// Opens an event stream and consumes its authority handshake.
     pub async fn open_event_stream(
         &self,
         request: Request,
     ) -> Result<EventStream<Transport::Stream>, ClientError<Transport::Error>> {
-        let mut responses = self.request_stream(request).await?;
+        let pending = self.state.begin(StreamRole::Event)?;
+        let correlation_id = pending.id();
+        let outgoing = protocol::encode_request_frame(
+            StreamRole::Event,
+            correlation_id,
+            &request,
+            self.limits,
+        )?;
+        let mut stream = self
+            .transport
+            .open_bidirectional()
+            .await
+            .map_err(ClientError::Transport)?;
+        stream
+            .send(&outgoing)
+            .await
+            .map_err(ClientError::Transport)?;
+        stream.finish().await.map_err(ClientError::Transport)?;
+        let mut responses = ResponseStream {
+            stream,
+            role: StreamRole::Event,
+            pending: Some(pending),
+            decoder: NetworkFrameDecoder::new(self.limits),
+        };
         let response = responses.next().await?.ok_or(ClientError::ResponseEnded)?;
         let Response::EventStreamOpened { authority } = response else {
             return Err(ClientError::UnexpectedResponse(response));
@@ -595,26 +565,6 @@ where
     }
 }
 
-async fn receive_frame<Stream>(
-    stream: &mut Stream,
-    limits: protocol::Limits,
-) -> Result<Option<protocol::NetworkFrame>, ClientError<Stream::Error>>
-where
-    Stream: BidirectionalStream,
-{
-    let mut decoder = NetworkFrameDecoder::new(limits);
-    loop {
-        if let Some(frame) = decoder.next_frame()? {
-            return Ok(Some(frame));
-        }
-        let Some(chunk) = stream.receive().await.map_err(ClientError::Transport)? else {
-            decoder.finish()?;
-            return Ok(None);
-        };
-        decoder.push(&chunk);
-    }
-}
-
 async fn receive_next_frame<Stream>(
     stream: &mut Stream,
     decoder: &mut NetworkFrameDecoder,
@@ -974,63 +924,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn shared_client_decodes_fragmented_unary_and_stream_responses() {
+    async fn shared_client_decodes_fragmented_and_coalesced_event_responses() {
         let limits = protocol::Limits::default();
-        let unary = protocol::encode_response_frame(
-            StreamRole::Snapshot,
-            1,
-            &Response::Snapshot(None),
-            limits,
-        )
-        .expect("unary response");
-        let unary_client = Client::new(
-            ScriptedTransport {
-                chunks: unary.chunks(2).map(<[u8]>::to_vec).collect(),
-            },
-            limits,
-        );
-        assert_eq!(
-            unary_client
-                .request(Request::LatestSnapshot)
-                .await
-                .expect("unary request"),
-            Response::Snapshot(None)
-        );
-
-        let first = protocol::encode_response_frame(
-            StreamRole::Event,
-            1,
-            &Response::CaughtUp(None),
-            limits,
-        )
-        .expect("first stream response");
-        let second = protocol::encode_response_frame(
-            StreamRole::Event,
-            1,
-            &Response::CaughtUp(Some(2)),
-            limits,
-        )
-        .expect("second stream response");
-        let stream_client = Client::new(
-            ScriptedTransport {
-                chunks: vec![[first, second].concat()],
-            },
-            limits,
-        );
-        let mut responses = stream_client
-            .request_stream(Request::Load { required: None })
-            .await
-            .expect("stream request");
-        assert_eq!(
-            responses.next().await.expect("first item"),
-            Some(Response::CaughtUp(None))
-        );
-        assert_eq!(
-            responses.next().await.expect("second item"),
-            Some(Response::CaughtUp(Some(2)))
-        );
-        assert_eq!(responses.next().await.expect("stream EOF"), None);
-
         let opened = protocol::encode_response_frame(
             StreamRole::Event,
             1,
@@ -1049,7 +944,11 @@ mod tests {
         .expect("event stream item");
         let event_client = Client::new(
             ScriptedTransport {
-                chunks: vec![[opened, caught_up].concat()],
+                chunks: [opened, caught_up]
+                    .concat()
+                    .chunks(2)
+                    .map(<[u8]>::to_vec)
+                    .collect(),
             },
             limits,
         );

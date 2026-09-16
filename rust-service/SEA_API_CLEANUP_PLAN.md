@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 6f. Remove old transport paths.
-- **Last completed checkpoint:** 6e. Content stream.
-- **Last validation:** Checkpoint 6e formatting, strict workspace Clippy and rustdoc, workspace build and tests, example and documentation checks, generated WASM/Node behavior, TypeScript format/lint/typecheck/build/test consumers, repository policy and `build:fast`, and the real Chromium 152 WebTransport flow passed on 2026-09-16.
-- **Latest checkpoint notes:** `OpenContentStream` lazily binds one reusable content stream to event authority. Bounded history, blob, directory, and snapshot lookup requests use nonzero correlation IDs and terminate with `ResponseComplete`; clients serialize requests on that stream to preserve backpressure while independent logical streams can progress concurrently. Shared native and browser clients no longer open a transport stream per content operation.
+- **Current checkpoint:** 7. Explicit liveness and cleanup.
+- **Last completed checkpoint:** 6f. Remove old transport paths.
+- **Last validation:** Checkpoint 6f focused Rust tests and strict Clippy, generated WASM/Node behavior, TypeScript typecheck, and the real Chromium 152 WebTransport flow passed on 2026-09-16; canonical workspace validation is recorded in the implementation commit.
+- **Latest checkpoint notes:** The server accepts only the centralized length-delimited message-kind and correlation envelope. The `SEA1` outer codec, EOF-delimited helpers, generic per-operation client and service APIs, control role, and superseded archive/session/load/snapshot request variants are deleted. Event opening carries archive intent, and all known network clients use persistent event, author, snapshot, and content streams.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 6f. Remove old transport paths.
+- **Next checkpoint:** 7. Explicit liveness and cleanup.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -595,11 +595,11 @@ Do not retain the old per-operation implementation after its final consumer move
 
 #### 6f. Remove old transport paths
 
-- [ ] Delete per-operation `open_bi()` request code.
-- [ ] Delete EOF-delimited frame readers and writers.
-- [ ] Delete `SEA1` and `SEAS` markers.
-- [ ] Delete unary terminology, APIs, fallback tests, and documentation.
-- [ ] Ensure no known client can accidentally select an inefficient path.
+- [x] Delete per-operation `open_bi()` request code.
+- [x] Delete EOF-delimited frame readers and writers.
+- [x] Delete `SEA1` and `SEAS` markers.
+- [x] Delete unary terminology, APIs, fallback tests, and documentation.
+- [x] Ensure no known client can accidentally select an inefficient path.
 
 Validation after each stream subcommit:
 

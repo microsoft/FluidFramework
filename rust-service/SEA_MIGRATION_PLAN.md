@@ -317,10 +317,10 @@ Required atomic operations must make it impossible to commit an event or snapsho
 - [x] Implement the lazy load flow: optional required position, newest compatible snapshot, every subsequent event, an explicit caught-up marker, and continued live delivery without gaps. Eager content remains an optional future optimization.
 - [x] Implement distinct event-author and event-subscription stream lifecycles with explicit takeover, reconnect, cancellation, backpressure, and terminal-error behavior.
 - [x] Implement latest-value snapshot subscriptions with coalescing semantics and leave guaranteed delivery of every snapshot as a future optional mode.
-- [x] Keep content requests bounded and request-correlated in Sea v1. Multiplexed partial responses and loading hints are deferred by RS-016.
+- [x] Keep content requests bounded and request-correlated on one persistent content stream with explicit response completion.
 - [x] Keep unattached uploads available in the first implementation. Do not add leases, expiry, or collection while all uploaded content is retained.
 - [x] Bind each session and its content requests to one archive and prevent archive-independent digest probing. Production host authorization is tracked by RS-018.
-- [x] Cover unary operations, event submission streams, snapshot publication retry and resolution, gap-free load, bounded historical reads, event and snapshot subscriptions, blob-tree upload and fetch, cancellation, reconnect, and ambiguous outcomes.
+- [x] Cover persistent event, author, snapshot, and content streams, snapshot publication retry and resolution, gap-free load, bounded historical reads, blob-tree upload and fetch, cancellation, reconnect, and ambiguous outcomes.
 - [x] Remove FSP4 and the transitional protocol, client, browser, storage, and service packages after consumer cutover.
 
 ### 10. Adapt session decorators

@@ -45,64 +45,11 @@ where
         + Sync
         + 'static,
 {
-    async fn request(&self, request: protocol::Request) -> protocol::Response {
-        match self.request_inner(request).await {
-            Ok(response) | Err(response) => response,
-        }
-    }
-
-    async fn stream(
+    async fn open_event_stream(
         &self,
-        request: protocol::Request,
+        _request: protocol::Request,
     ) -> Result<SeaResponseStream, protocol::Response> {
-        match request {
-            protocol::Request::Read { after, through } => {
-                let stream = self
-                    .session
-                    .read(
-                        after.map(EventPosition::new),
-                        through.map(EventPosition::new),
-                    )
-                    .await
-                    .map_err(error_response)?;
-                Ok(Box::pin(stream.map(|item| match item {
-                    Ok(event) => session_event_to_wire(&event),
-                    Err(error) => error_response(error),
-                })))
-            }
-            protocol::Request::Load { required } => {
-                let stream = self
-                    .session
-                    .load(required.map(EventPosition::new))
-                    .await
-                    .map_err(error_response)?;
-                Ok(Box::pin(stream.map(|item| match item {
-                    Ok(LoadEvent::Snapshot(snapshot)) => {
-                        protocol::Response::LoadSnapshot(snapshot_to_wire(snapshot))
-                    }
-                    Ok(LoadEvent::Event(event)) => session_event_to_wire(&event),
-                    Ok(LoadEvent::CaughtUp(head)) => {
-                        protocol::Response::CaughtUp(head.map(EventPosition::get))
-                    }
-                    Err(error) => error_response(error),
-                })))
-            }
-            protocol::Request::SubscribeSnapshots => {
-                let stream = self
-                    .session
-                    .subscribe_snapshots()
-                    .await
-                    .map_err(error_response)?;
-                Ok(Box::pin(stream.map(|item| match item {
-                    Ok(snapshot) => protocol::Response::Snapshot(Some(snapshot_to_wire(snapshot))),
-                    Err(error) => error_response(error),
-                })))
-            }
-            _ => Err(protocol::Response::Error {
-                kind: protocol::ErrorKind::Rejected,
-                message: "request does not open a response stream".to_owned(),
-            }),
-        }
+        Err(invalid("event stream must be opened by the service host"))
     }
 
     async fn event_stream(
@@ -130,7 +77,9 @@ where
         match request {
             protocol::Request::Submit { .. }
             | protocol::Request::ResolveSubmission { .. }
-            | protocol::Request::Close => self.request(request).await,
+            | protocol::Request::Close => match self.request_inner(request).await {
+                Ok(response) | Err(response) => response,
+            },
             _ => invalid("request is not valid on an open author stream"),
         }
     }
@@ -189,7 +138,9 @@ where
                 Err(error) => error,
             },
             protocol::Request::LatestSnapshot | protocol::Request::ResolveSnapshot { .. } => {
-                self.request(request).await
+                match self.request_inner(request).await {
+                    Ok(response) | Err(response) => response,
+                }
             }
             _ => invalid("request is not valid on an open snapshot stream"),
         }
@@ -211,8 +162,19 @@ where
         &self,
         request: protocol::Request,
     ) -> Result<SeaResponseStream, protocol::Response> {
-        if matches!(request, protocol::Request::Read { .. }) {
-            return self.stream(request).await;
+        if let protocol::Request::Read { after, through } = request {
+            let stream = self
+                .session
+                .read(
+                    after.map(EventPosition::new),
+                    through.map(EventPosition::new),
+                )
+                .await
+                .map_err(error_response)?;
+            return Ok(Box::pin(stream.map(|item| match item {
+                Ok(event) => session_event_to_wire(&event),
+                Err(error) => error_response(error),
+            })));
         }
         self.request_inner(request)
             .await
@@ -237,7 +199,7 @@ where
             request @ (protocol::Request::PutBlob { .. }
             | protocol::Request::GetBlob { .. }
             | protocol::Request::PutDirectory { .. }
-            | protocol::Request::GetDirectory { .. }) => self.content_request(request).await,
+            | protocol::Request::GetDirectory { .. }) => self.content_value(request).await,
             protocol::Request::Submit {
                 operation,
                 reference,
@@ -286,29 +248,6 @@ where
                     .map_err(error_response)?;
                 Ok(protocol::Response::Snapshot(snapshot.map(snapshot_to_wire)))
             }
-            protocol::Request::PublishSnapshot {
-                operation,
-                expected_parent,
-                at_event,
-                root,
-            } => {
-                let snapshot = self
-                    .session
-                    .publish_snapshot(SnapshotPublication {
-                        operation_id: operation_id(operation)?,
-                        expected_parent: expected_parent
-                            .map(|parent| SnapshotId::from_bytes(Bytes::from(parent))),
-                        snapshot: ArchiveSnapshot {
-                            at_event: snapshot_position_from_wire(at_event),
-                            root: tree_from_wire(root),
-                        },
-                    })
-                    .await
-                    .map_err(error_response)?;
-                Ok(protocol::Response::Snapshot(Some(snapshot_to_wire(
-                    snapshot,
-                ))))
-            }
             protocol::Request::ResolveSnapshot { operation } => {
                 let snapshot = self
                     .session
@@ -321,22 +260,18 @@ where
                 self.session.close().await.map_err(error_response)?;
                 Ok(protocol::Response::Acknowledged)
             }
-            protocol::Request::CreateArchive { .. }
-            | protocol::Request::OpenSession { .. }
-            | protocol::Request::OpenEventStream { .. }
+            protocol::Request::OpenEventStream { .. }
             | protocol::Request::OpenAuthorStream { .. }
             | protocol::Request::OpenSnapshotStream { .. }
             | protocol::Request::PublishNominatedSnapshot { .. }
             | protocol::Request::OpenContentStream { .. }
-            | protocol::Request::Read { .. }
-            | protocol::Request::Load { .. }
-            | protocol::Request::SubscribeSnapshots => Err(invalid(
-                "request is not valid for an open-session unary operation",
-            )),
+            | protocol::Request::Read { .. } => {
+                Err(invalid("request is not valid for this logical stream"))
+            }
         }
     }
 
-    async fn content_request(
+    async fn content_value(
         &self,
         request: protocol::Request,
     ) -> Result<protocol::Response, protocol::Response> {
@@ -518,7 +453,7 @@ mod tests {
     use crate::SeaConnectionService;
 
     #[tokio::test]
-    async fn dispatches_typed_operations_and_load_streams() {
+    async fn dispatches_typed_role_operations() {
         let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
             .await
             .unwrap();
@@ -532,26 +467,43 @@ mod tests {
             .unwrap();
         let dispatcher = SessionDispatcher::new(Arc::new(session));
 
-        let protocol::Response::BlobStored { id } = dispatcher
-            .request(protocol::Request::PutBlob {
+        let mut stored = dispatcher
+            .content_request(protocol::Request::PutBlob {
                 payload: b"content".to_vec(),
             })
             .await
+            .expect("blob upload response");
+        let protocol::Response::BlobStored { id } = dispatcher
+            .content_request(protocol::Request::PutBlob {
+                payload: b"content-2".to_vec(),
+            })
+            .await
+            .expect("second blob upload response")
+            .next()
+            .await
+            .expect("second blob identity")
         else {
             panic!("blob upload should return its identity");
         };
-        let protocol::Response::Blob(payload) =
-            dispatcher.request(protocol::Request::GetBlob { id }).await
+        assert!(matches!(
+            stored.next().await,
+            Some(protocol::Response::BlobStored { .. })
+        ));
+        let mut fetched = dispatcher
+            .content_request(protocol::Request::GetBlob { id })
+            .await
+            .expect("blob fetch response");
+        let protocol::Response::Blob(payload) = fetched.next().await.expect("blob fetch payload")
         else {
             panic!("blob fetch should return bytes");
         };
-        assert_eq!(payload, b"content");
+        assert_eq!(payload, b"content-2");
 
         let protocol::Response::EventCommitted {
             position,
             durability,
         } = dispatcher
-            .request(protocol::Request::Submit {
+            .author_request(protocol::Request::Submit {
                 operation: b"operation".to_vec(),
                 reference: None,
                 event: protocol::Event {
@@ -567,7 +519,7 @@ mod tests {
         assert!(position > 0);
         assert_eq!(
             dispatcher
-                .request(protocol::Request::ResolveSubmission {
+                .author_request(protocol::Request::ResolveSubmission {
                     operation: b"operation".to_vec(),
                 })
                 .await,
@@ -577,10 +529,7 @@ mod tests {
             }
         );
 
-        let mut load = dispatcher
-            .stream(protocol::Request::Load { required: None })
-            .await
-            .expect("load stream");
+        let mut load = dispatcher.event_stream(None).await.expect("load stream");
         assert!(matches!(
             load.next().await,
             Some(protocol::Response::LoadEvent(event)) if event.position == position

@@ -23,15 +23,6 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Impact:** Storage grows monotonically and stale-position or unavailable-history behavior cannot yet be exercised.
 - **Trigger:** Add leases, retention boundaries, and collection when a bounded deployment supplies concrete lifetime requirements.
 
-## RS-016: Content transfer uses bounded unary requests
-
-- **Status:** Deferred
-- **Severity:** Medium
-- **Area:** Protocol
-- **Evidence:** Sea v1 correlates and bounds each blob or directory request, but it does not multiplex partial content responses, loading hints, eager recursive results, or request-scoped cancellation on one content stream.
-- **Impact:** Large or related content requires separate WebTransport streams and cannot use cache hints to reduce round trips.
-- **Trigger:** Introduce a versioned content stream after measurements show unary requests are a material bottleneck.
-
 ## RS-017: Session eviction is explicit, not time based
 
 - **Status:** Deferred

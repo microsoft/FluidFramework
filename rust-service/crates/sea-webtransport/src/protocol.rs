@@ -12,8 +12,6 @@ pub const PROTOCOL_VERSION: u16 = 2;
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[repr(u8)]
 pub enum MessageKind {
-    CreateArchive = 1,
-    OpenSession = 2,
     Submit = 3,
     ResolveSubmission = 4,
     Read = 5,
@@ -23,10 +21,7 @@ pub enum MessageKind {
     GetDirectory = 9,
     GetSnapshot = 10,
     LatestSnapshot = 11,
-    PublishSnapshot = 12,
     ResolveSnapshot = 13,
-    Load = 14,
-    SubscribeSnapshots = 15,
     Close = 16,
     OpenEventStream = 17,
     OpenAuthorStream = 18,
@@ -55,8 +50,6 @@ impl TryFrom<u8> for MessageKind {
 
     fn try_from(value: u8) -> Result<Self, ProtocolError> {
         match value {
-            1 => Ok(Self::CreateArchive),
-            2 => Ok(Self::OpenSession),
             3 => Ok(Self::Submit),
             4 => Ok(Self::ResolveSubmission),
             5 => Ok(Self::Read),
@@ -66,10 +59,7 @@ impl TryFrom<u8> for MessageKind {
             9 => Ok(Self::GetDirectory),
             10 => Ok(Self::GetSnapshot),
             11 => Ok(Self::LatestSnapshot),
-            12 => Ok(Self::PublishSnapshot),
             13 => Ok(Self::ResolveSnapshot),
-            14 => Ok(Self::Load),
-            15 => Ok(Self::SubscribeSnapshots),
             16 => Ok(Self::Close),
             17 => Ok(Self::OpenEventStream),
             18 => Ok(Self::OpenAuthorStream),
@@ -105,7 +95,6 @@ impl From<MessageKind> for u8 {
 /// Logical stream on which a message is valid.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum StreamRole {
-    Control,
     Event,
     Author,
     Snapshot,
@@ -114,9 +103,7 @@ pub enum StreamRole {
 
 impl MessageKind {
     /// Every assigned message kind in numeric order.
-    pub const ALL: [Self; 36] = [
-        Self::CreateArchive,
-        Self::OpenSession,
+    pub const ALL: [Self; 31] = [
         Self::Submit,
         Self::ResolveSubmission,
         Self::Read,
@@ -126,10 +113,7 @@ impl MessageKind {
         Self::GetDirectory,
         Self::GetSnapshot,
         Self::LatestSnapshot,
-        Self::PublishSnapshot,
         Self::ResolveSnapshot,
-        Self::Load,
-        Self::SubscribeSnapshots,
         Self::Close,
         Self::OpenEventStream,
         Self::OpenAuthorStream,
@@ -158,14 +142,9 @@ impl MessageKind {
     pub const fn is_valid_on(self, role: StreamRole) -> bool {
         use MessageKind as Kind;
         match role {
-            StreamRole::Control => {
-                matches!(self, Kind::CreateArchive | Kind::Acknowledged | Kind::Error)
-            }
             StreamRole::Event => matches!(
                 self,
-                Kind::OpenSession
-                    | Kind::OpenEventStream
-                    | Kind::Load
+                Kind::OpenEventStream
                     | Kind::LoadSnapshot
                     | Kind::LoadEvent
                     | Kind::CaughtUp
@@ -186,11 +165,9 @@ impl MessageKind {
             ),
             StreamRole::Snapshot => matches!(
                 self,
-                Kind::SubscribeSnapshots
-                    | Kind::OpenSnapshotStream
+                Kind::OpenSnapshotStream
                     | Kind::PublishNominatedSnapshot
                     | Kind::LatestSnapshot
-                    | Kind::PublishSnapshot
                     | Kind::ResolveSnapshot
                     | Kind::Snapshot
                     | Kind::SnapshotCoordination
@@ -225,8 +202,7 @@ impl MessageKind {
     #[must_use]
     pub const fn request_role(self) -> Option<StreamRole> {
         match self {
-            Self::CreateArchive => Some(StreamRole::Control),
-            Self::OpenSession | Self::Load | Self::OpenEventStream => Some(StreamRole::Event),
+            Self::OpenEventStream => Some(StreamRole::Event),
             Self::OpenAuthorStream | Self::Submit | Self::ResolveSubmission | Self::Close => {
                 Some(StreamRole::Author)
             }
@@ -238,11 +214,9 @@ impl MessageKind {
             | Self::GetDirectory
             | Self::GetSnapshot => Some(StreamRole::Content),
             Self::LatestSnapshot
-            | Self::PublishSnapshot
             | Self::OpenSnapshotStream
             | Self::PublishNominatedSnapshot
-            | Self::ResolveSnapshot
-            | Self::SubscribeSnapshots => Some(StreamRole::Snapshot),
+            | Self::ResolveSnapshot => Some(StreamRole::Snapshot),
             _ => None,
         }
     }
@@ -259,13 +233,10 @@ impl MessageKind {
     }
 }
 
-/// Marker identifying one Sea protocol frame.
-pub const MAGIC: [u8; 4] = *b"SEA1";
-/// Current Sea protocol version.
-pub const VERSION: u8 = 1;
-const HEADER_BYTES: usize = MAGIC.len() + 1;
 const NETWORK_LENGTH_BYTES: usize = 4;
 const NETWORK_HEADER_BYTES: usize = 1 + 8;
+/// Smallest complete length-delimited network frame.
+pub const MIN_FRAME_BYTES: usize = NETWORK_LENGTH_BYTES + NETWORK_HEADER_BYTES;
 
 /// Maximum accepted encoded frame size.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -592,24 +563,6 @@ pub mod payload {
     #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct Empty;
 
-    /// Explicit archive creation payload.
-    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-    pub struct CreateArchive {
-        pub version: u16,
-        pub archive: Vec<u8>,
-    }
-
-    /// Archive-bound event-session opening payload.
-    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-    pub struct OpenSession {
-        pub version: u16,
-        pub archive: Vec<u8>,
-        pub intent: ArchiveIntent,
-        pub author: Vec<u8>,
-        pub session: Vec<u8>,
-        pub reference: Option<u64>,
-    }
-
     /// Archive-bound event-stream opening payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct OpenEventStream {
@@ -715,12 +668,6 @@ pub mod payload {
         pub root: TreeId,
     }
 
-    /// Event recovery load payload.
-    #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-    pub struct Load {
-        pub required: Option<u64>,
-    }
-
     /// Committed event receipt payload.
     #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct EventCommitted {
@@ -782,28 +729,6 @@ pub mod payload {
 /// One request on a Sea session control or operation stream.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Request {
-    /// Creates one archive without opening an author session.
-    CreateArchive {
-        /// Protocol version proposed before archive state is created.
-        version: u16,
-        /// Archive identity that must not already exist.
-        archive: Vec<u8>,
-    },
-    /// Opens one archive-bound author session.
-    OpenSession {
-        /// Protocol version proposed before session state is created.
-        version: u16,
-        /// Archive selected for this session.
-        archive: Vec<u8>,
-        /// Explicit archive lifecycle intent.
-        intent: ArchiveIntent,
-        /// Stable author identity.
-        author: Vec<u8>,
-        /// Fresh connection identity.
-        session: Vec<u8>,
-        /// Latest event incorporated by the author.
-        reference: Option<u64>,
-    },
     /// Submits one event under a stable operation identity.
     Submit {
         /// Stable retry identity.
@@ -852,29 +777,11 @@ pub enum Request {
     },
     /// Fetches the latest retained snapshot.
     LatestSnapshot,
-    /// Conditionally publishes one snapshot.
-    PublishSnapshot {
-        /// Stable retry identity.
-        operation: Vec<u8>,
-        /// Expected latest snapshot publication.
-        expected_parent: Option<Vec<u8>>,
-        /// Included event boundary.
-        at_event: SnapshotPosition,
-        /// Immutable content-tree root.
-        root: TreeId,
-    },
     /// Resolves a possibly ambiguous snapshot publication.
     ResolveSnapshot {
         /// Stable retry identity.
         operation: Vec<u8>,
     },
-    /// Starts snapshot selection, finite catch-up, and live continuation.
-    Load {
-        /// Position that a selected snapshot must not exceed.
-        required: Option<u64>,
-    },
-    /// Opens a latest-value snapshot subscription.
-    SubscribeSnapshots,
     /// Explicitly closes the logical session.
     Close,
     /// Opens the archive-bound recovery and live event stream.
@@ -995,8 +902,6 @@ impl Request {
     #[must_use]
     pub const fn kind(&self) -> MessageKind {
         match self {
-            Self::CreateArchive { .. } => MessageKind::CreateArchive,
-            Self::OpenSession { .. } => MessageKind::OpenSession,
             Self::OpenEventStream { .. } => MessageKind::OpenEventStream,
             Self::OpenAuthorStream { .. } => MessageKind::OpenAuthorStream,
             Self::OpenContentStream { .. } => MessageKind::OpenContentStream,
@@ -1011,10 +916,7 @@ impl Request {
             Self::GetDirectory { .. } => MessageKind::GetDirectory,
             Self::GetSnapshot { .. } => MessageKind::GetSnapshot,
             Self::LatestSnapshot => MessageKind::LatestSnapshot,
-            Self::PublishSnapshot { .. } => MessageKind::PublishSnapshot,
             Self::ResolveSnapshot { .. } => MessageKind::ResolveSnapshot,
-            Self::Load { .. } => MessageKind::Load,
-            Self::SubscribeSnapshots => MessageKind::SubscribeSnapshots,
             Self::Close => MessageKind::Close,
         }
     }
@@ -1023,10 +925,7 @@ impl Request {
     #[must_use]
     pub const fn stream_role(&self) -> StreamRole {
         match self {
-            Self::CreateArchive { .. } => StreamRole::Control,
-            Self::OpenSession { .. } | Self::OpenEventStream { .. } | Self::Load { .. } => {
-                StreamRole::Event
-            }
+            Self::OpenEventStream { .. } => StreamRole::Event,
             Self::OpenAuthorStream { .. }
             | Self::Submit { .. }
             | Self::ResolveSubmission { .. }
@@ -1039,11 +938,9 @@ impl Request {
             | Self::GetDirectory { .. }
             | Self::GetSnapshot { .. } => StreamRole::Content,
             Self::LatestSnapshot
-            | Self::PublishSnapshot { .. }
             | Self::OpenSnapshotStream { .. }
             | Self::PublishNominatedSnapshot { .. }
-            | Self::ResolveSnapshot { .. }
-            | Self::SubscribeSnapshots => StreamRole::Snapshot,
+            | Self::ResolveSnapshot { .. } => StreamRole::Snapshot,
         }
     }
 }
@@ -1110,37 +1007,6 @@ pub fn encode_request_frame(
 ) -> Result<Vec<u8>, ProtocolError> {
     use payload as wire;
     match request {
-        Request::CreateArchive { version, archive } => encode_typed_payload(
-            role,
-            request.kind(),
-            correlation_id,
-            &wire::CreateArchive {
-                version: *version,
-                archive: archive.clone(),
-            },
-            limits,
-        ),
-        Request::OpenSession {
-            version,
-            archive,
-            intent,
-            author,
-            session,
-            reference,
-        } => encode_typed_payload(
-            role,
-            request.kind(),
-            correlation_id,
-            &wire::OpenSession {
-                version: *version,
-                archive: archive.clone(),
-                intent: *intent,
-                author: author.clone(),
-                session: session.clone(),
-                reference: *reference,
-            },
-            limits,
-        ),
         Request::OpenEventStream {
             version,
             archive,
@@ -1284,33 +1150,7 @@ pub fn encode_request_frame(
             &wire::SnapshotId { id: id.clone() },
             limits,
         ),
-        Request::PublishSnapshot {
-            operation,
-            expected_parent,
-            at_event,
-            root,
-        } => encode_typed_payload(
-            role,
-            request.kind(),
-            correlation_id,
-            &wire::PublishSnapshot {
-                operation: operation.clone(),
-                expected_parent: expected_parent.clone(),
-                at_event: *at_event,
-                root: *root,
-            },
-            limits,
-        ),
-        Request::Load { required } => encode_typed_payload(
-            role,
-            request.kind(),
-            correlation_id,
-            &wire::Load {
-                required: *required,
-            },
-            limits,
-        ),
-        Request::LatestSnapshot | Request::SubscribeSnapshots | Request::Close => {
+        Request::LatestSnapshot | Request::Close => {
             encode_typed_payload(role, request.kind(), correlation_id, &wire::Empty, limits)
         }
     }
@@ -1330,24 +1170,6 @@ pub fn decode_request_frame(
     frame.kind.validate_on(role)?;
     validate_correlation(frame.kind, frame.correlation_id)?;
     Ok(match frame.kind {
-        MessageKind::CreateArchive => {
-            let value: wire::CreateArchive = decode_typed_payload(frame)?;
-            Request::CreateArchive {
-                version: value.version,
-                archive: value.archive,
-            }
-        }
-        MessageKind::OpenSession => {
-            let value: wire::OpenSession = decode_typed_payload(frame)?;
-            Request::OpenSession {
-                version: value.version,
-                archive: value.archive,
-                intent: value.intent,
-                author: value.author,
-                session: value.session,
-                reference: value.reference,
-            }
-        }
         MessageKind::OpenEventStream => {
             let value: wire::OpenEventStream = decode_typed_payload(frame)?;
             Request::OpenEventStream {
@@ -1443,25 +1265,6 @@ pub fn decode_request_frame(
         MessageKind::LatestSnapshot => {
             let _: wire::Empty = decode_typed_payload(frame)?;
             Request::LatestSnapshot
-        }
-        MessageKind::PublishSnapshot => {
-            let value: wire::PublishSnapshot = decode_typed_payload(frame)?;
-            Request::PublishSnapshot {
-                operation: value.operation,
-                expected_parent: value.expected_parent,
-                at_event: value.at_event,
-                root: value.root,
-            }
-        }
-        MessageKind::Load => {
-            let value: wire::Load = decode_typed_payload(frame)?;
-            Request::Load {
-                required: value.required,
-            }
-        }
-        MessageKind::SubscribeSnapshots => {
-            let _: wire::Empty = decode_typed_payload(frame)?;
-            Request::SubscribeSnapshots
         }
         MessageKind::Close => {
             let _: wire::Empty = decode_typed_payload(frame)?;
@@ -1725,15 +1528,6 @@ pub enum ErrorKind {
     Corrupt,
 }
 
-/// One correlated Sea protocol frame.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct Frame<T> {
-    /// Caller-selected request identity.
-    pub request_id: u64,
-    /// Typed request or response value.
-    pub message: T,
-}
-
 /// Failure to encode or decode one bounded Sea protocol frame.
 #[derive(Debug, Error)]
 pub enum ProtocolError {
@@ -1761,127 +1555,23 @@ pub enum ProtocolError {
     /// A length-delimited envelope ended before its declared boundary.
     #[error("Sea network frame is incomplete")]
     IncompleteFrame,
-    /// The configured limit cannot contain a frame header.
-    #[error("maximum frame size is smaller than the Sea protocol header")]
-    InvalidLimit,
     /// An encoded or received frame exceeds the configured limit.
     #[error("Sea protocol frame exceeds its configured limit")]
     FrameTooLarge,
-    /// The frame marker is absent or invalid.
-    #[error("invalid Sea protocol frame marker")]
-    InvalidMagic,
-    /// The frame uses an unsupported protocol version.
-    #[error("unsupported Sea protocol version {0}")]
-    UnsupportedVersion(u8),
     /// The typed payload is malformed or has trailing bytes.
     #[error("invalid Sea protocol payload: {0}")]
     InvalidPayload(postcard::Error),
 }
 
-/// Encodes one bounded Sea protocol frame.
-///
-/// # Errors
-///
-/// Returns an error when the limit is invalid, serialization fails, or the result is too large.
-pub fn encode<T: Serialize>(value: &T, limits: Limits) -> Result<Vec<u8>, ProtocolError> {
-    if limits.max_frame_bytes < HEADER_BYTES {
-        return Err(ProtocolError::InvalidLimit);
-    }
-    let payload = postcard::to_allocvec(value).map_err(ProtocolError::InvalidPayload)?;
-    let frame_length = HEADER_BYTES
-        .checked_add(payload.len())
-        .ok_or(ProtocolError::FrameTooLarge)?;
-    if frame_length > limits.max_frame_bytes {
-        return Err(ProtocolError::FrameTooLarge);
-    }
-    let mut frame = Vec::with_capacity(frame_length);
-    frame.extend_from_slice(&MAGIC);
-    frame.push(VERSION);
-    frame.extend_from_slice(&payload);
-    Ok(frame)
-}
-
-/// Decodes one complete bounded Sea protocol frame.
-///
-/// # Errors
-///
-/// Returns an error for invalid bounds, marker, version, payload, or trailing bytes.
-pub fn decode<T: DeserializeOwned>(bytes: &[u8], limits: Limits) -> Result<T, ProtocolError> {
-    if limits.max_frame_bytes < HEADER_BYTES {
-        return Err(ProtocolError::InvalidLimit);
-    }
-    if bytes.len() > limits.max_frame_bytes {
-        return Err(ProtocolError::FrameTooLarge);
-    }
-    if bytes.len() < HEADER_BYTES || bytes[..MAGIC.len()] != MAGIC {
-        return Err(ProtocolError::InvalidMagic);
-    }
-    if bytes[MAGIC.len()] != VERSION {
-        return Err(ProtocolError::UnsupportedVersion(bytes[MAGIC.len()]));
-    }
-    postcard::from_bytes(&bytes[HEADER_BYTES..]).map_err(ProtocolError::InvalidPayload)
-}
-
 #[cfg(test)]
 mod tests {
     use super::{
-        ArchiveIntent, CorrelationTracker, DirectoryEntry, ErrorKind, Event, Frame, Limits, MAGIC,
-        MessageKind, NetworkFrame, NetworkFrameDecoder, PROTOCOL_VERSION, ProtocolError, Request,
-        Response, Snapshot, SnapshotPosition, StreamEvent, StreamRole, TreeId, VERSION,
-        WireDurability, decode, decode_request_frame, decode_response_network_frame, encode,
-        encode_network_frame, encode_request_frame, encode_response_frame,
+        ArchiveIntent, CorrelationTracker, DirectoryEntry, ErrorKind, Event, Limits, MessageKind,
+        NetworkFrame, NetworkFrameDecoder, PROTOCOL_VERSION, ProtocolError, Request, Response,
+        Snapshot, SnapshotPosition, StreamEvent, StreamRole, TreeId, WireDurability,
+        decode_request_frame, decode_response_network_frame, encode_network_frame,
+        encode_request_frame, encode_response_frame,
     };
-
-    #[test]
-    fn request_round_trips() {
-        let request = Frame {
-            request_id: 7,
-            message: Request::Submit {
-                operation: b"operation".to_vec(),
-                reference: Some(42),
-                event: Event {
-                    payload: b"payload".to_vec(),
-                    blob_tree: Some(TreeId::Blob([3; 32])),
-                },
-            },
-        };
-        let encoded = encode(&request, Limits::default()).expect("encoding");
-        assert_eq!(
-            decode::<Frame<Request>>(&encoded, Limits::default()).expect("decoding"),
-            request
-        );
-    }
-
-    #[test]
-    fn rejects_bounds_magic_and_version() {
-        assert!(matches!(
-            encode(
-                &Frame {
-                    request_id: 1,
-                    message: Request::Close,
-                },
-                Limits { max_frame_bytes: 1 }
-            ),
-            Err(ProtocolError::InvalidLimit)
-        ));
-        assert!(matches!(
-            decode::<Frame<Request>>(b"FSP4\0", Limits::default()),
-            Err(ProtocolError::InvalidMagic)
-        ));
-        let mut encoded = encode(
-            &Frame {
-                request_id: 1,
-                message: Request::Close,
-            },
-            Limits::default(),
-        )
-        .expect("encoding");
-        encoded[MAGIC.len()] = VERSION + 1;
-        assert!(matches!(
-            decode::<Frame<Request>>(&encoded, Limits::default()),
-            Err(ProtocolError::UnsupportedVersion(_))
-        ));
-    }
 
     #[test]
     fn every_message_kind_has_one_explicit_byte() {
@@ -1933,7 +1623,7 @@ mod tests {
     #[test]
     fn network_frames_reject_limits_correlation_and_wrong_streams() {
         let opening = NetworkFrame {
-            kind: MessageKind::OpenSession,
+            kind: MessageKind::OpenEventStream,
             correlation_id: 0,
             payload: Vec::new(),
         };
@@ -2041,24 +1731,6 @@ mod tests {
         }];
         let cases = vec![
             (
-                StreamRole::Control,
-                Request::CreateArchive {
-                    version: PROTOCOL_VERSION,
-                    archive: b"archive".to_vec(),
-                },
-            ),
-            (
-                StreamRole::Event,
-                Request::OpenSession {
-                    version: PROTOCOL_VERSION,
-                    archive: b"archive".to_vec(),
-                    intent: ArchiveIntent::Open,
-                    author: b"author".to_vec(),
-                    session: b"session".to_vec(),
-                    reference: Some(1),
-                },
-            ),
-            (
                 StreamRole::Event,
                 Request::OpenEventStream {
                     version: PROTOCOL_VERSION,
@@ -2133,21 +1805,10 @@ mod tests {
             (StreamRole::Snapshot, Request::LatestSnapshot),
             (
                 StreamRole::Snapshot,
-                Request::PublishSnapshot {
-                    operation: b"snapshot-operation".to_vec(),
-                    expected_parent: Some(vec![8; 8]),
-                    at_event: SnapshotPosition::At(2),
-                    root: TreeId::Directory([9; 32]),
-                },
-            ),
-            (
-                StreamRole::Snapshot,
                 Request::ResolveSnapshot {
                     operation: b"snapshot-operation".to_vec(),
                 },
             ),
-            (StreamRole::Event, Request::Load { required: Some(2) }),
-            (StreamRole::Snapshot, Request::SubscribeSnapshots),
             (StreamRole::Author, Request::Close),
         ];
         for (role, request) in cases {
@@ -2184,7 +1845,7 @@ mod tests {
             },
         };
         let cases = vec![
-            (StreamRole::Control, Response::Acknowledged),
+            (StreamRole::Author, Response::Acknowledged),
             (StreamRole::Content, Response::ResponseComplete),
             (
                 StreamRole::Event,
@@ -2237,7 +1898,7 @@ mod tests {
             ),
             (StreamRole::Event, Response::CaughtUp(Some(2))),
             (
-                StreamRole::Control,
+                StreamRole::Author,
                 Response::Error {
                     kind: ErrorKind::Rejected,
                     message: "rejected".to_owned(),
@@ -2259,11 +1920,11 @@ mod tests {
     #[test]
     fn typed_payloads_reject_wrong_direction_and_malformed_bytes() {
         let response = Response::Acknowledged;
-        let encoded = encode_response_frame(StreamRole::Control, 1, &response, Limits::default())
+        let encoded = encode_response_frame(StreamRole::Author, 1, &response, Limits::default())
             .expect("response encoding");
         let frame = decode_one_network_frame(&encoded);
         assert!(matches!(
-            decode_request_frame(StreamRole::Control, &frame),
+            decode_request_frame(StreamRole::Author, &frame),
             Err(ProtocolError::UnexpectedMessageDirection(
                 MessageKind::Acknowledged
             ))
