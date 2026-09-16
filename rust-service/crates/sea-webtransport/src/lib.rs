@@ -5,7 +5,7 @@ pub mod protocol;
 #[cfg(not(target_arch = "wasm32"))]
 mod native;
 #[cfg(not(target_arch = "wasm32"))]
-pub use native::{NativeSeaClient, SeaClientError};
+pub use native::{NativeSeaClient, NativeSessionOpen, SeaClientError};
 
 #[cfg(not(target_arch = "wasm32"))]
 use bytes::Bytes;

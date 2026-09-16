@@ -200,7 +200,8 @@ where
                 self.session.close().await.map_err(error_response)?;
                 Ok(protocol::Response::Acknowledged)
             }
-            protocol::Request::OpenSession { .. }
+            protocol::Request::CreateArchive { .. }
+            | protocol::Request::OpenSession { .. }
             | protocol::Request::Read { .. }
             | protocol::Request::Load { .. }
             | protocol::Request::SubscribeSnapshots => Err(invalid(

@@ -126,25 +126,16 @@ test("generated local clients require explicit archive creation", async () => {
 			),
 		/archive does not exist/,
 	);
+	await service.connect().createArchive(archive);
+	await assert.rejects(service.connect().createArchive(archive), /archive already exists/);
 	await service
 		.connect()
 		.openSession(
 			archive,
-			true,
-			encoder.encode("create-author"),
-			encoder.encode("create-session"),
+			false,
+			encoder.encode("open-author"),
+			encoder.encode("open-session"),
 		);
-	await assert.rejects(
-		service
-			.connect()
-			.openSession(
-				archive,
-				true,
-				encoder.encode("duplicate-author"),
-				encoder.encode("duplicate-session"),
-			),
-		/archive already exists/,
-	);
 });
 
 test("generated local stream cancellation wakes a pending read", async () => {

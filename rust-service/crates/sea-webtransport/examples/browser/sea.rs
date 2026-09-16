@@ -587,6 +587,16 @@ pub struct SeaLocalClient {
 
 #[wasm_bindgen]
 impl SeaLocalClient {
+    /// Creates an archive without opening an author session.
+    #[wasm_bindgen(js_name = createArchive)]
+    pub async fn create_archive(&self, archive: Uint8Array) -> Result<(), JsValue> {
+        if self.archive.borrow().is_some() {
+            return Err(js_error("archive already exists"));
+        }
+        self.archive.replace(Some(archive.to_vec()));
+        Ok(())
+    }
+
     /// Opens or replaces this client's author session.
     #[wasm_bindgen(js_name = openSession)]
     pub async fn open_session(
@@ -964,6 +974,17 @@ impl SeaInjectedClient {
             next_request_id: Cell::new(1),
             limits: protocol::Limits { max_frame_bytes },
         })
+    }
+
+    /// Creates an archive without opening an author session.
+    #[wasm_bindgen(js_name = createArchive)]
+    pub async fn create_archive(&self, archive: Uint8Array) -> Result<(), JsValue> {
+        let response = self
+            .request(protocol::Request::CreateArchive {
+                archive: archive.to_vec(),
+            })
+            .await?;
+        expect_acknowledged(&response)
     }
 
     /// Opens one archive-bound author session.

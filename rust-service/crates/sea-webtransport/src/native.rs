@@ -101,6 +101,20 @@ pub struct NativeSeaClient {
     closed: AtomicBool,
 }
 
+/// Values that identify and initialize one native archive-bound session.
+pub struct NativeSessionOpen {
+    /// Archive selected for this session.
+    pub archive: Bytes,
+    /// Whether the archive is created or must already exist.
+    pub intent: protocol::ArchiveIntent,
+    /// Stable author identity.
+    pub author: AuthorId,
+    /// Fresh session identity.
+    pub session: SessionId,
+    /// Latest event incorporated by the author.
+    pub reference: Option<EventPosition>,
+}
+
 impl NativeSeaClient {
     /// Connects to `/sea` and opens one archive-bound logical session.
     ///
@@ -111,11 +125,7 @@ impl NativeSeaClient {
         url: impl Into<String>,
         certificate_hash: Sha256Digest,
         config: TransportConfig,
-        archive: Bytes,
-        intent: protocol::ArchiveIntent,
-        author: AuthorId,
-        session: SessionId,
-        reference: Option<EventPosition>,
+        open: NativeSessionOpen,
     ) -> Result<Self, SeaClientError> {
         config.validate()?;
         let url = url.into();
@@ -130,11 +140,11 @@ impl NativeSeaClient {
         };
         match client
             .request(protocol::Request::OpenSession {
-                archive: archive.to_vec(),
-                intent,
-                author: author.as_bytes().to_vec(),
-                session: session.as_bytes().to_vec(),
-                reference: reference.map(EventPosition::get),
+                archive: open.archive.to_vec(),
+                intent: open.intent,
+                author: open.author.as_bytes().to_vec(),
+                session: open.session.as_bytes().to_vec(),
+                reference: open.reference.map(EventPosition::get),
             })
             .await?
         {

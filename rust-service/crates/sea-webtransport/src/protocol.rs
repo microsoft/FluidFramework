@@ -104,6 +104,11 @@ pub enum ArchiveIntent {
 /// One request on a Sea session control or operation stream.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Request {
+    /// Creates one archive without opening an author session.
+    CreateArchive {
+        /// Archive identity that must not already exist.
+        archive: Vec<u8>,
+    },
     /// Opens one archive-bound author session.
     OpenSession {
         /// Archive selected for this session.

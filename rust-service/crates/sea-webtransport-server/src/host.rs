@@ -128,26 +128,41 @@ impl BuiltInSeaHost {
         session: SessionId,
         reference: Option<EventPosition>,
     ) -> Result<Arc<dyn SeaConnectionService>, protocol::Response> {
+        self.ensure_archive(&archive_id, intent).await?;
+        let state = self.inner.state.lock().await;
+        state
+            .archives
+            .get(&archive_id)
+            .expect("archive was created or opened")
+            .open_session(author, session, reference)
+            .await
+    }
+
+    async fn ensure_archive(
+        &self,
+        archive_id: &[u8],
+        intent: protocol::ArchiveIntent,
+    ) -> Result<(), protocol::Response> {
         if archive_id.is_empty() || archive_id.len() > 256 {
             return Err(invalid("archive identity must contain 1 to 256 bytes"));
         }
         let mut state = self.inner.state.lock().await;
-        let path = self.inner.root.join("archives").join(hex(&archive_id));
+        let path = self.inner.root.join("archives").join(hex(archive_id));
         let persisted = self.inner.mode != StorageMode::Memory && path.exists();
         match intent {
             protocol::ArchiveIntent::Create
-                if state.archives.contains_key(&archive_id) || persisted =>
+                if state.archives.contains_key(archive_id) || persisted =>
             {
                 return Err(conflict("archive already exists"));
             }
             protocol::ArchiveIntent::Open
-                if !state.archives.contains_key(&archive_id) && !persisted =>
+                if !state.archives.contains_key(archive_id) && !persisted =>
             {
                 return Err(rejected("archive does not exist"));
             }
             _ => {}
         }
-        if !state.archives.contains_key(&archive_id) {
+        if !state.archives.contains_key(archive_id) {
             let archive = match self.inner.mode {
                 StorageMode::Memory => Archive::Memory(
                     LocalSequencer::recover(Arc::new(MemoryStream::new()))
@@ -169,14 +184,9 @@ impl BuiltInSeaHost {
                     .map_err(error_response)?,
                 ),
             };
-            state.archives.insert(archive_id.clone(), archive);
+            state.archives.insert(archive_id.to_vec(), archive);
         }
-        state
-            .archives
-            .get(&archive_id)
-            .expect("archive was inserted")
-            .open_session(author, session, reference)
-            .await
+        Ok(())
     }
 }
 
@@ -197,6 +207,16 @@ struct HostedConnection {
 #[async_trait]
 impl SeaConnectionService for HostedConnection {
     async fn request(&self, request: protocol::Request) -> protocol::Response {
+        if let protocol::Request::CreateArchive { archive } = request {
+            return match self
+                .host
+                .ensure_archive(&archive, protocol::ArchiveIntent::Create)
+                .await
+            {
+                Ok(()) => protocol::Response::Acknowledged,
+                Err(error) => error,
+            };
+        }
         if let protocol::Request::OpenSession {
             archive,
             intent,
@@ -317,7 +337,9 @@ mod tests {
         BlobDirectory, BlobTreeId,
         archive::{AuthorId, EventReceipt, OperationId, SeaSession, SessionId},
     };
-    use sea_webtransport::{NativeSeaClient, TransportConfig as ClientTransportConfig, protocol};
+    use sea_webtransport::{
+        NativeSeaClient, NativeSessionOpen, TransportConfig as ClientTransportConfig, protocol,
+    };
     use tokio::time::timeout;
     use wtransport::{
         ClientConfig, Connection, Endpoint, Identity, endpoint::endpoint_side::Client,
@@ -348,12 +370,18 @@ mod tests {
                 }
             ));
             assert_eq!(
-                open_hosted_session(&host, protocol::ArchiveIntent::Create, b"create-session")
+                host.connect()
+                    .request(protocol::Request::CreateArchive {
+                        archive: b"archive".to_vec(),
+                    })
                     .await,
                 protocol::Response::Acknowledged
             );
             assert!(matches!(
-                open_hosted_session(&host, protocol::ArchiveIntent::Create, b"duplicate-session")
+                host.connect()
+                    .request(protocol::Request::CreateArchive {
+                        archive: b"archive".to_vec(),
+                    })
                     .await,
                 protocol::Response::Error {
                     kind: protocol::ErrorKind::Conflict,
@@ -433,11 +461,13 @@ mod tests {
                 format!("https://{address}/sea"),
                 certificate_hash,
                 ClientTransportConfig::default(),
-                Bytes::from_static(b"archive"),
-                protocol::ArchiveIntent::Create,
-                AuthorId::new(Bytes::from_static(b"author")).unwrap(),
-                SessionId::new(Bytes::from_static(b"session")).unwrap(),
-                None,
+                NativeSessionOpen {
+                    archive: Bytes::from_static(b"archive"),
+                    intent: protocol::ArchiveIntent::Create,
+                    author: AuthorId::new(Bytes::from_static(b"author")).unwrap(),
+                    session: SessionId::new(Bytes::from_static(b"session")).unwrap(),
+                    reference: None,
+                },
             )
             .await
             .unwrap();
@@ -479,11 +509,13 @@ mod tests {
                 format!("https://{address}/sea"),
                 certificate_hash.clone(),
                 ClientTransportConfig::default(),
-                Bytes::from_static(b"fault-archive"),
-                protocol::ArchiveIntent::Create,
-                AuthorId::new(Bytes::from_static(b"observer-author")).unwrap(),
-                SessionId::new(Bytes::from_static(b"observer-session")).unwrap(),
-                None,
+                NativeSessionOpen {
+                    archive: Bytes::from_static(b"fault-archive"),
+                    intent: protocol::ArchiveIntent::Create,
+                    author: AuthorId::new(Bytes::from_static(b"observer-author")).unwrap(),
+                    session: SessionId::new(Bytes::from_static(b"observer-session")).unwrap(),
+                    reference: None,
+                },
             )
             .await
             .unwrap();

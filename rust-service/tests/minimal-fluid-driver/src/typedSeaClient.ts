@@ -66,6 +66,7 @@ interface GeneratedSeaSubmissionStream<TTree extends GeneratedSeaTreeId> {
 
 /** Structural generated typed Sea client. */
 export interface GeneratedSeaClient<TTree extends GeneratedSeaTreeId = GeneratedSeaTreeId> {
+	createArchive(archive: Uint8Array): Promise<void>;
 	openSession(
 		archive: Uint8Array,
 		create: boolean,
@@ -143,12 +144,7 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 	public readonly peakSubscriptionQueueDepth = 0;
 
 	public async create(document: Uint8Array): Promise<void> {
-		await this.client.openSession(
-			document,
-			true,
-			encoder.encode("storage"),
-			encoder.encode(`storage-session-${crypto.randomUUID()}`),
-		);
+		await this.client.createArchive(document);
 	}
 
 	public async openSession(
@@ -158,7 +154,13 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 		resumeAfter?: Uint8Array,
 	): Promise<void> {
 		await this.closeSubmissionStream();
-		await this.client.openSession(document, false, writer, session, decodePosition(resumeAfter));
+		await this.client.openSession(
+			document,
+			false,
+			writer,
+			session,
+			decodePosition(resumeAfter),
+		);
 		this.submissionStream = await this.client.openSubmissionStream?.();
 	}
 
