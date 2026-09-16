@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 9. Generated TypeScript APIs.
-- **Last completed checkpoint:** 8. Promote and reorganize the WASM bindings.
-- **Last validation:** Checkpoint 8 production and test-support WASM builds, strict WASM Clippy, Node behavior, TypeScript typecheck, SharedTree bundles, local Chromium, and real Chromium 152 WebTransport passed on 2026-09-16; canonical workspace validation is recorded in the implementation commit.
-- **Latest checkpoint notes:** WASM exports now compile from `sea-webtransport` library source as one `rlib`/`cdylib`; no production Cargo example or path import remains. A crate-owned script emits canonical web and Node packages consumed directly by downstream harnesses. Production WASM excludes storage, sequencer, native endpoint, and server dependencies; process-local memory/sequencer bindings are isolated behind `test-support` and emitted as separately named test artifacts from the same library target.
+- **Current checkpoint:** 10. Simplify the Fluid TypeScript adapter.
+- **Last completed checkpoint:** 9. Generated TypeScript APIs.
+- **Last validation:** Checkpoint 9 strict WASM Clippy, production and test-support generation, Node behavior, TypeScript declaration-shape and SharedTree typechecks, package format/lint/build/tests, and real Chromium 152 WebTransport passed on 2026-09-16; canonical workspace validation is recorded in the implementation commit.
+- **Latest checkpoint notes:** Generated bindings expose closed `SeaDurability`, `SeaTreeKind`, `SeaLoadKind`, and `SeaErrorKind` enums; load results are a discriminated union with case-required fields, and directory operations use `SeaDirectoryEntries`. JavaScript service errors retain their classified kind. The Fluid adapter imports generated production/test-support declarations directly, its handwritten client/value mirror and optional event-field checks are deleted, and a type-only fixture verifies narrowing and closed API shapes. Vague `TypedSeaClientAdapter` terminology is replaced by `GeneratedSeaBindingAdapter`.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 9. Generated TypeScript APIs.
+- **Next checkpoint:** 10. Simplify the Fluid TypeScript adapter.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -661,13 +661,13 @@ pnpm --dir tests/minimal-fluid-driver run typecheck
 
 ### 9. Make generated TypeScript APIs genuinely useful
 
-- [ ] Generate or hand-declare closed Sea API discriminators such as durability and load-result kind; do not expose the internal network `MessageKind` catalog to TypeScript consumers.
-- [ ] Replace `kind: string` plus conditionally valid optional fields with case-specific classes or discriminated unions.
-- [ ] Replace `Array<any>` directory APIs with generated entry types.
-- [ ] Preserve structured service error kind and diagnostic information in JavaScript errors or result types.
-- [ ] Eliminate the handwritten `GeneratedSeaClient` mirror where generated declarations can be imported directly.
-- [ ] Add declaration-shape tests or TypeScript compile fixtures for narrowing and IntelliSense-relevant contracts.
-- [ ] Remove “typed” terminology or define any remaining use precisely.
+- [x] Generate or hand-declare closed Sea API discriminators such as durability and load-result kind; do not expose the internal network `MessageKind` catalog to TypeScript consumers.
+- [x] Replace `kind: string` plus conditionally valid optional fields with case-specific classes or discriminated unions.
+- [x] Replace `Array<any>` directory APIs with generated entry types.
+- [x] Preserve structured service error kind and diagnostic information in JavaScript errors or result types.
+- [x] Eliminate the handwritten `GeneratedSeaClient` mirror where generated declarations can be imported directly.
+- [x] Add declaration-shape tests or TypeScript compile fixtures for narrowing and IntelliSense-relevant contracts.
+- [x] Remove “typed” terminology or define any remaining use precisely.
 
 Validation:
 

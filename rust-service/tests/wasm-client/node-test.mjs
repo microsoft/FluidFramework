@@ -10,8 +10,10 @@ import test from "node:test";
 const require = createRequire(import.meta.url);
 const {
 	SeaDirectoryEntry,
+	SeaDurability,
 	SeaLoadKind,
 	SeaLocalService,
+	SeaTreeKind,
 } = require("../../crates/sea-webtransport/test-support/pkg/node/sea_webtransport_test_support.js");
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -37,6 +39,7 @@ test("generated local clients submit, resolve, read, and tail events", async () 
 		undefined,
 		encoder.encode("first"),
 	);
+	assert.equal(firstReceipt.durability, SeaDurability.Memory);
 	assert.equal(
 		(await first.resolveSubmission(encoder.encode("operation-one"))).position,
 		firstReceipt.position,
@@ -63,9 +66,11 @@ test("generated local clients submit, resolve, read, and tail events", async () 
 test("generated local clients preserve recursive content and snapshot identities", async () => {
 	const { first } = await clients();
 	const blob = await first.putBlob(encoder.encode("content"));
+	assert.equal(blob.kind, SeaTreeKind.Blob);
 	assert.equal(decoder.decode(await first.getBlob(blob)), "content");
 	const child = await first.putDirectory([new SeaDirectoryEntry("leaf", blob)]);
 	const root = await first.putDirectory([new SeaDirectoryEntry("child", child)]);
+	assert.equal(root.kind, SeaTreeKind.Directory);
 	const entries = await first.getDirectory(root);
 	assert.equal(entries.length, 1);
 	assert.equal(entries[0].name, "child");

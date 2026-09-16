@@ -1,4 +1,4 @@
-//! Typed Sea v1 bindings over an injected JavaScript transport.
+//! Generated Sea bindings over browser and injected JavaScript transports.
 
 #![allow(
     clippy::missing_errors_doc,
@@ -14,13 +14,14 @@ use std::{
 };
 
 use async_trait::async_trait;
+#[cfg(feature = "test-support")]
+use bytes::Bytes;
+#[cfg(feature = "test-support")]
 use futures_util::{
     StreamExt as _,
     future::{AbortHandle, Abortable},
 };
 use js_sys::{Array, Promise, Reflect, Uint8Array};
-#[cfg(feature = "test-support")]
-use bytes::Bytes;
 #[cfg(feature = "test-support")]
 use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, Event, EventPosition, SnapshotId,
@@ -31,10 +32,13 @@ use sea_core::{
         SnapshotPublication,
     },
 };
-use wasm_bindgen::prelude::*;
+use wasm_bindgen::{JsCast as _, prelude::*};
 use wasm_bindgen_futures::JsFuture;
 
-use super::{AsyncRequestTransport, call_method, sea_protocol_v1 as protocol};
+use super::{
+    AsyncRequestTransport, SeaDirectoryEntries, SeaLoadResult, call_method,
+    sea_protocol_v1 as protocol,
+};
 use crate::{
     client::{
         AuthorStream, Client, ClientError, ClientState, ContentStream, EventStream, ResponseStream,
@@ -46,7 +50,7 @@ use crate::{
     },
 };
 
-/// A typed immutable blob-tree identity.
+/// An immutable blob-tree identity exposed to generated consumers.
 #[wasm_bindgen]
 #[derive(Clone)]
 pub struct SeaTreeId {
@@ -73,12 +77,11 @@ impl SeaTreeId {
 
     /// Returns `blob` or `directory`.
     #[wasm_bindgen(getter)]
-    pub fn kind(&self) -> String {
+    pub fn kind(&self) -> SeaTreeKind {
         match self.inner {
-            protocol::TreeId::Blob(_) => "blob",
-            protocol::TreeId::Directory(_) => "directory",
+            protocol::TreeId::Blob(_) => SeaTreeKind::Blob,
+            protocol::TreeId::Directory(_) => SeaTreeKind::Directory,
         }
-        .to_owned()
     }
 
     /// Returns the fixed identity bytes.
@@ -90,6 +93,17 @@ impl SeaTreeId {
             }
         }
     }
+}
+
+/// Closed immutable tree-identity cases.
+#[wasm_bindgen]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u8)]
+pub enum SeaTreeKind {
+    /// Immutable blob bytes.
+    Blob = 1,
+    /// Immutable directory entries.
+    Directory = 2,
 }
 
 /// One named child supplied when publishing a directory.
@@ -117,7 +131,7 @@ impl SeaDirectoryEntry {
         self.name.clone()
     }
 
-    /// Returns the typed child identity.
+    /// Returns the child's closed identity value.
     #[wasm_bindgen(getter)]
     pub fn child(&self) -> SeaTreeId {
         self.child.clone()
@@ -128,7 +142,7 @@ impl SeaDirectoryEntry {
 #[wasm_bindgen]
 pub struct SeaEventReceipt {
     position: u64,
-    durability: String,
+    durability: SeaDurability,
 }
 
 #[wasm_bindgen]
@@ -139,11 +153,45 @@ impl SeaEventReceipt {
         self.position
     }
 
-    /// Returns `memory`, `buffered`, or `durable`.
+    /// Returns the closed event durability case.
     #[wasm_bindgen(getter)]
-    pub fn durability(&self) -> String {
-        self.durability.clone()
+    pub fn durability(&self) -> SeaDurability {
+        self.durability
     }
+}
+
+/// Closed event durability cases.
+#[wasm_bindgen]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u8)]
+pub enum SeaDurability {
+    /// Visible only in process memory.
+    Memory = 1,
+    /// Flushed to operating-system-backed storage.
+    Buffered = 2,
+    /// Persisted according to the backend durability contract.
+    Durable = 3,
+}
+
+/// Closed service error categories exposed on generated JavaScript errors.
+#[wasm_bindgen]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u8)]
+pub enum SeaErrorKind {
+    /// A position or identity is malformed or unavailable.
+    Invalid = 1,
+    /// Required retained state is no longer available.
+    Stale = 2,
+    /// Preconditions or stable identities conflict.
+    Conflict = 3,
+    /// The operation was definitively rejected.
+    Rejected = 4,
+    /// The operation may have committed.
+    Ambiguous = 5,
+    /// The service cannot currently complete the operation.
+    Unavailable = 6,
+    /// Persisted or received data is corrupt.
+    Corrupt = 7,
 }
 
 /// Metadata for one snapshot publication.
@@ -310,7 +358,7 @@ impl SeaLoadItem {
     }
 }
 
-/// Cancellable typed load or snapshot stream over an injected transport.
+/// Cancellable discriminated load stream over an injected transport.
 #[wasm_bindgen]
 pub struct SeaInjectedStream {
     inner: RefCell<Option<ResponseStream<InjectedBidirectionalStream>>>,
@@ -474,13 +522,13 @@ fn take_browser_stream(
 
 #[wasm_bindgen]
 impl SeaInjectedStream {
-    /// Waits for the next typed stream item.
-    pub async fn next(&self) -> Result<Option<SeaLoadItem>, JsValue> {
+    /// Waits for the next discriminated stream item.
+    pub async fn next(&self) -> Result<Option<SeaLoadResult>, JsValue> {
         if self.cancelled.get() {
             return Err(js_error("Sea stream is cancelled"));
         }
         if let Some(response) = self.buffered.borrow_mut().pop_front() {
-            return load_item(response).map(Some);
+            return load_item(response).map(load_result).map(Some);
         }
         if self.inner.borrow().is_none() {
             return Ok(None);
@@ -496,7 +544,7 @@ impl SeaInjectedStream {
         let Some(response) = response else {
             return Ok(None);
         };
-        load_item(response).map(Some)
+        load_item(response).map(load_result).map(Some)
     }
 
     /// Cancels the stream and injected transport.
@@ -510,7 +558,7 @@ impl SeaInjectedStream {
     }
 }
 
-/// Typed Sea v1 client using a caller-provided asynchronous transport.
+/// Generated Sea client using a caller-provided asynchronous transport.
 #[wasm_bindgen]
 pub struct SeaInjectedClient {
     transport: Rc<RefCell<JsValue>>,
@@ -593,421 +641,424 @@ mod test_support {
 
     use super::*;
 
-/// Shared in-process memory service for generated-client tests.
-#[wasm_bindgen]
-pub struct SeaLocalService {
-    sequencer: Arc<LocalSequencer<MemoryStream>>,
-    archive: Rc<RefCell<Option<Vec<u8>>>>,
-}
-
-#[wasm_bindgen]
-impl SeaLocalService {
-    /// Creates one empty in-process archive service.
-    pub async fn create() -> Result<SeaLocalService, JsValue> {
-        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
-            .await
-            .map_err(|error| js_error(&error.to_string()))?;
-        Ok(Self {
-            sequencer,
-            archive: Rc::new(RefCell::new(None)),
-        })
+    /// Shared in-process memory service for generated-client tests.
+    #[wasm_bindgen]
+    pub struct SeaLocalService {
+        sequencer: Arc<LocalSequencer<MemoryStream>>,
+        archive: Rc<RefCell<Option<Vec<u8>>>>,
     }
 
-    /// Creates one client sharing this service's archive registry.
-    pub fn connect(&self) -> SeaLocalClient {
-        SeaLocalClient {
-            sequencer: Arc::clone(&self.sequencer),
-            archive: Rc::clone(&self.archive),
-            session: RefCell::new(None),
-            disconnected: Cell::new(false),
-        }
-    }
-}
-
-/// Typed in-process Sea client used by local browser tests and benchmarks.
-#[wasm_bindgen]
-pub struct SeaLocalClient {
-    sequencer: Arc<LocalSequencer<MemoryStream>>,
-    archive: Rc<RefCell<Option<Vec<u8>>>>,
-    session: RefCell<Option<Rc<LocalSession<MemoryStream>>>>,
-    disconnected: Cell<bool>,
-}
-
-#[wasm_bindgen]
-impl SeaLocalClient {
-    /// Creates an archive without opening an author session.
-    #[wasm_bindgen(js_name = createArchive)]
-    pub async fn create_archive(&self, archive: Uint8Array) -> Result<(), JsValue> {
-        if self.archive.borrow().is_some() {
-            return Err(js_error("archive already exists"));
-        }
-        self.archive.replace(Some(archive.to_vec()));
-        std::future::ready(()).await;
-        Ok(())
-    }
-
-    /// Opens or replaces this client's author session.
-    #[wasm_bindgen(js_name = openSession)]
-    pub async fn open_session(
-        &self,
-        archive: Uint8Array,
-        create: bool,
-        author: Uint8Array,
-        session: Uint8Array,
-        reference: Option<u64>,
-    ) -> Result<(), JsValue> {
-        let archive = archive.to_vec();
-        let author = AuthorId::new(Bytes::from(author.to_vec()))
-            .map_err(|_| js_error("author identity is empty"))?;
-        let session_id = SessionId::new(Bytes::from(session.to_vec()))
-            .map_err(|_| js_error("session identity is empty"))?;
-        match (&*self.archive.borrow(), create) {
-            (Some(_), true) => return Err(js_error("archive already exists")),
-            (None, false) => return Err(js_error("archive does not exist")),
-            (Some(existing), false) if existing != &archive => {
-                return Err(js_error("archive does not exist"));
-            }
-            _ => {}
-        }
-        self.disconnected.set(false);
-        let previous = self.session.borrow().clone();
-        if let Some(previous) = previous {
-            previous
-                .close()
+    #[wasm_bindgen]
+    impl SeaLocalService {
+        /// Creates one empty in-process archive service.
+        pub async fn create() -> Result<SeaLocalService, JsValue> {
+            let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
                 .await
                 .map_err(|error| js_error(&error.to_string()))?;
-        }
-        let session = self
-            .sequencer
-            .open_session(author, session_id, reference.map(EventPosition::new))
-            .await
-            .map_err(|error| js_error(&error.to_string()))?;
-        if create {
-            self.archive.replace(Some(archive));
-        }
-        self.session.replace(Some(Rc::new(session)));
-        Ok(())
-    }
-
-    /// Submits one typed event.
-    pub async fn submit(
-        &self,
-        operation: Uint8Array,
-        reference: Option<u64>,
-        payload: Uint8Array,
-        blob_tree: Option<SeaTreeId>,
-    ) -> Result<SeaEventReceipt, JsValue> {
-        let receipt = self
-            .current()?
-            .submit(EventSubmission {
-                operation_id: OperationId::new(Bytes::from(operation.to_vec()))
-                    .map_err(|_| js_error("operation identity is empty"))?,
-                reference: reference.map(EventPosition::new),
-                event: Event {
-                    payload: Bytes::from(payload.to_vec()),
-                    blob_tree: blob_tree.map(|value| core_tree(value.inner)),
-                },
+            Ok(Self {
+                sequencer,
+                archive: Rc::new(RefCell::new(None)),
             })
-            .await
-            .map_err(|error| js_error(&error.to_string()))?;
-        Ok(SeaEventReceipt {
-            position: receipt.position.get(),
-            durability: "memory".to_owned(),
-        })
-    }
+        }
 
-    /// Resolves one stable event operation.
-    #[wasm_bindgen(js_name = resolveSubmission)]
-    pub async fn resolve_submission(
-        &self,
-        operation: Uint8Array,
-    ) -> Result<Option<SeaEventReceipt>, JsValue> {
-        let operation = OperationId::new(Bytes::from(operation.to_vec()))
-            .map_err(|_| js_error("operation identity is empty"))?;
-        Ok(self
-            .current()?
-            .resolve_submission(&operation)
-            .await
-            .map_err(|error| js_error(&error.to_string()))?
-            .map(|receipt| SeaEventReceipt {
-                position: receipt.position.get(),
-                durability: "memory".to_owned(),
-            }))
-    }
-
-    /// Uploads one immutable blob.
-    #[wasm_bindgen(js_name = putBlob)]
-    pub async fn put_blob(&self, payload: Uint8Array) -> Result<SeaTreeId, JsValue> {
-        let id = self
-            .current()?
-            .put_blob(Bytes::from(payload.to_vec()))
-            .await
-            .map_err(|error| js_error(&error.to_string()))?;
-        Ok(SeaTreeId {
-            inner: protocol::TreeId::Blob(*id.as_bytes()),
-        })
-    }
-
-    /// Fetches one immutable blob.
-    #[wasm_bindgen(js_name = getBlob)]
-    pub async fn get_blob(&self, id: &SeaTreeId) -> Result<Uint8Array, JsValue> {
-        let protocol::TreeId::Blob(bytes) = id.inner else {
-            return Err(js_error("getBlob requires a blob identity"));
-        };
-        let payload = self
-            .current()?
-            .get_blob(BlobId::from_bytes(&bytes).expect("fixed identity"))
-            .await
-            .map_err(|error| js_error(&error.to_string()))?;
-        Ok(Uint8Array::from(payload.as_ref()))
-    }
-
-    /// Uploads one immutable directory.
-    #[wasm_bindgen(js_name = putDirectory)]
-    pub async fn put_directory(&self, entries: Array) -> Result<SeaTreeId, JsValue> {
-        let mut directory = BTreeMap::new();
-        for value in entries {
-            let name = Reflect::get(&value, &JsValue::from_str("name"))?
-                .as_string()
-                .ok_or_else(|| js_error("directory entry name is not a string"))?;
-            let child = Reflect::get(&value, &JsValue::from_str("child"))?;
-            if directory
-                .insert(name, core_tree(tree_from_js(&child)?))
-                .is_some()
-            {
-                return Err(js_error("directory contains a duplicate name"));
+        /// Creates one client sharing this service's archive registry.
+        pub fn connect(&self) -> SeaLocalClient {
+            SeaLocalClient {
+                sequencer: Arc::clone(&self.sequencer),
+                archive: Rc::clone(&self.archive),
+                session: RefCell::new(None),
+                disconnected: Cell::new(false),
             }
         }
-        let directory =
-            BlobDirectory::new(directory).map_err(|error| js_error(&error.to_string()))?;
-        let id = self
-            .current()?
-            .put_directory(directory)
-            .await
-            .map_err(|error| js_error(&error.to_string()))?;
-        Ok(SeaTreeId {
-            inner: protocol::TreeId::Directory(*id.as_bytes()),
-        })
     }
 
-    /// Fetches one immutable directory.
-    #[wasm_bindgen(js_name = getDirectory)]
-    pub async fn get_directory(&self, id: &SeaTreeId) -> Result<Array, JsValue> {
-        let protocol::TreeId::Directory(bytes) = id.inner else {
-            return Err(js_error("getDirectory requires a directory identity"));
-        };
-        let directory = self
-            .current()?
-            .get_directory(BlobDirectoryId::from_bytes(&bytes).expect("fixed identity"))
-            .await
-            .map_err(|error| js_error(&error.to_string()))?;
-        Ok(directory
-            .entries()
-            .iter()
-            .map(|(name, child)| {
-                JsValue::from(SeaDirectoryEntry {
-                    name: name.clone(),
-                    child: SeaTreeId {
-                        inner: wire_tree(*child),
+    /// In-process Sea client used by local browser tests and benchmarks.
+    #[wasm_bindgen]
+    pub struct SeaLocalClient {
+        sequencer: Arc<LocalSequencer<MemoryStream>>,
+        archive: Rc<RefCell<Option<Vec<u8>>>>,
+        session: RefCell<Option<Rc<LocalSession<MemoryStream>>>>,
+        disconnected: Cell<bool>,
+    }
+
+    #[wasm_bindgen]
+    impl SeaLocalClient {
+        /// Creates an archive without opening an author session.
+        #[wasm_bindgen(js_name = createArchive)]
+        pub async fn create_archive(&self, archive: Uint8Array) -> Result<(), JsValue> {
+            if self.archive.borrow().is_some() {
+                return Err(js_error("archive already exists"));
+            }
+            self.archive.replace(Some(archive.to_vec()));
+            std::future::ready(()).await;
+            Ok(())
+        }
+
+        /// Opens or replaces this client's author session.
+        #[wasm_bindgen(js_name = openSession)]
+        pub async fn open_session(
+            &self,
+            archive: Uint8Array,
+            create: bool,
+            author: Uint8Array,
+            session: Uint8Array,
+            reference: Option<u64>,
+        ) -> Result<(), JsValue> {
+            let archive = archive.to_vec();
+            let author = AuthorId::new(Bytes::from(author.to_vec()))
+                .map_err(|_| js_error("author identity is empty"))?;
+            let session_id = SessionId::new(Bytes::from(session.to_vec()))
+                .map_err(|_| js_error("session identity is empty"))?;
+            match (&*self.archive.borrow(), create) {
+                (Some(_), true) => return Err(js_error("archive already exists")),
+                (None, false) => return Err(js_error("archive does not exist")),
+                (Some(existing), false) if existing != &archive => {
+                    return Err(js_error("archive does not exist"));
+                }
+                _ => {}
+            }
+            self.disconnected.set(false);
+            let previous = self.session.borrow().clone();
+            if let Some(previous) = previous {
+                previous
+                    .close()
+                    .await
+                    .map_err(|error| js_error(&error.to_string()))?;
+            }
+            let session = self
+                .sequencer
+                .open_session(author, session_id, reference.map(EventPosition::new))
+                .await
+                .map_err(|error| js_error(&error.to_string()))?;
+            if create {
+                self.archive.replace(Some(archive));
+            }
+            self.session.replace(Some(Rc::new(session)));
+            Ok(())
+        }
+
+        /// Submits one event.
+        pub async fn submit(
+            &self,
+            operation: Uint8Array,
+            reference: Option<u64>,
+            payload: Uint8Array,
+            blob_tree: Option<SeaTreeId>,
+        ) -> Result<SeaEventReceipt, JsValue> {
+            let receipt = self
+                .current()?
+                .submit(EventSubmission {
+                    operation_id: OperationId::new(Bytes::from(operation.to_vec()))
+                        .map_err(|_| js_error("operation identity is empty"))?,
+                    reference: reference.map(EventPosition::new),
+                    event: Event {
+                        payload: Bytes::from(payload.to_vec()),
+                        blob_tree: blob_tree.map(|value| core_tree(value.inner)),
                     },
                 })
-            })
-            .collect())
-    }
-
-    /// Fetches the latest retained snapshot.
-    #[wasm_bindgen(js_name = latestSnapshot)]
-    pub async fn latest_snapshot(&self) -> Result<Option<SeaSnapshot>, JsValue> {
-        Ok(self
-            .current()?
-            .latest_snapshot()
-            .await
-            .map_err(|error| js_error(&error.to_string()))?
-            .map(local_snapshot))
-    }
-
-    /// Fetches one retained snapshot.
-    #[wasm_bindgen(js_name = getSnapshot)]
-    pub async fn get_snapshot(&self, id: Uint8Array) -> Result<Option<SeaSnapshot>, JsValue> {
-        let id = SnapshotId::from_bytes(Bytes::from(id.to_vec()));
-        Ok(self
-            .current()?
-            .snapshot(&id)
-            .await
-            .map_err(|error| js_error(&error.to_string()))?
-            .map(local_snapshot))
-    }
-
-    /// Publishes one conditional snapshot.
-    #[wasm_bindgen(js_name = publishSnapshot)]
-    pub async fn publish_snapshot(
-        &self,
-        operation: Uint8Array,
-        expected_parent: Option<Uint8Array>,
-        at_event: Option<u64>,
-        root: &SeaTreeId,
-    ) -> Result<SeaSnapshot, JsValue> {
-        let snapshot = self
-            .current()?
-            .publish_snapshot(SnapshotPublication {
-                operation_id: OperationId::new(Bytes::from(operation.to_vec()))
-                    .map_err(|_| js_error("operation identity is empty"))?,
-                expected_parent: expected_parent
-                    .map(|value| SnapshotId::from_bytes(Bytes::from(value.to_vec()))),
-                snapshot: ArchiveSnapshot {
-                    at_event: at_event.map_or(ArchiveSnapshotPosition::Initial, |position| {
-                        ArchiveSnapshotPosition::At(EventPosition::new(position))
-                    }),
-                    root: core_tree(root.inner),
-                },
-            })
-            .await
-            .map_err(|error| js_error(&error.to_string()))?;
-        Ok(local_snapshot(snapshot))
-    }
-
-    /// Resolves one snapshot publication.
-    #[wasm_bindgen(js_name = resolveSnapshot)]
-    pub async fn resolve_snapshot(
-        &self,
-        operation: Uint8Array,
-    ) -> Result<Option<SeaSnapshot>, JsValue> {
-        let operation = OperationId::new(Bytes::from(operation.to_vec()))
-            .map_err(|_| js_error("operation identity is empty"))?;
-        Ok(self
-            .current()?
-            .resolve_snapshot_publication(&operation)
-            .await
-            .map_err(|error| js_error(&error.to_string()))?
-            .map(local_snapshot))
-    }
-
-    /// Opens a gap-free load stream.
-    pub async fn load(&self, required: Option<u64>) -> Result<SeaLocalStream, JsValue> {
-        let stream = self
-            .current()?
-            .load(required.map(EventPosition::new))
-            .await
-            .map_err(|error| js_error(&error.to_string()))?;
-        Ok(SeaLocalStream::new(stream.map(|item| {
-            item.map(local_load_item)
-                .map_err(|error| js_error(&error.to_string()))
-        })))
-    }
-
-    /// Opens a finite bounded event stream.
-    pub async fn read(
-        &self,
-        after: Option<u64>,
-        through: Option<u64>,
-    ) -> Result<SeaLocalStream, JsValue> {
-        let stream = self
-            .current()?
-            .read(
-                after.map(EventPosition::new),
-                through.map(EventPosition::new),
-            )
-            .await
-            .map_err(|error| js_error(&error.to_string()))?;
-        Ok(SeaLocalStream::new(stream.map(|item| {
-            item.map(|event| local_load_item(LoadEvent::Event(event)))
-                .map_err(|error| js_error(&error.to_string()))
-        })))
-    }
-
-    /// Disconnects this local client without closing shared service state.
-    pub fn disconnect(&self) {
-        self.disconnected.set(true);
-    }
-
-    /// Local clients do not replace a network transport.
-    #[wasm_bindgen(js_name = replaceTransport)]
-    pub fn replace_transport(&self, _transport: JsValue) {
-        self.disconnected.set(false);
-    }
-
-    /// Explicitly closes the logical session.
-    pub async fn close(&self) -> Result<(), JsValue> {
-        let session = self.session.borrow().clone();
-        if let Some(session) = session {
-            session
-                .close()
                 .await
                 .map_err(|error| js_error(&error.to_string()))?;
+            Ok(SeaEventReceipt {
+                position: receipt.position.get(),
+                durability: SeaDurability::Memory,
+            })
         }
-        self.session.replace(None);
-        Ok(())
+
+        /// Resolves one stable event operation.
+        #[wasm_bindgen(js_name = resolveSubmission)]
+        pub async fn resolve_submission(
+            &self,
+            operation: Uint8Array,
+        ) -> Result<Option<SeaEventReceipt>, JsValue> {
+            let operation = OperationId::new(Bytes::from(operation.to_vec()))
+                .map_err(|_| js_error("operation identity is empty"))?;
+            Ok(self
+                .current()?
+                .resolve_submission(&operation)
+                .await
+                .map_err(|error| js_error(&error.to_string()))?
+                .map(|receipt| SeaEventReceipt {
+                    position: receipt.position.get(),
+                    durability: SeaDurability::Memory,
+                }))
+        }
+
+        /// Uploads one immutable blob.
+        #[wasm_bindgen(js_name = putBlob)]
+        pub async fn put_blob(&self, payload: Uint8Array) -> Result<SeaTreeId, JsValue> {
+            let id = self
+                .current()?
+                .put_blob(Bytes::from(payload.to_vec()))
+                .await
+                .map_err(|error| js_error(&error.to_string()))?;
+            Ok(SeaTreeId {
+                inner: protocol::TreeId::Blob(*id.as_bytes()),
+            })
+        }
+
+        /// Fetches one immutable blob.
+        #[wasm_bindgen(js_name = getBlob)]
+        pub async fn get_blob(&self, id: &SeaTreeId) -> Result<Uint8Array, JsValue> {
+            let protocol::TreeId::Blob(bytes) = id.inner else {
+                return Err(js_error("getBlob requires a blob identity"));
+            };
+            let payload = self
+                .current()?
+                .get_blob(BlobId::from_bytes(&bytes).expect("fixed identity"))
+                .await
+                .map_err(|error| js_error(&error.to_string()))?;
+            Ok(Uint8Array::from(payload.as_ref()))
+        }
+
+        /// Uploads one immutable directory.
+        #[wasm_bindgen(js_name = putDirectory)]
+        pub async fn put_directory(
+            &self,
+            entries: SeaDirectoryEntries,
+        ) -> Result<SeaTreeId, JsValue> {
+            let mut directory = BTreeMap::new();
+            for value in Array::from(entries.as_ref()) {
+                let name = Reflect::get(&value, &JsValue::from_str("name"))?
+                    .as_string()
+                    .ok_or_else(|| js_error("directory entry name is not a string"))?;
+                let child = Reflect::get(&value, &JsValue::from_str("child"))?;
+                if directory
+                    .insert(name, core_tree(tree_from_js(&child)?))
+                    .is_some()
+                {
+                    return Err(js_error("directory contains a duplicate name"));
+                }
+            }
+            let directory =
+                BlobDirectory::new(directory).map_err(|error| js_error(&error.to_string()))?;
+            let id = self
+                .current()?
+                .put_directory(directory)
+                .await
+                .map_err(|error| js_error(&error.to_string()))?;
+            Ok(SeaTreeId {
+                inner: protocol::TreeId::Directory(*id.as_bytes()),
+            })
+        }
+
+        /// Fetches one immutable directory.
+        #[wasm_bindgen(js_name = getDirectory)]
+        pub async fn get_directory(&self, id: &SeaTreeId) -> Result<SeaDirectoryEntries, JsValue> {
+            let protocol::TreeId::Directory(bytes) = id.inner else {
+                return Err(js_error("getDirectory requires a directory identity"));
+            };
+            let directory = self
+                .current()?
+                .get_directory(BlobDirectoryId::from_bytes(&bytes).expect("fixed identity"))
+                .await
+                .map_err(|error| js_error(&error.to_string()))?;
+            let entries: Array = directory
+                .entries()
+                .iter()
+                .map(|(name, child)| {
+                    JsValue::from(SeaDirectoryEntry {
+                        name: name.clone(),
+                        child: SeaTreeId {
+                            inner: wire_tree(*child),
+                        },
+                    })
+                })
+                .collect();
+            Ok(entries.unchecked_into())
+        }
+
+        /// Fetches the latest retained snapshot.
+        #[wasm_bindgen(js_name = latestSnapshot)]
+        pub async fn latest_snapshot(&self) -> Result<Option<SeaSnapshot>, JsValue> {
+            Ok(self
+                .current()?
+                .latest_snapshot()
+                .await
+                .map_err(|error| js_error(&error.to_string()))?
+                .map(local_snapshot))
+        }
+
+        /// Fetches one retained snapshot.
+        #[wasm_bindgen(js_name = getSnapshot)]
+        pub async fn get_snapshot(&self, id: Uint8Array) -> Result<Option<SeaSnapshot>, JsValue> {
+            let id = SnapshotId::from_bytes(Bytes::from(id.to_vec()));
+            Ok(self
+                .current()?
+                .snapshot(&id)
+                .await
+                .map_err(|error| js_error(&error.to_string()))?
+                .map(local_snapshot))
+        }
+
+        /// Publishes one conditional snapshot.
+        #[wasm_bindgen(js_name = publishSnapshot)]
+        pub async fn publish_snapshot(
+            &self,
+            operation: Uint8Array,
+            expected_parent: Option<Uint8Array>,
+            at_event: Option<u64>,
+            root: &SeaTreeId,
+        ) -> Result<SeaSnapshot, JsValue> {
+            let snapshot = self
+                .current()?
+                .publish_snapshot(SnapshotPublication {
+                    operation_id: OperationId::new(Bytes::from(operation.to_vec()))
+                        .map_err(|_| js_error("operation identity is empty"))?,
+                    expected_parent: expected_parent
+                        .map(|value| SnapshotId::from_bytes(Bytes::from(value.to_vec()))),
+                    snapshot: ArchiveSnapshot {
+                        at_event: at_event.map_or(ArchiveSnapshotPosition::Initial, |position| {
+                            ArchiveSnapshotPosition::At(EventPosition::new(position))
+                        }),
+                        root: core_tree(root.inner),
+                    },
+                })
+                .await
+                .map_err(|error| js_error(&error.to_string()))?;
+            Ok(local_snapshot(snapshot))
+        }
+
+        /// Resolves one snapshot publication.
+        #[wasm_bindgen(js_name = resolveSnapshot)]
+        pub async fn resolve_snapshot(
+            &self,
+            operation: Uint8Array,
+        ) -> Result<Option<SeaSnapshot>, JsValue> {
+            let operation = OperationId::new(Bytes::from(operation.to_vec()))
+                .map_err(|_| js_error("operation identity is empty"))?;
+            Ok(self
+                .current()?
+                .resolve_snapshot_publication(&operation)
+                .await
+                .map_err(|error| js_error(&error.to_string()))?
+                .map(local_snapshot))
+        }
+
+        /// Opens a gap-free load stream.
+        pub async fn load(&self, required: Option<u64>) -> Result<SeaLocalStream, JsValue> {
+            let stream = self
+                .current()?
+                .load(required.map(EventPosition::new))
+                .await
+                .map_err(|error| js_error(&error.to_string()))?;
+            Ok(SeaLocalStream::new(stream.map(|item| {
+                item.map(local_load_item)
+                    .map_err(|error| js_error(&error.to_string()))
+            })))
+        }
+
+        /// Opens a finite bounded event stream.
+        pub async fn read(
+            &self,
+            after: Option<u64>,
+            through: Option<u64>,
+        ) -> Result<SeaLocalStream, JsValue> {
+            let stream = self
+                .current()?
+                .read(
+                    after.map(EventPosition::new),
+                    through.map(EventPosition::new),
+                )
+                .await
+                .map_err(|error| js_error(&error.to_string()))?;
+            Ok(SeaLocalStream::new(stream.map(|item| {
+                item.map(|event| local_load_item(LoadEvent::Event(event)))
+                    .map_err(|error| js_error(&error.to_string()))
+            })))
+        }
+
+        /// Disconnects this local client without closing shared service state.
+        pub fn disconnect(&self) {
+            self.disconnected.set(true);
+        }
+
+        /// Local clients do not replace a network transport.
+        #[wasm_bindgen(js_name = replaceTransport)]
+        pub fn replace_transport(&self, _transport: JsValue) {
+            self.disconnected.set(false);
+        }
+
+        /// Explicitly closes the logical session.
+        pub async fn close(&self) -> Result<(), JsValue> {
+            let session = self.session.borrow().clone();
+            if let Some(session) = session {
+                session
+                    .close()
+                    .await
+                    .map_err(|error| js_error(&error.to_string()))?;
+            }
+            self.session.replace(None);
+            Ok(())
+        }
     }
-}
 
-impl SeaLocalClient {
-    fn current(&self) -> Result<Rc<LocalSession<MemoryStream>>, JsValue> {
-        if self.disconnected.get() {
-            return Err(js_error("Sea local client is disconnected"));
-        }
-        self.session
-            .borrow()
-            .clone()
-            .ok_or_else(|| js_error("openSession is required before Sea operations"))
-    }
-}
-
-/// Stream returned by an in-process generated Sea client.
-#[wasm_bindgen]
-pub struct SeaLocalStream {
-    inner: RefCell<Option<SessionStream<SeaLoadItem, JsValue>>>,
-    pending_abort: RefCell<Option<AbortHandle>>,
-    cancelled: Cell<bool>,
-}
-
-impl SeaLocalStream {
-    fn new(
-        stream: impl futures_util::Stream<Item = Result<SeaLoadItem, JsValue>> + 'static,
-    ) -> Self {
-        Self {
-            inner: RefCell::new(Some(Box::pin(stream))),
-            pending_abort: RefCell::new(None),
-            cancelled: Cell::new(false),
+    impl SeaLocalClient {
+        fn current(&self) -> Result<Rc<LocalSession<MemoryStream>>, JsValue> {
+            if self.disconnected.get() {
+                return Err(js_error("Sea local client is disconnected"));
+            }
+            self.session
+                .borrow()
+                .clone()
+                .ok_or_else(|| js_error("openSession is required before Sea operations"))
         }
     }
-}
 
-#[wasm_bindgen]
-impl SeaLocalStream {
-    /// Returns the next local stream item or undefined at finite completion.
-    pub async fn next(&self) -> Result<Option<SeaLoadItem>, JsValue> {
-        if self.cancelled.get() {
-            return Ok(None);
-        }
-        let mut stream = self
-            .inner
-            .take()
-            .ok_or_else(|| js_error("Sea local stream is already being read"))?;
-        let (abort, registration) = AbortHandle::new_pair();
-        self.pending_abort.replace(Some(abort));
-        let item = Abortable::new(stream.next(), registration).await;
-        self.pending_abort.replace(None);
-        let Ok(item) = item else {
-            return Ok(None);
-        };
-        if self.cancelled.get() {
-            return Ok(None);
-        }
-        self.inner.replace(Some(stream));
-        item.transpose()
+    /// Stream returned by an in-process generated Sea client.
+    #[wasm_bindgen]
+    pub struct SeaLocalStream {
+        inner: RefCell<Option<SessionStream<SeaLoadItem, JsValue>>>,
+        pending_abort: RefCell<Option<AbortHandle>>,
+        cancelled: Cell<bool>,
     }
 
-    /// Cancels the local stream.
-    pub async fn cancel(&self) {
-        self.cancelled.set(true);
-        if let Some(abort) = self.pending_abort.take() {
-            abort.abort();
+    impl SeaLocalStream {
+        fn new(
+            stream: impl futures_util::Stream<Item = Result<SeaLoadItem, JsValue>> + 'static,
+        ) -> Self {
+            Self {
+                inner: RefCell::new(Some(Box::pin(stream))),
+                pending_abort: RefCell::new(None),
+                cancelled: Cell::new(false),
+            }
         }
-        self.inner.replace(None);
-        std::future::ready(()).await;
     }
-}
 
+    #[wasm_bindgen]
+    impl SeaLocalStream {
+        /// Returns the next local stream item or undefined at finite completion.
+        pub async fn next(&self) -> Result<Option<SeaLoadResult>, JsValue> {
+            if self.cancelled.get() {
+                return Ok(None);
+            }
+            let mut stream = self
+                .inner
+                .take()
+                .ok_or_else(|| js_error("Sea local stream is already being read"))?;
+            let (abort, registration) = AbortHandle::new_pair();
+            self.pending_abort.replace(Some(abort));
+            let item = Abortable::new(stream.next(), registration).await;
+            self.pending_abort.replace(None);
+            let Ok(item) = item else {
+                return Ok(None);
+            };
+            if self.cancelled.get() {
+                return Ok(None);
+            }
+            self.inner.replace(Some(stream));
+            item.transpose().map(|item| item.map(load_result))
+        }
+
+        /// Cancels the local stream.
+        pub async fn cancel(&self) {
+            self.cancelled.set(true);
+            if let Some(abort) = self.pending_abort.take() {
+                abort.abort();
+            }
+            self.inner.replace(None);
+            std::future::ready(()).await;
+        }
+    }
 }
 
 #[cfg(feature = "test-support")]
@@ -1015,7 +1066,7 @@ pub use test_support::*;
 
 #[wasm_bindgen]
 impl SeaInjectedClient {
-    /// Creates a typed client over one injected transport.
+    /// Creates a generated client over one injected transport.
     #[wasm_bindgen(constructor)]
     pub fn new(transport: AsyncRequestTransport, max_frame_bytes: usize) -> Result<Self, JsValue> {
         if max_frame_bytes < protocol::MIN_FRAME_BYTES {
@@ -1143,7 +1194,7 @@ impl SeaInjectedClient {
                 durability,
             } => Ok(SeaEventReceipt {
                 position,
-                durability: durability.name().to_owned(),
+                durability: durability_from_wire(durability),
             }),
             _ => Err(js_error("Sea response is not an event receipt")),
         }
@@ -1166,7 +1217,7 @@ impl SeaInjectedClient {
                 durability: Some(durability),
             } => Ok(Some(SeaEventReceipt {
                 position,
-                durability: durability.name().to_owned(),
+                durability: durability_from_wire(durability),
             })),
             protocol::Response::SubmissionResolved {
                 position: None,
@@ -1225,7 +1276,7 @@ impl SeaInjectedClient {
 
     /// Fetches one immutable directory.
     #[wasm_bindgen(js_name = getDirectory)]
-    pub async fn get_directory(&self, id: &SeaTreeId) -> Result<Array, JsValue> {
+    pub async fn get_directory(&self, id: &SeaTreeId) -> Result<SeaDirectoryEntries, JsValue> {
         let protocol::TreeId::Directory(id) = id.inner else {
             return Err(js_error("getDirectory requires a directory identity"));
         };
@@ -1233,22 +1284,26 @@ impl SeaInjectedClient {
             .one_content_response(protocol::Request::GetDirectory { id })
             .await?
         {
-            protocol::Response::Directory(entries) => Ok(entries
-                .into_iter()
-                .map(|entry| {
-                    JsValue::from(SeaDirectoryEntry {
-                        name: entry.name,
-                        child: SeaTreeId { inner: entry.child },
+            protocol::Response::Directory(entries) => {
+                let entries: Array = entries
+                    .into_iter()
+                    .map(|entry| {
+                        JsValue::from(SeaDirectoryEntry {
+                            name: entry.name,
+                            child: SeaTreeId { inner: entry.child },
+                        })
                     })
-                })
-                .collect()),
+                    .collect();
+                Ok(entries.unchecked_into())
+            }
             _ => Err(js_error("Sea response is not a directory")),
         }
     }
 
     /// Publishes one immutable directory and returns its identity.
     #[wasm_bindgen(js_name = putDirectory)]
-    pub async fn put_directory(&self, entries: Array) -> Result<SeaTreeId, JsValue> {
+    pub async fn put_directory(&self, entries: SeaDirectoryEntries) -> Result<SeaTreeId, JsValue> {
+        let entries = Array::from(entries.as_ref());
         let mut values = Vec::with_capacity(entries.length() as usize);
         for value in entries {
             let name = Reflect::get(&value, &JsValue::from_str("name"))?
@@ -1423,7 +1478,7 @@ impl SeaInjectedClient {
         let response = author.request(request).await;
         self.author_stream.replace(Some(author));
         match response.map_err(client_error)? {
-            protocol::Response::Error { message, .. } => Err(js_error(&message)),
+            protocol::Response::Error { kind, message } => Err(service_error(kind, &message)),
             response => Ok(response),
         }
     }
@@ -1439,7 +1494,7 @@ impl SeaInjectedClient {
         let response = stream.request(request).await;
         self.snapshot_stream.replace(Some(stream));
         match response.map_err(client_error)? {
-            protocol::Response::Error { message, .. } => Err(js_error(&message)),
+            protocol::Response::Error { kind, message } => Err(service_error(kind, &message)),
             response => Ok(response),
         }
     }
@@ -1463,8 +1518,8 @@ impl SeaInjectedClient {
         let response = stream.request(request).await;
         self.content_stream.replace(Some(stream));
         let responses = response.map_err(client_error)?;
-        if let Some(protocol::Response::Error { message, .. }) = responses.first() {
-            return Err(js_error(message));
+        if let Some(protocol::Response::Error { kind, message }) = responses.first() {
+            return Err(service_error(*kind, message));
         }
         Ok(responses)
     }
@@ -1489,16 +1544,16 @@ fn client_error(error: ClientError<JsValue>) -> JsValue {
         ClientError::Protocol(error) => js_error(&error.to_string()),
         ClientError::Transport(error) => error,
         ClientError::ResponseEnded => js_error("Sea response stream ended before its response"),
-        ClientError::UnexpectedResponse(protocol::Response::Error { message, .. }) => {
-            js_error(&message)
+        ClientError::UnexpectedResponse(protocol::Response::Error { kind, message }) => {
+            service_error(kind, &message)
         }
         ClientError::UnexpectedResponse(_) => js_error("Sea response did not match its request"),
     }
 }
 
 fn load_item(response: protocol::Response) -> Result<SeaLoadItem, JsValue> {
-    if let protocol::Response::Error { message, .. } = response {
-        return Err(js_error(&message));
+    if let protocol::Response::Error { kind, message } = response {
+        return Err(service_error(kind, &message));
     }
     if !matches!(
         response,
@@ -1511,6 +1566,37 @@ fn load_item(response: protocol::Response) -> Result<SeaLoadItem, JsValue> {
     Ok(SeaLoadItem { inner: response })
 }
 
+fn load_result(item: SeaLoadItem) -> SeaLoadResult {
+    JsValue::from(item).unchecked_into()
+}
+
+fn durability_from_wire(durability: protocol::WireDurability) -> SeaDurability {
+    match durability {
+        protocol::WireDurability::Memory => SeaDurability::Memory,
+        protocol::WireDurability::Buffered => SeaDurability::Buffered,
+        protocol::WireDurability::Durable => SeaDurability::Durable,
+    }
+}
+
+fn service_error(kind: protocol::ErrorKind, message: &str) -> JsValue {
+    let error = js_sys::Error::new(message);
+    let kind = match kind {
+        protocol::ErrorKind::Invalid => SeaErrorKind::Invalid,
+        protocol::ErrorKind::Stale => SeaErrorKind::Stale,
+        protocol::ErrorKind::Conflict => SeaErrorKind::Conflict,
+        protocol::ErrorKind::Rejected => SeaErrorKind::Rejected,
+        protocol::ErrorKind::Ambiguous => SeaErrorKind::Ambiguous,
+        protocol::ErrorKind::Unavailable => SeaErrorKind::Unavailable,
+        protocol::ErrorKind::Corrupt => SeaErrorKind::Corrupt,
+    };
+    let _ = Reflect::set(
+        error.as_ref(),
+        &JsValue::from_str("kind"),
+        &JsValue::from_f64(f64::from(kind as u8)),
+    );
+    error.into()
+}
+
 fn fixed_id(bytes: &Uint8Array) -> Result<[u8; 32], JsValue> {
     bytes
         .to_vec()
@@ -1520,16 +1606,20 @@ fn fixed_id(bytes: &Uint8Array) -> Result<[u8; 32], JsValue> {
 
 fn tree_from_js(value: &JsValue) -> Result<protocol::TreeId, JsValue> {
     let kind = Reflect::get(value, &JsValue::from_str("kind"))?
-        .as_string()
-        .ok_or_else(|| js_error("tree identity kind is not a string"))?;
+        .as_f64()
+        .ok_or_else(|| js_error("tree identity kind is not a number"))?;
     let bytes = Reflect::get(value, &JsValue::from_str("bytes"))?;
     if !bytes.is_instance_of::<Uint8Array>() {
         return Err(js_error("tree identity bytes are not a Uint8Array"));
     }
     let bytes = fixed_id(&Uint8Array::new(&bytes))?;
-    match kind.as_str() {
-        "blob" => Ok(protocol::TreeId::Blob(bytes)),
-        "directory" => Ok(protocol::TreeId::Directory(bytes)),
+    match kind.to_bits() {
+        value if value == f64::from(SeaTreeKind::Blob as u8).to_bits() => {
+            Ok(protocol::TreeId::Blob(bytes))
+        }
+        value if value == f64::from(SeaTreeKind::Directory as u8).to_bits() => {
+            Ok(protocol::TreeId::Directory(bytes))
+        }
         _ => Err(js_error("tree identity kind is invalid")),
     }
 }

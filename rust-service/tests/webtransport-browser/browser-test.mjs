@@ -6,6 +6,7 @@
 import init, {
 	SeaBrowserTransport,
 	SeaDirectoryEntry,
+	SeaErrorKind,
 	SeaInjectedClient,
 	SeaLoadKind,
 } from "../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
@@ -43,6 +44,21 @@ async function run() {
 	const first = new SeaInjectedClient(firstTransport, 1024 * 1024);
 	const second = new SeaInjectedClient(secondTransport, 1024 * 1024);
 	const archive = encoder.encode("browser-archive");
+	let missingArchiveError;
+	try {
+		await second.openSession(
+			encoder.encode("missing-browser-archive"),
+			false,
+			encoder.encode("missing-author"),
+			encoder.encode("missing-session"),
+		);
+	} catch (error) {
+		missingArchiveError = error;
+	}
+	assert(
+		missingArchiveError?.kind === SeaErrorKind.Rejected,
+		"service rejection omitted its structured error kind",
+	);
 	await first.openSession(
 		archive,
 		true,
@@ -199,6 +215,7 @@ async function run() {
 		caughtUp: initialCaughtUp.position.toString(),
 		blobBytes: blobPayload.length,
 		directoryEntries: entries.length,
+		serviceErrorKind: missingArchiveError.kind,
 		snapshotIdBytes: snapshot.id.length,
 	};
 }

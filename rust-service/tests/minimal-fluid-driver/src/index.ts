@@ -14,15 +14,15 @@ export { ProtocolClient } from "./protocolClient.js";
 export { DirectDummyClient } from "./directDummy.js";
 export { DirectSharedTreeClient } from "./directSharedTree.js";
 export {
-	TypedSeaClientAdapter,
+	GeneratedSeaBindingAdapter,
 	decodePosition,
 	encodePosition,
-} from "./typedSeaClient.js";
+} from "./generatedSeaBinding.js";
 export type {
 	GeneratedSeaClient,
 	GeneratedSeaTreeId,
 	GeneratedSeaTypes,
-} from "./typedSeaClient.js";
+} from "./generatedSeaBinding.js";
 export type {
 	BlobUpload,
 	ProjectedOperation,

@@ -1,4 +1,4 @@
-#![doc = "Typed browser, injected, and in-process Sea session bindings."]
+#![doc = "Generated browser, injected, and test-support Sea session bindings."]
 mod sea;
 
 pub use crate::protocol as sea_protocol_v1;
@@ -23,12 +23,54 @@ export interface AsyncBidirectionalTransport {
     receive(): Promise<Uint8Array | undefined>;
     cancel(): void | Promise<void>;
 }
+
+/** A selected recovery snapshot. */
+export interface SeaSnapshotLoadResult {
+    readonly kind: SeaLoadKind.Snapshot;
+    readonly snapshot: SeaSnapshot;
+}
+
+/** One catch-up or live event. */
+export interface SeaEventLoadResult {
+    readonly kind: SeaLoadKind.Event;
+    readonly position: bigint;
+    readonly payload: Uint8Array;
+    readonly blobTree: SeaTreeId | undefined;
+    readonly author: Uint8Array;
+    readonly session: Uint8Array;
+    readonly operation: Uint8Array;
+    readonly reference: bigint | undefined;
+    readonly minimumReference: bigint | undefined;
+}
+
+/** The finite catch-up boundary. */
+export interface SeaCaughtUpLoadResult {
+    readonly kind: SeaLoadKind.CaughtUp;
+    readonly position: bigint | undefined;
+}
+
+/** One closed case from a Sea load or bounded-read stream. */
+export type SeaLoadResult = SeaSnapshotLoadResult | SeaEventLoadResult | SeaCaughtUpLoadResult;
+
+/** Named children of one immutable directory. */
+export type SeaDirectoryEntries = ReadonlyArray<SeaDirectoryEntry>;
+
+/** A generated Sea service failure with its closed category. */
+export interface SeaServiceError extends Error {
+    readonly kind: SeaErrorKind;
+}
 "#;
 
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(typescript_type = "AsyncRequestTransport")]
     pub type AsyncRequestTransport;
+
+    #[wasm_bindgen(typescript_type = "SeaLoadResult")]
+    pub type SeaLoadResult;
+
+    #[wasm_bindgen(typescript_type = "SeaDirectoryEntries")]
+    pub type SeaDirectoryEntries;
 }
 
 pub(crate) fn call_method(

@@ -4,7 +4,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { rmSync } from "node:fs";
+import { rmSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -60,6 +60,7 @@ run("wasm-bindgen", [
 	"--out-dir",
 	webOutput,
 ]);
+writeFileSync(path.join(webOutput, "package.json"), '{"type":"module"}\n');
 run("wasm-bindgen", [
 	wasm,
 	"--target",
@@ -103,6 +104,7 @@ run("wasm-bindgen", [
 	"--out-dir",
 	testWebOutput,
 ]);
+writeFileSync(path.join(testWebOutput, "package.json"), '{"type":"module"}\n');
 run("wasm-bindgen", [
 	wasm,
 	"--target",

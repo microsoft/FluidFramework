@@ -23,6 +23,7 @@ import init, {
 	SeaLoadKind,
 	SeaLocalService,
 	SeaTreeId,
+	SeaTreeKind,
 	type SeaLocalClient,
 } from "../../../crates/sea-webtransport/test-support/pkg/web/sea_webtransport_test_support.js";
 import {
@@ -32,7 +33,7 @@ import {
 	MinimalWasmDocumentServiceFactory,
 } from "../src/index.js";
 import type { WasmProtocolClient } from "../src/wasmClient.js";
-import { TypedSeaClientAdapter } from "../src/typedSeaClient.js";
+import { GeneratedSeaBindingAdapter } from "../src/generatedSeaBinding.js";
 import {
 	adaptInitialObject,
 	adaptSharedTree,
@@ -88,13 +89,17 @@ function adaptSeaBrowserClient(
 	client: SeaInjectedClient,
 	reconnect: () => Promise<SeaBrowserTransport>,
 ): WasmProtocolClient {
-	return new TypedSeaClientAdapter<SeaTreeId>(
+	return new GeneratedSeaBindingAdapter(
 		client,
 		{
 			loadKind: {
 				snapshot: SeaLoadKind.Snapshot,
 				event: SeaLoadKind.Event,
 				caughtUp: SeaLoadKind.CaughtUp,
+			},
+			treeKind: {
+				blob: SeaTreeKind.Blob,
+				directory: SeaTreeKind.Directory,
 			},
 			blob: (bytes) => SeaTreeId.blob(bytes),
 			directory: (bytes) => SeaTreeId.directory(bytes),
@@ -149,11 +154,15 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	const createWasmClient = async (): Promise<WasmProtocolClient> => {
 		if (localService !== undefined) {
 			const client: SeaLocalClient = localService.connect();
-			const adapted = new TypedSeaClientAdapter<SeaTreeId>(client, {
+			const adapted = new GeneratedSeaBindingAdapter(client, {
 				loadKind: {
 					snapshot: SeaLoadKind.Snapshot,
 					event: SeaLoadKind.Event,
 					caughtUp: SeaLoadKind.CaughtUp,
+				},
+				treeKind: {
+					blob: SeaTreeKind.Blob,
+					directory: SeaTreeKind.Directory,
 				},
 				blob: (bytes) => SeaTreeId.blob(bytes),
 				directory: (bytes) => SeaTreeId.directory(bytes),

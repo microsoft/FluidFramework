@@ -5,7 +5,7 @@
 
 import type { WasmProtocolClient } from "./wasmClient.js";
 
-/** Typed Sea lifecycle facade used by the Fluid adapter. */
+/** Sea lifecycle facade used by the Fluid adapter. */
 export class ProtocolClient {
 	public constructor(public readonly wasm: WasmProtocolClient) {}
 

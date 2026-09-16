@@ -25,13 +25,14 @@ import init, {
 	SeaInjectedClient,
 	SeaLoadKind,
 	SeaTreeId,
+	SeaTreeKind,
 } from "../../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
 import {
 	type MinimalWasmDeltaConnection,
 	MinimalWasmDocumentServiceFactory,
 } from "../src/index.js";
 import type { WasmProtocolClient } from "../src/wasmClient.js";
-import { TypedSeaClientAdapter } from "../src/typedSeaClient.js";
+import { GeneratedSeaBindingAdapter } from "../src/generatedSeaBinding.js";
 
 /** Browser hooks used by the headless trace runner and failure diagnostics. */
 declare global {
@@ -110,12 +111,12 @@ function showResult(result: Record<string, unknown>): void {
 	output.textContent = JSON.stringify(result);
 }
 
-/** Adapts the generated typed Sea client to the Fluid driver boundary. */
+/** Adapts the generated Sea client to the Fluid driver boundary. */
 function adaptBrowserClient(
 	client: SeaInjectedClient,
 	reconnect: () => Promise<SeaBrowserTransport>,
 ): WasmProtocolClient {
-	return new TypedSeaClientAdapter<SeaTreeId>(
+	return new GeneratedSeaBindingAdapter(
 		client,
 		{
 			loadKind: {
@@ -123,9 +124,13 @@ function adaptBrowserClient(
 				event: SeaLoadKind.Event,
 				caughtUp: SeaLoadKind.CaughtUp,
 			},
+			treeKind: {
+				blob: SeaTreeKind.Blob,
+				directory: SeaTreeKind.Directory,
+			},
 			blob: (bytes) => SeaTreeId.blob(bytes),
 			directory: (bytes) => SeaTreeId.directory(bytes),
-			directoryEntry: (name, child) => new SeaDirectoryEntry(name, child as SeaTreeId),
+			directoryEntry: (name, child) => new SeaDirectoryEntry(name, child),
 		},
 		reconnect,
 	);
