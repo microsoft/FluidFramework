@@ -1,5 +1,7 @@
 //! Bounded versioned wire values for Sea sessions.
 
+use std::collections::BTreeSet;
+
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
@@ -254,11 +256,51 @@ pub fn encode_network_frame(
 }
 
 fn validate_correlation(kind: MessageKind, correlation_id: u64) -> Result<(), ProtocolError> {
-    if correlation_id == 0 && matches!(kind, MessageKind::CreateArchive | MessageKind::OpenSession)
-    {
+    if correlation_id == 0 && !matches!(kind, MessageKind::LoadEvent | MessageKind::Snapshot) {
         Err(ProtocolError::InvalidCorrelationId)
     } else {
         Ok(())
+    }
+}
+
+/// Stream-scoped active correlation IDs.
+#[derive(Debug, Default)]
+pub struct CorrelationTracker {
+    active: BTreeSet<u64>,
+}
+
+impl CorrelationTracker {
+    /// Marks a nonzero correlation ID active until its response completes.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for zero or an ID already active on this stream.
+    pub fn begin(&mut self, correlation_id: u64) -> Result<(), ProtocolError> {
+        if correlation_id == 0 {
+            return Err(ProtocolError::InvalidCorrelationId);
+        }
+        if !self.active.insert(correlation_id) {
+            return Err(ProtocolError::CorrelationInUse(correlation_id));
+        }
+        Ok(())
+    }
+
+    /// Completes one active request/response correlation.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the response ID does not match an active request.
+    pub fn complete(&mut self, correlation_id: u64) -> Result<(), ProtocolError> {
+        if !self.active.remove(&correlation_id) {
+            return Err(ProtocolError::UnknownCorrelation(correlation_id));
+        }
+        Ok(())
+    }
+
+    /// Returns whether `correlation_id` is currently active.
+    #[must_use]
+    pub fn is_active(&self, correlation_id: u64) -> bool {
+        self.active.contains(&correlation_id)
     }
 }
 
@@ -473,6 +515,161 @@ impl WireDurability {
     }
 }
 
+/// Message-kind-specific payload structures encoded inside [`NetworkFrame`].
+pub mod payload {
+    use serde::{Deserialize, Serialize};
+
+    use super::{
+        ArchiveIntent, DirectoryEntry, ErrorKind, Event, Snapshot, SnapshotPosition, TreeId,
+        WireDurability,
+    };
+
+    /// Payload for a message with no fields.
+    #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct Empty;
+
+    /// Explicit archive creation payload.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct CreateArchive {
+        pub version: u16,
+        pub archive: Vec<u8>,
+    }
+
+    /// Archive-bound event-session opening payload.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct OpenSession {
+        pub version: u16,
+        pub archive: Vec<u8>,
+        pub intent: ArchiveIntent,
+        pub author: Vec<u8>,
+        pub session: Vec<u8>,
+        pub reference: Option<u64>,
+    }
+
+    /// Ordered event submission payload.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct Submit {
+        pub operation: Vec<u8>,
+        pub reference: Option<u64>,
+        pub event: Event,
+    }
+
+    /// Stable operation identity payload.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct Operation {
+        pub operation: Vec<u8>,
+    }
+
+    /// Bounded historical read payload.
+    #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct Read {
+        pub after: Option<u64>,
+        pub through: Option<u64>,
+    }
+
+    /// Immutable blob publication payload.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct PutBlob {
+        pub payload: Vec<u8>,
+    }
+
+    /// Immutable blob identity payload.
+    #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct BlobId {
+        pub id: [u8; 32],
+    }
+
+    /// Immutable directory publication payload.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct PutDirectory {
+        pub entries: Vec<DirectoryEntry>,
+    }
+
+    /// Immutable directory identity payload.
+    #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct DirectoryId {
+        pub id: [u8; 32],
+    }
+
+    /// Snapshot publication identity payload.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct SnapshotId {
+        pub id: Vec<u8>,
+    }
+
+    /// Conditional snapshot publication payload.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct PublishSnapshot {
+        pub operation: Vec<u8>,
+        pub expected_parent: Option<Vec<u8>>,
+        pub at_event: SnapshotPosition,
+        pub root: TreeId,
+    }
+
+    /// Event recovery load payload.
+    #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct Load {
+        pub required: Option<u64>,
+    }
+
+    /// Committed event receipt payload.
+    #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct EventCommitted {
+        pub position: u64,
+        pub durability: WireDurability,
+    }
+
+    /// Stable submission resolution payload.
+    #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct SubmissionResolved {
+        pub position: Option<u64>,
+        pub durability: Option<WireDurability>,
+    }
+
+    /// Fetched blob bytes payload.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct Blob {
+        pub payload: Vec<u8>,
+    }
+
+    /// Fetched directory entries payload.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct Directory {
+        pub entries: Vec<DirectoryEntry>,
+    }
+
+    /// Optional snapshot response or notification payload.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct OptionalSnapshot {
+        pub snapshot: Option<Snapshot>,
+    }
+
+    /// Selected recovery snapshot payload.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct LoadSnapshot {
+        pub snapshot: Snapshot,
+    }
+
+    /// Authored event stream payload.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct LoadEvent {
+        pub event: super::StreamEvent,
+    }
+
+    /// Finite catch-up completion payload.
+    #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct CaughtUp {
+        pub position: Option<u64>,
+    }
+
+    /// Classified service failure payload.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct Error {
+        pub kind: ErrorKind,
+        pub message: String,
+    }
+}
+
 /// One request on a Sea session control or operation stream.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Request {
@@ -623,6 +820,541 @@ pub enum Response {
     },
 }
 
+impl Request {
+    /// Returns the explicit network kind for this request.
+    #[must_use]
+    pub const fn kind(&self) -> MessageKind {
+        match self {
+            Self::CreateArchive { .. } => MessageKind::CreateArchive,
+            Self::OpenSession { .. } => MessageKind::OpenSession,
+            Self::Submit { .. } => MessageKind::Submit,
+            Self::ResolveSubmission { .. } => MessageKind::ResolveSubmission,
+            Self::Read { .. } => MessageKind::Read,
+            Self::PutBlob { .. } => MessageKind::PutBlob,
+            Self::GetBlob { .. } => MessageKind::GetBlob,
+            Self::PutDirectory { .. } => MessageKind::PutDirectory,
+            Self::GetDirectory { .. } => MessageKind::GetDirectory,
+            Self::GetSnapshot { .. } => MessageKind::GetSnapshot,
+            Self::LatestSnapshot => MessageKind::LatestSnapshot,
+            Self::PublishSnapshot { .. } => MessageKind::PublishSnapshot,
+            Self::ResolveSnapshot { .. } => MessageKind::ResolveSnapshot,
+            Self::Load { .. } => MessageKind::Load,
+            Self::SubscribeSnapshots => MessageKind::SubscribeSnapshots,
+            Self::Close => MessageKind::Close,
+        }
+    }
+}
+
+impl Response {
+    /// Returns the explicit network kind for this response.
+    #[must_use]
+    pub const fn kind(&self) -> MessageKind {
+        match self {
+            Self::Acknowledged => MessageKind::Acknowledged,
+            Self::EventCommitted { .. } => MessageKind::EventCommitted,
+            Self::SubmissionResolved { .. } => MessageKind::SubmissionResolved,
+            Self::BlobStored { .. } => MessageKind::BlobStored,
+            Self::Blob(_) => MessageKind::Blob,
+            Self::DirectoryStored { .. } => MessageKind::DirectoryStored,
+            Self::Directory(_) => MessageKind::Directory,
+            Self::Snapshot(_) => MessageKind::Snapshot,
+            Self::LoadSnapshot(_) => MessageKind::LoadSnapshot,
+            Self::LoadEvent(_) => MessageKind::LoadEvent,
+            Self::CaughtUp(_) => MessageKind::CaughtUp,
+            Self::Error { .. } => MessageKind::Error,
+        }
+    }
+}
+
+fn encode_typed_payload<T: Serialize>(
+    role: StreamRole,
+    kind: MessageKind,
+    correlation_id: u64,
+    payload: &T,
+    limits: Limits,
+) -> Result<Vec<u8>, ProtocolError> {
+    kind.validate_on(role)?;
+    let payload = postcard::to_allocvec(payload).map_err(ProtocolError::InvalidPayload)?;
+    encode_network_frame(
+        &NetworkFrame {
+            kind,
+            correlation_id,
+            payload,
+        },
+        limits,
+    )
+}
+
+fn decode_typed_payload<T: DeserializeOwned>(frame: &NetworkFrame) -> Result<T, ProtocolError> {
+    postcard::from_bytes(&frame.payload).map_err(ProtocolError::InvalidPayload)
+}
+
+/// Encodes a request without serializing the outer [`Request`] enum.
+///
+/// # Errors
+///
+/// Returns an error for a wrong-stream kind, zero request correlation, malformed payload, or size
+/// limit violation.
+#[allow(clippy::too_many_lines)]
+pub fn encode_request_frame(
+    role: StreamRole,
+    correlation_id: u64,
+    request: &Request,
+    limits: Limits,
+) -> Result<Vec<u8>, ProtocolError> {
+    use payload as wire;
+    match request {
+        Request::CreateArchive { version, archive } => encode_typed_payload(
+            role,
+            request.kind(),
+            correlation_id,
+            &wire::CreateArchive {
+                version: *version,
+                archive: archive.clone(),
+            },
+            limits,
+        ),
+        Request::OpenSession {
+            version,
+            archive,
+            intent,
+            author,
+            session,
+            reference,
+        } => encode_typed_payload(
+            role,
+            request.kind(),
+            correlation_id,
+            &wire::OpenSession {
+                version: *version,
+                archive: archive.clone(),
+                intent: *intent,
+                author: author.clone(),
+                session: session.clone(),
+                reference: *reference,
+            },
+            limits,
+        ),
+        Request::Submit {
+            operation,
+            reference,
+            event,
+        } => encode_typed_payload(
+            role,
+            request.kind(),
+            correlation_id,
+            &wire::Submit {
+                operation: operation.clone(),
+                reference: *reference,
+                event: event.clone(),
+            },
+            limits,
+        ),
+        Request::ResolveSubmission { operation } | Request::ResolveSnapshot { operation } => {
+            encode_typed_payload(
+                role,
+                request.kind(),
+                correlation_id,
+                &wire::Operation {
+                    operation: operation.clone(),
+                },
+                limits,
+            )
+        }
+        Request::Read { after, through } => encode_typed_payload(
+            role,
+            request.kind(),
+            correlation_id,
+            &wire::Read {
+                after: *after,
+                through: *through,
+            },
+            limits,
+        ),
+        Request::PutBlob { payload } => encode_typed_payload(
+            role,
+            request.kind(),
+            correlation_id,
+            &wire::PutBlob {
+                payload: payload.clone(),
+            },
+            limits,
+        ),
+        Request::GetBlob { id } => encode_typed_payload(
+            role,
+            request.kind(),
+            correlation_id,
+            &wire::BlobId { id: *id },
+            limits,
+        ),
+        Request::PutDirectory { entries } => encode_typed_payload(
+            role,
+            request.kind(),
+            correlation_id,
+            &wire::PutDirectory {
+                entries: entries.clone(),
+            },
+            limits,
+        ),
+        Request::GetDirectory { id } => encode_typed_payload(
+            role,
+            request.kind(),
+            correlation_id,
+            &wire::DirectoryId { id: *id },
+            limits,
+        ),
+        Request::GetSnapshot { id } => encode_typed_payload(
+            role,
+            request.kind(),
+            correlation_id,
+            &wire::SnapshotId { id: id.clone() },
+            limits,
+        ),
+        Request::PublishSnapshot {
+            operation,
+            expected_parent,
+            at_event,
+            root,
+        } => encode_typed_payload(
+            role,
+            request.kind(),
+            correlation_id,
+            &wire::PublishSnapshot {
+                operation: operation.clone(),
+                expected_parent: expected_parent.clone(),
+                at_event: *at_event,
+                root: *root,
+            },
+            limits,
+        ),
+        Request::Load { required } => encode_typed_payload(
+            role,
+            request.kind(),
+            correlation_id,
+            &wire::Load {
+                required: *required,
+            },
+            limits,
+        ),
+        Request::LatestSnapshot | Request::SubscribeSnapshots | Request::Close => {
+            encode_typed_payload(role, request.kind(), correlation_id, &wire::Empty, limits)
+        }
+    }
+}
+
+/// Decodes a request from an explicitly identified payload.
+///
+/// # Errors
+///
+/// Returns an error for a wrong-stream or response kind, invalid correlation, or malformed payload.
+#[allow(clippy::too_many_lines)]
+pub fn decode_request_frame(
+    role: StreamRole,
+    frame: &NetworkFrame,
+) -> Result<Request, ProtocolError> {
+    use payload as wire;
+    frame.kind.validate_on(role)?;
+    validate_correlation(frame.kind, frame.correlation_id)?;
+    Ok(match frame.kind {
+        MessageKind::CreateArchive => {
+            let value: wire::CreateArchive = decode_typed_payload(frame)?;
+            Request::CreateArchive {
+                version: value.version,
+                archive: value.archive,
+            }
+        }
+        MessageKind::OpenSession => {
+            let value: wire::OpenSession = decode_typed_payload(frame)?;
+            Request::OpenSession {
+                version: value.version,
+                archive: value.archive,
+                intent: value.intent,
+                author: value.author,
+                session: value.session,
+                reference: value.reference,
+            }
+        }
+        MessageKind::Submit => {
+            let value: wire::Submit = decode_typed_payload(frame)?;
+            Request::Submit {
+                operation: value.operation,
+                reference: value.reference,
+                event: value.event,
+            }
+        }
+        MessageKind::ResolveSubmission | MessageKind::ResolveSnapshot => {
+            let value: wire::Operation = decode_typed_payload(frame)?;
+            if frame.kind == MessageKind::ResolveSubmission {
+                Request::ResolveSubmission {
+                    operation: value.operation,
+                }
+            } else {
+                Request::ResolveSnapshot {
+                    operation: value.operation,
+                }
+            }
+        }
+        MessageKind::Read => {
+            let value: wire::Read = decode_typed_payload(frame)?;
+            Request::Read {
+                after: value.after,
+                through: value.through,
+            }
+        }
+        MessageKind::PutBlob => {
+            let value: wire::PutBlob = decode_typed_payload(frame)?;
+            Request::PutBlob {
+                payload: value.payload,
+            }
+        }
+        MessageKind::GetBlob => {
+            let value: wire::BlobId = decode_typed_payload(frame)?;
+            Request::GetBlob { id: value.id }
+        }
+        MessageKind::PutDirectory => {
+            let value: wire::PutDirectory = decode_typed_payload(frame)?;
+            Request::PutDirectory {
+                entries: value.entries,
+            }
+        }
+        MessageKind::GetDirectory => {
+            let value: wire::DirectoryId = decode_typed_payload(frame)?;
+            Request::GetDirectory { id: value.id }
+        }
+        MessageKind::GetSnapshot => {
+            let value: wire::SnapshotId = decode_typed_payload(frame)?;
+            Request::GetSnapshot { id: value.id }
+        }
+        MessageKind::LatestSnapshot => {
+            let _: wire::Empty = decode_typed_payload(frame)?;
+            Request::LatestSnapshot
+        }
+        MessageKind::PublishSnapshot => {
+            let value: wire::PublishSnapshot = decode_typed_payload(frame)?;
+            Request::PublishSnapshot {
+                operation: value.operation,
+                expected_parent: value.expected_parent,
+                at_event: value.at_event,
+                root: value.root,
+            }
+        }
+        MessageKind::Load => {
+            let value: wire::Load = decode_typed_payload(frame)?;
+            Request::Load {
+                required: value.required,
+            }
+        }
+        MessageKind::SubscribeSnapshots => {
+            let _: wire::Empty = decode_typed_payload(frame)?;
+            Request::SubscribeSnapshots
+        }
+        MessageKind::Close => {
+            let _: wire::Empty = decode_typed_payload(frame)?;
+            Request::Close
+        }
+        _ => return Err(ProtocolError::UnexpectedMessageDirection(frame.kind)),
+    })
+}
+
+/// Encodes a response without serializing the outer [`Response`] enum.
+///
+/// # Errors
+///
+/// Returns an error for a wrong-stream kind, invalid correlation, malformed payload, or size limit.
+#[allow(clippy::too_many_lines)]
+pub fn encode_response_frame(
+    role: StreamRole,
+    correlation_id: u64,
+    response: &Response,
+    limits: Limits,
+) -> Result<Vec<u8>, ProtocolError> {
+    use payload as wire;
+    match response {
+        Response::Acknowledged => {
+            encode_typed_payload(role, response.kind(), correlation_id, &wire::Empty, limits)
+        }
+        Response::EventCommitted {
+            position,
+            durability,
+        } => encode_typed_payload(
+            role,
+            response.kind(),
+            correlation_id,
+            &wire::EventCommitted {
+                position: *position,
+                durability: *durability,
+            },
+            limits,
+        ),
+        Response::SubmissionResolved {
+            position,
+            durability,
+        } => encode_typed_payload(
+            role,
+            response.kind(),
+            correlation_id,
+            &wire::SubmissionResolved {
+                position: *position,
+                durability: *durability,
+            },
+            limits,
+        ),
+        Response::BlobStored { id } => encode_typed_payload(
+            role,
+            response.kind(),
+            correlation_id,
+            &wire::BlobId { id: *id },
+            limits,
+        ),
+        Response::Blob(payload) => encode_typed_payload(
+            role,
+            response.kind(),
+            correlation_id,
+            &wire::Blob {
+                payload: payload.clone(),
+            },
+            limits,
+        ),
+        Response::DirectoryStored { id } => encode_typed_payload(
+            role,
+            response.kind(),
+            correlation_id,
+            &wire::DirectoryId { id: *id },
+            limits,
+        ),
+        Response::Directory(entries) => encode_typed_payload(
+            role,
+            response.kind(),
+            correlation_id,
+            &wire::Directory {
+                entries: entries.clone(),
+            },
+            limits,
+        ),
+        Response::Snapshot(snapshot) => encode_typed_payload(
+            role,
+            response.kind(),
+            correlation_id,
+            &wire::OptionalSnapshot {
+                snapshot: snapshot.clone(),
+            },
+            limits,
+        ),
+        Response::LoadSnapshot(snapshot) => encode_typed_payload(
+            role,
+            response.kind(),
+            correlation_id,
+            &wire::LoadSnapshot {
+                snapshot: snapshot.clone(),
+            },
+            limits,
+        ),
+        Response::LoadEvent(event) => encode_typed_payload(
+            role,
+            response.kind(),
+            correlation_id,
+            &wire::LoadEvent {
+                event: (**event).clone(),
+            },
+            limits,
+        ),
+        Response::CaughtUp(position) => encode_typed_payload(
+            role,
+            response.kind(),
+            correlation_id,
+            &wire::CaughtUp {
+                position: *position,
+            },
+            limits,
+        ),
+        Response::Error { kind, message } => encode_typed_payload(
+            role,
+            response.kind(),
+            correlation_id,
+            &wire::Error {
+                kind: *kind,
+                message: message.clone(),
+            },
+            limits,
+        ),
+    }
+}
+
+/// Decodes a response from an explicitly identified payload.
+///
+/// # Errors
+///
+/// Returns an error for a wrong-stream or request kind, invalid correlation, or malformed payload.
+#[allow(clippy::too_many_lines)]
+pub fn decode_response_network_frame(
+    role: StreamRole,
+    frame: &NetworkFrame,
+) -> Result<Response, ProtocolError> {
+    use payload as wire;
+    frame.kind.validate_on(role)?;
+    validate_correlation(frame.kind, frame.correlation_id)?;
+    Ok(match frame.kind {
+        MessageKind::Acknowledged => {
+            let _: wire::Empty = decode_typed_payload(frame)?;
+            Response::Acknowledged
+        }
+        MessageKind::EventCommitted => {
+            let value: wire::EventCommitted = decode_typed_payload(frame)?;
+            Response::EventCommitted {
+                position: value.position,
+                durability: value.durability,
+            }
+        }
+        MessageKind::SubmissionResolved => {
+            let value: wire::SubmissionResolved = decode_typed_payload(frame)?;
+            Response::SubmissionResolved {
+                position: value.position,
+                durability: value.durability,
+            }
+        }
+        MessageKind::BlobStored => {
+            let value: wire::BlobId = decode_typed_payload(frame)?;
+            Response::BlobStored { id: value.id }
+        }
+        MessageKind::Blob => {
+            let value: wire::Blob = decode_typed_payload(frame)?;
+            Response::Blob(value.payload)
+        }
+        MessageKind::DirectoryStored => {
+            let value: wire::DirectoryId = decode_typed_payload(frame)?;
+            Response::DirectoryStored { id: value.id }
+        }
+        MessageKind::Directory => {
+            let value: wire::Directory = decode_typed_payload(frame)?;
+            Response::Directory(value.entries)
+        }
+        MessageKind::Snapshot => {
+            let value: wire::OptionalSnapshot = decode_typed_payload(frame)?;
+            Response::Snapshot(value.snapshot)
+        }
+        MessageKind::LoadSnapshot => {
+            let value: wire::LoadSnapshot = decode_typed_payload(frame)?;
+            Response::LoadSnapshot(value.snapshot)
+        }
+        MessageKind::LoadEvent => {
+            let value: wire::LoadEvent = decode_typed_payload(frame)?;
+            Response::LoadEvent(Box::new(value.event))
+        }
+        MessageKind::CaughtUp => {
+            let value: wire::CaughtUp = decode_typed_payload(frame)?;
+            Response::CaughtUp(value.position)
+        }
+        MessageKind::Error => {
+            let value: wire::Error = decode_typed_payload(frame)?;
+            Response::Error {
+                kind: value.kind,
+                message: value.message,
+            }
+        }
+        _ => return Err(ProtocolError::UnexpectedMessageDirection(frame.kind)),
+    })
+}
+
 /// Stable wire error categories.
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ErrorKind {
@@ -660,12 +1392,21 @@ pub enum ProtocolError {
     /// A durability byte has no assigned meaning.
     #[error("unknown Sea durability {0}")]
     UnknownDurability(u8),
+    /// A known kind appeared on the wrong request/response side.
+    #[error("Sea message {0:?} has the wrong request/response direction")]
+    UnexpectedMessageDirection(MessageKind),
     /// A known message kind is invalid on the selected logical stream.
     #[error("Sea message {kind:?} is invalid on {role:?} stream")]
     WrongStream { kind: MessageKind, role: StreamRole },
     /// A correlation ID violates envelope rules.
     #[error("Sea frame correlation ID is invalid")]
     InvalidCorrelationId,
+    /// A request reused an active stream-scoped correlation ID.
+    #[error("Sea correlation ID {0} is already active")]
+    CorrelationInUse(u64),
+    /// A response did not match an active stream-scoped correlation ID.
+    #[error("Sea correlation ID {0} is not active")]
+    UnknownCorrelation(u64),
     /// A length-delimited envelope ended before its declared boundary.
     #[error("Sea network frame is incomplete")]
     IncompleteFrame,
@@ -733,8 +1474,11 @@ pub fn decode<T: DeserializeOwned>(bytes: &[u8], limits: Limits) -> Result<T, Pr
 #[cfg(test)]
 mod tests {
     use super::{
-        Event, Frame, Limits, MAGIC, MessageKind, NetworkFrame, NetworkFrameDecoder, ProtocolError,
-        Request, StreamRole, TreeId, VERSION, decode, encode, encode_network_frame,
+        ArchiveIntent, CorrelationTracker, DirectoryEntry, ErrorKind, Event, Frame, Limits, MAGIC,
+        MessageKind, NetworkFrame, NetworkFrameDecoder, PROTOCOL_VERSION, ProtocolError, Request,
+        Response, Snapshot, SnapshotPosition, StreamEvent, StreamRole, TreeId, VERSION,
+        WireDurability, decode, decode_request_frame, decode_response_network_frame, encode,
+        encode_network_frame, encode_request_frame, encode_response_frame,
     };
 
     #[test]
@@ -884,5 +1628,257 @@ mod tests {
             truncated.finish(),
             Err(ProtocolError::IncompleteFrame)
         ));
+    }
+
+    #[test]
+    fn correlations_reject_reuse_and_mismatched_completion() {
+        let mut tracker = CorrelationTracker::default();
+        tracker.begin(7).expect("first use");
+        assert!(tracker.is_active(7));
+        assert!(matches!(
+            tracker.begin(7),
+            Err(ProtocolError::CorrelationInUse(7))
+        ));
+        assert!(matches!(
+            tracker.complete(8),
+            Err(ProtocolError::UnknownCorrelation(8))
+        ));
+        tracker.complete(7).expect("matching response");
+        tracker.begin(7).expect("reuse after completion");
+        assert!(matches!(
+            tracker.begin(0),
+            Err(ProtocolError::InvalidCorrelationId)
+        ));
+    }
+
+    #[test]
+    fn zero_correlation_is_reserved_for_notifications() {
+        assert!(
+            encode_network_frame(
+                &NetworkFrame {
+                    kind: MessageKind::LoadEvent,
+                    correlation_id: 0,
+                    payload: Vec::new(),
+                },
+                Limits::default(),
+            )
+            .is_ok()
+        );
+        assert!(matches!(
+            encode_network_frame(
+                &NetworkFrame {
+                    kind: MessageKind::Acknowledged,
+                    correlation_id: 0,
+                    payload: Vec::new(),
+                },
+                Limits::default(),
+            ),
+            Err(ProtocolError::InvalidCorrelationId)
+        ));
+    }
+
+    #[test]
+    fn every_request_payload_round_trips_without_outer_enum_encoding() {
+        let event = Event {
+            payload: b"payload".to_vec(),
+            blob_tree: Some(TreeId::Blob([3; 32])),
+        };
+        let entries = vec![DirectoryEntry {
+            name: "leaf".to_owned(),
+            child: TreeId::Blob([4; 32]),
+        }];
+        let cases = vec![
+            (
+                StreamRole::Control,
+                Request::CreateArchive {
+                    version: PROTOCOL_VERSION,
+                    archive: b"archive".to_vec(),
+                },
+            ),
+            (
+                StreamRole::Event,
+                Request::OpenSession {
+                    version: PROTOCOL_VERSION,
+                    archive: b"archive".to_vec(),
+                    intent: ArchiveIntent::Open,
+                    author: b"author".to_vec(),
+                    session: b"session".to_vec(),
+                    reference: Some(1),
+                },
+            ),
+            (
+                StreamRole::Author,
+                Request::Submit {
+                    operation: b"operation".to_vec(),
+                    reference: Some(1),
+                    event,
+                },
+            ),
+            (
+                StreamRole::Author,
+                Request::ResolveSubmission {
+                    operation: b"operation".to_vec(),
+                },
+            ),
+            (
+                StreamRole::Content,
+                Request::Read {
+                    after: Some(1),
+                    through: Some(2),
+                },
+            ),
+            (
+                StreamRole::Content,
+                Request::PutBlob {
+                    payload: b"blob".to_vec(),
+                },
+            ),
+            (StreamRole::Content, Request::GetBlob { id: [5; 32] }),
+            (StreamRole::Content, Request::PutDirectory { entries }),
+            (StreamRole::Content, Request::GetDirectory { id: [6; 32] }),
+            (StreamRole::Content, Request::GetSnapshot { id: vec![7; 8] }),
+            (StreamRole::Snapshot, Request::LatestSnapshot),
+            (
+                StreamRole::Snapshot,
+                Request::PublishSnapshot {
+                    operation: b"snapshot-operation".to_vec(),
+                    expected_parent: Some(vec![8; 8]),
+                    at_event: SnapshotPosition::At(2),
+                    root: TreeId::Directory([9; 32]),
+                },
+            ),
+            (
+                StreamRole::Snapshot,
+                Request::ResolveSnapshot {
+                    operation: b"snapshot-operation".to_vec(),
+                },
+            ),
+            (StreamRole::Event, Request::Load { required: Some(2) }),
+            (StreamRole::Snapshot, Request::SubscribeSnapshots),
+            (StreamRole::Author, Request::Close),
+        ];
+        for (role, request) in cases {
+            let encoded = encode_request_frame(role, 17, &request, Limits::default())
+                .expect("request encoding");
+            assert_eq!(encoded[4], u8::from(request.kind()));
+            let frame = decode_one_network_frame(&encoded);
+            assert_eq!(frame.correlation_id, 17);
+            assert_eq!(
+                decode_request_frame(role, &frame).expect("request decoding"),
+                request
+            );
+        }
+    }
+
+    #[test]
+    fn every_response_payload_round_trips_without_outer_enum_encoding() {
+        let snapshot = Snapshot {
+            id: vec![1; 8],
+            parent: None,
+            at_event: SnapshotPosition::At(2),
+            root: TreeId::Directory([2; 32]),
+        };
+        let stream_event = StreamEvent {
+            position: 2,
+            author: b"author".to_vec(),
+            session: b"session".to_vec(),
+            operation: b"operation".to_vec(),
+            reference: Some(1),
+            minimum_reference: Some(1),
+            event: Event {
+                payload: b"event".to_vec(),
+                blob_tree: None,
+            },
+        };
+        let cases = vec![
+            (StreamRole::Control, Response::Acknowledged),
+            (
+                StreamRole::Author,
+                Response::EventCommitted {
+                    position: 2,
+                    durability: WireDurability::Durable,
+                },
+            ),
+            (
+                StreamRole::Author,
+                Response::SubmissionResolved {
+                    position: Some(2),
+                    durability: Some(WireDurability::Durable),
+                },
+            ),
+            (StreamRole::Content, Response::BlobStored { id: [3; 32] }),
+            (StreamRole::Content, Response::Blob(b"blob".to_vec())),
+            (
+                StreamRole::Content,
+                Response::DirectoryStored { id: [4; 32] },
+            ),
+            (
+                StreamRole::Content,
+                Response::Directory(vec![DirectoryEntry {
+                    name: "leaf".to_owned(),
+                    child: TreeId::Blob([5; 32]),
+                }]),
+            ),
+            (
+                StreamRole::Snapshot,
+                Response::Snapshot(Some(snapshot.clone())),
+            ),
+            (StreamRole::Event, Response::LoadSnapshot(snapshot)),
+            (
+                StreamRole::Event,
+                Response::LoadEvent(Box::new(stream_event)),
+            ),
+            (StreamRole::Event, Response::CaughtUp(Some(2))),
+            (
+                StreamRole::Control,
+                Response::Error {
+                    kind: ErrorKind::Rejected,
+                    message: "rejected".to_owned(),
+                },
+            ),
+        ];
+        for (role, response) in cases {
+            let encoded = encode_response_frame(role, 19, &response, Limits::default())
+                .expect("response encoding");
+            assert_eq!(encoded[4], u8::from(response.kind()));
+            let frame = decode_one_network_frame(&encoded);
+            assert_eq!(
+                decode_response_network_frame(role, &frame).expect("response decoding"),
+                response
+            );
+        }
+    }
+
+    #[test]
+    fn typed_payloads_reject_wrong_direction_and_malformed_bytes() {
+        let response = Response::Acknowledged;
+        let encoded = encode_response_frame(StreamRole::Control, 1, &response, Limits::default())
+            .expect("response encoding");
+        let frame = decode_one_network_frame(&encoded);
+        assert!(matches!(
+            decode_request_frame(StreamRole::Control, &frame),
+            Err(ProtocolError::UnexpectedMessageDirection(
+                MessageKind::Acknowledged
+            ))
+        ));
+
+        let malformed = NetworkFrame {
+            kind: MessageKind::Submit,
+            correlation_id: 1,
+            payload: vec![0xff],
+        };
+        assert!(matches!(
+            decode_request_frame(StreamRole::Author, &malformed),
+            Err(ProtocolError::InvalidPayload(_))
+        ));
+    }
+
+    fn decode_one_network_frame(encoded: &[u8]) -> NetworkFrame {
+        let mut decoder = NetworkFrameDecoder::new(Limits::default());
+        decoder.push(encoded);
+        decoder
+            .next_frame()
+            .expect("network decoding")
+            .expect("complete network frame")
     }
 }
