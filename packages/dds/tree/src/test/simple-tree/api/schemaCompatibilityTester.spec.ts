@@ -267,6 +267,7 @@ describe("getSchemaIncompatibilityDetails", () => {
 describe("checkSchemaCompatibility", () => {
 	it("reports leaf value differences on all sides and in each blocker subset", () => {
 		const identifier = "LeafValueDiagnostics";
+		// Use the same identifier to compare leaf values instead of reporting missing definitions.
 		const view = new LeafNodeSchema(identifier, ValueSchema.Number);
 		const stored = toUpgradeSchema(new LeafNodeSchema(identifier, ValueSchema.String));
 		const status = expectCompatibility(
@@ -283,6 +284,7 @@ describe("checkSchemaCompatibility", () => {
 			},
 		]);
 		assert(!status.canView && !status.canUpgrade && !status.isEquivalent);
+		// This single difference prevents viewing and both directions of the stored-schema comparison.
 		assert.deepEqual(status.viewDiscrepancies, status.allDiscrepancies);
 		assert.deepEqual(status.upgradeDiscrepancies, status.allDiscrepancies);
 		assert.deepEqual(status.equivalenceDiscrepancies, status.allDiscrepancies);
@@ -326,6 +328,8 @@ describe("checkSchemaCompatibility", () => {
 		for (const view of schemas) {
 			for (const original of schemas) {
 				const stored = toUpgradeSchema(original);
+				// This matrix checks diagnostic consistency with the reported flags.
+				// The other tests supply independent expectations for compatibility decisions.
 				const { canView, canUpgrade, isEquivalent } = checkSchemaCompatibility(
 					new TreeViewConfigurationAlpha({ schema: view }),
 					stored,
@@ -372,6 +376,7 @@ describe("checkSchemaCompatibility", () => {
 		}
 		const first = compare(false);
 		const second = compare(true);
+		// Input insertion order must not change diagnostic values or their output order.
 		assert.deepEqual(first.allDiscrepancies, second.allDiscrepancies);
 		for (const property of [
 			"viewDiscrepancies",
@@ -415,6 +420,7 @@ describe("checkSchemaCompatibility", () => {
 
 	it("preserves empty-string object field locations in object-to-map failures", () => {
 		const view = factory.map("EmptyObjectKeyDiagnostics", factory.number);
+		// An explicit empty-string object key must not become null, which identifies an implicit field.
 		const stored = factory.object("EmptyObjectKeyDiagnostics", { "": factory.string });
 		const status = expectCompatibility(
 			{ view, stored: toUpgradeSchema(stored) },
@@ -443,6 +449,7 @@ describe("checkSchemaCompatibility", () => {
 			{ view, stored },
 			{ canView: true, canUpgrade: true, isEquivalent: true },
 		);
+		// An absent field and an explicit forbidden field accept the same content but differ in representation.
 		assert.deepEqual(status.allDiscrepancies, [
 			{
 				mismatch: "fieldPresence",
@@ -902,6 +909,7 @@ describe("checkSchemaCompatibility", () => {
 					{ view: Point2D, stored: toUpgradeSchema(Point3D) },
 					{ canView: true, canUpgrade: false, isEquivalent: false },
 				);
+				// The view-only policy permits reading the extra field but is not retained in stored schema.
 				const policyDifferences = status.allDiscrepancies.filter(
 					(entry) => entry.mismatch === "allowUnknownOptionalFields",
 				);
@@ -916,6 +924,7 @@ describe("checkSchemaCompatibility", () => {
 				]);
 				assert(!status.canUpgrade && !status.isEquivalent);
 				assert.equal("viewDiscrepancies" in status, false);
+				// Removing the extra field blocks upgrading and equivalence; the policy annotation does not.
 				for (const entry of policyDifferences) {
 					assert(!status.upgradeDiscrepancies.includes(entry));
 					assert(!status.equivalenceDiscrepancies.includes(entry));
@@ -1264,6 +1273,7 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 		);
 
 		const config = new TreeViewConfigurationAlpha({ schema: schemaStaged });
+		// The default policy is restrictive, so the target remains required even though stored schema is optional.
 		const status = checkSchemaCompatibility(config, stored);
 		const { enabledUpgrades } = status;
 		assert.equal(enabledUpgrades.size, 1);
@@ -1286,6 +1296,7 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 		]);
 		assert(status.canView && !status.canUpgrade && !status.isEquivalent);
 		assert.equal("viewDiscrepancies" in status, false);
+		// Only the field-kind change is a blocker; the staged-optional annotation is diagnostic context.
 		assert.deepEqual(status.upgradeDiscrepancies, [status.allDiscrepancies[0]]);
 		assert.deepEqual(status.equivalenceDiscrepancies, [status.allDiscrepancies[0]]);
 	});
@@ -1310,6 +1321,7 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 		const status = checkSchemaCompatibility(config, stored);
 		const { enabledUpgrades } = status;
 		assert.equal(enabledUpgrades.size, 0);
+		// Report the view's staging annotation even before the stored field becomes optional.
 		const stagedDifference = {
 			mismatch: "stagedOptional",
 			location: { nodeType: ObjStaged.identifier, fieldKey: "value" },
@@ -1324,6 +1336,7 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 		assert(status.canView && status.canUpgrade && status.isEquivalent);
 		assert.equal("equivalenceDiscrepancies" in status, false);
 
+		// Enable the upgrade in the proposed target without changing the current stored schema.
 		const upgrading = checkSchemaCompatibility(
 			config,
 			stored,
@@ -1334,6 +1347,7 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 			[stagedDifference],
 		);
 		assert(upgrading.canView && upgrading.canUpgrade && !upgrading.isEquivalent);
+		// Required-to-optional is a valid upgrade, but the reverse comparison prevents equivalence.
 		assert.deepEqual(upgrading.equivalenceDiscrepancies, [
 			{
 				mismatch: "fieldKind",
