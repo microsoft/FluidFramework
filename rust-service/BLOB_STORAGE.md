@@ -245,9 +245,15 @@ This removes the storage-level distinction between a standalone blob and a blob 
 Their content representation, upload, verification, retrieval, deduplication, and physical retention are identical.
 They differ only in which Fluid operation creates a retention root and which authorization path permits access.
 
-The current minimal Fluid driver does not yet implement this recursive representation.
-It uploads summary leaves as blobs, flattens their paths into one summary manifest, rejects summary handles and attachments, and publishes that manifest digest as an opaque snapshot payload.
-Moving to first-class directory objects would preserve subtree identity, allow handles to reuse unchanged data directly, and avoid rebuilding a flat manifest when only one subtree changes.
+The minimal Fluid driver implements this recursive representation using Sea blob and directory identities.
+It uploads new summary leaves as blobs, accepts attachment nodes that identify previously uploaded blobs, resolves blob and tree handles against the acknowledged parent snapshot, and conditionally publishes the resulting directory root as a new snapshot.
+The storage backends validate referenced objects before accepting each directory, and their content-addressed identities deduplicate unchanged blobs and reconstructed directory subtrees.
+
+The driver currently fetches and flattens the complete parent directory before resolving handles, then reconstructs the complete directory structure even when most of the summary is unchanged.
+This preserves incremental storage semantics but performs avoidable traversal and idempotent directory requests.
+A wire-efficient implementation could instead walk only each handle path from the parent snapshot root, retain tree handles as direct `BlobDirectoryId` values, combine those references with new blobs and attachment `BlobId` values, and write only newly composed ancestor directories.
+Existing snapshot, directory read, and directory write operations appear sufficient; no new persisted object kind is required.
+Such an optimization must preserve Fluid's `.app` and `.protocol` path projection, validate the requested handle kind, retain expected-parent conflict detection, and measure whether multiple targeted path walks outperform one full parent traversal for realistic summaries.
 
 Fluid's application-level garbage collector and the content store solve different problems.
 Fluid GC determines which data stores, attachments, and routes remain semantically reachable in a document.

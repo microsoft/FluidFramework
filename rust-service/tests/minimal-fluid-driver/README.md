@@ -8,18 +8,38 @@ The same adapter accepts local, injected, and browser WebTransport clients.
 
 - `IDocumentServiceFactory`: create with an optional full summary and load by resolved URL.
 - `IDocumentService`: storage, bounded delta storage, and explicit delta connection creation.
-- `IDocumentStorageService`: versions, snapshot trees, immutable blob create/read, full summary upload/download.
+- `IDocumentStorageService`: versions, snapshot trees, immutable blob create/read, full and incremental summary upload, and full summary download.
+- Summary tree, blob, and attachment handles resolved against the acknowledged parent snapshot, plus attachment blobs uploaded outside the summary.
 - `IDocumentDeltaStorageService`: bounded projected pages filtered to the requested sequence interval.
 - `IDocumentDeltaConnection`: submission and push-driven operation events through one bounded projected-operation subscription.
 - Explicit lifecycle extensions: `waitForIdle()`, `disconnect()`, `reconnect()`, `recoverPending()`, and caller-driven `resubmitPending()`.
 
 ## Unsupported interfaces and semantics
 
-- Signals, nacks, presence, automatic reconnect, hidden retry, offline merge, summary handles, summary attachments, loading groups, and GC/retention guarantees.
-- Summary upload accepts full trees only. Incremental handle reuse and parent concurrency are not implemented.
+- Signals, nacks, presence, automatic reconnect, hidden retry, offline merge, loading groups, and GC/retention guarantees.
+- Summary download materializes a full tree. It does not preserve handles or distinguish separately uploaded attachments from other blob leaves in the returned tree.
 - `getSnapshot`, caching, auth, production certificates, Routerlicious, and ODSP compatibility are not implemented or claimed.
 - The native server owns a bounded set of concurrent connection futures. The SharedTree Chromium trace uses three independent Fluid containers and three generated `BrowserClient` transport sessions. Each document service serializes access to its non-reentrant generated client; serialization is not shared across containers.
 - Browser loading uses Fluid's default read-to-write replacement. Each replacement opens a fresh Sea session identity while preserving the adapter's Fluid projection state. Production Fluid membership is not implemented.
+
+## Summary storage semantics
+
+`createBlob()` uploads an immutable attachment blob and returns its content identity.
+During summary upload, an attachment node references that existing identity without uploading its content again.
+The Sea storage backends validate every referenced blob and directory before accepting a directory, so a summary containing an unknown attachment identity is rejected.
+
+For an incremental summary, the driver loads the snapshot identified by `ISummaryContext.ackHandle`, falling back to `proposalHandle` when necessary.
+Blob and tree handles are paths into that parent snapshot.
+The driver resolves those paths, reuses the referenced content identities, uploads new blobs, and conditionally publishes a new snapshot whose expected parent is the resolved snapshot.
+A stale parent causes publication to fail; the driver does not retry against a different parent because that could change the summary's event boundary or invalidate its handles.
+
+The current implementation fetches the complete parent directory manifest and rebuilds the complete directory structure for each incremental summary.
+Content-addressed blob and directory identities ensure that unchanged content is not uploaded or persisted again, but the parent traversal and idempotent directory requests still consume client, server, and wire work.
+
+A future optimization could traverse only the parent paths named by handles and retain tree handles as direct directory identities.
+The client would build a mixed tree of new blobs, attachment identities, blob handles, and directory handles, then publish only newly composed directories from the leaves to the root.
+The existing snapshot, `getDirectory`, and `putDirectory` APIs appear sufficient, so this should not require a new Rust storage schema or wire protocol.
+The implementation would need to preserve the driver's `.app` and `.protocol` path projection, validate handle kinds and paths, retain expected-parent publication, and compare path-by-path request overhead with the current single full traversal before replacing it.
 
 ## Submission and subscription lifecycle
 
@@ -57,6 +77,7 @@ declarative task already provides hash-based incremental execution, so this is a
 tooling refinement rather than a prerequisite for reliable client builds.
 
 The unit suite includes an injected TypeScript submission-stream fixture. It deterministically holds acknowledgements, rejects writes or responses, records stream and subscription disposal, and verifies unary fallback without requiring a live service.
+It also includes a summary-storage fixture that verifies mixed incremental tree and blob handles, attachment reuse and validation, historical snapshot loading, and stale-parent rejection.
 
 For Chromium, generate the existing browser harness certificate, start
 `sea-webtransport-server`, and run:
