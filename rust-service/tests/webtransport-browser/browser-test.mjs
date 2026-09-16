@@ -52,11 +52,30 @@ async function run() {
 		undefined,
 		encoder.encode("first-payload"),
 	);
+	const authorStream = await first.openSubmissionStream();
+	const firstStreamedReceipt = await authorStream.submit(
+		encoder.encode("browser-operation-stream-1"),
+		firstReceipt.position,
+		encoder.encode("first-streamed-payload"),
+	);
+	const secondStreamedReceipt = await authorStream.submit(
+		encoder.encode("browser-operation-stream-2"),
+		firstStreamedReceipt.position,
+		encoder.encode("second-streamed-payload"),
+	);
+	await authorStream.close();
+	assert(
+		firstReceipt.position < firstStreamedReceipt.position &&
+			firstStreamedReceipt.position < secondStreamedReceipt.position,
+		"author-stream event positions did not increase",
+	);
 	const resolved = await first.resolveSubmission(encoder.encode("browser-operation-1"));
 	assert(resolved?.position === firstReceipt.position, "submission resolution mismatch");
 	const load = await first.load();
 	const firstLoaded = await load.next();
 	assert(firstLoaded.kind === "event", "load omitted the first event");
+	assert((await load.next()).kind === "event", "load omitted the first streamed event");
+	assert((await load.next()).kind === "event", "load omitted the second streamed event");
 	const initialCaughtUp = await load.next();
 	assert(initialCaughtUp.kind === "caughtUp", "load omitted its initial caught-up marker");
 
@@ -64,11 +83,11 @@ async function run() {
 		archive,
 		encoder.encode("second-author"),
 		encoder.encode("second-session"),
-		firstReceipt.position,
+		secondStreamedReceipt.position,
 	);
 	const secondReceipt = await second.submit(
 		encoder.encode("browser-operation-2"),
-		firstReceipt.position,
+		secondStreamedReceipt.position,
 		encoder.encode("second-payload"),
 	);
 	assert(secondReceipt.position > firstReceipt.position, "event positions did not increase");
@@ -147,6 +166,8 @@ async function run() {
 		browser: navigator.userAgent,
 		transportSessionCount: 3,
 		firstPosition: firstReceipt.position.toString(),
+		firstStreamedPosition: firstStreamedReceipt.position.toString(),
+		secondStreamedPosition: secondStreamedReceipt.position.toString(),
 		secondPosition: secondReceipt.position.toString(),
 		caughtUp: initialCaughtUp.position.toString(),
 		blobBytes: blobPayload.length,

@@ -6,6 +6,9 @@ Its `sea-webtransport-browser` WASM example generates the web and Node bindings 
 `WebTransportServer` accepts sessions only on `/sea`, bounds concurrent connections and streams, and dispatches requests to an archive-bound `SeaSession`.
 Unary requests require request-side EOF before dispatch.
 Streaming responses use four-byte length framing and terminate on cancellation, service closure, or write failure.
+The browser binding also opens an ordered event-author stream identified by `SEAS`.
+Each request and receipt on that stream uses the same four-byte length framing, allowing one bidirectional WebTransport stream to carry multiple submissions without a stream-open round trip per event.
+Protocol or transport failure closes the owning connection without terminating the server endpoint.
 
 `WebTransportClient` pins a SHA-256 certificate hash and implements `SeaSession`.
 Disconnect and reconnect are explicit; operations are never retried automatically.

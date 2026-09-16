@@ -43,7 +43,11 @@ The implementation would need to preserve the driver's `.app` and `.protocol` pa
 
 ## Submission and subscription lifecycle
 
-When the generated client provides `openSubmissionStream`, the driver writes contiguous client sequence numbers to one stream and consumes acknowledgements in the same order. A submission remains in `pending` until its acknowledgement arrives or projected local operation is observed. Write failures and response loss reject `waitForIdle()` without discarding pending identity, so callers can use `recoverPending()` and explicitly `resubmitPending()` when the service reports `notCommitted`. Resubmission intentionally uses the unary request path.
+The generated browser WebTransport client provides `openSubmissionStream`, so the driver writes contiguous client sequence numbers to one long-lived event-author stream and consumes acknowledgements in the same order.
+Clients without that capability, including the local generated client, retain the unary request fallback.
+A submission remains in `pending` until its acknowledgement arrives or projected local operation is observed.
+Write failures and response loss reject `waitForIdle()` without discarding pending identity, so callers can use `recoverPending()` and explicitly `resubmitPending()` when the service reports `notCommitted`.
+Resubmission intentionally uses the unary request path.
 
 Clients without `openSubmissionStream` continue to submit through unary requests. Reconnect closes the old submission stream, cancels the old projected-operation subscription, reconnects the generated client, and opens replacements. Explicit disconnect and disposal also close and cancel their owned resources. Subscription restart and explicit synchronization resume from the last projected cursor.
 
@@ -111,7 +115,7 @@ Tinylicious belongs to the separate Routerlicious pnpm workspace. Install that w
 pnpm --dir server/routerlicious install --frozen-lockfile
 ```
 
-Run all six cases with the quick default performance configuration of three repetitions, 250 measured edits, 10 warmup edits, and one edit per Fluid batch without per-batch synchronization:
+Run all cases with the quick default performance configuration of three repetitions, 250 measured edits, 10 warmup edits, and one edit per Fluid batch without per-batch synchronization:
 
 ```bash
 pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run
@@ -131,10 +135,14 @@ pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run -- \
 Run `pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run -- --help` for all flags. Case aliases are:
 
 - `rust-local`: Rust local memory
+- `rust-local-direct`: Rust local memory without the Fluid container/runtime
 - `local`: TypeScript local service
 - `rust-memory`: Rust WebTransport memory
+- `rust-memory-direct`: Rust WebTransport memory without the Fluid container/runtime
 - `rust-buffered`: Rust WebTransport buffered file
+- `rust-buffered-direct`: Rust WebTransport buffered file without the Fluid container/runtime
 - `rust-durable`: Rust WebTransport durable file
+- `rust-durable-direct`: Rust WebTransport durable file without the Fluid container/runtime
 - `tinylicious`: Tinylicious
 
 `--case` accepts comma-separated aliases and may be repeated. For arbitrary selection, `--grep <pattern>` passes a regular expression to Mocha. The lower-level `bench` script remains available for standard Mocha flags and environment-only automation.
@@ -158,6 +166,11 @@ Configure the workload through environment variables:
 `turns` is the default throughput workload: it flushes one edit per Fluid batch without waiting for observer convergence after each edit, then waits for final convergence. `batched` has the same synchronization behavior but is intended for an explicit `BENCHMARK_OPERATIONS_PER_TURN` or `--operations-per-turn` value above one. `messages` waits for both containers to observe every edit before continuing, providing an unambiguous one-operation-per-convergence latency workload.
 
 The defaults favor quick directional throughput comparisons. Increase repetitions and operations explicitly when collecting more stable performance data.
+
+The event-author stream removes a per-operation WebTransport stream-open latency floor.
+On the same Linux host and Chromium 152, a three-repetition `rust-memory-direct` run with 100 measured dummy operations improved from 37.86 to 2,295.24 operations/s after stream reuse.
+Mean final convergence fell from 2,642.5 ms to 44.27 ms while all clients still observed all 110 warmup and measured edits.
+These are directional development measurements comparing baseline commit `b16f8d980bbebfe1e39b118fc9dcccb50a3e2a59` with this change, not production capacity claims.
 
 The `bench:run` wrapper enables complete failure diagnostics and writes both reporter streams to stdout, so redirecting it with `> log.txt` retains the full errors.
 The report suite name includes the effective workload, operation count, warmup count, operations per turn, synchronization behavior, and repetition count.

@@ -1,7 +1,18 @@
 # Proposed WebTransport flows
 
-This document sketches a target network protocol for the [native WebTransport adapter](crates/wrappers/sea-webtransport/) and the [`sea-sequencer`](crates/sea-sequencer/).
-It is prospective: the current FSP4 protocol implements parts of these flows, but not the complete load, membership, snapshot, or content behavior described here.
+This document sketches a target network protocol for the [native WebTransport adapter](crates/sea-webtransport/) and the [`sea-sequencer`](crates/sea-sequencer/).
+It is prospective: the current Sea v1 protocol implements parts of these flows, but not the complete load, membership, snapshot, or content behavior described here.
+
+## Current implementation alignment
+
+The browser adapter currently uses one long-lived load stream for snapshot selection, catch-up, and live event delivery, plus one long-lived event-author stream for ordered submissions and receipts.
+The author stream uses a `SEAS` marker followed by four-byte-length-delimited Sea v1 request and response frames.
+This matches the intended two-stream topology and avoids opening a WebTransport stream for every edit.
+
+The current author stream is authorized by the `OpenSession` state already attached to its WebTransport connection.
+It does not yet carry a document and subscription-issued session identifier in its initialization message, implement author-stream takeover, or derive writer lifecycle from a paired subscription.
+Each submission still carries its reference and session metadata in the existing Sea request/event model rather than using compressed reference/session control events.
+Those differences preserve the current protocol semantics while the pairing, takeover, membership, and compression policies below remain prospective.
 
 The transport adapter should own WebTransport stream lifecycle, framing, timeouts, cancellation, and flow control.
 The server sequencer should own authoritative ordering, writer sessions, reference validation, minimum-reference tracking, and rejection.
