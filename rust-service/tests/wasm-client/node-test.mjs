@@ -106,3 +106,12 @@ test("generated local clients expose disconnect and explicit reopen", async () =
 	);
 	assert.equal(await first.latestSnapshot(), undefined);
 });
+
+test("generated local stream cancellation wakes a pending read", async () => {
+	const { first } = await clients();
+	const load = await first.load();
+	assert.equal((await load.next()).kind, "caughtUp");
+	const pending = load.next();
+	await load.cancel();
+	assert.equal(await pending, undefined);
+});

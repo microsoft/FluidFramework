@@ -114,8 +114,8 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 {
 	private readonly positionSequences = new Map<bigint, bigint>();
 	private readonly sequencePositions = new Map<bigint, bigint>();
+	private readonly operationLocalSequences = new Map<string, bigint>();
 	private nextSequence = 1n;
-	private nextSession = 1;
 
 	public constructor(
 		private readonly client: GeneratedSeaClient<TTree>,
@@ -132,7 +132,7 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 		await this.client.openSession(
 			document,
 			encoder.encode("storage"),
-			encoder.encode(`storage-session-${this.nextSession++}`),
+			encoder.encode(`storage-session-${crypto.randomUUID()}`),
 		);
 	}
 
@@ -150,10 +150,11 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 		_writer: Uint8Array,
 		_session: Uint8Array,
 		submission: Uint8Array,
-		_localSequenceNumber: number,
+		localSequenceNumber: number,
 		payload: Uint8Array,
 		referencePosition?: Uint8Array,
 	): Promise<Uint8Array> {
+		this.operationLocalSequences.set(bytesKey(submission), BigInt(localSequenceNumber));
 		const receipt = await this.client.submit(
 			submission,
 			decodePosition(referencePosition),
@@ -336,6 +337,9 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 		const message = JSON.parse(decoder.decode(item.payload)) as {
 			clientSequenceNumber?: number;
 		};
+		const localSequenceNumber =
+			this.operationLocalSequences.get(bytesKey(item.operation)) ??
+			BigInt(message.clientSequenceNumber ?? 0);
 		return {
 			position: encodePosition(item.position),
 			sequenceNumber: this.sequence(item.position),
@@ -345,7 +349,7 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 			writer: item.author,
 			session: item.session,
 			submission: item.operation,
-			localSequenceNumber: BigInt(message.clientSequenceNumber ?? 0),
+			localSequenceNumber,
 			...(item.reference === undefined ? {} : { reference: encodePosition(item.reference) }),
 			payload: item.payload,
 		};
@@ -387,6 +391,10 @@ export class TypedSeaClientAdapter<TTree extends GeneratedSeaTreeId>
 			}
 		}
 	}
+}
+
+function bytesKey(bytes: Uint8Array): string {
+	return Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
 }
 
 function insert<TTree extends GeneratedSeaTreeId>(

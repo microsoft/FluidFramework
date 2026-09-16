@@ -102,8 +102,14 @@ export class DirectDummyClient {
 	/** Waits until every local edit is submitted, acknowledged, and applied. */
 	public async waitForIdle(): Promise<void> {
 		await this.submissionChain;
+		const deadline = performance.now() + 10_000;
 		while (this.acknowledgedLocalSequenceNumber < this.localSequenceNumber) {
 			this.throwSynchronizationError();
+			if (performance.now() >= deadline) {
+				throw new Error(
+					`direct dummy timed out waiting for acknowledgment ${this.acknowledgedLocalSequenceNumber}/${this.localSequenceNumber}`,
+				);
+			}
 			await new Promise((resolve) => setTimeout(resolve, 0));
 		}
 		this.throwSynchronizationError();

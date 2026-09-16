@@ -111,8 +111,14 @@ export class DirectSharedTreeClient {
 	/** Waits until all currently submitted local edits are acknowledged and applied. */
 	public async waitForIdle(): Promise<void> {
 		await this.submissionChain;
+		const deadline = performance.now() + 10_000;
 		while (this.acknowledgedLocalSequenceNumber < this.localSequenceNumber) {
 			this.throwSynchronizationError();
+			if (performance.now() >= deadline) {
+				throw new Error(
+					`direct SharedTree timed out waiting for acknowledgment ${this.acknowledgedLocalSequenceNumber}/${this.localSequenceNumber}`,
+				);
+			}
 			await new Promise((resolve) => setTimeout(resolve, 0));
 		}
 		this.throwSynchronizationError();

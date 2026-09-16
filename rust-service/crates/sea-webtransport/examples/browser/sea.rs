@@ -14,7 +14,10 @@ use std::{
 };
 
 use bytes::Bytes;
-use futures_util::StreamExt as _;
+use futures_util::{
+    StreamExt as _,
+    future::{AbortHandle, Abortable},
+};
 use js_sys::{Array, Promise, Reflect, Uint8Array};
 use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, Event, EventPosition, SnapshotId,
@@ -800,6 +803,8 @@ impl SeaLocalClient {
 #[wasm_bindgen]
 pub struct SeaLocalStream {
     inner: RefCell<Option<SessionStream<SeaLoadItem, JsValue>>>,
+    pending_abort: RefCell<Option<AbortHandle>>,
+    cancelled: Cell<bool>,
 }
 
 impl SeaLocalStream {
@@ -808,6 +813,8 @@ impl SeaLocalStream {
     ) -> Self {
         Self {
             inner: RefCell::new(Some(Box::pin(stream))),
+            pending_abort: RefCell::new(None),
+            cancelled: Cell::new(false),
         }
     }
 }
@@ -816,17 +823,33 @@ impl SeaLocalStream {
 impl SeaLocalStream {
     /// Returns the next local stream item or undefined at finite completion.
     pub async fn next(&self) -> Result<Option<SeaLoadItem>, JsValue> {
+        if self.cancelled.get() {
+            return Ok(None);
+        }
         let mut stream = self
             .inner
             .take()
             .ok_or_else(|| js_error("Sea local stream is already being read"))?;
-        let item = stream.next().await.transpose()?;
+        let (abort, registration) = AbortHandle::new_pair();
+        self.pending_abort.replace(Some(abort));
+        let item = Abortable::new(stream.next(), registration).await;
+        self.pending_abort.replace(None);
+        let Ok(item) = item else {
+            return Ok(None);
+        };
+        if self.cancelled.get() {
+            return Ok(None);
+        }
         self.inner.replace(Some(stream));
-        Ok(item)
+        item.transpose()
     }
 
     /// Cancels the local stream.
     pub async fn cancel(&self) {
+        self.cancelled.set(true);
+        if let Some(abort) = self.pending_abort.take() {
+            abort.abort();
+        }
         self.inner.replace(None);
         std::future::ready(()).await;
     }

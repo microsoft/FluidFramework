@@ -616,8 +616,6 @@ interface DeltaConnectionLifecycle {
 	readonly remoteClientId: string;
 	/** Stable protocol writer identity. */
 	readonly writer: Uint8Array;
-	/** Stable protocol session identity. */
-	session: Uint8Array;
 	/** Last projected cursor consumed by reads or subscriptions. */
 	cursor: Uint8Array | undefined;
 	/** Last committed local submission position. */
@@ -706,6 +704,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 	public constructor(
 		public readonly clientId: string,
 		private readonly lifecycle: DeltaConnectionLifecycle,
+		private session: Uint8Array,
 		private readonly document: Uint8Array,
 		private readonly client: WasmProtocolClient,
 		private readonly protocol: ProtocolClient,
@@ -769,9 +768,14 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 		await this.protocol.openSession(
 			this.document,
 			this.lifecycle.writer,
-			this.lifecycle.session,
+			this.session,
 			this.lifecycle.lastPosition,
 		);
+		await this.openSubscription();
+	}
+
+	/** Opens projected delivery from the last consumed cursor. */
+	private async openSubscription(): Promise<void> {
 		this.subscription = await this.client.subscribeProjected(
 			this.document,
 			this.lifecycle.cursor,
@@ -804,7 +808,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 				const position = await this.protocol.submit(
 					this.document,
 					this.lifecycle.writer,
-					this.lifecycle.session,
+					this.session,
 					identity,
 					message.clientSequenceNumber,
 					encoder.encode(JSON.stringify(message)),
@@ -830,7 +834,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 	public async restartSubscription(): Promise<boolean> {
 		const resumedFromCursor = this.lifecycle.cursor !== undefined;
 		await this.stopSubscription();
-		await this.open();
+		await this.openSubscription();
 		return resumedFromCursor;
 	}
 
@@ -857,7 +861,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 			const resolution = await this.client.resolveSubmission(
 				this.document,
 				this.lifecycle.writer,
-				this.lifecycle.session,
+				this.session,
 				pending.identity,
 			);
 			resolutions.set(sequenceNumber, resolution);
@@ -881,7 +885,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 		const position = await this.protocol.submit(
 			this.document,
 			this.lifecycle.writer,
-			this.lifecycle.session,
+			this.session,
 			pending.identity,
 			sequenceNumber,
 			encoder.encode(JSON.stringify(pending.message)),
@@ -905,9 +909,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 	public async reconnect(...args: readonly unknown[]): Promise<void> {
 		await this.stopSubscription();
 		await this.client.reconnect(...args);
-		this.lifecycle.session = encoder.encode(
-			`${this.clientId}-session-${Date.now()}-${Math.random()}`,
-		);
+		this.session = encoder.encode(`${this.clientId}-session-${Date.now()}-${Math.random()}`);
 		await this.open();
 	}
 
@@ -946,7 +948,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 					this.lifecycle.cursor = operation.position;
 					if (
 						bytesEqual(operation.writer, this.lifecycle.writer) &&
-						bytesEqual(operation.session, this.lifecycle.session)
+						bytesEqual(operation.session, this.session)
 					) {
 						this.pending.delete(Number(operation.localSequenceNumber));
 					}
@@ -1064,11 +1066,12 @@ export class MinimalWasmDocumentService extends Events implements IDocumentServi
 		const lifecycle = this.getDeltaLifecycle(mode);
 		const logicalClientId = lifecycle.clientId;
 		const clientId = mode === "read" ? `client-${crypto.randomUUID()}` : logicalClientId;
-		lifecycle.session = encoder.encode(`${clientId}-session-${crypto.randomUUID()}`);
+		const session = encoder.encode(`${clientId}-session-${crypto.randomUUID()}`);
 		const wasm = await this.getClient(clientId);
 		const connection = new MinimalWasmDeltaConnection(
 			clientId,
 			lifecycle,
+			session,
 			documentId(this.resolvedUrl),
 			wasm,
 			new ProtocolClient(wasm),
@@ -1114,7 +1117,6 @@ export class MinimalWasmDocumentService extends Events implements IDocumentServi
 				clientId,
 				remoteClientId: clientId === remoteClientId ? externalClientId : remoteClientId,
 				writer: encoder.encode(clientId),
-				session: encoder.encode(`${clientId}-${crypto.randomUUID()}`),
 				cursor: undefined,
 				lastPosition: undefined,
 				remoteClientSequenceNumber: 0,
