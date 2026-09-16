@@ -35,8 +35,10 @@ export class SequenceIntervalOverlapSet {
 	 * Implicit segment tree over `ordered`: root 1, children of `n` at `2n` and `2n + 1`. Each
 	 * node holds the *index* of the interval with the greatest end position in its range. Indices
 	 * rather than intervals so that a stale entry cannot keep a removed interval alive, which in
-	 * turn lets a mutation mark the tree rather than discard it. A negative root means a rebuild
-	 * is owed.
+	 * turn lets a mutation mark the tree rather than discard it.
+	 *
+	 * A negative root means a rebuild is owed, so the root has to exist from the start for a set
+	 * which has never been queried to read as stale.
 	 */
 	private readonly maxEnds: number[] = [STALE, STALE];
 
@@ -131,8 +133,8 @@ export class SequenceIntervalOverlapSet {
 	 *
 	 * A set which has been emptied gives the array up, since nothing will query it and so nothing
 	 * will rebuild over it - `detachIndex` empties an index one interval at a time, so this is a
-	 * path the API drives itself. Trimming to two rather than none keeps the array packed, since
-	 * the root written below is at index 1.
+	 * path the API drives itself. It keeps the two entries the root sentinel needs, there being
+	 * nothing to gain by trimming below the index written next.
 	 */
 	private discardMaxEnds(): void {
 		if (this.ordered.length === 0) {
