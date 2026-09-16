@@ -3,9 +3,9 @@
 "fluid-framework": minor
 "__section": fix
 ---
-Identifier indexes handle schemas with multiple identifiers consistently
+[`createIdentifierIndex`](https://fluidframework.com/docs/api/tree/#createidentifierindex-function) handles schemas with multiple identifiers consistently
 
-`createIdentifierIndex` now indexes a node only when its schema has exactly one identifier field.
+`createIdentifierIndex` now indexes a node only when its schema has exactly one [`identifier`](https://fluidframework.com/docs/api/tree/schemafactory-class#identifier-property) field.
 Schemas with multiple identifier fields are skipped instead of arbitrarily indexing the first identifier field.
 This avoids field-order-dependent behavior while allowing identifier indexes to be created for trees containing such schemas.
 

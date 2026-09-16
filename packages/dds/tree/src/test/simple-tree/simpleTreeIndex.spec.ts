@@ -245,7 +245,7 @@ describe("simple tree indexes", () => {
 		assert.equal(index.get(childId), 3);
 	});
 
-	describe("indexing all nodes by name", () => {
+	describe("key field selection and validation", () => {
 		const exampleSchemaFactory = new SchemaFactory("all-nodes-by-name");
 		class NamedObject extends exampleSchemaFactory.object("NamedObject", {
 			name: exampleSchemaFactory.string,
