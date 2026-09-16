@@ -44,6 +44,7 @@ async function run() {
 	const archive = encoder.encode("browser-archive");
 	await first.openSession(
 		archive,
+		true,
 		encoder.encode("browser-author"),
 		encoder.encode("browser-session"),
 	);
@@ -81,6 +82,7 @@ async function run() {
 
 	await second.openSession(
 		archive,
+		false,
 		encoder.encode("second-author"),
 		encoder.encode("second-session"),
 		secondStreamedReceipt.position,
@@ -130,6 +132,7 @@ async function run() {
 	first.replaceTransport(replacement);
 	await first.openSession(
 		archive,
+		false,
 		encoder.encode("browser-author"),
 		encoder.encode("browser-session-reconnected"),
 		secondReceipt.position,
@@ -151,6 +154,7 @@ async function run() {
 				const client = new SeaInjectedClient(transport, 1024 * 1024);
 				await client.openSession(
 					archive,
+					false,
 					encoder.encode("third-author"),
 					encoder.encode("third-session"),
 				);

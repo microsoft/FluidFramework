@@ -8,7 +8,7 @@
 - **Current checkpoint:** 4b. Split service responsibilities.
 - **Last completed checkpoint:** 4a. Restore the server crate boundary.
 - **Last validation:** Checkpoint 4a formatting, strict transport/server Clippy, all transport/server tests, native cross-backend round trips, and the `wasm32-unknown-unknown` client-library build passed on 2026-09-16.
-- **Latest checkpoint notes:** `sea-webtransport-server` now owns endpoint binding, connection acceptance, server dispatch, host composition, measurements, and shutdown. `sea-webtransport` retains the shared protocol/frame codec and native client. The crate-level native cfg and browser protocol path import are removed; the WASM library build cannot reach server, sequencer, or storage dependencies.
+- **Latest checkpoint notes:** `sea-webtransport-server` now owns endpoint binding, connection acceptance, server dispatch, host composition, measurements, and shutdown. `sea-webtransport` retains the shared protocol/frame codec and native client. The crate-level native cfg and browser protocol path import are removed. Checkpoint 4b now requires explicit archive create versus open intent before creating author state; duplicate create conflicts and missing open is rejected across native, injected, browser, and process-local bindings.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
 - **Next checkpoint:** 4b. Split service responsibilities.
@@ -502,7 +502,7 @@ This checkpoint may be split into the following ordered commits.
 - [ ] Move snapshot lookup out of the author-session contract.
 - [ ] Preserve stable submission and snapshot-publication identities.
 - [ ] Replace fake archive creation through a `storage` author with an explicit archive operation.
-- [ ] Distinguish explicit archive creation from opening an existing archive so a load cannot silently create missing state; settle exact retry/conflict results in conformance tests before implementation.
+- [x] Distinguish explicit archive creation from opening an existing archive so a load cannot silently create missing state; settle exact retry/conflict results in conformance tests before implementation.
 - [ ] Define teardown ownership for every session and subscription.
 - [ ] Ensure event-payload decorators only wrap event/content payload operations they actually transform.
 - [ ] Update all local Rust implementations and conformance tests.

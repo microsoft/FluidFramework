@@ -92,6 +92,15 @@ pub struct StreamEvent {
     pub event: Event,
 }
 
+/// Whether opening an event session creates a new archive or requires an existing archive.
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum ArchiveIntent {
+    /// Create an archive that must not already exist.
+    Create,
+    /// Open an archive that must already exist.
+    Open,
+}
+
 /// One request on a Sea session control or operation stream.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Request {
@@ -99,6 +108,8 @@ pub enum Request {
     OpenSession {
         /// Archive selected for this session.
         archive: Vec<u8>,
+        /// Explicit archive lifecycle intent.
+        intent: ArchiveIntent,
         /// Stable author identity.
         author: Vec<u8>,
         /// Fresh connection identity.

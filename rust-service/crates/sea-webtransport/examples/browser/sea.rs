@@ -549,6 +549,7 @@ pub struct SeaInjectedSubmissionStream {
 #[wasm_bindgen]
 pub struct SeaLocalService {
     sequencer: Arc<LocalSequencer<MemoryStream>>,
+    archive: Rc<RefCell<Option<Vec<u8>>>>,
 }
 
 #[wasm_bindgen]
@@ -558,13 +559,17 @@ impl SeaLocalService {
         let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
             .await
             .map_err(|error| js_error(&error.to_string()))?;
-        Ok(Self { sequencer })
+        Ok(Self {
+            sequencer,
+            archive: Rc::new(RefCell::new(None)),
+        })
     }
 
     /// Creates one client sharing this service's archive registry.
     pub fn connect(&self) -> SeaLocalClient {
         SeaLocalClient {
             sequencer: Arc::clone(&self.sequencer),
+            archive: Rc::clone(&self.archive),
             session: RefCell::new(None),
             disconnected: Cell::new(false),
         }
@@ -575,6 +580,7 @@ impl SeaLocalService {
 #[wasm_bindgen]
 pub struct SeaLocalClient {
     sequencer: Arc<LocalSequencer<MemoryStream>>,
+    archive: Rc<RefCell<Option<Vec<u8>>>>,
     session: RefCell<Option<Rc<LocalSession<MemoryStream>>>>,
     disconnected: Cell<bool>,
 }
@@ -585,11 +591,25 @@ impl SeaLocalClient {
     #[wasm_bindgen(js_name = openSession)]
     pub async fn open_session(
         &self,
-        _archive: Uint8Array,
+        archive: Uint8Array,
+        create: bool,
         author: Uint8Array,
         session: Uint8Array,
         reference: Option<u64>,
     ) -> Result<(), JsValue> {
+        let archive = archive.to_vec();
+        let author = AuthorId::new(Bytes::from(author.to_vec()))
+            .map_err(|_| js_error("author identity is empty"))?;
+        let session_id = SessionId::new(Bytes::from(session.to_vec()))
+            .map_err(|_| js_error("session identity is empty"))?;
+        match (&*self.archive.borrow(), create) {
+            (Some(_), true) => return Err(js_error("archive already exists")),
+            (None, false) => return Err(js_error("archive does not exist")),
+            (Some(existing), false) if existing != &archive => {
+                return Err(js_error("archive does not exist"));
+            }
+            _ => {}
+        }
         self.disconnected.set(false);
         let previous = self.session.borrow().clone();
         if let Some(previous) = previous {
@@ -600,15 +620,12 @@ impl SeaLocalClient {
         }
         let session = self
             .sequencer
-            .open_session(
-                AuthorId::new(Bytes::from(author.to_vec()))
-                    .map_err(|_| js_error("author identity is empty"))?,
-                SessionId::new(Bytes::from(session.to_vec()))
-                    .map_err(|_| js_error("session identity is empty"))?,
-                reference.map(EventPosition::new),
-            )
+            .open_session(author, session_id, reference.map(EventPosition::new))
             .await
             .map_err(|error| js_error(&error.to_string()))?;
+        if create {
+            self.archive.replace(Some(archive));
+        }
         self.session.replace(Some(Rc::new(session)));
         Ok(())
     }
@@ -954,6 +971,7 @@ impl SeaInjectedClient {
     pub async fn open_session(
         &self,
         archive: Uint8Array,
+        create: bool,
         author: Uint8Array,
         session: Uint8Array,
         reference: Option<u64>,
@@ -961,6 +979,11 @@ impl SeaInjectedClient {
         let response = self
             .request(protocol::Request::OpenSession {
                 archive: archive.to_vec(),
+                intent: if create {
+                    protocol::ArchiveIntent::Create
+                } else {
+                    protocol::ArchiveIntent::Open
+                },
                 author: author.to_vec(),
                 session: session.to_vec(),
                 reference,

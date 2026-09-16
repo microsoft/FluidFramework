@@ -123,6 +123,7 @@ impl BuiltInSeaHost {
     async fn open_session(
         &self,
         archive_id: Vec<u8>,
+        intent: protocol::ArchiveIntent,
         author: AuthorId,
         session: SessionId,
         reference: Option<EventPosition>,
@@ -131,8 +132,22 @@ impl BuiltInSeaHost {
             return Err(invalid("archive identity must contain 1 to 256 bytes"));
         }
         let mut state = self.inner.state.lock().await;
+        let path = self.inner.root.join("archives").join(hex(&archive_id));
+        let persisted = self.inner.mode != StorageMode::Memory && path.exists();
+        match intent {
+            protocol::ArchiveIntent::Create
+                if state.archives.contains_key(&archive_id) || persisted =>
+            {
+                return Err(conflict("archive already exists"));
+            }
+            protocol::ArchiveIntent::Open
+                if !state.archives.contains_key(&archive_id) && !persisted =>
+            {
+                return Err(rejected("archive does not exist"));
+            }
+            _ => {}
+        }
         if !state.archives.contains_key(&archive_id) {
-            let path = self.inner.root.join("archives").join(hex(&archive_id));
             let archive = match self.inner.mode {
                 StorageMode::Memory => Archive::Memory(
                     LocalSequencer::recover(Arc::new(MemoryStream::new()))
@@ -184,6 +199,7 @@ impl SeaConnectionService for HostedConnection {
     async fn request(&self, request: protocol::Request) -> protocol::Response {
         if let protocol::Request::OpenSession {
             archive,
+            intent,
             author,
             session,
             reference,
@@ -203,6 +219,7 @@ impl SeaConnectionService for HostedConnection {
                 .host
                 .open_session(
                     archive,
+                    intent,
                     author,
                     session_id,
                     reference.map(EventPosition::new),
@@ -252,6 +269,20 @@ fn invalid(message: &str) -> protocol::Response {
     }
 }
 
+fn conflict(message: &str) -> protocol::Response {
+    protocol::Response::Error {
+        kind: protocol::ErrorKind::Conflict,
+        message: message.to_owned(),
+    }
+}
+
+fn rejected(message: &str) -> protocol::Response {
+    protocol::Response::Error {
+        kind: protocol::ErrorKind::Rejected,
+        message: message.to_owned(),
+    }
+}
+
 fn error_response(error: impl ClassifiedError) -> protocol::Response {
     let kind = error.kind();
     let message = error.to_string();
@@ -293,7 +324,79 @@ mod tests {
     };
 
     use super::{BuiltInSeaHost, StorageMode};
-    use crate::{ShutdownMode, TransportConfig, WebTransportServer};
+    use crate::{SeaServiceHost, ShutdownMode, TransportConfig, WebTransportServer};
+
+    #[tokio::test]
+    async fn archive_create_and_open_intent_is_explicit() {
+        for mode in [
+            StorageMode::Memory,
+            StorageMode::BufferedFile,
+            StorageMode::DurableFile,
+        ] {
+            let root = std::env::temp_dir().join(format!(
+                "sea-webtransport-archive-intent-{}-{}",
+                std::process::id(),
+                mode.name()
+            ));
+            let _ = std::fs::remove_dir_all(&root);
+            let host = BuiltInSeaHost::new(root.clone(), mode);
+            assert!(matches!(
+                open_hosted_session(&host, protocol::ArchiveIntent::Open, b"missing-session").await,
+                protocol::Response::Error {
+                    kind: protocol::ErrorKind::Rejected,
+                    ..
+                }
+            ));
+            assert_eq!(
+                open_hosted_session(&host, protocol::ArchiveIntent::Create, b"create-session")
+                    .await,
+                protocol::Response::Acknowledged
+            );
+            assert!(matches!(
+                open_hosted_session(&host, protocol::ArchiveIntent::Create, b"duplicate-session")
+                    .await,
+                protocol::Response::Error {
+                    kind: protocol::ErrorKind::Conflict,
+                    ..
+                }
+            ));
+            assert_eq!(
+                open_hosted_session(&host, protocol::ArchiveIntent::Open, b"open-session").await,
+                protocol::Response::Acknowledged
+            );
+
+            if mode != StorageMode::Memory {
+                drop(host);
+                let recovered = BuiltInSeaHost::new(root.clone(), mode);
+                assert_eq!(
+                    open_hosted_session(
+                        &recovered,
+                        protocol::ArchiveIntent::Open,
+                        b"recovered-session",
+                    )
+                    .await,
+                    protocol::Response::Acknowledged
+                );
+            }
+            let _ = std::fs::remove_dir_all(root);
+        }
+    }
+
+    async fn open_hosted_session(
+        host: &BuiltInSeaHost,
+        intent: protocol::ArchiveIntent,
+        session: &[u8],
+    ) -> protocol::Response {
+        host.connect()
+            .request(protocol::Request::OpenSession {
+                archive: b"archive".to_vec(),
+                intent,
+                author: session.to_vec(),
+                session: session.to_vec(),
+                reference: None,
+            })
+            .await
+    }
 
     #[tokio::test]
     async fn native_client_round_trips_every_storage_mode() {
@@ -331,6 +434,7 @@ mod tests {
                 certificate_hash,
                 ClientTransportConfig::default(),
                 Bytes::from_static(b"archive"),
+                protocol::ArchiveIntent::Create,
                 AuthorId::new(Bytes::from_static(b"author")).unwrap(),
                 SessionId::new(Bytes::from_static(b"session")).unwrap(),
                 None,
@@ -376,6 +480,7 @@ mod tests {
                 certificate_hash.clone(),
                 ClientTransportConfig::default(),
                 Bytes::from_static(b"fault-archive"),
+                protocol::ArchiveIntent::Create,
                 AuthorId::new(Bytes::from_static(b"observer-author")).unwrap(),
                 SessionId::new(Bytes::from_static(b"observer-session")).unwrap(),
                 None,
@@ -549,6 +654,7 @@ mod tests {
                 1,
                 protocol::Request::OpenSession {
                     archive: archive.to_vec(),
+                    intent: protocol::ArchiveIntent::Open,
                     author: author.to_vec(),
                     session: session.to_vec(),
                     reference: None,

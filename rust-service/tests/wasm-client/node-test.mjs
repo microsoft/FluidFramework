@@ -19,6 +19,7 @@ async function clients() {
 	const archive = encoder.encode("node-archive");
 	await first.openSession(
 		archive,
+		true,
 		encoder.encode("first-author"),
 		encoder.encode("first-session"),
 	);
@@ -41,6 +42,7 @@ test("generated local clients submit, resolve, read, and tail events", async () 
 	assert.equal((await load.next()).kind, "caughtUp");
 	await second.openSession(
 		archive,
+		false,
 		encoder.encode("second-author"),
 		encoder.encode("second-session"),
 		firstReceipt.position,
@@ -82,12 +84,14 @@ test("generated local clients reject stable identity conflicts and stale session
 	);
 	await first.openSession(
 		archive,
+		false,
 		encoder.encode("first-author"),
 		encoder.encode("replacement-session"),
 	);
 	await assert.rejects(
 		first.openSession(
 			archive,
+			false,
 			encoder.encode("first-author"),
 			encoder.encode("first-session"),
 		),
@@ -101,10 +105,46 @@ test("generated local clients expose disconnect and explicit reopen", async () =
 	await assert.rejects(first.latestSnapshot(), /disconnected/);
 	await first.openSession(
 		archive,
+		false,
 		encoder.encode("first-author"),
 		encoder.encode("reconnected-session"),
 	);
 	assert.equal(await first.latestSnapshot(), undefined);
+});
+
+test("generated local clients require explicit archive creation", async () => {
+	const service = await SeaLocalService.create();
+	const archive = encoder.encode("explicit-archive");
+	await assert.rejects(
+		service
+			.connect()
+			.openSession(
+				archive,
+				false,
+				encoder.encode("missing-author"),
+				encoder.encode("missing-session"),
+			),
+		/archive does not exist/,
+	);
+	await service
+		.connect()
+		.openSession(
+			archive,
+			true,
+			encoder.encode("create-author"),
+			encoder.encode("create-session"),
+		);
+	await assert.rejects(
+		service
+			.connect()
+			.openSession(
+				archive,
+				true,
+				encoder.encode("duplicate-author"),
+				encoder.encode("duplicate-session"),
+			),
+		/archive already exists/,
+	);
 });
 
 test("generated local stream cancellation wakes a pending read", async () => {

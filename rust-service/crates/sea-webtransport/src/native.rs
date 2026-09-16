@@ -112,6 +112,7 @@ impl NativeSeaClient {
         certificate_hash: Sha256Digest,
         config: TransportConfig,
         archive: Bytes,
+        intent: protocol::ArchiveIntent,
         author: AuthorId,
         session: SessionId,
         reference: Option<EventPosition>,
@@ -130,6 +131,7 @@ impl NativeSeaClient {
         match client
             .request(protocol::Request::OpenSession {
                 archive: archive.to_vec(),
+                intent,
                 author: author.as_bytes().to_vec(),
                 session: session.as_bytes().to_vec(),
                 reference: reference.map(EventPosition::get),
