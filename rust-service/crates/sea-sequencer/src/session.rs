@@ -19,8 +19,8 @@ use sea_core::{
     archive::{
         AuthorId, CommittedEvent, EventReceipt, EventSubmission, LoadEvent, OperationId,
         PublishedSnapshot, SeaArchive, SeaAuthorSession, SeaEventSubscription, SeaService,
-        SeaSnapshotCoordinator, SeaStorage, SessionCommittedEvent, SessionId, SessionStream,
-        SnapshotPublication,
+        SeaSnapshotCoordinator, SeaSnapshotPublisher, SeaStorage, SessionCommittedEvent, SessionId,
+        SessionStream, SnapshotCoordination, SnapshotPublication,
     },
 };
 use tokio::sync::{Mutex, broadcast, watch};
@@ -92,6 +92,18 @@ struct AcceptedSubmission {
     committed: SessionCommittedEvent,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct PublisherState {
+    eligible: bool,
+    willing: bool,
+}
+
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+struct CoordinationState {
+    latest: Option<PublishedSnapshot>,
+    nominee: Option<(SessionId, u64)>,
+}
+
 #[derive(Debug, Default)]
 struct SequencerState {
     authors: BTreeMap<AuthorId, AuthorState>,
@@ -99,9 +111,36 @@ struct SequencerState {
     accepted: BTreeMap<OperationId, AcceptedSubmission>,
     event_positions: BTreeSet<EventPosition>,
     latest_event: Option<EventPosition>,
+    publishers: BTreeMap<SessionId, PublisherState>,
+    next_snapshot_fence: u64,
+    coordination: CoordinationState,
 }
 
 impl SequencerState {
+    fn select_snapshot_publisher(&mut self) {
+        if self
+            .coordination
+            .nominee
+            .as_ref()
+            .is_some_and(|(session, _)| {
+                self.publishers
+                    .get(session)
+                    .is_some_and(|publisher| publisher.eligible && publisher.willing)
+            })
+        {
+            return;
+        }
+        self.coordination.nominee = self
+            .publishers
+            .iter()
+            .find(|(_, publisher)| publisher.eligible && publisher.willing)
+            .map(|(session, _)| {
+                let fence = self.next_snapshot_fence;
+                self.next_snapshot_fence = fence.wrapping_add(1).max(1);
+                (session.clone(), fence)
+            });
+    }
+
     fn minimum_reference(&self) -> Option<EventPosition> {
         if self.authors.is_empty() {
             return self.latest_event;
@@ -153,6 +192,7 @@ pub struct LocalSequencer<S: SeaStorage> {
     state: Mutex<SequencerState>,
     events: broadcast::Sender<SessionCommittedEvent>,
     snapshots: watch::Sender<Option<PublishedSnapshot>>,
+    coordination: watch::Sender<CoordinationState>,
 }
 
 impl<S> LocalSequencer<S>
@@ -172,11 +212,16 @@ where
             .map_err(SessionError::Storage)?;
         let (events, _) = broadcast::channel(256);
         let (snapshots, _) = watch::channel(latest_snapshot);
+        let mut state = state;
+        state.next_snapshot_fence = 1;
+        state.coordination.latest.clone_from(&snapshots.borrow());
+        let (coordination, _) = watch::channel(state.coordination.clone());
         Ok(Arc::new(Self {
             storage,
             state: Mutex::new(state),
             events,
             snapshots,
+            coordination,
         }))
     }
 
@@ -502,6 +547,11 @@ where
                 .map_err(SessionError::Storage)?;
             state.authors.remove(&self.author_id);
         }
+        state.publishers.remove(&self.session_id);
+        state.select_snapshot_publisher();
+        self.sequencer
+            .coordination
+            .send_replace(state.coordination.clone());
         Ok(())
     }
 }
@@ -573,6 +623,96 @@ where
                 }
             },
         )))
+    }
+}
+
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+impl<S> SeaSnapshotPublisher for LocalSession<S>
+where
+    S: SeaStorage + 'static,
+{
+    async fn coordinate_snapshots(
+        &self,
+        eligible: bool,
+        willing: bool,
+    ) -> Result<SessionStream<SnapshotCoordination, Self::Error>, Self::Error> {
+        self.ensure_open()?;
+        let mut state = self.sequencer.state.lock().await;
+        if state
+            .authors
+            .get(&self.author_id)
+            .is_none_or(|author| author.session_id != self.session_id)
+        {
+            return Err(SessionError::Rejected("session is not active"));
+        }
+        state.publishers.insert(
+            self.session_id.clone(),
+            PublisherState { eligible, willing },
+        );
+        state.select_snapshot_publisher();
+        self.sequencer
+            .coordination
+            .send_replace(state.coordination.clone());
+        drop(state);
+
+        let receiver = self.sequencer.coordination.subscribe();
+        let session_id = self.session_id.clone();
+        Ok(Box::pin(stream::unfold(
+            (receiver, true, session_id),
+            |(mut receiver, initial, session_id)| async move {
+                if !initial && receiver.changed().await.is_err() {
+                    return None;
+                }
+                let state = receiver.borrow_and_update().clone();
+                let coordination = SnapshotCoordination {
+                    latest: state.latest,
+                    fence: state
+                        .nominee
+                        .filter(|(nominee, _)| nominee == &session_id)
+                        .map(|(_, fence)| fence),
+                };
+                Some((Ok(coordination), (receiver, false, session_id)))
+            },
+        )))
+    }
+
+    async fn publish_nominated_snapshot(
+        &self,
+        fence: u64,
+        publication: SnapshotPublication,
+    ) -> Result<PublishedSnapshot, Self::Error> {
+        self.ensure_open()?;
+        let mut state = self.sequencer.state.lock().await;
+        if state.coordination.nominee.as_ref() != Some(&(self.session_id.clone(), fence)) {
+            return Err(SessionError::Rejected(
+                "snapshot publication fence is not current",
+            ));
+        }
+        let published = self
+            .sequencer
+            .storage
+            .publish_snapshot(publication)
+            .await
+            .map_err(SessionError::Storage)?;
+        state.coordination.latest = Some(published.clone());
+        self.sequencer
+            .snapshots
+            .send_replace(Some(published.clone()));
+        self.sequencer
+            .coordination
+            .send_replace(state.coordination.clone());
+        Ok(published)
+    }
+
+    async fn revoke_snapshot_publisher(&self) -> Result<(), Self::Error> {
+        let mut state = self.sequencer.state.lock().await;
+        state.publishers.remove(&self.session_id);
+        state.select_snapshot_publisher();
+        self.sequencer
+            .coordination
+            .send_replace(state.coordination.clone());
+        Ok(())
     }
 }
 
@@ -944,10 +1084,11 @@ mod tests {
     use bytes::Bytes;
     use futures_util::StreamExt as _;
     use sea_core::{
-        Durability, Event,
+        BlobId, BlobTreeId, Durability, Event,
         archive::{
             AuthorId, EventSubmission, LoadEvent, OperationId, SeaAuthorSession,
-            SeaEventSubscription, SessionId,
+            SeaEventSubscription, SeaSnapshotPublisher, SessionId, Snapshot, SnapshotPosition,
+            SnapshotPublication,
         },
     };
     use sea_memory::MemoryStream;
@@ -990,6 +1131,43 @@ mod tests {
             .await
             .unwrap();
         sea_conformance::run_sea_session_observable_behavior(&session).await;
+    }
+
+    #[tokio::test]
+    async fn snapshot_nomination_is_deterministic_fenced_and_reassigned() {
+        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
+            .await
+            .unwrap();
+        let first = sequencer
+            .open_session(author(b"first"), session(b"a-session"), None)
+            .await
+            .unwrap();
+        let second = sequencer
+            .open_session(author(b"second"), session(b"b-session"), None)
+            .await
+            .unwrap();
+        let mut first_state = first.coordinate_snapshots(true, true).await.unwrap();
+        let first_fence = first_state.next().await.unwrap().unwrap().fence.unwrap();
+        let mut second_state = second.coordinate_snapshots(true, true).await.unwrap();
+        assert_eq!(second_state.next().await.unwrap().unwrap().fence, None);
+
+        first.revoke_snapshot_publisher().await.unwrap();
+        let second_fence = second_state.next().await.unwrap().unwrap().fence.unwrap();
+        assert!(second_fence > first_fence);
+        let stale = first
+            .publish_nominated_snapshot(
+                first_fence,
+                SnapshotPublication {
+                    operation_id: OperationId::new(Bytes::from_static(b"stale-snapshot")).unwrap(),
+                    expected_parent: None,
+                    snapshot: Snapshot {
+                        at_event: SnapshotPosition::Initial,
+                        root: BlobTreeId::Blob(BlobId::from_bytes(&[0; 32]).unwrap()),
+                    },
+                },
+            )
+            .await;
+        assert!(matches!(stale, Err(SessionError::Rejected(_))));
     }
 
     #[tokio::test]

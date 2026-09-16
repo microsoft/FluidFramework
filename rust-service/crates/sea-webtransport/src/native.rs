@@ -1,6 +1,6 @@
 //! Native certificate-pinned [`SeaSession`] client.
 
-use std::{collections::BTreeMap, error::Error, fmt};
+use std::{collections::BTreeMap, error::Error, fmt, sync::Arc};
 
 use async_trait::async_trait;
 use bytes::Bytes;
@@ -20,7 +20,7 @@ use wtransport::tls::Sha256Digest;
 
 use crate::{
     TransportConfig, WebTransportError,
-    client::{AuthorStream, Client, ClientError, ClientStateError, EventStream},
+    client::{AuthorStream, Client, ClientError, ClientStateError, EventStream, SnapshotStream},
     connect_once, protocol,
     transport::native::{NativeBidirectionalStream, NativeTransport},
 };
@@ -121,6 +121,7 @@ pub struct NativeSeaClient {
     client: Client<NativeTransport>,
     event_stream: Mutex<Option<EventStream<NativeBidirectionalStream>>>,
     author_stream: Mutex<Option<AuthorStream<NativeBidirectionalStream>>>,
+    snapshot_stream: Arc<Mutex<SnapshotStream<NativeBidirectionalStream>>>,
     resume_after: Option<EventPosition>,
     operation_timeout: std::time::Duration,
 }
@@ -178,10 +179,17 @@ impl NativeSeaClient {
         let author_stream = timeout(config.operation_timeout, client.open_author_stream())
             .await
             .map_err(|_| WebTransportError::Timeout)??;
+        let snapshot_stream = timeout(
+            config.operation_timeout,
+            client.open_snapshot_stream(true, true),
+        )
+        .await
+        .map_err(|_| WebTransportError::Timeout)??;
         Ok(Self {
             client,
             event_stream: Mutex::new(Some(event_stream)),
             author_stream: Mutex::new(Some(author_stream)),
+            snapshot_stream: Arc::new(Mutex::new(snapshot_stream)),
             resume_after,
             operation_timeout: config.operation_timeout,
         })
@@ -432,7 +440,13 @@ impl SeaAuthorSession for NativeSeaClient {
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 impl SeaSnapshotCoordinator for NativeSeaClient {
     async fn latest_snapshot(&self) -> Result<Option<PublishedSnapshot>, Self::Error> {
-        match self.request(protocol::Request::LatestSnapshot).await? {
+        match self
+            .snapshot_stream
+            .lock()
+            .await
+            .request(protocol::Request::LatestSnapshot)
+            .await?
+        {
             protocol::Response::Snapshot(snapshot) => Ok(snapshot.map(snapshot_from_wire)),
             response => Err(response_error(response)),
         }
@@ -442,8 +456,11 @@ impl SeaSnapshotCoordinator for NativeSeaClient {
         &self,
         publication: SnapshotPublication,
     ) -> Result<PublishedSnapshot, Self::Error> {
-        match self
-            .request(protocol::Request::PublishSnapshot {
+        let mut stream = self.snapshot_stream.lock().await;
+        let fence = stream.fence().ok_or(SeaClientError::UnexpectedResponse)?;
+        match stream
+            .request(protocol::Request::PublishNominatedSnapshot {
+                fence,
                 operation: publication.operation_id.as_bytes().to_vec(),
                 expected_parent: publication
                     .expected_parent
@@ -463,6 +480,9 @@ impl SeaSnapshotCoordinator for NativeSeaClient {
         operation_id: &OperationId,
     ) -> Result<Option<PublishedSnapshot>, Self::Error> {
         match self
+            .snapshot_stream
+            .lock()
+            .await
             .request(protocol::Request::ResolveSnapshot {
                 operation: operation_id.as_bytes().to_vec(),
             })
@@ -476,12 +496,16 @@ impl SeaSnapshotCoordinator for NativeSeaClient {
     async fn subscribe_snapshots(
         &self,
     ) -> Result<SessionStream<PublishedSnapshot, Self::Error>, Self::Error> {
-        let stream = self
-            .stream_request(protocol::Request::SubscribeSnapshots)
-            .await?;
-        Ok(Box::pin(stream.map(|result| match result? {
-            protocol::Response::Snapshot(Some(snapshot)) => Ok(snapshot_from_wire(snapshot)),
-            response => Err(response_error(response)),
+        let stream = Arc::clone(&self.snapshot_stream);
+        Ok(Box::pin(stream::try_unfold(stream, |stream| async move {
+            let mut state = stream.lock().await;
+            state.next_coordination().await?;
+            let latest = state
+                .latest()
+                .cloned()
+                .ok_or(SeaClientError::UnexpectedResponse)?;
+            drop(state);
+            Ok(Some((snapshot_from_wire(latest), stream)))
         })))
     }
 }

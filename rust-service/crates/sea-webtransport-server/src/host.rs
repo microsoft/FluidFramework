@@ -351,6 +351,39 @@ impl SeaConnectionService for HostedConnection {
             None => invalid("OpenEventStream is required before author operations"),
         }
     }
+
+    async fn snapshot_stream(
+        &self,
+        request: protocol::Request,
+    ) -> Result<SeaResponseStream, protocol::Response> {
+        let protocol::Request::OpenSnapshotStream { ref authority, .. } = request else {
+            return Err(invalid("snapshot stream requires OpenSnapshotStream"));
+        };
+        let session = self.session.lock().await.clone();
+        match session {
+            Some(session) if session.authority == *authority => {
+                session.service.snapshot_stream(request).await
+            }
+            Some(_) => Err(rejected("snapshot stream authority does not match")),
+            None => Err(invalid(
+                "OpenEventStream is required before OpenSnapshotStream",
+            )),
+        }
+    }
+
+    async fn snapshot_request(&self, request: protocol::Request) -> protocol::Response {
+        let session = self.session.lock().await.clone();
+        match session {
+            Some(session) => session.service.snapshot_request(request).await,
+            None => invalid("OpenEventStream is required before snapshot operations"),
+        }
+    }
+
+    async fn revoke_snapshot_publisher(&self) {
+        if let Some(session) = self.session.lock().await.clone() {
+            session.service.revoke_snapshot_publisher().await;
+        }
+    }
 }
 
 impl Clone for HostedSession {
@@ -538,6 +571,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[allow(clippy::too_many_lines)]
     async fn event_stream_returns_distinct_authority_before_recovery() {
         let root = std::env::temp_dir().join(format!(
             "sea-webtransport-event-open-{}",
@@ -600,13 +634,75 @@ mod tests {
             })
             .await
             .expect("second event stream");
-        let protocol::Response::EventStreamOpened { authority: second } =
-            second_stream.next().await.expect("second authority")
+        let protocol::Response::EventStreamOpened {
+            authority: second_authority,
+        } = second_stream.next().await.expect("second authority")
         else {
             panic!("event stream must return its authority first");
         };
-        assert_eq!(second.len(), 32);
-        assert_ne!(first_authority, second);
+        assert_eq!(second_authority.len(), 32);
+        assert_ne!(first_authority, second_authority);
+
+        assert!(
+            second
+                .snapshot_stream(protocol::Request::OpenSnapshotStream {
+                    authority: vec![0; 32],
+                    eligible: true,
+                    willing: true,
+                })
+                .await
+                .is_err()
+        );
+        let mut first_snapshots = first_connection
+            .snapshot_stream(protocol::Request::OpenSnapshotStream {
+                authority: first_authority,
+                eligible: true,
+                willing: true,
+            })
+            .await
+            .expect("first snapshot stream");
+        let protocol::Response::SnapshotCoordination {
+            fence: Some(first_fence),
+            ..
+        } = first_snapshots.next().await.expect("first nomination")
+        else {
+            panic!("first eligible session must be nominated");
+        };
+        let mut second_snapshots = second
+            .snapshot_stream(protocol::Request::OpenSnapshotStream {
+                authority: second_authority,
+                eligible: true,
+                willing: true,
+            })
+            .await
+            .expect("second snapshot stream");
+        assert!(matches!(
+            second_snapshots.next().await,
+            Some(protocol::Response::SnapshotCoordination { fence: None, .. })
+        ));
+        assert!(matches!(
+            second
+                .snapshot_request(protocol::Request::PublishNominatedSnapshot {
+                    fence: first_fence,
+                    operation: b"non-nominee".to_vec(),
+                    expected_parent: None,
+                    at_event: protocol::SnapshotPosition::Initial,
+                    root: protocol::TreeId::Blob([0; 32]),
+                })
+                .await,
+            protocol::Response::Error {
+                kind: protocol::ErrorKind::Rejected,
+                ..
+            }
+        ));
+        first_connection.revoke_snapshot_publisher().await;
+        assert!(matches!(
+            second_snapshots.next().await,
+            Some(protocol::Response::SnapshotCoordination {
+                fence: Some(fence),
+                ..
+            }) if fence > first_fence
+        ));
         let _ = std::fs::remove_dir_all(root);
     }
 

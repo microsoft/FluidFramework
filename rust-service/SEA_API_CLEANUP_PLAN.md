@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 6d. Snapshot coordination stream.
-- **Last completed checkpoint:** 6c. Author stream.
-- **Last validation:** Checkpoint 6c formatting, 23 paired client/server tests, strict native and WASM Clippy, generated WASM/Node behavior, TypeScript typecheck, idle author liveness across all storage backends, and the real Chromium 152 WebTransport flow passed on 2026-09-16.
-- **Latest checkpoint notes:** `OpenAuthorStream` binds one ordered author stream to the opaque authority returned by the event stream. Native and browser clients use the same persistent submit, ambiguity-resolution, and close state machine; the optional stream API, per-submission fallback, `SEAS` marker, and extra length framing are removed. Healthy author streams remain open while idle beyond the operation timeout, and transport loss or EOF closes authoritative membership. The temporary postcard `OpenSession` and `Load` paths remain only for raw/local support until checkpoint 6f.
+- **Current checkpoint:** 6e. Content stream.
+- **Last completed checkpoint:** 6d. Snapshot coordination stream.
+- **Last validation:** Checkpoint 6d formatting, 26 sequencer/client/server tests, strict native and WASM Clippy, generated WASM/Node behavior, TypeScript typecheck, and the real Chromium 152 WebTransport flow passed on 2026-09-16.
+- **Latest checkpoint notes:** `OpenSnapshotStream` binds latest-value coordination to event authority and advertises publisher eligibility and willingness. `sea-sequencer` deterministically selects the lowest eligible session, issues monotonic fences, rejects non-nominees and stale fences, and reassigns on revocation or session close. Correlation-zero updates expose latest accepted snapshot plus this client's fence through shared native/browser state; publication and resolution use correlated requests on the same stream. No server snapshot-generation request kind exists.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 6d. Snapshot coordination stream.
+- **Next checkpoint:** 6e. Content stream.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -577,14 +577,14 @@ Do not retain the old per-operation implementation after its final consumer move
 
 #### 6d. Snapshot coordination stream
 
-- [ ] Open with an `OpenSnapshotStream` message bound to the event-stream session authority and carrying publisher eligibility and willingness.
-- [ ] Deliver the latest accepted snapshot on open and coalesced accepted-snapshot updates afterward.
-- [ ] Deliver nomination and revocation state without requesting snapshot creation.
-- [ ] Accept fenced publication from only the current nominee.
-- [ ] Implement eligibility, nomination, fencing, revocation, and deterministic replacement in `sea-sequencer`; connect network lifecycle signals from `sea-webtransport-server` without duplicating selection policy there.
-- [ ] Revoke and reassign nomination when connection lifecycle reports that the nominee is gone.
-- [ ] Test latest-value notification, non-nominee rejection, stale-fence rejection, deterministic failover, and the absence of any server snapshot-generation request message.
-- [ ] Expose nomination and accepted-snapshot state through the shared Rust client and generated bindings; Fluid integration remains checkpoint 11.
+- [x] Open with an `OpenSnapshotStream` message bound to the event-stream session authority and carrying publisher eligibility and willingness.
+- [x] Deliver the latest accepted snapshot on open and coalesced accepted-snapshot updates afterward.
+- [x] Deliver nomination and revocation state without requesting snapshot creation.
+- [x] Accept fenced publication from only the current nominee.
+- [x] Implement eligibility, nomination, fencing, revocation, and deterministic replacement in `sea-sequencer`; connect network lifecycle signals from `sea-webtransport-server` without duplicating selection policy there.
+- [x] Revoke and reassign nomination when connection lifecycle reports that the nominee is gone.
+- [x] Test latest-value notification, non-nominee rejection, stale-fence rejection, deterministic failover, and the absence of any server snapshot-generation request message.
+- [x] Expose nomination and accepted-snapshot state through the shared Rust client and generated bindings; Fluid integration remains checkpoint 11.
 
 #### 6e. Content stream
 

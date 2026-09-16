@@ -137,6 +137,15 @@ pub struct SnapshotPublication {
     pub snapshot: Snapshot,
 }
 
+/// Latest accepted snapshot and this session's current publication authority.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SnapshotCoordination {
+    /// Latest accepted snapshot, if any.
+    pub latest: Option<PublishedSnapshot>,
+    /// Current fencing token when this session is nominated.
+    pub fence: Option<u64>,
+}
+
 /// One committed application event returned through Sea interfaces.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CommittedEvent {
@@ -393,6 +402,28 @@ pub trait SeaSnapshotCoordinator: SeaService {
     async fn subscribe_snapshots(
         &self,
     ) -> Result<SessionStream<PublishedSnapshot, Self::Error>, Self::Error>;
+}
+
+/// Snapshot publisher eligibility, nomination, fencing, and network lifecycle.
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+pub trait SeaSnapshotPublisher: SeaService {
+    /// Registers this session's publisher capability and returns latest-value coordination state.
+    async fn coordinate_snapshots(
+        &self,
+        eligible: bool,
+        willing: bool,
+    ) -> Result<SessionStream<SnapshotCoordination, Self::Error>, Self::Error>;
+
+    /// Publishes a snapshot while this session holds the current fencing token.
+    async fn publish_nominated_snapshot(
+        &self,
+        fence: u64,
+        publication: SnapshotPublication,
+    ) -> Result<PublishedSnapshot, Self::Error>;
+
+    /// Removes this session from publisher selection after stream loss or explicit close.
+    async fn revoke_snapshot_publisher(&self) -> Result<(), Self::Error>;
 }
 
 /// Convenience marker for values implementing every current Sea responsibility.

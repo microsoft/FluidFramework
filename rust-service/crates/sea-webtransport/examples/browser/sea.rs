@@ -36,7 +36,9 @@ use wasm_bindgen_futures::JsFuture;
 
 use crate::{AsyncRequestTransport, call_method, sea_protocol_v1 as protocol};
 use sea_webtransport::{
-    client::{AuthorStream, Client, ClientError, ClientState, EventStream, ResponseStream},
+    client::{
+        AuthorStream, Client, ClientError, ClientState, EventStream, ResponseStream, SnapshotStream,
+    },
     transport::{
         BidirectionalStream, ClientTransport,
         browser::{BrowserBidirectionalStream, BrowserTransport},
@@ -314,6 +316,66 @@ pub struct SeaInjectedStream {
     cancelled: Cell<bool>,
 }
 
+/// Latest accepted snapshot and this client's nomination fence.
+#[wasm_bindgen]
+pub struct SeaSnapshotCoordination {
+    latest: Option<protocol::Snapshot>,
+    fence: Option<u64>,
+}
+
+#[wasm_bindgen]
+impl SeaSnapshotCoordination {
+    /// Returns the latest accepted snapshot.
+    #[wasm_bindgen(getter)]
+    pub fn latest(&self) -> Option<SeaSnapshot> {
+        self.latest.clone().map(|inner| SeaSnapshot { inner })
+    }
+
+    /// Returns this client's current nomination fence.
+    #[wasm_bindgen(getter)]
+    pub fn fence(&self) -> Option<u64> {
+        self.fence
+    }
+}
+
+/// Latest-value snapshot coordination updates.
+#[wasm_bindgen]
+pub struct SeaInjectedSnapshotStream {
+    inner: Rc<RefCell<Option<SnapshotStream<InjectedBidirectionalStream>>>>,
+    cancelled: Cell<bool>,
+}
+
+#[wasm_bindgen]
+impl SeaInjectedSnapshotStream {
+    /// Waits for the next accepted-snapshot or nomination update.
+    pub async fn next(&self) -> Result<SeaSnapshotCoordination, JsValue> {
+        if self.cancelled.get() {
+            return Err(js_error("Sea snapshot stream is cancelled"));
+        }
+        let mut stream = self
+            .inner
+            .take()
+            .ok_or_else(|| js_error("Sea snapshot stream is unavailable"))?;
+        stream.next_coordination().await.map_err(client_error)?;
+        let result = SeaSnapshotCoordination {
+            latest: stream.latest().cloned(),
+            fence: stream.fence(),
+        };
+        self.inner.replace(Some(stream));
+        Ok(result)
+    }
+
+    /// Finishes coordination and revokes publisher eligibility.
+    pub async fn cancel(&self) -> Result<(), JsValue> {
+        if !self.cancelled.replace(true)
+            && let Some(stream) = self.inner.take()
+        {
+            stream.close().await.map_err(client_error)?;
+        }
+        Ok(())
+    }
+}
+
 /// Raw browser WebTransport adapter consumed by [`SeaInjectedClient`].
 #[wasm_bindgen]
 pub struct SeaBrowserTransport {
@@ -458,6 +520,7 @@ pub struct SeaInjectedClient {
     client: Client<InjectedTransport>,
     event_stream: RefCell<Option<EventStream<InjectedBidirectionalStream>>>,
     author_stream: RefCell<Option<AuthorStream<InjectedBidirectionalStream>>>,
+    snapshot_stream: Rc<RefCell<Option<SnapshotStream<InjectedBidirectionalStream>>>>,
     resume_after: Cell<Option<u64>>,
 }
 
@@ -962,6 +1025,7 @@ impl SeaInjectedClient {
             client,
             event_stream: RefCell::new(None),
             author_stream: RefCell::new(None),
+            snapshot_stream: Rc::new(RefCell::new(None)),
             resume_after: Cell::new(None),
         })
     }
@@ -992,6 +1056,7 @@ impl SeaInjectedClient {
             previous.cancel().await.map_err(client_error)?;
         }
         self.author_stream.take();
+        self.snapshot_stream.take();
         let event_stream = self
             .client
             .open_event_stream(protocol::Request::OpenEventStream {
@@ -1013,9 +1078,15 @@ impl SeaInjectedClient {
             .open_author_stream()
             .await
             .map_err(client_error)?;
+        let snapshot_stream = self
+            .client
+            .open_snapshot_stream(true, true)
+            .await
+            .map_err(client_error)?;
         self.resume_after.set(reference);
         self.event_stream.replace(Some(event_stream));
         self.author_stream.replace(Some(author_stream));
+        self.snapshot_stream.replace(Some(snapshot_stream));
         Ok(())
     }
 
@@ -1168,8 +1239,15 @@ impl SeaInjectedClient {
         at_event: Option<u64>,
         root: &SeaTreeId,
     ) -> Result<SeaSnapshot, JsValue> {
+        let fence = self
+            .snapshot_stream
+            .borrow()
+            .as_ref()
+            .and_then(SnapshotStream::fence)
+            .ok_or_else(|| js_error("Sea client is not nominated to publish snapshots"))?;
         match self
-            .request(protocol::Request::PublishSnapshot {
+            .snapshot_request(protocol::Request::PublishNominatedSnapshot {
+                fence,
                 operation: operation.to_vec(),
                 expected_parent: expected_parent.map(|value| value.to_vec()),
                 at_event: at_event.map_or(
@@ -1202,7 +1280,10 @@ impl SeaInjectedClient {
     /// Fetches the latest retained snapshot.
     #[wasm_bindgen(js_name = latestSnapshot)]
     pub async fn latest_snapshot(&self) -> Result<Option<SeaSnapshot>, JsValue> {
-        match self.request(protocol::Request::LatestSnapshot).await? {
+        match self
+            .snapshot_request(protocol::Request::LatestSnapshot)
+            .await?
+        {
             protocol::Response::Snapshot(snapshot) => {
                 Ok(snapshot.map(|inner| SeaSnapshot { inner }))
             }
@@ -1217,7 +1298,7 @@ impl SeaInjectedClient {
         operation: Uint8Array,
     ) -> Result<Option<SeaSnapshot>, JsValue> {
         match self
-            .request(protocol::Request::ResolveSnapshot {
+            .snapshot_request(protocol::Request::ResolveSnapshot {
                 operation: operation.to_vec(),
             })
             .await?
@@ -1249,13 +1330,19 @@ impl SeaInjectedClient {
 
     /// Opens a latest-value snapshot subscription.
     #[wasm_bindgen(js_name = subscribeSnapshots)]
-    pub async fn subscribe_snapshots(&self) -> Result<SeaInjectedStream, JsValue> {
-        self.open_stream(protocol::Request::SubscribeSnapshots)
-            .await
+    pub async fn subscribe_snapshots(&self) -> Result<SeaInjectedSnapshotStream, JsValue> {
+        std::future::ready(()).await;
+        Ok(SeaInjectedSnapshotStream {
+            inner: Rc::clone(&self.snapshot_stream),
+            cancelled: Cell::new(false),
+        })
     }
 
     /// Explicitly closes this logical session.
     pub async fn close(&self) -> Result<(), JsValue> {
+        if let Some(snapshot) = self.snapshot_stream.take() {
+            snapshot.close().await.map_err(client_error)?;
+        }
         let author = self
             .author_stream
             .take()
@@ -1310,6 +1397,22 @@ impl SeaInjectedClient {
             .ok_or_else(|| js_error("Sea author stream is not open"))?;
         let response = author.request(request).await;
         self.author_stream.replace(Some(author));
+        match response.map_err(client_error)? {
+            protocol::Response::Error { message, .. } => Err(js_error(&message)),
+            response => Ok(response),
+        }
+    }
+
+    async fn snapshot_request(
+        &self,
+        request: protocol::Request,
+    ) -> Result<protocol::Response, JsValue> {
+        let mut stream = self
+            .snapshot_stream
+            .take()
+            .ok_or_else(|| js_error("Sea snapshot stream is not open"))?;
+        let response = stream.request(request).await;
+        self.snapshot_stream.replace(Some(stream));
         match response.map_err(client_error)? {
             protocol::Response::Error { message, .. } => Err(js_error(&message)),
             response => Ok(response),

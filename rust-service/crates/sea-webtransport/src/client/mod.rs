@@ -179,6 +179,56 @@ where
         })
     }
 
+    /// Opens snapshot coordination bound to this client's event-stream authority.
+    pub async fn open_snapshot_stream(
+        &self,
+        eligible: bool,
+        willing: bool,
+    ) -> Result<SnapshotStream<Transport::Stream>, ClientError<Transport::Error>> {
+        let authority = self.state.authority()?;
+        let pending = self.state.begin(StreamRole::Snapshot)?;
+        let correlation_id = pending.id();
+        let request = Request::OpenSnapshotStream {
+            authority,
+            eligible,
+            willing,
+        };
+        let outgoing = protocol::encode_request_frame(
+            StreamRole::Snapshot,
+            correlation_id,
+            &request,
+            self.limits,
+        )?;
+        let mut stream = self
+            .transport
+            .open_bidirectional()
+            .await
+            .map_err(ClientError::Transport)?;
+        stream
+            .send(&outgoing)
+            .await
+            .map_err(ClientError::Transport)?;
+        let mut decoder = NetworkFrameDecoder::new(self.limits);
+        let frame = receive_next_frame(&mut stream, &mut decoder)
+            .await?
+            .ok_or(ClientError::ResponseEnded)?;
+        pending.complete(frame.correlation_id)?;
+        let response = protocol::decode_response_network_frame(StreamRole::Snapshot, &frame)?;
+        if response != Response::Acknowledged {
+            return Err(ClientError::UnexpectedResponse(response));
+        }
+        let mut snapshot = SnapshotStream {
+            stream,
+            state: Arc::clone(&self.state),
+            limits: self.limits,
+            decoder,
+            latest: None,
+            fence: None,
+        };
+        snapshot.next_coordination().await?;
+        Ok(snapshot)
+    }
+
     /// Marks the logical client closed and rejects future requests.
     pub fn close(&self) -> Result<(), ClientStateError> {
         self.state.close()
@@ -216,6 +266,93 @@ pub struct AuthorStream<Stream> {
     state: Arc<ClientState>,
     limits: protocol::Limits,
     decoder: NetworkFrameDecoder,
+}
+
+/// Latest-value coordination and fenced requests on one persistent snapshot stream.
+#[derive(Debug)]
+pub struct SnapshotStream<Stream> {
+    stream: Stream,
+    state: Arc<ClientState>,
+    limits: protocol::Limits,
+    decoder: NetworkFrameDecoder,
+    latest: Option<protocol::Snapshot>,
+    fence: Option<u64>,
+}
+
+impl<Stream> SnapshotStream<Stream>
+where
+    Stream: BidirectionalStream,
+{
+    /// Returns the latest accepted snapshot observed on this stream.
+    #[must_use]
+    pub fn latest(&self) -> Option<&protocol::Snapshot> {
+        self.latest.as_ref()
+    }
+
+    /// Returns the current nomination fence, when this client is nominated.
+    #[must_use]
+    pub const fn fence(&self) -> Option<u64> {
+        self.fence
+    }
+
+    /// Waits for and applies the next latest-value coordination notification.
+    pub async fn next_coordination(&mut self) -> Result<(), ClientError<Stream::Error>> {
+        let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
+            .await?
+            .ok_or(ClientError::ResponseEnded)?;
+        if frame.correlation_id != 0 {
+            return Err(ProtocolError::UnknownCorrelation(frame.correlation_id).into());
+        }
+        let response = protocol::decode_response_network_frame(StreamRole::Snapshot, &frame)?;
+        if let Response::SnapshotCoordination { latest, fence } = response {
+            self.latest = latest;
+            self.fence = fence;
+            return Ok(());
+        }
+        Err(ClientError::UnexpectedResponse(response))
+    }
+
+    /// Sends one correlated snapshot operation while retaining interleaved coordination updates.
+    pub async fn request(
+        &mut self,
+        request: Request,
+    ) -> Result<Response, ClientError<Stream::Error>> {
+        let pending = self.state.begin(StreamRole::Snapshot)?;
+        let correlation_id = pending.id();
+        let outgoing = protocol::encode_request_frame(
+            StreamRole::Snapshot,
+            correlation_id,
+            &request,
+            self.limits,
+        )?;
+        self.stream
+            .send(&outgoing)
+            .await
+            .map_err(ClientError::Transport)?;
+        loop {
+            let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
+                .await?
+                .ok_or(ClientError::ResponseEnded)?;
+            if frame.correlation_id == 0 {
+                let response =
+                    protocol::decode_response_network_frame(StreamRole::Snapshot, &frame)?;
+                let Response::SnapshotCoordination { latest, fence } = response else {
+                    return Err(ClientError::UnexpectedResponse(response));
+                };
+                self.latest = latest;
+                self.fence = fence;
+                continue;
+            }
+            pending.complete(frame.correlation_id)?;
+            return protocol::decode_response_network_frame(StreamRole::Snapshot, &frame)
+                .map_err(Into::into);
+        }
+    }
+
+    /// Finishes the stream so the server revokes publisher membership.
+    pub async fn close(mut self) -> Result<(), ClientError<Stream::Error>> {
+        self.stream.finish().await.map_err(ClientError::Transport)
+    }
 }
 
 impl<Stream> AuthorStream<Stream>

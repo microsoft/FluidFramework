@@ -30,6 +30,8 @@ pub enum MessageKind {
     Close = 16,
     OpenEventStream = 17,
     OpenAuthorStream = 18,
+    OpenSnapshotStream = 19,
+    PublishNominatedSnapshot = 20,
     Acknowledged = 128,
     EventCommitted = 129,
     SubmissionResolved = 130,
@@ -42,6 +44,7 @@ pub enum MessageKind {
     LoadEvent = 137,
     CaughtUp = 138,
     EventStreamOpened = 139,
+    SnapshotCoordination = 140,
     Error = 255,
 }
 
@@ -68,6 +71,8 @@ impl TryFrom<u8> for MessageKind {
             16 => Ok(Self::Close),
             17 => Ok(Self::OpenEventStream),
             18 => Ok(Self::OpenAuthorStream),
+            19 => Ok(Self::OpenSnapshotStream),
+            20 => Ok(Self::PublishNominatedSnapshot),
             128 => Ok(Self::Acknowledged),
             129 => Ok(Self::EventCommitted),
             130 => Ok(Self::SubmissionResolved),
@@ -80,6 +85,7 @@ impl TryFrom<u8> for MessageKind {
             137 => Ok(Self::LoadEvent),
             138 => Ok(Self::CaughtUp),
             139 => Ok(Self::EventStreamOpened),
+            140 => Ok(Self::SnapshotCoordination),
             255 => Ok(Self::Error),
             _ => Err(ProtocolError::UnknownMessageKind(value)),
         }
@@ -104,7 +110,7 @@ pub enum StreamRole {
 
 impl MessageKind {
     /// Every assigned message kind in numeric order.
-    pub const ALL: [Self; 31] = [
+    pub const ALL: [Self; 34] = [
         Self::CreateArchive,
         Self::OpenSession,
         Self::Submit,
@@ -123,6 +129,8 @@ impl MessageKind {
         Self::Close,
         Self::OpenEventStream,
         Self::OpenAuthorStream,
+        Self::OpenSnapshotStream,
+        Self::PublishNominatedSnapshot,
         Self::Acknowledged,
         Self::EventCommitted,
         Self::SubmissionResolved,
@@ -135,6 +143,7 @@ impl MessageKind {
         Self::LoadEvent,
         Self::CaughtUp,
         Self::EventStreamOpened,
+        Self::SnapshotCoordination,
         Self::Error,
     ];
 
@@ -172,10 +181,13 @@ impl MessageKind {
             StreamRole::Snapshot => matches!(
                 self,
                 Kind::SubscribeSnapshots
+                    | Kind::OpenSnapshotStream
+                    | Kind::PublishNominatedSnapshot
                     | Kind::LatestSnapshot
                     | Kind::PublishSnapshot
                     | Kind::ResolveSnapshot
                     | Kind::Snapshot
+                    | Kind::SnapshotCoordination
                     | Kind::Close
                     | Kind::Acknowledged
                     | Kind::Error
@@ -217,6 +229,8 @@ impl MessageKind {
             | Self::GetSnapshot => Some(StreamRole::Content),
             Self::LatestSnapshot
             | Self::PublishSnapshot
+            | Self::OpenSnapshotStream
+            | Self::PublishNominatedSnapshot
             | Self::ResolveSnapshot
             | Self::SubscribeSnapshots => Some(StreamRole::Snapshot),
             _ => None,
@@ -291,7 +305,12 @@ pub fn encode_network_frame(
 }
 
 fn validate_correlation(kind: MessageKind, correlation_id: u64) -> Result<(), ProtocolError> {
-    if correlation_id == 0 && !matches!(kind, MessageKind::LoadEvent | MessageKind::Snapshot) {
+    if correlation_id == 0
+        && !matches!(
+            kind,
+            MessageKind::LoadEvent | MessageKind::Snapshot | MessageKind::SnapshotCoordination
+        )
+    {
         Err(ProtocolError::InvalidCorrelationId)
     } else {
         Ok(())
@@ -604,6 +623,28 @@ pub mod payload {
         pub authority: Vec<u8>,
     }
 
+    /// Snapshot coordination stream opening payload.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct OpenSnapshotStream {
+        pub authority: Vec<u8>,
+        pub eligible: bool,
+        pub willing: bool,
+    }
+
+    /// Fenced snapshot publication payload.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct PublishNominatedSnapshot {
+        pub fence: u64,
+        pub publication: PublishSnapshot,
+    }
+
+    /// Latest accepted snapshot and nomination notification.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct SnapshotCoordination {
+        pub latest: Option<Snapshot>,
+        pub fence: Option<u64>,
+    }
+
     /// Ordered event submission payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct Submit {
@@ -846,6 +887,28 @@ pub enum Request {
         /// Authority returned by the event stream.
         authority: Vec<u8>,
     },
+    /// Opens latest-value snapshot coordination for an established session.
+    OpenSnapshotStream {
+        /// Authority returned by the event stream.
+        authority: Vec<u8>,
+        /// Whether this client can publish snapshots.
+        eligible: bool,
+        /// Whether this client currently volunteers for nomination.
+        willing: bool,
+    },
+    /// Publishes a snapshot under the current nomination fence.
+    PublishNominatedSnapshot {
+        /// Current nomination fencing token.
+        fence: u64,
+        /// Stable publication identity.
+        operation: Vec<u8>,
+        /// Expected latest publication.
+        expected_parent: Option<Vec<u8>>,
+        /// Included event boundary.
+        at_event: SnapshotPosition,
+        /// Immutable content root.
+        root: TreeId,
+    },
 }
 
 /// One response or streamed result from a Sea session.
@@ -901,6 +964,13 @@ pub enum Response {
         /// Capability required to bind later logical streams.
         authority: Vec<u8>,
     },
+    /// Latest accepted snapshot and this client's nomination state.
+    SnapshotCoordination {
+        /// Latest accepted snapshot, if any.
+        latest: Option<Snapshot>,
+        /// Current fence when this client is nominated.
+        fence: Option<u64>,
+    },
 }
 
 impl Request {
@@ -912,6 +982,8 @@ impl Request {
             Self::OpenSession { .. } => MessageKind::OpenSession,
             Self::OpenEventStream { .. } => MessageKind::OpenEventStream,
             Self::OpenAuthorStream { .. } => MessageKind::OpenAuthorStream,
+            Self::OpenSnapshotStream { .. } => MessageKind::OpenSnapshotStream,
+            Self::PublishNominatedSnapshot { .. } => MessageKind::PublishNominatedSnapshot,
             Self::Submit { .. } => MessageKind::Submit,
             Self::ResolveSubmission { .. } => MessageKind::ResolveSubmission,
             Self::Read { .. } => MessageKind::Read,
@@ -949,6 +1021,8 @@ impl Request {
             | Self::GetSnapshot { .. } => StreamRole::Content,
             Self::LatestSnapshot
             | Self::PublishSnapshot { .. }
+            | Self::OpenSnapshotStream { .. }
+            | Self::PublishNominatedSnapshot { .. }
             | Self::ResolveSnapshot { .. }
             | Self::SubscribeSnapshots => StreamRole::Snapshot,
         }
@@ -962,6 +1036,7 @@ impl Response {
         match self {
             Self::Acknowledged => MessageKind::Acknowledged,
             Self::EventStreamOpened { .. } => MessageKind::EventStreamOpened,
+            Self::SnapshotCoordination { .. } => MessageKind::SnapshotCoordination,
             Self::EventCommitted { .. } => MessageKind::EventCommitted,
             Self::SubmissionResolved { .. } => MessageKind::SubmissionResolved,
             Self::BlobStored { .. } => MessageKind::BlobStored,
@@ -1073,6 +1148,42 @@ pub fn encode_request_frame(
             correlation_id,
             &wire::SessionAuthority {
                 authority: authority.clone(),
+            },
+            limits,
+        ),
+        Request::OpenSnapshotStream {
+            authority,
+            eligible,
+            willing,
+        } => encode_typed_payload(
+            role,
+            request.kind(),
+            correlation_id,
+            &wire::OpenSnapshotStream {
+                authority: authority.clone(),
+                eligible: *eligible,
+                willing: *willing,
+            },
+            limits,
+        ),
+        Request::PublishNominatedSnapshot {
+            fence,
+            operation,
+            expected_parent,
+            at_event,
+            root,
+        } => encode_typed_payload(
+            role,
+            request.kind(),
+            correlation_id,
+            &wire::PublishNominatedSnapshot {
+                fence: *fence,
+                publication: wire::PublishSnapshot {
+                    operation: operation.clone(),
+                    expected_parent: expected_parent.clone(),
+                    at_event: *at_event,
+                    root: *root,
+                },
             },
             limits,
         ),
@@ -1232,6 +1343,24 @@ pub fn decode_request_frame(
                 authority: value.authority,
             }
         }
+        MessageKind::OpenSnapshotStream => {
+            let value: wire::OpenSnapshotStream = decode_typed_payload(frame)?;
+            Request::OpenSnapshotStream {
+                authority: value.authority,
+                eligible: value.eligible,
+                willing: value.willing,
+            }
+        }
+        MessageKind::PublishNominatedSnapshot => {
+            let value: wire::PublishNominatedSnapshot = decode_typed_payload(frame)?;
+            Request::PublishNominatedSnapshot {
+                fence: value.fence,
+                operation: value.publication.operation,
+                expected_parent: value.publication.expected_parent,
+                at_event: value.publication.at_event,
+                root: value.publication.root,
+            }
+        }
         MessageKind::Submit => {
             let value: wire::Submit = decode_typed_payload(frame)?;
             Request::Submit {
@@ -1337,6 +1466,16 @@ pub fn encode_response_frame(
             correlation_id,
             &wire::EventStreamOpened {
                 authority: authority.clone(),
+            },
+            limits,
+        ),
+        Response::SnapshotCoordination { latest, fence } => encode_typed_payload(
+            role,
+            response.kind(),
+            correlation_id,
+            &wire::SnapshotCoordination {
+                latest: latest.clone(),
+                fence: *fence,
             },
             limits,
         ),
@@ -1469,6 +1608,13 @@ pub fn decode_response_network_frame(
             let value: wire::EventStreamOpened = decode_typed_payload(frame)?;
             Response::EventStreamOpened {
                 authority: value.authority,
+            }
+        }
+        MessageKind::SnapshotCoordination => {
+            let value: wire::SnapshotCoordination = decode_typed_payload(frame)?;
+            Response::SnapshotCoordination {
+                latest: value.latest,
+                fence: value.fence,
             }
         }
         MessageKind::EventCommitted => {
@@ -1898,6 +2044,24 @@ mod tests {
                 },
             ),
             (
+                StreamRole::Snapshot,
+                Request::OpenSnapshotStream {
+                    authority: vec![7; 32],
+                    eligible: true,
+                    willing: true,
+                },
+            ),
+            (
+                StreamRole::Snapshot,
+                Request::PublishNominatedSnapshot {
+                    fence: 3,
+                    operation: b"snapshot-operation".to_vec(),
+                    expected_parent: None,
+                    at_event: SnapshotPosition::At(2),
+                    root: TreeId::Directory([9; 32]),
+                },
+            ),
+            (
                 StreamRole::Author,
                 Request::Submit {
                     operation: b"operation".to_vec(),
@@ -1987,6 +2151,13 @@ mod tests {
                 StreamRole::Event,
                 Response::EventStreamOpened {
                     authority: vec![7; 32],
+                },
+            ),
+            (
+                StreamRole::Snapshot,
+                Response::SnapshotCoordination {
+                    latest: Some(snapshot.clone()),
+                    fence: Some(3),
                 },
             ),
             (

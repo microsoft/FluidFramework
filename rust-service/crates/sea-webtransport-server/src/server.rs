@@ -258,6 +258,18 @@ pub trait SeaConnectionService: Send + Sync {
 
     /// Validates author-stream authority or handles one ordered author operation.
     async fn author_request(&self, request: sea_v1::Request) -> sea_v1::Response;
+
+    /// Opens latest-value snapshot coordination after validating session authority.
+    async fn snapshot_stream(
+        &self,
+        request: sea_v1::Request,
+    ) -> Result<SeaResponseStream, sea_v1::Response>;
+
+    /// Handles one correlated operation on an open snapshot stream.
+    async fn snapshot_request(&self, request: sea_v1::Request) -> sea_v1::Response;
+
+    /// Revokes snapshot publisher membership after stream loss.
+    async fn revoke_snapshot_publisher(&self);
 }
 
 /// Creates isolated Sea protocol state for each WebTransport connection.
@@ -537,6 +549,7 @@ async fn serve_sea_stream(
     .await
 }
 
+#[allow(clippy::too_many_lines)]
 async fn serve_network_stream(
     mut send: wtransport::SendStream,
     mut receive: wtransport::RecvStream,
@@ -566,6 +579,19 @@ async fn serve_network_stream(
     metrics.add_wire_bytes(4 + 1 + 8 + frame.payload.len());
     if matches!(request, sea_v1::Request::OpenAuthorStream { .. }) {
         return serve_author_stream(
+            send,
+            receive,
+            service,
+            config,
+            metrics,
+            role,
+            frame.correlation_id,
+            request,
+        )
+        .await;
+    }
+    if matches!(request, sea_v1::Request::OpenSnapshotStream { .. }) {
+        return serve_snapshot_stream(
             send,
             receive,
             service,
@@ -707,6 +733,92 @@ async fn serve_author_stream(
             return send.finish().await.map_err(transport_error);
         }
     }
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn serve_snapshot_stream(
+    mut send: wtransport::SendStream,
+    mut receive: wtransport::RecvStream,
+    service: Arc<dyn SeaConnectionService>,
+    config: &TransportConfig,
+    metrics: &Metrics,
+    role: sea_v1::StreamRole,
+    correlation_id: u64,
+    opening: sea_v1::Request,
+) -> Result<(), WebTransportError> {
+    let limits = sea_v1::Limits {
+        max_frame_bytes: config.max_frame_bytes,
+    };
+    let mut notifications = match service.snapshot_stream(opening).await {
+        Ok(notifications) => notifications,
+        Err(response) => {
+            return write_network_response(
+                &mut send,
+                role,
+                correlation_id,
+                &response,
+                limits,
+                config.operation_timeout,
+                metrics,
+                true,
+            )
+            .await;
+        }
+    };
+    write_network_response(
+        &mut send,
+        role,
+        correlation_id,
+        &sea_v1::Response::Acknowledged,
+        limits,
+        config.operation_timeout,
+        metrics,
+        false,
+    )
+    .await?;
+    let mut decoder = sea_v1::NetworkFrameDecoder::new(limits);
+    loop {
+        tokio::select! {
+            frame = read_next_network_frame(&mut receive, &mut decoder) => {
+                let frame = match frame {
+                    Ok(Some(frame)) => frame,
+                    Ok(None) => break,
+                    Err(error) => {
+                        service.revoke_snapshot_publisher().await;
+                        return Err(error);
+                    }
+                };
+                let request = sea_v1::decode_request_frame(role, &frame)?;
+                metrics.add_wire_bytes(4 + 1 + 8 + frame.payload.len());
+                let response = service.snapshot_request(request).await;
+                write_network_response(
+                    &mut send,
+                    role,
+                    frame.correlation_id,
+                    &response,
+                    limits,
+                    config.operation_timeout,
+                    metrics,
+                    false,
+                ).await?;
+            }
+            notification = notifications.next() => {
+                let Some(notification) = notification else { break };
+                write_network_response(
+                    &mut send,
+                    role,
+                    0,
+                    &notification,
+                    limits,
+                    config.operation_timeout,
+                    metrics,
+                    false,
+                ).await?;
+            }
+        }
+    }
+    service.revoke_snapshot_publisher().await;
+    send.finish().await.map_err(transport_error)
 }
 
 async fn read_next_network_frame(

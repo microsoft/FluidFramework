@@ -10,8 +10,9 @@ use sea_core::{
     Event, EventPosition, SnapshotId,
     archive::{
         EventSubmission, LoadEvent, OperationId, PublishedSnapshot, SeaArchive, SeaAuthorSession,
-        SeaEventSubscription, SeaService, SeaSnapshotCoordinator, Snapshot as ArchiveSnapshot,
-        SnapshotPosition as ArchiveSnapshotPosition, SnapshotPublication,
+        SeaEventSubscription, SeaService, SeaSnapshotCoordinator, SeaSnapshotPublisher,
+        Snapshot as ArchiveSnapshot, SnapshotPosition as ArchiveSnapshotPosition,
+        SnapshotPublication,
     },
 };
 
@@ -39,6 +40,7 @@ where
         + SeaAuthorSession
         + SeaEventSubscription
         + SeaSnapshotCoordinator
+        + SeaSnapshotPublisher
         + Send
         + Sync
         + 'static,
@@ -132,12 +134,81 @@ where
             _ => invalid("request is not valid on an open author stream"),
         }
     }
+
+    async fn snapshot_stream(
+        &self,
+        request: protocol::Request,
+    ) -> Result<SeaResponseStream, protocol::Response> {
+        let protocol::Request::OpenSnapshotStream {
+            eligible, willing, ..
+        } = request
+        else {
+            return Err(invalid("snapshot stream requires OpenSnapshotStream"));
+        };
+        let stream = self
+            .session
+            .coordinate_snapshots(eligible, willing)
+            .await
+            .map_err(error_response)?;
+        Ok(Box::pin(stream.map(|item| match item {
+            Ok(state) => protocol::Response::SnapshotCoordination {
+                latest: state.latest.map(snapshot_to_wire),
+                fence: state.fence,
+            },
+            Err(error) => error_response(error),
+        })))
+    }
+
+    async fn snapshot_request(&self, request: protocol::Request) -> protocol::Response {
+        match request {
+            protocol::Request::PublishNominatedSnapshot {
+                fence,
+                operation,
+                expected_parent,
+                at_event,
+                root,
+            } => match operation_id(operation) {
+                Ok(operation_id) => self
+                    .session
+                    .publish_nominated_snapshot(
+                        fence,
+                        SnapshotPublication {
+                            operation_id,
+                            expected_parent: expected_parent
+                                .map(|parent| SnapshotId::from_bytes(Bytes::from(parent))),
+                            snapshot: ArchiveSnapshot {
+                                at_event: snapshot_position_from_wire(at_event),
+                                root: tree_from_wire(root),
+                            },
+                        },
+                    )
+                    .await
+                    .map_or_else(error_response, |snapshot| {
+                        protocol::Response::Snapshot(Some(snapshot_to_wire(snapshot)))
+                    }),
+                Err(error) => error,
+            },
+            protocol::Request::LatestSnapshot | protocol::Request::ResolveSnapshot { .. } => {
+                self.request(request).await
+            }
+            _ => invalid("request is not valid on an open snapshot stream"),
+        }
+    }
+
+    async fn revoke_snapshot_publisher(&self) {
+        let _ = self.session.revoke_snapshot_publisher().await;
+    }
 }
 
 impl<S> SessionDispatcher<S>
 where
-    S: SeaArchive + SeaAuthorSession + SeaEventSubscription + SeaSnapshotCoordinator,
+    S: SeaArchive
+        + SeaAuthorSession
+        + SeaEventSubscription
+        + SeaSnapshotCoordinator
+        + SeaSnapshotPublisher,
 {
+    #[allow(clippy::too_many_lines)]
     async fn request_inner(
         &self,
         request: protocol::Request,
@@ -234,6 +305,8 @@ where
             | protocol::Request::OpenSession { .. }
             | protocol::Request::OpenEventStream { .. }
             | protocol::Request::OpenAuthorStream { .. }
+            | protocol::Request::OpenSnapshotStream { .. }
+            | protocol::Request::PublishNominatedSnapshot { .. }
             | protocol::Request::Read { .. }
             | protocol::Request::Load { .. }
             | protocol::Request::SubscribeSnapshots => Err(invalid(
