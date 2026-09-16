@@ -8,7 +8,7 @@ import init, {
 	SeaDirectoryEntry,
 	SeaInjectedClient,
 	SeaLoadKind,
-} from "./pkg/sea_webtransport.js";
+} from "../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();

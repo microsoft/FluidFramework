@@ -24,7 +24,7 @@ import init, {
 	SeaLocalService,
 	SeaTreeId,
 	type SeaLocalClient,
-} from "../pkg/sea_webtransport.js";
+} from "../../../crates/sea-webtransport/test-support/pkg/web/sea_webtransport_test_support.js";
 import {
 	DirectDummyClient,
 	DirectSharedTreeClient,

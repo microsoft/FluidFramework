@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 8. Promote and reorganize the WASM bindings.
-- **Last completed checkpoint:** 7. Explicit liveness and cleanup.
-- **Last validation:** Checkpoint 7 focused sequencer/server tests and strict Clippy passed on 2026-09-16; canonical workspace and browser validation is recorded in the implementation commit.
-- **Latest checkpoint notes:** `LivenessPolicy` configures QUIC PING heartbeat, inactivity timeout, author reconnect grace, and live-event lag capacity at the server boundary. Idle streams have no operation deadline, while partial-frame reads and writes remain bounded. Connection loss immediately revokes snapshot nomination, author cleanup honors grace, forced shutdown bypasses grace, and recovery clears all connection-scoped author and nomination state while retaining stable operation identities and used session IDs. Cleanup counts and startup policy output make lifecycle behavior observable.
+- **Current checkpoint:** 9. Generated TypeScript APIs.
+- **Last completed checkpoint:** 8. Promote and reorganize the WASM bindings.
+- **Last validation:** Checkpoint 8 production and test-support WASM builds, strict WASM Clippy, Node behavior, TypeScript typecheck, SharedTree bundles, local Chromium, and real Chromium 152 WebTransport passed on 2026-09-16; canonical workspace validation is recorded in the implementation commit.
+- **Latest checkpoint notes:** WASM exports now compile from `sea-webtransport` library source as one `rlib`/`cdylib`; no production Cargo example or path import remains. A crate-owned script emits canonical web and Node packages consumed directly by downstream harnesses. Production WASM excludes storage, sequencer, native endpoint, and server dependencies; process-local memory/sequencer bindings are isolated behind `test-support` and emitted as separately named test artifacts from the same library target.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 8. Promote and reorganize the WASM bindings.
+- **Next checkpoint:** 9. Generated TypeScript APIs.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -635,21 +635,21 @@ cargo test -p sea-sequencer -p sea-webtransport -p sea-webtransport-server --all
 
 This should be primarily ownership and file movement after the transport contract is stable.
 
-- [ ] Move `wasm-bindgen` exports into a normal `cfg(target_arch = "wasm32")` module of the `sea-webtransport` library target.
-- [ ] Build that same library source as a `cdylib` for `wasm32` without creating a second Rust crate or retaining a Cargo example as production code.
-- [ ] Move WASM generation orchestration out of `tests/minimal-fluid-driver/scripts/build-wasm.mjs` to a script owned by the `sea-webtransport` crate or Rust workspace; downstream pnpm tasks may invoke it but do not own Sea artifact generation.
-- [ ] Remove path imports of production source files.
-- [ ] Verify the generated WASM dependency graph contains no `sea-webtransport-server`, storage backend, native endpoint, or server lifecycle code.
-- [ ] Preserve the shared client established in checkpoint 6a while reorganizing bindings; do not move or duplicate its behavior here.
-- [ ] Reduce browser-specific code to WebTransport read/write primitives and JavaScript/WASM value adaptation.
-- [ ] Ensure WASM bindings delegate to the same client connection, event, author, snapshot, and content state machines used by native Rust.
-- [ ] Do not create separate native and WASM logical-stream module trees.
-- [ ] Move any process-local service used only by tests into explicit test support rather than the production browser binding surface.
-- [ ] Keep protocol framing inside the shared Rust protocol/client implementation so generated TypeScript consumers never construct or parse frames.
-- [ ] Generate one canonical web output and one canonical Node output from the same crate target, with documented stable locations and names; downstream harnesses consume those outputs rather than generating private duplicate copies.
-- [ ] Update the declarative Fluid build task to track the new target and outputs.
-- [ ] Add a crate or module README explaining purpose, consumers, build command, generated files, and why it is not a runnable example.
-- [ ] Retain a Cargo example only if it has a `main` function and a documented user-facing scenario.
+- [x] Move `wasm-bindgen` exports into a normal `cfg(target_arch = "wasm32")` module of the `sea-webtransport` library target.
+- [x] Build that same library source as a `cdylib` for `wasm32` without creating a second Rust crate or retaining a Cargo example as production code.
+- [x] Move WASM generation orchestration out of `tests/minimal-fluid-driver/scripts/build-wasm.mjs` to a script owned by the `sea-webtransport` crate or Rust workspace; downstream pnpm tasks may invoke it but do not own Sea artifact generation.
+- [x] Remove path imports of production source files.
+- [x] Verify the generated WASM dependency graph contains no `sea-webtransport-server`, storage backend, native endpoint, or server lifecycle code.
+- [x] Preserve the shared client established in checkpoint 6a while reorganizing bindings; do not move or duplicate its behavior here.
+- [x] Reduce browser-specific code to WebTransport read/write primitives and JavaScript/WASM value adaptation.
+- [x] Ensure WASM bindings delegate to the same client connection, event, author, snapshot, and content state machines used by native Rust.
+- [x] Do not create separate native and WASM logical-stream module trees.
+- [x] Move any process-local service used only by tests into explicit test support rather than the production browser binding surface.
+- [x] Keep protocol framing inside the shared Rust protocol/client implementation so generated TypeScript consumers never construct or parse frames.
+- [x] Generate one canonical web output and one canonical Node output from the same crate target, with documented stable locations and names; downstream harnesses consume those outputs rather than generating private duplicate copies.
+- [x] Update the declarative Fluid build task to track the new target and outputs.
+- [x] Add a crate or module README explaining purpose, consumers, build command, generated files, and why it is not a runnable example.
+- [x] Retain a Cargo example only if it has a `main` function and a documented user-facing scenario.
 
 Validation:
 

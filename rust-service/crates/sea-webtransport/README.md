@@ -1,7 +1,8 @@
 # Sea WebTransport
 
 This crate owns the bounded, versioned Sea protocol, shared client state machines, native and browser transport primitives, and native WebTransport client.
-Its `sea-webtransport-browser` WASM example generates the web and Node bindings used by browser, injected-transport, and process-local clients.
+Its `src/wasm/` library module exports browser and injected-transport bindings from the same shared client used by native Rust.
+It is library code rather than a Cargo example because downstream applications consume generated bindings; there is no standalone scenario to run.
 
 The native listener, server dispatch, archive routing, connection measurements, and shutdown policy belong to `sea-webtransport-server`.
 The event stream opens the logical session, returns an opaque authority, and carries recovery plus live events.
@@ -13,6 +14,17 @@ Protocol or transport failure closes the owning connection without terminating t
 `NativeSeaClient` pins a SHA-256 certificate hash and implements `SeaSession`.
 Disconnect and reconnect are explicit; operations are never retried automatically.
 The current network envelope uses explicit message-kind and correlation fields with typed postcard payloads and a configured maximum frame size.
+
+Generate the canonical web and Node packages with:
+
+```bash
+node crates/sea-webtransport/scripts/build-wasm.mjs
+```
+
+The command runs from `rust-service/` and writes production outputs to `crates/sea-webtransport/pkg/web/` and `crates/sea-webtransport/pkg/node/`.
+The minimal Fluid driver, Node behavior tests, and real Chromium harness consume those locations directly.
+The same command emits feature-gated process-local test bindings under `crates/sea-webtransport/test-support/pkg/`; production outputs exclude `sea-memory`, `sea-sequencer`, native endpoints, and server lifecycle code.
+All generated files are build artifacts and must not be edited.
 
 Run from `rust-service/`:
 

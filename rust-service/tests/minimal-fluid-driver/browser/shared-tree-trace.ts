@@ -25,7 +25,7 @@ import init, {
 	SeaInjectedClient,
 	SeaLoadKind,
 	SeaTreeId,
-} from "../pkg/sea_webtransport.js";
+} from "../../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
 import {
 	type MinimalWasmDeltaConnection,
 	MinimalWasmDocumentServiceFactory,

@@ -22,13 +22,13 @@
 		"benchmark:tinylicious": "node browser/run-shared-tree-benchmark.mjs tinylicious",
 		"build": "fluid-build . --task build",
 		"build:benchmark:local": "esbuild browser/shared-tree-benchmark-local.ts --bundle --format=esm --platform=browser --inject:browser/process-shim.ts --outfile=dist/shared-tree-benchmark-local.js --log-level=warning --log-override:package.json=silent",
-		"build:benchmark:rust": "esbuild browser/shared-tree-benchmark-rust.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-benchmark-rust.js --external:../pkg/* --log-level=warning --log-override:package.json=silent",
+		"build:benchmark:rust": "esbuild browser/shared-tree-benchmark-rust.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-benchmark-rust.js --external:../../../crates/sea-webtransport/test-support/pkg/web/* --log-level=warning --log-override:package.json=silent",
 		"build:benchmark:tinylicious": "esbuild browser/shared-tree-benchmark-tinylicious.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-benchmark-tinylicious.js --log-level=warning --log-override:package.json=silent",
 		"build:benchmarks": "pnpm run build:benchmark:rust && pnpm run build:benchmark:local && pnpm run build:benchmark:tinylicious",
 		"build:compile": "fluid-build . --task compile",
 		"build:esm": "tsc --project ./tsconfig.json",
-		"build:shared-tree": "esbuild browser/shared-tree-trace.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-trace.js --external:../pkg/* --log-level=warning --log-override:package.json=silent",
-		"build:wasm": "node scripts/build-wasm.mjs",
+		"build:shared-tree": "esbuild browser/shared-tree-trace.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-trace.js --external:../../../crates/sea-webtransport/pkg/web/* --log-level=warning --log-override:package.json=silent",
+		"build:wasm": "node ../../crates/sea-webtransport/scripts/build-wasm.mjs",
 		"check:format": "biome format src browser scripts package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html shared-tree-benchmark-rust.html shared-tree-benchmark-local.html shared-tree-benchmark-tinylicious.html",
 		"clean": "rimraf --glob dist lib pkg \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"format": "biome format src browser scripts package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html shared-tree-benchmark-rust.html shared-tree-benchmark-local.html shared-tree-benchmark-tinylicious.html --write",
@@ -69,10 +69,10 @@
 	},
 	"fluidBuild": {
 		"declarativeTasks": {
-			"node scripts/build-wasm.mjs": {
+			"node ../../crates/sea-webtransport/scripts/build-wasm.mjs": {
 				"inputGlobs": [
 					"package.json",
-					"scripts/build-wasm.mjs",
+					"../../crates/sea-webtransport/scripts/build-wasm.mjs",
 					"${repoRoot}/rust-service/Cargo.toml",
 					"${repoRoot}/rust-service/Cargo.lock",
 					"${repoRoot}/rust-service/rust-toolchain.toml",
@@ -80,9 +80,10 @@
 					"${repoRoot}/rust-service/crates/**/Cargo.toml"
 				],
 				"outputGlobs": [
-					"pkg/**",
-					"../wasm-client/pkg/**",
-					"../webtransport-browser/pkg/**"
+					"../../crates/sea-webtransport/pkg/web/**",
+					"../../crates/sea-webtransport/pkg/node/**",
+					"../../crates/sea-webtransport/test-support/pkg/web/**",
+					"../../crates/sea-webtransport/test-support/pkg/node/**"
 				],
 				"includeLockFiles": false
 			}

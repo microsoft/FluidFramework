@@ -1,10 +1,7 @@
 #![doc = "Typed browser, injected, and in-process Sea session bindings."]
-#![cfg(target_arch = "wasm32")]
-
-#[path = "browser/sea.rs"]
 mod sea;
 
-pub use sea_webtransport::protocol as sea_protocol_v1;
+pub use crate::protocol as sea_protocol_v1;
 
 pub use sea::*;
 

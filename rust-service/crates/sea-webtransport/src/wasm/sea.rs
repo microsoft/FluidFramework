@@ -8,18 +8,20 @@
 
 use std::{
     cell::{Cell, RefCell},
-    collections::{BTreeMap, VecDeque},
+    collections::VecDeque,
     rc::Rc,
     sync::Arc,
 };
 
 use async_trait::async_trait;
-use bytes::Bytes;
 use futures_util::{
     StreamExt as _,
     future::{AbortHandle, Abortable},
 };
 use js_sys::{Array, Promise, Reflect, Uint8Array};
+#[cfg(feature = "test-support")]
+use bytes::Bytes;
+#[cfg(feature = "test-support")]
 use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, Event, EventPosition, SnapshotId,
     archive::{
@@ -29,13 +31,11 @@ use sea_core::{
         SnapshotPublication,
     },
 };
-use sea_memory::MemoryStream;
-use sea_sequencer::session::{LocalSequencer, LocalSession};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
-use crate::{AsyncRequestTransport, call_method, sea_protocol_v1 as protocol};
-use sea_webtransport::{
+use super::{AsyncRequestTransport, call_method, sea_protocol_v1 as protocol};
+use crate::{
     client::{
         AuthorStream, Client, ClientError, ClientState, ContentStream, EventStream, ResponseStream,
         SnapshotStream,
@@ -584,7 +584,16 @@ impl BidirectionalStream for InjectedBidirectionalStream {
     }
 }
 
-/// Shared in-process memory service for local generated Sea clients.
+#[cfg(feature = "test-support")]
+mod test_support {
+    use std::collections::BTreeMap;
+
+    use sea_memory::MemoryStream;
+    use sea_sequencer::session::{LocalSequencer, LocalSession};
+
+    use super::*;
+
+/// Shared in-process memory service for generated-client tests.
 #[wasm_bindgen]
 pub struct SeaLocalService {
     sequencer: Arc<LocalSequencer<MemoryStream>>,
@@ -999,12 +1008,17 @@ impl SeaLocalStream {
     }
 }
 
+}
+
+#[cfg(feature = "test-support")]
+pub use test_support::*;
+
 #[wasm_bindgen]
 impl SeaInjectedClient {
     /// Creates a typed client over one injected transport.
     #[wasm_bindgen(constructor)]
     pub fn new(transport: AsyncRequestTransport, max_frame_bytes: usize) -> Result<Self, JsValue> {
-        if max_frame_bytes < protocol::MAGIC.len() + 1 {
+        if max_frame_bytes < protocol::MIN_FRAME_BYTES {
             return Err(js_error(
                 "max_frame_bytes is smaller than the Sea frame header",
             ));
@@ -1060,16 +1074,17 @@ impl SeaInjectedClient {
         self.snapshot_stream.take();
         self.content_stream.take();
         let archive = archive.to_vec();
-        let pending_create = self.pending_archive_creation.borrow();
-        if let Some(pending_archive) = pending_create.as_ref()
-            && pending_archive != &archive
-        {
-            return Err(js_error(
-                "pending archive creation does not match the session",
-            ));
-        }
-        let create = create || pending_create.is_some();
-        drop(pending_create);
+        let create = {
+            let pending_create = self.pending_archive_creation.borrow();
+            if let Some(pending_archive) = pending_create.as_ref()
+                && pending_archive != &archive
+            {
+                return Err(js_error(
+                    "pending archive creation does not match the session",
+                ));
+            }
+            create || pending_create.is_some()
+        };
         let event_stream = self
             .client
             .open_event_stream(protocol::Request::OpenEventStream {
@@ -1496,14 +1511,6 @@ fn load_item(response: protocol::Response) -> Result<SeaLoadItem, JsValue> {
     Ok(SeaLoadItem { inner: response })
 }
 
-fn expect_acknowledged(response: &protocol::Response) -> Result<(), JsValue> {
-    if matches!(response, protocol::Response::Acknowledged) {
-        Ok(())
-    } else {
-        Err(js_error("Sea response is not an acknowledgement"))
-    }
-}
-
 fn fixed_id(bytes: &Uint8Array) -> Result<[u8; 32], JsValue> {
     bytes
         .to_vec()
@@ -1527,6 +1534,7 @@ fn tree_from_js(value: &JsValue) -> Result<protocol::TreeId, JsValue> {
     }
 }
 
+#[cfg(feature = "test-support")]
 fn core_tree(id: protocol::TreeId) -> BlobTreeId {
     match id {
         protocol::TreeId::Blob(bytes) => {
@@ -1538,6 +1546,7 @@ fn core_tree(id: protocol::TreeId) -> BlobTreeId {
     }
 }
 
+#[cfg(feature = "test-support")]
 fn wire_tree(id: BlobTreeId) -> protocol::TreeId {
     match id {
         BlobTreeId::Blob(id) => protocol::TreeId::Blob(*id.as_bytes()),
@@ -1545,6 +1554,7 @@ fn wire_tree(id: BlobTreeId) -> protocol::TreeId {
     }
 }
 
+#[cfg(feature = "test-support")]
 fn local_snapshot(snapshot: sea_core::archive::PublishedSnapshot) -> SeaSnapshot {
     SeaSnapshot {
         inner: protocol::Snapshot {
@@ -1561,6 +1571,7 @@ fn local_snapshot(snapshot: sea_core::archive::PublishedSnapshot) -> SeaSnapshot
     }
 }
 
+#[cfg(feature = "test-support")]
 fn local_load_item(item: LoadEvent) -> SeaLoadItem {
     SeaLoadItem {
         inner: match item {

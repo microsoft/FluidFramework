@@ -5,10 +5,11 @@ edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
-[[example]]
-name = "sea-webtransport-browser"
-path = "examples/browser.rs"
-crate-type = ["cdylib"]
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[features]
+test-support = ["dep:sea-memory", "dep:sea-sequencer"]
 
 [dependencies]
 async-trait.workspace = true
@@ -26,8 +27,8 @@ wtransport = "=0.7.2"
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 futures-util.workspace = true
 js-sys = "=0.3.105"
-sea-memory = { path = "../sea-memory" }
-sea-sequencer = { path = "../sea-sequencer" }
+sea-memory = { path = "../sea-memory", optional = true }
+sea-sequencer = { path = "../sea-sequencer", optional = true }
 wasm-bindgen = "=0.2.128"
 wasm-bindgen-futures = "=0.4.78"
 web-sys = { version = "=0.3.105", features = [

@@ -12,7 +12,7 @@ const {
 	SeaDirectoryEntry,
 	SeaLoadKind,
 	SeaLocalService,
-} = require("./pkg/sea_webtransport.js");
+} = require("../../crates/sea-webtransport/test-support/pkg/node/sea_webtransport_test_support.js");
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
