@@ -372,6 +372,20 @@ describe("OverlappingIntervalsIndex", () => {
 			assertIntervals(results, [second], "expected the intervals ending at 30");
 		});
 
+		it("reverses an end-bounded gather when iterating backward", () => {
+			const alsoEndsAt30 = createTestInterval(25, 30);
+			index.add(alsoEndsAt30);
+
+			const results: SequenceInterval[] = [];
+			index.gatherIterationResults(results, false, undefined, 30);
+
+			assertIntervals(
+				results,
+				[alsoEndsAt30, second],
+				"expected the intervals ending at 30, reversed",
+			);
+		});
+
 		it("gathers the intervals matching both the given start and end", () => {
 			const alsoFirst = createTestInterval(10, 20);
 			index.add(alsoFirst);
@@ -379,6 +393,21 @@ describe("OverlappingIntervalsIndex", () => {
 			const results: SequenceInterval[] = [];
 			index.gatherIterationResults(results, true, 10, 20);
 
+			assertSameIntervals(
+				results,
+				[first, alsoFirst],
+				"expected every interval spanning exactly the queried range",
+			);
+		});
+
+		it("gathers every interval matching both bounds when iterating backward", () => {
+			const alsoFirst = createTestInterval(10, 20);
+			index.add(alsoFirst);
+
+			const results: SequenceInterval[] = [];
+			index.gatherIterationResults(results, false, 10, 20);
+
+			// Order is not asserted: these share both endpoints, so the tie falls to interval ID.
 			assertSameIntervals(
 				results,
 				[first, alsoFirst],
