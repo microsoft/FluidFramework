@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 10d. Reduce duplication.
-- **Last completed checkpoint:** 10c. Put concurrency in stream owners.
-- **Last validation:** Checkpoint 10b/10c package format, lint, TypeScript and SharedTree typechecks, ESM build, Node tests, bundles, local Chromium, and real SharedTree WebTransport trace passed on 2026-09-16.
-- **Latest checkpoint notes:** The package-internal `SeaDriverClient` contract removes already-bound document/author/session parameters, false pagination and uncertainty states, and fabricated zero metrics. The global serialization wrapper is deleted so independent event, snapshot, and content work can overlap while generated author/content stream owners preserve their own ordering. Fluid-facing classes are named `SeaDriver`, `SeaDocumentService`, `SeaDocumentStorage`, `SeaDeltaStorage`, and `SeaDeltaConnection`; generated production and test-support adapter construction is centralized.
+- **Current checkpoint:** 11. Integrate snapshot coordination with Fluid.
+- **Last completed checkpoint:** 10. Simplify the Fluid TypeScript adapter.
+- **Last validation:** Checkpoint 10 package format, lint, TypeScript and SharedTree typechecks, ESM build, Node tests, bundles, local Chromium, and real SharedTree WebTransport trace passed on 2026-09-16.
+- **Latest checkpoint notes:** `SeaDriver` is the aggregate Fluid-facing factory over focused document service, storage, delta, and lifecycle modules. The internal `SeaDriverClient` removes already-bound arguments, false pagination/uncertainty states, fabricated metrics, and global serialization. Snapshot identity belongs to storage and uses length-prefixed scope fields. Generated production/test-support construction is shared, direct benchmarks use the same contract, and the accidental stale adapter duplicate is deleted.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 10d. Split `fluidDriver.ts` by ownership.
+- **Next checkpoint:** 11a. Choose and record the Fluid snapshot integration model.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -712,7 +712,7 @@ This checkpoint may be split into small deletion-oriented commits.
 
 - [x] Centralize generated remote and local client construction.
 - [x] Share construction between trace, benchmark, and browser harnesses.
-- [ ] Split `fluidDriver.ts` into storage, delta connection, document service, lifecycle, and shared helpers when each extraction has a clear owner.
+- [x] Split `fluidDriver.ts` into storage, delta connection, document service, lifecycle, and shared helpers when each extraction has a clear owner.
 - [x] Keep direct benchmark clients separate from the Fluid driver but make them consume the same Sea client contract.
 
 Validation after each subcommit:
