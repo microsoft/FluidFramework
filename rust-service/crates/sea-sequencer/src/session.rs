@@ -20,7 +20,7 @@ use sea_core::{
         AuthorId, CommittedEvent, EventReceipt, EventSubmission, LoadEvent, OperationId,
         PublishedSnapshot, SeaArchive, SeaAuthorSession, SeaEventSubscription, SeaService,
         SeaSnapshotCoordinator, SeaSnapshotPublisher, SeaStorage, SessionCommittedEvent, SessionId,
-        SessionStream, SnapshotCoordination, SnapshotPublication,
+        SessionStream, SnapshotCoordination, SnapshotParticipation, SnapshotPublication,
     },
 };
 use tokio::sync::{Mutex, broadcast, watch};
@@ -97,8 +97,7 @@ struct AcceptedSubmission {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 struct PublisherState {
-    eligible: bool,
-    willing: bool,
+    participation: SnapshotParticipation,
 }
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
@@ -122,13 +121,21 @@ struct SequencerState {
 impl SequencerState {
     fn select_snapshot_publisher(&mut self) {
         if self
+            .publishers
+            .values()
+            .any(|publisher| publisher.participation == SnapshotParticipation::ClientSelected)
+        {
+            self.coordination.nominee = None;
+            return;
+        }
+        if self
             .coordination
             .nominee
             .as_ref()
             .is_some_and(|(session, _)| {
-                self.publishers
-                    .get(session)
-                    .is_some_and(|publisher| publisher.eligible && publisher.willing)
+                self.publishers.get(session).is_some_and(|publisher| {
+                    publisher.participation == SnapshotParticipation::SeaSelected
+                })
             })
         {
             return;
@@ -136,7 +143,7 @@ impl SequencerState {
         self.coordination.nominee = self
             .publishers
             .iter()
-            .find(|(_, publisher)| publisher.eligible && publisher.willing)
+            .find(|(_, publisher)| publisher.participation == SnapshotParticipation::SeaSelected)
             .map(|(session, _)| {
                 let fence = self.next_snapshot_fence;
                 self.next_snapshot_fence = fence.wrapping_add(1).max(1);
@@ -652,8 +659,7 @@ where
 {
     async fn coordinate_snapshots(
         &self,
-        eligible: bool,
-        willing: bool,
+        participation: SnapshotParticipation,
     ) -> Result<SessionStream<SnapshotCoordination, Self::Error>, Self::Error> {
         self.ensure_open()?;
         let mut state = self.sequencer.state.lock().await;
@@ -664,10 +670,9 @@ where
         {
             return Err(SessionError::Rejected("session is not active"));
         }
-        state.publishers.insert(
-            self.session_id.clone(),
-            PublisherState { eligible, willing },
-        );
+        state
+            .publishers
+            .insert(self.session_id.clone(), PublisherState { participation });
         state.select_snapshot_publisher();
         self.sequencer
             .coordination
@@ -695,16 +700,27 @@ where
         )))
     }
 
-    async fn publish_nominated_snapshot(
+    async fn publish_coordinated_snapshot(
         &self,
-        fence: u64,
+        fence: Option<u64>,
         publication: SnapshotPublication,
     ) -> Result<PublishedSnapshot, Self::Error> {
         self.ensure_open()?;
         let mut state = self.sequencer.state.lock().await;
-        if state.coordination.nominee.as_ref() != Some(&(self.session_id.clone(), fence)) {
+        let participation = state
+            .publishers
+            .get(&self.session_id)
+            .map(|publisher| publisher.participation);
+        let authorized = match participation {
+            Some(SnapshotParticipation::SeaSelected) => fence.is_some_and(|fence| {
+                state.coordination.nominee.as_ref() == Some(&(self.session_id.clone(), fence))
+            }),
+            Some(SnapshotParticipation::ClientSelected) => fence.is_none(),
+            Some(SnapshotParticipation::ReadOnly) | None => false,
+        };
+        if !authorized {
             return Err(SessionError::Rejected(
-                "snapshot publication fence is not current",
+                "snapshot publication is not permitted by this stream",
             ));
         }
         let published = self
@@ -1102,11 +1118,11 @@ mod tests {
     use bytes::Bytes;
     use futures_util::StreamExt as _;
     use sea_core::{
-        BlobId, BlobTreeId, Durability, Event,
+        BlobId, BlobTreeId, ClassifiedError, Durability, ErrorKind, Event,
         archive::{
-            AuthorId, EventSubmission, LoadEvent, OperationId, SeaAuthorSession,
-            SeaEventSubscription, SeaSnapshotPublisher, SessionId, Snapshot, SnapshotPosition,
-            SnapshotPublication,
+            AuthorId, EventSubmission, LoadEvent, OperationId, SeaArchive, SeaAuthorSession,
+            SeaEventSubscription, SeaSnapshotPublisher, SessionId, Snapshot, SnapshotParticipation,
+            SnapshotPosition, SnapshotPublication,
         },
     };
     use sea_memory::MemoryStream;
@@ -1131,6 +1147,21 @@ mod tests {
             event: Event {
                 payload: Bytes::from_static(value),
                 blob_tree: None,
+            },
+        }
+    }
+
+    fn snapshot_publication(
+        operation: &'static [u8],
+        expected_parent: Option<sea_core::SnapshotId>,
+        root: BlobId,
+    ) -> SnapshotPublication {
+        SnapshotPublication {
+            operation_id: OperationId::new(Bytes::from_static(operation)).unwrap(),
+            expected_parent,
+            snapshot: Snapshot {
+                at_event: SnapshotPosition::Initial,
+                root: BlobTreeId::Blob(root),
             },
         }
     }
@@ -1164,17 +1195,23 @@ mod tests {
             .open_session(author(b"second"), session(b"b-session"), None)
             .await
             .unwrap();
-        let mut first_state = first.coordinate_snapshots(true, true).await.unwrap();
+        let mut first_state = first
+            .coordinate_snapshots(SnapshotParticipation::SeaSelected)
+            .await
+            .unwrap();
         let first_fence = first_state.next().await.unwrap().unwrap().fence.unwrap();
-        let mut second_state = second.coordinate_snapshots(true, true).await.unwrap();
+        let mut second_state = second
+            .coordinate_snapshots(SnapshotParticipation::SeaSelected)
+            .await
+            .unwrap();
         assert_eq!(second_state.next().await.unwrap().unwrap().fence, None);
 
         first.revoke_snapshot_publisher().await.unwrap();
         let second_fence = second_state.next().await.unwrap().unwrap().fence.unwrap();
         assert!(second_fence > first_fence);
         let stale = first
-            .publish_nominated_snapshot(
-                first_fence,
+            .publish_coordinated_snapshot(
+                Some(first_fence),
                 SnapshotPublication {
                     operation_id: OperationId::new(Bytes::from_static(b"stale-snapshot")).unwrap(),
                     expected_parent: None,
@@ -1189,6 +1226,122 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn client_selected_publishers_suppress_sea_selection_and_enforce_permissions() {
+        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
+            .await
+            .unwrap();
+        let sea_selected = sequencer
+            .open_session(author(b"sea"), session(b"sea-session"), None)
+            .await
+            .unwrap();
+        let client_selected = sequencer
+            .open_session(author(b"client"), session(b"client-session"), None)
+            .await
+            .unwrap();
+        let read_only = sequencer
+            .open_session(author(b"reader"), session(b"reader-session"), None)
+            .await
+            .unwrap();
+        let other_client_selected = sequencer
+            .open_session(
+                author(b"other-client"),
+                session(b"other-client-session"),
+                None,
+            )
+            .await
+            .unwrap();
+        let mut sea_state = sea_selected
+            .coordinate_snapshots(SnapshotParticipation::SeaSelected)
+            .await
+            .unwrap();
+        let first_fence = sea_state.next().await.unwrap().unwrap().fence.unwrap();
+        let mut client_state = client_selected
+            .coordinate_snapshots(SnapshotParticipation::ClientSelected)
+            .await
+            .unwrap();
+        assert_eq!(client_state.next().await.unwrap().unwrap().fence, None);
+        assert_eq!(sea_state.next().await.unwrap().unwrap().fence, None);
+        let mut read_only_state = read_only
+            .coordinate_snapshots(SnapshotParticipation::ReadOnly)
+            .await
+            .unwrap();
+        assert_eq!(read_only_state.next().await.unwrap().unwrap().fence, None);
+        let mut other_client_state = other_client_selected
+            .coordinate_snapshots(SnapshotParticipation::ClientSelected)
+            .await
+            .unwrap();
+        assert_eq!(
+            other_client_state.next().await.unwrap().unwrap().fence,
+            None
+        );
+        let snapshot_blob = client_selected
+            .put_blob(Bytes::from_static(b"snapshot"))
+            .await
+            .unwrap();
+
+        assert!(matches!(
+            sea_selected
+                .publish_coordinated_snapshot(
+                    Some(first_fence),
+                    snapshot_publication(b"suppressed-sea-snapshot", None, snapshot_blob),
+                )
+                .await,
+            Err(SessionError::Rejected(_))
+        ));
+        assert!(matches!(
+            read_only
+                .publish_coordinated_snapshot(
+                    None,
+                    snapshot_publication(b"read-only-snapshot", None, snapshot_blob),
+                )
+                .await,
+            Err(SessionError::Rejected(_))
+        ));
+        assert!(matches!(
+            client_selected
+                .publish_coordinated_snapshot(
+                    Some(first_fence),
+                    snapshot_publication(b"client-selected-with-fence", None, snapshot_blob),
+                )
+                .await,
+            Err(SessionError::Rejected(_))
+        ));
+        let first_snapshot = client_selected
+            .publish_coordinated_snapshot(
+                None,
+                snapshot_publication(b"client-selected-snapshot", None, snapshot_blob),
+            )
+            .await
+            .unwrap();
+        let conflict = other_client_selected
+            .publish_coordinated_snapshot(
+                None,
+                snapshot_publication(b"conflicting-snapshot", None, snapshot_blob),
+            )
+            .await
+            .unwrap_err();
+        assert_eq!(conflict.kind(), ErrorKind::Conflict);
+        other_client_selected
+            .publish_coordinated_snapshot(
+                None,
+                snapshot_publication(
+                    b"parented-snapshot",
+                    Some(first_snapshot.id),
+                    snapshot_blob,
+                ),
+            )
+            .await
+            .unwrap();
+
+        client_selected.revoke_snapshot_publisher().await.unwrap();
+        other_client_selected
+            .revoke_snapshot_publisher()
+            .await
+            .unwrap();
+        assert!(sea_state.next().await.unwrap().unwrap().fence.is_some());
+    }
+
+    #[tokio::test]
     async fn recovery_revokes_connection_scoped_session_state() {
         let storage = Arc::new(MemoryStream::new());
         let sequencer = LocalSequencer::recover(Arc::clone(&storage)).await.unwrap();
@@ -1197,7 +1350,10 @@ mod tests {
             .open_session(author(b"pre-restart-author"), stale_session.clone(), None)
             .await
             .unwrap();
-        let mut coordination = active.coordinate_snapshots(true, true).await.unwrap();
+        let mut coordination = active
+            .coordinate_snapshots(SnapshotParticipation::SeaSelected)
+            .await
+            .unwrap();
         assert!(coordination.next().await.unwrap().unwrap().fence.is_some());
         drop(active);
         drop(sequencer);

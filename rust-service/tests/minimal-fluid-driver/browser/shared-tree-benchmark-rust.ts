@@ -51,6 +51,8 @@ declare global {
 	interface Window {
 		/** Promise resolving to the detailed benchmark sample. */
 		__sharedTreeBenchmarkResult?: Promise<Record<string, unknown>>;
+		/** Current benchmark startup phase for timeout diagnostics. */
+		__sharedTreeStage?: string;
 	}
 }
 
@@ -86,7 +88,12 @@ function adaptSeaBrowserClient(
 	client: SeaInjectedClient,
 	reconnect: () => Promise<SeaBrowserTransport>,
 ): SeaDriverClient {
-	return createGeneratedSeaBindingAdapter(client, SeaBindings, reconnect);
+	return createGeneratedSeaBindingAdapter(
+		client,
+		SeaBindings,
+		integration === "direct" ? "SeaSelected" : "ClientSelected",
+		reconnect,
+	);
 }
 
 /** Waits for a Rust-service-backed container to reach Fluid's connected state. */
@@ -134,7 +141,11 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	const createWasmClient = async (): Promise<SeaDriverClient> => {
 		if (localService !== undefined) {
 			const client: SeaLocalClient = localService.connect();
-			const adapted = createGeneratedSeaBindingAdapter(client, SeaBindings);
+			const adapted = createGeneratedSeaBindingAdapter(
+				client,
+				SeaBindings,
+				integration === "direct" ? "SeaSelected" : "ClientSelected",
+			);
 			transports.push(adapted);
 			return adapted;
 		}
@@ -339,6 +350,7 @@ async function createDirectSharedTreePair(
 	transportActivity: TransportActivity,
 	local: boolean,
 ): Promise<SharedTreeBenchmarkPair> {
+	window.__sharedTreeStage = "creating direct SharedTree writer";
 	const writer = await DirectSharedTreeClient.create(
 		await createClient(),
 		document,
@@ -346,6 +358,7 @@ async function createDirectSharedTreePair(
 		1024 * 1024,
 		true,
 	);
+	window.__sharedTreeStage = "creating direct SharedTree observer";
 	const observer = await DirectSharedTreeClient.create(
 		await createClient(),
 		document,
@@ -353,6 +366,7 @@ async function createDirectSharedTreePair(
 		1024 * 1024,
 		false,
 	);
+	window.__sharedTreeStage = "initializing direct SharedTree";
 	const writerView = writer.tree.viewWith(benchmarkTreeConfiguration);
 	writerView.initialize({ value: 0 });
 	await writer.waitForIdle();
@@ -364,8 +378,11 @@ async function createDirectSharedTreePair(
 	const observerData = adaptSharedTree(observerView);
 	const startupTransportActivity = snapshotTransportActivity(transportActivity);
 	const synchronize = async (): Promise<void> => {
+		window.__sharedTreeStage = "waiting for direct SharedTree writer";
 		await writer.waitForIdle();
+		window.__sharedTreeStage = "waiting for direct SharedTree observer";
 		await observer.waitForIdle();
+		window.__sharedTreeStage = "waiting for direct SharedTree convergence";
 		await waitUntil(
 			() => observer.lastAppliedSequenceNumber >= writer.lastAppliedSequenceNumber,
 		);
@@ -415,6 +432,7 @@ async function createDirectDummyPair(
 	transportActivity: TransportActivity,
 	local: boolean,
 ): Promise<SharedTreeBenchmarkPair> {
+	window.__sharedTreeStage = "creating direct dummy writer";
 	const writer = await DirectDummyClient.create(
 		await createClient(),
 		document,
@@ -422,6 +440,7 @@ async function createDirectDummyPair(
 		1024 * 1024,
 		true,
 	);
+	window.__sharedTreeStage = "creating direct dummy observer";
 	const observer = await DirectDummyClient.create(
 		await createClient(),
 		document,
@@ -429,9 +448,13 @@ async function createDirectDummyPair(
 		1024 * 1024,
 		false,
 	);
+	window.__sharedTreeStage = "initializing direct dummy";
 	const synchronize = async (): Promise<void> => {
+		window.__sharedTreeStage = "waiting for direct dummy writer";
 		await writer.waitForIdle();
+		window.__sharedTreeStage = "waiting for direct dummy observer";
 		await observer.waitForIdle();
+		window.__sharedTreeStage = "waiting for direct dummy convergence";
 		await waitUntil(
 			() => observer.lastAppliedSequenceNumber >= writer.lastAppliedSequenceNumber,
 		);

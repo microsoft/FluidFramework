@@ -404,21 +404,31 @@ pub trait SeaSnapshotCoordinator: SeaService {
     ) -> Result<SessionStream<PublishedSnapshot, Self::Error>, Self::Error>;
 }
 
-/// Snapshot publisher eligibility, nomination, fencing, and network lifecycle.
+/// How one snapshot stream participates in publication authority.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SnapshotParticipation {
+    /// Receives coordination updates but cannot publish snapshots.
+    ReadOnly,
+    /// Publishes only while selected and fenced by Sea.
+    SeaSelected,
+    /// Publishes under application-managed selection without a Sea fence.
+    ClientSelected,
+}
+
+/// Snapshot participation, Sea selection, publication authority, and network lifecycle.
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 pub trait SeaSnapshotPublisher: SeaService {
     /// Registers this session's publisher capability and returns latest-value coordination state.
     async fn coordinate_snapshots(
         &self,
-        eligible: bool,
-        willing: bool,
+        participation: SnapshotParticipation,
     ) -> Result<SessionStream<SnapshotCoordination, Self::Error>, Self::Error>;
 
-    /// Publishes a snapshot while this session holds the current fencing token.
-    async fn publish_nominated_snapshot(
+    /// Publishes under this stream's Sea-selected or client-selected authority.
+    async fn publish_coordinated_snapshot(
         &self,
-        fence: u64,
+        fence: Option<u64>,
         publication: SnapshotPublication,
     ) -> Result<PublishedSnapshot, Self::Error>;
 

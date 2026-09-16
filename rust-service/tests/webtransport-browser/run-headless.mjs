@@ -10,7 +10,9 @@ import { tmpdir } from "node:os";
 import { extname, join, normalize, resolve } from "node:path";
 import { createServer as createNetServer } from "node:net";
 
-const [siteRoot, transportUrl, certificateHash, shutdownMarker] = process.argv.slice(2);
+const [siteRoot, transportUrl, certificateHash, shutdownMarker, snapshotPolicyArgument] =
+	process.argv.slice(2);
+const snapshotPolicy = process.env.SEA_SNAPSHOT_POLICY ?? snapshotPolicyArgument;
 if (!siteRoot || !transportUrl || !/^[0-9a-f]{64}$/i.test(certificateHash ?? "")) {
 	throw new Error(
 		"usage: node run-headless.mjs <site-root> <transport-url> <certificate-sha256-hex>",
@@ -132,7 +134,7 @@ await new Promise((resolve, reject) => {
 });
 const debugPort = await freePort();
 const profile = await mkdtemp(join(tmpdir(), "fluid-webtransport-chromium-"));
-const pageUrl = `http://localhost:${httpPort}/?transport=${encodeURIComponent(transportUrl)}&hash=${certificateHash}`;
+const pageUrl = `http://localhost:${httpPort}/?transport=${encodeURIComponent(transportUrl)}&hash=${certificateHash}${snapshotPolicy === undefined ? "" : `&snapshotPolicy=${encodeURIComponent(snapshotPolicy)}`}`;
 const chromium = spawn(
 	"chromium",
 	[

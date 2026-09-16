@@ -152,16 +152,14 @@ where
     /// Opens snapshot coordination bound to this client's event-stream authority.
     pub async fn open_snapshot_stream(
         &self,
-        eligible: bool,
-        willing: bool,
+        participation: protocol::SnapshotParticipation,
     ) -> Result<SnapshotStream<Transport::Stream>, ClientError<Transport::Error>> {
         let authority = self.state.authority()?;
         let pending = self.state.begin(StreamRole::Snapshot)?;
         let correlation_id = pending.id();
         let request = Request::OpenSnapshotStream {
             authority,
-            eligible,
-            willing,
+            participation,
         };
         let outgoing = protocol::encode_request_frame(
             StreamRole::Snapshot,

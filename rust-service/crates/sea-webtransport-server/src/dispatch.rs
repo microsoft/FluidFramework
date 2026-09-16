@@ -11,8 +11,8 @@ use sea_core::{
     archive::{
         EventSubmission, LoadEvent, OperationId, PublishedSnapshot, SeaArchive, SeaAuthorSession,
         SeaEventSubscription, SeaService, SeaSnapshotCoordinator, SeaSnapshotPublisher,
-        Snapshot as ArchiveSnapshot, SnapshotPosition as ArchiveSnapshotPosition,
-        SnapshotPublication,
+        Snapshot as ArchiveSnapshot, SnapshotParticipation as ArchiveSnapshotParticipation,
+        SnapshotPosition as ArchiveSnapshotPosition, SnapshotPublication,
     },
 };
 
@@ -92,15 +92,12 @@ where
         &self,
         request: protocol::Request,
     ) -> Result<SeaResponseStream, protocol::Response> {
-        let protocol::Request::OpenSnapshotStream {
-            eligible, willing, ..
-        } = request
-        else {
+        let protocol::Request::OpenSnapshotStream { participation, .. } = request else {
             return Err(invalid("snapshot stream requires OpenSnapshotStream"));
         };
         let stream = self
             .session
-            .coordinate_snapshots(eligible, willing)
+            .coordinate_snapshots(snapshot_participation_from_wire(participation))
             .await
             .map_err(error_response)?;
         Ok(Box::pin(stream.map(|item| match item {
@@ -114,7 +111,7 @@ where
 
     async fn snapshot_request(&self, request: protocol::Request) -> protocol::Response {
         match request {
-            protocol::Request::PublishNominatedSnapshot {
+            protocol::Request::PublishSnapshot {
                 fence,
                 operation,
                 expected_parent,
@@ -123,7 +120,7 @@ where
             } => match operation_id(operation) {
                 Ok(operation_id) => self
                     .session
-                    .publish_nominated_snapshot(
+                    .publish_coordinated_snapshot(
                         fence,
                         SnapshotPublication {
                             operation_id,
@@ -267,7 +264,7 @@ where
             protocol::Request::OpenEventStream { .. }
             | protocol::Request::OpenAuthorStream { .. }
             | protocol::Request::OpenSnapshotStream { .. }
-            | protocol::Request::PublishNominatedSnapshot { .. }
+            | protocol::Request::PublishSnapshot { .. }
             | protocol::Request::OpenContentStream { .. }
             | protocol::Request::Read { .. } => {
                 Err(invalid("request is not valid for this logical stream"))
@@ -392,6 +389,18 @@ fn snapshot_position_from_wire(position: protocol::SnapshotPosition) -> ArchiveS
         protocol::SnapshotPosition::Initial => ArchiveSnapshotPosition::Initial,
         protocol::SnapshotPosition::At(position) => {
             ArchiveSnapshotPosition::At(EventPosition::new(position))
+        }
+    }
+}
+
+const fn snapshot_participation_from_wire(
+    participation: protocol::SnapshotParticipation,
+) -> ArchiveSnapshotParticipation {
+    match participation {
+        protocol::SnapshotParticipation::ReadOnly => ArchiveSnapshotParticipation::ReadOnly,
+        protocol::SnapshotParticipation::SeaSelected => ArchiveSnapshotParticipation::SeaSelected,
+        protocol::SnapshotParticipation::ClientSelected => {
+            ArchiveSnapshotParticipation::ClientSelected
         }
     }
 }

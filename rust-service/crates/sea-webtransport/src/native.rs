@@ -184,7 +184,7 @@ impl NativeSeaClient {
             .map_err(|_| WebTransportError::Timeout)??;
         let snapshot_stream = timeout(
             config.operation_timeout,
-            client.open_snapshot_stream(true, true),
+            client.open_snapshot_stream(protocol::SnapshotParticipation::SeaSelected),
         )
         .await
         .map_err(|_| WebTransportError::Timeout)??;
@@ -462,8 +462,8 @@ impl SeaSnapshotCoordinator for NativeSeaClient {
         let mut stream = self.snapshot_stream.lock().await;
         let fence = stream.fence().ok_or(SeaClientError::UnexpectedResponse)?;
         match stream
-            .request(protocol::Request::PublishNominatedSnapshot {
-                fence,
+            .request(protocol::Request::PublishSnapshot {
+                fence: Some(fence),
                 operation: publication.operation_id.as_bytes().to_vec(),
                 expected_parent: publication
                     .expected_parent

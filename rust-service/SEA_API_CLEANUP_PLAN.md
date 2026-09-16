@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 11b. Integrate snapshot coordination with Fluid (blocked pending approval of cross-package runtime and delegation contracts).
-- **Last completed checkpoint:** 11a. Choose and record the Fluid snapshot integration model.
-- **Last validation:** Checkpoint 10 package format, lint, TypeScript and SharedTree typechecks, ESM build, Node tests, bundles, local Chromium, and real SharedTree WebTransport trace passed on 2026-09-16.
-- **Latest checkpoint notes:** [Decision 0012](decisions/0012-fluid-snapshot-election-integration.md) proposes that Sea nominate the interactive parent and replace Fluid's existing parent election through an internal `ISummarizerClientElection` factory/provider seam. Fluid retains summary cadence and child launch; the parent explicitly delegates its current fenced authority to the child uploader. Standard driver interfaces are insufficient, so implementation requires approval for coordinated container-runtime and Sea delegation protocol changes.
+- **Current checkpoint:** 12. Documentation and terminology completion.
+- **Last completed checkpoint:** 11. Integrate snapshot coordination with Fluid.
+- **Last validation:** Checkpoint 11 focused Rust, server, WASM, Node, TypeScript, client-selected Chromium, Sea-selected Chromium, local direct SharedTree, and regular Fluid SharedTree WebTransport checks passed on 2026-09-16; canonical validation is recorded in the implementation commit.
+- **Latest checkpoint notes:** Snapshot streams declare immutable `ReadOnly`, `SeaSelected`, or `ClientSelected` participation. Any active client-selected publisher suppresses Sea nomination; Sea deterministically selects a Sea-selected publisher only when none remain. Regular `SeaDriver` uses `ClientSelected` so Fluid retains its election and cadence, while direct SharedTree uses `SeaSelected`. Both publication paths remain session-bound, expected-parent checked, and stable-operation recoverable.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 11b after approving Decision 0012's runtime injection and delegated-fence API impact.
+- **Next checkpoint:** 12. Documentation and terminology completion.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -208,7 +208,7 @@ The target connection has these logical streams:
 
 1. **Event stream:** snapshot selection, finite catch-up, caught-up marker, and live events.
 2. **Author stream:** ordered submissions, acknowledgements, and author reference advancement.
-3. **Snapshot coordination stream:** latest accepted snapshot, publisher eligibility, nomination state, and snapshot publication.
+3. **Snapshot coordination stream:** latest accepted snapshot, participation policy, Sea nomination state, and snapshot publication.
 4. **Content stream:** correlated blob, directory, and bounded historical-read operations.
 
 A logical stream may be opened lazily when its first operation is needed.
@@ -222,16 +222,18 @@ Snapshot-coordination notifications report newly accepted publications and nomin
 
 - Snapshot-generation frequency and timing are client policy.
 - The server never requests that a client create a snapshot.
-- A client advertises whether it is able and willing to publish snapshots when opening its snapshot coordination stream.
-- The Sea service maintains at most one eligible connected client as the current snapshot publisher.
+- A client selects immutable `ReadOnly`, `SeaSelected`, or `ClientSelected` participation when opening its snapshot coordination stream.
+- Read-only clients cannot publish. Client-selected publishers use application-managed election and do not receive a Sea fence.
+- While any client-selected publisher is active, Sea grants no Sea-selected nomination.
+- Otherwise, Sea maintains at most one Sea-selected connected client as the current fenced publisher.
 - Nomination grants authority to publish; it does not instruct or schedule publication.
 - The nominated client independently decides whether and when a snapshot is appropriate.
 - Every client that needs snapshot state, including the Fluid driver, consumes the snapshot coordination stream.
 - The stream reports the latest accepted snapshot and subsequent accepted snapshots with latest-value/coalescing semantics.
 - Publication includes nomination fencing, expected parent, event boundary, stable publication operation identity, and blob-tree root.
-- The Sea service accepts publication only from the current nominated session and only while its fencing authority remains valid.
+- The Sea service accepts Sea-selected publication only from the current nominated session with its current fence, and accepts client-selected publication only without a fence from an active client-selected stream.
 - When the host determines that the nominee is unresponsive, it disconnects that session; the sequencer then nominates another eligible connected client according to its selection policy.
-- `sea-sequencer` owns authoritative publisher eligibility, nomination, fencing, revocation, and selection semantics so local and network access use the same rules.
+- `sea-sequencer` owns authoritative participation, nomination, fencing, revocation, and selection semantics so local and network access use the same rules.
 - `sea-webtransport-server` owns network connection-liveness detection and reports connection loss or eviction to that sequencer state; it does not independently choose or persist a nominee.
 - Nomination liveness uses the same explicit session-liveness signals as author membership; it does not introduce a separate hidden timer model.
 - Disconnect, replacement, timeout, and server restart must not allow an old nominee to publish.
@@ -292,7 +294,7 @@ The exact names may be refined during implementation, but responsibilities shoul
 - **`SeaArchive`:** archive-scoped content, historical reads, snapshot lookup, and explicit creation/opening behavior.
 - **`SeaAuthorSession`:** author identity, ordered submit, ambiguity resolution, reference advancement, and close.
 - **`SeaEventSubscription`:** gap-free snapshot/catch-up/live event delivery and cursor ownership.
-- **`SeaSnapshotCoordinator`:** sequencer-owned eligibility, nomination, latest-value notifications, fenced publication, and close.
+- **`SeaSnapshotCoordinator`:** sequencer-owned participation, nomination, latest-value notifications, publication authority, and close.
 - **`SeaStorage`:** trusted atomic backend operations beneath sequencing and coordination.
 
 Decorators should implement only the boundaries they transform.
@@ -577,11 +579,11 @@ Do not retain the old per-operation implementation after its final consumer move
 
 #### 6d. Snapshot coordination stream
 
-- [x] Open with an `OpenSnapshotStream` message bound to the event-stream session authority and carrying publisher eligibility and willingness.
+- [x] Open with an `OpenSnapshotStream` message bound to the event-stream session authority and carrying immutable snapshot participation.
 - [x] Deliver the latest accepted snapshot on open and coalesced accepted-snapshot updates afterward.
 - [x] Deliver nomination and revocation state without requesting snapshot creation.
 - [x] Accept fenced publication from only the current nominee.
-- [x] Implement eligibility, nomination, fencing, revocation, and deterministic replacement in `sea-sequencer`; connect network lifecycle signals from `sea-webtransport-server` without duplicating selection policy there.
+- [x] Implement participation, nomination, fencing, revocation, and deterministic replacement in `sea-sequencer`; connect network lifecycle signals from `sea-webtransport-server` without duplicating selection policy there.
 - [x] Revoke and reassign nomination when connection lifecycle reports that the nominee is gone.
 - [x] Test latest-value notification, non-nominee rejection, stale-fence rejection, deterministic failover, and the absence of any server snapshot-generation request message.
 - [x] Expose nomination and accepted-snapshot state through the shared Rust client and generated bindings; Fluid integration remains checkpoint 11.
@@ -733,25 +735,26 @@ Do not add a second competing election or assume the driver alone can control ru
 
 #### 11a. Choose and record the Fluid integration model
 
-- [x] Decide whether Sea nominates the interactive parent responsible for launching a Fluid summarizer or the actual session that uploads snapshots.
-- [x] Trace delegation and fencing if a nominated parent launches a separate summarizer client.
-- [x] Select one authoritative election model: either adapt Fluid's existing election to consume Sea nomination or replace it for this driver; never run both independently.
-- [x] Identify the smallest internal Fluid runtime integration seam and record why existing `IDocumentService` and `IDocumentDeltaConnection` surfaces are or are not sufficient.
+- [x] Define read-only, Sea-selected, and client-selected snapshot participation.
+- [x] Specify that any active client-selected publisher suppresses Sea selection.
+- [x] Keep Fluid's existing election authoritative by using client-selected participation in `SeaDriver`.
+- [x] Use Sea-selected participation for direct SharedTree integration.
 - [x] Record the decision and its API impact before implementation.
 
 #### 11b. Implement the selected model
 
-- [ ] Advertise snapshot capability and willingness for the selected Fluid session role.
-- [ ] Consume latest and newly accepted snapshot notifications through `SeaDriver`.
-- [ ] Feed Sea nomination into the selected Fluid runtime election seam without treating nomination as a request to summarize.
-- [ ] Let Fluid's existing client-side summary heuristics decide when to generate a summary.
-- [ ] Publish through the fenced snapshot coordination stream only under current or explicitly delegated nomination authority.
-- [ ] Stop publication promptly on nomination loss or disconnect.
-- [ ] Recover or resolve an ambiguous publication without accepting stale authority.
-- [ ] Test nomination transfer between two Fluid-capable clients.
-- [ ] Test an unresponsive nominee is disconnected and replaced.
-- [ ] Test a non-nominated client cannot publish.
-- [ ] Test snapshot cadence changes when client policy changes without a server protocol change.
+- [x] Advertise immutable snapshot participation for each generated client.
+- [x] Open and consume snapshot coordination through `SeaDriver` and direct integrations.
+- [x] Preserve Fluid's existing election by using client-selected participation without introducing a second election.
+- [x] Let Fluid's existing client-side summary heuristics decide when to generate a summary.
+- [x] Publish with a current Sea fence in Sea-selected mode and without a fence in client-selected mode.
+- [x] Stop Sea-selected publication promptly on nomination loss or disconnect.
+- [x] Recover or resolve an ambiguous publication without accepting stale authority.
+- [x] Test client-selected suppression and deterministic Sea-selection fallback.
+- [x] Test an unresponsive nominee is disconnected and replaced.
+- [x] Test read-only and non-nominated clients cannot publish.
+- [x] Test multiple client-selected publishers use expected-parent conflict control.
+- [x] Test both client-selected and Sea-selected browser workflows without changing the server protocol.
 
 Validation:
 
@@ -850,7 +853,7 @@ Resolve these only when the named checkpoint supplies evidence:
 - Exact heartbeat, inactivity, reconnect-grace, and lag thresholds: checkpoint 7.
 - Exact generated TypeScript representation for Sea result cases: checkpoint 9 chooses between `wasm-bindgen`-exported case classes/enums and a generated custom TypeScript discriminated union; either choice must support exhaustive narrowing and make invalid field combinations unrepresentable.
 - Whether a separate Fluid driver interface remains after wrapper removal: checkpoint 10b.
-- Snapshot nominee selection policy among equally eligible clients: checkpoint 6d.
-- Whether Sea nominates a Fluid parent client or the actual publishing summarizer session, and the runtime seam used to enforce that authority: checkpoint 11a.
+- Snapshot nominee selection policy among equally Sea-selected clients: checkpoint 6d.
+- Snapshot participation and interaction with application-managed election: checkpoint 11a and [Decision 0012](decisions/0012-fluid-snapshot-election-integration.md).
 
 Do not defer the ownership or semantic requirements stated in **Settled Decisions**.

@@ -9,6 +9,7 @@ import init, {
 	SeaErrorKind,
 	SeaInjectedClient,
 	SeaLoadKind,
+	SeaSnapshotParticipation,
 } from "../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
 
 const encoder = new TextEncoder();
@@ -16,6 +17,10 @@ const decoder = new TextDecoder();
 const parameters = new URLSearchParams(location.search);
 const transportUrl = parameters.get("transport");
 const certificateHex = parameters.get("hash");
+const snapshotParticipation =
+	parameters.get("snapshotPolicy") === "sea"
+		? SeaSnapshotParticipation.SeaSelected
+		: SeaSnapshotParticipation.ClientSelected;
 
 function assert(condition, message) {
 	if (!condition) throw new Error(message);
@@ -65,6 +70,10 @@ async function run() {
 		encoder.encode("browser-author"),
 		encoder.encode("browser-session"),
 	);
+	const snapshotCoordination = await first.subscribeSnapshots(
+		snapshotParticipation,
+	);
+	await snapshotCoordination.next();
 	const load = await first.load();
 	const initialCaughtUp = await load.next();
 	assert(
@@ -171,6 +180,10 @@ async function run() {
 		encoder.encode("browser-session-reconnected"),
 		secondReceipt.position,
 	);
+	const recoveredSnapshots = await first.subscribeSnapshots(
+		snapshotParticipation,
+	);
+	await recoveredSnapshots.next();
 	const recovered = await first.load(secondReceipt.position);
 	assert(
 		(await recovered.next()).kind === SeaLoadKind.Snapshot,
@@ -216,6 +229,7 @@ async function run() {
 		blobBytes: blobPayload.length,
 		directoryEntries: entries.length,
 		serviceErrorKind: missingArchiveError.kind,
+		snapshotParticipation,
 		snapshotIdBytes: snapshot.id.length,
 	};
 }

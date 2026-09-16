@@ -13,6 +13,7 @@ const {
 	SeaDurability,
 	SeaLoadKind,
 	SeaLocalService,
+	SeaSnapshotParticipation,
 	SeaTreeKind,
 } = require("../../crates/sea-webtransport/test-support/pkg/node/sea_webtransport_test_support.js");
 const encoder = new TextEncoder();
@@ -29,6 +30,8 @@ async function clients() {
 		encoder.encode("first-author"),
 		encoder.encode("first-session"),
 	);
+	const snapshots = await first.subscribeSnapshots(SeaSnapshotParticipation.ClientSelected);
+	await snapshots.next();
 	return { archive, first, second };
 }
 
@@ -82,6 +85,55 @@ test("generated local clients preserve recursive content and snapshot identities
 	);
 	assert.deepEqual((await first.latestSnapshot()).id, snapshot.id);
 	assert.deepEqual((await first.getSnapshot(snapshot.id)).root.bytes, root.bytes);
+});
+
+test("generated snapshot participation enforces publication authority", async () => {
+	const service = await SeaLocalService.create();
+	const archive = encoder.encode("snapshot-policy-archive");
+	const readOnly = service.connect();
+	await readOnly.openSession(
+		archive,
+		true,
+		encoder.encode("read-only-author"),
+		encoder.encode("read-only-session"),
+	);
+	const readOnlySnapshots = await readOnly.subscribeSnapshots(
+		SeaSnapshotParticipation.ReadOnly,
+	);
+	await readOnlySnapshots.next();
+	const blob = await readOnly.putBlob(encoder.encode("snapshot-policy-content"));
+	await assert.rejects(
+		readOnly.publishSnapshot(
+			encoder.encode("read-only-publication"),
+			undefined,
+			undefined,
+			blob,
+		),
+		/read-only/,
+	);
+
+	await readOnlySnapshots.cancel();
+	await readOnly.close();
+	const selected = service.connect();
+	await selected.openSession(
+		archive,
+		false,
+		encoder.encode("selected-author"),
+		encoder.encode("selected-session"),
+	);
+	const selectedSnapshots = await selected.subscribeSnapshots(
+		SeaSnapshotParticipation.SeaSelected,
+	);
+	const coordination = await selectedSnapshots.next();
+	assert.notEqual(coordination.fence, undefined);
+	const snapshot = await selected.publishSnapshot(
+		encoder.encode("selected-publication"),
+		undefined,
+		undefined,
+		blob,
+	);
+	assert.equal(snapshot.root.kind, SeaTreeKind.Blob);
+	await selected.close();
 });
 
 test("generated local clients reject stable identity conflicts and stale sessions", async () => {

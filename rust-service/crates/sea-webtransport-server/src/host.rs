@@ -636,8 +636,7 @@ mod tests {
             second
                 .snapshot_stream(protocol::Request::OpenSnapshotStream {
                     authority: vec![0; 32],
-                    eligible: true,
-                    willing: true,
+                    participation: protocol::SnapshotParticipation::SeaSelected,
                 })
                 .await
                 .is_err()
@@ -645,8 +644,7 @@ mod tests {
         let mut first_snapshots = first_connection
             .snapshot_stream(protocol::Request::OpenSnapshotStream {
                 authority: first_authority,
-                eligible: true,
-                willing: true,
+                participation: protocol::SnapshotParticipation::SeaSelected,
             })
             .await
             .expect("first snapshot stream");
@@ -655,13 +653,12 @@ mod tests {
             ..
         } = first_snapshots.next().await.expect("first nomination")
         else {
-            panic!("first eligible session must be nominated");
+            panic!("first Sea-selected session must be nominated");
         };
         let mut second_snapshots = second
             .snapshot_stream(protocol::Request::OpenSnapshotStream {
                 authority: second_authority,
-                eligible: true,
-                willing: true,
+                participation: protocol::SnapshotParticipation::SeaSelected,
             })
             .await
             .expect("second snapshot stream");
@@ -671,8 +668,8 @@ mod tests {
         ));
         assert!(matches!(
             second
-                .snapshot_request(protocol::Request::PublishNominatedSnapshot {
-                    fence: first_fence,
+                .snapshot_request(protocol::Request::PublishSnapshot {
+                    fence: Some(first_fence),
                     operation: b"non-nominee".to_vec(),
                     expected_parent: None,
                     at_event: protocol::SnapshotPosition::Initial,
@@ -684,6 +681,67 @@ mod tests {
                 ..
             }
         ));
+
+        let client_selected = host.connect(LivenessPolicy::default());
+        let mut client_events = client_selected
+            .open_event_stream(protocol::Request::OpenEventStream {
+                version: protocol::PROTOCOL_VERSION,
+                archive: b"archive".to_vec(),
+                intent: protocol::ArchiveIntent::Open,
+                author: b"client-selected-author".to_vec(),
+                session: b"client-selected-session".to_vec(),
+                resume_after: None,
+            })
+            .await
+            .expect("client-selected event stream");
+        let protocol::Response::EventStreamOpened {
+            authority: client_authority,
+        } = client_events
+            .next()
+            .await
+            .expect("client-selected authority")
+        else {
+            panic!("client-selected event stream must return authority first");
+        };
+        let mut client_snapshots = client_selected
+            .snapshot_stream(protocol::Request::OpenSnapshotStream {
+                authority: client_authority,
+                participation: protocol::SnapshotParticipation::ClientSelected,
+            })
+            .await
+            .expect("client-selected snapshot stream");
+        assert!(matches!(
+            client_snapshots.next().await,
+            Some(protocol::Response::SnapshotCoordination { fence: None, .. })
+        ));
+        assert!(matches!(
+            first_snapshots.next().await,
+            Some(protocol::Response::SnapshotCoordination { fence: None, .. })
+        ));
+        assert!(matches!(
+            first_connection
+                .snapshot_request(protocol::Request::PublishSnapshot {
+                    fence: Some(first_fence),
+                    operation: b"suppressed-nominee".to_vec(),
+                    expected_parent: None,
+                    at_event: protocol::SnapshotPosition::Initial,
+                    root: protocol::TreeId::Blob([0; 32]),
+                })
+                .await,
+            protocol::Response::Error {
+                kind: protocol::ErrorKind::Rejected,
+                ..
+            }
+        ));
+        client_selected.connection_closed(false).await;
+        assert!(matches!(
+            first_snapshots.next().await,
+            Some(protocol::Response::SnapshotCoordination {
+                fence: Some(fence),
+                ..
+            }) if fence > first_fence
+        ));
+
         first_connection.connection_closed(false).await;
         assert!(matches!(
             first_connection
@@ -1141,8 +1199,7 @@ mod tests {
             2,
             protocol::Request::OpenSnapshotStream {
                 authority,
-                eligible: true,
-                willing: true,
+                participation: protocol::SnapshotParticipation::SeaSelected,
             },
         )
         .await;
@@ -1171,8 +1228,8 @@ mod tests {
         send_raw_request(
             &mut send,
             3,
-            protocol::Request::PublishNominatedSnapshot {
-                fence,
+            protocol::Request::PublishSnapshot {
+                fence: Some(fence),
                 operation: operation.as_bytes().to_vec(),
                 expected_parent: None,
                 at_event: protocol::SnapshotPosition::At(receipt.position.get()),

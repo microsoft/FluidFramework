@@ -113,7 +113,7 @@ function adaptBrowserClient(
 	client: SeaInjectedClient,
 	reconnect: () => Promise<SeaBrowserTransport>,
 ): SeaDriverClient {
-	return createGeneratedSeaBindingAdapter(client, SeaBindings, reconnect);
+	return createGeneratedSeaBindingAdapter(client, SeaBindings, "ClientSelected", reconnect);
 }
 
 /** Polls a trace condition until it succeeds or the diagnostic timeout expires. */

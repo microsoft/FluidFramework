@@ -1,6 +1,6 @@
-# Decision 0012: Fluid Snapshot Election Integration
+# Decision 0012: Snapshot Participation and Fluid Election
 
-Status: proposed
+Status: accepted
 Date: 2026-09-16
 Iteration: lightweight
 Owners: interactive user and GitHub Copilot
@@ -9,61 +9,62 @@ Superseded by: none
 
 ## Context
 
-Sea selects at most one eligible connected session as snapshot publisher and grants that session a fenced publication capability.
-Fluid already runs `SummarizerClientElection`, which elects an interactive parent.
-That parent launches a separate non-interactive summarizer client through `SummaryManager`, and the summarizer uploads through `IDocumentStorageService.uploadSummaryWithContext` according to Fluid's existing client-side cadence policy.
-
-The standard `IDocumentService`, `IDocumentDeltaConnection`, and storage interfaces do not expose a reverse channel for driver nomination state.
-`ContainerRuntime` constructs `SummarizerClientElection` internally, so `SeaDriver` cannot currently supply nomination without starting a second independent election.
+Sea can simplify applications by selecting one snapshot publisher and granting it a fenced publication capability.
+Some applications already have an authoritative election that Sea cannot replace cleanly.
+Fluid is one such application: `SummarizerClientElection` elects an interactive parent, which launches a separate summarizer client through `SummaryManager`.
+The summarizer uploads according to Fluid's existing client-side cadence policy.
 
 ## Decision Drivers
 
-- Fluid and Sea must not independently elect competing summarizers.
+- Applications must be able to choose Sea-managed selection, client-managed selection, or no publication authority.
+- Sea and an application must not independently elect publishers for the same active snapshot stream.
 - Sea nomination grants publication authority; it must never request or schedule summary generation.
-- Fluid's existing heuristics and parent/child summarizer lifecycle must remain authoritative for cadence.
-- Publication must stop on nomination loss, disconnect, or stale fencing authority.
-- The separate summarizer client needs explicit authority to upload on behalf of its nominated parent.
-- Standard driver interfaces should not acquire Sea-specific members.
+- Sea-managed publication must remain fenced and deterministic.
+- Client-managed publication must preserve expected-parent conflict detection and stable operation recovery.
+- Fluid's existing election, heuristics, and parent/child summarizer lifecycle must remain authoritative.
 
 ## Options and Evidence
 
-- Nominate the actual summarizer session.
-  This avoids delegation, but the session does not exist until Fluid's independent parent election launches it.
-  During graceful handoff two summarizer sessions may overlap, leaving Sea to perform a second election whose result can disagree with Fluid's `electedClientId`.
-  This option is rejected.
-- Run a driver-local parent election and leave Fluid's election unchanged.
-  `IDocumentService` and `IDocumentDeltaConnection` cannot feed that result into `SummaryManager`, so this creates competing authority and is rejected.
-- Nominate the interactive parent and adapt Fluid's existing election to consume Sea nomination.
-  `SummaryManager` already starts and stops the child according to `electedParentId`, making this the smallest semantic seam and preserving one parent election.
+- Require every publisher to use Sea selection.
+  This is simple for direct integrations but requires a new Fluid container-runtime election seam and delegated fencing between Fluid's parent and summarizer child.
+  It is rejected as the only policy because it does not accommodate applications with an existing authoritative election.
+- Allow unconditional publication without declaring who owns selection.
+  This makes permissions ambiguous and can accidentally bypass Sea fencing, so it is rejected.
+- Declare one immutable participation policy when opening each snapshot stream.
+  This keeps publication permission explicit and lets applications select the appropriate authority model.
   This option is selected.
 
 ## Decision
 
-Sea nominates the interactive Fluid parent responsible for launching the summarizer.
-Fluid's `SummaryManager` remains responsible for launching the separate summarizer client, and Fluid's existing summary heuristics remain solely responsible for deciding when to summarize.
-Sea nomination is authority selection, not a summary request.
+Each snapshot stream opens with exactly one immutable `SnapshotParticipation` policy:
 
-`ISummarizerClientElection` remains the runtime-facing contract.
-Container runtime construction must accept an internal election factory or nomination provider that can produce an `ISummarizerClientElection` backed by Sea coordination.
-The default remains `SummarizerClientElection`; Sea integration replaces that election for the Sea driver rather than wrapping it with another independent result.
-No Sea-specific member is added to `IDocumentService` or `IDocumentDeltaConnection`.
+- `ReadOnly` receives latest-value coordination but cannot publish.
+- `SeaSelected` may publish only while holding Sea's current nomination fence.
+- `ClientSelected` may publish without a Sea fence because the client application owns election and scheduling.
 
-The nominated parent delegates its current Sea fence to the child summarizer through an explicit, bounded capability tied to the parent session, child session, archive, and current fence.
-The child publishes only while that delegation and fence remain current.
-Nomination loss, parent disconnect, child disconnect, or replacement revokes the delegation.
-Publication resolution may report an already accepted operation, but stale authority cannot authorize a new publication.
+If any active `ClientSelected` stream exists, Sea grants no `SeaSelected` fence and revokes an existing Sea nomination.
+When the last `ClientSelected` stream leaves, Sea deterministically selects one active `SeaSelected` stream if available.
+`ReadOnly` streams never participate in selection.
+
+The regular `SeaDriver` uses `ClientSelected`, preserving Fluid's existing `SummarizerClientElection`, parent/child lifecycle, and cadence heuristics without a new container-runtime seam.
+Direct SharedTree integration uses `SeaSelected` and benefits from Sea's simpler election.
+All modes receive accepted-snapshot notifications.
+
+Client-selected publication still requires the stream's active session authority, stable operation identity, expected parent, event boundary, and content root.
+Multiple client-selected sessions may race; storage accepts at most the publication satisfying the expected-parent condition.
+Sea-selected publication requires the current fence.
 
 ## Consequences
 
-This requires coordinated changes outside `rust-service`: an internal container-runtime election injection contract, an implementation that consumes asynchronous Sea nomination, and parent-to-summarizer delegation plumbing.
-It also requires Sea protocol/client/sequencer support for delegated fenced publication.
-The standard driver interfaces remain unchanged, but the container-runtime integration contract is shared cross-package API surface and needs explicit approval before implementation.
+The standard Fluid driver and runtime interfaces remain unchanged.
+Applications using `ClientSelected` own publisher availability: while any such stream is active, Sea intentionally does not provide fallback selection.
+If that application fails to elect or schedule a publisher, snapshots stop until it recovers or every client-selected stream disconnects.
 
-The model preserves Fluid's parent/child handoff and cadence behavior.
-It adds delegation complexity, but avoids a second election and makes publication authority auditable at the actual uploader.
+The protocol distinguishes client-selected publication from Sea-selected fenced publication, preventing an omitted fence from silently bypassing Sea election.
+Participation changes require reopening the snapshot stream.
 
 ## Validation and Follow-Up
 
-Before implementation, approve the internal container-runtime injection contract and delegated-fence protocol shape.
-Then test parent nomination transfer, child delegation and revocation, non-nominated publication rejection, unresponsive-parent replacement, stale delegated fences, ambiguous publication resolution, and cadence changes driven only by Fluid client policy.
-Run the SharedTree Chromium workflow with summaries enabled and verify that one authoritative election controls each publication.
+Test all three permission modes, Sea-selection suppression and fallback, stale fence rejection, multiple client-selected expected-parent conflicts, connection-loss cleanup, and ambiguous publication resolution.
+Run direct SharedTree with `SeaSelected` and the regular `SeaDriver` with `ClientSelected`.
+Verify that changing Fluid summary cadence requires no Sea protocol change.

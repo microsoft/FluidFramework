@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 /// Current Sea logical-stream opening version.
-pub const PROTOCOL_VERSION: u16 = 2;
+pub const PROTOCOL_VERSION: u16 = 3;
 
 /// Explicit wire identity of every Sea network message.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -26,7 +26,7 @@ pub enum MessageKind {
     OpenEventStream = 17,
     OpenAuthorStream = 18,
     OpenSnapshotStream = 19,
-    PublishNominatedSnapshot = 20,
+    PublishSnapshot = 20,
     OpenContentStream = 21,
     Acknowledged = 128,
     EventCommitted = 129,
@@ -64,7 +64,7 @@ impl TryFrom<u8> for MessageKind {
             17 => Ok(Self::OpenEventStream),
             18 => Ok(Self::OpenAuthorStream),
             19 => Ok(Self::OpenSnapshotStream),
-            20 => Ok(Self::PublishNominatedSnapshot),
+            20 => Ok(Self::PublishSnapshot),
             21 => Ok(Self::OpenContentStream),
             128 => Ok(Self::Acknowledged),
             129 => Ok(Self::EventCommitted),
@@ -118,7 +118,7 @@ impl MessageKind {
         Self::OpenEventStream,
         Self::OpenAuthorStream,
         Self::OpenSnapshotStream,
-        Self::PublishNominatedSnapshot,
+        Self::PublishSnapshot,
         Self::OpenContentStream,
         Self::Acknowledged,
         Self::EventCommitted,
@@ -166,7 +166,7 @@ impl MessageKind {
             StreamRole::Snapshot => matches!(
                 self,
                 Kind::OpenSnapshotStream
-                    | Kind::PublishNominatedSnapshot
+                    | Kind::PublishSnapshot
                     | Kind::LatestSnapshot
                     | Kind::ResolveSnapshot
                     | Kind::Snapshot
@@ -215,7 +215,7 @@ impl MessageKind {
             | Self::GetSnapshot => Some(StreamRole::Content),
             Self::LatestSnapshot
             | Self::OpenSnapshotStream
-            | Self::PublishNominatedSnapshot
+            | Self::PublishSnapshot
             | Self::ResolveSnapshot => Some(StreamRole::Snapshot),
             _ => None,
         }
@@ -525,6 +525,38 @@ pub enum WireDurability {
     Durable = 3,
 }
 
+/// Explicit snapshot publication policy on the Sea wire.
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[repr(u8)]
+#[serde(try_from = "u8", into = "u8")]
+pub enum SnapshotParticipation {
+    /// Receives snapshot state but cannot publish.
+    ReadOnly = 1,
+    /// Publishes only while selected and fenced by Sea.
+    SeaSelected = 2,
+    /// Publishes under client-managed selection without a Sea fence.
+    ClientSelected = 3,
+}
+
+impl TryFrom<u8> for SnapshotParticipation {
+    type Error = ProtocolError;
+
+    fn try_from(value: u8) -> Result<Self, ProtocolError> {
+        match value {
+            1 => Ok(Self::ReadOnly),
+            2 => Ok(Self::SeaSelected),
+            3 => Ok(Self::ClientSelected),
+            _ => Err(ProtocolError::UnknownSnapshotParticipation(value)),
+        }
+    }
+}
+
+impl From<SnapshotParticipation> for u8 {
+    fn from(value: SnapshotParticipation) -> Self {
+        value as Self
+    }
+}
+
 impl TryFrom<u8> for WireDurability {
     type Error = ProtocolError;
 
@@ -561,8 +593,8 @@ pub mod payload {
     use serde::{Deserialize, Serialize};
 
     use super::{
-        ArchiveIntent, DirectoryEntry, ErrorKind, Event, Snapshot, SnapshotPosition, TreeId,
-        WireDurability,
+        ArchiveIntent, DirectoryEntry, ErrorKind, Event, Snapshot, SnapshotParticipation,
+        SnapshotPosition, TreeId, WireDurability,
     };
 
     /// Payload for a message with no fields.
@@ -596,14 +628,13 @@ pub mod payload {
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct OpenSnapshotStream {
         pub authority: Vec<u8>,
-        pub eligible: bool,
-        pub willing: bool,
+        pub participation: SnapshotParticipation,
     }
 
-    /// Fenced snapshot publication payload.
+    /// Snapshot publication payload with an optional Sea selection fence.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-    pub struct PublishNominatedSnapshot {
-        pub fence: u64,
+    pub struct PublishSnapshotRequest {
+        pub fence: Option<u64>,
         pub publication: PublishSnapshot,
     }
 
@@ -819,15 +850,13 @@ pub enum Request {
     OpenSnapshotStream {
         /// Authority returned by the event stream.
         authority: Vec<u8>,
-        /// Whether this client can publish snapshots.
-        eligible: bool,
-        /// Whether this client currently volunteers for nomination.
-        willing: bool,
+        /// This stream's immutable publication participation policy.
+        participation: SnapshotParticipation,
     },
-    /// Publishes a snapshot under the current nomination fence.
-    PublishNominatedSnapshot {
-        /// Current nomination fencing token.
-        fence: u64,
+    /// Publishes under Sea-selected or client-selected authority.
+    PublishSnapshot {
+        /// Current Sea fence, or none for client-selected publication.
+        fence: Option<u64>,
         /// Stable publication identity.
         operation: Vec<u8>,
         /// Expected latest publication.
@@ -912,7 +941,7 @@ impl Request {
             Self::OpenAuthorStream { .. } => MessageKind::OpenAuthorStream,
             Self::OpenContentStream { .. } => MessageKind::OpenContentStream,
             Self::OpenSnapshotStream { .. } => MessageKind::OpenSnapshotStream,
-            Self::PublishNominatedSnapshot { .. } => MessageKind::PublishNominatedSnapshot,
+            Self::PublishSnapshot { .. } => MessageKind::PublishSnapshot,
             Self::Submit { .. } => MessageKind::Submit,
             Self::ResolveSubmission { .. } => MessageKind::ResolveSubmission,
             Self::Read { .. } => MessageKind::Read,
@@ -945,7 +974,7 @@ impl Request {
             | Self::GetSnapshot { .. } => StreamRole::Content,
             Self::LatestSnapshot
             | Self::OpenSnapshotStream { .. }
-            | Self::PublishNominatedSnapshot { .. }
+            | Self::PublishSnapshot { .. }
             | Self::ResolveSnapshot { .. } => StreamRole::Snapshot,
         }
     }
@@ -1047,20 +1076,18 @@ pub fn encode_request_frame(
         }
         Request::OpenSnapshotStream {
             authority,
-            eligible,
-            willing,
+            participation,
         } => encode_typed_payload(
             role,
             request.kind(),
             correlation_id,
             &wire::OpenSnapshotStream {
                 authority: authority.clone(),
-                eligible: *eligible,
-                willing: *willing,
+                participation: *participation,
             },
             limits,
         ),
-        Request::PublishNominatedSnapshot {
+        Request::PublishSnapshot {
             fence,
             operation,
             expected_parent,
@@ -1070,7 +1097,7 @@ pub fn encode_request_frame(
             role,
             request.kind(),
             correlation_id,
-            &wire::PublishNominatedSnapshot {
+            &wire::PublishSnapshotRequest {
                 fence: *fence,
                 publication: wire::PublishSnapshot {
                     operation: operation.clone(),
@@ -1203,13 +1230,12 @@ pub fn decode_request_frame(
             let value: wire::OpenSnapshotStream = decode_typed_payload(frame)?;
             Request::OpenSnapshotStream {
                 authority: value.authority,
-                eligible: value.eligible,
-                willing: value.willing,
+                participation: value.participation,
             }
         }
-        MessageKind::PublishNominatedSnapshot => {
-            let value: wire::PublishNominatedSnapshot = decode_typed_payload(frame)?;
-            Request::PublishNominatedSnapshot {
+        MessageKind::PublishSnapshot => {
+            let value: wire::PublishSnapshotRequest = decode_typed_payload(frame)?;
+            Request::PublishSnapshot {
                 fence: value.fence,
                 operation: value.publication.operation,
                 expected_parent: value.publication.expected_parent,
@@ -1543,6 +1569,9 @@ pub enum ProtocolError {
     /// A durability byte has no assigned meaning.
     #[error("unknown Sea durability {0}")]
     UnknownDurability(u8),
+    /// A snapshot participation byte has no assigned meaning.
+    #[error("unknown snapshot participation policy {0}")]
+    UnknownSnapshotParticipation(u8),
     /// A known kind appeared on the wrong request/response side.
     #[error("Sea message {0:?} has the wrong request/response direction")]
     UnexpectedMessageDirection(MessageKind),
@@ -1574,8 +1603,8 @@ mod tests {
     use super::{
         ArchiveIntent, CorrelationTracker, DirectoryEntry, ErrorKind, Event, Limits, MessageKind,
         NetworkFrame, NetworkFrameDecoder, PROTOCOL_VERSION, ProtocolError, Request, Response,
-        Snapshot, SnapshotPosition, StreamEvent, StreamRole, TreeId, WireDurability,
-        decode_request_frame, decode_response_network_frame, encode_network_frame,
+        Snapshot, SnapshotParticipation, SnapshotPosition, StreamEvent, StreamRole, TreeId,
+        WireDurability, decode_request_frame, decode_response_network_frame, encode_network_frame,
         encode_request_frame, encode_response_frame,
     };
 
@@ -1596,6 +1625,18 @@ mod tests {
                 ));
             }
         }
+    }
+
+    #[test]
+    fn snapshot_participation_rejects_unknown_values() {
+        assert!(matches!(
+            SnapshotParticipation::try_from(0),
+            Err(ProtocolError::UnknownSnapshotParticipation(0))
+        ));
+        assert!(matches!(
+            SnapshotParticipation::try_from(4),
+            Err(ProtocolError::UnknownSnapshotParticipation(4))
+        ));
     }
 
     #[test]
@@ -1763,14 +1804,13 @@ mod tests {
                 StreamRole::Snapshot,
                 Request::OpenSnapshotStream {
                     authority: vec![7; 32],
-                    eligible: true,
-                    willing: true,
+                    participation: SnapshotParticipation::SeaSelected,
                 },
             ),
             (
                 StreamRole::Snapshot,
-                Request::PublishNominatedSnapshot {
-                    fence: 3,
+                Request::PublishSnapshot {
+                    fence: Some(3),
                     operation: b"snapshot-operation".to_vec(),
                     expected_parent: None,
                     at_event: SnapshotPosition::At(2),
@@ -1825,6 +1865,25 @@ mod tests {
             assert_eq!(frame.correlation_id, 17);
             assert_eq!(
                 decode_request_frame(role, &frame).expect("request decoding"),
+                request
+            );
+        }
+        for participation in [
+            SnapshotParticipation::ReadOnly,
+            SnapshotParticipation::SeaSelected,
+            SnapshotParticipation::ClientSelected,
+        ] {
+            let request = Request::OpenSnapshotStream {
+                authority: vec![7; 32],
+                participation,
+            };
+            let encoded =
+                encode_request_frame(StreamRole::Snapshot, 18, &request, Limits::default())
+                    .expect("snapshot participation encoding");
+            let frame = decode_one_network_frame(&encoded);
+            assert_eq!(
+                decode_request_frame(StreamRole::Snapshot, &frame)
+                    .expect("snapshot participation decoding"),
                 request
             );
         }

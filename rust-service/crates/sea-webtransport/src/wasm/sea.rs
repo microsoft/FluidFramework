@@ -27,8 +27,9 @@ use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, Event, EventPosition, SnapshotId,
     archive::{
         AuthorId, EventSubmission, LoadEvent, OperationId, SeaArchive, SeaAuthorSession,
-        SeaEventSubscription, SeaSnapshotCoordinator, SessionId, SessionStream,
-        Snapshot as ArchiveSnapshot, SnapshotPosition as ArchiveSnapshotPosition,
+        SeaEventSubscription, SeaSnapshotCoordinator, SeaSnapshotPublisher, SessionId,
+        SessionStream, Snapshot as ArchiveSnapshot, SnapshotCoordination as ArchiveCoordination,
+        SnapshotParticipation as ArchiveParticipation, SnapshotPosition as ArchiveSnapshotPosition,
         SnapshotPublication,
     },
 };
@@ -192,6 +193,19 @@ pub enum SeaErrorKind {
     Unavailable = 6,
     /// Persisted or received data is corrupt.
     Corrupt = 7,
+}
+
+/// Snapshot publication policy selected when opening coordination.
+#[wasm_bindgen]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u8)]
+pub enum SeaSnapshotParticipation {
+    /// Receives snapshot state but cannot publish.
+    ReadOnly = 1,
+    /// Publishes only while selected and fenced by Sea.
+    SeaSelected = 2,
+    /// Publishes under client-managed selection without a Sea fence.
+    ClientSelected = 3,
 }
 
 /// Metadata for one snapshot publication.
@@ -392,6 +406,7 @@ impl SeaSnapshotCoordination {
 #[wasm_bindgen]
 pub struct SeaInjectedSnapshotStream {
     inner: Rc<RefCell<Option<SnapshotStream<InjectedBidirectionalStream>>>>,
+    initial: Cell<bool>,
     cancelled: Cell<bool>,
 }
 
@@ -401,6 +416,16 @@ impl SeaInjectedSnapshotStream {
     pub async fn next(&self) -> Result<SeaSnapshotCoordination, JsValue> {
         if self.cancelled.get() {
             return Err(js_error("Sea snapshot stream is cancelled"));
+        }
+        if self.initial.replace(false) {
+            let stream = self.inner.borrow();
+            let stream = stream
+                .as_ref()
+                .ok_or_else(|| js_error("Sea snapshot stream is unavailable"))?;
+            return Ok(SeaSnapshotCoordination {
+                latest: stream.latest().cloned(),
+                fence: stream.fence(),
+            });
         }
         let mut stream = self
             .inner
@@ -566,6 +591,7 @@ pub struct SeaInjectedClient {
     event_stream: RefCell<Option<EventStream<InjectedBidirectionalStream>>>,
     author_stream: RefCell<Option<AuthorStream<InjectedBidirectionalStream>>>,
     snapshot_stream: Rc<RefCell<Option<SnapshotStream<InjectedBidirectionalStream>>>>,
+    snapshot_participation: Cell<Option<SeaSnapshotParticipation>>,
     content_stream: RefCell<Option<ContentStream<InjectedBidirectionalStream>>>,
     pending_archive_creation: RefCell<Option<Vec<u8>>>,
     resume_after: Cell<Option<u64>>,
@@ -636,10 +662,14 @@ impl BidirectionalStream for InjectedBidirectionalStream {
 mod test_support {
     use std::collections::BTreeMap;
 
-    use sea_memory::MemoryStream;
-    use sea_sequencer::session::{LocalSequencer, LocalSession};
+    use sea_memory::{MemoryError, MemoryStream};
+    use sea_sequencer::session::{LocalSequencer, LocalSession, SessionError};
 
     use super::*;
+
+    type LocalSnapshotCoordinationStream =
+        SessionStream<ArchiveCoordination, SessionError<MemoryError>>;
+    type SharedLocalSnapshotStream = Rc<RefCell<Option<LocalSnapshotCoordinationStream>>>;
 
     /// Shared in-process memory service for generated-client tests.
     #[wasm_bindgen]
@@ -667,6 +697,9 @@ mod test_support {
                 sequencer: Arc::clone(&self.sequencer),
                 archive: Rc::clone(&self.archive),
                 session: RefCell::new(None),
+                snapshot_stream: Rc::new(RefCell::new(None)),
+                snapshot_participation: Cell::new(None),
+                snapshot_fence: Rc::new(Cell::new(None)),
                 disconnected: Cell::new(false),
             }
         }
@@ -678,6 +711,9 @@ mod test_support {
         sequencer: Arc<LocalSequencer<MemoryStream>>,
         archive: Rc<RefCell<Option<Vec<u8>>>>,
         session: RefCell<Option<Rc<LocalSession<MemoryStream>>>>,
+        snapshot_stream: SharedLocalSnapshotStream,
+        snapshot_participation: Cell<Option<SeaSnapshotParticipation>>,
+        snapshot_fence: Rc<Cell<Option<u64>>>,
         disconnected: Cell<bool>,
     }
 
@@ -718,6 +754,9 @@ mod test_support {
                 _ => {}
             }
             self.disconnected.set(false);
+            self.snapshot_stream.take();
+            self.snapshot_participation.set(None);
+            self.snapshot_fence.set(None);
             let previous = self.session.borrow().clone();
             if let Some(previous) = previous {
                 previous
@@ -899,23 +938,68 @@ mod test_support {
             at_event: Option<u64>,
             root: &SeaTreeId,
         ) -> Result<SeaSnapshot, JsValue> {
+            let participation = self
+                .snapshot_participation
+                .get()
+                .ok_or_else(|| js_error("Sea snapshot stream is not open"))?;
+            let fence = match participation {
+                SeaSnapshotParticipation::ReadOnly => {
+                    return Err(js_error("Sea snapshot stream is read-only"));
+                }
+                SeaSnapshotParticipation::SeaSelected => {
+                    Some(self.snapshot_fence.get().ok_or_else(|| {
+                        js_error("Sea client is not selected to publish snapshots")
+                    })?)
+                }
+                SeaSnapshotParticipation::ClientSelected => None,
+            };
             let snapshot = self
                 .current()?
-                .publish_snapshot(SnapshotPublication {
-                    operation_id: OperationId::new(Bytes::from(operation.to_vec()))
-                        .map_err(|_| js_error("operation identity is empty"))?,
-                    expected_parent: expected_parent
-                        .map(|value| SnapshotId::from_bytes(Bytes::from(value.to_vec()))),
-                    snapshot: ArchiveSnapshot {
-                        at_event: at_event.map_or(ArchiveSnapshotPosition::Initial, |position| {
-                            ArchiveSnapshotPosition::At(EventPosition::new(position))
-                        }),
-                        root: core_tree(root.inner),
+                .publish_coordinated_snapshot(
+                    fence,
+                    SnapshotPublication {
+                        operation_id: OperationId::new(Bytes::from(operation.to_vec()))
+                            .map_err(|_| js_error("operation identity is empty"))?,
+                        expected_parent: expected_parent
+                            .map(|value| SnapshotId::from_bytes(Bytes::from(value.to_vec()))),
+                        snapshot: ArchiveSnapshot {
+                            at_event: at_event.map_or(
+                                ArchiveSnapshotPosition::Initial,
+                                |position| {
+                                    ArchiveSnapshotPosition::At(EventPosition::new(position))
+                                },
+                            ),
+                            root: core_tree(root.inner),
+                        },
                     },
-                })
+                )
                 .await
                 .map_err(|error| js_error(&error.to_string()))?;
             Ok(local_snapshot(snapshot))
+        }
+
+        /// Opens policy-bound latest-value snapshot coordination.
+        #[wasm_bindgen(js_name = subscribeSnapshots)]
+        pub async fn subscribe_snapshots(
+            &self,
+            participation: SeaSnapshotParticipation,
+        ) -> Result<SeaLocalSnapshotStream, JsValue> {
+            if self.snapshot_stream.borrow().is_some() {
+                return Err(js_error("Sea snapshot stream is already open"));
+            }
+            let session = self.current()?;
+            let stream = session
+                .coordinate_snapshots(snapshot_participation_to_core(participation))
+                .await
+                .map_err(|error| js_error(&error.to_string()))?;
+            self.snapshot_stream.replace(Some(stream));
+            self.snapshot_participation.set(Some(participation));
+            Ok(SeaLocalSnapshotStream {
+                session,
+                inner: Rc::clone(&self.snapshot_stream),
+                fence: Rc::clone(&self.snapshot_fence),
+                cancelled: Cell::new(false),
+            })
         }
 
         /// Resolves one snapshot publication.
@@ -980,6 +1064,9 @@ mod test_support {
 
         /// Explicitly closes the logical session.
         pub async fn close(&self) -> Result<(), JsValue> {
+            self.snapshot_stream.take();
+            self.snapshot_participation.set(None);
+            self.snapshot_fence.set(None);
             let session = self.session.borrow().clone();
             if let Some(session) = session {
                 session
@@ -1059,6 +1146,53 @@ mod test_support {
             std::future::ready(()).await;
         }
     }
+
+    /// Latest-value snapshot coordination for process-local tests.
+    #[wasm_bindgen]
+    pub struct SeaLocalSnapshotStream {
+        session: Rc<LocalSession<MemoryStream>>,
+        inner: SharedLocalSnapshotStream,
+        fence: Rc<Cell<Option<u64>>>,
+        cancelled: Cell<bool>,
+    }
+
+    #[wasm_bindgen]
+    impl SeaLocalSnapshotStream {
+        /// Waits for the next accepted snapshot or Sea nomination update.
+        pub async fn next(&self) -> Result<SeaSnapshotCoordination, JsValue> {
+            if self.cancelled.get() {
+                return Err(js_error("Sea snapshot stream is cancelled"));
+            }
+            let mut stream = self
+                .inner
+                .take()
+                .ok_or_else(|| js_error("Sea snapshot stream is unavailable"))?;
+            let state = stream
+                .next()
+                .await
+                .ok_or_else(|| js_error("Sea snapshot stream ended"))?
+                .map_err(|error| js_error(&error.to_string()))?;
+            self.fence.set(state.fence);
+            self.inner.replace(Some(stream));
+            Ok(SeaSnapshotCoordination {
+                latest: state.latest.map(|snapshot| local_snapshot(snapshot).inner),
+                fence: state.fence,
+            })
+        }
+
+        /// Revokes this process-local client's snapshot participation.
+        pub async fn cancel(&self) -> Result<(), JsValue> {
+            if !self.cancelled.replace(true) {
+                self.inner.take();
+                self.fence.set(None);
+                self.session
+                    .revoke_snapshot_publisher()
+                    .await
+                    .map_err(|error| js_error(&error.to_string()))?;
+            }
+            Ok(())
+        }
+    }
 }
 
 #[cfg(feature = "test-support")]
@@ -1090,6 +1224,7 @@ impl SeaInjectedClient {
             event_stream: RefCell::new(None),
             author_stream: RefCell::new(None),
             snapshot_stream: Rc::new(RefCell::new(None)),
+            snapshot_participation: Cell::new(None),
             content_stream: RefCell::new(None),
             pending_archive_creation: RefCell::new(None),
             resume_after: Cell::new(None),
@@ -1123,6 +1258,7 @@ impl SeaInjectedClient {
         }
         self.author_stream.take();
         self.snapshot_stream.take();
+        self.snapshot_participation.set(None);
         self.content_stream.take();
         let archive = archive.to_vec();
         let create = {
@@ -1158,15 +1294,9 @@ impl SeaInjectedClient {
             .open_author_stream()
             .await
             .map_err(client_error)?;
-        let snapshot_stream = self
-            .client
-            .open_snapshot_stream(true, true)
-            .await
-            .map_err(client_error)?;
         self.resume_after.set(reference);
         self.event_stream.replace(Some(event_stream));
         self.author_stream.replace(Some(author_stream));
-        self.snapshot_stream.replace(Some(snapshot_stream));
         Ok(())
     }
 
@@ -1335,14 +1465,25 @@ impl SeaInjectedClient {
         at_event: Option<u64>,
         root: &SeaTreeId,
     ) -> Result<SeaSnapshot, JsValue> {
-        let fence = self
-            .snapshot_stream
-            .borrow()
-            .as_ref()
-            .and_then(SnapshotStream::fence)
-            .ok_or_else(|| js_error("Sea client is not nominated to publish snapshots"))?;
+        let participation = self
+            .snapshot_participation
+            .get()
+            .ok_or_else(|| js_error("Sea snapshot stream is not open"))?;
+        let fence = match participation {
+            SeaSnapshotParticipation::ReadOnly => {
+                return Err(js_error("Sea snapshot stream is read-only"));
+            }
+            SeaSnapshotParticipation::SeaSelected => Some(
+                self.snapshot_stream
+                    .borrow()
+                    .as_ref()
+                    .and_then(SnapshotStream::fence)
+                    .ok_or_else(|| js_error("Sea client is not selected to publish snapshots"))?,
+            ),
+            SeaSnapshotParticipation::ClientSelected => None,
+        };
         match self
-            .snapshot_request(protocol::Request::PublishNominatedSnapshot {
+            .snapshot_request(protocol::Request::PublishSnapshot {
                 fence,
                 operation: operation.to_vec(),
                 expected_parent: expected_parent.map(|value| value.to_vec()),
@@ -1427,10 +1568,23 @@ impl SeaInjectedClient {
 
     /// Opens a latest-value snapshot subscription.
     #[wasm_bindgen(js_name = subscribeSnapshots)]
-    pub async fn subscribe_snapshots(&self) -> Result<SeaInjectedSnapshotStream, JsValue> {
-        std::future::ready(()).await;
+    pub async fn subscribe_snapshots(
+        &self,
+        participation: SeaSnapshotParticipation,
+    ) -> Result<SeaInjectedSnapshotStream, JsValue> {
+        if self.snapshot_stream.borrow().is_some() {
+            return Err(js_error("Sea snapshot stream is already open"));
+        }
+        let snapshot_stream = self
+            .client
+            .open_snapshot_stream(snapshot_participation_to_wire(participation))
+            .await
+            .map_err(client_error)?;
+        self.snapshot_stream.replace(Some(snapshot_stream));
+        self.snapshot_participation.set(Some(participation));
         Ok(SeaInjectedSnapshotStream {
             inner: Rc::clone(&self.snapshot_stream),
+            initial: Cell::new(true),
             cancelled: Cell::new(false),
         })
     }
@@ -1440,6 +1594,7 @@ impl SeaInjectedClient {
         if let Some(snapshot) = self.snapshot_stream.take() {
             snapshot.close().await.map_err(client_error)?;
         }
+        self.snapshot_participation.set(None);
         if let Some(content) = self.content_stream.take() {
             content.close().await.map_err(client_error)?;
         }
@@ -1575,6 +1730,27 @@ fn durability_from_wire(durability: protocol::WireDurability) -> SeaDurability {
         protocol::WireDurability::Memory => SeaDurability::Memory,
         protocol::WireDurability::Buffered => SeaDurability::Buffered,
         protocol::WireDurability::Durable => SeaDurability::Durable,
+    }
+}
+
+const fn snapshot_participation_to_wire(
+    participation: SeaSnapshotParticipation,
+) -> protocol::SnapshotParticipation {
+    match participation {
+        SeaSnapshotParticipation::ReadOnly => protocol::SnapshotParticipation::ReadOnly,
+        SeaSnapshotParticipation::SeaSelected => protocol::SnapshotParticipation::SeaSelected,
+        SeaSnapshotParticipation::ClientSelected => protocol::SnapshotParticipation::ClientSelected,
+    }
+}
+
+#[cfg(feature = "test-support")]
+const fn snapshot_participation_to_core(
+    participation: SeaSnapshotParticipation,
+) -> ArchiveParticipation {
+    match participation {
+        SeaSnapshotParticipation::ReadOnly => ArchiveParticipation::ReadOnly,
+        SeaSnapshotParticipation::SeaSelected => ArchiveParticipation::SeaSelected,
+        SeaSnapshotParticipation::ClientSelected => ArchiveParticipation::ClientSelected,
     }
 }
 
