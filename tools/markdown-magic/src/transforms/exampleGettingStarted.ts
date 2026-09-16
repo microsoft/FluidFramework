@@ -11,6 +11,9 @@ import { transform } from "./options.js";
 import { readPackage, type PackageMetadata } from "./packageMetadata.js";
 import { headingSchema, type HeadingOptions, packageSchema } from "./schemas.js";
 
+const tinyliciousCodespacesPortInstruction =
+	"If you use GitHub Codespaces in a browser, set the visibility of the Tinylicious port (7070) to `public`. Do not use `Private to Organization`. For instructions, read [Sharing a port](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace#sharing-a-port).";
+
 /**
  * Generates setup steps for an example package.
  *
@@ -40,12 +43,16 @@ export function generateGettingStarted(
 		steps.push(
 			"1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser. The app uses an ephemeral in-browser service by default and stores the container ID in the URL hash.",
 			"1. To retain data across reloads in the current browser tab, run `pnpm start:session` and open <http://localhost:8080/?fluidClient=session>.",
-			"1. To share data between browser sessions, start Tinylicious in a separate terminal by running `pnpm tinylicious` in this directory, then run `pnpm start:tinylicious` and open <http://localhost:8080/?fluidClient=tinylicious>. In GitHub Codespaces, set the forwarded Tinylicious port 7070 visibility to `public`.",
 		);
+		if (usesTinylicious) {
+			steps.push(
+				`1. To share data between browser sessions, start Tinylicious in a separate terminal by running \`pnpm tinylicious\` in this directory, then run \`pnpm start:tinylicious\` and open <http://localhost:8080/?fluidClient=tinylicious>. ${tinyliciousCodespacesPortInstruction}`,
+			);
+		}
 	} else if (usesTinylicious) {
 		steps.push(
 			"1. In a separate terminal, run `pnpm tinylicious` from this directory to start Tinylicious.",
-			"1. If you use GitHub Codespaces in a browser, set the visibility of the Tinylicious port (7070) to `public`. Do not use `Private to Organization`. For instructions, read [Sharing a port](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace#sharing-a-port).",
+			`1. ${tinyliciousCodespacesPortInstruction}`,
 		);
 	}
 	if (!usesServiceClient) {

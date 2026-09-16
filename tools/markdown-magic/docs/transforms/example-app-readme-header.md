@@ -10,7 +10,7 @@ Use `example-app-readme-header` to generate the standard section at the start of
 | `headingLevel`    | integer | Inferred         | Context heading level for all generated sections.       |
 | `gettingStarted`  | boolean | `true`           | Include the getting-started section.                    |
 | `usesTinylicious` | boolean | `true`           | Include the Tinylicious setup steps.                    |
-| `serviceClient`   | boolean | `false`          | Include the unified ServiceClient setup steps.          |
+| `serviceClient`   | boolean | `false`          | Include the unified ServiceClient setup steps. Tinylicious mode also requires `usesTinylicious`. |
 
 If `gettingStarted` is `false`, the transform generates no content. `usesTinylicious` and `serviceClient` have no effect when `gettingStarted` is `false`.
 

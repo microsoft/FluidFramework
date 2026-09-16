@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ProvidePlugin, type Configuration as WebpackConfiguration } from "webpack";
+import { fileURLToPath } from "node:url";
+
+import webpack, { type Configuration as WebpackConfiguration } from "webpack";
 
 import {
 	baseExampleConfig,
@@ -40,7 +42,9 @@ export function exampleAppConfig(
 			// browser bundles. local-driver imports TestHistorian from the CommonJS root of
 			// server-test-utils, which eagerly loads TestContext, assert, and then util. util reads
 			// process.env.NODE_DEBUG during module initialization.
-			new ProvidePlugin({ process: require.resolve("process/browser.js") }),
+			new webpack.ProvidePlugin({
+				process: fileURLToPath(import.meta.resolve("process/browser.js")),
+			}),
 		],
 	};
 }
