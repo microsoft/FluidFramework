@@ -111,35 +111,39 @@ export class SequenceIntervalOverlapSet {
 	// #region Add and remove
 
 	/**
-	 * Locates an interval already in this set.
+	 * Locates where an interval belongs, and whether this set already holds it.
 	 *
 	 * `compareIntervals` orders on start, end and ID, so at most one entry can compare equal to
-	 * `interval`. Its ID is checked rather than its identity so that a second instance carrying
-	 * an ID already in this set is recognised as the interval it identifies.
+	 * `interval`, and `lowerBound` lands on it when it is present and on its insertion point
+	 * when it is not. One search therefore answers both questions.
 	 *
-	 * @returns the index holding `interval`, or undefined if this set does not contain it.
+	 * The ID is checked rather than the identity so that a second instance carrying an ID
+	 * already in this set is recognised as the interval it identifies.
 	 */
-	private indexOf(interval: SequenceInterval): number | undefined {
+	private locate(interval: SequenceInterval): { index: number; exists: boolean } {
 		const index = this.lowerBound(interval, compareIntervals);
 		const candidate = this.ordered[index];
-		return candidate !== undefined &&
-			compareIntervals(candidate, interval) === 0 &&
-			candidate.getIntervalId() === interval.getIntervalId()
-			? index
-			: undefined;
+		return {
+			index,
+			exists:
+				candidate !== undefined &&
+				compareIntervals(candidate, interval) === 0 &&
+				candidate.getIntervalId() === interval.getIntervalId(),
+		};
 	}
 
 	public add(interval: SequenceInterval): void {
-		if (this.indexOf(interval) !== undefined) {
+		const { index, exists } = this.locate(interval);
+		if (exists) {
 			return;
 		}
-		this.ordered.splice(this.upperBound(interval, compareIntervals), 0, interval);
+		this.ordered.splice(index, 0, interval);
 		this.maxEndsStale = true;
 	}
 
 	public remove(interval: SequenceInterval): void {
-		const index = this.indexOf(interval);
-		if (index !== undefined) {
+		const { index, exists } = this.locate(interval);
+		if (exists) {
 			this.ordered.splice(index, 1);
 			this.maxEndsStale = true;
 		}
