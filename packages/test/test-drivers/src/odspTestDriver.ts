@@ -17,10 +17,9 @@ import {
 	getDriveId,
 	getDriveItemByRootFileName,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import {
-	getOdspPointInTimeDocumentServiceFactory,
-	type IPointInTimeDocumentServiceFactory,
-} from "@fluidframework/odsp-driver/internal";
+import { createOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- Explicitly opts this test host into point-in-time loading.
+import { createPointInTimeDocumentService } from "@fluidframework/odsp-driver/legacy/point-in-time";
 import type {
 	HostStoragePolicy,
 	OdspResourceTokenFetchOptions,
@@ -430,13 +429,14 @@ export class OdspTestDriver implements ITestDriver {
 	 * imported directly from the current `@fluidframework/odsp-driver` rather than through the
 	 * versioned driver api, so it is only appropriate for `NoCompat` tests.
 	 */
-	createPointInTimeDocumentServiceFactory(): IPointInTimeDocumentServiceFactory {
-		const documentServiceFactory = getOdspPointInTimeDocumentServiceFactory(
-			this.getStorageToken.bind(this),
-			this.getPushToken.bind(this),
-			this.cache,
-			this.config.options,
-		);
+	createPointInTimeDocumentServiceFactory(): IDocumentServiceFactory {
+		const documentServiceFactory = createOdspDocumentServiceFactory({
+			getStorageToken: this.getStorageToken.bind(this),
+			getWebsocketToken: this.getPushToken.bind(this),
+			persistedCache: this.cache,
+			hostPolicy: this.config.options,
+			pointInTimeDocumentServiceImplementation: createPointInTimeDocumentService,
+		});
 		// Automatically reset the cache after creating the factory
 		delete this.cache;
 		return documentServiceFactory;

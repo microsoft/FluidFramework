@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { Listenable } from "@fluidframework/core-interfaces";
+import type { FluidIterableIterator, Listenable } from "@fluidframework/core-interfaces";
 import type {
 	DeepReadonly,
 	JsonDeserialized,
@@ -253,7 +253,7 @@ export interface StateMap<K extends string, V> {
 	/**
 	 * Returns an iterable of keys in the map.
 	 */
-	keys(): IterableIterator<K>;
+	keys(): FluidIterableIterator<K>;
 
 	/**
 	 * Returns an iterable of values in the map.

@@ -38,7 +38,6 @@ import {
 	revisionMetadataSourceFromInfo,
 	areEqualChangeAtomIds,
 	type ChangeAtomId,
-	areEqualChangeAtomIdOpts,
 	tagChange,
 	makeAnonChange,
 	type DeltaDetachedNodeChanges,
@@ -56,7 +55,6 @@ import {
 	brand,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
-	type RangeQueryResult,
 	getOrCreate,
 	mergeTupleBTrees,
 	type TupleBTree,
@@ -76,7 +74,6 @@ import type { TreeChunk } from "../chunked-forest/index.js";
 
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
 import {
-	EditFilterStatus,
 	type FieldChangeHandler,
 	NodeAttachState,
 	type RebaseRevisionMetadata,
@@ -98,20 +95,26 @@ import {
 	type NodeId,
 } from "./modularChangeTypes.js";
 import {
+	unifyAliases,
 	CrossFieldManagerI,
 	getChangeHandler,
+	getFieldsForCrossFieldKey,
+	getParentFieldId,
 	getRevInfoFromTaggedChanges,
 	hasConflicts,
 	makeModularChangeset,
 	newConstraintState,
 	newCrossFieldTable,
 	nodeChangeFromId,
+	normalizeFieldId,
+	normalizeNodeId,
 	revisionInfoFromTaggedChange,
 	updateConstraintsForFields,
 	type CrossFieldTable,
 } from "./modularChangeUtils.js";
 import { invertModularChange } from "./invert.js";
-import { pruneFieldMap } from "./prune.js";
+import { pruneChangeset } from "./prune.js";
+import { removeAllAttachesFilter, removeAllDetachesFilter } from "./filterEdits.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -227,6 +230,10 @@ export class ModularChangeFamily
 		revInfos: RevisionInfo[],
 		idState: IdAllocationState,
 	): ModularChangeset {
+		// Uncomment the following lines to facilitate debugging
+		// validateChangeset(change1, this.fieldKinds);
+		// validateChangeset(change2, this.fieldKinds);
+
 		const { fieldChanges, nodeChanges, nodeToParent, nodeAliases, crossFieldKeys } =
 			this.composeAllFields(change1, change2, revInfos, idState);
 
@@ -240,7 +247,7 @@ export class ModularChangeFamily
 		const noChangeConstraintOnRevert =
 			change1.noChangeConstraintOnRevert ?? change2.noChangeConstraintOnRevert;
 
-		return makeModularChangeset({
+		const composed = makeModularChangeset({
 			fieldChanges,
 			nodeChanges,
 			nodeToParent,
@@ -254,6 +261,11 @@ export class ModularChangeFamily
 			destroys: allDestroys,
 			refreshers: allRefreshers,
 		});
+
+		// Uncomment the following line to facilitate debugging
+		// validateChangeset(composed, this.fieldKinds);
+
+		return composed;
 	}
 
 	private composeAllFields(
@@ -286,11 +298,21 @@ export class ModularChangeFamily
 		const composedNodeToParent: ChangeAtomIdBTree<FieldId> = brand(
 			mergeTupleBTrees(change1.nodeToParent, change2.nodeToParent),
 		);
-		const composedNodeAliases: ChangeAtomIdBTree<NodeId> = brand(
-			mergeTupleBTrees(change1.nodeAliases, change2.nodeAliases),
-		);
+		const composedNodeAliases: ChangeAtomIdBTree<NodeId> = brand(change1.nodeAliases.clone());
+		for (const [[aliasRevision, aliasLocalId], target] of change2.nodeAliases.entries()) {
+			unifyAliases(
+				composedNodeAliases,
+				{ revision: aliasRevision, localId: aliasLocalId },
+				target,
+			);
+		}
 
-		const crossFieldTable = newComposeTable(change1, change2, composedNodeToParent);
+		const crossFieldTable = newComposeTable(
+			change1,
+			change2,
+			composedNodeToParent,
+			composedNodeAliases,
+		);
 
 		const composedFields = this.composeFieldMaps(
 			change1.fieldChanges,
@@ -411,6 +433,7 @@ export class ModularChangeFamily
 				pending.affectedBaseFields,
 				composedFields,
 				composedNodes,
+				nodeAliases,
 				genId,
 				metadata,
 			);
@@ -422,6 +445,7 @@ export class ModularChangeFamily
 				pending.affectedNewFields,
 				composedFields,
 				composedNodes,
+				nodeAliases,
 				genId,
 				metadata,
 			);
@@ -460,12 +484,18 @@ export class ModularChangeFamily
 		affectedFields: BTree<FieldIdKey, true>,
 		composedFields: FieldChangeMap,
 		composedNodes: ChangeAtomIdBTree<NodeChangeset>,
+		nodeAliases: ChangeAtomIdBTree<NodeId>,
 		genId: IdAllocator,
 		metadata: RevisionMetadataSource,
 	): void {
 		for (const fieldIdKey of affectedFields.keys()) {
 			const fieldId = normalizeFieldId(fieldIdFromFieldIdKey(fieldIdKey), change.nodeAliases);
-			const fieldChange = fieldChangeFromId(change.fieldChanges, change.nodeChanges, fieldId);
+			const fieldChange = fieldChangeFromId(
+				change.fieldChanges,
+				change.nodeChanges,
+				change.nodeAliases,
+				fieldId,
+			);
 
 			if (
 				table.fieldToContext.has(fieldChange) ||
@@ -499,7 +529,7 @@ export class ModularChangeFamily
 			const nodeId =
 				getFromChangeAtomIdMap(table.newToBaseNodeId, fieldId.nodeId) ?? fieldId.nodeId;
 
-			let nodeChangeset = nodeChangeFromId(composedNodes, nodeId);
+			let nodeChangeset = nodeChangeFromId(composedNodes, nodeId, nodeAliases);
 			if (!table.composedNodes.has(nodeChangeset)) {
 				nodeChangeset = cloneNodeChangeset(nodeChangeset);
 				setInChangeAtomIdMap(composedNodes, nodeId, nodeChangeset);
@@ -627,10 +657,20 @@ export class ModularChangeFamily
 		crossFieldTable: ComposeTable,
 		revisionMetadata: RevisionMetadataSource,
 	): void {
-		const nodeChangeset1 = nodeChangeFromId(nodeChanges1, id1);
-		const nodeChangeset2 = nodeChangeFromId(nodeChanges2, id2);
+		const normalizedId1 = normalizeNodeId(id1, crossFieldTable.baseChange.nodeAliases);
+		const normalizedId2 = normalizeNodeId(id2, crossFieldTable.newChange.nodeAliases);
+		const nodeChangeset1 = nodeChangeFromId(
+			nodeChanges1,
+			normalizedId1,
+			crossFieldTable.baseChange.nodeAliases,
+		);
+		const nodeChangeset2 = nodeChangeFromId(
+			nodeChanges2,
+			normalizedId2,
+			crossFieldTable.newChange.nodeAliases,
+		);
 		const composedNodeChangeset = this.composeNodeChanges(
-			id1,
+			normalizedId1,
 			nodeChangeset1,
 			nodeChangeset2,
 			idAllocator,
@@ -638,16 +678,17 @@ export class ModularChangeFamily
 			revisionMetadata,
 		);
 
-		setInChangeAtomIdMap(composedNodes, id1, composedNodeChangeset);
-
-		if (!areEqualChangeAtomIds(id1, id2)) {
-			composedNodes.delete([id2.revision, id2.localId]);
-			composedNodeToParent.delete([id2.revision, id2.localId]);
-			setInChangeAtomIdMap(nodeAliases, id2, id1);
-
-			// We need to delete id1 to avoid forming a cycle in case id1 already had an alias.
-			nodeAliases.delete([id1.revision, id1.localId]);
-		}
+		const parentInChange1 = getParentFieldId(crossFieldTable.baseChange, normalizedId1);
+		// While `parentInChange1` is normalized with respect to the base change,
+		// it may not be normalized with respect to the composed changeset.
+		const normalizedParentInComposedChange = normalizeFieldId(parentInChange1, nodeAliases);
+		const composedId = unifyAliases(nodeAliases, normalizedId2, normalizedId1);
+		composedNodes.delete([normalizedId1.revision, normalizedId1.localId]);
+		composedNodes.delete([normalizedId2.revision, normalizedId2.localId]);
+		composedNodeToParent.delete([normalizedId1.revision, normalizedId1.localId]);
+		composedNodeToParent.delete([normalizedId2.revision, normalizedId2.localId]);
+		setInChangeAtomIdMap(composedNodes, composedId, composedNodeChangeset);
+		setInChangeAtomIdMap(composedNodeToParent, composedId, normalizedParentInComposedChange);
 
 		crossFieldTable.composedNodes.add(composedNodeChangeset);
 	}
@@ -715,6 +756,10 @@ export class ModularChangeFamily
 		revisionMetadata: RevisionMetadataSource,
 		ignoreNoChangeViolation: boolean = false,
 	): ModularChangeset {
+		// Uncomment the following lines to facilitate debugging
+		// validateChangeset(taggedChange.change, this.fieldKinds);
+		// validateChangeset(potentiallyConflictedOver.change, this.fieldKinds);
+
 		// Our current cell ordering scheme in sequences depends on being able to rebase over a change with conflicts.
 		// This means that we must rebase over a muted version of the conflicted changeset.
 		// That is, a version that includes its declarations (e.g., new cells) but not its changes.
@@ -786,11 +831,12 @@ export class ModularChangeFamily
 			NodeAttachState.Attached,
 			constraintState,
 			rebasedNodes,
+			change.nodeAliases,
 			this.fieldKinds,
 		);
 
 		const rebased = makeModularChangeset({
-			fieldChanges: pruneFieldMap(rebasedFields, rebasedNodes, this.fieldKinds),
+			fieldChanges: rebasedFields,
 			nodeChanges: rebasedNodes,
 			nodeToParent: crossFieldTable.rebasedNodeToParent,
 			nodeAliases: change.nodeAliases,
@@ -805,7 +851,10 @@ export class ModularChangeFamily
 			refreshers: change.refreshers,
 		});
 
-		return rebased;
+		// Uncomment the following line to facilitate debugging
+		// validateChangeset(rebased, this.fieldKinds);
+
+		return pruneChangeset(rebased, this.fieldKinds);
 	}
 
 	// This performs a first pass on all fields which have both new and base changes.
@@ -838,7 +887,8 @@ export class ModularChangeFamily
 				metadata,
 			);
 
-			setInChangeAtomIdMap(rebasedNodes, newId, rebasedNode);
+			const normalizedNewId = normalizeNodeId(newId, crossFieldTable.newChange.nodeAliases);
+			setInChangeAtomIdMap(rebasedNodes, normalizedNewId, rebasedNode);
 		}
 
 		return rebasedFields;
@@ -862,6 +912,7 @@ export class ModularChangeFamily
 			const baseFieldChange = fieldMapFromNodeId(
 				baseChange.fieldChanges,
 				baseChange.nodeChanges,
+				baseChange.nodeAliases,
 				baseNodeId,
 			).get(fieldKey);
 
@@ -990,9 +1041,10 @@ export class ModularChangeFamily
 			}
 
 			if (base !== undefined) {
+				const normalizedBase = normalizeNodeId(base, crossFieldTable.baseChange.nodeAliases);
 				for (const id of context.baseNodeIds) {
-					if (areEqualChangeAtomIds(base, id)) {
-						return base;
+					if (areEqualChangeAtomIds(normalizedBase, id)) {
+						return normalizedBase;
 					}
 				}
 			}
@@ -1069,6 +1121,7 @@ export class ModularChangeFamily
 		const baseFieldChange = fieldChangeFromId(
 			table.baseChange.fieldChanges,
 			table.baseChange.nodeChanges,
+			table.baseChange.nodeAliases,
 			parentFieldIdBase,
 		);
 
@@ -1094,10 +1147,13 @@ export class ModularChangeFamily
 		const rebasedChangeset = handler.rebaser.rebase(
 			handler.createEmpty(),
 			baseFieldChange.change,
-			(_idNew, idBase) =>
-				idBase !== undefined && areEqualChangeAtomIds(idBase, baseNodeId)
-					? baseNodeId
-					: undefined,
+			(_idNew, idBase) => {
+				if (idBase === undefined) {
+					return undefined;
+				}
+				const normalizedBase = normalizeNodeId(idBase, table.baseChange.nodeAliases);
+				return areEqualChangeAtomIds(normalizedBase, baseNodeId) ? baseNodeId : undefined;
+			},
 			idAllocator,
 			new RebaseManager(table, baseFieldChange, rebasedFieldId),
 			metadata,
@@ -1198,8 +1254,16 @@ export class ModularChangeFamily
 		crossFieldTable: RebaseTable,
 		revisionMetadata: RebaseRevisionMetadata,
 	): NodeChangeset {
-		const change = nodeChangeFromId(crossFieldTable.newChange.nodeChanges, newId);
-		const over = nodeChangeFromId(crossFieldTable.baseChange.nodeChanges, baseId);
+		const change = nodeChangeFromId(
+			crossFieldTable.newChange.nodeChanges,
+			newId,
+			crossFieldTable.newChange.nodeAliases,
+		);
+		const over = nodeChangeFromId(
+			crossFieldTable.baseChange.nodeChanges,
+			baseId,
+			crossFieldTable.baseChange.nodeAliases,
+		);
 
 		const baseMap: FieldChangeMap = over?.fieldChanges ?? new Map<FieldKey, FieldChange>();
 
@@ -1229,7 +1293,11 @@ export class ModularChangeFamily
 			rebasedChange.nodeExistsConstraintOnRevert = change.nodeExistsConstraintOnRevert;
 		}
 
-		setInChangeAtomIdMap(crossFieldTable.baseToRebasedNodeId, baseId, newId);
+		setInChangeAtomIdMap(
+			crossFieldTable.baseToRebasedNodeId,
+			normalizeNodeId(baseId, crossFieldTable.baseChange.nodeAliases),
+			newId,
+		);
 		return rebasedChange;
 	}
 
@@ -1340,63 +1408,6 @@ export class ModularChangeFamily
 		return { fieldKind, change: brand(emptyChange) };
 	}
 
-	public validateChangeset(change: ModularChangeset): void {
-		let numNodes = this.validateFieldChanges(change, change.fieldChanges, undefined);
-
-		for (const [[revision, localId], node] of change.nodeChanges.entries()) {
-			if (node.fieldChanges === undefined) {
-				continue;
-			}
-
-			const nodeId: NodeId = { revision, localId };
-			const numChildren = this.validateFieldChanges(change, node.fieldChanges, nodeId);
-
-			numNodes += numChildren;
-		}
-
-		assert(
-			numNodes === change.nodeChanges.size,
-			0xa4d /* Node table contains unparented nodes */,
-		);
-	}
-
-	/**
-	 * Asserts that each child and cross field key in each field has a correct entry in
-	 * `nodeToParent` or `crossFieldKeyTable`.
-	 * @returns the number of children found.
-	 */
-	private validateFieldChanges(
-		change: ModularChangeset,
-		fieldChanges: FieldChangeMap,
-		nodeParent: NodeId | undefined,
-	): number {
-		let numChildren = 0;
-		for (const [field, fieldChange] of fieldChanges.entries()) {
-			const fieldId = { nodeId: nodeParent, field };
-			const handler = getChangeHandler(this.fieldKinds, fieldChange.fieldKind);
-			for (const [child, _index] of handler.getNestedChanges(fieldChange.change)) {
-				const parentFieldId = getParentFieldId(change, child);
-				assert(
-					areEqualFieldIds(parentFieldId, fieldId),
-					0xa4e /* Inconsistent node parentage */,
-				);
-				numChildren += 1;
-			}
-
-			for (const keyRange of handler.getCrossFieldKeys(fieldChange.change)) {
-				const fields = getFieldsForCrossFieldKey(change, keyRange.key, keyRange.count);
-				assert(
-					fields.length === 1 &&
-						fields[0] !== undefined &&
-						areEqualFieldIds(fields[0], fieldId),
-					0xa4f /* Inconsistent cross field keys */,
-				);
-			}
-		}
-
-		return numChildren;
-	}
-
 	private getEffectiveChange(change: ModularChangeset): ModularChangeset {
 		if (hasConflicts(change)) {
 			return this.muteChange(change);
@@ -1439,21 +1450,13 @@ export class ModularChangeFamily
 			fieldKind: change.fieldKind,
 			change: brand(
 				handler.rebaser.filterEdits(change.change, {
-					filterDetach: removeAllEditsFilter,
-					filterAttach: removeAllEditsFilter,
+					filterDetach: removeAllDetachesFilter,
+					filterAttach: removeAllAttachesFilter,
 					preserveOtherEdits: false,
 				}),
 			),
 		};
 	}
-}
-
-function removeAllEditsFilter(
-	_id: ChangeAtomId,
-	count: number,
-	_endpointId?: ChangeAtomId,
-): RangeQueryResult<EditFilterStatus> {
-	return { value: EditFilterStatus.Remove, length: count };
 }
 
 function replaceCrossFieldKeyTableRevisions(
@@ -1593,27 +1596,39 @@ export function* relevantRemovedRoots(
 	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): Iterable<DeltaDetachedNodeId> {
-	yield* relevantRemovedRootsFromFields(change.fieldChanges, change.nodeChanges, fieldKinds);
+	yield* relevantRemovedRootsFromFields(
+		change.fieldChanges,
+		change.nodeChanges,
+		change.nodeAliases,
+		fieldKinds,
+	);
 }
 
 function* relevantRemovedRootsFromNode(
 	node: NodeId,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): Iterable<DeltaDetachedNodeId> {
-	const nodeChangeset = nodeChangeFromId(nodeChanges, node);
+	const nodeChangeset = nodeChangeFromId(nodeChanges, node, nodeAliases);
 	if (nodeChangeset.fieldChanges !== undefined) {
-		yield* relevantRemovedRootsFromFields(nodeChangeset.fieldChanges, nodeChanges, fieldKinds);
+		yield* relevantRemovedRootsFromFields(
+			nodeChangeset.fieldChanges,
+			nodeChanges,
+			nodeAliases,
+			fieldKinds,
+		);
 	}
 }
 
 function* relevantRemovedRootsFromFields(
 	change: FieldChangeMap,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): Iterable<DeltaDetachedNodeId> {
 	const delegate = (node: NodeId): Iterable<DeltaDetachedNodeId> =>
-		relevantRemovedRootsFromNode(node, nodeChanges, fieldKinds);
+		relevantRemovedRootsFromNode(node, nodeChanges, nodeAliases, fieldKinds);
 	for (const [_, fieldChange] of change) {
 		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
 		yield* handler.relevantRemovedRoots(fieldChange.change, delegate);
@@ -1700,6 +1715,7 @@ export function intoDelta(
 		const fieldDeltas = intoDeltaImpl(
 			change.fieldChanges,
 			change.nodeChanges,
+			change.nodeAliases,
 			fieldKinds,
 			global,
 			rename,
@@ -1757,6 +1773,7 @@ function copyDetachedNodes(
 function intoDeltaImpl(
 	change: FieldChangeMap,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	global: DeltaDetachedNodeChanges[],
 	rename: DeltaDetachedNodeRename[],
@@ -1771,8 +1788,15 @@ function intoDeltaImpl(
 		} = getChangeHandler(fieldKinds, fieldChange.fieldKind).intoDelta(
 			fieldChange.change,
 			(childChange): DeltaFieldMap => {
-				const nodeChange = nodeChangeFromId(nodeChanges, childChange);
-				return deltaFromNodeChange(nodeChange, nodeChanges, fieldKinds, global, rename);
+				const nodeChange = nodeChangeFromId(nodeChanges, childChange, nodeAliases);
+				return deltaFromNodeChange(
+					nodeChange,
+					nodeChanges,
+					nodeAliases,
+					fieldKinds,
+					global,
+					rename,
+				);
 			},
 		);
 		if (fieldChanges !== undefined && fieldChanges.marks.length > 0) {
@@ -1791,12 +1815,20 @@ function intoDeltaImpl(
 function deltaFromNodeChange(
 	change: NodeChangeset,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	global: DeltaDetachedNodeChanges[],
 	rename: DeltaDetachedNodeRename[],
 ): DeltaFieldMap {
 	if (change.fieldChanges !== undefined) {
-		return intoDeltaImpl(change.fieldChanges, nodeChanges, fieldKinds, global, rename);
+		return intoDeltaImpl(
+			change.fieldChanges,
+			nodeChanges,
+			nodeAliases,
+			fieldKinds,
+			global,
+			rename,
+		);
 	}
 	// TODO: update the API to allow undefined to be returned here
 	return new Map();
@@ -1879,6 +1911,7 @@ function newComposeTable(
 	baseChange: ModularChangeset,
 	newChange: ModularChangeset,
 	composedNodeToParent: ChangeAtomIdBTree<FieldId>,
+	composedNodeAliases: ChangeAtomIdBTree<NodeId>,
 ): ComposeTable {
 	return {
 		...newCrossFieldTable<FieldChange>(),
@@ -1888,6 +1921,7 @@ function newComposeTable(
 		newFieldToBaseField: new Map(),
 		newToBaseNodeId: newChangeAtomIdBTree(),
 		composedNodes: new Set(),
+		composedNodeAliases,
 		composedNodeToParent,
 		pendingCompositions: {
 			nodeIdsToCompose: [],
@@ -1907,6 +1941,7 @@ interface ComposeTable extends CrossFieldTable<FieldChange> {
 	readonly fieldToContext: Map<FieldChange, ComposeFieldContext>;
 	readonly newFieldToBaseField: Map<FieldChange, FieldChange>;
 	readonly newToBaseNodeId: ChangeAtomIdBTree<NodeId>;
+	readonly composedNodeAliases: ChangeAtomIdBTree<NodeId>;
 	readonly composedNodes: Set<NodeChangeset>;
 	readonly composedNodeToParent: ChangeAtomIdBTree<FieldId>;
 	readonly pendingCompositions: PendingCompositions;
@@ -2088,7 +2123,11 @@ class ComposeManager extends CrossFieldManagerI<FieldChange> {
 	}
 
 	public override onMoveIn(id: ChangeAtomId): void {
-		setInChangeAtomIdMap(this.table.composedNodeToParent, id, this.fieldId);
+		setInChangeAtomIdMap(
+			this.table.composedNodeToParent,
+			normalizeNodeId(id, this.table.composedNodeAliases),
+			this.fieldId,
+		);
 	}
 
 	public override moveKey(
@@ -2452,22 +2491,24 @@ export type EditDescription = FieldEditDescription | GlobalEditDescription;
 function fieldChangeFromId(
 	fields: FieldChangeMap,
 	nodes: ChangeAtomIdBTree<NodeChangeset>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	id: FieldId,
 ): FieldChange {
-	const fieldMap = fieldMapFromNodeId(fields, nodes, id.nodeId);
+	const fieldMap = fieldMapFromNodeId(fields, nodes, nodeAliases, id.nodeId);
 	return fieldMap.get(id.field) ?? fail(0xb25 /* No field exists for the given ID */);
 }
 
 function fieldMapFromNodeId(
 	rootFieldMap: FieldChangeMap,
 	nodes: ChangeAtomIdBTree<NodeChangeset>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	nodeId: NodeId | undefined,
 ): FieldChangeMap {
 	if (nodeId === undefined) {
 		return rootFieldMap;
 	}
 
-	const node = nodeChangeFromId(nodes, nodeId);
+	const node = nodeChangeFromId(nodes, nodeId, nodeAliases);
 	assert(node.fieldChanges !== undefined, 0x9c9 /* Expected node to have field changes */);
 	return node.fieldChanges;
 }
@@ -2508,53 +2549,6 @@ function replaceFieldIdRevision(fieldId: FieldId, replacer: RevisionReplacer): F
 	};
 }
 
-export function getParentFieldId(changeset: ModularChangeset, nodeId: NodeId): FieldId {
-	const parentId = getFromChangeAtomIdMap(changeset.nodeToParent, nodeId);
-	assert(parentId !== undefined, 0x9cb /* Parent field should be defined */);
-	return normalizeFieldId(parentId, changeset.nodeAliases);
-}
-
-function getFieldsForCrossFieldKey(
-	changeset: ModularChangeset,
-	key: CrossFieldKey,
-	count: number,
-): FieldId[] {
-	const fieldIds: FieldId[] = [];
-	for (const { value: fieldId } of changeset.crossFieldKeys.getAll(key, count)) {
-		if (fieldId !== undefined) {
-			fieldIds.push(normalizeFieldId(fieldId, changeset.nodeAliases));
-		}
-	}
-
-	return fieldIds;
-}
-
-// This is only exported for use in test utilities.
-export function normalizeFieldId(
-	fieldId: FieldId,
-	nodeAliases: ChangeAtomIdBTree<NodeId>,
-): FieldId {
-	return fieldId.nodeId === undefined
-		? fieldId
-		: { ...fieldId, nodeId: normalizeNodeId(fieldId.nodeId, nodeAliases) };
-}
-
-/**
- * @returns The canonical form of nodeId, according to nodeAliases
- */
-function normalizeNodeId(nodeId: NodeId, nodeAliases: ChangeAtomIdBTree<NodeId>): NodeId {
-	let currentId = nodeId;
-
-	while (true) {
-		const dealiased = getFromChangeAtomIdMap(nodeAliases, currentId);
-		if (dealiased === undefined) {
-			return currentId;
-		}
-
-		currentId = dealiased;
-	}
-}
-
 /**
  * A rebaseChild callback for fields with no new changes.
  * Asserts that there are no new changes and returns undefined.
@@ -2574,10 +2568,6 @@ interface ModularChangesetContent {
 	nodeToParent: ChangeAtomIdBTree<FieldId>;
 	nodeAliases: ChangeAtomIdBTree<NodeId>;
 	crossFieldKeys: CrossFieldKeyTable;
-}
-
-function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
-	return areEqualChangeAtomIdOpts(a.nodeId, b.nodeId) && a.field === b.field;
 }
 
 function newFieldIdKeyBTree<V>(): TupleBTree<FieldIdKey, V> {

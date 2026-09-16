@@ -253,6 +253,7 @@ import {
 	OpSplitter,
 	Outbox,
 	RemoteMessageProcessor,
+	tryGetDeserializedRuntimeOpCopy,
 	type OutboundBatch,
 	type BatchResubmitInfo,
 } from "./opLifecycle/index.js";
@@ -818,10 +819,10 @@ export interface LoadContainerRuntimeParams {
 	 *
 	 * @privateRemarks
 	 * Used to determine the default configuration for {@link IContainerRuntimeOptionsInternal} that affect the document schema.
-	 * For example, let's say that feature `foo` was added in 2.0 which introduces a new op type. Additionally, option `bar`
-	 * was added to `IContainerRuntimeOptionsInternal` in 2.0 to enable/disable `foo` since clients prior to 2.0 would not
-	 * understand the new op type. If a customer were to set oldestSupportedClient to 2.0.0, then `bar` would be set to
-	 * enable `foo` by default. If a customer were to set oldestSupportedClient to 1.0.0, then `bar` would be set to
+	 * For example, let's say that feature `foo` was added in 2.40 which introduces a new op type. Additionally, option `bar`
+	 * was added to `IContainerRuntimeOptionsInternal` in 2.40 to enable/disable `foo` since clients prior to 2.40 would not
+	 * understand the new op type. If a customer were to set oldestSupportedClient to 2.40.0, then `bar` would be set to
+	 * enable `foo` by default. If a customer were to set oldestSupportedClient to 2.0.0, then `bar` would be set to
 	 * disable `foo` by default.
 	 */
 	oldestSupportedClient?: OldestSupportedClientVersion;
@@ -850,7 +851,10 @@ export interface LoadContainerRuntimeParams {
 export async function loadContainerRuntime(
 	params: LoadContainerRuntimeParams,
 ): Promise<IContainerRuntime & IRuntime> {
-	return ContainerRuntime.loadRuntime(params);
+	return ContainerRuntime.loadRuntime({
+		...params,
+		registry: new FluidDataStoreRegistry(params.registryEntries),
+	});
 }
 
 /**
@@ -859,6 +863,10 @@ export async function loadContainerRuntime(
  *
  * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
  * @returns An object containing the runtime.
+ *
+ * @privateRemarks
+ * By using loadRuntime2 instead of loadRuntime, this prevents mixinAttributor's overriding of loadRuntime from affecting this new API:
+ * this might cause unexpected issues.
  *
  * @legacy @alpha
  */
@@ -926,6 +934,8 @@ export class ContainerRuntime
 	 * {@link LoadContainerRuntimeParams} except internal, while still having layer compat obligations.
 	 * @privateRemarks
 	 * Despite this being `@internal`, `@fluidframework/test-utils` uses it in `createTestContainerRuntimeFactory` and assumes multiple versions of the package expose the same API.
+	 * To enable this code to know what version of this API it should use, loadRuntimeAPIVersion has been added.
+	 * This is a workaround for the relevant code in test-utils not tracking the package version, so it can't special case it off of that.
 	 *
 	 * Also note that `mixinAttributor` from `@fluid-experimental/attributor` overrides this function:
 	 * that will have to be updated if changing the signature of this function as well.
@@ -934,20 +944,20 @@ export class ContainerRuntime
 	 * `loadRuntime` could be removed (replaced by `loadRuntime2` which could be renamed back to `loadRuntime`).
 	 */
 	public static async loadRuntime(
-		params: LoadContainerRuntimeParams & {
-			/**
-			 * Constructor to use to create the ContainerRuntime instance.
-			 * @remarks
-			 * Defaults to {@link ContainerRuntime}.
-			 */
+		params: Omit<LoadContainerRuntimeParams, "registryEntries" | "runtimeOptions"> & {
+			registry: IFluidDataStoreRegistry;
 			containerRuntimeCtor?: typeof ContainerRuntime;
+			runtimeOptions?: IContainerRuntimeOptionsInternal;
 		},
 	): Promise<ContainerRuntime> {
-		return ContainerRuntime.loadRuntime2({
-			...params,
-			registry: new FluidDataStoreRegistry(params.registryEntries),
-		}).then((r) => r.runtime);
+		return ContainerRuntime.loadRuntime2(params).then((r) => r.runtime);
 	}
+
+	/**
+	 * Hack to allow test-utils to detect which version of loadRuntime API to expect.
+	 * See note in loadRuntime's private remarks.
+	 */
+	public static readonly loadRuntimeAPIVersion: number | undefined = 2;
 
 	/**
 	 * Load the stores from a snapshot and returns an object containing the runtime.
@@ -1024,8 +1034,8 @@ export class ContainerRuntime
 
 		// Some options require a minimum version of the FF runtime to operate, so the default configs will be generated
 		// based on the minVersionForCollab.
-		// For example, if minVersionForCollab is set to "1.0.0", the default configs will ensure compatibility with FF runtime
-		// 1.0.0 or later. If the minVersionForCollab is set to "2.10.0", the default values will be generated to ensure compatibility
+		// For example, if minVersionForCollab is set to "2.0.0", the default configs will ensure compatibility with FF runtime
+		// 2.0.0 or later. If the minVersionForCollab is set to "2.10.0", the default values will be generated to ensure compatibility
 		// with FF runtime 2.10.0 or later.
 		if (!isValidMinVersionForCollab(minVersionForCollab)) {
 			throw new UsageError(
@@ -1933,6 +1943,7 @@ export class ContainerRuntime
 		const fetchOps = (context as IContainerContextInternal).fetchOps;
 		this.versionMarkResolverInternal = new VersionMarkResolver({
 			getCurrentSequenceNumber: () => this.deltaManager.lastSequenceNumber,
+			getCurrentTimestamp: () => this.getCurrentReferenceTimestampMs(),
 			getCurrentMinimumSequenceNumber: () => this.deltaManager.minimumSequenceNumber,
 			getCurrentPendingBatchId: () => this.pendingStateManager.getMostRecentPendingBatchId(),
 			logger: createChildLogger({
@@ -1942,7 +1953,8 @@ export class ContainerRuntime
 			// Seal the current outbound batch so a just-submitted edit gets a stable batchId in the pending
 			// state before sealAndCaptureVersionMark reads it (a batchId is only assigned when flushed).
 			flushPendingBatch: () => this.flush(),
-			// Wire the container-provided op reader (if any) so resolution can read historical ops.
+			// Keep this optional while a supported older loader may not provide fetchOps. AB#81034 tracks
+			// making it required once the Runtime -> Loader compatibility window reaches generation 21.
 			getHistoricalOpReader: fetchOps ? () => ({ fetchMessages: fetchOps }) : undefined,
 			// Unpack scanned historical ops through the same pipeline the live inbound path uses, so a
 			// chunked batch's batchId (only restored after reassembly) is observed by the history scan too.
@@ -1957,6 +1969,7 @@ export class ContainerRuntime
 								runtimeOptions.chunkSizeInBytes,
 								runtimeOptions.maxBatchSizeInBytes,
 								this.mc.logger,
+								{ allowInitialPartialChunkStream: true },
 							),
 							new OpDecompressor(this.mc.logger),
 							new OpGroupingManager(
@@ -1965,13 +1978,11 @@ export class ContainerRuntime
 							),
 						);
 						return (op) => {
-							// Mirror the live path: only modern runtime-envelope ops (type Operation, with a
-							// client id) carry batches; skip system/server ops.
-							if (op.type !== MessageType.Operation || typeof op.clientId !== "string") {
+							// Only runtime ops carry batches; deserialize a copy so the reader-owned op stays untouched.
+							const messageCopy = tryGetDeserializedRuntimeOpCopy(op);
+							if (messageCopy === undefined) {
 								return undefined;
 							}
-							const messageCopy = { ...op };
-							ensureContentsDeserialized(messageCopy);
 							return scanProcessor.process(
 								messageCopy,
 								getSingleUseLegacyLogCallback(this.mc.logger, messageCopy.type),
@@ -2400,11 +2411,11 @@ export class ContainerRuntime
 	// #region `IFluidParentContext` APIs that should not be called on Root
 
 	public makeLocallyVisible(): void {
-		assert(false, 0x8eb /* should not be called */);
+		fail(0x8eb /* should not be called */);
 	}
 
 	public setChannelDirty(address: string): void {
-		assert(false, 0x909 /* should not be called */);
+		fail(0x909 /* should not be called */);
 	}
 
 	// #endregion
@@ -3413,6 +3424,7 @@ export class ContainerRuntime
 					this.versionMarkResolverInternal.processInboundBatch(
 						versionMarkUpdate.sequenced.batchId,
 						versionMarkUpdate.sequenced.sequenceNumber,
+						versionMarkUpdate.sequenced.timestamp,
 					);
 				}
 				this.versionMarkInboundBatchId = versionMarkUpdate.carriedBatchId;
@@ -3690,7 +3702,7 @@ export class ContainerRuntime
 			case ContainerMessageType.ChunkedOp: {
 				// From observability POV, we should not expose the rest of the system (including "op" events on object) to these messages.
 				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
-				assert(false, 0x93d /* should not even get here */);
+				fail(0x93d /* should not even get here */);
 			}
 			case ContainerMessageType.Rejoin: {
 				break;
@@ -4504,7 +4516,7 @@ export class ContainerRuntime
 				return this.channelCollection.getDataStorePackagePath(nodePath);
 			}
 			default: {
-				assert(false, 0x2de /* "Package path requested for unsupported node type." */);
+				fail(0x2de /* "Package path requested for unsupported node type." */);
 			}
 		}
 	}

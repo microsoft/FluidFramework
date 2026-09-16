@@ -18,6 +18,32 @@ import { BaseCommand } from "../library/commands/base.js";
 const FALLBACK_MODEL = "claude-haiku-4.5";
 export const SUPPORTED_ALIASES = ["dev", "copilot", "oce"] as const;
 
+export async function readAssetFile(
+	assetDirectory: string | undefined,
+	repoRoot: string | undefined,
+	filename: string,
+): Promise<string | undefined> {
+	const directories =
+		assetDirectory !== undefined
+			? [assetDirectory]
+			: repoRoot === undefined
+				? []
+				: [
+						// Fallback to support Codespaces that don't set the asset directory explicitly, including previous layouts.
+						resolve(repoRoot, ".devcontainer"),
+						resolve(repoRoot, ".devcontainer/ai-agent-insiders"),
+						resolve(repoRoot, ".devcontainer/ai-agent"),
+					];
+
+	for (const directory of directories) {
+		const content = await tryReadFile(resolve(directory, filename));
+		if (content !== undefined) {
+			return content;
+		}
+	}
+	return undefined;
+}
+
 export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	static readonly description =
 		"AI-powered assistant that helps you launch the right AI agent.";
@@ -39,6 +65,13 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 				"Path to the agent-aliases.sh file. Defaults to the AI-enabled Codespace locations.",
 			exists: true,
 			env: "FLUB_AI_ALIAS_FILE",
+		}),
+		assetDirectory: Flags.directory({
+			description:
+				"Directory containing assets used by the AI launcher. " +
+				"The configured directory must exist. When unset, searches supported locations under the resolved repository root.",
+			exists: true,
+			env: "FLUB_AI_ASSET_DIRECTORY",
 		}),
 		githubToken: Flags.string({
 			description:
@@ -63,11 +96,12 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 
 		const repoRoot = await this.tryResolveRepoRoot();
 		this.verbose(`Repo root: ${repoRoot ?? "(not in a Fluid repo)"}`);
+		this.verbose(`Asset directory: ${flags.assetDirectory ?? "(not configured)"}`);
 
 		const [aliasFile, gettingStartedContent, promptFile] = await Promise.all([
 			this.resolveAliasFile(repoRoot, flags.aliasFile),
-			this.readDevcontainerFile(repoRoot, "GETTING_STARTED.md"),
-			this.loadPromptFile(repoRoot),
+			readAssetFile(flags.assetDirectory, repoRoot, "GETTING_STARTED.md"),
+			this.loadPromptFile(flags.assetDirectory, repoRoot),
 		]);
 		this.verbose(`Alias file: ${aliasFile.path}`);
 
@@ -258,47 +292,14 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	}
 
 	/**
-	 * Reads a file from the devcontainer ai-agent directories, checking
-	 * ai-agent-insiders/ first then ai-agent/ in both cwd and repoRoot.
-	 */
-	private async readDevcontainerFile(
-		repoRoot: string | undefined,
-		filename: string,
-	): Promise<string | undefined> {
-		const dirs = [".devcontainer/ai-agent-insiders", ".devcontainer/ai-agent"];
-		const candidates: string[] = [];
-		const seen = new Set<string>();
-		for (const base of [process.cwd(), repoRoot]) {
-			if (base === undefined) continue;
-			for (const dir of dirs) {
-				const candidate = resolve(base, dir, filename);
-				if (!seen.has(candidate)) {
-					seen.add(candidate);
-					candidates.push(candidate);
-				}
-			}
-		}
-
-		for (const candidate of candidates) {
-			this.verbose(`Looking for ${filename}: ${candidate}`);
-			const content = await tryReadFile(candidate);
-			if (content !== undefined) {
-				this.verbose(`Found ${filename}: ${candidate}`);
-				return content;
-			}
-		}
-		this.verbose(`${filename} not found in any candidate location.`);
-		return undefined;
-	}
-
-	/**
 	 * Loads the launcher prompt template and its frontmatter config.
 	 * Falls back to a minimal default if the file is not found.
 	 */
 	private async loadPromptFile(
+		assetDirectory: string | undefined,
 		repoRoot: string | undefined,
 	): Promise<{ template: string; model?: string }> {
-		const raw = await this.readDevcontainerFile(repoRoot, "launcher-prompt.md");
+		const raw = await readAssetFile(assetDirectory, repoRoot, "launcher-prompt.md");
 		if (raw !== undefined) {
 			try {
 				const { data, content } = matter(raw);

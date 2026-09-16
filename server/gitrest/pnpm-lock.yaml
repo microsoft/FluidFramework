@@ -10,6 +10,7 @@ overrides:
   brace-expansion@>=5 <6: ^5.0.8
   keyv@>=4 <5: ^5.5.3
   on-headers@>=1 <2: ^1.1.0
+  socket.io-parser@>=4 <5: ^4.2.7
   ts-deepmerge@>=7 <8: ^8.0.0
   uuid@>=7 <12: ^11.1.1
   uuid@<7: ^11.1.1
@@ -2718,6 +2719,7 @@ packages:
   eslint@9.39.3:
     resolution: {integrity: sha512-VmQ+sifHUbI/IcSopBCF/HO3YiHQx/AVd3UVyYL6weuwW+HvON9VYn5l6Zl1WZzPWXPNZrSQpxwkkZ/VuvJZzg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -4765,8 +4767,8 @@ packages:
   socket.io-adapter@2.5.6:
     resolution: {integrity: sha512-DkkO/dz7MGln0dHn5bmN3pPy+JmywNICWrJqVWiVOyvXjWQFIv9c2h24JrQLLFJ2aQVQf/Cvl1vblnd4r2apLQ==}
 
-  socket.io-parser@4.2.6:
-    resolution: {integrity: sha512-asJqbVBDsBCJx0pTqw3WfesSY0iRX+2xzWEWzrpcH7L6fLzrhyF8WPI8UaeM4YCuDfpwA/cgsdugMsmtz8EJeg==}
+  socket.io-parser@4.2.7:
+    resolution: {integrity: sha512-IH/iSeO9T6gz1KkFleGDWkG9N3dl4jXVYUtMhIqH10Md0ttMer8nUNWiP1DKuNrybD2xBrixLJdCC9J6ECoYkg==}
     engines: {node: '>=10.0.0'}
 
   socket.io@4.8.3:
@@ -6057,7 +6059,7 @@ snapshots:
       serialize-error: 8.1.0
       socket.io: 4.8.3(supports-color@10.2.2)
       socket.io-adapter: 2.5.6(supports-color@8.1.1)
-      socket.io-parser: 4.2.6(supports-color@10.2.2)
+      socket.io-parser: 4.2.7(supports-color@10.2.2)
       uuid: 11.1.1
       winston: 3.8.2
     transitivePeerDependencies:
@@ -11311,7 +11313,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  socket.io-parser@4.2.6(supports-color@10.2.2):
+  socket.io-parser@4.2.7(supports-color@10.2.2):
     dependencies:
       '@socket.io/component-emitter': 3.1.0
       debug: 4.4.3(supports-color@10.2.2)
@@ -11326,7 +11328,7 @@ snapshots:
       debug: 4.4.3(supports-color@8.1.1)
       engine.io: 6.6.6(supports-color@8.1.1)
       socket.io-adapter: 2.5.6(supports-color@10.2.2)
-      socket.io-parser: 4.2.6(supports-color@10.2.2)
+      socket.io-parser: 4.2.7(supports-color@10.2.2)
     transitivePeerDependencies:
       - bufferutil
       - supports-color

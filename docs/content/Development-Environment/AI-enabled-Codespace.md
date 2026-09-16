@@ -4,12 +4,12 @@ The AI-enabled devcontainer profile provides a Codespace pre-configured with AI 
 
 ## Creating the Codespace
 
-You can use a [direct link](https://github.com/codespaces/new?hide_repo_select=true&%3Bref=main&%3Brepo=203843667&%3Bskip_quickstart=true&%3Bmachine=xLargePremiumLinux&%3Bdevcontainer_path=.devcontainer%2Fai-agent%2Fdevcontainer.json&%3Bgeo=UsWest&__prettifying=true) or follow these steps:
+You can use a [direct link](https://github.com/codespaces/new?hide_repo_select=true&%3Bref=main&%3Brepo=203843667&%3Bskip_quickstart=true&%3Bmachine=xLargePremiumLinux&%3Bdevcontainer_path=.devcontainer%2Fdevcontainer.json&%3Bgeo=UsWest&__prettifying=true) or follow these steps:
 
 1. Navigate to the repository on GitHub and initiate the codespace creation workflow
 2. Click the `...` button and select **New with options...**, then pick from "Dev container configuration"
 3. Choose your branch
-4. Expand **Dev container configuration** and select **AI-enabled** (defaults to 32 CPUs / 64 GB RAM)
+4. Keep the default **AI-enabled** configuration (defaults to 32 CPUs / 64 GB RAM)
 5. Create the Codespace
 
 ## Differences from Standard Profile
@@ -37,4 +37,4 @@ This enables running AI agents from your local terminal while the Codespace prov
 
 ## Getting Started
 
-Once your Codespace is running, see [GETTING_STARTED.md](../../../.devcontainer/ai-agent/GETTING_STARTED.md) for setup instructions, available aliases, custom MCP server usage, and more.
+Once your Codespace is running, see [GETTING_STARTED.md](../../../.devcontainer/GETTING_STARTED.md) for setup instructions, available aliases, custom MCP server usage, and more.

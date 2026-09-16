@@ -14,6 +14,7 @@ import type {
 	SharedKernel,
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { lt } from "semver-ts";
 
 import {
 	type CodecTree,
@@ -213,7 +214,7 @@ export class SharedTreeKernel
 			...defaultSharedTreeOptions,
 			...optionsParam,
 		};
-		if (options.minVersionForCollab < FluidClientVersion.v2_0) {
+		if (lt(options.minVersionForCollab, FluidClientVersion.v2_0)) {
 			throw new UsageError("SharedTree requires minVersionForCollab of at least 2.0.0");
 		}
 		const schema = new TreeStoredSchemaRepository();
@@ -524,6 +525,7 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
 	[EditManagerFormatVersion.v4, SharedTreeChangeFormatVersion.v4],
 	[EditManagerFormatVersion.vSharedBranches, SharedTreeChangeFormatVersion.v4],
 	[EditManagerFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
+	[EditManagerFormatVersion.v7, SharedTreeChangeFormatVersion.v5],
 ]);
 
 /**
@@ -540,6 +542,7 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs<
 	[MessageFormatVersion.v4, SharedTreeChangeFormatVersion.v4],
 	[MessageFormatVersion.vSharedBranches, SharedTreeChangeFormatVersion.v4],
 	[MessageFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
+	[MessageFormatVersion.v7, SharedTreeChangeFormatVersion.v5],
 ]);
 
 function getCodecTreeForEditManagerFormat(
@@ -659,10 +662,40 @@ export interface SharedTreeOptions
 	 * @remarks
 	 * By default, SharedTree evicts trunk commits once all peers have acknowledged them (i.e. once they
 	 * are outside the collaboration window), and they are not otherwise retained (e.g. by revertibles or
-	 * local branches), to bound memory usage. Enabling this flag retains the full trunk history for the
-	 * lifetime of the client, which increases memory usage over time and should be used with care.
+	 * local branches), to bound memory usage and document size.
+	 * As long as this flag is enabled, trunk commits are retained - this increases memory usage and document size
+	 * over time and should be used with care.
 	 */
 	readonly retainHistory?: boolean;
+
+	/**
+	 * When `true`, validates that commits being submitted for the first time can be applied without errors to a view.
+	 * In the event that a commit cannot be applied, SharedTree will throw an error and will enter a "broken" state, preventing the offending commit (and any further commits) from being submitted.
+	 *
+	 * This can be enabled (at the cost of performance) to improve safety against document corruption in the event of a bug in the SharedTree code:
+	 * when the additional validation is enabled, a client will error instead of potentially corrupting the document.
+	 *
+	 * @defaultValue `false`
+	 *
+	 * @remarks
+	 * This validation is more expensive than {@link SharedTreeOptions.validateRebasedCommitsBeforeResubmission} because it is likely to be performed more often.
+	 * We recommend {@link ForestOptions.forest|configuring SharedTree} with the {@link ForestTypeOptimized|optimized forest implementation} to reduce its performance impact.
+	 */
+	readonly validateCommitsOnFirstSubmission?: boolean;
+
+	/**
+	 * When `true`, validates that the commits being resubmitted can be applied without errors to a view.
+	 * In the event that a commit cannot be applied, SharedTree will throw an error and will enter a "broken" state, preventing the offending commit (and any further commits) from being submitted.
+	 *
+	 * This can be enabled (at the cost of performance) to improve safety against document corruption in the event of a bug in the SharedTree code:
+	 * when the additional validation is enabled, a client will error instead of potentially corrupting the document.
+	 *
+	 * @defaultValue `false`
+	 *
+	 * @remarks
+	 * We recommend {@link ForestOptions.forest|configuring SharedTree} with the {@link ForestTypeOptimized|optimized forest implementation} to reduce the performance impact of this validation.
+	 */
+	readonly validateRebasedCommitsBeforeResubmission?: boolean;
 }
 
 export interface SharedTreeOptionsInternal
@@ -812,6 +845,8 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	writeVersionOverrides: new Map(),
 	allowPossiblyIncompatibleWriteVersionOverrides: false,
 	retainHistory: false,
+	validateCommitsOnFirstSubmission: false,
+	validateRebasedCommitsBeforeResubmission: false,
 };
 
 /**

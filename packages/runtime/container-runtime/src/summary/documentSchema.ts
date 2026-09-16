@@ -436,9 +436,11 @@ function and(
 	}
 
 	// We keep the persisted minVersionForCollab if present, even if the provided minVersionForCollab
-	// is higher.
+	// is higher, after migrating historical 2.x prerelease values to their stable versions.
 	const minVersionForCollab =
-		persistedSchema.info?.minVersionForCollab ?? providedSchema.info.minVersionForCollab;
+		persistedSchema.info === undefined
+			? providedSchema.info.minVersionForCollab
+			: normalizePersistedMinVersionForCollab(persistedSchema.info.minVersionForCollab);
 
 	return {
 		version: currentDocumentVersionSchema,
@@ -463,12 +465,16 @@ function or(
 		);
 	}
 
-	// We take the greater of the persisted/provided minVersionForCollab
-	const minVersionForCollab =
+	// We take the greater of the normalized persisted/provided minVersionForCollab.
+	const persistedMinVersionForCollab =
 		persistedSchema.info === undefined
+			? undefined
+			: normalizePersistedMinVersionForCollab(persistedSchema.info.minVersionForCollab);
+	const minVersionForCollab =
+		persistedMinVersionForCollab === undefined
 			? providedSchema.info.minVersionForCollab
-			: gt(persistedSchema.info.minVersionForCollab, providedSchema.info.minVersionForCollab)
-				? persistedSchema.info.minVersionForCollab
+			: gt(persistedMinVersionForCollab, providedSchema.info.minVersionForCollab)
+				? persistedMinVersionForCollab
 				: providedSchema.info.minVersionForCollab;
 
 	return {
@@ -477,6 +483,25 @@ function or(
 		info: { minVersionForCollab },
 		runtime,
 	};
+}
+
+/**
+ * Migrates 2.x prerelease values accepted by older clients to the corresponding stable version.
+ *
+ * @remarks
+ * This is monotonic under SemVer and can cross a compatibility checkpoint when the prerelease
+ * shares that checkpoint's major, minor, and patch. Client 3.0 no longer supports active
+ * prerelease collaborators, so the persisted requirement advances before format selection.
+ */
+function normalizePersistedMinVersionForCollab(
+	minVersionForCollab: SemanticVersion,
+): SemanticVersion {
+	const parsed = parse(minVersionForCollab);
+	if (parsed?.major === 2 && parsed.prerelease.length > 0) {
+		// `parse` validates each numeric component before this template is constructed.
+		return `${parsed.major}.${parsed.minor}.${parsed.patch}` as SemanticVersion;
+	}
+	return minVersionForCollab;
 }
 
 /**

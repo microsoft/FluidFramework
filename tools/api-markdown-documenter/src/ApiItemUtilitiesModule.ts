@@ -8,10 +8,12 @@
  */
 
 export {
+	type ApiItemLinkTarget,
 	createQualifiedDocumentNameForApiItem,
 	filterItems,
 	getHeadingForApiItem,
 	getLinkForApiItem,
+	getLinkTargetForApiItem,
 	shouldItemBeIncluded,
 } from "./api-item-transforms/index.js";
 export {

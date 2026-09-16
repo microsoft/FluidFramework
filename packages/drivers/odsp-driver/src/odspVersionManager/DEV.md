@@ -36,8 +36,8 @@ Part 1 is built in three components:
 - **Component A — the version manager**: choose which file version to load or replay from. **This
   folder is Component A**, and this document is mostly about it.
 - **Component B — the recomposed driver**: load the chosen version and replay ops forward to the exact
-  target. **Built** in `../pointInTimeDriver/` (`getOdspPointInTimeDocumentServiceFactory` /
-  `OdspPointInTimeDocumentService`) — see [Part V](#part-v--components-b--c-as-built).
+  target. **Built** in `../pointInTimeDriver/`, exported through the consumer-injected
+  `../pointInTime.ts` entrypoint — see [Part V](#part-v--components-b--c-as-built).
 - **Component C — the loader hookup**: expose Component B through the container loader. **Built** in
   `@fluidframework/container-loader` (`loadContainerToSequenceNumber`) — see
   [Part V](#part-v--components-b--c-as-built). This is the current prototype-era package
@@ -556,9 +556,10 @@ is what ships today.
 
 ### Component B — how does the recomposed driver materialize the target?
 
-The factory returned by `getOdspPointInTimeDocumentServiceFactory` (in `../pointInTimeDriver/`)
-extends `OdspDocumentServiceFactoryCore` internally and adds
-`createPointInTimeDocumentService(resolvedUrl, targetSequenceNumber)`:
+The host imports `createPointInTimeDocumentService` from the dedicated point-in-time entrypoint and
+injects it through `createOdspDocumentServiceFactory`. The returned factory exposes the optional
+`createPointInTimeDocumentService(resolvedUrl, targetSequenceNumber)` capability as a thin delegate.
+The injected implementation:
 
 1. Build a version manager (Component A), sharing the single `EpochTracker` described below, and call
    `findBaseForSeq(target)`. It picks the closest version *and* proves that base shares the live
@@ -570,7 +571,11 @@ extends `OdspDocumentServiceFactoryCore` internally and adds
    document services: a **recoverable** one bound to that base version (its storage is the base
    snapshot) and a **live** one (its delta storage supplies the ops to replay). Both are created via
    `createDocumentServiceCore` with a **single shared** `EpochTracker` (the same one the version
-   manager reads through) — this is the structural lineage guard; see the next question.
+   manager reads through) — this is the structural lineage guard; see the next question. The
+   point-in-time storage wrapper forces the recoverable service's initial snapshot read to bypass
+   both the persistent latest-snapshot cache and the in-memory snapshot-prefetch cache so the
+   selected base cannot be replaced by a newer cached live snapshot. Both loader snapshot paths
+   (`getSnapshot` and the legacy `getVersions` + `getSnapshotTree` path) apply this rule.
 3. Return an `OdspPointInTimeDocumentService` composing the two.
 
 It lives in this package rather than a generic wrapping driver (e.g. `@fluidframework/replay-driver`)
@@ -661,9 +666,9 @@ and the `opStream` endpoint is queried for exactly `[from, target]`.
 
 1. Validates `loadToSequenceNumber` is a non-negative integer (`UsageError` otherwise).
 2. Detects the point-in-time capability with `asPointInTimeCapableFactory`, which checks the passed
-   `documentServiceFactory` exposes `createPointInTimeDocumentService`. A plain factory is a
-   `UsageError` — the caller must pass the result of `getOdspPointInTimeDocumentServiceFactory`
-   directly, with no wrapping.
+  `documentServiceFactory` exposes `createPointInTimeDocumentService`. A plain factory is a
+  `UsageError` — the caller must inject the dedicated ODSP implementation through
+  `createOdspDocumentServiceFactory` options and pass that factory directly with no wrapping.
 3. Wraps it in a `PointInTimeDocumentServiceFactory` adapter so the container's normal
    `createDocumentService(resolvedUrl)` routes to `createPointInTimeDocumentService(resolvedUrl, target)`.
    (`createContainer` throws — the adapter is load-only.)

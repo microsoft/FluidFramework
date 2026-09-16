@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import {
 	revisionMetadataSourceFromInfo,
 	type ChangeAtomId,
@@ -15,27 +15,22 @@ import {
 	type TaggedChange,
 	type TreeChunk,
 } from "../../core/index.js";
-import { brand, idAllocatorFromMaxId, type IdAllocator } from "../../util/index.js";
-import {
-	newChangeAtomIdBTree,
-	setInChangeAtomIdMap,
-	type ChangeAtomIdBTree,
-} from "../changeAtomIdBTree.js";
-import {
-	newCrossFieldKeyTable,
-	type CrossFieldKeyTable,
-	type FieldChange,
-	type FieldChangeMap,
-	type FieldId,
-	type ModularChangeset,
-	type NodeChangeset,
-	type NodeId,
+import { brand } from "../../util/index.js";
+import { newChangeAtomIdBTree, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import type {
+	FieldChange,
+	FieldChangeMap,
+	FieldId,
+	ModularChangeset,
+	NodeChangeset,
+	NodeId,
 } from "./modularChangeTypes.js";
 import {
 	CrossFieldManagerI,
 	getChangeHandler,
 	getRevInfoFromTaggedChanges,
 	hasConflicts,
+	makeChangesetInversions,
 	makeModularChangeset,
 	newConstraintState,
 	newCrossFieldTable,
@@ -44,7 +39,8 @@ import {
 } from "./modularChangeUtils.js";
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
 import type { FlexFieldKind } from "./fieldKind.js";
-import { NodeAttachState } from "./fieldChangeHandler.js";
+import { NodeAttachState, type AtomIdAliasAllocator } from "./fieldChangeHandler.js";
+import { DefaultAtomIdAliasAllocator } from "./defaultAtomIdAliasAllocator.js";
 
 /**
  * @param change - The change to invert.
@@ -58,6 +54,9 @@ export function invertModularChange(
 	revisionForInvert: RevisionTag,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
+	// Uncomment the following line to facilitate debugging
+	// validateChangeset(change.change, fieldKinds);
+
 	// Rollback changesets destroy the nodes created by the change being rolled back.
 	const destroys = isRollback ? invertBuilds(change.change.builds) : undefined;
 
@@ -82,15 +81,20 @@ export function invertModularChange(
 		});
 	}
 
-	const genId: IdAllocator = idAllocatorFromMaxId(change.change.maxId ?? -1);
+	const genId = new DefaultAtomIdAliasAllocator();
 
 	const crossFieldTable: InvertTable = {
 		...newCrossFieldTable<FieldChange>(),
 		originalFieldToContext: new Map(),
-		invertedNodeToParent: brand(change.change.nodeToParent.clone()),
 	};
 	const { revInfos: oldRevInfos } = getRevInfoFromTaggedChanges([change]);
 	const revisionMetadata = revisionMetadataSourceFromInfo(oldRevInfos);
+
+	if (change.change.maxId !== undefined) {
+		for (const { revision } of oldRevInfos) {
+			genId.reserve(revision, change.change.maxId);
+		}
+	}
 
 	const invertedFields = invertFieldMap(
 		change.change.fieldChanges,
@@ -144,7 +148,12 @@ export function invertModularChange(
 		}
 	}
 
-	const crossFieldKeys = makeCrossFieldKeyTable(invertedFields, invertedNodes, fieldKinds);
+	const { crossFieldKeys, nodeToParent } = makeChangesetInversions(
+		invertedFields,
+		invertedNodes,
+		fieldKinds,
+		change.change.nodeAliases,
+	);
 
 	const constraintState = newConstraintState(0);
 	updateConstraintsForFields(
@@ -152,13 +161,14 @@ export function invertModularChange(
 		NodeAttachState.Attached,
 		constraintState,
 		invertedNodes,
+		change.change.nodeAliases,
 		fieldKinds,
 	);
 
-	return makeModularChangeset({
+	const inverse = makeModularChangeset({
 		fieldChanges: invertedFields,
 		nodeChanges: invertedNodes,
-		nodeToParent: crossFieldTable.invertedNodeToParent,
+		nodeToParent,
 		nodeAliases: change.change.nodeAliases,
 		crossFieldKeys,
 		maxId: genId.getMaxId(),
@@ -168,13 +178,18 @@ export function invertModularChange(
 		noChangeConstraintOnRevert,
 		destroys,
 	});
+
+	// Uncomment the following line to facilitate debugging
+	// validateChangeset(inverse, fieldKinds);
+
+	return inverse;
 }
 
 function invertFieldMap(
 	changes: FieldChangeMap,
 	parentId: NodeId | undefined,
 	isRollback: boolean,
-	genId: IdAllocator,
+	genId: AtomIdAliasAllocator,
 	crossFieldTable: InvertTable,
 	revisionMetadata: RevisionMetadataSource,
 	revisionForInvert: RevisionTag,
@@ -213,7 +228,7 @@ function invertNodeChange(
 	change: NodeChangeset,
 	id: NodeId,
 	isRollback: boolean,
-	genId: IdAllocator,
+	genId: AtomIdAliasAllocator,
 	crossFieldTable: InvertTable,
 	revisionMetadata: RevisionMetadataSource,
 	revisionForInvert: RevisionTag,
@@ -261,7 +276,6 @@ function invertBuilds(
 
 interface InvertTable extends CrossFieldTable<FieldChange> {
 	originalFieldToContext: Map<FieldChange, InvertContext>;
-	invertedNodeToParent: ChangeAtomIdBTree<FieldId>;
 }
 
 interface InvertContext {
@@ -279,9 +293,7 @@ class InvertManager extends CrossFieldManagerI<FieldChange> {
 		super(table, field, allowInval);
 	}
 
-	public override onMoveIn(id: ChangeAtomId): void {
-		setInChangeAtomIdMap(this.table.invertedNodeToParent, id, this.fieldId);
-	}
+	public override onMoveIn(id: ChangeAtomId): void {}
 
 	public override moveKey(
 		target: CrossFieldTarget,
@@ -289,50 +301,10 @@ class InvertManager extends CrossFieldManagerI<FieldChange> {
 		id: ChangesetLocalId,
 		count: number,
 	): void {
-		assert(false, 0x9c5 /* Keys should not be moved manually during invert */);
+		fail(0x9c5 /* Keys should not be moved manually during invert */);
 	}
 
 	private get table(): InvertTable {
 		return this.crossFieldTable as InvertTable;
-	}
-}
-
-function makeCrossFieldKeyTable(
-	fields: FieldChangeMap,
-	nodes: ChangeAtomIdBTree<NodeChangeset>,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-): CrossFieldKeyTable {
-	const keys: CrossFieldKeyTable = newCrossFieldKeyTable();
-	populateCrossFieldKeyTableForFieldMap(keys, fields, undefined, fieldKinds);
-	nodes.forEachPair(([revision, localId], node) => {
-		if (node.fieldChanges !== undefined) {
-			populateCrossFieldKeyTableForFieldMap(
-				keys,
-				node.fieldChanges,
-				{
-					revision,
-					localId,
-				},
-				fieldKinds,
-			);
-		}
-	});
-
-	return keys;
-}
-
-function populateCrossFieldKeyTableForFieldMap(
-	table: CrossFieldKeyTable,
-	fields: FieldChangeMap,
-	parent: NodeId | undefined,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-): void {
-	for (const [fieldKey, fieldChange] of fields) {
-		const keys = getChangeHandler(fieldKinds, fieldChange.fieldKind).getCrossFieldKeys(
-			fieldChange.change,
-		);
-		for (const { key, count } of keys) {
-			table.set(key, count, { nodeId: parent, field: fieldKey });
-		}
 	}
 }

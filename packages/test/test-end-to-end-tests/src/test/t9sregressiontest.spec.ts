@@ -6,6 +6,8 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { waitContainerToCatchUp } from "@fluidframework/container-loader/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
@@ -31,6 +33,33 @@ describeCompat("t9s issue regression test", "NoCompat", (getTestObjectProvider, 
 			},
 		},
 	};
+
+	// TODO: Unskip once a Tinylicious version that reports checkpointSequenceNumber is published.
+	it.skip("waitContainerToCatchUp catches up from the first op", async function () {
+		const provider = getTestObjectProvider();
+		if (provider.driver.type !== "tinylicious" && provider.driver.type !== "t9s") {
+			this.skip();
+		}
+		const container1 = await provider.makeTestContainer(testContainerConfig);
+		const url = await container1.getAbsoluteUrl("");
+		assert(typeof url === "string");
+
+		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
+		const map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
+		map1.set("key", "value");
+		await provider.ensureSynchronized();
+
+		const loader = provider.makeTestLoader(testContainerConfig);
+		const container2 = await loader.resolve({
+			url,
+			headers: { [LoaderHeader.loadMode]: { deltaConnection: "none" } },
+		});
+		assert.equal(await waitContainerToCatchUp(container2), true);
+		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
+		assert.equal(map2.get("key"), "value");
+	});
+
 	it("handles long logtail", async function () {
 		const provider = getTestObjectProvider();
 		const loader1 = provider.makeTestLoader(testContainerConfig);

@@ -94,11 +94,6 @@ Share these links with the user:
 
 Tell the user: while `@alpha` has no contractual stability guarantees, there is an informal agreement not to break office-bohemia. If this change could break office-bohemia, it should be staged using the same process as above.
 
-If there is any doubt, recommend the user test against office-bohemia first by running the office-bohemia integration pipeline against their branch. Share these links:
-- Office-bohemia integration pipeline: https://dev.azure.com/office/OC/_build?definitionId=29163
-- Build - client packages pipeline: https://dev.azure.com/fluidframework/internal/_build?definitionId=12
-- Full instructions: https://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/dev/monitoring/loop-integration-pipeline/index
-
 Also tell the user: if they skip this check and the change does break office-bohemia, the daily integration pipeline will catch it and FF OCE will revert the PR or contact them to do so ASAP.
 
 ---

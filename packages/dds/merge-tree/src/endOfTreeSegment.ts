@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { fail } from "@fluidframework/core-utils/internal";
 
 import { LocalClientId } from "./constants.js";
 import type { LocalReferenceCollection } from "./localReference.js";
@@ -93,7 +93,7 @@ abstract class BaseEndpointSegment
 }
 
 const notSupported = (): never => {
-	assert(false, 0x3ed /* operation not supported */);
+	fail(0x3ed /* operation not supported */);
 };
 
 /**

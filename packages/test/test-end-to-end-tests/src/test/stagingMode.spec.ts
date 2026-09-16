@@ -16,6 +16,7 @@ import type {
 	IFluidDataStorePolicies,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	defaultTestOldestSupportedClient,
 	getContainerEntryPointBackCompat,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
@@ -74,6 +75,7 @@ describeCompat(
 			const container = await provider.createContainer(
 				new apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore({
 					defaultFactory,
+					oldestSupportedClient: defaultTestOldestSupportedClient,
 					registryEntries: new Map([[defaultFactory.type, defaultFactory]]),
 				}),
 			);

@@ -629,25 +629,9 @@ export namespace System_TableSchema {
 			}
 
 			public insertColumns(
-				columnsOrParams:
-					| readonly ColumnInsertableType[]
-					| TableSchema.InsertColumnsParameters<TColumnSchema>,
-				maybeIndex?: number,
+				columns: readonly ColumnInsertableType[],
+				index?: number,
 			): ColumnValueType[] {
-				// Dispatch on the runtime type of the first argument to disambiguate the two overloads:
-				//  * Array  → positional `(columns, index?)` overload
-				//  * object → deprecated `(params)` property-bag overload
-				let index: number | undefined;
-				let columns: readonly ColumnInsertableType[];
-				if (Array.isArray(columnsOrParams)) {
-					index = maybeIndex;
-					columns = columnsOrParams;
-				} else {
-					const params = columnsOrParams as TableSchema.InsertColumnsParameters<TColumnSchema>;
-					index = params.index;
-					columns = params.columns;
-				}
-
 				// #region Input validation
 
 				// Ensure specified index is valid
@@ -692,26 +676,7 @@ export namespace System_TableSchema {
 				return columns as unknown as ColumnValueType[];
 			}
 
-			public insertRows(
-				rowsOrParams:
-					| readonly RowInsertableType[]
-					| TableSchema.InsertRowsParameters<TRowSchema>,
-				maybeIndex?: number,
-			): RowValueType[] {
-				// Dispatch on the runtime type of the first argument to disambiguate the two overloads:
-				//  * Array  → positional `(rows, index?)` overload
-				//  * object → deprecated `(params)` property-bag overload
-				let index: number | undefined;
-				let rows: readonly RowInsertableType[];
-				if (Array.isArray(rowsOrParams)) {
-					index = maybeIndex;
-					rows = rowsOrParams;
-				} else {
-					const params = rowsOrParams as TableSchema.InsertRowsParameters<TRowSchema>;
-					index = params.index;
-					rows = params.rows;
-				}
-
+			public insertRows(rows: readonly RowInsertableType[], index?: number): RowValueType[] {
 				// #region Input validation
 
 				// Ensure specified index is valid
@@ -755,35 +720,10 @@ export namespace System_TableSchema {
 			}
 
 			public setCell(
-				rowOrParams:
-					| string
-					| number
-					| RowValueType
-					| TableSchema.SetCellParameters<TCellSchema, TColumnSchema, TRowSchema>,
-				maybeColumn?: string | number | ColumnValueType,
-				maybeCell?: CellInsertableType,
+				rowOrId: string | number | RowValueType,
+				columnOrId: string | number | ColumnValueType,
+				cell: CellInsertableType,
 			): void {
-				// Dispatch on the presence of the second argument to disambiguate the two overloads:
-				//  * `maybeColumn === undefined` → deprecated `(params)` property-bag overload; unpack from `params.key`/`params.cell`
-				//  * otherwise                   → positional `(row, column, cell)` overload
-				let rowOrId: string | number | RowValueType;
-				let columnOrId: string | number | ColumnValueType;
-				let cell: CellInsertableType;
-				if (maybeColumn === undefined) {
-					const params = rowOrParams as TableSchema.SetCellParameters<
-						TCellSchema,
-						TColumnSchema,
-						TRowSchema
-					>;
-					rowOrId = params.key.row as string | number | RowValueType;
-					columnOrId = params.key.column as string | number | ColumnValueType;
-					cell = params.cell as CellInsertableType;
-				} else {
-					rowOrId = rowOrParams as string | number | RowValueType;
-					columnOrId = maybeColumn;
-					cell = maybeCell as CellInsertableType;
-				}
-
 				const row = this.#getRow(rowOrId);
 				const column = this.#getColumn(columnOrId);
 
@@ -1009,26 +949,9 @@ export namespace System_TableSchema {
 			}
 
 			public removeCell(
-				rowOrKey:
-					| string
-					| number
-					| RowValueType
-					| TableSchema.CellKey<TColumnSchema, TRowSchema>,
-				maybeColumn?: string | number | ColumnValueType,
+				rowOrIdOrIndex: string | number | RowValueType,
+				columnOrIdOrIndex: string | number | ColumnValueType,
 			): CellValueType | undefined {
-				// Dispatch on the presence of the second argument to disambiguate the two overloads:
-				//  * `maybeColumn === undefined` → deprecated `(key)` overload; unpack from `key.row`/`key.column`
-				//  * otherwise                   → positional `(row, column)` overload
-				let rowOrIdOrIndex: string | number | RowValueType;
-				let columnOrIdOrIndex: string | number | ColumnValueType;
-				if (maybeColumn === undefined) {
-					const key = rowOrKey as TableSchema.CellKey<TColumnSchema, TRowSchema>;
-					rowOrIdOrIndex = key.row as string | number | RowValueType;
-					columnOrIdOrIndex = key.column as string | number | ColumnValueType;
-				} else {
-					rowOrIdOrIndex = rowOrKey as string | number | RowValueType;
-					columnOrIdOrIndex = maybeColumn;
-				}
 				const row = this.#getRow(rowOrIdOrIndex) as RowValueInternalType;
 				const column = this.#getColumn(columnOrIdOrIndex);
 
@@ -1123,19 +1046,14 @@ export namespace System_TableSchema {
 				preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
 			}): void {
 				const { applyEdits, preconditions, preconditionsOnRevert } = options;
-				const branch = TreeAlpha.branch(this);
+				const context = TreeAlpha.context(this);
 
 				// Ensure events are paused until all of the edits are applied.
 				// This ensures that the user sees the corresponding table-level edit as atomic,
 				// and ensures they are not spammed with intermediate events.
 				withBufferedTreeEvents(() => {
-					if (branch === undefined) {
-						// If this node does not have a corresponding branch, then it is unhydrated.
-						// I.e., it is not part of a collaborative session yet.
-						// Therefore, we don't need to run the edits as a transaction.
-						applyEdits();
-					} else {
-						branch.runTransaction(
+					if (context.isView()) {
+						context.runTransaction(
 							() => {
 								applyEdits();
 								if (preconditionsOnRevert !== undefined) {
@@ -1144,6 +1062,11 @@ export namespace System_TableSchema {
 							},
 							preconditions === undefined ? undefined : { preconditions },
 						);
+					} else {
+						// If this node does not have a corresponding view, then it is unhydrated.
+						// I.e., it is not part of a collaborative session yet.
+						// Therefore, we don't need to run the edits as a transaction.
+						applyEdits();
 					}
 				});
 			}
@@ -1168,7 +1091,7 @@ export namespace System_TableSchema {
 			#buildColumnInDocumentConstraintsForRows(
 				rows: Iterable<RowValueType>,
 			): TransactionConstraintAlpha[] | undefined {
-				if (!TreeAlpha.context(this).isBranch()) {
+				if (!TreeAlpha.context(this).isView()) {
 					return undefined;
 				}
 
@@ -1894,63 +1817,6 @@ export namespace TableSchema {
 	}
 
 	/**
-	 * {@link TableSchema.Table.(insertColumns:2)} parameters.
-	 * @input @beta
-	 * @deprecated Use the positional argument overload of {@link TableSchema.Table.(insertColumns:1)} instead.
-	 */
-	export interface InsertColumnsParameters<TColumn extends ImplicitAllowedTypes> {
-		/**
-		 * The index at which to insert the new columns.
-		 * @remarks If not provided, the columns will be appended to the end of the table.
-		 */
-		readonly index?: number | undefined;
-
-		/**
-		 * The columns to insert.
-		 */
-		readonly columns: InsertableTreeNodeFromImplicitAllowedTypes<TColumn>[];
-	}
-
-	/**
-	 * {@link TableSchema.Table.(insertRows:2)} parameters.
-	 * @input @beta
-	 * @deprecated Use the positional argument overload of {@link TableSchema.Table.(insertRows:1)} instead.
-	 */
-	export interface InsertRowsParameters<TRow extends ImplicitAllowedTypes> {
-		/**
-		 * The index at which to insert the new rows.
-		 * @remarks If not provided, the rows will be appended to the end of the table.
-		 */
-		readonly index?: number | undefined;
-
-		/**
-		 * The rows to insert.
-		 */
-		readonly rows: InsertableTreeNodeFromImplicitAllowedTypes<TRow>[];
-	}
-
-	/**
-	 * {@link TableSchema.Table.(setCell:2)} parameters.
-	 * @input @beta
-	 * @deprecated Use the positional argument overload of {@link TableSchema.Table.(setCell:1)} instead.
-	 */
-	export interface SetCellParameters<
-		TCell extends ImplicitAllowedTypes,
-		TColumn extends ImplicitAllowedTypes,
-		TRow extends ImplicitAllowedTypes,
-	> {
-		/**
-		 * The key to uniquely identify a cell in a table.
-		 */
-		readonly key: CellKey<TColumn, TRow>;
-
-		/**
-		 * The cell to set.
-		 */
-		readonly cell: InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
-	}
-
-	/**
 	 * A table.
 	 *
 	 * @remarks Table schema is created via the {@link TableSchema.(table:1)} factory.
@@ -2030,19 +1896,6 @@ export namespace TableSchema {
 			index?: number,
 		): TreeNodeFromImplicitAllowedTypes<TColumn>[];
 		/**
-		 * Inserts 0 or more columns into the table.
-		 *
-		 * @throws Throws an error if the specified index is out of range.
-		 *
-		 * No columns are inserted in this case.
-		 *
-		 * @deprecated Use {@link TableSchema.Table.(insertColumns:1)} instead.
-		 */
-		insertColumns(
-			params: InsertColumnsParameters<TColumn>,
-		): TreeNodeFromImplicitAllowedTypes<TColumn>[];
-
-		/**
 		 * Inserts 0 or more rows into the table.
 		 * @param rows - The rows to insert.
 		 * @param index - The index at which to insert the new rows. If omitted, the rows are appended to the end of the table.
@@ -2060,22 +1913,6 @@ export namespace TableSchema {
 			index?: number,
 		): TreeNodeFromImplicitAllowedTypes<TRow>[];
 		/**
-		 * Inserts 0 or more rows into the table.
-		 *
-		 * @throws
-		 * Throws an error in the following cases:
-		 *
-		 * - The row contains cells, but the table does not contain matching columns for one or more of those cells.
-		 *
-		 * - The specified index is out of range.
-		 *
-		 * No rows are inserted in these cases.
-		 *
-		 * @deprecated Use {@link TableSchema.Table.(insertRows:1)} instead.
-		 */
-		insertRows(params: InsertRowsParameters<TRow>): TreeNodeFromImplicitAllowedTypes<TRow>[];
-
-		/**
 		 * Sets the cell at the specified location in the table.
 		 * @param row - The {@link TableSchema.Row}, {@link TableSchema.Row.id}, or row index at which the cell is located.
 		 * @param column - The {@link TableSchema.Column}, {@link TableSchema.Column.id}, or column index at which the cell is located.
@@ -2087,13 +1924,6 @@ export namespace TableSchema {
 			column: string | number | TreeNodeFromImplicitAllowedTypes<TColumn>,
 			cell: InsertableTreeNodeFromImplicitAllowedTypes<TCell>,
 		): void;
-		/**
-		 * Sets the cell at the specified location in the table.
-		 * @remarks To remove a cell, call {@link TableSchema.Table.(removeCell:1)} instead.
-		 * @deprecated Use {@link TableSchema.Table.(setCell:1)} instead.
-		 */
-		setCell(params: SetCellParameters<TCell, TColumn, TRow>): void;
-
 		/**
 		 * Removes a range of columns from the table.
 		 *
@@ -2180,15 +2010,6 @@ export namespace TableSchema {
 		removeCell(
 			row: string | number | TreeNodeFromImplicitAllowedTypes<TRow>,
 			column: string | number | TreeNodeFromImplicitAllowedTypes<TColumn>,
-		): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
-		/**
-		 * Removes the cell at the specified location in the table.
-		 * @returns The cell if it exists, otherwise undefined.
-		 * @throws Throws an error if the location does not exist in the table.
-		 * @deprecated Use {@link TableSchema.Table.(removeCell:1)} instead.
-		 */
-		removeCell(
-			key: CellKey<TColumn, TRow>,
 		): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 	}
 

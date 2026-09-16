@@ -29,7 +29,9 @@ import { loadContainerToSequenceNumber } from "@fluidframework/container-loader/
 import type { ISummarizer } from "@fluidframework/container-runtime/internal";
 import type { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { ISharedCounter } from "@fluidframework/counter/internal";
+import type { IPersistedCache } from "@fluidframework/driver-definitions/internal";
 import {
+	defaultTestOldestSupportedClient,
 	type ITestObjectProvider,
 	LoaderContainerTracker,
 	LocalCodeLoader,
@@ -108,6 +110,7 @@ export function createPointInTimeRuntimeFactory(
 	const dataObjectFactory = buildFactory(apis);
 	return new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
 		registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 	}) as unknown as IRuntimeFactory;
 }
@@ -151,9 +154,13 @@ export async function loadPointInTimeContainer(
 	loadToSequenceNumber: number,
 	signal?: AbortSignal,
 	logger?: ITelemetryBaseLogger,
+	persistedCache?: IPersistedCache,
 ): Promise<IContainer> {
 	assert(provider.driver.type === "odsp", "Point-in-time load requires the odsp driver");
 	const odspDriver = provider.driver as OdspTestDriver;
+	if (persistedCache !== undefined) {
+		odspDriver.setPersistedCache(persistedCache);
+	}
 	const documentServiceFactory = odspDriver.createPointInTimeDocumentServiceFactory();
 	const url = await provider.driver.createContainerUrl(documentId);
 	const codeDetails: IFluidCodeDetails = provider.defaultCodeDetails;
@@ -166,6 +173,32 @@ export async function loadPointInTimeContainer(
 		logger: logger ?? provider.logger,
 		signal,
 	});
+}
+
+/**
+ * Load the live document through a supplied persisted cache so a later point-in-time load can
+ * verify that a newer cached live snapshot is not used as its recoverable historical base.
+ */
+export async function loadLiveContainerWithPersistedCache(
+	provider: ITestObjectProvider,
+	runtimeFactory: IRuntimeFactory,
+	tracker: LoaderContainerTracker,
+	documentId: string,
+	persistedCache: IPersistedCache,
+): Promise<IContainer> {
+	assert(provider.driver.type === "odsp", "Point-in-time load requires the odsp driver");
+	const odspDriver = provider.driver as OdspTestDriver;
+	odspDriver.setPersistedCache(persistedCache);
+	const loader = createLoader(
+		[[provider.defaultCodeDetails, runtimeFactory]],
+		odspDriver.createDocumentServiceFactory(),
+		provider.urlResolver,
+		provider.logger,
+	);
+	const url = await provider.driver.createContainerUrl(documentId);
+	const container = await loader.resolve({ url });
+	tracker.addContainer(container);
+	return container;
 }
 
 /**

@@ -29,6 +29,7 @@ import type {
 	TreeViewConfiguration,
 	ImplicitFieldSchema,
 	TreeViewAlpha,
+	TreeViewBeta,
 	ITreeAlpha,
 	ViewableTree,
 	TreeView,
@@ -68,7 +69,7 @@ export interface IndependentViewTelemetryOptions {
 }
 
 /**
- * {@link independentView} options.
+ * {@link createIndependentTreeViewAlpha} options.
  * @alpha @input
  */
 export interface IndependentViewOptions
@@ -114,16 +115,52 @@ export type CreateIndependentTreeAlphaOptions = ForestOptions &
  * Create an uninitialized {@link TreeView} that is not tied to any {@link ITree} instance.
  *
  * @remarks
- * Such a view can never experience collaboration or be persisted to to a Fluid Container.
+ * Such a view can never experience collaboration or be persisted to a Fluid Container.
  *
  * This can be useful for testing, as well as use-cases like working on local files instead of documents stored in some Fluid service.
+ *
+ * @param config - The configuration for the tree view.
+ * @param options - Options for the independent tree view.
+ * @returns An uninitialized, non-collaborative tree view.
+ * @alpha
+ */
+export function createIndependentTreeViewAlpha<const TSchema extends ImplicitFieldSchema>(
+	config: TreeViewConfiguration<TSchema>,
+	options?: IndependentViewOptions,
+): TreeViewAlpha<TSchema> {
+	return createIndependentTreeAlpha(options).viewWith(config) as TreeViewAlpha<TSchema>;
+}
+
+/**
+ * {@inheritDoc createIndependentTreeViewAlpha}
+ * @deprecated Use {@link createIndependentTreeViewAlpha} instead.
  * @alpha
  */
 export function independentView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	options?: IndependentViewOptions,
 ): TreeViewAlpha<TSchema> {
-	return createIndependentTreeAlpha(options).viewWith(config) as TreeViewAlpha<TSchema>;
+	return createIndependentTreeViewAlpha(config, options);
+}
+
+/**
+ * Creates an uninitialized tree view that is not tied to any {@link ITree} instance.
+ *
+ * @remarks
+ * Such a view can never experience collaboration or be persisted to a Fluid Container.
+ *
+ * This can be useful for testing and for use cases such as working on local files instead of documents stored in a Fluid service.
+ *
+ * @param config - The configuration for the tree view.
+ * @param options - Options for the independent tree's forest.
+ * @returns An uninitialized, non-collaborative tree view.
+ * @beta
+ */
+export function createIndependentTreeView<const TSchema extends ImplicitFieldSchema>(
+	config: TreeViewConfiguration<TSchema>,
+	options?: ForestOptions,
+): TreeViewBeta<TSchema> {
+	return createIndependentTreeBeta(options).viewWith(config) as TreeViewBeta<TSchema>;
 }
 
 /**

@@ -23,7 +23,7 @@ import {
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import {
 	IChannelServices,
 	IChannelStorageService,
@@ -1244,7 +1244,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 	public attach(handler): void {}
 
 	public submit(messageContent: any): number {
-		assert(false, "Throw submit error on mock empty delta connection");
+		fail("Throw submit error on mock empty delta connection");
 	}
 
 	public dirty(): void {}
@@ -1327,7 +1327,7 @@ function setContentsFromSummaryTree(
 				setContentsFromSummaryTree(value, `${path}${key}/`, contents);
 				break;
 			default:
-				assert(false, "Unexpected summary type on mock createFromSummary");
+				fail("Unexpected summary type on mock createFromSummary");
 		}
 	}
 }

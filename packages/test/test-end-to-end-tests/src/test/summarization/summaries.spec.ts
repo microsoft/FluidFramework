@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { bufferToString } from "@fluid-internal/client-utils";
+import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import {
 	ITestDataObject,
 	TestDataObjectType,
@@ -28,6 +28,7 @@ import {
 import type { SharedString } from "@fluidframework/sequence/internal";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	defaultTestOldestSupportedClient,
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -55,7 +56,7 @@ const testContainerConfig: ITestContainerConfig = {
 	},
 };
 function readBlobContent(content: ISummaryBlob["content"]): unknown {
-	const json = typeof content === "string" ? content : bufferToString(content, "utf8");
+	const json = typeof content === "string" ? content : Uint8ArrayToString(content, "utf8");
 	return JSON.parse(json);
 }
 
@@ -314,6 +315,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 			]);
 			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 				defaultFactory: dataStoreFactory1,
+				oldestSupportedClient: defaultTestOldestSupportedClient,
 				registryEntries: registryStoreEntries,
 			});
 

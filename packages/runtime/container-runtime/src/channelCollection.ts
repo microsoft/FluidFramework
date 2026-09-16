@@ -15,7 +15,7 @@ import type {
 	IFluidHandleInternal,
 	ISignalEnvelope,
 } from "@fluidframework/core-interfaces/internal";
-import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
+import { assert, fail, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import type {
 	ISnapshot,
@@ -805,7 +805,7 @@ export class ChannelCollection
 				return this.resubmitDataStoreOp(message.contents, localOpMetadata, squash);
 			}
 			default: {
-				assert(false, 0x907 /* unknown op type */);
+				fail(0x907 /* unknown op type */);
 			}
 		}
 	};
@@ -862,7 +862,7 @@ export class ChannelCollection
 				return this.applyStashedChannelChannelOp(opContents.contents);
 			}
 			default: {
-				assert(false, 0x908 /* unknon type of op */);
+				fail(0x908 /* unknon type of op */);
 			}
 		}
 	}
@@ -943,7 +943,7 @@ export class ChannelCollection
 				break;
 			}
 			default: {
-				assert(false, 0x8e9 /* unreached */);
+				fail(0x8e9 /* unreached */);
 			}
 		}
 	}

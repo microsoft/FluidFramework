@@ -338,6 +338,13 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
     readonly uploadDuration: number;
 }
 
+// @beta @sealed @legacy
+export interface IVersionMarkResolver {
+    onBatchSequenced(listener: (batchId: string, sequenceNumber: number, timestamp?: number) => void): () => void;
+    resolve(batchId: string, sequenceNumberLowerBound: number): Promise<ResolveResult>;
+    sealAndCaptureVersionMark(): VersionMarkCapture;
+}
+
 // @beta @legacy
 export function loadContainerRuntime(params: LoadContainerRuntimeParams): Promise<IContainerRuntime & IRuntime>;
 
@@ -367,6 +374,19 @@ export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck |
 
 // @beta @deprecated @legacy
 export type ReadFluidDataStoreAttributes = IFluidDataStoreAttributes0 | IFluidDataStoreAttributes1 | IFluidDataStoreAttributes2;
+
+// @beta @legacy
+export type ResolveResult = {
+    readonly kind: "resolved";
+    readonly sequenceNumber: number;
+    readonly timestamp?: number;
+} | {
+    readonly kind: "pending";
+    readonly reason?: string;
+} | {
+    readonly kind: "unresolvable";
+    readonly reason?: string;
+};
 
 // @beta @legacy
 export interface SubmitSummaryFailureData {
@@ -417,6 +437,17 @@ export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 
 // @beta @legacy
 export const TombstoneResponseHeaderKey = "isTombstoned";
+
+// @beta @legacy
+export type VersionMarkCapture = {
+    readonly kind: "pending";
+    readonly batchId: string;
+    readonly sequenceNumberLowerBound: number;
+} | {
+    readonly kind: "resolved";
+    readonly sequenceNumber: number;
+    readonly timestamp?: number;
+};
 
 // (No @packageDocumentation comment for this package)
 

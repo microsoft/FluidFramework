@@ -564,7 +564,7 @@ const containerRuntimeLoader: ContainerRuntimeLoader = async (
 		registry: parameters.registry,
 		provideEntryPoint: parameters.provideEntryPoint,
 		existing: parameters.existing,
-		minVersionForCollab: parameters.minVersionForCollab,
+		oldestSupportedClient: parameters.minVersionForCollab,
 		runtimeOptions: { enableRuntimeIdCompressor: "on" },
 	});
 	if (!parameters.existing) {

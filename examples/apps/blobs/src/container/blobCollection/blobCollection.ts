@@ -23,6 +23,21 @@ import type { IBlobCollection, IBlobCollectionEvents, IBlobRecord } from "./inte
 type UploadArrayBufferFn = (blob: ArrayBufferLike) => Promise<IFluidHandle<ArrayBufferLike>>;
 
 /**
+ * Creates a `Blob` for an `ArrayBufferLike` cloning to `ArrayBuffer` if needed.
+ *
+ * @param buffer - any `ArrayBufferLike` for the `Blob`.
+ */
+export function BlobFromArrayBufferLike(buffer: ArrayBufferLike): Blob {
+	return new Blob([
+		buffer instanceof ArrayBuffer
+			? buffer
+			: // Use .slice to get `ArrayBuffer` backing that `Blob` requires.
+				// eslint-disable-next-line unicorn/prefer-spread -- spread is not the same as slice for `Uint8Array`
+				new Uint8Array(buffer).slice(),
+	]);
+}
+
+/**
  * The BlobCollection is our data object that implements the IBlobCollection interface.
  */
 class BlobCollection implements IBlobCollection {
@@ -45,7 +60,7 @@ class BlobCollection implements IBlobCollection {
 				const newBlob: IBlobRecord = {
 					id: key,
 					// Blobs in Fluid are retrieved as ArrayBuffers, this translates it back to a Blob
-					blob: new Blob([arrayBuffer]),
+					blob: BlobFromArrayBufferLike(arrayBuffer),
 				};
 				this.blobs.push(newBlob);
 				// Sort in case timestamps disagree with map insertion order

@@ -4,7 +4,14 @@
  */
 
 import { TreeAlpha, type PlainText } from "@fluidframework/tree/internal";
-import { type ChangeEvent, type FC, useCallback, useLayoutEffect, useRef } from "react";
+import {
+	type ChangeEvent,
+	type FC,
+	type SyntheticEvent,
+	useCallback,
+	useLayoutEffect,
+	useRef,
+} from "react";
 
 import { unwrapPropTreeNode, type PropTreeNode } from "../../propNode.js";
 import type { TextEditorProps } from "../textEditorProps.js";
@@ -56,10 +63,10 @@ const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel
 	const effectiveLabel = editLabel ?? root;
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	// Distinguishes the local user's own edit (browser keeps the caret) from a remote one.
-	const isLocalEditRef = useRef<boolean>(false);
+	const isLocalEditRef = useRef(false);
 
 	// Tree → string (one-way). The component supplies the other direction below.
-	const { text, selection } = useTreeSynchronizedString(root);
+	const { text, selection, setSelection } = useTreeSynchronizedString(root);
 
 	// A controlled value resets the caret on every change. For the user's own edit the browser
 	// already placed the caret correctly, so only restore the tracked selection for remote edits.
@@ -82,8 +89,22 @@ const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel
 			TreeAlpha.context(root).runTransaction(() => syncTextToTree(root, event.target.value), {
 				label: effectiveLabel,
 			});
+			setSelection({
+				start: event.target.selectionStart ?? 0,
+				end: event.target.selectionEnd ?? 0,
+			});
 		},
-		[root, effectiveLabel],
+		[root, effectiveLabel, setSelection],
+	);
+
+	const onSelect = useCallback(
+		(event: SyntheticEvent<HTMLTextAreaElement>) => {
+			setSelection({
+				start: event.currentTarget.selectionStart ?? 0,
+				end: event.currentTarget.selectionEnd ?? 0,
+			});
+		},
+		[setSelection],
 	);
 
 	return (
@@ -141,6 +162,7 @@ const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel
 				ref={textareaRef}
 				value={text}
 				onChange={onChange}
+				onSelect={onSelect}
 				placeholder="Start typing..."
 				style={{
 					flex: 1,

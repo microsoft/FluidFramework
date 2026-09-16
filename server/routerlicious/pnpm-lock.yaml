@@ -8,9 +8,10 @@ overrides:
   brace-expansion@>=1 <2: ^1.1.17
   brace-expansion@>=2 <3: ^2.1.3
   brace-expansion@>=5 <6: ^5.0.8
-  ip-address@>=9 <10: ^10.1.1
+  ip-address@>=9 <10: ^10.3.1
   keyv@>=4 <5: ^5.5.3
   on-headers@>=1 <2: ^1.1.0
+  socket.io-parser@>=4 <5: ^4.2.7
   ts-deepmerge@>=7 <8: ^8.0.0
   uuid@>=7 <12: ^11.1.1
   uuid@<7: ^11.1.1
@@ -50,7 +51,6 @@ overrides:
   simple-git: ^3.36.0
   systeminformation: ^5.31.6
   tar: ^7.5.11
-  socket.io-parser: ^4.2.6
   zookeeper: ^7.2.0
   minimatch@>=3 <4: ^3.1.5
   minimatch@>=5 <6: ^5.1.9
@@ -1631,8 +1631,8 @@ importers:
         specifier: ^2.5.6
         version: 2.5.6(supports-color@10.2.2)
       socket.io-parser:
-        specifier: ^4.2.6
-        version: 4.2.6(supports-color@10.2.2)
+        specifier: ^4.2.7
+        version: 4.2.7(supports-color@10.2.2)
       uuid:
         specifier: ^11.1.1
         version: 11.1.1
@@ -2054,6 +2054,9 @@ importers:
       agentkeepalive:
         specifier: ^4.2.1
         version: 4.3.0(supports-color@8.1.1)
+      async:
+        specifier: ^3.2.6
+        version: 3.2.6
       axios:
         specifier: ^1.15.1
         version: 1.18.0(debug@4.3.4(supports-color@10.2.2))(supports-color@10.2.2)
@@ -2124,6 +2127,9 @@ importers:
       '@microsoft/api-extractor':
         specifier: ^7.58.1
         version: 7.58.1(patch_hash=22afac8d849140413bab21c8bca49a9e20e928ab61666feccf3b088cb5d45832)(@types/node@22.19.17)
+      '@types/async':
+        specifier: ^3.2.20
+        version: 3.2.20
       '@types/compression':
         specifier: ^1.7.2
         version: 1.7.3
@@ -5652,8 +5658,8 @@ packages:
     resolution: {integrity: sha512-UxC0Yv1Y4WRJiGQxQkP0hfdL0/5/6YvdfOOClRgJ0qppSarkhneSa6UvkMkms0AkdGimSH3Ikqm+6mkMmX7vGA==}
     engines: {node: '>=12.22.0'}
 
-  ip-address@10.2.0:
-    resolution: {integrity: sha512-/+S6j4E9AHvW9SWMSEY9Xfy66O5PWvVEJ08O0y5JGyEKQpojb0K0GKpz/v5HJ/G0vi3D2sjGK78119oXZeE0qA==}
+  ip-address@10.5.0:
+    resolution: {integrity: sha512-R5SnVLJmgYYvf2F2ZgwSBnelz5G4q5AxIC277GDfUaNbrZKNANcBC7RHqYYePlszf4kBolVkJauG0ZjHHFh55g==}
     engines: {node: '>= 12'}
 
   ipaddr.js@1.9.1:
@@ -7584,8 +7590,8 @@ packages:
   socket.io-adapter@2.5.6:
     resolution: {integrity: sha512-DkkO/dz7MGln0dHn5bmN3pPy+JmywNICWrJqVWiVOyvXjWQFIv9c2h24JrQLLFJ2aQVQf/Cvl1vblnd4r2apLQ==}
 
-  socket.io-parser@4.2.6:
-    resolution: {integrity: sha512-asJqbVBDsBCJx0pTqw3WfesSY0iRX+2xzWEWzrpcH7L6fLzrhyF8WPI8UaeM4YCuDfpwA/cgsdugMsmtz8EJeg==}
+  socket.io-parser@4.2.7:
+    resolution: {integrity: sha512-IH/iSeO9T6gz1KkFleGDWkG9N3dl4jXVYUtMhIqH10Md0ttMer8nUNWiP1DKuNrybD2xBrixLJdCC9J6ECoYkg==}
     engines: {node: '>=10.0.0'}
 
   socket.io@4.8.3:
@@ -8056,6 +8062,11 @@ packages:
 
   typescript@5.9.3:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  typescript@6.0.3:
+    resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -8922,7 +8933,7 @@ snapshots:
       '@changesets/cli': 2.29.8(@types/node@22.19.17)
       '@changesets/types': 6.1.0
       changesets-format-with-issue-links: 0.3.0(@changesets/cli@2.29.8(@types/node@22.19.17))(supports-color@8.1.1)
-      typescript: 5.4.5
+      typescript: 6.0.3
     transitivePeerDependencies:
       - '@types/node'
       - supports-color
@@ -9627,7 +9638,7 @@ snapshots:
       serialize-error: 8.1.0
       socket.io: 4.8.3(supports-color@10.2.2)
       socket.io-adapter: 2.5.6(supports-color@10.2.2)
-      socket.io-parser: 4.2.6(supports-color@10.2.2)
+      socket.io-parser: 4.2.7(supports-color@10.2.2)
       uuid: 11.1.1
       winston: 3.9.0
     transitivePeerDependencies:
@@ -10611,7 +10622,7 @@ snapshots:
     dependencies:
       debug: 4.3.4(supports-color@10.2.2)
       notepack.io: 2.1.3
-      socket.io-parser: 4.2.6(supports-color@10.2.2)
+      socket.io-parser: 4.2.7(supports-color@10.2.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -13829,7 +13840,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  ip-address@10.2.0: {}
+  ip-address@10.5.0: {}
 
   ipaddr.js@1.9.1: {}
 
@@ -16231,7 +16242,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  socket.io-parser@4.2.6(supports-color@10.2.2):
+  socket.io-parser@4.2.7(supports-color@10.2.2):
     dependencies:
       '@socket.io/component-emitter': 3.1.0
       debug: 4.4.3(supports-color@10.2.2)
@@ -16246,7 +16257,7 @@ snapshots:
       debug: 4.4.3(supports-color@10.2.2)
       engine.io: 6.6.6(supports-color@10.2.2)
       socket.io-adapter: 2.5.6(supports-color@10.2.2)
-      socket.io-parser: 4.2.6(supports-color@10.2.2)
+      socket.io-parser: 4.2.7(supports-color@10.2.2)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -16262,7 +16273,7 @@ snapshots:
 
   socks@2.8.3:
     dependencies:
-      ip-address: 10.2.0
+      ip-address: 10.5.0
       smart-buffer: 4.2.0
 
   sort-json@2.0.1:
@@ -16776,6 +16787,8 @@ snapshots:
   typescript@5.4.5: {}
 
   typescript@5.9.3: {}
+
+  typescript@6.0.3: {}
 
   typewise-core@1.2.0: {}
 

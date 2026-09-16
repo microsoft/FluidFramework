@@ -95,6 +95,7 @@ export {
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
 	isNeverTree,
+	DefaultAtomIdAliasAllocator,
 	DefaultRevisionReplacer,
 	ModularChangeFormatVersion,
 	minimizeModularChangeset,
@@ -155,7 +156,7 @@ export {
 
 export {
 	SchemaValidationError,
-	type SchemaValidationErrorContext,
+	type SchemaValidationErrorDetails,
 	isNodeInSchema,
 	isFieldInSchema,
 	throwOutOfSchema,

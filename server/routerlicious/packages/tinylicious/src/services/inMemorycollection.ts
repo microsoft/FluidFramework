@@ -144,22 +144,21 @@ export class Collection<T> implements ICollection<T> {
 			if (!query[key]) {
 				continue;
 			}
-			if (query[key].$gt > 0 || query[key].$lt > 0) {
-				if (query[key].$gt > 0) {
-					filteredCollection = filteredCollection.filter(
-						(value) => getValueByKey(value, key) > query[key].$gt,
-					);
-				}
-				if (query[key].$lt > 0) {
-					filteredCollection = filteredCollection.filter(
-						(value) => getValueByKey(value, key) < query[key].$lt,
-					);
-				}
-			} else {
-				filteredCollection = filteredCollection.filter(
-					(value) => getValueByKey(value, key) === query[key],
-				);
-			}
+			// A range bound of 0 is meaningful and must be distinguished from an absent bound. For
+			// example the routerlicious driver asks for the ops of a document from the very beginning
+			// with `{ $gt: 0 }`; treating that as "not a range query" would degrade it to an equality
+			// match and return no ops at all, leaving clients unable to ever catch up.
+			const lowerBound: unknown = query[key].$gt;
+			const upperBound: unknown = query[key].$lt;
+			const hasLowerBound = typeof lowerBound === "number";
+			const hasUpperBound = typeof upperBound === "number";
+			filteredCollection = filteredCollection.filter((value) => {
+				const propertyValue = getValueByKey(value, key);
+				return hasLowerBound || hasUpperBound
+					? (!hasLowerBound || propertyValue > lowerBound) &&
+							(!hasUpperBound || propertyValue < upperBound)
+					: propertyValue === query[key];
+			});
 		}
 
 		if (sort && Object.keys(sort).length === 1) {

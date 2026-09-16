@@ -192,22 +192,22 @@ function testIntervalOperations(intervalCollection: ISequenceIntervalCollection)
 
 	iterator = intervalCollection.CreateForwardIteratorWithStartPosition(-1);
 	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
-		assert(false, "Iterator with OOB position should not produce a result");
+		assert.fail("Iterator with OOB position should not produce a result");
 	}
 
 	iterator = intervalCollection.CreateForwardIteratorWithEndPosition(99999);
 	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
-		assert(false, "Iterator with OOB position should not produce a result");
+		assert.fail("Iterator with OOB position should not produce a result");
 	}
 
 	iterator = intervalCollection.CreateForwardIteratorWithStartPosition(-1);
 	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
-		assert(false, "Iterator with OOB position should not produce a result");
+		assert.fail("Iterator with OOB position should not produce a result");
 	}
 
 	iterator = intervalCollection.CreateForwardIteratorWithEndPosition(99999);
 	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
-		assert(false, "Iterator with OOB position should not produce a result");
+		assert.fail("Iterator with OOB position should not produce a result");
 	}
 
 	i = 0;
@@ -565,7 +565,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 
 			if (intervals1[Symbol.iterator]) {
 				for (const _interval of intervals1) {
-					assert(false, "intervals1 should be empty after emptying invervals2");
+					assert.fail("intervals1 should be empty after emptying invervals2");
 				}
 			}
 		});

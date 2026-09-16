@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IsoBufferEncoding } from "./buffer.js";
 // This file is a Node.js-specific implementation of the base64 encoding functions.
 // Aside from the below import statement, this file should be identical to the
 // base64EncodingBrowser.ts.
@@ -36,7 +37,7 @@ export const fromUtf8ToBase64 = (input: string): string =>
  *
  * @internal
  */
-export const toUtf8 = (input: string, encoding: string): string => {
+export const toUtf8 = (input: string, encoding: IsoBufferEncoding): string => {
 	switch (encoding) {
 		case "utf8":
 		// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
