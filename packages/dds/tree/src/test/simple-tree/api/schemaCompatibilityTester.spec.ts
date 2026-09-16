@@ -404,6 +404,56 @@ describe("checkSchemaCompatibility", () => {
 		);
 	});
 
+	// Maps and Records use the same stored representation and must report the same field diagnostics.
+	for (const { kind, narrow, wide } of [
+		{
+			kind: "map",
+			narrow: factory.map("ImplicitFieldDiagnostics", factory.number),
+			wide: factory.map("ImplicitFieldDiagnostics", [factory.number, factory.string]),
+		},
+		{
+			kind: "record",
+			narrow: factory.record("ImplicitFieldDiagnostics", factory.number),
+			wide: factory.record("ImplicitFieldDiagnostics", [factory.number, factory.string]),
+		},
+	]) {
+		for (const widening of [true, false]) {
+			it(`reports ${kind} ${widening ? "widening" : "narrowing"} blockers at the implicit field`, () => {
+				const view = widening ? wide : narrow;
+				const stored = toUpgradeSchema(widening ? narrow : wide);
+				// Widening needs an upgrade before viewing. Narrowing rejects a type that stored data can contain.
+				// Only widening permits an upgrade because it preserves all existing allowed types.
+				const status = expectCompatibility(
+					{ view, stored },
+					{ canView: false, canUpgrade: widening, isEquivalent: false },
+				);
+				// The changed string type belongs to the implicit field, represented by null, not an empty string.
+				const expected = {
+					mismatch: "allowedType",
+					location: { nodeType: view.identifier, fieldKey: null },
+					allowedType: factory.string.identifier,
+					view: widening,
+					stored: !widening,
+					target: widening,
+				};
+				assert(!status.canView);
+				assert.deepEqual(status.viewDiscrepancies, [expected]);
+				assert(!status.isEquivalent);
+				// Check the allowed-type blocker separately from any missing-node diagnostics.
+				assert.deepEqual(
+					status.equivalenceDiscrepancies.filter(({ mismatch }) => mismatch === "allowedType"),
+					[expected],
+				);
+				if (!status.canUpgrade) {
+					assert.deepEqual(
+						status.upgradeDiscrepancies.filter(({ mismatch }) => mismatch === "allowedType"),
+						[expected],
+					);
+				}
+			});
+		}
+	}
+
 	it("does not invent an implicit-field blocker for an accepted object-to-map upgrade", () => {
 		const view = factory.map("ObjectToMapDiagnostics", factory.number);
 		const stored = factory.object("ObjectToMapDiagnostics", { value: factory.number });

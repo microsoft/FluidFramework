@@ -557,7 +557,8 @@ export function collectSchemaDiagnostics(
 				fieldKey === EmptyKey &&
 				(view.definitions.get(identifier)?.kind === NodeKind.Array ||
 					nodeKind(stored.nodeSchema.get(brand(identifier))) === "array" ||
-					(view.definitions.get(identifier)?.kind === NodeKind.Map &&
+					((view.definitions.get(identifier)?.kind === NodeKind.Map ||
+						view.definitions.get(identifier)?.kind === NodeKind.Record) &&
 						stored.nodeSchema.get(brand(identifier)) instanceof MapNodeStoredSchema))
 					? null
 					: (fieldKey ?? null),
