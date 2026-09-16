@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Version of the newline-delimited JSON result schema emitted by the harness.
-pub const SCHEMA_VERSION: u32 = 2;
+pub const SCHEMA_VERSION: u32 = 3;
 /// Default deterministic fixture seed recorded in benchmark results.
 pub const DEFAULT_SEED: u64 = 0x4d59_5df4_d0f3_3173;
 
@@ -23,6 +23,16 @@ pub enum FixtureKind {
     LargeIncompressible,
     /// An eight-byte big-endian record index used as snapshot state.
     Snapshot,
+}
+
+/// API boundary whose acknowledged operations are measured.
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum MeasurementBoundary {
+    /// Trusted archive backend operations through [`sea_core::archive::SeaStorage`].
+    Storage,
+    /// Author operations through a sequenced [`sea_core::archive::SeaSession`].
+    SequencedSession,
 }
 
 impl FixtureKind {
@@ -164,10 +174,10 @@ pub struct Distribution {
 pub struct Measurements {
     /// Backend construction time in microseconds.
     pub startup_microseconds: f64,
-    /// Distribution of acknowledged append latency in microseconds.
-    pub append_latency_microseconds: Distribution,
-    /// Records acknowledged per second across the append phase.
-    pub append_throughput_records_per_second: f64,
+    /// Distribution of acknowledged storage append or session submit latency in microseconds.
+    pub commit_latency_microseconds: Distribution,
+    /// Storage appends or session submissions acknowledged per second across the commit phase.
+    pub commit_throughput_records_per_second: f64,
     /// Time in microseconds to consume a finite read to its end.
     pub finite_read_microseconds: f64,
     /// Records observed by the finite read.
@@ -203,6 +213,8 @@ pub struct BenchmarkResult {
     pub repetition: u32,
     /// Stable backend identifier.
     pub implementation: String,
+    /// API boundary at which operation timing begins and ends.
+    pub measurement_boundary: MeasurementBoundary,
     /// Guarantees active for this backend and composition.
     pub active_guarantees: Vec<String>,
     /// Build and host metadata for the run.
@@ -300,6 +312,7 @@ mod tests {
             schema_version: SCHEMA_VERSION,
             repetition: 1,
             implementation: "test".to_owned(),
+            measurement_boundary: MeasurementBoundary::Storage,
             active_guarantees: vec!["memory".to_owned()],
             environment: Environment {
                 source_commit: "abc".to_owned(),
@@ -328,8 +341,8 @@ mod tests {
             },
             measurements: Measurements {
                 startup_microseconds: 1.0,
-                append_latency_microseconds: summarize(vec![1.0]),
-                append_throughput_records_per_second: 1.0,
+                commit_latency_microseconds: summarize(vec![1.0]),
+                commit_throughput_records_per_second: 1.0,
                 finite_read_microseconds: 1.0,
                 finite_read_records: 1,
                 snapshot_publish_microseconds: None,

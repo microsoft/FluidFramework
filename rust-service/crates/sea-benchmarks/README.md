@@ -30,16 +30,18 @@ Help exits successfully. Unknown options, missing values, zero records/writers/r
 
 ## Result Schema
 
-Each JSON output line is one schema-version-2 `BenchmarkResult`.
-It includes repetition number, source/environment metadata, workload parameters, active guarantees, append latency distribution, throughput, startup/read/snapshot/recovery duration, process CPU time and peak resident memory where `/proc` exposes them, and logical and persisted bytes.
+Each JSON output line is one schema-version-3 `BenchmarkResult`.
+It includes the measured API boundary, repetition number, source/environment metadata, workload parameters, active guarantees, commit latency distribution, throughput, startup/read/snapshot/recovery duration, process CPU time and peak resident memory where `/proc` exposes them, and logical and persisted bytes.
 Unavailable counters are `null`; they are never inferred.
 
 Latency and throughput use a monotonic process clock. The distribution reports minimum, median, p95, maximum, mean, sample standard deviation, and coefficient of variation. Results are procedure observations, not capacity claims.
 
-For periodic snapshot workloads, append throughput includes snapshot publication wall time and `snapshot_publish_microseconds` is the sum across all publications in the repetition.
+For periodic snapshot workloads, commit throughput includes snapshot publication wall time and `snapshot_publish_microseconds` is the sum across all publications in the repetition.
 
 ## Backends
 
-The runner covers memory, buffered file, independent zlib, immutable-dictionary zstd, AES-256-GCM-SIV, and dictionary-compression-before-encryption.
-File-backed cells report recursive persisted size; decorator cells report process CPU used by the append/read/snapshot workload.
+The `memory` and `file` cells measure trusted backend operations directly through `SeaStorage`.
+Compression, stateful compression, encryption, and the composed compression-before-encryption cell measure `SeaSession` decorators over a common `LocalSequencer<FileStream>`.
+Their commit measurements therefore include sequencing and author-session work and are not directly comparable with schema-version-2 raw-stream decorator results.
+File-backed cells report recursive persisted size; decorator cells report process CPU used by the submit/read/snapshot workload.
 The benchmark key is a fixed non-production key used only in memory and is never emitted; encryption nonces come from the operating system.

@@ -11,10 +11,25 @@ The older `run_conformance` and `run_position_codec_conformance` suites continue
 Factories must return a fresh, empty stream for each call, and the session suite requires a fresh archive session.
 The suites panic on a contract violation and are intended to be invoked from an implementation's async tests.
 
+The legacy append-stream laws map to the current contracts as follows:
+
+| Legacy law | Current disposition |
+| --- | --- |
+| Append order, empty payloads, and exclusive resume boundaries | Ported to `run_sea_storage_conformance`. |
+| Concurrent append completeness | Ported to `run_sea_storage_conformance`. |
+| Finite reads and reads after the current head | Ported to `run_sea_storage_conformance`. |
+| Independent reader cancellation | Ported to `run_sea_storage_conformance`; network cancellation has separate transport tests. |
+| Committed position validation | Ported to `run_sea_storage_conformance`. |
+| Snapshot position, parent, and monotonicity validation | Ported to `run_sea_storage_conformance` using content-addressed roots. |
+| Snapshot recovery | Covered by the atomic snapshot-plus-tail storage load and the session observable-behavior suite. |
+| Position codec round trip | Replaced by the canonical `EventPosition::to_bytes` and `EventPosition::from_bytes` assertion. The obsolete fallible token codec has no current equivalent. |
+| Deterministic mixed legacy model trace | Not mechanically ported because it combines the obsolete inline-snapshot value model with laws covered independently above. Deterministic current-API workloads remain in `sea-benchmarks`. |
+
 ## Relationships and Limits
 
 The memory, buffered-file, and durable-file packages run the Sea storage suite.
 `sea-sequencer` runs the session suite process-locally, while `sea-webtransport-server` runs it through `NativeSeaClient` against every built-in storage mode.
+Compression, encryption, and stateful-compression run the same session suite over a local sequencer.
 The generated Node suite separately covers the single-threaded WASM local client and pending-read cancellation.
 The Chromium harness covers `SeaInjectedClient` over `SeaBrowserTransport`, including its browser-only persistent submission stream, cancellation, disconnect, and reconnect behavior.
 Implementation-specific persistence, corruption, durability, and fault behavior still require local tests; passing this package does not establish those properties.

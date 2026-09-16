@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
     process::Command,
     sync::{
-        OnceLock,
+        Arc, OnceLock,
         atomic::{AtomicU64, Ordering},
     },
     time::Instant,
@@ -12,15 +12,23 @@ use std::{
 use bytes::Bytes;
 use futures_util::TryStreamExt;
 use sea_benchmarks::{
-    BenchmarkResult, DEFAULT_SEED, Environment, FixtureGenerator, FixtureKind, Measurements,
-    SCHEMA_VERSION, Workload, summarize,
+    BenchmarkResult, DEFAULT_SEED, Environment, FixtureGenerator, FixtureKind, MeasurementBoundary,
+    Measurements, SCHEMA_VERSION, Workload, summarize,
 };
-use sea_compression::CompressionStream;
-use sea_core::{EventStream, Snapshot, SnapshotPosition, SnapshotStore};
-use sea_encryption::{ActiveKey, EncryptionKey, EncryptionStream, KeyId, KeyProvider};
+use sea_compression::CompressionSession;
+use sea_core::{
+    BlobTreeId, Event,
+    archive::{
+        AuthorId, EventSubmission, OperationId, SeaSession, SeaStorage, SessionId,
+        Snapshot as ArchiveSnapshot, SnapshotPosition as ArchiveSnapshotPosition,
+        SnapshotPublication,
+    },
+};
+use sea_encryption::{ActiveKey, EncryptionKey, EncryptionSession, KeyId, KeyProvider};
 use sea_file::FileStream;
 use sea_memory::MemoryStream;
-use sea_stateful_compression::StatefulCompressionStream;
+use sea_sequencer::session::{LocalSequencer, LocalSession};
+use sea_stateful_compression::StatefulCompressionSession;
 use tokio::task::JoinSet;
 
 /// Monotonic suffix for process-local temporary benchmark paths.
@@ -188,7 +196,7 @@ async fn smoke() -> Result<(), String> {
     };
     let startup = Instant::now();
     let memory = MemoryStream::new();
-    run_stream(&memory, &concurrent, elapsed_microseconds(startup))
+    run_storage(&memory, &concurrent, elapsed_microseconds(startup))
         .await
         .map(|_| ())?;
 
@@ -197,17 +205,17 @@ async fn smoke() -> Result<(), String> {
     snapshot.snapshot_frequency = Some(16);
     let startup = Instant::now();
     let memory = MemoryStream::new();
-    run_stream(&memory, &snapshot, elapsed_microseconds(startup))
+    run_storage(&memory, &snapshot, elapsed_microseconds(startup))
         .await
         .map(|_| ())?;
 
     let directory = unique_directory("smoke");
     let startup = Instant::now();
     let file = FileStream::open(&directory).map_err(display_error)?;
-    run_stream(&file, &snapshot, elapsed_microseconds(startup)).await?;
+    run_storage(&file, &snapshot, elapsed_microseconds(startup)).await?;
     drop(file);
     let reopened = FileStream::open(&directory).map_err(display_error)?;
-    verify_reopened(&reopened, snapshot.records).await?;
+    verify_reopened_storage(&reopened, snapshot.records).await?;
     drop(reopened);
     fs::remove_dir_all(&directory).map_err(display_error)?;
 
@@ -258,6 +266,13 @@ async fn measure(config: Config) -> Result<(), String> {
                     "file-stateful-compression-encryption".to_owned()
                 }
             },
+            measurement_boundary: match config.backend {
+                Backend::Memory | Backend::File => MeasurementBoundary::Storage,
+                Backend::Compression
+                | Backend::StatefulCompression
+                | Backend::Encryption
+                | Backend::StatefulCompressionEncryption => MeasurementBoundary::SequencedSession,
+            },
             active_guarantees: guarantees(config.backend),
             environment: environment.clone(),
             workload: Workload {
@@ -273,8 +288,8 @@ async fn measure(config: Config) -> Result<(), String> {
             },
             measurements: Measurements {
                 startup_microseconds: measurements.startup_microseconds,
-                append_latency_microseconds: summarize(measurements.append_latencies),
-                append_throughput_records_per_second: throughput,
+                commit_latency_microseconds: summarize(measurements.append_latencies),
+                commit_throughput_records_per_second: throughput,
                 finite_read_microseconds: measurements.finite_read_microseconds,
                 finite_read_records: measurements.finite_read_records,
                 snapshot_publish_microseconds: measurements.snapshot_publish_microseconds,
@@ -301,20 +316,20 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
     let mut measurements = match config.backend {
         Backend::Memory => {
             let startup = Instant::now();
-            let stream = MemoryStream::new();
-            run_stream(&stream, config, elapsed_microseconds(startup)).await?
+            let storage = MemoryStream::new();
+            run_storage(&storage, config, elapsed_microseconds(startup)).await?
         }
         Backend::File => {
             let directory = unique_directory("measure");
             let startup = Instant::now();
-            let stream = FileStream::open(&directory).map_err(display_error)?;
+            let storage = FileStream::open(&directory).map_err(display_error)?;
             let mut measurements =
-                run_stream(&stream, config, elapsed_microseconds(startup)).await?;
-            drop(stream);
+                run_storage(&storage, config, elapsed_microseconds(startup)).await?;
+            drop(storage);
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
             let reopened = FileStream::open(&directory).map_err(display_error)?;
-            verify_reopened(&reopened, config.records).await?;
+            verify_reopened_storage(&reopened, config.records).await?;
             measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
             drop(reopened);
             fs::remove_dir_all(&directory).map_err(display_error)?;
@@ -323,100 +338,144 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
         Backend::Compression => {
             let directory = unique_directory("compression");
             let startup = Instant::now();
-            let stream =
-                CompressionStream::new(FileStream::open(&directory).map_err(display_error)?);
+            let sessions = open_local_sessions(
+                Arc::new(FileStream::open(&directory).map_err(display_error)?),
+                config.writers,
+                "compression",
+            )
+            .await?
+            .into_iter()
+            .map(CompressionSession::new)
+            .collect();
             let mut measurements =
-                run_stream(&stream, config, elapsed_microseconds(startup)).await?;
-            drop(stream);
+                run_session(sessions, config, elapsed_microseconds(startup)).await?;
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
-            let reopened =
-                CompressionStream::new(FileStream::open(&directory).map_err(display_error)?);
-            verify_reopened_stream(&reopened, config).await?;
+            let reopened = open_local_sessions(
+                Arc::new(FileStream::open(&directory).map_err(display_error)?),
+                1,
+                "compression-reopen",
+            )
+            .await?
+            .pop()
+            .expect("one reopened session");
+            let reopened = CompressionSession::new(reopened);
+            verify_reopened_session(&reopened, config).await?;
+            reopened.close().await.map_err(display_error)?;
             measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
-            drop(reopened);
             fs::remove_dir_all(&directory).map_err(display_error)?;
             measurements
         }
         Backend::StatefulCompression => {
             let directory = unique_directory("stateful-compression");
             let startup = Instant::now();
-            let stream = StatefulCompressionStream::new(
-                FileStream::open(&directory).map_err(display_error)?,
-                Bytes::from_static(DICTIONARY),
-                128 * 1024,
+            let sessions = open_local_sessions(
+                Arc::new(FileStream::open(&directory).map_err(display_error)?),
+                config.writers,
+                "stateful-compression",
             )
-            .map_err(display_error)?;
+            .await?
+            .into_iter()
+            .map(|session| {
+                StatefulCompressionSession::new(session, Bytes::from_static(DICTIONARY), 128 * 1024)
+                    .map_err(display_error)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
             let mut measurements =
-                run_stream(&stream, config, elapsed_microseconds(startup)).await?;
-            drop(stream);
+                run_session(sessions, config, elapsed_microseconds(startup)).await?;
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
-            let reopened = StatefulCompressionStream::new(
-                FileStream::open(&directory).map_err(display_error)?,
+            let reopened = open_local_sessions(
+                Arc::new(FileStream::open(&directory).map_err(display_error)?),
+                1,
+                "stateful-compression-reopen",
+            )
+            .await?
+            .pop()
+            .expect("one reopened session");
+            let reopened = StatefulCompressionSession::new(
+                reopened,
                 Bytes::from_static(DICTIONARY),
                 128 * 1024,
             )
             .map_err(display_error)?;
-            verify_reopened_stream(&reopened, config).await?;
+            verify_reopened_session(&reopened, config).await?;
+            reopened.close().await.map_err(display_error)?;
             measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
-            drop(reopened);
             fs::remove_dir_all(&directory).map_err(display_error)?;
             measurements
         }
         Backend::Encryption => {
             let directory = unique_directory("encryption");
             let startup = Instant::now();
-            let stream = EncryptionStream::new(
-                FileStream::open(&directory).map_err(display_error)?,
-                BenchmarkKey,
-            );
+            let sessions = open_local_sessions(
+                Arc::new(FileStream::open(&directory).map_err(display_error)?),
+                config.writers,
+                "encryption",
+            )
+            .await?
+            .into_iter()
+            .map(|session| EncryptionSession::new(session, BenchmarkKey))
+            .collect();
             let mut measurements =
-                run_stream(&stream, config, elapsed_microseconds(startup)).await?;
-            drop(stream);
+                run_session(sessions, config, elapsed_microseconds(startup)).await?;
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
-            let reopened = EncryptionStream::new(
-                FileStream::open(&directory).map_err(display_error)?,
-                BenchmarkKey,
-            );
-            verify_reopened_stream(&reopened, config).await?;
+            let reopened = open_local_sessions(
+                Arc::new(FileStream::open(&directory).map_err(display_error)?),
+                1,
+                "encryption-reopen",
+            )
+            .await?
+            .pop()
+            .expect("one reopened session");
+            let reopened = EncryptionSession::new(reopened, BenchmarkKey);
+            verify_reopened_session(&reopened, config).await?;
+            reopened.close().await.map_err(display_error)?;
             measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
-            drop(reopened);
             fs::remove_dir_all(&directory).map_err(display_error)?;
             measurements
         }
         Backend::StatefulCompressionEncryption => {
             let directory = unique_directory("stateful-compression-encryption");
             let startup = Instant::now();
-            let encrypted = EncryptionStream::new(
-                FileStream::open(&directory).map_err(display_error)?,
-                BenchmarkKey,
-            );
-            let stream = StatefulCompressionStream::new(
-                encrypted,
-                Bytes::from_static(DICTIONARY),
-                128 * 1024,
+            let sessions = open_local_sessions(
+                Arc::new(FileStream::open(&directory).map_err(display_error)?),
+                config.writers,
+                "stateful-compression-encryption",
             )
-            .map_err(display_error)?;
+            .await?
+            .into_iter()
+            .map(|session| {
+                StatefulCompressionSession::new(
+                    EncryptionSession::new(session, BenchmarkKey),
+                    Bytes::from_static(DICTIONARY),
+                    128 * 1024,
+                )
+                .map_err(display_error)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
             let mut measurements =
-                run_stream(&stream, config, elapsed_microseconds(startup)).await?;
-            drop(stream);
+                run_session(sessions, config, elapsed_microseconds(startup)).await?;
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
-            let encrypted = EncryptionStream::new(
-                FileStream::open(&directory).map_err(display_error)?,
-                BenchmarkKey,
-            );
-            let reopened = StatefulCompressionStream::new(
-                encrypted,
+            let reopened = open_local_sessions(
+                Arc::new(FileStream::open(&directory).map_err(display_error)?),
+                1,
+                "stateful-compression-encryption-reopen",
+            )
+            .await?
+            .pop()
+            .expect("one reopened session");
+            let reopened = StatefulCompressionSession::new(
+                EncryptionSession::new(reopened, BenchmarkKey),
                 Bytes::from_static(DICTIONARY),
                 128 * 1024,
             )
             .map_err(display_error)?;
-            verify_reopened_stream(&reopened, config).await?;
+            verify_reopened_session(&reopened, config).await?;
+            reopened.close().await.map_err(display_error)?;
             measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
-            drop(reopened);
             fs::remove_dir_all(&directory).map_err(display_error)?;
             measurements
         }
@@ -427,18 +486,47 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
     Ok(measurements)
 }
 
-/// Runs the append, optional snapshot, and finite-read workload on a stream.
-async fn run_stream<S>(
-    stream: &S,
+async fn open_local_sessions<S>(
+    storage: Arc<S>,
+    writers: usize,
+    identity_prefix: &str,
+) -> Result<Vec<LocalSession<S>>, String>
+where
+    S: SeaStorage + 'static,
+{
+    let sequencer = LocalSequencer::recover(storage)
+        .await
+        .map_err(display_error)?;
+    let mut sessions = Vec::with_capacity(writers);
+    for writer in 0..writers {
+        let author = AuthorId::new(Bytes::from(format!("{identity_prefix}-author-{writer}")))
+            .expect("generated author identity is nonempty");
+        let session = SessionId::new(Bytes::from(format!("{identity_prefix}-session-{writer}")))
+            .expect("generated session identity is nonempty");
+        sessions.push(
+            sequencer
+                .open_session(author, session, None)
+                .await
+                .map_err(display_error)?,
+        );
+    }
+    Ok(sessions)
+}
+
+/// Runs submission, optional snapshot, and finite-read work through sequenced sessions.
+#[allow(clippy::too_many_lines)]
+async fn run_session<S>(
+    sessions: Vec<S>,
     config: &Config,
     startup_microseconds: f64,
 ) -> Result<RunMeasurements, String>
 where
-    S: EventStream
-        + SnapshotStore<Position = <S as EventStream>::Position, Error = <S as EventStream>::Error>
-        + Clone
-        + 'static,
+    S: SeaSession + 'static,
 {
+    if sessions.len() != config.writers {
+        return Err("session count did not match writer count".to_owned());
+    }
+    let sessions = sessions.into_iter().map(Arc::new).collect::<Vec<_>>();
     let generator = FixtureGenerator::new(config.seed);
     let record_capacity =
         usize::try_from(config.records).map_err(|_| "record count exceeds addressable memory")?;
@@ -448,29 +536,47 @@ where
             if config.writers != 1 {
                 return Err("periodic snapshots require exactly one writer".to_owned());
             }
+            let session = &sessions[0];
             let mut latencies = Vec::with_capacity(record_capacity);
             let mut snapshot_elapsed = 0.0;
             let mut parent = None;
+            let mut reference = None;
             for index in 0..config.records {
-                let payload = Bytes::from(generator.payload(config.fixture, index));
                 let started = Instant::now();
-                let receipt = stream.append(payload).await.map_err(display_error)?;
+                let receipt = session
+                    .submit(EventSubmission {
+                        operation_id: benchmark_operation_id(b"session-event", index),
+                        reference,
+                        event: Event {
+                            payload: Bytes::from(generator.payload(config.fixture, index)),
+                            blob_tree: None,
+                        },
+                    })
+                    .await
+                    .map_err(display_error)?;
+                reference = Some(receipt.position);
                 latencies.push(elapsed_microseconds(started));
                 if (index + 1) % snapshot_frequency == 0 || index + 1 == config.records {
                     let started = Instant::now();
+                    let root = session
+                        .put_blob(Bytes::from(
+                            generator.payload(FixtureKind::Snapshot, index + 1),
+                        ))
+                        .await
+                        .map_err(display_error)?;
                     parent = Some(
-                        stream
-                            .publish(
-                                Snapshot {
-                                    at_event: SnapshotPosition::At(receipt.position),
-                                    payload: Bytes::from(
-                                        generator.payload(FixtureKind::Snapshot, index + 1),
-                                    ),
+                        session
+                            .publish_snapshot(SnapshotPublication {
+                                operation_id: benchmark_operation_id(b"session-snapshot", index),
+                                expected_parent: parent,
+                                snapshot: ArchiveSnapshot {
+                                    at_event: ArchiveSnapshotPosition::At(receipt.position),
+                                    root: BlobTreeId::Blob(root),
                                 },
-                                parent.as_ref(),
-                            )
+                            })
                             .await
-                            .map_err(display_error)?,
+                            .map_err(display_error)?
+                            .id,
                     );
                     snapshot_elapsed += elapsed_microseconds(started);
                 }
@@ -478,20 +584,31 @@ where
             (latencies, Some(snapshot_elapsed))
         } else {
             let mut tasks = JoinSet::new();
-            for writer in 0..config.writers {
-                let stream = stream.clone();
+            for (writer, session) in sessions.iter().enumerate() {
+                let session = Arc::clone(session);
                 let generator = generator.clone();
                 let fixture = config.fixture;
                 let records = config.records;
                 let writers = config.writers;
                 tasks.spawn(async move {
                     let mut latencies = Vec::new();
+                    let mut reference = None;
                     let first_index =
                         u64::try_from(writer).map_err(|_| "writer index exceeds workload range")?;
                     for index in (first_index..records).step_by(writers) {
-                        let payload = Bytes::from(generator.payload(fixture, index));
                         let started = Instant::now();
-                        stream.append(payload).await.map_err(display_error)?;
+                        let receipt = session
+                            .submit(EventSubmission {
+                                operation_id: benchmark_operation_id(b"session-event", index),
+                                reference,
+                                event: Event {
+                                    payload: Bytes::from(generator.payload(fixture, index)),
+                                    blob_tree: None,
+                                },
+                            })
+                            .await
+                            .map_err(display_error)?;
+                        reference = Some(receipt.position);
                         latencies.push(elapsed_microseconds(started));
                     }
                     Ok::<_, String>(latencies)
@@ -505,19 +622,22 @@ where
         };
     let append_elapsed_seconds = append_started.elapsed().as_secs_f64();
     if append_latencies.len() != record_capacity {
-        return Err("append count did not match workload".to_owned());
+        return Err("submission count did not match workload".to_owned());
     }
 
     let read_started = Instant::now();
-    let records = stream
-        .read(None)
+    let records = sessions[0]
+        .read(None, None)
         .await
         .map_err(display_error)?
         .try_collect::<Vec<_>>()
         .await
         .map_err(display_error)?;
     let finite_read_microseconds = elapsed_microseconds(read_started);
-    verify_payloads(&records, &generator, config)?;
+    verify_session_payloads(&records, &generator, config)?;
+    for session in &sessions {
+        session.close().await.map_err(display_error)?;
+    }
 
     Ok(RunMeasurements {
         startup_microseconds,
@@ -540,9 +660,33 @@ where
     })
 }
 
-/// Verifies record count and an order-independent digest of generated payloads.
-fn verify_payloads<P>(
-    records: &[sea_core::CommittedEvent<P>],
+async fn verify_reopened_session<S>(session: &S, config: &Config) -> Result<(), String>
+where
+    S: SeaSession,
+{
+    let generator = FixtureGenerator::new(config.seed);
+    let records = session
+        .read(None, None)
+        .await
+        .map_err(display_error)?
+        .try_collect::<Vec<_>>()
+        .await
+        .map_err(display_error)?;
+    verify_session_payloads(&records, &generator, config)?;
+    if config.snapshot_frequency.is_some()
+        && session
+            .latest_snapshot()
+            .await
+            .map_err(display_error)?
+            .is_none()
+    {
+        return Err("reopened session did not preserve its snapshot".to_owned());
+    }
+    Ok(())
+}
+
+fn verify_session_payloads(
+    records: &[sea_core::archive::SessionCommittedEvent],
     generator: &FixtureGenerator,
     config: &Config,
 ) -> Result<(), String> {
@@ -556,7 +700,7 @@ fn verify_payloads<P>(
         ));
     }
     let actual = records.iter().fold(0_u64, |digest, record| {
-        digest ^ payload_digest(&record.payload)
+        digest ^ payload_digest(&record.committed.event.payload)
     });
     let expected = (0..config.records).fold(0_u64, |digest, index| {
         digest ^ payload_digest(&generator.payload(config.fixture, index))
@@ -567,10 +711,148 @@ fn verify_payloads<P>(
     Ok(())
 }
 
+/// Runs the append, optional snapshot, and finite-read workload on trusted storage.
+#[allow(clippy::too_many_lines)]
+async fn run_storage<S>(
+    storage: &S,
+    config: &Config,
+    startup_microseconds: f64,
+) -> Result<RunMeasurements, String>
+where
+    S: SeaStorage + Clone + 'static,
+{
+    let generator = FixtureGenerator::new(config.seed);
+    let record_capacity =
+        usize::try_from(config.records).map_err(|_| "record count exceeds addressable memory")?;
+    let append_started = Instant::now();
+    let (append_latencies, snapshot_publish_microseconds) =
+        if let Some(snapshot_frequency) = config.snapshot_frequency {
+            if config.writers != 1 {
+                return Err("periodic snapshots require exactly one writer".to_owned());
+            }
+            let mut latencies = Vec::with_capacity(record_capacity);
+            let mut snapshot_elapsed = 0.0;
+            let mut parent = None;
+            for index in 0..config.records {
+                let payload = Bytes::from(generator.payload(config.fixture, index));
+                let started = Instant::now();
+                let receipt = storage
+                    .append(Event {
+                        payload,
+                        blob_tree: None,
+                    })
+                    .await
+                    .map_err(display_error)?;
+                latencies.push(elapsed_microseconds(started));
+                if (index + 1) % snapshot_frequency == 0 || index + 1 == config.records {
+                    let snapshot_payload =
+                        Bytes::from(generator.payload(FixtureKind::Snapshot, index + 1));
+                    let root = storage
+                        .put_blob(snapshot_payload)
+                        .await
+                        .map_err(display_error)?;
+                    let started = Instant::now();
+                    parent = Some(
+                        storage
+                            .publish_snapshot(SnapshotPublication {
+                                operation_id: benchmark_operation_id(b"storage-snapshot", index),
+                                expected_parent: parent,
+                                snapshot: ArchiveSnapshot {
+                                    at_event: ArchiveSnapshotPosition::At(receipt.position),
+                                    root: BlobTreeId::Blob(root),
+                                },
+                            })
+                            .await
+                            .map_err(display_error)?
+                            .id,
+                    );
+                    snapshot_elapsed += elapsed_microseconds(started);
+                }
+            }
+            (latencies, Some(snapshot_elapsed))
+        } else {
+            let mut tasks = JoinSet::new();
+            for writer in 0..config.writers {
+                let storage = storage.clone();
+                let generator = generator.clone();
+                let fixture = config.fixture;
+                let records = config.records;
+                let writers = config.writers;
+                tasks.spawn(async move {
+                    let mut latencies = Vec::new();
+                    let first_index =
+                        u64::try_from(writer).map_err(|_| "writer index exceeds workload range")?;
+                    for index in (first_index..records).step_by(writers) {
+                        let started = Instant::now();
+                        storage
+                            .append(Event {
+                                payload: Bytes::from(generator.payload(fixture, index)),
+                                blob_tree: None,
+                            })
+                            .await
+                            .map_err(display_error)?;
+                        latencies.push(elapsed_microseconds(started));
+                    }
+                    Ok::<_, String>(latencies)
+                });
+            }
+            let mut latencies = Vec::with_capacity(record_capacity);
+            while let Some(result) = tasks.join_next().await {
+                latencies.extend(result.map_err(display_error)??);
+            }
+            (latencies, None)
+        };
+    let append_elapsed_seconds = append_started.elapsed().as_secs_f64();
+    if append_latencies.len() != record_capacity {
+        return Err("append count did not match workload".to_owned());
+    }
+
+    let read_started = Instant::now();
+    let records = storage
+        .read(None, None)
+        .await
+        .map_err(display_error)?
+        .try_collect::<Vec<_>>()
+        .await
+        .map_err(display_error)?;
+    let finite_read_microseconds = elapsed_microseconds(read_started);
+    verify_storage_payloads(&records, &generator, config)?;
+
+    Ok(RunMeasurements {
+        startup_microseconds,
+        append_latencies,
+        append_elapsed_seconds,
+        finite_read_microseconds,
+        finite_read_records: config.records,
+        snapshot_publish_microseconds,
+        recovery_microseconds: None,
+        reconnect_microseconds: None,
+        process_cpu_microseconds: None,
+        peak_resident_memory_bytes: peak_resident_memory_bytes(),
+        logical_payload_bytes: config.records
+            * u64::try_from(config.fixture.payload_size())
+                .map_err(|_| "fixture size exceeds measurement range")?,
+        persisted_bytes: None,
+        wire_bytes: None,
+        peak_queued_records: None,
+        peak_active_streams: None,
+    })
+}
+
+fn benchmark_operation_id(domain: &[u8], index: u64) -> OperationId {
+    let mut bytes = Vec::with_capacity(domain.len() + 8);
+    bytes.extend_from_slice(domain);
+    bytes.extend_from_slice(&index.to_be_bytes());
+    OperationId::new(Bytes::from(bytes)).expect("benchmark operation identity")
+}
+
 /// Verifies that the plain file stream preserved records and a snapshot.
-async fn verify_reopened(stream: &FileStream, expected_records: u64) -> Result<(), String> {
-    let records = stream
-        .read(None)
+async fn verify_reopened_storage<S>(storage: &S, expected_records: u64) -> Result<(), String>
+where
+    S: SeaStorage,
+{
+    let records = storage
+        .read(None, None)
         .await
         .map_err(display_error)?
         .try_collect::<Vec<_>>()
@@ -581,31 +863,39 @@ async fn verify_reopened(stream: &FileStream, expected_records: u64) -> Result<(
     if records.len() != expected_records {
         return Err("reopened file stream did not preserve every record".to_owned());
     }
-    if stream.latest().await.map_err(display_error)?.is_none() {
+    if storage
+        .latest_snapshot()
+        .await
+        .map_err(display_error)?
+        .is_none()
+    {
         return Err("reopened file stream did not preserve its snapshot".to_owned());
     }
     Ok(())
 }
 
-/// Verifies records and optional snapshot state after reopening a wrapper stack.
-async fn verify_reopened_stream<S>(stream: &S, config: &Config) -> Result<(), String>
-where
-    S: EventStream
-        + SnapshotStore<Position = <S as EventStream>::Position, Error = <S as EventStream>::Error>,
-{
-    let generator = FixtureGenerator::new(config.seed);
-    let records = stream
-        .read(None)
-        .await
-        .map_err(display_error)?
-        .try_collect::<Vec<_>>()
-        .await
-        .map_err(display_error)?;
-    verify_payloads(&records, &generator, config)?;
-    if config.snapshot_frequency.is_some()
-        && stream.latest().await.map_err(display_error)?.is_none()
-    {
-        return Err("reopened wrapper did not preserve its snapshot".to_owned());
+fn verify_storage_payloads(
+    records: &[sea_core::archive::CommittedEvent],
+    generator: &FixtureGenerator,
+    config: &Config,
+) -> Result<(), String> {
+    let expected_records =
+        usize::try_from(config.records).map_err(|_| "record count exceeds addressable memory")?;
+    if records.len() != expected_records {
+        return Err(format!(
+            "finite read returned {} records; expected {}",
+            records.len(),
+            config.records
+        ));
+    }
+    let actual = records.iter().fold(0_u64, |digest, record| {
+        digest ^ payload_digest(&record.event.payload)
+    });
+    let expected = (0..config.records).fold(0_u64, |digest, index| {
+        digest ^ payload_digest(&generator.payload(config.fixture, index))
+    });
+    if actual != expected {
+        return Err("finite read payload digest did not match fixtures".to_owned());
     }
     Ok(())
 }

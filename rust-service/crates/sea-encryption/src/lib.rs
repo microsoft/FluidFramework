@@ -172,6 +172,9 @@ pub enum EncryptionError<E> {
     /// Encryption rejected the payload.
     #[error("payload encryption failed")]
     EncryptionFailed,
+    /// A stable operation identity was reused with different plaintext input.
+    #[error("operation identity is already bound to different input")]
+    OperationConflict,
     /// Authentication, parsing, version, algorithm, or context validation failed.
     #[error("encrypted payload is corrupt")]
     CorruptEnvelope,
@@ -186,6 +189,7 @@ where
             Self::Store(error) => error.kind(),
             Self::KeyUnavailable { .. } | Self::NonceUnavailable(_) => ErrorKind::Unavailable,
             Self::EncryptionFailed => ErrorKind::Rejected,
+            Self::OperationConflict => ErrorKind::Conflict,
             Self::CorruptEnvelope => ErrorKind::Corrupt,
         }
     }
@@ -326,6 +330,41 @@ where
         &self,
         mut submission: EventSubmission,
     ) -> Result<SessionEventReceipt, Self::Error> {
+        if let Some(receipt) = self
+            .inner
+            .resolve_submission(&submission.operation_id)
+            .await
+            .map_err(EncryptionError::Store)?
+        {
+            let after = receipt
+                .position
+                .get()
+                .checked_sub(1)
+                .filter(|position| *position != 0)
+                .map(sea_core::EventPosition::new);
+            let mut events = self
+                .inner
+                .read(after, Some(receipt.position))
+                .await
+                .map_err(EncryptionError::Store)?;
+            let mut committed = events
+                .next()
+                .await
+                .ok_or(EncryptionError::OperationConflict)?
+                .map_err(EncryptionError::Store)?;
+            committed.committed.event.payload = decrypt_payload(
+                &self.keys,
+                &committed.committed.event.payload,
+                PayloadContext::Record,
+            )?;
+            if committed.operation_id == submission.operation_id
+                && committed.reference == submission.reference
+                && committed.committed.event == submission.event
+            {
+                return Ok(receipt);
+            }
+            return Err(EncryptionError::OperationConflict);
+        }
         submission.event.payload = encrypt_payload(
             &self.keys,
             &self.nonces,
@@ -794,6 +833,23 @@ mod tests {
             event.committed.event.payload,
             Bytes::from_static(b"secret event")
         );
+    }
+
+    #[tokio::test]
+    async fn passes_session_conformance() {
+        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
+            .await
+            .unwrap();
+        let session = sequencer
+            .open_session(
+                AuthorId::new(Bytes::from_static(b"conformance-author")).unwrap(),
+                SessionId::new(Bytes::from_static(b"conformance-session")).unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+        let encrypted = EncryptionSession::new(session, TestKeys::new());
+        sea_conformance::run_sea_session_observable_behavior(&encrypted).await;
     }
 
     #[tokio::test]

@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 3a. Migrate conformance and benchmarks.
-- **Last completed checkpoint:** 2. Capture current behavior and test infrastructure.
-- **Last validation:** Checkpoint 2 strict Rust lint, full Rust workspace tests, minimal Fluid driver tests, generated Node tests, and real Chromium WebTransport validation passed on 2026-09-16.
-- **Latest checkpoint notes:** No settled architecture decisions changed. Current behavior is now captured by reusable `SeaSession` conformance, incremental frame fixtures, native response validation, and raw transport fault tests; generated local and browser/injected paths retain separate platform-specific lifecycle coverage.
+- **Current checkpoint:** 3b. Migrate storage and decorators.
+- **Last completed checkpoint:** 3a. Migrate conformance and benchmarks.
+- **Last validation:** Checkpoint 3a formatting, strict workspace Clippy, full Rust workspace tests, benchmark smoke, documentation links, and representative schema-version-3 storage/session measurements passed on 2026-09-16.
+- **Latest checkpoint notes:** Benchmark schema version 3 distinguishes direct `SeaStorage` measurements from sequenced `SeaSession` decorator measurements; version-2 raw-stream decorator results are not comparable. Current storage conformance absorbs the meaningful legacy laws. `EncryptionSession` now validates committed plaintext before returning a stable-ID retry receipt, preserving idempotency across fresh nonces and rejecting changed input.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 3a. Migrate conformance and benchmarks.
+- **Next checkpoint:** 3b. Migrate storage and decorators.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -453,11 +453,11 @@ This checkpoint may be split into the following ordered commits while keeping bo
 
 #### 3a. Migrate conformance and benchmarks
 
-- [ ] Inventory every legacy `sea-conformance` law and map it to `SeaStorage`, current `SeaSession`, a later checkpoint, or an explicit deletion rationale.
-- [ ] Port laws that remain meaningful to `SeaStorage` and the current `SeaSession` API without anticipating the boundary split in checkpoint 4; do not mechanically translate laws whose old value model no longer exists.
-- [ ] Split `sea-benchmarks` so storage-backend measurements exercise `SeaStorage`, while compression, encryption, and stateful-compression measurements exercise their surviving `SeaSession` decorators over a common sequenced session.
-- [ ] Preserve workload inputs where meaningful, but label the measured layer and do not compare old raw-stream decorator timings directly with new sequenced-session decorator timings.
-- [ ] Version or replace retained result fields whose measurement boundary changes, and document why old and new results are not equivalent.
+- [x] Inventory every legacy `sea-conformance` law and map it to `SeaStorage`, current `SeaSession`, a later checkpoint, or an explicit deletion rationale.
+- [x] Port laws that remain meaningful to `SeaStorage` and the current `SeaSession` API without anticipating the boundary split in checkpoint 4; do not mechanically translate laws whose old value model no longer exists.
+- [x] Split `sea-benchmarks` so storage-backend measurements exercise `SeaStorage`, while compression, encryption, and stateful-compression measurements exercise their surviving `SeaSession` decorators over a common sequenced session.
+- [x] Preserve workload inputs where meaningful, but label the measured layer and do not compare old raw-stream decorator timings directly with new sequenced-session decorator timings.
+- [x] Version or replace retained result fields whose measurement boundary changes, and document why old and new results are not equivalent.
 
 #### 3b. Migrate storage and decorators
 

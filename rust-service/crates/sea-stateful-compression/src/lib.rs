@@ -657,15 +657,17 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::time::Instant;
+    use std::{sync::Arc, time::Instant};
 
     use futures_util::{StreamExt, TryStreamExt};
     use sea_compression::CompressionStream;
     use sea_core::{
         Capabilities, ClassifiedError, CommittedEvent, ErrorKind, EventReceipt, EventStream,
         PublishedSnapshot, Snapshot, SnapshotId, SnapshotPosition, SnapshotStore, StreamReader,
+        archive::{AuthorId, SessionId},
     };
     use sea_memory::{MemoryError, MemoryPosition, MemoryStream};
+    use sea_sequencer::session::LocalSequencer;
 
     use super::*;
 
@@ -797,6 +799,25 @@ mod tests {
                 )
                 .await
         }
+    }
+
+    #[tokio::test]
+    async fn passes_session_conformance() {
+        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
+            .await
+            .unwrap();
+        let session = sequencer
+            .open_session(
+                AuthorId::new(Bytes::from_static(b"conformance-author")).unwrap(),
+                SessionId::new(Bytes::from_static(b"conformance-session")).unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+        let compressed =
+            StatefulCompressionSession::new(session, Bytes::from_static(DICTIONARY), MAX_PAYLOAD)
+                .unwrap();
+        sea_conformance::run_sea_session_observable_behavior(&compressed).await;
     }
 
     #[tokio::test]

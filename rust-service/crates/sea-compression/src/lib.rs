@@ -443,6 +443,23 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn passes_session_conformance() {
+        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
+            .await
+            .unwrap();
+        let session = sequencer
+            .open_session(
+                AuthorId::new(Bytes::from_static(b"conformance-author")).unwrap(),
+                SessionId::new(Bytes::from_static(b"conformance-session")).unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+        sea_conformance::run_sea_session_observable_behavior(&CompressionSession::new(session))
+            .await;
+    }
+
+    #[tokio::test]
     async fn passes_shared_conformance() {
         sea_conformance::run_conformance(|| CompressionStream::new(MemoryStream::new())).await;
     }

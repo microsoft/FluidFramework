@@ -147,11 +147,21 @@ where
     );
     assert_eq!(
         session
-            .submit(submission)
+            .submit(submission.clone())
             .await
             .expect("idempotent submission retry"),
         receipt
     );
+    let mut conflicting = submission;
+    conflicting.event.payload = Bytes::from_static(b"different");
+    assert!(matches!(
+        session
+            .submit(conflicting)
+            .await
+            .expect_err("operation identity reuse with different input")
+            .kind(),
+        ErrorKind::Conflict | ErrorKind::Rejected
+    ));
     receipt
 }
 
@@ -222,12 +232,20 @@ where
 /// # Panics
 ///
 /// Panics when the backend violates content, atomicity, history, idempotency, or load laws.
+#[allow(clippy::too_many_lines)]
 pub async fn run_sea_storage_conformance<S, F>(make_storage: F)
 where
     S: SeaStorage,
     S::Error: Debug,
     F: Fn() -> S,
 {
+    storage_append_order_and_boundaries(&make_storage).await;
+    storage_concurrent_appends_are_contiguous(&make_storage).await;
+    storage_read_is_finite(&make_storage).await;
+    storage_readers_are_independent_and_cancellable(&make_storage).await;
+    storage_positions_require_committed_ordinals(&make_storage).await;
+    storage_snapshot_positions_require_committed_ordinals(&make_storage).await;
+
     let storage = make_storage();
     let directory_id = prepare_blob_tree(&storage).await;
     reject_missing_event_tree(&storage).await;
@@ -292,6 +310,34 @@ where
         Some(positioned.clone())
     );
 
+    let stale_parent = storage
+        .publish_snapshot(SnapshotPublication {
+            operation_id: OperationId::new(Bytes::from_static(b"stale-parent-publication"))
+                .expect("operation identity"),
+            expected_parent: Some(initial.id),
+            snapshot: ArchiveSnapshot {
+                at_event: ArchiveSnapshotPosition::At(second.position),
+                root: BlobTreeId::Directory(directory_id),
+            },
+        })
+        .await
+        .expect_err("stale snapshot parent must be rejected");
+    assert_eq!(stale_parent.kind(), ErrorKind::Conflict);
+
+    let regressive = storage
+        .publish_snapshot(SnapshotPublication {
+            operation_id: OperationId::new(Bytes::from_static(b"regressive-publication"))
+                .expect("operation identity"),
+            expected_parent: Some(positioned.id.clone()),
+            snapshot: ArchiveSnapshot {
+                at_event: ArchiveSnapshotPosition::Initial,
+                root: BlobTreeId::Directory(directory_id),
+            },
+        })
+        .await
+        .expect_err("regressive snapshot must be rejected");
+    assert_eq!(regressive.kind(), ErrorKind::Conflict);
+
     let conflicting = SnapshotPublication {
         snapshot: ArchiveSnapshot {
             at_event: ArchiveSnapshotPosition::At(second.position),
@@ -319,6 +365,222 @@ where
         Some(positioned.clone())
     );
     assert_captured_load(&storage, positioned, first.position, second.position).await;
+}
+
+async fn storage_append_order_and_boundaries<S, F>(make_storage: &F)
+where
+    S: SeaStorage,
+    S::Error: Debug,
+    F: Fn() -> S,
+{
+    let storage = make_storage();
+    let first = storage
+        .append(Event {
+            payload: Bytes::from_static(b"first"),
+            blob_tree: None,
+        })
+        .await
+        .expect("first append");
+    let second = storage
+        .append(Event {
+            payload: Bytes::new(),
+            blob_tree: None,
+        })
+        .await
+        .expect("second append");
+    let third = storage
+        .append(Event {
+            payload: Bytes::from_static(b"third"),
+            blob_tree: None,
+        })
+        .await
+        .expect("third append");
+    assert_eq!(storage.head().await.expect("head"), Some(third.position));
+
+    let records = storage
+        .read(Some(first.position), None)
+        .await
+        .expect("reader")
+        .try_collect::<Vec<_>>()
+        .await
+        .expect("records");
+    assert_eq!(records.len(), 2);
+    assert_eq!(records[0].position, second.position);
+    assert_eq!(records[0].event.payload, Bytes::new());
+    assert_eq!(records[1].position, third.position);
+    assert_eq!(records[1].event.payload, Bytes::from_static(b"third"));
+
+    let after_head = storage
+        .read(Some(third.position), None)
+        .await
+        .expect("reader after head")
+        .try_collect::<Vec<_>>()
+        .await
+        .expect("records after head");
+    assert!(after_head.is_empty());
+}
+
+async fn storage_concurrent_appends_are_contiguous<S, F>(make_storage: &F)
+where
+    S: SeaStorage,
+    S::Error: Debug,
+    F: Fn() -> S,
+{
+    let storage = make_storage();
+    let appends = (0_u8..32).map(|value| {
+        storage.append(Event {
+            payload: Bytes::from(vec![value]),
+            blob_tree: None,
+        })
+    });
+    for result in join_all(appends).await {
+        result.expect("concurrent append");
+    }
+    storage
+        .append(Event {
+            payload: Bytes::from_static(b"sentinel"),
+            blob_tree: None,
+        })
+        .await
+        .expect("precedence append");
+    let records = storage
+        .read(None, None)
+        .await
+        .expect("reader")
+        .try_collect::<Vec<_>>()
+        .await
+        .expect("records");
+    assert_eq!(records.len(), 33);
+    assert_eq!(
+        records.last().expect("sentinel record").event.payload,
+        Bytes::from_static(b"sentinel")
+    );
+    let mut concurrent_values = records[..32]
+        .iter()
+        .map(|record| record.event.payload[0])
+        .collect::<Vec<_>>();
+    concurrent_values.sort_unstable();
+    assert_eq!(concurrent_values, (0_u8..32).collect::<Vec<_>>());
+}
+
+async fn storage_read_is_finite<S, F>(make_storage: &F)
+where
+    S: SeaStorage,
+    S::Error: Debug,
+    F: Fn() -> S,
+{
+    let storage = make_storage();
+    storage
+        .append(Event {
+            payload: Bytes::from_static(b"captured"),
+            blob_tree: None,
+        })
+        .await
+        .expect("captured append");
+    let reader = storage.read(None, None).await.expect("reader");
+    storage
+        .append(Event {
+            payload: Bytes::from_static(b"later"),
+            blob_tree: None,
+        })
+        .await
+        .expect("later append");
+    let records = reader.try_collect::<Vec<_>>().await.expect("records");
+    assert_eq!(records.len(), 1);
+    assert_eq!(records[0].event.payload, Bytes::from_static(b"captured"));
+}
+
+async fn storage_readers_are_independent_and_cancellable<S, F>(make_storage: &F)
+where
+    S: SeaStorage,
+    S::Error: Debug,
+    F: Fn() -> S,
+{
+    let storage = make_storage();
+    for payload in [Bytes::from_static(b"one"), Bytes::from_static(b"two")] {
+        storage
+            .append(Event {
+                payload,
+                blob_tree: None,
+            })
+            .await
+            .expect("append");
+    }
+    let mut cancelled = storage.read(None, None).await.expect("cancelled reader");
+    let complete = storage.read(None, None).await.expect("complete reader");
+    assert!(cancelled.next().await.is_some());
+    drop(cancelled);
+    let records = complete
+        .try_collect::<Vec<_>>()
+        .await
+        .expect("complete records");
+    assert_eq!(records.len(), 2);
+    assert_eq!(
+        storage.head().await.expect("head"),
+        Some(records[1].position)
+    );
+}
+
+async fn storage_positions_require_committed_ordinals<S, F>(make_storage: &F)
+where
+    S: SeaStorage,
+    S::Error: Debug,
+    F: Fn() -> S,
+{
+    let first = make_storage();
+    let second = make_storage();
+    let receipt = first
+        .append(Event {
+            payload: Bytes::from_static(b"value"),
+            blob_tree: None,
+        })
+        .await
+        .expect("append");
+    let Err(error) = second.read(Some(receipt.position), None).await else {
+        panic!("position beyond the committed head was accepted");
+    };
+    assert!(matches!(
+        error.kind(),
+        ErrorKind::InvalidPosition | ErrorKind::StalePosition
+    ));
+}
+
+async fn storage_snapshot_positions_require_committed_ordinals<S, F>(make_storage: &F)
+where
+    S: SeaStorage,
+    S::Error: Debug,
+    F: Fn() -> S,
+{
+    let first = make_storage();
+    let second = make_storage();
+    let position = first
+        .append(Event {
+            payload: Bytes::from_static(b"value"),
+            blob_tree: None,
+        })
+        .await
+        .expect("append")
+        .position;
+    let root = second
+        .put_blob(Bytes::from_static(b"foreign-position"))
+        .await
+        .expect("snapshot content");
+    let error = second
+        .publish_snapshot(SnapshotPublication {
+            operation_id: OperationId::new(Bytes::from_static(b"foreign-position-publication"))
+                .expect("operation identity"),
+            expected_parent: None,
+            snapshot: ArchiveSnapshot {
+                at_event: ArchiveSnapshotPosition::At(position),
+                root: BlobTreeId::Blob(root),
+            },
+        })
+        .await
+        .expect_err("uncommitted snapshot position should be rejected");
+    assert!(matches!(
+        error.kind(),
+        ErrorKind::InvalidPosition | ErrorKind::StalePosition
+    ));
 }
 
 async fn prepare_blob_tree<S>(storage: &S) -> sea_core::BlobDirectoryId
