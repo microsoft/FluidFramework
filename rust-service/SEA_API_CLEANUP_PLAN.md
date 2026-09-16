@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 11. Integrate snapshot coordination with Fluid.
-- **Last completed checkpoint:** 10. Simplify the Fluid TypeScript adapter.
+- **Current checkpoint:** 11b. Integrate snapshot coordination with Fluid (blocked pending approval of cross-package runtime and delegation contracts).
+- **Last completed checkpoint:** 11a. Choose and record the Fluid snapshot integration model.
 - **Last validation:** Checkpoint 10 package format, lint, TypeScript and SharedTree typechecks, ESM build, Node tests, bundles, local Chromium, and real SharedTree WebTransport trace passed on 2026-09-16.
-- **Latest checkpoint notes:** `SeaDriver` is the aggregate Fluid-facing factory over focused document service, storage, delta, and lifecycle modules. The internal `SeaDriverClient` removes already-bound arguments, false pagination/uncertainty states, fabricated metrics, and global serialization. Snapshot identity belongs to storage and uses length-prefixed scope fields. Generated production/test-support construction is shared, direct benchmarks use the same contract, and the accidental stale adapter duplicate is deleted.
+- **Latest checkpoint notes:** [Decision 0012](decisions/0012-fluid-snapshot-election-integration.md) proposes that Sea nominate the interactive parent and replace Fluid's existing parent election through an internal `ISummarizerClientElection` factory/provider seam. Fluid retains summary cadence and child launch; the parent explicitly delegates its current fenced authority to the child uploader. Standard driver interfaces are insufficient, so implementation requires approval for coordinated container-runtime and Sea delegation protocol changes.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 11a. Choose and record the Fluid snapshot integration model.
+- **Next checkpoint:** 11b after approving Decision 0012's runtime injection and delegated-fence API impact.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -733,11 +733,11 @@ Do not add a second competing election or assume the driver alone can control ru
 
 #### 11a. Choose and record the Fluid integration model
 
-- [ ] Decide whether Sea nominates the interactive parent responsible for launching a Fluid summarizer or the actual session that uploads snapshots.
-- [ ] Trace delegation and fencing if a nominated parent launches a separate summarizer client.
-- [ ] Select one authoritative election model: either adapt Fluid's existing election to consume Sea nomination or replace it for this driver; never run both independently.
-- [ ] Identify the smallest internal Fluid runtime integration seam and record why existing `IDocumentService` and `IDocumentDeltaConnection` surfaces are or are not sufficient.
-- [ ] Record the decision and its API impact before implementation.
+- [x] Decide whether Sea nominates the interactive parent responsible for launching a Fluid summarizer or the actual session that uploads snapshots.
+- [x] Trace delegation and fencing if a nominated parent launches a separate summarizer client.
+- [x] Select one authoritative election model: either adapt Fluid's existing election to consume Sea nomination or replace it for this driver; never run both independently.
+- [x] Identify the smallest internal Fluid runtime integration seam and record why existing `IDocumentService` and `IDocumentDeltaConnection` surfaces are or are not sufficient.
+- [x] Record the decision and its API impact before implementation.
 
 #### 11b. Implement the selected model
 
