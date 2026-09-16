@@ -40,6 +40,43 @@ export function getWebpackConfigExport(configModule: unknown): unknown {
 	return configModule;
 }
 
+/**
+ * Builds the serialized state used to determine whether a webpack task is up to date.
+ *
+ * If the config export is a factory, it is evaluated with the supplied environment before being
+ * serialized. The resulting config, webpack version state, and hashes of all source files contribute
+ * to the returned content.
+ *
+ * @param configModule - The loaded webpack config module.
+ * @param env - Environment arguments passed to a webpack config factory.
+ * @param version - Version state for webpack and its dependencies.
+ * @param srcFiles - Source files included in the task state.
+ * @param getSourceHash - Gets the content hash for a source file.
+ * @returns The serialized webpack task state written to the done file.
+ */
+export async function getWebpackDoneFileContent(
+	configModule: unknown,
+	env: Record<string, string | boolean>,
+	version: string,
+	srcFiles: readonly string[],
+	getSourceHash: (srcFile: string) => Promise<string>,
+): Promise<string> {
+	const config = getWebpackConfigExport(configModule);
+	const sources = Object.fromEntries(
+		await Promise.all(
+			srcFiles.map(async (srcFile) => [srcFile, await getSourceHash(srcFile)] as const),
+		),
+	);
+	const content: DoneFileContent = {
+		version,
+		// The config module is loaded dynamically, so its type is not statically known.
+		config: typeof config === "function" ? (config as WebpackConfigFactory)(env) : config,
+		sources,
+	};
+
+	return JSON.stringify(content);
+}
+
 export class WebpackTask extends LeafWithDoneFileTask {
 	protected get taskWeight(): number {
 		return 5; // generally expensive relative to other tasks
@@ -54,25 +91,16 @@ export class WebpackTask extends LeafWithDoneFileTask {
 				this.configFileFullPath,
 				this.package.packageJson.type,
 			);
-			const config = getWebpackConfigExport(configModule);
-			const content: DoneFileContent = {
-				version: await this.getVersion(),
-				// The config module is loaded dynamically, so its type is not statically known.
-				config:
-					typeof config === "function"
-						? (config as WebpackConfigFactory)(this.getEnvArguments())
-						: config,
-				sources: {},
-			};
-
 			// TODO: this is specific to the microsoft/FluidFramework repo set up.
 			const srcGlob = toPosixPath(this.node.pkg.directory) + "/src/**/*.*";
 			const srcFiles = await globFn(srcGlob);
-			for (const srcFile of srcFiles) {
-				content.sources[srcFile] = await this.node.context.fileHashCache.getFileHash(srcFile);
-			}
-
-			return JSON.stringify(content);
+			return getWebpackDoneFileContent(
+				configModule,
+				this.getEnvArguments(),
+				await this.getVersion(),
+				srcFiles,
+				async (srcFile) => this.node.context.fileHashCache.getFileHash(srcFile),
+			);
 		} catch (e) {
 			this.traceError(`error generating done file content ${e}`);
 			return undefined;
