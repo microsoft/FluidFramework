@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { isModuleNamespaceObject } from "node:util/types";
 import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
@@ -21,6 +22,24 @@ interface DoneFileContent {
  * instead of exporting the config object directly.
  */
 type WebpackConfigFactory = (env: Record<string, string | boolean>) => unknown;
+
+/**
+ * Gets the webpack config exported by a loaded config module.
+ */
+export function getWebpackConfigExport(configModule: unknown): unknown {
+	if (isModuleNamespaceObject(configModule)) {
+		if (
+			typeof configModule !== "object" ||
+			configModule === null ||
+			!("default" in configModule)
+		) {
+			throw new TypeError("ESM webpack config has no default export");
+		}
+		return configModule.default;
+	}
+	return configModule;
+}
+
 export class WebpackTask extends LeafWithDoneFileTask {
 	protected get taskWeight(): number {
 		return 5; // generally expensive relative to other tasks
@@ -31,7 +50,11 @@ export class WebpackTask extends LeafWithDoneFileTask {
 		// where their output might change the webpack's input.
 		assert.strictEqual(this.recheckLeafIsUpToDate, false);
 		try {
-			const config = await loadModule(this.configFileFullPath, this.package.packageJson.type);
+			const configModule = await loadModule(
+				this.configFileFullPath,
+				this.package.packageJson.type,
+			);
+			const config = getWebpackConfigExport(configModule);
 			const content: DoneFileContent = {
 				version: await this.getVersion(),
 				// The config module is loaded dynamically, so its type is not statically known.
