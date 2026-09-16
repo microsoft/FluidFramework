@@ -4,24 +4,15 @@
  */
 
 export {
-	MinimalWasmDeltaConnection,
-	MinimalWasmDeltaStorage,
-	MinimalWasmDocumentService,
-	MinimalWasmDocumentServiceFactory,
-	MinimalWasmStorage,
+	SeaDeltaConnection,
+	SeaDeltaStorage,
+	SeaDocumentService,
+	SeaDriver,
+	SeaDocumentStorage,
 } from "./fluidDriver.js";
 export { DirectDummyClient } from "./directDummy.js";
 export { DirectSharedTreeClient } from "./directSharedTree.js";
-export {
-	GeneratedSeaBindingAdapter,
-	decodePosition,
-	encodePosition,
-} from "./generatedSeaBinding.js";
-export type {
-	GeneratedSeaClient,
-	GeneratedSeaTreeId,
-	GeneratedSeaTypes,
-} from "./generatedSeaBinding.js";
+export { decodePosition, encodePosition } from "./generatedSeaBinding.js";
 export type {
 	BlobUpload,
 	ProjectedOperation,
@@ -29,5 +20,4 @@ export type {
 	SubmissionResolution,
 	SummaryEntry,
 	SummaryPublication,
-	WasmProtocolClient,
 } from "./wasmClient.js";

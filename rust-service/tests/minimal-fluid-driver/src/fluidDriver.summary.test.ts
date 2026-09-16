@@ -11,7 +11,7 @@ import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 
-import { MinimalWasmStorage } from "./fluidDriver.js";
+import { SeaDocumentStorage } from "./fluidDriver.js";
 import type {
 	BlobUpload,
 	ProjectedOperationSubscription,
@@ -19,7 +19,7 @@ import type {
 	SubmissionResolution,
 	SummaryEntry,
 	SummaryPublication,
-	WasmProtocolClient,
+	SeaDriverClient,
 } from "./wasmClient.js";
 
 const encoder = new TextEncoder();
@@ -31,7 +31,7 @@ interface FixtureSnapshot {
 	readonly atEvent?: Uint8Array;
 }
 
-class SummaryFixtureClient implements WasmProtocolClient {
+class SummaryFixtureClient implements SeaDriverClient {
 	private readonly blobs = new Map<string, Uint8Array>();
 	private readonly summaries = new Map<string, readonly SummaryEntry[]>();
 	private readonly snapshots = new Map<string, FixtureSnapshot>();
@@ -39,11 +39,6 @@ class SummaryFixtureClient implements WasmProtocolClient {
 	private nextSnapshotId = 1n;
 
 	public blobUploadCount = 0;
-	public readonly wireBytes = 0n;
-	public readonly peakResponseBytes = 0;
-	public readonly peakSubscriptionFrameBytes = 0;
-	public readonly peakSubscriptionQueueDepth = 0;
-
 	public async create(_document: Uint8Array): Promise<void> {}
 
 	public async openSession(
@@ -308,8 +303,8 @@ test("incremental summary publication rejects a stale acknowledged parent", asyn
 	assert.equal((await storage.getVersions(null, 1))[0]?.id, winner);
 });
 
-function createStorage(client: SummaryFixtureClient): MinimalWasmStorage {
-	return new MinimalWasmStorage(
+function createStorage(client: SummaryFixtureClient): SeaDocumentStorage {
+	return new SeaDocumentStorage(
 		encoder.encode("summary-test-document"),
 		client,
 	);

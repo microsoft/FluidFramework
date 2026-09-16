@@ -6,7 +6,7 @@
 import type {
 	ProjectedOperation,
 	ProjectedOperationSubscription,
-	WasmProtocolClient,
+	SeaDriverClient,
 } from "./wasmClient.js";
 
 const encoder = new TextEncoder();
@@ -41,8 +41,7 @@ export class DirectDummyClient {
 	private disposed = false;
 
 	private constructor(
-		private readonly client: WasmProtocolClient,
-		private readonly document: Uint8Array,
+		private readonly client: SeaDriverClient,
 		private readonly batchMaxOperations: number,
 		private readonly batchMaxPayloadBytes: number,
 	) {
@@ -52,7 +51,7 @@ export class DirectDummyClient {
 
 	/** Creates and opens one direct dummy client. */
 	public static async create(
-		client: WasmProtocolClient,
+		client: SeaDriverClient,
 		document: Uint8Array,
 		batchMaxOperations: number,
 		batchMaxPayloadBytes: number,
@@ -60,7 +59,6 @@ export class DirectDummyClient {
 	): Promise<DirectDummyClient> {
 		const host = new DirectDummyClient(
 			client,
-			document,
 			batchMaxOperations,
 			batchMaxPayloadBytes,
 		);
@@ -68,7 +66,7 @@ export class DirectDummyClient {
 			await client.create(document);
 		}
 		await client.openSession(document, host.writer, host.session);
-		host.subscription = await client.subscribeProjected(document);
+		host.subscription = await client.subscribeProjected();
 		host.subscriptionPump = host.consumeSubscription(host.subscription);
 		return host;
 	}
@@ -85,9 +83,6 @@ export class DirectDummyClient {
 		const payload = encoder.encode(JSON.stringify({ value } satisfies DirectDummyPayload));
 		this.submissionChain = this.submissionChain.then(async () => {
 			await this.client.submitEvent(
-				this.document,
-				this.writer,
-				this.session,
 				submission,
 				localSequenceNumber,
 				payload,

@@ -16,24 +16,21 @@ import {
 	createFluidContainer,
 } from "@fluidframework/fluid-static/internal";
 
-import init, {
+import init, * as SeaBindings from "../../../crates/sea-webtransport/test-support/pkg/web/sea_webtransport_test_support.js";
+import {
 	SeaBrowserTransport,
-	SeaDirectoryEntry,
 	SeaInjectedClient,
-	SeaLoadKind,
 	SeaLocalService,
-	SeaTreeId,
-	SeaTreeKind,
 	type SeaLocalClient,
 } from "../../../crates/sea-webtransport/test-support/pkg/web/sea_webtransport_test_support.js";
 import {
 	DirectDummyClient,
 	DirectSharedTreeClient,
-	type MinimalWasmDeltaConnection,
-	MinimalWasmDocumentServiceFactory,
+	type SeaDeltaConnection,
+	SeaDriver,
 } from "../src/index.js";
-import type { WasmProtocolClient } from "../src/wasmClient.js";
-import { GeneratedSeaBindingAdapter } from "../src/generatedSeaBinding.js";
+import type { SeaDriverClient } from "../src/wasmClient.js";
+import { createGeneratedSeaBindingAdapter } from "../src/generatedSeaBinding.js";
 import {
 	adaptInitialObject,
 	adaptSharedTree,
@@ -88,25 +85,8 @@ function snapshotTransportActivity(activity: TransportActivity): TransportActivi
 function adaptSeaBrowserClient(
 	client: SeaInjectedClient,
 	reconnect: () => Promise<SeaBrowserTransport>,
-): WasmProtocolClient {
-	return new GeneratedSeaBindingAdapter(
-		client,
-		{
-			loadKind: {
-				snapshot: SeaLoadKind.Snapshot,
-				event: SeaLoadKind.Event,
-				caughtUp: SeaLoadKind.CaughtUp,
-			},
-			treeKind: {
-				blob: SeaTreeKind.Blob,
-				directory: SeaTreeKind.Directory,
-			},
-			blob: (bytes) => SeaTreeId.blob(bytes),
-			directory: (bytes) => SeaTreeId.directory(bytes),
-			directoryEntry: (name, child) => new SeaDirectoryEntry(name, child),
-		},
-		reconnect,
-	);
+): SeaDriverClient {
+	return createGeneratedSeaBindingAdapter(client, SeaBindings, reconnect);
 }
 
 /** Waits for a Rust-service-backed container to reach Fluid's connected state. */
@@ -144,30 +124,17 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	const hash = Uint8Array.from(certificateHex?.match(/../gu) ?? [], (value) =>
 		Number.parseInt(value, 16),
 	);
-	const transports: WasmProtocolClient[] = [];
+	const transports: SeaDriverClient[] = [];
 	const transportActivity: TransportActivity = {
 		unaryRequests: {},
 		submissionStreams: 0,
 		projectedSubscriptions: 0,
 	};
 	const localService = local ? await SeaLocalService.create() : undefined;
-	const createWasmClient = async (): Promise<WasmProtocolClient> => {
+	const createWasmClient = async (): Promise<SeaDriverClient> => {
 		if (localService !== undefined) {
 			const client: SeaLocalClient = localService.connect();
-			const adapted = new GeneratedSeaBindingAdapter(client, {
-				loadKind: {
-					snapshot: SeaLoadKind.Snapshot,
-					event: SeaLoadKind.Event,
-					caughtUp: SeaLoadKind.CaughtUp,
-				},
-				treeKind: {
-					blob: SeaTreeKind.Blob,
-					directory: SeaTreeKind.Directory,
-				},
-				blob: (bytes) => SeaTreeId.blob(bytes),
-				directory: (bytes) => SeaTreeId.directory(bytes),
-				directoryEntry: (name, child) => new SeaDirectoryEntry(name, child),
-			});
+			const adapted = createGeneratedSeaBindingAdapter(client, SeaBindings);
 			transports.push(adapted);
 			return adapted;
 		}
@@ -184,7 +151,7 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		transports.push(adapted);
 		return adapted;
 	};
-	const deltaConnections: MinimalWasmDeltaConnection[] = [];
+	const deltaConnections: SeaDeltaConnection[] = [];
 	const documentId = `shared-tree-benchmark-${Date.now()}`;
 	if (integration === "direct") {
 		return dataStructure === "shared-tree"
@@ -217,7 +184,7 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		resolve: async (_request: IRequest) => resolvedUrl,
 		getAbsoluteUrl: async (_resolvedUrl: IResolvedUrl, relativeUrl: string) => relativeUrl,
 	};
-	const documentServiceFactory = new MinimalWasmDocumentServiceFactory(createWasmClient, {
+	const documentServiceFactory = new SeaDriver(createWasmClient, {
 		onDeltaConnection: (connection) => deltaConnections.push(connection),
 		subscriptionBatchMaxOperations,
 	});
@@ -344,18 +311,10 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 			browser: navigator.userAgent,
 			startupTransportActivity,
 			transportActivity: snapshotTransportActivity(transportActivity),
-			wireBytes: transports
-				.reduce((total, transport) => total + transport.wireBytes, 0n)
-				.toString(),
-			peakResponseBytes: Math.max(
-				...transports.map((transport) => transport.peakResponseBytes),
-			),
-			peakSubscriptionFrameBytes: Math.max(
-				...transports.map((transport) => transport.peakSubscriptionFrameBytes),
-			),
-			peakSubscriptionQueueDepth: Math.max(
-				...transports.map((transport) => transport.peakSubscriptionQueueDepth),
-			),
+			wireBytes: null,
+			peakResponseBytes: null,
+			peakSubscriptionFrameBytes: null,
+			peakSubscriptionQueueDepth: null,
 			subscriptionBatchMaxOperations,
 			subscriptionBatchCount: deltaConnections.reduce(
 				(total, connection) => total + connection.subscriptionBatchCount,
@@ -375,8 +334,8 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 /** Creates two production SharedTree kernels connected directly to rust-service. */
 async function createDirectSharedTreePair(
 	document: Uint8Array,
-	createClient: () => Promise<WasmProtocolClient>,
-	transports: WasmProtocolClient[],
+	createClient: () => Promise<SeaDriverClient>,
+	transports: SeaDriverClient[],
 	transportActivity: TransportActivity,
 	local: boolean,
 ): Promise<SharedTreeBenchmarkPair> {
@@ -434,18 +393,10 @@ async function createDirectSharedTreePair(
 			integration: "direct",
 			startupTransportActivity,
 			transportActivity: snapshotTransportActivity(transportActivity),
-			wireBytes: transports
-				.reduce((total, transport) => total + transport.wireBytes, 0n)
-				.toString(),
-			peakResponseBytes: Math.max(
-				...transports.map((transport) => transport.peakResponseBytes),
-			),
-			peakSubscriptionFrameBytes: Math.max(
-				...transports.map((transport) => transport.peakSubscriptionFrameBytes),
-			),
-			peakSubscriptionQueueDepth: Math.max(
-				...transports.map((transport) => transport.peakSubscriptionQueueDepth),
-			),
+			wireBytes: null,
+			peakResponseBytes: null,
+			peakSubscriptionFrameBytes: null,
+			peakSubscriptionQueueDepth: null,
 			subscriptionBatchMaxOperations,
 			subscriptionBatchCount: writer.deliveredBatchCount + observer.deliveredBatchCount,
 			peakSubscriptionBatchOperations: Math.max(
@@ -459,8 +410,8 @@ async function createDirectSharedTreePair(
 /** Creates two runtime-free scalar clients connected directly to rust-service. */
 async function createDirectDummyPair(
 	document: Uint8Array,
-	createClient: () => Promise<WasmProtocolClient>,
-	transports: WasmProtocolClient[],
+	createClient: () => Promise<SeaDriverClient>,
+	transports: SeaDriverClient[],
 	transportActivity: TransportActivity,
 	local: boolean,
 ): Promise<SharedTreeBenchmarkPair> {
@@ -506,18 +457,10 @@ async function createDirectDummyPair(
 			integration: "direct",
 			startupTransportActivity,
 			transportActivity: snapshotTransportActivity(transportActivity),
-			wireBytes: transports
-				.reduce((total, transport) => total + transport.wireBytes, 0n)
-				.toString(),
-			peakResponseBytes: Math.max(
-				...transports.map((transport) => transport.peakResponseBytes),
-			),
-			peakSubscriptionFrameBytes: Math.max(
-				...transports.map((transport) => transport.peakSubscriptionFrameBytes),
-			),
-			peakSubscriptionQueueDepth: Math.max(
-				...transports.map((transport) => transport.peakSubscriptionQueueDepth),
-			),
+			wireBytes: null,
+			peakResponseBytes: null,
+			peakSubscriptionFrameBytes: null,
+			peakSubscriptionQueueDepth: null,
 			subscriptionBatchMaxOperations,
 			subscriptionBatchCount: writer.deliveredBatchCount + observer.deliveredBatchCount,
 			peakSubscriptionBatchOperations: Math.max(

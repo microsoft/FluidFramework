@@ -5,13 +5,13 @@
 - **Plan status:** In progress.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 10b. Replace the client abstraction.
-- **Last completed checkpoint:** 10a. Remove forwarding wrappers.
-- **Last validation:** Checkpoint 10a package format, lint, TypeScript and SharedTree typechecks, ESM build, and Node tests passed on 2026-09-16.
-- **Latest checkpoint notes:** The forwarding `ProtocolClient` class and export are deleted. Direct clients, storage, delta connections, and document creation call the narrow client contract directly. Snapshot publication identity is owned by `MinimalWasmStorage` and canonically length-prefixes its domain, document, expected parent, event boundary, and content root.
+- **Current checkpoint:** 10d. Reduce duplication.
+- **Last completed checkpoint:** 10c. Put concurrency in stream owners.
+- **Last validation:** Checkpoint 10b/10c package format, lint, TypeScript and SharedTree typechecks, ESM build, Node tests, bundles, local Chromium, and real SharedTree WebTransport trace passed on 2026-09-16.
+- **Latest checkpoint notes:** The package-internal `SeaDriverClient` contract removes already-bound document/author/session parameters, false pagination and uncertainty states, and fabricated zero metrics. The global serialization wrapper is deleted so independent event, snapshot, and content work can overlap while generated author/content stream owners preserve their own ordering. Fluid-facing classes are named `SeaDriver`, `SeaDocumentService`, `SeaDocumentStorage`, `SeaDeltaStorage`, and `SeaDeltaConnection`; generated production and test-support adapter construction is centralized.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 10b. Replace the client abstraction.
+- **Next checkpoint:** 10d. Split `fluidDriver.ts` by ownership.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -692,28 +692,28 @@ This checkpoint may be split into small deletion-oriented commits.
 
 #### 10b. Replace the client abstraction
 
-- [ ] Remove `WasmProtocolClient` if generated network clients and explicit process-local test support can be consumed directly.
-- [ ] Otherwise retain one unexported narrow driver-client interface only when it demonstrably avoids duplicating the `SeaDriver`; name and document it for that role rather than for WASM.
-- [ ] Make `SeaDriver` the aggregate Fluid-facing implementation/factory composed from the current document service, storage, delta storage, delta connection, and lifecycle responsibilities; use `FluidSeaDriver` only where an exported context would otherwise be ambiguous.
-- [ ] Remove `TypedSeaClientAdapter` if improved generated bindings satisfy the narrow internal contract directly; otherwise keep one unexported adapter named for generated Sea binding conversion, never `SeaDriver`.
-- [ ] Remove archive, writer, and session parameters from methods already bound to those values.
-- [ ] Remove `stillUncertain` unless a concrete implementation and recovery rule requires it.
-- [ ] Remove `hasMore` if reads remain one bounded complete result.
-- [ ] Remove or implement adapter metrics and benchmark activity counters proven to report permanent zero values; retain server measurements and counters backed by real observations.
+- [x] Remove `WasmProtocolClient` if generated network clients and explicit process-local test support can be consumed directly.
+- [x] Otherwise retain one unexported narrow driver-client interface only when it demonstrably avoids duplicating the `SeaDriver`; name and document it for that role rather than for WASM.
+- [x] Make `SeaDriver` the aggregate Fluid-facing implementation/factory composed from the current document service, storage, delta storage, delta connection, and lifecycle responsibilities; use `FluidSeaDriver` only where an exported context would otherwise be ambiguous.
+- [x] Remove `TypedSeaClientAdapter` if improved generated bindings satisfy the narrow internal contract directly; otherwise keep one unexported adapter named for generated Sea binding conversion, never `SeaDriver`.
+- [x] Remove archive, writer, and session parameters from methods already bound to those values.
+- [x] Remove `stillUncertain` unless a concrete implementation and recovery rule requires it.
+- [x] Remove `hasMore` if reads remain one bounded complete result.
+- [x] Remove or implement adapter metrics and benchmark activity counters proven to report permanent zero values; retain server measurements and counters backed by real observations.
 
 #### 10c. Put concurrency in stream owners
 
-- [ ] Remove `SerializedWasmProtocolClient` after generated stream clients enforce their documented concurrency contracts.
-- [ ] Keep author submissions ordered by the author stream.
-- [ ] Permit independent event, snapshot, and content streams to progress concurrently.
-- [ ] Add tests for concurrent storage, subscription, and submission work.
+- [x] Remove `SerializedWasmProtocolClient` after generated stream clients enforce their documented concurrency contracts.
+- [x] Keep author submissions ordered by the author stream.
+- [x] Permit independent event, snapshot, and content streams to progress concurrently.
+- [x] Add tests for concurrent storage, subscription, and submission work.
 
 #### 10d. Reduce duplication
 
-- [ ] Centralize generated remote and local client construction.
-- [ ] Share construction between trace, benchmark, and browser harnesses.
+- [x] Centralize generated remote and local client construction.
+- [x] Share construction between trace, benchmark, and browser harnesses.
 - [ ] Split `fluidDriver.ts` into storage, delta connection, document service, lifecycle, and shared helpers when each extraction has a clear owner.
-- [ ] Keep direct benchmark clients separate from the Fluid driver but make them consume the same Sea client contract.
+- [x] Keep direct benchmark clients separate from the Fluid driver but make them consume the same Sea client contract.
 
 Validation after each subcommit:
 

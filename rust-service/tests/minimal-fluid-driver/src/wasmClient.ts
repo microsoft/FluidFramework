@@ -31,8 +31,6 @@ export interface ProjectedReadPage {
 	readonly operations: readonly ProjectedOperation[];
 	/** Opaque cursor to pass to the next read or subscription. */
 	readonly cursor?: Uint8Array;
-	/** Whether another page may contain additional operations. */
-	readonly hasMore: boolean;
 }
 
 /** A cancellable, push-driven stream of projected operations. */
@@ -56,8 +54,8 @@ export type SubmissionResolution =
 			readonly sequenceNumber: bigint;
 	  }
 	| {
-			/** Distinguishes a safe-to-resubmit identity from an unresolved identity. */
-			readonly kind: "notCommitted" | "stillUncertain";
+			/** Indicates that the identity is safe to resubmit. */
+			readonly kind: "notCommitted";
 	  };
 
 /** Receipt returned after uploading an immutable content-addressed blob. */
@@ -91,7 +89,7 @@ export interface SummaryPublication {
 }
 
 /** Minimal generated-client surface consumed by the Fluid driver adapter. */
-export interface WasmProtocolClient {
+export interface SeaDriverClient {
 	/** Creates an archive when the selected deployment requires explicit creation. */
 	create(document: Uint8Array): Promise<void>;
 	/** Opens one archive-bound author session. */
@@ -103,9 +101,6 @@ export interface WasmProtocolClient {
 	): Promise<void>;
 	/** Submits one opaque event and returns its canonical position. */
 	submitEvent(
-		document: Uint8Array,
-		writer: Uint8Array,
-		session: Uint8Array,
 		submission: Uint8Array,
 		localSequenceNumber: number,
 		payload: Uint8Array,
@@ -139,17 +134,13 @@ export interface WasmProtocolClient {
 	/** Resolves the Sea position mapped to one Fluid sequence number. */
 	positionForSequence(sequenceNumber: number): Uint8Array | undefined;
 	/** Reads a bounded page of projected operations after an optional cursor. */
-	readProjected(document: Uint8Array, after?: Uint8Array): Promise<ProjectedReadPage>;
+	readProjected(after?: Uint8Array): Promise<ProjectedReadPage>;
 	/** Subscribes to projected operations after an optional cursor. */
 	subscribeProjected(
-		document: Uint8Array,
 		after?: Uint8Array,
 	): ProjectedOperationSubscription | Promise<ProjectedOperationSubscription>;
 	/** Resolves whether a stable submission identity committed after an ambiguous failure. */
 	resolveSubmission(
-		document: Uint8Array,
-		writer: Uint8Array,
-		session: Uint8Array,
 		submission: Uint8Array,
 	): Promise<SubmissionResolution>;
 	/** Uploads an immutable blob and returns its content digest. */
@@ -164,12 +155,4 @@ export interface WasmProtocolClient {
 	disconnect(): void;
 	/** Re-establishes transport access using adapter-specific arguments. */
 	reconnect(...args: readonly unknown[]): void | Promise<void>;
-	/** Total encoded bytes observed by clients that expose wire accounting. */
-	readonly wireBytes: bigint;
-	/** Largest unary response frame observed in bytes. */
-	readonly peakResponseBytes: number;
-	/** Largest projected-subscription frame observed in bytes. */
-	readonly peakSubscriptionFrameBytes: number;
-	/** Largest projected-subscription queue depth observed by the client. */
-	readonly peakSubscriptionQueueDepth: number;
 }

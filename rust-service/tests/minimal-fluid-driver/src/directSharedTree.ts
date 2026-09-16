@@ -17,7 +17,7 @@ import {
 import type {
 	ProjectedOperation,
 	ProjectedOperationSubscription,
-	WasmProtocolClient,
+	SeaDriverClient,
 } from "./wasmClient.js";
 
 const encoder = new TextEncoder();
@@ -39,7 +39,6 @@ export class DirectSharedTreeClient {
 	/** Highest canonical service sequence applied to this kernel. */
 	public lastAppliedSequenceNumber = 0;
 
-	private readonly writer: Uint8Array;
 	private readonly session: Uint8Array;
 	private readonly positions = new Map<string, number>();
 	private subscription: ProjectedOperationSubscription | undefined;
@@ -52,8 +51,7 @@ export class DirectSharedTreeClient {
 	private disposed = false;
 
 	private constructor(
-		private readonly client: WasmProtocolClient,
-		private readonly document: Uint8Array,
+		private readonly client: SeaDriverClient,
 		private readonly batchMaxOperations: number,
 		private readonly batchMaxPayloadBytes: number,
 		tree: SharedTreeKernelView,
@@ -61,13 +59,12 @@ export class DirectSharedTreeClient {
 		session: Uint8Array,
 	) {
 		this.tree = tree;
-		this.writer = writer;
 		this.session = session;
 	}
 
 	/** Creates and opens one direct SharedTree client. */
 	public static async create(
-		client: WasmProtocolClient,
+		client: SeaDriverClient,
 		document: Uint8Array,
 		batchMaxOperations: number,
 		batchMaxPayloadBytes: number,
@@ -89,7 +86,6 @@ export class DirectSharedTreeClient {
 		});
 		host = new DirectSharedTreeClient(
 			client,
-			document,
 			batchMaxOperations,
 			batchMaxPayloadBytes,
 			tree,
@@ -100,7 +96,7 @@ export class DirectSharedTreeClient {
 			await client.create(document);
 		}
 		await client.openSession(document, writer, session);
-		host.subscription = await client.subscribeProjected(document);
+		host.subscription = await client.subscribeProjected();
 		host.subscriptionPump = host.consumeSubscription(host.subscription);
 		return host;
 	}
@@ -142,9 +138,6 @@ export class DirectSharedTreeClient {
 		);
 		this.submissionChain = this.submissionChain.then(async () => {
 			await this.client.submitEvent(
-				this.document,
-				this.writer,
-				this.session,
 				submission,
 				localSequenceNumber,
 				payload,

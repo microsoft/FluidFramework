@@ -19,20 +19,17 @@ import {
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/legacy";
 
-import init, {
+import init, * as SeaBindings from "../../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
+import {
 	SeaBrowserTransport,
-	SeaDirectoryEntry,
 	SeaInjectedClient,
-	SeaLoadKind,
-	SeaTreeId,
-	SeaTreeKind,
 } from "../../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
 import {
-	type MinimalWasmDeltaConnection,
-	MinimalWasmDocumentServiceFactory,
+	type SeaDeltaConnection,
+	SeaDriver,
 } from "../src/index.js";
-import type { WasmProtocolClient } from "../src/wasmClient.js";
-import { GeneratedSeaBindingAdapter } from "../src/generatedSeaBinding.js";
+import type { SeaDriverClient } from "../src/wasmClient.js";
+import { createGeneratedSeaBindingAdapter } from "../src/generatedSeaBinding.js";
 
 /** Browser hooks used by the headless trace runner and failure diagnostics. */
 declare global {
@@ -74,7 +71,7 @@ const synchronizedSequences: Record<string, number[]> = {};
 /** Operation envelopes observed by each explicit synchronization point. */
 const synchronizedEnvelopes: Record<string, Record<string, unknown>[]> = {};
 /** Minimal-driver connections whose lifecycle state is exercised by the trace. */
-const deltaConnections: MinimalWasmDeltaConnection[] = [];
+const deltaConnections: SeaDeltaConnection[] = [];
 /** Container lifecycle snapshots retained for diagnostics. */
 const containerStates: Record<string, unknown> = {};
 /** Counts generated-client protocol methods exercised by the trace. */
@@ -115,25 +112,8 @@ function showResult(result: Record<string, unknown>): void {
 function adaptBrowserClient(
 	client: SeaInjectedClient,
 	reconnect: () => Promise<SeaBrowserTransport>,
-): WasmProtocolClient {
-	return new GeneratedSeaBindingAdapter(
-		client,
-		{
-			loadKind: {
-				snapshot: SeaLoadKind.Snapshot,
-				event: SeaLoadKind.Event,
-				caughtUp: SeaLoadKind.CaughtUp,
-			},
-			treeKind: {
-				blob: SeaTreeKind.Blob,
-				directory: SeaTreeKind.Directory,
-			},
-			blob: (bytes) => SeaTreeId.blob(bytes),
-			directory: (bytes) => SeaTreeId.directory(bytes),
-			directoryEntry: (name, child) => new SeaDirectoryEntry(name, child),
-		},
-		reconnect,
-	);
+): SeaDriverClient {
+	return createGeneratedSeaBindingAdapter(client, SeaBindings, reconnect);
 }
 
 /** Polls a trace condition until it succeeds or the diagnostic timeout expires. */
@@ -199,7 +179,7 @@ async function run(): Promise<Record<string, unknown>> {
 		resolve: async (_request: IRequest) => resolvedUrl,
 		getAbsoluteUrl: async (_resolvedUrl: IResolvedUrl, relativeUrl: string) => relativeUrl,
 	};
-	const documentServiceFactory = new MinimalWasmDocumentServiceFactory(
+	const documentServiceFactory = new SeaDriver(
 		async () => {
 			const createTransport = async (): Promise<SeaBrowserTransport> => {
 				const transport = await SeaBrowserTransport.connect(transportUrl, hash, 1024 * 1024);
@@ -360,10 +340,6 @@ async function run(): Promise<Record<string, unknown>> {
 		"reloaded SharedTree did not replay edits",
 	);
 
-	const wireBytes = 0n;
-	const peakResponseBytes = 0;
-	const peakSubscriptionFrameBytes = 0;
-	const peakSubscriptionQueueDepth = 0;
 	firstView.dispose();
 	secondView.dispose();
 	reloadedView.dispose();
@@ -380,10 +356,6 @@ async function run(): Promise<Record<string, unknown>> {
 		explicitResubmissionCount: 1,
 		protocolCounts,
 		synchronizedSequences,
-		wireBytes: wireBytes.toString(),
-		peakResponseBytes,
-		peakSubscriptionFrameBytes,
-		peakSubscriptionQueueDepth,
 		startupMilliseconds: performance.now() - started,
 	};
 }

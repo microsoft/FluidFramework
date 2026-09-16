@@ -37,7 +37,7 @@ import type {
 	ProjectedOperationSubscription,
 	SubmissionResolution,
 	SummaryEntry,
-	WasmProtocolClient,
+	SeaDriverClient,
 } from "./wasmClient.js";
 
 /** UTF-8 encoder for protocol identities, payloads, and summary paths. */
@@ -57,155 +57,6 @@ const defaultSubscriptionBatchMaxPayloadBytes = 1024 * 1024;
 
 /** Listener shape used by the minimal event emitter. */
 type Listener = (...args: readonly unknown[]) => void;
-
-/** Serializes access to a generated client whose methods are not reentrant. */
-class SerializedWasmProtocolClient implements WasmProtocolClient {
-	/** Tail of the serialized operation chain, normalized to never reject. */
-	private tail: Promise<void> = Promise.resolve();
-	public constructor(private readonly inner: WasmProtocolClient) {}
-
-	public create(document: Uint8Array) {
-		return this.enqueue(async () => this.inner.create(document));
-	}
-
-	public openSession(
-		document: Uint8Array,
-		writer: Uint8Array,
-		session: Uint8Array,
-		resumeAfter?: Uint8Array,
-	) {
-		return this.enqueue(async () =>
-			this.inner.openSession(document, writer, session, resumeAfter),
-		);
-	}
-
-	public submitEvent(
-		document: Uint8Array,
-		writer: Uint8Array,
-		session: Uint8Array,
-		submission: Uint8Array,
-		localSequenceNumber: number,
-		payload: Uint8Array,
-		referencePosition?: Uint8Array,
-	) {
-		return this.enqueue(async () =>
-			this.inner.submitEvent(
-				document,
-				writer,
-				session,
-				submission,
-				localSequenceNumber,
-				payload,
-				referencePosition,
-			),
-		);
-	}
-
-	public latestSnapshot() {
-		return this.enqueue(async () => this.inner.latestSnapshot());
-	}
-
-	public snapshot(id: Uint8Array) {
-		return this.enqueue(async () => this.inner.snapshot(id));
-	}
-
-	public publishSnapshotRoot(
-		operation: Uint8Array,
-		expectedParent: Uint8Array | undefined,
-		atEvent: Uint8Array | undefined,
-		root: Uint8Array,
-	) {
-		return this.enqueue(async () =>
-			this.inner.publishSnapshotRoot(operation, expectedParent, atEvent, root),
-		);
-	}
-
-	/** Serializes a projected history read. */
-	public readProjected(document: Uint8Array, after?: Uint8Array) {
-		return this.enqueue(async () => this.inner.readProjected(document, after));
-	}
-
-	/** Serializes projected-subscription creation. */
-	public subscribeProjected(document: Uint8Array, after?: Uint8Array) {
-		return this.enqueue(async () => this.inner.subscribeProjected(document, after));
-	}
-
-	/** Serializes authoritative submission resolution. */
-	public resolveSubmission(
-		document: Uint8Array,
-		writer: Uint8Array,
-		session: Uint8Array,
-		submission: Uint8Array,
-	) {
-		return this.enqueue(async () =>
-			this.inner.resolveSubmission(document, writer, session, submission),
-		);
-	}
-
-	/** Serializes immutable blob upload. */
-	public uploadBlob(payload: Uint8Array) {
-		return this.enqueue(async () => this.inner.uploadBlob(payload));
-	}
-
-	/** Serializes immutable blob fetch. */
-	public fetchBlob(digest: Uint8Array) {
-		return this.enqueue(async () => this.inner.fetchBlob(digest));
-	}
-
-	/** Serializes summary publication. */
-	public publishSummary(entries: readonly SummaryEntry[]) {
-		return this.enqueue(async () => this.inner.publishSummary(entries));
-	}
-
-	/** Serializes summary fetch. */
-	public fetchSummary(digest: Uint8Array) {
-		return this.enqueue(async () => this.inner.fetchSummary(digest));
-	}
-
-	/** Immediately disconnects the inner transport. */
-	public disconnect(): void {
-		this.inner.disconnect();
-	}
-
-	/** Serializes transport reconnection. */
-	public reconnect(...args: readonly unknown[]): Promise<void> {
-		return this.enqueue(async () => this.inner.reconnect(...args));
-	}
-
-	/** Forwards total wire-byte accounting from the inner client. */
-	public get wireBytes(): bigint {
-		return this.inner.wireBytes;
-	}
-
-	/** Forwards the peak unary response size from the inner client. */
-	public get peakResponseBytes(): number {
-		return this.inner.peakResponseBytes;
-	}
-
-	/** Forwards the peak subscription frame size from the inner client. */
-	public get peakSubscriptionFrameBytes(): number {
-		return this.inner.peakSubscriptionFrameBytes;
-	}
-
-	/** Forwards the peak subscription queue depth from the inner client. */
-	public get peakSubscriptionQueueDepth(): number {
-		return this.inner.peakSubscriptionQueueDepth;
-	}
-
-	public positionForSequence(sequenceNumber: number): Uint8Array | undefined {
-		return this.inner.positionForSequence(sequenceNumber);
-	}
-
-	/** Appends an operation while keeping the chain usable after rejection. */
-	private enqueue<T>(operation: () => Promise<T>): Promise<T> {
-		const result = this.tail.then(operation, operation);
-		this.tail = result.then(
-			() => {},
-			() => {},
-		);
-		return result;
-	}
-}
 
 /** Minimal event emitter implementing the Fluid driver event methods. */
 class Events {
@@ -297,14 +148,14 @@ interface UploadedSummary {
 }
 
 /** Content-addressed storage adapter for full Fluid summary trees and blobs. */
-export class MinimalWasmStorage implements IDocumentStorageService {
+export class SeaDocumentStorage implements IDocumentStorageService {
 	/** Fluid cache policy for immutable content-addressed storage. */
 	public readonly policies = { maximumCacheDurationMs: 432_000_000 as const };
 
 	/** Creates storage for one document over a shared serialized client. */
 	public constructor(
 		private readonly document: Uint8Array,
-		private readonly client: WasmProtocolClient,
+		private readonly client: SeaDriverClient,
 	) {}
 
 	/** Resolves the latest summary or a caller-provided content digest. */
@@ -583,8 +434,7 @@ class ProjectedMessageStream implements IStream<ISequencedDocumentMessage[]> {
 
 	/** Creates a bounded view over projected operations in the requested sequence range. */
 	public constructor(
-		private readonly client: WasmProtocolClient,
-		private readonly document: Uint8Array,
+		private readonly client: SeaDriverClient,
 		private readonly from: number,
 		private readonly to: number | undefined,
 		private readonly project: (operation: ProjectedOperation) => ISequencedDocumentMessage,
@@ -597,9 +447,9 @@ class ProjectedMessageStream implements IStream<ISequencedDocumentMessage[]> {
 		if (this.done) {
 			return { done: true };
 		}
-		const page = await this.client.readProjected(this.document, this.cursor);
+		const page = await this.client.readProjected(this.cursor);
 		this.cursor = page.cursor;
-		this.done = !page.hasMore;
+		this.done = true;
 		const messages = page.operations
 			.filter(
 				({ sequenceNumber }) =>
@@ -615,11 +465,10 @@ class ProjectedMessageStream implements IStream<ISequencedDocumentMessage[]> {
 }
 
 /** Bounded projected-operation history adapter for Fluid delta storage. */
-export class MinimalWasmDeltaStorage implements IDocumentDeltaStorageService {
+export class SeaDeltaStorage implements IDocumentDeltaStorageService {
 	/** Creates delta storage for one document and projection policy. */
 	public constructor(
-		private readonly client: WasmProtocolClient,
-		private readonly document: Uint8Array,
+		private readonly client: SeaDriverClient,
 		private readonly project: (
 			operation: ProjectedOperation,
 		) => ISequencedDocumentMessage = toSequenced,
@@ -630,7 +479,7 @@ export class MinimalWasmDeltaStorage implements IDocumentDeltaStorageService {
 		from: number,
 		to: number | undefined,
 	): IStream<ISequencedDocumentMessage[]> {
-		return new ProjectedMessageStream(this.client, this.document, from, to, this.project);
+		return new ProjectedMessageStream(this.client, from, to, this.project);
 	}
 }
 
@@ -685,7 +534,7 @@ function projectOperation(
 }
 
 /** Minimal Fluid delta connection with explicit reconnect and ambiguity recovery. */
-export class MinimalWasmDeltaConnection extends Events implements IDocumentDeltaConnection {
+export class SeaDeltaConnection extends Events implements IDocumentDeltaConnection {
 	/** Registers a Fluid delta-connection event listener. */
 	public readonly on = this.addListener as unknown as IEventTransformer<
 		this,
@@ -740,7 +589,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 		private readonly lifecycle: DeltaConnectionLifecycle,
 		private session: Uint8Array,
 		private readonly document: Uint8Array,
-		private readonly client: WasmProtocolClient,
+		private readonly client: SeaDriverClient,
 		fluidClient: IClient,
 		public readonly mode: ConnectionMode,
 		public readonly initialClients: ISignalClient[],
@@ -809,10 +658,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 
 	/** Opens projected delivery from the last consumed cursor. */
 	private async openSubscription(): Promise<void> {
-		this.subscription = await this.client.subscribeProjected(
-			this.document,
-			this.lifecycle.cursor,
-		);
+		this.subscription = await this.client.subscribeProjected(this.lifecycle.cursor);
 		this.subscriptionPump = this.consumeSubscription(this.subscription);
 	}
 
@@ -839,9 +685,6 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 			this.nextClientSequenceNumber++;
 			this.submitChain = this.submitChain.then(async () => {
 				const position = await this.client.submitEvent(
-					this.document,
-					this.lifecycle.writer,
-					this.session,
 					identity,
 					message.clientSequenceNumber,
 					encoder.encode(JSON.stringify(message)),
@@ -873,7 +716,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 
 	/** Reads and emits projected operations that are not yet consumed by the subscription. */
 	public async synchronize(): Promise<ISequencedDocumentMessage[]> {
-		const page = await this.client.readProjected(this.document, this.lifecycle.cursor);
+		const page = await this.client.readProjected(this.lifecycle.cursor);
 		this.lifecycle.cursor = page.cursor;
 		const messages = page.operations.map((operation) =>
 			projectOperation(this.lifecycle, operation),
@@ -891,12 +734,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 	public async recoverPending(): Promise<ReadonlyMap<number, SubmissionResolution>> {
 		const resolutions = new Map<number, SubmissionResolution>();
 		for (const [sequenceNumber, pending] of this.pending) {
-			const resolution = await this.client.resolveSubmission(
-				this.document,
-				this.lifecycle.writer,
-				this.session,
-				pending.identity,
-			);
+			const resolution = await this.client.resolveSubmission(pending.identity);
 			resolutions.set(sequenceNumber, resolution);
 			if (resolution.kind === "committed") {
 				this.lifecycle.lastPosition = resolution.position;
@@ -916,9 +754,6 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 			throw new Error(`no pending submission ${sequenceNumber}`);
 		}
 		const position = await this.client.submitEvent(
-			this.document,
-			this.lifecycle.writer,
-			this.session,
 			pending.identity,
 			sequenceNumber,
 			encoder.encode(JSON.stringify(pending.message)),
@@ -1020,7 +855,7 @@ export class MinimalWasmDeltaConnection extends Events implements IDocumentDelta
 export type WasmClientFactory = (
 	resolvedUrl: IResolvedUrl,
 	clientId: string,
-) => Promise<WasmProtocolClient>;
+) => Promise<SeaDriverClient>;
 
 /** Optional observability hooks for the minimal driver harness. */
 export interface MinimalWasmDriverOptions {
@@ -1032,7 +867,7 @@ export interface MinimalWasmDriverOptions {
 		messages: readonly ISequencedDocumentMessage[],
 	) => void;
 	/** Receives each opened delta connection for lifecycle probes. */
-	readonly onDeltaConnection?: (connection: MinimalWasmDeltaConnection) => void;
+	readonly onDeltaConnection?: (connection: SeaDeltaConnection) => void;
 	/** Maximum operations delivered in one projected-subscription event. */
 	readonly subscriptionBatchMaxOperations?: number;
 	/** Maximum aggregate operation payload bytes delivered in one subscription event. */
@@ -1040,7 +875,7 @@ export interface MinimalWasmDriverOptions {
 }
 
 /** Document-scoped Fluid service sharing one serialized generated client and lifecycle. */
-export class MinimalWasmDocumentService extends Events implements IDocumentService {
+export class SeaDocumentService extends Events implements IDocumentService {
 	/** Registers a Fluid document-service event listener. */
 	public readonly on = this.addListener as unknown as IEventTransformer<
 		this,
@@ -1058,10 +893,10 @@ export class MinimalWasmDocumentService extends Events implements IDocumentServi
 	>;
 	/** Requests protocol-tree summarization from Fluid's runtime. */
 	public readonly policies = { summarizeProtocolTree: true };
-	/** Resolved serialized client after successful creation. */
-	private client: WasmProtocolClient | undefined;
-	/** In-flight or completed serialized client creation. */
-	private clientPromise: Promise<WasmProtocolClient> | undefined;
+	/** Resolved generated client after successful creation. */
+	private client: SeaDriverClient | undefined;
+	/** In-flight or completed generated client creation. */
+	private clientPromise: Promise<SeaDriverClient> | undefined;
 	/** Lifecycle state shared by read and write delta connections. */
 	private deltaLifecycle: DeltaConnectionLifecycle | undefined;
 
@@ -1075,29 +910,29 @@ export class MinimalWasmDocumentService extends Events implements IDocumentServi
 	}
 
 	/** Connects the content-addressed storage adapter. */
-	public async connectToStorage(): Promise<MinimalWasmStorage> {
+	public async connectToStorage(): Promise<SeaDocumentStorage> {
 		const client = await this.getClient("storage");
-		return new MinimalWasmStorage(documentId(this.resolvedUrl), client);
+		return new SeaDocumentStorage(documentId(this.resolvedUrl), client);
 	}
 
 	/** Connects bounded projected-operation history. */
-	public async connectToDeltaStorage(): Promise<MinimalWasmDeltaStorage> {
+	public async connectToDeltaStorage(): Promise<SeaDeltaStorage> {
 		const client = await this.getClient("history");
 		const lifecycle = this.getDeltaLifecycle("read");
-		return new MinimalWasmDeltaStorage(client, documentId(this.resolvedUrl), (operation) =>
+		return new SeaDeltaStorage(client, (operation) =>
 			projectOperation(lifecycle, operation),
 		);
 	}
 
 	/** Opens a delta connection, preserving lifecycle across read-to-write replacement. */
-	public async connectToDeltaStream(client: IClient): Promise<MinimalWasmDeltaConnection> {
+	public async connectToDeltaStream(client: IClient): Promise<SeaDeltaConnection> {
 		const mode = client.mode ?? "write";
 		const lifecycle = this.getDeltaLifecycle(mode);
 		const logicalClientId = lifecycle.clientId;
 		const clientId = mode === "read" ? `client-${crypto.randomUUID()}` : logicalClientId;
 		const session = encoder.encode(`${clientId}-session-${crypto.randomUUID()}`);
 		const wasm = await this.getClient(clientId);
-		const connection = new MinimalWasmDeltaConnection(
+		const connection = new SeaDeltaConnection(
 			clientId,
 			lifecycle,
 			session,
@@ -1127,10 +962,9 @@ export class MinimalWasmDocumentService extends Events implements IDocumentServi
 		await client.create(documentId(this.resolvedUrl));
 	}
 
-	/** Lazily creates the one serialized generated client shared by this service. */
-	private getClient(clientId: string): Promise<WasmProtocolClient> {
-		this.clientPromise ??= this.clientFactory(this.resolvedUrl, clientId).then((inner) => {
-			const client = new SerializedWasmProtocolClient(inner);
+	/** Lazily creates the one generated client shared by this service. */
+	private getClient(clientId: string): Promise<SeaDriverClient> {
+		this.clientPromise ??= this.clientFactory(this.resolvedUrl, clientId).then((client) => {
 			this.client = client;
 			return client;
 		});
@@ -1156,7 +990,7 @@ export class MinimalWasmDocumentService extends Events implements IDocumentServi
 }
 
 /** Fluid document-service factory backed by generated or injected WASM clients. */
-export class MinimalWasmDocumentServiceFactory implements IDocumentServiceFactory {
+export class SeaDriver implements IDocumentServiceFactory {
 	/** Creates a factory with optional lifecycle observability hooks. */
 	public constructor(
 		private readonly clientFactory: WasmClientFactory,
@@ -1170,7 +1004,7 @@ export class MinimalWasmDocumentServiceFactory implements IDocumentServiceFactor
 		_logger?: ITelemetryBaseLogger,
 		_clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		const service = new MinimalWasmDocumentService(
+		const service = new SeaDocumentService(
 			resolvedUrl,
 			this.clientFactory,
 			this.options,
@@ -1189,6 +1023,6 @@ export class MinimalWasmDocumentServiceFactory implements IDocumentServiceFactor
 		_logger?: ITelemetryBaseLogger,
 		_clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		return new MinimalWasmDocumentService(resolvedUrl, this.clientFactory, this.options);
+		return new SeaDocumentService(resolvedUrl, this.clientFactory, this.options);
 	}
 }
