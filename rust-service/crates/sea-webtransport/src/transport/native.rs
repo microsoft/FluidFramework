@@ -33,7 +33,10 @@ impl ClientTransport for NativeTransport {
             .map_err(transport_error)?
             .await
             .map_err(transport_error)?;
-        Ok(NativeBidirectionalStream { send, receive })
+        Ok(NativeBidirectionalStream {
+            send,
+            receive: Some(receive),
+        })
     }
 
     fn disconnect(&self) -> Result<(), Self::Error> {
@@ -44,7 +47,7 @@ impl ClientTransport for NativeTransport {
 
 pub(crate) struct NativeBidirectionalStream {
     send: wtransport::SendStream,
-    receive: wtransport::RecvStream,
+    receive: Option<wtransport::RecvStream>,
 }
 
 #[async_trait]
@@ -60,13 +63,11 @@ impl BidirectionalStream for NativeBidirectionalStream {
     }
 
     async fn receive(&mut self) -> Result<Option<Vec<u8>>, Self::Error> {
+        let Some(receive) = self.receive.as_mut() else {
+            return Ok(None);
+        };
         let mut bytes = vec![0_u8; 8192];
-        let Some(count) = self
-            .receive
-            .read(&mut bytes)
-            .await
-            .map_err(transport_error)?
-        else {
+        let Some(count) = receive.read(&mut bytes).await.map_err(transport_error)? else {
             return Ok(None);
         };
         bytes.truncate(count);
@@ -74,6 +75,10 @@ impl BidirectionalStream for NativeBidirectionalStream {
     }
 
     async fn cancel(&mut self) -> Result<(), Self::Error> {
+        let _ = self.send.reset(CLOSE_CODE);
+        if let Some(receive) = self.receive.take() {
+            receive.stop(CLOSE_CODE);
+        }
         Ok(())
     }
 }

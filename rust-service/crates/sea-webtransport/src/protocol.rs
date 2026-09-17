@@ -12,36 +12,67 @@ pub const PROTOCOL_VERSION: u16 = 3;
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[repr(u8)]
 pub enum MessageKind {
+    /// Event submission request.
     Submit = 3,
+    /// Submission-resolution request.
     ResolveSubmission = 4,
+    /// Bounded event-read request.
     Read = 5,
+    /// Blob-publication request.
     PutBlob = 6,
+    /// Blob-lookup request.
     GetBlob = 7,
+    /// Directory-publication request.
     PutDirectory = 8,
+    /// Directory-lookup request.
     GetDirectory = 9,
+    /// Snapshot-lookup request.
     GetSnapshot = 10,
+    /// Latest-snapshot request.
     LatestSnapshot = 11,
+    /// Snapshot-publication resolution request.
     ResolveSnapshot = 13,
+    /// Logical-session close request.
     Close = 16,
+    /// Event-stream opening request.
     OpenEventStream = 17,
+    /// Author-stream opening request.
     OpenAuthorStream = 18,
+    /// Snapshot-stream opening request.
     OpenSnapshotStream = 19,
+    /// Snapshot-publication request.
     PublishSnapshot = 20,
+    /// Content-stream opening request.
     OpenContentStream = 21,
+    /// Request acknowledgement response.
     Acknowledged = 128,
+    /// Event-commit response.
     EventCommitted = 129,
+    /// Submission-resolution response.
     SubmissionResolved = 130,
+    /// Blob-publication response.
     BlobStored = 131,
+    /// Blob-lookup response.
     Blob = 132,
+    /// Directory-publication response.
     DirectoryStored = 133,
+    /// Directory-lookup response.
     Directory = 134,
+    /// Snapshot lookup or publication response.
     Snapshot = 135,
+    /// Recovery snapshot item.
     LoadSnapshot = 136,
+    /// Recovery or live event item.
     LoadEvent = 137,
+    /// Finite catch-up completion item.
     CaughtUp = 138,
+    /// Event-stream authority response.
     EventStreamOpened = 139,
+    /// Snapshot coordination notification.
     SnapshotCoordination = 140,
+    /// Bounded-response completion marker.
     ResponseComplete = 141,
+    /// Classified service-error response.
     Error = 255,
 }
 
@@ -95,9 +126,13 @@ impl From<MessageKind> for u8 {
 /// Logical stream on which a message is valid.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum StreamRole {
+    /// Recovery and live event stream.
     Event,
+    /// Ordered submission stream.
     Author,
+    /// Latest-value snapshot coordination stream.
     Snapshot,
+    /// Correlated content-operation stream.
     Content,
 }
 
@@ -604,161 +639,202 @@ pub mod payload {
     /// Archive-bound event-stream opening payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct OpenEventStream {
+        /// Proposed protocol version.
         pub version: u16,
+        /// Selected archive identity.
         pub archive: Vec<u8>,
+        /// Requested archive lifecycle operation.
         pub intent: ArchiveIntent,
+        /// Stable author identity.
         pub author: Vec<u8>,
+        /// Fresh logical-session identity.
         pub session: Vec<u8>,
+        /// Latest event already incorporated by the client.
         pub resume_after: Option<u64>,
     }
 
     /// Opaque authority returned when an event stream opens.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct EventStreamOpened {
+        /// Capability used to bind the session's other logical streams.
         pub authority: Vec<u8>,
     }
 
     /// Opaque event-stream authority used to bind another logical stream.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct SessionAuthority {
+        /// Capability returned by the event-stream opening handshake.
         pub authority: Vec<u8>,
     }
 
     /// Snapshot coordination stream opening payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct OpenSnapshotStream {
+        /// Capability returned by the event-stream opening handshake.
         pub authority: Vec<u8>,
+        /// Immutable publication policy for this stream.
         pub participation: SnapshotParticipation,
     }
 
     /// Snapshot publication payload with an optional Sea selection fence.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct PublishSnapshotRequest {
+        /// Current Sea nomination fence, or none for client selection.
         pub fence: Option<u64>,
+        /// Snapshot content and publication preconditions.
         pub publication: PublishSnapshot,
     }
 
     /// Latest accepted snapshot and nomination notification.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct SnapshotCoordination {
+        /// Latest accepted snapshot, if one exists.
         pub latest: Option<Snapshot>,
+        /// Current nomination fence when this client is selected.
         pub fence: Option<u64>,
     }
 
     /// Ordered event submission payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct Submit {
+        /// Stable retry identity.
         pub operation: Vec<u8>,
+        /// Latest event incorporated by the author.
         pub reference: Option<u64>,
+        /// Event to sequence.
         pub event: Event,
     }
 
     /// Stable operation identity payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct Operation {
+        /// Stable retry identity.
         pub operation: Vec<u8>,
     }
 
     /// Bounded historical read payload.
     #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct Read {
+        /// Exclusive starting position.
         pub after: Option<u64>,
+        /// Inclusive ending position.
         pub through: Option<u64>,
     }
 
     /// Immutable blob publication payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct PutBlob {
+        /// Exact bytes to store.
         pub payload: Vec<u8>,
     }
 
     /// Immutable blob identity payload.
     #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct BlobId {
+        /// Domain-separated blob identity.
         pub id: [u8; 32],
     }
 
     /// Immutable directory publication payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct PutDirectory {
+        /// Canonically ordered directory entries.
         pub entries: Vec<DirectoryEntry>,
     }
 
     /// Immutable directory identity payload.
     #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct DirectoryId {
+        /// Domain-separated directory identity.
         pub id: [u8; 32],
     }
 
     /// Snapshot publication identity payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct SnapshotId {
+        /// Snapshot identity bytes.
         pub id: Vec<u8>,
     }
 
     /// Conditional snapshot publication payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct PublishSnapshot {
+        /// Stable publication identity.
         pub operation: Vec<u8>,
+        /// Expected latest publication.
         pub expected_parent: Option<Vec<u8>>,
+        /// Included event boundary.
         pub at_event: SnapshotPosition,
+        /// Immutable content root.
         pub root: TreeId,
     }
 
     /// Committed event receipt payload.
     #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct EventCommitted {
+        /// Assigned event position.
         pub position: u64,
+        /// Achieved durability class.
         pub durability: WireDurability,
     }
 
     /// Stable submission resolution payload.
     #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct SubmissionResolved {
+        /// Committed position, or none when definitively absent.
         pub position: Option<u64>,
+        /// Original durability, or none when definitively absent.
         pub durability: Option<WireDurability>,
     }
 
     /// Fetched blob bytes payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct Blob {
+        /// Stored blob bytes.
         pub payload: Vec<u8>,
     }
 
     /// Fetched directory entries payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct Directory {
+        /// Stored directory entries.
         pub entries: Vec<DirectoryEntry>,
     }
 
     /// Optional snapshot response or notification payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct OptionalSnapshot {
+        /// Selected snapshot, if one exists.
         pub snapshot: Option<Snapshot>,
     }
 
     /// Selected recovery snapshot payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct LoadSnapshot {
+        /// Snapshot selected for recovery.
         pub snapshot: Snapshot,
     }
 
     /// Authored event stream payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct LoadEvent {
+        /// Authored event and sequencing metadata.
         pub event: super::StreamEvent,
     }
 
     /// Finite catch-up completion payload.
     #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct CaughtUp {
+        /// Captured storage head, if the archive is nonempty.
         pub position: Option<u64>,
     }
 
     /// Classified service failure payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct Error {
+        /// Stable machine-readable error category.
         pub kind: ErrorKind,
+        /// Human-readable diagnostic.
         pub message: String,
     }
 }
@@ -1577,7 +1653,12 @@ pub enum ProtocolError {
     UnexpectedMessageDirection(MessageKind),
     /// A known message kind is invalid on the selected logical stream.
     #[error("Sea message {kind:?} is invalid on {role:?} stream")]
-    WrongStream { kind: MessageKind, role: StreamRole },
+    WrongStream {
+        /// Message kind received or requested.
+        kind: MessageKind,
+        /// Logical stream on which the message appeared.
+        role: StreamRole,
+    },
     /// A correlation ID violates envelope rules.
     #[error("Sea frame correlation ID is invalid")]
     InvalidCorrelationId,

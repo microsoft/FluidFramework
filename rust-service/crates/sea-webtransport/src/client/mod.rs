@@ -793,7 +793,10 @@ mod tests {
     use std::{
         collections::VecDeque,
         convert::Infallible,
-        sync::{Arc, Mutex},
+        sync::{
+            Arc, Mutex,
+            atomic::{AtomicBool, Ordering},
+        },
     };
 
     use async_trait::async_trait;
@@ -805,11 +808,13 @@ mod tests {
     #[derive(Debug)]
     struct ScriptedTransport {
         chunks: Vec<Vec<u8>>,
+        cancelled: Option<Arc<AtomicBool>>,
     }
 
     #[derive(Debug)]
     struct ScriptedStream {
         chunks: VecDeque<Vec<u8>>,
+        cancelled: Option<Arc<AtomicBool>>,
     }
 
     #[derive(Debug)]
@@ -825,6 +830,7 @@ mod tests {
         async fn open_bidirectional(&self) -> Result<Self::Stream, Self::Error> {
             Ok(ScriptedStream {
                 chunks: self.chunks.clone().into(),
+                cancelled: self.cancelled.clone(),
             })
         }
 
@@ -847,6 +853,7 @@ mod tests {
                     .pop_front()
                     .expect("another scripted stream")
                     .into(),
+                cancelled: None,
             })
         }
 
@@ -872,6 +879,9 @@ mod tests {
         }
 
         async fn cancel(&mut self) -> Result<(), Self::Error> {
+            if let Some(cancelled) = &self.cancelled {
+                cancelled.store(true, Ordering::Relaxed);
+            }
             Ok(())
         }
     }
@@ -954,6 +964,7 @@ mod tests {
                     .chunks(2)
                     .map(<[u8]>::to_vec)
                     .collect(),
+                cancelled: None,
             },
             limits,
         );
@@ -973,6 +984,43 @@ mod tests {
             event_stream.next().await.expect("event item"),
             Some(Response::CaughtUp(Some(2)))
         );
+    }
+
+    #[tokio::test]
+    async fn event_stream_cancel_delegates_to_transport() {
+        let limits = protocol::Limits::default();
+        let opened = protocol::encode_response_frame(
+            StreamRole::Event,
+            1,
+            &Response::EventStreamOpened {
+                authority: vec![9; 32],
+            },
+            limits,
+        )
+        .expect("event stream opening");
+        let cancelled = Arc::new(AtomicBool::new(false));
+        let client = Client::new(
+            ScriptedTransport {
+                chunks: vec![opened],
+                cancelled: Some(Arc::clone(&cancelled)),
+            },
+            limits,
+        );
+        let event_stream = client
+            .open_event_stream(Request::OpenEventStream {
+                version: protocol::PROTOCOL_VERSION,
+                archive: b"archive".to_vec(),
+                intent: protocol::ArchiveIntent::Open,
+                author: b"author".to_vec(),
+                session: b"session".to_vec(),
+                resume_after: None,
+            })
+            .await
+            .expect("event stream");
+
+        event_stream.cancel().await.expect("cancel event stream");
+
+        assert!(cancelled.load(Ordering::Relaxed));
     }
 
     #[tokio::test]

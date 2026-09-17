@@ -1,4 +1,4 @@
-#![doc = "Sea wire protocol and native client transport bindings."]
+#![doc = include_str!("../README.md")]
 
 pub mod protocol;
 
