@@ -8,6 +8,7 @@ use futures_core::Stream;
 
 pub mod archive;
 pub mod blob;
+pub mod monitored_stream;
 pub mod snapshot;
 
 pub use archive::{
@@ -15,6 +16,10 @@ pub use archive::{
     SessionId, SessionStream, ValueError,
 };
 pub use blob::{BlobDirectory, BlobDirectoryId, BlobId, BlobTreeError, BlobTreeId};
+pub use monitored_stream::{
+    BoxMonitoredStream, MonitoredStream, MonitoredStreamItem, MonitoredStreamProgress,
+    MonitoredStreamStatus,
+};
 pub use snapshot::{
     PublishedSnapshot, SnapshotCoordination, SnapshotId, SnapshotParticipation, SnapshotPublication,
 };
