@@ -76,6 +76,14 @@ export class SeaDocumentService extends Events implements IDocumentService {
 	private clientPromise: Promise<SeaDriverClient> | undefined;
 	/** Lifecycle state shared by read and write delta connections. */
 	private deltaLifecycle: DeltaConnectionLifecycle | undefined;
+	/** Whether the shared generated client has archive-bound session authority. */
+	private sessionOpened = false;
+	/** Ordered session replacements; logical-stream operations remain independently concurrent. */
+	private sessionTransition: Promise<void> = Promise.resolve();
+	/** Stable author identity for storage access before a Fluid delta connection opens. */
+	private readonly storageAuthor = encoder.encode(`storage-${crypto.randomUUID()}`);
+	/** Fresh session identity for pre-delta storage access. */
+	private readonly storageSession = encoder.encode(`storage-session-${crypto.randomUUID()}`);
 
 	/** Creates a document service whose Fluid interfaces share one generated client. */
 	public constructor(
@@ -89,12 +97,14 @@ export class SeaDocumentService extends Events implements IDocumentService {
 	/** Connects the content-addressed storage adapter. */
 	public async connectToStorage(): Promise<SeaDocumentStorage> {
 		const client = await this.getClient("storage");
+		await this.ensureStorageSession(client);
 		return new SeaDocumentStorage(documentId(this.resolvedUrl), client);
 	}
 
 	/** Connects bounded projected-operation history. */
 	public async connectToDeltaStorage(): Promise<SeaDeltaStorage> {
 		const client = await this.getClient("history");
+		await this.ensureStorageSession(client);
 		const lifecycle = this.getDeltaLifecycle("read");
 		return new SeaDeltaStorage(client, (operation) => projectOperation(lifecycle, operation));
 	}
@@ -121,7 +131,15 @@ export class SeaDocumentService extends Events implements IDocumentService {
 			this.options.subscriptionBatchMaxOperations,
 			this.options.subscriptionBatchMaxPayloadBytes,
 		);
-		await connection.open();
+		await this.transitionSession(() =>
+			wasm.openSession(
+				documentId(this.resolvedUrl),
+				lifecycle.writer,
+				session,
+				lifecycle.cursor,
+			),
+		);
+		await connection.open(true);
 		this.options.onDeltaConnection?.(connection);
 		return connection;
 	}
@@ -135,6 +153,7 @@ export class SeaDocumentService extends Events implements IDocumentService {
 	public async createDocument(): Promise<void> {
 		const client = await this.getClient("create");
 		await client.create(documentId(this.resolvedUrl));
+		await this.ensureStorageSession(client);
 	}
 
 	/** Lazily creates the one generated client shared by this service. */
@@ -144,6 +163,30 @@ export class SeaDocumentService extends Events implements IDocumentService {
 			return client;
 		});
 		return this.clientPromise;
+	}
+
+	/** Establishes temporary session authority for storage before delta connection creation. */
+	private async ensureStorageSession(client: SeaDriverClient): Promise<void> {
+		await this.transitionSession(async () => {
+			if (!this.sessionOpened) {
+				await client.openSession(
+					documentId(this.resolvedUrl),
+					this.storageAuthor,
+					this.storageSession,
+				);
+			}
+		});
+	}
+
+	/** Runs one session replacement after earlier storage or delta transitions settle. */
+	private async transitionSession(operation: () => Promise<void>): Promise<void> {
+		const result = this.sessionTransition.then(operation, operation);
+		this.sessionTransition = result.then(
+			() => {},
+			() => {},
+		);
+		await result;
+		this.sessionOpened = true;
 	}
 
 	/** Creates or returns lifecycle state retained across delta connections. */

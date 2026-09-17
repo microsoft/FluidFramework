@@ -218,14 +218,16 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 		};
 	}
 
-	/** Opens the protocol session's persistent event, author, and projected streams. */
-	public async open(): Promise<void> {
-		await this.client.openSession(
-			this.document,
-			this.lifecycle.writer,
-			this.session,
-			this.lifecycle.lastPosition,
-		);
+	/** Opens the protocol session and projected stream, or only the stream after owner setup. */
+	public async open(sessionOpened = false): Promise<void> {
+		if (!sessionOpened) {
+			await this.client.openSession(
+				this.document,
+				this.lifecycle.writer,
+				this.session,
+				this.lifecycle.lastPosition,
+			);
+		}
 		await this.openSubscription();
 	}
 
@@ -283,6 +285,13 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 	public async restartSubscription(): Promise<boolean> {
 		const resumedFromCursor = this.lifecycle.cursor !== undefined;
 		await this.stopSubscription();
+		this.session = encoder.encode(`${this.clientId}-session-${Date.now()}-${Math.random()}`);
+		await this.client.openSession(
+			this.document,
+			this.lifecycle.writer,
+			this.session,
+			this.lifecycle.cursor,
+		);
 		await this.openSubscription();
 		return resumedFromCursor;
 	}

@@ -454,7 +454,15 @@ where
     }
 
     /// Finishes the author stream and closes shared client state.
-    pub async fn close(mut self) -> Result<(), ClientError<Stream::Error>> {
+    pub async fn close(self) -> Result<(), ClientError<Stream::Error>> {
+        let state = Arc::clone(&self.state);
+        self.finish().await?;
+        state.close()?;
+        Ok(())
+    }
+
+    /// Finishes this author stream while allowing another session to open.
+    pub async fn finish(mut self) -> Result<(), ClientError<Stream::Error>> {
         let pending = self.state.begin(StreamRole::Author)?;
         let correlation_id = pending.id();
         let request = Request::Close;
@@ -477,7 +485,6 @@ where
         if response != Response::Acknowledged {
             return Err(ClientError::UnexpectedResponse(response));
         }
-        self.state.close()?;
         Ok(())
     }
 }

@@ -1265,7 +1265,9 @@ impl SeaInjectedClient {
         if let Some(previous) = self.event_stream.take() {
             previous.cancel().await.map_err(client_error)?;
         }
-        self.author_stream.take();
+        if let Some(author) = self.author_stream.take() {
+            author.finish().await.map_err(client_error)?;
+        }
         self.snapshot_stream.take();
         self.snapshot_participation.set(None);
         self.content_stream.take();
