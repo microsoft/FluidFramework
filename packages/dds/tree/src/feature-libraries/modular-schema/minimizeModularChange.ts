@@ -9,38 +9,22 @@ import {
 	makeChangeAtomId,
 	makeDetachedFieldIndex,
 	newChangeAtomIdRangeMap,
-	newChangeAtomIdTransform,
-	offsetChangeAtomId,
 	visitDelta,
 	type ChangeAtomId,
-	type ChangeAtomIdMap,
 	type ChangeAtomIdRangeMap,
-	type DeltaFieldMap,
 	type DeltaRoot,
 	type FieldKindIdentifier,
 	type IEditableForest,
 	type TreeChunk,
 } from "../../core/index.js";
-import {
-	brand,
-	hasSingle,
-	setInNestedMap,
-	type Mutable,
-	type RangeQueryResult,
-} from "../../util/index.js";
+import { brand, hasSingle, type Mutable, type RangeQueryResult } from "../../util/index.js";
 import {
 	getFromChangeAtomIdMap,
 	newChangeAtomIdBTree,
 	setInChangeAtomIdMap,
 	type ChangeAtomIdBTree,
 } from "../changeAtomIdBTree.js";
-import { NodeMoveType } from "./crossFieldQueries.js";
-import {
-	EditFilterStatus,
-	NodeAttachState,
-	type FilterAttachResult,
-	type FilterDetachResult,
-} from "./fieldChangeHandler.js";
+import { EditFilterStatus, NodeAttachState } from "./fieldChangeHandler.js";
 
 import type { FlexFieldKind } from "./fieldKind.js";
 import { filterEdits } from "./filterEdits.js";
@@ -263,14 +247,14 @@ class ModularChangeMinimizer {
 		fieldId: FieldId,
 		detachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<FilterDetachResult> {
+	): RangeQueryResult<EditFilterStatus> {
 		let countProcessed = count;
 		const inputIdEntry = firstDetachIdFromAttachId(this.change.rootNodes, detachId, count);
 		countProcessed = inputIdEntry.length;
 
 		if (!this.shouldSquashDetach(fieldId, inputIdEntry.value)) {
 			return {
-				value: { action: EditFilterStatus.Remove, shouldRemoveChild: false },
+				value: EditFilterStatus.Remove,
 				length: countProcessed,
 			};
 		}
@@ -283,30 +267,14 @@ class ModularChangeMinimizer {
 		);
 		countProcessed = moveEndpointEntry.length;
 
-		if (moveEndpointEntry.value !== undefined) {
-			const willSquashEndpointEntry = this.shouldSquashAttach(
-				moveEndpointEntry.value,
-				inputIdEntry.value,
-				countProcessed,
-				fieldId,
-			);
-			countProcessed = willSquashEndpointEntry.length;
-
-			const action = willSquashEndpointEntry.value
-				? EditFilterStatus.Preserve
-				: EditFilterStatus.PreserveWithoutMove;
-
-			return { value: { action }, length: countProcessed };
-		}
-
-		return { value: { action: EditFilterStatus.Preserve }, length: countProcessed };
+		return { value: EditFilterStatus.Preserve, length: countProcessed };
 	}
 
 	private filterAttachForBuildChange(
 		fieldId: FieldId,
 		id: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<FilterAttachResult> {
+	): RangeQueryResult<EditFilterStatus> {
 		let countProcessed = count;
 		const moveEndpointEntry = getDetachFieldForAttach(
 			this.change.crossFieldKeys,
@@ -328,25 +296,12 @@ class ModularChangeMinimizer {
 		);
 		countProcessed = shouldSquashEntry.length;
 
-		const isMove = moveEndpointEntry.value !== undefined;
 		if (!shouldSquashEntry.value) {
-			return { value: { action: EditFilterStatus.Remove }, length: countProcessed };
-		}
-
-		if (isMove) {
-			const movedNodeId = getFromChangeAtomIdMap(this.rootIdToNodeId, rootInputId);
-			return {
-				value: {
-					action: EditFilterStatus.PreserveWithoutMove,
-					nodeId: movedNodeId,
-					newAttachId: rootInputId,
-				},
-				length: countProcessed,
-			};
+			return { value: EditFilterStatus.Remove, length: countProcessed };
 		}
 
 		return {
-			value: { action: EditFilterStatus.Preserve },
+			value: EditFilterStatus.Preserve,
 			length: countProcessed,
 		};
 	}
@@ -381,7 +336,7 @@ class ModularChangeMinimizer {
 		fieldId: FieldId,
 		detachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<FilterDetachResult> {
+	): RangeQueryResult<EditFilterStatus> {
 		let countProcessed = count;
 		const moveEndpointEntry = getAttachFieldForDetach(
 			this.change.crossFieldKeys,
@@ -407,35 +362,16 @@ class ModularChangeMinimizer {
 		);
 		countProcessed = shouldDropEntry.length;
 
-		let hasPreservedAttach = false;
-		let hasDroppedAttach = false;
-		if (moveEndpointEntry.value !== undefined) {
-			const willDropAttachEntry = this.shouldDropAttach(
-				moveEndpointEntry.value,
-				inputRootIdEntry.value,
-				countProcessed,
-				fieldId,
-			);
-			countProcessed = willDropAttachEntry.length;
-			hasDroppedAttach = willDropAttachEntry.value;
-			hasPreservedAttach = !willDropAttachEntry.value;
-		}
-
 		if (shouldDropEntry.value) {
-			// If there is a preserved attach, we will represent any child change at that location,
-			// so we must remove them from here.
 			return {
-				value: { action: EditFilterStatus.Remove, shouldRemoveChild: hasPreservedAttach },
+				value: EditFilterStatus.Remove,
 				length: countProcessed,
 			};
 		}
 
 		return {
-			value: {
-				action: hasDroppedAttach
-					? EditFilterStatus.PreserveWithoutMove
-					: EditFilterStatus.Preserve,
-			},
+			value: EditFilterStatus.Preserve,
+
 			length: countProcessed,
 		};
 	}
@@ -444,7 +380,7 @@ class ModularChangeMinimizer {
 		fieldId: FieldId,
 		id: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<FilterAttachResult> {
+	): RangeQueryResult<EditFilterStatus> {
 		let countProcessed = count;
 		const moveEndpointEntry = getDetachFieldForAttach(
 			this.change.crossFieldKeys,
@@ -469,7 +405,7 @@ class ModularChangeMinimizer {
 
 		if (shouldDropEntry.value) {
 			return {
-				value: { action: EditFilterStatus.Remove },
+				value: EditFilterStatus.Remove,
 				length: countProcessed,
 			};
 		}
@@ -484,20 +420,15 @@ class ModularChangeMinimizer {
 			);
 			countProcessed = willDropEndpointEntry.length;
 			if (willDropEndpointEntry.value) {
-				const movedNodeId = getFromChangeAtomIdMap(this.rootIdToNodeId, rootInputId);
 				return {
-					value: {
-						action: EditFilterStatus.PreserveWithoutMove,
-						nodeId: movedNodeId,
-						newAttachId: inputIdEntry.value,
-					},
+					value: EditFilterStatus.Preserve,
 					length: countProcessed,
 				};
 			}
 		}
 
 		return {
-			value: { action: EditFilterStatus.Preserve },
+			value: EditFilterStatus.Preserve,
 			length: countProcessed,
 		};
 	}

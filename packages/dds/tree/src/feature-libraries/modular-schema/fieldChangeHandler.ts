@@ -175,7 +175,7 @@ export type FilterDetachFunc = (
 	 */
 	detachId: ChangeAtomId,
 	count: number,
-) => RangeQueryResult<FilterDetachResult>;
+) => RangeQueryResult<EditFilterStatus>;
 
 export type FilterAttachFunc = (
 	/**
@@ -183,33 +183,7 @@ export type FilterAttachFunc = (
 	 */
 	attachId: ChangeAtomId,
 	count: number,
-) => RangeQueryResult<FilterAttachResult>;
-
-export interface FilterDetachResult {
-	readonly action: EditFilterStatus;
-
-	/**
-	 * If true, the filtered change should also remove any child changes for the detached nodes.
-	 * This will only be set when `action` is `EditFilterStatus.Remove`.
-	 */
-	readonly shouldRemoveChild?: boolean;
-}
-
-export interface FilterAttachResult {
-	readonly action: EditFilterStatus;
-
-	/**
-	 * When `action` is `EditFilterStatus.PreserveWithoutMove`,
-	 * the filtered change should include a child change with this ID.
-	 */
-	readonly nodeId?: NodeId;
-
-	/**
-	 * When `action` is `EditFilterStatus.PreserveWithoutMove`,
-	 * this ID should be used as the attach ID for the filtered change.
-	 */
-	readonly newAttachId?: ChangeAtomId;
-}
+) => RangeQueryResult<EditFilterStatus>;
 
 /**
  * Used to describe what should be done with a particular attach or detach during `filterEdits`.
@@ -224,13 +198,6 @@ export enum EditFilterStatus {
 	 * The edit should be preserved in the filtered changeset.
 	 */
 	Preserve,
-
-	/**
-	 * This should only be used for an attach or detach which is part of a move.
-	 * The edit should be preserved, but should be adjusted, if necessary,
-	 * to reflect that the other endpoint of the move has been filtered out.
-	 */
-	PreserveWithoutMove,
 }
 
 /**

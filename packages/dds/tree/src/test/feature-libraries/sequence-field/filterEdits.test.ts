@@ -8,8 +8,6 @@ import { filterEdits } from "../../../feature-libraries/sequence-field/filterEdi
 // eslint-disable-next-line import-x/no-internal-modules
 import {
 	EditFilterStatus,
-	FilterAttachResult,
-	FilterDetachResult,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
@@ -36,36 +34,32 @@ const id7: ChangeAtomId = { revision: tag3, localId: brand(2) };
 function preserveAllDetaches(
 	id: ChangeAtomId,
 	count: number,
-	endpoint?: ChangeAtomId,
-): RangeQueryResult<FilterDetachResult> {
-	return { length: count, value: { action: EditFilterStatus.Preserve } };
+): RangeQueryResult<EditFilterStatus> {
+	return { length: count, value: EditFilterStatus.Preserve };
 }
 
 function preserveAllAttaches(
 	id: ChangeAtomId,
 	count: number,
-	endpoint?: ChangeAtomId,
-): RangeQueryResult<FilterAttachResult> {
-	return { length: count, value: { action: EditFilterStatus.Preserve } };
+): RangeQueryResult<EditFilterStatus> {
+	return { length: count, value: EditFilterStatus.Preserve };
 }
 
 function removeAllDetaches(
 	id: ChangeAtomId,
 	count: number,
-	endpoint?: ChangeAtomId,
-): RangeQueryResult<FilterDetachResult> {
+): RangeQueryResult<EditFilterStatus> {
 	return {
 		length: count,
-		value: { action: EditFilterStatus.Remove, shouldRemoveChild: false },
+		value: EditFilterStatus.Remove,
 	};
 }
 
 function removeAllAttaches(
 	id: ChangeAtomId,
 	count: number,
-	endpoint?: ChangeAtomId,
-): RangeQueryResult<FilterAttachResult> {
-	return { length: count, value: { action: EditFilterStatus.Remove } };
+): RangeQueryResult<EditFilterStatus> {
+	return { length: count, value: EditFilterStatus.Remove };
 }
 
 export function testFilterEdits(): void {
@@ -116,19 +110,15 @@ export function testFilterEdits(): void {
 			const filtered = filterEdits(unfiltered, {
 				filterDetach: (id, count) => ({
 					length: 1,
-					value: {
-						action: areEqualChangeAtomIds(id, id4)
-							? EditFilterStatus.Remove
-							: EditFilterStatus.Preserve,
-					},
+					value: areEqualChangeAtomIds(id, id4)
+						? EditFilterStatus.Remove
+						: EditFilterStatus.Preserve,
 				}),
 				filterAttach: (id, count) => ({
 					length: 1,
-					value: {
-						action: areEqualChangeAtomIds(id, id2)
-							? EditFilterStatus.Remove
-							: EditFilterStatus.Preserve,
-					},
+					value: areEqualChangeAtomIds(id, id2)
+						? EditFilterStatus.Remove
+						: EditFilterStatus.Preserve,
 				}),
 				preserveOtherEdits: false,
 			});

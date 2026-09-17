@@ -56,30 +56,9 @@ function filterMark(
 			const result = filterAttach(attachId, mark.count);
 
 			let filtered: Mark;
-			switch (result.value.action) {
+			switch (result.value) {
 				case EditFilterStatus.Preserve: {
 					filtered = mark;
-					break;
-				}
-				case EditFilterStatus.PreserveWithoutMove: {
-					// KLUDGE: PreserveWithoutMove requires us to return a mark which attaches the node
-					// using the detach ID of the move (the endpoint ID).
-					// Insert marks use the cell ID as the attach ID, so we must change the cell ID here.
-					// This could be a problem if there were references to the old cell ID outside this changeset,
-					// but PreserveWithoutMove is only used for transaction minimization, where that is not a problem.
-					const newCellId = result.value.newAttachId ?? attachId;
-					filtered = {
-						type: "Attach",
-						count: result.length,
-						cellId: newCellId,
-						revision: mark.revision,
-						id: mark.id,
-					};
-
-					if (result.value.nodeId !== undefined) {
-						filtered.changes = result.value.nodeId;
-					}
-
 					break;
 				}
 				case EditFilterStatus.Remove: {
@@ -87,7 +66,7 @@ function filterMark(
 					break;
 				}
 				default: {
-					unreachableCase(result.value.action);
+					unreachableCase(result.value);
 				}
 			}
 
@@ -98,36 +77,17 @@ function filterMark(
 			const result = filterDetach(detachId, mark.count);
 
 			let filtered: Mark;
-			switch (result.value.action) {
+			switch (result.value) {
 				case EditFilterStatus.Preserve: {
 					filtered = mark;
 					break;
 				}
-				case EditFilterStatus.PreserveWithoutMove: {
-					const outputCellId = getDetachOutputCellId(mark);
-					filtered = {
-						type: "Detach",
-						count: mark.count,
-						revision: outputCellId.revision,
-						id: outputCellId.localId,
-					};
-
-					if (mark.changes !== undefined) {
-						filtered.changes = mark.changes;
-					}
-
-					break;
-				}
 				case EditFilterStatus.Remove: {
 					filtered = omitMarkEffect(mark);
-					if (result.value.shouldRemoveChild === true) {
-						delete filtered.changes;
-					}
-
 					break;
 				}
 				default: {
-					unreachableCase(result.value.action);
+					unreachableCase(result.value);
 				}
 			}
 			return { ...filtered, count: result.length };

@@ -10,11 +10,7 @@ import {
 } from "../../core/index.js";
 import { brand, type RangeQueryResult } from "../../util/index.js";
 import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
-import {
-	EditFilterStatus,
-	type FilterAttachResult,
-	type FilterDetachResult,
-} from "./fieldChangeHandler.js";
+import { EditFilterStatus } from "./fieldChangeHandler.js";
 import type { FlexFieldKind } from "./fieldKind.js";
 import type {
 	FieldChange,
@@ -30,9 +26,9 @@ import { pruneChangeset } from "./prune.js";
 export function removeAllDetachesFilter(
 	_id: ChangeAtomId,
 	count: number,
-): RangeQueryResult<FilterDetachResult> {
+): RangeQueryResult<EditFilterStatus> {
 	return {
-		value: { action: EditFilterStatus.Remove, shouldRemoveChild: false },
+		value: EditFilterStatus.Remove,
 		length: count,
 	};
 }
@@ -40,8 +36,8 @@ export function removeAllDetachesFilter(
 export function removeAllAttachesFilter(
 	_id: ChangeAtomId,
 	count: number,
-): RangeQueryResult<FilterAttachResult> {
-	return { value: { action: EditFilterStatus.Remove }, length: count };
+): RangeQueryResult<EditFilterStatus> {
+	return { value: EditFilterStatus.Remove, length: count };
 }
 
 export function filterEdits(

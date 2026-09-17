@@ -33,8 +33,6 @@ export {
 	EditFilterStatus,
 	type FilterDetachFunc,
 	type FilterAttachFunc,
-	type FilterAttachResult,
-	type FilterDetachResult,
 	type FieldChangeHandler,
 	type FieldChangeEncodingContext,
 	type FieldChangeDecodingContext,
