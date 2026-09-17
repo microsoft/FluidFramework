@@ -15,5 +15,6 @@ The executable succeeds only after asserting the recovered value and prints:
 recovered counter: 4
 ```
 
-The example demonstrates stable submissions, blob-backed snapshots, and snapshot-plus-tail recovery over a local sequenced memory session.
+The example demonstrates stable submissions, blob-backed snapshots, snapshot-plus-tail recovery,
+and rejection of counter payloads that are not exactly eight bytes over a local sequenced memory session.
 It does not provide persistence, networking, multi-process coordination, or a performance measurement.
