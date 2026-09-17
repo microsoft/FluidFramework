@@ -65,6 +65,8 @@ function minimizeSharedTreeChange(
  * out to nothing. Minimizing the change reduces the size of the edit that is
  * submitted to (and stored by) the service without altering the observable
  * effect of the transaction.
+ * Minimization may discard edits to nodes which are removed by the transaction,
+ * which would cause an observable difference if those nodes are reattached by a concurrent edit.
  *
  * The current implementation is limited and is unable to guarantee that the
  * resulting change is fully minimized if multiple distinct edit groups are
@@ -73,11 +75,6 @@ function minimizeSharedTreeChange(
  * one or more schema changes and content edits on both sides. In such cases,
  * the implementation will throw a usage error:
  * "At most one edit group can be minimized..."
- *
- * @deprecated Note: minimization is not yet implemented. For now this is a
- * no-op that leaves the squashed change unchanged, so supplying it currently
- * has no observable effect beyond reserving the behavior. A real
- * implementation will be provided in a future change.
  *
  * @alpha
  */
