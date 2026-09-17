@@ -9,13 +9,13 @@
 //! 1. [`BlobStore`], [`EventArchive`], and [`SnapshotArchive`] are independently useful storage
 //!    components. Blob and event storage share [`ReferenceableStore`] because their identities are
 //!    persisted by another component; snapshots currently require no such external capability.
-//! 2. [`SeaStorage`] creates and reopens one instance of each component for a [`DocumentId`]. Its
-//!    contract supplies cross-component publication and recovery guarantees without requiring a
-//!    distributed transaction.
+//! 2. [`SeaStorage`] assigns each [`DocumentId`] and creates or reopens one instance of each
+//!    component for it. Its contract supplies cross-component publication and recovery guarantees
+//!    without requiring a distributed transaction.
 //! 3. [`SeaView`] exclusively composes one component of each kind into the reader/writer view of a
 //!    document. Availability-bearing handles enforce the order in which references are published.
-//! 4. [`SeaCollection`] assigns document identities, controls exclusive open ownership, and builds
-//!    views. A sequencer can own one view and multiplex it into concurrent client sessions.
+//! 4. [`SeaCollection`] combines storage with exclusive-open ownership and builds views. A
+//!    sequencer can own one view and multiplex it into concurrent client sessions.
 //!
 //! # Publication and recovery law
 //!
@@ -50,12 +50,12 @@ pub use event_archive::EventArchive;
 pub use referenceable_store::{ReferenceableStore, StorageHandle};
 pub use snapshot_archive::SnapshotArchive;
 
-/// Stable identity assigned to one Sea document.
+/// Stable backend-assigned identity of one Sea document.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct DocumentId(Bytes);
 
 impl DocumentId {
-    /// Wraps collection-defined identity bytes.
+    /// Wraps storage-defined identity bytes.
     #[must_use]
     pub fn from_bytes(value: Bytes) -> Self {
         Self(value)
@@ -79,16 +79,25 @@ pub struct StorageComponents<B, E, S> {
     pub snapshots: S,
 }
 
+/// A newly created document identity and its open storage components.
+#[derive(Debug)]
+pub struct CreatedDocument<B, E, S> {
+    /// Stable identity allocated according to backend requirements.
+    pub id: DocumentId,
+    /// Empty storage components created for the identity.
+    pub components: StorageComponents<B, E, S>,
+}
+
 /// Factory for the storage components of Sea documents.
 ///
 /// Each document has exactly one blob store, event archive, and snapshot archive, all addressed by
 /// the same [`DocumentId`]. The component traits remain independently useful, but this factory does
 /// not expose alternate sharing or layout policies.
 ///
-/// All components advertise the factory's durability. More importantly,
-/// [`SeaStorage::open_document`] returns them only after enforcing this module's publication and
-/// recovery law. An implementation must fail opening rather than return components containing an
-/// event gap, an unavailable referenced blob tree, or a snapshot outside the recovered event
+/// The factory advertises one durability class for the complete document. More importantly,
+/// [`SeaStorage::open_document`] returns components only after enforcing this module's publication
+/// and recovery law. An implementation must fail opening rather than return components containing
+/// an event gap, an unavailable referenced blob tree, or a snapshot outside the recovered event
 /// prefix.
 #[async_trait]
 pub trait SeaStorage: Send + Sync {
@@ -104,14 +113,16 @@ pub trait SeaStorage: Send + Sync {
     /// Snapshot-archive implementation created by this factory.
     type Snapshots: SnapshotArchive<Error = Self::Error>;
 
-    /// Persistence class advertised by every component created by this factory.
+    /// Persistence class of documents created by this backend.
     fn durability(&self) -> Durability;
 
-    /// Creates the three empty components for a newly assigned document identity.
+    /// Allocates a fresh document identity and creates its three empty components.
+    ///
+    /// Identity allocation is owned by the backend so it may satisfy persistence layout,
+    /// uniqueness, locality, or external service requirements.
     async fn create_document(
         &self,
-        id: &DocumentId,
-    ) -> Result<StorageComponents<Self::Blobs, Self::Events, Self::Snapshots>, Self::Error>;
+    ) -> Result<CreatedDocument<Self::Blobs, Self::Events, Self::Snapshots>, Self::Error>;
 
     /// Opens and recovers a document, or returns `None` when its identity is unknown.
     async fn open_document(
@@ -129,10 +140,10 @@ pub trait ViewLease: Send + 'static {}
 
 impl<T> ViewLease for T where T: Send + 'static {}
 
-/// Document identity allocation and exclusive-open policy used by [`SeaCollection`].
+/// Exclusive-open policy used by [`SeaCollection`].
 ///
-/// The catalog does not map documents to component identities. It allocates one identity for all
-/// three components and retains only the ownership state needed to prevent concurrent views.
+/// Storage owns document identity allocation and existence. The catalog retains only the ownership
+/// state needed to prevent concurrent views of an identity.
 #[async_trait]
 pub trait DocumentCatalog: Send + Sync {
     /// Classified catalog error.
@@ -141,13 +152,8 @@ pub trait DocumentCatalog: Send + Sync {
     /// Exclusive ownership retained by an open view.
     type Lease: ViewLease;
 
-    /// Assigns a fresh document identity and acquires its first exclusive lease.
-    async fn create(&self) -> Result<(DocumentId, Self::Lease), Self::Error>;
-
-    /// Acquires exclusive ownership for an identity, failing if it is already open.
-    ///
-    /// Document existence is determined by [`SeaStorage::open_document`].
-    async fn open(&self, id: &DocumentId) -> Result<Self::Lease, Self::Error>;
+    /// Acquires exclusive ownership for an identity, failing if it is already owned.
+    async fn acquire(&self, id: &DocumentId) -> Result<Self::Lease, Self::Error>;
 }
 
 /// An event position accepted for snapshot publication through one view.
@@ -389,7 +395,7 @@ impl<S, C> SeaCollection<S, C> {
 pub enum CollectionError<SE, CE> {
     /// Component creation or opening failed.
     Storage(SE),
-    /// Document identity resolution or exclusive ownership failed.
+    /// Exclusive document ownership could not be acquired.
     Catalog(CE),
 }
 
@@ -398,10 +404,11 @@ where
     S: SeaStorage,
     C: DocumentCatalog,
 {
-    /// Assigns an identity and creates one empty component of each kind for a document.
+    /// Creates a backend-identified document and acquires exclusive ownership of its view.
     ///
-    /// If component creation fails after identity allocation, dropping the returned lease releases
-    /// exclusive ownership. Backends may retain partial empty state for later cleanup or retry.
+    /// Storage allocates the identity together with its components before the collection acquires
+    /// the lease. A lease failure may therefore leave an unopened document for backend-specific
+    /// cleanup or later opening.
     pub async fn create(
         &self,
     ) -> Result<
@@ -411,17 +418,17 @@ where
         ),
         CollectionError<S::Error, C::Error>,
     > {
-        let (id, lease) = self
-            .catalog
-            .create()
-            .await
-            .map_err(CollectionError::Catalog)?;
-        let components = self
+        let created = self
             .storage
-            .create_document(&id)
+            .create_document()
             .await
             .map_err(CollectionError::Storage)?;
-        Ok((id, SeaView::new(components, lease)))
+        let lease = self
+            .catalog
+            .acquire(&created.id)
+            .await
+            .map_err(CollectionError::Catalog)?;
+        Ok((created.id, SeaView::new(created.components, lease)))
     }
 
     /// Opens an existing document with exclusive writer ownership.
@@ -434,7 +441,7 @@ where
     > {
         let lease = self
             .catalog
-            .open(id)
+            .acquire(id)
             .await
             .map_err(CollectionError::Catalog)?;
         let Some(components) = self
