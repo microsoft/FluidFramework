@@ -23,6 +23,10 @@ const tinyliciousCodespacesPortInstruction =
  * @param options - The section heading options.
  * @param context - The services and destination details for the transform.
  * @returns The generated setup instruction nodes.
+ *
+ * @privateRemarks
+ * TODO: Replace `usesTinylicious` and `usesServiceClient` with a single service-mode option in
+ * both transforms, then regenerate the affected example READMEs.
  */
 export function generateGettingStarted(
 	packageMetadata: PackageMetadata,
