@@ -81,6 +81,10 @@ pnpm --dir rust-service/tests/minimal-fluid-driver run build
 pnpm --dir rust-service/tests/minimal-fluid-driver test
 ```
 
+The package `build` script builds dependencies, generates the Rust WASM packages, checks formatting and lint, typechecks, and builds all browser bundles.
+The package `test` script depends on that complete build and runs the TypeScript unit tests, generated Node WASM tests, and real Chromium WebTransport test.
+To build and test the entire Rust service, including the Cargo workspace, run `./test.sh` from `rust-service/`.
+
 The package's `build:wasm` task uses Fluid build's declarative input/output
 tracking. It invokes Cargo and `wasm-bindgen` only when the Rust workspace inputs
 or generated Node/web packages change; Cargo provides an additional incremental

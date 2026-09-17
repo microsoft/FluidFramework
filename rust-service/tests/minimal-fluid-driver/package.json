@@ -33,8 +33,11 @@
 		"clean": "rimraf --glob dist lib pkg \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"format": "biome format src browser scripts package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html shared-tree-benchmark-rust.html shared-tree-benchmark-local.html shared-tree-benchmark-tinylicious.html --write",
 		"lint": "biome lint src browser scripts",
-		"test": "fluid-build . --task test",
+		"test": "pnpm run build && pnpm run test:all",
+		"test:all": "fluid-build . --task test:all",
+		"test:browser": "SEA_BROWSER_SKIP_BUILD=1 ../webtransport-browser/run-test.sh",
 		"test:node": "node --test \"lib/*.test.js\"",
+		"test:wasm": "node ../wasm-client/node-test.mjs",
 		"typecheck": "tsc --project tsconfig.json --noEmit --tsBuildInfoFile ./tsconfig.typecheck.tsbuildinfo",
 		"typecheck:shared-tree": "tsc --project tsconfig.shared-tree.json"
 	},
@@ -125,14 +128,22 @@
 				"^build:package:esm",
 				"build:wasm"
 			],
-			"test": {
+			"test:all": {
 				"dependsOn": [
-					"test:node"
+					"test:browser",
+					"test:node",
+					"test:wasm"
 				],
 				"script": false
 			},
+			"test:browser": [
+				"build:wasm"
+			],
 			"test:node": [
 				"build:esm",
+				"build:wasm"
+			],
+			"test:wasm": [
 				"build:wasm"
 			]
 		}

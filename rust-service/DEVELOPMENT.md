@@ -16,24 +16,17 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 RUSTDOCFLAGS='-D warnings' cargo doc --workspace --all-features --no-deps
 cargo build --workspace --all-targets
 cargo test --workspace --all-targets --all-features
-cargo run -p sea-counter
 node scripts/check-documentation.mjs
 ```
 
-Generated and TypeScript consumers add these checks:
+Run the complete Rust and non-Rust test suite with one command:
 
 ```bash
-pnpm --dir tests/minimal-fluid-driver run build:wasm
-node tests/wasm-client/node-test.mjs
-pnpm --dir tests/minimal-fluid-driver run check:format
-pnpm --dir tests/minimal-fluid-driver run lint
-pnpm --dir tests/minimal-fluid-driver run typecheck
-pnpm --dir tests/minimal-fluid-driver run typecheck:shared-tree
-pnpm --dir tests/minimal-fluid-driver run build:esm
-pnpm --dir tests/minimal-fluid-driver run test:node
-pnpm --dir tests/minimal-fluid-driver run build:shared-tree
-pnpm --dir tests/minimal-fluid-driver run build:benchmarks
+./test.sh
 ```
+
+The script delegates the complete non-Rust build to the minimal Fluid driver package, runs the Cargo workspace tests, and then delegates all TypeScript, generated WASM, and Chromium tests to that package's `test` script.
+The package build uses Fluid build's dependency graph to build its dependencies, generate WASM, check formatting and lint, typecheck, and build the browser bundles.
 
 Run repository policy validation from the repository root after every Rust-service change:
 

@@ -11,7 +11,10 @@ import path from "node:path";
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const crateDirectory = path.resolve(scriptDirectory, "..");
 const rustServiceDirectory = path.resolve(crateDirectory, "../..");
-const targetDirectory = path.join(rustServiceDirectory, "target");
+const targetDirectory = path.resolve(
+	rustServiceDirectory,
+	process.env.CARGO_TARGET_DIR ?? "target",
+);
 const releaseDirectory = path.join(targetDirectory, "wasm32-unknown-unknown", "release");
 const packageDirectory = path.join(crateDirectory, "pkg");
 const webOutput = path.join(packageDirectory, "web");

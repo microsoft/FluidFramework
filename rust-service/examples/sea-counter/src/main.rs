@@ -111,8 +111,7 @@ async fn recover(session: &CounterSession) -> Result<i64, &'static str> {
 }
 
 /// Runs the snapshot and replay demonstration.
-#[tokio::main]
-async fn main() {
+async fn run_demo() -> i64 {
     let session = counter_session(Arc::new(MemoryStream::new())).await;
     append_delta(&session, b"delta-1", 2).await;
     append_delta(&session, b"delta-2", 3).await;
@@ -125,7 +124,13 @@ async fn main() {
     publish_snapshot(&session, b"snapshot", 5, SnapshotPosition::At(position)).await;
     append_delta(&session, b"delta-3", -1).await;
 
-    let value = recover(&session).await.expect("recover counter");
+    recover(&session).await.expect("recover counter")
+}
+
+/// Runs the snapshot and replay demonstration.
+#[tokio::main]
+async fn main() {
+    let value = run_demo().await;
     assert_eq!(value, 4);
     println!("recovered counter: {value}");
 }
@@ -143,19 +148,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn recovers_only_events_after_later_snapshot() {
-        let session = counter_session(Arc::new(MemoryStream::new())).await;
-        append_delta(&session, b"first", 2).await;
-        append_delta(&session, b"second", 3).await;
-        let position = session
-            .resolve_submission(&OperationId::new(Bytes::from_static(b"second")).unwrap())
-            .await
-            .unwrap()
-            .unwrap()
-            .position;
-        publish_snapshot(&session, b"later", 5, SnapshotPosition::At(position)).await;
-        append_delta(&session, b"final", -1).await;
-        assert_eq!(recover(&session).await, Ok(4));
+    async fn runs_snapshot_and_replay_demo() {
+        assert_eq!(run_demo().await, 4);
     }
 
     #[tokio::test]
