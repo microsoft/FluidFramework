@@ -2,16 +2,16 @@
 
 ## Status
 
-- **Plan status:** In progress; final canonical validation remains.
+- **Plan status:** Complete.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 13. Final canonical validation.
-- **Last completed checkpoint:** 12. Documentation and terminology completion.
-- **Last validation:** The nine-arm WebTransport benchmark matrix, raw provenance, aggregate summary, real Chromium Sea-selected workflow, and server/browser shutdown evidence passed on 2026-09-17.
-- **Latest checkpoint notes:** Final controlled-local evidence is retained under [benchmarks/shared-tree/7f22a862585](benchmarks/shared-tree/7f22a862585/README.md). All memory, buffered-file, and durable-file arms passed for direct dummy, direct SharedTree, and Fluid SharedTree paths from clean source commit `294c803e8c4aa711df5dee19dc5711e6aead5f33`. The matching direct-dummy memory arm preserved the historical persistent-stream improvement, measuring 2,501.54 operations/s and 39.93 ms mean convergence versus 37.86 operations/s and 2,642.5 ms before stream reuse. Equivalent historical buffered-file and durable-file raw measurements were not retained, so the report limits the before/after claim to memory. A separate real Chromium run exercised all four logical stream roles and reported 3,979 Sea wire bytes, 3 peak connections, 9 peak streams, 3 completed connection cleanups, and 0 active connections after shutdown. No owned service or browser process remained.
+- **Current checkpoint:** None; all checkpoints are complete.
+- **Last completed checkpoint:** 13. Performance and final validation.
+- **Last validation:** The complete canonical Rust, generated WASM, TypeScript, policy, and repository validation suites passed on 2026-09-17. The working tree was clean and no owned service, benchmark, Chrome, or Chromium process remained.
+- **Latest checkpoint notes:** Final controlled-local evidence is retained under [benchmarks/shared-tree/7f22a862585](benchmarks/shared-tree/7f22a862585/README.md). All memory, buffered-file, and durable-file arms passed for direct dummy, direct SharedTree, and Fluid SharedTree paths from clean source commit `294c803e8c4aa711df5dee19dc5711e6aead5f33`. The matching direct-dummy memory arm preserved the historical persistent-stream improvement, measuring 2,501.54 operations/s and 39.93 ms mean convergence versus 37.86 operations/s and 2,642.5 ms before stream reuse. Equivalent historical buffered-file and durable-file raw measurements were not retained, so the report limits the before/after claim to memory. A separate real Chromium run exercised all four logical stream roles and reported 3,979 Sea wire bytes, 3 peak connections, 9 peak streams, 3 completed connection cleanups, and 0 active connections after shutdown. Canonical validation covered Rust formatting, Clippy, rustdoc, all-target builds and tests, `sea-counter`, documentation, generated WASM and Node tests, TypeScript formatting, lint, typechecks, builds and tests, scoped policy, and repository `build:fast`.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** Complete the canonical Rust, TypeScript, policy, and repository validation commands below.
+- **Next checkpoint:** None.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
