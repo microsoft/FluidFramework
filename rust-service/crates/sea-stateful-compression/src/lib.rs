@@ -444,6 +444,10 @@ mod current_tests {
             );
         }
 
+        let mut extended = encoded.to_vec();
+        extended.extend_from_slice(b"trailing bytes");
+        assert!(codec.decompress(&Bytes::from(extended)).is_err());
+
         let wrong_dictionary = StatefulCompressionSession::new(
             (),
             Bytes::from_static(b"different dictionary"),
