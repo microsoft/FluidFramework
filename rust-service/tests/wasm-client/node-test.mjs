@@ -32,7 +32,10 @@ async function nextAwaiting(stream) {
 	for (;;) {
 		const item = await stream.next();
 		assert.notEqual(item, undefined);
-		if (item.kind === SeaLoadKind.Progress && item.status === SeaStreamStatus.AwaitingNewItems) {
+		if (
+			item.kind === SeaLoadKind.Progress &&
+			item.status === SeaStreamStatus.AwaitingNewItems
+		) {
 			return item;
 		}
 	}

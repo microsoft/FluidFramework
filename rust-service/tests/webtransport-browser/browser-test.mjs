@@ -46,7 +46,10 @@ async function nextAwaiting(stream) {
 	for (;;) {
 		const item = await stream.next();
 		assert(item !== undefined, "event stream ended before catching up");
-		if (item.kind === SeaLoadKind.Progress && item.status === SeaStreamStatus.AwaitingNewItems) {
+		if (
+			item.kind === SeaLoadKind.Progress &&
+			item.status === SeaStreamStatus.AwaitingNewItems
+		) {
 			return item;
 		}
 	}
