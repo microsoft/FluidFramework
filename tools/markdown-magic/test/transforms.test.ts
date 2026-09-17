@@ -125,6 +125,17 @@ test("example app header honors the Tinylicious option", async () => {
 	assert.match(output, /pnpm start/);
 });
 
+test("ServiceClient instructions honor the Tinylicious option", async () => {
+	const output = await generate("example-getting-started", {
+		packageJsonPath: "./package.json",
+		serviceClient: true,
+		usesTinylicious: false,
+	});
+
+	assert.match(output, /fluidClient=session/);
+	assert.doesNotMatch(output, /fluidClient=tinylicious/);
+});
+
 test("transform options reject unknown properties", async () => {
 	const registry = createTransformRegistry();
 	const transform = registry.transforms["library-readme-header"];
