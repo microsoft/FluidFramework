@@ -2,14 +2,14 @@
 
 use std::{collections::BTreeMap, error::Error, fmt};
 
+use blake3::Hasher;
 use bytes::{Buf as _, BufMut as _, Bytes, BytesMut};
-use sha2::{Digest as _, Sha256};
 
 pub mod archive;
 
 const CONTENT_ID_BYTES: usize = 32;
-const BLOB_DOMAIN: &[u8] = b"sea:blob:v1\0";
-const DIRECTORY_DOMAIN: &[u8] = b"sea:directory:v1\0";
+const BLOB_DOMAIN: &[u8] = b"sea:blob:v2\0";
+const DIRECTORY_DOMAIN: &[u8] = b"sea:directory:v2\0";
 
 /// A stable event-order value within one archive.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -100,7 +100,7 @@ impl fmt::Display for BlobTreeError {
 
 impl Error for BlobTreeError {}
 
-/// The domain-separated content identity of an immutable binary leaf.
+/// The domain-separated BLAKE3 identity of an immutable binary leaf.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct BlobId([u8; CONTENT_ID_BYTES]);
 
@@ -127,7 +127,7 @@ impl BlobId {
     }
 }
 
-/// The domain-separated content identity of an immutable directory.
+/// The domain-separated BLAKE3 identity of an immutable directory.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct BlobDirectoryId([u8; CONTENT_ID_BYTES]);
 
@@ -294,10 +294,10 @@ fn content_id_bytes(bytes: &[u8]) -> Result<[u8; CONTENT_ID_BYTES], BlobTreeErro
 }
 
 fn domain_hash(domain: &[u8], bytes: &[u8]) -> [u8; CONTENT_ID_BYTES] {
-    let mut hash = Sha256::new();
+    let mut hash = Hasher::new();
     hash.update(domain);
     hash.update(bytes);
-    hash.finalize().into()
+    *hash.finalize().as_bytes()
 }
 
 fn validate_entry_name(name: &str) -> Result<(), BlobTreeError> {
@@ -333,6 +333,29 @@ mod sea_value_tests {
         let blob = BlobId::for_bytes(&[]);
         let directory = BlobDirectory::default().id().expect("empty directory id");
         assert_ne!(blob.as_bytes(), directory.as_bytes());
+    }
+
+    #[test]
+    fn content_identities_use_versioned_blake3_domains() {
+        assert_eq!(
+            BlobId::for_bytes(&[]).as_bytes(),
+            &[
+                0x6f, 0x84, 0x57, 0x6a, 0x0a, 0xd4, 0x37, 0x09, 0x09, 0x71, 0x86, 0xd3, 0x29, 0xd5,
+                0xea, 0x68, 0x52, 0x53, 0x5a, 0xc8, 0x66, 0x8a, 0x08, 0xa6, 0x71, 0x4a, 0x35, 0x88,
+                0xd0, 0x2b, 0x3b, 0x4d,
+            ]
+        );
+        assert_eq!(
+            BlobDirectory::default()
+                .id()
+                .expect("empty directory id")
+                .as_bytes(),
+            &[
+                0xa4, 0x2c, 0x08, 0x0c, 0x3d, 0x0b, 0x9b, 0xdb, 0x79, 0xc0, 0x67, 0x92, 0x6c, 0xa8,
+                0x01, 0x4f, 0x79, 0x30, 0x2a, 0x51, 0x7c, 0x3a, 0x7e, 0x2e, 0xb3, 0x31, 0x3d, 0x71,
+                0x69, 0xc2, 0x99, 0x2b,
+            ]
+        );
     }
 
     #[test]

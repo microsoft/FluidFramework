@@ -19,6 +19,13 @@ const nodeOutput = path.join(packageDirectory, "node");
 const testSupportDirectory = path.join(crateDirectory, "test-support", "pkg");
 const testWebOutput = path.join(testSupportDirectory, "web");
 const testNodeOutput = path.join(testSupportDirectory, "node");
+const rustFlags = [
+	process.env.RUSTFLAGS,
+	"--cfg=web_sys_unstable_apis",
+	"-C target-feature=+simd128",
+]
+	.filter(Boolean)
+	.join(" ");
 
 function run(command, args, options = {}) {
 	execFileSync(command, args, {
@@ -44,7 +51,7 @@ run(
 	{
 		env: {
 			...process.env,
-			RUSTFLAGS: "--cfg=web_sys_unstable_apis",
+			RUSTFLAGS: rustFlags,
 		},
 	},
 );
@@ -89,7 +96,7 @@ run(
 	{
 		env: {
 			...process.env,
-			RUSTFLAGS: "--cfg=web_sys_unstable_apis",
+			RUSTFLAGS: rustFlags,
 		},
 	},
 );

@@ -1,6 +1,6 @@
 # Sea Content Addressed
 
-`sea-content-addressed` stores immutable SHA-256 blobs and canonical blob directories on a local filesystem.
+`sea-content-addressed` stores immutable BLAKE3-addressed blobs and canonical blob directories on a local filesystem.
 
 `ContentStore` uses `BlobDirectory` and the typed blob and directory identities from `sea-core`.
 Blob and directory data occupy separate namespaces below the store root.
