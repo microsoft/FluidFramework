@@ -1,11 +1,12 @@
 # Sea Conformance
 
-`sea-conformance` provides implementation-independent checks for `sea-core` storage contracts.
+`sea-conformance` provides implementation-independent checks for `sea-core` storage and session contracts.
 
 ## Coverage
 
-`run_sea_storage_conformance` checks blob and directory identity, missing-tree rejection, event ordering, initial and historical snapshots, conditional and idempotent snapshot publication, publication resolution, and snapshot-plus-tail load.
+`run_sea_storage_conformance` checks empty storage, blob and directory identity, missing-tree rejection, event ordering, initial and historical snapshots, conditional and idempotent snapshot publication, publication resolution, and snapshot-plus-tail load.
 `run_sea_session_observable_behavior` checks the current `SeaSession` contract for submission and publication identity recovery, bounded and recovery reads, live snapshot notifications, content access, and close behavior.
+`run_sea_responsibility_observable_behavior` runs the same session checks when archive, author, subscription, and snapshot responsibilities are composed separately.
 
 Factories must return a fresh, empty stream for each call, and the session suite requires a fresh archive session.
 The suites panic on a contract violation and are intended to be invoked from an implementation's async tests.

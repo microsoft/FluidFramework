@@ -1,4 +1,4 @@
-#![doc = "Implementation-independent conformance checks for Sea event archives."]
+#![doc = include_str!("../README.md")]
 
 use std::{collections::BTreeMap, fmt::Debug};
 
@@ -107,6 +107,7 @@ where
     );
 }
 
+/// Verifies session-level blob and directory publication and retrieval.
 async fn round_trip_session_content<S>(session: &S) -> sea_core::BlobDirectoryId
 where
     S: SeaArchive,
@@ -140,6 +141,7 @@ where
     directory_id
 }
 
+/// Submits the first event and verifies retry, resolution, and conflict behavior.
 async fn submit_and_resolve_first_event<S>(
     session: &S,
     directory_id: sea_core::BlobDirectoryId,
@@ -188,6 +190,7 @@ where
     receipt
 }
 
+/// Publishes a snapshot and verifies notification, retry, resolution, and lookup behavior.
 async fn publish_and_resolve_snapshot<S, C>(
     archive: &S,
     coordinator: &C,
@@ -268,6 +271,7 @@ where
     S::Error: Debug,
     F: Fn() -> S,
 {
+    storage_starts_empty(&make_storage).await;
     storage_append_order_and_boundaries(&make_storage).await;
     storage_concurrent_appends_are_contiguous(&make_storage).await;
     storage_read_is_finite(&make_storage).await;
@@ -292,6 +296,10 @@ where
         .publish_snapshot(initial_request)
         .await
         .expect("initial snapshot");
+    assert_eq!(
+        storage.latest_snapshot().await.expect("latest snapshot"),
+        Some(initial.clone())
+    );
 
     let first = storage
         .append(Event {
@@ -326,6 +334,10 @@ where
         .publish_snapshot(positioned_request.clone())
         .await
         .expect("positioned snapshot");
+    assert_eq!(
+        storage.latest_snapshot().await.expect("latest snapshot"),
+        Some(positioned.clone())
+    );
     let retry = storage
         .publish_snapshot(positioned_request.clone())
         .await
@@ -396,6 +408,53 @@ where
     assert_captured_load(&storage, positioned, first.position, second.position).await;
 }
 
+/// Verifies the observable state and finite reads of a fresh storage instance.
+async fn storage_starts_empty<S, F>(make_storage: &F)
+where
+    S: SeaStorage,
+    S::Error: Debug,
+    F: Fn() -> S,
+{
+    let storage = make_storage();
+    assert_eq!(storage.head().await.expect("empty head"), None);
+    assert_eq!(
+        storage.latest_snapshot().await.expect("empty snapshot"),
+        None
+    );
+    assert_eq!(
+        storage
+            .resolve_snapshot_publication(
+                &OperationId::new(Bytes::from_static(b"unknown-publication"))
+                    .expect("operation identity"),
+            )
+            .await
+            .expect("unknown publication resolution"),
+        None
+    );
+    assert!(
+        storage
+            .read(None, None)
+            .await
+            .expect("empty reader")
+            .try_collect::<Vec<_>>()
+            .await
+            .expect("empty records")
+            .is_empty()
+    );
+
+    let load = storage.load(None).await.expect("empty load");
+    assert_eq!(load.snapshot, None);
+    assert_eq!(load.head, None);
+    assert!(
+        load.events
+            .try_collect::<Vec<_>>()
+            .await
+            .expect("empty load events")
+            .is_empty()
+    );
+}
+
+/// Verifies append durability, ordering, empty payloads, and exclusive read boundaries.
 async fn storage_append_order_and_boundaries<S, F>(make_storage: &F)
 where
     S: SeaStorage,
@@ -410,6 +469,7 @@ where
         })
         .await
         .expect("first append");
+    assert_eq!(first.durability, storage.durability());
     let second = storage
         .append(Event {
             payload: Bytes::new(),
@@ -449,6 +509,7 @@ where
     assert!(after_head.is_empty());
 }
 
+/// Verifies that concurrent appends commit exactly once before a later append.
 async fn storage_concurrent_appends_are_contiguous<S, F>(make_storage: &F)
 where
     S: SeaStorage,
@@ -492,6 +553,7 @@ where
     assert_eq!(concurrent_values, (0_u8..32).collect::<Vec<_>>());
 }
 
+/// Verifies that a read captures a finite head when the reader is created.
 async fn storage_read_is_finite<S, F>(make_storage: &F)
 where
     S: SeaStorage,
@@ -519,6 +581,7 @@ where
     assert_eq!(records[0].event.payload, Bytes::from_static(b"captured"));
 }
 
+/// Verifies that dropping one reader does not affect another reader or storage state.
 async fn storage_readers_are_independent_and_cancellable<S, F>(make_storage: &F)
 where
     S: SeaStorage,
@@ -550,6 +613,7 @@ where
     );
 }
 
+/// Verifies that reads reject positions not committed in the target storage instance.
 async fn storage_positions_require_committed_ordinals<S, F>(make_storage: &F)
 where
     S: SeaStorage,
@@ -574,6 +638,7 @@ where
     ));
 }
 
+/// Verifies that snapshots reject positions not committed in the target storage instance.
 async fn storage_snapshot_positions_require_committed_ordinals<S, F>(make_storage: &F)
 where
     S: SeaStorage,
@@ -612,6 +677,7 @@ where
     ));
 }
 
+/// Publishes and retrieves the content tree used by subsequent storage checks.
 async fn prepare_blob_tree<S>(storage: &S) -> sea_core::BlobDirectoryId
 where
     S: SeaStorage,
@@ -645,6 +711,7 @@ where
     directory_id
 }
 
+/// Verifies that an event cannot reference content absent from the storage instance.
 async fn reject_missing_event_tree<S>(storage: &S)
 where
     S: SeaStorage,
@@ -662,6 +729,7 @@ where
     assert_eq!(storage.head().await.expect("head after rejection"), None);
 }
 
+/// Verifies that a storage load returns its selected snapshot and captured finite tail.
 async fn assert_captured_load<S>(
     storage: &S,
     snapshot: sea_core::archive::PublishedSnapshot,
