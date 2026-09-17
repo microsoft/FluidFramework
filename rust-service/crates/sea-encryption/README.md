@@ -25,6 +25,9 @@ non-secret; `EncryptionKey` redacts debug output and zeroizes its bytes on drop.
 The default `OsNonceSource` uses the operating-system CSPRNG. An injected
 `NonceSource` must return a fresh nonce for every payload written under a key;
 deterministic sources are only appropriate for tests.
+An exact retry of an already committed operation reuses its original receipt
+without requesting another nonce, while changed input for that operation identity
+is rejected as a conflict.
 
 The wrapper buffers one complete payload for encryption or decryption and has
 no payload-size limit. Reads decrypt one event when polled and do not add a
@@ -45,5 +48,5 @@ RUSTDOCFLAGS="-D warnings" cargo doc -p sea-encryption --all-features --no-deps
 ```
 
 The test suite covers session conformance and stable retries, empty payloads,
-key rotation and unavailability, nonce failure, malformed and truncated envelopes,
-tampering, context separation, and key redaction.
+key rotation and unavailability, nonce failure and retry cardinality, malformed
+and truncated envelopes, tampering, context separation, and key redaction.

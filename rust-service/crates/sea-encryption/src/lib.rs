@@ -473,7 +473,10 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
+    use std::sync::{
+        Arc, Mutex,
+        atomic::{AtomicUsize, Ordering},
+    };
 
     use futures_util::StreamExt;
     use sea_core::{
@@ -570,6 +573,19 @@ mod tests {
         }
     }
 
+    /// Deterministic nonce source that records how many payloads request a nonce.
+    #[derive(Clone, Debug)]
+    struct CountingNonce {
+        calls: Arc<AtomicUsize>,
+    }
+
+    impl NonceSource for CountingNonce {
+        fn generate_nonce(&self) -> Result<[u8; NONCE_LENGTH], NonceUnavailable> {
+            let call = self.calls.fetch_add(1, Ordering::Relaxed);
+            Ok([u8::try_from(call + 1).unwrap(); NONCE_LENGTH])
+        }
+    }
+
     #[tokio::test]
     async fn session_decorator_round_trips_events_and_blobs() {
         let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
@@ -634,6 +650,47 @@ mod tests {
             .unwrap();
         let encrypted = EncryptionSession::new(session.clone(), TestKeys::new());
         sea_conformance::run_sea_responsibility_observable_behavior(&encrypted, &session).await;
+    }
+
+    #[tokio::test]
+    async fn operation_retries_do_not_request_another_nonce() {
+        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
+            .await
+            .unwrap();
+        let session = sequencer
+            .open_session(
+                AuthorId::new(Bytes::from_static(b"retry-author")).unwrap(),
+                SessionId::new(Bytes::from_static(b"retry-session")).unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+        let calls = Arc::new(AtomicUsize::new(0));
+        let encrypted = EncryptionSession::with_nonce_source(
+            session,
+            TestKeys::new(),
+            CountingNonce {
+                calls: calls.clone(),
+            },
+        );
+        let submission = EventSubmission {
+            operation_id: OperationId::new(Bytes::from_static(b"retry-operation")).unwrap(),
+            reference: None,
+            event: sea_core::Event {
+                payload: Bytes::from_static(b"plaintext"),
+                blob_tree: None,
+            },
+        };
+
+        let receipt = encrypted.submit(submission.clone()).await.unwrap();
+        assert_eq!(encrypted.submit(submission.clone()).await.unwrap(), receipt);
+        let mut conflicting = submission;
+        conflicting.event.payload = Bytes::from_static(b"different");
+        assert_eq!(
+            encrypted.submit(conflicting).await.unwrap_err().kind(),
+            ErrorKind::Conflict
+        );
+        assert_eq!(calls.load(Ordering::Relaxed), 1);
     }
 
     #[test]
