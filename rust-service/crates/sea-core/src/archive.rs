@@ -1,4 +1,13 @@
-//! Final archive and individual-session contracts.
+//! Event archive storage and client access contracts.
+//!
+//! An event archive holds an append-only ordered collection of events.
+//! [`SeaStorage`] defines the trusted backend contract and natively supports only a single writer;
+//! `sea-sequencer` coordinates multiple writers and exposes the client-facing traits in this module.
+//!
+//! Archives use the content-addressed trees in [`crate::blob`] so events can reference immutable
+//! content and [`Snapshot`]s can capture the state produced through a [`SnapshotPosition`].
+//!
+//! "Event Archive" is the "EA" in Sea: Snapshotted Event Archive.
 
 use std::pin::Pin;
 
@@ -7,8 +16,13 @@ use bytes::Bytes;
 use futures_core::Stream;
 
 use crate::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, Durability, Event,
-    EventPosition, SnapshotId,
+    BlobDirectory, BlobDirectoryId, BlobId, ClassifiedError, Durability, Event, EventPosition,
+};
+
+use crate::snapshot::SnapshotId;
+pub use crate::snapshot::{
+    PublishedSnapshot, Snapshot, SnapshotCoordination, SnapshotParticipation, SnapshotPosition,
+    SnapshotPublication,
 };
 
 /// Stable caller-provided identity for an operation whose result may be ambiguous.
@@ -136,55 +150,6 @@ pub enum ValueError {
     EmptyAuthorId,
     /// A session identity was empty.
     EmptySessionId,
-}
-
-/// The event boundary represented by a snapshot.
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub enum SnapshotPosition {
-    /// State before the first committed event.
-    Initial,
-    /// State including every event through this position.
-    At(EventPosition),
-}
-
-/// One immutable snapshot publication value.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Snapshot {
-    /// Latest event reflected in the snapshot.
-    pub at_event: SnapshotPosition,
-    /// Root of the immutable state tree.
-    pub root: BlobTreeId,
-}
-
-/// A snapshot paired with its publication identity and lineage.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PublishedSnapshot {
-    /// Identity of this publication, distinct from its content root.
-    pub id: SnapshotId,
-    /// Parent publication required when this snapshot was accepted.
-    pub parent: Option<SnapshotId>,
-    /// Published state and event boundary.
-    pub snapshot: Snapshot,
-}
-
-/// An idempotent conditional snapshot-publication request.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct SnapshotPublication {
-    /// Stable identity reused to retry or resolve this publication.
-    pub operation_id: OperationId,
-    /// Latest snapshot expected by the publisher.
-    pub expected_parent: Option<SnapshotId>,
-    /// State being published.
-    pub snapshot: Snapshot,
-}
-
-/// Latest accepted snapshot and this session's current publication authority.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct SnapshotCoordination {
-    /// Latest accepted snapshot, if any.
-    pub latest: Option<PublishedSnapshot>,
-    /// Current fencing token when this session is nominated.
-    pub fence: Option<u64>,
 }
 
 /// One committed application event returned through Sea interfaces.
@@ -443,17 +408,6 @@ pub trait SeaSnapshotCoordinator: SeaService {
     async fn subscribe_snapshots(
         &self,
     ) -> Result<SessionStream<PublishedSnapshot, Self::Error>, Self::Error>;
-}
-
-/// How one snapshot stream participates in publication authority.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum SnapshotParticipation {
-    /// Receives coordination updates but cannot publish snapshots.
-    ReadOnly,
-    /// Publishes only while selected and fenced by Sea.
-    SeaSelected,
-    /// Publishes under application-managed selection without a Sea fence.
-    ClientSelected,
 }
 
 /// Snapshot participation, Sea selection, publication authority, and network lifecycle.
