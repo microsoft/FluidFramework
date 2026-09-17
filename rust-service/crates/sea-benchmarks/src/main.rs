@@ -548,6 +548,9 @@ where
 }
 
 /// Runs submission, optional snapshot, and finite-read work through sequenced sessions.
+///
+/// Success means every configured submission completed, produced exactly one latency sample, and
+/// the finite read contained the exact configured fixture multiset.
 #[allow(clippy::too_many_lines)]
 async fn run_session<S, C>(
     sessions: Vec<S>,
@@ -756,6 +759,9 @@ fn verify_session_payloads(
 }
 
 /// Runs the append, optional snapshot, and finite-read workload on trusted storage.
+///
+/// Success means every configured append completed, produced exactly one latency sample, and the
+/// finite read contained the exact configured fixture multiset.
 #[allow(clippy::too_many_lines)]
 async fn run_storage<S>(
     storage: &S,
@@ -1273,6 +1279,35 @@ mod tests {
             verify_payloads(wrong_payloads, &FixtureGenerator::default(), &config),
             Err("finite read payloads did not match fixtures".to_owned())
         );
+    }
+
+    #[tokio::test]
+    async fn concurrent_writers_complete_before_measurement_returns() {
+        let config = Config {
+            backend: Backend::Memory,
+            fixture: FixtureKind::SmallIncompressible,
+            seed: DEFAULT_SEED,
+            records: 8,
+            writers: 2,
+            snapshot_frequency: None,
+            repetitions: 1,
+            warmups: 0,
+        };
+        let storage = MemoryStream::new();
+        let storage_measurements = run_storage(&storage, &config, 0.0)
+            .await
+            .expect("concurrent storage workload");
+        assert_eq!(storage_measurements.append_latencies.len(), 8);
+        assert_eq!(storage_measurements.finite_read_records, 8);
+
+        let sessions = open_local_sessions(Arc::new(MemoryStream::new()), 2, "concurrent-test")
+            .await
+            .expect("concurrent sessions");
+        let session_measurements = run_session(sessions.clone(), &sessions, &config, 0.0)
+            .await
+            .expect("concurrent session workload");
+        assert_eq!(session_measurements.append_latencies.len(), 8);
+        assert_eq!(session_measurements.finite_read_records, 8);
     }
 
     #[tokio::test]
