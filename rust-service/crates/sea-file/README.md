@@ -9,6 +9,7 @@ Writes are flushed through buffered files but are not synchronized with `fsync`,
 
 Opening an existing store validates framing, identities, snapshot lineage, content closure, and position ordering.
 Invalid or incomplete bytes produce `ErrorKind::Corrupt`; the crate intentionally performs no crash-tail repair.
+Operations rejected during validation do not append journal records.
 A clean close and reopen preserves events, content, snapshots, and stable publication resolution.
 
 ## Limits

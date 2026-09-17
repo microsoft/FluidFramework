@@ -847,7 +847,7 @@ mod current_tests {
 
     use bytes::Bytes;
     use sea_core::{
-        BlobDirectory, BlobTreeId, Event,
+        BlobDirectory, BlobId, BlobTreeId, Event, EventPosition,
         archive::{
             OperationId, SeaStorage, Snapshot as ArchiveSnapshot,
             SnapshotPosition as ArchiveSnapshotPosition, SnapshotPublication,
@@ -935,6 +935,70 @@ mod current_tests {
                 .unwrap(),
             Some(published)
         );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn rejected_operations_leave_the_archive_unchanged_and_reopenable() {
+        let root = directory("rejected-operations");
+        let storage = FileStream::open(&root).unwrap();
+        let blob_payload = Bytes::from_static(b"retained blob");
+        let blob = storage.put_blob(blob_payload.clone()).await.unwrap();
+        let archive_path = root.join(ARCHIVE_FILE);
+        let length_before_rejections = fs::metadata(&archive_path).unwrap().len();
+        let missing = BlobId::from_bytes(&[0xa5; 32]).unwrap();
+
+        let invalid_directory = BlobDirectory::new(BTreeMap::from([(
+            "missing".to_owned(),
+            BlobTreeId::Blob(missing),
+        )]))
+        .unwrap();
+        assert!(matches!(
+            storage.put_directory(invalid_directory).await,
+            Err(FileError::MissingBlobTree)
+        ));
+        assert!(matches!(
+            storage
+                .append(Event {
+                    payload: Bytes::from_static(b"must not commit"),
+                    blob_tree: Some(BlobTreeId::Blob(missing)),
+                })
+                .await,
+            Err(FileError::MissingBlobTree)
+        ));
+        assert!(matches!(
+            storage
+                .publish_snapshot(SnapshotPublication {
+                    operation_id: OperationId::new(Bytes::from_static(b"rejected-publication"))
+                        .unwrap(),
+                    expected_parent: None,
+                    snapshot: ArchiveSnapshot {
+                        at_event: ArchiveSnapshotPosition::Initial,
+                        root: BlobTreeId::Blob(missing),
+                    },
+                })
+                .await,
+            Err(FileError::MissingBlobTree)
+        ));
+        assert_eq!(
+            fs::metadata(&archive_path).unwrap().len(),
+            length_before_rejections
+        );
+        drop(storage);
+
+        let reopened = FileStream::open(&root).unwrap();
+        assert_eq!(reopened.get_blob(blob).await.unwrap(), blob_payload);
+        assert_eq!(reopened.head().await.unwrap(), None);
+        assert_eq!(reopened.latest_snapshot().await.unwrap(), None);
+        let receipt = reopened
+            .append(Event {
+                payload: Bytes::from_static(b"first committed event"),
+                blob_tree: None,
+            })
+            .await
+            .unwrap();
+        assert_eq!(receipt.position, EventPosition::new(1));
+        drop(reopened);
         fs::remove_dir_all(root).unwrap();
     }
 
