@@ -17,7 +17,8 @@ The backend retains all committed and uploaded values while alive.
 Live tailing and multi-user operation identities belong to `sea-sequencer`.
 This implementation is suitable for tests, examples, and process-local state, not crash recovery.
 
-See [`src/lib.rs`](src/lib.rs) for the API and focused fault-adapter tests. Shared laws come from [`../sea-conformance`](../sea-conformance/README.md).
+The primary API is [`MemoryStream`](https://docs.rs/sea-memory/latest/sea_memory/struct.MemoryStream.html).
+Shared laws come from [`sea-conformance`](../sea-conformance/README.md).
 
 ## Validation
 

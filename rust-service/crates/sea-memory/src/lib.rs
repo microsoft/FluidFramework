@@ -1,7 +1,4 @@
-#![doc = "In-memory reference implementation of the Sea event archive contracts."]
-#![doc = ""]
-#![doc = "Appends are visible to handles in this process and report memory durability;"]
-#![doc = "records and snapshots are lost when the last handle is dropped."]
+#![doc = include_str!("../README.md")]
 
 use std::{collections::BTreeMap, sync::Arc};
 
@@ -61,11 +58,17 @@ impl ClassifiedError for MemoryError {
 /// State used by the final Sea archive contract during migration.
 #[derive(Debug, Default)]
 struct ArchiveState {
+    /// Committed events in position order.
     events: Vec<ArchiveCommittedEvent>,
+    /// Immutable blobs indexed by content identity.
     blobs: BTreeMap<BlobId, Bytes>,
+    /// Immutable directories indexed by content identity.
     directories: BTreeMap<BlobDirectoryId, BlobDirectory>,
+    /// Published snapshots in parent order.
     snapshots: Vec<ArchivePublishedSnapshot>,
+    /// Publication inputs and results indexed by idempotency key.
     snapshot_operations: BTreeMap<OperationId, (SnapshotPublication, ArchivePublishedSnapshot)>,
+    /// Numeric identity reserved for the next snapshot publication.
     next_snapshot_id: u64,
 }
 
@@ -103,6 +106,7 @@ impl MemoryStream {
         }
     }
 
+    /// Rejects positions that do not identify a committed event.
     fn validate_archive_position(position: EventPosition, len: usize) -> Result<(), MemoryError> {
         let ordinal = position.get();
         if ordinal == 0 || ordinal > len as u64 {
@@ -111,6 +115,7 @@ impl MemoryStream {
         Ok(())
     }
 
+    /// Verifies that a blob-tree root and its complete transitive closure exist.
     fn validate_tree(state: &ArchiveState, root: BlobTreeId) -> Result<(), MemoryError> {
         match root {
             BlobTreeId::Blob(id) => state
@@ -384,14 +389,16 @@ impl sea_core::archive::SeaStorage for MemoryStream {
 
 #[cfg(test)]
 mod current_tests {
+    use std::collections::BTreeMap;
+
     use bytes::Bytes;
     use futures_util::TryStreamExt as _;
     use sea_core::{
-        Durability, Event,
+        BlobDirectory, BlobId, BlobTreeId, Durability, Event,
         archive::{SeaStorage, StorageEventStream},
     };
 
-    use super::MemoryStream;
+    use super::{MemoryError, MemoryStream};
 
     #[tokio::test]
     async fn passes_storage_conformance() {
@@ -411,5 +418,84 @@ mod current_tests {
         assert_eq!(receipt.durability, Durability::Memory);
         let records: StorageEventStream<_> = storage.read(None, None).await.unwrap();
         assert_eq!(records.try_collect::<Vec<_>>().await.unwrap().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn put_directory_rejects_missing_child() {
+        let storage = MemoryStream::new();
+        let missing = BlobId::from_bytes(&[0xa5; 32]).unwrap();
+        let directory = BlobDirectory::new(BTreeMap::from([(
+            "missing".to_owned(),
+            BlobTreeId::Blob(missing),
+        )]))
+        .unwrap();
+
+        assert!(matches!(
+            storage.put_directory(directory).await,
+            Err(MemoryError::MissingBlobTree)
+        ));
+    }
+
+    #[tokio::test]
+    async fn append_accepts_nested_blob_tree() {
+        let storage = MemoryStream::new();
+        let blob = storage
+            .put_blob(Bytes::from_static(b"nested"))
+            .await
+            .unwrap();
+        let child = storage
+            .put_directory(
+                BlobDirectory::new(BTreeMap::from([(
+                    "leaf".to_owned(),
+                    BlobTreeId::Blob(blob),
+                )]))
+                .unwrap(),
+            )
+            .await
+            .unwrap();
+        let root = storage
+            .put_directory(
+                BlobDirectory::new(BTreeMap::from([(
+                    "child".to_owned(),
+                    BlobTreeId::Directory(child),
+                )]))
+                .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        storage
+            .append(Event {
+                payload: Bytes::new(),
+                blob_tree: Some(BlobTreeId::Directory(root)),
+            })
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn read_rejects_reversed_bounds() {
+        let storage = MemoryStream::new();
+        let first = storage
+            .append(Event {
+                payload: Bytes::from_static(b"first"),
+                blob_tree: None,
+            })
+            .await
+            .unwrap();
+        let second = storage
+            .append(Event {
+                payload: Bytes::from_static(b"second"),
+                blob_tree: None,
+            })
+            .await
+            .unwrap();
+
+        assert!(matches!(
+            storage
+                .read(Some(second.position), Some(first.position))
+                .await,
+            Err(MemoryError::InvalidPosition)
+        ));
     }
 }
