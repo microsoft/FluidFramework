@@ -518,6 +518,7 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
     Ok(measurements)
 }
 
+/// Recovers a local sequencer and opens one deterministic identity per writer.
 async fn open_local_sessions<S>(
     storage: Arc<S>,
     writers: usize,
@@ -695,6 +696,7 @@ where
     })
 }
 
+/// Verifies that a reopened decorated session retained its records and optional snapshot.
 async fn verify_reopened_session<S, C>(
     session: &S,
     coordinator: &C,
@@ -725,6 +727,7 @@ where
     Ok(())
 }
 
+/// Verifies a session read against the configured record count and fixture payloads.
 fn verify_session_payloads(
     records: &[sea_core::archive::SessionCommittedEvent],
     generator: &FixtureGenerator,
@@ -879,6 +882,7 @@ where
     })
 }
 
+/// Builds a deterministic operation identifier within the supplied benchmark domain.
 fn benchmark_operation_id(domain: &[u8], index: u64) -> OperationId {
     let mut bytes = Vec::with_capacity(domain.len() + 8);
     bytes.extend_from_slice(domain);
@@ -914,6 +918,7 @@ where
     Ok(())
 }
 
+/// Verifies a storage read against the configured record count and fixture payloads.
 fn verify_storage_payloads(
     records: &[sea_core::archive::CommittedEvent],
     generator: &FixtureGenerator,
@@ -1199,5 +1204,44 @@ mod tests {
         let arguments = ["smoke".to_owned(), "--records".to_owned(), "1".to_owned()];
 
         assert!(parse_command(&arguments).is_err());
+    }
+
+    #[test]
+    fn measurement_config_uses_documented_defaults_and_disables_zero_frequency() {
+        let defaults = parse_config(&[]).expect("default configuration should be valid");
+        assert_eq!(
+            defaults,
+            Config {
+                backend: Backend::Memory,
+                fixture: FixtureKind::SmallCompressible,
+                seed: DEFAULT_SEED,
+                records: 10_000,
+                writers: 1,
+                snapshot_frequency: Some(1_000),
+                repetitions: 5,
+                warmups: 1,
+            }
+        );
+
+        let arguments = ["--snapshot-frequency".to_owned(), "0".to_owned()];
+        assert_eq!(
+            parse_config(&arguments)
+                .expect("zero snapshot frequency should disable snapshots")
+                .snapshot_frequency,
+            None
+        );
+    }
+
+    #[test]
+    fn measurement_config_rejects_missing_unknown_and_zero_values() {
+        for arguments in [
+            vec!["--records".to_owned()],
+            vec!["--unknown".to_owned(), "1".to_owned()],
+            vec!["--records".to_owned(), "0".to_owned()],
+            vec!["--writers".to_owned(), "0".to_owned()],
+            vec!["--repetitions".to_owned(), "0".to_owned()],
+        ] {
+            assert!(parse_config(&arguments).is_err(), "accepted {arguments:?}");
+        }
     }
 }

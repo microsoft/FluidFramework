@@ -1,4 +1,4 @@
-#![doc = "Deterministic fixtures and result schema for Sea benchmarks."]
+#![doc = include_str!("../README.md")]
 
 use serde::{Deserialize, Serialize};
 
@@ -225,12 +225,12 @@ pub struct BenchmarkResult {
     pub measurements: Measurements,
 }
 
-#[must_use]
 /// Summarizes a non-empty set of observations.
 ///
 /// # Panics
 ///
 /// Panics when `values` is empty or contains more than `u32::MAX` samples.
+#[must_use]
 pub fn summarize(mut values: Vec<f64>) -> Distribution {
     assert!(
         !values.is_empty(),
@@ -270,11 +270,13 @@ pub fn summarize(mut values: Vec<f64>) -> Distribution {
     }
 }
 
+/// Selects a nearest-rank percentile from a non-empty sorted sample.
 fn percentile(sorted: &[f64], numerator: usize, denominator: usize) -> f64 {
     let rank = ((sorted.len() - 1) * numerator).div_ceil(denominator);
     sorted[rank]
 }
 
+/// Mixes one 64-bit fixture state using the `SplitMix64` transform.
 const fn splitmix64(mut value: u64) -> u64 {
     value = value.wrapping_add(0x9e37_79b9_7f4a_7c15);
     value = (value ^ (value >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
@@ -371,5 +373,14 @@ mod tests {
         assert!(
             (distribution.sample_standard_deviation - 1.581_138_830_084_189_8).abs() < f64::EPSILON
         );
+    }
+
+    #[test]
+    fn percentile_selects_boundary_and_nearest_ranks() {
+        let values = [1.0, 2.0];
+
+        assert!((percentile(&values, 0, 100) - 1.0).abs() < f64::EPSILON);
+        assert!((percentile(&values, 50, 100) - 2.0).abs() < f64::EPSILON);
+        assert!((percentile(&values, 100, 100) - 2.0).abs() < f64::EPSILON);
     }
 }
