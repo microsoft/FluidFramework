@@ -7,7 +7,7 @@
 // @alpha
 export function createTinyliciousServiceClient(options: TinyliciousServiceOptions): ServiceClient;
 
-// @alpha
+// @alpha @input
 export interface TinyliciousServiceOptions extends ServiceOptions {
     readonly endpoint?: string;
     readonly port?: number;

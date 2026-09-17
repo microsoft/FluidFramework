@@ -41,6 +41,7 @@ import {
 
 /**
  * Options for configuring a {@link createTinyliciousServiceClient}.
+ * @input
  * @alpha
  */
 export interface TinyliciousServiceOptions extends ServiceOptions {
@@ -109,7 +110,7 @@ function makeContainerLoaderOptions(options: TinyliciousServiceOptions): {
 	const urlResolver =
 		options.port === undefined && options.endpoint === undefined
 			? createInsecureTinyliciousTestUrlResolver()
-			: new InsecureTinyliciousUrlResolver(options.port, options.endpoint);
+			: new InsecureTinyliciousUrlResolver(options);
 	const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
 
 	return {

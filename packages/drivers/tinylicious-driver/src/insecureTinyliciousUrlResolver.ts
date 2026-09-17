@@ -10,6 +10,8 @@ import {
 	type IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 
+import type { TinyliciousServiceOptions } from "./tinyliciousService.js";
+
 /**
  * Default endpoint port. Will be used by the service if the consumer does not specify a port.
  * @internal
@@ -31,7 +33,11 @@ export const defaultTinyliciousEndpoint = "http://localhost";
  */
 export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 	private readonly tinyliciousEndpoint: string;
-	public constructor(port?: number, endpoint?: string) {
+	/**
+	 * @param options - Tinylicious endpoint options.
+	 */
+	public constructor(options: Pick<TinyliciousServiceOptions, "port" | "endpoint"> = {}) {
+		const { port, endpoint } = options;
 		const endpointUrl = new URL(endpoint ?? defaultTinyliciousEndpoint);
 		if (port !== undefined || endpointUrl.port === "") {
 			endpointUrl.port = `${port ?? defaultTinyliciousPort}`;
@@ -128,7 +134,7 @@ function getTinyliciousEndpoint(): { endpoint: string; port: number } {
  */
 export function createInsecureTinyliciousTestUrlResolver(): IUrlResolver {
 	const { endpoint, port } = getTinyliciousEndpoint();
-	return new InsecureTinyliciousUrlResolver(port, endpoint);
+	return new InsecureTinyliciousUrlResolver({ port, endpoint });
 }
 
 /**

@@ -36,7 +36,10 @@ describe("Insecure Url Resolver Test", () => {
 		const customEndpoint = "http://custom-endpoint.io";
 		const customFluidEndpoint = "http://custom-endpoint.io";
 		const customPort = 1234;
-		const customResolver = new InsecureTinyliciousUrlResolver(customPort, customEndpoint);
+		const customResolver = new InsecureTinyliciousUrlResolver({
+			port: customPort,
+			endpoint: customEndpoint,
+		});
 		const testRequest: IRequest = {
 			url: `${documentId}`,
 			headers: {},
@@ -49,10 +52,9 @@ describe("Insecure Url Resolver Test", () => {
 	});
 
 	it("Should use the default Tinylicious port with a custom endpoint", async () => {
-		const customResolver = new InsecureTinyliciousUrlResolver(
-			undefined,
-			"http://custom-endpoint.io",
-		);
+		const customResolver = new InsecureTinyliciousUrlResolver({
+			endpoint: "http://custom-endpoint.io",
+		});
 
 		const resolvedUrl = await customResolver.resolve({ url: documentId });
 
@@ -63,10 +65,9 @@ describe("Insecure Url Resolver Test", () => {
 	});
 
 	it("Should preserve a port included in a custom endpoint", async () => {
-		const customResolver = new InsecureTinyliciousUrlResolver(
-			undefined,
-			"https://fluidframework.com:1234",
-		);
+		const customResolver = new InsecureTinyliciousUrlResolver({
+			endpoint: "https://fluidframework.com:1234",
+		});
 
 		const resolvedUrl = await customResolver.resolve({ url: documentId });
 
@@ -77,10 +78,10 @@ describe("Insecure Url Resolver Test", () => {
 	});
 
 	it("Should use an explicit standard HTTPS port for a forwarded endpoint", async () => {
-		const customResolver = new InsecureTinyliciousUrlResolver(
-			443,
-			"https://codespace-7070.app.github.dev",
-		);
+		const customResolver = new InsecureTinyliciousUrlResolver({
+			port: 443,
+			endpoint: "https://codespace-7070.app.github.dev",
+		});
 
 		const resolvedUrl = await customResolver.resolve({ url: documentId });
 
@@ -91,10 +92,10 @@ describe("Insecure Url Resolver Test", () => {
 	});
 
 	it("Should allow an explicit port to override the endpoint port", async () => {
-		const customResolver = new InsecureTinyliciousUrlResolver(
-			4321,
-			"https://fluidframework.com:1234",
-		);
+		const customResolver = new InsecureTinyliciousUrlResolver({
+			port: 4321,
+			endpoint: "https://fluidframework.com:1234",
+		});
 
 		const resolvedUrl = await customResolver.resolve({ url: documentId });
 
