@@ -5,11 +5,11 @@
 - **Plan status:** In progress.
 - **Execution mode:** Lightweight sequential work on the current branch.
 - **Compatibility:** Preserve existing import paths where practical, but the `SeaArchive::read` signature and behavior intentionally change.
-- **Current checkpoint:** 3. Evaluate snapshot subscriptions.
-- **Last completed checkpoint:** 2. Migrate archive reads and loads.
-- **Last validation:** The complete canonical Rust, generated WASM, Node, TypeScript, policy, and repository build suites passed on 2026-09-17. Real Chromium WebTransport validation also passed with client-selected and Sea-selected snapshot participation.
-- **Decisions or TODOs changed:** `read` and `load` synchronously construct streams and share one lazy, gap-free monitored event engine. `LoadEvent::Snapshot` remains an explicitly non-positioned load item, while `CaughtUp` is replaced by out-of-band progress. Protocol version 4 carries `StreamProgress`; lagging local consumers recover from storage without dropping archive events.
-- **Next checkpoint:** 3. Evaluate snapshot subscriptions.
+- **Current checkpoint:** 4. Evaluate remaining streams independently.
+- **Last completed checkpoint:** 3. Evaluate snapshot subscriptions.
+- **Last validation:** The documentation checker and diff validation passed on 2026-09-17.
+- **Decisions or TODOs changed:** Snapshot notification streams retain their plain latest-value abstraction. Their intentional coalescing has no ordered backlog: `SnapshotId` is opaque and unordered, while `SnapshotPosition` is neither unique per publication nor a notification revision.
+- **Next checkpoint:** 4. Evaluate remaining streams independently.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -239,6 +239,12 @@ Before implementation, settle:
 
 If the semantics fit `MonitoredStream`, migrate `SeaSnapshotCoordinator::subscribe_snapshots` in one commit with focused conformance, local, network, and browser tests.
 Otherwise, document why it retains a plain latest-value stream.
+
+Evaluation result: retain the plain latest-value stream.
+Intermediate snapshot publications may be coalesced intentionally, so skipped values are not unread backlog and cannot meaningfully produce `FallenBehind`.
+`SnapshotId` cannot serve as `Position` because it is opaque and unordered.
+`SnapshotPosition` cannot serve as `Position` because multiple publications may represent the same event boundary.
+Introducing a separate notification revision would add protocol and state solely to satisfy this abstraction, without a current consumer requirement.
 
 ### 4. Evaluate remaining streams independently
 
