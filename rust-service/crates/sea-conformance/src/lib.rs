@@ -6,7 +6,7 @@ use bytes::Bytes;
 use futures_util::{StreamExt, TryStreamExt, future::join_all};
 use sea_core::{
     BlobDirectory, BlobId, BlobTreeId, ClassifiedError, ErrorKind, Event, EventPosition,
-    MonitoredStreamItem, MonitoredStreamStatus,
+    MonitoredStreamItem, MonitoredStreamProgress, MonitoredStreamStatus,
     archive::{
         EventSubmission, LoadEvent, OperationId, SeaArchive, SeaAuthorSession,
         SeaEventSubscription, SeaSession, SeaSnapshotCoordinator, SeaStorage,
@@ -50,24 +50,7 @@ where
     let published =
         publish_and_resolve_snapshot(session, snapshots, directory_id, first.position).await;
 
-    let mut snapshot_load = session.load(Some(first.position));
-    assert!(matches!(
-        snapshot_load.next().await.expect("snapshot load progress").expect("load result"),
-        MonitoredStreamItem::Progress(progress)
-            if progress.status == MonitoredStreamStatus::StreamingBacklog
-    ));
-    assert!(matches!(
-        snapshot_load.next().await.expect("selected snapshot").expect("load result"),
-        MonitoredStreamItem::Item(LoadEvent::Snapshot(snapshot)) if snapshot == published
-    ));
-    assert!(matches!(
-        snapshot_load.next().await.expect("snapshot caught-up progress").expect("load result"),
-        MonitoredStreamItem::Progress(progress)
-            if progress.previous == Some(first.position)
-                && progress.latest_known == Some(first.position)
-                && progress.status == MonitoredStreamStatus::AwaitingNewItems
-    ));
-    drop(snapshot_load);
+    assert_snapshot_load_progress(session, first.position, &published).await;
 
     let second = session
         .submit(EventSubmission {
@@ -81,18 +64,17 @@ where
         })
         .await
         .expect("second submission");
-    let mut history_stream = session.read(Some(first.position), Some(second.position));
-    let mut history = Vec::new();
-    while let Some(item) = history_stream.next().await {
-        match item.expect("bounded read item") {
-            MonitoredStreamItem::Item(event) => history.push(event),
-            MonitoredStreamItem::Progress(_) => {}
-        }
-    }
-    assert_eq!(history.len(), 1);
-    assert_eq!(history[0].committed.position, second.position);
+    assert_bounded_read_progress(session, first.position, second.position).await;
 
     let mut load = session.load(None);
+    assert_eq!(
+        load.progress(),
+        MonitoredStreamProgress {
+            previous: None,
+            latest_known: None,
+            status: MonitoredStreamStatus::StreamingBacklog,
+        }
+    );
     assert!(matches!(
         load.next().await.expect("initial progress").expect("load result"),
         MonitoredStreamItem::Progress(progress)
@@ -141,6 +123,85 @@ where
             .kind(),
         ErrorKind::Rejected
     );
+}
+
+/// Verifies selected-snapshot delivery and its synchronous progress observations.
+async fn assert_snapshot_load_progress<S>(
+    session: &S,
+    required: EventPosition,
+    expected: &sea_core::archive::PublishedSnapshot,
+) where
+    S: SeaEventSubscription,
+    S::Error: Debug,
+{
+    let mut snapshot_load = session.load(Some(required));
+    assert_eq!(
+        snapshot_load.progress(),
+        MonitoredStreamProgress {
+            previous: None,
+            latest_known: None,
+            status: MonitoredStreamStatus::StreamingBacklog,
+        }
+    );
+    let MonitoredStreamItem::Progress(progress) = snapshot_load
+        .next()
+        .await
+        .expect("snapshot load progress")
+        .expect("load result")
+    else {
+        panic!("snapshot load did not begin with progress");
+    };
+    assert_eq!(progress.status, MonitoredStreamStatus::StreamingBacklog);
+    assert_eq!(snapshot_load.progress(), progress);
+    assert!(matches!(
+        snapshot_load.next().await.expect("selected snapshot").expect("load result"),
+        MonitoredStreamItem::Item(LoadEvent::Snapshot(snapshot)) if snapshot == *expected
+    ));
+    assert!(matches!(
+        snapshot_load.next().await.expect("snapshot caught-up progress").expect("load result"),
+        MonitoredStreamItem::Progress(progress)
+            if progress.previous == Some(required)
+                && progress.latest_known == Some(required)
+                && progress.status == MonitoredStreamStatus::AwaitingNewItems
+    ));
+    drop(snapshot_load);
+}
+
+/// Verifies bounded read contents and synchronous progress observations.
+async fn assert_bounded_read_progress<S>(
+    session: &S,
+    after: EventPosition,
+    stop_after: EventPosition,
+) where
+    S: SeaArchive,
+    S::Error: Debug,
+{
+    let mut history_stream = session.read(Some(after), Some(stop_after));
+    assert_eq!(
+        history_stream.progress(),
+        MonitoredStreamProgress {
+            previous: Some(after),
+            latest_known: Some(after),
+            status: MonitoredStreamStatus::StreamingBacklog,
+        }
+    );
+    let mut history = Vec::new();
+    while let Some(item) = history_stream.next().await {
+        match item.expect("bounded read item") {
+            MonitoredStreamItem::Item(event) => {
+                assert_eq!(
+                    history_stream.progress().previous,
+                    Some(event.committed.position)
+                );
+                history.push(event);
+            }
+            MonitoredStreamItem::Progress(progress) => {
+                assert_eq!(history_stream.progress(), progress);
+            }
+        }
+    }
+    assert_eq!(history.len(), 1);
+    assert_eq!(history[0].committed.position, stop_after);
 }
 
 /// Verifies session-level blob and directory publication and retrieval.
