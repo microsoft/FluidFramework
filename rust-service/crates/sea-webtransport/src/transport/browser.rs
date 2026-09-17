@@ -53,7 +53,6 @@ impl ClientTransport for BrowserTransport {
     }
 
     fn disconnect(&self) -> Result<(), Self::Error> {
-        self.transport.close();
         Ok(())
     }
 }

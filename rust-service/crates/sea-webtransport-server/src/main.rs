@@ -7,7 +7,8 @@ use std::{
 };
 
 use sea_webtransport_server::{
-    BuiltInSeaHost, ShutdownMode, StorageMode, TransportConfig, WebTransportServer,
+    BuiltInSeaHost, ShutdownMode, StorageMode, TransportConfig, TransportMeasurement,
+    WebTransportServer,
 };
 use wtransport::{Identity, tls::Sha256DigestFmt};
 
@@ -45,6 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
     let address = server.local_addr()?;
     let liveness = server.liveness_policy();
+    let measurements = server.measurement_handle();
     let mut shutdown = server.shutdown_handle();
     println!("WEBTRANSPORT_URL=https://{address}/sea");
     println!("CERTIFICATE_SHA256={certificate_hash}");
@@ -77,13 +79,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     result = &mut serving => {
                         let outcome = result?;
                         std::fs::write(marker.with_extension("ack"), b"accepting stopped\n")?;
-                        print_shutdown_outcome(outcome);
+                        print_shutdown_outcome(outcome, measurements.snapshot());
                         return Ok(());
                     }
                 }
                 std::fs::write(marker.with_extension("ack"), b"accepting stopped\n")?;
                 let outcome = serving.await?;
-                print_shutdown_outcome(outcome);
+                print_shutdown_outcome(outcome, measurements.snapshot());
             }
         }
     } else {
@@ -99,12 +101,23 @@ async fn wait_for_shutdown_marker(marker: &Path) {
     println!("SHUTDOWN_MARKER_DETECTED={}", marker.display());
 }
 
-fn print_shutdown_outcome(outcome: sea_webtransport_server::ShutdownOutcome) {
+fn print_shutdown_outcome(
+    outcome: sea_webtransport_server::ShutdownOutcome,
+    measurement: TransportMeasurement,
+) {
     println!(
         "SHUTDOWN_EVIDENCE disposition={:?} owned_connections={} cancelled_connections={} elapsed_milliseconds={}",
         outcome.disposition,
         outcome.owned_connections,
         outcome.cancelled_connections,
         outcome.elapsed.as_millis()
+    );
+    println!(
+        "TRANSPORT_EVIDENCE wire_bytes={} peak_connections={} peak_streams={} connection_cleanups={} active_connections={}",
+        measurement.wire_bytes,
+        measurement.peak_active_connections,
+        measurement.peak_active_streams,
+        measurement.connection_cleanups,
+        measurement.active_connections,
     );
 }
