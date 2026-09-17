@@ -185,6 +185,14 @@
 			"build:exports:node": [
 				"build:esm"
 			],
+			"build:test:esm": {
+				"dependsOn": [
+					"build:test:mocha:esm",
+					"build:test:playwright",
+					"build:test:types"
+				],
+				"script": false
+			},
 			"build:test:mocha:cjs": [
 				"build:cjs"
 			],
@@ -192,6 +200,7 @@
 				"build:esm"
 			],
 			"build:test:types": [
+				"typetests:gen",
 				"build:esm"
 			],
 			"check:exports:bundle-release-tags": [
