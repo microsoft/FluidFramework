@@ -1,0 +1,45 @@
+# Iteration 0015 Phase 3 Report
+
+Status: in progress
+Phase 2 integration commit: <!-- TODO(required): record the immutable input commit -->
+Phase 3 commit: <!-- TODO(required): record the final commit when created -->
+
+## Evidence Summary
+
+<!-- TODO(required): compare results with the charter's questions and expected evidence -->
+
+## Implementation Defects
+
+<!-- TODO(required): list local defects separately from shared abstraction limitations; write none when applicable -->
+
+## Shared Abstraction Findings
+
+<!-- TODO(required): record supported, falsified, and inconclusive findings about semantics, APIs, crates, and composition -->
+
+## Decisions
+
+<!-- TODO(required): link accepted, rejected, superseded, or still-proposed decision records -->
+
+## Comparative Results
+
+<!-- TODO(required): compare correctness, complexity, dependencies, size, and performance only where guarantees and workloads are equivalent -->
+
+## Contract and Test Quality
+
+<!-- TODO(required): assess whether accepted work documents behavior consumers rely on, localizes regression tests in owning modules or crates when practical, uses conformance for shared laws, and keeps broader tests only for distinct boundary evidence. Challenge every already-adequate disposition by asking which test would fail if only the owning decision regressed and whether another component could mask that defect. Identify unjustified omissions, redundant layers, false promises, and low-value documentation or test churn. -->
+
+## Learning and Process Findings
+
+<!-- TODO(required): link the retrospective, costly issues, human interventions, and promoted LEARNINGS.md entries -->
+
+## Skill Changes
+
+<!-- TODO(required): link the skill review and summarize approved coordination changes -->
+
+## Next Iteration Scope
+
+<!-- TODO(required): record the user's approved keep, remove, replace, and expand decisions plus explicit deferrals -->
+
+## Convergence Assessment
+
+<!-- TODO(required): assess each applicable convergence criterion and identify missing evidence -->
