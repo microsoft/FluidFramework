@@ -57,7 +57,8 @@ export type TreeIndexKey = TreeLeafValue;
  * A selector is logically a pure function. For convenience, an object with a `get` method, such as a
  * `ReadonlyMap`, is also accepted. Return the object property key, not the stored key.
  * Return `undefined` for non-object schemas and schemas that should not be indexed.
- * The selected key must be a leaf field directly on the indexed node. The index is invalidated when that field changes.
+ * The selected field must always contain exactly one leaf value directly on the indexed node.
+ * The index is invalidated when that field changes.
  * Keys derived from descendants are not supported: Simple Tree indexes use node-level invalidation and therefore do not
  * re-index ancestors when a descendant changes.
  *
@@ -301,10 +302,11 @@ export function createTreeIndexWithDependencyScope<
 			}
 			const fieldKind =
 				convertFieldKind.get(fieldSchema.kind) ?? fail("Unknown Simple Tree field kind");
-			// Rather than testing for just "required" we test the multiplicity to ensure we correctly handle other field kinds, like identifier, which always have one value.
+			// Check multiplicity rather than the specific field kind so this includes required fields, identifier fields, and
+			// any future field kinds that always contain one value.
 			if (fieldKind.multiplicity !== Multiplicity.Single) {
 				throw new UsageError(
-					`The property key "${keyLocation}" selected for schema "${schema.identifier}" must have a schema who's kind ensures it contains exactly one value (For example "required" or "identifier").`,
+					`The property key "${keyLocation}" selected for schema "${schema.identifier}" must refer to a field whose kind guarantees exactly one value, such as a required or identifier field.`,
 				);
 			}
 			if ([...fieldSchema.allowedTypeSet].some((type) => type.kind !== NodeKind.Leaf)) {
@@ -315,7 +317,7 @@ export function createTreeIndexWithDependencyScope<
 
 			keyFinders.set(
 				schema.identifier,
-				makeGenericKeyFinder<TKey>(brand(fieldSchema.storedKey), isKeyValid),
+				makeGenericKeyFinder<TKey>(brand(fieldSchema.storedKey), keyLocation, isKeyValid),
 			);
 		}
 	}
@@ -361,6 +363,7 @@ export function createTreeIndexWithDependencyScope<
  */
 function makeGenericKeyFinder<TKey extends TreeIndexKey>(
 	keyField: FieldKey,
+	propertyKey: string,
 	isKeyValid: (key: TreeIndexKey) => key is TKey,
 ): KeyFinder<TKey> {
 	return (cursor: ITreeSubscriptionCursor) => {
@@ -378,7 +381,7 @@ function makeGenericKeyFinder<TKey extends TreeIndexKey>(
 
 			if (!isKeyValid(value)) {
 				throw new UsageError(
-					`The value in key field "${keyField}" selected for schema "${cursor.type}" was rejected by isKeyValid.`,
+					`The value in key field "${propertyKey}" selected for schema "${cursor.type}" was rejected by isKeyValid.`,
 				);
 			}
 			return value;

@@ -326,7 +326,7 @@ describe("simple tree indexes", () => {
 					error instanceof UsageError &&
 					error.message.includes('The property key "name" selected for schema') &&
 					error.message.endsWith(
-						"must refer to a field that always contains exactly one value.",
+						"must refer to a field whose kind guarantees exactly one value, such as a required or identifier field.",
 					),
 			);
 		});
@@ -352,7 +352,7 @@ describe("simple tree indexes", () => {
 				(error: Error) =>
 					error instanceof UsageError &&
 					error.message.endsWith(
-						"must refer to a field that always contains exactly one value.",
+						"must refer to a field whose kind guarantees exactly one value, such as a required or identifier field.",
 					),
 			);
 
@@ -384,22 +384,24 @@ describe("simple tree indexes", () => {
 
 		it("rejects a key with an invalid type using a UsageError", () => {
 			class NumericName extends exampleSchemaFactory.object("NumericName", {
-				name: exampleSchemaFactory.number,
+				displayName: exampleSchemaFactory.required(exampleSchemaFactory.number, {
+					key: "name",
+				}),
 			}) {}
 			const view = getView(new TreeViewConfiguration({ schema: NumericName }));
-			view.initialize({ name: 42 });
+			view.initialize({ displayName: 42 });
 
 			assert.throws(
 				() =>
 					createTreeIndex(
 						view,
-						(schema) => (schema === NumericName ? "name" : undefined),
+						(schema) => (schema === NumericName ? "displayName" : undefined),
 						(nodes) => nodes,
 						isStringKey,
 					),
 				(error: Error) =>
 					error instanceof UsageError &&
-					error.message.includes('The value in key field "name" selected for schema') &&
+					error.message.includes('The value in key field "displayName" selected for schema') &&
 					error.message.endsWith("was rejected by isKeyValid."),
 			);
 		});

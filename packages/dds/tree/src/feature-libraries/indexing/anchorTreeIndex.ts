@@ -114,9 +114,10 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 		private readonly checkTreeStatus: (node: AnchorNode) => TreeStatus | undefined,
 		private readonly keyFinderDependencyScope = KeyFinderDependencyScope.Subtree,
 	) {
-		// index all existing trees (this includes the primary document tree and all other detached/removed trees)
+		// Index all existing trees (this includes the primary document tree and all other detached/removed trees)
 		const detachedFieldsCursor = forest.getCursorAboveDetachedFields();
 		const cursor = forest.allocateCursor();
+		// A failure during initial indexing may leave the index inconsistent, so it must also break the forest.
 		forest.breaker.run(() => {
 			forEachField(detachedFieldsCursor, (field) => {
 				forest.tryMoveCursorToField(
@@ -338,6 +339,7 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 	 */
 	private reIndexSpine(path: UpPath): void {
 		if (this.keyFinderDependencyScope === KeyFinderDependencyScope.Immutable) {
+			// Existing keys cannot change, so edits cannot require re-indexing them.
 			return;
 		}
 		const cursor = this.forest.allocateCursor();
