@@ -11,6 +11,7 @@ const require = createRequire(import.meta.url);
 const {
 	SeaDirectoryEntry,
 	SeaDurability,
+	SeaInjectedClient,
 	SeaLoadKind,
 	SeaLocalService,
 	SeaSnapshotParticipation,
@@ -193,6 +194,25 @@ test("generated local clients expose disconnect and explicit reopen", async () =
 		encoder.encode("reconnected-session"),
 	);
 	assert.equal(await first.latestSnapshot(), undefined);
+});
+
+test("generated injected clients allow an omitted disconnect hook", () => {
+	const openBidirectional = () => {
+		throw new Error("disconnect must not open a stream");
+	};
+	const withoutDisconnect = new SeaInjectedClient({ openBidirectional }, 1024 * 1024);
+	assert.doesNotThrow(() => withoutDisconnect.disconnect());
+
+	const withFailingDisconnect = new SeaInjectedClient(
+		{
+			openBidirectional,
+			disconnect: () => {
+				throw new Error("injected disconnect failed");
+			},
+		},
+		1024 * 1024,
+	);
+	assert.throws(() => withFailingDisconnect.disconnect(), /injected disconnect failed/);
 });
 
 test("generated local clients require explicit archive creation", async () => {

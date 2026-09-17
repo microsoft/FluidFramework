@@ -18,6 +18,10 @@ if (process.env.RUST_SERVICE_RECORDS_REPOSITORY_ROOT) {
 const projectRoot = resolve(repositoryRoot, "rust-service");
 const iterationsRoot = resolve(projectRoot, "iterations");
 const assetsRoot = resolve(scriptDirectory, "../assets");
+const qualityAssetsRoot = resolve(
+	scriptDirectory,
+	"../../rust-service-quality-iteration/assets",
+);
 const requiredMarker = "<!-- TODO(required):";
 
 const templates = {
@@ -111,7 +115,7 @@ async function init(iteration, workstreamArguments) {
 	await mkdir(resolve(iterationRoot, "next-phase-2-instructions"), { recursive: true });
 	await writeNew(
 		resolve(iterationRoot, "manifest.json"),
-		`${JSON.stringify(manifest, undefined, 2)}\n`,
+		`${JSON.stringify(manifest, undefined, "\t")}\n`,
 	);
 	await writeNew(
 		resolve(iterationRoot, "charter.md"),
@@ -178,8 +182,53 @@ async function createNextInstructions(iteration, workstreamArguments) {
 	}
 
 	manifest.nextWorkstreams = workstreams;
-	await writeFile(manifestPath, `${JSON.stringify(manifest, undefined, 2)}\n`, "utf8");
+	await writeFile(manifestPath, `${JSON.stringify(manifest, undefined, "\t")}\n`, "utf8");
 	console.log(`Created ${workstreams.length} next-iteration instruction file(s).`);
+}
+
+async function initQualityInventory(iteration) {
+	const path = resolve(iterationsRoot, iteration, "quality-inventory.md");
+	if (await exists(path)) {
+		throw new Error(`refusing to overwrite ${relative(repositoryRoot, path)}`);
+	}
+	const template = await readFile(
+		resolve(qualityAssetsRoot, "quality-inventory.template.md"),
+		"utf8",
+	);
+	await writeNew(path, template.replaceAll("{{ITERATION}}", iteration));
+	console.log(`Created quality inventory for iteration ${iteration}.`);
+}
+
+async function validateQualityInventory(iteration, errors = []) {
+	const path = resolve(iterationsRoot, iteration, "quality-inventory.md");
+	await validateMarkdown(
+		path,
+		[
+			"Selection Rationale",
+			"Reviewed Boundaries",
+			"Deferred Candidates",
+			"Coverage Layer Review",
+			"Convergence Assessment",
+		],
+		errors,
+	);
+	if (!(await exists(path))) {
+		return errors;
+	}
+	const content = await readFile(path, "utf8");
+	if (!content.includes(`Iteration ${iteration} Rust Quality Inventory`)) {
+		errors.push("quality inventory title does not match the iteration");
+	}
+	if (!/^Status: (complete|in progress)$/m.test(content)) {
+		errors.push("quality inventory status must be 'in progress' or 'complete'");
+	}
+	const tableRows = content
+		.split("\n")
+		.filter((line) => line.startsWith("|") && !line.includes("---"));
+	if (tableRows.length < 2) {
+		errors.push("quality inventory reviewed-boundaries table has no data row");
+	}
+	return errors;
 }
 
 async function loadManifest(iterationRoot, expectedIteration) {
@@ -457,6 +506,10 @@ async function validate(iteration, phase) {
 				);
 			}
 		}
+
+		if (await exists(resolve(iterationRoot, "quality-inventory.md"))) {
+			await validateQualityInventory(iteration, errors);
+		}
 	}
 
 	if (!(await exists(resolve(projectRoot, "LEARNINGS.md")))) {
@@ -498,7 +551,9 @@ function usage() {
 	console.log(`Usage:
   iteration-records.mjs validate-foundation
   iteration-records.mjs init NNNN workstream-name...
+	iteration-records.mjs init-quality NNNN
 	iteration-records.mjs next NNNN workstream-name...
+	iteration-records.mjs validate-quality NNNN
 	iteration-records.mjs validate NNNN start|phase-2|complete`);
 }
 
@@ -513,8 +568,20 @@ try {
 		const iteration = requireIteration(iterationArgument);
 		if (command === "init") {
 			await init(iteration, rest);
+		} else if (command === "init-quality") {
+			await initQualityInventory(iteration);
 		} else if (command === "next") {
 			await createNextInstructions(iteration, rest);
+		} else if (command === "validate-quality") {
+			const errors = await validateQualityInventory(iteration);
+			if (errors.length > 0) {
+				for (const error of errors) {
+					console.error(`error: ${error}`);
+				}
+				process.exitCode = 1;
+			} else {
+				console.log(`Quality inventory ${iteration} passes validation.`);
+			}
 		} else if (command === "validate") {
 			await validate(iteration, rest[0]);
 		} else {

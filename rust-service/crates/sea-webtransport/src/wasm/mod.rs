@@ -90,6 +90,7 @@ pub(crate) fn call_method(
     function.apply(target, &Array::from_iter(arguments.iter()))
 }
 
+/// Calls an optional JavaScript method, preserving lookup and invocation failures.
 pub(crate) fn call_optional_method(
     target: &JsValue,
     name: &str,

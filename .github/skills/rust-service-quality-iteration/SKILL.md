@@ -135,7 +135,7 @@ Create `rust-service/iterations/NNNN/quality-inventory.md` from
 run initialization with:
 
 ```bash
-node .github/skills/rust-service-quality-iteration/scripts/quality-inventory.mjs init NNNN
+node .github/skills/rust-service-coordination/scripts/iteration-records.mjs init-quality NNNN
 ```
 
 Workstreams report their rows; the integrator reconciles them into the iteration
@@ -198,5 +198,5 @@ or revisit trigger, and every accepted repair links its contract, tests, and
 validation evidence. Then run:
 
 ```bash
-node .github/skills/rust-service-quality-iteration/scripts/quality-inventory.mjs validate NNNN
+node .github/skills/rust-service-coordination/scripts/iteration-records.mjs validate-quality NNNN
 ```
