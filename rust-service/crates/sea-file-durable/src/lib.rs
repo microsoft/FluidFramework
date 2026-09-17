@@ -1,8 +1,4 @@
-#![doc = "A focused checksummed append-log and atomic snapshot spike."]
-#![doc = ""]
-#![doc = "Records use duplicated framing evidence. Snapshots are file-synced, atomically"]
-#![doc = "renamed, and directory-synced before acknowledgment. Retention and"]
-#![doc = "multi-process access are out of scope."]
+#![doc = include_str!("../README.md")]
 
 use std::{
     collections::{BTreeMap, VecDeque},
@@ -260,6 +256,7 @@ impl DurableLog {
         self.state.lock().map_err(|_| DurableLogError::Poisoned)
     }
 
+    /// Checks that an event position identifies an existing committed event.
     fn validate_archive_position(
         position: EventPosition,
         record_count: usize,
@@ -272,6 +269,7 @@ impl DurableLog {
         Ok(())
     }
 
+    /// Checks that a blob-tree root and all descendants exist in recovered state.
     fn validate_tree(state: &ArchiveState, root: BlobTreeId) -> Result<(), DurableLogError> {
         match root {
             BlobTreeId::Blob(id) => state
@@ -555,7 +553,6 @@ fn read_all(path: &Path) -> Result<Vec<u8>, DurableLogError> {
     Ok(bytes)
 }
 
-/// Recovers complete records and returns the byte length safe to retain.
 /// Recovers complete records from a checksummed log with the supplied marker.
 fn parse_framed_log(bytes: &[u8], magic: [u8; 8]) -> Result<(Vec<Bytes>, u64), DurableLogError> {
     if bytes.len() < HEADER_LEN {
@@ -712,10 +709,12 @@ fn archive_post_sync(state: &State, snapshot: bool) -> Result<(), DurableLogErro
         })
 }
 
+/// Encodes the next numeric snapshot identity in its stable byte representation.
 fn archive_snapshot_id(value: u64) -> SnapshotId {
     SnapshotId::from_bytes(Bytes::copy_from_slice(&value.to_be_bytes()))
 }
 
+/// Encodes a committed event record body.
 fn encode_archive_event(position: EventPosition, event: &Event) -> Vec<u8> {
     let mut body = Vec::with_capacity(8 + 33 + event.payload.len());
     body.extend_from_slice(&position.to_bytes());
@@ -724,6 +723,7 @@ fn encode_archive_event(position: EventPosition, event: &Event) -> Vec<u8> {
     body
 }
 
+/// Encodes a snapshot publication and its assigned identity as a record body.
 fn encode_archive_snapshot(
     publication: &SnapshotPublication,
     published: &ArchivePublishedSnapshot,
@@ -749,6 +749,7 @@ fn encode_archive_snapshot(
     Ok(body)
 }
 
+/// Appends a length-prefixed byte field to an archive record body.
 fn encode_field(output: &mut Vec<u8>, value: &[u8]) -> Result<(), DurableLogError> {
     let length = u32::try_from(value.len())
         .map_err(|_| DurableLogError::Corrupt("archive field exceeds length range"))?;
@@ -757,6 +758,7 @@ fn encode_field(output: &mut Vec<u8>, value: &[u8]) -> Result<(), DurableLogErro
     Ok(())
 }
 
+/// Appends a tagged blob-tree identity to an archive record body.
 fn encode_tree_id(output: &mut Vec<u8>, id: BlobTreeId) {
     match id {
         BlobTreeId::Blob(id) => {
@@ -770,6 +772,7 @@ fn encode_tree_id(output: &mut Vec<u8>, id: BlobTreeId) {
     }
 }
 
+/// Appends an optional tagged blob-tree identity to an archive record body.
 fn encode_optional_tree_id(output: &mut Vec<u8>, id: Option<BlobTreeId>) {
     match id {
         None => output.push(0),
@@ -799,6 +802,7 @@ fn parse_archive_records(records: &[Bytes]) -> Result<ArchiveState, DurableLogEr
     Ok(state)
 }
 
+/// Applies one decoded archive record to recovered state.
 fn parse_archive_record(
     state: &mut ArchiveState,
     kind: u8,
@@ -864,6 +868,7 @@ fn parse_archive_record(
     Ok(())
 }
 
+/// Decodes and validates a committed event record.
 fn parse_archive_event(state: &mut ArchiveState, body: &[u8]) -> Result<(), DurableLogError> {
     let mut cursor = 0;
     let position = EventPosition::from_bytes(read_archive_array::<8>(
@@ -897,6 +902,7 @@ fn parse_archive_event(state: &mut ArchiveState, body: &[u8]) -> Result<(), Dura
     Ok(())
 }
 
+/// Decodes and validates a snapshot publication record.
 fn parse_archive_snapshot_record(
     state: &mut ArchiveState,
     body: &[u8],
@@ -992,6 +998,7 @@ fn parse_archive_snapshot_record(
     Ok(())
 }
 
+/// Selects the latest snapshot whose event boundary does not exceed `position`.
 fn select_archive_snapshot(
     snapshots: &[ArchivePublishedSnapshot],
     position: EventPosition,
@@ -1006,6 +1013,7 @@ fn select_archive_snapshot(
         .cloned()
 }
 
+/// Decodes a required tagged blob-tree identity and advances `cursor`.
 fn decode_tree_id(bytes: &[u8], cursor: &mut usize) -> Result<BlobTreeId, DurableLogError> {
     let tag = read_archive_byte(bytes, cursor, "truncated tree identity tag")?;
     let id = read_archive_array::<32>(bytes, cursor, "truncated tree identity")?;
@@ -1020,6 +1028,7 @@ fn decode_tree_id(bytes: &[u8], cursor: &mut usize) -> Result<BlobTreeId, Durabl
     }
 }
 
+/// Decodes an optional tagged blob-tree identity and advances `cursor`.
 fn decode_optional_tree_id(
     bytes: &[u8],
     cursor: &mut usize,
@@ -1048,6 +1057,7 @@ fn decode_optional_tree_id(
     }
 }
 
+/// Reads one byte from an archive record and advances `cursor`.
 fn read_archive_byte(
     bytes: &[u8],
     cursor: &mut usize,
@@ -1058,6 +1068,7 @@ fn read_archive_byte(
     Ok(value)
 }
 
+/// Reads a fixed-size array from an archive record and advances `cursor`.
 fn read_archive_array<const N: usize>(
     bytes: &[u8],
     cursor: &mut usize,
@@ -1075,6 +1086,7 @@ fn read_archive_array<const N: usize>(
         .map_err(|_| DurableLogError::Corrupt(error))
 }
 
+/// Reads a length-prefixed byte field from an archive record and advances `cursor`.
 fn read_archive_field<'a>(
     bytes: &'a [u8],
     cursor: &mut usize,
@@ -1096,13 +1108,14 @@ fn read_archive_field<'a>(
 mod current_tests {
     use std::{
         fs,
+        io::Write,
         sync::atomic::{AtomicU64, Ordering},
     };
 
     use bytes::Bytes;
     use sea_core::{Event, archive::SeaStorage};
 
-    use super::DurableLog;
+    use super::{DurableLog, FRAME_HEADER_LEN, HEADER_LEN};
 
     static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(1);
 
@@ -1142,6 +1155,61 @@ mod current_tests {
         drop(storage);
         let reopened = DurableLog::open(&root).unwrap();
         assert_eq!(reopened.head().await.unwrap(), Some(receipt.position));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn reopen_discards_incomplete_tail() {
+        let root = directory("incomplete-tail");
+        let storage = DurableLog::open(&root).unwrap();
+        let receipt = storage
+            .append(Event {
+                payload: Bytes::from_static(b"committed"),
+                blob_tree: None,
+            })
+            .await
+            .unwrap();
+        let archive_path = storage.archive_path().to_owned();
+        drop(storage);
+
+        let committed_length = fs::metadata(&archive_path).unwrap().len();
+        fs::OpenOptions::new()
+            .append(true)
+            .open(&archive_path)
+            .unwrap()
+            .write_all(b"partial frame")
+            .unwrap();
+
+        let reopened = DurableLog::open(&root).unwrap();
+        assert_eq!(reopened.head().await.unwrap(), Some(receipt.position));
+        assert_eq!(fs::metadata(&archive_path).unwrap().len(), committed_length);
+        drop(reopened);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn reopen_rejects_checksum_mismatch() {
+        let root = directory("checksum-mismatch");
+        let storage = DurableLog::open(&root).unwrap();
+        storage
+            .append(Event {
+                payload: Bytes::from_static(b"committed"),
+                blob_tree: None,
+            })
+            .await
+            .unwrap();
+        let archive_path = storage.archive_path().to_owned();
+        drop(storage);
+
+        let mut bytes = fs::read(&archive_path).unwrap();
+        bytes[HEADER_LEN + FRAME_HEADER_LEN] ^= 1;
+        fs::write(&archive_path, bytes).unwrap();
+
+        let error = DurableLog::open(&root).unwrap_err();
+        assert!(matches!(
+            error,
+            super::DurableLogError::Corrupt("record checksum mismatch")
+        ));
         fs::remove_dir_all(root).unwrap();
     }
 }
