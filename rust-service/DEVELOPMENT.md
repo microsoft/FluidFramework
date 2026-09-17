@@ -51,6 +51,14 @@ purpose, semantics, an invariant, or a constraint rather than restating the
 identifier. Generated files, anonymous structural types, obvious local
 variables, callbacks, and trivial test bodies do not require comments.
 
+Document consequential behavior at the narrowest contract that consumers rely
+on. This includes internal traits, functions, and component boundaries when
+callers in the same crate or sibling crates depend on their behavior; public API
+visibility is not the test for whether a contract matters. Callers should rely
+only on behavior promised by that contract, not on incidental details inferred
+from its current implementation. Avoid turning implementation choices into
+promises unless consumers genuinely require them.
+
 Use layered evidence for a documentation audit:
 
 - compiler `missing_docs` diagnostics establish the public Rust baseline;
@@ -63,6 +71,41 @@ Record the inventory rule and every exemption when claiming complete coverage.
 The documentation checker verifies README presence and local filesystem targets;
 it does not validate Markdown anchors, external URLs, declaration coverage, or
 semantic accuracy.
+
+## Behavioral Test Policy
+
+Test consequential behavior as close as practical to the code responsible for
+providing it. Prefer evidence in this order:
+
+1. a focused unit test in the owning module;
+2. a focused test elsewhere in the owning crate when fixtures, private access,
+   or established test organization make that clearer;
+3. a conformance test when multiple implementations must satisfy one contract;
+4. an integration test for behavior that crosses a crate, process, transport,
+   generated-binding, or platform boundary; and
+5. a real browser test only for evidence that requires browser APIs or behavior.
+
+These layers may coexist when they prove distinct responsibilities. A
+conformance test protects shared substitutability but need not localize a defect
+in one implementation. An integration or browser test protects composition but
+should not be the only regression test for behavior owned by one Rust module or
+crate when focused coverage is practical. Do not repeat the same assertion at
+every layer merely to increase coverage.
+
+For a bug fix, identify the violated contract before changing code. Inspect each
+production crate changed by the fix and normally update the focused tests and
+contract documentation needed to prevent recurrence or make relied-upon
+behavior explicit. If a changed crate needs no test or documentation change,
+record why existing evidence is sufficient or why another boundary owns the
+guarantee. Use the smallest test that would fail for the defect for the intended
+reason, then retain broader tests only when they establish additional boundary
+confidence.
+
+Apply this policy in proportion to risk. Trivial private mechanics do not need
+their own prose and tests when observable behavior is already covered clearly.
+Do not pursue a coverage percentage, exhaustive comments, or low-value test
+volume. Prefer deterministic tests, useful failure messages, and consolidation
+or deletion when overlapping evidence no longer proves distinct behavior.
 
 ## Research Records
 

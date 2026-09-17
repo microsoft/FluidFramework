@@ -2,11 +2,14 @@
 
 ## Status
 
-- **Plan status:** Proposed.
+- **Plan status:** Active.
 - **Execution mode:** Serial work on the current branch; this outer plan does not use the numbered iteration workflow.
 - **Source commit:** `59836ab4c0fdd20185271236f71c0aa4eccdf930`.
-- **Current phase:** 0. Review and approve this plan.
-- **Next phase:** 1. Establish durable quality guidance.
+- **Plan commit:** `a09d224464b` (`docs(rust-service): plan code quality workflow`).
+- **Last completed phase:** 1. Establish durable quality guidance.
+- **Last validation:** `node scripts/check-documentation.mjs` and Markdown `git diff --check` passed on 2026-09-17.
+- **Current phase:** 2. Improve reusable skills and templates.
+- **Next phase:** 2. Improve reusable skills and templates.
 
 Update this section when completing each phase.
 Record the validation performed, retained evidence, decisions, and next phase.
@@ -94,11 +97,11 @@ Repeated runs should converge toward fewer material undocumented assumptions and
 
 ### 0. Review and approve this plan
 
-- [ ] Confirm the outer work remains lightweight serial work under the Rust-service coordination guidance.
-- [ ] Confirm the private evaluation method without adding issue-specific answers to trial-visible artifacts.
-- [ ] Agree on the minimum acceptable trial result and convergence threshold.
-- [ ] Run the documentation checker.
-- [ ] Commit this plan separately from implementation.
+- [x] Confirm the outer work remains lightweight serial work under the Rust-service coordination guidance.
+- [x] Confirm the private evaluation method without adding issue-specific answers to trial-visible artifacts.
+- [x] Agree on the minimum acceptable trial result and convergence threshold.
+- [x] Run the documentation checker.
+- [x] Commit this plan separately from implementation.
 
 Validation:
 
@@ -109,12 +112,12 @@ node scripts/check-documentation.mjs
 
 ### 1. Establish durable quality guidance
 
-- [ ] Refine `DEVELOPMENT.md` with the contract, test-locality, bug-fix, and evidence-layering expectations from this plan.
-- [ ] Separate durable architectural guidance from the completed execution record in `SEA_API_CLEANUP_PLAN.md` without losing historical evidence.
-- [ ] Ensure guidance distinguishes public API documentation from internal contracts that callers or sibling components rely upon.
-- [ ] Explain when conformance, integration, generated-binding, and browser tests add distinct value.
-- [ ] Document proportionate exceptions and require rationale rather than mechanical test or documentation growth.
-- [ ] Verify links and terminology.
+- [x] Refine `DEVELOPMENT.md` with the contract, test-locality, bug-fix, and evidence-layering expectations from this plan.
+- [x] Separate durable architectural guidance from the completed execution record in `SEA_API_CLEANUP_PLAN.md` without losing historical evidence.
+- [x] Ensure guidance distinguishes public API documentation from internal contracts that callers or sibling components rely upon.
+- [x] Explain when conformance, integration, generated-binding, and browser tests add distinct value.
+- [x] Document proportionate exceptions and require rationale rather than mechanical test or documentation growth.
+- [x] Verify links and terminology.
 
 Completion gate:
 

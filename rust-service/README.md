@@ -83,6 +83,7 @@ Each approved iteration uses a dedicated integration branch and one isolated bra
 ## Documents
 
 - [PLAN.md](PLAN.md) defines the architecture, semantics, iterative work phases, reporting contract, review loop, and success criteria.
+- [SEA_ARCHITECTURE.md](SEA_ARCHITECTURE.md) records the current Sea API, protocol, lifecycle, generated-binding, and application-adapter ownership rules.
 - [DEVELOPMENT.md](DEVELOPMENT.md) defines the pinned toolchain, lockfile policy, and required foundation commands.
 - [WORKSTREAMS.md](WORKSTREAMS.md) records the current package graph and runtime composition.
 - [BENCHMARKS.md](BENCHMARKS.md) defines initial workloads, measurement procedure, and required environment metadata.

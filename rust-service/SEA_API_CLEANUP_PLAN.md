@@ -1,5 +1,11 @@
 # Sea API and WebTransport Cleanup Plan
 
+> **Historical execution record:** This completed plan preserves the migration
+> sequence, evidence, and decisions that produced the current implementation.
+> Use [SEA_ARCHITECTURE.md](SEA_ARCHITECTURE.md) for active architectural
+> guidance and [DEVELOPMENT.md](DEVELOPMENT.md) for current documentation and
+> testing policy. Do not rewrite completed checkpoints to describe later work.
+
 ## Status
 
 - **Plan status:** Complete.
