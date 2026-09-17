@@ -60,6 +60,7 @@ export { SequenceField };
 
 export {
 	isNeverField,
+	allowsFieldKindSuperset,
 	ModularEditBuilder,
 	type FieldEditDescription as EditDescription,
 	type FieldChangeHandler,
@@ -80,6 +81,7 @@ export {
 	FlexFieldKind,
 	type FullSchemaPolicy,
 	allowsRepoSuperset,
+	getStoredSchemaSupersetFailures,
 	type GenericChangeset,
 	genericFieldKind,
 	type HasFieldChanges,

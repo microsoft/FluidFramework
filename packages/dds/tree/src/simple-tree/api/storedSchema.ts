@@ -14,7 +14,7 @@ import { toStoredSchema } from "../toStoredSchema.js";
 
 import { TreeViewConfigurationAlpha } from "./configuration.js";
 import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
-import type { SchemaCompatibilityStatus } from "./tree.js";
+import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
 
 /**
  * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable format.
@@ -72,11 +72,13 @@ export function extractPersistedSchema(
  * @param persisted - Schema persisted for a document. Typically persisted alongside the data and assumed to describe that data.
  * @param view - Schema which would be used to view persisted content.
  * @param options - {@link ICodecOptions} used when parsing the provided schema.
- * @param canInitialize - Passed through to the return value unchanged and otherwise unused.
- * @returns The {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schema.
+ * @returns Alpha compatibility diagnostics without document initialization state.
  *
  * @remarks
- * This uses the persisted formats for schema, meaning it only includes data which impacts compatibility.
+ * This compares schema data available in the persisted format, including persisted metadata when present.
+ * Persisted metadata differences do not affect compatibility flags.
+ * Non-persisted custom metadata and descriptions are not compared.
+ * Staging annotations are available from the view, but are not reconstructed from persisted input.
  * It also uses the persisted format so that this API can be used in tests to compare against saved schema from previous versions of the application.
  *
  * @example
@@ -88,7 +90,6 @@ export function extractPersistedSchema(
  * 		require("./schema.json"),
  * 		MySchema,
  * 		{ jsonValidator: typeboxValidator },
- * 		false,
  * 	).canUpgrade,
  * );
  * ```
@@ -98,7 +99,7 @@ export function comparePersistedSchema(
 	persisted: JsonCompatible,
 	view: ImplicitFieldSchema,
 	options: ICodecOptions,
-): Omit<SchemaCompatibilityStatus, "canInitialize"> {
+): SchemaComparisonStatusAlpha {
 	const schemaCodec = schemaCodecBuilder.buildDecoder(options);
 	const stored = schemaCodec.decode(persisted);
 	const config = new TreeViewConfigurationAlpha({

@@ -6,6 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import {
+	EmptyKey,
+	type FieldKey,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	type MutableTreeStoredSchema,
@@ -28,6 +30,7 @@ import {
 	allowsTreeSchemaIdentifierSuperset,
 	allowsTreeSuperset,
 	allowsValueSuperset,
+	getStoredSchemaSupersetFailures,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import-x/no-internal-modules */
 } from "../../../feature-libraries/modular-schema/comparison.js";
@@ -92,6 +95,110 @@ describe("Schema Comparison", () => {
 			nodeSchema: new Map([...repo.nodeSchema, [identifier, schema]]),
 		});
 	}
+
+	describe("getStoredSchemaSupersetFailures", () => {
+		const identifier = brand<TreeNodeSchemaIdentifier>("testTree");
+		const fieldKey = brand<FieldKey>("value");
+
+		function repository(node: TreeNodeStoredSchema): TreeStoredSchema {
+			return {
+				rootFieldSchema: storedEmptyFieldSchema,
+				nodeSchema: new Map([
+					[identifier, node],
+					[emptyTree.name, emptyTree.schema],
+				]),
+			};
+		}
+
+		it("reports every rejected aspect at the root and detached node fields", () => {
+			const original = {
+				...repository(
+					new ObjectNodeStoredSchema(new Map([[fieldKey, fieldOptionalEmptyTree]])),
+				),
+				rootFieldSchema: fieldOptionalEmptyTree,
+			};
+			const target = repository(new ObjectNodeStoredSchema(new Map()));
+			assert.deepEqual(
+				[...getStoredSchemaSupersetFailures(defaultSchemaPolicy, original, target)],
+				[
+					{
+						mismatch: "allowedType",
+						allowedType: emptyTree.name,
+						identifier: undefined,
+						fieldKey: EmptyKey,
+					},
+					{ mismatch: "fieldKind", identifier: undefined, fieldKey: EmptyKey },
+					{ mismatch: "allowedType", allowedType: emptyTree.name, identifier, fieldKey },
+					{ mismatch: "fieldKind", identifier, fieldKey },
+				],
+			);
+			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, original, target), false);
+		});
+
+		it("locates object-to-map failures at object keys and rejects the reverse node transition", () => {
+			const object = repository(
+				new ObjectNodeStoredSchema(new Map([[fieldKey, fieldOptionalEmptyTree]])),
+			);
+			const map = repository(new MapNodeStoredSchema(storedEmptyFieldSchema));
+			assert.deepEqual(
+				[...getStoredSchemaSupersetFailures(defaultSchemaPolicy, object, map)],
+				[
+					{ mismatch: "allowedType", allowedType: emptyTree.name, identifier, fieldKey },
+					{ mismatch: "fieldKind", identifier, fieldKey },
+				],
+			);
+			assert.deepEqual(
+				[...getStoredSchemaSupersetFailures(defaultSchemaPolicy, map, object)],
+				[{ mismatch: "nodeKind", identifier }],
+			);
+		});
+
+		it("locates implicit map fields and leaf value failures", () => {
+			assert.deepEqual(
+				[
+					...getStoredSchemaSupersetFailures(
+						defaultSchemaPolicy,
+						repository(new MapNodeStoredSchema(fieldOptionalEmptyTree)),
+						repository(new MapNodeStoredSchema(storedEmptyFieldSchema)),
+					),
+				],
+				[
+					{
+						mismatch: "allowedType",
+						allowedType: emptyTree.name,
+						identifier,
+						fieldKey: EmptyKey,
+					},
+					{ mismatch: "fieldKind", identifier, fieldKey: EmptyKey },
+				],
+			);
+			assert.deepEqual(
+				[
+					...getStoredSchemaSupersetFailures(
+						defaultSchemaPolicy,
+						repository(numberLeaf),
+						repository(new LeafNodeStoredSchema(ValueSchema.String)),
+					),
+				],
+				[{ mismatch: "valueSchema", identifier }],
+			);
+		});
+
+		it("preserves constructability rejection even when there are no object fields to compare", () => {
+			const original = repository(emptyTree.schema);
+			const target = repository(new MapNodeStoredSchema(fieldRequiredEmptyTree));
+			assert.deepEqual(
+				[...getStoredSchemaSupersetFailures(defaultSchemaPolicy, original, target)],
+				[{ mismatch: "nodeKind", identifier }],
+			);
+			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, original, target), false);
+			assert.deepEqual(
+				[...getStoredSchemaSupersetFailures(defaultSchemaPolicy, target, original)],
+				[],
+			);
+			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, target, original), true);
+		});
+	});
 
 	it("allowsValueSuperset", () => {
 		assert.equal(

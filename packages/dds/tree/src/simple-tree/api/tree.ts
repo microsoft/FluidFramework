@@ -40,6 +40,7 @@ import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
 import type { StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
+import type { SchemaCompatibilityStatusAlpha } from "./schemaDiagnostics.js";
 import type {
 	RunTransactionParamsAlpha,
 	RunTransactionParamsBeta,
@@ -980,6 +981,13 @@ export interface TreeViewAlpha<
 			"root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync" | "isView"
 		>,
 		UntypedTreeViewAlpha {
+	/**
+	 * Reports compatibility and all schema differences within the comparison scope.
+	 * @remarks
+	 * See {@link SchemaCompatibilityStatusAlpha} for the metadata exclusions.
+	 */
+	readonly compatibility: SchemaCompatibilityStatusAlpha;
+
 	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);

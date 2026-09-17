@@ -12,11 +12,77 @@ import {
 	extractPersistedSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/storedSchema.js";
-import { TreeViewConfigurationAlpha, type SchemaUpgrade } from "../../../simple-tree/index.js";
+import {
+	TreeViewConfigurationAlpha,
+	SchemaFactoryAlpha,
+	checkCompatibility,
+	type SchemaUpgrade,
+} from "../../../simple-tree/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { getStagedSchemaUpgrades, testDocuments } from "../../testTrees.js";
 
 describe("simple-tree storedSchema", () => {
+	it("reports metadata through both helpers without inspecting non-persisted metadata", () => {
+		const factory = new SchemaFactoryAlpha("diagnostics");
+		const metadata = {
+			get custom(): never {
+				throw new Error("custom metadata must not be traversed");
+			},
+			get description(): never {
+				throw new Error("descriptions must not be traversed");
+			},
+		};
+		const original = factory.objectAlpha(
+			"Metadata",
+			{
+				value: factory.optional(factory.number, {
+					persistedMetadata: { label: "before" },
+					metadata,
+				}),
+			},
+			{ metadata },
+		);
+		const view = factory.objectAlpha(
+			"Metadata",
+			{
+				value: factory.optional(factory.number, {
+					persistedMetadata: { label: "after", absentBefore: null },
+					metadata,
+				}),
+			},
+			{ metadata },
+		);
+		const persisted = extractPersistedSchema(original, FluidClientVersion.v2_0, () => false);
+		for (const status of [
+			checkCompatibility(
+				new TreeViewConfigurationAlpha({ schema: original }),
+				new TreeViewConfigurationAlpha({ schema: view }),
+			),
+			comparePersistedSchema(persisted, view, { jsonValidator: FormatValidatorBasic }),
+		]) {
+			assert.equal(status.canView, true);
+			assert.equal(status.canUpgrade, true);
+			assert.equal(status.isEquivalent, true);
+			assert(
+				status.allDiscrepancies.some(
+					({ mismatch, location }) =>
+						mismatch === "persistedMetadata" &&
+						location !== "root" &&
+						location.fieldKey === "value",
+				),
+			);
+			assert.equal("canInitialize" in status, false);
+			const serialized: unknown = JSON.parse(JSON.stringify(status));
+			assert.deepEqual(serialized, {
+				canView: true,
+				canUpgrade: true,
+				isEquivalent: true,
+				allDiscrepancies: status.allDiscrepancies,
+				enabledUpgrades: {},
+			});
+		}
+	});
+
 	describe("test-schema", () => {
 		useSnapshotDirectory("simple-tree-storedSchema");
 		// TODO: Should also loop over schema formats once `extractPersistedSchema` takes the format version as an argument.
@@ -62,7 +128,12 @@ describe("simple-tree storedSchema", () => {
 					const status = comparePersistedSchema(persistedA, test.schema, {
 						jsonValidator: FormatValidatorBasic,
 					});
-					assert.deepEqual(status, {
+					const { allDiscrepancies, ...legacyStatus } = status;
+
+					// Verify that JSON serialization and parsing preserve the diagnostic payload without data loss.
+					assert.deepEqual(JSON.parse(JSON.stringify(allDiscrepancies)), allDiscrepancies);
+
+					assert.deepEqual(legacyStatus, {
 						isEquivalent: true,
 						canView: true,
 						canUpgrade: true,
