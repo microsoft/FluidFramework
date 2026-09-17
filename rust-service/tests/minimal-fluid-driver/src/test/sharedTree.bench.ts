@@ -306,7 +306,7 @@ function dataStructureEnvironmentVariable(): "dummy" | "shared-tree" {
 /** Incrementally builds native or Tinylicious prerequisites for a case. */
 function buildPrerequisites(benchmarkCase: BenchmarkCase): void {
 	if (benchmarkCase.backend === "rust") {
-		run("cargo", ["build", "--locked", "-p", "sea-webtransport", "--release"], {
+		run("cargo", ["build", "--locked", "-p", "sea-webtransport-server", "--release"], {
 			cwd: rustServiceDirectory,
 		});
 		ensureCertificate();
