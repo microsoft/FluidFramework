@@ -1294,4 +1294,31 @@ mod tests {
         assert_eq!(measurements.finite_read_records, config.records);
         assert!(measurements.recovery_microseconds.is_some());
     }
+
+    #[tokio::test]
+    async fn reopened_storage_rejects_wrong_payloads_without_snapshots() {
+        let config = Config {
+            backend: Backend::File,
+            fixture: FixtureKind::Empty,
+            seed: DEFAULT_SEED,
+            records: 1,
+            writers: 1,
+            snapshot_frequency: None,
+            repetitions: 1,
+            warmups: 0,
+        };
+        let storage = MemoryStream::new();
+        storage
+            .append(Event {
+                payload: Bytes::from_static(b"wrong"),
+                blob_tree: None,
+            })
+            .await
+            .unwrap();
+
+        assert_eq!(
+            verify_reopened_storage(&storage, &config).await,
+            Err("finite read payloads did not match fixtures".to_owned())
+        );
+    }
 }

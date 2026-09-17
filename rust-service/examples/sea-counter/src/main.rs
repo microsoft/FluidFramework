@@ -148,6 +148,24 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn later_snapshot_replaces_prior_event_state_before_tail_replay() {
+        let session = counter_session(Arc::new(MemoryStream::new())).await;
+        append_delta(&session, b"before-snapshot", 2).await;
+        let position = session
+            .resolve_submission(
+                &OperationId::new(Bytes::from_static(b"before-snapshot")).unwrap(),
+            )
+            .await
+            .unwrap()
+            .unwrap()
+            .position;
+        publish_snapshot(&session, b"replacement", 20, SnapshotPosition::At(position)).await;
+        append_delta(&session, b"after-snapshot", -1).await;
+
+        assert_eq!(recover(&session).await, Ok(19));
+    }
+
+    #[tokio::test]
     async fn runs_snapshot_and_replay_demo() {
         assert_eq!(run_demo().await, 4);
     }
@@ -170,6 +188,31 @@ mod tests {
         assert_eq!(
             recover(&session).await,
             Err("counter delta must contain exactly 8 bytes")
+        );
+    }
+
+    #[tokio::test]
+    async fn rejects_malformed_snapshot() {
+        let session = counter_session(Arc::new(MemoryStream::new())).await;
+        let root = session
+            .put_blob(Bytes::from_static(b"not-an-i64"))
+            .await
+            .unwrap();
+        session
+            .publish_snapshot(SnapshotPublication {
+                operation_id: OperationId::new(Bytes::from_static(b"malformed-snapshot")).unwrap(),
+                expected_parent: None,
+                snapshot: Snapshot {
+                    at_event: SnapshotPosition::Initial,
+                    root: BlobTreeId::Blob(root),
+                },
+            })
+            .await
+            .unwrap();
+
+        assert_eq!(
+            recover(&session).await,
+            Err("counter snapshot must contain exactly 8 bytes")
         );
     }
 }
