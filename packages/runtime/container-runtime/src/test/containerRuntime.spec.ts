@@ -452,6 +452,67 @@ describe("Runtime", () => {
 				disabled.dispose();
 			});
 
+			for (const flushMode of [FlushMode.Immediate, FlushMode.TurnBased]) {
+				it(`retries a sole unacknowledged configuration request after reconnect (${FlushMode[flushMode]})`, async () => {
+					const runtime = await loadConfigurationRuntime(true, { flushMode });
+					const privates = runtime as unknown as ContainerRuntime_WithPrivates & {
+						readonly pendingMessagesCount: number;
+					};
+					let completed = 0;
+					const ensure = async (): Promise<void> => {
+						await runtime.ensureChannelConfigurationEnabled?.();
+						completed++;
+					};
+					const first = ensure();
+					const second = ensure();
+					await clock.tickAsync(0);
+					assert.equal(submittedOps.length, 1);
+					const proposal = submittedOps[0] as LocalContainerRuntimeMessage;
+					assert.equal(proposal.type, ContainerMessageType.DocumentSchemaChange);
+					assert.equal(privates.pendingMessagesCount, 1);
+					assert.equal(completed, 0);
+
+					changeConnectionState(runtime, false, mockClientId);
+					const flush = sandbox.spy(privates, "flush");
+					const reconnectedClientId = "reconnectedClientId";
+					changeConnectionState(runtime, true, reconnectedClientId);
+					await clock.tickAsync(0);
+
+					assert.equal(submittedOps.length, 2, "Reconnect must regenerate the proposal");
+					assert.equal(privates.pendingMessagesCount, 1);
+					assert.equal(runtime.channelConfigurationEnabled, false);
+					assert.equal(completed, 0);
+					assert.equal(
+						flush.lastCall.args[0],
+						undefined,
+						"The regenerated proposal must be flushed outside the replayed batch",
+					);
+					const third = ensure();
+					await clock.tickAsync(0);
+					assert.equal(submittedOps.length, 2, "Coalesced requests must not send more ops");
+					runtime.process(
+						{
+							clientId: reconnectedClientId,
+							clientSequenceNumber: 2,
+							sequenceNumber: 1,
+							minimumSequenceNumber: 0,
+							referenceSequenceNumber: 0,
+							timestamp: 1,
+							type: MessageType.Operation,
+							contents: submittedOps[1],
+						},
+						true,
+					);
+					await clock.tickAsync(0);
+					await Promise.all([first, second, third]);
+					assert.equal(completed, 3);
+					assert.equal(runtime.channelConfigurationEnabled, true);
+					assert.equal(privates.pendingMessagesCount, 0);
+					assert.equal(submittedOps.length, 2);
+					runtime.dispose();
+				});
+			}
+
 			it("retries only after a competing proposal and the pending local acknowledgement", async () => {
 				const runtime = await loadConfigurationRuntime(true);
 				const completion = runtime.ensureChannelConfigurationEnabled?.();

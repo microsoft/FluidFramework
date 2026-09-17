@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { EventEmitter } from "node:events";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -125,7 +126,10 @@ interface Harness {
 	readonly dirty: number;
 }
 
-function harness(attachState: AttachState = AttachState.Attached): Harness {
+function harness(
+	attachState: AttachState = AttachState.Attached,
+	onSubmit?: () => void,
+): Harness {
 	const runtime = Object.assign(new MockFluidDataStoreRuntime({ attachState }), {
 		channelConfigurationCreationEnabled: true,
 		channelConfigurationEnabled: true,
@@ -136,7 +140,11 @@ function harness(attachState: AttachState = AttachState.Attached): Harness {
 	const submitted: { contents: unknown; metadata: unknown }[] = [];
 	let dirty = 0;
 	const delta = new MockDeltaConnection(
-		(contents: unknown, metadata) => submitted.push({ contents, metadata }),
+		(contents: unknown, metadata) => {
+			const clientSequenceNumber = submitted.push({ contents, metadata });
+			onSubmit?.();
+			return clientSequenceNumber;
+		},
 		() => dirty++,
 	);
 	const services: IChannelServices = {
@@ -392,6 +400,57 @@ describe("configured kernel composition", () => {
 		assert.equal(secondResult.status, "conflict");
 		assert.equal(config.current.values.retain, true);
 	});
+
+	for (const queued of [false, true]) {
+		it(`envelopes ordinary edits from synchronous dirty listeners during ${queued ? "queued" : "immediate"} control submission`, async () => {
+			const events = new EventEmitter();
+			const { runtime, delta, services, submitted } = harness(AttachState.Attached, () =>
+				events.emit("dirty"),
+			);
+			const factory = makeKind({}).getFactory();
+			const shared = factory.create(runtime, "reentrant");
+			publish(shared);
+			const remote = harness();
+			const peer = await factory.load(
+				remote.runtime,
+				"peer",
+				remote.services,
+				shared.attributes,
+			);
+			if (!queued) {
+				shared.connect(services);
+			}
+			const config = requireConfig(shared);
+			const contents = { edit: "from dirty event" };
+			const metadata = { origin: "dirty listener" };
+			events.once("dirty", () => shared.edit(contents, metadata));
+
+			const request = config.requestChange({ retain: true });
+			if (queued) {
+				assert.equal(submitted.length, 0);
+				shared.connect(services);
+			}
+			assert.equal(submitted.length, 2);
+			assert.deepEqual(submitted[0]?.contents, barrier(0, true));
+			assert.deepEqual(submitted[1]?.contents, operation(contents));
+			assert.equal(submitted[1]?.metadata, metadata);
+			assert.equal(config.current.revision, 0);
+			assert.deepEqual(shared.observed.at(-1), ["optimistic", contents]);
+
+			delta.processMessages(
+				collection(
+					submitted.map((message) => message.contents),
+					true,
+					submitted.map((message) => message.metadata),
+				),
+			);
+			const result = await request;
+			assert.equal(result.status, "applied");
+			assert.deepEqual(shared.observed.at(-1), ["operation", contents, metadata, 0, 1, true]);
+			remote.delta.processMessages(collection(submitted.map((message) => message.contents)));
+			assert.deepEqual(peer.observed.at(-1), ["operation", contents, undefined, 0, 1, false]);
+		});
+	}
 
 	it("queues published changes while bound but not yet connected to services", async () => {
 		const { runtime, services, submitted, delta } = harness();

@@ -58,6 +58,8 @@ export class ConfiguredKernelProtocol<TConfig extends ChannelConfiguration>
 	public prepareLocalMessage(content: unknown): unknown {
 		this.verifyCanSubmit();
 		if (this.submittingControl) {
+			// Consume the bypass before submission can synchronously trigger another DDS edit.
+			this.submittingControl = false;
 			return content;
 		}
 		return {

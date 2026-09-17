@@ -3113,6 +3113,10 @@ export class ContainerRuntime
 
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
+
+			// Replay discards unacknowledged schema proposals. Retry any explicit request
+			// after all replayed batches have finished, even if no other ops were pending.
+			this.advanceChannelConfigurationRequest();
 		} finally {
 			// Restore the old state, re-enable event emit
 			this.lastEmittedDirty = oldState;
