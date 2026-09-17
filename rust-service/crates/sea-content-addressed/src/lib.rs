@@ -1,8 +1,4 @@
-//! Durable immutable blob and blob-directory persistence.
-//!
-//! Leaves and directories occupy separate namespaces and use the domain-separated identities
-//! defined by `sea-core`. Objects are written to same-filesystem temporary files, file-synced,
-//! atomically renamed, and directory-synced before acknowledgement. All content is retained.
+#![doc = include_str!("../README.md")]
 
 use std::{
     fs::{self, File, OpenOptions},
@@ -180,7 +176,7 @@ impl ContentStore {
         Ok(directory)
     }
 
-    /// Returns the owned store root.
+    /// Returns the store's root directory.
     #[must_use]
     pub fn root(&self) -> &Path {
         &self.root
@@ -189,28 +185,52 @@ impl ContentStore {
 
 fn publish(directory: &Path, name: &str, bytes: &[u8]) -> Result<(), StoreError> {
     let target = directory.join(name);
-    if target.exists() {
-        return Ok(());
+    match target.try_exists() {
+        Ok(true) => return verify_existing(&target, bytes),
+        Ok(false) => {}
+        Err(error) => return Err(error.into()),
     }
     let temporary = directory.join(format!(
         ".{name}.{}.tmp",
         NEXT_TEMP.fetch_add(1, Ordering::Relaxed)
     ));
-    let mut file = OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(&temporary)?;
-    file.write_all(bytes)?;
-    file.sync_all()?;
-    drop(file);
-    match fs::rename(&temporary, &target) {
-        Ok(()) => {}
-        Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
-            fs::remove_file(&temporary)?;
+    let result = (|| {
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temporary)?;
+        file.write_all(bytes)?;
+        file.sync_all()?;
+        drop(file);
+        match fs::hard_link(&temporary, &target) {
+            Ok(()) => {
+                fs::remove_file(&temporary)?;
+                sync_directory(directory)
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
+                fs::remove_file(&temporary)?;
+                verify_existing(&target, bytes)
+            }
+            Err(error) => Err(error.into()),
         }
-        Err(error) => return Err(error.into()),
+    })();
+    if result.is_err() {
+        let _ = fs::remove_file(temporary);
     }
-    sync_directory(directory)
+    result
+}
+
+fn verify_existing(path: &Path, expected: &[u8]) -> Result<(), StoreError> {
+    let limit = u64::try_from(expected.len())
+        .map_err(|_| StoreError::Corrupt("published object exceeds address space"))?;
+    let actual = read_bounded(path, limit)?;
+    if actual == expected {
+        Ok(())
+    } else {
+        Err(StoreError::Corrupt(
+            "published object content does not match its identity",
+        ))
+    }
 }
 
 fn read_bounded(path: &Path, limit: u64) -> Result<Bytes, StoreError> {
@@ -289,7 +309,7 @@ mod tests {
     }
 
     #[test]
-    fn rejects_bounds_and_corruption() {
+    fn rejects_blob_bounds_and_corruption() {
         let root = test_directory();
         let store = ContentStore::open(
             &root,
@@ -306,6 +326,65 @@ mod tests {
         let blob = store.put_blob(&Bytes::from_static(b"ok")).unwrap();
         fs::write(store.blobs.join(hex(blob.as_bytes())), b"no").unwrap();
         assert!(matches!(store.get_blob(blob), Err(StoreError::Corrupt(_))));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn rejects_directory_bounds_and_corruption() {
+        let root = test_directory();
+        let directory = BlobDirectory::new(BTreeMap::new()).unwrap();
+        let bounded_store = ContentStore::open(
+            &root,
+            StoreConfig {
+                max_blob_bytes: 1024,
+                max_directory_bytes: 0,
+            },
+        )
+        .unwrap();
+        assert!(matches!(
+            bounded_store.put_directory(&directory),
+            Err(StoreError::DirectoryTooLarge { .. })
+        ));
+        drop(bounded_store);
+
+        let store = ContentStore::open(&root, StoreConfig::default()).unwrap();
+        let directory_id = store.put_directory(&directory).unwrap();
+        fs::write(
+            store.directories.join(hex(directory_id.as_bytes())),
+            b"invalid",
+        )
+        .unwrap();
+        assert!(matches!(
+            store.get_directory(directory_id),
+            Err(StoreError::Corrupt(_))
+        ));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn reports_missing_objects() {
+        let root = test_directory();
+        let store = ContentStore::open(&root, StoreConfig::default()).unwrap();
+        assert!(matches!(
+            store.get_blob(BlobId::for_bytes(b"missing")),
+            Err(StoreError::Missing)
+        ));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn publication_verifies_existing_content() {
+        let root = test_directory();
+        fs::create_dir(&root).unwrap();
+        let target = root.join("object");
+        fs::write(&target, b"existing").unwrap();
+
+        publish(&root, "object", b"existing").unwrap();
+        assert!(matches!(
+            publish(&root, "object", b"replacement"),
+            Err(StoreError::Corrupt(_))
+        ));
+        assert_eq!(fs::read(&target).unwrap(), b"existing");
         fs::remove_dir_all(root).unwrap();
     }
 }
