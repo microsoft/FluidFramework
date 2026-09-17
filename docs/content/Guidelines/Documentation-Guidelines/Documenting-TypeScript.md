@@ -39,20 +39,30 @@ For more specific guidance and examples of leveraging TSDoc syntax, see [TSDoc G
 
 ### When to use
 
-As a general rule, inline comment syntax should be used when describing what code is _doing_.
+Use inline comments to:
+
+- Clarify the purpose of logic that may not be obvious to a developer reading the code for the first time.
+- Document logical branches, especially when they are complex or contain early returns.
+  Explain why the branch is needed.
+
+Focus on the purpose of the code rather than repeating what its statements do.
 
 #### Example
 
 Good:
 
 ```typescript
-// Calculate the sum of `a` and `b`, log it, and return it.
-const sum = a + b;
-console.log(sum);
-return sum;
+if (pendingChanges.length === 0) {
+	// Avoid notifying listeners when the document has not changed.
+	return;
+}
+
+applyChanges(pendingChanges);
+notifyListeners();
 ```
 
-In this example, the comment is intended to describe what the subsequent lines of code are _doing_, rather than attempting to annotate the local variable `sum`, so an inline comment is preferred.
+In this example, the comment explains why the branch returns before notifying listeners.
+It describes the purpose of the control flow rather than documenting a declaration, so inline syntax is appropriate.
 
 ### When not to use
 
@@ -84,7 +94,7 @@ return (
 ## Rules of thumb
 
 - If documentation is intended to describe a specific declaration or API, use [TSDoc syntax](#tsdoc-syntax).
-- If documentation is intended to describe what code is doing, use [Inline syntax](#inline-syntax).
+- If documentation is intended to explain the purpose or control flow of code, use [Inline syntax](#inline-syntax).
 - If neither of the above are appropriate, use [Block syntax](#block-syntax).
 
 ## Advanced
