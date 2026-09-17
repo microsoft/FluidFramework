@@ -189,6 +189,11 @@ where
     _lease: L,
 }
 
+/// Component handles protected by a view's single operation-ordering lock.
+///
+/// Keeping all three components under one mutex lets [`SeaView`] hold the same guard while it
+/// establishes dependencies and publishes their owner record, or while it selects a snapshot and
+/// captures the corresponding finite event head.
 struct ViewState<B, E, S> {
     blobs: B,
     events: E,
@@ -331,8 +336,8 @@ where
 
     /// Selects a compatible snapshot and captures a finite catch-up boundary.
     ///
-    /// Exclusive mutable ownership prevents an append through this view while the snapshot and
-    /// head are selected. Implementations that permit external writers must provide equivalent
+    /// The view's operation lock prevents an append through this view while the snapshot and head
+    /// are selected. Implementations that permit external writers must provide equivalent
     /// serialization beneath the component contracts.
     pub async fn load(
         &self,
