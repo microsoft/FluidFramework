@@ -8,11 +8,9 @@ import path from "path";
 
 import fs from "fs-extra";
 
-import { _dirname } from "./dirname.cjs";
-
 describe("Check Dependencies", () => {
 	it("verify no @fluid-internal packages in dependencies", async () => {
-		await verifyNoFluidPackages(path.join(_dirname, "/../../node_modules"));
+		await verifyNoFluidPackages(path.join(import.meta.dirname, "/../../node_modules"));
 	});
 });
 
