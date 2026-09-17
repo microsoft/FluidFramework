@@ -380,13 +380,10 @@ export class PartialSequenceLengths {
 				childPartials.push(leafPartialLengths);
 			}
 
-			const childPartialsLen = childPartials.length;
-
 			const childPartialLengths: PartialSequenceLength[][] = [];
 			const childUnsequencedPartialLengths: PartialSequenceLength[][] = [];
 			const childPerRefSeqAdjustments: Map<number, PartialSequenceLengthsSet>[] = [];
-			for (let i = 0; i < childPartialsLen; i++) {
-				const child = childPartials[i];
+			for (const child of childPartials) {
 				const { partialLengths, unsequencedRecords } = child;
 				combinedPartialLengths.segmentCount += child.getSegmentCount();
 				combinedPartialLengths.minLength += child.getBaselineLength();
@@ -427,8 +424,7 @@ export class PartialSequenceLengths {
 			}
 
 			// could merge these like we do above rather than do out of order like this
-			for (let i = 0; i < childPartialsLen; i++) {
-				const { perClientAdjustments } = childPartials[i];
+			for (const { perClientAdjustments } of childPartials) {
 				if (perClientAdjustments.length > 0) {
 					for (let clientId = 0; clientId < perClientAdjustments.length; clientId++) {
 						const clientAdjustment = perClientAdjustments[clientId];
