@@ -216,6 +216,7 @@ export function createTreeIndex<
  * Creates a {@link TreeIndex} with a specified key field selector.
  *
  * @privateRemarks
+ * TODO:
  * This (and thus its exposed overloads) are limited to making indexes where the keys are leaves of the tree nodes in specific fields which are a function of the schema.
  * A more generalized design could provide an option where the user gets to provide a custom key extraction function.
  * We could run that function with observation tracking to handle invalidation.
