@@ -22,5 +22,6 @@ Snapshot coordination is composed from the undecorated session handle because th
 ```rust
 use sea_compression::CompressionSession;
 
+# let session = ();
 let compressed = CompressionSession::new(session);
 ```
