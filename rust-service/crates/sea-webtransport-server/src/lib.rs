@@ -1,4 +1,4 @@
-#![doc = "Native Sea WebTransport hosting and protocol dispatch."]
+#![doc = include_str!("../README.md")]
 
 mod dispatch;
 pub mod host;

@@ -805,6 +805,18 @@ mod tests {
         };
         let ((), response) = tokio::join!(cleanup, explicit);
         assert_eq!(response, protocol::Response::Acknowledged);
+        connection.connection_closed(false).await;
+        assert!(matches!(
+            connection
+                .author_request(protocol::Request::ResolveSubmission {
+                    operation: b"after-close".to_vec(),
+                })
+                .await,
+            protocol::Response::Error {
+                kind: protocol::ErrorKind::Invalid,
+                ..
+            }
+        ));
         let _ = std::fs::remove_dir_all(root);
     }
 
