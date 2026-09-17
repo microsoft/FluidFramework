@@ -1188,14 +1188,21 @@ mod tests {
         certificate_hash: wtransport::tls::Sha256Digest,
     ) {
         let (_endpoint, connection) = raw_connection(address, certificate_hash).await;
-        let (mut send, receive) = connection.open_bi().await.unwrap().await.unwrap();
+        let (mut send, mut receive) = connection.open_bi().await.unwrap().await.unwrap();
         send.write_all(b"bad!").await.unwrap();
 
-        // The server may reject the malformed frame and send STOP_SENDING before this
-        // finish completes. Both a clean finish and that peer stop mean the bytes were
-        // delivered; later requests in the test verify that the server survived them.
         let _ = send.finish().await;
-        drop(receive);
+        timeout(Duration::from_secs(2), receive.stopped())
+            .await
+            .expect("malformed stream should be stopped");
+
+        let (_authority, _events) = open_raw_event_stream(
+            &connection,
+            b"same-connection-archive",
+            b"same-connection-author",
+            b"same-connection-session",
+        )
+        .await;
         connection.close(0_u32.into(), b"fault injected");
     }
 

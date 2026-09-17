@@ -1856,6 +1856,23 @@ mod tests {
     }
 
     #[test]
+    fn network_decoder_rejects_unknown_kinds_and_invalid_correlations() {
+        let mut unknown_kind = NetworkFrameDecoder::new(Limits::default());
+        unknown_kind.push(&[0, 0, 0, 9, 12, 0, 0, 0, 0, 0, 0, 0, 1]);
+        assert!(matches!(
+            unknown_kind.next_frame(),
+            Err(ProtocolError::UnknownMessageKind(12))
+        ));
+
+        let mut zero_correlation = NetworkFrameDecoder::new(Limits::default());
+        zero_correlation.push(&[0, 0, 0, 9, 3, 0, 0, 0, 0, 0, 0, 0, 0]);
+        assert!(matches!(
+            zero_correlation.next_frame(),
+            Err(ProtocolError::InvalidCorrelationId)
+        ));
+    }
+
+    #[test]
     fn correlations_reject_reuse_and_mismatched_completion() {
         let mut tracker = CorrelationTracker::default();
         tracker.begin(7).expect("first use");
@@ -2137,6 +2154,16 @@ mod tests {
             Err(ProtocolError::UnexpectedMessageDirection(
                 MessageKind::Acknowledged
             ))
+        ));
+
+        let wrong_stream = NetworkFrame {
+            kind: MessageKind::Submit,
+            correlation_id: 1,
+            payload: Vec::new(),
+        };
+        assert!(matches!(
+            decode_request_frame(StreamRole::Content, &wrong_stream),
+            Err(ProtocolError::WrongStream { .. })
         ));
 
         let malformed = NetworkFrame {
