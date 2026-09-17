@@ -117,4 +117,52 @@ describe("Indexed Collection Operations", function () {
 
 		expect(modification).to.deep.equal(originalCS);
 	});
+
+	it("applying an identical duplicate insert into an indexed collection should be a no-op (CS-003)", () => {
+		// Base ChangeSet that already has an insert for key "1"
+		const base = {
+			insert: {
+				"test:test-1.0.0": {
+					test: {
+						"map<Bool>": { entries: { insert: { "1": true } } },
+					},
+				},
+			},
+		};
+
+		// The exact same insert being merged in a second time (e.g. from a duplicated/replayed op)
+		const duplicateInsert = cloneDeep(base);
+
+		const expected = cloneDeep(base);
+
+		expect(() => new ChangeSet(base).applyChangeSet(duplicateInsert)).to.not.throw();
+		expect(base).to.deep.equal(expected);
+	});
+
+	it("applying a conflicting insert for an already-existing key should still throw", () => {
+		const base = {
+			insert: {
+				"test:test-1.0.0": {
+					test: {
+						"map<Bool>": { entries: { insert: { "1": true } } },
+					},
+				},
+			},
+		};
+
+		// Same key, different value: a genuine conflict, not a duplicate/replay
+		const conflictingInsert = {
+			insert: {
+				"test:test-1.0.0": {
+					test: {
+						"map<Bool>": { entries: { insert: { "1": false } } },
+					},
+				},
+			},
+		};
+
+		expect(() => new ChangeSet(base).applyChangeSet(conflictingInsert)).to.throw(
+			/Added an already existing entry/,
+		);
+	});
 });
