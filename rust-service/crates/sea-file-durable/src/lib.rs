@@ -1109,13 +1109,22 @@ mod current_tests {
     use std::{
         fs,
         io::Write,
+        sync::Arc,
         sync::atomic::{AtomicU64, Ordering},
     };
 
     use bytes::Bytes;
-    use sea_core::{Event, archive::SeaStorage};
+    use sea_core::{
+        BlobTreeId, Event,
+        archive::{
+            OperationId, SeaStorage, Snapshot as ArchiveSnapshot,
+            SnapshotPosition as ArchiveSnapshotPosition, SnapshotPublication,
+        },
+    };
 
-    use super::{DurableLog, FRAME_HEADER_LEN, HEADER_LEN};
+    use super::{
+        CrashInjector, CrashPoint, DurableLog, DurableLogError, FRAME_HEADER_LEN, HEADER_LEN,
+    };
 
     static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(1);
 
@@ -1155,6 +1164,91 @@ mod current_tests {
         drop(storage);
         let reopened = DurableLog::open(&root).unwrap();
         assert_eq!(reopened.head().await.unwrap(), Some(receipt.position));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn crash_recovery_distinguishes_incomplete_and_synced_appends() {
+        let incomplete_root = directory("crash-incomplete-append");
+        let storage = DurableLog::open_with_crash_injector(
+            &incomplete_root,
+            Arc::new(CrashInjector::new([CrashPoint::RecordAfterHeaderWrite])),
+        )
+        .unwrap();
+        let error = storage
+            .append(Event {
+                payload: Bytes::from_static(b"incomplete"),
+                blob_tree: None,
+            })
+            .await
+            .unwrap_err();
+        assert!(matches!(error, DurableLogError::AmbiguousAppend(_)));
+        drop(storage);
+        let reopened = DurableLog::open(&incomplete_root).unwrap();
+        assert_eq!(reopened.head().await.unwrap(), None);
+        drop(reopened);
+        fs::remove_dir_all(incomplete_root).unwrap();
+
+        let synced_root = directory("crash-synced-append");
+        let storage = DurableLog::open_with_crash_injector(
+            &synced_root,
+            Arc::new(CrashInjector::new([CrashPoint::RecordAfterSync])),
+        )
+        .unwrap();
+        let error = storage
+            .append(Event {
+                payload: Bytes::from_static(b"synced"),
+                blob_tree: None,
+            })
+            .await
+            .unwrap_err();
+        assert!(matches!(error, DurableLogError::AmbiguousAppend(_)));
+        drop(storage);
+        let reopened = DurableLog::open(&synced_root).unwrap();
+        assert_eq!(
+            reopened.head().await.unwrap(),
+            Some(sea_core::EventPosition::new(1))
+        );
+        drop(reopened);
+        fs::remove_dir_all(synced_root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn reopen_resolves_snapshot_after_post_sync_ambiguity() {
+        let root = directory("crash-synced-snapshot");
+        let storage = DurableLog::open(&root).unwrap();
+        let blob = storage
+            .put_blob(Bytes::from_static(b"snapshot-root"))
+            .await
+            .unwrap();
+        drop(storage);
+
+        let storage = DurableLog::open_with_crash_injector(
+            &root,
+            Arc::new(CrashInjector::new([CrashPoint::RecordAfterSync])),
+        )
+        .unwrap();
+        let operation_id = OperationId::new(Bytes::from_static(b"ambiguous-snapshot")).unwrap();
+        let publication = SnapshotPublication {
+            operation_id: operation_id.clone(),
+            expected_parent: None,
+            snapshot: ArchiveSnapshot {
+                at_event: ArchiveSnapshotPosition::Initial,
+                root: BlobTreeId::Blob(blob),
+            },
+        };
+        let error = storage.publish_snapshot(publication).await.unwrap_err();
+        assert!(matches!(error, DurableLogError::AmbiguousSnapshot(_)));
+        drop(storage);
+
+        let reopened = DurableLog::open(&root).unwrap();
+        let resolved = reopened
+            .resolve_snapshot_publication(&operation_id)
+            .await
+            .unwrap()
+            .expect("synced snapshot should be recovered by operation identity");
+        assert_eq!(reopened.latest_snapshot().await.unwrap(), Some(resolved));
+        drop(reopened);
         fs::remove_dir_all(root).unwrap();
     }
 
