@@ -24,6 +24,10 @@ Phase 3 commit: <!-- TODO(required): record the final commit when created -->
 
 <!-- TODO(required): compare correctness, complexity, dependencies, size, and performance only where guarantees and workloads are equivalent -->
 
+## Contract and Test Quality
+
+<!-- TODO(required): assess whether accepted work documents behavior consumers rely on, localizes regression tests in owning modules or crates when practical, uses conformance for shared laws, and keeps broader tests only for distinct boundary evidence. Identify unjustified omissions, redundant layers, false promises, and low-value documentation or test churn. -->
+
 ## Learning and Process Findings
 
 <!-- TODO(required): link the retrospective, costly issues, human interventions, and promoted LEARNINGS.md entries -->

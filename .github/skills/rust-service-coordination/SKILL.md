@@ -32,6 +32,15 @@ most local durable artifact: code and tests for a fix, an adjacent README or
 benchmark report for retained measurements, and a decision or `LEARNINGS.md`
 entry only when their existing triggers apply.
 
+For every behavior change or bug fix, identify the contract consumers rely on
+and inspect each changed production crate for proportionate documentation and
+regression evidence. Prefer a focused test in the owning module or crate, add a
+conformance test when multiple implementations share the guarantee, and retain
+integration, generated-binding, or browser coverage only when it proves a
+distinct boundary. If a changed crate needs no documentation or test change,
+record why existing evidence is sufficient or why another boundary owns the
+guarantee. Follow the full policy in `rust-service/DEVELOPMENT.md`.
+
 Before completing any Rust-service implementation or integration, run the
 canonical validation in `rust-service/DEVELOPMENT.md` and, from the repository
 root, run:
@@ -158,16 +167,23 @@ Never use forced removal to bypass uncommitted or untracked files. Do not delete
 
 1. Record branch, worktree, base commit, agent/instruction provenance, initial hypothesis, and planned checks before substantive implementation.
 2. Keep implementation commits coherent and independently reviewable.
-3. Update the workstream report when any of these occurs:
+3. Before changing behavior, identify the relied-upon contract and the narrowest
+   responsible implementation boundary. Plan focused owning-module or
+   owning-crate regression evidence first, then shared conformance or broader
+   integration evidence only where it proves an additional responsibility.
+4. For every changed production crate, update its report with the contract and
+   test evidence added, or explain why existing evidence is sufficient or a
+   different boundary owns the guarantee.
+5. Update the workstream report when any of these occurs:
    - a hypothesis is falsified;
    - three materially similar attempts fail;
    - an issue consumes substantial effort relative to the workstream;
    - user intervention or a shared-contract decision is required;
    - an undocumented workaround or cross-workstream dependency appears; or
    - a reusable technique or candidate skill is discovered.
-4. For each notable event, capture the attempted approach, evidence, impact, resolution or current state, and reusable lesson. Prefer commands, test names, commits, and artifact links over narrative memory.
-5. Create a decision record from [the decision template](./assets/decision-record.template.md) when the outcome changes shared semantics, APIs, crate boundaries, conformance, iteration scope, or coordination policy.
-6. Finish with the report template complete and the worktree clean, or enumerate every remaining artifact.
+6. For each notable event, capture the attempted approach, evidence, impact, resolution or current state, and reusable lesson. Prefer commands, test names, commits, and artifact links over narrative memory.
+7. Create a decision record from [the decision template](./assets/decision-record.template.md) when the outcome changes shared semantics, APIs, crate boundaries, conformance, iteration scope, or coordination policy.
+8. Finish with the report template complete and the worktree clean, or enumerate every remaining artifact.
 
 For delegated commands in repositories with multiple worktrees, make the command itself use the assigned absolute path and print the absolute worktree path, `git branch --show-current`, HEAD, and status before running work. Assert the expected branch and base when applicable, and stop on mismatch. Do not accept summarized validation output that omits this guard output, exit status, or the requested test result. When the workstream may edit a crate manifest but does not own the shared lockfile, validate in an exact disposable copy and immediately verify that the assigned worktree's lockfile is unchanged.
 
@@ -197,15 +213,21 @@ Use [workstream report template](./assets/workstream-report.template.md).
 ## Integrate Phase 2
 
 1. Review and integrate accepted commits in dependency order.
-2. Record rejected or deferred work, conflict resolution, cross-workstream adaptations, and validation results in `phase-2/integration.md`.
-3. Set the manifest status to `phase-2-complete`.
-4. Run:
+2. For every accepted behavior change or bug fix, verify that the relied-upon
+   contract is documented at its owning boundary and that each changed
+   production crate has proportionate focused regression evidence or a recorded
+   rationale for relying on existing or differently owned evidence. Verify that
+   conformance and broader integration tests prove distinct responsibilities
+   rather than substituting for practical localized coverage.
+3. Record rejected or deferred work, conflict resolution, cross-workstream adaptations, and validation results in `phase-2/integration.md`.
+4. Set the manifest status to `phase-2-complete`.
+5. Run:
 
    ```bash
    node .github/skills/rust-service-coordination/scripts/iteration-records.mjs validate NNNN phase-2
    ```
 
-5. Run workspace-level validation and commit the integration boundary only after the artifact check passes.
+6. Run workspace-level validation and commit the integration boundary only after the artifact check passes.
 
 Workspace-level validation must include the canonical format, strict
 workspace/all-target/all-feature Clippy, build, test, and example commands in
@@ -225,7 +247,9 @@ Use [integration report template](./assets/integration-report.template.md).
 ## Conduct Phase 3
 
 1. Compare the charter's hypotheses with observed results.
-2. Separate implementation defects from shared-abstraction limitations.
+2. Separate implementation defects from shared-abstraction limitations, and
+   assess whether accepted tests and documentation capture the contracts that
+   consumers actually rely on at the narrowest practical owning boundaries.
 3. Review every costly issue, human intervention, workaround, and proposed decision.
 4. Create or update decision records and link them from the Phase 3 report.
 5. Decide interactively which workstreams to keep, remove, replace, or add next.

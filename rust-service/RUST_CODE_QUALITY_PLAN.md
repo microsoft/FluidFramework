@@ -6,10 +6,10 @@
 - **Execution mode:** Serial work on the current branch; this outer plan does not use the numbered iteration workflow.
 - **Source commit:** `59836ab4c0fdd20185271236f71c0aa4eccdf930`.
 - **Plan commit:** `a09d224464b` (`docs(rust-service): plan code quality workflow`).
-- **Last completed phase:** 1. Establish durable quality guidance.
-- **Last validation:** `node scripts/check-documentation.mjs` and Markdown `git diff --check` passed on 2026-09-17.
-- **Current phase:** 2. Improve reusable skills and templates.
-- **Next phase:** 2. Improve reusable skills and templates.
+- **Last completed phase:** 2. Improve reusable skills and templates.
+- **Last validation:** Coordination script syntax, iteration `0013` complete-record validation, documentation links, and `git diff --check` passed on 2026-09-17.
+- **Current phase:** 3. Define the reusable quality iteration.
+- **Next phase:** 3. Define the reusable quality iteration.
 
 Update this section when completing each phase.
 Record the validation performed, retained evidence, decisions, and next phase.
@@ -125,12 +125,12 @@ Humans can apply the quality bar during an ordinary bug fix without consulting t
 
 ### 2. Improve reusable skills and templates
 
-- [ ] Identify the existing skills and templates invoked for Rust-service implementation, workstreams, integration, review, and retrospectives.
-- [ ] Add contract and localized-regression evidence to those reusable surfaces where it affects their responsibility.
-- [ ] Make workstream and integration reports record the behavioral contract, owning test layer, broader boundary evidence, and rationale for omissions.
-- [ ] Teach review and synthesis to detect tests placed only at a broad integration layer when a lower owning layer is practical.
-- [ ] Keep run-specific scope and budgets out of reusable quality rules.
-- [ ] Validate skill and template consistency using their existing checks.
+- [x] Identify the existing skills and templates invoked for Rust-service implementation, workstreams, integration, review, and retrospectives.
+- [x] Add contract and localized-regression evidence to those reusable surfaces where it affects their responsibility.
+- [x] Make workstream and integration reports record the behavioral contract, owning test layer, broader boundary evidence, and rationale for omissions.
+- [x] Teach review and synthesis to detect tests placed only at a broad integration layer when a lower owning layer is practical.
+- [x] Keep run-specific scope and budgets out of reusable quality rules.
+- [x] Validate skill and template consistency using their existing checks.
 
 Completion gate:
 

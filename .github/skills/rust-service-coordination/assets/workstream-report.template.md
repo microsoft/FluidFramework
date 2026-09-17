@@ -27,6 +27,10 @@ Started and finished: <!-- TODO(required): record known timestamps or unknown --
 
 <!-- TODO(required): list exact commands, outcomes, relevant test names, and retained machine-readable output. For retained output, record expected-file/count, nonzero-size, parse, provenance, and domain-invariant checks. -->
 
+## Behavioral Contracts and Test Layers
+
+<!-- TODO(required): for every changed production crate, name the relied-upon behavior and owning contract; list focused module/crate tests, shared conformance tests, and integration/generated/browser tests with the distinct responsibility each proves. If documentation or tests were not changed for a crate, identify the sufficient existing evidence or differently owned boundary and justify the omission. -->
+
 ## Notable Events
 
 Record an event when a hypothesis is falsified, three similar attempts fail, substantial effort is lost, human intervention is needed, a workaround appears, or a reusable technique is discovered.

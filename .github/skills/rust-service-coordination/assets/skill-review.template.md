@@ -2,7 +2,7 @@
 
 ## Evidence Reviewed
 
-<!-- TODO(required): link workstream events, integration friction, retrospective findings, the relevant skill version or commit, and prior deferred candidates or next-review triggers reconsidered now -->
+<!-- TODO(required): link workstream events, integration friction, contract and test-quality findings, retrospective findings, the relevant skill version or commit, and prior deferred candidates or next-review triggers reconsidered now -->
 
 ## Candidate Skills or Changes
 

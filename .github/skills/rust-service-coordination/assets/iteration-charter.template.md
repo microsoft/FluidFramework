@@ -20,6 +20,10 @@ Coordinator: <!-- TODO(required): record the coordinator -->
 
 <!-- TODO(required): list the canonical workspace formatting, all-target/all-feature linting, build, test, example, conformance, fresh generated-consumer, and retained-artifact validation commands that apply. Define expected files and domain invariants for machine-readable evidence. -->
 
+## Contract and Test Evidence
+
+<!-- TODO(required): state how workstreams will identify relied-upon behavioral contracts, provide focused evidence in each owning production crate, use conformance tests for shared laws, and reserve broader integration or browser tests for distinct boundaries. Define how omissions will be justified without imposing test or documentation volume targets. -->
+
 ## Risks and Escalation
 
 <!-- TODO(required): identify known risks and the conditions that end a workstream or move the iteration to Phase 3 early -->

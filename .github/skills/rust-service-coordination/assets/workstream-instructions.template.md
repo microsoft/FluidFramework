@@ -17,7 +17,7 @@ Required environment: <!-- TODO(required): record tool/runtime versions and setu
 
 ## Expected Evidence
 
-<!-- TODO(required): list deliverables, tests, measurements, and evidence sufficient to stop. For retained machine-readable output, define expected files, provenance, parse checks, and domain invariants. -->
+<!-- TODO(required): list deliverables, tests, measurements, and evidence sufficient to stop. For each behavior change or bug fix, require the relied-upon contract, focused owning-module or owning-crate regression evidence for each changed production crate, shared conformance evidence where applicable, and broader integration evidence only for distinct boundaries. Require rationale when existing or differently owned evidence makes a local change unnecessary. For retained machine-readable output, define expected files, provenance, parse checks, and domain invariants. -->
 
 ## Validation
 

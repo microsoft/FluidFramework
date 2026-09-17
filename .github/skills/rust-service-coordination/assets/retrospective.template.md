@@ -16,7 +16,7 @@ For each substantial effort sink, record the trigger, attempted approaches, evid
 
 ## Agentic Development Findings
 
-<!-- TODO(required): assess instruction quality, decomposition, autonomy, handoffs, tool use, validation behavior, and human interventions -->
+<!-- TODO(required): assess instruction quality, decomposition, autonomy, handoffs, tool use, validation behavior, contract identification, test-layer selection, documentation or test churn, and human interventions -->
 
 ## Practices to Keep, Change, or Stop
 

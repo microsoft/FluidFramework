@@ -38,6 +38,10 @@ Update this table while Phase 1 occurs when a hypothesis is falsified, three sim
 
 <!-- TODO(required): record exact format, lint, build, test, example, and foundation-artifact validation commands and results -->
 
+## Behavioral Contracts and Test Layers
+
+<!-- TODO(required): identify consequential contracts introduced or changed during foundation work; record focused owning-crate tests, shared conformance laws, and broader boundary tests with the distinct responsibility each proves. For any changed production crate without documentation or test changes, justify why existing or differently owned evidence is sufficient. -->
+
 ## Decisions and Human Interventions
 
 <!-- TODO(required): link decision records and identify user decisions or corrections; write none only after review -->

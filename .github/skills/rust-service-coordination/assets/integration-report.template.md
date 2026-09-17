@@ -21,6 +21,10 @@ Integration commit: <!-- TODO(required): record the immutable Phase 2 integratio
 
 <!-- TODO(required): list artifact validation; canonical workspace format, all-target/all-feature lint, build, test, and example results; conformance and integration results; fresh generated-consumer execution; and retained-evidence size, parse, provenance, and domain-invariant checks when applicable -->
 
+## Contract and Regression Review
+
+<!-- TODO(required): for each accepted behavior change or bug fix, verify that relied-upon behavior is documented at the owning boundary and each changed production crate has proportionate focused regression evidence or a justified omission. Confirm that conformance and broader integration/generated/browser tests prove distinct responsibilities; record gaps, duplication, or misleading contracts for Phase 3. -->
+
 ## Cross-Workstream Findings
 
 <!-- TODO(required): summarize contradictions, shared limitations, duplicated mechanisms, and unexpected dependencies for Phase 3 -->
