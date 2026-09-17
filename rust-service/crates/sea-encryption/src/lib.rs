@@ -1,24 +1,4 @@
-//! Transparent authenticated encryption for Sea event archives.
-//!
-//! Each event payload and blob is encrypted independently with AES-256-GCM-SIV.
-//! The stored envelope contains a magic value, format and algorithm versions,
-//! a record-or-snapshot context, a non-secret key identifier, a 96-bit nonce,
-//! ciphertext, and a 128-bit authentication tag. The header is authenticated,
-//! and the distinct contexts prevent swapping records with snapshots. Positions,
-//! capabilities, and underlying error classifications pass through unchanged.
-//!
-//! [`OsNonceSource`] is the production default. Custom [`NonceSource`]
-//! implementations must provide a fresh nonce for every payload written with a
-//! given key; deterministic sources are suitable only for tests. A [`KeyProvider`]
-//! must retain every historical key needed by stored envelopes and protect key
-//! material outside this wrapper. Missing keys are unavailable, while malformed
-//! or unauthenticated envelopes are corrupt without exposing authentication detail.
-//!
-//! Encryption and decryption allocate one complete payload-sized buffer and do
-//! not impose a payload-size limit. A returned reader decrypts only the item being
-//! polled and adds no stream buffer or background task; dropping it cancels further
-//! wrapper work. Compression should wrap encryption so plaintext is compressed
-//! before encryption; encrypting first generally prevents useful compression.
+#![doc = include_str!("../README.md")]
 
 use std::fmt;
 
@@ -533,6 +513,13 @@ mod tests {
             }
         }
 
+        /// Creates a provider with no active or historical key material.
+        fn empty() -> Self {
+            Self {
+                state: Arc::new(Mutex::new((FIRST_ID, Vec::new()))),
+            }
+        }
+
         /// Creates a provider whose key identifier matches but key material does not.
         fn wrong() -> Self {
             Self {
@@ -680,6 +667,56 @@ mod tests {
     }
 
     #[test]
+    fn empty_payload_round_trips() {
+        let keys = TestKeys::new();
+        let encoded = encrypt_payload::<MemoryError, _, _>(
+            &keys,
+            &FixedNonce([8; NONCE_LENGTH]),
+            &Bytes::new(),
+            PayloadContext::Record,
+        )
+        .unwrap();
+
+        assert_eq!(encoded.len(), ENVELOPE_OVERHEAD);
+        assert_eq!(
+            decrypt_payload::<MemoryError, _>(&keys, &encoded, PayloadContext::Record).unwrap(),
+            Bytes::new()
+        );
+    }
+
+    #[test]
+    fn missing_active_and_historical_keys_are_unavailable() {
+        let missing_active = encrypt_payload::<MemoryError, _, _>(
+            &TestKeys::empty(),
+            &FixedNonce([8; NONCE_LENGTH]),
+            &Bytes::from_static(b"plaintext"),
+            PayloadContext::Record,
+        )
+        .unwrap_err();
+        assert!(matches!(
+            missing_active,
+            EncryptionError::KeyUnavailable { key_id: None }
+        ));
+
+        let encoded = encrypt_payload::<MemoryError, _, _>(
+            &TestKeys::new(),
+            &FixedNonce([8; NONCE_LENGTH]),
+            &Bytes::from_static(b"plaintext"),
+            PayloadContext::Record,
+        )
+        .unwrap();
+        let missing_historical =
+            decrypt_payload::<MemoryError, _>(&TestKeys::empty(), &encoded, PayloadContext::Record)
+                .unwrap_err();
+        assert!(matches!(
+            missing_historical,
+            EncryptionError::KeyUnavailable {
+                key_id: Some(FIRST_ID)
+            }
+        ));
+    }
+
+    #[test]
     fn wrong_key_tampering_and_context_share_corruption_errors() {
         let keys = TestKeys::new();
         let encoded = encrypt_payload::<MemoryError, _, _>(
@@ -708,6 +745,30 @@ mod tests {
             .kind(),
             ErrorKind::Corrupt
         );
+    }
+
+    #[test]
+    fn invalid_fixed_header_fields_are_corrupt() {
+        let keys = TestKeys::new();
+        let encoded = encrypt_payload::<MemoryError, _, _>(
+            &keys,
+            &FixedNonce([10; NONCE_LENGTH]),
+            &Bytes::from_static(b"authenticated"),
+            PayloadContext::Record,
+        )
+        .unwrap();
+
+        for offset in [0, MAGIC.len(), MAGIC.len() + 1] {
+            let mut malformed = encoded.to_vec();
+            malformed[offset] ^= u8::MAX;
+            let error = decrypt_payload::<MemoryError, _>(
+                &keys,
+                &Bytes::from(malformed),
+                PayloadContext::Record,
+            )
+            .unwrap_err();
+            assert_eq!(error.kind(), ErrorKind::Corrupt, "header offset {offset}");
+        }
     }
 
     #[test]

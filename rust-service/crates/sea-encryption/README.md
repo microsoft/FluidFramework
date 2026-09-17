@@ -44,5 +44,6 @@ cargo clippy -p sea-encryption --all-targets --all-features -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc -p sea-encryption --all-features --no-deps
 ```
 
-The test suite covers session conformance and stable retries, key rotation, wrong keys,
-nonce failure, truncation, tampering, context separation, and key redaction.
+The test suite covers session conformance and stable retries, empty payloads,
+key rotation and unavailability, nonce failure, malformed and truncated envelopes,
+tampering, context separation, and key redaction.
