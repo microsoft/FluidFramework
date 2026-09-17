@@ -1,7 +1,7 @@
 //! Event archive storage and client access contracts.
 //!
 //! An event archive holds an append-only ordered collection of events.
-//! [`SeaStorage`] defines the trusted backend contract and natively supports only a single writer;
+//! [`crate::SeaStorage`] defines the trusted backend contract and natively supports only a single writer;
 //! `sea-sequencer` coordinates multiple writers and exposes the client-facing traits in this module.
 //!
 //! Archives use the content-addressed trees in [`crate::blob`] so events can reference immutable
@@ -15,14 +15,17 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_core::Stream;
 
-use crate::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, Durability,
-};
+use crate::{BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId};
 
 use crate::snapshot::SnapshotId;
 pub use crate::snapshot::{
     PublishedSnapshot, Snapshot, SnapshotCoordination, SnapshotParticipation, SnapshotPosition,
     SnapshotPublication,
+};
+pub use crate::{
+    EventReceipt, EventSubmission, LoadEvent, SeaAuthorSession, SeaEventSubscription, SeaService,
+    SeaSession, SeaSnapshotCoordinator, SeaSnapshotPublisher, SeaStorage, SessionBounds,
+    StorageEventStream, StorageLoad,
 };
 
 /// A stable event-order value within one archive.
@@ -219,117 +222,6 @@ pub struct CommittedEvent {
     pub event: Event,
 }
 
-/// Receipt proving one event became visible at the reported durability.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct EventReceipt {
-    /// Stable position assigned to the event.
-    pub position: EventPosition,
-    /// Persistence completed before acknowledgement.
-    pub durability: Durability,
-}
-
-/// A storage load selected atomically with a finite catch-up head.
-pub struct StorageLoad<E> {
-    /// Newest compatible retained snapshot, when one exists.
-    pub snapshot: Option<PublishedSnapshot>,
-    /// Head captured with snapshot selection, or `None` for an empty archive.
-    pub head: Option<EventPosition>,
-    /// Events after the selected snapshot through `head`, in position order.
-    pub events: StorageEventStream<E>,
-}
-
-/// A finite storage event stream.
-pub type StorageEventStream<E> =
-    Pin<Box<dyn Stream<Item = Result<CommittedEvent, E>> + Send + 'static>>;
-
-/// Trusted backend operations for one archive.
-#[async_trait]
-pub trait SeaStorage: Send + Sync {
-    /// Classified backend error.
-    type Error: ClassifiedError;
-
-    /// Durability established before this backend acknowledges an owner record.
-    fn durability(&self) -> Durability;
-
-    /// Publishes or deduplicates one immutable blob.
-    async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error>;
-
-    /// Fetches and verifies one immutable blob.
-    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error>;
-
-    /// Publishes or deduplicates one validated immutable directory.
-    async fn put_directory(&self, directory: BlobDirectory)
-    -> Result<BlobDirectoryId, Self::Error>;
-
-    /// Fetches and verifies one immutable directory.
-    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error>;
-
-    /// Atomically validates an event's optional tree and commits both event and reference.
-    async fn append(&self, event: Event) -> Result<EventReceipt, Self::Error>;
-
-    /// Reads committed application events strictly after `after` through `through`.
-    async fn read(
-        &self,
-        after: Option<EventPosition>,
-        through: Option<EventPosition>,
-    ) -> Result<StorageEventStream<Self::Error>, Self::Error>;
-
-    /// Returns the latest committed application-event position.
-    async fn head(&self) -> Result<Option<EventPosition>, Self::Error>;
-
-    /// Returns one retained snapshot by publication identity.
-    async fn snapshot(&self, id: &SnapshotId) -> Result<Option<PublishedSnapshot>, Self::Error>;
-
-    /// Returns the latest retained snapshot.
-    async fn latest_snapshot(&self) -> Result<Option<PublishedSnapshot>, Self::Error>;
-
-    /// Returns the newest retained snapshot at or before `position`.
-    async fn snapshot_at_or_before(
-        &self,
-        position: EventPosition,
-    ) -> Result<Option<PublishedSnapshot>, Self::Error>;
-
-    /// Atomically validates the root and conditionally publishes one snapshot.
-    async fn publish_snapshot(
-        &self,
-        publication: SnapshotPublication,
-    ) -> Result<PublishedSnapshot, Self::Error>;
-
-    /// Resolves a prior snapshot publication by its stable operation identity.
-    async fn resolve_snapshot_publication(
-        &self,
-        operation_id: &OperationId,
-    ) -> Result<Option<PublishedSnapshot>, Self::Error>;
-
-    /// Selects a compatible snapshot and captures a finite catch-up stream atomically.
-    async fn load(
-        &self,
-        required: Option<EventPosition>,
-    ) -> Result<StorageLoad<Self::Error>, Self::Error>;
-}
-
-/// One item delivered by a gap-free session load.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum LoadEvent {
-    /// Snapshot selected for this load, when retained state is available.
-    Snapshot(PublishedSnapshot),
-    /// One subsequent committed event.
-    Event(SessionCommittedEvent),
-    /// Finite catch-up completed through this captured head.
-    CaughtUp(Option<EventPosition>),
-}
-
-/// A stable event submission through an individual session.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct EventSubmission {
-    /// Stable identity reused for retries and ambiguity resolution.
-    pub operation_id: OperationId,
-    /// Latest event incorporated by the author's local state.
-    pub reference: Option<EventPosition>,
-    /// Opaque event and optional content root.
-    pub event: Event,
-}
-
 /// One committed event with the sequencing metadata exposed to session consumers.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SessionCommittedEvent {
@@ -355,26 +247,6 @@ pub type SessionStream<T, E> = Pin<Box<dyn Stream<Item = Result<T, E>> + Send + 
 /// Session stream on browser targets.
 pub type SessionStream<T, E> = Pin<Box<dyn Stream<Item = Result<T, E>> + 'static>>;
 
-#[cfg(not(target_arch = "wasm32"))]
-/// Thread-safety required from native session implementations.
-pub trait SessionBounds: Send + Sync {}
-
-#[cfg(not(target_arch = "wasm32"))]
-impl<T: Send + Sync> SessionBounds for T {}
-
-#[cfg(target_arch = "wasm32")]
-/// Marker allowing browser sessions to remain single-threaded.
-pub trait SessionBounds {}
-
-#[cfg(target_arch = "wasm32")]
-impl<T> SessionBounds for T {}
-
-/// Common classified error associated with one Sea service surface.
-pub trait SeaService: SessionBounds {
-    /// Classified service error.
-    type Error: ClassifiedError;
-}
-
 /// Archive-scoped content, historical reads, and snapshot lookup.
 ///
 /// This surface owns no author membership or live subscription.
@@ -382,7 +254,10 @@ pub trait SeaService: SessionBounds {
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 pub trait SeaArchive: SeaService {
-    /// Reads committed application events strictly after `after` through `through`.
+    /// Reads a finite, ordered range of committed application events.
+    ///
+    /// `after` is an exclusive lower bound; `None` starts at the first event.
+    /// `through` is an inclusive upper bound; `None` ends at the head captured when the read begins.
     async fn read(
         &self,
         after: Option<EventPosition>,
@@ -404,98 +279,4 @@ pub trait SeaArchive: SeaService {
 
     /// Returns one retained snapshot by publication identity.
     async fn snapshot(&self, id: &SnapshotId) -> Result<Option<PublishedSnapshot>, Self::Error>;
-}
-
-/// Gap-free snapshot, catch-up, and live event delivery.
-///
-/// Each returned stream owns its cursor and subscription.
-/// Dropping the stream cancels that subscription without closing other session facets.
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-pub trait SeaEventSubscription: SeaService {
-    /// Starts a gap-free snapshot, catch-up, and live event stream.
-    async fn load(
-        &self,
-        required: Option<EventPosition>,
-    ) -> Result<SessionStream<LoadEvent, Self::Error>, Self::Error>;
-}
-
-/// Ordered author submission, ambiguity resolution, and lifecycle.
-///
-/// The author surface owns logical-session teardown.
-/// Closing one cloned facet is idempotent and invalidates every facet sharing that session.
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-pub trait SeaAuthorSession: SeaService {
-    /// Submits one event under a stable retry identity.
-    async fn submit(&self, submission: EventSubmission) -> Result<EventReceipt, Self::Error>;
-
-    /// Resolves a possibly ambiguous event submission.
-    async fn resolve_submission(
-        &self,
-        operation_id: &OperationId,
-    ) -> Result<Option<EventReceipt>, Self::Error>;
-
-    /// Explicitly closes this author session.
-    async fn close(&self) -> Result<(), Self::Error>;
-}
-
-/// Snapshot lookup notifications, conditional publication, and ambiguity resolution.
-///
-/// Each returned notification stream owns its subscription and cancels on drop.
-/// The coordinator shares the author session's logical lifetime and does not close it.
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-pub trait SeaSnapshotCoordinator: SeaService {
-    /// Returns the latest retained snapshot.
-    async fn latest_snapshot(&self) -> Result<Option<PublishedSnapshot>, Self::Error>;
-
-    /// Conditionally publishes a snapshot under a stable retry identity.
-    async fn publish_snapshot(
-        &self,
-        publication: SnapshotPublication,
-    ) -> Result<PublishedSnapshot, Self::Error>;
-
-    /// Resolves a possibly ambiguous snapshot publication.
-    async fn resolve_snapshot_publication(
-        &self,
-        operation_id: &OperationId,
-    ) -> Result<Option<PublishedSnapshot>, Self::Error>;
-
-    /// Subscribes to latest-value snapshot updates.
-    async fn subscribe_snapshots(
-        &self,
-    ) -> Result<SessionStream<PublishedSnapshot, Self::Error>, Self::Error>;
-}
-
-/// Snapshot participation, Sea selection, publication authority, and network lifecycle.
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-pub trait SeaSnapshotPublisher: SeaService {
-    /// Registers this session's publisher capability and returns latest-value coordination state.
-    async fn coordinate_snapshots(
-        &self,
-        participation: SnapshotParticipation,
-    ) -> Result<SessionStream<SnapshotCoordination, Self::Error>, Self::Error>;
-
-    /// Publishes under this stream's Sea-selected or client-selected authority.
-    async fn publish_coordinated_snapshot(
-        &self,
-        fence: Option<u64>,
-        publication: SnapshotPublication,
-    ) -> Result<PublishedSnapshot, Self::Error>;
-
-    /// Removes this session from publisher selection after stream loss or explicit close.
-    async fn revoke_snapshot_publisher(&self) -> Result<(), Self::Error>;
-}
-
-/// Convenience marker for values implementing every current Sea responsibility.
-pub trait SeaSession:
-    SeaArchive + SeaAuthorSession + SeaEventSubscription + SeaSnapshotCoordinator
-{
-}
-
-impl<S> SeaSession for S where
-    S: SeaArchive + SeaAuthorSession + SeaEventSubscription + SeaSnapshotCoordinator
-{
 }

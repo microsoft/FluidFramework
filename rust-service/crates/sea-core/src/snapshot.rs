@@ -6,7 +6,10 @@
 
 use bytes::Bytes;
 
-use crate::{BlobTreeId, archive::{EventPosition, OperationId}};
+use crate::{
+    BlobTreeId,
+    archive::{EventPosition, OperationId},
+};
 
 /// An opaque identity assigned to a published snapshot.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
