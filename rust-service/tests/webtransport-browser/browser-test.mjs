@@ -70,9 +70,7 @@ async function run() {
 		encoder.encode("browser-author"),
 		encoder.encode("browser-session"),
 	);
-	const snapshotCoordination = await first.subscribeSnapshots(
-		snapshotParticipation,
-	);
+	const snapshotCoordination = await first.subscribeSnapshots(snapshotParticipation);
 	await snapshotCoordination.next();
 	const load = await first.load();
 	const initialCaughtUp = await load.next();
@@ -141,7 +139,10 @@ async function run() {
 		encoder.encode("third-streamed-payload"),
 	);
 	const secondLive = await secondLoad.next();
-	assert(secondLive.kind === SeaLoadKind.Event, "second load omitted the live first-client event");
+	assert(
+		secondLive.kind === SeaLoadKind.Event,
+		"second load omitted the live first-client event",
+	);
 	assert(
 		decoder.decode(secondLive.payload) === "third-streamed-payload",
 		"second load returned the wrong live payload",
@@ -221,9 +222,7 @@ async function run() {
 		encoder.encode("browser-session-reconnected"),
 		secondReceipt.position,
 	);
-	const recoveredSnapshots = await first.subscribeSnapshots(
-		snapshotParticipation,
-	);
+	const recoveredSnapshots = await first.subscribeSnapshots(snapshotParticipation);
 	await recoveredSnapshots.next();
 	const recovered = await first.load(secondReceipt.position);
 	assert(
