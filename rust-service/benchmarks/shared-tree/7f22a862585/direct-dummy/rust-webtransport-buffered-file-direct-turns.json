@@ -1,0 +1,200 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "provisional": true,
+  "backend": "rust-service-webtransport-buffered-file-direct-dummy",
+  "sourceCommit": "294c803e8c4aa711df5dee19dc5711e6aead5f33",
+  "sourceDirty": false,
+  "configuration": {
+    "dataStructure": "dummy",
+    "repetitions": 3,
+    "operations": 100,
+    "warmup": 10,
+    "operationsPerTurn": 1,
+    "synchronizePerTurn": false,
+    "subscriptionBatchOperations": 64,
+    "integration": "direct",
+    "clients": 2
+  },
+  "environment": {
+    "capturedAt": "2026-09-17T00:44:11.509Z",
+    "platform": "linux",
+    "kernel": "6.8.0-1064-azure",
+    "architecture": "x64",
+    "logicalCpuCount": 32,
+    "cpuModel": "AMD EPYC 9V74 80-Core Processor",
+    "node": "v22.23.2",
+    "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+    "serviceProcess": {
+      "pid": 710177,
+      "cpuSeconds": 0.07,
+      "residentSetKiB": 7800,
+      "peakResidentSetKiB": 7800
+    }
+  },
+  "aggregates": {
+    "startupMilliseconds": {
+      "minimum": 61.899999998509884,
+      "mean": 64.86666666592161,
+      "median": 63.19999999925494,
+      "p95": 69.5,
+      "maximum": 69.5,
+      "sampleStandardDeviation": 4.064890323120142
+    },
+    "submissionMilliseconds": {
+      "minimum": 0.5,
+      "mean": 0.5333333338300387,
+      "median": 0.5,
+      "p95": 0.6000000014901161,
+      "maximum": 0.6000000014901161,
+      "sampleStandardDeviation": 0.057735027779281516
+    },
+    "convergenceMilliseconds": {
+      "minimum": 34.80000000074506,
+      "mean": 35.066666666418314,
+      "median": 35.099999997764826,
+      "p95": 35.30000000074506,
+      "maximum": 35.30000000074506,
+      "sampleStandardDeviation": 0.25166114764498765
+    },
+    "operationsPerSecond": {
+      "minimum": 2793.2960893273416,
+      "mean": 2809.0925757689934,
+      "median": 2801.120448237731,
+      "p95": 2832.861189741908,
+      "maximum": 2832.861189741908,
+      "sampleStandardDeviation": 20.952694474332407
+    }
+  },
+  "samples": [
+    {
+      "status": "passed",
+      "dataStructure": "dummy",
+      "backend": "rust-service-webtransport-buffered-file-direct-dummy",
+      "clientCount": 2,
+      "operationCount": 100,
+      "warmupOperationCount": 10,
+      "operationsPerTurn": 1,
+      "synchronizePerTurn": false,
+      "startupMilliseconds": 63.19999999925494,
+      "submissionMilliseconds": 0.5,
+      "convergenceMilliseconds": 35.30000000074506,
+      "totalOperationMilliseconds": 35.80000000074506,
+      "operationsPerSecond": 2793.2960893273416,
+      "writerIndex": 0,
+      "observerIndex": 1,
+      "initialValue": 0,
+      "finalEditCount": 110,
+      "observedChangeCounts": [
+        110,
+        110
+      ],
+      "finalValue": 110,
+      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+      "integration": "direct",
+      "startupTransportActivity": {
+        "unaryRequests": {},
+        "submissionStreams": 0,
+        "projectedSubscriptions": 0
+      },
+      "transportActivity": {
+        "unaryRequests": {},
+        "submissionStreams": 0,
+        "projectedSubscriptions": 0
+      },
+      "wireBytes": null,
+      "peakResponseBytes": null,
+      "peakSubscriptionFrameBytes": null,
+      "peakSubscriptionQueueDepth": null,
+      "subscriptionBatchMaxOperations": 64,
+      "subscriptionBatchCount": 220,
+      "peakSubscriptionBatchOperations": 1
+    },
+    {
+      "status": "passed",
+      "dataStructure": "dummy",
+      "backend": "rust-service-webtransport-buffered-file-direct-dummy",
+      "clientCount": 2,
+      "operationCount": 100,
+      "warmupOperationCount": 10,
+      "operationsPerTurn": 1,
+      "synchronizePerTurn": false,
+      "startupMilliseconds": 61.899999998509884,
+      "submissionMilliseconds": 0.6000000014901161,
+      "convergenceMilliseconds": 35.099999997764826,
+      "totalOperationMilliseconds": 35.69999999925494,
+      "operationsPerSecond": 2801.120448237731,
+      "writerIndex": 0,
+      "observerIndex": 1,
+      "initialValue": 0,
+      "finalEditCount": 110,
+      "observedChangeCounts": [
+        110,
+        110
+      ],
+      "finalValue": 110,
+      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+      "integration": "direct",
+      "startupTransportActivity": {
+        "unaryRequests": {},
+        "submissionStreams": 0,
+        "projectedSubscriptions": 0
+      },
+      "transportActivity": {
+        "unaryRequests": {},
+        "submissionStreams": 0,
+        "projectedSubscriptions": 0
+      },
+      "wireBytes": null,
+      "peakResponseBytes": null,
+      "peakSubscriptionFrameBytes": null,
+      "peakSubscriptionQueueDepth": null,
+      "subscriptionBatchMaxOperations": 64,
+      "subscriptionBatchCount": 220,
+      "peakSubscriptionBatchOperations": 1
+    },
+    {
+      "status": "passed",
+      "dataStructure": "dummy",
+      "backend": "rust-service-webtransport-buffered-file-direct-dummy",
+      "clientCount": 2,
+      "operationCount": 100,
+      "warmupOperationCount": 10,
+      "operationsPerTurn": 1,
+      "synchronizePerTurn": false,
+      "startupMilliseconds": 69.5,
+      "submissionMilliseconds": 0.5,
+      "convergenceMilliseconds": 34.80000000074506,
+      "totalOperationMilliseconds": 35.30000000074506,
+      "operationsPerSecond": 2832.861189741908,
+      "writerIndex": 0,
+      "observerIndex": 1,
+      "initialValue": 0,
+      "finalEditCount": 110,
+      "observedChangeCounts": [
+        110,
+        110
+      ],
+      "finalValue": 110,
+      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+      "integration": "direct",
+      "startupTransportActivity": {
+        "unaryRequests": {},
+        "submissionStreams": 0,
+        "projectedSubscriptions": 0
+      },
+      "transportActivity": {
+        "unaryRequests": {},
+        "submissionStreams": 0,
+        "projectedSubscriptions": 0
+      },
+      "wireBytes": null,
+      "peakResponseBytes": null,
+      "peakSubscriptionFrameBytes": null,
+      "peakSubscriptionQueueDepth": null,
+      "subscriptionBatchMaxOperations": 64,
+      "subscriptionBatchCount": 220,
+      "peakSubscriptionBatchOperations": 1
+    }
+  ]
+}

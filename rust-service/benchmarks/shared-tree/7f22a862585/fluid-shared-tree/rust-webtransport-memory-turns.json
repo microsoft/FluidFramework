@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "provisional": true,
+  "backend": "rust-service-webtransport-memory-force-write",
+  "sourceCommit": "294c803e8c4aa711df5dee19dc5711e6aead5f33",
+  "sourceDirty": false,
+  "configuration": {
+    "dataStructure": "shared-tree",
+    "repetitions": 3,
+    "operations": 100,
+    "warmup": 10,
+    "operationsPerTurn": 1,
+    "synchronizePerTurn": false,
+    "subscriptionBatchOperations": 64,
+    "integration": "fluid",
+    "clients": 2
+  },
+  "environment": {
+    "capturedAt": "2026-09-17T00:45:38.567Z",
+    "platform": "linux",
+    "kernel": "6.8.0-1064-azure",
+    "architecture": "x64",
+    "logicalCpuCount": 32,
+    "cpuModel": "AMD EPYC 9V74 80-Core Processor",
+    "node": "v22.23.2",
+    "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+    "serviceProcess": {
+      "pid": 714243,
+      "cpuSeconds": 0.14,
+      "residentSetKiB": 8832,
+      "peakResidentSetKiB": 8832
+    }
+  },
+  "aggregates": {
+    "startupMilliseconds": {
+      "minimum": 227.09999999776483,
+      "mean": 234.4666666649282,
+      "median": 231.79999999701977,
+      "p95": 244.5,
+      "maximum": 244.5,
+      "sampleStandardDeviation": 9.001296204311155
+    },
+    "submissionMilliseconds": {
+      "minimum": 45.399999998509884,
+      "mean": 46.166666665424906,
+      "median": 45.599999997764826,
+      "p95": 47.5,
+      "maximum": 47.5,
+      "sampleStandardDeviation": 1.1590225777534942
+    },
+    "convergenceMilliseconds": {
+      "minimum": 103.20000000298023,
+      "mean": 105.2000000004967,
+      "median": 103.5,
+      "p95": 108.89999999850988,
+      "maximum": 108.89999999850988,
+      "sampleStandardDeviation": 3.207802984680653
+    },
+    "operationsPerSecond": {
+      "minimum": 639.3861892644038,
+      "mean": 661.006957427904,
+      "median": 671.5916722699849,
+      "p95": 672.0430107493232,
+      "maximum": 672.0430107493232,
+      "sampleStandardDeviation": 18.725494348363664
+    }
+  },
+  "samples": [
+    {
+      "status": "passed",
+      "dataStructure": "shared-tree",
+      "backend": "rust-service-webtransport-memory-force-write",
+      "clientCount": 2,
+      "operationCount": 100,
+      "warmupOperationCount": 10,
+      "operationsPerTurn": 1,
+      "synchronizePerTurn": false,
+      "startupMilliseconds": 244.5,
+      "submissionMilliseconds": 45.399999998509884,
+      "convergenceMilliseconds": 103.5,
+      "totalOperationMilliseconds": 148.89999999850988,
+      "operationsPerSecond": 671.5916722699849,
+      "writerIndex": 0,
+      "observerIndex": 1,
+      "initialValue": 2,
+      "finalEditCount": 110,
+      "observedChangeCounts": [
+        110,
+        110
+      ],
+      "finalValue": 112,
+      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+      "startupTransportActivity": {
+        "unaryRequests": {},
+        "submissionStreams": 0,
+        "projectedSubscriptions": 0
+      },
+      "transportActivity": {
+        "unaryRequests": {},
+        "submissionStreams": 0,
+        "projectedSubscriptions": 0
+      },
+      "wireBytes": null,
+      "peakResponseBytes": null,
+      "peakSubscriptionFrameBytes": null,
+      "peakSubscriptionQueueDepth": null,
+      "subscriptionBatchMaxOperations": 64,
+      "subscriptionBatchCount": 229,
+      "peakSubscriptionBatchOperations": 1,
+      "resumeOpenMilliseconds": 31.200000002980232,
+      "resumeFirstDeliveryMilliseconds": 4,
+      "resumeCursorCount": 2,
+      "forceWriteConnection": true
+    },
+    {
+      "status": "passed",
+      "dataStructure": "shared-tree",
+      "backend": "rust-service-webtransport-memory-force-write",
+      "clientCount": 2,
+      "operationCount": 100,
+      "warmupOperationCount": 10,
+      "operationsPerTurn": 1,
+      "synchronizePerTurn": false,
+      "startupMilliseconds": 231.79999999701977,
+      "submissionMilliseconds": 47.5,
+      "convergenceMilliseconds": 108.89999999850988,
+      "totalOperationMilliseconds": 156.39999999850988,
+      "operationsPerSecond": 639.3861892644038,
+      "writerIndex": 0,
+      "observerIndex": 1,
+      "initialValue": 2,
+      "finalEditCount": 110,
+      "observedChangeCounts": [
+        110,
+        110
+      ],
+      "finalValue": 112,
+      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+      "startupTransportActivity": {
+        "unaryRequests": {},
+        "submissionStreams": 0,
+        "projectedSubscriptions": 0
+      },
+      "transportActivity": {
+        "unaryRequests": {},
+        "submissionStreams": 0,
+        "projectedSubscriptions": 0
+      },
+      "wireBytes": null,
+      "peakResponseBytes": null,
+      "peakSubscriptionFrameBytes": null,
+      "peakSubscriptionQueueDepth": null,
+      "subscriptionBatchMaxOperations": 64,
+      "subscriptionBatchCount": 230,
+      "peakSubscriptionBatchOperations": 1,
+      "resumeOpenMilliseconds": 31.099999997764826,
+      "resumeFirstDeliveryMilliseconds": 4.100000001490116,
+      "resumeCursorCount": 2,
+      "forceWriteConnection": true
+    },
+    {
+      "status": "passed",
+      "dataStructure": "shared-tree",
+      "backend": "rust-service-webtransport-memory-force-write",
+      "clientCount": 2,
+      "operationCount": 100,
+      "warmupOperationCount": 10,
+      "operationsPerTurn": 1,
+      "synchronizePerTurn": false,
+      "startupMilliseconds": 227.09999999776483,
+      "submissionMilliseconds": 45.599999997764826,
+      "convergenceMilliseconds": 103.20000000298023,
+      "totalOperationMilliseconds": 148.80000000074506,
+      "operationsPerSecond": 672.0430107493232,
+      "writerIndex": 0,
+      "observerIndex": 1,
+      "initialValue": 2,
+      "finalEditCount": 110,
+      "observedChangeCounts": [
+        110,
+        110
+      ],
+      "finalValue": 112,
+      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+      "startupTransportActivity": {
+        "unaryRequests": {},
+        "submissionStreams": 0,
+        "projectedSubscriptions": 0
+      },
+      "transportActivity": {
+        "unaryRequests": {},
+        "submissionStreams": 0,
+        "projectedSubscriptions": 0
+      },
+      "wireBytes": null,
+      "peakResponseBytes": null,
+      "peakSubscriptionFrameBytes": null,
+      "peakSubscriptionQueueDepth": null,
+      "subscriptionBatchMaxOperations": 64,
+      "subscriptionBatchCount": 233,
+      "peakSubscriptionBatchOperations": 1,
+      "resumeOpenMilliseconds": 31.600000001490116,
+      "resumeFirstDeliveryMilliseconds": 3.899999998509884,
+      "resumeCursorCount": 2,
+      "forceWriteConnection": true
+    }
+  ]
+}

@@ -2,16 +2,16 @@
 
 ## Status
 
-- **Plan status:** In progress.
+- **Plan status:** In progress; final canonical validation remains.
 - **Execution mode:** Sequential, independently committable checkpoints.
 - **Compatibility:** No compatibility is required for the current Rust API, generated TypeScript API, WebTransport wire format, or persisted experimental data.
-- **Current checkpoint:** 13. Performance and final validation.
+- **Current checkpoint:** 13. Final canonical validation.
 - **Last completed checkpoint:** 12. Documentation and terminology completion.
-- **Last validation:** Checkpoint 12 documentation structure, local links, and active terminology/path scans passed on 2026-09-16.
-- **Latest checkpoint notes:** Active documentation now defines the shared client first, four persistent stream roles, frame envelope, lifecycle ownership, native/browser/test-support targets, and the three snapshot participation policies. Root, server, browser, development, Fluid driver, known-issues, and WebTransport flow documents use current commands and paths. Active `typed`, `unary`, `SEA1`, `SEAS`, old example paths, and old generator paths are absent.
+- **Last validation:** The nine-arm WebTransport benchmark matrix, raw provenance, aggregate summary, real Chromium Sea-selected workflow, and server/browser shutdown evidence passed on 2026-09-17.
+- **Latest checkpoint notes:** Final controlled-local evidence is retained under [benchmarks/shared-tree/7f22a862585](benchmarks/shared-tree/7f22a862585/README.md). All memory, buffered-file, and durable-file arms passed for direct dummy, direct SharedTree, and Fluid SharedTree paths from clean source commit `294c803e8c4aa711df5dee19dc5711e6aead5f33`. The matching direct-dummy memory arm preserved the historical persistent-stream improvement, measuring 2,501.54 operations/s and 39.93 ms mean convergence versus 37.86 operations/s and 2,642.5 ms before stream reuse. Equivalent historical buffered-file and durable-file raw measurements were not retained, so the report limits the before/after claim to memory. A separate real Chromium run exercised all four logical stream roles and reported 3,979 Sea wire bytes, 3 peak connections, 9 peak streams, 3 completed connection cleanups, and 0 active connections after shutdown. No owned service or browser process remained.
 - **Plan commit:** `3fa80e6688ae3177945fb19c6f5c4e8b43a8c676` (`docs(rust-service): plan Sea API cleanup`).
 - **Persistent-stream baseline commit:** `30940207bc7e10081a3d9f364c9033b601c2cf5b` (`Fix stream reuse`).
-- **Next checkpoint:** 13. Performance and final validation.
+- **Next checkpoint:** Complete the canonical Rust, TypeScript, policy, and repository validation commands below.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -788,13 +788,13 @@ Every remaining search hit must be intentional and explained.
 
 ### 13. Performance and final validation
 
-- [ ] Run equivalent before/after WebTransport benchmarks for memory, buffered-file, and durable-file modes.
-- [ ] Cover direct dummy, direct SharedTree, and Fluid-integrated SharedTree paths.
-- [ ] Verify event, author, snapshot, and content streams are reused rather than opened per operation.
-- [ ] Record stream counts, wire bytes, CPU, RSS, convergence, and throughput from implemented counters.
-- [ ] Verify snapshot coordination does not alter client-selected snapshot cadence.
-- [ ] Verify no owned service or browser process remains after each harness.
-- [ ] Update this plan's **Status** with final evidence and remaining deferred work.
+- [x] Run the equivalent final WebTransport matrix for memory, buffered-file, and durable-file modes and compare the common memory arm with the retained pre-reuse baseline; equivalent historical buffered-file and durable-file raw measurements were not retained.
+- [x] Cover direct dummy, direct SharedTree, and Fluid-integrated SharedTree paths.
+- [x] Verify event, author, snapshot, and content streams are reused rather than opened per operation.
+- [x] Record stream counts, wire bytes, CPU, RSS, convergence, and throughput from implemented counters.
+- [x] Verify snapshot coordination does not alter client-selected snapshot cadence.
+- [x] Verify no owned service or browser process remains after each harness.
+- [x] Update this plan's **Status** with final evidence and remaining deferred work.
 
 Canonical validation from `rust-service/`:
 

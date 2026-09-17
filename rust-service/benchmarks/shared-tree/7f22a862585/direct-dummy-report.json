@@ -1,0 +1,184 @@
+[
+	{
+		"suiteName": "Fluid service benchmark (dds=dummy, workload=turns, operations=100, warmup=10, operationsPerTurn=1, synchronizePerTurn=false, repetitions=3)",
+		"contents": [
+			{
+				"benchmarkName": "@Benchmark @Measurement Rust WebTransport memory direct :ff-cat: @Fluid service",
+				"data": [
+					{
+						"name": "Operations per second",
+						"value": 2501.540489180062,
+						"units": "operations/s",
+						"type": "LargerIsBetter",
+						"significance": "Primary"
+					},
+					{
+						"name": "Startup",
+						"value": 66.83333333209157,
+						"units": "ms",
+						"type": "SmallerIsBetter",
+						"significance": "Secondary"
+					},
+					{
+						"name": "Submission",
+						"value": 0.6333333340783914,
+						"units": "ms",
+						"type": "SmallerIsBetter",
+						"significance": "Secondary"
+					},
+					{
+						"name": "Convergence",
+						"value": 39.93333333233992,
+						"units": "ms",
+						"type": "SmallerIsBetter",
+						"significance": "Secondary"
+					},
+					{
+						"name": "Service CPU",
+						"value": 0.07,
+						"units": "s",
+						"significance": "Diagnostic"
+					},
+					{
+						"name": "Service peak RSS",
+						"value": 7847936,
+						"units": "bytes",
+						"significance": "Diagnostic"
+					},
+					{
+						"name": "Child Process Duration",
+						"value": 2.017608521,
+						"units": "seconds",
+						"type": "SmallerIsBetter",
+						"significance": "Diagnostic"
+					},
+					{
+						"name": "Test Duration",
+						"value": 7.208948097,
+						"units": "seconds",
+						"type": "SmallerIsBetter",
+						"significance": "Diagnostic"
+					}
+				]
+			},
+			{
+				"benchmarkName": "@Benchmark @Measurement Rust WebTransport buffered file direct :ff-cat: @Fluid service",
+				"data": [
+					{
+						"name": "Operations per second",
+						"value": 2809.0925757689934,
+						"units": "operations/s",
+						"type": "LargerIsBetter",
+						"significance": "Primary"
+					},
+					{
+						"name": "Startup",
+						"value": 64.86666666592161,
+						"units": "ms",
+						"type": "SmallerIsBetter",
+						"significance": "Secondary"
+					},
+					{
+						"name": "Submission",
+						"value": 0.5333333338300387,
+						"units": "ms",
+						"type": "SmallerIsBetter",
+						"significance": "Secondary"
+					},
+					{
+						"name": "Convergence",
+						"value": 35.066666666418314,
+						"units": "ms",
+						"type": "SmallerIsBetter",
+						"significance": "Secondary"
+					},
+					{
+						"name": "Service CPU",
+						"value": 0.07,
+						"units": "s",
+						"significance": "Diagnostic"
+					},
+					{
+						"name": "Service peak RSS",
+						"value": 7987200,
+						"units": "bytes",
+						"significance": "Diagnostic"
+					},
+					{
+						"name": "Child Process Duration",
+						"value": 2.025030696,
+						"units": "seconds",
+						"type": "SmallerIsBetter",
+						"significance": "Diagnostic"
+					},
+					{
+						"name": "Test Duration",
+						"value": 7.213434216,
+						"units": "seconds",
+						"type": "SmallerIsBetter",
+						"significance": "Diagnostic"
+					}
+				]
+			},
+			{
+				"benchmarkName": "@Benchmark @Measurement Rust WebTransport durable file direct :ff-cat: @Fluid service",
+				"data": [
+					{
+						"name": "Operations per second",
+						"value": 1714.121314626225,
+						"units": "operations/s",
+						"type": "LargerIsBetter",
+						"significance": "Primary"
+					},
+					{
+						"name": "Startup",
+						"value": 68.56666666641831,
+						"units": "ms",
+						"type": "SmallerIsBetter",
+						"significance": "Secondary"
+					},
+					{
+						"name": "Submission",
+						"value": 0.5333333338300387,
+						"units": "ms",
+						"type": "SmallerIsBetter",
+						"significance": "Secondary"
+					},
+					{
+						"name": "Convergence",
+						"value": 57.866666665921606,
+						"units": "ms",
+						"type": "SmallerIsBetter",
+						"significance": "Secondary"
+					},
+					{
+						"name": "Service CPU",
+						"value": 0.09,
+						"units": "s",
+						"significance": "Diagnostic"
+					},
+					{
+						"name": "Service peak RSS",
+						"value": 7921664,
+						"units": "bytes",
+						"significance": "Diagnostic"
+					},
+					{
+						"name": "Child Process Duration",
+						"value": 2.126636686,
+						"units": "seconds",
+						"type": "SmallerIsBetter",
+						"significance": "Diagnostic"
+					},
+					{
+						"name": "Test Duration",
+						"value": 7.318996079,
+						"units": "seconds",
+						"type": "SmallerIsBetter",
+						"significance": "Diagnostic"
+					}
+				]
+			}
+		]
+	}
+]
