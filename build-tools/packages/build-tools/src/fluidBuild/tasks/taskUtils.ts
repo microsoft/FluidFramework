@@ -54,9 +54,9 @@ export async function getInstalledPackageVersion(
 	if (packageJsonPath === undefined) {
 		throw new Error(`Unable to find package ${packageName} from ${cwd}`);
 	}
-	const packageJson: PackageJson = JSON.parse(
+	const packageJson = JSON.parse(
 		await readFile(path.join(packageJsonPath, "package.json"), "utf8"),
-	);
+	) as PackageJson;
 	return packageJson.version;
 }
 
