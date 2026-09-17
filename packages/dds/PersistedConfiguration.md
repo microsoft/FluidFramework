@@ -1,6 +1,6 @@
 # Persisted DDS configuration
 
-**Status:** Local prototype. The configuration protocol is opt-in and has no production DDS adopter.
+**Status:** Local prototype. The configuration protocol is opt-in, with an internal adopter in `packages/dds/tree`.
 
 ## Summary and agreed requirements
 
@@ -78,6 +78,53 @@ is a separate integration, not permission to bypass the shared controller.
 Non-goals are application schema management, general consensus, cross-channel transactions,
 ordinary-op invalidation or its reconciliation/event APIs, automatic retries of rejected edits,
 migration of existing DDS instances, and asynchronous data migrations during a configuration callback.
+
+### SharedTree history prototype
+
+The production SharedTree implementation declares configuration reader support regardless of its creation policy.
+The internal `configuredSharedTree(options, initialConfiguration)` factory accepts an optional second argument of type `Readonly<{ retainHistory?: boolean }>`.
+Omit this argument to keep creating legacy instances; an absent attributes marker never migrates automatically.
+For marked instances, omitted `retainHistory` means `false`, and the persisted value overrides local `options.retainHistory`, including on summarizers.
+Legacy `configuredSharedTree({ retainHistory: true })` behavior is unchanged.
+
+```typescript
+import { configuredSharedTree } from "@fluidframework/tree/internal";
+
+// Requires the container's explicitSchemaControl and enableChannelConfiguration options.
+const kind = configuredSharedTree({}, { retainHistory: false });
+const tree = kind.getFactory().create(dataStoreRuntime, "tree");
+// In this prototype the per-instance facet is on ISharedTree's package-private kernel surface.
+const configuration = (tree as ISharedTree).kernel.configuration;
+if (configuration !== undefined) {
+    const result = await configuration.requestChange({ retainHistory: true });
+    // The shared wrapper, not SharedTree, decides result.status: "applied" or "conflict".
+}
+```
+
+The internal test/debug type `ISharedTree` in this example is imported from `treeFactory.ts` inside the Tree package.
+The creation entry point is exported as internal; the per-instance request surface is not a new public Tree API.
+`configuration.on("changed", listener)` and `off` expose the shared synchronous notifications.
+Published requests take effect only when sequenced, including requests made while disconnected.
+Detached or otherwise unpublished requests apply immediately without submitting an op.
+Publication still requires the document capability; existing documents must await `ensureChannelConfigurationEnabled()` before publishing the configured channel.
+
+Enabling starts history at the accepted barrier, not at the oldest commit retained by the current client.
+Tree records the first covered main-trunk sequence number and Tree batch index, together with the enabling configuration revision, in its versioned `HistoryRetention` summary blob.
+The index comes from committed trunk processing, not an optimistic local branch or the delivery-local `messageIndex`.
+Thus a commit that sequences after enable is retained even if it was authored under an earlier configuration revision, including when it shares the barrier's envelope sequence number.
+An identical enabled replacement does not move the start.
+Disabling and then enabling starts a new retention epoch and cannot recover history already evicted.
+
+The same metadata preserves the unpublished synthetic sequence cursor, even if trimming leaves no commits in the summary.
+This keeps the start stable through detached serialization, reload, further local configuration changes, and attach.
+It also preserves the last known collaboration-window minimum, so a configuration-only disable after loading can resume safe pruning without waiting for another Tree edit.
+Loading restores the saved start before replay; it never derives a new start from the latest unrelated configuration replacement or from the summarizer's locally retained ancestry.
+Missing, unsupported, or inconsistent configured history metadata fails loading rather than silently selecting a different policy.
+
+History required for collaboration, local forks, undo, or shared-branch ancestry remains subject to the existing correctness rules.
+Such history can precede the archival start and is not backfilled archival coverage.
+Disabling resumes normal safe pruning and summary selection; it does not purge required repair data or invalidate branches and revertibles.
+The existing branch-history inspection API can therefore include pre-enable protocol history and is not an archival-history filter.
 
 ## Persisted state
 

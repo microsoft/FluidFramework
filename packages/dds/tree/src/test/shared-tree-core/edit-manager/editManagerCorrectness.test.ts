@@ -22,7 +22,7 @@ import type {
 import { brand, makeArray } from "../../../util/index.js";
 import type { TestChangeFamily } from "../../testChange.js";
 import { NoOpChangeRebaser, TestChange } from "../../testChange.js";
-import { mintRevisionTag } from "../../utils.js";
+import { mintRevisionTag, testIdCompressor } from "../../utils.js";
 
 import { buildScenario, runUnitTestScenario } from "./editManagerScenario.js";
 import { checkChangeList, testChangeEditManagerFactory } from "./editManagerTestUtils.js";
@@ -723,6 +723,149 @@ export function testCorrectness(): void {
 					const third = testChangeEditManagerFactory({ retainHistory: true }).manager;
 					third.loadSummaryData(secondSummary);
 					assert.equal(third.getTrunkCommits("main").length, 10);
+				});
+
+				it("starts configured retention at the barrier, independent of older local forks", () => {
+					const withFork = testChangeEditManagerFactory({ configurationRevision: 0 }).manager;
+					const withoutFork = testChangeEditManagerFactory({
+						configurationRevision: 0,
+					}).manager;
+					const fork = withFork.getLocalBranch("main").fork();
+					for (const manager of [withFork, withoutFork]) {
+						sequencePeerCommits(manager, 5, 1, 1);
+						manager.advanceMinimumSequenceNumber(brand(5));
+						manager.setHistoryRetention(true, 1, brand(6));
+						sequencePeerCommits(manager, 5, 6, 6);
+						manager.advanceMinimumSequenceNumber(brand(10));
+						assert.deepEqual(manager.getHistoryRetentionState(), {
+							version: 1,
+							start: { revision: 1, sequenceNumber: 6, indexInBatch: 0 },
+						});
+						assert.deepEqual(
+							manager.getSummaryData().main.trunk.map((commit) => commit.sequenceNumber),
+							[6, 7, 8, 9, 10],
+						);
+					}
+					assert.equal(withFork.getTrunkCommits("main").length, 10);
+					assert.equal(withoutFork.getTrunkCommits("main").length, 5);
+					fork.dispose();
+					assert.equal(withFork.getTrunkCommits("main").length, 5);
+				});
+
+				it("resumes safe pruning on disable and starts a new epoch on reenable", () => {
+					const { manager } = testChangeEditManagerFactory({
+						configurationRevision: 0,
+						retainHistory: true,
+					});
+					sequencePeerCommits(manager, 5, 1, 1);
+					const fork = manager.getLocalBranch("main").fork();
+					sequencePeerCommits(manager, 5, 6, 6);
+					manager.advanceMinimumSequenceNumber(brand(10));
+					manager.setHistoryRetention(false, 1, brand(11));
+					assert.equal(manager.getTrunkCommits("main").length, 6);
+					fork.dispose();
+					assert.equal(manager.getTrunkCommits("main").length, 0);
+					manager.setHistoryRetention(true, 2, brand(12));
+					sequencePeerCommits(manager, 3, 12, 11);
+					manager.advanceMinimumSequenceNumber(brand(14));
+					assert.deepEqual(
+						manager.getSummaryData().main.trunk.map((commit) => commit.sequenceNumber),
+						[12, 13, 14],
+					);
+				});
+
+				it("does not move the epoch for an identical enabled replacement", () => {
+					const { manager } = testChangeEditManagerFactory({ configurationRevision: 0 });
+					sequencePeerCommits(manager, 3, 1, 1);
+					manager.setHistoryRetention(true, 1, brand(4));
+					sequencePeerCommits(manager, 3, 4, 4);
+					manager.setHistoryRetention(true, 2, brand(7));
+					manager.advanceMinimumSequenceNumber(brand(6));
+					assert.deepEqual(manager.getHistoryRetentionState()?.start, {
+						revision: 1,
+						sequenceNumber: 4,
+						indexInBatch: 0,
+					});
+					assert.equal(manager.getSummaryData().main.trunk.length, 3);
+				});
+
+				it("preserves the same-sequence boundary and batch indexes across summary generations", () => {
+					const first = testChangeEditManagerFactory({ configurationRevision: 0 }).manager;
+					sequencePeerCommits(first, 1, 10, 1);
+					sequencePeerCommits(first, 1, 10, 2);
+					first.setHistoryRetention(true, 1, brand(10));
+					sequencePeerCommits(first, 1, 10, 3);
+					first.advanceMinimumSequenceNumber(brand(10));
+					const state = first.getHistoryRetentionState();
+					assert(state !== undefined);
+					assert.deepEqual(state.start, {
+						revision: 1,
+						sequenceNumber: 10,
+						indexInBatch: 2,
+					});
+					const summary = structuredClone(first.getSummaryData());
+					assert.deepEqual(
+						summary.main.trunk.map((commit) => commit.indexInBatch),
+						[2],
+					);
+					const second = testChangeEditManagerFactory({
+						configurationRevision: 1,
+						retainHistory: true,
+					}).manager;
+					second.loadHistoryRetentionState(state);
+					second.loadSummaryData(summary);
+					sequencePeerCommits(second, 1, 10, 4);
+					assert.deepEqual(
+						second.getSummaryData().main.trunk.map((commit) => commit.indexInBatch),
+						[2, 3],
+					);
+					assert.deepEqual(second.getHistoryRetentionState(), state);
+				});
+
+				it("retains collaboration history before the archival start until peers advance", () => {
+					const { manager } = testChangeEditManagerFactory({ configurationRevision: 0 });
+					sequencePeerCommits(manager, 5, 1, 1);
+					manager.setHistoryRetention(true, 1, brand(6));
+					sequencePeerCommits(manager, 5, 6, 6);
+					assert.equal(manager.getSummaryData().main.trunk.length, 10);
+					manager.advanceMinimumSequenceNumber(brand(10));
+					assert.equal(manager.getSummaryData().main.trunk.length, 5);
+				});
+
+				it("preserves shared-branch ancestry when disabling and reloading", () => {
+					const { manager } = testChangeEditManagerFactory({ configurationRevision: 0 });
+					sequencePeerCommits(manager, 3, 1, 1);
+					const branchId = testIdCompressor.generateCompressedId();
+					manager.sequenceBranchCreation(peer2, brand(3), branchId, "retained branch");
+					manager.setHistoryRetention(true, 1, brand(4));
+					manager.addSequencedChanges(
+						[
+							{
+								revision: mintRevisionTag(),
+								change: TestChange.mint([1, 2, 3], [100]),
+								customMetadata: undefined,
+							},
+						],
+						peer2,
+						brand(4),
+						brand(3),
+						branchId,
+					);
+					sequencePeerCommits(manager, 3, 5, 4);
+					manager.advanceMinimumSequenceNumber(brand(7));
+					manager.setHistoryRetention(false, 2, brand(8));
+					const summary = structuredClone(manager.getSummaryData());
+					const state = manager.getHistoryRetentionState();
+					assert(state !== undefined);
+					const loaded = testChangeEditManagerFactory({ configurationRevision: 2 }).manager;
+					loaded.loadHistoryRetentionState(state);
+					loaded.loadSummaryData(summary);
+					assert.equal(loaded.getSharedBranchName(branchId), "retained branch");
+					assert.deepEqual(
+						loaded.getTrunkChanges(branchId),
+						manager.getTrunkChanges(branchId),
+					);
+					assert.deepEqual(loaded.getSummaryData(), summary);
 				});
 			});
 

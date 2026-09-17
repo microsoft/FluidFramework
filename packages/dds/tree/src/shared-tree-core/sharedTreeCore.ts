@@ -15,7 +15,6 @@ import type {
 } from "@fluidframework/id-compressor";
 import type {
 	IExperimentalIncrementalSummaryContext,
-	IRuntimeMessageCollection,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -23,6 +22,8 @@ import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type {
 	IChannelView,
 	IFluidSerializer,
+	ChannelConfigurationFacet,
+	SharedKernelMessageCollection,
 } from "@fluidframework/shared-object-base/internal";
 import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -46,6 +47,7 @@ import {
 	type WithBreakable,
 	throwIfBroken,
 	breakingClass,
+	readAndParseSnapshotBlob,
 } from "../util/index.js";
 
 import type { BranchId, SharedTreeBranch } from "./branch.js";
@@ -70,6 +72,13 @@ import {
 	type SummaryElementStringifier,
 } from "./summaryTypes.js";
 import { VersionedSummarizer } from "./versionedSummarizer.js";
+import {
+	historyRetentionBlobKey,
+	parseHistoryRetentionState,
+	type HistoryRetentionState,
+	type HistoryRetentionSummary,
+	type TreeHistoryConfiguration,
+} from "./historyRetention.js";
 
 export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 	schema: TreeStoredSchemaRepository;
@@ -172,6 +181,7 @@ export class SharedTreeCore<
 		schemaPolicy: SchemaPolicy,
 		enrichmentConfig?: EnrichmentConfig<TChange>,
 		public readonly getEditor: () => TEditor = () => this.getLocalBranch().editor,
+		public readonly configuration?: ChannelConfigurationFacet<TreeHistoryConfiguration>,
 	) {
 		super(
 			summarizablesTreeKey,
@@ -205,7 +215,10 @@ export class SharedTreeCore<
 			this.mintRevisionTag,
 			(branchId) => this.registerSharedBranch(branchId),
 			rebaseLogger,
-			coreOptions.retainHistory ?? false,
+			configuration === undefined
+				? (coreOptions.retainHistory ?? false)
+				: configuration.current.values.retainHistory === true,
+			configuration?.current.revision,
 		);
 
 		this.registerSharedBranch("main");
@@ -249,6 +262,26 @@ export class SharedTreeCore<
 				enrichmentConfig.resubmitMachine,
 			);
 		}
+
+		configuration?.on("changed", (change) => {
+			this.editManager.setHistoryRetention(
+				change.current.values.retainHistory === true,
+				change.current.revision,
+				brand(
+					change.source === "sequenced"
+						? change.sequenceNumber
+						: (this.detachedRevision ??
+								fail("Unpublished history changes require a detached Tree")) + 1,
+				),
+			);
+		});
+	}
+
+	/**
+	 * The persisted archival epoch, not the oldest history needed by this client's forks or undo.
+	 */
+	public getHistoryRetentionState(): HistoryRetentionState | undefined {
+		return this.editManager.getHistoryRetentionState();
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -286,12 +319,47 @@ export class SharedTreeCore<
 			);
 		}
 		builder.addWithStats(summarizablesTreeKey, summarizableBuilder.getSummaryTree());
+		const historyRetention = this.getHistoryRetentionState();
+		if (historyRetention !== undefined) {
+			builder.addBlob(
+				historyRetentionBlobKey,
+				stringify({
+					...historyRetention,
+					detachedSequenceNumber: this.detachedRevision ?? null,
+					minimumSequenceNumber: this.editManager.getMinimumSequenceNumber(),
+				} satisfies HistoryRetentionSummary),
+			);
+		}
 	}
 
 	protected async loadInternal(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
+		let loadedMinimumSequenceNumber: SeqNumber | undefined;
+		const hasHistoryRetention = await services.contains(historyRetentionBlobKey);
+		if (this.configuration !== undefined) {
+			if (!hasHistoryRetention) {
+				throw new UsageError("Configured SharedTree summary is missing its history boundary");
+			}
+			const state = parseHistoryRetentionState(
+				await readAndParseSnapshotBlob(historyRetentionBlobKey, services, parse),
+			);
+			if (
+				(state.start !== null) !==
+					(this.configuration.current.values.retainHistory === true) ||
+				(state.start !== null && state.start.revision > this.configuration.current.revision)
+			) {
+				throw new UsageError("SharedTree history boundary does not match its configuration");
+			}
+			this.editManager.loadHistoryRetentionState(state);
+			loadedMinimumSequenceNumber = brand(state.minimumSequenceNumber);
+			if (this.detachedRevision !== undefined && state.detachedSequenceNumber !== null) {
+				this.detachedRevision = brand(state.detachedSequenceNumber);
+			}
+		} else if (hasHistoryRetention) {
+			throw new UsageError("SharedTree history boundary requires persisted configuration");
+		}
 		const [editManagerSummarizer, ...summarizables] = this.summarizables;
 		const loadEditManager = this.loadSummarizable(editManagerSummarizer, services, parse);
 		const loadSummarizables = summarizables.map(async (s) =>
@@ -310,9 +378,16 @@ export class SharedTreeCore<
 			// latestDetachedSequenceNumber is either undefined (no commits in summary) or negative (all commits in summary were made while detached).
 			// We only need to update `this.detachedRevision` in the latter case.
 			if (latestDetachedSequenceNumber !== undefined && latestDetachedSequenceNumber < 0) {
-				this.detachedRevision = latestDetachedSequenceNumber;
+				this.detachedRevision = brand(
+					Math.max(this.detachedRevision, latestDetachedSequenceNumber),
+				);
 			}
 			await Promise.all(loadSummarizables);
+		}
+		if (loadedMinimumSequenceNumber !== undefined) {
+			// Restore the last known collaboration window without trimming before checkout.load().
+			// This also lets a trailing configuration-only disable release previously archived history.
+			this.editManager.advanceMinimumSequenceNumber(loadedMinimumSequenceNumber, false);
 		}
 	}
 
@@ -445,8 +520,10 @@ export class SharedTreeCore<
 
 	/**
 	 * Process a bunch of messages from the runtime. SharedObject will call this method with a bunch of messages.
+	 * Earlier configuration revisions describe submission provenance, not validity:
+	 * all commits are sequenced under the history policy active at delivery.
 	 */
-	public processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	public processMessagesCore(messagesCollection: SharedKernelMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		const commits: GraphCommit<TChange>[] = [];
 		let messagesSessionId: SessionId | undefined;

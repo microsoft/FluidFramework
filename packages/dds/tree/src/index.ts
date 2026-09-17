@@ -27,6 +27,8 @@ export {
 	type RevertToOptionsAlpha,
 } from "./core/index.js";
 
+export type { TreeHistoryConfiguration } from "./shared-tree-core/index.js";
+
 export {
 	TreeStatus,
 	TreeCompressionStrategy,

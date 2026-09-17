@@ -12,6 +12,7 @@ import type {
 	IChannelView,
 	IFluidSerializer,
 	SharedKernel,
+	ChannelConfigurationFacet,
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { lt } from "semver-ts";
@@ -76,6 +77,7 @@ import {
 	SharedTreeCore,
 	EditManagerFormatVersion,
 	makeEditManagerCodecBuilder,
+	type TreeHistoryConfiguration,
 } from "../shared-tree-core/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -209,6 +211,7 @@ export class SharedTreeKernel
 		initialSequenceNumber: number,
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
+		configuration?: ChannelConfigurationFacet<TreeHistoryConfiguration>,
 	) {
 		const options: Required<SharedTreeOptionsInternal> = {
 			...defaultSharedTreeOptions,
@@ -313,6 +316,9 @@ export class SharedTreeKernel
 			idCompressor,
 			schema,
 			defaultSchemaPolicy,
+			undefined,
+			undefined,
+			configuration,
 		);
 
 		this.checkout = createTreeCheckout(idCompressor, this.mintRevisionTag, revisionTagCodec, {
@@ -665,6 +671,7 @@ export interface SharedTreeOptions
 	 * local branches), to bound memory usage and document size.
 	 * As long as this flag is enabled, trunk commits are retained - this increases memory usage and document size
 	 * over time and should be used with care.
+	 * Instances opted into the internal persisted configuration prototype use their persisted history policy instead.
 	 */
 	readonly retainHistory?: boolean;
 
