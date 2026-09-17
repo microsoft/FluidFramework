@@ -138,6 +138,9 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 		this.checkValid(
 			"visitor getter should be deregistered from the forest when index is disposed",
 		);
+		// If something goes wrong updating the index, its going to leave the index in a bad state,
+		// and crash this traversal which likely breaks updating the forest.
+		// It is safest (though likely redundant) to wrap all index updates in the forest's breaker to ensure either consistency or an error and broken state that can't be used.
 		const run = <T>(callback: () => T): T => this.forest.breaker.run(callback);
 		let parentField: FieldKey | undefined;
 		let parent: UpPath | undefined;

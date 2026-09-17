@@ -488,7 +488,8 @@ describe("simple tree indexes", () => {
 			{ metadata: { custom: { categoryField: "genre" } satisfies MetadataWithCategoryField } },
 		) {}
 
-		// ...
+		// ... Create a TreeView named `view` containing nodes such as
+		// `new Video({ genre: Category.News })`.
 		// -- Start section omitted from example
 		class Content extends schemaFactoryBeta.array("Content", [
 			Article,

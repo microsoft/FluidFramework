@@ -137,7 +137,8 @@ export type TreeIndexKeyFieldSelector<TSchema extends TreeNodeSchema = TreeNodeS
  * 	{ metadata: { custom: { categoryField: "genre" } satisfies MetadataWithCategoryField } },
  * ) {}
  *
- * // ...
+ * // ... Create a TreeView named `view` containing nodes such as
+ * // `new Video({ genre: Category.News })`.
  * const contentByCategory = createTreeIndex(
  * 	view,
  * 	(schema) =>
