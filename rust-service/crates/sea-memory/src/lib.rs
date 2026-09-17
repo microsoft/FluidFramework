@@ -395,7 +395,10 @@ mod current_tests {
     use futures_util::TryStreamExt as _;
     use sea_core::{
         BlobDirectory, BlobId, BlobTreeId, Durability, Event,
-        archive::{SeaStorage, StorageEventStream},
+        archive::{
+            OperationId, SeaStorage, Snapshot as ArchiveSnapshot,
+            SnapshotPosition as ArchiveSnapshotPosition, SnapshotPublication, StorageEventStream,
+        },
     };
 
     use super::{MemoryError, MemoryStream};
@@ -497,5 +500,98 @@ mod current_tests {
                 .await,
             Err(MemoryError::InvalidPosition)
         ));
+    }
+
+    #[tokio::test]
+    async fn read_includes_through_and_excludes_later_events() {
+        let storage = MemoryStream::new();
+        let first = storage
+            .append(Event {
+                payload: Bytes::from_static(b"first"),
+                blob_tree: None,
+            })
+            .await
+            .unwrap();
+        let second = storage
+            .append(Event {
+                payload: Bytes::from_static(b"second"),
+                blob_tree: None,
+            })
+            .await
+            .unwrap();
+        storage
+            .append(Event {
+                payload: Bytes::from_static(b"third"),
+                blob_tree: None,
+            })
+            .await
+            .unwrap();
+
+        let records = storage
+            .read(Some(first.position), Some(second.position))
+            .await
+            .unwrap()
+            .try_collect::<Vec<_>>()
+            .await
+            .unwrap();
+
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].position, second.position);
+        assert_eq!(records[0].event.payload, Bytes::from_static(b"second"));
+    }
+
+    #[tokio::test]
+    async fn rejected_snapshot_does_not_bind_operation_identity() {
+        let storage = MemoryStream::new();
+        let operation_id =
+            OperationId::new(Bytes::from_static(b"retry-after-rejection")).unwrap();
+        let missing = BlobId::from_bytes(&[0xa5; 32]).unwrap();
+
+        assert!(matches!(
+            storage
+                .publish_snapshot(SnapshotPublication {
+                    operation_id: operation_id.clone(),
+                    expected_parent: None,
+                    snapshot: ArchiveSnapshot {
+                        at_event: ArchiveSnapshotPosition::Initial,
+                        root: BlobTreeId::Blob(missing),
+                    },
+                })
+                .await,
+            Err(MemoryError::MissingBlobTree)
+        ));
+        assert_eq!(storage.latest_snapshot().await.unwrap(), None);
+        assert_eq!(
+            storage
+                .resolve_snapshot_publication(&operation_id)
+                .await
+                .unwrap(),
+            None
+        );
+
+        let root = storage
+            .put_blob(Bytes::from_static(b"valid-root"))
+            .await
+            .unwrap();
+        let published = storage
+            .publish_snapshot(SnapshotPublication {
+                operation_id: operation_id.clone(),
+                expected_parent: None,
+                snapshot: ArchiveSnapshot {
+                    at_event: ArchiveSnapshotPosition::Initial,
+                    root: BlobTreeId::Blob(root),
+                },
+            })
+            .await
+            .unwrap();
+
+        assert_eq!(storage.latest_snapshot().await.unwrap(), Some(published.clone()));
+        assert_eq!(
+            storage
+                .resolve_snapshot_publication(&operation_id)
+                .await
+                .unwrap(),
+            Some(published)
+        );
     }
 }
