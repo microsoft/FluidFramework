@@ -48,14 +48,14 @@ The choice of collaboration technology becomes part of the product architecture 
 
 A foundation for durable human-AI artifacts should be evaluated against at least six requirements.
 
-| Requirement | Why it matters |
-| --- | --- |
-| Structured, addressable state | Agents need to target sections, tasks, nodes, and fields rather than rewrite an entire serialized document. |
+| Requirement                    | Why it matters                                                                                                              |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| Structured, addressable state  | Agents need to target sections, tasks, nodes, and fields rather than rewrite an entire serialized document.                 |
 | Predictable concurrent editing | Human and agent changes must converge without forcing application developers to invent conflict behavior for every feature. |
-| Reviewable AI workflows | Products need a way to preview, accept, reject, revise, or partially apply agent-authored changes. |
-| Local responsiveness | A collaborator should see their own edit immediately, even while synchronization is in progress. |
-| Durable evolution | The data model must accommodate application growth, schema changes, recovery, and long-lived documents. |
-| Operable deployment | Authentication, storage, networking, observability, and service ownership must be considered alongside the client library. |
+| Reviewable AI workflows        | Products need a way to preview, accept, reject, revise, or partially apply agent-authored changes.                          |
+| Local responsiveness           | A collaborator should see their own edit immediately, even while synchronization is in progress.                            |
+| Durable evolution              | The data model must accommodate application growth, schema changes, recovery, and long-lived documents.                     |
+| Operable deployment            | Authentication, storage, networking, observability, and service ownership must be considered alongside the client library.  |
 
 No framework satisfies all of these requirements by itself. Authentication, authorization, audit, retention, search, and regulatory controls remain responsibilities of the surrounding product and service architecture.
 
@@ -148,12 +148,12 @@ The collaboration ecosystem contains strong alternatives. A credible recommendat
 
 This comparison is architectural rather than a performance benchmark. Actual results depend on document shape, edit patterns, network topology, persistence design, and workload scale.
 
-| Technology | Distinctive strength | When it may be the better fit | Lesson for Fluid |
-| --- | --- | --- | --- |
-| [Yjs](https://docs.yjs.dev/) | Mature ecosystem for collaborative text, editor bindings, and network-provider flexibility. | Text-centric products, especially when a supported editor integration is the dominant requirement. | Collaborative text must be excellent, easy to integrate, and demonstrated with production-oriented examples. |
-| [Automerge](https://automerge.org/docs/) | Clear local-first model with offline editing, mergeable history, and JSON-like data. | Applications in which extended offline work, replica autonomy, or local ownership is central. | History, offline behavior, and the local developer experience should be easier to understand and use. |
-| [Loro](https://loro.dev/docs) | Structured CRDTs, including rich text and movable tree-oriented data. | Products that prioritize decentralized structured-data merging or need its specific conflict semantics. | Structural conflicts such as concurrent moves and deletes deserve explicit documentation and testable guarantees. |
-| [Liveblocks](https://liveblocks.io/docs) | Managed collaboration features, polished APIs, comments, notifications, presence, and editor integrations. | Teams optimizing for fast delivery through a hosted collaboration platform. | Developers judge a platform by time to first successful feature, not only by the power of its primitives. |
+| Technology                               | Distinctive strength                                                                                       | When it may be the better fit                                                                           | Lesson for Fluid                                                                                                  |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| [Yjs](https://docs.yjs.dev/)             | Mature ecosystem for collaborative text, editor bindings, and network-provider flexibility.                | Text-centric products, especially when a supported editor integration is the dominant requirement.      | Collaborative text must be excellent, easy to integrate, and demonstrated with production-oriented examples.      |
+| [Automerge](https://automerge.org/docs/) | Clear local-first model with offline editing, mergeable history, and JSON-like data.                       | Applications in which extended offline work, replica autonomy, or local ownership is central.           | History, offline behavior, and the local developer experience should be easier to understand and use.             |
+| [Loro](https://loro.dev/docs)            | Structured CRDTs, including rich text and movable tree-oriented data.                                      | Products that prioritize decentralized structured-data merging or need its specific conflict semantics. | Structural conflicts such as concurrent moves and deletes deserve explicit documentation and testable guarantees. |
+| [Liveblocks](https://liveblocks.io/docs) | Managed collaboration features, polished APIs, comments, notifications, presence, and editor integrations. | Teams optimizing for fast delivery through a hosted collaboration platform.                             | Developers judge a platform by time to first successful feature, not only by the power of its primitives.         |
 
 ### 5.1 Yjs
 
