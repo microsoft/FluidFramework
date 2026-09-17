@@ -1,19 +1,4 @@
-//! Transparent per-payload zlib compression for Sea event archives.
-//!
-//! Each record and snapshot is one independent zlib frame. Positions, snapshot
-//! boundaries, capabilities, and underlying error classifications pass through
-//! unchanged; stored payload bytes do not. Reads reject malformed, truncated,
-//! or extended frames as [`ErrorKind::Corrupt`].
-//!
-//! Encoding and decoding buffer one complete payload in memory. This wrapper
-//! does not impose a decoded-size bound, so callers handling untrusted storage
-//! should enforce a payload limit in another layer. A returned reader decodes
-//! only the item being polled and adds no stream buffer or background task;
-//! dropping it cancels further wrapper work, while underlying cancellation and
-//! backpressure behavior remain the store's responsibility.
-//!
-//! Compression should normally wrap encryption so compression happens before
-//! encryption. Reversing that order generally prevents useful compression.
+#![doc = include_str!("../README.md")]
 
 use std::io::{Read, Write};
 
@@ -297,6 +282,52 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn classifies_malformed_stored_payloads_as_corrupt() {
+        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
+            .await
+            .unwrap();
+        let session = sequencer
+            .open_session(
+                AuthorId::new(Bytes::from_static(b"corrupt-author")).unwrap(),
+                SessionId::new(Bytes::from_static(b"corrupt-session")).unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+        let compressed = CompressionSession::new(session.clone());
+
+        let blob = session
+            .put_blob(Bytes::from_static(b"not a zlib frame"))
+            .await
+            .unwrap();
+        let blob_error = compressed.get_blob(blob).await.unwrap_err();
+        assert!(matches!(blob_error, CompressionError::Corrupt(_)));
+        assert_eq!(blob_error.kind(), ErrorKind::Corrupt);
+
+        let receipt = session
+            .submit(EventSubmission {
+                operation_id: OperationId::new(Bytes::from_static(b"corrupt-operation")).unwrap(),
+                reference: None,
+                event: sea_core::Event {
+                    payload: Bytes::from_static(b"not a zlib frame"),
+                    blob_tree: None,
+                },
+            })
+            .await
+            .unwrap();
+
+        let mut history = compressed.read(None, Some(receipt.position)).await.unwrap();
+        let read_error = history.next().await.unwrap().unwrap_err();
+        assert!(matches!(read_error, CompressionError::Corrupt(_)));
+        assert_eq!(read_error.kind(), ErrorKind::Corrupt);
+
+        let mut load = compressed.load(None).await.unwrap();
+        let load_error = load.next().await.unwrap().unwrap_err();
+        assert!(matches!(load_error, CompressionError::Corrupt(_)));
+        assert_eq!(load_error.kind(), ErrorKind::Corrupt);
+    }
+
+    #[tokio::test]
     async fn passes_session_conformance() {
         let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
             .await
@@ -327,6 +358,14 @@ mod tests {
         let mut extended = encoded.to_vec();
         extended.extend_from_slice(b"trailing bytes");
         assert!(decompress_payload(&Bytes::from(extended)).is_err());
+    }
+
+    #[test]
+    fn round_trips_an_empty_payload() {
+        let payload = Bytes::new();
+        let encoded = compress_payload(&payload).unwrap();
+
+        assert_eq!(decompress_payload(&encoded).unwrap(), payload);
     }
 
     #[test]
