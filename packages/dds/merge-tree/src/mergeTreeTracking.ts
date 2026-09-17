@@ -152,9 +152,8 @@ export class TrackingGroupCollection {
 	}
 
 	public matches(trackingCollection: TrackingGroupCollection): boolean {
-		const trackingGroups: ReadonlySet<ITrackingGroup> | undefined =
-			trackingCollection?.trackingGroups;
-		if (this._trackingGroups.size !== trackingGroups?.size) {
+		const trackingGroups: ReadonlySet<ITrackingGroup> = trackingCollection.trackingGroups;
+		if (this._trackingGroups.size !== trackingGroups.size) {
 			return false;
 		}
 		for (const tg of this._trackingGroups.values()) {
