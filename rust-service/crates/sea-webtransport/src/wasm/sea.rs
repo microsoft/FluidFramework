@@ -36,7 +36,7 @@ use wasm_bindgen::{JsCast as _, prelude::*};
 use wasm_bindgen_futures::JsFuture;
 
 use super::{
-    AsyncRequestTransport, SeaDirectoryEntries, SeaLoadResult, call_method,
+    AsyncRequestTransport, SeaDirectoryEntries, SeaLoadResult, call_method, call_optional_method,
     sea_protocol_v1 as protocol,
 };
 use crate::{
@@ -682,7 +682,7 @@ impl ClientTransport for InjectedTransport {
     }
 
     fn disconnect(&self) -> Result<(), Self::Error> {
-        call_method(&self.inner.borrow(), "disconnect", &[]).map(|_| ())
+        call_optional_method(&self.inner.borrow(), "disconnect", &[]).map(|_| ())
     }
 }
 

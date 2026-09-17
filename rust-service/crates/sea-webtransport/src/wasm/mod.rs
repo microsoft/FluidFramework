@@ -90,6 +90,23 @@ pub(crate) fn call_method(
     function.apply(target, &Array::from_iter(arguments.iter()))
 }
 
+pub(crate) fn call_optional_method(
+    target: &JsValue,
+    name: &str,
+    arguments: &[JsValue],
+) -> Result<Option<JsValue>, JsValue> {
+    let method = Reflect::get(target, &JsValue::from_str(name))?;
+    if method.is_null() || method.is_undefined() {
+        return Ok(None);
+    }
+    let function = method
+        .dyn_into::<Function>()
+        .map_err(|_| js_error(&format!("transport member {name} is not callable")))?;
+    function
+        .apply(target, &Array::from_iter(arguments.iter()))
+        .map(Some)
+}
+
 pub(crate) fn js_error(message: &str) -> JsValue {
     js_sys::Error::new(message).into()
 }
