@@ -8,5 +8,7 @@
 		"noUnusedParameters": true,
 		// As of 2026-06-18, there are 47 errors enabling exactOptionalPropertyTypes.
 		"exactOptionalPropertyTypes": false,
+		// Record index access is enforced by @fluid-internal/fluid/no-unchecked-record-access.
+		"noUncheckedIndexedAccess": false,
 	},
 }

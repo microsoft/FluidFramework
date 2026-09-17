@@ -110,11 +110,8 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 			}
 		}
 
-		const driveId = joinSessionMatch[3] ?? joinSessionMatch[5];
+		const driveId = joinSessionMatch[3] || joinSessionMatch[5];
 		const itemId = joinSessionMatch[4];
-		if (driveId === undefined || itemId === undefined) {
-			throw new Error("ODC URL matched without drive and item ID capture groups");
-		}
 
 		return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
 	} else {
@@ -125,9 +122,6 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 		}
 		const driveId = joinSessionMatch[2];
 		const itemId = joinSessionMatch[3];
-		if (driveId === undefined || itemId === undefined) {
-			throw new Error("ODSP URL matched without drive and item ID capture groups");
-		}
 
 		return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
 	}

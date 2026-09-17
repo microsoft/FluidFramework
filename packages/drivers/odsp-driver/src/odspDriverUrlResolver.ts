@@ -103,12 +103,14 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 	 * {@inheritDoc @fluidframework/driver-definitions#IUrlResolver.resolve}
 	 */
 	public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
-		if (request.headers?.[DriverHeader.createNew]) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- IRequest headers are intentionally untyped.
+		const createNewHeader = request.headers?.[DriverHeader.createNew];
+		if (createNewHeader) {
 			const [siteURL, queryString] = request.url.split("?");
 
 			const searchParams = new URLSearchParams(queryString);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-			const fileName: string = request.headers[DriverHeader.createNew].fileName;
+			const fileName: string = createNewHeader.fileName;
 			const driveID = searchParams.get("driveId");
 			const filePath = searchParams.get("path");
 			const packageName = searchParams.get("containerPackageName");
@@ -242,9 +244,6 @@ export function decodeOdspUrl(url: string): {
 	fileVersion?: string;
 } {
 	const [siteUrl, queryString] = url.split("?");
-	if (siteUrl === undefined) {
-		throw new Error("ODSP URL did not contain a site URL");
-	}
 
 	const searchParams = new URLSearchParams(queryString);
 

@@ -30,17 +30,6 @@ const createUtEpochTracker = (
 	logger: ITelemetryLoggerExt,
 ): EpochTracker => new EpochTracker(createUtLocalCache(), fileEntry, logger);
 
-function getRequiredMessage(
-	messages: ISequencedDocumentMessage[],
-	index: number,
-): ISequencedDocumentMessage {
-	const message = messages[index];
-	if (message === undefined) {
-		throw new Error(`Expected message at index ${index}`);
-	}
-	return message;
-}
-
 describe("DeltaStorageService", () => {
 	/*
 	 * Use fake urls so we don't accidental make real calls that make our tests flakey.
@@ -133,20 +122,18 @@ describe("DeltaStorageService", () => {
 			);
 			assert(!partialResult, "partialResult === false");
 			assert.equal(messages.length, 2, "Deserialized feed response is not of expected length");
-			const firstMessage = getRequiredMessage(messages, 0);
-			const secondMessage = getRequiredMessage(messages, 1);
 			assert.equal(
-				firstMessage.sequenceNumber,
+				messages[0].sequenceNumber,
 				1,
 				"First element of feed response has invalid sequence number",
 			);
 			assert.equal(
-				secondMessage.sequenceNumber,
+				messages[1].sequenceNumber,
 				2,
 				"Second element of feed response has invalid sequence number",
 			);
 			assert.equal(
-				secondMessage.type,
+				messages[1].type,
 				"noop",
 				"Second element of feed response has invalid op type",
 			);
@@ -205,20 +192,18 @@ describe("DeltaStorageService", () => {
 			);
 			assert(!partialResult, "partialResult === false");
 			assert.equal(messages.length, 2, "Deserialized feed response is not of expected length");
-			const firstMessage = getRequiredMessage(messages, 0);
-			const secondMessage = getRequiredMessage(messages, 1);
 			assert.equal(
-				firstMessage.sequenceNumber,
+				messages[0].sequenceNumber,
 				1,
 				"First element of feed response has invalid sequence number",
 			);
 			assert.equal(
-				secondMessage.sequenceNumber,
+				messages[1].sequenceNumber,
 				2,
 				"Second element of feed response has invalid sequence number",
 			);
 			assert.equal(
-				secondMessage.type,
+				messages[1].type,
 				"noop",
 				"Second element of feed response has invalid op type",
 			);

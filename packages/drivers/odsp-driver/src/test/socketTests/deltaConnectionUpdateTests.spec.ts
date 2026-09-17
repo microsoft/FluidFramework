@@ -184,12 +184,8 @@ describe("DeltaConnectionMetadata update tests", () => {
 
 		const handler = (metadata: Record<string, string>): void => {
 			eventRaised = true;
-			const sensitivityLabelsInfo = metadata.sensitivityLabelsInfo;
-			if (sensitivityLabelsInfo === undefined) {
-				throw new Error("Metadata update did not include sensitivityLabelsInfo");
-			}
 			assert.deepStrictEqual(
-				JSON.parse(sensitivityLabelsInfo),
+				JSON.parse(metadata.sensitivityLabelsInfo),
 				parsedResponse.sensitivityLabelsInfo,
 				"sensitivity info via event should match",
 			);
@@ -220,12 +216,8 @@ describe("DeltaConnectionMetadata update tests", () => {
 
 		const handler = (metadata: Record<string, string>): void => {
 			eventRaised = true;
-			const sensitivityLabelsInfo = metadata.sensitivityLabelsInfo;
-			if (sensitivityLabelsInfo === undefined) {
-				throw new Error("Metadata update did not include sensitivityLabelsInfo");
-			}
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-			const arg1 = JSON.parse(sensitivityLabelsInfo).labels;
+			const arg1 = JSON.parse(metadata.sensitivityLabelsInfo).labels;
 			const arg2: ISensitivityLabel[] | undefined = content.labels;
 			assert.deepStrictEqual(arg1, arg2, "label via event should match");
 		};

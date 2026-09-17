@@ -24,8 +24,9 @@ class MockCache implements ICache {
 
 	public async write(batchNumber: string, data: string): Promise<void> {
 		this.writeCount++;
-		this.data[batchNumber] = JSON.parse(data);
-		for (const op of this.data[batchNumber] as CacheEntry) {
+		const batch = JSON.parse(data) as CacheEntry;
+		this.data[batchNumber] = batch;
+		for (const op of batch) {
 			// JSON.serialize converts undefined to null
 			if (op !== null) {
 				this.opsWritten++;
@@ -34,7 +35,7 @@ class MockCache implements ICache {
 	}
 
 	public async read(batchNumber: string): Promise<string | undefined> {
-		const content = this.data[batchNumber];
+		const content: unknown | undefined = this.data[batchNumber];
 		if (content === undefined) {
 			return undefined;
 		}
@@ -83,11 +84,7 @@ async function validate(
 	}
 
 	if (expectedArr.length > 0) {
-		const lastExpectedOp = expectedArr[expectedArr.length - 1];
-		if (lastExpectedOp === undefined) {
-			throw new Error("Expected a final op in the non-empty expected array");
-		}
-		const last = lastExpectedOp.sequenceNumber + 1;
+		const last = expectedArr[expectedArr.length - 1].sequenceNumber + 1;
 
 		result = await cache.get(last, undefined);
 		assert(result.length === 0);
@@ -441,16 +438,8 @@ describe("OdspDeltaStorageWithCache", () => {
 			assert(ops.length === 0);
 		} else {
 			assert(ops.length === to - from);
-			if (ops.length === 0) {
-				return;
-			}
-			const firstOp = ops[0];
-			const lastOp = ops[ops.length - 1];
-			if (firstOp === undefined || lastOp === undefined) {
-				throw new Error("Expected first and last ops in the non-empty result");
-			}
-			assert(firstOp.sequenceNumber === from);
-			assert(lastOp.sequenceNumber === to - 1);
+			assert(ops.length === 0 || ops[0].sequenceNumber === from);
+			assert(ops.length === 0 || ops[ops.length - 1].sequenceNumber === to - 1);
 		}
 	}
 

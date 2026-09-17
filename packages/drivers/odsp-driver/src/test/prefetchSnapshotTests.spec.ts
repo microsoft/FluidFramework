@@ -134,14 +134,6 @@ describe("Tests for prefetching snapshot", () => {
 		},
 	};
 
-	function getRequiredSnapshotTree(name: ".app" | ".protocol"): ISnapshotTree {
-		const tree = snapshotTreeWithGroupId.trees[name];
-		if (tree === undefined) {
-			throw new Error(`Expected ${name} snapshot tree`);
-		}
-		return tree;
-	}
-
 	const blobContents = new Map<string, ArrayBuffer>([
 		[
 			"bARD4RKvW4LL1KmaUKp6hUMSp",
@@ -290,14 +282,10 @@ describe("Tests for prefetching snapshot", () => {
 					),
 			);
 
-			const firstTree = odspSnapshot.trees[0];
-			if (firstTree === undefined) {
-				throw new Error("Expected the ODSP snapshot to contain a tree");
-			}
 			const networkSnapshot: IOdspSnapshot = {
 				...odspSnapshot,
 				id: "network-id",
-				trees: [{ ...firstTree, id: "network-id" }],
+				trees: [{ ...odspSnapshot.trees[0], id: "network-id" }],
 			};
 			const version = await mockFetchSingle(
 				async () => service.getVersions(null, 1, undefined, FetchSource.noCache),
@@ -731,13 +719,13 @@ describe("Tests for prefetching snapshot", () => {
 			version: persistedCacheValueVersion,
 		};
 		const odspCompactSnapshotWithGroupId = convertToCompactSnapshot(snapshotWithGroupId);
-		const appTree = getRequiredSnapshotTree(".app");
-		const protocolTree = getRequiredSnapshotTree(".protocol");
+		const appTree: ISnapshotTree | undefined = snapshotTreeWithGroupId.trees[".app"];
+		assert(appTree !== undefined, "App tree should be present");
 		const snapshotTreeWithGroupIdToCompare: ISnapshotTree = {
 			blobs: { ...appTree.blobs },
 			trees: {
 				...appTree.trees,
-				".protocol": protocolTree,
+				".protocol": snapshotTreeWithGroupId.trees[".protocol"],
 			},
 			id: "SnapshotId",
 		};
@@ -985,13 +973,13 @@ describe("Tests for prefetching snapshot", () => {
 			snapshotFormatV: 1,
 		};
 		const odspCompactSnapshotWithGroupId = convertToCompactSnapshot(snapshotWithGroupId);
-		const appTree = getRequiredSnapshotTree(".app");
-		const protocolTree = getRequiredSnapshotTree(".protocol");
+		const appTree: ISnapshotTree | undefined = snapshotTreeWithGroupId.trees[".app"];
+		assert(appTree !== undefined, "App tree should be present");
 		const snapshotTreeWithGroupIdToCompare: ISnapshotTree = {
 			blobs: { ...appTree.blobs },
 			trees: {
 				...appTree.trees,
-				".protocol": protocolTree,
+				".protocol": snapshotTreeWithGroupId.trees[".protocol"],
 			},
 			id: "SnapshotId",
 		};

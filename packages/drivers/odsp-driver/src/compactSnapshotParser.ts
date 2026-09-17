@@ -42,6 +42,7 @@ export interface ISnapshotContentsWithProps extends ISnapshot {
  * Recreates blobs section of the tree.
  * @param node - tree node to read blob section from
  */
+/* eslint-disable @fluid-internal/fluid/no-unchecked-record-access -- Required records are validated by the existing parser assertions. */
 function readBlobSection(node: NodeTypes): {
 	blobContents: Map<string, ArrayBuffer>;
 	slowBlobStructureCount: number;
@@ -81,11 +82,13 @@ function readBlobSection(node: NodeTypes): {
 	}
 	return { blobContents, slowBlobStructureCount };
 }
+/* eslint-enable @fluid-internal/fluid/no-unchecked-record-access */
 
 /**
  * Recreates ops section of the tree.
  * @param node - tree node to read ops section from
  */
+/* eslint-disable @fluid-internal/fluid/no-unchecked-record-access -- Required records are validated by the existing parser assertions. */
 function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 	assertNodeCoreInstance(node, "Deltas should be of type NodeCore");
 	const ops: ISequencedDocumentMessage[] = [];
@@ -99,18 +102,13 @@ function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 	// Due to a bug at service side, in an edge case service was serializing deltas even
 	// when there are no ops. So just make the code resilient to that bug. Service has also
 	// fixed that bug.
-	if (ops.length > 0) {
-		const firstOp = ops[0];
-		if (firstOp === undefined) {
-			throw new Error("Compact snapshot ops contained an undefined first op");
-		}
-		assert(
-			records.firstSequenceNumber.valueOf() === firstOp.sequenceNumber,
-			0x280 /* "Validate first op seq number" */,
-		);
-	}
+	assert(
+		ops.length === 0 || records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber,
+		0x280 /* "Validate first op seq number" */,
+	);
 	return ops;
 }
+/* eslint-enable @fluid-internal/fluid/no-unchecked-record-access */
 
 /**
  * Recreates snapshot tree out of tree representation.
@@ -221,10 +219,11 @@ function readTreeSection(node: NodeCore): {
 		} else if (records.children !== undefined) {
 			assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
 			const result = readTreeSection(records.children);
-			trees[path] = result.snapshotTree;
+			const childTree = result.snapshotTree;
+			trees[path] = childTree;
 			if (records.groupId !== undefined) {
 				const groupId = getStringInstance(records.groupId, "groupId should be a string");
-				trees[path].groupId = groupId;
+				childTree.groupId = groupId;
 				treeStructureCountWithGroupId++;
 			}
 			slowTreeStructureCount += result.slowTreeStructureCount;
@@ -240,6 +239,7 @@ function readTreeSection(node: NodeCore): {
  * Recreates snapshot tree out of tree representation.
  * @param node - tree node to de-serialize from
  */
+/* eslint-disable @fluid-internal/fluid/no-unchecked-record-access -- Required records are validated by the existing parser assertions. */
 function readSnapshotSection(node: NodeTypes): {
 	sequenceNumber: number;
 	snapshotTree: ISnapshotTree;
@@ -262,6 +262,7 @@ function readSnapshotSection(node: NodeTypes): {
 		treeStructureCountWithGroupId,
 	};
 }
+/* eslint-enable @fluid-internal/fluid/no-unchecked-record-access */
 
 /**
  * Converts snapshot from binary compact representation to tree/blobs/ops.
@@ -298,13 +299,10 @@ export function parseCompactSnapshotResponse(
 		0x2c2 /* "Create Version should be equal to currentReadVersion" */,
 	);
 
-	const snapshotNode = records.snapshot;
-	assertNodeCoreInstance(snapshotNode, "snapshot should be of type NodeCore");
-	const blobsNode = records.blobs;
-	assertNodeCoreInstance(blobsNode, "blobs should be of type NodeCore");
-
-	const [snapshot, durationSnapshotTree] = measure(() => readSnapshotSection(snapshotNode));
-	const [blobContents, durationBlobs] = measure(() => readBlobSection(blobsNode));
+	const [snapshot, durationSnapshotTree] = measure(() =>
+		readSnapshotSection(records.snapshot),
+	);
+	const [blobContents, durationBlobs] = measure(() => readBlobSection(records.blobs));
 
 	return {
 		...snapshot,

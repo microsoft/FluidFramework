@@ -9,6 +9,7 @@ import { bufferToString, fromBase64ToUtf8 } from "@fluid-internal/client-utils";
 import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	ISnapshot,
+	ISnapshotTree,
 	IDocumentAttributes,
 	IFileEntry,
 } from "@fluidframework/driver-definitions/internal";
@@ -154,24 +155,20 @@ describe("Create New Utils Tests", () => {
 		);
 		assert.strictEqual(snapshot.blobContents.size, 2, "2 blobs should be there");
 
-		const appTree = snapshotTree.trees[".app"];
-		const protocolTree = snapshotTree.trees[".protocol"];
+		const appTree: ISnapshotTree | undefined = snapshotTree.trees[".app"];
+		const protocolTree: ISnapshotTree | undefined = snapshotTree.trees[".protocol"];
 		assert(appTree !== undefined, "App tree should be there");
 		assert(protocolTree !== undefined, "Protocol tree should be there");
 
-		const appTreeBlobId = appTree.blobs.attributes;
-		if (appTreeBlobId === undefined) {
-			throw new Error("App tree attributes blob id should exist");
-		}
+		const appTreeBlobId: string | undefined = appTree.blobs.attributes;
+		assert(appTreeBlobId !== undefined, "App attributes blob should be there");
 		const appTreeBlobValBuffer = snapshot.blobContents.get(appTreeBlobId);
 		assert(appTreeBlobValBuffer !== undefined, "app blob value should exist");
 		const appTreeBlobVal = bufferToString(appTreeBlobValBuffer, "utf8");
 		assert(appTreeBlobVal === blobContent, "Blob content should match");
 
-		const docAttributesBlobId = protocolTree.blobs.attributes;
-		if (docAttributesBlobId === undefined) {
-			throw new Error("Protocol tree attributes blob id should exist");
-		}
+		const docAttributesBlobId: string | undefined = protocolTree.blobs.attributes;
+		assert(docAttributesBlobId !== undefined, "Protocol attributes blob should be there");
 		const docAttributesBuffer = snapshot.blobContents.get(docAttributesBlobId);
 		assert(docAttributesBuffer !== undefined, "protocol attributes blob value should exist");
 		const docAttributesBlobValue = bufferToString(docAttributesBuffer, "utf8");

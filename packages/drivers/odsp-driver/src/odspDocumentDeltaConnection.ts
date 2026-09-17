@@ -599,15 +599,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 					duration: data === undefined ? undefined : performanceNow() - data.start,
 				};
 				if (messages !== undefined && messages.length > 0) {
-					const firstMessage = messages[0];
-					const lastMessage = messages[messages.length - 1];
-					if (firstMessage === undefined || lastMessage === undefined) {
-						throw new Error("Non-empty messages array contained an undefined message");
-					}
 					this.logger.sendPerformanceEvent({
 						...common,
-						first: firstMessage.sequenceNumber,
-						last: lastMessage.sequenceNumber,
+						first: messages[0].sequenceNumber,
+						last: messages[messages.length - 1].sequenceNumber,
 						length: messages.length,
 					});
 					this.emit("op", this.documentId, messages);
