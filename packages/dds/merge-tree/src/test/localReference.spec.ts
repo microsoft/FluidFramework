@@ -77,6 +77,28 @@ function addTombstones(
 }
 
 describe("LocalReferenceCollection", () => {
+	describe("size", () => {
+		it("counts stored references as they are added and removed", () => {
+			const { collection } = setup("abc", 0);
+			assert.equal(collection.size, 0);
+
+			const ref = collection.createLocalRef(1, ReferenceType.Simple, undefined);
+			assert.equal(collection.size, 1);
+			collection.createLocalRef(2, ReferenceType.Transient, undefined);
+			assert.equal(collection.size, 1);
+
+			collection.removeLocalRef(ref);
+			assert.equal(collection.size, 0);
+		});
+
+		it("includes references in before, at, and after buckets", () => {
+			const { collection } = setup("abc", 1);
+			addTombstones(collection, "before", ["before-0", "before-1"]);
+			addTombstones(collection, "after", ["after-0"]);
+			assert.equal(collection.size, 6);
+		});
+	});
+
 	describe("walkReferences", () => {
 		it("walks all references when no start is provided", () => {
 			const { collection } = setup("abc", 2);
