@@ -29,7 +29,7 @@ Started and finished: <!-- TODO(required): record known timestamps or unknown --
 
 ## Behavioral Contracts and Test Layers
 
-<!-- TODO(required): for every changed production crate, name the relied-upon behavior and owning contract; list focused module/crate tests, shared conformance tests, and integration/generated/browser tests with the distinct responsibility each proves. For every already-adequate disposition, name the exact owning decision and the nearest test that would fail if only that decision regressed; reject topical coverage that another component can satisfy while the behavior remains broken. If documentation or tests were not changed for a crate, identify the sufficient existing evidence or differently owned boundary and justify the omission. -->
+<!-- TODO(required): for every changed production crate, name the relied-upon behavior and quote or link the precise owning contract text; implementation and tests do not substitute for a promise. List focused module/crate tests, shared conformance tests, and integration/generated/browser tests with the distinct responsibility each proves. For every already-adequate disposition, name the exact owning decision and the nearest test that would fail if only that decision regressed; reject topical coverage that another component can satisfy while the behavior remains broken. Separately assess diagnostic locality: shared conformance does not replace a practical owner-local regression test merely because the implementation invokes it. If documentation or tests were not changed for a crate, identify the sufficient existing evidence or differently owned boundary and justify the omission. -->
 
 ## Notable Events
 

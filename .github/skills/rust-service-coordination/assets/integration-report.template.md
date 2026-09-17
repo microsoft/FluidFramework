@@ -23,7 +23,7 @@ Integration commit: <!-- TODO(required): record the immutable Phase 2 integratio
 
 ## Contract and Regression Review
 
-<!-- TODO(required): for each accepted behavior change or bug fix, verify that relied-upon behavior is documented at the owning boundary and each changed production crate has proportionate focused regression evidence or a justified omission. For every already-adequate disposition, identify the exact owning decision and verify the nearest cited test would fail if only that decision regressed. Confirm that conformance and broader integration/generated/browser tests prove distinct responsibilities rather than allowing another component to mask the target defect; record gaps, duplication, or misleading contracts for Phase 3. -->
+<!-- TODO(required): for each accepted behavior change or bug fix, verify that precise contract text promises the relied-upon behavior and each changed production crate has proportionate focused regression evidence or a justified omission. For every already-adequate disposition, identify the exact owning decision, verify the nearest cited test would fail if only that decision regressed, and assess whether failure diagnoses that implementation locally. Confirm that shared conformance and broader integration/generated/browser tests prove distinct responsibilities rather than replacing practical owner-local diagnosis or allowing another component to mask the target defect; record gaps, duplication, or misleading contracts for Phase 3. -->
 
 ## Cross-Workstream Findings
 

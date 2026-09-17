@@ -252,6 +252,12 @@ async function validateMarkdown(path, headings, errors) {
 		return;
 	}
 	const content = await readFile(path, "utf8");
+	const topLevelHeadings = content.match(/^# .+$/gm) ?? [];
+	if (topLevelHeadings.length !== 1) {
+		errors.push(
+			`${relative(repositoryRoot, path)} must contain exactly one top-level heading`,
+		);
+	}
 	for (const heading of headings) {
 		if (!content.includes(`## ${heading}`)) {
 			errors.push(`${relative(repositoryRoot, path)} is missing heading: ${heading}`);

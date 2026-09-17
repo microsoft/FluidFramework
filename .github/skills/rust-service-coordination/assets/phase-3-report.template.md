@@ -26,7 +26,7 @@ Phase 3 commit: <!-- TODO(required): record the final commit when created -->
 
 ## Contract and Test Quality
 
-<!-- TODO(required): assess whether accepted work documents behavior consumers rely on, localizes regression tests in owning modules or crates when practical, uses conformance for shared laws, and keeps broader tests only for distinct boundary evidence. Challenge every already-adequate disposition by asking which test would fail if only the owning decision regressed and whether another component could mask that defect. Identify unjustified omissions, redundant layers, false promises, and low-value documentation or test churn. -->
+<!-- TODO(required): assess whether precise contract text promises behavior consumers rely on, regression tests diagnose owning modules or crates when practical, conformance covers shared laws, and broader tests retain only distinct boundary evidence. Challenge every already-adequate disposition by asking which test would fail if only the owning decision regressed, whether another component could mask that defect, and whether a remote shared assertion leaves practical local diagnosis absent. Identify unjustified omissions, redundant layers, false promises, and low-value documentation or test churn. -->
 
 ## Learning and Process Findings
 

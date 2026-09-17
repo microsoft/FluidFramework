@@ -90,7 +90,8 @@ For each selected boundary:
    it.
 2. State the behavior those consumers need, then locate the contract that
    promises it. Distinguish a missing promise from behavior consumers should
-   stop assuming.
+  stop assuming. Quote or link the precise contract text; implementation and
+  test behavior are evidence of what code does, not substitutes for a promise.
 3. Locate existing focused, conformance, integration, generated-binding, and
    platform evidence. State the distinct responsibility of each useful layer.
   For each candidate test, identify the exact owning decision whose regression
@@ -121,7 +122,10 @@ A finding may be:
 - **already adequate** when current contracts and tests cover the risk with no
   material gap. Name the exact owning decision and the nearest test that would
   fail if only that decision regressed. If no such test exists and focused
-  coverage is practical, the evidence is not already adequate;
+  coverage is practical, the evidence is not already adequate. Separately
+  identify the precise contract text and whether failure diagnoses the owning
+  implementation locally. A shared conformance invocation does not replace a
+  practical owner-local regression test merely because it eventually fails;
 - **consumer corrected** when code was relying on behavior the owning contract
   should not promise;
 - **deferred** when the gap is real but outside the run budget or blocked, with a
@@ -163,6 +167,9 @@ In addition to the coordination skill's normal Phase 2 checks, verify:
 - each `already adequate` disposition identifies a test that discriminates the
   exact owning decision, or explains why the narrowest practical evidence must
   cross a broader boundary;
+- each relied-upon behavior links precise contract text rather than inferring a
+  promise from implementation or tests, and shared conformance is not accepted
+  as owner-local diagnosis when a focused implementation test is practical;
 - conformance tests describe implementation-independent laws;
 - integration and browser tests prove distinct boundaries;
 - tests are deterministic and fail diagnostically;
