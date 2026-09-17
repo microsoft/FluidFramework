@@ -24,9 +24,11 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { OdspPointInTimeDocumentService } from "../pointInTimeDriver/odspPointInTimeDocumentService.js";
 
-/** Minimal sequenced message: only the sequence number matters to the wrapper's logic. */
-const msg = (sequenceNumber: number): ISequencedDocumentMessage =>
-	({ sequenceNumber }) as unknown as ISequencedDocumentMessage;
+const msg = (
+	sequenceNumber: number,
+	properties: Partial<ISequencedDocumentMessage> = {},
+): ISequencedDocumentMessage =>
+	({ sequenceNumber, clientId: "client", ...properties }) as ISequencedDocumentMessage;
 
 /**
  * A scripted inner delta-storage stream: yields each batch (as a `{done:false}` read) in order, then
@@ -37,7 +39,24 @@ function streamFromBatches(batches: number[][]): IStream<ISequencedDocumentMessa
 	return {
 		read: async (): Promise<IStreamResult<ISequencedDocumentMessage[]>> => {
 			if (index < batches.length) {
-				return { done: false, value: batches[index++].map(msg) };
+				return {
+					done: false,
+					value: batches[index++].map((sequenceNumber) => msg(sequenceNumber)),
+				};
+			}
+			return { done: true };
+		},
+	};
+}
+
+function streamFromMessages(
+	batches: ISequencedDocumentMessage[][],
+): IStream<ISequencedDocumentMessage[]> {
+	let index = 0;
+	return {
+		read: async (): Promise<IStreamResult<ISequencedDocumentMessage[]>> => {
+			if (index < batches.length) {
+				return { done: false, value: batches[index++] };
 			}
 			return { done: true };
 		},
@@ -243,6 +262,73 @@ describe("OdspPointInTimeDocumentService", () => {
 		it("yields nothing when the stream serves no ops", async () => {
 			assert.deepEqual(await readAll(12, 10, []), []);
 		});
+
+		it("rejects a target inside a runtime batch", async () => {
+			const inner = streamFromMessages([
+				[
+					msg(10, { metadata: { batch: true } }),
+					msg(11),
+					msg(12, { metadata: { batch: false } }),
+				],
+			]);
+			const { service } = makeService(11, inner);
+			const deltaStorage = await service.connectToDeltaStorage();
+
+			await assert.rejects(
+				drain(deltaStorage.fetchMessages(10, undefined)),
+				/not a complete materialization boundary/,
+			);
+		});
+
+		it("allows a target at the end of a runtime batch", async () => {
+			const inner = streamFromMessages([
+				[
+					msg(10, { metadata: { batch: true } }),
+					msg(11),
+					msg(12, { metadata: { batch: false } }),
+				],
+			]);
+			const { service } = makeService(12, inner);
+			const deltaStorage = await service.connectToDeltaStorage();
+
+			assert.deepEqual(await drain(deltaStorage.fetchMessages(10, undefined)), [10, 11, 12]);
+		});
+
+		it("allows replay that begins in an initial partial chunk stream", async () => {
+			const chunk = (sequenceNumber: number, chunkId: number): ISequencedDocumentMessage =>
+				msg(sequenceNumber, {
+					contents: JSON.stringify({
+						type: "chunkedOp",
+						contents: { chunkId, totalChunks: 3, contents: "part" },
+					}),
+				});
+			const { service } = makeService(12, streamFromMessages([[chunk(11, 2), chunk(12, 3)]]));
+			const deltaStorage = await service.connectToDeltaStorage();
+
+			assert.deepEqual(await drain(deltaStorage.fetchMessages(11, undefined)), [11, 12]);
+		});
+
+		it("allows a target that completes one of multiple interleaved chunk streams", async () => {
+			const chunk = (
+				sequenceNumber: number,
+				clientId: string,
+				chunkId: number,
+			): ISequencedDocumentMessage =>
+				msg(sequenceNumber, {
+					clientId,
+					contents: JSON.stringify({
+						type: "chunkedOp",
+						contents: { chunkId, totalChunks: 2, contents: "part" },
+					}),
+				});
+			const inner = streamFromMessages([
+				[chunk(10, "client-a", 1), chunk(11, "client-b", 1), chunk(12, "client-a", 2)],
+			]);
+			const { service } = makeService(12, inner);
+			const deltaStorage = await service.connectToDeltaStorage();
+
+			assert.deepEqual(await drain(deltaStorage.fetchMessages(10, undefined)), [10, 11, 12]);
+		});
 	});
 
 	describe("storage, stream, and lifecycle", () => {
@@ -255,7 +341,11 @@ describe("OdspPointInTimeDocumentService", () => {
 			const { service, recoverable } = makeService(100, streamFromBatches([]));
 			const storage = await service.connectToStorage();
 			const snapshot = await storage.getSnapshot?.({ scenarioName: "point-in-time-test" });
-			assert.equal(snapshot, recoverable.snapshot);
+			assert.deepEqual(snapshot, {
+				...recoverable.snapshot,
+				ops: [],
+				latestSequenceNumber: recoverable.snapshot.sequenceNumber,
+			});
 			assert.deepEqual(recoverable.snapshotFetchOptions, {
 				scenarioName: "point-in-time-test",
 				fetchSource: FetchSource.noCache,

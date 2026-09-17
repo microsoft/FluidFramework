@@ -749,6 +749,29 @@ export enum ScopeType {
     SummaryWrite = "summary:write"
 }
 
+// @beta @legacy
+export type SequenceNumberAvailability = {
+    readonly sequenceNumber: number;
+    readonly status: "available";
+} | {
+    readonly sequenceNumber: number;
+    readonly status: "unavailable";
+    readonly reason: SequenceNumberAvailabilityReason;
+} | {
+    readonly sequenceNumber: number;
+    readonly status: "unknown";
+    readonly reason: "transientFailure";
+};
+
+// @beta @legacy
+export type SequenceNumberAvailabilityReason =
+/** No retained snapshot on the current document lineage exists at or before the target. */
+"noRetainedBase"
+/** One or more operations required to replay from the retained base are authoritatively absent. */
+| "missingBridgingOps"
+/** The target is inside an atomic runtime batch or an incomplete chunked operation. */
+| "notMaterializationBoundary";
+
 // @public
 export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
 

@@ -33,8 +33,11 @@ earlier point in time — which spans two repositories:
 
 Part 1 is built in three components:
 
-- **Component A — the version manager**: choose which file version to load or replay from. **This
-  folder is Component A**, and this document is mostly about it.
+- **Component A — version selection**: choose which file version to load or replay from. Availability
+  uses the full manager in **this folder** for batched discovery and explicit lineage comparison.
+  Point-in-time loading uses the lightweight selector in
+  `../pointInTimeDriver/odspPointInTimeVersionManager.ts`; keeping its JSON-only request path separate
+  prevents availability-only compact parsing and validation logic from increasing the loader bundle.
 - **Component B — the recomposed driver**: load the chosen version and replay ops forward to the exact
   target. **Built** in `../pointInTimeDriver/`, exported through the consumer-injected
   `../pointInTime.ts` entrypoint — see [Part V](#part-v--components-b--c-as-built).
@@ -66,11 +69,13 @@ is either a bundle of ops or a saved snapshot of state.
   under which *both* snapshots (`.../opStream/snapshots/...`) and raw ops (`.../opStream?filter=...`) live.
 - **delta storage**: the durable REST op log (`OdspDeltaStorageService`), which fetches raw ops by
   sequence-number range and is retention-limited. Distinct from —
-- **trailing / bundled ops**: a small tail of ops baked *inside* a snapshot (up to `latestSequenceNumber`),
-  returned with the snapshot for free — not a separate fetch.
+- **trailing / bundled ops**: the contiguous entries actually present in `ISnapshot.ops`. Compact
+  snapshot `latestSequenceNumber` is storage's `lsn` and may be newer than the bundled tail, so it is
+  not by itself proof that those intervening ops are available.
 - **sequence number** = an op's global order index (a snapshot's is the op its tree is current through);
-  **latestSequenceNumber** = the last bundled trailing op; **minimumSequenceNumber (MSN)** = the
-  collaboration-window floor (seq all connected clients have acked) — **not** a retention/trimming signal.
+  **latestSequenceNumber** = the snapshot response's latest storage observation; **minimumSequenceNumber
+  (MSN)** = the collaboration-window floor (seq all connected clients have acked) — **not** a
+  retention/trimming signal.
 
 Chain of custody for one saved state: a **summarizer** writes a **summary** → stored as a **snapshot** →
 surfaced by ODSP as a **file version**. Same state, three names because three layers own it.
@@ -103,19 +108,18 @@ the driver's snapshot list.
 
 Any base at or before the target can be replayed forward to the target and yields the same state, so
 the choice is not about correctness. The **closest** one minimizes how many ops must be replayed, and
-minimizes the chance that the needed ops have been trimmed from retention. Selection therefore aims for
-the greatest version sequence number at or before the target. Because versions are enumerated
-newest-first and version order is expected to track sequence order, an early-stop scan finds it; if that
-ordering is ever violated, a valid but not-strictly-closest base may be chosen (still correct, just less
-optimal) — see [Part IV](#part-iv--directional) for the planned order-tolerant search.
+minimizes the chance that the needed ops have been trimmed from retention. Selection therefore resolves
+the sealed candidates and chooses the greatest version sequence number at or before the target, tolerating
+local inversions in the metadata order.
 
 ### How is a version's sequence number obtained?
 
 By fetching that version's snapshot from the **version-scoped snapshot endpoint**
-(`.../versions/{label}/opStream/snapshots/trees/latest?blobs=2`), which returns the snapshot in the
-driver's normal (`application/json` or `application/ms-fluid`) framing. The driver's existing snapshot
-parser reads it, and the sequence number is `trees[0].sequenceNumber`. `blobs=2` inlines blob contents
-so the parser has everything it needs.
+(`.../versions/{label}/opStream/snapshots/trees/latest?blobs=2`). Availability accepts the driver's
+normal JSON and compact framings because it also needs a reliable live storage watermark. The
+point-in-time loader selector requests JSON explicitly and reads only `trees[0].sequenceNumber`, so
+the loader bundle does not include the general snapshot parsers. `blobs=2` inlines the protocol
+attributes needed by both paths.
 
 ### Can a base be replayed across a version restore (a lineage change)?
 
@@ -145,8 +149,10 @@ these behaviors are tested with an in-memory fake.
 
 The list is newest-first, and the tip (index 0, the newest version) is excluded: it is the one version
 whose sequence number is not yet static, so it cannot be a stable base. Among the remaining (sealed)
-versions the answer is the closest one at or before the target — the greatest sequence number at or before
-the target when version order tracks sequence order, which an early-stop newest-first scan finds.
+versions the answer is the greatest sequence number at or before the target, even if metadata order has
+a local sequence inversion. Once scanning reaches an older document epoch after finding a candidate,
+selection retains and validates that current-lineage candidate instead of failing on irrelevant restored
+history.
 
 - **Target between two versions?** The closer, older one. `M-SELECT-01`
 - **Target equal to a version?** That version, an exact match (zero ops to replay). `M-SELECT-02`
@@ -166,8 +172,9 @@ the target when version order tracks sequence order, which an early-stop newest-
 
 ### What work does it avoid when scanning?
 
-- **Resolving more versions than needed?** It stops at the first version at or before the target and does
-  not resolve older ones. `M-STOP-01`
+- **Resolving the mutable tip?** The tip is always excluded. Sealed sequence numbers are cached, while
+  each selection considers all retained sealed versions so ordering anomalies cannot select a worse base.
+  `M-STOP-01`
 
 ### What is cached, and what is re-fetched?
 
@@ -223,17 +230,20 @@ A numbered version's snapshot is immutable, so its epoch is read once and memoiz
 live document's epoch can change (a restore or download-and-reupload bumps it) and is therefore read
 fresh on every lineage check, never cached. `M-VALIDATE-CACHE-01`
 
-**Op availability.** This is _not_ re-checked up front, and Component B adds no check of its own. Op
+**Op availability.** This is _not_ re-checked by base selection. Op
 retention trims a contiguous _prefix_ from the oldest end of the stream, and op sequence numbers are
 contiguous by construction, so the ordinary delta-storage stack already enforces exactly what a replay
 needs: `validateMessages` (strict) discards any fetched batch that does not begin at the requested
 `from`, and `requestOps`/`ParallelRequests` keep requesting until the whole bounded range has been
-delivered, asserting contiguity as they dispatch. A bounded stream that reaches `done` has therefore
+delivered, asserting contiguity as they dispatch. Component B additionally verifies that the target is
+the end of a logical runtime operation: targets inside a multi-message batch or before the final chunk
+of that client's chunked operation are rejected. Partial chunk streams from other clients do not block
+a boundary because the runtime buffers them independently without applying their operations. A bounded stream that reaches `done` has therefore
 necessarily served the full bridge; a range that never materializes fails the fetch instead (the delta
 stack polls, then throws its non-retryable "Failed to retrieve ops from storage (Too Many Retries)"
-error). The `OdspPointInTimeDocumentService` delta-storage wrapper (Part V) only bounds every fetch at
-the target. Because the wrapper rides the live document's delta storage, the creation snapshot's ops
-are already merged in for free.
+error). The `OdspPointInTimeDocumentService` discards bundled snapshot ops and reads the whole
+post-snapshot bridge from live delta storage so continuity and materialization-boundary validation use
+one consistent source.
 
 ## Part III — The File-Version Fetcher
 
@@ -246,8 +256,9 @@ authentication, and snapshot-parsing code.
 It calls the driveItem versions URL — built from the same API root as the snapshot call — and maps the
 `value` array of each page to versions (newest-first). `F-LIST-01` A long history is paged, so it follows
 `@odata.nextLink` until it is absent and concatenates every page; a base version beyond the first page is
-therefore still found rather than mistaken for `noBaseVersion`. `F-LIST-02` A response without a `value`
-field yields an empty list rather than an error. `F-LIST-03`
+therefore still found rather than mistaken for `noBaseVersion`. `F-LIST-02` A successful response
+without a versions array is rejected as malformed, so incomplete service data cannot become an
+authoritative `noBaseVersion`. `F-LIST-03`
 
 ### How does it resolve a version's sequence number?
 
@@ -368,14 +379,11 @@ replays only the ops in `(base, T]` on top of it.
 
 Those ops come from two distinct pools:
 
-1. **The snapshot's own bundled ops.** Every stored snapshot carries a frozen tail of the ops *after* its
-   base — a `deltas` section the summarizer writes into the snapshot itself (`writeOpsSection` in
-   `compactSnapshotWriter.ts`), surfaced by the parser as `ISnapshot.ops` with `latestSequenceNumber` = the
-   last such op (`odspSnapshotParser.ts`). This tail is intrinsic to the snapshot object: the version-scoped
-   snapshot endpoint returns it whether or not `deltas=1` is asked, and its first op is always `base + 1`
-   (`fetchSnapshot.ts` asserts `ops[0].sequenceNumber - 1 === sequenceNumber`). So `(base, latestSequenceNumber]`
-   is available for free, no extra fetch.
-2. **The standalone op log.** Anything beyond `latestSequenceNumber` is fetched from ODSP **delta storage** —
+1. **The snapshot's own bundled ops.** Point-in-time loading deliberately discards these, and the
+   availability check does not count them as shared coverage. Both paths validate the full
+   post-snapshot bridge against live delta storage, independent of snapshot options.
+2. **The standalone op log.** Availability verifies every op after the snapshot's base sequence from
+   ODSP **delta storage** —
    `OdspDeltaStorageService.get(from, to)`, which issues
    `.../opStream?ump=1&filter=sequenceNumber ge {from} and sequenceNumber le {to-1}` (`odspDeltaStorageService.ts`;
    URL built from `getUrlBase`/`getDeltaStorageUrl` in `odspDriverUrlResolver.ts`). This is the same op-fetch
@@ -545,9 +553,8 @@ historical cache entries into another load.
 Component A (this folder) only selects the base. Components B and C — which materialize the document at
 the target and expose it through the loader — are now built, in other files. They carry no catechism
 code IDs here (those index Component A's suite); Component B's lineage guard is covered by
-`../test/odspPointInTimeDocumentServiceFactory.spec.ts` — both the structural shared-`EpochTracker`
-wiring and the up-front recoverable-vs-live epoch comparison (a mismatch fails the load before any
-service is built; a matching epoch proceeds to create both services) — and its bounded `fetchMessages`
+`../test/odspPointInTimeDocumentServiceFactory.spec.ts` through the structural shared-`EpochTracker`
+wiring, and its bounded `fetchMessages`
 clamp (an unbounded, past-target, or before-target `to`, plus op pass-through) by
 `../test/odspPointInTimeDocumentService.spec.ts`; the rest are conceptual answers in the spirit of
 [Part I](#part-i--foundations). The one still-directional gap is bridging a
@@ -561,12 +568,11 @@ injects it through `createOdspDocumentServiceFactory`. The returned factory expo
 `createPointInTimeDocumentService(resolvedUrl, targetSequenceNumber)` capability as a thin delegate.
 The injected implementation:
 
-1. Build a version manager (Component A), sharing the single `EpochTracker` described below, and call
-   `findBaseForSeq(target)`. It picks the closest version *and* proves that base shares the live
-   document's epoch before returning it (see
-   [Part II](#how-does-it-verify-a-chosen-base-can-be-replayed-to-the-target)); a cross-lineage base
-   throws the non-retryable `fileOverwrittenInStorage` error. A `noBaseVersion` result becomes a
-   `UsageError` naming the target and the oldest resolved sequence number.
+1. Build the lightweight loader selector, sharing the single `EpochTracker` described below, and call
+   `findBaseForSeq(target)`. It requests JSON-only version metadata and picks the closest sealed
+   version without importing the availability manager or general snapshot parsers. A
+   `noBaseVersion` result becomes a `UsageError` naming the target and the oldest resolved sequence
+   number.
 2. Resolve the chosen file version into a version-scoped resolved URL, then create two ordinary ODSP
    document services: a **recoverable** one bound to that base version (its storage is the base
    snapshot) and a **live** one (its delta storage supplies the ops to replay). Both are created via
@@ -592,25 +598,23 @@ id: a version restore (or download-then-reupload) bumps the epoch and renumbers 
 old lineage while the live ops in `(base, target]` are from the new one, so replaying them would
 silently corrupt the materialized state (see [Part I / can a base replay across a lineage change?](#can-a-base-be-replayed-across-a-version-restore-a-lineage-change)).
 
-The guard has **two layers**. **Up front**, `findBaseForSeq` validates the chosen base's lineage before
-returning it (and thus before `createPointInTimeDocumentService` builds any service): it reads the base
-version's epoch and the live document's epoch and, if they differ, rejects the load with the driver's
-canonical `fileOverwrittenInStorage` epoch-mismatch error — the *same* `errorType` the shared
-`EpochTracker` raises structurally — so both layers surface one consistent, non-retryable error for a
-cross-lineage base. This up-front comparison is
-exercised end-to-end at the factory: `test/odspPointInTimeDocumentServiceFactory.spec.ts` drives a real
-version manager whose recoverable-version epoch differs from the live document's and asserts the load is
-rejected *before* any service is created (with a matching-epoch companion that proceeds to build both).
-**Structurally**, it then
-threads one `EpochTracker` through every read — the version-history reads that pick the base, the
+The loader guard is structural: it threads one `EpochTracker` through every read — the
+version-history reads that pick the base, the
 recoverable base snapshot, and the live op stream — by passing a single shared `ICacheAndTracker` to
 `createDocumentServiceCore` for both services. An `EpochTracker` pins itself to the first epoch it sees
 and throws `fileOverwrittenInStorage` ("Epoch mismatch") on any later divergence
 (`epochTracker.ts:130-132, 496-511`), so even a lineage change that slips past the up-front check is
-caught as reads happen and the load fails loudly instead of returning a wrong document. A fresh
+caught as reads happen and the load fails loudly instead of returning a wrong document. Availability uses the full manager's explicit base/live epoch comparison because it must classify
+same-lineage bases without instantiating document services. Historical snapshot metadata is fetched
+without the live document's epoch-pinned tracker, and each response epoch is compared explicitly.
+Older retained lineages are ignored rather than treated as authoritative evidence because a sequence
+number alone does not identify the lineage on which its mark was created. A fresh
 `NonPersistentCache` backs that shared tracker so this read-only historical load stays isolated from the
 factory's cache — a base version's snapshot can never leak into a normal live load. (The structural
 guard — shared-tracker threading and divergent-epoch rejection — is verified by the same spec.)
+The lightweight selector also performs a final live snapshot metadata read after selecting the base
+and requires epoch headers on both sides. This closes the exact-base case where no live delta request
+is needed and the shared tracker would otherwise have no opportunity to observe the current lineage.
 
 ### Component B — which `IDocumentService` method drives the replay?
 
@@ -618,12 +622,14 @@ guard — shared-tracker threading and divergent-epoch rejection — is verified
 Its three `IDocumentService` methods:
 
 - `connectToStorage` → the recoverable (base-version) service's storage: the base snapshot.
+  Bundled ops are removed and `latestSequenceNumber` is reset to the snapshot sequence so all replayed
+  ops come through the validated live delta-storage path.
 - `connectToDeltaStorage` → wraps the **live** service's delta storage and clamps every
   **`fetchMessages(from, to, …)`** call to an exclusive upper bound of `targetSequenceNumber + 1`, so no
-  op past the target is ever fetched. The clamp is all it does: op availability is already enforced
-  beneath it by the delta-storage stack, which discards any batch not starting at the requested `from`
-  and keeps requesting until the bounded range is fully delivered — so a stream that completes has
-  necessarily served the whole bridge, and one that cannot fails the fetch.
+  op past the target is ever fetched. It also tracks runtime batch and chunk metadata and rejects a
+  target that would expose a partial logical operation. Op continuity is enforced beneath it by the
+  delta-storage stack, which discards any batch not starting at the requested `from` and keeps
+  requesting until the bounded range is fully delivered.
   **`fetchMessages` is the method that drives the bounded replay.**
 - `connectToDeltaStream` → throws: under `storageOnly` the connection manager synthesizes a frozen,
   read-only delta stream instead of opening a live socket, so this is never called under normal flow.
@@ -640,9 +646,9 @@ below is the ordinary ODSP delta path (`OdspDeltaStorageWithCache` → `OdspDelt
 range-constrained by that clamp.
 
 `OdspDeltaStorageWithCache.fetchMessages` is a **paged stream**, not a single request: via `requestOps`
-it walks the requested `[from, to)` in batches, checking three sources in order — ops bundled with the
-base snapshot, then the cache, then network storage — so the clamp guarantees no page is ever requested
-past the target.
+it walks the requested `[from, to)` in batches, checking the cache and then network storage. The
+point-in-time storage wrapper has removed bundled snapshot ops, so the clamp guarantees every
+post-snapshot page uses the same validated path and no page is requested past the target.
 
 The network leg (`OdspDeltaStorageService.get`) is where the request is constructed:
 
@@ -674,3 +680,28 @@ and the `opStream` endpoint is queried for exactly `[from, target]`.
    (`createContainer` throws — the adapter is load-only.)
 4. Delegates to `loadContainerPaused(...)` with inbound/outbound processing paused, returning a
    disconnected, read-only historical view of the container at the target sequence number.
+
+`checkSequenceNumberAvailability` uses the sibling ODSP availability capability. It enumerates file
+versions once for the full input batch, resolves all sealed candidates so local version-order
+inversions cannot hide a closer base, then reads one unversioned live snapshot to establish both the
+current epoch and storage-head observation. Reading the live snapshot last makes it the observation
+point for the query; candidates are then filtered to that lineage before selection. The check
+verifies each base group's complete `(base, target]` range through one bounded delta-storage stream.
+Because the storage observation can lag PUSH, a target above it is `unknown`, not authoritatively
+`unavailable`. Historical version metadata is resolved independently of the live epoch tracker and
+filtered by explicit response-epoch comparison before base selection. An older-lineage version does
+not identify the lineage of a sequence-number-only mark, so it cannot by itself produce an
+authoritative result. The delta-validation service is never connected to storage, so it cannot use bundled
+live-snapshot ops that the actual point-in-time load discards. Targets inside a runtime batch or before
+the final chunk of their own chunked operation are authoritatively `unavailable` with
+`notMaterializationBoundary`; unrelated clients' buffered chunks do not block a boundary.
+Discovery failures, live-service setup failures, restore races during bridge verification, and the
+absence of any resolved current-lineage sealed version are `unknown`. Only a `cannotCatchUp` error
+observed while reading the requested delta-storage range proves `missingBridgingOps`; the same error
+from service creation or delta-storage connection does not establish op loss. A target older than the
+oldest current-lineage sealed base is `noRetainedBase` only when no retained cross-lineage history was
+observed; otherwise the
+sequence-number-only mark remains ambiguous and returns `unknown`. Version sequence
+resolution uses `blobs=2` without requesting deltas, while the separate live storage-watermark
+observation requests one delta so JSON and compact snapshot responses expose the latest durable
+sequence consistently. The check does not create a container or runtime.

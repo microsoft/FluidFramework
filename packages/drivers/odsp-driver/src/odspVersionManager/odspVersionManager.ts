@@ -20,50 +20,25 @@ import { pkgVersion as driverVersion } from "../packageVersion.js";
 import {
 	createOdspFileVersionFetcher,
 	type OdspFileVersionFetcherProps,
-	type OdspFileVersionRef,
 	type IOdspFileVersionFetcher,
 } from "./odspFileVersionFetcher.js";
+import {
+	type BaseForSeq,
+	findBaseForSeqFromVersions,
+	type ResolvedVersion,
+} from "./odspVersionSelection.js";
 
 // Re-exported so consumers (and this module's own index) can keep importing these fetcher-owned
 // types from the version manager. The definitions live in odspFileVersionFetcher.ts so that file
 // does not depend on this one, avoiding a circular dependency between the two modules.
 export type { OdspFileVersionRef, IOdspFileVersionFetcher } from "./odspFileVersionFetcher.js";
+export type { BaseForSeq, ResolvedVersion } from "./odspVersionSelection.js";
 
-/**
- * An ODSP file version together with its resolved Fluid sequence number.
- */
-export interface ResolvedVersion extends OdspFileVersionRef {
-	/**
-	 * The Fluid sequence number the version's snapshot represents.
-	 */
-	readonly sequenceNumber: number;
+export interface AvailabilityBaseResults {
+	readonly bases: readonly BaseForSeq[];
+	readonly observedStorageSequenceNumber: number | undefined;
+	readonly lineageBoundaryObserved?: true;
 }
-
-/**
- * Result of resolving the base version for a target sequence number.
- *
- * @remarks
- * The tip (newest) version is excluded from base selection, so when the target is at or after the head
- * the base is the newest *sealed* version with `seq <= target` (a normal `found`); if the file's only
- * version is the tip, the result is `noBaseVersion`. The wired consumer surfaces `noBaseVersion` as a
- * `UsageError`; loading the live file for a near-head target is a possible future consumer choice, not
- * current behavior.
- */
-export type BaseForSeq =
-	| {
-			/** A recoverable version with `sequenceNumber <= target` was found. */
-			readonly kind: "found";
-			readonly base: ResolvedVersion;
-	  }
-	| {
-			/**
-			 * No sealed version has `sequenceNumber <= target` — the target predates retained history, or
-			 * the only version is the excluded tip.
-			 */
-			readonly kind: "noBaseVersion";
-			/** The oldest sequence number that was resolved while searching, if any. */
-			readonly oldestResolvedSeq?: number;
-	  };
 
 /**
  * Selects the file version to use as the base for loading or replaying to a target sequence number.
@@ -80,13 +55,23 @@ export interface IOdspVersionManager {
 	 * lazily as the loader reads the bridging ops.
 	 */
 	findBaseForSeq(target: number): Promise<BaseForSeq>;
+
+	/**
+	 * Resolves bases for multiple targets from one version-history enumeration and one live snapshot
+	 * metadata read. Versions outside the current lineage are ignored because a sequence number alone
+	 * does not identify the lineage on which its mark was created.
+	 */
+	findBasesForSeqs(
+		targets: readonly number[],
+		signal?: AbortSignal,
+	): Promise<AvailabilityBaseResults>;
 }
 
 /**
  * Default {@link IOdspVersionManager}. Caches resolved sequence numbers (which never change); the version
  * list is re-enumerated on each query rather than cached, since new versions are cut over time. The
- * resolution strategy (eager, newest-to-oldest, stopping at the first usable base) is hidden behind
- * {@link findBaseForSeq} and can change without affecting callers.
+ * resolution strategy is hidden behind {@link findBaseForSeq} and can change without affecting
+ * callers.
  */
 // Exported only so the same-package tests can construct it with a fake IOdspFileVersionFetcher.
 // Deliberately kept out of the folder barrel and the package public index, so it is not public API.
@@ -103,28 +88,108 @@ export class OdspVersionManager implements IOdspVersionManager {
 	public async findBaseForSeq(target: number): Promise<BaseForSeq> {
 		// Re-enumerate the list each call (it changes as new versions are cut).
 		const versions = await this.fetcher.listFileVersions();
+		const result = await findBaseForSeqFromVersions(versions, target, async (versionId) =>
+			this.resolveSeq(versionId),
+		);
+		if (result.kind === "found") {
+			// Confirm the chosen base shares the live document's lineage before handing it back.
+			await this.validateLineageEpoch(result.base);
+		}
+		return result;
+	}
 
-		// Start past the tip (index 0): the newest version's sequence number can still advance until a newer
-		// version is cut, so it is treated as the live head rather than a stable base. Scan the remaining
-		// (sealed) versions newest-first and return the first with sequence number <= target — the closest
-		// base — or noBaseVersion, reporting the oldest sequence number seen.
-		const candidates = versions.slice(1);
+	public async findBasesForSeqs(
+		targets: readonly number[],
+		signal?: AbortSignal,
+	): Promise<AvailabilityBaseResults> {
+		const versions = await this.fetcher.listFileVersions(signal);
+		const resolvedVersions: {
+			readonly base: ResolvedVersion;
+			readonly epoch: string;
+		}[] = [];
+		for (const version of versions.slice(1)) {
+			const sequenceNumbers: {
+				readonly sequenceNumber: number;
+				readonly latestSequenceNumber: number;
+				readonly epoch?: string;
+			} = await this.fetcher.resolveVersionSequenceNumbers(version.versionId, signal);
+			if (sequenceNumbers.epoch === undefined) {
+				throw new NonRetryableError(
+					`Cannot verify ODSP file version ${version.versionId} lineage because its response is missing an epoch.`,
+					OdspErrorTypes.incorrectServerResponse,
+					{ driverVersion },
+				);
+			}
+			resolvedVersions.push({
+				base: {
+					...version,
+					sequenceNumber: sequenceNumbers.sequenceNumber,
+					latestSequenceNumber: sequenceNumbers.latestSequenceNumber,
+				},
+				epoch: sequenceNumbers.epoch,
+			});
+		}
 
+		// Read the live snapshot after resolving immutable historical metadata. This single response
+		// defines the epoch and storage watermark for the observation, so a restore during discovery
+		// cannot make pre-restore metadata look authoritative for the post-restore document.
+		const liveSnapshot =
+			versions[0] === undefined
+				? undefined
+				: await this.fetcher.resolveLiveSnapshotMetadata(signal);
+		const observedStorageSequenceNumber = liveSnapshot?.latestSequenceNumber;
+		const liveEpoch = liveSnapshot?.epoch;
+		if (versions[0] !== undefined && liveEpoch === undefined) {
+			throw new NonRetryableError(
+				"Cannot verify ODSP file-version lineage because the live response is missing an epoch.",
+				OdspErrorTypes.incorrectServerResponse,
+				{ driverVersion },
+			);
+		}
+
+		const results: (BaseForSeq | undefined)[] = Array.from({
+			length: targets.length,
+		});
 		let oldestResolvedSeq: number | undefined;
-		for (const version of candidates) {
-			const sequenceNumber = await this.resolveSeq(version.versionId);
+		let lineageBoundaryObserved = false;
+		for (const { base, epoch } of resolvedVersions) {
+			if (epoch !== liveEpoch) {
+				lineageBoundaryObserved = true;
+				continue;
+			}
 			oldestResolvedSeq =
 				oldestResolvedSeq === undefined
-					? sequenceNumber
-					: Math.min(oldestResolvedSeq, sequenceNumber);
-			if (sequenceNumber <= target) {
-				const base = { ...version, sequenceNumber };
-				// Confirm the chosen base shares the live document's lineage before handing it back
-				await this.validateLineageEpoch(base);
-				return { kind: "found", base };
+					? base.sequenceNumber
+					: Math.min(oldestResolvedSeq, base.sequenceNumber);
+			for (let index = 0; index < targets.length; index++) {
+				const target = targets[index];
+				const current = results[index];
+				if (
+					target !== undefined &&
+					base.sequenceNumber <= target &&
+					(current === undefined ||
+						(current.kind === "found" && base.sequenceNumber > current.base.sequenceNumber))
+				) {
+					results[index] = { kind: "found", base };
+				}
 			}
 		}
-		return { kind: "noBaseVersion", oldestResolvedSeq };
+
+		for (let index = 0; index < results.length; index++) {
+			if (results[index] !== undefined) {
+				continue;
+			}
+			results[index] =
+				oldestResolvedSeq === undefined
+					? { kind: "noBaseVersion" }
+					: { kind: "noBaseVersion", oldestResolvedSeq };
+		}
+
+		return {
+			bases: results.map((result): BaseForSeq => result ?? { kind: "noBaseVersion" }),
+			observedStorageSequenceNumber,
+			...(lineageBoundaryObserved ? { lineageBoundaryObserved: true } : {}),
+		};
 	}
 
 	private async validateLineageEpoch(base: ResolvedVersion): Promise<void> {
@@ -181,7 +246,10 @@ export class OdspVersionManager implements IOdspVersionManager {
 		);
 	}
 
-	private async resolveSeq(versionId: string): Promise<number> {
+	private async resolveSeq(versionId: string, signal?: AbortSignal): Promise<number> {
+		if (signal !== undefined) {
+			return this.fetcher.resolveSequenceNumber(versionId, signal);
+		}
 		// Cached indefinitely (a sealed version's number is fixed); concurrent calls coalesce and a failed
 		// resolution is evicted so a later call retries.
 		return this.seqCache.addOrGet(versionId, async () =>
@@ -189,7 +257,13 @@ export class OdspVersionManager implements IOdspVersionManager {
 		);
 	}
 
-	private async resolveVersionEpoch(versionId: string): Promise<string | undefined> {
+	private async resolveVersionEpoch(
+		versionId: string,
+		signal?: AbortSignal,
+	): Promise<string | undefined> {
+		if (signal !== undefined) {
+			return this.fetcher.getRecoverableVersionEpoch(versionId, signal);
+		}
 		// Cached like resolveSeq (a sealed version's epoch is fixed). The live document's epoch is read
 		// fresh instead (see validateLineageEpoch).
 		return this.epochCache.addOrGet(versionId, async () =>

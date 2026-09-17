@@ -18,8 +18,12 @@ import {
 	getDriveItemByRootFileName,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import { createOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
-// eslint-disable-next-line import-x/no-internal-modules -- Explicitly opts this test host into point-in-time loading.
-import { createPointInTimeDocumentService } from "@fluidframework/odsp-driver/legacy/point-in-time";
+/* eslint-disable import-x/no-internal-modules -- Explicitly opts this test host into point-in-time features. */
+import {
+	checkSequenceNumberAvailability,
+	createPointInTimeDocumentService,
+} from "@fluidframework/odsp-driver/legacy/point-in-time";
+/* eslint-enable import-x/no-internal-modules */
 import type {
 	HostStoragePolicy,
 	OdspResourceTokenFetchOptions,
@@ -424,10 +428,11 @@ export class OdspTestDriver implements ITestDriver {
 	 * Creates a point-in-time document service factory wired to this driver's tokens.
 	 *
 	 * @remarks
-	 * Point-in-time loading (`loadContainerToSequenceNumber`) requires a factory that can materialize
-	 * the document at a target sequence number. Unlike `createDocumentServiceFactory`, this is
-	 * imported directly from the current `@fluidframework/odsp-driver` rather than through the
-	 * versioned driver api, so it is only appropriate for `NoCompat` tests.
+	 * Point-in-time loading (`loadContainerToSequenceNumber`) and availability checks
+	 * (`checkSequenceNumberAvailability`) use independently optional capabilities on the factory.
+	 * Unlike `createDocumentServiceFactory`, both implementations are imported directly from the
+	 * current `@fluidframework/odsp-driver` rather than through the versioned driver api, so this is
+	 * only appropriate for `NoCompat` tests.
 	 */
 	createPointInTimeDocumentServiceFactory(): IDocumentServiceFactory {
 		const documentServiceFactory = createOdspDocumentServiceFactory({
@@ -436,6 +441,7 @@ export class OdspTestDriver implements ITestDriver {
 			persistedCache: this.cache,
 			hostPolicy: this.config.options,
 			pointInTimeDocumentServiceImplementation: createPointInTimeDocumentService,
+			pointInTimeAvailabilityImplementation: checkSequenceNumberAvailability,
 		});
 		// Automatically reset the cache after creating the factory
 		delete this.cache;

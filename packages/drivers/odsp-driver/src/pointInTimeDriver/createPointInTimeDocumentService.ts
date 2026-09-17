@@ -26,20 +26,20 @@ import {
 	getOdspResolvedUrl,
 	toInstrumentedOdspStorageTokenFetcher,
 } from "../odspUtils.js";
-import {
-	createOdspVersionManager,
-	type IOdspVersionManager,
-	// eslint-disable-next-line import-x/no-internal-modules -- the feature implementation owns version selection
-} from "../odspVersionManager/odspVersionManager.js";
+// eslint-disable-next-line import-x/no-internal-modules -- The feature implementation owns version selection.
+import type { IOdspVersionManager } from "../odspVersionManager/odspVersionManager.js";
 
 import { OdspPointInTimeDocumentService } from "./odspPointInTimeDocumentService.js";
+import { createOdspPointInTimeVersionManager } from "./odspPointInTimeVersionManager.js";
 
 interface IPointInTimeDocumentServiceDependencies {
 	readonly createVersionManager?: (
 		odspResolvedUrl: IOdspResolvedUrl,
 		logger: TelemetryLoggerExt,
 		epochTracker: EpochTracker,
-	) => IOdspVersionManager | Promise<IOdspVersionManager>;
+	) =>
+		| Pick<IOdspVersionManager, "findBaseForSeq">
+		| Promise<Pick<IOdspVersionManager, "findBaseForSeq">>;
 	readonly resolveFileVersion?: (
 		resolvedUrl: IResolvedUrl,
 		fileVersion: string,
@@ -52,7 +52,7 @@ async function createVersionManager(
 	epochTracker: EpochTracker,
 	getStorageToken: IOdspPointInTimeDocumentServiceImplementationProps["getStorageToken"],
 	requestHeaders?: Readonly<Record<string, string>>,
-): Promise<IOdspVersionManager> {
+): Promise<Pick<IOdspVersionManager, "findBaseForSeq">> {
 	const urlParts: IOdspUrlParts = {
 		siteUrl: odspResolvedUrl.siteUrl,
 		driveId: odspResolvedUrl.driveId,
@@ -63,11 +63,10 @@ async function createVersionManager(
 		urlParts,
 		getStorageToken,
 	);
-	return createOdspVersionManager({
+	return createOdspPointInTimeVersionManager({
 		urlParts,
 		getAuthHeader,
 		epochTracker,
-		logger,
 		requestHeaders,
 	});
 }

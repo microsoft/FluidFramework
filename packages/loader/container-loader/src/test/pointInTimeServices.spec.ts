@@ -15,6 +15,7 @@ import { UsageError } from "@fluidframework/driver-utils/internal";
 
 import {
 	asPointInTimeCapableFactory,
+	asPointInTimeAvailabilityCapableFactory,
 	PointInTimeDocumentServiceFactory,
 } from "../pointInTimeServices.js";
 
@@ -71,6 +72,20 @@ function makeCapableFactory(): CapableFactory {
 describe("asPointInTimeCapableFactory", () => {
 	it("returns undefined for a factory without the point-in-time capability", () => {
 		assert.equal(asPointInTimeCapableFactory(makePlainFactory()), undefined);
+	});
+
+	describe("asPointInTimeAvailabilityCapableFactory", () => {
+		it("returns undefined for a factory without the availability capability", () => {
+			assert.equal(asPointInTimeAvailabilityCapableFactory(makePlainFactory()), undefined);
+		});
+
+		it("returns the factory when it implements checkSequenceNumberAvailability", () => {
+			const factory = {
+				...makePlainFactory(),
+				checkSequenceNumberAvailability: async () => [],
+			} as unknown as IDocumentServiceFactory;
+			assert.equal(asPointInTimeAvailabilityCapableFactory(factory), factory);
+		});
 	});
 
 	it("returns the factory when it implements createPointInTimeDocumentService", () => {

@@ -13,6 +13,8 @@ import type {
 	IPersistedCache,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- The availability API is currently exposed from the legacy entrypoint.
+import type { SequenceNumberAvailability } from "@fluidframework/driver-definitions/legacy";
 import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
@@ -88,6 +90,32 @@ export interface IPointInTimeDocumentServiceFactory extends IDocumentServiceFact
 }
 
 /**
+ * An ODSP document service factory that can check point-in-time availability.
+ *
+ * @legacy @beta
+ */
+export interface PointInTimeAvailabilityDocumentServiceFactory
+	extends IDocumentServiceFactory {
+	/**
+	 * Checks whether sequence numbers can currently be materialized as historical containers.
+	 *
+	 * @param options - The resolved document, sequence numbers, and optional cancellation settings.
+	 * @returns One availability result for each input sequence number, in input order.
+	 *
+	 * @remarks
+	 * The loader detects this capability structurally, so hosts can pass the configured factory
+	 * directly to {@link @fluidframework/container-loader#checkSequenceNumberAvailability}.
+	 */
+	checkSequenceNumberAvailability(options: {
+		readonly resolvedUrl: IResolvedUrl;
+		readonly sequenceNumbers: readonly number[];
+		readonly signal?: AbortSignal | undefined;
+		readonly logger?: ITelemetryBaseLogger | undefined;
+		readonly clientIsSummarizer?: boolean | undefined;
+	}): Promise<readonly SequenceNumberAvailability[]>;
+}
+
+/**
  * Inputs supplied by the ODSP document service factory to an injected point-in-time implementation.
  *
  * @legacy @beta
@@ -132,6 +160,49 @@ export interface IOdspPointInTimeDocumentServiceImplementationProps {
 export type OdspPointInTimeDocumentServiceImplementation = (
 	props: IOdspPointInTimeDocumentServiceImplementationProps,
 ) => Promise<IDocumentService>;
+
+/**
+ * Inputs supplied to an injected ODSP point-in-time availability implementation.
+ *
+ * @legacy @beta
+ */
+export interface OdspPointInTimeAvailabilityImplementationProps {
+	/** The resolved ODSP URL for the document to check. */
+	readonly resolvedUrl: IResolvedUrl;
+	/** The non-negative safe-integer sequence numbers to check. */
+	readonly sequenceNumbers: readonly number[];
+	/** Cancels the availability check. */
+	readonly signal?: AbortSignal | undefined;
+	/** Optional telemetry logger for the availability check. */
+	readonly logger?: ITelemetryBaseLogger | undefined;
+	/** Whether to apply summarizer policies and telemetry. Defaults to `false`. */
+	readonly clientIsSummarizer?: boolean | undefined;
+	/** The persisted ODSP cache supplied to the document service factory. */
+	readonly persistedCache: IPersistedCache;
+	/** Fetches storage access tokens for ODSP requests. */
+	readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>;
+	/** Host-owned attribution metadata for ODSP requests. */
+	readonly requestHeaders?: Readonly<Record<string, string>> | undefined;
+	/**
+	 * Creates the live ODSP document service used to query durable delta storage.
+	 *
+	 * @param resolvedUrl - The resolved URL for the live document.
+	 * @param logger - The telemetry logger for the document service.
+	 * @param cacheAndTracker - The cache and epoch tracker shared with version discovery.
+	 * @param clientIsSummarizer - Whether to apply summarizer policies and telemetry.
+	 * @returns The live document service.
+	 */
+	readonly createDocumentService: IOdspPointInTimeDocumentServiceImplementationProps["createDocumentService"];
+}
+
+/**
+ * Consumer-provided implementation of ODSP point-in-time availability checks.
+ *
+ * @legacy @beta
+ */
+export type OdspPointInTimeAvailabilityImplementation = (
+	props: OdspPointInTimeAvailabilityImplementationProps,
+) => Promise<readonly SequenceNumberAvailability[]>;
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -380,6 +451,14 @@ export class OdspDocumentServiceFactoryCore
 	 * at the requested sequence number.
 	 */
 	public readonly createPointInTimeDocumentService?: IPointInTimeDocumentServiceFactory["createPointInTimeDocumentService"];
+	/**
+	 * Checks whether resolved sequence numbers can currently be materialized without loading a
+	 * container for each target.
+	 *
+	 * @param options - The resolved document, sequence numbers, and optional cancellation settings.
+	 * @returns One availability result for each input sequence number, in input order.
+	 */
+	public readonly checkSequenceNumberAvailability?: PointInTimeAvailabilityDocumentServiceFactory["checkSequenceNumberAvailability"];
 
 	protected async createDocumentServiceCore(
 		resolvedUrl: IResolvedUrl,

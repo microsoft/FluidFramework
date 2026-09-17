@@ -69,6 +69,7 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 			getWebsocketToken: undefined,
 		});
 		assert.equal(factory.createPointInTimeDocumentService, undefined);
+		assert.equal(factory.checkSequenceNumberAvailability, undefined);
 	});
 
 	it("exposes and invokes the consumer-injected implementation", async () => {
@@ -93,6 +94,25 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 		assert.equal(capturedProps?.getStorageToken, getStorageToken);
 		assert.equal(capturedProps?.persistedCache, persistedCache);
 		assert.equal(typeof capturedProps?.createDocumentService, "function");
+	});
+
+	it("exposes availability independently from point-in-time loading", async () => {
+		const resolvedUrl = await makeResolvedUrl();
+		const expectedResults = [{ sequenceNumber: 42, status: "available" as const }];
+		const factory = createOdspDocumentServiceFactory({
+			getStorageToken,
+			getWebsocketToken: undefined,
+			pointInTimeAvailabilityImplementation: async () => expectedResults,
+		});
+
+		assert.equal(factory.createPointInTimeDocumentService, undefined);
+		assert.equal(
+			await factory.checkSequenceNumberAvailability?.({
+				resolvedUrl,
+				sequenceNumbers: [42],
+			}),
+			expectedResults,
+		);
 	});
 
 	it("does not expose point-in-time loading on the local factory", () => {
@@ -122,6 +142,8 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 		const recoverableResolvedUrl = await makeResolvedUrl("42.0");
 		let versionManagerEpochTracker: EpochTracker | undefined;
 		const manager: IOdspVersionManager = {
+			findBasesForSeqs: async () =>
+				assert.fail("availability lookup is not expected in this test"),
 			findBaseForSeq: async (): Promise<BaseForSeq> => ({
 				kind: "found",
 				base: {
@@ -172,6 +194,8 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 				}),
 				{
 					createVersionManager: () => ({
+						findBasesForSeqs: async () =>
+							assert.fail("availability lookup is not expected in this test"),
 						findBaseForSeq: async (): Promise<BaseForSeq> => ({
 							kind: "found",
 							base: {
@@ -208,6 +232,8 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 			}),
 			{
 				createVersionManager: () => ({
+					findBasesForSeqs: async () =>
+						assert.fail("availability lookup is not expected in this test"),
 					findBaseForSeq: async (): Promise<BaseForSeq> => ({
 						kind: "found",
 						base: {
@@ -242,6 +268,8 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 						}),
 						{
 							createVersionManager: () => ({
+								findBasesForSeqs: async () =>
+									assert.fail("availability lookup is not expected in this test"),
 								findBaseForSeq: async (): Promise<BaseForSeq> =>
 									oldestResolvedSeq === undefined
 										? { kind: "noBaseVersion" }

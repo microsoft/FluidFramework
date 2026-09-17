@@ -49,6 +49,10 @@ export type {
 	IUrlResolver,
 } from "./urlResolver.js";
 export { DriverHeader } from "./urlResolver.js";
+export type {
+	SequenceNumberAvailability,
+	SequenceNumberAvailabilityReason,
+} from "./pointInTime.js";
 
 export type {
 	ConnectionMode,

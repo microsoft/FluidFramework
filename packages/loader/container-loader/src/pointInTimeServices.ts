@@ -8,6 +8,7 @@ import type {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
+	SequenceNumberAvailability,
 } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils/internal";
 
@@ -34,6 +35,16 @@ interface IPointInTimeCapableDocumentServiceFactory {
 	): Promise<IDocumentService>;
 }
 
+interface IPointInTimeAvailabilityCapableDocumentServiceFactory {
+	checkSequenceNumberAvailability(options: {
+		readonly resolvedUrl: IResolvedUrl;
+		readonly sequenceNumbers: readonly number[];
+		readonly signal?: AbortSignal | undefined;
+		readonly logger?: ITelemetryBaseLogger | undefined;
+		readonly clientIsSummarizer?: boolean | undefined;
+	}): Promise<readonly SequenceNumberAvailability[]>;
+}
+
 /**
  * Returns the factory typed as point-in-time capable if it implements
  * {@link IPointInTimeCapableDocumentServiceFactory}, otherwise `undefined`.
@@ -44,6 +55,21 @@ export function asPointInTimeCapableFactory(
 	return typeof (factory as Partial<IPointInTimeCapableDocumentServiceFactory>)
 		.createPointInTimeDocumentService === "function"
 		? (factory as IDocumentServiceFactory & IPointInTimeCapableDocumentServiceFactory)
+		: undefined;
+}
+
+/**
+ * Returns the factory typed as point-in-time availability capable, otherwise `undefined`.
+ */
+export function asPointInTimeAvailabilityCapableFactory(
+	factory: IDocumentServiceFactory,
+):
+	| (IDocumentServiceFactory & IPointInTimeAvailabilityCapableDocumentServiceFactory)
+	| undefined {
+	return typeof (factory as Partial<IPointInTimeAvailabilityCapableDocumentServiceFactory>)
+		.checkSequenceNumberAvailability === "function"
+		? (factory as IDocumentServiceFactory &
+				IPointInTimeAvailabilityCapableDocumentServiceFactory)
 		: undefined;
 }
 

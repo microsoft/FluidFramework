@@ -5,6 +5,9 @@
 ```ts
 
 // @beta @legacy
+export function checkSequenceNumberAvailability(props: OdspPointInTimeAvailabilityImplementationProps): Promise<readonly SequenceNumberAvailability[]>;
+
+// @beta @legacy
 export function createPointInTimeDocumentService(props: IOdspPointInTimeDocumentServiceImplementationProps): Promise<IDocumentService>;
 
 // @beta @legacy
@@ -110,6 +113,22 @@ export interface IPrefetchSnapshotContents extends ISnapshot {
     fluidEpoch: string;
     // (undocumented)
     prefetchStartTime: number;
+}
+
+// @beta @legacy
+export type OdspPointInTimeAvailabilityImplementation = (props: OdspPointInTimeAvailabilityImplementationProps) => Promise<readonly SequenceNumberAvailability[]>;
+
+// @beta @legacy
+export interface OdspPointInTimeAvailabilityImplementationProps {
+    readonly clientIsSummarizer?: boolean | undefined;
+    readonly createDocumentService: IOdspPointInTimeDocumentServiceImplementationProps["createDocumentService"];
+    readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>;
+    readonly logger?: ITelemetryBaseLogger | undefined;
+    readonly persistedCache: IPersistedCache;
+    readonly requestHeaders?: Readonly<Record<string, string>> | undefined;
+    readonly resolvedUrl: IResolvedUrl;
+    readonly sequenceNumbers: readonly number[];
+    readonly signal?: AbortSignal | undefined;
 }
 
 // @beta @legacy

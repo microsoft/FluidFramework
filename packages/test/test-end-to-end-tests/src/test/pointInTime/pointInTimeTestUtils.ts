@@ -25,7 +25,11 @@ import type {
 	IFluidCodeDetails,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
-import { loadContainerToSequenceNumber } from "@fluidframework/container-loader/internal";
+import {
+	checkSequenceNumberAvailability,
+	loadContainerToSequenceNumber,
+	type SequenceNumberAvailability,
+} from "@fluidframework/container-loader/internal";
 import type { ISummarizer } from "@fluidframework/container-runtime/internal";
 import type { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { ISharedCounter } from "@fluidframework/counter/internal";
@@ -172,6 +176,33 @@ export async function loadPointInTimeContainer(
 		loadToSequenceNumber,
 		logger: logger ?? provider.logger,
 		signal,
+	});
+}
+
+/**
+ * Check point-in-time materialization availability through the public loader API and the ODSP
+ * availability-capable document service factory. The driver must be the ODSP test driver.
+ */
+export async function checkPointInTimeAvailability(
+	provider: ITestObjectProvider,
+	documentId: string,
+	sequenceNumbers: readonly number[],
+	signal?: AbortSignal,
+): Promise<readonly SequenceNumberAvailability[]> {
+	assert(
+		provider.driver.type === "odsp",
+		"Point-in-time availability requires the odsp driver",
+	);
+	const odspDriver = provider.driver as OdspTestDriver;
+	const documentServiceFactory = odspDriver.createPointInTimeDocumentServiceFactory();
+	const url = await provider.driver.createContainerUrl(documentId);
+	return checkSequenceNumberAvailability({
+		urlResolver: provider.urlResolver,
+		documentServiceFactory,
+		request: { url },
+		sequenceNumbers,
+		logger: provider.logger,
+		...(signal === undefined ? {} : { signal }),
 	});
 }
 

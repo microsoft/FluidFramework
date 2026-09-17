@@ -10,7 +10,14 @@ The host calls:
 
 ```ts
 import { createOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/legacy";
-import { createPointInTimeDocumentService } from "@fluidframework/odsp-driver/legacy/point-in-time";
+import {
+  checkSequenceNumberAvailability as checkOdspSequenceNumberAvailability,
+  createPointInTimeDocumentService,
+} from "@fluidframework/odsp-driver/legacy/point-in-time";
+import {
+  checkSequenceNumberAvailability,
+  loadContainerToSequenceNumber,
+} from "@fluidframework/container-loader/legacy";
 
 const documentServiceFactory = createOdspDocumentServiceFactory({
   getStorageToken,
@@ -18,6 +25,7 @@ const documentServiceFactory = createOdspDocumentServiceFactory({
   persistedCache,
   hostPolicy,
   pointInTimeDocumentServiceImplementation: createPointInTimeDocumentService,
+  pointInTimeAvailabilityImplementation: checkOdspSequenceNumberAvailability,
 });
 
 const historicalContainer = await loadContainerToSequenceNumber({
@@ -37,6 +45,18 @@ The result is a historical view with these invariants:
 - The container is read-only, disconnected, and has inbound and outbound processing paused.
 - It does not advance as new live ops sequence.
 - It must not be connected or used as a normal collaborative container.
+
+Hosts can check resolved marks without instantiating containers by calling
+`checkSequenceNumberAvailability`. The loader resolves the document and invokes the capable driver's
+batch check directly. A single call accepts multiple sequence numbers so the driver can enumerate
+versions, read the live snapshot, and validate bridging ops in batches. `unavailable` is reserved for
+authoritative retained-base, bridging-op, or materialization-boundary results. Network,
+authentication, throttling, timeout, offline, cancellation, restore races, ambiguous lineage, and an
+ODSP storage head that may lag PUSH return `unknown`. The ODSP implementation obtains the current
+epoch and storage-head observation from one unversioned live snapshot response, then uses a separate
+live document service only for delta storage. This prevents mixed-epoch observations, cached head
+metadata, and bundled live-snapshot ops from producing results that the actual point-in-time load
+cannot reproduce.
 
 ## End-to-end sequence
 
@@ -94,10 +114,12 @@ The loader detects this capability structurally so callers pass the driver's fac
 The point-in-time capability is not part of the general `IDocumentServiceFactory` contract. Fluid
 therefore owns both runtime checks needed to bridge the optional capability:
 
-- The host imports `createPointInTimeDocumentService` from the dedicated ODSP point-in-time entrypoint
-  and injects it through `createOdspDocumentServiceFactory` options.
+- The host imports the loading and availability implementations from the dedicated ODSP
+  point-in-time entrypoint and injects them through `createOdspDocumentServiceFactory` options.
 - `asPointInTimeCapableFactory` performs the cross-driver structural check at the loader boundary.
-  `loadContainerToSequenceNumber` uses this check before constructing its internal adapter.
+  `loadContainerToSequenceNumber` uses this check before constructing its internal adapter;
+  `asPointInTimeAvailabilityCapableFactory` performs the equivalent direct-method check for
+  `checkSequenceNumberAvailability`.
 
 A host should not repeat the capability check or cast a general factory. It passes the configured
 ODSP factory directly to `loadContainerToSequenceNumber`. Keeping detection in Fluid also gives
@@ -109,7 +131,7 @@ capability interface, `asPointInTimeCapableFactory`, and
 `PointInTimeDocumentServiceFactory` move with it. The ODSP public interface, construction helper,
 and implementation remain in `@fluidframework/odsp-driver`. The capability should move into a
 shared driver contract only if multiple drivers need a public compile-time type; structural
-detection is sufficient for the current single-provider alpha API.
+detection is sufficient for the current single-driver alpha API.
 
 ## Package ownership and planned extraction
 
@@ -199,6 +221,9 @@ the target. It then composes:
 - a shared `EpochTracker` across version discovery, snapshot reads, and live-op reads.
 
 The shared epoch prevents replay across a disruptive file restore or other lineage change. A fresh non-persistent cache also prevents a historical snapshot from contaminating normal live-load caches.
+The lightweight loader selector requires an epoch on the selected historical snapshot and performs a
+final live metadata read after selection. This final comparison is required even when the selected
+snapshot is exactly at the target and no live delta request would otherwise occur.
 
 Detailed ODSP version selection, lineage validation, and bounded replay are documented in [`odspVersionManager/DEV.md`](../../../../drivers/odsp-driver/src/odspVersionManager/DEV.md).
 
@@ -219,6 +244,7 @@ Like normal storage catch-up, retriable network failures may retry for an extend
 | File | Responsibility |
 | --- | --- |
 | `loadContainerToSequenceNumber.ts` | Validates the target and driver capability, installs the adapter, and starts the paused load. |
+| `checkSequenceNumberAvailability.ts` | Validates a target batch, resolves the document, and invokes the driver's direct availability capability. |
 | `pointInTimeServices.ts` | Defines the structural driver capability and adapts it to `IDocumentServiceFactory`. |
 | `loadPaused.ts` | Loads read-only, replays to the exact target, pauses processing, disconnects, and handles cancellation. |
 | `packages/drivers/odsp-driver/src/odspDocumentServiceFactory.ts` | Accepts and installs a consumer-supplied PIT implementation and constructs a typed capable factory. |
@@ -233,6 +259,7 @@ Loader unit coverage:
 
 - `src/test/loadContainerToSequenceNumber.spec.ts` covers target validation order and the capability error boundary.
 - `src/test/pointInTimeServices.spec.ts` covers structural capability detection, target forwarding, argument forwarding, and rejecting container creation through the adapter.
+- `src/test/checkSequenceNumberAvailability.spec.ts` covers batch validation, ordering, and cancellation forwarding.
 
 ODSP unit coverage exercises base selection, no-base failures, version URL resolution, bounded delta reads, storage routing, storage-only behavior, and shared epoch/cache construction.
 
@@ -243,8 +270,12 @@ Real-service ODSP coverage lives under [`packages/test/test-end-to-end-tests/src
   first historical load with a newer live snapshot already in persistent cache, a frozen read-only
   result, and deep-history replay.
 - `epochMismatch.spec.ts` and `loadFailure.spec.ts` cover lineage changes, unavailable ops, malformed targets, and cancellation during replay.
+- `checkSequenceNumberAvailability.spec.ts` covers batched retained targets, an unknown result above
+  ODSP's observed storage head, restore-induced ambiguity, and pre-canceled checks through
+  the public availability API.
 - `odspVersionApi.spec.ts` verifies the real-service version-history test setup.
-- `pointInTimeTestUtils.ts` supplies the shared counter runtime, summarizer, version-snapshot helpers, and point-in-time load wrapper.
+- `pointInTimeTestUtils.ts` supplies the shared counter runtime, summarizer, version-snapshot
+  helpers, and public point-in-time load and availability wrappers.
 
 These suites validate loading after a target sequence number is already known. End-to-end creation and resolution of a version mark before loading is tracked as future work in the runtime version-mark DEV document.
 

@@ -34,8 +34,11 @@ export {
 export {
 	type IOdspPointInTimeDocumentServiceImplementationProps,
 	type IPointInTimeDocumentServiceFactory,
+	type OdspPointInTimeAvailabilityImplementation,
+	type OdspPointInTimeAvailabilityImplementationProps,
 	type OdspPointInTimeDocumentServiceImplementation,
 	OdspDocumentServiceFactoryCore,
+	type PointInTimeAvailabilityDocumentServiceFactory,
 } from "./odspDocumentServiceFactoryCore.js";
 
 // File creation

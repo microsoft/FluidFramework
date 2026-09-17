@@ -30,6 +30,10 @@ interface FakeFetcher extends IOdspFileVersionFetcher {
 	readonly resolvedIds: () => string[];
 	/** Number of times the live document's epoch was read. */
 	readonly liveEpochCalls: () => number;
+	/** Number of times paired live snapshot metadata was read. */
+	readonly liveSnapshotMetadataCalls: () => number;
+	/** Historical and live metadata reads, in call order. */
+	readonly metadataReadOrder: () => string[];
 	/** Version ids passed to getRecoverableVersionEpoch, in call order. */
 	readonly versionEpochIds: () => string[];
 }
@@ -40,6 +44,8 @@ interface FakeFetcher extends IOdspFileVersionFetcher {
  */
 interface ReplayConfig {
 	readonly liveEpoch?: string;
+	readonly liveSequenceNumber?: number;
+	readonly sequenceErrors?: Readonly<Record<string, unknown>>;
 	readonly versionEpochs?: Record<string, string | undefined>;
 }
 
@@ -60,6 +66,8 @@ function makeManager(
 	let listCallCount = 0;
 	const resolved: string[] = [];
 	let liveEpochCallCount = 0;
+	let liveSnapshotMetadataCallCount = 0;
+	const metadataReadOrder: string[] = [];
 	const versionEpochResolved: string[] = [];
 	const logger = new MockLogger();
 	const fetcher: FakeFetcher = {
@@ -69,11 +77,46 @@ function makeManager(
 		},
 		resolveSequenceNumber: async (versionId: string) => {
 			resolved.push(versionId);
+			if (Object.hasOwn(replayConfig.sequenceErrors ?? {}, versionId)) {
+				throw replayConfig.sequenceErrors?.[versionId];
+			}
 			const seq: number | undefined = seqByVersion[versionId];
 			if (seq === undefined) {
 				throw new Error(`no sequence number configured for version ${versionId}`);
 			}
 			return seq;
+		},
+		resolveVersionSequenceNumbers: async (versionId: string) => {
+			resolved.push(versionId);
+			metadataReadOrder.push(versionId);
+			if (Object.hasOwn(replayConfig.sequenceErrors ?? {}, versionId)) {
+				throw replayConfig.sequenceErrors?.[versionId];
+			}
+			const seq = seqByVersion[versionId];
+			if (seq === undefined) {
+				throw new Error(`no sequence number configured for version ${versionId}`);
+			}
+			const epoch = replayConfig.versionEpochs
+				? replayConfig.versionEpochs[versionId]
+				: replayConfig.liveEpoch;
+			return {
+				sequenceNumber: seq,
+				latestSequenceNumber: seq,
+				...(epoch === undefined ? {} : { epoch }),
+			};
+		},
+		resolveLiveSnapshotMetadata: async () => {
+			liveSnapshotMetadataCallCount++;
+			metadataReadOrder.push("live");
+			const seq =
+				replayConfig.liveSequenceNumber ?? seqByVersion[versions[0]?.versionId ?? ""];
+			if (seq === undefined) {
+				throw new Error("no live sequence number configured");
+			}
+			return {
+				latestSequenceNumber: seq,
+				...(replayConfig.liveEpoch === undefined ? {} : { epoch: replayConfig.liveEpoch }),
+			};
 		},
 		getLiveDocumentEpoch: async () => {
 			liveEpochCallCount++;
@@ -88,6 +131,8 @@ function makeManager(
 		listCalls: () => listCallCount,
 		resolvedIds: () => [...resolved],
 		liveEpochCalls: () => liveEpochCallCount,
+		liveSnapshotMetadataCalls: () => liveSnapshotMetadataCallCount,
+		metadataReadOrder: () => [...metadataReadOrder],
 		versionEpochIds: () => [...versionEpochResolved],
 	};
 	return {
@@ -112,6 +157,37 @@ describe("OdspVersionManager", () => {
 			assert.equal(result.kind, "found");
 			assert.equal(result.kind === "found" && result.base.versionId, "40.0");
 			assert.equal(result.kind === "found" && result.base.sequenceNumber, 418);
+		});
+
+		it("tolerates local sequence inversions in the version list", async () => {
+			const { manager } = makeManager([ref("tip"), ref("42.0"), ref("43.0"), ref("40.0")], {
+				"42.0": 448,
+				"43.0": 460,
+				"40.0": 418,
+			});
+
+			const result = await manager.findBaseForSeq(470);
+
+			assert.equal(result.kind === "found" && result.base.versionId, "43.0");
+		});
+
+		it("retains a current-lineage base when older history crosses an epoch boundary", async () => {
+			const lineageError = Object.assign(new Error("old lineage"), {
+				errorType: OdspErrorTypes.fileOverwrittenInStorage,
+			});
+			const { manager } = makeManager(
+				[ref("tip"), ref("current"), ref("old-lineage")],
+				{ current: 460 },
+				{
+					liveEpoch: "current-epoch",
+					sequenceErrors: { "old-lineage": lineageError },
+					versionEpochs: { current: "current-epoch" },
+				},
+			);
+
+			const result = await manager.findBaseForSeq(470);
+
+			assert.equal(result.kind === "found" && result.base.versionId, "current");
 		});
 
 		it("returns an exact match (0-op replay) when the target equals a version's sequence number", async () => {
@@ -157,8 +233,8 @@ describe("OdspVersionManager", () => {
 			assert.equal(result.kind === "found" && result.base.versionId, "43.0");
 			assert.deepEqual(
 				fetcher.resolvedIds(),
-				["43.0"],
-				"only the newest sealed version is resolved; the tip is not",
+				["43.0", "42.0"],
+				"all sealed versions are resolved, but the tip is not",
 			);
 		});
 
@@ -190,14 +266,13 @@ describe("OdspVersionManager", () => {
 	});
 
 	describe("efficiency: does it avoid unnecessary work?", () => {
-		it("stops resolving once it finds the closest base (does not resolve older versions or the tip)", async () => {
+		it("resolves all sealed versions but never resolves the mutable tip", async () => {
 			// @q M-STOP-01
 			const versions = [ref("44.0"), ref("43.0"), ref("42.0"), ref("40.0")];
 			const seqs = { "43.0": 460, "42.0": 448, "40.0": 418 };
 			const { manager, fetcher } = makeManager(versions, seqs);
-			// target 448: skips the tip, resolves 43.0 (too new) then 42.0 (match), so 40.0 is never resolved.
 			await manager.findBaseForSeq(448);
-			assert.deepEqual(fetcher.resolvedIds(), ["43.0", "42.0"]);
+			assert.deepEqual(fetcher.resolvedIds(), ["43.0", "42.0", "40.0"]);
 		});
 
 		it("caches resolved sequence numbers across calls but re-enumerates the list each call", async () => {
@@ -227,6 +302,14 @@ describe("OdspVersionManager", () => {
 					return [ref("44.0"), ref("43.0")];
 				},
 				resolveSequenceNumber: async (versionId: string) => Number.parseInt(versionId, 10),
+				resolveVersionSequenceNumbers: async (versionId: string) => {
+					const sequenceNumber = Number.parseInt(versionId, 10);
+					return { sequenceNumber, latestSequenceNumber: sequenceNumber, epoch: "epoch" };
+				},
+				resolveLiveSnapshotMetadata: async () => ({
+					latestSequenceNumber: 500,
+					epoch: "epoch",
+				}),
 				getLiveDocumentEpoch: async () => "epoch",
 				getRecoverableVersionEpoch: async () => "epoch",
 			};
@@ -264,6 +347,15 @@ describe("OdspVersionManager", () => {
 					}
 					return 448;
 				},
+				resolveVersionSequenceNumbers: async () => ({
+					sequenceNumber: 448,
+					latestSequenceNumber: 448,
+					epoch: "epoch",
+				}),
+				resolveLiveSnapshotMetadata: async () => ({
+					latestSequenceNumber: 448,
+					epoch: "epoch",
+				}),
 				getLiveDocumentEpoch: async () => "epoch",
 				getRecoverableVersionEpoch: async () => "epoch",
 			};
@@ -457,6 +549,151 @@ describe("OdspVersionManager", () => {
 				fetcher.liveEpochCalls(),
 				2,
 				"the live document's epoch must be re-read on every lineage check (never cached)",
+			);
+		});
+	});
+
+	describe("findBasesForSeqs", () => {
+		it("resolves one version list and returns the observed head with each closest base", async () => {
+			const { manager, fetcher } = makeManager(
+				[ref("tip"), ref("43.0"), ref("42.0"), ref("40.0")],
+				{ tip: 500, "43.0": 460, "42.0": 448, "40.0": 418 },
+				{ liveEpoch: "epoch" },
+			);
+
+			const result = await manager.findBasesForSeqs([455, 430]);
+
+			assert.equal(result.observedStorageSequenceNumber, 500);
+			assert.deepEqual(
+				result.bases.map((base) =>
+					base.kind === "found" ? base.base.sequenceNumber : base.kind,
+				),
+				[448, 418],
+			);
+			assert.equal(fetcher.listCalls(), 1);
+			assert.equal(fetcher.liveSnapshotMetadataCalls(), 1);
+			assert.deepEqual(fetcher.metadataReadOrder(), ["43.0", "42.0", "40.0", "live"]);
+		});
+
+		it("selects the greatest sequence at or below the target despite version-list inversions", async () => {
+			const { manager, fetcher } = makeManager(
+				[ref("tip"), ref("42.0"), ref("43.0"), ref("40.0")],
+				{ tip: 500, "42.0": 448, "43.0": 460, "40.0": 418 },
+				{ liveEpoch: "epoch" },
+			);
+
+			const result = await manager.findBasesForSeqs([470]);
+
+			assert.equal(
+				result.bases[0]?.kind === "found"
+					? result.bases[0].base.sequenceNumber
+					: result.bases[0]?.kind,
+				460,
+			);
+			assert.deepEqual(fetcher.resolvedIds(), ["42.0", "43.0", "40.0"]);
+		});
+
+		it("reads the head independently of the version-list tip", async () => {
+			const { manager } = makeManager(
+				[ref("listed-tip"), ref("base")],
+				{ "listed-tip": 500, base: 450 },
+				{ liveEpoch: "epoch", liveSequenceNumber: 510 },
+			);
+
+			const result = await manager.findBasesForSeqs([505]);
+
+			assert.equal(result.observedStorageSequenceNumber, 510);
+			assert.equal(result.bases[0]?.kind, "found");
+		});
+
+		it("ignores older-lineage versions when a current-lineage base can reconstruct the target", async () => {
+			const { manager } = makeManager(
+				[ref("tip"), ref("current"), ref("old-lineage")],
+				{ tip: 100, current: 50, "old-lineage": 80 },
+				{
+					liveEpoch: "current-epoch",
+					liveSequenceNumber: 100,
+					versionEpochs: {
+						current: "current-epoch",
+						"old-lineage": "old-epoch",
+					},
+				},
+			);
+
+			const result = await manager.findBasesForSeqs([90]);
+
+			assert.deepEqual(result.bases[0], {
+				kind: "found",
+				base: {
+					versionId: "current",
+					lastModifiedDateTime: "2026-01-01T00:00:00.000Z",
+					sequenceNumber: 50,
+					latestSequenceNumber: 50,
+				},
+			});
+		});
+
+		it("treats older-lineage-only history as non-authoritative", async () => {
+			const { manager } = makeManager(
+				[ref("tip"), ref("old-lineage")],
+				{ tip: 100, "old-lineage": 40 },
+				{
+					liveEpoch: "current-epoch",
+					liveSequenceNumber: 100,
+					versionEpochs: {
+						"old-lineage": "old-epoch",
+					},
+				},
+			);
+
+			const result = await manager.findBasesForSeqs([50]);
+
+			assert.deepEqual(result.bases[0], { kind: "noBaseVersion" });
+			assert.equal(result.lineageBoundaryObserved, true);
+		});
+
+		it("does not authorize no-retained-base when retained history crosses a lineage boundary", async () => {
+			const { manager } = makeManager(
+				[ref("tip"), ref("current"), ref("old-lineage")],
+				{ tip: 500, current: 400, "old-lineage": 900 },
+				{
+					liveEpoch: "current-epoch",
+					liveSequenceNumber: 500,
+					versionEpochs: {
+						current: "current-epoch",
+						"old-lineage": "old-epoch",
+					},
+				},
+			);
+
+			const result = await manager.findBasesForSeqs([300]);
+
+			assert.deepEqual(result.bases[0], {
+				kind: "noBaseVersion",
+				oldestResolvedSeq: 400,
+			});
+			assert.equal(result.lineageBoundaryObserved, true);
+		});
+
+		it("propagates an epoch change observed while scanning versions", async () => {
+			const epochChange = Object.assign(new Error("restore raced discovery"), {
+				errorType: OdspErrorTypes.fileOverwrittenInStorage,
+			});
+			const { manager } = makeManager(
+				[ref("tip"), ref("current"), ref("old-lineage")],
+				{ tip: 500, current: 460 },
+				{
+					liveEpoch: "current-epoch",
+					liveSequenceNumber: 500,
+					sequenceErrors: { "old-lineage": epochChange },
+				},
+			);
+
+			await assert.rejects(
+				manager.findBasesForSeqs([470]),
+				(error: Error) =>
+					(error as { errorType?: unknown }).errorType ===
+					OdspErrorTypes.fileOverwrittenInStorage,
 			);
 		});
 	});

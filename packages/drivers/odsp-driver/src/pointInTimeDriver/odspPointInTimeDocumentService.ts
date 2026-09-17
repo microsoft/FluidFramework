@@ -18,7 +18,12 @@ import {
 	type ISnapshotFetchOptions,
 	type IVersion,
 } from "@fluidframework/driver-definitions/internal";
-import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils/internal";
+import {
+	DocumentStorageServiceProxy,
+	UsageError,
+} from "@fluidframework/driver-utils/internal";
+
+import { MaterializationBoundaryTracker } from "./materializationBoundary.js";
 
 /**
  * Forces point-in-time snapshot reads to bypass caches while forwarding all other storage operations
@@ -28,10 +33,15 @@ class PointInTimeDocumentStorageService extends DocumentStorageServiceProxy {
 	public override async getSnapshot(
 		snapshotFetchOptions?: ISnapshotFetchOptions,
 	): Promise<ISnapshot> {
-		return super.getSnapshot({
+		const snapshot = await super.getSnapshot({
 			...snapshotFetchOptions,
 			fetchSource: FetchSource.noCache,
 		});
+		return {
+			...snapshot,
+			ops: [],
+			latestSequenceNumber: snapshot.sequenceNumber,
+		};
 	}
 
 	public override async getVersions(
@@ -59,10 +69,9 @@ class PointInTimeDocumentStorageService extends DocumentStorageServiceProxy {
  * still catches up from the snapshot's sequence number through delta storage, which is exactly the
  * bounded replay we want. As a result no live delta-stream connection is ever established.
  *
- * Op availability is enforced by the delta storage stack itself: it validates that fetched batches
- * are contiguous from the requested start, keeps requesting until the bounded range is fully
- * delivered, and fails the fetch if the ops never materialize. So a stream that completes has
- * necessarily served the whole bridge, and no additional checks are needed here.
+ * Historical bundled ops are discarded so every op after the snapshot is read from live delta
+ * storage. The wrapper rejects targets inside runtime batches or chunked operations, where pausing
+ * would expose a partial logical state.
  *
  * @internal
  */
@@ -99,17 +108,35 @@ export class OdspPointInTimeDocumentService
 
 	public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
 		const liveDeltaStorage = await this.liveDocumentService.connectToDeltaStorage();
+		const boundaryTracker = new MaterializationBoundaryTracker();
 		// The exclusive upper bound needed to include the target op itself.
 		const boundedTo = this.targetSequenceNumber + 1;
 		return {
-			fetchMessages: (from, to, abortSignal, cachedOnly, fetchReason) =>
-				liveDeltaStorage.fetchMessages(
+			fetchMessages: (from, to, abortSignal, cachedOnly, fetchReason) => {
+				const stream = liveDeltaStorage.fetchMessages(
 					from,
 					to === undefined ? boundedTo : Math.min(to, boundedTo),
 					abortSignal,
 					cachedOnly,
 					fetchReason,
-				),
+				);
+				return {
+					read: async () => {
+						const result = await stream.read();
+						if (!result.done) {
+							for (const message of result.value) {
+								const isBoundary = boundaryTracker.observe(message);
+								if (message.sequenceNumber === this.targetSequenceNumber && !isBoundary) {
+									throw new UsageError(
+										`Sequence number ${this.targetSequenceNumber} is not a complete materialization boundary.`,
+									);
+								}
+							}
+						}
+						return result;
+					},
+				};
+			},
 		};
 	}
 

@@ -10,6 +10,16 @@ export function asLegacyAlpha(base: IContainer): ContainerAlpha;
 // @alpha @legacy
 export function captureFullContainerState(input: ICaptureFullContainerStateProps): Promise<string>;
 
+// @beta @legacy
+export function checkSequenceNumberAvailability(props: CheckSequenceNumberAvailabilityProps): Promise<readonly SequenceNumberAvailability[]>;
+
+// @beta @legacy
+export interface CheckSequenceNumberAvailabilityProps extends IContainerLoadDriverProps {
+    readonly logger?: ITelemetryBaseLogger | undefined;
+    readonly sequenceNumbers: readonly number[];
+    readonly signal?: AbortSignal | undefined;
+}
+
 // @public
 export enum ConnectionState {
     CatchingUp = 1,
@@ -269,6 +279,29 @@ export function rehydrateDetachedContainer(rehydrateDetachedContainerProps: IReh
 
 // @beta @legacy
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
+
+// @beta @legacy
+export type SequenceNumberAvailability = {
+    readonly sequenceNumber: number;
+    readonly status: "available";
+} | {
+    readonly sequenceNumber: number;
+    readonly status: "unavailable";
+    readonly reason: SequenceNumberAvailabilityReason;
+} | {
+    readonly sequenceNumber: number;
+    readonly status: "unknown";
+    readonly reason: "transientFailure";
+};
+
+// @beta @legacy
+export type SequenceNumberAvailabilityReason =
+/** No retained snapshot on the current document lineage exists at or before the target. */
+"noRetainedBase"
+/** One or more operations required to replay from the retained base are authoritatively absent. */
+| "missingBridgingOps"
+/** The target is inside an atomic runtime batch or an incomplete chunked operation. */
+| "notMaterializationBoundary";
 
 // @alpha @legacy
 export type SummaryStage = "base" | "generate" | "upload" | "submit" | "unknown";

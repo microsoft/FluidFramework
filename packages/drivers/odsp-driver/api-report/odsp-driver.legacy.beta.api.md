@@ -97,6 +97,7 @@ export interface IOdspDocumentServiceFactoryOptions {
     readonly getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined;
     readonly hostPolicy?: HostStoragePolicy | undefined;
     readonly persistedCache?: IPersistedCache | undefined;
+    readonly pointInTimeAvailabilityImplementation?: OdspPointInTimeAvailabilityImplementation | undefined;
     readonly pointInTimeDocumentServiceImplementation?: OdspPointInTimeDocumentServiceImplementation | undefined;
 }
 
@@ -179,6 +180,7 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
 // @beta @legacy
 export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, IRelaySessionAwareDriverFactory {
     constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
+    readonly checkSequenceNumberAvailability?: PointInTimeAvailabilityDocumentServiceFactory["checkSequenceNumberAvailability"];
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
@@ -231,7 +233,34 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
 }
 
 // @beta @legacy
+export type OdspPointInTimeAvailabilityImplementation = (props: OdspPointInTimeAvailabilityImplementationProps) => Promise<readonly SequenceNumberAvailability[]>;
+
+// @beta @legacy
+export interface OdspPointInTimeAvailabilityImplementationProps {
+    readonly clientIsSummarizer?: boolean | undefined;
+    readonly createDocumentService: IOdspPointInTimeDocumentServiceImplementationProps["createDocumentService"];
+    readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>;
+    readonly logger?: ITelemetryBaseLogger | undefined;
+    readonly persistedCache: IPersistedCache;
+    readonly requestHeaders?: Readonly<Record<string, string>> | undefined;
+    readonly resolvedUrl: IResolvedUrl;
+    readonly sequenceNumbers: readonly number[];
+    readonly signal?: AbortSignal | undefined;
+}
+
+// @beta @legacy
 export type OdspPointInTimeDocumentServiceImplementation = (props: IOdspPointInTimeDocumentServiceImplementationProps) => Promise<IDocumentService>;
+
+// @beta @legacy
+export interface PointInTimeAvailabilityDocumentServiceFactory extends IDocumentServiceFactory {
+    checkSequenceNumberAvailability(options: {
+        readonly resolvedUrl: IResolvedUrl;
+        readonly sequenceNumbers: readonly number[];
+        readonly signal?: AbortSignal | undefined;
+        readonly logger?: ITelemetryBaseLogger | undefined;
+        readonly clientIsSummarizer?: boolean | undefined;
+    }): Promise<readonly SequenceNumberAvailability[]>;
+}
 
 // @beta @legacy
 export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, _forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, _fetchBinarySnapshotFormat?: boolean, _snapshotFormatFetchType?: SnapshotFormatSupportType, odspDocumentServiceFactory?: OdspDocumentServiceFactory): Promise<boolean>;

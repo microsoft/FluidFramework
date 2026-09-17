@@ -52,24 +52,44 @@ export interface IOdspFileVersionFetcher {
 	/**
 	 * Enumerate the file's versions, newest-first.
 	 */
-	listFileVersions(): Promise<OdspFileVersionRef[]>;
+	listFileVersions(signal?: AbortSignal): Promise<OdspFileVersionRef[]>;
 	/**
 	 * Resolve a single version's Fluid sequence number. Throws on failure rather than returning a
 	 * wrong value.
 	 */
-	resolveSequenceNumber(versionId: string): Promise<number>;
+	resolveSequenceNumber(versionId: string, signal?: AbortSignal): Promise<number>;
+	/**
+	 * Resolve both the base sequence number and the latest bundled op in a version snapshot.
+	 */
+	resolveVersionSequenceNumbers(
+		versionId: string,
+		signal?: AbortSignal,
+	): Promise<{
+		sequenceNumber: number;
+		latestSequenceNumber: number;
+		epoch?: string;
+	}>;
+	/**
+	 * Resolve the latest sequence number and epoch from one fresh unversioned live snapshot.
+	 */
+	resolveLiveSnapshotMetadata(
+		signal?: AbortSignal,
+	): Promise<{ readonly latestSequenceNumber: number; readonly epoch?: string }>;
 	/**
 	 * Read the live document's current ODSP epoch (`x-fluid-epoch`), or `undefined`. Epoch identifies
 	 * the file's binary lineage and changes on a version restore or download-then-reupload; compared
 	 * with {@link IOdspFileVersionFetcher.getRecoverableVersionEpoch} to confirm a base is on the live
 	 * document's lineage.
 	 */
-	getLiveDocumentEpoch(): Promise<string | undefined>;
+	getLiveDocumentEpoch(signal?: AbortSignal): Promise<string | undefined>;
 	/**
 	 * Read the ODSP epoch of a specific file version, or `undefined`. See
 	 * {@link IOdspFileVersionFetcher.getLiveDocumentEpoch}.
 	 */
-	getRecoverableVersionEpoch(versionId: string): Promise<string | undefined>;
+	getRecoverableVersionEpoch(
+		versionId: string,
+		signal?: AbortSignal,
+	): Promise<string | undefined>;
 }
 
 /**
@@ -108,8 +128,9 @@ export function createOdspFileVersionFetcher(
 ): IOdspFileVersionFetcher {
 	const { urlParts, getAuthHeader, epochTracker, logger, requestHeaders } = props;
 	const { siteUrl, driveId, itemId } = urlParts;
+	const itemRoot = `${getApiRoot(new URL(siteUrl))}/drives/${driveId}/items/${itemId}`;
 
-	const listFileVersions = async (): Promise<OdspFileVersionRef[]> =>
+	const listFileVersions = async (signal?: AbortSignal): Promise<OdspFileVersionRef[]> =>
 		getWithRetryForTokenRefresh(async (options) => {
 			const method = "GET";
 			const versions: OdspFileVersionRef[] = [];
@@ -126,10 +147,17 @@ export function createOdspFileVersionFetcher(
 				const headers = getHeadersWithAuth(token);
 				const response = await epochTracker.fetchAndParseAsJSON<{
 					value?: IDriveItemVersion[];
-				}>(url, { method, headers }, "versions");
+				}>(url, { method, headers, signal }, "versions");
 				const page = response.content as IDriveItemVersionsPage;
+				if (!Array.isArray(page.value)) {
+					throw new NonRetryableError(
+						"ODSP file-version response is missing its versions array.",
+						OdspErrorTypes.incorrectServerResponse,
+						{ driverVersion },
+					);
+				}
 				// The API returns versions newest-first.
-				for (const version of page.value ?? []) {
+				for (const version of page.value) {
 					versions.push({
 						versionId: version.id,
 						lastModifiedDateTime: version.lastModifiedDateTime,
@@ -140,13 +168,26 @@ export function createOdspFileVersionFetcher(
 			return versions;
 		});
 
-	const resolveSequenceNumber = async (versionId: string): Promise<number> =>
+	const resolveSnapshotSequenceNumbers = async (
+		versionId: string | undefined,
+		signal?: AbortSignal,
+		includeDeltas: boolean = false,
+	): Promise<{
+		sequenceNumber: number;
+		latestSequenceNumber: number;
+		epoch?: string;
+	}> =>
 		getWithRetryForTokenRefresh(async (options) => {
 			// The sequence number lives in the version snapshot's `.protocol/attributes` blob, so fetch the
 			// version-scoped snapshot with `blobs=2` to inline it. No op stream needed.
-			const url = `${getApiRoot(new URL(siteUrl))}/drives/${driveId}/items/${itemId}/versions/${encodeURIComponent(
-				versionId,
-			)}/opStream/snapshots/trees/latest?blobs=2`;
+			const snapshotRoot =
+				versionId === undefined
+					? itemRoot
+					: `${itemRoot}/versions/${encodeURIComponent(versionId)}`;
+			const url = `${snapshotRoot}/opStream/snapshots/trees/latest?blobs=2${
+				includeDeltas ? "&deltas=1" : ""
+			}`;
+			const snapshotLabel = versionId ?? "live document";
 			const method = "GET";
 			const token = await getAuthHeader(
 				{ ...options, request: { url, method } },
@@ -156,24 +197,62 @@ export function createOdspFileVersionFetcher(
 			// The snapshot comes back as JSON or "ms-fluid" (ODSP's compact binary form). Accept both and
 			// pin the binary version (as the driver's snapshot fetch does) so the parser can read it.
 			headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
-			const response = await epochTracker.fetch(url, { method, headers }, "treesLatest");
+			const trackedResponse =
+				versionId === undefined
+					? await epochTracker.fetch(url, { method, headers, signal }, "treesLatest")
+					: undefined;
+			const historicalResponse =
+				versionId === undefined
+					? undefined
+					: await fetchArray(url, {
+							method,
+							headers: mergeRequestHeaders(requestHeaders, headers),
+							signal,
+						});
+			const response = trackedResponse ?? historicalResponse;
+			if (response === undefined) {
+				throw new Error("Snapshot response was not created");
+			}
 			const contentType = response.headers.get("content-type") ?? "";
+			const epoch = response.headers.get("x-fluid-epoch") ?? undefined;
 			let sequenceNumber: number | undefined;
+			let latestSequenceNumber: number | undefined;
 			if (contentType.includes("application/json")) {
 				// JSON framing: read it with the driver's JSON snapshot parser.
-				const snapshotJson = (await response.content.json()) as IOdspSnapshot;
-				sequenceNumber =
-					convertOdspSnapshotToSnapshotTreeAndBlobs(snapshotJson).sequenceNumber;
+				let snapshotJson: IOdspSnapshot;
+				if (trackedResponse === undefined) {
+					if (historicalResponse === undefined) {
+						throw new Error("Historical snapshot response was not created");
+					}
+					snapshotJson = JSON.parse(
+						new TextDecoder().decode(historicalResponse.content),
+					) as IOdspSnapshot;
+				} else {
+					snapshotJson = (await trackedResponse.content.json()) as IOdspSnapshot;
+				}
+				const snapshot = convertOdspSnapshotToSnapshotTreeAndBlobs(snapshotJson);
+				sequenceNumber = snapshot.sequenceNumber;
+				latestSequenceNumber = snapshot.latestSequenceNumber;
 			} else if (contentType.includes("application/ms-fluid")) {
 				// ms-fluid framing: the compact binary form; read it with the driver's compact-snapshot parser.
-				const bytes = new Uint8Array(await response.content.arrayBuffer());
-				sequenceNumber = parseCompactSnapshotResponse(bytes, logger).sequenceNumber;
+				let bytes: Uint8Array;
+				if (trackedResponse === undefined) {
+					if (historicalResponse === undefined) {
+						throw new Error("Historical snapshot response was not created");
+					}
+					bytes = new Uint8Array(historicalResponse.content);
+				} else {
+					bytes = new Uint8Array(await trackedResponse.content.arrayBuffer());
+				}
+				const snapshot = parseCompactSnapshotResponse(bytes, logger);
+				sequenceNumber = snapshot.sequenceNumber;
+				latestSequenceNumber = snapshot.latestSequenceNumber;
 			} else {
 				// Neither framing (e.g. an HTML error page). Throw the driver's typed bad-response error
 				// (like fetchSnapshot.ts): canRetry=false stops the loader re-driving, while the
 				// incorrectServerResponse errorType still earns one wire-retry from getWithRetryForTokenRefresh.
 				throw new NonRetryableError(
-					`ODSP file version ${versionId} snapshot returned an unexpected content-type`,
+					`ODSP ${snapshotLabel} snapshot returned an unexpected content-type`,
 					OdspErrorTypes.incorrectServerResponse,
 					{ driverVersion, contentType, accept: headers.accept },
 				);
@@ -188,22 +267,73 @@ export function createOdspFileVersionFetcher(
 				)
 			) {
 				throw new NonRetryableError(
-					`ODSP file version ${versionId} snapshot has a missing or invalid sequenceNumber (${String(sequenceNumber)})`,
+					`ODSP ${snapshotLabel} snapshot has a missing or invalid sequenceNumber (${String(sequenceNumber)})`,
 					OdspErrorTypes.incorrectServerResponse,
 					{ driverVersion, contentType, accept: headers.accept },
 				);
 			}
-			return sequenceNumber;
+			const resolvedLatestSequenceNumber = latestSequenceNumber ?? sequenceNumber;
+			if (
+				!Number.isInteger(resolvedLatestSequenceNumber) ||
+				resolvedLatestSequenceNumber < sequenceNumber
+			) {
+				throw new NonRetryableError(
+					`ODSP ${snapshotLabel} snapshot has an invalid latestSequenceNumber`,
+					OdspErrorTypes.incorrectServerResponse,
+					{
+						driverVersion,
+						contentType,
+						snapshotSequenceNumber: sequenceNumber,
+						latestSequenceNumber: resolvedLatestSequenceNumber,
+					},
+				);
+			}
+			return {
+				sequenceNumber,
+				latestSequenceNumber: includeDeltas ? resolvedLatestSequenceNumber : sequenceNumber,
+				...(epoch === undefined ? {} : { epoch }),
+			};
 		});
 
-	const itemRoot = `${getApiRoot(new URL(siteUrl))}/drives/${driveId}/items/${itemId}`;
+	const resolveSequenceNumber = async (
+		versionId: string,
+		signal?: AbortSignal,
+	): Promise<number> => {
+		const resolved = await resolveSnapshotSequenceNumbers(versionId, signal);
+		return resolved.sequenceNumber;
+	};
+
+	const resolveVersionSequenceNumbers = async (
+		versionId: string,
+		signal?: AbortSignal,
+	): Promise<{
+		sequenceNumber: number;
+		latestSequenceNumber: number;
+		epoch?: string;
+	}> => resolveSnapshotSequenceNumbers(versionId, signal);
+
+	const resolveLiveSnapshotMetadata = async (
+		signal?: AbortSignal,
+	): Promise<{ readonly latestSequenceNumber: number; readonly epoch?: string }> => {
+		const resolved = await resolveSnapshotSequenceNumbers(undefined, signal, true);
+		return resolved.epoch === undefined
+			? { latestSequenceNumber: resolved.latestSequenceNumber }
+			: {
+					latestSequenceNumber: resolved.latestSequenceNumber,
+					epoch: resolved.epoch,
+				};
+	};
 
 	// Reads the `x-fluid-epoch` header from `url`. Deliberately uses the raw fetch helper instead of
 	// `epochTracker.fetch`: the whole point is to COMPARE the base version's epoch against the live
 	// document's epoch, but the shared EpochTracker pins to the first epoch it sees and throws on the
 	// second (divergent) read - so it could never yield two epochs to compare. `fetchArray` also lets
 	// the body (JSON or ms-fluid binary) be consumed and discarded; only the header is needed.
-	const readEpoch = async (url: string, scenarioName: string): Promise<string | undefined> =>
+	const readEpoch = async (
+		url: string,
+		scenarioName: string,
+		signal?: AbortSignal,
+	): Promise<string | undefined> =>
 		getWithRetryForTokenRefresh(async (options) => {
 			const method = "GET";
 			const token = await getAuthHeader(
@@ -214,24 +344,31 @@ export function createOdspFileVersionFetcher(
 			const response = await fetchArray(url, {
 				method,
 				headers: mergeRequestHeaders(requestHeaders, headers),
+				signal,
 			});
 			return response.headers.get("x-fluid-epoch") ?? undefined;
 		});
 
-	const getLiveDocumentEpoch = async (): Promise<string | undefined> =>
+	const getLiveDocumentEpoch = async (signal?: AbortSignal): Promise<string | undefined> =>
 		// The (unversioned) live snapshot endpoint is a current-file read, so its epoch is the live
 		// document's epoch. `blobs=0` keeps the response to the tree metadata.
-		readEpoch(`${itemRoot}/opStream/snapshots/trees/latest?blobs=0`, "LiveEpoch");
+		readEpoch(`${itemRoot}/opStream/snapshots/trees/latest?blobs=0`, "LiveEpoch", signal);
 
-	const getRecoverableVersionEpoch = async (versionId: string): Promise<string | undefined> =>
+	const getRecoverableVersionEpoch = async (
+		versionId: string,
+		signal?: AbortSignal,
+	): Promise<string | undefined> =>
 		readEpoch(
 			`${itemRoot}/versions/${encodeURIComponent(versionId)}/opStream/snapshots/trees/latest?blobs=0`,
 			"FileVersionEpoch",
+			signal,
 		);
 
 	return {
 		listFileVersions,
 		resolveSequenceNumber,
+		resolveVersionSequenceNumbers,
+		resolveLiveSnapshotMetadata,
 		getLiveDocumentEpoch,
 		getRecoverableVersionEpoch,
 	};
