@@ -818,60 +818,57 @@ async fn serve_snapshot_stream(
             .await;
         }
     };
-    write_network_response(
-        &mut send,
-        role,
-        correlation_id,
-        &sea_v1::Response::Acknowledged,
-        limits,
-        config.operation_timeout,
-        metrics,
-        false,
-    )
-    .await?;
-    let mut decoder = sea_v1::NetworkFrameDecoder::new(limits);
-    loop {
-        tokio::select! {
-            frame = read_next_network_frame(&mut receive, &mut decoder, config.operation_timeout) => {
-                let frame = match frame {
-                    Ok(Some(frame)) => frame,
-                    Ok(None) => break,
-                    Err(error) => {
-                        service.revoke_snapshot_publisher().await;
-                        return Err(error);
-                    }
-                };
-                let request = sea_v1::decode_request_frame(role, &frame)?;
-                metrics.add_wire_bytes(4 + 1 + 8 + frame.payload.len());
-                let response = service.snapshot_request(request).await;
-                write_network_response(
-                    &mut send,
-                    role,
-                    frame.correlation_id,
-                    &response,
-                    limits,
-                    config.operation_timeout,
-                    metrics,
-                    false,
-                ).await?;
-            }
-            notification = notifications.next() => {
-                let Some(notification) = notification else { break };
-                write_network_response(
-                    &mut send,
-                    role,
-                    0,
-                    &notification,
-                    limits,
-                    config.operation_timeout,
-                    metrics,
-                    false,
-                ).await?;
+    let result = async {
+        write_network_response(
+            &mut send,
+            role,
+            correlation_id,
+            &sea_v1::Response::Acknowledged,
+            limits,
+            config.operation_timeout,
+            metrics,
+            false,
+        )
+        .await?;
+        let mut decoder = sea_v1::NetworkFrameDecoder::new(limits);
+        loop {
+            tokio::select! {
+                frame = read_next_network_frame(&mut receive, &mut decoder, config.operation_timeout) => {
+                    let Some(frame) = frame? else { break };
+                    let request = sea_v1::decode_request_frame(role, &frame)?;
+                    metrics.add_wire_bytes(4 + 1 + 8 + frame.payload.len());
+                    let response = service.snapshot_request(request).await;
+                    write_network_response(
+                        &mut send,
+                        role,
+                        frame.correlation_id,
+                        &response,
+                        limits,
+                        config.operation_timeout,
+                        metrics,
+                        false,
+                    ).await?;
+                }
+                notification = notifications.next() => {
+                    let Some(notification) = notification else { break };
+                    write_network_response(
+                        &mut send,
+                        role,
+                        0,
+                        &notification,
+                        limits,
+                        config.operation_timeout,
+                        metrics,
+                        false,
+                    ).await?;
+                }
             }
         }
+        send.finish().await.map_err(transport_error)
     }
+    .await;
     service.revoke_snapshot_publisher().await;
-    send.finish().await.map_err(transport_error)
+    result
 }
 
 #[allow(clippy::too_many_arguments)]

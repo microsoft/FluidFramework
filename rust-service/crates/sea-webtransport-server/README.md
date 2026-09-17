@@ -20,4 +20,5 @@ Clients connect to the printed `/sea` URL and pin the printed SHA-256 certificat
 It also prints the configured QUIC heartbeat interval, inactivity timeout, author reconnect grace, and live-event lag limit.
 Heartbeat uses QUIC PING frames; a peer is responsive when QUIC receives authenticated traffic before the inactivity timeout.
 Connection loss immediately removes snapshot participation, then releases author membership after reconnect grace.
+Snapshot-stream loss also immediately removes that stream's publisher participation while leaving the connection available for other logical streams.
 Read-only streams cannot publish; client-selected streams retain application-managed election; Sea-selected streams receive a deterministic fence only while no client-selected publisher is active.

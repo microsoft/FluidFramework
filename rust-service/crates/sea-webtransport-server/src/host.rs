@@ -1047,6 +1047,8 @@ mod tests {
             send_malformed_stream(address, certificate_hash.clone()).await;
             timeout_in_flight_frame(address, certificate_hash.clone()).await;
 
+            malformed_snapshot_stream_releases_publisher(address, certificate_hash.clone()).await;
+
             // A fresh client proves the server remains usable after both framing failures.
             let client = NativeSeaClient::connect(
                 format!("https://{address}/sea"),
@@ -1077,6 +1079,108 @@ mod tests {
         let (result, ()) = tokio::join!(serving, exercise);
         result.unwrap();
         let _ = std::fs::remove_dir_all(root);
+    }
+
+    async fn malformed_snapshot_stream_releases_publisher(
+        address: SocketAddr,
+        certificate_hash: wtransport::tls::Sha256Digest,
+    ) {
+        let (_endpoint, connection) = raw_connection(address, certificate_hash.clone()).await;
+        let (authority, _events) = open_raw_event_stream_with_intent(
+            &connection,
+            b"malformed-snapshot-archive",
+            protocol::ArchiveIntent::Create,
+            b"malformed-snapshot-author",
+            b"malformed-snapshot-session",
+        )
+        .await;
+        let (mut send, mut receive) = connection.open_bi().await.unwrap().await.unwrap();
+        let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
+        send_raw_request(
+            &mut send,
+            2,
+            protocol::Request::OpenSnapshotStream {
+                authority,
+                participation: protocol::SnapshotParticipation::SeaSelected,
+            },
+        )
+        .await;
+        assert_eq!(
+            read_raw_response(
+                &mut receive,
+                &mut decoder,
+                protocol::StreamRole::Snapshot,
+                2,
+            )
+            .await,
+            protocol::Response::Acknowledged
+        );
+        assert!(matches!(
+            read_raw_response(
+                &mut receive,
+                &mut decoder,
+                protocol::StreamRole::Snapshot,
+                0,
+            )
+            .await,
+            protocol::Response::SnapshotCoordination { fence: Some(_), .. }
+        ));
+
+        send_raw_request(
+            &mut send,
+            3,
+            protocol::Request::ResolveSubmission {
+                operation: b"wrong-logical-stream".to_vec(),
+            },
+        )
+        .await;
+        timeout(Duration::from_secs(2), send.stopped())
+            .await
+            .expect("malformed snapshot stream should be stopped");
+
+        let (_observer_endpoint, observer_connection) =
+            raw_connection(address, certificate_hash).await;
+        let (observer_authority, _observer_events) = open_raw_event_stream(
+            &observer_connection,
+            b"malformed-snapshot-archive",
+            b"observer-author",
+            b"observer-session",
+        )
+        .await;
+        let (mut observer_send, mut observer_receive) =
+            observer_connection.open_bi().await.unwrap().await.unwrap();
+        let mut observer_decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
+        send_raw_request(
+            &mut observer_send,
+            4,
+            protocol::Request::OpenSnapshotStream {
+                authority: observer_authority,
+                participation: protocol::SnapshotParticipation::SeaSelected,
+            },
+        )
+        .await;
+        assert_eq!(
+            read_raw_response(
+                &mut observer_receive,
+                &mut observer_decoder,
+                protocol::StreamRole::Snapshot,
+                4,
+            )
+            .await,
+            protocol::Response::Acknowledged
+        );
+        assert!(matches!(
+            read_raw_response(
+                &mut observer_receive,
+                &mut observer_decoder,
+                protocol::StreamRole::Snapshot,
+                0,
+            )
+            .await,
+            protocol::Response::SnapshotCoordination { fence: Some(_), .. }
+        ));
+        connection.close(0_u32.into(), b"fault injected");
+        observer_connection.close(0_u32.into(), b"test complete");
     }
 
     async fn send_malformed_stream(
@@ -1313,6 +1417,23 @@ mod tests {
         author: &[u8],
         session: &[u8],
     ) -> (Vec<u8>, wtransport::RecvStream) {
+        open_raw_event_stream_with_intent(
+            connection,
+            archive,
+            protocol::ArchiveIntent::Open,
+            author,
+            session,
+        )
+        .await
+    }
+
+    async fn open_raw_event_stream_with_intent(
+        connection: &Connection,
+        archive: &[u8],
+        intent: protocol::ArchiveIntent,
+        author: &[u8],
+        session: &[u8],
+    ) -> (Vec<u8>, wtransport::RecvStream) {
         let (mut send, mut receive) = connection.open_bi().await.unwrap().await.unwrap();
         send_raw_request(
             &mut send,
@@ -1320,7 +1441,7 @@ mod tests {
             protocol::Request::OpenEventStream {
                 version: protocol::PROTOCOL_VERSION,
                 archive: archive.to_vec(),
-                intent: protocol::ArchiveIntent::Open,
+                intent,
                 author: author.to_vec(),
                 session: session.to_vec(),
                 resume_after: None,
