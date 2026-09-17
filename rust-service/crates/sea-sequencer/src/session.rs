@@ -395,6 +395,7 @@ impl<S: SeaStorage> LocalSession<S> {
                                             SnapshotPosition::Initial => None,
                                             SnapshotPosition::At(position) => Some(position),
                                         });
+                                    state.latest_known = state.previous;
                                     if let Some(snapshot) = load.snapshot {
                                         state.pending.push_back(LoadEvent::Snapshot(snapshot));
                                     }

@@ -55,6 +55,14 @@ async function nextAwaiting(stream) {
 	}
 }
 
+async function nextSnapshot(stream) {
+	for (;;) {
+		const item = await stream.next();
+		assert(item !== undefined, "event stream ended before a recovery snapshot");
+		if (item.kind === SeaLoadKind.Snapshot) return item;
+	}
+}
+
 async function connect(hash) {
 	return SeaBrowserTransport.connect(transportUrl, hash, 1024 * 1024);
 }
@@ -214,6 +222,34 @@ async function run() {
 	assert(fetched !== undefined, "snapshot lookup failed");
 	assert(equalBytes(fetched.root.bytes, directory.bytes), "snapshot root mismatch");
 
+	await snapshotCoordination.cancel();
+	await first.openSession(
+		archive,
+		false,
+		encoder.encode("browser-author"),
+		encoder.encode("browser-session-resumed"),
+		secondReceipt.position,
+	);
+	const resumedSnapshots = await first.subscribeSnapshots(snapshotParticipation);
+	await resumedSnapshots.next();
+	const resumedLoad = await first.load(secondReceipt.position);
+	await nextAwaiting(resumedLoad);
+	const resumedReceipt = await first.submit(
+		encoder.encode("browser-operation-resumed"),
+		secondReceipt.position,
+		encoder.encode("resumed-payload"),
+	);
+	const resumedLive = await nextEvent(resumedLoad);
+	assert(
+		resumedLive.position === resumedReceipt.position,
+		"same-connection resumed load omitted its live event",
+	);
+	assert(
+		decoder.decode(resumedLive.payload) === "resumed-payload",
+		"same-connection resumed load returned the wrong payload",
+	);
+	await resumedLoad.cancel();
+
 	first.disconnect();
 	let disconnected = false;
 	try {
@@ -234,10 +270,7 @@ async function run() {
 	const recoveredSnapshots = await first.subscribeSnapshots(snapshotParticipation);
 	await recoveredSnapshots.next();
 	const recovered = await first.load(secondReceipt.position);
-	assert(
-		(await recovered.next()).kind === SeaLoadKind.Snapshot,
-		"reconnected event stream omitted the recovery snapshot",
-	);
+	await nextSnapshot(recovered);
 	assert((await first.latestSnapshot()) !== undefined, "reconnected snapshot lookup failed");
 
 	window.__shutdownProbe = {

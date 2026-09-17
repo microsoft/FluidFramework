@@ -569,11 +569,7 @@ async fn serve_connection_streams(
                     serve_sea_stream(send, receive, service, &config, &metrics).await
                 });
             }
-            result = streams.next(), if !streams.is_empty() => {
-                if matches!(result, Some(Err(_))) {
-                    return Ok(());
-                }
-            }
+            _ = streams.next(), if !streams.is_empty() => {}
         }
     }
 }

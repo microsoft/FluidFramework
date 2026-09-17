@@ -50,6 +50,25 @@ where
     let published =
         publish_and_resolve_snapshot(session, snapshots, directory_id, first.position).await;
 
+    let mut snapshot_load = session.load(Some(first.position));
+    assert!(matches!(
+        snapshot_load.next().await.expect("snapshot load progress").expect("load result"),
+        MonitoredStreamItem::Progress(progress)
+            if progress.status == MonitoredStreamStatus::StreamingBacklog
+    ));
+    assert!(matches!(
+        snapshot_load.next().await.expect("selected snapshot").expect("load result"),
+        MonitoredStreamItem::Item(LoadEvent::Snapshot(snapshot)) if snapshot == published
+    ));
+    assert!(matches!(
+        snapshot_load.next().await.expect("snapshot caught-up progress").expect("load result"),
+        MonitoredStreamItem::Progress(progress)
+            if progress.previous == Some(first.position)
+                && progress.latest_known == Some(first.position)
+                && progress.status == MonitoredStreamStatus::AwaitingNewItems
+    ));
+    drop(snapshot_load);
+
     let second = session
         .submit(EventSubmission {
             operation_id: OperationId::new(Bytes::from_static(b"observable-event-two"))
