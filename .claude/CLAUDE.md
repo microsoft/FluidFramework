@@ -4,11 +4,11 @@
 
 ## Coding Guidelines
 
-Before writing or modifying code, read and follow the [Coding Guidelines](../docs/content/Guidelines/Coding-Guidelines.md).
+Follow the [Coding Guidelines](../docs/content/Guidelines/Coding-Guidelines.md) when writing / modifying code.
 
 ## Documentation Guidelines
 
-Before writing or modifying code or documentation, read and follow the [Documentation Guidelines](../docs/content/Guidelines/Documentation-Guidelines.md).
+Follow the [Documentation Guidelines](../docs/content/Guidelines/Documentation-Guidelines.md) when writing or modifying code or documentation.
 Read and follow the linked guides relevant to the task, including the language-specific guides for source-code documentation.
 These requirements apply to source-code comments and API documentation as well as standalone documentation.
 
