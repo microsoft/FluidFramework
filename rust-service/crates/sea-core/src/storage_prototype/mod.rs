@@ -7,7 +7,8 @@
 //! The architecture has four layers:
 //!
 //! 1. [`BlobStore`], [`EventArchive`], and [`SnapshotArchive`] are independently useful storage
-//!    components. Event and snapshot archives persist external identities without resolving them.
+//!    components. Blob and event storage share [`ReferenceableStore`] because their identities are
+//!    persisted by another component; snapshots currently require no such external capability.
 //! 2. [`SeaStorage`] creates and reopens one instance of each component for a [`DocumentId`]. Its
 //!    contract supplies cross-component publication and recovery guarantees without requiring a
 //!    distributed transaction.
@@ -30,6 +31,7 @@
 
 mod blob_store;
 mod event_archive;
+mod referenceable_store;
 mod snapshot_archive;
 
 use async_trait::async_trait;
@@ -43,8 +45,9 @@ use crate::{
     StorageEventStream, StorageLoad,
 };
 
-pub use blob_store::{BlobStore, BlobTreeHandle};
-pub use event_archive::{EventArchive, EventHandle};
+pub use blob_store::BlobStore;
+pub use event_archive::EventArchive;
+pub use referenceable_store::{ReferenceableStore, StorageHandle};
 pub use snapshot_archive::SnapshotArchive;
 
 /// Stable identity assigned to one Sea document.
@@ -232,7 +235,15 @@ where
 
     /// Resolves a tree identity to availability evidence suitable for later publication.
     pub async fn resolve_tree(&self, id: BlobTreeId) -> Result<Option<B::Handle>, B::Error> {
-        self.state.lock().await.blobs.resolve_tree(id).await
+        self.state.lock().await.blobs.resolve(id).await
+    }
+
+    /// Resolves an event position to availability evidence suitable for snapshot publication.
+    pub async fn resolve_position(
+        &self,
+        position: EventPosition,
+    ) -> Result<Option<E::Handle>, B::Error> {
+        self.state.lock().await.events.resolve(position).await
     }
 
     /// Appends an event after establishing availability of its optional content tree.
@@ -243,13 +254,13 @@ where
     ) -> Result<E::Handle, B::Error> {
         let state = self.state.lock().await;
         if let Some(handle) = tree {
-            state.blobs.verify_handle(handle).await?;
+            state.blobs.ensure_available(handle).await?;
         }
         state
             .events
             .append(Event {
                 payload,
-                blob_tree: tree.map(BlobTreeHandle::id),
+                blob_tree: tree.map(StorageHandle::id),
             })
             .await
     }
@@ -284,12 +295,12 @@ where
         publication: ViewSnapshotPublication<B::Handle, E::Handle>,
     ) -> Result<PublishedSnapshot, B::Error> {
         let state = self.state.lock().await;
-        state.blobs.verify_handle(&publication.root).await?;
+        state.blobs.ensure_available(&publication.root).await?;
         let at_event = match &publication.at_event {
             ViewSnapshotPosition::Initial => SnapshotPosition::Initial,
             ViewSnapshotPosition::At(event) => {
-                state.events.verify_handle(event).await?;
-                SnapshotPosition::At(event.position())
+                state.events.ensure_available(event).await?;
+                SnapshotPosition::At(event.id())
             }
         };
         state
