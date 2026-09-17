@@ -27,7 +27,8 @@ pub struct MonitoredStreamProgress<P> {
     ///
     /// This starts at the cursor used to create the stream and advances only when a data item is
     /// returned to the reader. Receiving, downloading, decoding, or buffering an item does not
-    /// advance it.
+    /// advance it. A wrapper created by [`map_monitored_stream`] preserves the source cursor, so
+    /// a transformation error does not rewind an item that the source already delivered.
     pub previous: Option<P>,
     /// Newest item position currently known to belong to the stream's range.
     ///
@@ -232,7 +233,10 @@ where
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-/// Maps monitored data and errors while preserving progress observations.
+/// Maps monitored data and errors while preserving source progress observations.
+///
+/// A data transformation error does not rewind the source cursor because the source item was
+/// delivered before its transformation failed.
 pub fn map_monitored_stream<T, U, P, E, O, F, G>(
     stream: BoxMonitoredStream<T, P, E>,
     map_data: F,
@@ -255,7 +259,10 @@ where
 }
 
 #[cfg(target_arch = "wasm32")]
-/// Maps monitored data and errors while preserving progress observations.
+/// Maps monitored data and errors while preserving source progress observations.
+///
+/// A data transformation error does not rewind the source cursor because the source item was
+/// delivered before its transformation failed.
 pub fn map_monitored_stream<T, U, P, E, O, F, G>(
     stream: BoxMonitoredStream<T, P, E>,
     map_data: F,
@@ -302,7 +309,7 @@ mod tests {
 
     use super::{
         BoxMonitoredStream, MonitoredStream, MonitoredStreamItem, MonitoredStreamProgress,
-        MonitoredStreamStatus, boxed_monitored_stream,
+        MonitoredStreamStatus, boxed_monitored_stream, map_monitored_stream,
     };
 
     struct EmptyStream {
@@ -368,5 +375,37 @@ mod tests {
             Poll::Ready(Some(Ok(MonitoredStreamItem::Item(4))))
         ));
         assert_eq!(stream.progress().previous, Some(4));
+    }
+
+    #[test]
+    fn mapped_progress_preserves_source_delivery_after_transformation_error() {
+        let initial = MonitoredStreamProgress {
+            previous: Some(3),
+            latest_known: Some(5),
+            status: MonitoredStreamStatus::StreamingBacklog,
+        };
+        let source = futures_util::stream::iter([
+            Ok::<_, Infallible>(MonitoredStreamItem::Item(4_u64)),
+            Ok(MonitoredStreamItem::Item(5_u64)),
+        ]);
+        let positioned = boxed_monitored_stream(source, initial.clone(), |position| Some(*position));
+        let mut stream = map_monitored_stream(
+            positioned,
+            |position| (position < 5).then_some(position).ok_or("invalid item"),
+            |error| match error {},
+        );
+        let waker = futures_util::task::noop_waker();
+        let mut context = Context::from_waker(&waker);
+
+        assert!(matches!(
+            stream.as_mut().poll_next(&mut context),
+            Poll::Ready(Some(Ok(MonitoredStreamItem::Item(4))))
+        ));
+        assert_eq!(stream.progress().previous, Some(4));
+        assert!(matches!(
+            stream.as_mut().poll_next(&mut context),
+            Poll::Ready(Some(Err("invalid item")))
+        ));
+        assert_eq!(stream.progress().previous, Some(5));
     }
 }
