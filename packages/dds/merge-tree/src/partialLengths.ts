@@ -386,10 +386,10 @@ export class PartialSequenceLengths {
 			const childUnsequencedPartialLengths: PartialSequenceLength[][] = [];
 			const childPerRefSeqAdjustments: Map<number, PartialSequenceLengthsSet>[] = [];
 			for (let i = 0; i < childPartialsLen; i++) {
-				const { segmentCount, minLength, partialLengths, unsequencedRecords } =
-					childPartials[i];
-				combinedPartialLengths.segmentCount += segmentCount;
-				combinedPartialLengths.minLength += minLength;
+				const child = childPartials[i];
+				const { partialLengths, unsequencedRecords } = child;
+				combinedPartialLengths.segmentCount += child.getSegmentCount();
+				combinedPartialLengths.minLength += child.getBaselineLength();
 				childPartialLengths.push(partialLengths.items as PartialSequenceLength[]);
 				if (unsequencedRecords) {
 					childUnsequencedPartialLengths.push(
@@ -923,7 +923,7 @@ export class PartialSequenceLengths {
 				if (branchPartialLengths.lastIncrementalInvalidationSeq === seq) {
 					// Bail out.
 					const newPartials = PartialSequenceLengths.combine(node, collabWindow, false);
-					newPartials.lastIncrementalInvalidationSeq = seq;
+					newPartials.invalidateIncrementalPropagation(seq);
 					node.partialLengths = newPartials;
 					return;
 				}
@@ -933,7 +933,7 @@ export class PartialSequenceLengths {
 				if (leqPartial && leqPartial.seq === seq) {
 					seqSeglen += leqPartial.seglen;
 				}
-				segCount += branchPartialLengths.segmentCount;
+				segCount += branchPartialLengths.getSegmentCount();
 
 				// .forEach natively ignores undefined entries.
 				// eslint-disable-next-line unicorn/no-array-for-each
@@ -948,7 +948,7 @@ export class PartialSequenceLengths {
 		}
 
 		if (failIncrementalPropagation) {
-			this.lastIncrementalInvalidationSeq = seq;
+			this.invalidateIncrementalPropagation(seq);
 		}
 		this.segmentCount = segCount;
 		this.unsequencedRecords = undefined;
@@ -958,6 +958,28 @@ export class PartialSequenceLengths {
 			this.zamboni(collabWindow);
 		}
 		PartialSequenceLengths.options.verifier?.(this);
+	}
+
+	/**
+	 * Marks `seq` as requiring full parent rebuilds rather than incremental propagation.
+	 * Replaces the previous invalidation marker without changing the calculated lengths.
+	 */
+	public invalidateIncrementalPropagation(seq: number): void {
+		this.lastIncrementalInvalidationSeq = seq;
+	}
+
+	/**
+	 * Returns the tracked segment count, independent of visibility at a particular sequence.
+	 */
+	public getSegmentCount(): number {
+		return this.segmentCount;
+	}
+
+	/**
+	 * Returns the baseline length at `minSeq`, before sequence and client adjustments.
+	 */
+	public getBaselineLength(): number {
+		return this.minLength;
 	}
 
 	/**
