@@ -1,22 +1,4 @@
-//! Bounded dictionary compression with independently restartable payloads.
-//!
-//! Each record and snapshot is one independent zstd frame prefixed by a wrapper
-//! header containing a magic value, format version, dictionary fingerprint, and
-//! declared decoded length. Reopening requires the same immutable dictionary and
-//! configured decoded-size bound; no earlier record or mutable codec state is
-//! needed. Positions, capabilities, and underlying errors pass through unchanged.
-//!
-//! The dictionary is limited to [`MAX_DICTIONARY_BYTES`], and the configured
-//! decoded-size bound cannot exceed [`MAX_DECODED_BYTES`]. The declared length is
-//! checked before decompression, the zstd window is capped from the configured
-//! bound, and the actual decoded length must match. The complete stored frame and
-//! decoded payload are nevertheless held in memory. A returned reader decodes
-//! only the item being polled and adds no stream buffer or background task;
-//! dropping it cancels further wrapper work.
-//!
-//! The dictionary fingerprint detects accidental mismatch but is not a
-//! cryptographic authenticator. Use authenticated encryption outside this wrapper
-//! when storage is untrusted; this ordering compresses plaintext before encryption.
+#![doc = include_str!("../README.md")]
 
 use async_trait::async_trait;
 use bytes::{BufMut, Bytes, BytesMut};
@@ -413,8 +395,10 @@ mod current_tests {
 
     use bytes::Bytes;
     use sea_core::{
-        ClassifiedError, ErrorKind,
-        archive::{AuthorId, SeaArchive, SessionId},
+        ClassifiedError, ErrorKind, Event,
+        archive::{
+            AuthorId, EventSubmission, OperationId, SeaArchive, SeaAuthorSession, SessionId,
+        },
     };
     use sea_memory::MemoryStream;
     use sea_sequencer::session::LocalSequencer;
@@ -450,13 +434,18 @@ mod current_tests {
     }
 
     #[test]
-    fn frame_round_trip_rejects_truncation_wrong_dictionary_and_false_lengths() {
+    fn frame_round_trip_rejects_invalid_metadata_and_payloads() {
         let codec =
             StatefulCompressionSession::new((), Bytes::from_static(DICTIONARY), MAX_PAYLOAD)
                 .unwrap();
         let payload = Bytes::from_static(b"complete payload");
         let encoded = codec.compress(&payload).unwrap();
         assert_eq!(codec.decompress(&encoded).unwrap(), payload);
+        let empty = Bytes::new();
+        assert_eq!(
+            codec.decompress(&codec.compress(&empty).unwrap()).unwrap(),
+            empty
+        );
         for end in 0..encoded.len() {
             assert!(
                 codec.decompress(&encoded.slice(..end)).is_err(),
@@ -472,15 +461,37 @@ mod current_tests {
         .unwrap();
         assert!(wrong_dictionary.decompress(&encoded).is_err());
 
+        let mut unsupported_version = encoded.to_vec();
+        unsupported_version[super::MAGIC.len()] += 1;
+        assert_eq!(
+            codec
+                .decompress(&Bytes::from(unsupported_version))
+                .unwrap_err(),
+            "unsupported dictionary-frame version"
+        );
+
         let length_offset = super::MAGIC.len() + 1 + 8;
         let mut false_length = encoded.to_vec();
         false_length[length_offset..super::HEADER_LEN]
             .copy_from_slice(&((payload.len() + 1) as u64).to_be_bytes());
         assert!(codec.decompress(&Bytes::from(false_length)).is_err());
+
+        let mut oversized_length = encoded.to_vec();
+        oversized_length[length_offset..super::HEADER_LEN]
+            .copy_from_slice(&((MAX_PAYLOAD + 1) as u64).to_be_bytes());
+        assert_eq!(
+            codec
+                .decompress(&Bytes::from(oversized_length))
+                .unwrap_err(),
+            format!(
+                "decoded length {} exceeds configured maximum {MAX_PAYLOAD}",
+                MAX_PAYLOAD + 1
+            )
+        );
     }
 
     #[tokio::test]
-    async fn rejects_payload_over_configured_bound() {
+    async fn rejects_blob_and_event_payloads_over_configured_bound() {
         let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
             .await
             .unwrap();
@@ -497,6 +508,23 @@ mod current_tests {
                 .unwrap();
         let error = compressed
             .put_blob(Bytes::from(vec![0; MAX_PAYLOAD + 1]))
+            .await
+            .unwrap_err();
+        assert_eq!(error.kind(), ErrorKind::Rejected);
+        assert!(matches!(
+            error,
+            StatefulCompressionError::PayloadTooLarge { .. }
+        ));
+
+        let error = compressed
+            .submit(EventSubmission {
+                operation_id: OperationId::new(Bytes::from_static(b"oversized-event")).unwrap(),
+                reference: None,
+                event: Event {
+                    payload: Bytes::from(vec![0; MAX_PAYLOAD + 1]),
+                    blob_tree: None,
+                },
+            })
             .await
             .unwrap_err();
         assert_eq!(error.kind(), ErrorKind::Rejected);

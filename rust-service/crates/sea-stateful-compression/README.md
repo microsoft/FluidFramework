@@ -1,6 +1,6 @@
 # Stateful Compression Wrapper
 
-`sea-stateful-compression` uses one immutable zstd dictionary to compress event payloads and blob leaves through `StatefulCompressionSession<S>`.
+`sea-stateful-compression` uses one immutable zstd dictionary to compress event payloads and blob leaves through [`StatefulCompressionSession`].
 Despite the package name, decoding does not depend on mutable history: every stored payload is an independent frame with the metadata needed to restart from that item.
 
 ## Framing And Restart
@@ -16,9 +16,9 @@ wrong-dictionary frames classify as `ErrorKind::Corrupt`.
 
 ## Bounds
 
-- `MAX_DICTIONARY_BYTES` is the hard maximum retained dictionary size.
-- `MAX_DECODED_BYTES` is the hard ceiling for a configured decoded payload bound.
-- `StatefulCompressionSession::new` rejects an empty bound, a bound above the
+- [`MAX_DICTIONARY_BYTES`] is the hard maximum retained dictionary size.
+- [`MAX_DECODED_BYTES`] is the hard ceiling for a configured decoded payload bound.
+- [`StatefulCompressionSession::new`] rejects an empty bound, a bound above the
   hard ceiling, or a dictionary above its hard maximum.
 - Event and blob payloads above the configured bound are rejected
   before writing. Reads reject a declared or actual decoded length outside the
