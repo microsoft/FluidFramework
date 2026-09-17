@@ -1,10 +1,4 @@
-#![doc = "A minimal buffered file implementation of the Sea event archive contracts."]
-#![doc = ""]
-#![doc = "The stream and snapshot logs use fixed headers followed by big-endian"]
-#![doc = "length-framed records. Successful writes are flushed through `BufWriter`,"]
-#![doc = "but are not synced. Receipts therefore report only buffered durability."]
-#![doc = "Opening a store validates every byte and rejects incomplete or invalid data;"]
-#![doc = "this crate deliberately provides no crash recovery or repair."]
+#![doc = include_str!("../README.md")]
 
 use std::{
     collections::BTreeMap,
@@ -105,7 +99,7 @@ struct State {
 
 /// A single-process buffered file stream.
 ///
-/// One instance owns a directory containing `stream.log` and `snapshots.log`.
+/// One instance owns a directory containing `archive.log`.
 /// Reopening that directory after clean use preserves positions and snapshots.
 /// Concurrent independent opens of the same directory are unsupported.
 #[derive(Clone, Debug)]
@@ -423,7 +417,6 @@ impl sea_core::archive::SeaStorage for FileStream {
     }
 }
 
-/// Converts an initial or positioned snapshot to its persisted ordinal.
 /// Encodes a numeric snapshot identity as opaque bytes.
 fn snapshot_id(value: u64) -> SnapshotId {
     SnapshotId::from_bytes(Bytes::copy_from_slice(&value.to_be_bytes()))
@@ -460,8 +453,6 @@ fn parse_header(bytes: &[u8], magic: [u8; 8]) -> Result<(), FileError> {
     Ok(())
 }
 
-/// Strictly parses every length-framed stream record.
-/// Strictly parses snapshots and validates IDs and monotonic positions.
 /// Reads one big-endian integer while advancing a checked cursor.
 fn read_u64(bytes: &[u8], cursor: &mut usize, error: &'static str) -> Result<u64, FileError> {
     let end = cursor.checked_add(8).ok_or(FileError::Corrupt(error))?;
@@ -495,7 +486,6 @@ fn write_frame(writer: &mut impl Write, payload: &[u8]) -> Result<(), FileError>
     Ok(())
 }
 
-/// Writes one snapshot record in the persisted log format.
 /// Appends one typed record to the final Sea archive journal.
 fn write_archive_record(writer: &mut impl Write, kind: u8, body: &[u8]) -> Result<(), FileError> {
     let mut record = Vec::with_capacity(1 + body.len());
@@ -850,14 +840,21 @@ fn read_field<'a>(
 #[cfg(test)]
 mod current_tests {
     use std::{
+        collections::BTreeMap,
         fs,
         sync::atomic::{AtomicU64, Ordering},
     };
 
     use bytes::Bytes;
-    use sea_core::{Event, archive::SeaStorage};
+    use sea_core::{
+        BlobDirectory, BlobTreeId, Event,
+        archive::{
+            OperationId, SeaStorage, Snapshot as ArchiveSnapshot,
+            SnapshotPosition as ArchiveSnapshotPosition, SnapshotPublication,
+        },
+    };
 
-    use super::FileStream;
+    use super::{ARCHIVE_EVENT, ARCHIVE_FILE, ARCHIVE_MAGIC, FileError, FileStream};
 
     static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(1);
 
@@ -881,19 +878,107 @@ mod current_tests {
     }
 
     #[tokio::test]
-    async fn clean_reopen_preserves_events() {
+    async fn clean_reopen_preserves_archive_state() {
         let root = directory("reopen");
         let storage = FileStream::open(&root).unwrap();
+        let blob_payload = Bytes::from_static(b"persisted blob");
+        let blob = storage.put_blob(blob_payload.clone()).await.unwrap();
+        let directory_value = BlobDirectory::new(BTreeMap::from([(
+            "leaf".to_owned(),
+            BlobTreeId::Blob(blob),
+        )]))
+        .unwrap();
+        let directory_id = storage
+            .put_directory(directory_value.clone())
+            .await
+            .unwrap();
         let receipt = storage
             .append(Event {
                 payload: Bytes::from_static(b"persisted"),
-                blob_tree: None,
+                blob_tree: Some(BlobTreeId::Directory(directory_id)),
+            })
+            .await
+            .unwrap();
+        let operation_id = OperationId::new(Bytes::from_static(b"persisted-publication")).unwrap();
+        let published = storage
+            .publish_snapshot(SnapshotPublication {
+                operation_id: operation_id.clone(),
+                expected_parent: None,
+                snapshot: ArchiveSnapshot {
+                    at_event: ArchiveSnapshotPosition::At(receipt.position),
+                    root: BlobTreeId::Directory(directory_id),
+                },
             })
             .await
             .unwrap();
         drop(storage);
+
         let reopened = FileStream::open(&root).unwrap();
         assert_eq!(reopened.head().await.unwrap(), Some(receipt.position));
+        assert_eq!(reopened.get_blob(blob).await.unwrap(), blob_payload);
+        assert_eq!(
+            reopened.get_directory(directory_id).await.unwrap(),
+            directory_value
+        );
+        assert_eq!(
+            reopened.snapshot(&published.id).await.unwrap(),
+            Some(published.clone())
+        );
+        assert_eq!(
+            reopened.latest_snapshot().await.unwrap(),
+            Some(published.clone())
+        );
+        assert_eq!(
+            reopened
+                .resolve_snapshot_publication(&operation_id)
+                .await
+                .unwrap(),
+            Some(published)
+        );
         fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn open_rejects_incomplete_or_invalid_archive_framing() {
+        let cases = [
+            (
+                "incomplete-header",
+                ARCHIVE_MAGIC[..ARCHIVE_MAGIC.len() - 1].to_vec(),
+                "incomplete file header",
+            ),
+            (
+                "invalid-header",
+                b"NOTSEA01".to_vec(),
+                "invalid file header",
+            ),
+            (
+                "incomplete-frame-header",
+                [ARCHIVE_MAGIC.as_slice(), &[0; 7]].concat(),
+                "incomplete frame header",
+            ),
+            (
+                "incomplete-frame-payload",
+                [
+                    ARCHIVE_MAGIC.as_slice(),
+                    2_u64.to_be_bytes().as_slice(),
+                    &[ARCHIVE_EVENT],
+                ]
+                .concat(),
+                "incomplete frame payload",
+            ),
+        ];
+
+        for (label, bytes, expected) in cases {
+            let root = directory(label);
+            fs::create_dir_all(&root).unwrap();
+            fs::write(root.join(ARCHIVE_FILE), bytes).unwrap();
+
+            let error = FileStream::open(&root).expect_err("corrupt archive should be rejected");
+            match error {
+                FileError::Corrupt(actual) => assert_eq!(actual, expected),
+                other => panic!("expected corruption error, got {other:?}"),
+            }
+            fs::remove_dir_all(root).unwrap();
+        }
     }
 }
