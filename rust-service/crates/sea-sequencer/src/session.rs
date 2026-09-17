@@ -1369,6 +1369,30 @@ mod tests {
         ));
     }
 
+    #[test]
+    fn session_errors_preserve_caller_classifications() {
+        assert_eq!(
+            SessionError::Storage(sea_memory::MemoryError::SnapshotConflict).kind(),
+            ErrorKind::Conflict
+        );
+        assert_eq!(
+            SessionError::<sea_memory::MemoryError>::Rejected("rejected").kind(),
+            ErrorKind::Rejected
+        );
+        assert_eq!(
+            SessionError::<sea_memory::MemoryError>::Closed.kind(),
+            ErrorKind::Rejected
+        );
+        assert_eq!(
+            SessionError::<sea_memory::MemoryError>::Corrupt("corrupt").kind(),
+            ErrorKind::Corrupt
+        );
+        assert_eq!(
+            SessionError::<sea_memory::MemoryError>::Lagged.kind(),
+            ErrorKind::Unavailable
+        );
+    }
+
     #[tokio::test]
     async fn local_session_matches_observable_behavior() {
         let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
@@ -1630,6 +1654,85 @@ mod tests {
             }
         }
         assert_eq!(recovered, [first.position, second.position]);
+    }
+
+    #[tokio::test]
+    async fn replacement_and_close_release_minimum_reference_pins() {
+        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
+            .await
+            .unwrap();
+        let first_author = author(b"minimum-first-author");
+        let first = sequencer
+            .open_session(first_author.clone(), session(b"minimum-first-session"), None)
+            .await
+            .unwrap();
+        let second = sequencer
+            .open_session(
+                author(b"minimum-second-author"),
+                session(b"minimum-second-session"),
+                None,
+            )
+            .await
+            .unwrap();
+        let first_event = first.submit(submission(b"minimum-one", None)).await.unwrap();
+        let second_event = second
+            .submit(submission(b"minimum-two", Some(first_event.position)))
+            .await
+            .unwrap();
+
+        let replacement = sequencer
+            .open_session(
+                first_author,
+                session(b"minimum-replacement-session"),
+                Some(second_event.position),
+            )
+            .await
+            .unwrap();
+        let third_operation = OperationId::new(Bytes::from_static(b"minimum-three")).unwrap();
+        replacement
+            .submit(submission(b"minimum-three", Some(second_event.position)))
+            .await
+            .unwrap();
+        assert_eq!(
+            sequencer
+                .state
+                .lock()
+                .await
+                .accepted
+                .get(&third_operation)
+                .unwrap()
+                .committed
+                .minimum_reference,
+            Some(first_event.position)
+        );
+
+        second.close().await.unwrap();
+        let third_position = sequencer
+            .state
+            .lock()
+            .await
+            .accepted
+            .get(&third_operation)
+            .unwrap()
+            .receipt
+            .position;
+        let fourth_operation = OperationId::new(Bytes::from_static(b"minimum-four")).unwrap();
+        replacement
+            .submit(submission(b"minimum-four", Some(third_position)))
+            .await
+            .unwrap();
+        assert_eq!(
+            sequencer
+                .state
+                .lock()
+                .await
+                .accepted
+                .get(&fourth_operation)
+                .unwrap()
+                .committed
+                .minimum_reference,
+            Some(third_position)
+        );
     }
 
     #[tokio::test]
