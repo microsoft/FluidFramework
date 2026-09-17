@@ -192,6 +192,7 @@ export interface LocalService<out TClient extends ServiceClient = LocalServiceCl
 	 * waiting for all dirty containers to save.
 	 *
 	 * @param timeoutMilliseconds - The maximum time to wait for containers to quiesce, in milliseconds. Defaults to 30_000.
+	 * @throws A `UsageError` if the containers do not quiesce before the timeout expires.
 	 *
 	 * @privateRemarks
 	 * This is a best-effort implementation simplified from `LoaderContainerTracker.ensureSynchronized`.
@@ -305,12 +306,20 @@ class LocalServiceImplementation
 	>
 	implements LocalService<LocalServiceClientImplementation<LocalServiceImplementation>>
 {
-	// A single server is shared by all containers connected to this service so they can communicate with each other.
+	/**
+	 * The active in-memory server shared by this service's containers so they can communicate.
+	 * Replaced after document maintenance resets the server.
+	 */
 	private server: ILocalDeltaConnectionServer;
+	/** The document service factory bound to the active {@link LocalServiceImplementation.server}. */
 	private documentServiceFactory: LocalDocumentServiceFactory;
+	/** The persistent database factory retained when the active server is replaced. */
 	private readonly databaseFactory: ITestDbFactory;
+	/** The open containers connected to this service. */
 	private readonly containers = new Set<EphemeralServiceContainer<unknown>>();
+	/** Whether this service has been permanently closed. */
 	private closed = false;
+	/** Whether document deletion is temporarily preventing other service operations. */
 	private maintenanceInProgress = false;
 
 	public constructor(databaseFactory?: ITestDbFactory) {
@@ -374,6 +383,9 @@ class LocalServiceImplementation
 		}
 	}
 
+	/**
+	 * Delete all documents unless `id` is specified, in which case only that document is deleted.
+	 */
 	private async deleteDocuments(id?: string): Promise<void> {
 		this.ensureAvailable();
 		if (this.containers.size > 0) {

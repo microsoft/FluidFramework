@@ -22,7 +22,7 @@ import type { Configuration as WebpackConfiguration } from "webpack";
 import type Server from "webpack-dev-server";
 import type { Configuration, ExpressRequestHandler, Middleware } from "webpack-dev-server";
 
-import { baseDevServerConfig, baseExampleConfig } from "./baseConfig.js";
+import { createBaseDevServerConfig, createBaseExampleConfig } from "./baseConfig.js";
 import { tinyliciousUrls } from "./getUrlResolver.js";
 import { RouteOptions } from "./loader.js";
 
@@ -326,7 +326,7 @@ export function devServerConfig(
 	baseDir: string,
 	env: RouteOptions,
 ): { devServer: Configuration } {
-	const { devServer: baseDevServer } = baseDevServerConfig();
+	const { devServer: baseDevServer } = createBaseDevServerConfig();
 	return {
 		devServer: {
 			...baseDevServer,
@@ -365,7 +365,7 @@ export function commonExampleConfig(
 	baseDir: string,
 	env: RouteOptions & { production?: boolean },
 ): WebpackConfiguration {
-	const config = baseExampleConfig(baseDir, env, {
+	const config = createBaseExampleConfig(baseDir, env, {
 		html: false,
 		loaderPaths: {
 			sourceMapLoader: sourceMapLoaderPath,

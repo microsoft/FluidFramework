@@ -98,7 +98,7 @@ export function getExampleServiceClient(
  * it should replace use of this function with an appropriate alternative scheme.
  * @internal
  */
-export async function loadExampleContainer<T>(
+export async function createOrLoadExampleContainer<T>(
 	client: ServiceClient,
 	rootStore: DataStoreKind<T>,
 ): Promise<FluidContainer<T>> {
@@ -126,14 +126,14 @@ export async function loadExampleContainer<T>(
  * Simple examples can use it to help keep our set of examples aligned in how they are setup when those
  * examples don't need to demonstrate/customize anything this function controls.
  *
- * This is a simple wrapper around {@link getExampleServiceClient} and {@link loadExampleContainer}:
+ * This is a simple wrapper around {@link getExampleServiceClient} and {@link createOrLoadExampleContainer}:
  * see them for details.
  *
  * @internal
  */
 export async function loadExampleDataStore<T>(rootStore: DataStoreKind<T>): Promise<T> {
 	const service = getExampleServiceClient();
-	const container = await loadExampleContainer(service, rootStore);
+	const container = await createOrLoadExampleContainer(service, rootStore);
 	return container.data;
 }
 

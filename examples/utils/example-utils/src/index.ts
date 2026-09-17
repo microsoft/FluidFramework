@@ -25,7 +25,7 @@ export {
 	defaultServiceOptions,
 	type ExampleServiceOptions,
 	getExampleServiceClient,
-	loadExampleContainer,
+	createOrLoadExampleContainer,
 	loadExampleDataStore,
 	renderRoot,
 } from "./exampleApp.js";

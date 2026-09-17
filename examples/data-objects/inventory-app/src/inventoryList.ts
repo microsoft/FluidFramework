@@ -7,7 +7,7 @@ import { defineTreeDataStore } from "fluid-framework/alpha";
 
 import { Inventory, treeConfiguration } from "./schema.js";
 
-export const inventoryDataStoreKind = defineTreeDataStore({
+export const InventoryDataStore = defineTreeDataStore({
 	type: "inventory-list",
 	config: treeConfiguration,
 	initializer: () =>

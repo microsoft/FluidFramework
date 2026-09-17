@@ -10,9 +10,11 @@ import type { Configuration as WebpackConfiguration } from "webpack";
 import type { Configuration as DevServerConfiguration } from "webpack-dev-server";
 
 /**
- * Axios publishes its browser CommonJS bundle with a reference to `axios.cjs.map`, but does not
- * include that map in the package. Exclude only that bundle so source-map-loader continues to
- * process source maps from other dependencies without emitting a missing-file warning for Axios.
+ * A pattern matching the Axios browser CommonJS bundle, used to exclude it from source-map-loader.
+ *
+ * @remarks Axios publishes this bundle with a reference to `axios.cjs.map`, but does not include
+ * that map in the package. Excluding only this bundle allows source-map-loader to process source
+ * maps from other dependencies without emitting a missing-file warning for Axios.
  */
 const axiosBrowserBundleWithoutSourceMap =
 	/node_modules[/\\]axios[/\\]dist[/\\]browser[/\\]axios\.cjs$/;
@@ -55,7 +57,7 @@ export interface BaseExampleConfigOptions {
  * @returns The shared webpack-dev-server configuration.
  * @internal
  */
-export function baseDevServerConfig(): { devServer: DevServerConfiguration } {
+export function createBaseDevServerConfig(): { devServer: DevServerConfiguration } {
 	return {
 		devServer: {
 			static: false,
@@ -74,14 +76,14 @@ export function baseDevServerConfig(): { devServer: DevServerConfiguration } {
  * @returns A webpack configuration for the example application.
  * @internal
  */
-export function baseExampleConfig(
+export function createBaseExampleConfig(
 	baseDir: string,
 	env: ExampleWebpackEnvironment,
 	options: BaseExampleConfigOptions = {},
 ): WebpackConfiguration {
 	const { production } = env;
 	return {
-		...baseDevServerConfig(),
+		...createBaseDevServerConfig(),
 		entry: {
 			main: "./src/index.ts",
 		},

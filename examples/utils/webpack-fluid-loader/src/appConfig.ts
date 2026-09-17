@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import webpack, { type Configuration as WebpackConfiguration } from "webpack";
 
 import {
-	baseExampleConfig,
+	createBaseExampleConfig,
 	type BaseExampleConfigOptions,
 	type ExampleWebpackEnvironment,
 } from "./baseConfig.js";
@@ -32,7 +32,7 @@ export function exampleAppConfig(
 	env: ExampleWebpackEnvironment,
 	options: BaseExampleConfigOptions = {},
 ): WebpackConfiguration {
-	const config = baseExampleConfig(baseDir, env, {
+	const config = createBaseExampleConfig(baseDir, env, {
 		...options,
 		loaderPaths: {
 			sourceMapLoader: fileURLToPath(import.meta.resolve("source-map-loader")),

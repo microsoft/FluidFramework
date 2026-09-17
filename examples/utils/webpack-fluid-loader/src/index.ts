@@ -4,8 +4,8 @@
  */
 
 export {
-	baseDevServerConfig,
-	baseExampleConfig,
+	createBaseDevServerConfig,
+	createBaseExampleConfig,
 	type BaseExampleConfigOptions,
 	type ExampleWebpackEnvironment,
 } from "./baseConfig.js";
