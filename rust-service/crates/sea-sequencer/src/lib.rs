@@ -1,3 +1,3 @@
-#![doc = "Multi-user Sea sessions over trusted archive storage."]
+#![doc = include_str!("../README.md")]
 
 pub mod session;

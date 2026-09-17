@@ -227,6 +227,11 @@ where
         storage: Arc<S>,
         max_event_lag: usize,
     ) -> Result<Arc<Self>, SessionError<S::Error>> {
+        if max_event_lag == 0 {
+            return Err(SessionError::Rejected(
+                "event lag limit must be greater than zero",
+            ));
+        }
         let state = replay(storage.as_ref()).await?;
         let latest_snapshot = storage
             .latest_snapshot()
@@ -1166,6 +1171,19 @@ mod tests {
         }
     }
 
+    async fn assert_snapshot_publication_rejected(
+        session: &super::LocalSession<MemoryStream>,
+        fence: Option<u64>,
+        publication: SnapshotPublication,
+    ) {
+        assert!(matches!(
+            session
+                .publish_coordinated_snapshot(fence, publication)
+                .await,
+            Err(SessionError::Rejected(_))
+        ));
+    }
+
     #[tokio::test]
     async fn local_session_matches_observable_behavior() {
         let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
@@ -1279,33 +1297,24 @@ mod tests {
             .await
             .unwrap();
 
-        assert!(matches!(
-            sea_selected
-                .publish_coordinated_snapshot(
-                    Some(first_fence),
-                    snapshot_publication(b"suppressed-sea-snapshot", None, snapshot_blob),
-                )
-                .await,
-            Err(SessionError::Rejected(_))
-        ));
-        assert!(matches!(
-            read_only
-                .publish_coordinated_snapshot(
-                    None,
-                    snapshot_publication(b"read-only-snapshot", None, snapshot_blob),
-                )
-                .await,
-            Err(SessionError::Rejected(_))
-        ));
-        assert!(matches!(
-            client_selected
-                .publish_coordinated_snapshot(
-                    Some(first_fence),
-                    snapshot_publication(b"client-selected-with-fence", None, snapshot_blob),
-                )
-                .await,
-            Err(SessionError::Rejected(_))
-        ));
+        assert_snapshot_publication_rejected(
+            &sea_selected,
+            Some(first_fence),
+            snapshot_publication(b"suppressed-sea-snapshot", None, snapshot_blob),
+        )
+        .await;
+        assert_snapshot_publication_rejected(
+            &read_only,
+            None,
+            snapshot_publication(b"read-only-snapshot", None, snapshot_blob),
+        )
+        .await;
+        assert_snapshot_publication_rejected(
+            &client_selected,
+            Some(first_fence),
+            snapshot_publication(b"client-selected-with-fence", None, snapshot_blob),
+        )
+        .await;
         let first_snapshot = client_selected
             .publish_coordinated_snapshot(
                 None,
@@ -1390,6 +1399,18 @@ mod tests {
         assert!(matches!(
             events.next().await,
             Some(Err(SessionError::Lagged))
+        ));
+    }
+
+    #[tokio::test]
+    async fn zero_event_lag_is_rejected() {
+        let result = LocalSequencer::recover_with_event_lag(Arc::new(MemoryStream::new()), 0).await;
+
+        assert!(matches!(
+            result,
+            Err(SessionError::Rejected(
+                "event lag limit must be greater than zero"
+            ))
         ));
     }
 
