@@ -6,10 +6,10 @@
 - **Execution mode:** Serial work on the current branch; this outer plan does not use the numbered iteration workflow.
 - **Source commit:** `59836ab4c0fdd20185271236f71c0aa4eccdf930`.
 - **Plan commit:** `a09d224464b` (`docs(rust-service): plan code quality workflow`).
-- **Last completed phase:** 2. Improve reusable skills and templates.
-- **Last validation:** Coordination script syntax, iteration `0013` complete-record validation, documentation links, and `git diff --check` passed on 2026-09-17.
-- **Current phase:** 3. Define the reusable quality iteration.
-- **Next phase:** 3. Define the reusable quality iteration.
+- **Last completed phase:** 3. Define the reusable quality iteration.
+- **Last validation:** The quality-inventory initializer and validator passed disposable create, reject-incomplete, accept-complete, and refuse-overwrite tests; Biome, Node syntax, documentation links, and `git diff --check` passed on 2026-09-17.
+- **Current phase:** 4. Pre-register evaluation and run the first trial.
+- **Next phase:** 4. Pre-register evaluation and run the first trial.
 
 Update this section when completing each phase.
 Record the validation performed, retained evidence, decisions, and next phase.
@@ -138,13 +138,13 @@ An ordinary Rust-service implementation or bug-fix workstream is prompted to doc
 
 ### 3. Define the reusable quality iteration
 
-- [ ] Define a risk-driven audit workflow that samples consequential Rust boundaries instead of enumerating declarations or maximizing coverage.
-- [ ] Define discovery, prioritization, implementation, independent review, and synthesis workstreams only where they are genuinely independent.
-- [ ] Define the reviewed-boundary and unresolved-finding inventory consumed by later runs.
-- [ ] Define evidence requirements for accepting a finding, a repair, an exception, or a no-change conclusion.
-- [ ] Define budgets and stopping conditions that prevent low-value documentation or test churn.
-- [ ] Reference the durable skills and templates rather than copying their guidance into the workflow.
-- [ ] Add or update validation for the reusable iteration artifacts.
+- [x] Define a risk-driven audit workflow that samples consequential Rust boundaries instead of enumerating declarations or maximizing coverage.
+- [x] Define discovery, prioritization, implementation, independent review, and synthesis workstreams only where they are genuinely independent.
+- [x] Define the reviewed-boundary and unresolved-finding inventory consumed by later runs.
+- [x] Define evidence requirements for accepting a finding, a repair, an exception, or a no-change conclusion.
+- [x] Define budgets and stopping conditions that prevent low-value documentation or test churn.
+- [x] Reference the durable skills and templates rather than copying their guidance into the workflow.
+- [x] Add or update validation for the reusable iteration artifacts.
 
 Completion gate:
 
