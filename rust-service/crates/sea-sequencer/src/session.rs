@@ -1481,6 +1481,45 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn snapshot_only_load_reports_caught_up_at_snapshot_position() {
+        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
+            .await
+            .unwrap();
+        let session = sequencer
+            .open_session(author(b"load-author"), session(b"load-session"), None)
+            .await
+            .unwrap();
+        let event = session
+            .submit(submission(b"load-event", None))
+            .await
+            .unwrap();
+        let root = session
+            .put_blob(Bytes::from_static(b"load-snapshot"))
+            .await
+            .unwrap();
+        let mut publication = snapshot_publication(b"load-publication", None, root);
+        publication.snapshot.at_event = SnapshotPosition::At(event.position);
+        let snapshot = session.publish_snapshot(publication).await.unwrap();
+
+        let mut load = session.load(Some(event.position));
+        assert!(matches!(
+            load.next().await.unwrap().unwrap(),
+            MonitoredStreamItem::Progress(_)
+        ));
+        assert!(matches!(
+            load.next().await.unwrap().unwrap(),
+            MonitoredStreamItem::Item(LoadEvent::Snapshot(selected)) if selected == snapshot
+        ));
+        assert!(matches!(
+            load.next().await.unwrap().unwrap(),
+            MonitoredStreamItem::Progress(progress)
+                if progress.previous == Some(event.position)
+                    && progress.latest_known == Some(event.position)
+                    && progress.status == MonitoredStreamStatus::AwaitingNewItems
+        ));
+    }
+
+    #[tokio::test]
     async fn client_selected_publishers_suppress_sea_selection_and_enforce_permissions() {
         let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
             .await

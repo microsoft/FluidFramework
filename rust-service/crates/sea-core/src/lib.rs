@@ -175,7 +175,9 @@ pub trait SeaEventSubscription: SeaService {
     ///
     /// Calling this method performs no confirmed I/O; initialization failures are yielded by the
     /// returned stream. A selected snapshot is yielded as [`LoadEvent::Snapshot`] without an event
-    /// position, while monitored progress describes the subsequent event delivery.
+    /// position, while monitored progress describes the subsequent event delivery. The selected
+    /// snapshot position initializes both `previous` and `latest_known`; when no later event is
+    /// captured, the stream reports [`MonitoredStreamStatus::AwaitingNewItems`] at that position.
     fn load(&self, required: Option<EventPosition>) -> ArchiveLoadStream<Self::Error>;
 }
 

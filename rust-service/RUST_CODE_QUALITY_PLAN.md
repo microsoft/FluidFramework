@@ -2,14 +2,17 @@
 
 ## Status
 
-- **Plan status:** Active.
+- **Plan status:** Complete.
 - **Execution mode:** Serial work on the current branch; this outer plan does not use the numbered iteration workflow.
 - **Source commit:** `59836ab4c0fdd20185271236f71c0aa4eccdf930`.
 - **Plan commit:** `a09d224464b` (`docs(rust-service): plan code quality workflow`).
-- **Last completed phase:** 3. Define the reusable quality iteration.
-- **Last validation:** The quality-inventory initializer and validator passed disposable create, reject-incomplete, accept-complete, and refuse-overwrite tests; Biome, Node syntax, documentation links, and `git diff --check` passed on 2026-09-17.
-- **Current phase:** 4. Pre-register evaluation and run the first trial.
-- **Next phase:** 4. Pre-register evaluation and run the first trial.
+- **Last completed phase:** 7. Final engineering review and polish.
+- **Trial results:** Iteration `0014` established the 47-boundary inventory and exposed an evidence-acceptance blind spot. Iteration `0015` repaired nine exact-decision evidence gaps and met the external quality threshold. Iteration `0016` independently verified 32 further dispositions and repaired one unrelated benchmark contract/locality gap, providing generalization evidence outside the motivating area.
+- **Final backstop:** Added precise snapshot-selected load progress documentation and a focused `sea-sequencer` snapshot-only caught-up regression after the trial series.
+- **Remaining deferred work:** The accepted iteration inventories retain explicit semantic, fault-injection, browser-resource, handshake-timeout, and durability triggers; no additional same-scope audit is justified without one of those triggers or changed boundaries.
+- **Last validation:** Focused snapshot-load coverage; full Rust workspace formatting, strict Clippy, warning-denied rustdoc, all-target build and tests; `sea-counter`; documentation; `./test.sh`; scoped policy; and repository `pnpm build:fast` all passed on 2026-09-17.
+- **Current phase:** None.
+- **Next phase:** None; repeat the reusable quality iteration only when inventory triggers or meaningful code changes justify it.
 
 Update this section when completing each phase.
 Record the validation performed, retained evidence, decisions, and next phase.
@@ -152,12 +155,12 @@ A coordinator can configure a run by selecting scope, priorities, budget, and in
 
 ### 4. Pre-register evaluation and run the first trial
 
-- [ ] Freeze the private evaluator checklist and scoring or pass criteria before creating trial instructions.
-- [ ] Record the source commit and ensure the trial starts from an approved clean state.
-- [ ] Configure a neutral workspace-quality run without naming known bugs, commits, expected findings, or expected test locations.
-- [ ] Initialize and execute the trial through the normal numbered iteration workflow.
-- [ ] Preserve its reports, decisions, accepted commits, rejected findings, validation, and costs.
-- [ ] Evaluate the completed result against the private checklist only after the trial reaches its immutable completion boundary.
+- [x] Freeze the private evaluator checklist and scoring or pass criteria before creating trial instructions.
+- [x] Record the source commit and ensure the trial starts from an approved clean state.
+- [x] Configure a neutral workspace-quality run without naming known bugs, commits, expected findings, or expected test locations.
+- [x] Initialize and execute the trial through the normal numbered iteration workflow.
+- [x] Preserve its reports, decisions, accepted commits, rejected findings, validation, and costs.
+- [x] Evaluate the completed result against the private checklist only after the trial reaches its immutable completion boundary.
 
 Evaluation dimensions:
 
@@ -171,14 +174,14 @@ Evaluation dimensions:
 
 ### 5. Refine reusable surfaces and repeat
 
-- [ ] Classify each miss as a guidance, skill, template, audit-method, run-configuration, execution, or evaluator problem.
-- [ ] Prefer changes to durable skills, guidance, and templates already used by the workflow when the lesson applies broadly.
-- [ ] Change per-run configuration only when the lesson concerns scope, priorities, budget, stopping conditions, inherited findings, reports, or validation unique to that execution.
-- [ ] Record where every refinement lands and why it belongs there.
-- [ ] Do not insert issue-specific expected answers into reusable or per-run instructions.
-- [ ] Start each repeat as a new numbered iteration from the latest approved state; do not rewrite completed trial records.
-- [ ] Re-evaluate against the unchanged private criteria and compare discovery quality, repair quality, churn, and cost with prior trials.
-- [ ] Repeat only while a material process improvement remains plausible.
+- [x] Classify each miss as a guidance, skill, template, audit-method, run-configuration, execution, or evaluator problem.
+- [x] Prefer changes to durable skills, guidance, and templates already used by the workflow when the lesson applies broadly.
+- [x] Change per-run configuration only when the lesson concerns scope, priorities, budget, stopping conditions, inherited findings, reports, or validation unique to that execution.
+- [x] Record where every refinement lands and why it belongs there.
+- [x] Do not insert issue-specific expected answers into reusable or per-run instructions.
+- [x] Start each repeat as a new numbered iteration from the latest approved state; do not rewrite completed trial records.
+- [x] Re-evaluate against the unchanged private criteria and compare discovery quality, repair quality, churn, and cost with prior trials.
+- [x] Repeat only while a material process improvement remains plausible.
 
 Completion gate:
 
@@ -186,11 +189,11 @@ The agreed evaluation threshold is met and a subsequent run yields no material n
 
 ### 6. Test generality
 
-- [ ] Select a consequential Rust area not used to derive or tune the private evaluator.
-- [ ] Pre-register expected evaluation criteria independently from the trial workflow.
-- [ ] Run the reusable iteration with only neutral run-specific configuration.
-- [ ] Evaluate whether findings and repairs satisfy the same quality principles without issue-specific prompting.
-- [ ] Refine reusable surfaces only for lessons that generalize beyond the selected area.
+- [x] Select a consequential Rust area not used to derive or tune the private evaluator.
+- [x] Pre-register expected evaluation criteria independently from the trial workflow.
+- [x] Run the reusable iteration with only neutral run-specific configuration.
+- [x] Evaluate whether findings and repairs satisfy the same quality principles without issue-specific prompting.
+- [x] Refine reusable surfaces only for lessons that generalize beyond the selected area.
 
 Completion gate:
 
@@ -198,13 +201,13 @@ The workflow demonstrates useful discovery and proportionate repairs outside the
 
 ### 7. Final engineering review and polish
 
-- [ ] Reveal and review all known evaluation gaps after the trial series is complete.
-- [ ] Manually inspect any missed or weakly repaired gaps.
-- [ ] Add, revise, consolidate, or remove documentation and tests so final code quality does not depend on the experiment having succeeded.
-- [ ] Confirm browser tests retain only integration responsibilities that require generated WASM, real WebTransport, or browser behavior.
-- [ ] Record residual risks and intentionally deferred work.
-- [ ] Run canonical Rust-service and repository validation required by `DEVELOPMENT.md` and the coordination skill.
-- [ ] Update this plan with final evidence and mark it complete.
+- [x] Reveal and review all known evaluation gaps after the trial series is complete.
+- [x] Manually inspect any missed or weakly repaired gaps.
+- [x] Add, revise, consolidate, or remove documentation and tests so final code quality does not depend on the experiment having succeeded.
+- [x] Confirm browser tests retain only integration responsibilities that require generated WASM, real WebTransport, or browser behavior.
+- [x] Record residual risks and intentionally deferred work.
+- [x] Run canonical Rust-service and repository validation required by `DEVELOPMENT.md` and the coordination skill.
+- [x] Update this plan with final evidence and mark it complete.
 
 ## Trial Record Requirements
 
