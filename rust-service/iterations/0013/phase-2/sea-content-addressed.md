@@ -1,31 +1,59 @@
 # Iteration 0013: sea-content-addressed Report
 
-Status: in progress
-Branch: `rust-service/iteration-0013/sea-content-addressed`
-Worktree: <!-- TODO(required): record the worktree path -->
-Base commit: <!-- TODO(required): record the base commit -->
-Final commit: <!-- TODO(required): record the final commit or explain why none exists -->
-Agent or owner: <!-- TODO(required): record the agent or owner -->
-Model and tool version: <!-- TODO(required): record known values; use unknown when unavailable -->
-Instruction source: <!-- TODO(required): link the assigned instruction file and record its commit -->
-Session or transcript reference: <!-- TODO(required): record a safe reference when useful; otherwise none -->
-Started and finished: <!-- TODO(required): record known timestamps or unknown -->
+Status: complete
+Branch: `rust-service-iteration-0013-sea-content-addressed`
+Worktree: `/workspaces/FluidFramework-rust-service-iteration-0013-sea-content-addressed`
+Base commit: `cf77b2b3655dc5ae2e015ee4b789e301a9e2f200`
+Final commit: this report-only commit; its hash is reported to the coordinator because a commit cannot contain its own hash
+Agent or owner: GitHub Copilot
+Model and tool version: unknown
+Instruction source: [`instructions/sea-content-addressed.md`](instructions/sea-content-addressed.md) at `cf77b2b3655dc5ae2e015ee4b789e301a9e2f200`; its recorded iteration source commit is stale (`52ad0aa3b4b28498e609d3fe41d9eabcf5f23bd2`), so the guarded worktree kickoff is authoritative.
+Session or transcript reference: none
+Started and finished: 2026-09-17; exact times unknown
 
 ## Outcome
 
-<!-- TODO(required): summarize completed scope, result, and confidence -->
+Audited every function and method in `sea-content-addressed` and made one local persistence correctness fix.
+Publication now verifies existing content and uses an atomic no-replace hard link instead of a rename that could replace a concurrently published object on Unix.
+Added focused coverage for deduplication conflicts, missing objects, and directory limits and corruption; updated crate documentation to describe implemented behavior and use the README as crate-level rustdoc.
+Confidence is high for the changed local behavior based on the reproducer and the complete crate test suite.
 
 ## Hypothesis Results
 
-<!-- TODO(required): state which charter hypotheses were supported, falsified, or remain inconclusive and link evidence -->
+Supported: `publish` reported successful deduplication for a corrupt pre-existing object because it checked only path existence.
+The initial `publication_rejects_conflicting_existing_content` reproducer failed because `publish` returned `Ok(())`; after the repair, `publication_verifies_existing_content` passes and confirms both identical deduplication and rejection without replacement.
+Inspection also confirmed that rename-based publication could replace a target won by another publisher on Unix.
+The repair verifies existing bytes and uses no-replace hard-link publication without changing object paths or encodings.
+
+Function and method inventory:
+
+- `StoreConfig::default`, `ContentStore::open`, `put_blob`, `get_blob`, `put_directory`, and `get_directory` are exercised by round-trip and focused error-path tests.
+- `publish` and `verify_existing` are directly covered by identical and conflicting existing-content cases.
+- `read_bounded`, `sync_directory`, and `hex` are exercised through public store operations.
+- `ContentStore::root` is a trivial accessor and does not warrant a dedicated test.
 
 ## Deliverables and Commits
 
-<!-- TODO(required): list deliverables and ordered commits -->
+1. `a86986d1a7274c92e1d2bea65a286b9fd6126433` - `fix(sea-content-addressed): verify immutable publication`
+2. This report-only commit - final audit and evidence
+
+No persistence format, public API, dependency, manifest, lockfile, or generated-file change was made.
 
 ## Validation Evidence
 
-<!-- TODO(required): list exact commands, outcomes, relevant test names, and retained machine-readable output. For retained output, record expected-file/count, nonzero-size, parse, provenance, and domain-invariant checks. -->
+- `cargo test -p sea-content-addressed publication_rejects_conflicting_existing_content` - failed before the fix because conflicting existing bytes were accepted; this was the intended reproducer.
+- `cargo test -p sea-content-addressed publication_rejects_conflicting_existing_content` - passed immediately after the production repair.
+- `cargo test -p sea-content-addressed --all-targets --all-features` - passed, 5 tests.
+- `cargo fmt --all -- --check` - passed.
+- `cargo clippy -p sea-content-addressed --all-targets --all-features -- -D warnings` - passed.
+- `RUSTDOCFLAGS='-D warnings' cargo doc -p sea-content-addressed --all-features --no-deps` - passed after both documentation edits.
+- `node scripts/check-documentation.mjs` - passed after both documentation edits; final run checked 24 roots, 31 READMEs, and 48 local links.
+- `git diff --check` - passed before the implementation commit.
+- Path-qualified status and diff checks showed only the two owned crate files and this report changed; `rust-service/Cargo.lock` was unchanged and no root lockfile exists in this checkout.
+- VS Code diagnostics reported no errors in `src/lib.rs`.
+- `pnpm policy-check --path rust-service` could not start because the isolated worktree has no `node_modules` (exit 130).
+- `/workspaces/FluidFramework/node_modules/.bin/flub check policy --path rust-service` started but could not load `typescript` while checking `rust-service/tests/minimal-fluid-driver/package.json` (exit 1); it reported no finding in `sea-content-addressed`.
+- No machine-readable artifact was required or retained.
 
 ## Notable Events
 
@@ -33,28 +61,39 @@ Record an event when a hypothesis is falsified, three similar attempts fail, sub
 
 | Type | Attempt or event | Evidence | Impact | Resolution or state | Reusable lesson |
 | --- | --- | --- | --- | --- | --- |
-| <!-- TODO(required): replace with a notable event or an explicit none-reviewed row --> | | | | | |
+| Product defect | Pre-seeded an identity target with conflicting bytes, then called `publish`. | The focused test failed because `publish` returned `Ok(())`. | Corrupt content could be acknowledged as deduplicated; rename also allowed concurrent replacement on Unix. | Fixed in `a86986d1a7274c92e1d2bea65a286b9fd6126433`; retained passing regression coverage. | Content-addressed deduplication must compare bytes, and publication must use a no-replace primitive. |
+| Validation environment | Ran the required policy check in an isolated worktree without installed Node dependencies, then retried with the main checkout's `flub`. | Exit 130 for missing `node_modules`; retry exited 1 because `typescript` could not be resolved for an unrelated package. | The repository policy gate is inconclusive for this worktree. | No dependency workaround was retained; rerun at integration in a dependency-ready checkout. | Policy tools that resolve target-worktree modules need a local install, not only an external executable. |
+| Coordination tooling | Initial delegated and shared-terminal guards returned sibling-worktree context. | Reported branches included `sea-file-durable`, `sea-counter`, and `sea-sequencer`. | Those outputs were rejected as evidence. | Used absolute file paths and path-qualified Git commands; guarded validation later confirmed the assigned branch and kickoff ancestry. | Multi-worktree evidence must include and enforce the absolute checkout identity. |
 
 ## Contract and Integration Friction
 
-<!-- TODO(required): record shared API limitations, cross-workstream dependencies, and undocumented exceptions; write none when there were none -->
+No shared API or cross-workstream dependency was changed.
+Repository policy validation requires a dependency-ready integration checkout.
 
 ## Human Interventions
 
-<!-- TODO(required): record decisions or corrections supplied by a person and why they were needed; write none when there were none -->
+None.
 
 ## Measurements
 
-<!-- TODO(required): report applicable performance, size, dependency, and effort measurements with environment metadata; mark non-applicable fields -->
+Performance: not applicable; no benchmark was required for this correctness and documentation change.
+Dependencies: unchanged.
+Tests: increased from 2 to 5; all 5 pass under the pinned Rust toolchain in the assigned dev container.
+Effort and token measurements: unknown.
 
 ## Proposed Decisions
 
-<!-- TODO(required): link decision records or state that no shared decision is proposed -->
+No shared decision is proposed.
 
 ## Candidate Skills and Process Changes
 
-<!-- TODO(required): describe reusable triggers and procedures, supported by the event above; write none when there were none -->
+No new process change is proposed; the existing coordination requirement for path-qualified, guarded commands correctly addresses the observed sibling-worktree interference.
 
 ## Remaining Work and Risks
 
-<!-- TODO(required): enumerate unfinished work, intentional artifacts, confidence, and recommended next instructions -->
+- Rerun `pnpm policy-check --path rust-service` in the dependency-ready integration checkout.
+- Interrupted publication can leave temporary files; startup cleanup would require a deliberate persistence policy.
+- Temporary names use a process-local counter and can collide across processes; changing naming or retry behavior deserves a separate multi-process design and test.
+- Failures after the hard link becomes visible are not classified as ambiguous by the current public error API.
+- Recursively verifying referenced directory children, garbage collection, and synchronizing the parent when initially creating the store root are architectural follow-up work outside this assignment.
+- No failing or ignored reproducer, temporary symlink, dependency installation, or generated artifact remains.
