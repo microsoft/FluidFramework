@@ -218,7 +218,10 @@ Use [workstream report template](./assets/workstream-report.template.md).
    production crate has proportionate focused regression evidence or a recorded
    rationale for relying on existing or differently owned evidence. Verify that
    conformance and broader integration tests prove distinct responsibilities
-   rather than substituting for practical localized coverage.
+   rather than substituting for practical localized coverage. For an
+   `already adequate` conclusion, require the exact owning decision and the
+   nearest test that would fail if only that decision regressed; topical
+   coverage that another component can satisfy is insufficient.
 3. Record rejected or deferred work, conflict resolution, cross-workstream adaptations, and validation results in `phase-2/integration.md`.
 4. Set the manifest status to `phase-2-complete`.
 5. Run:

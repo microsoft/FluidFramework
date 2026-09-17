@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"iteration": "0014",
-	"status": "phase-2-complete",
+	"status": "complete",
 	"sourceCommit": "e06794556ebb92d2d33b83577f903e201fd78b2a",
 	"createdAt": "2026-09-17T17:52:54.880Z",
 	"activeWorkstreams": [
@@ -77,5 +77,5 @@
 		}
 	],
 	"deferredWorkstreams": [],
-	"nextWorkstreams": []
+	"nextWorkstreams": ["core-session", "storage", "decorators", "transport", "workloads"]
 }

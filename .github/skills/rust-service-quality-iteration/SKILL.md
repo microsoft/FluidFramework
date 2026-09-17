@@ -93,6 +93,9 @@ For each selected boundary:
    stop assuming.
 3. Locate existing focused, conformance, integration, generated-binding, and
    platform evidence. State the distinct responsibility of each useful layer.
+  For each candidate test, identify the exact owning decision whose regression
+  would make it fail. Do not count topical coverage when another component can
+  satisfy the assertion while the candidate behavior remains broken.
 4. Form one falsifiable quality finding: missing or inaccurate contract,
    missing owning-layer regression evidence, misplaced broad-only evidence,
    redundant evidence, or adequate existing coverage.
@@ -116,7 +119,9 @@ A finding may be:
 - **repaired** when the owning contract and proportionate test evidence are
   accepted and validated;
 - **already adequate** when current contracts and tests cover the risk with no
-  material gap;
+  material gap. Name the exact owning decision and the nearest test that would
+  fail if only that decision regressed. If no such test exists and focused
+  coverage is practical, the evidence is not already adequate;
 - **consumer corrected** when code was relying on behavior the owning contract
   should not promise;
 - **deferred** when the gap is real but outside the run budget or blocked, with a
@@ -155,6 +160,9 @@ In addition to the coordination skill's normal Phase 2 checks, verify:
 
 - each accepted change names the behavior and owning contract;
 - each changed production crate has focused evidence or a defensible rationale;
+- each `already adequate` disposition identifies a test that discriminates the
+  exact owning decision, or explains why the narrowest practical evidence must
+  cross a broader boundary;
 - conformance tests describe implementation-independent laws;
 - integration and browser tests prove distinct boundaries;
 - tests are deterministic and fail diagnostically;
