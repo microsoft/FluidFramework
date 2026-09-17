@@ -1043,8 +1043,11 @@ mod tests {
         let shutdown = server.shutdown_handle();
         let serving = server.serve_until_shutdown();
         let exercise = async {
+            // Framing failures must terminate only the offending stream, not the server.
             send_malformed_stream(address, certificate_hash.clone()).await;
             timeout_in_flight_frame(address, certificate_hash.clone()).await;
+
+            // A fresh client proves the server remains usable after both framing failures.
             let client = NativeSeaClient::connect(
                 format!("https://{address}/sea"),
                 certificate_hash.clone(),
@@ -1059,6 +1062,9 @@ mod tests {
             )
             .await
             .unwrap();
+
+            // Once committed, submissions and snapshots remain resolvable even when the
+            // requester abandons its response stream before reading the acknowledgement.
             let receipt =
                 abandon_submission_and_resolve(address, certificate_hash.clone(), &client).await;
             abandon_snapshot_and_resolve(address, certificate_hash, &client, receipt).await;
@@ -1080,7 +1086,11 @@ mod tests {
         let (_endpoint, connection) = raw_connection(address, certificate_hash).await;
         let (mut send, receive) = connection.open_bi().await.unwrap().await.unwrap();
         send.write_all(b"bad!").await.unwrap();
-        send.finish().await.unwrap();
+
+        // The server may reject the malformed frame and send STOP_SENDING before this
+        // finish completes. Both a clean finish and that peer stop mean the bytes were
+        // delivered; later requests in the test verify that the server survived them.
+        let _ = send.finish().await;
         drop(receive);
         connection.close(0_u32.into(), b"fault injected");
     }
