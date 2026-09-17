@@ -383,10 +383,12 @@ mod current_tests {
     use std::sync::Arc;
 
     use bytes::Bytes;
+    use futures_util::StreamExt;
     use sea_core::{
-        ClassifiedError, ErrorKind, Event,
+        ClassifiedError, ErrorKind, Event, MonitoredStreamItem,
         archive::{
-            AuthorId, EventSubmission, OperationId, SeaArchive, SeaAuthorSession, SessionId,
+            AuthorId, EventSubmission, LoadEvent, OperationId, SeaArchive, SeaAuthorSession,
+            SeaEventSubscription, SessionId,
         },
     };
     use sea_memory::MemoryStream;
@@ -521,6 +523,115 @@ mod current_tests {
             error,
             StatefulCompressionError::PayloadTooLarge { .. }
         ));
+    }
+
+    #[tokio::test]
+    async fn corrupt_events_do_not_prevent_fresh_replay() {
+        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
+            .await
+            .unwrap();
+        let session = sequencer
+            .open_session(
+                AuthorId::new(Bytes::from_static(b"replay-author")).unwrap(),
+                SessionId::new(Bytes::from_static(b"replay-session")).unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+        let compressed = StatefulCompressionSession::new(
+            session.clone(),
+            Bytes::from_static(DICTIONARY),
+            MAX_PAYLOAD,
+        )
+        .unwrap();
+
+        let submission =
+            |operation_id: &'static [u8], reference, payload: &'static [u8]| EventSubmission {
+                operation_id: OperationId::new(Bytes::from_static(operation_id)).unwrap(),
+                reference,
+                event: Event {
+                    payload: Bytes::from_static(payload),
+                    blob_tree: None,
+                },
+            };
+
+        let first = compressed
+            .submit(submission(
+                b"valid-before-corruption",
+                None,
+                b"valid before corruption",
+            ))
+            .await
+            .unwrap();
+        let corrupt = session
+            .submit(submission(
+                b"corrupt-frame",
+                Some(first.position),
+                b"not a dictionary frame",
+            ))
+            .await
+            .unwrap();
+        let last = compressed
+            .submit(submission(
+                b"valid-after-corruption",
+                Some(corrupt.position),
+                b"valid after corruption",
+            ))
+            .await
+            .unwrap();
+
+        let mut history = compressed.read(None, Some(corrupt.position));
+        let history_error = loop {
+            match history.next().await.unwrap() {
+                Ok(MonitoredStreamItem::Progress(_)) => {}
+                Ok(MonitoredStreamItem::Item(event)) => {
+                    assert_eq!(event.committed.position, first.position);
+                    assert_eq!(
+                        event.committed.event.payload,
+                        Bytes::from_static(b"valid before corruption")
+                    );
+                }
+                Err(error) => break error,
+            }
+        };
+        assert!(matches!(
+            history_error,
+            StatefulCompressionError::Corrupt(_)
+        ));
+        assert_eq!(history_error.kind(), ErrorKind::Corrupt);
+
+        let mut resumed = compressed.read(Some(corrupt.position), Some(last.position));
+        let resumed_event = loop {
+            match resumed.next().await.unwrap().unwrap() {
+                MonitoredStreamItem::Progress(_) => {}
+                MonitoredStreamItem::Item(event) => break event,
+            }
+        };
+        assert_eq!(resumed_event.committed.position, last.position);
+        assert_eq!(
+            resumed_event.committed.event.payload,
+            Bytes::from_static(b"valid after corruption")
+        );
+
+        let mut load = compressed.load(None);
+        let load_error = loop {
+            match load.next().await.unwrap() {
+                Ok(
+                    MonitoredStreamItem::Progress(_)
+                    | MonitoredStreamItem::Item(LoadEvent::Snapshot(_)),
+                ) => {}
+                Ok(MonitoredStreamItem::Item(LoadEvent::Event(event))) => {
+                    assert_eq!(event.committed.position, first.position);
+                    assert_eq!(
+                        event.committed.event.payload,
+                        Bytes::from_static(b"valid before corruption")
+                    );
+                }
+                Err(error) => break error,
+            }
+        };
+        assert!(matches!(load_error, StatefulCompressionError::Corrupt(_)));
+        assert_eq!(load_error.kind(), ErrorKind::Corrupt);
     }
 
     #[test]
