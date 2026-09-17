@@ -542,6 +542,11 @@ export interface ContainerRuntimeOptionsInternal extends ContainerRuntimeOptions
 	 * In that case, batched messages will be sent individually (but still all at the same time).
 	 */
 	readonly enableGroupedBatching: boolean;
+
+	/**
+	 * Deployment opt-in for creating configured channels. Readers remain enabled when omitted.
+	 */
+	readonly enableChannelConfiguration?: boolean;
 }
 
 /**
@@ -1086,7 +1091,11 @@ export class ContainerRuntime
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
 			stagingModeAutoFlushThreshold = defaultConfigs.stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade = defaultConfigs.disableSchemaUpgrade,
+			enableChannelConfiguration,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
+		if (enableChannelConfiguration === true && !explicitSchemaControl) {
+			throw new UsageError("Channel configuration requires explicit schema control");
+		}
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
 		if (!explicitSchemaControl) {
@@ -1282,6 +1291,9 @@ export class ContainerRuntime
 				opGroupingEnabled: enableGroupedBatching,
 				createBlobPayloadPending,
 				disallowedVersions: [],
+				...(!existing && enableChannelConfiguration === true
+					? { channelConfiguration: true as const }
+					: {}),
 			},
 			(schema) => {
 				runtime.onSchemaChange(schema);
@@ -1321,6 +1333,7 @@ export class ContainerRuntime
 			createBlobPayloadPending,
 			stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade,
+			...(enableChannelConfiguration === undefined ? {} : { enableChannelConfiguration }),
 		};
 
 		validateMinimumVersionForCollab(updatedMinVersionForCollab);
@@ -1715,6 +1728,25 @@ export class ContainerRuntime
 		recentBatchInfo?: [number, string][],
 	) {
 		super();
+		Object.defineProperties(this, {
+			registerChannelConfigurationPublication: {
+				value: (publish: () => void): void => {
+					this.channelConfigurationPublications.push(publish);
+				},
+			},
+			ensureChannelConfigurationEnabled: {
+				value: async (): Promise<void> => this.ensureChannelConfigurationEnabledCore(),
+			},
+			channelConfigurationEnabled: {
+				get: () => this.documentsSchemaController.channelConfigurationEnabled,
+			},
+			channelConfigurationCreationEnabled: {
+				get: () => this.runtimeOptions.enableChannelConfiguration === true,
+			},
+			channelConfigurationPublicationRequired: {
+				get: () => this.attachState !== AttachState.Detached,
+			},
+		});
 
 		const {
 			options,
@@ -2387,6 +2419,69 @@ export class ContainerRuntime
 		}
 	}
 
+	private channelConfigurationRequest:
+		| {
+				readonly promise: Promise<void>;
+				readonly resolve: () => void;
+				readonly reject: (error: unknown) => void;
+		  }
+		| undefined;
+	private channelConfigurationPublications: (() => void)[] = [];
+
+	/**
+	 * Enables the document reader requirement before configured channels are published.
+	 * Existing documents wait for an actual sequenced schema change.
+	 */
+	private async ensureChannelConfigurationEnabledCore(): Promise<void> {
+		this.verifyNotClosed();
+		if (this.runtimeOptions.enableChannelConfiguration !== true) {
+			throw new UsageError("Channel configuration creation is not enabled");
+		}
+		if (this.documentsSchemaController.channelConfigurationEnabled) {
+			return;
+		}
+		if (this.isReadOnly() || this.inStagingMode) {
+			throw new UsageError(
+				"Cannot enable channel configuration in the current submission phase",
+			);
+		}
+		if (this.channelConfigurationRequest === undefined) {
+			this.documentsSchemaController.requestChannelConfiguration();
+			let resolve!: () => void;
+			let reject!: (error: unknown) => void;
+			const promise = new Promise<void>((res, rej) => {
+				resolve = res;
+				reject = rej;
+			});
+			this.channelConfigurationRequest = { promise, resolve, reject };
+			this.advanceChannelConfigurationRequest();
+			return promise;
+		}
+		return this.channelConfigurationRequest?.promise;
+	}
+
+	private advanceChannelConfigurationRequest(): void {
+		const request = this.channelConfigurationRequest;
+		if (request === undefined) {
+			return;
+		}
+		if (this.documentsSchemaController.channelConfigurationEnabled) {
+			this.channelConfigurationRequest = undefined;
+			request.resolve();
+			return;
+		}
+		try {
+			this.verifyNotClosed();
+			const contents = this.documentsSchemaController.maybeGenerateSchemaMessage();
+			if (contents !== undefined) {
+				this.submit({ type: ContainerMessageType.DocumentSchemaChange, contents });
+			}
+		} catch (error) {
+			this.channelConfigurationRequest = undefined;
+			request.reject(error);
+		}
+	}
+
 	public getCreateChildSummarizerNodeFn(
 		id: string,
 		createParam: CreateChildSummarizerNodeParam,
@@ -2603,6 +2698,11 @@ export class ContainerRuntime
 			return;
 		}
 		this._disposed = true;
+		this.channelConfigurationRequest?.reject(
+			error ?? new UsageError("Runtime disposed before channel configuration was enabled"),
+		);
+		this.channelConfigurationRequest = undefined;
+		this.channelConfigurationPublications = [];
 
 		// The ContainerRuntimeDisposed event is redundant with the loader's ContainerDispose event
 		// (see #27126) and can be removed once the change for ContainerDispose has saturated in telemetry.
@@ -3713,6 +3813,10 @@ export class ContainerRuntime
 					local,
 					message.sequenceNumber,
 				);
+				if (this.channelConfigurationRequest !== undefined) {
+					// Wait until this incoming batch has finished before proposing another schema.
+					queueMicrotask(() => this.advanceChannelConfigurationRequest());
+				}
 				break;
 			}
 			default: {
@@ -4244,6 +4348,13 @@ export class ContainerRuntime
 				this.attachState === AttachState.Attaching,
 				0x12d /* "Container Context should already be in attaching state" */,
 			);
+			// The loader captures its summary while still detached, then synchronously changes
+			// attach state. Publish all captured channels before any datastore can emit callbacks.
+			const publications = this.channelConfigurationPublications;
+			this.channelConfigurationPublications = [];
+			for (const publish of publications) {
+				publish();
+			}
 		} else {
 			assert(
 				this.attachState === AttachState.Attached,
@@ -4268,6 +4379,7 @@ export class ContainerRuntime
 		blobRedirectTable?: Map<string, string>,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTree {
+		this.channelConfigurationPublications = [];
 		if (blobRedirectTable) {
 			this.blobManager.patchRedirectTable(blobRedirectTable);
 		}

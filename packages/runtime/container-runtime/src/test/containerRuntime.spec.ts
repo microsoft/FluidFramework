@@ -43,6 +43,7 @@ import {
 	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import type {
+	ChannelConfigurationRuntime,
 	FluidDataStoreMessage,
 	ISummaryTreeWithStats,
 	FluidDataStoreRegistryEntry,
@@ -340,6 +341,176 @@ describe("Runtime", () => {
 	});
 
 	describe("Container Runtime", () => {
+		describe("Channel configuration capability", () => {
+			async function loadConfigurationRuntime(
+				existing: boolean,
+				runtimeOptions: IContainerRuntimeOptionsInternal = {},
+			): Promise<ContainerRuntime & ChannelConfigurationRuntime> {
+				const { runtime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext({
+						attachState: existing ? AttachState.Attached : AttachState.Detached,
+					}) as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing,
+					runtimeOptions: {
+						explicitSchemaControl: true,
+						enableChannelConfiguration: true,
+						enableGroupedBatching: false,
+						flushMode: FlushMode.Immediate,
+						...runtimeOptions,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				return runtime;
+			}
+
+			it("initializes new detached containers before attachment without sending ops", async () => {
+				const runtime = await loadConfigurationRuntime(false);
+				assert.equal(runtime.channelConfigurationEnabled, true);
+				await runtime.ensureChannelConfigurationEnabled?.();
+				assert.equal(submittedOps.length, 0);
+				runtime.dispose();
+			});
+
+			it("publishes every captured channel before datastore attachment callbacks", async () => {
+				const context = getMockContext({ attachState: AttachState.Detached });
+				const { runtime } = await ContainerRuntime.loadRuntime2({
+					context: context as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: { explicitSchemaControl: true, enableChannelConfiguration: true },
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				const capability = runtime as ContainerRuntime & ChannelConfigurationRuntime;
+				const order: string[] = [];
+				capability.registerChannelConfigurationPublication?.(() =>
+					order.push("old serialization"),
+				);
+				runtime.createSummary();
+				capability.registerChannelConfigurationPublication?.(() =>
+					order.push("first channel"),
+				);
+				capability.registerChannelConfigurationPublication?.(() =>
+					order.push("second channel"),
+				);
+				const privates = runtime as unknown as ContainerRuntime_WithPrivates;
+				sandbox.stub(privates.channelCollection, "setAttachState").callsFake(() => {
+					order.push("datastore callback");
+				});
+				Object.assign(context, { attachState: AttachState.Attaching });
+				runtime.setAttachState(AttachState.Attaching);
+				assert.deepEqual(order, ["first channel", "second channel", "datastore callback"]);
+				runtime.dispose();
+			});
+
+			it("explicitly submits and waits for a sequenced schema acknowledgement", async () => {
+				const runtime = await loadConfigurationRuntime(true);
+				let completed = false;
+				const completion = runtime.ensureChannelConfigurationEnabled?.().then(() => {
+					completed = true;
+				});
+				await Promise.resolve();
+				assert.equal(completed, false);
+				assert.equal(runtime.channelConfigurationEnabled, false);
+				assert.equal(submittedOps.length, 1);
+				const second = runtime.ensureChannelConfigurationEnabled?.();
+				assert.equal(submittedOps.length, 1);
+				runtime.process(
+					{
+						clientId: mockClientId,
+						clientSequenceNumber: 1,
+						sequenceNumber: 1,
+						minimumSequenceNumber: 0,
+						referenceSequenceNumber: 0,
+						timestamp: 1,
+						type: MessageType.Operation,
+						contents: submittedOps[0],
+					},
+					true,
+				);
+				await clock.tickAsync(0);
+				await Promise.all([completion, second]);
+				assert.equal(runtime.channelConfigurationEnabled, true);
+				assert.equal(completed, true);
+				runtime.dispose();
+			});
+
+			it("rejects dark creation and disabled upgrades", async () => {
+				const dark = await loadConfigurationRuntime(true, {
+					enableChannelConfiguration: false,
+				});
+				await assert.rejects(
+					async () => dark.ensureChannelConfigurationEnabled?.(),
+					/creation is not enabled/,
+				);
+				dark.dispose();
+				const disabled = await loadConfigurationRuntime(true, { disableSchemaUpgrade: true });
+				await assert.rejects(
+					async () => disabled.ensureChannelConfigurationEnabled?.(),
+					/upgrades are disabled/,
+				);
+				disabled.dispose();
+			});
+
+			it("retries only after a competing proposal and the pending local acknowledgement", async () => {
+				const runtime = await loadConfigurationRuntime(true);
+				const completion = runtime.ensureChannelConfigurationEnabled?.();
+				const first = submittedOps[0] as {
+					type: ContainerMessageType.DocumentSchemaChange;
+					contents: { version: 1; refSeq: number; runtime: Record<string, unknown> };
+				};
+				const process = (contents: object, sequenceNumber: number, local: boolean): void => {
+					runtime.process(
+						{
+							clientId: local ? mockClientId : "otherClient",
+							clientSequenceNumber: local && sequenceNumber === 3 ? 2 : 1,
+							sequenceNumber,
+							minimumSequenceNumber: 0,
+							referenceSequenceNumber: 0,
+							timestamp: sequenceNumber,
+							type: MessageType.Operation,
+							contents,
+						},
+						local,
+					);
+				};
+				process(
+					{
+						...first,
+						contents: {
+							...first.contents,
+							runtime: { explicitSchemaControl: true, createBlobPayloadPending: true },
+						},
+					},
+					1,
+					false,
+				);
+				await clock.tickAsync(0);
+				assert.equal(submittedOps.length, 1);
+				assert.equal(runtime.channelConfigurationEnabled, false);
+				process(first, 2, true);
+				await clock.tickAsync(0);
+				assert.equal(submittedOps.length, 2);
+				const retry = submittedOps[1] as typeof first;
+				assert.equal(retry.contents.refSeq, 1);
+				assert.equal(retry.contents.runtime.channelConfiguration, true);
+				assert.equal(retry.contents.runtime.createBlobPayloadPending, true);
+				process(retry, 3, true);
+				await clock.tickAsync(0);
+				await completion;
+				assert.equal(runtime.channelConfigurationEnabled, true);
+				runtime.dispose();
+			});
+
+			it("rejects outstanding requests when disposed", async () => {
+				const runtime = await loadConfigurationRuntime(true);
+				const completion = runtime.ensureChannelConfigurationEnabled?.();
+				assert(completion !== undefined);
+				runtime.dispose();
+				await assert.rejects(completion, /disposed/);
+			});
+		});
+
 		describe("IdCompressor", () => {
 			it("finalizes idRange on attach", async () => {
 				const logger = new MockLogger();

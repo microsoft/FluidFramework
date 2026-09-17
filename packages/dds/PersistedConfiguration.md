@@ -1,12 +1,12 @@
 # Persisted DDS configuration
 
-**Status:** Design proposal. The APIs and persisted formats below do not exist yet.
+**Status:** Local prototype. The configuration protocol is opt-in and has no production DDS adopter.
 
 ## Summary and agreed requirements
 
 Introduce an opt-in, per-channel configuration protocol, implemented by shared infrastructure rather
 than by individual DDSes. Each opted-in DDS has a persisted configuration and a monotonically
-increasing configuration revision. Configuration changes are explicit compare-and-swap (CAS) ops.
+increasing configuration revision. Configuration changes on published channels are explicit compare-and-swap (CAS) ops.
 Ordinary DDS ops carry the configuration revision captured for their original logical submission.
 
 The shared mechanism accepts a configuration change only if its expected revision is current.
@@ -20,7 +20,7 @@ The following decisions were clarified for this proposal:
 | --- | --- |
 | Barrier semantics | Sequenced CAS, not consensus or a wait for all clients to acknowledge. |
 | Ordinary ops from earlier revisions | Delivered normally, with their configuration revision exposed to the DDS. Any invalidation policy and related events are DDS responsibilities, deferred from this design. |
-| Local application | Preserve each DDS's existing optimistic, acknowledgement, and resubmission behavior. Only configuration changes must wait for sequencing. |
+| Local application | Preserve each DDS's existing optimistic, acknowledgement, and resubmission behavior. Published configuration changes wait for sequencing; unpublished configuration changes apply locally. |
 | Configuration values | Full replacement is allowed, including disabling or removing settings. |
 | Adoption | Creation-time opt-in for new DDS instances. Migrating existing instances is out of scope. |
 | Unloaded DDSes | Preserve lazy loading; validate and replay configuration before exposing the instance. |
@@ -56,7 +56,10 @@ desired/session distinction, and one-proposal-per-session policy are not the req
 
 Put a reusable `ChannelConfigurationController` in `shared-object-base`. It owns configuration
 state, CAS decisions, revision stamping/exposure, and configuration-request completion tracking.
-An internal `ConfiguredSharedObject` base integrates it with `SharedObjectCore`'s lifecycle.
+An internal protocol adapter integrates it with `SharedObjectCore`'s lifecycle.
+The primary DDS API is a typed configuration facet in `KernelArgs`, available before the
+kernel factory constructs or loads the kernel. It does not require kernel implementations
+such as `SharedTreeKernel` to extend `SharedObject`.
 
 The DDS owns the meaning and validation of its configuration, how it reacts to an accepted change,
 and how it processes ordinary ops, including optimistic local state and acknowledgements. It does
@@ -69,7 +72,7 @@ The datastore runtime continues to own channel routing, summary scheduling, and 
 It validates protocol support before loading a configured channel. Container runtime owns the
 document-level compatibility gate described below.
 
-Version 1 supports DDSes using the new internal base. Adapting a direct `IChannel` implementation
+Version 1 supports DDSes using `makeSharedObjectKind`. Adapting a direct `IChannel` implementation
 is a separate integration, not permission to bypass the shared controller.
 
 Non-goals are application schema management, general consensus, cross-channel transactions,
@@ -122,7 +125,7 @@ Copy and deeply freeze input before retaining or submitting it. Do not rely on T
 Validate the serialized size against the runtime's supported message limits before submission;
 do not truncate configuration or silently fall back to defaults.
 
-These types describe the proposed internal API:
+These types describe the internal API:
 
 ```typescript
 import type { ReadonlyJsonTypeWith } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
@@ -221,7 +224,7 @@ If B's ordinary op had sequenced before position 100, the current configuration 
 would still have been revision 7. Neither ordering causes the shared layer to discard the op.
 The barrier does not undo committed or optimistic edits or drain outstanding submissions.
 
-## Proposed DDS-facing internal APIs
+## DDS-facing internal APIs
 
 All new symbols below are `@internal`; they are not application-facing promises of the existing
 `SharedMap`, `SharedString`, or `SharedTree` APIs. API snippets specify contracts, not full class
@@ -244,81 +247,78 @@ export interface ChannelConfigurationDefinition<
     readonly validateTransition: (previous: TConfig, next: TConfig) => void;
 }
 
-export interface ChannelConfigurationChange<
-    TConfig extends ChannelConfiguration,
-> {
-    readonly previous: ChannelConfigurationSnapshot<TConfig>;
-    readonly current: ChannelConfigurationSnapshot<TConfig>;
+export interface ChannelConfigurationSequencedContext {
+    readonly source: "sequenced";
     readonly sequenceNumber: number;
+    readonly clientSequenceNumber: number;
+    readonly messageIndex: number;
     readonly local: boolean;
 }
 
+export type ChannelConfigurationContext =
+    | { readonly source: "local"; readonly local: true }
+    | ChannelConfigurationSequencedContext;
+
+export type ChannelConfigurationChange<TConfig extends ChannelConfiguration> = {
+    readonly previous: ChannelConfigurationSnapshot<TConfig>;
+    readonly current: ChannelConfigurationSnapshot<TConfig>;
+} & ChannelConfigurationContext;
+
 export type ConfigurationChangeResult<TConfig extends ChannelConfiguration> =
-    | {
+    | ({
           readonly status: "applied";
           readonly current: ChannelConfigurationSnapshot<TConfig>;
-          readonly sequenceNumber: number;
-      }
-    | {
+      } & ChannelConfigurationContext)
+    | ({
           readonly status: "conflict";
           readonly current: ChannelConfigurationSnapshot<TConfig>;
-          readonly sequenceNumber: number;
-      };
+      } & ChannelConfigurationSequencedContext);
 
-export type ConfiguredMessageContent = IRuntimeMessagesContent & {
-    readonly configurationRevision: number;
-};
-
-export type ConfiguredMessageCollection = Omit<
+export type SharedKernelMessageCollection = Omit<
     IRuntimeMessageCollection,
     "messagesContent"
 > & {
-    readonly messagesContent: readonly ConfiguredMessageContent[];
+    readonly messagesContent: readonly (IRuntimeMessagesContent & {
+        readonly configurationRevision?: number;
+    })[];
 };
 
-export type ConfigurationSource<TConfig extends ChannelConfiguration> =
-    | { readonly kind: "create"; readonly initialConfiguration: TConfig }
-    | { readonly kind: "load" };
-
-export declare abstract class ConfiguredSharedObject<
+export interface ChannelConfigurationFacet<
     TConfig extends ChannelConfiguration,
-> extends SharedObject {
-    protected constructor(
-        id: string,
-        runtime: IFluidDataStoreRuntime,
-        attributes: IChannelAttributes,
-        telemetryContextPrefix: string,
-        definition: ChannelConfigurationDefinition<TConfig>,
-        source: ConfigurationSource<TConfig>,
-    );
-
-    protected get configuration(): ChannelConfigurationSnapshot<TConfig>;
-
-    protected requestConfigurationChange(
-        next: TConfig,
-    ): Promise<ConfigurationChangeResult<TConfig>>;
-
-    protected abstract initializeConfiguration(configuration: TConfig): void;
-
-    protected abstract onConfigurationChanged(
-        change: ChannelConfigurationChange<TConfig>,
-    ): void;
-
-    protected abstract processConfiguredMessagesCore(
-        messages: ConfiguredMessageCollection,
-    ): void;
+> {
+    readonly current: ChannelConfigurationSnapshot<TConfig>;
+    requestChange(next: TConfig): Promise<ConfigurationChangeResult<TConfig>>;
+    on(event: "changed", listener: (change: ChannelConfigurationChange<TConfig>) => void): void;
+    off(event: "changed", listener: (change: ChannelConfigurationChange<TConfig>) => void): void;
 }
 ```
 
-`SharedObject` and `IFluidDataStoreRuntime` in this sketch are the existing internal-entrypoint
-imports. Existing submission, load, summary, GC, connection, resubmission, stashed-op, and rollback
-hooks remain available for ordinary DDS operations.
+`SharedKernelFactory<T, TConfig>.configurationDefinition` declares reader support.
+`SharedObjectOptions<T, TConfig>.initialConfiguration` separately opts new instances in.
+`KernelArgs<TConfig>.configuration` contains the facet for marked instances and is undefined
+for legacy instances. The wrapper creates it before calling `factory.create` or `factory.loadCore`.
+The kernel can read it during construction and register a listener before loading its state.
+Existing submission, load, summary, GC, connection, resubmission, stashed-op, and rollback hooks
+remain available for ordinary DDS operations.
+`messageIndex` is the logical position within the delivered collection, not a globally unique
+service position. It can differ after stash reconstruction and must not be persisted as identity.
+The channel configuration revision uniquely identifies each accepted barrier,
+including when grouped messages share a service sequence number.
 
 ### Requesting a configuration change
 
-`requestConfigurationChange` captures the current revision and clones the replacement values
+`requestChange` captures the current revision and clones the replacement values
 synchronously at invocation, before any asynchronous work. It validates locally, then submits
-one control op. It never changes the configuration optimistically.
+one control op if the channel is published. It never changes published configuration optimistically.
+For an unpublished channel, it replaces the authoritative state and synchronously notifies listeners
+before returning its promise, without submitting any op or waiting for a connection.
+This is a final local change, not an optimistic proposal.
+Changes and results distinguish `source: "local"` from `source: "sequenced"`; only sequenced
+changes carry service sequence information.
+Before a service advertises its size limit, unpublished configuration uses a conservative
+16 KiB serialized UTF-8 bound. A known runtime limit takes precedence.
+Submission limits do not constrain persisted snapshot loads, including detached rehydration,
+or already-sequenced changes.
 
 The shared mechanism, not the DDS, decides and reports `"applied"` or `"conflict"`. The returned
 snapshot is the state at processing that result; another change can occur before the caller's
@@ -338,21 +338,21 @@ using existing pending local-op metadata; completion metadata is not part of the
 
 ### Applying changes to a live DDS
 
-`initializeConfiguration` runs once, after construction, before `initializeLocalCore` or
-`loadCore`. For load it receives the snapshot's validated configuration, not the latest
-configuration from buffered ops. It is not a configuration-change notification.
+The facet is initialized once before kernel construction. For load it exposes the snapshot's
+validated configuration, not the latest configuration from buffered ops.
+Reading that initial snapshot is not a configuration-change notification.
 
-`onConfigurationChanged` runs synchronously for every accepted barrier, local or remote,
+The `"changed"` listener runs synchronously for every accepted barrier, local or remote,
 including barriers replayed during load. The controller's getter already exposes `current`.
 It does not run for conflicts. The next ordinary op cannot reach the DDS until this callback
-returns.
+returns. It also runs for each final local change while unpublished.
 
 Validation and the callback's effects on committed state must be deterministic and independent of
 local feature gates, connection state, wall-clock time, and local pending requests. A callback may
 also update a local view/cache consistently with the DDS's existing optimistic-state model; those
 local effects must not change the configuration CAS result or the shared state transition.
-Callbacks cannot await work. The base rejects reentrant configuration/data submission from
-initialization or configuration callbacks;
+Callbacks cannot await work. The wrapper rejects reentrant configuration/data submission from
+load or configuration callbacks;
 callers may schedule work afterward. This prevents partially reconfigured state from escaping.
 
 The callback can replace codecs, update behavior, or perform deterministic synchronous state
@@ -371,10 +371,10 @@ The wrapper stamps new ordinary messages with the active configuration revision.
 change when the DDS applies local edits, emits events, resolves its own promises, or reconciles
 acknowledgements. There is no shared `"dropped"` result or new acknowledgement-based data API.
 
-`processConfiguredMessagesCore` receives normal runtime message fields plus
+`SharedKernel.processMessagesCore` receives normal runtime message fields plus
 `messages.messagesContent[i].configurationRevision`, copied from that op's envelope. The current
-configuration is available through `this.configuration`. For example, the op revision may be 7
-while `this.configuration.revision` is 8. Both are meaningful; the wrapper must not replace the
+configuration is available through the facet's `current`. For example, the op revision may be 7
+while `configuration.current.revision` is 8. Both are meaningful; the wrapper must not replace the
 op's revision with current or discard the op because they differ.
 
 The DDS may ignore the metadata for flags that do not affect in-flight ops. A future DDS-specific
@@ -396,17 +396,17 @@ For example, a summary-only setting need not affect ordinary ops at all:
 
 ```typescript
 public setSummaryCompression(enabled: boolean): Promise<ConfigurationChangeResult<MyConfig>> {
-    return this.requestConfigurationChange({
-        ...this.configuration.values,
+    return this.configuration.requestChange({
+        ...this.configuration.current.values,
         summaryCompression: enabled,
     });
 }
 
-protected onConfigurationChanged(change: ChannelConfigurationChange<MyConfig>): void {
+private onConfigurationChanged(change: ChannelConfigurationChange<MyConfig>): void {
     this.summaryCompressionEnabled = change.current.values.summaryCompression;
 }
 
-protected processConfiguredMessagesCore(messages: ConfiguredMessageCollection): void {
+public processMessagesCore(messages: SharedKernelMessageCollection): void {
     this.processDataMessages(messages);
 }
 ```
@@ -415,10 +415,10 @@ protected processConfiguredMessagesCore(messages: ConfiguredMessageCollection): 
 Here the existing data handler can ignore `configurationRevision` and retain its normal optimistic
 and acknowledgement behavior. CAS remains entirely in the shared configuration mechanism.
 
-### Base-class integration
+### Shared wrapper integration
 
-The new base separates configuration-control traffic from ordinary DDS traffic, forwarding
-ordinary message collections to `processConfiguredMessagesCore` with revision metadata.
+The protocol adapter separates configuration-control traffic from ordinary DDS traffic, forwarding
+ordinary message collections to `SharedKernel.processMessagesCore` with revision metadata.
 It handles configuration requests during resubmission, stashed-op restoration, and rollback,
 but delegates ordinary payloads to the DDS's existing hooks. Guard against unwrapped configured
 traffic and double wrapping; `submitLocalMessage` remains the ordinary submission entry point.
@@ -431,14 +431,19 @@ that they sequenced.
 
 ## Creation, publication, load, and summaries
 
-At creation the factory passes `source: { kind: "create", initialConfiguration }`. Loading uses
-`source: { kind: "load" }` and must obtain configuration exclusively from persisted attributes.
-Reject a missing marker on the configured load path; never turn a legacy channel into a configured
-one by applying current factory defaults.
+At creation the wrapper uses `SharedObjectOptions.initialConfiguration`, when provided.
+Loading obtains configuration exclusively from persisted attributes. A supporting factory
+loads both marked and unmarked channels: absent markers select the legacy protocol, and
+present markers require supported, valid configuration. Never turn a legacy channel into a
+configured one by applying current factory defaults. Reader support remains enabled even
+when deployment policy stops creating new configured channels.
 
-Initial configuration is immutable until the channel is published. This proposal rejects
-configuration-change requests for unpublished channels; supply the intended initial state at
-creation instead. After publication, every replacement requires an actual sequenced barrier.
+Until publication, configuration replacements apply locally and immediately through the same
+validation and immutable state path. Repeated replacements, including identical values, advance
+the revision and notify the active kernel. These changes require neither a control op nor a
+document-schema upgrade round trip. An unbound channel in an attached container is also
+unpublished. After publication, every replacement requires an actual sequenced barrier;
+disconnecting an already-published channel does not restore local authority.
 
 Unpublished channels retain the DDS's existing local-edit and initialization behavior. Local data
 included in the initial snapshot must not also be sent as trailing ops. The configuration mechanism
@@ -451,7 +456,7 @@ alter the captured baseline; optimistic updates to the live DDS continue accordi
 semantics. This boundary is not `connected`, and must not be inferred solely from
 `SharedObjectCore.isAttached()` or from a later attach acknowledgement.
 
-Detached serialization/rehydration retains the same initial configuration. A detached snapshot
+Detached serialization/rehydration retains the current configuration and local authority. A detached snapshot
 is not a license to regenerate it from new factory defaults. An interrupted attach must preserve
 its captured snapshot and trailing-op order through the existing pending attachment machinery.
 
@@ -542,15 +547,15 @@ Use two checks:
    A supported runtime with an older DDS factory must fail predictably rather than load the
    configured channel through the legacy path.
 
-Proposed factory capability:
+Factory capability:
 
 ```typescript
-export interface ConfiguredChannelFactory extends IChannelFactory {
-    readonly channelConfigurationProtocolVersion: 1;
+export interface ChannelConfigurationFactory {
+    readonly channelConfigurationProtocolVersion?: 1;
 }
 ```
 
-The marker advertises support, not initial values. `ConfiguredSharedObject` checks support for the
+Marker value `1` advertises support, not initial values. The shared wrapper checks support for the
 actual DDS configuration before reading DDS state. The marker is a contract for factory-created
 instances, not evidence that every configuration value is supported.
 The runtime also requires the returned configured instance to have registered its shared controller
@@ -577,12 +582,16 @@ An offline call can remain pending until sequencing is possible.
 
 DDS construction/publication must not synchronously initiate an unawaited upgrade and then emit
 new-protocol content. The caller prepares this capability before using a configured factory in
-an attached container; creation/publication fail clearly if it is not ready. Pass readiness through
+an attached container. New-instance creation requires `channelConfigurationCreationEnabled`;
+publication additionally requires `channelConfigurationEnabled`. Local configuration edits do not
+require document readiness. Pass readiness through
 an internal datastore-runtime capability rather than having DDS packages depend on container
 runtime's implementation.
 
-Ship protocol readers and the new base dark first. Gate creation by deployment policy, with no
-behavioral changes to existing DDSes. `minVersionForCollab` is useful rollout guidance, but its
+Ship protocol readers and the new wrapper dark first. Gate creation by deployment policy, with no
+behavioral changes to existing DDSes. The internal runtime option `enableChannelConfiguration`
+enables creation policy and requires `explicitSchemaControl: true`.
+`minVersionForCollab` is useful rollout guidance, but its
 current warning alone is not enforcement. Clients predating document-schema enforcement require
 the existing deployment/old-client exclusion strategy; the new field cannot retroactively make
 them safe.
@@ -601,15 +610,15 @@ drops in this protocol; DDS-specific invalidation events and telemetry are outsi
 | Area | Proposed changes |
 | --- | --- |
 | `datastore-definitions` | Internal persisted-state/factory capability types, without new required members on legacy channel contracts. |
-| `shared-object-base` | Controller and configured base; immutable per-instance attributes; control-op dispatch and ordinary-op revision metadata; configuration-request completion tracking; initialization and publication hooks. |
+| `shared-object-base` | Controller and compositional kernel facet; immutable per-instance attributes; control-op dispatch and ordinary-op revision metadata; configuration-request completion tracking; initialization and publication hooks. |
 | `datastore` | Factory compatibility check; propagate publication/readiness hooks; retain lazy replay ordering; align stashed-envelope handling and summary invalidation. |
 | `container-runtime` | Sticky document-schema capability and explicit enablement path; propagate readiness; retain pending accounting and existing ordinary-op replay behavior. |
 | Initial adopter | New opt-in DDS instances with configuration validation and a synchronous change callback. Preserve their existing local mutation, acknowledgement, and ordinary-op lifecycle behavior. |
 
 Share the existing base's serializer, telemetry, error handling, and summary support through
 targeted hooks. Do not duplicate the whole `SharedObjectCore` implementation or change the
-legacy dispatch path's semantics. Generated API reports would be regenerated during implementation,
-not edited as part of this proposal.
+legacy dispatch path's semantics. Generated API reports are regenerated through existing build
+tasks, never hand-edited.
 
 ## Required coverage before enabling the feature
 
@@ -623,7 +632,7 @@ test harnesses. The key scenarios are:
 | Identical replacement; A-to-B-to-A replacement | Each successful barrier has a distinct revision; returning to earlier values does not erase an op's revision provenance. |
 | Barrier and data ops in one grouped envelope | Preserve logical order and callback boundaries, including shared sequence numbers. |
 | Multiple DDSes | Configuration and revision metadata for one channel do not affect another. |
-| Existing local application | Optimistic edits, local events, acknowledgements, and DDS-specific promises behave as before; only configuration activation waits for sequencing. |
+| Existing local application | Optimistic edits, local events, acknowledgements, and DDS-specific promises behave as before; only published configuration activation waits for sequencing. |
 | Non-invalidating configuration flag | An ordinary op in flight across a flag change reaches the data handler unchanged, with its earlier configuration revision. |
 | Disable/remove setting | Full replacement persists; no feature-gate/default merging on reload. |
 | Configuration callback updates DDS state | Data and configuration summarize/reload consistently; replay reproduces the update. |
@@ -639,7 +648,7 @@ test harnesses. The key scenarios are:
 | Legacy document/channel | No opt-in, no new envelopes, and no changes to existing behavior. |
 
 The shared mechanism provides persisted configuration, ordered CAS updates, and op revision
-metadata without changing ordinary DDS consistency semantics. Configuration activation incurs
-acknowledgement latency; ordinary APIs retain their existing behavior. Flags that invalidate
+metadata without changing ordinary DDS consistency semantics. Published configuration activation incurs
+acknowledgement latency; unpublished changes apply locally and ordinary APIs retain their existing behavior. Flags that invalidate
 in-flight ops require a separate DDS-authored design, including reconciliation and events, rather
 than a universal dropping rule in the common wrapper.

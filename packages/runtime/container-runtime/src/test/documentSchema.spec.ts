@@ -94,6 +94,134 @@ describe("Runtime", () => {
 		createController(validConfig);
 	});
 
+	describe("channel configuration", () => {
+		it("initializes new documents synchronously and keeps the capability sticky", () => {
+			const controller = new DocumentsSchemaController(
+				false,
+				0,
+				undefined,
+				{ ...features, channelConfiguration: true },
+				() => {},
+				{ minVersionForCollab: defaultMinVersionForCollab },
+				logger,
+				false,
+			);
+			assert.equal(controller.channelConfigurationEnabled, true);
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+			const schema = controller.summarizeDocumentSchema(0);
+			assert(schema !== undefined);
+			const reader = createController(schema);
+			assert.equal(reader.channelConfigurationEnabled, true);
+			assert.equal(reader.sessionSchema.runtime.channelConfiguration, true);
+		});
+
+		it("waits for the actual schema acknowledgement", () => {
+			const controller = createController(validConfig);
+			controller.requestChannelConfiguration();
+			assert.equal(controller.channelConfigurationEnabled, false);
+			const proposal = controller.maybeGenerateSchemaMessage();
+			assert(proposal !== undefined);
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+			assert.equal(controller.channelConfigurationEnabled, false);
+			controller.processDocumentSchemaMessages([proposal], true, 1);
+			assert.equal(controller.channelConfigurationEnabled, true);
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+		});
+
+		it("preserves the gate when a detached snapshot is rehydrated by a dark reader", () => {
+			const controller = new DocumentsSchemaController(
+				false,
+				0,
+				{
+					...validConfig,
+					runtime: { explicitSchemaControl: true, channelConfiguration: true },
+				},
+				{ ...features, explicitSchemaControl: false },
+				() => {},
+				{ minVersionForCollab: defaultMinVersionForCollab },
+				logger,
+				false,
+			);
+			assert.equal(controller.channelConfigurationEnabled, true);
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+		});
+
+		it("retries an explicitly requested capability after CAS conflict without storms", () => {
+			const controller = createController(validConfig);
+			controller.requestChannelConfiguration();
+			const original = controller.maybeGenerateSchemaMessage();
+			assert(original !== undefined);
+			controller.processDocumentSchemaMessages(
+				[
+					{
+						...original,
+						runtime: {
+							explicitSchemaControl: true,
+							opGroupingEnabled: true,
+						},
+					},
+				],
+				false,
+				1,
+			);
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+			assert.equal(controller.sessionSchema.runtime.channelConfiguration, undefined);
+			assert.equal(controller.processDocumentSchemaMessages([original], true, 2), false);
+			const retry = controller.maybeGenerateSchemaMessage();
+			assert(retry !== undefined);
+			assert.equal(retry.refSeq, 1);
+			assert.equal(retry.runtime.channelConfiguration, true);
+			assert.equal(retry.runtime.opGroupingEnabled, true);
+			assert.equal(retry.runtime.compressionLz4, true);
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+			controller.processDocumentSchemaMessages([retry], true, 3);
+			assert.equal(controller.channelConfigurationEnabled, true);
+		});
+
+		it("can explicitly request after an earlier ordinary schema attempt completed", () => {
+			const controller = createController({
+				...validConfig,
+				runtime: { explicitSchemaControl: true },
+			});
+			const ordinary = controller.maybeGenerateSchemaMessage();
+			assert(ordinary !== undefined);
+			controller.processDocumentSchemaMessages([ordinary], true, 1);
+			controller.requestChannelConfiguration();
+			const proposal = controller.maybeGenerateSchemaMessage();
+			assert(proposal !== undefined);
+			assert.equal(proposal.refSeq, 1);
+		});
+
+		it("rejects disabled upgrades and non-explicit capability schemas", () => {
+			const disabled = new DocumentsSchemaController(
+				true,
+				0,
+				validConfig,
+				features,
+				() => {},
+				{ minVersionForCollab: defaultMinVersionForCollab },
+				logger,
+				true,
+			);
+			assert.throws(() => disabled.requestChannelConfiguration(), /upgrades are disabled/);
+			testWrongConfig({
+				...validConfig,
+				runtime: { channelConfiguration: true },
+			});
+		});
+
+		it("rejects attempts to remove the persisted capability", () => {
+			const controller = createController({
+				...validConfig,
+				runtime: { explicitSchemaControl: true, channelConfiguration: true },
+			});
+			assert.throws(
+				() => controller.processDocumentSchemaMessages([validConfig], false, 1),
+				/cannot be removed/,
+			);
+		});
+	});
+
 	// It's hard to say if we will allow additional propeorty trees here like this sample shows.
 	// More likely that will require version bump, to ensure that old code does not run with such structure.
 	// If if such configs will be backward compatible (similar to runtime options we are listing that were in use for very long time),
