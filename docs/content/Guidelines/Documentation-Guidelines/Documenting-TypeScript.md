@@ -44,6 +44,12 @@ Use inline comments to:
 - Clarify the purpose of logic that may not be obvious to a developer reading the code for the first time.
 - Document logical branches, especially when they are complex or contain early returns.
   Explain why the branch is needed.
+- Document important assumptions and invariants that the code depends on.
+
+    > [!NOTE]
+    > When practical, use assertions to check assumptions and invariants instead of relying only on comments.
+    > Use comments to explain assumptions that cannot be checked or to provide context that assertions do not convey.
+    > Refer to the [error-handling guidelines](../Coding-Guidelines.md#errors) for more details.
 
 Focus on the purpose of the code rather than repeating what its statements do.
 
