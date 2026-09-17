@@ -20,11 +20,4 @@ This crate defines no persistence layout, authentication policy, retention polic
 
 See [`src/lib.rs`](src/lib.rs) for the complete API contract.
 
-## Validation
-
-From `rust-service/`:
-
-```bash
-cargo test -p sea-core
-RUSTDOCFLAGS='-D warnings' cargo doc -p sea-core --no-deps
-```
+Contributor validation commands are in [`DEV.md`](DEV.md).

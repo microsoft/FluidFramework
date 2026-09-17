@@ -1,4 +1,4 @@
-#![doc = "Core contracts for an opaque, client-snapshotted append stream."]
+#![doc = include_str!("../README.md")]
 
 use std::{collections::BTreeMap, error::Error, fmt};
 
@@ -229,7 +229,10 @@ impl BlobDirectory {
             }
             let name_length = usize::try_from(encoded.get_u32())
                 .map_err(|_| BlobTreeError::TruncatedDirectory)?;
-            if encoded.remaining() < name_length + 1 + CONTENT_ID_BYTES {
+            let entry_length = name_length
+                .checked_add(1 + CONTENT_ID_BYTES)
+                .ok_or(BlobTreeError::TruncatedDirectory)?;
+            if encoded.remaining() < entry_length {
                 return Err(BlobTreeError::TruncatedDirectory);
             }
             let name = std::str::from_utf8(&encoded[..name_length])
@@ -333,6 +336,18 @@ mod sea_value_tests {
     }
 
     #[test]
+    fn content_identities_require_exactly_32_bytes() {
+        assert_eq!(
+            BlobId::from_bytes(&[0; 31]),
+            Err(BlobTreeError::InvalidIdLength { actual: 31 })
+        );
+        assert_eq!(
+            BlobDirectoryId::from_bytes(&[0; 33]),
+            Err(BlobTreeError::InvalidIdLength { actual: 33 })
+        );
+    }
+
+    #[test]
     fn directories_round_trip_canonically() {
         let mut entries = BTreeMap::new();
         entries.insert(
@@ -360,14 +375,23 @@ mod sea_value_tests {
 
     #[test]
     fn directories_reject_paths_and_malformed_encodings() {
-        let invalid = BlobDirectory::new(BTreeMap::from([(
-            "nested/name".to_owned(),
-            BlobTreeId::Blob(BlobId::for_bytes(b"leaf")),
-        )]));
-        assert!(matches!(invalid, Err(BlobTreeError::InvalidEntryName(_))));
+        for name in ["", ".", "..", "nested/name", "nul\0name"] {
+            let invalid = BlobDirectory::new(BTreeMap::from([(
+                name.to_owned(),
+                BlobTreeId::Blob(BlobId::for_bytes(b"leaf")),
+            )]));
+            assert_eq!(
+                invalid,
+                Err(BlobTreeError::InvalidEntryName(name.to_owned()))
+            );
+        }
         assert_eq!(
             BlobDirectory::decode(&[0, 0, 0, 0, 1]),
             Err(BlobTreeError::TrailingDirectoryBytes)
+        );
+        assert_eq!(
+            BlobDirectory::decode(&[0, 0, 0, 1, u8::MAX, u8::MAX, u8::MAX, u8::MAX]),
+            Err(BlobTreeError::TruncatedDirectory)
         );
     }
 

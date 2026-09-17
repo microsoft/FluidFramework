@@ -86,6 +86,47 @@ impl SessionId {
     }
 }
 
+#[cfg(test)]
+mod identity_tests {
+    use bytes::Bytes;
+
+    use super::{AuthorId, OperationId, SessionId, ValueError};
+
+    #[test]
+    fn caller_identities_preserve_nonempty_bytes_and_reject_empty_values() {
+        let value = Bytes::from_static(b"identity");
+
+        assert_eq!(
+            OperationId::new(value.clone())
+                .expect("nonempty operation identity")
+                .as_bytes(),
+            &value
+        );
+        assert_eq!(
+            AuthorId::new(value.clone())
+                .expect("nonempty author identity")
+                .as_bytes(),
+            &value
+        );
+        assert_eq!(
+            SessionId::new(value.clone())
+                .expect("nonempty session identity")
+                .as_bytes(),
+            &value
+        );
+
+        assert_eq!(
+            OperationId::new(Bytes::new()),
+            Err(ValueError::EmptyOperationId)
+        );
+        assert_eq!(AuthorId::new(Bytes::new()), Err(ValueError::EmptyAuthorId));
+        assert_eq!(
+            SessionId::new(Bytes::new()),
+            Err(ValueError::EmptySessionId)
+        );
+    }
+}
+
 /// Invalid caller-created Sea values.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ValueError {
