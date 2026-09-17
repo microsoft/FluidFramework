@@ -785,15 +785,20 @@ where
         publication: SnapshotPublication,
     ) -> Result<PublishedSnapshot, Self::Error> {
         self.ensure_open()?;
+        let mut state = self.sequencer.state.lock().await;
         let published = self
             .sequencer
             .storage
             .publish_snapshot(publication)
             .await
             .map_err(SessionError::Storage)?;
+        state.coordination.latest = Some(published.clone());
         self.sequencer
             .snapshots
             .send_replace(Some(published.clone()));
+        self.sequencer
+            .coordination
+            .send_replace(state.coordination.clone());
         Ok(published)
     }
 
@@ -1306,8 +1311,8 @@ mod tests {
         MonitoredStreamStatus,
         archive::{
             AuthorId, EventSubmission, LoadEvent, OperationId, SeaArchive, SeaAuthorSession,
-            SeaEventSubscription, SeaSnapshotPublisher, SessionId, Snapshot, SnapshotParticipation,
-            SnapshotPosition, SnapshotPublication,
+            SeaEventSubscription, SeaSnapshotCoordinator, SeaSnapshotPublisher, SessionId,
+            Snapshot, SnapshotParticipation, SnapshotPosition, SnapshotPublication,
         },
     };
     use sea_memory::MemoryStream;
@@ -1421,6 +1426,35 @@ mod tests {
             )
             .await;
         assert!(matches!(stale, Err(SessionError::Rejected(_))));
+    }
+
+    #[tokio::test]
+    async fn direct_snapshot_publication_updates_coordination_streams() {
+        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
+            .await
+            .unwrap();
+        let session = sequencer
+            .open_session(author(b"publisher"), session(b"publisher-session"), None)
+            .await
+            .unwrap();
+        let mut coordination = session
+            .coordinate_snapshots(SnapshotParticipation::ReadOnly)
+            .await
+            .unwrap();
+        assert_eq!(coordination.next().await.unwrap().unwrap().latest, None);
+        let root = session
+            .put_blob(Bytes::from_static(b"snapshot"))
+            .await
+            .unwrap();
+        let published = session
+            .publish_snapshot(snapshot_publication(b"direct-snapshot", None, root))
+            .await
+            .unwrap();
+
+        assert_eq!(
+            coordination.next().await.unwrap().unwrap().latest,
+            Some(published)
+        );
     }
 
     #[tokio::test]
