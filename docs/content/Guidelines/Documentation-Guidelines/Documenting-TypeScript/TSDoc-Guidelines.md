@@ -220,6 +220,38 @@ Additionally helps with IDE hover-over behaviors.
 public rotateEntries(shapes: ShapeList, clockwiseRotationInDegrees: number): ShapeList;
 ```
 
+#### \@throws
+
+See: <https://api-extractor.com/pages/tsdoc/tag_throws/>
+
+##### \@throws: Guidance
+
+Use `@throws` blocks for APIs that throw errors or on API declarations whose implementations are expected to throw errors under certain conditions.
+Describe the condition that causes the error and the kind of error reported.
+Use separate blocks for distinct error conditions when that makes the documentation clearer.
+Include expected errors propagated from other APIs, not only errors thrown directly by the implementation.
+
+Use `{@link ...}` to reference error types when they are available at the API's support level.
+Otherwise, describe the error using properties that callers can observe, such as `errorType: "usageError"`, without linking to an internal implementation type.
+
+Document input requirements with `@param` or `@remarks` in addition to `@throws`.
+
+Internal assertion failures represent implementation bugs, not expected error cases in the API contract, so they should not be represented by `@throws` documentation.
+See the [error-handling guidelines](../../Coding-Guidelines.md#errors) for guidance on errors and assertions.
+
+##### \@throws: Example
+
+```typescript
+/**
+ * Returns the item at the specified index.
+ *
+ * @param items - The items to read from.
+ * @param index - Must be an integer in the range [0, items.length).
+ * @throws A `RangeError` if index is not an integer or is outside the supported range.
+ */
+export function getItemAt(items: readonly string[], index: number): string;
+```
+
 #### \@typeParam
 
 See: <https://api-extractor.com/pages/tsdoc/tag_typeparam/>

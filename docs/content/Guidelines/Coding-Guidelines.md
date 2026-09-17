@@ -515,17 +515,107 @@ Now there is no chance of collision with a predefined user property.
 
 ### Errors
 
-#### ✔ DO limit runtime error checking to non-obvious/hard to diagnose errors
+#### ✔ DO use errors to validate end-user input and usage
 
-Runtime error checking is reserved for non-obvious errors that are difficult to diagnose without runtime assistance.
-You should assume that developers have common sense and do not exploit quirks or intentionally circumvent the type system.
+Use errors to report invalid input or usage through supported user-facing package APIs.
+Validate these conditions before they can violate internal invariants.
+
+Use `UsageError` from `@fluidframework/telemetry-utils/internal` for incorrect user-facing API usage.
+The `validatePrecondition` helper throws a `UsageError` when its condition is false and narrows types when the condition holds.
+Where a standard JavaScript error better matches the API contract, use an appropriate `Error` subclass, such as `TypeError` or `RangeError`.
+Throw error objects, not strings or other values.
+
+Use an error type that describes the failure, rather than treating every failure as incorrect usage.
+Other framework error types include:
+
+- `DataCorruptionError` for definitive evidence of corrupted persisted data.
+- `DataProcessingError` for fatal failures while processing incoming data from the Fluid service.
+- `LayerIncompatibilityError` for incompatible Fluid layer versions.
+
+These error types and `validatePrecondition` are defined in [error.ts](../../../packages/utils/telemetry-utils/src/error.ts).
+See [IErrorBase and the framework error categories](../../../packages/common/core-interfaces/src/error.ts) for shared error contracts.
+
+Focus runtime validation on conditions that the type system cannot express and failures that would otherwise be difficult to diagnose.
+Avoid redundant checks for every possible violation of TypeScript types.
+Preserve documented default behavior for supported boundary cases, such as empty inputs, instead of introducing new errors.
+
+#### ✔ DO document expected errors with `@throws`
+
+APIs that throw errors, or are expected to throw errors, should include [`@throws` blocks](./Documentation-Guidelines/Documenting-TypeScript/TSDoc-Guidelines.md#throws).
+Describe the conditions that cause each error and the kind of error reported.
+
+Assertion failures indicate implementation bugs, not supported API behavior; do not document them as expected usage errors.
 
 #### ✘ DO NOT use assertions for validating user input
 
-An assertion failure indicates a bug in the Fluid Framework itself, not the user's code.
-User errors should by signaled by throwing an instance of `Error`, `TypeError`, `ReferenceError`, `RangeError`, `AggregateError` or an appropriate subclass (other built-in error types are reserved for language parsing errors).
+An assertion failure indicates a bug in the Fluid Framework implementation, not incorrect usage by an application.
+Do not use `assert` or `debugAssert` to reject invalid end-user input or usage.
+A user-facing API can contain assertions about its implementation, but checks of end-user input should report usage errors.
 
-- See the [@fluidframework/core-interfaces](../../../packages/common/core-interfaces/src/error.ts) package for some example Error subclasses used frequently across the framework.
+#### ✔ DO use assertions to document and validate internal invariants
+
+Here, internal includes implementation details within a package and APIs marked `@internal`, even when called across package boundaries.
+These APIs are not part of the supported user-facing API surface.
+Use assertions to validate their input requirements and assumptions, just as for package-internal code.
+
+Use [assert](../../../packages/common/core-utils/src/assert.ts) from `@fluidframework/core-utils/internal` when a false condition indicates an implementation bug.
+An assertion documents an assumption in executable code and detects when the assumption stops being true.
+Its `asserts` return type also lets TypeScript narrow types after the check.
+Prefer this to an unchecked type cast or non-null assertion justified only by a comment.
+
+When an assertion validates an input requirement for an internal API, generally document that requirement on the API with `@param` or `@remarks`.
+The assertion checks the requirement, but does not replace the caller-facing documentation.
+If that input originates from a supported user-facing package API, validate end-user input at that boundary with an appropriate error first.
+Use additional comments to explain why an invariant holds when the assertion alone does not make that clear.
+
+For example, avoid relying on a comment and a cast:
+
+```typescript
+// The caller only requests keys that are already cached.
+const value = cachedValues.get(key) as string;
+```
+
+Instead, document the internal helper's input requirement and use an assertion to narrow the result:
+
+```typescript
+import { assert } from "@fluidframework/core-utils/internal";
+
+/**
+ * Reads an existing cached value.
+ *
+ * @param key - Must be present in cachedValues.
+ */
+function readCachedValue(cachedValues: ReadonlyMap<string, string>, key: string): string {
+	const value = cachedValues.get(key);
+	assert(value !== undefined, "The requested key must exist in the cache.");
+	return value;
+}
+```
+
+Use a descriptive string literal for each new assertion message.
+Do not invent numeric or hexadecimal assertion codes or copy a code from another assertion.
+Repository tooling assigns these codes; leave existing generated codes unchanged.
+
+Never catch assertion failures to implement normal control flow.
+
+#### ✔ DO account for assertion cost and build configuration
+
+`assert` checks run in all build configurations, including production.
+The condition is evaluated on every call, so consider its runtime cost, especially in frequently executed code.
+Keep assertion checks free of side effects.
+
+For checks needed only for documentation and debugging, consider `debugAssert` from `@fluidframework/core-utils/internal`, defined alongside `assert` in the file linked above.
+It accepts a function that returns `true` when the condition holds or a diagnostic message when it fails:
+
+```typescript
+import { debugAssert } from "@fluidframework/core-utils/internal";
+
+debugAssert(() => cachedValues.size <= capacity || "The cache must stay within capacity.");
+```
+
+`debugAssert` can be disabled or removed from production builds, which can reduce runtime cost and bundle size.
+
+Never catch assertion failures to implement normal control flow.
 
 ### Events
 
@@ -635,8 +725,8 @@ A better option for our example method might look something like:
 ```typescript
 /**
  * Gets the element at the provided index.
- * @param index - The index being queried. Must be on [0, {@link Bar.length}).
- * @throws Throws an error if the provided index is out of range.
+ * @param index - The index being queried. Must be an integer in the range [0, {@link Bar.length}).
+ * @throws A `RangeError` if the index is not an integer or is outside the supported range.
  */
 public getAtIndex(index: number): Foo;
 ```

@@ -47,9 +47,11 @@ Use inline comments to:
 - Document important assumptions and invariants that the code depends on.
 
     > [!NOTE]
-    > When practical, use assertions to check assumptions and invariants instead of relying only on comments.
+    > When practical, use assertions to document internal assumptions and invariants in executable code instead of relying only on comments.
+    > Assertions can also narrow types, so prefer them to a type cast justified only by a comment.
+    > When an assertion validates an input requirement, also document that requirement on the corresponding API.
     > Use comments to explain assumptions that cannot be checked or to provide context that assertions do not convey.
-    > Refer to the [error-handling guidelines](../Coding-Guidelines.md#errors) for more details.
+    > Refer to the [error-handling guidelines](../Coding-Guidelines.md#errors) for the distinction and examples.
 
 Focus on the purpose of the code rather than repeating what its statements do.
 
