@@ -300,6 +300,32 @@ impl<Stream> ContentStream<Stream>
 where
     Stream: BidirectionalStream,
 {
+    /// Sends one content operation and returns its owned response stream.
+    pub async fn request_stream(
+        mut self,
+        request: Request,
+    ) -> Result<ResponseStream<Stream>, ClientError<Stream::Error>> {
+        let pending = self.state.begin(StreamRole::Content)?;
+        let correlation_id = pending.id();
+        let outgoing = protocol::encode_request_frame(
+            StreamRole::Content,
+            correlation_id,
+            &request,
+            self.limits,
+        )?;
+        self.stream
+            .send(&outgoing)
+            .await
+            .map_err(ClientError::Transport)?;
+        self.stream.finish().await.map_err(ClientError::Transport)?;
+        Ok(ResponseStream {
+            stream: self.stream,
+            role: StreamRole::Content,
+            pending: Some(pending),
+            decoder: self.decoder,
+        })
+    }
+
     /// Sends one content operation and collects responses through explicit completion.
     pub async fn request(
         &mut self,
@@ -540,9 +566,16 @@ where
                 if frame.correlation_id != expected {
                     return Err(ProtocolError::UnknownCorrelation(frame.correlation_id).into());
                 }
-                return protocol::decode_response_network_frame(self.role, &frame)
-                    .map(Some)
-                    .map_err(Into::into);
+                let response = protocol::decode_response_network_frame(self.role, &frame)?;
+                if response == Response::ResponseComplete {
+                    let pending = self
+                        .pending
+                        .take()
+                        .expect("response stream correlation remains active");
+                    pending.complete(expected)?;
+                    return Ok(None);
+                }
+                return Ok(Some(response));
             }
             let Some(chunk) = self
                 .stream
@@ -953,7 +986,11 @@ mod tests {
         let caught_up = protocol::encode_response_frame(
             StreamRole::Event,
             1,
-            &Response::CaughtUp(Some(2)),
+            &Response::StreamProgress {
+                previous: Some(2),
+                latest_known: Some(2),
+                status: protocol::StreamStatus::AwaitingNewItems,
+            },
             limits,
         )
         .expect("event stream item");
@@ -982,7 +1019,11 @@ mod tests {
         assert_eq!(event_stream.authority(), &[9; 32]);
         assert_eq!(
             event_stream.next().await.expect("event item"),
-            Some(Response::CaughtUp(Some(2)))
+            Some(Response::StreamProgress {
+                previous: Some(2),
+                latest_known: Some(2),
+                status: protocol::StreamStatus::AwaitingNewItems,
+            })
         );
     }
 

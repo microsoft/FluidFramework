@@ -21,6 +21,7 @@ import type {
 	SeaInjectedSnapshotStream,
 	SeaInjectedStream,
 	SeaLoadKind,
+	SeaStreamStatus,
 	SeaTreeId,
 	SeaTreeKind,
 } from "../../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
@@ -47,7 +48,10 @@ export interface GeneratedSeaTypes {
 	loadKind: {
 		readonly snapshot: SeaLoadKind.Snapshot;
 		readonly event: SeaLoadKind.Event;
-		readonly caughtUp: SeaLoadKind.CaughtUp;
+		readonly progress: SeaLoadKind.Progress;
+	};
+	streamStatus: {
+		readonly awaitingNewItems: SeaStreamStatus.AwaitingNewItems;
 	};
 	treeKind: {
 		readonly blob: SeaTreeKind.Blob;
@@ -63,7 +67,10 @@ export interface GeneratedSeaModule {
 	readonly SeaLoadKind: {
 		readonly Snapshot: SeaLoadKind.Snapshot;
 		readonly Event: SeaLoadKind.Event;
-		readonly CaughtUp: SeaLoadKind.CaughtUp;
+		readonly Progress: SeaLoadKind.Progress;
+	};
+	readonly SeaStreamStatus: {
+		readonly AwaitingNewItems: SeaStreamStatus.AwaitingNewItems;
 	};
 	readonly SeaTreeKind: {
 		readonly Blob: SeaTreeKind.Blob;
@@ -94,7 +101,10 @@ export function createGeneratedSeaBindingAdapter(
 			loadKind: {
 				snapshot: bindings.SeaLoadKind.Snapshot,
 				event: bindings.SeaLoadKind.Event,
-				caughtUp: bindings.SeaLoadKind.CaughtUp,
+				progress: bindings.SeaLoadKind.Progress,
+			},
+			streamStatus: {
+				awaitingNewItems: bindings.SeaStreamStatus.AwaitingNewItems,
 			},
 			treeKind: {
 				blob: bindings.SeaTreeKind.Blob,
@@ -234,7 +244,10 @@ export class GeneratedSeaBindingAdapter implements SeaDriverClient {
 				const operation = this.project(item);
 				operations.push(operation);
 				cursor = operation.position;
-			} else if (item.kind === this.types.loadKind.caughtUp) {
+			} else if (
+				item.kind === this.types.loadKind.progress &&
+				item.status === this.types.streamStatus.awaitingNewItems
+			) {
 				await stream.cancel();
 				return cursor === undefined ? { operations } : { operations, cursor };
 			}

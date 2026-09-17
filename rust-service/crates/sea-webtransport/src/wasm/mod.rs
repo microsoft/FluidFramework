@@ -43,14 +43,16 @@ export interface SeaEventLoadResult {
     readonly minimumReference: bigint | undefined;
 }
 
-/** The finite catch-up boundary. */
-export interface SeaCaughtUpLoadResult {
-    readonly kind: SeaLoadKind.CaughtUp;
-    readonly position: bigint | undefined;
+/** One out-of-band monitored delivery progress snapshot. */
+export interface SeaProgressLoadResult {
+    readonly kind: SeaLoadKind.Progress;
+    readonly previous: bigint | undefined;
+    readonly latestKnown: bigint | undefined;
+    readonly status: SeaStreamStatus;
 }
 
-/** One closed case from a Sea load or bounded-read stream. */
-export type SeaLoadResult = SeaSnapshotLoadResult | SeaEventLoadResult | SeaCaughtUpLoadResult;
+/** One closed case from a Sea load or archive-read stream. */
+export type SeaLoadResult = SeaSnapshotLoadResult | SeaEventLoadResult | SeaProgressLoadResult;
 
 /** Named children of one immutable directory. */
 export type SeaDirectoryEntries = ReadonlyArray<SeaDirectoryEntry>;

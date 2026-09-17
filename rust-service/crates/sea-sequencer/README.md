@@ -23,7 +23,9 @@ Explicit close and author-session replacement stop inactive sessions from pinnin
 
 ## Load and subscriptions
 
-`load` selects a compatible snapshot and finite catch-up head atomically, emits the snapshot and catch-up events, emits `CaughtUp`, and continues with live events without a gap.
+`load` selects a compatible snapshot and catch-up head atomically, emits the snapshot and catch-up events, reports monitored progress when it catches up, and continues with live events without a gap.
+Archive reads and loads share the same monitored event-delivery engine.
+Progress observations may cut ahead of buffered events, while events remain strictly ordered.
 Snapshot subscriptions use latest-value semantics and may coalesce intermediate publications for slow consumers.
 
 ## Validation

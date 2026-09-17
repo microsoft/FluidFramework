@@ -6,6 +6,7 @@ use bytes::Bytes;
 use futures_util::{StreamExt, TryStreamExt, future::join_all};
 use sea_core::{
     BlobDirectory, BlobId, BlobTreeId, ClassifiedError, ErrorKind, Event, EventPosition,
+    MonitoredStreamItem, MonitoredStreamStatus,
     archive::{
         EventSubmission, LoadEvent, OperationId, SeaArchive, SeaAuthorSession,
         SeaEventSubscription, SeaSession, SeaSnapshotCoordinator, SeaStorage,
@@ -61,28 +62,44 @@ where
         })
         .await
         .expect("second submission");
-    let history = session
-        .read(Some(first.position), Some(second.position))
-        .await
-        .expect("bounded read")
-        .try_collect::<Vec<_>>()
-        .await
-        .expect("bounded read events");
+    let mut history_stream = session.read(Some(first.position), Some(second.position));
+    let mut history = Vec::new();
+    while let Some(item) = history_stream.next().await {
+        match item.expect("bounded read item") {
+            MonitoredStreamItem::Item(event) => history.push(event),
+            MonitoredStreamItem::Progress(_) => {}
+        }
+    }
     assert_eq!(history.len(), 1);
     assert_eq!(history[0].committed.position, second.position);
 
-    let mut load = session.load(None).await.expect("snapshot recovery load");
+    let mut load = session.load(None);
+    assert!(matches!(
+        load.next().await.expect("initial progress").expect("load result"),
+        MonitoredStreamItem::Progress(progress)
+            if progress.status == MonitoredStreamStatus::StreamingBacklog
+    ));
     assert!(matches!(
         load.next().await.expect("load snapshot").expect("load result"),
-        LoadEvent::Snapshot(snapshot) if snapshot == published
+        MonitoredStreamItem::Item(LoadEvent::Snapshot(snapshot)) if snapshot == published
+    ));
+    assert!(matches!(
+        load.next().await.expect("load progress").expect("load result"),
+        MonitoredStreamItem::Progress(progress)
+            if progress.latest_known == Some(second.position)
+                && progress.status == MonitoredStreamStatus::StreamingBacklog
     ));
     assert!(matches!(
         load.next().await.expect("load event").expect("load result"),
-        LoadEvent::Event(event) if event.committed.position == second.position
+        MonitoredStreamItem::Item(LoadEvent::Event(event))
+            if event.committed.position == second.position
     ));
     assert!(matches!(
-        load.next().await.expect("caught-up marker").expect("load result"),
-        LoadEvent::CaughtUp(Some(position)) if position == second.position
+        load.next().await.expect("caught-up progress").expect("load result"),
+        MonitoredStreamItem::Progress(progress)
+            if progress.previous == Some(second.position)
+                && progress.latest_known == Some(second.position)
+                && progress.status == MonitoredStreamStatus::AwaitingNewItems
     ));
 
     drop(load);

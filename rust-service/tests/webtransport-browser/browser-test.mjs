@@ -10,6 +10,7 @@ import init, {
 	SeaInjectedClient,
 	SeaLoadKind,
 	SeaSnapshotParticipation,
+	SeaStreamStatus,
 } from "../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
 
 const encoder = new TextEncoder();
@@ -31,6 +32,24 @@ function equalBytes(actual, expected) {
 		actual.length === expected.length &&
 		actual.every((value, index) => value === expected[index])
 	);
+}
+
+async function nextEvent(stream) {
+	for (;;) {
+		const item = await stream.next();
+		assert(item !== undefined, "event stream ended before an event");
+		if (item.kind === SeaLoadKind.Event) return item;
+	}
+}
+
+async function nextAwaiting(stream) {
+	for (;;) {
+		const item = await stream.next();
+		assert(item !== undefined, "event stream ended before catching up");
+		if (item.kind === SeaLoadKind.Progress && item.status === SeaStreamStatus.AwaitingNewItems) {
+			return item;
+		}
+	}
 }
 
 async function connect(hash) {
@@ -73,11 +92,7 @@ async function run() {
 	const snapshotCoordination = await first.subscribeSnapshots(snapshotParticipation);
 	await snapshotCoordination.next();
 	const load = await first.load();
-	const initialCaughtUp = await load.next();
-	assert(
-		initialCaughtUp.kind === SeaLoadKind.CaughtUp,
-		"load omitted its initial caught-up marker",
-	);
+	const initialCaughtUp = await nextAwaiting(load);
 	const firstReceipt = await first.submit(
 		encoder.encode("browser-operation-1"),
 		undefined,
@@ -100,14 +115,14 @@ async function run() {
 	);
 	const resolved = await first.resolveSubmission(encoder.encode("browser-operation-1"));
 	assert(resolved?.position === firstReceipt.position, "submission resolution mismatch");
-	const firstLoaded = await load.next();
+	const firstLoaded = await nextEvent(load);
 	assert(firstLoaded.kind === SeaLoadKind.Event, "load omitted the first event");
 	assert(
-		(await load.next()).kind === SeaLoadKind.Event,
+		(await nextEvent(load)).kind === SeaLoadKind.Event,
 		"load omitted the first streamed event",
 	);
 	assert(
-		(await load.next()).kind === SeaLoadKind.Event,
+		(await nextEvent(load)).kind === SeaLoadKind.Event,
 		"load omitted the second streamed event",
 	);
 	await second.openSession(
@@ -123,22 +138,13 @@ async function run() {
 		assert(secondSnapshotState.fence === undefined, "two Sea-selected clients were nominated");
 	}
 	const secondLoad = await second.load(secondStreamedReceipt.position);
-	let secondCaughtUp;
-	for (;;) {
-		const item = await secondLoad.next();
-		if (item.kind === SeaLoadKind.CaughtUp) {
-			secondCaughtUp = item;
-			break;
-		}
-		assert(item.kind === SeaLoadKind.Event, "second event stream returned an invalid item");
-	}
-	assert(secondCaughtUp !== undefined, "second event stream omitted its caught-up marker");
+	const secondCaughtUp = await nextAwaiting(secondLoad);
 	const thirdStreamedReceipt = await first.submit(
 		encoder.encode("browser-operation-stream-3"),
 		secondStreamedReceipt.position,
 		encoder.encode("third-streamed-payload"),
 	);
-	const secondLive = await secondLoad.next();
+	const secondLive = await nextEvent(secondLoad);
 	assert(
 		secondLive.kind === SeaLoadKind.Event,
 		"second load omitted the live first-client event",
@@ -147,7 +153,7 @@ async function run() {
 		decoder.decode(secondLive.payload) === "third-streamed-payload",
 		"second load returned the wrong live payload",
 	);
-	const firstSelfLive = await load.next();
+	const firstSelfLive = await nextEvent(load);
 	assert(firstSelfLive.kind === SeaLoadKind.Event, "first load omitted its own third event");
 	assert(
 		decoder.decode(firstSelfLive.payload) === "third-streamed-payload",
@@ -158,7 +164,7 @@ async function run() {
 		thirdStreamedReceipt.position,
 		encoder.encode("fourth-streamed-payload"),
 	);
-	const secondConsecutiveLive = await secondLoad.next();
+	const secondConsecutiveLive = await nextEvent(secondLoad);
 	assert(
 		secondConsecutiveLive.kind === SeaLoadKind.Event,
 		"second load omitted the consecutive first-client event",
@@ -167,7 +173,7 @@ async function run() {
 		decoder.decode(secondConsecutiveLive.payload) === "fourth-streamed-payload",
 		"second load returned the wrong consecutive live payload",
 	);
-	const firstConsecutiveSelfLive = await load.next();
+	const firstConsecutiveSelfLive = await nextEvent(load);
 	assert(
 		firstConsecutiveSelfLive.kind === SeaLoadKind.Event,
 		"first load omitted its consecutive self-event",
@@ -178,7 +184,7 @@ async function run() {
 		encoder.encode("second-payload"),
 	);
 	assert(secondReceipt.position > firstReceipt.position, "event positions did not increase");
-	const live = await load.next();
+	const live = await nextEvent(load);
 	assert(live.kind === SeaLoadKind.Event, "load omitted the live second-client event");
 	assert(decoder.decode(live.payload) === "second-payload", "live event payload mismatch");
 	await load.cancel();
@@ -267,7 +273,7 @@ async function run() {
 		thirdStreamedPosition: thirdStreamedReceipt.position.toString(),
 		fourthStreamedPosition: fourthStreamedReceipt.position.toString(),
 		secondPosition: secondReceipt.position.toString(),
-		caughtUp: initialCaughtUp.position.toString(),
+		caughtUp: initialCaughtUp.latestKnown?.toString() ?? "none",
 		blobBytes: blobPayload.length,
 		directoryEntries: entries.length,
 		serviceErrorKind: missingArchiveError.kind,

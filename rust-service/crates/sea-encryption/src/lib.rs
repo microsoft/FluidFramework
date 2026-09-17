@@ -11,12 +11,14 @@ use bytes::Bytes;
 use futures_util::StreamExt;
 use rand_core::{OsRng, RngCore};
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, ClassifiedError, ErrorKind, SnapshotId,
+    ArchiveEventStream, ArchiveLoadStream, BlobDirectory, BlobDirectoryId, BlobId, ClassifiedError,
+    ErrorKind, SnapshotId,
     archive::{
         EventReceipt as SessionEventReceipt, EventSubmission, LoadEvent, OperationId,
         PublishedSnapshot as SessionPublishedSnapshot, SeaArchive, SeaAuthorSession,
-        SeaEventSubscription, SeaService, SessionStream,
+        SeaEventSubscription, SeaService,
     },
+    map_monitored_stream,
 };
 use thiserror::Error;
 use zeroize::{Zeroize, ZeroizeOnDrop};
@@ -223,18 +225,11 @@ where
     K: KeyProvider + Clone + 'static,
     N: NonceSource,
 {
-    async fn load(
-        &self,
-        required: Option<sea_core::EventPosition>,
-    ) -> Result<SessionStream<LoadEvent, Self::Error>, Self::Error> {
-        let stream = self
-            .inner
-            .load(required)
-            .await
-            .map_err(EncryptionError::Store)?;
+    fn load(&self, required: Option<sea_core::EventPosition>) -> ArchiveLoadStream<Self::Error> {
         let keys = self.keys.clone();
-        Ok(Box::pin(stream.map(move |item| {
-            item.map_err(EncryptionError::Store).and_then(|mut item| {
+        map_monitored_stream(
+            self.inner.load(required),
+            move |mut item| {
                 if let LoadEvent::Event(event) = &mut item {
                     event.committed.event.payload = decrypt_payload(
                         &keys,
@@ -243,8 +238,9 @@ where
                     )?;
                 }
                 Ok(item)
-            })
-        })))
+            },
+            EncryptionError::Store,
+        )
     }
 }
 
@@ -256,28 +252,24 @@ where
     K: KeyProvider + Clone + 'static,
     N: NonceSource,
 {
-    async fn read(
+    fn read(
         &self,
         after: Option<sea_core::EventPosition>,
-        through: Option<sea_core::EventPosition>,
-    ) -> Result<SessionStream<sea_core::archive::SessionCommittedEvent, Self::Error>, Self::Error>
-    {
-        let stream = self
-            .inner
-            .read(after, through)
-            .await
-            .map_err(EncryptionError::Store)?;
+        stop_after: Option<sea_core::EventPosition>,
+    ) -> ArchiveEventStream<Self::Error> {
         let keys = self.keys.clone();
-        Ok(Box::pin(stream.map(move |item| {
-            item.map_err(EncryptionError::Store).and_then(|mut event| {
+        map_monitored_stream(
+            self.inner.read(after, stop_after),
+            move |mut event| {
                 event.committed.event.payload = decrypt_payload(
                     &keys,
                     &event.committed.event.payload,
                     PayloadContext::Record,
                 )?;
                 Ok(event)
-            })
-        })))
+            },
+            EncryptionError::Store,
+        )
     }
 
     async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {
@@ -349,16 +341,18 @@ where
                 .checked_sub(1)
                 .filter(|position| *position != 0)
                 .map(sea_core::EventPosition::new);
-            let mut events = self
-                .inner
-                .read(after, Some(receipt.position))
-                .await
-                .map_err(EncryptionError::Store)?;
-            let mut committed = events
-                .next()
-                .await
-                .ok_or(EncryptionError::OperationConflict)?
-                .map_err(EncryptionError::Store)?;
+            let mut events = self.inner.read(after, Some(receipt.position));
+            let mut committed = loop {
+                match events
+                    .next()
+                    .await
+                    .ok_or(EncryptionError::OperationConflict)?
+                    .map_err(EncryptionError::Store)?
+                {
+                    sea_core::MonitoredStreamItem::Item(event) => break event,
+                    sea_core::MonitoredStreamItem::Progress(_) => {}
+                }
+            };
             committed.committed.event.payload = decrypt_payload(
                 &self.keys,
                 &committed.committed.event.payload,
@@ -610,9 +604,13 @@ mod tests {
             })
             .await
             .unwrap();
-        let mut load = encrypted.load(None).await.unwrap();
-        let LoadEvent::Event(event) = load.next().await.unwrap().unwrap() else {
-            panic!("load should begin with the event");
+        let mut load = encrypted.load(None);
+        let event = loop {
+            match load.next().await.unwrap().unwrap() {
+                sea_core::MonitoredStreamItem::Item(LoadEvent::Event(event)) => break event,
+                sea_core::MonitoredStreamItem::Item(LoadEvent::Snapshot(_))
+                | sea_core::MonitoredStreamItem::Progress(_) => {}
+            }
         };
         assert_eq!(event.committed.position, receipt.position);
         assert_eq!(

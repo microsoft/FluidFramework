@@ -4,16 +4,18 @@ use std::{collections::BTreeMap, error::Error, fmt, sync::Arc};
 
 use async_trait::async_trait;
 use bytes::Bytes;
-use futures_util::{StreamExt as _, stream};
+use futures_util::{StreamExt as _, TryStreamExt as _, stream};
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, Durability, ErrorKind,
-    Event, EventPosition, SnapshotId,
+    ArchiveEventStream, ArchiveLoadStream, BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId,
+    ClassifiedError, Durability, ErrorKind, Event, EventPosition, MonitoredStreamItem,
+    MonitoredStreamProgress, MonitoredStreamStatus, SnapshotId,
     archive::{
         AuthorId, CommittedEvent, EventReceipt, EventSubmission, LoadEvent, OperationId,
         PublishedSnapshot, SeaArchive, SeaAuthorSession, SeaEventSubscription, SeaService,
         SeaSnapshotCoordinator, SessionCommittedEvent, SessionId, SessionStream, Snapshot,
         SnapshotPosition, SnapshotPublication,
     },
+    boxed_monitored_stream,
 };
 use tokio::{sync::Mutex, time::timeout};
 use wtransport::tls::Sha256Digest;
@@ -121,8 +123,8 @@ impl From<ClientError<WebTransportError>> for SeaClientError {
 
 /// Native WebTransport client bound to one open Sea archive session.
 pub struct NativeSeaClient {
-    client: Client<NativeTransport>,
-    event_stream: Mutex<Option<EventStream<NativeBidirectionalStream>>>,
+    client: Arc<Client<NativeTransport>>,
+    event_stream: Arc<Mutex<Option<EventStream<NativeBidirectionalStream>>>>,
     author_stream: Mutex<Option<AuthorStream<NativeBidirectionalStream>>>,
     snapshot_stream: Arc<Mutex<SnapshotStream<NativeBidirectionalStream>>>,
     content_stream: Mutex<Option<ContentStream<NativeBidirectionalStream>>>,
@@ -189,8 +191,8 @@ impl NativeSeaClient {
         .await
         .map_err(|_| WebTransportError::Timeout)??;
         Ok(Self {
-            client,
-            event_stream: Mutex::new(Some(event_stream)),
+            client: Arc::new(client),
+            event_stream: Arc::new(Mutex::new(Some(event_stream))),
             author_stream: Mutex::new(Some(author_stream)),
             snapshot_stream: Arc::new(Mutex::new(snapshot_stream)),
             content_stream: Mutex::new(None),
@@ -234,54 +236,78 @@ impl SeaService for NativeSeaClient {
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 impl SeaEventSubscription for NativeSeaClient {
-    async fn load(
-        &self,
-        required: Option<EventPosition>,
-    ) -> Result<SessionStream<LoadEvent, Self::Error>, Self::Error> {
+    fn load(&self, required: Option<EventPosition>) -> ArchiveLoadStream<Self::Error> {
+        let initial = MonitoredStreamProgress {
+            previous: self.resume_after,
+            latest_known: self.resume_after,
+            status: MonitoredStreamStatus::StreamingBacklog,
+        };
         if required != self.resume_after {
-            return Err(SeaClientError::UnexpectedResponse);
+            return boxed_monitored_stream(
+                stream::once(async { Err(SeaClientError::UnexpectedResponse) }),
+                initial,
+                load_event_position,
+            );
         }
-        let responses = self
-            .event_stream
-            .lock()
-            .await
-            .take()
-            .ok_or(SeaClientError::UnexpectedResponse)?
-            .into_responses();
-        let stream: SessionStream<protocol::Response, SeaClientError> =
-            Box::pin(stream::try_unfold(responses, |mut responses| async move {
-                Ok(responses
-                    .next()
-                    .await
-                    .map_err(SeaClientError::from)?
-                    .map(|response| (response, responses)))
-            }));
-        Ok(Box::pin(
-            stream.map(|result| result.and_then(load_from_wire)),
-        ))
+        let event_stream = Arc::clone(&self.event_stream);
+        let responses = stream::try_unfold(event_stream, |event_stream| async move {
+            let response = {
+                let mut guard = event_stream.lock().await;
+                let stream = guard.as_mut().ok_or(SeaClientError::UnexpectedResponse)?;
+                stream.next().await.map_err(SeaClientError::from)?
+            };
+            Ok(response.map(|response| (response, event_stream)))
+        });
+        boxed_monitored_stream(
+            responses.map(|result| result.and_then(load_from_wire)),
+            initial,
+            load_event_position,
+        )
     }
 }
 
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 impl SeaArchive for NativeSeaClient {
-    async fn read(
+    fn read(
         &self,
         after: Option<EventPosition>,
-        through: Option<EventPosition>,
-    ) -> Result<SessionStream<SessionCommittedEvent, Self::Error>, Self::Error> {
-        let responses = self
-            .content_request(protocol::Request::Read {
-                after: after.map(EventPosition::get),
-                through: through.map(EventPosition::get),
+        stop_after: Option<EventPosition>,
+    ) -> ArchiveEventStream<Self::Error> {
+        let initial = MonitoredStreamProgress {
+            previous: after,
+            latest_known: after,
+            status: MonitoredStreamStatus::StreamingBacklog,
+        };
+        let client = Arc::clone(&self.client);
+        let response_stream = stream::once(async move {
+            let content = client
+                .open_content_stream()
+                .await
+                .map_err(SeaClientError::from)?;
+            content
+                .request_stream(protocol::Request::Read {
+                    after: after.map(EventPosition::get),
+                    stop_after: stop_after.map(EventPosition::get),
+                })
+                .await
+                .map_err(SeaClientError::from)
+        })
+        .map_ok(|responses| {
+            stream::try_unfold(responses, |mut responses| async move {
+                Ok(responses
+                    .next()
+                    .await
+                    .map_err(SeaClientError::from)?
+                    .map(|response| (response, responses)))
             })
-            .await?;
-        Ok(Box::pin(stream::iter(responses.into_iter().map(
-            |response| match response {
-                protocol::Response::LoadEvent(event) => session_event_from_wire(*event),
-                response => Err(response_error(response)),
-            },
-        ))))
+        })
+        .try_flatten();
+        boxed_monitored_stream(
+            response_stream.map(|result| result.and_then(event_from_stream_response)),
+            initial,
+            |event| Some(event.committed.position),
+        )
     }
 
     async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {
@@ -513,16 +539,69 @@ impl SeaSnapshotCoordinator for NativeSeaClient {
     }
 }
 
-fn load_from_wire(response: protocol::Response) -> Result<LoadEvent, SeaClientError> {
+fn load_from_wire(
+    response: protocol::Response,
+) -> Result<MonitoredStreamItem<LoadEvent, EventPosition>, SeaClientError> {
     match response {
-        protocol::Response::LoadSnapshot(snapshot) => {
-            Ok(LoadEvent::Snapshot(snapshot_from_wire(snapshot)))
-        }
-        protocol::Response::LoadEvent(event) => {
-            session_event_from_wire(*event).map(LoadEvent::Event)
-        }
-        protocol::Response::CaughtUp(head) => Ok(LoadEvent::CaughtUp(head.map(EventPosition::new))),
+        protocol::Response::LoadSnapshot(snapshot) => Ok(MonitoredStreamItem::Item(
+            LoadEvent::Snapshot(snapshot_from_wire(snapshot)),
+        )),
+        protocol::Response::LoadEvent(event) => session_event_from_wire(*event)
+            .map(LoadEvent::Event)
+            .map(MonitoredStreamItem::Item),
+        protocol::Response::StreamProgress {
+            previous,
+            latest_known,
+            status,
+        } => Ok(MonitoredStreamItem::Progress(progress_from_wire(
+            previous,
+            latest_known,
+            status,
+        ))),
         response => Err(response_error(response)),
+    }
+}
+
+fn event_from_stream_response(
+    response: protocol::Response,
+) -> Result<MonitoredStreamItem<SessionCommittedEvent, EventPosition>, SeaClientError> {
+    match response {
+        protocol::Response::LoadEvent(event) => {
+            session_event_from_wire(*event).map(MonitoredStreamItem::Item)
+        }
+        protocol::Response::StreamProgress {
+            previous,
+            latest_known,
+            status,
+        } => Ok(MonitoredStreamItem::Progress(progress_from_wire(
+            previous,
+            latest_known,
+            status,
+        ))),
+        response => Err(response_error(response)),
+    }
+}
+
+fn progress_from_wire(
+    previous: Option<u64>,
+    latest_known: Option<u64>,
+    status: protocol::StreamStatus,
+) -> MonitoredStreamProgress<EventPosition> {
+    MonitoredStreamProgress {
+        previous: previous.map(EventPosition::new),
+        latest_known: latest_known.map(EventPosition::new),
+        status: match status {
+            protocol::StreamStatus::StreamingBacklog => MonitoredStreamStatus::StreamingBacklog,
+            protocol::StreamStatus::AwaitingNewItems => MonitoredStreamStatus::AwaitingNewItems,
+            protocol::StreamStatus::FallenBehind => MonitoredStreamStatus::FallenBehind,
+        },
+    }
+}
+
+fn load_event_position(event: &LoadEvent) -> Option<EventPosition> {
+    match event {
+        LoadEvent::Snapshot(_) => None,
+        LoadEvent::Event(event) => Some(event.committed.position),
     }
 }
 

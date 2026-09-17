@@ -8,14 +8,16 @@ They differ only where their environments open connections and read or write byt
 
 One archive-bound client connection uses four persistent logical streams:
 
-- The **event stream** opens the logical session, returns opaque session authority, and carries atomic snapshot selection, finite catch-up, a caught-up marker, and live events.
+- The **event stream** opens the logical session, returns opaque session authority, and carries atomic snapshot selection, catch-up, monitored progress, and live events.
 - The **author stream** uses that authority for ordered submissions, receipts, ambiguity resolution, and close.
 - The **snapshot stream** uses that authority for latest-value snapshot notifications and policy-bound publication.
-- The **content stream** uses that authority for correlated bounded history, blob, directory, and snapshot lookup operations with explicit completion.
+- A **content stream** uses that authority for correlated history, blob, directory, and snapshot lookup operations.
+	Unary operations reuse one stream, while each monitored history read owns a content-role stream for its finite or live lifetime.
 
 Each frame is length-delimited and contains an explicit `MessageKind`, stream-scoped correlation ID, and postcard-serialized kind-specific payload.
 The decoder accepts fragmentation and coalescing, rejects unknown kinds and wrong-stream messages, and enforces `max_frame_bytes` before payload decoding.
 Correlation ID zero is reserved for unsolicited event and snapshot notifications.
+Monitored progress responses are out-of-band observations and may cut ahead of buffered event responses without reordering those events.
 
 An **archive** is durable or process-local retained state.
 A **logical session** is one connection-bound author identity within an archive.

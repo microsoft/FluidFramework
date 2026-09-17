@@ -5,14 +5,15 @@ use std::io::{Read, Write};
 use async_trait::async_trait;
 use bytes::Bytes;
 use flate2::{Compression, read::ZlibDecoder, write::ZlibEncoder};
-use futures_util::StreamExt;
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, ClassifiedError, ErrorKind, SnapshotId,
+    ArchiveEventStream, ArchiveLoadStream, BlobDirectory, BlobDirectoryId, BlobId, ClassifiedError,
+    ErrorKind, SnapshotId,
     archive::{
         EventReceipt as SessionEventReceipt, EventSubmission, LoadEvent, OperationId,
         PublishedSnapshot as SessionPublishedSnapshot, SeaArchive, SeaAuthorSession,
-        SeaEventSubscription, SeaService, SessionStream,
+        SeaEventSubscription, SeaService,
     },
+    map_monitored_stream,
 };
 use thiserror::Error;
 
@@ -74,25 +75,19 @@ impl<S> SeaEventSubscription for CompressionSession<S>
 where
     S: SeaEventSubscription,
 {
-    async fn load(
-        &self,
-        required: Option<sea_core::EventPosition>,
-    ) -> Result<SessionStream<LoadEvent, Self::Error>, Self::Error> {
-        let stream = self
-            .inner
-            .load(required)
-            .await
-            .map_err(CompressionError::Store)?;
-        Ok(Box::pin(stream.map(|item| {
-            item.map_err(CompressionError::Store).and_then(|mut item| {
+    fn load(&self, required: Option<sea_core::EventPosition>) -> ArchiveLoadStream<Self::Error> {
+        map_monitored_stream(
+            self.inner.load(required),
+            |mut item| {
                 if let LoadEvent::Event(event) = &mut item {
                     event.committed.event.payload =
                         decompress_payload(&event.committed.event.payload)
                             .map_err(CompressionError::Corrupt)?;
                 }
                 Ok(item)
-            })
-        })))
+            },
+            CompressionError::Store,
+        )
     }
 }
 
@@ -102,24 +97,20 @@ impl<S> SeaArchive for CompressionSession<S>
 where
     S: SeaArchive,
 {
-    async fn read(
+    fn read(
         &self,
         after: Option<sea_core::EventPosition>,
-        through: Option<sea_core::EventPosition>,
-    ) -> Result<SessionStream<sea_core::archive::SessionCommittedEvent, Self::Error>, Self::Error>
-    {
-        let stream = self
-            .inner
-            .read(after, through)
-            .await
-            .map_err(CompressionError::Store)?;
-        Ok(Box::pin(stream.map(|item| {
-            item.map_err(CompressionError::Store).and_then(|mut event| {
+        stop_after: Option<sea_core::EventPosition>,
+    ) -> ArchiveEventStream<Self::Error> {
+        map_monitored_stream(
+            self.inner.read(after, stop_after),
+            |mut event| {
                 event.committed.event.payload = decompress_payload(&event.committed.event.payload)
                     .map_err(CompressionError::Corrupt)?;
                 Ok(event)
-            })
-        })))
+            },
+            CompressionError::Store,
+        )
     }
 
     async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {
@@ -270,9 +261,13 @@ mod tests {
             })
             .await
             .unwrap();
-        let mut load = compressed.load(None).await.unwrap();
-        let LoadEvent::Event(event) = load.next().await.unwrap().unwrap() else {
-            panic!("load should begin with the event");
+        let mut load = compressed.load(None);
+        let event = loop {
+            match load.next().await.unwrap().unwrap() {
+                sea_core::MonitoredStreamItem::Item(LoadEvent::Event(event)) => break event,
+                sea_core::MonitoredStreamItem::Item(LoadEvent::Snapshot(_))
+                | sea_core::MonitoredStreamItem::Progress(_) => {}
+            }
         };
         assert_eq!(event.committed.position, receipt.position);
         assert_eq!(
@@ -316,13 +311,30 @@ mod tests {
             .await
             .unwrap();
 
-        let mut history = compressed.read(None, Some(receipt.position)).await.unwrap();
-        let read_error = history.next().await.unwrap().unwrap_err();
+        let mut history = compressed.read(None, Some(receipt.position));
+        let read_error = loop {
+            match history.next().await.unwrap() {
+                Ok(sea_core::MonitoredStreamItem::Progress(_)) => {}
+                Ok(sea_core::MonitoredStreamItem::Item(_)) => {
+                    panic!("malformed event was returned")
+                }
+                Err(error) => break error,
+            }
+        };
         assert!(matches!(read_error, CompressionError::Corrupt(_)));
         assert_eq!(read_error.kind(), ErrorKind::Corrupt);
 
-        let mut load = compressed.load(None).await.unwrap();
-        let load_error = load.next().await.unwrap().unwrap_err();
+        let mut load = compressed.load(None);
+        let load_error = loop {
+            match load.next().await.unwrap() {
+                Ok(sea_core::MonitoredStreamItem::Progress(_)) => {}
+                Ok(sea_core::MonitoredStreamItem::Item(LoadEvent::Snapshot(_))) => {}
+                Ok(sea_core::MonitoredStreamItem::Item(LoadEvent::Event(_))) => {
+                    panic!("malformed event was returned")
+                }
+                Err(error) => break error,
+            }
+        };
         assert!(matches!(load_error, CompressionError::Corrupt(_)));
         assert_eq!(load_error.kind(), ErrorKind::Corrupt);
     }

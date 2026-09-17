@@ -23,9 +23,9 @@ pub use crate::snapshot::{
     SnapshotPublication,
 };
 pub use crate::{
-    EventReceipt, EventSubmission, LoadEvent, SeaAuthorSession, SeaEventSubscription, SeaService,
-    SeaSession, SeaSnapshotCoordinator, SeaSnapshotPublisher, SeaStorage, SessionBounds,
-    StorageEventStream, StorageLoad,
+    ArchiveEventStream, ArchiveLoadStream, EventReceipt, EventSubmission, LoadEvent,
+    SeaAuthorSession, SeaEventSubscription, SeaService, SeaSession, SeaSnapshotCoordinator,
+    SeaSnapshotPublisher, SeaStorage, SessionBounds, StorageEventStream, StorageLoad,
 };
 
 /// A stable event-order value within one archive.
@@ -249,20 +249,28 @@ pub type SessionStream<T, E> = Pin<Box<dyn Stream<Item = Result<T, E>> + 'static
 
 /// Archive-scoped content, historical reads, and snapshot lookup.
 ///
-/// This surface owns no author membership or live subscription.
-/// Dropping an archive handle therefore requires no asynchronous teardown.
+/// This surface owns no author membership. Each read stream owns its finite read or live
+/// subscription, and dropping that stream cancels its work without closing the archive handle.
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 pub trait SeaArchive: SeaService {
-    /// Reads a finite, ordered range of committed application events.
+    /// Reads an ordered range of committed application events.
     ///
     /// `after` is an exclusive lower bound; `None` starts at the first event.
-    /// `through` is an inclusive upper bound; `None` ends at the head captured when the read begins.
-    async fn read(
+    /// `stop_after` is an inclusive upper bound; `None` continues waiting for new events.
+    /// Calling this method performs no confirmed I/O; initialization failures are yielded by the
+    /// returned stream.
+    ///
+    /// Event items retain strict archive order. Progress items are out-of-band observations and
+    /// may cut ahead of buffered events without changing their order. Initial progress uses
+    /// `after` for both `previous` and `latest_known` with `StreamingBacklog` until head discovery
+    /// completes. `AwaitingNewItems` reports that an unbounded read has caught up, while
+    /// `FallenBehind` reports known throughput-limited buffering.
+    fn read(
         &self,
         after: Option<EventPosition>,
-        through: Option<EventPosition>,
-    ) -> Result<SessionStream<SessionCommittedEvent, Self::Error>, Self::Error>;
+        stop_after: Option<EventPosition>,
+    ) -> ArchiveEventStream<Self::Error>;
 
     /// Publishes or deduplicates one immutable blob.
     async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error>;

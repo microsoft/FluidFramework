@@ -31,7 +31,7 @@ SeaStorage: memory, buffered-file, or durable-file
 
 `EventPosition` is a stable ordered `u64` value inside one archive and has a canonical eight-byte encoding.
 Snapshots may represent initial state or state through one event.
-A load atomically selects a compatible snapshot and catch-up head, emits every later event through that head, emits a caught-up marker, and then continues live without a gap.
+A load atomically selects a compatible snapshot and catch-up head, emits every later event through that head, reports monitored progress when it catches up, and then continues live without a gap.
 Uploaded content, events, and snapshots are retained in the initial implementation.
 
 Snapshot streams declare immutable `ReadOnly`, `SeaSelected`, or `ClientSelected` participation.

@@ -10,14 +10,14 @@ use std::{
 };
 
 use bytes::Bytes;
-use futures_util::TryStreamExt;
+use futures_util::{StreamExt, TryStreamExt};
 use sea_benchmarks::{
     BenchmarkResult, DEFAULT_SEED, Environment, FixtureGenerator, FixtureKind, MeasurementBoundary,
     Measurements, SCHEMA_VERSION, Workload, summarize,
 };
 use sea_compression::CompressionSession;
 use sea_core::{
-    BlobTreeId, Event,
+    ArchiveEventStream, BlobTreeId, Event, MonitoredStreamItem,
     archive::{
         AuthorId, EventSubmission, OperationId, SeaArchive, SeaAuthorSession, SeaEventSubscription,
         SeaSnapshotCoordinator, SeaStorage, SessionId, Snapshot as ArchiveSnapshot,
@@ -662,13 +662,7 @@ where
     }
 
     let read_started = Instant::now();
-    let records = sessions[0]
-        .read(None, None)
-        .await
-        .map_err(display_error)?
-        .try_collect::<Vec<_>>()
-        .await
-        .map_err(display_error)?;
+    let records = collect_session_events(sessions[0].read(None, None), record_capacity).await?;
     let finite_read_microseconds = elapsed_microseconds(read_started);
     verify_session_payloads(&records, &generator, config)?;
     for session in &sessions {
@@ -707,13 +701,9 @@ where
     C: SeaSnapshotCoordinator,
 {
     let generator = FixtureGenerator::new(config.seed);
-    let records = session
-        .read(None, None)
-        .await
-        .map_err(display_error)?
-        .try_collect::<Vec<_>>()
-        .await
-        .map_err(display_error)?;
+    let expected_records = usize::try_from(config.records)
+        .map_err(|_| "record count exceeds addressable memory".to_owned())?;
+    let records = collect_session_events(session.read(None, None), expected_records).await?;
     verify_session_payloads(&records, &generator, config)?;
     if config.snapshot_frequency.is_some()
         && coordinator
@@ -725,6 +715,28 @@ where
         return Err("reopened session did not preserve its snapshot".to_owned());
     }
     Ok(())
+}
+
+async fn collect_session_events<E>(
+    mut stream: ArchiveEventStream<E>,
+    expected: usize,
+) -> Result<Vec<sea_core::archive::SessionCommittedEvent>, String>
+where
+    E: std::fmt::Display,
+{
+    let mut events = Vec::with_capacity(expected);
+    while events.len() < expected {
+        match stream
+            .next()
+            .await
+            .ok_or_else(|| "session read ended before every expected event".to_owned())?
+            .map_err(display_error)?
+        {
+            MonitoredStreamItem::Item(event) => events.push(event),
+            MonitoredStreamItem::Progress(_) => {}
+        }
+    }
+    Ok(events)
 }
 
 /// Verifies a session read against the configured record count and fixture payloads.

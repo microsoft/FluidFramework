@@ -2,14 +2,15 @@
 
 use async_trait::async_trait;
 use bytes::{BufMut, Bytes, BytesMut};
-use futures_util::StreamExt;
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, ClassifiedError, ErrorKind, SnapshotId,
+    ArchiveEventStream, ArchiveLoadStream, BlobDirectory, BlobDirectoryId, BlobId, ClassifiedError,
+    ErrorKind, SnapshotId,
     archive::{
         EventReceipt as SessionEventReceipt, EventSubmission, LoadEvent, OperationId,
         PublishedSnapshot as SessionPublishedSnapshot, SeaArchive, SeaAuthorSession,
-        SeaEventSubscription, SeaService, SessionStream,
+        SeaEventSubscription, SeaService,
     },
+    map_monitored_stream,
 };
 use thiserror::Error;
 
@@ -166,33 +167,26 @@ impl<S> SeaEventSubscription for StatefulCompressionSession<S>
 where
     S: SeaEventSubscription,
 {
-    async fn load(
-        &self,
-        required: Option<sea_core::EventPosition>,
-    ) -> Result<SessionStream<LoadEvent, Self::Error>, Self::Error> {
-        let stream = self
-            .inner
-            .load(required)
-            .await
-            .map_err(StatefulCompressionError::Store)?;
+    fn load(&self, required: Option<sea_core::EventPosition>) -> ArchiveLoadStream<Self::Error> {
         let dictionary = self.dictionary.clone();
         let dictionary_fingerprint = self.dictionary_fingerprint;
         let max_decoded_bytes = self.max_decoded_bytes;
-        Ok(Box::pin(stream.map(move |item| {
-            item.map_err(StatefulCompressionError::Store)
-                .and_then(|mut item| {
-                    if let LoadEvent::Event(event) = &mut item {
-                        event.committed.event.payload = decompress_frame(
-                            &event.committed.event.payload,
-                            &dictionary,
-                            dictionary_fingerprint,
-                            max_decoded_bytes,
-                        )
-                        .map_err(StatefulCompressionError::Corrupt)?;
-                    }
-                    Ok(item)
-                })
-        })))
+        map_monitored_stream(
+            self.inner.load(required),
+            move |mut item| {
+                if let LoadEvent::Event(event) = &mut item {
+                    event.committed.event.payload = decompress_frame(
+                        &event.committed.event.payload,
+                        &dictionary,
+                        dictionary_fingerprint,
+                        max_decoded_bytes,
+                    )
+                    .map_err(StatefulCompressionError::Corrupt)?;
+                }
+                Ok(item)
+            },
+            StatefulCompressionError::Store,
+        )
     }
 }
 
@@ -202,33 +196,28 @@ impl<S> SeaArchive for StatefulCompressionSession<S>
 where
     S: SeaArchive,
 {
-    async fn read(
+    fn read(
         &self,
         after: Option<sea_core::EventPosition>,
-        through: Option<sea_core::EventPosition>,
-    ) -> Result<SessionStream<sea_core::archive::SessionCommittedEvent, Self::Error>, Self::Error>
-    {
-        let stream = self
-            .inner
-            .read(after, through)
-            .await
-            .map_err(StatefulCompressionError::Store)?;
+        stop_after: Option<sea_core::EventPosition>,
+    ) -> ArchiveEventStream<Self::Error> {
         let dictionary = self.dictionary.clone();
         let dictionary_fingerprint = self.dictionary_fingerprint;
         let max_decoded_bytes = self.max_decoded_bytes;
-        Ok(Box::pin(stream.map(move |item| {
-            item.map_err(StatefulCompressionError::Store)
-                .and_then(|mut event| {
-                    event.committed.event.payload = decompress_frame(
-                        &event.committed.event.payload,
-                        &dictionary,
-                        dictionary_fingerprint,
-                        max_decoded_bytes,
-                    )
-                    .map_err(StatefulCompressionError::Corrupt)?;
-                    Ok(event)
-                })
-        })))
+        map_monitored_stream(
+            self.inner.read(after, stop_after),
+            move |mut event| {
+                event.committed.event.payload = decompress_frame(
+                    &event.committed.event.payload,
+                    &dictionary,
+                    dictionary_fingerprint,
+                    max_decoded_bytes,
+                )
+                .map_err(StatefulCompressionError::Corrupt)?;
+                Ok(event)
+            },
+            StatefulCompressionError::Store,
+        )
     }
 
     async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {

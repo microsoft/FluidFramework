@@ -5,11 +5,11 @@
 - **Plan status:** In progress.
 - **Execution mode:** Lightweight sequential work on the current branch.
 - **Compatibility:** Preserve existing import paths where practical, but the `SeaArchive::read` signature and behavior intentionally change.
-- **Current checkpoint:** 2. Migrate archive reads and loads.
-- **Last completed checkpoint:** 1. Introduce the generic monitored-stream API.
-- **Last validation:** `cargo fmt --all -- --check`, package Clippy with warnings denied, package rustdoc with warnings denied, all-target/all-feature package tests, and the documentation checker passed on 2026-09-17.
-- **Decisions or TODOs changed:** The generic API uses associated data, position, and error types; exposes one object-safe `MonitoredStream` trait; and provides target-aware `BoxMonitoredStream` aliases.
-- **Next checkpoint:** 2. Migrate archive reads and loads.
+- **Current checkpoint:** 3. Evaluate snapshot subscriptions.
+- **Last completed checkpoint:** 2. Migrate archive reads and loads.
+- **Last validation:** The complete canonical Rust, generated WASM, Node, TypeScript, policy, and repository build suites passed on 2026-09-17. Real Chromium WebTransport validation also passed with client-selected and Sea-selected snapshot participation.
+- **Decisions or TODOs changed:** `read` and `load` synchronously construct streams and share one lazy, gap-free monitored event engine. `LoadEvent::Snapshot` remains an explicitly non-positioned load item, while `CaughtUp` is replaced by out-of-band progress. Protocol version 4 carries `StreamProgress`; lagging local consumers recover from storage without dropping archive events.
+- **Next checkpoint:** 3. Evaluate snapshot subscriptions.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.

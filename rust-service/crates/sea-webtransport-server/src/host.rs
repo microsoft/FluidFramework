@@ -608,7 +608,18 @@ mod tests {
         );
         assert!(matches!(
             first_stream.next().await,
-            Some(protocol::Response::CaughtUp(Some(_)))
+            Some(protocol::Response::StreamProgress {
+                status: protocol::StreamStatus::StreamingBacklog,
+                ..
+            })
+        ));
+        assert!(matches!(
+            first_stream.next().await,
+            Some(protocol::Response::StreamProgress {
+                previous: None,
+                latest_known: None,
+                status: protocol::StreamStatus::AwaitingNewItems,
+            })
         ));
 
         let second = host.connect(LivenessPolicy::default());
@@ -962,10 +973,18 @@ mod tests {
             )
             .await
             .unwrap();
-            let mut events = client.load(None).await.unwrap();
+            let mut events = client.load(None);
             assert!(matches!(
                 events.next().await.unwrap().unwrap(),
-                LoadEvent::CaughtUp(Some(_))
+                sea_core::MonitoredStreamItem::Progress(progress)
+                    if progress.status == sea_core::MonitoredStreamStatus::StreamingBacklog
+            ));
+            assert!(matches!(
+                events.next().await.unwrap().unwrap(),
+                sea_core::MonitoredStreamItem::Progress(progress)
+                    if progress.previous.is_none()
+                        && progress.latest_known.is_none()
+                        && progress.status == sea_core::MonitoredStreamStatus::AwaitingNewItems
             ));
             tokio::time::sleep(Duration::from_millis(100)).await;
             let receipt = client
@@ -981,7 +1000,13 @@ mod tests {
                 .unwrap();
             assert!(matches!(
                 events.next().await.unwrap().unwrap(),
-                LoadEvent::Event(event) if event.committed.position == receipt.position
+                sea_core::MonitoredStreamItem::Progress(progress)
+                    if progress.latest_known == Some(receipt.position)
+            ));
+            assert!(matches!(
+                events.next().await.unwrap().unwrap(),
+                sea_core::MonitoredStreamItem::Item(LoadEvent::Event(event))
+                    if event.committed.position == receipt.position
             ));
             client.close().await.unwrap();
             shutdown

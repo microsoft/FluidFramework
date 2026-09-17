@@ -1,7 +1,7 @@
 //! Final multi-user local session implementation over [`SeaStorage`].
 
 use std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::{BTreeMap, BTreeSet, VecDeque},
     error::Error,
     fmt,
     sync::{
@@ -14,14 +14,17 @@ use async_trait::async_trait;
 use bytes::{Buf as _, BufMut as _, Bytes, BytesMut};
 use futures_util::{StreamExt as _, TryStreamExt as _, stream};
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, ClassifiedError, Durability, ErrorKind, Event,
-    EventPosition, SnapshotId,
+    ArchiveEventStream, ArchiveLoadStream, BlobDirectory, BlobDirectoryId, BlobId, ClassifiedError,
+    Durability, ErrorKind, Event, EventPosition, MonitoredStreamItem, MonitoredStreamProgress,
+    MonitoredStreamStatus, SnapshotId, StorageEventStream,
     archive::{
         AuthorId, CommittedEvent, EventReceipt, EventSubmission, LoadEvent, OperationId,
         PublishedSnapshot, SeaArchive, SeaAuthorSession, SeaEventSubscription, SeaService,
         SeaSnapshotCoordinator, SeaSnapshotPublisher, SeaStorage, SessionCommittedEvent, SessionId,
-        SessionStream, SnapshotCoordination, SnapshotParticipation, SnapshotPublication,
+        SessionStream, SnapshotCoordination, SnapshotParticipation, SnapshotPosition,
+        SnapshotPublication,
     },
+    boxed_monitored_stream, map_monitored_stream,
 };
 use tokio::sync::{Mutex, broadcast, watch};
 
@@ -315,6 +318,232 @@ impl<S: SeaStorage> LocalSession<S> {
             Ok(())
         }
     }
+
+    fn monitored_events(&self, mode: EventStreamMode) -> ArchiveLoadStream<SessionError<S::Error>>
+    where
+        S: 'static,
+    {
+        let initial_previous = match mode {
+            EventStreamMode::Read { after, .. } => after,
+            EventStreamMode::Load { .. } => None,
+        };
+        let initial = MonitoredStreamProgress {
+            previous: initial_previous,
+            latest_known: initial_previous,
+            status: MonitoredStreamStatus::StreamingBacklog,
+        };
+        if let Err(error) = self.ensure_open() {
+            return boxed_monitored_stream(
+                stream::once(async move { Err(error) }),
+                initial,
+                load_event_position,
+            );
+        }
+
+        let state = EventStreamState {
+            storage: Arc::clone(&self.sequencer.storage),
+            live: self.sequencer.events.subscribe(),
+            mode: Some(mode),
+            catch_up: None,
+            catch_up_status: MonitoredStreamStatus::StreamingBacklog,
+            pending: VecDeque::new(),
+            previous: initial_previous,
+            latest_known: initial_previous,
+            live_delivery: false,
+            caught_up: false,
+            done: false,
+        };
+        let events = stream::unfold(state, |mut state| async move {
+            loop {
+                if state.done {
+                    return None;
+                }
+
+                if let Some(mode) = state.mode.take() {
+                    let initialized = match mode {
+                        EventStreamMode::Read { after, stop_after } => {
+                            let head = match stop_after {
+                                Some(position) => Some(position),
+                                None => match state.storage.head().await {
+                                    Ok(head) => head,
+                                    Err(error) => {
+                                        state.done = true;
+                                        return Some((Err(SessionError::Storage(error)), state));
+                                    }
+                                },
+                            };
+                            match state.storage.read(after, head).await {
+                                Ok(events) => {
+                                    state.catch_up = Some(events);
+                                    if stop_after.is_some() {
+                                        state.latest_known = head;
+                                    }
+                                    state.live_delivery = stop_after.is_none();
+                                    Ok(())
+                                }
+                                Err(error) => Err(error),
+                            }
+                        }
+                        EventStreamMode::Load { required } => {
+                            match state.storage.load(required).await {
+                                Ok(load) => {
+                                    state.previous =
+                                        load.snapshot.as_ref().and_then(|snapshot| match snapshot
+                                            .snapshot
+                                            .at_event
+                                        {
+                                            SnapshotPosition::Initial => None,
+                                            SnapshotPosition::At(position) => Some(position),
+                                        });
+                                    if let Some(snapshot) = load.snapshot {
+                                        state.pending.push_back(LoadEvent::Snapshot(snapshot));
+                                    }
+                                    state.catch_up = Some(load.events);
+                                    state.live_delivery = true;
+                                    Ok(())
+                                }
+                                Err(error) => Err(error),
+                            }
+                        }
+                    };
+                    if let Err(error) = initialized {
+                        state.done = true;
+                        return Some((Err(SessionError::Storage(error)), state));
+                    }
+                    let progress = state.progress(MonitoredStreamStatus::StreamingBacklog);
+                    return Some((Ok(MonitoredStreamItem::Progress(progress)), state));
+                }
+
+                if let Some(item) = state.pending.pop_front() {
+                    if let LoadEvent::Event(event) = &item {
+                        state.previous = Some(event.committed.position);
+                    }
+                    return Some((Ok(MonitoredStreamItem::Item(item)), state));
+                }
+
+                if let Some(catch_up) = &mut state.catch_up {
+                    match catch_up.next().await {
+                        Some(Ok(record)) => match decode_committed(&record) {
+                            Ok(Some(event)) => {
+                                state.latest_known = Some(event.committed.position);
+                                state.pending.push_back(LoadEvent::Event(event));
+                                let progress = state.progress(state.catch_up_status);
+                                return Some((Ok(MonitoredStreamItem::Progress(progress)), state));
+                            }
+                            Ok(None) => {}
+                            Err(error) => {
+                                state.done = true;
+                                return Some((Err(error), state));
+                            }
+                        },
+                        Some(Err(error)) => {
+                            state.done = true;
+                            return Some((Err(SessionError::Storage(error)), state));
+                        }
+                        None => {
+                            state.catch_up = None;
+                            if !state.live_delivery {
+                                state.done = true;
+                                continue;
+                            }
+                        }
+                    }
+                    continue;
+                }
+
+                if !state.caught_up && state.previous == state.latest_known {
+                    state.caught_up = true;
+                    let progress = state.progress(MonitoredStreamStatus::AwaitingNewItems);
+                    return Some((Ok(MonitoredStreamItem::Progress(progress)), state));
+                }
+
+                match state.live.recv().await {
+                    Ok(event)
+                        if state
+                            .previous
+                            .is_none_or(|position| event.committed.position > position) =>
+                    {
+                        state.latest_known = Some(event.committed.position);
+                        state.caught_up = false;
+                        state.pending.push_back(LoadEvent::Event(event));
+                        let status = if state.live.len() > 0 {
+                            MonitoredStreamStatus::FallenBehind
+                        } else {
+                            MonitoredStreamStatus::StreamingBacklog
+                        };
+                        let progress = state.progress(status);
+                        return Some((Ok(MonitoredStreamItem::Progress(progress)), state));
+                    }
+                    Ok(_) => {}
+                    Err(broadcast::error::RecvError::Lagged(_)) => {
+                        let head = match state.storage.head().await {
+                            Ok(head) => head,
+                            Err(error) => {
+                                state.done = true;
+                                return Some((Err(SessionError::Storage(error)), state));
+                            }
+                        };
+                        match state.storage.read(state.previous, head).await {
+                            Ok(events) => {
+                                state.catch_up = Some(events);
+                                state.catch_up_status = MonitoredStreamStatus::FallenBehind;
+                                state.caught_up = false;
+                                continue;
+                            }
+                            Err(error) => {
+                                state.done = true;
+                                return Some((Err(SessionError::Storage(error)), state));
+                            }
+                        }
+                    }
+                    Err(broadcast::error::RecvError::Closed) => return None,
+                }
+            }
+        });
+        boxed_monitored_stream(events, initial, load_event_position)
+    }
+}
+
+#[derive(Clone, Copy)]
+enum EventStreamMode {
+    Read {
+        after: Option<EventPosition>,
+        stop_after: Option<EventPosition>,
+    },
+    Load {
+        required: Option<EventPosition>,
+    },
+}
+
+struct EventStreamState<S: SeaStorage> {
+    storage: Arc<S>,
+    live: broadcast::Receiver<SessionCommittedEvent>,
+    mode: Option<EventStreamMode>,
+    catch_up: Option<StorageEventStream<S::Error>>,
+    catch_up_status: MonitoredStreamStatus,
+    pending: VecDeque<LoadEvent>,
+    previous: Option<EventPosition>,
+    latest_known: Option<EventPosition>,
+    live_delivery: bool,
+    caught_up: bool,
+    done: bool,
+}
+
+impl<S: SeaStorage> EventStreamState<S> {
+    fn progress(&self, status: MonitoredStreamStatus) -> MonitoredStreamProgress<EventPosition> {
+        MonitoredStreamProgress {
+            previous: self.previous,
+            latest_known: self.latest_known,
+            status,
+        }
+    }
+}
+
+fn load_event_position(event: &LoadEvent) -> Option<EventPosition> {
+    match event {
+        LoadEvent::Snapshot(_) => None,
+        LoadEvent::Event(event) => Some(event.committed.position),
+    }
 }
 
 impl<S> SeaService for LocalSession<S>
@@ -330,52 +559,8 @@ impl<S> SeaEventSubscription for LocalSession<S>
 where
     S: SeaStorage + 'static,
 {
-    async fn load(
-        &self,
-        required: Option<EventPosition>,
-    ) -> Result<SessionStream<LoadEvent, Self::Error>, Self::Error> {
-        self.ensure_open()?;
-        let live = self.sequencer.events.subscribe();
-        let load = self
-            .sequencer
-            .storage
-            .load(required)
-            .await
-            .map_err(SessionError::Storage)?;
-        let captured_head = load.head;
-        let mut initial = Vec::new();
-        if let Some(snapshot) = load.snapshot {
-            initial.push(Ok(LoadEvent::Snapshot(snapshot)));
-        }
-        let records = load
-            .events
-            .try_collect::<Vec<_>>()
-            .await
-            .map_err(SessionError::Storage)?;
-        for record in records {
-            if let Some(committed) = decode_committed(&record)? {
-                initial.push(Ok(LoadEvent::Event(committed)));
-            }
-        }
-        initial.push(Ok(LoadEvent::CaughtUp(captured_head)));
-        let live_stream =
-            stream::unfold((live, captured_head), |(mut receiver, head)| async move {
-                loop {
-                    match receiver.recv().await {
-                        Ok(event)
-                            if head.is_none_or(|position| event.committed.position > position) =>
-                        {
-                            return Some((Ok(LoadEvent::Event(event)), (receiver, head)));
-                        }
-                        Ok(_) => {}
-                        Err(broadcast::error::RecvError::Lagged(_)) => {
-                            return Some((Err(SessionError::Lagged), (receiver, head)));
-                        }
-                        Err(broadcast::error::RecvError::Closed) => return None,
-                    }
-                }
-            });
-        Ok(Box::pin(stream::iter(initial).chain(live_stream)))
+    fn load(&self, required: Option<EventPosition>) -> ArchiveLoadStream<Self::Error> {
+        self.monitored_events(EventStreamMode::Load { required })
     }
 }
 
@@ -385,28 +570,21 @@ impl<S> SeaArchive for LocalSession<S>
 where
     S: SeaStorage + 'static,
 {
-    async fn read(
+    fn read(
         &self,
         after: Option<EventPosition>,
-        through: Option<EventPosition>,
-    ) -> Result<SessionStream<SessionCommittedEvent, Self::Error>, Self::Error> {
-        self.ensure_open()?;
-        let records = self
-            .sequencer
-            .storage
-            .read(after, through)
-            .await
-            .map_err(SessionError::Storage)?;
-        Ok(Box::pin(records.filter_map(|record| async move {
-            match record {
-                Ok(record) => match decode_committed(&record) {
-                    Ok(Some(committed)) => Some(Ok(committed)),
-                    Ok(None) => None,
-                    Err(error) => Some(Err(error)),
-                },
-                Err(error) => Some(Err(SessionError::Storage(error))),
-            }
-        })))
+        stop_after: Option<EventPosition>,
+    ) -> ArchiveEventStream<Self::Error> {
+        map_monitored_stream(
+            self.monitored_events(EventStreamMode::Read { after, stop_after }),
+            |item| match item {
+                LoadEvent::Event(event) => Ok(event),
+                LoadEvent::Snapshot(_) => Err(SessionError::Corrupt(
+                    "archive read unexpectedly selected a snapshot",
+                )),
+            },
+            |error| error,
+        )
     }
 
     async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {
@@ -1123,7 +1301,8 @@ mod tests {
     use bytes::Bytes;
     use futures_util::StreamExt as _;
     use sea_core::{
-        BlobId, BlobTreeId, ClassifiedError, Durability, ErrorKind, Event,
+        BlobId, BlobTreeId, ClassifiedError, Durability, ErrorKind, Event, MonitoredStreamItem,
+        MonitoredStreamStatus,
         archive::{
             AuthorId, EventSubmission, LoadEvent, OperationId, SeaArchive, SeaAuthorSession,
             SeaEventSubscription, SeaSnapshotPublisher, SessionId, Snapshot, SnapshotParticipation,
@@ -1378,7 +1557,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn configured_event_lag_evicts_a_slow_subscriber() {
+    async fn configured_event_lag_reports_fallen_behind_and_recovers() {
         let sequencer = LocalSequencer::recover_with_event_lag(Arc::new(MemoryStream::new()), 1)
             .await
             .unwrap();
@@ -1386,19 +1565,89 @@ mod tests {
             .open_session(author(b"lag-author"), session(b"lag-session"), None)
             .await
             .unwrap();
-        let mut events = session.load(None).await.unwrap();
+        let mut events = session.load(None);
         assert!(matches!(
             events.next().await.unwrap().unwrap(),
-            LoadEvent::CaughtUp(_)
+            MonitoredStreamItem::Progress(progress)
+                if progress.status == MonitoredStreamStatus::StreamingBacklog
+        ));
+        assert!(matches!(
+            events.next().await.unwrap().unwrap(),
+            MonitoredStreamItem::Progress(progress)
+                if progress.status == MonitoredStreamStatus::AwaitingNewItems
         ));
         let first = session.submit(submission(b"lag-one", None)).await.unwrap();
-        session
+        let second = session
             .submit(submission(b"lag-two", Some(first.position)))
             .await
             .unwrap();
         assert!(matches!(
             events.next().await,
-            Some(Err(SessionError::Lagged))
+            Some(Ok(MonitoredStreamItem::Progress(progress)))
+                if progress.status == MonitoredStreamStatus::FallenBehind
+        ));
+        let mut recovered = Vec::new();
+        while recovered.len() < 2 {
+            if let Some(Ok(MonitoredStreamItem::Item(LoadEvent::Event(event)))) =
+                events.next().await
+            {
+                recovered.push(event.committed.position);
+            }
+        }
+        assert_eq!(recovered, [first.position, second.position]);
+    }
+
+    #[tokio::test]
+    async fn archive_reads_are_lazy_finite_or_live() {
+        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
+            .await
+            .unwrap();
+        let session = sequencer
+            .open_session(author(b"read-author"), session(b"read-session"), None)
+            .await
+            .unwrap();
+
+        let first = session.submit(submission(b"read-one", None)).await.unwrap();
+        let mut finite = session.read(None, Some(first.position));
+        let mut finite_events = Vec::new();
+        while let Some(item) = finite.next().await {
+            if let MonitoredStreamItem::Item(event) = item.unwrap() {
+                finite_events.push(event.committed.position);
+            }
+        }
+        assert_eq!(finite_events, [first.position]);
+
+        let mut live = session.read(Some(first.position), None);
+        assert!(matches!(
+            live.next().await.unwrap().unwrap(),
+            MonitoredStreamItem::Progress(progress)
+                if progress.status == MonitoredStreamStatus::StreamingBacklog
+        ));
+        assert!(matches!(
+            live.next().await.unwrap().unwrap(),
+            MonitoredStreamItem::Progress(progress)
+                if progress.status == MonitoredStreamStatus::AwaitingNewItems
+        ));
+        let second = session
+            .submit(submission(b"read-two", Some(first.position)))
+            .await
+            .unwrap();
+        assert!(matches!(
+            live.next().await.unwrap().unwrap(),
+            MonitoredStreamItem::Progress(progress)
+                if progress.latest_known == Some(second.position)
+        ));
+        assert!(matches!(
+            live.next().await.unwrap().unwrap(),
+            MonitoredStreamItem::Item(event)
+                if event.committed.position == second.position
+        ));
+
+        let invalid = sea_core::EventPosition::new(u64::MAX);
+        let mut failed = session.read(Some(invalid), None);
+        assert!(matches!(
+            failed.next().await,
+            Some(Err(SessionError::Storage(_)))
         ));
     }
 
@@ -1445,23 +1694,42 @@ mod tests {
             Err(SessionError::Rejected(_))
         ));
 
-        let mut load = first_session.load(None).await.unwrap();
-        let loaded = load.next().await.unwrap().unwrap();
-        let LoadEvent::Event(loaded) = loaded else {
+        let mut load = first_session.load(None);
+        assert!(matches!(
+            load.next().await.unwrap().unwrap(),
+            MonitoredStreamItem::Progress(progress)
+                if progress.status == MonitoredStreamStatus::StreamingBacklog
+        ));
+        assert!(matches!(
+            load.next().await.unwrap().unwrap(),
+            MonitoredStreamItem::Progress(progress)
+                if progress.latest_known == Some(first.position)
+        ));
+        let MonitoredStreamItem::Item(LoadEvent::Event(loaded)) =
+            load.next().await.unwrap().unwrap()
+        else {
             panic!("first load item should be the committed event");
         };
         assert_eq!(loaded.committed.position, first.position);
         assert_eq!(loaded.operation_id.as_bytes(), b"operation-one".as_slice());
         assert!(matches!(
             load.next().await.unwrap().unwrap(),
-            LoadEvent::CaughtUp(Some(_))
+            MonitoredStreamItem::Progress(progress)
+                if progress.previous == Some(first.position)
+                    && progress.status == MonitoredStreamStatus::AwaitingNewItems
         ));
 
         let second = first_session
             .submit(submission(b"operation-two", Some(first.position)))
             .await
             .unwrap();
-        let LoadEvent::Event(live) = load.next().await.unwrap().unwrap() else {
+        assert!(matches!(
+            load.next().await.unwrap().unwrap(),
+            MonitoredStreamItem::Progress(progress)
+                if progress.latest_known == Some(second.position)
+        ));
+        let MonitoredStreamItem::Item(LoadEvent::Event(live)) = load.next().await.unwrap().unwrap()
+        else {
             panic!("load should continue with live events");
         };
         assert_eq!(live.committed.position, second.position);

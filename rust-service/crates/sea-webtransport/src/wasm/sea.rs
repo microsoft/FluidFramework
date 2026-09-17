@@ -22,7 +22,8 @@ use futures_util::future::{AbortHandle, Abortable};
 use js_sys::{Array, Promise, Reflect, Uint8Array};
 #[cfg(feature = "test-support")]
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, Event, EventPosition, SnapshotId,
+    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, Event, EventPosition, MonitoredStreamItem,
+    MonitoredStreamStatus, SnapshotId,
     archive::{
         AuthorId, EventSubmission, LoadEvent, OperationId, SeaArchive, SeaAuthorSession,
         SeaEventSubscription, SeaSnapshotCoordinator, SeaSnapshotPublisher, SessionId,
@@ -254,8 +255,21 @@ pub enum SeaLoadKind {
     Snapshot = 1,
     /// One catch-up or live event.
     Event = 2,
-    /// The finite catch-up boundary.
-    CaughtUp = 3,
+    /// One out-of-band delivery progress snapshot.
+    Progress = 3,
+}
+
+/// Current monitored-stream delivery state.
+#[wasm_bindgen]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u8)]
+pub enum SeaStreamStatus {
+    /// Initial discovery is incomplete, or unread items are known to exist.
+    StreamingBacklog = 1,
+    /// Initial discovery is complete and the stream is waiting for new items.
+    AwaitingNewItems = 2,
+    /// Items are buffering because throughput is limiting delivery.
+    FallenBehind = 3,
 }
 
 /// One item from a gap-free Sea load stream.
@@ -272,7 +286,7 @@ impl SeaLoadItem {
         match self.inner {
             protocol::Response::LoadSnapshot(_) => SeaLoadKind::Snapshot,
             protocol::Response::LoadEvent(_) => SeaLoadKind::Event,
-            protocol::Response::CaughtUp(_) => SeaLoadKind::CaughtUp,
+            protocol::Response::StreamProgress { .. } => SeaLoadKind::Progress,
             _ => unreachable!("SeaLoadItem is constructed only from load responses"),
         }
     }
@@ -288,12 +302,42 @@ impl SeaLoadItem {
         }
     }
 
-    /// Returns the event position or caught-up head.
+    /// Returns the event position when this is an event item.
     #[wasm_bindgen(getter)]
     pub fn position(&self) -> Option<u64> {
         match &self.inner {
             protocol::Response::LoadEvent(event) => Some(event.position),
-            protocol::Response::CaughtUp(position) => *position,
+            _ => None,
+        }
+    }
+
+    /// Returns the cursor immediately before the next unread event for a progress item.
+    #[wasm_bindgen(getter)]
+    pub fn previous(&self) -> Option<u64> {
+        match self.inner {
+            protocol::Response::StreamProgress { previous, .. } => previous,
+            _ => None,
+        }
+    }
+
+    /// Returns the latest known event position for a progress item.
+    #[wasm_bindgen(getter, js_name = latestKnown)]
+    pub fn latest_known(&self) -> Option<u64> {
+        match self.inner {
+            protocol::Response::StreamProgress { latest_known, .. } => latest_known,
+            _ => None,
+        }
+    }
+
+    /// Returns the monitored delivery state for a progress item.
+    #[wasm_bindgen(getter)]
+    pub fn status(&self) -> Option<SeaStreamStatus> {
+        match self.inner {
+            protocol::Response::StreamProgress { status, .. } => Some(match status {
+                protocol::StreamStatus::StreamingBacklog => SeaStreamStatus::StreamingBacklog,
+                protocol::StreamStatus::AwaitingNewItems => SeaStreamStatus::AwaitingNewItems,
+                protocol::StreamStatus::FallenBehind => SeaStreamStatus::FallenBehind,
+            }),
             _ => None,
         }
     }
@@ -374,6 +418,7 @@ impl SeaLoadItem {
 #[wasm_bindgen]
 pub struct SeaInjectedStream {
     inner: RefCell<Option<ResponseStream<InjectedBidirectionalStream>>>,
+    pending_read: RefCell<Option<(Rc<Client<InjectedTransport>>, protocol::Request)>>,
     buffered: RefCell<VecDeque<protocol::Response>>,
     pending_abort: RefCell<Option<AbortHandle>>,
     cancelled: Cell<bool>,
@@ -554,6 +599,14 @@ impl SeaInjectedStream {
         if let Some(response) = self.buffered.borrow_mut().pop_front() {
             return load_item(response).map(load_result).map(Some);
         }
+        if let Some((client, request)) = self.pending_read.take() {
+            let content = client.open_content_stream().await.map_err(client_error)?;
+            let responses = content
+                .request_stream(request)
+                .await
+                .map_err(client_error)?;
+            self.inner.replace(Some(responses));
+        }
         if self.inner.borrow().is_none() {
             return Ok(None);
         }
@@ -587,6 +640,7 @@ impl SeaInjectedStream {
             if let Some(stream) = self.inner.take() {
                 stream.cancel().await.map_err(client_error)?;
             }
+            self.pending_read.take();
         }
         Ok(())
     }
@@ -596,7 +650,7 @@ impl SeaInjectedStream {
 #[wasm_bindgen]
 pub struct SeaInjectedClient {
     transport: Rc<RefCell<JsValue>>,
-    client: Client<InjectedTransport>,
+    client: Rc<Client<InjectedTransport>>,
     event_stream: RefCell<Option<EventStream<InjectedBidirectionalStream>>>,
     author_stream: RefCell<Option<AuthorStream<InjectedBidirectionalStream>>>,
     snapshot_stream: Rc<RefCell<Option<SnapshotStream<InjectedBidirectionalStream>>>>,
@@ -1028,35 +1082,36 @@ mod test_support {
         }
 
         /// Opens a gap-free load stream.
-        pub async fn load(&self, required: Option<u64>) -> Result<SeaLocalStream, JsValue> {
-            let stream = self
-                .current()?
-                .load(required.map(EventPosition::new))
-                .await
-                .map_err(|error| js_error(&error.to_string()))?;
+        pub fn load(&self, required: Option<u64>) -> Result<SeaLocalStream, JsValue> {
+            let stream = self.current()?.load(required.map(EventPosition::new));
             Ok(SeaLocalStream::new(stream.map(|item| {
-                item.map(local_load_item)
+                item.map(local_monitored_load_item)
                     .map_err(|error| js_error(&error.to_string()))
             })))
         }
 
-        /// Opens a finite bounded event stream.
-        pub async fn read(
+        /// Opens a bounded or live event stream.
+        pub fn read(
             &self,
             after: Option<u64>,
-            through: Option<u64>,
+            stop_after: Option<u64>,
         ) -> Result<SeaLocalStream, JsValue> {
-            let stream = self
-                .current()?
-                .read(
-                    after.map(EventPosition::new),
-                    through.map(EventPosition::new),
-                )
-                .await
-                .map_err(|error| js_error(&error.to_string()))?;
+            let stream = self.current()?.read(
+                after.map(EventPosition::new),
+                stop_after.map(EventPosition::new),
+            );
             Ok(SeaLocalStream::new(stream.map(|item| {
-                item.map(|event| local_load_item(LoadEvent::Event(event)))
-                    .map_err(|error| js_error(&error.to_string()))
+                item.map(|item| {
+                    local_monitored_load_item(match item {
+                        MonitoredStreamItem::Item(event) => {
+                            MonitoredStreamItem::Item(LoadEvent::Event(event))
+                        }
+                        MonitoredStreamItem::Progress(progress) => {
+                            MonitoredStreamItem::Progress(progress)
+                        }
+                    })
+                })
+                .map_err(|error| js_error(&error.to_string()))
             })))
         }
 
@@ -1229,7 +1284,7 @@ impl SeaInjectedClient {
         );
         Ok(Self {
             transport,
-            client,
+            client: Rc::new(client),
             event_stream: RefCell::new(None),
             author_stream: RefCell::new(None),
             snapshot_stream: Rc::new(RefCell::new(None)),
@@ -1368,18 +1423,19 @@ impl SeaInjectedClient {
         }
     }
 
-    /// Opens a finite bounded committed-event stream.
-    pub async fn read(
+    /// Opens a bounded or live committed-event stream without performing immediate I/O.
+    pub fn read(
         &self,
         after: Option<u64>,
-        through: Option<u64>,
+        stop_after: Option<u64>,
     ) -> Result<SeaInjectedStream, JsValue> {
-        let responses = self
-            .content_request(protocol::Request::Read { after, through })
-            .await?;
         Ok(SeaInjectedStream {
             inner: RefCell::new(None),
-            buffered: RefCell::new(responses.into()),
+            pending_read: RefCell::new(Some((
+                Rc::clone(&self.client),
+                protocol::Request::Read { after, stop_after },
+            ))),
+            buffered: RefCell::new(VecDeque::new()),
             pending_abort: RefCell::new(None),
             cancelled: Cell::new(false),
         })
@@ -1560,7 +1616,7 @@ impl SeaInjectedClient {
     }
 
     /// Opens a gap-free snapshot, catch-up, and live event stream.
-    pub async fn load(&self, required: Option<u64>) -> Result<SeaInjectedStream, JsValue> {
+    pub fn load(&self, required: Option<u64>) -> Result<SeaInjectedStream, JsValue> {
         if required != self.resume_after.get() {
             return Err(js_error(
                 "load position must match the opened event stream resume position",
@@ -1570,9 +1626,9 @@ impl SeaInjectedClient {
             .event_stream
             .take()
             .ok_or_else(|| js_error("Sea event stream is not open"))?;
-        std::future::ready(()).await;
         Ok(SeaInjectedStream {
             inner: RefCell::new(Some(event_stream.into_responses())),
+            pending_read: RefCell::new(None),
             buffered: RefCell::new(VecDeque::new()),
             pending_abort: RefCell::new(None),
             cancelled: Cell::new(false),
@@ -1727,7 +1783,7 @@ fn load_item(response: protocol::Response) -> Result<SeaLoadItem, JsValue> {
         response,
         protocol::Response::LoadSnapshot(_)
             | protocol::Response::LoadEvent(_)
-            | protocol::Response::CaughtUp(_)
+            | protocol::Response::StreamProgress { .. }
     ) {
         return Err(js_error("Sea stream response is not a load item"));
     }
@@ -1851,13 +1907,13 @@ fn local_snapshot(snapshot: sea_core::archive::PublishedSnapshot) -> SeaSnapshot
 }
 
 #[cfg(feature = "test-support")]
-fn local_load_item(item: LoadEvent) -> SeaLoadItem {
+fn local_monitored_load_item(item: MonitoredStreamItem<LoadEvent, EventPosition>) -> SeaLoadItem {
     SeaLoadItem {
         inner: match item {
-            LoadEvent::Snapshot(snapshot) => {
+            MonitoredStreamItem::Item(LoadEvent::Snapshot(snapshot)) => {
                 protocol::Response::LoadSnapshot(local_snapshot(snapshot).inner)
             }
-            LoadEvent::Event(event) => {
+            MonitoredStreamItem::Item(LoadEvent::Event(event)) => {
                 protocol::Response::LoadEvent(Box::new(protocol::StreamEvent {
                     position: event.committed.position.get(),
                     author: event.author_id.as_bytes().to_vec(),
@@ -1871,7 +1927,19 @@ fn local_load_item(item: LoadEvent) -> SeaLoadItem {
                     },
                 }))
             }
-            LoadEvent::CaughtUp(head) => protocol::Response::CaughtUp(head.map(EventPosition::get)),
+            MonitoredStreamItem::Progress(progress) => protocol::Response::StreamProgress {
+                previous: progress.previous.map(EventPosition::get),
+                latest_known: progress.latest_known.map(EventPosition::get),
+                status: match progress.status {
+                    MonitoredStreamStatus::StreamingBacklog => {
+                        protocol::StreamStatus::StreamingBacklog
+                    }
+                    MonitoredStreamStatus::AwaitingNewItems => {
+                        protocol::StreamStatus::AwaitingNewItems
+                    }
+                    MonitoredStreamStatus::FallenBehind => protocol::StreamStatus::FallenBehind,
+                },
+            },
         },
     }
 }

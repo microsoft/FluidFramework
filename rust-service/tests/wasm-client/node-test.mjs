@@ -14,10 +14,29 @@ const {
 	SeaLoadKind,
 	SeaLocalService,
 	SeaSnapshotParticipation,
+	SeaStreamStatus,
 	SeaTreeKind,
 } = require("../../crates/sea-webtransport/test-support/pkg/node/sea_webtransport_test_support.js");
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
+
+async function nextEvent(stream) {
+	for (;;) {
+		const item = await stream.next();
+		assert.notEqual(item, undefined);
+		if (item.kind === SeaLoadKind.Event) return item;
+	}
+}
+
+async function nextAwaiting(stream) {
+	for (;;) {
+		const item = await stream.next();
+		assert.notEqual(item, undefined);
+		if (item.kind === SeaLoadKind.Progress && item.status === SeaStreamStatus.AwaitingNewItems) {
+			return item;
+		}
+	}
+}
 
 async function clients() {
 	const service = await SeaLocalService.create();
@@ -48,8 +67,8 @@ test("generated local clients submit, resolve, read, and tail events", async () 
 		firstReceipt.position,
 	);
 	const load = await first.load();
-	assert.equal(decoder.decode((await load.next()).payload), "first");
-	assert.equal((await load.next()).kind, SeaLoadKind.CaughtUp);
+	assert.equal(decoder.decode((await nextEvent(load)).payload), "first");
+	await nextAwaiting(load);
 	await second.openSession(
 		archive,
 		false,
@@ -62,7 +81,7 @@ test("generated local clients submit, resolve, read, and tail events", async () 
 		firstReceipt.position,
 		encoder.encode("second"),
 	);
-	assert.equal(decoder.decode((await load.next()).payload), "second");
+	assert.equal(decoder.decode((await nextEvent(load)).payload), "second");
 	await load.cancel();
 });
 
@@ -202,7 +221,7 @@ test("generated local clients require explicit archive creation", async () => {
 test("generated local stream cancellation wakes a pending read", async () => {
 	const { first } = await clients();
 	const load = await first.load();
-	assert.equal((await load.next()).kind, SeaLoadKind.CaughtUp);
+	await nextAwaiting(load);
 	const pending = load.next();
 	await load.cancel();
 	assert.equal(await pending, undefined);

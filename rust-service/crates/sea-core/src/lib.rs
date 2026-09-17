@@ -18,11 +18,17 @@ pub use archive::{
 pub use blob::{BlobDirectory, BlobDirectoryId, BlobId, BlobTreeError, BlobTreeId};
 pub use monitored_stream::{
     BoxMonitoredStream, MonitoredStream, MonitoredStreamItem, MonitoredStreamProgress,
-    MonitoredStreamStatus,
+    MonitoredStreamStatus, boxed_monitored_stream, map_monitored_stream,
 };
 pub use snapshot::{
     PublishedSnapshot, SnapshotCoordination, SnapshotId, SnapshotParticipation, SnapshotPublication,
 };
+
+/// A monitored stream of ordered archive events.
+pub type ArchiveEventStream<E> = BoxMonitoredStream<SessionCommittedEvent, EventPosition, E>;
+
+/// A monitored snapshot load followed by ordered archive events.
+pub type ArchiveLoadStream<E> = BoxMonitoredStream<LoadEvent, EventPosition, E>;
 
 /// Receipt proving one event became visible at the reported durability.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -145,8 +151,6 @@ pub enum LoadEvent {
     Snapshot(PublishedSnapshot),
     /// One subsequent committed event.
     Event(SessionCommittedEvent),
-    /// Finite catch-up completed through this captured head.
-    CaughtUp(Option<EventPosition>),
 }
 
 /// A stable event submission through an individual session.
@@ -168,10 +172,11 @@ pub struct EventSubmission {
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 pub trait SeaEventSubscription: SeaService {
     /// Starts a gap-free snapshot, catch-up, and live event stream.
-    async fn load(
-        &self,
-        required: Option<EventPosition>,
-    ) -> Result<SessionStream<LoadEvent, Self::Error>, Self::Error>;
+    ///
+    /// Calling this method performs no confirmed I/O; initialization failures are yielded by the
+    /// returned stream. A selected snapshot is yielded as [`LoadEvent::Snapshot`] without an event
+    /// position, while monitored progress describes the subsequent event delivery.
+    fn load(&self, required: Option<EventPosition>) -> ArchiveLoadStream<Self::Error>;
 }
 
 /// Ordered author submission, ambiguity resolution, and lifecycle.

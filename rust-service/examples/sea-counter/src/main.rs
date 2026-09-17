@@ -3,7 +3,7 @@ use std::sync::Arc;
 use bytes::Bytes;
 use futures_util::StreamExt as _;
 use sea_core::{
-    BlobTreeId, Event,
+    BlobTreeId, Event, MonitoredStreamItem, MonitoredStreamStatus,
     archive::{
         AuthorId, EventSubmission, LoadEvent, OperationId, SeaArchive, SeaAuthorSession,
         SeaEventSubscription, SeaSnapshotCoordinator, SessionId, Snapshot, SnapshotPosition,
@@ -79,11 +79,11 @@ fn decode_counter_value(
 
 /// Recovers the counter from the newest snapshot and its subsequent events.
 async fn recover(session: &CounterSession) -> Result<i64, &'static str> {
-    let mut load = session.load(None).await.expect("load counter");
+    let mut load = session.load(None);
     let mut value = 0_i64;
     while let Some(item) = load.next().await {
         match item.expect("load item") {
-            LoadEvent::Snapshot(snapshot) => {
+            MonitoredStreamItem::Item(LoadEvent::Snapshot(snapshot)) => {
                 let BlobTreeId::Blob(root) = snapshot.snapshot.root else {
                     panic!("counter snapshot root must be a blob");
                 };
@@ -93,13 +93,18 @@ async fn recover(session: &CounterSession) -> Result<i64, &'static str> {
                     "counter snapshot must contain exactly 8 bytes",
                 )?;
             }
-            LoadEvent::Event(event) => {
+            MonitoredStreamItem::Item(LoadEvent::Event(event)) => {
                 value += decode_counter_value(
                     event.committed.event.payload.as_ref(),
                     "counter delta must contain exactly 8 bytes",
                 )?;
             }
-            LoadEvent::CaughtUp(_) => break,
+            MonitoredStreamItem::Progress(progress)
+                if progress.status == MonitoredStreamStatus::AwaitingNewItems =>
+            {
+                break;
+            }
+            MonitoredStreamItem::Progress(_) => {}
         }
     }
     Ok(value)

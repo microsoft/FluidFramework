@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 /// Current Sea logical-stream opening version.
-pub const PROTOCOL_VERSION: u16 = 3;
+pub const PROTOCOL_VERSION: u16 = 4;
 
 /// Explicit wire identity of every Sea network message.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -64,8 +64,8 @@ pub enum MessageKind {
     LoadSnapshot = 136,
     /// Recovery or live event item.
     LoadEvent = 137,
-    /// Finite catch-up completion item.
-    CaughtUp = 138,
+    /// Out-of-band monitored-stream progress.
+    StreamProgress = 138,
     /// Event-stream authority response.
     EventStreamOpened = 139,
     /// Snapshot coordination notification.
@@ -107,7 +107,7 @@ impl TryFrom<u8> for MessageKind {
             135 => Ok(Self::Snapshot),
             136 => Ok(Self::LoadSnapshot),
             137 => Ok(Self::LoadEvent),
-            138 => Ok(Self::CaughtUp),
+            138 => Ok(Self::StreamProgress),
             139 => Ok(Self::EventStreamOpened),
             140 => Ok(Self::SnapshotCoordination),
             141 => Ok(Self::ResponseComplete),
@@ -165,7 +165,7 @@ impl MessageKind {
         Self::Snapshot,
         Self::LoadSnapshot,
         Self::LoadEvent,
-        Self::CaughtUp,
+        Self::StreamProgress,
         Self::EventStreamOpened,
         Self::SnapshotCoordination,
         Self::ResponseComplete,
@@ -182,7 +182,7 @@ impl MessageKind {
                 Kind::OpenEventStream
                     | Kind::LoadSnapshot
                     | Kind::LoadEvent
-                    | Kind::CaughtUp
+                    | Kind::StreamProgress
                     | Kind::EventStreamOpened
                     | Kind::Acknowledged
                     | Kind::Error
@@ -225,7 +225,7 @@ impl MessageKind {
                     | Kind::Directory
                     | Kind::Snapshot
                     | Kind::LoadEvent
-                    | Kind::CaughtUp
+                    | Kind::StreamProgress
                     | Kind::ResponseComplete
                     | Kind::Acknowledged
                     | Kind::Error
@@ -573,6 +573,38 @@ pub enum SnapshotParticipation {
     ClientSelected = 3,
 }
 
+/// Explicit monitored-stream delivery state on the Sea wire.
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[repr(u8)]
+#[serde(try_from = "u8", into = "u8")]
+pub enum StreamStatus {
+    /// Initial discovery is incomplete, or unread items are known to exist.
+    StreamingBacklog = 1,
+    /// Initial discovery is complete and the stream is waiting for a new item.
+    AwaitingNewItems = 2,
+    /// Items are known to be buffering because throughput is limiting delivery.
+    FallenBehind = 3,
+}
+
+impl TryFrom<u8> for StreamStatus {
+    type Error = ProtocolError;
+
+    fn try_from(value: u8) -> Result<Self, ProtocolError> {
+        match value {
+            1 => Ok(Self::StreamingBacklog),
+            2 => Ok(Self::AwaitingNewItems),
+            3 => Ok(Self::FallenBehind),
+            _ => Err(ProtocolError::UnknownStreamStatus(value)),
+        }
+    }
+}
+
+impl From<StreamStatus> for u8 {
+    fn from(value: StreamStatus) -> Self {
+        value as Self
+    }
+}
+
 impl TryFrom<u8> for SnapshotParticipation {
     type Error = ProtocolError;
 
@@ -629,7 +661,7 @@ pub mod payload {
 
     use super::{
         ArchiveIntent, DirectoryEntry, ErrorKind, Event, Snapshot, SnapshotParticipation,
-        SnapshotPosition, TreeId, WireDurability,
+        SnapshotPosition, StreamStatus, TreeId, WireDurability,
     };
 
     /// Payload for a message with no fields.
@@ -718,7 +750,7 @@ pub mod payload {
         /// Exclusive starting position.
         pub after: Option<u64>,
         /// Inclusive ending position.
-        pub through: Option<u64>,
+        pub stop_after: Option<u64>,
     }
 
     /// Immutable blob publication payload.
@@ -822,11 +854,15 @@ pub mod payload {
         pub event: super::StreamEvent,
     }
 
-    /// Finite catch-up completion payload.
+    /// One out-of-band monitored-stream progress snapshot.
     #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-    pub struct CaughtUp {
-        /// Captured storage head, if the archive is nonempty.
-        pub position: Option<u64>,
+    pub struct StreamProgress {
+        /// Cursor immediately before the next unread event.
+        pub previous: Option<u64>,
+        /// Latest event position currently known to the service.
+        pub latest_known: Option<u64>,
+        /// Current monitored delivery state.
+        pub status: StreamStatus,
     }
 
     /// Classified service failure payload.
@@ -861,7 +897,7 @@ pub enum Request {
         /// Exclusive starting position.
         after: Option<u64>,
         /// Inclusive ending position.
-        through: Option<u64>,
+        stop_after: Option<u64>,
     },
     /// Publishes or deduplicates one blob.
     PutBlob {
@@ -983,8 +1019,15 @@ pub enum Response {
     LoadSnapshot(Snapshot),
     /// One event delivered during catch-up or live continuation.
     LoadEvent(Box<StreamEvent>),
-    /// Finite catch-up completed through this captured storage head.
-    CaughtUp(Option<u64>),
+    /// One out-of-band monitored-stream progress snapshot.
+    StreamProgress {
+        /// Cursor immediately before the next unread event.
+        previous: Option<u64>,
+        /// Latest event position currently known to the service.
+        latest_known: Option<u64>,
+        /// Current monitored delivery state.
+        status: StreamStatus,
+    },
     /// Stable classified failure without implementation details.
     Error {
         /// Machine-readable error category.
@@ -1074,7 +1117,7 @@ impl Response {
             Self::Snapshot(_) => MessageKind::Snapshot,
             Self::LoadSnapshot(_) => MessageKind::LoadSnapshot,
             Self::LoadEvent(_) => MessageKind::LoadEvent,
-            Self::CaughtUp(_) => MessageKind::CaughtUp,
+            Self::StreamProgress { .. } => MessageKind::StreamProgress,
             Self::Error { .. } => MessageKind::Error,
         }
     }
@@ -1210,13 +1253,13 @@ pub fn encode_request_frame(
                 limits,
             )
         }
-        Request::Read { after, through } => encode_typed_payload(
+        Request::Read { after, stop_after } => encode_typed_payload(
             role,
             request.kind(),
             correlation_id,
             &wire::Read {
                 after: *after,
-                through: *through,
+                stop_after: *stop_after,
             },
             limits,
         ),
@@ -1343,7 +1386,7 @@ pub fn decode_request_frame(
             let value: wire::Read = decode_typed_payload(frame)?;
             Request::Read {
                 after: value.after,
-                through: value.through,
+                stop_after: value.stop_after,
             }
         }
         MessageKind::PutBlob => {
@@ -1503,12 +1546,18 @@ pub fn encode_response_frame(
             },
             limits,
         ),
-        Response::CaughtUp(position) => encode_typed_payload(
+        Response::StreamProgress {
+            previous,
+            latest_known,
+            status,
+        } => encode_typed_payload(
             role,
             response.kind(),
             correlation_id,
-            &wire::CaughtUp {
-                position: *position,
+            &wire::StreamProgress {
+                previous: *previous,
+                latest_known: *latest_known,
+                status: *status,
             },
             limits,
         ),
@@ -1602,9 +1651,13 @@ pub fn decode_response_network_frame(
             let value: wire::LoadEvent = decode_typed_payload(frame)?;
             Response::LoadEvent(Box::new(value.event))
         }
-        MessageKind::CaughtUp => {
-            let value: wire::CaughtUp = decode_typed_payload(frame)?;
-            Response::CaughtUp(value.position)
+        MessageKind::StreamProgress => {
+            let value: wire::StreamProgress = decode_typed_payload(frame)?;
+            Response::StreamProgress {
+                previous: value.previous,
+                latest_known: value.latest_known,
+                status: value.status,
+            }
         }
         MessageKind::Error => {
             let value: wire::Error = decode_typed_payload(frame)?;
@@ -1648,6 +1701,9 @@ pub enum ProtocolError {
     /// A snapshot participation byte has no assigned meaning.
     #[error("unknown snapshot participation policy {0}")]
     UnknownSnapshotParticipation(u8),
+    /// A monitored-stream status byte has no assigned meaning.
+    #[error("unknown monitored stream status {0}")]
+    UnknownStreamStatus(u8),
     /// A known kind appeared on the wrong request/response side.
     #[error("Sea message {0:?} has the wrong request/response direction")]
     UnexpectedMessageDirection(MessageKind),
@@ -1684,9 +1740,9 @@ mod tests {
     use super::{
         ArchiveIntent, CorrelationTracker, DirectoryEntry, ErrorKind, Event, Limits, MessageKind,
         NetworkFrame, NetworkFrameDecoder, PROTOCOL_VERSION, ProtocolError, Request, Response,
-        Snapshot, SnapshotParticipation, SnapshotPosition, StreamEvent, StreamRole, TreeId,
-        WireDurability, decode_request_frame, decode_response_network_frame, encode_network_frame,
-        encode_request_frame, encode_response_frame,
+        Snapshot, SnapshotParticipation, SnapshotPosition, StreamEvent, StreamRole, StreamStatus,
+        TreeId, WireDurability, decode_request_frame, decode_response_network_frame,
+        encode_network_frame, encode_request_frame, encode_response_frame,
     };
 
     #[test]
@@ -1916,7 +1972,7 @@ mod tests {
                 StreamRole::Content,
                 Request::Read {
                     after: Some(1),
-                    through: Some(2),
+                    stop_after: Some(2),
                 },
             ),
             (
@@ -2042,7 +2098,14 @@ mod tests {
                 StreamRole::Event,
                 Response::LoadEvent(Box::new(stream_event)),
             ),
-            (StreamRole::Event, Response::CaughtUp(Some(2))),
+            (
+                StreamRole::Event,
+                Response::StreamProgress {
+                    previous: Some(1),
+                    latest_known: Some(2),
+                    status: StreamStatus::StreamingBacklog,
+                },
+            ),
             (
                 StreamRole::Author,
                 Response::Error {

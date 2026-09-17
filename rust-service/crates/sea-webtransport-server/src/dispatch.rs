@@ -7,7 +7,7 @@ use bytes::Bytes;
 use futures_util::{StreamExt as _, stream};
 use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, Durability, ErrorKind,
-    Event, EventPosition, SnapshotId,
+    Event, EventPosition, MonitoredStreamItem, MonitoredStreamStatus, SnapshotId,
     archive::{
         EventSubmission, LoadEvent, OperationId, PublishedSnapshot, SeaArchive, SeaAuthorSession,
         SeaEventSubscription, SeaService, SeaSnapshotCoordinator, SeaSnapshotPublisher,
@@ -60,19 +60,17 @@ where
         &self,
         resume_after: Option<u64>,
     ) -> Result<SeaResponseStream, protocol::Response> {
-        let stream = self
-            .session
-            .load(resume_after.map(EventPosition::new))
-            .await
-            .map_err(error_response)?;
+        let stream = self.session.load(resume_after.map(EventPosition::new));
         Ok(Box::pin(stream.map(|item| match item {
-            Ok(LoadEvent::Snapshot(snapshot)) => {
+            Ok(MonitoredStreamItem::Item(LoadEvent::Snapshot(snapshot))) => {
                 protocol::Response::LoadSnapshot(snapshot_to_wire(snapshot))
             }
-            Ok(LoadEvent::Event(event)) => session_event_to_wire(&event),
-            Ok(LoadEvent::CaughtUp(head)) => {
-                protocol::Response::CaughtUp(head.map(EventPosition::get))
-            }
+            Ok(MonitoredStreamItem::Item(LoadEvent::Event(event))) => session_event_to_wire(&event),
+            Ok(MonitoredStreamItem::Progress(progress)) => protocol::Response::StreamProgress {
+                previous: progress.previous.map(EventPosition::get),
+                latest_known: progress.latest_known.map(EventPosition::get),
+                status: stream_status_to_wire(progress.status),
+            },
             Err(error) => error_response(error),
         })))
     }
@@ -163,23 +161,32 @@ where
         &self,
         request: protocol::Request,
     ) -> Result<SeaResponseStream, protocol::Response> {
-        if let protocol::Request::Read { after, through } = request {
-            let stream = self
-                .session
-                .read(
-                    after.map(EventPosition::new),
-                    through.map(EventPosition::new),
-                )
-                .await
-                .map_err(error_response)?;
+        if let protocol::Request::Read { after, stop_after } = request {
+            let stream = self.session.read(
+                after.map(EventPosition::new),
+                stop_after.map(EventPosition::new),
+            );
             return Ok(Box::pin(stream.map(|item| match item {
-                Ok(event) => session_event_to_wire(&event),
+                Ok(MonitoredStreamItem::Item(event)) => session_event_to_wire(&event),
+                Ok(MonitoredStreamItem::Progress(progress)) => protocol::Response::StreamProgress {
+                    previous: progress.previous.map(EventPosition::get),
+                    latest_known: progress.latest_known.map(EventPosition::get),
+                    status: stream_status_to_wire(progress.status),
+                },
                 Err(error) => error_response(error),
             })));
         }
         self.request_inner(request)
             .await
             .map(|response| Box::pin(stream::once(async move { response })) as SeaResponseStream)
+    }
+}
+
+const fn stream_status_to_wire(status: MonitoredStreamStatus) -> protocol::StreamStatus {
+    match status {
+        MonitoredStreamStatus::StreamingBacklog => protocol::StreamStatus::StreamingBacklog,
+        MonitoredStreamStatus::AwaitingNewItems => protocol::StreamStatus::AwaitingNewItems,
+        MonitoredStreamStatus::FallenBehind => protocol::StreamStatus::FallenBehind,
     }
 }
 
@@ -545,11 +552,29 @@ mod tests {
         let mut load = dispatcher.event_stream(None).await.expect("load stream");
         assert!(matches!(
             load.next().await,
+            Some(protocol::Response::StreamProgress {
+                status: protocol::StreamStatus::StreamingBacklog,
+                ..
+            })
+        ));
+        assert!(matches!(
+            load.next().await,
+            Some(protocol::Response::StreamProgress {
+                latest_known: Some(known),
+                ..
+            }) if known == position
+        ));
+        assert!(matches!(
+            load.next().await,
             Some(protocol::Response::LoadEvent(event)) if event.position == position
         ));
         assert!(matches!(
             load.next().await,
-            Some(protocol::Response::CaughtUp(Some(_)))
+            Some(protocol::Response::StreamProgress {
+                previous: Some(previous),
+                latest_known: Some(latest_known),
+                status: protocol::StreamStatus::AwaitingNewItems,
+            }) if previous == position && latest_known == position
         ));
     }
 }
