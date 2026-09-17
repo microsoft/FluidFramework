@@ -2,72 +2,13 @@
 
 use std::error::Error;
 
-use bytes::Bytes;
-
 pub mod archive;
 pub mod blob;
 pub mod snapshot;
 
+pub use archive::{Event, EventPosition};
 pub use blob::{BlobDirectory, BlobDirectoryId, BlobId, BlobTreeError, BlobTreeId};
 pub use snapshot::SnapshotId;
-
-/// A stable event-order value within one archive.
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct EventPosition(u64);
-
-impl EventPosition {
-    /// Creates a position from its implementation-assigned numeric value.
-    #[must_use]
-    pub const fn new(value: u64) -> Self {
-        Self(value)
-    }
-
-    /// Returns the implementation-assigned numeric value.
-    #[must_use]
-    pub const fn get(self) -> u64 {
-        self.0
-    }
-
-    /// Encodes the position in canonical big-endian order.
-    #[must_use]
-    pub const fn to_bytes(self) -> [u8; 8] {
-        self.0.to_be_bytes()
-    }
-
-    /// Decodes one canonical position.
-    #[must_use]
-    pub const fn from_bytes(bytes: [u8; 8]) -> Self {
-        Self(u64::from_be_bytes(bytes))
-    }
-}
-
-/// One application event before or after commitment.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Event {
-    /// Opaque application bytes.
-    pub payload: Bytes,
-    /// Optional immutable content tree referenced by this event.
-    pub blob_tree: Option<BlobTreeId>,
-}
-
-#[cfg(test)]
-mod sea_value_tests {
-    use super::EventPosition;
-
-    #[test]
-    fn event_positions_use_canonical_ordered_bytes() {
-        let positions = [
-            EventPosition::new(0),
-            EventPosition::new(1),
-            EventPosition::new(u64::MAX),
-        ];
-        assert!(positions[0] < positions[1]);
-        assert!(positions[1] < positions[2]);
-        for position in positions {
-            assert_eq!(EventPosition::from_bytes(position.to_bytes()), position);
-        }
-    }
-}
 
 /// The durability completed before a successful append was acknowledged.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

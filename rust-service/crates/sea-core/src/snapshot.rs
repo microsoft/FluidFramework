@@ -6,7 +6,7 @@
 
 use bytes::Bytes;
 
-use crate::{BlobTreeId, EventPosition, archive::OperationId};
+use crate::{BlobTreeId, archive::{EventPosition, OperationId}};
 
 /// An opaque identity assigned to a published snapshot.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
@@ -89,7 +89,7 @@ pub enum SnapshotParticipation {
 #[cfg(test)]
 mod tests {
     use super::SnapshotPosition;
-    use crate::EventPosition;
+    use crate::archive::EventPosition;
 
     #[test]
     fn initial_snapshot_precedes_every_event_position() {
