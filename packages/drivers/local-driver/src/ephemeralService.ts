@@ -173,8 +173,12 @@ export interface LocalService<out TClient extends ServiceClient = LocalServiceCl
 	 * Deletion is only allowed when this service has no open containers because resetting the local
 	 * server invalidates all of its active connections. Content-addressed summary data shared with other
 	 * documents may be retained until {@link LocalService.deleteAllDocuments} is called.
+	 * Only one call to {@link LocalService.deleteDocument} or {@link LocalService.deleteAllDocuments}
+	 * may be in progress at a time.
 	 *
 	 * @param id - The ID of the document to delete.
+	 * @throws A `UsageError` if the service is closed, another document deletion is in progress, or the
+	 * service has open containers.
 	 */
 	deleteDocument(id: string): Promise<void>;
 
@@ -184,6 +188,10 @@ export interface LocalService<out TClient extends ServiceClient = LocalServiceCl
 	 * @remarks
 	 * Deletion is only allowed when this service has no open containers because resetting the local
 	 * server invalidates all of its active connections.
+	 * Only one call to {@link LocalService.deleteDocument} or {@link LocalService.deleteAllDocuments}
+	 * may be in progress at a time.
+	 * @throws A `UsageError` if the service is closed, another document deletion is in progress, or the
+	 * service has open containers.
 	 */
 	deleteAllDocuments(): Promise<void>;
 
