@@ -55,7 +55,6 @@ export class DirectSharedTreeClient {
 		private readonly batchMaxOperations: number,
 		private readonly batchMaxPayloadBytes: number,
 		tree: SharedTreeKernelView,
-		writer: Uint8Array,
 		session: Uint8Array,
 	) {
 		this.tree = tree;
@@ -89,7 +88,6 @@ export class DirectSharedTreeClient {
 			batchMaxOperations,
 			batchMaxPayloadBytes,
 			tree,
-			writer,
 			session,
 		);
 		if (createDocument) {
@@ -137,12 +135,7 @@ export class DirectSharedTreeClient {
 			`${decoder.decode(this.session)}-${localSequenceNumber}`,
 		);
 		this.submissionChain = this.submissionChain.then(async () => {
-			await this.client.submitEvent(
-				submission,
-				localSequenceNumber,
-				payload,
-				reference,
-			);
+			await this.client.submitEvent(submission, localSequenceNumber, payload, reference);
 		});
 	}
 

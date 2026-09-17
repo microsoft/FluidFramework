@@ -268,9 +268,7 @@ export class GeneratedSeaBindingAdapter implements SeaDriverClient {
 		};
 	}
 
-	public async resolveSubmission(
-		submission: Uint8Array,
-	): Promise<SubmissionResolution> {
+	public async resolveSubmission(submission: Uint8Array): Promise<SubmissionResolution> {
 		const receipt = await this.client.resolveSubmission(submission);
 		return receipt === undefined
 			? { kind: "notCommitted" }
@@ -408,11 +406,7 @@ function bytesKey(bytes: Uint8Array): string {
 	return Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
 }
 
-function insert(
-	directory: DirectoryNode,
-	parts: readonly string[],
-	leaf: SeaTreeId,
-): void {
+function insert(directory: DirectoryNode, parts: readonly string[], leaf: SeaTreeId): void {
 	const [name, ...rest] = parts;
 	if (name === undefined || name.length === 0) {
 		throw new Error("summary path contains an empty segment");

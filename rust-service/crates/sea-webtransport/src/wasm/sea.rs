@@ -17,10 +17,8 @@ use async_trait::async_trait;
 #[cfg(feature = "test-support")]
 use bytes::Bytes;
 #[cfg(feature = "test-support")]
-use futures_util::{
-    StreamExt as _,
-    future::{AbortHandle, Abortable},
-};
+use futures_util::StreamExt as _;
+use futures_util::future::{AbortHandle, Abortable};
 use js_sys::{Array, Promise, Reflect, Uint8Array};
 #[cfg(feature = "test-support")]
 use sea_core::{
@@ -377,6 +375,7 @@ impl SeaLoadItem {
 pub struct SeaInjectedStream {
     inner: RefCell<Option<ResponseStream<InjectedBidirectionalStream>>>,
     buffered: RefCell<VecDeque<protocol::Response>>,
+    pending_abort: RefCell<Option<AbortHandle>>,
     cancelled: Cell<bool>,
 }
 
@@ -562,7 +561,14 @@ impl SeaInjectedStream {
             .inner
             .take()
             .ok_or_else(|| js_error("Sea stream has ended"))?;
-        let response = stream.next().await.map_err(client_error)?;
+        let (abort, registration) = AbortHandle::new_pair();
+        self.pending_abort.replace(Some(abort));
+        let response = Abortable::new(stream.next(), registration).await;
+        self.pending_abort.replace(None);
+        let Ok(response) = response else {
+            return Ok(None);
+        };
+        let response = response.map_err(client_error)?;
         if response.is_some() {
             self.inner.replace(Some(stream));
         }
@@ -574,10 +580,13 @@ impl SeaInjectedStream {
 
     /// Cancels the stream and injected transport.
     pub async fn cancel(&self) -> Result<(), JsValue> {
-        if !self.cancelled.replace(true)
-            && let Some(stream) = self.inner.take()
-        {
-            stream.cancel().await.map_err(client_error)?;
+        if !self.cancelled.replace(true) {
+            if let Some(abort) = self.pending_abort.take() {
+                abort.abort();
+            }
+            if let Some(stream) = self.inner.take() {
+                stream.cancel().await.map_err(client_error)?;
+            }
         }
         Ok(())
     }
@@ -1369,6 +1378,7 @@ impl SeaInjectedClient {
         Ok(SeaInjectedStream {
             inner: RefCell::new(None),
             buffered: RefCell::new(responses.into()),
+            pending_abort: RefCell::new(None),
             cancelled: Cell::new(false),
         })
     }
@@ -1562,6 +1572,7 @@ impl SeaInjectedClient {
         Ok(SeaInjectedStream {
             inner: RefCell::new(Some(event_stream.into_responses())),
             buffered: RefCell::new(VecDeque::new()),
+            pending_abort: RefCell::new(None),
             cancelled: Cell::new(false),
         })
     }

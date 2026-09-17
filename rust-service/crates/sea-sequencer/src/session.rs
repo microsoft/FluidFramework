@@ -1324,11 +1324,7 @@ mod tests {
         other_client_selected
             .publish_coordinated_snapshot(
                 None,
-                snapshot_publication(
-                    b"parented-snapshot",
-                    Some(first_snapshot.id),
-                    snapshot_blob,
-                ),
+                snapshot_publication(b"parented-snapshot", Some(first_snapshot.id), snapshot_blob),
             )
             .await
             .unwrap();

@@ -119,6 +119,11 @@ async function run() {
 		encoder.encode("second-session"),
 		secondStreamedReceipt.position,
 	);
+	const secondSnapshotCoordination = await second.subscribeSnapshots(snapshotParticipation);
+	const secondSnapshotState = await secondSnapshotCoordination.next();
+	if (snapshotParticipation === SeaSnapshotParticipation.SeaSelected) {
+		assert(secondSnapshotState.fence === undefined, "two Sea-selected clients were nominated");
+	}
 	const secondLoad = await second.load(secondStreamedReceipt.position);
 	let secondCaughtUp;
 	for (;;) {
@@ -130,9 +135,45 @@ async function run() {
 		assert(item.kind === SeaLoadKind.Event, "second event stream returned an invalid item");
 	}
 	assert(secondCaughtUp !== undefined, "second event stream omitted its caught-up marker");
+	const thirdStreamedReceipt = await first.submit(
+		encoder.encode("browser-operation-stream-3"),
+		secondStreamedReceipt.position,
+		encoder.encode("third-streamed-payload"),
+	);
+	const secondLive = await secondLoad.next();
+	assert(secondLive.kind === SeaLoadKind.Event, "second load omitted the live first-client event");
+	assert(
+		decoder.decode(secondLive.payload) === "third-streamed-payload",
+		"second load returned the wrong live payload",
+	);
+	const firstSelfLive = await load.next();
+	assert(firstSelfLive.kind === SeaLoadKind.Event, "first load omitted its own third event");
+	assert(
+		decoder.decode(firstSelfLive.payload) === "third-streamed-payload",
+		"first load returned the wrong self-event payload",
+	);
+	const fourthStreamedReceipt = await first.submit(
+		encoder.encode("browser-operation-stream-4"),
+		thirdStreamedReceipt.position,
+		encoder.encode("fourth-streamed-payload"),
+	);
+	const secondConsecutiveLive = await secondLoad.next();
+	assert(
+		secondConsecutiveLive.kind === SeaLoadKind.Event,
+		"second load omitted the consecutive first-client event",
+	);
+	assert(
+		decoder.decode(secondConsecutiveLive.payload) === "fourth-streamed-payload",
+		"second load returned the wrong consecutive live payload",
+	);
+	const firstConsecutiveSelfLive = await load.next();
+	assert(
+		firstConsecutiveSelfLive.kind === SeaLoadKind.Event,
+		"first load omitted its consecutive self-event",
+	);
 	const secondReceipt = await second.submit(
 		encoder.encode("browser-operation-2"),
-		secondStreamedReceipt.position,
+		fourthStreamedReceipt.position,
 		encoder.encode("second-payload"),
 	);
 	assert(secondReceipt.position > firstReceipt.position, "event positions did not increase");
@@ -224,6 +265,8 @@ async function run() {
 		firstPosition: firstReceipt.position.toString(),
 		firstStreamedPosition: firstStreamedReceipt.position.toString(),
 		secondStreamedPosition: secondStreamedReceipt.position.toString(),
+		thirdStreamedPosition: thirdStreamedReceipt.position.toString(),
+		fourthStreamedPosition: fourthStreamedReceipt.position.toString(),
 		secondPosition: secondReceipt.position.toString(),
 		caughtUp: initialCaughtUp.position.toString(),
 		blobBytes: blobPayload.length,

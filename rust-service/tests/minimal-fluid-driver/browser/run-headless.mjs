@@ -112,10 +112,11 @@ const server = createServer(async (request, response) => {
 			new URL(request.url, "http://localhost").pathname.slice(1) || "index.html";
 		const normalized = normalize(relative);
 		if (normalized.startsWith("..")) throw new Error("invalid path");
-		const root = normalized.startsWith("crates/sea-webtransport/pkg/web/") ||
+		const root =
+			normalized.startsWith("crates/sea-webtransport/pkg/web/") ||
 			normalized.startsWith("crates/sea-webtransport/test-support/pkg/web/")
-			? resolve(siteRoot, "../..")
-			: siteRoot;
+				? resolve(siteRoot, "../..")
+				: siteRoot;
 		const data = await readFile(join(root, normalized));
 		response.writeHead(200, {
 			"content-type": contentTypes.get(extname(normalized)) ?? "application/octet-stream",

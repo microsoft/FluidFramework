@@ -140,9 +140,7 @@ export interface SeaDriverClient {
 		after?: Uint8Array,
 	): ProjectedOperationSubscription | Promise<ProjectedOperationSubscription>;
 	/** Resolves whether a stable submission identity committed after an ambiguous failure. */
-	resolveSubmission(
-		submission: Uint8Array,
-	): Promise<SubmissionResolution>;
+	resolveSubmission(submission: Uint8Array): Promise<SubmissionResolution>;
 	/** Uploads an immutable blob and returns its content digest. */
 	uploadBlob(payload: Uint8Array): Promise<BlobUpload>;
 	/** Fetches an immutable blob by content digest. */

@@ -57,11 +57,7 @@ export class DirectDummyClient {
 		batchMaxPayloadBytes: number,
 		createDocument: boolean,
 	): Promise<DirectDummyClient> {
-		const host = new DirectDummyClient(
-			client,
-			batchMaxOperations,
-			batchMaxPayloadBytes,
-		);
+		const host = new DirectDummyClient(client, batchMaxOperations, batchMaxPayloadBytes);
 		if (createDocument) {
 			await client.create(document);
 		}
@@ -82,12 +78,7 @@ export class DirectDummyClient {
 		);
 		const payload = encoder.encode(JSON.stringify({ value } satisfies DirectDummyPayload));
 		this.submissionChain = this.submissionChain.then(async () => {
-			await this.client.submitEvent(
-				submission,
-				localSequenceNumber,
-				payload,
-				reference,
-			);
+			await this.client.submitEvent(submission, localSequenceNumber, payload, reference);
 		});
 	}
 

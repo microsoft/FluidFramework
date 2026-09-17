@@ -304,10 +304,7 @@ test("incremental summary publication rejects a stale acknowledged parent", asyn
 });
 
 function createStorage(client: SummaryFixtureClient): SeaDocumentStorage {
-	return new SeaDocumentStorage(
-		encoder.encode("summary-test-document"),
-		client,
-	);
+	return new SeaDocumentStorage(encoder.encode("summary-test-document"), client);
 }
 
 function tree(children: ISummaryTree["tree"]): ISummaryTree {

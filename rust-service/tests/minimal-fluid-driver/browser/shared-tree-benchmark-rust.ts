@@ -16,10 +16,13 @@ import {
 	createFluidContainer,
 } from "@fluidframework/fluid-static/internal";
 
-import init, * as SeaBindings from "../../../crates/sea-webtransport/test-support/pkg/web/sea_webtransport_test_support.js";
+import init, * as SeaBindings from "../../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
 import {
 	SeaBrowserTransport,
 	SeaInjectedClient,
+} from "../../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
+import initTestSupport, * as SeaTestBindings from "../../../crates/sea-webtransport/test-support/pkg/web/sea_webtransport_test_support.js";
+import {
 	SeaLocalService,
 	type SeaLocalClient,
 } from "../../../crates/sea-webtransport/test-support/pkg/web/sea_webtransport_test_support.js";
@@ -127,7 +130,7 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	if (!local && (transportUrl === null || certificateHex?.length !== 64)) {
 		throw new Error("missing Rust-service transport URL or certificate hash");
 	}
-	await init();
+	await (local ? initTestSupport() : init());
 	const hash = Uint8Array.from(certificateHex?.match(/../gu) ?? [], (value) =>
 		Number.parseInt(value, 16),
 	);
@@ -143,7 +146,7 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 			const client: SeaLocalClient = localService.connect();
 			const adapted = createGeneratedSeaBindingAdapter(
 				client,
-				SeaBindings,
+				SeaTestBindings,
 				integration === "direct" ? "SeaSelected" : "ClientSelected",
 			);
 			transports.push(adapted);
@@ -169,14 +172,12 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 			? createDirectSharedTreePair(
 					encoder.encode(documentId),
 					createWasmClient,
-					transports,
 					transportActivity,
 					local,
 				)
 			: createDirectDummyPair(
 					encoder.encode(documentId),
 					createWasmClient,
-					transports,
 					transportActivity,
 					local,
 				);
@@ -346,7 +347,6 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 async function createDirectSharedTreePair(
 	document: Uint8Array,
 	createClient: () => Promise<SeaDriverClient>,
-	transports: SeaDriverClient[],
 	transportActivity: TransportActivity,
 	local: boolean,
 ): Promise<SharedTreeBenchmarkPair> {
@@ -385,6 +385,10 @@ async function createDirectSharedTreePair(
 		window.__sharedTreeStage = "waiting for direct SharedTree convergence";
 		await waitUntil(
 			() => observer.lastAppliedSequenceNumber >= writer.lastAppliedSequenceNumber,
+			async () => {
+				window.__sharedTreeStage = `waiting for direct SharedTree convergence writer=${writer.lastAppliedSequenceNumber} observer=${observer.lastAppliedSequenceNumber}`;
+				await observer.waitForIdle();
+			},
 		);
 	};
 
@@ -428,7 +432,6 @@ async function createDirectSharedTreePair(
 async function createDirectDummyPair(
 	document: Uint8Array,
 	createClient: () => Promise<SeaDriverClient>,
-	transports: SeaDriverClient[],
 	transportActivity: TransportActivity,
 	local: boolean,
 ): Promise<SharedTreeBenchmarkPair> {
@@ -457,6 +460,10 @@ async function createDirectDummyPair(
 		window.__sharedTreeStage = "waiting for direct dummy convergence";
 		await waitUntil(
 			() => observer.lastAppliedSequenceNumber >= writer.lastAppliedSequenceNumber,
+			async () => {
+				window.__sharedTreeStage = `waiting for direct dummy convergence writer=${writer.lastAppliedSequenceNumber}:${writer.value} observer=${observer.lastAppliedSequenceNumber}:${observer.value}`;
+				await observer.waitForIdle();
+			},
 		);
 	};
 	const startupTransportActivity = snapshotTransportActivity(transportActivity);
@@ -495,9 +502,13 @@ async function createDirectDummyPair(
 }
 
 /** Waits for a direct-integration state predicate with a bounded timeout. */
-async function waitUntil(predicate: () => boolean): Promise<void> {
+async function waitUntil(
+	predicate: () => boolean,
+	check: () => Promise<void> = async () => {},
+): Promise<void> {
 	const deadline = performance.now() + 10_000;
 	while (!predicate()) {
+		await check();
 		if (performance.now() >= deadline) {
 			throw new Error("timed out waiting for direct SharedTree synchronization");
 		}

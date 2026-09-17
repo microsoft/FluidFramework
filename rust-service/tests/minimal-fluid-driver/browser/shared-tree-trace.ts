@@ -24,10 +24,7 @@ import {
 	SeaBrowserTransport,
 	SeaInjectedClient,
 } from "../../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
-import {
-	type SeaDeltaConnection,
-	SeaDriver,
-} from "../src/index.js";
+import { type SeaDeltaConnection, SeaDriver } from "../src/index.js";
 import type { SeaDriverClient } from "../src/wasmClient.js";
 import { createGeneratedSeaBindingAdapter } from "../src/generatedSeaBinding.js";
 
