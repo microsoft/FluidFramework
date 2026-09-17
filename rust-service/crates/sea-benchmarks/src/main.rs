@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     env, fs,
     path::{Path, PathBuf},
     process::Command,
@@ -215,7 +216,7 @@ async fn smoke() -> Result<(), String> {
     run_storage(&file, &snapshot, elapsed_microseconds(startup)).await?;
     drop(file);
     let reopened = FileStream::open(&directory).map_err(display_error)?;
-    verify_reopened_storage(&reopened, snapshot.records).await?;
+    verify_reopened_storage(&reopened, &snapshot).await?;
     drop(reopened);
     fs::remove_dir_all(&directory).map_err(display_error)?;
 
@@ -329,7 +330,7 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
             let reopened = FileStream::open(&directory).map_err(display_error)?;
-            verify_reopened_storage(&reopened, config.records).await?;
+            verify_reopened_storage(&reopened, config).await?;
             measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
             drop(reopened);
             fs::remove_dir_all(&directory).map_err(display_error)?;
@@ -745,25 +746,13 @@ fn verify_session_payloads(
     generator: &FixtureGenerator,
     config: &Config,
 ) -> Result<(), String> {
-    let expected_records =
-        usize::try_from(config.records).map_err(|_| "record count exceeds addressable memory")?;
-    if records.len() != expected_records {
-        return Err(format!(
-            "finite read returned {} records; expected {}",
-            records.len(),
-            config.records
-        ));
-    }
-    let actual = records.iter().fold(0_u64, |digest, record| {
-        digest ^ payload_digest(&record.committed.event.payload)
-    });
-    let expected = (0..config.records).fold(0_u64, |digest, index| {
-        digest ^ payload_digest(&generator.payload(config.fixture, index))
-    });
-    if actual != expected {
-        return Err("finite read payload digest did not match fixtures".to_owned());
-    }
-    Ok(())
+    verify_payloads(
+        records
+            .iter()
+            .map(|record| record.committed.event.payload.as_ref()),
+        generator,
+        config,
+    )
 }
 
 /// Runs the append, optional snapshot, and finite-read workload on trusted storage.
@@ -902,8 +891,8 @@ fn benchmark_operation_id(domain: &[u8], index: u64) -> OperationId {
     OperationId::new(Bytes::from(bytes)).expect("benchmark operation identity")
 }
 
-/// Verifies that the plain file stream preserved records and a snapshot.
-async fn verify_reopened_storage<S>(storage: &S, expected_records: u64) -> Result<(), String>
+/// Verifies that the plain file stream preserved records and any requested snapshot.
+async fn verify_reopened_storage<S>(storage: &S, config: &Config) -> Result<(), String>
 where
     S: SeaStorage,
 {
@@ -914,16 +903,13 @@ where
         .try_collect::<Vec<_>>()
         .await
         .map_err(display_error)?;
-    let expected_records =
-        usize::try_from(expected_records).map_err(|_| "record count exceeds addressable memory")?;
-    if records.len() != expected_records {
-        return Err("reopened file stream did not preserve every record".to_owned());
-    }
-    if storage
-        .latest_snapshot()
-        .await
-        .map_err(display_error)?
-        .is_none()
+    verify_storage_payloads(&records, &FixtureGenerator::new(config.seed), config)?;
+    if config.snapshot_frequency.is_some()
+        && storage
+            .latest_snapshot()
+            .await
+            .map_err(display_error)?
+            .is_none()
     {
         return Err("reopened file stream did not preserve its snapshot".to_owned());
     }
@@ -936,23 +922,42 @@ fn verify_storage_payloads(
     generator: &FixtureGenerator,
     config: &Config,
 ) -> Result<(), String> {
+    verify_payloads(
+        records.iter().map(|record| record.event.payload.as_ref()),
+        generator,
+        config,
+    )
+}
+
+/// Verifies the exact payload multiset without assuming concurrent append order.
+fn verify_payloads<'a>(
+    payloads: impl IntoIterator<Item = &'a [u8]>,
+    generator: &FixtureGenerator,
+    config: &Config,
+) -> Result<(), String> {
     let expected_records =
         usize::try_from(config.records).map_err(|_| "record count exceeds addressable memory")?;
-    if records.len() != expected_records {
+    let mut actual = HashMap::<&[u8], usize>::new();
+    let mut actual_records = 0;
+    for payload in payloads {
+        *actual.entry(payload).or_default() += 1;
+        actual_records += 1;
+    }
+    if actual_records != expected_records {
         return Err(format!(
             "finite read returned {} records; expected {}",
-            records.len(),
-            config.records
+            actual_records, config.records
         ));
     }
-    let actual = records.iter().fold(0_u64, |digest, record| {
-        digest ^ payload_digest(&record.event.payload)
-    });
-    let expected = (0..config.records).fold(0_u64, |digest, index| {
-        digest ^ payload_digest(&generator.payload(config.fixture, index))
-    });
-    if actual != expected {
-        return Err("finite read payload digest did not match fixtures".to_owned());
+    for index in 0..config.records {
+        let expected = generator.payload(config.fixture, index);
+        let Some(remaining) = actual.get_mut(expected.as_slice()) else {
+            return Err("finite read payloads did not match fixtures".to_owned());
+        };
+        if *remaining == 0 {
+            return Err("finite read payloads did not match fixtures".to_owned());
+        }
+        *remaining -= 1;
     }
     Ok(())
 }
@@ -1174,13 +1179,6 @@ fn unique_directory(label: &str) -> PathBuf {
     ))
 }
 
-/// Computes a stable non-cryptographic payload digest for correctness checks.
-fn payload_digest(payload: &[u8]) -> u64 {
-    payload.iter().fold(0xcbf2_9ce4_8422_2325, |hash, byte| {
-        (hash ^ u64::from(*byte)).wrapping_mul(0x1000_0000_01b3)
-    })
-}
-
 /// Converts elapsed monotonic time to microseconds.
 fn elapsed_microseconds(started: Instant) -> f64 {
     started.elapsed().as_secs_f64() * 1_000_000.0
@@ -1255,5 +1253,45 @@ mod tests {
         ] {
             assert!(parse_config(&arguments).is_err(), "accepted {arguments:?}");
         }
+    }
+
+    #[test]
+    fn payload_verification_rejects_duplicate_wrong_payloads() {
+        let config = Config {
+            backend: Backend::Memory,
+            fixture: FixtureKind::Empty,
+            seed: DEFAULT_SEED,
+            records: 4,
+            writers: 2,
+            snapshot_frequency: None,
+            repetitions: 1,
+            warmups: 0,
+        };
+        let wrong_payloads = [b"wrong".as_slice(); 4];
+
+        assert_eq!(
+            verify_payloads(wrong_payloads, &FixtureGenerator::default(), &config),
+            Err("finite read payloads did not match fixtures".to_owned())
+        );
+    }
+
+    #[tokio::test]
+    async fn file_backend_recovers_without_snapshots() {
+        let config = Config {
+            backend: Backend::File,
+            fixture: FixtureKind::SmallIncompressible,
+            seed: DEFAULT_SEED,
+            records: 4,
+            writers: 2,
+            snapshot_frequency: None,
+            repetitions: 1,
+            warmups: 0,
+        };
+
+        let measurements = run_backend(&config)
+            .await
+            .expect("snapshot-disabled file workload should recover");
+        assert_eq!(measurements.finite_read_records, config.records);
+        assert!(measurements.recovery_microseconds.is_some());
     }
 }
