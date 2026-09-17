@@ -48,6 +48,7 @@ import {
 	minSequenceId,
 	sequenceIdComparator,
 } from "./sequenceIdUtils.js";
+import type { HistoryRetentionState } from "./historyRetention.js";
 
 export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
 const minimumPossibleSequenceId: SequenceId = {
@@ -113,6 +114,8 @@ export class EditManager<
 	 */
 	private trunkBase: GraphCommit<TChangeset>;
 
+	private historyRetentionState: HistoryRetentionState | undefined;
+
 	private readonly telemetryEventBatcher:
 		| TelemetryEventBatcher<keyof RebaseStatsWithDuration>
 		| undefined;
@@ -122,7 +125,9 @@ export class EditManager<
 	 * @param localSessionId - the id of the local session that will be used for local commits
 	 * @param mintRevisionTag - a function which generates globally unique revision tags
 	 * @param onSharedBranchCreated - called when a new shared branch is created. This is not called for the main branch.
-	 * @param retainHistory - when `true`, trunk commits are never trimmed/evicted.
+	 * @param retainHistory - when `true`, trunk commits are never trimmed/evicted on legacy instances.
+	 * On configured instances, this is the initial policy until a boundary is loaded or changed.
+	 * @param configurationRevision - the initial shared configuration revision, or undefined for legacy instances.
 	 */
 	public constructor(
 		public readonly changeFamily: ChangeFamily<TEditor, TChangeset, TChangeProcessingContext>,
@@ -131,7 +136,20 @@ export class EditManager<
 		private readonly onSharedBranchCreated?: (branchId: BranchId) => void,
 		logger?: TelemetryLoggerExt,
 		private readonly retainHistory: boolean = false,
+		configurationRevision?: number,
 	) {
+		if (configurationRevision !== undefined) {
+			this.historyRetentionState = {
+				version: 1,
+				start: retainHistory
+					? {
+							revision: configurationRevision,
+							sequenceNumber: minimumPossibleSequenceNumber + 1,
+							indexInBatch: 0,
+						}
+					: null,
+			};
+		}
 		this.trunkBase = {
 			revision: rootRevision,
 			change: changeFamily.rebaser.compose([]),
@@ -159,6 +177,56 @@ export class EditManager<
 		);
 
 		this.createAndAddSharedBranch("main", "main", undefined, undefined, mainTrunk);
+	}
+
+	/**
+	 * Returns a copy of the archival epoch, independently of locally retained history.
+	 */
+	public getHistoryRetentionState(): HistoryRetentionState | undefined {
+		const state = this.historyRetentionState;
+		return state === undefined
+			? undefined
+			: { version: 1, start: state.start === null ? null : { ...state.start } };
+	}
+
+	public getMinimumSequenceNumber(): SeqNumber {
+		return this.minimumSequenceNumber;
+	}
+
+	/**
+	 * Restores the epoch without deriving a new start from this client's retained ancestry.
+	 * Loading must not trim history before the other indexes have loaded their repair data.
+	 */
+	public loadHistoryRetentionState(state: HistoryRetentionState): void {
+		assert(this.historyRetentionState !== undefined, "Expected a configured Tree");
+		this.historyRetentionState = state;
+	}
+
+	/**
+	 * Changes archival retention without changing the collaboration, fork, or undo retention rules.
+	 * The sequence number is the accepted barrier's, or the next unpublished synthetic sequence.
+	 */
+	public setHistoryRetention(
+		enabled: boolean,
+		revision: number,
+		sequenceNumber: SeqNumber,
+	): void {
+		const previous = this.historyRetentionState;
+		assert(previous !== undefined, "Expected a configured Tree");
+		if ((previous.start !== null) === enabled) {
+			return;
+		}
+		this.historyRetentionState = {
+			version: 1,
+			start: enabled
+				? {
+						revision,
+						sequenceNumber,
+						indexInBatch: this.getSharedBranch("main").getBatchSize(sequenceNumber),
+					}
+				: null,
+		};
+		this.trimHistory();
 	}
 
 	public getLocalBranch(
@@ -295,7 +363,7 @@ export class EditManager<
 	 * if any commits on the trunk are unreferenced and unneeded for future computation; those found are evicted from the trunk.
 	 */
 	private trimHistory(): void {
-		if (this.retainHistory) {
+		if (this.historyRetentionState === undefined && this.retainHistory) {
 			// When history retention is enabled, trunk commits are never evicted.
 			return;
 		}
@@ -305,6 +373,16 @@ export class EditManager<
 			sequenceNumber: this.minimumSequenceNumber,
 			indexInBatch: Number.POSITIVE_INFINITY,
 		};
+		const historyStart = this.historyRetentionState?.start;
+		if (historyStart !== undefined && historyStart !== null) {
+			trunkTailSequenceId = minSequenceId(
+				trunkTailSequenceId,
+				getUpperBoundOfPreviousSequenceId({
+					sequenceNumber: brand(historyStart.sequenceNumber),
+					indexInBatch: historyStart.indexInBatch,
+				}),
+			);
+		}
 		// If there are any outstanding registered branches, get the one that is the oldest (has the "most behind" trunk base)
 		const minimumBranchBaseSequenceId = this.trunkBranches.minKey();
 		if (minimumBranchBaseSequenceId !== undefined) {
@@ -409,9 +487,17 @@ export class EditManager<
 		const minSeqNumberToSummarize: SequenceId = {
 			sequenceNumber: brand(this.minimumSequenceNumber + 1),
 		};
-		let minBaseSeqId: SequenceId = this.retainHistory
-			? (mainBranch.sequenceIdToCommit.minKey() ?? minimumPossibleSequenceId)
-			: minSeqNumberToSummarize;
+		let minBaseSeqId: SequenceId =
+			this.historyRetentionState === undefined && this.retainHistory
+				? (mainBranch.sequenceIdToCommit.minKey() ?? minimumPossibleSequenceId)
+				: minSeqNumberToSummarize;
+		const historyStart = this.historyRetentionState?.start;
+		if (historyStart !== undefined && historyStart !== null) {
+			minBaseSeqId = minSequenceId(minBaseSeqId, {
+				sequenceNumber: brand(historyStart.sequenceNumber),
+				indexInBatch: historyStart.indexInBatch,
+			});
+		}
 		const branches = new Map<BranchId, SharedBranchSummaryData<TChangeset>>();
 		for (const [branchId, branch] of this.sharedBranches) {
 			if (branchId !== "main") {
@@ -1057,15 +1143,10 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 
 	// TODO: Document that this is to handle receiving separate commits with the same sequence ID,
 	// as a batch of changes are not guaranteed to be processed as one bunch.
-	private getBatchSize(sequenceNumber: SeqNumber): number {
-		const startSequenceId: SequenceId = {
-			sequenceNumber,
-		};
-		const endSequenceId: SequenceId = {
-			sequenceNumber: brand((sequenceNumber as number) + 1),
-		};
-
-		return this.sequenceIdToCommit.getRange(startSequenceId, endSequenceId, false).length;
+	public getBatchSize(sequenceNumber: SeqNumber): number {
+		// A summary or trimming can remove a prefix of a batch. Its length is not the next index.
+		const last = this.sequenceIdToCommit.maxKey();
+		return last?.sequenceNumber === sequenceNumber ? (last.indexInBatch ?? 0) + 1 : 0;
 	}
 
 	public getSummaryData(
