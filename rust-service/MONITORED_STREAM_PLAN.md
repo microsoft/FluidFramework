@@ -2,14 +2,14 @@
 
 ## Status
 
-- **Plan status:** In progress.
+- **Plan status:** Complete.
 - **Execution mode:** Lightweight sequential work on the current branch.
 - **Compatibility:** Preserve existing import paths where practical, but the `SeaArchive::read` signature and behavior intentionally change.
-- **Current checkpoint:** 4. Evaluate remaining streams independently.
-- **Last completed checkpoint:** 3. Evaluate snapshot subscriptions.
-- **Last validation:** The documentation checker and diff validation passed on 2026-09-17.
-- **Decisions or TODOs changed:** Snapshot notification streams retain their plain latest-value abstraction. Their intentional coalescing has no ordered backlog: `SnapshotId` is opaque and unordered, while `SnapshotPosition` is neither unique per publication nor a notification revision.
-- **Next checkpoint:** 4. Evaluate remaining streams independently.
+- **Current checkpoint:** None; all checkpoints are complete.
+- **Last completed checkpoint:** 4. Evaluate remaining streams independently.
+- **Last validation:** The complete canonical Rust, generated WASM, Node, TypeScript, policy, repository build, and real Chromium WebTransport suites passed for the implementation on 2026-09-17. The documentation checker and diff validation passed for the final stream evaluations.
+- **Decisions or TODOs changed:** Snapshot notification and coordination streams retain plain latest-value semantics because coalesced state has no ordered backlog position. Internal `SeaStorage` catch-up streams remain finite because `StorageLoad` already returns their captured head atomically and they do not perform live delivery.
+- **Next checkpoint:** None.
 
 Update this section in every implementation commit.
 Record the completed checkpoint, validation performed, decisions or TODOs changed, and the next checkpoint.
@@ -262,6 +262,16 @@ For each surface:
 - migrate it in its own commit with focused tests and the validation proportional to its consumers.
 
 Do not bundle these migrations together merely because they share the generic abstraction.
+
+Evaluation results:
+
+- Retain `SeaSnapshotPublisher::coordinate_snapshots` as a plain latest-value stream.
+    Coordination may change because of nomination or fencing without publishing a snapshot, intermediate states may be coalesced intentionally, and no value provides one monotonic item position.
+- Retain `StorageEventStream` as a plain finite stream internal to `SeaStorage`.
+    `StorageLoad` already returns the finite stream's captured head atomically, and the stream may contain private storage records that are filtered before the client-visible event position domain.
+    Adding monitored progress would duplicate the explicit head while exposing the wrong ordering abstraction.
+
+No additional stream migration is justified by current semantics or consumer requirements.
 
 ## Completion Criteria
 
