@@ -42,14 +42,14 @@ export const defaultServiceOptions: ExampleServiceOptions = {
  * {@link @fluid-example/webpack-fluid-loader#exampleAppConfig}, which provides the browser
  * compatibility required by the local-driver services.
  * Reads the `fluidClient` URL query parameter.
- * Accepts `ephemeral`, `session`, or `tinylicious`:
- * missing and unknown values default to the session service when session storage is available,
+ * Accepts `ephemeral`, `session`, or `tinylicious`.
+ * Missing and unknown values default to the session service when session storage is available,
  * or the ephemeral service otherwise.
  *
- * This is intended to be invoked once on startup:
- * it may start a local service as a side-effect.
+ * This is intended to be invoked once on startup.
+ * It may start a local service as a side-effect.
  *
- * When used in testing, and cleanup is required, use the ephemeral service,
+ * When used in testing and cleanup is required, use the ephemeral service,
  * which can be cleaned up using `cleanupEphemeralService()`.
  *
  * @param options - Options used to configure the service client. Defaults to {@link defaultServiceOptions}.
