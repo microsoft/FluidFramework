@@ -75,7 +75,7 @@ export class WebpackTask extends LeafWithDoneFileTask {
 			".webpack/webpackfile",
 		];
 		// TODO: webpack support more default config file extensions.  Just implement the ones that we use.
-		const defaultConfigExtensions = [".js", ".cjs"];
+		const defaultConfigExtensions = [".js", ".cjs", ".mjs"];
 		for (const name of defaultConfigFileNames) {
 			for (const ext of defaultConfigExtensions) {
 				const file = path.join(this.package.directory, `${name}${ext}`);
