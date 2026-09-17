@@ -324,6 +324,13 @@ mod tests {
             Err(StoreError::BlobTooLarge { .. })
         ));
         let blob = store.put_blob(&Bytes::from_static(b"ok")).unwrap();
+        fs::write(store.blobs.join(hex(blob.as_bytes())), b"four").unwrap();
+        assert!(matches!(
+            store.get_blob(blob),
+            Err(StoreError::Corrupt(
+                "stored object exceeds configured bound"
+            ))
+        ));
         fs::write(store.blobs.join(hex(blob.as_bytes())), b"no").unwrap();
         assert!(matches!(store.get_blob(blob), Err(StoreError::Corrupt(_))));
         fs::remove_dir_all(root).unwrap();
@@ -357,6 +364,30 @@ mod tests {
         assert!(matches!(
             store.get_directory(directory_id),
             Err(StoreError::Corrupt(_))
+        ));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn rejects_directory_identity_mismatch() {
+        let root = test_directory();
+        let store = ContentStore::open(&root, StoreConfig::default()).unwrap();
+        let expected = BlobDirectory::new(BTreeMap::new()).unwrap();
+        let expected_id = store.put_directory(&expected).unwrap();
+        let different = BlobDirectory::new(BTreeMap::from([(
+            "leaf".to_owned(),
+            BlobTreeId::Blob(BlobId::for_bytes(b"different")),
+        )]))
+        .unwrap();
+        fs::write(
+            store.directories.join(hex(expected_id.as_bytes())),
+            different.encode().unwrap(),
+        )
+        .unwrap();
+
+        assert!(matches!(
+            store.get_directory(expected_id),
+            Err(StoreError::Corrupt("directory identity mismatch"))
         ));
         fs::remove_dir_all(root).unwrap();
     }
