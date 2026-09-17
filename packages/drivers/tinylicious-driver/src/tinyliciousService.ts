@@ -6,6 +6,7 @@
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
+	type ICreateDetachedContainerProps,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
@@ -16,7 +17,6 @@ import type {
 	DataStoreRegistry,
 	FluidContainerAttached,
 	FluidContainerWithService,
-	IUrlResolver,
 	Registry,
 	ServiceClient,
 	ServiceOptions,
@@ -100,12 +100,12 @@ const containerRuntimeLoader: ContainerRuntimeLoader = async (
 	return runtime;
 };
 
-function makeContainerLoaderOptions(options: TinyliciousServiceOptions): {
-	urlResolver: IUrlResolver;
-	documentServiceFactory: RouterliciousDocumentServiceFactory;
-	clientDetailsOverride: { capabilities: { interactive: boolean } };
-	configProvider: ReturnType<typeof wrapConfigProviderWithDefaults>;
-} {
+function makeContainerLoaderOptions(
+	options: TinyliciousServiceOptions,
+): Pick<
+	ICreateDetachedContainerProps,
+	"urlResolver" | "documentServiceFactory" | "clientDetailsOverride" | "configProvider"
+> {
 	const tokenProvider = new InsecureTinyliciousTokenProvider();
 	const urlResolver =
 		options.port === undefined && options.endpoint === undefined
