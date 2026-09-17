@@ -9,13 +9,13 @@
 //! 1. [`BlobStore`], [`EventArchive`], and [`SnapshotArchive`] are independently useful storage
 //!    components. Blob and event storage share [`ReferenceableStore`] because their identities are
 //!    persisted by another component; snapshots currently require no such external capability.
-//! 2. [`SeaStorage`] assigns each [`DocumentId`] and creates or reopens one instance of each
-//!    component for it. Its contract supplies cross-component publication and recovery guarantees
-//!    without requiring a distributed transaction.
+//! 2. [`SeaStorage`] assigns each [`DocumentId`] and creates or reopens one exclusive writable
+//!    instance of each component for it. Its contract supplies cross-component publication and
+//!    recovery guarantees without requiring a distributed transaction.
 //! 3. [`SeaView`] exclusively composes one component of each kind into the reader/writer view of a
 //!    document. Availability-bearing handles enforce the order in which references are published.
-//! 4. [`SeaCollection`] combines storage with exclusive-open ownership and builds views. A
-//!    sequencer can own one view and multiplex it into concurrent client sessions.
+//! 4. [`SeaCollection`] uses storage to build document views. A sequencer can own one view and
+//!    multiplex it into concurrent client sessions.
 //!
 //! # Publication and recovery law
 //!
@@ -69,6 +69,11 @@ impl DocumentId {
 }
 
 /// The three storage components belonging to one document.
+///
+/// A value returned by [`SeaStorage`] collectively represents one exclusive writable opening of
+/// the document. Component types need not be `Clone`. If an implementation makes one cloneable,
+/// every clone must preserve the same single-writer ordering and recovery guarantees rather than
+/// create an independent writer.
 #[derive(Debug)]
 pub struct StorageComponents<B, E, S> {
     /// Content-addressed blob store for this document.
@@ -98,7 +103,8 @@ pub struct CreatedDocument<B, E, S> {
 /// [`SeaStorage::open_document`] returns components only after enforcing this module's publication
 /// and recovery law. An implementation must fail opening rather than return components containing
 /// an event gap, an unavailable referenced blob tree, or a snapshot outside the recovered event
-/// prefix.
+/// prefix. Creation and opening must also fail while another exclusive writable component set for
+/// the same document remains live.
 #[async_trait]
 pub trait SeaStorage: Send + Sync {
     /// Classified error shared by this factory's components.
@@ -116,7 +122,7 @@ pub trait SeaStorage: Send + Sync {
     /// Persistence class of documents created by this backend.
     fn durability(&self) -> Durability;
 
-    /// Allocates a fresh document identity and creates its three empty components.
+    /// Allocates a fresh document identity and creates its exclusive writable components.
     ///
     /// Identity allocation is owned by the backend so it may satisfy persistence layout,
     /// uniqueness, locality, or external service requirements.
@@ -124,36 +130,14 @@ pub trait SeaStorage: Send + Sync {
         &self,
     ) -> Result<CreatedDocument<Self::Blobs, Self::Events, Self::Snapshots>, Self::Error>;
 
-    /// Opens and recovers a document, or returns `None` when its identity is unknown.
+    /// Exclusively opens and recovers a document, or returns `None` when its identity is unknown.
+    ///
+    /// The implementation must reject the operation while another writable opening remains live.
+    /// Dropping all returned component handles releases that ownership.
     async fn open_document(
         &self,
         id: &DocumentId,
     ) -> Result<Option<StorageComponents<Self::Blobs, Self::Events, Self::Snapshots>>, Self::Error>;
-}
-
-/// Exclusive-open authority retained for the lifetime of a [`SeaView`].
-///
-/// Most implementations need only an in-process registry entry or an operating-system file lock.
-/// Persistent fencing is required only when stale owners could otherwise continue writing after
-/// ownership transfer.
-pub trait ViewLease: Send + 'static {}
-
-impl<T> ViewLease for T where T: Send + 'static {}
-
-/// Exclusive-open policy used by [`SeaCollection`].
-///
-/// Storage owns document identity allocation and existence. The catalog retains only the ownership
-/// state needed to prevent concurrent views of an identity.
-#[async_trait]
-pub trait DocumentCatalog: Send + Sync {
-    /// Classified catalog error.
-    type Error: ClassifiedError;
-
-    /// Exclusive ownership retained by an open view.
-    type Lease: ViewLease;
-
-    /// Acquires exclusive ownership for an identity, failing if it is already owned.
-    async fn acquire(&self, id: &DocumentId) -> Result<Self::Lease, Self::Error>;
 }
 
 /// An event position accepted for snapshot publication through one view.
@@ -184,15 +168,13 @@ pub struct ViewSnapshotPublication<BH, EH> {
 /// remains held across validation and owner-record publication. Consequently an append, snapshot
 /// publication, or load cannot interleave with another operation through the same view after an
 /// awaited component call yields.
-pub struct SeaView<B, E, S, L>
+pub struct SeaView<B, E, S>
 where
     B: BlobStore,
     E: EventArchive<Error = B::Error>,
     S: SnapshotArchive<Error = B::Error>,
-    L: ViewLease,
 {
     state: Mutex<ViewState<B, E, S>>,
-    _lease: L,
 }
 
 /// Component handles protected by a view's single operation-ordering lock.
@@ -206,21 +188,19 @@ struct ViewState<B, E, S> {
     snapshots: S,
 }
 
-impl<B, E, S, L> SeaView<B, E, S, L>
+impl<B, E, S> SeaView<B, E, S>
 where
     B: BlobStore,
     E: EventArchive<Error = B::Error>,
     S: SnapshotArchive<Error = B::Error>,
-    L: ViewLease,
 {
-    fn new(components: StorageComponents<B, E, S>, lease: L) -> Self {
+    fn new(components: StorageComponents<B, E, S>) -> Self {
         Self {
             state: Mutex::new(ViewState {
                 blobs: components.blobs,
                 events: components.events,
                 snapshots: components.snapshots,
             }),
-            _lease: lease,
         }
     }
 
@@ -370,88 +350,45 @@ where
     }
 }
 
-/// Document collection that composes storage components into exclusively owned views.
-pub struct SeaCollection<S, C> {
+/// Document collection that asks storage to create or exclusively open document views.
+pub struct SeaCollection<S> {
     storage: S,
-    catalog: C,
 }
 
-impl<S, C> SeaCollection<S, C> {
-    /// Creates a collection from component storage and document catalog policy.
+impl<S> SeaCollection<S> {
+    /// Creates a collection from one document storage backend.
     #[must_use]
-    pub const fn new(storage: S, catalog: C) -> Self {
-        Self { storage, catalog }
+    pub const fn new(storage: S) -> Self {
+        Self { storage }
     }
 
-    /// Returns the underlying component factory for advanced sharing policies.
+    /// Returns the underlying document storage backend.
     #[must_use]
     pub const fn storage(&self) -> &S {
         &self.storage
     }
 }
 
-/// Failure while constructing or opening a document view.
-#[derive(Debug)]
-pub enum CollectionError<SE, CE> {
-    /// Component creation or opening failed.
-    Storage(SE),
-    /// Exclusive document ownership could not be acquired.
-    Catalog(CE),
-}
-
-impl<S, C> SeaCollection<S, C>
+impl<S> SeaCollection<S>
 where
     S: SeaStorage,
-    C: DocumentCatalog,
 {
-    /// Creates a backend-identified document and acquires exclusive ownership of its view.
-    ///
-    /// Storage allocates the identity together with its components before the collection acquires
-    /// the lease. A lease failure may therefore leave an unopened document for backend-specific
-    /// cleanup or later opening.
+    /// Creates a backend-identified document and its exclusive writable view.
     pub async fn create(
         &self,
-    ) -> Result<
-        (
-            DocumentId,
-            SeaView<S::Blobs, S::Events, S::Snapshots, C::Lease>,
-        ),
-        CollectionError<S::Error, C::Error>,
-    > {
-        let created = self
-            .storage
-            .create_document()
-            .await
-            .map_err(CollectionError::Storage)?;
-        let lease = self
-            .catalog
-            .acquire(&created.id)
-            .await
-            .map_err(CollectionError::Catalog)?;
-        Ok((created.id, SeaView::new(created.components, lease)))
+    ) -> Result<(DocumentId, SeaView<S::Blobs, S::Events, S::Snapshots>), S::Error> {
+        let created = self.storage.create_document().await?;
+        Ok((created.id, SeaView::new(created.components)))
     }
 
     /// Opens an existing document with exclusive writer ownership.
     pub async fn open(
         &self,
         id: &DocumentId,
-    ) -> Result<
-        Option<SeaView<S::Blobs, S::Events, S::Snapshots, C::Lease>>,
-        CollectionError<S::Error, C::Error>,
-    > {
-        let lease = self
-            .catalog
-            .acquire(id)
-            .await
-            .map_err(CollectionError::Catalog)?;
-        let Some(components) = self
-            .storage
-            .open_document(id)
-            .await
-            .map_err(CollectionError::Storage)?
-        else {
+    ) -> Result<Option<SeaView<S::Blobs, S::Events, S::Snapshots>>, S::Error> {
+        let Some(components) = self.storage.open_document(id).await? else {
             return Ok(None);
         };
-        Ok(Some(SeaView::new(components, lease)))
+        Ok(Some(SeaView::new(components)))
     }
 }
