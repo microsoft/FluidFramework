@@ -327,8 +327,10 @@ mod tests {
         let mut load = compressed.load(None);
         let load_error = loop {
             match load.next().await.unwrap() {
-                Ok(sea_core::MonitoredStreamItem::Progress(_)) => {}
-                Ok(sea_core::MonitoredStreamItem::Item(LoadEvent::Snapshot(_))) => {}
+                Ok(
+                    sea_core::MonitoredStreamItem::Progress(_)
+                    | sea_core::MonitoredStreamItem::Item(LoadEvent::Snapshot(_)),
+                ) => {}
                 Ok(sea_core::MonitoredStreamItem::Item(LoadEvent::Event(_))) => {
                     panic!("malformed event was returned")
                 }

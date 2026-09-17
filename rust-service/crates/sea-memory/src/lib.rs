@@ -543,8 +543,7 @@ mod current_tests {
     #[tokio::test]
     async fn rejected_snapshot_does_not_bind_operation_identity() {
         let storage = MemoryStream::new();
-        let operation_id =
-            OperationId::new(Bytes::from_static(b"retry-after-rejection")).unwrap();
+        let operation_id = OperationId::new(Bytes::from_static(b"retry-after-rejection")).unwrap();
         let missing = BlobId::from_bytes(&[0xa5; 32]).unwrap();
 
         assert!(matches!(
@@ -585,7 +584,10 @@ mod current_tests {
             .await
             .unwrap();
 
-        assert_eq!(storage.latest_snapshot().await.unwrap(), Some(published.clone()));
+        assert_eq!(
+            storage.latest_snapshot().await.unwrap(),
+            Some(published.clone())
+        );
         assert_eq!(
             storage
                 .resolve_snapshot_publication(&operation_id)

@@ -152,9 +152,7 @@ mod tests {
         let session = counter_session(Arc::new(MemoryStream::new())).await;
         append_delta(&session, b"before-snapshot", 2).await;
         let position = session
-            .resolve_submission(
-                &OperationId::new(Bytes::from_static(b"before-snapshot")).unwrap(),
-            )
+            .resolve_submission(&OperationId::new(Bytes::from_static(b"before-snapshot")).unwrap())
             .await
             .unwrap()
             .unwrap()

@@ -388,7 +388,8 @@ mod tests {
             Ok::<_, Infallible>(MonitoredStreamItem::Item(4_u64)),
             Ok(MonitoredStreamItem::Item(5_u64)),
         ]);
-        let positioned = boxed_monitored_stream(source, initial.clone(), |position| Some(*position));
+        let positioned =
+            boxed_monitored_stream(source, initial.clone(), |position| Some(*position));
         let mut stream = map_monitored_stream(
             positioned,
             |position| (position < 5).then_some(position).ok_or("invalid item"),

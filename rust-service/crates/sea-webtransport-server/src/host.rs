@@ -1192,13 +1192,16 @@ mod tests {
         send.write_all(b"bad!").await.unwrap();
 
         let _ = send.finish().await;
-        timeout(Duration::from_secs(2), receive.stopped())
+        let mut response = [0_u8; 1];
+        let result = timeout(Duration::from_secs(2), receive.read(&mut response))
             .await
-            .expect("malformed stream should be stopped");
+            .expect("malformed stream response should close");
+        assert!(matches!(result, Ok(None) | Err(_)));
 
-        let (_authority, _events) = open_raw_event_stream(
+        let (_authority, _events) = open_raw_event_stream_with_intent(
             &connection,
             b"same-connection-archive",
+            protocol::ArchiveIntent::Create,
             b"same-connection-author",
             b"same-connection-session",
         )

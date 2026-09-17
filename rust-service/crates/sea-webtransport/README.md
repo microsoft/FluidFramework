@@ -12,7 +12,7 @@ One archive-bound client connection uses four persistent logical streams:
 - The **author stream** uses that authority for ordered submissions, receipts, ambiguity resolution, and close.
 - The **snapshot stream** uses that authority for latest-value snapshot notifications and policy-bound publication.
 - A **content stream** uses that authority for correlated history, blob, directory, and snapshot lookup operations.
-	Unary operations reuse one stream, while each monitored history read owns a content-role stream for its finite or live lifetime.
+  Unary operations reuse one stream, while each monitored history read owns a content-role stream for its finite or live lifetime.
 
 Each frame is length-delimited and contains an explicit `MessageKind`, stream-scoped correlation ID, and postcard-serialized kind-specific payload.
 The decoder accepts fragmentation and coalescing, rejects unknown kinds and wrong-stream messages, and enforces `max_frame_bytes` before payload decoding.

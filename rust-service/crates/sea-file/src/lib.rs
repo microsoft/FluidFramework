@@ -842,6 +842,7 @@ mod current_tests {
     use std::{
         collections::BTreeMap,
         fs,
+        path::Path,
         sync::atomic::{AtomicU64, Ordering},
     };
 
@@ -849,7 +850,7 @@ mod current_tests {
     use sea_core::{
         BlobDirectory, BlobId, BlobTreeId, Event, EventPosition,
         archive::{
-            OperationId, SeaStorage, Snapshot as ArchiveSnapshot,
+            OperationId, PublishedSnapshot, SeaStorage, Snapshot as ArchiveSnapshot,
             SnapshotPosition as ArchiveSnapshotPosition, SnapshotPublication,
         },
     };
@@ -1017,63 +1018,16 @@ mod current_tests {
             })
             .await
             .unwrap();
-        let length_before_snapshot_rejections = fs::metadata(&archive_path).unwrap().len();
-        macro_rules! assert_rejected_without_write {
-            ($publication:expr, $pattern:pat) => {
-                assert!(matches!(
-                    storage.publish_snapshot($publication).await,
-                    Err($pattern)
-                ));
-                assert_eq!(
-                    fs::metadata(&archive_path).unwrap().len(),
-                    length_before_snapshot_rejections
-                );
-            };
-        }
-        assert_rejected_without_write!(
-            SnapshotPublication {
-                operation_id: OperationId::new(Bytes::from_static(b"stale-parent")).unwrap(),
-                expected_parent: Some(initial.id),
-                snapshot: ArchiveSnapshot {
-                    at_event: ArchiveSnapshotPosition::At(first.position),
-                    root: BlobTreeId::Blob(blob),
-                },
-            },
-            FileError::SnapshotConflict
-        );
-        assert_rejected_without_write!(
-            SnapshotPublication {
-                operation_id: OperationId::new(Bytes::from_static(b"invalid-position")).unwrap(),
-                expected_parent: Some(positioned.id.clone()),
-                snapshot: ArchiveSnapshot {
-                    at_event: ArchiveSnapshotPosition::At(EventPosition::new(2)),
-                    root: BlobTreeId::Blob(blob),
-                },
-            },
-            FileError::InvalidPosition
-        );
-        assert_rejected_without_write!(
-            SnapshotPublication {
-                operation_id: OperationId::new(Bytes::from_static(b"regressive")).unwrap(),
-                expected_parent: Some(positioned.id.clone()),
-                snapshot: ArchiveSnapshot {
-                    at_event: ArchiveSnapshotPosition::Initial,
-                    root: BlobTreeId::Blob(blob),
-                },
-            },
-            FileError::SnapshotRegression
-        );
-        assert_rejected_without_write!(
-            SnapshotPublication {
-                operation_id: initial_operation,
-                expected_parent: Some(positioned.id.clone()),
-                snapshot: ArchiveSnapshot {
-                    at_event: ArchiveSnapshotPosition::At(first.position),
-                    root: BlobTreeId::Blob(blob),
-                },
-            },
-            FileError::OperationConflict
-        );
+        assert_snapshot_rejections_leave_archive_unchanged(
+            &storage,
+            &archive_path,
+            blob,
+            first.position,
+            initial,
+            &positioned,
+            initial_operation,
+        )
+        .await;
         drop(storage);
 
         let reopened = FileStream::open(&root).unwrap();
@@ -1090,6 +1044,74 @@ mod current_tests {
         assert_eq!(second.position, EventPosition::new(2));
         drop(reopened);
         fs::remove_dir_all(root).unwrap();
+    }
+
+    async fn assert_snapshot_rejections_leave_archive_unchanged(
+        storage: &FileStream,
+        archive_path: &Path,
+        blob: BlobId,
+        first_position: EventPosition,
+        initial: PublishedSnapshot,
+        positioned: &PublishedSnapshot,
+        initial_operation: OperationId,
+    ) {
+        let length = fs::metadata(archive_path).unwrap().len();
+        let cases = [
+            (
+                SnapshotPublication {
+                    operation_id: OperationId::new(Bytes::from_static(b"stale-parent")).unwrap(),
+                    expected_parent: Some(initial.id),
+                    snapshot: ArchiveSnapshot {
+                        at_event: ArchiveSnapshotPosition::At(first_position),
+                        root: BlobTreeId::Blob(blob),
+                    },
+                },
+                FileError::SnapshotConflict,
+            ),
+            (
+                SnapshotPublication {
+                    operation_id: OperationId::new(Bytes::from_static(b"invalid-position"))
+                        .unwrap(),
+                    expected_parent: Some(positioned.id.clone()),
+                    snapshot: ArchiveSnapshot {
+                        at_event: ArchiveSnapshotPosition::At(EventPosition::new(2)),
+                        root: BlobTreeId::Blob(blob),
+                    },
+                },
+                FileError::InvalidPosition,
+            ),
+            (
+                SnapshotPublication {
+                    operation_id: OperationId::new(Bytes::from_static(b"regressive")).unwrap(),
+                    expected_parent: Some(positioned.id.clone()),
+                    snapshot: ArchiveSnapshot {
+                        at_event: ArchiveSnapshotPosition::Initial,
+                        root: BlobTreeId::Blob(blob),
+                    },
+                },
+                FileError::SnapshotRegression,
+            ),
+            (
+                SnapshotPublication {
+                    operation_id: initial_operation,
+                    expected_parent: Some(positioned.id.clone()),
+                    snapshot: ArchiveSnapshot {
+                        at_event: ArchiveSnapshotPosition::At(first_position),
+                        root: BlobTreeId::Blob(blob),
+                    },
+                },
+                FileError::OperationConflict,
+            ),
+        ];
+
+        for (publication, expected) in cases {
+            let error = storage.publish_snapshot(publication).await.unwrap_err();
+            assert_eq!(
+                std::mem::discriminant(&error),
+                std::mem::discriminant(&expected)
+            );
+            assert_eq!(fs::metadata(archive_path).unwrap().len(), length);
+        }
     }
 
     #[test]

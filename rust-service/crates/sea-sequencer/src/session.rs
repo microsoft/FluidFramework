@@ -319,6 +319,7 @@ impl<S: SeaStorage> LocalSession<S> {
         }
     }
 
+    #[allow(clippy::too_many_lines)]
     fn monitored_events(&self, mode: EventStreamMode) -> ArchiveLoadStream<SessionError<S::Error>>
     where
         S: 'static,
@@ -445,7 +446,6 @@ impl<S: SeaStorage> LocalSession<S> {
                             state.catch_up = None;
                             if !state.live_delivery {
                                 state.done = true;
-                                continue;
                             }
                         }
                     }
@@ -467,10 +467,10 @@ impl<S: SeaStorage> LocalSession<S> {
                         state.latest_known = Some(event.committed.position);
                         state.caught_up = false;
                         state.pending.push_back(LoadEvent::Event(event));
-                        let status = if state.live.len() > 0 {
-                            MonitoredStreamStatus::FallenBehind
-                        } else {
+                        let status = if state.live.is_empty() {
                             MonitoredStreamStatus::StreamingBacklog
+                        } else {
+                            MonitoredStreamStatus::FallenBehind
                         };
                         let progress = state.progress(status);
                         return Some((Ok(MonitoredStreamItem::Progress(progress)), state));
@@ -489,7 +489,6 @@ impl<S: SeaStorage> LocalSession<S> {
                                 state.catch_up = Some(events);
                                 state.catch_up_status = MonitoredStreamStatus::FallenBehind;
                                 state.caught_up = false;
-                                continue;
                             }
                             Err(error) => {
                                 state.done = true;
@@ -1663,7 +1662,11 @@ mod tests {
             .unwrap();
         let first_author = author(b"minimum-first-author");
         let first = sequencer
-            .open_session(first_author.clone(), session(b"minimum-first-session"), None)
+            .open_session(
+                first_author.clone(),
+                session(b"minimum-first-session"),
+                None,
+            )
             .await
             .unwrap();
         let second = sequencer
@@ -1674,7 +1677,10 @@ mod tests {
             )
             .await
             .unwrap();
-        let first_event = first.submit(submission(b"minimum-one", None)).await.unwrap();
+        let first_event = first
+            .submit(submission(b"minimum-one", None))
+            .await
+            .unwrap();
         let second_event = second
             .submit(submission(b"minimum-two", Some(first_event.position)))
             .await
