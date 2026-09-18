@@ -15,10 +15,13 @@ Availability handles have private, document-specific provenance and retain data,
 A new opening of the same document can validate old handles with `ensure_available` or mint fresh ones with `resolve`.
 Handles from another document are rejected even when their content identities or event positions match.
 
-Blobs and directories deduplicate by content identity; directory publication validates the complete transitive tree.
+Blobs and directories deduplicate by content identity.
+Every object reachable from a stored directory is also stored: publication requires all direct children to exist, and content is never removed or modified.
+This invariant makes tree availability a single membership lookup, without traversing descendants.
 The direct view establishes blob availability before appending a referencing event and both blob and event availability before publishing a snapshot.
 Raw event components deliberately treat blob identities as opaque.
-Reopening validates the complete event prefix and all snapshot dependencies and fails on inconsistent history rather than omitting records.
+Reopening validates content closure, the complete event prefix, matching archive and item positions, and all snapshot dependencies.
+It fails on inconsistent history rather than omitting records.
 
 Event appends assign increasing positions starting at one and never deduplicate equal input.
 Snapshots are sparse, strictly increasing publications at their event handle's position, with exact and optional inclusive-bound lookup.
@@ -48,7 +51,8 @@ This implementation is suitable for tests, examples, and process-local state, no
 
 The primary entry point is `MemoryStorage`; its components and handles are exported from the crate root.
 Shared replacement laws come from [`sea-conformance::next`](../sea-conformance/src/next.rs).
-Localized tests in [`document.rs`](src/document.rs) exercise provenance, opening lifetimes, cancellation, lazy/live reads, and inconsistent-history rejection.
+Localized tests in [`document.rs`](src/document.rs) exercise provenance, opening lifetimes, cancellation, concurrent appends, position exhaustion, shared-tree closure, lazy/live reads, and inconsistent-history rejection.
+Tests in [`memory_archive.rs`](src/memory_archive.rs) cover append-only assertions, sparse bounds and progress, terminal stream leases, and weak subscription cleanup.
 
 ## Transitional API
 

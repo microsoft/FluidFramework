@@ -46,8 +46,8 @@ pub enum MemoryStorageError {
     /// An identity counter cannot advance.
     #[error("numeric identity space is exhausted")]
     IdentityExhausted,
-    /// Previously stored state fails the publication law.
-    #[error("document history has an unavailable dependency")]
+    /// Stored history has inconsistent positions or unavailable dependencies.
+    #[error("document history has inconsistent positions or unavailable dependencies")]
     InconsistentHistory,
 }
 
@@ -64,35 +64,77 @@ impl ClassifiedError for MemoryStorageError {
     }
 }
 
-/// Immutable content retained for the lifetime of its document.
+/// Immutable blobs and directories retained for the lifetime of their document.
+/// Event payloads are stored separately in the event archive.
+///
+/// Every tree reachable from a stored directory is also stored in these maps.
+/// Publication preserves this invariant by requiring every direct child to be present before
+/// inserting a directory; existing directories already guarantee their own descendants.
+/// Entries are never removed or modified, so membership proves transitive availability.
 #[derive(Debug, Default)]
-struct Content {
+struct BlobStorageData {
     /// Published leaf values keyed by their content hashes.
     blobs: BTreeMap<BlobId, Bytes>,
-    /// Published directories whose complete children were validated at insertion.
+    /// Published directories whose direct and transitive children are present in these maps.
     directories: BTreeMap<BlobDirectoryId, BlobDirectory>,
 }
 
-impl Content {
-    /// Checks closure recursively, including when validating a recovered document.
+impl BlobStorageData {
+    /// Tests membership; the closure invariant makes a directory lookup sufficient for its whole tree.
     fn contains_tree(&self, id: BlobTreeId) -> bool {
         match id {
             BlobTreeId::Blob(id) => self.blobs.contains_key(&id),
-            BlobTreeId::Directory(id) => self.directories.get(&id).is_some_and(|directory| {
-                directory
-                    .entries()
-                    .values()
-                    .all(|child| self.contains_tree(*child))
-            }),
+            BlobTreeId::Directory(id) => self.directories.contains_key(&id),
         }
+    }
+
+    /// Publishes or deduplicates an immutable leaf without changing existing content.
+    fn put_blob(&mut self, payload: Bytes) -> BlobId {
+        let id = BlobId::for_bytes(&payload);
+        self.blobs.entry(id).or_insert(payload);
+        id
+    }
+
+    /// Publishes a directory only after all direct children exist, preserving transitive closure.
+    /// Failure leaves both maps unchanged.
+    fn put_directory(
+        &mut self,
+        directory: BlobDirectory,
+    ) -> Result<BlobDirectoryId, MemoryStorageError> {
+        if !directory
+            .entries()
+            .values()
+            .all(|child| self.contains_tree(*child))
+        {
+            return Err(MemoryStorageError::MissingContent);
+        }
+        let id = directory
+            .id()
+            .map_err(|_| MemoryStorageError::MissingContent)?;
+        self.directories.entry(id).or_insert(directory);
+        Ok(id)
+    }
+
+    /// Checks closure when reopening potentially inconsistent history, not during ordinary lookups.
+    /// Checking each stored directory's direct children also covers every transitive descendant.
+    fn validate(&self) -> Result<(), MemoryStorageError> {
+        if self.directories.values().any(|directory| {
+            directory
+                .entries()
+                .values()
+                .any(|child| !self.contains_tree(*child))
+        }) {
+            return Err(MemoryStorageError::InconsistentHistory);
+        }
+        Ok(())
     }
 }
 
 /// Retained state shared across successive exclusive openings.
 #[derive(Debug, Default)]
 struct Document {
-    /// Content shared by the components, but not their writer authority.
-    content: Mutex<Content>,
+    /// Blob-tree data shared by the components, but not their writer authority.
+    blob_data: Mutex<BlobStorageData>,
     /// Complete opaque event history.
     events: Arc<Mutex<ArchiveData<CommittedEvent>>>,
     /// Snapshot identities without self-retaining availability handles.
@@ -100,9 +142,10 @@ struct Document {
 }
 
 impl Document {
-    /// Enforces dependency-closed complete histories before granting a new opening.
+    /// Checks complete histories, matching archive positions, and dependency closure before reopening.
     fn validate(&self) -> Result<(), MemoryStorageError> {
-        let content = self.content.lock().expect("content lock");
+        let content = self.blob_data.lock().expect("content lock");
+        content.validate()?;
         let events = self.events.lock().expect("event lock");
         for (index, (position, event)) in events.entries.iter().enumerate() {
             if position.get() != index as u64 + 1
@@ -115,14 +158,9 @@ impl Document {
                 return Err(MemoryStorageError::InconsistentHistory);
             }
         }
-        for snapshot in self
-            .snapshots
-            .lock()
-            .expect("snapshot lock")
-            .entries
-            .values()
-        {
-            if !events.entries.contains_key(&snapshot.at_event)
+        for (position, snapshot) in &self.snapshots.lock().expect("snapshot lock").entries {
+            if *position != snapshot.at_event
+                || !events.entries.contains_key(&snapshot.at_event)
                 || !content.contains_tree(snapshot.root)
             {
                 return Err(MemoryStorageError::InconsistentHistory);
@@ -148,7 +186,7 @@ impl StoredSnapshot {
         document: &Arc<Document>,
     ) -> Result<Snapshot<MemoryBlobHandle, MemoryEventHandle>, MemoryStorageError> {
         if !document
-            .content
+            .blob_data
             .lock()
             .expect("content lock")
             .contains_tree(self.root)
@@ -541,7 +579,7 @@ impl ReferenceableStore for MemoryBlobStore {
     async fn resolve(&self, id: Self::Id) -> Result<Option<Self::Handle>, Self::Error> {
         Ok(self
             .document
-            .content
+            .blob_data
             .lock()
             .expect("content lock")
             .contains_tree(id)
@@ -557,7 +595,7 @@ impl ReferenceableStore for MemoryBlobStore {
         }
         if !self
             .document
-            .content
+            .blob_data
             .lock()
             .expect("content lock")
             .contains_tree(handle.id)
@@ -571,14 +609,12 @@ impl ReferenceableStore for MemoryBlobStore {
 #[async_trait]
 impl BlobStore for MemoryBlobStore {
     async fn put_blob(&self, payload: Bytes) -> Result<Self::Handle, Self::Error> {
-        let id = BlobId::for_bytes(&payload);
-        self.document
-            .content
+        let id = self
+            .document
+            .blob_data
             .lock()
             .expect("content lock")
-            .blobs
-            .entry(id)
-            .or_insert(payload);
+            .put_blob(payload);
         Ok(MemoryBlobHandle {
             document: self.document.clone(),
             id: BlobTreeId::Blob(id),
@@ -587,7 +623,7 @@ impl BlobStore for MemoryBlobStore {
 
     async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
         self.document
-            .content
+            .blob_data
             .lock()
             .expect("content lock")
             .blobs
@@ -597,18 +633,12 @@ impl BlobStore for MemoryBlobStore {
     }
 
     async fn put_directory(&self, directory: BlobDirectory) -> Result<Self::Handle, Self::Error> {
-        let mut content = self.document.content.lock().expect("content lock");
-        if !directory
-            .entries()
-            .values()
-            .all(|child| content.contains_tree(*child))
-        {
-            return Err(MemoryStorageError::MissingContent);
-        }
-        let id = directory
-            .id()
-            .map_err(|_| MemoryStorageError::MissingContent)?;
-        content.directories.entry(id).or_insert(directory);
+        let id = self
+            .document
+            .blob_data
+            .lock()
+            .expect("content lock")
+            .put_directory(directory)?;
         Ok(MemoryBlobHandle {
             document: self.document.clone(),
             id: BlobTreeId::Directory(id),
@@ -617,7 +647,7 @@ impl BlobStore for MemoryBlobStore {
 
     async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
         self.document
-            .content
+            .blob_data
             .lock()
             .expect("content lock")
             .directories
@@ -812,9 +842,18 @@ mod tests {
         ));
         assert!(cancelled.next().now_or_never().is_none());
         drop(cancelled);
+        let replacement_counter = Arc::new(WakeCounter::default());
+        let replacement_wake = waker(replacement_counter.clone());
+        let mut replacement_context = Context::from_waker(&replacement_wake);
+        assert!(
+            live.as_mut()
+                .poll_next(&mut replacement_context)
+                .is_pending()
+        );
         let first = view.append(Bytes::new(), None).await.unwrap();
         let second = view.append(Bytes::new(), None).await.unwrap();
-        assert!(counter.0.load(Ordering::Relaxed) > 0);
+        assert_eq!(counter.0.load(Ordering::Relaxed), 0);
+        assert!(replacement_counter.0.load(Ordering::Relaxed) > 0);
         assert_eq!(live.progress().previous, None);
         assert_eq!(live.progress().latest_known, Some(second.id()));
         assert_eq!(live.progress().status, MonitoredStreamStatus::FallenBehind);
@@ -847,19 +886,77 @@ mod tests {
                 .unwrap()
                 .is_ok()
         );
-        let handles =
-            futures_util::future::join_all((0..32).map(|_| view.append(Bytes::new(), None))).await;
+        let barrier = std::sync::Barrier::new(4);
+        let handles = std::thread::scope(|scope| {
+            let workers: Vec<_> = (0..4)
+                .map(|_| {
+                    let view = &view;
+                    let barrier = &barrier;
+                    scope.spawn(move || {
+                        barrier.wait();
+                        (0..8)
+                            .map(|_| {
+                                view.append(Bytes::new(), None)
+                                    .now_or_never()
+                                    .expect("memory append must settle synchronously")
+                            })
+                            .collect::<Vec<_>>()
+                    })
+                })
+                .collect();
+            workers
+                .into_iter()
+                .flat_map(|worker| worker.join().unwrap())
+                .collect::<Vec<_>>()
+        });
         let positions: std::collections::BTreeSet<_> = handles
             .into_iter()
             .map(|handle| handle.unwrap().id())
             .collect();
         assert_eq!(positions.len(), 32);
+        assert_eq!(
+            positions.iter().copied().collect::<Vec<_>>(),
+            (2..=33).map(EventPosition::new).collect::<Vec<_>>()
+        );
         let head = view.head().await.unwrap();
         assert_eq!(head, positions.last().copied());
         assert_eq!(
             collect_items(view.read(None, head)).await.unwrap().len(),
             33
         );
+    }
+
+    #[tokio::test]
+    async fn exhausted_event_positions_reject_without_changing_history() {
+        let storage = MemoryStorage::new();
+        let created = storage.create_document().await.unwrap();
+        let events = created.components.events;
+        let position = EventPosition::new(u64::MAX);
+        let event = Event {
+            payload: Bytes::from_static(b"retained"),
+            blob_tree: None,
+        };
+        events.document.events.lock().unwrap().insert(
+            position,
+            CommittedEvent {
+                position,
+                event: event.clone(),
+            },
+        );
+
+        let error = events
+            .append(Event {
+                payload: Bytes::new(),
+                blob_tree: None,
+            })
+            .await
+            .unwrap_err();
+        assert!(matches!(error, MemoryStorageError::IdentityExhausted));
+        assert_eq!(error.kind(), ErrorKind::Rejected);
+        let archive = events.document.events.lock().unwrap();
+        assert_eq!(archive.head(), Some(position));
+        assert_eq!(archive.entries.len(), 1);
+        assert_eq!(archive.entries[&position].event, event);
     }
 
     #[tokio::test]
@@ -923,7 +1020,7 @@ mod tests {
         components
             .blobs
             .document
-            .content
+            .blob_data
             .lock()
             .unwrap()
             .blobs
@@ -954,6 +1051,40 @@ mod tests {
             .entries
             .remove(&first.id());
         assert_eq!(second.id(), EventPosition::new(2));
+        assert!(matches!(
+            storage.open_document(&created.id).await,
+            Err(MemoryStorageError::InconsistentHistory)
+        ));
+    }
+
+    #[tokio::test]
+    async fn reopen_rejects_mismatched_snapshot_positions() {
+        let storage = MemoryStorage::new();
+        let created = storage.create_document().await.unwrap();
+        let components = created.components;
+        let root = components.blobs.put_blob(Bytes::new()).await.unwrap();
+        let event = components
+            .events
+            .append(Event {
+                payload: Bytes::new(),
+                blob_tree: None,
+            })
+            .await
+            .unwrap();
+        components
+            .snapshots
+            .append(Snapshot {
+                root,
+                at_event: event.clone(),
+            })
+            .await
+            .unwrap();
+        {
+            let mut snapshots = components.snapshots.document.snapshots.lock().unwrap();
+            let stored = snapshots.entries.remove(&event.id()).unwrap();
+            snapshots.entries.insert(EventPosition::new(2), stored);
+        }
+        drop(components);
         assert!(matches!(
             storage.open_document(&created.id).await,
             Err(MemoryStorageError::InconsistentHistory)
@@ -1115,6 +1246,132 @@ mod tests {
             first.id()
         );
         assert_eq!(reopened.head().await.unwrap(), Some(second.id()));
+    }
+
+    #[test]
+    fn content_publication_preserves_closure_and_deduplicates() {
+        let mut content = BlobStorageData::default();
+        let payload = Bytes::from_static(b"leaf");
+        let leaf = BlobTreeId::Blob(content.put_blob(payload.clone()));
+        let child = BlobDirectory::new(BTreeMap::from([("leaf".to_owned(), leaf)])).unwrap();
+        let child_id = content.put_directory(child.clone()).unwrap();
+        let parent = BlobDirectory::new(BTreeMap::from([
+            ("left".to_owned(), BlobTreeId::Directory(child_id)),
+            ("right".to_owned(), BlobTreeId::Directory(child_id)),
+        ]))
+        .unwrap();
+        let parent_id = content.put_directory(parent.clone()).unwrap();
+        let empty = BlobDirectory::new(BTreeMap::new()).unwrap();
+        let empty_id = content.put_directory(empty.clone()).unwrap();
+
+        assert_eq!(leaf, BlobTreeId::Blob(content.put_blob(payload.clone())));
+        assert_eq!(content.put_directory(child.clone()).unwrap(), child_id);
+        assert_eq!(content.put_directory(parent.clone()).unwrap(), parent_id);
+        assert_eq!(content.put_directory(empty.clone()).unwrap(), empty_id);
+        assert_eq!(
+            content.blobs,
+            BTreeMap::from([(BlobId::for_bytes(&payload), payload)])
+        );
+        assert_eq!(
+            content.directories,
+            BTreeMap::from([(child_id, child), (parent_id, parent), (empty_id, empty),])
+        );
+        for id in [
+            leaf,
+            BlobTreeId::Directory(child_id),
+            BlobTreeId::Directory(parent_id),
+            BlobTreeId::Directory(empty_id),
+        ] {
+            assert!(content.contains_tree(id));
+        }
+        content.validate().unwrap();
+    }
+
+    #[test]
+    fn content_publication_rejects_missing_children_without_mutation() {
+        let mut content = BlobStorageData::default();
+        let leaf = BlobTreeId::Blob(content.put_blob(Bytes::new()));
+        let missing_leaf = BlobTreeId::Blob(BlobId::for_bytes(b"missing"));
+        let missing_directory =
+            BlobDirectory::new(BTreeMap::from([("missing".to_owned(), missing_leaf)])).unwrap();
+        let missing_directory_id = BlobTreeId::Directory(missing_directory.id().unwrap());
+        let original_blobs = content.blobs.clone();
+        let original_directories = content.directories.clone();
+
+        for missing in [missing_leaf, missing_directory_id] {
+            assert!(!content.contains_tree(missing));
+            let directory = BlobDirectory::new(BTreeMap::from([
+                ("available".to_owned(), leaf),
+                ("missing".to_owned(), missing),
+            ]))
+            .unwrap();
+            assert!(matches!(
+                content.put_directory(directory),
+                Err(MemoryStorageError::MissingContent)
+            ));
+            assert_eq!(content.blobs, original_blobs);
+            assert_eq!(content.directories, original_directories);
+            content.validate().unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn reopening_rejects_missing_transitive_content() {
+        let storage = MemoryStorage::new();
+        let created = storage.create_document().await.unwrap();
+        let blobs = &created.components.blobs;
+        let leaf = blobs.put_blob(Bytes::new()).await.unwrap();
+        let child = blobs
+            .put_directory(
+                BlobDirectory::new(BTreeMap::from([("leaf".to_owned(), leaf.id())])).unwrap(),
+            )
+            .await
+            .unwrap();
+        let parent = blobs
+            .put_directory(
+                BlobDirectory::new(BTreeMap::from([("child".to_owned(), child.id())])).unwrap(),
+            )
+            .await
+            .unwrap();
+        created
+            .components
+            .events
+            .append(Event {
+                payload: Bytes::new(),
+                blob_tree: Some(parent.id()),
+            })
+            .await
+            .unwrap();
+        blobs.document.blob_data.lock().unwrap().blobs.clear();
+
+        drop(created.components);
+        assert!(matches!(
+            storage.open_document(&created.id).await,
+            Err(MemoryStorageError::InconsistentHistory)
+        ));
+    }
+
+    #[tokio::test]
+    async fn shared_subtrees_validate_without_expanding_every_path() {
+        let storage = MemoryStorage::new();
+        let (id, view) = storage.create_view().await.unwrap();
+        let mut root = view.blobs().put_blob(Bytes::new()).await.unwrap();
+        for _ in 0..64 {
+            let directory = BlobDirectory::new(BTreeMap::from([
+                ("left".to_owned(), root.id()),
+                ("right".to_owned(), root.id()),
+            ]))
+            .unwrap();
+            root = view.blobs().put_directory(directory).await.unwrap();
+        }
+        view.blobs().ensure_available(&root).await.unwrap();
+        assert_eq!(
+            view.blobs().resolve(root.id()).await.unwrap().unwrap().id(),
+            root.id()
+        );
+        view.append(Bytes::new(), Some(&root)).await.unwrap();
+        drop(view);
+        assert!(storage.open_view(&id).await.unwrap().is_some());
     }
 
     #[tokio::test]

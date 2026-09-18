@@ -16,12 +16,18 @@ use sea_core::{
 
 use crate::{MemoryStorageError, document::WriterLease};
 
-/// Complete committed history plus weak subscriptions; dropped reads retain no registration.
+/// Complete committed history plus weak subscriptions that do not keep dropped reads alive.
 #[derive(Debug)]
 pub(crate) struct ArchiveData<Item> {
     /// Strictly ordered immutable entries.
+    ///
+    /// Archives are append-only, so a sorted vector could reduce allocation overhead and improve locality.
+    /// Binary search would retain O(log N) lookup for sparse snapshot positions, like this `BTreeMap`.
+    /// Event archives have dense positions, so they could benefit further from
+    /// O(1) indexing by position minus one, without storing separate map keys.
+    /// For now a `BTreeMap` is used for simplicity of implementation.
     pub(crate) entries: BTreeMap<EventPosition, Item>,
-    /// Readers to wake after committing an entry.
+    /// Readers to wake after committing an entry; dead registrations are pruned on insert or initialization.
     readers: Vec<Weak<AtomicWaker>>,
 }
 
@@ -41,7 +47,15 @@ impl<Item> ArchiveData<Item> {
     }
 
     /// Commits one entry and returns live subscriptions to wake outside the history lock.
+    ///
+    /// # Panics
+    ///
+    /// Panics before modifying history if the position does not strictly advance the head.
     pub(crate) fn insert(&mut self, position: EventPosition, item: Item) -> Vec<Arc<AtomicWaker>> {
+        assert!(
+            self.head().is_none_or(|head| position > head),
+            "archive inserts must strictly advance the head"
+        );
         self.entries.insert(position, item);
         let mut readers = Vec::new();
         self.readers.retain(|reader| {
@@ -188,4 +202,188 @@ pub(crate) fn read<Item: Clone + Send + Unpin + 'static>(
         empty: matches!((after, stop_after), (Some(after), Some(stop)) if after >= stop),
         reported: None,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+
+    use futures_util::{FutureExt, StreamExt};
+
+    use super::*;
+
+    /// Checks that progress reflects only unread in-range entries and the delivered cursor.
+    fn assert_range_progress(
+        progress: &MonitoredStreamProgress<EventPosition>,
+        previous: Option<EventPosition>,
+        positions: &[u64],
+        stop: u64,
+        empty: bool,
+    ) {
+        assert_eq!(progress.previous, previous);
+        let remaining: Vec<_> = positions
+            .iter()
+            .copied()
+            .filter(|ordinal| {
+                !empty && Some(EventPosition::new(*ordinal)) > previous && *ordinal <= stop
+            })
+            .collect();
+        assert_eq!(
+            progress.latest_known,
+            remaining
+                .last()
+                .copied()
+                .map(EventPosition::new)
+                .or(previous)
+        );
+        assert_eq!(
+            progress.status,
+            match remaining.len() {
+                0 => MonitoredStreamStatus::AwaitingNewItems,
+                1 => MonitoredStreamStatus::StreamingBacklog,
+                _ => MonitoredStreamStatus::FallenBehind,
+            }
+        );
+    }
+
+    #[test]
+    fn finite_reads_check_sparse_bounds_progress_and_terminal_leases() {
+        for positions in [vec![], vec![2, 5, 9]] {
+            let mut archive = ArchiveData::default();
+            for &ordinal in &positions {
+                let position = EventPosition::new(ordinal);
+                archive.insert(position, position);
+            }
+            let data = Arc::new(Mutex::new(archive));
+            let head = positions.last().copied();
+            for after in [None, Some(1), Some(2), Some(3), Some(5), Some(9), Some(10)] {
+                for stop in [1, 2, 3, 5, 6, 9, 10] {
+                    let opening = Arc::new(WriterLease);
+                    let lease = Arc::downgrade(&opening);
+                    let mut stream = read(
+                        data.clone(),
+                        opening,
+                        after.map(EventPosition::new),
+                        Some(EventPosition::new(stop)),
+                    );
+                    let initial = stream.progress();
+                    assert_eq!(initial.previous, after.map(EventPosition::new));
+                    assert_eq!(initial.latest_known, initial.previous);
+                    assert_eq!(initial.status, MonitoredStreamStatus::StreamingBacklog);
+
+                    let empty = after.is_some_and(|after| after >= stop);
+                    let invalid = !empty && (after > head || Some(stop) > head);
+                    let mut previous = initial.previous;
+                    let mut delivered = Vec::new();
+                    let mut errors = 0;
+                    let mut completed = false;
+                    for _ in 0..positions.len() + 3 {
+                        let next = stream
+                            .next()
+                            .now_or_never()
+                            .expect("finite read must not wait");
+                        match next {
+                            None => {
+                                completed = true;
+                                break;
+                            }
+                            Some(Err(MemoryStorageError::InvalidPosition)) => errors += 1,
+                            Some(Err(error)) => panic!("unexpected read error: {error}"),
+                            Some(Ok(item)) => {
+                                assert!(!invalid);
+                                if let MonitoredStreamItem::Item(position) = item {
+                                    assert!(Some(position) > previous);
+                                    previous = Some(position);
+                                    delivered.push(position.get());
+                                } else if let MonitoredStreamItem::Progress(progress) = item {
+                                    assert_eq!(progress, stream.progress());
+                                }
+                                assert_range_progress(
+                                    &stream.progress(),
+                                    previous,
+                                    &positions,
+                                    stop,
+                                    empty,
+                                );
+                            }
+                        }
+                    }
+                    assert!(completed, "finite read must terminate");
+                    assert_eq!(errors, usize::from(invalid));
+                    let expected: Vec<_> = positions
+                        .iter()
+                        .copied()
+                        .filter(|ordinal| {
+                            !invalid && !empty && Some(*ordinal) > after && *ordinal <= stop
+                        })
+                        .collect();
+                    assert_eq!(delivered, expected);
+                    assert!(matches!(stream.next().now_or_never(), Some(None)));
+                    assert!(
+                        lease.upgrade().is_some(),
+                        "terminal streams retain the opening"
+                    );
+                    drop(stream);
+                    assert!(
+                        lease.upgrade().is_none(),
+                        "dropping a stream releases its lease"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn dropped_readers_are_pruned_without_retaining_their_wakers() {
+        let data = Arc::new(Mutex::new(ArchiveData::<EventPosition>::default()));
+        let opening = Arc::new(WriterLease);
+        let mut first = read(data.clone(), opening.clone(), None, None);
+        assert!(matches!(first.next().now_or_never(), Some(Some(Ok(_)))));
+        let registration = data.lock().unwrap().readers[0].clone();
+        drop(first);
+        assert!(registration.upgrade().is_none());
+
+        let mut second = read(data.clone(), opening, None, None);
+        assert!(matches!(second.next().now_or_never(), Some(Some(Ok(_)))));
+        assert_eq!(data.lock().unwrap().readers.len(), 1);
+        let position = EventPosition::new(1);
+        assert_eq!(data.lock().unwrap().insert(position, position).len(), 1);
+        drop(second);
+        let position = EventPosition::new(2);
+        let mut archive = data.lock().unwrap();
+        assert!(archive.insert(position, position).is_empty());
+        assert!(archive.readers.is_empty());
+    }
+
+    #[test]
+    fn inserts_accept_strictly_increasing_sparse_positions() {
+        let mut data = ArchiveData::default();
+        data.insert(EventPosition::new(2), "first");
+        data.insert(EventPosition::new(5), "second");
+
+        assert_eq!(data.head(), Some(EventPosition::new(5)));
+        assert_eq!(
+            data.entries,
+            BTreeMap::from([
+                (EventPosition::new(2), "first"),
+                (EventPosition::new(5), "second"),
+            ])
+        );
+    }
+
+    #[test]
+    fn nonadvancing_inserts_panic_without_modifying_history() {
+        let mut data = ArchiveData::default();
+        data.insert(EventPosition::new(2), "first");
+        data.insert(EventPosition::new(5), "second");
+        let original = data.entries.clone();
+
+        for ordinal in [1, 2, 4, 5] {
+            let result = catch_unwind(AssertUnwindSafe(|| {
+                data.insert(EventPosition::new(ordinal), "invalid");
+            }));
+            assert!(result.is_err(), "position {ordinal} must be rejected");
+            assert_eq!(data.entries, original);
+        }
+    }
 }
