@@ -108,7 +108,7 @@
 }
 
 .ffcom-partner-entry-label-text {
-	margin: 0;
+	margin: 0 0 var(--ifm-paragraph-margin-bottom);
 
 	font-family: "Segoe UI";
 	font-style: normal;
