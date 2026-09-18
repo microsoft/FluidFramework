@@ -4,6 +4,7 @@
  */
 
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
 
 /**
@@ -118,7 +119,7 @@ export function getFluidTestMochaConfig(
 		const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as {
 			name: string;
 		};
-		config.reporter = `mocha-multi-reporters`;
+		config.reporter = createRequire(packageJsonPath).resolve("mocha-multi-reporters");
 		// See https://www.npmjs.com/package/mocha-multi-reporters#cmroutput-option
 		const outputFilePrefix = reportPrefix !== undefined ? `${reportPrefix}-` : "";
 		if (process.env.SILENT_TEST_OUTPUT === undefined) {
