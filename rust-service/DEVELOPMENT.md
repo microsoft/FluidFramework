@@ -25,7 +25,8 @@ Run the complete Rust and non-Rust test suite with one command:
 ./test.sh
 ```
 
-The script delegates the complete non-Rust build to the minimal Fluid driver package, runs the Cargo workspace tests, and then delegates all TypeScript, generated WASM, and Chromium tests to that package's `test` script.
+The script delegates the complete non-Rust build to the minimal Fluid driver test harness, runs the Cargo workspace tests, and then delegates all TypeScript, generated WASM, and Chromium tests to that package's `test` script.
+The harness depends on the reusable `@fluidframework/sea-driver` and `@fluidframework/sea-tree` packages under `packages/`.
 The package build uses Fluid build's dependency graph to build its dependencies, generate WASM, check formatting and lint, typecheck, and build the browser bundles.
 
 Run repository policy validation from the repository root after every Rust-service change:

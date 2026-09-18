@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/minimal-wasm-driver",
-	"version": "3.1.0",
+	"version": "3.2.0",
 	"private": true,
 	"description": "Minimal Fluid driver integration for the experimental Rust service.",
 	"homepage": "https://fluidframework.com",
@@ -50,6 +50,8 @@
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/sea-driver": "workspace:~",
+		"@fluidframework/sea-tree": "workspace:~",
 		"@fluidframework/server-local-server": "^7.0.1",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",

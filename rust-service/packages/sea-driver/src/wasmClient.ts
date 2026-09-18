@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-/** A service operation projected into the Fluid driver's sequenced-message model. */
+/**
+ * A service operation projected into the Fluid driver's sequenced-message model.
+ * @internal
+ */
 export interface ProjectedOperation {
 	/** Opaque service position that can resume projected reads and subscriptions. */
 	readonly position: Uint8Array;
@@ -25,7 +28,10 @@ export interface ProjectedOperation {
 	readonly payload: Uint8Array;
 }
 
-/** A bounded page of projected operations and its continuation state. */
+/**
+ * A bounded page of projected operations and its continuation state.
+ * @internal
+ */
 export interface ProjectedReadPage {
 	/** Operations returned after the requested cursor. */
 	readonly operations: readonly ProjectedOperation[];
@@ -33,7 +39,10 @@ export interface ProjectedReadPage {
 	readonly cursor?: Uint8Array;
 }
 
-/** A cancellable, push-driven stream of projected operations. */
+/**
+ * A cancellable, push-driven stream of projected operations.
+ * @internal
+ */
 export interface ProjectedOperationSubscription {
 	/** Waits for the next projected operation. */
 	next(): Promise<ProjectedOperation>;
@@ -43,7 +52,10 @@ export interface ProjectedOperationSubscription {
 	nextBatch?(maxOperations: number, maxBytes: number): Promise<readonly ProjectedOperation[]>;
 }
 
-/** The authoritative outcome of resolving a possibly ambiguous submission. */
+/**
+ * The authoritative outcome of resolving a possibly ambiguous submission.
+ * @internal
+ */
 export type SubmissionResolution =
 	| {
 			/** Indicates that the service found the submitted identity in its log. */
@@ -58,7 +70,10 @@ export type SubmissionResolution =
 			readonly kind: "notCommitted";
 	  };
 
-/** Receipt returned after uploading an immutable content-addressed blob. */
+/**
+ * Receipt returned after uploading an immutable content-addressed blob.
+ * @internal
+ */
 export interface BlobUpload {
 	/** Content digest used to fetch the blob. */
 	readonly digest: Uint8Array;
@@ -68,7 +83,10 @@ export interface BlobUpload {
 	readonly deduplicated: boolean;
 }
 
-/** One summary path mapped to an uploaded blob digest. */
+/**
+ * One summary path mapped to an uploaded blob digest.
+ * @internal
+ */
 export interface SummaryEntry {
 	/** UTF-8 encoded path within the flattened summary tree. */
 	readonly path: Uint8Array;
@@ -76,7 +94,10 @@ export interface SummaryEntry {
 	readonly blob: Uint8Array;
 }
 
-/** Receipt returned after publishing a content-addressed summary manifest. */
+/**
+ * Receipt returned after publishing a content-addressed summary manifest.
+ * @internal
+ */
 export interface SummaryPublication {
 	/** Digest used to fetch the published summary. */
 	readonly digest: Uint8Array;
@@ -88,7 +109,10 @@ export interface SummaryPublication {
 	readonly deduplicated: boolean;
 }
 
-/** Minimal generated-client surface consumed by the Fluid driver adapter. */
+/**
+ * Minimal generated-client surface consumed by the Fluid driver adapter.
+ * @internal
+ */
 export interface SeaDriverClient {
 	/** Creates a document and returns the backend-assigned identity used for later opens. */
 	create(): Promise<Uint8Array>;

@@ -9,9 +9,9 @@ export {
 	SeaDocumentService,
 	SeaDriver,
 	SeaDocumentStorage,
-} from "./fluidDriver.js";
+} from "@fluidframework/sea-driver/internal";
 export { DirectDummyClient } from "./directDummy.js";
-export { DirectSharedTreeClient } from "./directSharedTree.js";
+export { DirectSharedTreeClient } from "@fluidframework/sea-tree/internal";
 export { decodePosition, encodePosition } from "./generatedSeaBinding.js";
 export type {
 	BlobUpload,
@@ -20,4 +20,4 @@ export type {
 	SubmissionResolution,
 	SummaryEntry,
 	SummaryPublication,
-} from "./wasmClient.js";
+} from "@fluidframework/sea-driver/internal";

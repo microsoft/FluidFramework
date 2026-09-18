@@ -7,7 +7,7 @@ import type {
 	ProjectedOperation,
 	ProjectedOperationSubscription,
 	SeaDriverClient,
-} from "./wasmClient.js";
+} from "@fluidframework/sea-driver/internal";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();

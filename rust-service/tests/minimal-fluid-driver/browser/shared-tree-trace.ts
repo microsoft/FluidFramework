@@ -25,7 +25,7 @@ import {
 	SeaInjectedClient,
 } from "../../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
 import { type SeaDeltaConnection, SeaDriver } from "../src/index.js";
-import type { SeaDriverClient } from "../src/wasmClient.js";
+import type { SeaDriverClient } from "@fluidframework/sea-driver/internal";
 import { createGeneratedSeaBindingAdapter } from "../src/generatedSeaBinding.js";
 
 /** Browser hooks used by the headless trace runner and failure diagnostics. */

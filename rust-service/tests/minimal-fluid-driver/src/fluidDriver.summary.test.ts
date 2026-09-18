@@ -12,8 +12,7 @@ import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 
-import { SeaDocumentStorage } from "./fluidDriver.js";
-import { SeaDeltaConnection } from "./delta.js";
+import { SeaDocumentStorage, SeaDeltaConnection } from "@fluidframework/sea-driver/internal";
 import { createGeneratedSeaBindingAdapter, encodePosition } from "./generatedSeaBinding.js";
 import type {
 	BlobUpload,
@@ -23,7 +22,7 @@ import type {
 	SummaryEntry,
 	SummaryPublication,
 	SeaDriverClient,
-} from "./wasmClient.js";
+} from "@fluidframework/sea-driver/internal";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();

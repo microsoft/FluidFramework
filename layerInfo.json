@@ -78,6 +78,14 @@
 				"dirs": ["packages/drivers/"],
 				"deps": ["Driver-Utils", "Core-Interfaces", "Client-Utils", "Other-Utils"]
 			},
+			"Sea-Driver": {
+				"packages": ["@fluidframework/sea-driver"],
+				"deps": ["Driver-Definitions", "Core-Interfaces"]
+			},
+			"Sea-Tree": {
+				"packages": ["@fluidframework/sea-tree"],
+				"deps": ["Runtime", "Sea-Driver"]
+			},
 			"Loader": {
 				"dirs": ["packages/loader/"],
 				"deps": ["Container-Definitions", "Driver-Utils", "Client-Utils"]

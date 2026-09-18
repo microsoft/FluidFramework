@@ -254,6 +254,7 @@ packages:
   - "examples/**"
   - "experimental/**"
   - "packages/**"
+  - "rust-service/packages/*"
   - "rust-service/tests/minimal-fluid-driver"
   - "tools/markdown-magic"
 

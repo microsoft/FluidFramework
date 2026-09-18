@@ -79,7 +79,10 @@ class ProjectedMessageStream implements IStream<ISequencedDocumentMessage[]> {
 	}
 }
 
-/** Bounded projected-operation history adapter for Fluid delta storage. */
+/**
+ * Bounded projected-operation history adapter for Fluid delta storage.
+ * @internal
+ */
 export class SeaDeltaStorage implements IDocumentDeltaStorageService {
 	/** Creates delta storage for one document and projection policy. */
 	public constructor(
@@ -98,15 +101,21 @@ export class SeaDeltaStorage implements IDocumentDeltaStorageService {
 	}
 }
 
-/** Stable identity and payload retained until submission outcome is known. */
-interface PendingSubmission {
+/**
+ * Stable identity and payload retained until submission outcome is known.
+ * @internal
+ */
+export interface PendingSubmission {
 	/** Service-level submission identity reused for resolution and resubmission. */
 	readonly identity: Uint8Array;
 	/** Original Fluid message retained for explicit resubmission. */
 	readonly message: IDocumentMessage;
 }
 
-/** Minimal Fluid delta connection with explicit reconnect and ambiguity recovery. */
+/**
+ * Minimal Fluid delta connection with explicit reconnect and ambiguity recovery.
+ * @internal
+ */
 export class SeaDeltaConnection extends Events implements IDocumentDeltaConnection {
 	/** Registers a Fluid delta-connection event listener. */
 	public readonly on = this.addListener as unknown as IEventTransformer<

@@ -32,7 +32,10 @@ interface UploadedSummary {
 	readonly entries: readonly SummaryEntry[];
 }
 
-/** Content-addressed storage adapter for full Fluid summary trees and blobs. */
+/**
+ * Content-addressed storage adapter for full Fluid summary trees and blobs.
+ * @internal
+ */
 export class SeaDocumentStorage implements IDocumentStorageService {
 	/** Fluid cache policy for immutable content-addressed storage. */
 	public readonly policies = { maximumCacheDurationMs: 432_000_000 as const };

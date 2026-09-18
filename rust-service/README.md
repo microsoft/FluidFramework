@@ -20,7 +20,8 @@ This is a speculative learning project, not a proposed production replacement fo
 | Try a local snapshot-and-replay example | [Sea counter](examples/sea-counter/README.md) |
 | Run and configure the native server | [WebTransport server](crates/sea-webtransport-server/README.md) |
 | Use the native or browser client | [WebTransport client](crates/sea-webtransport/README.md) |
-| Work with Fluid and SharedTree | [Minimal Fluid driver](tests/minimal-fluid-driver/README.md) |
+| Use the Fluid driver or direct SharedTree integration | [TypeScript packages](packages/README.md) |
+| Run Fluid and SharedTree integration tests | [Integration harness](tests/minimal-fluid-driver/README.md) |
 | Run browser transport tests | [Browser harness](tests/webtransport-browser/README.md) |
 | Measure performance | [Benchmarks](BENCHMARKS.md) |
 

@@ -12,7 +12,7 @@ import type {
 	SummaryEntry,
 	SummaryPublication,
 	SeaDriverClient,
-} from "./wasmClient.js";
+} from "@fluidframework/sea-driver/internal";
 import type {
 	AsyncRequestTransport,
 	SeaDirectoryEntry,

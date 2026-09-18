@@ -11,25 +11,49 @@ import type {
 
 import type { ProjectedOperation } from "./wasmClient.js";
 
-/** UTF-8 encoder for protocol identities, payloads, and summary paths. */
+/**
+ * UTF-8 encoder for protocol identities, payloads, and summary paths.
+ * @internal
+ */
 export const encoder = new TextEncoder();
-/** UTF-8 decoder for Fluid operation and summary payloads. */
+/**
+ * UTF-8 decoder for Fluid operation and summary payloads.
+ * @internal
+ */
 export const decoder = new TextDecoder();
-/** Numeric Fluid summary node kinds accepted by the minimal full-tree adapter. */
+/**
+ * Numeric Fluid summary node kinds accepted by the minimal full-tree adapter.
+ * @internal
+ */
 export const summaryType = { tree: 1, blob: 2 } as const;
-/** Synthetic member identity used for read-first service replacement. */
+/**
+ * Synthetic member identity used for read-first service replacement.
+ * @internal
+ */
 export const remoteClientId = "remote-service-client";
-/** Synthetic member identity used for independently connected write clients. */
+/**
+ * Synthetic member identity used for independently connected write clients.
+ * @internal
+ */
 export const externalClientId = "external-service-client";
-/** Number of initial join messages preceding application operations. */
+/**
+ * Number of initial join messages preceding application operations.
+ * @internal
+ */
 export const applicationSequenceOffset = 2;
 export const defaultSubscriptionBatchMaxOperations = 64;
 export const defaultSubscriptionBatchMaxPayloadBytes = 1024 * 1024;
 
-/** Listener shape used by the minimal event emitter. */
-type Listener = (...args: readonly unknown[]) => void;
+/**
+ * Listener shape used by the minimal event emitter.
+ * @internal
+ */
+export type Listener = (...args: readonly unknown[]) => void;
 
-/** Minimal event emitter implementing the Fluid driver event methods. */
+/**
+ * Minimal event emitter implementing the Fluid driver event methods.
+ * @internal
+ */
 export class Events {
 	/** Event listeners grouped by Fluid event name. */
 	private readonly listeners = new Map<string, Set<Listener>>();
@@ -65,12 +89,18 @@ export class Events {
 	}
 }
 
-/** Converts bytes to the lowercase hexadecimal identifiers exposed by Fluid storage. */
+/**
+ * Converts bytes to the lowercase hexadecimal identifiers exposed by Fluid storage.
+ * @internal
+ */
 export function bytesToHex(bytes: Uint8Array): string {
 	return Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
 }
 
-/** Parses a nonempty even-length hexadecimal identity. */
+/**
+ * Parses a nonempty even-length hexadecimal identity.
+ * @internal
+ */
 export function hexToBytes(value: string): Uint8Array {
 	if (value.length === 0 || value.length % 2 !== 0 || !/^[0-9a-f]+$/u.test(value)) {
 		throw new Error(`invalid hexadecimal identity: ${value}`);
@@ -78,12 +108,18 @@ export function hexToBytes(value: string): Uint8Array {
 	return Uint8Array.from(value.match(/../gu) ?? [], (byte) => Number.parseInt(byte, 16));
 }
 
-/** Encodes the resolved Fluid document ID for protocol requests. */
+/**
+ * Encodes the resolved Fluid document ID for protocol requests.
+ * @internal
+ */
 export function documentId(resolvedUrl: IResolvedUrl): Uint8Array {
 	return hexToBytes(resolvedUrl.id);
 }
 
-/** Compares byte strings lexicographically for deterministic summary ordering. */
+/**
+ * Compares byte strings lexicographically for deterministic summary ordering.
+ * @internal
+ */
 export function compareBytes(left: Uint8Array, right: Uint8Array): number {
 	const length = Math.min(left.length, right.length);
 	for (let index = 0; index < length; index++) {
@@ -95,12 +131,18 @@ export function compareBytes(left: Uint8Array, right: Uint8Array): number {
 	return left.length - right.length;
 }
 
-/** Tests byte-string identity without allocating an encoded key. */
+/**
+ * Tests byte-string identity without allocating an encoded key.
+ * @internal
+ */
 export function bytesEqual(left: Uint8Array, right: Uint8Array): boolean {
 	return left.length === right.length && left.every((byte, index) => byte === right[index]);
 }
 
-/** Document-service state preserved across read-to-write replacement and reconnect. */
+/**
+ * Document-service state preserved across read-to-write replacement and reconnect.
+ * @internal
+ */
 export interface DeltaConnectionLifecycle {
 	/** Logical Fluid client identity represented by this service. */
 	readonly clientId: string;
@@ -118,7 +160,10 @@ export interface DeltaConnectionLifecycle {
 	readonly remoteSequenceNumbers: Map<string, number>;
 }
 
-/** Projects a service operation into Fluid's sequenced document-message shape. */
+/**
+ * Projects a service operation into Fluid's sequenced document-message shape.
+ * @internal
+ */
 export function toSequenced(
 	operation: ProjectedOperation,
 	localWriter?: Uint8Array,
@@ -141,7 +186,10 @@ export function toSequenced(
 	};
 }
 
-/** Projects an operation using identities and cursors shared by one document service. */
+/**
+ * Projects an operation using identities and cursors shared by one document service.
+ * @internal
+ */
 export function projectOperation(
 	lifecycle: DeltaConnectionLifecycle,
 	operation: ProjectedOperation,

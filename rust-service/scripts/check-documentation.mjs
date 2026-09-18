@@ -15,6 +15,7 @@ const groupingRoots = [
 	"crates/wrappers",
 	"crates/spikes",
 	"examples",
+	"packages",
 	"tests",
 	"benchmarks",
 	"scripts",
@@ -133,6 +134,7 @@ const roots =
 					...cargoPackageRoots(path.join(rustServiceRoot, "crates")),
 					...cargoPackageRoots(path.join(rustServiceRoot, "examples")),
 					...childDirectoryRoots(path.join(rustServiceRoot, "tests")),
+					...childDirectoryRoots(path.join(rustServiceRoot, "packages")),
 				]),
 			].sort()
 		: requestedRoots;

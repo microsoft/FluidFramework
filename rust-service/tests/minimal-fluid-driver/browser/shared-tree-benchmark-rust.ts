@@ -32,7 +32,7 @@ import {
 	type SeaDeltaConnection,
 	SeaDriver,
 } from "../src/index.js";
-import type { SeaDriverClient } from "../src/wasmClient.js";
+import type { SeaDriverClient } from "@fluidframework/sea-driver/internal";
 import { createGeneratedSeaBindingAdapter } from "../src/generatedSeaBinding.js";
 import {
 	adaptInitialObject,

@@ -18,7 +18,7 @@ import type {
 	ProjectedOperation,
 	ProjectedOperationSubscription,
 	SeaDriverClient,
-} from "./wasmClient.js";
+} from "@fluidframework/sea-driver/internal";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -28,7 +28,10 @@ interface DirectSharedTreePayload {
 	readonly idCreationRange: IdCreationRange;
 }
 
-/** Runtime-free rust-service host for one production SharedTree kernel. */
+/**
+ * Runtime-free rust-service host for one production SharedTree kernel.
+ * @internal
+ */
 export class DirectSharedTreeClient {
 	/** Production SharedTree API and kernel view owned by this host. */
 	public readonly tree: SharedTreeKernelView;

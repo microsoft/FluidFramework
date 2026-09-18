@@ -29,13 +29,19 @@ import {
 import { SeaDocumentStorage } from "./storage.js";
 import type { SeaDriverClient } from "./wasmClient.js";
 
-/** Creates a generated or injected protocol client for one logical Fluid client. */
+/**
+ * Creates a generated or injected protocol client for one logical Fluid client.
+ * @internal
+ */
 export type WasmClientFactory = (
 	resolvedUrl: IResolvedUrl,
 	clientId: string,
 ) => Promise<SeaDriverClient>;
 
-/** Optional observability hooks for the minimal driver harness. */
+/**
+ * Optional observability hooks for the minimal driver harness.
+ * @internal
+ */
 export interface MinimalWasmDriverOptions {
 	/** Receives projected-subscription failures before Fluid is disconnected. */
 	readonly onSynchronizationError?: (error: unknown) => void;
@@ -52,7 +58,10 @@ export interface MinimalWasmDriverOptions {
 	readonly subscriptionBatchMaxPayloadBytes?: number;
 }
 
-/** Document-scoped Fluid service sharing one generated client and lifecycle. */
+/**
+ * Document-scoped Fluid service sharing one generated client and lifecycle.
+ * @internal
+ */
 export class SeaDocumentService extends Events implements IDocumentService {
 	/** Registers a Fluid document-service event listener. */
 	public readonly on = this.addListener as unknown as IEventTransformer<
@@ -214,7 +223,10 @@ export class SeaDocumentService extends Events implements IDocumentService {
 	}
 }
 
-/** Fluid document-service factory backed by generated or injected WASM clients. */
+/**
+ * Fluid document-service factory backed by generated or injected WASM clients.
+ * @internal
+ */
 export class SeaDriver implements IDocumentServiceFactory {
 	/** Creates a factory with optional lifecycle observability hooks. */
 	public constructor(
