@@ -113,6 +113,23 @@ Do not pass WASM-owned objects between split bundles or rely on generated class 
 
 ## Implementation Stages
 
+### Combined Execution of Stages 1 and 2
+
+Implement stages 1 and 2 together as one sequential foundation phase.
+Their checklists and acceptance criteria remain distinct, but they do not require separate implementation passes or duplicate consumer migrations.
+The WASM crate and TypeScript package must establish their ownership and dependency direction together so generated artifacts have their intended package owner from the start.
+
+Use this order within the combined phase:
+
+1. Inventory the extraction boundary and create minimal `sea-wasm` and `@fluidframework/sea-typescript` scaffolding with the intended dependency direction.
+2. Prove local, remote, and compressed event and blob round trips through shared session bindings and package entrypoints before broad consumer migration.
+3. Complete capability-specific builds, generated-asset packaging, and dependency-exclusion checks.
+4. Move neutral adaptation into `sea-typescript` and Fluid projection into `sea-driver`; migrate existing consumers directly to their owning package entrypoints, preserving existing tests.
+5. Complete package conventions, documentation, generated API reports, tests, and the acceptance and validation gates for both stages before proceeding to stage 3.
+
+Establish the factory and loading surface needed for this phase, but leave full combined/split preset behavior and comparative measurements to stage 3.
+This combined phase does not require parallel workstreams or a numbered iteration and does not start ServiceClient or example integration.
+
 ### 1. Extract and Package WASM Bindings
 
 - [ ] Inventory the existing general bindings, browser transport bindings, generated adapter, and consumers; identify the narrow extraction boundary.
@@ -121,11 +138,11 @@ Do not pass WASM-owned objects between split bundles or rely on generated class 
 - [ ] Promote local memory from transport test support to a supported binding configuration.
 - [ ] Expose the existing compression decorator through an optional capability and an explicit configuration; preserve matching encode/decode configuration for collaborating clients.
 - [ ] Prove compressed event and blob round trips over local and remote sessions through the shared bindings before broad consumer migration; do not duplicate bindings or decorator logic for these stacks.
-- [ ] Identify general session binding code separately from Fluid-specific generated-client adaptation, preparing the package extraction in stage 2.
+- [ ] Identify general session binding code separately from Fluid-specific generated-client adaptation and coordinate its package extraction with stage 2 in the combined phase.
 - [ ] Provide local-only, WebTransport-only, combined, and compression-enabled named build configurations from the same binding source.
 - [ ] Isolate generated outputs by configuration and JavaScript target; prevent overwrites, stale outputs, and unintended Cargo feature unification between variants.
 - [ ] Register generated artifacts and their inputs in the Fluid build graph, including clean and incremental builds, package exports, and browser asset loading.
-- [ ] Migrate existing Node.js, browser, Fluid-driver, and direct SharedTree consumers without losing their current tests.
+- [ ] Migrate existing Node.js, browser, Fluid-driver, and direct SharedTree consumers directly to the package entrypoints established with stage 2, without losing their current tests; this is the same migration tracked in stage 2.
 - [ ] Document the new crate responsibilities and record the architectural decision under `historical/decisions/`.
 
 Acceptance: generated local and remote clients retain their existing behavior; the local-only WASM dependency graph excludes `sea-webtransport`; the minimal WebTransport build excludes local storage, sequencer, compression, and encryption dependencies.
@@ -247,7 +264,8 @@ Update architecture and package guides to describe actual supported behavior, re
 
 ## Execution and Completion
 
-Stages 1 through 5 are dependency-ordered and define this plan's implementation scope.
+Stages 1 through 5 define this plan's implementation scope.
+Execute stages 1 and 2 together using the combined foundation order above, then stages 3, 4, and 5 in dependency order.
 One owner can implement the main chain sequentially without numbered iteration overhead.
 If parallel investigation or separate workstreams justify a full iteration, ask for that workflow choice before creating iteration records or worktrees.
 This plan does not select or start an iteration.
