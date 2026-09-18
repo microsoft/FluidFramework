@@ -16,15 +16,11 @@ export {
 export { LocalSessionStorageDbFactory } from "./localSessionStorageDb.js";
 export type {
 	EphemeralService,
+	EphemeralServiceClient,
 	EphemeralServiceOptions,
-	LocalService,
-	LocalServiceClient,
-	LocalServiceOptions,
-	SessionService,
 } from "./ephemeralService.js";
 export {
 	startEphemeralService,
-	getSessionService,
 	cleanupEphemeralService,
 	getDefaultEphemeralService,
 } from "./ephemeralService.js";

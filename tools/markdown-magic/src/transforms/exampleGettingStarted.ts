@@ -11,27 +11,18 @@ import { transform } from "./options.js";
 import { readPackage, type PackageMetadata } from "./packageMetadata.js";
 import { headingSchema, type HeadingOptions, packageSchema } from "./schemas.js";
 
-const tinyliciousCodespacesPortInstruction =
-	"If you use GitHub Codespaces in a browser, set the visibility of the Tinylicious port (7070) to `public`. Do not use `Private to Organization`. For instructions, read [Sharing a port](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace#sharing-a-port).";
-
 /**
  * Generates setup steps for an example package.
  *
  * @param packageMetadata - The example package metadata.
  * @param usesTinylicious - Whether to include Tinylicious setup steps.
- * @param usesServiceClient - Whether to include unified ServiceClient setup steps.
  * @param options - The section heading options.
  * @param context - The services and destination details for the transform.
  * @returns The generated setup instruction nodes.
- *
- * @privateRemarks
- * TODO: Replace `usesTinylicious` and `usesServiceClient` with a single service-mode option in
- * both transforms, then regenerate the affected example READMEs.
  */
 export function generateGettingStarted(
 	packageMetadata: PackageMetadata,
 	usesTinylicious: boolean,
-	usesServiceClient: boolean,
 	options: HeadingOptions,
 	context: TransformContext,
 ): RootContent[] {
@@ -43,29 +34,17 @@ export function generateGettingStarted(
 		"1. From the `FluidFramework` root directory, run `pnpm install`.",
 		`1. From the \`FluidFramework\` root directory, run \`pnpm run build:fast --nolint\`.\n    - To build only this package, add the package name to the command:\n      \`pnpm run build:fast --nolint ${packageMetadata.name}\``,
 	];
-	if (usesServiceClient) {
-		steps.push(
-			"1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser. The app uses a session-storage-backed in-browser service by default and stores the container ID in the URL hash.",
-			"1. To select the session-backed service explicitly, run `pnpm start:session` and open <http://localhost:8080/?fluidClient=session>.",
-		);
-		if (usesTinylicious) {
-			steps.push(
-				`1. To share data between browser sessions, start Tinylicious in a separate terminal by running \`pnpm tinylicious\` in this directory, then run \`pnpm start:tinylicious\` and open <http://localhost:8080/?fluidClient=tinylicious>. ${tinyliciousCodespacesPortInstruction}`,
-			);
-		}
-	} else if (usesTinylicious) {
+	if (usesTinylicious) {
 		steps.push(
 			"1. In a separate terminal, run `pnpm tinylicious` from this directory to start Tinylicious.",
-			`1. ${tinyliciousCodespacesPortInstruction}`,
+			"1. If you use GitHub Codespaces in a browser, set the visibility of the Tinylicious port (7070) to `public`. Do not use `Private to Organization`. For instructions, read [Sharing a port](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace#sharing-a-port).",
 		);
 	}
-	if (!usesServiceClient) {
-		steps.push(
-			"1. Run `pnpm start` from this directory.",
-			"1. Open <http://localhost:8080> in a web browser.",
-			"\nTo run the example with SharePoint, complete these steps:\n\n1. Follow the [webpack-fluid-loader instructions](https://github.com/microsoft/FluidFramework/blob/main/examples/utils/webpack-fluid-loader/README.md#sharepoint) to get authentication credentials.\n1. Run `pnpm start:spo` or `pnpm start:spo-df` from this directory.\n1. Open <http://localhost:8080> in a web browser.",
-		);
-	}
+	steps.push(
+		"1. Run `pnpm start` from this directory.",
+		"1. Open <http://localhost:8080> in a web browser.",
+		"\nTo run the example with SharePoint, complete these steps:\n\n1. Follow the [webpack-fluid-loader instructions](https://github.com/microsoft/FluidFramework/blob/main/examples/utils/webpack-fluid-loader/README.md#sharepoint) to get authentication credentials.\n1. Run `pnpm start:spo` or `pnpm start:spo-df` from this directory.\n1. Open <http://localhost:8080> in a web browser.",
+	);
 	return parseFragment(
 		`${heading}Complete these steps to run the example:\n\n${steps.join("\n")}`,
 		context,
@@ -82,13 +61,11 @@ export const exampleGettingStartedTransform: Transform = transform(
 		...packageSchema,
 		...headingSchema,
 		usesTinylicious: { type: "boolean", default: true },
-		serviceClient: { type: "boolean", default: false },
 	},
 	async (options, context) =>
 		generateGettingStarted(
 			await readPackage(context, options),
 			options.usesTinylicious,
-			options.serviceClient,
 			options,
 			context,
 		),

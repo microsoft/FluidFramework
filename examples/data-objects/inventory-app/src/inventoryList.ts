@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { defineTreeDataStore } from "fluid-framework/alpha";
+// eslint-disable-next-line import-x/no-internal-modules
+import { treeDataObjectInternal } from "@fluidframework/react/internal";
 
 import { Inventory, treeConfiguration } from "./schema.js";
 
-export const InventoryDataStore = defineTreeDataStore({
-	type: "inventory-list",
-	config: treeConfiguration,
-	initializer: () =>
+export const InventoryListFactory = treeDataObjectInternal(
+	treeConfiguration,
+	() =>
 		new Inventory({
 			parts: [
 				{
@@ -23,4 +23,4 @@ export const InventoryDataStore = defineTreeDataStore({
 				},
 			],
 		}),
-});
+).factory;
