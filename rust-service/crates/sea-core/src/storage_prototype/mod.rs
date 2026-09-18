@@ -45,7 +45,7 @@ use crate::snapshot::{Snapshot, SnapshotPosition};
 use crate::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, CommittedEvent,
     Durability, Event, EventPosition, MonitoredStreamItem, MonitoredStreamProgress,
-    MonitoredStreamStatus, PublishedSnapshot, SnapshotId, boxed_monitored_stream,
+    MonitoredStreamStatus, boxed_monitored_stream,
 };
 
 pub use blob_store::BlobStore;
@@ -166,7 +166,7 @@ pub struct ViewSnapshotPublication<BH, EH> {
 /// A snapshot selection and finite event catch-up captured by [`SeaView::load`].
 pub struct ViewLoad<E> {
     /// Newest compatible retained snapshot, when one exists.
-    pub snapshot: Option<PublishedSnapshot>,
+    pub snapshot: Option<Snapshot>,
     /// Event head captured after snapshot selection, or `None` for an empty archive.
     pub head: Option<EventPosition>,
     /// Monitored events after the selected snapshot through `head`, in position order.
@@ -274,16 +274,8 @@ where
         self.events.head().await
     }
 
-    /// Returns one retained snapshot by identity.
-    pub async fn get_snapshot(
-        &self,
-        id: &SnapshotId,
-    ) -> Result<Option<PublishedSnapshot>, B::Error> {
-        self.snapshots.get_snapshot(id).await
-    }
-
     /// Returns the latest retained snapshot.
-    pub async fn get_latest_snapshot(&self) -> Result<Option<PublishedSnapshot>, B::Error> {
+    pub async fn get_latest_snapshot(&self) -> Result<Option<Snapshot>, B::Error> {
         let Some(position) = self.snapshots.head().await? else {
             return Ok(None);
         };
@@ -294,7 +286,7 @@ where
     pub async fn publish_snapshot(
         &self,
         publication: ViewSnapshotPublication<B::Handle, E::Handle>,
-    ) -> Result<PublishedSnapshot, B::Error> {
+    ) -> Result<Snapshot, B::Error> {
         self.blobs.ensure_available(&publication.root).await?;
         let at_event = match &publication.at_event {
             ViewSnapshotPosition::Initial => SnapshotPosition::Initial,
@@ -325,12 +317,10 @@ where
             None => self.get_latest_snapshot().await?,
         };
         let head = self.events.head().await?;
-        let after = snapshot
-            .as_ref()
-            .and_then(|value| match value.snapshot.at_event {
-                SnapshotPosition::Initial => None,
-                SnapshotPosition::At(position) => Some(position),
-            });
+        let after = snapshot.as_ref().and_then(|value| match value.at_event {
+            SnapshotPosition::Initial => None,
+            SnapshotPosition::At(position) => Some(position),
+        });
         let events = match head {
             Some(head) => self.events.read(after, Some(head)),
             None => empty_event_archive_stream(after),

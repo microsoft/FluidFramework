@@ -1,13 +1,13 @@
 //! Independent snapshot publication storage.
 //!
 //! Snapshot roots and event positions are opaque references at this boundary. The archive owns
-//! publication identity, lineage, and retained-history lookup; [`super::SeaView`] establishes that
-//! referenced content and events are available before publication.
+//! retained history, while [`super::SeaView`] establishes that referenced content and events are
+//! available before publication.
 
 use async_trait::async_trait;
 
+use crate::EventPosition;
 use crate::snapshot::{Snapshot, SnapshotPosition};
-use crate::{EventPosition, PublishedSnapshot, SnapshotId};
 
 use super::Archive;
 
@@ -18,29 +18,20 @@ use super::Archive;
 /// only at a position containing a retained publication.
 #[async_trait]
 pub trait SnapshotArchive:
-    Archive<
-        Position = SnapshotPosition,
-        Item = PublishedSnapshot,
-        Append = Snapshot,
-        AppendResult = PublishedSnapshot,
-    >
+    Archive<Position = SnapshotPosition, Item = Snapshot, Append = Snapshot, AppendResult = Snapshot>
 {
-    /// Returns one retained snapshot by publication identity.
-    async fn get_snapshot(&self, id: &SnapshotId)
-    -> Result<Option<PublishedSnapshot>, Self::Error>;
-
     /// Returns the snapshot at this exact archive position, when retained.
     ///
     /// Because at most one snapshot occupies a position, callers can use this lookup after an
-    /// ambiguous append outcome to determine which publication, if any, occupies that position.
+    /// ambiguous append outcome to determine which snapshot, if any, occupies that position.
     async fn get_snapshot_at(
         &self,
         position: SnapshotPosition,
-    ) -> Result<Option<PublishedSnapshot>, Self::Error>;
+    ) -> Result<Option<Snapshot>, Self::Error>;
 
     /// Returns the newest retained snapshot at or before an event position.
     async fn get_snapshot_at_or_before(
         &self,
         position: EventPosition,
-    ) -> Result<Option<PublishedSnapshot>, Self::Error>;
+    ) -> Result<Option<Snapshot>, Self::Error>;
 }
