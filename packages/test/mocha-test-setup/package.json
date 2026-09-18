@@ -19,6 +19,10 @@
 		"./mocharc-common": {
 			"require": "./mocharc-common-cjswrapper.cjs",
 			"default": "./lib/mocharcCommon.js"
+		},
+		"./xunit-reporter": {
+			"require": "./xunit-reporter-cjswrapper.cjs",
+			"default": "./lib/xunitReporter.js"
 		}
 	},
 	"scripts": {
@@ -30,7 +34,7 @@
 		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
 		"build:esm": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
-		"check:are-the-types-wrong": "attw --pack . --profile esm-only --exclude-entrypoints ./mocharc-common",
+		"check:are-the-types-wrong": "attw --pack . --profile esm-only --exclude-entrypoints ./mocharc-common ./xunit-reporter",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
@@ -39,13 +43,15 @@
 		"check:types:inexactOptionalPropertyTypes": "tsc --project ./tsconfig.json --noEmit --exactOptionalPropertyTypes false --skipLibCheck --emitDeclarationOnly false --tsBuildInfoFile ./tsconfig.inexactOptionalPropertyTypes.tsbuildinfo",
 		"ci:build:api-reports": "api-extractor run --config api-extractor/api-extractor-report.json",
 		"ci:build:docs": "api-extractor run --config api-extractor/api-extractor-model.json",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
-		"lint:fix": "fluid-build . --task eslint:fix --task format"
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"test": "npm run test:mocha:esm",
+		"test:mocha:esm": "mocha"
 	},
 	"dependencies": {
 		"@fluid-internal/test-driver-definitions": "workspace:~",
