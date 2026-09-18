@@ -1,5 +1,7 @@
 #![doc = include_str!("../README.md")]
 
+mod next;
+
 use std::fmt;
 
 use aes_gcm_siv::{
@@ -498,13 +500,13 @@ mod tests {
 
     /// Rotatable in-memory key provider used to exercise key lifecycle behavior.
     #[derive(Clone, Debug)]
-    struct TestKeys {
+    pub(super) struct TestKeys {
         state: Arc<Mutex<TestKeyState>>,
     }
 
     impl TestKeys {
         /// Creates a provider with the first key active.
-        fn new() -> Self {
+        pub(super) fn new() -> Self {
             Self {
                 state: Arc::new(Mutex::new((FIRST_ID, vec![(FIRST_ID, [7; 32])]))),
             }
@@ -525,7 +527,7 @@ mod tests {
         }
 
         /// Retains the first key and makes a second key active.
-        fn rotate(&self) {
+        pub(super) fn rotate(&self) {
             let mut state = self.state.lock().unwrap();
             state.1.push((SECOND_ID, [8; 32]));
             state.0 = SECOND_ID;
@@ -575,8 +577,8 @@ mod tests {
 
     /// Deterministic nonce source that records how many payloads request a nonce.
     #[derive(Clone, Debug)]
-    struct CountingNonce {
-        calls: Arc<AtomicUsize>,
+    pub(super) struct CountingNonce {
+        pub(super) calls: Arc<AtomicUsize>,
     }
 
     impl NonceSource for CountingNonce {

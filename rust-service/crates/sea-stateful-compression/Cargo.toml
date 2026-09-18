@@ -16,6 +16,8 @@ zstd = { version = "0.13.3", default-features = false }
 [dev-dependencies]
 sea-compression = { path = "../sea-compression" }
 sea-conformance = { path = "../sea-conformance" }
+sea-encryption = { path = "../sea-encryption" }
+sea-file = { path = "../sea-file" }
 sea-memory = { path = "../sea-memory" }
 sea-sequencer = { path = "../sea-sequencer" }
 tokio.workspace = true

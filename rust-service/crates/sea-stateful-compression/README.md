@@ -30,7 +30,10 @@ record when polled and add no background task or stream buffer.
 
 Directories and snapshot metadata remain visible.
 For authenticated storage, wrap an encrypted session in `StatefulCompressionSession` so compression processes plaintext before encryption.
-Snapshot coordination is composed from the undecorated session handle because dictionary compression does not transform nomination, publication, or notification state.
+The replacement `sea_core::next::session` facets are implemented directly on `StatefulCompressionSession`.
+Loads decode the selected snapshot's live suffix; snapshots, availability handles, stored-content identities, publisher fences, and registration lifetime pass through unchanged.
+Exact retries use deterministic dictionary frames, while decoding errors preserve the source's delivered cursor.
+Old session-trait implementations remain for benchmark consumers until checkpoint 5; only those old facets require undecorated snapshot coordination.
 
 ## Validation
 
@@ -44,3 +47,5 @@ RUSTDOCFLAGS="-D warnings" cargo doc -p sea-stateful-compression --all-features 
 
 The test suite covers session conformance, configured limits, and malformed,
 truncated, false-length, and wrong-dictionary frames.
+Replacement tests also cover shared session conformance, bounds before storage, decoding-error progress, and dictionary-compression-over-encryption on both buffered and durable file-backed sequencers.
+That composition test publishes snapshots, shuts down, reopens, and verifies decoded replay and snapshot content through the same wrappers.

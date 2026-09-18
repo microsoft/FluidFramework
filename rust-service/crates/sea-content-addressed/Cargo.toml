@@ -6,9 +6,13 @@ license = "MIT"
 rust-version = "1.98.1"
 
 [dependencies]
+async-trait.workspace = true
 bytes.workspace = true
 sea-core = { path = "../sea-core" }
 thiserror.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true
 
 [lints.rust]
 unsafe_code = "forbid"

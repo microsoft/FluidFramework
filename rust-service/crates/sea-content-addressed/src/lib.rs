@@ -1,5 +1,8 @@
 #![doc = include_str!("../README.md")]
 
+/// Replacement blob-store capabilities for the immutable object engine.
+pub mod next;
+
 use std::{
     fs::{self, File, OpenOptions},
     io::{Read as _, Write as _},
@@ -59,6 +62,9 @@ pub enum StoreError {
     /// Stored bytes do not match their requested identity or canonical encoding.
     #[error("stored content is corrupt: {0}")]
     Corrupt(&'static str),
+    /// Availability evidence belongs to another namespace.
+    #[error("incompatible content handle")]
+    IncompatibleHandle,
 }
 
 /// Durable immutable blob-tree object store.
@@ -83,6 +89,9 @@ impl ContentStore {
         fs::create_dir_all(&blobs)?;
         fs::create_dir_all(&directories)?;
         sync_directory(&root)?;
+        let root = fs::canonicalize(root)?;
+        let blobs = root.join("blobs");
+        let directories = root.join("directories");
         Ok(Self {
             root,
             blobs,

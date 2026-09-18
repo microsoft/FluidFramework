@@ -1,5 +1,8 @@
 #![doc = include_str!("../README.md")]
 
+/// Synchronized replacement document factory and component contracts.
+pub mod next;
+
 use std::{
     collections::{BTreeMap, VecDeque},
     fs::{self, File, OpenOptions},

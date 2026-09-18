@@ -1,5 +1,10 @@
 #![doc = include_str!("../README.md")]
 
+mod journal;
+
+/// Replacement document factory and independently usable file components.
+pub mod next;
+
 use std::{
     collections::BTreeMap,
     fs::{self, File, OpenOptions},

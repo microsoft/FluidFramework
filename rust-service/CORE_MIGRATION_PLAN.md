@@ -2,16 +2,16 @@
 
 ## Status
 
-- **Plan status:** Checkpoint 1 reviewed and committed by the user; checkpoint 2 implemented and validated, uncommitted for review.
+- **Plan status:** Checkpoints 1 and 2 reviewed and committed by the user; checkpoint 3 implemented and validated, uncommitted for review.
 - **Execution mode:** One coordinating agent, sequential checkpoints on the current branch.
 - **Scope:** Replacement of the old core model and alignment of its implementations and consumers within `rust-service/`.
 - **Preparation completed:** `85e6cf96430` introduced `sea_core::next`, removed `SeaCollection`, and added default `SeaStorage::create_view` and `open_view` methods.
-- **Completed checkpoint:** API-only preparation and checkpoints 1 and 2 implementation; checkpoint 2 awaits user review and checkpoints 3 through 6 remain open.
-- **Validation:** Checkpoint 2 focused tests, canonical Rust workspace gates, `./test.sh`, documentation checking, scoped policy, and repository-root `pnpm build:fast` passed; exact outcomes are recorded below.
-- **Known implementation state:** Replacement memory components, direct views, session facets, and a multi-user sequencer work together; remaining backends, wrappers, transport, and application consumers still use the explicitly transitional old model.
+- **Completed checkpoint:** API-only preparation and checkpoints 1 through 3 implementation; checkpoint 3 awaits user review and checkpoints 4 through 6 remain open.
+- **Validation:** Checkpoint 3 focused tests, canonical Rust workspace gates, `./test.sh` (166 Rust tests plus generated-client/browser checks), documentation checking, scoped policy, and repository-root `pnpm build:fast` passed; exact outcomes are recorded below.
+- **Known implementation state:** Replacement memory, buffered-file, durable-file, immutable-content, sequencer, and transforming-wrapper paths work; transport and application consumers still use the explicitly transitional old model.
 - **Open decisions:** Final public module layout and consumer-specific protocol/Fluid mappings remain for their owning checkpoints; checkpoint 2's shared session mappings are approved and recorded below.
-- **Next action:** Review checkpoint 2's uncommitted diff and evidence at `893fb9fe307`. Only after approval, begin checkpoint 3's remaining backends and decorators; do not start checkpoint 3 from this handoff without authorization.
-- **Plan commit:** `468aa0dd934`; checkpoint 1 started from `96ffe44bc98` and was committed and adjusted by the user through `893fb9fe307`. Checkpoint 2 created no commit, push, branch, worktree, or subagent.
+- **Next action:** Review checkpoint 3's uncommitted diff and evidence at `05a8403baa1`. Only after approval, begin checkpoint 4 at server document ownership and protocol/session mappings; do not start checkpoint 4 from this handoff without authorization.
+- **Plan commit:** `468aa0dd934`; checkpoint 1 was committed and adjusted through `893fb9fe307`, checkpoint 2 through `05a8403baa1`. Checkpoint 3 created no commit, push, branch, worktree, or subagent.
 
 Update this status and the checkpoint evidence in every implementation commit.
 Record the exact next action, completed checks, unresolved decisions, and any temporary breakage.
@@ -137,7 +137,7 @@ Package names below identify focused validation targets, not permission to omit 
 - **Evidence:** Multiple sessions share one runtime; ordered submission and snapshot-plus-replay work without gaps or duplicates; ambiguous and cancelled operations are not confused; closing one session does not invalidate another; logical teardown releases the intended resources.
 - **Validation:** Focused `sea-sequencer` tests and session conformance checks over the memory implementation, plus affected core checks and required gates.
 - **Exit:** One usable end-to-end memory/view/sequencer slice with documented session contracts and remaining consumer dependencies. Evaluate, but do not automatically begin, parallel execution.
-- [x] Complete: implementation and validation, uncommitted and awaiting user review.
+- [x] Complete: reviewed, committed, and adjusted by the user through `05a8403baa1`.
 
 ### 3. Remaining Backends And Decorators
 
@@ -147,7 +147,7 @@ Package names below identify focused validation targets, not permission to omit 
 - **Evidence:** Shared conformance across memory, buffered-file, and durable-file storage; dependency-closed recovery; corrupt required-prefix failure; exclusive ownership and resource lifetime; declared durability behavior; compression/encryption/stateful-compression round trips and stream semantics.
 - **Validation:** Focused tests for each affected crate, cross-backend conformance, and required gates. Reopening and crash/recovery tests use freshly created data, not legacy fixtures kept solely for compatibility.
 - **Exit:** Retained backends and decorators operate under the new contracts without compatibility layers. Record any consumer still keeping an old type alive for checkpoint 5.
-- [ ] Complete.
+- [x] Complete: implementation and validation, uncommitted and awaiting user review.
 
 ### 4. Server, Protocol, Clients, And Bindings
 
@@ -443,3 +443,121 @@ Parallel backend and wrapper work could become useful after this slice is accept
 Sequential work remains the authorized mode; any switch requires a separate user decision and no iteration or worktree has been created.
 Stop for checkpoint-2 review now.
 The precise next implementation action, only after authorization, is to verify this accepted boundary and begin checkpoint 3 at the remaining backend/decorator contracts and their localized conformance fixtures.
+
+### Checkpoint 3: Remaining Backends And Decorators
+
+Starting commit: `05a8403baa1`, clean working tree on `rust-service`.
+The user accepted checkpoint 2 in `4cc9ed3bdf2`, with idempotent-close correction `362b41cfdb9` and lifecycle coverage `05a8403baa1`.
+This supersedes checkpoint 2's historical uncommitted handoff above.
+Execution remained sequential, with no subagents, worktrees, branches, commits, or pushes.
+
+First responsible path: replacement file journal in `sea-file`, shared by buffered and durable replacement components.
+Hypothesis: an exclusively locked, checksummed dependency-ordered journal supports both recovery policies without forwarding through old storage or changing shared contracts.
+First discriminating check: `exclusive_journal_round_trip_and_tail_policies` passed immediately after the first substantive edit.
+No shared core/storage/session contract was changed.
+
+#### Implementation And Decisions
+
+`sea-file::next::FileStorage<false>` supplies buffered replacement documents.
+`sea-file-durable::next::DurableStorage` names the synchronized `FileStorage<true>` configuration of the same new engine, not a wrapper around either old backend.
+The new format contains checksummed content/event/snapshot records in dependency order and does not read old-format data.
+Opening verifies complete content closure, a dense event prefix, and strictly advancing snapshots whose dependencies exist.
+Buffered recovery rejects incomplete tails; durable recovery truncates only an incomplete final frame.
+Complete corruption or missing required dependencies fails recovery.
+
+OS file locks exclude competing independent openings.
+Components and reads retain the opening; unpolled, completed, or failed reads must be dropped before reopening.
+Private availability handles retain canonical document provenance, not writer authority, and can be revalidated after reopening.
+Raw event components keep tree identities opaque; composed views establish availability, and recovery rejects missing dependencies.
+Reads are lazy and bounded/live, support sparse snapshot ranges, preserve coherent progress, and wake outside the mutation lock on commits and uncertain writes.
+
+Filesystem mutations have no internal suspension or detached work.
+Unpolled cancellation has no effect, and a polled call settles synchronously before returning.
+Uncertain journal writes are `Ambiguous` and poison the opening until recovery; heads and resolutions cannot report stale absence.
+No storage append is deduplicated or automatically resubmitted.
+Snapshot positions remain their identities; parent and publisher policy remains in the sequencer.
+
+`ContentStore` now directly implements replacement `BlobStore`/`ReferenceableStore` over its immutable object engine.
+Trait publication verifies transitive closure; resolution distinguishes an absent root from a stored root with missing descendants.
+Handles carry canonical namespace provenance and do not keep a writable opening alive.
+Its synchronous identity-based primitives remain useful lower-level operations, not a second old storage model.
+
+Compression, encryption, and dictionary-compression types now implement all replacement session facets directly.
+They transform payloads while preserving stored identities, opaque availability handles, reference trees, snapshot policy, stream progress, and error classification.
+Snapshot coordination streams retain their underlying drop/revocation behavior.
+Deterministic compression frames preserve exact retries.
+Encryption verifies committed plaintext and reuses ciphertext through the inner author's submission check, preserving reconnect/key-rotation behavior without bypassing cross-author conflicts.
+Definitive concurrent conflicts may reconcile an already committed exact operation; uncertain writes are not blindly retried.
+
+No new third-party version was introduced.
+Manifests and the workspace lockfile record the shared file engine dependency, content trait/test dependencies, and file/encryption test dependencies for dictionary composition.
+All six changed implementation crates have owning documentation and focused tests; unchanged conformance functions supply common laws without duplicate fixtures or conformance churn.
+The memory README only records transition ownership; no memory or sequencer implementation was changed.
+
+#### Behavioral Evidence
+
+Seventeen new tests supplement the accepted checkpoint-2 suite.
+All use freshly created data, not old-format compatibility fixtures.
+
+| Responsibility | Evidence |
+| --- | --- |
+| Exclusive journal, clean records, buffered/durable tail policies | `sea-file::journal::tests::exclusive_journal_round_trip_and_tail_policies` |
+| Shared view and sparse snapshot laws | `replacement_file_conformance`, `replacement_durable_conformance`; existing memory conformance also passed in the full suite |
+| Opaque raw event identities, dependency-closed recovery, foreign-handle rejection | `raw_event_dependencies_fail_recovery_and_foreign_handles_are_rejected` |
+| Coherent new-backlog progress and real reader wakeups | `progress_stays_coherent_when_live_reader_discovers_new_backlog`, `live_readers_wake_on_commit_and_uncertain_write` |
+| Pre-write rejection, partial writes, post-sync lost acknowledgment in both modes | `journal_faults_preserve_prefix_and_block_uncertain_observations` |
+| Snapshot uncertainty cannot claim absence or create duplicates | `snapshot_post_sync_ambiguity_recovers_without_duplicate_publication` |
+| Durable dependency preservation, incomplete-tail repair, corruption failure, stream ownership | `recovery_preserves_dependencies_discards_torn_tail_and_rejects_corruption`, `independent_factories_and_live_streams_share_exclusive_ownership` |
+| Immutable content provenance, closure, reopening, missing descendants | `closure_provenance_reopen_and_missing_dependency` |
+| Every wrapper's session facets, including snapshots, replay, and close | Shared `run_session_conformance` invoked by each wrapper's replacement tests |
+| Encryption retry cardinality, reconnect/key rotation, cross-author conflict | `replacement_retries_preserve_ciphertext_but_recheck_authority` |
+| Decode-error cursor and size limits | `replacement_bounds_decode_errors_and_progress` |
+| Compression/encryption and dictionary/encryption compositions | `replacement_compression_encryption_conformance`, `replacement_file_compositions_recover_snapshots_and_replay` |
+
+The file-composition test runs buffered and synchronized files through view, sequencer, encryption, and dictionary compression, including shutdown, recovery, snapshot content, and decoded replay.
+Fault tests explicitly distinguish failed admission, incomplete commitment, and acknowledged bytes without a returned acknowledgment.
+They are not a power-loss, hardware-failure, or distributed-filesystem certification.
+The full-history in-memory index, synchronous filesystem work, and linear namespace allocation are documented experimental limits.
+
+#### Validation Results
+
+All final commands exited successfully on 2026-09-18.
+Commands run from `rust-service/` unless marked repository root.
+
+| Command | Actual outcome |
+| --- | --- |
+| Focused `cargo test -p <crate> next::` / specific test filters for all six changed crates | Passed after each implementation slice, including journal faults and file-backed wrapper composition. |
+| Focused `cargo clippy -p <crate> --all-targets --all-features -- -D warnings` | Passed for every changed crate; local compile/style defects were repaired without suppressions. |
+| `cargo fmt --all -- --check` | Passed. |
+| `cargo clippy --workspace --all-targets --all-features -- -D warnings` | Passed. |
+| `RUSTDOCFLAGS='-D warnings' cargo doc --workspace --all-features --no-deps` | Passed. |
+| `cargo build --workspace --all-targets` | Passed. |
+| `./test.sh` | Passed: 166 Rust tests across 16 binaries, generated WASM/Node tests, driver JavaScript tests, and Chromium WebTransport/shutdown checks. |
+| `node scripts/check-documentation.mjs` | Passed: 24 roots, 31 READMEs, 56 local links. |
+| Repository-root `pnpm policy-check --path rust-service` | Passed: 530 files, no violations. |
+| Repository-root `pnpm build:fast` | Passed: 1,878 tasks across 168 packages; 1,858 up to date and 20 completed, including regenerated WASM/browser inputs. |
+| `git diff --check` and editor diagnostics for edited implementation files | Passed with no reported errors. |
+
+Logs are `/tmp/sea-core-checkpoint3-tests.log` and `/tmp/sea-core-checkpoint3-build-fast.log`.
+The browser harness reports HeadlessChrome 152, three sessions, `STORAGE_MODE=durable-file`, successful content/snapshot participation, and bounded shutdown.
+That harness still uses the old server backend: it establishes regression safety, not completed replacement protocol or application migration.
+No standalone SharedTree browser matrix, new benchmark result, or wrapper-specific browser claim is made.
+There are no failing or waived required gates and no tracked generated-output changes.
+
+#### Precise Handoff
+
+Checkpoint 3's 26 changed/new files remain uncommitted at `05a8403baa1` for user review.
+Review the replacement journal/components, content trait implementation, all three wrapper facets, localized tests, manifest/lockfile edges, READMEs, and this plan.
+No checkpoint-4 implementation, commit, or push has been performed.
+
+Concrete retained transition obligations:
+- `sea-webtransport-server/src/host.rs` still names `MemoryStream`, `FileStream`, and `DurableLog`; checkpoint 4 owns document-scoped factories/runtime caching and protocol migration.
+- `sea-webtransport/src/wasm/sea.rs` local bindings and server dispatch fixtures still use old memory/sequencer APIs; checkpoint 4 owns their migration.
+- `examples/sea-counter` and `sea-benchmarks/src/main.rs` still use old storage/session APIs and wrapper facets; checkpoint 5 owns those consumers.
+- Old backends, old conformance entry points, and old wrapper trait implementations therefore cannot yet be removed without crossing checkpoint scope. Checkpoint 5 owns final deletion after these consumers migrate.
+- The shared replacement engine is already independent of those old backends. No compatibility adapter or format fallback was added.
+
+Stop for checkpoint-3 review.
+After explicit approval, verify the accepted commit and begin checkpoint 4 at `sea-webtransport-server/src/host.rs`, replacing per-connection old stream ownership with document-scoped runtime ownership over the selected replacement factory.
+Keep received identities separate from availability handles, and ask before any material protocol/session contract decision not already approved.
+Sequential execution remains authorized; no parallel iteration has been created.

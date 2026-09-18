@@ -62,7 +62,8 @@ Tests in [`memory_archive.rs`](src/memory_archive.rs) cover append-only assertio
 `MemoryStream` still implements the old `sea_core::archive::SeaStorage` for consumers awaiting migration.
 It is separate state and code, not an adapter beneath `MemoryStorage`.
 Its finite captured-head loads, initial snapshots, conditional publication, and stable publication identities are old-model semantics only.
-Checkpoint 3 of the [core migration plan](../../CORE_MIGRATION_PLAN.md) owns its removal after dependent consumers migrate.
+Checkpoint 3 of the [core migration plan](../../CORE_MIGRATION_PLAN.md) verified that server hosting and WASM-local consumers still require it until checkpoint 4, while the counter and benchmarks require it until checkpoint 5.
+Final old-backend removal therefore remains an explicit checkpoint-5 obligation, not a compatibility layer beneath replacement storage.
 
 ## Validation
 

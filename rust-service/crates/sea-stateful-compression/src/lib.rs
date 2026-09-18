@@ -1,5 +1,7 @@
 #![doc = include_str!("../README.md")]
 
+mod next;
+
 use async_trait::async_trait;
 use bytes::{BufMut, Bytes, BytesMut};
 use sea_core::{

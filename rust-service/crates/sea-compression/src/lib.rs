@@ -1,5 +1,7 @@
 #![doc = include_str!("../README.md")]
 
+mod next;
+
 use std::io::{Read, Write};
 
 use async_trait::async_trait;

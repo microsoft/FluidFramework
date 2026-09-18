@@ -1148,9 +1148,11 @@ dependencies = [
 name = "sea-content-addressed"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "bytes",
  "sea-core",
  "thiserror",
+ "tokio",
 ]
 
 [[package]]
@@ -1218,6 +1220,7 @@ dependencies = [
  "futures-util",
  "sea-conformance",
  "sea-core",
+ "sea-file",
  "thiserror",
  "tokio",
 ]
@@ -1258,6 +1261,8 @@ dependencies = [
  "sea-compression",
  "sea-conformance",
  "sea-core",
+ "sea-encryption",
+ "sea-file",
  "sea-memory",
  "sea-sequencer",
  "thiserror",

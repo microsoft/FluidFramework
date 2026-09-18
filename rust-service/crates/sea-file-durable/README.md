@@ -1,7 +1,23 @@
 # Sea Durable File
 
-This crate is a single-process `SeaStorage` implementation with checksummed framing, sync-before-acknowledgement, deterministic crash points, blob-tree references, retained snapshot history, and reopen behavior.
+`sea-file-durable::next::DurableStorage` implements replacement `SeaStorage` using the shared filesystem engine's synchronized configuration.
+It provides independently usable blob, event, and snapshot components, exclusive OS-locked openings, dependency-closed recovery, and direct monitored live reads.
+The engine and format are documented in [sea-file](../sea-file/README.md).
 It remains experimental rather than a production storage backend.
+
+Every successful write synchronizes the journal; document allocation synchronizes the containing namespace, and namespace creation synchronizes its ancestors.
+Recovery preserves complete checksummed frames, discards an incomplete final frame, and rejects corrupt required history or missing dependencies.
+Uncertain writes poison the opening until recovery, rather than claiming an authoritative head from stale state.
+Snapshot identities are event positions and there is no backend publication-operation registry.
+Handles carry provenance without retaining writer authority; components and reads retain the opening until dropped.
+
+## Transitional API
+
+`DurableLog`, its old-format records, and its public crash-injection fixture remain only for old server consumers and tests.
+Checkpoint 4 migrates server hosting; checkpoint 5 removes any remaining old backend APIs.
+The replacement implementation does not adapt through `DurableLog`.
+
+## Validation
 
 From `rust-service/`, run:
 
@@ -10,6 +26,10 @@ cargo test -p sea-file-durable --all-targets --all-features
 cargo clippy -p sea-file-durable --all-targets --all-features -- -D warnings
 ```
 
-The test suite covers archive conformance, clean reopen behavior, incomplete-tail recovery, checksum-corruption rejection, recovery of synced-but-unacknowledged appends, and operation-based resolution of synced-but-unacknowledged snapshot publications.
+Replacement tests cover shared view/snapshot conformance, dependency-preserving reopen, incomplete-tail repair, checksum-corruption rejection, independent factories, live delivery, and stream-retained opening ownership.
+The owning shared engine tests pre-write rejection, partial writes, post-sync lost acknowledgments, snapshot recovery, and wakeups on uncertainty.
+The retained old suite additionally covers its former operation-based snapshot resolution.
 
-Successful tests demonstrate recovery after process termination while the operating system remains running. They do not demonstrate survival across power loss, filesystem or hardware failure, multi-process writer safety, retention, replication, or remote storage semantics. Persisted-size output is structural evidence for this encoding, not a capacity or throughput claim.
+Successful tests are not certification of survival across power loss or filesystem/hardware failure.
+OS locks exclude competing valid openings; external replacement of locked files and distributed filesystems are outside the supported model.
+There is no retention policy, replication, remote storage, capacity, or throughput claim.
