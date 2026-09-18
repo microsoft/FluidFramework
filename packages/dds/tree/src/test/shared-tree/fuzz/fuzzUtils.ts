@@ -15,6 +15,7 @@ import {
 	deserializeIdCompressor,
 	toIdCompressorWithCore,
 	type IIdCompressorCore,
+	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 
 import {
@@ -258,10 +259,14 @@ export const createOrDeserializeCompressor = (
 ): IIdCompressor & IIdCompressorCore => {
 	return toIdCompressorWithCore(
 		summary === undefined
-			? createIdCompressor(sessionId)
+			? createIdCompressor(sessionId, SerializationVersion.V3)
 			: summary.withSession
-				? deserializeIdCompressor(summary.serializedCompressor)
-				: deserializeIdCompressor(summary.serializedCompressor, sessionId),
+				? deserializeIdCompressor(summary.serializedCompressor, SerializationVersion.V3)
+				: deserializeIdCompressor(
+						summary.serializedCompressor,
+						sessionId,
+						SerializationVersion.V3,
+					),
 	);
 };
 

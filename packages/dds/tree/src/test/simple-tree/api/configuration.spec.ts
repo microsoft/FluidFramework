@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { createIndependentTreeViewAlpha } from "../../../shared-tree/index.js";
@@ -61,7 +64,7 @@ describe("simple-tree configuration", () => {
 			preventAmbiguity: false,
 		});
 		const view = createIndependentTreeViewAlpha(config, {
-			idCompressor: createIdCompressor(),
+			idCompressor: createIdCompressor(SerializationVersion.V3),
 		});
 		// This is invalid since it is ambiguous which type of node is being constructed:
 		// view.initialize({ length: 5 });
@@ -84,7 +87,7 @@ describe("simple-tree configuration", () => {
 			preventAmbiguity: true,
 		});
 		const view = createIndependentTreeViewAlpha(config, {
-			idCompressor: createIdCompressor(),
+			idCompressor: createIdCompressor(SerializationVersion.V3),
 		});
 		// This now works, since the field is sufficient to determine this is a `Meters` node.
 		view.initialize({ meters: 5 });

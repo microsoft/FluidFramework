@@ -13,7 +13,6 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { startEphemeralService } from "@fluidframework/local-driver/internal";
 import type {
 	ISharedObjectKind,
@@ -134,7 +133,6 @@ const DebugSharedTree = configuredSharedTree({
 class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
 	public constructor() {
 		super({
-			idCompressor: createIdCompressor(),
 			registry: [DebugSharedTree.getFactory()],
 		});
 	}
@@ -496,12 +494,8 @@ describe("SharedTree", () => {
 		describe("incrementally reuses previous blobs", () => {
 			it("on a client which never uploaded a blob", async () => {
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
-				const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-					idCompressor: createIdCompressor(),
-				});
-				const dataStoreRuntime2 = new MockFluidDataStoreRuntime({
-					idCompressor: createIdCompressor(),
-				});
+				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 				const factory = new SharedTreeTestFactory(() => {});
 
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
@@ -759,7 +753,6 @@ describe("SharedTree", () => {
 		// If it doesn't, the second tree will throw an error when trying to sequence a commit with sequence number that has "gone backwards" and this test will fail.
 		const sharedTreeFactory = DefaultTestSharedTreeKind.getFactory();
 		const runtime = new MockFluidDataStoreRuntime({
-			idCompressor: createIdCompressor(),
 			attachState: AttachState.Detached,
 		});
 		const tree = sharedTreeFactory.create(runtime, "tree");
@@ -3215,7 +3208,7 @@ describe("SharedTree", () => {
 	});
 
 	it("throws an error if attaching during a transaction", () => {
-		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+		const runtime = new MockFluidDataStoreRuntime();
 		const tree = DefaultTestSharedTreeKind.getFactory().create(runtime, "tree");
 		const runtimeFactory = new MockContainerRuntimeFactory();
 		runtimeFactory.createContainerRuntime(runtime);
@@ -3236,7 +3229,6 @@ describe("SharedTree", () => {
 
 	it("summarize with pre-attach removed nodes", () => {
 		const runtime = new MockFluidDataStoreRuntime({
-			idCompressor: createIdCompressor(),
 			minVersionForCollab: FluidClientVersion.v2_52,
 		});
 		const sharedObject = configuredSharedTree({
