@@ -31,6 +31,8 @@ This is a speculative learning project, not a proposed production replacement fo
 - [Workspace architecture](WORKSTREAMS.md) maps packages, dependencies, and runtime composition.
 - [Crate guides](crates/README.md) link to implementation-specific guarantees, limitations, and validation commands.
 
+Past plans, research notes, iteration reports, decisions, and benchmark evidence are collected in [Historical records](historical/README.md).
+
 ## Limits
 
 The native server is single-host, and uploaded content, events, and snapshots are retained without garbage collection.

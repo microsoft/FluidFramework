@@ -120,4 +120,4 @@ TODO: Direct shared tree integration should ideally not need a separate summary 
 [`sea-conformance`](crates/sea-conformance/README.md) defines observable laws shared by implementations of the core contracts.
 Focused tests validate behavior owned by each crate; integration and browser tests validate composition across boundaries.
 Follow the [documentation policy](DEVELOPMENT.md#documentation-policy) and [behavioral test policy](DEVELOPMENT.md#behavioral-test-policy) when making changes.
-Record a [decision](decisions/) when changing shared semantics, public contracts, protocol behavior, crate responsibilities, or application integration policy.
+Record a [decision](historical/decisions/) when changing shared semantics, public contracts, protocol behavior, crate responsibilities, or application integration policy.

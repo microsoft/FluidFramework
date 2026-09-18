@@ -49,7 +49,7 @@ Snapshot coordination opens with one immutable policy:
 Any active client-selected publisher suppresses Sea selection.
 When the last client-selected stream leaves, Sea deterministically nominates one active Sea-selected stream if available.
 Nomination selects authority; it never requests or schedules snapshot generation.
-See [Decision 0012](../../decisions/0012-fluid-snapshot-election-integration.md).
+See [Decision 0012](../../historical/decisions/0012-fluid-snapshot-election-integration.md).
 
 ## Lifecycle And Ownership
 

@@ -72,16 +72,29 @@ async function exists(path) {
 }
 
 async function highestIteration(root) {
-	const iterationsRoot = resolve(root, "rust-service/iterations");
-	if (!(await exists(iterationsRoot))) {
-		return undefined;
+	const iterations = [];
+	for (const directory of ["rust-service/historical/iterations", "rust-service/iterations"]) {
+		const iterationsRoot = resolve(root, directory);
+		if (!(await exists(iterationsRoot))) {
+			continue;
+		}
+		const entries = await readdir(iterationsRoot, { withFileTypes: true });
+		iterations.push(
+			...entries
+				.filter((entry) => entry.isDirectory() && /^\d{4}$/.test(entry.name))
+				.map((entry) => entry.name),
+		);
 	}
-	const entries = await readdir(iterationsRoot, { withFileTypes: true });
-	return entries
-		.filter((entry) => entry.isDirectory() && /^\d{4}$/.test(entry.name))
-		.map((entry) => entry.name)
-		.sort()
-		.at(-1);
+	return iterations.sort().at(-1);
+}
+
+async function iterationDirectory(root, iteration) {
+	const historical = resolve(root, `rust-service/historical/iterations/${iteration}`);
+	const legacy = resolve(root, `rust-service/iterations/${iteration}`);
+	return !(await exists(resolve(historical, "manifest.json"))) &&
+		(await exists(resolve(legacy, "manifest.json")))
+		? legacy
+		: historical;
 }
 
 function parseWorktrees(text) {
@@ -298,8 +311,13 @@ async function main() {
 	);
 	const iteration =
 		options.iteration ??
-		highestWorktreeIteration(worktrees) ??
-		(await highestIteration(repositoryRoot));
+		[
+			highestWorktreeIteration(worktrees),
+			await highestIteration(options.integrationRoot ?? repositoryRoot),
+		]
+			.filter((candidate) => candidate !== undefined)
+			.sort()
+			.at(-1);
 	if (iteration === undefined) {
 		fail("no numbered Rust service iteration was found");
 	}
@@ -315,7 +333,7 @@ async function main() {
 	}
 	integrationRoot = resolve(integrationRoot);
 
-	const iterationRoot = resolve(integrationRoot, `rust-service/iterations/${iteration}`);
+	const iterationRoot = await iterationDirectory(integrationRoot, iteration);
 	const manifestPath = resolve(iterationRoot, "manifest.json");
 	if (!(await exists(manifestPath))) {
 		fail(`manifest not found: ${manifestPath}`);
@@ -330,8 +348,7 @@ async function main() {
 		const worktreePath =
 			discovered ?? ((await exists(conventional)) ? conventional : undefined);
 		const reportPath = resolve(
-			worktreePath ?? integrationRoot,
-			`rust-service/iterations/${iteration}`,
+			await iterationDirectory(worktreePath ?? integrationRoot, iteration),
 			workstream.report,
 		);
 		const report = await reportSummary(reportPath);

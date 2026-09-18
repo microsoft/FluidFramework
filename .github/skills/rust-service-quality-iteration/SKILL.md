@@ -139,7 +139,7 @@ rationale; it is a deferral with remaining risk.
 
 ## Maintain the Quality Inventory
 
-Create `rust-service/iterations/NNNN/quality-inventory.md` from
+Create `rust-service/historical/iterations/NNNN/quality-inventory.md` from
 [the quality inventory template](./assets/quality-inventory.template.md) during
 run initialization with:
 

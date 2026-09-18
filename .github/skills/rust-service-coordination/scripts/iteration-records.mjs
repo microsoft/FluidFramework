@@ -16,7 +16,8 @@ if (process.env.RUST_SERVICE_RECORDS_REPOSITORY_ROOT) {
 	console.error(`info: using repository root override: ${repositoryRoot}`);
 }
 const projectRoot = resolve(repositoryRoot, "rust-service");
-const iterationsRoot = resolve(projectRoot, "iterations");
+const historicalRoot = resolve(projectRoot, "historical");
+const iterationsRoot = resolve(historicalRoot, "iterations");
 const assetsRoot = resolve(scriptDirectory, "../assets");
 const qualityAssetsRoot = resolve(
 	scriptDirectory,
@@ -277,7 +278,7 @@ async function validateMarkdown(path, headings, errors) {
 
 async function validateFoundation() {
 	const errors = [];
-	const reportPath = resolve(projectRoot, "foundation-report.md");
+	const reportPath = resolve(historicalRoot, "foundation-report.md");
 	await validateMarkdown(
 		reportPath,
 		[
@@ -320,7 +321,7 @@ async function validateFoundation() {
 			"cargo clippy --workspace --all-targets --all-features -- -D warnings",
 			"cargo build --workspace --all-targets",
 			"cargo test --workspace --all-targets --all-features",
-			"cargo run -p ",
+			"node scripts/check-documentation.mjs",
 		]) {
 			if (!development.includes(command)) {
 				errors.push(`DEVELOPMENT.md does not document: ${command}`);
@@ -521,15 +522,15 @@ async function validate(iteration, phase) {
 	if (!(await exists(resolve(projectRoot, "LEARNINGS.md")))) {
 		errors.push("missing rust-service/LEARNINGS.md");
 	}
-	if (!(await exists(resolve(projectRoot, "decisions/README.md")))) {
-		errors.push("missing rust-service/decisions/README.md");
+	if (!(await exists(resolve(historicalRoot, "decisions/README.md")))) {
+		errors.push("missing rust-service/historical/decisions/README.md");
 	} else if (phase === "complete") {
-		const decisionFiles = (await readdir(resolve(projectRoot, "decisions"))).filter(
+		const decisionFiles = (await readdir(resolve(historicalRoot, "decisions"))).filter(
 			(name) => name.endsWith(".md") && name !== "README.md",
 		);
 		for (const decisionFile of decisionFiles) {
 			await validateMarkdown(
-				resolve(projectRoot, "decisions", decisionFile),
+				resolve(historicalRoot, "decisions", decisionFile),
 				[
 					"Context",
 					"Decision Drivers",

@@ -110,12 +110,7 @@ or deletion when overlapping evidence no longer proves distinct behavior.
 
 ## Research Records
 
-Phase 1 work is recorded in `foundation-report.md`. Do not wait until the foundation is complete to update it: record falsified hypotheses, repeated failed attempts, substantial effort sinks, human interventions, shared decisions, and reusable process findings as they occur.
-
-Before declaring Phase 1 complete, run:
-
-```bash
-node ../.github/skills/rust-service-coordination/scripts/iteration-records.mjs validate-foundation
-```
-
-After that validation and all commands above pass, commit the foundation. Its commit hash becomes iteration `0001`'s `sourceCommit`.
+Past plans, foundation work, iteration records, decisions, and benchmark evidence live in [Historical records](historical/README.md).
+Use the [coordination skill](../.github/skills/rust-service-coordination/SKILL.md) to choose lightweight work or a full iteration and to run the current process.
+New iteration records also live under `historical/iterations/`; completed records remain append-only history.
+Record falsified hypotheses, repeated failed attempts, substantial effort sinks, human interventions, shared decisions, and reusable process findings as they occur.

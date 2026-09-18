@@ -27,6 +27,9 @@ node .github/skills/rust-service-status-report/scripts/collect-status.mjs --summ
 
 The script discovers worktrees from `git worktree list`, reads the iteration manifest and reports, inspects Git state, and scans `/proc` without modifying anything. `--summary` omits long commit histories and bounds report excerpts so the result remains directly readable by tool output. If no iteration is supplied, it selects the highest numbered iteration available in the integration checkout or primary repository.
 
+Iteration manifests and reports live under `rust-service/historical/iterations/NNNN/`, including records for active iterations.
+For worktrees that predate the archive move, the collector can still read the old `rust-service/iterations/NNNN/` location without modifying those worktrees.
+
 Use `--integration-root <absolute-path>` only when the integration worktree cannot be discovered automatically:
 
 ```bash

@@ -4,7 +4,7 @@ Status: planned
 Branch: `rust-service-iteration-{{ITERATION}}-{{WORKSTREAM}}`
 Iteration source commit: <!-- TODO(required): record the approved prior Phase 3 or foundation commit -->
 Owner: <!-- TODO(required): record the agent or owner -->
-Report: `rust-service/iterations/{{ITERATION}}/phase-2/{{WORKSTREAM}}.md`
+Report: `rust-service/historical/iterations/{{ITERATION}}/phase-2/{{WORKSTREAM}}.md`
 Required environment: <!-- TODO(required): record tool/runtime versions and setup constraints, or none -->
 
 ## Assignment
