@@ -106,7 +106,11 @@ The creation entry point is exported as internal; the per-instance request surfa
 `configuration.on("changed", listener)` and `off` expose the shared synchronous notifications.
 Published requests take effect only when sequenced, including requests made while disconnected.
 Detached or otherwise unpublished requests apply immediately without submitting an op.
-Publication still requires the document capability; existing documents must await `ensureChannelConfigurationEnabled()` before publishing the configured channel.
+Publication still requires the document capability.
+In an existing document, normal outgoing traffic can propose the capability through the desired document schema.
+Publish only after `channelConfigurationEnabled` reports that a sequenced schema change has made the capability active; setting the local option does not make publication ready.
+If the proposal loses a compare-and-swap race, the capability may remain unavailable for the session; there is no separate activation API or automatic retry.
+Publishing before readiness throws an error instead of switching to the legacy protocol.
 
 Enabling starts history at the accepted barrier, not at the oldest commit retained by the current client.
 Tree records the first covered main-trunk sequence number and Tree batch index, together with the enabling configuration revision, in its versioned `HistoryRetention` summary blob.
