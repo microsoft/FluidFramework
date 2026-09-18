@@ -137,11 +137,12 @@ export function verifyChannelConfigurationPublication(
 	}
 	requireChannelConfigurationController(channel);
 	if (
-		(runtime as IFluidDataStoreRuntime & ChannelConfigurationRuntime)
-			.channelConfigurationEnabled !== true
+		(
+			runtime as IFluidDataStoreRuntime & ChannelConfigurationRuntime
+		).isChannelConfigurationEnabled?.(channel.attributes.type) !== true
 	) {
 		throw new UsageError(
-			"Document channel configuration is not active; cannot publish a configured channel",
+			"Document channel configuration is not active for this type; cannot publish a configured channel",
 		);
 	}
 	return true;

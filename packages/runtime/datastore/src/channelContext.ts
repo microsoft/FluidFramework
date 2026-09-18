@@ -220,8 +220,9 @@ export async function loadChannel(
 		configured &&
 		(dataStoreRuntime as IFluidDataStoreRuntime & ChannelConfigurationRuntime)
 			.channelConfigurationPublicationRequired === true &&
-		(dataStoreRuntime as IFluidDataStoreRuntime & ChannelConfigurationRuntime)
-			.channelConfigurationEnabled !== true
+		(
+			dataStoreRuntime as IFluidDataStoreRuntime & ChannelConfigurationRuntime
+		).isChannelConfigurationEnabled?.(attributes.type) !== true
 	) {
 		throw new DataCorruptionError("Configured channel requires document capability", {});
 	}

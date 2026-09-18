@@ -272,6 +272,8 @@ import {
 	validateLoaderCompatibility,
 } from "./runtimeLayerCompatState.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Share validation without a package-level export.
+import { PersistedStringSet } from "./summary/documentSchema.js";
 import {
 	VersionMarkResolver,
 	type IVersionMarkResolver,
@@ -544,11 +546,11 @@ export interface ContainerRuntimeOptionsInternal extends ContainerRuntimeOptions
 	readonly enableGroupedBatching: boolean;
 
 	/**
-	 * Deployment opt-in for creating configured channels. Readers remain enabled when omitted.
-	 * Existing documents request the capability through normal schema proposals; it may not
-	 * become active this session. Publication requires the capability to be active.
+	 * Stable channel type IDs allowed to create configured channels. Persisted types remain
+	 * readable when omitted. Existing documents request these types through normal schema
+	 * proposals; they may not become active this session. Publication requires the type to be active.
 	 */
-	readonly enableChannelConfiguration?: boolean;
+	readonly channelConfigurationTypes?: readonly string[];
 }
 
 /**
@@ -1093,9 +1095,17 @@ export class ContainerRuntime
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
 			stagingModeAutoFlushThreshold = defaultConfigs.stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade = defaultConfigs.disableSchemaUpgrade,
-			enableChannelConfiguration,
+			channelConfigurationTypes,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
-		if (enableChannelConfiguration === true && !explicitSchemaControl) {
+		const channelConfigurationProperty = new PersistedStringSet();
+		if (!channelConfigurationProperty.validate(channelConfigurationTypes)) {
+			throw new UsageError("Channel configuration types must be an array of nonempty strings");
+		}
+		const requestedChannelConfigurationTypes = channelConfigurationProperty.or(
+			undefined,
+			channelConfigurationTypes,
+		);
+		if (requestedChannelConfigurationTypes !== undefined && !explicitSchemaControl) {
 			throw new UsageError("Channel configuration requires explicit schema control");
 		}
 
@@ -1283,9 +1293,17 @@ export class ContainerRuntime
 			compressionOptions.compressionAlgorithm === "lz4";
 
 		const persistedRuntimeSchema = metadata?.documentSchema?.runtime;
+		const persistedChannelConfigurationTypes = persistedRuntimeSchema?.channelConfiguration;
+		if (!channelConfigurationProperty.validate(persistedChannelConfigurationTypes)) {
+			throw new DataCorruptionError(
+				"Channel configuration types must be an array of nonempty strings",
+				{},
+			);
+		}
 		if (
-			persistedRuntimeSchema?.channelConfiguration === true &&
-			persistedRuntimeSchema.explicitSchemaControl !== true
+			persistedChannelConfigurationTypes !== undefined &&
+			persistedChannelConfigurationTypes.length > 0 &&
+			persistedRuntimeSchema?.explicitSchemaControl !== true
 		) {
 			throw new DataCorruptionError(
 				"Channel configuration requires explicit document schema control",
@@ -1293,7 +1311,9 @@ export class ContainerRuntime
 			);
 		}
 		const rehydratingConfiguredDocument =
-			!existing && persistedRuntimeSchema?.channelConfiguration === true;
+			!existing &&
+			persistedChannelConfigurationTypes !== undefined &&
+			persistedChannelConfigurationTypes.length > 0;
 
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
@@ -1306,10 +1326,12 @@ export class ContainerRuntime
 				opGroupingEnabled: enableGroupedBatching,
 				createBlobPayloadPending,
 				disallowedVersions: [],
-				channelConfiguration:
-					enableChannelConfiguration === true || rehydratingConfiguredDocument
-						? true
-						: undefined,
+				channelConfiguration: rehydratingConfiguredDocument
+					? channelConfigurationProperty.or(
+							persistedChannelConfigurationTypes,
+							requestedChannelConfigurationTypes,
+						)
+					: requestedChannelConfigurationTypes,
 			},
 			(schema) => {
 				runtime.onSchemaChange(schema);
@@ -1349,7 +1371,9 @@ export class ContainerRuntime
 			createBlobPayloadPending,
 			stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade,
-			...(enableChannelConfiguration === undefined ? {} : { enableChannelConfiguration }),
+			...(requestedChannelConfigurationTypes === undefined
+				? {}
+				: { channelConfigurationTypes: requestedChannelConfigurationTypes }),
 		};
 
 		validateMinimumVersionForCollab(updatedMinVersionForCollab);
@@ -1750,12 +1774,15 @@ export class ContainerRuntime
 					this.channelConfigurationPublications.push(publish);
 				},
 			},
-			channelConfigurationEnabled: {
-				get: () =>
-					this.documentsSchemaController.sessionSchema.runtime.channelConfiguration === true,
+			isChannelConfigurationEnabled: {
+				value: (type: string): boolean =>
+					this.documentsSchemaController.sessionSchema.runtime.channelConfiguration?.includes(
+						type,
+					) === true,
 			},
-			channelConfigurationCreationEnabled: {
-				get: () => this.runtimeOptions.enableChannelConfiguration === true,
+			isChannelConfigurationCreationEnabled: {
+				value: (type: string): boolean =>
+					this.runtimeOptions.channelConfigurationTypes?.includes(type) === true,
 			},
 			channelConfigurationPublicationRequired: {
 				get: () => this.attachState !== AttachState.Detached,

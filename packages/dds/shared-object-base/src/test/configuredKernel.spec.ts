@@ -65,6 +65,7 @@ interface View {
 function makeKind(
 	initialConfiguration?: Config,
 	support: boolean = true,
+	type: string = "configured-test",
 ): ISharedObjectKind<View> & SharedObjectKindAlpha<View> {
 	function create(args: KernelArgs<Config>): FactoryOut<View> {
 		const observed: unknown[] = [["initial", args.configuration?.current]];
@@ -103,8 +104,8 @@ function makeKind(
 		return { kernel, view: { config: args.configuration, observed, edit } };
 	}
 	return makeSharedObjectKind<View, Config>({
-		type: "configured-test",
-		attributes: { type: "configured-test", snapshotFormatVersion: "1" },
+		type,
+		attributes: { type, snapshotFormatVersion: "1" },
 		telemetryContextPrefix: "configured-test",
 		factory: {
 			...(support ? { configurationDefinition: definition } : {}),
@@ -117,8 +118,8 @@ function makeKind(
 
 interface Harness {
 	readonly runtime: MockFluidDataStoreRuntime & {
-		channelConfigurationCreationEnabled: boolean;
-		channelConfigurationEnabled: boolean;
+		isChannelConfigurationCreationEnabled: (type: string) => boolean;
+		isChannelConfigurationEnabled: (type: string) => boolean;
 	};
 	readonly delta: MockDeltaConnection;
 	readonly services: IChannelServices;
@@ -131,8 +132,8 @@ function harness(
 	onSubmit?: () => void,
 ): Harness {
 	const runtime = Object.assign(new MockFluidDataStoreRuntime({ attachState }), {
-		channelConfigurationCreationEnabled: true,
-		channelConfigurationEnabled: true,
+		isChannelConfigurationCreationEnabled: (type: string) => type === "configured-test",
+		isChannelConfigurationEnabled: (type: string) => type === "configured-test",
 	});
 	Object.defineProperty(runtime.deltaManagerInternal, "maxMessageSize", {
 		value: 1024 * 1024,
@@ -213,8 +214,8 @@ describe("configured kernel composition", () => {
 		context.isLocalDataStore = false;
 		context.attachState = AttachState.Attached;
 		context.containerRuntime = Object.assign(context.containerRuntime, {
-			channelConfigurationEnabled: true,
-			channelConfigurationCreationEnabled: false,
+			isChannelConfigurationEnabled: (type: string) => type === "configured-test",
+			isChannelConfigurationCreationEnabled: () => false,
 			channelConfigurationPublicationRequired: true,
 		});
 		context.baseSnapshot = {
@@ -330,14 +331,44 @@ describe("configured kernel composition", () => {
 
 	it("requires creation opt-in but not document-schema readiness for local configuration", async () => {
 		const { runtime } = harness(AttachState.Detached);
-		runtime.channelConfigurationCreationEnabled = false;
+		runtime.isChannelConfigurationCreationEnabled = () => false;
 		assert.throws(() => makeKind({}).getFactory().create(runtime, "dark"), /creation/i);
-		runtime.channelConfigurationCreationEnabled = true;
-		runtime.channelConfigurationEnabled = false;
+		runtime.isChannelConfigurationCreationEnabled = (type) => type === "configured-test";
+		runtime.isChannelConfigurationEnabled = () => false;
 		const shared = makeKind({}).getFactory().create(runtime, "local");
 		await requireConfig(shared).requestChange({ retain: true });
 		assert.throws(() => publish(shared), /capability/i);
 		assert.equal(requireConfig(shared).current.values.retain, true);
+	});
+
+	it("checks the exact factory type separately for creation and publication", async () => {
+		const { runtime, submitted } = harness();
+		const firstFactory = makeKind({}).getFactory();
+		const secondFactory = makeKind({}, true, "other-configured-test").getFactory();
+		const first = firstFactory.create(runtime, "first-instance");
+		publish(first);
+		assert.throws(
+			() => secondFactory.create(runtime, firstFactory.type),
+			/creation is not enabled for this type/,
+		);
+
+		runtime.isChannelConfigurationCreationEnabled = (type) =>
+			type === firstFactory.type || type === secondFactory.type;
+		const second = secondFactory.create(runtime, firstFactory.type);
+		const config = requireConfig(second);
+		const change = config.requestChange({ retain: true });
+		assert.equal(config.current.revision, 1);
+		assert.equal(config.current.values.retain, true);
+		const result = await change;
+		assert.equal(result.source, "local");
+		assert.equal(submitted.length, 0);
+		assert.throws(() => publish(second), /capability is not enabled for this type/);
+
+		runtime.isChannelConfigurationEnabled = (type) =>
+			type === firstFactory.type || type === secondFactory.type;
+		runtime.isChannelConfigurationCreationEnabled = () => false;
+		publish(second);
+		assert.equal(requireConfig(first).current.revision, 0);
 	});
 
 	it("captures latest local state and queues later changes until attachment without changing the baseline", async () => {
@@ -531,7 +562,7 @@ describe("configured kernel composition", () => {
 		await requireConfig(original).requestChange({ retain: true });
 		const persisted = JSON.parse(JSON.stringify(original.attributes)) as IChannelAttributes;
 		const reader = makeKind().getFactory();
-		runtime.channelConfigurationCreationEnabled = false;
+		runtime.isChannelConfigurationCreationEnabled = () => false;
 		const loaded = await reader.load(runtime, "loaded", services, persisted);
 		assert.equal(requireConfig(loaded).current.values.retain, true);
 		assert.equal(requireConfig(loaded).current.revision, 1);

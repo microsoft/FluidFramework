@@ -280,8 +280,14 @@ class SharedObjectFromKernel<
 	}
 
 	public onChannelConfigurationPublication(): void {
-		if ((this.runtime as ChannelConfigurationRuntime).channelConfigurationEnabled !== true) {
-			throw new UsageError("Channel configuration document capability is not enabled");
+		if (
+			(this.runtime as ChannelConfigurationRuntime).isChannelConfigurationEnabled?.(
+				this.attributes.type,
+			) !== true
+		) {
+			throw new UsageError(
+				"Channel configuration document capability is not enabled for this type",
+			);
 		}
 		this.#configurationPublished = true;
 	}
@@ -642,9 +648,11 @@ function makeChannelFactory<T extends object, TConfig extends ChannelConfigurati
 		public create(runtime: IFluidDataStoreRuntime, id: string): T & IChannel {
 			if (
 				options.initialConfiguration !== undefined &&
-				(runtime as ChannelConfigurationRuntime).channelConfigurationCreationEnabled !== true
+				(runtime as ChannelConfigurationRuntime).isChannelConfigurationCreationEnabled?.(
+					ChannelFactory.Attributes.type,
+				) !== true
 			) {
-				throw new UsageError("Channel configuration creation is not enabled");
+				throw new UsageError("Channel configuration creation is not enabled for this type");
 			}
 			const shared = new SharedObjectFromKernel(
 				id,

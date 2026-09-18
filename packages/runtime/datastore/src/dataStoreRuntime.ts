@@ -421,16 +421,21 @@ export class FluidDataStoreRuntime
 			},
 		});
 		for (const key of [
-			"channelConfigurationEnabled",
-			"channelConfigurationCreationEnabled",
-			"channelConfigurationPublicationRequired",
+			"isChannelConfigurationEnabled",
+			"isChannelConfigurationCreationEnabled",
 		] as const) {
 			Object.defineProperty(this, key, {
-				get: () =>
-					(this.dataStoreContext.containerRuntime as ChannelConfigurationRuntime)[key] ===
-					true,
+				value: (type: string): boolean =>
+					(this.dataStoreContext.containerRuntime as ChannelConfigurationRuntime)[key]?.(
+						type,
+					) === true,
 			});
 		}
+		Object.defineProperty(this, "channelConfigurationPublicationRequired", {
+			get: () =>
+				(this.dataStoreContext.containerRuntime as ChannelConfigurationRuntime)
+					.channelConfigurationPublicationRequired === true,
+		});
 		this.sharedObjectRegistry = new LegacyTypeAwareRegistry(sharedObjectRegistry);
 
 		assert(

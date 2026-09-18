@@ -43,7 +43,7 @@ describe("Channel configuration compatibility", () => {
 	const sparse: unknown[] = [];
 	sparse.length = 2;
 	const runtime = {
-		channelConfigurationEnabled: true,
+		isChannelConfigurationEnabled: (type: string) => type === attributes.type,
 	} as unknown as IFluidDataStoreRuntime & ChannelConfigurationRuntime;
 
 	function channel(): IChannel & ChannelConfigurationChannel {
@@ -208,8 +208,8 @@ describe("Channel configuration compatibility", () => {
 		let captured = false;
 		const configured = channel();
 		const unavailableRuntime = {
-			channelConfigurationCreationEnabled: true,
-			channelConfigurationEnabled: false,
+			isChannelConfigurationCreationEnabled: (type: string) => type === attributes.type,
+			isChannelConfigurationEnabled: () => false,
 		} as unknown as IFluidDataStoreRuntime & ChannelConfigurationRuntime;
 		Object.assign(configured, {
 			getAttachSummary: () => {
@@ -227,11 +227,76 @@ describe("Channel configuration compatibility", () => {
 		);
 	});
 
+	it("does not publish another type just because one type is active", () => {
+		const configured = channel();
+		const other = {
+			...channel(),
+			attributes: { ...channel().attributes, type: "other-configured" },
+		};
+		summarizeChannel(configured, true, false, undefined, runtime);
+		assert.throws(
+			() => summarizeChannel(other, true, false, undefined, runtime),
+			/channel configuration is not active for this type/,
+		);
+		assert.throws(
+			() => publishChannelConfiguration(other, runtime),
+			/channel configuration is not active for this type/,
+		);
+	});
+
+	for (const type of [attributes.type, "other-configured"]) {
+		it(`checks persisted type membership before loading ${type}`, async () => {
+			const saved = { ...channel().attributes, type };
+			const publishedRuntime = {
+				isChannelConfigurationEnabled: (channelType: string) =>
+					channelType === attributes.type,
+				isChannelConfigurationCreationEnabled: () => false,
+				channelConfigurationPublicationRequired: true,
+			} as unknown as IFluidDataStoreRuntime & ChannelConfigurationRuntime;
+			let loaded = false;
+			const factory = {
+				attributes: { ...attributes, type },
+				channelConfigurationProtocolVersion: 1,
+				load: async () => {
+					loaded = true;
+					return { ...channel(), attributes: saved };
+				},
+			} as unknown as IChannelFactory;
+			const load = async (): Promise<IChannel> =>
+				loadChannel(
+					publishedRuntime,
+					saved,
+					factory,
+					{} as ChannelServiceEndpoints,
+					createMockLoggerExt(),
+					attributes.type,
+				);
+			if (type === attributes.type) {
+				await load();
+				assert.equal(loaded, true);
+			} else {
+				await assert.rejects(load(), /requires document capability/);
+				assert.equal(loaded, false);
+				await loadChannel(
+					publishedRuntime,
+					factory.attributes,
+					{
+						...factory,
+						load: async () => ({ attributes: factory.attributes }) as IChannel,
+					},
+					{} as ChannelServiceEndpoints,
+					createMockLoggerExt(),
+					"legacy",
+				);
+			}
+		});
+	}
+
 	it("registers detached snapshots and publishes before connecting the instance", () => {
 		const dataStoreContext = new MockFluidDataStoreContext();
 		const publications: (() => void)[] = [];
 		const localRuntime = {
-			channelConfigurationEnabled: true,
+			isChannelConfigurationEnabled: (type: string) => type === attributes.type,
 			registerChannelConfigurationPublication: (publish: () => void) =>
 				publications.push(publish),
 		} as unknown as IFluidDataStoreRuntime & ChannelConfigurationRuntime;

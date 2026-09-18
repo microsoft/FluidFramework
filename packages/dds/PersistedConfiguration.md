@@ -540,9 +540,10 @@ is not a sufficient guard.
 
 Use two checks:
 
-1. **Container protocol gate:** a sticky `DocumentSchema.runtime.channelConfiguration: true`
-   capability. It requires explicit schema control and a runtime implementing this protocol.
-   Runtimes that understand document-schema enforcement but not this capability fail on it.
+1. **Container protocol gate:** `DocumentSchema.runtime.channelConfiguration` is an additive
+   set of DDS type identifiers, stored as a JSON string array. Each entry requires readers to
+   understand this protocol for that type. A nonempty set requires explicit schema control.
+   Runtimes that understand document-schema enforcement but not this property fail on it.
 2. **DDS factory gate:** an internal factory capability marker checked before `factory.load`.
    A supported runtime with an older DDS factory must fail predictably rather than load the
    configured channel through the legacy path.
@@ -561,36 +562,67 @@ instances, not evidence that every configuration value is supported.
 The runtime also requires the returned configured instance to have registered its shared controller
 before connecting/replaying it; a factory marker alone must not enable a legacy dispatch path.
 
-The container gate must be active before a configured channel can be published. For a new
-container, include it in the initial document schema before attachment. For an existing container,
-the runtime option requests the capability through the normal desired schema. Ordinary outgoing
-traffic gives the schema controller an opportunity to propose the change. Publication is allowed
-only after a sequenced schema change makes the capability active, not merely because it was requested.
+Type identifiers are the exact stable `factory.type` / `attributes.type` strings, not instance IDs.
+The runtime does not import DDS implementations or keep a second factory registry. This allows
+each DDS type to roll out independently. For example, the following uses illustrative type IDs,
+not built-in DDS types:
+
+```json
+{
+  "runtime": {
+    "explicitSchemaControl": true,
+    "channelConfiguration": [
+      "https://example.com/types/a",
+      "https://example.com/types/b"
+    ]
+  }
+}
+```
+
+New requested sets and unions that add members remove duplicates and use stable ordering.
+An empty requested set is treated as absent. When a union adds no members, the property handler keeps
+the persisted array identity so equivalent, reordered, duplicate, or subset requests do not cause a schema proposal.
+An existing persisted array need not be rewritten just to normalize its ordering.
+The earlier prototype boolean is not supported and has no wildcard meaning.
+
+The channel's type must be in the active document set before a configured channel can be published.
+For a new container, include requested types in the initial document schema before attachment.
+For an existing container, `channelConfigurationTypes` requests additions through the normal desired
+schema. Ordinary outgoing traffic gives the schema controller an opportunity to propose the change.
+Publication is allowed only after a sequenced schema change activates that type, not merely because
+it was requested. An active type A does not permit publishing type B.
 
 The schema controller keeps its existing one-attempt policy. If another schema wins without
-enabling this capability, it may remain unavailable for the rest of the session. The runtime does
+adding a requested type, that type may remain unavailable for the rest of the session. A later
+session can propose the missing type while retaining the observed members. The runtime does
 not retry the upgrade automatically or provide a separate activation method. It does not create
 an ordinary edit just to trigger a schema proposal. Disabled schema upgrades remain disabled.
-Attempting to publish a configured channel while the capability is unavailable throws an error;
+Attempting to publish a configured channel while its type is unavailable throws an error;
 it does not silently switch the channel to the legacy protocol.
 
-New-instance creation requires `channelConfigurationCreationEnabled`; publication additionally
-requires `channelConfigurationEnabled`. Local configuration edits do not require document readiness.
-These internal datastore-runtime properties keep DDS packages independent of the container
-runtime implementation. Loading a configured detached snapshot preserves its capability and
-explicit schema control even when local creation options are off or omitted.
+New-instance creation requires `isChannelConfigurationCreationEnabled(type)`; publication additionally
+requires `isChannelConfigurationEnabled(type)`. These optional internal runtime queries return
+booleans; a missing query does not grant permission. Creation uses the local requested type list.
+Publication and reads use persisted membership, even when the local list omits that type.
+Local configuration edits do not require document readiness. These datastore-runtime queries keep
+DDS packages independent of the container runtime implementation. Loading a configured detached
+snapshot preserves all persisted type memberships and explicit schema control even when the local
+requested list is empty, omitted, or a subset.
 
 Ship protocol readers and the new wrapper dark first. Gate creation by deployment policy, with no
-behavioral changes to existing DDSes. The internal runtime option `enableChannelConfiguration`
-enables creation policy and requires `explicitSchemaControl: true`.
+behavioral changes to existing DDSes. The internal runtime option
+`channelConfigurationTypes?: readonly string[]` supplies the local creation allow-list and requested
+document additions. Nonempty lists require `explicitSchemaControl: true`. For example, a deployment
+may request only `["https://example.com/types/a"]`; it cannot create configured instances of type B.
 `minVersionForCollab` is useful rollout guidance, but its
 current warning alone is not enforcement. Clients predating document-schema enforcement require
 the existing deployment/old-client exclusion strategy; the new field cannot retroactively make
 them safe.
 
-The container capability stays sticky even when all current DDS settings are disabled. It protects
-the wrapper protocol and historical summaries/ops, not an individual configuration value.
-Neither a DDS configuration barrier nor a package rollback clears it.
+Persisted type memberships stay sticky even when local creation is disabled or all current DDS
+settings are disabled. They protect the wrapper protocol and historical summaries/ops, not individual
+configuration values. Neither a DDS configuration barrier nor a package rollback removes a member.
+Existing unmarked instances remain legacy even when their type is in the document set.
 
 Record configuration proposal outcomes and compatibility/processing failures with channel type,
 protocol version, revision, and sequencing context. Do not log arbitrary configuration values or
@@ -604,7 +636,7 @@ drops in this protocol; DDS-specific invalidation events and telemetry are outsi
 | `datastore-definitions` | Internal persisted-state/factory capability types, without new required members on legacy channel contracts. |
 | `shared-object-base` | Controller and compositional kernel facet; immutable per-instance attributes; control-op dispatch and ordinary-op revision metadata; configuration-request completion tracking; initialization and publication hooks. |
 | `datastore` | Factory compatibility check; propagate publication/readiness hooks; retain lazy replay ordering; align stashed-envelope handling and summary invalidation. |
-| `container-runtime` | Sticky document-schema capability requested through normal schema features; propagate readiness; retain the existing one-attempt policy, pending accounting, and ordinary-op replay behavior. |
+| `container-runtime` | Additive persisted type set requested through normal schema features; propagate per-type readiness; retain the existing one-attempt policy, pending accounting, and ordinary-op replay behavior. |
 | Initial adopter | New opt-in DDS instances with configuration validation and a synchronous change callback. Preserve their existing local mutation, acknowledgement, and ordinary-op lifecycle behavior. |
 
 Share the existing base's serializer, telemetry, error handling, and summary support through
@@ -637,6 +669,9 @@ test harnesses. The key scenarios are:
 | Unsupported obsolete config in a losing proposal | CAS conflict without attempting DDS-specific interpretation. |
 | Supported runtime with unsupported factory | Fail before loading the configured channel or rewriting its summary. |
 | Unsupported runtime and first configured attachment | Document-schema capability excludes it before it can process new-protocol data. |
+| Independent type rollouts | Creation and publication check the exact type; enabling A does not enable B. |
+| Equivalent type requests | Reordered, duplicate, subset, empty, and absent requests do not cause a schema proposal when no members are added. |
+| Concurrent type additions | A losing proposal is not retried automatically; later proposals retain all observed persisted members. |
 | Legacy document/channel | No opt-in, no new envelopes, and no changes to existing behavior. |
 
 The shared mechanism provides persisted configuration, ordered CAS updates, and op revision

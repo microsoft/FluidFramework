@@ -150,9 +150,9 @@ export interface IDocumentSchemaFeatures {
 	opGroupingEnabled: boolean;
 	createBlobPayloadPending: true | undefined;
 	/**
-	 * Sticky reader requirement for channels with persisted configuration.
+	 * Stable channel type IDs with a sticky reader requirement for persisted configuration.
 	 */
-	channelConfiguration?: true | undefined;
+	channelConfiguration?: string[] | undefined;
 
 	/**
 	 * List of disallowed versions of the runtime.
@@ -237,9 +237,44 @@ class TrueOrUndefinedMax extends TrueOrUndefined {
 	}
 }
 
-class PersistedTrueOrUndefined extends TrueOrUndefined {
-	public and(persistedSchema?: true): true | undefined {
+/**
+ * An additive string set whose session value includes only persisted members.
+ * @internal
+ */
+export class PersistedStringSet implements IProperty<string[] | undefined> {
+	public and(persistedSchema?: string[]): string[] | undefined {
 		return persistedSchema;
+	}
+
+	public or(
+		persistedSchema?: string[],
+		providedSchema?: readonly string[],
+	): string[] | undefined {
+		assert(this.validate(providedSchema), "Invalid persisted string set");
+		if (
+			providedSchema === undefined ||
+			providedSchema.every((value) => persistedSchema?.includes(value) === true)
+		) {
+			// same() compares by identity. Keep even noncanonical persisted arrays on a no-op.
+			return persistedSchema;
+		}
+		return [...new Set([...(persistedSchema ?? []), ...providedSchema])].sort();
+	}
+
+	public validate(value: unknown): value is string[] | undefined {
+		if (value === undefined) {
+			return true;
+		}
+		if (!Array.isArray(value)) {
+			return false;
+		}
+		for (let index = 0; index < value.length; index++) {
+			const member: unknown = value[index];
+			if (!Object.hasOwn(value, index) || typeof member !== "string" || member.length === 0) {
+				return false;
+			}
+		}
+		return true;
 	}
 }
 
@@ -310,7 +345,7 @@ const documentSchemaSupportedConfigs = {
 	opGroupingEnabled: new TrueOrUndefined(),
 	compressionLz4: new TrueOrUndefined(),
 	createBlobPayloadPending: new TrueOrUndefined(),
-	channelConfiguration: new PersistedTrueOrUndefined(),
+	channelConfiguration: new PersistedStringSet(),
 	disallowedVersions: new CheckVersions(),
 };
 
@@ -712,7 +747,10 @@ export class DocumentsSchemaController {
 				idCompressorMode: features.idCompressorMode,
 				opGroupingEnabled: boolToProp(features.opGroupingEnabled),
 				createBlobPayloadPending: features.createBlobPayloadPending,
-				channelConfiguration: features.channelConfiguration,
+				channelConfiguration: documentSchemaSupportedConfigs.channelConfiguration.or(
+					undefined,
+					features.channelConfiguration,
+				),
 				disallowedVersions: arrayToProp(features.disallowedVersions),
 				...retiredFeatureValues(),
 			},
