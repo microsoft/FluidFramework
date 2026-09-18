@@ -8,6 +8,7 @@ import {
 	REPO_ROOT_TOKEN,
 	replaceRepoRootToken,
 	replaceRepoRootTokens,
+	validateDeclarativeTaskGlobSeparators,
 } from "../fluidBuild/fluidBuildConfig.js";
 
 describe("Repo Root Token", () => {
@@ -53,6 +54,28 @@ describe("Repo Root Token", () => {
 				"/home/user/repo/.eslintrc.cjs",
 				"/home/user/repo/common/config.json",
 			]);
+		});
+
+		describe("validateDeclarativeTaskGlobSeparators", () => {
+			it("rejects backslashes in declarative task paths", () => {
+				assert.throws(
+					() =>
+						validateDeclarativeTaskGlobSeparators({
+							inputGlobs: ["${repoRoot}\\src\\**\\*.ts"],
+							outputGlobs: [],
+						}),
+					/inputGlob .* contains backslashes; use '\/' in fluidBuild configuration\./,
+				);
+				assert.throws(
+					() =>
+						validateDeclarativeTaskGlobSeparators({
+							inputGlobs: [],
+							outputGlobs: [],
+							additionalConfigFiles: ["${repoRoot}\\common\\config.json"],
+						}),
+					/additionalConfigFile .* contains backslashes; use '\/' in fluidBuild configuration\./,
+				);
+			});
 		});
 
 		it("handles mixed array with and without tokens", () => {
@@ -127,14 +150,6 @@ describe("Repo Root Token", () => {
 				"C:/Users/dev/repo/.eslintrc.cjs",
 				"C:/Users/dev/repo/common/**/*.ts",
 			]);
-		});
-
-		it("normalizes backslashes anywhere in the resolved path", () => {
-			const result = replaceRepoRootToken(
-				"${repoRoot}\\common\\**\\*.ts",
-				"C:\\Users\\dev\\repo",
-			);
-			assert.strictEqual(result, "C:/Users/dev/repo/common/**/*.ts");
 		});
 
 		it("normalizes Windows repo root with trailing backslash", () => {
