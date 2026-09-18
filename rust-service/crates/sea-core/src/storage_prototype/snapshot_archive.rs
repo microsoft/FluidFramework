@@ -6,33 +6,39 @@
 
 use async_trait::async_trait;
 
-use crate::{
-    ClassifiedError, EventPosition, OperationId, PublishedSnapshot, SnapshotId, SnapshotPublication,
-};
+use crate::snapshot::SnapshotPosition;
+use crate::{EventPosition, OperationId, PublishedSnapshot, SnapshotId, SnapshotPublication};
 
-/// An independently useful archive of immutable snapshot publications.
+use super::Archive;
+
+/// An independently useful ordered archive of immutable snapshot publications.
+///
+/// Snapshot positions are unique and increase with the event history they summarize. The archive
+/// may therefore be read sparsely using any [`SnapshotPosition`] bound, while exact lookup succeeds
+/// only at a position containing a retained publication.
 #[async_trait]
-pub trait SnapshotArchive: Send + Sync {
-    /// Classified backend error.
-    type Error: ClassifiedError;
-
+pub trait SnapshotArchive:
+    Archive<
+        Position = SnapshotPosition,
+        Item = PublishedSnapshot,
+        Append = SnapshotPublication,
+        AppendResult = PublishedSnapshot,
+    >
+{
     /// Returns one retained snapshot by publication identity.
     async fn snapshot(&self, id: &SnapshotId) -> Result<Option<PublishedSnapshot>, Self::Error>;
 
-    /// Returns the latest retained snapshot.
-    async fn latest_snapshot(&self) -> Result<Option<PublishedSnapshot>, Self::Error>;
+    /// Returns the snapshot at this exact archive position, when retained.
+    async fn snapshot_at(
+        &self,
+        position: SnapshotPosition,
+    ) -> Result<Option<PublishedSnapshot>, Self::Error>;
 
     /// Returns the newest retained snapshot at or before an event position.
     async fn snapshot_at_or_before(
         &self,
         position: EventPosition,
     ) -> Result<Option<PublishedSnapshot>, Self::Error>;
-
-    /// Conditionally publishes a snapshot without interpreting its external references.
-    async fn publish_snapshot(
-        &self,
-        publication: SnapshotPublication,
-    ) -> Result<PublishedSnapshot, Self::Error>;
 
     /// Resolves a possibly ambiguous publication by stable operation identity.
     async fn resolve_snapshot_publication(

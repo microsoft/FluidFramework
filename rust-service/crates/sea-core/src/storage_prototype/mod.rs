@@ -7,8 +7,9 @@
 //! The architecture has four layers:
 //!
 //! 1. [`BlobStore`], [`EventArchive`], and [`SnapshotArchive`] are independently useful storage
-//!    components. Blob and event storage share [`ReferenceableStore`] because their identities are
-//!    persisted by another component; snapshots currently require no such external capability.
+//!    components. Event and snapshot storage share the ordered [`Archive`] contract. Blob and event
+//!    storage also share [`ReferenceableStore`] because their identities are persisted by another
+//!    component; snapshots currently require no such external capability.
 //! 2. [`SeaStorage`] assigns each [`DocumentId`] and creates or reopens one exclusive writable
 //!    instance of each component for it. Its contract supplies cross-component publication and
 //!    recovery guarantees without requiring a distributed transaction.
@@ -31,8 +32,10 @@
 
 mod blob_store;
 mod event_archive;
+mod ordered_archive;
 mod referenceable_store;
 mod snapshot_archive;
+mod storage_surface;
 
 use async_trait::async_trait;
 use bytes::Bytes;
@@ -48,8 +51,10 @@ use crate::{
 
 pub use blob_store::BlobStore;
 pub use event_archive::{EventArchive, EventArchiveStream};
+pub use ordered_archive::{Archive, ArchiveStream};
 pub use referenceable_store::{ReferenceableStore, StorageHandle};
 pub use snapshot_archive::SnapshotArchive;
+pub use storage_surface::StorageSurface;
 
 /// Stable backend-assigned identity of one Sea document.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
@@ -171,7 +176,7 @@ pub struct ViewLoad<E> {
     pub head: Option<EventPosition>,
     /// Monitored events after the selected snapshot through `head`, in position order.
     ///
-    /// This stream is always finite even though [`EventArchive::read`] also supports live reads.
+    /// This stream is always finite even though [`Archive::read`] also supports live reads.
     pub events: EventArchiveStream<E>,
 }
 
@@ -281,7 +286,10 @@ where
 
     /// Returns the latest retained snapshot.
     pub async fn latest_snapshot(&self) -> Result<Option<PublishedSnapshot>, B::Error> {
-        self.snapshots.latest_snapshot().await
+        let Some(position) = self.snapshots.head().await? else {
+            return Ok(None);
+        };
+        self.snapshots.snapshot_at(position).await
     }
 
     /// Publishes a snapshot after establishing both referenced dependencies.
@@ -298,7 +306,7 @@ where
             }
         };
         self.snapshots
-            .publish_snapshot(SnapshotPublication {
+            .append(SnapshotPublication {
                 operation_id: publication.operation_id,
                 expected_parent: publication.expected_parent,
                 snapshot: Snapshot {
@@ -330,7 +338,7 @@ where
     ) -> Result<ViewLoad<B::Error>, B::Error> {
         let snapshot = match required {
             Some(position) => self.snapshots.snapshot_at_or_before(position).await?,
-            None => self.snapshots.latest_snapshot().await?,
+            None => self.latest_snapshot().await?,
         };
         let head = self.events.head().await?;
         let after = snapshot

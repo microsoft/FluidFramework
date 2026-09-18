@@ -6,7 +6,7 @@
 
 use async_trait::async_trait;
 
-use crate::ClassifiedError;
+use super::StorageSurface;
 
 /// Implementation-defined evidence that a stored value can be made available by its owning store.
 ///
@@ -27,10 +27,7 @@ pub trait StorageHandle: Clone + Send + Sync + 'static {
 /// that identity elsewhere, callers use [`ReferenceableStore::ensure_available`] to establish that
 /// the value is available from this store. A handle from an incompatible store must be rejected.
 #[async_trait]
-pub trait ReferenceableStore: Send + Sync {
-    /// Classified backend error.
-    type Error: ClassifiedError;
-
+pub trait ReferenceableStore: StorageSurface {
     /// Stable identity of one stored value.
     type Id: Copy + Send + Sync + 'static;
 
