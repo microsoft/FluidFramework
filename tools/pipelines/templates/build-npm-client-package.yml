@@ -207,9 +207,9 @@ extends:
               # Install all dependencies, not just the root ones
               dependencyInstallCommand: pnpm install --frozen-lockfile
 
-      # Install / Build / Test Stage
+      # Build Stage
       - stage: build
-        displayName: Build Stage
+        displayName: Build
         dependsOn: [] # this stage doesn't depend on preceding stage
         jobs:
           # Job - Build
@@ -591,9 +591,14 @@ extends:
                       sbomEnabled: false
                       publishLocation: pipeline
 
+      # Verification Stage
+      - stage: verification
+        displayName: Verification
+        dependsOn:
+          - build
+        jobs:
           - job: Coverage_tests
             displayName: "Coverage tests"
-            dependsOn: build
             variables:
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                 - name: targetBranchName
@@ -608,7 +613,7 @@ extends:
               - name: ONEES_ENFORCED_CODEQL_ENABLED
                 value: 'false'
               - name: COMMIT_SHA
-                value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+                value: $[ stageDependencies.build.build.outputs['setCommitSHA.COMMIT_SHA'] ]
 
             steps:
               # Setup
@@ -766,7 +771,6 @@ extends:
           - ${{ each test in parameters.taskTest }}:
             - job: Test_${{ test.jobName }}
               displayName: "Run Task Test ${{ test.jobName }}"
-              dependsOn: build
               variables:
                 - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                   - name: targetBranchName
@@ -781,7 +785,7 @@ extends:
                 - name: ONEES_ENFORCED_CODEQL_ENABLED
                   value: 'false'
                 - name: COMMIT_SHA
-                  value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+                  value: $[ stageDependencies.build.build.outputs['setCommitSHA.COMMIT_SHA'] ]
               steps:
                 # Setup
                 - checkout: self
@@ -911,7 +915,8 @@ extends:
         - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
           parameters:
             dependsOn:
-              - build
+              # This also depends on build stage transitively.
+              - verification
             telemetryDescription: 'stage_timing'
             telemetry_upload_steps:
               - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
