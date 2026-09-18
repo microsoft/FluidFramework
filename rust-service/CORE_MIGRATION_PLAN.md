@@ -11,7 +11,8 @@
 - **Known implementation state:** All retained consumers use the final model. Core storage and session contracts are sibling modules; obsolete core/backend/session implementations and transitional `next` exports are removed.
 - **Open decisions:** None. The user approved retiring the obsolete Wave 3 runner; no shared-contract change was needed in checkpoint 6.
 - **Next action:** User review and commit of the final documentation/script changes. No further migration checkpoint remains.
-- **Plan commit:** `468aa0dd934`; checkpoint 1 was committed and adjusted through `893fb9fe307`, checkpoint 2 through `05a8403baa1`, checkpoint 3 through `155c6d12159`. Checkpoint 4 created no commit, push, branch, worktree, or subagent.
+- **Plan commit:** `468aa0dd934`; checkpoint 1 was committed and adjusted through `893fb9fe307`, checkpoint 2 through `05a8403baa1`, checkpoint 3 through `155c6d12159`, checkpoint 4 through `327672b7cb0`, and checkpoint 5 through `b9148b926e5`.
+	Checkpoint 6 created no commit, push, branch, worktree, or subagent.
 
 Update this status and the checkpoint evidence in every implementation commit.
 Record the exact next action, completed checks, unresolved decisions, and any temporary breakage.
