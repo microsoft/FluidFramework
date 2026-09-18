@@ -78,11 +78,10 @@ async function run() {
 	const secondTransport = await connect(hash);
 	const first = new SeaInjectedClient(firstTransport, 1024 * 1024);
 	const second = new SeaInjectedClient(secondTransport, 1024 * 1024);
-	const archive = encoder.encode("browser-archive");
 	let missingArchiveError;
 	try {
 		await second.openSession(
-			encoder.encode("missing-browser-archive"),
+			new Uint8Array(8),
 			false,
 			encoder.encode("missing-author"),
 			encoder.encode("missing-session"),
@@ -94,14 +93,15 @@ async function run() {
 		missingArchiveError?.kind === SeaErrorKind.Rejected,
 		"service rejection omitted its structured error kind",
 	);
-	await first.openSession(
-		archive,
-		true,
+	const archive = await first.createDocument(
 		encoder.encode("browser-author"),
 		encoder.encode("browser-session"),
 	);
+	const previousCoordination = await first.subscribeSnapshots(snapshotParticipation);
+	await previousCoordination.next();
 	const snapshotCoordination = await first.subscribeSnapshots(snapshotParticipation);
 	await snapshotCoordination.next();
+	await previousCoordination.cancel();
 	const load = await first.load();
 	const initialCaughtUp = await nextAwaiting(load);
 	const firstReceipt = await first.submit(
@@ -111,21 +111,20 @@ async function run() {
 	);
 	const firstStreamedReceipt = await first.submit(
 		encoder.encode("browser-operation-stream-1"),
-		firstReceipt.position,
+		firstReceipt,
 		encoder.encode("first-streamed-payload"),
 	);
 	const secondStreamedReceipt = await first.submit(
 		encoder.encode("browser-operation-stream-2"),
-		firstStreamedReceipt.position,
+		firstStreamedReceipt,
 		encoder.encode("second-streamed-payload"),
 	);
 	assert(
-		firstReceipt.position < firstStreamedReceipt.position &&
-			firstStreamedReceipt.position < secondStreamedReceipt.position,
+		firstReceipt < firstStreamedReceipt && firstStreamedReceipt < secondStreamedReceipt,
 		"author-stream event positions did not increase",
 	);
 	const resolved = await first.resolveSubmission(encoder.encode("browser-operation-1"));
-	assert(resolved?.position === firstReceipt.position, "submission resolution mismatch");
+	assert(resolved === firstReceipt, "submission resolution mismatch");
 	const firstLoaded = await nextEvent(load);
 	assert(firstLoaded.kind === SeaLoadKind.Event, "load omitted the first event");
 	assert(
@@ -141,18 +140,18 @@ async function run() {
 		false,
 		encoder.encode("second-author"),
 		encoder.encode("second-session"),
-		secondStreamedReceipt.position,
+		secondStreamedReceipt,
 	);
 	const secondSnapshotCoordination = await second.subscribeSnapshots(snapshotParticipation);
 	const secondSnapshotState = await secondSnapshotCoordination.next();
 	if (snapshotParticipation === SeaSnapshotParticipation.SeaSelected) {
 		assert(secondSnapshotState.fence === undefined, "two Sea-selected clients were nominated");
 	}
-	const secondLoad = await second.load(secondStreamedReceipt.position);
+	const secondLoad = await second.load(secondStreamedReceipt);
 	const secondCaughtUp = await nextAwaiting(secondLoad);
 	const thirdStreamedReceipt = await first.submit(
 		encoder.encode("browser-operation-stream-3"),
-		secondStreamedReceipt.position,
+		secondStreamedReceipt,
 		encoder.encode("third-streamed-payload"),
 	);
 	const secondLive = await nextEvent(secondLoad);
@@ -172,7 +171,7 @@ async function run() {
 	);
 	const fourthStreamedReceipt = await first.submit(
 		encoder.encode("browser-operation-stream-4"),
-		thirdStreamedReceipt.position,
+		thirdStreamedReceipt,
 		encoder.encode("fourth-streamed-payload"),
 	);
 	const secondConsecutiveLive = await nextEvent(secondLoad);
@@ -191,10 +190,10 @@ async function run() {
 	);
 	const secondReceipt = await second.submit(
 		encoder.encode("browser-operation-2"),
-		fourthStreamedReceipt.position,
+		fourthStreamedReceipt,
 		encoder.encode("second-payload"),
 	);
-	assert(secondReceipt.position > firstReceipt.position, "event positions did not increase");
+	assert(secondReceipt > firstReceipt, "event positions did not increase");
 	const live = await nextEvent(load);
 	assert(live.kind === SeaLoadKind.Event, "load omitted the live second-client event");
 	assert(decoder.decode(live.payload) === "second-payload", "live event payload mismatch");
@@ -209,39 +208,46 @@ async function run() {
 	assert(entries[0].name === "leaf", "directory entry name mismatch");
 	assert(equalBytes(entries[0].child.bytes, blob.bytes), "directory child mismatch");
 
-	const snapshot = await first.publishSnapshot(
-		encoder.encode("browser-snapshot-operation"),
-		undefined,
-		secondReceipt.position,
-		directory,
-	);
+	const notification = snapshotCoordination.next();
+	const snapshot = await first.publishSnapshot(undefined, secondReceipt, directory);
+	let observed = await notification;
+	while (observed.latest !== snapshot.atEvent) {
+		observed = await snapshotCoordination.next();
+	}
 	const latest = await first.latestSnapshot();
 	assert(latest !== undefined, "latest snapshot was missing");
-	assert(equalBytes(latest.id, snapshot.id), "latest snapshot identity mismatch");
-	const fetched = await first.getSnapshot(snapshot.id);
+	assert(latest.atEvent === snapshot.atEvent, "latest snapshot identity mismatch");
+	const fetched = await first.getSnapshot(snapshot.atEvent);
 	assert(fetched !== undefined, "snapshot lookup failed");
 	assert(equalBytes(fetched.root.bytes, directory.bytes), "snapshot root mismatch");
 
+	const cancelledNotification = snapshotCoordination.next().then(
+		() => {
+			throw new Error("cancelled notification unexpectedly succeeded");
+		},
+		() => undefined,
+	);
 	await snapshotCoordination.cancel();
+	await cancelledNotification;
 	await first.openSession(
 		archive,
 		false,
 		encoder.encode("browser-author"),
 		encoder.encode("browser-session-resumed"),
-		secondReceipt.position,
+		secondReceipt,
 	);
 	const resumedSnapshots = await first.subscribeSnapshots(snapshotParticipation);
 	await resumedSnapshots.next();
-	const resumedLoad = await first.load(secondReceipt.position);
+	const resumedLoad = await first.load(secondReceipt);
 	await nextAwaiting(resumedLoad);
 	const resumedReceipt = await first.submit(
 		encoder.encode("browser-operation-resumed"),
-		secondReceipt.position,
+		secondReceipt,
 		encoder.encode("resumed-payload"),
 	);
 	const resumedLive = await nextEvent(resumedLoad);
 	assert(
-		resumedLive.position === resumedReceipt.position,
+		resumedLive.position === resumedReceipt,
 		"same-connection resumed load omitted its live event",
 	);
 	assert(
@@ -265,11 +271,11 @@ async function run() {
 		false,
 		encoder.encode("browser-author"),
 		encoder.encode("browser-session-reconnected"),
-		secondReceipt.position,
+		secondReceipt,
 	);
 	const recoveredSnapshots = await first.subscribeSnapshots(snapshotParticipation);
 	await recoveredSnapshots.next();
-	const recovered = await first.load(secondReceipt.position);
+	const recovered = await first.load(secondReceipt);
 	await nextSnapshot(recovered);
 	assert((await first.latestSnapshot()) !== undefined, "reconnected snapshot lookup failed");
 
@@ -303,18 +309,19 @@ async function run() {
 		status: "passed",
 		browser: navigator.userAgent,
 		transportSessionCount: 3,
-		firstPosition: firstReceipt.position.toString(),
-		firstStreamedPosition: firstStreamedReceipt.position.toString(),
-		secondStreamedPosition: secondStreamedReceipt.position.toString(),
-		thirdStreamedPosition: thirdStreamedReceipt.position.toString(),
-		fourthStreamedPosition: fourthStreamedReceipt.position.toString(),
-		secondPosition: secondReceipt.position.toString(),
+		firstPosition: firstReceipt.toString(),
+		firstStreamedPosition: firstStreamedReceipt.toString(),
+		secondStreamedPosition: secondStreamedReceipt.toString(),
+		thirdStreamedPosition: thirdStreamedReceipt.toString(),
+		fourthStreamedPosition: fourthStreamedReceipt.toString(),
+		secondPosition: secondReceipt.toString(),
 		caughtUp: initialCaughtUp.latestKnown?.toString() ?? "none",
 		blobBytes: blobPayload.length,
 		directoryEntries: entries.length,
 		serviceErrorKind: missingArchiveError.kind,
 		snapshotParticipation,
-		snapshotIdBytes: snapshot.id.length,
+		snapshotPosition: snapshot.atEvent.toString(),
+		documentIdBytes: archive.length,
 	};
 }
 

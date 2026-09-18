@@ -24,6 +24,20 @@ The same adapter accepts local, injected, and browser WebTransport clients.
 
 ## Summary storage semantics
 
+Document creation returns a backend-assigned opaque ID.
+The driver places its hexadecimal encoding in the resolved Fluid URL; peers and reloads use the returned URL, not the provisional attach name.
+
+The initial summary is uploaded as immutable content, then referenced by a committed application initialization event, then published as an ordinary snapshot at that event.
+Initialization is hidden from Fluid's operation stream and maps to application sequence zero.
+Ordinary operations receive contiguous application sequence numbers starting at one, independently of the backend's potentially sparse event positions.
+The two existing synthetic Fluid membership positions remain a separate projection offset.
+Each opened session scans full retained history to reconstruct this mapping before opening its live subscription; startup cost therefore grows with retained history.
+
+Snapshot version handles encode committed event positions.
+The generated client's bounded lookup is checked for an exact position match when satisfying a Fluid version request.
+Publishing a different state at the same position is rejected, even with a fresh publication attempt; summaries of later state must use later committed event positions.
+There are no independent snapshot-operation identities or pre-event initial snapshots.
+
 `createBlob()` uploads an immutable attachment blob and returns its content identity.
 During summary upload, an attachment node references that existing identity without uploading its content again.
 The Sea storage backends validate every referenced blob and directory before accepting a directory, so a summary containing an unknown attachment identity is rejected.
@@ -101,6 +115,7 @@ The generated Node suite exercises the process-local client, including cancellat
 The real Chromium harness exercises the injected client over `SeaBrowserTransport`, including persistent submission, stream cancellation, explicit disconnect, and reconnect.
 Rust transport tests inject fragmented, coalesced, delayed, reset, malformed, and abandoned-response inputs without requiring browser timing.
 The TypeScript unit suite also includes a summary-storage fixture that verifies mixed incremental tree and blob handles, attachment reuse and validation, historical snapshot loading, and stale-parent rejection.
+A generated-WASM driver regression verifies hidden initialization, first-operation sequence numbering, fresh-client mapping reconstruction, and exact historical snapshot versions.
 
 For Chromium, generate the existing browser harness certificate, start
 `sea-webtransport-server`, and run:

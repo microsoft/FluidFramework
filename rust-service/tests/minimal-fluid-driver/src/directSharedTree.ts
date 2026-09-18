@@ -61,6 +61,9 @@ export class DirectSharedTreeClient {
 		this.session = session;
 	}
 
+	/** Backend-assigned identity retained for opening peer clients. */
+	public documentId: Uint8Array = new Uint8Array();
+
 	/** Creates and opens one direct SharedTree client. */
 	public static async create(
 		client: SeaDriverClient,
@@ -90,10 +93,8 @@ export class DirectSharedTreeClient {
 			tree,
 			session,
 		);
-		if (createDocument) {
-			await client.create(document);
-		}
-		await client.openSession(document, writer, session);
+		host.documentId = createDocument ? await client.create() : document;
+		await client.openSession(host.documentId, writer, session);
 		host.subscription = await client.subscribeProjected();
 		host.subscriptionPump = host.consumeSubscription(host.subscription);
 		return host;

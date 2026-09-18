@@ -5,14 +5,13 @@
 
 import type {
 	SeaDirectoryEntries,
-	SeaDurability,
 	SeaErrorKind,
-	SeaEventReceipt,
 	SeaInjectedClient,
 	SeaLoadKind,
 	SeaLoadResult,
 	SeaServiceError,
 	SeaTreeId,
+	SeaSnapshot,
 	SeaTreeKind,
 } from "../../../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
 
@@ -31,8 +30,16 @@ export type EventPayloadIsRequired = Assert<Equal<EventResult["payload"], Uint8A
 export type DirectoryEntriesAreTyped = Assert<
 	Equal<Awaited<ReturnType<SeaInjectedClient["getDirectory"]>>, SeaDirectoryEntries>
 >;
-/** Compile fixture proving event durability uses a closed generated enum. */
-export type DurabilityIsClosed = Assert<Equal<SeaEventReceipt["durability"], SeaDurability>>;
+/** Compile fixture proving submissions return committed positions directly. */
+export type SubmissionReturnsPosition = Assert<
+	Equal<Awaited<ReturnType<SeaInjectedClient["submit"]>>, bigint>
+>;
+/** Compile fixture proving every snapshot includes a committed event position. */
+export type SnapshotPositionIsRequired = Assert<Equal<SeaSnapshot["atEvent"], bigint>>;
+/** Compile fixture proving creation returns the assigned document identity. */
+export type CreationReturnsDocument = Assert<
+	Equal<Awaited<ReturnType<SeaInjectedClient["createDocument"]>>, Uint8Array>
+>;
 /** Compile fixture proving tree identity kind uses a closed generated enum. */
 export type TreeKindIsClosed = Assert<Equal<SeaTreeId["kind"], SeaTreeKind>>;
 /** Compile fixture proving service errors preserve their closed category. */

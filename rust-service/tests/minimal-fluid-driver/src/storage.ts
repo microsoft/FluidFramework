@@ -20,7 +20,6 @@ import {
 	decoder,
 	encoder,
 	hexToBytes,
-	snapshotOperationIdentity,
 	summaryType,
 } from "./lifecycleHelpers.js";
 import type { SeaDriverClient, SummaryEntry } from "./wasmClient.js";
@@ -39,10 +38,7 @@ export class SeaDocumentStorage implements IDocumentStorageService {
 	public readonly policies = { maximumCacheDurationMs: 432_000_000 as const };
 
 	/** Creates storage for one document over a shared serialized client. */
-	public constructor(
-		private readonly document: Uint8Array,
-		private readonly client: SeaDriverClient,
-	) {}
+	public constructor(private readonly client: SeaDriverClient) {}
 
 	/** Resolves the latest summary or a caller-provided content digest. */
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
@@ -102,7 +98,7 @@ export class SeaDocumentStorage implements IDocumentStorageService {
 		const eventSequenceNumber = context.referenceSequenceNumber - applicationSequenceOffset;
 		const atEvent =
 			eventSequenceNumber <= 0
-				? undefined
+				? this.client.positionForSequence(0)
 				: this.client.positionForSequence(eventSequenceNumber);
 		if (eventSequenceNumber > 0 && atEvent === undefined) {
 			throw new Error(
@@ -110,7 +106,6 @@ export class SeaDocumentStorage implements IDocumentStorageService {
 			);
 		}
 		const snapshotId = await this.client.publishSnapshotRoot(
-			snapshotOperationIdentity(this.document, parentSnapshot?.id, atEvent, uploaded.digest),
 			parentSnapshot?.id,
 			atEvent,
 			uploaded.digest,
@@ -144,12 +139,7 @@ export class SeaDocumentStorage implements IDocumentStorageService {
 	/** Uploads and publishes the detached container's initial full summary. */
 	public async uploadInitialSummary(summary: ISummaryTree): Promise<void> {
 		const uploaded = await this.uploadSummary(summary);
-		await this.client.publishSnapshotRoot(
-			snapshotOperationIdentity(this.document, undefined, undefined, uploaded.digest),
-			undefined,
-			undefined,
-			uploaded.digest,
-		);
+		await this.client.publishSnapshotRoot(undefined, undefined, uploaded.digest);
 	}
 
 	/** Flattens, uploads, and publishes a full summary in canonical path order. */

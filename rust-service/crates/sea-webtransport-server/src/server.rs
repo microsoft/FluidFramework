@@ -867,7 +867,7 @@ async fn serve_snapshot_stream(
         send.finish().await.map_err(transport_error)
     }
     .await;
-    service.revoke_snapshot_publisher().await;
+    drop(notifications);
     result
 }
 

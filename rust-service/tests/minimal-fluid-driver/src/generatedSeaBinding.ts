@@ -143,8 +143,11 @@ export class GeneratedSeaBindingAdapter implements SeaDriverClient {
 		private readonly reconnectTransport?: () => Promise<AsyncRequestTransport>,
 	) {}
 
-	public async create(document: Uint8Array): Promise<void> {
-		await this.client.createArchive(document);
+	public async create(): Promise<Uint8Array> {
+		return this.client.createDocument(
+			encoder.encode(`create-${crypto.randomUUID()}`),
+			encoder.encode(`create-session-${crypto.randomUUID()}`),
+		);
 	}
 
 	public async openSession(
@@ -157,7 +160,11 @@ export class GeneratedSeaBindingAdapter implements SeaDriverClient {
 		await this.closeSnapshotStream();
 		const reference = decodePosition(resumeAfter);
 		await this.client.openSession(document, false, writer, session, reference);
-		this.eventStream = await this.client.load(reference);
+		this.positionSequences.clear();
+		this.sequencePositions.clear();
+		this.nextSequence = 1n;
+		await this.readProjected();
+		this.eventStream = await this.client.read(reference);
 		this.snapshotStream = await (
 			this.client.subscribeSnapshots as (
 				participation: number,
@@ -179,7 +186,7 @@ export class GeneratedSeaBindingAdapter implements SeaDriverClient {
 			decodePosition(referencePosition),
 			payload,
 		);
-		return encodePosition(receipt.position);
+		return encodePosition(receipt);
 	}
 
 	public async latestSnapshot(): Promise<
@@ -189,13 +196,11 @@ export class GeneratedSeaBindingAdapter implements SeaDriverClient {
 		const snapshot = await this.client.latestSnapshot();
 		return snapshot === undefined
 			? undefined
-			: snapshot.atEvent === undefined
-				? { id: snapshot.id, root: snapshot.root.bytes }
-				: {
-						id: snapshot.id,
-						root: snapshot.root.bytes,
-						atEvent: encodePosition(snapshot.atEvent),
-					};
+			: {
+					id: encodePosition(snapshot.atEvent),
+					root: snapshot.root.bytes,
+					atEvent: encodePosition(snapshot.atEvent),
+				};
 	}
 
 	public async snapshot(
@@ -204,31 +209,45 @@ export class GeneratedSeaBindingAdapter implements SeaDriverClient {
 		| { readonly id: Uint8Array; readonly root: Uint8Array; readonly atEvent?: Uint8Array }
 		| undefined
 	> {
-		const snapshot = await this.client.getSnapshot(id);
-		return snapshot === undefined
+		const position = decodePosition(id);
+		if (position === undefined) {
+			throw new Error("snapshot position is required");
+		}
+		const snapshot = await this.client.getSnapshot(position);
+		return snapshot === undefined || snapshot.atEvent !== position
 			? undefined
-			: snapshot.atEvent === undefined
-				? { id: snapshot.id, root: snapshot.root.bytes }
-				: {
-						id: snapshot.id,
-						root: snapshot.root.bytes,
-						atEvent: encodePosition(snapshot.atEvent),
-					};
+			: {
+					id: encodePosition(snapshot.atEvent),
+					root: snapshot.root.bytes,
+					atEvent: encodePosition(snapshot.atEvent),
+				};
 	}
 
 	public async publishSnapshotRoot(
-		operation: Uint8Array,
 		expectedParent: Uint8Array | undefined,
 		atEvent: Uint8Array | undefined,
 		root: Uint8Array,
 	): Promise<Uint8Array> {
+		let position = decodePosition(atEvent) ?? this.sequencePositions.get(0n);
+		if (position === undefined) {
+			if (expectedParent !== undefined || this.nextSequence !== 1n) {
+				throw new Error("a snapshot must reference a known application position");
+			}
+			position = await this.client.submit(
+				encoder.encode("fluid-initialize-v1"),
+				undefined,
+				encoder.encode(JSON.stringify({ seaFluid: "initialize", version: 1 })),
+				this.types.directory(root),
+			);
+			this.positionSequences.set(position, 0n);
+			this.sequencePositions.set(0n, position);
+		}
 		const snapshot = await this.client.publishSnapshot(
-			operation,
-			expectedParent,
-			decodePosition(atEvent),
+			decodePosition(expectedParent),
+			position,
 			this.types.directory(root),
 		);
-		return snapshot.id;
+		return encodePosition(snapshot.atEvent);
 	}
 
 	public async readProjected(after?: Uint8Array): Promise<ProjectedReadPage> {
@@ -242,8 +261,10 @@ export class GeneratedSeaBindingAdapter implements SeaDriverClient {
 			}
 			if (item.kind === this.types.loadKind.event) {
 				const operation = this.project(item);
-				operations.push(operation);
-				cursor = operation.position;
+				if (operation !== undefined) {
+					operations.push(operation);
+				}
+				cursor = encodePosition(item.position);
 			} else if (
 				item.kind === this.types.loadKind.progress &&
 				item.status === this.types.streamStatus.awaitingNewItems
@@ -273,7 +294,10 @@ export class GeneratedSeaBindingAdapter implements SeaDriverClient {
 						throw new Error("Sea subscription ended");
 					}
 					if (item.kind === this.types.loadKind.event) {
-						return this.project(item);
+						const operation = this.project(item);
+						if (operation !== undefined) {
+							return operation;
+						}
 					}
 				}
 			},
@@ -283,12 +307,15 @@ export class GeneratedSeaBindingAdapter implements SeaDriverClient {
 
 	public async resolveSubmission(submission: Uint8Array): Promise<SubmissionResolution> {
 		const receipt = await this.client.resolveSubmission(submission);
+		if (receipt !== undefined && !this.positionSequences.has(receipt)) {
+			await this.readProjected();
+		}
 		return receipt === undefined
 			? { kind: "notCommitted" }
 			: {
 					kind: "committed",
-					position: encodePosition(receipt.position),
-					sequenceNumber: this.sequence(receipt.position),
+					position: encodePosition(receipt),
+					sequenceNumber: this.sequence(receipt),
 				};
 	}
 
@@ -321,9 +348,10 @@ export class GeneratedSeaBindingAdapter implements SeaDriverClient {
 		return entries;
 	}
 
+	/** Releases local ownership; a closing transport may reject asynchronous cleanup. */
 	public disconnect(): void {
-		void this.closeEventStream();
-		void this.closeSnapshotStream();
+		void this.closeEventStream().catch(() => {});
+		void this.closeSnapshotStream().catch(() => {});
 		this.client.disconnect();
 	}
 
@@ -355,10 +383,25 @@ export class GeneratedSeaBindingAdapter implements SeaDriverClient {
 		await stream?.cancel();
 	}
 
-	private project(item: SeaEventLoadResult): ProjectedOperation {
+	private project(item: SeaEventLoadResult): ProjectedOperation | undefined {
 		const message = JSON.parse(decoder.decode(item.payload)) as {
 			clientSequenceNumber?: number;
+			seaFluid?: string;
+			version?: number;
 		};
+		if (message.seaFluid === "initialize") {
+			const previous = this.sequencePositions.get(0n);
+			if (
+				message.version !== 1 ||
+				item.blobTree?.kind !== this.types.treeKind.directory ||
+				(previous !== undefined ? previous !== item.position : this.nextSequence !== 1n)
+			) {
+				throw new Error("invalid Fluid initialization event");
+			}
+			this.positionSequences.set(item.position, 0n);
+			this.sequencePositions.set(0n, item.position);
+			return undefined;
+		}
 		const localSequenceNumber =
 			this.operationLocalSequences.get(bytesKey(item.operation)) ??
 			BigInt(message.clientSequenceNumber ?? 0);

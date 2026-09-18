@@ -1,23 +1,35 @@
 //! Native certificate-pinned [`SeaSession`] client.
 
-use std::{collections::BTreeMap, error::Error, fmt, sync::Arc};
+use std::{
+    collections::BTreeMap,
+    error::Error,
+    fmt,
+    sync::{Arc, Weak},
+};
 
 use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{StreamExt as _, TryStreamExt as _, stream};
 use sea_core::{
-    ArchiveEventStream, ArchiveLoadStream, BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId,
-    ClassifiedError, Durability, ErrorKind, Event, EventPosition, MonitoredStreamItem,
-    MonitoredStreamProgress, MonitoredStreamStatus, SnapshotId,
+    ArchiveEventStream, BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError,
+    ErrorKind, Event, EventPosition, MonitoredStreamItem, MonitoredStreamProgress,
+    MonitoredStreamStatus,
     archive::{
-        AuthorId, CommittedEvent, EventReceipt, EventSubmission, LoadEvent, OperationId,
-        PublishedSnapshot, SeaArchive, SeaAuthorSession, SeaEventSubscription, SeaService,
-        SeaSnapshotCoordinator, SessionCommittedEvent, SessionId, SessionStream, Snapshot,
-        SnapshotPosition, SnapshotPublication,
+        AuthorId, CommittedEvent, EventSubmission, OperationId, SeaService, SessionCommittedEvent,
+        SessionId, SessionStream, SnapshotParticipation,
     },
     boxed_monitored_stream,
+    next::{
+        DocumentId, LoadStart, Snapshot, StorageHandle,
+        session::{
+            SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator, SessionLoad, SnapshotCoordination,
+        },
+    },
 };
-use tokio::{sync::Mutex, time::timeout};
+use tokio::{
+    sync::{Mutex, mpsc, oneshot, watch},
+    time::timeout,
+};
 use wtransport::tls::Sha256Digest;
 
 use crate::{
@@ -126,9 +138,116 @@ pub struct NativeSeaClient {
     client: Arc<Client<NativeTransport>>,
     event_stream: Arc<Mutex<Option<EventStream<NativeBidirectionalStream>>>>,
     author_stream: Mutex<Option<AuthorStream<NativeBidirectionalStream>>>,
-    snapshot_stream: Arc<Mutex<SnapshotStream<NativeBidirectionalStream>>>,
+    /// Weak registration ownership; the returned coordination stream owns its lifetime.
+    snapshot_stream: Mutex<Option<Weak<SnapshotPump>>>,
     content_stream: Mutex<Option<ContentStream<NativeBidirectionalStream>>>,
     resume_after: Option<EventPosition>,
+    /// Backend document identity, distinct from logical session authority.
+    document: DocumentId,
+    /// Private provenance shared by handles resolved through this client.
+    scope: Arc<()>,
+}
+
+/// Remotely confirmed availability scoped to the client that obtained it.
+#[derive(Clone)]
+pub struct RemoteHandle<Identity: Copy + Send + Sync + 'static> {
+    /// Confirmed immutable identity or committed event position.
+    id: Identity,
+    /// Private client provenance; retaining it does not keep a session open.
+    scope: Arc<()>,
+}
+
+impl<Identity: Copy + Send + Sync + 'static> StorageHandle for RemoteHandle<Identity> {
+    type Id = Identity;
+
+    fn id(&self) -> Identity {
+        self.id
+    }
+}
+
+/// One publication request processed without competing readers on the transport stream.
+struct SnapshotCommand {
+    /// Correlated request to send.
+    request: protocol::Request,
+    /// Completion independent of the submitting future's lifetime.
+    response: oneshot::Sender<Result<protocol::Response, SeaClientError>>,
+}
+
+/// Owns the sole snapshot transport reader while a coordination subscription exists.
+struct SnapshotPump {
+    /// Requests queued behind any in-flight publication.
+    commands: mpsc::Sender<SnapshotCommand>,
+    /// Cancels transport ownership when the registration stream is dropped.
+    task: tokio::task::AbortHandle,
+}
+
+impl Drop for SnapshotPump {
+    fn drop(&mut self) {
+        self.task.abort();
+    }
+}
+
+impl SnapshotPump {
+    /// Starts one cancellation-owned pump and its coalescible coordination receiver.
+    fn start(
+        mut stream: SnapshotStream<NativeBidirectionalStream>,
+    ) -> (
+        Arc<Self>,
+        watch::Receiver<Result<SnapshotCoordination, String>>,
+    ) {
+        let state = |stream: &SnapshotStream<NativeBidirectionalStream>| SnapshotCoordination {
+            latest: stream.latest().map(EventPosition::new),
+            fence: stream.fence(),
+        };
+        let (updates, receiver) = watch::channel(Ok(state(&stream)));
+        let (commands, mut requests) = mpsc::channel::<SnapshotCommand>(16);
+        let task = tokio::spawn(async move {
+            loop {
+                tokio::select! {
+                    command = requests.recv() => {
+                        let Some(command) = command else { break; };
+                        let result = stream.request(command.request).await.map_err(SeaClientError::from);
+                        if let Err(error) = &result {
+                            let _ = updates.send_replace(Err(error.to_string()));
+                            let _ = command.response.send(result);
+                            break;
+                        }
+                        let _ = updates.send_replace(Ok(state(&stream)));
+                        let _ = command.response.send(result);
+                    }
+                    result = stream.next_coordination() => {
+                        match result {
+                            Ok(()) => { let _ = updates.send_replace(Ok(state(&stream))); }
+                            Err(error) => {
+                                let _ = updates.send_replace(Err(SeaClientError::from(error).to_string()));
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        (
+            Arc::new(Self {
+                commands,
+                task: task.abort_handle(),
+            }),
+            receiver,
+        )
+    }
+
+    /// Enqueues a request; cancellation does not cause an automatic publication retry.
+    async fn request(
+        &self,
+        request: protocol::Request,
+    ) -> Result<protocol::Response, SeaClientError> {
+        let (response, received) = oneshot::channel();
+        self.commands
+            .send(SnapshotCommand { request, response })
+            .await
+            .map_err(|_| SeaClientError::Closed)?;
+        received.await.map_err(|_| SeaClientError::Closed)?
+    }
 }
 
 /// Values that identify and initialize one native archive-bound session.
@@ -184,20 +303,44 @@ impl NativeSeaClient {
         let author_stream = timeout(config.operation_timeout, client.open_author_stream())
             .await
             .map_err(|_| WebTransportError::Timeout)??;
-        let snapshot_stream = timeout(
-            config.operation_timeout,
-            client.open_snapshot_stream(protocol::SnapshotParticipation::SeaSelected),
-        )
-        .await
-        .map_err(|_| WebTransportError::Timeout)??;
         Ok(Self {
+            document: DocumentId::from_bytes(Bytes::copy_from_slice(event_stream.document())),
+            scope: Arc::new(()),
             client: Arc::new(client),
             event_stream: Arc::new(Mutex::new(Some(event_stream))),
             author_stream: Mutex::new(Some(author_stream)),
-            snapshot_stream: Arc::new(Mutex::new(snapshot_stream)),
+            snapshot_stream: Mutex::new(None),
             content_stream: Mutex::new(None),
             resume_after,
         })
+    }
+
+    /// Returns the backend-assigned identity to retain for later opens.
+    #[must_use]
+    pub const fn document(&self) -> &DocumentId {
+        &self.document
+    }
+
+    /// Mints a handle only after a successful service observation.
+    fn handle<Identity: Copy + Send + Sync + 'static>(
+        &self,
+        id: Identity,
+    ) -> RemoteHandle<Identity> {
+        RemoteHandle {
+            id,
+            scope: self.scope.clone(),
+        }
+    }
+
+    /// Converts a service-confirmed publication to local availability evidence.
+    fn snapshot_from_wire(
+        &self,
+        snapshot: &protocol::Snapshot,
+    ) -> Snapshot<RemoteHandle<BlobTreeId>, RemoteHandle<EventPosition>> {
+        Snapshot {
+            root: self.handle(tree_from_wire(snapshot.root)),
+            at_event: self.handle(EventPosition::new(snapshot.at_event)),
+        }
     }
 
     async fn content_request(
@@ -235,40 +378,59 @@ impl SeaService for NativeSeaClient {
 
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-impl SeaEventSubscription for NativeSeaClient {
-    fn load(&self, required: Option<EventPosition>) -> ArchiveLoadStream<Self::Error> {
-        let initial = MonitoredStreamProgress {
-            previous: self.resume_after,
-            latest_known: self.resume_after,
-            status: MonitoredStreamStatus::StreamingBacklog,
-        };
-        if required != self.resume_after {
-            return boxed_monitored_stream(
-                stream::once(async { Err(SeaClientError::UnexpectedResponse) }),
-                initial,
-                load_event_position,
-            );
-        }
-        let event_stream = Arc::clone(&self.event_stream);
-        let responses = stream::try_unfold(event_stream, |event_stream| async move {
-            let response = {
-                let mut guard = event_stream.lock().await;
-                let stream = guard.as_mut().ok_or(SeaClientError::UnexpectedResponse)?;
-                stream.next().await.map_err(SeaClientError::from)?
-            };
-            Ok(response.map(|response| (response, event_stream)))
-        });
-        boxed_monitored_stream(
-            responses.map(|result| result.and_then(load_from_wire)),
-            initial,
-            load_event_position,
-        )
-    }
-}
-
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 impl SeaArchive for NativeSeaClient {
+    type BlobHandle = RemoteHandle<BlobTreeId>;
+    type EventHandle = RemoteHandle<EventPosition>;
+
+    async fn load(
+        &self,
+        start: LoadStart,
+    ) -> Result<SessionLoad<Self::BlobHandle, Self::EventHandle, Self::Error>, Self::Error> {
+        let opened_start = self
+            .resume_after
+            .map_or(LoadStart::LatestSnapshot, LoadStart::ReplayAtLeastAllAfter);
+        if start == opened_start {
+            let mut opened = self.event_stream.lock().await;
+            if let Some(mut events) = opened.take() {
+                let first = events
+                    .next()
+                    .await?
+                    .ok_or(SeaClientError::UnexpectedResponse)?;
+                let (snapshot, pending) = match first {
+                    protocol::Response::LoadSnapshot(snapshot) => {
+                        (Some(self.snapshot_from_wire(&snapshot)), None)
+                    }
+                    response => (None, Some(response)),
+                };
+                let cursor = snapshot.as_ref().map(|value| value.at_event.id());
+                let responses = stream::iter(pending.into_iter().map(Ok)).chain(
+                    stream::try_unfold(events, |mut events| async move {
+                        Ok(events
+                            .next()
+                            .await
+                            .map_err(SeaClientError::from)?
+                            .map(|response| (response, events)))
+                    }),
+                );
+                return Ok(SessionLoad {
+                    snapshot,
+                    events: boxed_monitored_stream(
+                        responses.map(|result| result.and_then(event_from_stream_response)),
+                        MonitoredStreamProgress {
+                            previous: cursor,
+                            latest_known: cursor,
+                            status: MonitoredStreamStatus::StreamingBacklog,
+                        },
+                        |event| Some(event.committed.position),
+                    ),
+                });
+            }
+        }
+        let snapshot = self.get_snapshot(start).await?;
+        let events = self.read(snapshot.as_ref().map(|value| value.at_event.id()), None);
+        Ok(SessionLoad { snapshot, events })
+    }
+
     fn read(
         &self,
         after: Option<EventPosition>,
@@ -310,16 +472,16 @@ impl SeaArchive for NativeSeaClient {
         )
     }
 
-    async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {
+    async fn put_blob(&self, payload: Bytes) -> Result<Self::BlobHandle, Self::Error> {
         match self
             .one_content_response(protocol::Request::PutBlob {
                 payload: payload.to_vec(),
             })
             .await?
         {
-            protocol::Response::BlobStored { id } => {
-                Ok(BlobId::from_bytes(&id).expect("fixed blob identity"))
-            }
+            protocol::Response::BlobStored { id } => Ok(self.handle(BlobTreeId::Blob(
+                BlobId::from_bytes(&id).expect("fixed blob identity"),
+            ))),
             response => Err(response_error(response)),
         }
     }
@@ -337,7 +499,7 @@ impl SeaArchive for NativeSeaClient {
     async fn put_directory(
         &self,
         directory: BlobDirectory,
-    ) -> Result<BlobDirectoryId, Self::Error> {
+    ) -> Result<Self::BlobHandle, Self::Error> {
         let entries = directory
             .entries()
             .iter()
@@ -350,9 +512,9 @@ impl SeaArchive for NativeSeaClient {
             .one_content_response(protocol::Request::PutDirectory { entries })
             .await?
         {
-            protocol::Response::DirectoryStored { id } => {
-                Ok(BlobDirectoryId::from_bytes(&id).expect("fixed directory identity"))
-            }
+            protocol::Response::DirectoryStored { id } => Ok(self.handle(BlobTreeId::Directory(
+                BlobDirectoryId::from_bytes(&id).expect("fixed directory identity"),
+            ))),
             response => Err(response_error(response)),
         }
     }
@@ -378,23 +540,70 @@ impl SeaArchive for NativeSeaClient {
         }
     }
 
-    async fn snapshot(&self, id: &SnapshotId) -> Result<Option<PublishedSnapshot>, Self::Error> {
-        match self
-            .one_content_response(protocol::Request::GetSnapshot {
-                id: id.as_bytes().to_vec(),
-            })
-            .await?
-        {
-            protocol::Response::Snapshot(snapshot) => Ok(snapshot.map(snapshot_from_wire)),
+    async fn get_snapshot(
+        &self,
+        start: LoadStart,
+    ) -> Result<Option<Snapshot<Self::BlobHandle, Self::EventHandle>>, Self::Error> {
+        let response = match start {
+            LoadStart::Beginning => return Ok(None),
+            LoadStart::LatestSnapshot => {
+                self.one_content_response(protocol::Request::LatestSnapshot)
+                    .await?
+            }
+            LoadStart::ReplayAtLeastAllAfter(position) => {
+                self.one_content_response(protocol::Request::GetSnapshot { id: position.get() })
+                    .await?
+            }
+        };
+        match response {
+            protocol::Response::Snapshot(snapshot) => {
+                Ok(snapshot.map(|value| self.snapshot_from_wire(&value)))
+            }
             response => Err(response_error(response)),
         }
+    }
+
+    async fn resolve_tree(&self, id: BlobTreeId) -> Result<Option<Self::BlobHandle>, Self::Error> {
+        let result = match id {
+            BlobTreeId::Blob(blob) => self.get_blob(blob).await.map(|_| ()),
+            BlobTreeId::Directory(directory) => self.get_directory(directory).await.map(|_| ()),
+        };
+        match result {
+            Ok(()) => Ok(Some(self.handle(id))),
+            Err(error) if error.kind() == ErrorKind::Rejected => Ok(None),
+            Err(error) => Err(error),
+        }
+    }
+
+    async fn resolve_position(
+        &self,
+        position: EventPosition,
+    ) -> Result<Option<Self::EventHandle>, Self::Error> {
+        let mut events = self.read(None, None);
+        while let Some(item) = events.next().await {
+            match item? {
+                MonitoredStreamItem::Item(event) if event.committed.position == position => {
+                    return Ok(Some(self.handle(position)));
+                }
+                MonitoredStreamItem::Item(event) if event.committed.position > position => {
+                    return Ok(None);
+                }
+                MonitoredStreamItem::Progress(progress)
+                    if progress.status == MonitoredStreamStatus::AwaitingNewItems =>
+                {
+                    return Ok(None);
+                }
+                _ => {}
+            }
+        }
+        Ok(None)
     }
 }
 
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 impl SeaAuthorSession for NativeSeaClient {
-    async fn submit(&self, submission: EventSubmission) -> Result<EventReceipt, Self::Error> {
+    async fn submit(&self, submission: EventSubmission) -> Result<EventPosition, Self::Error> {
         match self
             .author_stream
             .lock()
@@ -408,13 +617,7 @@ impl SeaAuthorSession for NativeSeaClient {
             })
             .await?
         {
-            protocol::Response::EventCommitted {
-                position,
-                durability,
-            } => Ok(EventReceipt {
-                position: EventPosition::new(position),
-                durability: durability_from_wire(durability),
-            }),
+            protocol::Response::EventCommitted { position, .. } => Ok(EventPosition::new(position)),
             response => Err(response_error(response)),
         }
     }
@@ -422,7 +625,7 @@ impl SeaAuthorSession for NativeSeaClient {
     async fn resolve_submission(
         &self,
         operation_id: &OperationId,
-    ) -> Result<Option<EventReceipt>, Self::Error> {
+    ) -> Result<Option<EventPosition>, Self::Error> {
         match self
             .author_stream
             .lock()
@@ -434,17 +637,9 @@ impl SeaAuthorSession for NativeSeaClient {
             })
             .await?
         {
-            protocol::Response::SubmissionResolved {
-                position,
-                durability,
-            } => match (position, durability) {
-                (Some(position), Some(durability)) => Ok(Some(EventReceipt {
-                    position: EventPosition::new(position),
-                    durability: durability_from_wire(durability),
-                })),
-                (None, None) => Ok(None),
-                _ => Err(SeaClientError::UnexpectedResponse),
-            },
+            protocol::Response::SubmissionResolved { position, .. } => {
+                Ok(position.map(EventPosition::new))
+            }
             response => Err(response_error(response)),
         }
     }
@@ -460,6 +655,16 @@ impl SeaAuthorSession for NativeSeaClient {
             .take()
             .ok_or(SeaClientError::Closed)?;
         author.close().await?;
+        if let Some(pump) = self
+            .snapshot_stream
+            .lock()
+            .await
+            .take()
+            .and_then(|weak| weak.upgrade())
+        {
+            pump.task.abort();
+        }
+        self.event_stream.lock().await.take();
         self.client.disconnect()?;
         Ok(())
     }
@@ -468,97 +673,88 @@ impl SeaAuthorSession for NativeSeaClient {
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 impl SeaSnapshotCoordinator for NativeSeaClient {
-    async fn latest_snapshot(&self) -> Result<Option<PublishedSnapshot>, Self::Error> {
-        match self
-            .snapshot_stream
-            .lock()
-            .await
-            .request(protocol::Request::LatestSnapshot)
-            .await?
-        {
-            protocol::Response::Snapshot(snapshot) => Ok(snapshot.map(snapshot_from_wire)),
-            response => Err(response_error(response)),
-        }
-    }
-
     async fn publish_snapshot(
         &self,
-        publication: SnapshotPublication,
-    ) -> Result<PublishedSnapshot, Self::Error> {
-        let mut stream = self.snapshot_stream.lock().await;
-        let fence = stream.fence().ok_or(SeaClientError::UnexpectedResponse)?;
-        match stream
-            .request(protocol::Request::PublishSnapshot {
-                fence: Some(fence),
-                operation: publication.operation_id.as_bytes().to_vec(),
-                expected_parent: publication
-                    .expected_parent
-                    .map(|parent| parent.as_bytes().to_vec()),
-                at_event: snapshot_position_to_wire(publication.snapshot.at_event),
-                root: tree_to_wire(publication.snapshot.root),
-            })
-            .await?
+        expected_parent: Option<EventPosition>,
+        fence: Option<u64>,
+        snapshot: Snapshot<Self::BlobHandle, Self::EventHandle>,
+    ) -> Result<Snapshot<Self::BlobHandle, Self::EventHandle>, Self::Error> {
+        if !Arc::ptr_eq(&self.scope, &snapshot.root.scope)
+            || !Arc::ptr_eq(&self.scope, &snapshot.at_event.scope)
         {
-            protocol::Response::Snapshot(Some(snapshot)) => Ok(snapshot_from_wire(snapshot)),
-            response => Err(response_error(response)),
+            return Err(SeaClientError::Service(
+                protocol::ErrorKind::Rejected,
+                "snapshot handles belong to another client".to_owned(),
+            ));
         }
-    }
-
-    async fn resolve_snapshot_publication(
-        &self,
-        operation_id: &OperationId,
-    ) -> Result<Option<PublishedSnapshot>, Self::Error> {
-        match self
+        let pump = self
             .snapshot_stream
             .lock()
             .await
-            .request(protocol::Request::ResolveSnapshot {
-                operation: operation_id.as_bytes().to_vec(),
+            .as_ref()
+            .and_then(Weak::upgrade)
+            .ok_or(SeaClientError::Closed)?;
+        match pump
+            .request(protocol::Request::PublishSnapshot {
+                fence,
+                expected_parent: expected_parent.map(EventPosition::get),
+                at_event: snapshot.at_event.id().get(),
+                root: tree_to_wire(snapshot.root.id()),
             })
             .await?
         {
-            protocol::Response::Snapshot(snapshot) => Ok(snapshot.map(snapshot_from_wire)),
+            protocol::Response::Snapshot(Some(snapshot)) => Ok(self.snapshot_from_wire(&snapshot)),
             response => Err(response_error(response)),
         }
     }
 
-    async fn subscribe_snapshots(
+    async fn coordinate_snapshots(
         &self,
-    ) -> Result<SessionStream<PublishedSnapshot, Self::Error>, Self::Error> {
-        let stream = Arc::clone(&self.snapshot_stream);
-        Ok(Box::pin(stream::try_unfold(stream, |stream| async move {
-            let mut state = stream.lock().await;
-            state.next_coordination().await?;
-            let latest = state
-                .latest()
-                .cloned()
-                .ok_or(SeaClientError::UnexpectedResponse)?;
-            drop(state);
-            Ok(Some((snapshot_from_wire(latest), stream)))
-        })))
+        participation: SnapshotParticipation,
+    ) -> Result<SessionStream<SnapshotCoordination, Self::Error>, Self::Error> {
+        let participation = match participation {
+            SnapshotParticipation::ReadOnly => protocol::SnapshotParticipation::ReadOnly,
+            SnapshotParticipation::SeaSelected => protocol::SnapshotParticipation::SeaSelected,
+            SnapshotParticipation::ClientSelected => {
+                protocol::SnapshotParticipation::ClientSelected
+            }
+        };
+        let mut current = self.snapshot_stream.lock().await;
+        if let Some(previous) = current.take().and_then(|weak| weak.upgrade()) {
+            previous.task.abort();
+        }
+        let (pump, receiver) =
+            SnapshotPump::start(self.client.open_snapshot_stream(participation).await?);
+        *current = Some(Arc::downgrade(&pump));
+        Ok(Box::pin(stream::try_unfold(
+            (pump, receiver, true),
+            |(pump, mut receiver, initial)| async move {
+                if !initial && receiver.changed().await.is_err() {
+                    return Ok(None);
+                }
+                let state = receiver.borrow_and_update().clone().map_err(|message| {
+                    SeaClientError::Service(protocol::ErrorKind::Unavailable, message)
+                })?;
+                Ok(Some((state, (pump, receiver, false))))
+            },
+        )))
     }
-}
 
-fn load_from_wire(
-    response: protocol::Response,
-) -> Result<MonitoredStreamItem<LoadEvent, EventPosition>, SeaClientError> {
-    match response {
-        protocol::Response::LoadSnapshot(snapshot) => Ok(MonitoredStreamItem::Item(
-            LoadEvent::Snapshot(snapshot_from_wire(snapshot)),
-        )),
-        protocol::Response::LoadEvent(event) => session_event_from_wire(*event)
-            .map(LoadEvent::Event)
-            .map(MonitoredStreamItem::Item),
-        protocol::Response::StreamProgress {
-            previous,
-            latest_known,
-            status,
-        } => Ok(MonitoredStreamItem::Progress(progress_from_wire(
-            previous,
-            latest_known,
-            status,
-        ))),
-        response => Err(response_error(response)),
+    async fn revoke_snapshot_publisher(&self) -> Result<(), Self::Error> {
+        if let Some(pump) = self
+            .snapshot_stream
+            .lock()
+            .await
+            .take()
+            .and_then(|weak| weak.upgrade())
+        {
+            let response = pump.request(protocol::Request::Close).await?;
+            pump.task.abort();
+            if response != protocol::Response::Acknowledged {
+                return Err(response_error(response));
+            }
+        }
+        Ok(())
     }
 }
 
@@ -595,13 +791,6 @@ fn progress_from_wire(
             protocol::StreamStatus::AwaitingNewItems => MonitoredStreamStatus::AwaitingNewItems,
             protocol::StreamStatus::FallenBehind => MonitoredStreamStatus::FallenBehind,
         },
-    }
-}
-
-fn load_event_position(event: &LoadEvent) -> Option<EventPosition> {
-    match event {
-        LoadEvent::Snapshot(_) => None,
-        LoadEvent::Event(event) => Some(event.committed.position),
     }
 }
 
@@ -656,39 +845,6 @@ fn tree_to_wire(id: BlobTreeId) -> protocol::TreeId {
     }
 }
 
-fn snapshot_from_wire(snapshot: protocol::Snapshot) -> PublishedSnapshot {
-    PublishedSnapshot {
-        id: SnapshotId::from_bytes(Bytes::from(snapshot.id)),
-        parent: snapshot
-            .parent
-            .map(|parent| SnapshotId::from_bytes(Bytes::from(parent))),
-        snapshot: Snapshot {
-            at_event: match snapshot.at_event {
-                protocol::SnapshotPosition::Initial => SnapshotPosition::Initial,
-                protocol::SnapshotPosition::At(position) => {
-                    SnapshotPosition::At(EventPosition::new(position))
-                }
-            },
-            root: tree_from_wire(snapshot.root),
-        },
-    }
-}
-
-fn snapshot_position_to_wire(position: SnapshotPosition) -> protocol::SnapshotPosition {
-    match position {
-        SnapshotPosition::Initial => protocol::SnapshotPosition::Initial,
-        SnapshotPosition::At(position) => protocol::SnapshotPosition::At(position.get()),
-    }
-}
-
-const fn durability_from_wire(value: protocol::WireDurability) -> Durability {
-    match value {
-        protocol::WireDurability::Memory => Durability::Memory,
-        protocol::WireDurability::Buffered => Durability::Buffered,
-        protocol::WireDurability::Durable => Durability::Durable,
-    }
-}
-
 fn response_error(response: protocol::Response) -> SeaClientError {
     match response {
         protocol::Response::Error { kind, message } => SeaClientError::Service(kind, message),
@@ -698,13 +854,13 @@ fn response_error(response: protocol::Response) -> SeaClientError {
 
 #[cfg(test)]
 mod tests {
-    use super::{SeaClientError, load_from_wire};
+    use super::{SeaClientError, event_from_stream_response};
     use crate::protocol::Response;
 
     #[test]
     fn load_rejects_unexpected_response_kind() {
         assert!(matches!(
-            load_from_wire(Response::Acknowledged),
+            event_from_stream_response(Response::Acknowledged),
             Err(SeaClientError::UnexpectedResponse)
         ));
     }

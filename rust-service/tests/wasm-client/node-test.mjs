@@ -10,7 +10,6 @@ import test from "node:test";
 const require = createRequire(import.meta.url);
 const {
 	SeaDirectoryEntry,
-	SeaDurability,
 	SeaInjectedClient,
 	SeaLoadKind,
 	SeaLocalService,
@@ -46,16 +45,13 @@ async function clients() {
 	const service = await SeaLocalService.create();
 	const first = service.connect();
 	const second = service.connect();
-	const archive = encoder.encode("node-archive");
-	await first.openSession(
-		archive,
-		true,
+	const archive = await first.createDocument(
 		encoder.encode("first-author"),
 		encoder.encode("first-session"),
 	);
 	const snapshots = await first.subscribeSnapshots(SeaSnapshotParticipation.ClientSelected);
 	await snapshots.next();
-	return { archive, first, second };
+	return { archive, first, second, snapshots };
 }
 
 test("generated local clients submit, resolve, read, and tail events", async () => {
@@ -65,11 +61,8 @@ test("generated local clients submit, resolve, read, and tail events", async () 
 		undefined,
 		encoder.encode("first"),
 	);
-	assert.equal(firstReceipt.durability, SeaDurability.Memory);
-	assert.equal(
-		(await first.resolveSubmission(encoder.encode("operation-one"))).position,
-		firstReceipt.position,
-	);
+	assert.equal(typeof firstReceipt, "bigint");
+	assert.equal(await first.resolveSubmission(encoder.encode("operation-one")), firstReceipt);
 	const load = await first.load();
 	assert.equal(decoder.decode((await nextEvent(load)).payload), "first");
 	await nextAwaiting(load);
@@ -78,13 +71,9 @@ test("generated local clients submit, resolve, read, and tail events", async () 
 		false,
 		encoder.encode("second-author"),
 		encoder.encode("second-session"),
-		firstReceipt.position,
+		firstReceipt,
 	);
-	await second.submit(
-		encoder.encode("operation-two"),
-		firstReceipt.position,
-		encoder.encode("second"),
-	);
+	await second.submit(encoder.encode("operation-two"), firstReceipt, encoder.encode("second"));
 	assert.equal(decoder.decode((await nextEvent(load)).payload), "second");
 	await load.cancel();
 });
@@ -100,23 +89,24 @@ test("generated local clients preserve recursive content and snapshot identities
 	const entries = await first.getDirectory(root);
 	assert.equal(entries.length, 1);
 	assert.equal(entries[0].name, "child");
-	const snapshot = await first.publishSnapshot(
-		encoder.encode("snapshot-operation"),
+	const position = await first.submit(
+		encoder.encode("initialize"),
 		undefined,
-		undefined,
+		encoder.encode("initial state"),
 		root,
 	);
-	assert.deepEqual((await first.latestSnapshot()).id, snapshot.id);
-	assert.deepEqual((await first.getSnapshot(snapshot.id)).root.bytes, root.bytes);
+	const snapshot = await first.publishSnapshot(undefined, position, root);
+	assert.equal((await first.latestSnapshot()).atEvent, snapshot.atEvent);
+	assert.deepEqual((await first.getSnapshot(snapshot.atEvent)).root.bytes, root.bytes);
+	assert.equal((await first.publishSnapshot(undefined, position, root)).atEvent, position);
+	const other = await first.putBlob(encoder.encode("other state"));
+	await assert.rejects(first.publishSnapshot(undefined, position, other), /different root/);
 });
 
 test("generated snapshot participation enforces publication authority", async () => {
 	const service = await SeaLocalService.create();
-	const archive = encoder.encode("snapshot-policy-archive");
 	const readOnly = service.connect();
-	await readOnly.openSession(
-		archive,
-		true,
+	const archive = await readOnly.createDocument(
 		encoder.encode("read-only-author"),
 		encoder.encode("read-only-session"),
 	);
@@ -125,15 +115,13 @@ test("generated snapshot participation enforces publication authority", async ()
 	);
 	await readOnlySnapshots.next();
 	const blob = await readOnly.putBlob(encoder.encode("snapshot-policy-content"));
-	await assert.rejects(
-		readOnly.publishSnapshot(
-			encoder.encode("read-only-publication"),
-			undefined,
-			undefined,
-			blob,
-		),
-		/read-only/,
+	const position = await readOnly.submit(
+		encoder.encode("initialize"),
+		undefined,
+		encoder.encode("initial"),
+		blob,
 	);
+	await assert.rejects(readOnly.publishSnapshot(undefined, position, blob), /read-only/);
 
 	await readOnlySnapshots.cancel();
 	await readOnly.close();
@@ -149,12 +137,7 @@ test("generated snapshot participation enforces publication authority", async ()
 	);
 	const coordination = await selectedSnapshots.next();
 	assert.notEqual(coordination.fence, undefined);
-	const snapshot = await selected.publishSnapshot(
-		encoder.encode("selected-publication"),
-		undefined,
-		undefined,
-		blob,
-	);
+	const snapshot = await selected.publishSnapshot(undefined, position, blob);
 	assert.equal(snapshot.root.kind, SeaTreeKind.Blob);
 	await selected.close();
 });
@@ -164,7 +147,7 @@ test("generated local clients reject stable identity conflicts and stale session
 	await first.submit(encoder.encode("same"), undefined, encoder.encode("first"));
 	await assert.rejects(
 		first.submit(encoder.encode("same"), undefined, encoder.encode("different")),
-		/operation identity is already bound/,
+		/operation identity/,
 	);
 	await first.openSession(
 		archive,
@@ -179,7 +162,7 @@ test("generated local clients reject stable identity conflicts and stale session
 			encoder.encode("first-author"),
 			encoder.encode("first-session"),
 		),
-		/session identity was already used/,
+		/reused session/,
 	);
 });
 
@@ -227,14 +210,25 @@ test("generated local clients require explicit archive creation", async () => {
 				encoder.encode("missing-author"),
 				encoder.encode("missing-session"),
 			),
-		/archive does not exist/,
+		/document does not exist/,
 	);
-	await service.connect().createArchive(archive);
-	await assert.rejects(service.connect().createArchive(archive), /archive already exists/);
+	const allocated = await service
+		.connect()
+		.createDocument(encoder.encode("creator"), encoder.encode("creator-session"));
+	const another = await service
+		.connect()
+		.createDocument(encoder.encode("another"), encoder.encode("another-session"));
+	assert.notDeepEqual(allocated, another);
+	await assert.rejects(
+		service
+			.connect()
+			.openSession(allocated, true, encoder.encode("named"), encoder.encode("named-session")),
+		/does not accept/,
+	);
 	await service
 		.connect()
 		.openSession(
-			archive,
+			allocated,
 			false,
 			encoder.encode("open-author"),
 			encoder.encode("open-session"),
@@ -248,4 +242,27 @@ test("generated local stream cancellation wakes a pending read", async () => {
 	const pending = load.next();
 	await load.cancel();
 	assert.equal(await pending, undefined);
+});
+
+test("snapshot replacement and cancellation release only their own registration", async () => {
+	const { first, snapshots } = await clients();
+	const pending = assert.rejects(snapshots.next(), /cancelled/);
+	const replacement = await first.subscribeSnapshots(SeaSnapshotParticipation.ClientSelected);
+	await pending;
+	await replacement.next();
+	await snapshots.cancel();
+	const root = await first.putBlob(encoder.encode("state"));
+	const position = await first.submit(
+		encoder.encode("initial"),
+		undefined,
+		encoder.encode("state"),
+		root,
+	);
+	const notification = replacement.next();
+	await first.publishSnapshot(undefined, position, root);
+	assert.equal((await notification).latest, position);
+	const cancelled = assert.rejects(replacement.next(), /cancelled/);
+	await replacement.cancel();
+	await cancelled;
+	await assert.rejects(first.publishSnapshot(undefined, position, root), /not open/);
 });

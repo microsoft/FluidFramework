@@ -65,6 +65,10 @@ export interface SeaServiceError extends Error {
 
 #[wasm_bindgen]
 extern "C" {
+    /// Non-consuming JavaScript reference to an immutable generated tree identity.
+    #[wasm_bindgen(typescript_type = "SeaTreeId")]
+    pub type SeaTreeReference;
+
     #[wasm_bindgen(typescript_type = "AsyncRequestTransport")]
     pub type AsyncRequestTransport;
 

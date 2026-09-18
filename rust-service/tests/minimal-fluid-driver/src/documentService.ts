@@ -18,6 +18,7 @@ import type {
 import { SeaDeltaConnection, SeaDeltaStorage } from "./delta.js";
 import {
 	documentId,
+	bytesToHex,
 	encoder,
 	Events,
 	externalClientId,
@@ -87,7 +88,7 @@ export class SeaDocumentService extends Events implements IDocumentService {
 
 	/** Creates a document service whose Fluid interfaces share one generated client. */
 	public constructor(
-		public readonly resolvedUrl: IResolvedUrl,
+		public resolvedUrl: IResolvedUrl,
 		private readonly clientFactory: WasmClientFactory,
 		private readonly options: MinimalWasmDriverOptions,
 	) {
@@ -98,7 +99,7 @@ export class SeaDocumentService extends Events implements IDocumentService {
 	public async connectToStorage(): Promise<SeaDocumentStorage> {
 		const client = await this.getClient("storage");
 		await this.ensureStorageSession(client);
-		return new SeaDocumentStorage(documentId(this.resolvedUrl), client);
+		return new SeaDocumentStorage(client);
 	}
 
 	/** Connects bounded projected-operation history. */
@@ -152,7 +153,13 @@ export class SeaDocumentService extends Events implements IDocumentService {
 	/** Creates this service's document before initial summary upload. */
 	public async createDocument(): Promise<void> {
 		const client = await this.getClient("create");
-		await client.create(documentId(this.resolvedUrl));
+		const document = await client.create();
+		const id = bytesToHex(document);
+		const url = new URL(this.resolvedUrl.url);
+		const segments = url.pathname.split("/");
+		segments[segments.length - 1] = id;
+		url.pathname = segments.join("/");
+		this.resolvedUrl = { ...this.resolvedUrl, id, url: url.toString() };
 		await this.ensureStorageSession(client);
 	}
 

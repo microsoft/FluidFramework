@@ -6,13 +6,15 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{StreamExt as _, stream};
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, Durability, ErrorKind,
-    Event, EventPosition, MonitoredStreamItem, MonitoredStreamStatus, SnapshotId,
+    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, ErrorKind, Event,
+    EventPosition, MonitoredStreamItem, MonitoredStreamStatus,
     archive::{
-        EventSubmission, LoadEvent, OperationId, PublishedSnapshot, SeaArchive, SeaAuthorSession,
-        SeaEventSubscription, SeaService, SeaSnapshotCoordinator, SeaSnapshotPublisher,
-        Snapshot as ArchiveSnapshot, SnapshotParticipation as ArchiveSnapshotParticipation,
-        SnapshotPosition as ArchiveSnapshotPosition, SnapshotPublication,
+        EventSubmission, OperationId, SeaService,
+        SnapshotParticipation as ArchiveSnapshotParticipation,
+    },
+    next::{
+        LoadStart, Snapshot, StorageHandle,
+        session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
     },
 };
 
@@ -36,14 +38,7 @@ impl<S: SeaService> SessionDispatcher<S> {
 #[async_trait]
 impl<S> SeaConnectionService for SessionDispatcher<S>
 where
-    S: SeaArchive
-        + SeaAuthorSession
-        + SeaEventSubscription
-        + SeaSnapshotCoordinator
-        + SeaSnapshotPublisher
-        + Send
-        + Sync
-        + 'static,
+    S: SeaArchive + SeaAuthorSession + SeaSnapshotCoordinator + Send + Sync + 'static,
 {
     async fn connection_closed(&self, _allow_reconnect_grace: bool) {
         let _ = self.session.close().await;
@@ -60,19 +55,28 @@ where
         &self,
         resume_after: Option<u64>,
     ) -> Result<SeaResponseStream, protocol::Response> {
-        let stream = self.session.load(resume_after.map(EventPosition::new));
-        Ok(Box::pin(stream.map(|item| match item {
-            Ok(MonitoredStreamItem::Item(LoadEvent::Snapshot(snapshot))) => {
-                protocol::Response::LoadSnapshot(snapshot_to_wire(snapshot))
-            }
-            Ok(MonitoredStreamItem::Item(LoadEvent::Event(event))) => session_event_to_wire(&event),
-            Ok(MonitoredStreamItem::Progress(progress)) => protocol::Response::StreamProgress {
-                previous: progress.previous.map(EventPosition::get),
-                latest_known: progress.latest_known.map(EventPosition::get),
-                status: stream_status_to_wire(progress.status),
+        let load = self
+            .session
+            .load(resume_after.map_or(LoadStart::LatestSnapshot, |position| {
+                LoadStart::ReplayAtLeastAllAfter(EventPosition::new(position))
+            }))
+            .await
+            .map_err(error_response)?;
+        let snapshot = stream::iter(
+            load.snapshot
+                .map(|snapshot| protocol::Response::LoadSnapshot(snapshot_to_wire(&snapshot))),
+        );
+        Ok(Box::pin(snapshot.chain(load.events.map(
+            |item| match item {
+                Ok(MonitoredStreamItem::Item(event)) => session_event_to_wire(&event),
+                Ok(MonitoredStreamItem::Progress(progress)) => protocol::Response::StreamProgress {
+                    previous: progress.previous.map(EventPosition::get),
+                    latest_known: progress.latest_known.map(EventPosition::get),
+                    status: stream_status_to_wire(progress.status),
+                },
+                Err(error) => error_response(error),
             },
-            Err(error) => error_response(error),
-        })))
+        ))))
     }
 
     async fn author_request(&self, request: protocol::Request) -> protocol::Response {
@@ -100,7 +104,7 @@ where
             .map_err(error_response)?;
         Ok(Box::pin(stream.map(|item| match item {
             Ok(state) => protocol::Response::SnapshotCoordination {
-                latest: state.latest.map(snapshot_to_wire),
+                latest: state.latest.map(EventPosition::get),
                 fence: state.fence,
             },
             Err(error) => error_response(error),
@@ -109,38 +113,27 @@ where
 
     async fn snapshot_request(&self, request: protocol::Request) -> protocol::Response {
         match request {
+            protocol::Request::Close => self
+                .session
+                .revoke_snapshot_publisher()
+                .await
+                .map_or_else(error_response, |()| protocol::Response::Acknowledged),
             protocol::Request::PublishSnapshot {
                 fence,
-                operation,
                 expected_parent,
                 at_event,
                 root,
-            } => match operation_id(operation) {
-                Ok(operation_id) => self
-                    .session
-                    .publish_coordinated_snapshot(
-                        fence,
-                        SnapshotPublication {
-                            operation_id,
-                            expected_parent: expected_parent
-                                .map(|parent| SnapshotId::from_bytes(Bytes::from(parent))),
-                            snapshot: ArchiveSnapshot {
-                                at_event: snapshot_position_from_wire(at_event),
-                                root: tree_from_wire(root),
-                            },
-                        },
-                    )
+            } => {
+                match self
+                    .publish_snapshot(fence, expected_parent, at_event, root)
                     .await
-                    .map_or_else(error_response, |snapshot| {
-                        protocol::Response::Snapshot(Some(snapshot_to_wire(snapshot)))
-                    }),
-                Err(error) => error,
-            },
-            protocol::Request::LatestSnapshot | protocol::Request::ResolveSnapshot { .. } => {
-                match self.request_inner(request).await {
+                {
                     Ok(response) | Err(response) => response,
                 }
             }
+            protocol::Request::LatestSnapshot => match self.request_inner(request).await {
+                Ok(response) | Err(response) => response,
+            },
             _ => invalid("request is not valid on an open snapshot stream"),
         }
     }
@@ -192,12 +185,42 @@ const fn stream_status_to_wire(status: MonitoredStreamStatus) -> protocol::Strea
 
 impl<S> SessionDispatcher<S>
 where
-    S: SeaArchive
-        + SeaAuthorSession
-        + SeaEventSubscription
-        + SeaSnapshotCoordinator
-        + SeaSnapshotPublisher,
+    S: SeaArchive + SeaAuthorSession + SeaSnapshotCoordinator,
 {
+    /// Resolves both dependency identities before invoking conditional publication.
+    async fn publish_snapshot(
+        &self,
+        fence: Option<u64>,
+        expected_parent: Option<u64>,
+        at_event: u64,
+        root: protocol::TreeId,
+    ) -> Result<protocol::Response, protocol::Response> {
+        let root = self
+            .session
+            .resolve_tree(tree_from_wire(root))
+            .await
+            .map_err(error_response)?
+            .ok_or_else(|| invalid("snapshot tree is unavailable"))?;
+        let at_event = self
+            .session
+            .resolve_position(EventPosition::new(at_event))
+            .await
+            .map_err(error_response)?
+            .ok_or_else(|| invalid("snapshot event is unavailable"))?;
+        let snapshot = self
+            .session
+            .publish_snapshot(
+                expected_parent.map(EventPosition::new),
+                fence,
+                Snapshot { root, at_event },
+            )
+            .await
+            .map_err(error_response)?;
+        Ok(protocol::Response::Snapshot(Some(snapshot_to_wire(
+            &snapshot,
+        ))))
+    }
+
     #[allow(clippy::too_many_lines)]
     async fn request_inner(
         &self,
@@ -223,8 +246,7 @@ where
                     .await
                     .map_err(error_response)?;
                 Ok(protocol::Response::EventCommitted {
-                    position: receipt.position.get(),
-                    durability: durability_to_wire(receipt.durability),
+                    position: receipt.get(),
                 })
             }
             protocol::Request::ResolveSubmission { operation } => {
@@ -234,35 +256,28 @@ where
                     .await
                     .map_err(error_response)?;
                 Ok(protocol::Response::SubmissionResolved {
-                    position: receipt.as_ref().map(|receipt| receipt.position.get()),
-                    durability: receipt
-                        .as_ref()
-                        .map(|receipt| durability_to_wire(receipt.durability)),
+                    position: receipt.map(EventPosition::get),
                 })
             }
             protocol::Request::GetSnapshot { id } => {
                 let snapshot = self
                     .session
-                    .snapshot(&SnapshotId::from_bytes(Bytes::from(id)))
+                    .get_snapshot(LoadStart::ReplayAtLeastAllAfter(EventPosition::new(id)))
                     .await
                     .map_err(error_response)?;
-                Ok(protocol::Response::Snapshot(snapshot.map(snapshot_to_wire)))
+                Ok(protocol::Response::Snapshot(
+                    snapshot.as_ref().map(snapshot_to_wire),
+                ))
             }
             protocol::Request::LatestSnapshot => {
                 let snapshot = self
                     .session
-                    .latest_snapshot()
+                    .get_snapshot(LoadStart::LatestSnapshot)
                     .await
                     .map_err(error_response)?;
-                Ok(protocol::Response::Snapshot(snapshot.map(snapshot_to_wire)))
-            }
-            protocol::Request::ResolveSnapshot { operation } => {
-                let snapshot = self
-                    .session
-                    .resolve_snapshot_publication(&operation_id(operation)?)
-                    .await
-                    .map_err(error_response)?;
-                Ok(protocol::Response::Snapshot(snapshot.map(snapshot_to_wire)))
+                Ok(protocol::Response::Snapshot(
+                    snapshot.as_ref().map(snapshot_to_wire),
+                ))
             }
             protocol::Request::Close => {
                 self.session.close().await.map_err(error_response)?;
@@ -290,6 +305,9 @@ where
                     .put_blob(Bytes::from(payload))
                     .await
                     .map_err(error_response)?;
+                let BlobTreeId::Blob(id) = id.id() else {
+                    return Err(invalid("blob store returned a directory"));
+                };
                 Ok(protocol::Response::BlobStored { id: *id.as_bytes() })
             }
             protocol::Request::GetBlob { id } => {
@@ -317,6 +335,9 @@ where
                     .put_directory(directory)
                     .await
                     .map_err(error_response)?;
+                let BlobTreeId::Directory(id) = id.id() else {
+                    return Err(invalid("directory store returned a blob"));
+                };
                 Ok(protocol::Response::DirectoryStored { id: *id.as_bytes() })
             }
             protocol::Request::GetDirectory { id } => {
@@ -391,15 +412,6 @@ fn tree_to_wire(id: BlobTreeId) -> protocol::TreeId {
     }
 }
 
-fn snapshot_position_from_wire(position: protocol::SnapshotPosition) -> ArchiveSnapshotPosition {
-    match position {
-        protocol::SnapshotPosition::Initial => ArchiveSnapshotPosition::Initial,
-        protocol::SnapshotPosition::At(position) => {
-            ArchiveSnapshotPosition::At(EventPosition::new(position))
-        }
-    }
-}
-
 const fn snapshot_participation_from_wire(
     participation: protocol::SnapshotParticipation,
 ) -> ArchiveSnapshotParticipation {
@@ -412,23 +424,15 @@ const fn snapshot_participation_from_wire(
     }
 }
 
-fn snapshot_to_wire(snapshot: PublishedSnapshot) -> protocol::Snapshot {
+fn snapshot_to_wire<
+    BlobHandle: StorageHandle<Id = BlobTreeId>,
+    EventHandle: StorageHandle<Id = EventPosition>,
+>(
+    snapshot: &Snapshot<BlobHandle, EventHandle>,
+) -> protocol::Snapshot {
     protocol::Snapshot {
-        id: snapshot.id.as_bytes().to_vec(),
-        parent: snapshot.parent.map(|parent| parent.as_bytes().to_vec()),
-        at_event: match snapshot.snapshot.at_event {
-            ArchiveSnapshotPosition::Initial => protocol::SnapshotPosition::Initial,
-            ArchiveSnapshotPosition::At(position) => protocol::SnapshotPosition::At(position.get()),
-        },
-        root: tree_to_wire(snapshot.snapshot.root),
-    }
-}
-
-const fn durability_to_wire(durability: Durability) -> protocol::WireDurability {
-    match durability {
-        Durability::Memory => protocol::WireDurability::Memory,
-        Durability::Buffered => protocol::WireDurability::Buffered,
-        Durability::Durable => protocol::WireDurability::Durable,
+        at_event: snapshot.at_event.id().get(),
+        root: tree_to_wire(snapshot.root.id()),
     }
 }
 
@@ -464,8 +468,9 @@ mod tests {
     use bytes::Bytes;
     use futures_util::StreamExt as _;
     use sea_core::archive::{AuthorId, SessionId};
-    use sea_memory::MemoryStream;
-    use sea_sequencer::session::LocalSequencer;
+    use sea_core::next::SeaStorage as _;
+    use sea_memory::MemoryStorage;
+    use sea_sequencer::next::LocalSequencer;
 
     use super::SessionDispatcher;
     use sea_webtransport::protocol;
@@ -474,7 +479,8 @@ mod tests {
 
     #[tokio::test]
     async fn dispatches_typed_role_operations() {
-        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
+        let (_, view) = MemoryStorage::new().create_view().await.unwrap();
+        let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
             .await
             .unwrap();
         let session = sequencer
@@ -519,10 +525,7 @@ mod tests {
         };
         assert_eq!(payload, b"content-2");
 
-        let protocol::Response::EventCommitted {
-            position,
-            durability,
-        } = dispatcher
+        let protocol::Response::EventCommitted { position } = dispatcher
             .author_request(protocol::Request::Submit {
                 operation: b"operation".to_vec(),
                 reference: None,
@@ -535,7 +538,6 @@ mod tests {
         else {
             panic!("submission should commit");
         };
-        assert_eq!(durability, protocol::WireDurability::Memory);
         assert!(position > 0);
         assert_eq!(
             dispatcher
@@ -545,7 +547,6 @@ mod tests {
                 .await,
             protocol::Response::SubmissionResolved {
                 position: Some(position),
-                durability: Some(protocol::WireDurability::Memory)
             }
         );
 
@@ -556,13 +557,6 @@ mod tests {
                 status: protocol::StreamStatus::StreamingBacklog,
                 ..
             })
-        ));
-        assert!(matches!(
-            load.next().await,
-            Some(protocol::Response::StreamProgress {
-                latest_known: Some(known),
-                ..
-            }) if known == position
         ));
         assert!(matches!(
             load.next().await,

@@ -165,7 +165,7 @@ async function run(): Promise<Record<string, unknown>> {
 		Number.parseInt(value, 16),
 	);
 	const documentId = `shared-tree-${Date.now()}`;
-	const resolvedUrl: IResolvedUrl = {
+	let resolvedUrl: IResolvedUrl = {
 		type: "fluid",
 		id: documentId,
 		url: `fluid://localhost/minimal/${documentId}`,
@@ -262,6 +262,10 @@ async function run(): Promise<Record<string, unknown>> {
 	containerStates.firstClosed = () => firstContainer.closed;
 	setStage("attaching-container");
 	await firstContainer.attach({ url: resolvedUrl.url });
+	if (firstContainer.resolvedUrl?.type !== "fluid") {
+		throw new Error("attached container did not retain its assigned Fluid URL");
+	}
+	resolvedUrl = firstContainer.resolvedUrl;
 	await waitForConnected(firstContainer);
 	const firstConnection = deltaConnections.at(-1);
 	assert(firstConnection !== undefined, "attached container omitted its delta connection");

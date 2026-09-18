@@ -90,8 +90,8 @@ export interface SummaryPublication {
 
 /** Minimal generated-client surface consumed by the Fluid driver adapter. */
 export interface SeaDriverClient {
-	/** Creates an archive when the selected deployment requires explicit creation. */
-	create(document: Uint8Array): Promise<void>;
+	/** Creates a document and returns the backend-assigned identity used for later opens. */
+	create(): Promise<Uint8Array>;
 	/** Opens one archive-bound author session. */
 	openSession(
 		document: Uint8Array,
@@ -126,7 +126,6 @@ export interface SeaDriverClient {
 	>;
 	/** Conditionally publishes one directory root as a snapshot. */
 	publishSnapshotRoot(
-		operation: Uint8Array,
 		expectedParent: Uint8Array | undefined,
 		atEvent: Uint8Array | undefined,
 		root: Uint8Array,

@@ -185,7 +185,7 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	if (integration !== "fluid") {
 		throw new Error(`unsupported SharedTree integration ${JSON.stringify(integration)}`);
 	}
-	const resolvedUrl: IResolvedUrl = {
+	let resolvedUrl: IResolvedUrl = {
 		type: "fluid",
 		id: documentId,
 		url: `fluid://localhost/minimal/${documentId}`,
@@ -241,6 +241,10 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		benchmarkTreeConfiguration,
 	);
 	await firstContainer.attach({ url: resolvedUrl.url });
+	if (firstContainer.resolvedUrl?.type !== "fluid") {
+		throw new Error("attached container did not retain its assigned Fluid URL");
+	}
+	resolvedUrl = firstContainer.resolvedUrl;
 	await waitForConnected(firstContainer);
 
 	const secondContainer = await makeLoader().resolve({ url: resolvedUrl.url });
@@ -361,7 +365,7 @@ async function createDirectSharedTreePair(
 	window.__sharedTreeStage = "creating direct SharedTree observer";
 	const observer = await DirectSharedTreeClient.create(
 		await createClient(),
-		document,
+		writer.documentId,
 		subscriptionBatchMaxOperations,
 		1024 * 1024,
 		false,
@@ -446,7 +450,7 @@ async function createDirectDummyPair(
 	window.__sharedTreeStage = "creating direct dummy observer";
 	const observer = await DirectDummyClient.create(
 		await createClient(),
-		document,
+		writer.documentId,
 		subscriptionBatchMaxOperations,
 		1024 * 1024,
 		false,

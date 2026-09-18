@@ -6,9 +6,9 @@ They differ only where their environments open connections and read or write byt
 
 ## Architecture
 
-One archive-bound client connection uses four persistent logical streams:
+One document-bound client connection uses four persistent logical streams:
 
-- The **event stream** opens the logical session, returns opaque session authority, and carries atomic snapshot selection, catch-up, monitored progress, and live events.
+- The **event stream** opens the logical session, returns the backend document ID and opaque session authority, and carries a selected snapshot followed by catch-up, monitored progress, and live events.
 - The **author stream** uses that authority for ordered submissions, receipts, ambiguity resolution, and close.
 - The **snapshot stream** uses that authority for latest-value snapshot notifications and policy-bound publication.
 - A **content stream** uses that authority for correlated history, blob, directory, and snapshot lookup operations.
@@ -25,6 +25,19 @@ A **logical stream** is one persistent WebTransport bidirectional stream with a 
 A **client** owns one transport connection and the shared state for its logical streams.
 The **protocol** is the versioned frame and message contract, not the server implementation or application adapter.
 
+Protocol version 5 uses backend-assigned opaque document IDs.
+Creation supplies no document ID; the open response returns the ID to retain for subsequent sessions.
+There is no caller-name mapping or compatibility reader for earlier protocol versions.
+Submission and resolution return committed event positions, not per-operation durability receipts.
+Durability remains a backend property.
+
+Snapshots contain a root and committed event position, which is also their document-scoped version.
+Publication carries the expected parent position and optional nomination fence; the receiver resolves tree and event availability before publishing.
+An exact retry at the same position and root succeeds, but a different root at that position fails.
+`getSnapshot(position)` selects the newest snapshot at or before its inclusive bound; `latestSnapshot()` needs no publisher subscription.
+There is no empty initial snapshot: applications with initial state must first commit an event.
+Loads select the latest or bounded snapshot and then replay the retained suffix without promising an atomic captured head.
+
 ## Snapshot Participation
 
 Snapshot coordination opens with one immutable policy:
@@ -40,11 +53,21 @@ See [Decision 0012](../../decisions/0012-fluid-snapshot-election-integration.md)
 
 ## Lifecycle And Ownership
 
-`NativeSeaClient` pins a SHA-256 certificate hash and implements `SeaSession`.
+`NativeSeaClient` pins a SHA-256 certificate hash and implements the replacement `sea_core::next::session` facets.
+Its private-provenance handles confirm remote availability and are scoped to the resolving client; they are never sent as wire authority.
+Event-position resolution currently scans retained history, and tree resolution fetches the corresponding immutable content.
 Disconnect and reconnect are explicit; operations are never retried automatically.
 Active frame reads and writes have deadlines, while an idle healthy stream does not inherit the operation deadline.
 Connection loss releases author membership and snapshot participation according to server liveness policy.
 Protocol or transport failure closes the owning connection without terminating the server endpoint.
+
+The returned snapshot subscription owns its registration.
+Replacing, cancelling, or dropping it releases only that registration, not a newer one.
+Native tasks and browser-local tasks serialize snapshot requests while independently delivering coalescible coordination updates.
+Publication can proceed while a notification read is pending; cancelling the notification wakes its waiter.
+Browser reads retain their JavaScript promise across cancelled Rust waiters, since dropping a Rust future does not cancel a JavaScript read.
+Explicit browser disconnect closes the underlying WebTransport session.
+Optional generated tree inputs are non-consuming typed JavaScript references, so a submitted tree identity remains usable for publication.
 
 The native listener, server dispatch, archive routing, connection liveness, measurements, and shutdown policy belong to the separate [`sea-webtransport-server`](../sea-webtransport-server/) crate.
 

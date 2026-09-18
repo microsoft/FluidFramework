@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 /// Current Sea logical-stream opening version.
-pub const PROTOCOL_VERSION: u16 = 4;
+pub const PROTOCOL_VERSION: u16 = 5;
 
 /// Explicit wire identity of every Sea network message.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -30,8 +30,6 @@ pub enum MessageKind {
     GetSnapshot = 10,
     /// Latest-snapshot request.
     LatestSnapshot = 11,
-    /// Snapshot-publication resolution request.
-    ResolveSnapshot = 13,
     /// Logical-session close request.
     Close = 16,
     /// Event-stream opening request.
@@ -90,7 +88,6 @@ impl TryFrom<u8> for MessageKind {
             9 => Ok(Self::GetDirectory),
             10 => Ok(Self::GetSnapshot),
             11 => Ok(Self::LatestSnapshot),
-            13 => Ok(Self::ResolveSnapshot),
             16 => Ok(Self::Close),
             17 => Ok(Self::OpenEventStream),
             18 => Ok(Self::OpenAuthorStream),
@@ -138,7 +135,7 @@ pub enum StreamRole {
 
 impl MessageKind {
     /// Every assigned message kind in numeric order.
-    pub const ALL: [Self; 31] = [
+    pub const ALL: [Self; 30] = [
         Self::Submit,
         Self::ResolveSubmission,
         Self::Read,
@@ -148,7 +145,6 @@ impl MessageKind {
         Self::GetDirectory,
         Self::GetSnapshot,
         Self::LatestSnapshot,
-        Self::ResolveSnapshot,
         Self::Close,
         Self::OpenEventStream,
         Self::OpenAuthorStream,
@@ -203,7 +199,6 @@ impl MessageKind {
                 Kind::OpenSnapshotStream
                     | Kind::PublishSnapshot
                     | Kind::LatestSnapshot
-                    | Kind::ResolveSnapshot
                     | Kind::Snapshot
                     | Kind::SnapshotCoordination
                     | Kind::Close
@@ -219,6 +214,7 @@ impl MessageKind {
                     | Kind::PutDirectory
                     | Kind::GetDirectory
                     | Kind::GetSnapshot
+                    | Kind::LatestSnapshot
                     | Kind::BlobStored
                     | Kind::Blob
                     | Kind::DirectoryStored
@@ -248,10 +244,9 @@ impl MessageKind {
             | Self::PutDirectory
             | Self::GetDirectory
             | Self::GetSnapshot => Some(StreamRole::Content),
-            Self::LatestSnapshot
-            | Self::OpenSnapshotStream
-            | Self::PublishSnapshot
-            | Self::ResolveSnapshot => Some(StreamRole::Snapshot),
+            Self::LatestSnapshot | Self::OpenSnapshotStream | Self::PublishSnapshot => {
+                Some(StreamRole::Snapshot)
+            }
             _ => None,
         }
     }
@@ -488,24 +483,11 @@ pub struct DirectoryEntry {
     pub child: TreeId,
 }
 
-/// Initial state or one included event position.
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum SnapshotPosition {
-    /// State before the first event.
-    Initial,
-    /// State through the supplied event position.
-    At(u64),
-}
-
 /// Snapshot metadata returned by the service.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Snapshot {
-    /// Publication identity.
-    pub id: Vec<u8>,
-    /// Parent publication identity.
-    pub parent: Option<Vec<u8>>,
-    /// Included event boundary.
-    pub at_event: SnapshotPosition,
+    /// Included committed event and document-scoped snapshot version.
+    pub at_event: u64,
     /// Immutable content-tree root.
     pub root: TreeId,
 }
@@ -545,19 +527,6 @@ pub enum ArchiveIntent {
     Create,
     /// Open an archive that must already exist.
     Open,
-}
-
-/// Explicitly encoded event durability on the Sea wire.
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[repr(u8)]
-#[serde(try_from = "u8", into = "u8")]
-pub enum WireDurability {
-    /// Visible only in process.
-    Memory = 1,
-    /// Flushed to operating-system-backed storage.
-    Buffered = 2,
-    /// Persisted according to the backend durability contract.
-    Durable = 3,
 }
 
 /// Explicit snapshot publication policy on the Sea wire.
@@ -624,44 +593,13 @@ impl From<SnapshotParticipation> for u8 {
     }
 }
 
-impl TryFrom<u8> for WireDurability {
-    type Error = ProtocolError;
-
-    fn try_from(value: u8) -> Result<Self, ProtocolError> {
-        match value {
-            1 => Ok(Self::Memory),
-            2 => Ok(Self::Buffered),
-            3 => Ok(Self::Durable),
-            _ => Err(ProtocolError::UnknownDurability(value)),
-        }
-    }
-}
-
-impl From<WireDurability> for u8 {
-    fn from(value: WireDurability) -> Self {
-        value as Self
-    }
-}
-
-impl WireDurability {
-    /// Returns the stable generated-client display name.
-    #[must_use]
-    pub const fn name(self) -> &'static str {
-        match self {
-            Self::Memory => "memory",
-            Self::Buffered => "buffered",
-            Self::Durable => "durable",
-        }
-    }
-}
-
 /// Message-kind-specific payload structures encoded inside [`NetworkFrame`].
 pub mod payload {
     use serde::{Deserialize, Serialize};
 
     use super::{
         ArchiveIntent, DirectoryEntry, ErrorKind, Event, Snapshot, SnapshotParticipation,
-        SnapshotPosition, StreamStatus, TreeId, WireDurability,
+        StreamStatus, TreeId,
     };
 
     /// Payload for a message with no fields.
@@ -688,6 +626,8 @@ pub mod payload {
     /// Opaque authority returned when an event stream opens.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct EventStreamOpened {
+        /// Backend-assigned document identity retained for subsequent opens.
+        pub document: Vec<u8>,
         /// Capability used to bind the session's other logical streams.
         pub authority: Vec<u8>,
     }
@@ -720,8 +660,8 @@ pub mod payload {
     /// Latest accepted snapshot and nomination notification.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct SnapshotCoordination {
-        /// Latest accepted snapshot, if one exists.
-        pub latest: Option<Snapshot>,
+        /// Event position of the latest accepted snapshot, if one exists.
+        pub latest: Option<u64>,
         /// Current nomination fence when this client is selected.
         pub fence: Option<u64>,
     }
@@ -784,19 +724,17 @@ pub mod payload {
     /// Snapshot publication identity payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct SnapshotId {
-        /// Snapshot identity bytes.
-        pub id: Vec<u8>,
+        /// Document-scoped committed event position.
+        pub id: u64,
     }
 
     /// Conditional snapshot publication payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct PublishSnapshot {
-        /// Stable publication identity.
-        pub operation: Vec<u8>,
-        /// Expected latest publication.
-        pub expected_parent: Option<Vec<u8>>,
+        /// Expected latest snapshot event position.
+        pub expected_parent: Option<u64>,
         /// Included event boundary.
-        pub at_event: SnapshotPosition,
+        pub at_event: u64,
         /// Immutable content root.
         pub root: TreeId,
     }
@@ -806,8 +744,6 @@ pub mod payload {
     pub struct EventCommitted {
         /// Assigned event position.
         pub position: u64,
-        /// Achieved durability class.
-        pub durability: WireDurability,
     }
 
     /// Stable submission resolution payload.
@@ -815,8 +751,6 @@ pub mod payload {
     pub struct SubmissionResolved {
         /// Committed position, or none when definitively absent.
         pub position: Option<u64>,
-        /// Original durability, or none when definitively absent.
-        pub durability: Option<WireDurability>,
     }
 
     /// Fetched blob bytes payload.
@@ -921,16 +855,11 @@ pub enum Request {
     },
     /// Fetches one retained snapshot.
     GetSnapshot {
-        /// Publication identity.
-        id: Vec<u8>,
+        /// Inclusive upper bound for the selected snapshot's event position.
+        id: u64,
     },
     /// Fetches the latest retained snapshot.
     LatestSnapshot,
-    /// Resolves a possibly ambiguous snapshot publication.
-    ResolveSnapshot {
-        /// Stable retry identity.
-        operation: Vec<u8>,
-    },
     /// Explicitly closes the logical session.
     Close,
     /// Opens the archive-bound recovery and live event stream.
@@ -969,12 +898,10 @@ pub enum Request {
     PublishSnapshot {
         /// Current Sea fence, or none for client-selected publication.
         fence: Option<u64>,
-        /// Stable publication identity.
-        operation: Vec<u8>,
-        /// Expected latest publication.
-        expected_parent: Option<Vec<u8>>,
+        /// Expected latest snapshot event position.
+        expected_parent: Option<u64>,
         /// Included event boundary.
-        at_event: SnapshotPosition,
+        at_event: u64,
         /// Immutable content root.
         root: TreeId,
     },
@@ -985,19 +912,15 @@ pub enum Request {
 pub enum Response {
     /// The request completed without another value.
     Acknowledged,
-    /// An event committed at this position and durability class.
+    /// An event committed at this position.
     EventCommitted {
         /// Stable event position.
         position: u64,
-        /// Explicit durability class.
-        durability: WireDurability,
     },
     /// Submission resolution result.
     SubmissionResolved {
         /// Committed position, or `None` when definitively absent.
         position: Option<u64>,
-        /// Original durability class when the submission committed.
-        durability: Option<WireDurability>,
     },
     /// Published blob identity.
     BlobStored {
@@ -1037,13 +960,15 @@ pub enum Response {
     },
     /// The event stream opened with this opaque logical-session authority.
     EventStreamOpened {
+        /// Backend-assigned document identity retained for subsequent opens.
+        document: Vec<u8>,
         /// Capability required to bind later logical streams.
         authority: Vec<u8>,
     },
     /// Latest accepted snapshot and this client's nomination state.
     SnapshotCoordination {
-        /// Latest accepted snapshot, if any.
-        latest: Option<Snapshot>,
+        /// Event position of the latest accepted snapshot, if any.
+        latest: Option<u64>,
         /// Current fence when this client is nominated.
         fence: Option<u64>,
     },
@@ -1070,7 +995,6 @@ impl Request {
             Self::GetDirectory { .. } => MessageKind::GetDirectory,
             Self::GetSnapshot { .. } => MessageKind::GetSnapshot,
             Self::LatestSnapshot => MessageKind::LatestSnapshot,
-            Self::ResolveSnapshot { .. } => MessageKind::ResolveSnapshot,
             Self::Close => MessageKind::Close,
         }
     }
@@ -1093,8 +1017,7 @@ impl Request {
             | Self::GetSnapshot { .. } => StreamRole::Content,
             Self::LatestSnapshot
             | Self::OpenSnapshotStream { .. }
-            | Self::PublishSnapshot { .. }
-            | Self::ResolveSnapshot { .. } => StreamRole::Snapshot,
+            | Self::PublishSnapshot { .. } => StreamRole::Snapshot,
         }
     }
 }
@@ -1208,7 +1131,6 @@ pub fn encode_request_frame(
         ),
         Request::PublishSnapshot {
             fence,
-            operation,
             expected_parent,
             at_event,
             root,
@@ -1219,8 +1141,7 @@ pub fn encode_request_frame(
             &wire::PublishSnapshotRequest {
                 fence: *fence,
                 publication: wire::PublishSnapshot {
-                    operation: operation.clone(),
-                    expected_parent: expected_parent.clone(),
+                    expected_parent: *expected_parent,
                     at_event: *at_event,
                     root: *root,
                 },
@@ -1242,17 +1163,15 @@ pub fn encode_request_frame(
             },
             limits,
         ),
-        Request::ResolveSubmission { operation } | Request::ResolveSnapshot { operation } => {
-            encode_typed_payload(
-                role,
-                request.kind(),
-                correlation_id,
-                &wire::Operation {
-                    operation: operation.clone(),
-                },
-                limits,
-            )
-        }
+        Request::ResolveSubmission { operation } => encode_typed_payload(
+            role,
+            request.kind(),
+            correlation_id,
+            &wire::Operation {
+                operation: operation.clone(),
+            },
+            limits,
+        ),
         Request::Read { after, stop_after } => encode_typed_payload(
             role,
             request.kind(),
@@ -1299,7 +1218,7 @@ pub fn encode_request_frame(
             role,
             request.kind(),
             correlation_id,
-            &wire::SnapshotId { id: id.clone() },
+            &wire::SnapshotId { id: *id },
             limits,
         ),
         Request::LatestSnapshot | Request::Close => {
@@ -1356,7 +1275,6 @@ pub fn decode_request_frame(
             let value: wire::PublishSnapshotRequest = decode_typed_payload(frame)?;
             Request::PublishSnapshot {
                 fence: value.fence,
-                operation: value.publication.operation,
                 expected_parent: value.publication.expected_parent,
                 at_event: value.publication.at_event,
                 root: value.publication.root,
@@ -1370,16 +1288,10 @@ pub fn decode_request_frame(
                 event: value.event,
             }
         }
-        MessageKind::ResolveSubmission | MessageKind::ResolveSnapshot => {
+        MessageKind::ResolveSubmission => {
             let value: wire::Operation = decode_typed_payload(frame)?;
-            if frame.kind == MessageKind::ResolveSubmission {
-                Request::ResolveSubmission {
-                    operation: value.operation,
-                }
-            } else {
-                Request::ResolveSnapshot {
-                    operation: value.operation,
-                }
+            Request::ResolveSubmission {
+                operation: value.operation,
             }
         }
         MessageKind::Read => {
@@ -1442,11 +1354,15 @@ pub fn encode_response_frame(
         Response::Acknowledged | Response::ResponseComplete => {
             encode_typed_payload(role, response.kind(), correlation_id, &wire::Empty, limits)
         }
-        Response::EventStreamOpened { authority } => encode_typed_payload(
+        Response::EventStreamOpened {
+            document,
+            authority,
+        } => encode_typed_payload(
             role,
             response.kind(),
             correlation_id,
             &wire::EventStreamOpened {
+                document: document.clone(),
                 authority: authority.clone(),
             },
             limits,
@@ -1456,34 +1372,26 @@ pub fn encode_response_frame(
             response.kind(),
             correlation_id,
             &wire::SnapshotCoordination {
-                latest: latest.clone(),
+                latest: *latest,
                 fence: *fence,
             },
             limits,
         ),
-        Response::EventCommitted {
-            position,
-            durability,
-        } => encode_typed_payload(
+        Response::EventCommitted { position } => encode_typed_payload(
             role,
             response.kind(),
             correlation_id,
             &wire::EventCommitted {
                 position: *position,
-                durability: *durability,
             },
             limits,
         ),
-        Response::SubmissionResolved {
-            position,
-            durability,
-        } => encode_typed_payload(
+        Response::SubmissionResolved { position } => encode_typed_payload(
             role,
             response.kind(),
             correlation_id,
             &wire::SubmissionResolved {
                 position: *position,
-                durability: *durability,
             },
             limits,
         ),
@@ -1599,6 +1507,7 @@ pub fn decode_response_network_frame(
         MessageKind::EventStreamOpened => {
             let value: wire::EventStreamOpened = decode_typed_payload(frame)?;
             Response::EventStreamOpened {
+                document: value.document,
                 authority: value.authority,
             }
         }
@@ -1613,14 +1522,12 @@ pub fn decode_response_network_frame(
             let value: wire::EventCommitted = decode_typed_payload(frame)?;
             Response::EventCommitted {
                 position: value.position,
-                durability: value.durability,
             }
         }
         MessageKind::SubmissionResolved => {
             let value: wire::SubmissionResolved = decode_typed_payload(frame)?;
             Response::SubmissionResolved {
                 position: value.position,
-                durability: value.durability,
             }
         }
         MessageKind::BlobStored => {
@@ -1695,9 +1602,6 @@ pub enum ProtocolError {
     /// A network message kind byte has no assigned meaning.
     #[error("unknown Sea message kind {0}")]
     UnknownMessageKind(u8),
-    /// A durability byte has no assigned meaning.
-    #[error("unknown Sea durability {0}")]
-    UnknownDurability(u8),
     /// A snapshot participation byte has no assigned meaning.
     #[error("unknown snapshot participation policy {0}")]
     UnknownSnapshotParticipation(u8),
@@ -1740,9 +1644,9 @@ mod tests {
     use super::{
         ArchiveIntent, CorrelationTracker, DirectoryEntry, ErrorKind, Event, Limits, MessageKind,
         NetworkFrame, NetworkFrameDecoder, PROTOCOL_VERSION, ProtocolError, Request, Response,
-        Snapshot, SnapshotParticipation, SnapshotPosition, StreamEvent, StreamRole, StreamStatus,
-        TreeId, WireDurability, decode_request_frame, decode_response_network_frame,
-        encode_network_frame, encode_request_frame, encode_response_frame,
+        Snapshot, SnapshotParticipation, StreamEvent, StreamRole, StreamStatus, TreeId,
+        decode_request_frame, decode_response_network_frame, encode_network_frame,
+        encode_request_frame, encode_response_frame,
     };
 
     #[test]
@@ -1965,9 +1869,8 @@ mod tests {
                 StreamRole::Snapshot,
                 Request::PublishSnapshot {
                     fence: Some(3),
-                    operation: b"snapshot-operation".to_vec(),
                     expected_parent: None,
-                    at_event: SnapshotPosition::At(2),
+                    at_event: 2,
                     root: TreeId::Directory([9; 32]),
                 },
             ),
@@ -2001,14 +1904,8 @@ mod tests {
             (StreamRole::Content, Request::GetBlob { id: [5; 32] }),
             (StreamRole::Content, Request::PutDirectory { entries }),
             (StreamRole::Content, Request::GetDirectory { id: [6; 32] }),
-            (StreamRole::Content, Request::GetSnapshot { id: vec![7; 8] }),
+            (StreamRole::Content, Request::GetSnapshot { id: 7 }),
             (StreamRole::Snapshot, Request::LatestSnapshot),
-            (
-                StreamRole::Snapshot,
-                Request::ResolveSnapshot {
-                    operation: b"snapshot-operation".to_vec(),
-                },
-            ),
             (StreamRole::Author, Request::Close),
         ];
         for (role, request) in cases {
@@ -2046,9 +1943,7 @@ mod tests {
     #[test]
     fn every_response_payload_round_trips_without_outer_enum_encoding() {
         let snapshot = Snapshot {
-            id: vec![1; 8],
-            parent: None,
-            at_event: SnapshotPosition::At(2),
+            at_event: 2,
             root: TreeId::Directory([2; 32]),
         };
         let stream_event = StreamEvent {
@@ -2069,29 +1964,21 @@ mod tests {
             (
                 StreamRole::Event,
                 Response::EventStreamOpened {
+                    document: vec![8; 8],
                     authority: vec![7; 32],
                 },
             ),
             (
                 StreamRole::Snapshot,
                 Response::SnapshotCoordination {
-                    latest: Some(snapshot.clone()),
+                    latest: Some(snapshot.at_event),
                     fence: Some(3),
                 },
             ),
+            (StreamRole::Author, Response::EventCommitted { position: 2 }),
             (
                 StreamRole::Author,
-                Response::EventCommitted {
-                    position: 2,
-                    durability: WireDurability::Durable,
-                },
-            ),
-            (
-                StreamRole::Author,
-                Response::SubmissionResolved {
-                    position: Some(2),
-                    durability: Some(WireDurability::Durable),
-                },
+                Response::SubmissionResolved { position: Some(2) },
             ),
             (StreamRole::Content, Response::BlobStored { id: [3; 32] }),
             (StreamRole::Content, Response::Blob(b"blob".to_vec())),

@@ -99,11 +99,16 @@ where
             decoder: NetworkFrameDecoder::new(self.limits),
         };
         let response = responses.next().await?.ok_or(ClientError::ResponseEnded)?;
-        let Response::EventStreamOpened { authority } = response else {
+        let Response::EventStreamOpened {
+            document,
+            authority,
+        } = response
+        else {
             return Err(ClientError::UnexpectedResponse(response));
         };
         self.state.set_authority(authority.clone())?;
         Ok(EventStream {
+            document,
             authority,
             responses,
         })
@@ -263,6 +268,8 @@ where
 /// Open event stream after its authority handshake has completed.
 #[derive(Debug)]
 pub struct EventStream<Stream> {
+    /// Backend identity returned by the opening handshake.
+    document: Vec<u8>,
     authority: Vec<u8>,
     responses: ResponseStream<Stream>,
 }
@@ -283,7 +290,7 @@ pub struct SnapshotStream<Stream> {
     state: Arc<ClientState>,
     limits: protocol::Limits,
     decoder: NetworkFrameDecoder,
-    latest: Option<protocol::Snapshot>,
+    latest: Option<u64>,
     fence: Option<u64>,
 }
 
@@ -372,8 +379,8 @@ where
 {
     /// Returns the latest accepted snapshot observed on this stream.
     #[must_use]
-    pub fn latest(&self) -> Option<&protocol::Snapshot> {
-        self.latest.as_ref()
+    pub const fn latest(&self) -> Option<u64> {
+        self.latest
     }
 
     /// Returns the current nomination fence, when this client is nominated.
@@ -519,6 +526,12 @@ impl<Stream> EventStream<Stream>
 where
     Stream: BidirectionalStream,
 {
+    /// Returns the backend-assigned identity used to reopen this document.
+    #[must_use]
+    pub fn document(&self) -> &[u8] {
+        &self.document
+    }
+
     /// Returns the opaque authority used to bind later logical streams.
     #[must_use]
     pub fn authority(&self) -> &[u8] {
@@ -978,6 +991,7 @@ mod tests {
             StreamRole::Event,
             1,
             &Response::EventStreamOpened {
+                document: vec![8; 8],
                 authority: vec![9; 32],
             },
             limits,
@@ -1017,6 +1031,7 @@ mod tests {
             .await
             .expect("event stream");
         assert_eq!(event_stream.authority(), &[9; 32]);
+        assert_eq!(event_stream.document(), &[8; 8]);
         assert_eq!(
             event_stream.next().await.expect("event item"),
             Some(Response::StreamProgress {
@@ -1034,6 +1049,7 @@ mod tests {
             StreamRole::Event,
             1,
             &Response::EventStreamOpened {
+                document: vec![8; 8],
                 authority: vec![9; 32],
             },
             limits,
@@ -1071,6 +1087,7 @@ mod tests {
             StreamRole::Event,
             1,
             &Response::EventStreamOpened {
+                document: vec![8; 8],
                 authority: vec![9; 32],
             },
             limits,
@@ -1082,10 +1099,7 @@ mod tests {
         let committed = protocol::encode_response_frame(
             StreamRole::Author,
             3,
-            &Response::EventCommitted {
-                position: 4,
-                durability: protocol::WireDurability::Durable,
-            },
+            &Response::EventCommitted { position: 4 },
             limits,
         )
         .expect("author receipt");
@@ -1125,10 +1139,7 @@ mod tests {
                 })
                 .await
                 .expect("submission"),
-            Response::EventCommitted {
-                position: 4,
-                durability: protocol::WireDurability::Durable,
-            }
+            Response::EventCommitted { position: 4 }
         );
     }
 }

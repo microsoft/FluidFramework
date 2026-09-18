@@ -2,16 +2,16 @@
 
 ## Status
 
-- **Plan status:** Checkpoints 1 and 2 reviewed and committed by the user; checkpoint 3 implemented and validated, uncommitted for review.
+- **Plan status:** Checkpoints 1 through 3 reviewed and committed by the user; checkpoint 4 implemented and validated, awaiting user review.
 - **Execution mode:** One coordinating agent, sequential checkpoints on the current branch.
 - **Scope:** Replacement of the old core model and alignment of its implementations and consumers within `rust-service/`.
 - **Preparation completed:** `85e6cf96430` introduced `sea_core::next`, removed `SeaCollection`, and added default `SeaStorage::create_view` and `open_view` methods.
-- **Completed checkpoint:** API-only preparation and checkpoints 1 through 3 implementation; checkpoint 3 awaits user review and checkpoints 4 through 6 remain open.
-- **Validation:** Checkpoint 3 focused tests, canonical Rust workspace gates, `./test.sh` (166 Rust tests plus generated-client/browser checks), documentation checking, scoped policy, and repository-root `pnpm build:fast` passed; exact outcomes are recorded below.
-- **Known implementation state:** Replacement memory, buffered-file, durable-file, immutable-content, sequencer, and transforming-wrapper paths work; transport and application consumers still use the explicitly transitional old model.
-- **Open decisions:** Final public module layout and consumer-specific protocol/Fluid mappings remain for their owning checkpoints; checkpoint 2's shared session mappings are approved and recorded below.
-- **Next action:** Review checkpoint 3's uncommitted diff and evidence at `05a8403baa1`. Only after approval, begin checkpoint 4 at server document ownership and protocol/session mappings; do not start checkpoint 4 from this handoff without authorization.
-- **Plan commit:** `468aa0dd934`; checkpoint 1 was committed and adjusted through `893fb9fe307`, checkpoint 2 through `05a8403baa1`. Checkpoint 3 created no commit, push, branch, worktree, or subagent.
+- **Completed checkpoint:** API-only preparation and checkpoints 1 through 3; checkpoints 4 through 6 remain open.
+- **Validation:** Checkpoint 4 focused native, generated Node, driver, and Chromium tests; canonical Rust gates; `./test.sh`; documentation checking; scoped policy; and repository-root `pnpm build:fast` passed. Exact modes and outcomes are recorded below.
+- **Known implementation state:** Server, protocol, native/generated clients, and the necessary Fluid-driver mappings now use the replacement model. Old core/backend/session implementations remain for examples, benchmarks, and final cleanup in checkpoint 5.
+- **Open decisions:** Final public module layout remains for checkpoint 5. Backend-assigned document IDs and the necessary early Fluid adaptations were approved; no additional shared-core contract change was needed.
+- **Next action:** Review checkpoint 4's uncommitted changes. Do not start checkpoint 5 until the user accepts this checkpoint.
+- **Plan commit:** `468aa0dd934`; checkpoint 1 was committed and adjusted through `893fb9fe307`, checkpoint 2 through `05a8403baa1`, checkpoint 3 through `155c6d12159`. Checkpoint 4 created no commit, push, branch, worktree, or subagent.
 
 Update this status and the checkpoint evidence in every implementation commit.
 Record the exact next action, completed checks, unresolved decisions, and any temporary breakage.
@@ -147,17 +147,18 @@ Package names below identify focused validation targets, not permission to omit 
 - **Evidence:** Shared conformance across memory, buffered-file, and durable-file storage; dependency-closed recovery; corrupt required-prefix failure; exclusive ownership and resource lifetime; declared durability behavior; compression/encryption/stateful-compression round trips and stream semantics.
 - **Validation:** Focused tests for each affected crate, cross-backend conformance, and required gates. Reopening and crash/recovery tests use freshly created data, not legacy fixtures kept solely for compatibility.
 - **Exit:** Retained backends and decorators operate under the new contracts without compatibility layers. Record any consumer still keeping an old type alive for checkpoint 5.
-- [x] Complete: implementation and validation, uncommitted and awaiting user review.
+- [x] Complete: reviewed, committed, and adjusted by the user through `155c6d12159`.
 
 ### 4. Server, Protocol, Clients, And Bindings
 
 - **Prerequisite:** A functioning sequencer and supported backends, with explicit session semantics.
-- **Writable scope:** `sea-webtransport-server`, `sea-webtransport`, their generated-binding sources/test support, and direct transport test harnesses.
+- **Writable scope:** `sea-webtransport-server`, `sea-webtransport`, their generated-binding sources/test support, direct transport test harnesses, and the Fluid-driver adaptations needed to exercise the new APIs.
 - **Work:** Add only the runtime document ownership needed by inbound connections; update server and clients together. Keep local handles behind storage boundaries and use explicit wire identities and error mappings.
+- **Approved consumer work:** Propagate backend-assigned document IDs into creation and reopening; use event-position snapshot versions; implement explicit initialization events and correct Fluid sequence projection. Include focused regression tests and retain the integrated build/test gates. Broader application acceptance, examples, benchmarks, and final core cleanup remain in checkpoint 5.
 - **Evidence:** Concurrent first connections do not create competing document writers; failed lazy initialization can be handled; sessions share the intended sequencer; disconnects and shutdown release resources. Native, injected, Node, and browser paths expose usable equivalent operations without requiring browser-owned state to be `Send`.
 - **Validation:** Transport/server Rust tests, generated Node tests, and real Chromium WebTransport tests from their current READMEs, plus required gates. Rebuild and exercise generated output in the checkout being accepted.
 - **Exit:** Native and browser clients communicate with the new server over the new protocol, including memory and file-backed configurations. No old-protocol negotiation or fallback is retained for compatibility.
-- [ ] Complete.
+- [ ] Complete: implementation and validation finished; awaiting user review and acceptance.
 
 ### 5. Application Workflows And Final Core Layout
 
@@ -214,6 +215,84 @@ Do not hand-edit generated bindings or treat cached build success as proof that 
 Classify failures as migration defects, pre-existing failures, or environment blockers with evidence; never silently waive a required gate.
 
 ## Decisions And Checkpoint Evidence
+
+### Checkpoint 4: Approved Scope And Starting Hypothesis
+
+- Starting commit: `155c6d12159`, with a clean working tree; checkpoint 3 was committed at `8c39c7bda1b` and reviewed at the starting commit.
+- Creation returns the backend-assigned opaque document ID, which clients retain for subsequent opens. No client-name registry is added.
+- The user approved moving the necessary Fluid-driver adaptations into checkpoint 4 to validate the API boundary with real consumers, accepting a larger checkpoint and potentially slower implementation.
+- Responsible first path: server document ownership in `crates/sea-webtransport-server/src/host.rs`.
+- Initial hypothesis: serialized lazy initialization can share one replacement sequencer per document and leave failed opens retryable without competing writer views.
+	Cheapest discriminating check: concurrent first-open and failed-open retry tests using the replacement memory factory.
+- Execution remains sequential, without subagents, new worktrees, branches, commits, or pushes. Stop after checkpoint 4 for review.
+
+### Checkpoint 4: Implementation And Validation Handoff
+
+Implementation is uncommitted on `rust-service`, based on `155c6d12159`.
+The accepted scope and initial hypothesis are recorded above.
+The first focused registry tests supported the hypothesis: concurrent first opens share one recovered sequencer, and a failed competing open does not poison later explicit initialization.
+
+#### Responsibilities And Decisions
+
+- `sea-webtransport-server` directly hosts replacement memory, buffered-file, and durable-file factories and sequencers.
+	It serializes lazy initialization, caches only successful document runtimes, and returns backend-assigned opaque IDs.
+	Successful runtimes remain cached for the host lifetime; there is no idle eviction, and retaining a host after listener shutdown retains its views.
+- Protocol version 5 returns document IDs separately from session authority, submission positions without obsolete durability receipts, and snapshots identified by committed event position.
+	Publication resolves tree and event availability at the receiver; obsolete snapshot-operation IDs, initial snapshots, and snapshot-operation resolution are removed.
+	There is no old-format fallback.
+- Native clients implement the replacement session facets with private client-scoped remote availability handles.
+	Generated browser and local clients expose equivalent creation, history, content, snapshot, and author operations without requiring browser-owned values to be `Send`.
+	Native event-handle resolution scans retained history; content-handle resolution fetches immutable content.
+- Returned coordination subscriptions own registration lifetime.
+	Native and browser pumps serialize requests independently of coalescible notification delivery.
+	Old-stream cleanup cannot revoke a replacement registration, and cancellation wakes pending notification reads.
+- The driver retains assigned IDs in resolved URLs, versions snapshots by event position, and represents initial summary state with a committed initialization event.
+	Initialization maps to application sequence zero but is not a Fluid operation; ordinary operations start at one independently of raw positions.
+	A fresh session scans retained history to reconstruct the map, so startup cost grows with history.
+	Browser/direct harnesses propagate returned IDs; their broader workflow and measurement acceptance remains checkpoint 5.
+
+#### Local Findings And Repairs
+
+- Generated Node execution exposed consumption of an optional exported Rust tree value during `submit`.
+	`Option<&SeaTreeId>` is unsupported by wasm-bindgen; a typed non-consuming JavaScript reference now preserves the caller's immutable identity.
+	The content/initialization/snapshot regression exercises reuse of the same tree after submission.
+- Pending snapshot reads previously blocked publication or outlived cancellation.
+	Registration-owned streams and request pumps now separate these responsibilities.
+	Browser reads retain pending JavaScript promises across Rust waiter cancellation, preventing a dropped waiter from losing the next transport bytes.
+- Once browser disconnect actually closed WebTransport, old-stream cleanup could prevent explicit reopening.
+	Replacement session setup now discards failed old-stream cleanup without retrying application operations.
+	Driver synchronous disconnect likewise handles asynchronous cleanup failures without unhandled rejections.
+- Initial strict lint runs found by-value snapshot conversions; those now borrow.
+	The first root build found formatting in the two JavaScript harnesses; focused formatting checks and the rerun root build passed.
+
+#### Evidence And Limits
+
+| Boundary | Executed evidence |
+| --- | --- |
+| Shared document ownership and initialization retry | Two focused `DocumentRegistry` tests in `host.rs`; full server suite passes (10 tests). |
+| Wire framing, role routing, authority, correlation, submission positions | `sea-webtransport` library suite passes (18 tests); server typed-dispatch and malformed/abandoned-stream tests pass. |
+| Native backend composition and concurrent notification/publication | Native round-trip test covers memory, buffered-file, and durable-file, including registration replacement and publication while coordination is being polled. |
+| Generated Node API and local ownership | Rebuilt production/test-support packages; all 9 generated Node tests pass, including tree reuse, backend allocation, same-position root rejection, pending-read cancellation, and replacement registration isolation. |
+| Fluid initialization and snapshot projection | All 6 driver tests pass; the real generated-client regression verifies hidden initialization, first operation sequence 1, fresh-client reconstruction, exact historical versions, and rejection of nonexistent exact versions. Both TypeScript targets compile. |
+| Browser memory / Sea-selected | `SEA_BROWSER_SKIP_BUILD=1 SEA_STORAGE_MODE=memory SEA_SNAPSHOT_POLICY=sea tests/webtransport-browser/run-test.sh` passes, including pending notification publication/cancellation, replacement, reconnect, and shutdown. |
+| Browser durable-file / Client-selected | `./test.sh` runs the default Chromium harness successfully, with the same protocol/lifecycle flow. Both browser runs report 3 transport cleanups and zero active connections after bounded shutdown. |
+
+Canonical commands passed from `rust-service/`:
+`cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`,
+`RUSTDOCFLAGS='-D warnings' cargo doc --workspace --all-features --no-deps`,
+`cargo build --workspace --all-targets`, `./test.sh`, and `node scripts/check-documentation.mjs`.
+The documentation checker reports 24 roots, 31 READMEs, and 56 local links.
+The additional WASM-target Clippy check passes with `RUSTFLAGS='--cfg=web_sys_unstable_apis'`, target `wasm32-unknown-unknown`, and `--features test-support -- -D warnings`.
+Repository-root `pnpm policy-check --path rust-service` passes (530 files), and `pnpm build:fast` passes after the harness formatting repair.
+Generated artifacts were rebuilt and executed, not hand-edited.
+
+Owning transport/server READMEs and client/driver harness documentation describe the changed contracts and retained costs.
+This is proportionate contract documentation, not a claim of a complete private-declaration documentation audit.
+No new core, sequencer, or storage contracts were changed, so their existing focused/conformance evidence remains authoritative; the changed transport/server crates add boundary-specific regression evidence.
+No full SharedTree collaboration/summary/reload acceptance run or benchmark measurements are claimed in this checkpoint.
+The temporary `next` namespace, old core/backends/sessions, and remaining example/benchmark migrations belong to checkpoint 5.
+All validation-owned browser/server processes have exited; no commits or pushes were made.
+Stop here for user review.
 
 ### Preparation
 

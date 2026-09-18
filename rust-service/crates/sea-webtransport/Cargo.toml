@@ -26,6 +26,7 @@ wtransport = "=0.7.2"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 futures-util.workspace = true
+tokio = { version = "1.47.1", default-features = false, features = ["sync", "macros"] }
 js-sys = "=0.3.105"
 sea-memory = { path = "../sea-memory", optional = true }
 sea-sequencer = { path = "../sea-sequencer", optional = true }

@@ -12,7 +12,9 @@ It uses an isolated `CARGO_TARGET_DIR` and leaves the root manifest and lockfile
 tests/webtransport-browser/run-test.sh
 ```
 
-The browser flow exercises archive/session operations, multiple ordered submissions on one event-author stream, gap-free load, live events, blob and directory round trips, snapshots, explicit disconnect, and reconnect against the native service.
+The browser flow exercises backend-assigned document IDs, multiple ordered submissions on one event-author stream, gap-free load, live events, blob and directory round trips, event-position snapshots, explicit disconnect, and reconnect against the native service.
+It also replaces a snapshot registration, cancels the older subscription without revoking its replacement, publishes while a notification read is pending, and wakes a cancelled notification read.
+Shutdown checks prove bounded connection cleanup and rejection of new sessions after acceptance stops.
 
 The default flow opens snapshot coordination as `ClientSelected`.
 Run the same flow with Sea-managed selection by setting `SEA_SNAPSHOT_POLICY=sea` on the script command; passing tests report `snapshotParticipation` as `3` and `2`, respectively.

@@ -5,6 +5,7 @@
 
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { createRequire } from "node:module";
 import test from "node:test";
 
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
@@ -12,6 +13,7 @@ import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 
 import { SeaDocumentStorage } from "./fluidDriver.js";
+import { createGeneratedSeaBindingAdapter, encodePosition } from "./generatedSeaBinding.js";
 import type {
 	BlobUpload,
 	ProjectedOperationSubscription,
@@ -25,6 +27,52 @@ import type {
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
+test("generated driver hides initialization and preserves snapshot versions across reopen", async () => {
+	const require = createRequire(import.meta.url);
+	const bindings =
+		require("../../../crates/sea-webtransport/test-support/pkg/node/sea_webtransport_test_support.js") as typeof import("../../../crates/sea-webtransport/test-support/pkg/web/sea_webtransport_test_support.js");
+	const service = await bindings.SeaLocalService.create();
+	const writerClient = service.connect();
+	const writer = createGeneratedSeaBindingAdapter(writerClient, bindings, "ClientSelected");
+	const document = await writer.create();
+	await writer.openSession(
+		document,
+		encoder.encode("writer"),
+		encoder.encode("writer-session"),
+	);
+	const root = await writer.publishSummary([]);
+	const initial = await writer.publishSnapshotRoot(undefined, undefined, root.digest);
+	assert.deepEqual(writer.positionForSequence(0), initial);
+	assert.deepEqual((await writer.readProjected()).operations, []);
+	const position = await writer.submitEvent(
+		encoder.encode("edit"),
+		1,
+		encoder.encode(JSON.stringify({ clientSequenceNumber: 1 })),
+		initial,
+	);
+	const history = await writer.readProjected();
+	assert.equal(history.operations.length, 1);
+	assert.equal(history.operations[0]?.sequenceNumber, 1n);
+	assert.deepEqual(writer.positionForSequence(1), position);
+	const version = await writer.publishSnapshotRoot(initial, position, root.digest);
+	assert.deepEqual(version, position);
+	const observerClient = service.connect();
+	const observer = createGeneratedSeaBindingAdapter(observerClient, bindings, "ReadOnly");
+	await observer.openSession(
+		document,
+		encoder.encode("observer"),
+		encoder.encode("observer-session"),
+	);
+	assert.deepEqual(observer.positionForSequence(0), initial);
+	assert.deepEqual(observer.positionForSequence(1), position);
+	assert.equal((await observer.readProjected()).operations[0]?.sequenceNumber, 1n);
+	assert.deepEqual((await observer.snapshot(initial))?.id, initial);
+	assert.deepEqual((await observer.latestSnapshot())?.id, version);
+	assert.equal(await observer.snapshot(encodePosition(999n)), undefined);
+	await writerClient.close();
+	await observerClient.close();
+});
+
 interface FixtureSnapshot {
 	readonly id: Uint8Array;
 	readonly root: Uint8Array;
@@ -36,10 +84,11 @@ class SummaryFixtureClient implements SeaDriverClient {
 	private readonly summaries = new Map<string, readonly SummaryEntry[]>();
 	private readonly snapshots = new Map<string, FixtureSnapshot>();
 	private latestSnapshotId: Uint8Array | undefined;
-	private nextSnapshotId = 1n;
 
 	public blobUploadCount = 0;
-	public async create(_document: Uint8Array): Promise<void> {}
+	public async create(): Promise<Uint8Array> {
+		return encodeU64(1n);
+	}
 
 	public async openSession(
 		_document: Uint8Array,
@@ -63,7 +112,6 @@ class SummaryFixtureClient implements SeaDriverClient {
 	}
 
 	public async publishSnapshotRoot(
-		_operation: Uint8Array,
 		expectedParent: Uint8Array | undefined,
 		atEvent: Uint8Array | undefined,
 		root: Uint8Array,
@@ -74,7 +122,10 @@ class SummaryFixtureClient implements SeaDriverClient {
 		if (!this.summaries.has(bytesKey(root))) {
 			throw new Error("snapshot root does not exist");
 		}
-		const id = encodeU64(this.nextSnapshotId++);
+		const id = atEvent ?? encodeU64(1n);
+		if (this.snapshots.has(bytesKey(id))) {
+			throw new Error("snapshot position conflict");
+		}
 		const snapshot = {
 			id,
 			root: root.slice(),
@@ -85,8 +136,8 @@ class SummaryFixtureClient implements SeaDriverClient {
 		return id;
 	}
 
-	public positionForSequence(_sequenceNumber: number): Uint8Array | undefined {
-		return undefined;
+	public positionForSequence(sequenceNumber: number): Uint8Array | undefined {
+		return sequenceNumber > 0 ? encodeU64(BigInt(sequenceNumber)) : undefined;
 	}
 
 	public async readProjected(): Promise<ProjectedReadPage> {
@@ -304,7 +355,7 @@ test("incremental summary publication rejects a stale acknowledged parent", asyn
 });
 
 function createStorage(client: SummaryFixtureClient): SeaDocumentStorage {
-	return new SeaDocumentStorage(encoder.encode("summary-test-document"), client);
+	return new SeaDocumentStorage(client);
 }
 
 function tree(children: ISummaryTree["tree"]): ISummaryTree {
@@ -319,7 +370,8 @@ function summaryContext(ackHandle?: string): ISummaryContext {
 	return {
 		proposalHandle: undefined,
 		ackHandle,
-		referenceSequenceNumber: 0,
+		referenceSequenceNumber:
+			ackHandle === undefined ? 3 : Number(BigInt(`0x${ackHandle}`)) + 3,
 	};
 }
 

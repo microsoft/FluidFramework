@@ -6,14 +6,14 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{StreamExt as _, stream};
 use rand_core::{OsRng, RngCore as _};
+use sea_core::next::{DocumentId, SeaStorage};
 use sea_core::{
     ClassifiedError, ErrorKind, EventPosition,
     archive::{AuthorId, SessionId},
 };
-use sea_file::FileStream;
-use sea_file_durable::DurableLog;
-use sea_memory::MemoryStream;
-use sea_sequencer::session::{LocalSequencer, LocalSession};
+use sea_file::next::FileStorage;
+use sea_file_durable::next::DurableStorage;
+use sea_memory::MemoryStorage;
 use sea_webtransport::protocol;
 use tokio::{sync::Mutex, time::sleep};
 
@@ -21,10 +21,65 @@ use crate::{
     LivenessPolicy, SeaConnectionService, SeaResponseStream, SeaServiceHost, SessionDispatcher,
 };
 
-enum Archive {
-    Memory(Arc<LocalSequencer<MemoryStream>>),
-    Buffered(Arc<LocalSequencer<FileStream>>),
-    Durable(Arc<LocalSequencer<DurableLog>>),
+/// Serializes lazy runtime recovery within one backend namespace.
+struct DocumentRegistry<Storage: sea_core::next::SeaStorage> {
+    /// Factory retaining the backend namespace independently of active views.
+    storage: Storage,
+    /// Serializes first recovery; failed attempts are never cached.
+    documents: Mutex<BTreeMap<Vec<u8>, Arc<sea_sequencer::next::LocalSequencer<Storage>>>>,
+}
+
+impl<Storage: sea_core::next::SeaStorage + 'static> DocumentRegistry<Storage> {
+    /// Creates an empty cache over one backend namespace.
+    fn new(storage: Storage) -> Self {
+        Self {
+            storage,
+            documents: Mutex::new(BTreeMap::new()),
+        }
+    }
+
+    /// Allocates a backend identity and retains its recovered exclusive view.
+    async fn create(&self) -> Result<sea_core::next::DocumentId, protocol::Response> {
+        let mut documents = self.documents.lock().await;
+        let (id, view) = self.storage.create_view().await.map_err(error_response)?;
+        let runtime = sea_sequencer::next::LocalSequencer::recover(view)
+            .await
+            .map_err(error_response)?;
+        documents.insert(id.as_bytes().to_vec(), runtime);
+        Ok(id)
+    }
+
+    /// Shares the existing runtime or exclusively recovers one without caching failures.
+    async fn open(
+        &self,
+        id: &sea_core::next::DocumentId,
+    ) -> Result<Arc<sea_sequencer::next::LocalSequencer<Storage>>, protocol::Response> {
+        let mut documents = self.documents.lock().await;
+        if let Some(runtime) = documents.get(id.as_bytes().as_ref()) {
+            return Ok(runtime.clone());
+        }
+        let view = self
+            .storage
+            .open_view(id)
+            .await
+            .map_err(error_response)?
+            .ok_or_else(|| rejected("document does not exist"))?;
+        let runtime = sea_sequencer::next::LocalSequencer::recover(view)
+            .await
+            .map_err(error_response)?;
+        documents.insert(id.as_bytes().to_vec(), runtime.clone());
+        Ok(runtime)
+    }
+}
+
+/// Runtime-selected factory and its exclusively owned document views.
+enum Backend {
+    /// Ephemeral process-local document namespace.
+    Memory(DocumentRegistry<MemoryStorage>),
+    /// Buffered journal namespace.
+    Buffered(DocumentRegistry<FileStorage>),
+    /// Crash-durable journal namespace.
+    Durable(DocumentRegistry<DurableStorage>),
 }
 
 /// Runtime-selected built-in archive backend.
@@ -62,45 +117,70 @@ impl StorageMode {
     }
 }
 
-impl Archive {
+impl Backend {
+    /// Opens a logical membership through the selected document registry.
     async fn open_session(
         &self,
+        document: Vec<u8>,
+        intent: protocol::ArchiveIntent,
         author: AuthorId,
         session: SessionId,
         reference: Option<EventPosition>,
-    ) -> Result<Arc<dyn SeaConnectionService>, protocol::Response> {
+    ) -> Result<(DocumentId, Arc<dyn SeaConnectionService>), protocol::Response> {
         match self {
-            Self::Memory(sequencer) => open(sequencer, author, session, reference).await,
-            Self::Buffered(sequencer) => open(sequencer, author, session, reference).await,
-            Self::Durable(sequencer) => open(sequencer, author, session, reference).await,
+            Self::Memory(registry) => {
+                open(registry, document, intent, author, session, reference).await
+            }
+            Self::Buffered(registry) => {
+                open(registry, document, intent, author, session, reference).await
+            }
+            Self::Durable(registry) => {
+                open(registry, document, intent, author, session, reference).await
+            }
         }
     }
 }
 
-async fn open<S>(
-    sequencer: &Arc<LocalSequencer<S>>,
+/// Resolves backend identity before opening author membership in the shared runtime.
+async fn open<Storage>(
+    registry: &DocumentRegistry<Storage>,
+    document: Vec<u8>,
+    intent: protocol::ArchiveIntent,
     author: AuthorId,
     session: SessionId,
     reference: Option<EventPosition>,
-) -> Result<Arc<dyn SeaConnectionService>, protocol::Response>
+) -> Result<(DocumentId, Arc<dyn SeaConnectionService>), protocol::Response>
 where
-    S: sea_core::archive::SeaStorage + 'static,
+    Storage: SeaStorage + 'static,
 {
+    let id = match intent {
+        protocol::ArchiveIntent::Create if document.is_empty() => registry.create().await?,
+        protocol::ArchiveIntent::Create => {
+            return Err(invalid("creation does not accept a document identity"));
+        }
+        protocol::ArchiveIntent::Open if !document.is_empty() => {
+            DocumentId::from_bytes(Bytes::from(document))
+        }
+        protocol::ArchiveIntent::Open => {
+            return Err(invalid("opening requires a document identity"));
+        }
+    };
+    let sequencer = registry.open(&id).await?;
     let session = sequencer
         .open_session(author, session, reference)
         .await
         .map_err(error_response)?;
-    Ok(Arc::new(SessionDispatcher::new(Arc::new(session))))
+    Ok((id, Arc::new(SessionDispatcher::new(Arc::new(session)))))
 }
 
-struct HostState {
-    archives: BTreeMap<Vec<u8>, Archive>,
-}
-
+/// Shared lazy backend initialization and retained document ownership.
 struct HostInner {
+    /// Storage namespace for file modes.
     root: PathBuf,
+    /// Configured storage guarantees.
     mode: StorageMode,
-    state: Mutex<HostState>,
+    /// Successful factory initialization; errors leave this empty for retry.
+    backend: Mutex<Option<Arc<Backend>>>,
 }
 
 /// Final Sea protocol host using the server's runtime-selected backend.
@@ -117,13 +197,12 @@ impl BuiltInSeaHost {
             inner: Arc::new(HostInner {
                 root,
                 mode,
-                state: Mutex::new(HostState {
-                    archives: BTreeMap::new(),
-                }),
+                backend: Mutex::new(None),
             }),
         }
     }
 
+    /// Initializes the factory once and delegates to its document registry.
     async fn open_session(
         &self,
         archive_id: Vec<u8>,
@@ -131,74 +210,29 @@ impl BuiltInSeaHost {
         author: AuthorId,
         session: SessionId,
         reference: Option<EventPosition>,
-        max_event_lag: usize,
-    ) -> Result<Arc<dyn SeaConnectionService>, protocol::Response> {
-        self.ensure_archive(&archive_id, intent, max_event_lag)
-            .await?;
-        let state = self.inner.state.lock().await;
-        state
-            .archives
-            .get(&archive_id)
-            .expect("archive was created or opened")
-            .open_session(author, session, reference)
+    ) -> Result<(DocumentId, Arc<dyn SeaConnectionService>), protocol::Response> {
+        let backend = {
+            let mut current = self.inner.backend.lock().await;
+            if current.is_none() {
+                let root = self.inner.root.join("documents");
+                let backend = match self.inner.mode {
+                    StorageMode::Memory => {
+                        Backend::Memory(DocumentRegistry::new(MemoryStorage::new()))
+                    }
+                    StorageMode::BufferedFile => Backend::Buffered(DocumentRegistry::new(
+                        FileStorage::open(root).map_err(error_response)?,
+                    )),
+                    StorageMode::DurableFile => Backend::Durable(DocumentRegistry::new(
+                        DurableStorage::open(root).map_err(error_response)?,
+                    )),
+                };
+                *current = Some(Arc::new(backend));
+            }
+            current.as_ref().expect("backend initialized").clone()
+        };
+        backend
+            .open_session(archive_id, intent, author, session, reference)
             .await
-    }
-
-    async fn ensure_archive(
-        &self,
-        archive_id: &[u8],
-        intent: protocol::ArchiveIntent,
-        max_event_lag: usize,
-    ) -> Result<(), protocol::Response> {
-        if archive_id.is_empty() || archive_id.len() > 256 {
-            return Err(invalid("archive identity must contain 1 to 256 bytes"));
-        }
-        let mut state = self.inner.state.lock().await;
-        let path = self.inner.root.join("archives").join(hex(archive_id));
-        let persisted = self.inner.mode != StorageMode::Memory && path.exists();
-        match intent {
-            protocol::ArchiveIntent::Create
-                if state.archives.contains_key(archive_id) || persisted =>
-            {
-                return Err(conflict("archive already exists"));
-            }
-            protocol::ArchiveIntent::Open
-                if !state.archives.contains_key(archive_id) && !persisted =>
-            {
-                return Err(rejected("archive does not exist"));
-            }
-            _ => {}
-        }
-        if !state.archives.contains_key(archive_id) {
-            let archive = match self.inner.mode {
-                StorageMode::Memory => Archive::Memory(
-                    LocalSequencer::recover_with_event_lag(
-                        Arc::new(MemoryStream::new()),
-                        max_event_lag,
-                    )
-                    .await
-                    .map_err(error_response)?,
-                ),
-                StorageMode::BufferedFile => Archive::Buffered(
-                    LocalSequencer::recover_with_event_lag(
-                        Arc::new(FileStream::open(path).map_err(error_response)?),
-                        max_event_lag,
-                    )
-                    .await
-                    .map_err(error_response)?,
-                ),
-                StorageMode::DurableFile => Archive::Durable(
-                    LocalSequencer::recover_with_event_lag(
-                        Arc::new(DurableLog::open(path).map_err(error_response)?),
-                        max_event_lag,
-                    )
-                    .await
-                    .map_err(error_response)?,
-                ),
-            };
-            state.archives.insert(archive_id.to_vec(), archive);
-        }
-        Ok(())
     }
 }
 
@@ -267,7 +301,7 @@ impl SeaConnectionService for HostedConnection {
                     .author_request(protocol::Request::Close)
                     .await;
             }
-            let service = self
+            let (document, service) = self
                 .host
                 .open_session(
                     archive,
@@ -275,7 +309,6 @@ impl SeaConnectionService for HostedConnection {
                     author,
                     session_id,
                     resume_after.map(EventPosition::new),
-                    self.liveness.max_event_lag,
                 )
                 .await?;
             let authority = new_authority();
@@ -283,8 +316,12 @@ impl SeaConnectionService for HostedConnection {
                 authority: authority.clone(),
                 service: Arc::clone(&service),
             });
-            let opened =
-                stream::once(async move { protocol::Response::EventStreamOpened { authority } });
+            let opened = stream::once(async move {
+                protocol::Response::EventStreamOpened {
+                    document: document.as_bytes().to_vec(),
+                    authority,
+                }
+            });
             let recovery = stream::once(open_recovery_stream(service, resume_after)).flatten();
             return Ok(Box::pin(opened.chain(recovery)));
         }
@@ -404,25 +441,9 @@ async fn open_recovery_stream(
     }
 }
 
-fn hex(bytes: &[u8]) -> String {
-    let mut encoded = String::with_capacity(bytes.len() * 2);
-    for byte in bytes {
-        use std::fmt::Write as _;
-        write!(encoded, "{byte:02x}").expect("writing to a string cannot fail");
-    }
-    encoded
-}
-
 fn invalid(message: &str) -> protocol::Response {
     protocol::Response::Error {
         kind: protocol::ErrorKind::Invalid,
-        message: message.to_owned(),
-    }
-}
-
-fn conflict(message: &str) -> protocol::Response {
-    protocol::Response::Error {
-        kind: protocol::ErrorKind::Conflict,
         message: message.to_owned(),
     }
 }
@@ -456,13 +477,6 @@ fn error_response(error: impl ClassifiedError) -> protocol::Response {
     }
 }
 
-#[allow(dead_code)]
-fn _assert_session_is_send_sync<S: sea_core::archive::SeaStorage>()
-where
-    LocalSession<S>: Send + Sync,
-{
-}
-
 #[cfg(test)]
 mod tests {
     use std::{collections::BTreeMap, net::SocketAddr, sync::Arc, time::Duration};
@@ -470,10 +484,11 @@ mod tests {
     use bytes::Bytes;
     use futures_util::StreamExt as _;
     use sea_core::{
-        BlobDirectory, BlobTreeId, Event,
-        archive::{
-            AuthorId, EventReceipt, EventSubmission, LoadEvent, OperationId, SeaArchive,
-            SeaAuthorSession, SeaEventSubscription, SeaSnapshotCoordinator, SessionId,
+        BlobDirectory, BlobTreeId, Event, EventPosition,
+        archive::{AuthorId, EventSubmission, OperationId, SessionId, SnapshotParticipation},
+        next::{
+            LoadStart, Snapshot, StorageHandle,
+            session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
         },
     };
     use sea_webtransport::{
@@ -484,11 +499,55 @@ mod tests {
         ClientConfig, Connection, Endpoint, Identity, endpoint::endpoint_side::Client,
     };
 
-    use super::{BuiltInSeaHost, StorageMode};
+    use super::{BuiltInSeaHost, DocumentRegistry, StorageMode};
     use crate::{
         LivenessPolicy, SeaServiceHost, ShutdownDisposition, ShutdownMode, TransportConfig,
         WebTransportServer,
     };
+
+    #[tokio::test]
+    async fn document_registry_shares_concurrent_first_opens() {
+        use sea_core::next::SeaStorage as _;
+
+        let storage = sea_memory::MemoryStorage::new();
+        let (id, view) = storage
+            .create_view()
+            .await
+            .expect("create persisted document");
+        drop(view);
+        let registry = DocumentRegistry::new(storage);
+        let (first, second) = tokio::join!(registry.open(&id), registry.open(&id));
+        assert!(Arc::ptr_eq(
+            &first.expect("first"),
+            &second.expect("second")
+        ));
+        let fresh = registry.create().await.expect("allocate document");
+        assert_ne!(fresh, id);
+        assert!(registry.open(&fresh).await.is_ok());
+    }
+
+    #[tokio::test]
+    async fn document_registry_retries_failed_initialization() {
+        use sea_core::next::{DocumentId, SeaStorage as _};
+
+        let storage = sea_memory::MemoryStorage::new();
+        let (id, external_view) = storage.create_view().await.expect("external writer");
+        let registry = DocumentRegistry::new(storage);
+        assert!(registry.open(&id).await.is_err());
+        assert!(registry.documents.lock().await.is_empty());
+        drop(external_view);
+        let runtime = registry
+            .open(&id)
+            .await
+            .expect("retry after writer release");
+        assert!(Arc::ptr_eq(
+            &runtime,
+            &registry.open(&id).await.expect("cached")
+        ));
+        let unknown = DocumentId::from_bytes(Bytes::from_static(b"unknown"));
+        assert!(registry.open(&unknown).await.is_err());
+        assert_eq!(registry.documents.lock().await.len(), 1);
+    }
 
     #[tokio::test]
     async fn archive_create_and_open_intent_is_explicit() {
@@ -504,55 +563,86 @@ mod tests {
             ));
             let _ = std::fs::remove_dir_all(&root);
             let host = BuiltInSeaHost::new(root.clone(), mode);
-            assert!(matches!(
-                open_hosted_session(&host, protocol::ArchiveIntent::Open, b"missing-session").await,
-                protocol::Response::Error {
-                    kind: protocol::ErrorKind::Rejected,
-                    ..
-                }
-            ));
-            assert!(matches!(
-                open_hosted_session_with_version(
-                    &host,
-                    protocol::PROTOCOL_VERSION + 1,
-                    protocol::ArchiveIntent::Create,
-                    b"invalid-version-session",
+            let author = AuthorId::new(Bytes::from_static(b"author")).unwrap();
+            let session = |name: &'static [u8]| SessionId::new(Bytes::from_static(name)).unwrap();
+            assert!(
+                host.open_session(
+                    vec![0; 8],
+                    protocol::ArchiveIntent::Open,
+                    author.clone(),
+                    session(b"missing"),
+                    None
                 )
-                .await,
-                protocol::Response::Error {
-                    kind: protocol::ErrorKind::Rejected,
-                    ..
-                }
-            ));
-            assert_eq!(
-                open_hosted_session(&host, protocol::ArchiveIntent::Create, b"create-session")
-                    .await,
-                protocol::Response::Acknowledged
+                .await
+                .is_err()
             );
             assert!(matches!(
-                open_hosted_session(&host, protocol::ArchiveIntent::Create, b"conflict-session")
+                host.connect(LivenessPolicy::default())
+                    .open_event_stream(protocol::Request::OpenEventStream {
+                        version: protocol::PROTOCOL_VERSION + 1,
+                        archive: Vec::new(),
+                        intent: protocol::ArchiveIntent::Create,
+                        author: b"author".to_vec(),
+                        session: b"invalid-version".to_vec(),
+                        resume_after: None,
+                    })
                     .await,
-                protocol::Response::Error {
-                    kind: protocol::ErrorKind::Conflict,
+                Err(protocol::Response::Error {
+                    kind: protocol::ErrorKind::Rejected,
                     ..
-                }
+                })
             ));
-            assert_eq!(
-                open_hosted_session(&host, protocol::ArchiveIntent::Open, b"open-session").await,
-                protocol::Response::Acknowledged
+            let (document, created) = host
+                .open_session(
+                    Vec::new(),
+                    protocol::ArchiveIntent::Create,
+                    author.clone(),
+                    session(b"created"),
+                    None,
+                )
+                .await
+                .unwrap();
+            assert!(!document.as_bytes().is_empty());
+            assert!(
+                host.open_session(
+                    document.as_bytes().to_vec(),
+                    protocol::ArchiveIntent::Create,
+                    author.clone(),
+                    session(b"named-create"),
+                    None
+                )
+                .await
+                .is_err()
             );
+            let (opened_id, opened) = host
+                .open_session(
+                    document.as_bytes().to_vec(),
+                    protocol::ArchiveIntent::Open,
+                    author.clone(),
+                    session(b"opened"),
+                    None,
+                )
+                .await
+                .unwrap();
+            assert_eq!(document, opened_id);
+            created.connection_closed(false).await;
+            opened.connection_closed(false).await;
+            drop((created, opened));
 
             if mode != StorageMode::Memory {
                 drop(host);
                 let recovered = BuiltInSeaHost::new(root.clone(), mode);
-                assert_eq!(
-                    open_hosted_session(
-                        &recovered,
-                        protocol::ArchiveIntent::Open,
-                        b"recovered-session",
-                    )
-                    .await,
-                    protocol::Response::Acknowledged
+                assert!(
+                    recovered
+                        .open_session(
+                            document.as_bytes().to_vec(),
+                            protocol::ArchiveIntent::Open,
+                            author,
+                            session(b"recovered"),
+                            None
+                        )
+                        .await
+                        .is_ok()
                 );
             }
             let _ = std::fs::remove_dir_all(root);
@@ -572,7 +662,7 @@ mod tests {
         let mut first_stream = first_connection
             .open_event_stream(protocol::Request::OpenEventStream {
                 version: protocol::PROTOCOL_VERSION,
-                archive: b"archive".to_vec(),
+                archive: Vec::new(),
                 intent: protocol::ArchiveIntent::Create,
                 author: b"first-author".to_vec(),
                 session: b"first-session".to_vec(),
@@ -582,6 +672,7 @@ mod tests {
             .expect("first event stream");
         let protocol::Response::EventStreamOpened {
             authority: first_authority,
+            document,
         } = first_stream.next().await.expect("opening authority")
         else {
             panic!("event stream must return its authority first");
@@ -609,13 +700,6 @@ mod tests {
         assert!(matches!(
             first_stream.next().await,
             Some(protocol::Response::StreamProgress {
-                status: protocol::StreamStatus::StreamingBacklog,
-                ..
-            })
-        ));
-        assert!(matches!(
-            first_stream.next().await,
-            Some(protocol::Response::StreamProgress {
                 previous: None,
                 latest_known: None,
                 status: protocol::StreamStatus::AwaitingNewItems,
@@ -626,7 +710,7 @@ mod tests {
         let mut second_stream = second
             .open_event_stream(protocol::Request::OpenEventStream {
                 version: protocol::PROTOCOL_VERSION,
-                archive: b"archive".to_vec(),
+                archive: document.clone(),
                 intent: protocol::ArchiveIntent::Open,
                 author: b"second-author".to_vec(),
                 session: b"second-session".to_vec(),
@@ -636,6 +720,7 @@ mod tests {
             .expect("second event stream");
         let protocol::Response::EventStreamOpened {
             authority: second_authority,
+            ..
         } = second_stream.next().await.expect("second authority")
         else {
             panic!("event stream must return its authority first");
@@ -677,14 +762,38 @@ mod tests {
             second_snapshots.next().await,
             Some(protocol::Response::SnapshotCoordination { fence: None, .. })
         ));
+        let protocol::Response::BlobStored { id: snapshot_root } = first_connection
+            .content_request(protocol::Request::PutBlob {
+                payload: b"state".to_vec(),
+            })
+            .await
+            .unwrap()
+            .next()
+            .await
+            .unwrap()
+        else {
+            panic!("blob upload");
+        };
+        let protocol::Response::EventCommitted { position } = first_connection
+            .author_request(protocol::Request::Submit {
+                operation: b"initialize".to_vec(),
+                reference: None,
+                event: protocol::Event {
+                    payload: b"initialization".to_vec(),
+                    blob_tree: Some(protocol::TreeId::Blob(snapshot_root)),
+                },
+            })
+            .await
+        else {
+            panic!("initialization event");
+        };
         assert!(matches!(
             second
                 .snapshot_request(protocol::Request::PublishSnapshot {
                     fence: Some(first_fence),
-                    operation: b"non-nominee".to_vec(),
                     expected_parent: None,
-                    at_event: protocol::SnapshotPosition::Initial,
-                    root: protocol::TreeId::Blob([0; 32]),
+                    at_event: position,
+                    root: protocol::TreeId::Blob(snapshot_root),
                 })
                 .await,
             protocol::Response::Error {
@@ -697,7 +806,7 @@ mod tests {
         let mut client_events = client_selected
             .open_event_stream(protocol::Request::OpenEventStream {
                 version: protocol::PROTOCOL_VERSION,
-                archive: b"archive".to_vec(),
+                archive: document,
                 intent: protocol::ArchiveIntent::Open,
                 author: b"client-selected-author".to_vec(),
                 session: b"client-selected-session".to_vec(),
@@ -707,6 +816,7 @@ mod tests {
             .expect("client-selected event stream");
         let protocol::Response::EventStreamOpened {
             authority: client_authority,
+            ..
         } = client_events
             .next()
             .await
@@ -733,10 +843,9 @@ mod tests {
             first_connection
                 .snapshot_request(protocol::Request::PublishSnapshot {
                     fence: Some(first_fence),
-                    operation: b"suppressed-nominee".to_vec(),
                     expected_parent: None,
-                    at_event: protocol::SnapshotPosition::Initial,
-                    root: protocol::TreeId::Blob([0; 32]),
+                    at_event: position,
+                    root: protocol::TreeId::Blob(snapshot_root),
                 })
                 .await,
             protocol::Response::Error {
@@ -790,7 +899,7 @@ mod tests {
         let mut events = connection
             .open_event_stream(protocol::Request::OpenEventStream {
                 version: protocol::PROTOCOL_VERSION,
-                archive: b"archive".to_vec(),
+                archive: Vec::new(),
                 intent: protocol::ArchiveIntent::Create,
                 author: b"author".to_vec(),
                 session: b"session".to_vec(),
@@ -798,7 +907,7 @@ mod tests {
             })
             .await
             .unwrap();
-        let protocol::Response::EventStreamOpened { authority } =
+        let protocol::Response::EventStreamOpened { authority, .. } =
             events.next().await.expect("event authority")
         else {
             panic!("event stream must return authority");
@@ -829,46 +938,6 @@ mod tests {
             }
         ));
         let _ = std::fs::remove_dir_all(root);
-    }
-
-    async fn open_hosted_session(
-        host: &BuiltInSeaHost,
-        intent: protocol::ArchiveIntent,
-        session: &[u8],
-    ) -> protocol::Response {
-        open_hosted_session_with_version(host, protocol::PROTOCOL_VERSION, intent, session).await
-    }
-
-    async fn open_hosted_session_with_version(
-        host: &BuiltInSeaHost,
-        version: u16,
-        intent: protocol::ArchiveIntent,
-        session: &[u8],
-    ) -> protocol::Response {
-        match host
-            .connect(LivenessPolicy::default())
-            .open_event_stream(protocol::Request::OpenEventStream {
-                version,
-                archive: b"archive".to_vec(),
-                intent,
-                author: session.to_vec(),
-                session: session.to_vec(),
-                resume_after: None,
-            })
-            .await
-        {
-            Ok(mut stream) => match stream.next().await {
-                Some(protocol::Response::EventStreamOpened { .. }) => {
-                    protocol::Response::Acknowledged
-                }
-                Some(response) => response,
-                None => protocol::Response::Error {
-                    kind: protocol::ErrorKind::Unavailable,
-                    message: "event stream ended before opening".to_owned(),
-                },
-            },
-            Err(response) => response,
-        }
     }
 
     #[tokio::test]
@@ -914,7 +983,7 @@ mod tests {
                 certificate_hash,
                 ClientTransportConfig::default(),
                 NativeSessionOpen {
-                    archive: Bytes::from_static(b"shutdown-archive"),
+                    archive: Bytes::new(),
                     intent: protocol::ArchiveIntent::Create,
                     author: AuthorId::new(Bytes::from_static(b"shutdown-author")).unwrap(),
                     session: SessionId::new(Bytes::from_static(b"shutdown-session")).unwrap(),
@@ -936,6 +1005,7 @@ mod tests {
         let _ = std::fs::remove_dir_all(root);
     }
 
+    #[allow(clippy::too_many_lines)]
     async fn native_client_round_trip(mode: StorageMode) {
         let root = std::env::temp_dir().join(format!(
             "sea-webtransport-server-test-{}-{}",
@@ -964,7 +1034,7 @@ mod tests {
                 certificate_hash,
                 ClientTransportConfig::default(),
                 NativeSessionOpen {
-                    archive: Bytes::from_static(b"archive"),
+                    archive: Bytes::new(),
                     intent: protocol::ArchiveIntent::Create,
                     author: AuthorId::new(Bytes::from_static(b"author")).unwrap(),
                     session: SessionId::new(Bytes::from_static(b"session")).unwrap(),
@@ -973,19 +1043,18 @@ mod tests {
             )
             .await
             .unwrap();
-            let mut events = client.load(None);
-            assert!(matches!(
-                events.next().await.unwrap().unwrap(),
-                sea_core::MonitoredStreamItem::Progress(progress)
-                    if progress.status == sea_core::MonitoredStreamStatus::StreamingBacklog
-            ));
-            assert!(matches!(
-                events.next().await.unwrap().unwrap(),
-                sea_core::MonitoredStreamItem::Progress(progress)
-                    if progress.previous.is_none()
-                        && progress.latest_known.is_none()
-                        && progress.status == sea_core::MonitoredStreamStatus::AwaitingNewItems
-            ));
+            let mut events = client.load(LoadStart::LatestSnapshot).await.unwrap().events;
+            loop {
+                let sea_core::MonitoredStreamItem::Progress(progress) =
+                    events.next().await.unwrap().unwrap()
+                else {
+                    panic!("empty document must not deliver events");
+                };
+                assert!(progress.previous.is_none() && progress.latest_known.is_none());
+                if progress.status == sea_core::MonitoredStreamStatus::AwaitingNewItems {
+                    break;
+                }
+            }
             tokio::time::sleep(Duration::from_millis(100)).await;
             let receipt = client
                 .submit(EventSubmission {
@@ -998,16 +1067,47 @@ mod tests {
                 })
                 .await
                 .unwrap();
-            assert!(matches!(
-                events.next().await.unwrap().unwrap(),
-                sea_core::MonitoredStreamItem::Progress(progress)
-                    if progress.latest_known == Some(receipt.position)
-            ));
-            assert!(matches!(
-                events.next().await.unwrap().unwrap(),
-                sea_core::MonitoredStreamItem::Item(LoadEvent::Event(event))
-                    if event.committed.position == receipt.position
-            ));
+            loop {
+                if let sea_core::MonitoredStreamItem::Item(event) =
+                    events.next().await.unwrap().unwrap()
+                {
+                    assert_eq!(event.committed.position, receipt);
+                    break;
+                }
+            }
+            let old_registration = client
+                .coordinate_snapshots(SnapshotParticipation::SeaSelected)
+                .await
+                .unwrap();
+            let mut coordination = client
+                .coordinate_snapshots(SnapshotParticipation::SeaSelected)
+                .await
+                .unwrap();
+            drop(old_registration);
+            let selected = coordination.next().await.unwrap().unwrap();
+            let root_handle = client
+                .put_blob(Bytes::from_static(b"snapshot-state"))
+                .await
+                .unwrap();
+            let event_handle = client.resolve_position(receipt).await.unwrap().unwrap();
+            let publish = client.publish_snapshot(
+                None,
+                selected.fence,
+                Snapshot {
+                    root: root_handle,
+                    at_event: event_handle,
+                },
+            );
+            let observed = async {
+                while coordination.next().await.unwrap().unwrap().latest != Some(receipt) {}
+            };
+            let (published, ()) = timeout(Duration::from_secs(2), async {
+                tokio::join!(publish, observed)
+            })
+            .await
+            .expect("publication must not deadlock behind coordination reads");
+            assert_eq!(published.unwrap().at_event.id(), receipt);
+            drop(coordination);
             client.close().await.unwrap();
             shutdown
                 .shutdown(ShutdownMode::Drain {
@@ -1055,7 +1155,7 @@ mod tests {
                 certificate_hash.clone(),
                 ClientTransportConfig::default(),
                 NativeSessionOpen {
-                    archive: Bytes::from_static(b"fault-archive"),
+                    archive: Bytes::new(),
                     intent: protocol::ArchiveIntent::Create,
                     author: AuthorId::new(Bytes::from_static(b"observer-author")).unwrap(),
                     session: SessionId::new(Bytes::from_static(b"observer-session")).unwrap(),
@@ -1086,9 +1186,9 @@ mod tests {
         certificate_hash: wtransport::tls::Sha256Digest,
     ) {
         let (_endpoint, connection) = raw_connection(address, certificate_hash.clone()).await;
-        let (authority, _events) = open_raw_event_stream_with_intent(
+        let (authority, document, _events) = open_raw_event_stream_with_intent(
             &connection,
-            b"malformed-snapshot-archive",
+            b"",
             protocol::ArchiveIntent::Create,
             b"malformed-snapshot-author",
             b"malformed-snapshot-session",
@@ -1142,7 +1242,7 @@ mod tests {
             raw_connection(address, certificate_hash).await;
         let (observer_authority, _observer_events) = open_raw_event_stream(
             &observer_connection,
-            b"malformed-snapshot-archive",
+            &document,
             b"observer-author",
             b"observer-session",
         )
@@ -1198,9 +1298,9 @@ mod tests {
             .expect("malformed stream response should close");
         assert!(matches!(result, Ok(None) | Err(_)));
 
-        let (_authority, _events) = open_raw_event_stream_with_intent(
+        let (_authority, _document, _events) = open_raw_event_stream_with_intent(
             &connection,
-            b"same-connection-archive",
+            b"",
             protocol::ArchiveIntent::Create,
             b"same-connection-author",
             b"same-connection-session",
@@ -1226,12 +1326,12 @@ mod tests {
         address: SocketAddr,
         certificate_hash: wtransport::tls::Sha256Digest,
         client: &NativeSeaClient,
-    ) -> EventReceipt {
+    ) -> EventPosition {
         let operation = OperationId::new(Bytes::from_static(b"lost-event-ack")).unwrap();
         let (_endpoint, connection) = raw_connection(address, certificate_hash).await;
         let (authority, _events) = open_raw_event_stream(
             &connection,
-            b"fault-archive",
+            client.document().as_bytes(),
             b"submission-author",
             b"submission-session",
         )
@@ -1280,7 +1380,7 @@ mod tests {
         address: SocketAddr,
         certificate_hash: wtransport::tls::Sha256Digest,
         client: &NativeSeaClient,
-        receipt: EventReceipt,
+        receipt: EventPosition,
     ) {
         let blob = client
             .put_blob(Bytes::from_static(b"snapshot-content"))
@@ -1288,20 +1388,18 @@ mod tests {
             .unwrap();
         let root = client
             .put_directory(
-                BlobDirectory::new(BTreeMap::from([(
-                    "leaf".to_owned(),
-                    BlobTreeId::Blob(blob),
-                )]))
-                .unwrap(),
+                BlobDirectory::new(BTreeMap::from([("leaf".to_owned(), blob.id())])).unwrap(),
             )
             .await
             .unwrap();
-        let operation = OperationId::new(Bytes::from_static(b"lost-snapshot-ack")).unwrap();
         client.close().await.unwrap();
+        let BlobTreeId::Directory(root) = root.id() else {
+            panic!("directory");
+        };
         abandon_raw_snapshot_publication(
             address,
             certificate_hash.clone(),
-            &operation,
+            client.document().as_bytes(),
             receipt,
             *root.as_bytes(),
         )
@@ -1311,7 +1409,7 @@ mod tests {
             certificate_hash,
             ClientTransportConfig::default(),
             NativeSessionOpen {
-                archive: Bytes::from_static(b"fault-archive"),
+                archive: client.document().as_bytes().clone(),
                 intent: protocol::ArchiveIntent::Open,
                 author: AuthorId::new(Bytes::from_static(b"snapshot-resolver-author")).unwrap(),
                 session: SessionId::new(Bytes::from_static(b"snapshot-resolver-session")).unwrap(),
@@ -1323,7 +1421,7 @@ mod tests {
         timeout(Duration::from_secs(2), async {
             loop {
                 if resolver
-                    .resolve_snapshot_publication(&operation)
+                    .get_snapshot(LoadStart::ReplayAtLeastAllAfter(receipt))
                     .await
                     .unwrap()
                     .is_some()
@@ -1341,14 +1439,14 @@ mod tests {
     async fn abandon_raw_snapshot_publication(
         address: SocketAddr,
         certificate_hash: wtransport::tls::Sha256Digest,
-        operation: &OperationId,
-        receipt: EventReceipt,
+        document: &[u8],
+        receipt: EventPosition,
         root: [u8; 32],
     ) {
         let (_endpoint, connection) = raw_connection(address, certificate_hash.clone()).await;
         let (authority, _events) = open_raw_event_stream(
             &connection,
-            b"fault-archive",
+            document,
             b"snapshot-author",
             b"snapshot-session",
         )
@@ -1391,9 +1489,8 @@ mod tests {
             3,
             protocol::Request::PublishSnapshot {
                 fence: Some(fence),
-                operation: operation.as_bytes().to_vec(),
                 expected_parent: None,
-                at_event: protocol::SnapshotPosition::At(receipt.position.get()),
+                at_event: receipt.get(),
                 root: protocol::TreeId::Directory(root),
             },
         )
@@ -1427,14 +1524,15 @@ mod tests {
         author: &[u8],
         session: &[u8],
     ) -> (Vec<u8>, wtransport::RecvStream) {
-        open_raw_event_stream_with_intent(
+        let (authority, _, events) = open_raw_event_stream_with_intent(
             connection,
             archive,
             protocol::ArchiveIntent::Open,
             author,
             session,
         )
-        .await
+        .await;
+        (authority, events)
     }
 
     async fn open_raw_event_stream_with_intent(
@@ -1443,7 +1541,7 @@ mod tests {
         intent: protocol::ArchiveIntent,
         author: &[u8],
         session: &[u8],
-    ) -> (Vec<u8>, wtransport::RecvStream) {
+    ) -> (Vec<u8>, Vec<u8>, wtransport::RecvStream) {
         let (mut send, mut receive) = connection.open_bi().await.unwrap().await.unwrap();
         send_raw_request(
             &mut send,
@@ -1460,12 +1558,14 @@ mod tests {
         .await;
         send.finish().await.unwrap();
         let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
-        let protocol::Response::EventStreamOpened { authority } =
-            read_raw_response(&mut receive, &mut decoder, protocol::StreamRole::Event, 1).await
+        let protocol::Response::EventStreamOpened {
+            authority,
+            document,
+        } = read_raw_response(&mut receive, &mut decoder, protocol::StreamRole::Event, 1).await
         else {
             panic!("raw event stream should return authority");
         };
-        (authority, receive)
+        (authority, document, receive)
     }
 
     async fn send_raw_request(

@@ -80,34 +80,7 @@ export function hexToBytes(value: string): Uint8Array {
 
 /** Encodes the resolved Fluid document ID for protocol requests. */
 export function documentId(resolvedUrl: IResolvedUrl): Uint8Array {
-	return encoder.encode(resolvedUrl.id);
-}
-
-/** Encodes a collision-free snapshot publication identity for one summary scope. */
-export function snapshotOperationIdentity(
-	document: Uint8Array,
-	expectedParent: Uint8Array | undefined,
-	atEvent: Uint8Array | undefined,
-	root: Uint8Array,
-): Uint8Array {
-	const fields = [
-		encoder.encode("fluid-sea-snapshot-v1"),
-		document,
-		expectedParent ?? new Uint8Array(),
-		atEvent ?? new Uint8Array(),
-		root,
-	];
-	const size = fields.reduce((total, field) => total + 4 + field.length, 0);
-	const result = new Uint8Array(size);
-	const view = new DataView(result.buffer);
-	let offset = 0;
-	for (const field of fields) {
-		view.setUint32(offset, field.length);
-		offset += 4;
-		result.set(field, offset);
-		offset += field.length;
-	}
-	return result;
+	return hexToBytes(resolvedUrl.id);
 }
 
 /** Compares byte strings lexicographically for deterministic summary ordering. */
