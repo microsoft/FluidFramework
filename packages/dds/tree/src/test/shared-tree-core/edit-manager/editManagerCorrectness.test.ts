@@ -665,6 +665,7 @@ export function testCorrectness(): void {
 					count: number,
 					startSequenceNumber: number,
 					startIntention: number,
+					sessionId: SessionId = peer1,
 				): void {
 					for (let i = 0; i < count; i += 1) {
 						const intention = startIntention + i;
@@ -679,7 +680,7 @@ export function testCorrectness(): void {
 									customMetadata: undefined,
 								},
 							],
-							peer1,
+							sessionId,
 							brand(startSequenceNumber + i),
 							brand(startSequenceNumber + i - 1),
 							"main",
@@ -772,6 +773,46 @@ export function testCorrectness(): void {
 						manager.getSummaryData().main.trunk.map((commit) => commit.sequenceNumber),
 						[12, 13, 14],
 					);
+				});
+
+				it("normalizes stale peer bases in bounded summaries without changing live forks", () => {
+					const { manager } = testChangeEditManagerFactory({ configurationRevision: 0 });
+					const fork = manager.getLocalBranch("main").fork();
+					const forkHead = fork.getHead();
+					sequencePeerCommits(manager, 1, 1, 1, peer1);
+					sequencePeerCommits(manager, 4, 2, 2, peer2);
+					manager.advanceMinimumSequenceNumber(brand(5));
+					manager.setHistoryRetention(true, 1, brand(6));
+					sequencePeerCommits(manager, 3, 6, 6, peer2);
+					manager.advanceMinimumSequenceNumber(brand(8));
+					const summary = structuredClone(manager.getSummaryData());
+					assert.deepEqual(
+						summary.main.trunk.map((commit) => commit.sequenceNumber),
+						[6, 7, 8],
+					);
+					assert.equal(summary.main.peerLocalBranches.get(peer1)?.base, "root");
+					assert.equal(fork.getHead(), forkHead);
+					assert.equal(manager.getTrunkCommits("main").length, 8);
+
+					const loaded = testChangeEditManagerFactory({
+						configurationRevision: 1,
+						retainHistory: true,
+					}).manager;
+					const state = manager.getHistoryRetentionState();
+					assert(state !== undefined);
+					loaded.loadHistoryRetentionState(state);
+					loaded.loadSummaryData(summary);
+					for (const client of [manager, loaded]) {
+						sequencePeerCommits(client, 1, 9, 9, peer1);
+						client.advanceMinimumSequenceNumber(brand(9));
+						assert.deepEqual(
+							client.getSummaryData().main.trunk.map((commit) => commit.sequenceNumber),
+							[6, 7, 8, 9],
+						);
+					}
+					fork.rebaseOnto(manager.getLocalBranch("main"));
+					assert.equal(fork.getHead(), manager.getTrunkHead("main"));
+					fork.dispose();
 				});
 
 				it("does not move the epoch for an identical enabled replacement", () => {
