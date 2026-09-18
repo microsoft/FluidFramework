@@ -16,8 +16,10 @@ pub type ArchiveStream<T, P, E> = BoxMonitoredStream<T, P, E>;
 /// contain equal values. If an append request proposes its position, the implementation rejects a
 /// position that is not strictly greater than the current head.
 ///
-/// Recovery exposes either an ordered retained suffix or an error. It never silently skips an
-/// unavailable entry and resumes at a later retained position.
+/// This prototype does not support pruning: archives must retain every committed entry.
+/// Recovery exposes a complete ordered prefix starting with the first entry, or an error,
+/// subject to the backend's durability guarantees.
+/// Corruption within the required prefix fails recovery rather than producing a gap.
 #[async_trait]
 pub trait Archive: StorageSurface {
     /// Ordered position of one entry in this archive.
@@ -37,7 +39,7 @@ pub trait Archive: StorageSurface {
 
     /// Reads entries strictly after `after` in position order.
     ///
-    /// `after` is an exclusive starting cursor; `None` starts before the first retained entry.
+    /// `after` is an exclusive starting cursor; `None` starts before the first entry.
     /// `stop_after` is an inclusive upper bound. `Some(position)` creates a finite stream containing
     /// every entry through that bound, whether or not an entry exists exactly at the supplied
     /// position. `None` creates an unbounded stream that waits for newly appended entries after

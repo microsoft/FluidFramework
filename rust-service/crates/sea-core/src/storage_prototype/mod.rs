@@ -27,6 +27,10 @@
 //! available and valid. Every non-initial snapshot position identifies an event in the exposed
 //! prefix. Corruption within the required prefix fails recovery rather than producing a gap.
 //!
+//! This prototype does not support event or snapshot pruning.
+//! Archives retain every committed entry, and recovered event prefixes start with the first event.
+//! This retention requirement does not strengthen the backend's durability guarantees.
+//!
 //! This law is distinct from [`crate::Durability`]. Durability remains descriptive metadata about
 //! memory, orderly storage, or crash-resistant persistence and is not a runtime policy mechanism.
 
@@ -165,7 +169,7 @@ pub struct ViewSnapshotPublication<BH, EH> {
 
 /// A snapshot selection and finite event catch-up captured by [`SeaView::load`].
 pub struct ViewLoad<E> {
-    /// Newest compatible retained snapshot, when one exists.
+    /// Newest compatible snapshot, when one exists.
     pub snapshot: Option<Snapshot>,
     /// Event head captured after snapshot selection, or `None` for an empty archive.
     pub head: Option<EventPosition>,
@@ -274,7 +278,7 @@ where
         self.events.head().await
     }
 
-    /// Returns the latest retained snapshot.
+    /// Returns the latest snapshot.
     pub async fn get_latest_snapshot(&self) -> Result<Option<Snapshot>, B::Error> {
         let Some(position) = self.snapshots.head().await? else {
             return Ok(None);
