@@ -88,9 +88,13 @@ For marked instances, omitted `retainHistory` means `false`, and the persisted v
 Legacy `configuredSharedTree({ retainHistory: true })` behavior is unchanged.
 
 ```typescript
-import { configuredSharedTree } from "@fluidframework/tree/internal";
+import { configuredSharedTree, SharedTreeFactoryType } from "@fluidframework/tree/internal";
 
-// Requires the container's explicitSchemaControl and enableChannelConfiguration options.
+// Set these internal container runtime options before creating the Tree.
+const runtimeOptions = {
+    explicitSchemaControl: true,
+    channelConfigurationTypes: [SharedTreeFactoryType],
+};
 const kind = configuredSharedTree({}, { retainHistory: false });
 const tree = kind.getFactory().create(dataStoreRuntime, "tree");
 // In this prototype the per-instance facet is on ISharedTree's package-private kernel surface.
@@ -101,15 +105,19 @@ if (configuration !== undefined) {
 }
 ```
 
+`SharedTreeFactoryType` is the stable type ID `https://graph.microsoft.com/types/tree`.
+This runtime option allows new configured Trees, not configured instances of other DDS types.
+An empty or omitted type list disables new configured instances but does not prevent reading persisted configured instances.
+Only SharedTree adopts the configuration protocol in production in this prototype.
 The internal test/debug type `ISharedTree` in this example is imported from `treeFactory.ts` inside the Tree package.
 The creation entry point is exported as internal; the per-instance request surface is not a new public Tree API.
 `configuration.on("changed", listener)` and `off` expose the shared synchronous notifications.
 Published requests take effect only when sequenced, including requests made while disconnected.
 Detached or otherwise unpublished requests apply immediately without submitting an op.
-Publication still requires the document capability.
-In an existing document, normal outgoing traffic can propose the capability through the desired document schema.
-Publish only after `channelConfigurationEnabled` reports that a sequenced schema change has made the capability active; setting the local option does not make publication ready.
-If the proposal loses a compare-and-swap race, the capability may remain unavailable for the session; there is no separate activation API or automatic retry.
+Publication requires the Tree type in the persisted document capability set.
+In an existing document, normal outgoing traffic can propose adding the Tree type through the desired document schema.
+Publish only after `isChannelConfigurationEnabled(SharedTreeFactoryType)` reports that the type is active; setting the local option does not make publication ready.
+If the proposal loses a compare-and-swap race, the type may remain unavailable for the session; there is no separate activation API or automatic retry.
 Publishing before readiness throws an error instead of switching to the legacy protocol.
 
 Enabling starts history at the accepted barrier, not at the oldest commit retained by the current client.
