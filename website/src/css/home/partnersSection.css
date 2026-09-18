@@ -108,6 +108,8 @@
 }
 
 .ffcom-partner-entry-label-text {
+	margin: 0;
+
 	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 600;

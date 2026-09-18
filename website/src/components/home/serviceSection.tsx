@@ -86,7 +86,7 @@ function ServiceSectionCard({
 		<div className="ffcom-service">
 			<div className="ffcom-service-content">
 				<img src={logoSource} className="ffcom-service-card-logo" alt={logoAltText} />
-				<div className="ffcom-service-title">{title}</div>
+				<h3 className="ffcom-service-title">{title}</h3>
 				<div className="ffcom-service-description">{description}</div>
 				<a
 					className="ffcom-learn-more-link"
