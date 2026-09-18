@@ -34,7 +34,7 @@ pub enum MemoryStorageError {
     /// A referenced content tree is not present.
     #[error("referenced content is unavailable")]
     MissingContent,
-    /// Another component or stream still owns the document's writer opening.
+    /// Another component still owns the document's writer opening.
     #[error("document is already open")]
     AlreadyOpen,
     /// A read bound is beyond the archive's initialization head.
@@ -230,23 +230,26 @@ impl StoredSnapshot {
     }
 }
 
-/// Shared token whose strong references prevent a new writer opening for the document.
+/// An exclusive opening that owns access to its document until its last strong reference is dropped.
 #[derive(Debug)]
-pub(crate) struct WriterLease;
+struct DocumentOpening {
+    /// Retained data accessed by all writable components of this opening.
+    document: Arc<Document>,
+}
 
-/// Stored identity and weak writer lease for a document known by the factory.
+/// Stored identity and weak exclusive opening for a document known by the factory.
 #[derive(Debug)]
 struct DocumentEntry {
     /// Data persists as long as the factory or a component/handle retains it.
     document: Arc<Document>,
     /// Does not keep an otherwise unused opening alive.
-    opening: Weak<WriterLease>,
+    opening: Weak<DocumentOpening>,
 }
 
 /// Process-local document factory implementing `sea_core::next::SeaStorage`.
 ///
-/// Clones share identities and exclusive openings. Components and streams retain writer leases;
-/// availability handles retain data only and remain compatible with later openings of this document.
+/// Clones share identities and exclusive openings. Only components retain their opening;
+/// streams and availability handles retain data only and remain usable across reopening.
 /// There is no detached write work: an unpolled append has no effect, and a polled append settles
 /// synchronously under its component lock before returning. No operation reports ambiguity.
 #[derive(Clone, Debug, Default)]
@@ -262,21 +265,18 @@ impl MemoryStorage {
         Self::default()
     }
 
-    /// Shares one exclusive lease among all three components.
+    /// Derives all three components from the same document-owning opening.
     fn components(
-        document: Arc<Document>,
-        opening: Arc<WriterLease>,
+        opening: Arc<DocumentOpening>,
     ) -> StorageComponents<MemoryBlobStore, MemoryEventArchive, MemorySnapshotArchive> {
         StorageComponents {
             blobs: MemoryBlobStore {
-                document: document.clone(),
-                _opening: opening.clone(),
-            },
-            events: MemoryEventArchive {
-                document: document.clone(),
                 opening: opening.clone(),
             },
-            snapshots: MemorySnapshotArchive { document, opening },
+            events: MemoryEventArchive {
+                opening: opening.clone(),
+            },
+            snapshots: MemorySnapshotArchive { opening },
         }
     }
 }
@@ -302,7 +302,9 @@ impl SeaStorage for MemoryStorage {
             .map_err(|_| MemoryStorageError::IdentityExhausted)?;
         let id = DocumentId::from_bytes(Bytes::copy_from_slice(&ordinal.to_be_bytes()));
         let document = Arc::new(Document::default());
-        let opening = Arc::new(WriterLease);
+        let opening = Arc::new(DocumentOpening {
+            document: document.clone(),
+        });
         self.documents.lock().expect("registry lock").insert(
             id.clone(),
             DocumentEntry {
@@ -312,7 +314,7 @@ impl SeaStorage for MemoryStorage {
         );
         Ok(CreatedDocument {
             id,
-            components: Self::components(document, opening),
+            components: Self::components(opening),
         })
     }
 
@@ -329,9 +331,11 @@ impl SeaStorage for MemoryStorage {
             return Err(MemoryStorageError::AlreadyOpen);
         }
         entry.document.validate()?;
-        let opening = Arc::new(WriterLease);
+        let opening = Arc::new(DocumentOpening {
+            document: entry.document.clone(),
+        });
         entry.opening = Arc::downgrade(&opening);
-        Ok(Some(Self::components(entry.document.clone(), opening)))
+        Ok(Some(Self::components(opening)))
     }
 }
 
@@ -352,13 +356,11 @@ impl StorageHandle for MemoryBlobHandle {
     }
 }
 
-/// Blob component of one exclusive opening; clones share the same writer lease.
+/// Blob component of one exclusive opening; clones share the same document-owning opening.
 #[derive(Clone, Debug)]
 pub struct MemoryBlobStore {
-    /// Data remains available across reopening through the factory.
-    document: Arc<Document>,
-    /// Shared lease held by every component and dependent stream.
-    _opening: Arc<WriterLease>,
+    /// Owns access to the document and keeps its opening exclusive.
+    opening: Arc<DocumentOpening>,
 }
 
 /// Availability evidence for an event in this document; does not retain writer ownership.
@@ -380,10 +382,8 @@ impl StorageHandle for MemoryEventHandle {
 /// Cloneable event component sharing one exclusive opening and append order.
 #[derive(Clone, Debug)]
 pub struct MemoryEventArchive {
-    /// Owning document supplies history and handle provenance.
-    document: Arc<Document>,
-    /// Shared exclusive writer lease.
-    opening: Arc<WriterLease>,
+    /// Owns access to the document and keeps its opening exclusive.
+    opening: Arc<DocumentOpening>,
 }
 
 impl StorageSurface for MemoryEventArchive {
@@ -397,6 +397,7 @@ impl ReferenceableStore for MemoryEventArchive {
 
     async fn resolve(&self, id: Self::Id) -> Result<Option<Self::Handle>, Self::Error> {
         Ok(self
+            .opening
             .document
             .events
             .lock()
@@ -404,16 +405,17 @@ impl ReferenceableStore for MemoryEventArchive {
             .entries
             .contains_key(&id)
             .then(|| MemoryEventHandle {
-                document: self.document.clone(),
+                document: self.opening.document.clone(),
                 id,
             }))
     }
 
     async fn ensure_available(&self, handle: &Self::Handle) -> Result<(), Self::Error> {
-        if !Arc::ptr_eq(&self.document, &handle.document) {
+        if !Arc::ptr_eq(&self.opening.document, &handle.document) {
             return Err(MemoryStorageError::ForeignHandle);
         }
         if !self
+            .opening
             .document
             .events
             .lock()
@@ -436,7 +438,7 @@ impl Archive for MemoryEventArchive {
 
     async fn append(&self, event: Event) -> Result<Self::AppendResult, Self::Error> {
         let (position, readers) = {
-            let mut events = self.document.events.lock().expect("event lock");
+            let mut events = self.opening.document.events.lock().expect("event lock");
             let ordinal = events
                 .head()
                 .map_or(0, EventPosition::get)
@@ -450,7 +452,7 @@ impl Archive for MemoryEventArchive {
             reader.wake();
         }
         Ok(MemoryEventHandle {
-            document: self.document.clone(),
+            document: self.opening.document.clone(),
             id: position,
         })
     }
@@ -460,26 +462,25 @@ impl Archive for MemoryEventArchive {
         after: Option<EventPosition>,
         stop_after: Option<EventPosition>,
     ) -> ArchiveStream<Self::Item, EventPosition, Self::Error> {
-        memory_archive::read(
-            self.document.events.clone(),
-            self.opening.clone(),
-            after,
-            stop_after,
-        )
+        memory_archive::read(self.opening.document.events.clone(), after, stop_after)
     }
 
     async fn head(&self) -> Result<Option<EventPosition>, Self::Error> {
-        Ok(self.document.events.lock().expect("event lock").head())
+        Ok(self
+            .opening
+            .document
+            .events
+            .lock()
+            .expect("event lock")
+            .head())
     }
 }
 
 /// Sparse snapshot component ordered strictly by the referenced event position.
 #[derive(Clone, Debug)]
 pub struct MemorySnapshotArchive {
-    /// Owning document provides both publication dependencies.
-    document: Arc<Document>,
-    /// Shared exclusive writer lease.
-    opening: Arc<WriterLease>,
+    /// Owns access to the document and keeps its opening exclusive.
+    opening: Arc<DocumentOpening>,
 }
 
 impl StorageSurface for MemorySnapshotArchive {
@@ -494,8 +495,8 @@ impl Archive for MemorySnapshotArchive {
     type AppendResult = ();
 
     async fn append(&self, snapshot: Self::Append) -> Result<(), Self::Error> {
-        if !Arc::ptr_eq(&self.document, &snapshot.root.document)
-            || !Arc::ptr_eq(&self.document, &snapshot.at_event.document)
+        if !Arc::ptr_eq(&self.opening.document, &snapshot.root.document)
+            || !Arc::ptr_eq(&self.opening.document, &snapshot.at_event.document)
         {
             return Err(MemoryStorageError::ForeignHandle);
         }
@@ -503,9 +504,14 @@ impl Archive for MemorySnapshotArchive {
             root: snapshot.root.id,
             at_event: snapshot.at_event.id,
         };
-        stored.resolve(&self.document)?;
+        stored.resolve(&self.opening.document)?;
         let readers = {
-            let mut snapshots = self.document.snapshots.lock().expect("snapshot lock");
+            let mut snapshots = self
+                .opening
+                .document
+                .snapshots
+                .lock()
+                .expect("snapshot lock");
             if snapshots.head().is_some_and(|head| head >= stored.at_event) {
                 return Err(MemoryStorageError::SnapshotOrder);
             }
@@ -522,14 +528,9 @@ impl Archive for MemorySnapshotArchive {
         after: Option<EventPosition>,
         stop_after: Option<EventPosition>,
     ) -> ArchiveStream<Self::Item, EventPosition, Self::Error> {
-        let document = self.document.clone();
+        let document = self.opening.document.clone();
         map_monitored_stream(
-            memory_archive::read(
-                self.document.snapshots.clone(),
-                self.opening.clone(),
-                after,
-                stop_after,
-            ),
+            memory_archive::read(document.snapshots.clone(), after, stop_after),
             move |snapshot| snapshot.resolve(&document),
             |error| error,
         )
@@ -537,6 +538,7 @@ impl Archive for MemorySnapshotArchive {
 
     async fn head(&self) -> Result<Option<EventPosition>, Self::Error> {
         Ok(self
+            .opening
             .document
             .snapshots
             .lock()
@@ -555,6 +557,7 @@ impl SnapshotArchive for MemorySnapshotArchive {
         position: EventPosition,
     ) -> Result<Option<Self::Item>, Self::Error> {
         let stored = self
+            .opening
             .document
             .snapshots
             .lock()
@@ -563,7 +566,7 @@ impl SnapshotArchive for MemorySnapshotArchive {
             .get(&position)
             .cloned();
         stored
-            .map(|snapshot| snapshot.resolve(&self.document))
+            .map(|snapshot| snapshot.resolve(&self.opening.document))
             .transpose()
     }
 
@@ -572,7 +575,12 @@ impl SnapshotArchive for MemorySnapshotArchive {
         position: Option<EventPosition>,
     ) -> Result<Option<Self::Item>, Self::Error> {
         let stored = {
-            let snapshots = self.document.snapshots.lock().expect("snapshot lock");
+            let snapshots = self
+                .opening
+                .document
+                .snapshots
+                .lock()
+                .expect("snapshot lock");
             match position {
                 Some(position) => snapshots.entries.range(..=position).next_back(),
                 None => snapshots.entries.last_key_value(),
@@ -580,7 +588,7 @@ impl SnapshotArchive for MemorySnapshotArchive {
             .map(|(_, snapshot)| snapshot.clone())
         };
         stored
-            .map(|snapshot| snapshot.resolve(&self.document))
+            .map(|snapshot| snapshot.resolve(&self.opening.document))
             .transpose()
     }
 }
@@ -596,22 +604,24 @@ impl ReferenceableStore for MemoryBlobStore {
 
     async fn resolve(&self, id: Self::Id) -> Result<Option<Self::Handle>, Self::Error> {
         Ok(self
+            .opening
             .document
             .blob_data
             .lock()
             .expect("content lock")
             .contains_tree(id)
             .then(|| MemoryBlobHandle {
-                document: self.document.clone(),
+                document: self.opening.document.clone(),
                 id,
             }))
     }
 
     async fn ensure_available(&self, handle: &Self::Handle) -> Result<(), Self::Error> {
-        if !Arc::ptr_eq(&self.document, &handle.document) {
+        if !Arc::ptr_eq(&self.opening.document, &handle.document) {
             return Err(MemoryStorageError::ForeignHandle);
         }
         if !self
+            .opening
             .document
             .blob_data
             .lock()
@@ -629,19 +639,21 @@ impl BlobStore for MemoryBlobStore {
     async fn put_blob(&self, payload: Bytes) -> Result<Self::Handle, Self::Error> {
         let blob = PrehashedBlob::new(payload);
         let id = self
+            .opening
             .document
             .blob_data
             .lock()
             .expect("content lock")
             .put_blob(blob);
         Ok(MemoryBlobHandle {
-            document: self.document.clone(),
+            document: self.opening.document.clone(),
             id: BlobTreeId::Blob(id),
         })
     }
 
     async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
-        self.document
+        self.opening
+            .document
             .blob_data
             .lock()
             .expect("content lock")
@@ -653,19 +665,21 @@ impl BlobStore for MemoryBlobStore {
 
     async fn put_directory(&self, directory: BlobDirectory) -> Result<Self::Handle, Self::Error> {
         let id = self
+            .opening
             .document
             .blob_data
             .lock()
             .expect("content lock")
             .put_directory(directory)?;
         Ok(MemoryBlobHandle {
-            document: self.document.clone(),
+            document: self.opening.document.clone(),
             id: BlobTreeId::Directory(id),
         })
     }
 
     async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
-        self.document
+        self.opening
+            .document
             .blob_data
             .lock()
             .expect("content lock")
@@ -796,7 +810,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn read_bounds_are_lazy_empty_ranges_finish_and_drops_release_opening() {
+    async fn read_bounds_are_lazy_and_readers_do_not_prevent_reopening() {
         let storage = MemoryStorage::new();
         let (id, view) = storage.create_view().await.unwrap();
         let future = EventPosition::new(1);
@@ -810,9 +824,15 @@ mod tests {
             Some(Err(MemoryStorageError::InvalidPosition))
         ));
         assert!(invalid.next().await.is_none());
-        let lazy = view.read(None, Some(future));
+        let mut lazy = view.read(None, Some(future));
         view.append(Bytes::new(), None).await.unwrap();
-        assert_eq!(collect_items(lazy).await.unwrap().len(), 1);
+        let mut delivered = 0;
+        while let Some(item) = lazy.next().await {
+            if let MonitoredStreamItem::Item(_) = item.unwrap() {
+                delivered += 1;
+            }
+        }
+        assert_eq!(delivered, 1);
         let beyond = EventPosition::new(50);
         assert!(
             collect_items(view.read(Some(beyond), Some(future)))
@@ -830,21 +850,61 @@ mod tests {
             collect_items(view.read(Some(beyond), None)).await,
             Err(MemoryStorageError::InvalidPosition)
         ));
-        let unpolled = view.read(None, None);
+        let mut unpolled = view.read(None, None);
         drop(view);
-        drop(invalid);
+        let reopened = storage.open_view(&id).await.unwrap().unwrap();
+        assert!(invalid.next().await.is_none());
+        assert!(lazy.next().await.is_none());
         assert!(matches!(
-            storage.open_view(&id).await,
-            Err(MemoryStorageError::AlreadyOpen)
+            unpolled.next().await,
+            Some(Ok(MonitoredStreamItem::Progress(_)))
         ));
-        drop(unpolled);
-        assert!(storage.open_view(&id).await.unwrap().is_some());
+        assert!(matches!(
+            unpolled.next().await,
+            Some(Ok(MonitoredStreamItem::Item(event))) if event.position == future
+        ));
+        assert_eq!(reopened.head().await.unwrap(), Some(future));
     }
 
     #[tokio::test]
-    async fn live_read_wakes_without_gaps_tracks_backlog_and_cancels_independently() {
+    async fn event_read_retains_only_its_archive_until_dropped() {
         let storage = MemoryStorage::new();
-        let (_, view) = storage.create_view().await.unwrap();
+        let created = storage.create_document().await.unwrap();
+        let document = Arc::downgrade(&created.components.events.opening.document);
+        let opening = Arc::downgrade(&created.components.events.opening);
+        let archive = Arc::downgrade(&created.components.events.opening.document.events);
+        let event = created
+            .components
+            .events
+            .append(Event {
+                payload: Bytes::from_static(b"retained"),
+                blob_tree: None,
+            })
+            .await
+            .unwrap();
+        let mut stream = created.components.events.read(None, Some(event.id()));
+        drop((event, created, storage));
+
+        assert!(opening.upgrade().is_none());
+        assert!(document.upgrade().is_none());
+        assert!(archive.upgrade().is_some());
+        let mut delivered = 0;
+        while let Some(item) = stream.next().await {
+            if let MonitoredStreamItem::Item(event) = item.unwrap() {
+                assert_eq!(event.event.payload, Bytes::from_static(b"retained"));
+                delivered += 1;
+            }
+        }
+        assert_eq!(delivered, 1);
+        assert!(archive.upgrade().is_some());
+        drop(stream);
+        assert!(archive.upgrade().is_none());
+    }
+
+    #[tokio::test]
+    async fn live_read_wakes_across_reopening_tracks_backlog_and_cancels_independently() {
+        let storage = MemoryStorage::new();
+        let (id, view) = storage.create_view().await.unwrap();
         let mut live = view.read(None, None);
         let mut cancelled = view.read(None, None);
         let counter = Arc::new(WakeCounter::default());
@@ -869,6 +929,8 @@ mod tests {
                 .poll_next(&mut replacement_context)
                 .is_pending()
         );
+        drop(view);
+        let view = storage.open_view(&id).await.unwrap().unwrap();
         let first = view.append(Bytes::new(), None).await.unwrap();
         let second = view.append(Bytes::new(), None).await.unwrap();
         assert_eq!(counter.0.load(Ordering::Relaxed), 0);
@@ -955,7 +1017,7 @@ mod tests {
             payload: Bytes::from_static(b"retained"),
             blob_tree: None,
         };
-        events.document.events.lock().unwrap().insert(
+        events.opening.document.events.lock().unwrap().insert(
             position,
             CommittedEvent {
                 position,
@@ -972,7 +1034,7 @@ mod tests {
             .unwrap_err();
         assert!(matches!(error, MemoryStorageError::IdentityExhausted));
         assert_eq!(error.kind(), ErrorKind::Rejected);
-        let archive = events.document.events.lock().unwrap();
+        let archive = events.opening.document.events.lock().unwrap();
         assert_eq!(archive.head(), Some(position));
         assert_eq!(archive.entries.len(), 1);
         assert_eq!(archive.entries[&position].event, event);
@@ -1038,6 +1100,7 @@ mod tests {
             .unwrap();
         components
             .blobs
+            .opening
             .document
             .blob_data
             .lock()
@@ -1099,7 +1162,13 @@ mod tests {
             .await
             .unwrap();
         {
-            let mut snapshots = components.snapshots.document.snapshots.lock().unwrap();
+            let mut snapshots = components
+                .snapshots
+                .opening
+                .document
+                .snapshots
+                .lock()
+                .unwrap();
             let stored = snapshots.entries.remove(&event.id()).unwrap();
             snapshots.entries.insert(EventPosition::new(2), stored);
         }
@@ -1169,11 +1238,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn snapshot_stream_is_live_and_retains_opening_without_retaining_handle_cycles() {
+    async fn snapshot_stream_survives_reopening_without_retaining_handle_cycles() {
         let storage = MemoryStorage::new();
         let created = storage.create_document().await.unwrap();
         let components = created.components;
-        let document = Arc::downgrade(&components.blobs.document);
+        let document = Arc::downgrade(&components.blobs.opening.document);
         let root = components.blobs.put_blob(Bytes::new()).await.unwrap();
         let event = components
             .events
@@ -1189,7 +1258,9 @@ mod tests {
             Some(Ok(MonitoredStreamItem::Progress(_)))
         ));
         assert!(snapshots.next().now_or_never().is_none());
-        components
+        drop(components);
+        let reopened = storage.open_document(&created.id).await.unwrap().unwrap();
+        reopened
             .snapshots
             .append(Snapshot {
                 root,
@@ -1197,18 +1268,13 @@ mod tests {
             })
             .await
             .unwrap();
-        drop(components);
-        assert!(matches!(
-            storage.open_document(&created.id).await,
-            Err(MemoryStorageError::AlreadyOpen)
-        ));
         assert!(
             matches!(snapshots.next().await, Some(Ok(MonitoredStreamItem::Item(snapshot))) if snapshot.at_event.id() == event.id())
         );
-        drop(snapshots);
-        let reopened = storage.open_document(&created.id).await.unwrap().unwrap();
         reopened.events.ensure_available(&event).await.unwrap();
         drop((reopened, event, storage));
+        assert!(document.upgrade().is_some());
+        drop(snapshots);
         assert!(
             document.upgrade().is_none(),
             "stored snapshots must not keep their own document alive"
@@ -1248,11 +1314,6 @@ mod tests {
             }
         }
         drop(view);
-        assert!(matches!(
-            storage.open_view(&id).await,
-            Err(MemoryStorageError::AlreadyOpen)
-        ));
-        drop(load);
         let reopened = storage.open_view(&id).await.unwrap().unwrap();
         reopened.blobs().ensure_available(&root).await.unwrap();
         assert_eq!(
@@ -1265,6 +1326,16 @@ mod tests {
             first.id()
         );
         assert_eq!(reopened.head().await.unwrap(), Some(second.id()));
+        let third = reopened
+            .append(Bytes::from_static(b"three"), None)
+            .await
+            .unwrap();
+        loop {
+            if let Some(Ok(MonitoredStreamItem::Item(event))) = load.events.next().await {
+                assert_eq!(event.position, third.id());
+                break;
+            }
+        }
     }
 
     #[test]
@@ -1364,7 +1435,14 @@ mod tests {
             })
             .await
             .unwrap();
-        blobs.document.blob_data.lock().unwrap().blobs.clear();
+        blobs
+            .opening
+            .document
+            .blob_data
+            .lock()
+            .unwrap()
+            .blobs
+            .clear();
 
         drop(created.components);
         assert!(matches!(
@@ -1398,14 +1476,9 @@ mod tests {
 
     #[tokio::test]
     async fn blob_handles_check_document_provenance_and_closure() {
-        let store = MemoryBlobStore {
-            document: Arc::default(),
-            _opening: Arc::new(WriterLease),
-        };
-        let other = MemoryBlobStore {
-            document: Arc::default(),
-            _opening: Arc::new(WriterLease),
-        };
+        let storage = MemoryStorage::new();
+        let store = storage.create_document().await.unwrap().components.blobs;
+        let other = storage.create_document().await.unwrap().components.blobs;
         let handle = store
             .put_blob(Bytes::from_static(b"content"))
             .await

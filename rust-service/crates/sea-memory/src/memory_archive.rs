@@ -1,4 +1,4 @@
-//! Retained ordered data and lazy, lease-owning monitored reads.
+//! Retained ordered data and lazy monitored reads independent of writable openings.
 
 use std::{
     collections::BTreeMap,
@@ -14,7 +14,7 @@ use sea_core::{
     MonitoredStreamStatus, next::ArchiveStream,
 };
 
-use crate::{MemoryStorageError, document::WriterLease};
+use crate::MemoryStorageError;
 
 /// Complete committed history plus weak subscriptions that do not keep dropped reads alive.
 #[derive(Debug)]
@@ -70,12 +70,10 @@ impl<Item> ArchiveData<Item> {
     }
 }
 
-/// A read owns the opening even before initialization and after finite completion until dropped.
+/// A read retains its archive independently of writable components and subsequent openings.
 struct MemoryRead<Item> {
-    /// Retained immutable entries and notification registrations.
+    /// Retained entries and notification registrations, without writer ownership.
     data: Arc<Mutex<ArchiveData<Item>>>,
-    /// Prevents another writer opening while this stream exists.
-    _opening: Arc<WriterLease>,
     /// Exclusive cursor, advanced only on data delivery.
     previous: Option<EventPosition>,
     /// Inclusive bound; absent for live delivery.
@@ -185,15 +183,14 @@ impl<Item: Clone + Unpin> MonitoredStream for MemoryRead<Item> {
 }
 
 /// Creates a lazy reader; no state lock or initialization is performed here.
+/// Only archive data is retained, so readers do not prevent a new writable opening.
 pub(crate) fn read<Item: Clone + Send + Unpin + 'static>(
     data: Arc<Mutex<ArchiveData<Item>>>,
-    opening: Arc<WriterLease>,
     after: Option<EventPosition>,
     stop_after: Option<EventPosition>,
 ) -> ArchiveStream<Item, EventPosition, MemoryStorageError> {
     Box::pin(MemoryRead {
         data,
-        _opening: opening,
         previous: after,
         stop_after,
         waker: Arc::new(AtomicWaker::new()),
@@ -247,7 +244,7 @@ mod tests {
     }
 
     #[test]
-    fn finite_reads_check_sparse_bounds_progress_and_terminal_leases() {
+    fn finite_reads_check_sparse_bounds_progress_and_completion() {
         for positions in [vec![], vec![2, 5, 9]] {
             let mut archive = ArchiveData::default();
             for &ordinal in &positions {
@@ -258,11 +255,8 @@ mod tests {
             let head = positions.last().copied();
             for after in [None, Some(1), Some(2), Some(3), Some(5), Some(9), Some(10)] {
                 for stop in [1, 2, 3, 5, 6, 9, 10] {
-                    let opening = Arc::new(WriterLease);
-                    let lease = Arc::downgrade(&opening);
                     let mut stream = read(
                         data.clone(),
-                        opening,
                         after.map(EventPosition::new),
                         Some(EventPosition::new(stop)),
                     );
@@ -319,15 +313,6 @@ mod tests {
                         .collect();
                     assert_eq!(delivered, expected);
                     assert!(matches!(stream.next().now_or_never(), Some(None)));
-                    assert!(
-                        lease.upgrade().is_some(),
-                        "terminal streams retain the opening"
-                    );
-                    drop(stream);
-                    assert!(
-                        lease.upgrade().is_none(),
-                        "dropping a stream releases its lease"
-                    );
                 }
             }
         }
@@ -336,14 +321,13 @@ mod tests {
     #[test]
     fn dropped_readers_are_pruned_without_retaining_their_wakers() {
         let data = Arc::new(Mutex::new(ArchiveData::<EventPosition>::default()));
-        let opening = Arc::new(WriterLease);
-        let mut first = read(data.clone(), opening.clone(), None, None);
+        let mut first = read(data.clone(), None, None);
         assert!(matches!(first.next().now_or_never(), Some(Some(Ok(_)))));
         let registration = data.lock().unwrap().readers[0].clone();
         drop(first);
         assert!(registration.upgrade().is_none());
 
-        let mut second = read(data.clone(), opening, None, None);
+        let mut second = read(data.clone(), None, None);
         assert!(matches!(second.next().now_or_never(), Some(Some(Ok(_)))));
         assert_eq!(data.lock().unwrap().readers.len(), 1);
         let position = EventPosition::new(1);

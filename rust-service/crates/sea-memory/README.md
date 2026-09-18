@@ -8,8 +8,11 @@
 Factory clones share the registry, and closed documents retain their complete histories while the registry lives.
 
 Blob, event, and snapshot components and their clones share one exclusive opening.
-Reads retain that opening from creation until dropped, including unpolled, failed, and completed reads.
-Dropping a view does not invalidate its reads; dropping the last component and stream releases writer ownership.
+The opening owns the document; writable components access their data through that opening rather than pairing data with a separate lifetime token.
+Dropping the last component or component clone releases writer ownership, even when reads remain alive.
+Reads retain data, not the opening: event reads keep their event archive, while snapshot reads also retain the document needed to resolve snapshot dependencies.
+Unpolled, live, failed, and completed reads do not prevent reopening.
+Dropping a view or reopening the document does not invalidate its reads; live reads continue receiving appends from subsequent openings.
 
 Availability handles have private, document-specific provenance and retain data, not writer ownership.
 A new opening of the same document can validate old handles with `ensure_available` or mint fresh ones with `resolve`.
@@ -52,7 +55,7 @@ This implementation is suitable for tests, examples, and process-local state, no
 The primary entry point is `MemoryStorage`; its components and handles are exported from the crate root.
 Shared replacement laws come from [`sea-conformance::next`](../sea-conformance/src/next.rs).
 Localized tests in [`document.rs`](src/document.rs) exercise provenance, opening lifetimes, cancellation, concurrent appends, position exhaustion, shared-tree closure, lazy/live reads, and inconsistent-history rejection.
-Tests in [`memory_archive.rs`](src/memory_archive.rs) cover append-only assertions, sparse bounds and progress, terminal stream leases, and weak subscription cleanup.
+Tests in [`memory_archive.rs`](src/memory_archive.rs) cover append-only assertions, sparse bounds and progress, finite completion, and weak subscription cleanup.
 
 ## Transitional API
 
