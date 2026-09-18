@@ -1,4 +1,13 @@
-//! Private persisted submission encoding; membership remains runtime-local.
+//! Private persisted submission encoding for the local sequencer.
+//!
+//! Each application event stores stable author, session, and operation identities, its explicit
+//! reference, the active minimum reference, and opaque application bytes. Blob-tree identity stays
+//! in the surrounding storage event so availability checks remain owned by the storage view.
+//!
+//! The format contains submissions only. Membership and publisher lifecycle are runtime-local and
+//! produce no control records, so every successfully decoded archive item is an application event.
+//! Decoding rejects an invalid marker, empty identity, truncation, unknown position tag, or trailing
+//! bytes as [`crate::SessionError::Corrupt`].
 
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use sea_core::{
@@ -33,7 +42,7 @@ pub(crate) fn encode_submission<Error>(
 /// Decodes a persisted submission, rejecting truncation and trailing bytes.
 pub(crate) fn decode_committed<Error>(
     record: &CommittedEvent,
-) -> Result<Option<SessionCommittedEvent>, SessionError<Error>> {
+) -> Result<SessionCommittedEvent, SessionError<Error>> {
     let Some(encoded) = record.event.payload.strip_prefix(MAGIC) else {
         return Err(SessionError::Corrupt("invalid submission marker"));
     };
@@ -50,7 +59,7 @@ pub(crate) fn decode_committed<Error>(
     if bytes.has_remaining() {
         return Err(SessionError::Corrupt("trailing submission bytes"));
     }
-    Ok(Some(SessionCommittedEvent {
+    Ok(SessionCommittedEvent {
         committed: CommittedEvent {
             position: record.position,
             event: Event {
@@ -63,7 +72,7 @@ pub(crate) fn decode_committed<Error>(
         operation_id,
         reference,
         minimum_reference,
-    }))
+    })
 }
 
 /// Writes a length-prefixed identity or payload.
@@ -131,9 +140,7 @@ mod tests {
                 blob_tree: None,
             },
         };
-        let decoded = decode_committed::<std::io::Error>(&record)
-            .unwrap()
-            .unwrap();
+        let decoded = decode_committed::<std::io::Error>(&record).unwrap();
         assert_eq!(
             decoded.committed.event.payload,
             Bytes::from_static(b"payload")

@@ -1,4 +1,4 @@
-//! Replacement document components over one exclusive dependency-ordered file journal.
+//! Document components over one exclusive dependency-ordered file journal.
 //!
 //! [`crate::storage::FileStorage`] allocates numeric document identities below a canonical namespace
 //! and opens one OS-locked journal per document. Blob, event, and snapshot components share that
@@ -1002,7 +1002,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn replacement_file_conformance() {
+    async fn file_conformance() {
         let root = root();
         let storage = FileStorage::<false>::open(&root).unwrap();
         sea_conformance::run_view_conformance(&storage).await;

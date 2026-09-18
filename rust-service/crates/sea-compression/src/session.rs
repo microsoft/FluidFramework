@@ -1,4 +1,4 @@
-//! Stateless compression adapters for replacement session facets.
+//! Stateless compression adapters for session facets.
 //!
 //! Event payloads and blob leaves are encoded as independent deterministic zlib frames. This keeps
 //! exact submission retries stable without a wrapper-owned identity registry and allows each read
@@ -195,7 +195,7 @@ mod tests {
     use sea_sequencer::session::LocalSequencer;
 
     #[tokio::test]
-    async fn replacement_session_conformance() {
+    async fn session_conformance() {
         let storage = MemoryStorage::new();
         let (_, view) = storage.create_view().await.unwrap();
         let runtime = LocalSequencer::<MemoryStorage>::recover(view)

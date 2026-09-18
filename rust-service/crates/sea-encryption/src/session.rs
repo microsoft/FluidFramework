@@ -1,4 +1,4 @@
-//! Authenticated-encryption adapters for replacement session facets.
+//! Authenticated-encryption adapters for session facets.
 //!
 //! Event payloads and blob leaves use independent AES-256-GCM-SIV envelopes with distinct record
 //! and blob contexts. Directories, snapshots, positions, and opaque availability handles pass
@@ -293,7 +293,7 @@ mod tests {
     };
 
     #[tokio::test]
-    async fn replacement_compression_encryption_conformance() {
+    async fn compression_encryption_conformance() {
         for compress in [false, true] {
             let storage = MemoryStorage::new();
             let (_, view) = storage.create_view().await.unwrap();
@@ -335,7 +335,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn replacement_retries_preserve_ciphertext_but_recheck_authority() {
+    async fn retries_preserve_ciphertext_but_recheck_authority() {
         let storage = MemoryStorage::new();
         let (_, view) = storage.create_view().await.unwrap();
         let runtime = LocalSequencer::<MemoryStorage>::recover(view)

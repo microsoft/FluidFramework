@@ -1,6 +1,6 @@
-//! Deterministic failure and ownership tests for the replacement runtime.
+//! Deterministic failure and ownership tests for the session runtime.
 //!
-//! [`FaultStorage`] decorates replacement memory components without changing their identities or
+//! [`FaultStorage`] decorates memory components without changing their identities or
 //! ordering guarantees. One-shot controls distinguish rejection, ambiguity before or after a real
 //! commit, reconciliation failure, and suspension on either side of commitment. Append counters
 //! verify that the sequencer never converts reconciliation or caller cancellation into an implicit

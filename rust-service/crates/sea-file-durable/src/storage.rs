@@ -1,4 +1,4 @@
-//! Durable specialization of the replacement filesystem document engine.
+//! Durable specialization of the filesystem document engine.
 //!
 //! [`crate::storage::DurableStorage`] uses [`sea_file::storage::FileStorage`] in durable mode, which
 //! synchronizes each journal record and document-namespace publication before acknowledgment. The
@@ -41,7 +41,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn replacement_durable_conformance() {
+    async fn durable_conformance() {
         let root = root();
         let storage = DurableStorage::open(&root).unwrap();
         assert_eq!(storage.durability(), Durability::Durable);

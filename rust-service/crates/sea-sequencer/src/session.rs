@@ -1,4 +1,4 @@
-//! Multi-user replacement session runtime over one exclusively owned document view.
+//! Multi-user session runtime over one exclusively owned document view.
 //!
 //! [`crate::session::LocalSequencer`] recovers committed submission and snapshot identities, then
 //! multiplexes the view into [`crate::session::LocalSession`] memberships. Memberships are
@@ -14,7 +14,7 @@
 //! Event delivery uses the view's monitored archive streams directly. Snapshot publisher
 //! registration is separate synchronous state: dropping a coordination stream revokes its lease,
 //! client-selected publishers suppress Sea nomination, and every nomination change receives a new
-//! fence. The runtime never forwards through the transitional old-model sequencer.
+//! fence.
 
 #[cfg(test)]
 #[path = "fault_tests.rs"]
@@ -212,8 +212,7 @@ impl Drop for PublisherLease {
 impl<Storage: SeaStorage> Runtime<Storage> {
     /// Records a settled submission and rejects duplicate committed identities.
     fn apply(&mut self, record: &CommittedEvent) -> Result<(), SessionError<Storage::Error>> {
-        let committed = decode_committed(record)?
-            .ok_or(SessionError::Corrupt("unexpected session control record"))?;
+        let committed = decode_committed(record)?;
         if self.accepted.contains_key(&committed.operation_id) {
             return Err(SessionError::Corrupt("duplicate submission identity"));
         }
@@ -273,7 +272,7 @@ impl<Storage: SeaStorage> Runtime<Storage> {
     }
 }
 
-/// One runtime multiplexing an exclusively owned replacement view into logical sessions.
+/// One runtime multiplexing an exclusively owned view into logical sessions.
 pub struct LocalSequencer<Storage: SeaStorage> {
     /// The sole owner of mutation sequencing and session membership.
     runtime: Mutex<Runtime<Storage>>,
@@ -600,11 +599,9 @@ impl<Storage: SeaStorage + 'static> SeaArchive for LocalSession<Storage> {
                         Ok(MonitoredStreamItem::Progress(progress)) => {
                             Ok(MonitoredStreamItem::Progress(progress))
                         }
-                        Ok(MonitoredStreamItem::Item(record)) => decode_committed(&record)
-                            .and_then(|event| {
-                                event.ok_or(SessionError::Corrupt("unexpected control record"))
-                            })
-                            .map(MonitoredStreamItem::Item),
+                        Ok(MonitoredStreamItem::Item(record)) => {
+                            decode_committed(&record).map(MonitoredStreamItem::Item)
+                        }
                         Err(error) => Err(SessionError::Storage(error)),
                     };
                     let done = item.is_err();
@@ -1037,7 +1034,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn replacement_session_conformance() {
+    async fn session_conformance() {
         let storage = MemoryStorage::new();
         let (_, view) = storage.create_view().await.unwrap();
         let runtime = LocalSequencer::<MemoryStorage>::recover(view)

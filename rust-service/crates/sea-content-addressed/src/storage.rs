@@ -1,4 +1,4 @@
-//! Replacement blob capabilities over the immutable content-addressed object engine.
+//! Blob capabilities over the immutable content-addressed object engine.
 //!
 //! [`ContentStore`] remains independently useful rather than becoming a document factory. Trait
 //! publication returns [`crate::storage::ContentHandle`] evidence scoped to the store's canonical

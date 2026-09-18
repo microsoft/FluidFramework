@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-//! Shared behavioral checks for replacement storage and session implementations.
+//! Shared behavioral checks for storage and session implementations.
 //!
 //! The storage checks exercise contracts common to every backend: document isolation, handle
 //! provenance, ordered archive ranges, dependency-closed publication, snapshot selection, and
@@ -18,7 +18,7 @@ use sea_core::{
     session::SeaSession,
 };
 
-/// Exercises two memberships sharing one replacement runtime, including a real initialization event.
+/// Exercises two memberships sharing one runtime, including a real initialization event.
 ///
 /// # Panics
 /// Panics when session ordering, conditional publication, replay, or isolated close violates the contract.
@@ -160,7 +160,7 @@ async fn next_data<Item, Error: std::fmt::Debug>(
 /// Checks direct-view publication, snapshot policies, bounded replay, live load, and reopening.
 ///
 /// # Panics
-/// Panics when a factory violates replacement storage laws. The caller should bound test duration
+/// Panics when a factory violates storage laws. The caller should bound test duration
 /// to diagnose a backend that never completes a bounded read or never wakes a live reader.
 pub async fn run_view_conformance<Storage: SeaStorage>(storage: &Storage) {
     let (id, view) = storage.create_view().await.expect("create view");

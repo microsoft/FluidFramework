@@ -1,4 +1,4 @@
-//! Bounded dictionary-compression adapters for replacement session facets.
+//! Bounded dictionary-compression adapters for session facets.
 //!
 //! Every event payload and blob leaf is an independent deterministic frame containing the
 //! dictionary fingerprint and declared decoded length. Reopening therefore needs the same immutable
@@ -256,7 +256,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn replacement_file_compositions_recover_snapshots_and_replay() {
+    async fn file_compositions_recover_snapshots_and_replay() {
         file_composition::<false>().await;
         file_composition::<true>().await;
     }
@@ -338,7 +338,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn replacement_session_conformance() {
+    async fn session_conformance() {
         let storage = MemoryStorage::new();
         let (_, view) = storage.create_view().await.unwrap();
         let runtime = LocalSequencer::<MemoryStorage>::recover(view)
@@ -374,7 +374,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn replacement_bounds_decode_errors_and_progress() {
+    async fn bounds_decode_errors_and_progress() {
         let storage = MemoryStorage::new();
         let (_, view) = storage.create_view().await.unwrap();
         let runtime = LocalSequencer::<MemoryStorage>::recover(view)

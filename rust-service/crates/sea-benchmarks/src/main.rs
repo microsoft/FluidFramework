@@ -18,7 +18,7 @@ use sea_benchmarks::{
 };
 use sea_compression::CompressionSession;
 use sea_core::{
-    ArchiveEventStream, Event, MonitoredStreamItem,
+    ArchiveEventStream, Event, EventPosition, MonitoredStreamItem,
     archive::{AuthorId, EventSubmission, OperationId, SessionId, SnapshotParticipation},
     session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
     storage::{
@@ -699,14 +699,15 @@ where
         .map_err(|_| "record count exceeds addressable memory".to_owned())?;
     let records = collect_session_events(session.read(None, None), expected_records).await?;
     verify_session_payloads(&records, &generator, config)?;
-    if config.snapshot_frequency.is_some()
-        && session
+    if config.snapshot_frequency.is_some() {
+        let snapshot = session
             .get_snapshot(LoadStart::LatestSnapshot)
             .await
             .map_err(display_error)?
-            .is_none()
-    {
-        return Err("reopened session did not preserve its snapshot".to_owned());
+            .ok_or_else(|| "reopened session did not preserve its snapshot".to_owned())?;
+        if snapshot.at_event.id() != EventPosition::new(config.records) {
+            return Err("reopened session did not preserve its latest snapshot".to_owned());
+        }
     }
     Ok(())
 }
@@ -1346,6 +1347,63 @@ mod tests {
         assert_eq!(
             verify_reopened_storage(&storage, &config).await,
             Err("finite read payloads did not match fixtures".to_owned())
+        );
+    }
+
+    #[tokio::test]
+    async fn reopened_session_rejects_a_stale_snapshot() {
+        let config = Config {
+            backend: Backend::Memory,
+            fixture: FixtureKind::SmallCompressible,
+            seed: DEFAULT_SEED,
+            records: 2,
+            writers: 1,
+            snapshot_frequency: Some(1),
+            repetitions: 1,
+            warmups: 0,
+        };
+        let generator = FixtureGenerator::new(config.seed);
+        let (_, view) = MemoryStorage::new().create_view().await.unwrap();
+        let sessions = open_local_sessions::<MemoryStorage>(view, 1, "stale-snapshot")
+            .await
+            .unwrap();
+        let session = &sessions[0];
+        let _participation = session
+            .coordinate_snapshots(SnapshotParticipation::ClientSelected)
+            .await
+            .unwrap();
+        let first = session
+            .submit(EventSubmission {
+                operation_id: benchmark_operation_id(b"session-event", 0),
+                reference: None,
+                event: Event {
+                    payload: Bytes::from(generator.payload(config.fixture, 0)),
+                    blob_tree: None,
+                },
+            })
+            .await
+            .unwrap();
+        let root = session.put_blob(Bytes::new()).await.unwrap();
+        let at_event = session.resolve_position(first).await.unwrap().unwrap();
+        session
+            .publish_snapshot(None, None, Snapshot { root, at_event })
+            .await
+            .unwrap();
+        session
+            .submit(EventSubmission {
+                operation_id: benchmark_operation_id(b"session-event", 1),
+                reference: Some(first),
+                event: Event {
+                    payload: Bytes::from(generator.payload(config.fixture, 1)),
+                    blob_tree: None,
+                },
+            })
+            .await
+            .unwrap();
+
+        assert_eq!(
+            verify_reopened_session(session, &config).await,
+            Err("reopened session did not preserve its latest snapshot".to_owned())
         );
     }
 }

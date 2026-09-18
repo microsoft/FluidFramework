@@ -1,4 +1,4 @@
-//! Client-session contracts composed above an exclusive replacement-storage view.
+//! Client-session contracts composed above an exclusive document-storage view.
 //!
 //! The traits separate direct content and history access ([`crate::session::SeaArchive`]),
 //! stable author submission identities ([`crate::session::SeaAuthorSession`]), and
@@ -135,7 +135,7 @@ pub trait SeaSnapshotCoordinator: SeaArchive {
     async fn revoke_snapshot_publisher(&self) -> Result<(), Self::Error>;
 }
 
-/// Convenience marker for all replacement session facets.
+/// Convenience marker for all session facets.
 pub trait SeaSession: SeaAuthorSession + SeaSnapshotCoordinator {}
 
 impl<Implementation: SeaAuthorSession + SeaSnapshotCoordinator> SeaSession for Implementation {}

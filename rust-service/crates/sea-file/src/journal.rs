@@ -1,4 +1,4 @@
-//! Exclusive framed journal for replacement filesystem document components.
+//! Exclusive framed journal for filesystem document components.
 //!
 //! Each record carries its length, complemented length, and content checksum. Recovery returns
 //! only complete verified records and the last valid byte boundary; interpretation and
@@ -21,7 +21,7 @@ use std::{
 };
 use thiserror::Error;
 
-/// Replacement filesystem failures, including uncertain writes requiring reopening.
+/// Filesystem failures, including uncertain writes requiring reopening.
 #[derive(Debug, Error)]
 pub enum FileStorageError {
     /// An operation failed before any archive mutation.

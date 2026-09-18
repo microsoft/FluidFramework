@@ -1,9 +1,4 @@
-//! Replacement Sea core contracts, starting with decomposed storage.
-//!
-//! These contracts are the target for migration from the existing core APIs.
-//! The temporary `next` namespace keeps replacement types distinct while consumers are ported;
-//! unchanged core primitives are shared rather than duplicated.
-//! The module remains hidden from generated documentation during API-only preparation.
+//! Document storage contracts built from independently usable components and exclusive views.
 //!
 //! The storage architecture has three layers:
 //!
@@ -117,7 +112,7 @@ pub struct CreatedDocument<Blobs, Events, Snapshots> {
 /// the same document remains owned by components or dependent streams and handles.
 ///
 /// An outage, failover, or another backend-defined invalidating event may require a new opening.
-/// Before granting a replacement opening, the backend must prevent the invalidated opening from
+/// Before granting a new opening, the backend must prevent the invalidated opening from
 /// committing further writes, even if its Rust values remain live.
 /// Streams are not required to survive such invalidation; callers must reopen and recreate them.
 /// A backend may preserve an independent read stream when doing so preserves ordering and recovery
