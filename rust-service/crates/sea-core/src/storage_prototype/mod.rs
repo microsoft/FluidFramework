@@ -347,10 +347,11 @@ where
     /// The snapshot's root is the complete materialized state through its referenced event.
     /// The initial empty state is not created through publication; every published snapshot requires
     /// an event handle.
+    /// Success acknowledges publication; the supplied handles already identify the snapshot.
     pub async fn publish_snapshot(
         &self,
         snapshot: &Snapshot<Blobs::Handle, Events::Handle>,
-    ) -> Result<Snapshot<Blobs::Handle, Events::Handle>, Blobs::Error> {
+    ) -> Result<(), Blobs::Error> {
         self.blobs.ensure_available(&snapshot.root).await?;
         self.events.ensure_available(&snapshot.at_event).await?;
         self.snapshots.append(snapshot.clone()).await

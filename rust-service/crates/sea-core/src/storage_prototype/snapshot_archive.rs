@@ -19,7 +19,7 @@ use super::{Archive, Snapshot, StorageHandle};
 /// A snapshot's archive position is the identity of its event handle.
 /// The initial empty state has no snapshot publication.
 ///
-/// Lookups, reads, and append results provide handles compatible with the associated blob and event
+/// Lookups and reads provide handles compatible with the associated blob and event
 /// stores; an implementation must establish that evidence or return an error.
 /// A missing dependency of an existing publication is a consistency failure, not an absent snapshot.
 /// Handles are API values; this contract prescribes no persisted representation.
@@ -29,7 +29,7 @@ pub trait SnapshotArchive:
         Position = EventPosition,
         Item = Snapshot<Self::BlobHandle, Self::EventHandle>,
         Append = Snapshot<Self::BlobHandle, Self::EventHandle>,
-        AppendResult = Snapshot<Self::BlobHandle, Self::EventHandle>,
+        AppendResult = (),
     >
 {
     /// Availability handle for a snapshot's complete state tree.
