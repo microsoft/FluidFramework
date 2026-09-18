@@ -1,0 +1,1048 @@
+//! Cross-crate scenarios for independently selected session decorator stacks.
+
+use std::{panic::AssertUnwindSafe, sync::Arc, time::Duration};
+
+use async_trait::async_trait;
+use bytes::Bytes;
+use futures_util::{FutureExt, StreamExt, future::BoxFuture, stream};
+use sea_compression::CompressionSession;
+use sea_core::{
+    AuthorId, BlobDirectory, BlobTreeId, ClassifiedError, ErrorKind, Event, EventPosition,
+    EventSubmission, MonitoredStreamItem, MonitoredStreamStatus, OperationId, SeaArchive,
+    SeaAuthorSession, SeaSession, SessionCommittedEvent, SessionId, SnapshotParticipation,
+    storage::{LoadStart, SeaStorage, Snapshot, StorageHandle},
+};
+use sea_encryption::{ActiveKey, EncryptionKey, EncryptionSession, KeyId, KeyProvider};
+use sea_memory::MemoryStorage;
+use sea_sequencer::session::{LocalSequencer, LocalSession};
+use sea_stateful_compression::StatefulCompressionSession;
+use sea_webtransport::{NativeSeaClient, NativeSessionOpen, protocol};
+use sea_webtransport_server::{
+    LivenessPolicy, SeaConnectionService, SeaResponseStream, SeaServiceHost, SessionDispatcher,
+    ShutdownHandle, ShutdownMode, ShutdownOutcome, TransportConfig, WebTransportError,
+    WebTransportServer,
+};
+use tokio::{task::JoinHandle, time::timeout};
+use wtransport::Identity;
+
+/// Independent workflows run against every layer configuration.
+#[derive(Clone, Copy, Debug)]
+enum Scenario {
+    /// Opening and closing must work without content or snapshot registrations.
+    OpenClose,
+    /// Content, snapshot publication, bounded replay, and live delivery round-trip.
+    EventsAndSnapshots,
+    /// Fresh memberships and transport connections retain history and stable retries.
+    Reconnect,
+    /// Independent authors observe the same order and exchange snapshot content.
+    Collaboration,
+    /// Concurrent batches, snapshot history, and repeated peer reconnects share one document.
+    CollaborationStress,
+}
+
+/// Keep scenarios separate from the layer table below.
+const SCENARIOS: [Scenario; 5] = [
+    Scenario::OpenClose,
+    Scenario::EventsAndSnapshots,
+    Scenario::Reconnect,
+    Scenario::Collaboration,
+    Scenario::CollaborationStress,
+];
+
+/// Fixed test-only keys survive reconstruction of all encryption layers.
+#[derive(Clone)]
+struct Keys;
+
+impl KeyProvider for Keys {
+    fn active_key(&self) -> Option<ActiveKey> {
+        Some(ActiveKey {
+            id: KeyId::new([1; 16]),
+            key: EncryptionKey::new([7; 32]),
+        })
+    }
+
+    fn key_for_id(&self, id: &KeyId) -> Option<EncryptionKey> {
+        (*id == KeyId::new([1; 16])).then(|| EncryptionKey::new([7; 32]))
+    }
+}
+
+/// One real loopback endpoint; abort on unwind so failed cases cannot leak servers.
+struct Endpoint {
+    /// Requests bounded graceful termination on the normal cleanup path.
+    shutdown: ShutdownHandle,
+    /// Owns the server and its connection tasks.
+    task: JoinHandle<Result<ShutdownOutcome, WebTransportError>>,
+}
+
+impl Drop for Endpoint {
+    fn drop(&mut self) {
+        self.task.abort();
+    }
+}
+
+/// A retained document and the transport hops belonging to one matrix cell.
+struct Fixture {
+    /// Shared authoritative state, retained across logical reconnects.
+    runtime: Arc<LocalSequencer<MemoryStorage>>,
+    /// Backend-assigned document identity returned by every proxy hop.
+    document: Bytes,
+    /// Stable author identity, independent of the connection generation.
+    author: &'static str,
+    /// Fresh memberships prevent accidental reuse of connection-scoped authority.
+    generation: usize,
+    /// Endpoints in inner-to-outer construction order.
+    endpoints: Vec<Endpoint>,
+}
+
+impl Fixture {
+    /// Creates a fresh document for each scenario/configuration pair.
+    async fn new() -> Self {
+        let storage = MemoryStorage::new();
+        let (document, view) = storage.create_view().await.unwrap();
+        Self {
+            runtime: LocalSequencer::<MemoryStorage>::recover(view)
+                .await
+                .unwrap(),
+            document: document.as_bytes().clone(),
+            author: "author",
+            generation: 0,
+            endpoints: Vec::new(),
+        }
+    }
+
+    /// Shares document state, but not author membership, wrappers, or transport resources.
+    fn peer(&self, author: &'static str) -> Self {
+        Self {
+            runtime: self.runtime.clone(),
+            document: self.document.clone(),
+            author,
+            generation: 0,
+            endpoints: Vec::new(),
+        }
+    }
+
+    /// Opens the same author under a fresh logical membership.
+    async fn open(&mut self) -> LocalSession<MemoryStorage> {
+        self.generation += 1;
+        self.runtime
+            .open_session(
+                AuthorId::new(self.author).unwrap(),
+                SessionId::new(format!("{}-session-{}", self.author, self.generation)).unwrap(),
+                None,
+            )
+            .await
+            .unwrap()
+    }
+
+    /// Serves an arbitrary concrete session through a real native transport hop.
+    async fn transport<Session: SeaSession + 'static>(
+        &mut self,
+        session: Session,
+    ) -> NativeSeaClient {
+        let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
+        let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
+        let host = Arc::new(TestHost {
+            document: self.document.clone(),
+            dispatcher: Arc::new(SessionDispatcher::new(Arc::new(session))),
+        });
+        let server = WebTransportServer::bind(
+            "127.0.0.1:0".parse().unwrap(),
+            identity,
+            host,
+            TransportConfig::default(),
+        )
+        .unwrap();
+        let address = server.local_addr().unwrap();
+        self.endpoints.push(Endpoint {
+            shutdown: server.shutdown_handle(),
+            task: tokio::spawn(server.serve_until_shutdown()),
+        });
+        NativeSeaClient::connect(
+            format!("https://{address}/sea"),
+            certificate_hash,
+            sea_webtransport::TransportConfig::default(),
+            NativeSessionOpen {
+                archive: self.document.clone(),
+                intent: protocol::ArchiveIntent::Open,
+                author: AuthorId::new(self.author).unwrap(),
+                session: SessionId::new(format!("{}-session-{}", self.author, self.generation))
+                    .unwrap(),
+                reference: None,
+            },
+        )
+        .await
+        .unwrap()
+    }
+
+    /// Stops outer hops before the upstream endpoints they depend on.
+    async fn stop_endpoints(&mut self) {
+        while let Some(mut endpoint) = self.endpoints.pop() {
+            endpoint
+                .shutdown
+                .shutdown(ShutdownMode::Drain {
+                    timeout: Duration::from_secs(2),
+                })
+                .unwrap();
+            timeout(Duration::from_secs(3), &mut endpoint.task)
+                .await
+                .expect("server cleanup timed out")
+                .expect("server task panicked")
+                .expect("server failed");
+        }
+    }
+}
+
+/// A single-session test host; production dispatch still handles all data operations.
+struct TestHost {
+    /// Identity of the already-open document.
+    document: Bytes,
+    /// Can target a local session, decorated session, or another transport client.
+    dispatcher: Arc<dyn SeaConnectionService>,
+}
+
+impl SeaServiceHost for TestHost {
+    fn connect(&self, _liveness: LivenessPolicy) -> Arc<dyn SeaConnectionService> {
+        Arc::new(TestHost {
+            document: self.document.clone(),
+            dispatcher: self.dispatcher.clone(),
+        })
+    }
+}
+
+#[async_trait]
+impl SeaConnectionService for TestHost {
+    async fn connection_closed(&self, allow_reconnect_grace: bool) {
+        self.dispatcher
+            .connection_closed(allow_reconnect_grace)
+            .await;
+    }
+
+    async fn open_event_stream(
+        &self,
+        request: protocol::Request,
+    ) -> Result<SeaResponseStream, protocol::Response> {
+        let protocol::Request::OpenEventStream {
+            archive,
+            version,
+            resume_after,
+            ..
+        } = request
+        else {
+            panic!("expected event-stream opening");
+        };
+        assert_eq!(archive, self.document);
+        assert_eq!(version, protocol::PROTOCOL_VERSION);
+        let opened = protocol::Response::EventStreamOpened {
+            document: self.document.to_vec(),
+            authority: b"composition-test".to_vec(),
+        };
+        let events = self.dispatcher.event_stream(resume_after).await?;
+        Ok(Box::pin(stream::once(async move { opened }).chain(events)))
+    }
+
+    async fn event_stream(
+        &self,
+        resume_after: Option<u64>,
+    ) -> Result<SeaResponseStream, protocol::Response> {
+        self.dispatcher.event_stream(resume_after).await
+    }
+
+    async fn author_request(&self, request: protocol::Request) -> protocol::Response {
+        if let protocol::Request::OpenAuthorStream { authority } = request {
+            assert_eq!(authority, b"composition-test");
+            protocol::Response::Acknowledged
+        } else {
+            self.dispatcher.author_request(request).await
+        }
+    }
+
+    async fn snapshot_stream(
+        &self,
+        request: protocol::Request,
+    ) -> Result<SeaResponseStream, protocol::Response> {
+        self.dispatcher.snapshot_stream(request).await
+    }
+
+    async fn snapshot_request(&self, request: protocol::Request) -> protocol::Response {
+        self.dispatcher.snapshot_request(request).await
+    }
+
+    async fn revoke_snapshot_publisher(&self) {
+        self.dispatcher.revoke_snapshot_publisher().await;
+    }
+
+    async fn open_content_stream(&self, request: protocol::Request) -> protocol::Response {
+        self.dispatcher.open_content_stream(request).await
+    }
+
+    async fn content_request(
+        &self,
+        request: protocol::Request,
+    ) -> Result<SeaResponseStream, protocol::Response> {
+        self.dispatcher.content_request(request).await
+    }
+}
+
+/// Durable identities and original plaintext survive teardown; availability handles do not.
+struct Trace {
+    /// Exact input used to check committed retries after rebuilding every layer.
+    submission: EventSubmission,
+    /// First committed event, also the snapshot version.
+    first: EventPosition,
+    /// Event after the snapshot, used to check replay boundaries.
+    second: EventPosition,
+    /// Stored root identity, resolved afresh through each new session.
+    root: BlobTreeId,
+    /// Stored leaf identity, which can differ from a plaintext content hash.
+    leaf: BlobTreeId,
+}
+
+/// Reads through progress notifications without assuming their delivery cadence.
+async fn next_event<Error: std::fmt::Debug>(
+    events: &mut sea_core::ArchiveEventStream<Error>,
+) -> SessionCommittedEvent {
+    loop {
+        if let MonitoredStreamItem::Item(event) = events.next().await.unwrap().unwrap() {
+            return event;
+        }
+    }
+}
+
+/// Checks actual decoded content, including the directory-to-leaf identity mapping.
+async fn check_content<Session: SeaArchive>(session: &Session, trace: &Trace) {
+    let BlobTreeId::Directory(root) = trace.root else {
+        panic!("expected directory")
+    };
+    let BlobTreeId::Blob(leaf) = trace.leaf else {
+        panic!("expected blob")
+    };
+    let directory = session.get_directory(root).await.unwrap();
+    assert_eq!(directory.entries().get("state"), Some(&trace.leaf));
+    assert_eq!(
+        session.get_blob(leaf).await.unwrap(),
+        Bytes::from_static(b"snapshot content")
+    );
+    assert_eq!(
+        session
+            .resolve_tree(trace.root)
+            .await
+            .unwrap()
+            .unwrap()
+            .id(),
+        trace.root
+    );
+}
+
+/// Publishes under Sea selection and waits for the corresponding coordination update.
+async fn publish<Session: SeaSession>(
+    session: &Session,
+    root: BlobTreeId,
+    position: EventPosition,
+    parent: Option<EventPosition>,
+) {
+    let mut coordination = session
+        .coordinate_snapshots(SnapshotParticipation::SeaSelected)
+        .await
+        .unwrap();
+    let selected = coordination.next().await.unwrap().unwrap();
+    assert!(selected.fence.is_some());
+    assert_eq!(selected.latest, parent);
+    let snapshot = Snapshot {
+        root: session.resolve_tree(root).await.unwrap().unwrap(),
+        at_event: session.resolve_position(position).await.unwrap().unwrap(),
+    };
+    let accepted = session
+        .publish_snapshot(parent, selected.fence, snapshot.clone())
+        .await
+        .unwrap();
+    assert_eq!(accepted.root.id(), root);
+    assert_eq!(accepted.at_event.id(), position);
+    assert_eq!(
+        session
+            .publish_snapshot(parent, selected.fence, snapshot)
+            .await
+            .unwrap()
+            .at_event
+            .id(),
+        position
+    );
+    while coordination.next().await.unwrap().unwrap().latest != Some(position) {}
+    session.revoke_snapshot_publisher().await.unwrap();
+}
+
+/// Establishes plaintext, snapshot, bounded-history, and live-stream observations.
+async fn write_trace<Session: SeaSession>(session: &Session) -> Trace {
+    let mut initial = session.load(LoadStart::LatestSnapshot).await.unwrap();
+    assert!(initial.snapshot.is_none());
+    let leaf = session
+        .put_blob(Bytes::from_static(b"snapshot content"))
+        .await
+        .unwrap()
+        .id();
+    let root = session
+        .put_directory(BlobDirectory::new([("state".to_owned(), leaf)].into()).unwrap())
+        .await
+        .unwrap()
+        .id();
+    let submission = EventSubmission {
+        operation_id: OperationId::new("first").unwrap(),
+        reference: None,
+        event: Event {
+            payload: Bytes::from_static(b"first plaintext event"),
+            blob_tree: Some(root),
+        },
+    };
+    let first = session.submit(submission.clone()).await.unwrap();
+    assert_eq!(session.submit(submission.clone()).await.unwrap(), first);
+    let delivered = next_event(&mut initial.events).await;
+    assert_eq!(delivered.committed.position, first);
+    assert_eq!(delivered.committed.event, submission.event);
+    drop(initial.events);
+    publish(session, root, first, None).await;
+    let mut loaded = session.load(LoadStart::LatestSnapshot).await.unwrap();
+    let snapshot = loaded.snapshot.unwrap();
+    assert_eq!(snapshot.at_event.id(), first);
+    assert_eq!(snapshot.root.id(), root);
+    let second = session
+        .submit(EventSubmission {
+            operation_id: OperationId::new("second").unwrap(),
+            reference: Some(first),
+            event: Event {
+                payload: Bytes::from_static(b"second plaintext event"),
+                blob_tree: None,
+            },
+        })
+        .await
+        .unwrap();
+    let delivered = next_event(&mut loaded.events).await;
+    assert_eq!(delivered.committed.position, second);
+    assert_eq!(
+        delivered.committed.event.payload,
+        Bytes::from_static(b"second plaintext event")
+    );
+    let trace = Trace {
+        submission,
+        first,
+        second,
+        root,
+        leaf,
+    };
+    check_content(session, &trace).await;
+    check_history(session, &trace).await;
+    trace
+}
+
+/// A bounded read must contain exactly the two originals, never a duplicate retry.
+async fn check_history<Session: SeaArchive>(session: &Session, trace: &Trace) {
+    let mut history = session.read(None, Some(trace.second));
+    let first = next_event(&mut history).await;
+    let second = next_event(&mut history).await;
+    assert_eq!(first.committed.position, trace.first);
+    assert_eq!(first.committed.event, trace.submission.event);
+    assert_eq!(second.committed.position, trace.second);
+    assert_eq!(
+        second.committed.event.payload,
+        Bytes::from_static(b"second plaintext event")
+    );
+    while let Some(item) = history.next().await {
+        assert!(matches!(item.unwrap(), MonitoredStreamItem::Progress(_)));
+    }
+}
+
+/// Rebuilds wrapper state and verifies retry identity, replay, and fresh snapshot authority.
+async fn after_reconnect<Session: SeaSession>(session: &Session, trace: &Trace) {
+    check_content(session, trace).await;
+    assert_eq!(
+        session
+            .resolve_submission(&trace.submission.operation_id)
+            .await
+            .unwrap(),
+        Some(trace.first)
+    );
+    assert_eq!(
+        session.submit(trace.submission.clone()).await.unwrap(),
+        trace.first
+    );
+    let mut changed = trace.submission.clone();
+    changed.event.payload = Bytes::from_static(b"conflicting plaintext");
+    assert!(matches!(
+        session.submit(changed).await.unwrap_err().kind(),
+        ErrorKind::Conflict | ErrorKind::Rejected
+    ));
+    check_history(session, trace).await;
+    let mut loaded = session.load(LoadStart::LatestSnapshot).await.unwrap();
+    assert_eq!(loaded.snapshot.unwrap().at_event.id(), trace.first);
+    assert_eq!(
+        next_event(&mut loaded.events).await.committed.position,
+        trace.second
+    );
+    let third = session
+        .submit(EventSubmission {
+            operation_id: OperationId::new("third").unwrap(),
+            reference: Some(trace.second),
+            event: Event {
+                payload: Bytes::from_static(b"after reconnect"),
+                blob_tree: Some(trace.root),
+            },
+        })
+        .await
+        .unwrap();
+    let live = next_event(&mut loaded.events).await;
+    assert_eq!(live.committed.position, third);
+    assert_eq!(
+        live.committed.event.payload,
+        Bytes::from_static(b"after reconnect")
+    );
+    publish(session, trace.root, third, Some(trace.first)).await;
+    assert_eq!(
+        session
+            .get_snapshot(LoadStart::LatestSnapshot)
+            .await
+            .unwrap()
+            .unwrap()
+            .at_event
+            .id(),
+        third
+    );
+}
+
+/// Plaintext expectations retained independently of decoded history returned by Sea.
+struct ExpectedEvent {
+    /// Receipt used to order concurrent submissions without assuming which author wins.
+    position: EventPosition,
+    /// Author whose identity must survive every decorator and reconnect.
+    author: &'static str,
+    /// Original operation, reference, and event bytes.
+    submission: EventSubmission,
+}
+
+/// A nested snapshot tree containing binary content, an empty leaf, and a shared subtree.
+struct ContentTree {
+    /// Root identity returned by the complete stack.
+    root: BlobTreeId,
+    /// Shared directory referenced twice by the root.
+    branch: BlobTreeId,
+    /// Binary payload leaf in the stored identity domain.
+    leaf: BlobTreeId,
+    /// Empty payload leaf in the stored identity domain.
+    empty: BlobTreeId,
+    /// Expected decoded bytes, not their encoded representation.
+    payload: Bytes,
+}
+
+/// Builds a reproducible binary tree with repeated directory references.
+async fn content_tree<Session: SeaArchive>(session: &Session, seed: usize) -> ContentTree {
+    let payload = Bytes::from(
+        (0..4096)
+            .map(|index| u8::try_from((index * 31 + seed) % 256).unwrap())
+            .collect::<Vec<_>>(),
+    );
+    let leaf = session.put_blob(payload.clone()).await.unwrap().id();
+    let empty = session.put_blob(Bytes::new()).await.unwrap().id();
+    let branch = session
+        .put_directory(
+            BlobDirectory::new([("binary".to_owned(), leaf), ("empty".to_owned(), empty)].into())
+                .unwrap(),
+        )
+        .await
+        .unwrap()
+        .id();
+    let root = session
+        .put_directory(
+            BlobDirectory::new([("left".to_owned(), branch), ("right".to_owned(), branch)].into())
+                .unwrap(),
+        )
+        .await
+        .unwrap()
+        .id();
+    ContentTree {
+        root,
+        branch,
+        leaf,
+        empty,
+        payload,
+    }
+}
+
+/// Traverses every level through a different session, checking plaintext and shared identities.
+async fn verify_tree<Session: SeaArchive>(session: &Session, tree: &ContentTree) {
+    let BlobTreeId::Directory(root) = tree.root else {
+        panic!("expected root directory")
+    };
+    let BlobTreeId::Directory(branch) = tree.branch else {
+        panic!("expected nested directory")
+    };
+    let BlobTreeId::Blob(leaf) = tree.leaf else {
+        panic!("expected binary leaf")
+    };
+    let BlobTreeId::Blob(empty) = tree.empty else {
+        panic!("expected empty leaf")
+    };
+    assert_eq!(
+        session.get_directory(root).await.unwrap().entries(),
+        &[
+            ("left".to_owned(), tree.branch),
+            ("right".to_owned(), tree.branch),
+        ]
+        .into()
+    );
+    assert_eq!(
+        session.get_directory(branch).await.unwrap().entries(),
+        &[
+            ("binary".to_owned(), tree.leaf),
+            ("empty".to_owned(), tree.empty),
+        ]
+        .into()
+    );
+    assert_eq!(session.get_blob(leaf).await.unwrap(), tree.payload);
+    assert!(session.get_blob(empty).await.unwrap().is_empty());
+}
+
+/// Checks original plaintext, author, operation identity, and reference against the model.
+fn verify_event(actual: &SessionCommittedEvent, expected: &ExpectedEvent) {
+    assert_eq!(actual.committed.position, expected.position);
+    assert_eq!(actual.committed.event, expected.submission.event);
+    assert_eq!(actual.author_id, AuthorId::new(expected.author).unwrap());
+    assert_eq!(actual.operation_id, expected.submission.operation_id);
+    assert_eq!(actual.reference, expected.submission.reference);
+}
+
+/// Confirms exact retained history, including the absence of rejected or duplicate operations.
+async fn verify_history<Session: SeaArchive>(session: &Session, expected: &[ExpectedEvent]) {
+    let mut history = session.read(None, Some(expected.last().unwrap().position));
+    for event in expected {
+        verify_event(&next_event(&mut history).await, event);
+    }
+    while let Some(item) = history.next().await {
+        assert!(matches!(item.unwrap(), MonitoredStreamItem::Progress(_)));
+    }
+}
+
+/// Cancels an initialized, polled read while other subscriptions remain active.
+async fn cancel_idle_read<Session: SeaArchive>(session: &Session, after: Option<EventPosition>) {
+    let mut events = session.read(after, None);
+    loop {
+        match events.next().await.unwrap().unwrap() {
+            MonitoredStreamItem::Progress(progress) => {
+                if progress.status == MonitoredStreamStatus::AwaitingNewItems {
+                    break;
+                }
+            }
+            MonitoredStreamItem::Item(_) => panic!("idle read unexpectedly delivered an event"),
+        }
+    }
+    assert!(events.next().now_or_never().is_none());
+    drop(events);
+}
+
+/// Creates distinct operation identities with empty, short, and larger binary payloads.
+fn collaborative_submission(
+    author: &str,
+    round: usize,
+    batch: usize,
+    root: BlobTreeId,
+    reference: Option<EventPosition>,
+) -> EventSubmission {
+    let length = [0, 1, 127, 8192][batch % 4];
+    EventSubmission {
+        operation_id: OperationId::new(format!("{author}-{round}-{batch}")).unwrap(),
+        reference,
+        event: Event {
+            payload: Bytes::from(
+                (0..length)
+                    .map(|index| {
+                        u8::try_from(
+                            (index * 17 + round + batch + usize::from(author.as_bytes()[0])) % 256,
+                        )
+                        .unwrap()
+                    })
+                    .collect::<Vec<_>>(),
+            ),
+            blob_tree: Some(root),
+        },
+    }
+}
+
+/// Exercises read-only rejection, client-selected suppression, stale fences, and parent checks.
+async fn collaborative_snapshot<Session: SeaSession>(
+    first: &Session,
+    peer: &Session,
+    tree: &ContentTree,
+    position: EventPosition,
+    parent: Option<EventPosition>,
+) {
+    let mut selected = first
+        .coordinate_snapshots(SnapshotParticipation::SeaSelected)
+        .await
+        .unwrap();
+    let old_fence = selected.next().await.unwrap().unwrap().fence;
+    assert!(old_fence.is_some());
+    let mut read_only = peer
+        .coordinate_snapshots(SnapshotParticipation::ReadOnly)
+        .await
+        .unwrap();
+    assert!(read_only.next().await.unwrap().unwrap().fence.is_none());
+    let snapshot = Snapshot {
+        root: peer.resolve_tree(tree.root).await.unwrap().unwrap(),
+        at_event: peer.resolve_position(position).await.unwrap().unwrap(),
+    };
+    assert!(
+        peer.publish_snapshot(parent, None, snapshot.clone())
+            .await
+            .is_err()
+    );
+    let mut client_selected = peer
+        .coordinate_snapshots(SnapshotParticipation::ClientSelected)
+        .await
+        .unwrap();
+    assert!(
+        client_selected
+            .next()
+            .await
+            .unwrap()
+            .unwrap()
+            .fence
+            .is_none()
+    );
+    drop(read_only);
+    while selected.next().await.unwrap().unwrap().fence.is_some() {}
+    let stale_snapshot = Snapshot {
+        root: first.resolve_tree(tree.root).await.unwrap().unwrap(),
+        at_event: first.resolve_position(position).await.unwrap().unwrap(),
+    };
+    assert!(
+        first
+            .publish_snapshot(parent, old_fence, stale_snapshot)
+            .await
+            .is_err()
+    );
+    verify_snapshot_publication(peer, tree, position, parent, snapshot).await;
+    while client_selected.next().await.unwrap().unwrap().latest != Some(position) {}
+    peer.revoke_snapshot_publisher().await.unwrap();
+    let renewed = loop {
+        let update = selected.next().await.unwrap().unwrap();
+        if update.fence.is_some() {
+            break update;
+        }
+    };
+    assert_ne!(renewed.fence, old_fence);
+    assert_eq!(renewed.latest, Some(position));
+    first.revoke_snapshot_publisher().await.unwrap();
+}
+
+/// Checks parent fencing and exact snapshot retries without accepting conflicting content.
+async fn verify_snapshot_publication<Session: SeaSession>(
+    peer: &Session,
+    tree: &ContentTree,
+    position: EventPosition,
+    parent: Option<EventPosition>,
+    snapshot: Snapshot<Session::BlobHandle, Session::EventHandle>,
+) {
+    let wrong_parent = if parent.is_some() {
+        None
+    } else {
+        Some(position)
+    };
+    assert!(
+        peer.publish_snapshot(wrong_parent, None, snapshot.clone())
+            .await
+            .is_err()
+    );
+    assert_eq!(
+        peer.get_snapshot(LoadStart::LatestSnapshot)
+            .await
+            .unwrap()
+            .map(|value| value.at_event.id()),
+        parent
+    );
+    let accepted = peer
+        .publish_snapshot(parent, None, snapshot.clone())
+        .await
+        .unwrap();
+    assert_eq!(accepted.root.id(), tree.root);
+    assert_eq!(accepted.at_event.id(), position);
+    assert_eq!(
+        peer.publish_snapshot(parent, None, snapshot)
+            .await
+            .unwrap()
+            .at_event
+            .id(),
+        position
+    );
+    let conflicting = Snapshot {
+        root: peer.resolve_tree(tree.branch).await.unwrap().unwrap(),
+        at_event: peer.resolve_position(position).await.unwrap().unwrap(),
+    };
+    assert!(
+        peer.publish_snapshot(Some(position), None, conflicting)
+            .await
+            .is_err()
+    );
+    assert_eq!(
+        peer.get_snapshot(LoadStart::LatestSnapshot)
+            .await
+            .unwrap()
+            .unwrap()
+            .root
+            .id(),
+        tree.root
+    );
+}
+
+/// Races two authors, validates retries and rejection, and orders the expected committed pair.
+async fn concurrent_batch<Session: SeaSession>(
+    first: &Session,
+    peer: &Session,
+    roots: (BlobTreeId, BlobTreeId),
+    round: usize,
+    batch: usize,
+    reference: Option<EventPosition>,
+) -> [ExpectedEvent; 2] {
+    let first_submission = collaborative_submission("author", round, batch, roots.0, reference);
+    let peer_submission = collaborative_submission("peer", round, batch, roots.1, reference);
+    let (first_receipt, peer_receipt) = tokio::join!(
+        first.submit(first_submission.clone()),
+        peer.submit(peer_submission.clone()),
+    );
+    let first_receipt = first_receipt.unwrap();
+    let peer_receipt = peer_receipt.unwrap();
+    assert_ne!(first_receipt, peer_receipt);
+    assert_eq!(
+        first.submit(first_submission.clone()).await.unwrap(),
+        first_receipt
+    );
+    assert_eq!(
+        peer.submit(peer_submission.clone()).await.unwrap(),
+        peer_receipt
+    );
+    let mut changed = peer_submission.clone();
+    changed.event.payload = Bytes::from_static(b"changed retry");
+    assert!(peer.submit(changed).await.is_err());
+    assert!(peer.submit(first_submission.clone()).await.is_err());
+    let mut pair = [
+        ExpectedEvent {
+            position: first_receipt,
+            author: "author",
+            submission: first_submission,
+        },
+        ExpectedEvent {
+            position: peer_receipt,
+            author: "peer",
+            submission: peer_submission,
+        },
+    ];
+    pair.sort_by_key(|event| event.position);
+    pair
+}
+
+/// Verifies a reconnect's selected snapshot and retained suffix before returning its live stream.
+async fn load_peer<Session: SeaArchive>(
+    peer: &Session,
+    history: &[ExpectedEvent],
+    snapshot: Option<&(EventPosition, ContentTree)>,
+) -> sea_core::ArchiveEventStream<Session::Error> {
+    let mut loaded = peer.load(LoadStart::LatestSnapshot).await.unwrap();
+    assert_eq!(
+        loaded.snapshot.as_ref().map(|value| value.at_event.id()),
+        snapshot.map(|(position, _)| *position)
+    );
+    if let Some((position, tree)) = snapshot {
+        assert_eq!(loaded.snapshot.unwrap().root.id(), tree.root);
+        verify_tree(peer, tree).await;
+        for event in history.iter().filter(|event| event.position > *position) {
+            verify_event(&next_event(&mut loaded.events).await, event);
+        }
+    }
+    loaded.events
+}
+
+/// Runs concurrent writers and repeated reconnects while keeping the first author's stream live.
+async fn collaborate<Session, Build>(
+    fixture: &mut Fixture,
+    peer_fixture: &mut Fixture,
+    build: Build,
+    rounds: usize,
+) where
+    Session: SeaSession,
+    Build: for<'fixture> Fn(&'fixture mut Fixture) -> BoxFuture<'fixture, Session>,
+{
+    let first = build(fixture).await;
+    let mut first_events = first.load(LoadStart::LatestSnapshot).await.unwrap().events;
+    let mut history: Vec<ExpectedEvent> = Vec::new();
+    let mut snapshots: Vec<(EventPosition, ContentTree)> = Vec::new();
+    let mut last_peer_retry: Option<(EventSubmission, EventPosition)> = None;
+    for round in 0..rounds {
+        let peer = build(peer_fixture).await;
+        let mut peer_events = load_peer(&peer, &history, snapshots.last()).await;
+        if let Some((submission, position)) = &last_peer_retry {
+            assert_eq!(
+                peer.resolve_submission(&submission.operation_id)
+                    .await
+                    .unwrap(),
+                Some(*position)
+            );
+            assert_eq!(peer.submit(submission.clone()).await.unwrap(), *position);
+        }
+        let first_tree = content_tree(&first, round * 2).await;
+        let peer_tree = content_tree(&peer, round * 2 + 1).await;
+        verify_tree(&peer, &first_tree).await;
+        verify_tree(&first, &peer_tree).await;
+        cancel_idle_read(&peer, history.last().map(|event| event.position)).await;
+        for batch in 0..4 {
+            let reference = history.last().map(|event| event.position);
+            let pair = concurrent_batch(
+                &first,
+                &peer,
+                (first_tree.root, peer_tree.root),
+                round,
+                batch,
+                reference,
+            )
+            .await;
+            for expected in pair {
+                let delivered = next_event(&mut first_events).await;
+                let observed = next_event(&mut peer_events).await;
+                assert_eq!(delivered, observed);
+                verify_event(&delivered, &expected);
+                if expected.author == "peer" {
+                    last_peer_retry = Some((expected.submission.clone(), expected.position));
+                }
+                history.push(expected);
+            }
+        }
+        let position = history.last().unwrap().position;
+        collaborative_snapshot(
+            &first,
+            &peer,
+            &peer_tree,
+            position,
+            snapshots.last().map(|(position, _)| *position),
+        )
+        .await;
+        snapshots.push((position, peer_tree));
+        for (position, tree) in &snapshots {
+            let snapshot = peer
+                .get_snapshot(LoadStart::ReplayAtLeastAllAfter(*position))
+                .await
+                .unwrap()
+                .unwrap();
+            assert_eq!(snapshot.at_event.id(), *position);
+            assert_eq!(snapshot.root.id(), tree.root);
+            verify_tree(&first, tree).await;
+        }
+        verify_history(&first, &history).await;
+        verify_history(&peer, &history).await;
+        drop(peer_events);
+        peer.close().await.unwrap();
+        drop(peer);
+        peer_fixture.stop_endpoints().await;
+        let submission =
+            collaborative_submission("offline", round, 2, first_tree.root, Some(position));
+        let receipt = first.submit(submission.clone()).await.unwrap();
+        let expected = ExpectedEvent {
+            position: receipt,
+            author: "author",
+            submission,
+        };
+        verify_event(&next_event(&mut first_events).await, &expected);
+        history.push(expected);
+    }
+    let peer = build(peer_fixture).await;
+    verify_history(&peer, &history).await;
+    let (submission, position) = last_peer_retry.unwrap();
+    assert_eq!(peer.submit(submission).await.unwrap(), position);
+    drop(load_peer(&peer, &history, snapshots.last()).await);
+    verify_history(&peer, &history).await;
+    peer.close().await.unwrap();
+    first.close().await.unwrap();
+}
+
+/// Builds concrete stacks in application-to-storage order, without erasing handles or errors.
+macro_rules! stack {
+    ($fixture:ident, $session:expr;) => { $session };
+    ($fixture:ident, $session:expr; compression $(, $rest:ident)*) => {
+        CompressionSession::new(stack!($fixture, $session; $($rest),*))
+    };
+    ($fixture:ident, $session:expr; encryption $(, $rest:ident)*) => {
+        EncryptionSession::new(stack!($fixture, $session; $($rest),*), Keys)
+    };
+    ($fixture:ident, $session:expr; dictionary $(, $rest:ident)*) => {
+        StatefulCompressionSession::new(
+            stack!($fixture, $session; $($rest),*),
+            Bytes::from_static(b"shared dictionary for composition tests"),
+            1024 * 1024,
+        ).unwrap()
+    };
+    ($fixture:ident, $session:expr; transport $(, $rest:ident)*) => {{
+        let inner = stack!($fixture, $session; $($rest),*);
+        $fixture.transport(inner).await
+    }};
+}
+
+/// Generates one named test per configuration, each running the independent scenario table.
+macro_rules! configurations {
+    ($($name:ident => [$($layer:ident),*]),* $(,)?) => {
+        $(
+            #[tokio::test]
+            async fn $name() {
+                /// Rebuilds this configuration without retaining resources from earlier connections.
+                async fn build(fixture: &mut Fixture) -> impl SeaSession + use<> {
+                    let base = fixture.open().await;
+                    stack!(fixture, base; $($layer),*)
+                }
+                for scenario in SCENARIOS {
+                    let mut fixture = Fixture::new().await;
+                    let mut peer_fixture = fixture.peer("peer");
+                    let result = AssertUnwindSafe(timeout(Duration::from_secs(30), async {
+                        if matches!(scenario, Scenario::Collaboration | Scenario::CollaborationStress) {
+                            let rounds = if matches!(scenario, Scenario::CollaborationStress) { 4 } else { 1 };
+                            collaborate(&mut fixture, &mut peer_fixture, |fixture| Box::pin(build(fixture)), rounds).await;
+                            return;
+                        }
+                        let base = fixture.open().await;
+                        let session = stack!(fixture, base; $($layer),*);
+                        let trace = match scenario {
+                            Scenario::OpenClose => None,
+                            Scenario::EventsAndSnapshots | Scenario::Reconnect => Some(write_trace(&session).await),
+                            Scenario::Collaboration | Scenario::CollaborationStress => unreachable!(),
+                        };
+                        session.close().await.unwrap();
+                        drop(session);
+                        fixture.stop_endpoints().await;
+                        if matches!(scenario, Scenario::Reconnect) {
+                            let base = fixture.open().await;
+                            let session = stack!(fixture, base; $($layer),*);
+                            after_reconnect(&session, &trace.unwrap()).await;
+                            session.close().await.unwrap();
+                        }
+                    })).catch_unwind().await;
+                    peer_fixture.stop_endpoints().await;
+                    fixture.stop_endpoints().await;
+                    fixture.runtime.shutdown().await.unwrap();
+                    match result {
+                        Ok(Ok(())) => {},
+                        Ok(Err(_)) => panic!("{} / {scenario:?}: timed out", stringify!($name)),
+                        Err(_) => panic!("{} / {scenario:?}: see original assertion above", stringify!($name)),
+                    }
+                }
+            }
+        )*
+    };
+}
+
+configurations! {
+    bare => [],
+    compression => [compression],
+    encryption => [encryption],
+    dictionary => [dictionary],
+    duplicate_compression => [compression, compression],
+    duplicate_encryption => [encryption, encryption],
+    duplicate_dictionary => [dictionary, dictionary],
+    compress_then_encrypt => [compression, encryption],
+    encrypt_then_compress => [encryption, compression],
+    transport_only => [transport],
+    duplicate_transport => [transport, transport],
+    transport_compression_transport => [transport, compression, transport],
+    mixed => [compression, transport, encryption, dictionary, transport],
+    repeated_stress => [compression, encryption, dictionary, transport, compression, encryption, dictionary, transport, encryption, dictionary, compression, transport],
+}

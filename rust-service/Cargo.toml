@@ -2,6 +2,7 @@
 members = [
     "crates/sea-benchmarks",
     "crates/sea-conformance",
+    "crates/sea-integration-tests",
     "crates/sea-content-addressed",
     "crates/sea-core",
     "crates/sea-file",

@@ -1226,6 +1226,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "sea-integration-tests"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "futures-util",
+ "sea-compression",
+ "sea-core",
+ "sea-encryption",
+ "sea-memory",
+ "sea-sequencer",
+ "sea-stateful-compression",
+ "sea-webtransport",
+ "sea-webtransport-server",
+ "tokio",
+ "wtransport",
+]
+
+[[package]]
 name = "sea-memory"
 version = "0.1.0"
 dependencies = [

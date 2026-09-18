@@ -12,6 +12,7 @@ Development-only conformance fixtures and integration-test dependencies are desc
 | --- | --- | --- | --- |
 | `sea-core` | `crates/sea-core/` | None | Shared primitives, storage factories/components/`SeaView`, and sibling session contracts. |
 | `sea-conformance` | `crates/sea-conformance/` | `sea-core` | Reusable view, snapshot-archive, and session semantic laws. |
+| `sea-integration-tests` | `crates/sea-integration-tests/` | None (test-only package) | Cross-crate composition of concrete sessions, decorators, and transports. |
 | `sea-memory` | `crates/sea-memory/` | `sea-core` | In-process retain-all archive storage. |
 | `sea-file` | `crates/sea-file/` | `sea-core` | Buffered single-process archive storage. |
 | `sea-file-durable` | `crates/sea-file-durable/` | `sea-core`, `sea-file` | Synchronized configuration of the shared file engine with dependency-closed recovery. |
@@ -26,6 +27,7 @@ Development-only conformance fixtures and integration-test dependencies are desc
 | `sea-counter` | `examples/sea-counter/` | `sea-core`, `sea-memory`, `sea-sequencer` | Snapshot and replay over a local session. |
 
 Storage implementations and session decorators use `sea-conformance` as a development dependency where applicable.
+`sea-integration-tests` uses core, memory storage, the sequencer, payload decorators, and the WebTransport client and server as development dependencies.
 
 At runtime, the primary service path is:
 

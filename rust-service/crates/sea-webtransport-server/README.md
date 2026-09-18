@@ -42,3 +42,5 @@ Each snapshot stream owns its own registration lease, so cleanup of an older str
 An explicit snapshot `Close` acknowledges and ends that transport stream; lease drop, not session-wide revocation, releases its registration.
 
 Focused host tests cover shared first-open ownership, retry after failed initialization, backend-assigned IDs, native round trips across all three storage modes, authority checks, snapshot replacement, malformed streams, acknowledgement loss, and shutdown.
+
+Cross-crate decorator composition, including repeated WebTransport hops, is tested in [`sea-integration-tests`](../sea-integration-tests/README.md).
