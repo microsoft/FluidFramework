@@ -35,6 +35,19 @@ pub trait Archive: StorageSurface {
     type AppendResult: Send + 'static;
 
     /// Appends one entry at a new position in archive order.
+    ///
+    /// One invocation may create at most one entry.
+    /// Implementations must not transparently resubmit an append after an ambiguous outcome.
+    /// Retrying is an application decision; equal values submitted separately remain distinct entries.
+    /// An error that leaves commitment uncertain must be classified as [`crate::ErrorKind::Ambiguous`];
+    /// other errors indicate that this invocation created no entry.
+    /// After this future returns, even with an ambiguous error, a subsequent successful
+    /// [`Self::head`] bounds any entry created by this invocation.
+    ///
+    /// Dropping the future does not imply rollback or that backend work has stopped.
+    /// Unlike a returned result, cancellation alone does not make a subsequent head a reconciliation
+    /// bound: callers must first establish through backend-documented settlement or recovery that
+    /// the cancelled operation can no longer commit later.
     async fn append(&self, value: Self::Append) -> Result<Self::AppendResult, Self::Error>;
 
     /// Reads entries strictly after `after` in position order.
@@ -59,5 +72,12 @@ pub trait Archive: StorageSurface {
     /// result. An append concurrent with this operation may or may not be reflected, and a later
     /// append may make the result stale before it is returned. This is an authoritative read,
     /// unlike the potentially lagging `latest_known` observation reported by a monitored stream.
+    ///
+    /// For every append whose future returned before this future begins execution, including those
+    /// returning an ambiguous error, a successful result bounds any entry that invocation created.
+    /// Such an invocation must not commit beyond the returned head after this observation.
+    /// `None` establishes that none of those invocations created an entry in this archive history.
+    /// Implementations must wait for settlement or return an error if they cannot establish this bound.
+    /// This guarantee does not cover append futures that are still pending or were dropped.
     async fn head(&self) -> Result<Option<Self::Position>, Self::Error>;
 }

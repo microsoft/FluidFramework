@@ -245,6 +245,11 @@ where
     }
 
     /// Appends an event after establishing availability of its optional content tree.
+    ///
+    /// This method does not retry the append or deduplicate equal events.
+    /// After an ambiguous result, applications can reconcile a bounded event range before deciding
+    /// whether to resubmit; see [`EventArchive`] for identity and ordering requirements.
+    /// Dropping this future does not imply rollback or settlement; see [`Archive::append`].
     pub async fn append(
         &self,
         payload: Bytes,
@@ -274,6 +279,10 @@ where
     }
 
     /// Returns the latest committed event position.
+    ///
+    /// A successful result bounds appends that returned before this operation began, including
+    /// ambiguous results, as specified by [`Archive::head`].
+    /// It does not by itself settle cancelled calls or requests still in flight upstream.
     pub async fn head(&self) -> Result<Option<EventPosition>, B::Error> {
         self.events.head().await
     }
