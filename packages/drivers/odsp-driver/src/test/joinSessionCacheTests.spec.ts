@@ -14,6 +14,7 @@ import type {
 	IOdspResolvedUrl,
 	ISocketStorageDiscovery,
 } from "@fluidframework/odsp-driver-definitions/internal";
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { stub, type SinonStub } from "sinon";
 import type { Socket } from "socket.io-client";
@@ -55,6 +56,50 @@ describe("expose joinSessionInfo Tests", () => {
 		async (_options) => "token",
 		async (_options) => "token",
 	);
+
+	it("preserves an epoch supplied in pending driver state", async () => {
+		const resolver = new OdspDriverUrlResolver();
+		const odspResolvedUrl = await resolver.resolve({
+			url: createOdspUrl({ driveId, itemId, siteUrl, dataStorePath: "/" }),
+		});
+		const logger = new MockLogger();
+		const service = await odspDocumentServiceFactory.createDocumentService(
+			odspResolvedUrl,
+			logger.toTelemetryLogger(),
+		);
+		assert(service.driverStatePersistence !== undefined);
+		const driverState = { documentId: odspResolvedUrl.hashedDocumentId, epoch: "epoch1" };
+		assert.throws(
+			() => service.driverStatePersistence?.set({ ...driverState, epoch: "" }),
+			/ODSP driver state must contain a non-empty epoch/,
+		);
+		service.driverStatePersistence.set(driverState);
+		logger.assertMatch([
+			{
+				eventName: "OdspDriver:EpochLearnedFirstTime",
+				source: "pendingState",
+				fetchType: "pendingState",
+				fromCache: true,
+			},
+		]);
+		service.driverStatePersistence.set(driverState);
+		assert.deepStrictEqual(service.driverStatePersistence.get(), driverState);
+		assert.throws(
+			() => service.driverStatePersistence?.set({ ...driverState, epoch: "epoch2" }),
+			(error: IAnyDriverError) => {
+				assert.match(
+					error.message,
+					/ODSP driver state epoch does not match the current epoch/,
+				);
+				assert.equal(error.errorType, OdspErrorTypes.fileOverwrittenInStorage);
+				return true;
+			},
+		);
+		assert.throws(
+			() => service.driverStatePersistence?.set({ ...driverState, documentId: "other" }),
+			/ODSP driver state belongs to a different document/,
+		);
+	});
 
 	function addJoinSessionStub(): SinonStub {
 		const joinSessionStub = stub(fetchJoinSession, mockify.key).callsFake(

@@ -48,7 +48,8 @@ export class EpochTracker implements IPersistedFileCache {
     readonly rateLimiter: RateLimiter;
     // (undocumented)
     removeEntries(): Promise<void>;
-    // (undocumented)
+    setEpoch(epoch: string, source: FetchTypeInternal | "pendingState"): void;
+    // @deprecated
     setEpoch(epoch: string, fromCache: boolean, fetchType: FetchTypeInternal): void;
     // (undocumented)
     validateEpoch(epoch: string | undefined, fetchType: FetchType): Promise<void>;
