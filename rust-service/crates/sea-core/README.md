@@ -28,9 +28,10 @@ It does not replace the existing storage traits.
 The prototype-local `Snapshot<BlobHandle, EventHandle>` carries availability handles and is shared by snapshot lookup, publication, and loading.
 Snapshot archives use event positions as their positions; initial empty state has no snapshot publication.
 This API prototype does not define a persisted snapshot representation.
-`SeaView::load` accepts a `LoadStart` policy: replay from the beginning without a snapshot, include all events after a supplied cursor, or start at the latest compatible snapshot.
-The returned stream catches up and then waits for new events, including for an initially empty archive.
-Loading combines snapshot selection and streaming startup without an extra caller round trip; callers can drop the stream when done or use `read` separately for bounded reads.
+`SeaView::get_snapshot` and `SeaView::load` share a `LoadStart` policy: `Beginning` skips snapshots, `ReplayAtLeastAllAfter(position)` selects the newest snapshot at or before the cursor, and `LatestSnapshot` selects the newest available snapshot.
+Snapshot selection returns `None` when no snapshot qualifies; callers can use the selected snapshot followed by a bounded `read` to reconstruct a particular event position.
+The stream returned by `load` catches up and then waits for new events, including for an initially empty archive.
+`load` combines `get_snapshot` and an unbounded `read` without an extra caller round trip; callers can drop the stream when done.
 Loads do not capture an event head.
 
 Contributor validation commands are in [`DEV.md`](DEV.md).

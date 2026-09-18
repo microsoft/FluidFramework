@@ -174,21 +174,21 @@ pub struct Snapshot<BlobHandle, EventHandle> {
     pub at_event: EventHandle,
 }
 
-/// Starting-point policy for snapshot selection and event replay in [`SeaView::load`].
+/// Starting-point policy shared by [`SeaView::get_snapshot`] and [`SeaView::load`].
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LoadStart {
-    /// Skips snapshots and replays events from the beginning of the archive.
+    /// Selects no snapshot, so loading replays events from the beginning of the archive.
     Beginning,
     /// Selects the newest snapshot at or before this exclusive event cursor.
     ///
-    /// Falls back to the beginning when no compatible snapshot exists.
-    /// The event stream's initial progress cursor is `None` or at most this position,
-    /// so no event after this position is omitted.
-    /// Replay may include earlier events as well.
-    IncludeAllAfter(EventPosition),
+    /// Selects no snapshot when no compatible snapshot exists.
+    /// Loading then streams every event after the selected snapshot, or from the beginning without one.
+    /// The stream's initial progress cursor is `None` or at most this position,
+    /// so every event after this cursor is replayed, possibly along with earlier events.
+    ReplayAtLeastAllAfter(EventPosition),
     /// Selects the newest snapshot, if one exists.
     ///
-    /// Falls back to the beginning when no compatible snapshot exists.
+    /// Selects no snapshot when none exists, so loading starts at the beginning.
     LatestSnapshot,
 }
 
@@ -313,14 +313,33 @@ where
         self.events.head().await
     }
 
-    /// Returns the latest snapshot with handles compatible with this view's stores.
-    pub async fn get_latest_snapshot(
+    /// Selects a snapshot using `start`, with handles compatible with this view's stores.
+    ///
+    /// [`LoadStart::Beginning`] returns `None` without a snapshot lookup.
+    /// [`LoadStart::ReplayAtLeastAllAfter`] selects the newest snapshot at or before the supplied position,
+    /// including an exact match when available; [`LoadStart::LatestSnapshot`] selects the newest snapshot.
+    /// Both return `None` when no qualifying snapshot exists, even if the archive contains events.
+    ///
+    /// To reconstruct state through a target position, select with `ReplayAtLeastAllAfter(target)` and use
+    /// [`Self::read`] from the returned snapshot's event position (or `None`) through `Some(target)`.
+    /// For exact-publication reconciliation, compare the returned event handle's identity with the
+    /// requested position: an older snapshot or `None` means no publication at that position was observed.
+    pub async fn get_snapshot(
         &self,
+        start: LoadStart,
     ) -> Result<Option<Snapshot<Blobs::Handle, Events::Handle>>, Blobs::Error> {
-        let Some(position) = self.snapshots.head().await? else {
-            return Ok(None);
-        };
-        self.snapshots.get_snapshot_at(position).await
+        match start {
+            LoadStart::Beginning => Ok(None),
+            LoadStart::ReplayAtLeastAllAfter(position) => {
+                self.snapshots.get_snapshot_at_or_before(position).await
+            }
+            LoadStart::LatestSnapshot => {
+                let Some(position) = self.snapshots.head().await? else {
+                    return Ok(None);
+                };
+                self.snapshots.get_snapshot_at(position).await
+            }
+        }
     }
 
     /// Publishes a snapshot after establishing both referenced dependencies.
@@ -339,30 +358,21 @@ where
 
     /// Selects a compatible snapshot and starts a live event stream in one operation.
     ///
-    /// This combines snapshot selection and streaming startup so callers need no extra round trip
-    /// to start reading after the selected snapshot.
-    /// `start` determines the latest acceptable snapshot boundary.
-    /// Having no snapshot starts event replay at the beginning.
-    /// `LoadStart::Beginning` skips snapshot lookup entirely.
-    ///
-    /// The stream catches up and then waits for new events, even when the archive is initially empty.
-    /// Callers can drop it when done or use [`Self::read`] separately for bounded reads.
+    /// This is the combined fast path for [`Self::get_snapshot`] followed by [`Self::read`],
+    /// avoiding an extra caller round trip to start reading after the selected snapshot.
+    /// The read cursor is the snapshot's event position, or `None` when no snapshot is selected;
+    /// its `stop_after` is `None`, so the stream catches up and then waits for new events.
+    /// Selection semantics follow [`Self::get_snapshot`]; stream behavior and cancellation follow [`Self::read`].
     /// This method does not capture an event head or an atomic snapshot-and-event read.
     /// Snapshot lookup failures are returned here; event initialization and runtime failures are
-    /// yielded by the stream, and dropping the stream cancels its read or subscription work.
+    /// yielded by the stream.
     pub async fn load(
         &self,
         start: LoadStart,
     ) -> Result<ViewLoad<Blobs::Handle, Events::Handle, Blobs::Error>, Blobs::Error> {
-        let snapshot = match start {
-            LoadStart::Beginning => None,
-            LoadStart::IncludeAllAfter(position) => {
-                self.snapshots.get_snapshot_at_or_before(position).await?
-            }
-            LoadStart::LatestSnapshot => self.get_latest_snapshot().await?,
-        };
+        let snapshot = self.get_snapshot(start).await?;
         let after = snapshot.as_ref().map(|value| value.at_event.id());
-        let events = self.events.read(after, None);
+        let events = self.read(after, None);
         Ok(ViewLoad { snapshot, events })
     }
 }
