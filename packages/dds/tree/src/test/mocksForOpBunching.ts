@@ -175,6 +175,9 @@ export class MockContainerRuntimeWithOpBunching extends MockContainerRuntimeForR
 		let bunchedMessagesContent: IRuntimeMessagesContent[] = [];
 		let previousMessage: ISequencedDocumentMessage | undefined;
 		let previousLocal: boolean | undefined;
+		// Runtime-only messages can split datastore bunches without starting a new batch.
+		let previousBatchMessage: ISequencedDocumentMessage | undefined;
+		let currentBatchMessageIndex = 0;
 
 		const sendBunchedMessages = (): void => {
 			if (previousMessage === undefined) {
@@ -193,6 +196,14 @@ export class MockContainerRuntimeWithOpBunching extends MockContainerRuntimeForR
 		for (const message of messages) {
 			this.deltaManager.process(message);
 			const [local, localOpMetadata] = this.processInternal(message);
+			currentBatchMessageIndex = areMessagesFromSameBatch(
+				previousBatchMessage,
+				message,
+				this.runtimeOptions.flushMode,
+			)
+				? currentBatchMessageIndex + 1
+				: 0;
+			previousBatchMessage = message;
 
 			// Id allocation messages are for the runtime, so process it here directly.
 			if (this.maybeProcessIdAllocationMessage(message)) {
@@ -216,6 +227,7 @@ export class MockContainerRuntimeWithOpBunching extends MockContainerRuntimeForR
 				contents: message.contents,
 				localOpMetadata,
 				clientSequenceNumber: message.clientSequenceNumber,
+				indexInBatch: currentBatchMessageIndex,
 			});
 		}
 

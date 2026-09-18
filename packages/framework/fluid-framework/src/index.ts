@@ -232,6 +232,10 @@ export type {
 } from "@fluidframework/shared-object-base/internal";
 
 export type {
+	ISequencedRuntimeMessage, // Leaked via ISharedObjectEvents
+} from "@fluidframework/runtime-definitions/internal";
+
+export type {
 	ISequencedDocumentMessage, // Leaked via ISharedObjectEvents
 	IBranchOrigin, // Required for ISequencedDocumentMessage
 	ITrace, // Required for ISequencedDocumentMessage
