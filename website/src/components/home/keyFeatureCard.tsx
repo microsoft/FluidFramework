@@ -82,7 +82,7 @@ function KeyFeatureCardBody({ label, bodyText }: KeyFeatureCardBodyProps): JSX.E
 	return (
 		<div className="ffcom-key-feature-card-body ">
 			<div className="ffcom-key-feature-card-body-label-container">
-				<p className="ffcom-key-feature-card-body-label">{label}</p>
+				<h3 className="ffcom-key-feature-card-body-label">{label}</h3>
 			</div>
 			<div className="ffcom-key-feature-card-body-text-container">
 				<p className="ffcom-key-feature-card-body-text">{bodyText}</p>
