@@ -32,6 +32,7 @@ Initialization is hidden from Fluid's operation stream and maps to application s
 Ordinary operations receive contiguous application sequence numbers starting at one, independently of the backend's potentially sparse event positions.
 The two existing synthetic Fluid membership positions remain a separate projection offset.
 Each opened session scans full retained history to reconstruct this mapping before opening its live subscription; startup cost therefore grows with retained history.
+Every projected history read cancels its live stream on completion or failure, including malformed initialization encountered during startup.
 
 Snapshot version handles encode committed event positions.
 The generated client's bounded lookup is checked for an exact position match when satisfying a Fluid version request.

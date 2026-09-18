@@ -73,6 +73,48 @@ test("generated driver hides initialization and preserves snapshot versions acro
 	await observerClient.close();
 });
 
+test("generated driver cancels startup history when initialization is invalid", async () => {
+	const require = createRequire(import.meta.url);
+	const bindings =
+		require("../../../crates/sea-webtransport/test-support/pkg/node/sea_webtransport_test_support.js") as typeof import("../../../crates/sea-webtransport/test-support/pkg/web/sea_webtransport_test_support.js");
+	const service = await bindings.SeaLocalService.create();
+	const client = service.connect();
+	const document = await client.createDocument(
+		encoder.encode("author"),
+		encoder.encode("initial-session"),
+	);
+	await client.submit(
+		encoder.encode("invalid-initialization"),
+		undefined,
+		encoder.encode(JSON.stringify({ seaFluid: "initialize", version: 2 })),
+	);
+	let cancelled = false;
+	const read = client.read.bind(client);
+	client.read = (...args) => {
+		const stream = read(...args);
+		const cancel = stream.cancel.bind(stream);
+		stream.cancel = async () => {
+			cancelled = true;
+			await cancel();
+		};
+		return stream;
+	};
+	const adapter = createGeneratedSeaBindingAdapter(client, bindings, "ReadOnly");
+	try {
+		await assert.rejects(
+			adapter.openSession(
+				document,
+				encoder.encode("reader"),
+				encoder.encode("reader-session"),
+			),
+			/invalid Fluid initialization event/,
+		);
+		assert.equal(cancelled, true, "failed startup must release its live history read");
+	} finally {
+		await client.close();
+	}
+});
+
 interface FixtureSnapshot {
 	readonly id: Uint8Array;
 	readonly root: Uint8Array;

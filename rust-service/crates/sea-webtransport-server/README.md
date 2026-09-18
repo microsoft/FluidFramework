@@ -39,5 +39,6 @@ Live replay uses backend monitored streams rather than the obsolete sequencer br
 Snapshot dispatch resolves wire roots and committed event positions through the session before constructing availability handles.
 Snapshots are versioned by event position, not publication-operation IDs.
 Each snapshot stream owns its own registration lease, so cleanup of an older stream cannot revoke its replacement.
+An explicit snapshot `Close` acknowledges and ends that transport stream; lease drop, not session-wide revocation, releases its registration.
 
 Focused host tests cover shared first-open ownership, retry after failed initialization, backend-assigned IDs, native round trips across all three storage modes, authority checks, snapshot replacement, malformed streams, acknowledgement loss, and shutdown.

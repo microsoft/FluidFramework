@@ -113,11 +113,7 @@ where
 
     async fn snapshot_request(&self, request: protocol::Request) -> protocol::Response {
         match request {
-            protocol::Request::Close => self
-                .session
-                .revoke_snapshot_publisher()
-                .await
-                .map_or_else(error_response, |()| protocol::Response::Acknowledged),
+            protocol::Request::Close => protocol::Response::Acknowledged,
             protocol::Request::PublishSnapshot {
                 fence,
                 expected_parent,
@@ -476,6 +472,71 @@ mod tests {
     use sea_webtransport::protocol;
 
     use crate::SeaConnectionService;
+
+    #[tokio::test]
+    async fn closing_old_snapshot_stream_preserves_replacement() {
+        let (_, view) = MemoryStorage::new().create_view().await.unwrap();
+        let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let session = sequencer
+            .open_session(
+                AuthorId::new(Bytes::from_static(b"author")).unwrap(),
+                SessionId::new(Bytes::from_static(b"session")).unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+        let dispatcher = SessionDispatcher::new(Arc::new(session));
+        let opening = protocol::Request::OpenSnapshotStream {
+            authority: Vec::new(),
+            participation: protocol::SnapshotParticipation::SeaSelected,
+        };
+        let old = dispatcher.snapshot_stream(opening.clone()).await.unwrap();
+        let mut replacement = dispatcher.snapshot_stream(opening).await.unwrap();
+        let Some(protocol::Response::SnapshotCoordination { fence, .. }) = replacement.next().await
+        else {
+            panic!("replacement must be nominated");
+        };
+        assert_eq!(
+            dispatcher.snapshot_request(protocol::Request::Close).await,
+            protocol::Response::Acknowledged
+        );
+        drop(old);
+        let mut uploaded = dispatcher
+            .content_request(protocol::Request::PutBlob {
+                payload: b"state".to_vec(),
+            })
+            .await
+            .unwrap();
+        let Some(protocol::Response::BlobStored { id }) = uploaded.next().await else {
+            panic!("blob missing");
+        };
+        let protocol::Response::EventCommitted { position } = dispatcher
+            .author_request(protocol::Request::Submit {
+                operation: b"initial".to_vec(),
+                reference: None,
+                event: protocol::Event {
+                    payload: Vec::new(),
+                    blob_tree: Some(protocol::TreeId::Blob(id)),
+                },
+            })
+            .await
+        else {
+            panic!("event missing");
+        };
+        assert!(matches!(
+            dispatcher
+                .snapshot_request(protocol::Request::PublishSnapshot {
+                    fence,
+                    expected_parent: None,
+                    at_event: position,
+                    root: protocol::TreeId::Blob(id),
+                })
+                .await,
+            protocol::Response::Snapshot(Some(_))
+        ));
+    }
 
     #[tokio::test]
     async fn dispatches_typed_role_operations() {

@@ -254,24 +254,27 @@ export class GeneratedSeaBindingAdapter implements SeaDriverClient {
 		const stream = await this.client.read(decodePosition(after));
 		const operations: ProjectedOperation[] = [];
 		let cursor = after;
-		for (;;) {
-			const item = await stream.next();
-			if (item === undefined) {
-				return cursor === undefined ? { operations } : { operations, cursor };
-			}
-			if (item.kind === this.types.loadKind.event) {
-				const operation = this.project(item);
-				if (operation !== undefined) {
-					operations.push(operation);
+		try {
+			for (;;) {
+				const item = await stream.next();
+				if (item === undefined) {
+					return cursor === undefined ? { operations } : { operations, cursor };
 				}
-				cursor = encodePosition(item.position);
-			} else if (
-				item.kind === this.types.loadKind.progress &&
-				item.status === this.types.streamStatus.awaitingNewItems
-			) {
-				await stream.cancel();
-				return cursor === undefined ? { operations } : { operations, cursor };
+				if (item.kind === this.types.loadKind.event) {
+					const operation = this.project(item);
+					if (operation !== undefined) {
+						operations.push(operation);
+					}
+					cursor = encodePosition(item.position);
+				} else if (
+					item.kind === this.types.loadKind.progress &&
+					item.status === this.types.streamStatus.awaitingNewItems
+				) {
+					return cursor === undefined ? { operations } : { operations, cursor };
+				}
 			}
+		} finally {
+			await stream.cancel();
 		}
 	}
 

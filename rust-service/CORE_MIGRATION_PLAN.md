@@ -294,6 +294,21 @@ The temporary `next` namespace, old core/backends/sessions, and remaining exampl
 All validation-owned browser/server processes have exited; no commits or pushes were made.
 Stop here for user review.
 
+#### Staged Review Improvements
+
+The quick sequential review of checkpoint 4's staged changes found two verified lifecycle defects.
+Both new regression tests failed before their corresponding repairs and passed afterward.
+
+- Snapshot-stream `Close` revoked the session's current publisher registration, so closing an older stream could disable its replacement.
+	Dispatch now acknowledges without session-wide revocation, and the transport ends the closing stream so its own lease is dropped.
+	`closing_old_snapshot_stream_preserves_replacement` covers continued publication through the replacement registration.
+- A malformed initialization event during driver startup left the projected live history read uncancelled.
+	Projected reads now cancel in `finally` on both completion and failure.
+	The generated-WASM test `generated driver cancels startup history when initialization is invalid` checks the failure path directly.
+
+The complete server suite (11 tests), summary suite (5 tests), canonical Rust formatting/Clippy/rustdoc/build gates, `./test.sh`, and documentation checker passed after these repairs.
+The review fixes remain unstaged over the user's original staged batch; no commit or checkpoint-5 work is authorized by this review.
+
 ### Preparation
 
 - The user approved sequential execution with a committed handoff plan, not a parallel iteration.

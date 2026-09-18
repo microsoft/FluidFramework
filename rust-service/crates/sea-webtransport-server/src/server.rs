@@ -307,9 +307,10 @@ pub trait SeaConnectionService: Send + Sync {
     ) -> Result<SeaResponseStream, sea_v1::Response>;
 
     /// Handles one correlated operation on an open snapshot stream.
+    /// `Close` acknowledges only; the transport ends and drops that stream's registration lease.
     async fn snapshot_request(&self, request: sea_v1::Request) -> sea_v1::Response;
 
-    /// Revokes snapshot publisher membership after stream loss.
+    /// Revokes the session's current publisher membership after connection loss.
     async fn revoke_snapshot_publisher(&self);
 
     /// Validates content-stream authority.
@@ -837,6 +838,7 @@ async fn serve_snapshot_stream(
                     let Some(frame) = frame? else { break };
                     let request = sea_v1::decode_request_frame(role, &frame)?;
                     metrics.add_wire_bytes(4 + 1 + 8 + frame.payload.len());
+                    let close = matches!(request, sea_v1::Request::Close);
                     let response = service.snapshot_request(request).await;
                     write_network_response(
                         &mut send,
@@ -848,6 +850,7 @@ async fn serve_snapshot_stream(
                         metrics,
                         false,
                     ).await?;
+                    if close { break; }
                 }
                 notification = notifications.next() => {
                     let Some(notification) = notification else { break };
