@@ -1,270 +1,270 @@
 {
-  "schemaVersion": 1,
-  "status": "passed",
-  "provisional": true,
-  "backend": "tinylicious-client",
-  "sourceCommit": "13401fe0de31c2fde0e0a0c466c2ab76571ed6fe",
-  "sourceDirty": false,
-  "configuration": {
-    "repetitions": 10,
-    "operations": 100,
-    "warmup": 10,
-    "clients": 2
-  },
-  "environment": {
-    "capturedAt": "2026-09-13T00:52:48.394Z",
-    "platform": "linux",
-    "kernel": "6.8.0-1064-azure",
-    "architecture": "x64",
-    "logicalCpuCount": 32,
-    "cpuModel": "AMD EPYC 7763 64-Core Processor",
-    "node": "v24.21.0",
-    "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36"
-  },
-  "aggregates": {
-    "startupMilliseconds": {
-      "minimum": 185.5,
-      "mean": 217.70999999940395,
-      "median": 194.89999999850988,
-      "p95": 405.19999999552965,
-      "maximum": 405.19999999552965,
-      "sampleStandardDeviation": 66.49002347764358
-    },
-    "operationsPerSecond": {
-      "minimum": 52.260256075254766,
-      "mean": 73.57116370610679,
-      "median": 58.23772639911084,
-      "p95": 214.6383344072115,
-      "maximum": 214.6383344072115,
-      "sampleStandardDeviation": 49.68569421832003
-    },
-    "medianOperationLatencyMilliseconds": {
-      "minimum": 4.600000001490116,
-      "mean": 4.61000000089407,
-      "median": 4.600000001490116,
-      "p95": 4.699999995529652,
-      "maximum": 4.699999995529652,
-      "sampleStandardDeviation": 0.03162277471681942
-    },
-    "p95OperationLatencyMilliseconds": {
-      "minimum": 4.800000004470348,
-      "mean": 4.810000003874302,
-      "median": 4.800000004470348,
-      "p95": 4.899999998509884,
-      "maximum": 4.899999998509884,
-      "sampleStandardDeviation": 0.03162277471681942
-    }
-  },
-  "samples": [
-    {
-      "status": "passed",
-      "backend": "tinylicious-client",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 405.19999999552965,
-      "totalOperationMilliseconds": 465.8999999985099,
-      "operationsPerSecond": 214.6383344072115,
-      "latencyMilliseconds": {
-        "minimum": 4.399999998509884,
-        "median": 4.600000001490116,
-        "p95": 4.800000004470348,
-        "maximum": 5.200000002980232
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": null,
-      "peakResponseBytes": null,
-      "forceWriteConnection": false
-    },
-    {
-      "status": "passed",
-      "backend": "tinylicious-client",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 217.60000000149012,
-      "totalOperationMilliseconds": 1913.5,
-      "operationsPerSecond": 52.260256075254766,
-      "latencyMilliseconds": {
-        "minimum": 4.399999998509884,
-        "median": 4.600000001490116,
-        "p95": 4.800000004470348,
-        "maximum": 1457.3999999985099
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": null,
-      "peakResponseBytes": null,
-      "forceWriteConnection": false
-    },
-    {
-      "status": "passed",
-      "backend": "tinylicious-client",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 203.10000000149012,
-      "totalOperationMilliseconds": 1701.1000000014901,
-      "operationsPerSecond": 58.78549174058691,
-      "latencyMilliseconds": {
-        "minimum": 4.399999998509884,
-        "median": 4.600000001490116,
-        "p95": 4.800000004470348,
-        "maximum": 1241.3999999985099
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": null,
-      "peakResponseBytes": null,
-      "forceWriteConnection": false
-    },
-    {
-      "status": "passed",
-      "backend": "tinylicious-client",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 201.29999999701977,
-      "totalOperationMilliseconds": 1669.2999999970198,
-      "operationsPerSecond": 59.90534954782156,
-      "latencyMilliseconds": {
-        "minimum": 4.399999998509884,
-        "median": 4.600000001490116,
-        "p95": 4.800000004470348,
-        "maximum": 1209.2999999970198
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": null,
-      "peakResponseBytes": null,
-      "forceWriteConnection": false
-    },
-    {
-      "status": "passed",
-      "backend": "tinylicious-client",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 194.89999999850988,
-      "totalOperationMilliseconds": 1717.1000000014901,
-      "operationsPerSecond": 58.23772639911084,
-      "latencyMilliseconds": {
-        "minimum": 4.399999998509884,
-        "median": 4.600000001490116,
-        "p95": 4.800000004470348,
-        "maximum": 1258.5
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": null,
-      "peakResponseBytes": null,
-      "forceWriteConnection": false
-    },
-    {
-      "status": "passed",
-      "backend": "tinylicious-client",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 196.90000000596046,
-      "totalOperationMilliseconds": 1593.8999999985099,
-      "operationsPerSecond": 62.73919317403443,
-      "latencyMilliseconds": {
-        "minimum": 4.399999998509884,
-        "median": 4.600000001490116,
-        "p95": 4.800000004470348,
-        "maximum": 1135.7999999970198
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": null,
-      "peakResponseBytes": null,
-      "forceWriteConnection": false
-    },
-    {
-      "status": "passed",
-      "backend": "tinylicious-client",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 185.5,
-      "totalOperationMilliseconds": 1804.1999999955297,
-      "operationsPerSecond": 55.42622769108068,
-      "latencyMilliseconds": {
-        "minimum": 4.399999998509884,
-        "median": 4.600000001490116,
-        "p95": 4.899999998509884,
-        "maximum": 1342.7000000029802
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": null,
-      "peakResponseBytes": null,
-      "forceWriteConnection": false
-    },
-    {
-      "status": "passed",
-      "backend": "tinylicious-client",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 190.29999999701977,
-      "totalOperationMilliseconds": 1867.1999999955297,
-      "operationsPerSecond": 53.556126821036536,
-      "latencyMilliseconds": {
-        "minimum": 4.399999998509884,
-        "median": 4.699999995529652,
-        "p95": 4.800000004470348,
-        "maximum": 1407.2999999970198
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": null,
-      "peakResponseBytes": null,
-      "forceWriteConnection": false
-    },
-    {
-      "status": "passed",
-      "backend": "tinylicious-client",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 191.29999999701977,
-      "totalOperationMilliseconds": 1598.3999999985099,
-      "operationsPerSecond": 62.56256256262089,
-      "latencyMilliseconds": {
-        "minimum": 4.399999998509884,
-        "median": 4.600000001490116,
-        "p95": 4.800000004470348,
-        "maximum": 1139
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": null,
-      "peakResponseBytes": null,
-      "forceWriteConnection": false
-    },
-    {
-      "status": "passed",
-      "backend": "tinylicious-client",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 191,
-      "totalOperationMilliseconds": 1736.1000000014901,
-      "operationsPerSecond": 57.600368642309874,
-      "latencyMilliseconds": {
-        "minimum": 4.399999998509884,
-        "median": 4.600000001490116,
-        "p95": 4.800000004470348,
-        "maximum": 1278.5
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": null,
-      "peakResponseBytes": null,
-      "forceWriteConnection": false
-    }
-  ]
+	"schemaVersion": 1,
+	"status": "passed",
+	"provisional": true,
+	"backend": "tinylicious-client",
+	"sourceCommit": "13401fe0de31c2fde0e0a0c466c2ab76571ed6fe",
+	"sourceDirty": false,
+	"configuration": {
+		"repetitions": 10,
+		"operations": 100,
+		"warmup": 10,
+		"clients": 2
+	},
+	"environment": {
+		"capturedAt": "2026-09-13T00:52:48.394Z",
+		"platform": "linux",
+		"kernel": "6.8.0-1064-azure",
+		"architecture": "x64",
+		"logicalCpuCount": 32,
+		"cpuModel": "AMD EPYC 7763 64-Core Processor",
+		"node": "v24.21.0",
+		"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36"
+	},
+	"aggregates": {
+		"startupMilliseconds": {
+			"minimum": 185.5,
+			"mean": 217.70999999940395,
+			"median": 194.89999999850988,
+			"p95": 405.19999999552965,
+			"maximum": 405.19999999552965,
+			"sampleStandardDeviation": 66.49002347764358
+		},
+		"operationsPerSecond": {
+			"minimum": 52.260256075254766,
+			"mean": 73.57116370610679,
+			"median": 58.23772639911084,
+			"p95": 214.6383344072115,
+			"maximum": 214.6383344072115,
+			"sampleStandardDeviation": 49.68569421832003
+		},
+		"medianOperationLatencyMilliseconds": {
+			"minimum": 4.600000001490116,
+			"mean": 4.61000000089407,
+			"median": 4.600000001490116,
+			"p95": 4.699999995529652,
+			"maximum": 4.699999995529652,
+			"sampleStandardDeviation": 0.03162277471681942
+		},
+		"p95OperationLatencyMilliseconds": {
+			"minimum": 4.800000004470348,
+			"mean": 4.810000003874302,
+			"median": 4.800000004470348,
+			"p95": 4.899999998509884,
+			"maximum": 4.899999998509884,
+			"sampleStandardDeviation": 0.03162277471681942
+		}
+	},
+	"samples": [
+		{
+			"status": "passed",
+			"backend": "tinylicious-client",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 405.19999999552965,
+			"totalOperationMilliseconds": 465.8999999985099,
+			"operationsPerSecond": 214.6383344072115,
+			"latencyMilliseconds": {
+				"minimum": 4.399999998509884,
+				"median": 4.600000001490116,
+				"p95": 4.800000004470348,
+				"maximum": 5.200000002980232
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": null,
+			"peakResponseBytes": null,
+			"forceWriteConnection": false
+		},
+		{
+			"status": "passed",
+			"backend": "tinylicious-client",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 217.60000000149012,
+			"totalOperationMilliseconds": 1913.5,
+			"operationsPerSecond": 52.260256075254766,
+			"latencyMilliseconds": {
+				"minimum": 4.399999998509884,
+				"median": 4.600000001490116,
+				"p95": 4.800000004470348,
+				"maximum": 1457.3999999985099
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": null,
+			"peakResponseBytes": null,
+			"forceWriteConnection": false
+		},
+		{
+			"status": "passed",
+			"backend": "tinylicious-client",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 203.10000000149012,
+			"totalOperationMilliseconds": 1701.1000000014901,
+			"operationsPerSecond": 58.78549174058691,
+			"latencyMilliseconds": {
+				"minimum": 4.399999998509884,
+				"median": 4.600000001490116,
+				"p95": 4.800000004470348,
+				"maximum": 1241.3999999985099
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": null,
+			"peakResponseBytes": null,
+			"forceWriteConnection": false
+		},
+		{
+			"status": "passed",
+			"backend": "tinylicious-client",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 201.29999999701977,
+			"totalOperationMilliseconds": 1669.2999999970198,
+			"operationsPerSecond": 59.90534954782156,
+			"latencyMilliseconds": {
+				"minimum": 4.399999998509884,
+				"median": 4.600000001490116,
+				"p95": 4.800000004470348,
+				"maximum": 1209.2999999970198
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": null,
+			"peakResponseBytes": null,
+			"forceWriteConnection": false
+		},
+		{
+			"status": "passed",
+			"backend": "tinylicious-client",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 194.89999999850988,
+			"totalOperationMilliseconds": 1717.1000000014901,
+			"operationsPerSecond": 58.23772639911084,
+			"latencyMilliseconds": {
+				"minimum": 4.399999998509884,
+				"median": 4.600000001490116,
+				"p95": 4.800000004470348,
+				"maximum": 1258.5
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": null,
+			"peakResponseBytes": null,
+			"forceWriteConnection": false
+		},
+		{
+			"status": "passed",
+			"backend": "tinylicious-client",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 196.90000000596046,
+			"totalOperationMilliseconds": 1593.8999999985099,
+			"operationsPerSecond": 62.73919317403443,
+			"latencyMilliseconds": {
+				"minimum": 4.399999998509884,
+				"median": 4.600000001490116,
+				"p95": 4.800000004470348,
+				"maximum": 1135.7999999970198
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": null,
+			"peakResponseBytes": null,
+			"forceWriteConnection": false
+		},
+		{
+			"status": "passed",
+			"backend": "tinylicious-client",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 185.5,
+			"totalOperationMilliseconds": 1804.1999999955297,
+			"operationsPerSecond": 55.42622769108068,
+			"latencyMilliseconds": {
+				"minimum": 4.399999998509884,
+				"median": 4.600000001490116,
+				"p95": 4.899999998509884,
+				"maximum": 1342.7000000029802
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": null,
+			"peakResponseBytes": null,
+			"forceWriteConnection": false
+		},
+		{
+			"status": "passed",
+			"backend": "tinylicious-client",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 190.29999999701977,
+			"totalOperationMilliseconds": 1867.1999999955297,
+			"operationsPerSecond": 53.556126821036536,
+			"latencyMilliseconds": {
+				"minimum": 4.399999998509884,
+				"median": 4.699999995529652,
+				"p95": 4.800000004470348,
+				"maximum": 1407.2999999970198
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": null,
+			"peakResponseBytes": null,
+			"forceWriteConnection": false
+		},
+		{
+			"status": "passed",
+			"backend": "tinylicious-client",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 191.29999999701977,
+			"totalOperationMilliseconds": 1598.3999999985099,
+			"operationsPerSecond": 62.56256256262089,
+			"latencyMilliseconds": {
+				"minimum": 4.399999998509884,
+				"median": 4.600000001490116,
+				"p95": 4.800000004470348,
+				"maximum": 1139
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": null,
+			"peakResponseBytes": null,
+			"forceWriteConnection": false
+		},
+		{
+			"status": "passed",
+			"backend": "tinylicious-client",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 191,
+			"totalOperationMilliseconds": 1736.1000000014901,
+			"operationsPerSecond": 57.600368642309874,
+			"latencyMilliseconds": {
+				"minimum": 4.399999998509884,
+				"median": 4.600000001490116,
+				"p95": 4.800000004470348,
+				"maximum": 1278.5
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": null,
+			"peakResponseBytes": null,
+			"forceWriteConnection": false
+		}
+	]
 }

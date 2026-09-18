@@ -1,270 +1,270 @@
 {
-  "schemaVersion": 1,
-  "status": "passed",
-  "provisional": true,
-  "backend": "rust-service-minimal-driver-force-write",
-  "sourceCommit": "13401fe0de31c2fde0e0a0c466c2ab76571ed6fe",
-  "sourceDirty": false,
-  "configuration": {
-    "repetitions": 10,
-    "operations": 100,
-    "warmup": 10,
-    "clients": 2
-  },
-  "environment": {
-    "capturedAt": "2026-09-13T00:51:41.846Z",
-    "platform": "linux",
-    "kernel": "6.8.0-1064-azure",
-    "architecture": "x64",
-    "logicalCpuCount": 32,
-    "cpuModel": "AMD EPYC 7763 64-Core Processor",
-    "node": "v24.21.0",
-    "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36"
-  },
-  "aggregates": {
-    "startupMilliseconds": {
-      "minimum": 993.9000000059605,
-      "mean": 1239.929999999702,
-      "median": 1271.1000000014901,
-      "p95": 1399.3000000044703,
-      "maximum": 1399.3000000044703,
-      "sampleStandardDeviation": 144.19624012611484
-    },
-    "operationsPerSecond": {
-      "minimum": 12.398641108925299,
-      "mean": 13.628730161173356,
-      "median": 13.307428206422188,
-      "p95": 15.894460780418024,
-      "maximum": 15.894460780418024,
-      "sampleStandardDeviation": 1.0552999428683336
-    },
-    "medianOperationLatencyMilliseconds": {
-      "minimum": 57.399999998509884,
-      "mean": 58.030000001937154,
-      "median": 58.100000001490116,
-      "p95": 58.600000001490116,
-      "maximum": 58.600000001490116,
-      "sampleStandardDeviation": 0.323350515575772
-    },
-    "p95OperationLatencyMilliseconds": {
-      "minimum": 112.39999999850988,
-      "mean": 113.75,
-      "median": 113.89999999850988,
-      "p95": 114.29999999701977,
-      "maximum": 114.29999999701977,
-      "sampleStandardDeviation": 0.5873670064490425
-    }
-  },
-  "samples": [
-    {
-      "status": "passed",
-      "backend": "rust-service-minimal-driver-force-write",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 1396.2999999970198,
-      "totalOperationMilliseconds": 7201.69999999553,
-      "operationsPerSecond": 13.885610342011201,
-      "latencyMilliseconds": {
-        "minimum": 6,
-        "median": 57.899999998509884,
-        "p95": 114,
-        "maximum": 115.70000000298023
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": "519911",
-      "peakResponseBytes": 2827,
-      "forceWriteConnection": true
-    },
-    {
-      "status": "passed",
-      "backend": "rust-service-minimal-driver-force-write",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 1280.2999999970198,
-      "totalOperationMilliseconds": 7658.19999999553,
-      "operationsPerSecond": 13.057898722945128,
-      "latencyMilliseconds": {
-        "minimum": 30.400000005960464,
-        "median": 58.100000001490116,
-        "p95": 113.89999999850988,
-        "maximum": 114.80000000447035
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": "521899",
-      "peakResponseBytes": 2826,
-      "forceWriteConnection": true
-    },
-    {
-      "status": "passed",
-      "backend": "rust-service-minimal-driver-force-write",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 1178.8999999985099,
-      "totalOperationMilliseconds": 7028.29999999702,
-      "operationsPerSecond": 14.228191739117909,
-      "latencyMilliseconds": {
-        "minimum": 6.100000001490116,
-        "median": 57.80000000447035,
-        "p95": 114.29999999701977,
-        "maximum": 115.20000000298023
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": "520479",
-      "peakResponseBytes": 2827,
-      "forceWriteConnection": true
-    },
-    {
-      "status": "passed",
-      "backend": "rust-service-minimal-driver-force-write",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 1349.6000000014901,
-      "totalOperationMilliseconds": 8065.4000000059605,
-      "operationsPerSecond": 12.398641108925299,
-      "latencyMilliseconds": {
-        "minimum": 30.100000001490116,
-        "median": 58.20000000298023,
-        "p95": 114.10000000149012,
-        "maximum": 114.79999999701977
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": "523035",
-      "peakResponseBytes": 1499,
-      "forceWriteConnection": true
-    },
-    {
-      "status": "passed",
-      "backend": "rust-service-minimal-driver-force-write",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 1170.8999999985099,
-      "totalOperationMilliseconds": 6291.5,
-      "operationsPerSecond": 15.894460780418024,
-      "latencyMilliseconds": {
-        "minimum": 5.399999998509884,
-        "median": 57.80000000447035,
-        "p95": 112.39999999850988,
-        "maximum": 114.10000000149012
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": "519343",
-      "peakResponseBytes": 2827,
-      "forceWriteConnection": true
-    },
-    {
-      "status": "passed",
-      "backend": "rust-service-minimal-driver-force-write",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 1271.1000000014901,
-      "totalOperationMilliseconds": 7974.20000000298,
-      "operationsPerSecond": 12.540442928439546,
-      "latencyMilliseconds": {
-        "minimum": 30,
-        "median": 58.600000001490116,
-        "p95": 114.10000000149012,
-        "maximum": 115
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": "522467",
-      "peakResponseBytes": 2815,
-      "forceWriteConnection": true
-    },
-    {
-      "status": "passed",
-      "backend": "rust-service-minimal-driver-force-write",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 993.9000000059605,
-      "totalOperationMilliseconds": 6947.60000000149,
-      "operationsPerSecond": 14.393459611949242,
-      "latencyMilliseconds": {
-        "minimum": 5.299999997019768,
-        "median": 57.399999998509884,
-        "p95": 113,
-        "maximum": 114.30000000447035
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": "520763",
-      "peakResponseBytes": 2827,
-      "forceWriteConnection": true
-    },
-    {
-      "status": "passed",
-      "backend": "rust-service-minimal-driver-force-write",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 1027.2999999970198,
-      "totalOperationMilliseconds": 7514.60000000149,
-      "operationsPerSecond": 13.307428206422188,
-      "latencyMilliseconds": {
-        "minimum": 5.399999998509884,
-        "median": 58.20000000298023,
-        "p95": 114,
-        "maximum": 115.10000000149012
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": "521331",
-      "peakResponseBytes": 2827,
-      "forceWriteConnection": true
-    },
-    {
-      "status": "passed",
-      "backend": "rust-service-minimal-driver-force-write",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 1331.6999999955297,
-      "totalOperationMilliseconds": 7245.10000000149,
-      "operationsPerSecond": 13.802431988513538,
-      "latencyMilliseconds": {
-        "minimum": 30.19999999552965,
-        "median": 58.20000000298023,
-        "p95": 113.89999999850988,
-        "maximum": 115
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": "520763",
-      "peakResponseBytes": 2819,
-      "forceWriteConnection": true
-    },
-    {
-      "status": "passed",
-      "backend": "rust-service-minimal-driver-force-write",
-      "clientCount": 2,
-      "operationCount": 100,
-      "warmupOperationCount": 10,
-      "startupMilliseconds": 1399.3000000044703,
-      "totalOperationMilliseconds": 7825.5,
-      "operationsPerSecond": 12.778736182991501,
-      "latencyMilliseconds": {
-        "minimum": 30.899999998509884,
-        "median": 58.100000001490116,
-        "p95": 113.80000000447035,
-        "maximum": 114.69999999552965
-      },
-      "finalValue": 110,
-      "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
-      "wireBytes": "522467",
-      "peakResponseBytes": 2827,
-      "forceWriteConnection": true
-    }
-  ]
+	"schemaVersion": 1,
+	"status": "passed",
+	"provisional": true,
+	"backend": "rust-service-minimal-driver-force-write",
+	"sourceCommit": "13401fe0de31c2fde0e0a0c466c2ab76571ed6fe",
+	"sourceDirty": false,
+	"configuration": {
+		"repetitions": 10,
+		"operations": 100,
+		"warmup": 10,
+		"clients": 2
+	},
+	"environment": {
+		"capturedAt": "2026-09-13T00:51:41.846Z",
+		"platform": "linux",
+		"kernel": "6.8.0-1064-azure",
+		"architecture": "x64",
+		"logicalCpuCount": 32,
+		"cpuModel": "AMD EPYC 7763 64-Core Processor",
+		"node": "v24.21.0",
+		"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36"
+	},
+	"aggregates": {
+		"startupMilliseconds": {
+			"minimum": 993.9000000059605,
+			"mean": 1239.929999999702,
+			"median": 1271.1000000014901,
+			"p95": 1399.3000000044703,
+			"maximum": 1399.3000000044703,
+			"sampleStandardDeviation": 144.19624012611484
+		},
+		"operationsPerSecond": {
+			"minimum": 12.398641108925299,
+			"mean": 13.628730161173356,
+			"median": 13.307428206422188,
+			"p95": 15.894460780418024,
+			"maximum": 15.894460780418024,
+			"sampleStandardDeviation": 1.0552999428683336
+		},
+		"medianOperationLatencyMilliseconds": {
+			"minimum": 57.399999998509884,
+			"mean": 58.030000001937154,
+			"median": 58.100000001490116,
+			"p95": 58.600000001490116,
+			"maximum": 58.600000001490116,
+			"sampleStandardDeviation": 0.323350515575772
+		},
+		"p95OperationLatencyMilliseconds": {
+			"minimum": 112.39999999850988,
+			"mean": 113.75,
+			"median": 113.89999999850988,
+			"p95": 114.29999999701977,
+			"maximum": 114.29999999701977,
+			"sampleStandardDeviation": 0.5873670064490425
+		}
+	},
+	"samples": [
+		{
+			"status": "passed",
+			"backend": "rust-service-minimal-driver-force-write",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 1396.2999999970198,
+			"totalOperationMilliseconds": 7201.69999999553,
+			"operationsPerSecond": 13.885610342011201,
+			"latencyMilliseconds": {
+				"minimum": 6,
+				"median": 57.899999998509884,
+				"p95": 114,
+				"maximum": 115.70000000298023
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": "519911",
+			"peakResponseBytes": 2827,
+			"forceWriteConnection": true
+		},
+		{
+			"status": "passed",
+			"backend": "rust-service-minimal-driver-force-write",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 1280.2999999970198,
+			"totalOperationMilliseconds": 7658.19999999553,
+			"operationsPerSecond": 13.057898722945128,
+			"latencyMilliseconds": {
+				"minimum": 30.400000005960464,
+				"median": 58.100000001490116,
+				"p95": 113.89999999850988,
+				"maximum": 114.80000000447035
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": "521899",
+			"peakResponseBytes": 2826,
+			"forceWriteConnection": true
+		},
+		{
+			"status": "passed",
+			"backend": "rust-service-minimal-driver-force-write",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 1178.8999999985099,
+			"totalOperationMilliseconds": 7028.29999999702,
+			"operationsPerSecond": 14.228191739117909,
+			"latencyMilliseconds": {
+				"minimum": 6.100000001490116,
+				"median": 57.80000000447035,
+				"p95": 114.29999999701977,
+				"maximum": 115.20000000298023
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": "520479",
+			"peakResponseBytes": 2827,
+			"forceWriteConnection": true
+		},
+		{
+			"status": "passed",
+			"backend": "rust-service-minimal-driver-force-write",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 1349.6000000014901,
+			"totalOperationMilliseconds": 8065.4000000059605,
+			"operationsPerSecond": 12.398641108925299,
+			"latencyMilliseconds": {
+				"minimum": 30.100000001490116,
+				"median": 58.20000000298023,
+				"p95": 114.10000000149012,
+				"maximum": 114.79999999701977
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": "523035",
+			"peakResponseBytes": 1499,
+			"forceWriteConnection": true
+		},
+		{
+			"status": "passed",
+			"backend": "rust-service-minimal-driver-force-write",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 1170.8999999985099,
+			"totalOperationMilliseconds": 6291.5,
+			"operationsPerSecond": 15.894460780418024,
+			"latencyMilliseconds": {
+				"minimum": 5.399999998509884,
+				"median": 57.80000000447035,
+				"p95": 112.39999999850988,
+				"maximum": 114.10000000149012
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": "519343",
+			"peakResponseBytes": 2827,
+			"forceWriteConnection": true
+		},
+		{
+			"status": "passed",
+			"backend": "rust-service-minimal-driver-force-write",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 1271.1000000014901,
+			"totalOperationMilliseconds": 7974.20000000298,
+			"operationsPerSecond": 12.540442928439546,
+			"latencyMilliseconds": {
+				"minimum": 30,
+				"median": 58.600000001490116,
+				"p95": 114.10000000149012,
+				"maximum": 115
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": "522467",
+			"peakResponseBytes": 2815,
+			"forceWriteConnection": true
+		},
+		{
+			"status": "passed",
+			"backend": "rust-service-minimal-driver-force-write",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 993.9000000059605,
+			"totalOperationMilliseconds": 6947.60000000149,
+			"operationsPerSecond": 14.393459611949242,
+			"latencyMilliseconds": {
+				"minimum": 5.299999997019768,
+				"median": 57.399999998509884,
+				"p95": 113,
+				"maximum": 114.30000000447035
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": "520763",
+			"peakResponseBytes": 2827,
+			"forceWriteConnection": true
+		},
+		{
+			"status": "passed",
+			"backend": "rust-service-minimal-driver-force-write",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 1027.2999999970198,
+			"totalOperationMilliseconds": 7514.60000000149,
+			"operationsPerSecond": 13.307428206422188,
+			"latencyMilliseconds": {
+				"minimum": 5.399999998509884,
+				"median": 58.20000000298023,
+				"p95": 114,
+				"maximum": 115.10000000149012
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": "521331",
+			"peakResponseBytes": 2827,
+			"forceWriteConnection": true
+		},
+		{
+			"status": "passed",
+			"backend": "rust-service-minimal-driver-force-write",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 1331.6999999955297,
+			"totalOperationMilliseconds": 7245.10000000149,
+			"operationsPerSecond": 13.802431988513538,
+			"latencyMilliseconds": {
+				"minimum": 30.19999999552965,
+				"median": 58.20000000298023,
+				"p95": 113.89999999850988,
+				"maximum": 115
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": "520763",
+			"peakResponseBytes": 2819,
+			"forceWriteConnection": true
+		},
+		{
+			"status": "passed",
+			"backend": "rust-service-minimal-driver-force-write",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"startupMilliseconds": 1399.3000000044703,
+			"totalOperationMilliseconds": 7825.5,
+			"operationsPerSecond": 12.778736182991501,
+			"latencyMilliseconds": {
+				"minimum": 30.899999998509884,
+				"median": 58.100000001490116,
+				"p95": 113.80000000447035,
+				"maximum": 114.69999999552965
+			},
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"wireBytes": "522467",
+			"peakResponseBytes": 2827,
+			"forceWriteConnection": true
+		}
+	]
 }
