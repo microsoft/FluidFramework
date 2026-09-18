@@ -374,7 +374,7 @@ export interface LocalChangeMetadata extends CommitMetadata {
 
 /**
  * Events related to a local commit that has been applied.
- * @sealed @alpha
+ * @sealed @beta
  */
 export interface LocalCommitEvents {
 	/**
@@ -390,7 +390,7 @@ export interface LocalCommitEvents {
 	 * It can also be used to queue up a new attempt at making the rejected changes. Note however that new edits must be made outside of the event callback.
 	 * @example Notifying the user of the outcome and allowing them to retry:
 	 * ```typescript
-	 * // Use `asAlpha` API to access the settled event API
+	 * // Use `asAlpha` API to access the noChange precondition
 	 * const view = asAlpha(tree.viewWith(config));
 	 *
 	 * // Function to clear all contents of the tree, with a precondition that no changes have occurred.
@@ -473,7 +473,7 @@ export type TransactionLabels = Set<unknown> & { tree?: LabelTree };
 
 /**
  * Details about what changes from a commit were applied or not.
- * @alpha
+ * @beta
  */
 export enum CommitOutcome {
 	/**
@@ -547,6 +547,33 @@ export interface RemoteChangeMetadata extends CommitMetadata {
 	 */
 	readonly labels: TransactionLabels;
 }
+
+/**
+ * Information about a local or remote change that has been applied.
+ * @remarks
+ * For local changes, use {@link LocalCommitEvents.settled | the settled event} to observe the outcome after sequencing.
+ * See {@link ChangeMetadata} for additional alpha APIs.
+ * @sealed @beta
+ */
+export type ChangeMetadataBeta = CommitMetadata &
+	(
+		| {
+				/**
+				 * Whether the change was made on the local machine/client or received from a remote client.
+				 */
+				readonly isLocal: true;
+				/**
+				 * Events related to a local change that has been applied.
+				 */
+				readonly events: Listenable<LocalCommitEvents>;
+		  }
+		| {
+				/**
+				 * Whether the change was made on the local machine/client or received from a remote client.
+				 */
+				readonly isLocal: false;
+		  }
+	);
 
 /**
  * Information about a {@link LocalChangeMetadata | local} or {@link RemoteChangeMetadata | remote} change that has been applied.

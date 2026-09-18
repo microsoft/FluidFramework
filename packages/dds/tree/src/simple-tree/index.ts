@@ -165,6 +165,7 @@ export {
 	type TreeBranchAlpha,
 	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
+	type TreeBranchEventsBeta,
 	type TreeBranchCommitMetadata,
 	type TreeBranchHistory,
 	type TreeContextBeta,
