@@ -45,8 +45,7 @@ use crate::snapshot::{Snapshot, SnapshotPosition};
 use crate::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, CommittedEvent,
     Durability, Event, EventPosition, MonitoredStreamItem, MonitoredStreamProgress,
-    MonitoredStreamStatus, OperationId, PublishedSnapshot, SnapshotId, SnapshotPublication,
-    boxed_monitored_stream,
+    MonitoredStreamStatus, PublishedSnapshot, SnapshotId, boxed_monitored_stream,
 };
 
 pub use blob_store::BlobStore;
@@ -158,10 +157,6 @@ pub enum ViewSnapshotPosition<H> {
 /// Snapshot publication carrying availability evidence for every external reference.
 #[derive(Clone, Debug)]
 pub struct ViewSnapshotPublication<BH, EH> {
-    /// Stable identity reused for retries and ambiguity resolution.
-    pub operation_id: OperationId,
-    /// Latest publication expected by the publisher.
-    pub expected_parent: Option<SnapshotId>,
     /// Event boundary represented by the snapshot.
     pub at_event: ViewSnapshotPosition<EH>,
     /// Complete materialized state tree.
@@ -306,24 +301,10 @@ where
             }
         };
         self.snapshots
-            .append(SnapshotPublication {
-                operation_id: publication.operation_id,
-                expected_parent: publication.expected_parent,
-                snapshot: Snapshot {
-                    at_event,
-                    root: publication.root.id(),
-                },
+            .append(Snapshot {
+                at_event,
+                root: publication.root.id(),
             })
-            .await
-    }
-
-    /// Resolves a possibly ambiguous snapshot publication.
-    pub async fn resolve_snapshot_publication(
-        &self,
-        operation_id: &OperationId,
-    ) -> Result<Option<PublishedSnapshot>, B::Error> {
-        self.snapshots
-            .resolve_snapshot_publication(operation_id)
             .await
     }
 

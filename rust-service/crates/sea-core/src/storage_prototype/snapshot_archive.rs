@@ -1,13 +1,13 @@
 //! Independent snapshot publication storage.
 //!
 //! Snapshot roots and event positions are opaque references at this boundary. The archive owns
-//! publication identity, lineage, retry resolution, and retained-history lookup; [`super::SeaView`]
-//! establishes that referenced content and events are available before publication.
+//! publication identity, lineage, and retained-history lookup; [`super::SeaView`] establishes that
+//! referenced content and events are available before publication.
 
 use async_trait::async_trait;
 
-use crate::snapshot::SnapshotPosition;
-use crate::{EventPosition, OperationId, PublishedSnapshot, SnapshotId, SnapshotPublication};
+use crate::snapshot::{Snapshot, SnapshotPosition};
+use crate::{EventPosition, PublishedSnapshot, SnapshotId};
 
 use super::Archive;
 
@@ -21,7 +21,7 @@ pub trait SnapshotArchive:
     Archive<
         Position = SnapshotPosition,
         Item = PublishedSnapshot,
-        Append = SnapshotPublication,
+        Append = Snapshot,
         AppendResult = PublishedSnapshot,
     >
 {
@@ -29,6 +29,9 @@ pub trait SnapshotArchive:
     async fn snapshot(&self, id: &SnapshotId) -> Result<Option<PublishedSnapshot>, Self::Error>;
 
     /// Returns the snapshot at this exact archive position, when retained.
+    ///
+    /// Because at most one snapshot occupies a position, callers can use this lookup after an
+    /// ambiguous append outcome to determine which publication, if any, occupies that position.
     async fn snapshot_at(
         &self,
         position: SnapshotPosition,
@@ -38,11 +41,5 @@ pub trait SnapshotArchive:
     async fn snapshot_at_or_before(
         &self,
         position: EventPosition,
-    ) -> Result<Option<PublishedSnapshot>, Self::Error>;
-
-    /// Resolves a possibly ambiguous publication by stable operation identity.
-    async fn resolve_snapshot_publication(
-        &self,
-        operation_id: &OperationId,
     ) -> Result<Option<PublishedSnapshot>, Self::Error>;
 }
