@@ -59,6 +59,22 @@ Split the existing generated-client adapter by responsibility rather than moving
 General session bindings and neutral contracts belong in `sea-typescript`; Fluid message and summary interpretation and Fluid sequence projection belong in `sea-driver` or the appropriate higher-level adapter.
 Do not copy driver-owned interfaces into `sea-typescript` merely to avoid a dependency edge.
 
+### Reusable Session Stack Construction
+
+Separate the shared, transport-independent WASM session bindings from construction of concrete session stacks.
+Local memory, WebTransport, and decorated stacks must reuse the same session binding implementation.
+General binding values must not require transport-protocol types that pull `sea-webtransport` into local-only builds.
+Provide a browser-compatible session boundary on which the existing Rust session decorators can operate, rather than reimplementing decorator behavior in each binding.
+
+Adding a stack of existing storage, transport, and decorator implementations should require only localized Rust composition, factory, and build-configuration changes.
+Make decorator order explicit and preserve its semantics.
+Named configurations assembled in Rust are sufficient; arbitrary runtime composition of every possible stack is not required.
+Cargo features must enable or disable capabilities and their configuration factories without including dependencies of disabled capabilities.
+TypeScript factories select supported configurations without exposing generated WASM details and reject unsupported configurations clearly.
+
+Use compression over local and remote sessions as the first proof that this factoring works.
+Compression-plus-encryption is an example of a future configuration the design should accommodate, not an additional implementation acceptance requirement.
+
 ### Separate Capabilities, Services, and Packaging
 
 Cargo features choose capabilities at build time.
@@ -72,9 +88,27 @@ Provide a build-time example option to compare combined and split presets withou
 Switching presets should change that one selection, not driver logic, service configuration, or inventory-app code.
 Adding a capability may require a new build configuration and factory, but must not require copying the binding implementation.
 
+Make generating multiple capability-specific bundles a supported build operation, not a manual source-editing workflow.
+Each named build configuration specifies an explicit Cargo feature set and produces separate JavaScript and WASM artifacts for its supported JavaScript targets.
+The initial configurations include:
+
+| Bundle | Included capabilities |
+| --- | --- |
+| `webtransport` | Remote sessions only; no local storage, sequencer, compression, or encryption. |
+| `memory` | Local memory service without WebTransport. |
+| `combined` | Local memory and remote WebTransport sessions. |
+| `webtransport-compression` | Remote sessions with compression support. |
+
+Keep service configuration separate from these build names: including compression support does not implicitly enable compression for every session.
+Build each variant in a separate Cargo invocation with `--no-default-features` and explicit features to prevent feature unification between variants.
+Isolate generated outputs by configuration and JavaScript target, and track each variant's inputs and outputs for incremental builds.
+Provide independently importable package loaders so selecting the minimal WebTransport bundle does not download other bundles.
+Verify excluded dependencies and actual loading behavior, and measure generated JavaScript and WASM sizes with and without transfer compression.
+No exact bundle-size target is promised before measurement.
+
 Initialization is lazy and cached per loaded bundle.
 An initialized WASM module is not an ephemeral service: create service instances explicitly, with independent storage unless callers deliberately share a service.
-Keep generated objects and handles with the WASM instance that created them.
+Keep services, sessions, decorator stacks, generated objects, and handles with the WASM instance that created them.
 Do not pass WASM-owned objects between split bundles or rely on generated class identity across bundles.
 
 ## Implementation Stages
@@ -83,8 +117,10 @@ Do not pass WASM-owned objects between split bundles or rely on generated class 
 
 - [ ] Inventory the existing general bindings, browser transport bindings, generated adapter, and consumers; identify the narrow extraction boundary.
 - [ ] Introduce `sea-wasm` with optional capabilities for local memory and WebTransport, leaving transport mechanics in their owning crate.
+- [ ] Separate neutral session binding values and operations from concrete stack construction; establish the browser-compatible session boundary needed to reuse existing Rust decorators.
 - [ ] Promote local memory from transport test support to a supported binding configuration.
 - [ ] Expose the existing compression decorator through an optional capability and an explicit configuration; preserve matching encode/decode configuration for collaborating clients.
+- [ ] Prove compressed event and blob round trips over local and remote sessions through the shared bindings before broad consumer migration; do not duplicate bindings or decorator logic for these stacks.
 - [ ] Identify general session binding code separately from Fluid-specific generated-client adaptation, preparing the package extraction in stage 2.
 - [ ] Provide local-only, WebTransport-only, combined, and compression-enabled named build configurations from the same binding source.
 - [ ] Isolate generated outputs by configuration and JavaScript target; prevent overwrites, stale outputs, and unintended Cargo feature unification between variants.
@@ -92,7 +128,8 @@ Do not pass WASM-owned objects between split bundles or rely on generated class 
 - [ ] Migrate existing Node.js, browser, Fluid-driver, and direct SharedTree consumers without losing their current tests.
 - [ ] Document the new crate responsibilities and record the architectural decision under `historical/decisions/`.
 
-Acceptance: generated local and remote clients retain their existing behavior; the local-only WASM dependency graph excludes `sea-webtransport`; transport-only output excludes local storage and sequencer dependencies unless independently required and justified.
+Acceptance: generated local and remote clients retain their existing behavior; the local-only WASM dependency graph excludes `sea-webtransport`; the minimal WebTransport build excludes local storage, sequencer, compression, and encryption dependencies.
+Adding the compression configurations demonstrates localized stack construction and shared bindings without copying session operations.
 Test capability-specific builds as well as the all-features build, since the latter cannot detect missing feature guards.
 
 ### 2. Establish the sea-typescript Package
@@ -101,6 +138,7 @@ Test capability-specific builds as well as the all-features build, since the lat
 - [ ] Make it the sole direct SEA dependency needed by general TypeScript SEA applications, covering local memory, remote sessions, and optional decorators through package entrypoints.
 - [ ] Move general generated-client bindings and neutral session contracts into the package; keep Fluid-specific projection and adaptation in the higher-level adapters.
 - [ ] Encapsulate generated WASM artifacts and their loading so consumers do not import crate output paths or depend directly on generated packages.
+- [ ] Expose independently importable loaders for capability-specific bundles, including minimal WebTransport, through package entrypoints.
 - [ ] Configure workspace registration, dependency declarations, standard build tasks, exports and generated entrypoints, internal API release tags, generated API reports, TypeScript and documentation configuration, formatting, lint, and package metadata according to repository practices.
 - [ ] Add a package README and API documentation for session capabilities, initialization, resource ownership, errors, and supported environments without Fluid-specific concepts.
 - [ ] Migrate existing consumers to package entrypoints and preserve driver and direct SharedTree integration tests in their owning packages or harnesses.
@@ -117,11 +155,13 @@ Fluid adapters consume this layer, not the reverse; existing higher-level tests 
 - [ ] Supply combined and split loader presets and make their selection independent of service options.
 - [ ] Cache initialization per bundle without sharing ephemeral document storage implicitly.
 - [ ] Keep optional capabilities lazy; existing non-SEA example options must not initialize or fetch SEA WASM.
+- [ ] Verify that selecting the minimal WebTransport loader fetches only its own generated JavaScript and WASM artifacts, not memory, combined, or decorator-enabled bundles.
 - [ ] Test explicit sharing between clients of one ephemeral service and isolation between separate services.
 - [ ] Exercise the same local and remote scenarios through both presets, plus a compression-enabled scenario that proves the extension mechanism.
 - [ ] Record generated and compressed artifact sizes and observed loading behavior with build configuration and environment details.
 
 Acceptance: changing one loader selection switches combined/split packaging without changes to application logic or service semantics.
+The minimal WebTransport configuration passes remote-session scenarios without loading other bundles; dependency inspection and artifact-size measurements accompany the loading evidence.
 An unsupported capability produces a useful error; no silent transport fallback is allowed.
 Measurements support later comparison; this stage does not require an extensive benchmark project or a permanent choice of packaging strategy.
 
