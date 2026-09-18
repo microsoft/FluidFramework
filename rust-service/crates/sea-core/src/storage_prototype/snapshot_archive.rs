@@ -26,19 +26,20 @@ pub trait SnapshotArchive:
     >
 {
     /// Returns one retained snapshot by publication identity.
-    async fn snapshot(&self, id: &SnapshotId) -> Result<Option<PublishedSnapshot>, Self::Error>;
+    async fn get_snapshot(&self, id: &SnapshotId)
+    -> Result<Option<PublishedSnapshot>, Self::Error>;
 
     /// Returns the snapshot at this exact archive position, when retained.
     ///
     /// Because at most one snapshot occupies a position, callers can use this lookup after an
     /// ambiguous append outcome to determine which publication, if any, occupies that position.
-    async fn snapshot_at(
+    async fn get_snapshot_at(
         &self,
         position: SnapshotPosition,
     ) -> Result<Option<PublishedSnapshot>, Self::Error>;
 
     /// Returns the newest retained snapshot at or before an event position.
-    async fn snapshot_at_or_before(
+    async fn get_snapshot_at_or_before(
         &self,
         position: EventPosition,
     ) -> Result<Option<PublishedSnapshot>, Self::Error>;

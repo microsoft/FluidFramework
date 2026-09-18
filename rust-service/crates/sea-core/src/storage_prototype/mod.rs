@@ -275,16 +275,19 @@ where
     }
 
     /// Returns one retained snapshot by identity.
-    pub async fn snapshot(&self, id: &SnapshotId) -> Result<Option<PublishedSnapshot>, B::Error> {
-        self.snapshots.snapshot(id).await
+    pub async fn get_snapshot(
+        &self,
+        id: &SnapshotId,
+    ) -> Result<Option<PublishedSnapshot>, B::Error> {
+        self.snapshots.get_snapshot(id).await
     }
 
     /// Returns the latest retained snapshot.
-    pub async fn latest_snapshot(&self) -> Result<Option<PublishedSnapshot>, B::Error> {
+    pub async fn get_latest_snapshot(&self) -> Result<Option<PublishedSnapshot>, B::Error> {
         let Some(position) = self.snapshots.head().await? else {
             return Ok(None);
         };
-        self.snapshots.snapshot_at(position).await
+        self.snapshots.get_snapshot_at(position).await
     }
 
     /// Publishes a snapshot after establishing both referenced dependencies.
@@ -318,8 +321,8 @@ where
         required: Option<EventPosition>,
     ) -> Result<ViewLoad<B::Error>, B::Error> {
         let snapshot = match required {
-            Some(position) => self.snapshots.snapshot_at_or_before(position).await?,
-            None => self.latest_snapshot().await?,
+            Some(position) => self.snapshots.get_snapshot_at_or_before(position).await?,
+            None => self.get_latest_snapshot().await?,
         };
         let head = self.events.head().await?;
         let after = snapshot
