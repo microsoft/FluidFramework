@@ -21,6 +21,18 @@ Before writing or modifying a changeset, read and follow the [Changeset Guidelin
 
 When writing asserts (from `@fluidframework/core-utils`), use a string literal for the error message, not a hex assert code. This applies only to newly added asserts, not existing ones.
 
+## Internal Interface Type Checks
+
+When adding or changing a cast that accesses internal capabilities on a known concrete implementation, ensure the implementation is checked against the internal interface:
+
+- Prefer `implements` when API constraints allow it. First check for existing enforcement through inherited interfaces, typed wrappers, or factories; do not duplicate it without a specific reason.
+- Otherwise, add a compile-time `requireAssignableTo<Actual, Expected>` check. Reuse the existing helper from `@fluidframework/build-tools` where that dependency is available, using a type-only import.
+- For TypeScript-private members, derive the checked shape from the actual member types in the source module. Emitted declarations can erase private member types. Do not make members public or cast away mismatches to make the check pass.
+- Use `Required<Interface>` only when the concrete implementation guarantees every optional capability. Keep cross-version optionality on the interface itself.
+- Explain each check and any intentional exclusions or adaptations in TSDoc. Verify that incompatible member changes make the check fail.
+
+Examples: [parent-context type tests](../packages/runtime/container-runtime/src/test/types/internalInterfaces.ts) and the source-local `_checkInternalConfig` in [FluidDataStoreRuntime](../packages/runtime/datastore/src/dataStoreRuntime.ts).
+
 ## API Reports (`*.api.md`)
 
 API report files are **generated artifacts** — never hand-edit them. If they need updating, rebuild and regenerate via `build:api-reports`. If you are working in `@fluidframework/tree` or its aggregator (`fluid-framework`) and encounter unexpected API report diffs, read `.claude/skills/ci-readiness-check/tree-api-checks.md` before attempting to fix them.
