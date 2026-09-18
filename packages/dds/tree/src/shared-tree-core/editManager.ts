@@ -23,6 +23,7 @@ import {
 	findAncestor,
 	findCommonAncestor,
 	mintCommit,
+	rebaseBranch,
 	type RebaseStatsWithDuration,
 	tagChange,
 } from "../core/index.js";
@@ -1206,12 +1207,37 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 		const peerLocalBranches = new Map<SessionId, SummarySessionBranch<TChangeset>>(
 			mapIterable(this.peerLocalBranches.entries(), ([sessionId, branch]) => {
 				const branchPath: GraphCommit<TChangeset>[] = [];
-				const ancestor =
+				let ancestor =
 					findCommonAncestor([branch.getHead(), branchPath], this.trunk.getHead()) ??
 					fail(0xad6 /* Expected branch to be based on trunk */);
 
+				if (
+					this.parentBranch === undefined &&
+					sequenceIdComparator(
+						this.getCommitSequenceId(ancestor.revision),
+						this.getCommitSequenceId(forkPointFromMainTrunk.revision),
+					) < 0
+				) {
+					// A local fork can prevent physical trimming even when the summary omits a prefix.
+					// Rebase only the serialized peer state, preserving live forks and peer ancestry.
+					const { newSourceHead } = rebaseBranch(
+						this.mintRevisionTag,
+						this.changeFamily.rebaser,
+						branch.getHead(),
+						forkPointFromMainTrunk,
+						this.trunk.getHead(),
+					);
+					branchPath.length = 0;
+					ancestor =
+						findCommonAncestor([newSourceHead, branchPath], this.trunk.getHead()) ??
+						fail("Expected serialized peer branch to be based on trunk");
+				}
+				const summaryBaseRevision =
+					this.parentBranch === undefined
+						? forkPointFromMainTrunk.revision
+						: trunkBaseRevision;
 				const base =
-					ancestor.revision === trunkBaseRevision ? rootRevision : ancestor.revision;
+					ancestor.revision === summaryBaseRevision ? rootRevision : ancestor.revision;
 				return [
 					sessionId,
 					{
