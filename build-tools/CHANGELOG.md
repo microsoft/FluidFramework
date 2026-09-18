@@ -1,3 +1,9 @@
+## Unreleased
+
+### Other Changes
+
+* **build-tools:** Enable type-safety ESLint rules.
+
 ## [0.61.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.60.0...build-tools_v0.61.0) (2025-12-03)
 
 No documented changes.

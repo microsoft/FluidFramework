@@ -1,5 +1,9 @@
 # @fluid-example/version-migration-same-container
 
+## 3.1.0
+
+Dependency updates only.
+
 ## 3.0.0
 
 Dependency updates only.

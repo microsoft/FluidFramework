@@ -41,7 +41,7 @@ export class DefaultAtomIdAliasAllocator implements AtomIdAliasAllocator {
 		} else {
 			assert(
 				originalMaxLocalId === current.originalMaxLocalId,
-				"Inconsistent original max local ID for the same revision",
+				0xd3f /* Inconsistent original max local ID for the same revision */,
 			);
 		}
 	}
@@ -52,11 +52,11 @@ export class DefaultAtomIdAliasAllocator implements AtomIdAliasAllocator {
 	): ChangesetLocalId {
 		const current = this.offsets.get(originalRevision);
 		if (current === undefined) {
-			fail("No alias reserved for the given revision");
+			fail(0xd40 /* No alias reserved for the given revision */);
 		}
 		assert(
 			originalLocalId <= current.originalMaxLocalId,
-			"Original local ID exceeds the reserved count for the given revision",
+			0xd41 /* Original local ID exceeds the reserved count for the given revision */,
 		);
 		return offsetChangesetLocalId(originalLocalId, current.offset);
 	}
