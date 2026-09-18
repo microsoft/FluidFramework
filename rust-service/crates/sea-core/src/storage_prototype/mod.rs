@@ -81,6 +81,8 @@ impl DocumentId {
 /// the document. Component types need not be `Clone`. If an implementation makes one cloneable,
 /// every clone must preserve the same single-writer ordering and recovery guarantees rather than
 /// create an independent writer.
+/// Components and dependent streams share ownership or locks for the resources they use.
+/// Dropping the component set does not release ownership still needed by a dependent stream.
 #[derive(Debug)]
 pub struct StorageComponents<B, E, S> {
     /// Content-addressed blob store for this document.
@@ -110,8 +112,15 @@ pub struct CreatedDocument<B, E, S> {
 /// [`SeaStorage::open_document`] returns components only after enforcing this module's publication
 /// and recovery law. An implementation must fail opening rather than return components containing
 /// an event gap, an unavailable referenced blob tree, or a snapshot outside the recovered event
-/// prefix. Creation and opening must also fail while another exclusive writable component set for
-/// the same document remains live.
+/// prefix. Creation and opening must also fail while another valid exclusive writable opening for
+/// the same document remains owned by components or dependent streams and handles.
+///
+/// An outage, failover, or another backend-defined invalidating event may require a new opening.
+/// Before granting a replacement opening, the backend must prevent the invalidated opening from
+/// committing further writes, even if its Rust values remain live.
+/// Streams are not required to survive such invalidation; callers must reopen and recreate them.
+/// A backend may preserve an independent read stream when doing so preserves ordering and recovery
+/// guarantees, without requiring it to retain exclusive writer ownership.
 #[async_trait]
 pub trait SeaStorage: Send + Sync {
     /// Classified error shared by this factory's components.
@@ -139,8 +148,12 @@ pub trait SeaStorage: Send + Sync {
 
     /// Exclusively opens and recovers a document, or returns `None` when its identity is unknown.
     ///
-    /// The implementation must reject the operation while another writable opening remains live.
-    /// Dropping all returned component handles releases that ownership.
+    /// The implementation must reject the operation while another valid writable opening remains owned.
+    /// Ownership is released when all components, clones, streams, and availability handles that
+    /// retain it have been dropped, or when the backend safely invalidates the opening as described
+    /// by [`SeaStorage`].
+    /// Independent streams and availability handles need not retain writer ownership;
+    /// the backend must document which do.
     async fn open_document(
         &self,
         id: &DocumentId,
@@ -201,6 +214,12 @@ pub struct ViewLoad<E> {
 /// persistence, may overlap. Each component implementation linearizes its own mutations, while
 /// composed methods establish dependency order by awaiting availability before publishing an owner
 /// record.
+///
+/// Through its components, the view owns or locks its resources and shares the necessary ownership
+/// with streams returned by [`Self::read`] and [`Self::load`].
+/// Dropping the view alone does not invalidate those streams or release ownership they still need.
+/// Streams need not survive events that invalidate the opening, such as an outage or failover;
+/// callers must recreate the view and streams in that case.
 pub struct SeaView<B, E, S>
 where
     B: BlobStore,
@@ -283,8 +302,10 @@ where
 
     /// Reads ordered events after a cursor, either through a position or as a live stream.
     ///
-    /// `stop_after: Some(position)` produces a finite stream. `stop_after: None` catches up and
-    /// waits for newly committed events.
+    /// For bounds within the committed history, `stop_after: Some(position)` produces a finite stream.
+    /// `stop_after: None` catches up and waits for newly committed events.
+    /// Empty ranges, implementation-defined future bounds, lazy errors, and stream resource
+    /// ownership follow [`Archive::read`].
     pub fn read(
         &self,
         after: Option<EventPosition>,

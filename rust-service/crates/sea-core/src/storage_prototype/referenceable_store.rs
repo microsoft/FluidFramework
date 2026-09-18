@@ -13,6 +13,14 @@ use super::StorageSurface;
 /// Concrete handle construction remains private to an implementation. A handle may represent an
 /// already stored value, retained uploadable content, or another capability that can establish the
 /// value on demand.
+///
+/// A handle is availability evidence, not independent writer authority or a guarantee that an
+/// opening stays valid.
+/// Implementations must document whether handles retain resources or ownership of an opening;
+/// keeping a handle alive does not guarantee survival of an outage or failover.
+/// After reopening, callers must establish availability through the new store with
+/// [`ReferenceableStore::ensure_available`] or obtain a fresh handle with [`ReferenceableStore::resolve`].
+/// An incompatible old handle must be rejected even though its identity remains readable.
 pub trait StorageHandle: Clone + Send + Sync + 'static {
     /// Stable serializable identity represented by this handle.
     type Id: Copy + Send + Sync + 'static;

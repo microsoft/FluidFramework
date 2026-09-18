@@ -53,13 +53,30 @@ pub trait Archive: StorageSurface {
     /// Reads entries strictly after `after` in position order.
     ///
     /// `after` is an exclusive starting cursor; `None` starts before the first entry.
-    /// `stop_after` is an inclusive upper bound. `Some(position)` creates a finite stream containing
-    /// every entry through that bound, whether or not an entry exists exactly at the supplied
-    /// position. `None` creates an unbounded stream that waits for newly appended entries after
-    /// catching up.
+    /// `stop_after` is an inclusive upper bound.
+    /// For bounds at or before the committed head observed during stream initialization,
+    /// `Some(position)` creates a finite stream containing every entry in the requested range,
+    /// whether or not an entry exists exactly at either supplied position.
+    /// `None` creates an unbounded stream that waits for newly appended entries after catching up.
+    ///
+    /// When both bounds are present and `after >= stop_after`, the range is empty:
+    /// the stream yields no entries and completes without waiting for appends.
+    /// Otherwise, behavior for either supplied bound beyond the head observed during initialization
+    /// is implementation-defined, including when the archive is empty and has no head.
+    /// A backend must document its choice and may reject such bounds with
+    /// [`crate::ErrorKind::InvalidPosition`]; callers must not rely on support for future positions.
+    /// These allowances do not permit yielding entries outside the requested range or out of order.
     ///
     /// Calling this method performs no confirmed I/O. Initialization and runtime failures are
     /// yielded by the stream, and dropping the stream cancels its read or subscription work.
+    /// An empty range may still report an initialization failure.
+    /// The stream owns or shares the resources and locks needed to read independently of the
+    /// Rust value on which this method was called; dropping that value alone does not invalidate it.
+    /// For document components, this includes any dependency on the exclusive opening described
+    /// by [`super::SeaStorage`].
+    /// An outage, failover, or other event invalidating that opening may fail the stream;
+    /// callers must reopen and create a new stream rather than rely on transparent continuation.
+    /// A backend may keep an independent stream valid longer, but this is not required.
     fn read(
         &self,
         after: Option<Self::Position>,
