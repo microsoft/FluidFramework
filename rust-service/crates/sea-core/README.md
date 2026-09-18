@@ -24,6 +24,7 @@ See [`src/lib.rs`](src/lib.rs) for the complete API contract.
 
 The experimental [`storage_prototype`](src/storage_prototype/mod.rs) module decomposes storage into blob, event, and snapshot components.
 It does not replace the existing storage traits.
+`SeaView::blobs()` borrows the underlying blob store for content access and handle resolution; event and snapshot publication remain composed operations on the view.
 `SeaView::load` accepts a `LoadStart` policy: replay from the beginning without a snapshot, include all events after a supplied cursor, or start at the latest compatible snapshot.
 The returned stream catches up and then waits for new events, including for an initially empty archive.
 Loading combines snapshot selection and streaming startup without an extra caller round trip; callers can drop the stream when done or use `read` separately for bounded reads.

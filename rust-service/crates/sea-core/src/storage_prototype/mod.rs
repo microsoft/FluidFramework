@@ -45,10 +45,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 
 use crate::snapshot::{Snapshot, SnapshotPosition};
-use crate::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, Durability, Event,
-    EventPosition,
-};
+use crate::{ClassifiedError, Durability, Event, EventPosition};
 
 pub use blob_store::BlobStore;
 pub use event_archive::{EventArchive, EventArchiveStream};
@@ -245,29 +242,13 @@ where
         }
     }
 
-    /// Publishes or deduplicates one blob and returns its availability capability.
-    pub async fn put_blob(&self, payload: Bytes) -> Result<B::Handle, B::Error> {
-        self.blobs.put_blob(payload).await
-    }
-
-    /// Publishes or deduplicates one complete directory tree.
-    pub async fn put_directory(&self, directory: BlobDirectory) -> Result<B::Handle, B::Error> {
-        self.blobs.put_directory(directory).await
-    }
-
-    /// Fetches one immutable blob.
-    pub async fn get_blob(&self, id: BlobId) -> Result<Bytes, B::Error> {
-        self.blobs.get_blob(id).await
-    }
-
-    /// Fetches one immutable directory.
-    pub async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, B::Error> {
-        self.blobs.get_directory(id).await
-    }
-
-    /// Resolves a tree identity to availability evidence suitable for later publication.
-    pub async fn resolve_tree(&self, id: BlobTreeId) -> Result<Option<B::Handle>, B::Error> {
-        self.blobs.resolve(id).await
+    /// Borrows the blob store for content access and availability-handle resolution.
+    ///
+    /// The view retains ownership of the component.
+    /// Event and snapshot publication still go through the view's availability checks.
+    #[must_use]
+    pub const fn blobs(&self) -> &B {
+        &self.blobs
     }
 
     /// Resolves an event position to availability evidence suitable for snapshot publication.
