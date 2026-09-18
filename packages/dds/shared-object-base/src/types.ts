@@ -9,7 +9,7 @@ import type {
 	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedRuntimeMessage } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Events emitted by {@link ISharedObject}.
@@ -27,7 +27,7 @@ export interface ISharedObjectEvents extends IErrorEvent {
 	(
 		event: "pre-op",
 		listener: (
-			op: ISequencedDocumentMessage,
+			op: ISequencedRuntimeMessage,
 			local: boolean,
 			target: IEventThisPlaceHolder,
 		) => void,
@@ -44,7 +44,7 @@ export interface ISharedObjectEvents extends IErrorEvent {
 	(
 		event: "op",
 		listener: (
-			op: ISequencedDocumentMessage,
+			op: ISequencedRuntimeMessage,
 			local: boolean,
 			target: IEventThisPlaceHolder,
 		) => void,

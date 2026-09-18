@@ -36,6 +36,7 @@ import {
 	totalBlobSizePropertyName,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
+	type ISequencedRuntimeMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	toDeltaManagerInternal,
@@ -611,21 +612,28 @@ export abstract class SharedObjectCore<
 
 		// Decode any handles in the contents before processing the messages.
 		const decodedMessagesContent: IRuntimeMessagesContent[] = [];
-		for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
+		for (const {
+			contents,
+			localOpMetadata,
+			clientSequenceNumber,
+			indexInBatch,
+		} of messagesContent) {
 			const decodedMessageContent: IRuntimeMessagesContent = {
 				contents: parseHandles(contents, this.serializer),
 				localOpMetadata,
 				clientSequenceNumber,
+				indexInBatch,
 			};
 			decodedMessagesContent.push(decodedMessageContent);
 		}
 
 		const emitEvents = (event: "pre-op" | "op"): void => {
-			for (const { contents, clientSequenceNumber } of decodedMessagesContent) {
-				const message: ISequencedDocumentMessage = {
+			for (const { contents, clientSequenceNumber, indexInBatch } of decodedMessagesContent) {
+				const message: ISequencedRuntimeMessage = {
 					...envelope,
 					contents,
 					clientSequenceNumber,
+					indexInBatch,
 				};
 				this.emitInternal(event, message, local);
 			}
