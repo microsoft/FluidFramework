@@ -20,7 +20,11 @@ pub trait EventArchive: ReferenceableStore<Id = EventPosition> {
     /// Appends one event and returns its stable committed position.
     async fn append(&self, event: Event) -> Result<Self::Handle, Self::Error>;
 
-    /// Reads committed events strictly after `after` through the inclusive `through` bound.
+    /// Reads a finite range of committed events strictly after `after`.
+    ///
+    /// `through` is an inclusive upper bound. When it is `None`, the implementation captures the
+    /// current head as the upper bound. Events appended after that boundary are never added to the
+    /// returned stream.
     async fn read(
         &self,
         after: Option<EventPosition>,

@@ -36,7 +36,6 @@ mod snapshot_archive;
 
 use async_trait::async_trait;
 use bytes::Bytes;
-use tokio::sync::Mutex;
 
 use crate::snapshot::{Snapshot, SnapshotPosition};
 use crate::{
@@ -164,25 +163,17 @@ pub struct ViewSnapshotPublication<BH, EH> {
 
 /// Exclusive concrete reader/writer view of one snapshotted event archive.
 ///
-/// The view is intentionally not `Clone`. Its internal async mutex serializes component access and
-/// remains held across validation and owner-record publication. Consequently an append, snapshot
-/// publication, or load cannot interleave with another operation through the same view after an
-/// awaited component call yields.
+/// The view is intentionally not `Clone`, preserving the exclusive writable authority established
+/// by [`SeaStorage`]. Its methods take shared references so independent operations, such as blob
+/// persistence, may overlap. Each component implementation linearizes its own mutations, while
+/// composed methods establish dependency order by awaiting availability before publishing an owner
+/// record.
 pub struct SeaView<B, E, S>
 where
     B: BlobStore,
     E: EventArchive<Error = B::Error>,
     S: SnapshotArchive<Error = B::Error>,
 {
-    state: Mutex<ViewState<B, E, S>>,
-}
-
-/// Component handles protected by a view's single operation-ordering lock.
-///
-/// Keeping all three components under one mutex lets [`SeaView`] hold the same guard while it
-/// establishes dependencies and publishes their owner record, or while it selects a snapshot and
-/// captures the corresponding finite event head.
-struct ViewState<B, E, S> {
     blobs: B,
     events: E,
     snapshots: S,
@@ -196,37 +187,35 @@ where
 {
     fn new(components: StorageComponents<B, E, S>) -> Self {
         Self {
-            state: Mutex::new(ViewState {
-                blobs: components.blobs,
-                events: components.events,
-                snapshots: components.snapshots,
-            }),
+            blobs: components.blobs,
+            events: components.events,
+            snapshots: components.snapshots,
         }
     }
 
     /// Publishes or deduplicates one blob and returns its availability capability.
     pub async fn put_blob(&self, payload: Bytes) -> Result<B::Handle, B::Error> {
-        self.state.lock().await.blobs.put_blob(payload).await
+        self.blobs.put_blob(payload).await
     }
 
     /// Publishes or deduplicates one complete directory tree.
     pub async fn put_directory(&self, directory: BlobDirectory) -> Result<B::Handle, B::Error> {
-        self.state.lock().await.blobs.put_directory(directory).await
+        self.blobs.put_directory(directory).await
     }
 
     /// Fetches one immutable blob.
     pub async fn get_blob(&self, id: BlobId) -> Result<Bytes, B::Error> {
-        self.state.lock().await.blobs.get_blob(id).await
+        self.blobs.get_blob(id).await
     }
 
     /// Fetches one immutable directory.
     pub async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, B::Error> {
-        self.state.lock().await.blobs.get_directory(id).await
+        self.blobs.get_directory(id).await
     }
 
     /// Resolves a tree identity to availability evidence suitable for later publication.
     pub async fn resolve_tree(&self, id: BlobTreeId) -> Result<Option<B::Handle>, B::Error> {
-        self.state.lock().await.blobs.resolve(id).await
+        self.blobs.resolve(id).await
     }
 
     /// Resolves an event position to availability evidence suitable for snapshot publication.
@@ -234,7 +223,7 @@ where
         &self,
         position: EventPosition,
     ) -> Result<Option<E::Handle>, B::Error> {
-        self.state.lock().await.events.resolve(position).await
+        self.events.resolve(position).await
     }
 
     /// Appends an event after establishing availability of its optional content tree.
@@ -243,12 +232,10 @@ where
         payload: Bytes,
         tree: Option<&B::Handle>,
     ) -> Result<E::Handle, B::Error> {
-        let state = self.state.lock().await;
         if let Some(handle) = tree {
-            state.blobs.ensure_available(handle).await?;
+            self.blobs.ensure_available(handle).await?;
         }
-        state
-            .events
+        self.events
             .append(Event {
                 payload,
                 blob_tree: tree.map(StorageHandle::id),
@@ -262,22 +249,22 @@ where
         after: Option<EventPosition>,
         through: Option<EventPosition>,
     ) -> Result<StorageEventStream<B::Error>, B::Error> {
-        self.state.lock().await.events.read(after, through).await
+        self.events.read(after, through).await
     }
 
     /// Returns the latest committed event position.
     pub async fn head(&self) -> Result<Option<EventPosition>, B::Error> {
-        self.state.lock().await.events.head().await
+        self.events.head().await
     }
 
     /// Returns one retained snapshot by identity.
     pub async fn snapshot(&self, id: &SnapshotId) -> Result<Option<PublishedSnapshot>, B::Error> {
-        self.state.lock().await.snapshots.snapshot(id).await
+        self.snapshots.snapshot(id).await
     }
 
     /// Returns the latest retained snapshot.
     pub async fn latest_snapshot(&self) -> Result<Option<PublishedSnapshot>, B::Error> {
-        self.state.lock().await.snapshots.latest_snapshot().await
+        self.snapshots.latest_snapshot().await
     }
 
     /// Publishes a snapshot after establishing both referenced dependencies.
@@ -285,17 +272,15 @@ where
         &self,
         publication: ViewSnapshotPublication<B::Handle, E::Handle>,
     ) -> Result<PublishedSnapshot, B::Error> {
-        let state = self.state.lock().await;
-        state.blobs.ensure_available(&publication.root).await?;
+        self.blobs.ensure_available(&publication.root).await?;
         let at_event = match &publication.at_event {
             ViewSnapshotPosition::Initial => SnapshotPosition::Initial,
             ViewSnapshotPosition::At(event) => {
-                state.events.ensure_available(event).await?;
+                self.events.ensure_available(event).await?;
                 SnapshotPosition::At(event.id())
             }
         };
-        state
-            .snapshots
+        self.snapshots
             .publish_snapshot(SnapshotPublication {
                 operation_id: publication.operation_id,
                 expected_parent: publication.expected_parent,
@@ -312,36 +297,32 @@ where
         &self,
         operation_id: &OperationId,
     ) -> Result<Option<PublishedSnapshot>, B::Error> {
-        self.state
-            .lock()
-            .await
-            .snapshots
+        self.snapshots
             .resolve_snapshot_publication(operation_id)
             .await
     }
 
     /// Selects a compatible snapshot and captures a finite catch-up boundary.
     ///
-    /// The view's operation lock prevents an append through this view while the snapshot and head
-    /// are selected. Implementations that permit external writers must provide equivalent
-    /// serialization beneath the component contracts.
+    /// The event archive linearizes concurrent appends. After snapshot selection, the captured head
+    /// fixes the inclusive upper bound of the returned finite event stream; later appends are not
+    /// included.
     pub async fn load(
         &self,
         required: Option<EventPosition>,
     ) -> Result<StorageLoad<B::Error>, B::Error> {
-        let state = self.state.lock().await;
         let snapshot = match required {
-            Some(position) => state.snapshots.snapshot_at_or_before(position).await?,
-            None => state.snapshots.latest_snapshot().await?,
+            Some(position) => self.snapshots.snapshot_at_or_before(position).await?,
+            None => self.snapshots.latest_snapshot().await?,
         };
-        let head = state.events.head().await?;
+        let head = self.events.head().await?;
         let after = snapshot
             .as_ref()
             .and_then(|value| match value.snapshot.at_event {
                 SnapshotPosition::Initial => None,
                 SnapshotPosition::At(position) => Some(position),
             });
-        let events = state.events.read(after, head).await?;
+        let events = self.events.read(after, head).await?;
         Ok(StorageLoad {
             snapshot,
             head,
