@@ -14,7 +14,7 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-use-before-define": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"unicorn/text-encoding-identifier-case": "off",
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+			"@fluid-internal/fluid/no-unchecked-record-access": "error",
 			"@typescript-eslint/unbound-method": "off",
 		},
 	},

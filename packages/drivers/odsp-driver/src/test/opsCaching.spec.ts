@@ -24,8 +24,9 @@ class MockCache implements ICache {
 
 	public async write(batchNumber: string, data: string): Promise<void> {
 		this.writeCount++;
-		this.data[batchNumber] = JSON.parse(data);
-		for (const op of this.data[batchNumber] as CacheEntry) {
+		const batch = JSON.parse(data) as CacheEntry;
+		this.data[batchNumber] = batch;
+		for (const op of batch) {
 			// JSON.serialize converts undefined to null
 			if (op !== null) {
 				this.opsWritten++;
@@ -34,7 +35,7 @@ class MockCache implements ICache {
 	}
 
 	public async read(batchNumber: string): Promise<string | undefined> {
-		const content = this.data[batchNumber];
+		const content: unknown | undefined = this.data[batchNumber];
 		if (content === undefined) {
 			return undefined;
 		}

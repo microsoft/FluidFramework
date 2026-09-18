@@ -258,8 +258,10 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 	protected combineProtocolAndAppSnapshotTree(snapshotTree: ISnapshotTree): ISnapshotTree {
 		// When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
 		// So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
+		// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access -- The snapshot format requires the .app tree; existing behavior fails if it is absent.
 		const hierarchicalAppTree = snapshotTree.trees[".app"];
-		const hierarchicalProtocolTree = snapshotTree.trees[".protocol"];
+		const hierarchicalProtocolTree: ISnapshotTree | undefined =
+			snapshotTree.trees[".protocol"];
 		const summarySnapshotTree: ISnapshotTree = {
 			blobs: {
 				...hierarchicalAppTree.blobs,
