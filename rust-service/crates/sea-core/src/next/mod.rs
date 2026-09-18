@@ -1,10 +1,11 @@
-//! Executable prototype of decomposed Sea storage contracts.
+//! Replacement Sea core contracts, starting with decomposed storage.
 //!
-//! This module captures a proposed replacement for the current monolithic storage API. It is
-//! hidden from generated documentation while the contracts are evaluated and does not yet replace
-//! existing traits.
+//! These contracts are the target for migration from the existing core APIs.
+//! The temporary `next` namespace keeps replacement types distinct while consumers are ported;
+//! unchanged core primitives are shared rather than duplicated.
+//! The module remains hidden from generated documentation during API-only preparation.
 //!
-//! The architecture has four layers:
+//! The storage architecture has three layers:
 //!
 //! 1. [`BlobStore`], [`EventArchive`], and [`SnapshotArchive`] are independently useful storage
 //!    components. Event and snapshot storage share the ordered [`Archive`] contract. Blob and event
@@ -15,8 +16,11 @@
 //!    recovery guarantees without requiring a distributed transaction.
 //! 3. [`SeaView`] exclusively composes one component of each kind into the reader/writer view of a
 //!    document. Availability-bearing handles enforce the order in which references are published.
-//! 4. [`SeaCollection`] uses storage to build document views. A sequencer can own one view and
-//!    multiplex it into concurrent client sessions.
+//!
+//! [`SeaStorage::create_view`] and [`SeaStorage::open_view`] compose document views directly.
+//! A sequencer can own one view and multiplex it into concurrent client sessions.
+//! Lazy document allocation, active sequencer ownership, and session lifecycle policy belong to
+//! higher-level runtime management, not this storage API.
 //!
 //! # Publication and recovery law
 //!
@@ -28,7 +32,7 @@
 //! Every snapshot position identifies an event in the exposed prefix.
 //! Corruption within the required prefix fails recovery rather than producing a gap.
 //!
-//! This prototype does not support event or snapshot pruning.
+//! These storage contracts do not support event or snapshot pruning.
 //! Archives retain every committed entry, and recovered event prefixes start with the first event.
 //! This retention requirement does not strengthen the backend's durability guarantees.
 //!
@@ -159,6 +163,31 @@ pub trait SeaStorage: Send + Sync {
         &self,
         id: &DocumentId,
     ) -> Result<Option<StorageComponents<Self::Blobs, Self::Events, Self::Snapshots>>, Self::Error>;
+
+    /// Creates a backend-identified document and its exclusive writable view.
+    async fn create_view(
+        &self,
+    ) -> Result<
+        (
+            DocumentId,
+            SeaView<Self::Blobs, Self::Events, Self::Snapshots>,
+        ),
+        Self::Error,
+    > {
+        let created = self.create_document().await?;
+        Ok((created.id, SeaView::new(created.components)))
+    }
+
+    /// Opens an existing document with exclusive writer ownership, or returns `None` if unknown.
+    async fn open_view(
+        &self,
+        id: &DocumentId,
+    ) -> Result<Option<SeaView<Self::Blobs, Self::Events, Self::Snapshots>>, Self::Error> {
+        let Some(components) = self.open_document(id).await? else {
+            return Ok(None);
+        };
+        Ok(Some(SeaView::new(components)))
+    }
 }
 
 /// Materialized state through a committed event, with availability evidence for both dependencies.
@@ -370,55 +399,5 @@ where
         let after = snapshot.as_ref().map(|value| value.at_event.id());
         let events = self.read(after, None);
         Ok(ViewLoad { snapshot, events })
-    }
-}
-
-/// Document collection that asks storage to create or exclusively open document views.
-pub struct SeaCollection<Storage> {
-    storage: Storage,
-}
-
-impl<Storage> SeaCollection<Storage> {
-    /// Creates a collection from one document storage backend.
-    #[must_use]
-    pub const fn new(storage: Storage) -> Self {
-        Self { storage }
-    }
-
-    /// Returns the underlying document storage backend.
-    #[must_use]
-    pub const fn storage(&self) -> &Storage {
-        &self.storage
-    }
-}
-
-impl<Storage> SeaCollection<Storage>
-where
-    Storage: SeaStorage,
-{
-    /// Creates a backend-identified document and its exclusive writable view.
-    pub async fn create(
-        &self,
-    ) -> Result<
-        (
-            DocumentId,
-            SeaView<Storage::Blobs, Storage::Events, Storage::Snapshots>,
-        ),
-        Storage::Error,
-    > {
-        let created = self.storage.create_document().await?;
-        Ok((created.id, SeaView::new(created.components)))
-    }
-
-    /// Opens an existing document with exclusive writer ownership.
-    pub async fn open(
-        &self,
-        id: &DocumentId,
-    ) -> Result<Option<SeaView<Storage::Blobs, Storage::Events, Storage::Snapshots>>, Storage::Error>
-    {
-        let Some(components) = self.storage.open_document(id).await? else {
-            return Ok(None);
-        };
-        Ok(Some(SeaView::new(components)))
     }
 }

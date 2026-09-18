@@ -16,7 +16,7 @@ pub type ArchiveStream<Item, Position, Error> = BoxMonitoredStream<Item, Positio
 /// contain equal values. If an append request proposes its position, the implementation rejects a
 /// position that is not strictly greater than the current head.
 ///
-/// This prototype does not support pruning: archives must retain every committed entry.
+/// This contract does not support pruning: archives must retain every committed entry.
 /// Recovery exposes a complete ordered prefix starting with the first entry, or an error,
 /// subject to the backend's durability guarantees.
 /// Corruption within the required prefix fails recovery rather than producing a gap.

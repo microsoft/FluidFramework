@@ -20,14 +20,18 @@ This crate defines no persistence layout, authentication policy, retention polic
 
 See [`src/lib.rs`](src/lib.rs) for the complete API contract.
 
-## Storage Prototype
+## Replacement Core Model
 
-The experimental [`storage_prototype`](src/storage_prototype/mod.rs) module decomposes storage into blob, event, and snapshot components.
-It does not replace the existing storage traits.
+The [`next`](src/next/mod.rs) module contains the replacement core contracts, starting with storage decomposed into blob, event, and snapshot components.
+It is the target for migration of implementations and consumers; the existing APIs remain in place until their consumers are ported.
+The namespace is temporary: replacement types will move to their intended public modules as the superseded APIs are removed.
+Unchanged core primitives are shared rather than duplicated.
+`SeaStorage::create_view` and `SeaStorage::open_view` compose exclusive document views directly from backend components.
+Active document caching, sequencer ownership, and session lifecycle policy belong to higher-level runtime management, not a storage collection wrapper.
 `SeaView::blobs()` borrows the underlying blob store for content access and handle resolution; event and snapshot publication remain composed operations on the view.
-The prototype-local `Snapshot<BlobHandle, EventHandle>` carries availability handles and is shared by snapshot lookup, publication, and loading.
+The replacement `Snapshot<BlobHandle, EventHandle>` carries availability handles and is shared by snapshot lookup, publication, and loading.
 Snapshot archives use event positions as their positions; initial empty state has no snapshot publication.
-This API prototype does not define a persisted snapshot representation.
+These contracts do not define a persisted snapshot representation.
 `SeaView::get_snapshot` and `SeaView::load` share a `LoadStart` policy: `Beginning` skips snapshots, `ReplayAtLeastAllAfter(position)` selects the newest snapshot at or before the cursor, and `LatestSnapshot` selects the newest available snapshot.
 Snapshot selection returns `None` when no snapshot qualifies; callers can use the selected snapshot followed by a bounded `read` to reconstruct a particular event position.
 The stream returned by `load` catches up and then waits for new events, including for an initially empty archive.

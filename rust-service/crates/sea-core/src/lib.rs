@@ -9,9 +9,9 @@ use futures_core::Stream;
 pub mod archive;
 pub mod blob;
 pub mod monitored_stream;
-pub mod snapshot;
 #[doc(hidden)]
-pub mod storage_prototype;
+pub mod next;
+pub mod snapshot;
 
 pub use archive::{
     AuthorId, CommittedEvent, Event, EventPosition, OperationId, SeaArchive, SessionCommittedEvent,

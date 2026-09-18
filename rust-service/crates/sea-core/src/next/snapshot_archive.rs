@@ -15,7 +15,7 @@ use super::{Archive, Snapshot, StorageHandle};
 /// Snapshot positions are unique and increase with the event history they summarize. The archive
 /// may therefore be read sparsely using any [`EventPosition`] bound, while exact lookup succeeds
 /// only at a position containing a publication.
-/// Like every [`Archive`] in this prototype, snapshot archives do not support pruning.
+/// Like every [`Archive`], snapshot archives do not support pruning.
 /// A snapshot's archive position is the identity of its event handle.
 /// The initial empty state has no snapshot publication.
 ///
