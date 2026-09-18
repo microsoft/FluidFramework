@@ -1,32 +1,23 @@
-//! Event archive storage and client access contracts.
-//!
-//! An event archive holds an append-only ordered collection of events.
-//! [`crate::SeaStorage`] defines the trusted backend contract and natively supports only a single writer;
-//! `sea-sequencer` coordinates multiple writers and exposes the client-facing traits in this module.
-//!
-//! Archives use the content-addressed trees in [`crate::blob`] so events can reference immutable
-//! content and [`Snapshot`]s can capture the state produced through a [`SnapshotPosition`].
-//!
-//! "Event Archive" is the "EA" in Sea: Snapshotted Event Archive.
+//! Ordered event values and stable session identities.
 
 use std::pin::Pin;
 
-use async_trait::async_trait;
 use bytes::Bytes;
 use futures_core::Stream;
 
-use crate::{BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId};
+use crate::BlobTreeId;
+pub use crate::SnapshotParticipation;
 
-use crate::snapshot::SnapshotId;
-pub use crate::snapshot::{
-    PublishedSnapshot, Snapshot, SnapshotCoordination, SnapshotParticipation, SnapshotPosition,
-    SnapshotPublication,
-};
-pub use crate::{
-    ArchiveEventStream, ArchiveLoadStream, EventReceipt, EventSubmission, LoadEvent,
-    SeaAuthorSession, SeaEventSubscription, SeaService, SeaSession, SeaSnapshotCoordinator,
-    SeaSnapshotPublisher, SeaStorage, SessionBounds, StorageEventStream, StorageLoad,
-};
+/// A stable event submission through an individual session.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct EventSubmission {
+    /// Stable identity reused for retries and ambiguity resolution.
+    pub operation_id: OperationId,
+    /// Latest event incorporated by the author's local state.
+    pub reference: Option<EventPosition>,
+    /// Opaque event and optional content root.
+    pub event: Event,
+}
 
 /// A stable event-order value within one archive.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -246,45 +237,3 @@ pub type SessionStream<T, E> = Pin<Box<dyn Stream<Item = Result<T, E>> + Send + 
 #[cfg(target_arch = "wasm32")]
 /// Session stream on browser targets.
 pub type SessionStream<T, E> = Pin<Box<dyn Stream<Item = Result<T, E>> + 'static>>;
-
-/// Archive-scoped content, historical reads, and snapshot lookup.
-///
-/// This surface owns no author membership. Each read stream owns its finite read or live
-/// subscription, and dropping that stream cancels its work without closing the archive handle.
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-pub trait SeaArchive: SeaService {
-    /// Reads an ordered range of committed application events.
-    ///
-    /// `after` is an exclusive lower bound; `None` starts at the first event.
-    /// `stop_after` is an inclusive upper bound; `None` continues waiting for new events.
-    /// Calling this method performs no confirmed I/O; initialization failures are yielded by the
-    /// returned stream.
-    ///
-    /// Event items retain strict archive order. Progress items are out-of-band observations and
-    /// may cut ahead of buffered events without changing their order. Initial progress uses
-    /// `after` for both `previous` and `latest_known` with `StreamingBacklog` until head discovery
-    /// completes. `AwaitingNewItems` reports that an unbounded read has caught up, while
-    /// `FallenBehind` reports known throughput-limited buffering.
-    fn read(
-        &self,
-        after: Option<EventPosition>,
-        stop_after: Option<EventPosition>,
-    ) -> ArchiveEventStream<Self::Error>;
-
-    /// Publishes or deduplicates one immutable blob.
-    async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error>;
-
-    /// Fetches one authorized immutable blob.
-    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error>;
-
-    /// Publishes or deduplicates one immutable directory.
-    async fn put_directory(&self, directory: BlobDirectory)
-    -> Result<BlobDirectoryId, Self::Error>;
-
-    /// Fetches one authorized immutable directory.
-    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error>;
-
-    /// Returns one retained snapshot by publication identity.
-    async fn snapshot(&self, id: &SnapshotId) -> Result<Option<PublishedSnapshot>, Self::Error>;
-}

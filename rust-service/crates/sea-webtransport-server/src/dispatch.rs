@@ -9,13 +9,10 @@ use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, ErrorKind, Event,
     EventPosition, MonitoredStreamItem, MonitoredStreamStatus,
     archive::{
-        EventSubmission, OperationId, SeaService,
-        SnapshotParticipation as ArchiveSnapshotParticipation,
+        EventSubmission, OperationId, SnapshotParticipation as ArchiveSnapshotParticipation,
     },
-    next::{
-        LoadStart, Snapshot, StorageHandle,
-        session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
-    },
+    session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
+    storage::{LoadStart, Snapshot, StorageHandle},
 };
 
 use sea_webtransport::protocol;
@@ -23,11 +20,11 @@ use sea_webtransport::protocol;
 use crate::{SeaConnectionService, SeaResponseStream};
 
 /// Adapts narrow Sea service responsibilities to typed wire requests.
-pub struct SessionDispatcher<S: SeaService> {
+pub struct SessionDispatcher<S: sea_core::SeaService> {
     session: Arc<S>,
 }
 
-impl<S: SeaService> SessionDispatcher<S> {
+impl<S: sea_core::SeaService> SessionDispatcher<S> {
     /// Wraps one already-open session.
     #[must_use]
     pub const fn new(session: Arc<S>) -> Self {
@@ -464,9 +461,9 @@ mod tests {
     use bytes::Bytes;
     use futures_util::StreamExt as _;
     use sea_core::archive::{AuthorId, SessionId};
-    use sea_core::next::SeaStorage as _;
+    use sea_core::storage::SeaStorage as _;
     use sea_memory::MemoryStorage;
-    use sea_sequencer::next::LocalSequencer;
+    use sea_sequencer::session::LocalSequencer;
 
     use super::SessionDispatcher;
     use sea_webtransport::protocol;

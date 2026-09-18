@@ -1,6 +1,6 @@
 # Sea File
 
-`sea-file::next::FileStorage` implements the replacement `sea_core::next::SeaStorage` with buffered filesystem documents.
+`sea-file::storage::FileStorage` implements the replacement `sea_core::storage::SeaStorage` with buffered filesystem documents.
 `FileStorage::<false>::open(root)` creates or opens a namespace; `create_view` allocates a document and `open_view` exclusively recovers one.
 The same engine supplies synchronized storage to `sea-file-durable` through `FileStorage<true>`.
 Neither mode forwards through the old backend.
@@ -52,15 +52,9 @@ Synchronous I/O can block the calling executor; there is no throughput, distribu
 Durable behavior depends on the host filesystem honoring synchronization and advisory locks.
 Tests exercise deterministic incomplete and post-sync boundaries, not power-loss or hardware-failure certification.
 
-See [`src/next.rs`](src/next.rs) for components and localized tests, and [`src/journal.rs`](src/journal.rs) for framing and fault boundaries.
+See [`src/storage.rs`](src/storage.rs) for components and localized tests, and [`src/journal.rs`](src/journal.rs) for framing and fault boundaries.
 Shared view and sparse-archive laws come from [`sea-conformance`](../sea-conformance/README.md).
 The stateful wrapper crate tests file/view/sequencer/encryption/dictionary composition and recovery in both durability modes.
-
-## Transitional API
-
-`FileStream` and its old journal remain for server hosting (checkpoint 4) and benchmarks (checkpoint 5).
-They have different snapshot/retry semantics and do not provide replacement opening guarantees.
-Checkpoint 5 removes remaining old backend definitions after those consumers migrate; no replacement path depends on them.
 
 ## Validation
 

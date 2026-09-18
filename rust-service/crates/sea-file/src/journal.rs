@@ -2,7 +2,7 @@
 //!
 //! Each record carries its length, complemented length, and content checksum. Recovery returns
 //! only complete verified records and the last valid byte boundary; interpretation and
-//! dependency-closure checks remain the responsibility of `sea_file::next`.
+//! dependency-closure checks remain the responsibility of `sea_file::storage`.
 //!
 //! Buffered openings reject an incomplete tail because an acknowledged write may not have reached
 //! stable storage. Durable openings synchronize every acknowledged frame and may therefore discard

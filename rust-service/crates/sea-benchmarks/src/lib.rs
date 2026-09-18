@@ -29,9 +29,9 @@ pub enum FixtureKind {
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum MeasurementBoundary {
-    /// Trusted archive backend operations through [`sea_core::archive::SeaStorage`].
+    /// Trusted archive backend operations through [`sea_core::storage::SeaView`].
     Storage,
-    /// Author operations through a sequenced [`sea_core::archive::SeaSession`].
+    /// Author operations through a sequenced [`sea_core::session::SeaSession`].
     SequencedSession,
 }
 

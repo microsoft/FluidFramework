@@ -21,12 +21,10 @@ use sea_core::{
         EventSubmission, OperationId, SessionCommittedEvent, SessionStream, SnapshotParticipation,
     },
     map_monitored_stream,
-    next::{
-        ArchiveStream, LoadStart, Snapshot,
-        session::{
-            SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator, SessionLoad, SnapshotCoordination,
-        },
+    session::{
+        SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator, SessionLoad, SnapshotCoordination,
     },
+    storage::{ArchiveStream, LoadStart, Snapshot},
 };
 
 impl<Session: SeaArchive> StatefulCompressionSession<Session> {
@@ -224,10 +222,10 @@ mod tests {
     use sea_core::{
         ClassifiedError, ErrorKind, Event, MonitoredStreamItem,
         archive::{AuthorId, SessionId},
-        next::SeaStorage,
+        storage::SeaStorage,
     };
     use sea_memory::MemoryStorage;
-    use sea_sequencer::next::LocalSequencer;
+    use sea_sequencer::session::LocalSequencer;
 
     /// Fixed test-only key provider for persisted wrapper-composition evidence.
     #[derive(Clone)]
@@ -265,14 +263,14 @@ mod tests {
 
     /// Runs the same session workflow and post-shutdown recovery under each file durability policy.
     async fn file_composition<const DURABLE: bool>() {
-        use sea_core::next::StorageHandle;
+        use sea_core::storage::StorageHandle;
         let root = std::env::temp_dir().join(format!(
             "sea-next-composition-{}-{DURABLE}",
             std::process::id()
         ));
-        let storage = sea_file::next::FileStorage::<DURABLE>::open(&root).unwrap();
+        let storage = sea_file::storage::FileStorage::<DURABLE>::open(&root).unwrap();
         let (id, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<sea_file::next::FileStorage<DURABLE>>::recover(view)
+        let runtime = LocalSequencer::<sea_file::storage::FileStorage<DURABLE>>::recover(view)
             .await
             .unwrap();
         let first = wrapped(
@@ -295,7 +293,7 @@ mod tests {
                 .await
                 .unwrap(),
         );
-        sea_conformance::next::run_session_conformance(&first, &second).await;
+        sea_conformance::run_session_conformance(&first, &second).await;
         let snapshot = second
             .get_snapshot(LoadStart::LatestSnapshot)
             .await
@@ -303,9 +301,10 @@ mod tests {
             .unwrap();
         runtime.shutdown().await.unwrap();
         let reopened = storage.open_view(&id).await.unwrap().unwrap();
-        let recovered = LocalSequencer::<sea_file::next::FileStorage<DURABLE>>::recover(reopened)
-            .await
-            .unwrap();
+        let recovered =
+            LocalSequencer::<sea_file::storage::FileStorage<DURABLE>>::recover(reopened)
+                .await
+                .unwrap();
         let session = wrapped(
             recovered
                 .open_session(
@@ -371,7 +370,7 @@ mod tests {
             4096,
         )
         .unwrap();
-        sea_conformance::next::run_session_conformance(&first, &second).await;
+        sea_conformance::run_session_conformance(&first, &second).await;
     }
 
     #[tokio::test]

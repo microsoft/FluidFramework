@@ -11,29 +11,36 @@ use std::{
 };
 
 use bytes::Bytes;
-use futures_util::{StreamExt, TryStreamExt};
+use futures_util::StreamExt;
 use sea_benchmarks::{
     BenchmarkResult, DEFAULT_SEED, Environment, FixtureGenerator, FixtureKind, MeasurementBoundary,
     Measurements, SCHEMA_VERSION, Workload, summarize,
 };
 use sea_compression::CompressionSession;
 use sea_core::{
-    ArchiveEventStream, BlobTreeId, Event, MonitoredStreamItem,
-    archive::{
-        AuthorId, EventSubmission, OperationId, SeaArchive, SeaAuthorSession, SeaEventSubscription,
-        SeaSnapshotCoordinator, SeaStorage, SessionId, Snapshot as ArchiveSnapshot,
-        SnapshotPosition as ArchiveSnapshotPosition, SnapshotPublication,
+    ArchiveEventStream, Event, MonitoredStreamItem,
+    archive::{AuthorId, EventSubmission, OperationId, SessionId, SnapshotParticipation},
+    session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
+    storage::{
+        BlobStore, EventArchiveStream, LoadStart, SeaStorage, SeaView, Snapshot, StorageHandle,
     },
 };
 use sea_encryption::{ActiveKey, EncryptionKey, EncryptionSession, KeyId, KeyProvider};
-use sea_file::FileStream;
-use sea_memory::MemoryStream;
+use sea_file::storage::FileStorage;
+use sea_memory::MemoryStorage;
 use sea_sequencer::session::{LocalSequencer, LocalSession};
 use sea_stateful_compression::StatefulCompressionSession;
 use tokio::task::JoinSet;
 
 /// Monotonic suffix for process-local temporary benchmark paths.
 static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(1);
+
+/// Document view constructed by one benchmark backend factory.
+type BackendView<Storage> = SeaView<
+    <Storage as SeaStorage>::Blobs,
+    <Storage as SeaStorage>::Events,
+    <Storage as SeaStorage>::Snapshots,
+>;
 
 /// Storage or transport composition exercised by one workload.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -195,30 +202,14 @@ async fn smoke() -> Result<(), String> {
         repetitions: 1,
         warmups: 0,
     };
-    let startup = Instant::now();
-    let memory = MemoryStream::new();
-    run_storage(&memory, &concurrent, elapsed_microseconds(startup))
-        .await
-        .map(|_| ())?;
+    run_backend(&concurrent).await?;
 
     let mut snapshot = concurrent.clone();
     snapshot.writers = 1;
     snapshot.snapshot_frequency = Some(16);
-    let startup = Instant::now();
-    let memory = MemoryStream::new();
-    run_storage(&memory, &snapshot, elapsed_microseconds(startup))
-        .await
-        .map(|_| ())?;
-
-    let directory = unique_directory("smoke");
-    let startup = Instant::now();
-    let file = FileStream::open(&directory).map_err(display_error)?;
-    run_storage(&file, &snapshot, elapsed_microseconds(startup)).await?;
-    drop(file);
-    let reopened = FileStream::open(&directory).map_err(display_error)?;
-    verify_reopened_storage(&reopened, &snapshot).await?;
-    drop(reopened);
-    fs::remove_dir_all(&directory).map_err(display_error)?;
+    run_backend(&snapshot).await?;
+    snapshot.backend = Backend::File;
+    run_backend(&snapshot).await?;
 
     let mut integrated = snapshot.clone();
     integrated.records = 8;
@@ -317,19 +308,26 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
     let mut measurements = match config.backend {
         Backend::Memory => {
             let startup = Instant::now();
-            let storage = MemoryStream::new();
-            run_storage(&storage, config, elapsed_microseconds(startup)).await?
+            let (_, view) = MemoryStorage::new()
+                .create_view()
+                .await
+                .map_err(display_error)?;
+            run_storage(Arc::new(view), config, elapsed_microseconds(startup)).await?
         }
         Backend::File => {
             let directory = unique_directory("measure");
             let startup = Instant::now();
-            let storage = FileStream::open(&directory).map_err(display_error)?;
+            let storage = FileStorage::<false>::open(&directory).map_err(display_error)?;
+            let (document, view) = storage.create_view().await.map_err(display_error)?;
             let mut measurements =
-                run_storage(&storage, config, elapsed_microseconds(startup)).await?;
-            drop(storage);
+                run_storage(Arc::new(view), config, elapsed_microseconds(startup)).await?;
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
-            let reopened = FileStream::open(&directory).map_err(display_error)?;
+            let reopened = storage
+                .open_view(&document)
+                .await
+                .map_err(display_error)?
+                .ok_or("missing document")?;
             verify_reopened_storage(&reopened, config).await?;
             measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
             drop(reopened);
@@ -339,28 +337,26 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
         Backend::Compression => {
             let directory = unique_directory("compression");
             let startup = Instant::now();
-            let coordinators = open_local_sessions(
-                Arc::new(FileStream::open(&directory).map_err(display_error)?),
-                config.writers,
-                "compression",
-            )
-            .await?;
+            let factory = FileStorage::<false>::open(&directory).map_err(display_error)?;
+            let (document, view) = factory.create_view().await.map_err(display_error)?;
+            let coordinators =
+                open_local_sessions::<FileStorage>(view, config.writers, "compression").await?;
             let sessions = coordinators
                 .iter()
                 .cloned()
                 .map(CompressionSession::new)
                 .collect();
-            let mut measurements = run_session(
-                sessions,
-                &coordinators,
-                config,
-                elapsed_microseconds(startup),
-            )
-            .await?;
+            let mut measurements =
+                run_session(sessions, config, elapsed_microseconds(startup)).await?;
+            drop(coordinators);
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
-            let reopened = open_local_sessions(
-                Arc::new(FileStream::open(&directory).map_err(display_error)?),
+            let reopened = open_local_sessions::<FileStorage>(
+                factory
+                    .open_view(&document)
+                    .await
+                    .map_err(display_error)?
+                    .ok_or("missing document")?,
                 1,
                 "compression-reopen",
             )
@@ -368,7 +364,7 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
             .pop()
             .expect("one reopened session");
             let decorated = CompressionSession::new(reopened.clone());
-            verify_reopened_session(&decorated, &reopened, config).await?;
+            verify_reopened_session(&decorated, config).await?;
             decorated.close().await.map_err(display_error)?;
             measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
             fs::remove_dir_all(&directory).map_err(display_error)?;
@@ -377,12 +373,11 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
         Backend::StatefulCompression => {
             let directory = unique_directory("stateful-compression");
             let startup = Instant::now();
-            let coordinators = open_local_sessions(
-                Arc::new(FileStream::open(&directory).map_err(display_error)?),
-                config.writers,
-                "stateful-compression",
-            )
-            .await?;
+            let factory = FileStorage::<false>::open(&directory).map_err(display_error)?;
+            let (document, view) = factory.create_view().await.map_err(display_error)?;
+            let coordinators =
+                open_local_sessions::<FileStorage>(view, config.writers, "stateful-compression")
+                    .await?;
             let sessions = coordinators
                 .iter()
                 .cloned()
@@ -395,17 +390,17 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
                     .map_err(display_error)
                 })
                 .collect::<Result<Vec<_>, _>>()?;
-            let mut measurements = run_session(
-                sessions,
-                &coordinators,
-                config,
-                elapsed_microseconds(startup),
-            )
-            .await?;
+            let mut measurements =
+                run_session(sessions, config, elapsed_microseconds(startup)).await?;
+            drop(coordinators);
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
-            let reopened = open_local_sessions(
-                Arc::new(FileStream::open(&directory).map_err(display_error)?),
+            let reopened = open_local_sessions::<FileStorage>(
+                factory
+                    .open_view(&document)
+                    .await
+                    .map_err(display_error)?
+                    .ok_or("missing document")?,
                 1,
                 "stateful-compression-reopen",
             )
@@ -418,7 +413,7 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
                 128 * 1024,
             )
             .map_err(display_error)?;
-            verify_reopened_session(&decorated, &reopened, config).await?;
+            verify_reopened_session(&decorated, config).await?;
             decorated.close().await.map_err(display_error)?;
             measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
             fs::remove_dir_all(&directory).map_err(display_error)?;
@@ -427,28 +422,26 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
         Backend::Encryption => {
             let directory = unique_directory("encryption");
             let startup = Instant::now();
-            let coordinators = open_local_sessions(
-                Arc::new(FileStream::open(&directory).map_err(display_error)?),
-                config.writers,
-                "encryption",
-            )
-            .await?;
+            let factory = FileStorage::<false>::open(&directory).map_err(display_error)?;
+            let (document, view) = factory.create_view().await.map_err(display_error)?;
+            let coordinators =
+                open_local_sessions::<FileStorage>(view, config.writers, "encryption").await?;
             let sessions = coordinators
                 .iter()
                 .cloned()
                 .map(|session| EncryptionSession::new(session, BenchmarkKey))
                 .collect();
-            let mut measurements = run_session(
-                sessions,
-                &coordinators,
-                config,
-                elapsed_microseconds(startup),
-            )
-            .await?;
+            let mut measurements =
+                run_session(sessions, config, elapsed_microseconds(startup)).await?;
+            drop(coordinators);
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
-            let reopened = open_local_sessions(
-                Arc::new(FileStream::open(&directory).map_err(display_error)?),
+            let reopened = open_local_sessions::<FileStorage>(
+                factory
+                    .open_view(&document)
+                    .await
+                    .map_err(display_error)?
+                    .ok_or("missing document")?,
                 1,
                 "encryption-reopen",
             )
@@ -456,7 +449,7 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
             .pop()
             .expect("one reopened session");
             let decorated = EncryptionSession::new(reopened.clone(), BenchmarkKey);
-            verify_reopened_session(&decorated, &reopened, config).await?;
+            verify_reopened_session(&decorated, config).await?;
             decorated.close().await.map_err(display_error)?;
             measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
             fs::remove_dir_all(&directory).map_err(display_error)?;
@@ -465,8 +458,10 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
         Backend::StatefulCompressionEncryption => {
             let directory = unique_directory("stateful-compression-encryption");
             let startup = Instant::now();
-            let coordinators = open_local_sessions(
-                Arc::new(FileStream::open(&directory).map_err(display_error)?),
+            let factory = FileStorage::<false>::open(&directory).map_err(display_error)?;
+            let (document, view) = factory.create_view().await.map_err(display_error)?;
+            let coordinators = open_local_sessions::<FileStorage>(
+                view,
                 config.writers,
                 "stateful-compression-encryption",
             )
@@ -483,17 +478,17 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
                     .map_err(display_error)
                 })
                 .collect::<Result<Vec<_>, _>>()?;
-            let mut measurements = run_session(
-                sessions,
-                &coordinators,
-                config,
-                elapsed_microseconds(startup),
-            )
-            .await?;
+            let mut measurements =
+                run_session(sessions, config, elapsed_microseconds(startup)).await?;
+            drop(coordinators);
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
-            let reopened = open_local_sessions(
-                Arc::new(FileStream::open(&directory).map_err(display_error)?),
+            let reopened = open_local_sessions::<FileStorage>(
+                factory
+                    .open_view(&document)
+                    .await
+                    .map_err(display_error)?
+                    .ok_or("missing document")?,
                 1,
                 "stateful-compression-encryption-reopen",
             )
@@ -506,7 +501,7 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
                 128 * 1024,
             )
             .map_err(display_error)?;
-            verify_reopened_session(&decorated, &reopened, config).await?;
+            verify_reopened_session(&decorated, config).await?;
             decorated.close().await.map_err(display_error)?;
             measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
             fs::remove_dir_all(&directory).map_err(display_error)?;
@@ -521,14 +516,14 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
 
 /// Recovers a local sequencer and opens one deterministic identity per writer.
 async fn open_local_sessions<S>(
-    storage: Arc<S>,
+    storage: BackendView<S>,
     writers: usize,
     identity_prefix: &str,
 ) -> Result<Vec<LocalSession<S>>, String>
 where
     S: SeaStorage + 'static,
 {
-    let sequencer = LocalSequencer::recover(storage)
+    let sequencer = LocalSequencer::<S>::recover(storage)
         .await
         .map_err(display_error)?;
     let mut sessions = Vec::with_capacity(writers);
@@ -552,17 +547,15 @@ where
 /// Success means every configured submission completed, produced exactly one latency sample, and
 /// the finite read contained the exact configured fixture multiset.
 #[allow(clippy::too_many_lines)]
-async fn run_session<S, C>(
+async fn run_session<S>(
     sessions: Vec<S>,
-    coordinators: &[C],
     config: &Config,
     startup_microseconds: f64,
 ) -> Result<RunMeasurements, String>
 where
-    S: SeaArchive + SeaAuthorSession + SeaEventSubscription + 'static,
-    C: SeaSnapshotCoordinator,
+    S: SeaArchive + SeaAuthorSession + SeaSnapshotCoordinator + 'static,
 {
-    if sessions.len() != config.writers || coordinators.len() != config.writers {
+    if sessions.len() != config.writers {
         return Err("session count did not match writer count".to_owned());
     }
     let sessions = sessions.into_iter().map(Arc::new).collect::<Vec<_>>();
@@ -576,7 +569,10 @@ where
                 return Err("periodic snapshots require exactly one writer".to_owned());
             }
             let session = &sessions[0];
-            let coordinator = &coordinators[0];
+            let _participation = session
+                .coordinate_snapshots(SnapshotParticipation::ClientSelected)
+                .await
+                .map_err(display_error)?;
             let mut latencies = Vec::with_capacity(record_capacity);
             let mut snapshot_elapsed = 0.0;
             let mut parent = None;
@@ -594,7 +590,7 @@ where
                     })
                     .await
                     .map_err(display_error)?;
-                reference = Some(receipt.position);
+                reference = Some(receipt);
                 latencies.push(elapsed_microseconds(started));
                 if (index + 1) % snapshot_frequency == 0 || index + 1 == config.records {
                     let started = Instant::now();
@@ -604,19 +600,18 @@ where
                         ))
                         .await
                         .map_err(display_error)?;
+                    let at_event = session
+                        .resolve_position(receipt)
+                        .await
+                        .map_err(display_error)?
+                        .ok_or("missing committed event")?;
                     parent = Some(
-                        coordinator
-                            .publish_snapshot(SnapshotPublication {
-                                operation_id: benchmark_operation_id(b"session-snapshot", index),
-                                expected_parent: parent,
-                                snapshot: ArchiveSnapshot {
-                                    at_event: ArchiveSnapshotPosition::At(receipt.position),
-                                    root: BlobTreeId::Blob(root),
-                                },
-                            })
+                        session
+                            .publish_snapshot(parent, None, Snapshot { at_event, root })
                             .await
                             .map_err(display_error)?
-                            .id,
+                            .at_event
+                            .id(),
                     );
                     snapshot_elapsed += elapsed_microseconds(started);
                 }
@@ -648,7 +643,7 @@ where
                             })
                             .await
                             .map_err(display_error)?;
-                        reference = Some(receipt.position);
+                        reference = Some(receipt);
                         latencies.push(elapsed_microseconds(started));
                     }
                     Ok::<_, String>(latencies)
@@ -695,14 +690,9 @@ where
 }
 
 /// Verifies that a reopened decorated session retained its records and optional snapshot.
-async fn verify_reopened_session<S, C>(
-    session: &S,
-    coordinator: &C,
-    config: &Config,
-) -> Result<(), String>
+async fn verify_reopened_session<S>(session: &S, config: &Config) -> Result<(), String>
 where
     S: SeaArchive,
-    C: SeaSnapshotCoordinator,
 {
     let generator = FixtureGenerator::new(config.seed);
     let expected_records = usize::try_from(config.records)
@@ -710,8 +700,8 @@ where
     let records = collect_session_events(session.read(None, None), expected_records).await?;
     verify_session_payloads(&records, &generator, config)?;
     if config.snapshot_frequency.is_some()
-        && coordinator
-            .latest_snapshot()
+        && session
+            .get_snapshot(LoadStart::LatestSnapshot)
             .await
             .map_err(display_error)?
             .is_none()
@@ -763,13 +753,19 @@ fn verify_session_payloads(
 /// Success means every configured append completed, produced exactly one latency sample, and the
 /// finite read contained the exact configured fixture multiset.
 #[allow(clippy::too_many_lines)]
-async fn run_storage<S>(
-    storage: &S,
+async fn run_storage<Blobs, Events, Snapshots>(
+    storage: Arc<SeaView<Blobs, Events, Snapshots>>,
     config: &Config,
     startup_microseconds: f64,
 ) -> Result<RunMeasurements, String>
 where
-    S: SeaStorage + Clone + 'static,
+    Blobs: BlobStore + 'static,
+    Events: sea_core::storage::EventArchive<Error = Blobs::Error> + 'static,
+    Snapshots: sea_core::storage::SnapshotArchive<
+            Error = Blobs::Error,
+            BlobHandle = Blobs::Handle,
+            EventHandle = Events::Handle,
+        > + 'static,
 {
     let generator = FixtureGenerator::new(config.seed);
     let record_capacity =
@@ -782,40 +778,27 @@ where
             }
             let mut latencies = Vec::with_capacity(record_capacity);
             let mut snapshot_elapsed = 0.0;
-            let mut parent = None;
             for index in 0..config.records {
                 let payload = Bytes::from(generator.payload(config.fixture, index));
                 let started = Instant::now();
-                let receipt = storage
-                    .append(Event {
-                        payload,
-                        blob_tree: None,
-                    })
-                    .await
-                    .map_err(display_error)?;
+                let receipt = storage.append(payload, None).await.map_err(display_error)?;
                 latencies.push(elapsed_microseconds(started));
                 if (index + 1) % snapshot_frequency == 0 || index + 1 == config.records {
                     let snapshot_payload =
                         Bytes::from(generator.payload(FixtureKind::Snapshot, index + 1));
                     let root = storage
+                        .blobs()
                         .put_blob(snapshot_payload)
                         .await
                         .map_err(display_error)?;
                     let started = Instant::now();
-                    parent = Some(
-                        storage
-                            .publish_snapshot(SnapshotPublication {
-                                operation_id: benchmark_operation_id(b"storage-snapshot", index),
-                                expected_parent: parent,
-                                snapshot: ArchiveSnapshot {
-                                    at_event: ArchiveSnapshotPosition::At(receipt.position),
-                                    root: BlobTreeId::Blob(root),
-                                },
-                            })
-                            .await
-                            .map_err(display_error)?
-                            .id,
-                    );
+                    storage
+                        .publish_snapshot(&Snapshot {
+                            at_event: receipt,
+                            root,
+                        })
+                        .await
+                        .map_err(display_error)?;
                     snapshot_elapsed += elapsed_microseconds(started);
                 }
             }
@@ -835,10 +818,7 @@ where
                     for index in (first_index..records).step_by(writers) {
                         let started = Instant::now();
                         storage
-                            .append(Event {
-                                payload: Bytes::from(generator.payload(fixture, index)),
-                                blob_tree: None,
-                            })
+                            .append(Bytes::from(generator.payload(fixture, index)), None)
                             .await
                             .map_err(display_error)?;
                         latencies.push(elapsed_microseconds(started));
@@ -858,13 +838,9 @@ where
     }
 
     let read_started = Instant::now();
-    let records = storage
-        .read(None, None)
-        .await
-        .map_err(display_error)?
-        .try_collect::<Vec<_>>()
-        .await
-        .map_err(display_error)?;
+    let records =
+        collect_storage_events(storage.read(None, storage.head().await.map_err(display_error)?))
+            .await?;
     let finite_read_microseconds = elapsed_microseconds(read_started);
     verify_storage_payloads(&records, &generator, config)?;
 
@@ -898,21 +874,26 @@ fn benchmark_operation_id(domain: &[u8], index: u64) -> OperationId {
 }
 
 /// Verifies that the plain file stream preserved records and any requested snapshot.
-async fn verify_reopened_storage<S>(storage: &S, config: &Config) -> Result<(), String>
+async fn verify_reopened_storage<Blobs, Events, Snapshots>(
+    storage: &SeaView<Blobs, Events, Snapshots>,
+    config: &Config,
+) -> Result<(), String>
 where
-    S: SeaStorage,
+    Blobs: BlobStore,
+    Events: sea_core::storage::EventArchive<Error = Blobs::Error>,
+    Snapshots: sea_core::storage::SnapshotArchive<
+            Error = Blobs::Error,
+            BlobHandle = Blobs::Handle,
+            EventHandle = Events::Handle,
+        >,
 {
-    let records = storage
-        .read(None, None)
-        .await
-        .map_err(display_error)?
-        .try_collect::<Vec<_>>()
-        .await
-        .map_err(display_error)?;
+    let records =
+        collect_storage_events(storage.read(None, storage.head().await.map_err(display_error)?))
+            .await?;
     verify_storage_payloads(&records, &FixtureGenerator::new(config.seed), config)?;
     if config.snapshot_frequency.is_some()
         && storage
-            .latest_snapshot()
+            .get_snapshot(LoadStart::LatestSnapshot)
             .await
             .map_err(display_error)?
             .is_none()
@@ -922,9 +903,22 @@ where
     Ok(())
 }
 
+/// Collects a bounded monitored storage read through completion.
+async fn collect_storage_events<Error: std::fmt::Display>(
+    mut stream: EventArchiveStream<Error>,
+) -> Result<Vec<sea_core::CommittedEvent>, String> {
+    let mut events = Vec::new();
+    while let Some(item) = stream.next().await {
+        if let MonitoredStreamItem::Item(event) = item.map_err(display_error)? {
+            events.push(event);
+        }
+    }
+    Ok(events)
+}
+
 /// Verifies a storage read against the configured record count and fixture payloads.
 fn verify_storage_payloads(
-    records: &[sea_core::archive::CommittedEvent],
+    records: &[sea_core::CommittedEvent],
     generator: &FixtureGenerator,
     config: &Config,
 ) -> Result<(), String> {
@@ -1293,17 +1287,18 @@ mod tests {
             repetitions: 1,
             warmups: 0,
         };
-        let storage = MemoryStream::new();
-        let storage_measurements = run_storage(&storage, &config, 0.0)
+        let (_, storage) = MemoryStorage::new().create_view().await.unwrap();
+        let storage_measurements = run_storage(Arc::new(storage), &config, 0.0)
             .await
             .expect("concurrent storage workload");
         assert_eq!(storage_measurements.append_latencies.len(), 8);
         assert_eq!(storage_measurements.finite_read_records, 8);
 
-        let sessions = open_local_sessions(Arc::new(MemoryStream::new()), 2, "concurrent-test")
+        let (_, view) = MemoryStorage::new().create_view().await.unwrap();
+        let sessions = open_local_sessions::<MemoryStorage>(view, 2, "concurrent-test")
             .await
             .expect("concurrent sessions");
-        let session_measurements = run_session(sessions.clone(), &sessions, &config, 0.0)
+        let session_measurements = run_session(sessions, &config, 0.0)
             .await
             .expect("concurrent session workload");
         assert_eq!(session_measurements.append_latencies.len(), 8);
@@ -1342,12 +1337,9 @@ mod tests {
             repetitions: 1,
             warmups: 0,
         };
-        let storage = MemoryStream::new();
+        let (_, storage) = MemoryStorage::new().create_view().await.unwrap();
         storage
-            .append(Event {
-                payload: Bytes::from_static(b"wrong"),
-                blob_tree: None,
-            })
+            .append(Bytes::from_static(b"wrong"), None)
             .await
             .unwrap();
 

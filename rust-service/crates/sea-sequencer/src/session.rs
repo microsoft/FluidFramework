@@ -1,644 +1,696 @@
-//! Final multi-user local session implementation over [`SeaStorage`].
+//! Multi-user replacement session runtime over one exclusively owned document view.
+//!
+//! [`crate::session::LocalSequencer`] recovers committed submission and snapshot identities, then
+//! multiplexes the view into [`crate::session::LocalSession`] memberships. Memberships are
+//! runtime-local: reopening the document restores stable committed identities but requires callers
+//! to establish fresh sessions.
+//!
+//! One runtime mutex serializes membership changes and state-dependent mutations. Before releasing
+//! that order, the runtime stores an owned backend future, so cancellation of a caller does not
+//! masquerade as settlement. A later operation drives the same future to completion; a failed
+//! bounded reconciliation poisons further mutation with
+//! [`crate::session::SessionError::RecoveryRequired`] until the view is discarded and recovered.
+//!
+//! Event delivery uses the view's monitored archive streams directly. Snapshot publisher
+//! registration is separate synchronous state: dropping a coordination stream revokes its lease,
+//! client-selected publishers suppress Sea nomination, and every nomination change receives a new
+//! fence. The runtime never forwards through the transitional old-model sequencer.
+
+#[cfg(test)]
+#[path = "fault_tests.rs"]
+mod fault_tests;
 
 use std::{
-    collections::{BTreeMap, BTreeSet, VecDeque},
-    error::Error,
-    fmt,
-    sync::{
-        Arc,
-        atomic::{AtomicBool, Ordering},
-    },
+    collections::{BTreeMap, BTreeSet},
+    sync::Arc,
 };
 
 use async_trait::async_trait;
-use bytes::{Buf as _, BufMut as _, Bytes, BytesMut};
-use futures_util::{StreamExt as _, TryStreamExt as _, stream};
-use sea_core::{
-    ArchiveEventStream, ArchiveLoadStream, BlobDirectory, BlobDirectoryId, BlobId, ClassifiedError,
-    Durability, ErrorKind, Event, EventPosition, MonitoredStreamItem, MonitoredStreamProgress,
-    MonitoredStreamStatus, SnapshotId, StorageEventStream,
-    archive::{
-        AuthorId, CommittedEvent, EventReceipt, EventSubmission, LoadEvent, OperationId,
-        PublishedSnapshot, SeaArchive, SeaAuthorSession, SeaEventSubscription, SeaService,
-        SeaSnapshotCoordinator, SeaSnapshotPublisher, SeaStorage, SessionCommittedEvent, SessionId,
-        SessionStream, SnapshotCoordination, SnapshotParticipation, SnapshotPosition,
-        SnapshotPublication,
-    },
-    boxed_monitored_stream, map_monitored_stream,
+use bytes::Bytes;
+use futures_util::{
+    StreamExt, TryStreamExt,
+    future::{Either, select},
+    stream,
 };
-use tokio::sync::{Mutex, broadcast, watch};
+use sea_core::{
+    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, CommittedEvent, ErrorKind,
+    Event, EventPosition, MonitoredStreamItem, MonitoredStreamProgress, MonitoredStreamStatus,
+    archive::{
+        AuthorId, EventSubmission, OperationId, SessionCommittedEvent, SessionId, SessionStream,
+        SnapshotParticipation,
+    },
+    boxed_monitored_stream,
+    session::{
+        SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator, SessionLoad, SnapshotCoordination,
+    },
+    storage::{
+        ArchiveStream, BlobStore, LoadStart, ReferenceableStore, SeaStorage, SeaView, Snapshot,
+        StorageHandle,
+    },
+};
+use tokio::sync::{Mutex, watch};
 
-/// Default number of live events retained for each lagging subscriber.
-pub const DEFAULT_EVENT_LAG_LIMIT: usize = 256;
+use crate::codec::{decode_committed, encode_submission};
+pub use crate::error::SessionError;
 
-const ENVELOPE_MAGIC: &[u8; 5] = b"SEAQ1";
-const SESSION_OPEN: u8 = 0;
-const SUBMISSION: u8 = 1;
-const SESSION_CLOSE: u8 = 2;
+/// View supplied by a document factory, moved into the sequencer.
+type View<Storage> = SeaView<
+    <Storage as SeaStorage>::Blobs,
+    <Storage as SeaStorage>::Events,
+    <Storage as SeaStorage>::Snapshots,
+>;
 
-/// Failure from local multi-user sequencing or its trusted backend.
-#[derive(Debug)]
-pub enum SessionError<E> {
-    /// The trusted backend failed.
-    Storage(E),
-    /// Caller input conflicts with current authoritative session state.
-    Rejected(&'static str),
-    /// A committed private sequencer envelope is malformed or inconsistent.
-    Corrupt(&'static str),
-    /// This local session has been closed.
-    Closed,
-    /// A live subscriber fell behind the bounded in-process queue.
-    Lagged,
-    /// A mutation's commitment could not be reconciled; the runtime must be recovered.
-    RecoveryRequired,
-}
+#[cfg(not(target_arch = "wasm32"))]
+/// An owned mutation remains pollable after cancellation of its caller.
+type MutationFuture<Error> =
+    futures_util::future::BoxFuture<'static, Result<EventPosition, SessionError<Error>>>;
 
-impl<E: fmt::Display> fmt::Display for SessionError<E> {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Storage(error) => write!(formatter, "storage failed: {error}"),
-            Self::Rejected(message) => write!(formatter, "session rejected operation: {message}"),
-            Self::Corrupt(message) => write!(formatter, "sequencer log is corrupt: {message}"),
-            Self::Closed => formatter.write_str("session is closed"),
-            Self::Lagged => formatter.write_str("session subscriber fell behind"),
-            Self::RecoveryRequired => formatter.write_str("sequencer recovery is required"),
-        }
-    }
-}
+#[cfg(target_arch = "wasm32")]
+/// Browser-owned reconciliation streams need not be `Send`.
+type MutationFuture<Error> =
+    futures_util::future::LocalBoxFuture<'static, Result<EventPosition, SessionError<Error>>>;
 
-impl<E: Error + 'static> Error for SessionError<E> {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::Storage(error) => Some(error),
-            Self::Rejected(_)
-            | Self::Corrupt(_)
-            | Self::Closed
-            | Self::Lagged
-            | Self::RecoveryRequired => None,
-        }
-    }
-}
+/// Tree capability used by this factory.
+type BlobHandle<Storage> = <<Storage as SeaStorage>::Blobs as ReferenceableStore>::Handle;
+/// Event capability used by this factory.
+type EventHandle<Storage> = <<Storage as SeaStorage>::Events as ReferenceableStore>::Handle;
+/// Snapshot with capabilities from one document opening.
+type ViewSnapshot<Storage> = Snapshot<BlobHandle<Storage>, EventHandle<Storage>>;
 
-impl<E: ClassifiedError> ClassifiedError for SessionError<E> {
-    fn kind(&self) -> ErrorKind {
-        match self {
-            Self::Storage(error) => error.kind(),
-            Self::Rejected(_) | Self::Closed => ErrorKind::Rejected,
-            Self::Corrupt(_) => ErrorKind::Corrupt,
-            Self::Lagged => ErrorKind::Unavailable,
-            Self::RecoveryRequired => ErrorKind::Ambiguous,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-struct AuthorState {
-    session_id: SessionId,
-    reference: Option<EventPosition>,
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-struct AcceptedSubmission {
-    author_id: AuthorId,
-    session_id: SessionId,
-    submission: EventSubmission,
-    receipt: EventReceipt,
-    committed: SessionCommittedEvent,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-struct PublisherState {
+/// Runtime-owned publisher registration; stream cancellation revokes it synchronously.
+struct Publisher {
+    /// Requested publication policy.
     participation: SnapshotParticipation,
+    /// Stream-held liveness token, independent of backend lifetime choices.
+    alive: std::sync::Weak<()>,
+    /// Registration identity prevents stale streams from observing replacement authority.
+    registration: u64,
+    /// Latest state for this registration.
+    updates: watch::Sender<SnapshotCoordination>,
 }
 
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
-struct CoordinationState {
-    latest: Option<PublishedSnapshot>,
-    nominee: Option<(SessionId, u64)>,
+/// One logical membership; clones observe the same closure signal.
+struct Membership {
+    /// Stable author whose current connection is represented.
+    author: AuthorId,
+    /// Latest acknowledged application position.
+    reference: Option<EventPosition>,
+    /// Closing or replacing this membership ends its live streams.
+    closed: watch::Sender<bool>,
 }
 
-#[derive(Debug, Default)]
-struct SequencerState {
-    authors: BTreeMap<AuthorId, AuthorState>,
-    seen_sessions: BTreeSet<SessionId>,
-    accepted: BTreeMap<OperationId, AcceptedSubmission>,
-    event_positions: BTreeSet<EventPosition>,
-    latest_event: Option<EventPosition>,
-    publishers: BTreeMap<SessionId, PublisherState>,
-    next_snapshot_fence: u64,
-    coordination: CoordinationState,
+/// One in-flight mutation and its replayable application input.
+struct Pending<Error> {
+    /// Owned backend work; never dropped merely because its requesting future was dropped.
+    future: MutationFuture<Error>,
+    /// Encoded event used to rebuild authoritative state after settlement.
+    event: Option<Event>,
 }
 
-impl SequencerState {
-    fn select_snapshot_publisher(&mut self) {
-        if self
-            .publishers
+/// Authoritative mutable session state serialized across all clients.
+struct Runtime<Storage: SeaStorage> {
+    /// Removed only by explicit shutdown after pending work settles.
+    view: Option<Arc<View<Storage>>>,
+    /// Active session memberships, not persisted as application events.
+    members: BTreeMap<SessionId, Membership>,
+    /// Identities cannot be reused within this runtime or after a committed submission.
+    seen: BTreeSet<SessionId>,
+    /// Committed submission identities for retries and recovery.
+    accepted: BTreeMap<OperationId, SessionCommittedEvent>,
+    /// Application positions used to validate references and snapshot boundaries.
+    positions: BTreeSet<EventPosition>,
+    /// At most one outstanding mutation owns backend execution.
+    pending: Option<Pending<Storage::Error>>,
+    /// A failed reconciliation prevents a duplicate-producing retry.
+    recovery_required: bool,
+    /// Publisher state is synchronous so dropping a stream can revoke its authority immediately.
+    publishers: Arc<std::sync::Mutex<Publishers>>,
+}
+
+/// Publisher coordination without asynchronous work on stream drop.
+#[derive(Default)]
+struct Publishers {
+    /// Live session registrations.
+    entries: BTreeMap<SessionId, Publisher>,
+    /// Current nomination, unique across registration changes within this runtime.
+    nominee: Option<(SessionId, u64, u64)>,
+    /// Monotonic registration/fencing sequence; exhaustion rejects registration.
+    next_fence: u64,
+    /// Latest committed snapshot version.
+    latest: Option<EventPosition>,
+}
+
+impl Publishers {
+    /// Recomputes authority after membership, registration, publication, or stream cancellation.
+    fn refresh(&mut self) {
+        self.entries
+            .retain(|_, publisher| publisher.alive.strong_count() != 0);
+        let client_selected = self
+            .entries
             .values()
-            .any(|publisher| publisher.participation == SnapshotParticipation::ClientSelected)
-        {
-            self.coordination.nominee = None;
-            return;
-        }
-        if self
-            .coordination
-            .nominee
-            .as_ref()
-            .is_some_and(|(session, _)| {
-                self.publishers.get(session).is_some_and(|publisher| {
+            .any(|publisher| publisher.participation == SnapshotParticipation::ClientSelected);
+        let candidate = if client_selected {
+            None
+        } else {
+            self.entries
+                .iter()
+                .find(|(_, publisher)| {
                     publisher.participation == SnapshotParticipation::SeaSelected
                 })
-            })
+                .map(|(session, publisher)| (session.clone(), publisher.registration))
+        };
+        if self
+            .nominee
+            .as_ref()
+            .map(|(session, registration, _)| (session.clone(), *registration))
+            != candidate
         {
-            return;
-        }
-        self.coordination.nominee = self
-            .publishers
-            .iter()
-            .find(|(_, publisher)| publisher.participation == SnapshotParticipation::SeaSelected)
-            .map(|(session, _)| {
-                let fence = self.next_snapshot_fence;
-                self.next_snapshot_fence = fence.wrapping_add(1).max(1);
-                (session.clone(), fence)
+            self.nominee = candidate.and_then(|(session, registration)| {
+                self.next_fence = self.next_fence.checked_add(1)?;
+                Some((session, registration, self.next_fence))
             });
-    }
-
-    fn minimum_reference(&self) -> Option<EventPosition> {
-        if self.authors.is_empty() {
-            return self.latest_event;
         }
-        self.authors
-            .values()
-            .map(|author| author.reference)
-            .min()
-            .flatten()
-    }
-
-    fn validate_reference(&self, reference: Option<EventPosition>) -> Result<(), &'static str> {
-        if reference.is_some_and(|position| !self.event_positions.contains(&position)) {
-            return Err("reference does not identify an application event");
+        for (session, publisher) in &self.entries {
+            publisher.updates.send_replace(SnapshotCoordination {
+                latest: self.latest,
+                fence: self
+                    .nominee
+                    .as_ref()
+                    .filter(|(nominee, _, _)| nominee == session)
+                    .map(|(_, _, fence)| *fence),
+            });
         }
-        if let Some(minimum) = self.minimum_reference()
-            && reference.is_some_and(|position| position < minimum)
+    }
+}
+
+/// Drop guard revokes only the registration it created.
+struct PublisherLease {
+    /// Coordination state, containing no storage authority.
+    publishers: Arc<std::sync::Mutex<Publishers>>,
+    /// Owning logical session.
+    session: SessionId,
+    /// Unique registration identity.
+    registration: u64,
+    /// Keeps this registration live until stream drop.
+    _alive: Arc<()>,
+}
+
+impl Drop for PublisherLease {
+    fn drop(&mut self) {
+        let mut publishers = self.publishers.lock().expect("publisher lock");
+        if publishers
+            .entries
+            .get(&self.session)
+            .is_some_and(|publisher| publisher.registration == self.registration)
         {
-            return Err("reference precedes the active minimum");
+            publishers.entries.remove(&self.session);
+            publishers.refresh();
+        }
+    }
+}
+
+impl<Storage: SeaStorage> Runtime<Storage> {
+    /// Records a settled submission and rejects duplicate committed identities.
+    fn apply(&mut self, record: &CommittedEvent) -> Result<(), SessionError<Storage::Error>> {
+        let committed = decode_committed(record)?
+            .ok_or(SessionError::Corrupt("unexpected session control record"))?;
+        if self.accepted.contains_key(&committed.operation_id) {
+            return Err(SessionError::Corrupt("duplicate submission identity"));
+        }
+        if committed
+            .reference
+            .is_some_and(|position| !self.positions.contains(&position))
+        {
+            return Err(SessionError::Corrupt("reference is not a preceding event"));
+        }
+        self.seen.insert(committed.session_id.clone());
+        if let Some(member) = self.members.get_mut(&committed.session_id) {
+            member.reference = committed.reference;
+        }
+        self.positions.insert(record.position);
+        self.accepted
+            .insert(committed.operation_id.clone(), committed);
+        Ok(())
+    }
+
+    /// Drives a retained mutation to settlement before allowing another state-dependent operation.
+    async fn settle(&mut self) -> Result<(), SessionError<Storage::Error>> {
+        if self.recovery_required {
+            return Err(SessionError::RecoveryRequired);
+        }
+        if let Some(pending) = &mut self.pending {
+            let result = pending.future.as_mut().await;
+            let pending = self.pending.take().expect("settled mutation");
+            if matches!(
+                &result,
+                Err(SessionError::RecoveryRequired | SessionError::Corrupt(_))
+            ) {
+                self.recovery_required = true;
+            }
+            let position = result?;
+            if let Some(event) = pending.event {
+                if let Err(error) = self.apply(&CommittedEvent { position, event }) {
+                    self.recovery_required = true;
+                    return Err(error);
+                }
+            } else {
+                let mut publishers = self.publishers.lock().expect("publisher lock");
+                publishers.latest = Some(position);
+                publishers.refresh();
+            }
         }
         Ok(())
     }
 
-    fn minimum_reference_after(
-        &self,
-        author_id: &AuthorId,
-        reference: Option<EventPosition>,
-    ) -> Option<EventPosition> {
-        if self.authors.is_empty() {
-            return self.latest_event;
-        }
-        self.authors
-            .iter()
-            .map(|(candidate, author)| {
-                if candidate == author_id {
-                    reference
-                } else {
-                    author.reference
+    /// Clones the active view only for an operation; never lends writer authority to callers.
+    fn view(&self) -> Result<Arc<View<Storage>>, SessionError<Storage::Error>> {
+        self.view.clone().ok_or(SessionError::Closed)
+    }
+
+    /// Requires current logical membership after all prior mutations settle.
+    fn member(&self, session: &SessionId) -> Result<&Membership, SessionError<Storage::Error>> {
+        self.members.get(session).ok_or(SessionError::Closed)
+    }
+}
+
+/// One runtime multiplexing an exclusively owned replacement view into logical sessions.
+pub struct LocalSequencer<Storage: SeaStorage> {
+    /// The sole owner of mutation sequencing and session membership.
+    runtime: Mutex<Runtime<Storage>>,
+}
+
+impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
+    /// Recovers stable event identities by scanning a bounded committed history.
+    /// Active membership is runtime-local; recovery requires fresh logical sessions.
+    ///
+    /// # Errors
+    /// Returns backend failures or malformed/duplicate committed submission errors.
+    /// # Panics
+    /// Panics if an internal publisher-state lock was poisoned.
+    pub async fn recover(view: View<Storage>) -> Result<Arc<Self>, SessionError<Storage::Error>> {
+        let view = Arc::new(view);
+        let mut runtime = Runtime {
+            view: Some(view.clone()),
+            members: BTreeMap::new(),
+            seen: BTreeSet::new(),
+            accepted: BTreeMap::new(),
+            positions: BTreeSet::new(),
+            pending: None,
+            recovery_required: false,
+            publishers: Arc::new(std::sync::Mutex::new(Publishers::default())),
+        };
+        if let Some(head) = view.head().await.map_err(SessionError::Storage)? {
+            let mut records = view.read(None, Some(head));
+            while let Some(item) = records.next().await {
+                if let MonitoredStreamItem::Item(record) = item.map_err(SessionError::Storage)? {
+                    runtime.apply(&record)?;
                 }
-            })
-            .min()
-            .flatten()
-    }
-}
-
-/// Shared authoritative sequencer over one archive.
-pub struct LocalSequencer<S: SeaStorage> {
-    storage: Arc<S>,
-    state: Mutex<SequencerState>,
-    events: broadcast::Sender<SessionCommittedEvent>,
-    snapshots: watch::Sender<Option<PublishedSnapshot>>,
-    coordination: watch::Sender<CoordinationState>,
-}
-
-impl<S> LocalSequencer<S>
-where
-    S: SeaStorage + 'static,
-{
-    /// Replays one archive and creates its local sequencing authority.
-    ///
-    /// # Errors
-    ///
-    /// Returns a storage or committed-envelope validation failure.
-    pub async fn recover(storage: Arc<S>) -> Result<Arc<Self>, SessionError<S::Error>> {
-        Self::recover_with_event_lag(storage, DEFAULT_EVENT_LAG_LIMIT).await
-    }
-
-    /// Replays one archive with an explicit live-event lag limit.
-    ///
-    /// # Errors
-    ///
-    /// Returns a storage or committed-envelope validation failure.
-    pub async fn recover_with_event_lag(
-        storage: Arc<S>,
-        max_event_lag: usize,
-    ) -> Result<Arc<Self>, SessionError<S::Error>> {
-        if max_event_lag == 0 {
-            return Err(SessionError::Rejected(
-                "event lag limit must be greater than zero",
-            ));
+            }
         }
-        let state = replay(storage.as_ref()).await?;
-        let latest_snapshot = storage
-            .latest_snapshot()
+        let latest = view
+            .get_snapshot(LoadStart::LatestSnapshot)
             .await
             .map_err(SessionError::Storage)?;
-        let (events, _) = broadcast::channel(max_event_lag);
-        let (snapshots, _) = watch::channel(latest_snapshot);
-        let mut state = state;
-        state.authors.clear();
-        state.publishers.clear();
-        state.coordination.nominee = None;
-        state.next_snapshot_fence = 1;
-        state.coordination.latest.clone_from(&snapshots.borrow());
-        let (coordination, _) = watch::channel(state.coordination.clone());
+        runtime.publishers.lock().expect("publisher lock").latest =
+            latest.map(|snapshot| snapshot.at_event.id());
         Ok(Arc::new(Self {
-            storage,
-            state: Mutex::new(state),
-            events,
-            snapshots,
-            coordination,
+            runtime: Mutex::new(runtime),
         }))
     }
 
-    /// Opens a fresh logical session, replacing the author's previous active session.
+    /// Opens a fresh membership, closing the previous connection for the same author.
     ///
     /// # Errors
-    ///
-    /// Returns an error for a reused session identity, unavailable reference, or storage failure.
+    /// Rejects reused sessions, invalid references, closed runtimes, or unsettled prior work.
+    /// # Panics
+    /// Panics if an internal publisher-state lock was poisoned.
     pub async fn open_session(
         self: &Arc<Self>,
-        author_id: AuthorId,
-        session_id: SessionId,
+        author: AuthorId,
+        session: SessionId,
         reference: Option<EventPosition>,
-    ) -> Result<LocalSession<S>, SessionError<S::Error>> {
-        let mut state = self.state.lock().await;
-        if state.seen_sessions.contains(&session_id) {
-            return Err(SessionError::Rejected("session identity was already used"));
+    ) -> Result<LocalSession<Storage>, SessionError<Storage::Error>> {
+        let mut runtime = self.runtime.lock().await;
+        runtime.settle().await?;
+        runtime.view()?;
+        if runtime.seen.contains(&session)
+            || reference.is_some_and(|position| !runtime.positions.contains(&position))
+        {
+            return Err(SessionError::Rejected(
+                "reused session or invalid reference",
+            ));
         }
-        state
-            .validate_reference(reference)
-            .map_err(SessionError::Rejected)?;
-        let envelope = encode_open(&author_id, &session_id, reference)?;
-        self.storage
-            .append(Event {
-                payload: envelope,
-                blob_tree: None,
-            })
-            .await
-            .map_err(SessionError::Storage)?;
-        state.seen_sessions.insert(session_id.clone());
-        state.authors.insert(
-            author_id.clone(),
-            AuthorState {
-                session_id: session_id.clone(),
-                reference,
-            },
-        );
-        Ok(LocalSession {
-            sequencer: Arc::clone(self),
-            author_id,
-            session_id,
-            closed: Arc::new(AtomicBool::new(false)),
-        })
-    }
-}
-
-/// One individual-user session backed by a shared local sequencer.
-#[derive(Clone)]
-pub struct LocalSession<S: SeaStorage> {
-    sequencer: Arc<LocalSequencer<S>>,
-    author_id: AuthorId,
-    session_id: SessionId,
-    closed: Arc<AtomicBool>,
-}
-
-impl<S: SeaStorage> LocalSession<S> {
-    fn ensure_open(&self) -> Result<(), SessionError<S::Error>> {
-        if self.closed.load(Ordering::Acquire) {
-            Err(SessionError::Closed)
-        } else {
-            Ok(())
-        }
-    }
-
-    #[allow(clippy::too_many_lines)]
-    fn monitored_events(&self, mode: EventStreamMode) -> ArchiveLoadStream<SessionError<S::Error>>
-    where
-        S: 'static,
-    {
-        let initial_previous = match mode {
-            EventStreamMode::Read { after, .. } => after,
-            EventStreamMode::Load { .. } => None,
-        };
-        let initial = MonitoredStreamProgress {
-            previous: initial_previous,
-            latest_known: initial_previous,
-            status: MonitoredStreamStatus::StreamingBacklog,
-        };
-        if let Err(error) = self.ensure_open() {
-            return boxed_monitored_stream(
-                stream::once(async move { Err(error) }),
-                initial,
-                load_event_position,
-            );
-        }
-
-        let state = EventStreamState {
-            storage: Arc::clone(&self.sequencer.storage),
-            live: self.sequencer.events.subscribe(),
-            mode: Some(mode),
-            catch_up: None,
-            catch_up_status: MonitoredStreamStatus::StreamingBacklog,
-            pending: VecDeque::new(),
-            previous: initial_previous,
-            latest_known: initial_previous,
-            live_delivery: false,
-            caught_up: false,
-            done: false,
-        };
-        let events = stream::unfold(state, |mut state| async move {
-            loop {
-                if state.done {
-                    return None;
-                }
-
-                if let Some(mode) = state.mode.take() {
-                    let initialized = match mode {
-                        EventStreamMode::Read { after, stop_after } => {
-                            let head = match stop_after {
-                                Some(position) => Some(position),
-                                None => match state.storage.head().await {
-                                    Ok(head) => head,
-                                    Err(error) => {
-                                        state.done = true;
-                                        return Some((Err(SessionError::Storage(error)), state));
-                                    }
-                                },
-                            };
-                            match state.storage.read(after, head).await {
-                                Ok(events) => {
-                                    state.catch_up = Some(events);
-                                    if stop_after.is_some() {
-                                        state.latest_known = head;
-                                    }
-                                    state.live_delivery = stop_after.is_none();
-                                    Ok(())
-                                }
-                                Err(error) => Err(error),
-                            }
-                        }
-                        EventStreamMode::Load { required } => {
-                            match state.storage.load(required).await {
-                                Ok(load) => {
-                                    state.previous =
-                                        load.snapshot.as_ref().and_then(|snapshot| match snapshot
-                                            .snapshot
-                                            .at_event
-                                        {
-                                            SnapshotPosition::Initial => None,
-                                            SnapshotPosition::At(position) => Some(position),
-                                        });
-                                    state.latest_known = state.previous;
-                                    if let Some(snapshot) = load.snapshot {
-                                        state.pending.push_back(LoadEvent::Snapshot(snapshot));
-                                    }
-                                    state.catch_up = Some(load.events);
-                                    state.live_delivery = true;
-                                    Ok(())
-                                }
-                                Err(error) => Err(error),
-                            }
-                        }
-                    };
-                    if let Err(error) = initialized {
-                        state.done = true;
-                        return Some((Err(SessionError::Storage(error)), state));
-                    }
-                    let progress = state.progress(MonitoredStreamStatus::StreamingBacklog);
-                    return Some((Ok(MonitoredStreamItem::Progress(progress)), state));
-                }
-
-                if let Some(item) = state.pending.pop_front() {
-                    if let LoadEvent::Event(event) = &item {
-                        state.previous = Some(event.committed.position);
-                    }
-                    return Some((Ok(MonitoredStreamItem::Item(item)), state));
-                }
-
-                if let Some(catch_up) = &mut state.catch_up {
-                    match catch_up.next().await {
-                        Some(Ok(record)) => match decode_committed(&record) {
-                            Ok(Some(event)) => {
-                                state.latest_known = Some(event.committed.position);
-                                state.pending.push_back(LoadEvent::Event(event));
-                                let progress = state.progress(state.catch_up_status);
-                                return Some((Ok(MonitoredStreamItem::Progress(progress)), state));
-                            }
-                            Ok(None) => {}
-                            Err(error) => {
-                                state.done = true;
-                                return Some((Err(error), state));
-                            }
-                        },
-                        Some(Err(error)) => {
-                            state.done = true;
-                            return Some((Err(SessionError::Storage(error)), state));
-                        }
-                        None => {
-                            state.catch_up = None;
-                            if !state.live_delivery {
-                                state.done = true;
-                            }
-                        }
-                    }
-                    continue;
-                }
-
-                if !state.caught_up && state.previous == state.latest_known {
-                    state.caught_up = true;
-                    let progress = state.progress(MonitoredStreamStatus::AwaitingNewItems);
-                    return Some((Ok(MonitoredStreamItem::Progress(progress)), state));
-                }
-
-                match state.live.recv().await {
-                    Ok(event)
-                        if state
-                            .previous
-                            .is_none_or(|position| event.committed.position > position) =>
-                    {
-                        state.latest_known = Some(event.committed.position);
-                        state.caught_up = false;
-                        state.pending.push_back(LoadEvent::Event(event));
-                        let status = if state.live.is_empty() {
-                            MonitoredStreamStatus::StreamingBacklog
-                        } else {
-                            MonitoredStreamStatus::FallenBehind
-                        };
-                        let progress = state.progress(status);
-                        return Some((Ok(MonitoredStreamItem::Progress(progress)), state));
-                    }
-                    Ok(_) => {}
-                    Err(broadcast::error::RecvError::Lagged(_)) => {
-                        let head = match state.storage.head().await {
-                            Ok(head) => head,
-                            Err(error) => {
-                                state.done = true;
-                                return Some((Err(SessionError::Storage(error)), state));
-                            }
-                        };
-                        match state.storage.read(state.previous, head).await {
-                            Ok(events) => {
-                                state.catch_up = Some(events);
-                                state.catch_up_status = MonitoredStreamStatus::FallenBehind;
-                                state.caught_up = false;
-                            }
-                            Err(error) => {
-                                state.done = true;
-                                return Some((Err(SessionError::Storage(error)), state));
-                            }
-                        }
-                    }
-                    Err(broadcast::error::RecvError::Closed) => return None,
-                }
+        runtime.members.retain(|_, member| {
+            if member.author == author {
+                member.closed.send_replace(true);
+                false
+            } else {
+                true
             }
         });
-        boxed_monitored_stream(events, initial, load_event_position)
+        {
+            let mut publishers = runtime.publishers.lock().expect("publisher lock");
+            publishers
+                .entries
+                .retain(|session, _| runtime.members.contains_key(session));
+            publishers.refresh();
+        }
+        let (closed, _) = watch::channel(false);
+        runtime.members.insert(
+            session.clone(),
+            Membership {
+                author: author.clone(),
+                reference,
+                closed,
+            },
+        );
+        runtime.seen.insert(session.clone());
+        Ok(LocalSession {
+            sequencer: self.clone(),
+            author,
+            session,
+        })
+    }
+
+    /// Settles retained backend work, closes every session, and releases the owned view.
+    /// Backend-dependent resources retained by independent streams may still prevent reopening.
+    ///
+    /// # Errors
+    /// Returns a pending mutation failure or an unresolved outcome requiring recovery.
+    /// # Panics
+    /// Panics if an internal publisher-state lock was poisoned.
+    pub async fn shutdown(&self) -> Result<(), SessionError<Storage::Error>> {
+        let mut runtime = self.runtime.lock().await;
+        runtime.settle().await?;
+        for (_, member) in std::mem::take(&mut runtime.members) {
+            member.closed.send_replace(true);
+        }
+        runtime
+            .publishers
+            .lock()
+            .expect("publisher lock")
+            .entries
+            .clear();
+        runtime.view.take();
+        Ok(())
     }
 }
 
-#[derive(Clone, Copy)]
-enum EventStreamMode {
-    Read {
-        after: Option<EventPosition>,
-        stop_after: Option<EventPosition>,
-    },
-    Load {
-        required: Option<EventPosition>,
-    },
+/// Cloneable membership in one shared runtime; close affects only this membership.
+pub struct LocalSession<Storage: SeaStorage> {
+    /// Shared sequencing owner, not independent storage authority.
+    sequencer: Arc<LocalSequencer<Storage>>,
+    /// Author identity checked when reconciling retries.
+    author: AuthorId,
+    /// Unique connection identity for this membership.
+    session: SessionId,
 }
 
-struct EventStreamState<S: SeaStorage> {
-    storage: Arc<S>,
-    live: broadcast::Receiver<SessionCommittedEvent>,
-    mode: Option<EventStreamMode>,
-    catch_up: Option<StorageEventStream<S::Error>>,
-    catch_up_status: MonitoredStreamStatus,
-    pending: VecDeque<LoadEvent>,
-    previous: Option<EventPosition>,
-    latest_known: Option<EventPosition>,
-    live_delivery: bool,
-    caught_up: bool,
-    done: bool,
-}
-
-impl<S: SeaStorage> EventStreamState<S> {
-    fn progress(&self, status: MonitoredStreamStatus) -> MonitoredStreamProgress<EventPosition> {
-        MonitoredStreamProgress {
-            previous: self.previous,
-            latest_known: self.latest_known,
-            status,
+impl<Storage: SeaStorage> Clone for LocalSession<Storage> {
+    fn clone(&self) -> Self {
+        Self {
+            sequencer: self.sequencer.clone(),
+            author: self.author.clone(),
+            session: self.session.clone(),
         }
     }
 }
 
-fn load_event_position(event: &LoadEvent) -> Option<EventPosition> {
-    match event {
-        LoadEvent::Snapshot(_) => None,
-        LoadEvent::Event(event) => Some(event.committed.position),
+impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
+    /// Submits once, retaining backend execution through caller cancellation.
+    async fn submit(
+        &self,
+        submission: EventSubmission,
+    ) -> Result<EventPosition, SessionError<Storage::Error>> {
+        let mut runtime = self.sequencer.runtime.lock().await;
+        runtime.settle().await?;
+        runtime.member(&self.session)?;
+        if let Some(accepted) = runtime.accepted.get(&submission.operation_id) {
+            return if accepted.author_id == self.author
+                && accepted.committed.event == submission.event
+                && accepted.reference == submission.reference
+            {
+                Ok(accepted.committed.position)
+            } else {
+                Err(SessionError::Rejected(
+                    "operation identity conflicts with previous input",
+                ))
+            };
+        }
+        if submission
+            .reference
+            .is_some_and(|position| !runtime.positions.contains(&position))
+        {
+            return Err(SessionError::Rejected(
+                "reference is not an application event",
+            ));
+        }
+        let active_minimum = runtime
+            .members
+            .values()
+            .map(|member| member.reference)
+            .min()
+            .flatten();
+        if submission
+            .reference
+            .zip(active_minimum)
+            .is_some_and(|(reference, minimum)| reference < minimum)
+        {
+            return Err(SessionError::Rejected(
+                "reference precedes the active minimum",
+            ));
+        }
+        let minimum = runtime
+            .members
+            .iter()
+            .map(|(session, member)| {
+                if session == &self.session {
+                    submission.reference
+                } else {
+                    member.reference
+                }
+            })
+            .min()
+            .flatten();
+        let event = Event {
+            payload: encode_submission(
+                &self.author,
+                &self.session,
+                &submission.operation_id,
+                submission.reference,
+                minimum,
+                &submission.event.payload,
+            )?,
+            blob_tree: submission.event.blob_tree,
+        };
+        let view = runtime.view()?;
+        let input = event.clone();
+        runtime.pending = Some(Pending {
+            event: Some(event),
+            future: Box::pin(async move { append_once::<Storage>(&view, input).await }),
+        });
+        runtime.settle().await?;
+        Ok(runtime
+            .accepted
+            .get(&submission.operation_id)
+            .expect("settled submission")
+            .committed
+            .position)
+    }
+
+    /// Resolves a stable identity after settling any cancelled caller's retained work.
+    async fn resolve_submission(
+        &self,
+        operation: &OperationId,
+    ) -> Result<Option<EventPosition>, SessionError<Storage::Error>> {
+        let mut runtime = self.sequencer.runtime.lock().await;
+        runtime.settle().await?;
+        runtime.member(&self.session)?;
+        Ok(runtime
+            .accepted
+            .get(operation)
+            .map(|accepted| accepted.committed.position))
+    }
+
+    /// Closes this membership idempotently without closing the shared runtime.
+    async fn close(&self) -> Result<(), SessionError<Storage::Error>> {
+        let mut runtime = self.sequencer.runtime.lock().await;
+        if !runtime.members.contains_key(&self.session) {
+            return Ok(());
+        }
+        runtime.settle().await?;
+        let member = runtime
+            .members
+            .remove(&self.session)
+            .expect("validated membership");
+        member.closed.send_replace(true);
+        let mut publishers = runtime.publishers.lock().expect("publisher lock");
+        publishers.entries.remove(&self.session);
+        publishers.refresh();
+        Ok(())
+    }
+
+    /// Obtains a view only after validating current membership and settling prior work.
+    async fn view(&self) -> Result<Arc<View<Storage>>, SessionError<Storage::Error>> {
+        let mut runtime = self.sequencer.runtime.lock().await;
+        runtime.settle().await?;
+        runtime.member(&self.session)?;
+        runtime.view()
     }
 }
 
-impl<S> SeaService for LocalSession<S>
-where
-    S: SeaStorage + 'static,
-{
-    type Error = SessionError<S::Error>;
+impl<Storage: SeaStorage + 'static> sea_core::SeaService for LocalSession<Storage> {
+    type Error = SessionError<Storage::Error>;
 }
 
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-impl<S> SeaEventSubscription for LocalSession<S>
-where
-    S: SeaStorage + 'static,
-{
-    fn load(&self, required: Option<EventPosition>) -> ArchiveLoadStream<Self::Error> {
-        self.monitored_events(EventStreamMode::Load { required })
+impl<Storage: SeaStorage + 'static> SeaAuthorSession for LocalSession<Storage> {
+    async fn submit(&self, submission: EventSubmission) -> Result<EventPosition, Self::Error> {
+        Self::submit(self, submission).await
+    }
+    async fn resolve_submission(
+        &self,
+        operation: &OperationId,
+    ) -> Result<Option<EventPosition>, Self::Error> {
+        Self::resolve_submission(self, operation).await
+    }
+    async fn close(&self) -> Result<(), Self::Error> {
+        Self::close(self).await
     }
 }
 
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-impl<S> SeaArchive for LocalSession<S>
-where
-    S: SeaStorage + 'static,
-{
+impl<Storage: SeaStorage + 'static> SeaArchive for LocalSession<Storage> {
+    type BlobHandle = BlobHandle<Storage>;
+    type EventHandle = EventHandle<Storage>;
+
     fn read(
         &self,
         after: Option<EventPosition>,
         stop_after: Option<EventPosition>,
-    ) -> ArchiveEventStream<Self::Error> {
-        map_monitored_stream(
-            self.monitored_events(EventStreamMode::Read { after, stop_after }),
-            |item| match item {
-                LoadEvent::Event(event) => Ok(event),
-                LoadEvent::Snapshot(_) => Err(SessionError::Corrupt(
-                    "archive read unexpectedly selected a snapshot",
-                )),
-            },
-            |error| error,
+    ) -> ArchiveStream<SessionCommittedEvent, EventPosition, Self::Error> {
+        let session = self.clone();
+        let initial = MonitoredStreamProgress {
+            previous: after,
+            latest_known: after,
+            status: MonitoredStreamStatus::StreamingBacklog,
+        };
+        let initialized = stream::once(async move {
+            let mut runtime = session.sequencer.runtime.lock().await;
+            runtime.settle().await?;
+            let closed = runtime.member(&session.session)?.closed.subscribe();
+            let source = runtime.view()?.read(after, stop_after);
+            Ok::<_, Self::Error>(stream::unfold(
+                (source, closed, false),
+                |(mut source, mut closed, done)| async move {
+                    if done || *closed.borrow() {
+                        return None;
+                    }
+                    let next = {
+                        let read = Box::pin(source.next());
+                        let closing = Box::pin(closed.changed());
+                        match select(closing, read).await {
+                            Either::Left(_) => None,
+                            Either::Right((item, _)) => item,
+                        }
+                    };
+                    let item = match next? {
+                        Ok(MonitoredStreamItem::Progress(progress)) => {
+                            Ok(MonitoredStreamItem::Progress(progress))
+                        }
+                        Ok(MonitoredStreamItem::Item(record)) => decode_committed(&record)
+                            .and_then(|event| {
+                                event.ok_or(SessionError::Corrupt("unexpected control record"))
+                            })
+                            .map(MonitoredStreamItem::Item),
+                        Err(error) => Err(SessionError::Storage(error)),
+                    };
+                    let done = item.is_err();
+                    Some((item, (source, closed, done)))
+                },
+            ))
+        });
+        boxed_monitored_stream(
+            initialized.try_flatten(),
+            initial,
+            |event: &SessionCommittedEvent| Some(event.committed.position),
         )
     }
 
-    async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {
-        self.ensure_open()?;
-        self.sequencer
-            .storage
+    async fn load(
+        &self,
+        start: LoadStart,
+    ) -> Result<SessionLoad<Self::BlobHandle, Self::EventHandle, Self::Error>, Self::Error> {
+        let snapshot = self.get_snapshot(start).await?;
+        let after = snapshot.as_ref().map(|snapshot| snapshot.at_event.id());
+        Ok(SessionLoad {
+            snapshot,
+            events: self.read(after, None),
+        })
+    }
+
+    async fn get_snapshot(
+        &self,
+        start: LoadStart,
+    ) -> Result<Option<ViewSnapshot<Storage>>, Self::Error> {
+        self.view()
+            .await?
+            .get_snapshot(start)
+            .await
+            .map_err(SessionError::Storage)
+    }
+    async fn put_blob(&self, payload: Bytes) -> Result<Self::BlobHandle, Self::Error> {
+        self.view()
+            .await?
+            .blobs()
             .put_blob(payload)
             .await
             .map_err(SessionError::Storage)
     }
-
     async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
-        self.ensure_open()?;
-        self.sequencer
-            .storage
+        self.view()
+            .await?
+            .blobs()
             .get_blob(id)
             .await
             .map_err(SessionError::Storage)
     }
-
     async fn put_directory(
         &self,
         directory: BlobDirectory,
-    ) -> Result<BlobDirectoryId, Self::Error> {
-        self.ensure_open()?;
-        self.sequencer
-            .storage
+    ) -> Result<Self::BlobHandle, Self::Error> {
+        self.view()
+            .await?
+            .blobs()
             .put_directory(directory)
             .await
             .map_err(SessionError::Storage)
     }
-
     async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
-        self.ensure_open()?;
-        self.sequencer
-            .storage
+        self.view()
+            .await?
+            .blobs()
             .get_directory(id)
             .await
             .map_err(SessionError::Storage)
     }
-
-    async fn snapshot(&self, id: &SnapshotId) -> Result<Option<PublishedSnapshot>, Self::Error> {
-        self.ensure_open()?;
-        self.sequencer
-            .storage
-            .snapshot(id)
+    async fn resolve_tree(&self, id: BlobTreeId) -> Result<Option<Self::BlobHandle>, Self::Error> {
+        self.view()
+            .await?
+            .blobs()
+            .resolve(id)
+            .await
+            .map_err(SessionError::Storage)
+    }
+    async fn resolve_position(
+        &self,
+        position: EventPosition,
+    ) -> Result<Option<Self::EventHandle>, Self::Error> {
+        self.view()
+            .await?
+            .resolve_position(position)
             .await
             .map_err(SessionError::Storage)
     }
@@ -646,701 +698,208 @@ where
 
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-impl<S> SeaAuthorSession for LocalSession<S>
-where
-    S: SeaStorage + 'static,
-{
-    async fn submit(&self, submission: EventSubmission) -> Result<EventReceipt, Self::Error> {
-        self.ensure_open()?;
-        let mut state = self.sequencer.state.lock().await;
-        if let Some(accepted) = state.accepted.get(&submission.operation_id) {
-            return if accepted.author_id == self.author_id
-                && accepted.session_id == self.session_id
-                && accepted.submission == submission
-            {
-                Ok(accepted.receipt.clone())
-            } else {
-                Err(SessionError::Rejected(
-                    "operation identity is already bound to different input",
-                ))
-            };
-        }
-        let author = state
-            .authors
-            .get(&self.author_id)
-            .ok_or(SessionError::Rejected("author is not active"))?;
-        if author.session_id != self.session_id {
-            return Err(SessionError::Rejected("session was replaced"));
-        }
-        state
-            .validate_reference(submission.reference)
-            .map_err(SessionError::Rejected)?;
-        let minimum_reference =
-            state.minimum_reference_after(&self.author_id, submission.reference);
-        let envelope = encode_submission(
-            &self.author_id,
-            &self.session_id,
-            &submission.operation_id,
-            submission.reference,
-            minimum_reference,
-            &submission.event.payload,
-        )?;
-        let receipt = self
-            .sequencer
-            .storage
-            .append(Event {
-                payload: envelope,
-                blob_tree: submission.event.blob_tree,
-            })
-            .await
-            .map_err(SessionError::Storage)?;
-        state
-            .authors
-            .get_mut(&self.author_id)
-            .expect("validated author")
-            .reference = submission.reference;
-        state.event_positions.insert(receipt.position);
-        state.latest_event = Some(receipt.position);
-        let committed = SessionCommittedEvent {
-            committed: CommittedEvent {
-                position: receipt.position,
-                event: submission.event.clone(),
-            },
-            author_id: self.author_id.clone(),
-            session_id: self.session_id.clone(),
-            operation_id: submission.operation_id.clone(),
-            reference: submission.reference,
-            minimum_reference,
-        };
-        state.accepted.insert(
-            submission.operation_id.clone(),
-            AcceptedSubmission {
-                author_id: self.author_id.clone(),
-                session_id: self.session_id.clone(),
-                submission,
-                receipt: receipt.clone(),
-                committed: committed.clone(),
-            },
-        );
-        drop(state);
-        let _ = self.sequencer.events.send(committed);
-        Ok(receipt)
-    }
-
-    async fn resolve_submission(
-        &self,
-        operation_id: &OperationId,
-    ) -> Result<Option<EventReceipt>, Self::Error> {
-        self.ensure_open()?;
-        Ok(self
-            .sequencer
-            .state
-            .lock()
-            .await
-            .accepted
-            .get(operation_id)
-            .map(|accepted| accepted.receipt.clone()))
-    }
-
-    async fn close(&self) -> Result<(), Self::Error> {
-        if self.closed.swap(true, Ordering::AcqRel) {
-            return Ok(());
-        }
-        let mut state = self.sequencer.state.lock().await;
-        if state
-            .authors
-            .get(&self.author_id)
-            .is_some_and(|author| author.session_id == self.session_id)
-        {
-            let envelope = encode_close(&self.author_id, &self.session_id)?;
-            self.sequencer
-                .storage
-                .append(Event {
-                    payload: envelope,
-                    blob_tree: None,
-                })
-                .await
-                .map_err(SessionError::Storage)?;
-            state.authors.remove(&self.author_id);
-        }
-        state.publishers.remove(&self.session_id);
-        state.select_snapshot_publisher();
-        self.sequencer
-            .coordination
-            .send_replace(state.coordination.clone());
-        Ok(())
-    }
-}
-
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-impl<S> SeaSnapshotCoordinator for LocalSession<S>
-where
-    S: SeaStorage + 'static,
-{
-    async fn latest_snapshot(&self) -> Result<Option<PublishedSnapshot>, Self::Error> {
-        self.ensure_open()?;
-        self.sequencer
-            .storage
-            .latest_snapshot()
-            .await
-            .map_err(SessionError::Storage)
-    }
-
-    async fn publish_snapshot(
-        &self,
-        publication: SnapshotPublication,
-    ) -> Result<PublishedSnapshot, Self::Error> {
-        self.ensure_open()?;
-        let mut state = self.sequencer.state.lock().await;
-        let published = self
-            .sequencer
-            .storage
-            .publish_snapshot(publication)
-            .await
-            .map_err(SessionError::Storage)?;
-        state.coordination.latest = Some(published.clone());
-        self.sequencer
-            .snapshots
-            .send_replace(Some(published.clone()));
-        self.sequencer
-            .coordination
-            .send_replace(state.coordination.clone());
-        Ok(published)
-    }
-
-    async fn resolve_snapshot_publication(
-        &self,
-        operation_id: &OperationId,
-    ) -> Result<Option<PublishedSnapshot>, Self::Error> {
-        self.ensure_open()?;
-        self.sequencer
-            .storage
-            .resolve_snapshot_publication(operation_id)
-            .await
-            .map_err(SessionError::Storage)
-    }
-
-    async fn subscribe_snapshots(
-        &self,
-    ) -> Result<SessionStream<PublishedSnapshot, Self::Error>, Self::Error> {
-        self.ensure_open()?;
-        let receiver = self.sequencer.snapshots.subscribe();
-        Ok(Box::pin(stream::unfold(
-            (receiver, true),
-            |(mut receiver, initial)| async move {
-                if initial {
-                    let snapshot = receiver.borrow_and_update().clone();
-                    if let Some(snapshot) = snapshot {
-                        return Some((Ok(snapshot), (receiver, false)));
-                    }
-                }
-                match receiver.changed().await {
-                    Ok(()) => {
-                        let snapshot = receiver.borrow_and_update().clone();
-                        snapshot.map(|snapshot| (Ok(snapshot), (receiver, false)))
-                    }
-                    Err(_) => None,
-                }
-            },
-        )))
-    }
-}
-
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-impl<S> SeaSnapshotPublisher for LocalSession<S>
-where
-    S: SeaStorage + 'static,
-{
+impl<Storage: SeaStorage + 'static> SeaSnapshotCoordinator for LocalSession<Storage> {
     async fn coordinate_snapshots(
         &self,
         participation: SnapshotParticipation,
     ) -> Result<SessionStream<SnapshotCoordination, Self::Error>, Self::Error> {
-        self.ensure_open()?;
-        let mut state = self.sequencer.state.lock().await;
-        if state
-            .authors
-            .get(&self.author_id)
-            .is_none_or(|author| author.session_id != self.session_id)
-        {
-            return Err(SessionError::Rejected("session is not active"));
-        }
-        state
-            .publishers
-            .insert(self.session_id.clone(), PublisherState { participation });
-        state.select_snapshot_publisher();
-        self.sequencer
-            .coordination
-            .send_replace(state.coordination.clone());
-        drop(state);
-
-        let receiver = self.sequencer.coordination.subscribe();
-        let session_id = self.session_id.clone();
+        let mut runtime = self.sequencer.runtime.lock().await;
+        runtime.settle().await?;
+        runtime.member(&self.session)?;
+        let mut publishers = runtime.publishers.lock().expect("publisher lock");
+        let registration = publishers
+            .next_fence
+            .checked_add(1)
+            .ok_or(SessionError::Rejected("publisher fence exhausted"))?;
+        publishers.next_fence = registration;
+        let alive = Arc::new(());
+        let (updates, receiver) = watch::channel(SnapshotCoordination::default());
+        publishers.entries.insert(
+            self.session.clone(),
+            Publisher {
+                participation,
+                alive: Arc::downgrade(&alive),
+                registration,
+                updates,
+            },
+        );
+        publishers.refresh();
+        let lease = PublisherLease {
+            publishers: runtime.publishers.clone(),
+            session: self.session.clone(),
+            registration,
+            _alive: alive,
+        };
         Ok(Box::pin(stream::unfold(
-            (receiver, true, session_id),
-            |(mut receiver, initial, session_id)| async move {
-                if !initial && receiver.changed().await.is_err() {
+            (receiver, true, lease),
+            |(mut receiver, first, lease)| async move {
+                if !first && receiver.changed().await.is_err() {
                     return None;
                 }
-                let state = receiver.borrow_and_update().clone();
-                let coordination = SnapshotCoordination {
-                    latest: state.latest,
-                    fence: state
-                        .nominee
-                        .filter(|(nominee, _)| nominee == &session_id)
-                        .map(|(_, fence)| fence),
-                };
-                Some((Ok(coordination), (receiver, false, session_id)))
+                let update = receiver.borrow_and_update().clone();
+                Some((Ok(update), (receiver, false, lease)))
             },
         )))
     }
 
-    async fn publish_coordinated_snapshot(
+    async fn publish_snapshot(
         &self,
+        expected_parent: Option<EventPosition>,
         fence: Option<u64>,
-        publication: SnapshotPublication,
-    ) -> Result<PublishedSnapshot, Self::Error> {
-        self.ensure_open()?;
-        let mut state = self.sequencer.state.lock().await;
-        let participation = state
-            .publishers
-            .get(&self.session_id)
-            .map(|publisher| publisher.participation);
-        let authorized = match participation {
-            Some(SnapshotParticipation::SeaSelected) => fence.is_some_and(|fence| {
-                state.coordination.nominee.as_ref() == Some(&(self.session_id.clone(), fence))
-            }),
-            Some(SnapshotParticipation::ClientSelected) => fence.is_none(),
-            Some(SnapshotParticipation::ReadOnly) | None => false,
-        };
-        if !authorized {
+        snapshot: ViewSnapshot<Storage>,
+    ) -> Result<ViewSnapshot<Storage>, Self::Error> {
+        let mut runtime = self.sequencer.runtime.lock().await;
+        runtime.settle().await?;
+        runtime.member(&self.session)?;
+        {
+            let mut publishers = runtime.publishers.lock().expect("publisher lock");
+            publishers.refresh();
+            let authorized = match publishers
+                .entries
+                .get(&self.session)
+                .map(|publisher| publisher.participation)
+            {
+                Some(SnapshotParticipation::ClientSelected) => fence.is_none(),
+                Some(SnapshotParticipation::SeaSelected) => publishers
+                    .nominee
+                    .as_ref()
+                    .is_some_and(|(session, _, current)| {
+                        session == &self.session && Some(*current) == fence
+                    }),
+                _ => false,
+            };
+            if !authorized {
+                return Err(SessionError::Rejected(
+                    "snapshot publisher is not authorized",
+                ));
+            }
+        }
+        let view = runtime.view()?;
+        let position = snapshot.at_event.id();
+        if !runtime.positions.contains(&position) {
             return Err(SessionError::Rejected(
-                "snapshot publication is not permitted by this stream",
+                "snapshot boundary is not an application event",
             ));
         }
-        let published = self
-            .sequencer
-            .storage
-            .publish_snapshot(publication)
+        view.blobs()
+            .ensure_available(&snapshot.root)
             .await
             .map_err(SessionError::Storage)?;
-        state.coordination.latest = Some(published.clone());
-        self.sequencer
-            .snapshots
-            .send_replace(Some(published.clone()));
-        self.sequencer
-            .coordination
-            .send_replace(state.coordination.clone());
-        Ok(published)
+        if let Some(existing) = view
+            .get_snapshot(LoadStart::ReplayAtLeastAllAfter(position))
+            .await
+            .map_err(SessionError::Storage)?
+            && existing.at_event.id() == position
+        {
+            return if existing.root.id() == snapshot.root.id() {
+                Ok(existing)
+            } else {
+                Err(SessionError::Rejected(
+                    "snapshot position already has a different root",
+                ))
+            };
+        }
+        let latest = runtime.publishers.lock().expect("publisher lock").latest;
+        if latest != expected_parent || latest.is_some_and(|latest| position <= latest) {
+            return Err(SessionError::Rejected(
+                "snapshot parent conflicts or position regresses",
+            ));
+        }
+        let input = snapshot.clone();
+        runtime.pending = Some(Pending {
+            event: None,
+            future: Box::pin(async move {
+                match view.publish_snapshot(&input).await {
+                    Ok(()) => Ok(position),
+                    Err(error) if error.kind() == ErrorKind::Ambiguous => {
+                        let existing = view
+                            .get_snapshot(LoadStart::ReplayAtLeastAllAfter(position))
+                            .await
+                            .map_err(|_| SessionError::RecoveryRequired)?;
+                        match existing {
+                            Some(existing)
+                                if existing.at_event.id() == position
+                                    && existing.root.id() == input.root.id() =>
+                            {
+                                Ok(position)
+                            }
+                            Some(existing) if existing.at_event.id() == position => Err(
+                                SessionError::Corrupt("ambiguous publication has a different root"),
+                            ),
+                            _ => Err(SessionError::RecoveryRequired),
+                        }
+                    }
+                    Err(error) => Err(SessionError::Storage(error)),
+                }
+            }),
+        });
+        runtime.settle().await?;
+        Ok(snapshot)
     }
 
     async fn revoke_snapshot_publisher(&self) -> Result<(), Self::Error> {
-        let mut state = self.sequencer.state.lock().await;
-        state.publishers.remove(&self.session_id);
-        state.select_snapshot_publisher();
-        self.sequencer
-            .coordination
-            .send_replace(state.coordination.clone());
+        let runtime = self.sequencer.runtime.lock().await;
+        let mut publishers = runtime.publishers.lock().expect("publisher lock");
+        publishers.entries.remove(&self.session);
+        publishers.refresh();
         Ok(())
     }
 }
 
-async fn replay<S>(storage: &S) -> Result<SequencerState, SessionError<S::Error>>
-where
-    S: SeaStorage,
-{
-    let records = storage
-        .read(None, None)
-        .await
-        .map_err(SessionError::Storage)?
-        .try_collect::<Vec<_>>()
-        .await
-        .map_err(SessionError::Storage)?;
-    let mut state = SequencerState::default();
-    for record in records {
-        apply_record(&mut state, &record, storage.durability())?;
-    }
-    Ok(state)
-}
-
-enum Envelope {
-    Open {
-        author_id: AuthorId,
-        session_id: SessionId,
-        reference: Option<EventPosition>,
-    },
-    Submission {
-        author_id: AuthorId,
-        session_id: SessionId,
-        operation_id: OperationId,
-        reference: Option<EventPosition>,
-        minimum_reference: Option<EventPosition>,
-        payload: Bytes,
-    },
-    Close {
-        author_id: AuthorId,
-        session_id: SessionId,
-    },
-}
-
-fn apply_record<E>(
-    state: &mut SequencerState,
-    record: &CommittedEvent,
-    durability: Durability,
-) -> Result<(), SessionError<E>> {
-    match decode_envelope(&record.event.payload)? {
-        Envelope::Open {
-            author_id,
-            session_id,
-            reference,
-        } => {
-            if !state.seen_sessions.insert(session_id.clone()) {
-                return Err(SessionError::Corrupt("session identity was reused"));
-            }
-            state
-                .validate_reference(reference)
-                .map_err(SessionError::Corrupt)?;
-            state.authors.insert(
-                author_id,
-                AuthorState {
-                    session_id,
-                    reference,
-                },
-            );
-        }
-        Envelope::Submission {
-            author_id,
-            session_id,
-            operation_id,
-            reference,
-            minimum_reference,
-            payload,
-        } => {
-            let author = state
-                .authors
-                .get(&author_id)
-                .ok_or(SessionError::Corrupt("submission author is not active"))?;
-            if author.session_id != session_id {
-                return Err(SessionError::Corrupt("submission session is stale"));
-            }
-            state
-                .validate_reference(reference)
-                .map_err(SessionError::Corrupt)?;
-            if state.minimum_reference_after(&author_id, reference) != minimum_reference {
-                return Err(SessionError::Corrupt(
-                    "submission minimum reference is inconsistent",
-                ));
-            }
-            if state.accepted.contains_key(&operation_id) {
-                return Err(SessionError::Corrupt("submission identity was reused"));
-            }
-            state
-                .authors
-                .get_mut(&author_id)
-                .expect("validated author")
-                .reference = reference;
-            state.event_positions.insert(record.position);
-            state.latest_event = Some(record.position);
-            let submission = EventSubmission {
-                operation_id: operation_id.clone(),
-                reference,
-                event: Event {
-                    payload,
-                    blob_tree: record.event.blob_tree,
-                },
-            };
-            let committed = SessionCommittedEvent {
-                committed: CommittedEvent {
-                    position: record.position,
-                    event: submission.event.clone(),
-                },
-                author_id: author_id.clone(),
-                session_id: session_id.clone(),
-                operation_id: operation_id.clone(),
-                reference,
-                minimum_reference,
-            };
-            state.accepted.insert(
-                operation_id,
-                AcceptedSubmission {
-                    author_id,
-                    session_id,
-                    submission,
-                    receipt: EventReceipt {
-                        position: record.position,
-                        durability,
-                    },
-                    committed,
-                },
-            );
-        }
-        Envelope::Close {
-            author_id,
-            session_id,
-        } => {
-            if state
-                .authors
-                .get(&author_id)
-                .is_some_and(|author| author.session_id == session_id)
-            {
-                state.authors.remove(&author_id);
-            }
-        }
-    }
-    Ok(())
-}
-
-pub(super) fn decode_committed<E>(
-    record: &CommittedEvent,
-) -> Result<Option<SessionCommittedEvent>, SessionError<E>> {
-    let Envelope::Submission {
-        author_id,
-        session_id,
-        operation_id,
-        reference,
-        minimum_reference,
-        payload,
-    } = decode_envelope(&record.event.payload)?
-    else {
-        return Ok(None);
+/// Appends once and reconciles a returned ambiguous result; never resubmits the event.
+async fn append_once<Storage: SeaStorage>(
+    view: &View<Storage>,
+    event: Event,
+) -> Result<EventPosition, SessionError<Storage::Error>> {
+    let tree = match event.blob_tree {
+        Some(id) => Some(
+            view.blobs()
+                .resolve(id)
+                .await
+                .map_err(SessionError::Storage)?
+                .ok_or(SessionError::Rejected("event tree unavailable"))?,
+        ),
+        None => None,
     };
-    Ok(Some(SessionCommittedEvent {
-        committed: CommittedEvent {
-            position: record.position,
-            event: Event {
-                payload,
-                blob_tree: record.event.blob_tree,
-            },
-        },
-        author_id,
-        session_id,
-        operation_id,
-        reference,
-        minimum_reference,
-    }))
-}
-
-fn encode_open<E>(
-    author_id: &AuthorId,
-    session_id: &SessionId,
-    reference: Option<EventPosition>,
-) -> Result<Bytes, SessionError<E>> {
-    encode_envelope(
-        SESSION_OPEN,
-        author_id,
-        session_id,
-        None,
-        reference,
-        None,
-        &[],
-    )
-}
-
-pub(super) fn encode_submission<E>(
-    author_id: &AuthorId,
-    session_id: &SessionId,
-    operation_id: &OperationId,
-    reference: Option<EventPosition>,
-    minimum_reference: Option<EventPosition>,
-    payload: &[u8],
-) -> Result<Bytes, SessionError<E>> {
-    encode_envelope(
-        SUBMISSION,
-        author_id,
-        session_id,
-        Some(operation_id),
-        reference,
-        minimum_reference,
-        payload,
-    )
-}
-
-fn encode_close<E>(author_id: &AuthorId, session_id: &SessionId) -> Result<Bytes, SessionError<E>> {
-    encode_envelope(SESSION_CLOSE, author_id, session_id, None, None, None, &[])
-}
-
-fn encode_envelope<E>(
-    kind: u8,
-    author_id: &AuthorId,
-    session_id: &SessionId,
-    operation_id: Option<&OperationId>,
-    reference: Option<EventPosition>,
-    minimum_reference: Option<EventPosition>,
-    payload: &[u8],
-) -> Result<Bytes, SessionError<E>> {
-    let mut encoded = BytesMut::new();
-    encoded.extend_from_slice(ENVELOPE_MAGIC);
-    encoded.put_u8(kind);
-    put_field(&mut encoded, author_id.as_bytes())?;
-    put_field(&mut encoded, session_id.as_bytes())?;
-    if let Some(operation_id) = operation_id {
-        put_field(&mut encoded, operation_id.as_bytes())?;
-    }
-    put_position(&mut encoded, reference);
-    if kind == SUBMISSION {
-        put_position(&mut encoded, minimum_reference);
-        let length = u32::try_from(payload.len())
-            .map_err(|_| SessionError::Rejected("event payload is too large"))?;
-        encoded.put_u32(length);
-        encoded.extend_from_slice(payload);
-    }
-    Ok(encoded.freeze())
-}
-
-fn put_position(encoded: &mut BytesMut, position: Option<EventPosition>) {
-    match position {
-        Some(position) => {
-            encoded.put_u8(1);
-            encoded.extend_from_slice(&position.to_bytes());
+    let before = view.head().await.map_err(SessionError::Storage)?;
+    match view.append(event.payload.clone(), tree.as_ref()).await {
+        Ok(handle) => Ok(handle.id()),
+        Err(error) if error.kind() == ErrorKind::Ambiguous => {
+            let head = view
+                .head()
+                .await
+                .map_err(|_| SessionError::RecoveryRequired)?;
+            if let Some(head) = head {
+                let mut records = view.read(before, Some(head));
+                while let Some(item) = records.next().await {
+                    if let MonitoredStreamItem::Item(record) =
+                        item.map_err(|_| SessionError::RecoveryRequired)?
+                    {
+                        if record.event == event {
+                            return Ok(record.position);
+                        }
+                        return Err(SessionError::Corrupt(
+                            "unexpected concurrent archive writer",
+                        ));
+                    }
+                }
+            }
+            Err(SessionError::Rejected("append settled without commitment"))
         }
-        None => encoded.put_u8(0),
+        Err(error) => Err(SessionError::Storage(error)),
     }
-}
-
-fn put_field<E>(encoded: &mut BytesMut, value: &[u8]) -> Result<(), SessionError<E>> {
-    let length =
-        u32::try_from(value.len()).map_err(|_| SessionError::Rejected("identity is too large"))?;
-    encoded.put_u32(length);
-    encoded.extend_from_slice(value);
-    Ok(())
-}
-
-fn decode_envelope<E>(encoded: &[u8]) -> Result<Envelope, SessionError<E>> {
-    if encoded.len() < ENVELOPE_MAGIC.len() + 1
-        || &encoded[..ENVELOPE_MAGIC.len()] != ENVELOPE_MAGIC
-    {
-        return Err(SessionError::Corrupt("invalid envelope marker"));
-    }
-    let mut bytes = Bytes::copy_from_slice(&encoded[ENVELOPE_MAGIC.len()..]);
-    let kind = bytes.get_u8();
-    let author_id = AuthorId::new(take_field(&mut bytes)?)
-        .map_err(|_| SessionError::Corrupt("empty author identity"))?;
-    let session_id = SessionId::new(take_field(&mut bytes)?)
-        .map_err(|_| SessionError::Corrupt("empty session identity"))?;
-    let operation_id = if kind == SUBMISSION {
-        Some(
-            OperationId::new(take_field(&mut bytes)?)
-                .map_err(|_| SessionError::Corrupt("empty operation identity"))?,
-        )
-    } else {
-        None
-    };
-    let reference = take_position(&mut bytes)?;
-    let minimum_reference = if kind == SUBMISSION {
-        take_position(&mut bytes)?
-    } else {
-        None
-    };
-    let payload = if kind == SUBMISSION {
-        if bytes.remaining() < 4 {
-            return Err(SessionError::Corrupt("truncated payload length"));
-        }
-        let length = usize::try_from(bytes.get_u32())
-            .map_err(|_| SessionError::Corrupt("payload length exceeds address space"))?;
-        if bytes.remaining() != length {
-            return Err(SessionError::Corrupt("invalid payload length"));
-        }
-        bytes.copy_to_bytes(length)
-    } else {
-        if bytes.has_remaining() {
-            return Err(SessionError::Corrupt("control envelope has trailing bytes"));
-        }
-        Bytes::new()
-    };
-    match kind {
-        SESSION_OPEN => Ok(Envelope::Open {
-            author_id,
-            session_id,
-            reference,
-        }),
-        SUBMISSION => Ok(Envelope::Submission {
-            author_id,
-            session_id,
-            operation_id: operation_id.expect("submission operation identity"),
-            reference,
-            minimum_reference,
-            payload,
-        }),
-        SESSION_CLOSE => Ok(Envelope::Close {
-            author_id,
-            session_id,
-        }),
-        _ => Err(SessionError::Corrupt("unknown envelope kind")),
-    }
-}
-
-fn take_position<E>(bytes: &mut Bytes) -> Result<Option<EventPosition>, SessionError<E>> {
-    match take_byte(bytes)? {
-        0 => Ok(None),
-        1 => Ok(Some(EventPosition::from_bytes(take_array::<8, E>(bytes)?))),
-        _ => Err(SessionError::Corrupt("invalid position tag")),
-    }
-}
-
-fn take_field<E>(bytes: &mut Bytes) -> Result<Bytes, SessionError<E>> {
-    if bytes.remaining() < 4 {
-        return Err(SessionError::Corrupt("truncated identity length"));
-    }
-    let length = usize::try_from(bytes.get_u32())
-        .map_err(|_| SessionError::Corrupt("identity length exceeds address space"))?;
-    if bytes.remaining() < length {
-        return Err(SessionError::Corrupt("truncated identity"));
-    }
-    Ok(bytes.copy_to_bytes(length))
-}
-
-fn take_byte<E>(bytes: &mut Bytes) -> Result<u8, SessionError<E>> {
-    if bytes.has_remaining() {
-        Ok(bytes.get_u8())
-    } else {
-        Err(SessionError::Corrupt("truncated envelope"))
-    }
-}
-
-fn take_array<const N: usize, E>(bytes: &mut Bytes) -> Result<[u8; N], SessionError<E>> {
-    if bytes.remaining() < N {
-        return Err(SessionError::Corrupt("truncated envelope field"));
-    }
-    let mut value = [0; N];
-    bytes.copy_to_slice(&mut value);
-    Ok(value)
 }
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
+    use super::*;
+    use sea_memory::MemoryStorage;
 
-    use bytes::Bytes;
-    use futures_util::StreamExt as _;
-    use sea_core::{
-        BlobId, BlobTreeId, ClassifiedError, Durability, ErrorKind, Event, MonitoredStreamItem,
-        MonitoredStreamStatus,
-        archive::{
-            AuthorId, EventSubmission, LoadEvent, OperationId, SeaArchive, SeaAuthorSession,
-            SeaEventSubscription, SeaSnapshotCoordinator, SeaSnapshotPublisher, SessionId,
-            Snapshot, SnapshotParticipation, SnapshotPosition, SnapshotPublication,
-        },
-    };
-    use sea_memory::MemoryStream;
-
-    use super::{LocalSequencer, SessionError};
-
-    fn author(value: &'static [u8]) -> AuthorId {
-        AuthorId::new(Bytes::from_static(value)).expect("author identity")
-    }
-
-    fn session(value: &'static [u8]) -> SessionId {
-        SessionId::new(Bytes::from_static(value)).expect("session identity")
-    }
-
-    fn submission(
-        value: &'static [u8],
-        reference: Option<sea_core::EventPosition>,
-    ) -> EventSubmission {
+    /// Produces one stable application submission for session tests.
+    pub(super) fn submission(value: &'static [u8]) -> EventSubmission {
         EventSubmission {
-            operation_id: OperationId::new(Bytes::from_static(value)).expect("operation identity"),
-            reference,
+            operation_id: OperationId::new(Bytes::from_static(value)).unwrap(),
+            reference: None,
             event: Event {
                 payload: Bytes::from_static(value),
                 blob_tree: None,
@@ -1348,615 +907,514 @@ mod tests {
         }
     }
 
-    fn snapshot_publication(
-        operation: &'static [u8],
-        expected_parent: Option<sea_core::SnapshotId>,
-        root: BlobId,
-    ) -> SnapshotPublication {
-        SnapshotPublication {
-            operation_id: OperationId::new(Bytes::from_static(operation)).unwrap(),
-            expected_parent,
-            snapshot: Snapshot {
-                at_event: SnapshotPosition::Initial,
-                root: BlobTreeId::Blob(root),
-            },
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn concurrent_sessions_deliver_each_submission_once_with_lazy_errors_and_progress() {
+        let storage = MemoryStorage::new();
+        let (id, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let first = member(&runtime, "first").await;
+        let second = member(&runtime, "second").await;
+        let mut live = first.read(None, None);
+        assert_eq!(live.progress().previous, None);
+        assert!(matches!(
+            live.next().await,
+            Some(Ok(MonitoredStreamItem::Progress(_)))
+        ));
+        let mut tasks = Vec::new();
+        for index in 0..32 {
+            let session = if index % 2 == 0 {
+                first.clone()
+            } else {
+                second.clone()
+            };
+            tasks.push(tokio::spawn(async move {
+                let payload = Bytes::from(index.to_string());
+                session
+                    .submit(EventSubmission {
+                        operation_id: OperationId::new(payload.clone()).unwrap(),
+                        reference: None,
+                        event: Event {
+                            payload,
+                            blob_tree: None,
+                        },
+                    })
+                    .await
+                    .unwrap()
+            }));
         }
-    }
-
-    async fn assert_snapshot_publication_rejected(
-        session: &super::LocalSession<MemoryStream>,
-        fence: Option<u64>,
-        publication: SnapshotPublication,
-    ) {
-        assert!(matches!(
-            session
-                .publish_coordinated_snapshot(fence, publication)
-                .await,
-            Err(SessionError::Rejected(_))
-        ));
-    }
-
-    #[test]
-    fn session_errors_preserve_caller_classifications() {
-        assert_eq!(
-            SessionError::Storage(sea_memory::MemoryError::SnapshotConflict).kind(),
-            ErrorKind::Conflict
-        );
-        assert_eq!(
-            SessionError::<sea_memory::MemoryError>::Rejected("rejected").kind(),
-            ErrorKind::Rejected
-        );
-        assert_eq!(
-            SessionError::<sea_memory::MemoryError>::Closed.kind(),
-            ErrorKind::Rejected
-        );
-        assert_eq!(
-            SessionError::<sea_memory::MemoryError>::Corrupt("corrupt").kind(),
-            ErrorKind::Corrupt
-        );
-        assert_eq!(
-            SessionError::<sea_memory::MemoryError>::Lagged.kind(),
-            ErrorKind::Unavailable
-        );
-    }
-
-    #[tokio::test]
-    async fn local_session_matches_observable_behavior() {
-        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
-            .await
-            .unwrap();
-        let session = sequencer
-            .open_session(
-                author(b"observable-author"),
-                session(b"observable-session"),
-                None,
-            )
-            .await
-            .unwrap();
-        sea_conformance::run_sea_session_observable_behavior(&session).await;
-    }
-
-    #[tokio::test]
-    async fn snapshot_nomination_is_deterministic_fenced_and_reassigned() {
-        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
-            .await
-            .unwrap();
-        let first = sequencer
-            .open_session(author(b"first"), session(b"a-session"), None)
-            .await
-            .unwrap();
-        let second = sequencer
-            .open_session(author(b"second"), session(b"b-session"), None)
-            .await
-            .unwrap();
-        let mut first_state = first
-            .coordinate_snapshots(SnapshotParticipation::SeaSelected)
-            .await
-            .unwrap();
-        let first_fence = first_state.next().await.unwrap().unwrap().fence.unwrap();
-        let mut second_state = second
-            .coordinate_snapshots(SnapshotParticipation::SeaSelected)
-            .await
-            .unwrap();
-        assert_eq!(second_state.next().await.unwrap().unwrap().fence, None);
-
-        first.revoke_snapshot_publisher().await.unwrap();
-        let second_fence = second_state.next().await.unwrap().unwrap().fence.unwrap();
-        assert!(second_fence > first_fence);
-        let stale = first
-            .publish_coordinated_snapshot(
-                Some(first_fence),
-                SnapshotPublication {
-                    operation_id: OperationId::new(Bytes::from_static(b"stale-snapshot")).unwrap(),
-                    expected_parent: None,
-                    snapshot: Snapshot {
-                        at_event: SnapshotPosition::Initial,
-                        root: BlobTreeId::Blob(BlobId::from_bytes(&[0; 32]).unwrap()),
-                    },
-                },
-            )
-            .await;
-        assert!(matches!(stale, Err(SessionError::Rejected(_))));
-    }
-
-    #[tokio::test]
-    async fn direct_snapshot_publication_updates_coordination_streams() {
-        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
-            .await
-            .unwrap();
-        let session = sequencer
-            .open_session(author(b"publisher"), session(b"publisher-session"), None)
-            .await
-            .unwrap();
-        let mut coordination = session
-            .coordinate_snapshots(SnapshotParticipation::ReadOnly)
-            .await
-            .unwrap();
-        assert_eq!(coordination.next().await.unwrap().unwrap().latest, None);
-        let root = session
-            .put_blob(Bytes::from_static(b"snapshot"))
-            .await
-            .unwrap();
-        let published = session
-            .publish_snapshot(snapshot_publication(b"direct-snapshot", None, root))
-            .await
-            .unwrap();
-
-        assert_eq!(
-            coordination.next().await.unwrap().unwrap().latest,
-            Some(published)
-        );
-    }
-
-    #[tokio::test]
-    async fn snapshot_only_load_reports_caught_up_at_snapshot_position() {
-        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
-            .await
-            .unwrap();
-        let session = sequencer
-            .open_session(author(b"load-author"), session(b"load-session"), None)
-            .await
-            .unwrap();
-        let event = session
-            .submit(submission(b"load-event", None))
-            .await
-            .unwrap();
-        let root = session
-            .put_blob(Bytes::from_static(b"load-snapshot"))
-            .await
-            .unwrap();
-        let mut publication = snapshot_publication(b"load-publication", None, root);
-        publication.snapshot.at_event = SnapshotPosition::At(event.position);
-        let snapshot = session.publish_snapshot(publication).await.unwrap();
-
-        let mut load = session.load(Some(event.position));
-        assert!(matches!(
-            load.next().await.unwrap().unwrap(),
-            MonitoredStreamItem::Progress(_)
-        ));
-        assert!(matches!(
-            load.next().await.unwrap().unwrap(),
-            MonitoredStreamItem::Item(LoadEvent::Snapshot(selected)) if selected == snapshot
-        ));
-        assert!(matches!(
-            load.next().await.unwrap().unwrap(),
-            MonitoredStreamItem::Progress(progress)
-                if progress.previous == Some(event.position)
-                    && progress.latest_known == Some(event.position)
-                    && progress.status == MonitoredStreamStatus::AwaitingNewItems
-        ));
-    }
-
-    #[tokio::test]
-    async fn client_selected_publishers_suppress_sea_selection_and_enforce_permissions() {
-        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
-            .await
-            .unwrap();
-        let sea_selected = sequencer
-            .open_session(author(b"sea"), session(b"sea-session"), None)
-            .await
-            .unwrap();
-        let client_selected = sequencer
-            .open_session(author(b"client"), session(b"client-session"), None)
-            .await
-            .unwrap();
-        let read_only = sequencer
-            .open_session(author(b"reader"), session(b"reader-session"), None)
-            .await
-            .unwrap();
-        let other_client_selected = sequencer
-            .open_session(
-                author(b"other-client"),
-                session(b"other-client-session"),
-                None,
-            )
-            .await
-            .unwrap();
-        let mut sea_state = sea_selected
-            .coordinate_snapshots(SnapshotParticipation::SeaSelected)
-            .await
-            .unwrap();
-        let first_fence = sea_state.next().await.unwrap().unwrap().fence.unwrap();
-        let mut client_state = client_selected
-            .coordinate_snapshots(SnapshotParticipation::ClientSelected)
-            .await
-            .unwrap();
-        assert_eq!(client_state.next().await.unwrap().unwrap().fence, None);
-        assert_eq!(sea_state.next().await.unwrap().unwrap().fence, None);
-        let mut read_only_state = read_only
-            .coordinate_snapshots(SnapshotParticipation::ReadOnly)
-            .await
-            .unwrap();
-        assert_eq!(read_only_state.next().await.unwrap().unwrap().fence, None);
-        let mut other_client_state = other_client_selected
-            .coordinate_snapshots(SnapshotParticipation::ClientSelected)
-            .await
-            .unwrap();
-        assert_eq!(
-            other_client_state.next().await.unwrap().unwrap().fence,
-            None
-        );
-        let snapshot_blob = client_selected
-            .put_blob(Bytes::from_static(b"snapshot"))
-            .await
-            .unwrap();
-
-        assert_snapshot_publication_rejected(
-            &sea_selected,
-            Some(first_fence),
-            snapshot_publication(b"suppressed-sea-snapshot", None, snapshot_blob),
-        )
-        .await;
-        assert_snapshot_publication_rejected(
-            &read_only,
-            None,
-            snapshot_publication(b"read-only-snapshot", None, snapshot_blob),
-        )
-        .await;
-        assert_snapshot_publication_rejected(
-            &client_selected,
-            Some(first_fence),
-            snapshot_publication(b"client-selected-with-fence", None, snapshot_blob),
-        )
-        .await;
-        let first_snapshot = client_selected
-            .publish_coordinated_snapshot(
-                None,
-                snapshot_publication(b"client-selected-snapshot", None, snapshot_blob),
-            )
-            .await
-            .unwrap();
-        let conflict = other_client_selected
-            .publish_coordinated_snapshot(
-                None,
-                snapshot_publication(b"conflicting-snapshot", None, snapshot_blob),
-            )
-            .await
-            .unwrap_err();
-        assert_eq!(conflict.kind(), ErrorKind::Conflict);
-        other_client_selected
-            .publish_coordinated_snapshot(
-                None,
-                snapshot_publication(b"parented-snapshot", Some(first_snapshot.id), snapshot_blob),
-            )
-            .await
-            .unwrap();
-
-        client_selected.revoke_snapshot_publisher().await.unwrap();
-        other_client_selected
-            .revoke_snapshot_publisher()
-            .await
-            .unwrap();
-        assert!(sea_state.next().await.unwrap().unwrap().fence.is_some());
-    }
-
-    #[tokio::test]
-    async fn recovery_revokes_connection_scoped_session_state() {
-        let storage = Arc::new(MemoryStream::new());
-        let sequencer = LocalSequencer::recover(Arc::clone(&storage)).await.unwrap();
-        let stale_session = session(b"pre-restart-session");
-        let active = sequencer
-            .open_session(author(b"pre-restart-author"), stale_session.clone(), None)
-            .await
-            .unwrap();
-        let mut coordination = active
-            .coordinate_snapshots(SnapshotParticipation::SeaSelected)
-            .await
-            .unwrap();
-        assert!(coordination.next().await.unwrap().unwrap().fence.is_some());
-        drop(active);
-        drop(sequencer);
-
-        let recovered = LocalSequencer::recover(storage).await.unwrap();
-        let state = recovered.state.lock().await;
-        assert!(state.authors.is_empty());
-        assert!(state.publishers.is_empty());
-        assert_eq!(state.coordination.nominee, None);
-        drop(state);
-        assert!(matches!(
-            recovered
-                .open_session(author(b"restarted-author"), stale_session, None)
-                .await,
-            Err(SessionError::Rejected("session identity was already used"))
-        ));
-    }
-
-    #[tokio::test]
-    async fn configured_event_lag_reports_fallen_behind_and_recovers() {
-        let sequencer = LocalSequencer::recover_with_event_lag(Arc::new(MemoryStream::new()), 1)
-            .await
-            .unwrap();
-        let session = sequencer
-            .open_session(author(b"lag-author"), session(b"lag-session"), None)
-            .await
-            .unwrap();
-        let mut events = session.load(None);
-        assert!(matches!(
-            events.next().await.unwrap().unwrap(),
-            MonitoredStreamItem::Progress(progress)
-                if progress.status == MonitoredStreamStatus::StreamingBacklog
-        ));
-        assert!(matches!(
-            events.next().await.unwrap().unwrap(),
-            MonitoredStreamItem::Progress(progress)
-                if progress.status == MonitoredStreamStatus::AwaitingNewItems
-        ));
-        let first = session.submit(submission(b"lag-one", None)).await.unwrap();
-        let second = session
-            .submit(submission(b"lag-two", Some(first.position)))
-            .await
-            .unwrap();
-        assert!(matches!(
-            events.next().await,
-            Some(Ok(MonitoredStreamItem::Progress(progress)))
-                if progress.status == MonitoredStreamStatus::FallenBehind
-        ));
-        let mut recovered = Vec::new();
-        while recovered.len() < 2 {
-            if let Some(Ok(MonitoredStreamItem::Item(LoadEvent::Event(event)))) =
-                events.next().await
-            {
-                recovered.push(event.committed.position);
-            }
+        let mut positions = BTreeSet::new();
+        for task in tasks {
+            positions.insert(task.await.unwrap());
         }
-        assert_eq!(recovered, [first.position, second.position]);
-    }
-
-    #[tokio::test]
-    async fn replacement_and_close_release_minimum_reference_pins() {
-        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
-            .await
-            .unwrap();
-        let first_author = author(b"minimum-first-author");
-        let first = sequencer
-            .open_session(
-                first_author.clone(),
-                session(b"minimum-first-session"),
-                None,
-            )
-            .await
-            .unwrap();
-        let second = sequencer
-            .open_session(
-                author(b"minimum-second-author"),
-                session(b"minimum-second-session"),
-                None,
-            )
-            .await
-            .unwrap();
-        let first_event = first
-            .submit(submission(b"minimum-one", None))
-            .await
-            .unwrap();
-        let second_event = second
-            .submit(submission(b"minimum-two", Some(first_event.position)))
-            .await
-            .unwrap();
-
-        let replacement = sequencer
-            .open_session(
-                first_author,
-                session(b"minimum-replacement-session"),
-                Some(second_event.position),
-            )
-            .await
-            .unwrap();
-        let third_operation = OperationId::new(Bytes::from_static(b"minimum-three")).unwrap();
-        replacement
-            .submit(submission(b"minimum-three", Some(second_event.position)))
-            .await
-            .unwrap();
-        assert_eq!(
-            sequencer
-                .state
-                .lock()
-                .await
-                .accepted
-                .get(&third_operation)
-                .unwrap()
-                .committed
-                .minimum_reference,
-            Some(first_event.position)
+        assert_eq!(positions.len(), 32);
+        for expected in &positions {
+            let event = data(&mut live).await.unwrap();
+            assert_eq!(event.committed.position, *expected);
+            assert_eq!(live.progress().previous, Some(*expected));
+        }
+        assert!(
+            matches!(live.next().await, Some(Ok(MonitoredStreamItem::Progress(progress)))
+            if progress.status == MonitoredStreamStatus::AwaitingNewItems && progress.previous == progress.latest_known)
         );
-
+        let mut invalid = first.read(None, Some(EventPosition::new(u64::MAX)));
+        assert_eq!(
+            invalid.progress().status,
+            MonitoredStreamStatus::StreamingBacklog
+        );
+        assert_eq!(
+            invalid.next().await.unwrap().unwrap_err().kind(),
+            ErrorKind::InvalidPosition
+        );
+        assert!(invalid.next().await.is_none());
+        first.close().await.unwrap();
         second.close().await.unwrap();
-        let third_position = sequencer
-            .state
-            .lock()
-            .await
-            .accepted
-            .get(&third_operation)
-            .unwrap()
-            .receipt
-            .position;
-        let fourth_operation = OperationId::new(Bytes::from_static(b"minimum-four")).unwrap();
-        replacement
-            .submit(submission(b"minimum-four", Some(third_position)))
-            .await
-            .unwrap();
-        assert_eq!(
-            sequencer
-                .state
-                .lock()
-                .await
-                .accepted
-                .get(&fourth_operation)
-                .unwrap()
-                .committed
-                .minimum_reference,
-            Some(third_position)
+        assert!(
+            storage.open_view(&id).await.is_err(),
+            "runtime, not its membership count, owns the view"
         );
+        drop((live, invalid));
+        runtime.shutdown().await.unwrap();
+        assert!(storage.open_view(&id).await.unwrap().is_some());
     }
 
     #[tokio::test]
-    async fn archive_reads_are_lazy_finite_or_live() {
-        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
-            .await
-            .unwrap();
-        let session = sequencer
-            .open_session(author(b"read-author"), session(b"read-session"), None)
-            .await
-            .unwrap();
-
-        let first = session.submit(submission(b"read-one", None)).await.unwrap();
-        let mut finite = session.read(None, Some(first.position));
-        let mut finite_events = Vec::new();
-        while let Some(item) = finite.next().await {
-            if let MonitoredStreamItem::Item(event) = item.unwrap() {
-                finite_events.push(event.committed.position);
-            }
-        }
-        assert_eq!(finite_events, [first.position]);
-
-        let mut live = session.read(Some(first.position), None);
-        assert!(matches!(
-            live.next().await.unwrap().unwrap(),
-            MonitoredStreamItem::Progress(progress)
-                if progress.status == MonitoredStreamStatus::StreamingBacklog
-        ));
-        assert!(matches!(
-            live.next().await.unwrap().unwrap(),
-            MonitoredStreamItem::Progress(progress)
-                if progress.status == MonitoredStreamStatus::AwaitingNewItems
-        ));
-        let second = session
-            .submit(submission(b"read-two", Some(first.position)))
+    async fn recovery_rejects_malformed_and_duplicate_submission_envelopes() {
+        let storage = MemoryStorage::new();
+        let (_, malformed) = storage.create_view().await.unwrap();
+        malformed
+            .append(Bytes::from_static(b"not a sequencer record"), None)
             .await
             .unwrap();
         assert!(matches!(
-            live.next().await.unwrap().unwrap(),
-            MonitoredStreamItem::Progress(progress)
-                if progress.latest_known == Some(second.position)
+            LocalSequencer::<MemoryStorage>::recover(malformed).await,
+            Err(SessionError::Corrupt(_))
         ));
+        let (_, duplicate) = storage.create_view().await.unwrap();
+        let payload = encode_submission::<sea_memory::MemoryStorageError>(
+            &AuthorId::new("author").unwrap(),
+            &SessionId::new("session").unwrap(),
+            &OperationId::new("operation").unwrap(),
+            None,
+            None,
+            b"payload",
+        )
+        .unwrap();
+        duplicate.append(payload.clone(), None).await.unwrap();
+        duplicate.append(payload, None).await.unwrap();
         assert!(matches!(
-            live.next().await.unwrap().unwrap(),
-            MonitoredStreamItem::Item(event)
-                if event.committed.position == second.position
-        ));
-
-        let invalid = sea_core::EventPosition::new(u64::MAX);
-        let mut failed = session.read(Some(invalid), None);
-        assert!(matches!(
-            failed.next().await,
-            Some(Err(SessionError::Storage(_)))
+            LocalSequencer::<MemoryStorage>::recover(duplicate).await,
+            Err(SessionError::Corrupt(_))
         ));
     }
 
-    #[tokio::test]
-    async fn zero_event_lag_is_rejected() {
-        let result = LocalSequencer::recover_with_event_lag(Arc::new(MemoryStream::new()), 0).await;
-
-        assert!(matches!(
-            result,
-            Err(SessionError::Rejected(
-                "event lag limit must be greater than zero"
-            ))
-        ));
-    }
-
-    #[tokio::test]
-    async fn local_sessions_retry_load_replace_and_recover() {
-        let storage = Arc::new(MemoryStream::new());
-        let sequencer = LocalSequencer::recover(Arc::clone(&storage)).await.unwrap();
-        let first_author = author(b"author-one");
-        let first_session_id = session(b"session-one");
-        let first_session = sequencer
-            .open_session(first_author.clone(), first_session_id, None)
-            .await
-            .unwrap();
-
-        let first_submission = submission(b"operation-one", None);
-        let first = first_session
-            .submit(first_submission.clone())
-            .await
-            .unwrap();
-        assert_eq!(first.durability, Durability::Memory);
-        assert_eq!(
-            first_session
-                .submit(first_submission.clone())
-                .await
-                .unwrap(),
-            first
-        );
-        let mut conflicting = first_submission;
-        conflicting.event.payload = Bytes::from_static(b"different");
-        assert!(matches!(
-            first_session.submit(conflicting).await,
-            Err(SessionError::Rejected(_))
-        ));
-
-        let mut load = first_session.load(None);
-        assert!(matches!(
-            load.next().await.unwrap().unwrap(),
-            MonitoredStreamItem::Progress(progress)
-                if progress.status == MonitoredStreamStatus::StreamingBacklog
-        ));
-        assert!(matches!(
-            load.next().await.unwrap().unwrap(),
-            MonitoredStreamItem::Progress(progress)
-                if progress.latest_known == Some(first.position)
-        ));
-        let MonitoredStreamItem::Item(LoadEvent::Event(loaded)) =
-            load.next().await.unwrap().unwrap()
-        else {
-            panic!("first load item should be the committed event");
-        };
-        assert_eq!(loaded.committed.position, first.position);
-        assert_eq!(loaded.operation_id.as_bytes(), b"operation-one".as_slice());
-        assert!(matches!(
-            load.next().await.unwrap().unwrap(),
-            MonitoredStreamItem::Progress(progress)
-                if progress.previous == Some(first.position)
-                    && progress.status == MonitoredStreamStatus::AwaitingNewItems
-        ));
-
-        let second = first_session
-            .submit(submission(b"operation-two", Some(first.position)))
-            .await
-            .unwrap();
-        assert!(matches!(
-            load.next().await.unwrap().unwrap(),
-            MonitoredStreamItem::Progress(progress)
-                if progress.latest_known == Some(second.position)
-        ));
-        let MonitoredStreamItem::Item(LoadEvent::Event(live)) = load.next().await.unwrap().unwrap()
-        else {
-            panic!("load should continue with live events");
-        };
-        assert_eq!(live.committed.position, second.position);
-
-        let replacement = sequencer
-            .open_session(first_author, session(b"session-two"), Some(second.position))
-            .await
-            .unwrap();
-        assert!(matches!(
-            first_session
-                .submit(submission(b"stale-session", Some(second.position)))
-                .await,
-            Err(SessionError::Rejected("session was replaced"))
-        ));
-        replacement.close().await.unwrap();
-        drop(replacement);
-        drop(first_session);
-        drop(sequencer);
-
-        let recovered = LocalSequencer::recover(storage).await.unwrap();
-        let resumed = recovered
+    /// Opens a named member without imposing backend-specific ownership rules.
+    pub(super) async fn member<Storage: SeaStorage + 'static>(
+        runtime: &Arc<LocalSequencer<Storage>>,
+        name: &'static str,
+    ) -> LocalSession<Storage> {
+        runtime
             .open_session(
-                author(b"author-three"),
-                session(b"session-three"),
-                Some(second.position),
+                AuthorId::new(name).unwrap(),
+                SessionId::new(name).unwrap(),
+                None,
             )
             .await
+            .unwrap()
+    }
+
+    /// Returns data while allowing an implementation to emit progress first.
+    async fn data<Error: std::fmt::Debug>(
+        stream: &mut ArchiveStream<SessionCommittedEvent, EventPosition, Error>,
+    ) -> Option<SessionCommittedEvent> {
+        while let Some(item) = stream.next().await {
+            if let MonitoredStreamItem::Item(event) = item.unwrap() {
+                return Some(event);
+            }
+        }
+        None
+    }
+
+    #[tokio::test]
+    async fn replacement_session_conformance() {
+        let storage = MemoryStorage::new();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
             .unwrap();
-        assert_eq!(
-            resumed
-                .resolve_submission(
-                    &OperationId::new(Bytes::from_static(b"operation-one")).unwrap()
+        let first = member(&runtime, "first").await;
+        let second = member(&runtime, "second").await;
+        tokio::time::timeout(
+            std::time::Duration::from_secs(5),
+            sea_conformance::run_session_conformance(&first, &second),
+        )
+        .await
+        .unwrap();
+    }
+
+    #[tokio::test]
+    async fn snapshot_parent_position_and_publisher_fences_are_session_policy() {
+        let storage = MemoryStorage::new();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let first = member(&runtime, "first").await;
+        let second = member(&runtime, "second").await;
+        let root = first.put_blob(Bytes::new()).await.unwrap();
+        let initial = first.submit(submission(b"initial")).await.unwrap();
+        let snapshot = Snapshot {
+            root: root.clone(),
+            at_event: first.resolve_position(initial).await.unwrap().unwrap(),
+        };
+        assert!(
+            first
+                .publish_snapshot(None, None, snapshot.clone())
+                .await
+                .is_err()
+        );
+        let mut nomination = first
+            .coordinate_snapshots(SnapshotParticipation::SeaSelected)
+            .await
+            .unwrap();
+        let fence = nomination.next().await.unwrap().unwrap().fence.unwrap();
+        let client = second
+            .coordinate_snapshots(SnapshotParticipation::ClientSelected)
+            .await
+            .unwrap();
+        assert!(
+            first
+                .publish_snapshot(None, Some(fence), snapshot.clone())
+                .await
+                .is_err()
+        );
+        drop(client);
+        let new_fence = nomination.next().await.unwrap().unwrap().fence.unwrap();
+        assert_ne!(fence, new_fence);
+        assert!(
+            first
+                .publish_snapshot(None, Some(fence), snapshot.clone())
+                .await
+                .is_err()
+        );
+        first
+            .publish_snapshot(None, Some(new_fence), snapshot.clone())
+            .await
+            .unwrap();
+        let next_position = second.submit(submission(b"next")).await.unwrap();
+        let next = Snapshot {
+            root: root.clone(),
+            at_event: second
+                .resolve_position(next_position)
+                .await
+                .unwrap()
+                .unwrap(),
+        };
+        assert!(
+            first
+                .publish_snapshot(None, Some(new_fence), next.clone())
+                .await
+                .is_err()
+        );
+        first
+            .publish_snapshot(Some(initial), Some(new_fence), next)
+            .await
+            .unwrap();
+        first
+            .publish_snapshot(None, Some(new_fence), snapshot.clone())
+            .await
+            .unwrap();
+        let different = first
+            .put_blob(Bytes::from_static(b"different"))
+            .await
+            .unwrap();
+        assert!(
+            first
+                .publish_snapshot(
+                    None,
+                    Some(new_fence),
+                    Snapshot {
+                        root: different,
+                        at_event: snapshot.at_event
+                    }
                 )
                 .await
-                .unwrap(),
-            Some(first)
+                .is_err()
         );
+        assert_registration_replacement(&first, nomination, root, initial, new_fence).await;
+    }
+
+    /// Dropping an older stream cannot revoke a newer registration for the same session.
+    async fn assert_registration_replacement(
+        first: &LocalSession<MemoryStorage>,
+        nomination: SessionStream<
+            SnapshotCoordination,
+            SessionError<sea_memory::MemoryStorageError>,
+        >,
+        root: sea_memory::MemoryBlobHandle,
+        initial: EventPosition,
+        new_fence: u64,
+    ) {
+        let mut replacement = first
+            .coordinate_snapshots(SnapshotParticipation::SeaSelected)
+            .await
+            .unwrap();
+        drop(nomination);
+        assert!(replacement.next().await.unwrap().unwrap().fence.is_some());
+        drop(replacement);
+        assert!(
+            first
+                .publish_snapshot(
+                    None,
+                    Some(new_fence),
+                    Snapshot {
+                        root,
+                        at_event: first.resolve_position(initial).await.unwrap().unwrap()
+                    }
+                )
+                .await
+                .is_err()
+        );
+    }
+
+    #[tokio::test]
+    async fn closing_the_nominee_transfers_snapshot_authority_with_a_fresh_fence() {
+        let storage = MemoryStorage::new();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let first = member(&runtime, "first").await;
+        let second = member(&runtime, "second").await;
+        let mut first_nomination = first
+            .coordinate_snapshots(SnapshotParticipation::SeaSelected)
+            .await
+            .unwrap();
+        let first_fence = first_nomination
+            .next()
+            .await
+            .unwrap()
+            .unwrap()
+            .fence
+            .unwrap();
+        let mut second_nomination = second
+            .coordinate_snapshots(SnapshotParticipation::SeaSelected)
+            .await
+            .unwrap();
+        assert_eq!(second_nomination.next().await.unwrap().unwrap().fence, None);
+        assert_eq!(
+            first_nomination.next().await.unwrap().unwrap().fence,
+            Some(first_fence)
+        );
+
+        first.close().await.unwrap();
+
+        assert!(first_nomination.next().await.is_none());
+        let second_fence = second_nomination
+            .next()
+            .await
+            .unwrap()
+            .unwrap()
+            .fence
+            .unwrap();
+        assert!(second_fence > first_fence);
+    }
+
+    #[tokio::test]
+    async fn direct_reads_close_with_membership_and_load_policies_preserve_replay() {
+        use futures_util::FutureExt;
+        let storage = MemoryStorage::new();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let first = member(&runtime, "first").await;
+        let second = member(&runtime, "second").await;
+        let mut live = first.load(LoadStart::Beginning).await.unwrap().events;
+        assert!(matches!(
+            live.next().await,
+            Some(Ok(MonitoredStreamItem::Progress(_)))
+        ));
+        assert!(live.next().now_or_never().is_none());
+        let position = second.submit(submission(b"event")).await.unwrap();
+        assert_eq!(data(&mut live).await.unwrap().committed.position, position);
+        let authority = second
+            .coordinate_snapshots(SnapshotParticipation::ClientSelected)
+            .await
+            .unwrap();
+        let root = second.put_blob(Bytes::new()).await.unwrap();
+        second
+            .publish_snapshot(
+                None,
+                None,
+                Snapshot {
+                    root,
+                    at_event: second.resolve_position(position).await.unwrap().unwrap(),
+                },
+            )
+            .await
+            .unwrap();
+        for policy in [
+            LoadStart::LatestSnapshot,
+            LoadStart::ReplayAtLeastAllAfter(position),
+        ] {
+            let loaded = first.load(policy).await.unwrap();
+            assert_eq!(loaded.snapshot.unwrap().at_event.id(), position);
+            assert_eq!(loaded.events.progress().previous, Some(position));
+        }
+        let mut beginning = first.load(LoadStart::Beginning).await.unwrap();
+        assert!(beginning.snapshot.is_none());
+        assert_eq!(
+            data(&mut beginning.events)
+                .await
+                .unwrap()
+                .committed
+                .position,
+            position
+        );
+        let replacement = runtime
+            .open_session(
+                AuthorId::new("first").unwrap(),
+                SessionId::new("replacement").unwrap(),
+                Some(position),
+            )
+            .await
+            .unwrap();
+        assert!(live.next().await.is_none());
+        assert!(first.submit(submission(b"stale")).await.is_err());
+        let mut retained = second.read(Some(position), None);
+        assert!(matches!(
+            retained.next().await,
+            Some(Ok(MonitoredStreamItem::Progress(_)))
+        ));
+        replacement.close().await.unwrap();
+        second.submit(submission(b"surviving")).await.unwrap();
+        assert_eq!(
+            data(&mut retained).await.unwrap().committed.event.payload,
+            Bytes::from_static(b"surviving")
+        );
+        runtime.shutdown().await.unwrap();
+        assert!(retained.next().await.is_none());
+        drop(authority);
+    }
+
+    #[tokio::test]
+    async fn recovery_restores_submission_and_snapshot_identities_not_active_memberships() {
+        let storage = MemoryStorage::new();
+        let (id, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let first = member(&runtime, "author").await;
+        let position = first.submit(submission(b"original")).await.unwrap();
+        let mut conflicting = submission(b"original");
+        conflicting.event.payload = Bytes::from_static(b"conflict");
+        assert!(first.submit(conflicting).await.is_err());
+        let authority = first
+            .coordinate_snapshots(SnapshotParticipation::ClientSelected)
+            .await
+            .unwrap();
+        let root = first.put_blob(Bytes::new()).await.unwrap();
+        first
+            .publish_snapshot(
+                None,
+                None,
+                Snapshot {
+                    root,
+                    at_event: first.resolve_position(position).await.unwrap().unwrap(),
+                },
+            )
+            .await
+            .unwrap();
+        runtime.shutdown().await.unwrap();
+        drop((first, authority, runtime));
+        let recovered = LocalSequencer::<MemoryStorage>::recover(
+            storage.open_view(&id).await.unwrap().unwrap(),
+        )
+        .await
+        .unwrap();
+        assert!(
+            recovered
+                .open_session(
+                    AuthorId::new("author").unwrap(),
+                    SessionId::new("author").unwrap(),
+                    None
+                )
+                .await
+                .is_err()
+        );
+        let reconnected = recovered
+            .open_session(
+                AuthorId::new("author").unwrap(),
+                SessionId::new("new-session").unwrap(),
+                Some(position),
+            )
+            .await
+            .unwrap();
+        assert_eq!(
+            reconnected.submit(submission(b"original")).await.unwrap(),
+            position
+        );
+        assert_eq!(
+            reconnected
+                .get_snapshot(LoadStart::LatestSnapshot)
+                .await
+                .unwrap()
+                .unwrap()
+                .at_event
+                .id(),
+            position
+        );
+        assert_eq!(
+            reconnected
+                .resolve_submission(&OperationId::new("original").unwrap())
+                .await
+                .unwrap(),
+            Some(position)
+        );
+        let foreign = member(&recovered, "foreign").await;
+        assert!(foreign.submit(submission(b"original")).await.is_err());
+        let mut absent = submission(b"invalid");
+        absent.reference = Some(EventPosition::new(999));
+        assert!(foreign.submit(absent).await.is_err());
+    }
+
+    #[tokio::test]
+    async fn two_sessions_share_one_view_and_close_independently() {
+        let storage = MemoryStorage::new();
+        let (id, view) = storage.create_view().await.unwrap();
+        let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let first = sequencer
+            .open_session(
+                AuthorId::new("first").unwrap(),
+                SessionId::new("first").unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+        let second = sequencer
+            .open_session(
+                AuthorId::new("second").unwrap(),
+                SessionId::new("second").unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+        assert!(storage.open_view(&id).await.is_err());
+        let first_position = first.submit(submission(b"one")).await.unwrap();
+        first.clone().close().await.unwrap();
+        assert!(first.submit(submission(b"closed")).await.is_err());
+        let second_position = second.submit(submission(b"two")).await.unwrap();
+        assert!(first_position < second_position);
+        assert_eq!(
+            second.submit(submission(b"two")).await.unwrap(),
+            second_position
+        );
+        sequencer.shutdown().await.unwrap();
+        assert!(second.submit(submission(b"after shutdown")).await.is_err());
+        assert!(storage.open_view(&id).await.unwrap().is_some());
     }
 }

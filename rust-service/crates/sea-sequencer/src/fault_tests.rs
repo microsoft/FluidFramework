@@ -25,7 +25,8 @@ use futures_util::{FutureExt, StreamExt};
 use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, ClassifiedError, Durability, ErrorKind, EventPosition,
     map_monitored_stream,
-    next::{
+    session::{SeaArchive, SeaSnapshotCoordinator},
+    storage::{
         Archive, ArchiveStream, BlobStore, CreatedDocument, DocumentId, ReferenceableStore,
         SeaStorage, SnapshotArchive, StorageComponents, StorageSurface,
     },
@@ -42,10 +43,7 @@ use super::{
 };
 use sea_core::{
     archive::{OperationId, SnapshotParticipation},
-    next::{
-        LoadStart, Snapshot,
-        session::{SeaArchive, SeaSnapshotCoordinator},
-    },
+    storage::{LoadStart, Snapshot},
 };
 
 /// One-shot backend behavior selected by a test before submitting work.

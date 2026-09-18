@@ -1,7 +1,7 @@
 #![doc = include_str!("../README.md")]
 
 /// Replacement blob-store capabilities for the immutable object engine.
-pub mod next;
+pub mod storage;
 
 use std::{
     fs::{self, File, OpenOptions},

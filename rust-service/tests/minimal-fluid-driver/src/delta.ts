@@ -218,14 +218,14 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 		};
 	}
 
-	/** Opens the protocol session and projected stream, or only the stream after owner setup. */
+	/** Opens delivery after the consumed cursor, independently of the last submitted event. */
 	public async open(sessionOpened = false): Promise<void> {
 		if (!sessionOpened) {
 			await this.client.openSession(
 				this.document,
 				this.lifecycle.writer,
 				this.session,
-				this.lifecycle.lastPosition,
+				this.lifecycle.cursor,
 			);
 		}
 		await this.openSubscription();

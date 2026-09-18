@@ -202,7 +202,7 @@ impl Default for LivenessPolicy {
             heartbeat_interval: Duration::from_secs(3),
             inactivity_timeout: Duration::from_secs(15),
             reconnect_grace: Duration::ZERO,
-            max_event_lag: sea_sequencer::session::DEFAULT_EVENT_LAG_LIMIT,
+            max_event_lag: 256,
         }
     }
 }

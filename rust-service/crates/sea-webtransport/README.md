@@ -53,7 +53,7 @@ See [Decision 0012](../../decisions/0012-fluid-snapshot-election-integration.md)
 
 ## Lifecycle And Ownership
 
-`NativeSeaClient` pins a SHA-256 certificate hash and implements the replacement `sea_core::next::session` facets.
+`NativeSeaClient` pins a SHA-256 certificate hash and implements the replacement `sea_core::session` facets.
 Its private-provenance handles confirm remote availability and are scoped to the resolving client; they are never sent as wire authority.
 Event-position resolution currently scans retained history, and tree resolution fetches the corresponding immutable content.
 Disconnect and reconnect are explicit; operations are never retried automatically.

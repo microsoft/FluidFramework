@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
+mod codec;
+mod error;
+/// Local multi-user session runtime.
 pub mod session;
-
-/// Replacement sessions over one exclusively owned storage view.
-pub mod next;

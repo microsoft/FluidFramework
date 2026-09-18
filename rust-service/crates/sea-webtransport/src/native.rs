@@ -15,16 +15,14 @@ use sea_core::{
     ErrorKind, Event, EventPosition, MonitoredStreamItem, MonitoredStreamProgress,
     MonitoredStreamStatus,
     archive::{
-        AuthorId, CommittedEvent, EventSubmission, OperationId, SeaService, SessionCommittedEvent,
-        SessionId, SessionStream, SnapshotParticipation,
+        AuthorId, CommittedEvent, EventSubmission, OperationId, SessionCommittedEvent, SessionId,
+        SessionStream, SnapshotParticipation,
     },
     boxed_monitored_stream,
-    next::{
-        DocumentId, LoadStart, Snapshot, StorageHandle,
-        session::{
-            SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator, SessionLoad, SnapshotCoordination,
-        },
+    session::{
+        SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator, SessionLoad, SnapshotCoordination,
     },
+    storage::{DocumentId, LoadStart, Snapshot, StorageHandle},
 };
 use tokio::{
     sync::{Mutex, mpsc, oneshot, watch},
@@ -372,7 +370,7 @@ impl NativeSeaClient {
 }
 
 #[async_trait]
-impl SeaService for NativeSeaClient {
+impl sea_core::SeaService for NativeSeaClient {
     type Error = SeaClientError;
 }
 

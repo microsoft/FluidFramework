@@ -36,11 +36,10 @@ background task or stream buffer.
 
 Directories, event metadata, and snapshot metadata remain visible so the server can validate ordering and reachability.
 For compression plus encryption, wrap an `EncryptionSession` in `CompressionSession` so compression processes plaintext first.
-The replacement `sea_core::next::session` facets are implemented directly on `EncryptionSession`.
+The replacement `sea_core::session` facets are implemented directly on `EncryptionSession`.
 Snapshot handles and publisher participation/fences pass through unchanged, and loads decrypt the direct live suffix.
 Blob identities and handles identify stored ciphertext; directory references remain in that stored identity space.
 Dropping a forwarded coordination stream revokes its underlying registration.
-Old session-trait implementations remain for benchmark consumers until checkpoint 5; only those old facets require undecorated snapshot coordination.
 
 ## Validation
 

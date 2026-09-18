@@ -1,863 +1,486 @@
 #![doc = include_str!("../README.md")]
 
-/// Shared behavioral laws for the replacement storage components and direct views.
-pub mod next;
+//! Shared behavioral checks for replacement storage and session implementations.
+//!
+//! The storage checks exercise contracts common to every backend: document isolation, handle
+//! provenance, ordered archive ranges, dependency-closed publication, snapshot selection, and
+//! reopening. They deliberately leave backend-specific future-bound behavior, durability, and
+//! resource lifetimes to each implementation's focused tests.
+//!
+//! [`crate::run_session_conformance`] checks the implementation-independent session workflow
+//! over two memberships: explicit initialization, conditional snapshot publication,
+//! snapshot-plus-live loading, stable submission retries, ordered replay, and isolated close.
+//! Cancellation, reconciliation failures, publisher fencing, and concrete runtime ownership remain
+//! implementation responsibilities and require owner-local tests.
 
-use std::{collections::BTreeMap, fmt::Debug};
+use sea_core::{
+    archive::{EventSubmission, OperationId, SnapshotParticipation},
+    session::SeaSession,
+};
+
+/// Exercises two memberships sharing one replacement runtime, including a real initialization event.
+///
+/// # Panics
+/// Panics when session ordering, conditional publication, replay, or isolated close violates the contract.
+pub async fn run_session_conformance<Session: SeaSession>(first: &Session, second: &Session) {
+    let root = first
+        .put_blob(Bytes::from_static(b"initial state"))
+        .await
+        .expect("state");
+    let initialization = first
+        .submit(EventSubmission {
+            operation_id: OperationId::new(Bytes::from_static(b"initialize")).expect("identity"),
+            reference: None,
+            event: Event {
+                payload: Bytes::from_static(b"initialize"),
+                blob_tree: Some(root.id()),
+            },
+        })
+        .await
+        .expect("explicit initialization event");
+    let authority = first
+        .coordinate_snapshots(SnapshotParticipation::ClientSelected)
+        .await
+        .expect("publisher");
+    let initial = Snapshot {
+        root,
+        at_event: first
+            .resolve_position(initialization)
+            .await
+            .expect("resolve")
+            .expect("event"),
+    };
+    first
+        .publish_snapshot(None, None, initial.clone())
+        .await
+        .expect("initial application snapshot");
+    let mut loaded = second.load(LoadStart::LatestSnapshot).await.expect("load");
+    assert_eq!(
+        loaded.snapshot.as_ref().expect("snapshot").at_event.id(),
+        initialization
+    );
+    assert_eq!(loaded.events.progress().previous, Some(initialization));
+    let request = EventSubmission {
+        operation_id: OperationId::new(Bytes::from_static(b"followup")).expect("identity"),
+        reference: Some(initialization),
+        event: Event {
+            payload: Bytes::new(),
+            blob_tree: None,
+        },
+    };
+    let position = second
+        .submit(request.clone())
+        .await
+        .expect("second session submission");
+    assert_eq!(second.submit(request).await.expect("retry"), position);
+    assert_eq!(
+        next_data(&mut loaded.events)
+            .await
+            .expect("live suffix")
+            .committed
+            .position,
+        position
+    );
+    let mut bounded = first.read(None, Some(position));
+    for expected in [initialization, position] {
+        assert_eq!(
+            next_data(&mut bounded)
+                .await
+                .expect("ordered replay")
+                .committed
+                .position,
+            expected
+        );
+    }
+    assert!(next_data(&mut bounded).await.is_none());
+    first
+        .publish_snapshot(None, None, initial)
+        .await
+        .expect("exact retry after publication");
+    first.close().await.expect("close first membership");
+    let final_position = second
+        .submit(EventSubmission {
+            operation_id: OperationId::new(Bytes::from_static(b"after-close")).expect("identity"),
+            reference: Some(position),
+            event: Event {
+                payload: Bytes::new(),
+                blob_tree: None,
+            },
+        })
+        .await
+        .expect("other session survives");
+    assert_eq!(
+        next_data(&mut loaded.events)
+            .await
+            .expect("live after peer close")
+            .committed
+            .position,
+        final_position
+    );
+    drop(authority);
+}
+
+use std::collections::BTreeMap;
 
 use bytes::Bytes;
-use futures_util::{StreamExt, TryStreamExt, future::join_all};
+use futures_util::StreamExt;
 use sea_core::{
-    BlobDirectory, BlobId, BlobTreeId, ClassifiedError, ErrorKind, Event, EventPosition,
-    MonitoredStreamItem, MonitoredStreamProgress, MonitoredStreamStatus,
-    archive::{
-        EventSubmission, LoadEvent, OperationId, SeaArchive, SeaAuthorSession,
-        SeaEventSubscription, SeaSession, SeaSnapshotCoordinator, SeaStorage,
-        Snapshot as ArchiveSnapshot, SnapshotPosition as ArchiveSnapshotPosition,
-        SnapshotPublication,
+    BlobDirectory, Event, EventPosition, MonitoredStreamItem,
+    storage::{
+        Archive, ArchiveStream, BlobStore, LoadStart, ReferenceableStore, SeaStorage, SeaView,
+        Snapshot, SnapshotArchive, StorageHandle,
     },
 };
 
-/// Runs the current session's observable behavior against a fresh archive session.
-///
-/// # Panics
-///
-/// Panics when submission recovery, content access, snapshot recovery, streaming, or close
-/// behavior differs between session implementations.
-pub async fn run_sea_session_observable_behavior<S>(session: &S)
-where
-    S: SeaSession,
-    S::Error: Debug,
-{
-    run_sea_responsibility_observable_behavior(session, session).await;
-}
+/// Concrete view provided by one conformance factory.
+type View<Storage> = SeaView<
+    <Storage as SeaStorage>::Blobs,
+    <Storage as SeaStorage>::Events,
+    <Storage as SeaStorage>::Snapshots,
+>;
 
-/// Runs observable behavior across separately composed session and snapshot responsibilities.
-///
-/// # Panics
-///
-/// Panics when the composed responsibilities do not preserve current Sea behavior.
-pub async fn run_sea_responsibility_observable_behavior<S, C>(session: &S, snapshots: &C)
-where
-    S: SeaArchive + SeaAuthorSession + SeaEventSubscription,
-    S::Error: Debug,
-    C: SeaSnapshotCoordinator,
-    C::Error: Debug,
-{
-    assert_eq!(
-        snapshots.latest_snapshot().await.expect("initial snapshot"),
-        None
-    );
-    let directory_id = round_trip_session_content(session).await;
-    let first = submit_and_resolve_first_event(session, directory_id).await;
-    let published =
-        publish_and_resolve_snapshot(session, snapshots, directory_id, first.position).await;
+/// Blob evidence associated with a factory's view.
+type BlobHandle<Storage> = <<Storage as SeaStorage>::Blobs as ReferenceableStore>::Handle;
 
-    assert_snapshot_load_progress(session, first.position, &published).await;
+/// Event evidence associated with a factory's view.
+type EventHandle<Storage> = <<Storage as SeaStorage>::Events as ReferenceableStore>::Handle;
 
-    let second = session
-        .submit(EventSubmission {
-            operation_id: OperationId::new(Bytes::from_static(b"observable-event-two"))
-                .expect("operation identity"),
-            reference: Some(first.position),
-            event: Event {
-                payload: Bytes::from_static(b"second"),
-                blob_tree: None,
-            },
-        })
-        .await
-        .expect("second submission");
-    assert_bounded_read_progress(session, first.position, second.position).await;
-
-    let mut load = session.load(None);
-    assert_eq!(
-        load.progress(),
-        MonitoredStreamProgress {
-            previous: None,
-            latest_known: None,
-            status: MonitoredStreamStatus::StreamingBacklog,
-        }
-    );
-    assert!(matches!(
-        load.next().await.expect("initial progress").expect("load result"),
-        MonitoredStreamItem::Progress(progress)
-            if progress.status == MonitoredStreamStatus::StreamingBacklog
-    ));
-    assert!(matches!(
-        load.next().await.expect("load snapshot").expect("load result"),
-        MonitoredStreamItem::Item(LoadEvent::Snapshot(snapshot)) if snapshot == published
-    ));
-    assert!(matches!(
-        load.next().await.expect("load progress").expect("load result"),
-        MonitoredStreamItem::Progress(progress)
-            if progress.latest_known == Some(second.position)
-                && progress.status == MonitoredStreamStatus::StreamingBacklog
-    ));
-    assert!(matches!(
-        load.next().await.expect("load event").expect("load result"),
-        MonitoredStreamItem::Item(LoadEvent::Event(event))
-            if event.committed.position == second.position
-    ));
-    assert!(matches!(
-        load.next().await.expect("caught-up progress").expect("load result"),
-        MonitoredStreamItem::Progress(progress)
-            if progress.previous == Some(second.position)
-                && progress.latest_known == Some(second.position)
-                && progress.status == MonitoredStreamStatus::AwaitingNewItems
-    ));
-
-    drop(load);
-    session.close().await.expect("session close");
-    let closed_probe =
-        OperationId::new(Bytes::from_static(b"closed-session-probe")).expect("operation identity");
-    assert_eq!(
-        session
-            .resolve_submission(&closed_probe)
-            .await
-            .expect_err("closed session operation")
-            .kind(),
-        ErrorKind::Rejected
-    );
-    assert_eq!(
-        snapshots
-            .latest_snapshot()
-            .await
-            .expect_err("closed snapshot coordinator")
-            .kind(),
-        ErrorKind::Rejected
-    );
-}
-
-/// Verifies selected-snapshot delivery and its synchronous progress observations.
-async fn assert_snapshot_load_progress<S>(
-    session: &S,
-    required: EventPosition,
-    expected: &sea_core::archive::PublishedSnapshot,
-) where
-    S: SeaEventSubscription,
-    S::Error: Debug,
-{
-    let mut snapshot_load = session.load(Some(required));
-    assert_eq!(
-        snapshot_load.progress(),
-        MonitoredStreamProgress {
-            previous: None,
-            latest_known: None,
-            status: MonitoredStreamStatus::StreamingBacklog,
-        }
-    );
-    let MonitoredStreamItem::Progress(progress) = snapshot_load
-        .next()
-        .await
-        .expect("snapshot load progress")
-        .expect("load result")
-    else {
-        panic!("snapshot load did not begin with progress");
-    };
-    assert_eq!(progress.status, MonitoredStreamStatus::StreamingBacklog);
-    assert_eq!(snapshot_load.progress(), progress);
-    assert!(matches!(
-        snapshot_load.next().await.expect("selected snapshot").expect("load result"),
-        MonitoredStreamItem::Item(LoadEvent::Snapshot(snapshot)) if snapshot == *expected
-    ));
-    assert!(matches!(
-        snapshot_load.next().await.expect("snapshot caught-up progress").expect("load result"),
-        MonitoredStreamItem::Progress(progress)
-            if progress.previous == Some(required)
-                && progress.latest_known == Some(required)
-                && progress.status == MonitoredStreamStatus::AwaitingNewItems
-    ));
-    drop(snapshot_load);
-}
-
-/// Verifies bounded read contents and synchronous progress observations.
-async fn assert_bounded_read_progress<S>(
-    session: &S,
-    after: EventPosition,
-    stop_after: EventPosition,
-) where
-    S: SeaArchive,
-    S::Error: Debug,
-{
-    let mut history_stream = session.read(Some(after), Some(stop_after));
-    assert_eq!(
-        history_stream.progress(),
-        MonitoredStreamProgress {
-            previous: Some(after),
-            latest_known: Some(after),
-            status: MonitoredStreamStatus::StreamingBacklog,
-        }
-    );
-    let mut history = Vec::new();
-    while let Some(item) = history_stream.next().await {
-        match item.expect("bounded read item") {
-            MonitoredStreamItem::Item(event) => {
-                assert_eq!(
-                    history_stream.progress().previous,
-                    Some(event.committed.position)
-                );
-                history.push(event);
-            }
-            MonitoredStreamItem::Progress(progress) => {
-                assert_eq!(history_stream.progress(), progress);
-            }
+/// Returns the next data item, ignoring out-of-band progress observations.
+async fn next_data<Item, Error: std::fmt::Debug>(
+    stream: &mut ArchiveStream<Item, EventPosition, Error>,
+) -> Option<Item> {
+    while let Some(item) = stream.next().await {
+        if let MonitoredStreamItem::Item(item) = item.expect("archive read") {
+            return Some(item);
         }
     }
-    assert_eq!(history.len(), 1);
-    assert_eq!(history[0].committed.position, stop_after);
+    None
 }
 
-/// Verifies session-level blob and directory publication and retrieval.
-async fn round_trip_session_content<S>(session: &S) -> sea_core::BlobDirectoryId
-where
-    S: SeaArchive,
-    S::Error: Debug,
-{
-    let blob_payload = Bytes::from_static(b"observable-blob");
-    let blob = session
-        .put_blob(blob_payload.clone())
-        .await
-        .expect("blob publication");
-    assert_eq!(
-        session.get_blob(blob).await.expect("blob retrieval"),
-        blob_payload
-    );
-    let directory = BlobDirectory::new(BTreeMap::from([(
-        "leaf".to_owned(),
-        BlobTreeId::Blob(blob),
-    )]))
-    .expect("directory");
-    let directory_id = session
-        .put_directory(directory.clone())
-        .await
-        .expect("directory publication");
-    assert_eq!(
-        session
-            .get_directory(directory_id)
-            .await
-            .expect("directory retrieval"),
-        directory
-    );
-    directory_id
-}
-
-/// Submits the first event and verifies retry, resolution, and conflict behavior.
-async fn submit_and_resolve_first_event<S>(
-    session: &S,
-    directory_id: sea_core::BlobDirectoryId,
-) -> sea_core::archive::EventReceipt
-where
-    S: SeaAuthorSession,
-    S::Error: Debug,
-{
-    let submission = EventSubmission {
-        operation_id: OperationId::new(Bytes::from_static(b"observable-event-one"))
-            .expect("operation identity"),
-        reference: None,
-        event: Event {
-            payload: Bytes::from_static(b"first"),
-            blob_tree: Some(BlobTreeId::Directory(directory_id)),
-        },
-    };
-    let receipt = session
-        .submit(submission.clone())
-        .await
-        .expect("first submission");
-    assert_eq!(
-        session
-            .resolve_submission(&submission.operation_id)
-            .await
-            .expect("submission resolution"),
-        Some(receipt.clone())
-    );
-    assert_eq!(
-        session
-            .submit(submission.clone())
-            .await
-            .expect("idempotent submission retry"),
-        receipt
-    );
-    let mut conflicting = submission;
-    conflicting.event.payload = Bytes::from_static(b"different");
-    assert!(matches!(
-        session
-            .submit(conflicting)
-            .await
-            .expect_err("operation identity reuse with different input")
-            .kind(),
-        ErrorKind::Conflict | ErrorKind::Rejected
-    ));
-    receipt
-}
-
-/// Publishes a snapshot and verifies notification, retry, resolution, and lookup behavior.
-async fn publish_and_resolve_snapshot<S, C>(
-    archive: &S,
-    coordinator: &C,
-    directory_id: sea_core::BlobDirectoryId,
-    position: EventPosition,
-) -> sea_core::archive::PublishedSnapshot
-where
-    S: SeaArchive,
-    S::Error: Debug,
-    C: SeaSnapshotCoordinator,
-    C::Error: Debug,
-{
-    let mut snapshots = coordinator
-        .subscribe_snapshots()
-        .await
-        .expect("snapshot subscription");
-    let publication = SnapshotPublication {
-        operation_id: OperationId::new(Bytes::from_static(b"observable-snapshot"))
-            .expect("snapshot operation identity"),
-        expected_parent: None,
-        snapshot: ArchiveSnapshot {
-            at_event: ArchiveSnapshotPosition::At(position),
-            root: BlobTreeId::Directory(directory_id),
-        },
-    };
-    let published = coordinator
-        .publish_snapshot(publication.clone())
-        .await
-        .expect("snapshot publication");
-    assert_eq!(
-        snapshots
-            .next()
-            .await
-            .expect("snapshot notification")
-            .expect("snapshot notification result"),
-        published
-    );
-    assert_eq!(
-        coordinator
-            .publish_snapshot(publication.clone())
-            .await
-            .expect("idempotent snapshot retry"),
-        published
-    );
-    assert_eq!(
-        coordinator
-            .resolve_snapshot_publication(&publication.operation_id)
-            .await
-            .expect("snapshot resolution"),
-        Some(published.clone())
-    );
-    assert_eq!(
-        archive
-            .snapshot(&published.id)
-            .await
-            .expect("snapshot lookup"),
-        Some(published.clone())
-    );
-    assert_eq!(
-        coordinator
-            .latest_snapshot()
-            .await
-            .expect("latest snapshot"),
-        Some(published.clone())
-    );
-    published
-}
-
-/// Runs the final trusted-backend laws against a fresh archive.
+/// Checks direct-view publication, snapshot policies, bounded replay, live load, and reopening.
 ///
 /// # Panics
-///
-/// Panics when the backend violates content, atomicity, history, idempotency, or load laws.
-#[allow(clippy::too_many_lines)]
-pub async fn run_sea_storage_conformance<S, F>(make_storage: F)
-where
-    S: SeaStorage,
-    S::Error: Debug,
-    F: Fn() -> S,
-{
-    storage_starts_empty(&make_storage).await;
-    storage_append_order_and_boundaries(&make_storage).await;
-    storage_concurrent_appends_are_contiguous(&make_storage).await;
-    storage_read_is_finite(&make_storage).await;
-    storage_readers_are_independent_and_cancellable(&make_storage).await;
-    storage_positions_require_committed_ordinals(&make_storage).await;
-    storage_snapshot_positions_require_committed_ordinals(&make_storage).await;
-
-    let storage = make_storage();
-    let directory_id = prepare_blob_tree(&storage).await;
-    reject_missing_event_tree(&storage).await;
-
-    let initial_request = SnapshotPublication {
-        operation_id: OperationId::new(Bytes::from_static(b"initial-publication"))
-            .expect("operation identity"),
-        expected_parent: None,
-        snapshot: ArchiveSnapshot {
-            at_event: ArchiveSnapshotPosition::Initial,
-            root: BlobTreeId::Directory(directory_id),
-        },
-    };
-    let initial = storage
-        .publish_snapshot(initial_request)
-        .await
-        .expect("initial snapshot");
-    assert_eq!(
-        storage.latest_snapshot().await.expect("latest snapshot"),
-        Some(initial.clone())
+/// Panics when a factory violates replacement storage laws. The caller should bound test duration
+/// to diagnose a backend that never completes a bounded read or never wakes a live reader.
+pub async fn run_view_conformance<Storage: SeaStorage>(storage: &Storage) {
+    let (id, view) = storage.create_view().await.expect("create view");
+    assert!(
+        storage.open_view(&id).await.is_err(),
+        "competing writer accepted"
     );
-
-    let first = storage
-        .append(Event {
-            payload: Bytes::from_static(b"first"),
-            blob_tree: Some(BlobTreeId::Directory(directory_id)),
-        })
+    assert_eq!(view.head().await.expect("empty head"), None);
+    assert!(
+        view.resolve_position(EventPosition::new(1))
+            .await
+            .expect("unknown event")
+            .is_none()
+    );
+    let mut beginning = view
+        .load(LoadStart::Beginning)
+        .await
+        .expect("empty live load");
+    assert!(beginning.snapshot.is_none());
+    let root = publish_tree::<Storage>(&view).await;
+    let root_id = root.id();
+    let first = view
+        .append(Bytes::from_static(b"same"), None)
         .await
         .expect("first event");
-    let second = storage
-        .append(Event {
-            payload: Bytes::from_static(b"second"),
-            blob_tree: None,
-        })
+    let second = view
+        .append(Bytes::from_static(b"same"), None)
         .await
-        .expect("second event");
-    assert!(first.position < second.position);
-    assert_eq!(
-        EventPosition::from_bytes(first.position.to_bytes()),
-        first.position
-    );
-
-    let positioned_request = SnapshotPublication {
-        operation_id: OperationId::new(Bytes::from_static(b"positioned-publication"))
-            .expect("operation identity"),
-        expected_parent: Some(initial.id.clone()),
-        snapshot: ArchiveSnapshot {
-            at_event: ArchiveSnapshotPosition::At(first.position),
-            root: BlobTreeId::Directory(directory_id),
-        },
-    };
-    let positioned = storage
-        .publish_snapshot(positioned_request.clone())
+        .expect("distinct equal event");
+    let third = view
+        .append(Bytes::new(), Some(&root))
         .await
-        .expect("positioned snapshot");
-    assert_eq!(
-        storage.latest_snapshot().await.expect("latest snapshot"),
-        Some(positioned.clone())
-    );
-    let retry = storage
-        .publish_snapshot(positioned_request.clone())
-        .await
-        .expect("exact publication retry");
-    assert_eq!(retry, positioned);
-    assert_eq!(
-        storage
-            .resolve_snapshot_publication(&positioned_request.operation_id)
-            .await
-            .expect("publication resolution"),
-        Some(positioned.clone())
-    );
-
-    let stale_parent = storage
-        .publish_snapshot(SnapshotPublication {
-            operation_id: OperationId::new(Bytes::from_static(b"stale-parent-publication"))
-                .expect("operation identity"),
-            expected_parent: Some(initial.id),
-            snapshot: ArchiveSnapshot {
-                at_event: ArchiveSnapshotPosition::At(second.position),
-                root: BlobTreeId::Directory(directory_id),
-            },
-        })
-        .await
-        .expect_err("stale snapshot parent must be rejected");
-    assert_eq!(stale_parent.kind(), ErrorKind::Conflict);
-
-    let regressive = storage
-        .publish_snapshot(SnapshotPublication {
-            operation_id: OperationId::new(Bytes::from_static(b"regressive-publication"))
-                .expect("operation identity"),
-            expected_parent: Some(positioned.id.clone()),
-            snapshot: ArchiveSnapshot {
-                at_event: ArchiveSnapshotPosition::Initial,
-                root: BlobTreeId::Directory(directory_id),
-            },
-        })
-        .await
-        .expect_err("regressive snapshot must be rejected");
-    assert_eq!(regressive.kind(), ErrorKind::Conflict);
-
-    let conflicting = SnapshotPublication {
-        snapshot: ArchiveSnapshot {
-            at_event: ArchiveSnapshotPosition::At(second.position),
-            root: BlobTreeId::Directory(directory_id),
-        },
-        ..positioned_request
-    };
-    let conflict = storage
-        .publish_snapshot(conflicting)
-        .await
-        .expect_err("operation identity reuse must conflict");
-    assert_eq!(conflict.kind(), ErrorKind::Conflict);
-    assert_eq!(
-        storage
-            .snapshot(&positioned.id)
-            .await
-            .expect("snapshot by id"),
-        Some(positioned.clone())
-    );
-    assert_eq!(
-        storage
-            .snapshot_at_or_before(first.position)
-            .await
-            .expect("historical selection"),
-        Some(positioned.clone())
-    );
-    assert_captured_load(&storage, positioned, first.position, second.position).await;
-}
-
-/// Verifies the observable state and finite reads of a fresh storage instance.
-async fn storage_starts_empty<S, F>(make_storage: &F)
-where
-    S: SeaStorage,
-    S::Error: Debug,
-    F: Fn() -> S,
-{
-    let storage = make_storage();
-    assert_eq!(storage.head().await.expect("empty head"), None);
-    assert_eq!(
-        storage.latest_snapshot().await.expect("empty snapshot"),
-        None
-    );
-    assert_eq!(
-        storage
-            .resolve_snapshot_publication(
-                &OperationId::new(Bytes::from_static(b"unknown-publication"))
-                    .expect("operation identity"),
-            )
-            .await
-            .expect("unknown publication resolution"),
-        None
-    );
-    assert!(
-        storage
-            .read(None, None)
-            .await
-            .expect("empty reader")
-            .try_collect::<Vec<_>>()
-            .await
-            .expect("empty records")
-            .is_empty()
-    );
-
-    let load = storage.load(None).await.expect("empty load");
-    assert_eq!(load.snapshot, None);
-    assert_eq!(load.head, None);
-    assert!(
-        load.events
-            .try_collect::<Vec<_>>()
-            .await
-            .expect("empty load events")
-            .is_empty()
-    );
-}
-
-/// Verifies append durability, ordering, empty payloads, and exclusive read boundaries.
-async fn storage_append_order_and_boundaries<S, F>(make_storage: &F)
-where
-    S: SeaStorage,
-    S::Error: Debug,
-    F: Fn() -> S,
-{
-    let storage = make_storage();
-    let first = storage
-        .append(Event {
-            payload: Bytes::from_static(b"first"),
-            blob_tree: None,
-        })
-        .await
-        .expect("first append");
-    assert_eq!(first.durability, storage.durability());
-    let second = storage
-        .append(Event {
-            payload: Bytes::new(),
-            blob_tree: None,
-        })
-        .await
-        .expect("second append");
-    let third = storage
-        .append(Event {
-            payload: Bytes::from_static(b"third"),
-            blob_tree: None,
-        })
-        .await
-        .expect("third append");
-    assert_eq!(storage.head().await.expect("head"), Some(third.position));
-
-    let records = storage
-        .read(Some(first.position), None)
-        .await
-        .expect("reader")
-        .try_collect::<Vec<_>>()
-        .await
-        .expect("records");
-    assert_eq!(records.len(), 2);
-    assert_eq!(records[0].position, second.position);
-    assert_eq!(records[0].event.payload, Bytes::new());
-    assert_eq!(records[1].position, third.position);
-    assert_eq!(records[1].event.payload, Bytes::from_static(b"third"));
-
-    let after_head = storage
-        .read(Some(third.position), None)
-        .await
-        .expect("reader after head")
-        .try_collect::<Vec<_>>()
-        .await
-        .expect("records after head");
-    assert!(after_head.is_empty());
-}
-
-/// Verifies that concurrent appends commit exactly once before a later append.
-async fn storage_concurrent_appends_are_contiguous<S, F>(make_storage: &F)
-where
-    S: SeaStorage,
-    S::Error: Debug,
-    F: Fn() -> S,
-{
-    let storage = make_storage();
-    let appends = (0_u8..32).map(|value| {
-        storage.append(Event {
-            payload: Bytes::from(vec![value]),
-            blob_tree: None,
-        })
-    });
-    for result in join_all(appends).await {
-        result.expect("concurrent append");
+        .expect("tree event");
+    assert!(first.id() < second.id() && second.id() < third.id());
+    let positions = [first.id(), second.id(), third.id()];
+    for position in positions {
+        assert_eq!(
+            next_data(&mut beginning.events)
+                .await
+                .expect("live event")
+                .position,
+            position
+        );
     }
-    storage
-        .append(Event {
-            payload: Bytes::from_static(b"sentinel"),
-            blob_tree: None,
-        })
-        .await
-        .expect("precedence append");
-    let records = storage
-        .read(None, None)
-        .await
-        .expect("reader")
-        .try_collect::<Vec<_>>()
-        .await
-        .expect("records");
-    assert_eq!(records.len(), 33);
     assert_eq!(
-        records.last().expect("sentinel record").event.payload,
-        Bytes::from_static(b"sentinel")
+        view.resolve_position(second.id())
+            .await
+            .expect("resolve event")
+            .expect("event")
+            .id(),
+        second.id()
     );
-    let mut concurrent_values = records[..32]
-        .iter()
-        .map(|record| record.event.payload[0])
-        .collect::<Vec<_>>();
-    concurrent_values.sort_unstable();
-    assert_eq!(concurrent_values, (0_u8..32).collect::<Vec<_>>());
+    publish_snapshots_and_check_selection::<Storage>(&view, &root, [&first, &second, &third]).await;
+    let mut bounded = view.read(Some(first.id()), Some(third.id()));
+    assert_eq!(
+        next_data(&mut bounded).await.expect("second").position,
+        second.id()
+    );
+    let event = next_data(&mut bounded).await.expect("third");
+    assert_eq!(event.position, third.id());
+    assert_eq!(event.event.blob_tree, Some(root_id));
+    assert!(next_data(&mut bounded).await.is_none());
+    let mut empty = view.read(Some(third.id()), Some(first.id()));
+    assert!(next_data(&mut empty).await.is_none());
+    let mut loaded = view
+        .load(LoadStart::LatestSnapshot)
+        .await
+        .expect("latest load");
+    assert_eq!(
+        loaded.snapshot.as_ref().expect("snapshot").at_event.id(),
+        third.id()
+    );
+    let fourth = view
+        .append(Bytes::from_static(b"live tail"), None)
+        .await
+        .expect("tail");
+    let last_position = fourth.id();
+    assert_eq!(
+        next_data(&mut loaded.events)
+            .await
+            .expect("live tail")
+            .position,
+        last_position
+    );
+    drop((
+        beginning, bounded, empty, loaded, root, first, second, third, fourth, view,
+    ));
+    assert_reopened_history(storage, &id, root_id, positions, last_position).await;
 }
 
-/// Verifies that a read captures a finite head when the reader is created.
-async fn storage_read_is_finite<S, F>(make_storage: &F)
-where
-    S: SeaStorage,
-    S::Error: Debug,
-    F: Fn() -> S,
-{
-    let storage = make_storage();
-    storage
-        .append(Event {
-            payload: Bytes::from_static(b"captured"),
-            blob_tree: None,
-        })
+/// Verifies recovery without retaining any original opening or handles.
+async fn assert_reopened_history<Storage: SeaStorage>(
+    storage: &Storage,
+    id: &sea_core::storage::DocumentId,
+    root_id: sea_core::BlobTreeId,
+    positions: [EventPosition; 3],
+    last_position: EventPosition,
+) {
+    let reopened = storage
+        .open_view(id)
         .await
-        .expect("captured append");
-    let reader = storage.read(None, None).await.expect("reader");
-    storage
-        .append(Event {
-            payload: Bytes::from_static(b"later"),
-            blob_tree: None,
-        })
+        .expect("reopen")
+        .expect("known document");
+    assert_eq!(
+        reopened.head().await.expect("recovered head"),
+        Some(last_position)
+    );
+    let snapshot = reopened
+        .get_snapshot(LoadStart::LatestSnapshot)
         .await
-        .expect("later append");
-    let records = reader.try_collect::<Vec<_>>().await.expect("records");
-    assert_eq!(records.len(), 1);
-    assert_eq!(records[0].event.payload, Bytes::from_static(b"captured"));
+        .expect("snapshot lookup")
+        .expect("retained snapshot");
+    assert_eq!(snapshot.root.id(), root_id);
+    reopened
+        .blobs()
+        .ensure_available(&snapshot.root)
+        .await
+        .expect("recovered root");
+    let mut history = reopened.read(None, Some(last_position));
+    for expected in positions.into_iter().chain([last_position]) {
+        assert_eq!(
+            next_data(&mut history)
+                .await
+                .expect("retained event")
+                .position,
+            expected
+        );
+    }
+    assert!(next_data(&mut history).await.is_none());
 }
 
-/// Verifies that dropping one reader does not affect another reader or storage state.
-async fn storage_readers_are_independent_and_cancellable<S, F>(make_storage: &F)
-where
-    S: SeaStorage,
-    S::Error: Debug,
-    F: Fn() -> S,
-{
-    let storage = make_storage();
-    for payload in [Bytes::from_static(b"one"), Bytes::from_static(b"two")] {
-        storage
-            .append(Event {
-                payload,
-                blob_tree: None,
+/// Publishes and resolves a complete content tree for a direct view.
+async fn publish_tree<Storage: SeaStorage>(view: &View<Storage>) -> BlobHandle<Storage> {
+    let leaf = view
+        .blobs()
+        .put_blob(Bytes::from_static(b"state"))
+        .await
+        .expect("blob");
+    let directory =
+        BlobDirectory::new(BTreeMap::from([("leaf".to_owned(), leaf.id())])).expect("directory");
+    let root = view
+        .blobs()
+        .put_directory(directory)
+        .await
+        .expect("complete tree");
+    assert_eq!(
+        view.blobs()
+            .resolve(root.id())
+            .await
+            .expect("resolve")
+            .expect("root")
+            .id(),
+        root.id()
+    );
+    view.blobs()
+        .ensure_available(&root)
+        .await
+        .expect("availability");
+    root
+}
+
+/// Checks snapshot selection independently of live event delivery.
+async fn publish_snapshots_and_check_selection<Storage: SeaStorage>(
+    view: &View<Storage>,
+    root: &BlobHandle<Storage>,
+    events: [&EventHandle<Storage>; 3],
+) {
+    for index in [0, 2] {
+        view.publish_snapshot(&Snapshot {
+            root: root.clone(),
+            at_event: events[index].clone(),
+        })
+        .await
+        .expect("snapshot");
+    }
+    assert!(
+        view.get_snapshot(LoadStart::Beginning)
+            .await
+            .expect("beginning")
+            .is_none()
+    );
+    for (bound, expected) in [
+        (events[1].id(), events[0].id()),
+        (events[2].id(), events[2].id()),
+    ] {
+        assert_eq!(
+            view.get_snapshot(LoadStart::ReplayAtLeastAllAfter(bound))
+                .await
+                .expect("bounded snapshot")
+                .expect("selected snapshot")
+                .at_event
+                .id(),
+            expected
+        );
+    }
+}
+
+/// Checks sparse snapshot ranges, exact lookup, inclusive selection, and strict append order.
+///
+/// # Panics
+/// Panics when an archive loses a publication or violates ordering/selection laws.
+pub async fn run_snapshot_archive_conformance<Storage: SeaStorage>(storage: &Storage) {
+    let created = storage
+        .create_document()
+        .await
+        .expect("document components");
+    let components = created.components;
+    assert!(
+        components
+            .snapshots
+            .latest_at_or_before(None)
+            .await
+            .expect("empty snapshots")
+            .is_none()
+    );
+    let root = components
+        .blobs
+        .put_blob(Bytes::new())
+        .await
+        .expect("empty blob");
+    let mut events = Vec::new();
+    for _ in 0..3 {
+        events.push(
+            components
+                .events
+                .append(Event {
+                    payload: Bytes::new(),
+                    blob_tree: None,
+                })
+                .await
+                .expect("event"),
+        );
+    }
+    for index in [0, 2] {
+        components
+            .snapshots
+            .append(Snapshot {
+                root: root.clone(),
+                at_event: events[index].clone(),
             })
             .await
-            .expect("append");
+            .expect("snapshot");
     }
-    let mut cancelled = storage.read(None, None).await.expect("cancelled reader");
-    let complete = storage.read(None, None).await.expect("complete reader");
-    assert!(cancelled.next().await.is_some());
-    drop(cancelled);
-    let records = complete
-        .try_collect::<Vec<_>>()
-        .await
-        .expect("complete records");
-    assert_eq!(records.len(), 2);
-    assert_eq!(
-        storage.head().await.expect("head"),
-        Some(records[1].position)
-    );
-}
-
-/// Verifies that reads reject positions not committed in the target storage instance.
-async fn storage_positions_require_committed_ordinals<S, F>(make_storage: &F)
-where
-    S: SeaStorage,
-    S::Error: Debug,
-    F: Fn() -> S,
-{
-    let first = make_storage();
-    let second = make_storage();
-    let receipt = first
-        .append(Event {
-            payload: Bytes::from_static(b"value"),
-            blob_tree: None,
-        })
-        .await
-        .expect("append");
-    let Err(error) = second.read(Some(receipt.position), None).await else {
-        panic!("position beyond the committed head was accepted");
-    };
-    assert!(matches!(
-        error.kind(),
-        ErrorKind::InvalidPosition | ErrorKind::StalePosition
-    ));
-}
-
-/// Verifies that snapshots reject positions not committed in the target storage instance.
-async fn storage_snapshot_positions_require_committed_ordinals<S, F>(make_storage: &F)
-where
-    S: SeaStorage,
-    S::Error: Debug,
-    F: Fn() -> S,
-{
-    let first = make_storage();
-    let second = make_storage();
-    let position = first
-        .append(Event {
-            payload: Bytes::from_static(b"value"),
-            blob_tree: None,
-        })
-        .await
-        .expect("append")
-        .position;
-    let root = second
-        .put_blob(Bytes::from_static(b"foreign-position"))
-        .await
-        .expect("snapshot content");
-    let error = second
-        .publish_snapshot(SnapshotPublication {
-            operation_id: OperationId::new(Bytes::from_static(b"foreign-position-publication"))
-                .expect("operation identity"),
-            expected_parent: None,
-            snapshot: ArchiveSnapshot {
-                at_event: ArchiveSnapshotPosition::At(position),
-                root: BlobTreeId::Blob(root),
-            },
-        })
-        .await
-        .expect_err("uncommitted snapshot position should be rejected");
-    assert!(matches!(
-        error.kind(),
-        ErrorKind::InvalidPosition | ErrorKind::StalePosition
-    ));
-}
-
-/// Publishes and retrieves the content tree used by subsequent storage checks.
-async fn prepare_blob_tree<S>(storage: &S) -> sea_core::BlobDirectoryId
-where
-    S: SeaStorage,
-    S::Error: Debug,
-{
-    let blob = storage
-        .put_blob(Bytes::from_static(b"shared-content"))
-        .await
-        .expect("blob publication");
-    assert_eq!(
-        storage.get_blob(blob).await.expect("blob retrieval"),
-        Bytes::from_static(b"shared-content")
-    );
-
-    let directory = BlobDirectory::new(BTreeMap::from([(
-        "leaf".to_owned(),
-        BlobTreeId::Blob(blob),
-    )]))
-    .expect("valid directory");
-    let directory_id = storage
-        .put_directory(directory.clone())
-        .await
-        .expect("directory publication");
-    assert_eq!(
-        storage
-            .get_directory(directory_id)
+    assert!(
+        components
+            .snapshots
+            .get_snapshot_at(events[1].id())
             .await
-            .expect("directory retrieval"),
-        directory
+            .expect("sparse exact lookup")
+            .is_none()
     );
-    directory_id
-}
-
-/// Verifies that an event cannot reference content absent from the storage instance.
-async fn reject_missing_event_tree<S>(storage: &S)
-where
-    S: SeaStorage,
-    S::Error: Debug,
-{
-    let missing = BlobId::from_bytes(&[0xa5; 32]).expect("synthetic missing identity");
-    let missing_error = storage
-        .append(Event {
-            payload: Bytes::from_static(b"must-not-commit"),
-            blob_tree: Some(BlobTreeId::Blob(missing)),
-        })
+    let exact = components
+        .snapshots
+        .get_snapshot_at(events[0].id())
         .await
-        .expect_err("missing tree must reject the event");
-    assert_eq!(missing_error.kind(), ErrorKind::Rejected);
-    assert_eq!(storage.head().await.expect("head after rejection"), None);
-}
-
-/// Verifies that a storage load returns its selected snapshot and captured finite tail.
-async fn assert_captured_load<S>(
-    storage: &S,
-    snapshot: sea_core::archive::PublishedSnapshot,
-    snapshot_position: EventPosition,
-    captured_head: EventPosition,
-) where
-    S: SeaStorage,
-    S::Error: Debug,
-{
-    let load = storage
-        .load(Some(snapshot_position))
+        .expect("exact lookup")
+        .expect("snapshot");
+    components
+        .blobs
+        .ensure_available(&exact.root)
         .await
-        .expect("captured load");
-    assert_eq!(load.snapshot, Some(snapshot));
-    assert_eq!(load.head, Some(captured_head));
-    storage
-        .append(Event {
-            payload: Bytes::from_static(b"after-captured-head"),
-            blob_tree: None,
-        })
-        .await
-        .expect("post-load event");
-    let loaded = load
+        .expect("snapshot blob evidence");
+    components
         .events
-        .try_collect::<Vec<_>>()
+        .ensure_available(&exact.at_event)
         .await
-        .expect("load events");
-    assert_eq!(loaded.len(), 1);
-    assert_eq!(loaded[0].position, captured_head);
-    assert_eq!(loaded[0].event.payload, Bytes::from_static(b"second"));
+        .expect("snapshot event evidence");
+    assert_eq!(
+        components
+            .snapshots
+            .latest_at_or_before(Some(events[1].id()))
+            .await
+            .expect("bounded lookup")
+            .expect("first snapshot")
+            .at_event
+            .id(),
+        events[0].id()
+    );
+    for index in [0, 2] {
+        assert!(
+            components
+                .snapshots
+                .append(Snapshot {
+                    root: root.clone(),
+                    at_event: events[index].clone()
+                })
+                .await
+                .is_err()
+        );
+    }
+    assert_snapshot_ranges(
+        &components.snapshots,
+        [events[0].id(), events[1].id(), events[2].id()],
+    )
+    .await;
+}
+
+/// Exercises range boundaries that need not name an actual snapshot publication.
+async fn assert_snapshot_ranges<Snapshots: SnapshotArchive>(
+    snapshots: &Snapshots,
+    positions: [EventPosition; 3],
+) {
+    let mut prefix = snapshots.read(None, Some(positions[1]));
+    assert_eq!(
+        next_data(&mut prefix)
+            .await
+            .expect("first snapshot")
+            .at_event
+            .id(),
+        positions[0]
+    );
+    assert!(next_data(&mut prefix).await.is_none());
+    let mut suffix = snapshots.read(Some(positions[1]), Some(positions[2]));
+    assert_eq!(
+        next_data(&mut suffix)
+            .await
+            .expect("third snapshot")
+            .at_event
+            .id(),
+        positions[2]
+    );
+    assert!(next_data(&mut suffix).await.is_none());
 }

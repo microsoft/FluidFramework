@@ -1,6 +1,6 @@
 //! Replacement document components over one exclusive dependency-ordered file journal.
 //!
-//! [`crate::next::FileStorage`] allocates numeric document identities below a canonical namespace
+//! [`crate::storage::FileStorage`] allocates numeric document identities below a canonical namespace
 //! and opens one OS-locked journal per document. Blob, event, and snapshot components share that
 //! opening and its mutation order. Availability handles retain canonical-path provenance but no
 //! writer ownership; components and streams retain the opening until dropped.
@@ -24,7 +24,7 @@ use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, CommittedEvent, Durability, Event,
     EventPosition, MonitoredStream, MonitoredStreamItem, MonitoredStreamProgress,
     MonitoredStreamStatus,
-    next::{
+    storage::{
         Archive, ArchiveStream, BlobStore, CreatedDocument, DocumentId, ReferenceableStore,
         SeaStorage, Snapshot, SnapshotArchive, StorageComponents, StorageHandle, StorageSurface,
     },
@@ -963,7 +963,7 @@ mod tests {
         let reopened = storage.open_view(&created.id).await.unwrap().unwrap();
         assert_eq!(
             reopened
-                .get_snapshot(sea_core::next::LoadStart::LatestSnapshot)
+                .get_snapshot(sea_core::storage::LoadStart::LatestSnapshot)
                 .await
                 .unwrap()
                 .unwrap()
@@ -1005,8 +1005,8 @@ mod tests {
     async fn replacement_file_conformance() {
         let root = root();
         let storage = FileStorage::<false>::open(&root).unwrap();
-        sea_conformance::next::run_view_conformance(&storage).await;
-        sea_conformance::next::run_snapshot_archive_conformance(&storage).await;
+        sea_conformance::run_view_conformance(&storage).await;
+        sea_conformance::run_snapshot_archive_conformance(&storage).await;
         fs::remove_dir_all(root).unwrap();
     }
 

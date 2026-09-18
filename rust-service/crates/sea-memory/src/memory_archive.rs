@@ -11,7 +11,7 @@ use std::{
 use futures_util::{Stream, task::AtomicWaker};
 use sea_core::{
     EventPosition, MonitoredStream, MonitoredStreamItem, MonitoredStreamProgress,
-    MonitoredStreamStatus, next::ArchiveStream,
+    MonitoredStreamStatus, storage::ArchiveStream,
 };
 
 use crate::MemoryStorageError;

@@ -1,6 +1,8 @@
 # Counter Example
 
 This bounded in-memory example submits `2`, submits `3`, publishes a snapshot at `5`, submits `-1`, and recovers the value through `SeaSession::load`.
+The backend creates the document and its exclusive view.
+Every snapshot references a committed event, including a snapshot of initial application state.
 
 From `rust-service/`, run:
 

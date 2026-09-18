@@ -1,6 +1,6 @@
 # Sea Memory
 
-`sea-memory` provides `MemoryStorage`, the process-local reference implementation of `sea_core::next::SeaStorage`.
+`sea-memory` provides `MemoryStorage`, the process-local reference implementation of `sea_core::storage::SeaStorage`.
 
 ## Behavior
 
@@ -53,17 +53,9 @@ Session policy, application operation identities, and reconciliation belong abov
 This implementation is suitable for tests, examples, and process-local state, not crash recovery.
 
 The primary entry point is `MemoryStorage`; its components and handles are exported from the crate root.
-Shared replacement laws come from [`sea-conformance::next`](../sea-conformance/src/next.rs).
+Shared replacement laws come from [`sea-conformance`](../sea-conformance/src/lib.rs).
 Localized tests in [`document.rs`](src/document.rs) exercise provenance, opening lifetimes, cancellation, concurrent appends, position exhaustion, shared-tree closure, lazy/live reads, and inconsistent-history rejection.
 Tests in [`memory_archive.rs`](src/memory_archive.rs) cover append-only assertions, sparse bounds and progress, finite completion, and weak subscription cleanup.
-
-## Transitional API
-
-`MemoryStream` still implements the old `sea_core::archive::SeaStorage` for consumers awaiting migration.
-It is separate state and code, not an adapter beneath `MemoryStorage`.
-Its finite captured-head loads, initial snapshots, conditional publication, and stable publication identities are old-model semantics only.
-Checkpoint 3 of the [core migration plan](../../CORE_MIGRATION_PLAN.md) verified that server hosting and WASM-local consumers still require it until checkpoint 4, while the counter and benchmarks require it until checkpoint 5.
-Final old-backend removal therefore remains an explicit checkpoint-5 obligation, not a compatibility layer beneath replacement storage.
 
 ## Validation
 

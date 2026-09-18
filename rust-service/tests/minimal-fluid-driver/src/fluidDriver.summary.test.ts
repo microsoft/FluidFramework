@@ -13,6 +13,7 @@ import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 
 import { SeaDocumentStorage } from "./fluidDriver.js";
+import { SeaDeltaConnection } from "./delta.js";
 import { createGeneratedSeaBindingAdapter, encodePosition } from "./generatedSeaBinding.js";
 import type {
 	BlobUpload,
@@ -69,6 +70,35 @@ test("generated driver hides initialization and preserves snapshot versions acro
 	assert.deepEqual((await observer.snapshot(initial))?.id, initial);
 	assert.deepEqual((await observer.latestSnapshot())?.id, version);
 	assert.equal(await observer.snapshot(encodePosition(999n)), undefined);
+	const connection = new SeaDeltaConnection(
+		"observer",
+		{
+			clientId: "observer",
+			remoteClientId: "writer",
+			writer: encoder.encode("observer"),
+			cursor: position,
+			lastPosition: initial,
+			remoteClientSequenceNumber: 0,
+			remoteSequenceNumbers: new Map(),
+		},
+		encoder.encode("observer-reopened"),
+		document,
+		observer,
+		{
+			details: { capabilities: { interactive: true } },
+			permission: [],
+			scopes: [],
+			user: { id: "observer" },
+			mode: "write",
+		},
+		"write",
+		[],
+	);
+	try {
+		await connection.open();
+	} finally {
+		connection.dispose();
+	}
 	await writerClient.close();
 	await observerClient.close();
 });

@@ -4,35 +4,17 @@
 
 ## Coverage
 
-`next::run_view_conformance` checks the replacement factory/view workflow: exclusive opening, content availability, distinct equal appends, snapshot selection, bounded replay, initially empty live loading, live suffix delivery, reopening, and retained history.
-`next::run_snapshot_archive_conformance` checks exact and inclusive snapshot lookup, strict publication ordering, compatible returned handles, and sparse range bounds.
-These functions accept a replacement document factory and are currently exercised by `sea-memory`.
-`next::run_session_conformance` accepts two memberships in one replacement runtime and checks explicit initial-state publication, stable event retries, snapshot-plus-live replay, bounded ordering, and independent session close.
+`run_view_conformance` checks the replacement factory/view workflow: exclusive opening, content availability, distinct equal appends, snapshot selection, bounded replay, initially empty live loading, live suffix delivery, reopening, and retained history.
+`run_snapshot_archive_conformance` checks exact and inclusive snapshot lookup, strict publication ordering, compatible returned handles, and sparse range bounds.
+These functions accept a document factory and are exercised by memory, buffered-file, and durable-file backends.
+`run_session_conformance` accepts two memberships in one replacement runtime and checks explicit initial-state publication, stable event retries, snapshot-plus-live replay, bounded ordering, and independent session close.
 It is exercised by `sea-sequencer`; backend ambiguity, cancelled mutation settlement, publisher fences, and backend-specific ownership are localized there rather than assumed from the memory backend.
 They do not impose a backend's future-bound policy, handle ownership policy, cancellation settlement mechanism, or durability behavior; those require localized tests.
 
-The following suites remain for old-model consumers until their owning migration checkpoints:
+Sparse bounds, observed progress, and bounded versus live delivery also have localized tests in the owning memory and file archive implementations.
 
-`run_sea_storage_conformance` checks empty storage, blob and directory identity, missing-tree rejection, event ordering, initial and historical snapshots, conditional and idempotent snapshot publication, publication resolution, and snapshot-plus-tail load.
-`run_sea_session_observable_behavior` checks the current `SeaSession` contract for submission and publication identity recovery, bounded and recovery reads, monitored-stream progress access, live snapshot notifications, content access, and close behavior.
-`run_sea_responsibility_observable_behavior` runs the same session checks when archive, author, subscription, and snapshot responsibilities are composed separately.
-
-Factories must return a fresh, empty stream for each call, and the session suite requires a fresh archive session.
+Factories must be fresh for each invocation, and the session suite requires two fresh memberships sharing an empty document.
 The suites panic on a contract violation and are intended to be invoked from an implementation's async tests.
-
-The legacy append-stream laws map to the current contracts as follows:
-
-| Legacy law | Current disposition |
-| --- | --- |
-| Append order, empty payloads, and exclusive resume boundaries | Ported to `run_sea_storage_conformance`. |
-| Concurrent append completeness | Ported to `run_sea_storage_conformance`. |
-| Finite reads and reads after the current head | Ported to `run_sea_storage_conformance`. |
-| Independent reader cancellation | Ported to `run_sea_storage_conformance`; network cancellation has separate transport tests. |
-| Committed position validation | Ported to `run_sea_storage_conformance`. |
-| Snapshot position, parent, and monotonicity validation | Ported to `run_sea_storage_conformance` using content-addressed roots. |
-| Snapshot recovery | Covered by the atomic snapshot-plus-tail storage load and the session observable-behavior suite. |
-| Position codec round trip | Replaced by the canonical `EventPosition::to_bytes` and `EventPosition::from_bytes` assertion. The obsolete fallible token codec was removed. |
-| Deterministic mixed legacy model trace | Not mechanically ported because it combines the obsolete inline-snapshot value model with laws covered independently above. Deterministic current-API workloads remain in `sea-benchmarks`. |
 
 ## Relationships and Limits
 

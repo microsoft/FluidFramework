@@ -6,13 +6,13 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{StreamExt as _, stream};
 use rand_core::{OsRng, RngCore as _};
-use sea_core::next::{DocumentId, SeaStorage};
+use sea_core::storage::{DocumentId, SeaStorage};
 use sea_core::{
     ClassifiedError, ErrorKind, EventPosition,
     archive::{AuthorId, SessionId},
 };
-use sea_file::next::FileStorage;
-use sea_file_durable::next::DurableStorage;
+use sea_file::storage::FileStorage;
+use sea_file_durable::storage::DurableStorage;
 use sea_memory::MemoryStorage;
 use sea_webtransport::protocol;
 use tokio::{sync::Mutex, time::sleep};
@@ -22,14 +22,14 @@ use crate::{
 };
 
 /// Serializes lazy runtime recovery within one backend namespace.
-struct DocumentRegistry<Storage: sea_core::next::SeaStorage> {
+struct DocumentRegistry<Storage: sea_core::storage::SeaStorage> {
     /// Factory retaining the backend namespace independently of active views.
     storage: Storage,
     /// Serializes first recovery; failed attempts are never cached.
-    documents: Mutex<BTreeMap<Vec<u8>, Arc<sea_sequencer::next::LocalSequencer<Storage>>>>,
+    documents: Mutex<BTreeMap<Vec<u8>, Arc<sea_sequencer::session::LocalSequencer<Storage>>>>,
 }
 
-impl<Storage: sea_core::next::SeaStorage + 'static> DocumentRegistry<Storage> {
+impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage> {
     /// Creates an empty cache over one backend namespace.
     fn new(storage: Storage) -> Self {
         Self {
@@ -39,10 +39,10 @@ impl<Storage: sea_core::next::SeaStorage + 'static> DocumentRegistry<Storage> {
     }
 
     /// Allocates a backend identity and retains its recovered exclusive view.
-    async fn create(&self) -> Result<sea_core::next::DocumentId, protocol::Response> {
+    async fn create(&self) -> Result<sea_core::storage::DocumentId, protocol::Response> {
         let mut documents = self.documents.lock().await;
         let (id, view) = self.storage.create_view().await.map_err(error_response)?;
-        let runtime = sea_sequencer::next::LocalSequencer::recover(view)
+        let runtime = sea_sequencer::session::LocalSequencer::recover(view)
             .await
             .map_err(error_response)?;
         documents.insert(id.as_bytes().to_vec(), runtime);
@@ -52,8 +52,8 @@ impl<Storage: sea_core::next::SeaStorage + 'static> DocumentRegistry<Storage> {
     /// Shares the existing runtime or exclusively recovers one without caching failures.
     async fn open(
         &self,
-        id: &sea_core::next::DocumentId,
-    ) -> Result<Arc<sea_sequencer::next::LocalSequencer<Storage>>, protocol::Response> {
+        id: &sea_core::storage::DocumentId,
+    ) -> Result<Arc<sea_sequencer::session::LocalSequencer<Storage>>, protocol::Response> {
         let mut documents = self.documents.lock().await;
         if let Some(runtime) = documents.get(id.as_bytes().as_ref()) {
             return Ok(runtime.clone());
@@ -64,7 +64,7 @@ impl<Storage: sea_core::next::SeaStorage + 'static> DocumentRegistry<Storage> {
             .await
             .map_err(error_response)?
             .ok_or_else(|| rejected("document does not exist"))?;
-        let runtime = sea_sequencer::next::LocalSequencer::recover(view)
+        let runtime = sea_sequencer::session::LocalSequencer::recover(view)
             .await
             .map_err(error_response)?;
         documents.insert(id.as_bytes().to_vec(), runtime.clone());
@@ -486,10 +486,8 @@ mod tests {
     use sea_core::{
         BlobDirectory, BlobTreeId, Event, EventPosition,
         archive::{AuthorId, EventSubmission, OperationId, SessionId, SnapshotParticipation},
-        next::{
-            LoadStart, Snapshot, StorageHandle,
-            session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
-        },
+        session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
+        storage::{LoadStart, Snapshot, StorageHandle},
     };
     use sea_webtransport::{
         NativeSeaClient, NativeSessionOpen, TransportConfig as ClientTransportConfig, protocol,
@@ -507,7 +505,7 @@ mod tests {
 
     #[tokio::test]
     async fn document_registry_shares_concurrent_first_opens() {
-        use sea_core::next::SeaStorage as _;
+        use sea_core::storage::SeaStorage as _;
 
         let storage = sea_memory::MemoryStorage::new();
         let (id, view) = storage
@@ -528,7 +526,7 @@ mod tests {
 
     #[tokio::test]
     async fn document_registry_retries_failed_initialization() {
-        use sea_core::next::{DocumentId, SeaStorage as _};
+        use sea_core::storage::{DocumentId, SeaStorage as _};
 
         let storage = sea_memory::MemoryStorage::new();
         let (id, external_view) = storage.create_view().await.expect("external writer");

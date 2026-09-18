@@ -46,9 +46,6 @@ mod referenceable_store;
 mod snapshot_archive;
 mod storage_surface;
 
-/// Multi-user session contracts composed above an exclusive document view.
-pub mod session;
-
 use async_trait::async_trait;
 use bytes::Bytes;
 
@@ -293,6 +290,9 @@ where
     }
 
     /// Resolves an event position to availability evidence suitable for snapshot publication.
+    ///
+    /// # Errors
+    /// Returns the event archive's resolution error; a missing position returns `None`.
     pub async fn resolve_position(
         &self,
         position: EventPosition,
@@ -306,6 +306,9 @@ where
     /// After an ambiguous result, applications can reconcile a bounded event range before deciding
     /// whether to resubmit; see [`EventArchive`] for identity and ordering requirements.
     /// Dropping this future does not imply rollback or settlement; see [`Archive::append`].
+    ///
+    /// # Errors
+    /// Propagates tree availability failures and event append errors, including ambiguous outcomes.
     pub async fn append(
         &self,
         payload: Bytes,
@@ -341,6 +344,9 @@ where
     /// A successful result bounds appends that returned before this operation began, including
     /// ambiguous results, as specified by [`Archive::head`].
     /// It does not by itself settle cancelled calls or requests still in flight upstream.
+    ///
+    /// # Errors
+    /// Returns the event archive's error when an authoritative head cannot be established.
     pub async fn head(&self) -> Result<Option<EventPosition>, Blobs::Error> {
         self.events.head().await
     }
@@ -356,6 +362,9 @@ where
     /// [`Self::read`] from the returned snapshot's event position (or `None`) through `Some(target)`.
     /// For exact-publication reconciliation, compare the returned event handle's identity with the
     /// requested position: an older snapshot or `None` means no publication at that position was observed.
+    ///
+    /// # Errors
+    /// Propagates snapshot archive lookup failures, except when `Beginning` skips lookup.
     pub async fn get_snapshot(
         &self,
         start: LoadStart,
@@ -375,6 +384,10 @@ where
     /// The initial empty state is not created through publication; every published snapshot requires
     /// an event handle.
     /// Success acknowledges publication; the supplied handles already identify the snapshot.
+    ///
+    /// # Errors
+    /// Propagates dependency availability failures and snapshot append errors, including rejected
+    /// ordering, conflicting roots, and ambiguous publication outcomes.
     pub async fn publish_snapshot(
         &self,
         snapshot: &Snapshot<Blobs::Handle, Events::Handle>,
@@ -394,6 +407,9 @@ where
     /// This method does not capture an event head or an atomic snapshot-and-event read.
     /// Snapshot lookup failures are returned here; event initialization and runtime failures are
     /// yielded by the stream.
+    ///
+    /// # Errors
+    /// Returns snapshot selection errors from [`Self::get_snapshot`].
     pub async fn load(
         &self,
         start: LoadStart,

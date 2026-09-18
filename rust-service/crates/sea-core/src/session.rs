@@ -1,15 +1,15 @@
 //! Client-session contracts composed above an exclusive replacement-storage view.
 //!
-//! The traits separate direct content and history access ([`crate::next::session::SeaArchive`]),
-//! stable author submission identities ([`crate::next::session::SeaAuthorSession`]), and
-//! conditional snapshot publication ([`crate::next::session::SeaSnapshotCoordinator`]).
-//! [`crate::next::session::SeaSession`] is the convenience bound for implementations that provide
+//! The traits separate direct content and history access ([`crate::session::SeaArchive`]),
+//! stable author submission identities ([`crate::session::SeaAuthorSession`]), and
+//! conditional snapshot publication ([`crate::session::SeaSnapshotCoordinator`]).
+//! [`crate::session::SeaSession`] is the convenience bound for implementations that provide
 //! all three facets.
 //!
 //! Storage supplies ordered archives and availability-bearing handles, but it does not implement
 //! membership, application-level deduplication, ambiguous-result reconciliation, or publisher
 //! selection. Session implementations own those policies and must keep received identities distinct
-//! from locally resolved [`StorageHandle`] values.
+//! from locally resolved [`crate::storage::StorageHandle`] values.
 //!
 //! Loads intentionally combine a selected snapshot with a live suffix without claiming an atomic
 //! captured event head. Closing a membership ends that membership's reads and author authority;
@@ -19,7 +19,7 @@
 use async_trait::async_trait;
 use bytes::Bytes;
 
-use super::{ArchiveStream, LoadStart, Snapshot, StorageHandle};
+use crate::storage::{ArchiveStream, LoadStart, Snapshot, StorageHandle};
 use crate::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, EventPosition,
     archive::{

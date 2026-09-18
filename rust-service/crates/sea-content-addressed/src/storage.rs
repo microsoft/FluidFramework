@@ -1,7 +1,7 @@
 //! Replacement blob capabilities over the immutable content-addressed object engine.
 //!
 //! [`ContentStore`] remains independently useful rather than becoming a document factory. Trait
-//! publication returns [`crate::next::ContentHandle`] evidence scoped to the store's canonical
+//! publication returns [`crate::storage::ContentHandle`] evidence scoped to the store's canonical
 //! namespace; equal content identities from another namespace do not establish local availability.
 //!
 //! Directory publication and handle resolution verify the complete reachable tree, visiting shared
@@ -14,7 +14,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, ErrorKind,
-    next::{BlobStore, ReferenceableStore, StorageHandle, StorageSurface},
+    storage::{BlobStore, ReferenceableStore, StorageHandle, StorageSurface},
 };
 use std::{collections::BTreeSet, path::PathBuf, sync::Arc};
 

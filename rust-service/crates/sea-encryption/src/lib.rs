@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-mod next;
+mod session;
 
 use std::fmt;
 
@@ -8,20 +8,9 @@ use aes_gcm_siv::{
     Aes256GcmSiv, Nonce, Tag,
     aead::{AeadInPlace, KeyInit},
 };
-use async_trait::async_trait;
 use bytes::Bytes;
-use futures_util::StreamExt;
 use rand_core::{OsRng, RngCore};
-use sea_core::{
-    ArchiveEventStream, ArchiveLoadStream, BlobDirectory, BlobDirectoryId, BlobId, ClassifiedError,
-    ErrorKind, SnapshotId,
-    archive::{
-        EventReceipt as SessionEventReceipt, EventSubmission, LoadEvent, OperationId,
-        PublishedSnapshot as SessionPublishedSnapshot, SeaArchive, SeaAuthorSession,
-        SeaEventSubscription, SeaService,
-    },
-    map_monitored_stream,
-};
+use sea_core::{ClassifiedError, ErrorKind, SeaService};
 use thiserror::Error;
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
@@ -219,182 +208,6 @@ where
     type Error = EncryptionError<S::Error>;
 }
 
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-impl<S, K, N> SeaEventSubscription for EncryptionSession<S, K, N>
-where
-    S: SeaEventSubscription,
-    K: KeyProvider + Clone + 'static,
-    N: NonceSource,
-{
-    fn load(&self, required: Option<sea_core::EventPosition>) -> ArchiveLoadStream<Self::Error> {
-        let keys = self.keys.clone();
-        map_monitored_stream(
-            self.inner.load(required),
-            move |mut item| {
-                if let LoadEvent::Event(event) = &mut item {
-                    event.committed.event.payload = decrypt_payload(
-                        &keys,
-                        &event.committed.event.payload,
-                        PayloadContext::Record,
-                    )?;
-                }
-                Ok(item)
-            },
-            EncryptionError::Store,
-        )
-    }
-}
-
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-impl<S, K, N> SeaArchive for EncryptionSession<S, K, N>
-where
-    S: SeaArchive,
-    K: KeyProvider + Clone + 'static,
-    N: NonceSource,
-{
-    fn read(
-        &self,
-        after: Option<sea_core::EventPosition>,
-        stop_after: Option<sea_core::EventPosition>,
-    ) -> ArchiveEventStream<Self::Error> {
-        let keys = self.keys.clone();
-        map_monitored_stream(
-            self.inner.read(after, stop_after),
-            move |mut event| {
-                event.committed.event.payload = decrypt_payload(
-                    &keys,
-                    &event.committed.event.payload,
-                    PayloadContext::Record,
-                )?;
-                Ok(event)
-            },
-            EncryptionError::Store,
-        )
-    }
-
-    async fn put_blob(&self, payload: Bytes) -> Result<BlobId, Self::Error> {
-        let payload = encrypt_payload(&self.keys, &self.nonces, &payload, PayloadContext::Blob)?;
-        self.inner
-            .put_blob(payload)
-            .await
-            .map_err(EncryptionError::Store)
-    }
-
-    async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
-        let payload = self
-            .inner
-            .get_blob(id)
-            .await
-            .map_err(EncryptionError::Store)?;
-        decrypt_payload(&self.keys, &payload, PayloadContext::Blob)
-    }
-
-    async fn put_directory(
-        &self,
-        directory: BlobDirectory,
-    ) -> Result<BlobDirectoryId, Self::Error> {
-        self.inner
-            .put_directory(directory)
-            .await
-            .map_err(EncryptionError::Store)
-    }
-
-    async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
-        self.inner
-            .get_directory(id)
-            .await
-            .map_err(EncryptionError::Store)
-    }
-
-    async fn snapshot(
-        &self,
-        id: &SnapshotId,
-    ) -> Result<Option<SessionPublishedSnapshot>, Self::Error> {
-        self.inner
-            .snapshot(id)
-            .await
-            .map_err(EncryptionError::Store)
-    }
-}
-
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-impl<S, K, N> SeaAuthorSession for EncryptionSession<S, K, N>
-where
-    S: SeaArchive + SeaAuthorSession,
-    K: KeyProvider + Clone + 'static,
-    N: NonceSource,
-{
-    async fn submit(
-        &self,
-        mut submission: EventSubmission,
-    ) -> Result<SessionEventReceipt, Self::Error> {
-        if let Some(receipt) = self
-            .inner
-            .resolve_submission(&submission.operation_id)
-            .await
-            .map_err(EncryptionError::Store)?
-        {
-            let after = receipt
-                .position
-                .get()
-                .checked_sub(1)
-                .filter(|position| *position != 0)
-                .map(sea_core::EventPosition::new);
-            let mut events = self.inner.read(after, Some(receipt.position));
-            let mut committed = loop {
-                match events
-                    .next()
-                    .await
-                    .ok_or(EncryptionError::OperationConflict)?
-                    .map_err(EncryptionError::Store)?
-                {
-                    sea_core::MonitoredStreamItem::Item(event) => break event,
-                    sea_core::MonitoredStreamItem::Progress(_) => {}
-                }
-            };
-            committed.committed.event.payload = decrypt_payload(
-                &self.keys,
-                &committed.committed.event.payload,
-                PayloadContext::Record,
-            )?;
-            if committed.operation_id == submission.operation_id
-                && committed.reference == submission.reference
-                && committed.committed.event == submission.event
-            {
-                return Ok(receipt);
-            }
-            return Err(EncryptionError::OperationConflict);
-        }
-        submission.event.payload = encrypt_payload(
-            &self.keys,
-            &self.nonces,
-            &submission.event.payload,
-            PayloadContext::Record,
-        )?;
-        self.inner
-            .submit(submission)
-            .await
-            .map_err(EncryptionError::Store)
-    }
-
-    async fn resolve_submission(
-        &self,
-        operation_id: &OperationId,
-    ) -> Result<Option<SessionEventReceipt>, Self::Error> {
-        self.inner
-            .resolve_submission(operation_id)
-            .await
-            .map_err(EncryptionError::Store)
-    }
-
-    async fn close(&self) -> Result<(), Self::Error> {
-        self.inner.close().await.map_err(EncryptionError::Store)
-    }
-}
-
 /// Builds and authenticates one record or snapshot envelope.
 fn encrypt_payload<E, K, N>(
     keys: &K,
@@ -480,18 +293,8 @@ mod tests {
         atomic::{AtomicUsize, Ordering},
     };
 
-    use futures_util::StreamExt;
-    use sea_core::{
-        ClassifiedError, ErrorKind,
-        archive::{
-            AuthorId, EventSubmission, LoadEvent, OperationId, SeaArchive, SeaAuthorSession,
-            SeaEventSubscription, SessionId,
-        },
-    };
-    use sea_memory::{MemoryError, MemoryStream};
-    use sea_sequencer::session::LocalSequencer;
-
     use super::*;
+    use sea_memory::MemoryStorageError;
 
     const FIRST_ID: KeyId = KeyId::new([1; KEY_ID_LENGTH]);
     const SECOND_ID: KeyId = KeyId::new([2; KEY_ID_LENGTH]);
@@ -588,117 +391,10 @@ mod tests {
         }
     }
 
-    #[tokio::test]
-    async fn session_decorator_round_trips_events_and_blobs() {
-        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
-            .await
-            .unwrap();
-        let session = sequencer
-            .open_session(
-                AuthorId::new(Bytes::from_static(b"author")).unwrap(),
-                SessionId::new(Bytes::from_static(b"session")).unwrap(),
-                None,
-            )
-            .await
-            .unwrap();
-        let encrypted =
-            EncryptionSession::with_nonce_source(session, TestKeys::new(), FixedNonce([3; 12]));
-        let blob = encrypted
-            .put_blob(Bytes::from_static(b"secret blob"))
-            .await
-            .unwrap();
-        assert_eq!(
-            encrypted.get_blob(blob).await.unwrap(),
-            Bytes::from_static(b"secret blob")
-        );
-        let receipt = encrypted
-            .submit(EventSubmission {
-                operation_id: OperationId::new(Bytes::from_static(b"operation")).unwrap(),
-                reference: None,
-                event: sea_core::Event {
-                    payload: Bytes::from_static(b"secret event"),
-                    blob_tree: None,
-                },
-            })
-            .await
-            .unwrap();
-        let mut load = encrypted.load(None);
-        let event = loop {
-            match load.next().await.unwrap().unwrap() {
-                sea_core::MonitoredStreamItem::Item(LoadEvent::Event(event)) => break event,
-                sea_core::MonitoredStreamItem::Item(LoadEvent::Snapshot(_))
-                | sea_core::MonitoredStreamItem::Progress(_) => {}
-            }
-        };
-        assert_eq!(event.committed.position, receipt.position);
-        assert_eq!(
-            event.committed.event.payload,
-            Bytes::from_static(b"secret event")
-        );
-    }
-
-    #[tokio::test]
-    async fn passes_session_conformance() {
-        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
-            .await
-            .unwrap();
-        let session = sequencer
-            .open_session(
-                AuthorId::new(Bytes::from_static(b"conformance-author")).unwrap(),
-                SessionId::new(Bytes::from_static(b"conformance-session")).unwrap(),
-                None,
-            )
-            .await
-            .unwrap();
-        let encrypted = EncryptionSession::new(session.clone(), TestKeys::new());
-        sea_conformance::run_sea_responsibility_observable_behavior(&encrypted, &session).await;
-    }
-
-    #[tokio::test]
-    async fn operation_retries_do_not_request_another_nonce() {
-        let sequencer = LocalSequencer::recover(Arc::new(MemoryStream::new()))
-            .await
-            .unwrap();
-        let session = sequencer
-            .open_session(
-                AuthorId::new(Bytes::from_static(b"retry-author")).unwrap(),
-                SessionId::new(Bytes::from_static(b"retry-session")).unwrap(),
-                None,
-            )
-            .await
-            .unwrap();
-        let calls = Arc::new(AtomicUsize::new(0));
-        let encrypted = EncryptionSession::with_nonce_source(
-            session,
-            TestKeys::new(),
-            CountingNonce {
-                calls: calls.clone(),
-            },
-        );
-        let submission = EventSubmission {
-            operation_id: OperationId::new(Bytes::from_static(b"retry-operation")).unwrap(),
-            reference: None,
-            event: sea_core::Event {
-                payload: Bytes::from_static(b"plaintext"),
-                blob_tree: None,
-            },
-        };
-
-        let receipt = encrypted.submit(submission.clone()).await.unwrap();
-        assert_eq!(encrypted.submit(submission.clone()).await.unwrap(), receipt);
-        let mut conflicting = submission;
-        conflicting.event.payload = Bytes::from_static(b"different");
-        assert_eq!(
-            encrypted.submit(conflicting).await.unwrap_err().kind(),
-            ErrorKind::Conflict
-        );
-        assert_eq!(calls.load(Ordering::Relaxed), 1);
-    }
-
     #[test]
     fn envelope_round_trips_across_key_rotation() {
         let keys = TestKeys::new();
-        let old = encrypt_payload::<MemoryError, _, _>(
+        let old = encrypt_payload::<MemoryStorageError, _, _>(
             &keys,
             &FixedNonce([6; 12]),
             &Bytes::from_static(b"old"),
@@ -706,7 +402,7 @@ mod tests {
         )
         .unwrap();
         keys.rotate();
-        let new = encrypt_payload::<MemoryError, _, _>(
+        let new = encrypt_payload::<MemoryStorageError, _, _>(
             &keys,
             &FixedNonce([7; 12]),
             &Bytes::from_static(b"new"),
@@ -714,11 +410,11 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            decrypt_payload::<MemoryError, _>(&keys, &old, PayloadContext::Record).unwrap(),
+            decrypt_payload::<MemoryStorageError, _>(&keys, &old, PayloadContext::Record).unwrap(),
             Bytes::from_static(b"old")
         );
         assert_eq!(
-            decrypt_payload::<MemoryError, _>(&keys, &new, PayloadContext::Record).unwrap(),
+            decrypt_payload::<MemoryStorageError, _>(&keys, &new, PayloadContext::Record).unwrap(),
             Bytes::from_static(b"new")
         );
     }
@@ -726,7 +422,7 @@ mod tests {
     #[test]
     fn empty_payload_round_trips() {
         let keys = TestKeys::new();
-        let encoded = encrypt_payload::<MemoryError, _, _>(
+        let encoded = encrypt_payload::<MemoryStorageError, _, _>(
             &keys,
             &FixedNonce([8; NONCE_LENGTH]),
             &Bytes::new(),
@@ -736,14 +432,15 @@ mod tests {
 
         assert_eq!(encoded.len(), ENVELOPE_OVERHEAD);
         assert_eq!(
-            decrypt_payload::<MemoryError, _>(&keys, &encoded, PayloadContext::Record).unwrap(),
+            decrypt_payload::<MemoryStorageError, _>(&keys, &encoded, PayloadContext::Record)
+                .unwrap(),
             Bytes::new()
         );
     }
 
     #[test]
     fn missing_active_and_historical_keys_are_unavailable() {
-        let missing_active = encrypt_payload::<MemoryError, _, _>(
+        let missing_active = encrypt_payload::<MemoryStorageError, _, _>(
             &TestKeys::empty(),
             &FixedNonce([8; NONCE_LENGTH]),
             &Bytes::from_static(b"plaintext"),
@@ -755,16 +452,19 @@ mod tests {
             EncryptionError::KeyUnavailable { key_id: None }
         ));
 
-        let encoded = encrypt_payload::<MemoryError, _, _>(
+        let encoded = encrypt_payload::<MemoryStorageError, _, _>(
             &TestKeys::new(),
             &FixedNonce([8; NONCE_LENGTH]),
             &Bytes::from_static(b"plaintext"),
             PayloadContext::Record,
         )
         .unwrap();
-        let missing_historical =
-            decrypt_payload::<MemoryError, _>(&TestKeys::empty(), &encoded, PayloadContext::Record)
-                .unwrap_err();
+        let missing_historical = decrypt_payload::<MemoryStorageError, _>(
+            &TestKeys::empty(),
+            &encoded,
+            PayloadContext::Record,
+        )
+        .unwrap_err();
         assert!(matches!(
             missing_historical,
             EncryptionError::KeyUnavailable {
@@ -776,24 +476,28 @@ mod tests {
     #[test]
     fn wrong_key_tampering_and_context_share_corruption_errors() {
         let keys = TestKeys::new();
-        let encoded = encrypt_payload::<MemoryError, _, _>(
+        let encoded = encrypt_payload::<MemoryStorageError, _, _>(
             &keys,
             &FixedNonce([9; 12]),
             &Bytes::from_static(b"authenticated"),
             PayloadContext::Record,
         )
         .unwrap();
-        let wrong_key =
-            decrypt_payload::<MemoryError, _>(&TestKeys::wrong(), &encoded, PayloadContext::Record)
-                .unwrap_err();
+        let wrong_key = decrypt_payload::<MemoryStorageError, _>(
+            &TestKeys::wrong(),
+            &encoded,
+            PayloadContext::Record,
+        )
+        .unwrap_err();
         assert_eq!(wrong_key.kind(), ErrorKind::Corrupt);
         let wrong_context =
-            decrypt_payload::<MemoryError, _>(&keys, &encoded, PayloadContext::Blob).unwrap_err();
+            decrypt_payload::<MemoryStorageError, _>(&keys, &encoded, PayloadContext::Blob)
+                .unwrap_err();
         assert_eq!(wrong_context.kind(), ErrorKind::Corrupt);
         let mut tampered = encoded.to_vec();
         tampered[HEADER_LENGTH] ^= 1;
         assert_eq!(
-            decrypt_payload::<MemoryError, _>(
+            decrypt_payload::<MemoryStorageError, _>(
                 &keys,
                 &Bytes::from(tampered),
                 PayloadContext::Record,
@@ -807,7 +511,7 @@ mod tests {
     #[test]
     fn invalid_fixed_header_fields_are_corrupt() {
         let keys = TestKeys::new();
-        let encoded = encrypt_payload::<MemoryError, _, _>(
+        let encoded = encrypt_payload::<MemoryStorageError, _, _>(
             &keys,
             &FixedNonce([10; NONCE_LENGTH]),
             &Bytes::from_static(b"authenticated"),
@@ -818,7 +522,7 @@ mod tests {
         for offset in [0, MAGIC.len(), MAGIC.len() + 1] {
             let mut malformed = encoded.to_vec();
             malformed[offset] ^= u8::MAX;
-            let error = decrypt_payload::<MemoryError, _>(
+            let error = decrypt_payload::<MemoryStorageError, _>(
                 &keys,
                 &Bytes::from(malformed),
                 PayloadContext::Record,
@@ -831,7 +535,7 @@ mod tests {
     #[test]
     fn every_truncated_envelope_is_corrupt() {
         let keys = TestKeys::new();
-        let encoded = encrypt_payload::<MemoryError, _, _>(
+        let encoded = encrypt_payload::<MemoryStorageError, _, _>(
             &keys,
             &FixedNonce([12; NONCE_LENGTH]),
             &Bytes::from_static(b"complete payload"),
@@ -840,7 +544,7 @@ mod tests {
         .unwrap();
 
         for end in 0..encoded.len() {
-            let error = decrypt_payload::<MemoryError, _>(
+            let error = decrypt_payload::<MemoryStorageError, _>(
                 &keys,
                 &encoded.slice(..end),
                 PayloadContext::Record,
@@ -852,7 +556,7 @@ mod tests {
 
     #[test]
     fn nonce_failure_is_unavailable() {
-        let error = encrypt_payload::<MemoryError, _, _>(
+        let error = encrypt_payload::<MemoryStorageError, _, _>(
             &TestKeys::new(),
             &UnavailableNonce,
             &Bytes::from_static(b"record"),

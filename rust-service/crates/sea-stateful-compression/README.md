@@ -30,10 +30,9 @@ record when polled and add no background task or stream buffer.
 
 Directories and snapshot metadata remain visible.
 For authenticated storage, wrap an encrypted session in `StatefulCompressionSession` so compression processes plaintext before encryption.
-The replacement `sea_core::next::session` facets are implemented directly on `StatefulCompressionSession`.
+The replacement `sea_core::session` facets are implemented directly on `StatefulCompressionSession`.
 Loads decode the selected snapshot's live suffix; snapshots, availability handles, stored-content identities, publisher fences, and registration lifetime pass through unchanged.
 Exact retries use deterministic dictionary frames, while decoding errors preserve the source's delivered cursor.
-Old session-trait implementations remain for benchmark consumers until checkpoint 5; only those old facets require undecorated snapshot coordination.
 
 ## Validation
 

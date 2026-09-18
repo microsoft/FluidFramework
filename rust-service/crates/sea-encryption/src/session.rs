@@ -24,12 +24,10 @@ use sea_core::{
         EventSubmission, OperationId, SessionCommittedEvent, SessionStream, SnapshotParticipation,
     },
     map_monitored_stream,
-    next::{
-        ArchiveStream, LoadStart, Snapshot,
-        session::{
-            SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator, SessionLoad, SnapshotCoordination,
-        },
+    session::{
+        SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator, SessionLoad, SnapshotCoordination,
     },
+    storage::{ArchiveStream, LoadStart, Snapshot},
 };
 
 impl<Session: SeaArchive, Keys: KeyProvider + Clone + 'static, Nonces: NonceSource>
@@ -285,10 +283,10 @@ mod tests {
     use sea_core::{
         Event,
         archive::{AuthorId, SessionId},
-        next::SeaStorage,
+        storage::SeaStorage,
     };
     use sea_memory::MemoryStorage;
-    use sea_sequencer::next::LocalSequencer;
+    use sea_sequencer::session::LocalSequencer;
     use std::sync::{
         Arc,
         atomic::{AtomicUsize, Ordering},
@@ -325,13 +323,13 @@ mod tests {
                 TestKeys::new(),
             );
             if compress {
-                sea_conformance::next::run_session_conformance(
+                sea_conformance::run_session_conformance(
                     &sea_compression::CompressionSession::new(first),
                     &sea_compression::CompressionSession::new(second),
                 )
                 .await;
             } else {
-                sea_conformance::next::run_session_conformance(&first, &second).await;
+                sea_conformance::run_session_conformance(&first, &second).await;
             }
         }
     }

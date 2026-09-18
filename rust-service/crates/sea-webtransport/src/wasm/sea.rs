@@ -28,13 +28,11 @@ use sea_core::{
         AuthorId, EventSubmission, OperationId, SessionCommittedEvent, SessionId, SessionStream,
         SnapshotParticipation as ArchiveParticipation,
     },
-    next::{
-        DocumentId, LoadStart, SeaStorage, Snapshot, StorageHandle,
-        session::{
-            SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator,
-            SnapshotCoordination as ArchiveCoordination,
-        },
+    session::{
+        SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator,
+        SnapshotCoordination as ArchiveCoordination,
     },
+    storage::{DocumentId, LoadStart, SeaStorage, Snapshot, StorageHandle},
 };
 use tokio::sync::{mpsc, oneshot, watch};
 use wasm_bindgen::{JsCast as _, prelude::*};
@@ -802,8 +800,8 @@ mod test_support {
 
     use sea_memory::{MemoryStorage, MemoryStorageError};
     use sea_sequencer::{
-        next::{LocalSequencer, LocalSession},
         session::SessionError,
+        session::{LocalSequencer, LocalSession},
     };
 
     use super::*;

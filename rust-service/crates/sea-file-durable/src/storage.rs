@@ -1,6 +1,6 @@
 //! Durable specialization of the replacement filesystem document engine.
 //!
-//! [`crate::next::DurableStorage`] uses [`sea_file::next::FileStorage`] in durable mode, which
+//! [`crate::storage::DurableStorage`] uses [`sea_file::storage::FileStorage`] in durable mode, which
 //! synchronizes each journal record and document-namespace publication before acknowledgment. The
 //! shared engine still owns framing, dependency validation, exclusive locking, handle provenance,
 //! and read behavior; this module adds focused evidence for durable tail recovery and cross-factory
@@ -8,10 +8,10 @@
 //!
 //! This path does not read or adapt the transitional file-storage format.
 
-pub use sea_file::next::{FileBlobs, FileEvents, FileHandle, FileSnapshots, FileStorageError};
+pub use sea_file::storage::{FileBlobs, FileEvents, FileHandle, FileSnapshots, FileStorageError};
 
 /// Exclusive file documents synchronizing records and namespace publication before acknowledgment.
-pub type DurableStorage = sea_file::next::FileStorage<true>;
+pub type DurableStorage = sea_file::storage::FileStorage<true>;
 
 #[cfg(test)]
 mod tests {
@@ -20,7 +20,7 @@ mod tests {
     use futures_util::{FutureExt, StreamExt};
     use sea_core::{
         Durability, MonitoredStreamItem,
-        next::{BlobStore, SeaStorage, Snapshot, StorageHandle},
+        storage::{BlobStore, SeaStorage, Snapshot, StorageHandle},
     };
     use std::{
         fs,
@@ -45,8 +45,8 @@ mod tests {
         let root = root();
         let storage = DurableStorage::open(&root).unwrap();
         assert_eq!(storage.durability(), Durability::Durable);
-        sea_conformance::next::run_view_conformance(&storage).await;
-        sea_conformance::next::run_snapshot_archive_conformance(&storage).await;
+        sea_conformance::run_view_conformance(&storage).await;
+        sea_conformance::run_snapshot_archive_conformance(&storage).await;
         fs::remove_dir_all(root).unwrap();
     }
 
@@ -83,7 +83,7 @@ mod tests {
         assert_eq!(reopened.head().await.unwrap(), Some(event.id()));
         assert_eq!(
             reopened
-                .get_snapshot(sea_core::next::LoadStart::LatestSnapshot)
+                .get_snapshot(sea_core::storage::LoadStart::LatestSnapshot)
                 .await
                 .unwrap()
                 .unwrap()

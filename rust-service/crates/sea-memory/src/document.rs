@@ -10,7 +10,7 @@ use std::{
 
 use async_trait::async_trait;
 use bytes::Bytes;
-use sea_core::next::{
+use sea_core::storage::{
     Archive, ArchiveStream, BlobStore, CreatedDocument, DocumentId, ReferenceableStore, SeaStorage,
     Snapshot, SnapshotArchive, StorageComponents, StorageHandle, StorageSurface,
 };
@@ -246,7 +246,7 @@ struct DocumentEntry {
     opening: Weak<DocumentOpening>,
 }
 
-/// Process-local document factory implementing `sea_core::next::SeaStorage`.
+/// Process-local document factory implementing `sea_core::storage::SeaStorage`.
 ///
 /// Clones share identities and exclusive openings. Only components retain their opening;
 /// streams and availability handles retain data only and remain usable across reopening.
@@ -697,7 +697,7 @@ mod tests {
         FutureExt, StreamExt,
         task::{ArcWake, waker},
     };
-    use sea_core::{MonitoredStreamItem, MonitoredStreamStatus, next::LoadStart};
+    use sea_core::{MonitoredStreamItem, MonitoredStreamStatus, storage::LoadStart};
     use std::{
         sync::atomic::AtomicUsize,
         task::{Context, Poll},
@@ -730,8 +730,8 @@ mod tests {
     #[tokio::test]
     async fn replacement_storage_conformance() {
         tokio::time::timeout(Duration::from_secs(5), async {
-            sea_conformance::next::run_view_conformance(&MemoryStorage::new()).await;
-            sea_conformance::next::run_snapshot_archive_conformance(&MemoryStorage::new()).await;
+            sea_conformance::run_view_conformance(&MemoryStorage::new()).await;
+            sea_conformance::run_snapshot_archive_conformance(&MemoryStorage::new()).await;
         })
         .await
         .expect("replacement conformance must finish");
