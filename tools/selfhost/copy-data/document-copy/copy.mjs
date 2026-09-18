@@ -135,7 +135,12 @@ async function documentExists(url, authorization, fetchImplementation) {
 	);
 }
 
-async function selfHostDocumentExists(selfHostEndpoint, selfHostTenantId, documentId, selfHostKey) {
+async function selfHostDocumentExists(
+	selfHostEndpoint,
+	selfHostTenantId,
+	documentId,
+	selfHostKey,
+) {
 	const authorization = selfHostAuthorization(selfHostTenantId, documentId, selfHostKey);
 	return documentExists(
 		`${selfHostEndpoint.replace(/\/$/, "")}/documents/${encodeURIComponent(selfHostTenantId)}/${encodeURIComponent(documentId)}`,
