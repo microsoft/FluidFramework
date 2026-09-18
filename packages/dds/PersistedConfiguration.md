@@ -562,31 +562,23 @@ The runtime also requires the returned configured instance to have registered it
 before connecting/replaying it; a factory marker alone must not enable a legacy dispatch path.
 
 The container gate must be active before a configured channel can be published. For a new
-container, include it in the initial document schema before attachment. For an existing
-container, accept the document-schema upgrade barrier first, then publish configured channels.
-If first use would otherwise wait for an unrelated edit to trigger the upgrade, provide an
-internal container-runtime entry point:
+container, include it in the initial document schema before attachment. For an existing container,
+the runtime option requests the capability through the normal desired schema. Ordinary outgoing
+traffic gives the schema controller an opportunity to propose the change. Publication is allowed
+only after a sequenced schema change makes the capability active, not merely because it was requested.
 
-```typescript
-// On an internal container-runtime capability, not on the DDS configuration controller.
-ensureChannelConfigurationEnabled(): Promise<void>;
-```
+The schema controller keeps its existing one-attempt policy. If another schema wins without
+enabling this capability, it may remain unavailable for the rest of the session. The runtime does
+not retry the upgrade automatically or provide a separate activation method. It does not create
+an ordinary edit just to trigger a schema proposal. Disabled schema upgrades remain disabled.
+Attempting to publish a configured channel while the capability is unavailable throws an error;
+it does not silently switch the channel to the legacy protocol.
 
-This method explicitly requests the document-schema capability under existing CAS rules and
-resolves only once it is present in the persisted document schema observed by this client.
-It rejects when upgrades are disabled, the deployment has not opted in, or the runtime is closed.
-After a competing document-schema change, it re-evaluates the shared capability request without
-dropping other schema features. This requires extending the current controller's one-attempt
-policy for this explicit request path; it must not report success based on `desiredSchema`.
-An offline call can remain pending until sequencing is possible.
-
-DDS construction/publication must not synchronously initiate an unawaited upgrade and then emit
-new-protocol content. The caller prepares this capability before using a configured factory in
-an attached container. New-instance creation requires `channelConfigurationCreationEnabled`;
-publication additionally requires `channelConfigurationEnabled`. Local configuration edits do not
-require document readiness. Pass readiness through
-an internal datastore-runtime capability rather than having DDS packages depend on container
-runtime's implementation.
+New-instance creation requires `channelConfigurationCreationEnabled`; publication additionally
+requires `channelConfigurationEnabled`. Local configuration edits do not require document readiness.
+These internal datastore-runtime properties keep DDS packages independent of the container
+runtime implementation. Loading a configured detached snapshot preserves its capability and
+explicit schema control even when local creation options are off or omitted.
 
 Ship protocol readers and the new wrapper dark first. Gate creation by deployment policy, with no
 behavioral changes to existing DDSes. The internal runtime option `enableChannelConfiguration`
@@ -612,7 +604,7 @@ drops in this protocol; DDS-specific invalidation events and telemetry are outsi
 | `datastore-definitions` | Internal persisted-state/factory capability types, without new required members on legacy channel contracts. |
 | `shared-object-base` | Controller and compositional kernel facet; immutable per-instance attributes; control-op dispatch and ordinary-op revision metadata; configuration-request completion tracking; initialization and publication hooks. |
 | `datastore` | Factory compatibility check; propagate publication/readiness hooks; retain lazy replay ordering; align stashed-envelope handling and summary invalidation. |
-| `container-runtime` | Sticky document-schema capability and explicit enablement path; propagate readiness; retain pending accounting and existing ordinary-op replay behavior. |
+| `container-runtime` | Sticky document-schema capability requested through normal schema features; propagate readiness; retain the existing one-attempt policy, pending accounting, and ordinary-op replay behavior. |
 | Initial adopter | New opt-in DDS instances with configuration validation and a synchronous change callback. Preserve their existing local mutation, acknowledgement, and ordinary-op lifecycle behavior. |
 
 Share the existing base's serializer, telemetry, error handling, and summary support through

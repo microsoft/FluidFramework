@@ -60,12 +60,15 @@ describe("Runtime", () => {
 		disallowedVersions: [],
 	} as const satisfies IDocumentSchemaFeatures;
 
-	function createController(config: IDocumentSchema) {
+	function createController(
+		config: IDocumentSchema,
+		desiredFeatures: IDocumentSchemaFeatures = features,
+	) {
 		return new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
 			config, // old schema,
-			features,
+			desiredFeatures,
 			() => {}, // onSchemaChange
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info,
 			logger,
@@ -106,49 +109,54 @@ describe("Runtime", () => {
 				logger,
 				false,
 			);
-			assert.equal(controller.channelConfigurationEnabled, true);
+			assert.equal(controller.sessionSchema.runtime.channelConfiguration, true);
 			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
 			const schema = controller.summarizeDocumentSchema(0);
 			assert(schema !== undefined);
 			const reader = createController(schema);
-			assert.equal(reader.channelConfigurationEnabled, true);
 			assert.equal(reader.sessionSchema.runtime.channelConfiguration, true);
 		});
 
 		it("waits for the actual schema acknowledgement", () => {
-			const controller = createController(validConfig);
-			controller.requestChannelConfiguration();
-			assert.equal(controller.channelConfigurationEnabled, false);
+			const controller = createController(validConfig, {
+				...features,
+				channelConfiguration: true,
+			});
+			assert.equal(controller.sessionSchema.runtime.channelConfiguration, undefined);
+			const proposal = controller.maybeGenerateSchemaMessage();
+			assert(proposal !== undefined);
+			assert.equal(proposal.runtime.channelConfiguration, true);
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+			assert.equal(controller.sessionSchema.runtime.channelConfiguration, undefined);
+			controller.processDocumentSchemaMessages([proposal], true, 1);
+			assert.equal(controller.sessionSchema.runtime.channelConfiguration, true);
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+		});
+
+		it("regenerates an unacknowledged proposal only after the normal reconnect reset", () => {
+			const controller = createController(validConfig, {
+				...features,
+				channelConfiguration: true,
+			});
 			const proposal = controller.maybeGenerateSchemaMessage();
 			assert(proposal !== undefined);
 			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
-			assert.equal(controller.channelConfigurationEnabled, false);
+			controller.pendingOpNotAcked();
+			assert.deepEqual(controller.maybeGenerateSchemaMessage(), proposal);
+			assert.equal(controller.sessionSchema.runtime.channelConfiguration, undefined);
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
 			controller.processDocumentSchemaMessages([proposal], true, 1);
-			assert.equal(controller.channelConfigurationEnabled, true);
+			controller.pendingOpNotAcked();
+			assert.equal(controller.sessionSchema.runtime.channelConfiguration, true);
 			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
 		});
 
-		it("preserves the gate when a detached snapshot is rehydrated by a dark reader", () => {
-			const controller = new DocumentsSchemaController(
-				false,
-				0,
-				{
-					...validConfig,
-					runtime: { explicitSchemaControl: true, channelConfiguration: true },
-				},
-				{ ...features, explicitSchemaControl: false },
-				() => {},
-				{ minVersionForCollab: defaultMinVersionForCollab },
-				logger,
-				false,
-			);
-			assert.equal(controller.channelConfigurationEnabled, true);
-			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
-		});
-
-		it("retries an explicitly requested capability after CAS conflict without storms", () => {
-			const controller = createController(validConfig);
-			controller.requestChannelConfiguration();
+		it("does not retry after a competing schema wins, even after a reconnect reset", () => {
+			const controller = createController(validConfig, {
+				...features,
+				channelConfiguration: true,
+				opGroupingEnabled: true,
+			});
 			const original = controller.maybeGenerateSchemaMessage();
 			assert(original !== undefined);
 			controller.processDocumentSchemaMessages(
@@ -166,59 +174,75 @@ describe("Runtime", () => {
 			);
 			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
 			assert.equal(controller.sessionSchema.runtime.channelConfiguration, undefined);
+			assert.equal(controller.sessionSchema.runtime.opGroupingEnabled, true);
 			assert.equal(controller.processDocumentSchemaMessages([original], true, 2), false);
-			const retry = controller.maybeGenerateSchemaMessage();
-			assert(retry !== undefined);
-			assert.equal(retry.refSeq, 1);
-			assert.equal(retry.runtime.channelConfiguration, true);
-			assert.equal(retry.runtime.opGroupingEnabled, true);
-			assert.equal(retry.runtime.compressionLz4, true);
 			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
-			controller.processDocumentSchemaMessages([retry], true, 3);
-			assert.equal(controller.channelConfigurationEnabled, true);
+			controller.pendingOpNotAcked();
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+			assert.equal(controller.sessionSchema.runtime.channelConfiguration, undefined);
 		});
 
-		it("can explicitly request after an earlier ordinary schema attempt completed", () => {
+		it("preserves the persisted capability in the session and unrelated schema proposals", () => {
 			const controller = createController({
 				...validConfig,
-				runtime: { explicitSchemaControl: true },
+				runtime: { explicitSchemaControl: true, channelConfiguration: true },
 			});
-			const ordinary = controller.maybeGenerateSchemaMessage();
-			assert(ordinary !== undefined);
-			controller.processDocumentSchemaMessages([ordinary], true, 1);
-			controller.requestChannelConfiguration();
+			assert.equal(controller.sessionSchema.runtime.channelConfiguration, true);
+			assert.equal(controller.sessionSchema.runtime.compressionLz4, undefined);
 			const proposal = controller.maybeGenerateSchemaMessage();
 			assert(proposal !== undefined);
-			assert.equal(proposal.refSeq, 1);
+			assert.equal(proposal.runtime.channelConfiguration, true);
+			assert.equal(proposal.runtime.compressionLz4, true);
+			assert.equal(proposal.runtime.idCompressorMode, "delayed");
+			controller.processDocumentSchemaMessages([proposal], true, 1);
+			assert.equal(controller.sessionSchema.runtime.channelConfiguration, true);
+			assert.equal(controller.sessionSchema.runtime.compressionLz4, true);
+			assert.equal(controller.sessionSchema.runtime.idCompressorMode, "delayed");
+			assert.equal(controller.summarizeDocumentSchema(1)?.runtime.channelConfiguration, true);
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
 		});
 
-		it("rejects disabled upgrades and non-explicit capability schemas", () => {
+		it("does not propose the capability when schema upgrades are disabled", () => {
 			const disabled = new DocumentsSchemaController(
 				true,
 				0,
 				validConfig,
-				features,
+				{ ...features, channelConfiguration: true },
 				() => {},
 				{ minVersionForCollab: defaultMinVersionForCollab },
 				logger,
 				true,
 			);
-			assert.throws(() => disabled.requestChannelConfiguration(), /upgrades are disabled/);
-			testWrongConfig({
-				...validConfig,
-				runtime: { channelConfiguration: true },
-			});
+			assert.equal(disabled.sessionSchema.runtime.channelConfiguration, undefined);
+			assert.equal(disabled.maybeGenerateSchemaMessage(), undefined);
+			disabled.pendingOpNotAcked();
+			assert.equal(disabled.maybeGenerateSchemaMessage(), undefined);
 		});
 
-		it("rejects attempts to remove the persisted capability", () => {
+		it("does not add the capability to unrelated proposals without opting in", () => {
 			const controller = createController({
 				...validConfig,
-				runtime: { explicitSchemaControl: true, channelConfiguration: true },
+				runtime: { explicitSchemaControl: true },
 			});
-			assert.throws(
-				() => controller.processDocumentSchemaMessages([validConfig], false, 1),
-				/cannot be removed/,
-			);
+			const proposal = controller.maybeGenerateSchemaMessage();
+			assert(proposal !== undefined);
+			assert.equal(proposal.runtime.channelConfiguration, undefined);
+			assert.equal(proposal.runtime.compressionLz4, true);
+			controller.processDocumentSchemaMessages([proposal], true, 1);
+			assert.equal(controller.sessionSchema.runtime.channelConfiguration, undefined);
+			assert.equal(controller.sessionSchema.runtime.compressionLz4, true);
+		});
+
+		it("rejects invalid capability property values", () => {
+			for (const channelConfiguration of [false, "true"]) {
+				testWrongConfig({
+					...validConfig,
+					runtime: { channelConfiguration } as unknown as Record<
+						string,
+						DocumentSchemaValueType
+					>,
+				});
+			}
 		});
 	});
 

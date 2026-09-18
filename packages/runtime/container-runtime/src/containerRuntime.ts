@@ -545,6 +545,8 @@ export interface ContainerRuntimeOptionsInternal extends ContainerRuntimeOptions
 
 	/**
 	 * Deployment opt-in for creating configured channels. Readers remain enabled when omitted.
+	 * Existing documents request the capability through normal schema proposals; it may not
+	 * become active this session. Publication requires the capability to be active.
 	 */
 	readonly enableChannelConfiguration?: boolean;
 }
@@ -1280,20 +1282,34 @@ export class ContainerRuntime
 			compressionOptions.minimumBatchSizeInBytes !== Number.POSITIVE_INFINITY &&
 			compressionOptions.compressionAlgorithm === "lz4";
 
+		const persistedRuntimeSchema = metadata?.documentSchema?.runtime;
+		if (
+			persistedRuntimeSchema?.channelConfiguration === true &&
+			persistedRuntimeSchema.explicitSchemaControl !== true
+		) {
+			throw new DataCorruptionError(
+				"Channel configuration requires explicit document schema control",
+				{},
+			);
+		}
+		const rehydratingConfiguredDocument =
+			!existing && persistedRuntimeSchema?.channelConfiguration === true;
+
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
 			protocolSequenceNumber,
 			metadata?.documentSchema,
 			{
-				explicitSchemaControl,
+				explicitSchemaControl: explicitSchemaControl || rehydratingConfiguredDocument,
 				compressionLz4,
 				idCompressorMode,
 				opGroupingEnabled: enableGroupedBatching,
 				createBlobPayloadPending,
 				disallowedVersions: [],
-				...(!existing && enableChannelConfiguration === true
-					? { channelConfiguration: true as const }
-					: {}),
+				channelConfiguration:
+					enableChannelConfiguration === true || rehydratingConfiguredDocument
+						? true
+						: undefined,
 			},
 			(schema) => {
 				runtime.onSchemaChange(schema);
@@ -1734,11 +1750,9 @@ export class ContainerRuntime
 					this.channelConfigurationPublications.push(publish);
 				},
 			},
-			ensureChannelConfigurationEnabled: {
-				value: async (): Promise<void> => this.ensureChannelConfigurationEnabledCore(),
-			},
 			channelConfigurationEnabled: {
-				get: () => this.documentsSchemaController.channelConfigurationEnabled,
+				get: () =>
+					this.documentsSchemaController.sessionSchema.runtime.channelConfiguration === true,
 			},
 			channelConfigurationCreationEnabled: {
 				get: () => this.runtimeOptions.enableChannelConfiguration === true,
@@ -2419,68 +2433,7 @@ export class ContainerRuntime
 		}
 	}
 
-	private channelConfigurationRequest:
-		| {
-				readonly promise: Promise<void>;
-				readonly resolve: () => void;
-				readonly reject: (error: unknown) => void;
-		  }
-		| undefined;
 	private channelConfigurationPublications: (() => void)[] = [];
-
-	/**
-	 * Enables the document reader requirement before configured channels are published.
-	 * Existing documents wait for an actual sequenced schema change.
-	 */
-	private async ensureChannelConfigurationEnabledCore(): Promise<void> {
-		this.verifyNotClosed();
-		if (this.runtimeOptions.enableChannelConfiguration !== true) {
-			throw new UsageError("Channel configuration creation is not enabled");
-		}
-		if (this.documentsSchemaController.channelConfigurationEnabled) {
-			return;
-		}
-		if (this.isReadOnly() || this.inStagingMode) {
-			throw new UsageError(
-				"Cannot enable channel configuration in the current submission phase",
-			);
-		}
-		if (this.channelConfigurationRequest === undefined) {
-			this.documentsSchemaController.requestChannelConfiguration();
-			let resolve!: () => void;
-			let reject!: (error: unknown) => void;
-			const promise = new Promise<void>((res, rej) => {
-				resolve = res;
-				reject = rej;
-			});
-			this.channelConfigurationRequest = { promise, resolve, reject };
-			this.advanceChannelConfigurationRequest();
-			return promise;
-		}
-		return this.channelConfigurationRequest?.promise;
-	}
-
-	private advanceChannelConfigurationRequest(): void {
-		const request = this.channelConfigurationRequest;
-		if (request === undefined) {
-			return;
-		}
-		if (this.documentsSchemaController.channelConfigurationEnabled) {
-			this.channelConfigurationRequest = undefined;
-			request.resolve();
-			return;
-		}
-		try {
-			this.verifyNotClosed();
-			const contents = this.documentsSchemaController.maybeGenerateSchemaMessage();
-			if (contents !== undefined) {
-				this.submit({ type: ContainerMessageType.DocumentSchemaChange, contents });
-			}
-		} catch (error) {
-			this.channelConfigurationRequest = undefined;
-			request.reject(error);
-		}
-	}
 
 	public getCreateChildSummarizerNodeFn(
 		id: string,
@@ -2698,10 +2651,6 @@ export class ContainerRuntime
 			return;
 		}
 		this._disposed = true;
-		this.channelConfigurationRequest?.reject(
-			error ?? new UsageError("Runtime disposed before channel configuration was enabled"),
-		);
-		this.channelConfigurationRequest = undefined;
 		this.channelConfigurationPublications = [];
 
 		// The ContainerRuntimeDisposed event is redundant with the loader's ContainerDispose event
@@ -3113,10 +3062,6 @@ export class ContainerRuntime
 
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
-
-			// Replay discards unacknowledged schema proposals. Retry any explicit request
-			// after all replayed batches have finished, even if no other ops were pending.
-			this.advanceChannelConfigurationRequest();
 		} finally {
 			// Restore the old state, re-enable event emit
 			this.lastEmittedDirty = oldState;
@@ -3817,10 +3762,6 @@ export class ContainerRuntime
 					local,
 					message.sequenceNumber,
 				);
-				if (this.channelConfigurationRequest !== undefined) {
-					// Wait until this incoming batch has finished before proposing another schema.
-					queueMicrotask(() => this.advanceChannelConfigurationRequest());
-				}
 				break;
 			}
 			default: {

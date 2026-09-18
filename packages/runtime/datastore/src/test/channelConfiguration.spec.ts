@@ -207,19 +207,23 @@ describe("Channel configuration compatibility", () => {
 	it("gates publication before capturing a new-protocol snapshot", () => {
 		let captured = false;
 		const configured = channel();
+		const unavailableRuntime = {
+			channelConfigurationCreationEnabled: true,
+			channelConfigurationEnabled: false,
+		} as unknown as IFluidDataStoreRuntime & ChannelConfigurationRuntime;
 		Object.assign(configured, {
 			getAttachSummary: () => {
 				captured = true;
 			},
 		});
 		assert.throws(
-			() => summarizeChannel(configured, true, false, undefined, {} as IFluidDataStoreRuntime),
-			/Enable document/,
+			() => summarizeChannel(configured, true, false, undefined, unavailableRuntime),
+			/channel configuration is not active/,
 		);
 		assert.equal(captured, false);
 		assert.throws(
-			() => publishChannelConfiguration(configured, {} as IFluidDataStoreRuntime),
-			/Enable document/,
+			() => publishChannelConfiguration(configured, unavailableRuntime),
+			/channel configuration is not active/,
 		);
 	});
 

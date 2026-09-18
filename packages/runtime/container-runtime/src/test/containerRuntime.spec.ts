@@ -108,6 +108,8 @@ import type { IPendingMessage, PendingStateManager } from "../pendingStateManage
 import {
 	type ISummaryCancellationToken,
 	type IContainerRuntimeMetadata,
+	type IDocumentSchema,
+	type IDocumentSchemaChangeMessageOutgoing,
 	neverCancelledSummaryToken,
 	metadataBlobName,
 	recentBatchInfoBlobName,
@@ -342,19 +344,41 @@ describe("Runtime", () => {
 
 	describe("Container Runtime", () => {
 		describe("Channel configuration capability", () => {
+			const configurationOptions = {
+				explicitSchemaControl: true,
+				enableChannelConfiguration: true,
+			};
+
 			async function loadConfigurationRuntime(
 				existing: boolean,
-				runtimeOptions: IContainerRuntimeOptionsInternal = {},
+				runtimeOptions: IContainerRuntimeOptionsInternal = configurationOptions,
+				documentSchema?: IDocumentSchema,
 			): Promise<ContainerRuntime & ChannelConfigurationRuntime> {
+				const metadata: IContainerRuntimeMetadata = {
+					summaryFormatVersion: 1,
+					documentSchema,
+				};
 				const { runtime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext({
 						attachState: existing ? AttachState.Attached : AttachState.Detached,
+						baseSnapshot:
+							documentSchema === undefined
+								? undefined
+								: {
+										trees: { ".channels": { trees: {}, blobs: {} } },
+										blobs: { [metadataBlobName]: "metadata-id" },
+									},
+						mockStorage: {
+							...defaultMockStorage,
+							readBlob: async (id) => {
+								assert.equal(id, "metadata-id");
+								return stringToBuffer(JSON.stringify(metadata), "utf8");
+							},
+						},
 					}) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing,
 					runtimeOptions: {
-						explicitSchemaControl: true,
-						enableChannelConfiguration: true,
 						enableGroupedBatching: false,
 						flushMode: FlushMode.Immediate,
 						...runtimeOptions,
@@ -364,10 +388,33 @@ describe("Runtime", () => {
 				return runtime;
 			}
 
+			function processConfigurationOp(
+				runtime: ContainerRuntime,
+				contents: object,
+				sequenceNumber: number,
+				clientSequenceNumber: number,
+				local: boolean = true,
+			): void {
+				runtime.process(
+					{
+						clientId: local ? mockClientId : "otherClient",
+						clientSequenceNumber,
+						sequenceNumber,
+						minimumSequenceNumber: 0,
+						referenceSequenceNumber: 0,
+						timestamp: sequenceNumber,
+						type: MessageType.Operation,
+						contents,
+					},
+					local,
+				);
+			}
+
 			it("initializes new detached containers before attachment without sending ops", async () => {
 				const runtime = await loadConfigurationRuntime(false);
 				assert.equal(runtime.channelConfigurationEnabled, true);
-				await runtime.ensureChannelConfigurationEnabled?.();
+				assert.equal(runtime.channelConfigurationCreationEnabled, true);
+				assert.equal(runtime.sessionSchema.explicitSchemaControl, true);
 				assert.equal(submittedOps.length, 0);
 				runtime.dispose();
 			});
@@ -403,173 +450,202 @@ describe("Runtime", () => {
 				runtime.dispose();
 			});
 
-			it("explicitly submits and waits for a sequenced schema acknowledgement", async () => {
-				const runtime = await loadConfigurationRuntime(true);
-				let completed = false;
-				const completion = runtime.ensureChannelConfigurationEnabled?.().then(() => {
-					completed = true;
-				});
-				await Promise.resolve();
-				assert.equal(completed, false);
-				assert.equal(runtime.channelConfigurationEnabled, false);
-				assert.equal(submittedOps.length, 1);
-				const second = runtime.ensureChannelConfigurationEnabled?.();
-				assert.equal(submittedOps.length, 1);
-				runtime.process(
-					{
-						clientId: mockClientId,
-						clientSequenceNumber: 1,
-						sequenceNumber: 1,
-						minimumSequenceNumber: 0,
-						referenceSequenceNumber: 0,
-						timestamp: 1,
-						type: MessageType.Operation,
-						contents: submittedOps[0],
-					},
-					true,
-				);
-				await clock.tickAsync(0);
-				await Promise.all([completion, second]);
-				assert.equal(runtime.channelConfigurationEnabled, true);
-				assert.equal(completed, true);
-				runtime.dispose();
-			});
-
-			it("rejects dark creation and disabled upgrades", async () => {
-				const dark = await loadConfigurationRuntime(true, {
-					enableChannelConfiguration: false,
-				});
-				await assert.rejects(
-					async () => dark.ensureChannelConfigurationEnabled?.(),
-					/creation is not enabled/,
-				);
-				dark.dispose();
-				const disabled = await loadConfigurationRuntime(true, { disableSchemaUpgrade: true });
-				await assert.rejects(
-					async () => disabled.ensureChannelConfigurationEnabled?.(),
-					/upgrades are disabled/,
-				);
-				disabled.dispose();
-			});
-
 			for (const flushMode of [FlushMode.Immediate, FlushMode.TurnBased]) {
-				it(`retries a sole unacknowledged configuration request after reconnect (${FlushMode[flushMode]})`, async () => {
-					const runtime = await loadConfigurationRuntime(true, { flushMode });
-					const privates = runtime as unknown as ContainerRuntime_WithPrivates & {
-						readonly pendingMessagesCount: number;
-					};
-					let completed = 0;
-					const ensure = async (): Promise<void> => {
-						await runtime.ensureChannelConfigurationEnabled?.();
-						completed++;
-					};
-					const first = ensure();
-					const second = ensure();
+				it(`proposes on ordinary data and waits for the schema acknowledgement (${FlushMode[flushMode]})`, async () => {
+					const runtime = await loadConfigurationRuntime(true, {
+						explicitSchemaControl: true,
+						enableChannelConfiguration: true,
+						flushMode,
+					});
+					const privates = runtime as unknown as ContainerRuntime_WithPrivates;
+					stubChannelCollection(privates);
 					await clock.tickAsync(0);
-					assert.equal(submittedOps.length, 1);
-					const proposal = submittedOps[0] as LocalContainerRuntimeMessage;
-					assert.equal(proposal.type, ContainerMessageType.DocumentSchemaChange);
-					assert.equal(privates.pendingMessagesCount, 1);
-					assert.equal(completed, 0);
-
-					changeConnectionState(runtime, false, mockClientId);
-					const flush = sandbox.spy(privates, "flush");
-					const reconnectedClientId = "reconnectedClientId";
-					changeConnectionState(runtime, true, reconnectedClientId);
-					await clock.tickAsync(0);
-
-					assert.equal(submittedOps.length, 2, "Reconnect must regenerate the proposal");
-					assert.equal(privates.pendingMessagesCount, 1);
+					assert.equal(submittedOps.length, 0);
+					assert.equal(runtime.channelConfigurationCreationEnabled, true);
 					assert.equal(runtime.channelConfigurationEnabled, false);
-					assert.equal(completed, 0);
-					assert.equal(
-						flush.lastCall.args[0],
-						undefined,
-						"The regenerated proposal must be flushed outside the replayed batch",
-					);
-					const third = ensure();
+					submitDataStoreOp(runtime, "1", testDataStoreMessage);
 					await clock.tickAsync(0);
-					assert.equal(submittedOps.length, 2, "Coalesced requests must not send more ops");
-					runtime.process(
-						{
-							clientId: reconnectedClientId,
-							clientSequenceNumber: 2,
-							sequenceNumber: 1,
-							minimumSequenceNumber: 0,
-							referenceSequenceNumber: 0,
-							timestamp: 1,
-							type: MessageType.Operation,
-							contents: submittedOps[1],
-						},
-						true,
-					);
-					await clock.tickAsync(0);
-					await Promise.all([first, second, third]);
-					assert.equal(completed, 3);
-					assert.equal(runtime.channelConfigurationEnabled, true);
-					assert.equal(privates.pendingMessagesCount, 0);
 					assert.equal(submittedOps.length, 2);
+					const proposal = submittedOps[0] as {
+						type: ContainerMessageType.DocumentSchemaChange;
+						contents: IDocumentSchemaChangeMessageOutgoing;
+					};
+					assert.equal(proposal.type, ContainerMessageType.DocumentSchemaChange);
+					assert.equal(proposal.contents.runtime.channelConfiguration, true);
+					assert.equal(runtime.channelConfigurationEnabled, false);
+					submitDataStoreOp(runtime, "1", testDataStoreMessage);
+					await clock.tickAsync(0);
+					assert.equal(submittedOps.length, 3, "Only one schema proposal is sent");
+					assert.equal(runtime.channelConfigurationEnabled, false);
+					processConfigurationOp(runtime, proposal, 1, 1);
+					assert.equal(runtime.channelConfigurationEnabled, true);
+					processConfigurationOp(
+						runtime,
+						submittedOps[1] as LocalContainerRuntimeMessage,
+						2,
+						2,
+					);
+					submitDataStoreOp(runtime, "1", testDataStoreMessage);
+					await clock.tickAsync(0);
+					assert.equal(submittedOps.length, 4, "Acknowledgement does not trigger proposals");
 					runtime.dispose();
 				});
 			}
 
-			it("retries only after a competing proposal and the pending local acknowledgement", async () => {
-				const runtime = await loadConfigurationRuntime(true);
-				const completion = runtime.ensureChannelConfigurationEnabled?.();
+			it("does not retry a losing proposal, including on later ordinary data", async () => {
+				const runtime = await loadConfigurationRuntime(true, {
+					explicitSchemaControl: true,
+					enableChannelConfiguration: true,
+					enableRuntimeIdCompressor: "delayed",
+				});
+				stubChannelCollection(runtime as unknown as ContainerRuntime_WithPrivates);
+				submitDataStoreOp(runtime, "1", testDataStoreMessage);
+				assert.equal(submittedOps.length, 2);
 				const first = submittedOps[0] as {
 					type: ContainerMessageType.DocumentSchemaChange;
-					contents: { version: 1; refSeq: number; runtime: Record<string, unknown> };
+					contents: IDocumentSchemaChangeMessageOutgoing;
 				};
-				const process = (contents: object, sequenceNumber: number, local: boolean): void => {
-					runtime.process(
-						{
-							clientId: local ? mockClientId : "otherClient",
-							clientSequenceNumber: local && sequenceNumber === 3 ? 2 : 1,
-							sequenceNumber,
-							minimumSequenceNumber: 0,
-							referenceSequenceNumber: 0,
-							timestamp: sequenceNumber,
-							type: MessageType.Operation,
-							contents,
-						},
-						local,
-					);
-				};
-				process(
+				assert.equal(first.contents.runtime.channelConfiguration, true);
+				processConfigurationOp(
+					runtime,
 					{
 						...first,
 						contents: {
 							...first.contents,
-							runtime: { explicitSchemaControl: true, createBlobPayloadPending: true },
+							runtime: { explicitSchemaControl: true, idCompressorMode: "delayed" },
 						},
 					},
+					1,
 					1,
 					false,
 				);
 				await clock.tickAsync(0);
-				assert.equal(submittedOps.length, 1);
+				assert.equal(submittedOps.length, 2);
 				assert.equal(runtime.channelConfigurationEnabled, false);
-				process(first, 2, true);
+				assert.equal(runtime.sessionSchema.idCompressorMode, "delayed");
+				processConfigurationOp(runtime, first, 2, 1);
+				processConfigurationOp(runtime, submittedOps[1] as LocalContainerRuntimeMessage, 3, 2);
 				await clock.tickAsync(0);
 				assert.equal(submittedOps.length, 2);
-				const retry = submittedOps[1] as typeof first;
-				assert.equal(retry.contents.refSeq, 1);
-				assert.equal(retry.contents.runtime.channelConfiguration, true);
-				assert.equal(retry.contents.runtime.createBlobPayloadPending, true);
-				process(retry, 3, true);
+				submitDataStoreOp(runtime, "1", testDataStoreMessage);
 				await clock.tickAsync(0);
-				await completion;
-				assert.equal(runtime.channelConfigurationEnabled, true);
+				assert.equal(submittedOps.length, 3);
+				assert.equal(
+					(submittedOps[2] as LocalContainerRuntimeMessage).type,
+					ContainerMessageType.FluidDataStoreOp,
+				);
+				assert.equal(runtime.channelConfigurationEnabled, false);
 				runtime.dispose();
 			});
 
-			it("rejects outstanding requests when disposed", async () => {
-				const runtime = await loadConfigurationRuntime(true);
-				const completion = runtime.ensureChannelConfigurationEnabled?.();
-				assert(completion !== undefined);
+			it("does not propose schema changes when upgrades are disabled", async () => {
+				const runtime = await loadConfigurationRuntime(true, {
+					explicitSchemaControl: true,
+					enableChannelConfiguration: true,
+					disableSchemaUpgrade: true,
+				});
+				submitDataStoreOp(runtime, "1", testDataStoreMessage);
+				await clock.tickAsync(0);
+				assert.equal(submittedOps.length, 1);
+				assert.equal(
+					(submittedOps[0] as LocalContainerRuntimeMessage).type,
+					ContainerMessageType.FluidDataStoreOp,
+				);
+				assert.equal(runtime.channelConfigurationCreationEnabled, true);
+				assert.equal(runtime.channelConfigurationEnabled, false);
 				runtime.dispose();
-				await assert.rejects(completion, /disposed/);
 			});
+
+			for (const creationOptions of [{}, { enableChannelConfiguration: false }]) {
+				it(`keeps the capability dark while other features upgrade (${JSON.stringify(creationOptions)})`, async () => {
+					const runtime = await loadConfigurationRuntime(true, {
+						explicitSchemaControl: true,
+						enableRuntimeIdCompressor: "delayed",
+						...creationOptions,
+					});
+					submitDataStoreOp(runtime, "1", testDataStoreMessage);
+					assert.equal(submittedOps.length, 2);
+					const proposal = submittedOps[0] as {
+						type: ContainerMessageType.DocumentSchemaChange;
+						contents: IDocumentSchemaChangeMessageOutgoing;
+					};
+					assert.equal(proposal.type, ContainerMessageType.DocumentSchemaChange);
+					assert.equal(proposal.contents.runtime.channelConfiguration, undefined);
+					assert.equal(proposal.contents.runtime.idCompressorMode, "delayed");
+					assert.equal(runtime.channelConfigurationCreationEnabled, false);
+					assert.equal(runtime.channelConfigurationEnabled, false);
+					processConfigurationOp(runtime, proposal, 1, 1);
+					assert.equal(runtime.sessionSchema.idCompressorMode, "delayed");
+					assert.equal(runtime.channelConfigurationEnabled, false);
+					runtime.dispose();
+				});
+
+				for (const explicitOptions of [{}, { explicitSchemaControl: false }]) {
+					for (const existing of [false, true]) {
+						it(`preserves persisted capability and explicit control (${JSON.stringify({
+							existing,
+							...creationOptions,
+							...explicitOptions,
+						})})`, async () => {
+							const runtime = await loadConfigurationRuntime(
+								existing,
+								{ ...creationOptions, ...explicitOptions },
+								{
+									version: 1,
+									refSeq: 0,
+									info: { minVersionForCollab: defaultMinVersionForCollab },
+									runtime: {
+										explicitSchemaControl: true,
+										channelConfiguration: true,
+									},
+								},
+							);
+							assert.equal(runtime.channelConfigurationCreationEnabled, false);
+							assert.equal(runtime.channelConfigurationEnabled, true);
+							assert.equal(runtime.sessionSchema.explicitSchemaControl, true);
+							assert.equal(submittedOps.length, 0);
+							if (!existing) {
+								const metadata: SummaryObject | undefined =
+									runtime.createSummary().tree[metadataBlobName];
+								assert(metadata?.type === SummaryType.Blob);
+								assert(typeof metadata.content === "string");
+								const persisted = JSON.parse(metadata.content) as IContainerRuntimeMetadata;
+								assert.equal(persisted.documentSchema?.runtime.channelConfiguration, true);
+								assert.equal(persisted.documentSchema?.runtime.explicitSchemaControl, true);
+							}
+							runtime.dispose();
+						});
+					}
+				}
+			}
+
+			for (const existing of [false, true]) {
+				it(`requires explicit schema control for creation opt-in (existing: ${existing})`, async () => {
+					await assert.rejects(
+						loadConfigurationRuntime(existing, {
+							explicitSchemaControl: false,
+							enableChannelConfiguration: true,
+						}),
+						/Channel configuration requires explicit schema control/,
+					);
+				});
+
+				it(`rejects loaded capability without explicit schema control (existing: ${existing})`, async () => {
+					await assert.rejects(
+						loadConfigurationRuntime(
+							existing,
+							{},
+							{
+								version: 1,
+								refSeq: 0,
+								info: { minVersionForCollab: defaultMinVersionForCollab },
+								runtime: { channelConfiguration: true },
+							},
+						),
+						/Channel configuration requires explicit document schema control/,
+					);
+				});
+			}
 		});
 
 		describe("IdCompressor", () => {

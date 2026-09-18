@@ -8,13 +8,16 @@
  * @internal
  */
 export interface ChannelConfigurationRuntime {
+	/**
+	 * Whether the persisted document schema permits publishing configured channels.
+	 * A local creation option alone does not make the capability active.
+	 */
 	readonly channelConfigurationEnabled?: boolean;
 	readonly channelConfigurationCreationEnabled?: boolean;
 	/**
 	 * Whether an attach summary is captured within a published container.
 	 */
 	readonly channelConfigurationPublicationRequired?: boolean;
-	readonly ensureChannelConfigurationEnabled?: () => Promise<void>;
 	/**
 	 * Registers a captured detached channel snapshot for publication before attachment callbacks.
 	 * Detached serialization alone does not invoke the callback.

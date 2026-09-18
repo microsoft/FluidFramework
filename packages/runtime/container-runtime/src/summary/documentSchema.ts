@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { SemanticVersion } from "@fluidframework/runtime-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
+import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 import { gt, lt, parse } from "semver-ts";
 
 import { pkgVersion } from "../packageVersion.js";
@@ -152,7 +152,7 @@ export interface IDocumentSchemaFeatures {
 	/**
 	 * Sticky reader requirement for channels with persisted configuration.
 	 */
-	channelConfiguration?: true;
+	channelConfiguration?: true | undefined;
 
 	/**
 	 * List of disallowed versions of the runtime.
@@ -429,16 +429,6 @@ function checkRuntimeCompatibility(
 			},
 		);
 	}
-	if (
-		documentSchema.runtime.channelConfiguration === true &&
-		documentSchema.runtime.explicitSchemaControl !== true
-	) {
-		throw DataProcessingError.create(
-			"Channel configuration requires explicit document schema control",
-			"checkRuntimeCompatibility",
-			undefined,
-		);
-	}
 }
 
 function and(
@@ -641,12 +631,9 @@ export class DocumentsSchemaController {
 
 	/**
 	 * Have we generated a DocumentSchemaChange op and we're waiting for the ack?
-	 * This is used to ensure that we do not generate multiple schema change ops - this client normally sends one (if any).
-	 * An explicit channel configuration request may retry after that attempt has completed.
+	 * This is used to ensure that we do not generate multiple schema change ops - this client should only ever send one (if any).
 	 */
 	private opPending = false;
-	private schemaOpOutstanding = false;
-	private channelConfigurationRequested = false;
 
 	// schema coming from document metadata (snapshot we loaded from)
 	private documentSchema: IDocumentSchema;
@@ -720,18 +707,12 @@ export class DocumentsSchemaController {
 			refSeq: documentMetadataSchema?.refSeq ?? 0,
 			info,
 			runtime: {
-				explicitSchemaControl: boolToProp(
-					features.explicitSchemaControl ||
-						documentMetadataSchema?.runtime.channelConfiguration === true,
-				),
+				explicitSchemaControl: boolToProp(features.explicitSchemaControl),
 				compressionLz4: boolToProp(features.compressionLz4),
 				idCompressorMode: features.idCompressorMode,
 				opGroupingEnabled: boolToProp(features.opGroupingEnabled),
 				createBlobPayloadPending: features.createBlobPayloadPending,
-				...(features.channelConfiguration === true ||
-				(!existing && documentMetadataSchema?.runtime.channelConfiguration === true)
-					? { channelConfiguration: true }
-					: {}),
+				channelConfiguration: features.channelConfiguration,
 				disallowedVersions: arrayToProp(features.disallowedVersions),
 				...retiredFeatureValues(),
 			},
@@ -826,43 +807,12 @@ export class DocumentsSchemaController {
 		}
 		if (this.futureSchema !== undefined && !this.opPending) {
 			this.opPending = true;
-			this.schemaOpOutstanding = true;
 			assert(
 				this.explicitSchemaControl && this.futureSchema.runtime.explicitSchemaControl === true,
 				0x94e /* not legacy */,
 			);
 			return this.futureSchema;
 		}
-	}
-
-	/**
-	 * Whether this client has observed the persisted compatibility barrier.
-	 */
-	public get channelConfigurationEnabled(): boolean {
-		return this.documentSchema.runtime.channelConfiguration === true;
-	}
-
-	/**
-	 * Requests an explicit upgrade, including retry after a competing schema proposal.
-	 * The caller must wait for sequencing, rather than treating this request as readiness.
-	 */
-	public requestChannelConfiguration(): void {
-		if (this.channelConfigurationEnabled) {
-			return;
-		}
-		if (this.disableSchemaUpgrade) {
-			throw new UsageError("Channel configuration schema upgrades are disabled");
-		}
-		if (!this.explicitSchemaControl) {
-			throw new UsageError("Channel configuration requires explicit schema control");
-		}
-		this.channelConfigurationRequested = true;
-		if (!this.schemaOpOutstanding) {
-			this.opPending = false;
-		}
-		this.desiredSchema.runtime.channelConfiguration = true;
-		checkRuntimeCompatibility(this.documentSchema, "document");
-		this.futureSchema = or(this.documentSchema, this.desiredSchema);
 	}
 
 	private validateSeqNumber(
@@ -913,12 +863,6 @@ export class DocumentsSchemaController {
 			);
 		}
 		for (const content of contents) {
-			if (local) {
-				this.schemaOpOutstanding = false;
-			}
-			if (local && this.channelConfigurationRequested) {
-				this.opPending = false;
-			}
 			this.validateSeqNumber(content.refSeq, this.documentSchema.refSeq, "content.refSeq");
 			this.validateSeqNumber(this.documentSchema.refSeq, sequenceNumber, "refSeq");
 			// validate is strickly less, not equal
@@ -929,10 +873,6 @@ export class DocumentsSchemaController {
 
 			if (content.refSeq !== this.documentSchema.refSeq) {
 				// CAS failed
-				if (this.channelConfigurationRequested && !this.channelConfigurationEnabled) {
-					checkRuntimeCompatibility(this.documentSchema, "document");
-					this.futureSchema = or(this.documentSchema, this.desiredSchema);
-				}
 				return false;
 			}
 
@@ -945,13 +885,6 @@ export class DocumentsSchemaController {
 
 			// Changes are in effect. Immediately check that this client understands these changes
 			checkRuntimeCompatibility(content, "change");
-			if (this.channelConfigurationEnabled && content.runtime.channelConfiguration !== true) {
-				throw DataProcessingError.create(
-					"Channel configuration capability cannot be removed",
-					"processDocumentSchemaMessages",
-					undefined,
-				);
-			}
 			const schema = {
 				...content,
 				refSeq: sequenceNumber,
@@ -972,9 +905,6 @@ export class DocumentsSchemaController {
 			// Avoid this complexity for now - a new client session (loading from new summary with these changes)
 			// will automatically do this recalculation and will figure out
 			this.futureSchema = undefined;
-			if (this.channelConfigurationRequested && !this.channelConfigurationEnabled) {
-				this.futureSchema = or(schema, this.desiredSchema);
-			}
 
 			this.onSchemaChange(this.sessionSchema);
 		}
@@ -986,7 +916,6 @@ export class DocumentsSchemaController {
 	 */
 	public pendingOpNotAcked(): void {
 		this.opPending = false;
-		this.schemaOpOutstanding = false;
 	}
 }
 

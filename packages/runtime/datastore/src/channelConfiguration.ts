@@ -140,7 +140,9 @@ export function verifyChannelConfigurationPublication(
 		(runtime as IFluidDataStoreRuntime & ChannelConfigurationRuntime)
 			.channelConfigurationEnabled !== true
 	) {
-		throw new UsageError("Enable document channel configuration before publishing a channel");
+		throw new UsageError(
+			"Document channel configuration is not active; cannot publish a configured channel",
+		);
 	}
 	return true;
 }

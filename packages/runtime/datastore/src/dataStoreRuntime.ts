@@ -413,16 +413,6 @@ export class FluidDataStoreRuntime
 		policies?: Partial<IFluidDataStorePolicies>,
 	) {
 		super();
-		Object.defineProperty(this, "ensureChannelConfigurationEnabled", {
-			value: async (): Promise<void> => {
-				this.verifyNotClosed();
-				const runtime = this.dataStoreContext.containerRuntime as ChannelConfigurationRuntime;
-				if (runtime.ensureChannelConfigurationEnabled === undefined) {
-					throw new UsageError("Container runtime does not support channel configuration");
-				}
-				await runtime.ensureChannelConfigurationEnabled();
-			},
-		});
 		Object.defineProperty(this, "registerChannelConfigurationPublication", {
 			value: (publish: () => void): void => {
 				(
