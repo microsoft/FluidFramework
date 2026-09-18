@@ -1,172 +1,127 @@
 # Sea Architecture
 
-## Purpose
+Sea separates durable document state, multi-user coordination, transport, and application policy.
+The core traits are independent of storage backends, network transports, and application frameworks.
+For setup and usage, start with the [README](README.md); for package dependencies, see [workspace architecture](WORKSTREAMS.md).
 
-This document records the current durable architecture and ownership rules for
-Sea APIs, WebTransport, generated bindings, and application adapters.
-Use it when changing these surfaces.
-The [core migration plan](CORE_MIGRATION_PLAN.md) records the current storage/session migration and acceptance evidence.
-The completed [Sea API cleanup plan](SEA_API_CLEANUP_PLAN.md) remains historical evidence for the earlier client and crate cleanup.
+## System Layers
 
-## Core Responsibilities
+```mermaid
+flowchart TD
+	Application[Application or Adapter] --> Session[SeaSession]
+	Session --> Decorators[Optional Session Decorators]
+	Session --> Sequencer[Sequencer]
+	Decorators --> Sequencer
+	Sequencer --> View[SeaView]
+	Factory[SeaStorage Factory] -->|creates or opens| View
+	View --> Blobs[BlobStore]
+	View --> Events[EventArchive]
+	View --> Snapshots[SnapshotArchive]
+```
 
-`sea-core::storage` defines document factories, blob stores, event archives, snapshot archives, and their composed `SeaView`.
-The sibling `sea-core::session` defines archive, author, and snapshot-coordination facets above storage.
-Identity, event, monitored-stream, and classified-error primitives are shared.
+Applications use the session contracts locally or through WebTransport.
+The sequencer turns an exclusively opened document into a shared service for multiple clients.
+Optional session decorators add compression, encryption, or remote access without changing the application's session interface.
 
-`SeaStorage` allocates opaque document IDs and exclusively opens the document's components.
-`SeaView` establishes content and event availability before publishing dependent events or snapshots.
-Availability handles prove locally resolved dependencies; they are neither serialized wire values nor independent writer authority.
-Storage retains full committed histories with dependency-closed recovery, but does not own membership, application deduplication, or transparent append retry.
+## Document Storage
 
-`LoadStart` selects no snapshot, a snapshot at or before a cursor, or the latest snapshot.
-Loading returns the selected snapshot and a live event suffix without capturing an atomic event head.
-For reconstruction through a known position, select a suitable snapshot and use a bounded read.
+The [`sea-core::storage`](crates/sea-core/src/storage/mod.rs) module defines independently useful components and their composition into a document:
 
-`sea-sequencer` owns authoritative multi-user behavior over an archive:
+| Abstraction | Role |
+| --- | --- |
+| [`BlobStore`](crates/sea-core/src/storage/blob_store.rs) | Stores immutable, content-addressed blobs and directory trees. |
+| [`EventArchive`](crates/sea-core/src/storage/event_archive.rs) | Stores ordered, opaque application events. |
+| [`SnapshotArchive`](crates/sea-core/src/storage/snapshot_archive.rs) | Stores materialized state associated with committed event positions. |
+| [`Archive`](crates/sea-core/src/storage/ordered_archive.rs) | Common append-only history contract for event and snapshot archives, with bounded reads and live streams. |
+| [`SeaStorage`](crates/sea-core/src/storage/mod.rs) | Allocates document identities and creates or reopens one exclusive writable set of components per document. |
+| [`SeaView`](crates/sea-core/src/storage/mod.rs) | Composes those components into a document reader/writer and enforces cross-component dependencies. This is a concrete type, not a trait. |
 
-- author and session identity;
-- stable operation identity and ambiguity resolution;
-- reference validation and minimum-reference state;
-- event ordering and live delivery;
-- snapshot participation, nomination, and fencing; and
-- connection-independent session semantics.
+The key composition rule is that referenced data must be available before a reference to it is published: blob trees before dependent events, and events before dependent snapshots.
+Recovery must preserve those dependencies as well as event order.
+[`ReferenceableStore` and `StorageHandle`](crates/sea-core/src/storage/referenceable_store.rs) express this distinction between a value's identity and evidence that a store can make it available.
+This lets `SeaView` coordinate publication without requiring a distributed transaction across its components.
 
-`sea-conformance` expresses observable laws shared by implementations of these
-contracts. A conformance law establishes substitutability; focused tests in an
-implementation crate should still localize defects in behavior that crate owns
-when practical.
+[Memory](crates/sea-memory/README.md), [buffered-file](crates/sea-file/README.md), and [durable-file](crates/sea-file-durable/README.md) backends implement `SeaStorage` with different persistence guarantees.
+Storage does not manage client membership, submission deduplication, or publisher election; those belong to the session layer.
 
-The runtime shares one exclusive view across memberships.
-Membership and publisher selection are runtime-local; recovery restores committed submission identities, not active connections.
-Cancelled mutation futures remain owned by the runtime until a subsequent operation drives settlement.
-Returned append ambiguity is reconciled by a bounded scan, not automatic resubmission; failed reconciliation requires recovery.
+### Snapshots and Replay
 
-## Client and Server Boundary
+A snapshot represents application state through a committed event.
+That event's `EventPosition` identifies the snapshot's version within the document.
+Applications reconstruct state by loading a snapshot and replaying subsequent events, then continue receiving live events.
+[`LoadStart`](crates/sea-core/src/storage/mod.rs) controls the starting point, including replay from the beginning without a snapshot.
 
-`sea-webtransport` owns the versioned Sea wire values, bounded frame codec, one
-transport-independent client implementation, native client transport, and thin
-browser and injected-transport bindings. Native and browser clients share
-framing, correlation, ordering, logical-stream state machines, recovery, and
-lifecycle behavior.
+Sea stores snapshot content but does not interpret it or decide when to generate it.
+Applications own both responsibilities, including representing nonempty initial state in the event history.
+See the [core contracts](crates/sea-core/README.md) for snapshot selection and read semantics.
 
-Target-specific code should be limited to operations that genuinely differ by
-environment, such as opening a connection or stream, adapting byte I/O, native
-`Send` and `Sync` bounds, and exporting WASM-facing values. Do not create
-parallel native and browser implementations of client semantics.
+## Multi-User Sessions
 
-`sea-webtransport-server` owns native endpoint binding, connection acceptance,
-logical-stream dispatch, archive routing, transport liveness, measurements,
-TLS, shutdown, and the deployable binary. It consumes shared protocol code from
-`sea-webtransport`; the client crate must not depend on server, sequencer, or
-storage implementation code for its production WASM build.
+The [`sea-core::session`](crates/sea-core/src/session.rs) traits separate three capabilities above storage:
 
-The host caches one recovered sequencer per document, serializes first opening, and does not cache failed recovery.
-Successful runtimes remain cached for the host lifetime; idle eviction is not implemented.
+| Trait | Role |
+| --- | --- |
+| `SeaArchive` | Content access, snapshot loading, and event history with live delivery. |
+| `SeaAuthorSession` | Ordered event submission, stable operation identities, outcome resolution, and author membership lifecycle. Extends `SeaArchive`. |
+| `SeaSnapshotCoordinator` | Snapshot participation, publisher authority, and conditional publication. Extends `SeaArchive`. |
+| `SeaSession` | Marker trait for types implementing `SeaArchive`, `SeaAuthorSession`, and `SeaSnapshotCoordinator`. Adds no methods; automatically implemented for types satisfying those traits. |
 
-## Protocol and Streams
+[`sea-sequencer`](crates/sea-sequencer/README.md) implements these contracts over one exclusive `SeaView`, shared across client memberships.
+It owns author identity, submission deduplication, reference validation, event ordering, and snapshot publication authority.
+Committed submission identities survive recovery; active memberships and publisher authority do not.
+The server owns document runtime management, including opening and sharing sequencers.
 
-Every frame uses the shared bounded length-delimited envelope with an explicit
-numeric message kind, a stream-scoped correlation ID, and a kind-specific
-payload. Encoding must not depend on Rust declaration order or an implicit
-serializer enum representation. Unknown kinds, unsupported protocol versions,
-excessive lengths, invalid correlation, and messages on the wrong logical
-stream are classified protocol errors.
+Snapshot participants may observe only (`ReadOnly`), let Sea select a publisher (`SeaSelected`), or use application-owned election (`ClientSelected`).
+Client-selected publishers suppress Sea selection.
+Selection grants publication authority; it does not schedule snapshot generation.
+The [session contracts](crates/sea-core/src/session.rs) define lifecycle, retry, and publication rules.
 
-One archive-bound connection uses persistent logical streams with distinct
-responsibilities:
+## Optional Session Decorators
 
-1. The event stream establishes the logical session and carries snapshot
-  selection, catch-up, monitored progress, and live events without an atomic captured head.
-2. The author stream carries ordered submissions, acknowledged event positions, ambiguity
-   resolution, and author lifecycle.
-3. The snapshot stream carries latest accepted snapshots, participation,
-   nomination, and fenced publication.
-4. Content-role streams carry correlated history, blob, directory, and snapshot
-   lookup operations.
+Session decorators wrap sessions, preserving the same API surface while adding functionality.
+Decorators can be stacked in application-chosen order, including repeated layers.
+Their order determines where and how operations are transformed.
 
-Opening a logical stream uses a WebTransport bidirectional stream, but known
-operations must not silently fall back to a per-operation transport path.
-Cancellation or failure belongs to the narrowest owning stream or connection
-boundary defined by its contract.
+### Transport
 
-Network message identifiers belong only to the Sea network protocol. Durable
-sequencer records, encrypted payloads, blob directories, and other persisted
-formats use independent encoding domains and versioning.
+[`sea-webtransport`](crates/sea-webtransport/README.md) carries the session contracts over [WebTransport](https://developer.mozilla.org/en-US/docs/Web/API/WebTransport) and supports both native and browser clients.
 
-## Session and Snapshot Lifecycle
+TODO: sea-webtransport is supposed to support single round trip document loads, including op streaming. Make sure this actually works (including getting needed blobs), and note it here and it the web-transport readme, citing the APi used to do this (SeaSession::load?).
 
-An archive is retained state. A logical session is connection-bound author
-membership in one archive. A logical stream is a persistent transport stream
-with one role. A client owns one transport connection and shared state for its
-logical streams.
+[`sea-webtransport-server`](crates/sea-webtransport-server/README.md) owns endpoint binding, connection acceptance, document routing, transport liveness, TLS, and shutdown.
+It consumes the shared protocol; the production client does not depend on the server, sequencer, or storage implementations.
 
-Creating an archive and opening an existing archive are explicit operations.
-Creation returns a backend-assigned opaque document ID that clients retain for reopening; no client-name mapping is provided.
-Content, author, and snapshot operations cannot create missing archive state as
-a side effect.
+### Payload Decorators
 
-Every snapshot references a committed event and uses its event position as the document-scoped version.
-There is no pre-event initial snapshot or separate snapshot-operation ID.
-Applications represent nonempty initial state with an initialization event referencing uploaded content before publishing a snapshot.
-The session checks expected parents and current publication authority; new publication advances the position, while an exact position/root retry returns the existing snapshot.
-Transport receivers resolve received tree and event identities before constructing local availability handles.
+| Decorator | Role |
+| --- | --- |
+| [`CompressionSession`](crates/sea-compression/README.md) | Compresses event payloads and blob content. |
+| [`EncryptionSession`](crates/sea-encryption/README.md) | Encrypts and authenticates event payloads and blob content. |
+| [`StatefulCompressionSession`](crates/sea-stateful-compression/README.md) | Compresses payloads using a shared immutable dictionary. |
 
-Active I/O deadlines are separate from healthy idle-stream lifetime.
-Connection loss, explicit close, replacement, liveness failure, and server
-shutdown release the membership and snapshot authority owned by that
-connection. Restart does not restore connection-scoped sessions or nomination
-as active. Replaced membership and stale fences are rejected at mutation admission; revocation does not roll back an already admitted operation.
-Cancelling a snapshot stream releases only its own registration, not a newer replacement registration.
+TODO: StatefulCompressionSession is supposed to apply cross op stream compression for events, which would require every snapshot to track the compressor state of every editor.
+EIther fix this or remove it.
 
-Snapshot participation is immutable for one snapshot stream:
+## Application Adapters
 
-- `ReadOnly` observes accepted snapshots and cannot publish.
-- `SeaSelected` publishes only while holding Sea's current nomination fence.
-- `ClientSelected` uses application-owned election and publishes without a Sea
-  fence.
+Some adapters which wrap sessions to implement different APIs are provided.
 
-Any active client-selected publisher suppresses Sea selection. Nomination
-selects publication authority; it does not request or schedule snapshot
-generation. See [Decision 0012](decisions/0012-fluid-snapshot-election-integration.md).
+`sea-webtransport` includes TypeScript binding for its WASM build.
 
-## Generated Bindings and Application Adapters
+TODO: its a bit odd that bindings for SeaSession are coming from `sea-webtransport`.
+Making a dedicated master WASM package which wraps everything WASM users might need, and uses crate features to limit its size would be better.
 
-The WASM adapter is a target-specific module of `sea-webtransport`, not a
-separate implementation of the protocol client. Generated web and Node
-packages come from the same crate target and are build artifacts; never edit
-them by hand.
+[`SeaDriver`](tests/minimal-fluid-driver/README.md) is a Fluid driver, allowing Fluid applications to run on Sea. It maps Fluid sequence numbers, messages, summaries, blob trees, and reconnection behavior onto the Sea model.
 
-Generated TypeScript APIs should expose closed representations for finite Sea
-cases and structured entries instead of stringly typed discriminators,
-conditionally valid bags of fields, or `any`. Keep internal network message
-kinds and framing out of application-facing TypeScript APIs.
+`DirectSharedTreeClient` skips most of the Fluid runtime logic and directly integrates Sea events into SharedTree for much lower overhead.
+It also can apply batched updates to the tree for much faster handling of op backlogs (regular Fluid drivers could do this, but currently do not beyond their limited op bunching). The direct SharedTree integration used Sea's built in service assisted summarizer selection instead of Fluid's.
 
-Application adapters such as `SeaDriver` own only application-specific
-projection and policy. For Fluid, this includes sequence-number conversion,
-pending-operation identity and recovery, message serialization, summary and
-blob-tree mapping, and translation to Fluid interfaces. Adapters should call
-documented generated-client behavior directly where no real adaptation or
-invariant is required.
+TODO: Direct shared tree integration needs summary support. Maybe initially use a separate tree as thats known to work and just having one it likely to break due to current assumptions in SharedTree.
+TODO: Direct shared tree integration should ideally not need a separate summary tree, and should be able to work off the existing tree, but this is not implemented.
 
-The Fluid adapter stores the created document ID in the resolved URL, hides its initialization event, and reconstructs contiguous application sequence numbers by scanning retained history.
-Snapshot handles encode event positions, and bounded snapshot lookup is checked for an exact match for Fluid version requests.
-Reconnection resumes delivery from the consumed cursor, independently of the last submitted event position.
+## Contract Validation
 
-## Change and Evidence Rules
-
-When changing this architecture:
-
-- document behavior at the contract consumers rely on;
-- test owned behavior in the responsible module or crate when practical;
-- use conformance tests for laws shared by multiple implementations;
-- use native integration tests for crate, process, or transport composition;
-- reserve generated-binding and browser tests for evidence that crosses those
-  boundaries; and
-- preserve broader tests only when they prove something distinct from focused
-  coverage.
-
-Follow the full documentation and behavioral test policy in
-[DEVELOPMENT.md](DEVELOPMENT.md). Record a decision when a change alters shared
-semantics, public contracts, protocol behavior, crate responsibilities, or
-application integration policy.
+[`sea-conformance`](crates/sea-conformance/README.md) defines observable laws shared by implementations of the core contracts.
+Focused tests validate behavior owned by each crate; integration and browser tests validate composition across boundaries.
+Follow the [documentation policy](DEVELOPMENT.md#documentation-policy) and [behavioral test policy](DEVELOPMENT.md#behavioral-test-policy) when making changes.
+Record a [decision](decisions/) when changing shared semantics, public contracts, protocol behavior, crate responsibilities, or application integration policy.
