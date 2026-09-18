@@ -62,3 +62,16 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
   It still uses synthetic membership and omits authentication, signals, presence, automatic reconnect, offline merge, loading groups, and GC policy.
 - **Impact:** The adapter is integration evidence, not a Routerlicious or ODSP replacement.
 - **Trigger:** Define production membership and connection policy before broadening the supported Fluid surface.
+
+## Codespaces public forwarding cannot carry the current SEA endpoint
+
+- **Status:** Open
+- **Severity:** Medium
+- **Area:** Browser development workflow
+- **Evidence:** As checked on 2026-09-18, [GitHub documents Codespaces forwarding as TCP](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace), but the native SEA listener uses HTTP/3 over QUIC/UDP.
+  Public visibility and HTTPS forwarding do not bridge those protocols.
+  See the [investigation findings](CODESPACES_WEBTRANSPORT_PLAN.md#initial-findings-2026-09-18) for implementation evidence, alternatives, and unverified routes.
+- **Impact:** Starting SEA in a Codespace and making its port public does not provide Tinylicious-style access from ordinary external browsers.
+  Internal Chromium tests do not establish that workflow.
+- **Trigger:** Investigate native WebTransport over HTTP/2 compatibility or a public UDP-preserving tunnel, establish a separately reachable WebTransport endpoint, or re-evaluate when Codespaces documents compatible forwarding.
+  Preserve transport-backed backpressure; WebSocket transport and bridge options are not selected.
