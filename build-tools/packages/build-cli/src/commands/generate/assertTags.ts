@@ -17,6 +17,7 @@ import {
 	type SourceFile,
 	type StringLiteral,
 	SyntaxKind,
+	ts,
 } from "ts-morph";
 import { PackageCommand, type PackageProcessingError } from "../../BasePackageCommand.js";
 import type { PackageKind, PackageWithKind } from "../../filter.js";
@@ -224,10 +225,57 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 				// Be sure not to skip dependency resolution, as we want to
 				// process all files in a package.
 				skipFileDependencyResolution: false,
+				// Assertion scanning needs no TypeScript standard library declarations.
+				skipLoadingLibFiles: true,
 				tsConfigFilePath: tsconfigPath,
+				// Performance optimization: avoid loading and parsing external sources.
+				// This is not needed to exclude external files from assertion scanning; the filter below does that.
+				// Follow local imports, including files omitted from the tsconfig's initial file list.
+				// Assumes no additional package-local files are reachable only through external imports.
+				// If a package violates this assumption, those files and their assertions will be missed.
+				resolutionHost: (moduleResolutionHost) => ({
+					resolveModuleNames: (...args) => {
+						const [
+							moduleNames,
+							containingFile,
+							_reusedNames,
+							redirectedReference,
+							compilerOptions,
+							containingSourceFile,
+						] = args;
+						return moduleNames.map((moduleName, index) => {
+							const { resolvedModule } = ts.resolveModuleName(
+								moduleName,
+								containingFile,
+								compilerOptions,
+								moduleResolutionHost,
+								undefined,
+								redirectedReference,
+								containingSourceFile === undefined
+									? undefined
+									: ts.getModeForResolutionAtIndex(
+											containingSourceFile,
+											index,
+											compilerOptions,
+										),
+							);
+							if (resolvedModule === undefined) {
+								return undefined;
+							}
+							const relativePath = path.relative(
+								pkg.directory,
+								resolvedModule.resolvedFileName,
+							);
+							return relativePath.startsWith(`..${path.sep}`) || path.isAbsolute(relativePath)
+								? undefined
+								: resolvedModule;
+						});
+					},
+				}),
 			});
 
-			// Filter to package local sources of interest
+			// Filter to package local sources of interest. Tsconfig entries and reference directives
+			// can introduce external files without going through the module-resolution hook above.
 			const sourceFiles = project
 				.getSourceFiles(
 					// Limit to sources in the current package directory
@@ -250,7 +298,8 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		}
 
 		// If there are errors, avoid making code changes and just report the errors.
-		if (errors.length > 0) {
+		// Validation alone also stops here; --requireTagged still needs the simulated changes.
+		if (errors.length > 0 || (this.flags.validate && !this.flags.requireTagged)) {
 			return errors.map((details) => ({ packageName: undefined, details }));
 		}
 
@@ -366,6 +415,14 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 					// If it's a simple string literal, track the file for replacements later
 					case SyntaxKind.StringLiteral:
 					case SyntaxKind.NoSubstitutionTemplateLiteral: {
+						// Tagging inserts decoded message text into a block comment.
+						const literal = msg as StringLiteral | NoSubstitutionTemplateLiteral;
+						if (literal.getLiteralText().includes("*/")) {
+							errors.push(
+								`Assertion messages must not contain '*/' because tagging inserts them into block comments.\n\t${getCallsiteString(msg)}`,
+							);
+							break;
+						}
 						newAssertFiles.add(sourceFile);
 						break;
 					}
