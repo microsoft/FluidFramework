@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { JsonString } from "@fluidframework/core-interfaces/internal";
 import { PromiseCache } from "@fluidframework/core-utils/internal";
 import type {
 	ICacheEntry,
@@ -16,19 +17,35 @@ import type {
 	IOdspResolvedUrl,
 	ISocketStorageDiscovery,
 } from "@fluidframework/odsp-driver-definitions/internal";
+import type { ISnapshotCachedEntry2 } from "./contracts.js";
+import type { CacheEntry } from "./opsCaching.js";
 
 /**
  * Similar to IPersistedCache, but exposes cache interface for single file
  * @legacy
  * @beta
+ * @deprecated Use IPersistedFileCache instead.
  */
-export interface IPersistedFileCache {
+export interface IPersistedFileCacheDeprecated {
 	// TODO: use a stronger type
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	get(entry: IEntry): Promise<any>;
 	// TODO: use a stronger type
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	put(entry: IEntry, value: any): Promise<void>;
+	removeEntries(): Promise<void>;
+}
+
+/**
+ * Similar to IPersistedCache, but exposes cache interface for single file
+ * @legacy
+ * @beta
+ */
+export interface IPersistedFileCache<
+	TEntry extends ISnapshotCachedEntry2 | JsonString<CacheEntry>,
+> {
+	get(entry: IEntry): Promise<TEntry | undefined>;
+	put(entry: IEntry, value: TEntry): Promise<void>;
 	removeEntries(): Promise<void>;
 }
 
@@ -127,11 +144,12 @@ export interface INonPersistentCache {
  * @legacy
  * @beta
  */
-export interface IOdspCache extends INonPersistentCache {
+export interface IOdspCache<TEntry extends ISnapshotCachedEntry2 | JsonString<CacheEntry>>
+	extends INonPersistentCache {
 	/**
 	 * Persisted cache - only serializable content is allowed
 	 */
-	readonly persistedCache: IPersistedFileCache;
+	readonly persistedCache: IPersistedFileCache<TEntry>;
 }
 
 export class NonPersistentCache implements INonPersistentCache {

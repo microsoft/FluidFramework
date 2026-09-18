@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import type { JsonString } from "@fluidframework/core-interfaces/internal";
+import { JsonParse, JsonStringify } from "@fluidframework/core-interfaces/internal";
 import { delay } from "@fluidframework/core-utils/internal";
 import type {
 	IStream,
@@ -22,10 +24,11 @@ class MockCache implements ICache {
 	public writeCount = 0;
 	public opsWritten = 0;
 
-	public async write(batchNumber: string, data: string): Promise<void> {
+	public async write(batchNumber: string, data: JsonString<CacheEntry>): Promise<void> {
 		this.writeCount++;
-		this.data[batchNumber] = JSON.parse(data);
-		for (const op of this.data[batchNumber] as CacheEntry) {
+		const entry = JsonParse(data);
+		this.data[batchNumber] = entry;
+		for (const op of entry) {
 			// JSON.serialize converts undefined to null
 			if (op !== null) {
 				this.opsWritten++;
@@ -33,12 +36,12 @@ class MockCache implements ICache {
 		}
 	}
 
-	public async read(batchNumber: string): Promise<string | undefined> {
-		const content = this.data[batchNumber];
+	public async read(batchNumber: string): Promise<JsonString<CacheEntry> | undefined> {
+		const content: CacheEntry | undefined = this.data[batchNumber];
 		if (content === undefined) {
 			return undefined;
 		}
-		return JSON.stringify(content);
+		return JsonStringify(content);
 	}
 
 	public remove(): void {
@@ -48,7 +51,7 @@ class MockCache implements ICache {
 		this.data = {};
 	}
 
-	public data: { [key: string]: unknown } = {};
+	public data: { [key: string]: CacheEntry } = {};
 }
 
 async function validate(

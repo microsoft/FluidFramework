@@ -199,9 +199,7 @@ export interface IRenameFileResponse {
 }
 
 export interface IVersionedValueWithEpoch {
-	// TODO: use a stronger type
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	value: any;
+	value: unknown; // CacheEntry | ISnapshotCachedEntry2;
 	fluidEpoch: string;
 	// This is same as "persistedCacheValueVersion" below. This represents the version of data stored in cache.
 	version: 3;
@@ -243,7 +241,7 @@ export interface ISnapshotCachedEntry extends ISnapshotContents {
  * Represents the cached snapshot value.
  */
 export interface ISnapshotCachedEntry2 extends ISnapshot {
-	cacheEntryTime: number;
+	cacheEntryTime?: number;
 }
 
 /**

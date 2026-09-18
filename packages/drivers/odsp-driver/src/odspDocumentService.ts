@@ -4,6 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { JsonString } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
@@ -40,6 +41,7 @@ import {
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
 import { hasOdcOrigin } from "./odspUrlHelper.js";
 import { getOdspResolvedUrl } from "./odspUtils.js";
+import type { CacheEntry } from "./opsCaching.js";
 import { OpsCache } from "./opsCaching.js";
 import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter.js";
 
@@ -81,7 +83,7 @@ export class OdspDocumentService
 		// eslint-disable-next-line @rushstack/no-new-null
 		getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
 		logger: TelemetryLoggerExt,
-		cache: IOdspCache,
+		cache: IOdspCache<JsonString<CacheEntry>>,
 		hostPolicy: HostStoragePolicy,
 		epochTracker: EpochTracker,
 		socketReferenceKeyPrefix?: string,
@@ -129,7 +131,7 @@ export class OdspDocumentService
 			| ((options: TokenFetchOptions) => Promise<string | null>)
 			| undefined,
 		logger: TelemetryLoggerExt,
-		private readonly cache: IOdspCache,
+		private readonly cache: IOdspCache<JsonString<CacheEntry>>,
 		hostPolicy: HostStoragePolicy,
 		private readonly epochTracker: EpochTracker,
 		private readonly socketReferenceKeyPrefix?: string,
@@ -334,12 +336,11 @@ export class OdspDocumentService
 			this.mc.logger,
 			// ICache
 			{
-				write: async (key: string, opsData: string): Promise<void> => {
+				write: async (key: string, opsData: JsonString<CacheEntry>): Promise<void> => {
 					return this.cache.persistedCache.put({ ...opsKey, key }, opsData);
 				},
-				read: async (key: string): Promise<string | undefined> =>
-					// typing workaround because this.cache.persistedCache.get returns `Promise<any>`
-					this.cache.persistedCache.get({ ...opsKey, key }) as Promise<string | undefined>,
+				read: async (key: string): Promise<JsonString<CacheEntry> | undefined> =>
+					this.cache.persistedCache.get({ ...opsKey, key }),
 				remove: (): void => {
 					this.cache.persistedCache.removeEntries().catch(() => {});
 				},

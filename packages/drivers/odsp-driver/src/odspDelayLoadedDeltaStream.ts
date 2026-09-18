@@ -4,7 +4,7 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
-import type { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import type { ISignalEnvelope, JsonString } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
@@ -40,6 +40,7 @@ import { v4 as uuid } from "uuid";
 import { policyLabelsUpdatesSignalType } from "./contracts.js";
 import type { EpochTracker } from "./epochTracker.js";
 import type { IOdspCache } from "./odspCache.js";
+import type { CacheEntry } from "./opsCaching.js";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection.js";
 import {
 	type TokenFetchOptionsEx,
@@ -94,7 +95,7 @@ export class OdspDelayLoadedDeltaStream {
 			| ((options: TokenFetchOptions) => Promise<string | null>)
 			| undefined,
 		private readonly mc: MonitoringContext,
-		private readonly cache: IOdspCache,
+		private readonly cache: IOdspCache<JsonString<CacheEntry>>,
 		private readonly hostPolicy: HostStoragePolicy,
 		private readonly epochTracker: EpochTracker,
 		private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,

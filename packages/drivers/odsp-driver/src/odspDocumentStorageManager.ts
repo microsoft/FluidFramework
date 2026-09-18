@@ -5,6 +5,7 @@
 
 import { ArrayBufferLikeToArrayBuffer, performanceNow } from "@fluid-internal/client-utils";
 import { LogLevel } from "@fluidframework/core-interfaces";
+import type { JsonString } from "@fluidframework/core-interfaces/internal";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
@@ -71,6 +72,7 @@ import {
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
 	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
+import type { CacheEntry } from "./opsCaching.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
@@ -109,7 +111,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		private readonly getAuthHeader: InstrumentedStorageTokenFetcher,
 		private readonly logger: TelemetryLoggerExt,
 		private readonly fetchFullSnapshot: boolean,
-		private readonly cache: IOdspCache,
+		private readonly cache: IOdspCache<JsonString<CacheEntry>>,
 		private readonly hostPolicy: HostStoragePolicyInternal,
 		private readonly epochTracker: EpochTracker,
 		private readonly flushCallback: () => Promise<FlushResult>,
@@ -300,7 +302,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						.then(
 							async (
 								// eslint-disable-next-line import-x/no-deprecated
-								snapshotCachedEntry: ISnapshotCachedEntry | ISnapshotCachedEntry2,
+								snapshotCachedEntry: ISnapshotCachedEntry | ISnapshotCachedEntry2 | undefined,
 							) => {
 								if (snapshotCachedEntry !== undefined) {
 									// If the cached entry does not contain the entry time, then assign it a default of 30 days old.

@@ -4,6 +4,8 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
+import type { JsonString } from "@fluidframework/core-interfaces/internal";
+import { JsonParse, JsonStringify } from "@fluidframework/core-interfaces/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 // ISequencedDocumentMessage
@@ -11,7 +13,8 @@ export interface IMessage {
 	sequenceNumber: number;
 }
 
-export type CacheEntry = (IMessage | undefined)[];
+// eslint-disable-next-line @rushstack/no-new-null -- null is the JSON encoding for empty slots in the cache array
+export type CacheEntry = (IMessage | null)[];
 
 export interface IBatch {
 	remainingSlots: number;
@@ -23,8 +26,8 @@ export interface IBatch {
 }
 
 export interface ICache {
-	write(batchNumber: string, data: string): Promise<void>;
-	read(batchNumber: string): Promise<string | undefined>;
+	write(batchNumber: string, data: JsonString<CacheEntry>): Promise<void>;
+	read(batchNumber: string): Promise<JsonString<CacheEntry> | undefined>;
 	remove(): void;
 }
 
@@ -144,7 +147,7 @@ export class OpsCache {
 			if (res === undefined) {
 				return messages;
 			}
-			const result: CacheEntry = JSON.parse(res) as CacheEntry;
+			const result = JsonParse(res);
 			const prevMessagesLength = messages.length;
 			for (const op of result) {
 				// Note that we write out undefined, but due to JSON.stringify, it turns into null!
@@ -203,7 +206,7 @@ export class OpsCache {
 		// Errors are caught and logged by PersistedCacheWithErrorHandling that sits
 		// in the adapter chain of cache adapters
 		this.cache
-			.write(`${this.batchSize}_${batchNumber}`, JSON.stringify(payload.batchData))
+			.write(`${this.batchSize}_${batchNumber}`, JsonStringify(payload.batchData))
 			.catch(() => {
 				this.totalOpsToCache = 0;
 			});

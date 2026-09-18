@@ -39,7 +39,11 @@ import {
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
-import { type IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";
+import {
+	type ISnapshotCachedEntry2,
+	type IVersionedValueWithEpoch,
+	persistedCacheValueVersion,
+} from "./contracts.js";
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import type { INonPersistentCache, IOdspCache, IPersistedFileCache } from "./odspCache.js";
 import { patchOdspResolvedUrl } from "./odspLocationRedirection.js";
@@ -99,7 +103,7 @@ export const Odsp409Error = "Odsp409Error";
  * @privateRemarks
  * This class should be hidden and an interface exposed to better manage internal types like telemetry logger.
  */
-export class EpochTracker implements IPersistedFileCache {
+export class EpochTracker implements IPersistedFileCache<ISnapshotCachedEntry2> {
 	private _fluidEpoch: string | undefined;
 	private readonly requestHeaders: Readonly<Record<string, string>> | undefined;
 
@@ -143,14 +147,12 @@ export class EpochTracker implements IPersistedFileCache {
 		});
 	}
 
-	// TODO: return a stronger type
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public async get(entry: IEntry): Promise<any> {
+	public async get(entry: IEntry): Promise<ISnapshotCachedEntry2 | undefined> {
 		try {
 			// Return undefined so that the ops/snapshots are grabbed from the server instead of the cache
 			const value = (await this.cache.get(
 				this.fileEntryFromEntry(entry),
-			)) as IVersionedValueWithEpoch;
+			)) as IVersionedValueWithEpoch & { value: ISnapshotCachedEntry2 | undefined };
 			// Version mismatch between what the runtime expects and what it received.
 			// The cached value should not be used
 			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
@@ -168,7 +170,6 @@ export class EpochTracker implements IPersistedFileCache {
 			// Expire the cached snapshot if it's older than snapshotCacheExpiryTimeoutMs and immediately
 			// expire all old caches that do not have cacheEntryTime
 			if (entry.type === snapshotKey || entry.type === snapshotWithLoadingGroupIdKey) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 				const cacheTime = value.value?.cacheEntryTime;
 				const currentTime = Date.now();
 				if (
@@ -177,7 +178,7 @@ export class EpochTracker implements IPersistedFileCache {
 				) {
 					this.loggerInternal.sendTelemetryEvent({
 						eventName: "odspVersionsCacheExpired",
-						duration: currentTime - cacheTime,
+						...(cacheTime === undefined ? {} : { duration: currentTime - cacheTime }),
 						maxCacheAgeMs: this.snapshotCacheExpiryTimeoutMs,
 					});
 					await this.removeEntries();
@@ -194,18 +195,14 @@ export class EpochTracker implements IPersistedFileCache {
 		}
 	}
 
-	// TODO: take a stronger type or `unknown`
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-	public async put(entry: IEntry, value: any): Promise<void> {
+	public async put(entry: IEntry, value: ISnapshotCachedEntry2): Promise<void> {
 		assert(this._fluidEpoch !== undefined, 0x1dd /* "no epoch" */);
 		// For snapshots, the value should have the cacheEntryTime.
 		// This will be used to expire snapshots older than snapshotCacheExpiryTimeoutMs.
 		if (entry.type === snapshotKey || entry.type === snapshotWithLoadingGroupIdKey) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			value.cacheEntryTime = value.cacheEntryTime ?? Date.now();
 		}
 		const data: IVersionedValueWithEpoch = {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			value,
 			version: persistedCacheValueVersion,
 			fluidEpoch: this._fluidEpoch,
@@ -548,9 +545,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 		this.treesLatestDeferral.resolve();
 	}
 
-	// TODO: return a stronger type
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public async get(entry: IEntry): Promise<any> {
+	public async get(entry: IEntry): Promise<ISnapshotCachedEntry2 | undefined> {
 		let result = super.get(entry);
 
 		// equivalence of what happens in fetchAndParseAsJSON()
@@ -562,7 +557,6 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 					if (value !== undefined) {
 						this.treesLatestDeferral.resolve();
 					}
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 					return value;
 				})
 				.catch((error) => {
@@ -652,7 +646,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
  * @beta
  */
 export interface ICacheAndTracker {
-	cache: IOdspCache;
+	cache: IOdspCache<ISnapshotCachedEntry2>;
 	epochTracker: EpochTracker;
 }
 
