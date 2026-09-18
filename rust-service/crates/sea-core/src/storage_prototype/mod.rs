@@ -24,7 +24,7 @@
 //! them, and those events precede snapshots that reference their positions. After reopening or
 //! recovery, a storage implementation exposes only a self-consistent event prefix and snapshots
 //! closed over that prefix. Every blob tree referenced by an exposed event or snapshot is
-//! available and valid. Every non-initial snapshot position identifies an event in the exposed
+//! available and valid. Every snapshot position identifies an event in the exposed
 //! prefix. Corruption within the required prefix fails recovery rather than producing a gap.
 //!
 //! This prototype does not support event or snapshot pruning.
@@ -44,7 +44,6 @@ mod storage_surface;
 use async_trait::async_trait;
 use bytes::Bytes;
 
-use crate::snapshot::{Snapshot, SnapshotPosition};
 use crate::{ClassifiedError, Durability, Event, EventPosition};
 
 pub use blob_store::BlobStore;
@@ -130,7 +129,11 @@ pub trait SeaStorage: Send + Sync {
     type Events: EventArchive<Error = Self::Error>;
 
     /// Snapshot-archive implementation created by this factory.
-    type Snapshots: SnapshotArchive<Error = Self::Error>;
+    type Snapshots: SnapshotArchive<
+            Error = Self::Error,
+            BlobHandle = <Self::Blobs as ReferenceableStore>::Handle,
+            EventHandle = <Self::Events as ReferenceableStore>::Handle,
+        >;
 
     /// Persistence class of documents created by this backend.
     fn durability(&self) -> Durability;
@@ -157,22 +160,16 @@ pub trait SeaStorage: Send + Sync {
     ) -> Result<Option<StorageComponents<Self::Blobs, Self::Events, Self::Snapshots>>, Self::Error>;
 }
 
-/// An event position accepted for snapshot publication through one view.
+/// Materialized state through a committed event, with availability evidence for both dependencies.
+///
+/// The same value is used for snapshot lookup, loading, and publication.
+/// The initial empty state is represented by the absence of a snapshot, not an optional event handle.
 #[derive(Clone, Debug)]
-pub enum ViewSnapshotPosition<H> {
-    /// State before the first event.
-    Initial,
-    /// State through an event proven to belong to this view's event archive.
-    At(H),
-}
-
-/// Snapshot publication carrying availability evidence for every external reference.
-#[derive(Clone, Debug)]
-pub struct ViewSnapshotPublication<BH, EH> {
-    /// Event boundary represented by the snapshot.
-    pub at_event: ViewSnapshotPosition<EH>,
-    /// Complete materialized state tree.
-    pub root: BH,
+pub struct Snapshot<BlobHandle, EventHandle> {
+    /// Complete materialized state tree's availability handle.
+    pub root: BlobHandle,
+    /// Availability handle for the latest event reflected in the state.
+    pub at_event: EventHandle,
 }
 
 /// Starting-point policy for snapshot selection and event replay in [`SeaView::load`].
@@ -194,14 +191,14 @@ pub enum LoadStart {
 }
 
 /// A snapshot selection and live event stream returned by [`SeaView::load`].
-pub struct ViewLoad<E> {
+pub struct ViewLoad<BlobHandle, EventHandle, Error> {
     /// Newest compatible snapshot, when one exists.
-    pub snapshot: Option<Snapshot>,
+    pub snapshot: Option<Snapshot<BlobHandle, EventHandle>>,
     /// Monitored events strictly after the selected snapshot, or from the beginning without one.
     ///
     /// The stream catches up and then waits for new events, even for an initially empty archive.
     /// Dropping the stream cancels its read or subscription work.
-    pub events: EventArchiveStream<E>,
+    pub events: EventArchiveStream<Error>,
 }
 
 /// Exclusive concrete reader/writer view of one snapshotted event archive.
@@ -221,7 +218,7 @@ pub struct SeaView<B, E, S>
 where
     B: BlobStore,
     E: EventArchive<Error = B::Error>,
-    S: SnapshotArchive<Error = B::Error>,
+    S: SnapshotArchive<Error = B::Error, BlobHandle = B::Handle, EventHandle = E::Handle>,
 {
     blobs: B,
     events: E,
@@ -232,7 +229,7 @@ impl<B, E, S> SeaView<B, E, S>
 where
     B: BlobStore,
     E: EventArchive<Error = B::Error>,
-    S: SnapshotArchive<Error = B::Error>,
+    S: SnapshotArchive<Error = B::Error, BlobHandle = B::Handle, EventHandle = E::Handle>,
 {
     fn new(components: StorageComponents<B, E, S>) -> Self {
         Self {
@@ -304,8 +301,10 @@ where
         self.events.head().await
     }
 
-    /// Returns the latest snapshot.
-    pub async fn get_latest_snapshot(&self) -> Result<Option<Snapshot>, B::Error> {
+    /// Returns the latest snapshot with handles compatible with this view's stores.
+    pub async fn get_latest_snapshot(
+        &self,
+    ) -> Result<Option<Snapshot<B::Handle, E::Handle>>, B::Error> {
         let Some(position) = self.snapshots.head().await? else {
             return Ok(None);
         };
@@ -313,24 +312,17 @@ where
     }
 
     /// Publishes a snapshot after establishing both referenced dependencies.
+    ///
+    /// The snapshot's root is the complete materialized state through its referenced event.
+    /// The initial empty state is not created through publication; every published snapshot requires
+    /// an event handle.
     pub async fn publish_snapshot(
         &self,
-        publication: ViewSnapshotPublication<B::Handle, E::Handle>,
-    ) -> Result<Snapshot, B::Error> {
-        self.blobs.ensure_available(&publication.root).await?;
-        let at_event = match &publication.at_event {
-            ViewSnapshotPosition::Initial => SnapshotPosition::Initial,
-            ViewSnapshotPosition::At(event) => {
-                self.events.ensure_available(event).await?;
-                SnapshotPosition::At(event.id())
-            }
-        };
-        self.snapshots
-            .append(Snapshot {
-                at_event,
-                root: publication.root.id(),
-            })
-            .await
+        snapshot: &Snapshot<B::Handle, E::Handle>,
+    ) -> Result<Snapshot<B::Handle, E::Handle>, B::Error> {
+        self.blobs.ensure_available(&snapshot.root).await?;
+        self.events.ensure_available(&snapshot.at_event).await?;
+        self.snapshots.append(snapshot.clone()).await
     }
 
     /// Selects a compatible snapshot and starts a live event stream in one operation.
@@ -338,7 +330,7 @@ where
     /// This combines snapshot selection and streaming startup so callers need no extra round trip
     /// to start reading after the selected snapshot.
     /// `start` determines the latest acceptable snapshot boundary.
-    /// An initial snapshot starts event replay at the beginning, as does having no snapshot.
+    /// Having no snapshot starts event replay at the beginning.
     /// `LoadStart::Beginning` skips snapshot lookup entirely.
     ///
     /// The stream catches up and then waits for new events, even when the archive is initially empty.
@@ -346,7 +338,10 @@ where
     /// This method does not capture an event head or an atomic snapshot-and-event read.
     /// Snapshot lookup failures are returned here; event initialization and runtime failures are
     /// yielded by the stream, and dropping the stream cancels its read or subscription work.
-    pub async fn load(&self, start: LoadStart) -> Result<ViewLoad<B::Error>, B::Error> {
+    pub async fn load(
+        &self,
+        start: LoadStart,
+    ) -> Result<ViewLoad<B::Handle, E::Handle, B::Error>, B::Error> {
         let snapshot = match start {
             LoadStart::Beginning => None,
             LoadStart::IncludeAllAfter(position) => {
@@ -354,10 +349,7 @@ where
             }
             LoadStart::LatestSnapshot => self.get_latest_snapshot().await?,
         };
-        let after = snapshot.as_ref().and_then(|value| match value.at_event {
-            SnapshotPosition::Initial => None,
-            SnapshotPosition::At(position) => Some(position),
-        });
+        let after = snapshot.as_ref().map(|value| value.at_event.id());
         let events = self.events.read(after, None);
         Ok(ViewLoad { snapshot, events })
     }
