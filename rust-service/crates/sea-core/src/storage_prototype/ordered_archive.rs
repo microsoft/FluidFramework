@@ -7,7 +7,7 @@ use crate::BoxMonitoredStream;
 use super::StorageSurface;
 
 /// A monitored stream of entries from an [`Archive`].
-pub type ArchiveStream<T, P, E> = BoxMonitoredStream<T, P, E>;
+pub type ArchiveStream<Item, Position, Error> = BoxMonitoredStream<Item, Position, Error>;
 
 /// An independently useful ordered append-only archive.
 ///

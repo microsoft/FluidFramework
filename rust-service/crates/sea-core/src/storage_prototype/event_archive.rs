@@ -9,7 +9,7 @@ use crate::{CommittedEvent, Event, EventPosition};
 use super::{Archive, ArchiveStream, ReferenceableStore};
 
 /// A monitored stream of raw committed events from an [`EventArchive`].
-pub type EventArchiveStream<E> = ArchiveStream<CommittedEvent, EventPosition, E>;
+pub type EventArchiveStream<Error> = ArchiveStream<CommittedEvent, EventPosition, Error>;
 
 /// An independently useful single-writer ordered event archive.
 ///
@@ -55,12 +55,12 @@ pub trait EventArchive:
 {
 }
 
-impl<T> EventArchive for T where
-    T: Archive<
+impl<Implementation> EventArchive for Implementation where
+    Implementation: Archive<
             Position = EventPosition,
             Item = CommittedEvent,
             Append = Event,
-            AppendResult = <T as ReferenceableStore>::Handle,
+            AppendResult = <Implementation as ReferenceableStore>::Handle,
         > + ReferenceableStore<Id = EventPosition>
 {
 }

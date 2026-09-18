@@ -24,8 +24,9 @@
 //! them, and those events precede snapshots that reference their positions. After reopening or
 //! recovery, a storage implementation exposes only a self-consistent event prefix and snapshots
 //! closed over that prefix. Every blob tree referenced by an exposed event or snapshot is
-//! available and valid. Every snapshot position identifies an event in the exposed
-//! prefix. Corruption within the required prefix fails recovery rather than producing a gap.
+//! available and valid.
+//! Every snapshot position identifies an event in the exposed prefix.
+//! Corruption within the required prefix fails recovery rather than producing a gap.
 //!
 //! This prototype does not support event or snapshot pruning.
 //! Archives retain every committed entry, and recovered event prefixes start with the first event.
@@ -80,22 +81,22 @@ impl DocumentId {
 /// Components and dependent streams share ownership or locks for the resources they use.
 /// Dropping the component set does not release ownership still needed by a dependent stream.
 #[derive(Debug)]
-pub struct StorageComponents<B, E, S> {
+pub struct StorageComponents<Blobs, Events, Snapshots> {
     /// Content-addressed blob store for this document.
-    pub blobs: B,
+    pub blobs: Blobs,
     /// Ordered event archive for this document.
-    pub events: E,
+    pub events: Events,
     /// Snapshot publication archive for this document.
-    pub snapshots: S,
+    pub snapshots: Snapshots,
 }
 
 /// A newly created document identity and its open storage components.
 #[derive(Debug)]
-pub struct CreatedDocument<B, E, S> {
+pub struct CreatedDocument<Blobs, Events, Snapshots> {
     /// Stable identity allocated according to backend requirements.
     pub id: DocumentId,
     /// Empty storage components created for the identity.
-    pub components: StorageComponents<B, E, S>,
+    pub components: StorageComponents<Blobs, Events, Snapshots>,
 }
 
 /// Factory for the storage components of Sea documents.
@@ -163,7 +164,8 @@ pub trait SeaStorage: Send + Sync {
 /// Materialized state through a committed event, with availability evidence for both dependencies.
 ///
 /// The same value is used for snapshot lookup, loading, and publication.
-/// The initial empty state is represented by the absence of a snapshot, not an optional event handle.
+/// Every snapshot references a committed event; the initial empty state needs no snapshot.
+/// An archive may also contain events without any snapshot having been published.
 #[derive(Clone, Debug)]
 pub struct Snapshot<BlobHandle, EventHandle> {
     /// Complete materialized state tree's availability handle.
@@ -203,9 +205,10 @@ pub struct ViewLoad<BlobHandle, EventHandle, Error> {
 
 /// Exclusive concrete reader/writer view of one snapshotted event archive.
 ///
-/// The view is intentionally not `Clone`, preserving the exclusive writable authority established
-/// by [`SeaStorage`]. Its methods take shared references so independent operations, such as blob
-/// persistence, may overlap. Each component implementation linearizes its own mutations, while
+/// The view is intentionally not `Clone`; the backend enforces the exclusive writable authority
+/// established by [`SeaStorage`], including when the view is shared through an `Arc`.
+/// Its methods take shared references so independent operations, such as blob persistence, may overlap.
+/// Each component implementation linearizes its own mutations, while
 /// composed methods establish dependency order by awaiting availability before publishing an owner
 /// record.
 ///
@@ -214,24 +217,33 @@ pub struct ViewLoad<BlobHandle, EventHandle, Error> {
 /// Dropping the view alone does not invalidate those streams or release ownership they still need.
 /// Streams need not survive events that invalidate the opening, such as an outage or failover;
 /// callers must recreate the view and streams in that case.
-pub struct SeaView<B, E, S>
+pub struct SeaView<Blobs, Events, Snapshots>
 where
-    B: BlobStore,
-    E: EventArchive<Error = B::Error>,
-    S: SnapshotArchive<Error = B::Error, BlobHandle = B::Handle, EventHandle = E::Handle>,
+    Blobs: BlobStore,
+    Events: EventArchive<Error = Blobs::Error>,
+    Snapshots: SnapshotArchive<
+            Error = Blobs::Error,
+            BlobHandle = Blobs::Handle,
+            EventHandle = Events::Handle,
+        >,
 {
-    blobs: B,
-    events: E,
-    snapshots: S,
+    blobs: Blobs,
+    events: Events,
+    snapshots: Snapshots,
 }
 
-impl<B, E, S> SeaView<B, E, S>
+impl<Blobs, Events, Snapshots> SeaView<Blobs, Events, Snapshots>
 where
-    B: BlobStore,
-    E: EventArchive<Error = B::Error>,
-    S: SnapshotArchive<Error = B::Error, BlobHandle = B::Handle, EventHandle = E::Handle>,
+    Blobs: BlobStore,
+    Events: EventArchive<Error = Blobs::Error>,
+    Snapshots: SnapshotArchive<
+            Error = Blobs::Error,
+            BlobHandle = Blobs::Handle,
+            EventHandle = Events::Handle,
+        >,
 {
-    fn new(components: StorageComponents<B, E, S>) -> Self {
+    /// Composes the components of one exclusive document opening.
+    fn new(components: StorageComponents<Blobs, Events, Snapshots>) -> Self {
         Self {
             blobs: components.blobs,
             events: components.events,
@@ -244,7 +256,7 @@ where
     /// The view retains ownership of the component.
     /// Event and snapshot publication still go through the view's availability checks.
     #[must_use]
-    pub const fn blobs(&self) -> &B {
+    pub const fn blobs(&self) -> &Blobs {
         &self.blobs
     }
 
@@ -252,7 +264,7 @@ where
     pub async fn resolve_position(
         &self,
         position: EventPosition,
-    ) -> Result<Option<E::Handle>, B::Error> {
+    ) -> Result<Option<Events::Handle>, Blobs::Error> {
         self.events.resolve(position).await
     }
 
@@ -265,8 +277,8 @@ where
     pub async fn append(
         &self,
         payload: Bytes,
-        tree: Option<&B::Handle>,
-    ) -> Result<E::Handle, B::Error> {
+        tree: Option<&Blobs::Handle>,
+    ) -> Result<Events::Handle, Blobs::Error> {
         if let Some(handle) = tree {
             self.blobs.ensure_available(handle).await?;
         }
@@ -288,7 +300,7 @@ where
         &self,
         after: Option<EventPosition>,
         stop_after: Option<EventPosition>,
-    ) -> EventArchiveStream<B::Error> {
+    ) -> EventArchiveStream<Blobs::Error> {
         self.events.read(after, stop_after)
     }
 
@@ -297,14 +309,14 @@ where
     /// A successful result bounds appends that returned before this operation began, including
     /// ambiguous results, as specified by [`Archive::head`].
     /// It does not by itself settle cancelled calls or requests still in flight upstream.
-    pub async fn head(&self) -> Result<Option<EventPosition>, B::Error> {
+    pub async fn head(&self) -> Result<Option<EventPosition>, Blobs::Error> {
         self.events.head().await
     }
 
     /// Returns the latest snapshot with handles compatible with this view's stores.
     pub async fn get_latest_snapshot(
         &self,
-    ) -> Result<Option<Snapshot<B::Handle, E::Handle>>, B::Error> {
+    ) -> Result<Option<Snapshot<Blobs::Handle, Events::Handle>>, Blobs::Error> {
         let Some(position) = self.snapshots.head().await? else {
             return Ok(None);
         };
@@ -318,8 +330,8 @@ where
     /// an event handle.
     pub async fn publish_snapshot(
         &self,
-        snapshot: &Snapshot<B::Handle, E::Handle>,
-    ) -> Result<Snapshot<B::Handle, E::Handle>, B::Error> {
+        snapshot: &Snapshot<Blobs::Handle, Events::Handle>,
+    ) -> Result<Snapshot<Blobs::Handle, Events::Handle>, Blobs::Error> {
         self.blobs.ensure_available(&snapshot.root).await?;
         self.events.ensure_available(&snapshot.at_event).await?;
         self.snapshots.append(snapshot.clone()).await
@@ -341,7 +353,7 @@ where
     pub async fn load(
         &self,
         start: LoadStart,
-    ) -> Result<ViewLoad<B::Handle, E::Handle, B::Error>, B::Error> {
+    ) -> Result<ViewLoad<Blobs::Handle, Events::Handle, Blobs::Error>, Blobs::Error> {
         let snapshot = match start {
             LoadStart::Beginning => None,
             LoadStart::IncludeAllAfter(position) => {
@@ -356,32 +368,38 @@ where
 }
 
 /// Document collection that asks storage to create or exclusively open document views.
-pub struct SeaCollection<S> {
-    storage: S,
+pub struct SeaCollection<Storage> {
+    storage: Storage,
 }
 
-impl<S> SeaCollection<S> {
+impl<Storage> SeaCollection<Storage> {
     /// Creates a collection from one document storage backend.
     #[must_use]
-    pub const fn new(storage: S) -> Self {
+    pub const fn new(storage: Storage) -> Self {
         Self { storage }
     }
 
     /// Returns the underlying document storage backend.
     #[must_use]
-    pub const fn storage(&self) -> &S {
+    pub const fn storage(&self) -> &Storage {
         &self.storage
     }
 }
 
-impl<S> SeaCollection<S>
+impl<Storage> SeaCollection<Storage>
 where
-    S: SeaStorage,
+    Storage: SeaStorage,
 {
     /// Creates a backend-identified document and its exclusive writable view.
     pub async fn create(
         &self,
-    ) -> Result<(DocumentId, SeaView<S::Blobs, S::Events, S::Snapshots>), S::Error> {
+    ) -> Result<
+        (
+            DocumentId,
+            SeaView<Storage::Blobs, Storage::Events, Storage::Snapshots>,
+        ),
+        Storage::Error,
+    > {
         let created = self.storage.create_document().await?;
         Ok((created.id, SeaView::new(created.components)))
     }
@@ -390,7 +408,8 @@ where
     pub async fn open(
         &self,
         id: &DocumentId,
-    ) -> Result<Option<SeaView<S::Blobs, S::Events, S::Snapshots>>, S::Error> {
+    ) -> Result<Option<SeaView<Storage::Blobs, Storage::Events, Storage::Snapshots>>, Storage::Error>
+    {
         let Some(components) = self.storage.open_document(id).await? else {
             return Ok(None);
         };
