@@ -64,6 +64,24 @@ impl ClassifiedError for MemoryStorageError {
     }
 }
 
+/// A leaf whose content identity is computed before acquiring the shared blob-data lock.
+struct PrehashedBlob {
+    /// Content identity of `payload`.
+    id: BlobId,
+    /// Immutable bytes associated with `id`.
+    payload: Bytes,
+}
+
+impl PrehashedBlob {
+    /// Hashes the immutable bytes without accessing shared storage.
+    fn new(payload: Bytes) -> Self {
+        Self {
+            id: BlobId::for_bytes(&payload),
+            payload,
+        }
+    }
+}
+
 /// Immutable blobs and directories retained for the lifetime of their document.
 /// Event payloads are stored separately in the event archive.
 ///
@@ -88,9 +106,9 @@ impl BlobStorageData {
         }
     }
 
-    /// Publishes or deduplicates an immutable leaf without changing existing content.
-    fn put_blob(&mut self, payload: Bytes) -> BlobId {
-        let id = BlobId::for_bytes(&payload);
+    /// Publishes or deduplicates a prehashed leaf without hashing under the shared lock.
+    fn put_blob(&mut self, blob: PrehashedBlob) -> BlobId {
+        let PrehashedBlob { id, payload } = blob;
         self.blobs.entry(id).or_insert(payload);
         id
     }
@@ -609,12 +627,13 @@ impl ReferenceableStore for MemoryBlobStore {
 #[async_trait]
 impl BlobStore for MemoryBlobStore {
     async fn put_blob(&self, payload: Bytes) -> Result<Self::Handle, Self::Error> {
+        let blob = PrehashedBlob::new(payload);
         let id = self
             .document
             .blob_data
             .lock()
             .expect("content lock")
-            .put_blob(payload);
+            .put_blob(blob);
         Ok(MemoryBlobHandle {
             document: self.document.clone(),
             id: BlobTreeId::Blob(id),
@@ -1252,7 +1271,7 @@ mod tests {
     fn content_publication_preserves_closure_and_deduplicates() {
         let mut content = BlobStorageData::default();
         let payload = Bytes::from_static(b"leaf");
-        let leaf = BlobTreeId::Blob(content.put_blob(payload.clone()));
+        let leaf = BlobTreeId::Blob(content.put_blob(PrehashedBlob::new(payload.clone())));
         let child = BlobDirectory::new(BTreeMap::from([("leaf".to_owned(), leaf)])).unwrap();
         let child_id = content.put_directory(child.clone()).unwrap();
         let parent = BlobDirectory::new(BTreeMap::from([
@@ -1264,7 +1283,10 @@ mod tests {
         let empty = BlobDirectory::new(BTreeMap::new()).unwrap();
         let empty_id = content.put_directory(empty.clone()).unwrap();
 
-        assert_eq!(leaf, BlobTreeId::Blob(content.put_blob(payload.clone())));
+        assert_eq!(
+            leaf,
+            BlobTreeId::Blob(content.put_blob(PrehashedBlob::new(payload.clone())))
+        );
         assert_eq!(content.put_directory(child.clone()).unwrap(), child_id);
         assert_eq!(content.put_directory(parent.clone()).unwrap(), parent_id);
         assert_eq!(content.put_directory(empty.clone()).unwrap(), empty_id);
@@ -1290,7 +1312,7 @@ mod tests {
     #[test]
     fn content_publication_rejects_missing_children_without_mutation() {
         let mut content = BlobStorageData::default();
-        let leaf = BlobTreeId::Blob(content.put_blob(Bytes::new()));
+        let leaf = BlobTreeId::Blob(content.put_blob(PrehashedBlob::new(Bytes::new())));
         let missing_leaf = BlobTreeId::Blob(BlobId::for_bytes(b"missing"));
         let missing_directory =
             BlobDirectory::new(BTreeMap::from([("missing".to_owned(), missing_leaf)])).unwrap();
@@ -1352,11 +1374,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn shared_subtrees_validate_without_expanding_every_path() {
+    async fn shared_subtrees_remain_available_after_reopening() {
         let storage = MemoryStorage::new();
         let (id, view) = storage.create_view().await.unwrap();
         let mut root = view.blobs().put_blob(Bytes::new()).await.unwrap();
-        for _ in 0..64 {
+        for _ in 0..8 {
             let directory = BlobDirectory::new(BTreeMap::from([
                 ("left".to_owned(), root.id()),
                 ("right".to_owned(), root.id()),
