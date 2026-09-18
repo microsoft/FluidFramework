@@ -1,4 +1,17 @@
-//! Exclusive checksummed journal used by replacement document components.
+//! Exclusive framed journal for replacement filesystem document components.
+//!
+//! Each record carries its length, complemented length, and content checksum. Recovery returns
+//! only complete verified records and the last valid byte boundary; interpretation and
+//! dependency-closure checks remain the responsibility of `sea_file::next`.
+//!
+//! Buffered openings reject an incomplete tail because an acknowledged write may not have reached
+//! stable storage. Durable openings synchronize every acknowledged frame and may therefore discard
+//! only an incomplete final frame left by an interrupted write. A complete malformed frame is
+//! corruption in either mode.
+//!
+//! Once writing begins, an I/O failure or injected uncertain boundary poisons the opening. Later
+//! mutations and authoritative observations return [`FileStorageError::Ambiguous`] until every
+//! owner drops the journal and a new exclusive opening recovers it.
 
 use sea_core::{BlobId, ClassifiedError, ErrorKind};
 use std::{

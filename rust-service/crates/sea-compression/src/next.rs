@@ -1,4 +1,13 @@
-//! Replacement facets preserve stored identities and capabilities while transforming payloads.
+//! Stateless compression adapters for replacement session facets.
+//!
+//! Event payloads and blob leaves are encoded as independent deterministic zlib frames. This keeps
+//! exact submission retries stable without a wrapper-owned identity registry and allows each read
+//! item to decode without replay-global state. Directories, snapshots, positions, and availability
+//! handles pass through in the encoded store's identity space.
+//!
+//! Reads and loads decode only when an item is polled, preserve monitored progress, and add no
+//! background task or buffering layer. Malformed frames are classified as corrupt; underlying
+//! session errors retain their classification. This adapter imposes no decoded-size bound.
 
 use crate::{CompressionError, CompressionSession, compress_payload, decompress_payload};
 use async_trait::async_trait;
@@ -180,6 +189,7 @@ impl<Session: SeaSnapshotCoordinator> SeaSnapshotCoordinator for CompressionSess
 mod tests {
     use super::*;
     use sea_core::{
+        ClassifiedError, ErrorKind, Event, MonitoredStreamItem,
         archive::{AuthorId, SessionId},
         next::SeaStorage,
     };
@@ -214,5 +224,49 @@ mod tests {
                 .unwrap(),
         );
         sea_conformance::next::run_session_conformance(&first, &second).await;
+    }
+
+    #[tokio::test]
+    async fn malformed_stored_frames_are_corrupt_and_advance_delivery_progress() {
+        let storage = MemoryStorage::new();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let raw = runtime
+            .open_session(
+                AuthorId::new("author").unwrap(),
+                SessionId::new("session").unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+        let position = raw
+            .submit(EventSubmission {
+                operation_id: OperationId::new("malformed").unwrap(),
+                reference: None,
+                event: Event {
+                    payload: Bytes::from_static(b"not a zlib frame"),
+                    blob_tree: None,
+                },
+            })
+            .await
+            .unwrap();
+        let wrapped = CompressionSession::new(raw);
+        let mut events = wrapped.read(None, Some(position));
+        assert!(matches!(
+            events.next().await,
+            Some(Ok(MonitoredStreamItem::Progress(_)))
+        ));
+        assert_eq!(
+            events.next().await.unwrap().unwrap_err().kind(),
+            ErrorKind::Corrupt
+        );
+        assert_eq!(events.progress().previous, Some(position));
+        assert!(matches!(
+            events.next().await,
+            Some(Ok(MonitoredStreamItem::Progress(_)))
+        ));
+        assert!(events.next().await.is_none());
     }
 }

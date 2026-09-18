@@ -1,4 +1,12 @@
-//! Durable configuration of the shared replacement filesystem engine, not an old-storage adapter.
+//! Durable specialization of the replacement filesystem document engine.
+//!
+//! [`crate::next::DurableStorage`] uses [`sea_file::next::FileStorage`] in durable mode, which
+//! synchronizes each journal record and document-namespace publication before acknowledgment. The
+//! shared engine still owns framing, dependency validation, exclusive locking, handle provenance,
+//! and read behavior; this module adds focused evidence for durable tail recovery and cross-factory
+//! ownership.
+//!
+//! This path does not read or adapt the transitional file-storage format.
 
 pub use sea_file::next::{FileBlobs, FileEvents, FileHandle, FileSnapshots, FileStorageError};
 

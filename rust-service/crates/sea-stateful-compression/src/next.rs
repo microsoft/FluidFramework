@@ -1,4 +1,15 @@
-//! Replacement facets use independent bounded dictionary frames, never replay-global decoder state.
+//! Bounded dictionary-compression adapters for replacement session facets.
+//!
+//! Every event payload and blob leaf is an independent deterministic frame containing the
+//! dictionary fingerprint and declared decoded length. Reopening therefore needs the same immutable
+//! dictionary and configured bound, but no replay-global decoder state. Exact submission retries
+//! remain stable without a wrapper identity registry.
+//!
+//! Encoding rejects plaintext above the configured decoded-size bound before calling the inner
+//! session. Decoding validates the frame, dictionary, declared size, configured bound, and capped
+//! zstd window; malformed input is corrupt. The constructor also enforces the crate's hard
+//! dictionary and decoded-size ceilings. Reads decode lazily while preserving source progress and
+//! error classification, and metadata and availability handles pass through unchanged.
 
 use crate::{StatefulCompressionError, StatefulCompressionSession, decompress_frame};
 use async_trait::async_trait;

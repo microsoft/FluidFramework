@@ -1,4 +1,13 @@
-//! Availability-bearing access to the existing immutable object engine.
+//! Replacement blob capabilities over the immutable content-addressed object engine.
+//!
+//! [`ContentStore`] remains independently useful rather than becoming a document factory. Trait
+//! publication returns [`crate::next::ContentHandle`] evidence scoped to the store's canonical
+//! namespace; equal content identities from another namespace do not establish local availability.
+//!
+//! Directory publication and handle resolution verify the complete reachable tree, visiting shared
+//! subtrees once. A missing root resolves as absent, while a stored root with a missing descendant
+//! is corruption. Handles retain provenance but no writer lock, so a compatible reopened store can
+//! revalidate them.
 
 use crate::{ContentStore, StoreError};
 use async_trait::async_trait;

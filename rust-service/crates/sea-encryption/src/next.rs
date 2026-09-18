@@ -1,4 +1,14 @@
-//! Replacement facets keep handles opaque and verify plaintext before reusing committed ciphertext.
+//! Authenticated-encryption adapters for replacement session facets.
+//!
+//! Event payloads and blob leaves use independent AES-256-GCM-SIV envelopes with distinct record
+//! and blob contexts. Directories, snapshots, positions, and opaque availability handles pass
+//! through in the ciphertext store's identity space. Reads decrypt lazily and preserve monitored
+//! progress and underlying error classifications.
+//!
+//! Encryption is randomized, so an exact retry cannot generate fresh ciphertext and rely on the
+//! inner operation identity. The adapter resolves the committed operation, verifies its plaintext,
+//! tree, and reference, then resubmits the original ciphertext so the inner session rechecks current
+//! author authority. Missing settlement or ambiguous errors are never converted into blind retries.
 
 use crate::{
     EncryptionError, EncryptionSession, KeyProvider, NonceSource, PayloadContext, decrypt_payload,

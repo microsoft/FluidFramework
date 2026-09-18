@@ -1,4 +1,19 @@
-//! Replacement file components over one exclusively locked dependency-ordered journal.
+//! Replacement document components over one exclusive dependency-ordered file journal.
+//!
+//! [`crate::next::FileStorage`] allocates numeric document identities below a canonical namespace
+//! and opens one OS-locked journal per document. Blob, event, and snapshot components share that
+//! opening and its mutation order. Availability handles retain canonical-path provenance but no
+//! writer ownership; components and streams retain the opening until dropped.
+//!
+//! Journal records publish immutable content before referencing events and events before
+//! snapshots. Recovery validates framing, transitive content closure, a dense event prefix, and
+//! strictly advancing snapshot positions before exposing any component. Raw event components keep
+//! tree identities opaque, while the composed view resolves availability before publication.
+//!
+//! Reads initialize lazily, register wakeups under the mutation lock, and preserve exclusive-lower
+//! and inclusive-upper archive bounds. Filesystem operations are synchronous inside their async
+//! methods: there is no detached work or automatic retry. An uncertain journal write terminates
+//! authoritative observations until reopening and recovery.
 
 pub use crate::journal::FileStorageError;
 use crate::journal::Journal;
@@ -469,9 +484,10 @@ impl Archive for FileEvents {
         }
         record.extend_from_slice(&event.payload);
         state = persist(state, &record)?;
-        state
+        let replaced = state
             .events
             .insert(position, CommittedEvent { position, event });
+        assert!(replaced.is_none(), "new event position must be vacant");
         let readers = state.readers();
         drop(state);
         for reader in readers {
@@ -527,7 +543,8 @@ impl Archive for FileSnapshots {
         record.extend_from_slice(&position.get().to_be_bytes());
         encode_tree(&mut record, snapshot.root.id);
         state = persist(state, &record)?;
-        state.snapshots.insert(position, snapshot.root.id);
+        let replaced = state.snapshots.insert(position, snapshot.root.id);
+        assert!(replaced.is_none(), "new snapshot position must be vacant");
         let readers = state.readers();
         drop(state);
         for reader in readers {
