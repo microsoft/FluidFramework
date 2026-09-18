@@ -1,5 +1,8 @@
 # Sea Migration Plan
 
+> **Historical execution record:** The dictionary-compression crate, `sea-stateful-compression`, was removed after this migration because it was not useful.
+> References below preserve the migration evidence, not the current supported crate set; see [SEA_ARCHITECTURE.md](SEA_ARCHITECTURE.md) for current architecture.
+
 ## Status
 
 - **Plan status:** Implemented.

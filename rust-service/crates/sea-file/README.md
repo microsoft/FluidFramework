@@ -54,7 +54,6 @@ Tests exercise deterministic incomplete and post-sync boundaries, not power-loss
 
 See [`src/storage.rs`](src/storage.rs) for components and localized tests, and [`src/journal.rs`](src/journal.rs) for framing and fault boundaries.
 Shared view and sparse-archive laws come from [`sea-conformance`](../sea-conformance/README.md).
-The stateful wrapper crate tests file/view/sequencer/encryption/dictionary composition and recovery in both durability modes.
 
 ## Validation
 

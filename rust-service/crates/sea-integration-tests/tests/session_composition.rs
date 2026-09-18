@@ -1,7 +1,7 @@
 //! Cross-crate scenarios for independently selected session decorator stacks.
 //!
 //! This suite checks that session behavior survives composition of compression, encryption,
-//! dictionary compression, and real loopback WebTransport, including repeated layers and multiple network hops.
+//! and real loopback WebTransport, including repeated layers and multiple network hops.
 //! Every configuration runs the same workflows: open/close, content and snapshot round-trips,
 //! reconnect with stable submission retries, two-author collaboration, and bounded collaboration stress.
 //! Together they check ordered live delivery and replay, nested blob trees, snapshot publication authority,
@@ -52,7 +52,6 @@ use sea_core::{
 use sea_encryption::{ActiveKey, EncryptionKey, EncryptionSession, KeyId, KeyProvider};
 use sea_memory::MemoryStorage;
 use sea_sequencer::session::{LocalSequencer, LocalSession};
-use sea_stateful_compression::StatefulCompressionSession;
 use sea_webtransport::{NativeSeaClient, NativeSessionOpen, protocol};
 use sea_webtransport_server::{
     LivenessPolicy, SeaConnectionService, SeaResponseStream, SeaServiceHost, SessionDispatcher,
@@ -1142,13 +1141,6 @@ macro_rules! stack {
     ($fixture:ident, $session:expr; encryption $(, $rest:ident)*) => {
         EncryptionSession::new(stack!($fixture, $session; $($rest),*), Keys)
     };
-    ($fixture:ident, $session:expr; dictionary $(, $rest:ident)*) => {
-        StatefulCompressionSession::new(
-            stack!($fixture, $session; $($rest),*),
-            Bytes::from_static(b"shared dictionary for composition tests"),
-            1024 * 1024,
-        ).unwrap()
-    };
     ($fixture:ident, $session:expr; transport $(, $rest:ident)*) => {{
         let inner = stack!($fixture, $session; $($rest),*);
         $fixture.transport(inner).await
@@ -1228,15 +1220,13 @@ configurations! {
     bare => [],
     compression => [compression],
     encryption => [encryption],
-    dictionary => [dictionary],
     duplicate_compression => [compression, compression],
     duplicate_encryption => [encryption, encryption],
-    duplicate_dictionary => [dictionary, dictionary],
     compress_then_encrypt => [compression, encryption],
     encrypt_then_compress => [encryption, compression],
     transport_only => [transport],
     duplicate_transport => [transport, transport],
     transport_compression_transport => [transport, compression, transport],
-    mixed => [compression, transport, encryption, dictionary, transport],
-    repeated_stress => [compression, encryption, dictionary, transport, compression, encryption, dictionary, transport, encryption, dictionary, compression, transport],
+    mixed => [compression, transport, encryption, transport],
+    repeated_stress => [compression, encryption, transport, compression, encryption, transport, encryption, compression, transport],
 }

@@ -29,7 +29,6 @@ use sea_encryption::{ActiveKey, EncryptionKey, EncryptionSession, KeyId, KeyProv
 use sea_file::storage::FileStorage;
 use sea_memory::MemoryStorage;
 use sea_sequencer::session::{LocalSequencer, LocalSession};
-use sea_stateful_compression::StatefulCompressionSession;
 use tokio::task::JoinSet;
 
 /// Monotonic suffix for process-local temporary benchmark paths.
@@ -51,16 +50,9 @@ enum Backend {
     File,
     /// Independent zlib records over the file stream.
     Compression,
-    /// Immutable-dictionary zstd records over the file stream.
-    StatefulCompression,
     /// Authenticated encryption over the file stream.
     Encryption,
-    /// Dictionary compression followed by authenticated encryption.
-    StatefulCompressionEncryption,
 }
-
-/// Fixed representative dictionary shared by stateful-compression cells.
-const DICTIONARY: &[u8] = b"tenant=alpha;document=shared;operation=insert;path=/items/;value=collaborative-content;sequence=00000000";
 
 /// Fixed non-production key provider used only by encryption benchmark cells.
 #[derive(Clone, Debug)]
@@ -214,12 +206,7 @@ async fn smoke() -> Result<(), String> {
     let mut integrated = snapshot.clone();
     integrated.records = 8;
     integrated.snapshot_frequency = Some(4);
-    for backend in [
-        Backend::Compression,
-        Backend::StatefulCompression,
-        Backend::Encryption,
-        Backend::StatefulCompressionEncryption,
-    ] {
+    for backend in [Backend::Compression, Backend::Encryption] {
         integrated.backend = backend;
         run_backend(&integrated).await?;
     }
@@ -252,18 +239,11 @@ async fn measure(config: Config) -> Result<(), String> {
                 Backend::Memory => "memory".to_owned(),
                 Backend::File => "file-simple".to_owned(),
                 Backend::Compression => "file-compression".to_owned(),
-                Backend::StatefulCompression => "file-stateful-compression".to_owned(),
                 Backend::Encryption => "file-encryption".to_owned(),
-                Backend::StatefulCompressionEncryption => {
-                    "file-stateful-compression-encryption".to_owned()
-                }
             },
             measurement_boundary: match config.backend {
                 Backend::Memory | Backend::File => MeasurementBoundary::Storage,
-                Backend::Compression
-                | Backend::StatefulCompression
-                | Backend::Encryption
-                | Backend::StatefulCompressionEncryption => MeasurementBoundary::SequencedSession,
+                Backend::Compression | Backend::Encryption => MeasurementBoundary::SequencedSession,
             },
             active_guarantees: guarantees(config.backend),
             environment: environment.clone(),
@@ -370,55 +350,6 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
             fs::remove_dir_all(&directory).map_err(display_error)?;
             measurements
         }
-        Backend::StatefulCompression => {
-            let directory = unique_directory("stateful-compression");
-            let startup = Instant::now();
-            let factory = FileStorage::<false>::open(&directory).map_err(display_error)?;
-            let (document, view) = factory.create_view().await.map_err(display_error)?;
-            let coordinators =
-                open_local_sessions::<FileStorage>(view, config.writers, "stateful-compression")
-                    .await?;
-            let sessions = coordinators
-                .iter()
-                .cloned()
-                .map(|session| {
-                    StatefulCompressionSession::new(
-                        session,
-                        Bytes::from_static(DICTIONARY),
-                        128 * 1024,
-                    )
-                    .map_err(display_error)
-                })
-                .collect::<Result<Vec<_>, _>>()?;
-            let mut measurements =
-                run_session(sessions, config, elapsed_microseconds(startup)).await?;
-            drop(coordinators);
-            measurements.persisted_bytes = Some(directory_bytes(&directory)?);
-            let recovery = Instant::now();
-            let reopened = open_local_sessions::<FileStorage>(
-                factory
-                    .open_view(&document)
-                    .await
-                    .map_err(display_error)?
-                    .ok_or("missing document")?,
-                1,
-                "stateful-compression-reopen",
-            )
-            .await?
-            .pop()
-            .expect("one reopened session");
-            let decorated = StatefulCompressionSession::new(
-                reopened.clone(),
-                Bytes::from_static(DICTIONARY),
-                128 * 1024,
-            )
-            .map_err(display_error)?;
-            verify_reopened_session(&decorated, config).await?;
-            decorated.close().await.map_err(display_error)?;
-            measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
-            fs::remove_dir_all(&directory).map_err(display_error)?;
-            measurements
-        }
         Backend::Encryption => {
             let directory = unique_directory("encryption");
             let startup = Instant::now();
@@ -449,58 +380,6 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
             .pop()
             .expect("one reopened session");
             let decorated = EncryptionSession::new(reopened.clone(), BenchmarkKey);
-            verify_reopened_session(&decorated, config).await?;
-            decorated.close().await.map_err(display_error)?;
-            measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
-            fs::remove_dir_all(&directory).map_err(display_error)?;
-            measurements
-        }
-        Backend::StatefulCompressionEncryption => {
-            let directory = unique_directory("stateful-compression-encryption");
-            let startup = Instant::now();
-            let factory = FileStorage::<false>::open(&directory).map_err(display_error)?;
-            let (document, view) = factory.create_view().await.map_err(display_error)?;
-            let coordinators = open_local_sessions::<FileStorage>(
-                view,
-                config.writers,
-                "stateful-compression-encryption",
-            )
-            .await?;
-            let sessions = coordinators
-                .iter()
-                .cloned()
-                .map(|session| {
-                    StatefulCompressionSession::new(
-                        EncryptionSession::new(session, BenchmarkKey),
-                        Bytes::from_static(DICTIONARY),
-                        128 * 1024,
-                    )
-                    .map_err(display_error)
-                })
-                .collect::<Result<Vec<_>, _>>()?;
-            let mut measurements =
-                run_session(sessions, config, elapsed_microseconds(startup)).await?;
-            drop(coordinators);
-            measurements.persisted_bytes = Some(directory_bytes(&directory)?);
-            let recovery = Instant::now();
-            let reopened = open_local_sessions::<FileStorage>(
-                factory
-                    .open_view(&document)
-                    .await
-                    .map_err(display_error)?
-                    .ok_or("missing document")?,
-                1,
-                "stateful-compression-encryption-reopen",
-            )
-            .await?
-            .pop()
-            .expect("one reopened session");
-            let decorated = StatefulCompressionSession::new(
-                EncryptionSession::new(reopened.clone(), BenchmarkKey),
-                Bytes::from_static(DICTIONARY),
-                128 * 1024,
-            )
-            .map_err(display_error)?;
             verify_reopened_session(&decorated, config).await?;
             decorated.close().await.map_err(display_error)?;
             measurements.recovery_microseconds = Some(elapsed_microseconds(recovery));
@@ -1008,9 +887,7 @@ fn parse_backend(value: &str) -> Result<Backend, String> {
         "memory" => Ok(Backend::Memory),
         "file" => Ok(Backend::File),
         "compression" => Ok(Backend::Compression),
-        "stateful-compression" => Ok(Backend::StatefulCompression),
         "encryption" => Ok(Backend::Encryption),
-        "stateful-compression-encryption" => Ok(Backend::StatefulCompressionEncryption),
         _ => Err(format!("unknown backend: {value}")),
     }
 }
@@ -1045,18 +922,7 @@ fn guarantees(backend: Backend) -> Vec<String> {
             "snapshot publication".to_owned(),
         ],
         Backend::Compression => wrapper_guarantees("independent zlib compression"),
-        Backend::StatefulCompression => {
-            wrapper_guarantees("bounded immutable-dictionary zstd compression")
-        }
         Backend::Encryption => wrapper_guarantees("AES-256-GCM-SIV authenticated encryption"),
-        Backend::StatefulCompressionEncryption => vec![
-            "single-process ownership".to_owned(),
-            "buffered file durability without sync".to_owned(),
-            "bounded immutable-dictionary zstd compression before encryption".to_owned(),
-            "AES-256-GCM-SIV authenticated encryption".to_owned(),
-            "finite reads".to_owned(),
-            "snapshot publication".to_owned(),
-        ],
     }
 }
 
@@ -1192,7 +1058,7 @@ fn display_error(error: impl std::fmt::Display) -> String {
 
 /// Returns the complete command-line grammar.
 fn usage() -> String {
-    "usage: sea-benchmarks smoke | measure [--backend memory|file|compression|stateful-compression|encryption|stateful-compression-encryption] [--fixture empty|small-compressible|small-incompressible|large-compressible|large-incompressible|snapshot] [--seed N] [--records N] [--writers N] [--snapshot-frequency N] [--warmups N] [--repetitions N]".to_owned()
+    "usage: sea-benchmarks smoke | measure [--backend memory|file|compression|encryption] [--fixture empty|small-compressible|small-incompressible|large-compressible|large-incompressible|snapshot] [--seed N] [--records N] [--writers N] [--snapshot-frequency N] [--warmups N] [--repetitions N]".to_owned()
 }
 
 #[cfg(test)]

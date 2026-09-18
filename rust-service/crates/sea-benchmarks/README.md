@@ -41,7 +41,7 @@ For periodic snapshot workloads, commit throughput includes snapshot publication
 ## Backends
 
 The `memory` and `file` cells measure trusted backend operations through a factory-created `SeaView`.
-Compression, stateful compression, encryption, and the composed compression-before-encryption cell measure `SeaSession` decorators over a common `LocalSequencer<FileStorage>`.
+The `compression` and `encryption` cells measure `SeaSession` decorators over a common `LocalSequencer<FileStorage>`.
 Their payload and snapshot facets use the decorated session, retaining publisher registration for the publication workload.
 File recovery reopens the backend-assigned document ID after releasing the prior opening.
 Storage reads use an explicit committed upper bound; session reads collect the configured number of acknowledged submissions.

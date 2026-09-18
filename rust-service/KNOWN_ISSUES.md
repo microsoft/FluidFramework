@@ -49,9 +49,9 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Area:** Confidentiality and transforms
 - **Evidence:** Session decorators transform event payloads and blob leaves.
   Directory names, topology, event ordering metadata, and snapshot metadata remain visible so the server can validate references.
-  Stateful dictionaries are immutable out-of-band configuration, and no separate authenticated plaintext identity is exposed.
-- **Impact:** Encryption does not hide archive shape or directory names, and dictionary rotation requires replacing decorator configuration.
-- **Trigger:** Design encrypted directories, plaintext identity, or Sea-managed dictionaries only for a concrete consumer requirement.
+  No separate authenticated plaintext identity is exposed.
+- **Impact:** Encryption does not hide archive shape or directory names.
+- **Trigger:** Design encrypted directories or plaintext identity only for a concrete consumer requirement.
 
 ## RS-022: The Fluid adapter is not a production driver
 

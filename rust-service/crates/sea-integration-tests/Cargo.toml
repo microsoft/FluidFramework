@@ -15,7 +15,6 @@ sea-core = { path = "../sea-core" }
 sea-encryption = { path = "../sea-encryption" }
 sea-memory = { path = "../sea-memory" }
 sea-sequencer = { path = "../sea-sequencer" }
-sea-stateful-compression = { path = "../sea-stateful-compression" }
 sea-webtransport = { path = "../sea-webtransport" }
 sea-webtransport-server = { path = "../sea-webtransport-server" }
 tokio.workspace = true

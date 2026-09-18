@@ -97,10 +97,6 @@ It consumes the shared protocol; the production client does not depend on the se
 | --- | --- |
 | [`CompressionSession`](crates/sea-compression/README.md) | Compresses event payloads and blob content. |
 | [`EncryptionSession`](crates/sea-encryption/README.md) | Encrypts and authenticates event payloads and blob content. |
-| [`StatefulCompressionSession`](crates/sea-stateful-compression/README.md) | Compresses payloads using a shared immutable dictionary. |
-
-TODO: StatefulCompressionSession is supposed to apply cross op stream compression for events, which would require every snapshot to track the compressor state of every editor.
-EIther fix this or remove it.
 
 ## Application Adapters
 
