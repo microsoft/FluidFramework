@@ -53,6 +53,10 @@ function validateInventory(inventory, config, errors, warnings) {
 		errors.push("Inventory must contain tenants");
 		return;
 	}
+	if (Object.keys(inventory.tenants).length === 0) {
+		errors.push("Inventory contains no tenants to copy");
+		return;
+	}
 	if (!Array.isArray(inventory.errors) || inventory.errors.length > 0) {
 		errors.push("Inventory contains unreadable source servers");
 	}

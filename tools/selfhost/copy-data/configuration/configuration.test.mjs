@@ -122,6 +122,34 @@ test("requires inventory before copying data", async () => {
 	}
 });
 
+test("rejects an inventory with no tenants to copy", async () => {
+	const directory = await mkdtemp(path.join(os.tmpdir(), "copy-data-config-"));
+	try {
+		await writeJson(directory, "inventory.json", { tenants: {}, errors: [] });
+		await writeJson(directory, "config.json", {
+			inventoryPath: "inventory.json",
+			selfHostNamespace: "default",
+			resultsDirectory: "results",
+			selfHost: {
+				alfredEndpoint: "https://self-host.example",
+				historianEndpoint: "https://self-host.example",
+				subscriptionId: "subscription",
+				resourceGroup: "resource-group",
+				aksName: "aks",
+				contact: "owner@example.com",
+			},
+			azureFluidRelayTenants: {},
+		});
+
+		await assert.rejects(loadConfiguration(path.join(directory, "config.json")), (error) => {
+			assert.ok(error instanceof ConfigurationError);
+			return error.message.includes("Inventory contains no tenants to copy");
+		});
+	} finally {
+		await rm(directory, { recursive: true, force: true });
+	}
+});
+
 test("rejects an Azure Fluid Relay tenant missing from the inventory", async () => {
 	const directory = await mkdtemp(path.join(os.tmpdir(), "copy-data-config-"));
 	try {
