@@ -1,0 +1,217 @@
+# SEA WASM and ServiceClient Integration Plan
+
+Status: Planned; implementation has not started under this plan.
+Created: 2026-09-18.
+
+This is an active implementation plan, not a description of supported functionality.
+Use [Sea architecture](SEA_ARCHITECTURE.md) and [Development](DEVELOPMENT.md) as the current design and validation authorities.
+Archive this plan under [Historical records](historical/README.md) when the work is complete, after moving supported usage and guarantees into the relevant package guides.
+
+## Goals and Scope
+
+Make SEA available through the Fluid `ServiceClient` API and the inventory-app example with two selectable configurations:
+
+- An ephemeral in-memory service running locally through WebAssembly (WASM), without WebTransport or an external service process.
+- A remote service using real WebTransport, including collaboration between independent browser windows.
+
+First move the general JavaScript-facing SEA bindings out of `sea-webtransport` into a dedicated feature-gated WASM crate.
+Expose them through `@fluidframework/sea-typescript`, the non-Fluid-specific entry point and sole direct SEA dependency for general TypeScript SEA applications.
+Support both a combined WASM bundle and separate configuration-specific bundles without changing the application or driver logic.
+Make adding another configuration, such as compression, a small extension of the same build and factory model.
+
+## Fresh-Context Entry
+
+1. Read this plan's scope and acceptance criteria, then the [project README](README.md), [Sea architecture](SEA_ARCHITECTURE.md), [Known Issues](KNOWN_ISSUES.md), and [Development](DEVELOPMENT.md).
+2. Check the assigned worktree path, branch, HEAD, and working-tree status before editing; preserve existing changes and coordinate ownership of shared files.
+3. Check the pinned Rust toolchain, matching `wasm-bindgen` version, package dependencies, and available browser and network access using the development and harness guides.
+4. Start with the relevant implementation anchors below rather than assuming the proposed packages already exist.
+	These paths describe the starting implementation; follow moved code and update the pointers as extraction proceeds.
+5. Work only on stages 1 through 5.
+	Record unavailable browser or network validation as blocked or unverified, never passed; distinguish a browser inside Codespaces from the user's external browser.
+
+| Area | Starting points |
+| --- | --- |
+| WASM bindings and build | [Bindings module](crates/sea-webtransport/src/wasm/mod.rs), [build script](crates/sea-webtransport/scripts/build-wasm.mjs), and [harness build tasks](tests/minimal-fluid-driver/package.json). |
+| Generated-client adaptation | [Existing adapter](tests/minimal-fluid-driver/src/generatedSeaBinding.ts) and [driver-owned contract](packages/sea-driver/src/wasmClient.ts); separate neutral bindings from Fluid projection. |
+| TypeScript package conventions | [sea-driver](packages/sea-driver/README.md) and its [manifest](packages/sea-driver/package.json); reuse conventions, not Fluid-specific dependencies. |
+| ServiceClient | [Shared contract](../packages/common/driver-definitions/src/serviceClient.ts), [Tinylicious implementation](../packages/drivers/tinylicious-driver/src/tinyliciousService.ts), and [runtime helpers](../packages/runtime/runtime-utils/src/serviceClientUtils.ts). |
+| Example selection and bundling | [Example helpers](../examples/utils/example-utils/src/exampleApp.ts), [webpack configuration helper](../examples/utils/webpack-fluid-loader/src/appConfig.ts), and [inventory-app guide](../examples/data-objects/inventory-app/README.md). |
+| Browser validation | [WebTransport harness](tests/webtransport-browser/README.md) and [Fluid integration harness](tests/minimal-fluid-driver/README.md). |
+
+## Design Boundaries
+
+| Owner | Responsibility |
+| --- | --- |
+| Proposed `sea-wasm` Rust crate | General SEA bindings and feature-gated local, remote, and decorator construction. |
+| `@fluidframework/sea-typescript` | Non-Fluid-specific TypeScript SEA API, generated artifact packaging, typed loaders and factories, initialization, and combined/split presets. Initially expose internal APIs. |
+| `sea-webtransport` | Transport implementation and protocol responsibilities, not ownership of all JavaScript-facing session APIs. |
+| `sea-driver` | Fluid-specific projection, driver, and `ServiceClient` adaptation above `sea-typescript`, through an injected client factory; no SharedTree dependency or knowledge of bundle layout. |
+| `example-utils` SEA setup module | Select a bundle-loader preset and map example service options to the appropriate factories. |
+| Inventory-app | Consume the common example helpers without WASM or transport-specific application logic. |
+
+The TypeScript package name is `@fluidframework/sea-typescript`; exact exports remain implementation decisions within these boundaries.
+General TypeScript SEA applications obtain all SEA capabilities through its supported package entrypoints, without direct dependencies on generated WASM packages, crate output paths, or the integration harness.
+Fluid applications may use `sea-driver` or `sea-tree` above this layer; `sea-typescript` must not re-export or depend on those adapters.
+The package API and implementation must remain entirely non-Fluid-specific, without Fluid runtime, driver, or SharedTree dependencies, including development dependencies that would create cycles.
+The resulting dependency graph must still allow SharedTree tests to consume `sea-driver` without a dependency cycle.
+
+Split the existing generated-client adapter by responsibility rather than moving it wholesale.
+General session bindings and neutral contracts belong in `sea-typescript`; Fluid message and summary interpretation and Fluid sequence projection belong in `sea-driver` or the appropriate higher-level adapter.
+Do not copy driver-owned interfaces into `sea-typescript` merely to avoid a dependency edge.
+
+### Separate Capabilities, Services, and Packaging
+
+Cargo features choose capabilities at build time.
+Service configuration chooses among the capabilities included in an artifact at runtime.
+Bundle-loader configuration maps those service requirements to generated artifacts.
+These are separate choices: changing packaging must not silently change storage, transport, compression, or lifetime semantics.
+
+`sea-typescript` owns named build configurations and loader presets for its generated artifacts.
+The application composition point owns the choice of preset; for inventory-app, this is the SEA setup module in `example-utils`.
+Provide a build-time example option to compare combined and split presets without source edits.
+Switching presets should change that one selection, not driver logic, service configuration, or inventory-app code.
+Adding a capability may require a new build configuration and factory, but must not require copying the binding implementation.
+
+Initialization is lazy and cached per loaded bundle.
+An initialized WASM module is not an ephemeral service: create service instances explicitly, with independent storage unless callers deliberately share a service.
+Keep generated objects and handles with the WASM instance that created them.
+Do not pass WASM-owned objects between split bundles or rely on generated class identity across bundles.
+
+## Implementation Stages
+
+### 1. Extract and Package WASM Bindings
+
+- [ ] Inventory the existing general bindings, browser transport bindings, generated adapter, and consumers; identify the narrow extraction boundary.
+- [ ] Introduce `sea-wasm` with optional capabilities for local memory and WebTransport, leaving transport mechanics in their owning crate.
+- [ ] Promote local memory from transport test support to a supported binding configuration.
+- [ ] Expose the existing compression decorator through an optional capability and an explicit configuration; preserve matching encode/decode configuration for collaborating clients.
+- [ ] Identify general session binding code separately from Fluid-specific generated-client adaptation, preparing the package extraction in stage 2.
+- [ ] Provide local-only, WebTransport-only, combined, and compression-enabled named build configurations from the same binding source.
+- [ ] Isolate generated outputs by configuration and JavaScript target; prevent overwrites, stale outputs, and unintended Cargo feature unification between variants.
+- [ ] Register generated artifacts and their inputs in the Fluid build graph, including clean and incremental builds, package exports, and browser asset loading.
+- [ ] Migrate existing Node.js, browser, Fluid-driver, and direct SharedTree consumers without losing their current tests.
+- [ ] Document the new crate responsibilities and record the architectural decision under `historical/decisions/`.
+
+Acceptance: generated local and remote clients retain their existing behavior; the local-only WASM dependency graph excludes `sea-webtransport`; transport-only output excludes local storage and sequencer dependencies unless independently required and justified.
+Test capability-specific builds as well as the all-features build, since the latter cannot detect missing feature guards.
+
+### 2. Establish the sea-typescript Package
+
+- [ ] Create `@fluidframework/sea-typescript` under the Rust-service TypeScript packages, following neighboring repository package conventions.
+- [ ] Make it the sole direct SEA dependency needed by general TypeScript SEA applications, covering local memory, remote sessions, and optional decorators through package entrypoints.
+- [ ] Move general generated-client bindings and neutral session contracts into the package; keep Fluid-specific projection and adaptation in the higher-level adapters.
+- [ ] Encapsulate generated WASM artifacts and their loading so consumers do not import crate output paths or depend directly on generated packages.
+- [ ] Configure workspace registration, dependency declarations, standard build tasks, exports and generated entrypoints, internal API release tags, generated API reports, TypeScript and documentation configuration, formatting, lint, and package metadata according to repository practices.
+- [ ] Add a package README and API documentation for session capabilities, initialization, resource ownership, errors, and supported environments without Fluid-specific concepts.
+- [ ] Migrate existing consumers to package entrypoints and preserve driver and direct SharedTree integration tests in their owning packages or harnesses.
+- [ ] Add non-Fluid consumer tests for local sessions and browser WebTransport, and dependency checks that prevent reverse dependencies on the Fluid adapters or harness.
+- [ ] Validate the package's build, tests, policy compliance, and generated-asset resolution through its entrypoints before starting ServiceClient integration.
+
+Acceptance: a general TypeScript application can use SEA with only `@fluidframework/sea-typescript` as its direct SEA dependency.
+The package has no Fluid-specific API or implementation requirements and follows the repository's TypeScript package conventions.
+Fluid adapters consume this layer, not the reverse; existing higher-level tests remain intact.
+
+### 3. Add Stable Factories and Packaging Presets
+
+- [ ] Expose typed factories that hide generated bundle details from consumers while keeping service ownership and cleanup explicit.
+- [ ] Supply combined and split loader presets and make their selection independent of service options.
+- [ ] Cache initialization per bundle without sharing ephemeral document storage implicitly.
+- [ ] Keep optional capabilities lazy; existing non-SEA example options must not initialize or fetch SEA WASM.
+- [ ] Test explicit sharing between clients of one ephemeral service and isolation between separate services.
+- [ ] Exercise the same local and remote scenarios through both presets, plus a compression-enabled scenario that proves the extension mechanism.
+- [ ] Record generated and compressed artifact sizes and observed loading behavior with build configuration and environment details.
+
+Acceptance: changing one loader selection switches combined/split packaging without changes to application logic or service semantics.
+An unsupported capability produces a useful error; no silent transport fallback is allowed.
+Measurements support later comparison; this stage does not require an extensive benchmark project or a permanent choice of packaging strategy.
+
+### 4. Implement the ServiceClient API
+
+- [ ] Follow the existing Tinylicious and shared runtime utility patterns rather than introducing another container framework.
+- [ ] Support detached creation, attachment, attached creation, loading by the returned document identity, registry-based data stores, `oldestSupportedClient`, and container cleanup.
+- [ ] Provide local ephemeral and remote WebTransport construction through injected factories, preserving `sea-driver` dependency isolation.
+- [ ] Document service lifetime, document identity, failure handling, and the limits inherited from SEA's current Fluid adapter.
+- [ ] Add focused contract tests for creation, attachment, loading, registry behavior, option propagation, and cleanup; reuse existing test helpers where practical.
+
+Acceptance: both SEA configurations satisfy the supported `ServiceClient` contract, not just the attached-creation path used by inventory-app.
+An API wrapper must not imply support for automatic reconnect, presence, authentication, production membership, or other currently unsupported semantics.
+Escalate a genuine contract conflict instead of silently weakening the shared API.
+
+### 5. Integrate the Example Utilities and Inventory-App
+
+- [ ] Add explicit example selectors, provisionally `sea-ephemeral` and `sea-webtransport`, while preserving existing options and default behavior.
+- [ ] Place the loader-preset choice in the example-utils SEA setup module, with a build-time override for packaging comparisons.
+- [ ] Provide endpoint and development certificate configuration for the remote option; do not embed credentials or introduce a silent local fallback.
+- [ ] Integrate asynchronous WASM startup behind the existing helper contract where practical; audit callers before changing a shared helper signature.
+- [ ] Update example build tooling, launch commands, and usage documentation, including generated documentation sources where applicable.
+- [ ] Add focused service-selection tests, then perform the interactive acceptance matrix below.
+
+Acceptance: the same inventory application runs with every listed service option without transport-specific application code.
+The local SEA option works in a supported WASM browser through ordinary Codespaces page hosting, with no SEA server, QUIC connectivity, or certificate setup.
+Document actual browser prerequisites instead of claiming support in every environment.
+
+## Interactive Acceptance Matrix
+
+Use the actual inventory UI for item creation, deletion, and quantity changes.
+Record browser/version, environment, service and packaging configuration, commands, observed results, console/network errors, and any remaining blockers.
+Retain a small reproducible browser regression test for distinct integration behavior rather than relying only on a manual report.
+
+| Service | Required behavior | Persistence and collaboration limits |
+| --- | --- | --- |
+| Default selection | Starts successfully and retains the established fallback behavior. | Uses the existing service-selection semantics. |
+| TypeScript ephemeral | Create and edit inventory. | Reload persistence and independent-window collaboration are not required. |
+| TypeScript session | Create, edit, and reload in the same tab. | Independent tabs do not imply a shared live service. |
+| Tinylicious | Create, edit from both windows, converge, reload, and reopen the same document. | Run a reachable Tinylicious service. |
+| SEA ephemeral | Create and edit inventory with no WebTransport or external service process. | Test collaboration between clients sharing one explicitly created local service; no independent-window sharing or reload persistence is promised. |
+| SEA WebTransport | Create, edit from both independent windows, converge, reload, and reopen after both windows close. | Keep the service running; use durable storage for any separately claimed server-restart persistence. |
+
+For remote collaboration, use the same returned document URL in independent clients, including separate browser contexts where practical.
+Verify edits in both directions and concurrent edits converge; then close both clients and reopen the document.
+Confirm real WebTransport sessions rather than accepting UI rendering or a local fallback as transport evidence.
+Run SEA acceptance with both combined and split packaging.
+Perform a compression-enabled collaboration scenario with matching configuration and verify that the decorator path is actually used.
+
+Codespaces evidence must state whether the browser ran inside the Codespace or on the user's machine.
+An internal Chromium run does not establish that external interactive access works.
+Leave a usable example URL and concise startup instructions for the user, and document cleanup of test-owned services and browser resources.
+
+## Validation and Documentation Gates
+
+Run the narrowest behavioral checks after each implementation change, then the required integration gates at completion.
+Follow [Development](DEVELOPMENT.md) and the [coordination skill](../.github/skills/rust-service-coordination/SKILL.md); commands below are a checklist, not a replacement for those authorities.
+
+From `rust-service/`:
+
+```bash
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+RUSTDOCFLAGS='-D warnings' cargo doc --workspace --all-features --no-deps
+cargo build --workspace --all-targets
+cargo test --workspace --all-targets --all-features
+node scripts/check-documentation.mjs
+./test.sh
+```
+
+From the repository root for the implementation:
+
+```bash
+pnpm policy-check --path rust-service
+pnpm build:fast
+```
+
+Also run the owning package tests and checks for changes to example-utils and inventory-app.
+Verify generated artifacts work from a clean build and that changing a feature configuration correctly invalidates incremental outputs.
+Generate API reports through package tooling; never edit them by hand.
+Add changesets for user-facing behavior and API changes according to repository guidance.
+Update architecture and package guides to describe actual supported behavior, replacing the WASM-ownership TODO only after the extraction is complete.
+
+## Execution and Completion
+
+Stages 1 through 5 are dependency-ordered and define this plan's implementation scope.
+One owner can implement the main chain sequentially without numbered iteration overhead.
+If parallel investigation or separate workstreams justify a full iteration, ask for that workflow choice before creating iteration records or worktrees.
+This plan does not select or start an iteration.
+
+Record decisions and validation evidence as work proceeds.
+The completion summary must distinguish implemented capabilities, observed interactive results, unsupported behavior, and deferred work.
+No packaging choice, passing build, or internal browser test substitutes for the corresponding behavioral acceptance criterion.
