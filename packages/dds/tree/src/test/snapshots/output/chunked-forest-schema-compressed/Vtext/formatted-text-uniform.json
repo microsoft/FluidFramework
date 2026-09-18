@@ -1,0 +1,217 @@
+{
+  "version": "text",
+  "identifiers": [
+    "",
+    "com.fluidframework.leaf.string",
+    "bold",
+    "font",
+    "italic",
+    "size",
+    "underline",
+    "com.fluidframework.leaf.number",
+    "com.fluidframework.leaf.boolean"
+  ],
+  "shapes": [
+    {
+      "f": {
+        "base": 5,
+        "fields": [
+          [
+            0,
+            6
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": 8,
+        "value": [
+          false
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": 8,
+        "value": true
+      }
+    },
+    {
+      "c": {
+        "type": 1,
+        "value": true
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted<default>.Text",
+        "value": false,
+        "fields": [
+          [
+            0,
+            7
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted.StringTextAtom",
+        "value": false,
+        "fields": [
+          [
+            0,
+            3
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": 1,
+        "value": [
+          "a"
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted<default>.StringArray",
+        "value": false,
+        "fields": [
+          [
+            0,
+            8
+          ]
+        ]
+      }
+    },
+    {
+      "a": 9
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted<default>.StringAtom",
+        "value": false,
+        "fields": [
+          [
+            0,
+            10
+          ],
+          [
+            "format",
+            11
+          ]
+        ]
+      }
+    },
+    {
+      "d": 0
+    },
+    {
+      "f": {
+        "base": 12,
+        "fields": [
+          [
+            2,
+            1
+          ],
+          [
+            3,
+            13
+          ],
+          [
+            4,
+            1
+          ],
+          [
+            5,
+            14
+          ],
+          [
+            6,
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted.default.CharacterFormat",
+        "value": false,
+        "fields": [
+          [
+            2,
+            2
+          ],
+          [
+            4,
+            2
+          ],
+          [
+            6,
+            2
+          ],
+          [
+            5,
+            15
+          ],
+          [
+            3,
+            3
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": 1,
+        "value": [
+          "Arial"
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": 7,
+        "value": [
+          12
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": 7,
+        "value": true
+      }
+    }
+  ],
+  "data": [
+    [
+      4,
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ]
+  ]
+}

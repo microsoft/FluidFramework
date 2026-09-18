@@ -59,6 +59,7 @@ export function compressedEncode(
 	fieldBatch: FieldBatch,
 	context: EncoderContext,
 ): EncodedFieldBatchV1OrV2 {
+	context.beginBatch(fieldBatch);
 	const batchBuffer: BufferFormat[] = [];
 
 	// Populate buffer, including shape and identifier references
@@ -67,7 +68,9 @@ export function compressedEncode(
 		anyFieldEncoder.encodeField(cursor, context, buffer);
 		batchBuffer.push(buffer);
 	}
-	return updateShapesAndIdentifiersEncoding(context.version, batchBuffer);
+	const result = updateShapesAndIdentifiersEncoding(context.version, batchBuffer);
+	context.endBatch();
+	return result;
 }
 
 export type BufferFormat = BufferFormatGeneric<EncodedChunkShape>;
@@ -149,7 +152,11 @@ export function asFieldEncoder(encoder: NodeEncoder): FieldEncoder {
 		): void {
 			forEachNode(cursor, () => encoder.encodeNode(cursor, context, outputBuffer));
 		},
-		shape: encoder.shape,
+		// Read lazily: some node encoders (e.g. the VText cohort encoder) only know their
+		// shape once per-batch state has been resolved, after this wrapper is constructed.
+		get shape(): Shape {
+			return encoder.shape;
+		},
 	};
 }
 
@@ -397,10 +404,21 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> {
  * which is an easy way to keep all the related code together without extra objects.
  */
 export class NestedArrayEncoder implements FieldEncoder {
-	public constructor(
-		public readonly innerEncoder: NodeEncoder,
-		public readonly shape: NestedArrayShape = new NestedArrayShape(innerEncoder.shape),
-	) {}
+	private cachedShape: NestedArrayShape | undefined;
+
+	public constructor(public readonly innerEncoder: NodeEncoder) {}
+
+	public get shape(): NestedArrayShape {
+		// The inner encoder's shape can vary across batches (the VText cohort encoder resolves to
+		// a concrete shape when monomorphic, otherwise AnyShape), so rebuild when it changes.
+		// Within a batch it is stable, so the same instance is reused and the shape table still
+		// deduplicates by identity.
+		const inner = this.innerEncoder.shape;
+		if (this.cachedShape?.innerShape !== inner) {
+			this.cachedShape = new NestedArrayShape(inner);
+		}
+		return this.cachedShape;
+	}
 
 	public encodeField(
 		cursor: ITreeCursorSynchronous,
@@ -568,6 +586,28 @@ export class EncoderContext
 			this.idCompressor,
 			this.isSummary ? EncodedIdType.Originatorless : EncodedIdType.OriginatorDependent,
 		);
+	}
+
+	/**
+	 * Invoked at the start of every {@link compressedEncode} call, including the recursive sub-chunk
+	 * calls made by {@link incrementalFieldEncoder}, to let an encoder set up state scoped to a
+	 * single batch.
+	 * @remarks
+	 * The base implementation has no per-batch state and does nothing (e.g. V1/V2). Subclasses that
+	 * carry per-batch state override this. Firing per {@link compressedEncode} entry, rather than
+	 * once per top-level encode, is what lets recursive sub-chunk encodes get their own state with
+	 * no snapshot/restore.
+	 */
+	public beginBatch(_fieldBatch: FieldBatch): void {
+		// No per-batch state in the base encoder.
+	}
+
+	/**
+	 * Invoked when a {@link compressedEncode} call completes, to tear down per-batch state. The
+	 * teardown counterpart to {@link beginBatch}.
+	 */
+	public endBatch(): void {
+		// No per-batch state in the base encoder.
 	}
 
 	public nodeEncoderFromSchema(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
