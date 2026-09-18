@@ -1,5 +1,8 @@
 # Sea Core Model Migration
 
+> **Historical execution record:** The dictionary-compression crate, `sea-stateful-compression`, was removed after this migration because it was not useful.
+> References below preserve the migration evidence, not the current supported crate set; see [SEA_ARCHITECTURE.md](SEA_ARCHITECTURE.md) for current architecture.
+
 ## Status
 
 - **Plan status:** Complete. Checkpoints 1 through 5 were reviewed and committed by the user; checkpoint 6 acceptance passed on `b9148b926e5` plus the uncommitted documentation and benchmark-script repairs recorded below.

@@ -9,7 +9,7 @@ This folder contains the Rust packages that implement Sea.
 - [`sea-sequencer/`](sea-sequencer/) implements local multi-user sessions.
 - [`sea-webtransport/`](sea-webtransport/) owns Sea v1 framing, dispatch, native transport, and generated browser/local/injected clients.
 - [`sea-webtransport-server/`](sea-webtransport-server/) provides the sole native server executable.
-- [`sea-compression/`](sea-compression/), [`sea-encryption/`](sea-encryption/), and [`sea-stateful-compression/`](sea-stateful-compression/) decorate `SeaSession` values.
+- [`sea-compression/`](sea-compression/) and [`sea-encryption/`](sea-encryption/) decorate `SeaSession` values.
 - [`sea-benchmarks/`](sea-benchmarks/) contains measurement tooling.
 
 Each package README describes its guarantees, limitations, and focused validation. Run the canonical workspace checks from [`../DEVELOPMENT.md`](../DEVELOPMENT.md) after cross-package changes.

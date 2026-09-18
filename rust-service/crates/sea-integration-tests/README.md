@@ -7,7 +7,7 @@ WebTransport is one optional session decorator under test, alongside compression
 ## Session Composition Matrix
 
 The [composition matrix](tests/session_composition.rs) runs independent scenario and layer-configuration tables.
-Its five scenarios run against all fourteen configurations, for seventy scenario/configuration combinations:
+Its five scenarios run against all twelve configurations, for sixty scenario/configuration combinations:
 
 | Scenario | Coverage |
 | --- | --- |
@@ -17,13 +17,13 @@ Its five scenarios run against all fourteen configurations, for seventy scenario
 | Collaboration | Two distinct authors submit concurrently through independent stacks and verify identical ordered delivery, cross-author retry rejection, shared content, and publisher coordination. |
 | Collaboration stress | Four collaboration rounds with repeated peer reconnects, 36 committed events, four snapshots, historical snapshot lookup, and catch-up after writes made while the peer is disconnected. |
 
-Configurations range from a bare session to duplicate payload wrappers, reversed compression/encryption ordering, multiple real loopback WebTransport hops, and a twelve-layer mixed stack.
+Configurations range from a bare session to duplicate payload wrappers, reversed compression/encryption ordering, multiple real loopback WebTransport hops, and a nine-layer mixed stack.
 
 Each configuration first runs an isolated transport-path probe.
 Server-side counters track decoded submissions at every endpoint; rejecting a submission at each hop in turn must reach the caller, prevent commitment, and stop traffic before the deeper hops.
 Removing the rejection must let the same operation traverse every hop successfully.
 The scenarios also assert the configured endpoint count for every connection generation and submission traffic at every endpoint, except the intentionally submission-free open/close scenario.
-The twelve-layer `repeated_stress` configuration requires three network hops per stack, including each rebuilt peer stack.
+The nine-layer `repeated_stress` configuration requires three network hops per stack, including each rebuilt peer stack.
 
 The collaboration scenarios use empty and binary event payloads up to 8 KiB, nested blob directories with shared subtrees, and exact plaintext history expectations independent of the returned events.
 They cancel an initialized waiting read while other subscriptions remain active, reject read-only publication and stale fences, check client-selected suppression and renewed Sea selection, and reject wrong parents and conflicting snapshot roots.
