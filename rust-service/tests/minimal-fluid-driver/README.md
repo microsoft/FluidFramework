@@ -19,7 +19,7 @@ The same adapter accepts local, injected, and browser WebTransport clients.
 - Signals, nacks, presence, automatic reconnect, hidden retry, offline merge, loading groups, and GC/retention guarantees.
 - Summary download materializes a full tree. It does not preserve handles or distinguish separately uploaded attachments from other blob leaves in the returned tree.
 - `getSnapshot`, caching, auth, production certificates, Routerlicious, and ODSP compatibility are not implemented or claimed.
-- The native server owns a bounded set of concurrent connection futures. The SharedTree Chromium trace uses three independent Fluid containers and three generated browser transport sessions. Each generated client owns independent persistent event, author, snapshot, and content streams; stream owners preserve their own ordering without a global serialization wrapper.
+- The native server owns a bounded set of concurrent connection futures. The SharedTree Chromium trace uses three independent Fluid containers and four generated browser transport sessions, including explicit reconnection. Each generated client owns independent persistent event, author, snapshot, and content streams; stream owners preserve their own ordering without a global serialization wrapper.
 - Browser loading uses Fluid's default read-to-write replacement. Each replacement opens a fresh Sea session identity while preserving the adapter's Fluid projection state. Production Fluid membership is not implemented.
 
 ## Summary storage semantics

@@ -1,8 +1,9 @@
 # Blob-tree Storage
 
 Sea implements a unified content-addressed contract for binary blobs, immutable directories, snapshots, and content referenced by events.
-`sea-core` owns the typed identities and observable `SeaStorage`/`SeaSession` behavior.
-The storage backends validate a referenced tree's complete closure before atomically committing an event or snapshot reference.
+`sea-core` owns typed identities, storage components composed by `SeaView`, and the higher-level session contracts.
+The view establishes tree availability before appending an event and both tree and event availability before publishing a snapshot.
+Backends preserve dependency-closed committed history on recovery; raw event components keep tree identities opaque rather than implementing cross-component validation themselves.
 
 The initial implementation retains every uploaded and referenced object.
 The garbage-collection and hard-link material below describes a future compatible lifetime design, not behavior required from the current backends.

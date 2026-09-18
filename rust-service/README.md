@@ -6,8 +6,9 @@ Sea, short for Snapshotted Event Archive, is an experimental Rust service for sy
 - immutable blob trees and snapshots at known event positions; and
 - recovery by loading a snapshot and replaying later data.
 
-The application-independent `sea-core` contracts separate trusted archive storage from archive-bound user sessions.
-Memory, buffered-file, and crash-durable file backends implement the storage contract.
+The application-independent `sea-core::storage` contracts compose blob, event, and snapshot components into exclusive document views.
+Memory, buffered-file, and durable-file factories allocate document identities and open those components.
+The sibling `sea-core::session` contracts add multi-user policy above storage.
 `sea-sequencer` adds multi-user sessions and stable operation identities, while `sea-webtransport` carries the same session behavior over the versioned Sea protocol.
 The minimal Fluid driver remains a downstream adapter.
 
@@ -26,12 +27,16 @@ compression, encryption, or stateful-compression session decorators
                  |
 sea-sequencer: authors, stable operations, snapshot participation, and streams
                  |
-SeaStorage: memory, buffered-file, or durable-file
+SeaView: blob, event, and snapshot components from one exclusive opening
+                 |
+SeaStorage factory: memory, buffered-file, or durable-file
 ```
 
 `EventPosition` is a stable ordered `u64` value inside one archive and has a canonical eight-byte encoding.
-Snapshots may represent initial state or state through one event.
-A load atomically selects a compatible snapshot and catch-up head, emits every later event through that head, reports monitored progress when it catches up, and then continues live without a gap.
+Every snapshot represents state through a committed event and uses that event position as its version.
+Nonempty initial application state requires an initialization event before snapshot publication.
+A load selects a snapshot according to `LoadStart` and starts a live event stream after it, without capturing an atomic event head.
+Use a selected snapshot followed by a bounded read to reconstruct state through a particular committed position.
 Uploaded content, events, and snapshots are retained in the initial implementation.
 
 Snapshot streams declare immutable `ReadOnly`, `SeaSelected`, or `ClientSelected` participation.
@@ -84,6 +89,7 @@ Each approved iteration uses a dedicated integration branch and one isolated bra
 
 - [PLAN.md](PLAN.md) defines the architecture, semantics, iterative work phases, reporting contract, review loop, and success criteria.
 - [SEA_ARCHITECTURE.md](SEA_ARCHITECTURE.md) records the current Sea API, protocol, lifecycle, generated-binding, and application-adapter ownership rules.
+- [CORE_MIGRATION_PLAN.md](CORE_MIGRATION_PLAN.md) records the final storage/session model migration and its acceptance evidence.
 - [DEVELOPMENT.md](DEVELOPMENT.md) defines the pinned toolchain, lockfile policy, and required foundation commands.
 - [WORKSTREAMS.md](WORKSTREAMS.md) records the current package graph and runtime composition.
 - [BENCHMARKS.md](BENCHMARKS.md) defines initial workloads, measurement procedure, and required environment metadata.

@@ -19,7 +19,8 @@ The suites panic on a contract violation and are intended to be invoked from an 
 ## Relationships and Limits
 
 The memory, buffered-file, and durable-file packages run the Sea storage suite.
-`sea-sequencer` runs the session suite process-locally, while `sea-webtransport-server` runs it through `NativeSeaClient` against every built-in storage mode.
+`sea-sequencer` runs the session suite process-locally.
+Separate `sea-webtransport-server` integration tests exercise native live delivery and snapshot publication against every built-in storage mode; they do not invoke this shared session suite.
 Compression, encryption, and stateful-compression run the same session suite over a local sequencer.
 The generated Node suite separately covers the single-threaded WASM local client and pending-read cancellation.
 The Chromium harness covers `SeaInjectedClient` over `SeaBrowserTransport`, including its browser-only persistent submission stream, cancellation, disconnect, and reconnect behavior.

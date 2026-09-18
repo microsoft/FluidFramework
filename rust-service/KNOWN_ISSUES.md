@@ -8,8 +8,8 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Status:** Open
 - **Severity:** High
 - **Area:** Durability
-- **Evidence:** `sea-file-durable` synchronizes its log and metadata and passes deterministic process-termination recovery tests.
-  It has not been qualified against power loss, filesystem or hardware failure, concurrent process ownership, or remote storage.
+- **Evidence:** `sea-file-durable` synchronizes its journal and namespace metadata and passes deterministic incomplete-write, corruption, and post-sync recovery tests through the shared file engine.
+  Advisory OS locks exclude competing valid document openings, but the backend has not been qualified against power loss, filesystem or hardware failure, external replacement of locked files, or remote storage.
 - **Impact:** `durable-file` must not be interpreted as a production durability claim.
 - **Trigger:** Define a precise durability tier and add platform-specific fault testing before using the backend for production data.
 
@@ -19,7 +19,7 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Severity:** Medium
 - **Area:** Content and history lifetime
 - **Evidence:** All three `SeaStorage` backends retain every event, snapshot, blob, directory, and unattached upload.
-  Event and snapshot publication atomically validate and retain referenced tree closures, but no root is later released.
+  The composed view establishes dependencies before event and snapshot publication, and recovery checks dependency closure, but no root is later released.
 - **Impact:** Storage grows monotonically and stale-position or unavailable-history behavior cannot yet be exercised.
 - **Trigger:** Add leases, retention boundaries, and collection when a bounded deployment supplies concrete lifetime requirements.
 

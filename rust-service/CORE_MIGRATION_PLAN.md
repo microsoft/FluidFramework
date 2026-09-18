@@ -2,15 +2,15 @@
 
 ## Status
 
-- **Plan status:** Checkpoints 1 through 4 reviewed and committed by the user; checkpoint 5 implemented and validated from `327672b7cb0`, awaiting review.
+- **Plan status:** Complete. Checkpoints 1 through 5 were reviewed and committed by the user; checkpoint 6 acceptance passed on `b9148b926e5` plus the uncommitted documentation and benchmark-script repairs recorded below.
 - **Execution mode:** One coordinating agent, sequential checkpoints on the current branch.
 - **Scope:** Replacement of the old core model and alignment of its implementations and consumers within `rust-service/`.
 - **Preparation completed:** `85e6cf96430` introduced `sea_core::next`, removed `SeaCollection`, and added default `SeaStorage::create_view` and `open_view` methods.
-- **Completed checkpoint:** API-only preparation and checkpoints 1 through 4; checkpoints 5 and 6 remain open.
-- **Validation:** Checkpoint 5 canonical Rust/native/WASM gates, `./test.sh`, actual SharedTree traces, eight browser benchmark cells, counter and storage smoke/measurement entry points, documentation, scoped policy, and repository-root `pnpm build:fast` passed. Exact modes and outcomes are recorded below.
+- **Completed checkpoint:** API-only preparation and all six checkpoints.
+- **Validation:** Final canonical Rust/native/WASM gates, 133 Rust tests, generated/driver tests, three SharedTree backend traces, six browser backend/policy combinations, sixteen browser benchmark cells, counter and repaired storage benchmark scripts, documentation, scoped policy, and root `pnpm build:fast` passed. Exact modes and limitations are recorded below.
 - **Known implementation state:** All retained consumers use the final model. Core storage and session contracts are sibling modules; obsolete core/backend/session implementations and transitional `next` exports are removed.
-- **Open decisions:** None for checkpoint 5; no material shared-contract change was needed.
-- **Next action:** User review of checkpoint 5. Checkpoint 6 is not started.
+- **Open decisions:** None. The user approved retiring the obsolete Wave 3 runner; no shared-contract change was needed in checkpoint 6.
+- **Next action:** User review and commit of the final documentation/script changes. No further migration checkpoint remains.
 - **Plan commit:** `468aa0dd934`; checkpoint 1 was committed and adjusted through `893fb9fe307`, checkpoint 2 through `05a8403baa1`, checkpoint 3 through `155c6d12159`. Checkpoint 4 created no commit, push, branch, worktree, or subagent.
 
 Update this status and the checkpoint evidence in every implementation commit.
@@ -76,8 +76,8 @@ Any approved delegates need explicit writable paths, a common accepted base, dep
 
 ## Usage Inventory
 
-These are the initial acceptance surfaces, not a claim that every current path has already been audited.
-At each checkpoint, verify actual call sites and documented commands and add any discovered usage to this table with its disposition.
+These are the migration's acceptance surfaces; their final dispositions and executed evidence are recorded under checkpoint 6.
+The audit covers retained entry points and contract boundaries, not an exhaustive proof of every possible execution path.
 Deletion of a useful workflow requires an explicit decision, not an assumption based on obsolete implementation details.
 
 | Surface | Owning paths | Required migration outcome |
@@ -168,7 +168,7 @@ Package names below identify focused validation targets, not permission to omit 
 - **Evidence:** SharedTree collaboration, summary publication and reload, blob/directory/handle reuse, and both supported client-selected and Sea-selected snapshot participation. Examples and benchmark entry points remain executable and produce meaningful output.
 - **Validation:** The driver package's build/tests, relevant example and benchmark commands from their READMEs, and required gates. Record exact executed modes and backends rather than claiming blanket browser coverage.
 - **Exit:** No retained consumer needs the old model, and no live source depends on `next` or transitional compatibility paths. Historical documents need not lose old names. Record any deliberately removed workflow and the user decision authorizing it.
-- [ ] Complete: implementation and validation finished; awaiting user review.
+- [x] Complete: reviewed and committed by the user through `b9148b926e5` (`37b3d3edbbb` plus review improvements).
 
 ### 6. Full Acceptance And Handoff
 
@@ -177,7 +177,7 @@ Package names below identify focused validation targets, not permission to omit 
 - **Work:** Audit the usage inventory and all transition-removal obligations. Run the full validation below against the final integrated checkout.
 - **Evidence:** Actual command outcomes, all supported backend/session combinations covered by relevant suites, generated artifact consumers, and the real application workflows. Document any remaining limitation without relabeling it as success.
 - **Exit:** One core model, working retained usages, no hidden implementation blockers, and no owned servers or temporary validation overrides left running. Mark this plan complete and leave it as the historical execution record.
-- [ ] Complete.
+- [x] Complete: final inventory, repairs, and integrated acceptance passed; final changes remain uncommitted for user review.
 
 ## Validation And Evidence
 
@@ -215,6 +215,102 @@ Do not hand-edit generated bindings or treat cached build success as proof that 
 Classify failures as migration defects, pre-existing failures, or environment blockers with evidence; never silently waive a required gate.
 
 ## Decisions And Checkpoint Evidence
+
+### Checkpoint 6: Starting Hypothesis
+
+- Starting commit: `b9148b926e5`, clean working tree, after checkpoint 5 and the user's review improvements.
+- Execution remains sequential on the current branch, without subagents, worktrees, branches, commits, or pushes.
+- Responsible paths: final `sea-core` exports, retained consumer call sites, and the canonical validation entry points.
+	Hypothesis: all retained usages operate through the final storage/session model, with no transitional implementation or compatibility export required.
+	Cheapest checks: current-source import/export audit and documentation link validation, followed by the owning conformance and integration tests.
+- Final acceptance reruns the canonical gates and actual application workflows on this reviewed baseline; checkpoint-5 results are historical evidence, not a substitute.
+- Material shared-contract changes or scope expansion still require approval.
+
+### Checkpoint 6: Final Acceptance
+
+Acceptance ran on 2026-09-18 from `b9148b926e5` with the final changes described here.
+Checkpoint 5 is accepted through `37b3d3edbbb` and review improvements in `b9148b926e5`.
+No branch, worktree, subagent, commit, or push was created during checkpoint 6.
+
+#### Audit And Repairs
+
+Current Rust/TypeScript source and package guides no longer depend on `next`, old monolithic storage/session traits, or compatibility exports.
+Remaining references to the old file format explicitly reject compatibility; historical plans, decisions, and iteration reports remain unchanged.
+The final core exposes sibling `storage` and `session` modules, with shared primitives retained rather than duplicated.
+
+The root README and current architecture document still promised atomic captured-head loads and pre-event snapshots.
+They now describe factory-assigned IDs, exclusive composed views, local availability handles, event-position snapshots, explicit initialization, and non-atomic live loading.
+The package map, storage/limitation summaries, example index, and validation descriptions were aligned with actual dependencies and coverage.
+In particular, native server tests exercise all built-in backends but do not invoke the shared session-conformance function; the documentation no longer claims otherwise.
+
+The documented benchmark shell entry points exposed a missed transition obligation:
+`prepare_benchmark_copy` still inserted nonexistent `crates/benchmarks` into a workspace that already contains `crates/sea-benchmarks`.
+It now preserves the manifest and copies current sources without build outputs, installed dependencies, generated packages, Git metadata, or benchmark-result directories.
+Both validation and measurement scripts were executed after the repair; their source-manifest and lockfile integrity checks passed.
+
+The fixed Wave 3 script additionally requested removed `network-memory`, `native-service`, and `native-webtransport` backend cells.
+The user explicitly chose **Retire the obsolete Wave 3 runner** rather than introduce a new measurement matrix.
+`scripts/measure-wave3-benchmarks.sh` was removed, and current script documentation points to the supported storage/decorator and Fluid/browser measurement entry points.
+Historical Wave 3 reports remain intact and are not relabeled as measurements of the new model.
+This is the only deliberately retired workflow in this checkpoint; no Rust or TypeScript production behavior changed.
+
+#### Final Inventory
+
+| Surface | Disposition and owning evidence |
+| --- | --- |
+| Core values and composition | Final storage/session exports only; view and snapshot laws exercised across all three backends; strict Rust/WASM compilation and docs pass. |
+| Memory | Factory identities, opening lifetimes, handle provenance, bounded/live delivery, availability, and reopening remain covered in memory-local tests and shared view conformance. |
+| File and immutable content | Buffered/durable view and snapshot conformance, corruption/incomplete-tail checks, dependency-closed recovery, ownership, uncertainty, and content-addressed closure tests pass. |
+| Sequencer | Shared session conformance plus owning identity, settlement, cancellation, registration/fence, shutdown, and recovery tests pass. |
+| Decorators | Compression, encryption, stateful compression, and supported compositions pass their session/codec tests; composed file recovery executes with both durability policies. |
+| Native transport/server | Registry and protocol tests pass; real native idle/live/snapshot tests execute against memory, buffered-file, and durable-file. |
+| Generated Node/browser | Generated production and test-support packages rebuilt/exercised; Node and TypeScript consumer tests pass; six browser backend/policy combinations prove publication and cleanup. |
+| Fluid/SharedTree | Three-container collaboration, initialization-summary reload, explicit disconnected-edit resolution/resubmission, and later replay pass on all three backends; existing summary tests cover incremental tree/blob handles, attachments, exact versions, and stale parents. |
+| Counter | Documented executable prints `recovered counter: 4`; all counter tests pass in the workspace run. |
+| Measurements | Repaired shell validation passes all six supported storage/decorator smoke cells; measurement wrapper produces one valid schema-version-3 record with provenance and file recovery; sixteen Rust-backed browser benchmark cells pass. |
+
+#### Exact Validation
+
+Commands below run from `rust-service/` unless marked repository root.
+All final commands exited successfully; none were waived.
+
+| Command or selection | Result |
+| --- | --- |
+| `cargo test -p sea-sequencer -p sea-file -p sea-file-durable -p sea-stateful-compression --all-targets --all-features` | Focused session/backend/composition acceptance passed before the full suite. |
+| `cargo fmt --all -- --check` | Passed. |
+| `cargo clippy --workspace --all-targets --all-features -- -D warnings` | Passed. |
+| `RUSTDOCFLAGS='-D warnings' cargo doc --workspace --all-features --no-deps` | Passed. |
+| `cargo build --workspace --all-targets` | Passed. |
+| `RUSTFLAGS='--cfg=web_sys_unstable_apis' cargo clippy -p sea-webtransport --target wasm32-unknown-unknown --features test-support -- -D warnings` | Passed. |
+| `./test.sh` | Passed: 133 Rust tests across 16 binaries; complete driver build, generated Node tests, driver JavaScript tests, durable-file/ClientSelected Chromium transport and shutdown. |
+| `node tests/minimal-fluid-driver/browser/run-headless.mjs tests/minimal-fluid-driver <url> <hash> __sharedTreeResult shared-tree.html` | Passed separately on memory, buffered-file, and durable-file with owned temporary servers/certificates. Three containers, four transports including reconnect, final value 3, `notCommitted` resolution, one explicit resubmission. |
+| `SEA_STORAGE_MODE=<mode> SEA_SNAPSHOT_POLICY=<policy> SEA_BROWSER_SKIP_BUILD=1 tests/webtransport-browser/run-test.sh` | Passed for memory/client, memory/sea, buffered-file/client, buffered-file/sea, and durable-file/sea; durable-file/client ran in `./test.sh`. Rebuilt WASM used throughout. Each reports publication at event 6 and zero active connections after bounded shutdown. |
+| `pnpm --dir tests/minimal-fluid-driver run bench:run -- --case rust-local,rust-local-direct,rust-memory,rust-memory-direct,rust-buffered,rust-buffered-direct,rust-durable,rust-durable-direct --dds <dds> --repetitions 1 --operations 5 --warmup 1` | Eight of eight passed for each of `shared-tree` and `dummy`, using current release builds. Fluid uses ClientSelected and direct uses SeaSelected. |
+| `bash scripts/validate-benchmarks.sh` | Passed from a disposable source copy: benchmark unit tests, formatting, strict lint, six-backend smoke, and source-root integrity checks. |
+| `bash scripts/measure-benchmarks.sh --backend file --fixture small-incompressible --records 8 --writers 1 --snapshot-frequency 4 --warmups 0 --repetitions 1` | Passed: one parsed schema-version-3 JSON record, eight read records, source commit `b9148b926e5`, and successful recovery. |
+| `cargo run -p sea-counter` | Passed: recovered value 4. |
+| `node scripts/check-documentation.mjs` | Passed: 24 roots, 31 READMEs, 56 checked local links. |
+| Repository-root `pnpm policy-check --path rust-service` | Passed. |
+| Repository-root `pnpm build:fast` | Passed, including generated WASM and browser consumer tasks. |
+
+An exploratory measurement used two writers with periodic snapshots and was correctly rejected by the harness's existing single-writer requirement.
+The corrected one-writer command above passed; this was an invalid validation invocation, not a suppressed implementation defect.
+No Rust/application test failure or unresolved integration defect remains at this boundary.
+
+#### Limits And Handoff
+
+These checks establish the retained experimental workflows, not production durability, security, capacity, or performance improvement.
+Browser measurements used only one short repetition per cell; independent TypeScript-local and Tinylicious baseline services were not rerun in this checkpoint.
+No power-loss qualification, retention/GC, authentication, cross-host fencing, production membership, or automatic ambiguous-write retry was added.
+The full SharedTree trace reloads the initial summary plus later events; incremental summary handle reuse is separately covered by driver tests, not claimed as a full Fluid summarizer-election test.
+Documentation consistency was audited at these contract/entry-point boundaries; no exhaustive declaration-documentation coverage claim is made.
+
+Owned validation servers were awaited and stopped; browser harnesses and disposable benchmark copies removed their temporary data and targets.
+No persistent environment override was installed, and no source manifest, lockfile, generated binding, or retained benchmark report changed.
+Local evidence is under `/tmp/sea-checkpoint6-*.log` and `/tmp/sea-checkpoint6-measurement.jsonl`; these are diagnostic artifacts, not committed performance reports.
+
+The migration is complete with one retained core model.
+Final documentation and script changes are uncommitted for user review; no further checkpoint or expanded work is authorized by this handoff.
 
 ### Checkpoint 5: Starting Hypothesis
 
