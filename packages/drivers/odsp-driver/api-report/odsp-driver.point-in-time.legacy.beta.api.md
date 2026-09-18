@@ -9,7 +9,7 @@ export function createPointInTimeDocumentService(props: IOdspPointInTimeDocument
 
 // @beta @legacy
 export class EpochTracker implements IPersistedFileCache {
-    constructor(cache: IPersistedCache, fileEntry: IFileEntry, logger: ITelemetryLoggerExt, clientIsSummarizer?: boolean | undefined);
+    constructor(cache: IPersistedCache, fileEntry: IFileEntry, logger: ITelemetryLoggerExt, clientIsSummarizer?: boolean | undefined, requestHeaders?: Readonly<Record<string, string>>);
     // (undocumented)
     protected readonly cache: IPersistedCache;
     // (undocumented)
@@ -77,6 +77,7 @@ export interface IOdspPointInTimeDocumentServiceImplementationProps {
     readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>;
     readonly logger?: ITelemetryBaseLogger;
     readonly persistedCache: IPersistedCache;
+    readonly requestHeaders?: Readonly<Record<string, string>>;
     readonly resolvedUrl: IResolvedUrl;
     readonly targetSequenceNumber: number;
 }

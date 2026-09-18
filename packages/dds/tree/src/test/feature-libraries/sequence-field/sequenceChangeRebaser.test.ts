@@ -297,12 +297,12 @@ export function testRebaserAxioms(): void {
 
 		// Hand-crafted version of the above tests to add coverage for returns
 		it("Return ↷ [Return, Return⁻¹] === Return", () => {
-			const move: SF.Changeset = Mark.move(1, { revision: tag0, localId: brand(0) });
-			const r: SF.Changeset = testInvert(tagChange(move, tag0), tag3, false);
-			const base1 = tagChange(r, tag1);
+			const move = tagChange(Mark.move(1, { revision: tag0, localId: brand(0) }), tag0);
+			const r = tagChange(testInvert(move, tag3, false), tag3);
+			const base1 = tagChange(testInvert(move, tag1, false), tag1);
 			const base2 = tagChange(testInvert(base1, tag2, true), tag2);
-			const actual = rebaseOverChanges(tagChange(r, tag3), [base1, base2]);
-			assertChangesetsEqual(actual.change, r);
+			const actual = rebaseOverChanges(r, [base1, base2]);
+			assertChangesetsEqual(actual.change, r.change);
 		});
 
 		/**

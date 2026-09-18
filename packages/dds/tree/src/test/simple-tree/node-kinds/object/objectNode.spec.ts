@@ -825,6 +825,20 @@ describeHydration(
 			assert.notEqual(id, id2);
 		});
 
+		it("generates an identifier when SchemaFactoryAlpha.identifier is omitted", () => {
+			const alphaSchemaFactory = new SchemaFactoryAlpha("AlphaTest");
+			class HasId extends alphaSchemaFactory.object("hasID", {
+				id: SchemaFactoryAlpha.identifier(),
+			}) {}
+
+			const first = new HasId({}).id;
+			const second = new HasId({}).id;
+
+			assert(isStableId(first));
+			assert(isStableId(second));
+			assert.notEqual(first, second);
+		});
+
 		it("unhydrated default identifier access via shortId returns UUID", () => {
 			class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
 			const newNode = new HasId({});

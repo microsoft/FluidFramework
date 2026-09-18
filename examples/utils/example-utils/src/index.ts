@@ -21,6 +21,14 @@ export {
 	getDataStoreEntryPoint,
 	type IFluidMountableViewEntryPoint,
 } from "./containerViewRuntimeFactory.js";
+export {
+	defaultServiceOptions,
+	type ExampleServiceOptions,
+	getExampleServiceClient,
+	createOrLoadExampleContainer,
+	loadExampleDataStore,
+	renderRoot,
+} from "./exampleApp.js";
 export type {
 	DataTransformationCallback,
 	IImportExportModel,
