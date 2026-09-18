@@ -46,6 +46,9 @@ mod referenceable_store;
 mod snapshot_archive;
 mod storage_surface;
 
+/// Multi-user session contracts composed above an exclusive document view.
+pub mod session;
+
 use async_trait::async_trait;
 use bytes::Bytes;
 

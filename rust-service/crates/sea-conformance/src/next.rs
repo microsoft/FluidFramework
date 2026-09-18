@@ -1,5 +1,112 @@
 //! Replacement storage laws, independent of backend bounds and handle-lifetime choices.
 
+use sea_core::{
+    archive::{EventSubmission, OperationId, SnapshotParticipation},
+    next::session::SeaSession,
+};
+
+/// Exercises two memberships sharing one replacement runtime, including a real initialization event.
+///
+/// # Panics
+/// Panics when session ordering, conditional publication, replay, or isolated close violates the contract.
+pub async fn run_session_conformance<Session: SeaSession>(first: &Session, second: &Session) {
+    let root = first
+        .put_blob(Bytes::from_static(b"initial state"))
+        .await
+        .expect("state");
+    let initialization = first
+        .submit(EventSubmission {
+            operation_id: OperationId::new(Bytes::from_static(b"initialize")).expect("identity"),
+            reference: None,
+            event: Event {
+                payload: Bytes::from_static(b"initialize"),
+                blob_tree: Some(root.id()),
+            },
+        })
+        .await
+        .expect("explicit initialization event");
+    let authority = first
+        .coordinate_snapshots(SnapshotParticipation::ClientSelected)
+        .await
+        .expect("publisher");
+    let initial = Snapshot {
+        root,
+        at_event: first
+            .resolve_position(initialization)
+            .await
+            .expect("resolve")
+            .expect("event"),
+    };
+    first
+        .publish_snapshot(None, None, initial.clone())
+        .await
+        .expect("initial application snapshot");
+    let mut loaded = second.load(LoadStart::LatestSnapshot).await.expect("load");
+    assert_eq!(
+        loaded.snapshot.as_ref().expect("snapshot").at_event.id(),
+        initialization
+    );
+    assert_eq!(loaded.events.progress().previous, Some(initialization));
+    let request = EventSubmission {
+        operation_id: OperationId::new(Bytes::from_static(b"followup")).expect("identity"),
+        reference: Some(initialization),
+        event: Event {
+            payload: Bytes::new(),
+            blob_tree: None,
+        },
+    };
+    let position = second
+        .submit(request.clone())
+        .await
+        .expect("second session submission");
+    assert_eq!(second.submit(request).await.expect("retry"), position);
+    assert_eq!(
+        next_data(&mut loaded.events)
+            .await
+            .expect("live suffix")
+            .committed
+            .position,
+        position
+    );
+    let mut bounded = first.read(None, Some(position));
+    for expected in [initialization, position] {
+        assert_eq!(
+            next_data(&mut bounded)
+                .await
+                .expect("ordered replay")
+                .committed
+                .position,
+            expected
+        );
+    }
+    assert!(next_data(&mut bounded).await.is_none());
+    first
+        .publish_snapshot(None, None, initial)
+        .await
+        .expect("exact retry after publication");
+    first.close().await.expect("close first membership");
+    let final_position = second
+        .submit(EventSubmission {
+            operation_id: OperationId::new(Bytes::from_static(b"after-close")).expect("identity"),
+            reference: Some(position),
+            event: Event {
+                payload: Bytes::new(),
+                blob_tree: None,
+            },
+        })
+        .await
+        .expect("other session survives");
+    assert_eq!(
+        next_data(&mut loaded.events)
+            .await
+            .expect("live after peer close")
+            .committed
+            .position,
+        final_position
+    );
+    drop(authority);
+}
+
 use std::collections::BTreeMap;
 
 use bytes::Bytes;

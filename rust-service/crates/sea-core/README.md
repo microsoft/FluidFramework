@@ -38,4 +38,11 @@ The stream returned by `load` catches up and then waits for new events, includin
 `load` combines `get_snapshot` and an unbounded `read` without an extra caller round trip; callers can drop the stream when done.
 Loads do not capture an event head.
 
+The replacement [`next::session`](src/next/session.rs) facets put membership, author ordering, stable event retries, and conditional snapshot coordination above storage.
+They reuse `SeaService` and its native/browser thread-safety bounds, the existing identity/event primitives, and handle-based `Snapshot` values.
+Loads return a selected snapshot and a direct live session-event stream; snapshots use document-scoped event positions as version identities.
+Initial application state is represented by an application event, not an initial storage snapshot.
+Session publication checks expected parents and current client-selected/Sea-selected authority, with exact position/root reconciliation instead of a separate snapshot operation ID.
+Behavioural evidence for these composition contracts is in `sea-conformance::next::run_session_conformance` and the owning `sea-sequencer::next` tests.
+
 Contributor validation commands are in [`DEV.md`](DEV.md).

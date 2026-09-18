@@ -7,6 +7,8 @@
 `next::run_view_conformance` checks the replacement factory/view workflow: exclusive opening, content availability, distinct equal appends, snapshot selection, bounded replay, initially empty live loading, live suffix delivery, reopening, and retained history.
 `next::run_snapshot_archive_conformance` checks exact and inclusive snapshot lookup, strict publication ordering, compatible returned handles, and sparse range bounds.
 These functions accept a replacement document factory and are currently exercised by `sea-memory`.
+`next::run_session_conformance` accepts two memberships in one replacement runtime and checks explicit initial-state publication, stable event retries, snapshot-plus-live replay, bounded ordering, and independent session close.
+It is exercised by `sea-sequencer`; backend ambiguity, cancelled mutation settlement, publisher fences, and backend-specific ownership are localized there rather than assumed from the memory backend.
 They do not impose a backend's future-bound policy, handle ownership policy, cancellation settlement mechanism, or durability behavior; those require localized tests.
 
 The following suites remain for old-model consumers until their owning migration checkpoints:

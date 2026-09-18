@@ -49,6 +49,8 @@ pub enum SessionError<E> {
     Closed,
     /// A live subscriber fell behind the bounded in-process queue.
     Lagged,
+    /// A mutation's commitment could not be reconciled; the runtime must be recovered.
+    RecoveryRequired,
 }
 
 impl<E: fmt::Display> fmt::Display for SessionError<E> {
@@ -59,6 +61,7 @@ impl<E: fmt::Display> fmt::Display for SessionError<E> {
             Self::Corrupt(message) => write!(formatter, "sequencer log is corrupt: {message}"),
             Self::Closed => formatter.write_str("session is closed"),
             Self::Lagged => formatter.write_str("session subscriber fell behind"),
+            Self::RecoveryRequired => formatter.write_str("sequencer recovery is required"),
         }
     }
 }
@@ -67,7 +70,11 @@ impl<E: Error + 'static> Error for SessionError<E> {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Storage(error) => Some(error),
-            Self::Rejected(_) | Self::Corrupt(_) | Self::Closed | Self::Lagged => None,
+            Self::Rejected(_)
+            | Self::Corrupt(_)
+            | Self::Closed
+            | Self::Lagged
+            | Self::RecoveryRequired => None,
         }
     }
 }
@@ -79,6 +86,7 @@ impl<E: ClassifiedError> ClassifiedError for SessionError<E> {
             Self::Rejected(_) | Self::Closed => ErrorKind::Rejected,
             Self::Corrupt(_) => ErrorKind::Corrupt,
             Self::Lagged => ErrorKind::Unavailable,
+            Self::RecoveryRequired => ErrorKind::Ambiguous,
         }
     }
 }
@@ -1083,7 +1091,7 @@ fn apply_record<E>(
     Ok(())
 }
 
-fn decode_committed<E>(
+pub(super) fn decode_committed<E>(
     record: &CommittedEvent,
 ) -> Result<Option<SessionCommittedEvent>, SessionError<E>> {
     let Envelope::Submission {
@@ -1129,7 +1137,7 @@ fn encode_open<E>(
     )
 }
 
-fn encode_submission<E>(
+pub(super) fn encode_submission<E>(
     author_id: &AuthorId,
     session_id: &SessionId,
     operation_id: &OperationId,

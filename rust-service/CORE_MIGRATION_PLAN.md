@@ -2,16 +2,16 @@
 
 ## Status
 
-- **Plan status:** Checkpoint 1 implemented and validated in the working tree, ready for user review; stopped before checkpoint 2.
+- **Plan status:** Checkpoint 1 reviewed and committed by the user; checkpoint 2 implemented and validated, uncommitted for review.
 - **Execution mode:** One coordinating agent, sequential checkpoints on the current branch.
 - **Scope:** Replacement of the old core model and alignment of its implementations and consumers within `rust-service/`.
 - **Preparation completed:** `85e6cf96430` introduced `sea_core::next`, removed `SeaCollection`, and added default `SeaStorage::create_view` and `open_view` methods.
-- **Completed checkpoint:** API-only preparation and checkpoint 1 implementation; checkpoints 2 through 6 remain open.
-- **Validation:** Checkpoint 1 focused tests, canonical Rust workspace gates, `./test.sh`, documentation checking, scoped policy, and repository-root `pnpm build:fast` passed on 2026-09-18; exact outcomes are recorded below.
-- **Known implementation state:** `sea_memory::MemoryStorage` implements replacement components and direct views; existing sequencer, backends, wrappers, transport, and application consumers still use the old model.
-- **Open decisions:** Placement of session-level policies, mapping snapshot publication identities to the replacement model, and the final public module layout must be resolved at their owning checkpoints.
-- **Next action:** Review checkpoint 1's uncommitted diff and evidence. Only after approval, begin checkpoint 2 at `crates/sea-sequencer/src/session.rs` using an exclusively owned replacement view; settle the listed session decisions before materially changing contracts.
-- **Plan commit:** `468aa0dd934`; checkpoint 1 started from `96ffe44bc98`. No implementation commit, push, branch, worktree, or subagent was created.
+- **Completed checkpoint:** API-only preparation and checkpoints 1 and 2 implementation; checkpoint 2 awaits user review and checkpoints 3 through 6 remain open.
+- **Validation:** Checkpoint 2 focused tests, canonical Rust workspace gates, `./test.sh`, documentation checking, scoped policy, and repository-root `pnpm build:fast` passed; exact outcomes are recorded below.
+- **Known implementation state:** Replacement memory components, direct views, session facets, and a multi-user sequencer work together; remaining backends, wrappers, transport, and application consumers still use the explicitly transitional old model.
+- **Open decisions:** Final public module layout and consumer-specific protocol/Fluid mappings remain for their owning checkpoints; checkpoint 2's shared session mappings are approved and recorded below.
+- **Next action:** Review checkpoint 2's uncommitted diff and evidence at `893fb9fe307`. Only after approval, begin checkpoint 3's remaining backends and decorators; do not start checkpoint 3 from this handoff without authorization.
+- **Plan commit:** `468aa0dd934`; checkpoint 1 started from `96ffe44bc98` and was committed and adjusted by the user through `893fb9fe307`. Checkpoint 2 created no commit, push, branch, worktree, or subagent.
 
 Update this status and the checkpoint evidence in every implementation commit.
 Record the exact next action, completed checks, unresolved decisions, and any temporary breakage.
@@ -126,7 +126,7 @@ Package names below identify focused validation targets, not permission to omit 
 - **Evidence:** Create/open unknown and existing documents; reject competing valid writers; append with and without blob dependencies; resolve handles; publish and select snapshots; bounded and live reads, empty ranges, lazy errors, cancellation, and reopening within the backend's documented guarantees.
 - **Validation:** Focused `sea-memory`, `sea-core`, and relevant `sea-conformance` checks and tests, plus required policy/build checks below.
 - **Exit:** A real memory-backed `SeaView` supports append, snapshot, load, and reopen, with localized regression evidence. Record any remaining old memory API and its checkpoint-3 removal.
-- [x] Complete: implementation and validation, uncommitted and awaiting user review.
+- [x] Complete: reviewed, committed, and adjusted by the user through `893fb9fe307`.
 
 ### 2. Sequencer And Session Contracts
 
@@ -137,7 +137,7 @@ Package names below identify focused validation targets, not permission to omit 
 - **Evidence:** Multiple sessions share one runtime; ordered submission and snapshot-plus-replay work without gaps or duplicates; ambiguous and cancelled operations are not confused; closing one session does not invalidate another; logical teardown releases the intended resources.
 - **Validation:** Focused `sea-sequencer` tests and session conformance checks over the memory implementation, plus affected core checks and required gates.
 - **Exit:** One usable end-to-end memory/view/sequencer slice with documented session contracts and remaining consumer dependencies. Evaluate, but do not automatically begin, parallel execution.
-- [ ] Complete.
+- [x] Complete: implementation and validation, uncommitted and awaiting user review.
 
 ### 3. Remaining Backends And Decorators
 
@@ -328,3 +328,118 @@ Stop here for user review.
 After explicit authorization to continue, verify the starting commit and this working-tree evidence, then begin checkpoint 2 by replacing the sequencer's old storage dependency with one exclusive replacement `SeaView`.
 Before materially revising shared session contracts, resolve initial application state, snapshot publication/version identity, conditional publication ownership, and stable retry/reconciliation identity against actual consumer usages.
 No checkpoint-2 policy decision, implementation, commit, or parallel-work authorization is implied by this handoff.
+
+### Checkpoint 2: Sequencer And Session Contracts
+
+Starting commit: `893fb9fe307` on `rust-service`, initially clean.
+The user committed checkpoint 1 as `50a29da6bb9` and adjustments through `893fb9fe307`.
+Those adjustments supersede the original handoff's memory-stream lifetime description.
+The sequencer must depend only on shared `SeaStorage`/`SeaView` guarantees, not memory-specific stream ownership or reopening behavior.
+
+Responsible path: `crates/sea-sequencer/src/next.rs`, with the old session implementation retained for consumers awaiting checkpoints 3 through 5.
+Hypothesis: one owned view plus serialized, retained mutation futures supports multiple independent memberships without an old-storage adapter or broadcast catch-up pipeline.
+First discriminating check: `two_sessions_share_one_view_and_close_independently`.
+
+The user approved these shared mappings before implementation:
+- Represent a nonempty initial application summary with an explicit application initialization event referencing its tree, then a normal snapshot; Fluid mapping stays in its adapter.
+- Use document-scoped snapshot event positions as version identities; reconcile position/root equality and reject conflicting roots.
+	Expected-parent checks and publisher nomination/fencing belong in the sequencer, without a separate snapshot operation-ID registry.
+- Keep stable event identities and conflict detection above storage; reconcile returned ambiguous appends with a bounded scan.
+	Cancellation cannot prove absence or settlement; block further mutation until retained work settles or recovery establishes safety.
+- Own one exclusive view for the runtime and use direct live reads under shared contracts only.
+
+No subagents, worktrees, commits, pushes, or checkpoint-3 work are authorized by this checkpoint.
+
+#### Implementation And Decisions
+
+The initial two-session check passed after correcting generic type inference in the append helper.
+`sea_core::next::session` now defines archive, author, snapshot-coordinator, and combined session facets using existing `SeaService` native/browser bounds and shared identity/event primitives.
+Shared storage contracts were not changed.
+`sea-sequencer::next::LocalSequencer` owns the exclusive view, active membership, stable submission index, serialized mutations, and snapshot authority.
+`sea-conformance::next::run_session_conformance` proves the replacement initial-state, snapshot, retry, replay, and independent-close workflow.
+Each changed crate has updated owning documentation; shared contract behavior is exercised through conformance and the sequencer rather than a duplicate core fixture.
+
+Membership and publisher selection are runtime-local, with no control records in the replacement application archive.
+Recovery rebuilds committed operation identities and reserves session identities observed in application records; unused memberships are not persisted.
+The existing envelope codec is reused, but old storage is not underneath the replacement implementation.
+Direct monitored backend reads replace finite catch-up and broadcast buffering.
+Logical close removes one membership; shutdown settles pending work before releasing the runtime's view.
+Backend-owned streams or other resources can still retain opening ownership, as permitted by the shared contracts.
+
+An owned mutation future remains in the runtime when its caller is cancelled.
+The next state-dependent operation drives the same future; no detached task or native-only executor is required.
+Without another operation, cancelled work can remain pending.
+Dropping the runtime can cancel that retained work and requires backend settlement/recovery discipline before reopening.
+Failed reconciliation poisons the runtime with `RecoveryRequired`; discarding and recovering it is required instead of claiming successful shutdown.
+
+Returned event ambiguity uses an authoritative head and bounded scan, never automatic resubmission.
+Returned snapshot ambiguity only resolves when lookup confirms the exact position/root.
+Snapshot lookup absence is not proof of settlement and therefore requires recovery, not an unsafe explicit retry.
+Publisher registration replacement and drop revoke only the corresponding registration; nomination transitions allocate fresh fences.
+Conditional publication and exact retries remain session policy, while component provenance and dependency availability remain storage responsibilities.
+
+#### Behavioral Evidence
+
+Twelve replacement tests run alongside twelve retained old-sequencer tests.
+Fault fixtures live beside the owning implementation in `src/next_fault_tests.rs`; no new dependency or manifest change was needed.
+
+| Responsibility | Localized evidence |
+| --- | --- |
+| Shared view ownership, independent close, replacement membership | `two_sessions_share_one_view_and_close_independently` |
+| Explicit initialization, stable retries, snapshots and live suffix | `replacement_session_conformance`, invoking `run_session_conformance` |
+| Parent checks, position/root conflicts, client-selected suppression, fences, registration replacement/drop | `snapshot_parent_position_and_publisher_fences_are_session_policy` |
+| Direct replay, membership closure, every load policy | `direct_reads_close_with_membership_and_load_policies_preserve_replay` |
+| Recovered retry/snapshot identities, runtime-local membership | `recovery_restores_submission_and_snapshot_identities_not_active_memberships` |
+| 32 concurrent submissions, ordered once-only delivery, progress, lazy bound errors | `concurrent_sessions_deliver_each_submission_once_with_lazy_errors_and_progress` |
+| Corrupt and duplicate committed envelopes fail recovery | `recovery_rejects_malformed_and_duplicate_submission_envelopes` |
+| Definitive rejection, ambiguous commit/absence, no internal resubmission | `returned_ambiguity_is_scanned_without_resubmitting_and_absence_allows_explicit_retry` |
+| Failed head/read reconciliation blocks mutations and absence claims | `failed_reconciliation_blocks_mutation_and_absence_claims_until_recovery` |
+| Cancellation before/after backend commitment retains the same future | `cancelling_before_or_after_commit_retains_the_same_backend_future_until_settlement` |
+| Snapshot cancellation and ambiguous lookup preserve publication order | `snapshot_cancellation_and_ambiguity_preserve_publication_order` |
+| Teardown with backend streams retaining writer ownership | `shutdown_and_session_close_work_when_backend_streams_retain_writer_ownership` |
+
+The fault backend deliberately retains writable components in its read streams.
+This tests a stricter lifetime allowed by `SeaStorage` rather than relying solely on memory's independent streams.
+Mutation invocation counts and explicit gates distinguish caller cancellation from backend settlement without timing sleeps.
+
+#### Validation Results
+
+All final checks exited successfully; commands are from `rust-service/` except where marked repository root.
+
+| Command | Actual outcome |
+| --- | --- |
+| `cargo test -p sea-sequencer next::` | All 12 replacement tests passed. |
+| `cargo test -p sea-sequencer -p sea-core -p sea-conformance --all-targets --all-features` | Passed before the last two regressions; the full workspace run below includes both additions. |
+| `cargo clippy -p sea-core -p sea-sequencer -p sea-conformance --all-targets --all-features -- -D warnings` | Passed after local lint fixes and again after final code/documentation edits. |
+| `cargo fmt --all -- --check` | Passed. |
+| `cargo clippy --workspace --all-targets --all-features -- -D warnings` | Passed. |
+| `RUSTDOCFLAGS='-D warnings' cargo doc --workspace --all-features --no-deps` | Passed. |
+| `cargo build --workspace --all-targets` | Passed. |
+| `cargo rustc -p sea-sequencer --lib -- -D missing-docs` | Passed. |
+| `./test.sh` | Passed: 147 Rust tests across 16 binaries, generated WASM/Node tests, driver JavaScript tests, and real Chromium WebTransport/shutdown checks. |
+| `node scripts/check-documentation.mjs` | Passed: 24 roots, 31 READMEs, 53 local links. |
+| Repository-root `pnpm policy-check --path rust-service` | Passed: 523 files, no violations. |
+| Repository-root `pnpm build:fast` | Passed: 1,878 tasks across 168 packages; 1,858 up to date and 20 completed, including WASM/browser regeneration. |
+
+Local logs: `/tmp/sea-core-checkpoint2-tests.log` and `/tmp/sea-core-checkpoint2-build-fast.log`.
+Browser evidence reports HeadlessChrome 152, three sessions, the default durable-file configuration, blob/directory and snapshot participation, and bounded server shutdown.
+Generated client and browser coverage remains regression evidence for old consumers, not evidence of their migration.
+No replacement transport, SharedTree browser matrix, or benchmark migration is claimed.
+No required gate remains failing or waived; no tracked generated output, manifest, or lockfile changed.
+
+#### Precise Handoff
+
+Checkpoint 2 has no implementation commit: its eleven changed/new files remain uncommitted on `rust-service` at `893fb9fe307` for review.
+The accepted checkpoint-1 chain is `50a29da6bb9`, `89af83e7697`, `8e16ba8a24e`, `c4637c6445a`, and `893fb9fe307`.
+That chain supersedes checkpoint 1's historical uncommitted handoff and stream-ownership description above.
+
+Retained transition obligations:
+- Old core sessions and `sea-sequencer::session` remain for unmigrated consumers; they are not compatibility adapters for `next`.
+- The replacement reuses the old module's envelope codec and `SessionError`, now including `RecoveryRequired`; checkpoint 5 owns moving these definitions and removing the old session implementation.
+- Checkpoint 3 owns backend/wrapper migration and records any old backend type still needed by transport/application consumers until checkpoints 4 and 5.
+- Checkpoint 4 owns server runtime management and protocol/binding mappings; checkpoint 5 owns Fluid initialization/sequence/version mapping and final public layout.
+
+Parallel backend and wrapper work could become useful after this slice is accepted, but would add shared-conformance and integration coordination overhead.
+Sequential work remains the authorized mode; any switch requires a separate user decision and no iteration or worktree has been created.
+Stop for checkpoint-2 review now.
+The precise next implementation action, only after authorization, is to verify this accepted boundary and begin checkpoint 3 at the remaining backend/decorator contracts and their localized conformance fixtures.
