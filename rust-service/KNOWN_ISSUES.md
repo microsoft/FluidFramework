@@ -73,5 +73,6 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
   See the [investigation findings](CODESPACES_WEBTRANSPORT_PLAN.md#initial-findings-2026-09-18) for implementation evidence, alternatives, and unverified routes.
 - **Impact:** Starting SEA in a Codespace and making its port public does not provide Tinylicious-style access from ordinary external browsers.
   Internal Chromium tests do not establish that workflow.
-- **Trigger:** Investigate native WebTransport over HTTP/2 compatibility or a public UDP-preserving tunnel, establish a separately reachable WebTransport endpoint, or re-evaluate when Codespaces documents compatible forwarding.
-  Preserve transport-backed backpressure; WebSocket transport and bridge options are not selected.
+- **Trigger:** Implement and validate an SEA adapter after the [native WebSocketStream primitive probe](CODESPACES_WEBTRANSPORT_PLAN.md#native-websocketstream-probe-2026-09-18) demonstrated forwarded connections, bidirectional backpressure, and recovery from an external VS Code browser.
+  Preserve independent-stream flow control and finish/cancellation semantics; the primitive probe did not test SEA collaboration.
+  Traditional WebSocket wrappers remain insufficient, and third-party relays remain unselected alternatives.
