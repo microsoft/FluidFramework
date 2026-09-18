@@ -1,5 +1,13 @@
 #![doc = include_str!("../README.md")]
 
+mod document;
+mod memory_archive;
+
+pub use document::{
+    MemoryBlobHandle, MemoryBlobStore, MemoryEventArchive, MemoryEventHandle,
+    MemorySnapshotArchive, MemoryStorage, MemoryStorageError,
+};
+
 use std::{collections::BTreeMap, sync::Arc};
 
 use async_trait::async_trait;

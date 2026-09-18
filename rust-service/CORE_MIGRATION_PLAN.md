@@ -2,16 +2,16 @@
 
 ## Status
 
-- **Plan status:** Ready for implementation; no implementation checkpoint has started.
+- **Plan status:** Checkpoint 1 implemented and validated in the working tree, ready for user review; stopped before checkpoint 2.
 - **Execution mode:** One coordinating agent, sequential checkpoints on the current branch.
 - **Scope:** Replacement of the old core model and alignment of its implementations and consumers within `rust-service/`.
 - **Preparation completed:** `85e6cf96430` introduced `sea_core::next`, removed `SeaCollection`, and added default `SeaStorage::create_view` and `open_view` methods.
-- **Completed checkpoint:** API-only preparation; the six implementation checkpoints below remain open.
-- **Validation:** `node scripts/check-documentation.mjs` and repository-root `pnpm policy-check --path rust-service` passed on 2026-09-18. No code build or tests were run for this documentation-only change.
-- **Known implementation state:** Existing consumers still use the old model; the replacement contracts have no backend implementations yet.
+- **Completed checkpoint:** API-only preparation and checkpoint 1 implementation; checkpoints 2 through 6 remain open.
+- **Validation:** Checkpoint 1 focused tests, canonical Rust workspace gates, `./test.sh`, documentation checking, scoped policy, and repository-root `pnpm build:fast` passed on 2026-09-18; exact outcomes are recorded below.
+- **Known implementation state:** `sea_memory::MemoryStorage` implements replacement components and direct views; existing sequencer, backends, wrappers, transport, and application consumers still use the old model.
 - **Open decisions:** Placement of session-level policies, mapping snapshot publication identities to the replacement model, and the final public module layout must be resolved at their owning checkpoints.
-- **Next action:** Begin checkpoint 1 with a current consumer inventory and the memory backend; do not start several checkpoints concurrently.
-- **Plan commit:** Record this plan's commit hash in the first implementation checkpoint update.
+- **Next action:** Review checkpoint 1's uncommitted diff and evidence. Only after approval, begin checkpoint 2 at `crates/sea-sequencer/src/session.rs` using an exclusively owned replacement view; settle the listed session decisions before materially changing contracts.
+- **Plan commit:** `468aa0dd934`; checkpoint 1 started from `96ffe44bc98`. No implementation commit, push, branch, worktree, or subagent was created.
 
 Update this status and the checkpoint evidence in every implementation commit.
 Record the exact next action, completed checks, unresolved decisions, and any temporary breakage.
@@ -66,7 +66,8 @@ Do not silently disable tests, remove workspace members, or weaken a useful work
 
 Each checkpoint handoff must identify changed responsibilities, commit IDs, exact checks and outcomes, retained transitional code, and the next action.
 The next agent verifies those commits and evidence before continuing.
-Honor the user's commit authorization for implementation work; this request authorizes only the plan commit and does not authorize pushing.
+Honor the user's commit authorization for implementation work; the earlier plan-commit authorization did not authorize implementation commits or pushing.
+Checkpoint 1's implementation request explicitly prohibits committing, pushing, and starting checkpoint 2 before review.
 
 Do not initialize numbered iterations, new branches, worktrees, or parallel write agents under this plan.
 After the memory-and-sequencer slice works, independent backend or consumer work may justify parallel execution.
@@ -125,7 +126,7 @@ Package names below identify focused validation targets, not permission to omit 
 - **Evidence:** Create/open unknown and existing documents; reject competing valid writers; append with and without blob dependencies; resolve handles; publish and select snapshots; bounded and live reads, empty ranges, lazy errors, cancellation, and reopening within the backend's documented guarantees.
 - **Validation:** Focused `sea-memory`, `sea-core`, and relevant `sea-conformance` checks and tests, plus required policy/build checks below.
 - **Exit:** A real memory-backed `SeaView` supports append, snapshot, load, and reopen, with localized regression evidence. Record any remaining old memory API and its checkpoint-3 removal.
-- [ ] Complete.
+- [x] Complete: implementation and validation, uncommitted and awaiting user review.
 
 ### 2. Sequencer And Session Contracts
 
@@ -224,3 +225,106 @@ Classify failures as migration defects, pre-existing failures, or environment bl
 
 For each subsequent checkpoint, append a concise entry covering starting and accepted commits, decisions and rationale, tests and commands with outcomes, temporary paths removed or retained, and the precise next action.
 Update **Status** and its checkbox in the same implementation commit, leaving earlier evidence intact.
+
+### Checkpoint 1: Memory Storage And Direct Views
+
+- Starting commit: `96ffe44bc98` on `rust-service`, with a clean working tree.
+	The plan commit is `468aa0dd934`; API preparation is `85e6cf96430`.
+	Implementation is uncommitted by user instruction; no commit or push is authorized.
+- Responsible path: new document components in `crates/sea-memory/src/document.rs`, composed by the existing `sea_core::next::SeaView`.
+- Initial hypothesis: document-scoped availability provenance and shared exclusive-opening leases can satisfy the replacement contracts without changing their semantics or forwarding through the old memory API.
+	Cheapest initial check: a localized blob publication/resolution test rejects another document's handle even for identical content identity.
+- Verified current consumers of `MemoryStream`: sequencer tests, compression/encryption/stateful-compression tests, server host/dispatch, WASM transport tests, counter example, and benchmarks.
+	They remain on the old API for their owning checkpoints; checkpoint 3 owns removal of the old memory backend once these consumers have replacements.
+- Execution is sequential on the current branch, with no subagents, worktrees, or checkpoint-2 work.
+
+#### Implementation And Decisions
+
+`MemoryStorage` now owns document allocation, retained histories, and exclusive opening leases.
+Its blob, event, and snapshot components are independently usable; their clones share the same opening and mutation order.
+`memory_archive.rs` supplies retained bounded/live reads with lazy initialization, coherent progress, wakeups, and stream-owned leases.
+`SeaView` uses these implementations directly, with no forwarding through `MemoryStream` and no material shared-contract changes.
+The initial hypothesis was supported by the first executable check: `cargo test -p sea-memory blob_handles_check_document_provenance_and_closure` passed immediately after the first substantive edit.
+
+Availability handles retain document data but not opening ownership.
+They remain compatible with a later opening of the same document after `ensure_available`; foreign-document handles are rejected even for equal identities.
+Components and streams, including unpolled or completed streams, retain the opening until dropped.
+Raw event components keep blob identities opaque; reopening verifies a complete dependency-closed history and fails on missing dependencies or gaps.
+Snapshot records retain identities rather than their own document's handles, preventing ownership cycles.
+
+Memory-specific choices allowed by the contracts are documented in `crates/sea-memory/README.md`:
+nonempty future-bound reads fail lazily with `InvalidPosition`; reversed/equal ranges complete even for future bounds;
+all committed history is retained; more than one unread entry reports `FallenBehind`;
+and append has no internal suspension, detached work, retry, or ambiguous result.
+Unpolled append cancellation has no effect, while a polled append settles synchronously before returning.
+No new dependencies, manifest changes, wire representations, or persisted formats were introduced.
+
+#### Behavioral Evidence
+
+Twelve replacement-focused memory tests were added alongside the seven retained old-model tests.
+The shared replacement suites are invoked by `document::tests::replacement_storage_conformance` with a five-second timeout;
+`sea-conformance` itself has no standalone test fixtures.
+
+| Responsibility | Evidence |
+| --- | --- |
+| Unknown identities, unique allocation, exclusive opening, clones, competing opens | `factory_identity_and_component_clone_lifetimes` |
+| Blob round trip, directory closure, resolution, nested content, provenance | `blob_handles_check_document_provenance_and_closure` |
+| Dependency checks before view publication, including equal foreign identities | `availability_rejects_foreign_handles_before_view_publication` |
+| Append, snapshot, load, stream-held ownership, reopen, old-handle revalidation | `view_appends_loads_and_reopens_with_compatible_handles` |
+| Shared direct-view and sparse snapshot laws | `sea_conformance::next::{run_view_conformance, run_snapshot_archive_conformance}` |
+| Lazy bounds, finite/empty ranges, terminal errors, unpolled read ownership | `read_bounds_are_lazy_empty_ranges_finish_and_drops_release_opening` |
+| Actual reader wake notification, ordered delivery, progress, independent cancellation | `live_read_wakes_without_gaps_tracks_backlog_and_cancels_independently` |
+| Append cancellation settlement and distinct concurrent submissions | `cancelled_appends_have_no_detached_work_and_concurrent_appends_are_distinct` |
+| Every `LoadStart` policy, missing qualifying snapshots, replay cursor | `load_policies_replay_from_the_selected_snapshot_without_capturing_a_head` |
+| Live snapshot read ownership, reopened event availability, no handle cycle | `snapshot_stream_is_live_and_retains_opening_without_retaining_handle_cycles` |
+| Raw event opacity versus factory recovery law | `raw_event_archive_keeps_blob_ids_opaque_but_reopen_checks_dependencies` |
+| Missing published dependencies fail lookup/read/reopen, required event gaps fail reopen | `missing_snapshot_dependencies_and_event_gaps_fail_instead_of_disappearing` |
+
+The changed production crate's guarantees and tests live in `sea-memory`; unchanged `sea-core::next::SeaView` composition is exercised by the memory and shared suites.
+Core contracts and core implementation files were not changed, so no additional core-local fixture or documentation change was needed.
+
+#### Validation Results
+
+All final checks below exited successfully on 2026-09-18 using pinned `rustc 1.98.1` and `wasm-bindgen 0.2.128`.
+Commands are from `rust-service/` except where explicitly marked repository root.
+
+| Command | Actual outcome |
+| --- | --- |
+| `cargo test -p sea-memory -p sea-core -p sea-conformance --all-targets --all-features` | 19 memory tests and 11 core tests passed; replacement conformance exercised through memory. |
+| `cargo clippy -p sea-memory -p sea-core -p sea-conformance --all-targets --all-features -- -D warnings` | Passed after local lint cleanup. |
+| `cargo fmt --all -- --check` | Passed. |
+| `cargo clippy --workspace --all-targets --all-features -- -D warnings` | Passed. |
+| `RUSTDOCFLAGS='-D warnings' cargo doc --workspace --all-features --no-deps` | Passed; generated documentation under `target/doc/`. |
+| `cargo build --workspace --all-targets` | Passed. |
+| `./test.sh` | Passed: package build, `cargo test --workspace --all-targets --all-features` (124 tests across 16 test binaries), generated WASM/Node tests, driver JavaScript tests, and real Chromium WebTransport/shutdown checks. |
+| `node scripts/check-documentation.mjs` | Passed: 24 roots, 31 READMEs, 51 local links. |
+| Repository-root `pnpm policy-check --path rust-service` | Passed: 520 files, no violations. |
+| Repository-root `pnpm build:fast` | Passed: 1,878 tasks considered across 168 packages; 1,858 up to date and 20 completed, including regenerated WASM/browser inputs. |
+
+The full test log is `/tmp/sea-core-checkpoint1-tests.log`; the root build log is `/tmp/sea-core-checkpoint1-build-fast.log`.
+These are local diagnostic artifacts, not committed reports.
+The test graph executed `node ../wasm-client/node-test.mjs`, `node --test "lib/*.test.js"`, and the browser harness after rebuilding WASM.
+Browser evidence reports HeadlessChrome 152, three transport sessions, `STORAGE_MODE=durable-file`, successful blob/directory and snapshot-participation flow, and successful bounded shutdown.
+The harness waited for server exit and removed its temporary target, certificate, and data directories.
+Generated consumer checks are regression coverage for the retained old model, not a claim that transport or SharedTree has migrated to the new model.
+No standalone SharedTree browser matrix, benchmark smoke, or replacement sequencer workflow was claimed or required for this checkpoint.
+
+Initial focused Clippy failures were local: included-README list continuation formatting, two long conformance functions, and one redundant underscore-field assertion.
+They were corrected without suppressions, then focused and full workspace gates passed.
+There are no remaining known migration defects, temporary build breakages, or environment blockers at this boundary.
+
+#### Precise Handoff
+
+The accepted implementation commit is **none**: changes remain uncommitted for review on `rust-service` at `96ffe44bc98`.
+Review the three new source files (`sea-memory/src/document.rs`, `sea-memory/src/memory_archive.rs`, `sea-conformance/src/next.rs`), their crate-root wiring, the two READMEs, and this plan.
+No other tracked files changed; no shared core contract was materially revised.
+
+The old `MemoryStream`, old `MemoryError`, and old conformance entry points remain for existing consumers.
+Checkpoint 3 owns old memory/backend removal, coordinated with checkpoint 2's sequencer migration and later transport/application migrations;
+if a later consumer still keeps an old type alive, checkpoint 3 must record that obligation explicitly for checkpoint 5 rather than introduce an adapter.
+The temporary `sea_core::next` namespace remains checkpoint 5's responsibility.
+
+Stop here for user review.
+After explicit authorization to continue, verify the starting commit and this working-tree evidence, then begin checkpoint 2 by replacing the sequencer's old storage dependency with one exclusive replacement `SeaView`.
+Before materially revising shared session contracts, resolve initial application state, snapshot publication/version identity, conditional publication ownership, and stable retry/reconciliation identity against actual consumer usages.
+No checkpoint-2 policy decision, implementation, commit, or parallel-work authorization is implied by this handoff.

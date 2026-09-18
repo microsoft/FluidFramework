@@ -1,24 +1,61 @@
 # Sea Memory
 
-`sea-memory` is the process-local reference implementation of `SeaStorage`.
+`sea-memory` provides `MemoryStorage`, the process-local reference implementation of `sea_core::next::SeaStorage`.
 
 ## Behavior
 
-- Cloned handles share ordered events, immutable content, and retained snapshot history.
-- Appends become visible in process and report `Durability::Memory`.
-- Event and snapshot publication validates the complete referenced blob-tree closure before commit.
-- Readers are finite at their captured head; `load` atomically pairs snapshot selection with that head.
-- Snapshot publication enforces expected-parent equality, committed positions, stable operation identity, and non-regression.
+`create_view` allocates a process-unique document identity; `open_view` returns `None` for unknown identities and rejects competing openings.
+Factory clones share the registry, and closed documents retain their complete histories while the registry lives.
+
+Blob, event, and snapshot components and their clones share one exclusive opening.
+Reads retain that opening from creation until dropped, including unpolled, failed, and completed reads.
+Dropping a view does not invalidate its reads; dropping the last component and stream releases writer ownership.
+
+Availability handles have private, document-specific provenance and retain data, not writer ownership.
+A new opening of the same document can validate old handles with `ensure_available` or mint fresh ones with `resolve`.
+Handles from another document are rejected even when their content identities or event positions match.
+
+Blobs and directories deduplicate by content identity; directory publication validates the complete transitive tree.
+The direct view establishes blob availability before appending a referencing event and both blob and event availability before publishing a snapshot.
+Raw event components deliberately treat blob identities as opaque.
+Reopening validates the complete event prefix and all snapshot dependencies and fails on inconsistent history rather than omitting records.
+
+Event appends assign increasing positions starting at one and never deduplicate equal input.
+Snapshots are sparse, strictly increasing publications at their event handle's position, with exact and optional inclusive-bound lookup.
+There is no initial empty-state snapshot.
+
+Reads initialize on first poll; initialization errors are stream items, not errors from `read`.
+Finite reads use exclusive lower and inclusive upper bounds, including bounds without a snapshot at that position.
+Nonempty reads reject either bound beyond the archive's initialization head (including any bound on an empty archive).
+Ranges with both bounds and `after >= stop_after` complete without data, even for future bounds.
+
+Unbounded reads replay retained data and wait for appends without a captured-head cutoff or broadcast-loss window.
+Progress advances `previous` only on delivery, discovers the latest in-range position, and reports `FallenBehind` when more than one unread entry has accumulated.
+Dropping a read cancels its subscription without affecting other readers.
+`load` selects a snapshot using `LoadStart` and returns the live event suffix; it does not capture an atomic event head.
+
+Durability is `Durability::Memory`.
+Appends have no internal suspension or detached work: an unpolled future has no effect; once polled, its mutation settles synchronously under the component lock before returning.
+No operation returns an ambiguous outcome or retries an append.
 
 ## Limits
 
-All events, snapshots, and content are lost when the final handle is dropped.
-The backend retains all committed and uploaded values while alive.
-Live tailing and multi-user operation identities belong to `sea-sequencer`.
+There is no persistence, crash recovery, pruning, outage simulation, or cross-process document identity guarantee.
+Data survives while the factory, components, streams, or availability handles retain the corresponding state; handles alone do not provide a factory or writer authority.
+The factory retains every created document without eviction.
+Session policy, application operation identities, and reconciliation belong above the view.
 This implementation is suitable for tests, examples, and process-local state, not crash recovery.
 
-The primary API is [`MemoryStream`](https://docs.rs/sea-memory/latest/sea_memory/struct.MemoryStream.html).
-Shared laws come from [`sea-conformance`](../sea-conformance/README.md).
+The primary entry point is `MemoryStorage`; its components and handles are exported from the crate root.
+Shared replacement laws come from [`sea-conformance::next`](../sea-conformance/src/next.rs).
+Localized tests in [`document.rs`](src/document.rs) exercise provenance, opening lifetimes, cancellation, lazy/live reads, and inconsistent-history rejection.
+
+## Transitional API
+
+`MemoryStream` still implements the old `sea_core::archive::SeaStorage` for consumers awaiting migration.
+It is separate state and code, not an adapter beneath `MemoryStorage`.
+Its finite captured-head loads, initial snapshots, conditional publication, and stable publication identities are old-model semantics only.
+Checkpoint 3 of the [core migration plan](../../CORE_MIGRATION_PLAN.md) owns its removal after dependent consumers migrate.
 
 ## Validation
 

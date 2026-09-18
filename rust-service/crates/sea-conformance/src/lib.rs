@@ -1,5 +1,8 @@
 #![doc = include_str!("../README.md")]
 
+/// Shared behavioral laws for the replacement storage components and direct views.
+pub mod next;
+
 use std::{collections::BTreeMap, fmt::Debug};
 
 use bytes::Bytes;
