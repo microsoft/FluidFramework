@@ -129,6 +129,14 @@ export enum AttachState {
     Detached = "Detached"
 }
 
+// @beta @sealed
+export type ChangeMetadataBeta = CommitMetadata & ({
+    readonly isLocal: true;
+    readonly events: Listenable<LocalCommitEvents>;
+} | {
+    readonly isLocal: false;
+});
+
 // @beta @input
 export interface CodecWriteOptionsBeta {
     readonly minVersionForCollab: OldestSupportedClientVersion;
@@ -145,6 +153,13 @@ export enum CommitKind {
 export interface CommitMetadata {
     readonly isLocal: boolean;
     readonly kind: CommitKind;
+}
+
+// @beta
+export enum CommitOutcome {
+    FullyApplied = 0,
+    FullyDropped = 1,
+    NewContentOnly = 2
 }
 
 // @beta
@@ -853,6 +868,11 @@ export type Listeners<T extends object> = {
     [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
 };
 
+// @beta @sealed
+export interface LocalCommitEvents {
+    settled(outcome: CommitOutcome): void;
+}
+
 // @public
 export const LogLevel: LogLevelConst;
 
@@ -1519,6 +1539,11 @@ export const TreeBeta: TreeBeta;
 // @beta @deprecated
 export type TreeBranch = UntypedTreeView;
 
+// @beta @sealed
+export interface TreeBranchEventsBeta {
+    changed(data: ChangeMetadataBeta): void;
+}
+
 // @public @sealed
 export interface TreeChangeEvents {
     nodeChanged(unstable?: unknown): void;
@@ -1670,6 +1695,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 // @beta @sealed
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, UntypedTreeView {
     readonly compatibility: SchemaCompatibilityStatusBeta;
+    readonly events: Listenable<TreeViewEvents & TreeBranchEventsBeta>;
     // (undocumented)
     fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
 }
@@ -1724,6 +1750,7 @@ export type UnionToTuple<Union, A extends unknown[] = [], First = PopUnion<Union
 // @beta @sealed
 export interface UntypedTreeView extends IDisposable, TreeContextBeta {
     dispose(error?: Error): void;
+    readonly events: Listenable<TreeBranchEventsBeta>;
     fork(): UntypedTreeView;
     merge(view: UntypedTreeView, disposeMerged?: boolean): void;
     rebaseOnto(view: UntypedTreeView): void;

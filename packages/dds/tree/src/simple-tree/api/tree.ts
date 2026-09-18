@@ -7,6 +7,7 @@ import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/co
 
 import type {
 	ChangeMetadata,
+	ChangeMetadataBeta,
 	CommitMetadata,
 	CustomMetadataTree,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
@@ -161,6 +162,11 @@ export interface ITreeAlpha extends ITree {
  * @sealed @beta
  */
 export interface UntypedTreeView extends IDisposable, TreeContextBeta {
+	/**
+	 * Events for the view's underlying branch.
+	 */
+	readonly events: Listenable<TreeBranchEventsBeta>;
+
 	runTransaction<TValue>(
 		transaction: () => WithValue<TValue>,
 		params?: RunTransactionParamsBeta,
@@ -965,6 +971,11 @@ export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 	 */
 	readonly compatibility: SchemaCompatibilityStatusBeta;
 
+	/**
+	 * {@inheritDoc TreeView.events}
+	 */
+	readonly events: Listenable<TreeViewEvents & TreeBranchEventsBeta>;
+
 	// Override the base branch method to return a typed view rather than merely a branch.
 	fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
 }
@@ -1111,6 +1122,20 @@ export interface SchemaCompatibilityStatus {
 	// TODO: Consider extending this status to include:
 	// - application-defined metadata about the stored schema
 	// - details about the differences between the stored and view schema sufficient for implementing "safe mismatch" policies
+}
+
+/**
+ * Events for {@link UntypedTreeView}.
+ * @sealed @beta
+ */
+export interface TreeBranchEventsBeta {
+	/**
+	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
+	 * can use to filter on changes they care about (e.g. local vs. remote changes).
+	 *
+	 * @param data - information about the change, including settlement events for local changes
+	 */
+	changed(data: ChangeMetadataBeta): void;
 }
 
 /**
