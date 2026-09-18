@@ -220,68 +220,78 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 				);
 			}
 
-			// load the project based on the tsconfig
+			// Load the project from its tsconfig. To keep repository verification fast for developers,
+			// the settings below skip work that assertion tagging does not need.
 			const project = new Project({
-				// Be sure not to skip dependency resolution, as we want to
-				// process all files in a package.
-				skipFileDependencyResolution: false,
-				// Assertion scanning needs no TypeScript standard library declarations.
-				skipLoadingLibFiles: true,
-				tsConfigFilePath: tsconfigPath,
-				// Performance optimization: avoid loading and parsing external sources.
-				// This is not needed to exclude external files from assertion scanning; the filter below does that.
 				// Follow local imports, including files omitted from the tsconfig's initial file list.
-				// Assumes no additional package-local files are reachable only through external imports.
-				// If a package violates this assumption, those files and their assertions will be missed.
-				resolutionHost: (moduleResolutionHost) => ({
-					resolveModuleNames: (...args) => {
-						const [
-							moduleNames,
-							containingFile,
-							_reusedNames,
-							redirectedReference,
-							compilerOptions,
-							containingSourceFile,
-						] = args;
-						return moduleNames.map((moduleName, index) => {
-							const { resolvedModule } = ts.resolveModuleName(
-								moduleName,
+				skipFileDependencyResolution: false,
+				// No standard library declarations needed.
+				skipLoadingLibFiles: true,
+				// No ambient type packages needed.
+				compilerOptions: { types: [] },
+				tsConfigFilePath: tsconfigPath,
+				// Avoid loading external imports; the filter below controls which files are scanned.
+				// Assumes no additional local files are reachable only through external imports or
+				// ambient type packages: if any exist their assertions will be missed.
+				resolutionHost: (moduleResolutionHost, getCompilerOptions) => {
+					// Cache resolutions to avoid repeated filesystem lookups for shared imports.
+					const resolutionCache = ts.createModuleResolutionCache(
+						moduleResolutionHost.getCurrentDirectory!(),
+						(fileName) =>
+							ts.sys.useCaseSensitiveFileNames ? fileName : fileName.toLowerCase(),
+						getCompilerOptions(),
+					);
+					return {
+						resolveModuleNames: (...args) => {
+							const [
+								moduleNames,
 								containingFile,
-								compilerOptions,
-								moduleResolutionHost,
-								undefined,
+								_reusedNames,
 								redirectedReference,
-								containingSourceFile === undefined
+								compilerOptions,
+								containingSourceFile,
+							] = args;
+							return moduleNames.map((moduleName, index) => {
+								const { resolvedModule } = ts.resolveModuleName(
+									moduleName,
+									containingFile,
+									compilerOptions,
+									moduleResolutionHost,
+									resolutionCache,
+									redirectedReference,
+									containingSourceFile === undefined
+										? undefined
+										: ts.getModeForResolutionAtIndex(
+												containingSourceFile,
+												index,
+												compilerOptions,
+											),
+								);
+								if (resolvedModule === undefined) {
+									return undefined;
+								}
+								const relativePath = path.relative(
+									pkg.directory,
+									resolvedModule.resolvedFileName,
+								);
+								return relativePath.startsWith(`..${path.sep}`) ||
+									path.isAbsolute(relativePath)
 									? undefined
-									: ts.getModeForResolutionAtIndex(
-											containingSourceFile,
-											index,
-											compilerOptions,
-										),
-							);
-							if (resolvedModule === undefined) {
-								return undefined;
-							}
-							const relativePath = path.relative(
-								pkg.directory,
-								resolvedModule.resolvedFileName,
-							);
-							return relativePath.startsWith(`..${path.sep}`) || path.isAbsolute(relativePath)
-								? undefined
-								: resolvedModule;
-						});
-					},
-				}),
+									: resolvedModule;
+							});
+						},
+					};
+				},
 			});
 
-			// Filter to package local sources of interest. Tsconfig entries and reference directives
-			// can introduce external files without going through the module-resolution hook above.
+			// Keep only package-local sources, excluding .d.ts files. Tsconfig entries and reference directives
+			// can include external files without going through the resolver, so there may be some to remove.
 			const sourceFiles = project
 				.getSourceFiles(
 					// Limit to sources in the current package directory
 					`${pkg.directory.replaceAll("\\", "/")}/**`,
 				)
-				// Filter out type files - only interested in runtime sources
+				// Exclude declaration files.
 				.filter((source) => source.getExtension() !== ".d.ts");
 
 			this.info(
