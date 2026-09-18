@@ -331,14 +331,9 @@ where
         match start {
             LoadStart::Beginning => Ok(None),
             LoadStart::ReplayAtLeastAllAfter(position) => {
-                self.snapshots.get_snapshot_at_or_before(position).await
+                self.snapshots.latest_at_or_before(Some(position)).await
             }
-            LoadStart::LatestSnapshot => {
-                let Some(position) = self.snapshots.head().await? else {
-                    return Ok(None);
-                };
-                self.snapshots.get_snapshot_at(position).await
-            }
+            LoadStart::LatestSnapshot => self.snapshots.latest_at_or_before(None).await,
         }
     }
 

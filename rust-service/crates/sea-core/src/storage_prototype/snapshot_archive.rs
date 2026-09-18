@@ -47,9 +47,13 @@ pub trait SnapshotArchive:
         position: EventPosition,
     ) -> Result<Option<Snapshot<Self::BlobHandle, Self::EventHandle>>, Self::Error>;
 
-    /// Returns the newest snapshot at or before an event position.
-    async fn get_snapshot_at_or_before(
+    /// Returns the newest snapshot within an optional inclusive event-position bound.
+    ///
+    /// `Some(position)` selects the newest snapshot at or before that position.
+    /// `None` selects the newest available snapshot without an upper bound.
+    /// Returns `None` when no publication qualifies.
+    async fn latest_at_or_before(
         &self,
-        position: EventPosition,
+        position: Option<EventPosition>,
     ) -> Result<Option<Snapshot<Self::BlobHandle, Self::EventHandle>>, Self::Error>;
 }
