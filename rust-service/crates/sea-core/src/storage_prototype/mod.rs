@@ -43,13 +43,11 @@ mod storage_surface;
 
 use async_trait::async_trait;
 use bytes::Bytes;
-use futures_util::stream;
 
 use crate::snapshot::{Snapshot, SnapshotPosition};
 use crate::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, CommittedEvent,
-    Durability, Event, EventPosition, MonitoredStreamItem, MonitoredStreamProgress,
-    MonitoredStreamStatus, boxed_monitored_stream,
+    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, Durability, Event,
+    EventPosition,
 };
 
 pub use blob_store::BlobStore;
@@ -167,15 +165,32 @@ pub struct ViewSnapshotPublication<BH, EH> {
     pub root: BH,
 }
 
-/// A snapshot selection and finite event catch-up captured by [`SeaView::load`].
+/// Starting-point policy for snapshot selection and event replay in [`SeaView::load`].
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LoadStart {
+    /// Skips snapshots and replays events from the beginning of the archive.
+    Beginning,
+    /// Selects the newest snapshot at or before this exclusive event cursor.
+    ///
+    /// Falls back to the beginning when no compatible snapshot exists.
+    /// The event stream's initial progress cursor is `None` or at most this position,
+    /// so no event after this position is omitted.
+    /// Replay may include earlier events as well.
+    IncludeAllAfter(EventPosition),
+    /// Selects the newest snapshot, if one exists.
+    ///
+    /// Falls back to the beginning when no compatible snapshot exists.
+    LatestSnapshot,
+}
+
+/// A snapshot selection and live event stream returned by [`SeaView::load`].
 pub struct ViewLoad<E> {
     /// Newest compatible snapshot, when one exists.
     pub snapshot: Option<Snapshot>,
-    /// Event head captured after snapshot selection, or `None` for an empty archive.
-    pub head: Option<EventPosition>,
-    /// Monitored events after the selected snapshot through `head`, in position order.
+    /// Monitored events strictly after the selected snapshot, or from the beginning without one.
     ///
-    /// This stream is always finite even though [`Archive::read`] also supports live reads.
+    /// The stream catches up and then waits for new events, even for an initially empty archive.
+    /// Dropping the stream cancels its read or subscription work.
     pub events: EventArchiveStream<E>,
 }
 
@@ -316,49 +331,34 @@ where
             .await
     }
 
-    /// Selects a compatible snapshot and captures a finite catch-up boundary.
+    /// Selects a compatible snapshot and starts a live event stream in one operation.
     ///
-    /// The event archive linearizes concurrent appends. After snapshot selection, the captured head
-    /// fixes the inclusive upper bound of the returned finite event stream; later appends are not
-    /// included.
-    pub async fn load(
-        &self,
-        required: Option<EventPosition>,
-    ) -> Result<ViewLoad<B::Error>, B::Error> {
-        let snapshot = match required {
-            Some(position) => self.snapshots.get_snapshot_at_or_before(position).await?,
-            None => self.get_latest_snapshot().await?,
+    /// This combines snapshot selection and streaming startup so callers need no extra round trip
+    /// to start reading after the selected snapshot.
+    /// `start` determines the latest acceptable snapshot boundary.
+    /// An initial snapshot starts event replay at the beginning, as does having no snapshot.
+    /// `LoadStart::Beginning` skips snapshot lookup entirely.
+    ///
+    /// The stream catches up and then waits for new events, even when the archive is initially empty.
+    /// Callers can drop it when done or use [`Self::read`] separately for bounded reads.
+    /// This method does not capture an event head or an atomic snapshot-and-event read.
+    /// Snapshot lookup failures are returned here; event initialization and runtime failures are
+    /// yielded by the stream, and dropping the stream cancels its read or subscription work.
+    pub async fn load(&self, start: LoadStart) -> Result<ViewLoad<B::Error>, B::Error> {
+        let snapshot = match start {
+            LoadStart::Beginning => None,
+            LoadStart::IncludeAllAfter(position) => {
+                self.snapshots.get_snapshot_at_or_before(position).await?
+            }
+            LoadStart::LatestSnapshot => self.get_latest_snapshot().await?,
         };
-        let head = self.events.head().await?;
         let after = snapshot.as_ref().and_then(|value| match value.at_event {
             SnapshotPosition::Initial => None,
             SnapshotPosition::At(position) => Some(position),
         });
-        let events = match head {
-            Some(head) => self.events.read(after, Some(head)),
-            None => empty_event_archive_stream(after),
-        };
-        Ok(ViewLoad {
-            snapshot,
-            head,
-            events,
-        })
+        let events = self.events.read(after, None);
+        Ok(ViewLoad { snapshot, events })
     }
-}
-
-/// Constructs the completed event stream for a load whose captured archive head is empty.
-fn empty_event_archive_stream<E: Send + 'static>(
-    previous: Option<EventPosition>,
-) -> EventArchiveStream<E> {
-    boxed_monitored_stream(
-        stream::empty::<Result<MonitoredStreamItem<CommittedEvent, EventPosition>, E>>(),
-        MonitoredStreamProgress {
-            previous,
-            latest_known: previous,
-            status: MonitoredStreamStatus::StreamingBacklog,
-        },
-        |event| Some(event.position),
-    )
 }
 
 /// Document collection that asks storage to create or exclusively open document views.

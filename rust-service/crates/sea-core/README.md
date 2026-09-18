@@ -20,4 +20,13 @@ This crate defines no persistence layout, authentication policy, retention polic
 
 See [`src/lib.rs`](src/lib.rs) for the complete API contract.
 
+## Storage Prototype
+
+The experimental [`storage_prototype`](src/storage_prototype/mod.rs) module decomposes storage into blob, event, and snapshot components.
+It does not replace the existing storage traits.
+`SeaView::load` accepts a `LoadStart` policy: replay from the beginning without a snapshot, include all events after a supplied cursor, or start at the latest compatible snapshot.
+The returned stream catches up and then waits for new events, including for an initially empty archive.
+Loading combines snapshot selection and streaming startup without an extra caller round trip; callers can drop the stream when done or use `read` separately for bounded reads.
+Loads do not capture an event head.
+
 Contributor validation commands are in [`DEV.md`](DEV.md).
