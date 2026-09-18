@@ -377,6 +377,8 @@ export async function copyDocument({
 			documentId,
 			selfHostKey,
 		);
+		// This requires that the self-hosted Alfred deployment sets `alfred.enforceServerGeneratedDocumentId` to `false`.
+		// The document ID should not change when copying the document to the self-hosted Alfred deployment.
 		if (
 			await documentExists(
 				`${selfHostEndpoint.replace(/\/$/, "")}/documents/${encodeURIComponent(selfHostTenantId)}/${encodeURIComponent(documentId)}`,

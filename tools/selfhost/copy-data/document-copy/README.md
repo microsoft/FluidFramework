@@ -19,6 +19,9 @@ warning instead of attempting to create it.
 	`document-inventory.json` output. Its `errors` collection must be empty.
 - Complete the [configuration step](../configuration/README.md) and provide the
 	self-hosted tenant mapping for every document selected for copying.
+- Ensure Alfred sets `alfred.enforceServerGeneratedDocumentId` to `false`.
+	The self-hosted document ID must match the requested Azure Fluid Relay ID so
+	the copy tool can detect documents that were already copied.
 
 ## Commands
 
