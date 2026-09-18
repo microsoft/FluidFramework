@@ -14,6 +14,7 @@ import {
 	type SharedObjectOptions,
 	type FactoryOut,
 	type SharedObjectKindAlpha,
+	type ChannelConfigurationDefinition,
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -35,10 +36,19 @@ import {
 	EditManagerFormatVersion,
 	messageCodecName,
 	MessageFormatVersion,
+	type TreeHistoryConfiguration,
 } from "./shared-tree-core/index.js";
 import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
 import type { ITree } from "./simple-tree/index.js";
 import { Breakable, copyProperty } from "./util/index.js";
+
+const historyConfigurationDefinition: ChannelConfigurationDefinition<TreeHistoryConfiguration> =
+	{
+		isSupported: (values): values is TreeHistoryConfiguration =>
+			Object.keys(values).every((key) => key === "retainHistory") &&
+			(values.retainHistory === undefined || typeof values.retainHistory === "boolean"),
+		validateTransition: () => {},
+	};
 
 /**
  * {@link ITreePrivate} extended with ISharedObject.
@@ -55,8 +65,8 @@ export interface ISharedTree extends ISharedObject, ITreePrivate {}
  */
 function treeKernelFactory(
 	options: SharedTreeOptionsInternal,
-): SharedKernelFactory<SharedTreeKernelView> {
-	function treeFromKernelArgs(args: KernelArgs): SharedTreeKernel {
+): SharedKernelFactory<SharedTreeKernelView, TreeHistoryConfiguration> {
+	function treeFromKernelArgs(args: KernelArgs<TreeHistoryConfiguration>): SharedTreeKernel {
 		if (args.idCompressor === undefined) {
 			throw new UsageError("IdCompressor must be enabled to use SharedTree");
 		}
@@ -86,17 +96,19 @@ function treeKernelFactory(
 			args.initialSequenceNumber,
 			args.idCompressor,
 			adjustedOptions,
+			args.configuration,
 		);
 	}
 
 	return {
-		create: (args: KernelArgs): FactoryOut<SharedTreeKernelView> => {
+		configurationDefinition: historyConfigurationDefinition,
+		create: (args: KernelArgs<TreeHistoryConfiguration>): FactoryOut<SharedTreeKernelView> => {
 			const k = treeFromKernelArgs(args);
 			return { kernel: k, view: k.view };
 		},
 
 		async loadCore(
-			args: KernelArgs,
+			args: KernelArgs<TreeHistoryConfiguration>,
 			storage: IChannelStorageService,
 		): Promise<FactoryOut<SharedTreeKernelView>> {
 			const k = treeFromKernelArgs(args);
@@ -192,26 +204,34 @@ export function configuredSharedTreeAlpha(
  * This should be legacy, but has to be internal due to no alpha+legacy being setup yet.
  *
  * This should be renamed to `configuredSharedTreeAlpha` to avoid colliding with the eventual public version which will have less options.
+ *
+ * @param initialConfiguration - Internal, opt-in prototype configuration for new instances only.
+ * Omit this argument to create legacy instances. All factories can read configured instances.
+ * Persisted settings override local options, including `retainHistory`, on configured instances.
+ *
  * @internal
  */
 export function configuredSharedTree(
 	options: SharedTreeOptions,
+	initialConfiguration?: TreeHistoryConfiguration,
 ): ISharedObjectKind<ITree> & SharedObjectKindAlpha<ITree> {
 	const internalOptions = resolveOptions(options);
-	return configuredSharedTreeInternal(internalOptions);
+	return configuredSharedTreeInternal(internalOptions, initialConfiguration);
 }
 
 export function configuredSharedTreeInternal(
 	options: SharedTreeOptionsInternal,
+	initialConfiguration?: TreeHistoryConfiguration,
 ): ISharedObjectKind<ITree> & SharedObjectKindAlpha<ITree> {
-	const sharedObjectOptions: SharedObjectOptions<ITree> = {
+	const sharedObjectOptions: SharedObjectOptions<ITree, TreeHistoryConfiguration> = {
 		type: SharedTreeFactoryType,
 		attributes: SharedTreeAttributes,
 		telemetryContextPrefix: "fluid_sharedTree_",
 		factory: treeKernelFactory(options),
+		...(initialConfiguration === undefined ? {} : { initialConfiguration }),
 	};
 
-	return makeSharedObjectKind<ITree>(sharedObjectOptions);
+	return makeSharedObjectKind<ITree, TreeHistoryConfiguration>(sharedObjectOptions);
 }
 
 export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {

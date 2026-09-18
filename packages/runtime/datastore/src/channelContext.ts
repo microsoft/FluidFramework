@@ -4,6 +4,7 @@
  */
 
 import type {
+	ChannelConfigurationRuntime,
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
@@ -29,6 +30,12 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ChannelDeltaConnection } from "./channelDeltaConnection.js";
+import {
+	publishChannelConfiguration,
+	requireChannelConfigurationController,
+	validateChannelConfiguration,
+	verifyChannelConfigurationPublication,
+} from "./channelConfiguration.js";
 import { ChannelStorageService } from "./channelStorageService.js";
 import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
@@ -110,11 +117,18 @@ export function summarizeChannel(
 	fullTree: boolean = false,
 	trackState: boolean = false,
 	telemetryContext?: ITelemetryContext,
+	publicationRuntime?: IFluidDataStoreRuntime,
 ): ISummaryTreeWithStats {
+	if (publicationRuntime !== undefined) {
+		verifyChannelConfigurationPublication(channel, publicationRuntime);
+	}
 	const summarizeResult = channel.getAttachSummary(fullTree, trackState, telemetryContext);
 
 	// Add the channel attributes to the returned result.
 	addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
+	if (publicationRuntime !== undefined) {
+		publishChannelConfiguration(channel, publicationRuntime);
+	}
 	return summarizeResult;
 }
 
@@ -182,7 +196,14 @@ export async function loadChannelFactoryAndAttributes(
 	}
 	// This is a backward compatibility case where the attach message doesn't include attributes. Get the attributes
 	// from the factory.
-	attributes = attributes ?? factory.attributes;
+	if (attributes === undefined) {
+		// Factory defaults must not opt old attach messages into a new channel protocol.
+		const { configuration: _configuration, ...legacyAttributes } =
+			factory.attributes as IChannelAttributes & {
+				readonly configuration?: unknown;
+			};
+		attributes = legacyAttributes;
+	}
 	return { factory, attributes };
 }
 
@@ -194,6 +215,17 @@ export async function loadChannel(
 	logger: TelemetryLoggerExt,
 	channelId: string,
 ): Promise<IChannel> {
+	const configured = validateChannelConfiguration(attributes, factory);
+	if (
+		configured &&
+		(dataStoreRuntime as IFluidDataStoreRuntime & ChannelConfigurationRuntime)
+			.channelConfigurationPublicationRequired === true &&
+		(
+			dataStoreRuntime as IFluidDataStoreRuntime & ChannelConfigurationRuntime
+		).isChannelConfigurationEnabled?.(attributes.type) !== true
+	) {
+		throw new DataCorruptionError("Configured channel requires document capability", {});
+	}
 	// Compare snapshot version to collaborative object version
 	if (
 		attributes.snapshotFormatVersion !== undefined &&
@@ -209,5 +241,23 @@ export async function loadChannel(
 		});
 	}
 
-	return factory.load(dataStoreRuntime, channelId, services, attributes);
+	const channel = await factory.load(dataStoreRuntime, channelId, services, attributes);
+	if (configured) {
+		requireChannelConfigurationController(channel);
+		if (!validateChannelConfiguration(channel.attributes)) {
+			throw new DataCorruptionError("Configured channel lost its persisted attributes", {});
+		}
+		if (
+			(dataStoreRuntime as IFluidDataStoreRuntime & ChannelConfigurationRuntime)
+				.channelConfigurationPublicationRequired === true
+		) {
+			publishChannelConfiguration(channel, dataStoreRuntime);
+		}
+	} else if (channel.attributes !== undefined && "configuration" in channel.attributes) {
+		throw new DataCorruptionError(
+			"Factory cannot opt a legacy channel into configuration",
+			{},
+		);
+	}
+	return channel;
 }
