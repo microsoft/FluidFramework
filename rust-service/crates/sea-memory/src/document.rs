@@ -174,13 +174,17 @@ impl StoredSnapshot {
     }
 }
 
+/// Shared token whose strong references prevent a new writer opening for the document.
+#[derive(Debug)]
+pub(crate) struct WriterLease;
+
 /// Stored identity and weak writer lease for a document known by the factory.
 #[derive(Debug)]
 struct DocumentEntry {
     /// Data persists as long as the factory or a component/handle retains it.
     document: Arc<Document>,
     /// Does not keep an otherwise unused opening alive.
-    opening: Weak<()>,
+    opening: Weak<WriterLease>,
 }
 
 /// Process-local document factory implementing `sea_core::next::SeaStorage`.
@@ -205,7 +209,7 @@ impl MemoryStorage {
     /// Shares one exclusive lease among all three components.
     fn components(
         document: Arc<Document>,
-        opening: Arc<()>,
+        opening: Arc<WriterLease>,
     ) -> StorageComponents<MemoryBlobStore, MemoryEventArchive, MemorySnapshotArchive> {
         StorageComponents {
             blobs: MemoryBlobStore {
@@ -242,7 +246,7 @@ impl SeaStorage for MemoryStorage {
             .map_err(|_| MemoryStorageError::IdentityExhausted)?;
         let id = DocumentId::from_bytes(Bytes::copy_from_slice(&ordinal.to_be_bytes()));
         let document = Arc::new(Document::default());
-        let opening = Arc::new(());
+        let opening = Arc::new(WriterLease);
         self.documents.lock().expect("registry lock").insert(
             id.clone(),
             DocumentEntry {
@@ -269,7 +273,7 @@ impl SeaStorage for MemoryStorage {
             return Err(MemoryStorageError::AlreadyOpen);
         }
         entry.document.validate()?;
-        let opening = Arc::new(());
+        let opening = Arc::new(WriterLease);
         entry.opening = Arc::downgrade(&opening);
         Ok(Some(Self::components(entry.document.clone(), opening)))
     }
@@ -298,7 +302,7 @@ pub struct MemoryBlobStore {
     /// Data remains available across reopening through the factory.
     document: Arc<Document>,
     /// Shared lease held by every component and dependent stream.
-    _opening: Arc<()>,
+    _opening: Arc<WriterLease>,
 }
 
 /// Availability evidence for an event in this document; does not retain writer ownership.
@@ -323,7 +327,7 @@ pub struct MemoryEventArchive {
     /// Owning document supplies history and handle provenance.
     document: Arc<Document>,
     /// Shared exclusive writer lease.
-    opening: Arc<()>,
+    opening: Arc<WriterLease>,
 }
 
 impl StorageSurface for MemoryEventArchive {
@@ -419,7 +423,7 @@ pub struct MemorySnapshotArchive {
     /// Owning document provides both publication dependencies.
     document: Arc<Document>,
     /// Shared exclusive writer lease.
-    opening: Arc<()>,
+    opening: Arc<WriterLease>,
 }
 
 impl StorageSurface for MemorySnapshotArchive {
@@ -1117,11 +1121,11 @@ mod tests {
     async fn blob_handles_check_document_provenance_and_closure() {
         let store = MemoryBlobStore {
             document: Arc::default(),
-            _opening: Arc::new(()),
+            _opening: Arc::new(WriterLease),
         };
         let other = MemoryBlobStore {
             document: Arc::default(),
-            _opening: Arc::new(()),
+            _opening: Arc::new(WriterLease),
         };
         let handle = store
             .put_blob(Bytes::from_static(b"content"))

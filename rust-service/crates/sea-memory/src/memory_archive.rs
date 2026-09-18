@@ -14,7 +14,7 @@ use sea_core::{
     MonitoredStreamStatus, next::ArchiveStream,
 };
 
-use crate::MemoryStorageError;
+use crate::{MemoryStorageError, document::WriterLease};
 
 /// Complete committed history plus weak subscriptions; dropped reads retain no registration.
 #[derive(Debug)]
@@ -61,7 +61,7 @@ struct MemoryRead<Item> {
     /// Retained immutable entries and notification registrations.
     data: Arc<Mutex<ArchiveData<Item>>>,
     /// Prevents another writer opening while this stream exists.
-    _opening: Arc<()>,
+    _opening: Arc<WriterLease>,
     /// Exclusive cursor, advanced only on data delivery.
     previous: Option<EventPosition>,
     /// Inclusive bound; absent for live delivery.
@@ -173,7 +173,7 @@ impl<Item: Clone + Unpin> MonitoredStream for MemoryRead<Item> {
 /// Creates a lazy reader; no state lock or initialization is performed here.
 pub(crate) fn read<Item: Clone + Send + Unpin + 'static>(
     data: Arc<Mutex<ArchiveData<Item>>>,
-    opening: Arc<()>,
+    opening: Arc<WriterLease>,
     after: Option<EventPosition>,
     stop_after: Option<EventPosition>,
 ) -> ArchiveStream<Item, EventPosition, MemoryStorageError> {
