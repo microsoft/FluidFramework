@@ -499,6 +499,9 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
     /// Closes this membership idempotently without closing the shared runtime.
     async fn close(&self) -> Result<(), SessionError<Storage::Error>> {
         let mut runtime = self.sequencer.runtime.lock().await;
+        if !runtime.members.contains_key(&self.session) {
+            return Ok(());
+        }
         runtime.settle().await?;
         if let Some(member) = runtime.members.remove(&self.session) {
             member.closed.send_replace(true);

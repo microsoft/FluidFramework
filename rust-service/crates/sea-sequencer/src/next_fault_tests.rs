@@ -410,6 +410,22 @@ async fn failed_reconciliation_blocks_mutation_and_absence_claims_until_recovery
 }
 
 #[tokio::test]
+async fn repeated_close_ignores_an_unrelated_recovery_failure() {
+    let storage = FaultStorage::default();
+    let (_, view) = storage.create_view().await.unwrap();
+    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let closed = member(&runtime, "closed").await;
+    let active = member(&runtime, "active").await;
+    closed.close().await.unwrap();
+    storage.events.arm(Failure::FailHead);
+    assert!(matches!(
+        active.submit(submission(b"uncertain")).await,
+        Err(SessionError::RecoveryRequired)
+    ));
+    closed.close().await.unwrap();
+}
+
+#[tokio::test]
 async fn cancelling_before_or_after_commit_retains_the_same_backend_future_until_settlement() {
     for failure in [Failure::GateBefore, Failure::GateAfter] {
         let storage = FaultStorage::default();
