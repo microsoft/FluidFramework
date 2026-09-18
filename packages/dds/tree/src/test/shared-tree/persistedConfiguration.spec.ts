@@ -13,6 +13,7 @@ import { Loader } from "@fluidframework/container-loader/internal";
 import type {
 	ChannelConfigurationChannel,
 	ChannelConfigurationFactory,
+	ChannelConfigurationRuntime,
 	IChannelAttributes,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
@@ -41,6 +42,7 @@ import {
 import { asAlpha } from "../../api.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import type { SharedTreeOptions } from "../../shared-tree/index.js";
+import { SharedTreeFactoryType } from "../../sharedTreeAttributes.js";
 import { TreeViewConfiguration } from "../../simple-tree/index.js";
 import {
 	configuredSharedTree,
@@ -67,8 +69,9 @@ function factory(
 
 function configureRuntime(runtime: MockFluidDataStoreRuntime, creationEnabled = true): void {
 	Object.assign(runtime, {
-		channelConfigurationCreationEnabled: creationEnabled,
-		channelConfigurationEnabled: true,
+		isChannelConfigurationCreationEnabled: (type: string) =>
+			creationEnabled && type === SharedTreeFactoryType,
+		isChannelConfigurationEnabled: (type: string) => type === SharedTreeFactoryType,
 	});
 	Object.defineProperty(runtime.deltaManagerInternal, "maxMessageSize", {
 		value: 1024 * 1024,
@@ -265,8 +268,30 @@ describe("SharedTree persisted configuration", () => {
 				return (reader as IChannelFactory<ISharedTree> & ChannelConfigurationFactory)
 					.channelConfigurationProtocolVersion;
 			},
-			create: (runtime, id) => creator.create(runtime, id),
+			create: (runtime, id) => {
+				const capabilities = runtime as ChannelConfigurationRuntime;
+				for (const type of [SharedTreeFactoryType, "unrelated-dds-type"]) {
+					assert.equal(
+						capabilities.isChannelConfigurationCreationEnabled?.(type),
+						type === SharedTreeFactoryType,
+					);
+					assert.equal(
+						capabilities.isChannelConfigurationEnabled?.(type),
+						type === SharedTreeFactoryType,
+					);
+				}
+				return creator.create(runtime, id);
+			},
 			load: async (runtime, id, services, attributes) => {
+				const capabilities = runtime as ChannelConfigurationRuntime;
+				assert.equal(
+					capabilities.isChannelConfigurationCreationEnabled?.(SharedTreeFactoryType),
+					creationEnabled,
+				);
+				assert.equal(
+					capabilities.isChannelConfigurationEnabled?.(SharedTreeFactoryType),
+					true,
+				);
 				const tree = await reader.load(runtime, id, services, attributes);
 				loadedTrees.push(tree);
 				return tree;
@@ -286,7 +311,7 @@ describe("SharedTree persisted configuration", () => {
 					{
 						enableRuntimeIdCompressor: "on",
 						explicitSchemaControl: true,
-						enableChannelConfiguration: creationEnabled,
+						channelConfigurationTypes: creationEnabled ? [SharedTreeFactoryType] : [],
 						summaryOptions: {
 							summaryConfigOverrides: {
 								state: "disableHeuristics",
