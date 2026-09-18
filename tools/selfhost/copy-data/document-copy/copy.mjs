@@ -135,6 +135,15 @@ async function documentExists(url, authorization, fetchImplementation) {
 	);
 }
 
+async function selfHostDocumentExists(selfHostEndpoint, selfHostTenantId, documentId, selfHostKey) {
+	const authorization = selfHostAuthorization(selfHostTenantId, documentId, selfHostKey);
+	return documentExists(
+		`${selfHostEndpoint.replace(/\/$/, "")}/documents/${encodeURIComponent(selfHostTenantId)}/${encodeURIComponent(documentId)}`,
+		authorization,
+		fetch,
+	);
+}
+
 // Build the tenant-scoped Historian repository base URL.
 function repositoryUrl(endpoint, tenantId) {
 	return `${endpoint.replace(/\/$/, "")}/repos/${encodeURIComponent(tenantId)}`;
@@ -370,31 +379,9 @@ export async function copyDocument({
 	selfHostKey,
 	fetchImplementation = fetch,
 }) {
-	let step = "self-host-document-read";
+	let step = "azure-fluid-relay-discovery";
 	try {
-		const selfHostDocumentAuth = selfHostAuthorization(
-			selfHostTenantId,
-			documentId,
-			selfHostKey,
-		);
-		// This requires that the self-hosted Alfred deployment sets `alfred.enforceServerGeneratedDocumentId` to `false`.
-		// The document ID should not change when copying the document to the self-hosted Alfred deployment.
-		if (
-			await documentExists(
-				`${selfHostEndpoint.replace(/\/$/, "")}/documents/${encodeURIComponent(selfHostTenantId)}/${encodeURIComponent(documentId)}`,
-				selfHostDocumentAuth,
-				fetchImplementation,
-			)
-		) {
-			return {
-				result: "warning",
-				documentId,
-				message: "The self-hosted document already exists",
-			};
-		}
-
 		// Discover the Azure Fluid Relay storage host, then load the most recent summary commit and payload.
-		step = "azure-fluid-relay-discovery";
 		const azureFluidRelayHistorianEndpoint = await discoverAzureFluidRelayHistorian(
 			azureFluidRelayEndpoint,
 			azureFluidRelayTenantId,
@@ -523,20 +510,37 @@ export async function main(argv) {
 			tenant.selfHostTenantId || azureFluidRelayTenantId
 		).toLowerCase();
 		for (const documentId of tenant.documents) {
-			let failureContext = { endpoint: "azure-fluid-relay-credentials" };
+			let failureContext = { endpoint: "self-host-credentials" };
 			try {
-				// Retrieve each tenant key only around the corresponding document operation.
-				const copyResult = await withAzureFluidRelayTenantKey2(
-					azureFluidRelayTenant,
-					(azureFluidRelayKey) => {
-						failureContext = { endpoint: "self-host-credentials" };
-						return withSelfHostTenantKey2(
-							{
-								...config.selfHost,
-								selfHostNamespace: config.selfHostNamespace,
+				// Check if the self-hosted document already exists
+				const copyResult = await withSelfHostTenantKey2(
+					{
+						...config.selfHost,
+						selfHostNamespace: config.selfHostNamespace,
+						selfHostTenantId,
+					},
+					async (selfHostKey) => {
+						failureContext = { endpoint: "self-host" };
+						// This requires `alfred.enforceServerGeneratedDocumentId` to be `false`.
+						if (
+							await selfHostDocumentExists(
+								config.selfHost.alfredEndpoint,
 								selfHostTenantId,
-							},
-							(selfHostKey) => {
+								documentId,
+								selfHostKey,
+							)
+						) {
+							return {
+								result: "warning",
+								documentId,
+								message: "The self-hosted document already exists",
+							};
+						}
+
+						failureContext = { endpoint: "azure-fluid-relay-credentials" };
+						return withAzureFluidRelayTenantKey2(
+							azureFluidRelayTenant,
+							(azureFluidRelayKey) => {
 								failureContext = { endpoint: "self-host" };
 								return copyDocument({
 									azureFluidRelayEndpoint: azureFluidRelayTenant.azureFluidRelayEndpoint,

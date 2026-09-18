@@ -15,8 +15,6 @@ test("copies the latest Azure Fluid Relay summary through the self-host document
 	const requests = [];
 	const fetchImplementation = async (url, options) => {
 		requests.push({ url, options });
-		if (url.endsWith("/documents/self-host/azure-fluid-relay-document"))
-			return jsonResponse({}, 404);
 		if (url.includes("/session/"))
 			return jsonResponse({ historianUrl: "https://azure-fluid-relay-historian.example" });
 		if (url.endsWith("/git/refs/heads%2Fazure-fluid-relay-document"))
@@ -59,7 +57,7 @@ test("copies the latest Azure Fluid Relay summary through the self-host document
 
 	assert.deepEqual(result, { result: "success", documentId: "self-host-document" });
 	assert.equal(
-		requests[2].url,
+		requests[1].url,
 		"https://azure-fluid-relay-historian.example/repos/azure-fluid-relay/git/refs/heads%2Fazure-fluid-relay-document",
 	);
 	const createRequest = requests.at(-1);
@@ -99,26 +97,5 @@ test("copies the latest Azure Fluid Relay summary through the self-host document
 				},
 			},
 		],
-	});
-});
-
-test("returns a warning when the self-hosted document already exists", async () => {
-	const fetchImplementation = async () => jsonResponse({}, 200);
-
-	const result = await copyDocument({
-		azureFluidRelayEndpoint: "https://azure-fluid-relay.example",
-		azureFluidRelayTenantId: "azure-fluid-relay",
-		selfHostEndpoint: "https://self-host-alfred.example",
-		selfHostTenantId: "self-host",
-		documentId: "azure-fluid-relay-document",
-		azureFluidRelayKey: "azure-fluid-relay-key",
-		selfHostKey: "self-host-key",
-		fetchImplementation,
-	});
-
-	assert.deepEqual(result, {
-		result: "warning",
-		documentId: "azure-fluid-relay-document",
-		message: "The self-hosted document already exists",
 	});
 });
