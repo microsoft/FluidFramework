@@ -1,6 +1,43 @@
 //! Cross-crate scenarios for independently selected session decorator stacks.
+//!
+//! This suite checks that session behavior survives composition of compression, encryption,
+//! dictionary compression, and real loopback WebTransport, including repeated layers and multiple network hops.
+//! Every configuration runs the same workflows: open/close, content and snapshot round-trips,
+//! reconnect with stable submission retries, two-author collaboration, and bounded collaboration stress.
+//! Together they check ordered live delivery and replay, nested blob trees, snapshot publication authority,
+//! rejected mutations, read cancellation, and catch-up after a peer disconnects.
+//!
+//! Server-side probes also verify that submissions traverse every configured network hop.
+//! Reconnects rebuild memberships, decorators, and connections over a retained in-memory sequencer;
+//! they do not restart the service or test durable recovery.
+//! This is composition coverage, not exhaustive fault injection or a performance benchmark:
+//! packet loss, process crashes, malformed wire data, and key rotation are outside its scope.
+//!
+//! # Reading this test
+//!
+//! Start with the `configurations!` invocation at the bottom: each row is one Cargo test.
+//! `stack!` builds that row's concrete session type; `configurations!` first checks its
+//! network path on a disposable document, then runs every workflow in `SCENARIOS` on fresh documents.
+//! The transport-path probe is separate so its successful submissions cannot seed a scenario's history.
+//!
+//! `Fixture` and `TestHost` own the setup, not the expected behavior.
+//! The single-author workflows use `write_trace` and `after_reconnect`.
+//! The two-author workflows use `collaborate`, with one round for collaboration and four for stress.
+//! Its helpers separate content checks, concurrent submissions, snapshot authority, and reconnect loading.
+//!
+//! Expectations retain original plaintext submissions, not copies of received events.
+//! Concurrent receipt positions determine the expected order because either author may win a race.
+//! Progress notifications are not events; `next_event` skips them, while bounded history checks
+//! also consume the stream to completion to catch unexpected extra events.
 
-use std::{panic::AssertUnwindSafe, sync::Arc, time::Duration};
+use std::{
+    panic::AssertUnwindSafe,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, AtomicUsize, Ordering},
+    },
+    time::Duration,
+};
 
 use async_trait::async_trait;
 use bytes::Bytes;
@@ -80,7 +117,21 @@ impl Drop for Endpoint {
     }
 }
 
+/// Server-side evidence and a rejection switch for one independently bound network hop.
+#[derive(Default)]
+struct HopProbe {
+    /// Counts decoded submissions received from this endpoint's network connection.
+    submissions: AtomicUsize,
+    /// Stops submissions at this hop before dispatching to the next inner session.
+    reject_submissions: AtomicBool,
+}
+
 /// A retained document and the transport hops belonging to one matrix cell.
+///
+/// Each author has its own fixture; peers share only the document and sequencer.
+/// Rebuilding a stack advances `generation` and replaces membership, decorators, and connections.
+/// Endpoint cleanup empties `endpoints`, but deliberately keeps `hops` so later assertions
+/// include traffic from connections that were closed during earlier rounds.
 struct Fixture {
     /// Shared authoritative state, retained across logical reconnects.
     runtime: Arc<LocalSequencer<MemoryStorage>>,
@@ -92,6 +143,8 @@ struct Fixture {
     generation: usize,
     /// Endpoints in inner-to-outer construction order.
     endpoints: Vec<Endpoint>,
+    /// Retains receipt evidence even after endpoints are stopped during reconnects.
+    hops: Vec<Arc<HopProbe>>,
 }
 
 impl Fixture {
@@ -107,6 +160,7 @@ impl Fixture {
             author: "author",
             generation: 0,
             endpoints: Vec::new(),
+            hops: Vec::new(),
         }
     }
 
@@ -118,6 +172,7 @@ impl Fixture {
             author,
             generation: 0,
             endpoints: Vec::new(),
+            hops: Vec::new(),
         }
     }
 
@@ -135,15 +190,20 @@ impl Fixture {
     }
 
     /// Serves an arbitrary concrete session through a real native transport hop.
+    ///
+    /// The server owns the supplied inner stack; the returned client is the only way the
+    /// outer stack reaches it. Repeating this creates a chain, not several clients of one server.
     async fn transport<Session: SeaSession + 'static>(
         &mut self,
         session: Session,
     ) -> NativeSeaClient {
         let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
         let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
+        let probe = Arc::new(HopProbe::default());
         let host = Arc::new(TestHost {
             document: self.document.clone(),
             dispatcher: Arc::new(SessionDispatcher::new(Arc::new(session))),
+            probe: probe.clone(),
         });
         let server = WebTransportServer::bind(
             "127.0.0.1:0".parse().unwrap(),
@@ -153,6 +213,7 @@ impl Fixture {
         )
         .unwrap();
         let address = server.local_addr().unwrap();
+        self.hops.push(probe);
         self.endpoints.push(Endpoint {
             shutdown: server.shutdown_handle(),
             task: tokio::spawn(server.serve_until_shutdown()),
@@ -174,6 +235,20 @@ impl Fixture {
         .unwrap()
     }
 
+    /// Requires the configured hop count on every connection generation and real submission traffic.
+    fn verify_hop_traffic(&self, expected_hops: usize, scenario: Scenario) {
+        assert_eq!(self.hops.len(), self.generation * expected_hops);
+        if !matches!(scenario, Scenario::OpenClose) {
+            for (index, hop) in self.hops.iter().enumerate() {
+                assert!(
+                    hop.submissions.load(Ordering::SeqCst) > 0,
+                    "{} / {scenario:?}: hop {index} received no submissions",
+                    self.author
+                );
+            }
+        }
+    }
+
     /// Stops outer hops before the upstream endpoints they depend on.
     async fn stop_endpoints(&mut self) {
         while let Some(mut endpoint) = self.endpoints.pop() {
@@ -193,11 +268,17 @@ impl Fixture {
 }
 
 /// A single-session test host; production dispatch still handles all data operations.
+///
+/// Membership is already established by `Fixture::open`, so this host supplies only the
+/// opening handshake and delegates to that session's dispatcher, except for injected rejections.
+/// It does not exercise the production host's authentication or reconnect-grace policy.
 struct TestHost {
     /// Identity of the already-open document.
     document: Bytes,
     /// Can target a local session, decorated session, or another transport client.
     dispatcher: Arc<dyn SeaConnectionService>,
+    /// Shared only with this endpoint's observer and its accepted connection handlers.
+    probe: Arc<HopProbe>,
 }
 
 impl SeaServiceHost for TestHost {
@@ -205,6 +286,7 @@ impl SeaServiceHost for TestHost {
         Arc::new(TestHost {
             document: self.document.clone(),
             dispatcher: self.dispatcher.clone(),
+            probe: self.probe.clone(),
         })
     }
 }
@@ -248,6 +330,15 @@ impl SeaConnectionService for TestHost {
     }
 
     async fn author_request(&self, request: protocol::Request) -> protocol::Response {
+        if matches!(&request, protocol::Request::Submit { .. }) {
+            self.probe.submissions.fetch_add(1, Ordering::SeqCst);
+            if self.probe.reject_submissions.load(Ordering::SeqCst) {
+                return protocol::Response::Error {
+                    kind: protocol::ErrorKind::Rejected,
+                    message: "injected hop rejection".to_owned(),
+                };
+            }
+        }
         if let protocol::Request::OpenAuthorStream { authority } = request {
             assert_eq!(authority, b"composition-test");
             protocol::Response::Acknowledged
@@ -664,6 +755,12 @@ fn collaborative_submission(
 }
 
 /// Exercises read-only rejection, client-selected suppression, stale fences, and parent checks.
+///
+/// Authority moves from the first author's Sea-selected fence to the peer's client-selected
+/// registration, then back to a new fence after the peer revokes its registration.
+/// The peer starts read-only to test registration replacement as well as publication rights.
+/// Coordination streams may contain intermediate updates, so waits use state predicates
+/// instead of assuming one notification per operation; the enclosing scenario sets the deadline.
 async fn collaborative_snapshot<Session: SeaSession>(
     first: &Session,
     peer: &Session,
@@ -704,6 +801,7 @@ async fn collaborative_snapshot<Session: SeaSession>(
             .fence
             .is_none()
     );
+    // Dropping the superseded stream must not revoke the peer's new client-selected registration.
     drop(read_only);
     while selected.next().await.unwrap().unwrap().fence.is_some() {}
     let stale_snapshot = Snapshot {
@@ -857,6 +955,15 @@ async fn load_peer<Session: SeaArchive>(
 }
 
 /// Runs concurrent writers and repeated reconnects while keeping the first author's stream live.
+///
+/// Each round rebuilds the peer, catches up from the latest snapshot, exchanges nested content,
+/// runs four two-author batches, and publishes one snapshot while testing authority transitions.
+/// The peer then disconnects and the first author writes one more event for the next load's suffix.
+/// Thus a round contributes nine committed events; retries and rejected operations contribute none.
+/// A final peer connection checks the last suffix even when there is no next round.
+///
+/// `build` borrows a fixture only during construction and returns an owned session.
+/// Both authors use the same concrete stack type, but share no decorator instances or connections.
 async fn collaborate<Session, Build>(
     fixture: &mut Fixture,
     peer_fixture: &mut Fixture,
@@ -872,6 +979,7 @@ async fn collaborate<Session, Build>(
     let mut snapshots: Vec<(EventPosition, ContentTree)> = Vec::new();
     let mut last_peer_retry: Option<(EventSubmission, EventPosition)> = None;
     for round in 0..rounds {
+        // Fresh decorators must recover prior operation identities, not rely on old instance caches.
         let peer = build(peer_fixture).await;
         let mut peer_events = load_peer(&peer, &history, snapshots.last()).await;
         if let Some((submission, position)) = &last_peer_retry {
@@ -888,6 +996,7 @@ async fn collaborate<Session, Build>(
         verify_tree(&peer, &first_tree).await;
         verify_tree(&first, &peer_tree).await;
         cancel_idle_read(&peer, history.last().map(|event| event.position)).await;
+        // Both live streams must agree with the independently retained inputs, not just each other.
         for batch in 0..4 {
             let reference = history.last().map(|event| event.position);
             let pair = concurrent_batch(
@@ -936,6 +1045,7 @@ async fn collaborate<Session, Build>(
         peer.close().await.unwrap();
         drop(peer);
         peer_fixture.stop_endpoints().await;
+        // This is intentionally after snapshot publication and peer teardown: reconnect must replay it.
         let submission =
             collaborative_submission("offline", round, 2, first_tree.root, Some(position));
         let receipt = first.submit(submission.clone()).await.unwrap();
@@ -957,7 +1067,73 @@ async fn collaborate<Session, Build>(
     first.close().await.unwrap();
 }
 
+/// Proves each configured hop is on the submission path, in the expected order, without bypasses.
+///
+/// Hop indices follow construction order: zero is nearest storage, the last is nearest the caller.
+/// With three hops, a submission travels 2 -> 1 -> 0.
+/// Blocking hop 1 must increment counters 2 and 1, but leave counter 0 unchanged.
+/// This is the `index >= blocked` term below; retrying after unblocking adds one at every hop.
+/// Counts are checked after the awaited response, so receipt evidence needs no sleeps or polling.
+///
+/// Only submissions are rejected. Resolution stays available to prove the rejected operation
+/// did not commit, and the exact retry then proves the path recovers without rebuilding the stack.
+async fn verify_transport_path<Session: SeaSession>(
+    fixture: &Fixture,
+    session: &Session,
+    expected_hops: usize,
+) {
+    assert_eq!(fixture.endpoints.len(), expected_hops);
+    assert_eq!(fixture.hops.len(), expected_hops);
+    for (blocked, probe) in fixture.hops.iter().enumerate() {
+        let before: Vec<_> = fixture
+            .hops
+            .iter()
+            .map(|hop| hop.submissions.load(Ordering::SeqCst))
+            .collect();
+        let submission = EventSubmission {
+            operation_id: OperationId::new(format!("hop-probe-{blocked}")).unwrap(),
+            reference: None,
+            event: Event {
+                payload: Bytes::from_static(b"must cross every hop"),
+                blob_tree: None,
+            },
+        };
+        probe.reject_submissions.store(true, Ordering::SeqCst);
+        let error = session.submit(submission.clone()).await.unwrap_err();
+        assert_eq!(error.kind(), ErrorKind::Rejected);
+        assert_eq!(
+            session
+                .resolve_submission(&submission.operation_id)
+                .await
+                .unwrap(),
+            None
+        );
+        for (index, hop) in fixture.hops.iter().enumerate() {
+            assert_eq!(
+                hop.submissions.load(Ordering::SeqCst),
+                before[index] + usize::from(index >= blocked),
+                "blocked hop {blocked}: unexpected traffic at hop {index} (inner-to-outer)"
+            );
+        }
+        probe.reject_submissions.store(false, Ordering::SeqCst);
+        session.submit(submission).await.unwrap();
+        for (index, hop) in fixture.hops.iter().enumerate() {
+            assert_eq!(
+                hop.submissions.load(Ordering::SeqCst),
+                before[index] + usize::from(index >= blocked) + 1,
+                "unblocked hop {blocked}: submission bypassed hop {index}"
+            );
+        }
+    }
+}
+
 /// Builds concrete stacks in application-to-storage order, without erasing handles or errors.
+///
+/// For example, `[compression, transport, encryption, transport]` means
+/// caller -> compression -> network -> encryption -> network -> local session.
+/// Recursion constructs the rightmost (innermost) layer first; every `transport` starts
+/// a separate server owning the remaining inner stack and returns a client for that server.
+/// Keeping the stack's concrete type lets the same generic scenarios exercise every combination.
 macro_rules! stack {
     ($fixture:ident, $session:expr;) => { $session };
     ($fixture:ident, $session:expr; compression $(, $rest:ident)*) => {
@@ -980,16 +1156,32 @@ macro_rules! stack {
 }
 
 /// Generates one named test per configuration, each running the independent scenario table.
+///
+/// Cargo reports configuration names; scenario failures add their workflow name after cleanup.
+/// Each cell has its own timeout, and panic capture lets endpoint and sequencer cleanup run
+/// before the failure is re-reported. Endpoint drop also aborts tasks during unwinding.
+/// Receipt checks run after cleanup because their probes outlive the stopped endpoints.
 macro_rules! configurations {
     ($($name:ident => [$($layer:ident),*]),* $(,)?) => {
         $(
             #[tokio::test]
             async fn $name() {
                 /// Rebuilds this configuration without retaining resources from earlier connections.
+                /// `use<>` keeps the returned opaque session type independent of the fixture borrow.
                 async fn build(fixture: &mut Fixture) -> impl SeaSession + use<> {
                     let base = fixture.open().await;
                     stack!(fixture, base; $($layer),*)
                 }
+                let layers: &[&str] = &[$(stringify!($layer)),*];
+                let expected_hops = layers.iter().filter(|layer| **layer == "transport").count();
+                let mut probe_fixture = Fixture::new().await;
+                timeout(Duration::from_secs(30), async {
+                    let session = build(&mut probe_fixture).await;
+                    verify_transport_path(&probe_fixture, &session, expected_hops).await;
+                    session.close().await.unwrap();
+                }).await.expect("transport path probe timed out");
+                probe_fixture.stop_endpoints().await;
+                probe_fixture.runtime.shutdown().await.unwrap();
                 for scenario in SCENARIOS {
                     let mut fixture = Fixture::new().await;
                     let mut peer_fixture = fixture.peer("peer");
@@ -1024,6 +1216,8 @@ macro_rules! configurations {
                         Ok(Err(_)) => panic!("{} / {scenario:?}: timed out", stringify!($name)),
                         Err(_) => panic!("{} / {scenario:?}: see original assertion above", stringify!($name)),
                     }
+                    fixture.verify_hop_traffic(expected_hops, scenario);
+                    peer_fixture.verify_hop_traffic(expected_hops, scenario);
                 }
             }
         )*

@@ -19,6 +19,12 @@ Its five scenarios run against all fourteen configurations, for seventy scenario
 
 Configurations range from a bare session to duplicate payload wrappers, reversed compression/encryption ordering, multiple real loopback WebTransport hops, and a twelve-layer mixed stack.
 
+Each configuration first runs an isolated transport-path probe.
+Server-side counters track decoded submissions at every endpoint; rejecting a submission at each hop in turn must reach the caller, prevent commitment, and stop traffic before the deeper hops.
+Removing the rejection must let the same operation traverse every hop successfully.
+The scenarios also assert the configured endpoint count for every connection generation and submission traffic at every endpoint, except the intentionally submission-free open/close scenario.
+The twelve-layer `repeated_stress` configuration requires three network hops per stack, including each rebuilt peer stack.
+
 The collaboration scenarios use empty and binary event payloads up to 8 KiB, nested blob directories with shared subtrees, and exact plaintext history expectations independent of the returned events.
 They cancel an initialized waiting read while other subscriptions remain active, reject read-only publication and stale fences, check client-selected suppression and renewed Sea selection, and reject wrong parents and conflicting snapshot roots.
 Successful retries and rejected mutations must leave no extra history entries.
