@@ -1,4 +1,15 @@
-//! Backend-neutral failure and lifetime checks for the replacement runtime.
+//! Deterministic failure and ownership tests for the replacement runtime.
+//!
+//! [`FaultStorage`] decorates replacement memory components without changing their identities or
+//! ordering guarantees. One-shot controls distinguish rejection, ambiguity before or after a real
+//! commit, reconciliation failure, and suspension on either side of commitment. Append counters
+//! verify that the sequencer never converts reconciliation or caller cancellation into an implicit
+//! retry.
+//!
+//! Decorated read streams retain their component opening. This exercises the storage contract's
+//! strictest permitted ownership lifetime and verifies that session closure and runtime shutdown do
+//! not assume memory-specific independent streams. [`tokio::sync::Notify`] gates make cancellation
+//! checks independent of sleeps and scheduler timing.
 
 use std::{
     fmt,

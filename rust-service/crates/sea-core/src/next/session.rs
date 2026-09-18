@@ -1,4 +1,20 @@
-//! Client-session policies above replacement storage, without storage-level retry or membership policy.
+//! Client-session contracts composed above an exclusive replacement-storage view.
+//!
+//! The traits separate direct content and history access ([`crate::next::session::SeaArchive`]),
+//! stable author submission identities ([`crate::next::session::SeaAuthorSession`]), and
+//! conditional snapshot publication ([`crate::next::session::SeaSnapshotCoordinator`]).
+//! [`crate::next::session::SeaSession`] is the convenience bound for implementations that provide
+//! all three facets.
+//!
+//! Storage supplies ordered archives and availability-bearing handles, but it does not implement
+//! membership, application-level deduplication, ambiguous-result reconciliation, or publisher
+//! selection. Session implementations own those policies and must keep received identities distinct
+//! from locally resolved [`StorageHandle`] values.
+//!
+//! Loads intentionally combine a selected snapshot with a live suffix without claiming an atomic
+//! captured event head. Closing a membership ends that membership's reads and author authority;
+//! backend resources retained by an already-created stream continue to follow the underlying
+//! storage contract.
 
 use async_trait::async_trait;
 use bytes::Bytes;

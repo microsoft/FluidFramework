@@ -1,4 +1,15 @@
-//! Replacement storage laws, independent of backend bounds and handle-lifetime choices.
+//! Shared behavioral checks for replacement storage and session implementations.
+//!
+//! The storage checks exercise contracts common to every backend: document isolation, handle
+//! provenance, ordered archive ranges, dependency-closed publication, snapshot selection, and
+//! reopening. They deliberately leave backend-specific future-bound behavior, durability, and
+//! resource lifetimes to each implementation's focused tests.
+//!
+//! [`crate::next::run_session_conformance`] checks the implementation-independent session workflow
+//! over two memberships: explicit initialization, conditional snapshot publication,
+//! snapshot-plus-live loading, stable submission retries, ordered replay, and isolated close.
+//! Cancellation, reconciliation failures, publisher fencing, and concrete runtime ownership remain
+//! implementation responsibilities and require owner-local tests.
 
 use sea_core::{
     archive::{EventSubmission, OperationId, SnapshotParticipation},

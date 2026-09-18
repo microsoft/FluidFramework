@@ -1,4 +1,20 @@
-//! Replacement session runtime; storage is an exclusively owned view, never an old-model adapter.
+//! Multi-user replacement session runtime over one exclusively owned document view.
+//!
+//! [`crate::next::LocalSequencer`] recovers committed submission and snapshot identities, then
+//! multiplexes the view into [`crate::next::LocalSession`] memberships. Memberships are
+//! runtime-local: reopening the document restores stable committed identities but requires callers
+//! to establish fresh sessions.
+//!
+//! One runtime mutex serializes membership changes and state-dependent mutations. Before releasing
+//! that order, the runtime stores an owned backend future, so cancellation of a caller does not
+//! masquerade as settlement. A later operation drives the same future to completion; a failed
+//! bounded reconciliation poisons further mutation with
+//! [`crate::next::SessionError::RecoveryRequired`] until the view is discarded and recovered.
+//!
+//! Event delivery uses the view's monitored archive streams directly. Snapshot publisher
+//! registration is separate synchronous state: dropping a coordination stream revokes its lease,
+//! client-selected publishers suppress Sea nomination, and every nomination change receives a new
+//! fence. The runtime never forwards through the transitional old-model sequencer.
 
 #[cfg(test)]
 #[path = "next_fault_tests.rs"]
@@ -503,9 +519,11 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
             return Ok(());
         }
         runtime.settle().await?;
-        if let Some(member) = runtime.members.remove(&self.session) {
-            member.closed.send_replace(true);
-        }
+        let member = runtime
+            .members
+            .remove(&self.session)
+            .expect("validated membership");
+        member.closed.send_replace(true);
         let mut publishers = runtime.publishers.lock().expect("publisher lock");
         publishers.entries.remove(&self.session);
         publishers.refresh();
@@ -1158,6 +1176,49 @@ mod tests {
                 .await
                 .is_err()
         );
+    }
+
+    #[tokio::test]
+    async fn closing_the_nominee_transfers_snapshot_authority_with_a_fresh_fence() {
+        let storage = MemoryStorage::new();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let first = member(&runtime, "first").await;
+        let second = member(&runtime, "second").await;
+        let mut first_nomination = first
+            .coordinate_snapshots(SnapshotParticipation::SeaSelected)
+            .await
+            .unwrap();
+        let first_fence = first_nomination
+            .next()
+            .await
+            .unwrap()
+            .unwrap()
+            .fence
+            .unwrap();
+        let mut second_nomination = second
+            .coordinate_snapshots(SnapshotParticipation::SeaSelected)
+            .await
+            .unwrap();
+        assert_eq!(second_nomination.next().await.unwrap().unwrap().fence, None);
+        assert_eq!(
+            first_nomination.next().await.unwrap().unwrap().fence,
+            Some(first_fence)
+        );
+
+        first.close().await.unwrap();
+
+        assert!(first_nomination.next().await.is_none());
+        let second_fence = second_nomination
+            .next()
+            .await
+            .unwrap()
+            .unwrap()
+            .fence
+            .unwrap();
+        assert!(second_fence > first_fence);
     }
 
     #[tokio::test]
