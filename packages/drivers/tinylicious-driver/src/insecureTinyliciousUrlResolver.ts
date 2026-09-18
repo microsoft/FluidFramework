@@ -36,8 +36,19 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 	/**
 	 * @param options - Tinylicious endpoint options.
 	 */
-	public constructor(options: Pick<TinyliciousServiceOptions, "port" | "endpoint"> = {}) {
-		const { port, endpoint } = options;
+	public constructor(options?: Pick<TinyliciousServiceOptions, "port" | "endpoint">);
+	/**
+	 * @deprecated This overload is a temporary compatibility measure for external consumers of this internal API.
+	 */
+	public constructor(port?: number, endpoint?: string);
+	public constructor(
+		optionsOrPort: Pick<TinyliciousServiceOptions, "port" | "endpoint"> | number | undefined,
+		legacyEndpoint?: string,
+	) {
+		const { port, endpoint } =
+			typeof optionsOrPort === "object"
+				? optionsOrPort
+				: { port: optionsOrPort, endpoint: legacyEndpoint };
 		const endpointUrl = new URL(endpoint ?? defaultTinyliciousEndpoint);
 		if (port !== undefined || endpointUrl.port === "") {
 			endpointUrl.port = `${port ?? defaultTinyliciousPort}`;
