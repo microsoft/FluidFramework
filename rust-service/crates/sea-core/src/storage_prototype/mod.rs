@@ -36,16 +36,18 @@ mod snapshot_archive;
 
 use async_trait::async_trait;
 use bytes::Bytes;
+use futures_util::stream;
 
 use crate::snapshot::{Snapshot, SnapshotPosition};
 use crate::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, Durability, Event,
-    EventPosition, OperationId, PublishedSnapshot, SnapshotId, SnapshotPublication,
-    StorageEventStream, StorageLoad,
+    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, CommittedEvent,
+    Durability, Event, EventPosition, MonitoredStreamItem, MonitoredStreamProgress,
+    MonitoredStreamStatus, OperationId, PublishedSnapshot, SnapshotId, SnapshotPublication,
+    boxed_monitored_stream,
 };
 
 pub use blob_store::BlobStore;
-pub use event_archive::EventArchive;
+pub use event_archive::{EventArchive, EventArchiveStream};
 pub use referenceable_store::{ReferenceableStore, StorageHandle};
 pub use snapshot_archive::SnapshotArchive;
 
@@ -161,6 +163,18 @@ pub struct ViewSnapshotPublication<BH, EH> {
     pub root: BH,
 }
 
+/// A snapshot selection and finite event catch-up captured by [`SeaView::load`].
+pub struct ViewLoad<E> {
+    /// Newest compatible retained snapshot, when one exists.
+    pub snapshot: Option<PublishedSnapshot>,
+    /// Event head captured after snapshot selection, or `None` for an empty archive.
+    pub head: Option<EventPosition>,
+    /// Monitored events after the selected snapshot through `head`, in position order.
+    ///
+    /// This stream is always finite even though [`EventArchive::read`] also supports live reads.
+    pub events: EventArchiveStream<E>,
+}
+
 /// Exclusive concrete reader/writer view of one snapshotted event archive.
 ///
 /// The view is intentionally not `Clone`, preserving the exclusive writable authority established
@@ -243,13 +257,16 @@ where
             .await
     }
 
-    /// Reads a finite ordered event range.
-    pub async fn read(
+    /// Reads ordered events after a cursor, either through a position or as a live stream.
+    ///
+    /// `stop_after: Some(position)` produces a finite stream. `stop_after: None` catches up and
+    /// waits for newly committed events.
+    pub fn read(
         &self,
         after: Option<EventPosition>,
-        through: Option<EventPosition>,
-    ) -> Result<StorageEventStream<B::Error>, B::Error> {
-        self.events.read(after, through).await
+        stop_after: Option<EventPosition>,
+    ) -> EventArchiveStream<B::Error> {
+        self.events.read(after, stop_after)
     }
 
     /// Returns the latest committed event position.
@@ -310,7 +327,7 @@ where
     pub async fn load(
         &self,
         required: Option<EventPosition>,
-    ) -> Result<StorageLoad<B::Error>, B::Error> {
+    ) -> Result<ViewLoad<B::Error>, B::Error> {
         let snapshot = match required {
             Some(position) => self.snapshots.snapshot_at_or_before(position).await?,
             None => self.snapshots.latest_snapshot().await?,
@@ -322,13 +339,31 @@ where
                 SnapshotPosition::Initial => None,
                 SnapshotPosition::At(position) => Some(position),
             });
-        let events = self.events.read(after, head).await?;
-        Ok(StorageLoad {
+        let events = match head {
+            Some(head) => self.events.read(after, Some(head)),
+            None => empty_event_archive_stream(after),
+        };
+        Ok(ViewLoad {
             snapshot,
             head,
             events,
         })
     }
+}
+
+/// Constructs the completed event stream for a load whose captured archive head is empty.
+fn empty_event_archive_stream<E: Send + 'static>(
+    previous: Option<EventPosition>,
+) -> EventArchiveStream<E> {
+    boxed_monitored_stream(
+        stream::empty::<Result<MonitoredStreamItem<CommittedEvent, EventPosition>, E>>(),
+        MonitoredStreamProgress {
+            previous,
+            latest_known: previous,
+            status: MonitoredStreamStatus::StreamingBacklog,
+        },
+        |event| Some(event.position),
+    )
 }
 
 /// Document collection that asks storage to create or exclusively open document views.

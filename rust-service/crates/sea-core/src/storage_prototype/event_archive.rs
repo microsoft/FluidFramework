@@ -6,9 +6,12 @@
 
 use async_trait::async_trait;
 
-use crate::{Event, EventPosition, StorageEventStream};
+use crate::{BoxMonitoredStream, CommittedEvent, Event, EventPosition};
 
 use super::ReferenceableStore;
+
+/// A monitored stream of raw committed events from an [`EventArchive`].
+pub type EventArchiveStream<E> = BoxMonitoredStream<CommittedEvent, EventPosition, E>;
 
 /// An independently useful single-writer ordered event archive.
 ///
@@ -20,17 +23,26 @@ pub trait EventArchive: ReferenceableStore<Id = EventPosition> {
     /// Appends one event and returns its stable committed position.
     async fn append(&self, event: Event) -> Result<Self::Handle, Self::Error>;
 
-    /// Reads a finite range of committed events strictly after `after`.
+    /// Reads committed events strictly after `after`.
     ///
-    /// `through` is an inclusive upper bound. When it is `None`, the implementation captures the
-    /// current head as the upper bound. Events appended after that boundary are never added to the
-    /// returned stream.
-    async fn read(
+    /// `after` is an exclusive starting cursor; `None` starts before the first event.
+    /// `stop_after` is an inclusive upper bound. `Some(position)` creates a finite stream that ends
+    /// after returning that event, while `None` creates an unbounded stream that waits for newly
+    /// committed events after catching up.
+    ///
+    /// Calling this method performs no confirmed I/O. Initialization and runtime failures are
+    /// yielded by the stream, and dropping the stream cancels its read or subscription work.
+    fn read(
         &self,
         after: Option<EventPosition>,
-        through: Option<EventPosition>,
-    ) -> Result<StorageEventStream<Self::Error>, Self::Error>;
+        stop_after: Option<EventPosition>,
+    ) -> EventArchiveStream<Self::Error>;
 
-    /// Returns the latest committed event position.
+    /// Returns the committed head observed at one instant during this operation.
+    ///
+    /// Every append completed before the returned future begins execution is reflected in the
+    /// result. An append concurrent with this operation may or may not be reflected, and a later
+    /// append may make the result stale before it is returned. This is an authoritative read,
+    /// unlike the potentially lagging `latest_known` observation reported by a monitored stream.
     async fn head(&self) -> Result<Option<EventPosition>, Self::Error>;
 }
