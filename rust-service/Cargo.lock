@@ -1251,6 +1251,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "sea-wasm"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "futures-util",
+ "js-sys",
+ "sea-compression",
+ "sea-core",
+ "sea-memory",
+ "sea-sequencer",
+ "sea-webtransport",
+ "thiserror",
+ "tokio",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+]
+
+[[package]]
 name = "sea-webtransport"
 version = "0.1.0"
 dependencies = [

@@ -1,0 +1,37 @@
+[package]
+name = "sea-wasm"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[features]
+default = []
+memory = ["dep:sea-memory", "dep:sea-sequencer"]
+webtransport = ["dep:sea-webtransport"]
+compression = ["dep:sea-compression"]
+
+[dependencies]
+async-trait.workspace = true
+bytes.workspace = true
+futures-util.workspace = true
+sea-core = { path = "../sea-core" }
+sea-memory = { path = "../sea-memory", optional = true }
+sea-sequencer = { path = "../sea-sequencer", optional = true }
+sea-webtransport = { path = "../sea-webtransport", optional = true, default-features = false }
+sea-compression = { path = "../sea-compression", optional = true }
+thiserror.workspace = true
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+js-sys = "=0.3.105"
+wasm-bindgen = "=0.2.128"
+wasm-bindgen-futures = "=0.4.78"
+
+[dev-dependencies]
+tokio.workspace = true
+
+[lints]
+workspace = true

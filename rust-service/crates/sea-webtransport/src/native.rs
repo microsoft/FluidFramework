@@ -1,4 +1,4 @@
-//! Native certificate-pinned [`SeaSession`] client.
+//! Typed Sea sessions over platform transport primitives.
 
 use std::{
     collections::BTreeMap,
@@ -9,7 +9,11 @@ use std::{
 
 use async_trait::async_trait;
 use bytes::Bytes;
-use futures_util::{StreamExt as _, TryStreamExt as _, stream};
+use futures_util::{
+    StreamExt as _, TryStreamExt as _,
+    future::{AbortHandle, Abortable},
+    stream,
+};
 use sea_core::{
     ArchiveEventStream, BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError,
     ErrorKind, Event, EventPosition, MonitoredStreamItem, MonitoredStreamProgress,
@@ -24,27 +28,44 @@ use sea_core::{
     },
     storage::{DocumentId, LoadStart, Snapshot, StorageHandle},
 };
-use tokio::{
-    sync::{Mutex, mpsc, oneshot, watch},
-    time::timeout,
-};
+use tokio::sync::{Mutex, mpsc, oneshot, watch};
+#[cfg(not(target_arch = "wasm32"))]
+use tokio::time::timeout;
+#[cfg(not(target_arch = "wasm32"))]
 use wtransport::tls::Sha256Digest;
 
+#[cfg(not(target_arch = "wasm32"))]
+use crate::{TransportConfig, WebTransportError, connect_once, transport::native::NativeTransport};
 use crate::{
-    TransportConfig, WebTransportError,
     client::{
         AuthorStream, Client, ClientError, ClientStateError, ContentStream, EventStream,
         SnapshotStream,
     },
-    connect_once, protocol,
-    transport::native::{NativeBidirectionalStream, NativeTransport},
+    protocol,
+    transport::{BidirectionalStream, ClientTransport},
 };
 
-/// Failure from a native typed Sea client.
+/// Thread transfer required by native session streams and transport errors.
+#[cfg(not(target_arch = "wasm32"))]
+pub trait SessionStreamBounds: Send {}
+#[cfg(not(target_arch = "wasm32"))]
+impl<Value: Send> SessionStreamBounds for Value {}
+
+/// Browser session streams and transport errors may remain locally owned.
+#[cfg(target_arch = "wasm32")]
+pub trait SessionStreamBounds {}
+#[cfg(target_arch = "wasm32")]
+impl<Value> SessionStreamBounds for Value {}
+
+/// Failure from a typed Sea client.
 #[derive(Debug)]
 pub enum SeaClientError {
     /// The underlying connection or framing failed.
+    #[cfg(not(target_arch = "wasm32"))]
     Transport(WebTransportError),
+    /// The browser transport or framing failed.
+    #[cfg(target_arch = "wasm32")]
+    Transport(String),
     /// The service returned a classified Sea failure.
     Service(protocol::ErrorKind, String),
     /// The service returned a response that does not match the request.
@@ -69,7 +90,10 @@ impl fmt::Display for SeaClientError {
 impl Error for SeaClientError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
+            #[cfg(not(target_arch = "wasm32"))]
             Self::Transport(error) => Some(error),
+            #[cfg(target_arch = "wasm32")]
+            Self::Transport(_) => None,
             Self::Service(_, _) | Self::UnexpectedResponse | Self::Closed => None,
         }
     }
@@ -93,6 +117,7 @@ impl ClassifiedError for SeaClientError {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl From<WebTransportError> for SeaClientError {
     fn from(error: WebTransportError) -> Self {
         Self::Transport(error)
@@ -101,7 +126,47 @@ impl From<WebTransportError> for SeaClientError {
 
 impl From<protocol::ProtocolError> for SeaClientError {
     fn from(error: protocol::ProtocolError) -> Self {
-        Self::Transport(WebTransportError::SeaProtocol(error))
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            Self::Transport(WebTransportError::SeaProtocol(error))
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            Self::Transport(error.to_string())
+        }
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+impl From<wasm_bindgen::JsValue> for SeaClientError {
+    fn from(error: wasm_bindgen::JsValue) -> Self {
+        Self::Transport(format!("{error:?}"))
+    }
+}
+
+impl SeaClientError {
+    /// Reports a transport failure without retaining platform-owned error values.
+    fn transport_message(message: &str) -> Self {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            Self::Transport(WebTransportError::Transport(message.to_owned()))
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            Self::Transport(message.to_owned())
+        }
+    }
+
+    /// Reports the end of transport access without changing service classifications.
+    fn disconnected() -> Self {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            WebTransportError::Disconnected.into()
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            Self::transport_message("transport disconnected")
+        }
     }
 }
 
@@ -109,36 +174,40 @@ impl From<ClientStateError> for SeaClientError {
     fn from(error: ClientStateError) -> Self {
         match error {
             ClientStateError::Closed => Self::Closed,
-            ClientStateError::Disconnected => WebTransportError::Disconnected.into(),
+            ClientStateError::Disconnected => Self::disconnected(),
             ClientStateError::MissingAuthority => Self::UnexpectedResponse,
             ClientStateError::Protocol(error) => error.into(),
-            ClientStateError::Poisoned => Self::Transport(WebTransportError::Transport(
-                "shared client state is unavailable".to_owned(),
-            )),
+            ClientStateError::Poisoned => {
+                Self::transport_message("shared client state is unavailable")
+            }
         }
     }
 }
 
-impl From<ClientError<WebTransportError>> for SeaClientError {
-    fn from(error: ClientError<WebTransportError>) -> Self {
+impl<TransportError: Into<SeaClientError>> From<ClientError<TransportError>> for SeaClientError {
+    fn from(error: ClientError<TransportError>) -> Self {
         match error {
             ClientError::State(error) => error.into(),
             ClientError::Protocol(error) => error.into(),
             ClientError::Transport(error) => error.into(),
-            ClientError::ResponseEnded => WebTransportError::Disconnected.into(),
+            ClientError::ResponseEnded => Self::disconnected(),
             ClientError::UnexpectedResponse(response) => response_error(response),
         }
     }
 }
 
-/// Native WebTransport client bound to one open Sea archive session.
-pub struct NativeSeaClient {
-    client: Arc<Client<NativeTransport>>,
-    event_stream: Arc<Mutex<Option<EventStream<NativeBidirectionalStream>>>>,
-    author_stream: Mutex<Option<AuthorStream<NativeBidirectionalStream>>>,
+/// Native certificate-pinned client with the shared typed session implementation.
+#[cfg(not(target_arch = "wasm32"))]
+pub type NativeSeaClient = SessionClient<NativeTransport>;
+
+/// Typed archive session reusable across native and browser transports and session decorators.
+pub struct SessionClient<Transport: ClientTransport> {
+    client: Arc<Client<Transport>>,
+    event_stream: Arc<Mutex<Option<EventStream<Transport::Stream>>>>,
+    author_stream: Mutex<Option<AuthorStream<Transport::Stream>>>,
     /// Weak registration ownership; the returned coordination stream owns its lifetime.
     snapshot_stream: Mutex<Option<Weak<SnapshotPump>>>,
-    content_stream: Mutex<Option<ContentStream<NativeBidirectionalStream>>>,
+    content_stream: Mutex<Option<ContentStream<Transport::Stream>>>,
     resume_after: Option<EventPosition>,
     /// Backend document identity, distinct from logical session authority.
     document: DocumentId,
@@ -176,7 +245,7 @@ struct SnapshotPump {
     /// Requests queued behind any in-flight publication.
     commands: mpsc::Sender<SnapshotCommand>,
     /// Cancels transport ownership when the registration stream is dropped.
-    task: tokio::task::AbortHandle,
+    task: AbortHandle,
 }
 
 impl Drop for SnapshotPump {
@@ -187,51 +256,61 @@ impl Drop for SnapshotPump {
 
 impl SnapshotPump {
     /// Starts one cancellation-owned pump and its coalescible coordination receiver.
-    fn start(
-        mut stream: SnapshotStream<NativeBidirectionalStream>,
+    fn start<Stream>(
+        mut stream: SnapshotStream<Stream>,
     ) -> (
         Arc<Self>,
         watch::Receiver<Result<SnapshotCoordination, String>>,
-    ) {
-        let state = |stream: &SnapshotStream<NativeBidirectionalStream>| SnapshotCoordination {
+    )
+    where
+        Stream: BidirectionalStream + SessionStreamBounds + 'static,
+        Stream::Error: Into<SeaClientError> + SessionStreamBounds,
+    {
+        let state = |stream: &SnapshotStream<Stream>| SnapshotCoordination {
             latest: stream.latest().map(EventPosition::new),
             fence: stream.fence(),
         };
         let (updates, receiver) = watch::channel(Ok(state(&stream)));
         let (commands, mut requests) = mpsc::channel::<SnapshotCommand>(16);
-        let task = tokio::spawn(async move {
-            loop {
-                tokio::select! {
-                    command = requests.recv() => {
-                        let Some(command) = command else { break; };
-                        let result = stream.request(command.request).await.map_err(SeaClientError::from);
-                        if let Err(error) = &result {
-                            let _ = updates.send_replace(Err(error.to_string()));
-                            let _ = command.response.send(result);
-                            break;
-                        }
-                        let _ = updates.send_replace(Ok(state(&stream)));
-                        let _ = command.response.send(result);
-                    }
-                    result = stream.next_coordination() => {
-                        match result {
-                            Ok(()) => { let _ = updates.send_replace(Ok(state(&stream))); }
-                            Err(error) => {
-                                let _ = updates.send_replace(Err(SeaClientError::from(error).to_string()));
+        let (task, registration) = AbortHandle::new_pair();
+        let future = Abortable::new(
+            async move {
+                loop {
+                    tokio::select! {
+                        command = requests.recv() => {
+                            let Some(command) = command else { break; };
+                            let result = stream.request(command.request).await.map_err(SeaClientError::from);
+                            if let Err(error) = &result {
+                                let _ = updates.send_replace(Err(error.to_string()));
+                                let _ = command.response.send(result);
                                 break;
+                            }
+                            let _ = updates.send_replace(Ok(state(&stream)));
+                            let _ = command.response.send(result);
+                        }
+                        result = stream.next_coordination() => {
+                            match result {
+                                Ok(()) => { let _ = updates.send_replace(Ok(state(&stream))); }
+                                Err(error) => {
+                                    let _ = updates.send_replace(Err(SeaClientError::from(error).to_string()));
+                                    break;
+                                }
                             }
                         }
                     }
                 }
-            }
+            },
+            registration,
+        );
+        #[cfg(not(target_arch = "wasm32"))]
+        tokio::spawn(async move {
+            let _ = future.await;
         });
-        (
-            Arc::new(Self {
-                commands,
-                task: task.abort_handle(),
-            }),
-            receiver,
-        )
+        #[cfg(target_arch = "wasm32")]
+        wasm_bindgen_futures::spawn_local(async move {
+            let _ = future.await;
+        });
+        (Arc::new(Self { commands, task }), receiver)
     }
 
     /// Enqueues a request; cancellation does not cause an automatic publication retry.
@@ -248,8 +327,12 @@ impl SnapshotPump {
     }
 }
 
-/// Values that identify and initialize one native archive-bound session.
-pub struct NativeSessionOpen {
+/// Native session-open parameters retained for compatibility.
+#[cfg(not(target_arch = "wasm32"))]
+pub type NativeSessionOpen = SessionOpen;
+
+/// Values that identify and initialize one archive-bound session.
+pub struct SessionOpen {
     /// Archive selected for this session.
     pub archive: Bytes,
     /// Whether the archive is created or must already exist.
@@ -262,7 +345,8 @@ pub struct NativeSessionOpen {
     pub reference: Option<EventPosition>,
 }
 
-impl NativeSeaClient {
+#[cfg(not(target_arch = "wasm32"))]
+impl SessionClient<NativeTransport> {
     /// Connects to `/sea` and opens one archive-bound logical session.
     ///
     /// # Errors
@@ -301,7 +385,59 @@ impl NativeSeaClient {
         let author_stream = timeout(config.operation_timeout, client.open_author_stream())
             .await
             .map_err(|_| WebTransportError::Timeout)??;
-        Ok(Self {
+        Ok(Self::from_streams(
+            client,
+            event_stream,
+            author_stream,
+            resume_after,
+        ))
+    }
+}
+
+impl<Transport> SessionClient<Transport>
+where
+    Transport: ClientTransport + sea_core::SessionBounds + 'static,
+    Transport::Stream: SessionStreamBounds + 'static,
+    Transport::Error: Into<SeaClientError> + SessionStreamBounds,
+{
+    /// Opens a typed session over a caller-owned transport configuration.
+    ///
+    /// # Errors
+    ///
+    /// Returns transport, protocol, or service failures without retrying.
+    pub async fn open(
+        transport: Transport,
+        limits: protocol::Limits,
+        open: SessionOpen,
+    ) -> Result<Self, SeaClientError> {
+        let client = Client::new(transport, limits);
+        let event_stream = client
+            .open_event_stream(protocol::Request::OpenEventStream {
+                version: protocol::PROTOCOL_VERSION,
+                archive: open.archive.to_vec(),
+                intent: open.intent,
+                author: open.author.as_bytes().to_vec(),
+                session: open.session.as_bytes().to_vec(),
+                resume_after: open.reference.map(EventPosition::get),
+            })
+            .await?;
+        let author_stream = client.open_author_stream().await?;
+        Ok(Self::from_streams(
+            client,
+            event_stream,
+            author_stream,
+            open.reference,
+        ))
+    }
+
+    /// Retains the initially opened event stream and independent session channels.
+    fn from_streams(
+        client: Client<Transport>,
+        event_stream: EventStream<Transport::Stream>,
+        author_stream: AuthorStream<Transport::Stream>,
+        resume_after: Option<EventPosition>,
+    ) -> Self {
+        Self {
             document: DocumentId::from_bytes(Bytes::copy_from_slice(event_stream.document())),
             scope: Arc::new(()),
             client: Arc::new(client),
@@ -310,7 +446,7 @@ impl NativeSeaClient {
             snapshot_stream: Mutex::new(None),
             content_stream: Mutex::new(None),
             resume_after,
-        })
+        }
     }
 
     /// Returns the backend-assigned identity to retain for later opens.
@@ -369,14 +505,23 @@ impl NativeSeaClient {
     }
 }
 
-#[async_trait]
-impl sea_core::SeaService for NativeSeaClient {
+impl<Transport> sea_core::SeaService for SessionClient<Transport>
+where
+    Transport: ClientTransport + sea_core::SessionBounds + 'static,
+    Transport::Stream: SessionStreamBounds + 'static,
+    Transport::Error: Into<SeaClientError> + SessionStreamBounds,
+{
     type Error = SeaClientError;
 }
 
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-impl SeaArchive for NativeSeaClient {
+impl<Transport> SeaArchive for SessionClient<Transport>
+where
+    Transport: ClientTransport + sea_core::SessionBounds + 'static,
+    Transport::Stream: SessionStreamBounds + 'static,
+    Transport::Error: Into<SeaClientError> + SessionStreamBounds,
+{
     type BlobHandle = RemoteHandle<BlobTreeId>;
     type EventHandle = RemoteHandle<EventPosition>;
 
@@ -600,7 +745,12 @@ impl SeaArchive for NativeSeaClient {
 
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-impl SeaAuthorSession for NativeSeaClient {
+impl<Transport> SeaAuthorSession for SessionClient<Transport>
+where
+    Transport: ClientTransport + sea_core::SessionBounds + 'static,
+    Transport::Stream: SessionStreamBounds + 'static,
+    Transport::Error: Into<SeaClientError> + SessionStreamBounds,
+{
     async fn submit(&self, submission: EventSubmission) -> Result<EventPosition, Self::Error> {
         match self
             .author_stream
@@ -670,7 +820,12 @@ impl SeaAuthorSession for NativeSeaClient {
 
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-impl SeaSnapshotCoordinator for NativeSeaClient {
+impl<Transport> SeaSnapshotCoordinator for SessionClient<Transport>
+where
+    Transport: ClientTransport + sea_core::SessionBounds + 'static,
+    Transport::Stream: SessionStreamBounds + 'static,
+    Transport::Error: Into<SeaClientError> + SessionStreamBounds,
+{
     async fn publish_snapshot(
         &self,
         expected_parent: Option<EventPosition>,

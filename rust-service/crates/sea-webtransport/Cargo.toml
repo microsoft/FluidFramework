@@ -9,6 +9,8 @@ rust-version.workspace = true
 crate-type = ["rlib", "cdylib"]
 
 [features]
+default = ["bindings"]
+bindings = []
 test-support = ["dep:sea-memory", "dep:sea-sequencer"]
 
 [dependencies]

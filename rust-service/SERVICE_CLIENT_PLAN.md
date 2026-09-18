@@ -1,6 +1,6 @@
 # SEA WASM and ServiceClient Integration Plan
 
-Status: Planned; implementation has not started under this plan.
+Status: In progress; combined stages 1 and 2 have a working session-binding foundation, but consumer migration and full acceptance remain incomplete.
 Created: 2026-09-18.
 
 This is an active implementation plan, not a description of supported functionality.
@@ -129,6 +129,12 @@ Use this order within the combined phase:
 
 Establish the factory and loading surface needed for this phase, but leave full combined/split preset behavior and comparative measurements to stage 3.
 This combined phase does not require parallel workstreams or a numbered iteration and does not start ServiceClient or example integration.
+
+Foundation progress: `sea-wasm` now has shared session operations over a concrete-handle-preserving adapter, and `sea-webtransport` has a typed session client that compiles for native and browser transports.
+The `sea-typescript` package owns five isolated build configurations and exposes initial neutral memory and remote APIs.
+Node package tests passed for memory and compression, and Chromium 152 inside the Codespace passed real plain/compressed WebTransport blob and event round trips, snapshot publication, and reopening.
+See the [package guide](packages/sea-typescript/README.md) for commands and limitations.
+These results do not complete the stages: existing consumers still use the legacy bindings, and complete API/error/lifecycle coverage, consumer migration, and remaining validation gates must be finished before stage 3.
 
 ### 1. Extract and Package WASM Bindings
 

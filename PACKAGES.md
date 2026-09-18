@@ -95,6 +95,12 @@ The dependencies between layers are enforced by the layer-check command._
 | --- | --- |
 | - [@fluidframework/sea-driver](/rust-service/packages/sea-driver)</br>&nbsp; | - [Core-Interfaces](#Core-Interfaces)</br>- [Driver-Definitions](#Driver-Definitions) |
 
+### Sea-TypeScript
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/sea-typescript](/rust-service/packages/sea-typescript) | &nbsp; |
+
 ### Loader
 
 | Packages | Layer Dependencies |

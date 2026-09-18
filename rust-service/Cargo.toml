@@ -11,6 +11,7 @@ members = [
     "crates/sea-file-durable",
     "crates/sea-compression",
     "crates/sea-encryption",
+    "crates/sea-wasm",
     "crates/sea-webtransport",
     "crates/sea-webtransport-server",
     "examples/sea-counter",

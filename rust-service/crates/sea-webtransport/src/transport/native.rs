@@ -6,7 +6,8 @@ use wtransport::{Connection, Endpoint, endpoint::endpoint_side::Client};
 use super::{BidirectionalStream, ClientTransport};
 use crate::{CLOSE_CODE, WebTransportError, transport_error};
 
-pub(crate) struct NativeTransport {
+/// Native connection retained by the typed session client.
+pub struct NativeTransport {
     _endpoint: Endpoint<Client>,
     connection: Connection,
 }
@@ -45,7 +46,8 @@ impl ClientTransport for NativeTransport {
     }
 }
 
-pub(crate) struct NativeBidirectionalStream {
+/// Native bidirectional stream used by the shared session implementation.
+pub struct NativeBidirectionalStream {
     send: wtransport::SendStream,
     receive: Option<wtransport::RecvStream>,
 }

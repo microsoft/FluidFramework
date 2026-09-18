@@ -1,0 +1,77 @@
+<!-- Copyright (c) Microsoft Corporation and contributors. All rights reserved. -->
+<!-- Licensed under the MIT License. -->
+
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Sea package session validation</title></head>
+<body>
+<script type="module">
+import { openWebTransport } from "./lib/index.js";
+
+const parameters = new URLSearchParams(location.search);
+const certificateHash = Uint8Array.from(parameters.get("hash").match(/../gu), (byte) => Number.parseInt(byte, 16));
+const encode = (value) => new TextEncoder().encode(value);
+const assert = (condition, message) => { if (!condition) { throw new Error(message); } };
+
+window.__seaPackageResult = (async () => {
+    const results = [];
+    for (const compression of [false, true]) {
+        const service = { url: parameters.get("transport"), certificateHash, configuration: compression ? "webtransport-compression" : "webtransport" };
+        const unique = crypto.randomUUID();
+        const options = (name) => ({ author: encode(`${unique}-${name}`), session: encode(crypto.randomUUID()), compression });
+        const writer = await openWebTransport(service, undefined, options("writer"));
+        const reader = await openWebTransport(service, writer.document, options("reader"));
+        let coordination;
+        let events;
+        try {
+            const initial = await reader.load();
+            initial.cancel();
+            const payload = encode("browser application payload ".repeat(100));
+            const blob = await writer.putBlob(payload);
+            assert(new TextDecoder().decode(await reader.getBlob(blob)) === new TextDecoder().decode(payload), "blob did not round trip");
+            if (compression) {
+                const rawReader = await openWebTransport(service, writer.document, { ...options("raw-reader"), compression: false });
+                try {
+                    const stored = await rawReader.getBlob(blob);
+                    assert(stored.length < payload.length, "compression factory did not encode stored bytes");
+                } finally { await rawReader.close(); }
+            }
+            const root = await writer.putDirectory([{ name: "state", child: blob }]);
+            assert((await reader.getDirectory(root))[0].name === "state", "directory did not round trip");
+            const position = await writer.submit(encode("operation"), undefined, payload);
+            assert(await writer.resolveSubmission(encode("operation")) === position, "submission receipt missing");
+            events = reader.read(undefined, position);
+            let observed = false;
+            for (;;) {
+                const item = await events.next();
+                if (item === undefined) { break; }
+                if (item.kind === "event") {
+                    assert(new TextDecoder().decode(item.payload) === new TextDecoder().decode(payload), "event did not decode");
+                    observed = true;
+                }
+            }
+            assert(observed, "reader did not observe event");
+            coordination = await writer.coordinateSnapshots("clientSelected");
+            await coordination.next();
+            await writer.publishSnapshot(undefined, undefined, position, root);
+            const reloaded = await openWebTransport(service, writer.document, options("reload"));
+            try {
+                const loaded = await reloaded.load();
+                try {
+                    const snapshot = await loaded.next();
+                    assert(snapshot.kind === "snapshot" && snapshot.atEvent === position, "snapshot did not reopen");
+                } finally { loaded.cancel(); }
+            } finally { await reloaded.close(); }
+            results.push({ compression, blobBytes: payload.length, snapshotPosition: String(position) });
+        } finally {
+            events?.cancel();
+            coordination?.cancel();
+            await writer.close();
+            await reader.close();
+        }
+    }
+    return { status: "passed", browser: navigator.userAgent, environment: "Chromium inside Codespace", transport: "real WebTransport", results };
+})().catch((error) => ({ status: "failed", error: String(error), stack: error.stack }));
+</script>
+</body>
+</html>

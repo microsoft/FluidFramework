@@ -7,15 +7,16 @@ pub mod client;
 #[doc(hidden)]
 pub mod transport;
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "bindings"))]
 mod wasm;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "bindings"))]
 pub use wasm::*;
 
-#[cfg(not(target_arch = "wasm32"))]
 mod native;
+pub use native::SeaClientError;
 #[cfg(not(target_arch = "wasm32"))]
-pub use native::{NativeSeaClient, NativeSessionOpen, SeaClientError};
+pub use native::{NativeSeaClient, NativeSessionOpen};
+pub use native::{SessionClient, SessionOpen};
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::time::Duration;

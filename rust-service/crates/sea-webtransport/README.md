@@ -53,6 +53,11 @@ See [Decision 0012](../../historical/decisions/0012-fluid-snapshot-election-inte
 
 ## Lifecycle And Ownership
 
+`SessionClient<Transport>` implements the same typed session facets over native or browser transport primitives.
+`NativeSeaClient` retains its certificate-pinned `connect` API as the native specialization.
+`SessionClient::open` accepts an already configured transport and explicit session-open parameters, allowing the existing Rust compression decorator to wrap browser sessions.
+Snapshot pump cancellation uses the same ownership model with native tasks or browser-local tasks.
+
 `NativeSeaClient` pins a SHA-256 certificate hash and implements the replacement `sea_core::session` facets.
 Its private-provenance handles confirm remote availability and are scoped to the resolving client; they are never sent as wire authority.
 Event-position resolution currently scans retained history, and tree resolution fetches the corresponding immutable content.
@@ -72,6 +77,10 @@ Optional generated tree inputs are non-consuming typed JavaScript references, so
 The native listener, server dispatch, archive routing, connection liveness, measurements, and shutdown policy belong to the separate [`sea-webtransport-server`](../sea-webtransport-server/) crate.
 
 ## Targets And Generated Bindings
+
+The default `bindings` feature retains the existing generated API during migration.
+The new [WASM crate](../sea-wasm/README.md) disables default features when depending on this crate so it can own generated session exports without linking the legacy binding surface.
+Migration to the new [TypeScript package](../../packages/sea-typescript/README.md) is in progress; the legacy build commands below still serve existing consumers.
 
 The `src/wasm/` library module exports browser and injected-transport bindings from the same shared client used by native Rust.
 It is library code rather than a Cargo example because downstream applications consume generated bindings; there is no standalone scenario to run.
