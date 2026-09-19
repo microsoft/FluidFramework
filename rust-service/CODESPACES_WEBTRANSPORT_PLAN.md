@@ -26,7 +26,7 @@ See the [client contract](crates/sea-webtransport/README.md#optional-websocketst
 Production authentication, cross-browser support beyond native API availability, and total browser/proxy memory bounds remain out of scope.
 The rest of this record preserves earlier scope decisions and measurements chronologically.
 
-Validation at implementation completion:
+Validation before rebasing onto the newer `rust-service` branch:
 
 - All 147 Rust workspace all-target/all-feature tests passed; both transport crates also passed their feature-disabled tests.
 - Workspace formatting, strict Clippy, strict Rust documentation, and documentation-link checks passed.
@@ -39,7 +39,25 @@ Validation at implementation completion:
 	Those historical files and experiments were left unchanged; this is not a fully green repository gate.
 
 All implementation edits and build outputs remain in `/workspaces/FluidFramework-codespaces-webtransport` on `rust-service-codespaces-webtransport`.
-The active main worktree was not modified, and the implementation has not been committed, pushed, or merged.
+The active main worktree was not modified.
+
+### Rebase and Build Follow-Up: 2026-09-19
+
+The implementation was committed as `e4d78d11713`, then rebased onto local `rust-service` at `dd6b9c69ade`.
+Its rebased commit is `a17c6f65177`; the only conflict combined the new default `bindings` gate with the optional `websocket-stream` feature in the client manifest.
+Both native server and browser WASM transport checks passed after resolution.
+The neutral `sea-wasm` API remains unchanged.
+
+The newer base fixed the historical benchmark formatting blockers.
+The two synthetic probe scripts were moved together, without content changes, from the source test directory to ignored `rust-service/target/websocket-probes/` in the isolated worktree.
+They remain available as local investigation artifacts rather than production/test source.
+Root Biome and `pnpm policy-check --path rust-service` pass after this relocation.
+The earlier probe instructions below record their original paths at the time of the experiment.
+
+Post-rebase validation is green: `pnpm build:fast`, root Biome, Rust-service policy, canonical Rust formatting/Clippy/docs/build, all 149 workspace tests, and target-specific WASM Clippy passed.
+Both default WebTransport and feature-enabled WebSocketStream Chromium collaboration and bounded-shutdown tests passed.
+Default generated bindings were restored after the optional-feature browser run.
+No push or merge into the active worktree was performed.
 
 This is an independently assignable investigation, separate from the [SEA WASM and ServiceClient integration plan](SERVICE_CLIENT_PLAN.md).
 It does not require that plan's package extraction or inventory-app integration to be complete.

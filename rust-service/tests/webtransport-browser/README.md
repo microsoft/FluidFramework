@@ -44,6 +44,6 @@ The earlier synthetic probe below remains separate evidence for substantial two-
 ## Codespaces WebSocketStream Probe
 
 The local `websocketstream-probe.mjs` server and `websocketstream-probe-client.mjs` page tested native browser backpressure through Codespaces forwarding without starting SEA.
-They remain uncommitted in the isolated investigation worktree and are not part of `run-test.sh` or the implemented adapter.
+They are preserved together under ignored `rust-service/target/websocket-probes/` in the isolated investigation worktree and are not committed source, part of `run-test.sh`, or part of the implemented adapter.
 See the [investigation record](../../CODESPACES_WEBTRANSPORT_PLAN.md#native-websocketstream-probe-2026-09-18) for setup, exposure limits, observed results, and cleanup.
 The probe requires an existing `ws` installation supplied through `PROBE_WS_MODULE` and a browser with native `WebSocketStream`.
