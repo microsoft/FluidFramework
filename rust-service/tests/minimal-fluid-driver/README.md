@@ -9,94 +9,19 @@ It owns local and browser test setup, integration tests, and benchmarks; the neu
 TypeScript does not construct or parse Sea protocol frames.
 The same adapter accepts injected factories for local memory and browser WebTransport sessions.
 
-## Implemented interfaces
+## Ownership and Coverage
 
-- `IDocumentServiceFactory`: create with an optional full summary and load by resolved URL.
-- `IDocumentService`: storage, bounded delta storage, and explicit delta connection creation.
-- `IDocumentStorageService`: versions, snapshot trees, immutable blob create/read, full and incremental summary upload, and full summary download.
-- Summary tree, blob, and attachment handles resolved against the acknowledged parent snapshot, plus attachment blobs uploaded outside the summary.
-- `IDocumentDeltaStorageService`: bounded projected pages filtered to the requested sequence interval.
-- `IDocumentDeltaConnection`: submission and push-driven operation events through one bounded projected-operation subscription.
-- Explicit lifecycle extensions: `waitForIdle()`, `disconnect()`, `reconnect()`, `recoverPending()`, and caller-driven `resubmitPending()`.
+Package-specific regressions and contracts live with their implementations:
 
-## Unsupported interfaces and semantics
+- [sea-driver](../../packages/sea-driver/README.md) owns Fluid storage, sequence projection, membership, signals, submission recovery, and lifecycle contracts and tests.
+- [sea-tree](../../packages/sea-tree/README.md) owns the direct SharedTree host and its two-peer collaboration test.
+- [sea-typescript](../../packages/sea-typescript/README.md) owns neutral session tests, consumer type assertions, and generated WASM artifacts.
 
-- Signals, nacks, presence, automatic reconnect, hidden retry, offline merge, loading groups, and GC/retention guarantees.
-- Summary download materializes a full tree. It does not preserve handles or distinguish separately uploaded attachments from other blob leaves in the returned tree.
-- `getSnapshot`, caching, auth, production certificates, Routerlicious, and ODSP compatibility are not implemented or claimed.
-- The native server owns a bounded set of concurrent connection futures. The SharedTree Chromium trace uses three independent Fluid containers and reports actual session openings, including read-to-write replacement and explicit reconnection. Each remote session owns independent persistent event, author, snapshot, and content streams; stream owners preserve their own ordering without a global serialization wrapper.
-- Browser loading uses Fluid's default read-to-write replacement. Each replacement opens a fresh Sea session identity while preserving the adapter's Fluid projection state. Production Fluid membership is not implemented.
-
-## Summary storage semantics
-
-Document creation returns a backend-assigned opaque ID.
-The driver places its hexadecimal encoding in the resolved Fluid URL; peers and reloads use the returned URL, not the provisional attach name.
-
-The initial summary is uploaded as immutable content, then referenced by a committed application initialization event, then published as an ordinary snapshot at that event.
-Initialization is hidden from Fluid's operation stream and maps to application sequence zero.
-Ordinary operations receive contiguous application sequence numbers starting at one, independently of the backend's potentially sparse event positions.
-The two existing synthetic Fluid membership positions remain a separate projection offset.
-Each opened session scans full retained history to reconstruct this mapping before opening its live subscription; startup cost therefore grows with retained history.
-Every projected history read cancels its live stream on completion or failure, including malformed initialization encountered during startup.
-
-Snapshot version handles encode committed event positions.
-The generated client's bounded lookup is checked for an exact position match when satisfying a Fluid version request.
-Publishing a different state at the same position is rejected, even with a fresh publication attempt; summaries of later state must use later committed event positions.
-There are no independent snapshot-operation identities or pre-event initial snapshots.
-
-`createBlob()` uploads an immutable attachment blob and returns its content identity.
-During summary upload, an attachment node references that existing identity without uploading its content again.
-The Sea storage backends validate every referenced blob and directory before accepting a directory, so a summary containing an unknown attachment identity is rejected.
-
-For an incremental summary, the driver loads the snapshot identified by `ISummaryContext.ackHandle`, falling back to `proposalHandle` when necessary.
-Blob and tree handles are paths into that parent snapshot.
-The driver resolves those paths, reuses the referenced content identities, uploads new blobs, and conditionally publishes a new snapshot whose expected parent is the resolved snapshot.
-A stale parent causes publication to fail; the driver does not retry against a different parent because that could change the summary's event boundary or invalidate its handles.
-
-The current implementation fetches the complete parent directory manifest and rebuilds the complete directory structure for each incremental summary.
-Content-addressed blob and directory identities ensure that unchanged content is not uploaded or persisted again, but the parent traversal and idempotent directory requests still consume client, server, and wire work.
-
-A future optimization could traverse only the parent paths named by handles and retain tree handles as direct directory identities.
-The client would build a mixed tree of new blobs, attachment identities, blob handles, and directory handles, then publish only newly composed directories from the leaves to the root.
-The existing snapshot, `getDirectory`, and `putDirectory` APIs appear sufficient, so this should not require a new Rust storage schema or wire protocol.
-The implementation would need to preserve the driver's `.app` and `.protocol` path projection, validate handle kinds and paths, retain expected-parent publication, and compare path-by-path request overhead with the current single full traversal before replacing it.
-
-## Submission and subscription lifecycle
-
-The generated browser WebTransport client opens one authority-bound author stream with the session and sends contiguous client sequence numbers on it.
-Submission acknowledgements arrive in the same order through the shared native/browser author-stream state machine.
-A submission remains in `pending` until its acknowledgement arrives or projected local operation is observed.
-Write failures and response loss reject `waitForIdle()` without discarding pending identity.
-After reconnect, `recoverPending()` verifies the old accepted prefix through its durable leave.
-Callers may then use `resubmitPending(transform)` to transform the entire unaccepted suffix into fresh-session messages with new context and identities.
-An isolated `notCommitted` lookup never authorizes replaying an unchanged payload.
-Resubmission uses the same persistent author stream.
-
-Reconnect cancels the old projected-operation subscription, reconnects the generated client, and opens replacement event and author streams.
-Explicit disconnect and disposal also close or cancel their owned resources.
-Subscription restart and explicit synchronization resume from the last projected cursor.
-
-The driver does not automatically retry, recover, or resubmit ambiguous writes.
-Explicit-helper callers wait for the failed submission chain, reconnect, prove the terminal prefix, reconcile accepted history, and provide the application-specific suffix transformation.
-Normal Fluid containers instead let the runtime process pending state and rebase operations during reconnect; the full SharedTree trace exercises this path.
-Disposal is synchronous at the Fluid interface boundary while stream close and subscription cancellation complete asynchronously.
-
-## Snapshot Coordination
-
-Every generated client opens snapshot coordination with an explicit participation policy.
-The regular `SeaDriver` uses `ClientSelected`, so Fluid's existing summarizer election and client-side cadence remain authoritative; Sea permits publication from active client-selected streams without granting a nomination fence.
-The direct SharedTree benchmark uses `SeaSelected`, so Sea deterministically grants one current publisher fence when no client-selected publisher is active.
-Both modes receive accepted-snapshot coordination updates.
-`ReadOnly` is available to clients that need updates but must never publish.
-
-Within `sea-driver`, `SeaDriver` and `SeaDocumentService` compose `SeaDocumentStorage`, `SeaDeltaStorage`, and `SeaDeltaConnection`, with shared lifecycle helpers in a separate module.
-`SeaSessionDriverClient` in `sea-driver` now owns the Fluid projection over an injected neutral session factory.
-The summary tests, direct SharedTree package collaboration test, SharedTree browser lifecycle trace, and browser benchmarks use it with `sea-typescript` package entrypoints.
-The browser trace uses an import map to load package-owned JavaScript and WASM and triggers real session closure at submission admission for deterministic explicit recovery testing.
-The obsolete `GeneratedSeaBindingAdapter` has been removed.
-Browser benchmarks import the neutral memory and WebTransport factory entrypoints and explicitly close their owned memberships and local service.
-The benchmark runner checks that each Rust-backed sample loads only the selected capability's generated JavaScript and WASM artifacts.
-The consumer type fixture checks neutral session types rather than crate-generated exports.
+This harness retains SharedTree-based ServiceClient integration tests, browser traces, and comparison benchmarks.
+It aggregates the package-owned tests without moving their dependencies back into the harness.
+The browser trace loads package-owned JavaScript and WASM and closes a session at submission admission to test explicit recovery deterministically.
+Browser benchmarks explicitly close their memberships and local service and verify that each Rust-backed sample loads only its selected capability's generated artifacts.
+The native server owns a bounded set of concurrent connections; browser traces report actual session openings, including read-to-write replacement and explicit reconnection.
 
 ## Validation
 
@@ -114,7 +39,7 @@ pnpm --dir rust-service/tests/minimal-fluid-driver test
 ```
 
 The package `build` script builds dependencies, generates the Rust WASM packages, checks formatting and lint, typechecks, and builds all browser bundles.
-The package `test` script depends on that complete build and runs the TypeScript unit tests, generated Node WASM tests, and real Chromium WebTransport test.
+The package `test` script depends on that complete build and runs the remaining harness tests, package-owned driver and direct SharedTree regressions, neutral Node WASM tests and type assertions, and real Chromium WebTransport tests.
 To build and test the entire Rust service, including the Cargo workspace, run `./test.sh` from `rust-service/`.
 
 The neutral package's `build:wasm` task uses verified input/output tracking and skips unchanged generation.
@@ -126,17 +51,17 @@ from Cargo metadata, validate Rust target and `wasm-bindgen` tool versions, and
 model individual generated packages without package-owned globs. The current
 neutral-package task provides hash-based incremental execution.
 
-The Node suite runs thirteen neutral package session tests, including migrated snapshot registration replacement and cancellation ownership.
-The real Chromium harness runs the Fluid driver trace, plain and compressed neutral remote scenarios, and ordered delivery, explicit reopen, snapshot recovery, and shutdown checks through neutral factories.
-Both test tasks declare the neutral package build dependency; the package itself remains independent of this harness.
+The remaining Node scenarios verify ServiceClient attachment, reload, and SharedTree collaboration under both presets, plus the captured benchmark payload.
+Driver summary and lifecycle regressions run from `sea-driver`; direct SharedTree collaboration runs from `sea-tree`.
+The neutral package's own test command covers sessions and socket mechanics, including snapshot registration replacement and cancellation ownership.
+The real Chromium harness runs the Fluid driver trace, plain and compressed neutral scenarios, ServiceClient collaboration and reopen under both presets with and without compression, and transport/shutdown checks.
 Rust transport tests inject fragmented, coalesced, delayed, reset, malformed, and abandoned-response inputs without requiring browser timing.
-The TypeScript unit suite also includes a summary-storage fixture that verifies mixed incremental tree and blob handles, attachment reuse and validation, historical snapshot loading, and stale-parent rejection.
-A generated-WASM driver regression verifies hidden initialization, first-operation sequence numbering, fresh-client mapping reconstruction, and exact historical snapshot versions.
 
 The default browser page bundles `browser/trace.mjs` against the owning packages.
 It verifies initial summary reload, independent two-client push delivery, pre-commit pending recovery and explicit resubmission, duplicate-free reconnect, and a finite bounded historical range.
 It reports actual session openings rather than obsolete shared-transport assumptions or unavailable wire metrics, and closes all owned sessions.
-This trace is part of `test:browser` and `rust-service/test.sh`; the full SharedTree trace below remains separately invoked.
+This trace and the ServiceClient SharedTree matrix are part of `test:browser` and `rust-service/test.sh`.
+The legacy Loader-based SharedTree trace below remains separately invoked.
 
 For Chromium, generate the existing browser harness certificate, start
 `sea-webtransport-server`, and run:

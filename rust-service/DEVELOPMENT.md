@@ -24,7 +24,8 @@ Run the complete Rust and non-Rust test suite with one command:
 ./test.sh
 ```
 
-The script delegates the complete non-Rust build to the minimal Fluid driver test harness, runs the Cargo workspace tests, and then delegates all TypeScript, generated WASM, and Chromium tests to that package's `test` script.
+The script delegates the complete non-Rust build to the Fluid integration harness, runs the Cargo workspace tests, and then runs that package's aggregate `test:all` task.
+The aggregate includes package-owned driver, direct SharedTree, and neutral session tests and type assertions, as well as the remaining integration and Chromium scenarios.
 The harness depends on the reusable `@fluidframework/sea-driver` and `@fluidframework/sea-tree` packages under `packages/`.
 The package build uses Fluid build's dependency graph to build its dependencies, generate WASM, check formatting and lint, typecheck, and build the browser bundles.
 
@@ -35,11 +36,11 @@ pnpm policy-check --path rust-service
 ```
 
 Also run `pnpm build:fast` from the repository root when a change affects a registered pnpm package or a declared input to its build tasks.
-For the minimal Fluid driver, those inputs include Rust-service Cargo manifests, `Cargo.lock`, and Rust sources used to generate the WASM clients.
+For `sea-typescript`, those inputs include Rust-service Cargo manifests, `Cargo.lock`, and Rust sources used to generate the WASM clients.
 Documentation-only Rust-service changes do not require the repository build.
 
 The installed `wasm-bindgen` CLI must match the dependency version pinned by `sea-wasm`, which owns the generated bindings.
-See the [browser harness](tests/webtransport-browser/README.md) for the real Chromium WebTransport command and the [minimal Fluid driver](tests/minimal-fluid-driver/README.md) for the SharedTree trace.
+See the [browser harness](tests/webtransport-browser/README.md) for the real Chromium WebTransport command and the [Fluid integration harness](tests/minimal-fluid-driver/README.md) for the SharedTree trace.
 Browser validation exercises both client-selected and Sea-selected snapshot participation without changing the server protocol or binary.
 
 ## Documentation Policy

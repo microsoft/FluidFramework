@@ -45,10 +45,18 @@ jobs:
         run: |
           rustup target add wasm32-unknown-unknown
           cargo install wasm-bindgen-cli --version 0.2.128 --locked
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: "22.x"
+          cache: pnpm
+      - name: Install TypeScript workspace
+        working-directory: .
+        run: pnpm install --frozen-lockfile
       - name: Build and test generated Sea clients
+        working-directory: .
         run: |
-          node tests/minimal-fluid-driver/scripts/build-wasm.mjs
-          node tests/wasm-client/node-test.mjs
+          pnpm exec fluid-build rust-service/packages/sea-typescript --task test
       - name: Validate current documentation
         run: node scripts/check-documentation.mjs
       - name: Validate foundation records

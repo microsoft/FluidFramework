@@ -30,14 +30,17 @@
 		"build:entrypoints:esm": "flub generate entrypoints --outDir ./lib",
 		"build:esm": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
 		"check:exports:public": "api-extractor run --config api-extractor/api-extractor-lint-public.json",
 		"check:format": "biome check .",
 		"ci:build:api-reports": "api-extractor run --config api-extractor/api-extractor-report.json",
-		"clean": "rimraf --glob lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
+		"clean": "rimraf --glob lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"format": "biome check . --write",
-		"lint": "biome lint src"
+		"lint": "biome lint src",
+		"test": "fluid-build . --task test:node",
+		"test:node": "node --test \"lib/test/*.test.js\""
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
@@ -55,9 +58,18 @@
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/shared-object-base": "workspace:~",
 		"@microsoft/api-extractor": "7.58.1",
+		"@types/node": "catalog:types",
 		"concurrently": "^10.0.3",
 		"rimraf": "^6.1.3",
 		"typescript": "~6.0.3"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"test:node": [
+				"build:test:esm"
+			]
+		}
 	}
 }

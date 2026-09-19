@@ -12,11 +12,11 @@ The current browser transport implements disconnection directly, and the neutral
 Build the package-owned artifacts and run the tests from `rust-service/`:
 
 ```bash
-pnpm exec fluid-build tests/minimal-fluid-driver --task test:wasm
+pnpm exec fluid-build packages/sea-typescript --task test
 ```
 
-The harness declares the neutral package build as a dependency and invokes its tests only for orchestration; the neutral package does not depend on the harness.
-After building, `node --test packages/sea-typescript/test/session.test.mjs` runs all thirteen Node tests directly.
+The package task builds its artifacts and consumer type assertions before executing its Node tests; it does not depend on the Fluid harness.
+After building, `node --test packages/sea-typescript/test/session.test.mjs` runs the session tests directly.
 Session consumers use `@fluidframework/sea-typescript`, which owns the shared `sea-wasm` artifacts.
 Generated bindings and WASM binaries are ignored build outputs.
 

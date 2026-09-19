@@ -30,7 +30,8 @@ Subscription failures are surfaced by `waitForIdle()`.
 This is not a Fluid driver or container implementation.
 The host does not implement snapshot persistence, snapshot loading, or automatic reconnect and recovery.
 It consumes an injected client and does not generate or initialize WebAssembly (WASM).
-The [integration harness](../../tests/minimal-fluid-driver/README.md) supplies generated clients and local and browser scenarios.
+The [neutral package](../sea-typescript/README.md) supplies concrete sessions for the package-owned collaboration test.
+The [integration harness](../../tests/minimal-fluid-driver/README.md) supplies browser comparison benchmarks.
 
 ## Development
 
@@ -38,8 +39,9 @@ From the repository root:
 
 ```bash
 pnpm --dir rust-service/packages/sea-tree run build
-pnpm --dir rust-service/tests/minimal-fluid-driver test
+pnpm --dir rust-service/packages/sea-tree test
 ```
 
 The package build compiles TypeScript, generates entrypoints and API reports, and checks formatting, lint, and export release tags.
-The harness owns cross-package tests and the direct SharedTree benchmarks.
+The test task builds its dependencies and separate test project, then verifies two-way collaboration between direct SharedTree hosts through the package entrypoint.
+The harness retains the direct SharedTree benchmarks and includes this package test in its aggregate command.

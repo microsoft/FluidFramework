@@ -122,7 +122,7 @@ Its APIs contain no Fluid projection or SharedTree dependencies.
 Fluid projection belongs to `sea-driver`, which consumes injected neutral session factories; direct SharedTree integration remains above that layer.
 Cargo features determine included capabilities, session options enable supported decorators, and loaders select artifacts without changing service semantics.
 
-[`SeaDriver`](tests/minimal-fluid-driver/README.md) is a Fluid driver, allowing Fluid applications to run on Sea. It maps Fluid sequence numbers, messages, summaries, blob trees, and reconnection behavior onto the Sea model.
+[`SeaDriver`](packages/sea-driver/README.md) is a Fluid driver, allowing Fluid applications to run on Sea. It maps Fluid sequence numbers, messages, summaries, blob trees, and reconnection behavior onto the Sea model.
 
 `DirectSharedTreeClient` skips most of the Fluid runtime logic and directly integrates Sea events into SharedTree for much lower overhead.
 It also can apply batched updates to the tree for much faster handling of op backlogs (regular Fluid drivers could do this, but currently do not beyond their limited op bunching). The direct SharedTree integration used Sea's built in service assisted summarizer selection instead of Fluid's.

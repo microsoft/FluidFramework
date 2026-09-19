@@ -36,8 +36,8 @@
 		"test": "pnpm run build && pnpm run test:all",
 		"test:all": "fluid-build . --task test:all",
 		"test:browser": "SEA_BROWSER_SKIP_BUILD=1 ../webtransport-browser/run-test.sh",
-		"test:node": "node --test \"lib/*.test.js\"",
-		"test:wasm": "node --test \"../../packages/sea-typescript/test/*.test.mjs\"",
+		"test:node": "node --test lib/capturedSharedTreeOperation.test.js lib/seaPackages.test.js",
+		"test:wasm": "pnpm --dir ../../packages/sea-typescript test",
 		"typecheck": "tsc --project tsconfig.json --noEmit --tsBuildInfoFile ./tsconfig.typecheck.tsbuildinfo",
 		"typecheck:shared-tree": "tsc --project tsconfig.shared-tree.json"
 	},
@@ -115,7 +115,9 @@
 				"dependsOn": [
 					"test:browser",
 					"test:node",
-					"test:wasm"
+					"test:wasm",
+					"@fluidframework/sea-driver#test:node",
+					"@fluidframework/sea-tree#test:node"
 				],
 				"script": false
 			},
@@ -128,7 +130,7 @@
 				"build:esm"
 			],
 			"test:wasm": [
-				"@fluidframework/sea-typescript#build:esm"
+				"@fluidframework/sea-typescript#build:test:esm"
 			]
 		}
 	}

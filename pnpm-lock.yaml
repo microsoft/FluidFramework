@@ -16720,9 +16720,15 @@ importers:
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
         version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../../../packages/dds/shared-object-base
       '@microsoft/api-extractor':
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
+      '@types/node':
+        specifier: ~22.19.17
+        version: 22.19.17
       concurrently:
         specifier: ^10.0.3
         version: 10.0.3
@@ -16754,9 +16760,15 @@ importers:
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
         version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
+      '@fluidframework/sea-typescript':
+        specifier: workspace:~
+        version: link:../sea-typescript
       '@microsoft/api-extractor':
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
+      '@types/node':
+        specifier: ~22.19.17
+        version: 22.19.17
       concurrently:
         specifier: ^10.0.3
         version: 10.0.3

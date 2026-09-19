@@ -138,7 +138,48 @@ The pre-opened event stream can be transferred only once; later subscriptions at
 Automatic reconnect, authentication, and garbage collection remain incomplete.
 Ordered writer membership is implemented, but this does not establish production driver conformance.
 Summary download materializes a full tree rather than preserving handles.
-See the harness's [storage and lifecycle contracts](../../tests/minimal-fluid-driver/README.md) for the generated-client projection and snapshot semantics.
+
+## Summary Storage
+
+Document creation returns a backend-assigned opaque ID.
+The driver places its hexadecimal encoding in the resolved Fluid URL; peers and reloads use that URL rather than a provisional attach name.
+The initial summary is uploaded as immutable content, referenced by a committed application initialization event, and published as a snapshot at that event.
+Initialization is hidden from Fluid's operation stream and maps to sequence zero.
+Subsequent projected operations, membership records, and summary acknowledgments occupy contiguous Fluid sequence numbers independently of the backend's event positions.
+Each session scans retained history to reconstruct this mapping before opening its live subscription, so startup cost grows with retained history.
+Every finite projected history read cancels its stream on completion or failure, including malformed initialization during startup.
+
+Snapshot version handles encode committed event positions.
+Bounded snapshot lookup requires an exact position match for a Fluid version request.
+Publishing different state at the same position is rejected; summaries of later state require later committed positions.
+There are no independent snapshot-operation identities or pre-event initial snapshots.
+
+`createBlob()` uploads an immutable attachment blob and returns its content identity.
+An attachment summary node reuses that identity without uploading the content again.
+The Sea storage backends validate referenced blobs and directories, so an unknown attachment identity is rejected.
+
+For an incremental summary, the driver resolves the parent from `ISummaryContext.ackHandle`, falling back to `proposalHandle`.
+Blob and tree handles are paths into that parent snapshot.
+The driver resolves those paths, reuses the referenced identities, uploads new content, and conditionally publishes against the expected parent.
+A stale parent fails without retry because selecting another parent could change the summary's event boundary or invalidate its handles.
+The current implementation fetches the complete parent directory manifest and rebuilds the complete directory structure.
+Content addressing avoids persisting unchanged content again, but parent traversal and idempotent directory requests still consume work.
+Summary download materializes a full tree and does not distinguish separately uploaded attachments from other blob leaves.
+
+## Submission and Snapshot Coordination
+
+The neutral session supplies ordered submission acknowledgments.
+A submission remains pending until its acknowledgment arrives or its projected local operation is observed.
+Write failure or response loss rejects `waitForIdle()` without discarding pending identity.
+Explicit recovery and transformed resubmission follow the terminal-prefix contract above; a single `notCommitted` lookup does not authorize replay.
+Reconnect replaces the projected-operation subscription, resuming from the last projected cursor.
+Disconnect and disposal close or cancel their owned resources.
+Disposal is synchronous at the Fluid interface boundary while session close and subscription cancellation finish asynchronously.
+
+The regular `SeaDriver` uses `ClientSelected` snapshot participation, leaving publisher selection to Fluid.
+The direct SharedTree benchmark uses `SeaSelected`, which grants one current publisher fence when no client-selected publisher is active.
+Both receive accepted-snapshot updates; `ReadOnly` receives updates but cannot publish.
+These participation policies do not enable automatic summarization in `createSeaServiceClient`.
 
 ## Development
 
@@ -146,15 +187,18 @@ From the repository root:
 
 ```bash
 pnpm --dir rust-service/packages/sea-driver run build
-pnpm --dir rust-service/tests/minimal-fluid-driver test
+pnpm --dir rust-service/packages/sea-driver test
 ```
 
 The package build compiles TypeScript, generates entrypoints and API reports, and checks formatting, lint, and export release tags.
-The harness tests exercise the package entrypoint, including incremental summaries, stale-parent rejection, neutral-session initialization and startup cleanup, direct SharedTree collaboration, and dependency isolation.
+Package-owned Node tests exercise the entrypoint, including incremental summaries, stale-parent rejection, neutral-session initialization and startup cleanup, submission recovery, lifecycle races, and dependency isolation.
+The test task builds its dependencies and the separate test project before running those regressions.
+The [integration harness](../../tests/minimal-fluid-driver/README.md) retains SharedTree-based ServiceClient scenarios, browser traces, and benchmarks and includes these package tests in its aggregate command.
 The real Chromium SharedTree trace covers collaboration, explicit disconnect/recovery, and reload using the neutral remote factory.
 Eight consecutive migrated runs passed after fixing interrupted archive reads during membership replacement and author collisions between read-first containers.
 Deterministic Node regressions cover both ownership boundaries.
-ServiceClient Node tests cover both presets, detached creation without membership, concurrent/repeated attachment rejection, attached creation, reload and collaboration, registry lookups, compatibility options, and failed-attachment cleanup.
+Package-owned ServiceClient tests cover registry lookups, compatibility options, and failed-attachment cleanup without a SharedTree dependency.
+Harness ServiceClient tests cover both presets, detached creation without membership, concurrent/repeated attachment rejection, attached creation, reload, and SharedTree collaboration.
 The driver summary fixture separately localizes cleanup on initial-summary failure.
 The canonical browser harness runs real remote ServiceClient collaboration and reopening under both presets, with and without compression, in Chromium inside the Codespace.
 These tests do not establish inventory-app or external-browser acceptance.

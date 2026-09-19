@@ -209,6 +209,8 @@ pnpm --dir rust-service/packages/sea-typescript test
 ```
 
 The Node tests use capability entrypoints and cover sharing, isolation, compression, immutable content, events, snapshot reload, cancellation, and capability rejection.
+The package build also compiles [consumer type assertions](test/seaApi.typeTest.ts) in a separate test project.
+They verify narrowed event results, submission positions, directory entries, document identities, snapshots, and closed type unions through the package entrypoint without adding test exports to the production API.
 Migrated session regressions also cover live peer delivery, recursive content, idempotent publication, explicit snapshot fences, operation conflicts, superseded authors, reused memberships, and explicit reopening.
 The canonical Node harness executes twenty-one local package tests, including preset equivalence, capability rejection, initialization caching, snapshot-registration ownership, and bounded socket lifecycle behavior.
 An additional real Node socket test runs when the harness supplies `SEA_NODE_TRANSPORT_URL`.
