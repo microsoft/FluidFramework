@@ -62,6 +62,8 @@ Snapshot pump cancellation uses the same ownership model with native tasks or br
 Its private-provenance handles confirm remote availability and are scoped to the resolving client; they are never sent as wire authority.
 Event-position resolution currently scans retained history, and tree resolution fetches the corresponding immutable content.
 Disconnect and reconnect are explicit; operations are never retried automatically.
+An author-stream error or cancelled receipt makes that stream terminal before another request can be sent.
+The next request or explicit close cancels the failed transport stream; recovery uses a fresh session and the old session's durable departure barrier.
 Active frame reads and writes have deadlines, while an idle healthy stream does not inherit the operation deadline.
 Connection loss releases author membership and snapshot participation according to server liveness policy.
 Protocol or transport failure closes the owning connection without terminating the server endpoint.

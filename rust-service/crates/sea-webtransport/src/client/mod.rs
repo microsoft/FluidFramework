@@ -147,6 +147,7 @@ where
             return Err(ClientError::UnexpectedResponse(response));
         }
         Ok(AuthorStream {
+            terminal: false,
             stream,
             state: Arc::clone(&self.state),
             limits: self.limits,
@@ -277,6 +278,8 @@ pub struct EventStream<Stream> {
 /// Ordered author requests and receipts on one persistent transport stream.
 #[derive(Debug)]
 pub struct AuthorStream<Stream> {
+    /// Set before awaiting a request; only a successful response permits another request.
+    terminal: bool,
     stream: Stream,
     state: Arc<ClientState>,
     limits: protocol::Limits,
@@ -458,6 +461,24 @@ where
         &mut self,
         request: Request,
     ) -> Result<Response, ClientError<Stream::Error>> {
+        if std::mem::replace(&mut self.terminal, true) {
+            let _ = self.stream.cancel().await;
+            return Err(ClientStateError::Closed.into());
+        }
+        let result = self.request_inner(request).await;
+        if matches!(&result, Ok(response) if !matches!(response, Response::Error { .. })) {
+            self.terminal = false;
+        } else {
+            let _ = self.stream.cancel().await;
+        }
+        result
+    }
+
+    /// Exchanges one request while terminal-by-default state protects cancellation.
+    async fn request_inner(
+        &mut self,
+        request: Request,
+    ) -> Result<Response, ClientError<Stream::Error>> {
         if request.stream_role() != StreamRole::Author
             || matches!(request, Request::OpenAuthorStream { .. })
         {
@@ -496,6 +517,9 @@ where
 
     /// Finishes this author stream while allowing another session to open.
     pub async fn finish(mut self) -> Result<(), ClientError<Stream::Error>> {
+        if self.terminal {
+            return self.stream.cancel().await.map_err(ClientError::Transport);
+        }
         let pending = self.state.begin(StreamRole::Author)?;
         let correlation_id = pending.id();
         let request = Request::Close;
@@ -1078,6 +1102,86 @@ mod tests {
         event_stream.cancel().await.expect("cancel event stream");
 
         assert!(cancelled.load(Ordering::Relaxed));
+    }
+
+    #[tokio::test]
+    async fn author_error_or_cancelled_receipt_prevents_later_requests() {
+        use futures_util::FutureExt;
+        for cancel_receipt in [false, true] {
+            let cancelled = Arc::new(AtomicBool::new(false));
+            let limits = protocol::Limits::default();
+            let error = protocol::encode_response_frame(
+                StreamRole::Author,
+                1,
+                &Response::Error {
+                    kind: protocol::ErrorKind::Rejected,
+                    message: "rejected".into(),
+                },
+                limits,
+            )
+            .unwrap();
+            let mut author = super::AuthorStream {
+                terminal: false,
+                stream: SuspendedAuthorStream {
+                    inner: ScriptedStream {
+                        chunks: vec![error].into(),
+                        cancelled: Some(cancelled.clone()),
+                    },
+                    suspend: cancel_receipt,
+                },
+                state: Arc::new(ClientState::default()),
+                limits,
+                decoder: protocol::NetworkFrameDecoder::new(limits),
+            };
+            let request = Request::Submit {
+                operation: b"operation".to_vec(),
+                reference: None,
+                event: protocol::Event {
+                    payload: Vec::new(),
+                    blob_tree: None,
+                },
+            };
+            if cancel_receipt {
+                assert!(author.request(request.clone()).now_or_never().is_none());
+            } else {
+                assert!(matches!(
+                    author.request(request.clone()).await.unwrap(),
+                    Response::Error { .. }
+                ));
+            }
+            assert!(matches!(
+                author.request(request).await,
+                Err(super::ClientError::State(ClientStateError::Closed))
+            ));
+            assert!(cancelled.load(Ordering::Relaxed));
+            author.finish().await.unwrap();
+        }
+    }
+
+    /// Suspends receipt delivery so dropping an admitted request is deterministic.
+    struct SuspendedAuthorStream {
+        inner: ScriptedStream,
+        suspend: bool,
+    }
+
+    #[async_trait]
+    impl BidirectionalStream for SuspendedAuthorStream {
+        type Error = Infallible;
+        async fn send(&mut self, bytes: &[u8]) -> Result<(), Self::Error> {
+            self.inner.send(bytes).await
+        }
+        async fn finish(&mut self) -> Result<(), Self::Error> {
+            self.inner.finish().await
+        }
+        async fn receive(&mut self) -> Result<Option<Vec<u8>>, Self::Error> {
+            if self.suspend {
+                std::future::pending::<()>().await;
+            }
+            self.inner.receive().await
+        }
+        async fn cancel(&mut self) -> Result<(), Self::Error> {
+            self.inner.cancel().await
+        }
     }
 
     #[tokio::test]

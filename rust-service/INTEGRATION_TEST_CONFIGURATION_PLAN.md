@@ -221,6 +221,33 @@ The complete browser matrix then passed, including both ServiceClient presets wi
 Final validation passed after the repair: root `pnpm build:fast`, scoped policy, documentation and formatting checks, the complete canonical `./test.sh`, and the unchanged SEA lifecycle smoke (one passing).
 The source branch and its running demo were not modified; SEA remains opt-in and no exclusions were added.
 
+### Ordered Append Contract Correction
+
+The user rejected a permanent minimum-sequence-zero workaround and clarified two independent requirements: a durable monotonic document reference floor, and fail-stop append authority whose accepted events form a prefix ending at a durable leave.
+The required behavior was documented first in `f254dfeeb87`, including explicit TODOs and known issues RS-023, RS-024, and RS-025.
+[Decision 0015](historical/decisions/0015-terminal-append-authority.md) records the fail-stop contract implemented next.
+The reference floor and application-owned transformed resubmission remain separate follow-up work; passing existing tests does not resolve those requirements.
+
+RS-023 implementation evidence by boundary:
+
+- `sea-sequencer`: admitted cancellation and returned rejection revoke shared membership authority; retained appends settle before leave, and failed settlement requires recovery.
+	`failed_append_and_cancelled_ack_end_announced_prefix_before_later_work` covers definitive rejection, settled absence, and cancellation before/after commit; existing recovery tests now require a fresh membership after failure.
+- `sea-webtransport-server`: malformed author requests close the session before queued work, and every author-stream exit drives close.
+	`malformed_append_closes_authority_before_queued_submission` checks the owning dispatch decision; existing malformed-stream, acknowledgment-loss, connection cleanup, and shutdown tests cover transport lifetime.
+- `sea-webtransport`: `author_error_or_cancelled_receipt_prevents_later_requests` proves the client never sends a suffix after an error or cancelled receipt.
+- `sea-encryption`: shared serialized admission covers asynchronous retry preparation before the inner append.
+	`cancelled_preparation_terminates_clones_before_inner_append` proves cancelled admission is terminal across clones and drives the final leave; stable-ciphertext tests continue to enforce exact lookup without post-error resubmission.
+- `sea-compression`: synchronous encode failure closes the inner session; there is no suspension before inner admission on successful encoding.
+	Existing codec tests cover compression/decompression, and composition tests own fail-stop forwarding through this decorator; the in-memory encoder has no practical injectable I/O failure.
+- `sea-wasm` and `sea-typescript`: malformed operation/tree input closes authority, and the neutral wrapper serializes author calls before conversion.
+	Generated Node regression `invalid append input terminates the accepted prefix before queued work` covers empty operation identity and malformed tree identity, with an observer proving join/application/leave and no queued event.
+- `sea-integration-tests`: all 12 composition configurations retain intentional failures at terminal points and prove recovery through fresh sessions rather than continuing failed memberships.
+
+Native formatting, strict Clippy, rustdoc, build, and all-feature tests passed.
+The final complete canonical `./test.sh` passed with the binding-validation regression included, along with the package rebuild, root `pnpm build:fast`, and scoped policy check.
+Documentation-link validation passed for 29 roots, 36 READMEs, and 84 local links.
+An eight-test current-version SEA sample at `15f49ba5981` passed with the normal ten-second deadline, including the lifecycle smoke and the previously recorded SharedCounter/reentry failures; no new exclusions were added.
+
 ## Review Boundary and Later Work
 
 The user authorized committing the configuration once default tests pass and the checkout is in a committable state, with opt-in failures explicitly recorded.

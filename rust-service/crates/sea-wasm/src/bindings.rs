@@ -303,15 +303,26 @@ impl SeaSession {
         payload: &[u8],
         blob_tree: Option<SeaTreeReference>,
     ) -> Result<u64, JsValue> {
-        let operation_id = OperationId::new(Bytes::copy_from_slice(operation))
-            .map_err(|_| invalid("operation identity must not be empty"))?;
+        let prepared = (|| {
+            let operation_id = OperationId::new(Bytes::copy_from_slice(operation))
+                .map_err(|_| invalid("operation identity must not be empty"))?;
+            let tree = blob_tree.as_ref().map(tree_reference).transpose()?;
+            Ok::<_, JsValue>((operation_id, tree))
+        })();
+        let (operation_id, tree) = match prepared {
+            Ok(prepared) => prepared,
+            Err(error) => {
+                let _ = self.inner.close().await;
+                return Err(error);
+            }
+        };
         self.inner
             .submit(EventSubmission {
                 operation_id,
                 reference: reference.map(EventPosition::new),
                 event: Event {
                     payload: Bytes::copy_from_slice(payload),
-                    blob_tree: blob_tree.as_ref().map(tree_reference).transpose()?,
+                    blob_tree: tree,
                 },
             })
             .await

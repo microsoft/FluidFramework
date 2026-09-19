@@ -28,7 +28,10 @@ deterministic sources are only appropriate for tests.
 An exact retry of an already committed operation reuses its original ciphertext without requesting another nonce, while changed plaintext, tree, or reference conflicts.
 On the replacement path the wrapper verifies the committed plaintext, then asks the inner session to validate the original ciphertext under the current author membership.
 This preserves author checks across reconnects and key rotation instead of returning a receipt solely from a visible operation identity.
-If concurrent encodings race, a definitive rejection may reconcile an already committed matching operation; uncertain writes are never blindly resubmitted to storage.
+Author operations are serialized across wrapper clones, including the retry lookup before encryption.
+An append error or cancellation leaves the wrapper terminal; a later append cannot bypass that state even when the inner session never received the cancelled request.
+Close, or the next attempted append, drives inner closure and its durable departure barrier.
+Uncertain writes are never blindly resubmitted to storage, and a rejection never triggers a retry.
 
 The wrapper buffers one complete payload for encryption or decryption and has
 no payload-size limit. Reads decrypt one event when polled and do not add a

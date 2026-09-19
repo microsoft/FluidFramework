@@ -18,8 +18,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::StreamExt;
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, ErrorKind, EventPosition,
-    MonitoredStreamItem,
+    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, EventPosition, MonitoredStreamItem,
     archive::{
         EventSubmission, OperationId, SessionCommittedEvent, SessionStream, SnapshotParticipation,
     },
@@ -59,6 +58,19 @@ impl<Session: SeaArchive, Keys: KeyProvider + Clone + 'static, Nonces: NonceSour
 impl<Session: SeaAuthorSession, Keys: KeyProvider + Clone + 'static, Nonces: NonceSource>
     EncryptionSession<Session, Keys, Nonces>
 {
+    /// Serializes admission and leaves authority terminal unless the admitted operation succeeds.
+    async fn begin_append(
+        &self,
+    ) -> Result<futures_util::lock::MutexGuard<'_, bool>, EncryptionError<Session::Error>> {
+        let mut terminal = self.author_terminal.lock().await;
+        if *terminal {
+            let _ = self.inner.close().await;
+            return Err(EncryptionError::Closed);
+        }
+        *terminal = true;
+        Ok(terminal)
+    }
+
     /// Resolves settled input, preserving ciphertext so the inner author policy can validate the retry.
     async fn committed_retry(
         &self,
@@ -197,41 +209,46 @@ impl<Session: SeaAuthorSession, Keys: KeyProvider + Clone + 'static, Nonces: Non
     SeaAuthorSession for EncryptionSession<Session, Keys, Nonces>
 {
     async fn announce_membership(&self, metadata: Bytes) -> Result<EventPosition, Self::Error> {
-        self.inner
+        let mut terminal = self.begin_append().await?;
+        let result = self
+            .inner
             .announce_membership(metadata)
             .await
-            .map_err(EncryptionError::Store)
+            .map_err(EncryptionError::Store);
+        if result.is_ok() {
+            *terminal = false;
+        }
+        result
     }
     async fn submit(&self, submission: EventSubmission) -> Result<EventPosition, Self::Error> {
-        if let Some(retry) = self.committed_retry(&submission).await? {
-            return self
-                .inner
-                .submit(retry)
-                .await
-                .map_err(EncryptionError::Store);
-        }
-        let mut encoded = submission.clone();
-        encoded.event.payload = encrypt_payload(
-            &self.keys,
-            &self.nonces,
-            &submission.event.payload,
-            PayloadContext::Record,
-        )?;
-        match self.inner.submit(encoded).await {
-            Ok(position) => Ok(position),
-            Err(error) => {
-                if matches!(error.kind(), ErrorKind::Conflict | ErrorKind::Rejected)
-                    && let Some(retry) = self.committed_retry(&submission).await?
-                {
-                    return self
-                        .inner
-                        .submit(retry)
-                        .await
-                        .map_err(EncryptionError::Store);
-                }
-                Err(EncryptionError::Store(error))
+        let mut terminal = self.begin_append().await?;
+        let result = async {
+            if let Some(retry) = self.committed_retry(&submission).await? {
+                return self
+                    .inner
+                    .submit(retry)
+                    .await
+                    .map_err(EncryptionError::Store);
             }
+            let mut encoded = submission.clone();
+            encoded.event.payload = encrypt_payload(
+                &self.keys,
+                &self.nonces,
+                &submission.event.payload,
+                PayloadContext::Record,
+            )?;
+            self.inner
+                .submit(encoded)
+                .await
+                .map_err(EncryptionError::Store)
         }
+        .await;
+        if result.is_err() {
+            let _ = self.inner.close().await;
+        } else {
+            *terminal = false;
+        }
+        result
     }
     async fn resolve_submission(
         &self,
@@ -243,6 +260,7 @@ impl<Session: SeaAuthorSession, Keys: KeyProvider + Clone + 'static, Nonces: Non
             .map_err(EncryptionError::Store)
     }
     async fn close(&self) -> Result<(), Self::Error> {
+        *self.author_terminal.lock().await = true;
         self.inner.close().await.map_err(EncryptionError::Store)
     }
 }
@@ -288,8 +306,9 @@ impl<Session: SeaSnapshotCoordinator, Keys: KeyProvider + Clone + 'static, Nonce
 mod tests {
     use super::*;
     use crate::tests::{CountingNonce, TestKeys};
+    use futures_util::FutureExt;
     use sea_core::{
-        Event,
+        ClassifiedError, ErrorKind, Event,
         archive::{AuthorId, SessionId},
         storage::SeaStorage,
     };
@@ -424,6 +443,72 @@ mod tests {
                 })
                 .await
                 .is_err()
+        );
+    }
+
+    #[tokio::test]
+    async fn cancelled_preparation_terminates_clones_before_inner_append() {
+        let storage = MemoryStorage::new();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let session = EncryptionSession::new(
+            runtime
+                .open_session(
+                    AuthorId::new("author").unwrap(),
+                    SessionId::new("first").unwrap(),
+                    None,
+                )
+                .await
+                .unwrap(),
+            TestKeys::new(),
+        );
+        session.announce_membership(Bytes::new()).await.unwrap();
+        let clone = session.clone();
+        let preparation = async {
+            let _terminal = session.begin_append().await.unwrap();
+            std::future::pending::<()>().await;
+        };
+        assert!(preparation.now_or_never().is_none());
+        let submission = EventSubmission {
+            operation_id: OperationId::new("must-not-append").unwrap(),
+            reference: None,
+            event: Event {
+                payload: Bytes::new(),
+                blob_tree: None,
+            },
+        };
+        assert!(matches!(
+            clone.submit(submission).await,
+            Err(EncryptionError::Closed)
+        ));
+        assert!(matches!(
+            session.announce_membership(Bytes::new()).await,
+            Err(EncryptionError::Closed)
+        ));
+        session.close().await.unwrap();
+        let observer = runtime
+            .open_session(
+                AuthorId::new("observer").unwrap(),
+                SessionId::new("observer").unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+        let mut events = observer.read(None, Some(EventPosition::new(2)));
+        let mut kinds = Vec::new();
+        while let Some(item) = events.next().await {
+            if let MonitoredStreamItem::Item(event) = item.unwrap() {
+                kinds.push(event.kind);
+            }
+        }
+        assert_eq!(
+            kinds,
+            vec![
+                sea_core::archive::SessionEventKind::Joined,
+                sea_core::archive::SessionEventKind::Left
+            ]
         );
     }
 }

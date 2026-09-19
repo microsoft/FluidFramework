@@ -104,7 +104,8 @@ pub trait SeaArchive: crate::SeaService {
 /// A client replays through that departure, counts its accepted application events, and transforms
 /// only the unaccepted suffix for submission under a fresh session. SEA never performs that
 /// application-specific transformation. A lost acknowledgment is not evidence of rejection.
-/// TODO(RS-023): Enforce terminal append failures throughout the sequencer and transport adapters.
+/// Cancellation after admission also ends authority; close or subsequent runtime work drives
+/// settlement and departure. Cancellation before admission does not establish an accepted request.
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 pub trait SeaAuthorSession: SeaArchive {

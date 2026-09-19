@@ -97,6 +97,19 @@ struct Membership {
     reference: Option<EventPosition>,
     /// Closing or replacing this membership ends its live streams.
     closed: watch::Sender<bool>,
+    /// Cancellation or failure revokes append authority before asynchronous settlement.
+    failed: Arc<std::sync::atomic::AtomicBool>,
+}
+
+/// Marks an admitted append terminal if its caller exits without a successful result.
+struct AppendGuard(Option<Arc<std::sync::atomic::AtomicBool>>);
+
+impl Drop for AppendGuard {
+    fn drop(&mut self) {
+        if let Some(failed) = &self.0 {
+            failed.store(true, std::sync::atomic::Ordering::SeqCst);
+        }
+    }
 }
 
 /// One in-flight mutation and its replayable application input.
@@ -297,7 +310,7 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
             event: Some(event),
             future: Box::pin(async move { append_once::<Storage>(&view, input).await }),
         });
-        self.settle().await?;
+        self.settle_pending().await?;
         Ok(*self.positions.last().expect("settled membership position"))
     }
 
@@ -306,18 +319,40 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         &mut self,
         session: &SessionId,
     ) -> Result<(), SessionError<Storage::Error>> {
+        self.remove_member(session);
         if let Some(announcement) = self.announced.get(session) {
             let author = announcement.author_id.clone();
-            self.append_membership(&author, session, SessionEventKind::Left, &[])
-                .await?;
-        } else {
-            self.remove_member(session);
+            if let Err(error) = self
+                .append_membership(&author, session, SessionEventKind::Left, &[])
+                .await
+            {
+                self.recovery_required = true;
+                return Err(error);
+            }
         }
         Ok(())
     }
 
     /// Drives a retained mutation to settlement before allowing another state-dependent operation.
     async fn settle(&mut self) -> Result<(), SessionError<Storage::Error>> {
+        let result = self.settle_pending().await;
+        if self.recovery_required {
+            return result;
+        }
+        let failed = self
+            .members
+            .iter()
+            .filter(|(_, member)| member.failed.load(std::sync::atomic::Ordering::SeqCst))
+            .map(|(session, _)| session.clone())
+            .collect::<Vec<_>>();
+        for session in failed {
+            self.close_member(&session).await?;
+        }
+        result
+    }
+
+    /// Settles only backend work; callers drain failed memberships before admitting new work.
+    async fn settle_pending(&mut self) -> Result<(), SessionError<Storage::Error>> {
         if self.recovery_required {
             return Err(SessionError::RecoveryRequired);
         }
@@ -352,7 +387,10 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
 
     /// Requires current logical membership after all prior mutations settle.
     fn member(&self, session: &SessionId) -> Result<&Membership, SessionError<Storage::Error>> {
-        self.members.get(session).ok_or(SessionError::Closed)
+        self.members
+            .get(session)
+            .filter(|member| !member.failed.load(std::sync::atomic::Ordering::SeqCst))
+            .ok_or(SessionError::Closed)
     }
 }
 
@@ -443,6 +481,7 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
                 author: author.clone(),
                 reference,
                 closed,
+                failed: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             },
         );
         runtime.seen.insert(session.clone());
@@ -512,7 +551,24 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
     ) -> Result<EventPosition, SessionError<Storage::Error>> {
         let mut runtime = self.sequencer.runtime.lock().await;
         runtime.settle().await?;
-        runtime.member(&self.session)?;
+        let mut guard = AppendGuard(Some(runtime.member(&self.session)?.failed.clone()));
+        let result = self.announce_inner(&mut runtime, metadata).await;
+        if result.is_ok() {
+            guard.0 = None;
+        }
+        drop(guard);
+        if result.is_err() && !runtime.recovery_required {
+            runtime.close_member(&self.session).await?;
+        }
+        result
+    }
+
+    /// Sequences announcement under the same fail-stop authority as application appends.
+    async fn announce_inner(
+        &self,
+        runtime: &mut Runtime<Storage>,
+        metadata: Bytes,
+    ) -> Result<EventPosition, SessionError<Storage::Error>> {
         if let Some(announced) = runtime.announced.get(&self.session) {
             return if announced.committed.event.payload == metadata {
                 Ok(announced.committed.position)
@@ -530,15 +586,31 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
             .await
     }
 
-    /// Submits once, retaining backend execution through caller cancellation.
-    /// TODO(RS-023): A returned append error must terminate this session before later submissions.
+    /// Submits once; failure or cancellation ends this session's accepted prefix.
     async fn submit(
         &self,
         submission: EventSubmission,
     ) -> Result<EventPosition, SessionError<Storage::Error>> {
         let mut runtime = self.sequencer.runtime.lock().await;
         runtime.settle().await?;
-        runtime.member(&self.session)?;
+        let mut guard = AppendGuard(Some(runtime.member(&self.session)?.failed.clone()));
+        let result = self.submit_inner(&mut runtime, submission).await;
+        if result.is_ok() {
+            guard.0 = None;
+        }
+        drop(guard);
+        if result.is_err() && !runtime.recovery_required {
+            runtime.close_member(&self.session).await?;
+        }
+        result
+    }
+
+    /// Validates and settles one append while its terminal guard and runtime lock are held.
+    async fn submit_inner(
+        &self,
+        runtime: &mut Runtime<Storage>,
+        submission: EventSubmission,
+    ) -> Result<EventPosition, SessionError<Storage::Error>> {
         if let Some(accepted) = runtime.accepted.get(&submission.operation_id) {
             return if accepted.author_id == self.author
                 && accepted.committed.event == submission.event
@@ -603,7 +675,7 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
             event: Some(event),
             future: Box::pin(async move { append_once::<Storage>(&view, input).await }),
         });
-        runtime.settle().await?;
+        runtime.settle_pending().await?;
         Ok(runtime
             .accepted
             .get(&submission.operation_id)
@@ -629,7 +701,9 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
     /// Closes this membership idempotently without closing the shared runtime.
     async fn close(&self) -> Result<(), SessionError<Storage::Error>> {
         let mut runtime = self.sequencer.runtime.lock().await;
-        if !runtime.members.contains_key(&self.session) {
+        if !runtime.members.contains_key(&self.session)
+            && !runtime.announced.contains_key(&self.session)
+        {
             return Ok(());
         }
         runtime.settle().await?;
@@ -1022,7 +1096,6 @@ mod tests {
                 .unwrap(),
             joined
         );
-        assert!(first.announce_membership(Bytes::new()).await.is_err());
         let edit = first.submit(submission(b"first")).await.unwrap();
         assert!(joined < edit);
         let mut history = observer.read(None, None);
@@ -1034,6 +1107,11 @@ mod tests {
             data(&mut history).await.unwrap().kind,
             SessionEventKind::Application
         );
+        assert!(first.announce_membership(Bytes::new()).await.is_err());
+        assert!(matches!(
+            first.submit(submission(b"after-conflict")).await,
+            Err(SessionError::Closed)
+        ));
         first.close().await.unwrap();
         first.close().await.unwrap();
         let departed = data(&mut history).await.unwrap();
@@ -1510,9 +1588,6 @@ mod tests {
             .unwrap();
         let first = member(&runtime, "author").await;
         let position = first.submit(submission(b"original")).await.unwrap();
-        let mut conflicting = submission(b"original");
-        conflicting.event.payload = Bytes::from_static(b"conflict");
-        assert!(first.submit(conflicting).await.is_err());
         let authority = first
             .coordinate_snapshots(SnapshotParticipation::ClientSelected)
             .await
@@ -1529,6 +1604,9 @@ mod tests {
             )
             .await
             .unwrap();
+        let mut conflicting = submission(b"original");
+        conflicting.event.payload = Bytes::from_static(b"conflict");
+        assert!(first.submit(conflicting).await.is_err());
         runtime.shutdown().await.unwrap();
         drop((first, authority, runtime));
         let recovered = LocalSequencer::<MemoryStorage>::recover(

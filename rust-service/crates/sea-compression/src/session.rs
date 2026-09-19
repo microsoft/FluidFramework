@@ -135,8 +135,13 @@ impl<Session: SeaAuthorSession> SeaAuthorSession for CompressionSession<Session>
             .map_err(CompressionError::Store)
     }
     async fn submit(&self, mut submission: EventSubmission) -> Result<EventPosition, Self::Error> {
-        submission.event.payload =
-            compress_payload(&submission.event.payload).map_err(CompressionError::Encode)?;
+        submission.event.payload = match compress_payload(&submission.event.payload) {
+            Ok(payload) => payload,
+            Err(error) => {
+                let _ = self.inner.close().await;
+                return Err(CompressionError::Encode(error));
+            }
+        };
         self.inner
             .submit(submission)
             .await

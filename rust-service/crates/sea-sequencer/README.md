@@ -62,7 +62,10 @@ To recover non-idempotent application events:
 The reader needs the relevant session history, or equivalent prefix accounting in a snapshot.
 Lost acknowledgments do not change the committed prefix.
 An exact operation-ID lookup is separate from resubmission: it can confirm an existing outcome, but does not authorize replaying an old payload at a new reference.
-TODO(RS-023): The current local sequencer and dispatch paths do not consistently terminate append authority on error.
+The local runtime revokes authority on a failed or cancelled admitted append, including membership announcement failures.
+It settles retained backend work before persisting the departure; failed settlement prevents mutation until recovery.
+Transport dispatch also closes authority for malformed author requests that never reach the sequencer.
+Client and decorator admission state prevents a cancelled request from being followed by a successful suffix.
 TODO(RS-025): The Fluid driver's explicit retry helper does not yet require caller transformation or a terminal-prefix recovery barrier.
 See [known issues](../../KNOWN_ISSUES.md) for these implementation gaps.
 

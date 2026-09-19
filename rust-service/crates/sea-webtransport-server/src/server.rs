@@ -728,55 +728,15 @@ async fn serve_author_stream(
     correlation_id: u64,
     opening: sea_v1::Request,
 ) -> Result<(), WebTransportError> {
-    let limits = sea_v1::Limits {
-        max_frame_bytes: config.max_frame_bytes,
-    };
-    let response = service.author_request(opening).await;
-    write_network_response(
-        &mut send,
-        role,
-        correlation_id,
-        &response,
-        limits,
-        config.operation_timeout,
-        metrics,
-        false,
-    )
-    .await?;
-    if matches!(response, sea_v1::Response::Error { .. }) {
-        return send.finish().await.map_err(transport_error);
-    }
-    let mut decoder = sea_v1::NetworkFrameDecoder::new(limits);
-    loop {
-        let frame =
-            match read_next_network_frame(&mut receive, &mut decoder, config.operation_timeout)
-                .await
-            {
-                Ok(Some(frame)) => frame,
-                Ok(None) => {
-                    let _ = service.author_request(sea_v1::Request::Close).await;
-                    return send.finish().await.map_err(transport_error);
-                }
-                Err(error) => {
-                    let _ = service.author_request(sea_v1::Request::Close).await;
-                    return Err(error);
-                }
-            };
-        let request = sea_v1::decode_request_frame(role, &frame)?;
-        if matches!(request, sea_v1::Request::OpenAuthorStream { .. }) {
-            return Err(sea_v1::ProtocolError::WrongStream {
-                kind: request.kind(),
-                role,
-            }
-            .into());
-        }
-        metrics.add_wire_bytes(4 + 1 + 8 + frame.payload.len());
-        let close = matches!(request, sea_v1::Request::Close);
-        let response = service.author_request(request).await;
+    let result = async {
+        let limits = sea_v1::Limits {
+            max_frame_bytes: config.max_frame_bytes,
+        };
+        let response = service.author_request(opening).await;
         write_network_response(
             &mut send,
             role,
-            frame.correlation_id,
+            correlation_id,
             &response,
             limits,
             config.operation_timeout,
@@ -784,10 +744,55 @@ async fn serve_author_stream(
             false,
         )
         .await?;
-        if close {
+        if matches!(response, sea_v1::Response::Error { .. }) {
             return send.finish().await.map_err(transport_error);
         }
+        let mut decoder = sea_v1::NetworkFrameDecoder::new(limits);
+        loop {
+            let frame =
+                match read_next_network_frame(&mut receive, &mut decoder, config.operation_timeout)
+                    .await
+                {
+                    Ok(Some(frame)) => frame,
+                    Ok(None) => {
+                        let _ = service.author_request(sea_v1::Request::Close).await;
+                        return send.finish().await.map_err(transport_error);
+                    }
+                    Err(error) => {
+                        let _ = service.author_request(sea_v1::Request::Close).await;
+                        return Err(error);
+                    }
+                };
+            let request = sea_v1::decode_request_frame(role, &frame)?;
+            if matches!(request, sea_v1::Request::OpenAuthorStream { .. }) {
+                return Err(sea_v1::ProtocolError::WrongStream {
+                    kind: request.kind(),
+                    role,
+                }
+                .into());
+            }
+            metrics.add_wire_bytes(4 + 1 + 8 + frame.payload.len());
+            let close = matches!(request, sea_v1::Request::Close);
+            let response = service.author_request(request).await;
+            write_network_response(
+                &mut send,
+                role,
+                frame.correlation_id,
+                &response,
+                limits,
+                config.operation_timeout,
+                metrics,
+                false,
+            )
+            .await?;
+            if close || matches!(response, sea_v1::Response::Error { .. }) {
+                return send.finish().await.map_err(transport_error);
+            }
+        }
     }
+    .await;
+    let _ = service.author_request(sea_v1::Request::Close).await;
+    result
 }
 
 #[allow(clippy::too_many_arguments)]

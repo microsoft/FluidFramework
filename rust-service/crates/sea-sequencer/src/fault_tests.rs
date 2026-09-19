@@ -347,7 +347,7 @@ impl SeaStorage for FaultStorage {
 }
 
 #[tokio::test]
-async fn returned_ambiguity_is_scanned_without_resubmitting_and_absence_allows_explicit_retry() {
+async fn returned_ambiguity_is_scanned_and_rejection_requires_fresh_membership() {
     for failure in [
         Failure::AmbiguousCommitted,
         Failure::AmbiguousAbsent,
@@ -369,6 +369,11 @@ async fn returned_ambiguity_is_scanned_without_resubmitting_and_absence_allows_e
             assert_eq!(storage.events.calls.load(Ordering::SeqCst), 1);
         } else {
             assert!(result.is_err());
+            assert!(matches!(
+                session.submit(submission(b"later")).await,
+                Err(SessionError::Closed)
+            ));
+            let session = member(&runtime, "recovery").await;
             assert!(
                 session
                     .resolve_submission(&OperationId::new("operation").unwrap())
@@ -462,20 +467,94 @@ async fn cancelling_before_or_after_commit_retains_the_same_backend_future_until
             .submit(submission(b"after-settlement"))
             .await
             .unwrap();
-        let cancelled = first
+        assert!(matches!(
+            first.submit(submission(b"must-not-commit")).await,
+            Err(SessionError::Closed)
+        ));
+        let cancelled = second
             .resolve_submission(&OperationId::new("cancelled").unwrap())
             .await
             .unwrap()
             .unwrap();
         assert!(cancelled < accepted);
         assert!(
-            first
+            second
                 .resolve_submission(&OperationId::new("blocked").unwrap())
                 .await
                 .unwrap()
                 .is_none()
         );
         assert_eq!(storage.events.calls.load(Ordering::SeqCst), 2);
+    }
+}
+
+#[tokio::test]
+async fn failed_append_and_cancelled_ack_end_announced_prefix_before_later_work() {
+    use sea_core::archive::SessionEventKind;
+    for failure in [
+        Failure::Reject,
+        Failure::AmbiguousAbsent,
+        Failure::GateBefore,
+        Failure::GateAfter,
+    ] {
+        let storage = FaultStorage::default();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        let first = member(&runtime, "first").await;
+        let observer = member(&runtime, "observer").await;
+        first.announce_membership(Bytes::new()).await.unwrap();
+        first.submit(submission(b"accepted")).await.unwrap();
+        storage.events.arm(failure);
+        let cancelled = matches!(failure, Failure::GateBefore | Failure::GateAfter);
+        if cancelled {
+            assert!(
+                first
+                    .submit(submission(b"uncertain"))
+                    .now_or_never()
+                    .is_none()
+            );
+            storage.events.release.notify_one();
+        } else {
+            assert!(first.submit(submission(b"uncertain")).await.is_err());
+        }
+        assert!(matches!(
+            first.submit(submission(b"later")).await,
+            Err(SessionError::Closed)
+        ));
+        first.close().await.unwrap();
+        observer
+            .submit(submission(b"observer-event"))
+            .await
+            .unwrap();
+        let mut stream = observer.read(None, None);
+        let mut kinds = Vec::new();
+        let mut operations = Vec::new();
+        while let Some(item) = stream.next().await {
+            match item.unwrap() {
+                sea_core::MonitoredStreamItem::Item(event) => {
+                    if event.session_id == first.session {
+                        kinds.push(event.kind);
+                        if event.kind == SessionEventKind::Application {
+                            operations.push(event.operation_id);
+                        }
+                    }
+                }
+                sea_core::MonitoredStreamItem::Progress(progress)
+                    if progress.status == sea_core::MonitoredStreamStatus::AwaitingNewItems =>
+                {
+                    break;
+                }
+                sea_core::MonitoredStreamItem::Progress(_) => {}
+            }
+        }
+        let mut expected = vec![SessionEventKind::Joined, SessionEventKind::Application];
+        if cancelled {
+            expected.push(SessionEventKind::Application);
+        }
+        expected.push(SessionEventKind::Left);
+        assert_eq!(kinds, expected);
+        assert_eq!(operations[0], OperationId::new("accepted").unwrap());
+        assert_eq!(operations.len(), if cancelled { 2 } else { 1 });
     }
 }
 

@@ -62,8 +62,8 @@ test("neutral membership announcements and departures share application event or
 	const stream = ownStream(observer.read());
 	const joined = await writer.announceMembership(encode("public member"));
 	assert.equal(await writer.announceMembership(encode("public member")), joined);
-	await assert.rejects(writer.announceMembership(encode("changed")), { kind: "Rejected" });
 	const edit = await writer.submit(encode("writer-session"), joined, encode("edit"));
+	await assert.rejects(writer.announceMembership(encode("changed")), { kind: "Rejected" });
 	await writer.close();
 	await writer.close();
 	const events = [];
@@ -80,6 +80,38 @@ test("neutral membership announcements and departures share application event or
 	assert.deepEqual(events[0].payload, encode("public member"));
 	assert.deepEqual(events[2].payload, new Uint8Array());
 	assert.deepEqual(events[2].session, encode("writer-session"));
+});
+
+test("invalid append input terminates the accepted prefix before queued work", async (context) => {
+	for (const invalidTree of [false, true]) {
+		const { open, ownStream } = await sessionFixture(context);
+		const writer = await open(undefined, "writer", "writer-session");
+		const observer = await open(writer.document, "observer", "observer-session");
+		const joined = await writer.announceMembership(encode("member"));
+		await writer.submit(encode("accepted"), joined, encode("accepted"));
+		const failed = writer.submit(
+			invalidTree ? encode("invalid-tree") : new Uint8Array(),
+			joined,
+			encode("invalid"),
+			invalidTree ? { kind: "blob", bytes: new Uint8Array() } : undefined,
+		);
+		const queued = writer.submit(encode("queued"), joined, encode("must not append"));
+		const results = await Promise.allSettled([failed, queued]);
+		assert.deepEqual(
+			results.map((result) => result.status),
+			["rejected", "rejected"],
+		);
+		await writer.close();
+		const stream = ownStream(observer.read());
+		const kinds = [];
+		for (;;) {
+			const event = await nextMatching(stream, (item) => item.kind === "event");
+			kinds.push(event.eventType);
+			if (event.eventType === "left") break;
+		}
+		assert.deepEqual(kinds, ["joined", "application", "left"]);
+		assert.equal(await observer.resolveSubmission(encode("queued")), undefined);
+	}
 });
 
 test("neutral sessions resolve, load backlog, tail a peer, and cancel a pending read", async (context) => {

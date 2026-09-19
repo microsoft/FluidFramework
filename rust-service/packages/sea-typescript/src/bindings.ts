@@ -200,6 +200,8 @@ export function wrapSession(
 	let closeSettled = false;
 	let pendingOperations = 0;
 	let released = false;
+	let authorTerminal = false;
+	let authorQueue = Promise.resolve();
 	const requireOpen = (): void => {
 		if (closed) {
 			throw Object.assign(new Error("session is closed"), { kind: "Closed" });
@@ -221,9 +223,30 @@ export function wrapSession(
 			release();
 		}
 	};
+	/** Preserves append order even when identity conversion rejects before entering WASM. */
+	const invokeAuthor = <Result>(operation: () => Promise<Result>): Promise<Result> =>
+		invoke(() => {
+			const result = authorQueue.then(async () => {
+				if (authorTerminal) {
+					throw Object.assign(new Error("author session is closed"), { kind: "Closed" });
+				}
+				try {
+					return await operation();
+				} catch (error) {
+					authorTerminal = true;
+					await session.close().catch(() => {});
+					throw error;
+				}
+			});
+			authorQueue = result.then(
+				() => {},
+				() => {},
+			);
+			return result;
+		});
 	return {
 		document: session.document,
-		announceMembership: (metadata) => invoke(() => session.announceMembership(metadata)),
+		announceMembership: (metadata) => invokeAuthor(() => session.announceMembership(metadata)),
 		putBlob: (payload) => invoke(async () => copyIdentity(await session.putBlob(payload))),
 		getBlob: (id) =>
 			invoke(async () => {
@@ -260,7 +283,7 @@ export function wrapSession(
 				}
 			}),
 		submit: (operation, reference, payload, blobTree) =>
-			invoke(async () => {
+			invokeAuthor(async () => {
 				const tree =
 					blobTree === undefined ? undefined : generatedIdentity(bindings, blobTree);
 				try {

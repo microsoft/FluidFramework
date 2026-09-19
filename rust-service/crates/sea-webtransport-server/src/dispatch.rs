@@ -76,9 +76,9 @@ where
         ))))
     }
 
-    /// TODO(RS-023): Close append authority on failures before or during request dispatch.
+    /// Every author-request error ends append authority, including input conversion failures.
     async fn author_request(&self, request: protocol::Request) -> protocol::Response {
-        match request {
+        let response = match request {
             protocol::Request::Submit { .. }
             | protocol::Request::AnnounceMembership { .. }
             | protocol::Request::ResolveSubmission { .. }
@@ -86,7 +86,11 @@ where
                 Ok(response) | Err(response) => response,
             },
             _ => invalid("request is not valid on an open author stream"),
+        };
+        if matches!(response, protocol::Response::Error { .. }) {
+            let _ = self.session.close().await;
         }
+        response
     }
 
     async fn snapshot_stream(
@@ -488,6 +492,71 @@ mod tests {
     use sea_webtransport::protocol;
 
     use crate::SeaConnectionService;
+
+    #[tokio::test]
+    async fn malformed_append_closes_authority_before_queued_submission() {
+        let (_, view) = MemoryStorage::new().create_view().await.unwrap();
+        let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let session = sequencer
+            .open_session(
+                AuthorId::new("author").unwrap(),
+                SessionId::new("session").unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+        let observer = sequencer
+            .open_session(
+                AuthorId::new("observer").unwrap(),
+                SessionId::new("observer").unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+        let dispatcher = SessionDispatcher::new(Arc::new(session));
+        let observer = SessionDispatcher::new(Arc::new(observer));
+        dispatcher
+            .author_request(protocol::Request::AnnounceMembership {
+                metadata: Vec::new(),
+            })
+            .await;
+        for operation in [Vec::new(), b"later".to_vec()] {
+            assert!(matches!(
+                dispatcher
+                    .author_request(protocol::Request::Submit {
+                        operation,
+                        reference: None,
+                        event: protocol::Event {
+                            payload: Vec::new(),
+                            blob_tree: None
+                        },
+                    })
+                    .await,
+                protocol::Response::Error { .. }
+            ));
+        }
+        let mut events = observer.event_stream(None).await.unwrap();
+        let mut kinds = Vec::new();
+        while let Some(response) = events.next().await {
+            match response {
+                protocol::Response::LoadEvent(event) => kinds.push(event.kind),
+                protocol::Response::StreamProgress {
+                    status: protocol::StreamStatus::AwaitingNewItems,
+                    ..
+                } => break,
+                _ => {}
+            }
+        }
+        assert_eq!(
+            kinds,
+            vec![
+                protocol::SessionEventKind::Joined,
+                protocol::SessionEventKind::Left
+            ]
+        );
+    }
 
     #[tokio::test]
     async fn closing_old_snapshot_stream_preserves_replacement() {

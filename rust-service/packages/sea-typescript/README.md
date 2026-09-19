@@ -17,6 +17,9 @@ Automatic reconnect, implicit retries, authentication, and arbitrary runtime dec
 History reports `eventType: "joined"`, `"application"`, or `"left"`; joined payloads contain immutable public metadata, and left payloads are empty.
 Close, replacement, and service recovery append departures in the same order as application events.
 Exact announcement retries return the original position; changing metadata is rejected.
+Author calls are serialized in invocation order, including local identity conversion and generated-binding validation.
+The first failed author call closes append authority and prevents queued submissions from committing.
+Recover through an independent session and replay the old session's departure before transforming its unaccepted suffix; SEA does not transform or automatically resubmit application payloads.
 Metadata is public control data, like author/session identities: compression and encryption decorators do not transform or protect it.
 Unannounced sessions retain application-only history.
 Remote consumers must rebuild client and server together for protocol version 6.

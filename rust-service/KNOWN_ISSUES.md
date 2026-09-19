@@ -64,18 +64,6 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Impact:** The adapter is integration evidence, not a Routerlicious or ODSP replacement.
 - **Trigger:** Complete the opt-in integration inventory and connection-policy regressions before claiming production support.
 
-## RS-023: Append failures do not consistently terminate session authority
-
-- **Status:** Open
-- **Severity:** High
-- **Area:** Sequencer and append transport
-- **Evidence:** `LocalSession::submit` returns validation or definitive storage errors while leaving membership active.
-  Dispatch can also reject an invalid request before invoking the session append API.
-  Later submissions can therefore succeed after a failed submission, violating the required accepted-prefix contract.
-- **Impact:** Counting application events through a leave cannot reliably identify the accepted prefix if failures permit holes.
-- **Required fix:** Preserve append order, revoke authority on the first failure, settle any uncertain append, and persist a final leave for announced sessions before allowing recovery to claim completion.
-  Cover queued submissions, malformed input, cancellation, lost acknowledgments, transport failure, and recovery.
-
 ## RS-024: A durable enforced minimum-reference floor is missing
 
 - **Status:** Open

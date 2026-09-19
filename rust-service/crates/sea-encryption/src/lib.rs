@@ -126,6 +126,9 @@ impl NonceSource for OsNonceSource {
 /// An error produced by encryption or by the underlying store.
 #[derive(Debug, Error)]
 pub enum EncryptionError<E> {
+    /// An earlier append failed or was cancelled, or the session was closed.
+    #[error("author session is closed")]
+    Closed,
     /// The underlying store rejected the operation.
     #[error("underlying store error: {0}")]
     Store(#[source] E),
@@ -157,7 +160,7 @@ where
         match self {
             Self::Store(error) => error.kind(),
             Self::KeyUnavailable { .. } | Self::NonceUnavailable(_) => ErrorKind::Unavailable,
-            Self::EncryptionFailed => ErrorKind::Rejected,
+            Self::Closed | Self::EncryptionFailed => ErrorKind::Rejected,
             Self::OperationConflict => ErrorKind::Conflict,
             Self::CorruptEnvelope => ErrorKind::Corrupt,
         }
@@ -170,26 +173,30 @@ pub struct EncryptionSession<S, K, N = OsNonceSource> {
     inner: S,
     keys: K,
     nonces: N,
+    /// Shared fail-stop admission state, including preparation before an inner append.
+    author_terminal: std::sync::Arc<futures_util::lock::Mutex<bool>>,
 }
 
 impl<S, K> EncryptionSession<S, K, OsNonceSource> {
     /// Wraps a session using operating-system-generated nonces.
-    pub const fn new(inner: S, keys: K) -> Self {
+    pub fn new(inner: S, keys: K) -> Self {
         Self {
             inner,
             keys,
             nonces: OsNonceSource,
+            author_terminal: std::sync::Arc::new(futures_util::lock::Mutex::new(false)),
         }
     }
 }
 
 impl<S, K, N> EncryptionSession<S, K, N> {
     /// Wraps a session using an injected nonce source.
-    pub const fn with_nonce_source(inner: S, keys: K, nonces: N) -> Self {
+    pub fn with_nonce_source(inner: S, keys: K, nonces: N) -> Self {
         Self {
             inner,
             keys,
             nonces,
+            author_terminal: std::sync::Arc::new(futures_util::lock::Mutex::new(false)),
         }
     }
 

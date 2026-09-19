@@ -410,7 +410,6 @@ async fn verify_membership<Writer: SeaSession, Observer: SeaSession>(
         writer.announce_membership(metadata.clone()).await.unwrap(),
         joined
     );
-    assert!(writer.announce_membership(Bytes::new()).await.is_err());
     let position = writer
         .submit(EventSubmission {
             operation_id: OperationId::new("membership-edit").unwrap(),
@@ -597,12 +596,6 @@ async fn after_reconnect<Session: SeaSession>(session: &Session, trace: &Trace) 
         session.submit(trace.submission.clone()).await.unwrap(),
         trace.first
     );
-    let mut changed = trace.submission.clone();
-    changed.event.payload = Bytes::from_static(b"conflicting plaintext");
-    assert!(matches!(
-        session.submit(changed).await.unwrap_err().kind(),
-        ErrorKind::Conflict | ErrorKind::Rejected
-    ));
     check_history(session, trace).await;
     let mut loaded = session.load(LoadStart::LatestSnapshot).await.unwrap();
     assert_eq!(loaded.snapshot.unwrap().at_event.id(), trace.first);
@@ -638,6 +631,13 @@ async fn after_reconnect<Session: SeaSession>(session: &Session, trace: &Trace) 
             .id(),
         third
     );
+    let mut changed = trace.submission.clone();
+    changed.event.payload = Bytes::from_static(b"conflicting plaintext");
+    assert!(matches!(
+        session.submit(changed).await.unwrap_err().kind(),
+        ErrorKind::Conflict | ErrorKind::Rejected
+    ));
+    assert!(session.submit(trace.submission.clone()).await.is_err());
 }
 
 /// Plaintext expectations retained independently of decoded history returned by Sea.
@@ -930,7 +930,7 @@ async fn verify_snapshot_publication<Session: SeaSession>(
     );
 }
 
-/// Races two authors, validates retries and rejection, and orders the expected committed pair.
+/// Races two authors, validates exact lookups, and orders the expected committed pair.
 async fn concurrent_batch<Session: SeaSession>(
     first: &Session,
     peer: &Session,
@@ -956,10 +956,6 @@ async fn concurrent_batch<Session: SeaSession>(
         peer.submit(peer_submission.clone()).await.unwrap(),
         peer_receipt
     );
-    let mut changed = peer_submission.clone();
-    changed.event.payload = Bytes::from_static(b"changed retry");
-    assert!(peer.submit(changed).await.is_err());
-    assert!(peer.submit(first_submission.clone()).await.is_err());
     let mut pair = [
         ExpectedEvent {
             position: first_receipt,
@@ -1085,6 +1081,7 @@ async fn collaborate<Session, Build>(
         verify_history(&first, &history).await;
         verify_history(&peer, &history).await;
         drop(peer_events);
+        verify_terminal_conflict(&peer, &last_peer_retry.as_ref().unwrap().0).await;
         peer.close().await.unwrap();
         drop(peer);
         peer_fixture.stop_endpoints().await;
@@ -1106,8 +1103,24 @@ async fn collaborate<Session, Build>(
     assert_eq!(peer.submit(submission).await.unwrap(), position);
     drop(load_peer(&peer, &history, snapshots.last()).await);
     verify_history(&peer, &history).await;
+    let foreign = history
+        .iter()
+        .find(|event| event.author == "author")
+        .unwrap();
+    assert!(peer.submit(foreign.submission.clone()).await.is_err());
     peer.close().await.unwrap();
     first.close().await.unwrap();
+}
+
+/// A conflicting retry ends authority, including for a subsequent otherwise valid exact lookup.
+async fn verify_terminal_conflict<Session: SeaSession>(
+    session: &Session,
+    original: &EventSubmission,
+) {
+    let mut changed = original.clone();
+    changed.event.payload = Bytes::from_static(b"changed retry");
+    assert!(session.submit(changed).await.is_err());
+    assert!(session.submit(original.clone()).await.is_err());
 }
 
 /// Proves each configured hop is on the submission path, in the expected order, without bypasses.
@@ -1115,59 +1128,52 @@ async fn collaborate<Session, Build>(
 /// Hop indices follow construction order: zero is nearest storage, the last is nearest the caller.
 /// With three hops, a submission travels 2 -> 1 -> 0.
 /// Blocking hop 1 must increment counters 2 and 1, but leave counter 0 unchanged.
-/// This is the `index >= blocked` term below; retrying after unblocking adds one at every hop.
+/// This is the `index >= blocked` term below; recovery requires a fresh stack.
 /// Counts are checked after the awaited response, so receipt evidence needs no sleeps or polling.
 ///
-/// Only submissions are rejected. Resolution stays available to prove the rejected operation
-/// did not commit, and the exact retry then proves the path recovers without rebuilding the stack.
+/// The first rejection ends this append stream; even a valid later submission must fail.
 async fn verify_transport_path<Session: SeaSession>(
     fixture: &Fixture,
     session: &Session,
     expected_hops: usize,
-) {
+    blocked: usize,
+) -> EventSubmission {
     assert_eq!(fixture.endpoints.len(), expected_hops);
     assert_eq!(fixture.hops.len(), expected_hops);
-    for (blocked, probe) in fixture.hops.iter().enumerate() {
-        let before: Vec<_> = fixture
-            .hops
-            .iter()
-            .map(|hop| hop.submissions.load(Ordering::SeqCst))
-            .collect();
-        let submission = EventSubmission {
-            operation_id: OperationId::new(format!("hop-probe-{blocked}")).unwrap(),
-            reference: None,
-            event: Event {
-                payload: Bytes::from_static(b"must cross every hop"),
-                blob_tree: None,
-            },
-        };
-        probe.reject_submissions.store(true, Ordering::SeqCst);
-        let error = session.submit(submission.clone()).await.unwrap_err();
-        assert_eq!(error.kind(), ErrorKind::Rejected);
+    let probe = &fixture.hops[blocked];
+    let before: Vec<_> = fixture
+        .hops
+        .iter()
+        .map(|hop| hop.submissions.load(Ordering::SeqCst))
+        .collect();
+    let submission = EventSubmission {
+        operation_id: OperationId::new(format!("hop-probe-{blocked}")).unwrap(),
+        reference: None,
+        event: Event {
+            payload: Bytes::from_static(b"must cross every hop"),
+            blob_tree: None,
+        },
+    };
+    probe.reject_submissions.store(true, Ordering::SeqCst);
+    let error = session.submit(submission.clone()).await.unwrap_err();
+    assert_eq!(error.kind(), ErrorKind::Rejected);
+    for (index, hop) in fixture.hops.iter().enumerate() {
         assert_eq!(
-            session
-                .resolve_submission(&submission.operation_id)
-                .await
-                .unwrap(),
-            None
+            hop.submissions.load(Ordering::SeqCst),
+            before[index] + usize::from(index >= blocked),
+            "blocked hop {blocked}: unexpected traffic at hop {index} (inner-to-outer)"
         );
-        for (index, hop) in fixture.hops.iter().enumerate() {
-            assert_eq!(
-                hop.submissions.load(Ordering::SeqCst),
-                before[index] + usize::from(index >= blocked),
-                "blocked hop {blocked}: unexpected traffic at hop {index} (inner-to-outer)"
-            );
-        }
-        probe.reject_submissions.store(false, Ordering::SeqCst);
-        session.submit(submission).await.unwrap();
-        for (index, hop) in fixture.hops.iter().enumerate() {
-            assert_eq!(
-                hop.submissions.load(Ordering::SeqCst),
-                before[index] + usize::from(index >= blocked) + 1,
-                "unblocked hop {blocked}: submission bypassed hop {index}"
-            );
-        }
     }
+    probe.reject_submissions.store(false, Ordering::SeqCst);
+    assert!(session.submit(submission.clone()).await.is_err());
+    for (index, hop) in fixture.hops.iter().enumerate() {
+        assert_eq!(
+            hop.submissions.load(Ordering::SeqCst),
+            before[index] + usize::from(index >= blocked),
+            "terminated stream sent another submission to hop {index}"
+        );
+    }
+    submission
 }
 
 /// Builds concrete stacks in application-to-storage order, without erasing handles or errors.
@@ -1210,14 +1216,22 @@ macro_rules! configurations {
                 }
                 let layers: &[&str] = &[$(stringify!($layer)),*];
                 let expected_hops = layers.iter().filter(|layer| **layer == "transport").count();
+                for blocked in 0..expected_hops {
                 let mut probe_fixture = Fixture::new().await;
                 timeout(Duration::from_secs(30), async {
                     let session = build(&mut probe_fixture).await;
-                    verify_transport_path(&probe_fixture, &session, expected_hops).await;
+                    let submission = verify_transport_path(&probe_fixture, &session, expected_hops, blocked).await;
                     session.close().await.unwrap();
+                    drop(session);
+                    probe_fixture.stop_endpoints().await;
+                    let recovered = build(&mut probe_fixture).await;
+                    assert_eq!(recovered.resolve_submission(&submission.operation_id).await.unwrap(), None);
+                    recovered.submit(submission).await.unwrap();
+                    recovered.close().await.unwrap();
                 }).await.expect("transport path probe timed out");
                 probe_fixture.stop_endpoints().await;
                 probe_fixture.runtime.shutdown().await.unwrap();
+                }
                 let mut membership_fixture = Fixture::new().await;
                 let mut membership_peer = membership_fixture.peer("membership-observer");
                 timeout(Duration::from_secs(30), async {
