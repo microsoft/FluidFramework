@@ -328,6 +328,35 @@ These cases check handle round-tripping and transitive attachment across DDS typ
 The temporary source change was removed and the tests rebuilt; source comparison and generated-code inspection confirmed the original local-only selection was restored.
 This is additional manual coverage, not a change to the preceding full-run counts or a permanent SEA opt-in.
 
+### Three-Failure Repair and Green Current-Version Selection
+
+The three failures from the full run at `476613b3eac` are resolved without adding exclusions or weakening shared assertions:
+
+- Pong: the delta adapter never emitted latency observations.
+	It now measures a read-only snapshot-metadata round trip when a listener attaches, then repeats once per minute after completion.
+	The probe does not append events or send application signals; failures emit no pong, and disconnected or disposed connections suppress late results.
+	The owning gated regression checks response timing, multiple listeners, failed requests, periodic scheduling, and disposal.
+- Summary publication: uploading a summary immediately advanced SEA's latest snapshot before the corresponding Fluid summary op was submitted.
+	The neutral driver now stages the uploaded root privately and publishes it after its proposal commits, before acknowledging it.
+	Closing or replacing the author discards unsubmitted proposals; an accepted proposal cannot publish through a replacement session.
+	Initial document summaries still publish immediately, and legacy injected clients retain their existing publication path.
+	Two owning regressions check abandoned uploads, accepted publication and replayed acknowledgments, and replacement-session isolation.
+- Summary reload: a temporary disposal trace proved the runtime intentionally disposes the second summarizer after fetching the latest snapshot.
+	The test then tried reading snapshot blobs through that disposed runtime.
+	It now validates the same fetched tree and reference sequence through the still-live main container's storage.
+	No storage-after-disposal permission was added; all four snapshot-fetch tests pass on both SEA and local.
+
+All 21 summary/lifecycle fixture tests pass.
+After rebuilding, the full non-fail-fast SEA command completed twice with 658 passing, 526 pending, and zero failures.
+The final run, including the replacement-session guard, took 57.162 seconds.
+Its report is `/tmp/sea-three-final-results.json`, with runner output in `/tmp/sea-three-final-full.log`.
+Existing `SEA test driver is disposed` cleanup telemetry remains in that successful run; it did not fail assertions.
+The original pending conditions and historical-loader exclusion remain unchanged; the skip applicability audit is still open.
+
+Package/API generation, root `pnpm build:fast`, scoped policy, Rust formatting, strict Clippy, rustdoc, native build/tests, documentation validation, and complete canonical `./test.sh` passed.
+The generated API delta is limited to optional `SeaDriverClient.stageSnapshotRoot` and its implementation on the internal `SeaSessionDriverClient`; no public or alpha API changed.
+A changeset records the driver behavior fixes.
+
 ### Membership Investigation
 
 SEA-001 is not a test-specific mismatch: `SeaDeltaConnection` fabricates two initial join operations independently for each connection, and `projectOperation` collapses all other authors into one synthetic remote client.

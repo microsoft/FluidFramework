@@ -94,7 +94,7 @@ export class SeaDocumentStorage implements IDocumentStorageService {
 		return (await this.client.fetchBlob(hexToBytes(id))).slice().buffer;
 	}
 
-	/** Uploads a full summary and publishes it as the latest snapshot. */
+	/** Uploads a full summary, staging publication until proposal submission when supported. */
 	public async uploadSummaryWithContext(
 		summary: ISummaryTree,
 		context: ISummaryContext,
@@ -121,7 +121,9 @@ export class SeaDocumentStorage implements IDocumentStorageService {
 				`no Sea position is mapped to Fluid sequence ${context.referenceSequenceNumber}`,
 			);
 		}
-		const snapshotId = await this.client.publishSnapshotRoot(
+		const publish = this.client.stageSnapshotRoot ?? this.client.publishSnapshotRoot;
+		const snapshotId = await publish.call(
+			this.client,
 			parentSnapshot?.id,
 			atEvent,
 			uploaded.digest,

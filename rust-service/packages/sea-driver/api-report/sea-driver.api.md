@@ -192,6 +192,7 @@ export interface SeaDriverClient {
         readonly root: Uint8Array;
         readonly atEvent?: Uint8Array;
     } | undefined>;
+    stageSnapshotRoot?(expectedParent: Uint8Array | undefined, atEvent: Uint8Array | undefined, root: Uint8Array): Promise<Uint8Array>;
     submitEvent(submission: Uint8Array, localSequenceNumber: number, payload: Uint8Array, referencePosition?: Uint8Array): Promise<Uint8Array>;
     subscribeProjected(after?: Uint8Array): ProjectedOperationSubscription | Promise<ProjectedOperationSubscription>;
     uploadBlob(payload: Uint8Array): Promise<BlobUpload>;
@@ -227,6 +228,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
     reconnect(..._args: readonly unknown[]): Promise<void>;
     resolveSubmission(submission: Uint8Array): Promise<SubmissionResolution>;
     snapshot(id: Uint8Array): ReturnType<SeaDriverClient["snapshot"]>;
+    stageSnapshotRoot(expectedParent: Uint8Array | undefined, atEvent: Uint8Array | undefined, root: Uint8Array): Promise<Uint8Array>;
     submitEvent(submission: Uint8Array, localSequenceNumber: number, payload: Uint8Array, referencePosition?: Uint8Array): Promise<Uint8Array>;
     subscribeProjected(after?: Uint8Array): Promise<ProjectedOperationSubscription>;
     uploadBlob(payload: Uint8Array): Promise<BlobUpload>;

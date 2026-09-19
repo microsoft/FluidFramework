@@ -95,6 +95,130 @@ test("published summary proposals produce ordered replayable acknowledgments", a
 	}
 });
 
+test("summary uploads remain private until proposal submission and are discarded on close", async (context) => {
+	const service = await createMemoryService({ environment: "node" });
+	const writer = new SeaSessionDriverClient(service.open, "clientSelected");
+	const observer = new SeaSessionDriverClient(service.open, "readOnly");
+	context.after(async () => {
+		writer.disconnect();
+		observer.disconnect();
+		await Promise.all([writer.reconnect(), observer.reconnect()]);
+		service.close();
+	});
+	const document = await writer.create();
+	await writer.openSession(document, encoder.encode("writer"), encoder.encode("session"));
+	const storage = new SeaDocumentStorage(writer);
+	await storage.uploadInitialSummary({ type: SummaryType.Tree, tree: {} });
+	const initial = (await storage.getVersions(null, 1))[0];
+	assert.ok(initial);
+	await writer.announceMembership(encoder.encode(JSON.stringify({ mode: "write" })));
+	await writer.readProjected();
+	await observer.openSession(document, encoder.encode("observer"), encoder.encode("observer"));
+	const reference = writer.positionForSequence(1);
+	assert.ok(reference);
+	const abandoned = await storage.uploadSummaryWithContext(
+		{
+			type: SummaryType.Tree,
+			tree: { value: { type: SummaryType.Blob, content: "abandoned" } },
+		},
+		{ referenceSequenceNumber: 1, ackHandle: initial.id, proposalHandle: undefined },
+	);
+	assert.equal(Buffer.from((await observer.latestSnapshot())!.id).toString("hex"), initial.id);
+	writer.disconnect();
+	await writer.openSession(document, encoder.encode("writer"), encoder.encode("replacement"));
+	assert.equal(Buffer.from((await observer.latestSnapshot())!.id).toString("hex"), initial.id);
+	const proposal = await storage.uploadSummaryWithContext(
+		{
+			type: SummaryType.Tree,
+			tree: { value: { type: SummaryType.Blob, content: "accepted" } },
+		},
+		{ referenceSequenceNumber: 1, ackHandle: initial.id, proposalHandle: undefined },
+	);
+	assert.notEqual(proposal, abandoned);
+	await writer.submitEvent(
+		encoder.encode("summary"),
+		1,
+		encoder.encode(
+			JSON.stringify({
+				type: MessageType.Summarize,
+				contents: JSON.stringify({ handle: proposal }),
+			}),
+		),
+		reference,
+	);
+	const published = await observer.latestSnapshot();
+	assert.ok(published);
+	assert.deepEqual(published.atEvent, reference);
+	const snapshot = await new SeaDocumentStorage(observer).getSnapshotTree();
+	assert.ok(snapshot);
+	assert.equal(decoder.decode(await storage.readBlob(snapshot.blobs.value!)), "accepted");
+	const history = await observer.readProjected();
+	const acknowledgment = history.operations.find(
+		(operation) => operation.eventType === "summaryAck",
+	);
+	assert.ok(acknowledgment);
+	assert.equal(
+		JSON.parse(decoder.decode(acknowledgment.payload)).contents.handle,
+		Buffer.from(reference).toString("hex"),
+	);
+});
+
+test("accepted summary proposals cannot publish through a replacement session", async (context) => {
+	const service = await createMemoryService({ environment: "node" });
+	const writer = new SeaSessionDriverClient(async (...args) => {
+		const session = await service.open(...args);
+		return {
+			...session,
+			submit: async (...submissionArgs) => {
+				const position = await session.submit(...submissionArgs);
+				if (JSON.parse(decoder.decode(submissionArgs[2])).type === MessageType.Summarize) {
+					await writer.openSession(
+						session.document,
+						encoder.encode("writer"),
+						encoder.encode("replacement"),
+					);
+				}
+				return position;
+			},
+		};
+	}, "clientSelected");
+	context.after(async () => {
+		writer.disconnect();
+		await writer.reconnect();
+		service.close();
+	});
+	const document = await writer.create();
+	await writer.openSession(document, encoder.encode("writer"), encoder.encode("session"));
+	const root = await writer.publishSummary([]);
+	const initial = await writer.publishSnapshotRoot(undefined, undefined, root.digest);
+	await writer.announceMembership(encoder.encode(JSON.stringify({ mode: "write" })));
+	await writer.readProjected();
+	const reference = writer.positionForSequence(1);
+	assert.ok(reference);
+	const staged = await writer.stageSnapshotRoot(initial, reference, root.digest);
+	await assert.rejects(
+		writer.submitEvent(
+			encoder.encode("summary"),
+			1,
+			encoder.encode(
+				JSON.stringify({
+					type: MessageType.Summarize,
+					contents: JSON.stringify({ handle: bytesKey(staged) }),
+				}),
+			),
+			reference,
+		),
+		/original session/,
+	);
+	assert.deepEqual((await writer.latestSnapshot())?.id, initial);
+	assert.equal(
+		(await writer.readProjected()).operations.some(
+			(operation) => operation.eventType === "summaryAck",
+		),
+		false,
+	);
+});
+
 test("unpublished summary proposals terminate membership without an acknowledgment", async (context) => {
 	const service = await createMemoryService({ environment: "node" });
 	const writer = new SeaSessionDriverClient(service.open, "clientSelected");
@@ -260,6 +384,77 @@ test("neutral session driver hides initialization and preserves snapshot version
 	} finally {
 		connection.dispose();
 	}
+});
+
+test("pong waits for a service response and ignores failed or disposed measurements", async (context) => {
+	const service = await createMemoryService({ environment: "node" });
+	const adapter = new SeaSessionDriverClient(service.open, "readOnly");
+	const document = await adapter.create();
+	const connection = new SeaDeltaConnection(
+		"writer",
+		{
+			clientId: "writer",
+			remoteClientId: "remote",
+			writer: encoder.encode("writer"),
+			cursor: undefined,
+			lastPosition: undefined,
+			remoteClientSequenceNumber: 0,
+			remoteSequenceNumbers: new Map(),
+		},
+		encoder.encode("writer"),
+		document,
+		adapter,
+		{
+			details: { capabilities: { interactive: true } },
+			permission: [],
+			scopes: [],
+			user: { id: "writer" },
+			mode: "write",
+		},
+		"write",
+		[],
+	);
+	const responses: { resolve: () => void; reject: (error: Error) => void }[] = [];
+	adapter.latestSnapshot = () =>
+		new Promise((resolve, reject) => {
+			responses.push({ resolve: () => resolve(undefined), reject });
+		});
+	context.after(async () => {
+		connection.dispose();
+		for (const response of responses) response.resolve();
+		adapter.disconnect();
+		await adapter.reconnect();
+		service.close();
+	});
+	await connection.open();
+	context.mock.timers.enable({ apis: ["setTimeout"] });
+	assert.equal(responses.length, 0);
+	const latencies: number[] = [];
+	connection.on("pong", (latency) => latencies.push(latency));
+	let onceCalls = 0;
+	connection.once("pong", () => {
+		onceCalls++;
+	});
+	assert.equal(responses.length, 1);
+	assert.deepEqual(latencies, []);
+	responses[0]?.resolve();
+	await setImmediate();
+	assert.equal(latencies.length, 1);
+	assert.ok(Number.isFinite(latencies[0]) && (latencies[0] ?? -1) >= 0);
+	assert.equal(onceCalls, 1);
+	context.mock.timers.tick(60_000);
+	assert.equal(responses.length, 2);
+	responses[1]?.reject(new Error("probe failed"));
+	await setImmediate();
+	assert.equal(latencies.length, 1);
+	context.mock.timers.tick(60_000);
+	assert.equal(responses.length, 3);
+	connection.dispose();
+	responses[2]?.resolve();
+	await setImmediate();
+	context.mock.timers.tick(60_000);
+	assert.equal(responses.length, 3);
+	assert.equal(latencies.length, 1);
 });
 
 test("terminal recovery proves a prefix before transforming only the unaccepted suffix", async (context) => {
