@@ -70,6 +70,10 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	private session: SeaSession | undefined;
 	/** Session identity used to ignore cleanup from superseded delta connections. */
 	private sessionIdentity: Uint8Array | undefined;
+	/** Document retained for lazy storage access after delta membership ends. */
+	private archiveDocument: Uint8Array | undefined;
+	/** Unannounced archive session, never used to resume delta author authority. */
+	private archiveSession: Promise<SeaSession> | undefined;
 	/** Pending close retained so reopening never races prior membership disposal. */
 	private closing: Promise<void> = Promise.resolve();
 	/** Membership replacement blocks new archive reads until its setup finishes. */
@@ -123,13 +127,36 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		operation: (session: SeaSession) => Promise<Result>,
 	): Promise<Result> {
 		while (this.transition !== undefined) await this.transition;
-		const session = this.current();
-		const result = Promise.resolve().then(() => operation(session));
+		if (this.session === undefined && this.archiveDocument !== undefined) {
+			const document = this.archiveDocument;
+			this.archiveSession ??= this.closing.then(() => this.openArchiveSession(document));
+		}
+		const session = this.session ?? this.archiveSession ?? this.current();
+		const result = Promise.resolve(session).then(operation);
 		this.archiveOperations.add(result);
 		try {
 			return await result;
 		} finally {
 			this.archiveOperations.delete(result);
+		}
+	}
+
+	/** Opens content access without announcing a new Fluid delta membership. */
+	private async openArchiveSession(document: Uint8Array): Promise<SeaSession> {
+		const session = await this.factory(document, {
+			author: encoder.encode(`archive-${crypto.randomUUID()}`),
+			session: encoder.encode(`archive-session-${crypto.randomUUID()}`),
+		});
+		let stream: SeaStream<SeaLoadResult> | undefined;
+		try {
+			stream = session.read();
+			await stream.next();
+			return session;
+		} catch (error) {
+			await session.close();
+			throw error;
+		} finally {
+			stream?.cancel();
 		}
 	}
 
@@ -454,7 +481,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		});
 	}
 
-	/** Stops live streams, then drains admitted reads and blob uploads before closing membership. */
+	/** Closes membership after admitted work; owned delta disposal retains lazy archive access. */
 	public disconnect(owner?: Uint8Array): void {
 		if (
 			owner !== undefined &&
@@ -463,6 +490,9 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		) {
 			return;
 		}
+		this.archiveDocument = owner === undefined ? undefined : this.session?.document.slice();
+		const archiveSession = this.archiveSession;
+		this.archiveSession = undefined;
 		this.sessionIdentity = undefined;
 		this.eventStream?.cancel();
 		this.eventStream = undefined;
@@ -473,10 +503,14 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		this.snapshotFence = undefined;
 		const session = this.session;
 		this.session = undefined;
-		if (session !== undefined) {
-			this.closing = Promise.allSettled([...this.archiveOperations]).then(() =>
-				session.close(),
-			);
+		if (session !== undefined || archiveSession !== undefined) {
+			this.closing = Promise.allSettled([...this.archiveOperations]).then(async () => {
+				await session?.close();
+				await archiveSession?.then(
+					(archive) => archive.close(),
+					() => {},
+				);
+			});
 			void this.closing.catch(() => {});
 		}
 	}

@@ -115,10 +115,13 @@ It watches snapshot coordination continuously so SEA-selected publication uses t
 Membership replacement waits for admitted finite archive reads and blob uploads to finish and defers later reads and uploads until the replacement opens.
 Independent blob uploads remain concurrent within that gate; no live session is selected before a pending replacement completes.
 Each document service retains a unique SEA author for read-first connections, independent of shared projected Fluid client labels.
-Disconnect cancels owned live streams and prevents new reads and uploads, but drains admitted finite archive reads and blob uploads before membership close.
+Document-service disposal cancels owned live streams and prevents new reads and uploads, but drains admitted finite archive reads and blob uploads before membership close.
 Reconnect waits for that cleanup, and the next open calls the injected factory.
 Delta disposal also closes its owning session so Fluid pending-state recovery can observe the old client's final leave.
 Cleanup carries the original session identity and cannot close a newer replacement sharing the same adapter.
+After delta disposal, the still-live document service can lazily open an unannounced archive session for finite storage work, including data-store blobs fetched by a paused container.
+Concurrent requests share that opening; it does not restore delta author authority or announce another Fluid member.
+Full service disposal or a new delta session drains admitted archive work and closes that archive session, including an opening still in progress.
 Transferred projected subscriptions remain cancellation-owned by their driver consumer.
 The pre-opened event stream can be transferred only once; later subscriptions at the same cursor open independent readers, and cancelling one does not cancel another.
 

@@ -263,6 +263,17 @@ The API delta against the preceding checkpoint contains only internal declaratio
 The next full SEA `--bail` run reaches 384 passing and 427 pending before `LoadModes / Can load a paused container at a specific sequence number` fails with `SEA session is not open` while fetching a blob.
 That lifecycle failure remains in scope and is not excluded.
 
+The paused-load failure at `5b52b8352ac` conflated delta membership with document storage lifetime.
+Loading to a specified sequence disconnects delta delivery before lazily loading data-store blobs.
+Owned delta disposal now retains the document identity for a lazy, unannounced archive session; it still durably closes the old membership and cannot restore its author authority.
+Concurrent finite operations share the archive opening, while a replacement delta session or full document-service disposal drains admitted operations and closes the archive owner.
+The existing membership regression verifies final leaves, stale-owner isolation, continued blob access, rejection of delta author operations, and full-disposal rejection.
+A deterministic delayed-opening regression verifies shared admission and disposal while the archive factory is still pending.
+All 17 summary/lifecycle tests and all five unchanged `LoadModes` integration cases pass.
+Package and root builds, scoped policy, documentation, and complete canonical `./test.sh` pass; no API report changes.
+The next full SEA `--bail` run reaches 393 passing and 428 pending, then fails `TestSignals / Validate signal events are raised on the correct runtime` with the explicit `signals are unsupported` error.
+Application signals remain an applicable missing contract, not an implementation-specific exclusion.
+
 ### Membership Investigation
 
 SEA-001 is not a test-specific mismatch: `SeaDeltaConnection` fabricates two initial join operations independently for each connection, and `projectOperation` collapses all other authors into one synthetic remote client.

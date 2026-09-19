@@ -388,12 +388,81 @@ test("stale delta disposal cannot close a replacement session", async () => {
 		);
 		adapter.disconnect(encoder.encode("new"));
 		await adapter.reconnect();
+		const payload = encoder.encode("archive after delta disposal");
+		const blob = await adapter.uploadBlob(payload);
+		assert.deepEqual(await adapter.fetchBlob(blob.digest), payload);
+		await assert.rejects(
+			adapter.announceMembership(encoder.encode('{"mode":"write"}')),
+			/SEA session is not open/,
+		);
+		adapter.disconnect(encoder.encode("new"));
+		assert.deepEqual(await adapter.fetchBlob(blob.digest), payload);
 		await adapter.openSession(document, encoder.encode("reader"), encoder.encode("reader"));
 		assert.deepEqual(
 			(await adapter.readProjected()).operations.map((operation) => operation.eventType),
 			["joined", "left", "joined", "left"],
 		);
+		adapter.disconnect();
+		await assert.rejects(adapter.fetchBlob(blob.digest), /SEA session is not open/);
 	} finally {
+		adapter.disconnect();
+		await adapter.reconnect();
+		service.close();
+	}
+});
+
+test("document disposal drains a shared lazy archive opening and rejects later reads", async () => {
+	const service = await createMemoryService({ environment: "node" });
+	let releaseOpen = (): void => {};
+	const blocked = new Promise<void>((resolve) => {
+		releaseOpen = resolve;
+	});
+	let enteredOpen = (): void => {};
+	const entered = new Promise<void>((resolve) => {
+		enteredOpen = resolve;
+	});
+	let archiveOpens = 0;
+	let archiveCloses = 0;
+	const adapter = new SeaSessionDriverClient(async (document, options) => {
+		const archive = decoder.decode(options.author).startsWith("archive-");
+		if (archive) {
+			archiveOpens += 1;
+			enteredOpen();
+			await blocked;
+		}
+		const session = await service.open(document, options);
+		if (archive) {
+			const close = session.close.bind(session);
+			session.close = () => {
+				archiveCloses += 1;
+				return close();
+			};
+		}
+		return session;
+	}, "readOnly");
+	try {
+		const document = await adapter.create();
+		const payload = encoder.encode("lazy archive content");
+		const blob = await adapter.uploadBlob(payload);
+		const owner = encoder.encode("delta");
+		await adapter.openSession(document, encoder.encode("writer"), owner);
+		adapter.disconnect(owner);
+		const reads = Promise.all([
+			adapter.fetchBlob(blob.digest),
+			adapter.fetchBlob(blob.digest),
+		]);
+		await entered;
+		assert.equal(archiveOpens, 1);
+		adapter.disconnect();
+		await assert.rejects(adapter.fetchBlob(blob.digest), /SEA session is not open/);
+		assert.equal(archiveCloses, 0);
+		releaseOpen();
+		assert.deepEqual(await reads, [payload, payload]);
+		await adapter.reconnect();
+		assert.equal(archiveCloses, 1);
+		assert.equal(archiveOpens, 1);
+	} finally {
+		releaseOpen();
 		adapter.disconnect();
 		await adapter.reconnect();
 		service.close();
