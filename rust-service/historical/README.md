@@ -10,6 +10,7 @@ These records describe earlier designs, migration work, experiments, and decisio
 - Research notes: [initial notes](notes.md), [service description](notes2.md), and [WebTransport flows](notes4.md).
 - [Codespaces transport investigation](CODESPACES_WEBTRANSPORT_PLAN.md): forwarding constraints, streaming and ordinary WebSocket implementation, external browser evidence, and compatibility limitations.
 - [Execution isolation investigation](EXECUTION_ISOLATION_INVESTIGATION.md): repeated workstream interference, terminal ownership mechanisms, mocked checks, and remaining upstream validation.
+- [Historical deferral reconciliation](DEFERRAL_RECONCILIATION.md): current dispositions and remaining gaps for the six product deferrals retained by iteration 0016.
 - [Iterations](iterations/): charters, workstream instructions, reports, validation evidence, and retrospectives.
 - [Decisions](decisions/README.md): architectural and process decision history.
 - [Benchmarks](benchmarks/): saved measurements and profiles, organized by experiment or source revision.

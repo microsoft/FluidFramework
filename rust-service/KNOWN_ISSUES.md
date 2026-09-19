@@ -46,6 +46,32 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
   Close the underlying issue only after the VS Code/Copilot terminal tools provide exclusive ownership and command-specific completion handling, validated with concurrent same-chat commands and cancellation isolation.
   A successful workaround run does not establish that the underlying tool defect is fixed.
 
+## Browser disconnect resource release lacks focused evidence
+
+- **Status:** Open; the former no-op implementation is fixed
+- **Severity:** Medium
+- **Area:** Browser WebTransport lifecycle regression coverage
+- **Evidence:** `BrowserTransport::disconnect` and `Drop` now call `WebTransport.close()`.
+  The browser harness checks logical-session close and reopen but does not distinguish those actions from physical connection release.
+  See the [historical deferral reconciliation](historical/DEFERRAL_RECONCILIATION.md#browser-disconnect-resource-release).
+- **Impact:** Existing assertions could pass despite a regression that leaks a browser connection or its server admission capacity.
+  This is a missing regression guarantee, not evidence of a current leak.
+- **Trigger:** Add a real-browser test that separately exercises explicit transport disconnect and final-owner drop, then observes server cleanup or recovered connection capacity within a bounded deadline.
+  Keep the client alive after explicit disconnect so drop cannot mask a broken disconnect path.
+
+## Generic client disconnect error state is not defined
+
+- **Status:** Deferred; the former JavaScript injection API is removed
+- **Severity:** Low
+- **Area:** Generic Rust transport lifecycle contract
+- **Evidence:** `Client::disconnect` marks client state disconnected and abandons authority/correlations even if `ClientTransport::disconnect` returns an error.
+  The method does not specify this error-state policy, and the focused state test bypasses the outer client's fallible transport call.
+  See the [historical deferral reconciliation](historical/DEFERRAL_RECONCILIATION.md#injected-disconnect-failure-state).
+- **Impact:** A consumer of a fallible custom transport cannot rely on a defined recovery state after disconnect fails.
+  Removal of the JavaScript injection surface does not settle the generic Rust contract.
+- **Trigger:** When a fallible transport consumer requires recovery semantics, choose whether an error still abandons logical admission and pending requests.
+  Document that choice and test error propagation, request admission, correlation cleanup, and explicit recovery through the outer `Client` API.
+
 ## RS-003: Durable storage has qualified guarantees
 
 - **Status:** Open
