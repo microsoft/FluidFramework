@@ -13,6 +13,7 @@ const rustDirectory = path.resolve(packageDirectory, "../..");
 const configurations = {
 	memory: ["memory"],
 	webtransport: ["webtransport"],
+	websocket: ["websocket-stream"],
 	combined: ["memory", "webtransport"],
 	"memory-compression": ["memory", "compression"],
 	"webtransport-compression": ["webtransport", "compression"],

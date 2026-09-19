@@ -40,5 +40,7 @@ pub trait ClientTransport {
 
 #[cfg(target_arch = "wasm32")]
 pub mod browser;
+#[cfg(all(target_arch = "wasm32", feature = "websocket-stream"))]
+pub mod browser_socket;
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) mod native;

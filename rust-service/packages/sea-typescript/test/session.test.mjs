@@ -213,6 +213,7 @@ test("capability entrypoints share factories and reach only lazy capability-spec
 	for (const [capability, configurations] of [
 		["memory", ["memory", "memory-compression"]],
 		["webtransport", ["webtransport", "webtransport-compression"]],
+		["websocket", ["websocket"]],
 	]) {
 		const visited = new Set();
 		const artifacts = new Set();
@@ -258,7 +259,7 @@ test("capability entrypoints share factories and reach only lazy capability-spec
 			[...artifacts].sort(),
 			configurations
 				.flatMap((configuration) =>
-					capability === "memory"
+					capability !== "webtransport"
 						? [`${configuration}/node`, `${configuration}/web`]
 						: [`${configuration}/web`],
 				)

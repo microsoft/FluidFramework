@@ -19,3 +19,7 @@ The harness declares the neutral package build as a dependency and invokes its t
 After building, `node --test packages/sea-typescript/test/session.test.mjs` runs all thirteen Node tests directly.
 Session consumers use `@fluidframework/sea-typescript`, which owns the shared `sea-wasm` artifacts.
 Generated bindings and WASM binaries are ignored build outputs.
+
+The package's `websocket.test.mjs` retains focused low-level socket queue, upload-throttling, FIN, cancellation, handshake, and ownership regressions against the separate socket-capable artifact.
+These tests exercise transport mechanics, not the removed injected-session API.
+The browser harness enables its optional real Node collaboration test with `SEA_NODE_WEBSOCKET=1`; the test uses the neutral package's `openRemote` entrypoint.

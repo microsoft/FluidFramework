@@ -24,6 +24,7 @@ use wtransport::{
     endpoint::endpoint_side::Server as ServerSide,
 };
 
+use crate::stream::{ReceiveStream, SendStream};
 use sea_webtransport::protocol as sea_v1;
 
 pub(crate) const CLOSE_CODE: VarInt = VarInt::from_u32(1);
@@ -79,8 +80,8 @@ pub struct ShutdownOutcome {
 /// Cloneable control channel for requesting and observing server shutdown.
 #[derive(Clone, Debug)]
 pub struct ShutdownHandle {
-    request: watch::Sender<Option<ShutdownMode>>,
-    accepting: watch::Receiver<bool>,
+    pub(crate) request: watch::Sender<Option<ShutdownMode>>,
+    pub(crate) accepting: watch::Receiver<bool>,
 }
 
 impl ShutdownHandle {
@@ -112,7 +113,7 @@ impl ShutdownHandle {
 }
 
 #[derive(Debug, Default)]
-struct Metrics {
+pub(crate) struct Metrics {
     wire_bytes: AtomicU64,
     active_connections: AtomicUsize,
     peak_active_connections: AtomicUsize,
@@ -123,7 +124,7 @@ struct Metrics {
 
 /// Cloneable view of transport measurements.
 #[derive(Clone, Debug)]
-pub struct MeasurementHandle(Arc<Metrics>);
+pub struct MeasurementHandle(pub(crate) Arc<Metrics>);
 
 impl MeasurementHandle {
     /// Returns a point-in-time measurement snapshot.
@@ -134,14 +135,14 @@ impl MeasurementHandle {
 }
 
 impl Metrics {
-    fn enter_connection(&self) -> ActiveConnection<'_> {
+    pub(crate) fn enter_connection(&self) -> ActiveConnection<'_> {
         let active = self.active_connections.fetch_add(1, Ordering::Relaxed) + 1;
         self.peak_active_connections
             .fetch_max(active, Ordering::Relaxed);
         ActiveConnection(self)
     }
 
-    fn enter_stream(&self) -> ActiveStream<'_> {
+    pub(crate) fn enter_stream(&self) -> ActiveStream<'_> {
         let active = self.active_streams.fetch_add(1, Ordering::Relaxed) + 1;
         self.peak_active_streams
             .fetch_max(active, Ordering::Relaxed);
@@ -152,7 +153,7 @@ impl Metrics {
         self.wire_bytes.fetch_add(count as u64, Ordering::Relaxed);
     }
 
-    fn record_connection_cleanup(&self) {
+    pub(crate) fn record_connection_cleanup(&self) {
         self.connection_cleanups.fetch_add(1, Ordering::Relaxed);
     }
 
@@ -167,7 +168,7 @@ impl Metrics {
     }
 }
 
-struct ActiveConnection<'a>(&'a Metrics);
+pub(crate) struct ActiveConnection<'a>(&'a Metrics);
 
 impl Drop for ActiveConnection<'_> {
     fn drop(&mut self) {
@@ -175,7 +176,7 @@ impl Drop for ActiveConnection<'_> {
     }
 }
 
-struct ActiveStream<'a>(&'a Metrics);
+pub(crate) struct ActiveStream<'a>(&'a Metrics);
 
 impl Drop for ActiveStream<'_> {
     fn drop(&mut self) {
@@ -575,9 +576,9 @@ async fn serve_connection_streams(
     }
 }
 
-async fn serve_sea_stream(
-    send: wtransport::SendStream,
-    mut receive: wtransport::RecvStream,
+pub(crate) async fn serve_sea_stream(
+    send: impl SendStream,
+    mut receive: impl ReceiveStream,
     service: Arc<dyn SeaConnectionService>,
     config: &TransportConfig,
     metrics: &Metrics,
@@ -592,8 +593,8 @@ async fn serve_sea_stream(
 
 #[allow(clippy::too_many_lines)]
 async fn serve_network_stream(
-    mut send: wtransport::SendStream,
-    mut receive: wtransport::RecvStream,
+    mut send: impl SendStream,
+    mut receive: impl ReceiveStream,
     prefix: [u8; 4],
     service: Arc<dyn SeaConnectionService>,
     config: &TransportConfig,
@@ -677,7 +678,7 @@ async fn serve_network_stream(
         loop {
             let response = tokio::select! {
                 biased;
-                _ = send.stopped() => return Ok(()),
+                () = send.stopped() => return Ok(()),
                 response = responses.next() => response,
             };
             let Some(response) = response else {
@@ -718,8 +719,8 @@ async fn serve_network_stream(
 
 #[allow(clippy::too_many_arguments)]
 async fn serve_author_stream(
-    mut send: wtransport::SendStream,
-    mut receive: wtransport::RecvStream,
+    mut send: impl SendStream,
+    mut receive: impl ReceiveStream,
     service: Arc<dyn SeaConnectionService>,
     config: &TransportConfig,
     metrics: &Metrics,
@@ -791,8 +792,8 @@ async fn serve_author_stream(
 
 #[allow(clippy::too_many_arguments)]
 async fn serve_snapshot_stream(
-    mut send: wtransport::SendStream,
-    mut receive: wtransport::RecvStream,
+    mut send: impl SendStream,
+    mut receive: impl ReceiveStream,
     service: Arc<dyn SeaConnectionService>,
     config: &TransportConfig,
     metrics: &Metrics,
@@ -876,8 +877,8 @@ async fn serve_snapshot_stream(
 
 #[allow(clippy::too_many_arguments)]
 async fn serve_content_stream(
-    mut send: wtransport::SendStream,
-    mut receive: wtransport::RecvStream,
+    mut send: impl SendStream,
+    mut receive: impl ReceiveStream,
     service: Arc<dyn SeaConnectionService>,
     config: &TransportConfig,
     metrics: &Metrics,
@@ -942,7 +943,7 @@ async fn serve_content_stream(
 }
 
 async fn read_next_network_frame(
-    receive: &mut wtransport::RecvStream,
+    receive: &mut impl ReceiveStream,
     decoder: &mut sea_v1::NetworkFrameDecoder,
     operation_timeout: Duration,
 ) -> Result<Option<sea_v1::NetworkFrame>, WebTransportError> {
@@ -968,7 +969,7 @@ async fn read_next_network_frame(
 }
 
 async fn read_one_network_frame(
-    receive: &mut wtransport::RecvStream,
+    receive: &mut impl ReceiveStream,
     prefix: [u8; 4],
     limits: sea_v1::Limits,
 ) -> Result<sea_v1::NetworkFrame, WebTransportError> {
@@ -989,7 +990,7 @@ async fn read_one_network_frame(
 
 #[allow(clippy::too_many_arguments)]
 async fn write_network_response(
-    send: &mut wtransport::SendStream,
+    send: &mut impl SendStream,
     role: sea_v1::StreamRole,
     correlation_id: u64,
     response: &sea_v1::Response,

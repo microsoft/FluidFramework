@@ -38,6 +38,12 @@ done
 
 cd "$service_root"
 export CARGO_TARGET_DIR="$temporary_root/target"
+if [[ "${SEA_ORDINARY_WEBSOCKET:-}" == "1" || "${SEA_NODE_WEBSOCKET:-}" == "1" ]]; then
+	export SEA_WEBSOCKET_STREAM=1
+fi
+if [[ "${SEA_NODE_WEBSOCKET:-}" == "1" ]]; then
+	export SEA_WEBSOCKET_ORIGINLESS_LOOPBACK=1
+fi
 
 # Package-level test orchestration builds WASM through the Fluid build graph before
 # calling this script. Direct invocation remains self-contained.
@@ -46,7 +52,17 @@ if [[ "${SEA_BROWSER_SKIP_BUILD:-}" != "1" ]]; then
 	pnpm --dir tests/minimal-fluid-driver exec fluid-build . --task build:driver-trace
 fi
 sh tests/webtransport-browser/generate-cert.sh "$temporary_root/certs"
-cargo build -p sea-webtransport-server
+server_features=()
+transport_variable=WEBTRANSPORT_URL
+if [[ "${SEA_WEBSOCKET_STREAM:-}" == "1" ]]; then
+	server_features=(--features websocket-stream)
+	transport_variable=WEBSOCKET_URL
+	export SEA_WEBSOCKET_BIND=127.0.0.1:0
+	export SEA_BROWSER_HTTP_PORT
+	SEA_BROWSER_HTTP_PORT=$(node --input-type=module -e 'import {createServer} from "node:net"; const server = createServer(); server.listen(0, "127.0.0.1", () => { console.log(server.address().port); server.close(); });')
+	export SEA_WEBSOCKET_ORIGINS="http://localhost:$SEA_BROWSER_HTTP_PORT"
+fi
+cargo build -p sea-webtransport-server "${server_features[@]}"
 
 shutdown_marker="$temporary_root/shutdown.request"
 "$CARGO_TARGET_DIR/debug/sea-webtransport-server" \
@@ -61,7 +77,7 @@ server_pid=$!
 # server's startup contract while also failing immediately if the process exits.
 transport_url=
 for ((attempt = 0; attempt < 600; attempt++)); do
-	transport_url=$(sed -n 's/^WEBTRANSPORT_URL=//p' "$temporary_root/server.log" | tail -n 1)
+	transport_url=$(sed -n "s/^${transport_variable}=//p" "$temporary_root/server.log" | tail -n 1)
 	if [[ -n "$transport_url" ]]; then
 		break
 	fi
@@ -76,19 +92,24 @@ if [[ -z "$transport_url" ]]; then
 	exit 1
 fi
 
+export SEA_BROWSER_WEBTRANSPORT_URL
+SEA_BROWSER_WEBTRANSPORT_URL=$(sed -n 's/^WEBTRANSPORT_URL=//p' "$temporary_root/server.log" | tail -n 1)
 node tests/minimal-fluid-driver/browser/run-headless.mjs \
 	tests/minimal-fluid-driver \
-	"$transport_url" \
+	"$SEA_BROWSER_WEBTRANSPORT_URL" \
 	"$(cat "$temporary_root/certs/cert.sha256")"
 
 node tests/minimal-fluid-driver/browser/run-headless.mjs \
 	packages/sea-typescript \
-	"$transport_url" \
+	"$SEA_BROWSER_WEBTRANSPORT_URL" \
 	"$(cat "$temporary_root/certs/cert.sha256")" \
 	__seaPackageResult browser.html "snapshotPolicy=${SEA_SNAPSHOT_POLICY:-client}"
 
 # Passing the marker enables the runner's shutdown assertions. The runner creates it
 # after the browser flow, and the server acknowledges that it stopped accepting work.
+if [[ "${SEA_NODE_WEBSOCKET:-}" == "1" ]]; then
+	SEA_NODE_TRANSPORT_URL="$transport_url" node --test packages/sea-typescript/test/websocket.test.mjs
+fi
 node tests/webtransport-browser/run-headless.mjs \
 	tests/webtransport-browser \
 	"$transport_url" \

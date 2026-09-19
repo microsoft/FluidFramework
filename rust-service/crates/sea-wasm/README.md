@@ -9,7 +9,10 @@ Storage, transport, and decorator construction remain separate from session oper
 Errors retain their SEA classification, and snapshot publication delegates to the original session with its original handles.
 Handles from incompatible implementations are rejected rather than converted into availability claims.
 
-Cargo features select optional dependencies: `memory`, `webtransport`, and `compression`.
+Cargo features select optional dependencies: `memory`, `webtransport`, `websocket-stream`, and `compression`.
+The optional `websocket-stream` feature adds `openRemote`, sharing the same session adapter while selecting a fixed initial WebTransport or WebSocket transport.
+It forwards the socket capability to `sea-webtransport`; neither memory-only nor minimal WebTransport builds include it.
+The existing `openWebTransport` factory remains strict and never falls back.
 Default features are empty.
 A memory-only build does not depend on `sea-webtransport`; a WebTransport-only build does not depend on local storage, sequencers, or payload decorators.
 

@@ -36,3 +36,69 @@ Validation passed with durable-file storage and client-selected publication, and
 All three flows run through `rust-service/test.sh`; they do not establish external-browser connectivity through Codespaces forwarding.
 
 Browser APIs do not expose HTTP/3, QUIC, UDP, or TLS byte totals, so the harness does not infer unavailable network measurements.
+
+## Optional WebSocketStream Validation
+
+Run the same collaboration and shutdown flow against the optional native `WebSocketStream` adapter:
+
+```bash
+SEA_WEBSOCKET_STREAM=1 tests/webtransport-browser/run-test.sh
+```
+
+The mode also checks healthy-primary preference, explicit WebTransport-only failure, initial timeout fallback, and missing-native-API rejection through the neutral `openRemote` factory.
+Package-owned socket regressions cover disconnection during child creation.
+The default command and minimal `webtransport` artifact remain WebTransport-only; `websocket` is a separate generated configuration, not an overwrite of default bindings.
+The driver and compressed-session traces continue using QUIC in every mode; only the final collaboration/shutdown flow selects WebSocket.
+Use `SEA_BROWSER_SKIP_BUILD=1` only after the package artifacts and driver trace have been built.
+
+On 2026-09-18, Chromium 152 passed this flow locally with durable-file storage, including bounded shutdown and zero remaining connections.
+On 2026-09-19 UTC, the Windows VS Code integrated browser (Chrome 148 / Electron 42) passed the real SEA collaboration flow through Codespaces public HTTPS/WSS forwarding with memory storage.
+It covered document creation, three sessions, ordered/live events, blob/directory round trips, snapshots, and explicit reconnect with TLS validation enabled and no client tunnel or browser flags.
+The disposable public ports were restored to private and both test listeners stopped.
+The earlier synthetic probe below remains separate evidence for substantial two-way buffering and stall/recovery through the proxy; the SEA flow does not measure a global memory bound.
+
+## Ordinary WebSocket Compatibility Validation
+
+Run the same Chromium collaboration and shutdown flow with ordinary WebSocket, plus Node's built-in WebSocket against the temporary Rust listener:
+
+```bash
+SEA_ORDINARY_WEBSOCKET=1 SEA_NODE_WEBSOCKET=1 tests/webtransport-browser/run-test.sh
+```
+
+These settings enable the existing `websocket-stream` build feature automatically.
+The Node setting additionally permits missing Origin only on the harness's loopback listener; do not use it for forwarded/public endpoints.
+The ordinary browser mode checks `PreferAvailable` with unreachable QUIC and unavailable WebSocketStream through the neutral session factory.
+The focused package test checks the false receive-backpressure capability and disconnection during child creation.
+Selection probes run only on loopback-hosted pages: their deliberate loopback connection failures must not request access to an external visitor's local apps.
+Externally hosted pages still run collaboration with the explicitly selected transport, without these selection probes.
+Generated-binding regressions use a controlled event socket to test queue byte/message limits, upload throttling, cancellation, malformed records, FIN, handshake failure/timeouts, callback cleanup, and strict-mode refusal to fall back.
+That test consumes the separate `websocket` artifact and runs in the package's normal Node test command.
+
+Node 22.23.2's built-in WebSocket and local Chromium 152 passed these real SEA flows.
+On 2026-09-19, the user reported a passing three-session ordinary-WebSocket collaboration run in Windows Firefox 156 through public Codespaces forwarding with memory storage.
+The user denied a local-app permission prompt caused plausibly by the then-enabled loopback selection probe; collaboration still passed.
+The probe is now restricted to loopback-hosted pages, but the revised external page has not been rerun in Firefox.
+Private-window/login state was not confirmed; this is not a verified anonymous-browser result or an external shutdown test.
+Ordinary WebSocket cannot provide receive backpressure: a slow consumer's bounded adapter queue fails on overflow instead of slowing the sender.
+Neither the Node nor browser flow proves a total runtime/proxy memory bound.
+No feature-mode rebuild is needed to return to the default flow because artifacts are isolated.
+
+## Neutral-Factory Integration Validation
+
+The Codespaces branch integration preserves the completed shared-session extraction in `SERVICE_CLIENT_PLAN.md`.
+Socket mechanics now live under `sea-webtransport::transport`, while `sea-wasm` owns `openRemote` and the TypeScript package owns its separate generated artifact and browser/Node loaders.
+Removed transport-owned session exports, injection hooks, and build scripts remain removed.
+The archived investigation retains the pre-integration external Chromium and Firefox evidence; the merged neutral factory has not been rerun in those external browsers.
+
+Local integration validation passed all 150 Rust workspace tests, strict native and WASM Clippy, strict rustdoc, formatting, build, documentation links, repository policy, and root `pnpm build:fast`.
+The canonical `test.sh` passed default QUIC collaboration and shutdown, neutral plain/compressed sessions, and the Fluid driver trace.
+Both optional Chromium 152 modes passed selection, four-session collaboration, and bounded shutdown; Node 22.23.2 passed real two-session collaboration through the package entrypoint.
+The package's focused regression covers ordinary queue bounds, throttling, FIN, handshake failure, cancellation, and owner/child races; the browser checks cover native selection and transport composition.
+Cargo dependency checks confirm minimal memory and WebTransport artifacts still exclude the socket capability and unrelated stack dependencies.
+
+## Codespaces WebSocketStream Probe
+
+The local `websocketstream-probe.mjs` server and `websocketstream-probe-client.mjs` page tested native browser backpressure through Codespaces forwarding without starting SEA.
+They are preserved together under ignored `rust-service/target/websocket-probes/` in the isolated investigation worktree and are not committed source, part of `run-test.sh`, or part of the implemented adapter.
+See the [investigation record](../../historical/CODESPACES_WEBTRANSPORT_PLAN.md#native-websocketstream-probe-2026-09-18) for setup, exposure limits, observed results, and cleanup.
+The probe requires an existing `ws` installation supplied through `PROBE_WS_MODULE` and a browser with native `WebSocketStream`.

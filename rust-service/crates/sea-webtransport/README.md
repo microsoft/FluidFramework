@@ -21,7 +21,7 @@ Monitored progress responses are out-of-band observations and may cut ahead of b
 
 An **archive** is durable or process-local retained state.
 A **logical session** is one connection-bound author identity within an archive.
-A **logical stream** is one persistent WebTransport bidirectional stream with a single role.
+A **logical stream** is one persistent bidirectional byte stream with a single role.
 A **client** owns one transport connection and the shared state for its logical streams.
 The **protocol** is the versioned frame and message contract, not the server implementation or application adapter.
 
@@ -90,6 +90,69 @@ pnpm --dir rust-service/packages/sea-typescript run build
 Consumers import package entrypoints, not crate output paths.
 The minimal remote configuration excludes local storage, sequencer, compression, and encryption dependencies.
 All generated files are build artifacts and must not be edited.
+
+## Optional `WebSocketStream` Fallback
+
+The off-by-default `websocket-stream` Cargo feature adds socket primitives and explicit initial transport selection under `transport::browser_socket`.
+The owning `sea-wasm` factory and `sea-typescript` package expose these through neutral sessions; legacy generated session classes remain removed.
+The default WebSocket adapter requires native `WebSocketStream`; strict modes never substitute ordinary `WebSocket` or a JavaScript stream wrapper.
+Explicit compatibility modes also support the built-in `WebSocket` in Node and browsers without streaming transports, including Firefox, without adding an npm dependency.
+This provides a development path when QUIC or the streaming API is unavailable, at the cost of receive backpressure.
+Generate the package-owned socket artifact from `rust-service/` with:
+
+```bash
+node packages/sea-typescript/scripts/build-wasm.mjs websocket
+```
+
+Select a transport policy through the package entrypoint:
+
+```javascript
+import { openRemote } from "@fluidframework/sea-typescript/internal/websocket";
+
+const session = await openRemote(
+  {
+    mode: "PreferWebTransport",
+    url: webTransportUrl,
+    certificateHash: certificateSha256,
+    websocketUrl: "wss://your-service.example/sea/websocket",
+    timeoutMilliseconds: 5000,
+  },
+  document,
+  { author, session: sessionIdentity },
+);
+```
+
+`WebTransport` mode never falls back; `WebSocketStream` mode skips QUIC; `PreferWebTransport` explicitly permits fallback on any initial WebTransport establishment error or timeout.
+`WebSocket` selects ordinary WebSocket directly; `PreferAvailable` attempts WebTransport, native `WebSocketStream`, then ordinary WebSocket.
+Only these last two modes permit the reduced receive guarantees.
+`SeaWebSocketTransport.connect` remains streaming-only; `connectOrdinary` directly selects the compatibility adapter.
+Each attempt has the supplied timeout, so selection can take up to twice that interval for `PreferWebTransport` or three times for `PreferAvailable`.
+The failed attempt is closed before fallback; selection completes before any Sea operation.
+There is no mid-session switching, request replay, or automatic reconnect.
+The low-level `SeaWebSocketTransport.supportsReceiveBackpressure` getter distinguishes streaming (`true`) from ordinary (`false`) sockets for transport tests.
+Applications receive a neutral session and must accept the weakest guarantees their chosen policy permits.
+A streaming implementation must actually propagate reader demand to the network; API presence alone is not runtime validation.
+Callers opting into automatic fallback must trust both endpoints: the WebTransport pin does not authenticate the independently configured WebSocket TLS proxy.
+Only `wss:` URLs are accepted outside loopback; URLs cannot contain credentials, queries, or fragments.
+
+A control socket owns a group, and each logical stream uses its own WebSocket and the group's fixed API choice.
+Native `WebSocketStream` preserves independent receive backpressure; ordinary WebSocket cannot pause message delivery when the application stops reading.
+Binary DATA records carry at most 64 KiB; FIN is directional EOF, not a WebSocket close.
+Close before FIN is cancellation or failure, and closing the owner cancels every child.
+Pending reads survive Rust waiter cancellation, and concurrent sends or receives on the same direction are rejected.
+The SEA codec, correlation, session, storage, and application layers are unchanged.
+
+The ordinary adapter caps each socket's receive queue at 4 MiB and 256 messages and rejects individual messages larger than a 64 KiB DATA record plus its tag.
+Overflow closes and fails the stream; it never silently drops bytes or reports clean EOF.
+Slow consumers can therefore fail instead of slowing the sender, and must explicitly reconnect through the application's existing recovery policy.
+Uploads throttle admission using `bufferedAmount`, allowing at most two maximum-sized records in the reported native send buffer; this does not restore receive backpressure.
+Queue limits are per socket, not per connection, and do not bound already delivered messages, runtime/kernel buffering, or proxy memory.
+Node's built-in client sends no Origin: direct local tests require the server's separate, default-off loopback allowance described below.
+
+Message bounds limit adapter queues, not browser, kernel, proxy, or total process memory.
+Native browser receive queues and intermediaries have implementation-dependent buffering; do not treat an awaited write as a remote application acknowledgement.
+This does not provide QUIC datagrams, identical network behavior, or production authentication.
+See the [server setup](../sea-webtransport-server/README.md#optional-websocket-listener) and [browser validation](../../tests/webtransport-browser/README.md#optional-websocketstream-validation).
 
 ## Validation
 

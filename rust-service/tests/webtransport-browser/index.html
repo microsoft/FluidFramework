@@ -10,7 +10,10 @@
 <body>
   <pre id="result">running</pre>
   <script type="importmap">
-    { "imports": { "@fluidframework/sea-typescript/internal/webtransport": "/packages/sea-typescript/lib/webtransport.js" } }
+    { "imports": {
+      "@fluidframework/sea-typescript/internal/webtransport": "/packages/sea-typescript/lib/webtransport.js",
+      "@fluidframework/sea-typescript/internal/websocket": "/packages/sea-typescript/lib/websocket.js"
+    } }
   </script>
   <script type="module" src="./browser-test.mjs"></script>
 </body>

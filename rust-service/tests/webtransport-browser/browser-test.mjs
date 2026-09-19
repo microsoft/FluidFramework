@@ -57,9 +57,100 @@ async function run() {
 		Number.parseInt(value, 16),
 	);
 	let transportSessionCount = 0;
+	const websocket = parameters.get("websocket") === "1";
+	const ordinary = parameters.get("ordinaryWebsocket") === "1";
+	const remote = websocket
+		? await import("@fluidframework/sea-typescript/internal/websocket")
+		: undefined;
+	const remoteOptions = {
+		mode: ordinary ? "WebSocket" : "WebSocketStream",
+		websocketUrl: transportUrl,
+		certificateHash: hash,
+	};
+	if (websocket && ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname)) {
+		const options = {
+			author: encoder.encode("selection"),
+			session: encoder.encode("selection"),
+		};
+		const originalStreaming = Object.getOwnPropertyDescriptor(globalThis, "WebSocketStream");
+		const originalSocket = Object.getOwnPropertyDescriptor(globalThis, "WebSocket");
+		const unavailable = `https://127.0.0.1:${location.port}/sea`;
+		const restore = (name, descriptor) =>
+			descriptor
+				? Object.defineProperty(globalThis, name, descriptor)
+				: delete globalThis[name];
+		const reject = async (service) => {
+			let failure;
+			try {
+				const unexpected = await remote.openRemote(service, undefined, options);
+				await unexpected.close();
+			} catch (error) {
+				failure = error;
+			}
+			assert(failure, "strict transport unexpectedly fell back");
+		};
+		try {
+			const primaryUrl = parameters.get("primaryTransport");
+			if (primaryUrl) {
+				Object.defineProperty(globalThis, "WebSocketStream", {
+					value: undefined,
+					configurable: true,
+				});
+				Object.defineProperty(globalThis, "WebSocket", {
+					value: undefined,
+					configurable: true,
+				});
+				const primary = await remote.openRemote(
+					{
+						...remoteOptions,
+						mode: "PreferAvailable",
+						url: primaryUrl,
+						timeoutMilliseconds: 2000,
+					},
+					undefined,
+					options,
+				);
+				await primary.close();
+				restore("WebSocketStream", originalStreaming);
+				restore("WebSocket", originalSocket);
+			}
+			await reject({
+				...remoteOptions,
+				mode: "WebTransport",
+				url: unavailable,
+				timeoutMilliseconds: 100,
+			});
+			Object.defineProperty(globalThis, "WebSocketStream", {
+				value: undefined,
+				configurable: true,
+			});
+			await reject({ ...remoteOptions, mode: "WebSocketStream" });
+			await reject({
+				...remoteOptions,
+				mode: "PreferWebTransport",
+				url: unavailable,
+				timeoutMilliseconds: 100,
+			});
+			if (!ordinary) restore("WebSocketStream", originalStreaming);
+			const fallback = await remote.openRemote(
+				{
+					...remoteOptions,
+					mode: ordinary ? "PreferAvailable" : "PreferWebTransport",
+					url: unavailable,
+					timeoutMilliseconds: 1000,
+				},
+				undefined,
+				options,
+			);
+			await fallback.close();
+		} finally {
+			restore("WebSocketStream", originalStreaming);
+			restore("WebSocket", originalSocket);
+		}
+	}
 	const open = async (document, author, session, reference) => {
-		const opened = await openWebTransport(
-			{ url: transportUrl, certificateHash: hash },
+		const opened = await (websocket ? remote.openRemote : openWebTransport)(
+			websocket ? remoteOptions : { url: transportUrl, certificateHash: hash },
 			document,
 			{
 				author: encoder.encode(author),
@@ -304,6 +395,12 @@ async function run() {
 		caughtUp: initialCaughtUp.latestKnown?.toString() ?? "none",
 		secondCaughtUp: secondCaughtUp.latestKnown?.toString() ?? "none",
 		blobBytes: blobPayload.length,
+		transport:
+			parameters.get("ordinaryWebsocket") === "1"
+				? "WebSocket"
+				: parameters.get("websocket") === "1"
+					? "WebSocketStream"
+					: "WebTransport",
 		directoryEntries: entries.length,
 		serviceErrorKind: missingArchiveError.kind,
 		snapshotParticipation,

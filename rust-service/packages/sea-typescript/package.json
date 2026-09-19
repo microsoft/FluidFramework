@@ -28,6 +28,10 @@
 		"./internal/webtransport": {
 			"types": "./lib/webtransport.d.ts",
 			"default": "./lib/webtransport.js"
+		},
+		"./internal/websocket": {
+			"types": "./lib/websocket.d.ts",
+			"default": "./lib/websocket.js"
 		}
 	},
 	"scripts": {

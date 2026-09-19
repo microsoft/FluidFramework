@@ -8,6 +8,9 @@
 export function createMemoryService(options?: SeaMemoryBundleOptions): Promise<SeaMemoryService>;
 
 // @internal
+export function openRemote(service: SeaRemoteOptions, document: Uint8Array | undefined, options: SeaSessionOptions): Promise<SeaSession>;
+
+// @internal
 export function openWebTransport(service: SeaWebTransportOptions, document: Uint8Array | undefined, options: SeaSessionOptions): Promise<SeaSession>;
 
 // @internal
@@ -58,6 +61,16 @@ export interface SeaProgress {
     readonly latestKnown?: bigint;
     readonly previous?: bigint;
     readonly status: "StreamingBacklog" | "AwaitingNewItems" | "FallenBehind";
+}
+
+// @internal
+export interface SeaRemoteOptions {
+    readonly certificateHash?: Uint8Array;
+    readonly environment?: "browser" | "node";
+    readonly mode: "WebTransport" | "WebSocketStream" | "PreferWebTransport" | "WebSocket" | "PreferAvailable";
+    readonly timeoutMilliseconds?: number;
+    readonly url?: string;
+    readonly websocketUrl?: string;
 }
 
 // @internal

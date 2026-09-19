@@ -24,6 +24,10 @@ sea-webtransport = { path = "../sea-webtransport" }
 tokio.workspace = true
 thiserror.workspace = true
 wtransport = "=0.7.2"
+tokio-tungstenite = { version = "0.28.0", optional = true, default-features = false, features = ["handshake", "connect"] }
+
+[features]
+websocket-stream = ["dep:tokio-tungstenite", "sea-webtransport/websocket-stream"]
 
 [dev-dependencies]
 sea-conformance = { path = "../sea-conformance" }

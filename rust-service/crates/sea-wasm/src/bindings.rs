@@ -677,7 +677,59 @@ impl Default for SeaMemoryService {
     }
 }
 
-/// Opens a real browser WebTransport session, optionally wrapped in compression.
+/// Opens a neutral session with explicit initial transport selection and no replay.
+#[cfg(feature = "websocket-stream")]
+#[wasm_bindgen(js_name = openRemote)]
+pub async fn open_remote(
+    mode: sea_webtransport::transport::browser_socket::SeaBrowserTransportMode,
+    url: String,
+    certificate_hash: js_sys::Uint8Array,
+    websocket_url: String,
+    timeout_milliseconds: u32,
+    document: Option<Vec<u8>>,
+    options: &SeaSessionOptions,
+) -> Result<SeaSession, JsValue> {
+    use sea_webtransport::{
+        SessionClient, SessionOpen,
+        protocol::{ArchiveIntent, Limits},
+        transport::browser_socket::connect_browser_transport,
+    };
+    check_options(options)?;
+    let transport = connect_browser_transport(
+        mode,
+        url,
+        certificate_hash,
+        websocket_url,
+        4 * 1024 * 1024,
+        timeout_milliseconds,
+    )
+    .await
+    .map_err(|error| service_error(&sea_webtransport::SeaClientError::from(error)))?;
+    let intent = if document.is_some() {
+        ArchiveIntent::Open
+    } else {
+        ArchiveIntent::Create
+    };
+    let session = SessionClient::open(
+        transport,
+        Limits {
+            max_frame_bytes: 4 * 1024 * 1024,
+        },
+        SessionOpen {
+            archive: Bytes::from(document.unwrap_or_default()),
+            intent,
+            author: options.author.clone(),
+            session: options.session.clone(),
+            reference: options.reference,
+        },
+    )
+    .await
+    .map_err(|error| service_error(&error))?;
+    let document = session.document().as_bytes().to_vec();
+    SeaSession::from_stack(session, document, options.compression)
+}
+
+/// Opens a real browser WebTransport session without fallback, optionally wrapped in compression.
 #[cfg(feature = "webtransport")]
 #[wasm_bindgen(js_name = openWebTransport)]
 pub async fn open_webtransport(

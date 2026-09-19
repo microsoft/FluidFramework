@@ -127,14 +127,24 @@ const httpServer = createServer(async (request, response) => {
 	}
 });
 
-const httpPort = await freePort();
+const httpPort =
+	process.env.SEA_BROWSER_HTTP_PORT === undefined
+		? await freePort()
+		: Number(process.env.SEA_BROWSER_HTTP_PORT);
 await new Promise((resolve, reject) => {
 	httpServer.once("error", reject);
 	httpServer.listen(httpPort, "127.0.0.1", resolve);
 });
 const debugPort = await freePort();
 const profile = await mkdtemp(join(tmpdir(), "fluid-webtransport-chromium-"));
-const pageUrl = `http://localhost:${httpPort}/?transport=${encodeURIComponent(transportUrl)}&hash=${certificateHash}${snapshotPolicy === undefined ? "" : `&snapshotPolicy=${encodeURIComponent(snapshotPolicy)}`}`;
+const pageUrl = `http://localhost:${httpPort}/?transport=${encodeURIComponent(transportUrl)}&hash=${certificateHash}${snapshotPolicy === undefined ? "" : `&snapshotPolicy=${encodeURIComponent(snapshotPolicy)}`}${process.env.SEA_WEBSOCKET_STREAM === "1" ? "&websocket=1" : ""}`;
+const browserUrl = new URL(pageUrl);
+if (process.env.SEA_ORDINARY_WEBSOCKET === "1") {
+	browserUrl.searchParams.set("ordinaryWebsocket", "1");
+}
+if (process.env.SEA_BROWSER_WEBTRANSPORT_URL) {
+	browserUrl.searchParams.set("primaryTransport", process.env.SEA_BROWSER_WEBTRANSPORT_URL);
+}
 const chromium = spawn(
 	"chromium",
 	[
@@ -145,7 +155,7 @@ const chromium = spawn(
 		`--user-data-dir=${profile}`,
 		"--remote-debugging-address=127.0.0.1",
 		`--remote-debugging-port=${debugPort}`,
-		pageUrl,
+		browserUrl.href,
 	],
 	{ stdio: ["ignore", "ignore", "pipe"] },
 );

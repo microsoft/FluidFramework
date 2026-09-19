@@ -12,6 +12,7 @@ crate-type = ["rlib", "cdylib"]
 default = []
 memory = ["dep:sea-memory", "dep:sea-sequencer"]
 webtransport = ["dep:sea-webtransport"]
+websocket-stream = ["webtransport", "sea-webtransport/websocket-stream"]
 compression = ["dep:sea-compression"]
 
 [dependencies]

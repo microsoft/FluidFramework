@@ -63,15 +63,22 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Impact:** The adapter is integration evidence, not a Routerlicious or ODSP replacement.
 - **Trigger:** Define production membership and connection policy before broadening the supported Fluid surface.
 
-## Codespaces public forwarding cannot carry the current SEA endpoint
+## Codespaces forwarding requires the optional WebSocket transport
 
 - **Status:** Open
 - **Severity:** Medium
 - **Area:** Browser development workflow
 - **Evidence:** As checked on 2026-09-18, [GitHub documents Codespaces forwarding as TCP](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace), but the native SEA listener uses HTTP/3 over QUIC/UDP.
   Public visibility and HTTPS forwarding do not bridge those protocols.
-  See the [investigation findings](CODESPACES_WEBTRANSPORT_PLAN.md#initial-findings-2026-09-18) for implementation evidence, alternatives, and unverified routes.
-- **Impact:** Starting SEA in a Codespace and making its port public does not provide Tinylicious-style access from ordinary external browsers.
-  Internal Chromium tests do not establish that workflow.
-- **Trigger:** Investigate native WebTransport over HTTP/2 compatibility or a public UDP-preserving tunnel, establish a separately reachable WebTransport endpoint, or re-evaluate when Codespaces documents compatible forwarding.
-  Preserve transport-backed backpressure; WebSocket transport and bridge options are not selected.
+  See the [investigation findings](historical/CODESPACES_WEBTRANSPORT_PLAN.md#initial-findings-2026-09-18) for implementation evidence, alternatives, and unverified routes.
+- **Impact:** Making the default QUIC port public is still insufficient.
+  The off-by-default `websocket-stream` adapter and separate TCP listener passed actual SEA collaboration through public forwarding in a Windows Chromium-based integrated browser.
+  Native `WebSocketStream` preserves receive backpressure; explicit `WebSocket` and `PreferAvailable` modes also permit ordinary WebSocket for Node and browsers without the streaming API.
+  Ordinary reception cannot apply backpressure: the adapter fails on queue overflow rather than silently dropping data, and its per-socket limits do not bound runtime or proxy memory.
+  It requires explicit endpoint selection, trusted TLS termination, and a backend-visible Origin allowlist; it is not production authentication.
+  Node's built-in WebSocket sends no Origin and requires the separate default-off, direct-loopback admission option; do not enable it on public/forwarded endpoints.
+- **Trigger:** Integrate the opt-in adapter into an application-level development workflow with an explicit exposure/authentication policy.
+  Preserve FIN/cancellation semantics and the strict modes' independent-stream backpressure; opt into ordinary WebSocket only when its weaker receive guarantees are acceptable.
+  Local Chromium and Node flows passed; the user also reported a passing Windows Firefox 156 ordinary-WebSocket collaboration flow through public Codespaces forwarding.
+  A logged-out browser run remains unverified.
+  See [setup and validation](tests/webtransport-browser/README.md#optional-websocketstream-validation).

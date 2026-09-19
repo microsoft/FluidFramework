@@ -53,11 +53,32 @@ Compression configuration must match between collaborating clients and when reop
 The native service need not decode compressed application payloads.
 No external-browser connectivity through Codespaces forwarding is established by the package's internal Chromium test.
 
-The build script generates `memory`, `webtransport`, `combined`, `memory-compression`, and `webtransport-compression` artifacts in isolated output and Cargo target directories.
+The build script generates `memory`, `webtransport`, `websocket`, `combined`, `memory-compression`, and `webtransport-compression` artifacts in isolated output and Cargo target directories.
 Each configuration builds with explicit features and no default features, producing both Node and web JavaScript targets.
 The Node outputs for remote configurations do not provide a Node WebTransport implementation.
 The combined artifact exists, but public loader presets and packaging comparisons remain stage 3 work.
 Consumers must not import generated paths directly.
+
+## Optional WebSocket Sessions
+
+`openRemote` from `@fluidframework/sea-typescript/internal/websocket` loads only the separate `websocket` artifact and returns the same neutral session contract.
+Set `mode` explicitly to `WebTransport`, `WebSocketStream`, `PreferWebTransport`, `WebSocket`, or `PreferAvailable`.
+The preference modes attempt WebTransport then native WebSocketStream; only `PreferAvailable` may continue to ordinary WebSocket.
+Selection happens before SEA session operations, with no replay or mid-session switching.
+The existing `openWebTransport` API and its minimal artifact remain strict and unchanged.
+
+Supply `url` and `certificateHash` for modes that attempt QUIC and `websocketUrl` for modes that permit sockets.
+Trust both endpoints independently: a QUIC pin does not authenticate a TLS-terminating WebSocket proxy.
+`timeoutMilliseconds` defaults to 5000 per connection attempt, so three-choice selection can take up to three intervals.
+Set `environment: "node"` for Node's built-in ordinary WebSocket; the default environment is the browser.
+No npm WebSocket dependency is added.
+This artifact does not include compression; requesting it is rejected before a session opens.
+
+Ordinary WebSocket enables Node and non-streaming browser compatibility but cannot apply receive backpressure.
+Each socket's adapter queue fails at 4 MiB or 256 messages instead of dropping bytes; upload admission uses `bufferedAmount` throttling.
+These are not runtime, kernel, or proxy memory bounds, and slow consumers can fail rather than slow the sender.
+Applications must accept the weakest guarantees allowed by their selected policy.
+See the [transport contract](../../crates/sea-webtransport/README.md#optional-websocketstream-fallback) and [listener setup](../../crates/sea-webtransport-server/README.md#optional-websocket-listener), including the separate default-off originless-loopback exception for direct Node tests.
 
 ## Ownership and Failures
 
@@ -87,7 +108,8 @@ pnpm --dir rust-service/packages/sea-typescript test
 
 The Node tests use capability entrypoints and cover sharing, isolation, compression, immutable content, events, snapshot reload, cancellation, and capability rejection.
 Migrated session regressions also cover live peer delivery, recursive content, idempotent publication, explicit snapshot fences, operation conflicts, superseded authors, reused memberships, and explicit reopening.
-The canonical Node harness executes thirteen package tests, including snapshot-registration replacement, termination of its old pending read, and cancellation that revokes only the owned registration.
+The canonical Node harness executes fourteen local package tests, including snapshot-registration replacement, termination of its old pending read, cancellation that revokes only the owned registration, and bounded socket lifecycle behavior.
+An additional real Node socket test runs when the harness supplies `SEA_NODE_TRANSPORT_URL`.
 An emitted-module import-graph test checks lazy artifact imports and excludes unrelated capabilities and dependencies from each factory entrypoint.
 `browser.html` runs plain and compressed remote sessions through the emitted package entrypoint.
 The canonical WebTransport script runs this flow alongside the neutral Fluid driver trace and transport/shutdown checks, making neutral browser coverage part of `test.sh`.
