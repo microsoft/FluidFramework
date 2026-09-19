@@ -87,10 +87,12 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Status:** Open
 - **Severity:** High
 - **Area:** Durability
-- **Evidence:** `sea-file-durable` synchronizes its journal and namespace metadata and passes deterministic incomplete-write, corruption, and post-sync recovery tests through the shared file engine.
-  Advisory OS locks exclude competing valid document openings, but the backend has not been qualified against power loss, filesystem or hardware failure, external replacement of locked files, or remote storage.
+- **Evidence:** `sea-file-durable` publishes synchronized immutable journal replacements and synchronizes their namespace before acknowledgment.
+  Deterministic tests cover torn staging files, old/new rename outcomes, lost acknowledgments, and stable sidecar locks across processes.
+  The [power-loss model](crates/sea-file-durable/README.md#power-loss-model) assumes crash-atomic rename, truthful synchronization, and isolation of synchronized inodes from other writes.
+  Actual power-cut qualification on target filesystems and devices remains outstanding; media failure, external namespace modification, old writers, and remote storage are outside the model.
 - **Impact:** `durable-file` must not be interpreted as a production durability claim.
-- **Trigger:** Define a precise durability tier and add platform-specific fault testing before using the backend for production data.
+- **Trigger:** Qualify the stated model with platform-specific power-cut testing before using the backend for production data.
 
 ## RS-015: Retention and garbage collection are not implemented
 

@@ -865,6 +865,8 @@ mod tests {
             check_fault::<false>(fault).await;
             check_fault::<true>(fault).await;
         }
+        check_fault::<true>(JournalFault::BeforePublish).await;
+        check_fault::<true>(JournalFault::AfterPublish).await;
     }
 
     /// Exercises the same state transition under both durability policies.
@@ -902,7 +904,8 @@ mod tests {
             assert!(matches!(reopened, Err(FileStorageError::Corrupt(_))));
         } else {
             let view = reopened.unwrap().unwrap();
-            let expected = if matches!(fault, JournalFault::AfterSync) {
+            let expected = if matches!(fault, JournalFault::AfterPublish | JournalFault::AfterSync)
+            {
                 2
             } else {
                 1
