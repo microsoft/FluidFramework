@@ -6,17 +6,19 @@ They differ only where their environments open connections and read or write byt
 
 ## Architecture
 
-One document-bound client connection uses four persistent logical streams:
+One document-bound client connection supports five logical stream roles:
 
 - The **event stream** opens the logical session, returns the backend document ID and opaque session authority, and carries a selected snapshot followed by catch-up, monitored progress, and live events.
 - The **author stream** uses that authority for ordered submissions, receipts, ambiguity resolution, and close.
 - The **snapshot stream** uses that authority for latest-value snapshot notifications and policy-bound publication.
 - A **content stream** uses that authority for correlated history, blob, directory, and snapshot lookup operations.
   Unary operations reuse one stream, while each monitored history read owns a content-role stream for its finite or live lifetime.
+- An optional **signal stream** opens document-scoped live membership independently of event/author authority.
+  It carries reliable messages and membership observations without appending archive events.
 
 Each frame is length-delimited and contains an explicit `MessageKind`, stream-scoped correlation ID, and postcard-serialized kind-specific payload.
 The decoder accepts fragmentation and coalescing, rejects unknown kinds and wrong-stream messages, and enforces `max_frame_bytes` before payload decoding.
-Correlation ID zero is reserved for unsolicited event and snapshot notifications.
+Correlation ID zero is reserved for unsolicited event, snapshot, and signal notifications.
 Monitored progress responses are out-of-band observations and may cut ahead of buffered event responses without reordering those events.
 
 An **archive** is durable or process-local retained state.
@@ -25,8 +27,8 @@ A **logical stream** is one persistent bidirectional byte stream with a single r
 A **client** owns one transport connection and the shared state for its logical streams.
 The **protocol** is the versioned frame and message contract, not the server implementation or application adapter.
 
-Protocol version 7 carries the durable monotonic reference floor in ordered event metadata, including membership records.
-Earlier active-member minimum semantics are not compatible; rebuild client and server together.
+Protocol version 8 adds the signal role and optional best-effort datagrams, retaining the durable monotonic reference floor introduced in version 7.
+Rebuild client and server together; earlier protocol versions are not compatible.
 Documents use backend-assigned opaque IDs.
 Creation supplies no document ID; the open response returns the ID to retain for subsequent sessions.
 There is no caller-name mapping or compatibility reader for earlier protocol versions.
@@ -39,6 +41,33 @@ An exact retry at the same position and root succeeds, but a different root at t
 Snapshot lookup selects the newest snapshot at or before its inclusive bound; latest lookup needs no publisher subscription.
 There is no empty initial snapshot: applications with initial state must first commit an event.
 Loads select the latest or bounded snapshot and then replay the retained suffix without promising an atomic captured head.
+
+## Signal Delivery
+
+`SessionClient::signal_service` returns a document-bound `SeaSignalService`; `open_signals` is its convenience entrypoint.
+The low-level client can open a signal stream for an existing document without opening an author stream.
+The first observed event is the reliable membership snapshot, even if QUIC datagrams arrive earlier.
+Payloads and public metadata are opaque; archive compression and encryption decorators do not transform them.
+
+Reliable is the default delivery mode and always uses the signal byte stream.
+Best effort first tries one complete framed datagram when the transport supports it and the encoded frame fits its current maximum size.
+Unsupported or oversized messages fall back to the reliable stream before datagram admission.
+After admission there is no acknowledgement, retry, retransmission by Sea, or switch to reliable delivery.
+Each hop chooses independently: a QUIC sender can reach a WebSocket recipient and a WebSocket sender can reach a QUIC recipient.
+Reliable membership/control frames are never sent as datagrams; malformed or non-message inbound datagrams are not routed by the server.
+Best effort remains permitted to drop even when one or both hops use reliable fallback.
+
+The client has 64 pending submission slots and 256 received-event slots.
+Reliable or membership overflow ends delivery observably; only best-effort messages may be dropped silently.
+Exactly one application receive may be pending; cancellation does not consume an event.
+Close wakes pending receives and cancels the stream without closing archive access.
+The current remote host admits one signal registration per physical connection lifetime.
+Re-registration uses a fresh transport connection, so delayed datagrams cannot be attributed to a replacement identity.
+Session reconnect in the Fluid adapter already creates that fresh connection; no traffic is replayed.
+
+Owning-module tests cover codec round trips and queue policy.
+`signals_cross_native_connections_without_archive_events` exercises real QUIC reliable and datagram delivery.
+The Chromium harness covers generated bindings, oversized fallback, and mixed QUIC/WebSocket recipients.
 
 ## Snapshot Participation
 

@@ -118,6 +118,24 @@ impl ClientTransport for SelectedTransport {
     type Stream = SelectedStream;
     type Error = JsValue;
 
+    fn supports_datagrams(&self) -> bool {
+        matches!(self, Self::WebTransport(transport) if transport.supports_datagrams())
+    }
+
+    async fn send_datagram(&self, bytes: &[u8]) -> Result<bool, JsValue> {
+        match self {
+            Self::WebTransport(transport) => transport.send_datagram(bytes).await,
+            Self::WebSocket(_) => Ok(false),
+        }
+    }
+
+    async fn receive_datagram(&self) -> Result<Vec<u8>, JsValue> {
+        match self {
+            Self::WebTransport(transport) => transport.receive_datagram().await,
+            Self::WebSocket(_) => std::future::pending().await,
+        }
+    }
+
     async fn open_bidirectional(&self) -> Result<Self::Stream, Self::Error> {
         match self {
             Self::WebTransport(transport) => transport

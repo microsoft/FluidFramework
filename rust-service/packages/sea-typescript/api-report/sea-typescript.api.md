@@ -103,6 +103,7 @@ export interface SeaSession {
     getDirectory(id: SeaTreeId): Promise<readonly SeaDirectoryEntry[]>;
     getSnapshot(required?: bigint): Promise<SeaSnapshot | undefined>;
     load(required?: bigint): Promise<SeaStream<SeaLoadResult>>;
+    openSignals(member: SeaSignalMember): Promise<SeaSignals>;
     publishSnapshot(parent: bigint | undefined, fence: bigint | undefined, position: bigint, root: SeaTreeId): Promise<SeaSnapshot>;
     putBlob(payload: Uint8Array): Promise<SeaTreeId>;
     putDirectory(entries: readonly SeaDirectoryEntry[]): Promise<SeaTreeId>;
@@ -117,6 +118,43 @@ export interface SeaSessionOptions {
     readonly compression?: boolean;
     readonly reference?: bigint;
     readonly session: Uint8Array;
+}
+
+// @internal
+export type SeaSignalDelivery = "reliable" | "bestEffort";
+
+// @internal
+export type SeaSignalEvent = {
+    readonly kind: "members";
+    readonly members: readonly SeaSignalMember[];
+} | {
+    readonly kind: "joined";
+    readonly member: SeaSignalMember;
+} | {
+    readonly kind: "left";
+    readonly id: Uint8Array;
+} | {
+    readonly kind: "message";
+    readonly sender: Uint8Array;
+    readonly target?: Uint8Array;
+    readonly payload: Uint8Array;
+    readonly delivery: SeaSignalDelivery;
+};
+
+// @internal
+export interface SeaSignalMember {
+    readonly id: Uint8Array;
+    readonly metadata: Uint8Array;
+}
+
+// @internal
+export interface SeaSignals {
+    close(): Promise<void>;
+    next(): Promise<SeaSignalEvent | undefined>;
+    send(payload: Uint8Array, options?: {
+        readonly target?: Uint8Array;
+        readonly delivery?: SeaSignalDelivery;
+    }): Promise<void>;
 }
 
 // @internal

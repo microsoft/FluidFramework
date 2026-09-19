@@ -449,6 +449,23 @@ where
         }
     }
 
+    /// Registers independent live messaging for this session's document.
+    ///
+    /// # Errors
+    /// Returns connection, protocol, or membership admission failures.
+    pub async fn open_signals(
+        &self,
+        member: sea_core::signals::SignalMember,
+    ) -> Result<Arc<crate::signals::SignalClient>, SeaClientError> {
+        use sea_core::signals::SeaSignalService as _;
+        self.signal_service().open_signals(member).await
+    }
+
+    /// Returns independently usable document messaging without granting append authority.
+    pub fn signal_service(&self) -> crate::signals::SignalService<Transport> {
+        crate::signals::SignalService::new(self.client.clone(), self.document.as_bytes().clone())
+    }
+
     /// Returns the backend-assigned identity to retain for later opens.
     #[must_use]
     pub const fn document(&self) -> &DocumentId {

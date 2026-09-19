@@ -69,6 +69,100 @@ where
         }
     }
 
+    /// Opens independent signal membership without event or author authority.
+    pub async fn open_signal_stream(
+        &self,
+        opening: protocol::signals::OpenSignals,
+    ) -> Result<SignalStream<Transport::Stream>, ClientError<Transport::Error>> {
+        let pending = self.state.begin(StreamRole::Signal)?;
+        let outgoing = protocol::encode_request_frame(
+            StreamRole::Signal,
+            pending.id(),
+            &Request::OpenSignalStream(opening),
+            self.limits,
+        )?;
+        let mut stream = self
+            .transport
+            .open_bidirectional()
+            .await
+            .map_err(ClientError::Transport)?;
+        stream
+            .send(&outgoing)
+            .await
+            .map_err(ClientError::Transport)?;
+        let mut decoder = NetworkFrameDecoder::new(self.limits);
+        let frame = receive_next_frame(&mut stream, &mut decoder)
+            .await?
+            .ok_or(ClientError::ResponseEnded)?;
+        pending.complete(frame.correlation_id)?;
+        let response = protocol::decode_response_network_frame(StreamRole::Signal, &frame)?;
+        if response != Response::Acknowledged {
+            return Err(ClientError::UnexpectedResponse(response));
+        }
+        Ok(SignalStream {
+            stream,
+            state: self.state.clone(),
+            limits: self.limits,
+            decoder,
+        })
+    }
+
+    /// Reports whether the signal handshake can offer incoming datagrams.
+    pub fn supports_datagrams(&self) -> bool {
+        self.transport.supports_datagrams()
+    }
+
+    /// Sends an explicitly best-effort message, or requests reliable fallback before admission.
+    pub async fn send_signal_datagram(
+        &self,
+        submission: &protocol::signals::Submission,
+    ) -> Result<bool, ClientError<Transport::Error>>
+    where
+        Transport: sea_core::SessionBounds,
+    {
+        let bytes = protocol::encode_request_frame(
+            StreamRole::Signal,
+            1,
+            &Request::SendSignal(submission.clone()),
+            self.limits,
+        )?;
+        self.transport
+            .send_datagram(&bytes)
+            .await
+            .map_err(ClientError::Transport)
+    }
+
+    /// Receives exactly one framed best-effort message, rejecting reliable/control datagrams.
+    pub async fn receive_signal_datagram(
+        &self,
+    ) -> Result<protocol::signals::Event, ClientError<Transport::Error>>
+    where
+        Transport: sea_core::SessionBounds,
+    {
+        let bytes = self
+            .transport
+            .receive_datagram()
+            .await
+            .map_err(ClientError::Transport)?;
+        let mut decoder = NetworkFrameDecoder::new(self.limits);
+        decoder.push(&bytes);
+        let frame = decoder.next_frame()?.ok_or(ClientError::ResponseEnded)?;
+        decoder.finish()?;
+        let response = protocol::decode_response_network_frame(StreamRole::Signal, &frame)?;
+        match response {
+            Response::SignalEvent(
+                event @ protocol::signals::Event::Message {
+                    submission:
+                        protocol::signals::Submission {
+                            best_effort: true, ..
+                        },
+                    ..
+                },
+            ) if frame.correlation_id == 0 => Ok(event),
+            response => Err(ClientError::UnexpectedResponse(response)),
+        }
+    }
+
     /// Opens an event stream and consumes its authority handshake.
     pub async fn open_event_stream(
         &self,
@@ -284,6 +378,84 @@ pub struct AuthorStream<Stream> {
     state: Arc<ClientState>,
     limits: protocol::Limits,
     decoder: NetworkFrameDecoder,
+}
+
+/// One independently pumped ephemeral signal stream.
+pub struct SignalStream<Stream> {
+    /// Sole owner of network reads and writes.
+    stream: Stream,
+    /// Correlation lifecycle independent of author requests.
+    state: Arc<ClientState>,
+    /// Encoded frame bound.
+    limits: protocol::Limits,
+    /// Cancellation-safe partial frame state.
+    decoder: NetworkFrameDecoder,
+}
+
+impl<Stream: BidirectionalStream> SignalStream<Stream> {
+    /// Receives an unsolicited signal or terminal service error.
+    pub async fn next(&mut self) -> Result<protocol::signals::Event, ClientError<Stream::Error>> {
+        let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
+            .await?
+            .ok_or(ClientError::ResponseEnded)?;
+        let response = protocol::decode_response_network_frame(StreamRole::Signal, &frame)?;
+        if matches!(response, Response::Error { .. }) {
+            return Err(ClientError::UnexpectedResponse(response));
+        }
+        if frame.correlation_id != 0 {
+            return Err(ProtocolError::UnknownCorrelation(frame.correlation_id).into());
+        }
+        match response {
+            Response::SignalEvent(event) => Ok(event),
+            response => Err(ClientError::UnexpectedResponse(response)),
+        }
+    }
+
+    /// Exchanges one submission while forwarding interleaved live events without buffering them unboundedly.
+    pub async fn request(
+        &mut self,
+        request: Request,
+        mut receive: impl FnMut(protocol::signals::Event) -> Result<(), ClientError<Stream::Error>>,
+    ) -> Result<(), ClientError<Stream::Error>> {
+        let pending = self.state.begin(StreamRole::Signal)?;
+        let outgoing = protocol::encode_request_frame(
+            StreamRole::Signal,
+            pending.id(),
+            &request,
+            self.limits,
+        )?;
+        self.stream
+            .send(&outgoing)
+            .await
+            .map_err(ClientError::Transport)?;
+        loop {
+            let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
+                .await?
+                .ok_or(ClientError::ResponseEnded)?;
+            let response = protocol::decode_response_network_frame(StreamRole::Signal, &frame)?;
+            if matches!(response, Response::Error { .. }) {
+                return Err(ClientError::UnexpectedResponse(response));
+            }
+            if frame.correlation_id == 0 {
+                if let Response::SignalEvent(event) = response {
+                    receive(event)?;
+                    continue;
+                }
+                return Err(ClientError::UnexpectedResponse(response));
+            }
+            pending.complete(frame.correlation_id)?;
+            return if response == Response::Acknowledged {
+                Ok(())
+            } else {
+                Err(ClientError::UnexpectedResponse(response))
+            };
+        }
+    }
+
+    /// Cancels both directions, releasing remote signal membership.
+    pub async fn cancel(&mut self) {
+        let _ = self.stream.cancel().await;
+    }
 }
 
 /// Latest-value coordination and fenced requests on one persistent snapshot stream.

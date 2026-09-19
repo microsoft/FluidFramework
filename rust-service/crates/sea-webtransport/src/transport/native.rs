@@ -26,6 +26,34 @@ impl ClientTransport for NativeTransport {
     type Stream = NativeBidirectionalStream;
     type Error = WebTransportError;
 
+    fn supports_datagrams(&self) -> bool {
+        self.connection.max_datagram_size().is_some()
+    }
+
+    async fn send_datagram(&self, bytes: &[u8]) -> Result<bool, Self::Error> {
+        if self
+            .connection
+            .max_datagram_size()
+            .is_none_or(|limit| bytes.len() > limit)
+        {
+            return Ok(false);
+        }
+        self.connection
+            .send_datagram(bytes)
+            .map_err(transport_error)?;
+        Ok(true)
+    }
+
+    async fn receive_datagram(&self) -> Result<Vec<u8>, Self::Error> {
+        Ok(self
+            .connection
+            .receive_datagram()
+            .await
+            .map_err(transport_error)?
+            .payload()
+            .to_vec())
+    }
+
     async fn open_bidirectional(&self) -> Result<Self::Stream, Self::Error> {
         let (send, receive) = self
             .connection

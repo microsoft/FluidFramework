@@ -82,6 +82,35 @@ test("neutral membership announcements and departures share application event or
 	assert.deepEqual(events[2].session, encode("writer-session"));
 });
 
+test("neutral signals broadcast, target, close pending reads, and leave history unchanged", async (context) => {
+	const { open, ownStream } = await sessionFixture(context);
+	const first = await open(undefined, "first", "first-session");
+	const second = await open(first.document, "second", "second-session");
+	const sender = await first.openSignals({ id: encode("first"), metadata: encode("public") });
+	assert.equal((await sender.next()).members.length, 1);
+	const receiver = await second.openSignals({
+		id: encode("second"),
+		metadata: new Uint8Array(),
+	});
+	assert.equal((await receiver.next()).members.length, 2);
+	assert.equal((await sender.next()).kind, "joined");
+	await sender.send(encode("broadcast"));
+	assert.deepEqual(await sender.next(), await receiver.next());
+	await sender.send(encode("target"), { target: encode("second"), delivery: "bestEffort" });
+	assert.equal((await receiver.next()).delivery, "bestEffort");
+	const history = ownStream(first.read());
+	const progress = await history.next();
+	assert.equal(progress.kind, "progress");
+	assert.equal(progress.latestKnown, undefined);
+	const pending = receiver.next();
+	await assert.rejects(receiver.next(), { kind: "Conflict" });
+	await receiver.close();
+	assert.equal(await pending, undefined);
+	assert.deepEqual(await sender.next(), { kind: "left", id: encode("second") });
+	await sender.close();
+	await assert.rejects(sender.send(encode("closed")), { kind: "Closed" });
+});
+
 test("invalid append input terminates the accepted prefix before queued work", async (context) => {
 	for (const invalidTree of [false, true]) {
 		const { open, ownStream } = await sessionFixture(context);

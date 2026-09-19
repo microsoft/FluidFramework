@@ -4,6 +4,16 @@ Sea separates durable document state, multi-user coordination, transport, and ap
 The core traits are independent of storage backends, network transports, and application frameworks.
 For setup and usage, start with the [README](README.md); for package dependencies, see [workspace architecture](WORKSTREAMS.md).
 
+## Ephemeral Messaging
+
+[`sea-core::signals`](crates/sea-core/src/signals.rs) defines document-bound messaging separately from archive and author authority.
+[`sea-signals`](crates/sea-signals/README.md) provides a bounded memory-only relay with atomic initial membership and live joins/leaves.
+Signals have no persistence, replay, event position, or ordering relationship with document operations.
+Reliable live delivery is the default; opt-in best effort permits datagrams, loss, reordering, and reliable fallback independently on each network hop.
+The host owns document access and identity admission; the relay does not interpret application payloads.
+WASM/TypeScript factories expose independent connections; the Fluid adapter uses reliable messages and live read-only audience membership while leaving writer quorum sequenced.
+See [Decision 0017](historical/decisions/0017-document-signals.md) for compatibility, limits, and validation boundaries.
+
 ## System Layers
 
 ```mermaid

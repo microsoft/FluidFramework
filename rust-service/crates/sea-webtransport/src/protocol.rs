@@ -6,7 +6,9 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 /// Current Sea logical-stream opening version.
-pub const PROTOCOL_VERSION: u16 = 7;
+pub const PROTOCOL_VERSION: u16 = 8;
+
+pub mod signals;
 
 /// Explicit wire identity of every Sea network message.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -44,6 +46,10 @@ pub enum MessageKind {
     OpenContentStream = 21,
     /// Ordered membership announcement request.
     AnnounceMembership = 22,
+    /// Opens independent ephemeral document messaging.
+    OpenSignalStream = 23,
+    /// Sends one opaque signal.
+    SendSignal = 24,
     /// Request acknowledgement response.
     Acknowledged = 128,
     /// Event-commit response.
@@ -72,6 +78,8 @@ pub enum MessageKind {
     SnapshotCoordination = 140,
     /// Bounded-response completion marker.
     ResponseComplete = 141,
+    /// Live membership or application signal.
+    SignalEvent = 142,
     /// Classified service-error response.
     Error = 255,
 }
@@ -97,6 +105,8 @@ impl TryFrom<u8> for MessageKind {
             20 => Ok(Self::PublishSnapshot),
             21 => Ok(Self::OpenContentStream),
             22 => Ok(Self::AnnounceMembership),
+            23 => Ok(Self::OpenSignalStream),
+            24 => Ok(Self::SendSignal),
             128 => Ok(Self::Acknowledged),
             129 => Ok(Self::EventCommitted),
             130 => Ok(Self::SubmissionResolved),
@@ -111,6 +121,7 @@ impl TryFrom<u8> for MessageKind {
             139 => Ok(Self::EventStreamOpened),
             140 => Ok(Self::SnapshotCoordination),
             141 => Ok(Self::ResponseComplete),
+            142 => Ok(Self::SignalEvent),
             255 => Ok(Self::Error),
             _ => Err(ProtocolError::UnknownMessageKind(value)),
         }
@@ -126,6 +137,8 @@ impl From<MessageKind> for u8 {
 /// Logical stream on which a message is valid.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum StreamRole {
+    /// Ephemeral messaging independent of archive operations.
+    Signal,
     /// Recovery and live event stream.
     Event,
     /// Ordered submission stream.
@@ -138,7 +151,7 @@ pub enum StreamRole {
 
 impl MessageKind {
     /// Every assigned message kind in numeric order.
-    pub const ALL: [Self; 31] = [
+    pub const ALL: [Self; 34] = [
         Self::Submit,
         Self::ResolveSubmission,
         Self::Read,
@@ -155,6 +168,8 @@ impl MessageKind {
         Self::PublishSnapshot,
         Self::OpenContentStream,
         Self::AnnounceMembership,
+        Self::OpenSignalStream,
+        Self::SendSignal,
         Self::Acknowledged,
         Self::EventCommitted,
         Self::SubmissionResolved,
@@ -169,6 +184,7 @@ impl MessageKind {
         Self::EventStreamOpened,
         Self::SnapshotCoordination,
         Self::ResponseComplete,
+        Self::SignalEvent,
         Self::Error,
     ];
 
@@ -177,6 +193,15 @@ impl MessageKind {
     pub const fn is_valid_on(self, role: StreamRole) -> bool {
         use MessageKind as Kind;
         match role {
+            StreamRole::Signal => matches!(
+                self,
+                Kind::OpenSignalStream
+                    | Kind::SendSignal
+                    | Kind::SignalEvent
+                    | Kind::Close
+                    | Kind::Acknowledged
+                    | Kind::Error
+            ),
             StreamRole::Event => matches!(
                 self,
                 Kind::OpenEventStream
@@ -238,6 +263,7 @@ impl MessageKind {
     #[must_use]
     pub const fn request_role(self) -> Option<StreamRole> {
         match self {
+            Self::OpenSignalStream | Self::SendSignal => Some(StreamRole::Signal),
             Self::OpenEventStream => Some(StreamRole::Event),
             Self::OpenAuthorStream
             | Self::AnnounceMembership
@@ -326,7 +352,10 @@ fn validate_correlation(kind: MessageKind, correlation_id: u64) -> Result<(), Pr
     if correlation_id == 0
         && !matches!(
             kind,
-            MessageKind::LoadEvent | MessageKind::Snapshot | MessageKind::SnapshotCoordination
+            MessageKind::LoadEvent
+                | MessageKind::Snapshot
+                | MessageKind::SnapshotCoordination
+                | MessageKind::SignalEvent
         )
     {
         Err(ProtocolError::InvalidCorrelationId)
@@ -841,6 +870,10 @@ pub mod payload {
 /// One request on a Sea session control or operation stream.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Request {
+    /// Opens a document-scoped signal connection without append authority.
+    OpenSignalStream(signals::OpenSignals),
+    /// Submits an opaque message to current recipients.
+    SendSignal(signals::Submission),
     /// Announces the current membership in archive order.
     AnnounceMembership {
         /// Immutable public metadata, not encrypted by payload decorators.
@@ -944,6 +977,8 @@ pub enum Request {
 /// One response or streamed result from a Sea session.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Response {
+    /// Unsolicited signal or membership observation.
+    SignalEvent(signals::Event),
     /// The request completed without another value.
     Acknowledged,
     /// An event committed at this position.
@@ -1015,6 +1050,8 @@ impl Request {
     #[must_use]
     pub const fn kind(&self) -> MessageKind {
         match self {
+            Self::OpenSignalStream(_) => MessageKind::OpenSignalStream,
+            Self::SendSignal(_) => MessageKind::SendSignal,
             Self::AnnounceMembership { .. } => MessageKind::AnnounceMembership,
             Self::OpenEventStream { .. } => MessageKind::OpenEventStream,
             Self::OpenAuthorStream { .. } => MessageKind::OpenAuthorStream,
@@ -1038,6 +1075,7 @@ impl Request {
     #[must_use]
     pub const fn stream_role(&self) -> StreamRole {
         match self {
+            Self::OpenSignalStream(_) | Self::SendSignal(_) => StreamRole::Signal,
             Self::OpenEventStream { .. } => StreamRole::Event,
             Self::OpenAuthorStream { .. }
             | Self::AnnounceMembership { .. }
@@ -1063,6 +1101,7 @@ impl Response {
     #[must_use]
     pub const fn kind(&self) -> MessageKind {
         match self {
+            Self::SignalEvent(_) => MessageKind::SignalEvent,
             Self::Acknowledged => MessageKind::Acknowledged,
             Self::EventStreamOpened { .. } => MessageKind::EventStreamOpened,
             Self::SnapshotCoordination { .. } => MessageKind::SnapshotCoordination,
@@ -1120,6 +1159,12 @@ pub fn encode_request_frame(
 ) -> Result<Vec<u8>, ProtocolError> {
     use payload as wire;
     match request {
+        Request::OpenSignalStream(value) => {
+            encode_typed_payload(role, request.kind(), correlation_id, value, limits)
+        }
+        Request::SendSignal(value) => {
+            encode_typed_payload(role, request.kind(), correlation_id, value, limits)
+        }
         Request::OpenEventStream {
             version,
             archive,
@@ -1286,6 +1331,8 @@ pub fn decode_request_frame(
     frame.kind.validate_on(role)?;
     validate_correlation(frame.kind, frame.correlation_id)?;
     Ok(match frame.kind {
+        MessageKind::OpenSignalStream => Request::OpenSignalStream(decode_typed_payload(frame)?),
+        MessageKind::SendSignal => Request::SendSignal(decode_typed_payload(frame)?),
         MessageKind::OpenEventStream => {
             let value: wire::OpenEventStream = decode_typed_payload(frame)?;
             Request::OpenEventStream {
@@ -1402,6 +1449,9 @@ pub fn encode_response_frame(
 ) -> Result<Vec<u8>, ProtocolError> {
     use payload as wire;
     match response {
+        Response::SignalEvent(value) => {
+            encode_typed_payload(role, response.kind(), correlation_id, value, limits)
+        }
         Response::Acknowledged | Response::ResponseComplete => {
             encode_typed_payload(role, response.kind(), correlation_id, &wire::Empty, limits)
         }
@@ -1547,6 +1597,7 @@ pub fn decode_response_network_frame(
     frame.kind.validate_on(role)?;
     validate_correlation(frame.kind, frame.correlation_id)?;
     Ok(match frame.kind {
+        MessageKind::SignalEvent => Response::SignalEvent(decode_typed_payload(frame)?),
         MessageKind::Acknowledged => {
             let _: wire::Empty = decode_typed_payload(frame)?;
             Response::Acknowledged
@@ -1692,6 +1743,7 @@ pub enum ProtocolError {
 
 #[cfg(test)]
 mod tests {
+    use super::signals;
     use super::{
         ArchiveIntent, CorrelationTracker, DirectoryEntry, ErrorKind, Event, Limits, MessageKind,
         NetworkFrame, NetworkFrameDecoder, PROTOCOL_VERSION, ProtocolError, Request, Response,
@@ -1887,6 +1939,27 @@ mod tests {
         }];
         let cases = vec![
             (
+                StreamRole::Signal,
+                Request::OpenSignalStream(signals::OpenSignals {
+                    version: PROTOCOL_VERSION,
+                    document: vec![1],
+                    member: signals::Member {
+                        id: vec![2],
+                        metadata: vec![3],
+                    },
+                    datagrams: true,
+                }),
+            ),
+            (
+                StreamRole::Signal,
+                Request::SendSignal(signals::Submission {
+                    target: Some(vec![2]),
+                    payload: vec![4],
+                    best_effort: true,
+                }),
+            ),
+            (StreamRole::Signal, Request::Close),
+            (
                 StreamRole::Event,
                 Request::OpenEventStream {
                     version: PROTOCOL_VERSION,
@@ -1998,6 +2071,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn every_response_payload_round_trips_without_outer_enum_encoding() {
         let snapshot = Snapshot {
             at_event: 2,
@@ -2017,6 +2091,35 @@ mod tests {
             },
         };
         let cases = vec![
+            (
+                StreamRole::Signal,
+                Response::SignalEvent(signals::Event::Members(vec![signals::Member {
+                    id: vec![1],
+                    metadata: vec![2],
+                }])),
+            ),
+            (
+                StreamRole::Signal,
+                Response::SignalEvent(signals::Event::Joined(signals::Member {
+                    id: vec![1],
+                    metadata: vec![2],
+                })),
+            ),
+            (
+                StreamRole::Signal,
+                Response::SignalEvent(signals::Event::Left(vec![1])),
+            ),
+            (
+                StreamRole::Signal,
+                Response::SignalEvent(signals::Event::Message {
+                    sender: vec![1],
+                    submission: signals::Submission {
+                        target: None,
+                        payload: vec![3],
+                        best_effort: false,
+                    },
+                }),
+            ),
             (StreamRole::Author, Response::Acknowledged),
             (StreamRole::Content, Response::ResponseComplete),
             (

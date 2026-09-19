@@ -1376,6 +1376,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sea-signals"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "sea-core",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "sea-wasm"
 version = "0.1.0"
 dependencies = [
@@ -1387,6 +1398,7 @@ dependencies = [
  "sea-core",
  "sea-memory",
  "sea-sequencer",
+ "sea-signals",
  "sea-webtransport",
  "thiserror",
  "tokio",
@@ -1431,6 +1443,7 @@ dependencies = [
  "sea-file-durable",
  "sea-memory",
  "sea-sequencer",
+ "sea-signals",
  "sea-webtransport",
  "thiserror",
  "tokio",

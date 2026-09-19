@@ -120,6 +120,10 @@ export interface SummaryPublication {
  * @internal
  */
 export interface SeaDriverClient {
+	/** Opens independent live membership and reliable Fluid signal delivery. */
+	openSignals?(
+		member: import("@fluidframework/sea-typescript/internal").SeaSignalMember,
+	): Promise<import("@fluidframework/sea-typescript/internal").SeaSignals>;
 	/** Legacy clients reserve synthetic sequence slots; authoritative clients use zero. */
 	readonly applicationSequenceOffset?: number;
 	/** Publishes real membership when supported by the supplied session implementation. */

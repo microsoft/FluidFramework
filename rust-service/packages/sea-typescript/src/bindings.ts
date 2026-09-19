@@ -14,6 +14,8 @@ import type {
 	SeaSnapshot,
 	SeaSession,
 	SeaMemoryService,
+	SeaSignals,
+	SeaSignalEvent,
 } from "./index.js";
 
 /** Values needed from one initialized bundle; never exposed to callers. */
@@ -191,6 +193,60 @@ function wrapStream<Item>(
 }
 
 /** Keeps generated objects inside their owning module and presents neutral session values. */
+function wrapSignals(connection: Generated.SeaSignals): SeaSignals {
+	let closing: Promise<void> | undefined;
+	let settled = false;
+	let pending = 0;
+	let reading = false;
+	let released = false;
+	const release = (): void => {
+		if (settled && pending === 0 && !released) {
+			released = true;
+			connection.free();
+		}
+	};
+	const invoke = async <Result>(operation: () => Promise<Result>): Promise<Result> => {
+		if (closing !== undefined)
+			throw Object.assign(new Error("signal connection is closed"), { kind: "Closed" });
+		pending++;
+		try {
+			return await operation();
+		} finally {
+			pending--;
+			release();
+		}
+	};
+	return {
+		send: (payload, options) =>
+			invoke(() =>
+				connection.send(payload, options?.target, options?.delivery === "bestEffort"),
+			),
+		async next() {
+			if (closing !== undefined) return undefined;
+			if (reading)
+				throw Object.assign(new Error("signal receive is already pending"), {
+					kind: "Conflict",
+				});
+			reading = true;
+			try {
+				return await invoke(
+					async () => (await connection.next()) as SeaSignalEvent | undefined,
+				);
+			} finally {
+				reading = false;
+			}
+		},
+		close() {
+			closing ??= connection.close().finally(() => {
+				settled = true;
+				release();
+			});
+			return closing;
+		},
+	};
+}
+
+/** Keeps generated objects inside their owning module and presents neutral session values. */
 export function wrapSession(
 	session: Generated.SeaSession,
 	bindings: BindingModule,
@@ -246,6 +302,15 @@ export function wrapSession(
 		});
 	return {
 		document: session.document,
+		openSignals: (member) =>
+			invoke(async () => {
+				const signals = wrapSignals(await session.openSignals(member.id, member.metadata));
+				if (closed) {
+					await signals.close();
+					throw Object.assign(new Error("session is closed"), { kind: "Closed" });
+				}
+				return signals;
+			}),
 		announceMembership: (metadata) => invokeAuthor(() => session.announceMembership(metadata)),
 		putBlob: (payload) => invoke(async () => copyIdentity(await session.putBlob(payload))),
 		getBlob: (id) =>

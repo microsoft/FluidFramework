@@ -26,6 +26,26 @@ Session closure settles admitted work before a durable departure; an unknown sto
 Snapshot-stream loss also immediately removes that stream's publisher participation while leaving the connection available for other logical streams.
 Read-only streams cannot publish; client-selected streams retain application-managed election; Sea-selected streams receive a deterministic fence only while no client-selected publisher is active.
 
+## Ephemeral Signals
+
+The built-in host shares a [`SignalRoom`](../sea-signals/README.md) per existing document across both listeners.
+Admission checks document existence but does not grant or require append authority.
+Routing does not access storage or advance archive positions, reference floors, or snapshot nominations.
+Signal membership ends on signal-stream loss or connection loss, without the ordered author's reconnect grace.
+The host stamps the sender from the admitted registration; message payloads cannot select another sender.
+Current defaults are 1024 members per room, 256 queued events per recipient, 64 KiB payload/metadata limits, and 256-byte identities.
+These bounds are not a tenant quota or rate limiter.
+
+This experimental host has no user authentication: callers supply their document and proposed live identity.
+Document existence and unique live identity checks are not authorization.
+A production host must authenticate and authorize document access and identity admission before invoking the relay.
+Membership metadata and payloads are visible to the relay and recipients; they are not protected by archive decorators.
+One signal registration is admitted per connection lifetime, including after explicit signal close.
+Use a fresh connection for another registration; this prevents old datagrams from crossing registration lifetimes.
+
+The native host integration test covers independent signal delivery without archive events.
+The browser test's WebSocket mode also opens a QUIC peer against the same host and checks both mixed-transport directions.
+
 ## Optional WebSocket Listener
 
 Compile with the off-by-default `websocket-stream` feature and explicitly configure a separate TCP listener:

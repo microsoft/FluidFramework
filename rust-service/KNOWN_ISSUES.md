@@ -60,7 +60,10 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Area:** Fluid integration
 - **Evidence:** The adapter passes generated local-client and real Chromium SharedTree traces, recursive summary reconstruction, handle reuse, explicit reconnect, and caller-driven resubmission.
   The neutral-session path now projects ordered membership and passes the multi-driver lifecycle smoke; legacy injected benchmark clients retain synthetic membership.
-  Authentication, signals, presence, automatic reconnect, offline merge, loading groups, and GC policy remain incomplete.
+  Authentication, automatic reconnect, offline merge, loading groups, and GC policy remain incomplete.
+  Application signals now have a neutral reliable relay and opt-in best-effort datagrams; Fluid uses reliable delivery.
+  The remote host permits one signal registration per physical connection lifetime and does not authenticate identities or enforce tenant quotas.
+  Existing Fluid signal suites pass; a dedicated Presence convergence suite remains follow-up work.
 - **Impact:** The adapter is integration evidence, not a Routerlicious or ODSP replacement.
 - **Trigger:** Complete the opt-in integration inventory and connection-policy regressions before claiming production support.
 

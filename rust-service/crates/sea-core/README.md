@@ -11,6 +11,14 @@
 - `session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator}` separate content/history, ordered authors, and conditional snapshot coordination. `SeaSession` is their convenience marker.
 - Event and snapshot streams own their subscriptions and cancel on drop. The author facet owns idempotent logical-session close shared by cloned facets; archive handles require no asynchronous teardown.
 - `ErrorKind` exposes stable caller decisions while implementations retain detailed error types.
+- `signals::{SeaSignalService, SeaSignals}` separate ephemeral messaging from archive and author authority.
+
+Signal connections receive an initial live membership snapshot, reliable membership changes, and opaque messages.
+Broadcast includes self; targeting is document scoped, and missing targets are a successful no-op.
+Signals have no event position, persistence, replay, or ordering relationship with archive events.
+Reliable delivery is live-only and fails explicitly on receiver overflow; best effort permits loss and reordering.
+The [`sea-signals`](../sea-signals/README.md) tests establish these contracts for the local relay;
+remote composition is tested by the server and generated browser harness.
 
 ## Relationships and Limits
 

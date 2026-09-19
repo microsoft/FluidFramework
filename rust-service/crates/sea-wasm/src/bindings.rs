@@ -26,7 +26,7 @@ use wasm_bindgen::prelude::*;
 use crate::session::{BindingError, BindingSession, SessionAdapter};
 
 /// Converts classified failures into JavaScript errors without losing their category.
-fn service_error(error: &impl ClassifiedError) -> JsValue {
+pub(crate) fn service_error(error: &impl ClassifiedError) -> JsValue {
     let result = js_sys::Error::new(&error.to_string());
     let _ = Reflect::set(
         result.as_ref(),
@@ -44,7 +44,7 @@ fn invalid(message: &str) -> JsValue {
 }
 
 /// Sets one property on a newly allocated binding result.
-fn set(object: &Object, name: &str, value: impl Into<JsValue>) -> Result<(), JsValue> {
+pub(crate) fn set(object: &Object, name: &str, value: impl Into<JsValue>) -> Result<(), JsValue> {
     Reflect::set(object, &name.into(), &value.into())?;
     Ok(())
 }
@@ -158,6 +158,10 @@ impl SeaSessionOptions {
 /// One open session whose operations are shared by every concrete configuration.
 #[wasm_bindgen]
 pub struct SeaSession {
+    /// Independent document signal factory, not wrapped by archive payload decorators.
+    signal_factory: Rc<dyn crate::signals::SignalFactory>,
+    /// Live registrations to close before session transport ownership is released.
+    signals: RefCell<Vec<std::rc::Weak<crate::signals::BindingSignals>>>,
     /// Shared, object-safe adapter around the selected stack.
     inner: Rc<BindingSession>,
     /// Backend-assigned document identity.
@@ -171,6 +175,7 @@ impl SeaSession {
         session: Session,
         document: Vec<u8>,
         compression: bool,
+        signal_factory: Rc<dyn crate::signals::SignalFactory>,
     ) -> Result<Self, JsValue> {
         let inner: Rc<BindingSession> = if compression {
             #[cfg(feature = "compression")]
@@ -186,7 +191,12 @@ impl SeaSession {
         } else {
             Rc::new(SessionAdapter::new(session))
         };
-        Ok(Self { inner, document })
+        Ok(Self {
+            inner,
+            document,
+            signal_factory,
+            signals: RefCell::new(Vec::new()),
+        })
     }
 }
 
@@ -455,10 +465,39 @@ impl SeaSession {
 
     /// Closes this membership without closing other clients of the same service.
     pub async fn close(&self) -> Result<(), JsValue> {
+        let signals = self.signals.take();
+        for connection in signals
+            .into_iter()
+            .filter_map(|connection| connection.upgrade())
+        {
+            connection
+                .close_signals()
+                .await
+                .map_err(|error| service_error(&error))?;
+        }
         self.inner
             .close()
             .await
             .map_err(|error| service_error(&error))
+    }
+
+    /// Opens ephemeral messaging using a document-scoped connection identity.
+    #[wasm_bindgen(js_name = openSignals)]
+    pub async fn open_signals(
+        &self,
+        id: &[u8],
+        metadata: &[u8],
+    ) -> Result<crate::signals::SeaSignals, JsValue> {
+        let inner = self
+            .signal_factory
+            .open(sea_core::signals::SignalMember {
+                id: Bytes::copy_from_slice(id),
+                metadata: Bytes::copy_from_slice(metadata),
+            })
+            .await
+            .map_err(|error| service_error(&error))?;
+        self.signals.borrow_mut().push(Rc::downgrade(&inner));
+        Ok(crate::signals::SeaSignals { inner })
     }
 }
 
@@ -636,6 +675,8 @@ impl SeaSnapshotStream {
 #[cfg(feature = "memory")]
 #[wasm_bindgen]
 pub struct SeaMemoryService {
+    /// Signal rooms share document identity but do not access the sequencer.
+    signals: RefCell<BTreeMap<Vec<u8>, std::sync::Arc<sea_signals::SignalRoom>>>,
     /// Storage retains documents independently of individual sessions.
     storage: sea_memory::MemoryStorage,
     /// One exclusive sequencer per document.
@@ -655,6 +696,7 @@ impl SeaMemoryService {
     pub fn new() -> Self {
         Self {
             storage: sea_memory::MemoryStorage::new(),
+            signals: RefCell::new(BTreeMap::new()),
             runtimes: futures_util::lock::Mutex::new(BTreeMap::new()),
         }
     }
@@ -696,7 +738,23 @@ impl SeaMemoryService {
             )
             .await
             .map_err(|error| service_error(&error))?;
-        SeaSession::from_stack(session, document, options.compression)
+        let room = self
+            .signals
+            .borrow_mut()
+            .entry(document.clone())
+            .or_insert_with(|| {
+                sea_signals::SignalRoom::new(sea_signals::SignalLimits::default())
+                    .expect("default signal limits are valid")
+            })
+            .clone();
+        SeaSession::from_stack(
+            session,
+            document,
+            options.compression,
+            Rc::new(crate::signals::FactoryAdapter(
+                sea_signals::LocalSignalService::new(room),
+            )),
+        )
     }
 }
 
@@ -756,7 +814,8 @@ pub async fn open_remote(
     .await
     .map_err(|error| service_error(&error))?;
     let document = session.document().as_bytes().to_vec();
-    SeaSession::from_stack(session, document, options.compression)
+    let signals = Rc::new(crate::signals::FactoryAdapter(session.signal_service()));
+    SeaSession::from_stack(session, document, options.compression, signals)
 }
 
 /// Opens a real browser WebTransport session without fallback, optionally wrapped in compression.
@@ -798,5 +857,6 @@ pub async fn open_webtransport(
     .await
     .map_err(|error| service_error(&error))?;
     let document = session.document().as_bytes().to_vec();
-    SeaSession::from_stack(session, document, options.compression)
+    let signals = Rc::new(crate::signals::FactoryAdapter(session.signal_service()));
+    SeaSession::from_stack(session, document, options.compression, signals)
 }

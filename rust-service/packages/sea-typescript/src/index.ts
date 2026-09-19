@@ -148,7 +148,54 @@ export interface SeaStream<Item> {
 /** Non-Fluid-specific session operations with explicit membership lifetime.
  * @internal
  */
+export interface SeaSignalMember {
+	/** Document-scoped live connection identity. */
+	readonly id: Uint8Array;
+	/** Opaque public metadata. */
+	readonly metadata: Uint8Array;
+}
+
+/** Requested delivery semantics; best effort permits reliable fallback.
+ * @internal
+ */
+export type SeaSignalDelivery = "reliable" | "bestEffort";
+
+/** Membership observations and opaque transient messages, without document positions.
+ * @internal
+ */
+export type SeaSignalEvent =
+	| { readonly kind: "members"; readonly members: readonly SeaSignalMember[] }
+	| { readonly kind: "joined"; readonly member: SeaSignalMember }
+	| { readonly kind: "left"; readonly id: Uint8Array }
+	| {
+			readonly kind: "message";
+			readonly sender: Uint8Array;
+			readonly target?: Uint8Array;
+			readonly payload: Uint8Array;
+			readonly delivery: SeaSignalDelivery;
+	  };
+
+/** Independent ephemeral messaging connection; no persistence, replay, or ordering with events.
+ * @internal
+ */
+export interface SeaSignals {
+	/** Sends to one current member, or broadcasts including self; completion means admission only. */
+	send(
+		payload: Uint8Array,
+		options?: { readonly target?: Uint8Array; readonly delivery?: SeaSignalDelivery },
+	): Promise<void>;
+	/** Reads one live event; concurrent reads are rejected and close wakes a pending read. */
+	next(): Promise<SeaSignalEvent | undefined>;
+	/** Ends signal membership without closing archive access. */
+	close(): Promise<void>;
+}
+
+/** Non-Fluid-specific session operations with explicit membership lifetime.
+ * @internal
+ */
 export interface SeaSession {
+	/** Opens independent document messaging; archive compression does not transform signal payloads. */
+	openSignals(member: SeaSignalMember): Promise<SeaSignals>;
 	/** Backend-assigned identity for reopening on the same service. */
 	readonly document: Uint8Array;
 	/**
