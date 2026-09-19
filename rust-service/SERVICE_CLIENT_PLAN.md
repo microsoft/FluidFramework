@@ -146,9 +146,10 @@ The neutral WASM build task now skips unchanged work and regenerates missing out
 These results do not complete the stages: low-level protocol consumers still use legacy bindings, and their migration and legacy binding removal must preserve the transport-specific regressions before stage 3.
 The benchmark and loader checkpoint is committed as `f86f03c9c33`.
 Node session scenarios now live in the neutral package; the canonical Node command runs twelve package tests plus three retained legacy-specific regressions.
-The canonical browser command also runs plain and compressed neutral sessions before its transport and shutdown checks.
+The canonical browser command runs plain and compressed neutral sessions, and its ordered-delivery, explicit reopen, snapshot-suffix recovery, and shutdown checks now use the neutral WebTransport factory too.
+The browser harness no longer builds or serves the legacy generated client.
 Durable-file/client-selected and memory/SEA-selected browser runs passed in Chromium 152 inside the Codespace.
-Remaining direct generated tests cover injection hooks, legacy named-create rejection, snapshot registration replacement, and browser transport replacement/shutdown; the older driver browser trace also remains to migrate or retire after preserving its distinct scenarios.
+Remaining direct generated Node tests cover injection hooks, legacy named-create rejection, and snapshot registration replacement; the older driver browser trace also remains to migrate or retire after preserving its distinct scenarios.
 
 ### 1. Extract and Package WASM Bindings
 

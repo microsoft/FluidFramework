@@ -140,8 +140,7 @@
 				"script": false
 			},
 			"test:browser": [
-				"@fluidframework/sea-typescript#build:esm",
-				"build:wasm"
+				"@fluidframework/sea-typescript#build:esm"
 			],
 			"test:node": [
 				"build:esm",

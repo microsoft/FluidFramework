@@ -113,7 +113,7 @@ const httpServer = createServer(async (request, response) => {
 		const relative = requestPath === "/" ? "index.html" : requestPath.slice(1);
 		const normalized = normalize(relative);
 		if (normalized.startsWith("..")) throw new Error("invalid path");
-		const root = normalized.startsWith("crates/sea-webtransport/pkg/web/")
+		const root = normalized.startsWith("packages/sea-typescript/")
 			? resolve(siteRoot, "../..")
 			: siteRoot;
 		const data = await readFile(join(root, normalized));
