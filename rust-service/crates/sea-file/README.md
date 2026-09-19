@@ -11,11 +11,15 @@ Each document has one dependency-ordered checksummed journal containing immutabl
 Frames contain a length, its complement, a BLAKE3 content hash, and the record bytes.
 The replacement format is distinct from the transitional journal; there is no legacy reader or negotiation.
 Buffered writes reach the operating system before returning but are not synchronized, so their durability is `Durability::Buffered`.
-Durable mode synchronizes records and namespace creation before acknowledgment.
+Durable mode writes a complete replacement journal, synchronizes it, atomically renames it over the published journal, and synchronizes the parent directory before acknowledgment.
+It never appends to the published inode, so an interrupted write cannot tear a sector shared with acknowledged data.
+Document creation uses the same publication sequence; namespace creation synchronizes its ancestors.
 
 Recovery verifies framing, content identities, transitive directory closure, a dense event prefix, and strictly advancing snapshot dependencies before exposing components.
-Buffered recovery rejects incomplete tails; durable recovery truncates only an incomplete final frame.
+Buffered recovery rejects incomplete tails; durable recovery repairs a legacy incomplete final frame by publishing a replacement without that tail.
 Complete corrupt frames or missing required dependencies fail recovery rather than producing gaps.
+An unpublished `.pending` file is discarded even if it contains valid frames; a full-length corrupt staging file cannot prevent recovery of the published prefix.
+Durable reopening synchronizes the selected journal and parent directory before exposing records, completing any publication whose acknowledgment was lost.
 Raw event components treat tree identities as opaque, while the view establishes availability before publication; raw writes with absent dependencies therefore make subsequent recovery fail.
 Snapshots persist only position/root identities, not handles or session publication metadata.
 
@@ -25,11 +29,14 @@ Session retry identities and conditional snapshot policy remain above storage.
 
 ## Ownership And Reads
 
-The journal uses an exclusive OS file lock, including across independently opened factories.
+Both modes use an exclusive OS lock on a stable `.lock` sidecar, including across independently opened factories.
+The sidecar is never replaced or removed, so ownership survives replacement of the journal inode.
 Components, their clones, and all derived reads retain the same opening; even unpolled or completed streams must be dropped before reopening.
 Handles contain private canonical-document provenance but retain no writer ownership.
 After reopening, compatible handles can be revalidated against membership; foreign-document handles are rejected even for equal identities.
 Do not rename, replace, or externally modify files in an active namespace.
+Stop all old writers before upgrading: older binaries lock the journal itself and do not participate in sidecar locking.
+Journal record encoding is unchanged, but mixed-version writers are unsupported.
 
 Reads initialize lazily, retain complete bounded/live history, and register wakeups under the mutation lock.
 Finite ranges have exclusive lower and inclusive upper bounds, including sparse snapshot bounds.
@@ -49,8 +56,11 @@ This prevents reporting a false reconciliation bound from stale in-memory state.
 
 The complete journal is recovered into memory, history is never pruned, and namespace allocation searches for an unused numeric filename.
 Synchronous I/O can block the calling executor; there is no throughput, distributed locking, remote replication, or production capacity claim.
-Durable behavior depends on the host filesystem honoring synchronization and advisory locks.
-Tests exercise deterministic incomplete and post-sync boundaries, not power-loss or hardware-failure certification.
+Each durable mutation copies the complete journal and temporarily needs space for both versions; total write cost grows quadratically with retained history for fixed-size records.
+This implementation favors a simple recovery argument over throughput and is not suitable for large append-heavy archives.
+Durable behavior assumes the local filesystem provides crash-atomic same-directory rename, honors file and directory synchronization, and protects synchronized files from writes to other inodes.
+The storage device must honor flushes; media corruption, remote filesystems, and writes through buffered mode are outside the power-loss guarantee.
+Tests exercise torn staging images, both pre-directory-sync rename outcomes, post-sync acknowledgment loss, and cross-process locking; actual power-cut qualification remains outstanding.
 
 See [`src/storage.rs`](src/storage.rs) for components and localized tests, and [`src/journal.rs`](src/journal.rs) for framing and fault boundaries.
 Shared view and sparse-archive laws come from [`sea-conformance`](../sea-conformance/README.md).
