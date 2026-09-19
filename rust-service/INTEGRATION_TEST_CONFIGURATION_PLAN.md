@@ -187,7 +187,7 @@ Commands below run from this worktree root:
 The first smoke attempt exposed a configuration defect: logical URLs omitted the tenant segment expected by the Fluid loader.
 The resolver now uses `fluid://sea-test/tests/<document>`; the subsequent attempt reached SEA-001.
 The initial failure inventory applies to configuration checkpoint `4d9c1906dab`.
-No new SEA-specific test exclusions have been added.
+SEA-specific exclusions are listed in the explicit inventory below; none of the behavioral fixes above weakened shared assertions.
 
 SEA-006 is owned entirely by the Fluid adapter; the neutral sequencer remains unaware of summary semantics.
 Focused regressions prove identical live and replayed acknowledgment records, bounded system-message projection, rejection of an unpublished snapshot before proposal admission, and terminal leave after an interrupted acknowledgment without retry.
@@ -228,6 +228,18 @@ The teardown error is secondary to the rejected provider creation; inspect this 
 
 For each observed failure, record the exact test name and command, source revision, failure signature, setup versus behavioral classification, reproduction steps, and relevant known limitation.
 Keep unsupported contracts visible, including signals, presence, synthetic membership, automatic reconnect, authentication, and garbage collection; do not weaken shared assertions to hide them.
+
+### SEA Exclusion Inventory
+
+| ID | Exact suite and affected cases | Reason | Evidence |
+| --- | --- | --- | --- |
+| SEA-EX-001 | `Op Compression self-healing with old loader`: `Can compress and process compressed op`, `Processes ops that weren't worth compressing`, and the four `Correctly processes messages` compression/chunking/grouping combinations. | Explicitly loads `2.0.0-internal.1.4.6`, outside the current-version-only SEA configuration. The compatibility guard remains intact; only this historical suite skips for `sea-websocket`. | `test:realsvc:sea --grep '^Op Compression'`: six current tests pass, six historical tests pending. Identical selection with `--driver=local --compatKind=None --compatVersion=0 --timeout=10000`: all twelve pass. |
+
+Existing test-suite pending conditions are separate from this inventory.
+No current-version behavioral failure has been excluded.
+The exclusion checkpoint passes the focused SEA/local comparisons, root `pnpm build:fast`, scoped policy, documentation, and compile checks.
+The next full `--bail` run reaches 340 passing and 402 pending, then times out in `Runtime IdCompressor / finalizes IDs made in a detached state immediately upon attach`, waiting for incoming sequence 3.
+That current-version delivery failure remains in scope; it is not an exclusion candidate.
 
 ### Membership Investigation
 

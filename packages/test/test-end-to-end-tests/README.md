@@ -119,6 +119,8 @@ The lifecycle smoke passes with the neutral-session driver's ordered membership 
 The full SEA suite is still under investigation and is not expected to pass yet.
 See the active [failure inventory](../../../rust-service/INTEGRATION_TEST_CONFIGURATION_PLAN.md#failure-inventory) before interpreting the result as a setup problem.
 No SEA-specific behavioral tests are silently skipped by this configuration.
+The fixed historical-loader compression suite is explicitly pending for SEA because this configuration supports current-version APIs only.
+See the [SEA exclusion inventory](../../../rust-service/INTEGRATION_TEST_CONFIGURATION_PLAN.md#sea-exclusion-inventory) for the exact cases and local-driver comparison evidence.
 
 Focused setup checks:
 
