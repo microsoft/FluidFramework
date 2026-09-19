@@ -191,8 +191,9 @@ pnpm --dir rust-service/packages/sea-driver test
 ```
 
 The package build compiles TypeScript, generates entrypoints and API reports, and checks formatting, lint, and export release tags.
-Package-owned Node tests exercise the entrypoint, including incremental summaries, stale-parent rejection, neutral-session initialization and startup cleanup, submission recovery, lifecycle races, and dependency isolation.
-The test task builds its dependencies and the separate test project before running those regressions.
+Package-owned Mocha suites exercise the implementation entrypoint, including incremental summaries, stale-parent rejection, neutral-session initialization and startup cleanup, submission recovery, lifecycle races, and dependency isolation.
+The build compiles the separate test project; the test command uses the shared Fluid Mocha setup and reporters.
+To build and test in one step, run `pnpm exec fluid-build rust-service/packages/sea-driver --task test:mocha:esm` from the repository root.
 The [integration harness](../../tests/minimal-fluid-driver/README.md) retains SharedTree-based ServiceClient scenarios, browser traces, and benchmarks and includes these package tests in its aggregate command.
 The real Chromium SharedTree trace covers collaboration, explicit disconnect/recovery, and reload using the neutral remote factory.
 Eight consecutive migrated runs passed after fixing interrupted archive reads during membership replacement and author collisions between read-first containers.

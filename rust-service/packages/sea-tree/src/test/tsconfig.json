@@ -1,10 +1,13 @@
 {
-	"extends": "../../tsconfig.json",
+	"extends": [
+		"../../../../../common/build/build-common/tsconfig.node20.json",
+		"../../../../../common/build/build-common/tsconfig.test.json",
+	],
 	"include": ["./**/*.ts"],
-	"exclude": [],
 	"compilerOptions": {
 		"rootDir": ".",
 		"outDir": "../../lib/test",
-		"types": ["node"],
+		"types": ["mocha", "node"],
 	},
+	"references": [{ "path": "../.." }],
 }

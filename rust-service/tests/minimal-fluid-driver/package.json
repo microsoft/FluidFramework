@@ -116,8 +116,8 @@
 					"test:browser",
 					"test:node",
 					"test:wasm",
-					"@fluidframework/sea-driver#test:node",
-					"@fluidframework/sea-tree#test:node"
+					"@fluidframework/sea-driver#test:mocha:esm",
+					"@fluidframework/sea-tree#test:mocha:esm"
 				],
 				"script": false
 			},

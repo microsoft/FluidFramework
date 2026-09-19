@@ -5,20 +5,23 @@
 
 import type {
 	SeaDirectoryEntry,
-	SeaErrorKind,
-	SeaSession,
-	SeaMemoryService,
-	SeaLoadResult,
 	SeaError,
-	SeaTreeId,
+	SeaErrorKind,
+	SeaLoadResult,
+	SeaMemoryService,
+	SeaSession,
 	SeaSnapshot,
+	SeaTreeId,
 } from "@fluidframework/sea-typescript/internal";
 
+/** Tests exact type equality rather than one-way assignability. */
 type Equal<Left, Right> =
 	(<Value>() => Value extends Left ? 1 : 2) extends <Value>() => Value extends Right ? 1 : 2
 		? true
 		: false;
+/** Fails compilation when a consumer-facing type assertion is false. */
 type Assert<Value extends true> = Value;
+/** Event variant after a consumer narrows the load-result discriminator. */
 type EventResult = Extract<SeaLoadResult, { readonly kind: "event" }>;
 
 /** Compile fixture proving event positions are required after load-result narrowing. */

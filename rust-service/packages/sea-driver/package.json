@@ -39,8 +39,8 @@
 		"clean": "rimraf --glob lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"format": "biome check . --write",
 		"lint": "biome lint src",
-		"test": "fluid-build . --task test:node",
-		"test:node": "node --test \"lib/test/*.test.js\""
+		"test": "npm run test:mocha:esm",
+		"test:mocha:esm": "mocha"
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
@@ -56,20 +56,19 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",
+		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@microsoft/api-extractor": "7.58.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
+		"@types/sinon": "^17.0.3",
 		"concurrently": "^10.0.3",
+		"mocha": "^11.7.5",
+		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.3",
+		"sinon": "^18.0.1",
 		"typescript": "~6.0.3"
-	},
-	"fluidBuild": {
-		"tasks": {
-			"test:node": [
-				"build:test:esm"
-			]
-		}
 	}
 }

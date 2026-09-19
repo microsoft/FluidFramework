@@ -43,5 +43,6 @@ pnpm --dir rust-service/packages/sea-tree test
 ```
 
 The package build compiles TypeScript, generates entrypoints and API reports, and checks formatting, lint, and export release tags.
-The test task builds its dependencies and separate test project, then verifies two-way collaboration between direct SharedTree hosts through the package entrypoint.
+The build compiles the separate test project; the Mocha suite verifies two-way collaboration between direct SharedTree hosts through the implementation entrypoint using the shared Fluid setup and reporters.
+To build and test in one step, run `pnpm exec fluid-build rust-service/packages/sea-tree --task test:mocha:esm` from the repository root.
 The harness retains the direct SharedTree benchmarks and includes this package test in its aggregate command.
