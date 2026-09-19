@@ -2000,6 +2000,7 @@ export interface ServiceClient {
 
 // @alpha @input
 export interface ServiceOptions {
+    readonly logger?: ITelemetryBaseLogger;
     readonly oldestSupportedClient: OldestSupportedServiceClientVersion;
 }
 

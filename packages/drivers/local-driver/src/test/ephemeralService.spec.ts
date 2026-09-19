@@ -51,6 +51,27 @@ describe("EphemeralService", () => {
 	});
 
 	describe("LocalServiceClient", () => {
+		it("forwards telemetry from created and loaded containers to the configured logger", async () => {
+			const events: string[] = [];
+			const client = newService().newClient({
+				...options,
+				logger: { send: (event) => events.push(event.eventName) },
+			});
+			const container = await client.createAttachedContainer(stubFactory);
+			assert(
+				events.includes("fluid:telemetry:Container:CreateDetached_start"),
+				"Creating a container should emit telemetry",
+			);
+			await client.service.synchronize();
+			container.close();
+			events.length = 0;
+			await client.loadContainer(container.id, stubFactory);
+			assert(
+				events.includes("fluid:telemetry:Container:Load_end"),
+				"Loading a container should emit telemetry",
+			);
+		});
+
 		it("createContainer returns a detached container without an id", async () => {
 			const client = newService().newClient(options);
 			const detached = await client.createContainer(stubFactory);

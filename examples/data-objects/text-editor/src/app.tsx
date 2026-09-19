@@ -5,6 +5,7 @@
 
 import {
 	createOrLoadExampleContainer,
+	defaultServiceOptions,
 	ExampleErrorView,
 	ExampleLoadingView,
 	getExampleServiceClient,
@@ -185,7 +186,7 @@ async function initFluid(): Promise<{
 	connectUser: ConnectUser;
 }> {
 	const devtoolsLogger = createDevtoolsLogger();
-	const client = getExampleServiceClient();
+	const client = getExampleServiceClient({ ...defaultServiceOptions, logger: devtoolsLogger });
 	const connectUser: ConnectUser = async (documentId) => {
 		const loaded = await client.loadContainer(documentId, TextEditorDataStore);
 		return { id: makeUserId(), container: loaded, treeView: loaded.data.treeView };

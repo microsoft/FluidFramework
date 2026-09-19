@@ -22,11 +22,6 @@ Complete these steps to run the example:
 <!-- prettier-ignore-end -->
 <!-- markdown-magic:end -->
 
-## Service Compatibility
-
-Devtools supports container and tree inspection.
-The ServiceClient API does not yet accept a telemetry logger, so container telemetry is not forwarded to Devtools.
-
 ## Testing
 
 Run the in-memory React component tests with Mocha:
