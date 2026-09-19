@@ -64,6 +64,40 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Impact:** The adapter is integration evidence, not a Routerlicious or ODSP replacement.
 - **Trigger:** Complete the opt-in integration inventory and connection-policy regressions before claiming production support.
 
+## RS-023: Append failures do not consistently terminate session authority
+
+- **Status:** Open
+- **Severity:** High
+- **Area:** Sequencer and append transport
+- **Evidence:** `LocalSession::submit` returns validation or definitive storage errors while leaving membership active.
+  Dispatch can also reject an invalid request before invoking the session append API.
+  Later submissions can therefore succeed after a failed submission, violating the required accepted-prefix contract.
+- **Impact:** Counting application events through a leave cannot reliably identify the accepted prefix if failures permit holes.
+- **Required fix:** Preserve append order, revoke authority on the first failure, settle any uncertain append, and persist a final leave for announced sessions before allowing recovery to claim completion.
+  Cover queued submissions, malformed input, cancellation, lost acknowledgments, transport failure, and recovery.
+
+## RS-024: A durable enforced minimum-reference floor is missing
+
+- **Status:** Open
+- **Severity:** High
+- **Area:** Sequencer reference admission and Fluid efficiency
+- **Evidence:** The active-member minimum can decrease when sessions open with old or absent references; absent references also bypass the comparison using `Option::zip`.
+  There is no durable independent floor-advance record or restored document-wide floor.
+  The Fluid adapter reports minimum sequence zero as a temporary correctness workaround.
+- **Impact:** Clients cannot safely release old collaboration state based on an advancing minimum, even though server history retention is a separate concern.
+- **Required fix:** Persist and deliver ordered monotonic floor advances, reject new submissions below the committed floor, restore it on recovery, and project it consistently into Fluid replay and snapshots.
+  Keep advancement policy separate from enforcement; debounce advances where useful.
+
+## RS-025: Driver explicit retry is not application-owned resubmission
+
+- **Status:** Open
+- **Severity:** High
+- **Area:** Fluid pending-operation recovery
+- **Evidence:** `SeaDeltaConnection.resubmitPending` can resend the stored message with a new outer reference without requiring an unaccepted-prefix proof or a caller-transformed payload.
+- **Impact:** Non-idempotent or reference-dependent events can be duplicated or interpreted under an incorrect submission context.
+- **Required fix:** Recover the old session's accepted prefix through its terminal leave, and delegate transformation and fresh-session submission to the application/Fluid runtime.
+  Do not confuse exact outcome lookup with resubmission.
+
 ## Codespaces forwarding requires the optional WebSocket transport
 
 - **Status:** Open

@@ -93,7 +93,18 @@ pub trait SeaArchive: crate::SeaService {
     ) -> Result<Option<Self::EventHandle>, Self::Error>;
 }
 
-/// Author ordering, stable submission identities, and logical membership lifecycle.
+/// Ordered append authority and logical membership lifecycle.
+///
+/// Required contract: accepted submissions form a prefix of the append stream.
+/// The first append failure terminates that session's append authority, including its clones;
+/// later queued submissions must not commit. Concurrent callers must establish submission order
+/// before calling this API; a transport must preserve its stream's received order.
+/// For announced sessions, a durable departure follows all accepted submissions and is final:
+/// no application event from that session may follow it, including after recovery.
+/// A client replays through that departure, counts its accepted application events, and transforms
+/// only the unaccepted suffix for submission under a fresh session. SEA never performs that
+/// application-specific transformation. A lost acknowledgment is not evidence of rejection.
+/// TODO(RS-023): Enforce terminal append failures throughout the sequencer and transport adapters.
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 pub trait SeaAuthorSession: SeaArchive {
@@ -104,7 +115,11 @@ pub trait SeaAuthorSession: SeaArchive {
     /// Metadata is control data like author/session identities: payload decorators do not protect it.
     /// Sessions that never call this method produce no membership records.
     async fn announce_membership(&self, metadata: Bytes) -> Result<EventPosition, Self::Error>;
-    /// Submits an event or resolves an exact retry by the same author, including after reconnect.
+    /// Submits one event with the reference state used to construct its payload.
+    /// Session order identifies the preceding local submissions; the reference identifies the
+    /// sequenced history known to the author. Replay preserves both pieces of information.
+    /// An exact retry lookup by the same author can return an existing position after reconnect;
+    /// this is not application resubmission and must not append a duplicate event.
     /// Identity reuse with different payload, tree, reference, or author is rejected.
     /// Storage is never transparently retried. Returned ambiguity requires bounded reconciliation;
     /// cancellation does not establish settlement. Unsafe further mutations must wait or fail.
@@ -115,6 +130,8 @@ pub trait SeaAuthorSession: SeaArchive {
         operation: &OperationId,
     ) -> Result<Option<EventPosition>, Self::Error>;
     /// Idempotently closes this membership and its clones, without invalidating other sessions.
+    /// For announced membership, success establishes a durable departure after its accepted prefix.
+    /// If settlement is unknown, close must fail rather than publish a false completion barrier.
     async fn close(&self) -> Result<(), Self::Error>;
 }
 

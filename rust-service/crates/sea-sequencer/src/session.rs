@@ -531,6 +531,7 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
     }
 
     /// Submits once, retaining backend execution through caller cancellation.
+    /// TODO(RS-023): A returned append error must terminate this session before later submissions.
     async fn submit(
         &self,
         submission: EventSubmission,

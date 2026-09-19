@@ -221,7 +221,8 @@ pub enum SessionEventKind {
     Application,
     /// An explicitly announced membership; payload contains caller-provided metadata.
     Joined,
-    /// An announced membership closed; payload is empty.
+    /// An announced membership's final sequencing barrier; payload is empty.
+    /// All its accepted application events precede this record and none may follow it.
     Left,
 }
 
@@ -238,9 +239,11 @@ pub struct SessionCommittedEvent {
     pub session_id: SessionId,
     /// Stable application retry identity; membership records carry their session identity instead.
     pub operation_id: OperationId,
-    /// Event position referenced by the author, or initial state.
+    /// Sequenced history known when the author constructed this event, or initial state.
+    /// Together with the session's preceding application events, this describes the submission context.
     pub reference: Option<EventPosition>,
     /// Minimum position still referenced by an active author, when any event exists.
+    /// TODO(RS-024): This is not yet the required durable, nondecreasing enforced reference floor.
     pub minimum_reference: Option<EventPosition>,
 }
 

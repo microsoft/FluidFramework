@@ -76,6 +76,7 @@ where
         ))))
     }
 
+    /// TODO(RS-023): Close append authority on failures before or during request dispatch.
     async fn author_request(&self, request: protocol::Request) -> protocol::Response {
         match request {
             protocol::Request::Submit { .. }

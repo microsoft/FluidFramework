@@ -35,14 +35,63 @@ Loads use `LoadStart`, returning a selected handle-based snapshot and the live s
 The backend's retained live stream provides catch-up and subsequent delivery, so the replacement runtime has no event broadcast queue, lag limit, or broadcast-recovery loop.
 Publisher observations use coalescing watch streams because intermediate publisher states need not all be delivered.
 
-## Retry And Settlement
+## Ordered Append and Recovery
+
+The required append contract is strict order and termination at the first failure.
+Accepted application events form a prefix of the submissions on one append stream.
+A rejection, invalid request, or transport failure ends that stream's authority; later queued submissions must not be accepted.
+Concurrent local callers must serialize their intended submission order before invoking the session API.
+Each event retains its session identity and the reference position describing the sequenced history known when it was constructed.
+Earlier application events from that session identify its preceding local work.
+SEA treats payloads as opaque and cannot adjust an event for a different submission context.
+
+For announced sessions, the durable leave record is the final sequencing barrier.
+It follows every accepted event from that session, and no event from that session may be accepted afterward.
+Closing an append stream must settle admitted work before writing its leave.
+Unknown storage outcomes must block progress or require recovery, never produce a leave that falsely claims finality.
+Connection loss alone is not proof of completion; server failure detection and cleanup must establish that barrier.
+An independent read session can replay through the leave even when the old connection and its reads have ended.
+
+To recover non-idempotent application events:
+
+1. Read the old session's history through its leave record.
+2. Count its application events to determine the accepted submission prefix; joins and leaves do not count.
+3. Reconcile the accepted history with local state.
+4. Transform the unaccepted suffix as required by the application and submit it under a fresh session.
+
+The reader needs the relevant session history, or equivalent prefix accounting in a snapshot.
+Lost acknowledgments do not change the committed prefix.
+An exact operation-ID lookup is separate from resubmission: it can confirm an existing outcome, but does not authorize replaying an old payload at a new reference.
+TODO(RS-023): The current local sequencer and dispatch paths do not consistently terminate append authority on error.
+TODO(RS-025): The Fluid driver's explicit retry helper does not yet require caller transformation or a terminal-prefix recovery barrier.
+See [known issues](../../KNOWN_ISSUES.md) for these implementation gaps.
+
+## Minimum Reference Floor
+
+The required document-wide minimum reference is a durable, nondecreasing admission floor, independent of join/leave policy.
+The sequencer chooses when to advance it; policy can consider client progress or a time window, but correctness must not depend on the heuristic.
+New submissions below the committed floor must terminate their append stream.
+A stream-level reference update must be ordered with its submissions; a per-event reference is also sufficient.
+The current API carries a reference on every event.
+
+Floor advances must be persisted in archive order and delivered in that same order to live and replay readers.
+Snapshots must retain the floor at their boundary, and recovery must restore it before admitting mutations.
+Advances can be debounced to reduce bandwidth and storage; only a committed advance becomes enforceable and observable.
+Slow writers may need to catch up and transform their unaccepted events under a new session.
+Exact lookup of an already accepted event does not constitute a new admission below the floor.
+TODO(RS-024): The current active-member minimum can decrease on admission and is not this floor.
+The Fluid adapter currently reports zero, which avoids backward movement but prevents efficient release of client collaboration state.
+This is a temporary limitation, not a completed reference-floor implementation.
+
+## Retry Lookup and Settlement
 
 Stable event operation IDs belong to the sequencer, not storage.
 An exact retry by the same author returns its original position, including after reconnect; a changed author, payload, tree, or reference conflicts.
 Blob identities in submissions are resolved through the current view before publication; wire identities never fabricate availability handles.
 The sequencer never resubmits an append internally.
 After returned ambiguity it obtains an authoritative head and scans the bounded candidate range.
-An exact committed envelope resolves success; a complete settled empty range yields a definitive rejection, permitting an explicit caller retry.
+An exact committed envelope resolves success; a complete settled empty range yields a definitive rejection.
+Under the required prefix contract, rejection terminates the old append stream; recovery and transformed resubmission belong to the caller.
 A failed head or incomplete scan yields `RecoveryRequired` and prevents further mutations or claims of absence.
 
 The runtime retains an owned mutation future before first polling backend work.

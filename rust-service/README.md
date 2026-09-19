@@ -28,6 +28,7 @@ This is a speculative learning project, not a proposed production replacement fo
 ## Understand the System
 
 - [Sea architecture](SEA_ARCHITECTURE.md) explains the system layers, core traits, and ownership boundaries.
+- [Ordered append and recovery](crates/sea-sequencer/README.md#ordered-append-and-recovery) defines accepted prefixes, terminal leave records, and client-owned resubmission; the same guide explains the required minimum-reference floor and current implementation gaps.
 - [Workspace architecture](WORKSTREAMS.md) maps packages, dependencies, and runtime composition.
 - [Crate guides](crates/README.md) link to implementation-specific guarantees, limitations, and validation commands.
 

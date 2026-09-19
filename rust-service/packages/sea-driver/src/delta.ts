@@ -380,6 +380,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 	}
 
 	/** Explicitly resubmits one authoritatively not-committed pending message. */
+	/** TODO(RS-025): Require terminal-prefix recovery and caller-transformed payload/reference. */
 	public async resubmitPending(sequenceNumber: number): Promise<void> {
 		const pending = this.pending.get(sequenceNumber);
 		if (pending === undefined) {
