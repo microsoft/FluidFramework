@@ -1,7 +1,7 @@
 # Sea WASM Node validation
 
 The Node command runs the neutral package's session tests directly.
-General session scenarios live in [sea-typescript's test suite](../../packages/sea-typescript/test/session.test.mjs) and import its capability entrypoints.
+General session scenarios live in [sea-typescript's test suite](../../packages/sea-typescript/src/test/session.spec.ts) and exercise its capability factories.
 They cover submission resolution, backlog and live delivery, pending-read cancellation, recursive content, idempotent snapshots, publication authority, conflicting operations, superseded and reused memberships, explicit reopening, and backend-assigned document identities.
 
 The snapshot-registration ownership regression now uses neutral sessions: replacement ends the old pending read, cancelling the old registration cannot revoke its replacement, and cancelling the current registration revokes publication authority.
@@ -12,14 +12,14 @@ The current browser transport implements disconnection directly, and the neutral
 Build the package-owned artifacts and run the tests from `rust-service/`:
 
 ```bash
-pnpm exec fluid-build packages/sea-typescript --task test
+pnpm exec fluid-build packages/sea-typescript --task test:mocha:esm
 ```
 
-The package task builds its artifacts and consumer type assertions before executing its Node tests; it does not depend on the Fluid harness.
-After building, `node --test packages/sea-typescript/test/session.test.mjs` runs the session tests directly.
+The package task builds its artifacts, consumer type assertions, and TypeScript Mocha suites before executing the tests with shared Fluid setup; it does not depend on the Fluid harness.
+After building, `MOCHA_SPEC=lib/test/session.spec.js pnpm --dir packages/sea-typescript test` runs the session suite directly.
 Session consumers use `@fluidframework/sea-typescript`, which owns the shared `sea-wasm` artifacts.
 Generated bindings and WASM binaries are ignored build outputs.
 
-The package's `websocket.test.mjs` retains focused low-level socket queue, upload-throttling, FIN, cancellation, handshake, and ownership regressions against the separate socket-capable artifact.
+The package's [websocket.spec.ts](../../packages/sea-typescript/src/test/websocket.spec.ts) retains focused low-level socket queue, upload-throttling, FIN, cancellation, handshake, and ownership regressions against the separate socket-capable artifact.
 These tests exercise transport mechanics, not the removed injected-session API.
 The browser harness enables its optional real Node collaboration test with `SEA_NODE_WEBSOCKET=1`; the test uses the neutral package's `openRemote` entrypoint.

@@ -56,7 +56,7 @@ jobs:
       - name: Build and test generated Sea clients
         working-directory: .
         run: |
-          pnpm exec fluid-build rust-service/packages/sea-typescript --task test
+          pnpm exec fluid-build rust-service/packages/sea-typescript --task test:mocha:esm
       - name: Validate current documentation
         run: node scripts/check-documentation.mjs
       - name: Validate foundation records

@@ -208,12 +208,14 @@ pnpm --dir rust-service/packages/sea-typescript run build
 pnpm --dir rust-service/packages/sea-typescript test
 ```
 
-The Node tests use capability entrypoints and cover sharing, isolation, compression, immutable content, events, snapshot reload, cancellation, and capability rejection.
+The TypeScript Mocha suites in [src/test](src/test) use the repository's shared test setup and cover sharing, isolation, compression, immutable content, events, snapshot reload, cancellation, and capability rejection.
+Run `pnpm exec fluid-build rust-service/packages/sea-typescript --task test:mocha:esm` from the repository root to build prerequisites and run them in one step.
 The package build also compiles [consumer type assertions](src/test/types/seaApi.ts) in a separate test project using the repository's shared test configuration.
 They verify narrowed event results, submission positions, directory entries, document identities, snapshots, and closed type unions through the package entrypoint without adding test exports to the production API.
 Migrated session regressions also cover live peer delivery, recursive content, idempotent publication, explicit snapshot fences, operation conflicts, superseded authors, reused memberships, and explicit reopening.
-The canonical Node harness executes twenty-one local package tests, including preset equivalence, capability rejection, initialization caching, snapshot-registration ownership, and bounded socket lifecycle behavior.
-An additional real Node socket test runs when the harness supplies `SEA_NODE_TRANSPORT_URL`.
+The package suite executes twenty-four local tests, including preset equivalence, capability rejection, initialization caching, snapshot-registration ownership, and bounded socket lifecycle behavior.
+An additional real Node socket test runs when the browser harness supplies `SEA_NODE_TRANSPORT_URL`.
+The default browser transport matrix runs it once against a temporary Rust listener; standalone package tests skip it when no listener URL is supplied.
 An emitted-module import-graph test checks lazy artifact imports and excludes unrelated capabilities and dependencies from each factory entrypoint.
 `browser.html` runs identical plain/compressed local and remote scenarios through both presets, with fresh-page artifact loading assertions in the canonical script.
 The canonical WebTransport script runs this flow alongside the neutral Fluid driver trace and transport/shutdown checks, making neutral browser coverage part of `test.sh`.

@@ -5,12 +5,20 @@ The generated ECDSA P-256 certificate is valid for 13 days and the client pins i
 Generated certificates, private keys, service data, browser profiles, evidence, and WASM bindings are ignored.
 
 Run the test from `rust-service/`.
-The script builds the neutral package and Fluid driver trace, generates a temporary certificate, starts the native server, runs the browser flows in headless Chromium, and shuts down the server.
+The script builds the neutral package, Fluid driver trace, and native server once and generates a temporary certificate.
+It runs the shared browser flows once, then runs the final session and shutdown scenario over WebTransport, WebSocketStream, and ordinary WebSocket.
+Each transport uses a fresh server process, service-data directory, and shutdown marker.
+The first socket mode also runs the real Node WebSocket test once against its loopback listener.
 It uses an isolated `CARGO_TARGET_DIR` and leaves the root manifest and lockfile unchanged.
 
 ```bash
 tests/webtransport-browser/run-test.sh
 ```
+
+For a focused run, set `SEA_BROWSER_TRANSPORT` to `webtransport`, `websocketstream`, or `websocket`.
+The default is `all`; an explicit value takes precedence over the legacy flags shown below.
+Invalid values fail before building or starting a server.
+Each final scenario prints `TRANSPORT_MODE`, browser results, shutdown results, and server cleanup evidence.
 
 The first flow runs the [Fluid driver trace](../minimal-fluid-driver/README.md) through neutral WebTransport sessions.
 It checks summary reload, two-client push delivery, explicit pending recovery and resubmission, duplicate-free reconnect, and bounded history.
@@ -38,7 +46,7 @@ Run the package and final flows with Sea-managed selection by setting `SEA_SNAPS
 The Fluid driver trace retains client-selected publication because Fluid owns that policy.
 The results report `participation` or `snapshotParticipation` as `clientSelected` or `seaSelected`.
 Validation passed with durable-file storage and client-selected publication, and with `SEA_STORAGE_MODE=memory SEA_SNAPSHOT_POLICY=sea`, using Chromium 152 inside the Codespace.
-All three flows run through `rust-service/test.sh`; they do not establish external-browser connectivity through Codespaces forwarding.
+The shared flows and all three transport modes run through `rust-service/test.sh`; they do not establish external-browser connectivity through Codespaces forwarding.
 
 Browser APIs do not expose HTTP/3, QUIC, UDP, or TLS byte totals, so the harness does not infer unavailable network measurements.
 
@@ -64,17 +72,18 @@ Temporarily removing only `BrowserTransport::disconnect`'s close call failed wit
 Removing only Drop's close call instead failed with the corresponding `drop` message.
 Each restoration passed; the production implementation is unchanged.
 
-## Optional WebSocketStream Validation
+## WebSocketStream Validation
 
-Run the same collaboration and shutdown flow against the optional native `WebSocketStream` adapter:
+Run only the final WebSocketStream collaboration and shutdown mode, together with the shared flows and live Node test:
 
 ```bash
-SEA_WEBSOCKET_STREAM=1 tests/webtransport-browser/run-test.sh
+SEA_BROWSER_TRANSPORT=websocketstream tests/webtransport-browser/run-test.sh
 ```
 
+The legacy `SEA_WEBSOCKET_STREAM=1` flag selects the same mode when `SEA_BROWSER_TRANSPORT` is unset.
 The mode also checks healthy-primary preference, explicit WebTransport-only failure, initial timeout fallback, and missing-native-API rejection through the neutral `openRemote` factory.
 Package-owned socket regressions cover disconnection during child creation.
-The default command and minimal `webtransport` artifact remain WebTransport-only; `websocket` is a separate generated configuration, not an overwrite of default bindings.
+The minimal `webtransport` artifact remains WebTransport-only; `websocket` is a separate generated configuration, not an overwrite of default bindings.
 The driver and compressed-session traces continue using QUIC in every mode; only the final collaboration/shutdown flow selects WebSocket.
 Use `SEA_BROWSER_SKIP_BUILD=1` only after the package artifacts and driver trace have been built.
 
@@ -86,20 +95,22 @@ The earlier synthetic probe below remains separate evidence for substantial two-
 
 ## Ordinary WebSocket Compatibility Validation
 
-Run the same Chromium collaboration and shutdown flow with ordinary WebSocket, plus Node's built-in WebSocket against the temporary Rust listener:
+Run only the final ordinary WebSocket collaboration and shutdown mode, together with the shared flows and Node's built-in WebSocket against the temporary Rust listener:
 
 ```bash
-SEA_ORDINARY_WEBSOCKET=1 SEA_NODE_WEBSOCKET=1 tests/webtransport-browser/run-test.sh
+SEA_BROWSER_TRANSPORT=websocket tests/webtransport-browser/run-test.sh
 ```
 
-These settings enable the existing `websocket-stream` build feature automatically.
-The Node setting additionally permits missing Origin only on the harness's loopback listener; do not use it for forwarded/public endpoints.
+The legacy `SEA_ORDINARY_WEBSOCKET=1` flag selects this mode when `SEA_BROWSER_TRANSPORT` is unset.
+The legacy `SEA_NODE_WEBSOCKET=1` flag alone selects WebSocketStream mode; both socket modes now run the live Node test without a separate opt-in.
+All-mode and socket-only runs enable the existing `websocket-stream` build feature automatically.
+Socket-mode servers additionally permit missing Origin only on the harness's loopback listener; do not use this setting for forwarded/public endpoints.
 The ordinary browser mode checks `PreferAvailable` with unreachable QUIC and unavailable WebSocketStream through the neutral session factory.
 The focused package test checks the false receive-backpressure capability and disconnection during child creation.
 Selection probes run only on loopback-hosted pages: their deliberate loopback connection failures must not request access to an external visitor's local apps.
 Externally hosted pages still run collaboration with the explicitly selected transport, without these selection probes.
 Generated-binding regressions use a controlled event socket to test queue byte/message limits, upload throttling, cancellation, malformed records, FIN, handshake failure/timeouts, callback cleanup, and strict-mode refusal to fall back.
-That test consumes the separate `websocket` artifact and runs in the package's normal Node test command.
+That test consumes the separate `websocket` artifact and runs in the package's normal Mocha test command.
 
 Node 22.23.2's built-in WebSocket and local Chromium 152 passed these real SEA flows.
 On 2026-09-19, the user reported a passing three-session ordinary-WebSocket collaboration run in Windows Firefox 156 through public Codespaces forwarding with memory storage.
