@@ -24,10 +24,6 @@ Complete these steps to run the example:
 
 ## Service Compatibility
 
-This example uses the ServiceClient data-store format.
-Documents created by the previous AzureClient-based example use a different format and cannot be loaded by this version.
-Remove the URL hash to create a new document.
-
 Devtools supports container and tree inspection.
 The ServiceClient API does not yet accept a telemetry logger, so container telemetry is not forwarded to Devtools.
 
