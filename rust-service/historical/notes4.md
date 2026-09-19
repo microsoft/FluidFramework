@@ -79,39 +79,10 @@ A future subscription option may request delivery of every snapshot, with its re
 
 ## Prospective Content Optimizations
 
-### Blobs
-
-The storage contract, retention model, hard-link implementation, and Fluid mapping are specified in [BLOB_STORAGE.md](../BLOB_STORAGE.md).
-The implemented content stream serializes correlated bounded operations and uses explicit completion.
-This section describes possible future multiplexing and eager-loading optimization.
-
-Blobs can be downloaded over a content stream using requests that contain a content digest, a versioned loading hint, and a request identifier.
-Responses may interleave blobs from multiple requests and may deduplicate, throttle, or truncate recursive results.
-A truncated request should return at least one useful result when possible.
-
-Once the server will send no more blobs for a request, it sends an **end request** message containing that request identifier.
-The client can issue another request if content is still missing and must not reuse an identifier while its previous request is active.
-
-A content stream need not be permanently document-specific, but each fetch must carry enough authorization context for the server to determine whether the caller may discover and read the requested digest.
-
-Open security and privacy questions include:
-
-1. Should each request name a document through which the content must be reachable?
-2. How can the service check reachability without preventing cross-document deduplication or making garbage collection prohibitively expensive?
-3. Can a client-provided cache Bloom filter reveal sensitive content membership?
-4. Does probing a digest reveal content from another document or tenant?
-
-A non-owning document-to-digest reachability index may help authorization, but its consistency and interaction with retention remain open design questions.
-
-#### Upload
-
-Asynchronous clients may upload content long before an event or snapshot makes it reachable.
-The upload protocol therefore needs an expiring pending-upload scope and a way to declare content roots when committing an event or snapshot.
-
-Before committing a reference, the server verifies that the complete content graph is available and establishes its retention references.
-Missing content causes a definitive rejection so the client can upload it and retry under the operation's normal identity rules.
-
-Compression and encryption require an explicit digest and transformation domain shared with the storage contract.
+The current optimization status and implementation guidance are maintained in [Blob-tree Storage: Optimizations](../BLOB_STORAGE.md#optimizations).
+That section owns the design for cache knowledge, demand hints, initial-load and recursive transfers, heuristic budgets, and potential latency-aware refinement.
+The storage contract, retention model, upload lifetime design, and Fluid mapping are also maintained in [Blob-tree Storage](../BLOB_STORAGE.md).
+This historical flow note is not the source of truth for those designs.
 
 ## Notes
 

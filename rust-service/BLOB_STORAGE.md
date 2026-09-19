@@ -98,6 +98,133 @@ That choice controls deduplication, key rotation, server-side reference validati
 Storage-record wrappers cannot be assumed to apply correctly to content objects.
 Record transformation, content transformation, and transport encoding are separate composition boundaries.
 
+## Optimizations
+
+This section is the source of truth for blob-transfer optimization status and implementation handoff context.
+Statuses describe the current source, not fresh performance measurements: **Implemented** means the mechanism exists, **Partial** identifies a remaining limitation, and **Proposed** means it is not implemented.
+Proposals are independent opportunities, not commitments to implement every feature or prerequisites for the initial optimization work.
+Update the table and its supporting details when behavior changes.
+
+### Status
+
+| Optimization | Status | Scope and remaining work |
+| --- | --- | --- |
+| Persistent content stream | Implemented | Unary content operations reuse a stream, avoiding stream creation per object; requests remain serialized. |
+| Content-addressed deduplication | Implemented | Backends reuse immutable identities within their storage scope. This does not by itself avoid transferring duplicate upload bytes or establish cross-document availability. |
+| Reuse through Fluid handles and attachments | Implemented | Existing blob identities avoid reuploading unchanged leaves. Directory reconstruction still incurs avoidable requests. |
+| Bounded parallel summary uploads | Partial | The Fluid adapter admits up to eight blob uploads per summary, but the remote client's content-stream mutex serializes complete request/response operations. |
+| Multiple in-flight content requests | Proposed | Pipeline requests and correlate responses end to end; the existing correlation envelope alone does not provide concurrency. |
+| Parallel or batched downloads | Proposed | Fluid directory traversal and full-summary blob downloads are sequential. A bounded pool helps independent objects, but not undiscovered dependencies. |
+| Targeted incremental-summary traversal | Proposed | Resolve only needed handle paths, preserve directory handles directly, and publish newly composed ancestors; see [Mapping to Fluid](#mapping-to-fluid). |
+| Lazy blob-body downloads | Implemented | Snapshot-tree reconstruction reads directories without downloading all blob bodies; applications can request leaves separately. |
+| Client content cache and duplicate-fetch coalescing | Proposed | The Fluid adapter exposes cache-policy metadata but has no internal blob cache or shared in-flight fetch registry in its current client path. |
+| Per-blob compression | Implemented, optional | The session decorator compresses whole leaves; it does not provide streaming compression or a decoded-size bound. |
+| Digest-first upload negotiation | Proposed | Avoid sending bytes the service already has; ordinary `putBlob` currently sends the whole payload. Requires scoped availability checks and privacy policy. |
+| Explicit cache summaries | Proposed | Digest lists or Bloom filters suppress likely redundant speculative transfers; false positives must remain recoverable. |
+| Coarse cache assumptions | Proposed | Assume everything except the explicitly requested object, or nothing, is cached; a cheap alternative to detailed summaries. |
+| Transfer-history inference | Proposed | Keep a bounded, possibly approximate record of what the peer previously held, including avoiding reupload of downloaded objects. |
+| Recursive speculative download | Proposed | Traverse from a requested digest and send descendants without waiting for a client request at each directory. |
+| Demand-selection hints | Proposed | Shallow/deep or directory-only traversal, depth limits, path inclusion/exclusion patterns, and small-object thresholds select content wanted now. |
+| Eager content during initial load | Proposed | Put the same versioned hint on `OpenEventStream` so selected snapshot content can arrive without a separate content request. |
+| Heuristic speculative budgets | Proposed initial approach | Use byte, object-count, and traversal-work limits without requiring latency measurements. |
+| Latency-aware speculative sizing | Proposed later refinement | Adapt to round-trip time, effective throughput, and queued useful work; not a prerequisite for heuristic budgets. |
+| Chunked, resumable, or range transfers | Proposed | APIs currently buffer whole blobs; remote frames default to 4 MiB including protocol overhead. These features require separate framing and integrity decisions. |
+
+### Implementation entry points
+
+- [Fluid storage adapter](packages/sea-driver/src/storage.ts): `uploadBlobs`, `flattenSummary`, `downloadSummary`, and `readBlob` own upload admission, handle reuse, full-summary retrieval, and cache-policy metadata.
+- [Fluid session client](packages/sea-driver/src/sessionClient.ts): `uploadBlob`, `fetchBlob`, `publishDirectory`, and `flattenDirectory` bridge the adapter to neutral sessions and currently traverse directories sequentially.
+- [Shared native/browser session client](crates/sea-webtransport/src/native.rs): `SessionClient::content_request` holds the content-stream mutex across the response; `put_blob` and `get_blob` transfer whole payloads.
+- [Wire protocol](crates/sea-webtransport/src/protocol.rs) and [server dispatch](crates/sea-webtransport-server/src/dispatch.rs): own message shapes, correlation, completion, and routing. Use the [transport guide](crates/sea-webtransport/README.md) for stream ownership and cancellation contracts.
+- [Blob storage contract](crates/sea-core/src/storage/blob_store.rs) and [session contract](crates/sea-core/src/session.rs): own immutable content and availability semantics; transfer hints must not weaken them.
+- [Compression](crates/sea-compression/README.md) and [encryption](crates/sea-encryption/README.md): own payload transforms. Current identities name encoded stored bytes, including ciphertext when encryption is enabled; directories remain visible.
+
+### Cache knowledge, demand, and budgets
+
+These are separate inputs to a transfer decision and should remain separately interpretable even if encoded in one versioned hint.
+They can apply to initial open/load and subsequent content requests.
+
+**Cache knowledge** estimates what the receiver already has.
+It can be explicit (digest lists or Bloom filters), coarse (assume everything or nothing is cached), or inferred from prior uploads and downloads.
+An explicit request for an object overrides approximate cache knowledge; a false positive must never prevent an authorized fetch.
+Define the scope, memory bound, and invalidation rules for inferred knowledge across reconnects, document changes, client eviction, and service retention changes.
+
+The service's directory-availability guarantee includes all descendants; a client's cached directory does not imply cached descendants.
+Knowing that the client has a directory can avoid sending that directory again, but must not automatically prevent traversing it to find wanted descendants.
+A client that has held a directory for some time may have requested those descendants already; recently delivered directories may not have allowed time for a round trip, and application demand can change.
+Long service retention makes assuming that the service still has previously available content a useful upload heuristic, not proof of continued availability in the relevant document scope.
+Reference publication must still verify availability, with missing-content recovery following the operation's normal rejection and identity rules rather than blind retry.
+
+**Demand** describes what the receiver wants now, independently of what it has.
+Shallow/deep traversal can resemble the transfer behavior of extreme cache assumptions, but shallow means "do not send descendants now," not "I have the descendants."
+Path inclusion and exclusion patterns can request most of a document while leaving large optional subtrees for later loading.
+Before implementation, define pattern syntax, matching against canonical directory paths, exclusion precedence, and whether traversal may pass through unselected ancestors to reach selected descendants.
+Shared subtrees may occur at multiple paths: path selection must not be lost by deduplicating traversal solely by digest before evaluating demand.
+
+**Budgets** bound transferred bytes, object count, and traversal work, including work that produces no bytes because content is cached or excluded.
+Initial budgets can use simple heuristic sizes without explicit latency knowledge.
+Their purpose is to keep the connection occupied with mostly useful data while further requests arrive, not to maximize batch size.
+A mostly useful batch taking two round trips to transmit can support pipelined requests; adding lower-confidence data beyond that can waste resources and delay wanted content.
+As a separate future improvement, use measured round-trip time, effective throughput, and already queued useful work to size speculation around discovery latency.
+There is no universal one-round-trip batch limit; the relevant question is whether additional speculative work fills otherwise idle time or displaces more useful work.
+Both approaches need hard resource limits, backpressure, cancellation, and priority for explicitly requested content over lower-confidence speculation.
+
+### Recursive fetch and initial load
+
+For a linked chain of tiny directories, independent-request concurrency cannot avoid the discovery dependency: each reply reveals the next digest.
+Server-side traversal can instead send several descendants before another client round trip.
+This requires the client to accept, verify, and retain eagerly supplied objects so later reads can use them without fetching them again.
+
+The initial event open/load request (`OpenEventStream`) should accept the same versioned loading hint as a content request.
+The server can then send selected directories and blobs reachable from the selected snapshot root without waiting for a separate content request or stream-opening exchange.
+Hints must not change snapshot selection or the gap-free event suffix.
+Absent or unknown hint versions must permit ordinary lazy loading; wire encoding must allow unknown hints to be skipped safely.
+
+Define how eager content is framed, correlated, and completed during load, whether it shares the event stream or uses another delivery mechanism, and how scheduling avoids delaying catch-up and live events behind speculative bytes.
+Content completion is distinct from event catch-up; neither implies that every reachable blob has been delivered.
+Every supplied object needs its typed digest and verifiable bytes in the current transformation domain.
+Partial-object delivery, if later added, needs explicit reassembly and integrity semantics rather than treating fragments as published objects.
+
+For subsequent recursive requests, responses may interleave objects from multiple request identifiers and may deduplicate, throttle, or truncate results within the negotiated bounds.
+Send an explicit end-of-request indication when no more objects will be sent, and do not reuse an identifier while its request is active.
+Define completion, truncation, error, and cancellation semantics so omitted descendants remain discoverable and fetchable by digest.
+Return at least one useful object for a truncated request when possible; otherwise report a defined outcome, such as an oversized requested object, rather than permitting an empty retry loop.
+Deduplication across requests must not leave a requester waiting for content whose delivery was cancelled with another request.
+
+### Correctness and security boundaries
+
+Hints affect transfer scheduling only; they do not grant access, establish availability handles, change publication order, or prove retention.
+Current remote sessions are document-bound, and the built-in host does not implement production authentication or tenant policy.
+Do not make a content stream document-independent merely to optimize transfers without defining per-request authority and checking every returned object's authorization.
+Existence probes, cache summaries, and inferred knowledge must not become cross-document or cross-tenant content-discovery oracles.
+A Bloom filter can itself disclose cache membership; define its scope and exposure before using it across trust boundaries.
+
+Cross-document physical deduplication and authorization through a document are separate concerns.
+A non-owning document-to-digest reachability index is one possible authorization aid, but its consistency and interaction with retention remain unresolved.
+Pending uploads are currently retained indefinitely; expiring upload scopes and retention roots belong to the future lifetime design below and must not be assumed to exist for upload negotiation.
+Bound retained client cache state and decompression output as well as network bytes; whole-payload compression and encryption can otherwise hide substantial memory costs.
+
+### Handoff and validation
+
+Start with the smallest independent optimization and update its status only after testing the owning layer and the actual remote path.
+An adapter concurrency test does not prove transport overlap, and storage deduplication does not prove fewer transferred bytes.
+Before wire changes, settle hint versioning, completion, cancellation, and load scheduling; preserve client/server compatibility through the repository's protocol-version policy.
+Follow [Development](DEVELOPMENT.md) for required validation and use existing owning-module, driver, and browser tests where possible.
+
+Acceptance evidence should cover the relevant scenarios:
+
+- Multiple outstanding remote requests actually overlap; responses correlate correctly under interleaving, failure, and cancellation, and work remains bounded.
+- A deep chain of tiny directories loads with fewer request round trips; a wide graph demonstrates useful concurrency and shared-subtree deduplication.
+- Initial-load hints deliver usable snapshot content without a separate request while preserving snapshot selection, gap-free events, and responsiveness.
+- Cache false positives, stale inferred knowledge, cached directories with missing descendants, and changed demand still permit explicit fetch and correct publication rejection/recovery.
+- Path exclusions leave optional subtrees unloaded; shared subtrees reached through included and excluded paths retain correct selection semantics.
+- Budget exhaustion, oversized objects, unknown hints, malformed content, disconnects, and cancellation terminate predictably without unbounded buffering or retry loops.
+- Compression/encryption stacks preserve stored identities and decoded content; targeted Fluid handle reuse preserves path projection and expected-parent conflict checks.
+
+Measure load completion time, request count, transferred bytes, duplicate bytes, unused speculative bytes, peak buffering, traversal work, and event-delivery delay.
+Compare shallow/deep chains, wide trees, partially warm caches, optional large subtrees, and slow consumers across representative latency and bandwidth conditions.
+Do not claim that larger batches are faster without measuring useful work and wasted transfers separately.
+
 ## Future retention model
 
 Every backend needs four logical components:
