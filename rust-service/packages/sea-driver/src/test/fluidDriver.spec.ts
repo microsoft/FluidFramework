@@ -408,6 +408,91 @@ describe("SeaDriver", () => {
 		}
 	});
 
+	it("subscription restart preserves membership, signals, and ordered delivery", async () => {
+		const service = await createMemoryService({ environment: "node" });
+		let sessionOpens = 0;
+		const adapter = new SeaSessionDriverClient(async (...args) => {
+			sessionOpens++;
+			return service.open(...args);
+		}, "readOnly");
+		const document = await adapter.create();
+		const connection = new SeaDeltaConnection(
+			"writer",
+			{
+				clientId: "writer",
+				remoteClientId: "remote",
+				writer: encoder.encode("writer"),
+				cursor: undefined,
+				lastPosition: undefined,
+				remoteClientSequenceNumber: 0,
+				remoteSequenceNumbers: new Map(),
+			},
+			encoder.encode("writer"),
+			document,
+			adapter,
+			{
+				details: { capabilities: { interactive: true } },
+				permission: [],
+				scopes: [],
+				user: { id: "writer" },
+				mode: "write",
+			},
+			"write",
+			[],
+		);
+		const received: number[] = [];
+		const signals: unknown[] = [];
+		connection.on("op", (_document, messages) => {
+			for (const message of messages) {
+				if (message.type === "op") received.push(message.clientSequenceNumber);
+			}
+		});
+		connection.on("signal", (signal) => {
+			for (const message of Array.isArray(signal) ? signal : [signal]) {
+				signals.push(message.content);
+			}
+		});
+		try {
+			await connection.open();
+			const initialOpens = sessionOpens;
+			connection.submit([
+				{
+					clientSequenceNumber: 1,
+					referenceSequenceNumber: connection.checkpointSequenceNumber,
+					type: "op",
+					contents: "before restart",
+				},
+			]);
+			await connection.waitForIdle();
+			await setImmediate();
+			assert.deepEqual(received, [1]);
+			const checkpoint = connection.checkpointSequenceNumber;
+			assert.equal(await connection.restartSubscription(), true);
+			assert.equal(connection.clientId, "writer");
+			assert.equal(sessionOpens, initialOpens);
+			assert.equal(connection.checkpointSequenceNumber, checkpoint);
+			assert.deepEqual(signals, []);
+			connection.submit([
+				{
+					clientSequenceNumber: 2,
+					referenceSequenceNumber: checkpoint,
+					type: "op",
+					contents: "after restart",
+				},
+			]);
+			connection.submitSignal("after restart");
+			await connection.waitForIdle();
+			await setImmediate();
+			assert.deepEqual(received, [1, 2]);
+			assert.deepEqual(signals, ["after restart"]);
+		} finally {
+			connection.dispose();
+			adapter.disconnect();
+			await adapter.reconnect();
+			service.close();
+		}
+	});
+
 	it("pong waits for a service response and ignores failed or disposed measurements", async () => {
 		const service = await createMemoryService({ environment: "node" });
 		const adapter = new SeaSessionDriverClient(service.open, "readOnly");

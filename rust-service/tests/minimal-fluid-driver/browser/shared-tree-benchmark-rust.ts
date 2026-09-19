@@ -18,13 +18,11 @@ import {
 
 import { createMemoryService } from "@fluidframework/sea-typescript/internal/memory";
 import { openWebTransport } from "@fluidframework/sea-typescript/internal/webtransport";
+import { DirectDummyClient } from "../src/directDummy.js";
+import { DirectSharedTreeClient } from "@fluidframework/sea-tree/internal";
 import {
-	DirectDummyClient,
-	DirectSharedTreeClient,
 	type SeaDeltaConnection,
 	SeaDriver,
-} from "../src/index.js";
-import {
 	SeaSessionDriverClient,
 	type SeaDriverClient,
 	type SeaSessionFactory,
@@ -272,7 +270,21 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 				await connection.waitForIdle();
 			}
 			if (performance.now() >= deadline) {
-				throw new Error(`resume probe did not converge edit ${expectedValue}`);
+				throw new Error(
+					`resume probe did not converge edit ${expectedValue}: ${JSON.stringify({
+						expectedCount,
+						writer: {
+							count: firstData.appliedOpCount,
+							value: firstData.value,
+							closed: firstContainer.closed,
+						},
+						observer: {
+							count: secondData.appliedOpCount,
+							value: secondData.value,
+							closed: secondContainer.closed,
+						},
+					})}`,
+				);
 			}
 			await new Promise((resolve) => setTimeout(resolve, 1));
 		}

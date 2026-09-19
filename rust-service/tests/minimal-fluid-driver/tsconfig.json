@@ -1,16 +1,11 @@
 {
-	"extends": "../../../common/build/build-common/tsconfig.base.json",
+	"extends": "../../../common/build/build-common/tsconfig.node20.json",
 	"compilerOptions": {
-		"baseUrl": ".",
-		"declaration": true,
-		"ignoreDeprecations": "6.0",
-		"module": "NodeNext",
-		"moduleResolution": "NodeNext",
 		"outDir": "lib",
 		"rootDir": "src",
 		"skipLibCheck": true,
-		"typeRoots": ["../../../node_modules/.pnpm/node_modules/@types"],
-		"types": ["mocha", "node"],
+		"types": ["node"],
 	},
 	"include": ["src/**/*.ts"],
+	"exclude": ["src/test/**/*"],
 }

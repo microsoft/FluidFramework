@@ -487,18 +487,11 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 		await this.submitChain;
 	}
 
-	/** Reopens the projected subscription from the last consumed cursor. */
+	/** Reopens delivery from the consumed cursor without changing membership or signals. */
 	public async restartSubscription(): Promise<boolean> {
 		const resumedFromCursor = this.lifecycle.cursor !== undefined;
-		await this.stopSubscription();
-		this.renewSession();
-		await this.client.openSession(
-			this.document,
-			this.lifecycle.writer,
-			this.session,
-			this.lifecycle.cursor,
-		);
-		await this.open(true);
+		await this.stopProjectedSubscription();
+		await this.openSubscription();
 		return resumedFromCursor;
 	}
 
@@ -716,7 +709,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 		}
 	}
 
-	/** Cancels and drains the current projected subscription. */
+	/** Stops latency tracking and drains the signal registration and projected subscription. */
 	private async stopSubscription(): Promise<void> {
 		this.latencyTracking = undefined;
 		clearTimeout(this.latencyTimer);
@@ -727,6 +720,11 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 		this.signalPump = undefined;
 		if (signals !== undefined) await signals.close();
 		await signalPump;
+		await this.stopProjectedSubscription();
+	}
+
+	/** Cancels and drains only the event reader, preserving session and relay ownership. */
+	private async stopProjectedSubscription(): Promise<void> {
 		const subscription = this.subscription;
 		this.subscription = undefined;
 		if (subscription !== undefined) {

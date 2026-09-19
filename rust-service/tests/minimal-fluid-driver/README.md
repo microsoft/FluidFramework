@@ -34,12 +34,17 @@ From the repository root:
 
 ```bash
 pnpm install --frozen-lockfile
+pnpm --dir server/routerlicious install --frozen-lockfile
 pnpm --dir rust-service/tests/minimal-fluid-driver run build
 pnpm --dir rust-service/tests/minimal-fluid-driver test
 ```
 
 The package `build` script builds dependencies, generates the Rust WASM packages, checks formatting and lint, typechecks, and builds all browser bundles.
-The package `test` script depends on that complete build and runs the remaining harness tests, package-owned driver and direct SharedTree regressions, neutral Node WASM tests and type assertions, and real Chromium WebTransport tests.
+The package `test` script depends on that complete build and runs the harness Mocha tests, package-owned driver and direct SharedTree regressions, neutral session tests and type assertions, and the real Chromium transport matrix.
+Ordinary `test:mocha:esm` discovery includes four integration and payload tests and all ten benchmark cases as correctness tests.
+Without performance mode, the benchmark defaults are one repetition, ten measured operations, and one warmup operation; convergence and resume assertions still run.
+These tests require Chromium, the Rust toolchain, and the separate Routerlicious workspace dependencies for Tinylicious.
+For an incremental correctness run, use `pnpm exec fluid-build rust-service/tests/minimal-fluid-driver --task test:mocha:esm` from the repository root.
 To build and test the entire Rust service, including the Cargo workspace, run `./test.sh` from `rust-service/`.
 
 The neutral package's `build:wasm` task uses verified input/output tracking and skips unchanged generation.
@@ -51,7 +56,8 @@ from Cargo metadata, validate Rust target and `wasm-bindgen` tool versions, and
 model individual generated packages without package-owned globs. The current
 neutral-package task provides hash-based incremental execution.
 
-The remaining Node scenarios verify ServiceClient attachment, reload, and SharedTree collaboration under both presets, plus the captured benchmark payload.
+The harness `src/test/*.spec.ts` suites verify ServiceClient attachment, reload, and SharedTree collaboration under both presets, plus the captured benchmark payload.
+The neighboring `*.bench.ts` suite uses the same Mocha discovery and doubles as benchmark correctness coverage.
 Driver summary and lifecycle regressions run from `sea-driver`; direct SharedTree collaboration runs from `sea-tree`.
 The neutral package's own test command covers sessions and socket mechanics, including snapshot registration replacement and cancellation ownership.
 The real Chromium harness runs the Fluid driver trace, plain and compressed neutral scenarios, ServiceClient collaboration and reopen under both presets with and without compression, and transport/shutdown checks.
@@ -89,7 +95,7 @@ pnpm --dir rust-service/tests/minimal-fluid-driver run bench:build
 
 The build uses Fluid build's dependency graph and declarative WASM task. Unchanged TypeScript dependencies, browser bundles, Rust crates, and generated WASM packages reuse their normal build caches. The installed `wasm-bindgen` CLI version must match the workspace crate version.
 
-Tinylicious belongs to the separate Routerlicious pnpm workspace. Install that workspace once before selecting the Tinylicious case:
+Tinylicious belongs to the separate Routerlicious pnpm workspace. Install that workspace once before running the unfiltered correctness suite or selecting the Tinylicious performance case:
 
 ```bash
 pnpm --dir server/routerlicious install --frozen-lockfile
@@ -145,7 +151,8 @@ Configure the workload through environment variables:
 
 `turns` is the default throughput workload: it flushes one edit per Fluid batch without waiting for observer convergence after each edit, then waits for final convergence. `batched` has the same synchronization behavior but is intended for an explicit `BENCHMARK_OPERATIONS_PER_TURN` or `--operations-per-turn` value above one. `messages` waits for both containers to observe every edit before continuing, providing an unambiguous one-operation-per-convergence latency workload.
 
-The defaults favor quick directional throughput comparisons. Increase repetitions and operations explicitly when collecting more stable performance data.
+The table lists performance-mode defaults, enabled by `bench` and `bench:run`.
+The performance defaults favor quick directional throughput comparisons. Increase repetitions and operations explicitly when collecting more stable performance data.
 
 The event-author stream removes a per-operation WebTransport stream-open latency floor.
 On the same Linux host and Chromium 152, a three-repetition `rust-memory-direct` run with 100 measured dummy operations improved from 37.86 to 2,295.24 operations/s after stream reuse.

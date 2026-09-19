@@ -173,6 +173,8 @@ A submission remains pending until its acknowledgment arrives or its projected l
 Write failure or response loss rejects `waitForIdle()` without discarding pending identity.
 Explicit recovery and transformed resubmission follow the terminal-prefix contract above; a single `notCommitted` lookup does not authorize replay.
 Reconnect replaces the projected-operation subscription, resuming from the last projected cursor.
+`restartSubscription()` replaces only the projected reader from its consumed cursor, preserving the Fluid client identity, writer membership, signal registration, and submission sequence.
+It does not perform session recovery or reannounce membership; later operations continue through the existing Fluid connection.
 Disconnect and disposal close or cancel their owned resources.
 Disposal is synchronous at the Fluid interface boundary while session close and subscription cancellation finish asynchronously.
 

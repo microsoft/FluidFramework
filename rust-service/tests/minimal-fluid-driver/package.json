@@ -14,7 +14,7 @@
 	"type": "module",
 	"scripts": {
 		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha --parentProcess",
-		"bench:build": "fluid-build . --task build:esm --task build:benchmarks",
+		"bench:build": "fluid-build . --task build:test:esm --task build:benchmarks",
 		"bench:run": "node scripts/run-benchmark.mjs",
 		"benchmark:local": "node browser/run-shared-tree-benchmark.mjs local",
 		"benchmark:rust": "node browser/run-shared-tree-benchmark.mjs rust",
@@ -29,6 +29,7 @@
 		"build:driver-trace": "esbuild browser/trace.mjs --bundle --format=esm --platform=browser --outfile=dist/driver-trace.js --external:@fluidframework/sea-typescript/internal/* --log-level=warning --log-override:package.json=silent",
 		"build:esm": "tsc --project ./tsconfig.json",
 		"build:shared-tree": "esbuild browser/shared-tree-trace.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-trace.js --external:@fluidframework/sea-typescript/internal --log-level=warning --log-override:package.json=silent",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:format": "biome format src browser scripts package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html shared-tree-benchmark-rust.html shared-tree-benchmark-local.html shared-tree-benchmark-tinylicious.html",
 		"clean": "rimraf --glob dist lib pkg \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"format": "biome format src browser scripts package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html shared-tree-benchmark-rust.html shared-tree-benchmark-local.html shared-tree-benchmark-tinylicious.html --write",
@@ -36,8 +37,7 @@
 		"test": "pnpm run build && pnpm run test:all",
 		"test:all": "fluid-build . --task test:all",
 		"test:browser": "SEA_BROWSER_SKIP_BUILD=1 ../webtransport-browser/run-test.sh",
-		"test:node": "node --test lib/capturedSharedTreeOperation.test.js lib/seaPackages.test.js",
-		"test:wasm": "pnpm --dir ../../packages/sea-typescript test",
+		"test:mocha:esm": "mocha",
 		"typecheck": "tsc --project tsconfig.json --noEmit --tsBuildInfoFile ./tsconfig.typecheck.tsbuildinfo",
 		"typecheck:shared-tree": "tsc --project tsconfig.shared-tree.json"
 	},
@@ -87,6 +87,7 @@
 				"dependsOn": [
 					"build:driver-trace",
 					"build:esm",
+					"build:test:esm",
 					"typecheck:shared-tree",
 					"build:shared-tree",
 					"build:benchmarks"
@@ -94,9 +95,6 @@
 				"script": false
 			},
 			"build:driver-trace": [
-				"^build:package:esm"
-			],
-			"build:esm": [
 				"^build:package:esm"
 			],
 			"typecheck": [
@@ -114,10 +112,10 @@
 			"test:all": {
 				"dependsOn": [
 					"test:browser",
-					"test:node",
-					"test:wasm",
+					"test:mocha:esm",
 					"@fluidframework/sea-driver#test:mocha:esm",
-					"@fluidframework/sea-tree#test:mocha:esm"
+					"@fluidframework/sea-tree#test:mocha:esm",
+					"@fluidframework/sea-typescript#test:mocha:esm"
 				],
 				"script": false
 			},
@@ -126,11 +124,9 @@
 				"build:shared-tree",
 				"@fluidframework/sea-typescript#build:test:esm"
 			],
-			"test:node": [
-				"build:esm"
-			],
-			"test:wasm": [
-				"@fluidframework/sea-typescript#build:test:esm"
+			"test:mocha:esm": [
+				"...",
+				"build:benchmarks"
 			]
 		}
 	}

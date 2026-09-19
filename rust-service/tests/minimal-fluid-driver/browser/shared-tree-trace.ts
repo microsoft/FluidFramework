@@ -26,8 +26,9 @@ import {
 	openWebTransport,
 	type SeaSession,
 } from "@fluidframework/sea-typescript/internal";
-import { type SeaDeltaConnection, SeaDriver } from "../src/index.js";
 import {
+	type SeaDeltaConnection,
+	SeaDriver,
 	createSeaServiceClient,
 	SeaSessionDriverClient,
 } from "@fluidframework/sea-driver/internal";
