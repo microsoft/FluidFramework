@@ -131,7 +131,7 @@ await new Promise((resolve, reject) => {
 	server.listen(httpPort, "127.0.0.1", resolve);
 });
 const debugPort = await freePort();
-const profile = await mkdtemp(join(tmpdir(), "minimal-fluid-driver-"));
+const profile = await mkdtemp(join(tmpdir(), "sea-integration-tests-"));
 const pageParameters = new URLSearchParams(query);
 pageParameters.set("transport", transportUrl);
 pageParameters.set("hash", certificateHash);

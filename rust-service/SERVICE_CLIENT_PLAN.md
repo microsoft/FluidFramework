@@ -36,7 +36,7 @@ Make adding another configuration, such as compression, a small extension of the
 | TypeScript package conventions | [sea-driver](packages/sea-driver/README.md) and its [manifest](packages/sea-driver/package.json); reuse conventions, not Fluid-specific dependencies. |
 | ServiceClient | [Shared contract](../packages/common/driver-definitions/src/serviceClient.ts), [Tinylicious implementation](../packages/drivers/tinylicious-driver/src/tinyliciousService.ts), and [runtime helpers](../packages/runtime/runtime-utils/src/serviceClientUtils.ts). |
 | Example selection and bundling | [Example helpers](../examples/utils/example-utils/src/exampleApp.ts), [webpack configuration helper](../examples/utils/webpack-fluid-loader/src/appConfig.ts), and [inventory-app guide](../examples/data-objects/inventory-app/README.md). |
-| Browser validation | [WebTransport harness](tests/webtransport-browser/README.md) and [Fluid integration harness](tests/minimal-fluid-driver/README.md). |
+| Browser validation | [WebTransport harness](tests/webtransport-browser/README.md) and [Fluid integration harness](tests/sea-integration-tests/README.md). |
 
 ## Design Boundaries
 

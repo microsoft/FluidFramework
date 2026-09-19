@@ -2,7 +2,7 @@
 
 This folder contains cross-language and browser integration harnesses whose generated outputs remain ignored.
 
-- [`minimal-fluid-driver/`](minimal-fluid-driver/) retains Fluid/SharedTree integration scenarios, browser traces, benchmarks, and aggregate package-test orchestration.
+- [`sea-integration-tests/`](sea-integration-tests/) retains Fluid/SharedTree integration scenarios, browser traces, benchmarks, and aggregate package-test orchestration.
 - [`wasm-client/`](wasm-client/) documents package-owned neutral Node WASM validation.
 - [`webtransport-browser/`](webtransport-browser/) validates browser WebTransport against the native service with certificate pinning.
 

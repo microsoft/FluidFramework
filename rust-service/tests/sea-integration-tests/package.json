@@ -1,13 +1,13 @@
 {
-	"name": "@fluid-experimental/minimal-wasm-driver",
+	"name": "@fluid-internal/sea-integration-tests",
 	"version": "3.2.0",
 	"private": true,
-	"description": "Minimal Fluid driver integration for the experimental Rust service.",
+	"description": "Fluid and SharedTree integration tests and benchmarks for the Sea Rust service.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "rust-service/tests/minimal-fluid-driver"
+		"directory": "rust-service/tests/sea-integration-tests"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",

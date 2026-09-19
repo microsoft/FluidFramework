@@ -16848,7 +16848,7 @@ importers:
         specifier: ~6.0.3
         version: 6.0.3
 
-  rust-service/tests/minimal-fluid-driver:
+  rust-service/tests/sea-integration-tests:
     dependencies:
       '@fluidframework/container-loader':
         specifier: workspace:~

@@ -12,7 +12,7 @@ They use the root pnpm workspace and Fluid build graph.
 All current exports are `@internal` and are available through each package's `/internal` entrypoint.
 `sea-typescript` owns WebAssembly (WASM) generation and loading; `sea-driver` owns the Fluid projection over neutral sessions.
 Each package owns its focused regressions and type fixtures.
-The [integration harness](../tests/minimal-fluid-driver/README.md) retains browser setup, SharedTree-based ServiceClient scenarios, comparison benchmarks, and aggregate test orchestration.
+The [integration harness](../tests/sea-integration-tests/README.md) retains browser setup, SharedTree-based ServiceClient scenarios, comparison benchmarks, and aggregate test orchestration.
 
 `sea-tree` depends on `sea-driver` and SharedTree.
 `sea-driver` must not depend on SharedTree or `sea-tree`, including through workspace development dependencies, so SharedTree can use the driver in its own tests without a dependency cycle.

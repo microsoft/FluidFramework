@@ -94,7 +94,7 @@ The socket artifact does not support compression.
 - Read this plan's acceptance criteria and review boundary; the [main integration plan](SERVICE_CLIENT_PLAN.md) supplies dependency context, not additional assigned stages.
 - Read [Sea architecture](SEA_ARCHITECTURE.md), [Known Issues](KNOWN_ISSUES.md), and [Development](DEVELOPMENT.md) before implementation.
 - Check the assigned worktree path, branch, HEAD, and working-tree status; preserve existing changes and confirm ownership before editing shared test infrastructure.
-- Use the [existing Fluid harness](tests/minimal-fluid-driver/README.md), [Node socket regression](packages/sea-typescript/test/websocket.test.mjs), and [sea-driver manifest](packages/sea-driver/package.json) for initialization, package entrypoints, and behavioral limits.
+- Use the [existing Fluid harness](tests/sea-integration-tests/README.md), [Node socket regression](packages/sea-typescript/test/websocket.test.mjs), and [sea-driver manifest](packages/sea-driver/package.json) for initialization, package entrypoints, and behavioral limits.
 - Confirm the extension points above before editing; the minimal Fluid harness is a reference, not the registration target.
 - Check installed tools, worktree-local dependencies and generated artifacts, and service startup prerequisites; record missing prerequisites as blocked validation, not behavioral test results.
 - Install dependencies in this worktree with the frozen lockfile before implementation validation; do not share an outer `node_modules` symlink or assume ignored outputs were copied with Git.

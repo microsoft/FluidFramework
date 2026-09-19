@@ -20,7 +20,7 @@ The default is `all`; an explicit value takes precedence over the legacy flags s
 Invalid values fail before building or starting a server.
 Each final scenario prints `TRANSPORT_MODE`, browser results, shutdown results, and server cleanup evidence.
 
-The first flow runs the [Fluid driver trace](../minimal-fluid-driver/README.md) through neutral WebTransport sessions.
+The first flow runs the [Fluid driver trace](../sea-integration-tests/README.md) through neutral WebTransport sessions.
 It checks summary reload, two-client push delivery, explicit pending recovery and resubmission, duplicate-free reconnect, and bounded history.
 
 The package flow runs four fresh pages: split and combined loader presets, each with plain and compressed sessions.

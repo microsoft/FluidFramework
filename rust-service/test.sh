@@ -8,7 +8,7 @@ set -euo pipefail
 service_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 cd "$service_root"
 
-pnpm --dir tests/minimal-fluid-driver run build
+pnpm --dir tests/sea-integration-tests run build
 cargo test --workspace --all-targets --all-features
 # The build above satisfies test:all's prerequisites without traversing the build graph twice.
-pnpm --dir tests/minimal-fluid-driver run test:all
+pnpm --dir tests/sea-integration-tests run test:all

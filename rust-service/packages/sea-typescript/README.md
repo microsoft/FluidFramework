@@ -223,7 +223,7 @@ Both client-selected/durable-file and SEA-selected/memory configurations passed 
 With a running development server and certificate from the [browser harness](../../tests/webtransport-browser/README.md), run from `rust-service/`:
 
 ```bash
-node tests/minimal-fluid-driver/browser/run-headless.mjs packages/sea-typescript <WEBTRANSPORT_URL> <CERTIFICATE_SHA256_WITHOUT_COLONS> __seaPackageResult browser.html
+node tests/sea-integration-tests/browser/run-headless.mjs packages/sea-typescript <WEBTRANSPORT_URL> <CERTIFICATE_SHA256_WITHOUT_COLONS> __seaPackageResult browser.html
 ```
 
 The existing runner is test orchestration only; this package has no dependency on the Fluid harness, driver, runtime, or SharedTree.

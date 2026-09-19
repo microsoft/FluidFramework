@@ -35,8 +35,8 @@ From the repository root:
 ```bash
 pnpm install --frozen-lockfile
 pnpm --dir server/routerlicious install --frozen-lockfile
-pnpm --dir rust-service/tests/minimal-fluid-driver run build
-pnpm --dir rust-service/tests/minimal-fluid-driver test
+pnpm --dir rust-service/tests/sea-integration-tests run build
+pnpm --dir rust-service/tests/sea-integration-tests test
 ```
 
 The package `build` script builds dependencies, generates the Rust WASM packages, checks formatting and lint, typechecks, and builds all browser bundles.
@@ -44,7 +44,7 @@ The package `test` script depends on that complete build and runs the harness Mo
 Ordinary `test:mocha:esm` discovery includes four integration and payload tests and all ten benchmark cases as correctness tests.
 Without performance mode, the benchmark defaults are one repetition, ten measured operations, and one warmup operation; convergence and resume assertions still run.
 These tests require Chromium, the Rust toolchain, and the separate Routerlicious workspace dependencies for Tinylicious.
-For an incremental correctness run, use `pnpm exec fluid-build rust-service/tests/minimal-fluid-driver --task test:mocha:esm` from the repository root.
+For an incremental correctness run, use `pnpm exec fluid-build rust-service/tests/sea-integration-tests --task test:mocha:esm` from the repository root.
 To build and test the entire Rust service, including the Cargo workspace, run `./test.sh` from `rust-service/`.
 
 The neutral package's `build:wasm` task uses verified input/output tracking and skips unchanged generation.
@@ -90,7 +90,7 @@ Install the root workspace and incrementally build the benchmark package from th
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm --dir rust-service/tests/minimal-fluid-driver run bench:build
+pnpm --dir rust-service/tests/sea-integration-tests run bench:build
 ```
 
 The build uses Fluid build's dependency graph and declarative WASM task. Unchanged TypeScript dependencies, browser bundles, Rust crates, and generated WASM packages reuse their normal build caches. The installed `wasm-bindgen` CLI version must match the workspace crate version.
@@ -104,13 +104,13 @@ pnpm --dir server/routerlicious install --frozen-lockfile
 Run all cases with the quick default performance configuration of three repetitions, 250 measured edits, 10 warmup edits, and one edit per Fluid batch without per-batch synchronization:
 
 ```bash
-pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run
+pnpm --dir rust-service/tests/sea-integration-tests run bench:run
 ```
 
 Use case aliases and flags for focused runs:
 
 ```bash
-pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run -- \
+pnpm --dir rust-service/tests/sea-integration-tests run bench:run -- \
   --case rust-memory,rust-durable \
 	--dds shared-tree \
   --workload messages \
@@ -118,7 +118,7 @@ pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run -- \
   --warmup 100
 ```
 
-Run `pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run -- --help` for all flags. Case aliases are:
+Run `pnpm --dir rust-service/tests/sea-integration-tests run bench:run -- --help` for all flags. Case aliases are:
 
 - `rust-local`: Rust local memory
 - `rust-local-direct`: Rust local memory without the Fluid container/runtime
@@ -162,7 +162,7 @@ These are directional development measurements comparing baseline commit `b16f8d
 The comparison used this command in a clean checkout of each source commit:
 
 ```bash
-pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run -- \
+pnpm --dir rust-service/tests/sea-integration-tests run bench:run -- \
   --case rust-memory-direct \
   --dds dummy \
   --repetitions 3 \
@@ -180,7 +180,7 @@ The report suite name includes the effective workload, operation count, warmup c
 For example, compare selected cases using strict message delivery:
 
 ```bash
-pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run -- \
+pnpm --dir rust-service/tests/sea-integration-tests run bench:run -- \
   --case rust-memory,local \
   --workload messages \
   --operations 1000 \
@@ -194,7 +194,7 @@ After a successful setup run, pass `--skip-build` for the shortest rerun path. T
 Select one configuration and provide a Chromium profile base path:
 
 ```bash
-pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run -- \
+pnpm --dir rust-service/tests/sea-integration-tests run bench:run -- \
   --case rust-memory \
   --workload messages \
   --operations 1000 \

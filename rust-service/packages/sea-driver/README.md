@@ -25,7 +25,7 @@ The package has no SharedTree dependency, including through workspace developmen
 It does not generate or load WebAssembly (WASM), start a service, or select a transport.
 `SeaSessionDriverClient` adapts a neutral `sea-typescript` session supplied by an injected `SeaSessionFactory`.
 The factory retains the selected service and compression configuration and returns fresh membership for each create or open.
-The [integration harness](../../tests/minimal-fluid-driver/README.md) provides local and WebTransport examples through the neutral package entrypoints.
+The [integration harness](../../tests/sea-integration-tests/README.md) provides local and WebTransport examples through the neutral package entrypoints.
 
 ```typescript
 import { SeaDriver, SeaSessionDriverClient } from "@fluidframework/sea-driver/internal";
@@ -196,7 +196,7 @@ The package build compiles TypeScript, generates entrypoints and API reports, an
 Package-owned Mocha suites exercise the implementation entrypoint, including incremental summaries, stale-parent rejection, neutral-session initialization and startup cleanup, submission recovery, lifecycle races, and dependency isolation.
 The build compiles the separate test project; the test command uses the shared Fluid Mocha setup and reporters.
 To build and test in one step, run `pnpm exec fluid-build rust-service/packages/sea-driver --task test:mocha:esm` from the repository root.
-The [integration harness](../../tests/minimal-fluid-driver/README.md) retains SharedTree-based ServiceClient scenarios, browser traces, and benchmarks and includes these package tests in its aggregate command.
+The [integration harness](../../tests/sea-integration-tests/README.md) retains SharedTree-based ServiceClient scenarios, browser traces, and benchmarks and includes these package tests in its aggregate command.
 The real Chromium SharedTree trace covers collaboration, explicit disconnect/recovery, and reload using the neutral remote factory.
 Eight consecutive migrated runs passed after fixing interrupted archive reads during membership replacement and author collisions between read-first containers.
 Deterministic Node regressions cover both ownership boundaries.

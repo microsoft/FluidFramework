@@ -21,7 +21,7 @@ This is a speculative learning project, not a proposed production replacement fo
 | Run and configure the native server | [WebTransport server](crates/sea-webtransport-server/README.md) |
 | Use the native or browser client | [WebTransport client](crates/sea-webtransport/README.md) |
 | Use the Fluid driver or direct SharedTree integration | [TypeScript packages](packages/README.md) |
-| Run Fluid and SharedTree integration tests | [Integration harness](tests/minimal-fluid-driver/README.md) |
+| Run Fluid and SharedTree integration tests | [Integration harness](tests/sea-integration-tests/README.md) |
 | Run browser transport tests | [Browser harness](tests/webtransport-browser/README.md) |
 | Measure performance | [Benchmarks](BENCHMARKS.md) |
 

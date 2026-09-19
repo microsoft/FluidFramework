@@ -40,7 +40,7 @@ For `sea-typescript`, those inputs include Rust-service Cargo manifests, `Cargo.
 Documentation-only Rust-service changes do not require the repository build.
 
 The installed `wasm-bindgen` CLI must match the dependency version pinned by `sea-wasm`, which owns the generated bindings.
-See the [browser harness](tests/webtransport-browser/README.md) for the real Chromium WebTransport command and the [Fluid integration harness](tests/minimal-fluid-driver/README.md) for the SharedTree trace.
+See the [browser harness](tests/webtransport-browser/README.md) for the real Chromium WebTransport command and the [Fluid integration harness](tests/sea-integration-tests/README.md) for the SharedTree trace.
 Browser validation exercises both client-selected and Sea-selected snapshot participation without changing the server protocol or binary.
 
 ## Documentation Policy

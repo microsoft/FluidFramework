@@ -26,7 +26,7 @@ node scripts/check-documentation.mjs
 The measurement scripts set source commit, build profile, filesystem, and storage-device metadata. They do not retain results automatically. Redirect exploratory output outside [`../benchmarks/`](../historical/benchmarks/); evidence belongs there only after its procedure, schema, and limitations are reviewed and documented.
 
 The historical Wave 3 runner was retired during final core-migration acceptance because its network/backend cells no longer exist.
-Historical reports remain unchanged; use `measure-benchmarks.sh` for current storage/decorator measurements and the [Fluid driver's benchmark runner](../tests/minimal-fluid-driver/README.md) for current local and WebTransport workflows.
+Historical reports remain unchanged; use `measure-benchmarks.sh` for current storage/decorator measurements and the [Fluid driver's benchmark runner](../tests/sea-integration-tests/README.md) for current local and WebTransport workflows.
 Their results are not directly comparable with the retired matrix.
 
 The scripts require Bash, Node.js, Cargo, Git, tar, and standard Linux utilities used directly in their source. They add no dependencies and must leave the assigned `Cargo.toml`, `Cargo.lock`, and retained benchmark evidence unchanged.

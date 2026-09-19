@@ -31,7 +31,7 @@ This is not a Fluid driver or container implementation.
 The host does not implement snapshot persistence, snapshot loading, or automatic reconnect and recovery.
 It consumes an injected client and does not generate or initialize WebAssembly (WASM).
 The [neutral package](../sea-typescript/README.md) supplies concrete sessions for the package-owned collaboration test.
-The [integration harness](../../tests/minimal-fluid-driver/README.md) supplies browser comparison benchmarks.
+The [integration harness](../../tests/sea-integration-tests/README.md) supplies browser comparison benchmarks.
 
 ## Development
 

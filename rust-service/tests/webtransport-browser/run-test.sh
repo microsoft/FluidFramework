@@ -61,7 +61,7 @@ export CARGO_TARGET_DIR="$temporary_root/target"
 # calling this script. Direct invocation remains self-contained.
 if [[ "${SEA_BROWSER_SKIP_BUILD:-}" != "1" ]]; then
 	pnpm --dir packages/sea-typescript run build
-	pnpm --dir tests/minimal-fluid-driver exec fluid-build . --task build:driver-trace --task build:shared-tree
+	pnpm --dir tests/sea-integration-tests exec fluid-build . --task build:driver-trace --task build:shared-tree
 fi
 sh tests/webtransport-browser/generate-cert.sh "$temporary_root/certs"
 server_features=()
@@ -118,20 +118,20 @@ start_server() {
 }
 
 run_shared_scenarios() {
-	node tests/minimal-fluid-driver/browser/run-headless.mjs \
-		tests/minimal-fluid-driver \
+	node tests/sea-integration-tests/browser/run-headless.mjs \
+		tests/sea-integration-tests \
 		"$SEA_BROWSER_WEBTRANSPORT_URL" \
 		"$(cat "$temporary_root/certs/cert.sha256")"
 
 	for preset in split combined; do
 		for compression in false true; do
-			node tests/minimal-fluid-driver/browser/run-headless.mjs \
+			node tests/sea-integration-tests/browser/run-headless.mjs \
 				packages/sea-typescript \
 				"$SEA_BROWSER_WEBTRANSPORT_URL" \
 				"$(cat "$temporary_root/certs/cert.sha256")" \
 				__seaPackageResult browser.html "snapshotPolicy=${SEA_SNAPSHOT_POLICY:-client}&preset=$preset&compression=$compression"
-			node tests/minimal-fluid-driver/browser/run-headless.mjs \
-				tests/minimal-fluid-driver \
+			node tests/sea-integration-tests/browser/run-headless.mjs \
+				tests/sea-integration-tests \
 				"$SEA_BROWSER_WEBTRANSPORT_URL" \
 				"$(cat "$temporary_root/certs/cert.sha256")" \
 				__sharedTreeResult shared-tree.html "serviceClient=true&preset=$preset&compression=$compression"
