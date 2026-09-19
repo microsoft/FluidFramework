@@ -109,7 +109,8 @@ The two projections are not interoperable within one document; use fresh test do
 It watches snapshot coordination continuously so SEA-selected publication uses the current observed nomination fence.
 Membership replacement waits for admitted archive reads to finish and defers later reads until the replacement opens.
 Each document service retains a unique SEA author for read-first connections, independent of shared projected Fluid client labels.
-Disconnect cancels owned streams and starts membership close; reconnect waits for that cleanup, and the next open calls the injected factory.
+Disconnect cancels owned live streams and prevents new reads, but drains admitted finite archive reads before membership close.
+Reconnect waits for that cleanup, and the next open calls the injected factory.
 Delta disposal also closes its owning session so Fluid pending-state recovery can observe the old client's final leave.
 Cleanup carries the original session identity and cannot close a newer replacement sharing the same adapter.
 Transferred projected subscriptions remain cancellation-owned by their driver consumer.

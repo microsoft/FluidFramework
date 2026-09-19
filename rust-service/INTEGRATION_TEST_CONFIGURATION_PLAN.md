@@ -207,6 +207,14 @@ The combined real-service benchmark passes with test-body times of 704ms and 295
 Final combined validation passed: package build, root `pnpm build:fast`, scoped policy, documentation links, and complete canonical `./test.sh`.
 No generated API report or shared test assertion changed.
 
+With TCP delays removed at `348d780b390`, the full suite exposed a read-to-write replacement race in `Audience correctness / should add clients in audience as expected in write mode` (45 passing, 31 pending, one failing).
+A temporary listener probe found no unobserved operations; telemetry instead showed admitted finite archive reads cancelled by delta disposal closing their shared session.
+Disconnect now prevents new reads and drains admitted finite reads before closing; all four unchanged audience tests pass in 375ms.
+The existing suspended-read regression now includes explicit disconnect before replacement and proves both old-read completion and deferral of later reads.
+All 16 owning tests, package/root builds, scoped policy, documentation checks, and complete canonical `./test.sh` pass; probes are removed and no API report changes are needed.
+The next full `--bail` run reaches 108 passing and 38 pending, including the large summary benchmarks, then fails `blobs (createBlobPayloadPending: undefined) / attach sends an op` with `SEA session is not open` during upload.
+That remaining content-operation admission gap is separate from the committed upload pipeline and the finite-read disposal fix; no exclusions were added.
+
 For each observed failure, record the exact test name and command, source revision, failure signature, setup versus behavioral classification, reproduction steps, and relevant known limitation.
 Keep unsupported contracts visible, including signals, presence, synthetic membership, automatic reconnect, authentication, and garbage collection; do not weaken shared assertions to hide them.
 

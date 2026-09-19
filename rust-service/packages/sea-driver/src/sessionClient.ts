@@ -452,7 +452,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		});
 	}
 
-	/** Stops owned streams immediately and retains asynchronous membership close for reopening. */
+	/** Stops owned streams immediately, then drains finite reads before closing membership. */
 	public disconnect(owner?: Uint8Array): void {
 		if (
 			owner !== undefined &&
@@ -472,7 +472,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		const session = this.session;
 		this.session = undefined;
 		if (session !== undefined) {
-			this.closing = session.close();
+			this.closing = Promise.allSettled([...this.archiveReads]).then(() => session.close());
 			void this.closing.catch(() => {});
 		}
 	}

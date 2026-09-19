@@ -483,7 +483,7 @@ test("neutral session driver cancels startup history when initialization is inva
 	}
 });
 
-test("neutral session replacement drains storage reads and defers later reads", async () => {
+test("neutral session disposal drains storage reads and replacement defers later reads", async () => {
 	const service = await createMemoryService({ environment: "node" });
 	let releaseRead = (): void => {};
 	const blocked = new Promise<void>((resolve) => {
@@ -518,6 +518,7 @@ test("neutral session replacement drains storage reads and defers later reads", 
 	const blob = await adapter.uploadBlob(payload);
 	const reading = adapter.fetchBlob(blob.digest);
 	await entered;
+	adapter.disconnect();
 	const replacement = adapter.openSession(
 		document,
 		encoder.encode("writer"),
@@ -534,7 +535,7 @@ test("neutral session replacement drains storage reads and defers later reads", 
 		assert.equal(
 			firstClosed,
 			false,
-			"replacement must not close a session with an admitted storage read",
+			"disposal must not close a session with an admitted storage read",
 		);
 		assert.equal(laterCompleted, false, "new reads must wait for membership replacement");
 		releaseRead();
