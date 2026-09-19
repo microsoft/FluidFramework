@@ -3,6 +3,22 @@
 This file tracks current limitations of the experimental Sea implementation and its development tooling.
 Historical architecture findings remain in `decisions/` and `iterations/`.
 
+## Rust CI support
+
+- **Status:** Open
+- **Severity:** High
+- **Area:** Azure DevOps continuous integration (CI) and dependency restoration
+- **Evidence:** [Build 424362, log 57](https://dev.azure.com/fluidframework/internal/_apis/build/builds/424362/logs/57) fails while building `@fluidframework/sea-typescript` on 2026-09-19.
+  Rust 1.98.1 installs successfully, but Cargo cannot connect to `index.crates.io:443` to download the registry configuration and resolve `bytes`.
+  This is consistent with CI network isolation; the Azure DevOps pipeline configures npm feeds but has no equivalent Cargo source replacement.
+- **Impact:** The client build fails before completing the generated WebAssembly (WASM) artifacts.
+- **Follow-up:** Add crates.io as an upstream to the existing Fluid Azure Artifacts feed used for npm, subject to the required approval.
+  Configure CI-scoped Cargo source replacement and `CargoAuthenticate@0`, and verify that the build identity has permission to save packages from the upstream.
+  Preserve existing dependency declarations and lockfiles, and keep public development independent of internal feed access.
+  Provision the pinned Rust toolchain, `wasm32-unknown-unknown` target, and pinned `wasm-bindgen-cli` through approved paths; Cargo feeds do not provide rustup toolchain or target downloads.
+  See [Azure Artifacts Cargo upstream guidance](https://learn.microsoft.com/en-us/azure/devops/artifacts/cargo/cargo-upstream-source?view=azure-devops).
+- **Trigger:** Close after a fresh network-isolated CI build restores dependencies through the approved feed and completes the WASM and client builds without direct crates.io access.
+
 ## VS Code terminal tools can interfere across subagents
 
 - **Status:** Open; coordination workaround available
