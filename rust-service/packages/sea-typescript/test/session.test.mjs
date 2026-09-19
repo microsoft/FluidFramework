@@ -4,10 +4,77 @@
  */
 
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { createMemoryService } from "@fluidframework/sea-typescript/internal";
+import ts from "typescript";
+import {
+	createMemoryService as rootCreateMemoryService,
+	openWebTransport as rootOpenWebTransport,
+} from "@fluidframework/sea-typescript/internal";
+import { createMemoryService } from "@fluidframework/sea-typescript/internal/memory";
+import { openWebTransport } from "@fluidframework/sea-typescript/internal/webtransport";
 
 const encode = (text) => new TextEncoder().encode(text);
+
+test("capability entrypoints share factories and reach only lazy capability-specific artifacts", () => {
+	assert.equal(createMemoryService, rootCreateMemoryService);
+	assert.equal(openWebTransport, rootOpenWebTransport);
+	for (const [capability, configurations] of [
+		["memory", ["memory", "memory-compression"]],
+		["webtransport", ["webtransport", "webtransport-compression"]],
+	]) {
+		const visited = new Set();
+		const artifacts = new Set();
+		const visitModule = (url) => {
+			if (visited.has(url.href)) return;
+			visited.add(url.href);
+			const source = ts.createSourceFile(
+				url.pathname,
+				readFileSync(url, "utf8"),
+				ts.ScriptTarget.Latest,
+				true,
+				ts.ScriptKind.JS,
+			);
+			const visitNode = (node) => {
+				const dynamic =
+					ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword;
+				const specifier = dynamic
+					? node.arguments[0]
+					: ts.isImportDeclaration(node) || ts.isExportDeclaration(node)
+						? node.moduleSpecifier
+						: undefined;
+				if (specifier !== undefined && ts.isStringLiteral(specifier)) {
+					assert.ok(specifier.text.startsWith("."), `unexpected dependency ${specifier.text}`);
+					const dependency = new URL(specifier.text, url);
+					const generated = dependency.pathname.match(
+						/\/generated\/([^/]+)\/(node|web)\/sea_wasm\.js$/u,
+					);
+					if (generated === null) {
+						visitModule(dependency);
+					} else {
+						assert.ok(dynamic, "generated artifacts must load lazily");
+						artifacts.add(`${generated[1]}/${generated[2]}`);
+					}
+				}
+				ts.forEachChild(node, visitNode);
+			};
+			visitNode(source);
+		};
+		visitModule(
+			new URL(import.meta.resolve(`@fluidframework/sea-typescript/internal/${capability}`)),
+		);
+		assert.deepEqual(
+			[...artifacts].sort(),
+			configurations
+				.flatMap((configuration) =>
+					capability === "memory"
+						? [`${configuration}/node`, `${configuration}/web`]
+						: [`${configuration}/web`],
+				)
+				.sort(),
+		);
+	}
+});
 
 for (const compression of [false, true]) {
 	test(`package entrypoint supports shared memory sessions (compression=${compression})`, async () => {

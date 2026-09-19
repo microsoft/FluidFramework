@@ -16,24 +16,19 @@ import {
 	createFluidContainer,
 } from "@fluidframework/fluid-static/internal";
 
-import init, * as SeaBindings from "../../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
-import {
-	SeaBrowserTransport,
-	SeaInjectedClient,
-} from "../../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
-import initTestSupport, * as SeaTestBindings from "../../../crates/sea-webtransport/test-support/pkg/web/sea_webtransport_test_support.js";
-import {
-	SeaLocalService,
-	type SeaLocalClient,
-} from "../../../crates/sea-webtransport/test-support/pkg/web/sea_webtransport_test_support.js";
+import { createMemoryService } from "@fluidframework/sea-typescript/internal/memory";
+import { openWebTransport } from "@fluidframework/sea-typescript/internal/webtransport";
 import {
 	DirectDummyClient,
 	DirectSharedTreeClient,
 	type SeaDeltaConnection,
 	SeaDriver,
 } from "../src/index.js";
-import type { SeaDriverClient } from "@fluidframework/sea-driver/internal";
-import { createGeneratedSeaBindingAdapter } from "../src/generatedSeaBinding.js";
+import {
+	SeaSessionDriverClient,
+	type SeaDriverClient,
+	type SeaSessionFactory,
+} from "@fluidframework/sea-driver/internal";
 import {
 	adaptInitialObject,
 	adaptSharedTree,
@@ -86,17 +81,12 @@ function snapshotTransportActivity(activity: TransportActivity): TransportActivi
 	};
 }
 
-/** Adapts a generated remote Sea client to the minimal driver contract. */
-function adaptSeaBrowserClient(
-	client: SeaInjectedClient,
-	reconnect: () => Promise<SeaBrowserTransport>,
-): SeaDriverClient {
-	return createGeneratedSeaBindingAdapter(
-		client,
-		SeaBindings,
-		integration === "direct" ? "SeaSelected" : "ClientSelected",
-		reconnect,
-	);
+/** Lists requested SEA artifacts to distinguish capability loading from page startup. */
+function loadedSeaArtifacts(): string[] {
+	return performance
+		.getEntriesByType("resource")
+		.map((entry) => new URL(entry.name).pathname)
+		.filter((path) => path.includes("/sea-typescript/generated/"));
 }
 
 /** Waits for a Rust-service-backed container to reach Fluid's connected state. */
@@ -130,7 +120,6 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 	if (!local && (transportUrl === null || certificateHex?.length !== 64)) {
 		throw new Error("missing Rust-service transport URL or certificate hash");
 	}
-	await (local ? initTestSupport() : init());
 	const hash = Uint8Array.from(certificateHex?.match(/../gu) ?? [], (value) =>
 		Number.parseInt(value, 16),
 	);
@@ -140,47 +129,53 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		submissionStreams: 0,
 		projectedSubscriptions: 0,
 	};
-	const localService = local ? await SeaLocalService.create() : undefined;
+	const localService = local ? await createMemoryService() : undefined;
+	const factory: SeaSessionFactory =
+		localService?.open ??
+		((document, options) => {
+			if (transportUrl === null) throw new Error("missing Rust-service transport URL");
+			return openWebTransport({ url: transportUrl, certificateHash: hash }, document, options);
+		});
 	const createWasmClient = async (): Promise<SeaDriverClient> => {
-		if (localService !== undefined) {
-			const client: SeaLocalClient = localService.connect();
-			const adapted = createGeneratedSeaBindingAdapter(
-				client,
-				SeaTestBindings,
-				integration === "direct" ? "SeaSelected" : "ClientSelected",
-			);
-			transports.push(adapted);
-			return adapted;
-		}
-		if (transportUrl === null) {
-			throw new Error("missing Rust-service transport URL");
-		}
-		const createTransport = async (): Promise<SeaBrowserTransport> =>
-			SeaBrowserTransport.connect(transportUrl, hash, 1024 * 1024);
-		const transport = await createTransport();
-		const adapted = adaptSeaBrowserClient(
-			new SeaInjectedClient(transport, 1024 * 1024),
-			createTransport,
+		const adapted = new SeaSessionDriverClient(
+			factory,
+			integration === "direct" ? "seaSelected" : "clientSelected",
 		);
 		transports.push(adapted);
 		return adapted;
 	};
+	const closeSessions = async (): Promise<void> => {
+		for (const transport of transports) transport.disconnect();
+		await Promise.all(transports.map(async (transport) => transport.reconnect()));
+		localService?.close();
+	};
 	const deltaConnections: SeaDeltaConnection[] = [];
 	const documentId = `shared-tree-benchmark-${Date.now()}`;
 	if (integration === "direct") {
-		return dataStructure === "shared-tree"
-			? createDirectSharedTreePair(
-					encoder.encode(documentId),
-					createWasmClient,
-					transportActivity,
-					local,
-				)
-			: createDirectDummyPair(
-					encoder.encode(documentId),
-					createWasmClient,
-					transportActivity,
-					local,
-				);
+		const pair =
+			dataStructure === "shared-tree"
+				? await createDirectSharedTreePair(
+						encoder.encode(documentId),
+						createWasmClient,
+						transportActivity,
+						local,
+					)
+				: await createDirectDummyPair(
+						encoder.encode(documentId),
+						createWasmClient,
+						transportActivity,
+						local,
+					);
+		return {
+			...pair,
+			close: async () => {
+				try {
+					await pair.close();
+				} finally {
+					await closeSessions();
+				}
+			},
+		};
 	}
 	if (integration !== "fluid") {
 		throw new Error(`unsupported SharedTree integration ${JSON.stringify(integration)}`);
@@ -317,14 +312,16 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 			await waitForConvergence(firstData.appliedOpCount, probeValue);
 			resumeFirstDeliveryMilliseconds = performance.now() - deliveryStarted;
 		},
-		close: () => {
+		close: async () => {
 			firstData.dispose();
 			secondData.dispose();
 			firstContainer.close();
 			secondContainer.close();
+			await closeSessions();
 		},
 		metrics: () => ({
 			browser: navigator.userAgent,
+			seaArtifacts: loadedSeaArtifacts(),
 			startupTransportActivity,
 			transportActivity: snapshotTransportActivity(transportActivity),
 			wireBytes: null,
@@ -415,6 +412,7 @@ async function createDirectSharedTreePair(
 		},
 		metrics: () => ({
 			browser: navigator.userAgent,
+			seaArtifacts: loadedSeaArtifacts(),
 			integration: "direct",
 			startupTransportActivity,
 			transportActivity: snapshotTransportActivity(transportActivity),
@@ -488,6 +486,7 @@ async function createDirectDummyPair(
 		},
 		metrics: () => ({
 			browser: navigator.userAgent,
+			seaArtifacts: loadedSeaArtifacts(),
 			integration: "direct",
 			startupTransportActivity,
 			transportActivity: snapshotTransportActivity(transportActivity),

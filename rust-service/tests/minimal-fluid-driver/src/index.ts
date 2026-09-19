@@ -12,7 +12,6 @@ export {
 } from "@fluidframework/sea-driver/internal";
 export { DirectDummyClient } from "./directDummy.js";
 export { DirectSharedTreeClient } from "@fluidframework/sea-tree/internal";
-export { decodePosition, encodePosition } from "./generatedSeaBinding.js";
 export type {
 	BlobUpload,
 	ProjectedOperation,

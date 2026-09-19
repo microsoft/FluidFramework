@@ -134,6 +134,21 @@ for (let repetition = 0; repetition < repetitions; repetition++) {
 	if (sample.status !== "passed") {
 		throw new Error(`benchmark repetition ${repetition + 1} failed: ${evidence}`);
 	}
+	if (backend === "rust" || backend === "rust-local") {
+		const configuration = backend === "rust-local" ? "memory" : "webtransport";
+		const expected = ["sea_wasm.js", "sea_wasm_bg.wasm"].map(
+			(file) => `/packages/sea-typescript/generated/${configuration}/web/${file}`,
+		);
+		if (
+			!Array.isArray(sample.seaArtifacts) ||
+			sample.seaArtifacts.length !== expected.length ||
+			expected.some((path) => !sample.seaArtifacts.includes(path))
+		) {
+			throw new Error(
+				`unexpected SEA artifact loading: ${JSON.stringify(sample.seaArtifacts)}`,
+			);
+		}
+	}
 	samples.push(sample);
 }
 

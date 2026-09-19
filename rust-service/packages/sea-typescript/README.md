@@ -3,7 +3,7 @@
 This package provides non-Fluid-specific SEA sessions through package-owned WASM artifacts.
 Its APIs are internal and under active development in the combined foundation phase of the [integration plan](../../SERVICE_CLIENT_PLAN.md).
 Fluid summary tests, direct SharedTree package tests, and the SharedTree browser lifecycle trace now consume this package through the reusable `sea-driver` projection.
-Legacy benchmark and low-level protocol harnesses are still being migrated.
+Browser benchmarks also use the neutral factories; low-level protocol harnesses are still being migrated.
 
 ## Supported Foundation
 
@@ -14,7 +14,7 @@ Sessions expose opaque event submission with optional content references, submis
 Automatic reconnect, implicit retries, authentication, and arbitrary runtime decorator composition are not provided.
 
 ```typescript
-import { createMemoryService } from "@fluidframework/sea-typescript/internal";
+import { createMemoryService } from "@fluidframework/sea-typescript/internal/memory";
 
 const service = await createMemoryService({ environment: "node" });
 const encode = (value: string): Uint8Array => new TextEncoder().encode(value);
@@ -36,6 +36,11 @@ Separate `createMemoryService` calls have independent storage even when their WA
 Memory services do not persist across reloads or share storage across independent browser windows.
 
 ## Bundles and Environments
+
+Import `createMemoryService` from `@fluidframework/sea-typescript/internal/memory` or `openWebTransport` from `@fluidframework/sea-typescript/internal/webtransport` to load only the corresponding capability factory.
+These entrypoints share initialization and ownership handling with the existing root `internal` entrypoint.
+Importing a factory does not initialize WASM; its first call loads only the selected artifact.
+The remote factory module has no runtime dependency on the memory factory or its generated bundles.
 
 `createMemoryService` defaults to the browser target and the minimal `memory` artifact.
 Select `environment: "node"` for Node.js.
@@ -80,7 +85,8 @@ pnpm --dir rust-service/packages/sea-typescript run build
 pnpm --dir rust-service/packages/sea-typescript test
 ```
 
-The Node tests use the package entrypoint and cover sharing, isolation, compression, immutable content, events, snapshot reload, cancellation, and capability rejection.
+The Node tests use capability entrypoints and cover sharing, isolation, compression, immutable content, events, snapshot reload, cancellation, and capability rejection.
+An emitted-module import-graph test checks lazy artifact imports and excludes unrelated capabilities and dependencies from each factory entrypoint.
 `browser.html` runs plain and compressed remote sessions through the emitted package entrypoint.
 With a running development server and certificate from the [browser harness](../../tests/webtransport-browser/README.md), run from `rust-service/`:
 
@@ -110,5 +116,15 @@ The driver now drains admitted reads before replacement, defers later reads, and
 Deterministic Node regressions cover both cases.
 The root build, canonical Rust checks, `test.sh`, and focused Node tests do not substitute for this separately invoked SharedTree trace.
 
-Remaining combined-stage work includes legacy benchmark and low-level binding consumer migration, independently importable capability loaders, and incremental missing-artifact rebuild checks.
+Chromium 152 inside the Codespace passed eight small benchmark cases: dummy and SharedTree data structures, Fluid and direct integration, and local memory and remote durable-file WebTransport.
+The benchmark runner requires exactly the selected configuration's generated JavaScript and WASM requests, rejecting unrelated generated-artifact loads.
+These are behavioral and loading checks, not comparative performance measurements.
+
+The neutral package's `build:wasm` task tracks explicit inputs and outputs through its task-level `files` configuration.
+The external Cargo inputs use explicit globs without package-relative gitignore filtering; generated Cargo targets and legacy binding outputs are excluded.
+An unchanged second build skips generation.
+Validation restored all ten targets after removing the generated output tree, regenerated a missing memory WASM file, and rebuilt after temporarily enabling compression in the memory configuration.
+Restoring the minimal configuration rebuilt again and restored unsupported-compression rejection through the package entrypoint.
+
+Remaining combined-stage work includes low-level binding consumer migration and removal of legacy binding ownership without losing transport-specific tests.
 Legacy transport-owned generated exports remain until those consumers migrate; no stage-completion claim is made by these checks.

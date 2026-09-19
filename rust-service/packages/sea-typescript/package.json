@@ -20,6 +20,14 @@
 		"./internal": {
 			"types": "./lib/index.d.ts",
 			"default": "./lib/index.js"
+		},
+		"./internal/memory": {
+			"types": "./lib/memory.d.ts",
+			"default": "./lib/memory.js"
+		},
+		"./internal/webtransport": {
+			"types": "./lib/webtransport.d.ts",
+			"default": "./lib/webtransport.js"
 		}
 	},
 	"scripts": {
@@ -50,24 +58,27 @@
 		"typescript": "~6.0.3"
 	},
 	"fluidBuild": {
-		"declarativeTasks": {
-			"node scripts/build-wasm.mjs": {
-				"inputGlobs": [
-					"package.json",
-					"scripts/build-wasm.mjs",
-					"${repoRoot}/rust-service/Cargo.toml",
-					"${repoRoot}/rust-service/Cargo.lock",
-					"${repoRoot}/rust-service/rust-toolchain.toml",
-					"${repoRoot}/rust-service/crates/**/*.rs",
-					"${repoRoot}/rust-service/crates/**/Cargo.toml"
-				],
-				"outputGlobs": [
-					"generated/**"
-				],
-				"includeLockFiles": false
-			}
-		},
 		"tasks": {
+			"build:wasm": {
+				"files": {
+					"inputGlobs": [
+						"package.json",
+						"scripts/build-wasm.mjs",
+						"${repoRoot}/rust-service/Cargo.toml",
+						"${repoRoot}/rust-service/Cargo.lock",
+						"${repoRoot}/rust-service/rust-toolchain.toml",
+						"${repoRoot}/rust-service/crates/**/*.rs",
+						"${repoRoot}/rust-service/crates/**/Cargo.toml",
+						"!${repoRoot}/rust-service/crates/**/target/**",
+						"!${repoRoot}/rust-service/crates/**/pkg/**"
+					],
+					"outputGlobs": [
+						"generated/**"
+					],
+					"gitignore": [],
+					"includeLockFiles": false
+				}
+			},
 			"build:esm": [
 				"build:wasm"
 			],

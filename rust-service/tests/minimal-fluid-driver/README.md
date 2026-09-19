@@ -85,9 +85,12 @@ Both modes receive accepted-snapshot coordination updates.
 
 Within `sea-driver`, `SeaDriver` and `SeaDocumentService` compose `SeaDocumentStorage`, `SeaDeltaStorage`, and `SeaDeltaConnection`, with shared lifecycle helpers in a separate module.
 `SeaSessionDriverClient` in `sea-driver` now owns the Fluid projection over an injected neutral session factory.
-The summary tests, direct SharedTree package collaboration test, and SharedTree browser lifecycle trace use it with `sea-typescript` package entrypoints.
+The summary tests, direct SharedTree package collaboration test, SharedTree browser lifecycle trace, and browser benchmarks use it with `sea-typescript` package entrypoints.
 The browser trace uses an import map to load package-owned JavaScript and WASM and triggers real session closure at submission admission for deterministic explicit recovery testing.
-`GeneratedSeaBindingAdapter` remains temporarily in this harness for benchmarks still using the legacy generated API.
+The obsolete `GeneratedSeaBindingAdapter` has been removed.
+Browser benchmarks import the neutral memory and WebTransport factory entrypoints and explicitly close their owned memberships and local service.
+The benchmark runner checks that each Rust-backed sample loads only the selected capability's generated JavaScript and WASM artifacts.
+The consumer type fixture checks neutral session types rather than crate-generated exports.
 
 ## Validation
 
@@ -108,17 +111,15 @@ The package `build` script builds dependencies, generates the Rust WASM packages
 The package `test` script depends on that complete build and runs the TypeScript unit tests, generated Node WASM tests, and real Chromium WebTransport test.
 To build and test the entire Rust service, including the Cargo workspace, run `./test.sh` from `rust-service/`.
 
-The package's `build:wasm` task uses Fluid build's declarative input/output
-tracking. It invokes Cargo and `wasm-bindgen` only when the Rust workspace inputs
-or generated Node/web packages change; Cargo provides an additional incremental
-cache when the task does run. The installed `wasm-bindgen` CLI version must match
-the workspace crate version.
+The harness's legacy `build:wasm` command remains non-incremental at the Fluid build layer; Cargo caches its Rust compilation.
+The neutral package's separate `build:wasm` task uses verified input/output tracking and skips unchanged generation.
+The installed `wasm-bindgen` CLI version must match the workspace crate version.
 
 A future first-class Cargo/WASM Fluid build task could derive narrower inputs
 from Cargo metadata, validate Rust target and `wasm-bindgen` tool versions, and
 model individual generated packages without package-owned globs. The current
-declarative task already provides hash-based incremental execution, so this is a
-tooling refinement rather than a prerequisite for reliable client builds.
+neutral-package task provides hash-based incremental execution.
+The legacy task remains until the protocol harnesses migrate.
 
 The generated Node suite exercises the process-local client, including cancellation of a pending read.
 The real Chromium harness exercises the injected client over `SeaBrowserTransport`, including persistent submission, stream cancellation, explicit disconnect, and reconnect.
