@@ -3402,9 +3402,6 @@ importers:
       '@fluidframework/react':
         specifier: workspace:~
         version: link:../../../packages/framework/react
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
@@ -15621,6 +15618,9 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../../runtime/runtime-utils
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../../dds/sequence

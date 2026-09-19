@@ -13,10 +13,10 @@ import {
 } from "@fluid-example/example-utils";
 import {
 	createDevtoolsLogger,
-	initializeDevtools,
-	type ContainerDevtoolsProps,
+	initializeDevtoolsAlpha,
+	type FluidContainerDevtoolsProps,
 	type IDevtoolsLogger,
-} from "@fluidframework/devtools-core/beta";
+} from "@fluidframework/devtools-core/alpha";
 import {
 	FormattedMainView,
 	QuillMainView as PlainQuillView,
@@ -32,28 +32,25 @@ import {
 	PlainTextMainView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/react/internal";
-// eslint-disable-next-line import-x/no-internal-modules
-import { ServiceContainerBase } from "@fluidframework/runtime-utils/internal";
-import { TreeViewConfiguration, type ITree } from "@fluidframework/tree";
+// eslint-disable-next-line import-x/no-internal-modules -- FormattedTextDefault has no public export.
+import { FormattedTextDefault } from "@fluidframework/tree/internal";
+import { TreeViewConfiguration, type ITree } from "fluid-framework";
 import {
 	asAlpha,
+	defineDataStore,
 	FluidClientVersion,
 	ForestTypeOptimized,
 	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
+	instantiateTreeFirstTime,
 	SchemaFactoryAlpha,
+	sharedObjectRegistryFromIterable,
 	PlainText,
 	TreeCompressionStrategy,
+	type FluidContainer,
 	type TreeViewAlpha,
 	TreeViewConfigurationAlpha,
-} from "@fluidframework/tree/alpha";
-// eslint-disable-next-line import-x/no-internal-modules -- TODO: migrate to `FormattedText` with explicit parameterization.
-import { configuredSharedTree, FormattedTextDefault } from "@fluidframework/tree/internal";
-import {
-	defineDataStore,
-	instantiateTreeFirstTime,
-	sharedObjectRegistryFromIterable,
-	type FluidContainer,
+	configuredSharedTree,
 } from "fluid-framework/alpha";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
@@ -87,6 +84,9 @@ const SharedTree = configuredSharedTree({
 	minVersionForCollab: FluidClientVersion.v2_74,
 });
 
+/**
+ * Creates or loads the document's SharedTree and exposes a typed view to each user.
+ */
 const TextEditorDataStore = defineDataStore<TextEditorData, ITree>({
 	type: "text-editor",
 	registry: sharedObjectRegistryFromIterable([SharedTree]),
@@ -98,8 +98,13 @@ const TextEditorDataStore = defineDataStore<TextEditorData, ITree>({
 	view: async (tree) => ({ tree, treeView: asAlpha(tree.viewWith(treeConfig)) }),
 });
 
+/**
+ * Data exposed by the text editor's root data store.
+ */
 interface TextEditorData {
+	/** The shared object registered with Devtools for inspection. */
 	tree: ITree;
+	/** This client's typed view used to read and edit the document. */
 	treeView: TreeViewAlpha<typeof TextEditorRoot>;
 }
 
@@ -131,7 +136,8 @@ type UserId = string;
 /**
  * Generates a fresh {@link UserId}.
  *
- * Random so simulated users stay unique across page
+ * @remarks
+ * This is random so simulated users stay unique across page
  * reloads and multiple tabs open on the same document.
  */
 function makeUserId(): UserId {
@@ -156,17 +162,17 @@ export interface UserView {
  * Devtools registration props for one user's container. Keyed by user id, which is
  * never reused, so keys stay unique across add/remove cycles.
  */
-const devtoolsContainerProps = (user: UserView): ContainerDevtoolsProps => {
-	ServiceContainerBase.narrow(user.container);
-	return {
-		container: user.container.container,
-		containerData: { tree: user.container.data.tree },
-		containerKey: `User ${user.id} Container`,
-	};
-};
+const devtoolsContainerProps = (user: UserView): FluidContainerDevtoolsProps => ({
+	container: user.container,
+	containerData: { tree: user.container.data.tree },
+	containerKey: `User ${user.id} Container`,
+});
 
 /**
  * Creates a document root holding the given text as both plain and formatted text.
+ * @param text - Initial content for both text fields. Defaults to an empty string.
+ * @returns A root ready to initialize a new tree view.
+ * @remarks
  * Used to initialize new documents; exported so tests can initialize in-memory views
  * with the same shape.
  */
@@ -177,12 +183,31 @@ export function createInitialRoot(text = ""): TextEditorRoot {
 	});
 }
 
+/**
+ * Connects another simulated user to an existing document.
+ * @param containerId - Identifies the document to load.
+ * @returns The user's container and typed view, with a fresh user ID.
+ */
 type ConnectUser = (containerId: string) => Promise<UserView>;
 
-async function initFluid(): Promise<{
+/**
+ * Matches a complete example container ID: 3-64 ASCII letters, digits, or hyphens.
+ * Checked before loading a document identified by the URL hash.
+ */
+const containerIdPattern = /^[\dA-Za-z-]{3,64}$/;
+
+/**
+ * Creates or loads the document and connects the initial simulated users.
+ * @returns The document ID, shared telemetry logger, initial users, and callback for adding users.
+ */
+async function initializeFluid(): Promise<{
+	/** Identifies the document shared by all users. */
 	containerId: string;
+	/** Routes telemetry from all users' containers to Devtools. */
 	devtoolsLogger: IDevtoolsLogger;
+	/** Users connected during startup, each with a separate container and tree view. */
 	initialUsers: UserView[];
+	/** Connects an additional user when a panel is added. */
 	connectUser: ConnectUser;
 }> {
 	const devtoolsLogger = createDevtoolsLogger();
@@ -192,7 +217,7 @@ async function initFluid(): Promise<{
 		return { id: makeUserId(), container: loaded, treeView: loaded.data.treeView };
 	};
 	const rawContainerId = location.hash.slice(1);
-	if (rawContainerId.length > 0 && !/^[\dA-Za-z-]{3,64}$/.test(rawContainerId)) {
+	if (rawContainerId.length > 0 && !containerIdPattern.test(rawContainerId)) {
 		throw new Error(
 			"Invalid container ID in URL hash. Expected 3-64 alphanumeric or '-' characters.",
 		);
@@ -467,10 +492,12 @@ export const App: FC<{
 		if (!devtoolsEnabled) {
 			return;
 		}
-		const devtools = initializeDevtools({
+		const devtools = initializeDevtoolsAlpha({
 			logger: devtoolsLogger,
-			initialContainers: users.map((user) => devtoolsContainerProps(user)),
 		});
+		for (const user of users) {
+			devtools.registerContainerDevtools(devtoolsContainerProps(user));
+		}
 		return () => {
 			if (!devtools.disposed) {
 				devtools.dispose();
@@ -556,7 +583,7 @@ async function start(): Promise<void> {
 
 	try {
 		renderRoot(<ExampleLoadingView />);
-		const { containerId, devtoolsLogger, initialUsers, connectUser } = await initFluid();
+		const { containerId, devtoolsLogger, initialUsers, connectUser } = await initializeFluid();
 		renderRoot(
 			<App
 				containerId={containerId}

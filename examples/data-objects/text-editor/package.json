@@ -45,7 +45,6 @@
 		"@fluidframework/devtools-core": "workspace:~",
 		"@fluidframework/quill-react": "workspace:~",
 		"@fluidframework/react": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"fluid-framework": "workspace:~",
 		"quill": "^2.0.3",
