@@ -1,0 +1,124 @@
+{
+	"schemaVersion": 1,
+	"evidenceCommit": "7f22a862585e84d48c728461c53b4dd946ee2e9e",
+	"benchmarkSourceCommit": "294c803e8c4aa711df5dee19dc5711e6aead5f33",
+	"sourceDirty": false,
+	"configuration": {
+		"repetitions": 3,
+		"operations": 100,
+		"warmupOperations": 10,
+		"clients": 2,
+		"workload": "turns",
+		"operationsPerTurn": 1,
+		"synchronizePerTurn": false
+	},
+	"environment": {
+		"platform": "linux",
+		"kernel": "6.8.0-1064-azure",
+		"architecture": "x64",
+		"logicalCpuCount": 32,
+		"cpuModel": "AMD EPYC 9V74 80-Core Processor",
+		"node": "v22.23.2",
+		"browser": "HeadlessChrome/152.0.0.0"
+	},
+	"results": [
+		{
+			"path": "direct-dummy",
+			"storage": "memory",
+			"operationsPerSecondMean": 2501.540489180062,
+			"convergenceMillisecondsMean": 39.93333333233992,
+			"startupMillisecondsMean": 66.83333333209157,
+			"serviceCpuSeconds": 0.07,
+			"servicePeakResidentSetKiB": 7664
+		},
+		{
+			"path": "direct-dummy",
+			"storage": "buffered-file",
+			"operationsPerSecondMean": 2809.0925757689934,
+			"convergenceMillisecondsMean": 35.066666666418314,
+			"startupMillisecondsMean": 64.86666666592161,
+			"serviceCpuSeconds": 0.07,
+			"servicePeakResidentSetKiB": 7800
+		},
+		{
+			"path": "direct-dummy",
+			"storage": "durable-file",
+			"operationsPerSecondMean": 1714.121314626225,
+			"convergenceMillisecondsMean": 57.866666665921606,
+			"startupMillisecondsMean": 68.56666666641831,
+			"serviceCpuSeconds": 0.09,
+			"servicePeakResidentSetKiB": 7736
+		},
+		{
+			"path": "direct-shared-tree",
+			"storage": "memory",
+			"operationsPerSecondMean": 917.3487704915577,
+			"convergenceMillisecondsMean": 73.06666666641831,
+			"startupMillisecondsMean": 105.2999999995033,
+			"serviceCpuSeconds": 0.08,
+			"servicePeakResidentSetKiB": 8264
+		},
+		{
+			"path": "direct-shared-tree",
+			"storage": "buffered-file",
+			"operationsPerSecondMean": 932.2985330844621,
+			"convergenceMillisecondsMean": 70.86666666592161,
+			"startupMillisecondsMean": 100.5,
+			"serviceCpuSeconds": 0.08,
+			"servicePeakResidentSetKiB": 8304
+		},
+		{
+			"path": "direct-shared-tree",
+			"storage": "durable-file",
+			"operationsPerSecondMean": 825.6756101670486,
+			"convergenceMillisecondsMean": 85.53333333258827,
+			"startupMillisecondsMean": 101.60000000149012,
+			"serviceCpuSeconds": 0.1,
+			"servicePeakResidentSetKiB": 8360
+		},
+		{
+			"path": "fluid-shared-tree",
+			"storage": "memory",
+			"operationsPerSecondMean": 661.006957427904,
+			"convergenceMillisecondsMean": 105.2000000004967,
+			"startupMillisecondsMean": 234.4666666649282,
+			"serviceCpuSeconds": 0.14,
+			"servicePeakResidentSetKiB": 8832
+		},
+		{
+			"path": "fluid-shared-tree",
+			"storage": "buffered-file",
+			"operationsPerSecondMean": 678.9652778243081,
+			"convergenceMillisecondsMean": 101.63333333407839,
+			"startupMillisecondsMean": 230.20000000049671,
+			"serviceCpuSeconds": 0.14,
+			"servicePeakResidentSetKiB": 8892
+		},
+		{
+			"path": "fluid-shared-tree",
+			"storage": "durable-file",
+			"operationsPerSecondMean": 661.2859540371376,
+			"convergenceMillisecondsMean": 105.73333333308499,
+			"startupMillisecondsMean": 245.73333333308497,
+			"serviceCpuSeconds": 0.16,
+			"servicePeakResidentSetKiB": 8924
+		}
+	],
+	"browserTransportEvidence": {
+		"snapshotParticipation": "SeaSelected",
+		"wireBytes": 3979,
+		"peakConnections": 3,
+		"peakStreams": 9,
+		"connectionCleanups": 3,
+		"activeConnectionsAfterShutdown": 0,
+		"shutdownDisposition": "Cancelled",
+		"ownedConnections": 3,
+		"cancelledConnections": 3,
+		"shutdownElapsedMilliseconds": 5093
+	},
+	"historicalDirectDummyMemoryBaseline": {
+		"operationsPerSecondMean": 37.86,
+		"convergenceMillisecondsMean": 2642.5,
+		"limitations": "The original raw environment and per-repetition artifacts were not retained."
+	}
+}

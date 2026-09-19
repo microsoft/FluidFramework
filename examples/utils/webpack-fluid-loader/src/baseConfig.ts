@@ -26,6 +26,8 @@ const axiosBrowserBundleWithoutSourceMap =
 export interface ExampleWebpackEnvironment {
 	/** Whether to create an optimized production build. */
 	production?: boolean;
+	/** SEA artifact packaging selected at build time; defaults to split. */
+	seaPreset?: "split" | "combined";
 }
 
 /**

@@ -172,6 +172,22 @@ export async function getVersionedTestObjectProviderFromApis(
 ): Promise<TestObjectProvider> {
 	const type = driverConfig?.type ?? "local";
 
+	if (
+		type === "sea-websocket" &&
+		[
+			apis.loader,
+			apis.loaderForLoading,
+			apis.containerRuntime,
+			apis.containerRuntimeForLoading,
+			apis.dataRuntime,
+			apis.dataRuntimeForLoading,
+		].some((api) => api.version !== pkgVersion)
+	) {
+		throw new Error(
+			"SEA WebSocket tests require current-version APIs; select --compatKind=None --compatVersion=0",
+		);
+	}
+
 	const driver = await createFluidTestDriver(type, driverConfig?.config, apis.driver);
 
 	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(apis.dataRuntime);
@@ -249,6 +265,11 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		config: FluidTestDriverConfig;
 	},
 ): Promise<TestObjectProviderWithVersionedLoad> {
+	if (driverConfig.type === "sea-websocket") {
+		throw new Error(
+			"SEA WebSocket cross-client compatibility is not configured; select --compatKind=None --compatVersion=0",
+		);
+	}
 	const driverForCreating = await createFluidTestDriver(
 		driverConfig.type,
 		driverConfig.config,

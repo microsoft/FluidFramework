@@ -1,3 +1,6 @@
+@fluidframework/sea-typescript
+@fluidframework/sea-tree
+@fluidframework/sea-driver
 @fluidframework/tool-utils
 @fluidframework/telemetry-utils
 @fluidframework/odsp-doclib-utils

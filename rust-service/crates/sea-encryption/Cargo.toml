@@ -1,0 +1,26 @@
+[package]
+name = "sea-encryption"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+aes-gcm-siv = { version = "0.11.1", default-features = false, features = ["aes", "alloc", "getrandom"] }
+async-trait.workspace = true
+bytes.workspace = true
+futures-util.workspace = true
+rand_core = { version = "0.6.4", features = ["getrandom"] }
+sea-core = { path = "../sea-core" }
+thiserror.workspace = true
+zeroize = { version = "1.8.1", features = ["derive"] }
+
+[dev-dependencies]
+sea-compression = { path = "../sea-compression" }
+sea-conformance = { path = "../sea-conformance" }
+sea-memory = { path = "../sea-memory" }
+sea-sequencer = { path = "../sea-sequencer" }
+tokio.workspace = true
+
+[lints]
+workspace = true

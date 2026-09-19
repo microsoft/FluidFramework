@@ -1,0 +1,24 @@
+[package]
+name = "sea-integration-tests"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dev-dependencies]
+async-trait.workspace = true
+bytes.workspace = true
+futures-util.workspace = true
+sea-compression = { path = "../sea-compression" }
+sea-core = { path = "../sea-core" }
+sea-encryption = { path = "../sea-encryption" }
+sea-memory = { path = "../sea-memory" }
+sea-sequencer = { path = "../sea-sequencer" }
+sea-webtransport = { path = "../sea-webtransport" }
+sea-webtransport-server = { path = "../sea-webtransport-server" }
+tokio.workspace = true
+wtransport = "=0.7.2"
+
+[lints]
+workspace = true

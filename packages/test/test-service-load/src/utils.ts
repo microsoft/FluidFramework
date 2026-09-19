@@ -13,9 +13,6 @@ import {
 	OdspTestDriver,
 	createFluidTestDriver,
 	generateOdspHostStoragePolicy,
-	type LocalServerTestDriver,
-	type RouterliciousTestDriver,
-	type TinyliciousTestDriver,
 } from "@fluid-private/test-drivers";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
@@ -127,9 +124,7 @@ export async function createTestDriver(
 	endpointName: DriverEndpoint | undefined,
 	seed: number,
 	runId: number | undefined,
-): Promise<
-	LocalServerTestDriver | TinyliciousTestDriver | RouterliciousTestDriver | OdspTestDriver
-> {
+): ReturnType<typeof createFluidTestDriver> {
 	const options = generateOdspHostStoragePolicy(seed);
 	return createFluidTestDriver(driver, {
 		odsp: {

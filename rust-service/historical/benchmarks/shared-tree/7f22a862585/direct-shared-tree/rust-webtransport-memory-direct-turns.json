@@ -1,0 +1,191 @@
+{
+	"schemaVersion": 1,
+	"status": "passed",
+	"provisional": true,
+	"backend": "rust-service-webtransport-memory-direct-shared-tree",
+	"sourceCommit": "294c803e8c4aa711df5dee19dc5711e6aead5f33",
+	"sourceDirty": false,
+	"configuration": {
+		"dataStructure": "shared-tree",
+		"repetitions": 3,
+		"operations": 100,
+		"warmup": 10,
+		"operationsPerTurn": 1,
+		"synchronizePerTurn": false,
+		"subscriptionBatchOperations": 64,
+		"integration": "direct",
+		"clients": 2
+	},
+	"environment": {
+		"capturedAt": "2026-09-17T00:44:49.975Z",
+		"platform": "linux",
+		"kernel": "6.8.0-1064-azure",
+		"architecture": "x64",
+		"logicalCpuCount": 32,
+		"cpuModel": "AMD EPYC 9V74 80-Core Processor",
+		"node": "v22.23.2",
+		"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+		"serviceProcess": {
+			"pid": 711833,
+			"cpuSeconds": 0.08,
+			"residentSetKiB": 8264,
+			"peakResidentSetKiB": 8264
+		}
+	},
+	"aggregates": {
+		"startupMilliseconds": {
+			"minimum": 97.29999999701977,
+			"mean": 105.2999999995033,
+			"median": 97.80000000074506,
+			"p95": 120.80000000074506,
+			"maximum": 120.80000000074506,
+			"sampleStandardDeviation": 13.425721583207448
+		},
+		"submissionMilliseconds": {
+			"minimum": 35.400000002235174,
+			"mean": 36.000000001241766,
+			"median": 35.900000002235174,
+			"p95": 36.69999999925494,
+			"maximum": 36.69999999925494,
+			"sampleStandardDeviation": 0.655743850839516
+		},
+		"convergenceMilliseconds": {
+			"minimum": 69.39999999850988,
+			"mean": 73.06666666641831,
+			"median": 73.5,
+			"p95": 76.30000000074506,
+			"maximum": 76.30000000074506,
+			"sampleStandardDeviation": 3.470350607821364
+		},
+		"operationsPerSecond": {
+			"minimum": 891.2655971242765,
+			"mean": 917.3487704915577,
+			"median": 918.2736455275252,
+			"p95": 942.5070688228715,
+			"maximum": 942.5070688228715,
+			"sampleStandardDeviation": 25.63325283364549
+		}
+	},
+	"samples": [
+		{
+			"status": "passed",
+			"dataStructure": "shared-tree",
+			"backend": "rust-service-webtransport-memory-direct-shared-tree",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"operationsPerTurn": 1,
+			"synchronizePerTurn": false,
+			"startupMilliseconds": 120.80000000074506,
+			"submissionMilliseconds": 35.400000002235174,
+			"convergenceMilliseconds": 73.5,
+			"totalOperationMilliseconds": 108.90000000223517,
+			"operationsPerSecond": 918.2736455275252,
+			"writerIndex": 0,
+			"observerIndex": 1,
+			"initialValue": 0,
+			"finalEditCount": 110,
+			"observedChangeCounts": [110, 110],
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"integration": "direct",
+			"startupTransportActivity": {
+				"unaryRequests": {},
+				"submissionStreams": 0,
+				"projectedSubscriptions": 0
+			},
+			"transportActivity": {
+				"unaryRequests": {},
+				"submissionStreams": 0,
+				"projectedSubscriptions": 0
+			},
+			"wireBytes": null,
+			"peakResponseBytes": null,
+			"peakSubscriptionFrameBytes": null,
+			"peakSubscriptionQueueDepth": null,
+			"subscriptionBatchMaxOperations": 64,
+			"subscriptionBatchCount": 222,
+			"peakSubscriptionBatchOperations": 1
+		},
+		{
+			"status": "passed",
+			"dataStructure": "shared-tree",
+			"backend": "rust-service-webtransport-memory-direct-shared-tree",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"operationsPerTurn": 1,
+			"synchronizePerTurn": false,
+			"startupMilliseconds": 97.80000000074506,
+			"submissionMilliseconds": 35.900000002235174,
+			"convergenceMilliseconds": 76.30000000074506,
+			"totalOperationMilliseconds": 112.20000000298023,
+			"operationsPerSecond": 891.2655971242765,
+			"writerIndex": 0,
+			"observerIndex": 1,
+			"initialValue": 0,
+			"finalEditCount": 110,
+			"observedChangeCounts": [110, 110],
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"integration": "direct",
+			"startupTransportActivity": {
+				"unaryRequests": {},
+				"submissionStreams": 0,
+				"projectedSubscriptions": 0
+			},
+			"transportActivity": {
+				"unaryRequests": {},
+				"submissionStreams": 0,
+				"projectedSubscriptions": 0
+			},
+			"wireBytes": null,
+			"peakResponseBytes": null,
+			"peakSubscriptionFrameBytes": null,
+			"peakSubscriptionQueueDepth": null,
+			"subscriptionBatchMaxOperations": 64,
+			"subscriptionBatchCount": 222,
+			"peakSubscriptionBatchOperations": 1
+		},
+		{
+			"status": "passed",
+			"dataStructure": "shared-tree",
+			"backend": "rust-service-webtransport-memory-direct-shared-tree",
+			"clientCount": 2,
+			"operationCount": 100,
+			"warmupOperationCount": 10,
+			"operationsPerTurn": 1,
+			"synchronizePerTurn": false,
+			"startupMilliseconds": 97.29999999701977,
+			"submissionMilliseconds": 36.69999999925494,
+			"convergenceMilliseconds": 69.39999999850988,
+			"totalOperationMilliseconds": 106.09999999776483,
+			"operationsPerSecond": 942.5070688228715,
+			"writerIndex": 0,
+			"observerIndex": 1,
+			"initialValue": 0,
+			"finalEditCount": 110,
+			"observedChangeCounts": [110, 110],
+			"finalValue": 110,
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"integration": "direct",
+			"startupTransportActivity": {
+				"unaryRequests": {},
+				"submissionStreams": 0,
+				"projectedSubscriptions": 0
+			},
+			"transportActivity": {
+				"unaryRequests": {},
+				"submissionStreams": 0,
+				"projectedSubscriptions": 0
+			},
+			"wireBytes": null,
+			"peakResponseBytes": null,
+			"peakSubscriptionFrameBytes": null,
+			"peakSubscriptionQueueDepth": null,
+			"subscriptionBatchMaxOperations": 64,
+			"subscriptionBatchCount": 222,
+			"peakSubscriptionBatchOperations": 1
+		}
+	]
+}

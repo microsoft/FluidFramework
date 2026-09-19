@@ -1,0 +1,9 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"rootDir": ".",
+		"skipLibCheck": true,
+	},
+	"include": ["browser/shared-tree-*.ts", "browser/benchmark-*.ts", "src/**/*.ts"],
+}

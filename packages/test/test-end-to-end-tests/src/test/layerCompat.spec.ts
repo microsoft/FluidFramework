@@ -56,6 +56,10 @@ import {
 	r11sDriverCompatRequirementsForLoader,
 } from "@fluidframework/routerlicious-driver/internal";
 import {
+	seaDriverCompatDetailsForLoader,
+	seaDriverCompatRequirementsForLoader,
+} from "@fluidframework/sea-driver/internal";
+import {
 	allowIncompatibleLayersKey,
 	isLayerIncompatibilityError,
 	MockLogger,
@@ -159,6 +163,8 @@ function getDriverCompatDetailsForLoader(driverType: TestDriverTypes): ILayerCom
 			return odspDriverCompatDetailsForLoader;
 		case "local":
 			return localDriverCompatDetailsForLoader;
+		case "sea-websocket":
+			return seaDriverCompatDetailsForLoader;
 		default:
 			assert.fail(`Unexpected driver type: ${driverType}`);
 	}
@@ -184,6 +190,8 @@ function getDriverCompatRequirementsForLoader(
 			return odspDriverCompatRequirementsForLoader;
 		case "local":
 			return localDriverCompatRequirementsForLoader;
+		case "sea-websocket":
+			return seaDriverCompatRequirementsForLoader;
 		default:
 			assert.fail(`Unexpected driver type: ${driverType}`);
 	}

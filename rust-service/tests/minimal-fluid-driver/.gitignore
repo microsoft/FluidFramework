@@ -1,0 +1,6 @@
+lib/
+pkg/
+pkg-local/
+benchmark-results/
+benchmarkOutput.json
+*.tsbuildinfo

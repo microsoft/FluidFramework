@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 
 import { serializeNodes } from "../src/processorProfiles.js";
 import { createTransformRegistry } from "../src/transformRegistry.js";
+import { generateGettingStarted } from "../src/transforms/exampleGettingStarted.js";
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 
@@ -134,6 +135,33 @@ test("ServiceClient instructions honor the Tinylicious option", async () => {
 
 	assert.match(output, /fluidClient=session/);
 	assert.doesNotMatch(output, /fluidClient=tinylicious/);
+});
+
+test("SEA setup instructions require the matching package script", async () => {
+	const registry = createTransformRegistry();
+	const context = registry.createContext(
+		path.join(testDirectory, "fixture.md"),
+		"markdown",
+		2,
+	);
+	for (const enabled of [false, true]) {
+		const output = await serializeNodes(
+			generateGettingStarted(
+				{
+					name: "example",
+					scripts: enabled ? { "start:sea-ephemeral": "webpack serve" } : {},
+				},
+				false,
+				true,
+				{ includeHeading: true },
+				context,
+			),
+			"markdown",
+		);
+		assert.equal(output.includes("fluidClient=sea-ephemeral"), enabled);
+		assert.equal(output.includes("app port (8080 by default) to `public`"), enabled);
+		assert.equal(output.includes("Private to Organization"), enabled);
+	}
 });
 
 test("transform options reject unknown properties", async () => {

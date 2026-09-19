@@ -1,0 +1,10 @@
+{
+	"extends": "../../../common/build/build-common/tsconfig.node20.json",
+	"include": ["src/**/*"],
+	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./lib",
+		"types": [],
+		"skipLibCheck": true,
+	},
+}

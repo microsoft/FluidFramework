@@ -1,0 +1,81 @@
+{
+	"schemaVersion": 1,
+	"iteration": "0013",
+	"status": "complete",
+	"sourceCommit": "52ad0aa3b4b28498e609d3fe41d9eabcf5f23bd2",
+	"createdAt": "2026-09-17T02:14:54.313Z",
+	"activeWorkstreams": [
+		{
+			"name": "sea-benchmarks",
+			"instructions": "phase-2/instructions/sea-benchmarks.md",
+			"report": "phase-2/sea-benchmarks.md"
+		},
+		{
+			"name": "sea-compression",
+			"instructions": "phase-2/instructions/sea-compression.md",
+			"report": "phase-2/sea-compression.md"
+		},
+		{
+			"name": "sea-conformance",
+			"instructions": "phase-2/instructions/sea-conformance.md",
+			"report": "phase-2/sea-conformance.md"
+		},
+		{
+			"name": "sea-content-addressed",
+			"instructions": "phase-2/instructions/sea-content-addressed.md",
+			"report": "phase-2/sea-content-addressed.md"
+		},
+		{
+			"name": "sea-core",
+			"instructions": "phase-2/instructions/sea-core.md",
+			"report": "phase-2/sea-core.md"
+		},
+		{
+			"name": "sea-encryption",
+			"instructions": "phase-2/instructions/sea-encryption.md",
+			"report": "phase-2/sea-encryption.md"
+		},
+		{
+			"name": "sea-file",
+			"instructions": "phase-2/instructions/sea-file.md",
+			"report": "phase-2/sea-file.md"
+		},
+		{
+			"name": "sea-file-durable",
+			"instructions": "phase-2/instructions/sea-file-durable.md",
+			"report": "phase-2/sea-file-durable.md"
+		},
+		{
+			"name": "sea-memory",
+			"instructions": "phase-2/instructions/sea-memory.md",
+			"report": "phase-2/sea-memory.md"
+		},
+		{
+			"name": "sea-sequencer",
+			"instructions": "phase-2/instructions/sea-sequencer.md",
+			"report": "phase-2/sea-sequencer.md"
+		},
+		{
+			"name": "sea-stateful-compression",
+			"instructions": "phase-2/instructions/sea-stateful-compression.md",
+			"report": "phase-2/sea-stateful-compression.md"
+		},
+		{
+			"name": "sea-webtransport",
+			"instructions": "phase-2/instructions/sea-webtransport.md",
+			"report": "phase-2/sea-webtransport.md"
+		},
+		{
+			"name": "sea-webtransport-server",
+			"instructions": "phase-2/instructions/sea-webtransport-server.md",
+			"report": "phase-2/sea-webtransport-server.md"
+		},
+		{
+			"name": "sea-counter",
+			"instructions": "phase-2/instructions/sea-counter.md",
+			"report": "phase-2/sea-counter.md"
+		}
+	],
+	"deferredWorkstreams": [],
+	"nextWorkstreams": []
+}

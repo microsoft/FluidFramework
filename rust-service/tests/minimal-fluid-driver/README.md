@@ -1,0 +1,289 @@
+# Sea Fluid and SharedTree Integration Harness
+
+This test package consumes [sea-driver](../../packages/sea-driver/README.md) and [sea-tree](../../packages/sea-tree/README.md).
+The reusable Fluid implementation lives in `@fluidframework/sea-driver`; the runtime-free SharedTree host lives in `@fluidframework/sea-tree`.
+Both expose only internal APIs through their `/internal` entrypoints.
+
+This harness consumes neutral `sea-typescript` sessions through the driver-owned `SeaSessionDriverClient` adapter.
+It owns local and browser test setup, integration tests, and benchmarks; the neutral package owns generated WebAssembly (WASM) builds and loading.
+TypeScript does not construct or parse Sea protocol frames.
+The same adapter accepts injected factories for local memory and browser WebTransport sessions.
+
+## Implemented interfaces
+
+- `IDocumentServiceFactory`: create with an optional full summary and load by resolved URL.
+- `IDocumentService`: storage, bounded delta storage, and explicit delta connection creation.
+- `IDocumentStorageService`: versions, snapshot trees, immutable blob create/read, full and incremental summary upload, and full summary download.
+- Summary tree, blob, and attachment handles resolved against the acknowledged parent snapshot, plus attachment blobs uploaded outside the summary.
+- `IDocumentDeltaStorageService`: bounded projected pages filtered to the requested sequence interval.
+- `IDocumentDeltaConnection`: submission and push-driven operation events through one bounded projected-operation subscription.
+- Explicit lifecycle extensions: `waitForIdle()`, `disconnect()`, `reconnect()`, `recoverPending()`, and caller-driven `resubmitPending()`.
+
+## Unsupported interfaces and semantics
+
+- Signals, nacks, presence, automatic reconnect, hidden retry, offline merge, loading groups, and GC/retention guarantees.
+- Summary download materializes a full tree. It does not preserve handles or distinguish separately uploaded attachments from other blob leaves in the returned tree.
+- `getSnapshot`, caching, auth, production certificates, Routerlicious, and ODSP compatibility are not implemented or claimed.
+- The native server owns a bounded set of concurrent connection futures. The SharedTree Chromium trace uses three independent Fluid containers and reports actual session openings, including read-to-write replacement and explicit reconnection. Each remote session owns independent persistent event, author, snapshot, and content streams; stream owners preserve their own ordering without a global serialization wrapper.
+- Browser loading uses Fluid's default read-to-write replacement. Each replacement opens a fresh Sea session identity while preserving the adapter's Fluid projection state. Production Fluid membership is not implemented.
+
+## Summary storage semantics
+
+Document creation returns a backend-assigned opaque ID.
+The driver places its hexadecimal encoding in the resolved Fluid URL; peers and reloads use the returned URL, not the provisional attach name.
+
+The initial summary is uploaded as immutable content, then referenced by a committed application initialization event, then published as an ordinary snapshot at that event.
+Initialization is hidden from Fluid's operation stream and maps to application sequence zero.
+Ordinary operations receive contiguous application sequence numbers starting at one, independently of the backend's potentially sparse event positions.
+The two existing synthetic Fluid membership positions remain a separate projection offset.
+Each opened session scans full retained history to reconstruct this mapping before opening its live subscription; startup cost therefore grows with retained history.
+Every projected history read cancels its live stream on completion or failure, including malformed initialization encountered during startup.
+
+Snapshot version handles encode committed event positions.
+The generated client's bounded lookup is checked for an exact position match when satisfying a Fluid version request.
+Publishing a different state at the same position is rejected, even with a fresh publication attempt; summaries of later state must use later committed event positions.
+There are no independent snapshot-operation identities or pre-event initial snapshots.
+
+`createBlob()` uploads an immutable attachment blob and returns its content identity.
+During summary upload, an attachment node references that existing identity without uploading its content again.
+The Sea storage backends validate every referenced blob and directory before accepting a directory, so a summary containing an unknown attachment identity is rejected.
+
+For an incremental summary, the driver loads the snapshot identified by `ISummaryContext.ackHandle`, falling back to `proposalHandle` when necessary.
+Blob and tree handles are paths into that parent snapshot.
+The driver resolves those paths, reuses the referenced content identities, uploads new blobs, and conditionally publishes a new snapshot whose expected parent is the resolved snapshot.
+A stale parent causes publication to fail; the driver does not retry against a different parent because that could change the summary's event boundary or invalidate its handles.
+
+The current implementation fetches the complete parent directory manifest and rebuilds the complete directory structure for each incremental summary.
+Content-addressed blob and directory identities ensure that unchanged content is not uploaded or persisted again, but the parent traversal and idempotent directory requests still consume client, server, and wire work.
+
+A future optimization could traverse only the parent paths named by handles and retain tree handles as direct directory identities.
+The client would build a mixed tree of new blobs, attachment identities, blob handles, and directory handles, then publish only newly composed directories from the leaves to the root.
+The existing snapshot, `getDirectory`, and `putDirectory` APIs appear sufficient, so this should not require a new Rust storage schema or wire protocol.
+The implementation would need to preserve the driver's `.app` and `.protocol` path projection, validate handle kinds and paths, retain expected-parent publication, and compare path-by-path request overhead with the current single full traversal before replacing it.
+
+## Submission and subscription lifecycle
+
+The generated browser WebTransport client opens one authority-bound author stream with the session and sends contiguous client sequence numbers on it.
+Submission acknowledgements arrive in the same order through the shared native/browser author-stream state machine.
+A submission remains in `pending` until its acknowledgement arrives or projected local operation is observed.
+Write failures and response loss reject `waitForIdle()` without discarding pending identity.
+After reconnect, `recoverPending()` verifies the old accepted prefix through its durable leave.
+Callers may then use `resubmitPending(transform)` to transform the entire unaccepted suffix into fresh-session messages with new context and identities.
+An isolated `notCommitted` lookup never authorizes replaying an unchanged payload.
+Resubmission uses the same persistent author stream.
+
+Reconnect cancels the old projected-operation subscription, reconnects the generated client, and opens replacement event and author streams.
+Explicit disconnect and disposal also close or cancel their owned resources.
+Subscription restart and explicit synchronization resume from the last projected cursor.
+
+The driver does not automatically retry, recover, or resubmit ambiguous writes.
+Explicit-helper callers wait for the failed submission chain, reconnect, prove the terminal prefix, reconcile accepted history, and provide the application-specific suffix transformation.
+Normal Fluid containers instead let the runtime process pending state and rebase operations during reconnect; the full SharedTree trace exercises this path.
+Disposal is synchronous at the Fluid interface boundary while stream close and subscription cancellation complete asynchronously.
+
+## Snapshot Coordination
+
+Every generated client opens snapshot coordination with an explicit participation policy.
+The regular `SeaDriver` uses `ClientSelected`, so Fluid's existing summarizer election and client-side cadence remain authoritative; Sea permits publication from active client-selected streams without granting a nomination fence.
+The direct SharedTree benchmark uses `SeaSelected`, so Sea deterministically grants one current publisher fence when no client-selected publisher is active.
+Both modes receive accepted-snapshot coordination updates.
+`ReadOnly` is available to clients that need updates but must never publish.
+
+Within `sea-driver`, `SeaDriver` and `SeaDocumentService` compose `SeaDocumentStorage`, `SeaDeltaStorage`, and `SeaDeltaConnection`, with shared lifecycle helpers in a separate module.
+`SeaSessionDriverClient` in `sea-driver` now owns the Fluid projection over an injected neutral session factory.
+The summary tests, direct SharedTree package collaboration test, SharedTree browser lifecycle trace, and browser benchmarks use it with `sea-typescript` package entrypoints.
+The browser trace uses an import map to load package-owned JavaScript and WASM and triggers real session closure at submission admission for deterministic explicit recovery testing.
+The obsolete `GeneratedSeaBindingAdapter` has been removed.
+Browser benchmarks import the neutral memory and WebTransport factory entrypoints and explicitly close their owned memberships and local service.
+The benchmark runner checks that each Rust-backed sample loads only the selected capability's generated JavaScript and WASM artifacts.
+The consumer type fixture checks neutral session types rather than crate-generated exports.
+
+## Validation
+
+The package is registered in the root pnpm workspace. Install that workspace,
+then use its Fluid build graph to build client dependencies, generate the Rust
+WASM packages, typecheck the driver and SharedTree harnesses, and build the
+browser bundles in dependency order.
+
+From the repository root:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm --dir rust-service/tests/minimal-fluid-driver run build
+pnpm --dir rust-service/tests/minimal-fluid-driver test
+```
+
+The package `build` script builds dependencies, generates the Rust WASM packages, checks formatting and lint, typechecks, and builds all browser bundles.
+The package `test` script depends on that complete build and runs the TypeScript unit tests, generated Node WASM tests, and real Chromium WebTransport test.
+To build and test the entire Rust service, including the Cargo workspace, run `./test.sh` from `rust-service/`.
+
+The neutral package's `build:wasm` task uses verified input/output tracking and skips unchanged generation.
+The harness no longer has a transport-owned WASM build task or generated-client imports.
+The installed `wasm-bindgen` CLI version must match the workspace crate version.
+
+A future first-class Cargo/WASM Fluid build task could derive narrower inputs
+from Cargo metadata, validate Rust target and `wasm-bindgen` tool versions, and
+model individual generated packages without package-owned globs. The current
+neutral-package task provides hash-based incremental execution.
+
+The Node suite runs thirteen neutral package session tests, including migrated snapshot registration replacement and cancellation ownership.
+The real Chromium harness runs the Fluid driver trace, plain and compressed neutral remote scenarios, and ordered delivery, explicit reopen, snapshot recovery, and shutdown checks through neutral factories.
+Both test tasks declare the neutral package build dependency; the package itself remains independent of this harness.
+Rust transport tests inject fragmented, coalesced, delayed, reset, malformed, and abandoned-response inputs without requiring browser timing.
+The TypeScript unit suite also includes a summary-storage fixture that verifies mixed incremental tree and blob handles, attachment reuse and validation, historical snapshot loading, and stale-parent rejection.
+A generated-WASM driver regression verifies hidden initialization, first-operation sequence numbering, fresh-client mapping reconstruction, and exact historical snapshot versions.
+
+The default browser page bundles `browser/trace.mjs` against the owning packages.
+It verifies initial summary reload, independent two-client push delivery, pre-commit pending recovery and explicit resubmission, duplicate-free reconnect, and a finite bounded historical range.
+It reports actual session openings rather than obsolete shared-transport assumptions or unavailable wire metrics, and closes all owned sessions.
+This trace is part of `test:browser` and `rust-service/test.sh`; the full SharedTree trace below remains separately invoked.
+
+For Chromium, generate the existing browser harness certificate, start
+`sea-webtransport-server`, and run:
+
+```bash
+pnpm run typecheck:shared-tree
+pnpm run build:shared-tree
+node browser/run-headless.mjs "$PWD" <WEBTRANSPORT_URL> <CERTIFICATE_SHA256_WITHOUT_COLONS> __sharedTreeResult shared-tree.html
+```
+
+## Deterministic Fluid service comparison benchmark
+
+The benchmark runs the same two-client operation workload through the Rust local service, TypeScript local service, Rust WebTransport service, or Tinylicious. By default it uses a minimal benchmark SharedObject that counts applied operations and submits a captured SharedTree operation body. It also generates one compressed ID per operation, causing Fluid's runtime to add the same ID-allocation message and grouped-batch envelope observed in the SharedTree workload. This keeps service and Fluid runtime serialization costs representative while removing SharedTree processing from the default measurement.
+
+Pass `--dds shared-tree` to use a real SharedTree with the optimized forest implementation. Both modes use the same benchmark loop and validate writer/observer convergence. The selected DDS is recorded in the suite name and detailed JSON configuration.
+
+The harness uses the repository's standard Mocha benchmark tooling, so cases are selected with `--grep` and results are written through the standard benchmark reporter. It owns temporary data, ports, certificates, Chromium, and service processes.
+
+Install the root workspace and incrementally build the benchmark package from the repository root:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm --dir rust-service/tests/minimal-fluid-driver run bench:build
+```
+
+The build uses Fluid build's dependency graph and declarative WASM task. Unchanged TypeScript dependencies, browser bundles, Rust crates, and generated WASM packages reuse their normal build caches. The installed `wasm-bindgen` CLI version must match the workspace crate version.
+
+Tinylicious belongs to the separate Routerlicious pnpm workspace. Install that workspace once before selecting the Tinylicious case:
+
+```bash
+pnpm --dir server/routerlicious install --frozen-lockfile
+```
+
+Run all cases with the quick default performance configuration of three repetitions, 250 measured edits, 10 warmup edits, and one edit per Fluid batch without per-batch synchronization:
+
+```bash
+pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run
+```
+
+Use case aliases and flags for focused runs:
+
+```bash
+pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run -- \
+  --case rust-memory,rust-durable \
+	--dds shared-tree \
+  --workload messages \
+  --operations 1000 \
+  --warmup 100
+```
+
+Run `pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run -- --help` for all flags. Case aliases are:
+
+- `rust-local`: Rust local memory
+- `rust-local-direct`: Rust local memory without the Fluid container/runtime
+- `local`: TypeScript local service
+- `rust-memory`: Rust WebTransport memory
+- `rust-memory-direct`: Rust WebTransport memory without the Fluid container/runtime
+- `rust-buffered`: Rust WebTransport buffered file
+- `rust-buffered-direct`: Rust WebTransport buffered file without the Fluid container/runtime
+- `rust-durable`: Rust WebTransport durable file
+- `rust-durable-direct`: Rust WebTransport durable file without the Fluid container/runtime
+- `tinylicious`: Tinylicious
+
+`--case` accepts comma-separated aliases and may be repeated. For arbitrary selection, `--grep <pattern>` passes a regular expression to Mocha. The lower-level `bench` script remains available for standard Mocha flags and environment-only automation.
+
+Configure the workload through environment variables:
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `BENCHMARK_DDS` | `dummy` | `dummy` for the captured-payload counting SharedObject or `shared-tree` for real SharedTree. |
+| `BENCHMARK_REPETITIONS` | `3` | Browser samples per selected case. |
+| `BENCHMARK_OPERATIONS` | `250` | Measured edits per sample. |
+| `BENCHMARK_WARMUP` | `10` | Unmeasured edits per sample. |
+| `BENCHMARK_WORKLOAD` | `turns` | `batched`, `turns`, or `messages`. |
+| `BENCHMARK_OPERATIONS_PER_TURN` | `1` | Override edits per Fluid batch. |
+| `BENCHMARK_SYNCHRONIZE_PER_TURN` | enabled for `messages` | Override observer convergence after each turn. |
+| `BENCHMARK_BROWSER_TIMEOUT_MS` | `30000` or `180000` | Per-sample browser timeout. |
+| `BENCHMARK_ARTIFACT_DIR` | `benchmark-results` | Detailed JSON output directory, relative to this package unless absolute. |
+| `BENCHMARK_CPU_PROFILE_PATH` | unset | Chromium CPU profile base path. |
+| `BENCHMARK_SKIP_BUILD` | unset | Skip selected-case native or Tinylicious incremental builds. |
+
+`turns` is the default throughput workload: it flushes one edit per Fluid batch without waiting for observer convergence after each edit, then waits for final convergence. `batched` has the same synchronization behavior but is intended for an explicit `BENCHMARK_OPERATIONS_PER_TURN` or `--operations-per-turn` value above one. `messages` waits for both containers to observe every edit before continuing, providing an unambiguous one-operation-per-convergence latency workload.
+
+The defaults favor quick directional throughput comparisons. Increase repetitions and operations explicitly when collecting more stable performance data.
+
+The event-author stream removes a per-operation WebTransport stream-open latency floor.
+On the same Linux host and Chromium 152, a three-repetition `rust-memory-direct` run with 100 measured dummy operations improved from 37.86 to 2,295.24 operations/s after stream reuse.
+Mean final convergence fell from 2,642.5 ms to 44.27 ms while all clients still observed all 110 warmup and measured edits.
+These are directional development measurements comparing baseline commit `b16f8d980bbebfe1e39b118fc9dcccb50a3e2a59` with this change, not production capacity claims.
+
+The comparison used this command in a clean checkout of each source commit:
+
+```bash
+pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run -- \
+  --case rust-memory-direct \
+  --dds dummy \
+  --repetitions 3 \
+  --operations 100 \
+  --warmup 10
+```
+
+Before commit `30940207bc7e10081a3d9f364c9033b601c2cf5b`, every submission opened and closed a WebTransport bidirectional stream.
+That commit reused one browser submission stream for ordered requests and acknowledgements while retaining the per-operation path as a temporary fallback.
+The exact Linux distribution, kernel, CPU, memory, Node version, and raw per-repetition artifacts were not retained and are therefore unknown.
+
+The `bench:run` wrapper enables complete failure diagnostics and writes both reporter streams to stdout, so redirecting it with `> log.txt` retains the full errors.
+The report suite name includes the effective workload, operation count, warmup count, operations per turn, synchronization behavior, and repetition count.
+
+For example, compare selected cases using strict message delivery:
+
+```bash
+pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run -- \
+  --case rust-memory,local \
+  --workload messages \
+  --operations 1000 \
+  --warmup 100
+```
+
+After a successful setup run, pass `--skip-build` for the shortest rerun path. The harness still starts fresh service processes and uses fresh temporary data for every selected case.
+
+### Profiling
+
+Select one configuration and provide a Chromium profile base path:
+
+```bash
+pnpm --dir rust-service/tests/minimal-fluid-driver run bench:run -- \
+  --case rust-memory \
+  --workload messages \
+  --operations 1000 \
+  --repetitions 3 \
+  --skip-build \
+  --profile benchmark-results/browser.cpuprofile
+```
+
+The case slug is added to the profile filename and each repetition is retained, such as `browser-rust-webtransport-memory-1.cpuprofile` through `browser-rust-webtransport-memory-3.cpuprofile`. A one-repetition run keeps the case-specific name without a numeric suffix. The detailed JSON also records Linux service CPU and peak RSS when the harness owns an external service.
+
+### Results and agent use
+
+Mocha writes its standard aggregate report to `benchmarkOutput.json` by default. The harness additionally writes one detailed artifact per case and workload under `benchmark-results/`, including every repetition, environment and source metadata, workload semantics, distributions, observed values, and Rust FSP4 counters when available. Both paths are ignored locally.
+
+For retained evidence, agents and humans should:
+
+1. Build once, then use explicit `--case` aliases for the intended cases.
+2. Set workload and counts explicitly and use a unique standard report path with `--report <path>`.
+3. Parse both the standard report and each detailed artifact, verify `status`, configuration, sample count, and final observed values, and confirm no owned service remains.
+4. Run from a clean committed harness so `sourceDirty` is `false`, then copy the detailed artifacts into a tracked evidence directory with a report describing the environment and semantic differences.
+
+The first clean provisional run is recorded in the [SharedTree comparison evidence](../../historical/benchmarks/shared-tree/13401fe0de3/README.md).
+
+These baseline results are provisional because they predate the default read-to-write lifecycle and projected-operation subscription. The retained iteration 0008 evidence compares the same workload after both changes. Only the Rust binding currently exposes wire-byte counters. Compare convergence, startup, and observed edit latency with those differences labeled; do not present the numbers as production capacity, durability, or equivalent Routerlicious/ODSP evidence.

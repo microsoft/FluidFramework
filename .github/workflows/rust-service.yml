@@ -1,0 +1,55 @@
+name: Rust Service
+
+on:
+  pull_request:
+    paths:
+      - ".github/skills/rust-service-coordination/**"
+      - ".github/workflows/rust-service.yml"
+      - "rust-service/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/skills/rust-service-coordination/**"
+      - ".github/workflows/rust-service.yml"
+      - "rust-service/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Format, lint, build, and test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust-service
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Rust toolchain
+        run: rustup show active-toolchain
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Run Clippy
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      - name: Build documentation
+        run: RUSTDOCFLAGS='-D warnings' cargo doc --workspace --all-features --no-deps
+      - name: Build workspace
+        run: cargo build --workspace --all-targets
+      - name: Test workspace
+        run: cargo test --workspace --all-targets --all-features
+      - name: Run counter example
+        run: cargo run -p sea-counter
+      - name: Install WASM target and bindings tool
+        run: |
+          rustup target add wasm32-unknown-unknown
+          cargo install wasm-bindgen-cli --version 0.2.128 --locked
+      - name: Build and test generated Sea clients
+        run: |
+          node tests/minimal-fluid-driver/scripts/build-wasm.mjs
+          node tests/wasm-client/node-test.mjs
+      - name: Validate current documentation
+        run: node scripts/check-documentation.mjs
+      - name: Validate foundation records
+        run: node ../.github/skills/rust-service-coordination/scripts/iteration-records.mjs validate-foundation

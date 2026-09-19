@@ -27,3 +27,4 @@ export {
 	RouterliciousTestDriver,
 } from "./routerliciousTestDriver.js";
 export { TinyliciousTestDriver } from "./tinyliciousTestDriver.js";
+export type { SeaWebSocketTestDriver } from "./seaWebSocketTestDriver.js";

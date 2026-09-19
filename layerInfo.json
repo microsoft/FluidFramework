@@ -78,6 +78,24 @@
 				"dirs": ["packages/drivers/"],
 				"deps": ["Driver-Utils", "Core-Interfaces", "Client-Utils", "Other-Utils"]
 			},
+			"Sea-Driver": {
+				"packages": ["@fluidframework/sea-driver"],
+				"deps": [
+					"Driver-Definitions",
+					"Core-Interfaces",
+					"Sea-TypeScript",
+					"Loader",
+					"Runtime"
+				]
+			},
+			"Sea-TypeScript": {
+				"packages": ["@fluidframework/sea-typescript"],
+				"deps": []
+			},
+			"Sea-Tree": {
+				"packages": ["@fluidframework/sea-tree"],
+				"deps": ["Runtime", "Sea-Driver"]
+			},
 			"Loader": {
 				"dirs": ["packages/loader/"],
 				"deps": ["Container-Definitions", "Driver-Utils", "Client-Utils"]
@@ -124,7 +142,8 @@
 				"dirs": [
 					"packages/test/",
 					"azure/packages/test/",
-					"packages/service-clients/end-to-end-tests"
+					"packages/service-clients/end-to-end-tests",
+					"rust-service/tests/"
 				]
 			},
 			"Test-Utils": {
