@@ -1,6 +1,6 @@
 # SEA Opt-In Integration-Test Configuration Plan
 
-Status: Opt-in configuration committed; ordered-membership fix passes the lifecycle smoke, with checkpoint validation in progress.
+Status: Opt-in configuration and ordered-membership fix committed; completed ServiceClient work integrated and validated before further failure fixes.
 Created: 2026-09-18.
 Updated: 2026-09-19.
 
@@ -36,6 +36,7 @@ Coordinate other shared workspace/build changes and overlapping production edits
 - The source checkout's uncommitted ServiceClient implementation and lockfile changes were not copied.
 - Plan checkpoint: `48085c15e81`.
 - Configuration checkpoint: `4d9c1906dab`; default local and Tinylicious suites and required repository gates passed before this commit.
+- Membership checkpoint: `c279d079d6f`; canonical Rust/Node/browser validation, root build, scoped policy, and the unchanged SEA lifecycle smoke passed.
 - Workflow: one isolated assignment, without a numbered iteration; configuration and subsequent validated fix commits are authorized, but push, merge, and CI-default changes are not.
 
 ### Existing Extension Points
@@ -202,6 +203,23 @@ This requires coordinating the neutral session API, transport/bindings, ordering
 The user approved this extension rather than pausing at the configuration checkpoint.
 The implemented design and compatibility boundary are recorded in [decision 0014](historical/decisions/0014-ordered-session-membership.md).
 The neutral API remains opt-in, and no new SEA test exclusions have been added.
+
+### ServiceClient Integration
+
+The user authorized comparisons against useful local revisions and requested integration of the completed `rust-service` branch before further fixes.
+The API comparison against assignment base `d144885a3e5` found only internal changes in `sea-driver` and `sea-typescript`; no customer-facing release-tag changes require API Council review or a changeset.
+Source tip `a8a8a5abb85` adds the shared ServiceClient implementation (`e197e8d5b1a`) and inventory example integration.
+The merge applied without textual conflicts, and a frozen install, root build, strict native gates, policy, documentation checks, and all 16 existing Node driver/ServiceClient tests passed.
+
+The first combined canonical run passed Rust and Node tests but failed the new browser ServiceClient reopen trace with `Invalid MinimumSequenceNumber from service`.
+The membership projection incorrectly treated SEA's active-member minimum as Fluid's retention boundary.
+New admission may decrease SEA's minimum; Fluid requires a nondecreasing minimum.
+The adapter now conservatively reports zero while retaining all history, consistent with its lack of garbage collection or compaction.
+It does not clamp SEA's minimum to an unsafe high-water mark or change neutral semantics.
+The focused Node regression proves the raw minimum decreases across close/reopen while full and bounded Fluid replay preserve a stable minimum.
+The complete browser matrix then passed, including both ServiceClient presets with and without compression.
+Final validation passed after the repair: root `pnpm build:fast`, scoped policy, documentation and formatting checks, the complete canonical `./test.sh`, and the unchanged SEA lifecycle smoke (one passing).
+The source branch and its running demo were not modified; SEA remains opt-in and no exclusions were added.
 
 ## Review Boundary and Later Work
 

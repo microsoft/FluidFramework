@@ -39,9 +39,15 @@
 		"lint": "biome lint src"
 	},
 	"dependencies": {
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/sea-typescript": "workspace:~"
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/sea-typescript": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",

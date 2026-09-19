@@ -11,8 +11,12 @@ import { transform } from "./options.js";
 import { readPackage, type PackageMetadata } from "./packageMetadata.js";
 import { headingSchema, type HeadingOptions, packageSchema } from "./schemas.js";
 
-const tinyliciousCodespacesPortInstruction =
-	"If you use GitHub Codespaces in a browser, set the visibility of the Tinylicious port (7070) to `public`. Do not use `Private to Organization`. For instructions, read [Sharing a port](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace#sharing-a-port).";
+const codespacesPortInstruction = (portDescription: string): string =>
+	`If you use GitHub Codespaces in a browser, set the visibility of the ${portDescription} to \`public\`. Do not use \`Private to Organization\`. For instructions, read [Sharing a port](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace#sharing-a-port).`;
+
+const tinyliciousCodespacesPortInstruction = codespacesPortInstruction(
+	"Tinylicious port (7070)",
+);
 
 /**
  * Generates setup steps for an example package.
@@ -51,6 +55,11 @@ export function generateGettingStarted(
 		if (usesTinylicious) {
 			steps.push(
 				`1. To share data between browser sessions, start Tinylicious in a separate terminal by running \`pnpm tinylicious\` in this directory, then run \`pnpm start:tinylicious\` and open <http://localhost:8080/?fluidClient=tinylicious>. ${tinyliciousCodespacesPortInstruction}`,
+			);
+		}
+		if (packageMetadata.scripts?.["start:sea-ephemeral"] !== undefined) {
+			steps.push(
+				`1. To use the local SEA WebAssembly service, run \`pnpm start:sea-ephemeral\` and open <http://localhost:8080/?fluidClient=sea-ephemeral>. No external SEA server or WebTransport connection is required; see the SEA section below for build prerequisites and remote configuration. ${codespacesPortInstruction("app port (8080 by default)")}`,
 			);
 		}
 	} else if (usesTinylicious) {

@@ -16,6 +16,7 @@ import { MessageType } from "@fluidframework/driver-definitions/internal";
 import {
 	SeaDocumentStorage,
 	SeaDocumentService,
+	SeaDriver,
 	SeaDeltaConnection,
 	SeaSessionDriverClient,
 } from "@fluidframework/sea-driver/internal";
@@ -104,6 +105,50 @@ test("neutral session driver hides initialization and preserves snapshot version
 		await connection.open();
 	} finally {
 		connection.dispose();
+	}
+});
+
+test("neutral projection retains a safe minimum across membership close and reopen", async () => {
+	const service = await createMemoryService({ environment: "node" });
+	const writer = await service.open(undefined, {
+		author: encoder.encode("writer"),
+		session: encoder.encode("first"),
+	});
+	const adapter = new SeaSessionDriverClient(service.open, "readOnly");
+	try {
+		const joined = await writer.announceMembership(encoder.encode('{"mode":"write"}'));
+		await writer.submit(
+			encoder.encode("edit"),
+			joined,
+			encoder.encode('{"clientSequenceNumber":1}'),
+		);
+		await writer.close();
+		await adapter.openSession(
+			writer.document,
+			encoder.encode("reader"),
+			encoder.encode("second"),
+		);
+		await adapter.announceMembership(encoder.encode('{"mode":"write"}'));
+		const history = (await adapter.readProjected()).operations;
+		assert.deepEqual(
+			history.map((operation) => operation.eventType),
+			["joined", "application", "left", "joined"],
+		);
+		assert.ok(history[1]?.minimumReference !== undefined);
+		assert.equal(history[3]?.minimumReference, undefined);
+		assert.deepEqual(
+			history.map((operation) => operation.minimumSequenceNumber),
+			[0n, 0n, 0n, 0n],
+		);
+		assert.deepEqual(
+			(await adapter.readProjected(history[1]?.position)).operations,
+			history.slice(2),
+		);
+	} finally {
+		adapter.disconnect();
+		await adapter.reconnect();
+		await writer.close();
+		service.close();
 	}
 });
 
@@ -449,6 +494,29 @@ class SummaryFixtureClient implements SeaDriverClient {
 
 	public async reconnect(): Promise<void> {}
 }
+
+test("driver creation disposes its client when initial summary upload fails", async () => {
+	const client = new SummaryFixtureClient();
+	let disconnected = false;
+	client.disconnect = () => {
+		disconnected = true;
+	};
+	client.uploadBlob = async () => {
+		throw new Error("injected summary upload failure");
+	};
+	const driver = new SeaDriver(async () => client);
+	await assert.rejects(
+		driver.createContainer(tree({ leaf: blob("initial") }), {
+			type: "fluid",
+			id: "new",
+			url: "fluid://sea/documents/new",
+			tokens: {},
+			endpoints: {},
+		}),
+		/injected summary upload failure/u,
+	);
+	assert.equal(disconnected, true);
+});
 
 test("incremental summaries reuse tree and blob handles and include attachments", async () => {
 	const client = new SummaryFixtureClient();

@@ -49,7 +49,7 @@ fi
 # calling this script. Direct invocation remains self-contained.
 if [[ "${SEA_BROWSER_SKIP_BUILD:-}" != "1" ]]; then
 	pnpm --dir packages/sea-typescript run build
-	pnpm --dir tests/minimal-fluid-driver exec fluid-build . --task build:driver-trace
+	pnpm --dir tests/minimal-fluid-driver exec fluid-build . --task build:driver-trace --task build:shared-tree
 fi
 sh tests/webtransport-browser/generate-cert.sh "$temporary_root/certs"
 server_features=()
@@ -106,6 +106,11 @@ for preset in split combined; do
 			"$SEA_BROWSER_WEBTRANSPORT_URL" \
 			"$(cat "$temporary_root/certs/cert.sha256")" \
 			__seaPackageResult browser.html "snapshotPolicy=${SEA_SNAPSHOT_POLICY:-client}&preset=$preset&compression=$compression"
+		node tests/minimal-fluid-driver/browser/run-headless.mjs \
+			tests/minimal-fluid-driver \
+			"$SEA_BROWSER_WEBTRANSPORT_URL" \
+			"$(cat "$temporary_root/certs/cert.sha256")" \
+			__sharedTreeResult shared-tree.html "serviceClient=true&preset=$preset&compression=$compression"
 	done
 done
 

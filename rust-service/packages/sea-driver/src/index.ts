@@ -19,6 +19,7 @@ export {
 	type WasmClientFactory,
 } from "./fluidDriver.js";
 export type { PendingSubmission } from "./delta.js";
+export { createSeaServiceClient, type SeaServiceOptions } from "./serviceClient.js";
 export {
 	SeaSessionDriverClient,
 	type SeaSessionFactory,

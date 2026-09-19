@@ -424,7 +424,10 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		await this.closing;
 	}
 
-	/** Validates initialization events and assigns application event sequence numbers. */
+	/** Validates initialization and assigns dense sequence numbers.
+	 * The Fluid minimum remains zero because history is retained without compaction.
+	 * SEA's active-member minimum can decrease on admission and is not a retention watermark.
+	 */
 	private project(item: SeaEvent): ProjectedOperation | undefined {
 		const message = (
 			item.eventType === "left" ? {} : JSON.parse(decoder.decode(item.payload))
@@ -454,10 +457,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		return {
 			eventType: item.eventType,
 			...(membershipMode === undefined ? {} : { membershipMode }),
-			minimumSequenceNumber:
-				item.minimumReference === undefined
-					? 0n
-					: (this.positionSequences.get(item.minimumReference) ?? 0n),
+			minimumSequenceNumber: 0n,
 			position: encodePosition(item.position),
 			sequenceNumber: this.sequence(item.position),
 			...(item.minimumReference === undefined
