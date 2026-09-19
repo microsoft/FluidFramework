@@ -14689,6 +14689,9 @@ importers:
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/runtime-utils
+      '@fluidframework/sea-driver':
+        specifier: workspace:~
+        version: link:../../../rust-service/packages/sea-driver
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../dds/sequence
@@ -16677,6 +16680,9 @@ importers:
 
   rust-service/packages/sea-driver:
     dependencies:
+      '@fluid-internal/client-utils':
+        specifier: workspace:~
+        version: link:../../../packages/common/client-utils
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions

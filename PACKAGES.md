@@ -111,7 +111,7 @@ The dependencies between layers are enforced by the layer-check command._
 
 | Packages | Layer Dependencies |
 | --- | --- |
-| - [@fluidframework/sea-driver](/rust-service/packages/sea-driver)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Core-Interfaces](#Core-Interfaces)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Container-Definitions](#Container-Definitions)</br>- [Core-Utils](#Core-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils)</br>- [Sea-TypeScript](#Sea-TypeScript)</br>- [Loader](#Loader)</br>- [Runtime](#Runtime) |
+| - [@fluidframework/sea-driver](/rust-service/packages/sea-driver)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Core-Interfaces](#Core-Interfaces)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Container-Definitions](#Container-Definitions)</br>- [Core-Utils](#Core-Utils)</br>- [Client-Utils](#Client-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils)</br>- [Sea-TypeScript](#Sea-TypeScript)</br>- [Loader](#Loader)</br>- [Runtime](#Runtime) |
 
 ### Sea-Tree
 

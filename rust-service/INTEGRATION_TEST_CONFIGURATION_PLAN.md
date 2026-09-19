@@ -253,6 +253,16 @@ No SEA production crate or generated API changed; existing native validation rem
 The next full `test:realsvc:sea --bail` run reaches 368 passing and 402 pending, then fails `Layer compatibility validation / loader / driver compatibility / create flow` setup because its driver switch does not recognize `sea-websocket`.
 The teardown failure is secondary to that setup rejection; no additional exclusion was added.
 
+The layer-compatibility failure at `8dc19b36955` exposed missing SEA factory declarations as well as a missing driver branch in the test helper.
+The factory now publishes its generated package version, shared Fluid generation, and loader requirements through the standard compatibility interfaces.
+The shared tests consume those exact declarations without changing their assertions.
+The focused layer suite passes 15 SEA cases with 24 existing non-local skips, and all 39 local-driver cases.
+These cases cover both validation directions, generation and feature rejection, creation and loading, and the explicit override flag; they are the owning regression evidence for the factory declarations.
+Frozen install, package and root builds, generated API reports, scoped policy, documentation, and canonical `./test.sh` pass.
+The API delta against the preceding checkpoint contains only internal declaration constants and factory properties; no customer-facing changeset or API Council review is required.
+The next full SEA `--bail` run reaches 384 passing and 427 pending before `LoadModes / Can load a paused container at a specific sequence number` fails with `SEA session is not open` while fetching a blob.
+That lifecycle failure remains in scope and is not excluded.
+
 ### Membership Investigation
 
 SEA-001 is not a test-specific mismatch: `SeaDeltaConnection` fabricates two initial join operations independently for each connection, and `projectOperation` collapses all other authors into one synthetic remote client.

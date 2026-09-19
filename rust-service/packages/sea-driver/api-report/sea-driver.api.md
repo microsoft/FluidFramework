@@ -162,6 +162,8 @@ export class SeaDriver implements IDocumentServiceFactory {
     constructor(clientFactory: WasmClientFactory, options?: MinimalWasmDriverOptions);
     createContainer(createNewSummary: ISummaryTree | undefined, resolvedUrl: IResolvedUrl, _logger?: ITelemetryBaseLogger, _clientIsSummarizer?: boolean): Promise<IDocumentService>;
     createDocumentService(resolvedUrl: IResolvedUrl, _logger?: ITelemetryBaseLogger, _clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    readonly ILayerCompatDetails: ILayerCompatDetails;
+    readonly ILayerCompatSupportRequirements: ILayerCompatSupportRequirements;
 }
 
 // @internal
@@ -193,6 +195,12 @@ export interface SeaDriverClient {
     subscribeProjected(after?: Uint8Array): ProjectedOperationSubscription | Promise<ProjectedOperationSubscription>;
     uploadBlob(payload: Uint8Array): Promise<BlobUpload>;
 }
+
+// @internal
+export const seaDriverCompatDetailsForLoader: ILayerCompatDetails;
+
+// @internal
+export const seaDriverCompatRequirementsForLoader: ILayerCompatSupportRequirements;
 
 // @internal
 export interface SeaServiceOptions extends ServiceOptions {

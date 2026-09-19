@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import {
+	generation,
+	LayerCompatibilityPolicyWindowMonths,
+	type ILayerCompatDetails,
+	type ILayerCompatSupportRequirements,
+} from "@fluid-internal/client-utils";
 import type { IEventTransformer, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
@@ -28,6 +34,29 @@ import {
 } from "./lifecycleHelpers.js";
 import { SeaDocumentStorage } from "./storage.js";
 import type { SeaDriverClient } from "./wasmClient.js";
+import { pkgVersion } from "./packageVersion.js";
+
+/**
+ * SEA's supported features and generation at the Fluid loader boundary.
+ * @internal
+ */
+export const seaDriverCompatDetailsForLoader: ILayerCompatDetails = {
+	pkgVersion,
+	generation,
+	supportedFeatures: new Set<string>(),
+};
+
+/**
+ * Requirements the loader validates on SEA's behalf before creating a document service.
+ * @internal
+ */
+export const seaDriverCompatRequirementsForLoader: ILayerCompatSupportRequirements = {
+	minSupportedGeneration: Math.max(
+		0,
+		generation - LayerCompatibilityPolicyWindowMonths.NewDriverOldLoader,
+	),
+	requiredFeatures: [],
+};
 
 /**
  * Creates a generated or injected protocol client for one logical Fluid client.
@@ -233,6 +262,11 @@ export class SeaDocumentService extends Events implements IDocumentService {
  * @internal
  */
 export class SeaDriver implements IDocumentServiceFactory {
+	/** SEA's declaration for loader-to-driver compatibility validation. */
+	public readonly ILayerCompatDetails = seaDriverCompatDetailsForLoader;
+	/** Loader requirements validated by the loader on this driver's behalf. */
+	public readonly ILayerCompatSupportRequirements = seaDriverCompatRequirementsForLoader;
+
 	/** Creates a factory with optional lifecycle observability hooks. */
 	public constructor(
 		private readonly clientFactory: WasmClientFactory,

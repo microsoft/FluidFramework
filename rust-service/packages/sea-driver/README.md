@@ -7,6 +7,11 @@ It implements document services, summary and blob storage, bounded delta storage
 
 All exports are `@internal`; there is no supported public API yet.
 
+The factory publishes its generated package version, current Fluid layer generation, and loader requirements through the standard layer-compatibility interfaces.
+The loader validates both directions of that boundary before creating or loading a document service.
+The declarations use the shared driver-to-loader generation policy and no additional required or supported feature names.
+This metadata does not broaden the current-version-only SEA integration configuration or claim historical-loader conformance.
+
 ```typescript
 import { SeaDriver, type WasmClientFactory } from "@fluidframework/sea-driver/internal";
 
