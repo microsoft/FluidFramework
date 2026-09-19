@@ -32,6 +32,8 @@ websocket-stream = ["dep:tokio-tungstenite", "sea-webtransport/websocket-stream"
 
 [dev-dependencies]
 sea-conformance = { path = "../sea-conformance" }
+tokio = { workspace = true, features = ["test-util"] }
+wtransport = { version = "=0.7.2", features = ["quinn"] }
 
 [lints]
 workspace = true

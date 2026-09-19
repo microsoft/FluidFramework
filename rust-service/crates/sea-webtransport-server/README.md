@@ -19,6 +19,10 @@ On startup the process prints `WEBTRANSPORT_URL`, `CERTIFICATE_SHA256`, `STORAGE
 Clients connect to the printed `/sea` URL and pin the printed SHA-256 certificate digest.
 It also prints the configured QUIC heartbeat interval, inactivity timeout, author reconnect grace, and live-event lag limit.
 Heartbeat uses QUIC PING frames; a peer is responsive when QUIC receives authenticated traffic before the inactivity timeout.
+Each admitted QUIC connection has one `operation_timeout` deadline for the complete WebTransport handshake, including path acceptance or rejection.
+Failed, rejected, and timed-out admissions release their capacity slot and connection-scoped service without stopping the listener or applying reconnect grace.
+Pending admissions count toward `max_connections` and remain subject to immediate or bounded-drain shutdown.
+After admission, the establishment deadline no longer applies: framed I/O uses operation deadlines, while idle streams rely on the connection liveness policy.
 Connection loss immediately removes snapshot participation, then releases author membership after reconnect grace.
 An author request error, including invalid input rejected before dispatch, terminates append authority.
 The author-stream loop stops at its first error and closes the session after decode, receive, or response-write failure.
@@ -117,5 +121,7 @@ Each snapshot stream owns its own registration lease, so cleanup of an older str
 An explicit snapshot `Close` acknowledges and ends that transport stream; lease drop, not session-wide revocation, releases its registration.
 
 Focused host tests cover shared first-open ownership, retry after failed initialization, backend-assigned IDs, native round trips across all three storage modes, authority checks, snapshot replacement, malformed streams, acknowledgement loss, and shutdown.
+Server tests cover admission timeout, handshake failure, path rejection, capacity reuse, and shutdown during establishment.
+Idle and partial-frame timeout assertions use paused Tokio time at the byte-stream boundary; real QUIC admission tests use a short wall-clock deadline because its transport timers cannot safely share that virtual-clock test.
 
 Cross-crate decorator composition, including repeated WebTransport hops, is tested in [`sea-integration-tests`](../sea-integration-tests/README.md).

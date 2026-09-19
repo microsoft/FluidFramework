@@ -217,7 +217,7 @@ pub struct TransportConfig {
     pub max_connections: usize,
     /// Maximum bidirectional streams per connection.
     pub max_streams_per_connection: usize,
-    /// Timeout for connection establishment and framed I/O.
+    /// One deadline for connection establishment, and a per-operation framed I/O timeout.
     pub operation_timeout: Duration,
     /// Connection heartbeat, inactivity, reconnect, and lag policy.
     pub liveness: LivenessPolicy,
@@ -427,7 +427,7 @@ impl WebTransportServer {
     ///
     /// # Errors
     ///
-    /// Returns the first terminal connection error.
+    /// Returns the first terminal established-connection error; failed admissions are local.
     pub async fn serve(self) -> Result<(), WebTransportError> {
         self.serve_until_shutdown().await.map(|_| ())
     }
@@ -436,7 +436,7 @@ impl WebTransportServer {
     ///
     /// # Errors
     ///
-    /// Returns the first terminal connection error.
+    /// Returns the first terminal established-connection error; failed admissions are local.
     pub async fn serve_until_shutdown(mut self) -> Result<ShutdownOutcome, WebTransportError> {
         let mut connections = FuturesUnordered::new();
         let mut active_services = BTreeMap::new();
@@ -450,14 +450,23 @@ impl WebTransportServer {
                     active_services.insert(connection_id, Arc::clone(&service));
                     let config = self.config.clone();
                     let metrics = Arc::clone(&self.metrics);
+                    let establishment_deadline = Instant::now() + config.operation_timeout;
                     connections.push(async move {
                         let result = async {
-                            let request = incoming.await.map_err(transport_error)?;
-                            if request.path() != "/sea" {
-                                request.forbidden().await;
+                            let establishment = timeout_at(establishment_deadline, async {
+                                let request = incoming.await.map_err(transport_error)?;
+                                if request.path() != "/sea" {
+                                    request.forbidden().await;
+                                    return Ok(None);
+                                }
+                                request.accept().await.map(Some).map_err(transport_error)
+                            })
+                            .await;
+                            let Ok(Ok(Some(connection))) = establishment else {
+                                service.connection_closed(false).await;
+                                metrics.record_connection_cleanup();
                                 return Ok(());
-                            }
-                            let connection = request.accept().await.map_err(transport_error)?;
+                            };
                             serve_connection(connection, service, config, metrics).await
                         }
                         .await;
@@ -1154,4 +1163,173 @@ async fn write_network_response(
 
 pub(crate) fn transport_error(error: impl std::fmt::Display) -> WebTransportError {
     WebTransportError::Transport(error.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::host::{BuiltInSeaHost, StorageMode};
+    use wtransport::ClientConfig;
+
+    /// Supplies test-controlled chunks without network or filesystem timers.
+    struct TestReceive(tokio::sync::mpsc::UnboundedReceiver<Vec<u8>>);
+
+    #[async_trait]
+    impl ReceiveStream for TestReceive {
+        async fn read(&mut self, buffer: &mut [u8]) -> Result<Option<usize>, WebTransportError> {
+            Ok(self.0.recv().await.map(|bytes| {
+                buffer[..bytes.len()].copy_from_slice(&bytes);
+                bytes.len()
+            }))
+        }
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn idle_stream_outlives_operation_deadline() {
+        let (sender, receiver) = tokio::sync::mpsc::unbounded_channel();
+        let mut receive = TestReceive(receiver);
+        let mut decoder = sea_v1::NetworkFrameDecoder::new(sea_v1::Limits::default());
+        let reading = read_next_network_frame(&mut receive, &mut decoder, Duration::from_secs(5));
+        tokio::pin!(reading);
+        assert!(futures_util::poll!(&mut reading).is_pending());
+        tokio::time::advance(Duration::from_secs(3600)).await;
+        assert!(futures_util::poll!(&mut reading).is_pending());
+        sender
+            .send(
+                sea_v1::encode_request_frame(
+                    sea_v1::StreamRole::Author,
+                    42,
+                    &sea_v1::Request::Close,
+                    sea_v1::Limits::default(),
+                )
+                .unwrap(),
+            )
+            .unwrap();
+        assert_eq!(reading.await.unwrap().unwrap().correlation_id, 42);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn partial_frame_expires_after_operation_deadline() {
+        let (sender, receiver) = tokio::sync::mpsc::unbounded_channel();
+        let mut receive = TestReceive(receiver);
+        let mut decoder = sea_v1::NetworkFrameDecoder::new(sea_v1::Limits::default());
+        sender.send(vec![0]).unwrap();
+        let reading = read_next_network_frame(&mut receive, &mut decoder, Duration::from_secs(5));
+        tokio::pin!(reading);
+        assert!(futures_util::poll!(&mut reading).is_pending());
+        tokio::time::advance(Duration::from_secs(6)).await;
+        assert!(matches!(reading.await, Err(WebTransportError::Timeout)));
+    }
+
+    /// Creates a one-slot listener and a certificate-pinned client configuration.
+    fn admission_fixture() -> (WebTransportServer, ClientConfig) {
+        let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
+        let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
+        let server = WebTransportServer::bind(
+            "127.0.0.1:0".parse().unwrap(),
+            identity,
+            Arc::new(BuiltInSeaHost::new(
+                std::env::temp_dir(),
+                StorageMode::Memory,
+            )),
+            TransportConfig {
+                max_connections: 1,
+                operation_timeout: Duration::from_millis(500),
+                ..TransportConfig::default()
+            },
+        )
+        .unwrap();
+        let client = ClientConfig::builder()
+            .with_bind_default()
+            .with_server_certificate_hashes([certificate_hash])
+            .build();
+        (server, client)
+    }
+
+    /// Completes QUIC without sending the HTTP/3 settings required for admission.
+    async fn stalled_admission(
+        address: SocketAddr,
+        config: &ClientConfig,
+    ) -> (wtransport::quinn::Endpoint, wtransport::quinn::Connection) {
+        let mut endpoint =
+            wtransport::quinn::Endpoint::client("127.0.0.1:0".parse().unwrap()).unwrap();
+        endpoint.set_default_client_config(config.quic_config().clone());
+        let connection = endpoint
+            .connect(address, "localhost")
+            .unwrap()
+            .await
+            .unwrap();
+        (endpoint, connection)
+    }
+
+    #[tokio::test]
+    async fn failed_admissions_release_capacity_and_preserve_listener() {
+        let (server, config) = admission_fixture();
+        let address = server.local_addr().unwrap();
+        let shutdown = server.shutdown_handle();
+        let measurements = server.measurement_handle();
+        let serving = tokio::spawn(server.serve_until_shutdown());
+        let exercise = async {
+            let (_raw_endpoint, stalled) = stalled_admission(address, &config).await;
+            timeout(Duration::from_secs(2), stalled.closed())
+                .await
+                .expect("deadline must close the stalled transport");
+
+            let (_aborted_endpoint, aborted) = stalled_admission(address, &config).await;
+            aborted.close(wtransport::quinn::VarInt::from_u32(0), b"abandon handshake");
+
+            let client = Endpoint::client(config).unwrap();
+            assert!(
+                client
+                    .connect(format!("https://{address}/forbidden"))
+                    .await
+                    .is_err()
+            );
+            let connected = client
+                .connect(format!("https://{address}/sea"))
+                .await
+                .unwrap();
+            assert_eq!(measurements.snapshot().connection_cleanups, 3);
+            assert_eq!(measurements.snapshot().active_connections, 1);
+            connected.close(VarInt::from_u32(0), b"finished");
+            shutdown
+                .shutdown(ShutdownMode::Drain {
+                    timeout: Duration::from_secs(2),
+                })
+                .unwrap();
+        };
+        timeout(Duration::from_secs(5), exercise).await.unwrap();
+        assert_eq!(
+            serving.await.unwrap().unwrap().disposition,
+            ShutdownDisposition::Drained
+        );
+        assert_eq!(measurements.snapshot().connection_cleanups, 4);
+    }
+
+    #[tokio::test]
+    async fn shutdown_cancels_pending_admission_without_reconnect_grace() {
+        for mode in [
+            ShutdownMode::Immediate,
+            ShutdownMode::Drain {
+                timeout: Duration::ZERO,
+            },
+        ] {
+            let (server, config) = admission_fixture();
+            let address = server.local_addr().unwrap();
+            let shutdown = server.shutdown_handle();
+            let measurements = server.measurement_handle();
+            let serving = tokio::spawn(server.serve_until_shutdown());
+            let (_endpoint, _connection) = stalled_admission(address, &config).await;
+            shutdown.shutdown(mode).unwrap();
+            let outcome = timeout(Duration::from_secs(2), serving)
+                .await
+                .unwrap()
+                .unwrap()
+                .unwrap();
+            assert_eq!(outcome.disposition, ShutdownDisposition::Cancelled);
+            assert_eq!(outcome.owned_connections, 1);
+            assert_eq!(outcome.cancelled_connections, 1);
+            assert_eq!(measurements.snapshot().connection_cleanups, 1);
+        }
+    }
 }
