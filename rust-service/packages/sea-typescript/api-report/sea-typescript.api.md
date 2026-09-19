@@ -17,6 +17,14 @@ export interface SeaDirectoryEntry {
 }
 
 // @internal
+export interface SeaError extends Error {
+    readonly kind: SeaErrorKind;
+}
+
+// @internal
+export type SeaErrorKind = "InvalidPosition" | "StalePosition" | "Conflict" | "Rejected" | "Ambiguous" | "Unavailable" | "Corrupt" | "Closed";
+
+// @internal
 export interface SeaEvent {
     readonly author: Uint8Array;
     readonly blobTree?: SeaTreeId;
@@ -59,13 +67,14 @@ export interface SeaSession {
     readonly document: Uint8Array;
     getBlob(id: SeaTreeId): Promise<Uint8Array>;
     getDirectory(id: SeaTreeId): Promise<readonly SeaDirectoryEntry[]>;
+    getSnapshot(required?: bigint): Promise<SeaSnapshot | undefined>;
     load(required?: bigint): Promise<SeaStream<SeaLoadResult>>;
     publishSnapshot(parent: bigint | undefined, fence: bigint | undefined, position: bigint, root: SeaTreeId): Promise<SeaSnapshot>;
     putBlob(payload: Uint8Array): Promise<SeaTreeId>;
     putDirectory(entries: readonly SeaDirectoryEntry[]): Promise<SeaTreeId>;
     read(after?: bigint, stopAfter?: bigint): SeaStream<SeaLoadResult>;
     resolveSubmission(operation: Uint8Array): Promise<bigint | undefined>;
-    submit(operation: Uint8Array, reference: bigint | undefined, payload: Uint8Array): Promise<bigint>;
+    submit(operation: Uint8Array, reference: bigint | undefined, payload: Uint8Array, blobTree?: SeaTreeId): Promise<bigint>;
 }
 
 // @internal

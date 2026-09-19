@@ -134,7 +134,12 @@ Foundation progress: `sea-wasm` now has shared session operations over a concret
 The `sea-typescript` package owns five isolated build configurations and exposes initial neutral memory and remote APIs.
 Node package tests passed for memory and compression, and Chromium 152 inside the Codespace passed real plain/compressed WebTransport blob and event round trips, snapshot publication, and reopening.
 See the [package guide](packages/sea-typescript/README.md) for commands and limitations.
-These results do not complete the stages: existing consumers still use the legacy bindings, and complete API/error/lifecycle coverage, consumer migration, and remaining validation gates must be finished before stage 3.
+The foundation checkpoint is committed as `8defb28d049`.
+Continuation work adds submission content references, snapshot lookup, classified factory failures, and safe close during asynchronous operations.
+Fluid projection now lives in `sea-driver` as `SeaSessionDriverClient`, with summary tests, direct SharedTree package collaboration, and the real Chromium SharedTree lifecycle trace migrated to injected neutral factories.
+The migrated Chromium trace passed eight consecutive runs after fixing archive-read lifetime across membership replacement and SEA author collisions between read-first containers.
+Deterministic Node regressions cover both failure modes.
+These results do not complete the stages: benchmark and low-level protocol consumers still use legacy bindings, and loader entrypoints, remaining consumer migration, and build-regeneration acceptance must be finished before stage 3.
 
 ### 1. Extract and Package WASM Bindings
 

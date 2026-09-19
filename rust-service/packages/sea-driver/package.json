@@ -40,7 +40,8 @@
 	},
 	"dependencies": {
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/driver-definitions": "workspace:~"
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/sea-typescript": "workspace:~"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",

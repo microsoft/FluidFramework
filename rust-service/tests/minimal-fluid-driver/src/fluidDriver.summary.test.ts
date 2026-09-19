@@ -5,15 +5,20 @@
 
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { createRequire } from "node:module";
 import test from "node:test";
+import { setImmediate } from "node:timers/promises";
 
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 
-import { SeaDocumentStorage, SeaDeltaConnection } from "@fluidframework/sea-driver/internal";
-import { createGeneratedSeaBindingAdapter, encodePosition } from "./generatedSeaBinding.js";
+import {
+	SeaDocumentStorage,
+	SeaDocumentService,
+	SeaDeltaConnection,
+	SeaSessionDriverClient,
+} from "@fluidframework/sea-driver/internal";
+import { createMemoryService } from "@fluidframework/sea-typescript/internal";
 import type {
 	BlobUpload,
 	ProjectedOperationSubscription,
@@ -27,13 +32,16 @@ import type {
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
-test("generated driver hides initialization and preserves snapshot versions across reopen", async () => {
-	const require = createRequire(import.meta.url);
-	const bindings =
-		require("../../../crates/sea-webtransport/test-support/pkg/node/sea_webtransport_test_support.js") as typeof import("../../../crates/sea-webtransport/test-support/pkg/web/sea_webtransport_test_support.js");
-	const service = await bindings.SeaLocalService.create();
-	const writerClient = service.connect();
-	const writer = createGeneratedSeaBindingAdapter(writerClient, bindings, "ClientSelected");
+test("neutral session driver hides initialization and preserves snapshot versions across reopen", async (context) => {
+	const service = await createMemoryService({ environment: "node" });
+	const writer = new SeaSessionDriverClient(service.open, "clientSelected");
+	const observer = new SeaSessionDriverClient(service.open, "readOnly");
+	context.after(async () => {
+		writer.disconnect();
+		observer.disconnect();
+		await Promise.all([writer.reconnect(), observer.reconnect()]);
+		service.close();
+	});
 	const document = await writer.create();
 	await writer.openSession(
 		document,
@@ -56,8 +64,6 @@ test("generated driver hides initialization and preserves snapshot versions acro
 	assert.deepEqual(writer.positionForSequence(1), position);
 	const version = await writer.publishSnapshotRoot(initial, position, root.digest);
 	assert.deepEqual(version, position);
-	const observerClient = service.connect();
-	const observer = createGeneratedSeaBindingAdapter(observerClient, bindings, "ReadOnly");
 	await observer.openSession(
 		document,
 		encoder.encode("observer"),
@@ -68,7 +74,7 @@ test("generated driver hides initialization and preserves snapshot versions acro
 	assert.equal((await observer.readProjected()).operations[0]?.sequenceNumber, 1n);
 	assert.deepEqual((await observer.snapshot(initial))?.id, initial);
 	assert.deepEqual((await observer.latestSnapshot())?.id, version);
-	assert.equal(await observer.snapshot(encodePosition(999n)), undefined);
+	assert.equal(await observer.snapshot(encodeU64(999n)), undefined);
 	const connection = new SeaDeltaConnection(
 		"observer",
 		{
@@ -98,37 +104,35 @@ test("generated driver hides initialization and preserves snapshot versions acro
 	} finally {
 		connection.dispose();
 	}
-	await writerClient.close();
-	await observerClient.close();
 });
 
-test("generated driver cancels startup history when initialization is invalid", async () => {
-	const require = createRequire(import.meta.url);
-	const bindings =
-		require("../../../crates/sea-webtransport/test-support/pkg/node/sea_webtransport_test_support.js") as typeof import("../../../crates/sea-webtransport/test-support/pkg/web/sea_webtransport_test_support.js");
-	const service = await bindings.SeaLocalService.create();
-	const client = service.connect();
-	const document = await client.createDocument(
-		encoder.encode("author"),
-		encoder.encode("initial-session"),
-	);
+test("neutral session driver cancels startup history when initialization is invalid", async () => {
+	const service = await createMemoryService({ environment: "node" });
+	const client = await service.open(undefined, {
+		author: encoder.encode("author"),
+		session: encoder.encode("initial-session"),
+	});
+	const document = client.document;
 	await client.submit(
 		encoder.encode("invalid-initialization"),
 		undefined,
 		encoder.encode(JSON.stringify({ seaFluid: "initialize", version: 2 })),
 	);
 	let cancelled = false;
-	const read = client.read.bind(client);
-	client.read = (...args) => {
-		const stream = read(...args);
-		const cancel = stream.cancel.bind(stream);
-		stream.cancel = async () => {
-			cancelled = true;
-			await cancel();
+	const adapter = new SeaSessionDriverClient(async (archive, options) => {
+		const session = await service.open(archive, options);
+		const read = session.read.bind(session);
+		session.read = (...args) => {
+			const stream = read(...args);
+			const cancel = stream.cancel.bind(stream);
+			stream.cancel = () => {
+				cancelled = true;
+				cancel();
+			};
+			return stream;
 		};
-		return stream;
-	};
-	const adapter = createGeneratedSeaBindingAdapter(client, bindings, "ReadOnly");
+		return session;
+	}, "readOnly");
 	try {
 		await assert.rejects(
 			adapter.openSession(
@@ -140,7 +144,132 @@ test("generated driver cancels startup history when initialization is invalid", 
 		);
 		assert.equal(cancelled, true, "failed startup must release its live history read");
 	} finally {
+		adapter.disconnect();
+		await adapter.reconnect();
 		await client.close();
+		service.close();
+	}
+});
+
+test("neutral session replacement drains storage reads and defers later reads", async () => {
+	const service = await createMemoryService({ environment: "node" });
+	let releaseRead = (): void => {};
+	const blocked = new Promise<void>((resolve) => {
+		releaseRead = resolve;
+	});
+	let enteredRead = (): void => {};
+	const entered = new Promise<void>((resolve) => {
+		enteredRead = resolve;
+	});
+	let opens = 0;
+	let firstClosed = false;
+	const adapter = new SeaSessionDriverClient(async (document, options) => {
+		const session = await service.open(document, options);
+		opens += 1;
+		if (opens === 1) {
+			const getBlob = session.getBlob.bind(session);
+			const close = session.close.bind(session);
+			session.getBlob = async (id) => {
+				enteredRead();
+				await blocked;
+				return getBlob(id);
+			};
+			session.close = () => {
+				firstClosed = true;
+				return close();
+			};
+		}
+		return session;
+	}, "clientSelected");
+	const document = await adapter.create();
+	const payload = encoder.encode("storage read across delta membership replacement");
+	const blob = await adapter.uploadBlob(payload);
+	const reading = adapter.fetchBlob(blob.digest);
+	await entered;
+	const replacement = adapter.openSession(
+		document,
+		encoder.encode("writer"),
+		encoder.encode("delta-session"),
+	);
+	let laterCompleted = false;
+	const later = adapter.fetchBlob(blob.digest).then((value) => {
+		laterCompleted = true;
+		return value;
+	});
+	const results = Promise.allSettled([reading, replacement, later]);
+	try {
+		await setImmediate();
+		assert.equal(
+			firstClosed,
+			false,
+			"replacement must not close a session with an admitted storage read",
+		);
+		assert.equal(laterCompleted, false, "new reads must wait for membership replacement");
+		releaseRead();
+		assert.deepEqual(await reading, payload);
+		await replacement;
+		assert.deepEqual(await later, payload);
+		assert.equal(firstClosed, true);
+		assert.equal(opens, 2);
+	} finally {
+		releaseRead();
+		await results;
+		adapter.disconnect();
+		await adapter.reconnect();
+		service.close();
+	}
+});
+
+test("read-first document services retain independent SEA memberships", async () => {
+	const service = await createMemoryService({ environment: "node" });
+	const seed = await service.open(undefined, {
+		author: encoder.encode("seed"),
+		session: encoder.encode("seed"),
+	});
+	const payload = encoder.encode("shared archive content");
+	const blob = await seed.putBlob(payload);
+	const id = Buffer.from(seed.document).toString("hex");
+	const adapters: SeaSessionDriverClient[] = [];
+	const services = Array.from(
+		{ length: 2 },
+		() =>
+			new SeaDocumentService(
+				{
+					type: "fluid",
+					id,
+					url: `fluid://localhost/minimal/${id}`,
+					tokens: {},
+					endpoints: {},
+				},
+				async () => {
+					const adapter = new SeaSessionDriverClient(service.open, "readOnly");
+					adapters.push(adapter);
+					return adapter;
+				},
+				{},
+			),
+	);
+	const connections: SeaDeltaConnection[] = [];
+	try {
+		for (const documentService of services) {
+			connections.push(
+				await documentService.connectToDeltaStream({
+					details: { capabilities: { interactive: true } },
+					permission: [],
+					scopes: [],
+					user: { id: "reader" },
+					mode: "read",
+				}),
+			);
+		}
+		for (const adapter of adapters)
+			assert.deepEqual(await adapter.fetchBlob(blob.bytes), payload);
+	} finally {
+		for (const connection of connections) connection.dispose();
+		for (const documentService of services) documentService.dispose();
+		await Promise.all(adapters.map(async (adapter) => adapter.reconnect()));
+		await seed.close();
+		service.close();
 	}
 });
 

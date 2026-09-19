@@ -84,7 +84,10 @@ Both modes receive accepted-snapshot coordination updates.
 `ReadOnly` is available to clients that need updates but must never publish.
 
 Within `sea-driver`, `SeaDriver` and `SeaDocumentService` compose `SeaDocumentStorage`, `SeaDeltaStorage`, and `SeaDeltaConnection`, with shared lifecycle helpers in a separate module.
-`GeneratedSeaBindingAdapter` remains in this harness and only converts generated values to the driver's exported client contract.
+`SeaSessionDriverClient` in `sea-driver` now owns the Fluid projection over an injected neutral session factory.
+The summary tests, direct SharedTree package collaboration test, and SharedTree browser lifecycle trace use it with `sea-typescript` package entrypoints.
+The browser trace uses an import map to load package-owned JavaScript and WASM and triggers real session closure at submission admission for deterministic explicit recovery testing.
+`GeneratedSeaBindingAdapter` remains temporarily in this harness for benchmarks still using the legacy generated API.
 
 ## Validation
 

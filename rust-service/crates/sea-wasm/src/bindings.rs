@@ -26,7 +26,7 @@ use wasm_bindgen::prelude::*;
 use crate::session::{BindingError, BindingSession, SessionAdapter};
 
 /// Converts classified failures into JavaScript errors without losing their category.
-fn service_error(error: &BindingError) -> JsValue {
+fn service_error(error: &impl ClassifiedError) -> JsValue {
     let result = js_sys::Error::new(&error.to_string());
     let _ = Reflect::set(
         result.as_ref(),
@@ -38,7 +38,9 @@ fn service_error(error: &BindingError) -> JsValue {
 
 /// Reports invalid binding input before calling a session.
 fn invalid(message: &str) -> JsValue {
-    js_sys::Error::new(message).into()
+    let result = js_sys::Error::new(message);
+    let _ = Reflect::set(result.as_ref(), &"kind".into(), &"Rejected".into());
+    result.into()
 }
 
 /// Sets one property on a newly allocated binding result.
@@ -53,6 +55,30 @@ fn set(object: &Object, name: &str, value: impl Into<JsValue>) -> Result<(), JsV
 pub struct SeaTreeId {
     /// Transport-independent core identity.
     inner: BlobTreeId,
+}
+
+#[wasm_bindgen]
+extern "C" {
+    /// Non-consuming JavaScript reference to a generated content identity.
+    #[wasm_bindgen(typescript_type = "SeaTreeId")]
+    pub type SeaTreeReference;
+}
+
+/// Copies an optional generated identity without transferring ownership of its allocation.
+fn tree_reference(value: &SeaTreeReference) -> Result<BlobTreeId, JsValue> {
+    let bytes = Reflect::get(value.as_ref(), &"bytes".into())?;
+    let bytes = bytes
+        .dyn_ref::<Uint8Array>()
+        .ok_or_else(|| invalid("content identity requires Uint8Array bytes"))?
+        .to_vec();
+    match Reflect::get(value.as_ref(), &"kind".into())?
+        .as_string()
+        .as_deref()
+    {
+        Some("blob") => Ok(SeaTreeId::blob(&bytes)?.inner),
+        Some("directory") => Ok(SeaTreeId::directory(&bytes)?.inner),
+        _ => Err(invalid("unknown content identity kind")),
+    }
 }
 
 #[wasm_bindgen]
@@ -265,6 +291,7 @@ impl SeaSession {
         operation: &[u8],
         reference: Option<u64>,
         payload: &[u8],
+        blob_tree: Option<SeaTreeReference>,
     ) -> Result<u64, JsValue> {
         let operation_id = OperationId::new(Bytes::copy_from_slice(operation))
             .map_err(|_| invalid("operation identity must not be empty"))?;
@@ -274,7 +301,7 @@ impl SeaSession {
                 reference: reference.map(EventPosition::new),
                 event: Event {
                     payload: Bytes::copy_from_slice(payload),
-                    blob_tree: None,
+                    blob_tree: blob_tree.as_ref().map(tree_reference).transpose()?,
                 },
             })
             .await
@@ -331,6 +358,21 @@ impl SeaSession {
         Ok(SeaEventStream {
             stream: RefCell::new(Some(Box::pin(snapshot.chain(events)))),
             pending: RefCell::new(None),
+        })
+    }
+
+    /// Returns the newest snapshot at or before an inclusive event bound, or the latest if absent.
+    #[wasm_bindgen(js_name = getSnapshot)]
+    pub async fn get_snapshot(&self, required: Option<u64>) -> Result<JsValue, JsValue> {
+        let snapshot = self
+            .inner
+            .get_snapshot(required.map_or(LoadStart::LatestSnapshot, |position| {
+                LoadStart::ReplayAtLeastAllAfter(EventPosition::new(position))
+            }))
+            .await
+            .map_err(|error| service_error(&error))?;
+        snapshot.map_or(Ok(JsValue::UNDEFINED), |snapshot| {
+            snapshot_result(snapshot.root.id(), snapshot.at_event.id())
         })
     }
 
@@ -607,10 +649,10 @@ impl SeaMemoryService {
                 .storage
                 .create_view()
                 .await
-                .map_err(|error| invalid(&error.to_string()))?;
+                .map_err(|error| service_error(&error))?;
             let sequencer = sea_sequencer::session::LocalSequencer::recover(view)
                 .await
-                .map_err(|error| invalid(&error.to_string()))?;
+                .map_err(|error| service_error(&error))?;
             let document = document.as_bytes().to_vec();
             runtimes.insert(document.clone(), sequencer.clone());
             (document, sequencer)
@@ -623,7 +665,7 @@ impl SeaMemoryService {
                 options.reference,
             )
             .await
-            .map_err(|error| invalid(&error.to_string()))?;
+            .map_err(|error| service_error(&error))?;
         SeaSession::from_stack(session, document, options.compression)
     }
 }
@@ -650,7 +692,9 @@ pub async fn open_webtransport(
         transport::browser::BrowserTransport,
     };
     check_options(options)?;
-    let transport = BrowserTransport::connect(url, certificate_hash).await?;
+    let transport = BrowserTransport::connect(url, certificate_hash)
+        .await
+        .map_err(|error| service_error(&sea_webtransport::SeaClientError::from(error)))?;
     let intent = if document.is_some() {
         ArchiveIntent::Open
     } else {
@@ -670,7 +714,7 @@ pub async fn open_webtransport(
         },
     )
     .await
-    .map_err(|error| invalid(&error.to_string()))?;
+    .map_err(|error| service_error(&error))?;
     let document = session.document().as_bytes().to_vec();
     SeaSession::from_stack(session, document, options.compression)
 }

@@ -5,6 +5,27 @@
 
 import type * as Generated from "../generated/memory-compression/web/sea_wasm.js";
 
+/** Stable SEA failure categories, plus wrapper-local rejection after close.
+ * @internal
+ */
+export type SeaErrorKind =
+	| "InvalidPosition"
+	| "StalePosition"
+	| "Conflict"
+	| "Rejected"
+	| "Ambiguous"
+	| "Unavailable"
+	| "Corrupt"
+	| "Closed";
+
+/** Classified session or factory failure; artifact import/initialization can also throw platform errors.
+ * @internal
+ */
+export interface SeaError extends Error {
+	/** Backend classification, or Closed when the wrapper refuses a call after close. */
+	readonly kind: SeaErrorKind;
+}
+
 /** Immutable content identity, not availability evidence or a WASM-owned object.
  * @internal
  */
@@ -133,6 +154,7 @@ export interface SeaSession {
 		operation: Uint8Array,
 		reference: bigint | undefined,
 		payload: Uint8Array,
+		blobTree?: SeaTreeId,
 	): Promise<bigint>;
 	/** Resolves a submission without resubmitting it. */
 	resolveSubmission(operation: Uint8Array): Promise<bigint | undefined>;
@@ -140,6 +162,8 @@ export interface SeaSession {
 	read(after?: bigint, stopAfter?: bigint): SeaStream<SeaLoadResult>;
 	/** Loads a snapshot and its gap-free suffix. */
 	load(required?: bigint): Promise<SeaStream<SeaLoadResult>>;
+	/** Returns the newest snapshot at or before an inclusive bound, or the latest if absent. */
+	getSnapshot(required?: bigint): Promise<SeaSnapshot | undefined>;
 	/** Registers explicit snapshot participation. */
 	coordinateSnapshots(
 		participation: "readOnly" | "seaSelected" | "clientSelected",
@@ -226,22 +250,33 @@ export async function createMemoryService(
 			);
 	const service = new bindings.SeaMemoryService();
 	let closed = false;
+	let pendingOpens = 0;
+	let released = false;
+	const release = (): void => {
+		if (closed && pendingOpens === 0 && !released) {
+			released = true;
+			service.free();
+		}
+	};
 	return {
 		async open(document, sessionOptions) {
 			if (closed) {
-				throw new Error("memory service is closed");
+				throw Object.assign(new Error("memory service is closed"), { kind: "Closed" });
 			}
 			const generatedOptions = makeOptions(bindings, sessionOptions);
+			pendingOpens += 1;
 			try {
 				return wrapSession(await service.open(document, generatedOptions), bindings);
 			} finally {
 				generatedOptions.free();
+				pendingOpens -= 1;
+				release();
 			}
 		},
 		close() {
 			if (!closed) {
 				closed = true;
-				service.free();
+				release();
 			}
 		},
 	};
@@ -385,66 +420,116 @@ function wrapStream<Item>(
 /** Keeps generated objects inside their owning module and presents neutral session values. */
 function wrapSession(session: Generated.SeaSession, bindings: BindingModule): SeaSession {
 	let closing: Promise<void> | undefined;
+	let closed = false;
+	let closeSettled = false;
+	let pendingOperations = 0;
+	let released = false;
+	const requireOpen = (): void => {
+		if (closed) {
+			throw Object.assign(new Error("session is closed"), { kind: "Closed" });
+		}
+	};
+	const release = (): void => {
+		if (closeSettled && pendingOperations === 0 && !released) {
+			released = true;
+			session.free();
+		}
+	};
+	const invoke = async <Result>(operation: () => Promise<Result>): Promise<Result> => {
+		requireOpen();
+		pendingOperations += 1;
+		try {
+			return await operation();
+		} finally {
+			pendingOperations -= 1;
+			release();
+		}
+	};
 	return {
 		document: session.document,
-		async putBlob(payload) {
-			return copyIdentity(await session.putBlob(payload));
+		putBlob: (payload) => invoke(async () => copyIdentity(await session.putBlob(payload))),
+		getBlob: (id) =>
+			invoke(async () => {
+				const tree = generatedIdentity(bindings, id);
+				try {
+					return await session.getBlob(tree);
+				} finally {
+					tree.free();
+				}
+			}),
+		putDirectory: (entries) =>
+			invoke(async () => {
+				return copyIdentity(
+					await session.putDirectory(
+						entries.map((entry) => entry.name),
+						entries.map((entry) => generatedIdentity(bindings, entry.child)),
+					),
+				);
+			}),
+		getDirectory: (id) =>
+			invoke(async () => {
+				const tree = generatedIdentity(bindings, id);
+				try {
+					const entries = (await session.getDirectory(tree)) as {
+						name: string;
+						child: Generated.SeaTreeId;
+					}[];
+					return entries.map((entry) => ({
+						name: entry.name,
+						child: copyIdentity(entry.child),
+					}));
+				} finally {
+					tree.free();
+				}
+			}),
+		submit: (operation, reference, payload, blobTree) =>
+			invoke(async () => {
+				const tree =
+					blobTree === undefined ? undefined : generatedIdentity(bindings, blobTree);
+				try {
+					return await session.submit(operation, reference, payload, tree);
+				} finally {
+					tree?.free();
+				}
+			}),
+		resolveSubmission: (operation) => invoke(() => session.resolveSubmission(operation)),
+		read(after, stopAfter) {
+			requireOpen();
+			return wrapStream(session.read(after, stopAfter), copyResult);
 		},
-		async getBlob(id) {
-			const tree = generatedIdentity(bindings, id);
-			try {
-				return await session.getBlob(tree);
-			} finally {
-				tree.free();
-			}
-		},
-		async putDirectory(entries) {
-			return copyIdentity(
-				await session.putDirectory(
-					entries.map((entry) => entry.name),
-					entries.map((entry) => generatedIdentity(bindings, entry.child)),
-				),
-			);
-		},
-		async getDirectory(id) {
-			const tree = generatedIdentity(bindings, id);
-			try {
-				const entries = (await session.getDirectory(tree)) as {
-					name: string;
-					child: Generated.SeaTreeId;
-				}[];
-				return entries.map((entry) => ({
-					name: entry.name,
-					child: copyIdentity(entry.child),
-				}));
-			} finally {
-				tree.free();
-			}
-		},
-		submit: (operation, reference, payload) => session.submit(operation, reference, payload),
-		resolveSubmission: (operation) => session.resolveSubmission(operation),
-		read: (after, stopAfter) => wrapStream(session.read(after, stopAfter), copyResult),
-		async load(required) {
-			return wrapStream(await session.load(required), copyResult);
-		},
-		async coordinateSnapshots(participation) {
-			return wrapStream(
-				await session.coordinateSnapshots(participation),
-				(value) => value as SeaSnapshotCoordination,
-			);
-		},
-		async publishSnapshot(parent, fence, position, root) {
-			const tree = generatedIdentity(bindings, root);
-			try {
-				return copyResult(
-					await session.publishSnapshot(parent, fence, position, tree),
-				) as SeaSnapshot;
-			} finally {
-				tree.free();
-			}
-		},
+		load: (required) =>
+			invoke(async () => wrapStream(await session.load(required), copyResult)),
+		getSnapshot: (required) =>
+			invoke(async () => {
+				const result: unknown = await session.getSnapshot(required);
+				return result === undefined ? undefined : (copyResult(result) as SeaSnapshot);
+			}),
+		coordinateSnapshots: (participation) =>
+			invoke(async () => {
+				return wrapStream(
+					await session.coordinateSnapshots(participation),
+					(value) => value as SeaSnapshotCoordination,
+				);
+			}),
+		publishSnapshot: (parent, fence, position, root) =>
+			invoke(async () => {
+				const tree = generatedIdentity(bindings, root);
+				try {
+					return copyResult(
+						await session.publishSnapshot(parent, fence, position, tree),
+					) as SeaSnapshot;
+				} finally {
+					tree.free();
+				}
+			}),
 		close() {
-			closing ??= session.close().finally(() => session.free());
+			if (closing === undefined) {
+				closed = true;
+				closing = session.close().finally(() => {
+					closeSettled = true;
+					release();
+				});
+			}
 			return closing;
 		},
 	};

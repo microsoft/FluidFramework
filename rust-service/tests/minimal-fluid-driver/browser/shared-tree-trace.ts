@@ -19,14 +19,9 @@ import {
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/legacy";
 
-import init, * as SeaBindings from "../../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
-import {
-	SeaBrowserTransport,
-	SeaInjectedClient,
-} from "../../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
+import { openWebTransport, type SeaSession } from "@fluidframework/sea-typescript/internal";
 import { type SeaDeltaConnection, SeaDriver } from "../src/index.js";
-import type { SeaDriverClient } from "@fluidframework/sea-driver/internal";
-import { createGeneratedSeaBindingAdapter } from "../src/generatedSeaBinding.js";
+import { SeaSessionDriverClient } from "@fluidframework/sea-driver/internal";
 
 /** Browser hooks used by the headless trace runner and failure diagnostics. */
 declare global {
@@ -59,8 +54,8 @@ const containerSchema = {
 const codeDetails = { package: "shared-tree-wasm-driver", config: {} };
 /** Recent Fluid telemetry retained for trace failure diagnostics. */
 const telemetry: ITelemetryBaseEvent[] = [];
-/** Generated clients whose transport metrics and lifetimes are reported by the trace. */
-const transports: SeaBrowserTransport[] = [];
+/** Package-owned remote memberships opened by the trace's injected factory. */
+const sessions: SeaSession[] = [];
 /** Explicit synchronization failures retained in final trace evidence. */
 const synchronizationErrors: string[] = [];
 /** Sequence numbers observed by each explicit synchronization point. */
@@ -103,14 +98,6 @@ function showResult(result: Record<string, unknown>): void {
 	const output = document.querySelector("#result");
 	assert(output !== null, "missing result element");
 	output.textContent = JSON.stringify(result);
-}
-
-/** Adapts the generated Sea client to the Fluid driver boundary. */
-function adaptBrowserClient(
-	client: SeaInjectedClient,
-	reconnect: () => Promise<SeaBrowserTransport>,
-): SeaDriverClient {
-	return createGeneratedSeaBindingAdapter(client, SeaBindings, "ClientSelected", reconnect);
 }
 
 /** Polls a trace condition until it succeeds or the diagnostic timeout expires. */
@@ -159,7 +146,6 @@ async function run(): Promise<Record<string, unknown>> {
 	const certificateHex = parameters.get("hash");
 	assert(transportUrl, "missing transport URL");
 	assert(certificateHex?.length === 64, "missing certificate hash");
-	await init();
 	const started = performance.now();
 	const hash = Uint8Array.from(certificateHex.match(/../gu) ?? [], (value) =>
 		Number.parseInt(value, 16),
@@ -177,18 +163,16 @@ async function run(): Promise<Record<string, unknown>> {
 		getAbsoluteUrl: async (_resolvedUrl: IResolvedUrl, relativeUrl: string) => relativeUrl,
 	};
 	const documentServiceFactory = new SeaDriver(
-		async () => {
-			const createTransport = async (): Promise<SeaBrowserTransport> => {
-				const transport = await SeaBrowserTransport.connect(transportUrl, hash, 1024 * 1024);
-				transports.push(transport);
-				return transport;
-			};
-			const transport = await createTransport();
-			return adaptBrowserClient(
-				new SeaInjectedClient(transport, 1024 * 1024),
-				createTransport,
-			);
-		},
+		async () =>
+			new SeaSessionDriverClient(async (document, options) => {
+				const session = await openWebTransport(
+					{ url: transportUrl, certificateHash: hash },
+					document,
+					options,
+				);
+				sessions.push(session);
+				return session;
+			}, "clientSelected"),
 		{
 			onSynchronizationError: (error) => synchronizationErrors.push(String(error)),
 			onDeltaConnection: (connection) => deltaConnections.push(connection),
@@ -269,8 +253,8 @@ async function run(): Promise<Record<string, unknown>> {
 	await waitForConnected(firstContainer);
 	const firstConnection = deltaConnections.at(-1);
 	assert(firstConnection !== undefined, "attached container omitted its delta connection");
-	const firstTransport = transports.at(-1);
-	assert(firstTransport !== undefined, "attached container omitted its transport");
+	const firstSession = sessions.at(-1);
+	assert(firstSession !== undefined, "attached container omitted its session");
 
 	setStage("loading-second-container");
 	const secondContainer = await makeLoader().resolve({ url: resolvedUrl.url });
@@ -304,9 +288,17 @@ async function run(): Promise<Record<string, unknown>> {
 	);
 
 	setStage("recovering-disconnected-edit");
-	firstTransport.disconnect();
+	const submit = firstSession.submit.bind(firstSession);
+	const submissionStarted = new Promise<void>((resolve) => {
+		firstSession.submit = (...args) => {
+			void firstSession.close().catch(() => {});
+			resolve();
+			return submit(...args);
+		};
+	});
 	firstView.root.value = 3;
-	await waitUntil(() => firstConnection.pending.size > 0, "disconnected edit was not pending");
+	await submissionStarted;
+	assert(firstConnection.pending.size > 0, "disconnected edit was not pending");
 	let submissionFailed = false;
 	try {
 		await firstConnection.waitForIdle();
@@ -341,6 +333,7 @@ async function run(): Promise<Record<string, unknown>> {
 		"reloaded SharedTree did not replay edits",
 	);
 
+	setStage("closing-containers");
 	firstView.dispose();
 	secondView.dispose();
 	reloadedView.dispose();
@@ -350,7 +343,7 @@ async function run(): Promise<Record<string, unknown>> {
 	return {
 		status: "passed",
 		browser: navigator.userAgent,
-		transportSessionCount: transports.length,
+		transportSessionCount: sessions.length,
 		independentContainerCount: 3,
 		finalValue: 3,
 		recoveryResolution: "notCommitted",
@@ -371,6 +364,7 @@ window.__sharedTreeResult = run()
 			status: "failed",
 			stage,
 			error: String(error),
+			stack: error instanceof Error ? error.stack : undefined,
 			synchronizationErrors,
 			synchronizedSequences,
 			synchronizedEnvelopes,

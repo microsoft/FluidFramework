@@ -205,14 +205,14 @@ export class SeaDocumentService extends Events implements IDocumentService {
 		this.sessionOpened = true;
 	}
 
-	/** Creates or returns lifecycle state retained across delta connections. */
+	/** Retains a service-unique SEA author across delta connections, independent of projected client labels. */
 	private getDeltaLifecycle(mode: ConnectionMode): DeltaConnectionLifecycle {
 		if (this.deltaLifecycle === undefined) {
 			const clientId = mode === "read" ? remoteClientId : `client-${crypto.randomUUID()}`;
 			this.deltaLifecycle = {
 				clientId,
 				remoteClientId: clientId === remoteClientId ? externalClientId : remoteClientId,
-				writer: encoder.encode(clientId),
+				writer: encoder.encode(mode === "read" ? `reader-${crypto.randomUUID()}` : clientId),
 				cursor: undefined,
 				lastPosition: undefined,
 				remoteClientSequenceNumber: 0,

@@ -5,16 +5,15 @@
 
 import assert from "node:assert/strict";
 import { readFileSync, realpathSync } from "node:fs";
-import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import test from "node:test";
 import { setImmediate } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 import { DirectSharedTreeClient } from "@fluidframework/sea-tree/internal";
+import { SeaSessionDriverClient } from "@fluidframework/sea-driver/internal";
+import { createMemoryService } from "@fluidframework/sea-typescript/internal";
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
-
-import { createGeneratedSeaBindingAdapter } from "./generatedSeaBinding.js";
 
 /** Workspace dependency fields relevant to the driver isolation contract. */
 interface WorkspacePackage {
@@ -89,10 +88,7 @@ async function waitForPeer(
 test("sea-tree package hosts two collaborating SharedTree kernels", {
 	timeout: 10_000,
 }, async (context) => {
-	const require = createRequire(import.meta.url);
-	const bindings =
-		require("../../../crates/sea-webtransport/test-support/pkg/node/sea_webtransport_test_support.js") as typeof import("../../../crates/sea-webtransport/test-support/pkg/web/sea_webtransport_test_support.js");
-	const service = await bindings.SeaLocalService.create();
+	const service = await createMemoryService({ environment: "node" });
 	const clients: DirectSharedTreeClient[] = [];
 	const views: { dispose(): void }[] = [];
 	context.after(async () => {
@@ -100,10 +96,10 @@ test("sea-tree package hosts two collaborating SharedTree kernels", {
 			view.dispose();
 		}
 		await Promise.all(clients.map(async (client) => client.dispose()));
-		service.free();
+		service.close();
 	});
 	const writer = await DirectSharedTreeClient.create(
-		createGeneratedSeaBindingAdapter(service.connect(), bindings, "SeaSelected"),
+		new SeaSessionDriverClient(service.open, "seaSelected"),
 		new Uint8Array(),
 		4,
 		1024 * 1024,
@@ -111,7 +107,7 @@ test("sea-tree package hosts two collaborating SharedTree kernels", {
 	);
 	clients.push(writer);
 	const observer = await DirectSharedTreeClient.create(
-		createGeneratedSeaBindingAdapter(service.connect(), bindings, "SeaSelected"),
+		new SeaSessionDriverClient(service.open, "seaSelected"),
 		writer.documentId,
 		4,
 		1024 * 1024,

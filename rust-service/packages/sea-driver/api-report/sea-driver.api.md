@@ -186,6 +186,33 @@ export interface SeaDriverClient {
 }
 
 // @internal
+export class SeaSessionDriverClient implements SeaDriverClient {
+    constructor(factory: SeaSessionFactory, participation: SeaSnapshotParticipation);
+    create(): Promise<Uint8Array>;
+    disconnect(): void;
+    fetchBlob(digest: Uint8Array): Promise<Uint8Array>;
+    fetchSummary(digest: Uint8Array): Promise<readonly SummaryEntry[]>;
+    latestSnapshot(): ReturnType<SeaDriverClient["latestSnapshot"]>;
+    openSession(document: Uint8Array, writer: Uint8Array, session: Uint8Array, resumeAfter?: Uint8Array): Promise<void>;
+    positionForSequence(sequenceNumber: number): Uint8Array | undefined;
+    publishSnapshotRoot(expectedParent: Uint8Array | undefined, atEvent: Uint8Array | undefined, root: Uint8Array): Promise<Uint8Array>;
+    publishSummary(entries: readonly SummaryEntry[]): Promise<SummaryPublication>;
+    readProjected(after?: Uint8Array): Promise<ProjectedReadPage>;
+    reconnect(..._args: readonly unknown[]): Promise<void>;
+    resolveSubmission(submission: Uint8Array): Promise<SubmissionResolution>;
+    snapshot(id: Uint8Array): ReturnType<SeaDriverClient["snapshot"]>;
+    submitEvent(submission: Uint8Array, localSequenceNumber: number, payload: Uint8Array, referencePosition?: Uint8Array): Promise<Uint8Array>;
+    subscribeProjected(after?: Uint8Array): Promise<ProjectedOperationSubscription>;
+    uploadBlob(payload: Uint8Array): Promise<BlobUpload>;
+}
+
+// @internal
+export type SeaSessionFactory = (document: Uint8Array | undefined, options: SeaSessionOptions) => Promise<SeaSession>;
+
+// @internal
+export type SeaSnapshotParticipation = "readOnly" | "seaSelected" | "clientSelected";
+
+// @internal
 export type SubmissionResolution = {
     readonly kind: "committed";
     readonly position: Uint8Array;

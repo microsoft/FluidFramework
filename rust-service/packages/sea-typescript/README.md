@@ -2,13 +2,15 @@
 
 This package provides non-Fluid-specific SEA sessions through package-owned WASM artifacts.
 Its APIs are internal and under active development in the combined foundation phase of the [integration plan](../../SERVICE_CLIENT_PLAN.md).
-Existing Fluid-driver and direct SharedTree consumers have not yet migrated to this package.
+Fluid summary tests, direct SharedTree package tests, and the SharedTree browser lifecycle trace now consume this package through the reusable `sea-driver` projection.
+Legacy benchmark and low-level protocol harnesses are still being migrated.
 
 ## Supported Foundation
 
 The current entrypoint supports independent memory services and real browser WebTransport sessions.
 Both use the same Rust session bindings and can explicitly enable the existing compression decorator.
-Sessions expose opaque event submission and resolution, monitored history, immutable blobs and directories, and snapshot coordination, publication, and loading.
+Sessions expose opaque event submission with optional content references, submission resolution, monitored history, immutable blobs and directories, and snapshot coordination, publication, lookup, and loading.
+`getSnapshot()` selects the latest snapshot; an event bound selects the newest snapshot at or before that bound, or returns `undefined` when none exists.
 Automatic reconnect, implicit retries, authentication, and arbitrary runtime decorator composition are not provided.
 
 ```typescript
@@ -58,10 +60,15 @@ Initialization is cached per artifact and JavaScript target; it does not allocat
 The TypeScript wrapper copies content identities into plain values and keeps generated objects inside their originating WASM module.
 Call `cancel()` on streams and `close()` on sessions and memory services when finished.
 Closing a session leaves other sessions intact; releasing a memory service prevents new opens through that service object but does not forcibly close existing sessions.
+Close is idempotent and prevents new operations immediately.
+Admitted operations retain the generated allocation until they settle, so close never frees a WASM object still borrowed by an asynchronous call.
+An open admitted before memory-service close may still return a usable session.
+Session close can race an admitted write; its outcome must be observed or resolved, not inferred from close.
 Stream reads are sequential; a second concurrent read is rejected.
 
-Session-operation failures retain their Rust SEA category in an error's `kind` field.
-Input and factory-open failures currently provide diagnostic errors without a uniform category; a complete public error contract remains foundation work.
+Session-operation and backend factory-open failures retain their Rust SEA category in an error's `kind` field, described by `SeaError` and `SeaErrorKind`.
+Invalid binding inputs and unsupported capabilities are `Rejected`; wrapper calls after close are `Closed`, a wrapper-only category rather than a core SEA classification.
+Artifact import and WASM initialization failures can still be ordinary platform errors without a SEA category.
 No error or cancelled wait establishes that an ambiguous write did not commit.
 
 ## Validation
@@ -94,5 +101,14 @@ An npm packaging dry run included JavaScript, declarations, WASM, and module met
 
 The required repository-root `pnpm build:fast` passed after the historical benchmark formatting was corrected separately in commit `023ac56ea45`.
 
-Remaining combined-stage work includes consumer migration, optional content references on submissions, direct snapshot lookup, complete typed factory errors, in-flight operation/close lifecycle coverage, and incremental missing-artifact rebuild checks.
-The existing consumers still use the legacy transport-owned generated API; no stage-completion claim is made by these checks.
+Continuation tests cover content-reference reuse, absent and bounded snapshot lookup, factory categories, service close during open, and session close during an operation and subsequent calls.
+The reusable `SeaSessionDriverClient` in `sea-driver` consumes an injected session factory; neutral APIs contain no Fluid initialization or sequence-number projection.
+Migrated summary and direct SharedTree collaboration tests pass through package entrypoints.
+Eight consecutive real Chromium SharedTree lifecycle runs passed attachment, collaboration, session closure at submission admission, explicit ambiguity resolution and resubmission, and reload.
+The earlier intermittent `session is closed` failure exposed two driver defects: membership replacement interrupted archive reads, and independent read-first containers shared a SEA author and superseded each other's memberships.
+The driver now drains admitted reads before replacement, defers later reads, and retains a unique author per read-first document service.
+Deterministic Node regressions cover both cases.
+The root build, canonical Rust checks, `test.sh`, and focused Node tests do not substitute for this separately invoked SharedTree trace.
+
+Remaining combined-stage work includes legacy benchmark and low-level binding consumer migration, independently importable capability loaders, and incremental missing-artifact rebuild checks.
+Legacy transport-owned generated exports remain until those consumers migrate; no stage-completion claim is made by these checks.
