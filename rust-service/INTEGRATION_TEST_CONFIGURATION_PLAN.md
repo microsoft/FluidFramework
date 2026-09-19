@@ -241,6 +241,18 @@ The exclusion checkpoint passes the focused SEA/local comparisons, root `pnpm bu
 The next full `--bail` run reaches 340 passing and 402 pending, then times out in `Runtime IdCompressor / finalizes IDs made in a detached state immediately upon attach`, waiting for incoming sequence 3.
 That current-version delivery failure remains in scope; it is not an exclusion candidate.
 
+The ID-compressor timeout at `dd431da9966` was a shared tracker defect, not lost SEA delivery.
+The test creates a fourth container for an independent document; the tracker incorrectly required its sequence number to equal that of the first document's three clients.
+A temporary document-scoped synchronization probe passed and was removed.
+The original integration test and its assertions remain unchanged.
+`LoaderContainerTracker` now compares incoming sequence positions within each resolved document, treating unresolved containers independently.
+Two focused regressions prove independent positions are allowed and a lagging same-document peer is still detected.
+All 21 test-utils tests and all 32 `Runtime IdCompressor` cases pass, with the latter repeated on both SEA and the local driver.
+Root build, test-utils lint, scoped policy, documentation, and canonical SEA validation pass.
+No SEA production crate or generated API changed; existing native validation remains applicable.
+The next full `test:realsvc:sea --bail` run reaches 368 passing and 402 pending, then fails `Layer compatibility validation / loader / driver compatibility / create flow` setup because its driver switch does not recognize `sea-websocket`.
+The teardown failure is secondary to that setup rejection; no additional exclusion was added.
+
 ### Membership Investigation
 
 SEA-001 is not a test-specific mismatch: `SeaDeltaConnection` fabricates two initial join operations independently for each connection, and `projectOperation` collapses all other authors into one synthetic remote client.
