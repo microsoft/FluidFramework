@@ -1,9 +1,15 @@
 # Codespaces WebTransport Investigation Plan
 
-Status: Optional streaming and ordinary WebSocket adapters implemented; native streaming and Firefox ordinary WebSocket passed external Codespaces collaboration, with additional local Chromium and Node coverage.
+Status: Complete; archived on 2026-09-19.
 Created: 2026-09-18.
 
-Current recommendation: explicitly enable native `WebSocketStream` for the Codespaces development path; see [implementation and validation](tests/webtransport-browser/README.md#optional-websocketstream-validation).
+This record preserves the investigation, implementation, and validation evidence, including superseded proposals.
+Optional streaming and ordinary WebSocket adapters are implemented; native streaming and Firefox ordinary WebSocket passed external Codespaces collaboration, with additional local Chromium and Node coverage.
+The implementation and Firefox follow-up are committed through `031377a9cab` on the isolated branch; integration remains separate work.
+Anonymous-browser access and the revised page's absence of a Firefox permission prompt remain unverified, not implementation blockers.
+Use the linked client, server, and test guides for current supported behavior rather than the historical instructions below.
+
+Current recommendation: explicitly enable native `WebSocketStream` for the Codespaces development path; see [implementation and validation](../tests/webtransport-browser/README.md#optional-websocketstream-validation).
 Where streaming APIs are unavailable, explicitly select ordinary WebSocket only when loss of receive backpressure is acceptable; see the compatibility follow-up below.
 The user declined third-party relay deployment; retain those options as alternatives only.
 Earlier recommendations below are historical evidence, not authorization to deploy a relay.
@@ -74,7 +80,7 @@ The external Windows integrated browser (Chrome 148) also passed real SEA docume
 The test used disposable memory storage; both test ports returned to private and listeners were stopped.
 No third-party relay, client-side helper, certificate bypass, or ordinary-WebSocket substitution was used.
 
-See the [client contract](crates/sea-webtransport/README.md#optional-websocketstream-fallback) and [server setup](crates/sea-webtransport-server/README.md#optional-websocket-listener).
+See the [client contract](../crates/sea-webtransport/README.md#optional-websocketstream-fallback) and [server setup](../crates/sea-webtransport-server/README.md#optional-websocket-listener).
 Production authentication, cross-browser support beyond native API availability, and total browser/proxy memory bounds remain out of scope.
 The rest of this record preserves earlier scope decisions and measurements chronologically.
 
@@ -111,7 +117,7 @@ Both default WebTransport and feature-enabled WebSocketStream Chromium collabora
 Default generated bindings were restored after the optional-feature browser run.
 No push or merge into the active worktree was performed.
 
-This is an independently assignable investigation, separate from the [SEA WASM and ServiceClient integration plan](SERVICE_CLIENT_PLAN.md).
+This is an independently assignable investigation, separate from the [SEA WASM and ServiceClient integration plan](../SERVICE_CLIENT_PLAN.md).
 It does not require that plan's package extraction or inventory-app integration to be complete.
 Use the existing WebTransport client and server for the smallest useful probe.
 
@@ -140,9 +146,9 @@ Do not expand this assignment into implementing the WASM packages, ServiceClient
 
 ## Fresh-Context Entry
 
-- Read this plan's scope and acceptance criteria; the [main integration plan](SERVICE_CLIENT_PLAN.md) supplies context, not additional implementation tasks or prerequisites.
-- Read [Sea architecture](SEA_ARCHITECTURE.md), [Known Issues](KNOWN_ISSUES.md), and [Development](DEVELOPMENT.md), particularly current security and deployment limits.
-- Use the [WebTransport browser harness](tests/webtransport-browser/README.md), [transport guide](crates/sea-webtransport/README.md), and [server guide](crates/sea-webtransport-server/README.md) as implementation anchors.
+- Read this plan's scope and acceptance criteria; the [main integration plan](../SERVICE_CLIENT_PLAN.md) supplies context, not additional implementation tasks or prerequisites.
+- Read [Sea architecture](../SEA_ARCHITECTURE.md), [Known Issues](../KNOWN_ISSUES.md), and [Development](../DEVELOPMENT.md), particularly current security and deployment limits.
+- Use the [WebTransport browser harness](../tests/webtransport-browser/README.md), [transport guide](../crates/sea-webtransport/README.md), and [server guide](../crates/sea-webtransport-server/README.md) as implementation anchors.
 - Check the assigned worktree path, branch, HEAD, and working-tree status; preserve existing changes.
 - Check available browser access, network access, and current harness commands before making changes; follow relocated code if the main integration has changed the harness.
 - Establish whether the agent can test from an external browser or only inside Codespaces; unavailable external access remains unverified, not passed.
@@ -157,7 +163,7 @@ Do not expand this assignment into implementing the WASM packages, ServiceClient
 - [x] Record direct interactive access and internal Chromium results separately, including the browser location and endpoint used.
 - [x] Adapt SEA and validate collaboration, independent-stream behavior, half-close, cancellation, and cleanup over the selected transport.
 - [x] Identify practical alternatives and their costs or operational constraints without deploying infrastructure outside the approved scope.
-- [x] If blocked or unresolved, add a current item to [Known Issues](KNOWN_ISSUES.md) with evidence, user impact, and a concrete follow-up trigger.
+- [x] If blocked or unresolved, add a current item to [Known Issues](../KNOWN_ISSUES.md) with evidence, user impact, and a concrete follow-up trigger.
 
 Do not equate failure of ordinary port forwarding with proof that every possible approach is impossible.
 When external browser access is unavailable to the agent, mark that route unverified and provide the smallest remaining user-run test.
@@ -175,11 +181,11 @@ A blocked result must distinguish platform restrictions from missing access or i
 For a proposed gateway or tunnel, explain how a slow reader limits upstream sending and buffering across every hop.
 Validate bounded buffering and pressure propagation with a slow-reader probe before claiming that a working route preserves backpressure.
 
-Validate any code or harness changes with focused tests and the applicable gates in [Development](DEVELOPMENT.md).
+Validate any code or harness changes with focused tests and the applicable gates in [Development](../DEVELOPMENT.md).
 For documentation changes, run the documentation checker from `rust-service/` and `pnpm policy-check --path rust-service` from the repository root.
 Do not run implementation builds solely for a documentation-only report.
 
-When complete, hand findings to the main integration owner, place supported usage in the appropriate current guide, and archive this plan and its evidence under [Historical records](historical/README.md).
+When complete, hand findings to the main integration owner, place supported usage in the appropriate current guide, and archive this plan and its evidence under [Historical records](../historical/README.md).
 This assignment does not authorize commits, pushes, or starting a numbered iteration.
 
 ## Initial Findings: 2026-09-18
@@ -208,10 +214,10 @@ Sources checked on 2026-09-18:
 - [Dev tunnels overview](https://learn.microsoft.com/en-us/azure/developer/dev-tunnels/overview) mentions possible UDP-based protocols in its terminology.
 	That statement does not document a usable native-browser WebTransport route through Codespaces public port URLs.
 
-The [native listener](crates/sea-webtransport-server/src/server.rs) binds HTTP/3 and reports a UDP address.
+The [native listener](../crates/sea-webtransport-server/src/server.rs) binds HTTP/3 and reports a UDP address.
 Its acceptance path checks `/sea` but adds no origin allowlist or client authentication.
-The [browser binding](crates/sea-webtransport/src/wasm/sea.rs) requires a 32-byte certificate hash; the [browser transport](crates/sea-webtransport/src/transport/browser.rs) supplies it through `serverCertificateHashes`.
-The [certificate generator](tests/webtransport-browser/generate-cert.sh) creates an ECDSA P-256 certificate valid for 13 days.
+The [browser binding](../crates/sea-webtransport/src/wasm/sea.rs) requires a 32-byte certificate hash; the [browser transport](../crates/sea-webtransport/src/transport/browser.rs) supplies it through `serverCertificateHashes`.
+The [certificate generator](../tests/webtransport-browser/generate-cert.sh) creates an ECDSA P-256 certificate valid for 13 days.
 Pinning authenticates the server, not clients.
 A TLS-terminating gateway presents its own certificate, so the backend certificate pin cannot be reused for that connection.
 Private Codespaces page authentication also does not establish WebTransport authentication, since the latter does not carry the page's cookies or follow login redirects.
@@ -228,7 +234,7 @@ Public visibility removes that authentication requirement but does not remove th
 | Native WebSocketStream transport | Subsequently selected for a primitive probe; see the follow-up results below. | Native stream backpressure differs from a JavaScript wrapper around traditional WebSocket. SEA adaptation still needs independent-stream and half-close design; retain bounded messages and awaited sends. |
 | Continue using Tinylicious remotely and local SEA for local-service examples | Existing practical fallback while retaining the page workflow. | Does not exercise remote SEA. Keep separate native WebTransport tests in a reachable environment. |
 
-The [client transport contract](crates/sea-webtransport/src/transport/mod.rs) requires independent bidirectional byte streams, not application datagrams.
+The [client transport contract](../crates/sea-webtransport/src/transport/mod.rs) requires independent bidirectional byte streams, not application datagrams.
 The generated `SeaInjectedClient` already accepts a JavaScript transport implementing these operations.
 This makes reuse of the shared client plausible, but the server stream handlers currently use concrete `wtransport` stream types.
 This abstraction is not evidence that an alternate transport preserves backpressure.
@@ -245,7 +251,7 @@ Only non-secret environment flags were inspected.
 No connection probe was run: ordinary forwarding has no supported route to the current UDP listener, and no alternative transport or infrastructure has been authorized or provisioned.
 No internal Chromium success is claimed, and external browser control has not been established.
 No services, certificates, tunnels, port-visibility changes, or other test resources were created; no resource cleanup was needed.
-The [existing runner](tests/webtransport-browser/run-headless.mjs) starts internal Chromium and owns the temporary page host; it is not a persistent external-browser launch command.
+The [existing runner](../tests/webtransport-browser/run-headless.mjs) starts internal Chromium and owns the temporary page host; it is not a persistent external-browser launch command.
 
 The initial WebSocket recommendation was superseded on 2026-09-18 by the user's requirement to preserve backpressure and preference to avoid WebSockets.
 Recommended next step: a bounded native WebTransport compatibility investigation, not an implementation commitment.
