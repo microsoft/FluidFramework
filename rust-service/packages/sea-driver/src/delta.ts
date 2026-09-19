@@ -110,9 +110,11 @@ export class SeaDeltaStorage implements IDocumentDeltaStorageService {
  * @internal
  */
 export interface PendingSubmission {
-	/** Service-level submission identity reused for resolution and resubmission. */
+	/** Original session whose terminal prefix determines acceptance. */
+	readonly session: Uint8Array;
+	/** Service-level submission identity used only for exact outcome resolution. */
 	readonly identity: Uint8Array;
-	/** Original Fluid message retained for explicit resubmission. */
+	/** Original Fluid message supplied to the application's suffix transformation. */
 	readonly message: IDocumentMessage;
 }
 
@@ -154,6 +156,10 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 	public readonly pending = new Map<number, PendingSubmission>();
 	/** Submitted messages waiting for a contiguous local sequence prefix. */
 	private readonly queuedSubmissions = new Map<number, PendingSubmission>();
+	/** Full ordered attempt ledger, including acknowledged events needed for prefix proof. */
+	private readonly submitted: Pick<PendingSubmission, "identity" | "session">[] = [];
+	/** Exact pending suffix proven against terminal history in the current fresh session. */
+	private recoveredPending: ReadonlyMap<number, PendingSubmission> | undefined;
 	/** Next local sequence number eligible for submission. */
 	private nextClientSequenceNumber = 1;
 	/** Ordered acknowledgement chain observed by waitForIdle. */
@@ -271,6 +277,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 
 	/** Allocates a new membership identity while retaining pending submission identities. */
 	private renewSession(): void {
+		this.recoveredPending = undefined;
 		if (this.client.announceMembership === undefined) {
 			this.session = encoder.encode(`${this.clientId}-session-${Date.now()}-${Math.random()}`);
 		} else {
@@ -287,9 +294,10 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 
 	/** Queues Fluid messages for contiguous ordered submission. */
 	public submit(messages: IDocumentMessage[]): void {
+		this.recoveredPending = undefined;
 		for (const message of messages) {
 			const identity = encoder.encode(`${this.clientId}-${message.clientSequenceNumber}`);
-			const pending = { identity, message };
+			const pending = { identity, message, session: this.session };
 			this.pending.set(message.clientSequenceNumber, pending);
 			this.queuedSubmissions.set(message.clientSequenceNumber, pending);
 		}
@@ -306,6 +314,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 			const { identity, message } = pending;
 			this.queuedSubmissions.delete(this.nextClientSequenceNumber);
 			this.nextClientSequenceNumber++;
+			this.submitted.push({ identity, session: pending.session });
 			this.submitChain = this.submitChain.then(async () => {
 				const position = await this.client.submitEvent(
 					identity,
@@ -362,12 +371,54 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 		return messages;
 	}
 
-	/** Resolves every pending submission without automatically resubmitting it. */
+	/** Proves the old accepted prefix through its leave before exposing an unaccepted suffix.
+	 * Call after reconnect and before submitting new work; resolution alone never authorizes replay.
+	 */
 	public async recoverPending(): Promise<ReadonlyMap<number, SubmissionResolution>> {
+		await this.submitChain.catch(() => {});
+		this.recoveredPending = undefined;
 		const resolutions = new Map<number, SubmissionResolution>();
+		if (this.pending.size === 0) return resolutions;
+		if (this.client.announceMembership === undefined) {
+			throw new Error("terminal-prefix recovery requires authoritative membership");
+		}
+		const page = await this.client.readProjected();
 		for (const [sequenceNumber, pending] of this.pending) {
-			const resolution = await this.client.resolveSubmission(pending.identity);
+			if (bytesEqual(pending.session, this.session)) {
+				throw new Error("recovery requires a fresh session after the old append stream ends");
+			}
+			const history = page.operations.filter((operation) =>
+				bytesEqual(operation.session, pending.session),
+			);
+			if (history.at(-1)?.eventType !== "left") {
+				throw new Error("old session has no terminal leave in retained history");
+			}
+			const accepted = history.filter((operation) => operation.eventType === "application");
+			const attempted = this.submitted.filter((attempt) =>
+				bytesEqual(attempt.session, pending.session),
+			);
+			if (
+				accepted.length > attempted.length ||
+				accepted.some(
+					(operation, index) => !bytesEqual(operation.submission, attempted[index]!.identity),
+				)
+			) {
+				throw new Error("retained application events are not the submitted prefix");
+			}
+			const committed = accepted.find((operation) =>
+				bytesEqual(operation.submission, pending.identity),
+			);
+			const resolution: SubmissionResolution =
+				committed === undefined
+					? { kind: "notCommitted" }
+					: {
+							kind: "committed",
+							position: committed.position,
+							sequenceNumber: committed.sequenceNumber,
+						};
 			resolutions.set(sequenceNumber, resolution);
+		}
+		for (const [sequenceNumber, resolution] of resolutions) {
 			if (resolution.kind === "committed") {
 				this.lifecycle.lastPosition = resolution.position;
 				this.pending.delete(sequenceNumber);
@@ -376,27 +427,40 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 		if (this.pending.size === 0) {
 			this.submitChain = Promise.resolve();
 		}
+		this.recoveredPending = new Map(this.pending);
 		return resolutions;
 	}
 
-	/** Explicitly resubmits one authoritatively not-committed pending message. */
-	/** TODO(RS-025): Require terminal-prefix recovery and caller-transformed payload/reference. */
-	public async resubmitPending(sequenceNumber: number): Promise<void> {
-		const pending = this.pending.get(sequenceNumber);
-		if (pending === undefined) {
-			throw new Error(`no pending submission ${sequenceNumber}`);
+	/** Delegates transformation of the entire proven suffix to the application.
+	 * The callback must reconcile accepted history and return fresh-session messages numbered from one,
+	 * with payloads and reference sequence numbers appropriate to their new context. SEA never rebases them.
+	 */
+	public async resubmitPending(
+		transform: (suffix: readonly PendingSubmission[]) => readonly IDocumentMessage[],
+	): Promise<void> {
+		const recovered = this.recoveredPending;
+		if (
+			recovered === undefined ||
+			recovered.size !== this.pending.size ||
+			[...recovered].some(([sequence, pending]) => this.pending.get(sequence) !== pending) ||
+			this.submitted.some((pending) => bytesEqual(pending.session, this.session))
+		) {
+			throw new Error("resubmission requires a proven suffix and an unused fresh session");
 		}
-		const position = await this.client.submitEvent(
-			pending.identity,
-			sequenceNumber,
-			encoder.encode(JSON.stringify(pending.message)),
-			this.lifecycle.lastPosition,
+		const suffix = [...recovered.values()].sort(
+			(first, second) =>
+				first.message.clientSequenceNumber - second.message.clientSequenceNumber,
 		);
-		this.lifecycle.lastPosition = position;
-		this.pending.delete(sequenceNumber);
-		if (this.pending.size === 0) {
-			this.submitChain = Promise.resolve();
+		const transformed = [...transform(suffix)];
+		if (transformed.some((message, index) => message.clientSequenceNumber !== index + 1)) {
+			throw new Error("transformed suffix must use contiguous fresh-session sequence numbers");
 		}
+		this.pending.clear();
+		this.queuedSubmissions.clear();
+		this.submitChain = Promise.resolve();
+		this.nextClientSequenceNumber = 1;
+		this.submit(transformed);
+		await this.waitForIdle();
 	}
 
 	/** Disconnects transport resources while preserving recoverable lifecycle state. */

@@ -265,6 +265,27 @@ All 22 sequencer tests, 12 composition configurations, strict workspace Clippy, 
 The final canonical run initially hit the previously observed `idle_stream_outlives_operation_deadline_in_every_storage_mode` timeout; that unchanged test passed isolated and the complete `./test.sh` rerun passed.
 RS-024 and its TODOs are removed; RS-025 remains open and broader integration work is still deferred until its repair.
 
+### Application-Owned Suffix Recovery
+
+RS-025 is implemented in `SeaDeltaConnection` without interpreting application payloads.
+The driver retains original session identities and an ordered identity ledger, replays terminal history through leave, and verifies that accepted applications are exactly a submitted prefix.
+Missing terminal history, non-prefix history, and reuse of the old session reject recovery.
+The explicit helper now requires a callback transforming the whole proven suffix into fresh-session messages numbered from one, with caller-selected payloads and references and newly allocated submission identities.
+Accepted payloads are not retained by the prefix ledger.
+
+The owning Node regression injects a lost receipt after the second accepted event, queues a third, rejects recovery before leave and with a missing-prefix event, and proves only the unaccepted third event is transformed.
+Its final archive contains application deltas `[1, 2, 7]`, with new session/submission identities for the transformed event, not a duplicate of the accepted prefix or stale delta 3.
+All ten tests in the owning driver test file pass.
+The simple browser counter trace provides an explicit transformation for its context-independent deltas.
+The full SharedTree browser trace now exercises `IContainer.disconnect()`/`connect()` and Fluid runtime pending-state recovery instead of calling the driver retry helper with an opaque DDS payload.
+Two Chromium runs passed with three independent containers, recovered value 3, and reload; the final evidence reports runtime-owned recovery rather than the removed explicit retry.
+The temporary server was stopped, and the unrelated public demo was untouched.
+
+RS-025 source TODOs and its known issue are removed.
+Final root `pnpm build:fast`, package build and generated API reports, scoped policy, documentation links, strict native formatting/Clippy/rustdoc/build, and complete canonical `./test.sh` all passed.
+The generated API comparison against the preceding local checkpoint `2f5f1484ab5` contains only internal `PendingSubmission.session` and `resubmitPending(transform)` changes; no customer-facing release tag, API Council review, or changeset is required.
+The contract checkpoints are ready to commit before returning to the wider SEA integration inventory.
+
 ## Review Boundary and Later Work
 
 The user authorized committing the configuration once default tests pass and the checkout is in a committable state, with opt-in failures explicitly recorded.

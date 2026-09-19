@@ -72,7 +72,7 @@ export type SubmissionResolution =
 			readonly sequenceNumber: bigint;
 	  }
 	| {
-			/** Indicates that the identity is safe to resubmit. */
+			/** Indicates absence, not permission to replay an untransformed payload. */
 			readonly kind: "notCommitted";
 	  };
 

@@ -78,13 +78,20 @@ The driver depends on the standard loader/runtime helpers but still has no trans
 Summary storage supports full and incremental summaries, blob and tree handles, attachments, and historical versions.
 Incremental publication retains the acknowledged parent snapshot and rejects stale parents.
 Delta connections preserve pending submission identities across explicit recovery; they do not automatically retry or resubmit ambiguous writes.
+`recoverPending()` requires a fresh session and replays the old session through its durable leave.
+It counts and verifies the accepted application prefix against the ordered attempt ledger before returning the unaccepted suffix; a missing leave or non-prefix history rejects recovery.
+`resubmitPending(transform)` invokes an application-owned transformation of that whole suffix.
+The callback supplies fresh-session messages numbered from one, with payloads and reference sequence numbers appropriate after reconciling accepted history.
+New submission identities are allocated; neither an old payload nor its old reference is silently reused.
+Legacy synthetic-membership clients cannot prove this barrier and cannot use the explicit helper.
+Normal Fluid containers use the runtime's pending-state processing and reconnection instead; the driver does not implement DDS rebasing.
 
 The neutral-session adapter owns Fluid initialization events and the bidirectional mapping between opaque SEA positions and Fluid sequence numbers.
 It announces membership through the neutral session contract and projects shared joined/left records with per-connection identities.
 Read-only membership records occupy sequence positions without adding readers to the writer quorum.
-The projected Fluid minimum sequence number remains zero because this adapter retains all operation history.
-SEA's active-member minimum can decrease when a fresh session opens; it is not Fluid's nondecreasing retention boundary.
-An advancing Fluid minimum requires a separate retention policy and is not implemented.
+The projected Fluid minimum sequence number maps SEA's durable admission floor into the same dense sequence space.
+It advances monotonically across membership changes and reopening, independently of server history retention.
+The adapter still retains all operation history; floor enforcement does not claim garbage collection or compaction.
 This path has no synthetic sequence offset; legacy injected benchmark clients retain the earlier two-slot projection.
 The two projections are not interoperable within one document; use fresh test documents when migrating from the synthetic projection.
 It watches snapshot coordination continuously so SEA-selected publication uses the current observed nomination fence.

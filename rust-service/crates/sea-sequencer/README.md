@@ -66,8 +66,9 @@ The local runtime revokes authority on a failed or cancelled admitted append, in
 It settles retained backend work before persisting the departure; failed settlement prevents mutation until recovery.
 Transport dispatch also closes authority for malformed author requests that never reach the sequencer.
 Client and decorator admission state prevents a cancelled request from being followed by a successful suffix.
-TODO(RS-025): The Fluid driver's explicit retry helper does not yet require caller transformation or a terminal-prefix recovery barrier.
-See [known issues](../../KNOWN_ISSUES.md) for these implementation gaps.
+The Fluid driver's explicit recovery helper verifies the old terminal prefix and requires an application-owned suffix transformation under a fresh session.
+Normal Fluid containers delegate pending-state processing and rebasing to the runtime.
+See [known issues](../../KNOWN_ISSUES.md) for remaining implementation limits.
 
 ## Minimum Reference Floor
 

@@ -64,16 +64,6 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Impact:** The adapter is integration evidence, not a Routerlicious or ODSP replacement.
 - **Trigger:** Complete the opt-in integration inventory and connection-policy regressions before claiming production support.
 
-## RS-025: Driver explicit retry is not application-owned resubmission
-
-- **Status:** Open
-- **Severity:** High
-- **Area:** Fluid pending-operation recovery
-- **Evidence:** `SeaDeltaConnection.resubmitPending` can resend the stored message with a new outer reference without requiring an unaccepted-prefix proof or a caller-transformed payload.
-- **Impact:** Non-idempotent or reference-dependent events can be duplicated or interpreted under an incorrect submission context.
-- **Required fix:** Recover the old session's accepted prefix through its terminal leave, and delegate transformation and fresh-session submission to the application/Fluid runtime.
-  Do not confuse exact outcome lookup with resubmission.
-
 ## Codespaces forwarding requires the optional WebSocket transport
 
 - **Status:** Open

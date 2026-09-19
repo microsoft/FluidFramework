@@ -387,34 +387,11 @@ async function run(): Promise<Record<string, unknown>> {
 	);
 
 	setStage("recovering-disconnected-edit");
-	const submit = firstSession.submit.bind(firstSession);
-	const submissionStarted = new Promise<void>((resolve) => {
-		firstSession.submit = (...args) => {
-			void firstSession.close().catch(() => {});
-			resolve();
-			return submit(...args);
-		};
-	});
+	firstContainer.disconnect();
 	firstView.root.value = 3;
-	await submissionStarted;
-	assert(firstConnection.pending.size > 0, "disconnected edit was not pending");
-	let submissionFailed = false;
-	try {
-		await firstConnection.waitForIdle();
-	} catch {
-		submissionFailed = true;
-	}
-	assert(submissionFailed, "disconnected edit unexpectedly submitted");
-	await firstConnection.reconnect();
-	const resolutions = await firstConnection.recoverPending();
-	const pendingSequenceNumber = firstConnection.pending.keys().next().value;
-	assert(pendingSequenceNumber !== undefined, "pending edit disappeared before resolution");
-	assert(
-		resolutions.get(pendingSequenceNumber)?.kind === "notCommitted",
-		"disconnected edit was not authoritatively notCommitted",
-	);
-	await firstConnection.resubmitPending(pendingSequenceNumber);
-	await firstConnection.waitForIdle();
+	assert(firstContainer.isDirty, "disconnected edit was not retained by Fluid");
+	firstContainer.connect();
+	await waitForConnected(firstContainer);
 	await waitUntil(
 		() => secondView.root.value === 3,
 		"second client did not receive recovered edit",
@@ -445,8 +422,8 @@ async function run(): Promise<Record<string, unknown>> {
 		transportSessionCount: sessions.length,
 		independentContainerCount: 3,
 		finalValue: 3,
-		recoveryResolution: "notCommitted",
-		explicitResubmissionCount: 1,
+		recoveryOwner: "Fluid runtime",
+		disconnectedEditRecovered: true,
 		protocolCounts,
 		synchronizedSequences,
 		startupMilliseconds: performance.now() - started,

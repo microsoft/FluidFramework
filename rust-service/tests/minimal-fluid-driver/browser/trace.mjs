@@ -146,7 +146,14 @@ async function run() {
 			(await first.recoverPending()).get(2)?.kind === "notCommitted",
 			"pre-commit recovery mismatch",
 		);
-		await first.resubmitPending(2);
+		await first.resubmitPending((suffix) =>
+			suffix.map((pending, index) => ({
+				...pending.message,
+				clientSequenceNumber: index + 1,
+				referenceSequenceNumber: first.checkpointSequenceNumber,
+				contents: { delta: pending.message.contents.delta },
+			})),
+		);
 		await Promise.all([waitForCount(firstMessages, 3), waitForCount(secondMessages, 3)]);
 		first.disconnect();
 		await first.reconnect();

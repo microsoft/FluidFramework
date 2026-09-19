@@ -66,14 +66,20 @@ The implementation would need to preserve the driver's `.app` and `.protocol` pa
 The generated browser WebTransport client opens one authority-bound author stream with the session and sends contiguous client sequence numbers on it.
 Submission acknowledgements arrive in the same order through the shared native/browser author-stream state machine.
 A submission remains in `pending` until its acknowledgement arrives or projected local operation is observed.
-Write failures and response loss reject `waitForIdle()` without discarding pending identity, so callers can use `recoverPending()` and explicitly `resubmitPending()` when the service reports `notCommitted`.
+Write failures and response loss reject `waitForIdle()` without discarding pending identity.
+After reconnect, `recoverPending()` verifies the old accepted prefix through its durable leave.
+Callers may then use `resubmitPending(transform)` to transform the entire unaccepted suffix into fresh-session messages with new context and identities.
+An isolated `notCommitted` lookup never authorizes replaying an unchanged payload.
 Resubmission uses the same persistent author stream.
 
 Reconnect cancels the old projected-operation subscription, reconnects the generated client, and opens replacement event and author streams.
 Explicit disconnect and disposal also close or cancel their owned resources.
 Subscription restart and explicit synchronization resume from the last projected cursor.
 
-The driver does not automatically retry, recover, or resubmit ambiguous writes. Callers must wait for a failed submission chain, reconnect, resolve each pending identity, and resubmit only `notCommitted` operations. Disposal is synchronous at the Fluid interface boundary while stream close and subscription cancellation complete asynchronously.
+The driver does not automatically retry, recover, or resubmit ambiguous writes.
+Explicit-helper callers wait for the failed submission chain, reconnect, prove the terminal prefix, reconcile accepted history, and provide the application-specific suffix transformation.
+Normal Fluid containers instead let the runtime process pending state and rebase operations during reconnect; the full SharedTree trace exercises this path.
+Disposal is synchronous at the Fluid interface boundary while stream close and subscription cancellation complete asynchronously.
 
 ## Snapshot Coordination
 

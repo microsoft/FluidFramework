@@ -108,6 +108,116 @@ test("neutral session driver hides initialization and preserves snapshot version
 	}
 });
 
+test("terminal recovery proves a prefix before transforming only the unaccepted suffix", async (context) => {
+	const service = await createMemoryService({ environment: "node" });
+	const adapter = new SeaSessionDriverClient(service.open, "readOnly");
+	const document = await adapter.create();
+	const connection = new SeaDeltaConnection(
+		"writer",
+		{
+			clientId: "writer",
+			remoteClientId: "remote",
+			writer: encoder.encode("writer"),
+			cursor: undefined,
+			lastPosition: undefined,
+			remoteClientSequenceNumber: 0,
+			remoteSequenceNumbers: new Map(),
+		},
+		encoder.encode("writer"),
+		document,
+		adapter,
+		{
+			details: { capabilities: { interactive: true } },
+			permission: [],
+			scopes: [],
+			user: { id: "writer" },
+			mode: "write",
+		},
+		"write",
+		[],
+	);
+	context.after(async () => {
+		connection.dispose();
+		adapter.disconnect();
+		await adapter.reconnect();
+		service.close();
+	});
+	await connection.open();
+	const submit = adapter.submitEvent.bind(adapter);
+	let loseReceipt = true;
+	adapter.submitEvent = async (...args) => {
+		const position = await submit(...args);
+		if (loseReceipt && args[1] === 2) {
+			loseReceipt = false;
+			throw new Error("lost receipt");
+		}
+		return position;
+	};
+	connection.submit(
+		[1, 2, 3].map((sequence) => ({
+			clientSequenceNumber: sequence,
+			referenceSequenceNumber: connection.checkpointSequenceNumber,
+			type: "op",
+			contents: { delta: sequence },
+		})),
+	);
+	await assert.rejects(connection.waitForIdle(), /lost receipt/);
+	await assert.rejects(connection.recoverPending(), /fresh session/);
+	await connection.reconnect();
+	await assert.rejects(
+		connection.resubmitPending(() => []),
+		/proven suffix/,
+	);
+	const read = adapter.readProjected.bind(adapter);
+	adapter.readProjected = async () => {
+		const page = await read();
+		return {
+			...page,
+			operations: page.operations.filter((operation) => operation.eventType !== "left"),
+		};
+	};
+	await assert.rejects(connection.recoverPending(), /terminal leave/);
+	adapter.readProjected = async () => {
+		const page = await read();
+		return {
+			...page,
+			operations: page.operations.filter(
+				(operation) =>
+					operation.eventType !== "application" || operation.localSequenceNumber !== 1n,
+			),
+		};
+	};
+	await assert.rejects(connection.recoverPending(), /submitted prefix/);
+	adapter.readProjected = read;
+	assert.equal((await connection.recoverPending()).get(3)?.kind, "notCommitted");
+	await connection.resubmitPending((suffix) => {
+		assert.deepEqual(
+			suffix.map((pending) => pending.message.clientSequenceNumber),
+			[3],
+		);
+		return [
+			{
+				clientSequenceNumber: 1,
+				referenceSequenceNumber: connection.checkpointSequenceNumber,
+				type: "op",
+				contents: { delta: 7 },
+			},
+		];
+	});
+	const applications = (await read()).operations.filter(
+		(operation) => operation.eventType === "application",
+	);
+	assert.deepEqual(
+		applications.map(
+			(operation) => JSON.parse(decoder.decode(operation.payload)).contents.delta,
+		),
+		[1, 2, 7],
+	);
+	assert.notDeepEqual(applications[1]?.session, applications[2]?.session);
+	assert.notDeepEqual(applications[1]?.submission, applications[2]?.submission);
+	assert.equal(connection.pending.size, 0);
+});
+
 test("neutral projection preserves the durable floor across membership close and reopen", async () => {
 	const service = await createMemoryService({ environment: "node" });
 	const writer = await service.open(undefined, {

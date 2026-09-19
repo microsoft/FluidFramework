@@ -49,6 +49,7 @@ export interface MinimalWasmDriverOptions {
 export interface PendingSubmission {
     readonly identity: Uint8Array;
     readonly message: IDocumentMessage;
+    readonly session: Uint8Array;
 }
 
 // @internal
@@ -106,7 +107,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
     reconnect(...args: readonly unknown[]): Promise<void>;
     recoverPending(): Promise<ReadonlyMap<number, SubmissionResolution>>;
     restartSubscription(): Promise<boolean>;
-    resubmitPending(sequenceNumber: number): Promise<void>;
+    resubmitPending(transform: (suffix: readonly PendingSubmission[]) => readonly IDocumentMessage[]): Promise<void>;
     readonly serviceConfiguration: IClientConfiguration;
     submit(messages: IDocumentMessage[]): void;
     submitSignal(): void;
