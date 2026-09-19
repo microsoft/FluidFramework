@@ -1,6 +1,6 @@
 # SEA Opt-In Integration-Test Configuration Plan
 
-Status: Current-version SEA integration selection passes; user authorized inclusion in the default integration-test command.
+Status: Current-version SEA integration selection passes; default integration command and CI wiring enabled, with hosted CI execution unverified.
 Created: 2026-09-18.
 Updated: 2026-09-19.
 
@@ -9,7 +9,11 @@ Its first deliverable is an explicitly runnable SEA configuration in the reposit
 On 2026-09-19 the user extended this assignment to commit the validated configuration, then fix and commit failures iteratively until the current-version SEA integration suite passes, with an explicit inventory of justified exclusions.
 The initial opt-in requirement was superseded after the green full-suite run and merge into `rust-service` at `2caf9b7b7f5`.
 The user then authorized enabling SEA by default: `test` and `test:realsvc` now run local, Tinylicious, and SEA sequentially.
-Explicit service-specific commands and CI service selections remain unchanged; callers of the default command need the documented SEA toolchain prerequisites.
+The user subsequently authorized CI changes: the client build has a separate SEA test job, and the real-service pipeline has a current-version SEA stage.
+Other service selections remain unchanged; callers of the default command need the documented SEA toolchain prerequisites.
+The complete default local/Tinylicious/SEA sequence exited successfully after default enablement.
+The new root CI command also passed locally with 658 passing and 526 pending tests, and produced a JUnit report with no failures or errors.
+Hosted CI execution, fresh agent provisioning, and cold-build timing remain unverified.
 
 ## Dependencies and Ownership
 
@@ -40,7 +44,7 @@ Coordinate other shared workspace/build changes and overlapping production edits
 - Configuration checkpoint: `4d9c1906dab`; default local and Tinylicious suites and required repository gates passed before this commit.
 - Membership checkpoint: `c279d079d6f`; canonical Rust/Node/browser validation, root build, scoped policy, and the unchanged SEA lifecycle smoke passed.
 - Workflow: one isolated assignment, without a numbered iteration; configuration and subsequent validated fix commits were authorized initially.
-	The user later authorized merging into `rust-service` and enabling the default integration-test command there; no push is authorized.
+	The user later authorized merging into `rust-service`, enabling the default integration-test command, and adding CI jobs; no push is authorized.
 
 ### Existing Extension Points
 

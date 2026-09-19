@@ -49,6 +49,7 @@
 		"test:realsvc:routerlicious:report": "npm run test:realsvc:r11s --",
 		"test:realsvc:run": "mocha --verbose",
 		"test:realsvc:sea": "node scripts/seaRunner.mjs",
+		"test:realsvc:sea:report": "npm run test:realsvc:sea -- --no-bail",
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
 		"test:realsvc:tinylicious:report": "npm run test:realsvc:tinylicious",
 		"test:realsvc:tinylicious:report:full": "cross-env fluid__test__backCompat=FULL npm run test:realsvc:tinylicious",

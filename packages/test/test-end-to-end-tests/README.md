@@ -96,7 +96,8 @@ npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=docker
 ### SEA WebSocket Tests
 
 The default `test` and `test:realsvc` commands run local, Tinylicious, and then SEA.
-Service-specific commands and explicit CI service selections remain unchanged.
+The client CI pipeline has a separate `RealsvcSeaTest` job, and the real-service pipeline has an `e2e_sea` stage.
+Both run the current-version selection; existing service-specific commands and compatibility selections remain unchanged.
 The default run therefore requires the SEA prerequisites listed below; use a service-specific command to run only that service.
 From the repository root, build the test package and run the current-version SEA configuration directly:
 
@@ -113,6 +114,13 @@ Driver and compatibility overrides are rejected; test filters such as `--grep` a
 The service owns document storage until shutdown; restart persistence and WebTransport backpressure are not exercised.
 Ordinary WebSocket adapter queues fail on overflow rather than applying receive backpressure.
 The Node originless-loopback exception must not be enabled on a forwarded or public endpoint.
+
+CI runs `test:realsvc:sea:report` through the root `ci:test:realsvc:sea` command or the real-service stage.
+It disables fail-fast behavior and uses the shared Mocha JUnit reporter; missing reports fail the SEA publishing step.
+The client build installs the Rust toolchain from `rust-service/rust-toolchain.toml` and the `wasm-bindgen` CLI version required by `sea-wasm`.
+The build archive includes generated WASM but excludes Cargo intermediates under `rust-service/target`.
+SEA test jobs install the native Rust toolchain and build their own service binary; their Linux agents must provide a C compiler, OpenSSL, and HTTPS access to the Rust distribution and Cargo registries.
+The commands and report generation have been checked locally, but hosted-agent setup and Azure pipeline execution remain unverified.
 
 Readiness is bounded to 30 seconds, individual tests default to 10 seconds, and the suite process is bounded to 10 minutes.
 The runner stops owned processes and removes certificates and temporary storage on failure or interruption; service logs are printed on failure.

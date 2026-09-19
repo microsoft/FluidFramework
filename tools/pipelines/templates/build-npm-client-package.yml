@@ -372,6 +372,10 @@ extends:
                       packageTypesOverride: '${{ parameters.packageTypesOverride }}'
 
               # Build and Lint
+              - template: /tools/pipelines/templates/include-setup-rust.yml@self
+                parameters:
+                  buildDirectory: '${{ parameters.buildDirectory }}'
+
               - template: /tools/pipelines/templates/include-build-lint.yml@self
                 parameters:
                   taskBuild: '${{ parameters.taskBuild }}'
@@ -818,6 +822,12 @@ extends:
 
                 # Test
 
+                - ${{ if eq(test.name, 'ci:test:realsvc:sea') }}:
+                  - template: /tools/pipelines/templates/include-setup-rust.yml@self
+                    parameters:
+                      buildDirectory: '${{ parameters.buildDirectory }}'
+                      installWasm: false
+
                 # Set variable startTest if everything is good so far and we'll start running tests,
                 # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
                 - script: |
@@ -900,9 +910,13 @@ extends:
                   displayName: Publish Test Results
                   inputs:
                     testResultsFormat: 'JUnit'
-                    testResultsFiles: '**/*junit-report.xml'
                     searchFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc
                     mergeTestResults: false
+                    ${{ if eq(test.name, 'ci:test:realsvc:sea') }}:
+                      testResultsFiles: '**/*sea-websocket*junit-report.xml'
+                      failTaskOnMissingResultsFile: true
+                    ${{ else }}:
+                      testResultsFiles: '**/*junit-report.xml'
                   # Failed test runs still produce JUnit reports that should be published.
                   condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 

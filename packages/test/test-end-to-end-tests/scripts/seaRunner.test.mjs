@@ -22,6 +22,20 @@ test("default integration tests include local, Tinylicious, and SEA", async () =
 	assert.equal(scripts["test:realsvc:sea"], "node scripts/seaRunner.mjs");
 });
 
+test("CI runs the SEA report script without stopping at the first failure", async () => {
+	const { scripts } = JSON.parse(
+		await readFile(new URL("../package.json", import.meta.url), "utf8"),
+	);
+	const { scripts: rootScripts } = JSON.parse(
+		await readFile(new URL("../../../../package.json", import.meta.url), "utf8"),
+	);
+	assert.equal(scripts["test:realsvc:sea:report"], "npm run test:realsvc:sea -- --no-bail");
+	assert.equal(
+		rootScripts["ci:test:realsvc:sea"],
+		"pnpm run -r --no-sort --stream --no-bail test:realsvc:sea:report",
+	);
+});
+
 for (const scenario of [
 	"success",
 	"startup failure",

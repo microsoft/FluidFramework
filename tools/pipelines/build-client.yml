@@ -98,6 +98,7 @@ trigger:
     - pnpm-workspace.yaml
     - prettier.config.cjs
     - README.md
+    - rust-service
     - scripts/*
     - SECURITY.md
     - .syncpackrc.yml
@@ -111,6 +112,7 @@ trigger:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
+    - tools/pipelines/templates/include-setup-rust.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/include-vars-telemetry-generator.yml
     - tools/pipelines/templates/upload-telemetry/*
@@ -162,6 +164,7 @@ pr:
     - pnpm-workspace.yaml
     - prettier.config.cjs
     - README.md
+    - rust-service
     - scripts/*
     - SECURITY.md
     - .syncpackrc.yml
@@ -176,6 +179,7 @@ pr:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
+    - tools/pipelines/templates/include-setup-rust.yml
     - tools/pipelines/templates/include-vars-telemetry-generator.yml
     - tools/pipelines/templates/upload-telemetry/*
 
@@ -219,6 +223,7 @@ extends:
     # to the "pack" stage since it can use the already-packed packages in that case. As it is the pipeline packs some
     # packages twice.
     - { name: "ci:test:playwright", jobName: "PlaywrightTest" }
+    - { name: "ci:test:realsvc:sea", jobName: "RealsvcSeaTest" }
     - { name: "ci:test:realsvc:tinylicious", jobName: "RealsvcTinyliciousTest" }
     - { name: "ci:test:stress:tinylicious", jobName: "StressTinyliciousTest" }
     - { name: "ci:check:are-the-types-wrong", jobName: "AreTheTypesWrong" }
