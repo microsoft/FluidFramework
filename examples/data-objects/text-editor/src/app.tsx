@@ -191,12 +191,6 @@ export function createInitialRoot(text = ""): TextEditorRoot {
 type ConnectUser = (containerId: string) => Promise<UserView>;
 
 /**
- * Matches a complete example container ID: 3-64 ASCII letters, digits, or hyphens.
- * Checked before loading a document identified by the URL hash.
- */
-const containerIdPattern = /^[\dA-Za-z-]{3,64}$/;
-
-/**
  * Creates or loads the document and connects the initial simulated users.
  * @returns The document ID, shared telemetry logger, initial users, and callback for adding users.
  */
@@ -216,12 +210,6 @@ async function initializeFluid(): Promise<{
 		const loaded = await client.loadContainer(documentId, TextEditorDataStore);
 		return { id: makeUserId(), container: loaded, treeView: loaded.data.treeView };
 	};
-	const rawContainerId = location.hash.slice(1);
-	if (rawContainerId.length > 0 && !containerIdPattern.test(rawContainerId)) {
-		throw new Error(
-			"Invalid container ID in URL hash. Expected 3-64 alphanumeric or '-' characters.",
-		);
-	}
 	const container = await createOrLoadExampleContainer(client, TextEditorDataStore);
 	const containerId = container.id;
 	if (containerId === undefined) {
