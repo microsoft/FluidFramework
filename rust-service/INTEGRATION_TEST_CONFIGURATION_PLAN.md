@@ -274,6 +274,25 @@ Package and root builds, scoped policy, documentation, and complete canonical `.
 The next full SEA `--bail` run reaches 393 passing and 428 pending, then fails `TestSignals / Validate signal events are raised on the correct runtime` with the explicit `signals are unsupported` error.
 Application signals remain an applicable missing contract, not an implementation-specific exclusion.
 
+### Signal Integration and Overlapping Delta Initialization
+
+The worktree fast-forwarded to `9c510d094fc`, including the user's neutral signals and connection-timeout fixes.
+All seven `TestSignals` and `Targeted Signals` cases now pass; the unsupported-signal failure above is resolved.
+Both `reconnection does not block ops when having pending blobs` variants instead exposed overlapping delta initialization with `signal stream is already open on this connection`.
+The document service serialized only session replacement, allowing a second opening to replace the shared session while the first was still registering its signals.
+A temporary trace confirmed both delta connections registering on the second session; reverting the diagnostic fix reproduced both failures.
+
+`connectToDeltaStream` now keeps membership announcement, signal registration, and subscription setup inside the existing serialized session transition.
+The existing lifecycle fixture adds a promise-gated overlap regression, and all 18 tests in that file pass.
+`pnpm --dir packages/test/test-end-to-end-tests run test:realsvc:sea --grep 'reconnection does not block ops when having pending blobs|^(TestSignals|Targeted Signals)'` passes all nine unchanged integration tests.
+No server duplicate-registration guard, shared assertion, or exclusion changed.
+The full SEA integration suite has not yet been rerun with this fix.
+
+Package/API generation, root `pnpm build:fast`, scoped policy, documentation checks, Rust formatting, strict Clippy, rustdoc, and native build passed.
+The initial workspace test run timed out in `host::tests::native_client_round_trip_in_every_storage_mode`; that test passed on an isolated retry without native edits.
+The complete canonical `./test.sh` also passed, including workspace native tests, generated Node/WASM coverage, and Chromium checks.
+There are no generated API-report changes.
+
 ### Membership Investigation
 
 SEA-001 is not a test-specific mismatch: `SeaDeltaConnection` fabricates two initial join operations independently for each connection, and `projectOperation` collapses all other authors into one synthetic remote client.

@@ -660,6 +660,76 @@ test("neutral session disposal drains reads and uploads while replacement defers
 	}
 });
 
+test("overlapping delta opens finish initialization before replacing the shared session", async (context) => {
+	const service = await createMemoryService({ environment: "node" });
+	const seed = await service.open(undefined, {
+		author: encoder.encode("seed"),
+		session: encoder.encode("seed"),
+	});
+	let releaseSignals = (): void => {};
+	const blocked = new Promise<void>((resolve) => {
+		releaseSignals = resolve;
+	});
+	let enteredSignals = (): void => {};
+	const entered = new Promise<void>((resolve) => {
+		enteredSignals = resolve;
+	});
+	let opens = 0;
+	const adapter = new SeaSessionDriverClient(async (document, options) => {
+		opens += 1;
+		return service.open(document, options);
+	}, "readOnly");
+	const openSignals = adapter.openSignals.bind(adapter);
+	let signalOpens = 0;
+	adapter.openSignals = async (member) => {
+		if (++signalOpens === 1) {
+			enteredSignals();
+			await blocked;
+		}
+		return openSignals(member);
+	};
+	const id = Buffer.from(seed.document).toString("hex");
+	const documentService = new SeaDocumentService(
+		{ type: "fluid", id, url: `fluid://localhost/minimal/${id}`, tokens: {}, endpoints: {} },
+		async () => adapter,
+		{},
+	);
+	const pending: Promise<SeaDeltaConnection>[] = [];
+	context.after(async () => {
+		releaseSignals();
+		for (const result of await Promise.allSettled(pending)) {
+			if (result.status === "fulfilled") result.value.dispose();
+		}
+		documentService.dispose();
+		await adapter.reconnect();
+		await seed.close();
+		service.close();
+	});
+	const client = {
+		details: { capabilities: { interactive: true } },
+		permission: [],
+		scopes: [],
+		user: { id: "writer" },
+		mode: "write" as const,
+	};
+	const first = documentService.connectToDeltaStream(client);
+	pending.push(first);
+	await entered;
+	const second = documentService.connectToDeltaStream(client);
+	pending.push(second);
+	const results = Promise.allSettled(pending);
+	await setImmediate();
+	assert.equal(opens, 1, "a queued delta must not replace a session still opening signals");
+	assert.equal(signalOpens, 1);
+	releaseSignals();
+	assert.deepEqual(
+		(await results).map((result) => result.status),
+		["fulfilled", "fulfilled"],
+	);
+	assert.equal(opens, 2);
+	assert.equal(signalOpens, 2);
+});
+
 test("read-first document services retain independent memberships and shared writer identities", async () => {
 	const service = await createMemoryService({ environment: "node" });
 	const seed = await service.open(undefined, {

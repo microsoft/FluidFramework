@@ -118,6 +118,7 @@ This path has no synthetic sequence offset; legacy injected benchmark clients re
 The two projections are not interoperable within one document; use fresh test documents when migrating from the synthetic projection.
 It watches snapshot coordination continuously so SEA-selected publication uses the current observed nomination fence.
 Membership replacement waits for admitted finite archive reads and blob uploads to finish and defers later reads and uploads until the replacement opens.
+Document services serialize each delta opening through membership announcement, signal registration, and subscription setup before another delta opening can replace the shared session.
 Independent blob uploads remain concurrent within that gate; no live session is selected before a pending replacement completes.
 Each document service retains a unique SEA author for read-first connections, independent of shared projected Fluid client labels.
 Document-service disposal cancels owned live streams and prevents new reads and uploads, but drains admitted finite archive reads and blob uploads before membership close.

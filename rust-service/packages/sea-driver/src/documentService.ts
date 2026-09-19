@@ -175,15 +175,15 @@ export class SeaDocumentService extends Events implements IDocumentService {
 			this.options.subscriptionBatchMaxOperations,
 			this.options.subscriptionBatchMaxPayloadBytes,
 		);
-		await this.transitionSession(() =>
-			wasm.openSession(
+		await this.transitionSession(async () => {
+			await wasm.openSession(
 				documentId(this.resolvedUrl),
 				lifecycle.writer,
 				session,
 				lifecycle.cursor,
-			),
-		);
-		await connection.open(true);
+			);
+			await connection.open(true);
+		});
 		this.options.onDeltaConnection?.(connection);
 		return connection;
 	}
