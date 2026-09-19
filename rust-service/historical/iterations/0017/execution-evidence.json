@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 1,
+  "iteration": "0017",
+  "status": "accepted-command-evidence",
+  "sourceCommit": "41e9420cbba665bb4d9ad32f812eb1816a3fdea9",
+  "kickoffCommit": "cc2abb85cefb3a29e9b7d75e62986dff83e75680",
+  "integratedCommit": "42d577ab5d5e9df324a78e66bd23f6bb6e837f24",
+  "workstreamCommitsSuppliedByCoordinator": {"signals": "07dada7abbb", "transport": "83e39e44d0e", "recovery": "f0a90d78272"},
+  "nextWorkstreams": [],
+  "runner": "/workspaces/FluidFramework/rust-service/target/iteration-0017-tools/run.mjs",
+  "provenance": {
+    "results": "Coordinator validated raw result JSON and nonempty logs, including direct parsing of the final full result, exact integrated HEAD, final exit 0, and all four command exits 0.",
+    "rawArtifacts": "Exact absolute paths below are ignored local-only artifacts, not durable repository evidence. This summary retains selected metadata, not whole logs.",
+    "clock": "Exact observed Unix milliseconds; elapsedSeconds is arithmetic on runner endpoints, not agent timing or throughput.",
+    "commandFields": ["command", "args", "pid", "started", "finished", "code", "signal"],
+    "commandCwd": "Commands inherit each run's cwd unless commandCwdOverrides specifies the zero-based command index.",
+    "outcomeSources": "Command exits, clocks, identities and start status are from result JSON. Test totals, named outcomes, cache contention, format diagnosis, and generated/Node/Chromium task success are from inspected logs and accepted workstream/integration evidence, not JSON command metadata alone.",
+    "fullResult": "Accepted: coordinator directly parsed the completed full result and inspected the output ending confirming ./test.sh generated, Node, and Chromium task success. Only post-edit record checks, final artifact accounting, and the Phase 2 closeout commit remain pending.",
+    "agentEffortTiming": "unknown",
+    "toolchainVersions": "unknown"
+  },
+  "coordinatorDirectParseValidation": {
+    "status": "accepted",
+    "fullRunId": "1789848676088-f31e277c-8f10-4a4f-b9b3-18a9f439bc33",
+    "expectedHead": "42d577ab5d5e9df324a78e66bd23f6bb6e837f24",
+    "exactHeadVerified": true,
+    "fullExitCode": 0,
+    "fullCommandExitCodes": [0, 0, 0, 0],
+    "rawJsonValidated": true,
+    "nonemptyLogsValidated": true,
+    "threeDistinctCheckPidsAndOverlapValidated": true,
+    "committedObjectsAndPathOwnershipInspectedBeforeMerges": true,
+    "mergeOutcome": "clean checkouts; conflict-free merges",
+    "outputMisattributionObserved": false,
+    "outputAcceptance": "Coordinator inspected the final full output ending and accepted ./test.sh generated, Node, and Chromium task success; native integration passed all six gates and 174 tests.",
+    "rustdocProvenance": "Runner source explicitly sets RUSTDOCFLAGS=-D warnings; the recorded native mode confirms this execution path.",
+    "limits": "Broad browser success does not prove physical resource release. Post-edit validators and final checkout/artifact checks remain pending."
+  },
+  "guardAndEnvironmentContract": {
+    "sourceVerified": true,
+    "checks": ["process.cwd() equals checkout/rust-service", "actual branch equals owner-derived expected branch", "RS17_OWNER equals owner", "git merge-base --is-ancestor cc2abb85cef HEAD"],
+    "headGuardLimit": "Kickoff ancestry is asserted, not exact HEAD equality; actual HEAD is recorded per run.",
+    "guardOutcomeBasis": "Every recorded run reached its mode body or commands after the guards. No explicit per-guard booleans are emitted by the runner.",
+    "environmentRecordedByResults": "RS17_OWNER only, as environment",
+    "nativeDocOverrideFromRunner": {"RUSTDOCFLAGS": "-D warnings"},
+    "otherEnvironment": "Inherited environment is not dumped; effective CARGO_TARGET_DIR and CARGO_BUILD_JOBS are not established by result.json.",
+    "statusAfter": "Runner records start status only. Integration is now record-changed; no unintended manifest, lockfile, or build-artifact changes reported. Coordinator final checkout/artifact check remains pending.",
+    "completion": "Runner writes result.json in finally after mode completion/failure; completed results and command outcomes are accepted together with coordinator log/consumer verification, not partial task output."
+  },
+  "scheduling": {
+    "executor": "coordinator",
+    "probeGroup": "overlap-001",
+    "probeTask": "rs17-parallel-probe",
+    "checkTask": "rs17-parallel-checks",
+    "workspace": "/workspaces/FluidFramework",
+    "rendezvous": "/workspaces/FluidFramework/rust-service/target/iteration-0017-tools/overlap-001",
+    "delegateDiscovery": "tool_search unavailable; no delegate task invocation",
+    "cancellation": "capability unavailable; not attempted",
+    "unexpectedExit130OrForeignResults": "none observed",
+    "cacheContention": "brief Cargo package-cache contention observed",
+    "throughputComparison": "none; no comparable sequential baseline or inferred agent timings"
+  },
+  "runs": [
+    {
+      "runId": "1789847673360-86d32cc7-fc21-4d33-9656-8c5826e298ac", "owner": "signals", "mode": "overlap", "group": "overlap-001", "pid": 442813,
+      "started": 1789847673360, "finished": 1789847673888, "elapsedSeconds": 0.528,
+      "checkout": "/workspaces/FluidFramework-rust-service-iteration-0017-signals", "cwd": "/workspaces/FluidFramework-rust-service-iteration-0017-signals/rust-service",
+      "expectedBranch": "rust-service-iteration-0017-signals", "branch": "rust-service-iteration-0017-signals", "head": "cc2abb85cefb3a29e9b7d75e62986dff83e75680", "statusBefore": "", "environment": {"RS17_OWNER": "signals"},
+      "guards": "passed by runner control flow", "commands": [], "code": 0, "completion": "complete", "outputOutcome": "All three processes reached the fresh shared rendezvous; coordinator overlap only.",
+      "resultPath": "/workspaces/FluidFramework-rust-service-iteration-0017-signals/rust-service/target/iteration-0017-evidence/signals-overlap-1789847673360-86d32cc7-fc21-4d33-9656-8c5826e298ac/result.json",
+      "rawLogPath": "/workspaces/FluidFramework-rust-service-iteration-0017-signals/rust-service/target/iteration-0017-evidence/signals-overlap-1789847673360-86d32cc7-fc21-4d33-9656-8c5826e298ac/output.log"
+    },
+    {
+      "runId": "1789847673359-ca767b9a-6048-44f4-a450-d828ede9ce52", "owner": "transport", "mode": "overlap", "group": "overlap-001", "pid": 442811,
+      "started": 1789847673360, "finished": 1789847673888, "elapsedSeconds": 0.528,
+      "checkout": "/workspaces/FluidFramework-rust-service-iteration-0017-transport", "cwd": "/workspaces/FluidFramework-rust-service-iteration-0017-transport/rust-service",
+      "expectedBranch": "rust-service-iteration-0017-transport", "branch": "rust-service-iteration-0017-transport", "head": "cc2abb85cefb3a29e9b7d75e62986dff83e75680", "statusBefore": "", "environment": {"RS17_OWNER": "transport"},
+      "guards": "passed by runner control flow", "commands": [], "code": 0, "completion": "complete", "outputOutcome": "All three processes reached the fresh shared rendezvous; coordinator overlap only.",
+      "resultPath": "/workspaces/FluidFramework-rust-service-iteration-0017-transport/rust-service/target/iteration-0017-evidence/transport-overlap-1789847673359-ca767b9a-6048-44f4-a450-d828ede9ce52/result.json",
+      "rawLogPath": "/workspaces/FluidFramework-rust-service-iteration-0017-transport/rust-service/target/iteration-0017-evidence/transport-overlap-1789847673359-ca767b9a-6048-44f4-a450-d828ede9ce52/output.log"
+    },
+    {
+      "runId": "1789847673362-5af2dfe7-45ff-44dd-971d-0b2043083a0f", "owner": "recovery", "mode": "overlap", "group": "overlap-001", "pid": 442815,
+      "started": 1789847673363, "finished": 1789847673888, "elapsedSeconds": 0.525,
+      "checkout": "/workspaces/FluidFramework-rust-service-iteration-0017-recovery", "cwd": "/workspaces/FluidFramework-rust-service-iteration-0017-recovery/rust-service",
+      "expectedBranch": "rust-service-iteration-0017-recovery", "branch": "rust-service-iteration-0017-recovery", "head": "cc2abb85cefb3a29e9b7d75e62986dff83e75680", "statusBefore": "", "environment": {"RS17_OWNER": "recovery"},
+      "guards": "passed by runner control flow", "commands": [], "code": 0, "completion": "complete", "outputOutcome": "All three processes reached the fresh shared rendezvous; coordinator overlap only.",
+      "resultPath": "/workspaces/FluidFramework-rust-service-iteration-0017-recovery/rust-service/target/iteration-0017-evidence/recovery-overlap-1789847673362-5af2dfe7-45ff-44dd-971d-0b2043083a0f/result.json",
+      "rawLogPath": "/workspaces/FluidFramework-rust-service-iteration-0017-recovery/rust-service/target/iteration-0017-evidence/recovery-overlap-1789847673362-5af2dfe7-45ff-44dd-971d-0b2043083a0f/output.log"
+    },
+    {
+      "runId": "1789847965168-05639ec7-38c6-4172-abce-3274439dfeb1", "owner": "signals", "mode": "check", "pid": 450349,
+      "started": 1789847965169, "finished": 1789847980337, "elapsedSeconds": 15.168,
+      "checkout": "/workspaces/FluidFramework-rust-service-iteration-0017-signals", "cwd": "/workspaces/FluidFramework-rust-service-iteration-0017-signals/rust-service",
+      "expectedBranch": "rust-service-iteration-0017-signals", "branch": "rust-service-iteration-0017-signals", "head": "cc2abb85cefb3a29e9b7d75e62986dff83e75680",
+      "statusBefore": "M rust-service/crates/sea-signals/src/lib.rs\n M rust-service/historical/iterations/0017/phase-2/signals.md", "environment": {"RS17_OWNER": "signals"}, "guards": "passed by runner control flow",
+      "commands": [
+        ["cargo", ["test", "-p", "sea-signals", "--all-features"], 450444, 1789847965233, 1789847976263, 0, null],
+        ["cargo", ["clippy", "-p", "sea-signals", "--all-targets", "--all-features", "--", "-D", "warnings"], 453302, 1789847976264, 1789847980012, 0, null],
+        ["cargo", ["fmt", "--all", "--", "--check"], 454355, 1789847980012, 1789847980337, 0, null]
+      ],
+      "code": 0, "completion": "complete", "outputOutcome": "Report: 6 tests passed, 0 failed; new routing matrix and existing slow-receiver test passed by name; 0 doc-tests; Clippy and fmt passed.",
+      "resultPath": "/workspaces/FluidFramework-rust-service-iteration-0017-signals/rust-service/target/iteration-0017-evidence/signals-check-1789847965168-05639ec7-38c6-4172-abce-3274439dfeb1/result.json",
+      "rawLogPath": "/workspaces/FluidFramework-rust-service-iteration-0017-signals/rust-service/target/iteration-0017-evidence/signals-check-1789847965168-05639ec7-38c6-4172-abce-3274439dfeb1/output.log"
+    },
+    {
+      "runId": "1789847965170-9cd8b8c5-2634-420c-b0d1-cc25f6438b4d", "owner": "transport", "mode": "check", "pid": 450351,
+      "started": 1789847965170, "finished": 1789848048196, "elapsedSeconds": 83.026,
+      "checkout": "/workspaces/FluidFramework-rust-service-iteration-0017-transport", "cwd": "/workspaces/FluidFramework-rust-service-iteration-0017-transport/rust-service",
+      "expectedBranch": "rust-service-iteration-0017-transport", "branch": "rust-service-iteration-0017-transport", "head": "cc2abb85cefb3a29e9b7d75e62986dff83e75680",
+      "statusBefore": "M rust-service/historical/iterations/0017/phase-2/transport.md", "environment": {"RS17_OWNER": "transport"}, "guards": "passed by runner control flow",
+      "commands": [
+        ["cargo", ["test", "-p", "sea-webtransport", "-p", "sea-webtransport-server", "--all-features"], 450449, 1789847965236, 1789848025974, 0, null],
+        ["cargo", ["clippy", "-p", "sea-webtransport", "-p", "sea-webtransport-server", "--all-targets", "--all-features", "--", "-D", "warnings"], 457927, 1789848025974, 1789848047878, 0, null],
+        ["cargo", ["fmt", "--all", "--", "--check"], 458928, 1789848047878, 1789848048196, 0, null]
+      ],
+      "code": 0, "completion": "complete", "outputOutcome": "Report: 21 transport + 25 server tests passed; admission and established-stream deadline tests passed by name; Clippy/fmt passed. No callback-argument or browser physical-release proof.",
+      "resultPath": "/workspaces/FluidFramework-rust-service-iteration-0017-transport/rust-service/target/iteration-0017-evidence/transport-check-1789847965170-9cd8b8c5-2634-420c-b0d1-cc25f6438b4d/result.json",
+      "rawLogPath": "/workspaces/FluidFramework-rust-service-iteration-0017-transport/rust-service/target/iteration-0017-evidence/transport-check-1789847965170-9cd8b8c5-2634-420c-b0d1-cc25f6438b4d/output.log"
+    },
+    {
+      "runId": "1789847965170-3b0e23aa-962a-4281-8f0e-2c6bb0c398db", "owner": "recovery", "mode": "check", "pid": 450353,
+      "started": 1789847965171, "finished": 1789847984987, "elapsedSeconds": 19.816,
+      "checkout": "/workspaces/FluidFramework-rust-service-iteration-0017-recovery", "cwd": "/workspaces/FluidFramework-rust-service-iteration-0017-recovery/rust-service",
+      "expectedBranch": "rust-service-iteration-0017-recovery", "branch": "rust-service-iteration-0017-recovery", "head": "cc2abb85cefb3a29e9b7d75e62986dff83e75680",
+      "statusBefore": "M rust-service/crates/sea-sequencer/src/fault_tests.rs\n M rust-service/historical/iterations/0017/phase-2/recovery.md", "environment": {"RS17_OWNER": "recovery"}, "guards": "passed by runner control flow",
+      "commands": [
+        ["cargo", ["test", "-p", "sea-file", "-p", "sea-file-durable", "-p", "sea-sequencer", "--all-features"], 450471, 1789847965244, 1789847979602, 0, null],
+        ["cargo", ["clippy", "-p", "sea-file", "-p", "sea-file-durable", "-p", "sea-sequencer", "--all-targets", "--all-features", "--", "-D", "warnings"], 454247, 1789847979602, 1789847984663, 0, null],
+        ["cargo", ["fmt", "--all", "--", "--check"], 454734, 1789847984663, 1789847984987, 1, null]
+      ],
+      "code": 1, "error": "Error: cargo exited 1/null", "completion": "complete-failed", "outputOutcome": "Report: 7 file + 3 durable-file + 23 sequencer tests and Clippy passed; fmt failed on one multiline observer/head chain. True formatting failure, not interference.",
+      "resultPath": "/workspaces/FluidFramework-rust-service-iteration-0017-recovery/rust-service/target/iteration-0017-evidence/recovery-check-1789847965170-3b0e23aa-962a-4281-8f0e-2c6bb0c398db/result.json",
+      "rawLogPath": "/workspaces/FluidFramework-rust-service-iteration-0017-recovery/rust-service/target/iteration-0017-evidence/recovery-check-1789847965170-3b0e23aa-962a-4281-8f0e-2c6bb0c398db/output.log"
+    },
+    {
+      "runId": "1789848085438-b9ce5126-fd8e-4a86-8a8d-d3e6bbb4ce27", "owner": "recovery", "mode": "check", "pid": 459631,
+      "started": 1789848085439, "finished": 1789848087734, "elapsedSeconds": 2.295,
+      "checkout": "/workspaces/FluidFramework-rust-service-iteration-0017-recovery", "cwd": "/workspaces/FluidFramework-rust-service-iteration-0017-recovery/rust-service",
+      "expectedBranch": "rust-service-iteration-0017-recovery", "branch": "rust-service-iteration-0017-recovery", "head": "cc2abb85cefb3a29e9b7d75e62986dff83e75680",
+      "statusBefore": "M rust-service/crates/sea-sequencer/src/fault_tests.rs\n M rust-service/historical/iterations/0017/phase-2/recovery.md", "environment": {"RS17_OWNER": "recovery"}, "guards": "passed by runner control flow",
+      "commands": [
+        ["cargo", ["test", "-p", "sea-file", "-p", "sea-file-durable", "-p", "sea-sequencer", "--all-features"], 459664, 1789848085501, 1789848086872, 0, null],
+        ["cargo", ["clippy", "-p", "sea-file", "-p", "sea-file-durable", "-p", "sea-sequencer", "--all-targets", "--all-features", "--", "-D", "warnings"], 459961, 1789848086872, 1789848087420, 0, null],
+        ["cargo", ["fmt", "--all", "--", "--check"], 459997, 1789848087420, 1789848087733, 0, null]
+      ],
+      "code": 0, "completion": "complete", "rerunOf": "1789847965170-3b0e23aa-962a-4281-8f0e-2c6bb0c398db", "outputOutcome": "Report: after exact coordinator layout repair, the same 33 tests, Clippy and fmt passed. Named terminal-barrier test passed in both runs; not 66 distinct tests.",
+      "resultPath": "/workspaces/FluidFramework-rust-service-iteration-0017-recovery/rust-service/target/iteration-0017-evidence/recovery-check-1789848085438-b9ce5126-fd8e-4a86-8a8d-d3e6bbb4ce27/result.json",
+      "rawLogPath": "/workspaces/FluidFramework-rust-service-iteration-0017-recovery/rust-service/target/iteration-0017-evidence/recovery-check-1789848085438-b9ce5126-fd8e-4a86-8a8d-d3e6bbb4ce27/output.log"
+    },
+    {
+      "runId": "1789848498902-93371f6b-9371-4652-b5bb-0139bf63ee70", "owner": "integration", "mode": "native", "pid": 468306,
+      "started": 1789848498903, "finished": 1789848650901, "elapsedSeconds": 151.998,
+      "checkout": "/workspaces/FluidFramework-rust-service-iteration-0017", "cwd": "/workspaces/FluidFramework-rust-service-iteration-0017/rust-service",
+      "expectedBranch": "rust-service-iteration-0017", "branch": "rust-service-iteration-0017", "head": "42d577ab5d5e9df324a78e66bd23f6bb6e837f24", "statusBefore": "", "environment": {"RS17_OWNER": "integration"}, "guards": "passed by runner control flow",
+      "commands": [
+        ["cargo", ["fmt", "--all", "--", "--check"], 468338, 1789848498978, 1789848499303, 0, null],
+        ["cargo", ["clippy", "--workspace", "--all-targets", "--all-features", "--", "-D", "warnings"], 468362, 1789848499303, 1789848518731, 0, null],
+        ["cargo", ["doc", "--workspace", "--all-features", "--no-deps"], 471025, 1789848518731, 1789848525250, 0, null],
+        ["cargo", ["build", "--workspace", "--all-targets"], 471741, 1789848525250, 1789848556942, 0, null],
+        ["cargo", ["test", "--workspace", "--all-targets", "--all-features"], 477626, 1789848556942, 1789848650853, 0, null],
+        ["node", ["scripts/check-documentation.mjs"], 482699, 1789848650853, 1789848650901, 0, null]
+      ],
+      "commandEnvironmentOverrides": {"2": {"RUSTDOCFLAGS": "-D warnings"}},
+      "code": 0, "completion": "complete", "tests": {"passed": 174, "failed": 0, "ignored": 0, "binaries": 18, "emptyBinaries": 2},
+      "outputOutcome": "Coordinator-verified native evidence: all six gates passed, both new tests passed by name; documentation check reported 30 roots, 37 READMEs, 89 links before these edits. File fault suite took 61.48 s after a greater-than-60-second notice, then passed. No standalone example or fresh browser claim from native tests.",
+      "resultPath": "/workspaces/FluidFramework-rust-service-iteration-0017/rust-service/target/iteration-0017-evidence/integration-native-1789848498902-93371f6b-9371-4652-b5bb-0139bf63ee70/result.json",
+      "rawLogPath": "/workspaces/FluidFramework-rust-service-iteration-0017/rust-service/target/iteration-0017-evidence/integration-native-1789848498902-93371f6b-9371-4652-b5bb-0139bf63ee70/output.log"
+    },
+    {
+      "runId": "1789848676088-f31e277c-8f10-4a4f-b9b3-18a9f439bc33", "owner": "integration", "mode": "full", "pid": 482925,
+      "started": 1789848676089, "finished": 1789849276964, "elapsedSeconds": 600.875,
+      "checkout": "/workspaces/FluidFramework-rust-service-iteration-0017", "cwd": "/workspaces/FluidFramework-rust-service-iteration-0017/rust-service",
+      "expectedBranch": "rust-service-iteration-0017", "branch": "rust-service-iteration-0017", "head": "42d577ab5d5e9df324a78e66bd23f6bb6e837f24", "statusBefore": "", "environment": {"RS17_OWNER": "integration"}, "guards": "passed by runner control flow",
+      "commands": [
+        ["pnpm", ["install", "--frozen-lockfile"], 482957, 1789848676152, 1789848701635, 0, null],
+        ["pnpm", ["policy-check", "--path", "rust-service"], 483817, 1789848701635, 1789848704021, 0, null],
+        ["pnpm", ["build:fast"], 483986, 1789848704021, 1789849217817, 0, null],
+        ["./test.sh", [], 550400, 1789849217817, 1789849276963, 0, null]
+      ],
+      "commandCwdOverrides": {"0": "/workspaces/FluidFramework-rust-service-iteration-0017", "1": "/workspaces/FluidFramework-rust-service-iteration-0017", "2": "/workspaces/FluidFramework-rust-service-iteration-0017"},
+      "code": 0, "completion": "complete", "acceptance": "accepted-command-and-consumer-evidence",
+      "commandElapsedSeconds": [25.483, 2.386, 513.796, 59.146],
+      "outputOutcome": "Coordinator directly parsed the final result, verified exact HEAD and four exit-0 commands, and inspected the output ending confirming ./test.sh generated, Node, and Chromium task success. Consumer outcomes come from output, not JSON exits alone. Physical-release proof remains deferred; record validation and final artifact accounting remain pending.",
+      "resultPath": "/workspaces/FluidFramework-rust-service-iteration-0017/rust-service/target/iteration-0017-evidence/integration-full-1789848676088-f31e277c-8f10-4a4f-b9b3-18a9f439bc33/result.json",
+      "rawLogPath": "/workspaces/FluidFramework-rust-service-iteration-0017/rust-service/target/iteration-0017-evidence/integration-full-1789848676088-f31e277c-8f10-4a4f-b9b3-18a9f439bc33/output.log"
+    }
+  ],
+  "remainingAcceptance": [
+    "Run post-edit documentation and phase/quality record validation through the coordinator's authorized route.",
+    "Confirm the separate delegate's transport duplicate removal leaves one report title; the file-tool read during reconciliation still showed an appended second title.",
+    "Account for final record-changed checkout status and temporary artifacts; no unintended manifest, lockfile, or build-artifact changes reported.",
+    "Commit the immutable Phase 2 boundary after record validators and final artifact checks pass; Phase 3 remains outside this update."
+  ]
+}
