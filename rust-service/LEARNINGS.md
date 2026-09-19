@@ -50,6 +50,7 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 
 ## Agentic Development
 
+- **Confirmed:** Coordinator task access did not imply delegate capability: iteration 0017 delegates lacked `tool_search`, while coordinator task-batched checks completed without observed interference, including detection and correction of a genuine formatting failure. Autonomous delegate scheduling and cancellation remained unavailable and unverified. [Evidence](historical/iterations/0017/skill-review.md#verification-matrix)
 - **Confirmed:** Test-only environment overrides must be command-scoped or visibly reported because persistent agent terminals can leak state into later validation. [Evidence](historical/foundation-report.md#notable-events)
 - **Confirmed:** A clean agent can begin Phase 1 from the plan, development policy, active report, and coordination skill without prior conversation context when repository instructions own the read order and completion gates. [Evidence](historical/foundation-report.md#notable-events)
 - **Confirmed:** Independent workstreams should run concurrently once dependencies are satisfied; isolated worktrees and strict writable paths yielded conflict-free integration. [Evidence](historical/iterations/0001/retrospective.md#agentic-development-findings)

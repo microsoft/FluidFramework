@@ -22,6 +22,9 @@ Required environment: <!-- TODO(required): record tool/runtime versions and setu
 Follow the coordination skill's Terminal Coordination and Execution Isolation Recovery sections.
 Separate worktrees and execution-subagent IDs do not provide terminal isolation.
 
+- Verify actual delegate tool discovery (`tool_search` when required) and assigned registered-task invocation through `run_task` before promising autonomous edit/test loops.
+- If only the coordinator has task access, use parallel file audit/edit batches; return required checks immediately after each edit batch and pause further edits until the coordinator runs task validation, returns attributable results, and re-dispatches. This does not require delegate foreground-terminal access or whole-workstream serialization.
+
 Use assigned process tasks through `run_task` for focused checks and file tools for searches and edits.
 Do not edit shared task configuration, run the same task concurrently, or treat an already-running task as a new check.
 Return independent batch-ready commands to the coordinator for compound tasks with parallel dependencies; do not defer required immediate post-edit validation to make a batch.

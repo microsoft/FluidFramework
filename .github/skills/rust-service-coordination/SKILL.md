@@ -98,6 +98,13 @@ Separate parallel `run_task` tool calls did not overlap in that probe, so do not
 Assign direct task access to delegates for focused edit/test loops, but record autonomous cross-subagent scheduling as unverified until checked in that execution environment.
 Use compound validation batches when independent checks are ready together; do not delay required immediate post-edit validation just to assemble a batch.
 
+Before promising autonomous delegate edit/test loops, check actual delegate tool discovery, including `tool_search` when required, and invocation of an assigned registered task through `run_task`.
+Coordinator task access does not prove delegate task access.
+If delegates lack task access but the coordinator can invoke tasks, dispatch parallel file audit/edit batches; after each edit batch, delegates return the required checks and pause further edits while the coordinator immediately runs task validation.
+Return attributable results and re-dispatch focused repairs or the next batch only after validation.
+This is a narrower scheduling route under the existing fallback: do not force delegates onto shared foreground terminals or serialize whole workstreams when coordinator task validation is available.
+Coordinator-run overlap does not verify autonomous delegate scheduling or cancellation isolation, and does not establish a throughput improvement without a baseline.
+
 Each invocation needs a fresh run identifier and attributable command, cwd, checkout identity, output, and exit status.
 Use the command's existing report/log options or a task entry point that records these in a unique workstream-local result directory.
 Retain the output returned by `run_task`; `get_task_output` returned blank output for completed probe tasks and is not a reliable durable record by itself.
