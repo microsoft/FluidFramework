@@ -1,10 +1,11 @@
 //! Private persisted submission encoding for the local sequencer.
 //!
 //! Each application event stores stable author, session, and operation identities, its explicit
-//! reference, the active minimum reference, and opaque application bytes. Blob-tree identity stays
+//! reference, the durable minimum-reference floor, and opaque application bytes. Blob-tree identity stays
 //! in the surrounding storage event so availability checks remain owned by the storage view.
 //!
-//! Existing submissions retain their encoding. Announced membership records use a distinct marker
+//! Older active-member-minimum encodings are rejected rather than interpreted as enforced floors.
+//! Announced membership records use a distinct marker
 //! and share the same archive order without occupying the application submission identity space.
 //! Decoding rejects an invalid marker, empty identity, truncation, unknown position tag, or trailing
 //! bytes as [`crate::SessionError::Corrupt`].
@@ -18,10 +19,10 @@ use sea_core::{
 use crate::session::SessionError;
 
 /// Identifies the submission-only encoding.
-const MAGIC: &[u8; 5] = b"SEAQ2";
+const MAGIC: &[u8; 5] = b"SEAQ3";
 
 /// Identifies a service-authored membership envelope around submission-shaped metadata.
-const MEMBERSHIP_MAGIC: &[u8; 5] = b"SEAM1";
+const MEMBERSHIP_MAGIC: &[u8; 5] = b"SEAM2";
 
 /// Encodes an announced membership transition in the same ordered archive as submissions.
 pub(crate) fn encode_membership<Error>(

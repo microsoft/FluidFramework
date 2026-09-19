@@ -82,9 +82,25 @@ Snapshots must retain the floor at their boundary, and recovery must restore it 
 Advances can be debounced to reduce bandwidth and storage; only a committed advance becomes enforceable and observable.
 Slow writers may need to catch up and transform their unaccepted events under a new session.
 Exact lookup of an already accepted event does not constitute a new admission below the floor.
-TODO(RS-024): The current active-member minimum can decrease on admission and is not this floor.
-The Fluid adapter currently reports zero, which avoids backward movement but prevents efficient release of client collaboration state.
-This is a temporary limitation, not a completed reference-floor implementation.
+The runtime stores the committed floor separately from memberships and enforces it before every new application append, including submissions with no reference.
+Exact committed-operation lookup remains permitted without readmitting the old event.
+Each application or membership envelope persists the resulting floor atomically with its event; this is the ordered advance record, so no separate out-of-band notification can race replay.
+Failed appends do not advance it, and recovery rejects decreasing, forward, or context-inconsistent floor metadata.
+New readers may open behind the floor to catch up, but cannot submit below it.
+
+Advancement policy combines cooperative member progress with a 1024-position lag window, rounding window advances down to 64-position boundaries.
+The proposed advance is bounded by the carrying event's reference and never lowers the committed floor.
+Idle readers therefore cannot indefinitely pin advances from progressing writers.
+No timer or extra control append is needed in a quiescent document.
+These policy constants are conservative heuristics, not part of admission correctness.
+
+Snapshots retain their exact event boundary, whose immutable envelope retains the floor at publication.
+The current backend retains that event and all history; snapshot consumers can read the boundary event, and recovery scans the archive before admitting mutations.
+Any future compaction must preserve this floor metadata with the snapshot rather than discard the boundary envelope.
+The Fluid adapter maps the floor into its retained dense sequence space for live delivery, bounded replay, and reopening, instead of reporting permanent zero.
+
+Persisted application/membership encodings are `SEAQ3`/`SEAM2`; older active-minimum envelopes are rejected and require an explicit migration before reuse.
+Wire protocol version 7 rejects clients or servers with the earlier semantics.
 
 ## Retry Lookup and Settlement
 

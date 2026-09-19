@@ -25,7 +25,9 @@ A **logical stream** is one persistent bidirectional byte stream with a single r
 A **client** owns one transport connection and the shared state for its logical streams.
 The **protocol** is the versioned frame and message contract, not the server implementation or application adapter.
 
-Protocol version 5 uses backend-assigned opaque document IDs.
+Protocol version 7 carries the durable monotonic reference floor in ordered event metadata, including membership records.
+Earlier active-member minimum semantics are not compatible; rebuild client and server together.
+Documents use backend-assigned opaque IDs.
 Creation supplies no document ID; the open response returns the ID to retain for subsequent sessions.
 There is no caller-name mapping or compatibility reader for earlier protocol versions.
 Submission and resolution return committed event positions, not per-operation durability receipts.

@@ -64,18 +64,6 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Impact:** The adapter is integration evidence, not a Routerlicious or ODSP replacement.
 - **Trigger:** Complete the opt-in integration inventory and connection-policy regressions before claiming production support.
 
-## RS-024: A durable enforced minimum-reference floor is missing
-
-- **Status:** Open
-- **Severity:** High
-- **Area:** Sequencer reference admission and Fluid efficiency
-- **Evidence:** The active-member minimum can decrease when sessions open with old or absent references; absent references also bypass the comparison using `Option::zip`.
-  There is no durable independent floor-advance record or restored document-wide floor.
-  The Fluid adapter reports minimum sequence zero as a temporary correctness workaround.
-- **Impact:** Clients cannot safely release old collaboration state based on an advancing minimum, even though server history retention is a separate concern.
-- **Required fix:** Persist and deliver ordered monotonic floor advances, reject new submissions below the committed floor, restore it on recovery, and project it consistently into Fluid replay and snapshots.
-  Keep advancement policy separate from enforcement; debounce advances where useful.
-
 ## RS-025: Driver explicit retry is not application-owned resubmission
 
 - **Status:** Open

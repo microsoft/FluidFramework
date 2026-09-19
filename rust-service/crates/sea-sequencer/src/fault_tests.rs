@@ -347,6 +347,34 @@ impl SeaStorage for FaultStorage {
 }
 
 #[tokio::test]
+async fn floor_advances_only_with_the_committed_event() {
+    for failure in [
+        Failure::Reject,
+        Failure::AmbiguousAbsent,
+        Failure::AmbiguousCommitted,
+    ] {
+        let storage = FaultStorage::default();
+        let (id, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        let session = member(&runtime, "writer").await;
+        let initial = session.submit(submission(b"initial")).await.unwrap();
+        let mut advancing = submission(b"advance");
+        advancing.reference = Some(initial);
+        storage.events.arm(failure);
+        let committed = session.submit(advancing).await.is_ok();
+        assert_eq!(committed, matches!(failure, Failure::AmbiguousCommitted));
+        let expected = committed.then_some(initial);
+        assert_eq!(runtime.runtime.lock().await.minimum_reference, expected);
+        drop((session, runtime));
+        let recovered =
+            LocalSequencer::<FaultStorage>::recover(storage.open_view(&id).await.unwrap().unwrap())
+                .await
+                .unwrap();
+        assert_eq!(recovered.runtime.lock().await.minimum_reference, expected);
+    }
+}
+
+#[tokio::test]
 async fn returned_ambiguity_is_scanned_and_rejection_requires_fresh_membership() {
     for failure in [
         Failure::AmbiguousCommitted,

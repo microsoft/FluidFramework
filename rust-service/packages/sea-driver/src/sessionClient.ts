@@ -424,10 +424,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		await this.closing;
 	}
 
-	/** Validates initialization and assigns dense sequence numbers.
-	 * The Fluid minimum remains zero because history is retained without compaction.
-	 * SEA's active-member minimum can decrease on admission and is not a retention watermark.
-	 */
+	/** Projects initialization and the durable SEA floor into the same dense sequence space. */
 	private project(item: SeaEvent): ProjectedOperation | undefined {
 		const message = (
 			item.eventType === "left" ? {} : JSON.parse(decoder.decode(item.payload))
@@ -454,10 +451,17 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 			this.membershipModes.set(membership, message.mode ?? "write");
 		}
 		const membershipMode = this.membershipModes.get(membership);
+		const minimumSequenceNumber =
+			item.minimumReference === undefined
+				? 0n
+				: this.positionSequences.get(item.minimumReference);
+		if (minimumSequenceNumber === undefined) {
+			throw new Error("SEA minimum reference is missing from the retained projection");
+		}
 		return {
 			eventType: item.eventType,
 			...(membershipMode === undefined ? {} : { membershipMode }),
-			minimumSequenceNumber: 0n,
+			minimumSequenceNumber,
 			position: encodePosition(item.position),
 			sequenceNumber: this.sequence(item.position),
 			...(item.minimumReference === undefined

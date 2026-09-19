@@ -248,6 +248,23 @@ The final complete canonical `./test.sh` passed with the binding-validation regr
 Documentation-link validation passed for 29 roots, 36 READMEs, and 84 local links.
 An eight-test current-version SEA sample at `15f49ba5981` passed with the normal ten-second deadline, including the lifecycle smoke and the previously recorded SharedCounter/reentry failures; no new exclusions were added.
 
+### Durable Reference Floor
+
+[Decision 0016](historical/decisions/0016-durable-reference-floor.md) records the RS-024 implementation.
+The runtime now restores and enforces a document-wide committed floor, including absent-reference rejection, independently of membership admission and advancement policy.
+Advances commit atomically in ordered event metadata; cooperative progress and a coalesced bounded-lag window choose proposals but cannot lower the floor.
+Snapshot boundaries retain the floor in their immutable event envelopes, and the Fluid adapter maps that floor into dense sequence numbers for full and bounded replay.
+Earlier experimental encodings are rejected explicitly (`SEAQ3`/`SEAM2`, wire version 7), not reinterpreted.
+
+Owning sequencer tests cover monotonic reopen/recovery, absent and stale references, exact prior-operation lookup, successful current-context submission, idle-reader window advancement, definitive/ambiguous storage outcomes, and snapshot-boundary floor retention.
+The changed core comments and persisted codec document the same contract.
+The protocol version uses existing negotiation tests; TypeScript and transport preserve the unchanged metadata shape, with generated tests and real Chromium traces validating that boundary.
+The Fluid projection regression now expects advancing minima `[0, 1, 2, 2]` across join/application/leave/rejoin, with identical bounded history.
+
+All 22 sequencer tests, 12 composition configurations, strict workspace Clippy, formatting, rustdoc, build, root `pnpm build:fast`, documentation links, and scoped policy pass.
+The final canonical run initially hit the previously observed `idle_stream_outlives_operation_deadline_in_every_storage_mode` timeout; that unchanged test passed isolated and the complete `./test.sh` rerun passed.
+RS-024 and its TODOs are removed; RS-025 remains open and broader integration work is still deferred until its repair.
+
 ## Review Boundary and Later Work
 
 The user authorized committing the configuration once default tests pass and the checkout is in a committable state, with opt-in failures explicitly recorded.

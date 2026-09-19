@@ -108,7 +108,7 @@ test("neutral session driver hides initialization and preserves snapshot version
 	}
 });
 
-test("neutral projection retains a safe minimum across membership close and reopen", async () => {
+test("neutral projection preserves the durable floor across membership close and reopen", async () => {
 	const service = await createMemoryService({ environment: "node" });
 	const writer = await service.open(undefined, {
 		author: encoder.encode("writer"),
@@ -135,10 +135,10 @@ test("neutral projection retains a safe minimum across membership close and reop
 			["joined", "application", "left", "joined"],
 		);
 		assert.ok(history[1]?.minimumReference !== undefined);
-		assert.equal(history[3]?.minimumReference, undefined);
+		assert.deepEqual(history[3]?.minimumReference, history[1]?.position);
 		assert.deepEqual(
 			history.map((operation) => operation.minimumSequenceNumber),
-			[0n, 0n, 0n, 0n],
+			[0n, 1n, 2n, 2n],
 		);
 		assert.deepEqual(
 			(await adapter.readProjected(history[1]?.position)).operations,

@@ -134,6 +134,8 @@ struct Runtime<Storage: SeaStorage> {
     accepted: BTreeMap<OperationId, SessionCommittedEvent>,
     /// Application positions used to validate references and snapshot boundaries.
     positions: BTreeSet<EventPosition>,
+    /// Durable document-wide admission floor restored from ordered committed metadata.
+    minimum_reference: Option<EventPosition>,
     /// At most one outstanding mutation owns backend execution.
     pending: Option<Pending<Storage::Error>>,
     /// A failed reconciliation prevents a duplicate-producing retry.
@@ -225,9 +227,35 @@ impl Drop for PublisherLease {
 }
 
 impl<Storage: SeaStorage + 'static> Runtime<Storage> {
+    /// Chooses an advance without coupling admission enforcement to membership progress.
+    /// A 1024-position lag window prevents idle readers from pinning the floor indefinitely;
+    /// window advances are rounded down to 64-position boundaries to coalesce small changes.
+    fn proposed_minimum(
+        &self,
+        cooperative: Option<EventPosition>,
+        reference: Option<EventPosition>,
+    ) -> Option<EventPosition> {
+        let window = self.positions.iter().rev().nth(1023).and_then(|position| {
+            let boundary = EventPosition::new(position.get() / 64 * 64);
+            self.positions.range(..=boundary).next_back().copied()
+        });
+        self.minimum_reference
+            .max(cooperative.max(window).min(reference))
+    }
+
     /// Records a settled submission and rejects duplicate committed identities.
     fn apply(&mut self, record: &CommittedEvent) -> Result<(), SessionError<Storage::Error>> {
         let committed = decode_committed(record)?;
+        if committed.minimum_reference < self.minimum_reference
+            || committed.minimum_reference > committed.reference
+            || committed
+                .minimum_reference
+                .is_some_and(|position| !self.positions.contains(&position))
+            || (committed.kind == SessionEventKind::Application
+                && committed.reference < self.minimum_reference)
+        {
+            return Err(SessionError::Corrupt("invalid minimum reference floor"));
+        }
         if committed.kind == SessionEventKind::Application
             && self.accepted.contains_key(&committed.operation_id)
         {
@@ -246,6 +274,7 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
             member.reference = committed.reference;
         }
         self.positions.insert(record.position);
+        self.minimum_reference = committed.minimum_reference;
         match committed.kind {
             SessionEventKind::Application => {
                 self.accepted
@@ -300,6 +329,7 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
             .map(|(_, member)| member.reference)
             .min()
             .unwrap_or(reference);
+        let minimum = self.proposed_minimum(minimum, reference);
         let event = Event {
             payload: encode_membership(author, session, kind, reference, minimum, metadata)?,
             blob_tree: None,
@@ -411,6 +441,7 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
     pub async fn recover(view: View<Storage>) -> Result<Arc<Self>, SessionError<Storage::Error>> {
         let view = Arc::new(view);
         let mut runtime = Runtime {
+            minimum_reference: None,
             view: Some(view.clone()),
             members: BTreeMap::new(),
             announced: BTreeMap::new(),
@@ -631,19 +662,9 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
                 "reference is not an application event",
             ));
         }
-        let active_minimum = runtime
-            .members
-            .values()
-            .map(|member| member.reference)
-            .min()
-            .flatten();
-        if submission
-            .reference
-            .zip(active_minimum)
-            .is_some_and(|(reference, minimum)| reference < minimum)
-        {
+        if submission.reference < runtime.minimum_reference {
             return Err(SessionError::Rejected(
-                "reference precedes the active minimum",
+                "reference precedes the committed minimum",
             ));
         }
         let minimum = runtime
@@ -658,6 +679,7 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
             })
             .min()
             .flatten();
+        let minimum = runtime.proposed_minimum(minimum, submission.reference);
         let event = Event {
             payload: encode_submission(
                 &self.author,
@@ -1075,6 +1097,161 @@ async fn append_once<Storage: SeaStorage>(
 mod tests {
     use super::*;
     use sea_memory::MemoryStorage;
+
+    #[tokio::test]
+    async fn committed_minimum_survives_new_members_and_recovery() {
+        let storage = MemoryStorage::new();
+        let (id, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let first = member(&runtime, "first").await;
+        first.announce_membership(Bytes::new()).await.unwrap();
+        let initial = first.submit(submission(b"initial")).await.unwrap();
+        let mut advancing = submission(b"advance");
+        advancing.reference = Some(initial);
+        let advanced = first.submit(advancing).await.unwrap();
+        let mut history = first.read(Some(initial), Some(advanced));
+        assert_eq!(
+            data(&mut history).await.unwrap().minimum_reference,
+            Some(initial)
+        );
+        drop(history);
+        first.close().await.unwrap();
+        let stale = member(&runtime, "stale").await;
+        stale.announce_membership(Bytes::new()).await.unwrap();
+        assert!(
+            stale
+                .submit(submission(b"missing-reference"))
+                .await
+                .is_err()
+        );
+        assert!(matches!(
+            stale.submit(submission(b"queued")).await,
+            Err(SessionError::Closed)
+        ));
+        drop((stale, first, runtime));
+        let recovered = LocalSequencer::<MemoryStorage>::recover(
+            storage.open_view(&id).await.unwrap().unwrap(),
+        )
+        .await
+        .unwrap();
+        let fresh = member(&recovered, "fresh").await;
+        let mut below = submission(b"below-floor");
+        below.reference = Some(initial);
+        assert!(fresh.submit(below).await.is_err());
+        let valid = recovered
+            .open_session(
+                AuthorId::new("first").unwrap(),
+                SessionId::new("retry").unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+        assert_eq!(valid.submit(submission(b"initial")).await.unwrap(), initial);
+        let observer = member(&recovered, "observer").await;
+        let mut replay = observer.read(None, None);
+        let mut minimum = None;
+        for _ in 0..6 {
+            let event = data(&mut replay).await.unwrap();
+            assert!(event.minimum_reference >= minimum);
+            minimum = event.minimum_reference;
+        }
+        assert!(minimum >= Some(advanced));
+        drop(replay);
+        let mut current = submission(b"current-context");
+        current.reference = minimum;
+        valid.submit(current).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn idle_members_cannot_pin_the_debounced_reference_window() {
+        let storage = MemoryStorage::new();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let idle = member(&runtime, "idle").await;
+        let writer = member(&runtime, "writer").await;
+        let mut reference = None;
+        let mut advances = Vec::new();
+        for index in 0..1152 {
+            reference = Some(
+                writer
+                    .submit(EventSubmission {
+                        operation_id: OperationId::new(index.to_string()).unwrap(),
+                        reference,
+                        event: Event {
+                            payload: Bytes::new(),
+                            blob_tree: None,
+                        },
+                    })
+                    .await
+                    .unwrap(),
+            );
+            let floor = runtime.runtime.lock().await.minimum_reference;
+            if advances.last().copied().flatten() != floor {
+                advances.push(floor);
+            }
+        }
+        assert_eq!(
+            advances,
+            vec![Some(EventPosition::new(64)), Some(EventPosition::new(128))]
+        );
+        assert!(idle.submit(submission(b"too-old")).await.is_err());
+    }
+
+    #[tokio::test]
+    async fn snapshot_boundary_retains_its_floor_after_recovery() {
+        let storage = MemoryStorage::new();
+        let (id, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let writer = member(&runtime, "writer").await;
+        let participation = writer
+            .coordinate_snapshots(SnapshotParticipation::ClientSelected)
+            .await
+            .unwrap();
+        let initial = writer.submit(submission(b"initial")).await.unwrap();
+        let mut advancing = submission(b"advance");
+        advancing.reference = Some(initial);
+        let advanced = writer.submit(advancing).await.unwrap();
+        let root = writer
+            .put_blob(Bytes::from_static(b"snapshot"))
+            .await
+            .unwrap();
+        writer
+            .publish_snapshot(
+                None,
+                None,
+                Snapshot {
+                    root,
+                    at_event: writer.resolve_position(advanced).await.unwrap().unwrap(),
+                },
+            )
+            .await
+            .unwrap();
+        drop((participation, writer, runtime));
+        let recovered = LocalSequencer::<MemoryStorage>::recover(
+            storage.open_view(&id).await.unwrap().unwrap(),
+        )
+        .await
+        .unwrap();
+        let reader = member(&recovered, "reader").await;
+        let loaded = reader.load(LoadStart::LatestSnapshot).await.unwrap();
+        let boundary = loaded.snapshot.unwrap().at_event.id();
+        assert_eq!(boundary, advanced);
+        let mut event = reader.read(Some(initial), Some(boundary));
+        assert_eq!(
+            data(&mut event).await.unwrap().minimum_reference,
+            Some(initial)
+        );
+        assert_eq!(
+            recovered.runtime.lock().await.minimum_reference,
+            Some(initial)
+        );
+    }
 
     #[tokio::test]
     async fn announced_membership_orders_departure_on_close_replacement_and_recovery() {

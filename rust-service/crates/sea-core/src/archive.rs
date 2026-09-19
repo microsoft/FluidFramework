@@ -242,8 +242,9 @@ pub struct SessionCommittedEvent {
     /// Sequenced history known when the author constructed this event, or initial state.
     /// Together with the session's preceding application events, this describes the submission context.
     pub reference: Option<EventPosition>,
-    /// Minimum position still referenced by an active author, when any event exists.
-    /// TODO(RS-024): This is not yet the required durable, nondecreasing enforced reference floor.
+    /// Durable, nondecreasing document admission floor at this event's boundary.
+    /// Advances commit atomically with their carrying event and constrain subsequent submissions.
+    /// `None` denotes initial context and is below every concrete position.
     pub minimum_reference: Option<EventPosition>,
 }
 

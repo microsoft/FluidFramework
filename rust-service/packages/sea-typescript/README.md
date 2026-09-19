@@ -22,7 +22,10 @@ The first failed author call closes append authority and prevents queued submiss
 Recover through an independent session and replay the old session's departure before transforming its unaccepted suffix; SEA does not transform or automatically resubmit application payloads.
 Metadata is public control data, like author/session identities: compression and encryption decorators do not transform or protect it.
 Unannounced sessions retain application-only history.
-Remote consumers must rebuild client and server together for protocol version 6.
+`minimumReference` is the durable document-wide admission floor, not an active-member minimum.
+It never decreases, including after new membership or recovery; an absent submission reference is below every concrete floor.
+Advances commit atomically with their carrying event and arrive in the same live/replay order.
+Remote consumers must rebuild client and server together for protocol version 7.
 
 ```typescript
 import { createMemoryService } from "@fluidframework/sea-typescript/internal/memory";
