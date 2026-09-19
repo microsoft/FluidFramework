@@ -110,6 +110,7 @@ Update the table and its supporting details when behavior changes.
 | Optimization | Status | Scope and remaining work |
 | --- | --- | --- |
 | Persistent content stream | Implemented | Unary content operations reuse a stream, avoiding stream creation per object; requests remain serialized. |
+| Backpressure-driven blob production | Partial | WebTransport and native `WebSocketStream` provide transport backpressure; proposed recursive and concurrent blob work must preserve it through bounded traversal, reads, transforms, and queues. Ordinary WebSocket lacks receive backpressure. |
 | Content-addressed deduplication | Implemented | Backends reuse immutable identities within their storage scope. This does not by itself avoid transferring duplicate upload bytes or establish cross-document availability. |
 | Reuse through Fluid handles and attachments | Implemented | Existing blob identities avoid reuploading unchanged leaves. Directory reconstruction still incurs avoidable requests. |
 | Bounded parallel summary uploads | Partial | The Fluid adapter admits up to eight blob uploads per summary, but the remote client's content-stream mutex serializes complete request/response operations. |
@@ -169,6 +170,30 @@ As a separate future improvement, use measured round-trip time, effective throug
 There is no universal one-round-trip batch limit; the relevant question is whether additional speculative work fills otherwise idle time or displaces more useful work.
 Both approaches need hard resource limits, backpressure, cancellation, and priority for explicitly requested content over lower-confidence speculation.
 
+### Backpressure and bounded production
+
+Use the existing WebTransport and native `WebSocketStream` backpressure to pace blob production instead of eagerly materializing a recursive result or launching all uploads and downloads at once.
+Await transport writes and use bounded, byte-accounted queues between traversal, storage reads, compression/encryption, encoding, and transmission.
+When downstream capacity is exhausted, stop admitting more work upstream; allow only bounded lookahead to overlap storage or transformation work with transmission.
+On receive, avoid draining the transport into an unbounded response queue or cache, which would defeat backpressure from the consumer.
+Cancellation must stop traversal and release queued work, not merely discard results after production finishes.
+
+Backpressure controls production rate and outstanding buffering, not how much speculative content is useful.
+It complements rather than replaces per-request speculation budgets, demand hints, and hard traversal limits: a fast receiver could otherwise accept an arbitrarily large amount of unwanted content.
+Use it from the initial heuristic-budget implementation without requiring explicit latency measurements; latency-aware sizing remains a separate possible refinement.
+An awaited write indicates transport progress or acceptance into buffering, not remote application consumption, cache retention, or storage acknowledgement.
+Runtime, network, and proxy buffers can delay the pressure signal, so retain explicit bounds on application-owned work.
+
+Prefer small bounded queues and schedule explicit requests ahead of lower-confidence speculation before bytes enter a transport's ordered send queue.
+Already queued speculative bytes cannot generally be reprioritized; large writes can delay more useful responses on the same stream.
+Separate logical streams still share connection and host resources, so enforce aggregate byte and work limits and test event-delivery fairness.
+Current blob APIs and transforms buffer whole payloads: backpressure can bound the number and total bytes of admitted objects, but does not itself provide streaming within a blob or bound decompressed size.
+
+Ordinary WebSocket fallback cannot propagate receive backpressure when the application stops reading.
+Its send-buffer admission throttling and bounded receive queues do not provide the same guarantee; queue overflow fails the transport rather than silently dropping content.
+Use conservative bounded production for that mode, and define application-level receive credits or another explicit pacing mechanism if future speculative transfers need stronger slow-consumer guarantees.
+Do not assume that per-socket queue limits bound connection-wide, runtime, or proxy memory; see the [transport limitations](crates/sea-webtransport/README.md#optional-websocketstream-fallback).
+
 ### Recursive fetch and initial load
 
 For a linked chain of tiny directories, independent-request concurrency cannot avoid the discovery dependency: each reply reveals the next digest.
@@ -214,6 +239,7 @@ Follow [Development](DEVELOPMENT.md) for required validation and use existing ow
 Acceptance evidence should cover the relevant scenarios:
 
 - Multiple outstanding remote requests actually overlap; responses correlate correctly under interleaving, failure, and cancellation, and work remains bounded.
+- Slow or paused receivers propagate backpressure to blob reads, transforms, and traversal after bounded lookahead; resuming makes progress, and cancellation releases queued work. Exercise WebTransport and native `WebSocketStream` separately from ordinary WebSocket's overflow behavior, and check aggregate buffering and event-delivery fairness.
 - A deep chain of tiny directories loads with fewer request round trips; a wide graph demonstrates useful concurrency and shared-subtree deduplication.
 - Initial-load hints deliver usable snapshot content without a separate request while preserving snapshot selection, gap-free events, and responsiveness.
 - Cache false positives, stale inferred knowledge, cached directories with missing descendants, and changed demand still permit explicit fetch and correct publication rejection/recovery.
