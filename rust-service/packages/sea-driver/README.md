@@ -70,7 +70,7 @@ The shared Fluid container helpers retain their existing bounded cleanup-timer l
 
 Automatic summarization and garbage collection are disabled for this adapter.
 The initial summary and subsequent operation history support loading, but no bounded-history or background-compaction guarantee is made.
-The wrapper does not add automatic reconnect, presence, authentication, or production membership semantics.
+The wrapper does not add automatic reconnect, application signals, authentication, or production membership semantics.
 The driver depends on the standard loader/runtime helpers but still has no transitive SharedTree dependency, including development dependencies.
 
 ## Guarantees and Limits
@@ -94,6 +94,9 @@ Normal Fluid containers use the runtime's pending-state processing and reconnect
 The neutral-session adapter owns Fluid initialization events and the bidirectional mapping between opaque SEA positions and Fluid sequence numbers.
 It announces membership through the neutral session contract and projects shared joined/left records with per-connection identities.
 Read-only membership records occupy sequence positions without adding readers to the writer quorum.
+Initial audience state is rebuilt from retained joins and leaves, excluding departed sessions.
+Live read-only joins and leaves are also delivered as Fluid system signals; writers remain controlled by quorum operations.
+This projection uses the same durable membership history, not an independent presence service or application-signal channel.
 The projected Fluid minimum sequence number maps SEA's durable admission floor into the same dense sequence space.
 It advances monotonically across membership changes and reopening, independently of server history retention.
 The adapter still retains all operation history; floor enforcement does not claim garbage collection or compaction.
@@ -107,7 +110,7 @@ Delta disposal also closes its owning session so Fluid pending-state recovery ca
 Cleanup carries the original session identity and cannot close a newer replacement sharing the same adapter.
 Transferred projected subscriptions remain cancellation-owned by their driver consumer.
 
-Signals, audience presence, automatic reconnect, authentication, and garbage collection remain incomplete.
+Application signals, automatic reconnect, authentication, and garbage collection remain incomplete.
 Ordered writer membership is implemented, but this does not establish production driver conformance.
 Summary download materializes a full tree rather than preserving handles.
 See the harness's [storage and lifecycle contracts](../../tests/minimal-fluid-driver/README.md) for the generated-client projection and snapshot semantics.

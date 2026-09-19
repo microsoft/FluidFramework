@@ -600,6 +600,10 @@ test("read-first document services retain independent memberships and shared wri
 		const latest = connections.at(-1);
 		assert.ok(latest);
 		assert.deepEqual(
+			latest.initialClients.map((member) => member.clientId),
+			connections.map((connection) => connection.clientId),
+		);
+		assert.deepEqual(
 			latest.initialMessages
 				.filter((message) => message.type === MessageType.ClientJoin)
 				.map((message) => (JSON.parse(message.data ?? "") as { clientId: string }).clientId),
@@ -636,6 +640,32 @@ test("read-first document services retain independent memberships and shared wri
 			0,
 			"catch-up must not duplicate delivery",
 		);
+		const reader = connections[0];
+		assert.ok(reader);
+		const left = new Promise<string>((resolve) => {
+			latest.on("signal", (signal) => {
+				assert.ok(!Array.isArray(signal));
+				const content = JSON.parse(signal.content as string) as {
+					type: string;
+					content: string;
+				};
+				if (content.type === MessageType.ClientLeave) resolve(content.content);
+			});
+		});
+		reader.disconnect();
+		assert.equal(await left, reader.clientId);
+		const joined = new Promise<string>((resolve) => {
+			latest.on("signal", (signal) => {
+				assert.ok(!Array.isArray(signal));
+				const content = JSON.parse(signal.content as string) as {
+					type: string;
+					content: { clientId: string };
+				};
+				if (content.type === MessageType.ClientJoin) resolve(content.content.clientId);
+			});
+		});
+		await reader.reconnect();
+		assert.equal(await joined, reader.clientId);
 	} finally {
 		for (const connection of connections) connection.dispose();
 		for (const documentService of services) documentService.dispose();

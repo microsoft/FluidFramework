@@ -146,7 +146,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 	public readonly version = "^0.1.0";
 	/** Synthetic join messages that establish local and remote membership. */
 	public readonly initialMessages: ISequencedDocumentMessage[];
-	/** Signals are unsupported, so the initial signal list is empty. */
+	/** Initial audience is supplied through initialClients; no application signals are retained. */
 	public readonly initialSignals: ISignalMessage[] = [];
 	/** No Routerlicious service configuration is exposed by this adapter. */
 	public readonly serviceConfiguration = {} as IClientConfiguration;
@@ -267,6 +267,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 			} else {
 				this.initialMessages.splice(0, this.initialMessages.length, ...messages);
 			}
+			this.projectAudience(page.operations, !this.opened);
 			this.lifecycle.cursor = page.cursor;
 			this.checkpointSequenceNumber =
 				messages.at(-1)?.sequenceNumber ?? this.checkpointSequenceNumber;
@@ -368,7 +369,37 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 			this.emit("op", decoder.decode(this.document), messages);
 		}
 		this.onSynchronized?.(this.clientId, messages);
+		this.projectAudience(page.operations);
 		return messages;
+	}
+
+	/** Rebuilds the initial audience or emits read-only membership signals from durable records.
+	 * Writer audience membership remains controlled by the sequenced quorum operations.
+	 */
+	private projectAudience(operations: readonly ProjectedOperation[], initial = false): void {
+		const members = new Map<string, ISignalClient>();
+		for (const operation of operations) {
+			if (operation.eventType !== "joined" && operation.eventType !== "left") continue;
+			const clientId = decoder.decode(operation.session);
+			const joined = operation.eventType === "joined";
+			const member = joined
+				? { clientId, client: JSON.parse(decoder.decode(operation.payload)) as IClient }
+				: undefined;
+			if (initial) {
+				if (member === undefined) members.delete(clientId);
+				else members.set(clientId, member);
+			} else if (operation.membershipMode === "read") {
+				this.emit("signal", {
+					clientId: null,
+					content: JSON.stringify({
+						type: joined ? MessageType.ClientJoin : MessageType.ClientLeave,
+						content: member ?? clientId,
+					}),
+				} satisfies ISignalMessage);
+			}
+		}
+		if (initial)
+			this.initialClients.splice(0, this.initialClients.length, ...members.values());
 	}
 
 	/** Proves the old accepted prefix through its leave before exposing an unaccepted suffix.
@@ -527,6 +558,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 				);
 				this.checkpointSequenceNumber = messages.at(-1)?.sequenceNumber ?? 0;
 				this.emit("op", decoder.decode(this.document), messages);
+				this.projectAudience(operations);
 				this.onSynchronized?.(this.clientId, messages);
 			}
 		} catch (error) {
