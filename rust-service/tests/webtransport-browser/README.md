@@ -52,11 +52,16 @@ SEA_ORDINARY_WEBSOCKET=1 SEA_NODE_WEBSOCKET=1 tests/webtransport-browser/run-tes
 These settings enable the existing `websocket-stream` build feature automatically.
 The Node setting additionally permits missing Origin only on the harness's loopback listener; do not use it for forwarded/public endpoints.
 The ordinary browser mode checks `PreferAvailable` with unreachable QUIC and unavailable WebSocketStream, verifies the false receive-backpressure capability, and checks disconnection during child creation.
+Selection probes run only on loopback-hosted pages: their deliberate loopback connection failures must not request access to an external visitor's local apps.
+Externally hosted pages still run collaboration with the explicitly selected transport, without these selection probes.
 Generated-binding regressions use a controlled event socket to test queue byte/message limits, upload throttling, cancellation, malformed records, FIN, handshake failure/timeouts, callback cleanup, and strict-mode refusal to fall back.
 That test runs only when the generated package includes the optional feature.
 
 Node 22.23.2's built-in WebSocket and local Chromium 152 passed these real SEA flows.
-Firefox is a compatibility target, not a tested platform in this run; ordinary WebSocket through external Codespaces forwarding was not rerun.
+On 2026-09-19, the user reported a passing three-session ordinary-WebSocket collaboration run in Windows Firefox 156 through public Codespaces forwarding with memory storage.
+The user denied a local-app permission prompt caused plausibly by the then-enabled loopback selection probe; collaboration still passed.
+The probe is now restricted to loopback-hosted pages, but the revised external page has not been rerun in Firefox.
+Private-window/login state was not confirmed; this is not a verified anonymous-browser result or an external shutdown test.
 Ordinary WebSocket cannot provide receive backpressure: a slow consumer's bounded adapter queue fails on overflow instead of slowing the sender.
 Neither the Node nor browser flow proves a total runtime/proxy memory bound.
 Rebuild without the feature for default validation, as described above.

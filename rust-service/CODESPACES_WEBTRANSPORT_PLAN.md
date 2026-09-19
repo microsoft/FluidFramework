@@ -1,6 +1,6 @@
 # Codespaces WebTransport Investigation Plan
 
-Status: Optional streaming and ordinary WebSocket adapters implemented; native streaming passed external Codespaces collaboration, and ordinary WebSocket passed local Chromium and Node collaboration.
+Status: Optional streaming and ordinary WebSocket adapters implemented; native streaming and Firefox ordinary WebSocket passed external Codespaces collaboration, with additional local Chromium and Node coverage.
 Created: 2026-09-18.
 
 Current recommendation: explicitly enable native `WebSocketStream` for the Codespaces development path; see [implementation and validation](tests/webtransport-browser/README.md#optional-websocketstream-validation).
@@ -29,12 +29,35 @@ An existing Origin still requires an exact match; a local proxy can appear as a 
 
 Generated-WASM regressions cover queue count/byte bounds, upload throttling, malformed/oversized records, FIN before close, premature close, cancellation, failed/timed-out establishment, callback cleanup, and strict versus compatible selection.
 A real Node built-in WebSocket two-client flow and the full local Chromium ordinary-WebSocket collaboration/selection/shutdown flow passed against the Rust listener.
-Firefox and ordinary WebSocket through external Codespaces forwarding were not tested; prior external measurements below apply to native WebSocketStream only.
+Firefox ordinary WebSocket subsequently passed through external Codespaces forwarding; see the user-run evidence below.
+Prior external backpressure measurements below apply to native WebSocketStream only.
 Final validation passed: canonical workspace formatting, strict Clippy and rustdoc, native build, all-feature tests, documentation links, feature-enabled WASM Clippy, and default-feature WASM compilation.
 Root `pnpm build:fast` (including Biome and policy) and the separate Rust-service policy check passed.
 Native WebSocketStream and default WebTransport Chromium collaboration/shutdown regressions also passed; default generated bindings were restored and their Node suite passed.
-All changes remain uncommitted in the isolated worktree; this follow-up did not push, merge, or modify the active main checkout.
+The ordinary WebSocket implementation was committed as `a58f5e5c879` in the isolated worktree; this follow-up did not push, merge, or modify the active main checkout.
 The following implementation and investigation sections retain their earlier scope and evidence.
+
+### External Firefox Validation: 2026-09-19
+
+The user ran the collaboration page in Windows Firefox 156 through public Codespaces HTTPS/WSS forwarding and supplied this result:
+
+```json
+{"status":"passed","browser":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0","transportSessionCount":3,"firstPosition":"1","firstStreamedPosition":"2","secondStreamedPosition":"3","thirdStreamedPosition":"4","fourthStreamedPosition":"5","secondPosition":"6","caughtUp":"none","blobBytes":33,"transport":"WebSocket","directoryEntries":1,"serviceErrorKind":4,"snapshotParticipation":3,"snapshotPosition":"6","documentIdBytes":8}
+```
+
+The page used port 18765 and the Rust WebSocket listener used port 18766, both forwarded publicly for this disposable memory-storage test.
+TLS verification remained enabled, the backend Origin allowlist remained enforced, and originless loopback admission was disabled.
+The page and protocol upgrade were also reachable without credentials in command-line checks.
+A private browser window was requested, but the user did not confirm private-window or GitHub-login state; anonymous browser access remains unverified.
+
+The user denied a Firefox request for access to local apps, and the collaboration test still passed.
+The likely trigger was the harness's deliberate `127.0.0.1` WebTransport failure probe, not the public SEA endpoint.
+After this result, selection probes were restricted to pages hosted on loopback; external pages now run collaboration without those local-device requests.
+A focused execution check verified that public hosts skip selection probes and loopback hosts retain them.
+The revised page was not rerun by the user, so absence of the permission prompt has not been confirmed in Firefox.
+
+This result covers three sessions, ordered/live events, content, snapshots, and explicit reconnect, not external automated shutdown or receive-backpressure measurements.
+Both owned listeners were stopped afterward; ports 18765 and 18766 were verified private and their loopback listeners refused connections.
 
 ### Native Streaming Implementation
 
@@ -132,7 +155,7 @@ Do not expand this assignment into implementing the WASM packages, ServiceClient
 - [x] Identify a practical connection route, if any, and state its browser, certificate, forwarding, and host prerequisites.
 - [x] Try the smallest end-to-end probe when a supported route appears feasible; confirm actual native `WebSocketStream` traffic under the revised scope rather than only successful page loading.
 - [x] Record direct interactive access and internal Chromium results separately, including the browser location and endpoint used.
-- [ ] Adapt SEA and validate collaboration, independent-stream behavior, half-close, cancellation, and cleanup over the selected transport.
+- [x] Adapt SEA and validate collaboration, independent-stream behavior, half-close, cancellation, and cleanup over the selected transport.
 - [x] Identify practical alternatives and their costs or operational constraints without deploying infrastructure outside the approved scope.
 - [x] If blocked or unresolved, add a current item to [Known Issues](KNOWN_ISSUES.md) with evidence, user impact, and a concrete follow-up trigger.
 

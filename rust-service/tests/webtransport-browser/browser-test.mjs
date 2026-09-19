@@ -82,6 +82,7 @@ async function connect(hash) {
 
 async function checkTransportSelection(hash) {
 	if (parameters.get("websocket") !== "1") return;
+	if (!["localhost", "127.0.0.1", "[::1]"].includes(location.hostname)) return;
 	const modes = bindings.SeaBrowserTransportMode;
 	if (parameters.get("ordinaryWebsocket") === "1") {
 		const descriptor = Object.getOwnPropertyDescriptor(globalThis, "WebSocketStream");

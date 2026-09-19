@@ -79,5 +79,6 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
   Node's built-in WebSocket sends no Origin and requires the separate default-off, direct-loopback admission option; do not enable it on public/forwarded endpoints.
 - **Trigger:** Integrate the opt-in adapter into an application-level development workflow with an explicit exposure/authentication policy.
   Preserve FIN/cancellation semantics and the strict modes' independent-stream backpressure; opt into ordinary WebSocket only when its weaker receive guarantees are acceptable.
-  Local Chromium and Node flows passed, but Firefox and ordinary WebSocket through external forwarding remain unverified.
+  Local Chromium and Node flows passed; the user also reported a passing Windows Firefox 156 ordinary-WebSocket collaboration flow through public Codespaces forwarding.
+  A logged-out browser run remains unverified.
   See [setup and validation](tests/webtransport-browser/README.md#optional-websocketstream-validation).
