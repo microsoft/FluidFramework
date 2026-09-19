@@ -115,7 +115,8 @@ The Node originless-loopback exception must not be enabled on a forwarded or pub
 Readiness is bounded to 30 seconds, individual tests default to 10 seconds, and the suite process is bounded to 10 minutes.
 The runner stops owned processes and removes certificates and temporary storage on failure or interruption; service logs are printed on failure.
 Nonzero results are not suppressed.
-The initial smoke test reaches attachment and second-client loading, then fails the shared membership synchronization contract.
+The lifecycle smoke passes with the neutral-session driver's ordered membership projection.
+The full SEA suite is still under investigation and is not expected to pass yet.
 See the active [failure inventory](../../../rust-service/INTEGRATION_TEST_CONFIGURATION_PLAN.md#failure-inventory) before interpreting the result as a setup problem.
 No SEA-specific behavioral tests are silently skipped by this configuration.
 

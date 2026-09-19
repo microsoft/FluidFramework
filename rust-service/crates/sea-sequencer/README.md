@@ -8,7 +8,10 @@ The `sea_core::session` traits define content/history, author, and snapshot-coor
 Move a view into `session::LocalSequencer::<Storage>::recover`, then call `open_session` for each author connection.
 Recovery performs a bounded scan only when `head` is nonempty and restores committed submission identities and application positions.
 It rejects malformed envelopes, invalid references, and duplicate committed operation identities.
-Membership and publisher selection are runtime-local, not control records in the application archive.
+Active authority and publisher selection are runtime-local.
+`announce_membership` optionally publishes immutable public member metadata in the same archive order as application events.
+Announced memberships receive a service-authored departure on close, replacement, shutdown, or recovery; unannounced memberships produce no control records.
+Recovery closes outstanding announcements before admitting fresh sessions.
 Session identities used by committed events remain reserved after recovery; unused memberships need not survive a runtime restart.
 Opening another session for an author replaces its previous membership and closes that membership's streams.
 
@@ -22,7 +25,10 @@ The sequencer never relies on memory-specific stream survival or writer-lease be
 ## Delivery
 
 Application submissions carry sequencer metadata in the existing private envelope codec.
-There are no private open/close entries in the replacement event history, so monitored positions map directly to delivered application events.
+Opt-in membership transitions use a distinct persisted envelope and are delivered as `SessionEventKind::Joined` and `SessionEventKind::Left`.
+Application events remain `SessionEventKind::Application` with unchanged submission encoding and retry identity space.
+Exact announcement retries return the original position; changing metadata is rejected.
+Membership metadata is public control data and is not transformed by payload compression or encryption.
 `read` lazily initializes the view's bounded or live read and preserves its progress and error classification.
 Closing or replacing membership terminates its initialized live reads.
 Loads use `LoadStart`, returning a selected handle-based snapshot and the live suffix without an atomic captured head.

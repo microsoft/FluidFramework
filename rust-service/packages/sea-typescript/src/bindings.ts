@@ -223,6 +223,7 @@ export function wrapSession(
 	};
 	return {
 		document: session.document,
+		announceMembership: (metadata) => invoke(() => session.announceMembership(metadata)),
 		putBlob: (payload) => invoke(async () => copyIdentity(await session.putBlob(payload))),
 		getBlob: (id) =>
 			invoke(async () => {

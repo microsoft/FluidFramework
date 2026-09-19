@@ -97,6 +97,13 @@ pub trait SeaArchive: crate::SeaService {
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 pub trait SeaAuthorSession: SeaArchive {
+    /// Publishes this membership and immutable public metadata in the ordered event archive.
+    /// Exact retries return the original position; different metadata is rejected.
+    /// Close, replacement, or recovery appends a service-authored departure before later mutation.
+    /// Membership records are not application submissions and cannot be resolved by operation ID.
+    /// Metadata is control data like author/session identities: payload decorators do not protect it.
+    /// Sessions that never call this method produce no membership records.
+    async fn announce_membership(&self, metadata: Bytes) -> Result<EventPosition, Self::Error>;
     /// Submits an event or resolves an exact retry by the same author, including after reconnect.
     /// Identity reuse with different payload, tree, reference, or author is rejected.
     /// Storage is never transparently retried. Returned ambiguity requires bounded reconciliation;

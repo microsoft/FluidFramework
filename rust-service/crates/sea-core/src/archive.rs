@@ -213,16 +213,30 @@ pub struct CommittedEvent {
     pub event: Event,
 }
 
+/// Origin of a session event, independent of its application-specific payload.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum SessionEventKind {
+    /// An explicitly submitted application event.
+    #[default]
+    Application,
+    /// An explicitly announced membership; payload contains caller-provided metadata.
+    Joined,
+    /// An announced membership closed; payload is empty.
+    Left,
+}
+
 /// One committed event with the sequencing metadata exposed to session consumers.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SessionCommittedEvent {
+    /// Distinguishes submissions from service-authoritative membership records.
+    pub kind: SessionEventKind,
     /// Storage commitment and application event.
     pub committed: CommittedEvent,
     /// Stable author identity supplied when the session opened.
     pub author_id: AuthorId,
     /// Connection identity that submitted the event.
     pub session_id: SessionId,
-    /// Stable operation identity used for retry resolution.
+    /// Stable application retry identity; membership records carry their session identity instead.
     pub operation_id: OperationId,
     /// Event position referenced by the author, or initial state.
     pub reference: Option<EventPosition>,

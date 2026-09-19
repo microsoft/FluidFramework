@@ -50,8 +50,11 @@ export interface PendingSubmission {
 
 // @internal
 export interface ProjectedOperation {
+    readonly eventType?: "application" | "joined" | "left";
     readonly localSequenceNumber: bigint;
+    readonly membershipMode?: "read" | "write";
     readonly minimumReference?: Uint8Array;
+    readonly minimumSequenceNumber?: bigint;
     readonly payload: Uint8Array;
     readonly position: Uint8Array;
     readonly reference?: Uint8Array;
@@ -80,7 +83,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
     checkpointSequenceNumber: number;
     readonly claims: ITokenClaims;
     // (undocumented)
-    readonly clientId: string;
+    clientId: string;
     disconnect(): void;
     dispose(error?: Error): void;
     disposed: boolean;
@@ -159,6 +162,8 @@ export class SeaDriver implements IDocumentServiceFactory {
 
 // @internal
 export interface SeaDriverClient {
+    announceMembership?(metadata: Uint8Array): Promise<void>;
+    readonly applicationSequenceOffset?: number;
     create(): Promise<Uint8Array>;
     disconnect(): void;
     fetchBlob(digest: Uint8Array): Promise<Uint8Array>;
@@ -188,6 +193,8 @@ export interface SeaDriverClient {
 // @internal
 export class SeaSessionDriverClient implements SeaDriverClient {
     constructor(factory: SeaSessionFactory, participation: SeaSnapshotParticipation);
+    announceMembership(metadata: Uint8Array): Promise<void>;
+    readonly applicationSequenceOffset = 0;
     create(): Promise<Uint8Array>;
     disconnect(): void;
     fetchBlob(digest: Uint8Array): Promise<Uint8Array>;

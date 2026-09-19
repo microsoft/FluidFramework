@@ -13,6 +13,14 @@ Sessions expose opaque event submission with optional content references, submis
 `getSnapshot()` selects the latest snapshot; an event bound selects the newest snapshot at or before that bound, or returns `undefined` when none exists.
 Automatic reconnect, implicit retries, authentication, and arbitrary runtime decorator composition are not provided.
 
+`announceMembership(metadata)` opts a session into ordered membership records.
+History reports `eventType: "joined"`, `"application"`, or `"left"`; joined payloads contain immutable public metadata, and left payloads are empty.
+Close, replacement, and service recovery append departures in the same order as application events.
+Exact announcement retries return the original position; changing metadata is rejected.
+Metadata is public control data, like author/session identities: compression and encryption decorators do not transform or protect it.
+Unannounced sessions retain application-only history.
+Remote consumers must rebuild client and server together for protocol version 6.
+
 ```typescript
 import { createMemoryService } from "@fluidframework/sea-typescript/internal/memory";
 

@@ -86,6 +86,8 @@ export interface SeaSnapshot {
 export interface SeaEvent {
 	/** Event result discriminant. */
 	readonly kind: "event";
+	/** Service-authored membership transition or explicit application submission. */
+	readonly eventType: "application" | "joined" | "left";
 	/** Committed archive position. */
 	readonly position: bigint;
 	/** Decoded application payload. */
@@ -149,6 +151,13 @@ export interface SeaStream<Item> {
 export interface SeaSession {
 	/** Backend-assigned identity for reopening on the same service. */
 	readonly document: Uint8Array;
+	/**
+	 * Announces immutable public member metadata, returning its ordered position.
+	 * Exact retries are idempotent; changing metadata is rejected.
+	 * Close, replacement, and service recovery append an ordered departure.
+	 * Payload encryption and compression do not protect this control metadata.
+	 */
+	announceMembership(metadata: Uint8Array): Promise<bigint>;
 	/** Uploads a blob through the selected stack. */
 	putBlob(payload: Uint8Array): Promise<SeaTreeId>;
 	/** Fetches and decodes a blob. */

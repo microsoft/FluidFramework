@@ -40,13 +40,18 @@ Incremental publication retains the acknowledged parent snapshot and rejects sta
 Delta connections preserve pending submission identities across explicit recovery; they do not automatically retry or resubmit ambiguous writes.
 
 The neutral-session adapter owns Fluid initialization events and the bidirectional mapping between opaque SEA positions and Fluid sequence numbers.
+It announces membership through the neutral session contract and projects shared joined/left records with per-connection identities.
+Read-only membership records occupy sequence positions without adding readers to the writer quorum.
+This path has no synthetic sequence offset; legacy injected benchmark clients retain the earlier two-slot projection.
+The two projections are not interoperable within one document; use fresh test documents when migrating from the synthetic projection.
 It watches snapshot coordination continuously so SEA-selected publication uses the current observed nomination fence.
 Membership replacement waits for admitted archive reads to finish and defers later reads until the replacement opens.
 Each document service retains a unique SEA author for read-first connections, independent of shared projected Fluid client labels.
 Disconnect cancels owned streams and starts membership close; reconnect waits for that cleanup, and the next open calls the injected factory.
 Transferred projected subscriptions remain cancellation-owned by their driver consumer.
 
-Signals, presence, automatic reconnect, authentication, production Fluid membership, and garbage collection are not implemented.
+Signals, audience presence, automatic reconnect, authentication, and garbage collection remain incomplete.
+Ordered writer membership is implemented, but this does not establish production driver conformance.
 Summary download materializes a full tree rather than preserving handles.
 See the harness's [storage and lifecycle contracts](../../tests/minimal-fluid-driver/README.md) for the generated-client projection and snapshot semantics.
 

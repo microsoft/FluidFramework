@@ -221,6 +221,12 @@ impl<Session: SeaSession> SeaArchive for SessionAdapter<Session> {
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 impl<Session: SeaSession> SeaAuthorSession for SessionAdapter<Session> {
+    async fn announce_membership(&self, metadata: Bytes) -> Result<EventPosition, Self::Error> {
+        self.inner
+            .announce_membership(metadata)
+            .await
+            .map_err(|error| BindingError::from_error(&error))
+    }
     async fn submit(&self, submission: EventSubmission) -> Result<EventPosition, Self::Error> {
         self.inner
             .submit(submission)

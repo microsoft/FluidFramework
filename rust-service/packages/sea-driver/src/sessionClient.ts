@@ -51,6 +51,10 @@ const decoder = new TextDecoder();
  * @internal
  */
 export class SeaSessionDriverClient implements SeaDriverClient {
+	/** Membership records already occupy the projected history, without synthetic joins. */
+	public readonly applicationSequenceOffset = 0;
+	/** Announced modes are retained to distinguish read-only audience from writer quorum. */
+	private readonly membershipModes = new Map<string, "read" | "write">();
 	/** Mapping from opaque SEA positions to Fluid sequence numbers. */
 	private readonly positionSequences = new Map<bigint, bigint>();
 	/** Reverse mapping used by Fluid reference sequence numbers. */
@@ -168,6 +172,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		try {
 			this.positionSequences.clear();
 			this.sequencePositions.clear();
+			this.membershipModes.clear();
 			this.nextSequence = 1n;
 			await this.readProjectedFrom(this.current());
 			this.eventStream = this.current().read(reference);
@@ -204,6 +209,11 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 			}
 			this.snapshotFence = state.fence;
 		}
+	}
+
+	/** Announces Fluid metadata while keeping its interpretation above the neutral session API. */
+	public async announceMembership(metadata: Uint8Array): Promise<void> {
+		await this.current().announceMembership(metadata);
 	}
 
 	/** Submits serialized Fluid data with its original operation identity. */
@@ -314,7 +324,9 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		after?: Uint8Array,
 	): Promise<ProjectedOperationSubscription> {
 		if (decodePosition(after) !== this.eventResumeAfter) {
-			throw new Error("SEA subscription position does not match its opened event stream");
+			this.eventStream?.cancel();
+			this.eventStream = this.current().read(decodePosition(after));
+			this.eventResumeAfter = decodePosition(after);
 		}
 		const stream = this.eventStream;
 		if (stream === undefined) throw new Error("SEA event stream is not open");
@@ -414,12 +426,15 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 
 	/** Validates initialization events and assigns application event sequence numbers. */
 	private project(item: SeaEvent): ProjectedOperation | undefined {
-		const message = JSON.parse(decoder.decode(item.payload)) as {
+		const message = (
+			item.eventType === "left" ? {} : JSON.parse(decoder.decode(item.payload))
+		) as {
 			clientSequenceNumber?: number;
 			seaFluid?: string;
 			version?: number;
+			mode?: "read" | "write";
 		};
-		if (message.seaFluid === "initialize") {
+		if (item.eventType === "application" && message.seaFluid === "initialize") {
 			const previous = this.sequencePositions.get(0n);
 			if (
 				message.version !== 1 ||
@@ -431,7 +446,18 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 			this.sequencePositions.set(0n, item.position);
 			return undefined;
 		}
+		const membership = bytesKey(item.session);
+		if (item.eventType === "joined") {
+			this.membershipModes.set(membership, message.mode ?? "write");
+		}
+		const membershipMode = this.membershipModes.get(membership);
 		return {
+			eventType: item.eventType,
+			...(membershipMode === undefined ? {} : { membershipMode }),
+			minimumSequenceNumber:
+				item.minimumReference === undefined
+					? 0n
+					: (this.positionSequences.get(item.minimumReference) ?? 0n),
 			position: encodePosition(item.position),
 			sequenceNumber: this.sequence(item.position),
 			...(item.minimumReference === undefined

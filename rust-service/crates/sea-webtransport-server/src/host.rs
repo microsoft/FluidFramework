@@ -905,8 +905,10 @@ mod tests {
             })
             .await
             .unwrap();
-        let protocol::Response::EventStreamOpened { authority, .. } =
-            events.next().await.expect("event authority")
+        let protocol::Response::EventStreamOpened {
+            authority,
+            document,
+        } = events.next().await.expect("event authority")
         else {
             panic!("event stream must return authority");
         };
@@ -916,6 +918,30 @@ mod tests {
                 .await,
             protocol::Response::Acknowledged
         );
+        assert!(matches!(
+            connection
+                .author_request(protocol::Request::AnnounceMembership {
+                    metadata: b"public member".to_vec(),
+                })
+                .await,
+            protocol::Response::EventCommitted { .. }
+        ));
+        let observer = host.connect(LivenessPolicy::default());
+        let mut peer_events = observer
+            .open_event_stream(protocol::Request::OpenEventStream {
+                version: protocol::PROTOCOL_VERSION,
+                archive: document,
+                intent: protocol::ArchiveIntent::Open,
+                author: b"observer".to_vec(),
+                session: b"observer-session".to_vec(),
+                resume_after: None,
+            })
+            .await
+            .unwrap();
+        assert!(matches!(
+            peer_events.next().await,
+            Some(protocol::Response::EventStreamOpened { .. })
+        ));
         let cleanup = connection.connection_closed(true);
         let explicit = async {
             tokio::task::yield_now().await;
@@ -924,6 +950,20 @@ mod tests {
         let ((), response) = tokio::join!(cleanup, explicit);
         assert_eq!(response, protocol::Response::Acknowledged);
         connection.connection_closed(false).await;
+        let mut membership = Vec::new();
+        while membership.len() < 2 {
+            if let protocol::Response::LoadEvent(event) = peer_events.next().await.unwrap() {
+                membership.push(event.kind);
+            }
+        }
+        assert_eq!(
+            membership,
+            vec![
+                protocol::SessionEventKind::Joined,
+                protocol::SessionEventKind::Left
+            ]
+        );
+        observer.connection_closed(false).await;
         assert!(matches!(
             connection
                 .author_request(protocol::Request::ResolveSubmission {

@@ -398,6 +398,50 @@ async fn next_event<Error: std::fmt::Debug>(
     }
 }
 
+/// Verifies public membership metadata and application payloads through every configured layer.
+async fn verify_membership<Writer: SeaSession, Observer: SeaSession>(
+    writer: &Writer,
+    observer: &Observer,
+) {
+    use sea_core::archive::SessionEventKind;
+    let metadata = Bytes::from_static(b"public membership metadata");
+    let joined = writer.announce_membership(metadata.clone()).await.unwrap();
+    assert_eq!(
+        writer.announce_membership(metadata.clone()).await.unwrap(),
+        joined
+    );
+    assert!(writer.announce_membership(Bytes::new()).await.is_err());
+    let position = writer
+        .submit(EventSubmission {
+            operation_id: OperationId::new("membership-edit").unwrap(),
+            reference: Some(joined),
+            event: Event {
+                payload: Bytes::from_static(b"protected application data"),
+                blob_tree: None,
+            },
+        })
+        .await
+        .unwrap();
+    let mut events = observer.read(None, None);
+    let announcement = next_event(&mut events).await;
+    assert_eq!(announcement.kind, SessionEventKind::Joined);
+    assert_eq!(announcement.committed.position, joined);
+    assert_eq!(announcement.committed.event.payload, metadata);
+    let application = next_event(&mut events).await;
+    assert_eq!(application.kind, SessionEventKind::Application);
+    assert_eq!(application.committed.position, position);
+    assert_eq!(
+        application.committed.event.payload,
+        Bytes::from_static(b"protected application data")
+    );
+    writer.close().await.unwrap();
+    let departed = next_event(&mut events).await;
+    assert_eq!(departed.kind, SessionEventKind::Left);
+    assert_eq!(departed.session_id, announcement.session_id);
+    assert!(departed.committed.position > position);
+    assert!(departed.committed.event.payload.is_empty());
+}
+
 /// Checks actual decoded content, including the directory-to-leaf identity mapping.
 async fn check_content<Session: SeaArchive>(session: &Session, trace: &Trace) {
     let BlobTreeId::Directory(root) = trace.root else {
@@ -1174,6 +1218,17 @@ macro_rules! configurations {
                 }).await.expect("transport path probe timed out");
                 probe_fixture.stop_endpoints().await;
                 probe_fixture.runtime.shutdown().await.unwrap();
+                let mut membership_fixture = Fixture::new().await;
+                let mut membership_peer = membership_fixture.peer("membership-observer");
+                timeout(Duration::from_secs(30), async {
+                    let writer = build(&mut membership_fixture).await;
+                    let observer = build(&mut membership_peer).await;
+                    verify_membership(&writer, &observer).await;
+                    observer.close().await.unwrap();
+                }).await.expect("membership composition timed out");
+                membership_peer.stop_endpoints().await;
+                membership_fixture.stop_endpoints().await;
+                membership_fixture.runtime.shutdown().await.unwrap();
                 for scenario in SCENARIOS {
                     let mut fixture = Fixture::new().await;
                     let mut peer_fixture = fixture.peer("peer");

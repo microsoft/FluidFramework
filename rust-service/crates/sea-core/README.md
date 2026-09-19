@@ -43,4 +43,10 @@ Initial application state is represented by an application event, not an initial
 Session publication checks expected parents and current client-selected/Sea-selected authority, with exact position/root reconciliation instead of a separate snapshot operation ID.
 Behavioural evidence for these composition contracts is in `sea-conformance::run_session_conformance` and the owning `sea-sequencer::session` tests.
 
+`SeaAuthorSession::announce_membership` opts into durable joined/left records sharing the application event order.
+`SessionCommittedEvent::kind` distinguishes application submissions from service-authored membership transitions.
+Metadata is immutable public control data; payload decorators do not protect it.
+Close, replacement, and recovery settle a departure before later mutation, while unannounced sessions retain submission-only history.
+See [the membership decision](../../historical/decisions/0014-ordered-session-membership.md) for recovery, compatibility, and security boundaries.
+
 Contributor validation commands are in [`DEV.md`](DEV.md).

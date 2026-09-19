@@ -1,6 +1,6 @@
 # SEA Opt-In Integration-Test Configuration Plan
 
-Status: Opt-in configuration implemented; validation and failure inventory in progress before its checkpoint commit.
+Status: Opt-in configuration committed; ordered-membership fix passes the lifecycle smoke, with checkpoint validation in progress.
 Created: 2026-09-18.
 Updated: 2026-09-19.
 
@@ -23,6 +23,7 @@ Test packages may consume SharedTree without making it a dependency of the drive
 Keep this work in the test-driver definitions, test-driver implementation, test selection/lifecycle infrastructure, owning test-package documentation, and this plan.
 Leave ServiceClient and example integration with their current owners.
 The user assigned ownership of driver-contract fixes to this workstream after the configuration checkpoint.
+After the membership investigation, the user explicitly authorized extending the neutral session API and service/transport bindings while preserving Fluid-independent layering.
 The user approved adding SEA package dependencies to `test-drivers` and updating only its root lockfile importer; reconcile that overlap with ServiceClient during integration.
 Coordinate other shared workspace/build changes and overlapping production edits; isolated worktrees prevent working-tree interference but do not prevent integration conflicts.
 
@@ -34,6 +35,7 @@ Coordinate other shared workspace/build changes and overlapping production edits
 - Initial working-tree status: clean, before this plan update.
 - The source checkout's uncommitted ServiceClient implementation and lockfile changes were not copied.
 - Plan checkpoint: `48085c15e81`.
+- Configuration checkpoint: `4d9c1906dab`; default local and Tinylicious suites and required repository gates passed before this commit.
 - Workflow: one isolated assignment, without a numbered iteration; configuration and subsequent validated fix commits are authorized, but push, merge, and CI-default changes are not.
 
 ### Existing Extension Points
@@ -97,11 +99,11 @@ The socket artifact does not support compression.
 - [x] Add SEA through those established extension points with an explicit opt-in selector; a named selection must run SEA, not silently substitute another driver.
 - [x] Keep SEA excluded when no opt-in is supplied, including existing default and CI invocations.
 - [x] Add focused checks that verify selection, initialization, and cleanup without suppressing genuine driver failures.
-- [ ] Prove detached create, attach, second-client load, edits in both directions, and cleanup through the actual test provider; its current membership failure is retained and does not prevent inventory runs.
+- [x] Prove detached create, attach, second-client load, edits in both directions, and cleanup through the actual test provider; the ordered-membership implementation passes the unchanged lifecycle smoke.
 - [ ] Run the new configuration and distinguish setup failures from behavioral failures and unsupported contracts.
 - [ ] Retain exact commands and a failure inventory with test names, failure signatures, reproduction steps, and relevant known limitations.
-- [ ] Document how to run the configuration and interpret expected limitations.
-- [ ] Complete default-service and repository gates, then commit the configuration with its known failures before undertaking driver fixes.
+- [x] Document how to run the configuration and interpret expected limitations.
+- [x] Complete default-service and repository gates, then commit the configuration with its known failures before undertaking driver fixes.
 - [ ] Fix failures in focused validated commits and repeat the SEA suite; inventory any tests excluded because they assert a non-SEA implementation detail.
 
 Fix defects in the new configuration needed to make it runnable.
@@ -160,23 +162,46 @@ Commands below run from this worktree root:
 | `pnpm --dir packages/test/test-version-utils test` | 126 passing. |
 | Canonical commands from `rust-service/`: `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, `RUSTDOCFLAGS='-D warnings' cargo doc --workspace --all-features --no-deps`, `cargo build --workspace --all-targets`, `cargo test --workspace --all-targets --all-features`, `./test.sh` | All passed, including generated Node and Chromium harnesses. |
 | `pnpm --dir packages/test/test-end-to-end-tests test` | Local: 5340 passing, 630 existing pending; Tinylicious: 4049 passing, 1921 existing pending. No failures reported in either default suite. |
+| `pnpm --dir packages/test/test-end-to-end-tests run test:realsvc:sea --timeout=2000` at `4d9c1906dab` | Partial inventory: ten-minute runner cap reached after 214 reported failures, before `SharedInterval` completed. No final suite totals; short-deadline failures remain provisional. |
+| SEA lifecycle smoke after ordered-membership edits | One passing, unchanged assertions; detached creation, attachment, peer loading, bidirectional edits, and cleanup complete. |
+| `cargo test -p sea-sequencer` after membership edits | 17 passing, including persisted encoding and close/replacement/recovery ordering. |
+| `cargo test -p sea-integration-tests --test session_composition` after membership edits | 12 configurations pass, each also checking membership through its complete decorator/transport stack. |
+| Existing driver Node tests and neutral session tests after membership edits | 32 passing; the extended read-first regression also proves identical replay and actual writer identities. |
+| Membership checkpoint gates | Root `pnpm build:fast`, Rust formatting/Clippy/rustdoc/build, and scoped policy passed. Workspace tests hit the previously observed server idle-stream timeout once under concurrent build load, then passed isolated and as a full rerun. |
+| Browser membership regression | The trace initially asserted synthetic projection positions; it now distinguishes membership from application records, checks actual member IDs, and retains exact delivery/recovery assertions. The complete browser matrix passes. |
 
 ### Failure Inventory
 
 | ID | Test and reproduction | Signature and classification | Disposition |
 | --- | --- | --- | --- |
-| SEA-001 | `Driver lifecycle smoke / Non-Compat / creates detached, attaches, loads a peer, exchanges edits, and closes`; run the SEA smoke command above. | `Timeout on waiting for pending join or leave op` in `LoaderContainerTracker.ensureSynchronized`, first synchronization after load; behavioral membership-contract mismatch with the driver's synthetic membership. | Retained failing test; fix driver semantics after the configuration checkpoint. |
+| SEA-001 | `Driver lifecycle smoke / Non-Compat / creates detached, attaches, loads a peer, exchanges edits, and closes`; run the SEA smoke command above. | `Timeout on waiting for pending join or leave op` in `LoaderContainerTracker.ensureSynchronized`, first synchronization after load; behavioral membership-contract mismatch with the driver's synthetic membership. | Passes after the ordered-membership fix; assertion unchanged. |
 | SEA-002 | `SharedCounter / Non-Compat / before each: Ensure synchronized / can create the counter in 3 containers correctly`; run the bounded sample above. | Same pending join/leave timeout as SEA-001. | Retained; verify after membership fix. |
 | SEA-003 | `SharedCounter - runtime benchmarks / Non-Compat / increment value in 3 containers`; run the bounded sample above. | Mocha 2000ms timeout, with transport-disconnected telemetry during cleanup. | Retained; rerun with the standard 10000ms deadline after membership fix before assigning a separate cause. |
 | SEA-004 | `Op reentry and rebasing during pending batches / Non-Compat / Pending batches with reentry - SharedCounter`; run the bounded sample above. | `Timeout on waiting a container to be saved` in `ensureSynchronized`. | Retained; investigate pending-operation acknowledgment after membership fix. |
 
 The first smoke attempt exposed a configuration defect: logical URLs omitted the tenant segment expected by the Fluid loader.
 The resolver now uses `fluid://sea-test/tests/<document>`; the subsequent attempt reached SEA-001.
-The failure inventory applies to the uncommitted implementation after `48085c15e81`; record its configuration commit before starting fixes.
+The initial failure inventory applies to configuration checkpoint `4d9c1906dab`.
 No new SEA-specific test exclusions have been added.
 
 For each observed failure, record the exact test name and command, source revision, failure signature, setup versus behavioral classification, reproduction steps, and relevant known limitation.
 Keep unsupported contracts visible, including signals, presence, synthetic membership, automatic reconnect, authentication, and garbage collection; do not weaken shared assertions to hide them.
+
+### Membership Investigation
+
+SEA-001 is not a test-specific mismatch: `SeaDeltaConnection` fabricates two initial join operations independently for each connection, and `projectOperation` collapses all other authors into one synthetic remote client.
+Consequently, two peers do not observe the same identities or membership history.
+The existing lifecycle smoke is the focused regression: both peers must exchange edits and satisfy the unchanged quorum synchronization check.
+
+The neutral `SeaAuthorSession` contract exposes submission and membership close, but no ordered membership-observation API.
+Client-authored join/leave application events could represent graceful connections, but cannot authoritatively remove an abruptly disconnected peer by themselves.
+Relabeling the synthetic member, suppressing its interactive capability, or bypassing the test's quorum check would hide the missing contract rather than implement it.
+
+The recommended next design is a Fluid-independent, service-authoritative membership facility at the session layer, with Fluid join/leave projection owned by `sea-driver`.
+This requires coordinating the neutral session API, transport/bindings, ordering relative to application events, replay/snapshot boundaries, and disconnect policy with the ServiceClient owner.
+The user approved this extension rather than pausing at the configuration checkpoint.
+The implemented design and compatibility boundary are recorded in [decision 0014](historical/decisions/0014-ordered-session-membership.md).
+The neutral API remains opt-in, and no new SEA test exclusions have been added.
 
 ## Review Boundary and Later Work
 

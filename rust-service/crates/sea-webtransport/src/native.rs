@@ -751,6 +751,22 @@ where
     Transport::Stream: SessionStreamBounds + 'static,
     Transport::Error: Into<SeaClientError> + SessionStreamBounds,
 {
+    async fn announce_membership(&self, metadata: Bytes) -> Result<EventPosition, Self::Error> {
+        match self
+            .author_stream
+            .lock()
+            .await
+            .as_mut()
+            .ok_or(SeaClientError::Closed)?
+            .request(protocol::Request::AnnounceMembership {
+                metadata: metadata.to_vec(),
+            })
+            .await?
+        {
+            protocol::Response::EventCommitted { position } => Ok(EventPosition::new(position)),
+            response => Err(response_error(response)),
+        }
+    }
     async fn submit(&self, submission: EventSubmission) -> Result<EventPosition, Self::Error> {
         match self
             .author_stream
@@ -951,6 +967,13 @@ fn session_event_from_wire(
     event: protocol::StreamEvent,
 ) -> Result<SessionCommittedEvent, SeaClientError> {
     Ok(SessionCommittedEvent {
+        kind: match event.kind {
+            protocol::SessionEventKind::Application => {
+                sea_core::archive::SessionEventKind::Application
+            }
+            protocol::SessionEventKind::Joined => sea_core::archive::SessionEventKind::Joined,
+            protocol::SessionEventKind::Left => sea_core::archive::SessionEventKind::Left,
+        },
         committed: CommittedEvent {
             position: EventPosition::new(event.position),
             event: event_from_wire(event.event),

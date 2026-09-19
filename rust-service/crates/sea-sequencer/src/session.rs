@@ -2,8 +2,8 @@
 //!
 //! [`crate::session::LocalSequencer`] recovers committed submission and snapshot identities, then
 //! multiplexes the view into [`crate::session::LocalSession`] memberships. Memberships are
-//! runtime-local: reopening the document restores stable committed identities but requires callers
-//! to establish fresh sessions.
+//! runtime-local: reopening restores stable committed identities, closes outstanding durable
+//! announcements, and requires callers to establish fresh sessions.
 //!
 //! One runtime mutex serializes membership changes and state-dependent mutations. Before releasing
 //! that order, the runtime stores an owned backend future, so cancellation of a caller does not
@@ -36,8 +36,8 @@ use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, CommittedEvent, ErrorKind,
     Event, EventPosition, MonitoredStreamItem, MonitoredStreamProgress, MonitoredStreamStatus,
     archive::{
-        AuthorId, EventSubmission, OperationId, SessionCommittedEvent, SessionId, SessionStream,
-        SnapshotParticipation,
+        AuthorId, EventSubmission, OperationId, SessionCommittedEvent, SessionEventKind, SessionId,
+        SessionStream, SnapshotParticipation,
     },
     boxed_monitored_stream,
     session::{
@@ -50,7 +50,7 @@ use sea_core::{
 };
 use tokio::sync::{Mutex, watch};
 
-use crate::codec::{decode_committed, encode_submission};
+use crate::codec::{decode_committed, encode_membership, encode_submission};
 pub use crate::error::SessionError;
 
 /// View supplied by a document factory, moved into the sequencer.
@@ -113,6 +113,8 @@ struct Runtime<Storage: SeaStorage> {
     view: Option<Arc<View<Storage>>>,
     /// Active session memberships, not persisted as application events.
     members: BTreeMap<SessionId, Membership>,
+    /// Persisted announcements whose departure has not committed, including recovered sessions.
+    announced: BTreeMap<SessionId, SessionCommittedEvent>,
     /// Identities cannot be reused within this runtime or after a committed submission.
     seen: BTreeSet<SessionId>,
     /// Committed submission identities for retries and recovery.
@@ -209,11 +211,13 @@ impl Drop for PublisherLease {
     }
 }
 
-impl<Storage: SeaStorage> Runtime<Storage> {
+impl<Storage: SeaStorage + 'static> Runtime<Storage> {
     /// Records a settled submission and rejects duplicate committed identities.
     fn apply(&mut self, record: &CommittedEvent) -> Result<(), SessionError<Storage::Error>> {
         let committed = decode_committed(record)?;
-        if self.accepted.contains_key(&committed.operation_id) {
+        if committed.kind == SessionEventKind::Application
+            && self.accepted.contains_key(&committed.operation_id)
+        {
             return Err(SessionError::Corrupt("duplicate submission identity"));
         }
         if committed
@@ -223,12 +227,92 @@ impl<Storage: SeaStorage> Runtime<Storage> {
             return Err(SessionError::Corrupt("reference is not a preceding event"));
         }
         self.seen.insert(committed.session_id.clone());
-        if let Some(member) = self.members.get_mut(&committed.session_id) {
+        if committed.kind == SessionEventKind::Application
+            && let Some(member) = self.members.get_mut(&committed.session_id)
+        {
             member.reference = committed.reference;
         }
         self.positions.insert(record.position);
-        self.accepted
-            .insert(committed.operation_id.clone(), committed);
+        match committed.kind {
+            SessionEventKind::Application => {
+                self.accepted
+                    .insert(committed.operation_id.clone(), committed);
+            }
+            SessionEventKind::Joined => {
+                if self
+                    .announced
+                    .insert(committed.session_id.clone(), committed)
+                    .is_some()
+                {
+                    return Err(SessionError::Corrupt("duplicate membership announcement"));
+                }
+            }
+            SessionEventKind::Left => {
+                let announced = self
+                    .announced
+                    .remove(&committed.session_id)
+                    .ok_or(SessionError::Corrupt("departure without announcement"))?;
+                if announced.author_id != committed.author_id {
+                    return Err(SessionError::Corrupt("departure author mismatch"));
+                }
+                self.remove_member(&committed.session_id);
+            }
+        }
+        Ok(())
+    }
+
+    /// Closes live streams and publisher authority after ordered departure settles.
+    fn remove_member(&mut self, session: &SessionId) {
+        if let Some(member) = self.members.remove(session) {
+            member.closed.send_replace(true);
+        }
+        let mut publishers = self.publishers.lock().expect("publisher lock");
+        publishers.entries.remove(session);
+        publishers.refresh();
+    }
+
+    /// Retains and settles one service-authored membership mutation.
+    async fn append_membership(
+        &mut self,
+        author: &AuthorId,
+        session: &SessionId,
+        kind: SessionEventKind,
+        metadata: &[u8],
+    ) -> Result<EventPosition, SessionError<Storage::Error>> {
+        let reference = self.positions.last().copied();
+        let minimum = self
+            .members
+            .iter()
+            .filter(|(identity, _)| kind != SessionEventKind::Left || *identity != session)
+            .map(|(_, member)| member.reference)
+            .min()
+            .unwrap_or(reference);
+        let event = Event {
+            payload: encode_membership(author, session, kind, reference, minimum, metadata)?,
+            blob_tree: None,
+        };
+        let view = self.view()?;
+        let input = event.clone();
+        self.pending = Some(Pending {
+            event: Some(event),
+            future: Box::pin(async move { append_once::<Storage>(&view, input).await }),
+        });
+        self.settle().await?;
+        Ok(*self.positions.last().expect("settled membership position"))
+    }
+
+    /// Commits an announced departure before ending authority; unannounced sessions add no event.
+    async fn close_member(
+        &mut self,
+        session: &SessionId,
+    ) -> Result<(), SessionError<Storage::Error>> {
+        if let Some(announcement) = self.announced.get(session) {
+            let author = announcement.author_id.clone();
+            self.append_membership(&author, session, SessionEventKind::Left, &[])
+                .await?;
+        } else {
+            self.remove_member(session);
+        }
         Ok(())
     }
 
@@ -291,6 +375,7 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
         let mut runtime = Runtime {
             view: Some(view.clone()),
             members: BTreeMap::new(),
+            announced: BTreeMap::new(),
             seen: BTreeSet::new(),
             accepted: BTreeMap::new(),
             positions: BTreeSet::new(),
@@ -312,6 +397,9 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
             .map_err(SessionError::Storage)?;
         runtime.publishers.lock().expect("publisher lock").latest =
             latest.map(|snapshot| snapshot.at_event.id());
+        for session in runtime.announced.keys().cloned().collect::<Vec<_>>() {
+            runtime.close_member(&session).await?;
+        }
         Ok(Arc::new(Self {
             runtime: Mutex::new(runtime),
         }))
@@ -339,20 +427,14 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
                 "reused session or invalid reference",
             ));
         }
-        runtime.members.retain(|_, member| {
-            if member.author == author {
-                member.closed.send_replace(true);
-                false
-            } else {
-                true
-            }
-        });
-        {
-            let mut publishers = runtime.publishers.lock().expect("publisher lock");
-            publishers
-                .entries
-                .retain(|session, _| runtime.members.contains_key(session));
-            publishers.refresh();
+        let replaced = runtime
+            .members
+            .iter()
+            .filter(|(_, member)| member.author == author)
+            .map(|(session, _)| session.clone())
+            .collect::<Vec<_>>();
+        for previous in replaced {
+            runtime.close_member(&previous).await?;
         }
         let (closed, _) = watch::channel(false);
         runtime.members.insert(
@@ -381,8 +463,8 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
     pub async fn shutdown(&self) -> Result<(), SessionError<Storage::Error>> {
         let mut runtime = self.runtime.lock().await;
         runtime.settle().await?;
-        for (_, member) in std::mem::take(&mut runtime.members) {
-            member.closed.send_replace(true);
+        for session in runtime.members.keys().cloned().collect::<Vec<_>>() {
+            runtime.close_member(&session).await?;
         }
         runtime
             .publishers
@@ -416,6 +498,38 @@ impl<Storage: SeaStorage> Clone for LocalSession<Storage> {
 }
 
 impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
+    /// Publishes this membership once in archive order, retaining opaque application metadata.
+    /// Close, same-author replacement, and recovery publish an ordered departure.
+    /// Exact retries return the original position; metadata cannot change within a membership.
+    ///
+    /// # Errors
+    /// Returns closed-session, conflicting metadata, storage, or settlement errors.
+    /// # Panics
+    /// Panics if an internal publisher-state lock was poisoned.
+    pub async fn announce_membership(
+        &self,
+        metadata: Bytes,
+    ) -> Result<EventPosition, SessionError<Storage::Error>> {
+        let mut runtime = self.sequencer.runtime.lock().await;
+        runtime.settle().await?;
+        runtime.member(&self.session)?;
+        if let Some(announced) = runtime.announced.get(&self.session) {
+            return if announced.committed.event.payload == metadata {
+                Ok(announced.committed.position)
+            } else {
+                Err(SessionError::Rejected("membership metadata cannot change"))
+            };
+        }
+        runtime
+            .append_membership(
+                &self.author,
+                &self.session,
+                SessionEventKind::Joined,
+                &metadata,
+            )
+            .await
+    }
+
     /// Submits once, retaining backend execution through caller cancellation.
     async fn submit(
         &self,
@@ -518,15 +632,7 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
             return Ok(());
         }
         runtime.settle().await?;
-        let member = runtime
-            .members
-            .remove(&self.session)
-            .expect("validated membership");
-        member.closed.send_replace(true);
-        let mut publishers = runtime.publishers.lock().expect("publisher lock");
-        publishers.entries.remove(&self.session);
-        publishers.refresh();
-        Ok(())
+        runtime.close_member(&self.session).await
     }
 
     /// Obtains a view only after validating current membership and settling prior work.
@@ -545,6 +651,9 @@ impl<Storage: SeaStorage + 'static> sea_core::SeaService for LocalSession<Storag
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 impl<Storage: SeaStorage + 'static> SeaAuthorSession for LocalSession<Storage> {
+    async fn announce_membership(&self, metadata: Bytes) -> Result<EventPosition, Self::Error> {
+        Self::announce_membership(self, metadata).await
+    }
     async fn submit(&self, submission: EventSubmission) -> Result<EventPosition, Self::Error> {
         Self::submit(self, submission).await
     }
@@ -891,6 +1000,101 @@ async fn append_once<Storage: SeaStorage>(
 mod tests {
     use super::*;
     use sea_memory::MemoryStorage;
+
+    #[tokio::test]
+    async fn announced_membership_orders_departure_on_close_replacement_and_recovery() {
+        let storage = MemoryStorage::new();
+        let (id, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let observer = member(&runtime, "observer").await;
+        let first = member(&runtime, "first").await;
+        let joined = first
+            .announce_membership(Bytes::from_static(b"metadata"))
+            .await
+            .unwrap();
+        assert_eq!(
+            first
+                .announce_membership(Bytes::from_static(b"metadata"))
+                .await
+                .unwrap(),
+            joined
+        );
+        assert!(first.announce_membership(Bytes::new()).await.is_err());
+        let edit = first.submit(submission(b"first")).await.unwrap();
+        assert!(joined < edit);
+        let mut history = observer.read(None, None);
+        assert_eq!(
+            data(&mut history).await.unwrap().kind,
+            SessionEventKind::Joined
+        );
+        assert_eq!(
+            data(&mut history).await.unwrap().kind,
+            SessionEventKind::Application
+        );
+        first.close().await.unwrap();
+        first.close().await.unwrap();
+        let departed = data(&mut history).await.unwrap();
+        assert_eq!(departed.kind, SessionEventKind::Left);
+        assert!(edit < departed.committed.position);
+
+        let second = member(&runtime, "second").await;
+        second.announce_membership(Bytes::new()).await.unwrap();
+        let replacement = runtime
+            .open_session(
+                AuthorId::new("second").unwrap(),
+                SessionId::new("replacement").unwrap(),
+                None,
+            )
+            .await
+            .unwrap();
+        assert_eq!(
+            data(&mut history).await.unwrap().kind,
+            SessionEventKind::Joined
+        );
+        assert_eq!(
+            data(&mut history).await.unwrap().kind,
+            SessionEventKind::Left
+        );
+        assert!(second.submit(submission(b"stale")).await.is_err());
+        replacement
+            .announce_membership(Bytes::from_static(b"replacement"))
+            .await
+            .unwrap();
+        drop((history, observer, first, second, replacement, runtime));
+
+        let recovered = LocalSequencer::<MemoryStorage>::recover(
+            storage.open_view(&id).await.unwrap().unwrap(),
+        )
+        .await
+        .unwrap();
+        let observer = member(&recovered, "fresh-observer").await;
+        let mut replay = observer.read(None, None);
+        let mut kinds = Vec::new();
+        for _ in 0..7 {
+            kinds.push(data(&mut replay).await.unwrap().kind);
+        }
+        assert_eq!(
+            kinds,
+            vec![
+                SessionEventKind::Joined,
+                SessionEventKind::Application,
+                SessionEventKind::Left,
+                SessionEventKind::Joined,
+                SessionEventKind::Left,
+                SessionEventKind::Joined,
+                SessionEventKind::Left,
+            ]
+        );
+        assert_eq!(
+            observer
+                .resolve_submission(&OperationId::new("first").unwrap())
+                .await
+                .unwrap(),
+            Some(edit)
+        );
+    }
 
     /// Produces one stable application submission for session tests.
     pub(super) fn submission(value: &'static [u8]) -> EventSubmission {

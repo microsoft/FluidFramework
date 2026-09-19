@@ -285,6 +285,16 @@ impl SeaSession {
         Ok(result)
     }
 
+    /// Announces immutable public membership metadata in the ordered archive.
+    #[wasm_bindgen(js_name = announceMembership)]
+    pub async fn announce_membership(&self, metadata: &[u8]) -> Result<u64, JsValue> {
+        self.inner
+            .announce_membership(Bytes::copy_from_slice(metadata))
+            .await
+            .map(EventPosition::get)
+            .map_err(|error| service_error(&error))
+    }
+
     /// Submits opaque application data under a stable operation identity.
     pub async fn submit(
         &self,
@@ -458,6 +468,15 @@ fn event_result(
     match item {
         MonitoredStreamItem::Item(event) => {
             set(&result, "kind", "event")?;
+            set(
+                &result,
+                "eventType",
+                match event.kind {
+                    sea_core::archive::SessionEventKind::Application => "application",
+                    sea_core::archive::SessionEventKind::Joined => "joined",
+                    sea_core::archive::SessionEventKind::Left => "left",
+                },
+            )?;
             set(&result, "position", event.committed.position.get())?;
             set(
                 &result,

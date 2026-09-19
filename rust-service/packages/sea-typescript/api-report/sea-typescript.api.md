@@ -34,6 +34,7 @@ export type SeaErrorKind = "InvalidPosition" | "StalePosition" | "Conflict" | "R
 export interface SeaEvent {
     readonly author: Uint8Array;
     readonly blobTree?: SeaTreeId;
+    readonly eventType: "application" | "joined" | "left";
     readonly kind: "event";
     readonly minimumReference?: bigint;
     readonly operation: Uint8Array;
@@ -94,6 +95,7 @@ export interface SeaRemoteOptions {
 
 // @internal
 export interface SeaSession {
+    announceMembership(metadata: Uint8Array): Promise<bigint>;
     close(): Promise<void>;
     coordinateSnapshots(participation: "readOnly" | "seaSelected" | "clientSelected"): Promise<SeaStream<SeaSnapshotCoordination>>;
     readonly document: Uint8Array;

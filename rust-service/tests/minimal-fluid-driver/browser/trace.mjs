@@ -87,13 +87,25 @@ async function run() {
 		const first = await loaded.connectToDeltaStream(client);
 		connections.push(first);
 		const firstMessages = [];
-		first.on("op", (_document, messages) => firstMessages.push(...messages));
+		first.on("op", (_document, messages) =>
+			firstMessages.push(...messages.filter((message) => message.type === "op")),
+		);
 		const secondService = await factory.createDocumentService(created.resolvedUrl);
 		services.push(secondService);
 		const second = await secondService.connectToDeltaStream(client);
 		connections.push(second);
 		const secondMessages = [];
-		second.on("op", (_document, messages) => secondMessages.push(...messages));
+		second.on("op", (_document, messages) =>
+			secondMessages.push(...messages.filter((message) => message.type === "op")),
+		);
+		assert(
+			second.initialMessages
+				.filter((message) => message.type === "join")
+				.map((message) => JSON.parse(message.data).clientId)
+				.join(",") === `${first.clientId},${second.clientId}`,
+			"shared membership identities mismatch",
+		);
+		const firstSequence = second.checkpointSequenceNumber + 1;
 		assert(first instanceof SeaDeltaConnection, "first delta connection type mismatch");
 		assert(second instanceof SeaDeltaConnection, "second delta connection type mismatch");
 		const message = (clientSequenceNumber, delta) => ({
@@ -109,11 +121,13 @@ async function run() {
 		stage = "two-client-delivery";
 		await Promise.all([waitForCount(firstMessages, 2), waitForCount(secondMessages, 2)]);
 		assert(
-			firstMessages.map(({ sequenceNumber }) => sequenceNumber).join(",") === "3,4",
+			firstMessages.map(({ sequenceNumber }) => sequenceNumber).join(",") ===
+				`${firstSequence},${firstSequence + 1}`,
 			"first projection mismatch",
 		);
 		assert(
-			secondMessages.map(({ sequenceNumber }) => sequenceNumber).join(",") === "3,4",
+			secondMessages.map(({ sequenceNumber }) => sequenceNumber).join(",") ===
+				`${firstSequence},${firstSequence + 1}`,
 			"second projection mismatch",
 		);
 
@@ -145,20 +159,26 @@ async function run() {
 		);
 
 		const history = await loaded.connectToDeltaStorage();
-		const historicalStream = history.fetchMessages(4, 6);
+		const recoveredSequence = firstMessages[2].sequenceNumber;
+		const historicalStream = history.fetchMessages(firstSequence + 1, recoveredSequence + 1);
 		const historical = await historicalStream.read();
 		assert(!historical.done, "bounded historical read returned no page");
 		assert(
-			historical.value.map(({ sequenceNumber }) => sequenceNumber).join(",") === "4,5",
+			historical.value
+				.filter((message) => message.type === "op")
+				.map(({ sequenceNumber }) => sequenceNumber)
+				.join(",") === `${firstSequence + 1},${recoveredSequence}`,
 			"bounded historical range mismatch",
 		);
 		assert((await historicalStream.read()).done, "bounded history did not end");
 		assert(
-			firstMessages.map(({ sequenceNumber }) => sequenceNumber).join(",") === "3,4,5",
+			firstMessages.map(({ sequenceNumber }) => sequenceNumber).join(",") ===
+				`${firstSequence},${firstSequence + 1},${recoveredSequence}`,
 			"recovery lost or duplicated delivery",
 		);
 		assert(
-			secondMessages.map(({ sequenceNumber }) => sequenceNumber).join(",") === "3,4,5",
+			secondMessages.map(({ sequenceNumber }) => sequenceNumber).join(",") ===
+				`${firstSequence},${firstSequence + 1},${recoveredSequence}`,
 			"peer recovery delivery mismatch",
 		);
 		assert(synchronizationErrors.length === 0, synchronizationErrors.join("; "));

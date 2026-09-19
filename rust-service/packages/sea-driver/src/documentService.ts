@@ -124,9 +124,14 @@ export class SeaDocumentService extends Events implements IDocumentService {
 		const mode = client.mode ?? "write";
 		const lifecycle = this.getDeltaLifecycle(mode);
 		const logicalClientId = lifecycle.clientId;
-		const clientId = mode === "read" ? `client-${crypto.randomUUID()}` : logicalClientId;
-		const session = encoder.encode(`${clientId}-session-${crypto.randomUUID()}`);
+		let clientId = mode === "read" ? `client-${crypto.randomUUID()}` : logicalClientId;
 		const wasm = await this.getClient(clientId);
+		if (wasm.announceMembership !== undefined) clientId = `client-${crypto.randomUUID()}`;
+		const session = encoder.encode(
+			wasm.announceMembership === undefined
+				? `${clientId}-session-${crypto.randomUUID()}`
+				: clientId,
+		);
 		const connection = new SeaDeltaConnection(
 			clientId,
 			lifecycle,

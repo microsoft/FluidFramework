@@ -42,11 +42,13 @@ impl<Session: SeaArchive, Keys: KeyProvider + Clone + 'static, Nonces: NonceSour
         map_monitored_stream(
             source,
             move |mut event| {
-                event.committed.event.payload = decrypt_payload(
-                    &keys,
-                    &event.committed.event.payload,
-                    PayloadContext::Record,
-                )?;
+                if event.kind == sea_core::archive::SessionEventKind::Application {
+                    event.committed.event.payload = decrypt_payload(
+                        &keys,
+                        &event.committed.event.payload,
+                        PayloadContext::Record,
+                    )?;
+                }
                 Ok(event)
             },
             EncryptionError::Store,
@@ -194,6 +196,12 @@ impl<Session: SeaArchive, Keys: KeyProvider + Clone + 'static, Nonces: NonceSour
 impl<Session: SeaAuthorSession, Keys: KeyProvider + Clone + 'static, Nonces: NonceSource>
     SeaAuthorSession for EncryptionSession<Session, Keys, Nonces>
 {
+    async fn announce_membership(&self, metadata: Bytes) -> Result<EventPosition, Self::Error> {
+        self.inner
+            .announce_membership(metadata)
+            .await
+            .map_err(EncryptionError::Store)
+    }
     async fn submit(&self, submission: EventSubmission) -> Result<EventPosition, Self::Error> {
         if let Some(retry) = self.committed_retry(&submission).await? {
             return self

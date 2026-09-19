@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 /// Current Sea logical-stream opening version.
-pub const PROTOCOL_VERSION: u16 = 5;
+pub const PROTOCOL_VERSION: u16 = 6;
 
 /// Explicit wire identity of every Sea network message.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -42,6 +42,8 @@ pub enum MessageKind {
     PublishSnapshot = 20,
     /// Content-stream opening request.
     OpenContentStream = 21,
+    /// Ordered membership announcement request.
+    AnnounceMembership = 22,
     /// Request acknowledgement response.
     Acknowledged = 128,
     /// Event-commit response.
@@ -94,6 +96,7 @@ impl TryFrom<u8> for MessageKind {
             19 => Ok(Self::OpenSnapshotStream),
             20 => Ok(Self::PublishSnapshot),
             21 => Ok(Self::OpenContentStream),
+            22 => Ok(Self::AnnounceMembership),
             128 => Ok(Self::Acknowledged),
             129 => Ok(Self::EventCommitted),
             130 => Ok(Self::SubmissionResolved),
@@ -135,7 +138,7 @@ pub enum StreamRole {
 
 impl MessageKind {
     /// Every assigned message kind in numeric order.
-    pub const ALL: [Self; 30] = [
+    pub const ALL: [Self; 31] = [
         Self::Submit,
         Self::ResolveSubmission,
         Self::Read,
@@ -151,6 +154,7 @@ impl MessageKind {
         Self::OpenSnapshotStream,
         Self::PublishSnapshot,
         Self::OpenContentStream,
+        Self::AnnounceMembership,
         Self::Acknowledged,
         Self::EventCommitted,
         Self::SubmissionResolved,
@@ -186,6 +190,7 @@ impl MessageKind {
             StreamRole::Author => matches!(
                 self,
                 Kind::OpenAuthorStream
+                    | Kind::AnnounceMembership
                     | Kind::Submit
                     | Kind::ResolveSubmission
                     | Kind::EventCommitted
@@ -234,9 +239,11 @@ impl MessageKind {
     pub const fn request_role(self) -> Option<StreamRole> {
         match self {
             Self::OpenEventStream => Some(StreamRole::Event),
-            Self::OpenAuthorStream | Self::Submit | Self::ResolveSubmission | Self::Close => {
-                Some(StreamRole::Author)
-            }
+            Self::OpenAuthorStream
+            | Self::AnnounceMembership
+            | Self::Submit
+            | Self::ResolveSubmission
+            | Self::Close => Some(StreamRole::Author),
             Self::Read
             | Self::OpenContentStream
             | Self::PutBlob
@@ -501,9 +508,24 @@ pub struct Event {
     pub blob_tree: Option<TreeId>,
 }
 
+/// Service-observed event origin, separate from opaque application metadata.
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+pub enum SessionEventKind {
+    /// Explicit application submission.
+    #[default]
+    Application,
+    /// Explicit membership announcement.
+    Joined,
+    /// Service-authoritative membership departure.
+    Left,
+}
+
 /// One authored event delivered during catch-up or live continuation.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct StreamEvent {
+    /// Membership control record or application submission.
+    #[serde(default)]
+    pub kind: SessionEventKind,
     /// Stable event position.
     pub position: u64,
     /// Stable author identity.
@@ -605,6 +627,13 @@ pub mod payload {
     /// Payload for a message with no fields.
     #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct Empty;
+
+    /// Immutable public metadata for an ordered membership announcement.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct AnnounceMembership {
+        /// Application-specific public member description.
+        pub metadata: Vec<u8>,
+    }
 
     /// Archive-bound event-stream opening payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -812,6 +841,11 @@ pub mod payload {
 /// One request on a Sea session control or operation stream.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Request {
+    /// Announces the current membership in archive order.
+    AnnounceMembership {
+        /// Immutable public metadata, not encrypted by payload decorators.
+        metadata: Vec<u8>,
+    },
     /// Submits one event under a stable operation identity.
     Submit {
         /// Stable retry identity.
@@ -981,6 +1015,7 @@ impl Request {
     #[must_use]
     pub const fn kind(&self) -> MessageKind {
         match self {
+            Self::AnnounceMembership { .. } => MessageKind::AnnounceMembership,
             Self::OpenEventStream { .. } => MessageKind::OpenEventStream,
             Self::OpenAuthorStream { .. } => MessageKind::OpenAuthorStream,
             Self::OpenContentStream { .. } => MessageKind::OpenContentStream,
@@ -1005,6 +1040,7 @@ impl Request {
         match self {
             Self::OpenEventStream { .. } => StreamRole::Event,
             Self::OpenAuthorStream { .. }
+            | Self::AnnounceMembership { .. }
             | Self::Submit { .. }
             | Self::ResolveSubmission { .. }
             | Self::Close => StreamRole::Author,
@@ -1148,6 +1184,15 @@ pub fn encode_request_frame(
             },
             limits,
         ),
+        Request::AnnounceMembership { metadata } => encode_typed_payload(
+            role,
+            request.kind(),
+            correlation_id,
+            &wire::AnnounceMembership {
+                metadata: metadata.clone(),
+            },
+            limits,
+        ),
         Request::Submit {
             operation,
             reference,
@@ -1278,6 +1323,12 @@ pub fn decode_request_frame(
                 expected_parent: value.publication.expected_parent,
                 at_event: value.publication.at_event,
                 root: value.publication.root,
+            }
+        }
+        MessageKind::AnnounceMembership => {
+            let value: wire::AnnounceMembership = decode_typed_payload(frame)?;
+            Request::AnnounceMembership {
+                metadata: value.metadata,
             }
         }
         MessageKind::Submit => {
@@ -1876,6 +1927,12 @@ mod tests {
             ),
             (
                 StreamRole::Author,
+                Request::AnnounceMembership {
+                    metadata: b"public member".to_vec(),
+                },
+            ),
+            (
+                StreamRole::Author,
                 Request::Submit {
                     operation: b"operation".to_vec(),
                     reference: Some(1),
@@ -1947,6 +2004,7 @@ mod tests {
             root: TreeId::Directory([2; 32]),
         };
         let stream_event = StreamEvent {
+            kind: super::SessionEventKind::Application,
             position: 2,
             author: b"author".to_vec(),
             session: b"session".to_vec(),

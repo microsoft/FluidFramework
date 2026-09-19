@@ -67,10 +67,14 @@ class ProjectedMessageStream implements IStream<ISequencedDocumentMessage[]> {
 		this.done = true;
 		const messages = page.operations
 			.filter(
-				({ sequenceNumber }) =>
-					Number(sequenceNumber) + applicationSequenceOffset >= this.from &&
+				(operation) =>
+					Number(operation.sequenceNumber) +
+						(operation.eventType === undefined ? applicationSequenceOffset : 0) >=
+						this.from &&
 					(this.to === undefined ||
-						Number(sequenceNumber) + applicationSequenceOffset < this.to),
+						Number(operation.sequenceNumber) +
+							(operation.eventType === undefined ? applicationSequenceOffset : 0) <
+							this.to),
 			)
 			.map(this.project);
 		return messages.length === 0 && this.done
@@ -158,6 +162,8 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 	private subscription: ProjectedOperationSubscription | undefined;
 	/** Pump consuming the current projected-operation subscription. */
 	private subscriptionPump: Promise<void> | undefined;
+	/** Reopened connections deliver catch-up through listeners instead of a second initial batch. */
+	private opened = false;
 	/** Whether the Fluid connection has been synchronously disposed. */
 	public disposed = false;
 	/** Number of projected-operation batches delivered to Fluid. */
@@ -167,12 +173,12 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 
 	/** Creates a connection over document-scoped lifecycle state and one client. */
 	public constructor(
-		public readonly clientId: string,
+		public clientId: string,
 		private readonly lifecycle: DeltaConnectionLifecycle,
 		private session: Uint8Array,
 		private readonly document: Uint8Array,
 		private readonly client: SeaDriverClient,
-		fluidClient: IClient,
+		private readonly fluidClient: IClient,
 		public readonly mode: ConnectionMode,
 		public readonly initialClients: ISignalClient[],
 		private readonly onSynchronizationError?: (error: unknown) => void,
@@ -185,37 +191,41 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 	) {
 		super();
 		const remoteFluidClient = { ...fluidClient, mode: "write" } satisfies IClient;
-		this.initialMessages = [
-			{
-				sequenceNumber: 1,
-				minimumSequenceNumber: 0,
-				clientSequenceNumber: 0,
-				type: MessageType.ClientJoin,
-				clientId: null,
-				referenceSequenceNumber: 0,
-				contents: "",
-				timestamp: 0,
-				data: JSON.stringify({
-					clientId: lifecycle.clientId,
-					detail: remoteFluidClient,
-				}),
-			} satisfies ISequencedDocumentSystemMessage,
-			{
-				sequenceNumber: 2,
-				minimumSequenceNumber: 0,
-				clientSequenceNumber: 0,
-				type: MessageType.ClientJoin,
-				clientId: null,
-				referenceSequenceNumber: 0,
-				contents: "",
-				timestamp: 0,
-				data: JSON.stringify({
-					clientId: lifecycle.remoteClientId,
-					detail: remoteFluidClient,
-				}),
-			},
-		];
-		this.checkpointSequenceNumber = applicationSequenceOffset;
+		this.initialMessages =
+			this.client.announceMembership === undefined
+				? [
+						{
+							sequenceNumber: 1,
+							minimumSequenceNumber: 0,
+							clientSequenceNumber: 0,
+							type: MessageType.ClientJoin,
+							clientId: null,
+							referenceSequenceNumber: 0,
+							contents: "",
+							timestamp: 0,
+							data: JSON.stringify({
+								clientId: lifecycle.clientId,
+								detail: remoteFluidClient,
+							}),
+						} satisfies ISequencedDocumentSystemMessage,
+						{
+							sequenceNumber: 2,
+							minimumSequenceNumber: 0,
+							clientSequenceNumber: 0,
+							type: MessageType.ClientJoin,
+							clientId: null,
+							referenceSequenceNumber: 0,
+							contents: "",
+							timestamp: 0,
+							data: JSON.stringify({
+								clientId: lifecycle.remoteClientId,
+								detail: remoteFluidClient,
+							}),
+						},
+					]
+				: [];
+		this.checkpointSequenceNumber =
+			this.client.applicationSequenceOffset ?? applicationSequenceOffset;
 		this.claims = {
 			documentId: decoder.decode(document),
 			scopes: ["doc:read", "doc:write", "summary:write"],
@@ -237,7 +247,36 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 				this.lifecycle.cursor,
 			);
 		}
+		if (this.client.announceMembership !== undefined) {
+			await this.client.announceMembership(encoder.encode(JSON.stringify(this.fluidClient)));
+			const page = await this.client.readProjected(
+				this.opened ? this.lifecycle.cursor : undefined,
+			);
+			const messages = page.operations.map((operation) =>
+				projectOperation(this.lifecycle, operation),
+			);
+			if (this.opened) {
+				if (messages.length > 0) this.emit("op", decoder.decode(this.document), messages);
+				this.onSynchronized?.(this.clientId, messages);
+			} else {
+				this.initialMessages.splice(0, this.initialMessages.length, ...messages);
+			}
+			this.lifecycle.cursor = page.cursor;
+			this.checkpointSequenceNumber =
+				messages.at(-1)?.sequenceNumber ?? this.checkpointSequenceNumber;
+		}
+		this.opened = true;
 		await this.openSubscription();
+	}
+
+	/** Allocates a new membership identity while retaining pending submission identities. */
+	private renewSession(): void {
+		if (this.client.announceMembership === undefined) {
+			this.session = encoder.encode(`${this.clientId}-session-${Date.now()}-${Math.random()}`);
+		} else {
+			this.clientId = `client-${crypto.randomUUID()}`;
+			this.session = encoder.encode(this.clientId);
+		}
 	}
 
 	/** Opens projected delivery from the last consumed cursor. */
@@ -272,7 +311,9 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 					identity,
 					message.clientSequenceNumber,
 					encoder.encode(JSON.stringify(message)),
-					this.lifecycle.lastPosition,
+					this.client.applicationSequenceOffset === 0
+						? this.client.positionForSequence(message.referenceSequenceNumber)
+						: this.lifecycle.lastPosition,
 				);
 				this.lifecycle.lastPosition = position;
 				this.pending.delete(message.clientSequenceNumber);
@@ -294,14 +335,14 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 	public async restartSubscription(): Promise<boolean> {
 		const resumedFromCursor = this.lifecycle.cursor !== undefined;
 		await this.stopSubscription();
-		this.session = encoder.encode(`${this.clientId}-session-${Date.now()}-${Math.random()}`);
+		this.renewSession();
 		await this.client.openSession(
 			this.document,
 			this.lifecycle.writer,
 			this.session,
 			this.lifecycle.cursor,
 		);
-		await this.openSubscription();
+		await this.open(true);
 		return resumedFromCursor;
 	}
 
@@ -368,7 +409,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 	public async reconnect(...args: readonly unknown[]): Promise<void> {
 		await this.stopSubscription();
 		await this.client.reconnect(...args);
-		this.session = encoder.encode(`${this.clientId}-session-${Date.now()}-${Math.random()}`);
+		this.renewSession();
 		await this.open();
 	}
 

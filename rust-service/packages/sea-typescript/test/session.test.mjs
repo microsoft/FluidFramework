@@ -55,6 +55,33 @@ async function nextMatching(stream, predicate) {
 	}
 }
 
+test("neutral membership announcements and departures share application event order", async (context) => {
+	const { open, ownStream } = await sessionFixture(context);
+	const writer = await open(undefined, "writer", "writer-session");
+	const observer = await open(writer.document, "observer", "observer-session");
+	const stream = ownStream(observer.read());
+	const joined = await writer.announceMembership(encode("public member"));
+	assert.equal(await writer.announceMembership(encode("public member")), joined);
+	await assert.rejects(writer.announceMembership(encode("changed")), { kind: "Rejected" });
+	const edit = await writer.submit(encode("writer-session"), joined, encode("edit"));
+	await writer.close();
+	await writer.close();
+	const events = [];
+	for (let index = 0; index < 3; index++) {
+		events.push(await nextMatching(stream, (item) => item.kind === "event"));
+	}
+	assert.deepEqual(
+		events.map((event) => event.eventType),
+		["joined", "application", "left"],
+	);
+	assert.equal(events[0].position, joined);
+	assert.equal(events[1].position, edit);
+	assert.ok(events[2].position > edit);
+	assert.deepEqual(events[0].payload, encode("public member"));
+	assert.deepEqual(events[2].payload, new Uint8Array());
+	assert.deepEqual(events[2].session, encode("writer-session"));
+});
+
 test("neutral sessions resolve, load backlog, tail a peer, and cancel a pending read", async (context) => {
 	const { open, ownStream } = await sessionFixture(context);
 	const writer = await open(undefined, "writer", "writer-session");

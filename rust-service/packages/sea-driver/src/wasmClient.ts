@@ -8,6 +8,12 @@
  * @internal
  */
 export interface ProjectedOperation {
+	/** Present for the authoritative neutral-session projection; absent for legacy clients. */
+	readonly eventType?: "application" | "joined" | "left";
+	/** Membership mode retained from the announcement for departure projection. */
+	readonly membershipMode?: "read" | "write";
+	/** Minimum reference mapped into the same dense sequence space. */
+	readonly minimumSequenceNumber?: bigint;
 	/** Opaque service position that can resume projected reads and subscriptions. */
 	readonly position: Uint8Array;
 	/** Document-wide sequence number assigned by the service. */
@@ -114,6 +120,10 @@ export interface SummaryPublication {
  * @internal
  */
 export interface SeaDriverClient {
+	/** Legacy clients reserve synthetic sequence slots; authoritative clients use zero. */
+	readonly applicationSequenceOffset?: number;
+	/** Publishes real membership when supported by the supplied session implementation. */
+	announceMembership?(metadata: Uint8Array): Promise<void>;
 	/** Creates a document and returns the backend-assigned identity used for later opens. */
 	create(): Promise<Uint8Array>;
 	/** Opens one archive-bound author session. */

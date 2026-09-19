@@ -8,6 +8,7 @@ import type {
 	IResolvedUrl,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 
 import type { ProjectedOperation } from "./wasmClient.js";
 
@@ -171,6 +172,35 @@ export function toSequenced(
 	projectedRemoteClientId = remoteClientId,
 	remoteClientSequenceNumber = Number(operation.sequenceNumber),
 ): ISequencedDocumentMessage {
+	if (operation.eventType !== undefined) {
+		const clientId = decoder.decode(operation.session);
+		const common = {
+			sequenceNumber: Number(operation.sequenceNumber),
+			minimumSequenceNumber: Number(operation.minimumSequenceNumber ?? 0n),
+			timestamp: 0,
+		};
+		if (operation.eventType === "application") {
+			const message = JSON.parse(decoder.decode(operation.payload)) as IDocumentMessage;
+			return { ...message, ...common, clientId };
+		}
+		const readOnly = operation.membershipMode === "read";
+		return {
+			...common,
+			clientId: null,
+			clientSequenceNumber: -1,
+			referenceSequenceNumber: -1,
+			type: readOnly
+				? MessageType.NoOp
+				: operation.eventType === "joined"
+					? MessageType.ClientJoin
+					: MessageType.ClientLeave,
+			contents: null,
+			data:
+				operation.eventType === "joined"
+					? JSON.stringify({ clientId, detail: JSON.parse(decoder.decode(operation.payload)) })
+					: JSON.stringify(clientId),
+		};
+	}
 	const message = JSON.parse(decoder.decode(operation.payload)) as IDocumentMessage;
 	const isLocal =
 		localWriter !== undefined &&

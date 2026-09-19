@@ -59,9 +59,10 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Severity:** High
 - **Area:** Fluid integration
 - **Evidence:** The adapter passes generated local-client and real Chromium SharedTree traces, recursive summary reconstruction, handle reuse, explicit reconnect, and caller-driven resubmission.
-  It still uses synthetic membership and omits authentication, signals, presence, automatic reconnect, offline merge, loading groups, and GC policy.
+  The neutral-session path now projects ordered membership and passes the multi-driver lifecycle smoke; legacy injected benchmark clients retain synthetic membership.
+  Authentication, signals, presence, automatic reconnect, offline merge, loading groups, and GC policy remain incomplete.
 - **Impact:** The adapter is integration evidence, not a Routerlicious or ODSP replacement.
-- **Trigger:** Define production membership and connection policy before broadening the supported Fluid surface.
+- **Trigger:** Complete the opt-in integration inventory and connection-policy regressions before claiming production support.
 
 ## Codespaces forwarding requires the optional WebSocket transport
 

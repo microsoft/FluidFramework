@@ -79,6 +79,7 @@ where
     async fn author_request(&self, request: protocol::Request) -> protocol::Response {
         match request {
             protocol::Request::Submit { .. }
+            | protocol::Request::AnnounceMembership { .. }
             | protocol::Request::ResolveSubmission { .. }
             | protocol::Request::Close => match self.request_inner(request).await {
                 Ok(response) | Err(response) => response,
@@ -224,6 +225,16 @@ where
             | protocol::Request::GetBlob { .. }
             | protocol::Request::PutDirectory { .. }
             | protocol::Request::GetDirectory { .. }) => self.content_value(request).await,
+            protocol::Request::AnnounceMembership { metadata } => {
+                let position = self
+                    .session
+                    .announce_membership(Bytes::from(metadata))
+                    .await
+                    .map_err(error_response)?;
+                Ok(protocol::Response::EventCommitted {
+                    position: position.get(),
+                })
+            }
             protocol::Request::Submit {
                 operation,
                 reference,
@@ -359,6 +370,13 @@ where
 
 fn session_event_to_wire(event: &sea_core::archive::SessionCommittedEvent) -> protocol::Response {
     protocol::Response::LoadEvent(Box::new(protocol::StreamEvent {
+        kind: match event.kind {
+            sea_core::archive::SessionEventKind::Application => {
+                protocol::SessionEventKind::Application
+            }
+            sea_core::archive::SessionEventKind::Joined => protocol::SessionEventKind::Joined,
+            sea_core::archive::SessionEventKind::Left => protocol::SessionEventKind::Left,
+        },
         position: event.committed.position.get(),
         author: event.author_id.as_bytes().to_vec(),
         session: event.session_id.as_bytes().to_vec(),

@@ -98,7 +98,9 @@ export class SeaDocumentStorage implements IDocumentStorageService {
 				? undefined
 				: await this.client.fetchSummary(parentSnapshot.root);
 		const uploaded = await this.uploadSummary(summary, parentEntries);
-		const eventSequenceNumber = context.referenceSequenceNumber - applicationSequenceOffset;
+		const eventSequenceNumber =
+			context.referenceSequenceNumber -
+			(this.client.applicationSequenceOffset ?? applicationSequenceOffset);
 		const atEvent =
 			eventSequenceNumber <= 0
 				? this.client.positionForSequence(0)

@@ -11,6 +11,7 @@ import { setImmediate } from "node:timers/promises";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISummaryContext } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 
 import {
 	SeaDocumentStorage,
@@ -220,7 +221,7 @@ test("neutral session replacement drains storage reads and defers later reads", 
 	}
 });
 
-test("read-first document services retain independent SEA memberships", async () => {
+test("read-first document services retain independent memberships and shared writer identities", async () => {
 	const service = await createMemoryService({ environment: "node" });
 	const seed = await service.open(undefined, {
 		author: encoder.encode("seed"),
@@ -231,7 +232,7 @@ test("read-first document services retain independent SEA memberships", async ()
 	const id = Buffer.from(seed.document).toString("hex");
 	const adapters: SeaSessionDriverClient[] = [];
 	const services = Array.from(
-		{ length: 2 },
+		{ length: 4 },
 		() =>
 			new SeaDocumentService(
 				{
@@ -258,12 +259,52 @@ test("read-first document services retain independent SEA memberships", async ()
 					permission: [],
 					scopes: [],
 					user: { id: "reader" },
-					mode: "read",
+					mode: connections.length < 2 ? "read" : "write",
 				}),
 			);
 		}
 		for (const adapter of adapters)
 			assert.deepEqual(await adapter.fetchBlob(blob.bytes), payload);
+		const expectedMembers = connections.slice(2).map((connection) => connection.clientId);
+		const latest = connections.at(-1);
+		assert.ok(latest);
+		assert.deepEqual(
+			latest.initialMessages
+				.filter((message) => message.type === MessageType.ClientJoin)
+				.map((message) => (JSON.parse(message.data ?? "") as { clientId: string }).clientId),
+			expectedMembers,
+		);
+		for (const documentService of services) {
+			const history = await documentService.connectToDeltaStorage();
+			const page = await history.fetchMessages(1, latest.checkpointSequenceNumber + 1).read();
+			assert.equal(page.done, false);
+			if (!page.done) assert.deepEqual(page.value, latest.initialMessages);
+		}
+		const writer = connections[2];
+		assert.ok(writer);
+		const missed: unknown[] = [];
+		writer.on("op", (_document, messages) =>
+			missed.push(...messages.filter((message) => message.type === MessageType.Operation)),
+		);
+		writer.disconnect();
+		latest.submit([
+			{
+				clientSequenceNumber: 1,
+				referenceSequenceNumber: latest.checkpointSequenceNumber,
+				type: MessageType.Operation,
+				contents: "offline peer edit",
+			},
+		]);
+		await latest.waitForIdle();
+		const previousClientId = writer.clientId;
+		await writer.reconnect();
+		assert.notEqual(writer.clientId, previousClientId);
+		assert.equal(missed.length, 1, "reconnect must deliver an edit missed while offline");
+		assert.equal(
+			(await writer.synchronize()).length,
+			0,
+			"catch-up must not duplicate delivery",
+		);
 	} finally {
 		for (const connection of connections) connection.dispose();
 		for (const documentService of services) documentService.dispose();

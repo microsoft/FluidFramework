@@ -32,8 +32,10 @@ fn decode<Error: sea_core::ClassifiedError>(
     map_monitored_stream(
         source,
         |mut event| {
-            event.committed.event.payload = decompress_payload(&event.committed.event.payload)
-                .map_err(CompressionError::Corrupt)?;
+            if event.kind == sea_core::archive::SessionEventKind::Application {
+                event.committed.event.payload = decompress_payload(&event.committed.event.payload)
+                    .map_err(CompressionError::Corrupt)?;
+            }
             Ok(event)
         },
         CompressionError::Store,
@@ -126,6 +128,12 @@ impl<Session: SeaArchive> SeaArchive for CompressionSession<Session> {
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 impl<Session: SeaAuthorSession> SeaAuthorSession for CompressionSession<Session> {
+    async fn announce_membership(&self, metadata: Bytes) -> Result<EventPosition, Self::Error> {
+        self.inner
+            .announce_membership(metadata)
+            .await
+            .map_err(CompressionError::Store)
+    }
     async fn submit(&self, mut submission: EventSubmission) -> Result<EventPosition, Self::Error> {
         submission.event.payload =
             compress_payload(&submission.event.payload).map_err(CompressionError::Encode)?;

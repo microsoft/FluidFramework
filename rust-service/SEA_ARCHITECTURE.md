@@ -69,6 +69,9 @@ The [`sea-core::session`](crates/sea-core/src/session.rs) traits separate three 
 [`sea-sequencer`](crates/sea-sequencer/README.md) implements these contracts over one exclusive `SeaView`, shared across client memberships.
 It owns author identity, submission deduplication, reference validation, event ordering, and snapshot publication authority.
 Committed submission identities survive recovery; active memberships and publisher authority do not.
+Sessions can opt into ordered durable announcements with immutable public metadata.
+Close and replacement append departures; recovery appends departures for outstanding announcements before new sessions are admitted.
+These generic joined/left records share the application event order; Fluid identity and quorum interpretation remain in the driver.
 The server owns document runtime management, including opening and sharing sequencers.
 
 Snapshot participants may observe only (`ReadOnly`), let Sea select a publisher (`SeaSelected`), or use application-owned election (`ClientSelected`).
