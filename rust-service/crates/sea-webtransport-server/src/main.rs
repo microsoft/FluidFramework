@@ -133,6 +133,11 @@ async fn optional_websocket_server(
         origins,
     )
     .await?;
+    let websocket = match env::var("SEA_WEBSOCKET_ORIGINLESS_LOOPBACK").as_deref() {
+        Ok("1") => websocket.with_originless_loopback_clients()?,
+        Ok("0") | Err(_) => websocket,
+        Ok(_) => return Err("SEA_WEBSOCKET_ORIGINLESS_LOOPBACK must be 0 or 1".into()),
+    };
     println!(
         "WEBSOCKET_URL=ws://{}/sea/websocket",
         websocket.local_addr()?

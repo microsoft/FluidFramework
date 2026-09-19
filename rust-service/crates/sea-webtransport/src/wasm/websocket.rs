@@ -1,4 +1,4 @@
-//! Native browser `WebSocketStream` adapter and explicit establishment policy.
+//! Native streaming and ordinary WebSocket adapters with explicit establishment policy.
 
 use std::{
     cell::{Cell, RefCell},
@@ -12,13 +12,13 @@ use js_sys::{Array, Function, Object, Promise, Reflect, Uint8Array};
 use wasm_bindgen::{JsCast as _, prelude::*};
 use wasm_bindgen_futures::{JsFuture, spawn_local};
 
-use super::{SeaBrowserTransport, call_method, js_error};
+use super::{SeaBrowserTransport, call_method, js_error, ordinary_websocket::OrdinarySocket};
 use crate::{
     protocol,
     websocket::{self, CHUNK_BYTES, DATA, FIN, Record, SUBPROTOCOL},
 };
 
-/// Native transport selection, applied only before any Sea operation is issued.
+/// Transport selection, applied only before any Sea operation is issued.
 #[wasm_bindgen]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SeaBrowserTransportMode {
@@ -28,12 +28,19 @@ pub enum SeaBrowserTransportMode {
     WebSocketStream,
     /// Attempt WebTransport, then `WebSocketStream` on establishment failure or timeout.
     PreferWebTransport,
+    /// Require ordinary WebSocket for compatibility, without receive backpressure.
+    WebSocket,
+    /// Permit WebTransport, native streaming sockets, then ordinary WebSocket.
+    /// The last choice sacrifices receive backpressure for Node/Firefox compatibility.
+    PreferAvailable,
 }
 
 /// Connects one raw transport for `SeaInjectedClient`, without replaying Sea operations.
 ///
 /// The caller explicitly trusts both endpoints when selecting fallback. A WebTransport
 /// certificate pin does not authenticate a TLS-terminating WebSocket proxy.
+/// Each attempt has its own timeout. `PreferAvailable` permits up to three attempts
+/// and explicitly accepts the ordinary socket's lack of receive backpressure.
 ///
 /// # Errors
 /// Rejects invalid configuration, unavailable native APIs, or failed establishment.
@@ -49,13 +56,19 @@ pub async fn connect_browser_transport(
     if timeout_milliseconds == 0 || max_frame_bytes < protocol::MIN_FRAME_BYTES {
         return Err(js_error("invalid transport limits"));
     }
-    if mode != SeaBrowserTransportMode::WebSocketStream && certificate_hash.length() != 32 {
+    let try_webtransport = matches!(
+        mode,
+        SeaBrowserTransportMode::WebTransport
+            | SeaBrowserTransportMode::PreferWebTransport
+            | SeaBrowserTransportMode::PreferAvailable
+    );
+    if try_webtransport && certificate_hash.length() != 32 {
         return Err(js_error("certificate hash must contain exactly 32 bytes"));
     }
     if mode != SeaBrowserTransportMode::WebTransport {
         validate_url(&websocket_url)?;
     }
-    if mode != SeaBrowserTransportMode::WebSocketStream {
+    if try_webtransport {
         match deadline(
             SeaBrowserTransport::connect(webtransport_url, certificate_hash, max_frame_bytes),
             timeout_milliseconds,
@@ -67,8 +80,15 @@ pub async fn connect_browser_transport(
             Err(_) => {}
         }
     }
+    if mode != SeaBrowserTransportMode::WebSocket {
+        match SeaWebSocketTransport::connect(websocket_url.clone(), timeout_milliseconds).await {
+            Ok(transport) => return Ok(transport.into()),
+            Err(error) if mode != SeaBrowserTransportMode::PreferAvailable => return Err(error),
+            Err(_) => {}
+        }
+    }
     Ok(
-        SeaWebSocketTransport::connect(websocket_url, timeout_milliseconds)
+        SeaWebSocketTransport::connect_ordinary(websocket_url, timeout_milliseconds)
             .await?
             .into(),
     )
@@ -108,6 +128,8 @@ async fn deadline<Value>(
 
 /// Native socket plus cancellation-safe reader ownership.
 struct Socket {
+    /// Explicit compatibility backend, never silently used by strict modes.
+    ordinary: Option<OrdinarySocket>,
     /// Native `WebSocketStream` object, never the traditional WebSocket API.
     object: JsValue,
     /// Explicitly aborts a handshake when its deadline or owning future ends.
@@ -124,7 +146,18 @@ struct Socket {
 
 impl Socket {
     /// Constructs a native socket and closes it if establishment is abandoned.
-    async fn connect(url: &str) -> Result<Rc<Self>, JsValue> {
+    async fn connect(url: &str, ordinary: bool) -> Result<Rc<Self>, JsValue> {
+        if ordinary {
+            return Ok(Rc::new(Self {
+                ordinary: Some(OrdinarySocket::connect(url).await?),
+                object: JsValue::UNDEFINED,
+                abort: web_sys::AbortController::new()?,
+                reader: RefCell::new(JsValue::UNDEFINED),
+                writer: RefCell::new(JsValue::UNDEFINED),
+                pending: RefCell::new(None),
+                closed: Cell::new(false),
+            }));
+        }
         let constructor = Reflect::get(&js_sys::global(), &JsValue::from_str("WebSocketStream"))?
             .dyn_into::<Function>()
             .map_err(|_| js_error("native WebSocketStream is unavailable"))?;
@@ -138,6 +171,7 @@ impl Socket {
         arguments.push(&JsValue::from_str(url));
         arguments.push(&options);
         let socket = Rc::new(Self {
+            ordinary: None,
             object: Reflect::construct(&constructor, &arguments)?,
             abort,
             reader: RefCell::new(JsValue::UNDEFINED),
@@ -176,6 +210,9 @@ impl Socket {
 
     /// Reads one complete message without losing a pending read on cancellation.
     async fn read(&self) -> Result<JsValue, JsValue> {
+        if let Some(socket) = &self.ordinary {
+            return socket.read().await;
+        }
         if self.closed.get() {
             return Err(js_error("WebSocket stream is closed"));
         }
@@ -198,8 +235,11 @@ impl Socket {
         Reflect::get(&result, &JsValue::from_str("value"))
     }
 
-    /// Awaits native backpressure for one bounded message.
+    /// Awaits streaming backpressure or ordinary-socket upload buffer capacity.
     async fn write(&self, bytes: &Uint8Array) -> Result<(), JsValue> {
+        if let Some(socket) = &self.ordinary {
+            return socket.write(bytes).await;
+        }
         if self.closed.get() {
             return Err(js_error("WebSocket stream is closed"));
         }
@@ -210,6 +250,10 @@ impl Socket {
 
     /// Requests an idempotent close, also aborting an unfinished handshake.
     fn close(&self) {
+        if let Some(socket) = &self.ordinary {
+            socket.close();
+            return;
+        }
         if !self.closed.replace(true) {
             self.abort.abort();
             let _ = call_method(&self.object, "close", &[]);
@@ -255,7 +299,8 @@ impl Drop for Group {
     }
 }
 
-/// Feature-gated native `WebSocketStream` transport for `SeaInjectedClient`.
+/// Feature-gated WebSocket transport for `SeaInjectedClient`.
+/// Native `WebSocketStream` is the default; ordinary sockets require explicit opt-in.
 #[wasm_bindgen]
 pub struct SeaWebSocketTransport {
     /// Connection group shared with streams while they remain owned.
@@ -269,13 +314,45 @@ impl SeaWebSocketTransport {
     /// # Errors
     /// Rejects invalid URLs, unavailable native API, and handshake failures.
     pub async fn connect(url: String, timeout_milliseconds: u32) -> Result<Self, JsValue> {
+        Self::connect_backend(url, timeout_milliseconds, false).await
+    }
+
+    /// Connects without receive backpressure for Node and non-streaming browsers.
+    /// The per-socket receive queue holds at most 4 MiB and 256 messages.
+    /// Queue overflow fails the stream rather than losing SEA data.
+    /// These limits do not bound runtime, kernel, or proxy buffering.
+    /// Uploads use `bufferedAmount` throttling, not remote consumption acknowledgements.
+    ///
+    /// # Errors
+    /// Rejects invalid configuration and failed establishment.
+    #[wasm_bindgen(js_name = connectOrdinary)]
+    pub async fn connect_ordinary(url: String, timeout_milliseconds: u32) -> Result<Self, JsValue> {
+        Self::connect_backend(url, timeout_milliseconds, true).await
+    }
+
+    /// Whether the selected API propagates receive demand to the transport.
+    /// Runtime implementations must still honor their streaming API contract.
+    #[wasm_bindgen(getter, js_name = supportsReceiveBackpressure)]
+    #[must_use]
+    pub fn supports_receive_backpressure(&self) -> bool {
+        self.group.control.ordinary.is_none()
+    }
+}
+
+impl SeaWebSocketTransport {
+    /// Establishes the shared group protocol using one fixed socket backend.
+    async fn connect_backend(
+        url: String,
+        timeout_milliseconds: u32,
+        ordinary: bool,
+    ) -> Result<Self, JsValue> {
         validate_url(&url)?;
         if timeout_milliseconds == 0 {
             return Err(js_error("timeout must be positive"));
         }
         deadline(
             async {
-                let control = Socket::connect(url.trim_end_matches('/')).await?;
+                let control = Socket::connect(url.trim_end_matches('/'), ordinary).await?;
                 let token = control
                     .read()
                     .await?
@@ -304,8 +381,11 @@ impl SeaWebSocketTransport {
         )
         .await
     }
+}
 
-    /// Opens an independently backpressured socket in this connection group.
+#[wasm_bindgen]
+impl SeaWebSocketTransport {
+    /// Opens an independent socket using the group's already selected backend.
     ///
     /// # Errors
     /// Rejects closed groups and failed or timed-out child upgrades.
@@ -315,7 +395,7 @@ impl SeaWebSocketTransport {
             return Err(js_error("WebSocket transport is disconnected"));
         }
         let socket = deadline(
-            Socket::connect(&self.group.child_url),
+            Socket::connect(&self.group.child_url, self.group.control.ordinary.is_some()),
             self.group.timeout_milliseconds,
         )
         .await?;
@@ -352,7 +432,7 @@ pub struct SeaWebSocketBidirectionalStream {
     finished: Cell<bool>,
     /// Whether remote FIN has been consumed.
     ended: Cell<bool>,
-    /// Prevents concurrent writers from bypassing backpressure.
+    /// Prevents concurrent writers from bypassing upload flow control.
     sending: Cell<bool>,
     /// Prevents concurrent readers from sharing a pending read result.
     receiving: Cell<bool>,
@@ -369,7 +449,7 @@ impl Drop for Busy<'_> {
 
 #[wasm_bindgen]
 impl SeaWebSocketBidirectionalStream {
-    /// Sends bounded binary records, awaiting native backpressure for each.
+    /// Sends bounded records, awaiting streaming backpressure or upload buffer capacity.
     ///
     /// # Errors
     /// Rejects writes after FIN, concurrent sends, or transport failure.

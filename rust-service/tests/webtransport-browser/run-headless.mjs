@@ -139,6 +139,9 @@ const debugPort = await freePort();
 const profile = await mkdtemp(join(tmpdir(), "fluid-webtransport-chromium-"));
 const pageUrl = `http://localhost:${httpPort}/?transport=${encodeURIComponent(transportUrl)}&hash=${certificateHash}${snapshotPolicy === undefined ? "" : `&snapshotPolicy=${encodeURIComponent(snapshotPolicy)}`}${process.env.SEA_WEBSOCKET_STREAM === "1" ? "&websocket=1" : ""}`;
 const browserUrl = new URL(pageUrl);
+if (process.env.SEA_ORDINARY_WEBSOCKET === "1") {
+	browserUrl.searchParams.set("ordinaryWebsocket", "1");
+}
 if (process.env.SEA_BROWSER_WEBTRANSPORT_URL) {
 	browserUrl.searchParams.set("primaryTransport", process.env.SEA_BROWSER_WEBTRANSPORT_URL);
 }

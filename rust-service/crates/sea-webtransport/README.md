@@ -99,7 +99,9 @@ All generated files are build artifacts and must not be edited.
 ## Optional `WebSocketStream` Fallback
 
 The off-by-default `websocket-stream` Cargo feature adds `SeaWebSocketTransport`, `SeaBrowserTransportMode`, and `connectSeaBrowserTransport` to browser bindings.
-It requires the browser's native `WebSocketStream` API; it never substitutes the traditional `WebSocket` API or a JavaScript stream wrapper.
+The default WebSocket adapter requires native `WebSocketStream`; strict modes never substitute ordinary `WebSocket` or a JavaScript stream wrapper.
+Explicit compatibility modes also support the built-in `WebSocket` in Node and browsers without streaming transports, including Firefox, without adding an npm dependency.
+This provides a development path when QUIC or the streaming API is unavailable, at the cost of receive backpressure.
 Generate these optional bindings from `rust-service/` with:
 
 ```bash
@@ -121,18 +123,30 @@ const client = new SeaInjectedClient(transport, 1024 * 1024);
 ```
 
 `WebTransport` mode never falls back; `WebSocketStream` mode skips QUIC; `PreferWebTransport` explicitly permits fallback on any initial WebTransport establishment error or timeout.
-Each attempt has the supplied timeout, so automatic selection can take up to twice that interval.
+`WebSocket` selects ordinary WebSocket directly; `PreferAvailable` attempts WebTransport, native `WebSocketStream`, then ordinary WebSocket.
+Only these last two modes permit the reduced receive guarantees.
+`SeaWebSocketTransport.connect` remains streaming-only; `connectOrdinary` directly selects the compatibility adapter.
+Each attempt has the supplied timeout, so selection can take up to twice that interval for `PreferWebTransport` or three times for `PreferAvailable`.
 The failed attempt is closed before fallback; selection completes before any Sea operation.
 There is no mid-session switching, request replay, or automatic reconnect.
-The returned class identifies the selected transport.
+The returned class identifies WebTransport versus WebSocket; `SeaWebSocketTransport.supportsReceiveBackpressure` distinguishes streaming (`true`) from ordinary (`false`) sockets.
+This getter identifies the selected API, not verified runtime behavior: a streaming implementation must actually propagate reader demand to the network.
 Callers opting into automatic fallback must trust both endpoints: the WebTransport pin does not authenticate the independently configured WebSocket TLS proxy.
 Only `wss:` URLs are accepted outside loopback; URLs cannot contain credentials, queries, or fragments.
 
-A control socket owns a group, and each logical stream uses its own WebSocket with independent native backpressure.
+A control socket owns a group, and each logical stream uses its own WebSocket and the group's fixed API choice.
+Native `WebSocketStream` preserves independent receive backpressure; ordinary WebSocket cannot pause message delivery when the application stops reading.
 Binary DATA records carry at most 64 KiB; FIN is directional EOF, not a WebSocket close.
 Close before FIN is cancellation or failure, and closing the owner cancels every child.
 Pending reads survive Rust waiter cancellation, and concurrent sends or receives on the same direction are rejected.
 The SEA codec, correlation, session, storage, and application layers are unchanged.
+
+The ordinary adapter caps each socket's receive queue at 4 MiB and 256 messages and rejects individual messages larger than a 64 KiB DATA record plus its tag.
+Overflow closes and fails the stream; it never silently drops bytes or reports clean EOF.
+Slow consumers can therefore fail instead of slowing the sender, and must explicitly reconnect through the application's existing recovery policy.
+Uploads throttle admission using `bufferedAmount`, allowing at most two maximum-sized records in the reported native send buffer; this does not restore receive backpressure.
+Queue limits are per socket, not per connection, and do not bound already delivered messages, runtime/kernel buffering, or proxy memory.
+Node's built-in client sends no Origin: direct local tests require the server's separate, default-off loopback allowance described below.
 
 Message bounds limit adapter queues, not browser, kernel, proxy, or total process memory.
 Native browser receive queues and intermediaries have implementation-dependent buffering; do not treat an awaited write as a remote application acknowledgement.

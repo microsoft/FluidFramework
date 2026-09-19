@@ -20,6 +20,229 @@ const {
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
+const websocketBindings = require("../../crates/sea-webtransport/test-support/pkg/node/sea_webtransport_test_support.js");
+
+test("ordinary WebSocket compatibility bounds queues and preserves stream lifecycle", {
+	skip: !websocketBindings.SeaWebSocketTransport,
+	timeout: 10000,
+}, async () => {
+	const original = {
+		WebSocket: globalThis.WebSocket,
+		WebSocketStream: globalThis.WebSocketStream,
+		WebTransport: globalThis.WebTransport,
+	};
+	const sockets = [];
+	class TestSocket extends EventTarget {
+		static nextBehavior;
+		static CONNECTING = 0;
+		static OPEN = 1;
+		static CLOSING = 2;
+		static CLOSED = 3;
+		readyState = 0;
+		bufferedAmount = 0;
+		protocol = "sea-stream-v1";
+		sent = [];
+		constructor(url) {
+			super();
+			sockets.push(this);
+			const behavior = TestSocket.nextBehavior;
+			TestSocket.nextBehavior = undefined;
+			queueMicrotask(() => {
+				if (this.readyState !== 0) return;
+				if (behavior === "pending") return;
+				if (behavior === "error") {
+					this.onerror?.(new Event("error"));
+					return;
+				}
+				if (behavior === "protocol") this.protocol = "wrong-protocol";
+				this.readyState = 1;
+				this.onopen?.(new Event("open"));
+				if (url.endsWith("/sea/websocket") && behavior !== "no-token")
+					this.message("a".repeat(64));
+			});
+		}
+		message(data) {
+			this.onmessage?.(new MessageEvent("message", { data }));
+		}
+		send(bytes) {
+			this.sent.push(new Uint8Array(bytes).slice());
+		}
+		close() {
+			this.readyState = 3;
+			this.onclose?.(new Event("close"));
+		}
+	}
+	let transport;
+	const streams = [];
+	try {
+		globalThis.WebSocket = TestSocket;
+		globalThis.WebSocketStream = undefined;
+		globalThis.WebTransport = undefined;
+		const { connectSeaBrowserTransport, SeaBrowserTransportMode: modes } = websocketBindings;
+		for (const behavior of ["pending", "no-token", "error", "protocol"]) {
+			TestSocket.nextBehavior = behavior;
+			await assert.rejects(
+				websocketBindings.SeaWebSocketTransport.connectOrdinary(
+					"ws://localhost/sea/websocket",
+					20,
+				),
+			);
+			assert.equal(sockets.at(-1).readyState, 3);
+			assert(sockets.at(-1).onmessage == null);
+		}
+		const attempts = sockets.length;
+		await assert.rejects(
+			connectSeaBrowserTransport(
+				modes.PreferWebTransport,
+				"https://localhost/sea",
+				new Uint8Array(32),
+				"ws://localhost/sea/websocket",
+				1024 * 1024,
+				100,
+			),
+		);
+		assert.equal(
+			sockets.length,
+			attempts,
+			"strict mode must not instantiate ordinary WebSocket",
+		);
+		transport = await connectSeaBrowserTransport(
+			modes.PreferAvailable,
+			"https://localhost/sea",
+			new Uint8Array(32),
+			"ws://localhost/sea/websocket",
+			1024 * 1024,
+			100,
+		);
+		assert.equal(transport.supportsReceiveBackpressure, false);
+		const stream = await transport.openBidirectional();
+		streams.push(stream);
+		const socket = sockets.at(-1);
+		socket.bufferedAmount = 131074;
+		let sent = false;
+		const writing = stream.send(new Uint8Array(65537)).then(() => {
+			sent = true;
+		});
+		await new Promise((resolve) => setTimeout(resolve, 15));
+		assert.equal(sent, false);
+		assert.equal(socket.sent.length, 0);
+		socket.bufferedAmount = 0;
+		await writing;
+		await stream.finish();
+		assert.deepEqual(
+			socket.sent.map((bytes) => bytes.length),
+			[65537, 2, 1],
+		);
+		assert.deepEqual([...socket.sent.at(-1)], [1]);
+		assert.equal(socket.readyState, 1, "FIN must not close the reverse direction");
+		await assert.rejects(stream.send(new Uint8Array([1])));
+		const receiving = stream.receive();
+		await assert.rejects(stream.receive(), /already in progress/);
+		socket.message(new Uint8Array([0, 42]).buffer);
+		assert.deepEqual([...(await receiving)], [42]);
+		socket.message(new Uint8Array([1]).buffer);
+		socket.close();
+		assert.equal(await stream.receive(), undefined);
+		for (const bytes of [new Uint8Array([2]), new Uint8Array([0]), new Uint8Array(65538)]) {
+			const invalid = await transport.openBidirectional();
+			streams.push(invalid);
+			const receiver = sockets.at(-1);
+			receiver.message(bytes.buffer);
+			await assert.rejects(invalid.receive());
+			assert.equal(receiver.readyState, 3);
+		}
+		const closed = await transport.openBidirectional();
+		streams.push(closed);
+		sockets.at(-1).close();
+		await assert.rejects(closed.receive(), /without directional FIN/);
+		for (const [count, bytes] of [
+			[257, 2],
+			[65, 65537],
+		]) {
+			const overflow = await transport.openBidirectional();
+			streams.push(overflow);
+			const receiver = sockets.at(-1);
+			for (let index = 0; index < count; index++)
+				receiver.message(new Uint8Array(bytes).buffer);
+			await assert.rejects(overflow.receive(), /receive queue exceeded/);
+			assert.equal(receiver.readyState, 3);
+		}
+		const cancelled = await transport.openBidirectional();
+		streams.push(cancelled);
+		const waiting = cancelled.receive();
+		cancelled.cancel();
+		await assert.rejects(waiting, /cancelled/);
+		const child = await transport.openBidirectional();
+		streams.push(child);
+		const childRead = child.receive();
+		sockets.at(-1).bufferedAmount = 131074;
+		const childWrite = child.send(new Uint8Array([42]));
+		transport.disconnect();
+		await assert.rejects(childRead, /cancelled/);
+		await assert.rejects(childWrite, /cancelled/);
+		assert(sockets.every((socket) => socket.readyState === 3));
+	} finally {
+		transport?.disconnect();
+		for (const stream of streams) stream.free();
+		transport?.free();
+		Object.assign(globalThis, original);
+	}
+	assert(
+		sockets.every(
+			(socket) =>
+				socket.onmessage == null &&
+				socket.onopen == null &&
+				socket.onerror == null &&
+				socket.onclose == null,
+		),
+	);
+});
+
+test("Node built-in WebSocket collaborates through the native Rust listener", {
+	skip: !process.env.SEA_NODE_TRANSPORT_URL,
+	timeout: 20000,
+}, async () => {
+	const { SeaWebSocketTransport } = websocketBindings;
+	const firstTransport = await SeaWebSocketTransport.connectOrdinary(
+		process.env.SEA_NODE_TRANSPORT_URL,
+		5000,
+	);
+	const secondTransport = await SeaWebSocketTransport.connectOrdinary(
+		process.env.SEA_NODE_TRANSPORT_URL,
+		5000,
+	);
+	const first = new SeaInjectedClient(firstTransport, 1024 * 1024);
+	const second = new SeaInjectedClient(secondTransport, 1024 * 1024);
+	try {
+		assert.equal(firstTransport.supportsReceiveBackpressure, false);
+		const archive = await first.createDocument(
+			encoder.encode("node-first"),
+			encoder.encode("node-session-first"),
+		);
+		const firstLoad = await first.load();
+		await nextAwaiting(firstLoad);
+		await second.openSession(
+			archive,
+			false,
+			encoder.encode("node-second"),
+			encoder.encode("node-session-second"),
+		);
+		const secondLoad = await second.load();
+		await nextAwaiting(secondLoad);
+		const position = await first.submit(
+			encoder.encode("node-operation"),
+			undefined,
+			encoder.encode("network payload"),
+		);
+		assert.equal(await first.resolveSubmission(encoder.encode("node-operation")), position);
+		assert.equal((await nextEvent(secondLoad)).position, position);
+		assert.equal((await nextEvent(firstLoad)).position, position);
+	} finally {
+		await first.disconnect();
+		await second.disconnect();
+	}
+});
+
 async function nextEvent(stream) {
 	for (;;) {
 		const item = await stream.next();

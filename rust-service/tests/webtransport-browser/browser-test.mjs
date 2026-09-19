@@ -67,7 +67,9 @@ async function nextSnapshot(stream) {
 async function connect(hash) {
 	if (parameters.get("websocket") === "1") {
 		return bindings.connectSeaBrowserTransport(
-			bindings.SeaBrowserTransportMode.WebSocketStream,
+			parameters.get("ordinaryWebsocket") === "1"
+				? bindings.SeaBrowserTransportMode.WebSocket
+				: bindings.SeaBrowserTransportMode.WebSocketStream,
 			"",
 			hash,
 			transportUrl,
@@ -81,6 +83,45 @@ async function connect(hash) {
 async function checkTransportSelection(hash) {
 	if (parameters.get("websocket") !== "1") return;
 	const modes = bindings.SeaBrowserTransportMode;
+	if (parameters.get("ordinaryWebsocket") === "1") {
+		const descriptor = Object.getOwnPropertyDescriptor(globalThis, "WebSocketStream");
+		try {
+			Object.defineProperty(globalThis, "WebSocketStream", {
+				value: undefined,
+				configurable: true,
+			});
+			const fallback = await bindings.connectSeaBrowserTransport(
+				modes.PreferAvailable,
+				`https://127.0.0.1:${location.port}/sea`,
+				hash,
+				transportUrl,
+				1024 * 1024,
+				1000,
+			);
+			assert(
+				fallback instanceof bindings.SeaWebSocketTransport,
+				"ordinary fallback was not selected",
+			);
+			assert(
+				fallback.supportsReceiveBackpressure === false,
+				"ordinary fallback claimed receive backpressure",
+			);
+			const pendingChild = fallback.openBidirectional();
+			fallback.disconnect();
+			let childFailure;
+			try {
+				await pendingChild;
+			} catch (error) {
+				childFailure = error;
+			}
+			assert(childFailure, "ordinary child escaped group disconnection");
+			fallback.free();
+		} finally {
+			if (descriptor) Object.defineProperty(globalThis, "WebSocketStream", descriptor);
+			else delete globalThis.WebSocketStream;
+		}
+		return;
+	}
 	const primaryUrl = parameters.get("primaryTransport");
 	if (primaryUrl) {
 		const primary = await bindings.connectSeaBrowserTransport(
@@ -160,6 +201,13 @@ async function run() {
 	await checkTransportSelection(hash);
 	const firstTransport = await connect(hash);
 	const secondTransport = await connect(hash);
+	if (parameters.get("websocket") === "1") {
+		assert(
+			firstTransport.supportsReceiveBackpressure ===
+				(parameters.get("ordinaryWebsocket") !== "1"),
+			"incorrect receive backpressure capability",
+		);
+	}
 	const first = new SeaInjectedClient(firstTransport, 1024 * 1024);
 	const second = new SeaInjectedClient(secondTransport, 1024 * 1024);
 	let missingArchiveError;
@@ -401,7 +449,12 @@ async function run() {
 		secondPosition: secondReceipt.toString(),
 		caughtUp: initialCaughtUp.latestKnown?.toString() ?? "none",
 		blobBytes: blobPayload.length,
-		transport: parameters.get("websocket") === "1" ? "WebSocketStream" : "WebTransport",
+		transport:
+			parameters.get("ordinaryWebsocket") === "1"
+				? "WebSocket"
+				: parameters.get("websocket") === "1"
+					? "WebSocketStream"
+					: "WebTransport",
 		directoryEntries: entries.length,
 		serviceErrorKind: missingArchiveError.kind,
 		snapshotParticipation,

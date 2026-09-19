@@ -1,13 +1,42 @@
 # Codespaces WebTransport Investigation Plan
 
-Status: Optional feature-gated SEA WebSocketStream adapter implemented; local Chromium and external Codespaces collaboration flows passed.
+Status: Optional streaming and ordinary WebSocket adapters implemented; native streaming passed external Codespaces collaboration, and ordinary WebSocket passed local Chromium and Node collaboration.
 Created: 2026-09-18.
 
 Current recommendation: explicitly enable native `WebSocketStream` for the Codespaces development path; see [implementation and validation](tests/webtransport-browser/README.md#optional-websocketstream-validation).
+Where streaming APIs are unavailable, explicitly select ordinary WebSocket only when loss of receive backpressure is acceptable; see the compatibility follow-up below.
 The user declined third-party relay deployment; retain those options as alternatives only.
 Earlier recommendations below are historical evidence, not authorization to deploy a relay.
 
 ## Implementation Follow-Up
+
+### Ordinary WebSocket Compatibility Follow-Up
+
+The user subsequently approved ordinary WebSocket as an additional fallback for broader browser support and Node's built-in client, explicitly relaxing receive backpressure only for this compatibility path.
+The existing feature gate, wire protocol, group ownership, and SEA handlers remain shared.
+`WebSocket` selects it directly; `PreferAvailable` attempts WebTransport, native WebSocketStream, then ordinary WebSocket, with a separate timeout for each initial attempt.
+Existing strict modes still never substitute it, and no mode replays operations or switches mid-session.
+
+Ordinary reception has no application-demand backpressure.
+Each socket's adapter queue is limited to 4 MiB and 256 messages; oversized messages or queue overflow fail the stream rather than dropping bytes.
+Outbound `bufferedAmount` throttling limits upload admission but cannot provide the missing receive guarantee or bound runtime, kernel, and proxy memory.
+The capability getter makes this difference visible to callers.
+
+No Undici dependency or streaming polyfill was added.
+Node 22.23.2 has built-in WebSocket but no WebSocketStream and sends no Origin header.
+The server therefore has an explicit default-off originless allowance restricted to loopback listeners and peers, intended only for direct local tests.
+An existing Origin still requires an exact match; a local proxy can appear as a loopback peer, so the exception must stay disabled for public/forwarded endpoints.
+
+Generated-WASM regressions cover queue count/byte bounds, upload throttling, malformed/oversized records, FIN before close, premature close, cancellation, failed/timed-out establishment, callback cleanup, and strict versus compatible selection.
+A real Node built-in WebSocket two-client flow and the full local Chromium ordinary-WebSocket collaboration/selection/shutdown flow passed against the Rust listener.
+Firefox and ordinary WebSocket through external Codespaces forwarding were not tested; prior external measurements below apply to native WebSocketStream only.
+Final validation passed: canonical workspace formatting, strict Clippy and rustdoc, native build, all-feature tests, documentation links, feature-enabled WASM Clippy, and default-feature WASM compilation.
+Root `pnpm build:fast` (including Biome and policy) and the separate Rust-service policy check passed.
+Native WebSocketStream and default WebTransport Chromium collaboration/shutdown regressions also passed; default generated bindings were restored and their Node suite passed.
+All changes remain uncommitted in the isolated worktree; this follow-up did not push, merge, or modify the active main checkout.
+The following implementation and investigation sections retain their earlier scope and evidence.
+
+### Native Streaming Implementation
 
 The user approved implementation after the bounded probe.
 Both crates now have an off-by-default `websocket-stream` feature, with localized browser, wire-envelope, server-listener, and stream-adapter modules.

@@ -11,7 +11,7 @@ crate-type = ["rlib", "cdylib"]
 [features]
 default = ["bindings"]
 bindings = []
-websocket-stream = ["dep:gloo-timers", "web-sys/Url", "web-sys/AbortController", "web-sys/AbortSignal"]
+websocket-stream = ["dep:gloo-timers", "web-sys/Url", "web-sys/AbortController", "web-sys/AbortSignal", "web-sys/WebSocket", "web-sys/BinaryType", "web-sys/MessageEvent", "web-sys/Event"]
 test-support = ["dep:sea-memory", "dep:sea-sequencer"]
 
 [dependencies]

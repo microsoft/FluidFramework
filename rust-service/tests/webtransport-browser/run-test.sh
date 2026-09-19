@@ -38,6 +38,12 @@ done
 
 cd "$service_root"
 export CARGO_TARGET_DIR="$temporary_root/target"
+if [[ "${SEA_ORDINARY_WEBSOCKET:-}" == "1" || "${SEA_NODE_WEBSOCKET:-}" == "1" ]]; then
+	export SEA_WEBSOCKET_STREAM=1
+fi
+if [[ "${SEA_NODE_WEBSOCKET:-}" == "1" ]]; then
+	export SEA_WEBSOCKET_ORIGINLESS_LOOPBACK=1
+fi
 
 # Package-level test orchestration builds WASM through the Fluid build graph before
 # calling this script. Direct invocation remains self-contained.
@@ -89,6 +95,9 @@ fi
 # after the browser flow, and the server acknowledges that it stopped accepting work.
 export SEA_BROWSER_WEBTRANSPORT_URL
 SEA_BROWSER_WEBTRANSPORT_URL=$(sed -n 's/^WEBTRANSPORT_URL=//p' "$temporary_root/server.log" | tail -n 1)
+if [[ "${SEA_NODE_WEBSOCKET:-}" == "1" ]]; then
+	SEA_NODE_TRANSPORT_URL="$transport_url" node --test tests/wasm-client/node-test.mjs
+fi
 node tests/webtransport-browser/run-headless.mjs \
 	tests/webtransport-browser \
 	"$transport_url" \

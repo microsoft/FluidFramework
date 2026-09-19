@@ -48,6 +48,8 @@ struct State {
     config: TransportConfig,
     /// Exact backend-visible origins accepted during upgrade.
     origins: Vec<String>,
+    /// Development-only opt-in for originless Node clients on loopback sockets.
+    allow_originless_loopback: bool,
     /// Activity counters shared with the QUIC implementation.
     metrics: Arc<Metrics>,
 }
@@ -104,12 +106,31 @@ impl WebSocketServer {
                 groups: Mutex::new(BTreeMap::new()),
                 config,
                 origins: allowed_origins,
+                allow_originless_loopback: false,
                 metrics: Arc::default(),
             }),
             shutdown_request,
             shutdown_receiver,
             accepting,
         })
+    }
+
+    /// Permits missing Origin only for loopback peers on a loopback-bound listener.
+    ///
+    /// Intended for direct Node integration tests, not forwarded/public endpoints.
+    /// A local proxy also appears as a loopback peer; this is not authentication.
+    /// Present Origin headers must still match the allowlist, including `null`.
+    ///
+    /// # Errors
+    /// Rejects non-loopback listeners or configuration after state has been shared.
+    pub fn with_originless_loopback_clients(mut self) -> Result<Self, WebTransportError> {
+        if !self.local_addr()?.ip().is_loopback() {
+            return Err(WebTransportError::InvalidConfig);
+        }
+        Arc::get_mut(&mut self.state)
+            .ok_or(WebTransportError::InvalidConfig)?
+            .allow_originless_loopback = true;
+        Ok(self)
     }
 
     /// Returns the bound TCP address.
@@ -208,14 +229,21 @@ async fn handle_socket(
     mut stopped: watch::Receiver<bool>,
 ) -> Result<(), WebTransportError> {
     let mut path = String::new();
+    let originless_allowed = state.allow_originless_loopback
+        && socket
+            .peer_addr()
+            .map_err(transport_error)?
+            .ip()
+            .is_loopback();
     let handshake = accept_hdr_async_with_config(
         socket,
         |request: &Request, mut response: Response| {
-            let valid_origin = request
-                .headers()
-                .get("origin")
-                .and_then(|value| value.to_str().ok())
-                .is_some_and(|origin| state.origins.iter().any(|allowed| allowed == origin));
+            let valid_origin = match request.headers().get("origin") {
+                Some(value) => value
+                    .to_str()
+                    .is_ok_and(|origin| state.origins.iter().any(|allowed| allowed == origin)),
+                None => originless_allowed,
+            };
             let valid_protocol = request
                 .headers()
                 .get("sec-websocket-protocol")
@@ -356,6 +384,65 @@ mod tests {
     };
 
     const ORIGIN: &str = "http://localhost:12345";
+    #[tokio::test]
+    async fn originless_clients_require_explicit_loopback_opt_in() {
+        for allowed in [false, true] {
+            let server = WebSocketServer::bind(
+                "127.0.0.1:0".parse().unwrap(),
+                Arc::new(BuiltInSeaHost::new(
+                    std::path::PathBuf::new(),
+                    StorageMode::Memory,
+                )),
+                TransportConfig::default(),
+                vec![ORIGIN.to_owned()],
+            )
+            .await
+            .unwrap();
+            let server = if allowed {
+                server.with_originless_loopback_clients().unwrap()
+            } else {
+                server
+            };
+            let address = server.local_addr().unwrap();
+            let shutdown = server.shutdown_handle();
+            let serving = tokio::spawn(server.serve_until_shutdown());
+            for origin in [None, Some("null"), Some("http://untrusted.invalid")] {
+                let mut request = format!("ws://{address}{PATH}")
+                    .into_client_request()
+                    .unwrap();
+                request.headers_mut().insert(
+                    "sec-websocket-protocol",
+                    HeaderValue::from_static(SUBPROTOCOL),
+                );
+                if let Some(origin) = origin {
+                    request
+                        .headers_mut()
+                        .insert("origin", HeaderValue::from_static(origin));
+                }
+                let result = connect_async(request).await;
+                assert_eq!(result.is_ok(), allowed && origin.is_none());
+                drop(result);
+            }
+            shutdown.shutdown(ShutdownMode::Immediate).unwrap();
+            timeout(Duration::from_secs(2), serving)
+                .await
+                .unwrap()
+                .unwrap()
+                .unwrap();
+        }
+        let server = WebSocketServer::bind(
+            "0.0.0.0:0".parse().unwrap(),
+            Arc::new(BuiltInSeaHost::new(
+                std::path::PathBuf::new(),
+                StorageMode::Memory,
+            )),
+            TransportConfig::default(),
+            vec![ORIGIN.to_owned()],
+        )
+        .await
+        .unwrap();
+        assert!(server.with_originless_loopback_clients().is_err());
+    }
     type ClientSocket = WebSocketStream<MaybeTlsStream<TcpStream>>;
 
     async fn connect(address: SocketAddr, path: &str) -> ClientSocket {

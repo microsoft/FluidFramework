@@ -1,4 +1,6 @@
 #![doc = "Generated browser, injected, and test-support Sea session bindings."]
+#[cfg(feature = "websocket-stream")]
+mod ordinary_websocket;
 mod sea;
 #[cfg(feature = "websocket-stream")]
 mod websocket;

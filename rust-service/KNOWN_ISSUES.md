@@ -63,7 +63,7 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Impact:** The adapter is integration evidence, not a Routerlicious or ODSP replacement.
 - **Trigger:** Define production membership and connection policy before broadening the supported Fluid surface.
 
-## Codespaces forwarding requires the optional native WebSocketStream transport
+## Codespaces forwarding requires the optional WebSocket transport
 
 - **Status:** Open
 - **Severity:** Medium
@@ -73,7 +73,11 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
   See the [investigation findings](CODESPACES_WEBTRANSPORT_PLAN.md#initial-findings-2026-09-18) for implementation evidence, alternatives, and unverified routes.
 - **Impact:** Making the default QUIC port public is still insufficient.
   The off-by-default `websocket-stream` adapter and separate TCP listener passed actual SEA collaboration through public forwarding in a Windows Chromium-based integrated browser.
-  It requires native `WebSocketStream`, explicit endpoint selection, trusted TLS termination, and a backend-visible Origin allowlist; it is not a universal browser fallback or production authentication solution.
+  Native `WebSocketStream` preserves receive backpressure; explicit `WebSocket` and `PreferAvailable` modes also permit ordinary WebSocket for Node and browsers without the streaming API.
+  Ordinary reception cannot apply backpressure: the adapter fails on queue overflow rather than silently dropping data, and its per-socket limits do not bound runtime or proxy memory.
+  It requires explicit endpoint selection, trusted TLS termination, and a backend-visible Origin allowlist; it is not production authentication.
+  Node's built-in WebSocket sends no Origin and requires the separate default-off, direct-loopback admission option; do not enable it on public/forwarded endpoints.
 - **Trigger:** Integrate the opt-in adapter into an application-level development workflow with an explicit exposure/authentication policy.
-  Preserve independent-stream backpressure and FIN/cancellation semantics; do not substitute traditional WebSocket wrappers.
+  Preserve FIN/cancellation semantics and the strict modes' independent-stream backpressure; opt into ordinary WebSocket only when its weaker receive guarantees are acceptable.
+  Local Chromium and Node flows passed, but Firefox and ordinary WebSocket through external forwarding remain unverified.
   See [setup and validation](tests/webtransport-browser/README.md#optional-websocketstream-validation).
