@@ -6,9 +6,8 @@ The toolchain is pinned by `rust-toolchain.toml` and includes `rustfmt` and Clip
 
 ## Canonical Workspace Commands
 
-Run these commands before completing the foundation and at every Phase 2
-integration boundary. Package-scoped checks remain useful during a workstream,
-but do not replace this workspace-wide gate.
+Run these commands before completing Rust-service implementation or integration, including lightweight work and every Phase 2 integration boundary.
+Package-scoped checks remain useful during a workstream, but do not replace this workspace-wide gate.
 
 ```bash
 cargo fmt --all -- --check
@@ -39,7 +38,7 @@ Also run `pnpm build:fast` from the repository root when a change affects a regi
 For the minimal Fluid driver, those inputs include Rust-service Cargo manifests, `Cargo.lock`, and Rust sources used to generate the WASM clients.
 Documentation-only Rust-service changes do not require the repository build.
 
-The installed `wasm-bindgen` CLI must match the crate version pinned by `sea-webtransport`.
+The installed `wasm-bindgen` CLI must match the dependency version pinned by `sea-wasm`, which owns the generated bindings.
 See the [browser harness](tests/webtransport-browser/README.md) for the real Chromium WebTransport command and the [minimal Fluid driver](tests/minimal-fluid-driver/README.md) for the SharedTree trace.
 Browser validation exercises both client-selected and Sea-selected snapshot participation without changing the server protocol or binary.
 
@@ -112,5 +111,6 @@ or deletion when overlapping evidence no longer proves distinct behavior.
 
 Past plans, foundation work, iteration records, decisions, and benchmark evidence live in [Historical records](historical/README.md).
 Use the [coordination skill](../.github/skills/rust-service-coordination/SKILL.md) to choose lightweight work or a full iteration and to run the current process.
+Use the [quality-iteration skill](../.github/skills/rust-service-quality-iteration/SKILL.md) for risk-driven contract and regression-test audits, inventory evidence, and stopping conditions.
 New iteration records also live under `historical/iterations/`; completed records remain append-only history.
 Record falsified hypotheses, repeated failed attempts, substantial effort sinks, human interventions, shared decisions, and reusable process findings as they occur.

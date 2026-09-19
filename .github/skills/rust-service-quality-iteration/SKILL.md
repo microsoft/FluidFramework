@@ -34,10 +34,32 @@ duplicate the coordination workflow.
 
 ## Configure One Run
 
+### Confirm the Scope
+
+Before auditing boundaries or initializing records, propose a scope, explain the reason for it, and ask the user to confirm or customize it.
+Offer these starting modes, allowing combinations and explicit exclusions:
+
+- **Incremental:** Prioritize recent changes, unresolved findings, and recorded revisit triggers.
+- **Full reassessment:** Make every boundary in the selected crates or responsibility scope eligible, including unchanged and previously accepted boundaries.
+- **Targeted:** Review user-selected crates, behaviors, or concerns, regardless of change history or prior dispositions.
+
+When no scope is supplied, propose incremental review with the relevant prior inventory and change window, if available; do not silently assume approval.
+Confirm the effort budget and stopping conditions alongside the scope.
+If the user already supplied an explicit scope, restate it briefly and proceed without redundant confirmation; ask only about unresolved configuration choices.
+Scope confirmation does not replace the coordination skill's approval requirements for creating a numbered iteration.
+
+For full or targeted reassessments, retain prior inventories as evidence, but treat their conclusions as hypotheses to recheck rather than reasons to skip inspection.
+Record the user's request to revisit the area, improved skill guidance, or improved agent models as the reassessment trigger, as applicable.
+All boundaries being eligible does not mean all were reviewed: rank work within the approved budget and distinguish reviewed boundaries from unreviewed candidates in the final report.
+Ask before expanding the approved scope or budget.
+
+### Record the Configuration
+
 Before initializing records, agree with the user on these run-specific inputs:
 
 - approved source commit;
-- Rust crate or responsibility scope;
+- review mode or combination, Rust crate or responsibility scope, and exclusions;
+- reassessment trigger, when revisiting previously accepted boundaries;
 - risk priorities or recent-change window;
 - effort budget;
 - stopping conditions;
@@ -139,13 +161,16 @@ rationale; it is a deferral with remaining risk.
 
 ## Maintain the Quality Inventory
 
-Create `rust-service/historical/iterations/NNNN/quality-inventory.md` from
-[the quality inventory template](./assets/quality-inventory.template.md) during
-run initialization with:
+For an approved numbered iteration, first initialize the normal records with the coordination skill's `init NNNN workstream-name...` command.
+Then create `rust-service/historical/iterations/NNNN/quality-inventory.md` from
+[the quality inventory template](./assets/quality-inventory.template.md) before committing the kickoff records:
 
 ```bash
 node .github/skills/rust-service-coordination/scripts/iteration-records.mjs init-quality NNNN
 ```
+
+`init-quality` adds only the inventory; it does not replace `init` or create the charter, manifest, or workstream instructions.
+For lightweight work, do not create a numbered inventory; retain evidence in the local artifacts described by the coordination skill.
 
 Workstreams report their rows; the integrator reconciles them into the iteration
 copy and Phase 3 accepts its final dispositions.
@@ -154,9 +179,9 @@ The inventory is not a declaration checklist. Use one row per consequential
 behavioral or responsibility boundary reviewed. Keep stable boundary identifiers
 where practical so later runs can update rather than duplicate entries.
 
-At completion, carry forward only unresolved findings, changed boundaries, and
-explicit revisit triggers as candidates for a later run. Preserve completed
-iteration inventories as immutable history.
+For a later incremental run, carry forward unresolved findings, changed boundaries, and explicit revisit triggers as candidates.
+This default candidate set does not restrict a user-approved full or targeted reassessment.
+Preserve completed iteration inventories as immutable history.
 
 ## Integrate and Review
 
@@ -188,10 +213,14 @@ history. A quality run is converging when it reduces material unresolved risk,
 does not recreate previously reviewed work without a trigger, and adds little or
 no redundant documentation or testing.
 
+A user-approved reassessment, including one motivated by skill or model improvements, is a valid revisit trigger even when the code has not changed.
+Judge convergence against the confirmed scope and actual reviewed boundaries; do not infer exhaustive coverage from a full-reassessment mode.
+
 Recommend another run only when at least one of these is true:
 
 - material unresolved findings remain within a useful next scope;
 - changed or newly discovered boundaries invalidate prior evidence;
+- the user requests a full or targeted reassessment, with a recorded revisit trigger;
 - independent review found a plausible systematic blind spot; or
 - a reusable process improvement has a specific hypothesis worth testing.
 
@@ -210,8 +239,13 @@ the iteration records at start, Phase 2, and completion with
 Before completing Phase 3, verify that `quality-inventory.md` has no placeholder
 rows, every active workstream is represented, every unresolved item has an owner
 or revisit trigger, and every accepted repair links its contract, tests, and
-validation evidence. Then run:
+validation evidence.
+Set the inventory status to `complete` after reconciling the final dispositions, including any explicit deferrals.
+Then run:
 
 ```bash
 node .github/skills/rust-service-coordination/scripts/iteration-records.mjs validate-quality NNNN
 ```
+
+The inventory validator checks required headings, template markers, the title, an allowed status, and the presence of a table data row.
+It does not verify workstream coverage, disposition evidence, convergence, or that the status is `complete` at closeout; reviewers must check those requirements against the reports, diff, and command output.

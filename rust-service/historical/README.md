@@ -38,4 +38,15 @@ node .github/skills/rust-service-coordination/scripts/iteration-records.mjs vali
 node .github/skills/rust-service-status-report/scripts/collect-status.mjs --summary NNNN
 ```
 
+For a contract and regression-test audit, follow the [quality-iteration skill](../../.github/skills/rust-service-quality-iteration/SKILL.md).
+After `init` and before committing the kickoff records, add its inventory with:
+
+```bash
+node .github/skills/rust-service-coordination/scripts/iteration-records.mjs init-quality NNNN
+```
+
+This command adds the inventory only; it does not replace normal iteration initialization.
+At closeout, review the evidence and run `iteration-records.mjs validate-quality NNNN` using the same script path.
+No numbered records are required for lightweight work.
+
 The record tool also supports `validate-foundation` for checking the archived foundation report.

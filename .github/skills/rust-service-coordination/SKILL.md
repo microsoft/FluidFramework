@@ -75,6 +75,9 @@ and ask the same question.
 Once the user selects a full iteration, follow the remaining sections of this
 skill. Existing iteration records remain append-only historical artifacts.
 
+For a risk-driven contract and regression-test audit, also use the [quality-iteration skill](../rust-service-quality-iteration/SKILL.md).
+It defines boundary selection, evidence, inventory dispositions, and convergence; this skill remains the authority for iteration mechanics.
+
 ## Invariants
 
 - Start all workstream branches and worktrees from the same approved iteration base.
@@ -112,6 +115,8 @@ Record the alternatives, evidence, and downstream consequences with the question
    ```
 
 4. Set `sourceCommit` to that approved base commit, complete `charter.md` and each generated instruction, and set manifest status to `active`.
+   For a quality iteration, also run `iteration-records.mjs init-quality NNNN` using the script path above before committing the kickoff records.
+   Complete the inventory's configuration and selection rationale; workstreams fill reviewed boundaries during the audit.
 5. Run `node .github/skills/rust-service-coordination/scripts/iteration-records.mjs validate NNNN start`.
 6. Commit the initialized records as the iteration kickoff, then create the integration branch and isolated worktrees from that kickoff commit using the Worktrees section below.
 7. Give each agent its generated instruction file and report path.
@@ -221,7 +226,7 @@ Use [workstream report template](./assets/workstream-report.template.md).
 6. Run workspace-level validation and commit the integration boundary only after the artifact check passes.
 
 Workspace-level validation must include the canonical format, strict
-workspace/all-target/all-feature Clippy, build, test, and example commands in
+workspace/all-target/all-feature Clippy, rustdoc, build, test, and documentation checks in
 `rust-service/DEVELOPMENT.md`. Package-scoped checks do not replace this gate.
 It must also include the scoped repository policy check and, when the changed
 files affect the registered pnpm or declarative build graph, the repository-root
@@ -251,13 +256,15 @@ Use [integration report template](./assets/integration-report.template.md).
    lesson, verify whether it belongs in this skill, a generated template,
    validation policy, `LEARNINGS.md`, or only local instructions; apply it to
    the reusable surface when supported by evidence, and record the validation.
-8. Create instructions for each next-iteration workstream with:
+8. If a next iteration is justified and approved, create instructions for each next-iteration workstream with:
 
    ```bash
    node .github/skills/rust-service-coordination/scripts/iteration-records.mjs next NNNN workstream-name...
    ```
 
-   Complete the generated instructions and set manifest status to `complete`.
+   Complete the generated instructions.
+   If no next iteration is approved, leave `nextWorkstreams` empty and record the stopping decision or revisit trigger in the Phase 3 report.
+   In either case, set manifest status to `complete`.
 9. Run:
 
    ```bash
