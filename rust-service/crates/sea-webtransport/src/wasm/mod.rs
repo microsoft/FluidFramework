@@ -1,5 +1,9 @@
 #![doc = "Generated browser, injected, and test-support Sea session bindings."]
 mod sea;
+#[cfg(feature = "websocket-stream")]
+mod websocket;
+#[cfg(feature = "websocket-stream")]
+pub use websocket::*;
 
 pub use crate::protocol as sea_protocol_v1;
 

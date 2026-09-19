@@ -29,6 +29,7 @@ const rustFlags = [
 ]
 	.filter(Boolean)
 	.join(" ");
+const transportFeatures = process.env.SEA_WEBSOCKET_STREAM === "1" ? ["websocket-stream"] : [];
 
 function run(command, args, options = {}) {
 	execFileSync(command, args, {
@@ -47,6 +48,7 @@ run(
 		"-p",
 		"sea-webtransport",
 		"--lib",
+		...transportFeatures.flatMap((feature) => ["--features", feature]),
 		"--target",
 		"wasm32-unknown-unknown",
 		"--release",
@@ -91,7 +93,7 @@ run(
 		"sea-webtransport",
 		"--lib",
 		"--features",
-		"test-support",
+		["test-support", ...transportFeatures].join(","),
 		"--target",
 		"wasm32-unknown-unknown",
 		"--release",

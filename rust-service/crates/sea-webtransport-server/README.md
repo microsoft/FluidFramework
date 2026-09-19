@@ -23,6 +23,48 @@ Connection loss immediately removes snapshot participation, then releases author
 Snapshot-stream loss also immediately removes that stream's publisher participation while leaving the connection available for other logical streams.
 Read-only streams cannot publish; client-selected streams retain application-managed election; Sea-selected streams receive a deterministic fence only while no client-selected publisher is active.
 
+## Optional WebSocket Listener
+
+Compile with the off-by-default `websocket-stream` feature and explicitly configure a separate TCP listener:
+
+```bash
+SEA_WEBSOCKET_BIND=127.0.0.1:8081 \
+SEA_WEBSOCKET_ORIGINS=http://localhost:8080 \
+cargo run -p sea-webtransport-server --features websocket-stream -- \
+	127.0.0.1:4433 cert.pem key.pem ./sea-data
+```
+
+Merely compiling the feature does not open another listener.
+`SEA_WEBSOCKET_ORIGINS` is a comma-separated, exact backend-visible Origin allowlist; empty entries and `*` are rejected.
+The binary keeps its existing QUIC arguments and prints `WEBSOCKET_URL` when the optional listener is enabled.
+Both listeners share one `BuiltInSeaHost`, so they can collaborate on the same documents and coordinate shutdown.
+Custom hosts can bind `WebSocketServer` directly without starting QUIC or loading a QUIC certificate.
+
+The listener speaks plain HTTP WebSocket upgrades at `/sea/websocket`, using subprotocol `sea-stream-v1`.
+Put it behind a trusted TLS/authenticating proxy for remote `wss:` use.
+Codespaces forwarding provides TLS, but can rewrite Origin to `http://localhost:<listener-port>`; configure the observed backend value, not a wildcard.
+An Origin check and the random child-association token are not user authentication.
+Public exposure permits untrusted callers; use disposable data for development tests and restore private port visibility afterward.
+Do not expose retained or sensitive data through an unauthenticated public port.
+
+A control socket creates one dispatcher and receives an opaque, random 256-bit association token.
+Each logical stream opens its own socket at `/sea/websocket/<token>`; avoid logging these token-bearing paths.
+Loss of the control connection removes the token, cancels children, and calls dispatcher cleanup exactly once.
+Control ping/pong uses the configured heartbeat and inactivity policy, independently of data-stream backpressure.
+Group and stream counts use `TransportConfig` limits, with a bounded total of active socket tasks and timed upgrades.
+Limits and measurement handles are per listener, not combined across QUIC and WebSocket listeners.
+The existing drain policy stops acceptance, lets admitted work proceed until its deadline, then cancels groups and releases membership without reconnect grace.
+
+Server messages are capped at 64 KiB of DATA plus one tag byte, with a one-record receive queue and bounded write buffering per stream.
+FIN closes only the sender's direction; premature socket close, invalid tags, text on data sockets, and oversized messages fail the stream.
+Shared request handlers depend on a private byte-stream interface, not WebSocket-specific branching.
+
+Focused listener and stream tests:
+
+```bash
+cargo test -p sea-webtransport-server --features websocket-stream websocket
+```
+
 ## Document Ownership
 
 The host uses the replacement `SeaStorage` factories and `LocalSequencer` directly.

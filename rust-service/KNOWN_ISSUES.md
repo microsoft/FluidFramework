@@ -63,7 +63,7 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Impact:** The adapter is integration evidence, not a Routerlicious or ODSP replacement.
 - **Trigger:** Define production membership and connection policy before broadening the supported Fluid surface.
 
-## Codespaces public forwarding cannot carry the current SEA endpoint
+## Codespaces forwarding requires the optional native WebSocketStream transport
 
 - **Status:** Open
 - **Severity:** Medium
@@ -71,8 +71,9 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Evidence:** As checked on 2026-09-18, [GitHub documents Codespaces forwarding as TCP](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace), but the native SEA listener uses HTTP/3 over QUIC/UDP.
   Public visibility and HTTPS forwarding do not bridge those protocols.
   See the [investigation findings](CODESPACES_WEBTRANSPORT_PLAN.md#initial-findings-2026-09-18) for implementation evidence, alternatives, and unverified routes.
-- **Impact:** Starting SEA in a Codespace and making its port public does not provide Tinylicious-style access from ordinary external browsers.
-  Internal Chromium tests do not establish that workflow.
-- **Trigger:** Implement and validate an SEA adapter after the [native WebSocketStream primitive probe](CODESPACES_WEBTRANSPORT_PLAN.md#native-websocketstream-probe-2026-09-18) demonstrated forwarded connections, bidirectional backpressure, and recovery from an external VS Code browser.
-  Preserve independent-stream flow control and finish/cancellation semantics; the primitive probe did not test SEA collaboration.
-  Traditional WebSocket wrappers remain insufficient, and third-party relays remain unselected alternatives.
+- **Impact:** Making the default QUIC port public is still insufficient.
+  The off-by-default `websocket-stream` adapter and separate TCP listener passed actual SEA collaboration through public forwarding in a Windows Chromium-based integrated browser.
+  It requires native `WebSocketStream`, explicit endpoint selection, trusted TLS termination, and a backend-visible Origin allowlist; it is not a universal browser fallback or production authentication solution.
+- **Trigger:** Integrate the opt-in adapter into an application-level development workflow with an explicit exposure/authentication policy.
+  Preserve independent-stream backpressure and FIN/cancellation semantics; do not substitute traditional WebSocket wrappers.
+  See [setup and validation](tests/webtransport-browser/README.md#optional-websocketstream-validation).

@@ -38,16 +38,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let certificate_hash = identity.certificate_chain().as_slice()[0]
         .hash()
         .fmt(Sha256DigestFmt::DottedHex);
-    let server = WebTransportServer::bind(
-        bind,
-        identity,
-        Arc::new(BuiltInSeaHost::new(data, storage_mode)),
-        TransportConfig::default(),
-    )?;
+    let host = Arc::new(BuiltInSeaHost::new(data, storage_mode));
+    let server =
+        WebTransportServer::bind(bind, identity, host.clone(), TransportConfig::default())?;
     let address = server.local_addr()?;
     let liveness = server.liveness_policy();
     let measurements = server.measurement_handle();
-    let mut shutdown = server.shutdown_handle();
+    let mut shutdown_handles = vec![server.shutdown_handle()];
+    #[cfg(feature = "websocket-stream")]
+    let websocket_server = optional_websocket_server(host, &mut shutdown_handles).await?;
     println!("WEBTRANSPORT_URL=https://{address}/sea");
     println!("CERTIFICATE_SHA256={certificate_hash}");
     println!("STORAGE_MODE={}", storage_mode.name());
@@ -62,17 +61,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(marker) = &shutdown_marker {
         println!("SHUTDOWN_MARKER={}", marker.display());
     }
-    let mut serving = Box::pin(server.serve_until_shutdown());
+    let mut serving = Box::pin(async move {
+        #[cfg(feature = "websocket-stream")]
+        if let Some(websocket) = websocket_server {
+            let websocket_measurements = websocket.measurement_handle();
+            let (outcome, websocket_outcome) = tokio::try_join!(
+                server.serve_until_shutdown(),
+                websocket.serve_until_shutdown(),
+            )?;
+            print_shutdown_outcome(websocket_outcome, websocket_measurements.snapshot());
+            return Ok::<_, sea_webtransport_server::WebTransportError>(outcome);
+        }
+        server.serve_until_shutdown().await
+    });
     if let Some(marker) = shutdown_marker {
         tokio::select! {
             result = &mut serving => {
                 result?;
             }
             () = wait_for_shutdown_marker(&marker) => {
-                shutdown.shutdown(ShutdownMode::Drain {
-                    timeout: Duration::from_secs(5),
-                })?;
-                let mut accepting_stopped = Box::pin(shutdown.wait_stopped_accepting());
+                for shutdown in &shutdown_handles {
+                    shutdown.shutdown(ShutdownMode::Drain {
+                        timeout: Duration::from_secs(5),
+                    })?;
+                }
+                let mut accepting_stopped = Box::pin(async {
+                    for shutdown in &mut shutdown_handles {
+                        shutdown.wait_stopped_accepting().await?;
+                    }
+                    Ok::<_, sea_webtransport_server::WebTransportError>(())
+                });
                 tokio::select! {
                     biased;
                     result = &mut accepting_stopped => result?,
@@ -92,6 +110,35 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         serving.await?;
     }
     Ok(())
+}
+
+/// Binds the optional fallback only when both feature and runtime settings opt in.
+#[cfg(feature = "websocket-stream")]
+async fn optional_websocket_server(
+    host: Arc<BuiltInSeaHost>,
+    shutdown_handles: &mut Vec<sea_webtransport_server::ShutdownHandle>,
+) -> Result<Option<sea_webtransport_server::WebSocketServer>, Box<dyn std::error::Error>> {
+    let Ok(bind) = env::var("SEA_WEBSOCKET_BIND") else {
+        return Ok(None);
+    };
+    let origins = env::var("SEA_WEBSOCKET_ORIGINS")
+        .map_err(|_| "SEA_WEBSOCKET_ORIGINS is required with SEA_WEBSOCKET_BIND")?
+        .split(',')
+        .map(|origin| origin.trim().to_owned())
+        .collect();
+    let websocket = sea_webtransport_server::WebSocketServer::bind(
+        bind.parse()?,
+        host,
+        TransportConfig::default(),
+        origins,
+    )
+    .await?;
+    println!(
+        "WEBSOCKET_URL=ws://{}/sea/websocket",
+        websocket.local_addr()?
+    );
+    shutdown_handles.push(websocket.shutdown_handle());
+    Ok(Some(websocket))
 }
 
 async fn wait_for_shutdown_marker(marker: &Path) {

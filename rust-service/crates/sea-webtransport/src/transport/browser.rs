@@ -31,9 +31,17 @@ impl BrowserTransport {
         hash.set_value_u8_array(&Uint8Array::from(certificate_hash));
         let options = WebTransportOptions::new();
         options.set_server_certificate_hashes(&[hash]);
-        let transport = WebTransport::new_with_options(url, &options)?;
-        JsFuture::from(transport.ready()).await?;
-        Ok(Self { transport })
+        let connected = Self {
+            transport: WebTransport::new_with_options(url, &options)?,
+        };
+        JsFuture::from(connected.transport.ready()).await?;
+        Ok(connected)
+    }
+}
+
+impl Drop for BrowserTransport {
+    fn drop(&mut self) {
+        self.transport.close();
     }
 }
 

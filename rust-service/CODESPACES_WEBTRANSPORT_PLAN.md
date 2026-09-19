@@ -1,11 +1,45 @@
 # Codespaces WebTransport Investigation Plan
 
-Status: Native WebSocketStream forwarding and two-way backpressure probe passed; SEA adaptation remains unimplemented.
+Status: Optional feature-gated SEA WebSocketStream adapter implemented; local Chromium and external Codespaces collaboration flows passed.
 Created: 2026-09-18.
 
-Current recommendation: pursue native `WebSocketStream` for Codespaces, based on the [external embedded-browser probe](#native-websocketstream-probe-2026-09-18).
+Current recommendation: explicitly enable native `WebSocketStream` for the Codespaces development path; see [implementation and validation](tests/webtransport-browser/README.md#optional-websocketstream-validation).
 The user declined third-party relay deployment; retain those options as alternatives only.
 Earlier recommendations below are historical evidence, not authorization to deploy a relay.
+
+## Implementation Follow-Up
+
+The user approved implementation after the bounded probe.
+Both crates now have an off-by-default `websocket-stream` feature, with localized browser, wire-envelope, server-listener, and stream-adapter modules.
+The existing SEA codec and logical-session handlers remain shared; a private server stream trait isolates transport operations.
+One control socket owns a dispatcher and one socket per logical stream preserves independent backpressure.
+Bounded DATA and directional FIN records avoid an application-level multiplexing/credit system.
+Explicit selection permits WebTransport-only, WebSocketStream-only, or initial establishment fallback; there is no operation replay or mid-session switch.
+
+Focused tests cover origin/protocol admission, group/stream limits, owner cleanup and token revocation, half-close, malformed/oversized records, pending-read cancellation, independent-stream progress, and bounded stall/recovery.
+The real Chromium 152 harness passes collaboration, selection, and shutdown over the fallback.
+The external Windows integrated browser (Chrome 148) also passed real SEA document/event/content/snapshot/reconnect traffic through public Codespaces forwarding on 2026-09-19 UTC.
+The test used disposable memory storage; both test ports returned to private and listeners were stopped.
+No third-party relay, client-side helper, certificate bypass, or ordinary-WebSocket substitution was used.
+
+See the [client contract](crates/sea-webtransport/README.md#optional-websocketstream-fallback) and [server setup](crates/sea-webtransport-server/README.md#optional-websocket-listener).
+Production authentication, cross-browser support beyond native API availability, and total browser/proxy memory bounds remain out of scope.
+The rest of this record preserves earlier scope decisions and measurements chronologically.
+
+Validation at implementation completion:
+
+- All 147 Rust workspace all-target/all-feature tests passed; both transport crates also passed their feature-disabled tests.
+- Workspace formatting, strict Clippy, strict Rust documentation, and documentation-link checks passed.
+- WASM feature-enabled strict Clippy and feature-disabled compilation passed.
+- The feature-enabled Chromium collaboration/selection/shutdown flow and the default WebTransport collaboration/shutdown flow passed.
+- Modified JavaScript passed Biome checks.
+- `pnpm build:fast` completed the compilation tasks, including generated WASM and the minimal driver, but remained red on root Biome and policy tasks.
+	Root Biome reported 45 formatting findings, including retained historical benchmark JSON and the pre-existing local probe scripts.
+	`pnpm policy-check --path rust-service` reported only missing copyright headers in the two uncommitted probe scripts.
+	Those historical files and experiments were left unchanged; this is not a fully green repository gate.
+
+All implementation edits and build outputs remain in `/workspaces/FluidFramework-codespaces-webtransport` on `rust-service-codespaces-webtransport`.
+The active main worktree was not modified, and the implementation has not been committed, pushed, or merged.
 
 This is an independently assignable investigation, separate from the [SEA WASM and ServiceClient integration plan](SERVICE_CLIENT_PLAN.md).
 It does not require that plan's package extraction or inventory-app integration to be complete.

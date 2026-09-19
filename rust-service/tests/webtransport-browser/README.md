@@ -21,9 +21,29 @@ Run the same flow with Sea-managed selection by setting `SEA_SNAPSHOT_POLICY=sea
 
 Browser APIs do not expose HTTP/3, QUIC, UDP, or TLS byte totals, so the harness does not infer unavailable network measurements.
 
+## Optional WebSocketStream Validation
+
+Run the same collaboration and shutdown flow against the optional native `WebSocketStream` adapter:
+
+```bash
+SEA_WEBSOCKET_STREAM=1 node crates/sea-webtransport/scripts/build-wasm.mjs
+SEA_WEBSOCKET_STREAM=1 SEA_BROWSER_SKIP_BUILD=1 tests/webtransport-browser/run-test.sh
+```
+
+The feature-enabled mode also checks healthy-primary preference, explicit WebTransport-only failure, initial timeout fallback, missing-native-API rejection, and disconnection during child creation.
+The default command and default generated package remain WebTransport-only.
+Rebuild bindings without `SEA_WEBSOCKET_STREAM` when returning to default package validation.
+Do not reuse generated packages from a different feature mode with `SEA_BROWSER_SKIP_BUILD=1`.
+
+On 2026-09-18, Chromium 152 passed this flow locally with durable-file storage, including bounded shutdown and zero remaining connections.
+On 2026-09-19 UTC, the Windows VS Code integrated browser (Chrome 148 / Electron 42) passed the real SEA collaboration flow through Codespaces public HTTPS/WSS forwarding with memory storage.
+It covered document creation, three sessions, ordered/live events, blob/directory round trips, snapshots, and explicit reconnect with TLS validation enabled and no client tunnel or browser flags.
+The disposable public ports were restored to private and both test listeners stopped.
+The earlier synthetic probe below remains separate evidence for substantial two-way buffering and stall/recovery through the proxy; the SEA flow does not measure a global memory bound.
+
 ## Codespaces WebSocketStream Probe
 
 The local `websocketstream-probe.mjs` server and `websocketstream-probe-client.mjs` page tested native browser backpressure through Codespaces forwarding without starting SEA.
-They remain uncommitted in the isolated investigation worktree, not part of this notes-only commit, `run-test.sh`, or a supported SEA transport.
+They remain uncommitted in the isolated investigation worktree and are not part of `run-test.sh` or the implemented adapter.
 See the [investigation record](../../CODESPACES_WEBTRANSPORT_PLAN.md#native-websocketstream-probe-2026-09-18) for setup, exposure limits, observed results, and cleanup.
 The probe requires an existing `ws` installation supplied through `PROBE_WS_MODULE` and a browser with native `WebSocketStream`.

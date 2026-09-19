@@ -11,6 +11,7 @@ crate-type = ["rlib", "cdylib"]
 [features]
 default = ["bindings"]
 bindings = []
+websocket-stream = ["dep:gloo-timers", "web-sys/Url", "web-sys/AbortController", "web-sys/AbortSignal"]
 test-support = ["dep:sea-memory", "dep:sea-sequencer"]
 
 [dependencies]
@@ -27,6 +28,7 @@ tokio.workspace = true
 wtransport = "=0.7.2"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+gloo-timers = { version = "0.3.0", optional = true, features = ["futures"] }
 futures-util.workspace = true
 tokio = { version = "1.47.1", default-features = false, features = ["sync", "macros"] }
 js-sys = "=0.3.105"

@@ -21,7 +21,7 @@ Monitored progress responses are out-of-band observations and may cut ahead of b
 
 An **archive** is durable or process-local retained state.
 A **logical session** is one connection-bound author identity within an archive.
-A **logical stream** is one persistent WebTransport bidirectional stream with a single role.
+A **logical stream** is one persistent bidirectional byte stream with a single role.
 A **client** owns one transport connection and the shared state for its logical streams.
 The **protocol** is the versioned frame and message contract, not the server implementation or application adapter.
 
@@ -95,6 +95,49 @@ The command runs from `rust-service/` and writes production outputs to `crates/s
 The minimal Fluid driver, Node behavior tests, and real Chromium harness consume those locations directly.
 The same command emits feature-gated process-local test bindings under `crates/sea-webtransport/test-support/pkg/`; production outputs exclude `sea-memory`, `sea-sequencer`, native endpoints, and server lifecycle code.
 All generated files are build artifacts and must not be edited.
+
+## Optional `WebSocketStream` Fallback
+
+The off-by-default `websocket-stream` Cargo feature adds `SeaWebSocketTransport`, `SeaBrowserTransportMode`, and `connectSeaBrowserTransport` to browser bindings.
+It requires the browser's native `WebSocketStream` API; it never substitutes the traditional `WebSocket` API or a JavaScript stream wrapper.
+Generate these optional bindings from `rust-service/` with:
+
+```bash
+SEA_WEBSOCKET_STREAM=1 node crates/sea-webtransport/scripts/build-wasm.mjs
+```
+
+Pass the selected raw transport to the existing shared client:
+
+```javascript
+const transport = await connectSeaBrowserTransport(
+  SeaBrowserTransportMode.PreferWebTransport,
+  webTransportUrl,
+  certificateSha256,
+  "wss://your-service.example/sea/websocket",
+  1024 * 1024,
+  5000,
+);
+const client = new SeaInjectedClient(transport, 1024 * 1024);
+```
+
+`WebTransport` mode never falls back; `WebSocketStream` mode skips QUIC; `PreferWebTransport` explicitly permits fallback on any initial WebTransport establishment error or timeout.
+Each attempt has the supplied timeout, so automatic selection can take up to twice that interval.
+The failed attempt is closed before fallback; selection completes before any Sea operation.
+There is no mid-session switching, request replay, or automatic reconnect.
+The returned class identifies the selected transport.
+Callers opting into automatic fallback must trust both endpoints: the WebTransport pin does not authenticate the independently configured WebSocket TLS proxy.
+Only `wss:` URLs are accepted outside loopback; URLs cannot contain credentials, queries, or fragments.
+
+A control socket owns a group, and each logical stream uses its own WebSocket with independent native backpressure.
+Binary DATA records carry at most 64 KiB; FIN is directional EOF, not a WebSocket close.
+Close before FIN is cancellation or failure, and closing the owner cancels every child.
+Pending reads survive Rust waiter cancellation, and concurrent sends or receives on the same direction are rejected.
+The SEA codec, correlation, session, storage, and application layers are unchanged.
+
+Message bounds limit adapter queues, not browser, kernel, proxy, or total process memory.
+Native browser receive queues and intermediaries have implementation-dependent buffering; do not treat an awaited write as a remote application acknowledgement.
+This does not provide QUIC datagrams, identical network behavior, or production authentication.
+See the [server setup](../sea-webtransport-server/README.md#optional-websocket-listener) and [browser validation](../../tests/webtransport-browser/README.md#optional-websocketstream-validation).
 
 ## Validation
 

@@ -12,6 +12,7 @@ import init, {
 	SeaSnapshotParticipation,
 	SeaStreamStatus,
 } from "../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
+import * as bindings from "../../crates/sea-webtransport/pkg/web/sea_webtransport.js";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -64,7 +65,89 @@ async function nextSnapshot(stream) {
 }
 
 async function connect(hash) {
+	if (parameters.get("websocket") === "1") {
+		return bindings.connectSeaBrowserTransport(
+			bindings.SeaBrowserTransportMode.WebSocketStream,
+			"",
+			hash,
+			transportUrl,
+			1024 * 1024,
+			5000,
+		);
+	}
 	return SeaBrowserTransport.connect(transportUrl, hash, 1024 * 1024);
+}
+
+async function checkTransportSelection(hash) {
+	if (parameters.get("websocket") !== "1") return;
+	const modes = bindings.SeaBrowserTransportMode;
+	const primaryUrl = parameters.get("primaryTransport");
+	if (primaryUrl) {
+		const primary = await bindings.connectSeaBrowserTransport(
+			modes.PreferWebTransport,
+			primaryUrl,
+			hash,
+			transportUrl,
+			1024 * 1024,
+			2000,
+		);
+		assert(primary instanceof SeaBrowserTransport, "healthy primary transport was replaced");
+		primary.disconnect();
+		primary.free();
+	}
+	const unavailablePrimary = `https://127.0.0.1:${location.port}/sea`;
+	let primaryFailure;
+	try {
+		await bindings.connectSeaBrowserTransport(
+			modes.WebTransport,
+			unavailablePrimary,
+			hash,
+			transportUrl,
+			1024 * 1024,
+			100,
+		);
+	} catch (error) {
+		primaryFailure = error;
+	}
+	assert(primaryFailure, "WebTransport-only mode used a fallback");
+	const fallback = await bindings.connectSeaBrowserTransport(
+		modes.PreferWebTransport,
+		unavailablePrimary,
+		hash,
+		transportUrl,
+		1024 * 1024,
+		2000,
+	);
+	assert(
+		fallback instanceof bindings.SeaWebSocketTransport,
+		"initial fallback was not selected",
+	);
+	const pendingChild = fallback.openBidirectional();
+	fallback.disconnect();
+	let childFailure;
+	try {
+		await pendingChild;
+	} catch (error) {
+		childFailure = error;
+	}
+	assert(childFailure, "a child stream escaped group disconnection");
+	fallback.free();
+	const descriptor = Object.getOwnPropertyDescriptor(globalThis, "WebSocketStream");
+	try {
+		Object.defineProperty(globalThis, "WebSocketStream", {
+			value: undefined,
+			configurable: true,
+		});
+		let unavailableFailure;
+		try {
+			await connect(hash);
+		} catch (error) {
+			unavailableFailure = error;
+		}
+		assert(unavailableFailure, "missing native API silently used an ordinary WebSocket");
+	} finally {
+		Object.defineProperty(globalThis, "WebSocketStream", descriptor);
+	}
 }
 
 async function run() {
@@ -74,6 +157,7 @@ async function run() {
 	const hash = Uint8Array.from(certificateHex.match(/../gu), (value) =>
 		Number.parseInt(value, 16),
 	);
+	await checkTransportSelection(hash);
 	const firstTransport = await connect(hash);
 	const secondTransport = await connect(hash);
 	const first = new SeaInjectedClient(firstTransport, 1024 * 1024);
@@ -317,6 +401,7 @@ async function run() {
 		secondPosition: secondReceipt.toString(),
 		caughtUp: initialCaughtUp.latestKnown?.toString() ?? "none",
 		blobBytes: blobPayload.length,
+		transport: parameters.get("websocket") === "1" ? "WebSocketStream" : "WebTransport",
 		directoryEntries: entries.length,
 		serviceErrorKind: missingArchiveError.kind,
 		snapshotParticipation,

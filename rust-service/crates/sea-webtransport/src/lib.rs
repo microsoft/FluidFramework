@@ -2,6 +2,9 @@
 
 pub mod protocol;
 
+#[cfg(feature = "websocket-stream")]
+pub mod websocket;
+
 #[doc(hidden)]
 pub mod client;
 #[doc(hidden)]

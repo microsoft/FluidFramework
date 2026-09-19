@@ -45,7 +45,17 @@ if [[ "${SEA_BROWSER_SKIP_BUILD:-}" != "1" ]]; then
 	pnpm --dir tests/minimal-fluid-driver run build:wasm
 fi
 sh tests/webtransport-browser/generate-cert.sh "$temporary_root/certs"
-cargo build -p sea-webtransport-server
+server_features=()
+transport_variable=WEBTRANSPORT_URL
+if [[ "${SEA_WEBSOCKET_STREAM:-}" == "1" ]]; then
+	server_features=(--features websocket-stream)
+	transport_variable=WEBSOCKET_URL
+	export SEA_WEBSOCKET_BIND=127.0.0.1:0
+	export SEA_BROWSER_HTTP_PORT
+	SEA_BROWSER_HTTP_PORT=$(node --input-type=module -e 'import {createServer} from "node:net"; const server = createServer(); server.listen(0, "127.0.0.1", () => { console.log(server.address().port); server.close(); });')
+	export SEA_WEBSOCKET_ORIGINS="http://localhost:$SEA_BROWSER_HTTP_PORT"
+fi
+cargo build -p sea-webtransport-server "${server_features[@]}"
 
 shutdown_marker="$temporary_root/shutdown.request"
 "$CARGO_TARGET_DIR/debug/sea-webtransport-server" \
@@ -60,7 +70,7 @@ server_pid=$!
 # server's startup contract while also failing immediately if the process exits.
 transport_url=
 for ((attempt = 0; attempt < 600; attempt++)); do
-	transport_url=$(sed -n 's/^WEBTRANSPORT_URL=//p' "$temporary_root/server.log" | tail -n 1)
+	transport_url=$(sed -n "s/^${transport_variable}=//p" "$temporary_root/server.log" | tail -n 1)
 	if [[ -n "$transport_url" ]]; then
 		break
 	fi
@@ -77,6 +87,8 @@ fi
 
 # Passing the marker enables the runner's shutdown assertions. The runner creates it
 # after the browser flow, and the server acknowledges that it stopped accepting work.
+export SEA_BROWSER_WEBTRANSPORT_URL
+SEA_BROWSER_WEBTRANSPORT_URL=$(sed -n 's/^WEBTRANSPORT_URL=//p' "$temporary_root/server.log" | tail -n 1)
 node tests/webtransport-browser/run-headless.mjs \
 	tests/webtransport-browser \
 	"$transport_url" \
