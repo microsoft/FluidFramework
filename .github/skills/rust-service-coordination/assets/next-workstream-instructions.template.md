@@ -22,4 +22,7 @@ Owner: <!-- TODO(required): record the agent or owner -->
 
 ## Deliverables and Validation
 
+Follow the coordination skill's Terminal Coordination section before dispatch.
+Assign process task IDs and fresh per-run evidence paths; use compound tasks for parallel check batches and serialize only shared foreground terminal access by default.
+
 <!-- TODO(required): list expected evidence, commands, reporting obligations, and stopping conditions. For behavior changes and bug fixes, require documentation of the relied-upon contract and proportionate focused regression evidence in each owning production crate, with conformance or broader integration coverage only where it proves a distinct responsibility; require rationale for omissions. -->

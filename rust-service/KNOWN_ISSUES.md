@@ -1,7 +1,27 @@
 # Known Issues
 
-This file tracks current limitations of the experimental Sea implementation.
+This file tracks current limitations of the experimental Sea implementation and its development tooling.
 Historical architecture findings remain in `decisions/` and `iterations/`.
+
+## VS Code terminal tools can interfere across subagents
+
+- **Status:** Open; coordination workaround available
+- **Severity:** High
+- **Area:** Agent execution and validation evidence
+- **Evidence:** The [execution isolation investigation](historical/EXECUTION_ISOLATION_INVESTIGATION.md) inspected VS Code revision `7debcd0e2acdea1c52de81bf9ee1620444407dda` and tested extracted methods with mocked terminals.
+  Subagents retain the parent chat's terminal cache key; foreground reuse has no exclusive execution ownership.
+  Command startup can send Ctrl+C, preparation can remove an absolute `cd`, and overlapping completion listeners can accept another command's result.
+  Original incident tool logs were unavailable, so this does not prove the cause of every historical failure.
+- **Impact:** Parallel terminal calls can interrupt validation or return results from the wrong worktree.
+  Separate worktrees, execution-subagent IDs, and Cargo targets do not isolate terminal state or output.
+- **Workaround:** Follow [terminal coordination](../.github/skills/rust-service-coordination/SKILL.md#terminal-coordination) for lightweight work and iterations.
+  Use distinct process tasks with explicit cwd/environment and dedicated task terminals; a compound task with parallel dependencies passed an overlapping-process probe with correctly attributed exit codes.
+  Keep workstreams parallel and serialize only access to the shared foreground terminal across the parent chat and descendants.
+  Separate `run_task` calls did not overlap in the probe, and completed `get_task_output` calls returned blank output; use compound launches and preserve fresh per-run evidence rather than relying on terminal history.
+  Autonomous cross-subagent task scheduling and task cancellation isolation remain unverified.
+  Reject contaminated results and follow [execution isolation recovery](../.github/skills/rust-service-coordination/SKILL.md#execution-isolation-recovery) before rerunning checks.
+  Shared-terminal serialization is an instruction-level workaround, not an enforced tool lock.
+- **Trigger:** Reassess after the VS Code/Copilot terminal tools provide exclusive ownership and command-specific completion handling, validated with concurrent same-chat commands and cancellation isolation.
 
 ## RS-003: Durable storage has qualified guarantees
 

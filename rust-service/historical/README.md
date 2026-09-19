@@ -9,6 +9,7 @@ These records describe earlier designs, migration work, experiments, and decisio
 - Migration and cleanup plans: [Sea migration](SEA_MIGRATION_PLAN.md), [core migration](CORE_MIGRATION_PLAN.md), [API cleanup](SEA_API_CLEANUP_PLAN.md), [monitored streams](MONITORED_STREAM_PLAN.md), [code quality](RUST_CODE_QUALITY_PLAN.md), and [crate cleanup](crateCleanup.md).
 - Research notes: [initial notes](notes.md), [service description](notes2.md), and [WebTransport flows](notes4.md).
 - [Codespaces transport investigation](CODESPACES_WEBTRANSPORT_PLAN.md): forwarding constraints, streaming and ordinary WebSocket implementation, external browser evidence, and compatibility limitations.
+- [Execution isolation investigation](EXECUTION_ISOLATION_INVESTIGATION.md): repeated workstream interference, terminal ownership mechanisms, mocked checks, and remaining upstream validation.
 - [Iterations](iterations/): charters, workstream instructions, reports, validation evidence, and retrospectives.
 - [Decisions](decisions/README.md): architectural and process decision history.
 - [Benchmarks](benchmarks/): saved measurements and profiles, organized by experiment or source revision.
