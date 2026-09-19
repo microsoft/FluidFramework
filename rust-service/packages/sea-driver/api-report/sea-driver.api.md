@@ -54,7 +54,7 @@ export interface PendingSubmission {
 
 // @internal
 export interface ProjectedOperation {
-    readonly eventType?: "application" | "joined" | "left";
+    readonly eventType?: "application" | "joined" | "left" | "summaryAck";
     readonly localSequenceNumber: bigint;
     readonly membershipMode?: "read" | "write";
     readonly minimumReference?: Uint8Array;

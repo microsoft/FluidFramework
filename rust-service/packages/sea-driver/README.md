@@ -77,6 +77,11 @@ The driver depends on the standard loader/runtime helpers but still has no trans
 
 Summary storage supports full and incremental summaries, blob and tree handles, attachments, and historical versions.
 Incremental publication retains the acknowledged parent snapshot and rejects stale parents.
+The neutral-session adapter verifies that a summary proposal names a published snapshot before appending it.
+It then appends a separate durable Fluid acknowledgment referencing the proposal's sequence number.
+Live delivery and replay project that record as a system message with its own sequence position; the neutral sequencer does not interpret Fluid summaries.
+These adapter-owned acknowledgment records are not runtime submissions and are excluded from the runtime attempt-prefix ledger.
+A failure between proposal and acknowledgment closes the session and may leave a committed proposal without an acknowledgment; the adapter never blindly retries either record.
 Delta connections preserve pending submission identities across explicit recovery; they do not automatically retry or resubmit ambiguous writes.
 `recoverPending()` requires a fresh session and replays the old session through its durable leave.
 It counts and verifies the accepted application prefix against the ordered attempt ledger before returning the unaccepted suffix; a missing leave or non-prefix history rejects recovery.

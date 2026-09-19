@@ -179,9 +179,13 @@ export function toSequenced(
 			minimumSequenceNumber: Number(operation.minimumSequenceNumber ?? 0n),
 			timestamp: 0,
 		};
-		if (operation.eventType === "application") {
+		if (operation.eventType === "application" || operation.eventType === "summaryAck") {
 			const message = JSON.parse(decoder.decode(operation.payload)) as IDocumentMessage;
-			return { ...message, ...common, clientId };
+			return {
+				...message,
+				...common,
+				clientId: operation.eventType === "summaryAck" ? null : clientId,
+			};
 		}
 		const readOnly = operation.membershipMode === "read";
 		return {

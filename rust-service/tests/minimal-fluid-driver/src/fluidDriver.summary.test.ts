@@ -18,6 +18,7 @@ import {
 	SeaDocumentService,
 	SeaDriver,
 	SeaDeltaConnection,
+	SeaDeltaStorage,
 	SeaSessionDriverClient,
 } from "@fluidframework/sea-driver/internal";
 import { createMemoryService } from "@fluidframework/sea-typescript/internal";
@@ -33,6 +34,153 @@ import type {
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
+
+test("published summary proposals produce ordered replayable acknowledgments", async (context) => {
+	const service = await createMemoryService({ environment: "node" });
+	const writer = new SeaSessionDriverClient(service.open, "clientSelected");
+	const observer = new SeaSessionDriverClient(service.open, "readOnly");
+	context.after(async () => {
+		writer.disconnect();
+		observer.disconnect();
+		await Promise.all([writer.reconnect(), observer.reconnect()]);
+		service.close();
+	});
+	const document = await writer.create();
+	await writer.openSession(document, encoder.encode("writer"), encoder.encode("session"));
+	const root = await writer.publishSummary([]);
+	const version = await writer.publishSnapshotRoot(undefined, undefined, root.digest);
+	const handle = Buffer.from(version).toString("hex");
+	const subscription = await writer.subscribeProjected(version);
+	context.after(() => subscription.cancel());
+	await writer.submitEvent(
+		encoder.encode("summary"),
+		1,
+		encoder.encode(
+			JSON.stringify({
+				clientSequenceNumber: 1,
+				referenceSequenceNumber: 0,
+				type: MessageType.Summarize,
+				contents: JSON.stringify({ handle }),
+			}),
+		),
+		version,
+	);
+	const history = await writer.readProjected();
+	const messages = history.operations.map((operation) =>
+		JSON.parse(decoder.decode(operation.payload)),
+	);
+	assert.deepEqual(
+		messages.map((message) => message.type),
+		[MessageType.Summarize, MessageType.SummaryAck],
+	);
+	assert.deepEqual(messages[1].contents, {
+		handle,
+		summaryProposal: { summarySequenceNumber: 1 },
+	});
+	assert.equal((await subscription.next()).eventType, "application");
+	assert.equal((await subscription.next()).eventType, "summaryAck");
+	await observer.openSession(
+		document,
+		encoder.encode("observer"),
+		encoder.encode("observer-session"),
+	);
+	assert.deepEqual((await observer.readProjected()).operations, history.operations);
+	const page = await new SeaDeltaStorage(observer).fetchMessages(2, 3).read();
+	assert.equal(page.done, false);
+	if (!page.done) {
+		assert.equal(page.value.length, 1);
+		assert.equal(page.value[0]?.type, MessageType.SummaryAck);
+		assert.equal(page.value[0]?.clientId, null);
+		assert.equal(page.value[0]?.sequenceNumber, 2);
+	}
+});
+
+test("unpublished summary proposals terminate membership without an acknowledgment", async (context) => {
+	const service = await createMemoryService({ environment: "node" });
+	const writer = new SeaSessionDriverClient(service.open, "clientSelected");
+	context.after(async () => {
+		writer.disconnect();
+		await writer.reconnect();
+		service.close();
+	});
+	const document = await writer.create();
+	await writer.openSession(document, encoder.encode("writer"), encoder.encode("session"));
+	await writer.announceMembership(encoder.encode(JSON.stringify({ mode: "write" })));
+	await assert.rejects(
+		writer.submitEvent(
+			encoder.encode("summary"),
+			1,
+			encoder.encode(
+				JSON.stringify({
+					type: MessageType.Summarize,
+					contents: JSON.stringify({ handle: "000000000000ffff" }),
+				}),
+			),
+		),
+		/published snapshot/,
+	);
+	await writer.openSession(
+		document,
+		encoder.encode("observer"),
+		encoder.encode("observer-session"),
+	);
+	assert.deepEqual(
+		(await writer.readProjected()).operations.map((operation) => operation.eventType),
+		["joined", "left"],
+	);
+});
+
+test("failed summary acknowledgment leaves only the accepted proposal before departure", async (context) => {
+	const service = await createMemoryService({ environment: "node" });
+	let acknowledgmentAttempts = 0;
+	const writer = new SeaSessionDriverClient(async (...args) => {
+		const session = await service.open(...args);
+		return {
+			...session,
+			submit: async (...submissionArgs) => {
+				if (JSON.parse(decoder.decode(submissionArgs[2])).seaFluid === "summaryAck") {
+					acknowledgmentAttempts++;
+					throw new Error("acknowledgment interrupted");
+				}
+				return session.submit(...submissionArgs);
+			},
+		};
+	}, "clientSelected");
+	context.after(async () => {
+		writer.disconnect();
+		await writer.reconnect();
+		service.close();
+	});
+	const document = await writer.create();
+	await writer.openSession(document, encoder.encode("writer"), encoder.encode("session"));
+	const root = await writer.publishSummary([]);
+	const version = await writer.publishSnapshotRoot(undefined, undefined, root.digest);
+	await writer.announceMembership(encoder.encode(JSON.stringify({ mode: "write" })));
+	await assert.rejects(
+		writer.submitEvent(
+			encoder.encode("summary"),
+			1,
+			encoder.encode(
+				JSON.stringify({
+					type: MessageType.Summarize,
+					contents: JSON.stringify({ handle: Buffer.from(version).toString("hex") }),
+				}),
+			),
+			version,
+		),
+		/acknowledgment interrupted/,
+	);
+	await writer.openSession(
+		document,
+		encoder.encode("observer"),
+		encoder.encode("observer-session"),
+	);
+	assert.deepEqual(
+		(await writer.readProjected()).operations.map((operation) => operation.eventType),
+		["joined", "application", "left"],
+	);
+	assert.equal(acknowledgmentAttempts, 1);
+});
 
 test("neutral session driver hides initialization and preserves snapshot versions across reopen", async (context) => {
 	const service = await createMemoryService({ environment: "node" });

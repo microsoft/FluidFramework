@@ -180,11 +180,19 @@ Commands below run from this worktree root:
 | SEA-003 | `SharedCounter - runtime benchmarks / Non-Compat / increment value in 3 containers`; run the bounded sample above. | Mocha 2000ms timeout, with transport-disconnected telemetry during cleanup. | Passes at `4ea052fa0ff` with the standard 10000ms deadline. |
 | SEA-004 | `Op reentry and rebasing during pending batches / Non-Compat / Pending batches with reentry - SharedCounter`; run the bounded sample above. | `Timeout on waiting a container to be saved` in `ensureSynchronized`. | Passes at `4ea052fa0ff` with unchanged assertions. |
 | SEA-005 | `Container dirty flag / Non-Compat / Attached container / handles container with pending ops to be sent out`; `test:realsvc:sea --grep 'handles container with pending ops to be sent out'` at `4ea052fa0ff`. | 10000ms timeout waiting for connection after loading pending state; the old client remains in quorum because delta disposal never closes its SEA session. | Fixed by closing delta-owned authority with a session-identity guard; all four dirty-flag tests and the full selected container batch pass. |
+| SEA-006 | `Attributor / Non-Compat / repopulates attribution association data using the summary tree`; `test:realsvc:sea --grep 'repopulates attribution association data using the summary tree'` at `c12ab11e734`. | `receivedSummaryAckOrNack` timeout; full `--bail` selection stops with 39 passing, 31 pending, one failing because the adapter never emits a summary acknowledgment. | Unchanged test and all nine attribution tests pass after adding snapshot validation and a durable adapter-owned acknowledgment. All 14 summary-driver tests, package/API generation, root build, scoped policy, documentation checks, and canonical `./test.sh` pass. |
 
 The first smoke attempt exposed a configuration defect: logical URLs omitted the tenant segment expected by the Fluid loader.
 The resolver now uses `fluid://sea-test/tests/<document>`; the subsequent attempt reached SEA-001.
 The initial failure inventory applies to configuration checkpoint `4d9c1906dab`.
 No new SEA-specific test exclusions have been added.
+
+SEA-006 is owned entirely by the Fluid adapter; the neutral sequencer remains unaware of summary semantics.
+Focused regressions prove identical live and replayed acknowledgment records, bounded system-message projection, rejection of an unpublished snapshot before proposal admission, and terminal leave after an interrupted acknowledgment without retry.
+The first integration attempt exposed serialized proposal contents at the driver boundary; the regression now uses that exact representation, and all temporary probes were removed.
+The generated API comparison against local checkpoint `c12ab11e734` adds only the internal `ProjectedOperation.eventType` acknowledgment variant; no customer-facing release change or changeset is required.
+Native source and protocol remain unchanged from the previously validated strict-native checkpoint; the complete canonical suite reruns native, generated Node, driver, and Chromium coverage.
+The attribution batch still emits transport-disconnected cleanup telemetry without failed assertions.
 
 For each observed failure, record the exact test name and command, source revision, failure signature, setup versus behavioral classification, reproduction steps, and relevant known limitation.
 Keep unsupported contracts visible, including signals, presence, synthetic membership, automatic reconnect, authentication, and garbage collection; do not weaken shared assertions to hide them.

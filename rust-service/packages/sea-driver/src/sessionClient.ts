@@ -14,6 +14,9 @@ import type {
 	SeaTreeId,
 } from "@fluidframework/sea-typescript/internal";
 
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+
+import { hexToBytes } from "./lifecycleHelpers.js";
 import type {
 	BlobUpload,
 	ProjectedOperation,
@@ -219,7 +222,10 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		await this.current().announceMembership(metadata);
 	}
 
-	/** Submits serialized Fluid data with its original operation identity. */
+	/** Submits serialized Fluid data with its original operation identity.
+	 * Published summary proposals receive a separate durable adapter-owned acknowledgment.
+	 * An interrupted acknowledgment is never retried implicitly.
+	 */
 	public async submitEvent(
 		submission: Uint8Array,
 		localSequenceNumber: number,
@@ -227,9 +233,58 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		referencePosition?: Uint8Array,
 	): Promise<Uint8Array> {
 		this.operationLocalSequences.set(bytesKey(submission), BigInt(localSequenceNumber));
-		return encodePosition(
-			await this.current().submit(submission, decodePosition(referencePosition), payload),
-		);
+		const session = this.current();
+		try {
+			const message = JSON.parse(decoder.decode(payload)) as {
+				type?: string;
+				contents?: string | { handle?: string };
+			};
+			const isSummary = message.type === MessageType.Summarize;
+			const proposal =
+				isSummary && typeof message.contents === "string"
+					? (JSON.parse(message.contents) as { handle?: string })
+					: message.contents;
+			const handle = typeof proposal === "object" ? proposal?.handle : undefined;
+			if (isSummary) {
+				if (typeof handle !== "string")
+					throw new Error("summary proposal requires a snapshot handle");
+				const position = decodePosition(hexToBytes(handle));
+				if ((await session.getSnapshot(position))?.atEvent !== position) {
+					throw new Error("summary proposal must reference a published snapshot");
+				}
+			}
+			const position = await session.submit(
+				submission,
+				decodePosition(referencePosition),
+				payload,
+			);
+			if (isSummary) {
+				await this.readProjectedFrom(session);
+				const proposalSequence = Number(this.sequence(position));
+				await session.submit(
+					encoder.encode(
+						JSON.stringify({ seaFluid: "summaryAck", proposal: bytesKey(submission) }),
+					),
+					position,
+					encoder.encode(
+						JSON.stringify({
+							seaFluid: "summaryAck",
+							type: MessageType.SummaryAck,
+							clientSequenceNumber: -1,
+							referenceSequenceNumber: proposalSequence,
+							contents: {
+								handle,
+								summaryProposal: { summarySequenceNumber: proposalSequence },
+							},
+						}),
+					),
+				);
+			}
+			return encodePosition(position);
+		} catch (error) {
+			await session.close().catch(() => {});
+			throw error;
+		}
 	}
 
 	/** Returns the latest SEA snapshot in the driver's byte-position representation. */
@@ -470,7 +525,10 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 			throw new Error("SEA minimum reference is missing from the retained projection");
 		}
 		return {
-			eventType: item.eventType,
+			eventType:
+				item.eventType === "application" && message.seaFluid === "summaryAck"
+					? "summaryAck"
+					: item.eventType,
 			...(membershipMode === undefined ? {} : { membershipMode }),
 			minimumSequenceNumber,
 			position: encodePosition(item.position),

@@ -8,8 +8,8 @@
  * @internal
  */
 export interface ProjectedOperation {
-	/** Present for the authoritative neutral-session projection; absent for legacy clients. */
-	readonly eventType?: "application" | "joined" | "left";
+	/** Present for neutral-session projection; summary acknowledgments are adapter-owned, not runtime attempts. */
+	readonly eventType?: "application" | "joined" | "left" | "summaryAck";
 	/** Membership mode retained from the announcement for departure projection. */
 	readonly membershipMode?: "read" | "write";
 	/** Minimum reference mapped into the same dense sequence space. */
