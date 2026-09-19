@@ -318,6 +318,16 @@ Largest pending groups are `handle validation` (184), `Validate Attach lifecycle
 An exhaustive applicability audit of the inherited skips remains open.
 No assertions, production code, or skip conditions changed for this run.
 
+### One-Off Handle Validation on SEA
+
+At the user's request on 2026-09-19, `handle validation` ran on SEA without permanently changing its local-only selection.
+Starting from `1a96d221965`, a temporary `case "sea-websocket":` in the suite's driver guard enabled the run after rebuilding the tests.
+`pnpm --dir packages/test/test-end-to-end-tests run test:realsvc:sea --grep '^handle validation' --no-bail --reporter json --reporter-option output=/tmp/sea-handles-manual-results.json` completed with all 184 cases passing, zero pending, and zero failures in 15.263 seconds.
+Assertions and the standard 10-second per-test timeout were unchanged.
+These cases check handle round-tripping and transitive attachment across DDS types, including resolution from another container after the originating container closes.
+The temporary source change was removed and the tests rebuilt; source comparison and generated-code inspection confirmed the original local-only selection was restored.
+This is additional manual coverage, not a change to the preceding full-run counts or a permanent SEA opt-in.
+
 ### Membership Investigation
 
 SEA-001 is not a test-specific mismatch: `SeaDeltaConnection` fabricates two initial join operations independently for each connection, and `projectOperation` collapses all other authors into one synthetic remote client.
