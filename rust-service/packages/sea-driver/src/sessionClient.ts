@@ -377,11 +377,11 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		}
 	}
 
-	/** Transfers ownership of the pre-opened event stream to the driver subscription. */
+	/** Transfers the pre-opened stream once; later subscriptions open independent readers. */
 	public async subscribeProjected(
 		after?: Uint8Array,
 	): Promise<ProjectedOperationSubscription> {
-		if (decodePosition(after) !== this.eventResumeAfter) {
+		if (this.eventStream === undefined || decodePosition(after) !== this.eventResumeAfter) {
 			this.eventStream?.cancel();
 			this.eventStream = this.current().read(decodePosition(after));
 			this.eventResumeAfter = decodePosition(after);

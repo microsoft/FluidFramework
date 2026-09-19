@@ -115,6 +115,7 @@ Reconnect waits for that cleanup, and the next open calls the injected factory.
 Delta disposal also closes its owning session so Fluid pending-state recovery can observe the old client's final leave.
 Cleanup carries the original session identity and cannot close a newer replacement sharing the same adapter.
 Transferred projected subscriptions remain cancellation-owned by their driver consumer.
+The pre-opened event stream can be transferred only once; later subscriptions at the same cursor open independent readers, and cancelling one does not cancel another.
 
 Application signals, automatic reconnect, authentication, and garbage collection remain incomplete.
 Ordered writer membership is implemented, but this does not establish production driver conformance.

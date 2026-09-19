@@ -225,6 +225,12 @@ test("neutral session driver hides initialization and preserves snapshot version
 	assert.deepEqual((await observer.snapshot(initial))?.id, initial);
 	assert.deepEqual((await observer.latestSnapshot())?.id, version);
 	assert.equal(await observer.snapshot(encodeU64(999n)), undefined);
+	const firstSubscription = await observer.subscribeProjected();
+	const secondSubscription = await observer.subscribeProjected();
+	assert.deepEqual((await firstSubscription.next()).position, position);
+	await firstSubscription.cancel();
+	assert.deepEqual((await secondSubscription.next()).position, position);
+	await secondSubscription.cancel();
 	const connection = new SeaDeltaConnection(
 		"observer",
 		{

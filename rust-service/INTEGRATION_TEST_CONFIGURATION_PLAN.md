@@ -220,6 +220,11 @@ Independent uploads remain concurrent; only membership transitions block admissi
 Final package/root builds, scoped policy, documentation checks, and complete canonical `./test.sh` pass for this follow-up; no API report changes.
 The unchanged `^blobs ` batch now passes seven tests, including simultaneous identical uploads on one and separate containers, with one existing pending test.
 It next fails `reconnection does not block ops when having pending blobs` with `SEA event stream is not open` during subscription setup; subscription reuse remains a separate follow-up.
+Both unchanged reconnect variants pass after opening a fresh reader when the cached startup stream has already been transferred, even when the requested cursor is unchanged.
+The owning neutral-adapter regression opens two subscriptions at the same cursor and verifies that cancelling one leaves the other's replay intact.
+Subscription follow-up package/root builds, scoped policy, documentation check, and complete canonical `./test.sh` pass; no API report changes.
+The full `--bail` run advances to 160 passing and 60 pending, then fails setup in `Op Compression self-healing with old loader`, which explicitly requests historical APIs despite this configuration's current-version-only constraint.
+The teardown error is secondary to the rejected provider creation; inspect this suite for an explicit inventoried exclusion rather than weakening the compatibility guard.
 
 For each observed failure, record the exact test name and command, source revision, failure signature, setup versus behavioral classification, reproduction steps, and relevant known limitation.
 Keep unsupported contracts visible, including signals, presence, synthetic membership, automatic reconnect, authentication, and garbage collection; do not weaken shared assertions to hide them.
