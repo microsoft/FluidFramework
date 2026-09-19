@@ -104,7 +104,11 @@ function makeContainerLoaderOptions(
 	options: TinyliciousServiceOptions,
 ): Pick<
 	ICreateDetachedContainerProps,
-	"urlResolver" | "documentServiceFactory" | "clientDetailsOverride" | "configProvider"
+	| "urlResolver"
+	| "documentServiceFactory"
+	| "clientDetailsOverride"
+	| "configProvider"
+	| "logger"
 > {
 	const tokenProvider = new InsecureTinyliciousTokenProvider();
 	const urlResolver =
@@ -116,6 +120,7 @@ function makeContainerLoaderOptions(
 	return {
 		urlResolver,
 		documentServiceFactory,
+		logger: options.logger,
 		clientDetailsOverride: { capabilities: { interactive: true } },
 		configProvider: wrapConfigProviderWithDefaults(undefined, {
 			"Fluid.Container.ForceWriteConnection": true,
