@@ -708,8 +708,8 @@ test("read-first document services retain independent memberships and shared wri
 		const latest = connections.at(-1);
 		assert.ok(latest);
 		assert.deepEqual(
-			latest.initialClients.map((member) => member.clientId),
-			connections.map((connection) => connection.clientId),
+			latest.initialClients.map((member) => member.clientId).sort(),
+			connections.map((connection) => connection.clientId).sort(),
 		);
 		assert.deepEqual(
 			latest.initialMessages
@@ -725,6 +725,43 @@ test("read-first document services retain independent memberships and shared wri
 		}
 		const writer = connections[2];
 		assert.ok(writer);
+		const received: unknown[][] = connections.map(() => []);
+		const completed = connections.map(
+			(connection, index) =>
+				new Promise<void>((resolve) => {
+					connection.on("signal", (signal) => {
+						assert.ok(!Array.isArray(signal));
+						if (signal.clientId !== null) {
+							received[index]!.push(signal);
+							if (signal.content === "broadcast") resolve();
+						}
+					});
+				}),
+		);
+		writer.submitSignal("broadcast");
+		await Promise.all(completed);
+		for (const messages of received)
+			assert.deepEqual(messages, [{ clientId: writer.clientId, content: "broadcast" }]);
+		const targeted = new Promise<void>((resolve) =>
+			latest.on("signal", (signal) => {
+				assert.ok(!Array.isArray(signal));
+				if (signal.content === "target") {
+					assert.equal(signal.targetClientId, latest.clientId);
+					resolve();
+				}
+			}),
+		);
+		writer.submitSignal("target", latest.clientId);
+		await targeted;
+		assert.deepEqual(
+			received.map((messages) => messages.length),
+			[1, 1, 1, 2],
+		);
+		assert.equal(
+			(await writer.synchronize()).length,
+			0,
+			"signals do not enter sequenced history",
+		);
 		const missed: unknown[] = [];
 		writer.on("op", (_document, messages) =>
 			missed.push(...messages.filter((message) => message.type === MessageType.Operation)),

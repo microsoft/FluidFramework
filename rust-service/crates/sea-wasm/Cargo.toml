@@ -10,7 +10,7 @@ crate-type = ["rlib", "cdylib"]
 
 [features]
 default = []
-memory = ["dep:sea-memory", "dep:sea-sequencer"]
+memory = ["dep:sea-memory", "dep:sea-sequencer", "dep:sea-signals"]
 webtransport = ["dep:sea-webtransport"]
 websocket-stream = ["webtransport", "sea-webtransport/websocket-stream"]
 compression = ["dep:sea-compression"]
@@ -22,6 +22,7 @@ futures-util.workspace = true
 sea-core = { path = "../sea-core" }
 sea-memory = { path = "../sea-memory", optional = true }
 sea-sequencer = { path = "../sea-sequencer", optional = true }
+sea-signals = { path = "../sea-signals", optional = true }
 sea-webtransport = { path = "../sea-webtransport", optional = true, default-features = false }
 sea-compression = { path = "../sea-compression", optional = true }
 thiserror.workspace = true

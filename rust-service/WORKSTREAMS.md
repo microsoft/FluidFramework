@@ -18,9 +18,10 @@ Development-only conformance fixtures and integration-test dependencies are desc
 | `sea-file-durable` | `crates/sea-file-durable/` | `sea-core`, `sea-file` | Synchronized configuration of the shared file engine with dependency-closed recovery. |
 | `sea-content-addressed` | `crates/sea-content-addressed/` | `sea-core` | Reusable immutable blob and directory storage. |
 | `sea-sequencer` | `crates/sea-sequencer/` | `sea-core` | Multi-user local `SeaSession`, stable operations, fencing, replay, and subscriptions. |
+| `sea-signals` | `crates/sea-signals/` | `sea-core` | Bounded memory-only document messaging and live membership, independent of archive sequencing. |
 | `sea-webtransport` | `crates/sea-webtransport/` | `sea-core` | Versioned Sea framing, shared session client, and native/browser transport primitives. |
-| `sea-wasm` | `crates/sea-wasm/` | `sea-core`; optional `sea-memory`, `sea-sequencer`, `sea-webtransport`, and `sea-compression` | Shared session bindings and feature-gated stack construction. |
-| `sea-webtransport-server` | `crates/sea-webtransport-server/` | `sea-core`, `sea-sequencer`, `sea-webtransport`, and all three storage backends | Native server executable and runtime backend composition. |
+| `sea-wasm` | `crates/sea-wasm/` | `sea-core`; optional `sea-memory`, `sea-sequencer`, `sea-signals`, `sea-webtransport`, and `sea-compression` | Shared session/signal bindings and feature-gated stack construction. |
+| `sea-webtransport-server` | `crates/sea-webtransport-server/` | `sea-core`, `sea-sequencer`, `sea-signals`, `sea-webtransport`, and all three storage backends | Native server executable and runtime backend composition. |
 | `sea-compression` | `crates/sea-compression/` | `sea-core` | Transparent stateless compression `SeaSession` decorator. |
 | `sea-encryption` | `crates/sea-encryption/` | `sea-core` | Transparent authenticated encryption `SeaSession` decorator. |
 | `sea-benchmarks` | `crates/sea-benchmarks/` | Core, storage backends, and decorators | Local storage and transformation measurements. |

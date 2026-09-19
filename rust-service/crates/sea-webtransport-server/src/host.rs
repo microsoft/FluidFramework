@@ -175,6 +175,8 @@ where
 
 /// Shared lazy backend initialization and retained document ownership.
 struct HostInner {
+    /// Ephemeral rooms independent of retained document runtimes.
+    signals: Mutex<BTreeMap<Vec<u8>, std::sync::Weak<sea_signals::SignalRoom>>>,
     /// Storage namespace for file modes.
     root: PathBuf,
     /// Configured storage guarantees.
@@ -195,6 +197,7 @@ impl BuiltInSeaHost {
     pub fn new(root: PathBuf, mode: StorageMode) -> Self {
         Self {
             inner: Arc::new(HostInner {
+                signals: Mutex::new(BTreeMap::new()),
                 root,
                 mode,
                 backend: Mutex::new(None),
@@ -211,6 +214,14 @@ impl BuiltInSeaHost {
         session: SessionId,
         reference: Option<EventPosition>,
     ) -> Result<(DocumentId, Arc<dyn SeaConnectionService>), protocol::Response> {
+        let backend = self.backend().await?;
+        backend
+            .open_session(archive_id, intent, author, session, reference)
+            .await
+    }
+
+    /// Initializes storage without opening author membership.
+    async fn backend(&self) -> Result<Arc<Backend>, protocol::Response> {
         let backend = {
             let mut current = self.inner.backend.lock().await;
             if current.is_none() {
@@ -230,15 +241,14 @@ impl BuiltInSeaHost {
             }
             current.as_ref().expect("backend initialized").clone()
         };
-        backend
-            .open_session(archive_id, intent, author, session, reference)
-            .await
+        Ok(backend)
     }
 }
 
 impl SeaServiceHost for BuiltInSeaHost {
     fn connect(&self, liveness: LivenessPolicy) -> Arc<dyn SeaConnectionService> {
         Arc::new(HostedConnection {
+            signals: Mutex::new(None),
             host: self.clone(),
             session: Mutex::new(None),
             liveness,
@@ -247,6 +257,8 @@ impl SeaServiceHost for BuiltInSeaHost {
 }
 
 struct HostedConnection {
+    /// Current signal registration, released before author reconnect grace.
+    signals: Mutex<Option<Arc<sea_signals::SignalConnection>>>,
     host: BuiltInSeaHost,
     session: Mutex<Option<HostedSession>>,
     liveness: LivenessPolicy,
@@ -259,7 +271,64 @@ struct HostedSession {
 
 #[async_trait]
 impl SeaConnectionService for HostedConnection {
+    async fn signal_datagram(&self, submission: protocol::signals::Submission) {
+        use sea_core::signals::SeaSignals as _;
+        if let Some(connection) = self.signals.lock().await.as_ref() {
+            let _ = connection.send_signal(submission.into()).await;
+        }
+    }
+    async fn open_signals(
+        &self,
+        opening: protocol::signals::OpenSignals,
+    ) -> Result<Arc<sea_signals::SignalConnection>, protocol::Response> {
+        if opening.version != protocol::PROTOCOL_VERSION {
+            return Err(unsupported_version(opening.version));
+        }
+        if opening.document.is_empty() {
+            return Err(invalid("signal document identity is empty"));
+        }
+        let mut registration = self.signals.lock().await;
+        if registration.is_some() {
+            return Err(rejected("signal stream is already open on this connection"));
+        }
+        let id = DocumentId::from_bytes(Bytes::copy_from_slice(&opening.document));
+        let backend = self.host.backend().await?;
+        match backend.as_ref() {
+            Backend::Memory(registry) => {
+                registry.open(&id).await?;
+            }
+            Backend::Buffered(registry) => {
+                registry.open(&id).await?;
+            }
+            Backend::Durable(registry) => {
+                registry.open(&id).await?;
+            }
+        }
+        let mut rooms = self.host.inner.signals.lock().await;
+        rooms.retain(|_, room| room.strong_count() > 0);
+        let room = if let Some(room) = rooms
+            .get(&opening.document)
+            .and_then(std::sync::Weak::upgrade)
+        {
+            room
+        } else {
+            let room = sea_signals::SignalRoom::new(sea_signals::SignalLimits::default())
+                .map_err(error_response)?;
+            rooms.insert(opening.document, Arc::downgrade(&room));
+            room
+        };
+        let connection = room
+            .connect(opening.member.into())
+            .map_err(error_response)?;
+        *registration = Some(connection.clone());
+        Ok(connection)
+    }
+
     async fn connection_closed(&self, allow_reconnect_grace: bool) {
+        use sea_core::signals::SeaSignals as _;
+        if let Some(signals) = self.signals.lock().await.take() {
+            let _ = signals.close_signals().await;
+        }
         if let Some(session) = self.session.lock().await.clone() {
             session.service.revoke_snapshot_publisher().await;
             if allow_reconnect_grace {
@@ -502,6 +571,135 @@ mod tests {
         LivenessPolicy, SeaServiceHost, ShutdownDisposition, ShutdownMode, TransportConfig,
         WebTransportServer,
     };
+
+    #[tokio::test]
+    #[allow(clippy::too_many_lines)]
+    async fn signals_cross_native_connections_without_archive_events() {
+        use sea_core::signals::{
+            SeaSignals, SignalDelivery, SignalEvent, SignalMember, SignalSubmission,
+        };
+        let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
+        let hash = identity.certificate_chain().as_slice()[0].hash();
+        let server = WebTransportServer::bind(
+            "127.0.0.1:0".parse().unwrap(),
+            identity,
+            Arc::new(BuiltInSeaHost::new(
+                std::env::temp_dir().join("sea-signals-test"),
+                StorageMode::Memory,
+            )),
+            TransportConfig::default(),
+        )
+        .unwrap();
+        let address = server.local_addr().unwrap();
+        let shutdown = server.shutdown_handle();
+        let exercise = async {
+            let first = NativeSeaClient::connect(
+                format!("https://{address}/sea"),
+                hash.clone(),
+                ClientTransportConfig::default(),
+                NativeSessionOpen {
+                    archive: Bytes::new(),
+                    intent: protocol::ArchiveIntent::Create,
+                    author: AuthorId::new(Bytes::from_static(b"first")).unwrap(),
+                    session: SessionId::new(Bytes::from_static(b"first")).unwrap(),
+                    reference: None,
+                },
+            )
+            .await
+            .unwrap();
+            let second = NativeSeaClient::connect(
+                format!("https://{address}/sea"),
+                hash,
+                ClientTransportConfig::default(),
+                NativeSessionOpen {
+                    archive: first.document().as_bytes().clone(),
+                    intent: protocol::ArchiveIntent::Open,
+                    author: AuthorId::new(Bytes::from_static(b"second")).unwrap(),
+                    session: SessionId::new(Bytes::from_static(b"second")).unwrap(),
+                    reference: None,
+                },
+            )
+            .await
+            .unwrap();
+            let sender = first
+                .open_signals(SignalMember {
+                    id: Bytes::from_static(b"first"),
+                    metadata: Bytes::new(),
+                })
+                .await
+                .unwrap();
+            assert!(
+                matches!(sender.next_signal().await.unwrap(), Some(SignalEvent::Members(members)) if members.len() == 1)
+            );
+            let receiver = second
+                .open_signals(SignalMember {
+                    id: Bytes::from_static(b"second"),
+                    metadata: Bytes::new(),
+                })
+                .await
+                .unwrap();
+            assert!(
+                matches!(receiver.next_signal().await.unwrap(), Some(SignalEvent::Members(members)) if members.len() == 2)
+            );
+            assert!(matches!(
+                sender.next_signal().await.unwrap(),
+                Some(SignalEvent::Joined(_))
+            ));
+            sender
+                .send_signal(SignalSubmission {
+                    target: None,
+                    payload: Bytes::from_static(b"broadcast"),
+                    delivery: SignalDelivery::Reliable,
+                })
+                .await
+                .unwrap();
+            assert_eq!(
+                sender.next_signal().await.unwrap(),
+                receiver.next_signal().await.unwrap()
+            );
+            sender
+                .send_signal(SignalSubmission {
+                    target: Some(Bytes::from_static(b"second")),
+                    payload: Bytes::from_static(b"target"),
+                    delivery: SignalDelivery::Reliable,
+                })
+                .await
+                .unwrap();
+            assert!(
+                matches!(receiver.next_signal().await.unwrap(), Some(SignalEvent::Message(message)) if message.submission.payload == "target")
+            );
+            for size in [32, 4096] {
+                let payload = Bytes::from(vec![7; size]);
+                sender
+                    .send_signal(SignalSubmission {
+                        target: Some(Bytes::from_static(b"second")),
+                        payload: payload.clone(),
+                        delivery: SignalDelivery::BestEffort,
+                    })
+                    .await
+                    .unwrap();
+                assert!(
+                    matches!(receiver.next_signal().await.unwrap(), Some(SignalEvent::Message(message)) if message.submission.payload == payload && message.submission.delivery == SignalDelivery::BestEffort)
+                );
+            }
+            let mut history = first.load(LoadStart::LatestSnapshot).await.unwrap().events;
+            assert!(
+                matches!(history.next().await.unwrap().unwrap(), sea_core::MonitoredStreamItem::Progress(progress) if progress.previous.is_none() && progress.latest_known.is_none())
+            );
+            receiver.close_signals().await.unwrap();
+            assert_eq!(
+                sender.next_signal().await.unwrap(),
+                Some(SignalEvent::Left(Bytes::from_static(b"second")))
+            );
+            first.close().await.unwrap();
+            second.close().await.unwrap();
+            shutdown.shutdown(ShutdownMode::Immediate).unwrap();
+        };
+        let (outcome, ()) = tokio::join!(server.serve_until_shutdown(), async {
+            timeout(Duration::from_secs(15), exercise).await.unwrap();
+        });
+        outcome.unwrap();
+    }
 
     #[tokio::test]
     async fn document_registry_shares_concurrent_first_opens() {

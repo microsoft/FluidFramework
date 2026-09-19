@@ -4,6 +4,11 @@
  */
 
 import type { IEventTransformer } from "@fluidframework/core-interfaces";
+import type {
+	SeaSignals,
+	SeaSignalEvent,
+	SeaSignalMember,
+} from "@fluidframework/sea-typescript/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import type {
 	ConnectionMode,
@@ -32,6 +37,7 @@ import {
 	projectOperation,
 	toSequenced,
 	type DeltaConnectionLifecycle,
+	type Listener,
 } from "./lifecycleHelpers.js";
 import type {
 	ProjectedOperation,
@@ -124,15 +130,15 @@ export interface PendingSubmission {
  */
 export class SeaDeltaConnection extends Events implements IDocumentDeltaConnection {
 	/** Registers a Fluid delta-connection event listener. */
-	public readonly on = this.addListener as unknown as IEventTransformer<
-		this,
-		IDocumentDeltaConnectionEvents
-	>;
+	public readonly on = ((event: string, listener: Listener) => {
+		if (event === "signal") this.signalListenerAttached = true;
+		return this.addListener(event, listener);
+	}) as unknown as IEventTransformer<this, IDocumentDeltaConnectionEvents>;
 	/** Registers a one-shot Fluid delta-connection event listener. */
-	public readonly once = this.onceListener as unknown as IEventTransformer<
-		this,
-		IDocumentDeltaConnectionEvents
-	>;
+	public readonly once = ((event: string, listener: Listener) => {
+		if (event === "signal") this.signalListenerAttached = true;
+		return this.onceListener(event, listener);
+	}) as unknown as IEventTransformer<this, IDocumentDeltaConnectionEvents>;
 	/** Removes a Fluid delta-connection event listener. */
 	public readonly off = this.removeListener as unknown as IEventTransformer<
 		this,
@@ -168,6 +174,12 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 	private subscription: ProjectedOperationSubscription | undefined;
 	/** Pump consuming the current projected-operation subscription. */
 	private subscriptionPump: Promise<void> | undefined;
+	/** Live relay registration, separate from ordered writer membership. */
+	private signals: SeaSignals | undefined;
+	/** Completion of the current signal receive loop. */
+	private signalPump: Promise<void> | undefined;
+	/** Keeps setup-time signals in the loader's initial batch until its first listener. */
+	private signalListenerAttached = false;
 	/** Reopened connections deliver catch-up through listeners instead of a second initial batch. */
 	private opened = false;
 	/** Whether the Fluid connection has been synchronously disposed. */
@@ -272,6 +284,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 			this.checkpointSequenceNumber =
 				messages.at(-1)?.sequenceNumber ?? this.checkpointSequenceNumber;
 		}
+		await this.openSignals();
 		this.opened = true;
 		await this.openSubscription();
 	}
@@ -331,9 +344,97 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 		}
 	}
 
-	/** Rejects signal submission because this minimal driver has no signal protocol. */
-	public submitSignal(): void {
-		throw new Error("signals are unsupported");
+	/** Uses reliable live delivery for Fluid, including self echo and optional targeting. */
+	public submitSignal(content: string, targetClientId?: string): void {
+		const signals = this.signals;
+		if (this.disposed || signals === undefined)
+			throw new Error("signal connection is not open");
+		void signals
+			.send(
+				encoder.encode(content),
+				targetClientId === undefined ? undefined : { target: encoder.encode(targetClientId) },
+			)
+			.catch((error: unknown) => {
+				if (!this.disposed && this.signals === signals)
+					this.dispose(error instanceof Error ? error : new Error(String(error)));
+			});
+	}
+
+	/** Loads a current membership snapshot before exposing subsequent live notifications. */
+	private async openSignals(): Promise<void> {
+		if (this.client.openSignals === undefined) return;
+		const signals = await this.client.openSignals({
+			id: encoder.encode(this.clientId),
+			metadata: encoder.encode(JSON.stringify(this.fluidClient)),
+		});
+		this.signals = signals;
+		const snapshot = await signals.next();
+		if (snapshot?.kind !== "members")
+			throw new Error("signal registration did not provide a membership snapshot");
+		const members = snapshot.members.map((member) => this.signalMember(member));
+		if (this.opened) {
+			this.emitSignal({ clientId: null, content: JSON.stringify({ type: "clear" }) });
+			for (const member of members) this.emitMembership(MessageType.ClientJoin, member);
+		} else {
+			this.initialClients.splice(0, this.initialClients.length, ...members);
+		}
+		this.signalPump = this.consumeSignals(signals);
+	}
+
+	/** Decodes Fluid metadata only at the driver boundary. */
+	private signalMember(member: SeaSignalMember): ISignalClient {
+		return {
+			clientId: decoder.decode(member.id),
+			client: JSON.parse(decoder.decode(member.metadata)) as IClient,
+		};
+	}
+
+	/** Encodes loader system signals; writer audience remains governed by quorum. */
+	private emitMembership(type: string, content: ISignalClient | string): void {
+		this.emitSignal({ clientId: null, content: JSON.stringify({ type, content }) });
+	}
+
+	/** Preserves setup-time messages with the same bounded failure policy as live delivery. */
+	private emitSignal(signal: ISignalMessage): void {
+		if (this.signalListenerAttached) this.emit("signal", signal);
+		else {
+			if (this.initialSignals.length >= 256)
+				throw new Error("initial signal queue overflowed");
+			this.initialSignals.push(signal);
+		}
+	}
+
+	/** Pumps independent relay traffic and rejects stale observations after replacement. */
+	private async consumeSignals(signals: SeaSignals): Promise<void> {
+		try {
+			while (!this.disposed && this.signals === signals) {
+				const event: SeaSignalEvent | undefined = await signals.next();
+				if (this.disposed || this.signals !== signals) return;
+				if (event === undefined) throw new Error("signal connection ended");
+				switch (event.kind) {
+					case "joined":
+						this.emitMembership(MessageType.ClientJoin, this.signalMember(event.member));
+						break;
+					case "left":
+						this.emitMembership(MessageType.ClientLeave, decoder.decode(event.id));
+						break;
+					case "message":
+						this.emitSignal({
+							clientId: decoder.decode(event.sender),
+							content: decoder.decode(event.payload),
+							...(event.target === undefined
+								? {}
+								: { targetClientId: decoder.decode(event.target) }),
+						} satisfies ISignalMessage);
+						break;
+					case "members":
+						throw new Error("unexpected replacement signal snapshot");
+				}
+			}
+		} catch (error) {
+			if (!this.disposed && this.signals === signals)
+				this.dispose(error instanceof Error ? error : new Error(String(error)));
+		}
 	}
 
 	/** Waits for all currently scheduled submissions or their first failure. */
@@ -377,6 +478,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 	 * Writer audience membership remains controlled by the sequenced quorum operations.
 	 */
 	private projectAudience(operations: readonly ProjectedOperation[], initial = false): void {
+		if (this.client.openSignals !== undefined) return;
 		const members = new Map<string, ISignalClient>();
 		for (const operation of operations) {
 			if (operation.eventType !== "joined" && operation.eventType !== "left") continue;
@@ -571,6 +673,12 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 
 	/** Cancels and drains the current projected subscription. */
 	private async stopSubscription(): Promise<void> {
+		const signals = this.signals;
+		const signalPump = this.signalPump;
+		this.signals = undefined;
+		this.signalPump = undefined;
+		if (signals !== undefined) await signals.close();
+		await signalPump;
 		const subscription = this.subscription;
 		this.subscription = undefined;
 		if (subscription !== undefined) {

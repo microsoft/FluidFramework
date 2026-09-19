@@ -75,7 +75,7 @@ The shared Fluid container helpers retain their existing bounded cleanup-timer l
 
 Automatic summarization and garbage collection are disabled for this adapter.
 The initial summary and subsequent operation history support loading, but no bounded-history or background-compaction guarantee is made.
-The wrapper does not add automatic reconnect, application signals, authentication, or production membership semantics.
+The wrapper does not add automatic reconnect, authentication, or production membership semantics.
 The driver depends on the standard loader/runtime helpers but still has no transitive SharedTree dependency, including development dependencies.
 
 ## Guarantees and Limits
@@ -103,9 +103,14 @@ Normal Fluid containers use the runtime's pending-state processing and reconnect
 The neutral-session adapter owns Fluid initialization events and the bidirectional mapping between opaque SEA positions and Fluid sequence numbers.
 It announces membership through the neutral session contract and projects shared joined/left records with per-connection identities.
 Read-only membership records occupy sequence positions without adding readers to the writer quorum.
-Initial audience state is rebuilt from retained joins and leaves, excluding departed sessions.
-Live read-only joins and leaves are also delivered as Fluid system signals; writers remain controlled by quorum operations.
-This projection uses the same durable membership history, not an independent presence service or application-signal channel.
+Initial audience state and live read-only joins/leaves use the independent signal room; writers remain controlled by sequenced quorum operations.
+Legacy injected clients without a signal capability retain the durable-history audience projection.
+Application signals use reliable delivery, including sender echo and optional `targetClientId`; Fluid never opts into Sea best effort.
+The driver preserves setup-time signals in a bounded initial batch and ignores observations from replaced registrations.
+Signal delivery failure disconnects the delta connection rather than silently dropping reliable messages.
+Payloads are unchanged Fluid signal strings; the Sea host does not interpret Presence state or revision semantics.
+Existing Fluid broadcast and targeted-signal E2E suites run against the Rust WebSocket listener.
+Presence uses this runtime signal path, but these tests are not a separate Presence convergence suite.
 The projected Fluid minimum sequence number maps SEA's durable admission floor into the same dense sequence space.
 It advances monotonically across membership changes and reopening, independently of server history retention.
 The adapter still retains all operation history; floor enforcement does not claim garbage collection or compaction.
@@ -125,7 +130,7 @@ Full service disposal or a new delta session drains admitted archive work and cl
 Transferred projected subscriptions remain cancellation-owned by their driver consumer.
 The pre-opened event stream can be transferred only once; later subscriptions at the same cursor open independent readers, and cancelling one does not cancel another.
 
-Application signals, automatic reconnect, authentication, and garbage collection remain incomplete.
+Automatic reconnect, authentication, and garbage collection remain incomplete.
 Ordered writer membership is implemented, but this does not establish production driver conformance.
 Summary download materializes a full tree rather than preserving handles.
 See the harness's [storage and lifecycle contracts](../../tests/minimal-fluid-driver/README.md) for the generated-client projection and snapshot semantics.

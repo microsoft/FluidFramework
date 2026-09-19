@@ -18,6 +18,10 @@ use super::{BidirectionalStream, ClientTransport};
 /// Browser connection primitive used by the shared Sea client.
 pub struct BrowserTransport {
     transport: WebTransport,
+    /// Datagram stream locks and retained reads, separate from reliable logical streams.
+    datagrams: BrowserBidirectionalStream,
+    /// Browser-advertised datagram size, which may change during the connection.
+    datagram_options: JsValue,
 }
 
 impl BrowserTransport {
@@ -31,11 +35,28 @@ impl BrowserTransport {
         hash.set_value_u8_array(&Uint8Array::from(certificate_hash));
         let options = WebTransportOptions::new();
         options.set_server_certificate_hashes(&[hash]);
-        let connected = Self {
-            transport: WebTransport::new_with_options(url, &options)?,
+        let transport = WebTransport::new_with_options(url, &options)?;
+        JsFuture::from(transport.ready()).await?;
+        let datagram_options = Reflect::get(&transport, &JsValue::from_str("datagrams"))?;
+        let readable: ReadableStream =
+            Reflect::get(&datagram_options, &JsValue::from_str("readable"))?.dyn_into()?;
+        let writable: WritableStream =
+            Reflect::get(&datagram_options, &JsValue::from_str("writable"))?.dyn_into()?;
+        let datagrams = BrowserBidirectionalStream {
+            state: Rc::new(BrowserStreamState {
+                writer: writable.get_writer()?.unchecked_into(),
+                reader: readable.get_reader().unchecked_into(),
+                finished: Cell::new(false),
+                cancelled: Cell::new(false),
+                ended: Cell::new(false),
+                pending_receive: RefCell::new(None),
+            }),
         };
-        JsFuture::from(connected.transport.ready()).await?;
-        Ok(connected)
+        Ok(Self {
+            transport,
+            datagrams,
+            datagram_options,
+        })
     }
 }
 
@@ -49,6 +70,35 @@ impl Drop for BrowserTransport {
 impl ClientTransport for BrowserTransport {
     type Stream = BrowserBidirectionalStream;
     type Error = JsValue;
+
+    fn supports_datagrams(&self) -> bool {
+        true
+    }
+
+    async fn send_datagram(&self, bytes: &[u8]) -> Result<bool, JsValue> {
+        let limit = Reflect::get(
+            &self.datagram_options,
+            &JsValue::from_str("maxDatagramSize"),
+        )?
+        .as_f64()
+        .unwrap_or(0.0);
+        if !u32::try_from(bytes.len())
+            .map(f64::from)
+            .is_ok_and(|length| length <= limit)
+        {
+            return Ok(false);
+        }
+        self.datagrams.clone().send(bytes).await?;
+        Ok(true)
+    }
+
+    async fn receive_datagram(&self) -> Result<Vec<u8>, JsValue> {
+        self.datagrams
+            .clone()
+            .receive()
+            .await?
+            .ok_or_else(|| js_error("datagram stream ended"))
+    }
 
     async fn open_bidirectional(&self) -> Result<Self::Stream, Self::Error> {
         let stream = JsFuture::from(self.transport.create_bidirectional_stream())

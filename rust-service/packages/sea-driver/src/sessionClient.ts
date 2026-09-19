@@ -9,6 +9,8 @@ import type {
 	SeaLoadResult,
 	SeaSession,
 	SeaSessionOptions,
+	SeaSignalMember,
+	SeaSignals,
 	SeaSnapshotCoordination,
 	SeaStream,
 	SeaTreeId,
@@ -247,6 +249,11 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	/** Announces Fluid metadata while keeping its interpretation above the neutral session API. */
 	public async announceMembership(metadata: Uint8Array): Promise<void> {
 		await this.current().announceMembership(metadata);
+	}
+
+	/** Opens the neutral relay without adding signal traffic to event history. */
+	public openSignals(member: SeaSignalMember): Promise<SeaSignals> {
+		return this.current().openSignals(member);
 	}
 
 	/** Submits serialized Fluid data with its original operation identity.

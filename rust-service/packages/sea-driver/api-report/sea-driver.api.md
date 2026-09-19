@@ -110,7 +110,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
     resubmitPending(transform: (suffix: readonly PendingSubmission[]) => readonly IDocumentMessage[]): Promise<void>;
     readonly serviceConfiguration: IClientConfiguration;
     submit(messages: IDocumentMessage[]): void;
-    submitSignal(): void;
+    submitSignal(content: string, targetClientId?: string): void;
     subscriptionBatchCount: number;
     synchronize(): Promise<ISequencedDocumentMessage[]>;
     readonly version = "^0.1.0";
@@ -180,6 +180,7 @@ export interface SeaDriverClient {
         readonly atEvent?: Uint8Array;
     } | undefined>;
     openSession(document: Uint8Array, writer: Uint8Array, session: Uint8Array, resumeAfter?: Uint8Array): Promise<void>;
+    openSignals?(member: SeaSignalMember): Promise<SeaSignals>;
     positionForSequence(sequenceNumber: number): Uint8Array | undefined;
     publishSnapshotRoot(expectedParent: Uint8Array | undefined, atEvent: Uint8Array | undefined, root: Uint8Array): Promise<Uint8Array>;
     publishSummary(entries: readonly SummaryEntry[]): Promise<SummaryPublication>;
@@ -218,6 +219,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
     fetchSummary(digest: Uint8Array): Promise<readonly SummaryEntry[]>;
     latestSnapshot(): ReturnType<SeaDriverClient["latestSnapshot"]>;
     openSession(document: Uint8Array, writer: Uint8Array, session: Uint8Array, resumeAfter?: Uint8Array): Promise<void>;
+    openSignals(member: SeaSignalMember): Promise<SeaSignals>;
     positionForSequence(sequenceNumber: number): Uint8Array | undefined;
     publishSnapshotRoot(expectedParent: Uint8Array | undefined, atEvent: Uint8Array | undefined, root: Uint8Array): Promise<Uint8Array>;
     publishSummary(entries: readonly SummaryEntry[]): Promise<SummaryPublication>;

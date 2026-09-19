@@ -1,6 +1,7 @@
 #![doc = include_str!("../README.md")]
 
 pub mod protocol;
+pub mod signals;
 
 #[cfg(feature = "websocket-stream")]
 pub mod websocket;

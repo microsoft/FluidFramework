@@ -20,6 +20,7 @@ sea-file = { path = "../sea-file" }
 sea-file-durable = { path = "../sea-file-durable" }
 sea-memory = { path = "../sea-memory" }
 sea-sequencer = { path = "../sea-sequencer" }
+sea-signals = { path = "../sea-signals" }
 sea-webtransport = { path = "../sea-webtransport" }
 tokio.workspace = true
 thiserror.workspace = true

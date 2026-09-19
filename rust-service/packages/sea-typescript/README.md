@@ -25,7 +25,37 @@ Unannounced sessions retain application-only history.
 `minimumReference` is the durable document-wide admission floor, not an active-member minimum.
 It never decreases, including after new membership or recovery; an absent submission reference is below every concrete floor.
 Advances commit atomically with their carrying event and arrive in the same live/replay order.
-Remote consumers must rebuild client and server together for protocol version 7.
+Remote consumers must rebuild client and server together for protocol version 8.
+
+## Live Signals
+
+`session.openSignals({ id, metadata })` returns a separately closable `SeaSignals` connection.
+Identities and metadata are byte arrays; metadata is public to other current members.
+The first `next()` returns `{ kind: "members", members }`, followed by `joined`, `left`, and `message` events.
+A message carries `sender`, `payload`, optional `target`, and the requested `delivery` mode.
+
+```typescript
+const signals = await session.openSignals({ id: connectionId, metadata: new Uint8Array() });
+const initialMembership = await signals.next();
+await signals.send(payload);
+await signals.send(payload, { target: peerId, delivery: "bestEffort" });
+await signals.close();
+```
+
+Broadcast includes self; targeting a missing current member succeeds without delivery.
+Reliable is the default and applies only while the connection is live, not across failures or reconnect.
+Best effort permits loss/reordering and uses WebTransport datagrams when supported and small enough.
+Each hop independently falls back to reliable transport before datagram admission; there is no retry after admission.
+Messages have no persistence, replay, event positions, or ordering relationship with document operations.
+Archive compression does not transform signal bytes.
+
+Only one `next()` may be pending per connection.
+`close()` is idempotent, wakes pending reads, and leaves archive access open; closing the session also closes its signals.
+The wrapper defers freeing generated objects until admitted calls settle.
+Reliable queue overflow is a failure, not a silent drop; best-effort overflow may drop.
+The remote host currently permits one signal registration per physical connection lifetime, so reopening signals requires a fresh remote session.
+The built-in service has no production authentication or tenant quota policy.
+See [the neutral relay contract](../../crates/sea-signals/README.md) and [transport behavior](../../crates/sea-webtransport/README.md).
 
 ```typescript
 import { createMemoryService } from "@fluidframework/sea-typescript/internal/memory";

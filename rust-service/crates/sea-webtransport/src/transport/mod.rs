@@ -31,6 +31,21 @@ pub trait ClientTransport {
     /// Transport-specific failure.
     type Error;
 
+    /// Whether this connection exposes a usable datagram path.
+    fn supports_datagrams(&self) -> bool {
+        false
+    }
+
+    /// Sends one datagram, returning false only before admission when fallback is needed.
+    async fn send_datagram(&self, _bytes: &[u8]) -> Result<bool, Self::Error> {
+        Ok(false)
+    }
+
+    /// Receives one datagram; unsupported transports remain pending until cancelled.
+    async fn receive_datagram(&self) -> Result<Vec<u8>, Self::Error> {
+        std::future::pending().await
+    }
+
     /// Opens one bidirectional stream.
     async fn open_bidirectional(&self) -> Result<Self::Stream, Self::Error>;
 

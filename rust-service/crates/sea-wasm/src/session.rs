@@ -28,7 +28,7 @@ pub struct BindingError {
 
 impl BindingError {
     /// Preserves the classification and diagnostic of a concrete stack failure.
-    fn from_error(error: &impl ClassifiedError) -> Self {
+    pub(crate) fn from_error(error: &impl ClassifiedError) -> Self {
         Self {
             kind: error.kind(),
             message: error.to_string(),

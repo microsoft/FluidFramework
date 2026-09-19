@@ -283,6 +283,18 @@ pub type SeaResponseStream = Pin<Box<dyn Stream<Item = sea_v1::Response> + Send 
 /// Per-connection final Sea protocol dispatcher.
 #[async_trait]
 pub trait SeaConnectionService: Send + Sync {
+    /// Admits an authenticated connection's best-effort datagram after its signal handshake.
+    async fn signal_datagram(&self, _submission: sea_v1::signals::Submission) {}
+    /// Opens ephemeral messaging without creating author membership.
+    async fn open_signals(
+        &self,
+        _opening: sea_v1::signals::OpenSignals,
+    ) -> Result<Arc<sea_signals::SignalConnection>, sea_v1::Response> {
+        Err(sea_v1::Response::Error {
+            kind: sea_v1::ErrorKind::Rejected,
+            message: "signals are unsupported by this host".to_owned(),
+        })
+    }
     /// Releases all session state owned by this network connection.
     async fn connection_closed(&self, allow_reconnect_grace: bool);
 
@@ -559,6 +571,17 @@ async fn serve_connection_streams(
     let mut streams = FuturesUnordered::new();
     loop {
         tokio::select! {
+            datagram = connection.receive_datagram() => {
+                let Ok(datagram) = datagram else { return Ok(()); };
+                let mut decoder = sea_v1::NetworkFrameDecoder::new(sea_v1::Limits { max_frame_bytes: config.max_frame_bytes });
+                decoder.push(&datagram.payload());
+                if let Ok(Some(frame)) = decoder.next_frame()
+                    && decoder.finish().is_ok()
+                    && let Ok(sea_v1::Request::SendSignal(submission)) = sea_v1::decode_request_frame(sea_v1::StreamRole::Signal, &frame)
+                    && submission.best_effort {
+                    service.signal_datagram(submission).await;
+                }
+            }
             accepted = connection.accept_bi(), if streams.len() < config.max_streams_per_connection => {
                 let Ok((send, receive)) = accepted else {
                     return Ok(());
@@ -566,9 +589,10 @@ async fn serve_connection_streams(
                 let service = Arc::clone(&service);
                 let config = config.clone();
                 let metrics = Arc::clone(&metrics);
+                let datagrams = Some(connection.clone());
                 streams.push(async move {
                     let _active = metrics.enter_stream();
-                    serve_sea_stream(send, receive, service, &config, &metrics).await
+                    serve_sea_stream_with_datagrams(send, receive, service, &config, &metrics, datagrams).await
                 });
             }
             _ = streams.next(), if !streams.is_empty() => {}
@@ -576,19 +600,32 @@ async fn serve_connection_streams(
     }
 }
 
+#[cfg(feature = "websocket-stream")]
 pub(crate) async fn serve_sea_stream(
+    send: impl SendStream,
+    receive: impl ReceiveStream,
+    service: Arc<dyn SeaConnectionService>,
+    config: &TransportConfig,
+    metrics: &Metrics,
+) -> Result<(), WebTransportError> {
+    serve_sea_stream_with_datagrams(send, receive, service, config, metrics, None).await
+}
+
+/// Dispatches a logical stream with an optional independently negotiated datagram path.
+async fn serve_sea_stream_with_datagrams(
     send: impl SendStream,
     mut receive: impl ReceiveStream,
     service: Arc<dyn SeaConnectionService>,
     config: &TransportConfig,
     metrics: &Metrics,
+    datagrams: Option<Connection>,
 ) -> Result<(), WebTransportError> {
     let mut prefix = [0_u8; 4];
     timeout(config.operation_timeout, receive.read_exact(&mut prefix))
         .await
         .map_err(|_| WebTransportError::Timeout)?
         .map_err(transport_error)?;
-    serve_network_stream(send, receive, prefix, service, config, metrics).await
+    serve_network_stream(send, receive, prefix, service, config, metrics, datagrams).await
 }
 
 #[allow(clippy::too_many_lines)]
@@ -599,6 +636,7 @@ async fn serve_network_stream(
     service: Arc<dyn SeaConnectionService>,
     config: &TransportConfig,
     metrics: &Metrics,
+    datagrams: Option<Connection>,
 ) -> Result<(), WebTransportError> {
     let limits = sea_v1::Limits {
         max_frame_bytes: config.max_frame_bytes,
@@ -619,6 +657,19 @@ async fn serve_network_stream(
     let correlation_id = frame.correlation_id;
     let request = sea_v1::decode_request_frame(role, &frame)?;
     metrics.add_wire_bytes(4 + 1 + 8 + frame.payload.len());
+    if let sea_v1::Request::OpenSignalStream(opening) = request {
+        return serve_signal_stream(
+            send,
+            receive,
+            service,
+            config,
+            metrics,
+            correlation_id,
+            opening,
+            datagrams,
+        )
+        .await;
+    }
     if matches!(request, sea_v1::Request::OpenAuthorStream { .. }) {
         return serve_author_stream(
             send,
@@ -792,6 +843,89 @@ async fn serve_author_stream(
     }
     .await;
     let _ = service.author_request(sea_v1::Request::Close).await;
+    result
+}
+
+/// Pumps live signals independently of archive traffic and releases membership on every exit.
+#[allow(clippy::too_many_arguments)]
+async fn serve_signal_stream(
+    mut send: impl SendStream,
+    mut receive: impl ReceiveStream,
+    service: Arc<dyn SeaConnectionService>,
+    config: &TransportConfig,
+    metrics: &Metrics,
+    correlation_id: u64,
+    opening: sea_v1::signals::OpenSignals,
+    datagrams: Option<Connection>,
+) -> Result<(), WebTransportError> {
+    use sea_core::signals::SeaSignals as _;
+    let role = sea_v1::StreamRole::Signal;
+    let limits = sea_v1::Limits {
+        max_frame_bytes: config.max_frame_bytes,
+    };
+    let datagrams = datagrams.filter(|_| opening.datagrams);
+    let connection = match service.open_signals(opening).await {
+        Ok(connection) => connection,
+        Err(response) => {
+            return write_network_response(
+                &mut send,
+                role,
+                correlation_id,
+                &response,
+                limits,
+                config.operation_timeout,
+                metrics,
+                true,
+            )
+            .await;
+        }
+    };
+    let result = async {
+        write_network_response(&mut send, role, correlation_id, &sea_v1::Response::Acknowledged, limits, config.operation_timeout, metrics, false).await?;
+        let mut decoder = sea_v1::NetworkFrameDecoder::new(limits);
+        loop {
+            tokio::select! {
+                frame = read_next_network_frame(&mut receive, &mut decoder, config.operation_timeout) => {
+                    let Some(frame) = frame? else { break; };
+                    metrics.add_wire_bytes(13 + frame.payload.len());
+                    let request = sea_v1::decode_request_frame(role, &frame)?;
+                    let close = matches!(request, sea_v1::Request::Close);
+                    let response = match request {
+                        sea_v1::Request::SendSignal(submission) => match connection.send_signal(submission.into()).await {
+                            Ok(()) => sea_v1::Response::Acknowledged,
+                            Err(error) => crate::dispatch::error_response(error),
+                        },
+                        sea_v1::Request::Close => sea_v1::Response::Acknowledged,
+                        _ => sea_v1::Response::Error { kind: sea_v1::ErrorKind::Rejected, message: "invalid signal request".to_owned() },
+                    };
+                    let failed = matches!(response, sea_v1::Response::Error { .. });
+                    write_network_response(&mut send, role, frame.correlation_id, &response, limits, config.operation_timeout, metrics, false).await?;
+                    if close || failed { break; }
+                }
+                event = connection.next_signal() => {
+                    let response = match event {
+                        Ok(Some(event)) => sea_v1::Response::SignalEvent(event.into()),
+                        Ok(None) => break,
+                        Err(error) => crate::dispatch::error_response(error),
+                    };
+                    let failed = matches!(response, sea_v1::Response::Error { .. });
+                    if let (Some(connection), sea_v1::Response::SignalEvent(sea_v1::signals::Event::Message { submission, .. })) = (&datagrams, &response)
+                        && submission.best_effort {
+                            let bytes = sea_v1::encode_response_frame(role, 0, &response, limits)?;
+                            if connection.max_datagram_size().is_some_and(|limit| bytes.len() <= limit) {
+                                connection.send_datagram(&bytes).map_err(transport_error)?;
+                                metrics.add_wire_bytes(bytes.len());
+                                continue;
+                            }
+                    }
+                    write_network_response(&mut send, role, if failed { correlation_id } else { 0 }, &response, limits, config.operation_timeout, metrics, false).await?;
+                    if failed { break; }
+                }
+            }
+        }
+        send.finish().await
+    }.await;
+    let _ = connection.close_signals().await;
     result
 }
 

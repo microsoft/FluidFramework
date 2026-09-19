@@ -7,6 +7,7 @@ pub mod blob;
 pub mod monitored_stream;
 /// Session contracts above document storage.
 pub mod session;
+pub mod signals;
 pub mod snapshot;
 pub mod storage;
 

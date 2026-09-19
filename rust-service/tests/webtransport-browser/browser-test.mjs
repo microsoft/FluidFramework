@@ -214,6 +214,78 @@ async function run() {
 		"load omitted the second streamed event",
 	);
 	const second = await open(archive, "second-author", "second-session", secondStreamedReceipt);
+	const sender = await first.openSignals({
+		id: encoder.encode("signal-first"),
+		metadata: encoder.encode("first metadata"),
+	});
+	assert((await sender.next()).kind === "members", "initial signal snapshot missing");
+	const receiver = await second.openSignals({
+		id: encoder.encode("signal-second"),
+		metadata: new Uint8Array(),
+	});
+	assert(
+		(await receiver.next()).members.length === 2,
+		"signal snapshot is not document scoped",
+	);
+	assert((await sender.next()).kind === "joined", "signal join missing");
+	await sender.send(encoder.encode("broadcast"));
+	assert((await sender.next()).kind === "message", "broadcast omitted self echo");
+	assert(
+		decoder.decode((await receiver.next()).payload) === "broadcast",
+		"broadcast omitted peer",
+	);
+	for (const size of [32, 4096]) {
+		const payload = new Uint8Array(size).fill(42);
+		await sender.send(payload, {
+			target: encoder.encode("signal-second"),
+			delivery: "bestEffort",
+		});
+		const message = await receiver.next();
+		assert(
+			message.delivery === "bestEffort" && equalBytes(message.payload, payload),
+			"best-effort or oversized fallback changed the message",
+		);
+	}
+	if (websocket && parameters.get("primaryTransport")) {
+		const peer = await openWebTransport(
+			{ url: parameters.get("primaryTransport"), certificateHash: hash },
+			archive,
+			{ author: encoder.encode("mixed-peer"), session: encoder.encode("mixed-peer") },
+		);
+		transportSessionCount++;
+		const mixed = await peer.openSignals({
+			id: encoder.encode("signal-mixed"),
+			metadata: new Uint8Array(),
+		});
+		assert((await mixed.next()).members.length === 3, "mixed transports did not share a room");
+		assert((await sender.next()).kind === "joined", "mixed join missing at sender");
+		assert((await receiver.next()).kind === "joined", "mixed join missing at receiver");
+		await mixed.send(encoder.encode("QUIC to WebSocket"), {
+			target: encoder.encode("signal-second"),
+			delivery: "bestEffort",
+		});
+		assert(
+			decoder.decode((await receiver.next()).payload) === "QUIC to WebSocket",
+			"datagram ingress failed reliable recipient fallback",
+		);
+		await sender.send(encoder.encode("WebSocket to QUIC"), {
+			target: encoder.encode("signal-mixed"),
+			delivery: "bestEffort",
+		});
+		assert(
+			decoder.decode((await mixed.next()).payload) === "WebSocket to QUIC",
+			"reliable ingress failed datagram recipient delivery",
+		);
+		await mixed.close();
+		assert((await sender.next()).kind === "left", "mixed leave missing at sender");
+		assert((await receiver.next()).kind === "left", "mixed leave missing at receiver");
+		await peer.close();
+	}
+	const pendingSignal = receiver.next();
+	await receiver.close();
+	assert((await pendingSignal) === undefined, "signal close did not wake pending read");
+	assert((await sender.next()).kind === "left", "signal leave missing");
+	await sender.close();
 	const secondSnapshotCoordination = await second.coordinateSnapshots(snapshotParticipation);
 	const secondSnapshotState = await secondSnapshotCoordination.next();
 	if (snapshotParticipation === "seaSelected") {

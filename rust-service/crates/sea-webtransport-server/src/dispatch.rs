@@ -226,6 +226,9 @@ where
         request: protocol::Request,
     ) -> Result<protocol::Response, protocol::Response> {
         match request {
+            protocol::Request::OpenSignalStream(_) | protocol::Request::SendSignal(_) => {
+                Err(invalid("signals require a signal stream"))
+            }
             request @ (protocol::Request::PutBlob { .. }
             | protocol::Request::GetBlob { .. }
             | protocol::Request::PutDirectory { .. }
@@ -459,7 +462,7 @@ fn invalid(message: &str) -> protocol::Response {
     }
 }
 
-fn error_response(error: impl ClassifiedError) -> protocol::Response {
+pub(crate) fn error_response(error: impl ClassifiedError) -> protocol::Response {
     let kind = error.kind();
     let message = error.to_string();
     drop(error);
