@@ -65,6 +65,8 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	private nextSequence = 1n;
 	/** Current document membership, independent of the factory's shared service. */
 	private session: SeaSession | undefined;
+	/** Session identity used to ignore cleanup from superseded delta connections. */
+	private sessionIdentity: Uint8Array | undefined;
 	/** Pending close retained so reopening never races prior membership disposal. */
 	private closing: Promise<void> = Promise.resolve();
 	/** Membership replacement blocks new archive reads until its setup finishes. */
@@ -169,6 +171,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 			session,
 			...(reference === undefined ? {} : { reference }),
 		});
+		this.sessionIdentity = session.slice();
 		try {
 			this.positionSequences.clear();
 			this.sequencePositions.clear();
@@ -395,7 +398,15 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	}
 
 	/** Stops owned streams immediately and retains asynchronous membership close for reopening. */
-	public disconnect(): void {
+	public disconnect(owner?: Uint8Array): void {
+		if (
+			owner !== undefined &&
+			(this.sessionIdentity === undefined ||
+				bytesKey(owner) !== bytesKey(this.sessionIdentity))
+		) {
+			return;
+		}
+		this.sessionIdentity = undefined;
 		this.eventStream?.cancel();
 		this.eventStream = undefined;
 		this.eventResumeAfter = undefined;

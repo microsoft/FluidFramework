@@ -218,6 +218,34 @@ test("terminal recovery proves a prefix before transforming only the unaccepted 
 	assert.equal(connection.pending.size, 0);
 });
 
+test("stale delta disposal cannot close a replacement session", async () => {
+	const service = await createMemoryService({ environment: "node" });
+	const adapter = new SeaSessionDriverClient(service.open, "readOnly");
+	const document = await adapter.create();
+	try {
+		await adapter.openSession(document, encoder.encode("writer"), encoder.encode("old"));
+		await adapter.announceMembership(encoder.encode('{"mode":"write"}'));
+		await adapter.openSession(document, encoder.encode("writer"), encoder.encode("new"));
+		await adapter.announceMembership(encoder.encode('{"mode":"write"}'));
+		adapter.disconnect(encoder.encode("old"));
+		assert.deepEqual(
+			(await adapter.readProjected()).operations.map((operation) => operation.eventType),
+			["joined", "left", "joined"],
+		);
+		adapter.disconnect(encoder.encode("new"));
+		await adapter.reconnect();
+		await adapter.openSession(document, encoder.encode("reader"), encoder.encode("reader"));
+		assert.deepEqual(
+			(await adapter.readProjected()).operations.map((operation) => operation.eventType),
+			["joined", "left", "joined", "left"],
+		);
+	} finally {
+		adapter.disconnect();
+		await adapter.reconnect();
+		service.close();
+	}
+});
+
 test("neutral projection preserves the durable floor across membership close and reopen", async () => {
 	const service = await createMemoryService({ environment: "node" });
 	const writer = await service.open(undefined, {

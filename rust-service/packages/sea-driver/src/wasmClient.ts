@@ -182,8 +182,8 @@ export interface SeaDriverClient {
 	publishSummary(entries: readonly SummaryEntry[]): Promise<SummaryPublication>;
 	/** Fetches a flattened summary manifest by digest. */
 	fetchSummary(digest: Uint8Array): Promise<readonly SummaryEntry[]>;
-	/** Disconnects the current transport without implicit recovery. */
-	disconnect(): void;
+	/** Disconnects transport without implicit recovery; an optional owner cannot close a replacement. */
+	disconnect(session?: Uint8Array): void;
 	/** Re-establishes transport access using adapter-specific arguments. */
 	reconnect(...args: readonly unknown[]): void | Promise<void>;
 }

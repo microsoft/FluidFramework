@@ -466,7 +466,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 	/** Disconnects transport resources while preserving recoverable lifecycle state. */
 	public disconnect(): void {
 		void this.stopSubscription();
-		this.client.disconnect();
+		this.client.disconnect(this.session);
 		this.emit("disconnect", new Error("explicit disconnect"));
 	}
 
@@ -483,6 +483,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 		if (!this.disposed) {
 			this.disposed = true;
 			void this.stopSubscription();
+			this.client.disconnect(this.session);
 			this.emit(
 				"disconnect",
 				error ?? Object.assign(new Error("delta connection disposed"), { canRetry: true }),

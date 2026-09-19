@@ -169,7 +169,7 @@ export interface SeaDriverClient {
     announceMembership?(metadata: Uint8Array): Promise<void>;
     readonly applicationSequenceOffset?: number;
     create(): Promise<Uint8Array>;
-    disconnect(): void;
+    disconnect(session?: Uint8Array): void;
     fetchBlob(digest: Uint8Array): Promise<Uint8Array>;
     fetchSummary(digest: Uint8Array): Promise<readonly SummaryEntry[]>;
     latestSnapshot(): Promise<{
@@ -205,7 +205,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
     announceMembership(metadata: Uint8Array): Promise<void>;
     readonly applicationSequenceOffset = 0;
     create(): Promise<Uint8Array>;
-    disconnect(): void;
+    disconnect(owner?: Uint8Array): void;
     fetchBlob(digest: Uint8Array): Promise<Uint8Array>;
     fetchSummary(digest: Uint8Array): Promise<readonly SummaryEntry[]>;
     latestSnapshot(): ReturnType<SeaDriverClient["latestSnapshot"]>;

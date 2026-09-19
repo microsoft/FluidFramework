@@ -176,9 +176,10 @@ Commands below run from this worktree root:
 | ID | Test and reproduction | Signature and classification | Disposition |
 | --- | --- | --- | --- |
 | SEA-001 | `Driver lifecycle smoke / Non-Compat / creates detached, attaches, loads a peer, exchanges edits, and closes`; run the SEA smoke command above. | `Timeout on waiting for pending join or leave op` in `LoaderContainerTracker.ensureSynchronized`, first synchronization after load; behavioral membership-contract mismatch with the driver's synthetic membership. | Passes after the ordered-membership fix; assertion unchanged. |
-| SEA-002 | `SharedCounter / Non-Compat / before each: Ensure synchronized / can create the counter in 3 containers correctly`; run the bounded sample above. | Same pending join/leave timeout as SEA-001. | Retained; verify after membership fix. |
-| SEA-003 | `SharedCounter - runtime benchmarks / Non-Compat / increment value in 3 containers`; run the bounded sample above. | Mocha 2000ms timeout, with transport-disconnected telemetry during cleanup. | Retained; rerun with the standard 10000ms deadline after membership fix before assigning a separate cause. |
-| SEA-004 | `Op reentry and rebasing during pending batches / Non-Compat / Pending batches with reentry - SharedCounter`; run the bounded sample above. | `Timeout on waiting a container to be saved` in `ensureSynchronized`. | Retained; investigate pending-operation acknowledgment after membership fix. |
+| SEA-002 | `SharedCounter / Non-Compat / before each: Ensure synchronized / can create the counter in 3 containers correctly`; run the bounded sample above. | Same pending join/leave timeout as SEA-001. | Passes at `4ea052fa0ff` with unchanged assertions. |
+| SEA-003 | `SharedCounter - runtime benchmarks / Non-Compat / increment value in 3 containers`; run the bounded sample above. | Mocha 2000ms timeout, with transport-disconnected telemetry during cleanup. | Passes at `4ea052fa0ff` with the standard 10000ms deadline. |
+| SEA-004 | `Op reentry and rebasing during pending batches / Non-Compat / Pending batches with reentry - SharedCounter`; run the bounded sample above. | `Timeout on waiting a container to be saved` in `ensureSynchronized`. | Passes at `4ea052fa0ff` with unchanged assertions. |
+| SEA-005 | `Container dirty flag / Non-Compat / Attached container / handles container with pending ops to be sent out`; `test:realsvc:sea --grep 'handles container with pending ops to be sent out'` at `4ea052fa0ff`. | 10000ms timeout waiting for connection after loading pending state; the old client remains in quorum because delta disposal never closes its SEA session. | Fixed by closing delta-owned authority with a session-identity guard; all four dirty-flag tests and the full selected container batch pass. |
 
 The first smoke attempt exposed a configuration defect: logical URLs omitted the tenant segment expected by the Fluid loader.
 The resolver now uses `fluid://sea-test/tests/<document>`; the subsequent attempt reached SEA-001.
@@ -285,6 +286,22 @@ RS-025 source TODOs and its known issue are removed.
 Final root `pnpm build:fast`, package build and generated API reports, scoped policy, documentation links, strict native formatting/Clippy/rustdoc/build, and complete canonical `./test.sh` all passed.
 The generated API comparison against the preceding local checkpoint `2f5f1484ab5` contains only internal `PendingSubmission.session` and `resubmitPending(transform)` changes; no customer-facing release tag, API Council review, or changeset is required.
 The contract checkpoints are ready to commit before returning to the wider SEA integration inventory.
+
+### Post-Contract Integration Batches
+
+At `4ea052fa0ff`, the normal-deadline batch selected by `Driver lifecycle smoke|SharedCounter|Container Creation|Container Loading|SharedMap` passed 25 tests.
+The next batch selected by `^(SharedString|SharedDirectory|SubDirectory operations|Detached Container)` passed 70 tests with three existing pending cases.
+The `^Container` batch with `--bail` stopped after 18 passes and 31 pending cases at SEA-005.
+Temporary phase/membership probes showed pending-state capture and load completed, but Fluid waited for the previous session's leave.
+Closing the disposed delta session produced that leave and unblocked runtime resubmission.
+All temporary probes were removed; shared assertions and test configuration remain unchanged.
+
+The fix passes the owning Node regression `stale delta disposal cannot close a replacement session`, all eleven tests in the driver test file, all four `Container dirty flag` tests, and the repeated `^Container --bail` batch (22 passing, 31 existing pending).
+The adapter now accepts an optional session owner on `disconnect`, and disposal supplies that owner so a superseded delta cannot close the new membership.
+Root/package/API generation, scoped policy, documentation checks, and complete canonical `./test.sh` passed.
+The generated API delta adds only an optional session-owner argument to internal disconnect methods; existing callers remain compatible and no customer-facing changeset or API Council review is required.
+Background summarizer startup can still emit transport-disconnected cleanup telemetry; these batches reported no associated failing assertion after the fix.
+No new SEA-specific exclusions have been added, and the complete current-version suite is not yet proven.
 
 ## Review Boundary and Later Work
 
