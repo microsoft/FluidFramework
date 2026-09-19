@@ -21,15 +21,16 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 
 ## VS Code terminal tools can interfere across subagents
 
-- **Status:** Open; coordination workaround available
+- **Status:** Open; task-based workaround verified by a focused probe, full-iteration verification pending
 - **Severity:** High
 - **Area:** Agent execution and validation evidence
 - **Evidence:** The [execution isolation investigation](historical/EXECUTION_ISOLATION_INVESTIGATION.md) inspected VS Code revision `7debcd0e2acdea1c52de81bf9ee1620444407dda` and tested extracted methods with mocked terminals.
   Subagents retain the parent chat's terminal cache key; foreground reuse has no exclusive execution ownership.
   Command startup can send Ctrl+C, preparation can remove an absolute `cd`, and overlapping completion listeners can accept another command's result.
   Original incident tool logs were unavailable, so this does not prove the cause of every historical failure.
-- **Impact:** Parallel terminal calls can interrupt validation or return results from the wrong worktree.
+- **Impact:** Concurrent calls through the shared foreground terminal can interrupt validation or return results from the wrong worktree.
   Separate worktrees, execution-subagent IDs, and Cargo targets do not isolate terminal state or output.
+  Independent process tasks provide a tested alternative for parallel command batches; whole-workstream serialization is not the default mitigation.
 - **Workaround:** Follow [terminal coordination](../.github/skills/rust-service-coordination/SKILL.md#terminal-coordination) for lightweight work and iterations.
   Use distinct process tasks with explicit cwd/environment and dedicated task terminals; a compound task with parallel dependencies passed an overlapping-process probe with correctly attributed exit codes.
   Keep workstreams parallel and serialize only access to the shared foreground terminal across the parent chat and descendants.
@@ -37,7 +38,13 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
   Autonomous cross-subagent task scheduling and task cancellation isolation remain unverified.
   Reject contaminated results and follow [execution isolation recovery](../.github/skills/rust-service-coordination/SKILL.md#execution-isolation-recovery) before rerunning checks.
   Shared-terminal serialization is an instruction-level workaround, not an enforced tool lock.
-- **Trigger:** Reassess after the VS Code/Copilot terminal tools provide exclusive ownership and command-specific completion handling, validated with concurrent same-chat commands and cancellation isolation.
+- **Follow-up:** During the next approved iteration, run an early delegate task-access and overlap probe before broad dispatch.
+  Record workstream/task/run IDs, process IDs, start/end times, checkout identity, output, and exit status for real edit/test loops and parallel batches.
+  Check cancellation isolation only with disposable tasks, not active workstream validation.
+  Record scheduling failures and coordination overhead; a throughput improvement claim requires a comparable baseline.
+- **Trigger:** Update the workaround's verification status after that instrumented iteration.
+  Close the underlying issue only after the VS Code/Copilot terminal tools provide exclusive ownership and command-specific completion handling, validated with concurrent same-chat commands and cancellation isolation.
+  A successful workaround run does not establish that the underlying tool defect is fixed.
 
 ## RS-003: Durable storage has qualified guarantees
 
