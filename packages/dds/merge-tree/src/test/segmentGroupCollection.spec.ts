@@ -124,6 +124,7 @@ describe("segmentGroupCollection", () => {
 
 		assert.equal(segmentGroupCopy.dequeue(), segmentGroup);
 		assert.deepEqual(segmentGroup.segments, [precedingSegment, segment, segmentCopy]);
+		// The copy's slot (2) must reuse the source's previous properties from slot 1.
 		assert.equal(segmentGroup.previousProps?.length, 3);
 		assert.equal(segmentGroup.previousProps?.[2], previousProps);
 		assert.equal(segmentGroups.dequeue(), segmentGroup);

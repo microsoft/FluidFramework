@@ -43,6 +43,7 @@ describe("partial lengths", () => {
 			undefined,
 		);
 
+		// The initial "hello world!" supplies the 12-character baseline at sequence 0.
 		mergeTree.startCollaboration(localClientId, /* minSeq: */ 0, /* currentSeq: */ 0);
 	});
 
@@ -75,10 +76,11 @@ describe("partial lengths", () => {
 			parent.children[0] = mergeTree.root;
 			const combined = PartialSequenceLengths.combine(parent, mergeTree.collabWindow);
 
+			// Both levels cover "hello" (5), "more " (5), and " world!" (7).
 			for (const partials of [mergeTree.root.partialLengths, combined]) {
 				assert.equal(partials.getSegmentCount(), 3);
-				assert.equal(partials.getBaselineLength(), 12);
-				assert.equal(partials.getPartialLength(1, remoteClientId), 17);
+				assert.equal(partials.getBaselineLength(), 12); // minSeq 0 excludes the insertion.
+				assert.equal(partials.getPartialLength(1, remoteClientId), 17); // 12 + 5 characters.
 			}
 		});
 
@@ -95,6 +97,7 @@ describe("partial lengths", () => {
 			const partials = PartialSequenceLengths.combine(mergeTree.root, mergeTree.collabWindow);
 
 			assert.equal(partials.getSegmentCount(), 3);
+			// minSeq 1 now includes the 12 original + 5 inserted characters in the baseline.
 			assert.equal(partials.getBaselineLength(), 17);
 			assert.equal(partials.getPartialLength(1, remoteClientId), 17);
 		});
@@ -112,8 +115,9 @@ describe("partial lengths", () => {
 		const ancestorPartials = PartialSequenceLengths.combine(ancestor, mergeTree.collabWindow);
 		ancestor.partialLengths = ancestorPartials;
 
+		// No edits here: each level still represents one 12-character text segment.
 		childPartials.invalidateIncrementalPropagation(1);
-		childPartials.invalidateIncrementalPropagation(2);
+		childPartials.invalidateIncrementalPropagation(2); // Only sequence 2 remains invalidated.
 		assert.equal(childPartials.getPartialLength(2, remoteClientId), 12);
 
 		parentPartials.update(parent, 1, remoteClientId, mergeTree.collabWindow);

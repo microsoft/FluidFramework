@@ -85,7 +85,7 @@ describe("LocalReferenceCollection", () => {
 			const ref = collection.createLocalRef(1, ReferenceType.Simple, undefined);
 			assert.equal(collection.size, 1);
 			collection.createLocalRef(2, ReferenceType.Transient, undefined);
-			assert.equal(collection.size, 1);
+			assert.equal(collection.size, 1); // Transient references are not stored.
 
 			collection.removeLocalRef(ref);
 			assert.equal(collection.size, 0);
@@ -95,7 +95,7 @@ describe("LocalReferenceCollection", () => {
 			const { collection } = setup("abc", 1);
 			addTombstones(collection, "before", ["before-0", "before-1"]);
 			addTombstones(collection, "after", ["after-0"]);
-			assert.equal(collection.size, 6);
+			assert.equal(collection.size, 6); // Three at + two before + one after.
 		});
 	});
 
