@@ -19,6 +19,9 @@ The package flow runs four fresh pages: split and combined loader presets, each 
 It verifies classified missing-document rejection, content references, live peer delivery, cancellation of a pending history read, snapshot notifications, latest and bounded lookup, and reopening.
 It also checks local memory sharing and isolation and asserts exactly the selected generated JavaScript/WASM requests: remote-only split loads no local bundle, and combined local/remote use shares one artifact pair.
 Factory construction itself must not load a generated artifact.
+Each preset/compression pair also runs a ServiceClient scenario in the existing SharedTree page.
+It covers detached creation without a session, attachment, loading by the returned ID, bidirectional edits, reopening after closing both clients, and independent attached creation.
+This is separate from the full explicit-recovery SharedTree lifecycle trace.
 An undecorated observer verifies that compression actually encodes stored bytes.
 Both snapshot participation policies are supported; ordered unique session identities keep the expected SEA-selected publisher stable during the test.
 

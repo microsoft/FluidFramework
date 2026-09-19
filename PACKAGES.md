@@ -95,12 +95,6 @@ The dependencies between layers are enforced by the layer-check command._
 | --- | --- |
 | - [@fluidframework/sea-typescript](/rust-service/packages/sea-typescript) | &nbsp; |
 
-### Sea-Driver
-
-| Packages | Layer Dependencies |
-| --- | --- |
-| - [@fluidframework/sea-driver](/rust-service/packages/sea-driver)</br>&nbsp;</br>&nbsp; | - [Core-Interfaces](#Core-Interfaces)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Sea-TypeScript](#Sea-TypeScript) |
-
 ### Loader
 
 | Packages | Layer Dependencies |
@@ -113,11 +107,17 @@ The dependencies between layers are enforced by the layer-check command._
 | --- | --- |
 | - [@fluidframework/type-factory](/packages/framework/type-factory)</br>- [@fluid-experimental/ot](/experimental/dds/ot/ot)</br>- [@fluid-experimental/sharejs-json1](/experimental/dds/ot/sharejs/json1)</br>- [@fluid-experimental/sequence-deprecated](/experimental/dds/sequence-deprecated)</br>- [@fluid-experimental/tree](/experimental/dds/tree)</br>- [@fluidframework/cell](/packages/dds/cell)</br>- [@fluid-internal/claims](/packages/dds/claims) (private)</br>- [@fluidframework/counter](/packages/dds/counter)</br>- [@fluid-experimental/ink](/packages/dds/ink)</br>- [@fluidframework/legacy-dds](/packages/dds/legacy-dds)</br>- [@fluidframework/map](/packages/dds/map)</br>- [@fluidframework/matrix](/packages/dds/matrix)</br>- [@fluidframework/merge-tree](/packages/dds/merge-tree)</br>- [@fluidframework/ordered-collection](/packages/dds/ordered-collection)</br>- [@fluid-experimental/pact-map](/packages/dds/pact-map)</br>- [@fluidframework/register-collection](/packages/dds/register-collection)</br>- [@fluidframework/sequence](/packages/dds/sequence)</br>- [@fluidframework/shared-object-base](/packages/dds/shared-object-base)</br>- [@fluidframework/shared-summary-block](/packages/dds/shared-summary-block)</br>- [@fluidframework/task-manager](/packages/dds/task-manager)</br>- [@fluidframework/tree](/packages/dds/tree)</br>- [@fluidframework/container-runtime](/packages/runtime/container-runtime)</br>- [@fluidframework/container-runtime-definitions](/packages/runtime/container-runtime-definitions)</br>- [@fluidframework/datastore](/packages/runtime/datastore)</br>- [@fluidframework/datastore-definitions](/packages/runtime/datastore-definitions)</br>- [@fluidframework/id-compressor](/packages/runtime/id-compressor)</br>- [@fluidframework/runtime-definitions](/packages/runtime/runtime-definitions)</br>- [@fluidframework/runtime-utils](/packages/runtime/runtime-utils) | - [Core-Interfaces](#Core-Interfaces)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Container-Definitions](#Container-Definitions)</br>- [Core-Utils](#Core-Utils)</br>- [Client-Utils](#Client-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils)</br>- [Driver-Utils](#Driver-Utils)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; |
 
+### Sea-Driver
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/sea-driver](/rust-service/packages/sea-driver)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Core-Interfaces](#Core-Interfaces)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Container-Definitions](#Container-Definitions)</br>- [Core-Utils](#Core-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils)</br>- [Sea-TypeScript](#Sea-TypeScript)</br>- [Loader](#Loader)</br>- [Runtime](#Runtime) |
+
 ### Sea-Tree
 
 | Packages | Layer Dependencies |
 | --- | --- |
-| - [@fluidframework/sea-tree](/rust-service/packages/sea-tree)</br>&nbsp; | - [Sea-Driver](#Sea-Driver)</br>- [Runtime](#Runtime) |
+| - [@fluidframework/sea-tree](/rust-service/packages/sea-tree)</br>&nbsp; | - [Runtime](#Runtime)</br>- [Sea-Driver](#Sea-Driver) |
 
 ### Framework
 
@@ -219,7 +219,7 @@ The dependencies between layers are enforced by the layer-check command._
 
 | Packages | Layer Dependencies |
 | --- | --- |
-| - [@fluidframework/azure-end-to-end-tests](/packages/service-clients/end-to-end-tests/azure-client)</br>- [@fluid-experimental/odsp-end-to-end-tests](/packages/service-clients/end-to-end-tests/odsp-client)</br>- [@fluid-internal/functional-tests](/packages/test/functional-tests) (private)</br>- [@fluid-internal/local-server-stress-tests](/packages/test/local-server-stress-tests) (private)</br>- [@fluid-internal/local-server-tests](/packages/test/local-server-tests) (private)</br>- [@fluid-internal/mocha-test-setup](/packages/test/mocha-test-setup)</br>- [@fluid-internal/test-snapshots](/packages/test/snapshots) (private)</br>- [@fluid-private/test-end-to-end-tests](/packages/test/test-end-to-end-tests)</br>- [@fluid-internal/test-service-load](/packages/test/test-service-load)</br>- [@fluidframework/test-utils](/packages/test/test-utils)</br>- [@fluid-private/test-version-utils](/packages/test/test-version-utils)</br>- [@fluid-experimental/minimal-wasm-driver](/rust-service/tests/minimal-fluid-driver) (private)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Core-Interfaces](#Core-Interfaces)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Container-Definitions](#Container-Definitions)</br>- [Core-Utils](#Core-Utils)</br>- [Client-Utils](#Client-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils)</br>- [Driver-Utils](#Driver-Utils)</br>- [Other-Utils](#Other-Utils)</br>- [Tool-Utils](#Tool-Utils)</br>- [Driver](#Driver)</br>- [Sea-TypeScript](#Sea-TypeScript)</br>- [Sea-Driver](#Sea-Driver)</br>- [Loader](#Loader)</br>- [Runtime](#Runtime)</br>- [Sea-Tree](#Sea-Tree)</br>- [Framework](#Framework)</br>- [Build](#Build)</br>- [UberPackage](#UberPackage)</br>- [Server-Libs](#Server-Libs)</br>- [Server-Tools](#Server-Tools)</br>- [Routerlicious-Driver](#Routerlicious-Driver)</br>- [ServiceClients](#ServiceClients)</br>- [Test-Utils](#Test-Utils)</br>- [Tools](#Tools) |
+| - [@fluidframework/azure-end-to-end-tests](/packages/service-clients/end-to-end-tests/azure-client)</br>- [@fluid-experimental/odsp-end-to-end-tests](/packages/service-clients/end-to-end-tests/odsp-client)</br>- [@fluid-internal/functional-tests](/packages/test/functional-tests) (private)</br>- [@fluid-internal/local-server-stress-tests](/packages/test/local-server-stress-tests) (private)</br>- [@fluid-internal/local-server-tests](/packages/test/local-server-tests) (private)</br>- [@fluid-internal/mocha-test-setup](/packages/test/mocha-test-setup)</br>- [@fluid-internal/test-snapshots](/packages/test/snapshots) (private)</br>- [@fluid-private/test-end-to-end-tests](/packages/test/test-end-to-end-tests)</br>- [@fluid-internal/test-service-load](/packages/test/test-service-load)</br>- [@fluidframework/test-utils](/packages/test/test-utils)</br>- [@fluid-private/test-version-utils](/packages/test/test-version-utils)</br>- [@fluid-experimental/minimal-wasm-driver](/rust-service/tests/minimal-fluid-driver) (private)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Core-Interfaces](#Core-Interfaces)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Container-Definitions](#Container-Definitions)</br>- [Core-Utils](#Core-Utils)</br>- [Client-Utils](#Client-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils)</br>- [Driver-Utils](#Driver-Utils)</br>- [Other-Utils](#Other-Utils)</br>- [Tool-Utils](#Tool-Utils)</br>- [Driver](#Driver)</br>- [Sea-TypeScript](#Sea-TypeScript)</br>- [Loader](#Loader)</br>- [Runtime](#Runtime)</br>- [Sea-Driver](#Sea-Driver)</br>- [Sea-Tree](#Sea-Tree)</br>- [Framework](#Framework)</br>- [Build](#Build)</br>- [UberPackage](#UberPackage)</br>- [Server-Libs](#Server-Libs)</br>- [Server-Tools](#Server-Tools)</br>- [Routerlicious-Driver](#Routerlicious-Driver)</br>- [ServiceClients](#ServiceClients)</br>- [Test-Utils](#Test-Utils)</br>- [Tools](#Tools) |
 
 ### Azure-Examples
 

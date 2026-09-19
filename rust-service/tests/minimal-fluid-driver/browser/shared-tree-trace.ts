@@ -7,6 +7,7 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import { Loader } from "@fluidframework/container-loader/internal";
 import type { IRequest, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import type {
+	FluidContainer,
 	IClient,
 	IResolvedUrl,
 	IUrlResolver,
@@ -18,10 +19,18 @@ import {
 } from "@fluidframework/fluid-static/internal";
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/legacy";
+import { defineTreeDataStore } from "@fluidframework/tree/internal";
 
-import { openWebTransport, type SeaSession } from "@fluidframework/sea-typescript/internal";
+import {
+	createSeaFactories,
+	openWebTransport,
+	type SeaSession,
+} from "@fluidframework/sea-typescript/internal";
 import { type SeaDeltaConnection, SeaDriver } from "../src/index.js";
-import { SeaSessionDriverClient } from "@fluidframework/sea-driver/internal";
+import {
+	createSeaServiceClient,
+	SeaSessionDriverClient,
+} from "@fluidframework/sea-driver/internal";
 
 /** Browser hooks used by the headless trace runner and failure diagnostics. */
 declare global {
@@ -140,6 +149,93 @@ async function waitForConnected(container: {
 	});
 }
 
+/** Exercises the shared ServiceClient contract against real remote sessions. */
+async function runServiceClient(
+	url: string,
+	certificateHash: Uint8Array,
+): Promise<Record<string, unknown>> {
+	const preset = parameters.get("preset") === "combined" ? "combined" : "split";
+	const compression = parameters.get("compression") === "true";
+	const factories = createSeaFactories({ preset, compressionSupport: compression });
+	const containers: FluidContainer[] = [];
+	const opened: SeaSession[] = [];
+	const client = createSeaServiceClient({
+		oldestSupportedClient: "2.20.0",
+		openSession: async (document, options) => {
+			const session = await factories.openWebTransport({ url, certificateHash }, document, {
+				...options,
+				compression,
+			});
+			opened.push(session);
+			return session;
+		},
+	});
+	const kind = defineTreeDataStore({
+		type: "sea-service-client-browser",
+		config: treeConfiguration,
+		initializer: () => new SharedState({ value: 0 }),
+	});
+	try {
+		setStage("service-client-detached");
+		const detached = await client.createContainer(kind);
+		containers.push(detached);
+		assert(
+			detached.id === undefined && opened.length === 0,
+			"detached creation must not open SEA",
+		);
+		detached.data.root.value = 7;
+		setStage("service-client-attach");
+		const attached = await detached.attach();
+		assert(
+			attached === detached && attached.id.length > 0,
+			"attachment must retain the container and assigned identity",
+		);
+		setStage("service-client-load");
+		const peer = await client.loadContainer(attached.id, kind);
+		containers.push(peer);
+		assert(peer.data.root.value === 7, "initial ServiceClient summary must reload");
+		attached.data.root.value = 11;
+		await waitUntil(
+			() => peer.data.root.value === 11,
+			"ServiceClient peer did not receive an edit",
+		);
+		peer.data.root.value = 13;
+		await waitUntil(
+			() => attached.data.root.value === 13,
+			"ServiceClient writer did not receive the peer edit",
+		);
+		attached.close();
+		peer.close();
+		setStage("service-client-reopen");
+		const reopened = await client.loadContainer(attached.id, kind);
+		containers.push(reopened);
+		await waitUntil(
+			() => reopened.data.root.value === 13,
+			"closed ServiceClient document did not reopen",
+		);
+		const fresh = await client.createAttachedContainer(kind);
+		containers.push(fresh);
+		assert(
+			fresh.id !== attached.id && fresh.data.root.value === 0,
+			"attached creation must allocate independent documents",
+		);
+		return {
+			status: "passed",
+			browser: navigator.userAgent,
+			environment: "Chromium inside Codespace",
+			preset,
+			compression,
+			serviceClient: true,
+			transport: "real WebTransport",
+			transportSessionCount: opened.length,
+			finalValue: 13,
+		};
+	} finally {
+		for (const container of containers) container.close();
+		await Promise.all(opened.map(async (session) => session.close()));
+	}
+}
+
 /** Executes the browser lifecycle trace and returns its structured evidence. */
 async function run(): Promise<Record<string, unknown>> {
 	const transportUrl = parameters.get("transport");
@@ -150,6 +246,9 @@ async function run(): Promise<Record<string, unknown>> {
 	const hash = Uint8Array.from(certificateHex.match(/../gu) ?? [], (value) =>
 		Number.parseInt(value, 16),
 	);
+	if (parameters.get("serviceClient") === "true") {
+		return runServiceClient(transportUrl, hash);
+	}
 	const documentId = `shared-tree-${Date.now()}`;
 	let resolvedUrl: IResolvedUrl = {
 		type: "fluid",

@@ -15,6 +15,7 @@ import type { ISummaryContext } from "@fluidframework/driver-definitions/interna
 import {
 	SeaDocumentStorage,
 	SeaDocumentService,
+	SeaDriver,
 	SeaDeltaConnection,
 	SeaSessionDriverClient,
 } from "@fluidframework/sea-driver/internal";
@@ -408,6 +409,29 @@ class SummaryFixtureClient implements SeaDriverClient {
 
 	public async reconnect(): Promise<void> {}
 }
+
+test("driver creation disposes its client when initial summary upload fails", async () => {
+	const client = new SummaryFixtureClient();
+	let disconnected = false;
+	client.disconnect = () => {
+		disconnected = true;
+	};
+	client.uploadBlob = async () => {
+		throw new Error("injected summary upload failure");
+	};
+	const driver = new SeaDriver(async () => client);
+	await assert.rejects(
+		driver.createContainer(tree({ leaf: blob("initial") }), {
+			type: "fluid",
+			id: "new",
+			url: "fluid://sea/documents/new",
+			tokens: {},
+			endpoints: {},
+		}),
+		/injected summary upload failure/u,
+	);
+	assert.equal(disconnected, true);
+});
 
 test("incremental summaries reuse tree and blob handles and include attachments", async () => {
 	const client = new SummaryFixtureClient();

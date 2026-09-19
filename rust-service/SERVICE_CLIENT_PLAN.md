@@ -1,6 +1,6 @@
 # SEA WASM and ServiceClient Integration Plan
 
-Status: In progress; stages 1 through 3 are complete. Stage 4, ServiceClient integration, is next.
+Status: In progress; stages 1 through 4 are complete. Stage 5 example integration and interactive acceptance are next.
 Created: 2026-09-18.
 
 This is an active implementation plan, not a description of supported functionality.
@@ -230,11 +230,20 @@ Measurements support later comparison; this stage does not require an extensive 
 
 ### 4. Implement the ServiceClient API
 
-- [ ] Follow the existing Tinylicious and shared runtime utility patterns rather than introducing another container framework.
-- [ ] Support detached creation, attachment, attached creation, loading by the returned document identity, registry-based data stores, `oldestSupportedClient`, and container cleanup.
-- [ ] Provide local ephemeral and remote WebTransport construction through injected factories, preserving `sea-driver` dependency isolation.
-- [ ] Document service lifetime, document identity, failure handling, and the limits inherited from SEA's current Fluid adapter.
-- [ ] Add focused contract tests for creation, attachment, loading, registry behavior, option propagation, and cleanup; reuse existing test helpers where practical.
+`createSeaServiceClient` now uses the standard runtime and ServiceClient helpers with an injected neutral session factory.
+The driver remains independent of SharedTree and generated artifact layout.
+Focused Node tests passed creation, attachment, reload, registry and compatibility options, and failure cleanup.
+Failure injection exposed an existing initial-summary ownership leak; `SeaDriver.createContainer` now disposes its not-yet-transferred service on failure, with a direct driver regression as well as the ServiceClient test.
+Chromium 152 inside the Codespace passed all four remote preset/compression cases, including bidirectional edits and reopening after both clients close.
+The canonical Rust gates, documentation check, `./test.sh`, repository policy, dependency-layer checks, and root `pnpm build:fast` passed.
+The root build required formatting the changed layer declaration before its successful rerun.
+No inventory UI or external-browser result is claimed by stage 4.
+
+- [x] Follow the existing Tinylicious and shared runtime utility patterns rather than introducing another container framework.
+- [x] Support detached creation, attachment, attached creation, loading by the returned document identity, registry-based data stores, `oldestSupportedClient`, and container cleanup.
+- [x] Provide local ephemeral and remote WebTransport construction through injected factories, preserving `sea-driver` dependency isolation.
+- [x] Document service lifetime, document identity, failure handling, and the limits inherited from SEA's current Fluid adapter.
+- [x] Add focused contract tests for creation, attachment, loading, registry behavior, option propagation, and cleanup; reuse existing test helpers where practical.
 
 Acceptance: both SEA configurations satisfy the supported `ServiceClient` contract, not just the attached-creation path used by inventory-app.
 An API wrapper must not imply support for automatic reconnect, presence, authentication, production membership, or other currently unsupported semantics.

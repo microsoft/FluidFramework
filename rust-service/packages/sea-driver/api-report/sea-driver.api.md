@@ -12,6 +12,9 @@ export interface BlobUpload {
 }
 
 // @internal
+export function createSeaServiceClient(options: SeaServiceOptions): ServiceClient;
+
+// @internal
 export interface DeltaConnectionLifecycle {
     readonly clientId: string;
     cursor: Uint8Array | undefined;
@@ -183,6 +186,11 @@ export interface SeaDriverClient {
     submitEvent(submission: Uint8Array, localSequenceNumber: number, payload: Uint8Array, referencePosition?: Uint8Array): Promise<Uint8Array>;
     subscribeProjected(after?: Uint8Array): ProjectedOperationSubscription | Promise<ProjectedOperationSubscription>;
     uploadBlob(payload: Uint8Array): Promise<BlobUpload>;
+}
+
+// @internal
+export interface SeaServiceOptions extends ServiceOptions {
+    readonly openSession: SeaSessionFactory;
 }
 
 // @internal

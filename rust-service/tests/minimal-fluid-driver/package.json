@@ -121,6 +121,7 @@
 			},
 			"test:browser": [
 				"build:driver-trace",
+				"build:shared-tree",
 				"@fluidframework/sea-typescript#build:esm"
 			],
 			"test:node": [

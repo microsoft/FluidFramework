@@ -80,7 +80,13 @@
 			},
 			"Sea-Driver": {
 				"packages": ["@fluidframework/sea-driver"],
-				"deps": ["Driver-Definitions", "Core-Interfaces", "Sea-TypeScript"]
+				"deps": [
+					"Driver-Definitions",
+					"Core-Interfaces",
+					"Sea-TypeScript",
+					"Loader",
+					"Runtime"
+				]
 			},
 			"Sea-TypeScript": {
 				"packages": ["@fluidframework/sea-typescript"],

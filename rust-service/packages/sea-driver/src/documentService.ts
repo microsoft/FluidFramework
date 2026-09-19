@@ -242,12 +242,17 @@ export class SeaDriver implements IDocumentServiceFactory {
 		_clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
 		const service = new SeaDocumentService(resolvedUrl, this.clientFactory, this.options);
-		await service.createDocument();
-		const storage = await service.connectToStorage();
-		if (createNewSummary !== undefined) {
-			await storage.uploadInitialSummary(createNewSummary);
+		try {
+			await service.createDocument();
+			const storage = await service.connectToStorage();
+			if (createNewSummary !== undefined) {
+				await storage.uploadInitialSummary(createNewSummary);
+			}
+			return service;
+		} catch (error) {
+			service.dispose();
+			throw error;
 		}
-		return service;
 	}
 
 	/** Creates a service for an existing resolved document URL. */
