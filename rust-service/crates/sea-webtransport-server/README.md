@@ -122,6 +122,8 @@ An explicit snapshot `Close` acknowledges and ends that transport stream; lease 
 
 Focused host tests cover shared first-open ownership, retry after failed initialization, backend-assigned IDs, native round trips across all three storage modes, authority checks, snapshot replacement, malformed streams, acknowledgement loss, and shutdown.
 Server tests cover admission timeout, handshake failure, path rejection, capacity reuse, and shutdown during establishment.
+The admission fixture records actual service cleanup calls and asserts the no-reconnect-grace argument for each failed admission and both shutdown modes.
 Idle and partial-frame timeout assertions use paused Tokio time at the byte-stream boundary; real QUIC admission tests use a short wall-clock deadline because its transport timers cannot safely share that virtual-clock test.
+The [browser harness](../../tests/webtransport-browser/README.md#physical-connection-release) explicitly runs a normally ignored one-slot server test for physical browser disconnect and final-owner release.
 
 Cross-crate decorator composition, including repeated WebTransport hops, is tested in [`sea-integration-tests`](../sea-integration-tests/README.md).

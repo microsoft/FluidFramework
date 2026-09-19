@@ -1168,8 +1168,71 @@ pub(crate) fn transport_error(error: impl std::fmt::Display) -> WebTransportErro
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::host::{BuiltInSeaHost, StorageMode};
+    use std::sync::Mutex;
     use wtransport::ClientConfig;
+
+    /// Records lifecycle callbacks for connections that never open Sea streams.
+    struct AdmissionService {
+        /// Reconnect-grace arguments in callback order.
+        closures: Arc<Mutex<Vec<bool>>>,
+    }
+
+    impl SeaServiceHost for AdmissionService {
+        fn connect(&self, _liveness: LivenessPolicy) -> Arc<dyn SeaConnectionService> {
+            Arc::new(Self {
+                closures: self.closures.clone(),
+            })
+        }
+    }
+
+    #[async_trait]
+    impl SeaConnectionService for AdmissionService {
+        async fn connection_closed(&self, allow_reconnect_grace: bool) {
+            self.closures.lock().unwrap().push(allow_reconnect_grace);
+        }
+
+        async fn open_event_stream(
+            &self,
+            _request: sea_v1::Request,
+        ) -> Result<SeaResponseStream, sea_v1::Response> {
+            unreachable!("admission tests do not open Sea streams")
+        }
+
+        async fn event_stream(
+            &self,
+            _resume_after: Option<u64>,
+        ) -> Result<SeaResponseStream, sea_v1::Response> {
+            unreachable!("admission tests do not open Sea streams")
+        }
+
+        async fn author_request(&self, _request: sea_v1::Request) -> sea_v1::Response {
+            unreachable!("admission tests do not open Sea streams")
+        }
+
+        async fn snapshot_stream(
+            &self,
+            _request: sea_v1::Request,
+        ) -> Result<SeaResponseStream, sea_v1::Response> {
+            unreachable!("admission tests do not open Sea streams")
+        }
+
+        async fn snapshot_request(&self, _request: sea_v1::Request) -> sea_v1::Response {
+            unreachable!("admission tests do not open Sea streams")
+        }
+
+        async fn revoke_snapshot_publisher(&self) {}
+
+        async fn open_content_stream(&self, _request: sea_v1::Request) -> sea_v1::Response {
+            unreachable!("admission tests do not open Sea streams")
+        }
+
+        async fn content_request(
+            &self,
+            _request: sea_v1::Request,
+        ) -> Result<SeaResponseStream, sea_v1::Response> {
+            unreachable!("admission tests do not open Sea streams")
+        }
+    }
 
     /// Supplies test-controlled chunks without network or filesystem timers.
     struct TestReceive(tokio::sync::mpsc::UnboundedReceiver<Vec<u8>>);
@@ -1222,16 +1285,16 @@ mod tests {
     }
 
     /// Creates a one-slot listener and a certificate-pinned client configuration.
-    fn admission_fixture() -> (WebTransportServer, ClientConfig) {
+    fn admission_fixture() -> (WebTransportServer, ClientConfig, Arc<Mutex<Vec<bool>>>) {
         let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
         let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
+        let closures = Arc::new(Mutex::new(Vec::new()));
         let server = WebTransportServer::bind(
             "127.0.0.1:0".parse().unwrap(),
             identity,
-            Arc::new(BuiltInSeaHost::new(
-                std::env::temp_dir(),
-                StorageMode::Memory,
-            )),
+            Arc::new(AdmissionService {
+                closures: closures.clone(),
+            }),
             TransportConfig {
                 max_connections: 1,
                 operation_timeout: Duration::from_millis(500),
@@ -1243,7 +1306,7 @@ mod tests {
             .with_bind_default()
             .with_server_certificate_hashes([certificate_hash])
             .build();
-        (server, client)
+        (server, client, closures)
     }
 
     /// Completes QUIC without sending the HTTP/3 settings required for admission.
@@ -1264,7 +1327,7 @@ mod tests {
 
     #[tokio::test]
     async fn failed_admissions_release_capacity_and_preserve_listener() {
-        let (server, config) = admission_fixture();
+        let (server, config, closures) = admission_fixture();
         let address = server.local_addr().unwrap();
         let shutdown = server.shutdown_handle();
         let measurements = server.measurement_handle();
@@ -1290,6 +1353,7 @@ mod tests {
                 .await
                 .unwrap();
             assert_eq!(measurements.snapshot().connection_cleanups, 3);
+            assert_eq!(*closures.lock().unwrap(), [false, false, false]);
             assert_eq!(measurements.snapshot().active_connections, 1);
             connected.close(VarInt::from_u32(0), b"finished");
             shutdown
@@ -1314,7 +1378,7 @@ mod tests {
                 timeout: Duration::ZERO,
             },
         ] {
-            let (server, config) = admission_fixture();
+            let (server, config, closures) = admission_fixture();
             let address = server.local_addr().unwrap();
             let shutdown = server.shutdown_handle();
             let measurements = server.measurement_handle();
@@ -1330,6 +1394,74 @@ mod tests {
             assert_eq!(outcome.owned_connections, 1);
             assert_eq!(outcome.cancelled_connections, 1);
             assert_eq!(measurements.snapshot().connection_cleanups, 1);
+            assert_eq!(*closures.lock().unwrap(), [false]);
         }
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    #[ignore = "run by the browser harness after building the test-only WASM fixture"]
+    async fn browser_disconnect_and_drop_release_capacity() {
+        std::env::var("SEA_BROWSER_LIFECYCLE_WASM")
+            .expect("browser harness must provide the generated lifecycle fixture directory");
+        let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
+        let hash = identity.certificate_chain().as_slice()[0]
+            .hash()
+            .fmt(wtransport::tls::Sha256DigestFmt::DottedHex)
+            .replace(':', "");
+        let closures = Arc::new(Mutex::new(Vec::new()));
+        let server = WebTransportServer::bind(
+            "127.0.0.1:0".parse().unwrap(),
+            identity,
+            Arc::new(AdmissionService { closures }),
+            TransportConfig {
+                max_connections: 1,
+                liveness: LivenessPolicy {
+                    inactivity_timeout: Duration::from_secs(120),
+                    ..LivenessPolicy::default()
+                },
+                ..TransportConfig::default()
+            },
+        )
+        .unwrap();
+        let url = format!("https://{}/sea", server.local_addr().unwrap());
+        let shutdown = server.shutdown_handle();
+        let measurements = server.measurement_handle();
+        let serving = tokio::spawn(server.serve_until_shutdown());
+        let output = tokio::task::spawn_blocking(move || {
+            std::process::Command::new("node")
+                .current_dir(concat!(env!("CARGO_MANIFEST_DIR"), "/../.."))
+                .args([
+                    "tests/webtransport-browser/run-headless.mjs",
+                    "tests/webtransport-browser",
+                    &url,
+                    &hash,
+                ])
+                .env_remove("SEA_WEBSOCKET_STREAM")
+                .env_remove("SEA_ORDINARY_WEBSOCKET")
+                .env_remove("SEA_BROWSER_HTTP_PORT")
+                .output()
+                .unwrap()
+        })
+        .await
+        .unwrap();
+        let cleanup = timeout(Duration::from_secs(2), async {
+            while measurements.snapshot().active_connections != 0 {
+                tokio::task::yield_now().await;
+            }
+        })
+        .await;
+        let observed = measurements.snapshot();
+        shutdown.shutdown(ShutdownMode::Immediate).unwrap();
+        serving.await.unwrap().unwrap();
+        println!("{}", String::from_utf8_lossy(&output.stdout));
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        cleanup.unwrap();
+        assert_eq!(observed.connection_cleanups, 4);
+        assert_eq!(observed.peak_active_connections, 1);
+        assert_eq!(observed.active_connections, 0);
     }
 }

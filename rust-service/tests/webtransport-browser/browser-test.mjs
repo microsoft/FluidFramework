@@ -50,12 +50,91 @@ async function nextSnapshot(stream) {
 	}
 }
 
+/** Checks each concrete close path against a live one-slot server. */
+async function runLifecycle(hash) {
+	const { default: initialize, LifecycleTransport } = await import(
+		"/lifecycle/browser_lifecycle.js"
+	);
+	await initialize();
+	const NativeWebTransport = globalThis.WebTransport;
+	const retainedConnections = [];
+	globalThis.WebTransport = class extends NativeWebTransport {
+		/** Retains native objects so JavaScript collection cannot close them for the test. */
+		constructor(...arguments_) {
+			super(...arguments_);
+			retainedConnections.push(this);
+			this.closed.catch(() => {});
+		}
+	};
+	const bounded = async (promise, message) => {
+		let timer;
+		try {
+			return await Promise.race([
+				promise,
+				new Promise((_, reject) => {
+					timer = setTimeout(() => reject(new Error(message)), 3000);
+				}),
+			]);
+		} finally {
+			clearTimeout(timer);
+		}
+	};
+	const cases = [];
+	try {
+		for (const mode of ["disconnect", "drop"]) {
+			let owner = await bounded(
+				LifecycleTransport.connect(transportUrl, hash),
+				`${mode}: initial connection failed`,
+			);
+			assert(retainedConnections.length === cases.length + 1, "native owner was not retained");
+			const replacement = new NativeWebTransport(transportUrl, {
+				serverCertificateHashes: [{ algorithm: "sha-256", value: hash }],
+			});
+			replacement.closed.catch(() => {});
+			const admitted = replacement.ready.then(() => "admitted");
+			try {
+				const beforeRelease = await Promise.race([
+					admitted,
+					new Promise((resolve) => setTimeout(() => resolve("blocked"), 150)),
+				]);
+				assert(
+					beforeRelease === "blocked",
+					`${mode}: server did not enforce one-slot capacity`,
+				);
+				if (mode === "disconnect") {
+					owner.disconnect();
+				} else {
+					owner.free();
+					owner = undefined;
+				}
+				await bounded(
+					admitted,
+					`${mode}: physical connection did not release server capacity`,
+				);
+				assert(
+					(mode === "disconnect") === (owner !== undefined),
+					`${mode}: unexpected Rust owner lifetime`,
+				);
+				cases.push(mode);
+			} finally {
+				replacement.close();
+				owner?.free();
+			}
+		}
+		return { status: "passed", browser: navigator.userAgent, physicalRelease: cases };
+	} finally {
+		globalThis.WebTransport = NativeWebTransport;
+		for (const connection of retainedConnections) connection.close();
+	}
+}
+
 async function run() {
 	assert(transportUrl, "missing transport URL");
 	assert(certificateHex?.length === 64, "missing SHA-256 certificate hash");
 	const hash = Uint8Array.from(certificateHex.match(/../gu), (value) =>
 		Number.parseInt(value, 16),
 	);
+	if (parameters.get("lifecycle") === "1") return runLifecycle(hash);
 	let transportSessionCount = 0;
 	const websocket = parameters.get("websocket") === "1";
 	const ordinary = parameters.get("ordinaryWebsocket") === "1";

@@ -42,6 +42,28 @@ All three flows run through `rust-service/test.sh`; they do not establish extern
 
 Browser APIs do not expose HTTP/3, QUIC, UDP, or TLS byte totals, so the harness does not infer unavailable network measurements.
 
+## Physical Connection Release
+
+`run-test.sh` also builds the test-only `browser_lifecycle` WASM example and explicitly runs the normally ignored `browser_disconnect_and_drop_release_capacity` Rust test.
+The Rust fixture owns a certificate-pinned one-slot listener and launches the existing Chromium runner with `SEA_BROWSER_LIFECYCLE_WASM` pointing to the temporary generated bindings.
+No shipped session export or production configuration option is added.
+
+Two independent cases exercise the concrete `BrowserTransport`:
+
+- Explicit disconnect retains the Rust owner until a waiting replacement connection is admitted.
+- Final-owner drop uses the generated `free()` method without calling disconnect first.
+
+Both cases first check that the replacement cannot enter while the owner holds the slot, then require admission within three seconds of release.
+Native JavaScript transport objects remain strongly referenced so collection cannot substitute for either close call.
+The server uses a 120-second inactivity timeout and is not shut down until the browser assertions finish.
+The Rust test separately checks four connection cleanups, peak concurrency one, and no remaining active connections before shutdown.
+The fixture creates no logical sessions, so membership closure cannot mask physical-release failure.
+
+On 2026-09-19, both cases passed in Chromium 152.
+Temporarily removing only `BrowserTransport::disconnect`'s close call failed with `disconnect: physical connection did not release server capacity`.
+Removing only Drop's close call instead failed with the corresponding `drop` message.
+Each restoration passed; the production implementation is unchanged.
+
 ## Optional WebSocketStream Validation
 
 Run the same collaboration and shutdown flow against the optional native `WebSocketStream` adapter:

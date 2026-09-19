@@ -114,6 +114,8 @@ The native listener, server dispatch, archive routing, connection liveness, meas
 The [WASM crate](../sea-wasm/README.md) owns shared session exports and feature-gated stack construction.
 The [TypeScript package](../../packages/sea-typescript/README.md) owns generated artifacts, lazy loaders, and neutral application APIs.
 This crate is an ordinary Rust library on both native and WASM targets; it no longer exports generated session classes, JavaScript transport injection, or local test-service bindings.
+Its test-only `browser_lifecycle` cdylib example provides concrete ownership controls for the [physical-release browser regressions](../../tests/webtransport-browser/README.md#physical-connection-release).
+The harness generates this example separately; it is not part of the package's shipped bindings.
 Generate the package-owned web and Node artifacts from the repository root with:
 
 ```bash

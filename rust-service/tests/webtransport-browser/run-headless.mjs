@@ -13,6 +13,7 @@ import { createServer as createNetServer } from "node:net";
 const [siteRoot, transportUrl, certificateHash, shutdownMarker, snapshotPolicyArgument] =
 	process.argv.slice(2);
 const snapshotPolicy = process.env.SEA_SNAPSHOT_POLICY ?? snapshotPolicyArgument;
+const lifecycleWasm = process.env.SEA_BROWSER_LIFECYCLE_WASM;
 if (!siteRoot || !transportUrl || !/^[0-9a-f]{64}$/i.test(certificateHash ?? "")) {
 	throw new Error(
 		"usage: node run-headless.mjs <site-root> <transport-url> <certificate-sha256-hex>",
@@ -113,6 +114,14 @@ const httpServer = createServer(async (request, response) => {
 		const relative = requestPath === "/" ? "index.html" : requestPath.slice(1);
 		const normalized = normalize(relative);
 		if (normalized.startsWith("..")) throw new Error("invalid path");
+		if (lifecycleWasm && normalized.startsWith("lifecycle/")) {
+			const data = await readFile(join(lifecycleWasm, normalized.slice("lifecycle/".length)));
+			response.writeHead(200, {
+				"content-type": contentTypes.get(extname(normalized)) ?? "application/octet-stream",
+			});
+			response.end(data);
+			return;
+		}
 		const root = normalized.startsWith("packages/sea-typescript/")
 			? resolve(siteRoot, "../..")
 			: siteRoot;
@@ -139,6 +148,7 @@ const debugPort = await freePort();
 const profile = await mkdtemp(join(tmpdir(), "fluid-webtransport-chromium-"));
 const pageUrl = `http://localhost:${httpPort}/?transport=${encodeURIComponent(transportUrl)}&hash=${certificateHash}${snapshotPolicy === undefined ? "" : `&snapshotPolicy=${encodeURIComponent(snapshotPolicy)}`}${process.env.SEA_WEBSOCKET_STREAM === "1" ? "&websocket=1" : ""}`;
 const browserUrl = new URL(pageUrl);
+if (lifecycleWasm) browserUrl.searchParams.set("lifecycle", "1");
 if (process.env.SEA_ORDINARY_WEBSOCKET === "1") {
 	browserUrl.searchParams.set("ordinaryWebsocket", "1");
 }

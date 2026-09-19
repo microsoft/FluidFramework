@@ -50,27 +50,24 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 
 ## Admission cleanup callback lacks focused evidence
 
-- **Status:** Open; evidence gap, not a demonstrated runtime defect
+- **Status:** Resolved by focused regression evidence
 - **Severity:** Medium
 - **Area:** Server admission cleanup regression coverage
-- **Evidence:** Existing real-QUIC admission tests establish timeout, capacity recovery, listener survival, and cleanup counts, but counters prove neither service invocation of `connection_closed` nor its `false` no-reconnect-grace argument.
-  See [iteration 0017's admission assessment](historical/iterations/0017/phase-3-report.md#contract-and-test-quality).
-- **Impact:** A missing service callback or incorrect reconnect-grace argument could escape the current assertions despite passing admission tests.
-- **Trigger:** On a transport admission/cleanup change or approval of a recording-service fixture, assert callback invocation and `false` for failed admission and pending-admission shutdown.
-  Transport owns this deferred evidence repair; no new runtime semantics or workstream is authorized.
+- **Evidence:** The [real-QUIC admission tests](crates/sea-webtransport-server/src/server.rs) now record actual `connection_closed` calls and assert `false` for timed-out, aborted, and rejected admissions, plus immediate and bounded-drain cancellation during admission.
+  These assertions complement capacity/listener/counter checks and close [iteration 0017's evidence gap](historical/iterations/0017/phase-3-report.md#contract-and-test-quality).
+- **Impact:** Missing callbacks or incorrect reconnect-grace arguments fail the owning server tests; no runtime change was required.
+- **Trigger:** Preserve these direct callback assertions when admission or cleanup changes.
 
 ## Browser disconnect resource release lacks focused evidence
 
-- **Status:** Open; the former no-op implementation is fixed
+- **Status:** Resolved by real Chromium physical-release regressions
 - **Severity:** Medium
 - **Area:** Browser WebTransport lifecycle regression coverage
-- **Evidence:** `BrowserTransport::disconnect` and `Drop` now call `WebTransport.close()`.
-  The browser harness checks logical-session close and reopen but does not distinguish those actions from physical connection release.
-  See the [historical deferral reconciliation](historical/DEFERRAL_RECONCILIATION.md#browser-disconnect-resource-release).
-- **Impact:** Existing assertions could pass despite a regression that leaks a browser connection or its server admission capacity.
-  This is a missing regression guarantee, not evidence of a current leak.
-- **Trigger:** Add a real-browser test that separately exercises explicit transport disconnect and final-owner drop, then observes server cleanup or recovered connection capacity within a bounded deadline.
-  Keep the client alive after explicit disconnect so drop cannot mask a broken disconnect path.
+- **Evidence:** The [browser lifecycle fixture](tests/webtransport-browser/README.md#physical-connection-release) independently checks disconnect with the Rust owner retained and final-owner drop without disconnect.
+  Each must release a one-slot server's capacity within three seconds, with native JavaScript objects retained and inactivity expiry set to 120 seconds.
+  Removing either production close call independently failed its corresponding browser case; restoring it passed.
+- **Impact:** Physical release no longer relies on logical reopen, garbage collection, or server shutdown as evidence; no runtime change was required.
+- **Trigger:** Preserve both cases and their ownership controls when browser transport lifetime changes.
 
 ## Generic client disconnect error state is not defined
 

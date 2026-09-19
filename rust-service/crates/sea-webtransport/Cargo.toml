@@ -5,6 +5,11 @@ edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
+[[example]]
+name = "browser_lifecycle"
+path = "../../tests/webtransport-browser/transport-lifecycle.rs"
+crate-type = ["cdylib"]
+
 [features]
 websocket-stream = ["dep:gloo-timers", "web-sys/Url", "web-sys/AbortController", "web-sys/AbortSignal", "web-sys/WebSocket", "web-sys/BinaryType", "web-sys/MessageEvent", "web-sys/Event"]
 
