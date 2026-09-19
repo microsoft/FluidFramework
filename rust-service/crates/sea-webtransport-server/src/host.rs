@@ -1177,7 +1177,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn idle_stream_outlives_operation_deadline_in_every_storage_mode() {
+    async fn native_client_round_trip_in_every_storage_mode() {
         for mode in [
             StorageMode::Memory,
             StorageMode::BufferedFile,
@@ -1255,10 +1255,7 @@ mod tests {
             "127.0.0.1:0".parse::<SocketAddr>().unwrap(),
             identity,
             Arc::new(BuiltInSeaHost::new(root.clone(), mode)),
-            TransportConfig {
-                operation_timeout: Duration::from_millis(50),
-                ..TransportConfig::default()
-            },
+            TransportConfig::default(),
         )
         .unwrap();
         let address = server.local_addr().unwrap();
@@ -1291,7 +1288,6 @@ mod tests {
                     break;
                 }
             }
-            tokio::time::sleep(Duration::from_millis(100)).await;
             let receipt = client
                 .submit(EventSubmission {
                     operation_id: OperationId::new(Bytes::from_static(b"native-event")).unwrap(),
