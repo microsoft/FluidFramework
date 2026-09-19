@@ -286,12 +286,37 @@ A temporary trace confirmed both delta connections registering on the second ses
 The existing lifecycle fixture adds a promise-gated overlap regression, and all 18 tests in that file pass.
 `pnpm --dir packages/test/test-end-to-end-tests run test:realsvc:sea --grep 'reconnection does not block ops when having pending blobs|^(TestSignals|Targeted Signals)'` passes all nine unchanged integration tests.
 No server duplicate-registration guard, shared assertion, or exclusion changed.
-The full SEA integration suite has not yet been rerun with this fix.
+The subsequent full SEA run with this fix is recorded below.
 
 Package/API generation, root `pnpm build:fast`, scoped policy, documentation checks, Rust formatting, strict Clippy, rustdoc, and native build passed.
 The initial workspace test run timed out in `host::tests::native_client_round_trip_in_every_storage_mode`; that test passed on an isolated retry without native edits.
 The complete canonical `./test.sh` also passed, including workspace native tests, generated Node/WASM coverage, and Chromium checks.
 There are no generated API-report changes.
+
+### Full Current-Version Run at `476613b3eac`
+
+On 2026-09-19, after rebuilding with `pnpm exec fluid-build packages/test/test-end-to-end-tests --task build:test:esm`, the complete selection ran without fail-fast:
+
+```bash
+pnpm --dir packages/test/test-end-to-end-tests run test:realsvc:sea --no-bail --reporter json --reporter-option output=/tmp/sea-full-476613b3eac-results.json
+```
+
+Mocha completed in 70.621 seconds with 1,184 tests: 655 passed, 526 pending, and three failed.
+The run retained the standard 10-second per-test timeout and finished before the runner's 10-minute limit.
+The runner exited with code 1 after Mocha reported three failures; this was not a build or startup failure.
+The machine-readable report is `/tmp/sea-full-476613b3eac-results.json`; build and runner output are `/tmp/sea-full-476613b3eac-build.log` and `/tmp/sea-full-476613b3eac-run.log`.
+
+| Failing test | Observed failure |
+| --- | --- |
+| `Pong / Pong / Non-Compat / Delta manager receives pong event` | `Forcing timeout before test does (9985ms)` while waiting for the pong event. |
+| `SingleCommit Summaries Tests / Non-Compat / Non single commit summary/Last summary should be discarded due to missing SummaryOp` | `Summary Parent should match ack handle of summary1`. |
+| `Summarizer fetches expected number of times / Non-Compat / Summarizer loading from an older summary should fetch latest summary` | `SEA session is not open` from `SeaSessionDriverClient.withArchiveSession` during `fetchBlob`. |
+
+These are observed failures, not root-cause diagnoses or approved exclusion candidates.
+The 526 pending cases include the six explicit historical-loader exclusions and inherited suite conditions; they are not passes.
+Largest pending groups are `handle validation` (184), `Validate Attach lifecycle` (31), `Frozen Delta stream loading mode testing` (27), `Container` (25), and layer compatibility (24).
+An exhaustive applicability audit of the inherited skips remains open.
+No assertions, production code, or skip conditions changed for this run.
 
 ### Membership Investigation
 
