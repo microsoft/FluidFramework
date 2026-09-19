@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { createDevtoolsLogger } from "@fluidframework/devtools/beta";
+import { createDevtoolsLogger } from "@fluidframework/devtools-core/beta";
 import { fireEvent, render } from "@testing-library/react";
 import { independentView } from "fluid-framework/alpha";
 
@@ -23,8 +23,8 @@ function createFormattedTreeView(initialValue = ""): UserView["treeView"] {
 /**
  * Creates a {@link UserView} for rendering {@link App} in tests without a Fluid service:
  * the tree is an in-memory `independentView` seeded with `initialValue` (no collaboration,
- * no network), and the container is a stub whose `dispose` is a no-op.
- * Use this instead of the app's real `connectUser`, which requires a running service.
+ * no network), and the container is a stub whose `close` is a no-op.
+ * Use this instead of connecting to a Fluid service.
  *
  * @param id - Distinguishes this user from others in the same test.
  * @param initialValue - The document text the user's view starts with.
@@ -32,7 +32,7 @@ function createFormattedTreeView(initialValue = ""): UserView["treeView"] {
 function createTestUserView(id: string, initialValue: string): UserView {
 	return {
 		id,
-		container: { dispose: () => {} } as unknown as UserView["container"],
+		container: { close: () => {} } as unknown as UserView["container"],
 		treeView: createFormattedTreeView(initialValue),
 	};
 }
@@ -46,6 +46,7 @@ describe("app", () => {
 				containerId="test"
 				devtoolsLogger={createDevtoolsLogger()}
 				initialUsers={[createTestUserView("a", "Text A"), createTestUserView("b", "Text B")]}
+				connectUser={async () => createTestUserView("added", "Text of added user")}
 			/>
 		);
 		const rendered = render(content);
