@@ -218,7 +218,7 @@ impl WebSocketServer {
     }
 }
 
-/// Validates upgrade metadata before routing control or child connections.
+/// Disables TCP coalescing and validates upgrades before routing control or child connections.
 #[expect(
     clippy::result_large_err,
     reason = "tungstenite requires an HTTP response error in its upgrade callback"
@@ -228,6 +228,7 @@ async fn handle_socket(
     state: Arc<State>,
     mut stopped: watch::Receiver<bool>,
 ) -> Result<(), WebTransportError> {
+    socket.set_nodelay(true).map_err(transport_error)?;
     let mut path = String::new();
     let originless_allowed = state.allow_originless_loopback
         && socket
@@ -384,6 +385,40 @@ mod tests {
     };
 
     const ORIGIN: &str = "http://localhost:12345";
+
+    #[tokio::test]
+    async fn accepted_sockets_disable_nagle_before_upgrade() {
+        let server = WebSocketServer::bind(
+            "127.0.0.1:0".parse().unwrap(),
+            Arc::new(BuiltInSeaHost::new(
+                std::path::PathBuf::new(),
+                StorageMode::Memory,
+            )),
+            TransportConfig::default(),
+            vec![ORIGIN.to_owned()],
+        )
+        .await
+        .unwrap();
+        let _peer = TcpStream::connect(server.local_addr().unwrap())
+            .await
+            .unwrap();
+        let (socket, _) = server.listener.accept().await.unwrap();
+        let socket = socket.into_std().unwrap();
+        socket.set_nodelay(false).unwrap();
+        let inspection = socket.try_clone().unwrap();
+        let (stop, stopped) = watch::channel(false);
+        let handling = handle_socket(
+            TcpStream::from_std(socket).unwrap(),
+            Arc::clone(&server.state),
+            stopped,
+        );
+        tokio::pin!(handling);
+        assert!(futures_util::poll!(&mut handling).is_pending());
+        assert!(inspection.nodelay().unwrap());
+        stop.send_replace(true);
+        handling.await.unwrap();
+    }
+
     #[tokio::test]
     async fn originless_clients_require_explicit_loopback_opt_in() {
         for allowed in [false, true] {

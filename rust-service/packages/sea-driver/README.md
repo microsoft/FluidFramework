@@ -76,6 +76,10 @@ The driver depends on the standard loader/runtime helpers but still has no trans
 ## Guarantees and Limits
 
 Summary storage supports full and incremental summaries, blob and tree handles, attachments, and historical versions.
+Each summary uploads up to eight independent blobs concurrently, refilling a slot as soon as its request completes rather than waiting for a batch of round trips.
+The bound is shared across the summary's entire tree; content encoding waits until upload admission.
+Handles are validated before uploading, and manifest and snapshot publication wait for all uploads to succeed.
+On the first observed upload failure, no further blobs are scheduled; admitted uploads are drained before the error returns, with no implicit retries or partial snapshot publication.
 Incremental publication retains the acknowledged parent snapshot and rejects stale parents.
 The neutral-session adapter verifies that a summary proposal names a published snapshot before appending it.
 It then appends a separate durable Fluid acknowledgment referencing the proposal's sequence number.

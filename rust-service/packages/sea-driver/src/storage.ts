@@ -32,6 +32,17 @@ interface UploadedSummary {
 	readonly entries: readonly SummaryEntry[];
 }
 
+/** A summary blob retained without encoding or copying its content until upload admission. */
+interface PendingBlob {
+	/** Canonical manifest path for the uploaded blob. */
+	readonly path: Uint8Array;
+	/** Caller-owned content kept until its upload completes. */
+	readonly content: string | Uint8Array;
+}
+
+/** Maximum outstanding blob requests per summary, independent of its nesting depth. */
+const summaryUploadConcurrency = 8;
+
 /**
  * Content-addressed storage adapter for full Fluid summary trees and blobs.
  * @internal
@@ -153,35 +164,35 @@ export class SeaDocumentStorage implements IDocumentStorageService {
 		parentEntries?: readonly SummaryEntry[],
 	): Promise<UploadedSummary> {
 		const entries: SummaryEntry[] = [];
+		const blobs: PendingBlob[] = [];
 		const app = summary.tree[".app"];
 		const protocol = summary.tree[".protocol"];
 		if (app?.type === summaryType.tree && protocol?.type === summaryType.tree) {
-			await this.flattenSummary(app, "", entries, parentEntries);
-			await this.flattenSummary(protocol, ".protocol", entries, parentEntries);
+			this.flattenSummary(app, "", entries, blobs, parentEntries);
+			this.flattenSummary(protocol, ".protocol", entries, blobs, parentEntries);
 		} else {
-			await this.flattenSummary(summary, "", entries, parentEntries);
+			this.flattenSummary(summary, "", entries, blobs, parentEntries);
 		}
+		await this.uploadBlobs(blobs, entries);
 		entries.sort((left, right) => compareBytes(left.path, right.path));
 		const publication = await this.client.publishSummary(entries);
 		return { digest: publication.digest, entries };
 	}
 
-	/** Recursively uploads summary blobs into a flat path-to-digest manifest. */
-	private async flattenSummary(
+	/** Validates handles and collects blobs before any summary upload starts. */
+	private flattenSummary(
 		summary: ISummaryTree,
 		prefix: string,
 		entries: SummaryEntry[],
+		blobs: PendingBlob[],
 		parentEntries?: readonly SummaryEntry[],
-	): Promise<void> {
+	): void {
 		for (const [name, object] of Object.entries(summary.tree)) {
 			const path = prefix.length === 0 ? name : `${prefix}/${name}`;
 			if (object.type === summaryType.tree) {
-				await this.flattenSummary(object, path, entries, parentEntries);
+				this.flattenSummary(object, path, entries, blobs, parentEntries);
 			} else if (object.type === summaryType.blob) {
-				const payload =
-					typeof object.content === "string" ? encoder.encode(object.content) : object.content;
-				const upload = await this.client.uploadBlob(payload);
-				entries.push({ path: encoder.encode(path), blob: upload.digest });
+				blobs.push({ path: encoder.encode(path), content: object.content });
 			} else if (object.type === 4) {
 				entries.push({ path: encoder.encode(path), blob: hexToBytes(object.id) });
 			} else if (object.type === 3) {
@@ -217,6 +228,36 @@ export class SeaDocumentStorage implements IDocumentStorageService {
 				}
 			}
 		}
+	}
+
+	/** Refills bounded upload slots and drains admitted work before propagating the first failure.
+	 * No summary is published until every blob succeeds; failed uploads are not retried.
+	 */
+	private async uploadBlobs(
+		blobs: readonly PendingBlob[],
+		entries: SummaryEntry[],
+	): Promise<void> {
+		let next = 0;
+		let failed = false;
+		let failure: unknown;
+		await Promise.all(
+			Array.from({ length: Math.min(summaryUploadConcurrency, blobs.length) }, async () => {
+				while (!failed) {
+					const blob = blobs[next++];
+					if (blob === undefined) return;
+					try {
+						const payload =
+							typeof blob.content === "string" ? encoder.encode(blob.content) : blob.content;
+						const upload = await this.client.uploadBlob(payload);
+						entries.push({ path: blob.path, blob: upload.digest });
+					} catch (error) {
+						if (!failed) failure = error;
+						failed = true;
+					}
+				}
+			}),
+		);
+		if (failed) throw failure;
 	}
 
 	/** Reconstructs Fluid's snapshot-tree shape from a flat summary manifest. */

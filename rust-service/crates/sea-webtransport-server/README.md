@@ -49,6 +49,8 @@ Both listeners share one `BuiltInSeaHost`, so they can collaborate on the same d
 Custom hosts can bind `WebSocketServer` directly without starting QUIC or loading a QUIC certificate.
 
 The listener speaks plain HTTP WebSocket upgrades at `/sea/websocket`, using subprotocol `sea-stream-v1`.
+Accepted sockets enable `TCP_NODELAY` before upgrade so small stream frames do not wait for TCP coalescing and delayed acknowledgments.
+This applies to both control and child sockets and does not change framing, stream limits, or backpressure.
 Native `WebSocketStream` and explicitly selected ordinary WebSocket clients use this same protocol and grouping.
 Ordinary clients enable Node and broader browser compatibility but cannot propagate application receive demand to the network.
 Their adapter queue fails on overflow; bounded server buffers do not provide a total memory bound for those clients or intermediaries.

@@ -834,6 +834,99 @@ test("driver creation disposes its client when initial summary upload fails", as
 	assert.equal(disconnected, true);
 });
 
+test("summary blob uploads overlap with bounded refill and publish only after completion", async () => {
+	const client = new SummaryFixtureClient();
+	const storage = createStorage(client);
+	const upload = client.uploadBlob.bind(client);
+	const pending: (() => void)[] = [];
+	let started = 0;
+	let active = 0;
+	let peak = 0;
+	client.uploadBlob = async (payload) => {
+		started++;
+		active++;
+		peak = Math.max(peak, active);
+		await new Promise<void>((resolve) => pending.push(resolve));
+		const result = await upload(payload);
+		active--;
+		return result;
+	};
+	const result = storage.uploadInitialSummary(
+		tree(
+			Object.fromEntries(
+				Array.from({ length: 24 }, (_, index) => [`blob-${index}`, blob(`content-${index}`)]),
+			),
+		),
+	);
+	await setImmediate();
+	assert.equal(started, 8, "uploads must overlap before any receipt returns");
+	assert.equal(await client.latestSnapshot(), undefined);
+	const completeLast = pending.pop();
+	assert.ok(completeLast);
+	completeLast();
+	await setImmediate();
+	assert.equal(started, 9, "one completed upload must refill without waiting for its peers");
+	while (pending.length > 0) {
+		const complete = pending.shift();
+		assert.ok(complete);
+		complete();
+		await setImmediate();
+		assert.ok(active <= 8);
+	}
+	await result;
+	assert.equal(started, 24);
+	assert.equal(peak, 8);
+	assert.ok(await client.latestSnapshot());
+	const snapshot = await storage.getSnapshotTree();
+	assert.ok(snapshot);
+	assert.equal(Object.keys(snapshot.blobs).length, 24);
+});
+
+test("summary upload failure drains admitted blobs without scheduling or publishing a suffix", async () => {
+	const client = new SummaryFixtureClient();
+	const storage = createStorage(client);
+	const upload = client.uploadBlob.bind(client);
+	const pending: { complete: () => void; fail: (error: Error) => void }[] = [];
+	client.uploadBlob = async (payload) => {
+		await new Promise<void>((complete, fail) => pending.push({ complete, fail }));
+		return upload(payload);
+	};
+	let settled = false;
+	const failure = new Error("blob upload failed");
+	const result = storage.uploadInitialSummary(
+		tree(
+			Object.fromEntries(
+				Array.from({ length: 24 }, (_, index) => [
+					`branch-${index}`,
+					tree({ leaf: blob(`content-${index}`) }),
+				]),
+			),
+		),
+	);
+	const rejected = assert.rejects(result, (error) => {
+		settled = true;
+		assert.equal(error, failure);
+		return true;
+	});
+	await setImmediate();
+	assert.equal(pending.length, 8);
+	const [first, ...others] = pending;
+	assert.ok(first);
+	first.fail(failure);
+	await setImmediate();
+	assert.equal(
+		settled,
+		false,
+		"failure must wait for admitted uploads before callers dispose resources",
+	);
+	assert.equal(pending.length, 8, "no suffix upload may start after observed failure");
+	for (const pendingUpload of others) pendingUpload.complete();
+	await rejected;
+	assert.equal(pending.length, 8);
+	assert.equal(client.blobUploadCount, 7);
+	assert.equal(await client.latestSnapshot(), undefined);
+});
+
 test("incremental summaries reuse tree and blob handles and include attachments", async () => {
 	const client = new SummaryFixtureClient();
 	const storage = createStorage(client);
