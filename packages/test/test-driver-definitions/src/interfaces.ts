@@ -21,6 +21,7 @@ export type TestDriverTypes =
 	| "routerlicious"
 	| "r11s"
 	| "odsp"
+	| "sea-websocket"
 	| "local";
 
 /**

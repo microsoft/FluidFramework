@@ -1,11 +1,12 @@
 # SEA Opt-In Integration-Test Configuration Plan
 
-Status: Preparation started in an isolated worktree; configuration implementation has not started.
+Status: Opt-in configuration implemented; validation and failure inventory in progress before its checkpoint commit.
 Created: 2026-09-18.
 Updated: 2026-09-19.
 
 This is an independently assignable follow-up to the [SEA WASM and ServiceClient integration plan](SERVICE_CLIENT_PLAN.md).
-Its deliverable is an explicitly runnable SEA configuration in the repository's existing multi-service/driver integration tests, not a requirement to make every test pass.
+Its first deliverable is an explicitly runnable SEA configuration in the repository's existing multi-service/driver integration tests, with observed failures preserved.
+On 2026-09-19 the user extended this assignment to commit the validated configuration, then fix and commit failures iteratively until the current-version SEA integration suite passes, with an explicit inventory of justified exclusions.
 Keep the configuration out of default test runs and continuous integration (CI).
 
 ## Dependencies and Ownership
@@ -20,8 +21,10 @@ Do not add a competing bindings implementation or import generated crate output 
 Preserve the main plan's layering: general SEA access belongs in `sea-typescript`, Fluid adaptation belongs above it, and `sea-driver` must not acquire a SharedTree dependency.
 Test packages may consume SharedTree without making it a dependency of the driver.
 Keep this work in the test-driver definitions, test-driver implementation, test selection/lifecycle infrastructure, owning test-package documentation, and this plan.
-Leave ServiceClient, example integration, neutral bindings/presets, production transport, and existing minimal-harness changes with their current owners.
-Coordinate shared lockfile, workspace/build configuration, or production-driver fixes before editing; isolated worktrees prevent working-tree interference but do not prevent integration conflicts.
+Leave ServiceClient and example integration with their current owners.
+The user assigned ownership of driver-contract fixes to this workstream after the configuration checkpoint.
+The user approved adding SEA package dependencies to `test-drivers` and updating only its root lockfile importer; reconcile that overlap with ServiceClient during integration.
+Coordinate other shared workspace/build changes and overlapping production edits; isolated worktrees prevent working-tree interference but do not prevent integration conflicts.
 
 ## Assignment and Baseline
 
@@ -30,7 +33,8 @@ Coordinate shared lockfile, workspace/build configuration, or production-driver 
 - Source revision: `d144885a3e5fa68d66fe4570152fb6c69a223e97` (`feat(sea-typescript): add lazy split and combined loader presets`).
 - Initial working-tree status: clean, before this plan update.
 - The source checkout's uncommitted ServiceClient implementation and lockfile changes were not copied.
-- Workflow: one isolated assignment, without a numbered iteration; no commit, push, merge, or CI-default change is authorized by this plan.
+- Plan checkpoint: `48085c15e81`.
+- Workflow: one isolated assignment, without a numbered iteration; configuration and subsequent validated fix commits are authorized, but push, merge, and CI-default changes are not.
 
 ### Existing Extension Points
 
@@ -89,15 +93,16 @@ The socket artifact does not support compression.
 ## Implementation Checklist
 
 - [x] Locate the existing multi-service/driver test configuration and its selection and lifecycle extension points.
-- [x] Choose and document the initial SEA backend, transport, lifecycle requirements, and prerequisites; runnable orchestration remains unimplemented.
-- [ ] Add SEA through those established extension points with an explicit opt-in selector; a named selection must run SEA, not silently substitute another driver.
-- [ ] Keep SEA excluded when no opt-in is supplied, including existing default and CI invocations.
-- [ ] Add focused checks that verify selection, initialization, and cleanup without suppressing genuine driver failures.
-- [ ] Prove detached create, attach, second-client load, edits in both directions, and cleanup through the actual test provider before running the broader suite.
+- [x] Choose and document the initial SEA backend, transport, lifecycle requirements, and prerequisites.
+- [x] Add SEA through those established extension points with an explicit opt-in selector; a named selection must run SEA, not silently substitute another driver.
+- [x] Keep SEA excluded when no opt-in is supplied, including existing default and CI invocations.
+- [x] Add focused checks that verify selection, initialization, and cleanup without suppressing genuine driver failures.
+- [ ] Prove detached create, attach, second-client load, edits in both directions, and cleanup through the actual test provider; its current membership failure is retained and does not prevent inventory runs.
 - [ ] Run the new configuration and distinguish setup failures from behavioral failures and unsupported contracts.
 - [ ] Retain exact commands and a failure inventory with test names, failure signatures, reproduction steps, and relevant known limitations.
 - [ ] Document how to run the configuration and interpret expected limitations.
-- [ ] Stop at the review boundary below before undertaking broad failure remediation.
+- [ ] Complete default-service and repository gates, then commit the configuration with its known failures before undertaking driver fixes.
+- [ ] Fix failures in focused validated commits and repeat the SEA suite; inventory any tests excluded because they assert a non-SEA implementation detail.
 
 Fix defects in the new configuration needed to make it runnable.
 Do not weaken shared assertions, silently skip failing behavior, or change production semantics merely to obtain a green test run.
@@ -125,8 +130,7 @@ The completed transport work records a real Node.js two-session test covering li
 That regression uses `PreferAvailable`; it is transport foundation evidence, not a completed test of this plan's fixed `WebSocket` selector or Fluid provider.
 The existing Fluid harness supplies separate adapter evidence, not proof that the repository's multi-service suite already works with SEA.
 
-Preparation on 2026-09-19 created the isolated worktree and updated this plan only.
-Worktree-local package installation, generated artifacts, server startup, the provider smoke test, and the selected integration suite have not been run for this assignment.
+Preparation on 2026-09-19 created the isolated worktree and committed the updated plan.
 Preparation validation ran from the assigned worktree root:
 
 - A Node.js file-existence check passed for all 23 local Markdown link targets in this plan.
@@ -135,19 +139,53 @@ Preparation validation ran from the assigned worktree root:
 	This is blocked environment validation, not a behavioral failure; rerun after the frozen-lockfile install.
 - Full builds and behavioral tests were not run for this documentation-only preparation step.
 
-No behavioral failure inventory exists yet.
+Implementation now has worktree-local dependencies installed with `pnpm install --frozen-lockfile`, independently generated WASM artifacts, and a real Rust listener exercised by the new runner.
+The approved dependency update used `pnpm install --lockfile-only --no-frozen-lockfile --ignore-scripts` followed by a frozen install; the root lockfile diff is six lines in the `test-drivers` importer only.
+
+Commands below run from this worktree root:
+
+| Command | Result |
+| --- | --- |
+| `node --test packages/test/test-end-to-end-tests/scripts/seaRunner.test.mjs` | Five checks pass: success, startup failure, test failure, readiness timeout, and interruption all release the child and temporary directory. |
+| `pnpm exec fluid-build packages/test/test-drivers --task build:esm` | Pass; includes clean local WASM generation. |
+| `node --test packages/test/test-drivers/test/seaWebSocketTestDriver.test.mjs` | Five checks pass: unchanged local default without WASM initialization, historical-version rejection, explicit endpoint, identity/disposal, and endpoint rejection. |
+| `pnpm exec fluid-build packages/test/test-end-to-end-tests --task build:test:esm` | Pass after correcting the new smoke test's entrypoint typing. |
+| `pnpm --dir packages/test/test-end-to-end-tests run test:realsvc:sea --grep 'Driver lifecycle smoke'` | Behavioral failure SEA-001 below, after successful startup, attachment, and second-client load. |
+| `pnpm --dir packages/test/test-end-to-end-tests run test:realsvc:run -- --driver=local --compatKind=None --compatVersion=0 --grep 'Driver lifecycle smoke' --timeout=10000` | Same smoke test passes with the existing local driver. |
+| `pnpm policy-check --path 'packages/test/(test-drivers\|test-driver-definitions\|test-version-utils\|test-end-to-end-tests)'` | Pass after explicitly authorized headers and script ordering. |
+| `pnpm policy-check --path rust-service` | Pass after worktree-local installation. |
+| `pnpm build:fast` | Pass on rerun. The first run found two local lint issues and a duplicated factory return union in `test-service-load`; all were repaired and focused checks passed. Generated `PACKAGES.md` reflects the two new SEA dependency edges. |
+| `pnpm --dir packages/test/test-end-to-end-tests run test:realsvc:sea --grep 'Driver lifecycle smoke\|Container Creation\|SharedCounter' --timeout=2000` | One passing, four failing; bounded failure sample, not a complete suite run. |
+| `pnpm --dir packages/test/test-end-to-end-tests run test:realsvc:sea --grep 'SharedCounter orderSequentially'` | One passing; real native-service graceful shutdown and temporary-resource cleanup completed successfully. |
+| `pnpm --dir packages/test/test-version-utils test` | 126 passing. |
+| Canonical commands from `rust-service/`: `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, `RUSTDOCFLAGS='-D warnings' cargo doc --workspace --all-features --no-deps`, `cargo build --workspace --all-targets`, `cargo test --workspace --all-targets --all-features`, `./test.sh` | All passed, including generated Node and Chromium harnesses. |
+| `pnpm --dir packages/test/test-end-to-end-tests test` | Local: 5340 passing, 630 existing pending; Tinylicious: 4049 passing, 1921 existing pending. No failures reported in either default suite. |
+
+### Failure Inventory
+
+| ID | Test and reproduction | Signature and classification | Disposition |
+| --- | --- | --- | --- |
+| SEA-001 | `Driver lifecycle smoke / Non-Compat / creates detached, attaches, loads a peer, exchanges edits, and closes`; run the SEA smoke command above. | `Timeout on waiting for pending join or leave op` in `LoaderContainerTracker.ensureSynchronized`, first synchronization after load; behavioral membership-contract mismatch with the driver's synthetic membership. | Retained failing test; fix driver semantics after the configuration checkpoint. |
+| SEA-002 | `SharedCounter / Non-Compat / before each: Ensure synchronized / can create the counter in 3 containers correctly`; run the bounded sample above. | Same pending join/leave timeout as SEA-001. | Retained; verify after membership fix. |
+| SEA-003 | `SharedCounter - runtime benchmarks / Non-Compat / increment value in 3 containers`; run the bounded sample above. | Mocha 2000ms timeout, with transport-disconnected telemetry during cleanup. | Retained; rerun with the standard 10000ms deadline after membership fix before assigning a separate cause. |
+| SEA-004 | `Op reentry and rebasing during pending batches / Non-Compat / Pending batches with reentry - SharedCounter`; run the bounded sample above. | `Timeout on waiting a container to be saved` in `ensureSynchronized`. | Retained; investigate pending-operation acknowledgment after membership fix. |
+
+The first smoke attempt exposed a configuration defect: logical URLs omitted the tenant segment expected by the Fluid loader.
+The resolver now uses `fluid://sea-test/tests/<document>`; the subsequent attempt reached SEA-001.
+The failure inventory applies to the uncommitted implementation after `48085c15e81`; record its configuration commit before starting fixes.
+No new SEA-specific test exclusions have been added.
+
 For each observed failure, record the exact test name and command, source revision, failure signature, setup versus behavioral classification, reproduction steps, and relevant known limitation.
 Keep unsupported contracts visible, including signals, presence, synthetic membership, automatic reconnect, authentication, and garbage collection; do not weaken shared assertions to hide them.
 
 ## Review Boundary and Later Work
 
-Present the initial opt-in integration for review and obtain authorization to commit it.
-Stop before the separate failure-remediation project; review and commit of the configuration are prerequisites for that follow-up.
-
-After that boundary, a separately assigned effort can fix failures in focused, independently validated changes, potentially across multiple commits.
-Enable SEA by default only after the required suites pass and that change is approved.
-After an authorized push, inspect CI results and address newly observed failures.
-This plan does not authorize those later changes, commits, pushes, or CI-default changes.
+The user authorized committing the configuration once default tests pass and the checkout is in a committable state, with opt-in failures explicitly recorded.
+Commit that boundary before fixing driver-contract failures.
+Then fix and validate focused issues, commit the fixes, and repeat the integration tests until the current-version SEA suite passes.
+Do not replace shared assertions or classify missing supported behavior as a test flaw.
+Skip a SEA test only when its asserted implementation detail does not apply to SEA; retain its exact name, reason, and any alternative contract coverage in an exclusion inventory.
+SEA remains off by default even after the opt-in suite passes; enabling defaults, pushing, and merging require separate authorization.
 
 When this assignment is complete, keep run instructions with the owning test package and archive this plan and its evidence under [Historical records](historical/README.md).
 Do not start a numbered iteration unless that workflow is separately selected through the [coordination skill](../.github/skills/rust-service-coordination/SKILL.md).

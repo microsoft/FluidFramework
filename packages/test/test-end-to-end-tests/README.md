@@ -93,6 +93,39 @@ npm run test:realsvc:run -- --driver=r11s
 npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=docker
 ```
 
+### Opt-In SEA WebSocket Tests
+
+SEA is excluded from `test`, `test:realsvc`, and the existing CI service selections.
+From the repository root, build the test package and run the explicit current-version configuration:
+
+```bash
+pnpm exec fluid-build packages/test/test-end-to-end-tests --task build:test:esm
+pnpm --dir packages/test/test-end-to-end-tests run test:realsvc:sea --grep 'Driver lifecycle smoke'
+pnpm --dir packages/test/test-end-to-end-tests run test:realsvc:sea
+```
+
+The runner requires Linux, the repository Rust toolchain, matching `wasm-bindgen`, OpenSSL, and Node.js with built-in WebSocket support (tested with Node 22.23.2).
+It builds the native service with `websocket-stream`, selects memory storage, creates disposable certificates, and starts unforwarded loopback listeners on available ports.
+It supplies `SEA_TEST_WEBSOCKET_URL` to the test-driver factory and selects `sea-websocket`, `--compatKind=None`, and `--compatVersion=0` explicitly.
+Driver and compatibility overrides are rejected; test filters such as `--grep` and `--bail` remain available.
+The service owns document storage until shutdown; restart persistence and WebTransport backpressure are not exercised.
+Ordinary WebSocket adapter queues fail on overflow rather than applying receive backpressure.
+The Node originless-loopback exception must not be enabled on a forwarded or public endpoint.
+
+Readiness is bounded to 30 seconds, individual tests default to 10 seconds, and the suite process is bounded to 10 minutes.
+The runner stops owned processes and removes certificates and temporary storage on failure or interruption; service logs are printed on failure.
+Nonzero results are not suppressed.
+The initial smoke test reaches attachment and second-client loading, then fails the shared membership synchronization contract.
+See the active [failure inventory](../../../rust-service/INTEGRATION_TEST_CONFIGURATION_PLAN.md#failure-inventory) before interpreting the result as a setup problem.
+No SEA-specific behavioral tests are silently skipped by this configuration.
+
+Focused setup checks:
+
+```bash
+node --test packages/test/test-drivers/test/seaWebSocketTestDriver.test.mjs
+pnpm --dir packages/test/test-end-to-end-tests run test:sea:runner
+```
+
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

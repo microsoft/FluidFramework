@@ -14487,6 +14487,12 @@ importers:
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../drivers/routerlicious-driver
+      '@fluidframework/sea-driver':
+        specifier: workspace:~
+        version: link:../../../rust-service/packages/sea-driver
+      '@fluidframework/sea-typescript':
+        specifier: workspace:~
+        version: link:../../../rust-service/packages/sea-typescript
       '@fluidframework/server-local-server':
         specifier: ^7.0.1
         version: 7.0.1(supports-color@10.2.2)
