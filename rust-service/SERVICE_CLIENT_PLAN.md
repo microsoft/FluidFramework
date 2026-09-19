@@ -144,6 +144,11 @@ Capability-specific `internal/memory` and `internal/webtransport` entrypoints sh
 Eight small Chromium benchmark cases passed across both data structures, both integration paths, and both services; the runner now asserts selected-artifact-only loading.
 The neutral WASM build task now skips unchanged work and regenerates missing outputs and changed feature configurations; validation restored the original minimal capabilities afterward.
 These results do not complete the stages: low-level protocol consumers still use legacy bindings, and their migration and legacy binding removal must preserve the transport-specific regressions before stage 3.
+The benchmark and loader checkpoint is committed as `f86f03c9c33`.
+Node session scenarios now live in the neutral package; the canonical Node command runs twelve package tests plus three retained legacy-specific regressions.
+The canonical browser command also runs plain and compressed neutral sessions before its transport and shutdown checks.
+Durable-file/client-selected and memory/SEA-selected browser runs passed in Chromium 152 inside the Codespace.
+Remaining direct generated tests cover injection hooks, legacy named-create rejection, snapshot registration replacement, and browser transport replacement/shutdown; the older driver browser trace also remains to migrate or retire after preserving its distinct scenarios.
 
 ### 1. Extract and Package WASM Bindings
 

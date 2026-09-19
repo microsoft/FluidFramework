@@ -43,6 +43,7 @@ export CARGO_TARGET_DIR="$temporary_root/target"
 # calling this script. Direct invocation remains self-contained.
 if [[ "${SEA_BROWSER_SKIP_BUILD:-}" != "1" ]]; then
 	pnpm --dir tests/minimal-fluid-driver run build:wasm
+	pnpm --dir packages/sea-typescript run build
 fi
 sh tests/webtransport-browser/generate-cert.sh "$temporary_root/certs"
 cargo build -p sea-webtransport-server
@@ -74,6 +75,12 @@ if [[ -z "$transport_url" ]]; then
 	printf 'timed out waiting for the WebTransport server to start\n' >&2
 	exit 1
 fi
+
+node tests/minimal-fluid-driver/browser/run-headless.mjs \
+	packages/sea-typescript \
+	"$transport_url" \
+	"$(cat "$temporary_root/certs/cert.sha256")" \
+	__seaPackageResult browser.html "snapshotPolicy=${SEA_SNAPSHOT_POLICY:-client}"
 
 # Passing the marker enables the runner's shutdown assertions. The runner creates it
 # after the browser flow, and the server acknowledges that it stopped accepting work.

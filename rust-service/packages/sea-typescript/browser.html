@@ -6,26 +6,46 @@
 <head><meta charset="utf-8"><title>Sea package session validation</title></head>
 <body>
 <script type="module">
-import { openWebTransport } from "./lib/index.js";
+import { openWebTransport } from "./lib/webtransport.js";
 
 const parameters = new URLSearchParams(location.search);
 const certificateHash = Uint8Array.from(parameters.get("hash").match(/../gu), (byte) => Number.parseInt(byte, 16));
 const encode = (value) => new TextEncoder().encode(value);
 const assert = (condition, message) => { if (!condition) { throw new Error(message); } };
+const participation = parameters.get("snapshotPolicy") === "sea" ? "seaSelected" : "clientSelected";
+
+/** Reads through progress notifications until the requested history state arrives. */
+async function nextMatching(stream, predicate) {
+    for (;;) {
+        const item = await stream.next();
+        assert(item !== undefined, "history ended before the expected state");
+        if (predicate(item)) return item;
+    }
+}
 
 window.__seaPackageResult = (async () => {
     const results = [];
     for (const compression of [false, true]) {
         const service = { url: parameters.get("transport"), certificateHash, configuration: compression ? "webtransport-compression" : "webtransport" };
         const unique = crypto.randomUUID();
-        const options = (name) => ({ author: encode(`${unique}-${name}`), session: encode(crypto.randomUUID()), compression });
+        const options = (name) => ({ author: encode(`${unique}-${name}`), session: encode(`${name === "writer" ? "0" : "1"}-${crypto.randomUUID()}`), compression });
+        let missingError;
+        try {
+            const unexpected = await openWebTransport(service, new Uint8Array(8), options("missing"));
+            await unexpected.close();
+        } catch (error) { missingError = error; }
+        assert(missingError?.kind === "Rejected", "missing document did not return a classified rejection");
         const writer = await openWebTransport(service, undefined, options("writer"));
         const reader = await openWebTransport(service, writer.document, options("reader"));
         let coordination;
         let events;
+        let live;
+        let observerCoordination;
         try {
             const initial = await reader.load();
             initial.cancel();
+            live = reader.read();
+            await nextMatching(live, (item) => item.kind === "progress" && item.status === "AwaitingNewItems");
             const payload = encode("browser application payload ".repeat(100));
             const blob = await writer.putBlob(payload);
             assert(new TextDecoder().decode(await reader.getBlob(blob)) === new TextDecoder().decode(payload), "blob did not round trip");
@@ -38,8 +58,16 @@ window.__seaPackageResult = (async () => {
             }
             const root = await writer.putDirectory([{ name: "state", child: blob }]);
             assert((await reader.getDirectory(root))[0].name === "state", "directory did not round trip");
-            const position = await writer.submit(encode("operation"), undefined, payload);
+            const position = await writer.submit(encode("operation"), undefined, payload, root);
             assert(await writer.resolveSubmission(encode("operation")) === position, "submission receipt missing");
+            const delivery = await nextMatching(live, (item) => item.kind === "event");
+            assert(delivery.position === position, "live peer delivery position mismatch");
+            assert(new TextDecoder().decode(delivery.payload) === new TextDecoder().decode(payload), "live peer delivery payload mismatch");
+            assert(delivery.blobTree.kind === root.kind && delivery.blobTree.bytes.every((byte, index) => byte === root.bytes[index]), "live content reference mismatch");
+            await nextMatching(live, (item) => item.kind === "progress" && item.status === "AwaitingNewItems");
+            const pendingRead = live.next();
+            live.cancel();
+            assert(await pendingRead === undefined, "cancellation did not wake the pending read");
             events = reader.read(undefined, position);
             let observed = false;
             for (;;) {
@@ -51,9 +79,20 @@ window.__seaPackageResult = (async () => {
                 }
             }
             assert(observed, "reader did not observe event");
-            coordination = await writer.coordinateSnapshots("clientSelected");
-            await coordination.next();
-            await writer.publishSnapshot(undefined, undefined, position, root);
+            coordination = await writer.coordinateSnapshots(participation);
+            const authority = await coordination.next();
+            observerCoordination = await reader.coordinateSnapshots(participation);
+            const observerAuthority = await observerCoordination.next();
+            if (participation === "seaSelected") {
+                assert(authority.fence !== undefined, "publisher did not receive a fence");
+                assert(observerAuthority.fence === undefined, "two publishers were nominated");
+            }
+            const notification = coordination.next();
+            await writer.publishSnapshot(undefined, authority.fence, position, root);
+            let observedSnapshot = await notification;
+            while (observedSnapshot.latest !== position) observedSnapshot = await coordination.next();
+            assert((await writer.getSnapshot()).atEvent === position, "latest snapshot mismatch");
+            assert((await writer.getSnapshot(position)).atEvent === position, "bounded snapshot mismatch");
             const reloaded = await openWebTransport(service, writer.document, options("reload"));
             try {
                 const loaded = await reloaded.load();
@@ -62,9 +101,11 @@ window.__seaPackageResult = (async () => {
                     assert(snapshot.kind === "snapshot" && snapshot.atEvent === position, "snapshot did not reopen");
                 } finally { loaded.cancel(); }
             } finally { await reloaded.close(); }
-            results.push({ compression, blobBytes: payload.length, snapshotPosition: String(position) });
+            results.push({ compression, blobBytes: payload.length, snapshotPosition: String(position), participation, liveDelivery: true, cancellation: true, serviceErrorKind: missingError.kind });
         } finally {
             events?.cancel();
+            live?.cancel();
+            observerCoordination?.cancel();
             coordination?.cancel();
             await writer.close();
             await reader.close();

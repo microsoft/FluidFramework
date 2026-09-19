@@ -121,8 +121,9 @@ model individual generated packages without package-owned globs. The current
 neutral-package task provides hash-based incremental execution.
 The legacy task remains until the protocol harnesses migrate.
 
-The generated Node suite exercises the process-local client, including cancellation of a pending read.
-The real Chromium harness exercises the injected client over `SeaBrowserTransport`, including persistent submission, stream cancellation, explicit disconnect, and reconnect.
+The Node suite runs the neutral package's session tests plus retained legacy regressions for transport injection, named-create rejection, and snapshot registration replacement.
+The real Chromium harness first exercises plain and compressed neutral remote sessions, then the injected client over `SeaBrowserTransport`, including persistent submission, stream cancellation, explicit disconnect, and reconnect.
+Both test tasks declare the neutral package build dependency; the package itself remains independent of this harness.
 Rust transport tests inject fragmented, coalesced, delayed, reset, malformed, and abandoned-response inputs without requiring browser timing.
 The TypeScript unit suite also includes a summary-storage fixture that verifies mixed incremental tree and blob handles, attachment reuse and validation, historical snapshot loading, and stale-parent rejection.
 A generated-WASM driver regression verifies hidden initialization, first-operation sequence numbering, fresh-client mapping reconstruction, and exact historical snapshot versions.

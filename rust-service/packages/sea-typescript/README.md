@@ -86,8 +86,12 @@ pnpm --dir rust-service/packages/sea-typescript test
 ```
 
 The Node tests use capability entrypoints and cover sharing, isolation, compression, immutable content, events, snapshot reload, cancellation, and capability rejection.
+Migrated session regressions also cover live peer delivery, recursive content, idempotent publication, explicit snapshot fences, operation conflicts, superseded authors, reused memberships, and explicit reopening.
+The canonical Node harness executes these twelve package tests together with three retained legacy binding regressions.
 An emitted-module import-graph test checks lazy artifact imports and excludes unrelated capabilities and dependencies from each factory entrypoint.
 `browser.html` runs plain and compressed remote sessions through the emitted package entrypoint.
+The canonical WebTransport script now runs this flow before its legacy transport and shutdown checks, making neutral browser coverage part of `test.sh`.
+Both client-selected/durable-file and SEA-selected/memory configurations passed live delivery, pending-read cancellation, classified errors, content references, snapshot notifications and lookup, and reopening in Chromium 152 inside the Codespace.
 With a running development server and certificate from the [browser harness](../../tests/webtransport-browser/README.md), run from `rust-service/`:
 
 ```bash
