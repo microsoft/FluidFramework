@@ -74,8 +74,8 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	private closing: Promise<void> = Promise.resolve();
 	/** Membership replacement blocks new archive reads until its setup finishes. */
 	private transition: Promise<unknown> | undefined;
-	/** Admitted finite archive reads must settle before their membership is replaced. */
-	private readonly archiveReads = new Set<Promise<unknown>>();
+	/** Admitted finite reads and blob uploads must settle before membership replacement or close. */
+	private readonly archiveOperations = new Set<Promise<unknown>>();
 	/** Event subscription retained until transferred to the driver. */
 	private eventStream: SeaStream<SeaLoadResult> | undefined;
 	/** Resume position captured when the event stream is opened. */
@@ -101,13 +101,13 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		return this.session;
 	}
 
-	/** Serializes membership changes and drains reads admitted before replacement. */
+	/** Serializes membership changes and drains archive operations admitted before replacement. */
 	private replace<Result>(operation: () => Promise<Result>): Promise<Result> {
 		const previous = this.transition ?? Promise.resolve();
 		const replacement = previous
 			.catch(() => {})
 			.then(async () => {
-				await Promise.allSettled([...this.archiveReads]);
+				await Promise.allSettled([...this.archiveOperations]);
 				return operation();
 			});
 		this.transition = replacement;
@@ -118,18 +118,18 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		return replacement;
 	}
 
-	/** Pins a finite archive read to live membership while allowing parallel reads. */
-	private async readArchive<Result>(
+	/** Pins finite reads and blob uploads to a session without serializing independent operations. */
+	private async withArchiveSession<Result>(
 		operation: (session: SeaSession) => Promise<Result>,
 	): Promise<Result> {
 		while (this.transition !== undefined) await this.transition;
 		const session = this.current();
 		const result = Promise.resolve().then(() => operation(session));
-		this.archiveReads.add(result);
+		this.archiveOperations.add(result);
 		try {
 			return await result;
 		} finally {
-			this.archiveReads.delete(result);
+			this.archiveOperations.delete(result);
 		}
 	}
 
@@ -289,7 +289,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 
 	/** Returns the latest SEA snapshot in the driver's byte-position representation. */
 	public async latestSnapshot(): ReturnType<SeaDriverClient["latestSnapshot"]> {
-		const snapshot = await this.readArchive((session) => session.getSnapshot());
+		const snapshot = await this.withArchiveSession((session) => session.getSnapshot());
 		return snapshot === undefined
 			? undefined
 			: {
@@ -302,7 +302,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	/** Looks up an exact snapshot rather than accepting an earlier bounded selection. */
 	public async snapshot(id: Uint8Array): ReturnType<SeaDriverClient["snapshot"]> {
 		const position = decodePosition(id);
-		const snapshot = await this.readArchive((session) => session.getSnapshot(position));
+		const snapshot = await this.withArchiveSession((session) => session.getSnapshot(position));
 		return snapshot === undefined || snapshot.atEvent !== position
 			? undefined
 			: {
@@ -346,7 +346,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 
 	/** Reads until caught up while preserving the continuation position of initialization events. */
 	public async readProjected(after?: Uint8Array): Promise<ProjectedReadPage> {
-		return this.readArchive((session) => this.readProjectedFrom(session, after));
+		return this.withArchiveSession((session) => this.readProjectedFrom(session, after));
 	}
 
 	/** Reads through one captured session, including during exclusive projection initialization. */
@@ -420,13 +420,15 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 
 	/** Uploads an immutable blob without claiming backend deduplication measurements. */
 	public async uploadBlob(payload: Uint8Array): Promise<BlobUpload> {
-		const id = await this.current().putBlob(payload);
+		const id = await this.withArchiveSession((session) => session.putBlob(payload));
 		return { digest: id.bytes, sizeBytes: BigInt(payload.length), deduplicated: false };
 	}
 
 	/** Fetches a blob through the configured session stack. */
 	public fetchBlob(digest: Uint8Array): Promise<Uint8Array> {
-		return this.readArchive((session) => session.getBlob({ kind: "blob", bytes: digest }));
+		return this.withArchiveSession((session) =>
+			session.getBlob({ kind: "blob", bytes: digest }),
+		);
 	}
 
 	/** Converts a flattened Fluid summary into immutable SEA directories. */
@@ -445,14 +447,14 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 
 	/** Converts immutable SEA directories back to the driver's flattened summary representation. */
 	public async fetchSummary(digest: Uint8Array): Promise<readonly SummaryEntry[]> {
-		return this.readArchive(async (session) => {
+		return this.withArchiveSession(async (session) => {
 			const entries: SummaryEntry[] = [];
 			await this.flattenDirectory(session, { kind: "directory", bytes: digest }, "", entries);
 			return entries;
 		});
 	}
 
-	/** Stops owned streams immediately, then drains finite reads before closing membership. */
+	/** Stops live streams, then drains admitted reads and blob uploads before closing membership. */
 	public disconnect(owner?: Uint8Array): void {
 		if (
 			owner !== undefined &&
@@ -472,7 +474,9 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		const session = this.session;
 		this.session = undefined;
 		if (session !== undefined) {
-			this.closing = Promise.allSettled([...this.archiveReads]).then(() => session.close());
+			this.closing = Promise.allSettled([...this.archiveOperations]).then(() =>
+				session.close(),
+			);
 			void this.closing.catch(() => {});
 		}
 	}

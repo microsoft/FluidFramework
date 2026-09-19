@@ -107,9 +107,10 @@ The adapter still retains all operation history; floor enforcement does not clai
 This path has no synthetic sequence offset; legacy injected benchmark clients retain the earlier two-slot projection.
 The two projections are not interoperable within one document; use fresh test documents when migrating from the synthetic projection.
 It watches snapshot coordination continuously so SEA-selected publication uses the current observed nomination fence.
-Membership replacement waits for admitted archive reads to finish and defers later reads until the replacement opens.
+Membership replacement waits for admitted finite archive reads and blob uploads to finish and defers later reads and uploads until the replacement opens.
+Independent blob uploads remain concurrent within that gate; no live session is selected before a pending replacement completes.
 Each document service retains a unique SEA author for read-first connections, independent of shared projected Fluid client labels.
-Disconnect cancels owned live streams and prevents new reads, but drains admitted finite archive reads before membership close.
+Disconnect cancels owned live streams and prevents new reads and uploads, but drains admitted finite archive reads and blob uploads before membership close.
 Reconnect waits for that cleanup, and the next open calls the injected factory.
 Delta disposal also closes its owning session so Fluid pending-state recovery can observe the old client's final leave.
 Cleanup carries the original session identity and cannot close a newer replacement sharing the same adapter.

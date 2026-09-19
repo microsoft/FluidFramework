@@ -483,7 +483,7 @@ test("neutral session driver cancels startup history when initialization is inva
 	}
 });
 
-test("neutral session disposal drains storage reads and replacement defers later reads", async () => {
+test("neutral session disposal drains reads and uploads while replacement defers later work", async () => {
 	const service = await createMemoryService({ environment: "node" });
 	let releaseRead = (): void => {};
 	const blocked = new Promise<void>((resolve) => {
@@ -493,6 +493,15 @@ test("neutral session disposal drains storage reads and replacement defers later
 	const entered = new Promise<void>((resolve) => {
 		enteredRead = resolve;
 	});
+	let releaseUpload = (): void => {};
+	const blockedUpload = new Promise<void>((resolve) => {
+		releaseUpload = resolve;
+	});
+	let enteredUpload = (): void => {};
+	const uploading = new Promise<void>((resolve) => {
+		enteredUpload = resolve;
+	});
+	let blockUploads = false;
 	let opens = 0;
 	let firstClosed = false;
 	const adapter = new SeaSessionDriverClient(async (document, options) => {
@@ -500,7 +509,15 @@ test("neutral session disposal drains storage reads and replacement defers later
 		opens += 1;
 		if (opens === 1) {
 			const getBlob = session.getBlob.bind(session);
+			const putBlob = session.putBlob.bind(session);
 			const close = session.close.bind(session);
+			session.putBlob = async (payload) => {
+				if (blockUploads) {
+					enteredUpload();
+					await blockedUpload;
+				}
+				return putBlob(payload);
+			};
 			session.getBlob = async (id) => {
 				enteredRead();
 				await blocked;
@@ -518,6 +535,9 @@ test("neutral session disposal drains storage reads and replacement defers later
 	const blob = await adapter.uploadBlob(payload);
 	const reading = adapter.fetchBlob(blob.digest);
 	await entered;
+	blockUploads = true;
+	const writing = adapter.uploadBlob(payload);
+	await uploading;
 	adapter.disconnect();
 	const replacement = adapter.openSession(
 		document,
@@ -529,7 +549,8 @@ test("neutral session disposal drains storage reads and replacement defers later
 		laterCompleted = true;
 		return value;
 	});
-	const results = Promise.allSettled([reading, replacement, later]);
+	const laterUpload = adapter.uploadBlob(payload);
+	const results = Promise.allSettled([reading, writing, replacement, later, laterUpload]);
 	try {
 		await setImmediate();
 		assert.equal(
@@ -540,12 +561,23 @@ test("neutral session disposal drains storage reads and replacement defers later
 		assert.equal(laterCompleted, false, "new reads must wait for membership replacement");
 		releaseRead();
 		assert.deepEqual(await reading, payload);
+		await setImmediate();
+		assert.equal(
+			firstClosed,
+			false,
+			"an admitted upload still pins the old session after reads finish",
+		);
+		assert.equal(opens, 1);
+		releaseUpload();
+		assert.deepEqual((await writing).digest, blob.digest);
 		await replacement;
 		assert.deepEqual(await later, payload);
+		assert.deepEqual((await laterUpload).digest, blob.digest);
 		assert.equal(firstClosed, true);
 		assert.equal(opens, 2);
 	} finally {
 		releaseRead();
+		releaseUpload();
 		await results;
 		adapter.disconnect();
 		await adapter.reconnect();

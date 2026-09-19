@@ -214,6 +214,12 @@ The existing suspended-read regression now includes explicit disconnect before r
 All 16 owning tests, package/root builds, scoped policy, documentation checks, and complete canonical `./test.sh` pass; probes are removed and no API report changes are needed.
 The next full `--bail` run reaches 108 passing and 38 pending, including the large summary benchmarks, then fails `blobs (createBlobPayloadPending: undefined) / attach sends an op` with `SEA session is not open` during upload.
 That remaining content-operation admission gap is separate from the committed upload pipeline and the finite-read disposal fix; no exclusions were added.
+Both unchanged `attach sends an op` variants now pass after blob uploads use the same session-admission gate as finite reads.
+The existing lifecycle fixture independently blocks a read and an upload, proves the upload still prevents close after the read completes, and verifies that subsequent reads and uploads use the replacement.
+Independent uploads remain concurrent; only membership transitions block admission.
+Final package/root builds, scoped policy, documentation checks, and complete canonical `./test.sh` pass for this follow-up; no API report changes.
+The unchanged `^blobs ` batch now passes seven tests, including simultaneous identical uploads on one and separate containers, with one existing pending test.
+It next fails `reconnection does not block ops when having pending blobs` with `SEA event stream is not open` during subscription setup; subscription reuse remains a separate follow-up.
 
 For each observed failure, record the exact test name and command, source revision, failure signature, setup versus behavioral classification, reproduction steps, and relevant known limitation.
 Keep unsupported contracts visible, including signals, presence, synthetic membership, automatic reconnect, authentication, and garbage collection; do not weaken shared assertions to hide them.
