@@ -8,6 +8,9 @@
 export function createMemoryService(options?: SeaMemoryBundleOptions): Promise<SeaMemoryService>;
 
 // @internal
+export function createSeaFactories(options?: SeaLoaderOptions): SeaFactories;
+
+// @internal
 export function openRemote(service: SeaRemoteOptions, document: Uint8Array | undefined, options: SeaSessionOptions): Promise<SeaSession>;
 
 // @internal
@@ -39,6 +42,22 @@ export interface SeaEvent {
     readonly reference?: bigint;
     readonly session: Uint8Array;
 }
+
+// @internal
+export interface SeaFactories {
+    createMemoryService(): Promise<SeaMemoryService>;
+    openWebTransport(service: Omit<SeaWebTransportOptions, "configuration">, document: Uint8Array | undefined, options: SeaSessionOptions): Promise<SeaSession>;
+}
+
+// @internal
+export interface SeaLoaderOptions {
+    readonly compressionSupport?: boolean;
+    readonly environment?: "browser" | "node";
+    readonly preset?: SeaLoaderPreset;
+}
+
+// @internal
+export type SeaLoaderPreset = "split" | "combined";
 
 // @internal
 export type SeaLoadResult = SeaSnapshot | SeaEvent | SeaProgress;

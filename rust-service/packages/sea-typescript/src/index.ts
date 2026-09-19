@@ -6,6 +6,12 @@
 export { createMemoryService } from "./memory.js";
 export { openWebTransport, type SeaWebTransportOptions } from "./webtransport.js";
 export { openRemote, type SeaRemoteOptions } from "./websocket.js";
+export {
+	createSeaFactories,
+	type SeaFactories,
+	type SeaLoaderOptions,
+	type SeaLoaderPreset,
+} from "./presets.js";
 
 /** Stable SEA failure categories, plus wrapper-local rejection after close.
  * @internal

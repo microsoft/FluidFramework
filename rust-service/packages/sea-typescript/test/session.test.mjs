@@ -13,6 +13,7 @@ import {
 } from "@fluidframework/sea-typescript/internal";
 import { createMemoryService } from "@fluidframework/sea-typescript/internal/memory";
 import { openWebTransport } from "@fluidframework/sea-typescript/internal/webtransport";
+import { createSeaFactories } from "@fluidframework/sea-typescript/internal/presets";
 
 const encode = (text) => new TextEncoder().encode(text);
 
@@ -268,107 +269,187 @@ test("capability entrypoints share factories and reach only lazy capability-spec
 	}
 });
 
-for (const compression of [false, true]) {
-	test(`package entrypoint supports shared memory sessions (compression=${compression})`, async () => {
-		const configuration = compression ? "memory-compression" : "memory";
-		const service = await createMemoryService({ configuration, environment: "node" });
-		const isolated = await createMemoryService({ configuration, environment: "node" });
-		const writer = await service.open(undefined, {
-			author: encode("writer"),
-			session: encode("writer-session"),
-			compression,
+for (const preset of ["split", "combined"]) {
+	for (const compression of [false, true]) {
+		test(`package entrypoint supports shared memory sessions (preset=${preset}, compression=${compression})`, async () => {
+			const factories = createSeaFactories({
+				preset,
+				compressionSupport: compression,
+				environment: "node",
+			});
+			const service = await factories.createMemoryService();
+			const isolated = await factories.createMemoryService();
+			const writer = await service.open(undefined, {
+				author: encode("writer"),
+				session: encode("writer-session"),
+				compression,
+			});
+			const reader = await service.open(writer.document, {
+				author: encode("reader"),
+				session: encode("reader-session"),
+				compression,
+			});
+			try {
+				await assert.rejects(
+					isolated.open(writer.document, {
+						author: encode("isolated"),
+						session: encode("isolated-session"),
+						compression,
+					}),
+					{ kind: "Rejected", message: "document does not exist in this memory service" },
+				);
+				const payload = encode("opaque application payload ".repeat(100));
+				const blob = await writer.putBlob(payload);
+				assert.deepEqual(await reader.getBlob(blob), payload);
+				if (compression) {
+					const rawReader = await service.open(writer.document, {
+						author: encode("raw-reader"),
+						session: encode("raw-reader-session"),
+					});
+					try {
+						const stored = await rawReader.getBlob(blob);
+						assert.notDeepEqual(stored, payload);
+						assert.ok(stored.length < payload.length);
+					} finally {
+						await rawReader.close();
+					}
+				}
+				const root = await writer.putDirectory([{ name: "state", child: blob }]);
+				assert.deepEqual(await reader.getDirectory(root), [{ name: "state", child: blob }]);
+				assert.equal(await reader.getSnapshot(), undefined);
+				const position = await writer.submit(encode("operation"), undefined, payload, root);
+				assert.deepEqual(await writer.getDirectory(root), [{ name: "state", child: blob }]);
+				assert.equal(await writer.resolveSubmission(encode("operation")), position);
+				const events = reader.read(undefined, position);
+				let observed = false;
+				for (;;) {
+					const item = await events.next();
+					if (item === undefined) {
+						break;
+					}
+					if (item.kind === "event") {
+						assert.deepEqual(item.payload, payload);
+						assert.deepEqual(item.blobTree, root);
+						observed = true;
+					}
+				}
+				assert.ok(observed);
+				const coordination = await writer.coordinateSnapshots("clientSelected");
+				await coordination.next();
+				await writer.publishSnapshot(undefined, undefined, position, root);
+				const loaded = await reader.load();
+				const snapshot = await loaded.next();
+				assert.equal(snapshot.kind, "snapshot");
+				assert.equal(snapshot.atEvent, position);
+				assert.deepEqual(snapshot.root, root);
+				assert.deepEqual(await reader.getSnapshot(), snapshot);
+				assert.deepEqual(await reader.getSnapshot(position), snapshot);
+				assert.equal(await reader.getSnapshot(position - 1n), undefined);
+				loaded.cancel();
+				coordination.cancel();
+				const pendingStream = reader.read(position);
+				while ((await pendingStream.next()).kind !== "progress") {}
+				const pending = pendingStream.next();
+				pendingStream.cancel();
+				assert.equal(await pending, undefined);
+			} finally {
+				await writer.close();
+				await reader.close();
+				service.close();
+				isolated.close();
+			}
 		});
-		const reader = await service.open(writer.document, {
-			author: encode("reader"),
-			session: encode("reader-session"),
-			compression,
-		});
+	}
+}
+
+for (const preset of ["split", "combined"]) {
+	test(`minimal ${preset} preset rejects unavailable compression before creating a document`, async () => {
+		const service = await createSeaFactories({
+			preset,
+			environment: "node",
+		}).createMemoryService();
 		try {
 			await assert.rejects(
-				isolated.open(writer.document, {
-					author: encode("isolated"),
-					session: encode("isolated-session"),
-					compression,
+				service.open(undefined, {
+					author: encode("writer"),
+					session: encode("session"),
+					compression: true,
 				}),
-				{ kind: "Rejected", message: "document does not exist in this memory service" },
+				{ kind: "Rejected", message: "this WASM bundle does not support compression" },
 			);
-			const payload = encode("opaque application payload ".repeat(100));
-			const blob = await writer.putBlob(payload);
-			assert.deepEqual(await reader.getBlob(blob), payload);
-			if (compression) {
-				const rawReader = await service.open(writer.document, {
-					author: encode("raw-reader"),
-					session: encode("raw-reader-session"),
-				});
-				try {
-					const stored = await rawReader.getBlob(blob);
-					assert.notDeepEqual(stored, payload);
-					assert.ok(stored.length < payload.length);
-				} finally {
-					await rawReader.close();
-				}
-			}
-			const root = await writer.putDirectory([{ name: "state", child: blob }]);
-			assert.deepEqual(await reader.getDirectory(root), [{ name: "state", child: blob }]);
-			assert.equal(await reader.getSnapshot(), undefined);
-			const position = await writer.submit(encode("operation"), undefined, payload, root);
-			assert.deepEqual(await writer.getDirectory(root), [{ name: "state", child: blob }]);
-			assert.equal(await writer.resolveSubmission(encode("operation")), position);
-			const events = reader.read(undefined, position);
-			let observed = false;
-			for (;;) {
-				const item = await events.next();
-				if (item === undefined) {
-					break;
-				}
-				if (item.kind === "event") {
-					assert.deepEqual(item.payload, payload);
-					assert.deepEqual(item.blobTree, root);
-					observed = true;
-				}
-			}
-			assert.ok(observed);
-			const coordination = await writer.coordinateSnapshots("clientSelected");
-			await coordination.next();
-			await writer.publishSnapshot(undefined, undefined, position, root);
-			const loaded = await reader.load();
-			const snapshot = await loaded.next();
-			assert.equal(snapshot.kind, "snapshot");
-			assert.equal(snapshot.atEvent, position);
-			assert.deepEqual(snapshot.root, root);
-			assert.deepEqual(await reader.getSnapshot(), snapshot);
-			assert.deepEqual(await reader.getSnapshot(position), snapshot);
-			assert.equal(await reader.getSnapshot(position - 1n), undefined);
-			loaded.cancel();
-			coordination.cancel();
-			const pendingStream = reader.read(position);
-			while ((await pendingStream.next()).kind !== "progress") {}
-			const pending = pendingStream.next();
-			pendingStream.cancel();
-			assert.equal(await pending, undefined);
 		} finally {
-			await writer.close();
-			await reader.close();
 			service.close();
-			isolated.close();
+		}
+	});
+
+	test(`${preset} compression support does not enable compression implicitly`, async () => {
+		const service = await createSeaFactories({
+			preset,
+			environment: "node",
+			compressionSupport: true,
+		}).createMemoryService();
+		const session = await service.open(undefined, {
+			author: encode("writer"),
+			session: encode("writer-session"),
+		});
+		const raw = await service.open(session.document, {
+			author: encode("raw"),
+			session: encode("raw-session"),
+			compression: false,
+		});
+		try {
+			const payload = encode("uncompressed despite compiled support ".repeat(50));
+			assert.deepEqual(await raw.getBlob(await session.putBlob(payload)), payload);
+		} finally {
+			await session.close();
+			await raw.close();
+			service.close();
 		}
 	});
 }
 
-test("minimal memory bundle rejects unavailable compression before creating a document", async () => {
-	const service = await createMemoryService({ environment: "node" });
-	try {
+test("preset selection rejects invalid configuration and unsupported Node WebTransport", async () => {
+	assert.throws(() => createSeaFactories({ preset: "unknown" }), { kind: "Rejected" });
+	assert.throws(() => createSeaFactories({ environment: "unknown" }), { kind: "Rejected" });
+	for (const preset of ["split", "combined"]) {
 		await assert.rejects(
-			service.open(undefined, {
-				author: encode("writer"),
-				session: encode("session"),
-				compression: true,
-			}),
-			{ kind: "Rejected", message: "this WASM bundle does not support compression" },
+			createSeaFactories({ preset, environment: "node" }).openWebTransport(
+				{ url: "https://unused.invalid/sea", certificateHash: new Uint8Array(32) },
+				undefined,
+				{ author: encode("writer"), session: encode("session") },
+			),
+			{ kind: "Unavailable", message: "WebTransport requires a supported browser" },
 		);
-	} finally {
-		service.close();
 	}
+});
+
+test("bundle initialization is shared by concurrent callers and caches failure without retries", async () => {
+	const { initialize } = await import("../lib/bindings.js");
+	let loads = 0;
+	let initializations = 0;
+	const module = {};
+	const load = async () => {
+		loads++;
+		return module;
+	};
+	const setup = async () => {
+		initializations++;
+	};
+	const first = initialize("test/concurrent", load, setup);
+	const second = initialize("test/concurrent", load, setup);
+	assert.equal(first, second);
+	assert.equal(await first, module);
+	assert.equal(await initialize("test/concurrent", load, setup), module);
+	assert.equal(loads, 1);
+	assert.equal(initializations, 1);
+	const failure = new Error("initialization failed");
+	const failed = initialize("test/failure", load, async () => {
+		throw failure;
+	});
+	await assert.rejects(failed, failure);
+	assert.equal(initialize("test/failure", load, setup), failed);
+	await assert.rejects(failed, failure);
+	assert.equal(loads, 2);
 });
 
 test("closing a memory service lets an admitted open settle without freeing its borrow", async () => {

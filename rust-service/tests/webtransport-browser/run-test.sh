@@ -99,11 +99,15 @@ node tests/minimal-fluid-driver/browser/run-headless.mjs \
 	"$SEA_BROWSER_WEBTRANSPORT_URL" \
 	"$(cat "$temporary_root/certs/cert.sha256")"
 
-node tests/minimal-fluid-driver/browser/run-headless.mjs \
-	packages/sea-typescript \
-	"$SEA_BROWSER_WEBTRANSPORT_URL" \
-	"$(cat "$temporary_root/certs/cert.sha256")" \
-	__seaPackageResult browser.html "snapshotPolicy=${SEA_SNAPSHOT_POLICY:-client}"
+for preset in split combined; do
+	for compression in false true; do
+		node tests/minimal-fluid-driver/browser/run-headless.mjs \
+			packages/sea-typescript \
+			"$SEA_BROWSER_WEBTRANSPORT_URL" \
+			"$(cat "$temporary_root/certs/cert.sha256")" \
+			__seaPackageResult browser.html "snapshotPolicy=${SEA_SNAPSHOT_POLICY:-client}&preset=$preset&compression=$compression"
+	done
+done
 
 # Passing the marker enables the runner's shutdown assertions. The runner creates it
 # after the browser flow, and the server acknowledges that it stopped accepting work.

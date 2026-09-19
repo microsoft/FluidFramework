@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { initialize, makeOptions, wrapSession } from "./bindings.js";
+import { createBoundMemoryService, initialize } from "./bindings.js";
 import type { SeaMemoryBundleOptions, SeaMemoryService } from "./index.js";
 
 /** Creates an independent memory service using a lazily initialized package-owned bundle.
@@ -32,36 +32,5 @@ export async function createMemoryService(
 						: import("../generated/memory-compression/web/sea_wasm.js"),
 				(module) => module.default(),
 			);
-	const service = new bindings.SeaMemoryService();
-	let closed = false;
-	let pendingOpens = 0;
-	let released = false;
-	const release = (): void => {
-		if (closed && pendingOpens === 0 && !released) {
-			released = true;
-			service.free();
-		}
-	};
-	return {
-		async open(document, sessionOptions) {
-			if (closed) {
-				throw Object.assign(new Error("memory service is closed"), { kind: "Closed" });
-			}
-			const generatedOptions = makeOptions(bindings, sessionOptions);
-			pendingOpens += 1;
-			try {
-				return wrapSession(await service.open(document, generatedOptions), bindings);
-			} finally {
-				generatedOptions.free();
-				pendingOpens -= 1;
-				release();
-			}
-		},
-		close() {
-			if (!closed) {
-				closed = true;
-				release();
-			}
-		},
-	};
+	return createBoundMemoryService(bindings);
 }

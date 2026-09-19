@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { initialize, makeOptions, wrapSession } from "./bindings.js";
+import { initialize, openBoundWebTransport } from "./bindings.js";
 import type { SeaSession, SeaSessionOptions } from "./index.js";
 
 /** Endpoint and package-owned capability selection for browser WebTransport.
@@ -35,18 +35,5 @@ export async function openWebTransport(
 				: import("../generated/webtransport-compression/web/sea_wasm.js"),
 		(module) => module.default(),
 	);
-	const generatedOptions = makeOptions(bindings, options);
-	try {
-		return wrapSession(
-			await bindings.openWebTransport(
-				service.url,
-				service.certificateHash,
-				document,
-				generatedOptions,
-			),
-			bindings,
-		);
-	} finally {
-		generatedOptions.free();
-	}
+	return openBoundWebTransport(bindings, service, document, options);
 }

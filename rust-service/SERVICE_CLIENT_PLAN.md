@@ -1,6 +1,6 @@
 # SEA WASM and ServiceClient Integration Plan
 
-Status: In progress; combined stages 1 and 2 are complete. Stage 3, stable factories and packaging presets, is next.
+Status: In progress; stages 1 through 3 are complete. Stage 4, ServiceClient integration, is next.
 Created: 2026-09-18.
 
 This is an active implementation plan, not a description of supported functionality.
@@ -201,14 +201,27 @@ Fluid adapters consume this layer, not the reverse; existing higher-level tests 
 
 ### 3. Add Stable Factories and Packaging Presets
 
-- [ ] Expose typed factories that hide generated bundle details from consumers while keeping service ownership and cleanup explicit.
-- [ ] Supply combined and split loader presets and make their selection independent of service options.
-- [ ] Cache initialization per bundle without sharing ephemeral document storage implicitly.
-- [ ] Keep optional capabilities lazy; existing non-SEA example options must not initialize or fetch SEA WASM.
-- [ ] Verify that selecting the minimal WebTransport loader fetches only its own generated JavaScript and WASM artifacts, not memory, combined, or decorator-enabled bundles.
-- [ ] Test explicit sharing between clients of one ephemeral service and isolation between separate services.
-- [ ] Exercise the same local and remote scenarios through both presets, plus a compression-enabled scenario that proves the extension mechanism.
-- [ ] Record generated and compressed artifact sizes and observed loading behavior with build configuration and environment details.
+`createSeaFactories` selects split or combined artifacts independently of session options and reuses the same ownership helpers as the capability entrypoints.
+The merged socket factory remains separate and unchanged; selecting either preset never enables socket fallback.
+The combined-compression configuration adds compression support without enabling it implicitly.
+Node and fresh-page Chromium scenarios cover both presets, explicit sharing/isolation, capability rejection, initialization caching, and exact selected-artifact loading.
+The [package guide](packages/sea-typescript/README.md#artifact-measurements) records raw/gzip/Brotli artifact sizes, build provenance, and tradeoffs.
+Example selection remains unchanged; the build-time example preset override and non-SEA UI acceptance remain stage 5 responsibilities.
+
+Stage 3 validation passed all canonical Rust gates, documentation checks, `./test.sh`, scoped repository policy, and root `pnpm build:fast`.
+The package has twenty-one passing local tests; its additional server-backed Node socket test passed in the optional browser harness.
+Fresh-page Chromium 152 inside the Codespace passed both presets with and without compression under durable-file/client-selected and memory/SEA-selected configurations.
+The merged ordinary-WebSocket browser and Node collaboration paths and bounded server shutdown also passed.
+These results do not establish external-browser or inventory UI acceptance.
+
+- [x] Expose typed factories that hide generated bundle details from consumers while keeping service ownership and cleanup explicit.
+- [x] Supply combined and split loader presets and make their selection independent of service options.
+- [x] Cache initialization per bundle without sharing ephemeral document storage implicitly.
+- [x] Keep optional capabilities lazy at the package boundary; the existing examples still have no SEA dependency, and their post-integration no-fetch check is tracked in stage 5.
+- [x] Verify that selecting the minimal WebTransport loader fetches only its own generated JavaScript and WASM artifacts, not memory, combined, or decorator-enabled bundles.
+- [x] Test explicit sharing between clients of one ephemeral service and isolation between separate services.
+- [x] Exercise the same local and remote scenarios through both presets, plus a compression-enabled scenario that proves the extension mechanism.
+- [x] Record generated and compressed artifact sizes and observed loading behavior with build configuration and environment details.
 
 Acceptance: changing one loader selection switches combined/split packaging without changes to application logic or service semantics.
 The minimal WebTransport configuration passes remote-session scenarios without loading other bundles; dependency inspection and artifact-size measurements accompany the loading evidence.
@@ -230,6 +243,7 @@ Escalate a genuine contract conflict instead of silently weakening the shared AP
 ### 5. Integrate the Example Utilities and Inventory-App
 
 - [ ] Add explicit example selectors, provisionally `sea-ephemeral` and `sea-webtransport`, while preserving existing options and default behavior.
+- [ ] Verify that existing non-SEA example selections do not initialize or fetch SEA WASM after integration.
 - [ ] Place the loader-preset choice in the example-utils SEA setup module, with a build-time override for packaging comparisons.
 - [ ] Provide endpoint and development certificate configuration for the remote option; do not embed credentials or introduce a silent local fallback.
 - [ ] Integrate asynchronous WASM startup behind the existing helper contract where practical; audit callers before changing a shared helper signature.

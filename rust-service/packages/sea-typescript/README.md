@@ -1,7 +1,7 @@
 # @fluidframework/sea-typescript
 
 This package provides non-Fluid-specific SEA sessions through package-owned WASM artifacts.
-Its APIs are internal; the combined foundation phase of the [integration plan](../../SERVICE_CLIENT_PLAN.md) is complete, while packaging presets and higher-level integration remain future stages.
+Its APIs are internal; shared bindings and packaging presets are implemented, while higher-level ServiceClient and example integration remain in the [integration plan](../../SERVICE_CLIENT_PLAN.md).
 Fluid summary tests, direct SharedTree package tests, and the SharedTree browser lifecycle trace now consume this package through the reusable `sea-driver` projection.
 Browser benchmarks and the canonical Node, Fluid driver, and transport/shutdown harnesses also use the neutral factories.
 
@@ -53,11 +53,69 @@ Compression configuration must match between collaborating clients and when reop
 The native service need not decode compressed application payloads.
 No external-browser connectivity through Codespaces forwarding is established by the package's internal Chromium test.
 
-The build script generates `memory`, `webtransport`, `websocket`, `combined`, `memory-compression`, and `webtransport-compression` artifacts in isolated output and Cargo target directories.
+The build script generates `memory`, `webtransport`, `websocket`, `combined`, `combined-compression`, `memory-compression`, and `webtransport-compression` artifacts in isolated output and Cargo target directories.
 Each configuration builds with explicit features and no default features, producing both Node and web JavaScript targets.
 The Node outputs for remote configurations do not provide a Node WebTransport implementation.
-The combined artifact exists, but public loader presets and packaging comparisons remain stage 3 work.
 Consumers must not import generated paths directly.
+
+## Loader Presets
+
+Select packaging once at the application composition point:
+
+```typescript
+import { createSeaFactories } from "@fluidframework/sea-typescript/internal/presets";
+
+const factories = createSeaFactories({ preset: "split", compressionSupport: true });
+const localService = await factories.createMemoryService();
+```
+
+Changing only `preset` to `"combined"` keeps the same service and session APIs.
+`factories.openWebTransport({ url, certificateHash }, document, sessionOptions)` always uses WebTransport without fallback.
+The split preset loads memory and remote artifacts independently on first use; the combined preset shares one initialized module between both capabilities.
+Each `createMemoryService()` still creates independent storage, even across factories using the same cached module.
+Callers share a service explicitly and close services, sessions, and streams using the same ownership rules under either preset.
+Initialization, including failure, is cached per artifact and target; construction of the factory object does not initialize or fetch WASM.
+
+`compressionSupport` defaults to false and selects compiled capabilities only.
+Session options must still set `compression: true` to encode payloads; unsupported compression is rejected without changing the selected stack.
+`environment: "node"` supports memory services under either preset and rejects WebTransport with `Unavailable`.
+The separate optional socket factory retains its explicit transport policies and is not implicitly included in either preset.
+Existing capability entrypoints remain available for applications that only need one capability.
+Non-SEA example selections are unchanged; the example composition point and its build-time preset override remain stage 5 work.
+
+### Artifact Measurements
+
+From the repository root, build artifacts and measure their existing bytes:
+
+```bash
+pnpm --dir rust-service/packages/sea-typescript run build
+node rust-service/packages/sea-typescript/scripts/build-wasm.mjs --measure
+```
+
+Measurement is read-only and emits JSON for each configuration and JavaScript target with features, SHA-256 digest, raw bytes, gzip level 9 bytes, and Brotli quality 11 bytes.
+The following browser totals sum separately compressed JavaScript and WASM files, not one concatenated file.
+They exclude declarations, module metadata, TypeScript wrapper code, HTTP headers, and transport overhead; the harness serves uncompressed files, so these are compression comparisons, not measured wire traffic.
+
+| Configuration | JavaScript Bytes | WASM Bytes | Total Bytes | Gzip Bytes | Brotli Bytes |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| memory | 32,573 | 569,682 | 602,255 | 145,467 | 113,469 |
+| webtransport | 40,073 | 534,690 | 574,763 | 138,732 | 109,646 |
+| combined | 41,661 | 854,515 | 896,176 | 216,597 | 165,085 |
+| memory-compression | 32,573 | 672,948 | 705,521 | 174,731 | 136,986 |
+| webtransport-compression | 40,073 | 642,124 | 682,197 | 168,798 | 132,739 |
+| combined-compression | 41,661 | 1,004,050 | 1,045,711 | 253,711 | 192,442 |
+| websocket (independent) | 57,355 | 838,144 | 895,499 | 192,227 | 143,940 |
+
+Measured on 2026-09-19 in Debian 13, Linux x64, Node 22.23.2, Rust 1.98.1 (`48a229cea`), and wasm-bindgen 0.2.128, after merge baseline `b4e06f85151` with the preset implementation.
+Builds use `wasm32-unknown-unknown`, release mode, `--no-default-features`, explicit features from the build script, and `RUSTFLAGS='--cfg=web_sys_unstable_apis -C target-feature=+simd128'` without additional overrides.
+Plain combined costs 77,865 more gzip bytes than remote-only split, but saves 67,602 gzip bytes when both split capabilities would be loaded.
+Compressed combined similarly saves 89,818 gzip bytes over both compressed split capabilities.
+These measurements support the packaging choice; they do not establish a universal best preset or startup-performance claim.
+
+Chromium 152 inside the Codespace runs each preset/compression case in a fresh page.
+The remote-only split case requests exactly its selected WebTransport JavaScript and WASM, with no memory, combined, socket, or unrelated decorator bundle.
+Local use afterward adds only the selected memory pair; combined use shares its one pair across both services.
+The same scenarios verify remote collaboration, snapshot reopening, local sharing and isolation, and real compressed bytes.
 
 ## Optional WebSocket Sessions
 
@@ -108,10 +166,10 @@ pnpm --dir rust-service/packages/sea-typescript test
 
 The Node tests use capability entrypoints and cover sharing, isolation, compression, immutable content, events, snapshot reload, cancellation, and capability rejection.
 Migrated session regressions also cover live peer delivery, recursive content, idempotent publication, explicit snapshot fences, operation conflicts, superseded authors, reused memberships, and explicit reopening.
-The canonical Node harness executes fourteen local package tests, including snapshot-registration replacement, termination of its old pending read, cancellation that revokes only the owned registration, and bounded socket lifecycle behavior.
+The canonical Node harness executes twenty-one local package tests, including preset equivalence, capability rejection, initialization caching, snapshot-registration ownership, and bounded socket lifecycle behavior.
 An additional real Node socket test runs when the harness supplies `SEA_NODE_TRANSPORT_URL`.
 An emitted-module import-graph test checks lazy artifact imports and excludes unrelated capabilities and dependencies from each factory entrypoint.
-`browser.html` runs plain and compressed remote sessions through the emitted package entrypoint.
+`browser.html` runs identical plain/compressed local and remote scenarios through both presets, with fresh-page artifact loading assertions in the canonical script.
 The canonical WebTransport script runs this flow alongside the neutral Fluid driver trace and transport/shutdown checks, making neutral browser coverage part of `test.sh`.
 Both client-selected/durable-file and SEA-selected/memory configurations passed live delivery, pending-read cancellation, classified errors, content references, snapshot notifications and lookup, and reopening in Chromium 152 inside the Codespace.
 With a running development server and certificate from the [browser harness](../../tests/webtransport-browser/README.md), run from `rust-service/`:
@@ -124,7 +182,7 @@ The existing runner is test orchestration only; this package has no dependency o
 The caller owns the native service and its certificate/data cleanup; the runner owns its temporary Chromium profile and HTTP server.
 An initial Chromium 152 run inside the Codespace passed both configurations with 2,800-byte blob and event payloads, snapshot publication, and reopening.
 Local and remote tests also read compressed blobs through an undecorated observer to verify that the factory actually encodes stored bytes.
-This does not establish split-preset or inventory-app acceptance, which remain later plan stages.
+This does not establish inventory-app acceptance or external-browser behavior of the new presets.
 
 The initial foundation passed workspace Rust formatting, strict Clippy and rustdoc, build and tests, documentation links, and `rust-service/test.sh` with the existing generated-client and Chromium scenarios.
 The package passes formatting, TypeScript compilation, API report generation, export validation, Node tests, repository policy checks, and dependency-layer validation.

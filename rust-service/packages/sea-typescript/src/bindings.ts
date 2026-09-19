@@ -4,6 +4,7 @@
  */
 
 import type * as Generated from "../generated/memory-compression/web/sea_wasm.js";
+import type * as RemoteGenerated from "../generated/webtransport/web/sea_wasm.js";
 import type {
 	SeaSessionOptions,
 	SeaTreeId,
@@ -12,6 +13,7 @@ import type {
 	SeaSnapshotCoordination,
 	SeaSnapshot,
 	SeaSession,
+	SeaMemoryService,
 } from "./index.js";
 
 /** Values needed from one initialized bundle; never exposed to callers. */
@@ -48,6 +50,67 @@ export function makeOptions(
 		options.reference,
 		options.compression ?? false,
 	);
+}
+
+/** Creates an independent service while retaining admitted asynchronous opens until settled. */
+export function createBoundMemoryService(
+	bindings: BindingModule & Pick<typeof Generated, "SeaMemoryService">,
+): SeaMemoryService {
+	const service = new bindings.SeaMemoryService();
+	let closed = false;
+	let pendingOpens = 0;
+	let released = false;
+	const release = (): void => {
+		if (closed && pendingOpens === 0 && !released) {
+			released = true;
+			service.free();
+		}
+	};
+	return {
+		async open(document, sessionOptions) {
+			if (closed) {
+				throw Object.assign(new Error("memory service is closed"), { kind: "Closed" });
+			}
+			const generatedOptions = makeOptions(bindings, sessionOptions);
+			pendingOpens += 1;
+			try {
+				return wrapSession(await service.open(document, generatedOptions), bindings);
+			} finally {
+				generatedOptions.free();
+				pendingOpens -= 1;
+				release();
+			}
+		},
+		close() {
+			if (!closed) {
+				closed = true;
+				release();
+			}
+		},
+	};
+}
+
+/** Opens a remote session using options allocated by the selected module. */
+export async function openBoundWebTransport(
+	bindings: BindingModule & Pick<typeof RemoteGenerated, "openWebTransport">,
+	service: { readonly url: string; readonly certificateHash: Uint8Array },
+	document: Uint8Array | undefined,
+	options: SeaSessionOptions,
+): Promise<SeaSession> {
+	const generatedOptions = makeOptions(bindings, options);
+	try {
+		return wrapSession(
+			await bindings.openWebTransport(
+				service.url,
+				service.certificateHash,
+				document,
+				generatedOptions,
+			),
+			bindings,
+		);
+	} finally {
+		generatedOptions.free();
+	}
 }
 
 /** Copies a generated identity into a plain value and releases its WASM allocation. */

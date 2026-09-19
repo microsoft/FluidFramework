@@ -15,8 +15,10 @@ tests/webtransport-browser/run-test.sh
 The first flow runs the [Fluid driver trace](../minimal-fluid-driver/README.md) through neutral WebTransport sessions.
 It checks summary reload, two-client push delivery, explicit pending recovery and resubmission, duplicate-free reconnect, and bounded history.
 
-The package flow uses the neutral WebTransport factory for plain and compressed sessions.
+The package flow runs four fresh pages: split and combined loader presets, each with plain and compressed sessions.
 It verifies classified missing-document rejection, content references, live peer delivery, cancellation of a pending history read, snapshot notifications, latest and bounded lookup, and reopening.
+It also checks local memory sharing and isolation and asserts exactly the selected generated JavaScript/WASM requests: remote-only split loads no local bundle, and combined local/remote use shares one artifact pair.
+Factory construction itself must not load a generated artifact.
 An undecorated observer verifies that compression actually encodes stored bytes.
 Both snapshot participation policies are supported; ordered unique session identities keep the expected SEA-selected publisher stable during the test.
 

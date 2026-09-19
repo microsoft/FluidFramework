@@ -25,6 +25,10 @@
 			"types": "./lib/memory.d.ts",
 			"default": "./lib/memory.js"
 		},
+		"./internal/presets": {
+			"types": "./lib/presets.d.ts",
+			"default": "./lib/presets.js"
+		},
 		"./internal/webtransport": {
 			"types": "./lib/webtransport.d.ts",
 			"default": "./lib/webtransport.js"
