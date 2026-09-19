@@ -132,12 +132,22 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 	/** Registers a Fluid delta-connection event listener. */
 	public readonly on = ((event: string, listener: Listener) => {
 		if (event === "signal") this.signalListenerAttached = true;
-		return this.addListener(event, listener);
+		const result = this.addListener(event, listener);
+		if (event === "pong") {
+			this.pongListenerAttached = true;
+			this.startLatencyTracking();
+		}
+		return result;
 	}) as unknown as IEventTransformer<this, IDocumentDeltaConnectionEvents>;
 	/** Registers a one-shot Fluid delta-connection event listener. */
 	public readonly once = ((event: string, listener: Listener) => {
 		if (event === "signal") this.signalListenerAttached = true;
-		return this.onceListener(event, listener);
+		const result = this.onceListener(event, listener);
+		if (event === "pong") {
+			this.pongListenerAttached = true;
+			this.startLatencyTracking();
+		}
+		return result;
 	}) as unknown as IEventTransformer<this, IDocumentDeltaConnectionEvents>;
 	/** Removes a Fluid delta-connection event listener. */
 	public readonly off = this.removeListener as unknown as IEventTransformer<
@@ -180,6 +190,12 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 	private signalPump: Promise<void> | undefined;
 	/** Keeps setup-time signals in the loader's initial batch until its first listener. */
 	private signalListenerAttached = false;
+	/** Enables read-only round-trip measurements after a pong listener attaches. */
+	private pongListenerAttached = false;
+	/** Identity suppressing late measurements from disconnected or replaced streams. */
+	private latencyTracking: object | undefined;
+	/** Next latency measurement; no overlapping requests are scheduled. */
+	private latencyTimer: ReturnType<typeof setTimeout> | undefined;
 	/** Reopened connections deliver catch-up through listeners instead of a second initial batch. */
 	private opened = false;
 	/** Whether the Fluid connection has been synchronously disposed. */
@@ -287,6 +303,35 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 		await this.openSignals();
 		this.opened = true;
 		await this.openSubscription();
+		this.startLatencyTracking();
+	}
+
+	/** Starts one measurement loop for the current live delta stream. */
+	private startLatencyTracking(): void {
+		if (
+			!this.pongListenerAttached ||
+			this.disposed ||
+			this.subscription === undefined ||
+			this.latencyTracking !== undefined
+		)
+			return;
+		const tracking = {};
+		this.latencyTracking = tracking;
+		void this.measureLatency(tracking);
+	}
+
+	/** Measures successful metadata round trips; stream liveness, not probe failure, owns disconnection. */
+	private async measureLatency(tracking: object): Promise<void> {
+		const start = performance.now();
+		try {
+			await this.client.latestSnapshot();
+			if (this.latencyTracking === tracking) this.emit("pong", performance.now() - start);
+		} catch {
+		} finally {
+			if (this.latencyTracking === tracking) {
+				this.latencyTimer = setTimeout(() => void this.measureLatency(tracking), 60_000);
+			}
+		}
 	}
 
 	/** Allocates a new membership identity while retaining pending submission identities. */
@@ -673,6 +718,9 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 
 	/** Cancels and drains the current projected subscription. */
 	private async stopSubscription(): Promise<void> {
+		this.latencyTracking = undefined;
+		clearTimeout(this.latencyTimer);
+		this.latencyTimer = undefined;
 		const signals = this.signals;
 		const signalPump = this.signalPump;
 		this.signals = undefined;

@@ -92,6 +92,11 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	private snapshotFence: bigint | undefined;
 	/** Coordination failures prevent publication with stale authority. */
 	private snapshotFailure: unknown;
+	/** Uploaded proposals are private to this author until their summary op commits. */
+	private readonly stagedSnapshots = new Map<
+		string,
+		{ expectedParent: Uint8Array | undefined; atEvent: Uint8Array; root: Uint8Array }
+	>();
 
 	/** Uses a caller-owned factory for every create, open, and reconnect. */
 	public constructor(
@@ -279,11 +284,15 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 					? (JSON.parse(message.contents) as { handle?: string })
 					: message.contents;
 			const handle = typeof proposal === "object" ? proposal?.handle : undefined;
+			const staged = typeof handle === "string" ? this.stagedSnapshots.get(handle) : undefined;
 			if (isSummary) {
 				if (typeof handle !== "string")
 					throw new Error("summary proposal requires a snapshot handle");
-				const position = decodePosition(hexToBytes(handle));
-				if ((await session.getSnapshot(position))?.atEvent !== position) {
+				const position = staged === undefined ? decodePosition(hexToBytes(handle)) : undefined;
+				if (
+					staged === undefined &&
+					(await session.getSnapshot(position))?.atEvent !== position
+				) {
 					throw new Error("summary proposal must reference a published snapshot");
 				}
 			}
@@ -293,6 +302,20 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 				payload,
 			);
 			if (isSummary) {
+				if (this.session !== session) {
+					throw new Error("summary publication requires its original session");
+				}
+				const acknowledgedHandle =
+					staged === undefined
+						? handle
+						: bytesKey(
+								await this.publishSnapshotRoot(
+									staged.expectedParent,
+									staged.atEvent,
+									staged.root,
+								),
+							);
+				if (handle !== undefined) this.stagedSnapshots.delete(handle);
 				await this.readProjectedFrom(session);
 				const proposalSequence = Number(this.sequence(position));
 				await session.submit(
@@ -307,7 +330,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 							clientSequenceNumber: -1,
 							referenceSequenceNumber: proposalSequence,
 							contents: {
-								handle,
+								handle: acknowledgedHandle,
 								summaryProposal: { summarySequenceNumber: proposalSequence },
 							},
 						}),
@@ -344,6 +367,24 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 					root: snapshot.root.bytes,
 					atEvent: encodePosition(snapshot.atEvent),
 				};
+	}
+
+	/** Retains an upload without advancing the latest snapshot before a matching proposal. */
+	public async stageSnapshotRoot(
+		expectedParent: Uint8Array | undefined,
+		atEvent: Uint8Array | undefined,
+		root: Uint8Array,
+	): Promise<Uint8Array> {
+		this.current();
+		if (atEvent === undefined)
+			throw new Error("summary proposal requires a reference position");
+		const handle = crypto.getRandomValues(new Uint8Array(16));
+		this.stagedSnapshots.set(bytesKey(handle), {
+			expectedParent: expectedParent?.slice(),
+			atEvent: atEvent.slice(),
+			root: root.slice(),
+		});
+		return handle;
 	}
 
 	/** Publishes a Fluid snapshot, reserving sequence zero for the document initialization event. */
@@ -498,6 +539,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 			return;
 		}
 		this.archiveDocument = owner === undefined ? undefined : this.session?.document.slice();
+		this.stagedSnapshots.clear();
 		const archiveSession = this.archiveSession;
 		this.archiveSession = undefined;
 		this.sessionIdentity = undefined;

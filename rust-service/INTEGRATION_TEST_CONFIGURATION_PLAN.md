@@ -274,6 +274,89 @@ Package and root builds, scoped policy, documentation, and complete canonical `.
 The next full SEA `--bail` run reaches 393 passing and 428 pending, then fails `TestSignals / Validate signal events are raised on the correct runtime` with the explicit `signals are unsupported` error.
 Application signals remain an applicable missing contract, not an implementation-specific exclusion.
 
+### Signal Integration and Overlapping Delta Initialization
+
+The worktree fast-forwarded to `9c510d094fc`, including the user's neutral signals and connection-timeout fixes.
+All seven `TestSignals` and `Targeted Signals` cases now pass; the unsupported-signal failure above is resolved.
+Both `reconnection does not block ops when having pending blobs` variants instead exposed overlapping delta initialization with `signal stream is already open on this connection`.
+The document service serialized only session replacement, allowing a second opening to replace the shared session while the first was still registering its signals.
+A temporary trace confirmed both delta connections registering on the second session; reverting the diagnostic fix reproduced both failures.
+
+`connectToDeltaStream` now keeps membership announcement, signal registration, and subscription setup inside the existing serialized session transition.
+The existing lifecycle fixture adds a promise-gated overlap regression, and all 18 tests in that file pass.
+`pnpm --dir packages/test/test-end-to-end-tests run test:realsvc:sea --grep 'reconnection does not block ops when having pending blobs|^(TestSignals|Targeted Signals)'` passes all nine unchanged integration tests.
+No server duplicate-registration guard, shared assertion, or exclusion changed.
+The subsequent full SEA run with this fix is recorded below.
+
+Package/API generation, root `pnpm build:fast`, scoped policy, documentation checks, Rust formatting, strict Clippy, rustdoc, and native build passed.
+The initial workspace test run timed out in `host::tests::native_client_round_trip_in_every_storage_mode`; that test passed on an isolated retry without native edits.
+The complete canonical `./test.sh` also passed, including workspace native tests, generated Node/WASM coverage, and Chromium checks.
+There are no generated API-report changes.
+
+### Full Current-Version Run at `476613b3eac`
+
+On 2026-09-19, after rebuilding with `pnpm exec fluid-build packages/test/test-end-to-end-tests --task build:test:esm`, the complete selection ran without fail-fast:
+
+```bash
+pnpm --dir packages/test/test-end-to-end-tests run test:realsvc:sea --no-bail --reporter json --reporter-option output=/tmp/sea-full-476613b3eac-results.json
+```
+
+Mocha completed in 70.621 seconds with 1,184 tests: 655 passed, 526 pending, and three failed.
+The run retained the standard 10-second per-test timeout and finished before the runner's 10-minute limit.
+The runner exited with code 1 after Mocha reported three failures; this was not a build or startup failure.
+The machine-readable report is `/tmp/sea-full-476613b3eac-results.json`; build and runner output are `/tmp/sea-full-476613b3eac-build.log` and `/tmp/sea-full-476613b3eac-run.log`.
+
+| Failing test | Observed failure |
+| --- | --- |
+| `Pong / Pong / Non-Compat / Delta manager receives pong event` | `Forcing timeout before test does (9985ms)` while waiting for the pong event. |
+| `SingleCommit Summaries Tests / Non-Compat / Non single commit summary/Last summary should be discarded due to missing SummaryOp` | `Summary Parent should match ack handle of summary1`. |
+| `Summarizer fetches expected number of times / Non-Compat / Summarizer loading from an older summary should fetch latest summary` | `SEA session is not open` from `SeaSessionDriverClient.withArchiveSession` during `fetchBlob`. |
+
+These are observed failures, not root-cause diagnoses or approved exclusion candidates.
+The 526 pending cases include the six explicit historical-loader exclusions and inherited suite conditions; they are not passes.
+Largest pending groups are `handle validation` (184), `Validate Attach lifecycle` (31), `Frozen Delta stream loading mode testing` (27), `Container` (25), and layer compatibility (24).
+An exhaustive applicability audit of the inherited skips remains open.
+No assertions, production code, or skip conditions changed for this run.
+
+### One-Off Handle Validation on SEA
+
+At the user's request on 2026-09-19, `handle validation` ran on SEA without permanently changing its local-only selection.
+Starting from `1a96d221965`, a temporary `case "sea-websocket":` in the suite's driver guard enabled the run after rebuilding the tests.
+`pnpm --dir packages/test/test-end-to-end-tests run test:realsvc:sea --grep '^handle validation' --no-bail --reporter json --reporter-option output=/tmp/sea-handles-manual-results.json` completed with all 184 cases passing, zero pending, and zero failures in 15.263 seconds.
+Assertions and the standard 10-second per-test timeout were unchanged.
+These cases check handle round-tripping and transitive attachment across DDS types, including resolution from another container after the originating container closes.
+The temporary source change was removed and the tests rebuilt; source comparison and generated-code inspection confirmed the original local-only selection was restored.
+This is additional manual coverage, not a change to the preceding full-run counts or a permanent SEA opt-in.
+
+### Three-Failure Repair and Green Current-Version Selection
+
+The three failures from the full run at `476613b3eac` are resolved without adding exclusions or weakening shared assertions:
+
+- Pong: the delta adapter never emitted latency observations.
+	It now measures a read-only snapshot-metadata round trip when a listener attaches, then repeats once per minute after completion.
+	The probe does not append events or send application signals; failures emit no pong, and disconnected or disposed connections suppress late results.
+	The owning gated regression checks response timing, multiple listeners, failed requests, periodic scheduling, and disposal.
+- Summary publication: uploading a summary immediately advanced SEA's latest snapshot before the corresponding Fluid summary op was submitted.
+	The neutral driver now stages the uploaded root privately and publishes it after its proposal commits, before acknowledging it.
+	Closing or replacing the author discards unsubmitted proposals; an accepted proposal cannot publish through a replacement session.
+	Initial document summaries still publish immediately, and legacy injected clients retain their existing publication path.
+	Two owning regressions check abandoned uploads, accepted publication and replayed acknowledgments, and replacement-session isolation.
+- Summary reload: a temporary disposal trace proved the runtime intentionally disposes the second summarizer after fetching the latest snapshot.
+	The test then tried reading snapshot blobs through that disposed runtime.
+	It now validates the same fetched tree and reference sequence through the still-live main container's storage.
+	No storage-after-disposal permission was added; all four snapshot-fetch tests pass on both SEA and local.
+
+All 21 summary/lifecycle fixture tests pass.
+After rebuilding, the full non-fail-fast SEA command completed twice with 658 passing, 526 pending, and zero failures.
+The final run, including the replacement-session guard, took 57.162 seconds.
+Its report is `/tmp/sea-three-final-results.json`, with runner output in `/tmp/sea-three-final-full.log`.
+Existing `SEA test driver is disposed` cleanup telemetry remains in that successful run; it did not fail assertions.
+The original pending conditions and historical-loader exclusion remain unchanged; the skip applicability audit is still open.
+
+Package/API generation, root `pnpm build:fast`, scoped policy, Rust formatting, strict Clippy, rustdoc, native build/tests, documentation validation, and complete canonical `./test.sh` passed.
+The generated API delta is limited to optional `SeaDriverClient.stageSnapshotRoot` and its implementation on the internal `SeaSessionDriverClient`; no public or alpha API changed.
+A changeset records the driver behavior fixes.
+
 ### Membership Investigation
 
 SEA-001 is not a test-specific mismatch: `SeaDeltaConnection` fabricates two initial join operations independently for each connection, and `projectOperation` collapses all other authors into one synthetic remote client.

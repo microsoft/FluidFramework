@@ -162,6 +162,12 @@ export interface SeaDriverClient {
 		  }
 		| undefined
 	>;
+	/** Stages an uploaded summary until its Fluid proposal is submitted. */
+	stageSnapshotRoot?(
+		expectedParent: Uint8Array | undefined,
+		atEvent: Uint8Array | undefined,
+		root: Uint8Array,
+	): Promise<Uint8Array>;
 	/** Conditionally publishes one directory root as a snapshot. */
 	publishSnapshotRoot(
 		expectedParent: Uint8Array | undefined,
