@@ -3,6 +3,8 @@
 This harness runs the neutral `@fluidframework/sea-typescript` WebTransport factory against the native HTTP/3 server without disabling certificate validation.
 The generated ECDSA P-256 certificate is valid for 13 days and the client pins its SHA-256 digest.
 Generated certificates, private keys, service data, browser profiles, evidence, and WASM bindings are ignored.
+The runner uses the integration harness's [Chromium lifecycle support](../sea-integration-tests/browser/chromium.mjs) for browser startup, bounded CDP requests, and process/profile cleanup.
+The transport harness retains its own page serving, transport assertions, and server-shutdown probes.
 
 Run the test from `rust-service/`.
 The script builds the neutral package, Fluid driver trace, and native server once and generates a temporary certificate.

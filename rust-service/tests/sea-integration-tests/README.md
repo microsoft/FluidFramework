@@ -23,6 +23,12 @@ The browser trace loads package-owned JavaScript and WASM and closes a session a
 Browser benchmarks explicitly close their memberships and local service and verify that each Rust-backed sample loads only its selected capability's generated artifacts.
 The native server owns a bounded set of concurrent connections; browser traces report actual session openings, including read-to-write replacement and explicit reconnection.
 
+The integration and transport runners share [Chromium lifecycle support](browser/chromium.mjs).
+It owns Chromium, its profile and temporary files, and the Chrome DevTools Protocol (CDP) connection for one scenario.
+CDP startup and commands have deadlines; connection loss rejects pending commands.
+Cleanup runs after success, scenario failure, startup failure, and CPU-profile finalization failure, escalating browser termination after five seconds when needed.
+Each runner still owns its page server and scenario assertions; benchmark workload and measurement logic remain separate.
+
 ## Validation
 
 The package is registered in the root pnpm workspace. Install that workspace,
@@ -41,7 +47,7 @@ pnpm --dir rust-service/tests/sea-integration-tests test
 
 The package `build` script builds dependencies, generates the Rust WASM packages, checks formatting and lint, typechecks, and builds all browser bundles.
 The package `test` script depends on that complete build and runs the harness Mocha tests, package-owned driver and direct SharedTree regressions, neutral session tests and type assertions, and the real Chromium transport matrix.
-Ordinary `test:mocha:esm` discovery includes four integration and payload tests and all ten benchmark cases as correctness tests.
+Ordinary `test:mocha:esm` discovery includes integration and payload tests, Chromium lifecycle regressions, and all ten benchmark cases as correctness tests.
 Without performance mode, the benchmark defaults are one repetition, ten measured operations, and one warmup operation; convergence and resume assertions still run.
 These tests require Chromium, the Rust toolchain, and the separate Routerlicious workspace dependencies for Tinylicious.
 For an incremental correctness run, use `pnpm exec fluid-build rust-service/tests/sea-integration-tests --task test:mocha:esm` from the repository root.
