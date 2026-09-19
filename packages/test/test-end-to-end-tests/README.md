@@ -93,10 +93,12 @@ npm run test:realsvc:run -- --driver=r11s
 npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=docker
 ```
 
-### Opt-In SEA WebSocket Tests
+### SEA WebSocket Tests
 
-SEA is excluded from `test`, `test:realsvc`, and the existing CI service selections.
-From the repository root, build the test package and run the explicit current-version configuration:
+The default `test` and `test:realsvc` commands run local, Tinylicious, and then SEA.
+Service-specific commands and explicit CI service selections remain unchanged.
+The default run therefore requires the SEA prerequisites listed below; use a service-specific command to run only that service.
+From the repository root, build the test package and run the current-version SEA configuration directly:
 
 ```bash
 pnpm exec fluid-build packages/test/test-end-to-end-tests --task build:test:esm
@@ -116,8 +118,9 @@ Readiness is bounded to 30 seconds, individual tests default to 10 seconds, and 
 The runner stops owned processes and removes certificates and temporary storage on failure or interruption; service logs are printed on failure.
 Nonzero results are not suppressed.
 The lifecycle smoke passes with the neutral-session driver's ordered membership projection.
-The full SEA suite is still under investigation and is not expected to pass yet.
-See the active [failure inventory](../../../rust-service/INTEGRATION_TEST_CONFIGURATION_PLAN.md#failure-inventory) before interpreting the result as a setup problem.
+The validated current-version SEA selection has 658 passing tests, 526 pending tests, and no failures.
+Pending cases include inherited service-selection conditions; they are not passes.
+See the [integration results](../../../rust-service/INTEGRATION_TEST_CONFIGURATION_PLAN.md#three-failure-repair-and-green-current-version-selection) for validation evidence and remaining coverage limitations.
 No SEA-specific behavioral tests are silently skipped by this configuration.
 The fixed historical-loader compression suite is explicitly pending for SEA because this configuration supports current-version APIs only.
 See the [SEA exclusion inventory](../../../rust-service/INTEGRATION_TEST_CONFIGURATION_PLAN.md#sea-exclusion-inventory) for the exact cases and local-driver comparison evidence.

@@ -5,10 +5,22 @@
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { access } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { withSeaServer } from "./seaRunner.mjs";
+
+test("default integration tests include local, Tinylicious, and SEA", async () => {
+	const { scripts } = JSON.parse(
+		await readFile(new URL("../package.json", import.meta.url), "utf8"),
+	);
+	assert.equal(scripts.test, "npm run test:realsvc");
+	assert.equal(
+		scripts["test:realsvc"],
+		"npm run test:realsvc:local && npm run test:realsvc:tinylicious && npm run test:realsvc:sea",
+	);
+	assert.equal(scripts["test:realsvc:sea"], "node scripts/seaRunner.mjs");
+});
 
 for (const scenario of [
 	"success",

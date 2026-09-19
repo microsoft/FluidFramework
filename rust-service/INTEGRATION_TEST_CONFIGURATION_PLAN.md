@@ -1,13 +1,15 @@
 # SEA Opt-In Integration-Test Configuration Plan
 
-Status: Opt-in configuration and ordered-membership fix committed; completed ServiceClient work integrated and validated before further failure fixes.
+Status: Current-version SEA integration selection passes; user authorized inclusion in the default integration-test command.
 Created: 2026-09-18.
 Updated: 2026-09-19.
 
 This is an independently assignable follow-up to the [SEA WASM and ServiceClient integration plan](SERVICE_CLIENT_PLAN.md).
 Its first deliverable is an explicitly runnable SEA configuration in the repository's existing multi-service/driver integration tests, with observed failures preserved.
 On 2026-09-19 the user extended this assignment to commit the validated configuration, then fix and commit failures iteratively until the current-version SEA integration suite passes, with an explicit inventory of justified exclusions.
-Keep the configuration out of default test runs and continuous integration (CI).
+The initial opt-in requirement was superseded after the green full-suite run and merge into `rust-service` at `2caf9b7b7f5`.
+The user then authorized enabling SEA by default: `test` and `test:realsvc` now run local, Tinylicious, and SEA sequentially.
+Explicit service-specific commands and CI service selections remain unchanged; callers of the default command need the documented SEA toolchain prerequisites.
 
 ## Dependencies and Ownership
 
@@ -37,7 +39,8 @@ Coordinate other shared workspace/build changes and overlapping production edits
 - Plan checkpoint: `48085c15e81`.
 - Configuration checkpoint: `4d9c1906dab`; default local and Tinylicious suites and required repository gates passed before this commit.
 - Membership checkpoint: `c279d079d6f`; canonical Rust/Node/browser validation, root build, scoped policy, and the unchanged SEA lifecycle smoke passed.
-- Workflow: one isolated assignment, without a numbered iteration; configuration and subsequent validated fix commits are authorized, but push, merge, and CI-default changes are not.
+- Workflow: one isolated assignment, without a numbered iteration; configuration and subsequent validated fix commits were authorized initially.
+	The user later authorized merging into `rust-service` and enabling the default integration-test command there; no push is authorized.
 
 ### Existing Extension Points
 
