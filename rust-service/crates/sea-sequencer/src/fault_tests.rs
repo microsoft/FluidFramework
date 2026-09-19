@@ -452,6 +452,81 @@ async fn failed_reconciliation_blocks_mutation_and_absence_claims_until_recovery
 }
 
 #[tokio::test]
+async fn failed_reconciliation_prevents_terminal_leave_until_recovery() {
+    use sea_core::archive::SessionEventKind;
+    for failure in [Failure::FailHead, Failure::FailRead] {
+        for shutdown in [false, true] {
+            let storage = FaultStorage::default();
+            let (id, view) = storage.create_view().await.unwrap();
+            let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+            let session = member(&runtime, "author").await;
+            let old_session = session.session.clone();
+            session.announce_membership(Bytes::new()).await.unwrap();
+            storage.events.arm(failure);
+            assert!(matches!(
+                session.submit(submission(b"uncertain")).await,
+                Err(SessionError::RecoveryRequired)
+            ));
+            assert_eq!(storage.events.calls.load(Ordering::SeqCst), 2);
+            let result = if shutdown {
+                runtime.shutdown().await
+            } else {
+                session.close().await
+            };
+            assert!(matches!(result, Err(SessionError::RecoveryRequired)));
+            assert_eq!(
+                storage.events.calls.load(Ordering::SeqCst),
+                2,
+                "unresolved settlement must not append a terminal leave"
+            );
+            assert!(
+                storage.open_view(&id).await.is_err(),
+                "failed close or shutdown must not release the unresolved view"
+            );
+            drop((session, runtime));
+            let recovered = LocalSequencer::<FaultStorage>::recover(
+                storage.open_view(&id).await.unwrap().unwrap(),
+            )
+            .await
+            .unwrap();
+            assert_eq!(storage.events.calls.load(Ordering::SeqCst), 3);
+            let observer = member(&recovered, "observer").await;
+            assert!(
+                observer
+                    .resolve_submission(&OperationId::new("uncertain").unwrap())
+                    .await
+                    .unwrap()
+                    .is_some()
+            );
+            let head = observer
+                .view()
+                .await
+                .unwrap()
+                .head()
+                .await
+                .unwrap()
+                .unwrap();
+            let mut stream = observer.read(None, Some(head));
+            let mut kinds = Vec::new();
+            while let Some(item) = stream.next().await {
+                if let sea_core::MonitoredStreamItem::Item(event) = item.unwrap() {
+                    assert_eq!(event.session_id, old_session);
+                    kinds.push(event.kind);
+                }
+            }
+            assert_eq!(
+                kinds,
+                vec![
+                    SessionEventKind::Joined,
+                    SessionEventKind::Application,
+                    SessionEventKind::Left,
+                ]
+            );
+        }
+    }
+}
+
+#[tokio::test]
 async fn repeated_close_ignores_an_unrelated_recovery_failure() {
     let storage = FaultStorage::default();
     let (_, view) = storage.create_view().await.unwrap();
