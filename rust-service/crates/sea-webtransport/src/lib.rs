@@ -7,11 +7,6 @@ pub mod client;
 #[doc(hidden)]
 pub mod transport;
 
-#[cfg(all(target_arch = "wasm32", feature = "bindings"))]
-mod wasm;
-#[cfg(all(target_arch = "wasm32", feature = "bindings"))]
-pub use wasm::*;
-
 mod native;
 pub use native::SeaClientError;
 #[cfg(not(target_arch = "wasm32"))]

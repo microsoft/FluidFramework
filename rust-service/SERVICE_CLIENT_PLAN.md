@@ -1,6 +1,6 @@
 # SEA WASM and ServiceClient Integration Plan
 
-Status: In progress; combined stages 1 and 2 have a working session-binding foundation, but consumer migration and full acceptance remain incomplete.
+Status: In progress; combined stages 1 and 2 are complete. Stage 3, stable factories and packaging presets, is next.
 Created: 2026-09-18.
 
 This is an active implementation plan, not a description of supported functionality.
@@ -31,7 +31,7 @@ Make adding another configuration, such as compression, a small extension of the
 
 | Area | Starting points |
 | --- | --- |
-| WASM bindings and build | [Bindings module](crates/sea-webtransport/src/wasm/mod.rs), [build script](crates/sea-webtransport/scripts/build-wasm.mjs), and [harness build tasks](tests/minimal-fluid-driver/package.json). |
+| WASM bindings and build | [Shared bindings](crates/sea-wasm/src/bindings.rs), [package build script](packages/sea-typescript/scripts/build-wasm.mjs), and [package build tasks](packages/sea-typescript/package.json). |
 | Generated-client adaptation | [Neutral-session adapter](packages/sea-driver/src/sessionClient.ts) and [driver-owned contract](packages/sea-driver/src/wasmClient.ts); Fluid projection is now owned by the driver. |
 | TypeScript package conventions | [sea-driver](packages/sea-driver/README.md) and its [manifest](packages/sea-driver/package.json); reuse conventions, not Fluid-specific dependencies. |
 | ServiceClient | [Shared contract](../packages/common/driver-definitions/src/serviceClient.ts), [Tinylicious implementation](../packages/drivers/tinylicious-driver/src/tinyliciousService.ts), and [runtime helpers](../packages/runtime/runtime-utils/src/serviceClientUtils.ts). |
@@ -143,27 +143,39 @@ The browser benchmarks now use neutral factories for local and remote sessions, 
 Capability-specific `internal/memory` and `internal/webtransport` entrypoints share the same initialization and lifetime implementation.
 Eight small Chromium benchmark cases passed across both data structures, both integration paths, and both services; the runner now asserts selected-artifact-only loading.
 The neutral WASM build task now skips unchanged work and regenerates missing outputs and changed feature configurations; validation restored the original minimal capabilities afterward.
-These results do not complete the stages: low-level protocol consumers still use legacy bindings, and their migration and legacy binding removal must preserve the transport-specific regressions before stage 3.
+At that checkpoint, low-level protocol consumers still used legacy bindings; their migration and removal remained required before stage 3.
 The benchmark and loader checkpoint is committed as `f86f03c9c33`.
 Node session scenarios now live in the neutral package; the canonical Node command runs twelve package tests plus three retained legacy-specific regressions.
 The canonical browser command runs plain and compressed neutral sessions, and its ordered-delivery, explicit reopen, snapshot-suffix recovery, and shutdown checks now use the neutral WebTransport factory too.
 The browser harness no longer builds or serves the legacy generated client.
 Durable-file/client-selected and memory/SEA-selected browser runs passed in Chromium 152 inside the Codespace.
-Remaining direct generated Node tests cover injection hooks, legacy named-create rejection, and snapshot registration replacement; the older driver browser trace also remains to migrate or retire after preserving its distinct scenarios.
+The browser lifecycle and shutdown checkpoint is committed as `6ee5ce4d002`.
+The older Fluid driver browser trace now uses neutral sessions and runs in the canonical harness, preserving summary reload, two-client delivery, explicit pending recovery/resubmission, duplicate-free reconnect, and bounded historical reads.
+Snapshot registration replacement and stale cancellation ownership now have a neutral Node regression, alongside the sequencer's focused test.
+The optional JavaScript disconnect-hook and named-create tests were retired with their obsolete APIs; neither API exists on the neutral factory surface.
+The transport-owned generated bindings, test-support feature, build script, consumer imports, and harness build dependencies have been removed.
+The canonical Node suite now runs thirteen neutral package tests directly.
+Combined stages 1 and 2 passed final acceptance after this extraction cleanup.
+All five capability configurations rebuilt from the shared bindings; Cargo production dependency checks confirmed memory and minimal/ compressed remote exclusions.
+Canonical Rust formatting, strict Clippy and rustdoc, workspace build/tests, documentation checks, `./test.sh`, scoped policy checks, and the repository-root build passed.
+The memory/SEA-selected browser configuration and the separately invoked durable-file SharedTree lifecycle trace also passed in Chromium 152 inside the Codespace.
+One canonical attempt timed out in the unchanged server test `idle_stream_outlives_operation_deadline_in_every_storage_mode`; its isolated rerun and the complete canonical rerun passed without a server-code change.
+This timing risk remains recorded rather than treating the failed attempt as a pass.
+Stage 3 preset equivalence and size measurements, ServiceClient integration, inventory UI acceptance, and external-browser connectivity remain unimplemented or unverified by this phase.
 
 ### 1. Extract and Package WASM Bindings
 
-- [ ] Inventory the existing general bindings, browser transport bindings, generated adapter, and consumers; identify the narrow extraction boundary.
+- [x] Inventory the existing general bindings, browser transport bindings, generated adapter, and consumers; identify the narrow extraction boundary.
 - [x] Introduce `sea-wasm` with optional capabilities for local memory and WebTransport, leaving transport mechanics in their owning crate.
 - [x] Separate neutral session binding values and operations from concrete stack construction; establish the browser-compatible session boundary needed to reuse existing Rust decorators.
 - [x] Promote local memory from transport test support to a supported binding configuration.
 - [x] Expose the existing compression decorator through an optional capability and an explicit configuration; preserve matching encode/decode configuration for collaborating clients.
 - [x] Prove compressed event and blob round trips over local and remote sessions through the shared bindings before broad consumer migration; do not duplicate bindings or decorator logic for these stacks.
-- [ ] Identify general session binding code separately from Fluid-specific generated-client adaptation and coordinate its package extraction with stage 2 in the combined phase.
+- [x] Identify general session binding code separately from Fluid-specific generated-client adaptation and coordinate its package extraction with stage 2 in the combined phase.
 - [x] Provide local-only, WebTransport-only, combined, and compression-enabled named build configurations from the same binding source.
 - [x] Isolate generated outputs by configuration and JavaScript target; prevent overwrites, stale outputs, and unintended Cargo feature unification between variants.
 - [x] Register generated artifacts and their inputs in the Fluid build graph, including clean and incremental builds, package exports, and browser asset loading.
-- [ ] Migrate existing Node.js, browser, Fluid-driver, and direct SharedTree consumers directly to the package entrypoints established with stage 2, without losing their current tests; this is the same migration tracked in stage 2.
+- [x] Migrate existing Node.js, browser, Fluid-driver, and direct SharedTree consumers directly to the package entrypoints established with stage 2, without losing their current tests; this is the same migration tracked in stage 2.
 - [x] Document the new crate responsibilities and record the architectural decision under `historical/decisions/`.
 
 Acceptance: generated local and remote clients retain their existing behavior; the local-only WASM dependency graph excludes `sea-webtransport`; the minimal WebTransport build excludes local storage, sequencer, compression, and encryption dependencies.
@@ -173,15 +185,15 @@ Test capability-specific builds as well as the all-features build, since the lat
 ### 2. Establish the sea-typescript Package
 
 - [x] Create `@fluidframework/sea-typescript` under the Rust-service TypeScript packages, following neighboring repository package conventions.
-- [ ] Make it the sole direct SEA dependency needed by general TypeScript SEA applications, covering local memory, remote sessions, and optional decorators through package entrypoints.
-- [ ] Move general generated-client bindings and neutral session contracts into the package; keep Fluid-specific projection and adaptation in the higher-level adapters.
-- [ ] Encapsulate generated WASM artifacts and their loading so consumers do not import crate output paths or depend directly on generated packages.
+- [x] Make it the sole direct SEA dependency needed by general TypeScript SEA applications, covering local memory, remote sessions, and optional decorators through package entrypoints.
+- [x] Move general generated-client bindings and neutral session contracts into the package; keep Fluid-specific projection and adaptation in the higher-level adapters.
+- [x] Encapsulate generated WASM artifacts and their loading so consumers do not import crate output paths or depend directly on generated packages.
 - [x] Expose independently importable loaders for capability-specific bundles, including minimal WebTransport, through package entrypoints.
 - [x] Configure workspace registration, dependency declarations, standard build tasks, exports and generated entrypoints, internal API release tags, generated API reports, TypeScript and documentation configuration, formatting, lint, and package metadata according to repository practices.
 - [x] Add a package README and API documentation for session capabilities, initialization, resource ownership, errors, and supported environments without Fluid-specific concepts.
-- [ ] Migrate existing consumers to package entrypoints and preserve driver and direct SharedTree integration tests in their owning packages or harnesses.
-- [ ] Add non-Fluid consumer tests for local sessions and browser WebTransport, and dependency checks that prevent reverse dependencies on the Fluid adapters or harness.
-- [ ] Validate the package's build, tests, policy compliance, and generated-asset resolution through its entrypoints before starting ServiceClient integration.
+- [x] Migrate existing consumers to package entrypoints and preserve driver and direct SharedTree integration tests in their owning packages or harnesses.
+- [x] Add non-Fluid consumer tests for local sessions and browser WebTransport, and dependency checks that prevent reverse dependencies on the Fluid adapters or harness.
+- [x] Validate the package's build, tests, policy compliance, and generated-asset resolution through its entrypoints before starting ServiceClient integration.
 
 Acceptance: a general TypeScript application can use SEA with only `@fluidframework/sea-typescript` as its direct SEA dependency.
 The package has no Fluid-specific API or implementation requirements and follows the repository's TypeScript package conventions.

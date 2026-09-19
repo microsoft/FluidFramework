@@ -100,7 +100,7 @@ Sources checked on 2026-09-18:
 
 The [native listener](crates/sea-webtransport-server/src/server.rs) binds HTTP/3 and reports a UDP address.
 Its acceptance path checks `/sea` but adds no origin allowlist or client authentication.
-The [browser binding](crates/sea-webtransport/src/wasm/sea.rs) requires a 32-byte certificate hash; the [browser transport](crates/sea-webtransport/src/transport/browser.rs) supplies it through `serverCertificateHashes`.
+The [browser transport](crates/sea-webtransport/src/transport/browser.rs) requires a 32-byte certificate hash and supplies it through `serverCertificateHashes`.
 The [certificate generator](tests/webtransport-browser/generate-cert.sh) creates an ECDSA P-256 certificate valid for 13 days.
 Pinning authenticates the server, not clients.
 A TLS-terminating gateway presents its own certificate, so the backend certificate pin cannot be reused for that connection.
@@ -119,7 +119,8 @@ Public visibility removes that authentication requirement but does not remove th
 | Continue using Tinylicious remotely and local SEA for local-service examples | Existing practical fallback while retaining the page workflow. | Does not exercise remote SEA. Keep separate native WebTransport tests in a reachable environment. |
 
 The [client transport contract](crates/sea-webtransport/src/transport/mod.rs) requires independent bidirectional byte streams, not application datagrams.
-The generated `SeaInjectedClient` already accepts a JavaScript transport implementing these operations.
+At the original inspection checkpoint, the generated `SeaInjectedClient` accepted a JavaScript transport implementing these operations.
+The main branch's WASM extraction has since removed that generated surface; new transport compositions use the Rust `SessionClient<Transport>` boundary and package-owned factories.
 This makes reuse of the shared client plausible, but the server stream handlers currently use concrete `wtransport` stream types.
 This abstraction is not evidence that an alternate transport preserves backpressure.
 Do not silently fall back when native WebTransport was selected.

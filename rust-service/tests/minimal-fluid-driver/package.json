@@ -26,9 +26,9 @@
 		"build:benchmark:tinylicious": "esbuild browser/shared-tree-benchmark-tinylicious.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-benchmark-tinylicious.js --log-level=warning --log-override:package.json=silent",
 		"build:benchmarks": "pnpm run build:benchmark:rust && pnpm run build:benchmark:local && pnpm run build:benchmark:tinylicious",
 		"build:compile": "fluid-build . --task compile",
+		"build:driver-trace": "esbuild browser/trace.mjs --bundle --format=esm --platform=browser --outfile=dist/driver-trace.js --external:@fluidframework/sea-typescript/internal/* --log-level=warning --log-override:package.json=silent",
 		"build:esm": "tsc --project ./tsconfig.json",
 		"build:shared-tree": "esbuild browser/shared-tree-trace.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-trace.js --external:@fluidframework/sea-typescript/internal --log-level=warning --log-override:package.json=silent",
-		"build:wasm": "node ../../crates/sea-webtransport/scripts/build-wasm.mjs",
 		"check:format": "biome format src browser scripts package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html shared-tree-benchmark-rust.html shared-tree-benchmark-local.html shared-tree-benchmark-tinylicious.html",
 		"clean": "rimraf --glob dist lib pkg \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"format": "biome format src browser scripts package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html shared-tree-benchmark-rust.html shared-tree-benchmark-local.html shared-tree-benchmark-tinylicious.html --write",
@@ -37,7 +37,7 @@
 		"test:all": "fluid-build . --task test:all",
 		"test:browser": "SEA_BROWSER_SKIP_BUILD=1 ../webtransport-browser/run-test.sh",
 		"test:node": "node --test \"lib/*.test.js\"",
-		"test:wasm": "node ../wasm-client/node-test.mjs",
+		"test:wasm": "node --test ../../packages/sea-typescript/test/session.test.mjs",
 		"typecheck": "tsc --project tsconfig.json --noEmit --tsBuildInfoFile ./tsconfig.typecheck.tsbuildinfo",
 		"typecheck:shared-tree": "tsc --project tsconfig.shared-tree.json"
 	},
@@ -74,26 +74,6 @@
 		"typescript": "~6.0.3"
 	},
 	"fluidBuild": {
-		"declarativeTasks": {
-			"node ../../crates/sea-webtransport/scripts/build-wasm.mjs": {
-				"inputGlobs": [
-					"package.json",
-					"../../crates/sea-webtransport/scripts/build-wasm.mjs",
-					"${repoRoot}/rust-service/Cargo.toml",
-					"${repoRoot}/rust-service/Cargo.lock",
-					"${repoRoot}/rust-service/rust-toolchain.toml",
-					"${repoRoot}/rust-service/crates/**/*.rs",
-					"${repoRoot}/rust-service/crates/**/Cargo.toml"
-				],
-				"outputGlobs": [
-					"../../crates/sea-webtransport/pkg/web/**",
-					"../../crates/sea-webtransport/pkg/node/**",
-					"../../crates/sea-webtransport/test-support/pkg/web/**",
-					"../../crates/sea-webtransport/test-support/pkg/node/**"
-				],
-				"includeLockFiles": false
-			}
-		},
 		"tasks": {
 			"build": {
 				"dependsOn": [
@@ -105,6 +85,7 @@
 			},
 			"compile": {
 				"dependsOn": [
+					"build:driver-trace",
 					"build:esm",
 					"typecheck:shared-tree",
 					"build:shared-tree",
@@ -112,24 +93,23 @@
 				],
 				"script": false
 			},
+			"build:driver-trace": [
+				"^build:package:esm"
+			],
 			"build:esm": [
-				"^build:package:esm",
-				"build:wasm"
+				"^build:package:esm"
 			],
 			"typecheck": [
 				"^build:package:esm"
 			],
 			"typecheck:shared-tree": [
-				"^build:package:esm",
-				"build:wasm"
+				"^build:package:esm"
 			],
 			"build:shared-tree": [
-				"^build:package:esm",
-				"build:wasm"
+				"^build:package:esm"
 			],
 			"build:benchmarks": [
-				"^build:package:esm",
-				"build:wasm"
+				"^build:package:esm"
 			],
 			"test:all": {
 				"dependsOn": [
@@ -140,14 +120,13 @@
 				"script": false
 			},
 			"test:browser": [
+				"build:driver-trace",
 				"@fluidframework/sea-typescript#build:esm"
 			],
 			"test:node": [
-				"build:esm",
-				"build:wasm"
+				"build:esm"
 			],
 			"test:wasm": [
-				"build:wasm",
 				"@fluidframework/sea-typescript#build:esm"
 			]
 		}

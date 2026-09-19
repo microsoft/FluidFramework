@@ -1,8 +1,8 @@
 # Sea WASM Bindings
 
 This crate is the shared session-binding foundation for browser and Node.js consumers.
-It is under construction as part of the combined stages 1 and 2 in the [integration plan](../../SERVICE_CLIENT_PLAN.md).
-Existing consumers still use the bindings in `sea-webtransport` until migration is complete.
+It owns the session exports extracted during the combined stages 1 and 2 in the [integration plan](../../SERVICE_CLIENT_PLAN.md).
+Consumers use [sea-typescript](../../packages/sea-typescript/README.md), which owns generated artifacts and their loaders; `sea-webtransport` retains only transport and protocol responsibilities.
 
 The transport-independent session adapter preserves concrete availability handles while hiding their implementation types.
 Storage, transport, and decorator construction remain separate from session operations.

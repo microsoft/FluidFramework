@@ -18,7 +18,8 @@ Development-only conformance fixtures and integration-test dependencies are desc
 | `sea-file-durable` | `crates/sea-file-durable/` | `sea-core`, `sea-file` | Synchronized configuration of the shared file engine with dependency-closed recovery. |
 | `sea-content-addressed` | `crates/sea-content-addressed/` | `sea-core` | Reusable immutable blob and directory storage. |
 | `sea-sequencer` | `crates/sea-sequencer/` | `sea-core` | Multi-user local `SeaSession`, stable operations, fencing, replay, and subscriptions. |
-| `sea-webtransport` | `crates/sea-webtransport/` | `sea-core`; optional WASM `sea-memory` and `sea-sequencer` with `test-support` | Versioned Sea framing, native WebTransport, and generated browser/injected clients; local clients in test support. |
+| `sea-webtransport` | `crates/sea-webtransport/` | `sea-core` | Versioned Sea framing, shared session client, and native/browser transport primitives. |
+| `sea-wasm` | `crates/sea-wasm/` | `sea-core`; optional `sea-memory`, `sea-sequencer`, `sea-webtransport`, and `sea-compression` | Shared session bindings and feature-gated stack construction. |
 | `sea-webtransport-server` | `crates/sea-webtransport-server/` | `sea-core`, `sea-sequencer`, `sea-webtransport`, and all three storage backends | Native server executable and runtime backend composition. |
 | `sea-compression` | `crates/sea-compression/` | `sea-core` | Transparent stateless compression `SeaSession` decorator. |
 | `sea-encryption` | `crates/sea-encryption/` | `sea-core` | Transparent authenticated encryption `SeaSession` decorator. |
@@ -32,7 +33,7 @@ At runtime, the primary service path is:
 
 ```text
 application or Fluid adapter
-	-> local, injected, native, or browser SeaSession client
+	-> local, native, or browser SeaSession client
 	-> optional session decorators
 	-> sea-sequencer
 	-> SeaView over one exclusive document opening
@@ -41,4 +42,5 @@ application or Fluid adapter
 ```
 
 The final native process is `sea-webtransport-server` and accepts the current Sea protocol at `/sea`, without old-version negotiation.
-The production WASM package provides `SeaInjectedClient` and `SeaBrowserTransport`; the separate generated test-support package additionally provides `SeaLocalService` and `SeaLocalClient`.
+The `sea-typescript` package owns generated `sea-wasm` artifacts and exposes neutral local and remote factories.
+The transport crate no longer generates JavaScript session or local test-service classes.

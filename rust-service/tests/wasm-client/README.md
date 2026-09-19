@@ -1,27 +1,21 @@
 # Sea WASM Node validation
 
-The Node command runs the neutral package's session tests and three retained legacy binding regressions.
+The Node command runs the neutral package's session tests directly.
 General session scenarios live in [sea-typescript's test suite](../../packages/sea-typescript/test/session.test.mjs) and import its capability entrypoints.
 They cover submission resolution, backlog and live delivery, pending-read cancellation, recursive content, idempotent snapshots, publication authority, conflicting operations, superseded and reused memberships, explicit reopening, and backend-assigned document identities.
 
-The remaining direct generated imports test contracts specific to the old binding surface:
+The snapshot-registration ownership regression now uses neutral sessions: replacement ends the old pending read, cancelling the old registration cannot revoke its replacement, and cancelling the current registration revokes publication authority.
+The sequencer also retains its focused registration-replacement regression in `src/session.rs`.
+The optional injected JavaScript disconnect hook and named-create flag tests were retired with those obsolete APIs.
+The current browser transport implements disconnection directly, and the neutral factory allocates document identities only when the caller omits the document.
 
-- An injected transport may omit its disconnect hook; an implemented hook's failure propagates.
-- The legacy named-create flag is rejected rather than reopening an existing archive.
-- Replacing snapshot registration cancels its old pending read, and cancelling the old registration does not revoke the replacement.
-
-These tests remain until the legacy surface is removed or their transport responsibilities have a replacement home.
-The neutral API has no named-create flag and does not implicitly replace a caller-owned snapshot stream.
-Do not add new general session tests to the legacy surface.
-
-Build both package-owned and legacy distributions and run the tests from `rust-service/`:
+Build the package-owned artifacts and run the tests from `rust-service/`:
 
 ```bash
 pnpm exec fluid-build tests/minimal-fluid-driver --task test:wasm
 ```
 
-The harness declares the neutral package build as a dependency and imports its tests only for orchestration; the neutral package does not depend on the harness.
-After building, `node tests/wasm-client/node-test.mjs` runs all fifteen Node tests directly.
-Legacy artifacts remain under `crates/sea-webtransport/pkg/` and `crates/sea-webtransport/test-support/pkg/`.
-New session consumers use `@fluidframework/sea-typescript`, which owns the shared `sea-wasm` artifacts.
+The harness declares the neutral package build as a dependency and invokes its tests only for orchestration; the neutral package does not depend on the harness.
+After building, `node --test packages/sea-typescript/test/session.test.mjs` runs all thirteen Node tests directly.
+Session consumers use `@fluidframework/sea-typescript`, which owns the shared `sea-wasm` artifacts.
 Generated bindings and WASM binaries are ignored build outputs.

@@ -22,8 +22,8 @@ The memory, buffered-file, and durable-file packages run the Sea storage suite.
 `sea-sequencer` runs the session suite process-locally.
 Separate `sea-webtransport-server` integration tests exercise native live delivery and snapshot publication against every built-in storage mode; they do not invoke this shared session suite.
 Compression and encryption run the same session suite over a local sequencer.
-The generated Node suite separately covers the single-threaded WASM local client and pending-read cancellation.
-The Chromium harness covers `SeaInjectedClient` over `SeaBrowserTransport`, including its browser-only persistent submission stream, cancellation, disconnect, and reconnect behavior.
+The neutral TypeScript package's Node suite separately covers single-threaded WASM sessions, registration ownership, and pending-read cancellation.
+The Chromium harness uses neutral WebTransport factories to cover ordered submissions, cancellation, explicit close and reopen, snapshot recovery, and native shutdown.
 Implementation-specific persistence, corruption, durability, and fault behavior still require local tests; passing this package does not establish those properties.
 
 See [`src/lib.rs`](src/lib.rs) for generic bounds and panic conditions.

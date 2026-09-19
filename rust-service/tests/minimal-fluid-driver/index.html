@@ -9,6 +9,9 @@
 </head>
 <body>
 	<pre id="result">running</pre>
-	<script type="module" src="./browser/trace.mjs"></script>
+	<script type="importmap">
+		{ "imports": { "@fluidframework/sea-typescript/internal/webtransport": "/packages/sea-typescript/lib/webtransport.js" } }
+	</script>
+	<script type="module" src="./dist/driver-trace.js"></script>
 </body>
 </html>

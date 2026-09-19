@@ -1,9 +1,9 @@
 # @fluidframework/sea-typescript
 
 This package provides non-Fluid-specific SEA sessions through package-owned WASM artifacts.
-Its APIs are internal and under active development in the combined foundation phase of the [integration plan](../../SERVICE_CLIENT_PLAN.md).
+Its APIs are internal; the combined foundation phase of the [integration plan](../../SERVICE_CLIENT_PLAN.md) is complete, while packaging presets and higher-level integration remain future stages.
 Fluid summary tests, direct SharedTree package tests, and the SharedTree browser lifecycle trace now consume this package through the reusable `sea-driver` projection.
-Browser benchmarks also use the neutral factories; low-level protocol harnesses are still being migrated.
+Browser benchmarks and the canonical Node, Fluid driver, and transport/shutdown harnesses also use the neutral factories.
 
 ## Supported Foundation
 
@@ -87,10 +87,10 @@ pnpm --dir rust-service/packages/sea-typescript test
 
 The Node tests use capability entrypoints and cover sharing, isolation, compression, immutable content, events, snapshot reload, cancellation, and capability rejection.
 Migrated session regressions also cover live peer delivery, recursive content, idempotent publication, explicit snapshot fences, operation conflicts, superseded authors, reused memberships, and explicit reopening.
-The canonical Node harness executes these twelve package tests together with three retained legacy binding regressions.
+The canonical Node harness executes thirteen package tests, including snapshot-registration replacement, termination of its old pending read, and cancellation that revokes only the owned registration.
 An emitted-module import-graph test checks lazy artifact imports and excludes unrelated capabilities and dependencies from each factory entrypoint.
 `browser.html` runs plain and compressed remote sessions through the emitted package entrypoint.
-The canonical WebTransport script now runs this flow before its legacy transport and shutdown checks, making neutral browser coverage part of `test.sh`.
+The canonical WebTransport script runs this flow alongside the neutral Fluid driver trace and transport/shutdown checks, making neutral browser coverage part of `test.sh`.
 Both client-selected/durable-file and SEA-selected/memory configurations passed live delivery, pending-read cancellation, classified errors, content references, snapshot notifications and lookup, and reopening in Chromium 152 inside the Codespace.
 With a running development server and certificate from the [browser harness](../../tests/webtransport-browser/README.md), run from `rust-service/`:
 
@@ -102,7 +102,7 @@ The existing runner is test orchestration only; this package has no dependency o
 The caller owns the native service and its certificate/data cleanup; the runner owns its temporary Chromium profile and HTTP server.
 An initial Chromium 152 run inside the Codespace passed both configurations with 2,800-byte blob and event payloads, snapshot publication, and reopening.
 Local and remote tests also read compressed blobs through an undecorated observer to verify that the factory actually encodes stored bytes.
-This is foundation evidence, not completion of consumer migration, split-preset acceptance, or inventory-app acceptance.
+This does not establish split-preset or inventory-app acceptance, which remain later plan stages.
 
 The initial foundation passed workspace Rust formatting, strict Clippy and rustdoc, build and tests, documentation links, and `rust-service/test.sh` with the existing generated-client and Chromium scenarios.
 The package passes formatting, TypeScript compilation, API report generation, export validation, Node tests, repository policy checks, and dependency-layer validation.
@@ -130,5 +130,6 @@ An unchanged second build skips generation.
 Validation restored all ten targets after removing the generated output tree, regenerated a missing memory WASM file, and rebuilt after temporarily enabling compression in the memory configuration.
 Restoring the minimal configuration rebuilt again and restored unsupported-compression rejection through the package entrypoint.
 
-Remaining combined-stage work includes low-level binding consumer migration and removal of legacy binding ownership without losing transport-specific tests.
-Legacy transport-owned generated exports remain until those consumers migrate; no stage-completion claim is made by these checks.
+Legacy transport-owned generated exports, JavaScript injection hooks, named-create flags, test-support bundles, and their build task have been removed.
+The obsolete injection-hook and named-create tests were retired with those APIs; general document allocation, registration ownership, and lifecycle behavior remain covered through their current owners.
+The migrated Fluid driver trace additionally checks bounded history and explicit pre-commit recovery through neutral remote sessions.

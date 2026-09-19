@@ -1,6 +1,6 @@
 # Sea WebTransport
 
-This crate owns the bounded, versioned Sea wire protocol, one platform-independent client implementation, native client transport, and generated browser/injected bindings.
+This crate owns the bounded, versioned Sea wire protocol, one platform-independent client implementation, and native and browser transport primitives.
 Native and browser builds share framing, correlation, logical-stream state machines, recovery, and lifecycle behavior.
 They differ only where their environments open connections and read or write bytes.
 
@@ -34,7 +34,7 @@ Durability remains a backend property.
 Snapshots contain a root and committed event position, which is also their document-scoped version.
 Publication carries the expected parent position and optional nomination fence; the receiver resolves tree and event availability before publishing.
 An exact retry at the same position and root succeeds, but a different root at that position fails.
-`getSnapshot(position)` selects the newest snapshot at or before its inclusive bound; `latestSnapshot()` needs no publisher subscription.
+Snapshot lookup selects the newest snapshot at or before its inclusive bound; latest lookup needs no publisher subscription.
 There is no empty initial snapshot: applications with initial state must first commit an event.
 Loads select the latest or bounded snapshot and then replay the retained suffix without promising an atomic captured head.
 
@@ -72,28 +72,23 @@ Native tasks and browser-local tasks serialize snapshot requests while independe
 Publication can proceed while a notification read is pending; cancelling the notification wakes its waiter.
 Browser reads retain their JavaScript promise across cancelled Rust waiters, since dropping a Rust future does not cancel a JavaScript read.
 Explicit browser disconnect closes the underlying WebTransport session.
-Optional generated tree inputs are non-consuming typed JavaScript references, so a submitted tree identity remains usable for publication.
+JavaScript-facing session values and their resource ownership belong to `sea-wasm` and `sea-typescript`, not this transport crate.
 
 The native listener, server dispatch, archive routing, connection liveness, measurements, and shutdown policy belong to the separate [`sea-webtransport-server`](../sea-webtransport-server/) crate.
 
 ## Targets And Generated Bindings
 
-The default `bindings` feature retains the existing generated API during migration.
-The new [WASM crate](../sea-wasm/README.md) disables default features when depending on this crate so it can own generated session exports without linking the legacy binding surface.
-Migration to the new [TypeScript package](../../packages/sea-typescript/README.md) is in progress; the legacy build commands below still serve existing consumers.
-
-The `src/wasm/` library module exports browser and injected-transport bindings from the same shared client used by native Rust.
-It is library code rather than a Cargo example because downstream applications consume generated bindings; there is no standalone scenario to run.
-
-Generate the canonical web and Node packages with:
+The [WASM crate](../sea-wasm/README.md) owns shared session exports and feature-gated stack construction.
+The [TypeScript package](../../packages/sea-typescript/README.md) owns generated artifacts, lazy loaders, and neutral application APIs.
+This crate is an ordinary Rust library on both native and WASM targets; it no longer exports generated session classes, JavaScript transport injection, or local test-service bindings.
+Generate the package-owned web and Node artifacts from the repository root with:
 
 ```bash
-node crates/sea-webtransport/scripts/build-wasm.mjs
+pnpm --dir rust-service/packages/sea-typescript run build
 ```
 
-The command runs from `rust-service/` and writes production outputs to `crates/sea-webtransport/pkg/web/` and `crates/sea-webtransport/pkg/node/`.
-The minimal Fluid driver, Node behavior tests, and real Chromium harness consume those locations directly.
-The same command emits feature-gated process-local test bindings under `crates/sea-webtransport/test-support/pkg/`; production outputs exclude `sea-memory`, `sea-sequencer`, native endpoints, and server lifecycle code.
+Consumers import package entrypoints, not crate output paths.
+The minimal remote configuration excludes local storage, sequencer, compression, and encryption dependencies.
 All generated files are build artifacts and must not be edited.
 
 ## Validation

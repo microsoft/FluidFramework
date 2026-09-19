@@ -145,6 +145,30 @@ test("neutral snapshot participation enforces read-only authority and explicit f
 	await assert.rejects(selected.publishSnapshot(position, state.fence, position, root));
 });
 
+test("neutral snapshot replacement and cancellation release only their own registration", async (context) => {
+	const { open, ownStream } = await sessionFixture(context);
+	const session = await open(undefined, "writer", "writer-session");
+	const previous = ownStream(await session.coordinateSnapshots("clientSelected"));
+	await previous.next();
+	const ended = assert.rejects(previous.next(), /snapshot stream ended/);
+	const replacement = ownStream(await session.coordinateSnapshots("clientSelected"));
+	await ended;
+	await replacement.next();
+	previous.cancel();
+	const root = await session.putBlob(encode("state"));
+	const position = await session.submit(encode("initial"), undefined, encode("state"), root);
+	const notification = replacement.next();
+	await session.publishSnapshot(undefined, undefined, position, root);
+	assert.equal((await notification).latest, position);
+	const cancelled = assert.rejects(replacement.next());
+	replacement.cancel();
+	await cancelled;
+	await assert.rejects(
+		session.publishSnapshot(position, undefined, position, root),
+		/snapshot publisher is not authorized/,
+	);
+});
+
 test("neutral sessions reject operation conflicts, superseded authors, and reused memberships", async (context) => {
 	const { open } = await sessionFixture(context);
 	const first = await open(undefined, "author", "first-session");

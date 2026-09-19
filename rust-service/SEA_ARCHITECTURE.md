@@ -102,10 +102,12 @@ It consumes the shared protocol; the production client does not depend on the se
 
 Some adapters which wrap sessions to implement different APIs are provided.
 
-`sea-webtransport` includes TypeScript binding for its WASM build.
-
-TODO: its a bit odd that bindings for SeaSession are coming from `sea-webtransport`.
-Making a dedicated master WASM package which wraps everything WASM users might need, and uses crate features to limit its size would be better.
+[`sea-wasm`](crates/sea-wasm/README.md) owns shared JavaScript-facing session bindings and feature-gated concrete stack construction.
+Local memory, browser WebTransport, and compressed sessions use the same binding implementation while preserving their concrete availability handles.
+[`sea-typescript`](packages/sea-typescript/README.md) is the non-Fluid-specific application entrypoint and sole owner of generated artifacts, lazy initialization, and capability-specific factories.
+Its APIs contain no Fluid projection or SharedTree dependencies.
+Fluid projection belongs to `sea-driver`, which consumes injected neutral session factories; direct SharedTree integration remains above that layer.
+Cargo features determine included capabilities, session options enable supported decorators, and loaders select artifacts without changing service semantics.
 
 [`SeaDriver`](tests/minimal-fluid-driver/README.md) is a Fluid driver, allowing Fluid applications to run on Sea. It maps Fluid sequence numbers, messages, summaries, blob trees, and reconnection behavior onto the Sea model.
 
