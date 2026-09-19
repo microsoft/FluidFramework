@@ -4,6 +4,13 @@ This folder contains the webpack-fluid-loader. This package is meant to be used 
 
 This loader is intended for development purposes only and should not be used in production.
 
+## Self-Hosted ServiceClient Examples
+
+`exampleAppConfig` supports `--env seaPreset=split` (default) or `--env seaPreset=combined` for the SEA setup module in example-utils.
+This build-time choice changes artifact packaging, not application data stores, service selection, or transport fallback policy.
+See the [inventory example](../../data-objects/inventory-app/README.md#sea-services) for service query parameters and startup commands.
+Browser bundling honors the neutral SEA package's generated Node-target exclusions; the example tooling does not resolve generated artifact paths directly.
+
 The following environment variables can be defined when running `webpack --serve` to change the behavior of webpack-fluid-loader.
 
 See the [Azure Fluid Relay](#azure-fluid-relay) and [SharePoint](#sharepoint) sections below for information on connecting to these services.

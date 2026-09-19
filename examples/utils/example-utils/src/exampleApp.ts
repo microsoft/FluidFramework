@@ -16,6 +16,8 @@ import type {
 import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 
+import { createSeaExampleServiceClient } from "./seaExampleService.js";
+
 /**
  * This file has some simple example utilities for loading and rendering Fluid containers and data stores.
  */
@@ -42,7 +44,9 @@ export const defaultServiceOptions: ExampleServiceOptions = {
  * {@link @fluid-example/webpack-fluid-loader#exampleAppConfig}, which provides the browser
  * compatibility required by the local-driver services.
  * Reads the `fluidClient` URL query parameter.
- * Accepts `ephemeral`, `session`, or `tinylicious`.
+ * Accepts `ephemeral`, `session`, `tinylicious`, `sea-ephemeral`, `sea-webtransport`, or `sea-websocket`.
+ * SEA initializes WASM lazily on first attachment or load, not when selecting a client.
+ * Remote SEA requires `seaEndpoint`; WebTransport also requires `seaCertificateHash`.
  * Missing and unknown values default to the session service when session storage is available,
  * or the ephemeral service otherwise.
  *
@@ -59,9 +63,14 @@ export const defaultServiceOptions: ExampleServiceOptions = {
 export function getExampleServiceClient(
 	options: ExampleServiceOptions = defaultServiceOptions,
 ): ServiceClient {
-	const fluidClient =
-		new URLSearchParams(globalThis.location?.search ?? "").get("fluidClient") ?? "";
+	const parameters = new URLSearchParams(globalThis.location?.search ?? "");
+	const fluidClient = parameters.get("fluidClient") ?? "";
 	switch (fluidClient) {
+		case "sea-ephemeral":
+		case "sea-websocket":
+		case "sea-webtransport": {
+			return createSeaExampleServiceClient(fluidClient, options, parameters);
+		}
 		case "session": {
 			return getSessionService().newClient(options);
 		}

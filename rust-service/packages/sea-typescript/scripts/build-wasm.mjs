@@ -129,7 +129,7 @@ if (measure) {
 				);
 				writeFileSync(
 					path.join(output, "package.json"),
-					`${JSON.stringify({ type: target === "web" ? "module" : "commonjs" })}\n`,
+					`${JSON.stringify(target === "web" ? { type: "module" } : { type: "commonjs", browser: { "./sea_wasm.js": false } })}\n`,
 				);
 			}
 			rmSync(outputDirectory, { recursive: true, force: true });

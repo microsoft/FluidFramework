@@ -32,6 +32,10 @@ export function exampleAppConfig(
 	env: ExampleWebpackEnvironment,
 	options: BaseExampleConfigOptions = {},
 ): WebpackConfiguration {
+	const seaPreset = env.seaPreset ?? "split";
+	if (seaPreset !== "split" && seaPreset !== "combined") {
+		throw new Error("seaPreset must be split or combined");
+	}
 	const config = createBaseExampleConfig(baseDir, env, {
 		...options,
 		loaderPaths: {
@@ -44,6 +48,7 @@ export function exampleAppConfig(
 		...config,
 		plugins: [
 			...(config.plugins ?? []),
+			new webpack.DefinePlugin({ __SEA_LOADER_PRESET__: JSON.stringify(seaPreset) }),
 			// TODO: Remove this polyfill once local-driver no longer loads Node's util package in
 			// browser bundles. local-driver imports TestHistorian from the CommonJS root of
 			// server-test-utils, which eagerly loads TestContext, assert, and then util. util reads
