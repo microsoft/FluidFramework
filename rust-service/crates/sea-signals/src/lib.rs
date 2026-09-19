@@ -400,6 +400,48 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn document_scoped_routing_preserves_recipients_and_envelopes() {
+        let room = SignalRoom::new(SignalLimits::default()).unwrap();
+        let other_room = SignalRoom::new(SignalLimits::default()).unwrap();
+        let sender = connect(&room, "sender").await;
+        let recipient = connect(&room, "recipient").await;
+        let other_sender = connect(&other_room, "sender").await;
+        let other_recipient = connect(&other_room, "recipient").await;
+        for connection in [&sender, &other_sender] {
+            assert_eq!(
+                connection.next_signal().await.unwrap(),
+                Some(SignalEvent::Joined(SignalMember {
+                    id: Bytes::from_static(b"recipient"),
+                    metadata: Bytes::new(),
+                }))
+            );
+        }
+
+        for delivery in [SignalDelivery::Reliable, SignalDelivery::BestEffort] {
+            for target in [None, Some("recipient"), Some("missing")] {
+                let submission = message(target, delivery);
+                let expected = SignalEvent::Message(SignalMessage {
+                    sender: Bytes::from_static(b"sender"),
+                    submission: submission.clone(),
+                });
+                sender.send_signal(submission).await.unwrap();
+                for (connection, receives_message) in [
+                    (&sender, target.is_none()),
+                    (&recipient, target != Some("missing")),
+                    (&other_sender, false),
+                    (&other_recipient, false),
+                ] {
+                    let mut receiver = connection.receiver.lock().await;
+                    if receives_message {
+                        assert_eq!(receiver.try_recv(), Ok(expected.clone()));
+                    }
+                    assert_eq!(receiver.try_recv(), Err(mpsc::error::TryRecvError::Empty));
+                }
+            }
+        }
+    }
+
+    #[tokio::test]
     async fn best_effort_drops_but_reliable_overflow_fails_only_slow_receiver() {
         let room = SignalRoom::new(SignalLimits {
             queue_capacity: 1,
