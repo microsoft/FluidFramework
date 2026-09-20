@@ -397,6 +397,41 @@ async fn settles<Output>(future: impl std::future::Future<Output = Output>) -> O
 }
 
 #[tokio::test]
+async fn idle_ready_submissions_apply_before_receipts_and_rejection_ends_authority() {
+    let storage = FaultStorage::default();
+    let (_, view) = storage.create_view().await.unwrap();
+    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let writer = member(&runtime, "writer").await;
+    let mut receipts = Vec::new();
+    for _ in 0..2 {
+        let position = writer
+            .submit(submission(b"same"))
+            .now_or_never()
+            .expect("idle ready storage must complete on its first poll")
+            .unwrap();
+        assert_eq!(runtime.pipeline.occupancy(), (0, 0));
+        let state = runtime.runtime.try_lock().unwrap();
+        assert!(state.positions.contains(&position));
+        assert!(state.member(&writer.session).is_ok());
+        receipts.push(position);
+    }
+    assert!(receipts[0] < receipts[1]);
+    storage.events.arm(Failure::Reject);
+    assert!(matches!(
+        writer.submit(submission(b"rejected")).now_or_never(),
+        Some(Err(SessionError::Storage(_)))
+    ));
+    assert!(matches!(
+        writer.submit(submission(b"suffix")).await,
+        Err(SessionError::Closed)
+    ));
+    assert_eq!(storage.events.calls.load(Ordering::SeqCst), 3);
+    assert_eq!(storage.events.batches.load(Ordering::SeqCst), 0);
+    assert_eq!(runtime.pipeline.occupancy(), (0, 0));
+    runtime.shutdown().await.unwrap();
+}
+
+#[tokio::test]
 async fn buffered_submissions_preserve_first_poll_order_with_exhausted_budget() {
     let storage = MemoryStorage::new();
     let (_, view) = storage.create_view().await.unwrap();

@@ -13,7 +13,7 @@ use sea_core::{
 };
 use tokio::sync::{Mutex, RwLock, oneshot};
 
-use super::{AppendGuard, Runtime, SessionError, append_once};
+use super::{AppendGuard, MutationFuture, Runtime, SessionError, append_once};
 
 /// Maximum admitted entries, including the batch currently being persisted.
 const ENTRY_LIMIT: usize = 256;
@@ -100,12 +100,11 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
             .saturating_add(session.as_bytes().len())
             .saturating_add(128);
         let mut input = Some(submission);
-        let (completion, mut receiver) = oneshot::channel();
-        let mut completion = Some(completion);
+        let receiver;
         let mut guard;
         loop {
             let admission = self.gate.read().await;
-            let state = runtime.lock().await;
+            let mut state = runtime.lock().await;
             if state.recovery_required {
                 return Err(SessionError::RecoveryRequired);
             }
@@ -124,9 +123,33 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
                     "submission exceeds pipeline byte limit",
                 ));
             }
+            if self.queue.lock().expect("pipeline queue lock").count == 0 {
+                guard = AppendGuard(Some(failed));
+                match self
+                    .start_idle(
+                        runtime,
+                        &mut state,
+                        author,
+                        session,
+                        input.take().expect("unadmitted input"),
+                        bytes,
+                    )
+                    .await
+                {
+                    Either::Left(result) => {
+                        if result.is_ok() {
+                            guard.disarm();
+                        }
+                        return result;
+                    }
+                    Either::Right(completion) => receiver = completion,
+                }
+                break;
+            }
             let admitted = {
                 let mut queue = self.queue.lock().expect("pipeline queue lock");
                 if queue.count < ENTRY_LIMIT && bytes <= BYTE_LIMIT - queue.bytes {
+                    let (completion, pending) = oneshot::channel();
                     queue.count += 1;
                     queue.bytes += bytes;
                     queue.entries.push_back(Entry {
@@ -134,24 +157,35 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
                         session: session.clone(),
                         submission: input.take().expect("unadmitted input"),
                         bytes,
-                        completion: completion.take().expect("unadmitted completion"),
+                        completion,
                     });
-                    true
+                    Some(pending)
                 } else {
-                    false
+                    None
                 }
             };
             drop(state);
             drop(admission);
-            if admitted {
+            if let Some(pending) = admitted {
+                receiver = pending;
                 guard = AppendGuard(Some(failed));
                 break;
             }
             self.drive(runtime).await;
         }
         drop(membership_admission);
+        self.complete(runtime, receiver, guard).await
+    }
+
+    /// Drives retained work until this caller's receipt is ready, preserving cooperative yielding.
+    async fn complete(
+        &self,
+        runtime: &Arc<Mutex<Runtime<Storage>>>,
+        mut receiver: oneshot::Receiver<Result<EventPosition, SessionError<Storage::Error>>>,
+        mut guard: AppendGuard,
+    ) -> Result<EventPosition, SessionError<Storage::Error>> {
         loop {
-            match select(Box::pin(&mut receiver), Box::pin(self.drive(runtime))).await {
+            match select(&mut receiver, std::pin::pin!(self.drive(runtime))).await {
                 Either::Left((result, _)) => {
                     let result = result.unwrap_or(Err(SessionError::RecoveryRequired));
                     if result.is_ok() {
@@ -174,6 +208,67 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
                 }
             }
         }
+    }
+
+    /// Polls an idle append under both admission locks; pending work moves to the retained driver.
+    async fn start_idle(
+        &self,
+        runtime: &Arc<Mutex<Runtime<Storage>>>,
+        state: &mut Runtime<Storage>,
+        author: AuthorId,
+        session: SessionId,
+        submission: EventSubmission,
+        bytes: usize,
+    ) -> Either<
+        Result<EventPosition, SessionError<Storage::Error>>,
+        oneshot::Receiver<Result<EventPosition, SessionError<Storage::Error>>>,
+    > {
+        let event = match state.prepare_submission(
+            &author,
+            &session,
+            &submission,
+            state.minimum_reference,
+            true,
+        ) {
+            Ok(event) => event,
+            Err(error) => return Either::Left(Err(error)),
+        };
+        let view = match state.view() {
+            Ok(view) => view,
+            Err(error) => return Either::Left(Err(error)),
+        };
+        let input = event.clone();
+        let mut future: MutationFuture<Storage::Error> =
+            Box::pin(async move { append_once::<Storage>(&view, input).await });
+        if let std::task::Poll::Ready(result) =
+            std::future::poll_fn(|context| std::task::Poll::Ready(future.as_mut().poll(context)))
+                .await
+        {
+            return Either::Left(apply_result(state, event, result));
+        }
+        let (completion, receiver) = oneshot::channel();
+        let entry = Entry {
+            author,
+            session,
+            submission,
+            bytes,
+            completion,
+        };
+        {
+            let mut queue = self.queue.lock().expect("pipeline queue lock");
+            queue.count += 1;
+            queue.bytes += bytes;
+        }
+        let runtime = runtime.clone();
+        let queue = self.queue.clone();
+        let driver: Driver = Box::pin(async move {
+            let result = future.await;
+            let mut state = runtime.lock().await;
+            let result = apply_result(&mut state, event, result);
+            finish(&mut state, &queue, entry, result);
+        });
+        *self.driver.lock().expect("pipeline driver lock") = Some(driver.shared());
+        Either::Right(receiver)
     }
 
     /// Settles all admitted work while a lifecycle caller excludes new admission.
@@ -251,18 +346,7 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
                         let result = results.next().unwrap_or(Err(SessionError::Rejected(
                             "batch suffix was not attempted",
                         )));
-                        let result = match result {
-                            Ok(position) => state
-                                .apply(&sea_core::CommittedEvent { position, event })
-                                .map(|()| position),
-                            Err(error) => Err(error),
-                        };
-                        if matches!(
-                            &result,
-                            Err(SessionError::RecoveryRequired | SessionError::Corrupt(_))
-                        ) {
-                            state.recovery_required = true;
-                        }
+                        let result = apply_result(&mut state, event, result);
                         finish(&mut state, &queue, entry, result);
                     }
                 });
@@ -276,6 +360,27 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
             driver.take();
         }
     }
+}
+
+/// Applies a settled append before receipt publication and preserves ambiguous recovery barriers.
+fn apply_result<Storage: SeaStorage + 'static>(
+    state: &mut Runtime<Storage>,
+    event: Event,
+    result: Result<EventPosition, SessionError<Storage::Error>>,
+) -> Result<EventPosition, SessionError<Storage::Error>> {
+    let result = match result {
+        Ok(position) => state
+            .apply(&sea_core::CommittedEvent { position, event })
+            .map(|()| position),
+        Err(error) => Err(error),
+    };
+    if matches!(
+        &result,
+        Err(SessionError::RecoveryRequired | SessionError::Corrupt(_))
+    ) {
+        state.recovery_required = true;
+    }
+    result
 }
 
 /// Publishes completion only after runtime metadata has caught up with backend commitment.

@@ -1,5 +1,116 @@
 # Storage Optimization Evidence
 
+## Focused Overhead Pass on the Merged Baseline
+
+This section supersedes the older comparisons below for the focused performance pass.
+The starting checkout was clean at `32ee6e92c87b82c23948d23d52db4c94670743c3` on `rust-service-storage-optimization`.
+That merge includes storage checkpoint `47159ea46be` and session-sequence checkpoint `7753aba04ac`; the earlier unresolved-merge status below is historical.
+No other worktree, branch, commit, public API, storage format, dependency, or lockfile was changed by this pass.
+
+### Hypothesis and Kept Change
+
+An idle append that completes in its first poll does not need a completion channel, shared driver, or batch vectors.
+The pipeline now prepares and polls that append while holding lifecycle admission and runtime state locks.
+The empty charged queue is checked under those same locks, so a lifecycle writer or another admission cannot cross the check and dispatch.
+A ready result is applied to runtime metadata before its receipt returns; the session guard revokes authority on rejection or cancellation.
+A pending append retains the exact polled future in the existing shared driver, charges one entry and its input bytes, and releases both admission locks before waiting.
+The existing driver-slot identity check prevents an old completed driver from clearing a newer pending driver.
+Queued submissions still use the bounded batching path, frozen reference floor, and accepted-prefix failure handling.
+The completion loop also uses stack pinning instead of allocating two boxes per selection.
+One boxed backend future remains on the ready path; this is not an allocation-free implementation or an RSS measurement.
+
+Only one production candidate was tested and retained, in `sea-sequencer/src/pipeline.rs`.
+The new `idle_ready_submissions_apply_before_receipts_and_rejection_ends_authority` regression verifies first-poll completion, distinct receipts for equal inputs, applied metadata, released charges, and no accepted suffix after immediate rejection.
+The existing deterministic gated tests cover pending-future retention before/after commit, cancellation, bounded admission, same-session capacity ordering, grouped ambiguity, batching, and terminal leave ordering.
+All 35 sequencer tests passed.
+The ordinary cooperative storage benchmark regression also passed; the benchmark source is unchanged and contains no whole-submission `unconstrained` wrapper.
+No public behavioral contract changed, so no API report or changeset is needed.
+
+### Collection and Provenance
+
+The exact clean HEAD was built with `cargo build --manifest-path rust-service/Cargo.toml -p sea-benchmarks --bin storage-pipeline --release --locked` before any production edit.
+Its executable was copied to the owned temporary path `/tmp/sea-storage-overhead-N5913w/baseline` and retained for alternating comparisons.
+The candidate was rebuilt at `rust-service/target/release/storage-pipeline` with the same command and toolchain.
+The dataset was `rust-service/target/storage-overhead-data`, created fresh and removed by each successful invocation.
+No dataset remains after collection.
+
+Raw structured evidence is retained in [storage-overhead](measurements/2026-09-20/storage-overhead/baseline.json):
+
+- [baseline.json](measurements/2026-09-20/storage-overhead/baseline.json): 36 exact-HEAD cells collected before production edits, three rounds with reversed cell order in round two.
+- [candidate.json](measurements/2026-09-20/storage-overhead/candidate.json): 72 alternating baseline/candidate cells, three samples per version for every backend/payload/window combination.
+  Version order is baseline/candidate, candidate/baseline, baseline/candidate by round; the middle round also reverses the cell order.
+- [durable-repeat.json](measurements/2026-09-20/storage-overhead/durable-repeat.json): seven additional alternating pairs for the suspicious durable 8192-byte/window-128 cell, with no source changes.
+- [summary.json](measurements/2026-09-20/storage-overhead/summary.json): per-cell sample counts, medians, minima, and maxima for throughput, elapsed time, and p50/p99 submit latency.
+- [validation.json](measurements/2026-09-20/storage-overhead/validation.json): exact validation commands, cwd, environment overrides, timestamps, exit status, and temporary log paths/hashes.
+
+Every collection file embeds its collector source, exact invocation arguments, UTC timestamps, source SHA-256 values, baseline/candidate executable hashes, kernel, Rust toolchain, and relevant environment variables.
+Reproduction uses the embedded collector with its recorded paths and fresh output names; its clean-checkout baseline mode must run before editing production sources.
+The source hashes cover the benchmark, pipeline, session runtime, fault tests, and Cargo lockfile.
+The baseline executable hash must match between all three collections.
+Each cell uses the unchanged 128-operation warmup followed by 4096 measured operations, verifies every receipt and ordered replay, and records both phase rows.
+All 122 measured cells and 122 warmups passed their delivery/order checks without timeout.
+The dataset, payload, receipt, latency, and physical-durability limitations described below still apply, except that these new runs use the integrated session-local sequence rules and ordinary cooperative submissions.
+Shared-host contention, filesystem caches, CPU migration, and storage integrity were not controlled or qualified.
+
+### Head-to-Head Results
+
+These are the three-pair comparison medians, not ratios against the obsolete pre-storage identities.
+Throughput is operations/second; brackets give the full three-sample min/max range, rounded to whole operations.
+Latency columns give median p50/p99 microseconds across processes, baseline then candidate; these are not pooled percentiles.
+
+| Backend | Bytes | Window | Baseline ops/s [range] | Candidate ops/s [range] | Change | Baseline p50/p99 us | Candidate p50/p99 us |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| memory | 64 | 1 | 207092 [204941, 209101] | 325755 [323237, 326871] | +57.3% | 4.54 / 9.04 | 2.81 / 6.63 |
+| memory | 64 | 128 | 240799 [238616, 240951] | 297947 [294338, 301344] | +23.7% | 549.71 / 596.79 | 445.21 / 490.72 |
+| memory | 8192 | 1 | 95155 [92333, 96310] | 119151 [118795, 120461] | +25.2% | 9.52 / 24.27 | 7.55 / 17.22 |
+| memory | 8192 | 128 | 100332 [99012, 100582] | 108779 [106861, 108875] | +8.4% | 1284.12 / 1391.66 | 1180.14 / 1309.22 |
+| buffered-file | 64 | 1 | 28276 [27745, 28806] | 28629 [27881, 29074] | +1.3% | 33.48 / 57.94 | 33.02 / 56.73 |
+| buffered-file | 64 | 128 | 336439 [332077, 336554] | 342645 [340853, 346579] | +1.8% | 340.86 / 526.01 | 321.87 / 570.95 |
+| buffered-file | 8192 | 1 | 17022 [14208, 17259] | 17438 [17138, 18005] | +2.4% | 56.00 / 84.44 | 54.78 / 82.85 |
+| buffered-file | 8192 | 128 | 56262 [56255, 58254] | 54408 [54286, 56101] | -3.3% | 2097.74 / 2446.27 | 2219.46 / 2617.90 |
+| durable-file | 64 | 1 | 1272 [1251, 1312] | 1302 [1288, 1304] | +2.4% | 796.50 / 1396.92 | 796.39 / 1311.19 |
+| durable-file | 64 | 128 | 41362 [40182, 42664] | 41861 [41026, 44123] | +1.2% | 3050.18 / 3452.74 | 2900.05 / 3437.37 |
+| durable-file | 8192 | 1 | 789 [700, 925] | 923 [751, 935] | +17.0% | 1135.31 / 1613.28 | 1029.99 / 1556.61 |
+| durable-file | 8192 | 128 | 6846 [6819, 6985] | 4346 [3796, 7149] | -36.5% | 17414.70 / 28219.60 | 28968.33 / 31940.39 |
+
+Memory gains are consistent across all three samples in each cell, with nonoverlapping throughput ranges.
+The memory 64-byte/window-1 median submit phase fell from 19.779 ms to 12.574 ms; 8192-byte/window-1 fell from 43.046 ms to 34.377 ms.
+These short microbenchmarks do not establish sustained capacity or allocator-memory reductions.
+Buffered sequential gains are small and overlap baseline variation; the earlier singleton regression is not solved.
+Buffered 8192-byte/window-128 throughput and some buffered p99 values worsened in this matrix; this is not an across-the-board speedup.
+
+The durable 8192-byte/window-128 regression prompted the bounded seven-pair repeat.
+That repeat gave baseline median 7200 [6861, 7322] ops/s and candidate 7304 [3711, 7307] ops/s (+1.5%), with median p50/p99 16916.58/31264.86 us versus 16822.25/31017.87 us.
+Six candidate repeats were near 7241-7307 ops/s, but one was again slow; candidate tail variation remains unresolved and must not be erased by the favorable repeat median.
+The initial three-pair regression remains in the table and raw evidence.
+No stable durable speedup is claimed, and neither these runs nor the existing sync-count regressions qualify physical power-loss behavior.
+
+### Buffered Residual and Scope Limit
+
+`FileEvents::append` still wraps a singleton in `append_batch`, which hands work to Tokio's blocking pool.
+The retained worker owns the opening, serializes journal writes, and publishes only after the required sync; no event file I/O moved onto async workers.
+This handoff is consistent with the measured singleton overhead, but no isolated scheduler/syscall profile attributes an exact fraction of that cost.
+A permanent writer thread per document is unacceptable because document count would create an unbounded thread count.
+A shared bounded dedicated pool could avoid some handoffs, but would add queue admission, document fairness, shutdown/drain, panic poisoning, and cancellation-ownership contracts.
+That is disproportionate to this focused pass and was not implemented.
+File code is unchanged; pipelined batching, backpressure, and durability tests remain the relevant safeguards.
+
+### Validation and Handoff
+
+Workspace formatting, strict all-target/all-feature Clippy, warning-free rustdoc, all-target build, strict WASM library Clippy, documentation links, and scoped pnpm policy passed.
+The first workspace test run failed the unchanged `native_client_round_trip_in_every_storage_mode` with `Transport(Timeout)`.
+Its isolated rerun passed in 0.43 seconds without a code change, and the full native retry passed.
+The failed invocation remains recorded in `validation.json` and its original temporary log.
+The initial candidate also exceeded Clippy's function-line limit; extracting the completion loop repaired it, and strict checks and all sequencer regressions passed afterward.
+Root `pnpm build:fast` passed in 80.011 seconds after formatting the evidence with the repository's Biome formatter.
+The complete `./test.sh` passed, including the native workspace, generated WASM/Node, integration smoke/comparator, and Chromium transport/lifecycle scenarios.
+No non-Rust test changes or exclusions were needed.
+
+The final source changes are the pipeline and its focused fault test; this report and the five JSON evidence files retain the result.
+Nothing is staged or committed by this pass.
+Temporary baseline binary, collectors, and validation logs remain under the exclusively owned `/tmp/sea-storage-overhead-N5913w` directory for parent review.
+That exact directory is safe to remove after review; no other temporary directory or worktree should be cleaned as part of this pass.
+
 ## Scope and Result
 
 Native local `SeaAuthorSession::submit` measurements compare the existing copy-journal HEAD with the uncommitted storage ring, in-place journal, and batched-sync implementation.
