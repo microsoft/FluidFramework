@@ -27,6 +27,7 @@ The integration and transport runners share [Chromium lifecycle support](browser
 It owns Chromium, its profile and temporary files, and the Chrome DevTools Protocol (CDP) connection for one scenario.
 CDP startup and commands have deadlines; connection loss rejects pending commands.
 Cleanup runs after success, scenario failure, startup failure, and CPU-profile finalization failure, escalating browser termination after five seconds when needed.
+Controlled-child regressions cover startup timeout both with normal termination and with a child that ignores `SIGTERM`.
 Each runner still owns its page server and scenario assertions; benchmark workload and measurement logic remain separate.
 
 ## Validation
@@ -106,6 +107,12 @@ Tinylicious belongs to the separate Routerlicious pnpm workspace. Install that w
 ```bash
 pnpm --dir server/routerlicious install --frozen-lockfile
 ```
+
+Tinylicious prerequisites use the Routerlicious workspace's incremental Fluid `compile` graph.
+Unchanged dependency builds are reused, while a missing Tinylicious entry point triggers a rebuild of that package.
+This does not skip the browser workload, convergence assertions, or fresh service/data setup.
+On the same development checkout, the former recursive compile command took 48.4 seconds; the warm incremental prerequisite check took 1.6 seconds across 22 tasks in 13 packages.
+These timings describe local setup overhead, not service throughput or a clean-build comparison.
 
 Run all cases with the quick default performance configuration of three repetitions, 250 measured edits, 10 warmup edits, and one edit per Fluid batch without per-batch synchronization:
 

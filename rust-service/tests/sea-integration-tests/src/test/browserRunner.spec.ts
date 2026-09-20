@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import { execFile } from "node:child_process";
-import { mkdtemp, readdir, readlink, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, readlink, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -113,6 +113,61 @@ describe("Chromium runner lifecycle", function () {
 			/timed out awaiting CDP Runtime.evaluate/,
 		);
 	});
+
+	for (const ignoreTermination of [false, true]) {
+		it(
+			ignoreTermination
+				? "force-kills a child that ignores SIGTERM after startup timeout"
+				: "cleans up a child that never exposes CDP before startup timeout",
+			async () => {
+				const fixtureDirectory = await mkdtemp(join(tmpdir(), "sea-browser-stub-"));
+				const executable = join(fixtureDirectory, "chromium-stub.cjs");
+				const pidPath = join(fixtureDirectory, "pid");
+				const signalPath = join(fixtureDirectory, "signal");
+				await writeFile(
+					executable,
+					`#!${process.execPath}
+const fs = require("node:fs");
+process.on("SIGTERM", () => {
+	fs.writeFileSync(${JSON.stringify(signalPath)}, "SIGTERM");
+	if (!${ignoreTermination}) process.exit(0);
+});
+fs.writeFileSync(${JSON.stringify(pidPath)}, String(process.pid));
+setInterval(() => {}, 1000);
+`,
+					{ mode: 0o700 },
+				);
+				let watchdogFired = false;
+				const watchdog = setTimeout(() => {
+					watchdogFired = true;
+					void readFile(pidPath, "utf8")
+						.then((pid) => {
+							try {
+								process.kill(Number(pid), "SIGKILL");
+							} catch {}
+						})
+						.catch(() => {});
+				}, 12_000);
+				try {
+					await assert.rejects(
+						withChromium("about:blank", () => assert.fail("unexpected scenario"), {
+							executable,
+							profileRoot,
+							startupTimeoutMilliseconds: 500,
+						}),
+						/timed out waiting for Chromium CDP/,
+					);
+					browserPid = Number(await readFile(pidPath, "utf8"));
+					assert.ok(Number.isSafeInteger(browserPid) && browserPid > 0);
+					assert.equal(await readFile(signalPath, "utf8"), "SIGTERM");
+					assert.equal(watchdogFired, false, "the runner must terminate its own child");
+				} finally {
+					clearTimeout(watchdog);
+					await rm(fixtureDirectory, { recursive: true, force: true });
+				}
+			},
+		);
+	}
 
 	it("rejects pending CDP commands when the connection closes", async () => {
 		await withChromium(

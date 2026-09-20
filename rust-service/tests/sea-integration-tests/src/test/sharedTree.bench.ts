@@ -317,9 +317,18 @@ function buildPrerequisites(benchmarkCase: BenchmarkCase): void {
 				"Tinylicious dependencies are missing; run pnpm install in server/routerlicious",
 			);
 		}
-		run("pnpm", ["--filter", "tinylicious...", "run", "build:compile"], {
-			cwd: path.join(repositoryDirectory, "server/routerlicious"),
-		});
+		run(
+			"pnpm",
+			[
+				"exec",
+				"fluid-build",
+				"packages/tinylicious",
+				"--task",
+				"compile",
+				...(existsSync(path.join(tinyliciousDirectory, "dist/index.js")) ? [] : ["--rebuild"]),
+			],
+			{ cwd: path.join(repositoryDirectory, "server/routerlicious") },
+		);
 	}
 }
 
