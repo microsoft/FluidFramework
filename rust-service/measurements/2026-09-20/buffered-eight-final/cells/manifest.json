@@ -46,10 +46,7 @@
 		"native": "Cargo release, websocket-stream feature",
 		"wasm": "Cargo release, simd128",
 		"wireBytes": "not measured",
-		"seaStorage": [
-			"memory",
-			"buffered-file"
-		],
+		"seaStorage": ["memory", "buffered-file"],
 		"tinyliciousStorage": "default-in-memory-database",
 		"generatorPhysicalCores": 4,
 		"generatorCpus": "16,18,20,22"

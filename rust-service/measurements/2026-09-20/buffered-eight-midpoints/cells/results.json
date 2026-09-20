@@ -6559,9 +6559,7 @@
 					}
 				],
 				"deliveredInWindow": 148470,
-				"errors": [
-					"bounded backlog or operation limit reached"
-				],
+				"errors": ["bounded backlog or operation limit reached"],
 				"latencyMilliseconds": {
 					"max": 522.2212790000001,
 					"median": 3.6666160000000003,
@@ -8226,9 +8224,7 @@
 					}
 				],
 				"deliveredInWindow": 7526,
-				"errors": [
-					"bounded backlog or operation limit reached"
-				],
+				"errors": ["bounded backlog or operation limit reached"],
 				"latencyMilliseconds": {
 					"max": 499.113197,
 					"median": 405.309277,
@@ -11318,9 +11314,7 @@
 					}
 				],
 				"deliveredInWindow": 151765,
-				"errors": [
-					"bounded backlog or operation limit reached"
-				],
+				"errors": ["bounded backlog or operation limit reached"],
 				"latencyMilliseconds": {
 					"max": 415.71313,
 					"median": 9.104127,
@@ -11506,9 +11500,7 @@
 					}
 				],
 				"deliveredInWindow": 103319,
-				"errors": [
-					"bounded backlog or operation limit reached"
-				],
+				"errors": ["bounded backlog or operation limit reached"],
 				"latencyMilliseconds": {
 					"max": 415.19191700000005,
 					"median": 148.398618,
@@ -12583,9 +12575,7 @@
 					}
 				],
 				"deliveredInWindow": 0,
-				"errors": [
-					"bounded backlog or operation limit reached"
-				],
+				"errors": ["bounded backlog or operation limit reached"],
 				"latencyMilliseconds": {
 					"max": null,
 					"median": null,
@@ -12621,9 +12611,7 @@
 					}
 				],
 				"deliveredInWindow": 0,
-				"errors": [
-					"bounded backlog or operation limit reached"
-				],
+				"errors": ["bounded backlog or operation limit reached"],
 				"latencyMilliseconds": {
 					"max": null,
 					"median": null,
@@ -12694,9 +12682,7 @@
 					}
 				],
 				"deliveredInWindow": 0,
-				"errors": [
-					"bounded backlog or operation limit reached"
-				],
+				"errors": ["bounded backlog or operation limit reached"],
 				"latencyMilliseconds": {
 					"max": null,
 					"median": null,

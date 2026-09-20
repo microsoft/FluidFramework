@@ -69071,9 +69071,7 @@
 					}
 				],
 				"deliveredInWindow": 5744,
-				"errors": [
-					"bounded backlog or operation limit reached"
-				],
+				"errors": ["bounded backlog or operation limit reached"],
 				"latencyMilliseconds": {
 					"max": 842.2478239999999,
 					"median": 696.9566080000001,
@@ -69455,9 +69453,7 @@
 					}
 				],
 				"deliveredInWindow": 5961,
-				"errors": [
-					"bounded backlog or operation limit reached"
-				],
+				"errors": ["bounded backlog or operation limit reached"],
 				"latencyMilliseconds": {
 					"max": 851.906677,
 					"median": 707.51532,
