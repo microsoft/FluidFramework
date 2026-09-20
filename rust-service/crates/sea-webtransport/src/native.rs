@@ -19,8 +19,8 @@ use sea_core::{
     ErrorKind, Event, EventPosition, MonitoredStreamItem, MonitoredStreamProgress,
     MonitoredStreamStatus,
     archive::{
-        AuthorId, CommittedEvent, EventSubmission, OperationId, SessionCommittedEvent, SessionId,
-        SessionStream, SnapshotParticipation,
+        AuthorId, CommittedEvent, EventSubmission, SessionCommittedEvent, SessionId, SessionStream,
+        SnapshotParticipation,
     },
     boxed_monitored_stream,
     session::{
@@ -792,35 +792,12 @@ where
             .as_mut()
             .ok_or(SeaClientError::Closed)?
             .request(protocol::Request::Submit {
-                operation: submission.operation_id.as_bytes().to_vec(),
                 reference: submission.reference.map(EventPosition::get),
                 event: event_to_wire(&submission.event),
             })
             .await?
         {
             protocol::Response::EventCommitted { position, .. } => Ok(EventPosition::new(position)),
-            response => Err(response_error(response)),
-        }
-    }
-
-    async fn resolve_submission(
-        &self,
-        operation_id: &OperationId,
-    ) -> Result<Option<EventPosition>, Self::Error> {
-        match self
-            .author_stream
-            .lock()
-            .await
-            .as_mut()
-            .ok_or(SeaClientError::Closed)?
-            .request(protocol::Request::ResolveSubmission {
-                operation: operation_id.as_bytes().to_vec(),
-            })
-            .await?
-        {
-            protocol::Response::SubmissionResolved { position, .. } => {
-                Ok(position.map(EventPosition::new))
-            }
             response => Err(response_error(response)),
         }
     }
@@ -999,8 +976,7 @@ fn session_event_from_wire(
             .map_err(|_| SeaClientError::UnexpectedResponse)?,
         session_id: SessionId::new(Bytes::from(event.session))
             .map_err(|_| SeaClientError::UnexpectedResponse)?,
-        operation_id: OperationId::new(Bytes::from(event.operation))
-            .map_err(|_| SeaClientError::UnexpectedResponse)?,
+
         reference: event.reference.map(EventPosition::new),
         minimum_reference: event.minimum_reference.map(EventPosition::new),
     })

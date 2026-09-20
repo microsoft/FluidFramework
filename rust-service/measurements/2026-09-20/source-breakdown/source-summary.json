@@ -1,0 +1,79 @@
+{
+	"commit": "782051315ccf36a38a5703aa3edc07dd68b91ad9",
+	"tool": "cloc 2.06 (npm cloc@2.6.0)",
+	"scope": "Tracked source files, including tests and conditional code; excludes generated entrypoints, packageVersion, dependencies and build output. Dependency scopes follow local non-dev manifest edges, not linker reachability. Rust inline tests remain included.",
+	"testClassification": "Subset of total source: files in test/tests/test-utils/__tests__ directories or named *.spec.*/*.test.*, plus syntax-derived Rust #[cfg(test)] modules and #[test]/#[tokio::test] functions. Includes test support, not a count of test cases; complex cfg expressions, fixtures outside these paths, and integration tests outside the source scopes are not included.",
+	"results": {
+		"seaNativeClosure": {
+			"prefixes": [
+				"rust-service/crates/sea-webtransport-server/src/",
+				"rust-service/crates/sea-core/src/",
+				"rust-service/crates/sea-file/src/",
+				"rust-service/crates/sea-file-durable/src/",
+				"rust-service/crates/sea-memory/src/",
+				"rust-service/crates/sea-sequencer/src/",
+				"rust-service/crates/sea-signals/src/",
+				"rust-service/crates/sea-webtransport/src/"
+			],
+			"files": 49,
+			"blank": 1215,
+			"comment": 1998,
+			"code": 17899,
+			"nFiles": 49,
+			"testAndSupportCode": 6279,
+			"testAndSupportComments": 25,
+			"otherCode": 11620
+		},
+		"tinyliciousWrapper": {
+			"prefixes": ["server/routerlicious/packages/tinylicious/src/"],
+			"files": 35,
+			"blank": 457,
+			"comment": 356,
+			"code": 2442,
+			"nFiles": 35,
+			"testAndSupportCode": 472,
+			"testAndSupportComments": 33,
+			"otherCode": 1970
+		},
+		"tinyliciousServerClosure": {
+			"prefixes": [
+				"server/routerlicious/packages/tinylicious/src/",
+				"server/routerlicious/packages/gitresources/src/",
+				"server/routerlicious/packages/protocol-base/src/",
+				"server/routerlicious/packages/lambdas/src/",
+				"server/routerlicious/packages/lambdas-driver/src/",
+				"server/routerlicious/packages/services-client/src/",
+				"server/routerlicious/packages/services-core/src/",
+				"server/routerlicious/packages/services-telemetry/src/",
+				"server/routerlicious/packages/local-server/src/",
+				"server/routerlicious/packages/memory-orderer/src/",
+				"server/routerlicious/packages/test-utils/src/",
+				"server/routerlicious/packages/services-shared/src/",
+				"server/routerlicious/packages/services-utils/src/"
+			],
+			"files": 335,
+			"blank": 5210,
+			"comment": 7538,
+			"code": 35927,
+			"nFiles": 335,
+			"testAndSupportCode": 10775,
+			"testAndSupportComments": 809,
+			"otherCode": 25152
+		},
+		"seaTypeScriptAdapters": {
+			"prefixes": [
+				"rust-service/packages/sea-typescript/src/",
+				"rust-service/packages/sea-driver/src/",
+				"rust-service/packages/sea-tree/src/"
+			],
+			"files": 24,
+			"blank": 318,
+			"comment": 723,
+			"code": 5709,
+			"nFiles": 24,
+			"testAndSupportCode": 2712,
+			"testAndSupportComments": 50,
+			"otherCode": 2997
+		}
+	}
+}

@@ -1,9 +1,6 @@
 //! Bounded application admission and cancellation-retained batch execution.
 
-use std::{
-    collections::{BTreeSet, VecDeque},
-    sync::Arc,
-};
+use std::{collections::VecDeque, sync::Arc};
 
 use futures_util::{
     FutureExt,
@@ -32,7 +29,7 @@ type Driver = futures_util::future::LocalBoxFuture<'static, ()>;
 
 /// One admitted input and the caller waiting for its settled result.
 struct Entry<Error> {
-    /// Stable author used for encoding and retry validation.
+    /// Stable author used for encoding this membership's submissions.
     author: AuthorId,
     /// Membership whose failure prevents dispatch of queued successors.
     session: SessionId,
@@ -101,7 +98,6 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
             .len()
             .saturating_add(author.as_bytes().len())
             .saturating_add(session.as_bytes().len())
-            .saturating_add(submission.operation_id.as_bytes().len())
             .saturating_add(128);
         let mut input = Some(submission);
         let (completion, mut receiver) = oneshot::channel();
@@ -196,14 +192,10 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
             let mut driver = self.driver.lock().expect("pipeline driver lock");
             if driver.is_none() {
                 let mut entries = Vec::new();
-                let mut operations = BTreeSet::new();
                 {
                     let mut queue = self.queue.lock().expect("pipeline queue lock");
-                    while let Some(entry) = queue.entries.front() {
-                        if !operations.insert(entry.submission.operation_id.clone()) {
-                            break;
-                        }
-                        entries.push(queue.entries.pop_front().expect("queued entry"));
+                    while let Some(entry) = queue.entries.pop_front() {
+                        entries.push(entry);
                     }
                 }
                 if entries.is_empty() {
@@ -229,10 +221,9 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
                             )
                         };
                         match result {
-                            Ok(Ok(event)) => {
+                            Ok(event) => {
                                 prepared.push((entry, event));
                             }
-                            Ok(Err(position)) => finish(&mut state, &queue, entry, Ok(position)),
                             Err(error) => finish(&mut state, &queue, entry, Err(error)),
                         }
                     }

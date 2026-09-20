@@ -1,0 +1,21 @@
+   Compiling tokio v1.53.1
+   Compiling sea-core v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-core)
+   Compiling sea-compression v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-compression)
+   Compiling sea-conformance v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-conformance)
+   Compiling sea-wasm v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-wasm)
+   Compiling sea-content-addressed v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-content-addressed)
+   Compiling sea-file-durable v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-file-durable)
+   Compiling sea-memory v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-memory)
+   Compiling sea-sequencer v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-sequencer)
+   Compiling quinn v0.11.11
+   Compiling tokio-tungstenite v0.28.0
+   Compiling sea-signals v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-signals)
+   Compiling wtransport v0.7.2
+   Compiling sea-file v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-file)
+   Compiling sea-encryption v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-encryption)
+   Compiling sea-counter v0.1.0 (/workspaces/FluidFramework/rust-service/examples/sea-counter)
+   Compiling sea-webtransport v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-webtransport)
+   Compiling sea-benchmarks v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-benchmarks)
+   Compiling sea-webtransport-server v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-webtransport-server)
+   Compiling sea-integration-tests v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-integration-tests)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 15.12s

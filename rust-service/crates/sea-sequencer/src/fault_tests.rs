@@ -42,7 +42,7 @@ use super::{
     tests::{member, submission},
 };
 use sea_core::{
-    archive::{OperationId, SnapshotParticipation},
+    archive::SnapshotParticipation,
     storage::{LoadStart, Snapshot},
 };
 
@@ -415,7 +415,7 @@ async fn buffered_submissions_preserve_first_poll_order_with_exhausted_budget() 
                     assert!(!tokio::task::coop::has_budget_remaining());
                 }
                 let mut input = submission(b"ordered");
-                input.operation_id = OperationId::new(index.to_string()).unwrap();
+                input.event.payload = Bytes::from(index.to_string());
                 writer.submit(input).await.unwrap()
             }
         })
@@ -434,8 +434,8 @@ async fn buffered_submissions_preserve_first_poll_order_with_exhausted_budget() 
     for (index, position) in receipts.iter().enumerate() {
         let event = settles(super::tests::data(&mut replay)).await.unwrap();
         assert_eq!(
-            event.operation_id,
-            OperationId::new(index.to_string()).unwrap()
+            event.committed.event.payload,
+            Bytes::from(index.to_string())
         );
         assert_eq!(event.committed.position, *position);
     }
@@ -454,13 +454,11 @@ async fn delayed_persistence_admits_a_bounded_ring_and_publishes_only_after_comm
     let observer = member(&runtime, "observer").await;
     let mut reader = observer.read(None, None);
     assert!(reader.next().await.unwrap().is_ok());
-    for round in 0..2 {
+    for _ in 0..2 {
         storage.events.arm(Failure::GateBefore);
         let mut pending = Vec::new();
-        for (index, member) in members.iter().enumerate() {
-            let mut input = submission(b"queued");
-            input.operation_id = OperationId::new(format!("{round}-{index}")).unwrap();
-            let mut future = Box::pin(member.submit(input));
+        for member in &members {
+            let mut future = Box::pin(member.submit(submission(b"queued")));
             assert!(
                 tokio::task::unconstrained(future.as_mut())
                     .now_or_never()
@@ -759,8 +757,8 @@ async fn same_session_batch_rejects_invalid_entry_and_suffix_but_settles_prepare
     storage.events.arm(Failure::GateBefore);
     let mut blocked = Box::pin(leader.submit(submission(b"blocked")));
     assert!(blocked.as_mut().now_or_never().is_none());
-    let mut first = Box::pin(writer.submit(submission(b"first")));
-    let mut second = Box::pin(writer.submit(submission(b"second")));
+    let mut first = Box::pin(writer.submit(submission(b"equal")));
+    let mut second = Box::pin(writer.submit(submission(b"equal")));
     let mut invalid = submission(b"invalid");
     invalid.reference = Some(EventPosition::new(999));
     let mut invalid = Box::pin(writer.submit(invalid));
@@ -770,8 +768,12 @@ async fn same_session_batch_rejects_invalid_entry_and_suffix_but_settles_prepare
     }
     storage.events.release.notify_one();
     assert!(settles(blocked).await.is_ok());
-    assert!(settles(first).await.is_ok());
-    assert!(settles(second).await.is_ok());
+    let first = settles(first).await.unwrap();
+    let second = settles(second).await.unwrap();
+    assert!(
+        first < second,
+        "equal inputs must receive distinct ordered positions"
+    );
     assert!(matches!(
         settles(invalid).await,
         Err(SessionError::Rejected(_))
@@ -841,9 +843,8 @@ async fn batch_floor_does_not_invalidate_a_prepared_lower_reference() {
     let leader = member(&runtime, "leader").await;
     let writer = member(&runtime, "writer").await;
     let mut reference = None;
-    for index in 0..1100 {
+    for _ in 0..1100 {
         let mut input = submission(b"seed");
-        input.operation_id = OperationId::new(format!("seed-{index}")).unwrap();
         input.reference = reference;
         reference = Some(writer.submit(input).await.unwrap());
     }
@@ -920,11 +921,8 @@ async fn returned_ambiguity_is_scanned_and_rejection_requires_fresh_membership()
         assert_eq!(storage.events.calls.load(Ordering::SeqCst), 1);
         if matches!(failure, Failure::AmbiguousCommitted) {
             let position = result.unwrap();
-            assert_eq!(
-                session.submit(submission(b"operation")).await.unwrap(),
-                position
-            );
-            assert_eq!(storage.events.calls.load(Ordering::SeqCst), 1);
+            assert!(session.submit(submission(b"operation")).await.unwrap() > position);
+            assert_eq!(storage.events.calls.load(Ordering::SeqCst), 2);
         } else {
             assert!(result.is_err());
             assert!(matches!(
@@ -934,7 +932,10 @@ async fn returned_ambiguity_is_scanned_and_rejection_requires_fresh_membership()
             let session = member(&runtime, "recovery").await;
             assert!(
                 session
-                    .resolve_submission(&OperationId::new("operation").unwrap())
+                    .view()
+                    .await
+                    .unwrap()
+                    .head()
                     .await
                     .unwrap()
                     .is_none()
@@ -958,9 +959,7 @@ async fn failed_reconciliation_blocks_mutation_and_absence_claims_until_recovery
             Err(SessionError::RecoveryRequired)
         ));
         assert!(matches!(
-            session
-                .resolve_submission(&OperationId::new("uncertain").unwrap())
-                .await,
+            session.close().await,
             Err(SessionError::RecoveryRequired)
         ));
         assert!(session.submit(submission(b"later")).await.is_err());
@@ -971,12 +970,15 @@ async fn failed_reconciliation_blocks_mutation_and_absence_claims_until_recovery
                 .await
                 .unwrap();
         let session = member(&recovered, "new-author").await;
-        assert!(
-            session
-                .resolve_submission(&OperationId::new("uncertain").unwrap())
+        let mut replay = session.read(None, None);
+        assert_eq!(
+            super::tests::data(&mut replay)
                 .await
                 .unwrap()
-                .is_some()
+                .committed
+                .event
+                .payload,
+            Bytes::from_static(b"uncertain")
         );
     }
 }
@@ -1021,13 +1023,6 @@ async fn failed_reconciliation_prevents_terminal_leave_until_recovery() {
             .unwrap();
             assert_eq!(storage.events.calls.load(Ordering::SeqCst), 3);
             let observer = member(&recovered, "observer").await;
-            assert!(
-                observer
-                    .resolve_submission(&OperationId::new("uncertain").unwrap())
-                    .await
-                    .unwrap()
-                    .is_some()
-            );
             let head = observer
                 .view()
                 .await
@@ -1104,19 +1099,23 @@ async fn cancelling_before_or_after_commit_retains_the_same_backend_future_until
             first.submit(submission(b"must-not-commit")).await,
             Err(SessionError::Closed)
         ));
-        let cancelled = second
-            .resolve_submission(&OperationId::new("cancelled").unwrap())
-            .await
-            .unwrap()
-            .unwrap();
-        assert!(cancelled < accepted);
-        assert!(
-            second
-                .resolve_submission(&OperationId::new("blocked").unwrap())
+        let mut replay = second.read(None, Some(accepted));
+        let cancelled = super::tests::data(&mut replay).await.unwrap();
+        assert_eq!(cancelled.session_id, first.session);
+        assert_eq!(
+            cancelled.committed.event.payload,
+            Bytes::from_static(b"cancelled")
+        );
+        assert!(cancelled.committed.position < accepted);
+        assert_eq!(
+            super::tests::data(&mut replay)
                 .await
                 .unwrap()
-                .is_none()
+                .committed
+                .position,
+            accepted
         );
+        assert!(super::tests::data(&mut replay).await.is_none());
         assert_eq!(storage.events.calls.load(Ordering::SeqCst), 2);
     }
 }
@@ -1168,7 +1167,7 @@ async fn failed_append_and_cancelled_ack_end_announced_prefix_before_later_work(
                     if event.session_id == first.session {
                         kinds.push(event.kind);
                         if event.kind == SessionEventKind::Application {
-                            operations.push(event.operation_id);
+                            operations.push(event.committed.event.payload);
                         }
                     }
                 }
@@ -1186,7 +1185,7 @@ async fn failed_append_and_cancelled_ack_end_announced_prefix_before_later_work(
         }
         expected.push(SessionEventKind::Left);
         assert_eq!(kinds, expected);
-        assert_eq!(operations[0], OperationId::new("accepted").unwrap());
+        assert_eq!(operations[0], Bytes::from_static(b"accepted"));
         assert_eq!(operations.len(), if cancelled { 2 } else { 1 });
     }
 }

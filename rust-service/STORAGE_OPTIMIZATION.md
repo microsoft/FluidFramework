@@ -212,4 +212,58 @@ The benchmark directly exercises concurrent local session submissions.
 
 The session-sequence branch still needs semantic integration, particularly submission identity, accepted-prefix failure handling, cancellation, and terminal leave ordering.
 No merge was attempted while that independent work remained in progress.
-See [Decision 0018](historical/decisions/0018-bounded-storage-pipeline.md) for the approved storage assumptions and API boundary.
+See [Decision 0019](historical/decisions/0019-bounded-storage-pipeline.md) for the approved storage assumptions and API boundary.
+
+## Session-Sequence Merge Integration
+
+The merge combines storage checkpoint `47159ea46be` with incoming `7753aba04ac` in the storage worktree only.
+The incoming [Decision 0018](historical/decisions/0018-session-prefix-submission-identity.md) is preserved unchanged; the independently numbered storage decision is renumbered to 0019.
+This integration adds no performance optimization or new measurements.
+
+The pipeline no longer uses operation IDs, historical deduplication, or submission lookup.
+Each call, including equal inputs in one batch, is a new submission.
+Clients count ordered application events within a session; membership records do not consume that count.
+The benchmark verifies this order using its own opaque payload counter and immutable receipt positions.
+
+Cancellation of an admitted call revokes its membership but does not cancel an already dispatched storage batch.
+That retained batch may commit multiple already dispatched entries from the session, in order.
+Undispatched entries are rejected, and authoritative leave is written only after the accepted prefix settles.
+Ambiguous grouped outcomes still require recovery and cannot produce a false leave barrier.
+Entry/byte bounds, per-session capacity ordering, cooperative polling, and frozen batch reference-floor validation are preserved.
+
+Initial focused validation found eight compile errors from operation-ID fields in auto-merged fault tests.
+Those fixtures now use payload ordinals or equal submissions; the rerun passed all 34 sequencer tests.
+The storage benchmark regression passed all four payload/window combinations.
+The existing same-session batch regression also now requires equal inputs to receive distinct ordered positions before an invalid entry terminates the suffix.
+
+Final validation used the pinned Rust 1.98.1 toolchain:
+
+- All 34 sequencer tests and 16 benchmark tests passed with all targets and features.
+- Workspace formatting and strict Clippy passed; the earlier server `main` length failure is fixed in the incoming branch.
+- Strict WASM library Clippy passed for `sea-sequencer` and `sea-wasm`, with all features and `RUSTFLAGS='--cfg=web_sys_unstable_apis'`.
+- Warning-free workspace rustdoc, all-target workspace build, and documentation checks passed.
+- The complete `./test.sh` retry passed: 201 native tests, package-owned Node/WASM tests, integration smoke cases including Tinylicious, and Chromium WebTransport/WebSocket/lifecycle scenarios.
+  The one normally ignored native browser fixture was explicitly run and passed by the browser harness.
+- `pnpm policy-check --path rust-service` passed.
+- Repository `pnpm build:fast` passed in 110.602 seconds; output is retained at `/tmp/sea-storage-merge-root.log`.
+- Lockfiles are unchanged, the incoming session-prefix decision is byte-for-byte preserved, and the storage decision differs only in its number.
+
+Retained failed attempts are not superseded as evidence:
+
+- Formatting initially reported two import layouts and later one assertion layout; both were repaired and checked again.
+- The first combined WASM check omitted the required unstable web-sys configuration and failed on WebTransport imports.
+  A follow-up command stopped at a nonexistent script glob before running checks; the corrected package-script lookup and configured check passed.
+- The first full native suite failed `native_client_round_trip_in_every_storage_mode` with `Transport(Timeout)`.
+  The isolated rerun passed in 1.80 seconds without code changes, and both complete-suite invocations subsequently passed the native matrix.
+- The first complete suite passed the Rust and browser checks but failed its Tinylicious comparator because this worktree lacked Routerlicious dependencies.
+  A worktree-local `pnpm install --offline --frozen-lockfile` succeeded in 8.2 seconds, and the complete suite retry passed.
+- Two patch-tool deletions reported success while leaving the old decision path on disk.
+  Direct removal of that exact obsolete path completed the rename; filesystem and content checks verified it.
+
+Logs are retained under `/tmp/sea-storage-merge-`: `clippy.log`, `doc.log`, `build.log`, `test.log`, `policy.log`, `root.log`, `complete-test.log`, `routerlicious-install.log`, and `complete-test-retry.log`.
+The original native timeout and missing-dependency failures remain in their original logs.
+
+No resolution was staged or committed, and no other worktree was modified.
+Git intentionally retains the three unmerged index stages for `session.rs` until the parent reviews and stages the resolved file.
+The working file has no conflict markers; the decision deletion and new 0019 path also require staging.
+The semantic integration is ready for parent review and commit after staging, with physical power-cut qualification still outside this validation.

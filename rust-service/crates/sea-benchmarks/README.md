@@ -20,6 +20,7 @@ This workspace crate provides deterministic fixtures, correctness smoke workload
 
 `storage-pipeline` measures native `LocalSequencer` submissions from one session over `memory`, `buffered-file`, or `durable-file`.
 It accepts payload sizes 64 or 8192 and an in-flight window of 1 or 128, preserves initial submit polling order, and verifies exact receipts and finite replay.
+Replay verifies session identity and a sequential counter encoded in the opaque payload, without Sea operation IDs or submission deduplication.
 Each invocation emits separate JSON rows for a 128-operation warmup and a fresh 4096-operation measured document, then deletes its newly created data directory.
 Creation, replay, and shutdown are outside the submission timer; measured latency starts at each future's first poll.
 Tokio uses one async worker, with blocking workers available for file I/O; no CPU affinity is imposed.

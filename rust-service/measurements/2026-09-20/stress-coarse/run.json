@@ -1,0 +1,33 @@
+{
+	"schemaVersion": 1,
+	"startedAt": "2026-09-20T01:57:06.090Z",
+	"cwd": "/workspaces/FluidFramework",
+	"command": [
+		"node",
+		"rust-service/scripts/presentation-collect.mjs",
+		"sweep",
+		"/workspaces/FluidFramework/rust-service/measurements/2026-09-20/stress-coarse/cells"
+	],
+	"commit": "427a6493177a89c1daf42e7296e86974efdbfd77",
+	"branch": "rust-service",
+	"status": "?? rust-service/PRESENTATION_REPORT.md\n?? rust-service/measurements/",
+	"environment": {
+		"cpu": "AMD EPYC 7763 64-Core Processor",
+		"logicalCpus": 32,
+		"memoryBytes": 135064977408,
+		"kernel": "6.8.0-1064-azure",
+		"node": "v22.23.2",
+		"rust": "rustc 1.98.1 (48a229cea 2026-09-01)",
+		"browser": "Chromium 152.0.7977.82 built on Debian GNU/Linux 13 (trixie)",
+		"os": "PRETTY_NAME=\"Debian GNU/Linux 13 (trixie)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"13\"\nVERSION=\"13 (trixie)\"\nVERSION_CODENAME=trixie\nDEBIAN_VERSION_FULL=13.6\nID=debian\nHOME_URL=\"https://www.debian.org/\"\nSUPPORT_URL=\"https://www.debian.org/support\"\nBUG_REPORT_URL=\"https://bugs.debian.org/\"",
+		"cpuQuota": "max 100000",
+		"memoryLimit": "max",
+		"cpuTopology": "# The following is the parsable format, which can be fed to other\n# programs. Each different item in every column has an unique ID\n# starting usually from zero.\n# CPU,Core\n0,0\n1,0\n2,1\n3,1\n4,2\n5,2\n6,3\n7,3\n8,4\n9,4\n10,5\n11,5\n12,6\n13,6\n14,7\n15,7\n16,8\n17,8\n18,9\n19,9\n20,10\n21,10\n22,11\n23,11\n24,12\n25,12\n26,13\n27,13\n28,14\n29,14\n30,15\n31,15",
+		"filesystem": "FSTYPE SOURCE                                OPTIONS\next4   /dev/loop4[/codespacemount/workspace] rw,nodev,relatime"
+	},
+	"finishedAt": "2026-09-20T02:02:40.971Z",
+	"elapsedSeconds": 334.700096992,
+	"exitCode": 0,
+	"signal": null,
+	"error": null
+}

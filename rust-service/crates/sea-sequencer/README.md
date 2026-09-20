@@ -6,8 +6,8 @@ The `sea_core::session` traits define content/history, author, and snapshot-coor
 ## Runtime
 
 Move a view into `session::LocalSequencer::<Storage>::recover`, then call `open_session` for each author connection.
-Recovery performs a bounded scan only when `head` is nonempty and restores committed submission identities and application positions.
-It rejects malformed envelopes, invalid references, and duplicate committed operation identities.
+Recovery performs a bounded scan only when `head` is nonempty and restores used session identities and application positions.
+It rejects malformed envelopes and invalid references; equal submissions remain distinct events.
 Active authority and publisher selection are runtime-local.
 `announce_membership` optionally publishes immutable public member metadata in the same archive order as application events.
 Announced memberships receive a service-authored departure on close, replacement, shutdown, or recovery; unannounced memberships produce no control records.
@@ -36,7 +36,7 @@ The sequencer never relies on memory-specific stream survival or writer-lease be
 
 Application submissions carry sequencer metadata in the existing private envelope codec.
 Opt-in membership transitions use a distinct persisted envelope and are delivered as `SessionEventKind::Joined` and `SessionEventKind::Left`.
-Application events remain `SessionEventKind::Application` with unchanged submission encoding and retry identity space.
+Application events are delivered as `SessionEventKind::Application`, without a separate operation identity.
 Exact announcement retries return the original position; changing metadata is rejected.
 Membership metadata is public control data and is not transformed by payload compression or encryption.
 `read` lazily initializes the view's bounded or live read and preserves its progress and error classification.
@@ -58,7 +58,7 @@ The rest of submission retains cooperative scheduling, and the guarantee does no
 The gate is released as soon as an input enters the ring, not when persistence completes.
 Waiting for this gate holds no runtime or lifecycle lock; close can drain admitted work without waiting for callers that have not entered the ring.
 The ring preserves actual admission order and permits multiple operations from the same session in one storage batch.
-A repeated operation identity starts a later batch so retry lookup observes its predecessor's settled outcome.
+Equal inputs remain distinct submissions, including within one batch; no historical operation index is consulted.
 An invalid entry revokes its session during preparation: earlier prepared entries may settle, but later entries from that session are rejected.
 The storage batch's committed-prefix contract prevents a failed append from committing a later same-session entry.
 Cancellation after admission revokes the session even if that entry has not reached storage; cancellation before admission does not.
@@ -87,7 +87,8 @@ To recover non-idempotent application events:
 
 The reader needs the relevant session history, or equivalent prefix accounting in a snapshot.
 Lost acknowledgments do not change the committed prefix.
-An exact operation-ID lookup is separate from resubmission: it can confirm an existing outcome, but does not authorize replaying an old payload at a new reference.
+There is no operation-ID lookup or submission deduplication API.
+Each submit call is new, even when its payload and reference equal an earlier submission.
 The local runtime revokes authority on a failed or cancelled admitted append, including membership announcement failures.
 It settles retained backend work before persisting the departure; failed settlement prevents mutation until recovery.
 Transport dispatch also closes authority for malformed author requests that never reach the sequencer.
@@ -108,9 +109,8 @@ Floor advances must be persisted in archive order and delivered in that same ord
 Snapshots must retain the floor at their boundary, and recovery must restore it before admitting mutations.
 Advances can be debounced to reduce bandwidth and storage; only a committed advance becomes enforceable and observable.
 Slow writers may need to catch up and transform their unaccepted events under a new session.
-Exact lookup of an already accepted event does not constitute a new admission below the floor.
+Reading an already accepted event by archive position does not constitute a new admission below the floor.
 The runtime stores the committed floor separately from memberships and enforces it before every new application append, including submissions with no reference.
-Exact committed-operation lookup remains permitted without readmitting the old event.
 Each application or membership envelope persists the resulting floor atomically with its event; this is the ordered advance record, so no separate out-of-band notification can race replay.
 Failed appends do not advance it, and recovery rejects decreasing, forward, or context-inconsistent floor metadata.
 New readers may open behind the floor to catch up, but cannot submit below it.
@@ -118,7 +118,7 @@ New readers may open behind the floor to catch up, but cannot submit below it.
 Advancement policy combines cooperative member progress with a 1024-position lag window, rounding window advances down to 64-position boundaries.
 Only the final candidate in a storage batch may advance the floor, preventing speculative advances from rejecting another entry in that batch.
 Every earlier entry carries the frozen committed floor, even when its reference is higher than another prepared entry's reference.
-If the final candidate fails validation or is an exact retry, advancement is deferred to a later batch.
+If the final candidate fails validation, advancement is deferred to a later batch.
 The proposed advance is bounded by the carrying event's reference and never lowers the committed floor.
 Idle readers therefore cannot indefinitely pin advances from progressing writers.
 No timer or extra control append is needed in a quiescent document.
@@ -129,13 +129,14 @@ The current backend retains that event and all history; snapshot consumers can r
 Any future compaction must preserve this floor metadata with the snapshot rather than discard the boundary envelope.
 The Fluid adapter maps the floor into its retained dense sequence space for live delivery, bounded replay, and reopening, instead of reporting permanent zero.
 
-Persisted application/membership encodings are `SEAQ3`/`SEAM2`; older active-minimum envelopes are rejected and require an explicit migration before reuse.
-Wire protocol version 7 rejects clients or servers with the earlier semantics.
+Persisted application/membership encodings are `SEAQ4`/`SEAM3`; earlier envelopes are rejected and require an explicit migration before reuse.
+Wire protocol version 9 removes operation identities and resolution messages; rebuild clients and servers together.
 
-## Retry Lookup and Settlement
+## Submission Identity and Settlement
 
-Stable event operation IDs belong to the sequencer, not storage.
-An exact retry by the same author returns its original position, including after reconnect; a changed author, payload, tree, or reference conflicts.
+The sequencer assigns no operation IDs and retains no historical submission-deduplication index.
+A client recognizes its own accepted submissions by session and application-event ordinal; other events have immutable archive positions.
+Applications may carry their own identifiers in opaque payloads without Sea interpreting them.
 Blob identities in submissions are resolved through the current view before publication; wire identities never fabricate availability handles.
 The sequencer never resubmits an append internally.
 After returned ambiguity it obtains an authoritative head and scans the bounded candidate range.
@@ -181,7 +182,7 @@ cargo rustc -p sea-sequencer --lib -- -D missing-docs
 RUSTDOCFLAGS="-D warnings" cargo doc -p sea-sequencer --all-features --no-deps
 ```
 
-Tests cover retries, identity conflicts, replacement and close, replay, load boundaries, event delivery, snapshots, and content references.
+Tests cover distinct equal submissions, announcement retries and metadata conflicts, replacement and close, replay, load boundaries, event delivery, snapshots, and content references.
 Tests also run shared session conformance, concurrent submissions, direct live progress, publisher registration cancellation, and recovery.
 [`src/fault_tests.rs`](src/fault_tests.rs) injects definitive rejection, ambiguity with and without commitment, failed reconciliation, and cancellation before/after commitment.
 Its read streams retain writable components, exercising a stricter lifetime allowed by `SeaStorage` than the memory backend's independent reads.

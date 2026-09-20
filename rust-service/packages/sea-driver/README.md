@@ -91,12 +91,13 @@ It then appends a separate durable Fluid acknowledgment referencing the proposal
 Live delivery and replay project that record as a system message with its own sequence position; the neutral sequencer does not interpret Fluid summaries.
 These adapter-owned acknowledgment records are not runtime submissions and are excluded from the runtime attempt-prefix ledger.
 A failure between proposal and acknowledgment closes the session and may leave a committed proposal without an acknowledgment; the adapter never blindly retries either record.
-Delta connections preserve pending submission identities across explicit recovery; they do not automatically retry or resubmit ambiguous writes.
+Delta connections preserve pending messages and their original session across explicit recovery; they do not automatically retry or resubmit ambiguous writes.
 `recoverPending()` requires a fresh session and replays the old session through its durable leave.
-It counts and verifies the accepted application prefix against the ordered attempt ledger before returning the unaccepted suffix; a missing leave or non-prefix history rejects recovery.
+It counts and verifies the accepted application prefix against the ordered attempt ledger before returning the unaccepted suffix; a missing join, missing leave, or non-prefix history rejects recovery.
+The driver checks the Fluid client sequence numbers in opaque payloads; Sea does not interpret them or maintain an operation-ID index.
 `resubmitPending(transform)` invokes an application-owned transformation of that whole suffix.
 The callback supplies fresh-session messages numbered from one, with payloads and reference sequence numbers appropriate after reconciling accepted history.
-New submission identities are allocated; neither an old payload nor its old reference is silently reused.
+Neither an old payload nor its old reference is silently reused.
 Legacy synthetic-membership clients cannot prove this barrier and cannot use the explicit helper.
 Normal Fluid containers use the runtime's pending-state processing and reconnection instead; the driver does not implement DDS rebasing.
 

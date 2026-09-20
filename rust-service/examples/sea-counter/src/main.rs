@@ -2,7 +2,7 @@ use bytes::Bytes;
 use futures_util::StreamExt as _;
 use sea_core::{
     BlobTreeId, Event, EventPosition, MonitoredStreamItem, MonitoredStreamStatus,
-    archive::{AuthorId, EventSubmission, OperationId, SessionId, SnapshotParticipation},
+    archive::{AuthorId, EventSubmission, SessionId, SnapshotParticipation},
     session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
     storage::{LoadStart, SeaStorage, Snapshot, StorageHandle},
 };
@@ -31,10 +31,9 @@ async fn counter_session() -> CounterSession {
 }
 
 /// Appends one signed counter delta to the session.
-async fn append_delta(session: &CounterSession, operation: &'static [u8], delta: i64) {
+async fn append_delta(session: &CounterSession, delta: i64) -> EventPosition {
     session
         .submit(EventSubmission {
-            operation_id: OperationId::new(Bytes::from_static(operation)).expect("operation"),
             reference: None,
             event: Event {
                 payload: Bytes::copy_from_slice(&delta.to_be_bytes()),
@@ -42,7 +41,7 @@ async fn append_delta(session: &CounterSession, operation: &'static [u8], delta:
             },
         })
         .await
-        .expect("append delta");
+        .expect("append delta")
 }
 
 /// Publishes a blob-backed counter snapshot at the supplied stream position.
@@ -112,15 +111,10 @@ async fn recover(session: &CounterSession) -> Result<i64, &'static str> {
 /// Runs the snapshot and replay demonstration.
 async fn run_demo() -> i64 {
     let session = counter_session().await;
-    append_delta(&session, b"delta-1", 2).await;
-    append_delta(&session, b"delta-2", 3).await;
-    let position = session
-        .resolve_submission(&OperationId::new(Bytes::from_static(b"delta-2")).unwrap())
-        .await
-        .unwrap()
-        .unwrap();
+    append_delta(&session, 2).await;
+    let position = append_delta(&session, 3).await;
     publish_snapshot(&session, 5, position).await;
-    append_delta(&session, b"delta-3", -1).await;
+    append_delta(&session, -1).await;
 
     recover(&session).await.expect("recover counter")
 }
@@ -140,28 +134,18 @@ mod tests {
     #[tokio::test]
     async fn recovers_from_committed_initial_state() {
         let session = counter_session().await;
-        append_delta(&session, b"initial", 10).await;
-        let position = session
-            .resolve_submission(&OperationId::new(Bytes::from_static(b"initial")).unwrap())
-            .await
-            .unwrap()
-            .unwrap();
+        let position = append_delta(&session, 10).await;
         publish_snapshot(&session, 10, position).await;
-        append_delta(&session, b"delta", -3).await;
+        append_delta(&session, -3).await;
         assert_eq!(recover(&session).await, Ok(7));
     }
 
     #[tokio::test]
     async fn later_snapshot_replaces_prior_event_state_before_tail_replay() {
         let session = counter_session().await;
-        append_delta(&session, b"before-snapshot", 2).await;
-        let position = session
-            .resolve_submission(&OperationId::new(Bytes::from_static(b"before-snapshot")).unwrap())
-            .await
-            .unwrap()
-            .unwrap();
+        let position = append_delta(&session, 2).await;
         publish_snapshot(&session, 20, position).await;
-        append_delta(&session, b"after-snapshot", -1).await;
+        append_delta(&session, -1).await;
 
         assert_eq!(recover(&session).await, Ok(19));
     }
@@ -176,7 +160,6 @@ mod tests {
         let session = counter_session().await;
         session
             .submit(EventSubmission {
-                operation_id: OperationId::new(Bytes::from_static(b"malformed")).unwrap(),
                 reference: None,
                 event: Event {
                     payload: Bytes::from_static(b"not-an-i64"),
@@ -201,7 +184,6 @@ mod tests {
             .unwrap();
         let position = session
             .submit(EventSubmission {
-                operation_id: OperationId::new(Bytes::from_static(b"initial")).unwrap(),
                 reference: None,
                 event: Event {
                     payload: Bytes::copy_from_slice(&0_i64.to_be_bytes()),

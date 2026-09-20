@@ -87,7 +87,7 @@ describe("Neutral sessions", () => {
 		const stream = ownStream(observer.read());
 		const joined = await writer.announceMembership(encode("public member"));
 		assert.equal(await writer.announceMembership(encode("public member")), joined);
-		const edit = await writer.submit(encode("writer-session"), joined, encode("edit"));
+		const edit = await writer.submit(joined, encode("edit"));
 		await assert.rejects(writer.announceMembership(encode("changed")), { kind: "Rejected" });
 		await writer.close();
 		await writer.close();
@@ -153,14 +153,13 @@ describe("Neutral sessions", () => {
 			const writer = await open(undefined, "writer", "writer-session");
 			const observer = await open(writer.document, "observer", "observer-session");
 			const joined = await writer.announceMembership(encode("member"));
-			await writer.submit(encode("accepted"), joined, encode("accepted"));
+			await writer.submit(joined, encode("accepted"));
 			const failed = writer.submit(
-				invalidTree ? encode("invalid-tree") : new Uint8Array(),
-				joined,
+				invalidTree ? joined : 0xffff_ffff_ffff_ffffn,
 				encode("invalid"),
 				invalidTree ? { kind: "blob", bytes: new Uint8Array() } : undefined,
 			);
-			const queued = writer.submit(encode("queued"), joined, encode("must not append"));
+			const queued = writer.submit(joined, encode("must not append"));
 			const results = await Promise.allSettled([failed, queued]);
 			assert.deepEqual(
 				results.map((result) => result.status),
@@ -175,16 +174,14 @@ describe("Neutral sessions", () => {
 				if (event.eventType === "left") break;
 			}
 			assert.deepEqual(kinds, ["joined", "application", "left"]);
-			assert.equal(await observer.resolveSubmission(encode("queued")), undefined);
 		}
 	});
 
-	it("neutral sessions resolve, load backlog, tail a peer, and cancel a pending read", async () => {
+	it("neutral sessions load backlog, tail a peer, and cancel a pending read", async () => {
 		const { open, ownStream } = await sessionFixture();
 		const writer = await open(undefined, "writer", "writer-session");
-		const position = await writer.submit(encode("one"), undefined, encode("first"));
+		const position = await writer.submit(undefined, encode("first"));
 		assert.equal(typeof position, "bigint");
-		assert.equal(await writer.resolveSubmission(encode("one")), position);
 		const load = ownStream(await writer.load());
 		assert.deepEqual(
 			(await nextMatching(load, (item) => item.kind === "event")).payload,
@@ -195,7 +192,7 @@ describe("Neutral sessions", () => {
 			(item) => item.kind === "progress" && item.status === "AwaitingNewItems",
 		);
 		const peer = await open(writer.document, "peer", "peer-session", position);
-		const nextPosition = await peer.submit(encode("two"), position, encode("second"));
+		const nextPosition = await peer.submit(position, encode("second"));
 		const event = await nextMatching(load, (item) => item.kind === "event");
 		assert.equal(event.position, nextPosition);
 		assert.deepEqual(event.payload, encode("second"));
@@ -221,12 +218,7 @@ describe("Neutral sessions", () => {
 		assert.equal(root.kind, "directory");
 		assert.deepEqual(await session.getDirectory(root), [{ name: "child", child }]);
 		assert.deepEqual(await session.getDirectory(child), [{ name: "leaf", child: blob }]);
-		const position = await session.submit(
-			encode("initialize"),
-			undefined,
-			encode("initial state"),
-			root,
-		);
+		const position = await session.submit(undefined, encode("initial state"), root);
 		const snapshot = await session.publishSnapshot(undefined, undefined, position, root);
 		assert.deepEqual(await session.getSnapshot(), snapshot);
 		assert.deepEqual(await session.getSnapshot(position), snapshot);
@@ -247,12 +239,7 @@ describe("Neutral sessions", () => {
 		const notifications = ownStream(await reader.coordinateSnapshots("readOnly"));
 		await notifications.next();
 		const root = await reader.putBlob(encode("state"));
-		const position = await reader.submit(
-			encode("initialize"),
-			undefined,
-			encode("initial"),
-			root,
-		);
+		const position = await reader.submit(undefined, encode("initial"), root);
 		await assert.rejects(
 			reader.publishSnapshot(undefined, undefined, position, root),
 			/snapshot publisher is not authorized/,
@@ -282,7 +269,7 @@ describe("Neutral sessions", () => {
 		await replacement.next();
 		previous.cancel();
 		const root = await session.putBlob(encode("state"));
-		const position = await session.submit(encode("initial"), undefined, encode("state"), root);
+		const position = await session.submit(undefined, encode("state"), root);
 		const notification = replacement.next();
 		await session.publishSnapshot(undefined, undefined, position, root);
 		assert.equal((await notification)?.latest, position);
@@ -295,18 +282,15 @@ describe("Neutral sessions", () => {
 		);
 	});
 
-	it("neutral sessions reject operation conflicts, superseded authors, and reused memberships", async () => {
+	it("neutral sessions preserve equal submissions and reject superseded or reused memberships", async () => {
 		const { open } = await sessionFixture();
 		const first = await open(undefined, "author", "first-session");
-		await first.submit(encode("same"), undefined, encode("first"));
-		await assert.rejects(
-			first.submit(encode("same"), undefined, encode("different")),
-			/operation identity/,
-		);
+		const position = await first.submit(undefined, encode("first"));
+		assert.ok((await first.submit(undefined, encode("first"))) > position);
 		const replacement = await open(first.document, "author", "replacement-session");
 		await assert.rejects(first.getSnapshot(), /session is closed/);
 		await assert.rejects(open(first.document, "author", "first-session"), /reused session/);
-		await replacement.submit(encode("new"), undefined, encode("still open"));
+		await replacement.submit(undefined, encode("still open"));
 	});
 
 	it("neutral sessions close and explicitly reopen retained content", async () => {
@@ -445,9 +429,8 @@ describe("Neutral sessions", () => {
 					const root = await writer.putDirectory([{ name: "state", child: blob }]);
 					assert.deepEqual(await reader.getDirectory(root), [{ name: "state", child: blob }]);
 					assert.equal(await reader.getSnapshot(), undefined);
-					const position = await writer.submit(encode("operation"), undefined, payload, root);
+					const position = await writer.submit(undefined, payload, root);
 					assert.deepEqual(await writer.getDirectory(root), [{ name: "state", child: blob }]);
-					assert.equal(await writer.resolveSubmission(encode("operation")), position);
 					const events = reader.read(undefined, position);
 					let observed = false;
 					for (;;) {
@@ -628,11 +611,11 @@ describe("Neutral sessions", () => {
 			await closing;
 			assert.deepEqual(await peer.getBlob(blob), encode("in-flight content"));
 			await assert.rejects(session.getBlob(blob), { kind: "Closed" });
-			await assert.rejects(session.submit(encode("late"), undefined, encode("late")), {
+			await assert.rejects(session.submit(undefined, encode("late")), {
 				kind: "Closed",
 			});
 			assert.throws(() => session.read(), { kind: "Closed" });
-			await peer.submit(encode("peer-operation"), undefined, encode("still open"));
+			await peer.submit(undefined, encode("still open"));
 		} finally {
 			await session.close();
 			await peer.close();

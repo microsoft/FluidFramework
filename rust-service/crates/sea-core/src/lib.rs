@@ -12,8 +12,8 @@ pub mod snapshot;
 pub mod storage;
 
 pub use archive::{
-    AuthorId, CommittedEvent, Event, EventPosition, EventSubmission, OperationId,
-    SessionCommittedEvent, SessionId, SessionStream, ValueError,
+    AuthorId, CommittedEvent, Event, EventPosition, EventSubmission, SessionCommittedEvent,
+    SessionId, SessionStream, ValueError,
 };
 pub use blob::{BlobDirectory, BlobDirectoryId, BlobId, BlobTreeError, BlobTreeId};
 pub use monitored_stream::{

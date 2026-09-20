@@ -5,8 +5,8 @@ use std::{env, fs, path::Path, time::Instant};
 use bytes::Bytes;
 use futures_util::{StreamExt, stream};
 use sea_core::{
-    AuthorId, Event, EventSubmission, MonitoredStreamItem, OperationId, SeaAuthorSession,
-    SessionId, archive::SessionEventKind, session::SeaArchive, storage::SeaStorage,
+    AuthorId, Event, EventSubmission, MonitoredStreamItem, SeaAuthorSession, SessionId,
+    archive::SessionEventKind, session::SeaArchive, storage::SeaStorage,
 };
 use sea_file::storage::FileStorage;
 use sea_memory::MemoryStorage;
@@ -114,7 +114,6 @@ async fn exercise<Storage: SeaStorage + 'static>(
                 let started = Instant::now();
                 let position = session
                     .submit(EventSubmission {
-                        operation_id: operation_id(index),
                         reference: None,
                         event: Event {
                             payload: payload(index, payload_bytes),
@@ -153,7 +152,6 @@ async fn exercise<Storage: SeaStorage + 'static>(
             if event.kind != SessionEventKind::Application
                 || event.author_id != author
                 || event.session_id != identity
-                || event.operation_id != operation_id(delivered)
                 || event.committed.event.payload != payload(delivered, payload_bytes)
                 || receipts.get(delivered as usize) != Some(&event.committed.position)
             {
@@ -184,11 +182,6 @@ async fn exercise<Storage: SeaStorage + 'static>(
         "verified_order": true,
         "physical_durability_verified": false,
     }))
-}
-
-/// Provides deterministic unique retry identities without relying on a new batching API.
-fn operation_id(index: u32) -> OperationId {
-    OperationId::new(Bytes::copy_from_slice(&index.to_be_bytes())).expect("nonempty identity")
 }
 
 /// Encodes the sequence in a fixed-size payload so replay detects reorder and corruption.

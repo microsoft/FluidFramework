@@ -1,4 +1,4 @@
-# Decision 0018: Bounded Storage Pipeline
+# Decision 0019: Bounded Storage Pipeline
 
 Status: accepted
 Date: 2026-09-20

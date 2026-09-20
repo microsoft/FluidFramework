@@ -25,7 +25,7 @@ Unannounced sessions retain application-only history.
 `minimumReference` is the durable document-wide admission floor, not an active-member minimum.
 It never decreases, including after new membership or recovery; an absent submission reference is below every concrete floor.
 Advances commit atomically with their carrying event and arrive in the same live/replay order.
-Remote consumers must rebuild client and server together for protocol version 8.
+Remote consumers must rebuild client and server together for protocol version 9.
 
 ## Live Signals
 
@@ -67,14 +67,17 @@ const session = await service.open(undefined, {
     session: encode("fresh-session"),
 });
 try {
-    await session.submit(encode("operation-1"), undefined, encode("opaque payload"));
+    const position = await session.submit(undefined, encode("opaque payload"));
 } finally {
     await session.close();
     service.close();
 }
 ```
 
-Use a fresh membership identity for each open and stable operation identities when resolving ambiguous submissions.
+Use a fresh membership identity for each open.
+Each submit call creates a new event, including equal payloads; there is no operation-ID argument or resolution method.
+Recover ambiguous submissions by replaying through the old session's terminal departure and counting its application events.
+The resulting accepted prefix must be reconciled before transforming the remaining suffix for a fresh session.
 Pass a returned `session.document` to another `open` on the same service to share a document.
 Separate `createMemoryService` calls have independent storage even when their WASM module is already initialized.
 Memory services do not persist across reloads or share storage across independent browser windows.

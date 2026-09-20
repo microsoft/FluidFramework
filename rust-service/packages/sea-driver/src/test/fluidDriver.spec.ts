@@ -26,7 +26,6 @@ import {
 	type ProjectedOperationSubscription,
 	type ProjectedReadPage,
 	type SeaDriverClient,
-	type SubmissionResolution,
 	type SummaryEntry,
 	type SummaryPublication,
 } from "../index.js";
@@ -48,8 +47,6 @@ describe("SeaDriver", () => {
 			const subscription = await writer.subscribeProjected(version);
 			try {
 				await writer.submitEvent(
-					encoder.encode("summary"),
-					1,
 					encoder.encode(
 						JSON.stringify({
 							clientSequenceNumber: 1,
@@ -147,8 +144,6 @@ describe("SeaDriver", () => {
 			);
 			assert.notEqual(proposal, abandoned);
 			await writer.submitEvent(
-				encoder.encode("summary"),
-				1,
 				encoder.encode(
 					JSON.stringify({
 						type: MessageType.Summarize,
@@ -189,7 +184,7 @@ describe("SeaDriver", () => {
 				...session,
 				submit: async (...submissionArgs) => {
 					const position = await session.submit(...submissionArgs);
-					if (JSON.parse(decoder.decode(submissionArgs[2])).type === MessageType.Summarize) {
+					if (JSON.parse(decoder.decode(submissionArgs[1])).type === MessageType.Summarize) {
 						await writer.openSession(
 							session.document,
 							encoder.encode("writer"),
@@ -212,8 +207,6 @@ describe("SeaDriver", () => {
 			const staged = await writer.stageSnapshotRoot(initial, reference, root.digest);
 			await assert.rejects(
 				writer.submitEvent(
-					encoder.encode("summary"),
-					1,
 					encoder.encode(
 						JSON.stringify({
 							type: MessageType.Summarize,
@@ -247,8 +240,6 @@ describe("SeaDriver", () => {
 			await writer.announceMembership(encoder.encode(JSON.stringify({ mode: "write" })));
 			await assert.rejects(
 				writer.submitEvent(
-					encoder.encode("summary"),
-					1,
 					encoder.encode(
 						JSON.stringify({
 							type: MessageType.Summarize,
@@ -282,7 +273,7 @@ describe("SeaDriver", () => {
 			return {
 				...session,
 				submit: async (...submissionArgs) => {
-					if (JSON.parse(decoder.decode(submissionArgs[2])).seaFluid === "summaryAck") {
+					if (JSON.parse(decoder.decode(submissionArgs[1])).seaFluid === "summaryAck") {
 						acknowledgmentAttempts++;
 						throw new Error("acknowledgment interrupted");
 					}
@@ -298,8 +289,6 @@ describe("SeaDriver", () => {
 			await writer.announceMembership(encoder.encode(JSON.stringify({ mode: "write" })));
 			await assert.rejects(
 				writer.submitEvent(
-					encoder.encode("summary"),
-					1,
 					encoder.encode(
 						JSON.stringify({
 							type: MessageType.Summarize,
@@ -343,8 +332,6 @@ describe("SeaDriver", () => {
 			assert.deepEqual(writer.positionForSequence(0), initial);
 			assert.deepEqual((await writer.readProjected()).operations, []);
 			const position = await writer.submitEvent(
-				encoder.encode("edit"),
-				1,
 				encoder.encode(JSON.stringify({ clientSequenceNumber: 1 })),
 				initial,
 			);
@@ -603,7 +590,7 @@ describe("SeaDriver", () => {
 			let loseReceipt = true;
 			adapter.submitEvent = async (...args) => {
 				const position = await submit(...args);
-				if (loseReceipt && args[1] === 2) {
+				if (loseReceipt && JSON.parse(decoder.decode(args[0])).clientSequenceNumber === 2) {
 					loseReceipt = false;
 					throw new Error("lost receipt");
 				}
@@ -670,7 +657,7 @@ describe("SeaDriver", () => {
 				[1, 2, 7],
 			);
 			assert.notDeepEqual(applications[1]?.session, applications[2]?.session);
-			assert.notDeepEqual(applications[1]?.submission, applications[2]?.submission);
+			assert.notDeepEqual(applications[1]?.position, applications[2]?.position);
 			assert.equal(connection.pending.size, 0);
 		} finally {
 			connection.dispose();
@@ -786,11 +773,7 @@ describe("SeaDriver", () => {
 		const adapter = new SeaSessionDriverClient(service.open, "readOnly");
 		try {
 			const joined = await writer.announceMembership(encoder.encode('{"mode":"write"}'));
-			await writer.submit(
-				encoder.encode("edit"),
-				joined,
-				encoder.encode('{"clientSequenceNumber":1}'),
-			);
+			await writer.submit(joined, encoder.encode('{"clientSequenceNumber":1}'));
 			await writer.close();
 			await adapter.openSession(
 				writer.document,
@@ -829,7 +812,6 @@ describe("SeaDriver", () => {
 		});
 		const document = client.document;
 		await client.submit(
-			encoder.encode("invalid-initialization"),
 			undefined,
 			encoder.encode(JSON.stringify({ seaFluid: "initialize", version: 2 })),
 		);
@@ -1279,10 +1261,6 @@ describe("SeaDriver", () => {
 		}
 
 		public subscribeProjected(): ProjectedOperationSubscription {
-			throw new Error("not implemented by summary fixture");
-		}
-
-		public async resolveSubmission(): Promise<SubmissionResolution> {
 			throw new Error("not implemented by summary fixture");
 		}
 

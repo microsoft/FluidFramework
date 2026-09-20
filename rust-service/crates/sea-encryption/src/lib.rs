@@ -144,9 +144,6 @@ pub enum EncryptionError<E> {
     /// Encryption rejected the payload.
     #[error("payload encryption failed")]
     EncryptionFailed,
-    /// A stable operation identity was reused with different plaintext input.
-    #[error("operation identity is already bound to different input")]
-    OperationConflict,
     /// Authentication, parsing, version, algorithm, or context validation failed.
     #[error("encrypted payload is corrupt")]
     CorruptEnvelope,
@@ -161,7 +158,6 @@ where
             Self::Store(error) => error.kind(),
             Self::KeyUnavailable { .. } | Self::NonceUnavailable(_) => ErrorKind::Unavailable,
             Self::Closed | Self::EncryptionFailed => ErrorKind::Rejected,
-            Self::OperationConflict => ErrorKind::Conflict,
             Self::CorruptEnvelope => ErrorKind::Corrupt,
         }
     }

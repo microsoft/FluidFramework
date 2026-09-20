@@ -45,8 +45,8 @@ use futures_util::{FutureExt, StreamExt, future::BoxFuture, stream};
 use sea_compression::CompressionSession;
 use sea_core::{
     AuthorId, BlobDirectory, BlobTreeId, ClassifiedError, ErrorKind, Event, EventPosition,
-    EventSubmission, MonitoredStreamItem, MonitoredStreamStatus, OperationId, SeaArchive,
-    SeaAuthorSession, SeaSession, SessionCommittedEvent, SessionId, SnapshotParticipation,
+    EventSubmission, MonitoredStreamItem, MonitoredStreamStatus, SeaArchive, SeaAuthorSession,
+    SeaSession, SessionCommittedEvent, SessionId, SnapshotParticipation,
     storage::{LoadStart, SeaStorage, Snapshot, StorageHandle},
 };
 use sea_encryption::{ActiveKey, EncryptionKey, EncryptionSession, KeyId, KeyProvider};
@@ -412,7 +412,6 @@ async fn verify_membership<Writer: SeaSession, Observer: SeaSession>(
     );
     let position = writer
         .submit(EventSubmission {
-            operation_id: OperationId::new("membership-edit").unwrap(),
             reference: Some(joined),
             event: Event {
                 payload: Bytes::from_static(b"protected application data"),
@@ -518,7 +517,6 @@ async fn write_trace<Session: SeaSession>(session: &Session) -> Trace {
         .unwrap()
         .id();
     let submission = EventSubmission {
-        operation_id: OperationId::new("first").unwrap(),
         reference: None,
         event: Event {
             payload: Bytes::from_static(b"first plaintext event"),
@@ -526,7 +524,6 @@ async fn write_trace<Session: SeaSession>(session: &Session) -> Trace {
         },
     };
     let first = session.submit(submission.clone()).await.unwrap();
-    assert_eq!(session.submit(submission.clone()).await.unwrap(), first);
     let delivered = next_event(&mut initial.events).await;
     assert_eq!(delivered.committed.position, first);
     assert_eq!(delivered.committed.event, submission.event);
@@ -538,7 +535,6 @@ async fn write_trace<Session: SeaSession>(session: &Session) -> Trace {
     assert_eq!(snapshot.root.id(), root);
     let second = session
         .submit(EventSubmission {
-            operation_id: OperationId::new("second").unwrap(),
             reference: Some(first),
             event: Event {
                 payload: Bytes::from_static(b"second plaintext event"),
@@ -565,7 +561,7 @@ async fn write_trace<Session: SeaSession>(session: &Session) -> Trace {
     trace
 }
 
-/// A bounded read must contain exactly the two originals, never a duplicate retry.
+/// A bounded read must contain exactly the two submitted events.
 async fn check_history<Session: SeaArchive>(session: &Session, trace: &Trace) {
     let mut history = session.read(None, Some(trace.second));
     let first = next_event(&mut history).await;
@@ -582,20 +578,9 @@ async fn check_history<Session: SeaArchive>(session: &Session, trace: &Trace) {
     }
 }
 
-/// Rebuilds wrapper state and verifies retry identity, replay, and fresh snapshot authority.
+/// Rebuilds wrapper state and verifies replay and fresh snapshot authority.
 async fn after_reconnect<Session: SeaSession>(session: &Session, trace: &Trace) {
     check_content(session, trace).await;
-    assert_eq!(
-        session
-            .resolve_submission(&trace.submission.operation_id)
-            .await
-            .unwrap(),
-        Some(trace.first)
-    );
-    assert_eq!(
-        session.submit(trace.submission.clone()).await.unwrap(),
-        trace.first
-    );
     check_history(session, trace).await;
     let mut loaded = session.load(LoadStart::LatestSnapshot).await.unwrap();
     assert_eq!(loaded.snapshot.unwrap().at_event.id(), trace.first);
@@ -605,7 +590,6 @@ async fn after_reconnect<Session: SeaSession>(session: &Session, trace: &Trace) 
     );
     let third = session
         .submit(EventSubmission {
-            operation_id: OperationId::new("third").unwrap(),
             reference: Some(trace.second),
             event: Event {
                 payload: Bytes::from_static(b"after reconnect"),
@@ -632,7 +616,7 @@ async fn after_reconnect<Session: SeaSession>(session: &Session, trace: &Trace) 
         third
     );
     let mut changed = trace.submission.clone();
-    changed.event.payload = Bytes::from_static(b"conflicting plaintext");
+    changed.reference = Some(EventPosition::new(u64::MAX));
     assert!(matches!(
         session.submit(changed).await.unwrap_err().kind(),
         ErrorKind::Conflict | ErrorKind::Rejected
@@ -732,12 +716,11 @@ async fn verify_tree<Session: SeaArchive>(session: &Session, tree: &ContentTree)
     assert!(session.get_blob(empty).await.unwrap().is_empty());
 }
 
-/// Checks original plaintext, author, operation identity, and reference against the model.
+/// Checks original plaintext, author, position, and reference against the model.
 fn verify_event(actual: &SessionCommittedEvent, expected: &ExpectedEvent) {
     assert_eq!(actual.committed.position, expected.position);
     assert_eq!(actual.committed.event, expected.submission.event);
     assert_eq!(actual.author_id, AuthorId::new(expected.author).unwrap());
-    assert_eq!(actual.operation_id, expected.submission.operation_id);
     assert_eq!(actual.reference, expected.submission.reference);
 }
 
@@ -769,7 +752,7 @@ async fn cancel_idle_read<Session: SeaArchive>(session: &Session, after: Option<
     drop(events);
 }
 
-/// Creates distinct operation identities with empty, short, and larger binary payloads.
+/// Creates submissions with empty, short, and larger binary payloads.
 fn collaborative_submission(
     author: &str,
     round: usize,
@@ -779,7 +762,6 @@ fn collaborative_submission(
 ) -> EventSubmission {
     let length = [0, 1, 127, 8192][batch % 4];
     EventSubmission {
-        operation_id: OperationId::new(format!("{author}-{round}-{batch}")).unwrap(),
         reference,
         event: Event {
             payload: Bytes::from(
@@ -930,7 +912,7 @@ async fn verify_snapshot_publication<Session: SeaSession>(
     );
 }
 
-/// Races two authors, validates exact lookups, and orders the expected committed pair.
+/// Races two authors and orders the expected committed pair.
 async fn concurrent_batch<Session: SeaSession>(
     first: &Session,
     peer: &Session,
@@ -948,14 +930,6 @@ async fn concurrent_batch<Session: SeaSession>(
     let first_receipt = first_receipt.unwrap();
     let peer_receipt = peer_receipt.unwrap();
     assert_ne!(first_receipt, peer_receipt);
-    assert_eq!(
-        first.submit(first_submission.clone()).await.unwrap(),
-        first_receipt
-    );
-    assert_eq!(
-        peer.submit(peer_submission.clone()).await.unwrap(),
-        peer_receipt
-    );
     let mut pair = [
         ExpectedEvent {
             position: first_receipt,
@@ -998,7 +972,7 @@ async fn load_peer<Session: SeaArchive>(
 /// Each round rebuilds the peer, catches up from the latest snapshot, exchanges nested content,
 /// runs four two-author batches, and publishes one snapshot while testing authority transitions.
 /// The peer then disconnects and the first author writes one more event for the next load's suffix.
-/// Thus a round contributes nine committed events; retries and rejected operations contribute none.
+/// Thus a round contributes nine committed events; rejected operations contribute none.
 /// A final peer connection checks the last suffix even when there is no next round.
 ///
 /// `build` borrows a fixture only during construction and returns an owned session.
@@ -1016,20 +990,9 @@ async fn collaborate<Session, Build>(
     let mut first_events = first.load(LoadStart::LatestSnapshot).await.unwrap().events;
     let mut history: Vec<ExpectedEvent> = Vec::new();
     let mut snapshots: Vec<(EventPosition, ContentTree)> = Vec::new();
-    let mut last_peer_retry: Option<(EventSubmission, EventPosition)> = None;
     for round in 0..rounds {
-        // Fresh decorators must recover prior operation identities, not rely on old instance caches.
         let peer = build(peer_fixture).await;
         let mut peer_events = load_peer(&peer, &history, snapshots.last()).await;
-        if let Some((submission, position)) = &last_peer_retry {
-            assert_eq!(
-                peer.resolve_submission(&submission.operation_id)
-                    .await
-                    .unwrap(),
-                Some(*position)
-            );
-            assert_eq!(peer.submit(submission.clone()).await.unwrap(), *position);
-        }
         let first_tree = content_tree(&first, round * 2).await;
         let peer_tree = content_tree(&peer, round * 2 + 1).await;
         verify_tree(&peer, &first_tree).await;
@@ -1052,9 +1015,6 @@ async fn collaborate<Session, Build>(
                 let observed = next_event(&mut peer_events).await;
                 assert_eq!(delivered, observed);
                 verify_event(&delivered, &expected);
-                if expected.author == "peer" {
-                    last_peer_retry = Some((expected.submission.clone(), expected.position));
-                }
                 history.push(expected);
             }
         }
@@ -1081,7 +1041,7 @@ async fn collaborate<Session, Build>(
         verify_history(&first, &history).await;
         verify_history(&peer, &history).await;
         drop(peer_events);
-        verify_terminal_conflict(&peer, &last_peer_retry.as_ref().unwrap().0).await;
+        verify_terminal_rejection(&peer, &history.last().unwrap().submission).await;
         peer.close().await.unwrap();
         drop(peer);
         peer_fixture.stop_endpoints().await;
@@ -1099,26 +1059,30 @@ async fn collaborate<Session, Build>(
     }
     let peer = build(peer_fixture).await;
     verify_history(&peer, &history).await;
-    let (submission, position) = last_peer_retry.unwrap();
-    assert_eq!(peer.submit(submission).await.unwrap(), position);
     drop(load_peer(&peer, &history, snapshots.last()).await);
+    let mut submission = history.last().unwrap().submission.clone();
+    submission.reference = Some(history.last().unwrap().position);
+    let position = peer.submit(submission.clone()).await.unwrap();
+    assert!(position > history.last().unwrap().position);
+    let expected = ExpectedEvent {
+        position,
+        author: "peer",
+        submission,
+    };
+    verify_event(&next_event(&mut first_events).await, &expected);
+    history.push(expected);
     verify_history(&peer, &history).await;
-    let foreign = history
-        .iter()
-        .find(|event| event.author == "author")
-        .unwrap();
-    assert!(peer.submit(foreign.submission.clone()).await.is_err());
     peer.close().await.unwrap();
     first.close().await.unwrap();
 }
 
-/// A conflicting retry ends authority, including for a subsequent otherwise valid exact lookup.
-async fn verify_terminal_conflict<Session: SeaSession>(
+/// An invalid reference ends authority, including for a subsequent otherwise valid submission.
+async fn verify_terminal_rejection<Session: SeaSession>(
     session: &Session,
     original: &EventSubmission,
 ) {
     let mut changed = original.clone();
-    changed.event.payload = Bytes::from_static(b"changed retry");
+    changed.reference = Some(EventPosition::new(u64::MAX));
     assert!(session.submit(changed).await.is_err());
     assert!(session.submit(original.clone()).await.is_err());
 }
@@ -1147,7 +1111,6 @@ async fn verify_transport_path<Session: SeaSession>(
         .map(|hop| hop.submissions.load(Ordering::SeqCst))
         .collect();
     let submission = EventSubmission {
-        operation_id: OperationId::new(format!("hop-probe-{blocked}")).unwrap(),
         reference: None,
         event: Event {
             payload: Bytes::from_static(b"must cross every hop"),
@@ -1225,7 +1188,11 @@ macro_rules! configurations {
                     drop(session);
                     probe_fixture.stop_endpoints().await;
                     let recovered = build(&mut probe_fixture).await;
-                    assert_eq!(recovered.resolve_submission(&submission.operation_id).await.unwrap(), None);
+                    let mut history = recovered.read(None, None);
+                    match history.next().await.unwrap().unwrap() {
+                        MonitoredStreamItem::Progress(progress) => assert_eq!(progress.latest_known, None),
+                        MonitoredStreamItem::Item(_) => panic!("rejected submission committed"),
+                    }
                     recovered.submit(submission).await.unwrap();
                     recovered.close().await.unwrap();
                 }).await.expect("transport path probe timed out");

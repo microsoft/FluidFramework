@@ -416,7 +416,7 @@ RS-023 implementation evidence by boundary:
 - `sea-compression`: synchronous encode failure closes the inner session; there is no suspension before inner admission on successful encoding.
 	Existing codec tests cover compression/decompression, and composition tests own fail-stop forwarding through this decorator; the in-memory encoder has no practical injectable I/O failure.
 - `sea-wasm` and `sea-typescript`: malformed operation/tree input closes authority, and the neutral wrapper serializes author calls before conversion.
-	Generated Node regression `invalid append input terminates the accepted prefix before queued work` covers empty operation identity and malformed tree identity, with an observer proving join/application/leave and no queued event.
+	Generated Node regression `invalid append input terminates the accepted prefix before queued work` covers invalid reference and malformed tree identity, with an observer proving join/application/leave and no queued event.
 - `sea-integration-tests`: all 12 composition configurations retain intentional failures at terminal points and prove recovery through fresh sessions rather than continuing failed memberships.
 
 Native formatting, strict Clippy, rustdoc, build, and all-feature tests passed.
@@ -430,7 +430,7 @@ An eight-test current-version SEA sample at `15f49ba5981` passed with the normal
 The runtime now restores and enforces a document-wide committed floor, including absent-reference rejection, independently of membership admission and advancement policy.
 Advances commit atomically in ordered event metadata; cooperative progress and a coalesced bounded-lag window choose proposals but cannot lower the floor.
 Snapshot boundaries retain the floor in their immutable event envelopes, and the Fluid adapter maps that floor into dense sequence numbers for full and bounded replay.
-Earlier experimental encodings are rejected explicitly (`SEAQ3`/`SEAM2`, wire version 7), not reinterpreted.
+Earlier experimental encodings are rejected explicitly (current `SEAQ4`/`SEAM3`, wire version 9), not reinterpreted.
 
 Owning sequencer tests cover monotonic reopen/recovery, absent and stale references, exact prior-operation lookup, successful current-context submission, idle-reader window advancement, definitive/ambiguous storage outcomes, and snapshot-boundary floor retention.
 The changed core comments and persisted codec document the same contract.

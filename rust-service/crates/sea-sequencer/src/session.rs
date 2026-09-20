@@ -1,6 +1,6 @@
 //! Multi-user session runtime over one exclusively owned document view.
 //!
-//! [`crate::session::LocalSequencer`] recovers committed submission and snapshot identities, then
+//! [`crate::session::LocalSequencer`] recovers committed positions and used session identities, then
 //! multiplexes the view into [`crate::session::LocalSession`] memberships. Memberships are
 //! runtime-local: reopening restores stable committed identities, closes outstanding durable
 //! announcements, and requires callers to establish fresh sessions.
@@ -40,7 +40,7 @@ use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, CommittedEvent, ErrorKind,
     Event, EventPosition, MonitoredStreamItem, MonitoredStreamProgress, MonitoredStreamStatus,
     archive::{
-        AuthorId, EventSubmission, OperationId, SessionCommittedEvent, SessionEventKind, SessionId,
+        AuthorId, EventSubmission, SessionCommittedEvent, SessionEventKind, SessionId,
         SessionStream, SnapshotParticipation,
     },
     boxed_monitored_stream,
@@ -141,15 +141,13 @@ struct Runtime<Storage: SeaStorage> {
     announced: BTreeMap<SessionId, SessionCommittedEvent>,
     /// Identities cannot be reused within this runtime or after a committed submission.
     seen: BTreeSet<SessionId>,
-    /// Committed submission identities for retries and recovery.
-    accepted: BTreeMap<OperationId, SessionCommittedEvent>,
     /// Application positions used to validate references and snapshot boundaries.
     positions: BTreeSet<EventPosition>,
     /// Durable document-wide admission floor restored from ordered committed metadata.
     minimum_reference: Option<EventPosition>,
     /// At most one outstanding mutation owns backend execution.
     pending: Option<Pending<Storage::Error>>,
-    /// A failed reconciliation prevents a duplicate-producing retry.
+    /// A failed reconciliation prevents mutation or a false terminal departure.
     recovery_required: bool,
     /// Publisher state is synchronous so dropping a stream can revoke its authority immediately.
     publishers: Arc<std::sync::Mutex<Publishers>>,
@@ -246,21 +244,9 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         submission: &EventSubmission,
         floor: Option<EventPosition>,
         advance_floor: bool,
-    ) -> Result<Result<Event, EventPosition>, SessionError<Storage::Error>> {
+    ) -> Result<Event, SessionError<Storage::Error>> {
         self.member(session)?;
         self.view()?;
-        if let Some(accepted) = self.accepted.get(&submission.operation_id) {
-            return if accepted.author_id == *author
-                && accepted.committed.event == submission.event
-                && accepted.reference == submission.reference
-            {
-                Ok(Err(accepted.committed.position))
-            } else {
-                Err(SessionError::Rejected(
-                    "operation identity conflicts with previous input",
-                ))
-            };
-        }
         if submission
             .reference
             .is_some_and(|position| !self.positions.contains(&position))
@@ -292,17 +278,16 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         } else {
             floor
         };
-        Ok(Ok(Event {
+        Ok(Event {
             payload: encode_submission(
                 author,
                 session,
-                &submission.operation_id,
                 submission.reference,
                 minimum,
                 &submission.event.payload,
             )?,
             blob_tree: submission.event.blob_tree,
-        }))
+        })
     }
 
     /// Chooses an advance without coupling admission enforcement to membership progress.
@@ -321,7 +306,7 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
             .max(cooperative.max(window).min(reference))
     }
 
-    /// Records a settled submission and rejects duplicate committed identities.
+    /// Records settled events and validates reference floors and membership transitions.
     fn apply(&mut self, record: &CommittedEvent) -> Result<(), SessionError<Storage::Error>> {
         let committed = decode_committed(record)?;
         if committed.minimum_reference < self.minimum_reference
@@ -333,11 +318,6 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
                 && committed.reference < self.minimum_reference)
         {
             return Err(SessionError::Corrupt("invalid minimum reference floor"));
-        }
-        if committed.kind == SessionEventKind::Application
-            && self.accepted.contains_key(&committed.operation_id)
-        {
-            return Err(SessionError::Corrupt("duplicate submission identity"));
         }
         if committed
             .reference
@@ -354,10 +334,7 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         self.positions.insert(record.position);
         self.minimum_reference = committed.minimum_reference;
         match committed.kind {
-            SessionEventKind::Application => {
-                self.accepted
-                    .insert(committed.operation_id.clone(), committed);
-            }
+            SessionEventKind::Application => {}
             SessionEventKind::Joined => {
                 if self
                     .announced
@@ -522,7 +499,7 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
     /// Active membership is runtime-local; recovery requires fresh logical sessions.
     ///
     /// # Errors
-    /// Returns backend failures or malformed/duplicate committed submission errors.
+    /// Returns backend failures, malformed records, or invalid membership transitions.
     /// # Panics
     /// Panics if an internal publisher-state lock was poisoned.
     pub async fn recover(view: View<Storage>) -> Result<Arc<Self>, SessionError<Storage::Error>> {
@@ -533,7 +510,6 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
             members: BTreeMap::new(),
             announced: BTreeMap::new(),
             seen: BTreeSet::new(),
-            accepted: BTreeMap::new(),
             positions: BTreeSet::new(),
             pending: None,
             recovery_required: false,
@@ -642,7 +618,7 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
 pub struct LocalSession<Storage: SeaStorage> {
     /// Shared sequencing owner, not independent storage authority.
     sequencer: Arc<LocalSequencer<Storage>>,
-    /// Author identity checked when reconciling retries.
+    /// Author identity encoded in this membership's submissions.
     author: AuthorId,
     /// Unique connection identity for this membership.
     session: SessionId,
@@ -754,21 +730,6 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
         result
     }
 
-    /// Resolves a stable identity after settling any cancelled caller's retained work.
-    async fn resolve_submission(
-        &self,
-        operation: &OperationId,
-    ) -> Result<Option<EventPosition>, SessionError<Storage::Error>> {
-        let _barrier = self.sequencer.barrier().await;
-        let mut runtime = self.sequencer.runtime.lock().await;
-        runtime.settle().await?;
-        runtime.member(&self.session)?;
-        Ok(runtime
-            .accepted
-            .get(operation)
-            .map(|accepted| accepted.committed.position))
-    }
-
     /// Closes this membership idempotently without closing the shared runtime.
     async fn close(&self) -> Result<(), SessionError<Storage::Error>> {
         let _barrier = self.sequencer.barrier().await;
@@ -804,12 +765,6 @@ impl<Storage: SeaStorage + 'static> SeaAuthorSession for LocalSession<Storage> {
     }
     async fn submit(&self, submission: EventSubmission) -> Result<EventPosition, Self::Error> {
         Self::submit(self, submission).await
-    }
-    async fn resolve_submission(
-        &self,
-        operation: &OperationId,
-    ) -> Result<Option<EventPosition>, Self::Error> {
-        Self::resolve_submission(self, operation).await
     }
     async fn close(&self) -> Result<(), Self::Error> {
         Self::close(self).await
@@ -1202,7 +1157,6 @@ mod tests {
             )
             .await
             .unwrap();
-        assert_eq!(valid.submit(submission(b"initial")).await.unwrap(), initial);
         let observer = member(&recovered, "observer").await;
         let mut replay = observer.read(None, None);
         let mut minimum = None;
@@ -1229,11 +1183,10 @@ mod tests {
         let writer = member(&runtime, "writer").await;
         let mut reference = None;
         let mut advances = Vec::new();
-        for index in 0..1152 {
+        for _ in 0..1152 {
             reference = Some(
                 writer
                     .submit(EventSubmission {
-                        operation_id: OperationId::new(index.to_string()).unwrap(),
                         reference,
                         event: Event {
                             payload: Bytes::new(),
@@ -1397,19 +1350,17 @@ mod tests {
                 SessionEventKind::Left,
             ]
         );
+        let mut application = observer.read(None, Some(edit));
+        data(&mut application).await.unwrap();
         assert_eq!(
-            observer
-                .resolve_submission(&OperationId::new("first").unwrap())
-                .await
-                .unwrap(),
-            Some(edit)
+            data(&mut application).await.unwrap().committed.position,
+            edit
         );
     }
 
     /// Produces one stable application submission for session tests.
     pub(super) fn submission(value: &'static [u8]) -> EventSubmission {
         EventSubmission {
-            operation_id: OperationId::new(Bytes::from_static(value)).unwrap(),
             reference: None,
             event: Event {
                 payload: Bytes::from_static(value),
@@ -1444,7 +1395,6 @@ mod tests {
                 let payload = Bytes::from(index.to_string());
                 session
                     .submit(EventSubmission {
-                        operation_id: OperationId::new(payload.clone()).unwrap(),
                         reference: None,
                         event: Event {
                             payload,
@@ -1491,7 +1441,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn recovery_rejects_malformed_and_duplicate_submission_envelopes() {
+    async fn recovery_rejects_malformed_records_but_preserves_equal_submissions() {
         let storage = MemoryStorage::new();
         let (_, malformed) = storage.create_view().await.unwrap();
         malformed
@@ -1506,7 +1456,6 @@ mod tests {
         let payload = encode_submission::<sea_memory::MemoryStorageError>(
             &AuthorId::new("author").unwrap(),
             &SessionId::new("session").unwrap(),
-            &OperationId::new("operation").unwrap(),
             None,
             None,
             b"payload",
@@ -1514,10 +1463,16 @@ mod tests {
         .unwrap();
         duplicate.append(payload.clone(), None).await.unwrap();
         duplicate.append(payload, None).await.unwrap();
-        assert!(matches!(
-            LocalSequencer::<MemoryStorage>::recover(duplicate).await,
-            Err(SessionError::Corrupt(_))
-        ));
+        let recovered = LocalSequencer::<MemoryStorage>::recover(duplicate)
+            .await
+            .unwrap();
+        let observer = member(&recovered, "observer").await;
+        let mut replay = observer.read(None, None);
+        let first = data(&mut replay).await.unwrap();
+        let second = data(&mut replay).await.unwrap();
+        assert_eq!(first.committed.event, second.committed.event);
+        assert_eq!(first.session_id, second.session_id);
+        assert!(first.committed.position < second.committed.position);
     }
 
     /// Opens a named member without imposing backend-specific ownership rules.
@@ -1811,7 +1766,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn recovery_restores_submission_and_snapshot_identities_not_active_memberships() {
+    async fn recovery_preserves_positions_and_snapshots_without_deduplicating_submissions() {
         let storage = MemoryStorage::new();
         let (id, view) = storage.create_view().await.unwrap();
         let runtime = LocalSequencer::<MemoryStorage>::recover(view)
@@ -1837,7 +1792,7 @@ mod tests {
             .unwrap();
         let mut conflicting = submission(b"original");
         conflicting.event.payload = Bytes::from_static(b"conflict");
-        assert!(first.submit(conflicting).await.is_err());
+        assert!(first.submit(conflicting).await.unwrap() > position);
         runtime.shutdown().await.unwrap();
         drop((first, authority, runtime));
         let recovered = LocalSequencer::<MemoryStorage>::recover(
@@ -1863,10 +1818,7 @@ mod tests {
             )
             .await
             .unwrap();
-        assert_eq!(
-            reconnected.submit(submission(b"original")).await.unwrap(),
-            position
-        );
+        assert!(reconnected.submit(submission(b"original")).await.unwrap() > position);
         assert_eq!(
             reconnected
                 .get_snapshot(LoadStart::LatestSnapshot)
@@ -1877,15 +1829,8 @@ mod tests {
                 .id(),
             position
         );
-        assert_eq!(
-            reconnected
-                .resolve_submission(&OperationId::new("original").unwrap())
-                .await
-                .unwrap(),
-            Some(position)
-        );
         let foreign = member(&recovered, "foreign").await;
-        assert!(foreign.submit(submission(b"original")).await.is_err());
+        assert!(foreign.submit(submission(b"original")).await.unwrap() > position);
         let mut absent = submission(b"invalid");
         absent.reference = Some(EventPosition::new(999));
         assert!(foreign.submit(absent).await.is_err());
@@ -1920,10 +1865,7 @@ mod tests {
         assert!(first.submit(submission(b"closed")).await.is_err());
         let second_position = second.submit(submission(b"two")).await.unwrap();
         assert!(first_position < second_position);
-        assert_eq!(
-            second.submit(submission(b"two")).await.unwrap(),
-            second_position
-        );
+        assert!(second.submit(submission(b"two")).await.unwrap() > second_position);
         sequencer.shutdown().await.unwrap();
         assert!(second.submit(submission(b"after shutdown")).await.is_err());
         assert!(storage.open_view(&id).await.unwrap().is_some());

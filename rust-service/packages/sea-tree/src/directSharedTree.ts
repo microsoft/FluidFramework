@@ -130,16 +130,13 @@ export class DirectSharedTreeClient {
 	}
 
 	private submit(contents: unknown, idCreationRange: IdCreationRange): void {
-		const localSequenceNumber = ++this.localSequenceNumber;
+		this.localSequenceNumber++;
 		const reference = this.cursor?.slice();
 		const payload = encoder.encode(
 			JSON.stringify({ contents, idCreationRange } satisfies DirectSharedTreePayload),
 		);
-		const submission = encoder.encode(
-			`${decoder.decode(this.session)}-${localSequenceNumber}`,
-		);
 		this.submissionChain = this.submissionChain.then(async () => {
-			await this.client.submitEvent(submission, localSequenceNumber, payload, reference);
+			await this.client.submitEvent(payload, reference);
 		});
 	}
 
@@ -173,7 +170,7 @@ export class DirectSharedTreeClient {
 			const sequenceNumber = Number(operation.sequenceNumber);
 			this.positions.set(byteKey(operation.position), sequenceNumber);
 			if (bytesEqual(operation.session, this.session)) {
-				this.acknowledgedLocalSequenceNumber = Number(operation.localSequenceNumber);
+				this.acknowledgedLocalSequenceNumber++;
 			}
 			return {
 				contents: payload.contents,

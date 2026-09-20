@@ -15,9 +15,7 @@ use bytes::Bytes;
 use futures_util::StreamExt;
 use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, EventPosition,
-    archive::{
-        EventSubmission, OperationId, SessionCommittedEvent, SessionStream, SnapshotParticipation,
-    },
+    archive::{EventSubmission, SessionCommittedEvent, SessionStream, SnapshotParticipation},
     map_monitored_stream,
     session::{
         SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator, SessionLoad, SnapshotCoordination,
@@ -147,15 +145,6 @@ impl<Session: SeaAuthorSession> SeaAuthorSession for CompressionSession<Session>
             .await
             .map_err(CompressionError::Store)
     }
-    async fn resolve_submission(
-        &self,
-        operation: &OperationId,
-    ) -> Result<Option<EventPosition>, Self::Error> {
-        self.inner
-            .resolve_submission(operation)
-            .await
-            .map_err(CompressionError::Store)
-    }
     async fn close(&self) -> Result<(), Self::Error> {
         self.inner.close().await.map_err(CompressionError::Store)
     }
@@ -254,7 +243,6 @@ mod tests {
             .unwrap();
         let position = raw
             .submit(EventSubmission {
-                operation_id: OperationId::new("malformed").unwrap(),
                 reference: None,
                 event: Event {
                     payload: Bytes::from_static(b"not a zlib frame"),
