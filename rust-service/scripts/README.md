@@ -23,9 +23,11 @@ Copies exclude build outputs, installed dependencies, generated packages, Git me
 	Build `presentation-test-spans` from `sea-benchmarks` in release mode before running `source`; it classifies inline Rust test modules with `syn`, not text-based brace matching.
 	The inventory includes comment totals and a test/test-support subset, with exact paths and spans retained.
 	`followup-explore <new-output-directory>` compares native Sea WebSocket/WebTransport boundary points and finer Tinylicious loads.
+	`followup-tiny-retry <new-output-directory>` repeats the 750 and 1,250 ops/s probes after correcting fractional per-worker rate validation.
+	`followup-repeat <new-output-directory>` predeclares ten repeats of paired four-core native transport loads, higher WebSocket loads, and 750 ops/s Tinylicious loads on one and four service cores.
 - [`presentation-stress.mjs`](presentation-stress.mjs) runs bounded, minimal-client Sea/Tinylicious comparisons on Linux.
 	It uses production client libraries without SharedTree or the container runtime, verifies payloads and ordered delivery to writer and observer, and records resource samples and failures.
-	Sea uses release-mode native code, release-mode WASM, and the optional loopback WebSocket listener, not QUIC.
+	By default, Sea uses release-mode native service code, release-mode WASM clients, and the optional loopback WebSocket listener, not QUIC.
 	Tinylicious uses its normal Node.js server and Routerlicious Socket.IO client, with in-memory database defaults.
 	Both services retain history; these are not equivalent durable-storage tests.
 	Service CPU affinity is one or four physical cores, while up to four generator processes use separate physical cores.

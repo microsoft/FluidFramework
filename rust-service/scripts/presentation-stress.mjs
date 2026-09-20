@@ -567,7 +567,9 @@ if (mode === "--help") {
 			configuration.documents >= 1 &&
 			configuration.documents <= 32,
 	);
-	for (const key of ["rate", "payloadBytes", "seconds", "warmupSeconds"])
+	assert.ok(Number.isFinite(configuration.rate) && configuration.rate > 0, "rate");
+	if (mode !== "worker") assert.ok(Number.isInteger(configuration.rate), "total rate");
+	for (const key of ["payloadBytes", "seconds", "warmupSeconds"])
 		assert.ok(Number.isInteger(configuration[key]) && configuration[key] > 0, key);
 	assert.ok(configuration.payloadBytes >= 8 && configuration.payloadBytes <= 8192);
 	assert.ok(configuration.documents <= 4 || configuration.documents % 4 === 0);

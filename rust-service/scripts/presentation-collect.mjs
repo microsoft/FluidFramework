@@ -365,8 +365,53 @@ else if (mode === "sweep") {
 		}
 	}
 	sweep(cells);
+} else if (mode === "followup-tiny-retry") {
+	const cells = [];
+	for (const cores of [1, 4])
+		for (const payloadBytes of [64, 8192])
+			for (const rate of [750, 1250])
+				cells.push({
+					backend: "tinylicious",
+					cores,
+					documents: 32,
+					payloadBytes,
+					rate,
+					seconds: 10,
+					warmupSeconds: 3,
+				});
+	sweep(cells);
+} else if (mode === "followup-repeat") {
+	const cells = [];
+	for (let repetition = 0; repetition < 10; repetition++) {
+		const points = [];
+		for (const payloadBytes of [64, 8192]) {
+			for (const transport of ["websocket", "webtransport"])
+				points.push({
+					backend: "sea",
+					generator: "native",
+					transport,
+					cores: 4,
+					payloadBytes,
+					rate: payloadBytes === 64 ? 12000 : 6000,
+				});
+			points.push({
+				backend: "sea",
+				generator: "native",
+				transport: "websocket",
+				cores: 4,
+				payloadBytes,
+				rate: payloadBytes === 64 ? 24000 : 12000,
+			});
+			for (const cores of [1, 4])
+				points.push({ backend: "tinylicious", cores, payloadBytes, rate: 750 });
+		}
+		if (repetition % 2 !== 0) points.reverse();
+		for (const point of points)
+			cells.push({ ...point, documents: 32, seconds: 10, warmupSeconds: 3, repetition });
+	}
+	sweep(cells);
 } else if (mode === "matrix") sweep(JSON.parse(readFileSync(resolve(inputText), "utf8")));
 else
 	throw new Error(
-		"Use source <output>, sweep <output>, repeat <output>, followup-explore <output>, or matrix <output> <cells.json>",
+		"Use source, sweep, repeat, followup-explore, followup-tiny-retry, followup-repeat <output>, or matrix <output> <cells.json>",
 	);
