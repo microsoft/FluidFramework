@@ -62,8 +62,15 @@ WebTransport pins the server certificate and includes QUIC/TLS; the local WebSoc
 Sea defaults to memory storage; set `"storage":"buffered-file"` or `"storage":"durable-file"` to measure either file backend.
 The harness verifies the server's logged storage mode before starting workers and records the selected modes in the campaign manifest.
 Buffered-file appends reach the operating system without per-write synchronization; unlike Tinylicious's default operation database, it still writes an on-disk journal.
-Durable-file rewrites and synchronizes the complete journal per mutation, so duration and retained history are essential measurement parameters.
+Durable-file appends new frames and synchronizes once per event batch; its interrupted-tail and synchronized-prefix integrity assumptions still require filesystem/device qualification.
+Both file modes retain complete history in memory, so duration and retained history remain essential measurement parameters.
 Tinylicious uses its default in-memory document/operation database and filesystem Git summary storage; it is not durability-equivalent to Sea durable-file.
+For Tinylicious, set `"storage":"leveldb"` to select its file-backed database, or `"storage":"memory"` for an explicit in-memory selection.
+The harness sets `db__inMemory` and a fresh per-cell `db__path`, and checks the LevelDB `CURRENT` marker after workers create documents and connect, before starting load.
+Both modes use separate filesystem Git summary storage.
+At revision `92ecf30f4a7`, LevelDB document connection fails with `Collection checkpoints not implemented.`; see the [retained attempts](../measurements/tinylicious-leveldb/README.md).
+The [repaired follow-up](../measurements/tinylicious-leveldb-fixed/README.md) records the adapter compatibility fix, passing regression tests, and measured LevelDB rates.
+This is a pre-load compatibility failure, not a throughput result or a durability qualification.
 The 32-document workload uses four generator processes on four distinct physical cores; one-document runs use only one.
 
 Run these commands from `rust-service/`:

@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { once } from "node:events";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { resolve } from "node:path";
 import { createInterface } from "node:readline";
@@ -95,8 +95,7 @@ async function openPair(configuration, received, failure) {
 			});
 		}
 		return {
-			submit: (sequence, payload) =>
-				writer.submit(Buffer.from(String(sequence)), undefined, Buffer.from(payload)),
+			submit: (_sequence, payload) => writer.submit(undefined, Buffer.from(payload)),
 			close: async () => {
 				closed = true;
 				for (const stream of streams) stream.cancel();
@@ -373,6 +372,8 @@ async function run(configuration, output) {
 			SEA_WEBSOCKET_ORIGINS: "http://localhost",
 			SEA_WEBSOCKET_ORIGINLESS_LOOPBACK: "1",
 			storage: resolve(output, "tiny-storage"),
+			db__inMemory: String(configuration.storage !== "leveldb"),
+			db__path: resolve(output, "tiny-db"),
 		},
 		stdio: ["ignore", "pipe", "pipe"],
 	});
@@ -458,6 +459,12 @@ async function run(configuration, output) {
 			ready.push(messageFrom(child, "ready"));
 		}
 		await Promise.all(ready);
+		if (configuration.backend === "tinylicious")
+			assert.equal(
+				existsSync(resolve(output, "tiny-db", "CURRENT")),
+				configuration.storage === "leveldb",
+				"Tinylicious database selection must match its on-disk LevelDB marker",
+			);
 		const started = performance.now();
 		const captureSample = () => {
 			try {
@@ -501,7 +508,9 @@ async function run(configuration, output) {
 			storage:
 				configuration.backend === "sea"
 					? (configuration.storage ?? "memory")
-					: "default-in-memory-database",
+					: configuration.storage === "leveldb"
+						? "leveldb"
+						: "default-in-memory-database",
 			transport:
 				configuration.backend === "sea"
 					? (configuration.transport ?? "websocket")
@@ -573,7 +582,9 @@ if (mode === "--help") {
 	assert.ok(
 		configuration.storage === undefined ||
 			(configuration.backend === "sea" &&
-				["memory", "buffered-file", "durable-file"].includes(configuration.storage)),
+				["memory", "buffered-file", "durable-file"].includes(configuration.storage)) ||
+			(configuration.backend === "tinylicious" &&
+				["memory", "leveldb"].includes(configuration.storage)),
 	);
 	assert.ok(
 		Number.isInteger(configuration.documents) &&

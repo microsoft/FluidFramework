@@ -214,7 +214,15 @@ function sweep(cells) {
 						.map((cell) => cell.storage ?? "memory"),
 				),
 			],
-			tinyliciousStorage: "default-in-memory-database",
+			tinyliciousStorage: [
+				...new Set(
+					cells
+						.filter((cell) => cell.backend === "tinylicious")
+						.map((cell) =>
+							cell.storage === "leveldb" ? "leveldb" : "default-in-memory-database",
+						),
+				),
+			],
 			generatorPhysicalCores: 4,
 			generatorCpus: "16,18,20,22",
 		},
