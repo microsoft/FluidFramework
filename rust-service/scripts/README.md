@@ -30,7 +30,8 @@ Copies exclude build outputs, installed dependencies, generated packages, Git me
 	By default, Sea uses release-mode native service code, release-mode WASM clients, and the optional loopback WebSocket listener, not QUIC.
 	Tinylicious uses its normal Node.js server and Routerlicious Socket.IO client, with in-memory database defaults.
 	Both services retain history; these are not equivalent durable-storage tests.
-	Service CPU affinity is one or four physical cores, while up to four generator processes use separate physical cores.
+	Service CPU affinity is one, four, or eight physical cores, while up to four generator processes use separate physical cores.
+	The eight-core option uses CPUs 0,2,4,6,8,10,12,14; the one/four-core options retain CPUs 2 and 2,4,6,8 respectively.
 	The editor and other host activity are not CPU-isolated.
 	The script requires the built Routerlicious workspace, generated Sea clients, and browser-test certificates.
 	It changes no production defaults; set `SEA_MAX_CONNECTIONS=128` when running more than eight document pairs.
@@ -58,8 +59,9 @@ For native Sea generation, build `cargo build --release -p sea-benchmarks --bin 
 The native worker uses the shared session client with one ordered submission queue per document and a single-thread Tokio runtime per pinned process.
 Its benchmark-only WebSocket adapter uses bounded tungstenite messages and independent child sockets; it is not a new supported production client.
 WebTransport pins the server certificate and includes QUIC/TLS; the local WebSocket listener is unencrypted, so the comparison is not equal-security transport performance.
-Sea defaults to memory storage; set `"storage":"durable-file"` to measure the synchronized file backend.
+Sea defaults to memory storage; set `"storage":"buffered-file"` or `"storage":"durable-file"` to measure either file backend.
 The harness verifies the server's logged storage mode before starting workers and records the selected modes in the campaign manifest.
+Buffered-file appends reach the operating system without per-write synchronization; unlike Tinylicious's default operation database, it still writes an on-disk journal.
 Durable-file rewrites and synchronizes the complete journal per mutation, so duration and retained history are essential measurement parameters.
 Tinylicious uses its default in-memory document/operation database and filesystem Git summary storage; it is not durability-equivalent to Sea durable-file.
 The 32-document workload uses four generator processes on four distinct physical cores; one-document runs use only one.

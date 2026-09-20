@@ -346,7 +346,7 @@ async function worker(configuration) {
 async function run(configuration, output) {
 	mkdirSync(output, { recursive: true });
 	const port = await freePort();
-	const serviceCpu = configuration.cores === 1 ? "2" : "2,4,6,8";
+	const serviceCpu = { 1: "2", 4: "2,4,6,8", 8: "0,2,4,6,8,10,12,14" }[configuration.cores];
 	const certificate = resolve(root, "rust-service/tests/webtransport-browser/.certs");
 	const argumentsList =
 		configuration.backend === "sea"
@@ -569,11 +569,11 @@ if (mode === "--help") {
 } else {
 	const configuration = JSON.parse(configurationText);
 	assert.ok(["sea", "tinylicious"].includes(configuration.backend));
-	assert.ok([1, 4].includes(configuration.cores));
+	assert.ok([1, 4, 8].includes(configuration.cores));
 	assert.ok(
 		configuration.storage === undefined ||
 			(configuration.backend === "sea" &&
-				["memory", "durable-file"].includes(configuration.storage)),
+				["memory", "buffered-file", "durable-file"].includes(configuration.storage)),
 	);
 	assert.ok(
 		Number.isInteger(configuration.documents) &&
