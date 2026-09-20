@@ -19,7 +19,7 @@ use sea_benchmarks::{
 use sea_compression::CompressionSession;
 use sea_core::{
     ArchiveEventStream, Event, EventPosition, MonitoredStreamItem,
-    archive::{AuthorId, EventSubmission, OperationId, SessionId, SnapshotParticipation},
+    archive::{AuthorId, EventSubmission, SessionId, SnapshotParticipation},
     session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
     storage::{
         BlobStore, EventArchiveStream, LoadStart, SeaStorage, SeaView, Snapshot, StorageHandle,
@@ -460,7 +460,6 @@ where
                 let started = Instant::now();
                 let receipt = session
                     .submit(EventSubmission {
-                        operation_id: benchmark_operation_id(b"session-event", index),
                         reference,
                         event: Event {
                             payload: Bytes::from(generator.payload(config.fixture, index)),
@@ -513,7 +512,6 @@ where
                         let started = Instant::now();
                         let receipt = session
                             .submit(EventSubmission {
-                                operation_id: benchmark_operation_id(b"session-event", index),
                                 reference,
                                 event: Event {
                                     payload: Bytes::from(generator.payload(fixture, index)),
@@ -743,14 +741,6 @@ where
         peak_queued_records: None,
         peak_active_streams: None,
     })
-}
-
-/// Builds a deterministic operation identifier within the supplied benchmark domain.
-fn benchmark_operation_id(domain: &[u8], index: u64) -> OperationId {
-    let mut bytes = Vec::with_capacity(domain.len() + 8);
-    bytes.extend_from_slice(domain);
-    bytes.extend_from_slice(&index.to_be_bytes());
-    OperationId::new(Bytes::from(bytes)).expect("benchmark operation identity")
 }
 
 /// Verifies that the plain file stream preserved records and any requested snapshot.
@@ -1240,7 +1230,6 @@ mod tests {
             .unwrap();
         let first = session
             .submit(EventSubmission {
-                operation_id: benchmark_operation_id(b"session-event", 0),
                 reference: None,
                 event: Event {
                     payload: Bytes::from(generator.payload(config.fixture, 0)),
@@ -1257,7 +1246,6 @@ mod tests {
             .unwrap();
         session
             .submit(EventSubmission {
-                operation_id: benchmark_operation_id(b"session-event", 1),
                 reference: Some(first),
                 event: Event {
                     payload: Bytes::from(generator.payload(config.fixture, 1)),

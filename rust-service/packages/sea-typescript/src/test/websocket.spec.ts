@@ -244,12 +244,7 @@ describe("WebSocket compatibility", () => {
 		try {
 			second = await open(first.document, "second");
 			const stream = await second.load();
-			const position = await first.submit(
-				encoder.encode("operation"),
-				undefined,
-				encoder.encode("payload"),
-			);
-			assert.equal(await first.resolveSubmission(encoder.encode("operation")), position);
+			const position = await first.submit(undefined, encoder.encode("payload"));
 			for (;;) {
 				const item = await stream.next();
 				assert(item);

@@ -52,7 +52,8 @@ Recovery must preserve those dependencies as well as event order.
 This lets `SeaView` coordinate publication without requiring a distributed transaction across its components.
 
 [Memory](crates/sea-memory/README.md), [buffered-file](crates/sea-file/README.md), and [durable-file](crates/sea-file-durable/README.md) backends implement `SeaStorage` with different persistence guarantees.
-Storage does not manage client membership, submission deduplication, or publisher election; those belong to the session layer.
+Storage does not manage client membership or publisher election; those belong to the session layer.
+Neither layer deduplicates event submissions.
 
 ### Snapshots and Replay
 
@@ -72,13 +73,14 @@ The [`sea-core::session`](crates/sea-core/src/session.rs) traits separate three 
 | Trait | Role |
 | --- | --- |
 | `SeaArchive` | Content access, snapshot loading, and event history with live delivery. |
-| `SeaAuthorSession` | Ordered event submission, stable operation identities, outcome resolution, and author membership lifecycle. Extends `SeaArchive`. |
+| `SeaAuthorSession` | Ordered event submission, terminal-prefix recovery, and author membership lifecycle. Extends `SeaArchive`. |
 | `SeaSnapshotCoordinator` | Snapshot participation, publisher authority, and conditional publication. Extends `SeaArchive`. |
 | `SeaSession` | Marker trait for types implementing `SeaArchive`, `SeaAuthorSession`, and `SeaSnapshotCoordinator`. Adds no methods; automatically implemented for types satisfying those traits. |
 
 [`sea-sequencer`](crates/sea-sequencer/README.md) implements these contracts over one exclusive `SeaView`, shared across client memberships.
-It owns author identity, submission deduplication, reference validation, event ordering, and snapshot publication authority.
-Committed submission identities survive recovery; active memberships and publisher authority do not.
+It owns author identity, reference validation, event ordering, and snapshot publication authority.
+Used session identities and immutable event positions survive recovery; active memberships and publisher authority do not.
+Clients identify their own accepted submissions by session and application-event ordinal, not by a separate Sea operation ID.
 Sessions can opt into ordered durable announcements with immutable public metadata.
 Close and replacement append departures; recovery appends departures for outstanding announcements before new sessions are admitted.
 These generic joined/left records share the application event order; Fluid identity and quorum interpretation remain in the driver.
@@ -87,7 +89,7 @@ The server owns document runtime management, including opening and sharing seque
 Snapshot participants may observe only (`ReadOnly`), let Sea select a publisher (`SeaSelected`), or use application-owned election (`ClientSelected`).
 Client-selected publishers suppress Sea selection.
 Selection grants publication authority; it does not schedule snapshot generation.
-The [session contracts](crates/sea-core/src/session.rs) define lifecycle, retry, and publication rules.
+The [session contracts](crates/sea-core/src/session.rs) define lifecycle, recovery, and publication rules.
 
 ## Optional Session Decorators
 

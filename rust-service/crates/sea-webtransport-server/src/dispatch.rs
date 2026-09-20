@@ -8,9 +8,7 @@ use futures_util::{StreamExt as _, stream};
 use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, ErrorKind, Event,
     EventPosition, MonitoredStreamItem, MonitoredStreamStatus,
-    archive::{
-        EventSubmission, OperationId, SnapshotParticipation as ArchiveSnapshotParticipation,
-    },
+    archive::{EventSubmission, SnapshotParticipation as ArchiveSnapshotParticipation},
     session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
     storage::{LoadStart, Snapshot, StorageHandle},
 };
@@ -81,7 +79,6 @@ where
         let response = match request {
             protocol::Request::Submit { .. }
             | protocol::Request::AnnounceMembership { .. }
-            | protocol::Request::ResolveSubmission { .. }
             | protocol::Request::Close => match self.request_inner(request).await {
                 Ok(response) | Err(response) => response,
             },
@@ -243,15 +240,10 @@ where
                     position: position.get(),
                 })
             }
-            protocol::Request::Submit {
-                operation,
-                reference,
-                event,
-            } => {
+            protocol::Request::Submit { reference, event } => {
                 let receipt = self
                     .session
                     .submit(EventSubmission {
-                        operation_id: operation_id(operation)?,
                         reference: reference.map(EventPosition::new),
                         event: event_from_wire(event),
                     })
@@ -259,16 +251,6 @@ where
                     .map_err(error_response)?;
                 Ok(protocol::Response::EventCommitted {
                     position: receipt.get(),
-                })
-            }
-            protocol::Request::ResolveSubmission { operation } => {
-                let receipt = self
-                    .session
-                    .resolve_submission(&operation_id(operation)?)
-                    .await
-                    .map_err(error_response)?;
-                Ok(protocol::Response::SubmissionResolved {
-                    position: receipt.map(EventPosition::get),
                 })
             }
             protocol::Request::GetSnapshot { id } => {
@@ -388,15 +370,11 @@ fn session_event_to_wire(event: &sea_core::archive::SessionCommittedEvent) -> pr
         position: event.committed.position.get(),
         author: event.author_id.as_bytes().to_vec(),
         session: event.session_id.as_bytes().to_vec(),
-        operation: event.operation_id.as_bytes().to_vec(),
+
         reference: event.reference.map(EventPosition::get),
         minimum_reference: event.minimum_reference.map(EventPosition::get),
         event: event_to_wire(&event.committed.event),
     }))
-}
-
-fn operation_id(value: Vec<u8>) -> Result<OperationId, protocol::Response> {
-    OperationId::new(Bytes::from(value)).map_err(|_| invalid("operation identity is empty"))
 }
 
 fn event_from_wire(event: protocol::Event) -> Event {
@@ -525,12 +503,11 @@ mod tests {
                 metadata: Vec::new(),
             })
             .await;
-        for operation in [Vec::new(), b"later".to_vec()] {
+        for reference in [Some(u64::MAX), None] {
             assert!(matches!(
                 dispatcher
                     .author_request(protocol::Request::Submit {
-                        operation,
-                        reference: None,
+                        reference,
                         event: protocol::Event {
                             payload: Vec::new(),
                             blob_tree: None
@@ -602,7 +579,6 @@ mod tests {
         };
         let protocol::Response::EventCommitted { position } = dispatcher
             .author_request(protocol::Request::Submit {
-                operation: b"initial".to_vec(),
                 reference: None,
                 event: protocol::Event {
                     payload: Vec::new(),
@@ -676,7 +652,6 @@ mod tests {
 
         let protocol::Response::EventCommitted { position } = dispatcher
             .author_request(protocol::Request::Submit {
-                operation: b"operation".to_vec(),
                 reference: None,
                 event: protocol::Event {
                     payload: b"event".to_vec(),
@@ -688,16 +663,6 @@ mod tests {
             panic!("submission should commit");
         };
         assert!(position > 0);
-        assert_eq!(
-            dispatcher
-                .author_request(protocol::Request::ResolveSubmission {
-                    operation: b"operation".to_vec(),
-                })
-                .await,
-            protocol::Response::SubmissionResolved {
-                position: Some(position),
-            }
-        );
 
         let mut load = dispatcher.event_stream(None).await.expect("load stream");
         assert!(matches!(

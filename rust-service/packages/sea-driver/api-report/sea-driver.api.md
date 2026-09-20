@@ -47,7 +47,6 @@ export interface MinimalWasmDriverOptions {
 
 // @internal
 export interface PendingSubmission {
-    readonly identity: Uint8Array;
     readonly message: IDocumentMessage;
     readonly session: Uint8Array;
 }
@@ -64,7 +63,6 @@ export interface ProjectedOperation {
     readonly reference?: Uint8Array;
     readonly sequenceNumber: bigint;
     readonly session: Uint8Array;
-    readonly submission: Uint8Array;
     readonly writer: Uint8Array;
 }
 
@@ -186,14 +184,13 @@ export interface SeaDriverClient {
     publishSummary(entries: readonly SummaryEntry[]): Promise<SummaryPublication>;
     readProjected(after?: Uint8Array): Promise<ProjectedReadPage>;
     reconnect(...args: readonly unknown[]): void | Promise<void>;
-    resolveSubmission(submission: Uint8Array): Promise<SubmissionResolution>;
     snapshot(id: Uint8Array): Promise<{
         readonly id: Uint8Array;
         readonly root: Uint8Array;
         readonly atEvent?: Uint8Array;
     } | undefined>;
     stageSnapshotRoot?(expectedParent: Uint8Array | undefined, atEvent: Uint8Array | undefined, root: Uint8Array): Promise<Uint8Array>;
-    submitEvent(submission: Uint8Array, localSequenceNumber: number, payload: Uint8Array, referencePosition?: Uint8Array): Promise<Uint8Array>;
+    submitEvent(payload: Uint8Array, referencePosition?: Uint8Array): Promise<Uint8Array>;
     subscribeProjected(after?: Uint8Array): ProjectedOperationSubscription | Promise<ProjectedOperationSubscription>;
     uploadBlob(payload: Uint8Array): Promise<BlobUpload>;
 }
@@ -226,10 +223,9 @@ export class SeaSessionDriverClient implements SeaDriverClient {
     publishSummary(entries: readonly SummaryEntry[]): Promise<SummaryPublication>;
     readProjected(after?: Uint8Array): Promise<ProjectedReadPage>;
     reconnect(..._args: readonly unknown[]): Promise<void>;
-    resolveSubmission(submission: Uint8Array): Promise<SubmissionResolution>;
     snapshot(id: Uint8Array): ReturnType<SeaDriverClient["snapshot"]>;
     stageSnapshotRoot(expectedParent: Uint8Array | undefined, atEvent: Uint8Array | undefined, root: Uint8Array): Promise<Uint8Array>;
-    submitEvent(submission: Uint8Array, localSequenceNumber: number, payload: Uint8Array, referencePosition?: Uint8Array): Promise<Uint8Array>;
+    submitEvent(payload: Uint8Array, referencePosition?: Uint8Array): Promise<Uint8Array>;
     subscribeProjected(after?: Uint8Array): Promise<ProjectedOperationSubscription>;
     uploadBlob(payload: Uint8Array): Promise<BlobUpload>;
 }

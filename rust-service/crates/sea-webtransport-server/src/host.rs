@@ -554,7 +554,7 @@ mod tests {
     use futures_util::StreamExt as _;
     use sea_core::{
         BlobDirectory, BlobTreeId, Event, EventPosition,
-        archive::{AuthorId, EventSubmission, OperationId, SessionId, SnapshotParticipation},
+        archive::{AuthorId, EventSubmission, SessionId, SnapshotParticipation},
         session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
         storage::{LoadStart, Snapshot, StorageHandle},
     };
@@ -972,7 +972,6 @@ mod tests {
         };
         let protocol::Response::EventCommitted { position } = first_connection
             .author_request(protocol::Request::Submit {
-                operation: b"initialize".to_vec(),
                 reference: None,
                 event: protocol::Event {
                     payload: b"initialization".to_vec(),
@@ -1061,8 +1060,8 @@ mod tests {
         first_connection.connection_closed(false).await;
         assert!(matches!(
             first_connection
-                .author_request(protocol::Request::ResolveSubmission {
-                    operation: b"closed-author".to_vec(),
+                .author_request(protocol::Request::AnnounceMembership {
+                    metadata: Vec::new(),
                 })
                 .await,
             protocol::Response::Error {
@@ -1164,8 +1163,8 @@ mod tests {
         observer.connection_closed(false).await;
         assert!(matches!(
             connection
-                .author_request(protocol::Request::ResolveSubmission {
-                    operation: b"after-close".to_vec(),
+                .author_request(protocol::Request::AnnounceMembership {
+                    metadata: Vec::new(),
                 })
                 .await,
             protocol::Response::Error {
@@ -1290,7 +1289,6 @@ mod tests {
             }
             let receipt = client
                 .submit(EventSubmission {
-                    operation_id: OperationId::new(Bytes::from_static(b"native-event")).unwrap(),
                     reference: None,
                     event: Event {
                         payload: Bytes::from_static(b"native-payload"),
@@ -1461,8 +1459,8 @@ mod tests {
         send_raw_request(
             &mut send,
             3,
-            protocol::Request::ResolveSubmission {
-                operation: b"wrong-logical-stream".to_vec(),
+            protocol::Request::AnnounceMembership {
+                metadata: Vec::new(),
             },
         )
         .await;
@@ -1559,7 +1557,6 @@ mod tests {
         certificate_hash: wtransport::tls::Sha256Digest,
         client: &NativeSeaClient,
     ) -> EventPosition {
-        let operation = OperationId::new(Bytes::from_static(b"lost-event-ack")).unwrap();
         let (_endpoint, connection) = raw_connection(address, certificate_hash).await;
         let (authority, _events) = open_raw_event_stream(
             &connection,
@@ -1584,7 +1581,6 @@ mod tests {
             &mut send,
             3,
             protocol::Request::Submit {
-                operation: operation.as_bytes().to_vec(),
                 reference: None,
                 event: protocol::Event {
                     payload: b"committed-without-ack".to_vec(),
@@ -1597,12 +1593,20 @@ mod tests {
         drop(receive);
         connection.close(0_u32.into(), b"response abandoned");
         timeout(Duration::from_secs(2), async {
-            loop {
-                if let Some(receipt) = client.resolve_submission(&operation).await.unwrap() {
-                    break receipt;
+            let mut history = client.read(None, None);
+            while let Some(item) = history.next().await {
+                if let sea_core::MonitoredStreamItem::Item(event) = item.unwrap()
+                    && event.session_id.as_bytes().as_ref() == b"submission-session"
+                    && event.kind == sea_core::archive::SessionEventKind::Application
+                {
+                    assert_eq!(
+                        event.committed.event.payload.as_ref(),
+                        b"committed-without-ack"
+                    );
+                    return event.committed.position;
                 }
-                tokio::task::yield_now().await;
             }
+            panic!("history ended before committed submission");
         })
         .await
         .expect("submission should remain resolvable after acknowledgement loss")

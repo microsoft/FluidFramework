@@ -27,7 +27,8 @@ A **logical stream** is one persistent bidirectional byte stream with a single r
 A **client** owns one transport connection and the shared state for its logical streams.
 The **protocol** is the versioned frame and message contract, not the server implementation or application adapter.
 
-Protocol version 8 adds the signal role and optional best-effort datagrams, retaining the durable monotonic reference floor introduced in version 7.
+Protocol version 9 removes operation IDs and resolution messages while retaining signals and the durable monotonic reference floor.
+Equal submissions are new events; recovery uses ordered session history through the terminal departure.
 Rebuild client and server together; earlier protocol versions are not compatible.
 Documents use backend-assigned opaque IDs.
 Creation supplies no document ID; the open response returns the ID to retain for subsequent sessions.

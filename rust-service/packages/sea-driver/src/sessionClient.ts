@@ -25,7 +25,6 @@ import type {
 	ProjectedOperationSubscription,
 	ProjectedReadPage,
 	SeaDriverClient,
-	SubmissionResolution,
 	SummaryEntry,
 	SummaryPublication,
 } from "./wasmClient.js";
@@ -64,8 +63,6 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	private readonly positionSequences = new Map<bigint, bigint>();
 	/** Reverse mapping used by Fluid reference sequence numbers. */
 	private readonly sequencePositions = new Map<bigint, bigint>();
-	/** Local submission metadata retained across membership changes. */
-	private readonly operationLocalSequences = new Map<string, bigint>();
 	/** Next non-initialization Fluid sequence number. */
 	private nextSequence = 1n;
 	/** Current document membership, independent of the factory's shared service. */
@@ -261,17 +258,14 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		return this.current().openSignals(member);
 	}
 
-	/** Submits serialized Fluid data with its original operation identity.
+	/** Submits serialized Fluid data as a new event.
 	 * Published summary proposals receive a separate durable adapter-owned acknowledgment.
 	 * An interrupted acknowledgment is never retried implicitly.
 	 */
 	public async submitEvent(
-		submission: Uint8Array,
-		localSequenceNumber: number,
 		payload: Uint8Array,
 		referencePosition?: Uint8Array,
 	): Promise<Uint8Array> {
-		this.operationLocalSequences.set(bytesKey(submission), BigInt(localSequenceNumber));
 		const session = this.current();
 		try {
 			const message = JSON.parse(decoder.decode(payload)) as {
@@ -296,11 +290,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 					throw new Error("summary proposal must reference a published snapshot");
 				}
 			}
-			const position = await session.submit(
-				submission,
-				decodePosition(referencePosition),
-				payload,
-			);
+			const position = await session.submit(decodePosition(referencePosition), payload);
 			if (isSummary) {
 				if (this.session !== session) {
 					throw new Error("summary publication requires its original session");
@@ -319,9 +309,6 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 				await this.readProjectedFrom(session);
 				const proposalSequence = Number(this.sequence(position));
 				await session.submit(
-					encoder.encode(
-						JSON.stringify({ seaFluid: "summaryAck", proposal: bytesKey(submission) }),
-					),
 					position,
 					encoder.encode(
 						JSON.stringify({
@@ -402,7 +389,6 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 				throw new Error("a snapshot must reference a known application position");
 			}
 			position = await this.current().submit(
-				encoder.encode("fluid-initialize-v1"),
 				undefined,
 				encoder.encode(JSON.stringify({ seaFluid: "initialize", version: 1 })),
 				{ kind: "directory", bytes: root },
@@ -477,20 +463,6 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 			},
 			cancel: () => stream.cancel(),
 		};
-	}
-
-	/** Resolves ambiguity without retrying or changing an operation identity. */
-	public async resolveSubmission(submission: Uint8Array): Promise<SubmissionResolution> {
-		const receipt = await this.current().resolveSubmission(submission);
-		if (receipt !== undefined && !this.positionSequences.has(receipt))
-			await this.readProjected();
-		return receipt === undefined
-			? { kind: "notCommitted" }
-			: {
-					kind: "committed",
-					position: encodePosition(receipt),
-					sequenceNumber: this.sequence(receipt),
-				};
 	}
 
 	/** Uploads an immutable blob without claiming backend deduplication measurements. */
@@ -625,10 +597,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 				: { minimumReference: encodePosition(item.minimumReference) }),
 			writer: item.author,
 			session: item.session,
-			submission: item.operation,
-			localSequenceNumber:
-				this.operationLocalSequences.get(bytesKey(item.operation)) ??
-				BigInt(message.clientSequenceNumber ?? 0),
+			localSequenceNumber: BigInt(message.clientSequenceNumber ?? 0),
 			...(item.reference === undefined ? {} : { reference: encodePosition(item.reference) }),
 			payload: item.payload,
 		};
@@ -674,7 +643,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	}
 }
 
-/** Converts an opaque operation identity to a stable map key. */
+/** Converts opaque identity bytes to a stable map key. */
 function bytesKey(bytes: Uint8Array): string {
 	return Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
 }

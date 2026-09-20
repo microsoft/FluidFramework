@@ -9,12 +9,12 @@
 //!
 //! [`crate::run_session_conformance`] checks the implementation-independent session workflow
 //! over two memberships: explicit initialization, conditional snapshot publication,
-//! snapshot-plus-live loading, stable submission retries, ordered replay, and isolated close.
+//! snapshot-plus-live loading, distinct equal submissions, ordered replay, and isolated close.
 //! Cancellation, reconciliation failures, publisher fencing, and concrete runtime ownership remain
 //! implementation responsibilities and require owner-local tests.
 
 use sea_core::{
-    archive::{EventSubmission, OperationId, SnapshotParticipation},
+    archive::{EventSubmission, SnapshotParticipation},
     session::SeaSession,
 };
 
@@ -29,7 +29,6 @@ pub async fn run_session_conformance<Session: SeaSession>(first: &Session, secon
         .expect("state");
     let initialization = first
         .submit(EventSubmission {
-            operation_id: OperationId::new(Bytes::from_static(b"initialize")).expect("identity"),
             reference: None,
             event: Event {
                 payload: Bytes::from_static(b"initialize"),
@@ -60,8 +59,7 @@ pub async fn run_session_conformance<Session: SeaSession>(first: &Session, secon
         initialization
     );
     assert_eq!(loaded.events.progress().previous, Some(initialization));
-    let request = EventSubmission {
-        operation_id: OperationId::new(Bytes::from_static(b"followup")).expect("identity"),
+    let mut request = EventSubmission {
         reference: Some(initialization),
         event: Event {
             payload: Bytes::new(),
@@ -72,17 +70,23 @@ pub async fn run_session_conformance<Session: SeaSession>(first: &Session, secon
         .submit(request.clone())
         .await
         .expect("second session submission");
-    assert_eq!(second.submit(request).await.expect("retry"), position);
-    assert_eq!(
-        next_data(&mut loaded.events)
-            .await
-            .expect("live suffix")
-            .committed
-            .position,
-        position
-    );
-    let mut bounded = first.read(None, Some(position));
-    for expected in [initialization, position] {
+    let repeated = second
+        .submit(request.clone())
+        .await
+        .expect("equal independent submission");
+    assert!(repeated > position);
+    for expected in [position, repeated] {
+        assert_eq!(
+            next_data(&mut loaded.events)
+                .await
+                .expect("live suffix")
+                .committed
+                .position,
+            expected
+        );
+    }
+    let mut bounded = first.read(None, Some(repeated));
+    for expected in [initialization, position, repeated] {
         assert_eq!(
             next_data(&mut bounded)
                 .await
@@ -98,15 +102,9 @@ pub async fn run_session_conformance<Session: SeaSession>(first: &Session, secon
         .await
         .expect("exact retry after publication");
     first.close().await.expect("close first membership");
+    request.reference = Some(position);
     let final_position = second
-        .submit(EventSubmission {
-            operation_id: OperationId::new(Bytes::from_static(b"after-close")).expect("identity"),
-            reference: Some(position),
-            event: Event {
-                payload: Bytes::new(),
-                blob_tree: None,
-            },
-        })
+        .submit(request)
         .await
         .expect("other session survives");
     assert_eq!(

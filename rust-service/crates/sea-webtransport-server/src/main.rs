@@ -13,6 +13,10 @@ use sea_webtransport_server::{
 use wtransport::{Identity, tls::Sha256DigestFmt};
 
 #[tokio::main]
+#[expect(
+    clippy::too_many_lines,
+    reason = "Keep sequential server setup and the shutdown select together"
+)]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut arguments = env::args().skip(1);
     let bind: SocketAddr = arguments

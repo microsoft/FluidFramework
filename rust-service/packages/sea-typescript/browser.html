@@ -65,8 +65,7 @@ window.__seaPackageResult = (async () => {
             }
             const root = await writer.putDirectory([{ name: "state", child: blob }]);
             assert((await reader.getDirectory(root))[0].name === "state", "directory did not round trip");
-            const position = await writer.submit(encode("operation"), undefined, payload, root);
-            assert(await writer.resolveSubmission(encode("operation")) === position, "submission receipt missing");
+            const position = await writer.submit(undefined, payload, root);
             const delivery = await nextMatching(live, (item) => item.kind === "event");
             assert(delivery.position === position, "live peer delivery position mismatch");
             assert(new TextDecoder().decode(delivery.payload) === new TextDecoder().decode(payload), "live peer delivery payload mismatch");
@@ -126,7 +125,7 @@ window.__seaPackageResult = (async () => {
                 assert(isolatedError?.kind === "Rejected", "initialized bundle shared independent memory storage");
                 const localBlob = await localWriter.putBlob(payload);
                 assert(new TextDecoder().decode(await localReader.getBlob(localBlob)) === new TextDecoder().decode(payload), "local blob mismatch");
-                const localPosition = await localWriter.submit(encode("local-operation"), undefined, payload, localBlob);
+                const localPosition = await localWriter.submit(undefined, payload, localBlob);
                 const history = localReader.read(undefined, localPosition);
                 try {
                     const item = await nextMatching(history, (item) => item.kind === "event");

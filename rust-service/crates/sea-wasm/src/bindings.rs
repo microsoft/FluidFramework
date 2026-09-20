@@ -16,9 +16,8 @@ use futures_util::{
 use js_sys::{Array, Object, Reflect, Uint8Array};
 use sea_core::{
     AuthorId, BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, Event,
-    EventPosition, EventSubmission, MonitoredStreamItem, OperationId,
-    SeaSession as SessionContract, SessionId, SessionStream, SnapshotCoordination,
-    SnapshotParticipation,
+    EventPosition, EventSubmission, MonitoredStreamItem, SeaSession as SessionContract, SessionId,
+    SessionStream, SnapshotCoordination, SnapshotParticipation,
     storage::{LoadStart, Snapshot, StorageHandle},
 };
 use wasm_bindgen::prelude::*;
@@ -305,21 +304,14 @@ impl SeaSession {
             .map_err(|error| service_error(&error))
     }
 
-    /// Submits opaque application data under a stable operation identity.
+    /// Submits opaque application data in session order.
     pub async fn submit(
         &self,
-        operation: &[u8],
         reference: Option<u64>,
         payload: &[u8],
         blob_tree: Option<SeaTreeReference>,
     ) -> Result<u64, JsValue> {
-        let prepared = (|| {
-            let operation_id = OperationId::new(Bytes::copy_from_slice(operation))
-                .map_err(|_| invalid("operation identity must not be empty"))?;
-            let tree = blob_tree.as_ref().map(tree_reference).transpose()?;
-            Ok::<_, JsValue>((operation_id, tree))
-        })();
-        let (operation_id, tree) = match prepared {
+        let tree = match blob_tree.as_ref().map(tree_reference).transpose() {
             Ok(prepared) => prepared,
             Err(error) => {
                 let _ = self.inner.close().await;
@@ -328,7 +320,6 @@ impl SeaSession {
         };
         self.inner
             .submit(EventSubmission {
-                operation_id,
                 reference: reference.map(EventPosition::new),
                 event: Event {
                     payload: Bytes::copy_from_slice(payload),
@@ -338,19 +329,6 @@ impl SeaSession {
             .await
             .map(EventPosition::get)
             .map_err(|error| service_error(&error))
-    }
-
-    /// Resolves a stable operation without implicitly resubmitting it.
-    #[wasm_bindgen(js_name = resolveSubmission)]
-    pub async fn resolve_submission(&self, operation: &[u8]) -> Result<Option<u64>, JsValue> {
-        let operation = OperationId::new(Bytes::copy_from_slice(operation))
-            .map_err(|_| invalid("operation identity must not be empty"))?;
-        Ok(self
-            .inner
-            .resolve_submission(&operation)
-            .await
-            .map_err(|error| service_error(&error))?
-            .map(EventPosition::get))
     }
 
     /// Opens monitored bounded or live event history.
@@ -542,11 +520,6 @@ fn event_result(
                 &result,
                 "session",
                 Uint8Array::from(event.session_id.as_bytes().as_ref()),
-            )?;
-            set(
-                &result,
-                "operation",
-                Uint8Array::from(event.operation_id.as_bytes().as_ref()),
             )?;
             set(
                 &result,

@@ -37,7 +37,6 @@ export interface SeaEvent {
     readonly eventType: "application" | "joined" | "left";
     readonly kind: "event";
     readonly minimumReference?: bigint;
-    readonly operation: Uint8Array;
     readonly payload: Uint8Array;
     readonly position: bigint;
     readonly reference?: bigint;
@@ -108,8 +107,7 @@ export interface SeaSession {
     putBlob(payload: Uint8Array): Promise<SeaTreeId>;
     putDirectory(entries: readonly SeaDirectoryEntry[]): Promise<SeaTreeId>;
     read(after?: bigint, stopAfter?: bigint): SeaStream<SeaLoadResult>;
-    resolveSubmission(operation: Uint8Array): Promise<bigint | undefined>;
-    submit(operation: Uint8Array, reference: bigint | undefined, payload: Uint8Array, blobTree?: SeaTreeId): Promise<bigint>;
+    submit(reference: bigint | undefined, payload: Uint8Array, blobTree?: SeaTreeId): Promise<bigint>;
 }
 
 // @internal

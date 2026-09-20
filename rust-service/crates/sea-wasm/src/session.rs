@@ -9,9 +9,7 @@ use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, ErrorKind, EventPosition,
     SeaArchive, SeaAuthorSession, SeaService, SeaSession, SeaSnapshotCoordinator, SessionLoad,
     SnapshotCoordination,
-    archive::{
-        EventSubmission, OperationId, SessionCommittedEvent, SessionStream, SnapshotParticipation,
-    },
+    archive::{EventSubmission, SessionCommittedEvent, SessionStream, SnapshotParticipation},
     map_monitored_stream,
     storage::{ArchiveStream, LoadStart, Snapshot, StorageHandle},
 };
@@ -234,16 +232,6 @@ impl<Session: SeaSession> SeaAuthorSession for SessionAdapter<Session> {
             .map_err(|error| BindingError::from_error(&error))
     }
 
-    async fn resolve_submission(
-        &self,
-        operation: &OperationId,
-    ) -> Result<Option<EventPosition>, Self::Error> {
-        self.inner
-            .resolve_submission(operation)
-            .await
-            .map_err(|error| BindingError::from_error(&error))
-    }
-
     async fn close(&self) -> Result<(), Self::Error> {
         self.inner
             .close()
@@ -325,7 +313,6 @@ mod tests {
         };
         assert_eq!(session.get_blob(blob_id).await.unwrap(), payload);
         let submission = EventSubmission {
-            operation_id: OperationId::new(Bytes::from_static(b"operation")).unwrap(),
             reference: None,
             event: Event {
                 payload: payload.clone(),
@@ -333,16 +320,17 @@ mod tests {
             },
         };
         let position = session.submit(submission.clone()).await.unwrap();
-        assert_eq!(session.submit(submission).await.unwrap(), position);
-        let mut events = session.read(None, Some(position));
-        let mut observed = false;
+        let second = session.submit(submission).await.unwrap();
+        assert!(second > position);
+        let mut events = session.read(None, Some(second));
+        let mut observed = Vec::new();
         while let Some(item) = events.next().await {
             if let sea_core::MonitoredStreamItem::Item(event) = item.unwrap() {
                 assert_eq!(event.committed.event.payload, payload);
-                observed = true;
+                observed.push(event.committed.position);
             }
         }
-        assert!(observed);
+        assert_eq!(observed, vec![position, second]);
         let mut coordination = session
             .coordinate_snapshots(SnapshotParticipation::ClientSelected)
             .await

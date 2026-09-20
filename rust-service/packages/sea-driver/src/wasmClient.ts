@@ -24,8 +24,6 @@ export interface ProjectedOperation {
 	readonly writer: Uint8Array;
 	/** Writer session in which the operation was submitted. */
 	readonly session: Uint8Array;
-	/** Stable submission identity used for retry resolution. */
-	readonly submission: Uint8Array;
 	/** Writer-local sequence number carried by the submission. */
 	readonly localSequenceNumber: bigint;
 	/** Service position the submission referenced, or the initial position when absent. */
@@ -64,7 +62,7 @@ export interface ProjectedOperationSubscription {
  */
 export type SubmissionResolution =
 	| {
-			/** Indicates that the service found the submitted identity in its log. */
+			/** Indicates that terminal history contains the submission's session ordinal. */
 			readonly kind: "committed";
 			/** Opaque committed position assigned to the submission. */
 			readonly position: Uint8Array;
@@ -138,12 +136,7 @@ export interface SeaDriverClient {
 		resumeAfter?: Uint8Array,
 	): Promise<void>;
 	/** Submits one opaque event and returns its canonical position. */
-	submitEvent(
-		submission: Uint8Array,
-		localSequenceNumber: number,
-		payload: Uint8Array,
-		referencePosition?: Uint8Array,
-	): Promise<Uint8Array>;
+	submitEvent(payload: Uint8Array, referencePosition?: Uint8Array): Promise<Uint8Array>;
 	/** Returns the latest snapshot publication and root. */
 	latestSnapshot(): Promise<
 		| {
@@ -182,8 +175,6 @@ export interface SeaDriverClient {
 	subscribeProjected(
 		after?: Uint8Array,
 	): ProjectedOperationSubscription | Promise<ProjectedOperationSubscription>;
-	/** Resolves whether a stable submission identity committed after an ambiguous failure. */
-	resolveSubmission(submission: Uint8Array): Promise<SubmissionResolution>;
 	/** Uploads an immutable blob and returns its content digest. */
 	uploadBlob(payload: Uint8Array): Promise<BlobUpload>;
 	/** Fetches an immutable blob by content digest. */
