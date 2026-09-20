@@ -102,6 +102,10 @@ pnpm --dir rust-service/tests/sea-integration-tests run bench:build
 
 The build uses Fluid build's dependency graph and declarative WASM task. Unchanged TypeScript dependencies, browser bundles, Rust crates, and generated WASM packages reuse their normal build caches. The installed `wasm-bindgen` CLI version must match the workspace crate version.
 
+Comparison browser bundles are minified and define `process.env.NODE_ENV` as `production` for every backend.
+The native Sea service and generated WASM use Cargo release builds; the WASM build also enables SIMD.
+Results from earlier unminified bundles are not interchangeable with this configuration.
+
 Tinylicious belongs to the separate Routerlicious pnpm workspace. Install that workspace once before running the unfiltered correctness suite or selecting the Tinylicious performance case:
 
 ```bash
