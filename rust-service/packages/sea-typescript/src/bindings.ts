@@ -347,17 +347,16 @@ export function wrapSession(
 					tree.free();
 				}
 			}),
-		submit: (operation, reference, payload, blobTree) =>
+		submit: (reference, payload, blobTree) =>
 			invokeAuthor(async () => {
 				const tree =
 					blobTree === undefined ? undefined : generatedIdentity(bindings, blobTree);
 				try {
-					return await session.submit(operation, reference, payload, tree);
+					return await session.submit(reference, payload, tree);
 				} finally {
 					tree?.free();
 				}
 			}),
-		resolveSubmission: (operation) => invoke(() => session.resolveSubmission(operation)),
 		read(after, stopAfter) {
 			requireOpen();
 			return wrapStream(session.read(after, stopAfter), copyResult);

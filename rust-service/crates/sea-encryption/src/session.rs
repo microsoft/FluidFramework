@@ -5,10 +5,8 @@
 //! through in the ciphertext store's identity space. Reads decrypt lazily and preserve monitored
 //! progress and underlying error classifications.
 //!
-//! Encryption is randomized, so an exact retry cannot generate fresh ciphertext and rely on the
-//! inner operation identity. The adapter resolves the committed operation, verifies its plaintext,
-//! tree, and reference, then resubmits the original ciphertext so the inner session rechecks current
-//! author authority. Missing settlement or ambiguous errors are never converted into blind retries.
+//! Each submission is encrypted independently. Ambiguous outcomes terminate append authority;
+//! clients recover the accepted prefix through the session's terminal departure before resubmission.
 
 use crate::{
     EncryptionError, EncryptionSession, KeyProvider, NonceSource, PayloadContext, decrypt_payload,
@@ -18,10 +16,8 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::StreamExt;
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, EventPosition, MonitoredStreamItem,
-    archive::{
-        EventSubmission, OperationId, SessionCommittedEvent, SessionStream, SnapshotParticipation,
-    },
+    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, EventPosition,
+    archive::{EventSubmission, SessionCommittedEvent, SessionStream, SnapshotParticipation},
     map_monitored_stream,
     session::{
         SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator, SessionLoad, SnapshotCoordination,
@@ -69,46 +65,6 @@ impl<Session: SeaAuthorSession, Keys: KeyProvider + Clone + 'static, Nonces: Non
         }
         *terminal = true;
         Ok(terminal)
-    }
-
-    /// Resolves settled input, preserving ciphertext so the inner author policy can validate the retry.
-    async fn committed_retry(
-        &self,
-        submission: &EventSubmission,
-    ) -> Result<Option<EventSubmission>, EncryptionError<Session::Error>> {
-        let Some(position) = self
-            .inner
-            .resolve_submission(&submission.operation_id)
-            .await
-            .map_err(EncryptionError::Store)?
-        else {
-            return Ok(None);
-        };
-        let after = position
-            .get()
-            .checked_sub(1)
-            .filter(|value| *value != 0)
-            .map(EventPosition::new);
-        let mut events = self.inner.read(after, Some(position));
-        while let Some(item) = events.next().await {
-            let MonitoredStreamItem::Item(committed) = item.map_err(EncryptionError::Store)? else {
-                continue;
-            };
-            let ciphertext = committed.committed.event.payload.clone();
-            let plaintext = decrypt_payload(&self.keys, &ciphertext, PayloadContext::Record)?;
-            if committed.committed.position != position
-                || committed.operation_id != submission.operation_id
-                || committed.reference != submission.reference
-                || committed.committed.event.blob_tree != submission.event.blob_tree
-                || plaintext != submission.event.payload
-            {
-                return Err(EncryptionError::OperationConflict);
-            }
-            let mut retry = submission.clone();
-            retry.event.payload = ciphertext;
-            return Ok(Some(retry));
-        }
-        Err(EncryptionError::OperationConflict)
     }
 }
 
@@ -223,13 +179,6 @@ impl<Session: SeaAuthorSession, Keys: KeyProvider + Clone + 'static, Nonces: Non
     async fn submit(&self, submission: EventSubmission) -> Result<EventPosition, Self::Error> {
         let mut terminal = self.begin_append().await?;
         let result = async {
-            if let Some(retry) = self.committed_retry(&submission).await? {
-                return self
-                    .inner
-                    .submit(retry)
-                    .await
-                    .map_err(EncryptionError::Store);
-            }
             let mut encoded = submission.clone();
             encoded.event.payload = encrypt_payload(
                 &self.keys,
@@ -249,15 +198,6 @@ impl<Session: SeaAuthorSession, Keys: KeyProvider + Clone + 'static, Nonces: Non
             *terminal = false;
         }
         result
-    }
-    async fn resolve_submission(
-        &self,
-        operation: &OperationId,
-    ) -> Result<Option<EventPosition>, Self::Error> {
-        self.inner
-            .resolve_submission(operation)
-            .await
-            .map_err(EncryptionError::Store)
     }
     async fn close(&self) -> Result<(), Self::Error> {
         *self.author_terminal.lock().await = true;
@@ -308,7 +248,7 @@ mod tests {
     use crate::tests::{CountingNonce, TestKeys};
     use futures_util::FutureExt;
     use sea_core::{
-        ClassifiedError, ErrorKind, Event,
+        Event, MonitoredStreamItem,
         archive::{AuthorId, SessionId},
         storage::SeaStorage,
     };
@@ -362,7 +302,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn retries_preserve_ciphertext_but_recheck_authority() {
+    async fn equal_submissions_encrypt_independently_and_recheck_authority() {
         let storage = MemoryStorage::new();
         let (_, view) = storage.create_view().await.unwrap();
         let runtime = LocalSequencer::<MemoryStorage>::recover(view)
@@ -386,7 +326,6 @@ mod tests {
             nonces.clone(),
         );
         let submission = EventSubmission {
-            operation_id: OperationId::new("stable").unwrap(),
             reference: None,
             event: Event {
                 payload: Bytes::from_static(b"plaintext"),
@@ -407,11 +346,8 @@ mod tests {
             keys.clone(),
             nonces.clone(),
         );
-        assert_eq!(
-            reconnected.submit(submission.clone()).await.unwrap(),
-            position
-        );
-        assert_eq!(calls.load(Ordering::Relaxed), 1);
+        assert!(reconnected.submit(submission.clone()).await.unwrap() > position);
+        assert_eq!(calls.load(Ordering::Relaxed), 2);
         let other = EncryptionSession::with_nonce_source(
             runtime
                 .open_session(
@@ -424,17 +360,13 @@ mod tests {
             keys,
             nonces,
         );
-        assert!(other.submit(submission.clone()).await.is_err());
+        assert!(other.submit(submission.clone()).await.unwrap() > position);
         let mut conflicting = submission;
         conflicting.event.payload = Bytes::from_static(b"changed");
-        assert_eq!(
-            reconnected.submit(conflicting).await.unwrap_err().kind(),
-            ErrorKind::Conflict
-        );
+        assert!(reconnected.submit(conflicting).await.unwrap() > position);
         assert!(
             first
                 .submit(EventSubmission {
-                    operation_id: OperationId::new("closed").unwrap(),
                     reference: None,
                     event: Event {
                         payload: Bytes::new(),
@@ -472,7 +404,6 @@ mod tests {
         };
         assert!(preparation.now_or_never().is_none());
         let submission = EventSubmission {
-            operation_id: OperationId::new("must-not-append").unwrap(),
             reference: None,
             event: Event {
                 payload: Bytes::new(),

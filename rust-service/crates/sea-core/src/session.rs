@@ -1,13 +1,13 @@
 //! Client-session contracts composed above an exclusive document-storage view.
 //!
 //! The traits separate direct content and history access ([`crate::session::SeaArchive`]),
-//! stable author submission identities ([`crate::session::SeaAuthorSession`]), and
+//! ordered author submissions ([`crate::session::SeaAuthorSession`]), and
 //! conditional snapshot publication ([`crate::session::SeaSnapshotCoordinator`]).
 //! [`crate::session::SeaSession`] is the convenience bound for implementations that provide
 //! all three facets.
 //!
 //! Storage supplies ordered archives and availability-bearing handles, but it does not implement
-//! membership, application-level deduplication, ambiguous-result reconciliation, or publisher
+//! membership, ambiguous-result reconciliation, or publisher
 //! selection. Session implementations own those policies and must keep received identities distinct
 //! from locally resolved [`crate::storage::StorageHandle`] values.
 //!
@@ -22,9 +22,7 @@ use bytes::Bytes;
 use crate::storage::{ArchiveStream, LoadStart, Snapshot, StorageHandle};
 use crate::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, EventPosition,
-    archive::{
-        EventSubmission, OperationId, SessionCommittedEvent, SessionStream, SnapshotParticipation,
-    },
+    archive::{EventSubmission, SessionCommittedEvent, SessionStream, SnapshotParticipation},
 };
 
 /// Selected state and a live stream of application events, without a captured event head.
@@ -106,30 +104,27 @@ pub trait SeaArchive: crate::SeaService {
 /// application-specific transformation. A lost acknowledgment is not evidence of rejection.
 /// Cancellation after admission also ends authority; close or subsequent runtime work drives
 /// settlement and departure. Cancellation before admission does not establish an accepted request.
+/// Clients identify their submissions by session and ordinal among that session's application events.
+/// Replay must cover the accepted prefix, or resume with its known application-event count.
+/// Committed events are identified by their immutable archive positions; equal inputs are distinct submissions.
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 pub trait SeaAuthorSession: SeaArchive {
     /// Publishes this membership and immutable public metadata in the ordered event archive.
     /// Exact retries return the original position; different metadata is rejected.
     /// Close, replacement, or recovery appends a service-authored departure before later mutation.
-    /// Membership records are not application submissions and cannot be resolved by operation ID.
+    /// Membership records do not occupy application-submission ordinals.
     /// Metadata is control data like author/session identities: payload decorators do not protect it.
     /// Sessions that never call this method produce no membership records.
     async fn announce_membership(&self, metadata: Bytes) -> Result<EventPosition, Self::Error>;
     /// Submits one event with the reference state used to construct its payload.
     /// Session order identifies the preceding local submissions; the reference identifies the
     /// sequenced history known to the author. Replay preserves both pieces of information.
-    /// An exact retry lookup by the same author can return an existing position after reconnect;
-    /// this is not application resubmission and must not append a duplicate event.
-    /// Identity reuse with different payload, tree, reference, or author is rejected.
+    /// Each call is a new submission, even when its input equals an earlier submission.
+    /// After failure, replay through the terminal departure before resubmitting the unaccepted suffix.
     /// Storage is never transparently retried. Returned ambiguity requires bounded reconciliation;
     /// cancellation does not establish settlement. Unsafe further mutations must wait or fail.
     async fn submit(&self, submission: EventSubmission) -> Result<EventPosition, Self::Error>;
-    /// Resolves a submission after establishing settlement, or fails when its outcome remains unknown.
-    async fn resolve_submission(
-        &self,
-        operation: &OperationId,
-    ) -> Result<Option<EventPosition>, Self::Error>;
     /// Idempotently closes this membership and its clones, without invalidating other sessions.
     /// For announced membership, success establishes a durable departure after its accepted prefix.
     /// If settlement is unknown, close must fail rather than publish a false completion barrier.

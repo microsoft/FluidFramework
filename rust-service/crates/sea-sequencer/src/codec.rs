@@ -1,6 +1,6 @@
 //! Private persisted submission encoding for the local sequencer.
 //!
-//! Each application event stores stable author, session, and operation identities, its explicit
+//! Each application event stores author and session identities, its explicit
 //! reference, the durable minimum-reference floor, and opaque application bytes. Blob-tree identity stays
 //! in the surrounding storage event so availability checks remain owned by the storage view.
 //!
@@ -12,17 +12,15 @@
 
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use sea_core::archive::SessionEventKind;
-use sea_core::{
-    AuthorId, CommittedEvent, Event, EventPosition, OperationId, SessionCommittedEvent, SessionId,
-};
+use sea_core::{AuthorId, CommittedEvent, Event, EventPosition, SessionCommittedEvent, SessionId};
 
 use crate::session::SessionError;
 
 /// Identifies the submission-only encoding.
-const MAGIC: &[u8; 5] = b"SEAQ3";
+const MAGIC: &[u8; 5] = b"SEAQ4";
 
 /// Identifies a service-authored membership envelope around submission-shaped metadata.
-const MEMBERSHIP_MAGIC: &[u8; 5] = b"SEAM2";
+const MEMBERSHIP_MAGIC: &[u8; 5] = b"SEAM3";
 
 /// Encodes an announced membership transition in the same ordered archive as submissions.
 pub(crate) fn encode_membership<Error>(
@@ -38,16 +36,8 @@ pub(crate) fn encode_membership<Error>(
         SessionEventKind::Left if metadata.is_empty() => 1,
         _ => return Err(SessionError::Rejected("invalid membership event")),
     };
-    let operation = OperationId::new(session.as_bytes().clone())
-        .map_err(|_| SessionError::Rejected("empty session identity"))?;
-    let submission = encode_submission::<Error>(
-        author,
-        session,
-        &operation,
-        reference,
-        minimum_reference,
-        metadata,
-    )?;
+    let submission =
+        encode_submission::<Error>(author, session, reference, minimum_reference, metadata)?;
     let mut encoded = BytesMut::new();
     encoded.extend_from_slice(MEMBERSHIP_MAGIC);
     encoded.put_u8(tag);
@@ -59,7 +49,6 @@ pub(crate) fn encode_membership<Error>(
 pub(crate) fn encode_submission<Error>(
     author: &AuthorId,
     session: &SessionId,
-    operation: &OperationId,
     reference: Option<EventPosition>,
     minimum_reference: Option<EventPosition>,
     payload: &[u8],
@@ -68,7 +57,6 @@ pub(crate) fn encode_submission<Error>(
     encoded.extend_from_slice(MAGIC);
     put_field(&mut encoded, author.as_bytes())?;
     put_field(&mut encoded, session.as_bytes())?;
-    put_field(&mut encoded, operation.as_bytes())?;
     put_position(&mut encoded, reference);
     put_position(&mut encoded, minimum_reference);
     put_field(&mut encoded, payload)?;
@@ -104,16 +92,11 @@ pub(crate) fn decode_committed<Error>(
         .map_err(|_| SessionError::Corrupt("empty author identity"))?;
     let session_id = SessionId::new(take_field(&mut bytes)?)
         .map_err(|_| SessionError::Corrupt("empty session identity"))?;
-    let operation_id = OperationId::new(take_field(&mut bytes)?)
-        .map_err(|_| SessionError::Corrupt("empty operation identity"))?;
     let reference = take_position(&mut bytes)?;
     let minimum_reference = take_position(&mut bytes)?;
     let payload = take_field(&mut bytes)?;
     if bytes.has_remaining() {
         return Err(SessionError::Corrupt("trailing submission bytes"));
-    }
-    if kind != SessionEventKind::Application && operation_id.as_bytes() != session_id.as_bytes() {
-        return Err(SessionError::Corrupt("invalid membership identity"));
     }
     if kind == SessionEventKind::Left && !payload.is_empty() {
         return Err(SessionError::Corrupt("departure contains metadata"));
@@ -129,7 +112,6 @@ pub(crate) fn decode_committed<Error>(
         },
         author_id,
         session_id,
-        operation_id,
         reference,
         minimum_reference,
     })
@@ -221,6 +203,10 @@ mod tests {
             trailing.push(0);
             record.event.payload = Bytes::from(trailing);
             assert!(decode_committed::<std::io::Error>(&record).is_err());
+            let mut previous_format = encoded.to_vec();
+            previous_format[..MEMBERSHIP_MAGIC.len()].copy_from_slice(b"SEAM2");
+            record.event.payload = Bytes::from(previous_format);
+            assert!(decode_committed::<std::io::Error>(&record).is_err());
         }
     }
 
@@ -229,7 +215,6 @@ mod tests {
         let encoded = encode_submission::<std::io::Error>(
             &AuthorId::new("author").unwrap(),
             &SessionId::new("session").unwrap(),
-            &OperationId::new("operation").unwrap(),
             Some(EventPosition::new(2)),
             None,
             b"payload",
@@ -256,6 +241,10 @@ mod tests {
         let mut extended = encoded.to_vec();
         extended.push(0);
         record.event.payload = Bytes::from(extended);
+        assert!(decode_committed::<std::io::Error>(&record).is_err());
+        let mut previous_format = encoded.to_vec();
+        previous_format[..MAGIC.len()].copy_from_slice(b"SEAQ3");
+        record.event.payload = Bytes::from(previous_format);
         assert!(decode_committed::<std::io::Error>(&record).is_err());
     }
 }

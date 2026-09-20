@@ -261,18 +261,12 @@ async function run() {
 	previousCoordination.cancel();
 	const load = await first.load();
 	const initialCaughtUp = await nextAwaiting(load);
-	const firstReceipt = await first.submit(
-		encoder.encode("browser-operation-1"),
-		undefined,
-		encoder.encode("first-payload"),
-	);
+	const firstReceipt = await first.submit(undefined, encoder.encode("first-payload"));
 	const firstStreamedReceipt = await first.submit(
-		encoder.encode("browser-operation-stream-1"),
 		firstReceipt,
 		encoder.encode("first-streamed-payload"),
 	);
 	const secondStreamedReceipt = await first.submit(
-		encoder.encode("browser-operation-stream-2"),
 		firstStreamedReceipt,
 		encoder.encode("second-streamed-payload"),
 	);
@@ -280,8 +274,6 @@ async function run() {
 		firstReceipt < firstStreamedReceipt && firstStreamedReceipt < secondStreamedReceipt,
 		"author-stream event positions did not increase",
 	);
-	const resolved = await first.resolveSubmission(encoder.encode("browser-operation-1"));
-	assert(resolved === firstReceipt, "submission resolution mismatch");
 	const firstLoaded = await nextEvent(load);
 	assert(firstLoaded.position === firstReceipt, "load omitted or reordered the first event");
 	assert(
@@ -374,7 +366,6 @@ async function run() {
 	const secondLoad = await second.load(secondStreamedReceipt);
 	const secondCaughtUp = await nextAwaiting(secondLoad);
 	const thirdStreamedReceipt = await first.submit(
-		encoder.encode("browser-operation-stream-3"),
 		secondStreamedReceipt,
 		encoder.encode("third-streamed-payload"),
 	);
@@ -397,7 +388,6 @@ async function run() {
 		"first load returned the wrong self-event payload",
 	);
 	const fourthStreamedReceipt = await first.submit(
-		encoder.encode("browser-operation-stream-4"),
 		thirdStreamedReceipt,
 		encoder.encode("fourth-streamed-payload"),
 	);
@@ -416,7 +406,6 @@ async function run() {
 		"first load omitted its consecutive self-event",
 	);
 	const secondReceipt = await second.submit(
-		encoder.encode("browser-operation-2"),
 		fourthStreamedReceipt,
 		encoder.encode("second-payload"),
 	);
@@ -467,11 +456,7 @@ async function run() {
 	await resumedSnapshots.next();
 	const resumedLoad = await first.load(secondReceipt);
 	await nextAwaiting(resumedLoad);
-	const resumedReceipt = await first.submit(
-		encoder.encode("browser-operation-resumed"),
-		secondReceipt,
-		encoder.encode("resumed-payload"),
-	);
+	const resumedReceipt = await first.submit(secondReceipt, encoder.encode("resumed-payload"));
 	const resumedLive = await nextEvent(resumedLoad);
 	assert(
 		resumedLive.position === resumedReceipt,

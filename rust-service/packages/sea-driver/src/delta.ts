@@ -112,14 +112,12 @@ export class SeaDeltaStorage implements IDocumentDeltaStorageService {
 }
 
 /**
- * Stable identity and payload retained until submission outcome is known.
+ * Session and message retained until submission outcome is known.
  * @internal
  */
 export interface PendingSubmission {
 	/** Original session whose terminal prefix determines acceptance. */
 	readonly session: Uint8Array;
-	/** Service-level submission identity used only for exact outcome resolution. */
-	readonly identity: Uint8Array;
 	/** Original Fluid message supplied to the application's suffix transformation. */
 	readonly message: IDocumentMessage;
 }
@@ -173,7 +171,10 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 	/** Submitted messages waiting for a contiguous local sequence prefix. */
 	private readonly queuedSubmissions = new Map<number, PendingSubmission>();
 	/** Full ordered attempt ledger, including acknowledged events needed for prefix proof. */
-	private readonly submitted: Pick<PendingSubmission, "identity" | "session">[] = [];
+	private readonly submitted: {
+		readonly session: Uint8Array;
+		readonly sequenceNumber: number;
+	}[] = [];
 	/** Exact pending suffix proven against terminal history in the current fresh session. */
 	private recoveredPending: ReadonlyMap<number, PendingSubmission> | undefined;
 	/** Next local sequence number eligible for submission. */
@@ -334,7 +335,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 		}
 	}
 
-	/** Allocates a new membership identity while retaining pending submission identities. */
+	/** Allocates a new membership identity while retaining the old session's pending messages. */
 	private renewSession(): void {
 		this.recoveredPending = undefined;
 		if (this.client.announceMembership === undefined) {
@@ -355,8 +356,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 	public submit(messages: IDocumentMessage[]): void {
 		this.recoveredPending = undefined;
 		for (const message of messages) {
-			const identity = encoder.encode(`${this.clientId}-${message.clientSequenceNumber}`);
-			const pending = { identity, message, session: this.session };
+			const pending = { message, session: this.session };
 			this.pending.set(message.clientSequenceNumber, pending);
 			this.queuedSubmissions.set(message.clientSequenceNumber, pending);
 		}
@@ -370,14 +370,15 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 			if (pending === undefined) {
 				return;
 			}
-			const { identity, message } = pending;
+			const { message } = pending;
 			this.queuedSubmissions.delete(this.nextClientSequenceNumber);
 			this.nextClientSequenceNumber++;
-			this.submitted.push({ identity, session: pending.session });
+			this.submitted.push({
+				session: pending.session,
+				sequenceNumber: message.clientSequenceNumber,
+			});
 			this.submitChain = this.submitChain.then(async () => {
 				const position = await this.client.submitEvent(
-					identity,
-					message.clientSequenceNumber,
 					encoder.encode(JSON.stringify(message)),
 					this.client.applicationSequenceOffset === 0
 						? this.client.positionForSequence(message.referenceSequenceNumber)
@@ -561,7 +562,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 			const history = page.operations.filter((operation) =>
 				bytesEqual(operation.session, pending.session),
 			);
-			if (history.at(-1)?.eventType !== "left") {
+			if (history[0]?.eventType !== "joined" || history.at(-1)?.eventType !== "left") {
 				throw new Error("old session has no terminal leave in retained history");
 			}
 			const accepted = history.filter((operation) => operation.eventType === "application");
@@ -571,14 +572,16 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 			if (
 				accepted.length > attempted.length ||
 				accepted.some(
-					(operation, index) => !bytesEqual(operation.submission, attempted[index]!.identity),
+					(operation, index) =>
+						operation.localSequenceNumber !== BigInt(attempted[index]?.sequenceNumber ?? -1),
 				)
 			) {
 				throw new Error("retained application events are not the submitted prefix");
 			}
-			const committed = accepted.find((operation) =>
-				bytesEqual(operation.submission, pending.identity),
+			const ordinal = attempted.findIndex(
+				(attempt) => attempt.sequenceNumber === pending.message.clientSequenceNumber,
 			);
+			const committed = ordinal < 0 ? undefined : accepted[ordinal];
 			const resolution: SubmissionResolution =
 				committed === undefined
 					? { kind: "notCommitted" }

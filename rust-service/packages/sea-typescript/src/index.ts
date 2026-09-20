@@ -98,8 +98,6 @@ export interface SeaEvent {
 	readonly author: Uint8Array;
 	/** Membership identity. */
 	readonly session: Uint8Array;
-	/** Stable submission identity. */
-	readonly operation: Uint8Array;
 	/** Latest event incorporated by this author. */
 	readonly reference?: bigint;
 	/** Minimum reference observed by the sequencer. */
@@ -213,15 +211,12 @@ export interface SeaSession {
 	putDirectory(entries: readonly SeaDirectoryEntry[]): Promise<SeaTreeId>;
 	/** Reads named children of a directory. */
 	getDirectory(id: SeaTreeId): Promise<readonly SeaDirectoryEntry[]>;
-	/** Submits an opaque event without implicit retry. */
+	/** Submits a new opaque event; equal inputs are distinct submissions. */
 	submit(
-		operation: Uint8Array,
 		reference: bigint | undefined,
 		payload: Uint8Array,
 		blobTree?: SeaTreeId,
 	): Promise<bigint>;
-	/** Resolves a submission without resubmitting it. */
-	resolveSubmission(operation: Uint8Array): Promise<bigint | undefined>;
 	/** Reads bounded or live monitored history. */
 	read(after?: bigint, stopAfter?: bigint): SeaStream<SeaLoadResult>;
 	/** Loads a snapshot and its gap-free suffix. */

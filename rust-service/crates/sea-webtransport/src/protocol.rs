@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 /// Current Sea logical-stream opening version.
-pub const PROTOCOL_VERSION: u16 = 8;
+pub const PROTOCOL_VERSION: u16 = 9;
 
 pub mod signals;
 
@@ -16,8 +16,6 @@ pub mod signals;
 pub enum MessageKind {
     /// Event submission request.
     Submit = 3,
-    /// Submission-resolution request.
-    ResolveSubmission = 4,
     /// Bounded event-read request.
     Read = 5,
     /// Blob-publication request.
@@ -54,8 +52,6 @@ pub enum MessageKind {
     Acknowledged = 128,
     /// Event-commit response.
     EventCommitted = 129,
-    /// Submission-resolution response.
-    SubmissionResolved = 130,
     /// Blob-publication response.
     BlobStored = 131,
     /// Blob-lookup response.
@@ -90,7 +86,6 @@ impl TryFrom<u8> for MessageKind {
     fn try_from(value: u8) -> Result<Self, ProtocolError> {
         match value {
             3 => Ok(Self::Submit),
-            4 => Ok(Self::ResolveSubmission),
             5 => Ok(Self::Read),
             6 => Ok(Self::PutBlob),
             7 => Ok(Self::GetBlob),
@@ -109,7 +104,6 @@ impl TryFrom<u8> for MessageKind {
             24 => Ok(Self::SendSignal),
             128 => Ok(Self::Acknowledged),
             129 => Ok(Self::EventCommitted),
-            130 => Ok(Self::SubmissionResolved),
             131 => Ok(Self::BlobStored),
             132 => Ok(Self::Blob),
             133 => Ok(Self::DirectoryStored),
@@ -151,9 +145,8 @@ pub enum StreamRole {
 
 impl MessageKind {
     /// Every assigned message kind in numeric order.
-    pub const ALL: [Self; 34] = [
+    pub const ALL: [Self; 32] = [
         Self::Submit,
-        Self::ResolveSubmission,
         Self::Read,
         Self::PutBlob,
         Self::GetBlob,
@@ -172,7 +165,6 @@ impl MessageKind {
         Self::SendSignal,
         Self::Acknowledged,
         Self::EventCommitted,
-        Self::SubmissionResolved,
         Self::BlobStored,
         Self::Blob,
         Self::DirectoryStored,
@@ -217,9 +209,7 @@ impl MessageKind {
                 Kind::OpenAuthorStream
                     | Kind::AnnounceMembership
                     | Kind::Submit
-                    | Kind::ResolveSubmission
                     | Kind::EventCommitted
-                    | Kind::SubmissionResolved
                     | Kind::Close
                     | Kind::Acknowledged
                     | Kind::Error
@@ -265,11 +255,9 @@ impl MessageKind {
         match self {
             Self::OpenSignalStream | Self::SendSignal => Some(StreamRole::Signal),
             Self::OpenEventStream => Some(StreamRole::Event),
-            Self::OpenAuthorStream
-            | Self::AnnounceMembership
-            | Self::Submit
-            | Self::ResolveSubmission
-            | Self::Close => Some(StreamRole::Author),
+            Self::OpenAuthorStream | Self::AnnounceMembership | Self::Submit | Self::Close => {
+                Some(StreamRole::Author)
+            }
             Self::Read
             | Self::OpenContentStream
             | Self::PutBlob
@@ -561,8 +549,6 @@ pub struct StreamEvent {
     pub author: Vec<u8>,
     /// Connection identity that submitted the event.
     pub session: Vec<u8>,
-    /// Stable operation identity.
-    pub operation: Vec<u8>,
     /// Author reference position.
     pub reference: Option<u64>,
     /// Minimum active reference position.
@@ -727,19 +713,10 @@ pub mod payload {
     /// Ordered event submission payload.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct Submit {
-        /// Stable retry identity.
-        pub operation: Vec<u8>,
         /// Latest event incorporated by the author.
         pub reference: Option<u64>,
         /// Event to sequence.
         pub event: Event,
-    }
-
-    /// Stable operation identity payload.
-    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-    pub struct Operation {
-        /// Stable retry identity.
-        pub operation: Vec<u8>,
     }
 
     /// Bounded historical read payload.
@@ -802,13 +779,6 @@ pub mod payload {
     pub struct EventCommitted {
         /// Assigned event position.
         pub position: u64,
-    }
-
-    /// Stable submission resolution payload.
-    #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-    pub struct SubmissionResolved {
-        /// Committed position, or none when definitively absent.
-        pub position: Option<u64>,
     }
 
     /// Fetched blob bytes payload.
@@ -879,19 +849,12 @@ pub enum Request {
         /// Immutable public metadata, not encrypted by payload decorators.
         metadata: Vec<u8>,
     },
-    /// Submits one event under a stable operation identity.
+    /// Submits one event in session order.
     Submit {
-        /// Stable retry identity.
-        operation: Vec<u8>,
         /// Latest event incorporated by the author.
         reference: Option<u64>,
         /// Event to sequence.
         event: Event,
-    },
-    /// Resolves a possibly ambiguous event submission.
-    ResolveSubmission {
-        /// Stable retry identity.
-        operation: Vec<u8>,
     },
     /// Reads a bounded range of committed application events.
     Read {
@@ -986,11 +949,6 @@ pub enum Response {
         /// Stable event position.
         position: u64,
     },
-    /// Submission resolution result.
-    SubmissionResolved {
-        /// Committed position, or `None` when definitively absent.
-        position: Option<u64>,
-    },
     /// Published blob identity.
     BlobStored {
         /// Domain-separated identity.
@@ -1059,7 +1017,6 @@ impl Request {
             Self::OpenSnapshotStream { .. } => MessageKind::OpenSnapshotStream,
             Self::PublishSnapshot { .. } => MessageKind::PublishSnapshot,
             Self::Submit { .. } => MessageKind::Submit,
-            Self::ResolveSubmission { .. } => MessageKind::ResolveSubmission,
             Self::Read { .. } => MessageKind::Read,
             Self::PutBlob { .. } => MessageKind::PutBlob,
             Self::GetBlob { .. } => MessageKind::GetBlob,
@@ -1080,7 +1037,6 @@ impl Request {
             Self::OpenAuthorStream { .. }
             | Self::AnnounceMembership { .. }
             | Self::Submit { .. }
-            | Self::ResolveSubmission { .. }
             | Self::Close => StreamRole::Author,
             Self::Read { .. }
             | Self::OpenContentStream { .. }
@@ -1107,7 +1063,6 @@ impl Response {
             Self::SnapshotCoordination { .. } => MessageKind::SnapshotCoordination,
             Self::ResponseComplete => MessageKind::ResponseComplete,
             Self::EventCommitted { .. } => MessageKind::EventCommitted,
-            Self::SubmissionResolved { .. } => MessageKind::SubmissionResolved,
             Self::BlobStored { .. } => MessageKind::BlobStored,
             Self::Blob(_) => MessageKind::Blob,
             Self::DirectoryStored { .. } => MessageKind::DirectoryStored,
@@ -1238,27 +1193,13 @@ pub fn encode_request_frame(
             },
             limits,
         ),
-        Request::Submit {
-            operation,
-            reference,
-            event,
-        } => encode_typed_payload(
+        Request::Submit { reference, event } => encode_typed_payload(
             role,
             request.kind(),
             correlation_id,
             &wire::Submit {
-                operation: operation.clone(),
                 reference: *reference,
                 event: event.clone(),
-            },
-            limits,
-        ),
-        Request::ResolveSubmission { operation } => encode_typed_payload(
-            role,
-            request.kind(),
-            correlation_id,
-            &wire::Operation {
-                operation: operation.clone(),
             },
             limits,
         ),
@@ -1381,15 +1322,8 @@ pub fn decode_request_frame(
         MessageKind::Submit => {
             let value: wire::Submit = decode_typed_payload(frame)?;
             Request::Submit {
-                operation: value.operation,
                 reference: value.reference,
                 event: value.event,
-            }
-        }
-        MessageKind::ResolveSubmission => {
-            let value: wire::Operation = decode_typed_payload(frame)?;
-            Request::ResolveSubmission {
-                operation: value.operation,
             }
         }
         MessageKind::Read => {
@@ -1483,15 +1417,6 @@ pub fn encode_response_frame(
             response.kind(),
             correlation_id,
             &wire::EventCommitted {
-                position: *position,
-            },
-            limits,
-        ),
-        Response::SubmissionResolved { position } => encode_typed_payload(
-            role,
-            response.kind(),
-            correlation_id,
-            &wire::SubmissionResolved {
                 position: *position,
             },
             limits,
@@ -1623,12 +1548,6 @@ pub fn decode_response_network_frame(
         MessageKind::EventCommitted => {
             let value: wire::EventCommitted = decode_typed_payload(frame)?;
             Response::EventCommitted {
-                position: value.position,
-            }
-        }
-        MessageKind::SubmissionResolved => {
-            let value: wire::SubmissionResolved = decode_typed_payload(frame)?;
-            Response::SubmissionResolved {
                 position: value.position,
             }
         }
@@ -2007,15 +1926,8 @@ mod tests {
             (
                 StreamRole::Author,
                 Request::Submit {
-                    operation: b"operation".to_vec(),
                     reference: Some(1),
                     event,
-                },
-            ),
-            (
-                StreamRole::Author,
-                Request::ResolveSubmission {
-                    operation: b"operation".to_vec(),
                 },
             ),
             (
@@ -2082,7 +1994,7 @@ mod tests {
             position: 2,
             author: b"author".to_vec(),
             session: b"session".to_vec(),
-            operation: b"operation".to_vec(),
+
             reference: Some(1),
             minimum_reference: Some(1),
             event: Event {
@@ -2137,10 +2049,6 @@ mod tests {
                 },
             ),
             (StreamRole::Author, Response::EventCommitted { position: 2 }),
-            (
-                StreamRole::Author,
-                Response::SubmissionResolved { position: Some(2) },
-            ),
             (StreamRole::Content, Response::BlobStored { id: [3; 32] }),
             (StreamRole::Content, Response::Blob(b"blob".to_vec())),
             (

@@ -72,14 +72,11 @@ export class DirectDummyClient {
 	public set(value: number): void {
 		this.value = value;
 		this.appliedOpCount++;
-		const localSequenceNumber = ++this.localSequenceNumber;
+		this.localSequenceNumber++;
 		const reference = this.cursor?.slice();
-		const submission = encoder.encode(
-			`${decoder.decode(this.session)}-${localSequenceNumber}`,
-		);
 		const payload = encoder.encode(JSON.stringify({ value } satisfies DirectDummyPayload));
 		this.submissionChain = this.submissionChain.then(async () => {
-			await this.client.submitEvent(submission, localSequenceNumber, payload, reference);
+			await this.client.submitEvent(payload, reference);
 		});
 	}
 
@@ -136,7 +133,7 @@ export class DirectDummyClient {
 	private applyOperations(operations: readonly ProjectedOperation[]): void {
 		for (const operation of operations) {
 			if (bytesEqual(operation.session, this.session)) {
-				this.acknowledgedLocalSequenceNumber = Number(operation.localSequenceNumber);
+				this.acknowledgedLocalSequenceNumber++;
 			} else {
 				const payload = JSON.parse(decoder.decode(operation.payload)) as DirectDummyPayload;
 				this.value = payload.value;

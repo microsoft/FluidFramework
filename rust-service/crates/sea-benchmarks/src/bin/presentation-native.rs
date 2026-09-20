@@ -4,8 +4,8 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{SinkExt as _, StreamExt as _};
 use sea_core::{
-    AuthorId, Event, EventSubmission, MonitoredStreamItem, OperationId, SeaAuthorSession,
-    SessionId, archive::SessionEventKind,
+    AuthorId, Event, EventSubmission, MonitoredStreamItem, SeaAuthorSession, SessionId,
+    archive::SessionEventKind,
 };
 use sea_webtransport::{
     NativeSeaClient, SeaClientError, SessionClient, SessionOpen, TransportConfig, protocol,
@@ -292,8 +292,6 @@ where
         tasks.push(tokio::spawn(async move {
             while let Some(sequence) = receiver.recv().await {
                 let submission = EventSubmission {
-                    operation_id: OperationId::new(Bytes::from(sequence.to_string()))
-                        .expect("operation ID"),
                     reference: None,
                     event: Event {
                         payload: payload(sequence, bytes),

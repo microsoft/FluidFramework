@@ -1306,7 +1306,6 @@ mod tests {
                 decoder: protocol::NetworkFrameDecoder::new(limits),
             };
             let request = Request::Submit {
-                operation: b"operation".to_vec(),
                 reference: None,
                 event: protocol::Event {
                     payload: Vec::new(),
@@ -1406,7 +1405,6 @@ mod tests {
         assert_eq!(
             author
                 .request(Request::Submit {
-                    operation: b"operation".to_vec(),
                     reference: None,
                     event: protocol::Event {
                         payload: b"event".to_vec(),

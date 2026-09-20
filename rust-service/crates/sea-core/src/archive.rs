@@ -11,8 +11,6 @@ pub use crate::SnapshotParticipation;
 /// A stable event submission through an individual session.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct EventSubmission {
-    /// Stable identity reused for retries and ambiguity resolution.
-    pub operation_id: OperationId,
     /// Latest event incorporated by the author's local state.
     pub reference: Option<EventPosition>,
     /// Opaque event and optional content root.
@@ -77,31 +75,6 @@ mod event_tests {
     }
 }
 
-/// Stable caller-provided identity for an operation whose result may be ambiguous.
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct OperationId(Bytes);
-
-impl OperationId {
-    /// Creates a nonempty operation identity.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error when `value` is empty.
-    pub fn new(value: impl Into<Bytes>) -> Result<Self, ValueError> {
-        let value = value.into();
-        if value.is_empty() {
-            return Err(ValueError::EmptyOperationId);
-        }
-        Ok(Self(value))
-    }
-
-    /// Returns the opaque identity bytes.
-    #[must_use]
-    pub const fn as_bytes(&self) -> &Bytes {
-        &self.0
-    }
-}
-
 /// Stable identity of one event author within an archive.
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct AuthorId(Bytes);
@@ -156,18 +129,12 @@ impl SessionId {
 mod identity_tests {
     use bytes::Bytes;
 
-    use super::{AuthorId, OperationId, SessionId, ValueError};
+    use super::{AuthorId, SessionId, ValueError};
 
     #[test]
     fn caller_identities_preserve_nonempty_bytes_and_reject_empty_values() {
         let value = Bytes::from_static(b"identity");
 
-        assert_eq!(
-            OperationId::new(value.clone())
-                .expect("nonempty operation identity")
-                .as_bytes(),
-            &value
-        );
         assert_eq!(
             AuthorId::new(value.clone())
                 .expect("nonempty author identity")
@@ -181,10 +148,6 @@ mod identity_tests {
             &value
         );
 
-        assert_eq!(
-            OperationId::new(Bytes::new()),
-            Err(ValueError::EmptyOperationId)
-        );
         assert_eq!(AuthorId::new(Bytes::new()), Err(ValueError::EmptyAuthorId));
         assert_eq!(
             SessionId::new(Bytes::new()),
@@ -196,8 +159,6 @@ mod identity_tests {
 /// Invalid caller-created Sea values.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ValueError {
-    /// An operation identity was empty.
-    EmptyOperationId,
     /// An author identity was empty.
     EmptyAuthorId,
     /// A session identity was empty.
@@ -237,8 +198,6 @@ pub struct SessionCommittedEvent {
     pub author_id: AuthorId,
     /// Connection identity that submitted the event.
     pub session_id: SessionId,
-    /// Stable application retry identity; membership records carry their session identity instead.
-    pub operation_id: OperationId,
     /// Sequenced history known when the author constructed this event, or initial state.
     /// Together with the session's preceding application events, this describes the submission context.
     pub reference: Option<EventPosition>,
