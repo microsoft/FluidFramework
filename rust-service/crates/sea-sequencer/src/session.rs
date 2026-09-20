@@ -5,8 +5,9 @@
 //! runtime-local: reopening restores stable committed identities, closes outstanding durable
 //! announcements, and requires callers to establish fresh sessions.
 //!
-//! One runtime mutex serializes membership changes and state-dependent mutations. Before releasing
-//! that order, the runtime stores an owned backend future, so cancellation of a caller does not
+//! A bounded application ring separates admission from persistence; lifecycle barriers drain it.
+//! One runtime mutex serializes membership changes and committed metadata. The runtime retains
+//! owned backend futures, so cancellation of a caller does not
 //! masquerade as settlement. A later operation drives the same future to completion; a failed
 //! bounded reconciliation poisons further mutation with
 //! [`crate::session::SessionError::RecoveryRequired`] until the view is discarded and recovered.
@@ -19,6 +20,9 @@
 #[cfg(test)]
 #[path = "fault_tests.rs"]
 mod fault_tests;
+
+#[path = "pipeline.rs"]
+mod pipeline;
 
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -48,7 +52,7 @@ use sea_core::{
         StorageHandle,
     },
 };
-use tokio::sync::{Mutex, watch};
+use tokio::sync::{Mutex, RwLockWriteGuard, watch};
 
 use crate::codec::{decode_committed, encode_membership, encode_submission};
 pub use crate::error::SessionError;
@@ -103,6 +107,13 @@ struct Membership {
 
 /// Marks an admitted append terminal if its caller exits without a successful result.
 struct AppendGuard(Option<Arc<std::sync::atomic::AtomicBool>>);
+
+impl AppendGuard {
+    /// Successful settlement leaves the session eligible for later submissions.
+    fn disarm(&mut self) {
+        self.0 = None;
+    }
+}
 
 impl Drop for AppendGuard {
     fn drop(&mut self) {
@@ -227,6 +238,73 @@ impl Drop for PublisherLease {
 }
 
 impl<Storage: SeaStorage + 'static> Runtime<Storage> {
+    /// Validates against the frozen committed floor; only the final candidate may advance it.
+    fn prepare_submission(
+        &self,
+        author: &AuthorId,
+        session: &SessionId,
+        submission: &EventSubmission,
+        floor: Option<EventPosition>,
+        advance_floor: bool,
+    ) -> Result<Result<Event, EventPosition>, SessionError<Storage::Error>> {
+        self.member(session)?;
+        self.view()?;
+        if let Some(accepted) = self.accepted.get(&submission.operation_id) {
+            return if accepted.author_id == *author
+                && accepted.committed.event == submission.event
+                && accepted.reference == submission.reference
+            {
+                Ok(Err(accepted.committed.position))
+            } else {
+                Err(SessionError::Rejected(
+                    "operation identity conflicts with previous input",
+                ))
+            };
+        }
+        if submission
+            .reference
+            .is_some_and(|position| !self.positions.contains(&position))
+        {
+            return Err(SessionError::Rejected(
+                "reference is not an application event",
+            ));
+        }
+        if submission.reference < floor {
+            return Err(SessionError::Rejected(
+                "reference precedes the committed minimum",
+            ));
+        }
+        let minimum = self
+            .members
+            .iter()
+            .map(|(identity, member)| {
+                if identity == session {
+                    submission.reference
+                } else {
+                    member.reference
+                }
+            })
+            .min()
+            .flatten();
+        let minimum = if advance_floor {
+            self.proposed_minimum(minimum, submission.reference)
+                .max(floor)
+        } else {
+            floor
+        };
+        Ok(Ok(Event {
+            payload: encode_submission(
+                author,
+                session,
+                &submission.operation_id,
+                submission.reference,
+                minimum,
+                &submission.event.payload,
+            )?,
+            blob_tree: submission.event.blob_tree,
+        }))
+    }
+
     /// Chooses an advance without coupling admission enforcement to membership progress.
     /// A 1024-position lag window prevents idle readers from pinning the floor indefinitely;
     /// window advances are rounded down to 64-position boundaries to coalesce small changes.
@@ -427,10 +505,19 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
 /// One runtime multiplexing an exclusively owned view into logical sessions.
 pub struct LocalSequencer<Storage: SeaStorage> {
     /// The sole owner of mutation sequencing and session membership.
-    runtime: Mutex<Runtime<Storage>>,
+    runtime: Arc<Mutex<Runtime<Storage>>>,
+    /// Bounded admission, retained persistence work, and lifecycle exclusion.
+    pipeline: pipeline::Pipeline<Storage>,
 }
 
 impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
+    /// Excludes admission and settles every accepted application before lifecycle work.
+    async fn barrier(&self) -> RwLockWriteGuard<'_, ()> {
+        let guard = self.pipeline.gate.write().await;
+        self.pipeline.drain(&self.runtime).await;
+        guard
+    }
+
     /// Recovers stable event identities by scanning a bounded committed history.
     /// Active membership is runtime-local; recovery requires fresh logical sessions.
     ///
@@ -470,7 +557,8 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
             runtime.close_member(&session).await?;
         }
         Ok(Arc::new(Self {
-            runtime: Mutex::new(runtime),
+            runtime: Arc::new(Mutex::new(runtime)),
+            pipeline: pipeline::Pipeline::new(),
         }))
     }
 
@@ -486,6 +574,7 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
         session: SessionId,
         reference: Option<EventPosition>,
     ) -> Result<LocalSession<Storage>, SessionError<Storage::Error>> {
+        let _barrier = self.barrier().await;
         let mut runtime = self.runtime.lock().await;
         runtime.settle().await?;
         runtime.view()?;
@@ -520,6 +609,7 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
             sequencer: self.clone(),
             author,
             session,
+            admission: Arc::new(Mutex::new(())),
         })
     }
 
@@ -531,6 +621,7 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
     /// # Panics
     /// Panics if an internal publisher-state lock was poisoned.
     pub async fn shutdown(&self) -> Result<(), SessionError<Storage::Error>> {
+        let _barrier = self.barrier().await;
         let mut runtime = self.runtime.lock().await;
         runtime.settle().await?;
         for session in runtime.members.keys().cloned().collect::<Vec<_>>() {
@@ -555,6 +646,8 @@ pub struct LocalSession<Storage: SeaStorage> {
     author: AuthorId,
     /// Unique connection identity for this membership.
     session: SessionId,
+    /// Orders this membership's submissions through capacity waits, but not completion.
+    admission: Arc<Mutex<()>>,
 }
 
 impl<Storage: SeaStorage> Clone for LocalSession<Storage> {
@@ -563,6 +656,7 @@ impl<Storage: SeaStorage> Clone for LocalSession<Storage> {
             sequencer: self.sequencer.clone(),
             author: self.author.clone(),
             session: self.session.clone(),
+            admission: self.admission.clone(),
         }
     }
 }
@@ -580,6 +674,7 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
         &self,
         metadata: Bytes,
     ) -> Result<EventPosition, SessionError<Storage::Error>> {
+        let _barrier = self.sequencer.barrier().await;
         let mut runtime = self.sequencer.runtime.lock().await;
         runtime.settle().await?;
         let mut guard = AppendGuard(Some(runtime.member(&self.session)?.failed.clone()));
@@ -622,88 +717,41 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
         &self,
         submission: EventSubmission,
     ) -> Result<EventPosition, SessionError<Storage::Error>> {
-        let mut runtime = self.sequencer.runtime.lock().await;
-        runtime.settle().await?;
-        let mut guard = AppendGuard(Some(runtime.member(&self.session)?.failed.clone()));
-        let result = self.submit_inner(&mut runtime, submission).await;
-        if result.is_ok() {
-            guard.0 = None;
+        #[cfg(not(target_arch = "wasm32"))]
+        let admission = tokio::task::unconstrained(self.admission.lock()).await;
+        #[cfg(target_arch = "wasm32")]
+        let admission = self.admission.lock().await;
+        let needs_settlement = {
+            let runtime = self.sequencer.runtime.lock().await;
+            runtime.pending.is_some()
+                || runtime
+                    .members
+                    .values()
+                    .any(|member| member.failed.load(std::sync::atomic::Ordering::SeqCst))
+        };
+        if needs_settlement {
+            let _barrier = self.sequencer.barrier().await;
+            self.sequencer.runtime.lock().await.settle().await?;
         }
-        drop(guard);
-        if result.is_err() && !runtime.recovery_required {
-            runtime.close_member(&self.session).await?;
+        let result = self
+            .sequencer
+            .pipeline
+            .submit(
+                &self.sequencer.runtime,
+                admission,
+                self.author.clone(),
+                self.session.clone(),
+                submission,
+            )
+            .await;
+        if result.is_err() {
+            let _barrier = self.sequencer.barrier().await;
+            let mut runtime = self.sequencer.runtime.lock().await;
+            if !runtime.recovery_required {
+                runtime.settle().await?;
+            }
         }
         result
-    }
-
-    /// Validates and settles one append while its terminal guard and runtime lock are held.
-    async fn submit_inner(
-        &self,
-        runtime: &mut Runtime<Storage>,
-        submission: EventSubmission,
-    ) -> Result<EventPosition, SessionError<Storage::Error>> {
-        if let Some(accepted) = runtime.accepted.get(&submission.operation_id) {
-            return if accepted.author_id == self.author
-                && accepted.committed.event == submission.event
-                && accepted.reference == submission.reference
-            {
-                Ok(accepted.committed.position)
-            } else {
-                Err(SessionError::Rejected(
-                    "operation identity conflicts with previous input",
-                ))
-            };
-        }
-        if submission
-            .reference
-            .is_some_and(|position| !runtime.positions.contains(&position))
-        {
-            return Err(SessionError::Rejected(
-                "reference is not an application event",
-            ));
-        }
-        if submission.reference < runtime.minimum_reference {
-            return Err(SessionError::Rejected(
-                "reference precedes the committed minimum",
-            ));
-        }
-        let minimum = runtime
-            .members
-            .iter()
-            .map(|(session, member)| {
-                if session == &self.session {
-                    submission.reference
-                } else {
-                    member.reference
-                }
-            })
-            .min()
-            .flatten();
-        let minimum = runtime.proposed_minimum(minimum, submission.reference);
-        let event = Event {
-            payload: encode_submission(
-                &self.author,
-                &self.session,
-                &submission.operation_id,
-                submission.reference,
-                minimum,
-                &submission.event.payload,
-            )?,
-            blob_tree: submission.event.blob_tree,
-        };
-        let view = runtime.view()?;
-        let input = event.clone();
-        runtime.pending = Some(Pending {
-            event: Some(event),
-            future: Box::pin(async move { append_once::<Storage>(&view, input).await }),
-        });
-        runtime.settle_pending().await?;
-        Ok(runtime
-            .accepted
-            .get(&submission.operation_id)
-            .expect("settled submission")
-            .committed
-            .position)
     }
 
     /// Resolves a stable identity after settling any cancelled caller's retained work.
@@ -711,6 +759,7 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
         &self,
         operation: &OperationId,
     ) -> Result<Option<EventPosition>, SessionError<Storage::Error>> {
+        let _barrier = self.sequencer.barrier().await;
         let mut runtime = self.sequencer.runtime.lock().await;
         runtime.settle().await?;
         runtime.member(&self.session)?;
@@ -722,6 +771,7 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
 
     /// Closes this membership idempotently without closing the shared runtime.
     async fn close(&self) -> Result<(), SessionError<Storage::Error>> {
+        let _barrier = self.sequencer.barrier().await;
         let mut runtime = self.sequencer.runtime.lock().await;
         if !runtime.members.contains_key(&self.session)
             && !runtime.announced.contains_key(&self.session)
@@ -734,6 +784,7 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
 
     /// Obtains a view only after validating current membership and settling prior work.
     async fn view(&self) -> Result<Arc<View<Storage>>, SessionError<Storage::Error>> {
+        let _barrier = self.sequencer.barrier().await;
         let mut runtime = self.sequencer.runtime.lock().await;
         runtime.settle().await?;
         runtime.member(&self.session)?;
@@ -783,6 +834,7 @@ impl<Storage: SeaStorage + 'static> SeaArchive for LocalSession<Storage> {
             status: MonitoredStreamStatus::StreamingBacklog,
         };
         let initialized = stream::once(async move {
+            let _barrier = session.sequencer.barrier().await;
             let mut runtime = session.sequencer.runtime.lock().await;
             runtime.settle().await?;
             let closed = runtime.member(&session.session)?.closed.subscribe();
@@ -906,6 +958,7 @@ impl<Storage: SeaStorage + 'static> SeaSnapshotCoordinator for LocalSession<Stor
         &self,
         participation: SnapshotParticipation,
     ) -> Result<SessionStream<SnapshotCoordination, Self::Error>, Self::Error> {
+        let _barrier = self.sequencer.barrier().await;
         let mut runtime = self.sequencer.runtime.lock().await;
         runtime.settle().await?;
         runtime.member(&self.session)?;
@@ -951,6 +1004,7 @@ impl<Storage: SeaStorage + 'static> SeaSnapshotCoordinator for LocalSession<Stor
         fence: Option<u64>,
         snapshot: ViewSnapshot<Storage>,
     ) -> Result<ViewSnapshot<Storage>, Self::Error> {
+        let _barrier = self.sequencer.barrier().await;
         let mut runtime = self.sequencer.runtime.lock().await;
         runtime.settle().await?;
         runtime.member(&self.session)?;
@@ -1469,12 +1523,12 @@ mod tests {
     /// Opens a named member without imposing backend-specific ownership rules.
     pub(super) async fn member<Storage: SeaStorage + 'static>(
         runtime: &Arc<LocalSequencer<Storage>>,
-        name: &'static str,
+        name: &str,
     ) -> LocalSession<Storage> {
         runtime
             .open_session(
-                AuthorId::new(name).unwrap(),
-                SessionId::new(name).unwrap(),
+                AuthorId::new(name.to_owned()).unwrap(),
+                SessionId::new(name.to_owned()).unwrap(),
                 None,
             )
             .await
@@ -1482,7 +1536,7 @@ mod tests {
     }
 
     /// Returns data while allowing an implementation to emit progress first.
-    async fn data<Error: std::fmt::Debug>(
+    pub(super) async fn data<Error: std::fmt::Debug>(
         stream: &mut ArchiveStream<SessionCommittedEvent, EventPosition, Error>,
     ) -> Option<SessionCommittedEvent> {
         while let Some(item) = stream.next().await {

@@ -320,6 +320,40 @@ where
             .await
     }
 
+    /// Appends a dependency-checked prefix using the archive's batch settlement contract.
+    ///
+    /// Each input carries its optional tree capability. A dependency failure still publishes
+    /// the checked prefix; its error is returned only if every preceding append succeeds.
+    /// Missing results are unattempted inputs. Cancellation follows [`Archive::append_batch`].
+    pub async fn append_batch(
+        &self,
+        values: Vec<(Bytes, Option<Blobs::Handle>)>,
+    ) -> Vec<Result<Events::Handle, Blobs::Error>> {
+        let mut events = Vec::with_capacity(values.len());
+        let mut dependency_error = None;
+        for (payload, tree) in values {
+            if let Some(handle) = &tree
+                && let Err(error) = self.blobs.ensure_available(handle).await
+            {
+                dependency_error = Some(error);
+                break;
+            }
+            events.push(Event {
+                payload,
+                blob_tree: tree.as_ref().map(StorageHandle::id),
+            });
+        }
+        let checked = events.len();
+        let mut results = self.events.append_batch(events).await;
+        if results.len() == checked
+            && results.iter().all(Result::is_ok)
+            && let Some(error) = dependency_error
+        {
+            results.push(Err(error));
+        }
+        results
+    }
+
     /// Reads ordered events after a cursor, either through a position or as a live stream.
     ///
     /// For bounds within the committed history, `stop_after: Some(position)` produces a finite stream.

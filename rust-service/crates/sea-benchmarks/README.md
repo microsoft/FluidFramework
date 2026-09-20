@@ -16,6 +16,28 @@ Build the tools with `cargo build --release -p sea-benchmarks --bins` and test t
 
 This workspace crate provides deterministic fixtures, correctness smoke workloads, and newline-delimited JSON measurements for the storage and transformation layers.
 
+## Local Storage Pipeline
+
+`storage-pipeline` measures native `LocalSequencer` submissions from one session over `memory`, `buffered-file`, or `durable-file`.
+It accepts payload sizes 64 or 8192 and an in-flight window of 1 or 128, preserves initial submit polling order, and verifies exact receipts and finite replay.
+Each invocation emits separate JSON rows for a 128-operation warmup and a fresh 4096-operation measured document, then deletes its newly created data directory.
+Creation, replay, and shutdown are outside the submission timer; measured latency starts at each future's first poll.
+Tokio uses one async worker, with blocking workers available for file I/O; no CPU affinity is imposed.
+The output is specific to this binary, not the general harness schema below.
+
+```bash
+cargo build --release -p sea-benchmarks --bin storage-pipeline --locked
+timeout 180s target/release/storage-pipeline durable-file 64 128 target/storage-pipeline-data
+```
+
+The directory must not already exist, and its parent must exist.
+The window bounds live futures, not guaranteed storage batch size.
+Submit futures use ordinary `buffered` polling without an `unconstrained` wrapper; the sequencer preserves their actual first-poll order at its admission gate.
+The retained measurements used the earlier whole-submission `unconstrained` workaround and were not rerun after the admission fix.
+Their source hash describes the measured version, not the final benchmark source.
+Successful replay is not proof of physical durability or absence of early acknowledgment under faults.
+The [storage optimization report](../../STORAGE_OPTIMIZATION.md) retains comparable baseline observations and focused fault-test evidence.
+
 ## Commands
 
 From `rust-service/`:

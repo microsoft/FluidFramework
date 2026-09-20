@@ -16,6 +16,16 @@ Session identities used by committed events remain reserved after recovery; unus
 Opening another session for an author replaces its previous membership and closes that membership's streams.
 
 Every session shares the runtime's single view and serialized mutation order.
+Application admission uses a `VecDeque` ring bounded to 256 queued plus in-flight entries and 4 MiB of charged input bytes.
+The byte charge includes payload, identities, and envelope allowance; allocator overhead and a temporary encoded batch are additional bounded costs.
+Inputs larger than the byte limit are rejected and terminate their session; full queues backpressure callers before admission.
+Waiting callers retain their own input, so hosts must also bound outstanding requests.
+Application persistence releases the runtime mutex, allowing independent callers to enter the ring while storage is blocked.
+One retained cooperative driver owns backend execution; no native or browser task is spawned.
+Callers share polling of the retained future without holding an asynchronous driver lock across I/O.
+A caller yields after a completed drive so a ready empty queue cannot starve a completion receiver when the runtime's cooperative budget is exhausted.
+Lifecycle and snapshot operations exclude admission and drain the ring before running their existing exclusive control path.
+Those control paths still hold the runtime mutex during control-record or snapshot I/O.
 Closing a session is idempotent across clones, removes its minimum-reference contribution and publisher registration, and does not close another session.
 Closing the last session does not close the runtime.
 `shutdown` first settles pending work, closes all memberships, and releases the view even when closed session handles remain alive.
@@ -40,7 +50,23 @@ Publisher observations use coalescing watch streams because intermediate publish
 The required append contract is strict order and termination at the first failure.
 Accepted application events form a prefix of the submissions on one append stream.
 A rejection, invalid request, or transport failure ends that stream's authority; later queued submissions must not be accepted.
-Concurrent local callers must serialize their intended submission order before invoking the session API.
+Concurrent local callers must poll submission futures in their intended order; constructing futures or spawning tasks in that order is not sufficient.
+Cloned handles share a per-membership admission gate: submissions first polled in sequence keep that order across capacity waits, so a smaller successor cannot bypass a waiting input.
+On native builds, only the first gate acquisition disables Tokio cooperative-budget yielding, so an exhausted budget cannot yield before the mutex queues the submission.
+The sync-only WASM build keeps ordinary mutex acquisition without requiring a Tokio runtime.
+The rest of submission retains cooperative scheduling, and the guarantee does not impose an order on arbitrarily scheduled tasks.
+The gate is released as soon as an input enters the ring, not when persistence completes.
+Waiting for this gate holds no runtime or lifecycle lock; close can drain admitted work without waiting for callers that have not entered the ring.
+The ring preserves actual admission order and permits multiple operations from the same session in one storage batch.
+A repeated operation identity starts a later batch so retry lookup observes its predecessor's settled outcome.
+An invalid entry revokes its session during preparation: earlier prepared entries may settle, but later entries from that session are rejected.
+The storage batch's committed-prefix contract prevents a failed append from committing a later same-session entry.
+Cancellation after admission revokes the session even if that entry has not reached storage; cancellation before admission does not.
+Cancelling an input while it waits for the membership gate or ring capacity removes that input from the pending order and allows its successors to proceed without revoking the membership.
+An already dispatched batch retains its backend future and may commit its admitted prefix, including multiple entries from the cancelled session; queued undispatched entries from a failed session are rejected.
+Returned missing batch results are rejected without resubmission, and ambiguous multi-entry results poison the runtime until recovery.
+Successful completion is sent only after the committed prefix has been applied to runtime metadata.
+Direct readers rely on backend commit visibility, never queue admission, to expose records.
 Each event retains its session identity and the reference position describing the sequenced history known when it was constructed.
 Earlier application events from that session identify its preceding local work.
 SEA treats payloads as opaque and cannot adjust an event for a different submission context.
@@ -90,6 +116,9 @@ Failed appends do not advance it, and recovery rejects decreasing, forward, or c
 New readers may open behind the floor to catch up, but cannot submit below it.
 
 Advancement policy combines cooperative member progress with a 1024-position lag window, rounding window advances down to 64-position boundaries.
+Only the final candidate in a storage batch may advance the floor, preventing speculative advances from rejecting another entry in that batch.
+Every earlier entry carries the frozen committed floor, even when its reference is higher than another prepared entry's reference.
+If the final candidate fails validation or is an exact retry, advancement is deferred to a later batch.
 The proposed advance is bounded by the carrying event's reference and never lowers the committed floor.
 Idle readers therefore cannot indefinitely pin advances from progressing writers.
 No timer or extra control append is needed in a quiescent document.
@@ -110,6 +139,7 @@ An exact retry by the same author returns its original position, including after
 Blob identities in submissions are resolved through the current view before publication; wire identities never fabricate availability handles.
 The sequencer never resubmits an append internally.
 After returned ambiguity it obtains an authoritative head and scans the bounded candidate range.
+This reconciliation applies to singleton appends; ambiguous grouped persistence requires reopening instead of attempting per-entry reordering or replay.
 An exact committed envelope resolves success; a complete settled empty range yields a definitive rejection.
 Under the required prefix contract, rejection terminates the old append stream; recovery and transformed resubmission belong to the caller.
 A failed head or incomplete scan yields `RecoveryRequired` and prevents further mutations or claims of absence.
@@ -155,3 +185,5 @@ Tests cover retries, identity conflicts, replacement and close, replay, load bou
 Tests also run shared session conformance, concurrent submissions, direct live progress, publisher registration cancellation, and recovery.
 [`src/fault_tests.rs`](src/fault_tests.rs) injects definitive rejection, ambiguity with and without commitment, failed reconciliation, and cancellation before/after commitment.
 Its read streams retain writable components, exercising a stricter lifetime allowed by `SeaStorage` than the memory backend's independent reads.
+Delayed fault tests also cover bounded admission during application I/O, same-session batch prefix rejection, cancellation after batch dispatch, queued suffix rejection, grouped ambiguity, and mixed-reference floor recovery.
+Timeouts bound delayed settlement checks; admission probes explicitly avoid treating a cooperative scheduler yield as evidence that admission occurred.

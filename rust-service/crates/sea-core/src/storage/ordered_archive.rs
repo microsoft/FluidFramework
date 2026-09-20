@@ -50,6 +50,35 @@ pub trait Archive: StorageSurface {
     /// the cancelled operation can no longer commit later.
     async fn append(&self, value: Self::Append) -> Result<Self::AppendResult, Self::Error>;
 
+    /// Appends an ordered batch whose committed entries form an input prefix.
+    ///
+    /// Results correspond to an input prefix; missing results identify unattempted entries.
+    /// Successful results form an ordered prefix. After the first error, additional results
+    /// may only be ambiguous errors for entries that might belong to the committed prefix.
+    /// A definitive failure cannot precede a committed entry. A grouped persistence failure
+    /// may therefore return ambiguous errors for every attempted entry, even when recovery
+    /// will reveal that only some or none committed. No ambiguous entry is retried internally.
+    /// Successful results have the same visibility and durability as [`Self::append`].
+    /// After settlement, a successful [`Self::head`] bounds every returned result, including
+    /// all ambiguous errors. A poisoned backend must return an error instead of an unsafe bound.
+    /// Cancellation has the same settlement requirements as an individual append.
+    /// The default implementation appends sequentially and stops at its first error.
+    async fn append_batch(
+        &self,
+        values: Vec<Self::Append>,
+    ) -> Vec<Result<Self::AppendResult, Self::Error>> {
+        let mut results = Vec::with_capacity(values.len());
+        for value in values {
+            let result = self.append(value).await;
+            let failed = result.is_err();
+            results.push(result);
+            if failed {
+                break;
+            }
+        }
+        results
+    }
+
     /// Reads entries strictly after `after` in position order.
     ///
     /// `after` is an exclusive starting cursor; `None` starts before the first entry.

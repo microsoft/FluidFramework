@@ -27,6 +27,9 @@ Reopening validates content closure, the complete event prefix, matching archive
 It fails on inconsistent history rather than omitting records.
 
 Event appends assign increasing positions starting at one and never deduplicate equal input.
+Event batches publish under one archive lock and wake readers after releasing it.
+Position exhaustion retains the successful prefix and stops at the first error; batches never return ambiguous outcomes.
+The composed view checks dependency availability before publication and retains a checked prefix when a later capability is invalid.
 Snapshots are sparse, strictly increasing publications at their event handle's position, with exact and optional inclusive-bound lookup.
 There is no initial empty-state snapshot.
 

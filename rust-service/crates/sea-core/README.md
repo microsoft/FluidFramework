@@ -44,6 +44,14 @@ The stream returned by `load` catches up and then waits for new events, includin
 `load` combines `get_snapshot` and an unbounded `read` without an extra caller round trip; callers can drop the stream when done.
 Loads do not capture an event head.
 
+`Archive::append_batch` returns results for an input prefix; omitted inputs were not attempted.
+Successful results precede errors, and any results after the first error must be ambiguous.
+A definitive failure cannot precede a committed entry; grouped persistence can report every attempted entry ambiguous when any prefix may survive.
+After settlement, a successful `head` bounds all returned outcomes; poisoned backends must return an error instead of an unsafe bound.
+The default implementation appends sequentially and stops at its first error.
+`SeaView::append_batch` checks tree capabilities in order and publishes the checked prefix even when a later dependency fails.
+Its dependency error is returned only after all preceding entries succeed.
+
 The session facets put membership, author ordering, stable event retries, and conditional snapshot coordination above storage.
 They reuse `SeaService` and its native/browser thread-safety bounds, the existing identity/event primitives, and handle-based `Snapshot` values.
 Loads return a selected snapshot and a direct live session-event stream; snapshots use document-scoped event positions as version identities.

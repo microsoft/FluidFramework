@@ -457,6 +457,34 @@ impl Archive for MemoryEventArchive {
         })
     }
 
+    async fn append_batch(
+        &self,
+        values: Vec<Self::Append>,
+    ) -> Vec<Result<Self::AppendResult, Self::Error>> {
+        let mut results = Vec::with_capacity(values.len());
+        let mut readers = Vec::new();
+        {
+            let mut events = self.opening.document.events.lock().expect("event lock");
+            for event in values {
+                let Some(ordinal) = events.head().map_or(0, EventPosition::get).checked_add(1)
+                else {
+                    results.push(Err(MemoryStorageError::IdentityExhausted));
+                    break;
+                };
+                let position = EventPosition::new(ordinal);
+                readers = events.insert(position, CommittedEvent { position, event });
+                results.push(Ok(MemoryEventHandle {
+                    document: self.opening.document.clone(),
+                    id: position,
+                }));
+            }
+        }
+        for reader in readers {
+            reader.wake();
+        }
+        results
+    }
+
     fn read(
         &self,
         after: Option<EventPosition>,
@@ -703,6 +731,47 @@ mod tests {
         task::{Context, Poll},
         time::Duration,
     };
+
+    #[tokio::test]
+    async fn batch_dependency_failure_preserves_only_the_available_prefix() {
+        let storage = MemoryStorage::new();
+        let (_, view) = storage.create_view().await.unwrap();
+        let (_, foreign) = storage.create_view().await.unwrap();
+        let unavailable = foreign
+            .blobs()
+            .put_blob(Bytes::from_static(b"foreign"))
+            .await
+            .unwrap();
+        let results = view
+            .append_batch(vec![
+                (Bytes::from_static(b"first"), None),
+                (Bytes::from_static(b"invalid"), Some(unavailable)),
+                (Bytes::from_static(b"suffix"), None),
+            ])
+            .await;
+        assert_eq!(results.len(), 2);
+        assert!(results[0].is_ok());
+        assert!(matches!(results[1], Err(MemoryStorageError::ForeignHandle)));
+        assert_eq!(view.head().await.unwrap(), Some(EventPosition::new(1)));
+        let records = collect_items(view.read(None, Some(EventPosition::new(1))))
+            .await
+            .unwrap();
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].event.payload, Bytes::from_static(b"first"));
+        let results = view
+            .append_batch(vec![
+                (Bytes::from_static(b"second"), None),
+                (Bytes::from_static(b"third"), None),
+            ])
+            .await;
+        assert_eq!(
+            results
+                .into_iter()
+                .map(|result| result.unwrap().id().get())
+                .collect::<Vec<_>>(),
+            vec![2, 3]
+        );
+    }
 
     /// Collects the data of a finite read, preserving lazy errors for assertions.
     async fn collect_items<Item>(

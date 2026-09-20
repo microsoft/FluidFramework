@@ -16,7 +16,7 @@ async fn assert_busy<const DURABLE: bool>(root: &Path) {
 }
 
 #[tokio::test]
-async fn replacement_keeps_exclusive_lock_across_processes() {
+async fn append_keeps_exclusive_lock_across_processes() {
     if let Some(root) = std::env::var_os("SEA_JOURNAL_LOCK_PROBE") {
         assert_busy::<false>(Path::new(&root)).await;
         assert_busy::<true>(Path::new(&root)).await;
@@ -30,10 +30,7 @@ async fn replacement_keeps_exclusive_lock_across_processes() {
             .await
             .unwrap();
         let output = std::process::Command::new(std::env::current_exe().unwrap())
-            .args([
-                "--exact",
-                "replacement_keeps_exclusive_lock_across_processes",
-            ])
+            .args(["--exact", "append_keeps_exclusive_lock_across_processes"])
             .env("SEA_JOURNAL_LOCK_PROBE", &root)
             .output()
             .unwrap();

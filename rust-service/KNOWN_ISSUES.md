@@ -87,9 +87,10 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Status:** Open
 - **Severity:** High
 - **Area:** Durability
-- **Evidence:** `sea-file-durable` publishes synchronized immutable journal replacements and synchronizes their namespace before acknowledgment.
-  Deterministic tests cover torn staging files, old/new rename outcomes, lost acknowledgments, and stable sidecar locks across processes.
-  The [power-loss model](crates/sea-file-durable/README.md#power-loss-model) assumes crash-atomic rename, truthful synchronization, and isolation of synchronized inodes from other writes.
+- **Evidence:** `sea-file-durable` appends checksummed frames and synchronizes each event batch before acknowledgment.
+  Deterministic tests cover interrupted tails, grouped synchronization failures, lost acknowledgments, and stable sidecar locks across processes.
+  The [power-loss model](crates/sea-file-durable/README.md#power-loss-model) requires truthful synchronization and preservation of the synchronized prefix during later appends or recovery truncation, including a shared tail block.
+  Document creation also requires crash-atomic rename and durable namespace synchronization.
   Actual power-cut qualification on target filesystems and devices remains outstanding; media failure, external namespace modification, old writers, and remote storage are outside the model.
 - **Impact:** `durable-file` must not be interpreted as a production durability claim.
 - **Trigger:** Qualify the stated model with platform-specific power-cut testing before using the backend for production data.

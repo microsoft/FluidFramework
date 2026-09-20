@@ -11,10 +11,10 @@ bytes.workspace = true
 futures-util.workspace = true
 sea-core = { path = "../sea-core" }
 thiserror.workspace = true
+tokio.workspace = true
 
 [dev-dependencies]
 sea-conformance = { path = "../sea-conformance" }
-tokio.workspace = true
 
 [lints]
 workspace = true

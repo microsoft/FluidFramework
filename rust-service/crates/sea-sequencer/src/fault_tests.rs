@@ -68,6 +68,10 @@ enum Failure {
     GateBefore,
     /// Commit then suspend before returning until explicitly released.
     GateAfter,
+    /// Suspend, then definitively reject without modifying history.
+    GateReject,
+    /// A grouped call waits, commits its entries, and reports ambiguous outcomes.
+    GateGroupAmbiguous,
 }
 
 /// Deterministic fault injection and append-call accounting.
@@ -77,6 +81,8 @@ struct Faults {
     next: StdMutex<Failure>,
     /// Number of backend append invocations, including pending ones.
     calls: AtomicUsize,
+    /// Number of multi-entry backend calls, independent of individual entry accounting.
+    batches: AtomicUsize,
     /// One-shot head error after an ambiguous commit.
     fail_head: AtomicBool,
     /// One-shot data-delivery error during reconciliation.
@@ -198,6 +204,10 @@ impl<Store: Archive<Position = EventPosition, Error = MemoryStorageError> + 'sta
             Failure::Reject => return Err(FaultError::Injected(ErrorKind::Rejected)),
             Failure::AmbiguousAbsent => return Err(FaultError::Injected(ErrorKind::Ambiguous)),
             Failure::GateBefore => self.faults.release.notified().await,
+            Failure::GateReject => {
+                self.faults.release.notified().await;
+                return Err(FaultError::Injected(ErrorKind::Rejected));
+            }
             _ => {}
         }
         let result = self
@@ -223,6 +233,39 @@ impl<Store: Archive<Position = EventPosition, Error = MemoryStorageError> + 'sta
         } else {
             Ok(result)
         }
+    }
+
+    async fn append_batch(
+        &self,
+        values: Vec<Self::Append>,
+    ) -> Vec<Result<Self::AppendResult, Self::Error>> {
+        self.faults.batches.fetch_add(1, Ordering::SeqCst);
+        let ambiguous = {
+            let mut next = self.faults.next.lock().unwrap();
+            if matches!(*next, Failure::GateGroupAmbiguous) {
+                *next = Failure::None;
+                true
+            } else {
+                false
+            }
+        };
+        if ambiguous {
+            self.faults.release.notified().await;
+        }
+        let mut results = Vec::new();
+        for value in values {
+            let result = self.append(value).await;
+            let failed = result.is_err();
+            results.push(if ambiguous && !failed {
+                Err(FaultError::Injected(ErrorKind::Ambiguous))
+            } else {
+                result
+            });
+            if failed {
+                break;
+            }
+        }
+        results
     }
 
     fn read(
@@ -344,6 +387,493 @@ impl SeaStorage for FaultStorage {
             .map_err(FaultError::Backend)?
             .map(|components| self.wrap(components)))
     }
+}
+
+/// Bounds delayed checks without assuming when the cooperative driver runs.
+async fn settles<Output>(future: impl std::future::Future<Output = Output>) -> Output {
+    tokio::time::timeout(std::time::Duration::from_secs(5), future)
+        .await
+        .expect("released work must settle")
+}
+
+#[tokio::test]
+async fn buffered_submissions_preserve_first_poll_order_with_exhausted_budget() {
+    let storage = MemoryStorage::new();
+    let (_, view) = storage.create_view().await.unwrap();
+    let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+        .await
+        .unwrap();
+    let writer = member(&runtime, "writer").await;
+    let mut pending = futures_util::stream::iter(0..257)
+        .map(|index| {
+            let writer = &writer;
+            async move {
+                if index == 0 {
+                    while tokio::task::coop::has_budget_remaining() {
+                        tokio::task::consume_budget().await;
+                    }
+                    assert!(!tokio::task::coop::has_budget_remaining());
+                }
+                let mut input = submission(b"ordered");
+                input.operation_id = OperationId::new(index.to_string()).unwrap();
+                writer.submit(input).await.unwrap()
+            }
+        })
+        .buffered(128);
+    let mut receipts = Vec::new();
+    while let Some(position) = settles(pending.next()).await {
+        assert!(
+            receipts.last().is_none_or(|previous| *previous < position),
+            "receipt {} is out of first-poll order: {receipts:?}, {position:?}",
+            receipts.len()
+        );
+        receipts.push(position);
+    }
+    assert_eq!(receipts.len(), 257);
+    let mut replay = writer.read(None, receipts.last().copied());
+    for (index, position) in receipts.iter().enumerate() {
+        let event = settles(super::tests::data(&mut replay)).await.unwrap();
+        assert_eq!(
+            event.operation_id,
+            OperationId::new(index.to_string()).unwrap()
+        );
+        assert_eq!(event.committed.position, *position);
+    }
+    assert!(settles(super::tests::data(&mut replay)).await.is_none());
+}
+
+#[tokio::test]
+async fn delayed_persistence_admits_a_bounded_ring_and_publishes_only_after_commit() {
+    let storage = FaultStorage::default();
+    let (_, view) = storage.create_view().await.unwrap();
+    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let mut members = Vec::new();
+    for index in 0..257 {
+        members.push(member(&runtime, &format!("writer-{index}")).await);
+    }
+    let observer = member(&runtime, "observer").await;
+    let mut reader = observer.read(None, None);
+    assert!(reader.next().await.unwrap().is_ok());
+    for round in 0..2 {
+        storage.events.arm(Failure::GateBefore);
+        let mut pending = Vec::new();
+        for (index, member) in members.iter().enumerate() {
+            let mut input = submission(b"queued");
+            input.operation_id = OperationId::new(format!("{round}-{index}")).unwrap();
+            let mut future = Box::pin(member.submit(input));
+            assert!(
+                tokio::task::unconstrained(future.as_mut())
+                    .now_or_never()
+                    .is_none()
+            );
+            pending.push(future);
+        }
+        assert_eq!(runtime.pipeline.occupancy().0, 256);
+        assert!(
+            runtime.runtime.try_lock().is_ok(),
+            "persistence must not hold admission state"
+        );
+        assert!(
+            reader.next().now_or_never().is_none(),
+            "no early reader visibility"
+        );
+        storage.events.release.notify_one();
+        let results = settles(futures_util::future::join_all(pending)).await;
+        assert!(results.iter().all(Result::is_ok));
+        assert_eq!(runtime.pipeline.occupancy(), (0, 0));
+        assert!(storage.events.batches.load(Ordering::SeqCst) > 0);
+        for _ in 0..257 {
+            settles(super::tests::data(&mut reader)).await.unwrap();
+        }
+        while reader.next().now_or_never().is_some() {}
+    }
+}
+
+#[tokio::test]
+async fn cancelled_admitted_entry_discards_queued_session_suffix_before_leave() {
+    let storage = FaultStorage::default();
+    let (_, view) = storage.create_view().await.unwrap();
+    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let writer = member(&runtime, "writer").await;
+    let observer = member(&runtime, "observer").await;
+    writer.announce_membership(Bytes::new()).await.unwrap();
+    storage.events.arm(Failure::GateBefore);
+    let mut first = Box::pin(writer.submit(submission(b"first")));
+    let mut suffix = Box::pin(writer.submit(submission(b"suffix")));
+    assert!(first.as_mut().now_or_never().is_none());
+    assert!(suffix.as_mut().now_or_never().is_none());
+    assert_eq!(runtime.pipeline.occupancy().0, 2);
+    drop(first);
+    storage.events.release.notify_one();
+    assert!(settles(suffix).await.is_err());
+    settles(writer.close()).await.unwrap();
+    let mut reader = observer.read(None, Some(EventPosition::new(3)));
+    assert_eq!(
+        super::tests::data(&mut reader).await.unwrap().kind,
+        sea_core::archive::SessionEventKind::Joined
+    );
+    assert_eq!(
+        super::tests::data(&mut reader)
+            .await
+            .unwrap()
+            .committed
+            .event
+            .payload,
+        Bytes::from_static(b"first")
+    );
+    assert_eq!(
+        super::tests::data(&mut reader).await.unwrap().kind,
+        sea_core::archive::SessionEventKind::Left
+    );
+    assert_eq!(storage.events.calls.load(Ordering::SeqCst), 3);
+}
+
+#[tokio::test]
+async fn definitive_failure_never_dispatches_the_queued_same_session_suffix() {
+    let storage = FaultStorage::default();
+    let (_, view) = storage.create_view().await.unwrap();
+    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let writer = member(&runtime, "writer").await;
+    storage.events.arm(Failure::GateReject);
+    let mut first = Box::pin(writer.submit(submission(b"first")));
+    let mut suffix = Box::pin(writer.submit(submission(b"suffix")));
+    assert!(first.as_mut().now_or_never().is_none());
+    assert!(suffix.as_mut().now_or_never().is_none());
+    storage.events.release.notify_one();
+    let (first, suffix) = settles(futures_util::future::join(first, suffix)).await;
+    assert!(first.is_err());
+    assert!(suffix.is_err());
+    assert_eq!(storage.events.calls.load(Ordering::SeqCst), 1);
+    assert!(runtime.runtime.lock().await.positions.is_empty());
+}
+
+#[tokio::test]
+async fn grouped_ambiguity_poisoning_prevents_suffix_and_terminal_leave() {
+    let storage = FaultStorage::default();
+    let (_, view) = storage.create_view().await.unwrap();
+    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let first = member(&runtime, "first").await;
+    let second = member(&runtime, "second").await;
+    let third = member(&runtime, "third").await;
+    second.announce_membership(Bytes::new()).await.unwrap();
+    storage.events.arm(Failure::GateBefore);
+    let mut blocked = Box::pin(first.submit(submission(b"blocked")));
+    let mut ambiguous = Box::pin(second.submit(submission(b"ambiguous")));
+    let mut also_ambiguous = Box::pin(third.submit(submission(b"also-ambiguous")));
+    assert!(blocked.as_mut().now_or_never().is_none());
+    assert!(ambiguous.as_mut().now_or_never().is_none());
+    assert!(also_ambiguous.as_mut().now_or_never().is_none());
+    storage.events.release.notify_one();
+    assert!(settles(blocked).await.is_ok());
+    storage.events.arm(Failure::GateGroupAmbiguous);
+    settles(async {
+        while storage.events.batches.load(Ordering::SeqCst) == 0 {
+            assert!(ambiguous.as_mut().now_or_never().is_none());
+            tokio::task::yield_now().await;
+        }
+    })
+    .await;
+    let mut suffix = Box::pin(second.submit(submission(b"suffix")));
+    assert!(suffix.as_mut().now_or_never().is_none());
+    storage.events.release.notify_one();
+    assert!(matches!(
+        settles(ambiguous).await,
+        Err(SessionError::RecoveryRequired)
+    ));
+    assert!(matches!(
+        settles(also_ambiguous).await,
+        Err(SessionError::RecoveryRequired)
+    ));
+    assert!(settles(suffix).await.is_err());
+    assert!(matches!(
+        settles(second.close()).await,
+        Err(SessionError::RecoveryRequired)
+    ));
+    assert_eq!(storage.events.calls.load(Ordering::SeqCst), 4);
+}
+
+#[tokio::test]
+async fn byte_bound_backpressures_before_the_entry_limit() {
+    let storage = FaultStorage::default();
+    let (_, view) = storage.create_view().await.unwrap();
+    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let first = member(&runtime, "first").await;
+    let second = member(&runtime, "second").await;
+    let mut large = submission(b"large");
+    large.event.payload = Bytes::from(vec![0; 3 * 1024 * 1024]);
+    storage.events.arm(Failure::GateBefore);
+    let mut blocked = Box::pin(first.submit(large));
+    assert!(blocked.as_mut().now_or_never().is_none());
+    let mut large = submission(b"other-large");
+    large.event.payload = Bytes::from(vec![0; 2 * 1024 * 1024]);
+    let mut waiting = Box::pin(second.submit(large));
+    assert!(waiting.as_mut().now_or_never().is_none());
+    assert_eq!(runtime.pipeline.occupancy().0, 1);
+    storage.events.release.notify_one();
+    assert!(settles(blocked).await.is_ok());
+    assert!(settles(waiting).await.is_ok());
+    assert_eq!(runtime.pipeline.occupancy(), (0, 0));
+}
+
+#[tokio::test]
+async fn capacity_wait_preserves_same_session_order_and_failure_prefix() {
+    for invalid in [false, true] {
+        let storage = FaultStorage::default();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        let leader = member(&runtime, "leader").await;
+        let writer = member(&runtime, "writer").await;
+        let cloned_writer = writer.clone();
+        let mut input = submission(b"blocked");
+        input.event.payload = Bytes::from(vec![0; 3 * 1024 * 1024]);
+        storage.events.arm(Failure::GateBefore);
+        let mut blocked = Box::pin(leader.submit(input));
+        assert!(
+            tokio::task::unconstrained(blocked.as_mut())
+                .now_or_never()
+                .is_none()
+        );
+        let mut input = submission(b"first");
+        input.event.payload = Bytes::from(vec![0; 2 * 1024 * 1024]);
+        if invalid {
+            input.reference = Some(EventPosition::new(999));
+        }
+        let mut first = Box::pin(writer.submit(input));
+        let mut second = Box::pin(cloned_writer.submit(submission(b"second")));
+        assert!(
+            tokio::task::unconstrained(first.as_mut())
+                .now_or_never()
+                .is_none()
+        );
+        assert!(
+            tokio::task::unconstrained(second.as_mut())
+                .now_or_never()
+                .is_none()
+        );
+        assert_eq!(
+            runtime.pipeline.occupancy().0,
+            1,
+            "neither writer input may bypass capacity admission"
+        );
+        storage.events.release.notify_one();
+        settles(blocked).await.unwrap();
+        let (second, first) = settles(futures_util::future::join(second, first)).await;
+        if invalid {
+            assert!(matches!(first, Err(SessionError::Rejected(_))));
+            assert!(matches!(second, Err(SessionError::Closed)));
+            assert_eq!(storage.events.calls.load(Ordering::SeqCst), 1);
+        } else {
+            assert_eq!(first.unwrap(), EventPosition::new(2));
+            assert_eq!(second.unwrap(), EventPosition::new(3));
+            assert_eq!(storage.events.calls.load(Ordering::SeqCst), 3);
+        }
+        assert_eq!(runtime.pipeline.occupancy(), (0, 0));
+    }
+}
+
+#[tokio::test]
+async fn capacity_wait_cancellation_preserves_authority_and_close_needs_no_admission_lock() {
+    for close in [false, true] {
+        let storage = FaultStorage::default();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        let leader = member(&runtime, "leader").await;
+        let writer = member(&runtime, "writer").await;
+        let cloned_writer = writer.clone();
+        let mut input = submission(b"blocked");
+        input.event.payload = Bytes::from(vec![0; 3 * 1024 * 1024]);
+        storage.events.arm(Failure::GateBefore);
+        let mut blocked = Box::pin(leader.submit(input));
+        assert!(
+            tokio::task::unconstrained(blocked.as_mut())
+                .now_or_never()
+                .is_none()
+        );
+        let mut input = submission(b"first");
+        input.event.payload = Bytes::from(vec![0; 2 * 1024 * 1024]);
+        let mut first = Box::pin(writer.submit(input));
+        assert!(
+            tokio::task::unconstrained(first.as_mut())
+                .now_or_never()
+                .is_none()
+        );
+        let mut cancelled_waiter = Box::pin(cloned_writer.submit(submission(b"cancelled-waiter")));
+        assert!(
+            tokio::task::unconstrained(cancelled_waiter.as_mut())
+                .now_or_never()
+                .is_none()
+        );
+        let mut second = Box::pin(cloned_writer.submit(submission(b"second")));
+        assert!(
+            tokio::task::unconstrained(second.as_mut())
+                .now_or_never()
+                .is_none()
+        );
+        assert_eq!(runtime.pipeline.occupancy().0, 1);
+        drop(cancelled_waiter);
+        if close {
+            let mut closing = Box::pin(writer.close());
+            assert!(
+                tokio::task::unconstrained(closing.as_mut())
+                    .now_or_never()
+                    .is_none()
+            );
+            storage.events.release.notify_one();
+            settles(closing).await.unwrap();
+            assert!(matches!(settles(first).await, Err(SessionError::Closed)));
+            assert!(matches!(settles(second).await, Err(SessionError::Closed)));
+            settles(blocked).await.unwrap();
+            assert_eq!(storage.events.calls.load(Ordering::SeqCst), 1);
+        } else {
+            drop(first);
+            assert!(
+                tokio::task::unconstrained(second.as_mut())
+                    .now_or_never()
+                    .is_none()
+            );
+            assert_eq!(
+                runtime.pipeline.occupancy().0,
+                2,
+                "cancelling preadmission waiters lets the fitting successor enter"
+            );
+            storage.events.release.notify_one();
+            settles(blocked).await.unwrap();
+            assert_eq!(settles(second).await.unwrap(), EventPosition::new(2));
+            assert_eq!(
+                settles(writer.submit(submission(b"later"))).await.unwrap(),
+                EventPosition::new(3)
+            );
+            assert_eq!(storage.events.calls.load(Ordering::SeqCst), 3);
+        }
+        assert_eq!(runtime.pipeline.occupancy(), (0, 0));
+    }
+}
+
+#[tokio::test]
+async fn same_session_batch_rejects_invalid_entry_and_suffix_but_settles_prepared_prefix() {
+    let storage = FaultStorage::default();
+    let (_, view) = storage.create_view().await.unwrap();
+    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let leader = member(&runtime, "leader").await;
+    let writer = member(&runtime, "writer").await;
+    storage.events.arm(Failure::GateBefore);
+    let mut blocked = Box::pin(leader.submit(submission(b"blocked")));
+    assert!(blocked.as_mut().now_or_never().is_none());
+    let mut first = Box::pin(writer.submit(submission(b"first")));
+    let mut second = Box::pin(writer.submit(submission(b"second")));
+    let mut invalid = submission(b"invalid");
+    invalid.reference = Some(EventPosition::new(999));
+    let mut invalid = Box::pin(writer.submit(invalid));
+    let mut suffix = Box::pin(writer.submit(submission(b"suffix")));
+    for future in [&mut first, &mut second, &mut invalid, &mut suffix] {
+        assert!(future.as_mut().now_or_never().is_none());
+    }
+    storage.events.release.notify_one();
+    assert!(settles(blocked).await.is_ok());
+    assert!(settles(first).await.is_ok());
+    assert!(settles(second).await.is_ok());
+    assert!(matches!(
+        settles(invalid).await,
+        Err(SessionError::Rejected(_))
+    ));
+    assert!(matches!(settles(suffix).await, Err(SessionError::Closed)));
+    assert_eq!(storage.events.batches.load(Ordering::SeqCst), 1);
+    assert_eq!(storage.events.calls.load(Ordering::SeqCst), 3);
+    assert_eq!(runtime.pipeline.occupancy(), (0, 0));
+}
+
+#[tokio::test]
+async fn cancelled_dispatched_same_session_batch_settles_before_leave_without_queued_suffix() {
+    let storage = FaultStorage::default();
+    let (_, view) = storage.create_view().await.unwrap();
+    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let leader = member(&runtime, "leader").await;
+    let writer = member(&runtime, "writer").await;
+    writer.announce_membership(Bytes::new()).await.unwrap();
+    storage.events.arm(Failure::GateBefore);
+    let mut blocked = Box::pin(leader.submit(submission(b"blocked")));
+    assert!(blocked.as_mut().now_or_never().is_none());
+    let mut first = Box::pin(writer.submit(submission(b"first")));
+    let mut second = Box::pin(writer.submit(submission(b"second")));
+    assert!(first.as_mut().now_or_never().is_none());
+    assert!(second.as_mut().now_or_never().is_none());
+    storage.events.release.notify_one();
+    settles(blocked).await.unwrap();
+    storage.events.arm(Failure::GateBefore);
+    settles(async {
+        while storage.events.batches.load(Ordering::SeqCst) == 0 {
+            assert!(first.as_mut().now_or_never().is_none());
+            tokio::task::yield_now().await;
+        }
+    })
+    .await;
+    assert_eq!(storage.events.batches.load(Ordering::SeqCst), 1);
+    let mut suffix = Box::pin(writer.submit(submission(b"suffix")));
+    assert!(suffix.as_mut().now_or_never().is_none());
+    drop(first);
+    storage.events.release.notify_one();
+    settles(second).await.unwrap();
+    assert!(settles(suffix).await.is_err());
+    settles(writer.close()).await.unwrap();
+    let mut reader = leader.read(None, Some(EventPosition::new(5)));
+    let mut records = Vec::new();
+    while let Some(record) = settles(super::tests::data(&mut reader)).await {
+        records.push(record);
+    }
+    assert_eq!(records.len(), 5);
+    assert_eq!(
+        records[2].committed.event.payload,
+        Bytes::from_static(b"first")
+    );
+    assert_eq!(
+        records[3].committed.event.payload,
+        Bytes::from_static(b"second")
+    );
+    assert_eq!(records[4].kind, sea_core::archive::SessionEventKind::Left);
+    assert_eq!(storage.events.calls.load(Ordering::SeqCst), 5);
+}
+
+#[tokio::test]
+async fn batch_floor_does_not_invalidate_a_prepared_lower_reference() {
+    let storage = FaultStorage::default();
+    let (id, view) = storage.create_view().await.unwrap();
+    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let leader = member(&runtime, "leader").await;
+    let writer = member(&runtime, "writer").await;
+    let mut reference = None;
+    for index in 0..1100 {
+        let mut input = submission(b"seed");
+        input.operation_id = OperationId::new(format!("seed-{index}")).unwrap();
+        input.reference = reference;
+        reference = Some(writer.submit(input).await.unwrap());
+    }
+    let floor = runtime.runtime.lock().await.minimum_reference;
+    assert_eq!(floor, Some(EventPosition::new(64)));
+    let mut input = submission(b"blocked");
+    input.reference = floor;
+    storage.events.arm(Failure::GateBefore);
+    let mut blocked = Box::pin(leader.submit(input));
+    assert!(blocked.as_mut().now_or_never().is_none());
+    let mut high = submission(b"high");
+    high.reference = reference;
+    let mut low = submission(b"low");
+    low.reference = floor;
+    let mut high = Box::pin(writer.submit(high));
+    let mut low = Box::pin(writer.submit(low));
+    assert!(high.as_mut().now_or_never().is_none());
+    assert!(low.as_mut().now_or_never().is_none());
+    storage.events.release.notify_one();
+    settles(blocked).await.unwrap();
+    settles(high).await.unwrap();
+    settles(low).await.unwrap();
+    assert_eq!(storage.events.batches.load(Ordering::SeqCst), 1);
+    assert_eq!(runtime.runtime.lock().await.minimum_reference, floor);
+    drop((leader, writer, runtime));
+    let recovered =
+        LocalSequencer::<FaultStorage>::recover(storage.open_view(&id).await.unwrap().unwrap())
+            .await
+            .unwrap();
+    assert_eq!(recovered.runtime.lock().await.minimum_reference, floor);
 }
 
 #[tokio::test]

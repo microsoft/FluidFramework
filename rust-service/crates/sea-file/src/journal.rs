@@ -5,15 +5,19 @@
 //! dependency-closure checks remain the responsibility of `sea_file::storage`.
 //!
 //! Buffered openings append in place and reject incomplete tails.
-//! Durable openings publish a synchronized replacement through same-directory atomic rename,
-//! then synchronize the directory before acknowledgment. Published inodes are never modified by
-//! durable writes, so torn staging writes cannot damage an acknowledged prefix, even in its last
-//! sector. Recovery ignores staging files and synchronizes the selected journal and directory
-//! before exposing records. Legacy incomplete durable tails are repaired through replacement.
+//! Durable openings append frames in place and synchronize once per group before acknowledgment.
+//! This requires durable-prefix integrity: appending or truncating an unsynchronized tail must not
+//! damage previously synchronized bytes, including bytes sharing its final sector. Creation still
+//! publishes through synchronized rename. Recovery truncates incomplete tails and synchronizes the
+//! selected journal and directory before exposing records.
 //! Complete malformed published frames remain corruption, not discardable uncommitted data.
 //!
-//! Power-loss recovery assumes crash-atomic rename and truthful file and directory synchronization
-//! on a local filesystem. It does not cover media corruption or a switch to buffered writes.
+//! Power-loss recovery assumes durable-prefix integrity, crash-atomic creation rename, truthful
+//! synchronization, and tails consisting of valid frames followed by at most a short header or
+//! short payload with intact length metadata. Checksums cannot distinguish a full-length torn
+//! unacknowledged frame from damaged committed history; both fail recovery. Loss of acknowledged
+//! length is indistinguishable from an interrupted tail and is excluded by this model.
+//! Media corruption and a switch to buffered writes are outside the guarantee.
 //!
 //! Once writing begins, an I/O failure or injected uncertain boundary poisons the opening. Later
 //! mutations and authoritative observations return [`FileStorageError::Ambiguous`] until every
@@ -23,7 +27,7 @@ use sea_core::{BlobId, ClassifiedError, ErrorKind};
 use std::{
     fs::{self, File, OpenOptions},
     io::{Read, Seek, SeekFrom, Write},
-    path::{Path, PathBuf},
+    path::Path,
 };
 use thiserror::Error;
 
@@ -74,8 +78,6 @@ pub(crate) struct Journal {
     file: File,
     /// Never replaced or removed; owns the OS lock across publication and recovery.
     _lock: File,
-    /// Published journal name in the document namespace.
-    path: PathBuf,
     /// Whether each acknowledged record must be synchronized.
     durable: bool,
     /// Prevents writes and authoritative observations after an uncertain write.
@@ -83,6 +85,12 @@ pub(crate) struct Journal {
     /// Deterministic boundaries used only by localized recovery tests.
     #[cfg(test)]
     fault: Option<JournalFault>,
+    /// Counts successful append synchronization calls, excluding opening and recovery.
+    #[cfg(test)]
+    pub(crate) syncs: usize,
+    /// Pauses or panics at a completed-write boundary in executor and cancellation tests.
+    #[cfg(test)]
+    pub(crate) before_sync: Option<Box<dyn FnOnce() + Send>>,
 }
 
 /// Failure boundaries distinguish rejection, an incomplete tail, and lost acknowledgment.
@@ -93,10 +101,8 @@ pub(crate) enum JournalFault {
     BeforeWrite,
     /// Leaves an incomplete frame and an unusable opening.
     PartialWrite,
-    /// Synchronizes staging without publishing it.
-    BeforePublish,
-    /// Publishes the replacement without synchronizing its directory.
-    AfterPublish,
+    /// Writes complete frames but fails before synchronization.
+    BeforeSync,
     /// Commits and synchronizes the complete frame, then loses acknowledgment.
     AfterSync,
 }
@@ -156,10 +162,11 @@ impl Journal {
         file.read_to_end(&mut bytes)?;
         let (records, boundary) = recover(&bytes, durable)?;
         if boundary != bytes.len() {
-            let mut staged = staging_file(path)?;
-            staged.write_all(&bytes[..boundary])?;
-            publish(path, &staged)?;
-            file = staged;
+            file.set_len(boundary as u64)?;
+        }
+        if durable {
+            file.sync_all()?;
+            sync_parent(path)?;
         }
         match fs::remove_file(path.with_extension("pending")) {
             Ok(()) => {}
@@ -171,22 +178,17 @@ impl Journal {
             Self {
                 file,
                 _lock: lock,
-                path: path.to_path_buf(),
                 durable,
                 failed: false,
                 #[cfg(test)]
                 fault: None,
+                #[cfg(test)]
+                syncs: 0,
+                #[cfg(test)]
+                before_sync: None,
             },
             records,
         ))
-    }
-
-    /// Copies the published prefix into an unpublished inode before any durable mutation.
-    fn stage(&mut self) -> Result<File, FileStorageError> {
-        let mut staged = staging_file(&self.path)?;
-        self.file.seek(SeekFrom::Start(0))?;
-        std::io::copy(&mut self.file, &mut staged)?;
-        Ok(staged)
     }
 
     /// Refuses observations that could mistake an uncertain tail for settled absence.
@@ -206,50 +208,57 @@ impl Journal {
 
     /// Writes once, synchronously; an I/O failure poisons this opening until recovery.
     pub(crate) fn append(&mut self, payload: &[u8]) -> Result<(), FileStorageError> {
+        self.append_batch(&[payload])
+    }
+
+    /// Appends a group with one sync; on uncertainty any prefix of the group may survive.
+    /// No caller may publish any member until this method succeeds.
+    pub(crate) fn append_batch(&mut self, payloads: &[&[u8]]) -> Result<(), FileStorageError> {
         self.ready()?;
+        if payloads.is_empty() {
+            return Ok(());
+        }
         #[cfg(test)]
         let fault = self.fault.take();
         #[cfg(test)]
         if matches!(fault, Some(JournalFault::BeforeWrite)) {
             return Err(FileStorageError::Rejected("injected before write"));
         }
-        let length = payload.len() as u64;
-        let mut frame = Vec::with_capacity(FRAME_HEADER + payload.len());
-        frame.extend_from_slice(&length.to_be_bytes());
-        frame.extend_from_slice(&(!length).to_be_bytes());
-        frame.extend_from_slice(BlobId::for_bytes(payload).as_bytes());
-        frame.extend_from_slice(payload);
+        let mut frame = Vec::new();
+        for payload in payloads {
+            let length = payload.len() as u64;
+            frame.extend_from_slice(&length.to_be_bytes());
+            frame.extend_from_slice(&(!length).to_be_bytes());
+            frame.extend_from_slice(BlobId::for_bytes(payload).as_bytes());
+            frame.extend_from_slice(payload);
+        }
         self.failed = true;
-        let mut staged = if self.durable {
-            Some(self.stage().map_err(|_| FileStorageError::Ambiguous)?)
-        } else {
-            None
-        };
-        let output = staged.as_mut().unwrap_or(&mut self.file);
         #[cfg(test)]
         if matches!(fault, Some(JournalFault::PartialWrite)) {
-            output
+            self.file
                 .write_all(&frame[..20])
                 .map_err(|_| FileStorageError::Ambiguous)?;
             return Err(FileStorageError::Ambiguous);
         }
-        output
+        self.file
             .write_all(&frame)
             .map_err(|_| FileStorageError::Ambiguous)?;
-        if let Some(staged) = staged {
-            staged.sync_all().map_err(|_| FileStorageError::Ambiguous)?;
-            #[cfg(test)]
-            if matches!(fault, Some(JournalFault::BeforePublish)) {
-                return Err(FileStorageError::Ambiguous);
-            }
-            fs::rename(self.path.with_extension("pending"), &self.path)
+        #[cfg(test)]
+        if matches!(fault, Some(JournalFault::BeforeSync)) {
+            return Err(FileStorageError::Ambiguous);
+        }
+        #[cfg(test)]
+        if let Some(before_sync) = self.before_sync.take() {
+            before_sync();
+        }
+        if self.durable {
+            self.file
+                .sync_all()
                 .map_err(|_| FileStorageError::Ambiguous)?;
-            self.file = staged;
             #[cfg(test)]
-            if matches!(fault, Some(JournalFault::AfterPublish)) {
-                return Err(FileStorageError::Ambiguous);
+            {
+                self.syncs += 1;
             }
-            sync_parent(&self.path).map_err(|_| FileStorageError::Ambiguous)?;
         }
         #[cfg(test)]
         if matches!(fault, Some(JournalFault::AfterSync)) {
@@ -329,13 +338,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn durable_publication_recovers_old_or_new_without_modifying_old_inode() {
+    fn durable_append_reuses_inode_and_recovers_uncertain_prefix() {
         let root = std::env::temp_dir().join(format!("sea-publication-{}", std::process::id()));
         fs::create_dir_all(&root).unwrap();
         for (index, fault) in [
             JournalFault::PartialWrite,
-            JournalFault::BeforePublish,
-            JournalFault::AfterPublish,
+            JournalFault::BeforeSync,
             JournalFault::AfterSync,
         ]
         .into_iter()
@@ -361,15 +369,18 @@ mod tests {
                 }
                 let mut retained = Vec::new();
                 old_inode.read_to_end(&mut retained).unwrap();
-                assert_eq!(retained, published);
+                assert!(retained.starts_with(&published));
+                assert!(retained.len() > published.len());
+                assert_eq!(retained, fs::read(&path).unwrap());
+                assert!(!path.with_extension("pending").exists());
                 drop((old_inode, journal));
-                if rollback && matches!(fault, JournalFault::AfterPublish) {
+                if rollback && matches!(fault, JournalFault::BeforeSync) {
                     fs::write(&path, &published).unwrap();
                 }
                 let (mut journal, records) = Journal::open(&path, false, true).unwrap();
                 let mut expected = vec![b"acknowledged".to_vec()];
                 if matches!(fault, JournalFault::AfterSync)
-                    || (!rollback && matches!(fault, JournalFault::AfterPublish))
+                    || (!rollback && matches!(fault, JournalFault::BeforeSync))
                 {
                     expected.push(b"next".to_vec());
                 }
@@ -386,33 +397,33 @@ mod tests {
     }
 
     #[test]
-    fn recovery_ignores_every_truncated_or_corrupt_staging_image() {
+    fn recovery_repairs_every_incomplete_tail_but_rejects_complete_corruption() {
         let root = std::env::temp_dir().join(format!("sea-staging-{}", std::process::id()));
         fs::create_dir_all(&root).unwrap();
         let path = root.join("journal");
         let (mut journal, _) = Journal::open(&path, true, true).unwrap();
         journal.append(b"acknowledged").unwrap();
         let published = fs::read(&path).unwrap();
-        journal.inject(JournalFault::BeforePublish);
-        assert!(journal.append(b"unacknowledged").is_err());
-        let candidate = fs::read(path.with_extension("pending")).unwrap();
+        journal.append(b"unacknowledged").unwrap();
+        let candidate = fs::read(&path).unwrap();
         drop(journal);
-        let mut images: Vec<Vec<u8>> = (0..=candidate.len())
-            .map(|length| candidate[..length].to_vec())
-            .collect();
-        for offset in 0..candidate.len() {
-            let mut torn = candidate.clone();
-            torn[offset] ^= 0xff;
-            images.push(torn);
-        }
-        images.push(vec![0; candidate.len()]);
-        for image in images {
-            fs::write(path.with_extension("pending"), image).unwrap();
+        for length in published.len()..candidate.len() {
+            fs::write(&path, &candidate[..length]).unwrap();
+            fs::write(path.with_extension("pending"), b"ignored creation staging").unwrap();
             let (journal, records) = Journal::open(&path, false, true).unwrap();
             assert_eq!(records, vec![b"acknowledged".to_vec()]);
             assert_eq!(fs::read(&path).unwrap(), published);
             assert!(!path.with_extension("pending").exists());
             drop(journal);
+        }
+        for offset in published.len()..candidate.len() {
+            let mut corrupt = candidate.clone();
+            corrupt[offset] ^= 1;
+            fs::write(&path, corrupt).unwrap();
+            assert!(matches!(
+                Journal::open(&path, false, true),
+                Err(FileStorageError::Corrupt(_))
+            ));
         }
         let mut corrupt = published;
         *corrupt.last_mut().unwrap() ^= 1;
@@ -446,7 +457,7 @@ mod tests {
     }
 
     #[test]
-    fn interrupted_durable_append_does_not_modify_published_bytes() {
+    fn interrupted_durable_append_preserves_acknowledged_prefix() {
         let root =
             std::env::temp_dir().join(format!("sea-published-journal-{}", std::process::id()));
         std::fs::create_dir_all(&root).unwrap();
@@ -459,12 +470,35 @@ mod tests {
             journal.append(b"unacknowledged"),
             Err(FileStorageError::Ambiguous)
         ));
-        assert_eq!(std::fs::read(&path).unwrap(), published);
+        let interrupted = std::fs::read(&path).unwrap();
+        assert!(interrupted.starts_with(&published));
+        assert_eq!(interrupted.len(), published.len() + 20);
         drop(journal);
         let (journal, records) = Journal::open(&path, false, true).unwrap();
         assert_eq!(records, vec![b"acknowledged".to_vec()]);
+        assert_eq!(std::fs::read(&path).unwrap(), published);
         drop(journal);
         std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn durable_batch_syncs_once_and_empty_batch_does_not_sync() {
+        let root = std::env::temp_dir().join(format!("sea-batch-{}", std::process::id()));
+        fs::create_dir_all(&root).unwrap();
+        let path = root.join("journal");
+        let (mut journal, _) = Journal::open(&path, true, true).unwrap();
+        journal.append_batch(&[]).unwrap();
+        assert_eq!(journal.syncs, 0);
+        journal.append_batch(&[b"one", b"two", b"three"]).unwrap();
+        assert_eq!(journal.syncs, 1);
+        drop(journal);
+        let (journal, records) = Journal::open(&path, false, true).unwrap();
+        assert_eq!(
+            records,
+            vec![b"one".to_vec(), b"two".to_vec(), b"three".to_vec()]
+        );
+        drop(journal);
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

@@ -10,10 +10,12 @@
 //! strictly advancing snapshot positions before exposing any component. Raw event components keep
 //! tree identities opaque, while the composed view resolves availability before publication.
 //!
-//! Reads initialize lazily, register wakeups under the mutation lock, and preserve exclusive-lower
-//! and inclusive-upper archive bounds. Filesystem operations are synchronous inside their async
-//! methods: there is no detached work or automatic retry. An uncertain journal write terminates
-//! authoritative observations until reopening and recovery.
+//! Reads initialize lazily, register wakeups under the published-state lock, and preserve
+//! exclusive-lower and inclusive-upper archive bounds. Event batches run on Tokio blocking workers
+//! that retain the opening after caller cancellation. Their disk I/O does not hold the state lock.
+//! Returned results establish settlement; cancellation does not. Creation, recovery, blob writes,
+//! and snapshot writes remain synchronous barriers. No mutation is retried automatically.
+//! Uncertain writes and failed workers terminate authoritative observations until recovery.
 
 pub use crate::journal::FileStorageError;
 use crate::journal::Journal;
@@ -33,11 +35,14 @@ use std::{
     collections::BTreeMap,
     fs,
     path::{Path, PathBuf},
-    sync::{Arc, Mutex, MutexGuard, Weak},
+    sync::{
+        Arc, Mutex, MutexGuard, Weak,
+        atomic::{AtomicBool, Ordering},
+    },
     task::Poll,
 };
 
-/// Directory-backed document factory; durable mode synchronizes each record and namespace creation.
+/// Directory-backed factory; durable mode synchronizes each mutation group and namespace creation.
 #[derive(Clone, Debug)]
 pub struct FileStorage<const DURABLE: bool = false> {
     /// Canonical namespace, also used to establish handle provenance across openings.
@@ -67,7 +72,6 @@ impl<const DURABLE: bool> FileStorage<DURABLE> {
         records: Vec<Vec<u8>>,
     ) -> Result<StorageComponents<FileBlobs, FileEvents, FileSnapshots>, FileStorageError> {
         let mut state = State {
-            journal,
             blobs: BTreeMap::new(),
             directories: BTreeMap::new(),
             events: BTreeMap::new(),
@@ -79,6 +83,8 @@ impl<const DURABLE: bool> FileStorage<DURABLE> {
         }
         let opening = Arc::new(Opening {
             path: Arc::new(path),
+            journal: Mutex::new(journal),
+            failed: AtomicBool::new(false),
             state: Mutex::new(state),
         });
         Ok(StorageComponents {
@@ -164,20 +170,53 @@ impl<Identity: Copy + Send + Sync + 'static> StorageHandle for FileHandle<Identi
     }
 }
 
-/// Shared writer ownership retained by components and reads, not availability handles.
+/// Shared writer ownership retained by components, reads, and workers, not availability handles.
 struct Opening {
     /// Document provenance for minted handles.
     path: Arc<PathBuf>,
-    /// Serializes all journal mutations and observations.
+    /// Serializes mutations; acquired before the published-state mutex.
+    journal: Mutex<Journal>,
+    /// Refuses observations after uncertain I/O or a failed worker.
+    failed: AtomicBool,
+    /// Published dependency-closed state; event disk I/O never holds this mutex.
     state: Mutex<State>,
 }
 
 impl Opening {
+    /// Fails closed and notifies readers even when a worker panics after cancellation.
+    fn poison(&self) {
+        self.failed.store(true, Ordering::Release);
+        let mut state = self
+            .state
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let readers = state.readers();
+        drop(state);
+        for reader in readers {
+            reader.wake();
+        }
+    }
+
     /// Acquires a usable state or refuses uncertain journal observations.
     fn lock(&self) -> Result<MutexGuard<'_, State>, FileStorageError> {
         let state = self.state.lock().map_err(|_| FileStorageError::Ambiguous)?;
-        state.journal.ready()?;
+        if self.failed.load(Ordering::Acquire) || self.journal.is_poisoned() {
+            return Err(FileStorageError::Ambiguous);
+        }
         Ok(state)
+    }
+
+    /// Holds the mutation order across disk I/O and in-memory publication.
+    fn writer(&self) -> Result<MutexGuard<'_, Journal>, FileStorageError> {
+        let journal = self
+            .journal
+            .lock()
+            .map_err(|_| FileStorageError::Ambiguous)?;
+        journal.ready()?;
+        if self.failed.load(Ordering::Acquire) {
+            return Err(FileStorageError::Ambiguous);
+        }
+        Ok(journal)
     }
 
     /// Mints evidence only after the caller has established membership.
@@ -212,8 +251,6 @@ impl Opening {
 
 /// Journal state is dependency-closed after recovery and immutable except for append.
 struct State {
-    /// Exclusive persistent writer.
-    journal: Journal,
     /// Verified leaves, indexed by content identity.
     blobs: BTreeMap<BlobId, Bytes>,
     /// Immutable directories whose children were available at publication.
@@ -392,11 +429,12 @@ impl ReferenceableStore for FileBlobs {
 impl BlobStore for FileBlobs {
     async fn put_blob(&self, payload: Bytes) -> Result<Self::Handle, Self::Error> {
         let id = BlobId::for_bytes(&payload);
+        let mut journal = self.0.writer()?;
         let mut state = self.0.lock()?;
         if !state.blobs.contains_key(&id) {
             let mut record = vec![1];
             record.extend_from_slice(&payload);
-            state = persist(state, &record)?;
+            state = persist(&self.0, &mut journal, state, &record)?;
             state.blobs.insert(id, payload);
         }
         Ok(self.0.handle(BlobTreeId::Blob(id)))
@@ -416,6 +454,7 @@ impl BlobStore for FileBlobs {
         let id = directory
             .id()
             .map_err(|_| FileStorageError::Rejected("directory identity"))?;
+        let mut journal = self.0.writer()?;
         let mut state = self.0.lock()?;
         if directory
             .entries()
@@ -427,7 +466,7 @@ impl BlobStore for FileBlobs {
         if !state.directories.contains_key(&id) {
             let mut record = vec![2];
             record.extend_from_slice(&encoded);
-            state = persist(state, &record)?;
+            state = persist(&self.0, &mut journal, state, &record)?;
             state.directories.insert(id, directory);
         }
         Ok(self.0.handle(BlobTreeId::Directory(id)))
@@ -471,29 +510,41 @@ impl Archive for FileEvents {
     type Append = Event;
     type AppendResult = FileHandle<EventPosition>;
     async fn append(&self, event: Event) -> Result<Self::AppendResult, Self::Error> {
-        let mut state = self.0.lock()?;
-        let ordinal = (state.events.len() as u64)
-            .checked_add(1)
-            .ok_or(FileStorageError::Rejected("event positions exhausted"))?;
-        let position = EventPosition::new(ordinal);
-        let mut record = vec![3];
-        record.extend_from_slice(&ordinal.to_be_bytes());
-        record.push(u8::from(event.blob_tree.is_some()));
-        if let Some(root) = event.blob_tree {
-            encode_tree(&mut record, root);
+        self.append_batch(vec![event])
+            .await
+            .pop()
+            .expect("one event produces one result")
+    }
+    async fn append_batch(
+        &self,
+        values: Vec<Event>,
+    ) -> Vec<Result<Self::AppendResult, Self::Error>> {
+        if values.is_empty() {
+            return Vec::new();
         }
-        record.extend_from_slice(&event.payload);
-        state = persist(state, &record)?;
-        let replaced = state
-            .events
-            .insert(position, CommittedEvent { position, event });
-        assert!(replaced.is_none(), "new event position must be vacant");
-        let readers = state.readers();
-        drop(state);
-        for reader in readers {
-            reader.wake();
+        let count = values.len();
+        let events = self.clone();
+        if let Ok(results) = tokio::task::spawn_blocking(move || {
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                events.append_batch_blocking(values)
+            }));
+            match result {
+                Ok(results) => results,
+                Err(panic) => {
+                    events.0.poison();
+                    std::panic::resume_unwind(panic);
+                }
+            }
+        })
+        .await
+        {
+            results
+        } else {
+            self.0.poison();
+            (0..count)
+                .map(|_| Err(FileStorageError::Ambiguous))
+                .collect()
         }
-        Ok(self.0.handle(position))
     }
     fn read(
         &self,
@@ -518,6 +569,83 @@ impl Archive for FileEvents {
     }
 }
 
+impl FileEvents {
+    /// Settles a whole batch while the blocking worker retains the exclusive opening.
+    fn append_batch_blocking(
+        &self,
+        values: Vec<Event>,
+    ) -> Vec<Result<FileHandle<EventPosition>, FileStorageError>> {
+        let mut journal = match self.0.writer() {
+            Ok(journal) => journal,
+            Err(error) => return vec![Err(error)],
+        };
+        let state = match self.0.lock() {
+            Ok(state) => state,
+            Err(error) => return vec![Err(error)],
+        };
+        let head = state.events.len() as u64;
+        drop(state);
+        if head.checked_add(values.len() as u64).is_none() {
+            return vec![Err(FileStorageError::Rejected("event positions exhausted"))];
+        }
+        let records: Vec<Vec<u8>> = values
+            .iter()
+            .enumerate()
+            .map(|(index, event)| {
+                let ordinal = head + index as u64 + 1;
+                let mut record = vec![3];
+                record.extend_from_slice(&ordinal.to_be_bytes());
+                record.push(u8::from(event.blob_tree.is_some()));
+                if let Some(root) = event.blob_tree {
+                    encode_tree(&mut record, root);
+                }
+                record.extend_from_slice(&event.payload);
+                record
+            })
+            .collect();
+        let payloads: Vec<&[u8]> = records.iter().map(Vec::as_slice).collect();
+        if let Err(error) = journal.append_batch(&payloads) {
+            drop(journal);
+            if matches!(error, FileStorageError::Ambiguous) {
+                self.0.poison();
+            }
+            return if matches!(error, FileStorageError::Ambiguous) {
+                (0..values.len())
+                    .map(|_| Err(FileStorageError::Ambiguous))
+                    .collect()
+            } else {
+                vec![Err(error)]
+            };
+        }
+        let Ok(mut state) = self.0.lock() else {
+            drop(journal);
+            self.0.poison();
+            return (0..values.len())
+                .map(|_| Err(FileStorageError::Ambiguous))
+                .collect();
+        };
+        let results = values
+            .into_iter()
+            .enumerate()
+            .map(|(index, event)| {
+                let position = EventPosition::new(head + index as u64 + 1);
+                let replaced = state
+                    .events
+                    .insert(position, CommittedEvent { position, event });
+                assert!(replaced.is_none(), "new event position must be vacant");
+                Ok(self.0.handle(position))
+            })
+            .collect();
+        let readers = state.readers();
+        drop(state);
+        drop(journal);
+        for reader in readers {
+            reader.wake();
+        }
+        results
+    }
+}
+
 #[async_trait]
 impl Archive for FileSnapshots {
     type Position = EventPosition;
@@ -527,6 +655,7 @@ impl Archive for FileSnapshots {
     async fn append(&self, snapshot: Self::Append) -> Result<(), Self::Error> {
         self.0.compatible(&snapshot.root)?;
         self.0.compatible(&snapshot.at_event)?;
+        let mut journal = self.0.writer()?;
         let mut state = self.0.lock()?;
         let position = snapshot.at_event.id;
         if !state.contains(snapshot.root.id) || !state.events.contains_key(&position) {
@@ -542,7 +671,7 @@ impl Archive for FileSnapshots {
         let mut record = vec![4];
         record.extend_from_slice(&position.get().to_be_bytes());
         encode_tree(&mut record, snapshot.root.id);
-        state = persist(state, &record)?;
+        state = persist(&self.0, &mut journal, state, &record)?;
         let replaced = state.snapshots.insert(position, snapshot.root.id);
         assert!(replaced.is_none(), "new snapshot position must be vacant");
         let readers = state.readers();
@@ -606,10 +735,15 @@ impl SnapshotArchive for FileSnapshots {
 
 /// Releases the mutation lock before notifying readers of an uncertain write.
 fn persist<'state>(
+    opening: &Opening,
+    journal: &mut Journal,
     mut state: MutexGuard<'state, State>,
     record: &[u8],
 ) -> Result<MutexGuard<'state, State>, FileStorageError> {
-    if let Err(error) = state.journal.append(record) {
+    if let Err(error) = journal.append(record) {
+        if matches!(error, FileStorageError::Ambiguous) {
+            opening.failed.store(true, Ordering::Release);
+        }
         let readers = state.readers();
         drop(state);
         for reader in readers {
@@ -799,6 +933,295 @@ mod tests {
         }
     }
 
+    /// Blocks one journal write with a bounded watchdog so executor stalls fail instead of hang.
+    fn block_write(
+        events: &FileEvents,
+        panic: bool,
+    ) -> (
+        tokio::sync::oneshot::Receiver<()>,
+        std::sync::mpsc::Sender<()>,
+    ) {
+        let (entered, entered_receiver) = tokio::sync::oneshot::channel();
+        let (release, release_receiver) = std::sync::mpsc::channel();
+        events.0.writer().unwrap().before_sync = Some(Box::new(move || {
+            entered.send(()).unwrap();
+            release_receiver
+                .recv_timeout(std::time::Duration::from_secs(5))
+                .expect("executor must release the blocked writer");
+            assert!(!panic, "injected worker panic after writing");
+        }));
+        (entered_receiver, release)
+    }
+
+    /// Provides identical payloads so batch ordering does not depend on content identity.
+    fn batch() -> Vec<Event> {
+        vec![
+            Event {
+                payload: Bytes::from_static(b"batch"),
+                blob_tree: None
+            };
+            2
+        ]
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn blocked_batch_allows_executor_admission_and_published_reads() {
+        check_blocked_batch::<false>().await;
+        check_blocked_batch::<true>().await;
+    }
+
+    /// Checks off-executor writes and prefix visibility under both durability policies.
+    async fn check_blocked_batch<const DURABLE: bool>() {
+        let root = root();
+        let storage = FileStorage::<DURABLE>::open(&root).unwrap();
+        let created = storage.create_document().await.unwrap();
+        let events = created.components.events.clone();
+        let first = events.append(batch().remove(0)).await.unwrap();
+        let mut live = events.read(Some(first.id()), None);
+        live.next().await.unwrap().unwrap();
+        let (entered, release) = block_write(&events, false);
+        let writer = events.clone();
+        let append = tokio::spawn(async move { writer.append_batch(batch()).await });
+        entered.await.unwrap();
+        assert!(!append.is_finished());
+        assert_eq!(tokio::spawn(async { 42 }).await.unwrap(), 42);
+        assert_eq!(events.head().await.unwrap(), Some(first.id()));
+        assert!(
+            events
+                .resolve(EventPosition::new(2))
+                .await
+                .unwrap()
+                .is_none()
+        );
+        events.ensure_available(&first).await.unwrap();
+        assert_eq!(created.components.snapshots.head().await.unwrap(), None);
+        let counter = Arc::new(WakeCount(AtomicU64::new(0)));
+        let waker = futures_util::task::waker(counter.clone());
+        assert!(
+            live.as_mut()
+                .poll_next(&mut std::task::Context::from_waker(&waker))
+                .is_pending()
+        );
+        release.send(()).unwrap();
+        let results = append.await.unwrap();
+        assert_eq!(results.len(), 2);
+        assert!(results.into_iter().all(|result| result.is_ok()));
+        assert_eq!(counter.0.load(Ordering::Relaxed), 1);
+        assert_eq!(events.head().await.unwrap(), Some(EventPosition::new(3)));
+        assert!(
+            matches!(live.next().await, Some(Ok(MonitoredStreamItem::Item(event))) if event.position.get() == 2)
+        );
+        drop((live, events, created));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn cancelled_batch_retains_opening_until_worker_settles() {
+        let root = root();
+        let storage = FileStorage::<true>::open(&root).unwrap();
+        let created = storage.create_document().await.unwrap();
+        let events = created.components.events.clone();
+        let opening = Arc::downgrade(&events.0);
+        let (entered, release) = block_write(&events, false);
+        let append = tokio::spawn(async move { events.append_batch(batch()).await });
+        entered.await.unwrap();
+        append.abort();
+        assert!(append.await.unwrap_err().is_cancelled());
+        drop(created.components);
+        assert!(matches!(
+            storage.open_document(&created.id).await,
+            Err(FileStorageError::Busy)
+        ));
+        release.send(()).unwrap();
+        tokio::time::timeout(std::time::Duration::from_secs(5), async {
+            while opening.strong_count() != 0 {
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .unwrap();
+        let reopened = storage.open_document(&created.id).await.unwrap().unwrap();
+        assert_eq!(
+            reopened.events.head().await.unwrap(),
+            Some(EventPosition::new(2))
+        );
+        drop(reopened);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn worker_panic_poisons_observations_and_wakes_readers_even_after_cancellation() {
+        for cancelled in [false, true] {
+            let root = root();
+            let storage = FileStorage::<true>::open(&root).unwrap();
+            let created = storage.create_document().await.unwrap();
+            let events = created.components.events.clone();
+            let mut live = events.read(None, None);
+            live.next().await.unwrap().unwrap();
+            let counter = Arc::new(WakeCount(AtomicU64::new(0)));
+            let waker = futures_util::task::waker(counter.clone());
+            assert!(
+                live.as_mut()
+                    .poll_next(&mut std::task::Context::from_waker(&waker))
+                    .is_pending()
+            );
+            let (entered, release) = block_write(&events, true);
+            let writer = events.clone();
+            let append = tokio::spawn(async move { writer.append_batch(batch()).await });
+            entered.await.unwrap();
+            if cancelled {
+                append.abort();
+                assert!(append.await.unwrap_err().is_cancelled());
+                release.send(()).unwrap();
+            } else {
+                release.send(()).unwrap();
+                let results = append.await.unwrap();
+                assert_eq!(results.len(), 2);
+                assert!(
+                    results
+                        .iter()
+                        .all(|result| matches!(result, Err(FileStorageError::Ambiguous)))
+                );
+            }
+            tokio::time::timeout(std::time::Duration::from_secs(5), async {
+                while counter.0.load(Ordering::Relaxed) == 0 {
+                    tokio::task::yield_now().await;
+                }
+            })
+            .await
+            .unwrap();
+            let next = tokio::time::timeout(std::time::Duration::from_secs(5), live.next())
+                .await
+                .unwrap();
+            assert!(matches!(next, Some(Err(FileStorageError::Ambiguous))));
+            assert!(counter.0.load(Ordering::Relaxed) >= 1);
+            assert!(events.0.journal.is_poisoned());
+            assert!(matches!(
+                events.head().await,
+                Err(FileStorageError::Ambiguous)
+            ));
+            assert!(matches!(
+                events.resolve(EventPosition::new(1)).await,
+                Err(FileStorageError::Ambiguous)
+            ));
+            assert!(matches!(
+                created
+                    .components
+                    .blobs
+                    .resolve(BlobTreeId::Blob(BlobId::for_bytes(b"missing")))
+                    .await,
+                Err(FileStorageError::Ambiguous)
+            ));
+            assert!(events.append(batch().remove(0)).await.is_err());
+            drop((live, events, created.components));
+            let reopened = storage.open_document(&created.id).await.unwrap().unwrap();
+            assert_eq!(
+                reopened.events.head().await.unwrap(),
+                Some(EventPosition::new(2))
+            );
+            drop(reopened);
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn event_batch_publishes_dense_history_with_one_sync() {
+        let root = root();
+        let storage = FileStorage::<true>::open(&root).unwrap();
+        let created = storage.create_document().await.unwrap();
+        let events = &created.components.events;
+        let mut live = events.read(None, None);
+        live.next().await.unwrap().unwrap();
+        let results = events
+            .append_batch(vec![
+                Event {
+                    payload: Bytes::from_static(b"same"),
+                    blob_tree: None,
+                },
+                Event {
+                    payload: Bytes::from_static(b"same"),
+                    blob_tree: None,
+                },
+            ])
+            .await;
+        assert_eq!(results.len(), 2);
+        for (index, result) in results.into_iter().enumerate() {
+            assert_eq!(result.unwrap().id().get(), index as u64 + 1);
+        }
+        assert_eq!(events.0.writer().unwrap().syncs, 1);
+        assert!(events.append_batch(Vec::new()).await.is_empty());
+        assert_eq!(events.0.writer().unwrap().syncs, 1);
+        for ordinal in 1..=2 {
+            assert!(matches!(
+                live.next().await,
+                Some(Ok(MonitoredStreamItem::Item(event))) if event.position.get() == ordinal
+            ));
+        }
+        drop((live, created.components));
+        let view = storage.open_view(&created.id).await.unwrap().unwrap();
+        assert_eq!(view.head().await.unwrap(), Some(EventPosition::new(2)));
+        drop(view);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn uncertain_batch_reports_every_entry_without_publishing_to_readers() {
+        for fault in [
+            JournalFault::BeforeWrite,
+            JournalFault::PartialWrite,
+            JournalFault::BeforeSync,
+            JournalFault::AfterSync,
+        ] {
+            let root = root();
+            let storage = FileStorage::<true>::open(&root).unwrap();
+            let created = storage.create_document().await.unwrap();
+            let events = &created.components.events;
+            let mut live = events.read(None, None);
+            live.next().await.unwrap().unwrap();
+            events.0.writer().unwrap().inject(fault);
+            let results = events
+                .append_batch(vec![
+                    Event {
+                        payload: Bytes::new(),
+                        blob_tree: None,
+                    },
+                    Event {
+                        payload: Bytes::new(),
+                        blob_tree: None,
+                    },
+                ])
+                .await;
+            if matches!(fault, JournalFault::BeforeWrite) {
+                assert_eq!(results.len(), 1);
+                assert!(matches!(results[0], Err(FileStorageError::Rejected(_))));
+                assert_eq!(events.head().await.unwrap(), None);
+            } else {
+                assert_eq!(results.len(), 2);
+                assert!(
+                    results
+                        .iter()
+                        .all(|result| matches!(result, Err(FileStorageError::Ambiguous)))
+                );
+                assert!(events.0.state.lock().unwrap().events.is_empty());
+                assert!(matches!(
+                    live.next().await,
+                    Some(Err(FileStorageError::Ambiguous))
+                ));
+                assert!(events.head().await.is_err());
+            }
+            drop((live, created.components));
+            let view = storage.open_view(&created.id).await.unwrap().unwrap();
+            let expected = if matches!(fault, JournalFault::BeforeSync | JournalFault::AfterSync) {
+                Some(EventPosition::new(2))
+            } else {
+                None
+            };
+            assert_eq!(view.head().await.unwrap(), expected);
+            drop(view);
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
     #[tokio::test]
     async fn live_readers_wake_on_commit_and_uncertain_write() {
         let root = root();
@@ -824,9 +1247,8 @@ mod tests {
         assert!(live.as_mut().poll_next(&mut context).is_pending());
         events
             .0
-            .lock()
+            .writer()
             .unwrap()
-            .journal
             .inject(JournalFault::PartialWrite);
         assert!(
             events
@@ -865,8 +1287,7 @@ mod tests {
             check_fault::<false>(fault).await;
             check_fault::<true>(fault).await;
         }
-        check_fault::<true>(JournalFault::BeforePublish).await;
-        check_fault::<true>(JournalFault::AfterPublish).await;
+        check_fault::<true>(JournalFault::BeforeSync).await;
     }
 
     /// Exercises the same state transition under both durability policies.
@@ -882,7 +1303,7 @@ mod tests {
             })
             .await
             .unwrap();
-        events.0.lock().unwrap().journal.inject(fault);
+        events.0.writer().unwrap().inject(fault);
         let error = events
             .append(Event {
                 payload: Bytes::from_static(b"second"),
@@ -904,8 +1325,7 @@ mod tests {
             assert!(matches!(reopened, Err(FileStorageError::Corrupt(_))));
         } else {
             let view = reopened.unwrap().unwrap();
-            let expected = if matches!(fault, JournalFault::AfterPublish | JournalFault::AfterSync)
-            {
+            let expected = if matches!(fault, JournalFault::BeforeSync | JournalFault::AfterSync) {
                 2
             } else {
                 1
@@ -946,9 +1366,8 @@ mod tests {
             .components
             .snapshots
             .0
-            .lock()
+            .writer()
             .unwrap()
-            .journal
             .inject(JournalFault::AfterSync);
         assert!(matches!(
             created.components.snapshots.append(snapshot).await,
