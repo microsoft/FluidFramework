@@ -1,0 +1,79 @@
+{
+	"startedAt": "2026-09-20T07:23:30.341Z",
+	"commit": "354fc17264f157897ef4ff674569de2af51adf44",
+	"status": "?? rust-service/PRESENTATION_REPORT.md\n?? rust-service/measurements/\n",
+	"cells": [
+		{
+			"backend": "sea",
+			"storage": "memory",
+			"cores": 8,
+			"payloadBytes": 64,
+			"rate": 76000,
+			"generator": "native",
+			"transport": "websocket",
+			"documents": 32,
+			"seconds": 10,
+			"warmupSeconds": 3
+		},
+		{
+			"backend": "sea",
+			"storage": "buffered-file",
+			"cores": 8,
+			"payloadBytes": 64,
+			"rate": 62000,
+			"generator": "native",
+			"transport": "websocket",
+			"documents": 32,
+			"seconds": 10,
+			"warmupSeconds": 3
+		},
+		{
+			"backend": "sea",
+			"storage": "buffered-file",
+			"cores": 4,
+			"payloadBytes": 8192,
+			"rate": 19000,
+			"generator": "native",
+			"transport": "websocket",
+			"documents": 32,
+			"seconds": 10,
+			"warmupSeconds": 3
+		}
+	],
+	"settings": {
+		"SEA_MAX_CONNECTIONS": "128",
+		"NODE_ENV": "production",
+		"native": "Cargo release, websocket-stream feature",
+		"wasm": "Cargo release, simd128",
+		"wireBytes": "not measured",
+		"seaStorage": [
+			"memory",
+			"buffered-file"
+		],
+		"tinyliciousStorage": "default-in-memory-database",
+		"generatorPhysicalCores": 4,
+		"generatorCpus": "16,18,20,22"
+	},
+	"artifacts": [
+		{
+			"file": "rust-service/target/release/sea-webtransport-server",
+			"sha256": "7cd14f55959dee2ded12e627bd0d6536a5586bc7739b13fc4e08df2aa94d5760"
+		},
+		{
+			"file": "rust-service/packages/sea-typescript/generated/websocket/node/sea_wasm_bg.wasm",
+			"sha256": "3324dd586da4383dd8365e5109031bba23be9e2f57929075b707bebdb6370aa9"
+		},
+		{
+			"file": "rust-service/scripts/presentation-stress.mjs",
+			"sha256": "f8ac8814f806d06de3524bd9a07ee63f6d62b22b9ee665e399e41fe7ad0079ff"
+		},
+		{
+			"file": "rust-service/scripts/presentation-collect.mjs",
+			"sha256": "c2723952963c9ca6d91d682ce70e2695ccec7f1051d7da53369a57ad269c09ea"
+		},
+		{
+			"file": "rust-service/target/release/presentation-native",
+			"sha256": "26f2d73c81a2c60ba0865b01b92864a34005acb2ebd3c286caff154c80d53278"
+		}
+	]
+}

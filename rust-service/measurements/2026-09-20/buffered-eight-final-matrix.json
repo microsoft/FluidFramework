@@ -1,0 +1,38 @@
+[
+	{
+		"backend": "sea",
+		"storage": "memory",
+		"cores": 8,
+		"payloadBytes": 64,
+		"rate": 76000,
+		"generator": "native",
+		"transport": "websocket",
+		"documents": 32,
+		"seconds": 10,
+		"warmupSeconds": 3
+	},
+	{
+		"backend": "sea",
+		"storage": "buffered-file",
+		"cores": 8,
+		"payloadBytes": 64,
+		"rate": 62000,
+		"generator": "native",
+		"transport": "websocket",
+		"documents": 32,
+		"seconds": 10,
+		"warmupSeconds": 3
+	},
+	{
+		"backend": "sea",
+		"storage": "buffered-file",
+		"cores": 4,
+		"payloadBytes": 8192,
+		"rate": 19000,
+		"generator": "native",
+		"transport": "websocket",
+		"documents": 32,
+		"seconds": 10,
+		"warmupSeconds": 3
+	}
+]

@@ -1,0 +1,146 @@
+[
+	{
+		"backend": "sea",
+		"cores": 1,
+		"documents": 32,
+		"payloadBytes": 64,
+		"rate": 8000,
+		"seconds": 10,
+		"warmupSeconds": 3
+	},
+	{
+		"backend": "tinylicious",
+		"cores": 1,
+		"documents": 32,
+		"payloadBytes": 64,
+		"rate": 2000,
+		"seconds": 10,
+		"warmupSeconds": 3
+	},
+	{
+		"backend": "tinylicious",
+		"cores": 4,
+		"documents": 32,
+		"payloadBytes": 64,
+		"rate": 3000,
+		"seconds": 10,
+		"warmupSeconds": 3
+	},
+	{
+		"backend": "sea",
+		"cores": 4,
+		"documents": 32,
+		"payloadBytes": 64,
+		"rate": 16000,
+		"seconds": 10,
+		"warmupSeconds": 3
+	},
+	{
+		"backend": "sea",
+		"cores": 1,
+		"documents": 32,
+		"payloadBytes": 64,
+		"rate": 12000,
+		"seconds": 10,
+		"warmupSeconds": 3
+	},
+	{
+		"backend": "tinylicious",
+		"cores": 1,
+		"documents": 32,
+		"payloadBytes": 64,
+		"rate": 3000,
+		"seconds": 10,
+		"warmupSeconds": 3
+	},
+	{
+		"backend": "tinylicious",
+		"cores": 4,
+		"documents": 32,
+		"payloadBytes": 64,
+		"rate": 2000,
+		"seconds": 10,
+		"warmupSeconds": 3
+	},
+	{
+		"backend": "sea",
+		"cores": 4,
+		"documents": 32,
+		"payloadBytes": 64,
+		"rate": 24000,
+		"seconds": 10,
+		"warmupSeconds": 3
+	},
+	{
+		"backend": "sea",
+		"cores": 1,
+		"documents": 32,
+		"payloadBytes": 8192,
+		"rate": 6000,
+		"seconds": 10,
+		"warmupSeconds": 3
+	},
+	{
+		"backend": "tinylicious",
+		"cores": 1,
+		"documents": 32,
+		"payloadBytes": 8192,
+		"rate": 1500,
+		"seconds": 10,
+		"warmupSeconds": 3
+	},
+	{
+		"backend": "tinylicious",
+		"cores": 4,
+		"documents": 32,
+		"payloadBytes": 8192,
+		"rate": 2000,
+		"seconds": 10,
+		"warmupSeconds": 3
+	},
+	{
+		"backend": "sea",
+		"cores": 4,
+		"documents": 32,
+		"payloadBytes": 8192,
+		"rate": 8000,
+		"seconds": 10,
+		"warmupSeconds": 3
+	},
+	{
+		"backend": "sea",
+		"cores": 1,
+		"documents": 32,
+		"payloadBytes": 8192,
+		"rate": 8000,
+		"seconds": 10,
+		"warmupSeconds": 3
+	},
+	{
+		"backend": "tinylicious",
+		"cores": 1,
+		"documents": 32,
+		"payloadBytes": 8192,
+		"rate": 2000,
+		"seconds": 10,
+		"warmupSeconds": 3
+	},
+	{
+		"backend": "tinylicious",
+		"cores": 4,
+		"documents": 32,
+		"payloadBytes": 8192,
+		"rate": 1500,
+		"seconds": 10,
+		"warmupSeconds": 3
+	},
+	{
+		"backend": "sea",
+		"cores": 4,
+		"documents": 32,
+		"payloadBytes": 8192,
+		"rate": 12000,
+		"seconds": 10,
+		"warmupSeconds": 3
+	}
+]

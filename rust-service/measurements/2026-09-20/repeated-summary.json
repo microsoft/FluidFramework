@@ -1,0 +1,744 @@
+{
+	"schemaVersion": 1,
+	"source": "stress-repeated/cells/results.json",
+	"measurementCommit": "782051315ccf36a38a5703aa3edc07dd68b91ad9",
+	"aggregation": "Ten runs per point. Median averages the two central samples; p95 is nearest rank; sample standard deviation uses n-1. Worst-worker latency p95 is not a pooled operation percentile. All runs included.",
+	"groups": [
+		{
+			"key": "sea/64/4/500",
+			"configuration": {
+				"backend": "sea",
+				"cores": 4,
+				"documents": 32,
+				"payloadBytes": 64,
+				"rate": 500,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"passing": 10,
+			"sampleDirectories": [
+				"000-sea-64-32docs-4cpu-500ops",
+				"009-sea-64-32docs-4cpu-500ops",
+				"016-sea-64-32docs-4cpu-500ops",
+				"025-sea-64-32docs-4cpu-500ops",
+				"032-sea-64-32docs-4cpu-500ops",
+				"041-sea-64-32docs-4cpu-500ops",
+				"048-sea-64-32docs-4cpu-500ops",
+				"057-sea-64-32docs-4cpu-500ops",
+				"064-sea-64-32docs-4cpu-500ops",
+				"073-sea-64-32docs-4cpu-500ops"
+			],
+			"metrics": {
+				"deliveredOperationsPerSecond": {
+					"count": 10,
+					"minimum": 500,
+					"median": 500,
+					"mean": 500,
+					"p95": 500,
+					"maximum": 500,
+					"sampleStandardDeviation": 0
+				},
+				"payloadMiBPerSecond": {
+					"count": 10,
+					"minimum": 0.030517578125,
+					"median": 0.030517578125,
+					"mean": 0.030517578125,
+					"p95": 0.030517578125,
+					"maximum": 0.030517578125,
+					"sampleStandardDeviation": 0
+				},
+				"serviceMeanRssMiB": {
+					"count": 10,
+					"minimum": 43.87470703125,
+					"median": 44.002050781250006,
+					"mean": 43.999375,
+					"p95": 44.1033203125,
+					"maximum": 44.1033203125,
+					"sampleStandardDeviation": 0.0708726840948131
+				},
+				"servicePeakRssMiB": {
+					"count": 10,
+					"minimum": 47.8984375,
+					"median": 48.03515625,
+					"mean": 48.026953125,
+					"p95": 48.12109375,
+					"maximum": 48.12109375,
+					"sampleStandardDeviation": 0.0729271290857115
+				},
+				"serviceCpuPercent": {
+					"count": 10,
+					"minimum": 9.424347482419842,
+					"median": 9.679834575448593,
+					"mean": 9.690363327102183,
+					"p95": 9.937171379560878,
+					"maximum": 9.937171379560878,
+					"sampleStandardDeviation": 0.19450632233167717
+				}
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 10,
+				"minimum": 0.4745660000003227,
+				"median": 0.4917924999999741,
+				"mean": 0.4896313000000191,
+				"p95": 0.5064540000003035,
+				"maximum": 0.5064540000003035,
+				"sampleStandardDeviation": 0.010100384096655169
+			},
+			"totalPendingAtWindowEnd": {
+				"count": 10,
+				"minimum": 0,
+				"median": 0,
+				"mean": 0,
+				"p95": 0,
+				"maximum": 0,
+				"sampleStandardDeviation": 0
+			},
+			"errors": [],
+			"missingAfterDrain": 0
+		},
+		{
+			"key": "tinylicious/64/4/500",
+			"configuration": {
+				"backend": "tinylicious",
+				"cores": 4,
+				"documents": 32,
+				"payloadBytes": 64,
+				"rate": 500,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"passing": 10,
+			"sampleDirectories": [
+				"001-tinylicious-64-32docs-4cpu-500ops",
+				"008-tinylicious-64-32docs-4cpu-500ops",
+				"017-tinylicious-64-32docs-4cpu-500ops",
+				"024-tinylicious-64-32docs-4cpu-500ops",
+				"033-tinylicious-64-32docs-4cpu-500ops",
+				"040-tinylicious-64-32docs-4cpu-500ops",
+				"049-tinylicious-64-32docs-4cpu-500ops",
+				"056-tinylicious-64-32docs-4cpu-500ops",
+				"065-tinylicious-64-32docs-4cpu-500ops",
+				"072-tinylicious-64-32docs-4cpu-500ops"
+			],
+			"metrics": {
+				"deliveredOperationsPerSecond": {
+					"count": 10,
+					"minimum": 500,
+					"median": 500,
+					"mean": 500,
+					"p95": 500,
+					"maximum": 500,
+					"sampleStandardDeviation": 0
+				},
+				"payloadMiBPerSecond": {
+					"count": 10,
+					"minimum": 0.030517578125,
+					"median": 0.030517578125,
+					"mean": 0.030517578125,
+					"p95": 0.030517578125,
+					"maximum": 0.030517578125,
+					"sampleStandardDeviation": 0
+				},
+				"serviceMeanRssMiB": {
+					"count": 10,
+					"minimum": 167.4521484375,
+					"median": 168.890185546875,
+					"mean": 168.98224609375,
+					"p95": 170.4873046875,
+					"maximum": 170.4873046875,
+					"sampleStandardDeviation": 0.9575107956541367
+				},
+				"servicePeakRssMiB": {
+					"count": 10,
+					"minimum": 169.703125,
+					"median": 171.837890625,
+					"mean": 171.831640625,
+					"p95": 173.296875,
+					"maximum": 173.296875,
+					"sampleStandardDeviation": 1.0949250415555551
+				},
+				"serviceCpuPercent": {
+					"count": 10,
+					"minimum": 37.83374708949713,
+					"median": 38.599976234423565,
+					"mean": 38.68711393117228,
+					"p95": 40.30056453491232,
+					"maximum": 40.30056453491232,
+					"sampleStandardDeviation": 0.7844929341637175
+				}
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 10,
+				"minimum": 2.375029999999242,
+				"median": 2.509375500000715,
+				"mean": 2.5406990999999834,
+				"p95": 2.730322999999771,
+				"maximum": 2.730322999999771,
+				"sampleStandardDeviation": 0.12777747127218717
+			},
+			"totalPendingAtWindowEnd": {
+				"count": 10,
+				"minimum": 0,
+				"median": 0,
+				"mean": 0,
+				"p95": 0,
+				"maximum": 0,
+				"sampleStandardDeviation": 0
+			},
+			"errors": [],
+			"missingAfterDrain": 0
+		},
+		{
+			"key": "sea/8192/4/500",
+			"configuration": {
+				"backend": "sea",
+				"cores": 4,
+				"documents": 32,
+				"payloadBytes": 8192,
+				"rate": 500,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"passing": 10,
+			"sampleDirectories": [
+				"002-sea-8192-32docs-4cpu-500ops",
+				"011-sea-8192-32docs-4cpu-500ops",
+				"018-sea-8192-32docs-4cpu-500ops",
+				"027-sea-8192-32docs-4cpu-500ops",
+				"034-sea-8192-32docs-4cpu-500ops",
+				"043-sea-8192-32docs-4cpu-500ops",
+				"050-sea-8192-32docs-4cpu-500ops",
+				"059-sea-8192-32docs-4cpu-500ops",
+				"066-sea-8192-32docs-4cpu-500ops",
+				"075-sea-8192-32docs-4cpu-500ops"
+			],
+			"metrics": {
+				"deliveredOperationsPerSecond": {
+					"count": 10,
+					"minimum": 499.9,
+					"median": 500,
+					"mean": 499.98999999999995,
+					"p95": 500,
+					"maximum": 500,
+					"sampleStandardDeviation": 0.03162277660169099
+				},
+				"payloadMiBPerSecond": {
+					"count": 10,
+					"minimum": 3.90546875,
+					"median": 3.90625,
+					"mean": 3.9061718749999996,
+					"p95": 3.90625,
+					"maximum": 3.90625,
+					"sampleStandardDeviation": 0.00024705294220071084
+				},
+				"serviceMeanRssMiB": {
+					"count": 10,
+					"minimum": 107.015234375,
+					"median": 107.185205078125,
+					"mean": 107.17705078125,
+					"p95": 107.3376953125,
+					"maximum": 107.3376953125,
+					"sampleStandardDeviation": 0.10464415910401521
+				},
+				"servicePeakRssMiB": {
+					"count": 10,
+					"minimum": 143.40625,
+					"median": 143.908203125,
+					"mean": 143.83203125,
+					"p95": 144.07421875,
+					"maximum": 144.07421875,
+					"sampleStandardDeviation": 0.23152931001834184
+				},
+				"serviceCpuPercent": {
+					"count": 10,
+					"minimum": 14.648955886685167,
+					"median": 14.95357180620793,
+					"mean": 14.927009459385653,
+					"p95": 15.159216492863722,
+					"maximum": 15.159216492863722,
+					"sampleStandardDeviation": 0.13646070080123282
+				}
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 10,
+				"minimum": 0.735913000000437,
+				"median": 0.783190999999988,
+				"mean": 0.7832318999999643,
+				"p95": 0.8121750000000247,
+				"maximum": 0.8121750000000247,
+				"sampleStandardDeviation": 0.02241869558809
+			},
+			"totalPendingAtWindowEnd": {
+				"count": 10,
+				"minimum": 0,
+				"median": 0,
+				"mean": 0,
+				"p95": 0,
+				"maximum": 0,
+				"sampleStandardDeviation": 0
+			},
+			"errors": [],
+			"missingAfterDrain": 0
+		},
+		{
+			"key": "tinylicious/8192/4/500",
+			"configuration": {
+				"backend": "tinylicious",
+				"cores": 4,
+				"documents": 32,
+				"payloadBytes": 8192,
+				"rate": 500,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"passing": 10,
+			"sampleDirectories": [
+				"003-tinylicious-8192-32docs-4cpu-500ops",
+				"010-tinylicious-8192-32docs-4cpu-500ops",
+				"019-tinylicious-8192-32docs-4cpu-500ops",
+				"026-tinylicious-8192-32docs-4cpu-500ops",
+				"035-tinylicious-8192-32docs-4cpu-500ops",
+				"042-tinylicious-8192-32docs-4cpu-500ops",
+				"051-tinylicious-8192-32docs-4cpu-500ops",
+				"058-tinylicious-8192-32docs-4cpu-500ops",
+				"067-tinylicious-8192-32docs-4cpu-500ops",
+				"074-tinylicious-8192-32docs-4cpu-500ops"
+			],
+			"metrics": {
+				"deliveredOperationsPerSecond": {
+					"count": 10,
+					"minimum": 500,
+					"median": 500,
+					"mean": 500,
+					"p95": 500,
+					"maximum": 500,
+					"sampleStandardDeviation": 0
+				},
+				"payloadMiBPerSecond": {
+					"count": 10,
+					"minimum": 3.90625,
+					"median": 3.90625,
+					"mean": 3.90625,
+					"p95": 3.90625,
+					"maximum": 3.90625,
+					"sampleStandardDeviation": 0
+				},
+				"serviceMeanRssMiB": {
+					"count": 10,
+					"minimum": 217.88857421875,
+					"median": 220.6031763321314,
+					"mean": 220.93609425080132,
+					"p95": 224.4298828125,
+					"maximum": 224.4298828125,
+					"sampleStandardDeviation": 1.7743181005340105
+				},
+				"servicePeakRssMiB": {
+					"count": 10,
+					"minimum": 266.375,
+					"median": 276.4609375,
+					"mean": 274.88359375,
+					"p95": 280.37890625,
+					"maximum": 280.37890625,
+					"sampleStandardDeviation": 4.789770769630593
+				},
+				"serviceCpuPercent": {
+					"count": 10,
+					"minimum": 47.57370676155876,
+					"median": 48.60430963089132,
+					"mean": 48.540715354568015,
+					"p95": 49.210166468416666,
+					"maximum": 49.210166468416666,
+					"sampleStandardDeviation": 0.49581676911676614
+				}
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 10,
+				"minimum": 2.9286320000010164,
+				"median": 3.133845499999552,
+				"mean": 3.139794200000506,
+				"p95": 3.350658999999723,
+				"maximum": 3.350658999999723,
+				"sampleStandardDeviation": 0.11378771705978746
+			},
+			"totalPendingAtWindowEnd": {
+				"count": 10,
+				"minimum": 0,
+				"median": 0,
+				"mean": 0,
+				"p95": 0,
+				"maximum": 0,
+				"sampleStandardDeviation": 0
+			},
+			"errors": [],
+			"missingAfterDrain": 0
+		},
+		{
+			"key": "sea/64/1/12000",
+			"configuration": {
+				"backend": "sea",
+				"cores": 1,
+				"documents": 32,
+				"payloadBytes": 64,
+				"rate": 12000,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"passing": 10,
+			"sampleDirectories": [
+				"004-sea-64-32docs-1cpu-12000ops",
+				"012-sea-64-32docs-1cpu-12000ops",
+				"020-sea-64-32docs-1cpu-12000ops",
+				"028-sea-64-32docs-1cpu-12000ops",
+				"036-sea-64-32docs-1cpu-12000ops",
+				"044-sea-64-32docs-1cpu-12000ops",
+				"052-sea-64-32docs-1cpu-12000ops",
+				"060-sea-64-32docs-1cpu-12000ops",
+				"068-sea-64-32docs-1cpu-12000ops",
+				"076-sea-64-32docs-1cpu-12000ops"
+			],
+			"metrics": {
+				"deliveredOperationsPerSecond": {
+					"count": 10,
+					"minimum": 11995.5,
+					"median": 11997.85,
+					"mean": 11997.89,
+					"p95": 12000,
+					"maximum": 12000,
+					"sampleStandardDeviation": 1.5623699945915834
+				},
+				"payloadMiBPerSecond": {
+					"count": 10,
+					"minimum": 0.732147216796875,
+					"median": 0.7322906494140625,
+					"mean": 0.7322930908203125,
+					"p95": 0.732421875,
+					"maximum": 0.732421875,
+					"sampleStandardDeviation": 0.00009535949674020895
+				},
+				"serviceMeanRssMiB": {
+					"count": 10,
+					"minimum": 129.49365234375,
+					"median": 129.669189453125,
+					"mean": 129.675361328125,
+					"p95": 129.88095703125,
+					"maximum": 129.88095703125,
+					"sampleStandardDeviation": 0.09910920056847736
+				},
+				"servicePeakRssMiB": {
+					"count": 10,
+					"minimum": 190.765625,
+					"median": 190.8828125,
+					"mean": 190.89921875,
+					"p95": 191.1015625,
+					"maximum": 191.1015625,
+					"sampleStandardDeviation": 0.09951869851523718
+				},
+				"serviceCpuPercent": {
+					"count": 10,
+					"minimum": 83.68073096028432,
+					"median": 84.51858619551993,
+					"mean": 85.06397768486524,
+					"p95": 89.47681661250837,
+					"maximum": 89.47681661250837,
+					"sampleStandardDeviation": 1.7873706693165399
+				}
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 10,
+				"minimum": 2.944492000000537,
+				"median": 3.0680325000002995,
+				"mean": 9.600611400000298,
+				"p95": 57.28815600000053,
+				"maximum": 57.28815600000053,
+				"sampleStandardDeviation": 17.11945416124829
+			},
+			"totalPendingAtWindowEnd": {
+				"count": 10,
+				"minimum": 0,
+				"median": 0,
+				"mean": 0,
+				"p95": 0,
+				"maximum": 0,
+				"sampleStandardDeviation": 0
+			},
+			"errors": [],
+			"missingAfterDrain": 0
+		},
+		{
+			"key": "sea/64/4/16000",
+			"configuration": {
+				"backend": "sea",
+				"cores": 4,
+				"documents": 32,
+				"payloadBytes": 64,
+				"rate": 16000,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"passing": 10,
+			"sampleDirectories": [
+				"005-sea-64-32docs-4cpu-16000ops",
+				"013-sea-64-32docs-4cpu-16000ops",
+				"021-sea-64-32docs-4cpu-16000ops",
+				"029-sea-64-32docs-4cpu-16000ops",
+				"037-sea-64-32docs-4cpu-16000ops",
+				"045-sea-64-32docs-4cpu-16000ops",
+				"053-sea-64-32docs-4cpu-16000ops",
+				"061-sea-64-32docs-4cpu-16000ops",
+				"069-sea-64-32docs-4cpu-16000ops",
+				"077-sea-64-32docs-4cpu-16000ops"
+			],
+			"metrics": {
+				"deliveredOperationsPerSecond": {
+					"count": 10,
+					"minimum": 15995.1,
+					"median": 15997.25,
+					"mean": 15997.25,
+					"p95": 15999.4,
+					"maximum": 15999.4,
+					"sampleStandardDeviation": 1.2886254520050926
+				},
+				"payloadMiBPerSecond": {
+					"count": 10,
+					"minimum": 0.976263427734375,
+					"median": 0.9763946533203125,
+					"mean": 0.9763946533203125,
+					"p95": 0.97652587890625,
+					"maximum": 0.97652587890625,
+					"sampleStandardDeviation": 0.0000786514558108577
+				},
+				"serviceMeanRssMiB": {
+					"count": 10,
+					"minimum": 161.56748046875,
+					"median": 161.664306640625,
+					"mean": 161.6675390625,
+					"p95": 161.7853515625,
+					"maximum": 161.7853515625,
+					"sampleStandardDeviation": 0.07217612759990885
+				},
+				"servicePeakRssMiB": {
+					"count": 10,
+					"minimum": 242.08203125,
+					"median": 242.53515625,
+					"mean": 242.5328125,
+					"p95": 242.9609375,
+					"maximum": 242.9609375,
+					"sampleStandardDeviation": 0.23494721814164984
+				},
+				"serviceCpuPercent": {
+					"count": 10,
+					"minimum": 155.71347345813953,
+					"median": 157.51231893992096,
+					"mean": 157.3619287267942,
+					"p95": 159.07498303401283,
+					"maximum": 159.07498303401283,
+					"sampleStandardDeviation": 1.1771332570860116
+				}
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 10,
+				"minimum": 3.143794000001435,
+				"median": 3.1852509999994254,
+				"mean": 3.211243699999977,
+				"p95": 3.3249619999996867,
+				"maximum": 3.3249619999996867,
+				"sampleStandardDeviation": 0.05909210474595532
+			},
+			"totalPendingAtWindowEnd": {
+				"count": 10,
+				"minimum": 0,
+				"median": 0,
+				"mean": 0,
+				"p95": 0,
+				"maximum": 0,
+				"sampleStandardDeviation": 0
+			},
+			"errors": [],
+			"missingAfterDrain": 0
+		},
+		{
+			"key": "sea/8192/1/6000",
+			"configuration": {
+				"backend": "sea",
+				"cores": 1,
+				"documents": 32,
+				"payloadBytes": 8192,
+				"rate": 6000,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"passing": 10,
+			"sampleDirectories": [
+				"006-sea-8192-32docs-1cpu-6000ops",
+				"014-sea-8192-32docs-1cpu-6000ops",
+				"022-sea-8192-32docs-1cpu-6000ops",
+				"030-sea-8192-32docs-1cpu-6000ops",
+				"038-sea-8192-32docs-1cpu-6000ops",
+				"046-sea-8192-32docs-1cpu-6000ops",
+				"054-sea-8192-32docs-1cpu-6000ops",
+				"062-sea-8192-32docs-1cpu-6000ops",
+				"070-sea-8192-32docs-1cpu-6000ops",
+				"078-sea-8192-32docs-1cpu-6000ops"
+			],
+			"metrics": {
+				"deliveredOperationsPerSecond": {
+					"count": 10,
+					"minimum": 5995.2,
+					"median": 5998.95,
+					"mean": 5998.65,
+					"p95": 6000.4,
+					"maximum": 6000.4,
+					"sampleStandardDeviation": 1.454685914935212
+				},
+				"payloadMiBPerSecond": {
+					"count": 10,
+					"minimum": 46.8375,
+					"median": 46.866796875,
+					"mean": 46.864453125,
+					"p95": 46.878125,
+					"maximum": 46.878125,
+					"sampleStandardDeviation": 0.011364733710431344
+				},
+				"serviceMeanRssMiB": {
+					"count": 10,
+					"minimum": 815.88740234375,
+					"median": 816.186279296875,
+					"mean": 816.1703515625001,
+					"p95": 816.32275390625,
+					"maximum": 816.32275390625,
+					"sampleStandardDeviation": 0.12288057648743393
+				},
+				"servicePeakRssMiB": {
+					"count": 10,
+					"minimum": 1321.703125,
+					"median": 1322.005859375,
+					"mean": 1321.99765625,
+					"p95": 1322.33984375,
+					"maximum": 1322.33984375,
+					"sampleStandardDeviation": 0.2158884009142352
+				},
+				"serviceCpuPercent": {
+					"count": 10,
+					"minimum": 84.37355914964577,
+					"median": 85.40092405801599,
+					"mean": 85.70094121897137,
+					"p95": 87.52821943705439,
+					"maximum": 87.52821943705439,
+					"sampleStandardDeviation": 1.1248159731280225
+				}
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 10,
+				"minimum": 6.748336999999992,
+				"median": 8.955654999999751,
+				"mean": 10.960434799999803,
+				"p95": 25.677064000000428,
+				"maximum": 25.677064000000428,
+				"sampleStandardDeviation": 5.819860263172323
+			},
+			"totalPendingAtWindowEnd": {
+				"count": 10,
+				"minimum": 0,
+				"median": 0,
+				"mean": 2.8,
+				"p95": 28,
+				"maximum": 28,
+				"sampleStandardDeviation": 8.854377448471462
+			},
+			"errors": [],
+			"missingAfterDrain": 0
+		},
+		{
+			"key": "sea/8192/4/8000",
+			"configuration": {
+				"backend": "sea",
+				"cores": 4,
+				"documents": 32,
+				"payloadBytes": 8192,
+				"rate": 8000,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"passing": 10,
+			"sampleDirectories": [
+				"007-sea-8192-32docs-4cpu-8000ops",
+				"015-sea-8192-32docs-4cpu-8000ops",
+				"023-sea-8192-32docs-4cpu-8000ops",
+				"031-sea-8192-32docs-4cpu-8000ops",
+				"039-sea-8192-32docs-4cpu-8000ops",
+				"047-sea-8192-32docs-4cpu-8000ops",
+				"055-sea-8192-32docs-4cpu-8000ops",
+				"063-sea-8192-32docs-4cpu-8000ops",
+				"071-sea-8192-32docs-4cpu-8000ops",
+				"079-sea-8192-32docs-4cpu-8000ops"
+			],
+			"metrics": {
+				"deliveredOperationsPerSecond": {
+					"count": 10,
+					"minimum": 7996.3,
+					"median": 7998.15,
+					"mean": 7997.970000000001,
+					"p95": 7999.7,
+					"maximum": 7999.7,
+					"sampleStandardDeviation": 0.9522488003550422
+				},
+				"payloadMiBPerSecond": {
+					"count": 10,
+					"minimum": 62.47109375,
+					"median": 62.485546875,
+					"mean": 62.48414062500001,
+					"p95": 62.49765625,
+					"maximum": 62.49765625,
+					"sampleStandardDeviation": 0.007439443752773767
+				},
+				"serviceMeanRssMiB": {
+					"count": 10,
+					"minimum": 1076.8638671875,
+					"median": 1077.1505859375,
+					"mean": 1077.1846289062498,
+					"p95": 1077.47529296875,
+					"maximum": 1077.47529296875,
+					"sampleStandardDeviation": 0.21137192036307495
+				},
+				"servicePeakRssMiB": {
+					"count": 10,
+					"minimum": 1750.5078125,
+					"median": 1750.814453125,
+					"mean": 1750.815234375,
+					"p95": 1751.33203125,
+					"maximum": 1751.33203125,
+					"sampleStandardDeviation": 0.2543035753405555
+				},
+				"serviceCpuPercent": {
+					"count": 10,
+					"minimum": 145.44371791651906,
+					"median": 146.60300924308652,
+					"mean": 146.57092199469758,
+					"p95": 147.5868666644107,
+					"maximum": 147.5868666644107,
+					"sampleStandardDeviation": 0.6642356412288171
+				}
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 10,
+				"minimum": 8.808079000000362,
+				"median": 10.180063000000246,
+				"mean": 10.0553668999999,
+				"p95": 10.692243999999846,
+				"maximum": 10.692243999999846,
+				"sampleStandardDeviation": 0.5140533371811505
+			},
+			"totalPendingAtWindowEnd": {
+				"count": 10,
+				"minimum": 0,
+				"median": 0,
+				"mean": 1.3,
+				"p95": 13,
+				"maximum": 13,
+				"sampleStandardDeviation": 4.110960958218893
+			},
+			"errors": [],
+			"missingAfterDrain": 0
+		}
+	]
+}

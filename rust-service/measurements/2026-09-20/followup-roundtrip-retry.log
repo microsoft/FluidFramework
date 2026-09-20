@@ -1,0 +1,15 @@
+   Compiling sea-webtransport-server v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-webtransport-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 23.45s
+     Running unittests src/lib.rs (target/debug/deps/sea_webtransport_server-520e4d7236bd8a59)
+
+running 1 test
+test host::tests::native_client_round_trip_in_every_storage_mode ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 25 filtered out; finished in 0.45s
+
+     Running unittests src/main.rs (target/debug/deps/sea_webtransport_server-abbdd5db06709a3e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+

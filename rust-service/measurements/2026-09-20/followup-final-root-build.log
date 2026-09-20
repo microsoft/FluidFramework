@@ -1,0 +1,660 @@
+$ fluid-build --task build
+Build Root: /workspaces/FluidFramework
+Release group client matched (directory: /workspaces/FluidFramework)
+[K[?25l⠋ Creating build graph...
+[K[1A[K[?25l✔ Build graph created.
+[?25h[K[?25l⠋ Checking incremental build task status...
+[K[1A[K[?25l⠙ Checking incremental build task status...
+[K[1A[K[?25l⠹ Checking incremental build task status...
+[K[1A[K[?25l⠸ Checking incremental build task status...
+[K[1A[K[?25l⠼ Checking incremental build task status...
+[K[1A[K[?25l⠴ Checking incremental build task status...
+[K[1A[K[?25l⠦ Checking incremental build task status...
+[K[1A[K[?25l⠧ Checking incremental build task status...
+[K[1A[K[?25l⠇ Checking incremental build task status...
+[K[1A[K[?25l⠏ Checking incremental build task status...
+[K[1A[K[?25l⠋ Checking incremental build task status...
+[K[1A[K[?25l⠙ Checking incremental build task status...
+[K[1A[K[?25l⠹ Checking incremental build task status...
+[K[1A[K[?25l⠸ Checking incremental build task status...
+[K[1A[K[?25l⠼ Checking incremental build task status...
+[K[1A[K[?25l⠴ Checking incremental build task status...
+[K[1A[K[?25l⠦ Checking incremental build task status...
+[K[1A[K[?25l⠧ Checking incremental build task status...
+[K[1A[K[?25l⠇ Checking incremental build task status...
+[K[1A[K[?25l⠏ Checking incremental build task status...
+[K[1A[K[?25l⠋ Checking incremental build task status...
+[K[1A[K[?25l⠙ Checking incremental build task status...
+[K[1A[K[?25l⠹ Checking incremental build task status...
+[K[1A[K[?25l⠸ Checking incremental build task status...
+[K[1A[K[?25l⠼ Checking incremental build task status...
+[K[1A[K[?25l⠴ Checking incremental build task status...
+[K[1A[K[?25l⠦ Checking incremental build task status...
+[K[1A[K[?25l⠧ Checking incremental build task status...
+[K[1A[K[?25l⠇ Checking incremental build task status...
+[K[1A[K[?25l⠏ Checking incremental build task status...
+[K[1A[K[?25l⠋ Checking incremental build task status...
+[K[1A[K[?25l⠙ Checking incremental build task status...
+[K[1A[K[?25l⠹ Checking incremental build task status...
+[K[1A[K[?25l⠸ Checking incremental build task status...
+[K[1A[K[?25l⠼ Checking incremental build task status...
+[K[1A[K[?25l⠴ Checking incremental build task status...
+[K[1A[K[?25l⠦ Checking incremental build task status...
+[K[1A[K[?25l⠧ Checking incremental build task status...
+[K[1A[K[?25l⠇ Checking incremental build task status...
+[K[1A[K[?25l⠏ Checking incremental build task status...
+[K[1A[K[?25l⠋ Checking incremental build task status...
+[K[1A[K[?25l⠙ Checking incremental build task status...
+[K[1A[K[?25l⠹ Checking incremental build task status...
+[K[1A[K[?25l⠸ Checking incremental build task status...
+[K[1A[K[?25l⠼ Checking incremental build task status...
+[K[1A[K[?25l⠴ Checking incremental build task status...
+[K[1A[K[?25l⠦ Checking incremental build task status...
+[K[1A[K[?25l⠧ Checking incremental build task status...
+[K[1A[K[?25l⠇ Checking incremental build task status...
+[K[1A[K[?25l⠏ Checking incremental build task status...
+[K[1A[K[?25l⠋ Checking incremental build task status...
+[K[1A[K[?25l⠙ Checking incremental build task status...
+[K[1A[K[?25l⠹ Checking incremental build task status...
+[K[1A[K[?25l⠸ Checking incremental build task status...
+[K[1A[K[?25l⠼ Checking incremental build task status...
+[K[1A[K[?25l⠴ Checking incremental build task status...
+[K[1A[K[?25l⠦ Checking incremental build task status...
+[K[1A[K[?25l⠧ Checking incremental build task status...
+[K[1A[K[?25l⠇ Checking incremental build task status...
+[K[1A[K[?25l⠏ Checking incremental build task status...
+[K[1A[K[?25l⠋ Checking incremental build task status...
+[K[1A[K[?25l⠙ Checking incremental build task status...
+[K[1A[K[?25l⠹ Checking incremental build task status...
+[K[1A[K[?25l⠸ Checking incremental build task status...
+[K[1A[K[?25l⠼ Checking incremental build task status...
+[K[1A[K[?25l⠴ Checking incremental build task status...
+[K[1A[K[?25l⠦ Checking incremental build task status...
+[K[1A[K[?25l⠧ Checking incremental build task status...
+[K[1A[K[?25l⠇ Checking incremental build task status...
+[K[1A[K[?25l⠏ Checking incremental build task status...
+[K[1A[K[?25l⠋ Checking incremental build task status...
+[K[1A[K[?25l⠙ Checking incremental build task status...
+[K[1A[K[?25l⠹ Checking incremental build task status...
+[K[1A[K[?25l⠸ Checking incremental build task status...
+[K[1A[K[?25l⠼ Checking incremental build task status...
+[K[1A[K[?25l⠴ Checking incremental build task status...
+[K[1A[K[?25l⠦ Checking incremental build task status...
+[K[1A[K[?25l⠧ Checking incremental build task status...
+[K[1A[K[?25l✔ Tasks loaded.
+[?25hStart tasks 'build' in 1 matched packages (1902 total tasks in 171 packages)
+Skipping 1374 up to date tasks.
+[  1/528] ✓ @fluid-internal/sea-integration-tests: biome format src browser scripts package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html shared-tree-benchmark-rust.html shared-tree-benchmark-local.html shared-tree-benchmark-tinylicious.html - 0.145s (non-incremental)
+[  2/528] ✓ client-release-group-root: flub check buildVersion -g client --path . - 1.239s (non-incremental)
+[  3/528] ✓ client-release-group-root: syncpack lint --log-levels error,warn - 1.893s (non-incremental)
+[  4/528] ✓ @fluid-tools/markdown-magic: node --import jiti/register src/index.ts --files README.md - 2.105s (non-incremental)
+client-release-group-root: warning during command 'biome check .'
+client-release-group-root: Checked 6456 files in 4s. No fixes applied.
+client-release-group-root: Found 1 warning.
+client-release-group-root: Found 2 infos.
+client-release-group-root: 
+client-release-group-root: rust-service/measurements/2026-09-20/followup-repeat/cells/results.json check ━━━━━━━━━━━━━━━━━━━━━━
+client-release-group-root: 
+client-release-group-root:   i The size of the file is 2.6 MiB, which exceeds the configured maximum of 2.0 MiB for this project.
+client-release-group-root:     Use the `files.maxSize` configuration to change the maximum size of files processed, or `files.includes` to ignore the file.
+client-release-group-root:   
+client-release-group-root: 
+client-release-group-root: rust-service/measurements/2026-09-20/stress-repeated/cells/results.json check ━━━━━━━━━━━━━━━━━━━━━━
+client-release-group-root: 
+client-release-group-root:   i The size of the file is 2.1 MiB, which exceeds the configured maximum of 2.0 MiB for this project.
+client-release-group-root:     Use the `files.maxSize` configuration to change the maximum size of files processed, or `files.includes` to ignore the file.
+client-release-group-root:   
+client-release-group-root: 
+client-release-group-root: rust-service/packages/sea-driver/src/delta.ts:574:62 lint/style/noNonNullAssertion  FIXABLE  ━━━━━━━━━━
+client-release-group-root: 
+client-release-group-root:   ! Forbidden non-null assertion.
+client-release-group-root:   
+client-release-group-root:     572 │ 				accepted.length > attempted.length ||
+client-release-group-root:     573 │ 				accepted.some(
+client-release-group-root:   > 574 │ 					(operation, index) => !bytesEqual(operation.submission, attempted[index]!.identity),
+client-release-group-root:         │ 					                                                        ^^^^^^^^^^^^^^^^^
+client-release-group-root:     575 │ 				)
+client-release-group-root:     576 │ 			) {
+client-release-group-root:   
+client-release-group-root:   i Unsafe fix: Replace with optional chain operator ?. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator
+client-release-group-root:   
+client-release-group-root:     572 572 │   				accepted.length > attempted.length ||
+client-release-group-root:     573 573 │   				accepted.some(
+client-release-group-root:     574     │ - → → → → → (operation,·index)·=>·!bytesEqual(operation.submission,·attempted[index]!.identity),
+client-release-group-root:         574 │ + → → → → → (operation,·index)·=>·!bytesEqual(operation.submission,·attempted[index]?.identity),
+client-release-group-root:     575 575 │   				)
+client-release-group-root:     576 576 │   			) {
+[  5/528] ✓ client-release-group-root: biome check . - 4.877s
+@fluidframework/sea-typescript: warning during command 'node scripts/build-wasm.mjs'
+@fluidframework/sea-typescript: Finished `release` profile [optimized] target(s) in 0.10s
+@fluidframework/sea-typescript:     Finished `release` profile [optimized] target(s) in 0.19s
+@fluidframework/sea-typescript:     Finished `release` profile [optimized] target(s) in 0.24s
+@fluidframework/sea-typescript:     Finished `release` profile [optimized] target(s) in 0.38s
+@fluidframework/sea-typescript:     Finished `release` profile [optimized] target(s) in 0.19s
+@fluidframework/sea-typescript:     Finished `release` profile [optimized] target(s) in 0.10s
+@fluidframework/sea-typescript:     Finished `release` profile [optimized] target(s) in 0.10s
+[  6/528] ✓ @fluidframework/sea-typescript: node scripts/build-wasm.mjs - 5.334s
+[  7/528] - @fluidframework/sea-typescript: tsc --project ./tsconfig.json - 0.030s
+[  8/528] - @fluidframework/sea-typescript: flub generate entrypoints --outDir ./lib - 0.001s
+[  9/528] - @fluidframework/sea-typescript: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.002s
+[ 10/528] - @fluidframework/sea-typescript: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.002s
+[ 11/528] - @fluidframework/sea-typescript: api-extractor run --config api-extractor/api-extractor-lint-public.json - 0.002s
+[ 12/528] - @fluidframework/sea-driver: tsc --project ./tsconfig.json - 0.066s
+[ 13/528] - @fluidframework/sea-driver: flub generate entrypoints --outDir ./lib - 0.001s
+[ 14/528] - @fluidframework/sea-driver: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.005s
+[ 15/528] - @fluidframework/sea-driver: api-extractor run --config api-extractor/api-extractor-lint-public.json - 0.005s
+[ 16/528] - @fluidframework/sea-driver: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.005s
+[ 17/528] - @fluid-private/test-drivers: tsc --project ./tsconfig.json --noEmit --exactOptionalPropertyTypes false --skipLibCheck --emitDeclarationOnly false --tsBuildInfoFile ./tsconfig.inexactOptionalPropertyTypes.tsbuildinfo - 0.097s
+[ 18/528] - @fluid-private/test-drivers: tsc --project ./tsconfig.json - 0.100s
+[ 19/528] - @fluid-private/test-drivers: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.104s
+[ 20/528] - @fluid-private/test-drivers: copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist - 0.003s
+[ 21/528] - @fluid-private/test-drivers: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.014s
+[ 22/528] - @fluid-private/test-drivers: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.014s
+[ 23/528] - @fluid-private/test-drivers: eslint --quiet --format stylish src - 0.014s
+[ 24/528] - @fluid-private/test-drivers: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.009s
+[ 25/528] - @fluid-private/test-drivers: api-extractor run --config api-extractor/api-extractor-lint-index.esm.json - 0.009s
+[ 26/528] - @fluid-private/test-drivers: api-extractor run --config api-extractor/api-extractor-lint-index.cjs.json - 0.009s
+[ 27/528] - @fluid-experimental/property-dds: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.034s
+[ 28/528] - @fluid-experimental/property-dds: tsc --project ./tsconfig.json - 0.042s
+[ 29/528] - @fluid-experimental/property-dds: copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist - 0.006s
+[ 30/528] - @fluid-experimental/property-dds: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.011s
+[ 31/528] - @fluid-experimental/property-dds: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.011s
+[ 32/528] - @fluid-experimental/property-dds: eslint --quiet src - 0.011s
+[ 33/528] - @fluid-experimental/property-dds: api-extractor run --config ./api-extractor-lint.json - 0.007s
+[ 34/528] - @fluid-experimental/property-dds: tsc --project ./src/test/tsconfig.json - 0.028s
+[ 35/528] - @fluid-experimental/property-dds: fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json - 0.024s
+[ 36/528] - @fluidframework/tree: tsc --project ./tsconfig.json - 0.152s
+[ 37/528] - @fluidframework/tree: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.161s
+[ 38/528] - @fluidframework/tree: copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist - 0.010s
+[ 39/528] - @fluidframework/tree: api-extractor run --local --config api-extractor/api-extractor-report.legacy.json - 0.038s
+[ 40/528] - @fluidframework/tree: api-extractor run --local --config api-extractor/api-extractor-report.current.json - 0.038s
+[ 41/528] - @fluidframework/tree: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.030s
+[ 42/528] - @fluidframework/tree: eslint --quiet --format stylish src --concurrency 4 - 0.030s
+[ 43/528] - @fluidframework/tree: api-extractor run --config api-extractor/api-extractor-lint-beta.cjs.json - 0.021s
+[ 44/528] - @fluidframework/tree: api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json - 0.021s
+[ 45/528] - @fluidframework/tree: api-extractor run --config api-extractor/api-extractor-lint-alpha.cjs.json - 0.021s
+[ 46/528] - @fluidframework/tree: api-extractor run --config api-extractor/api-extractor-lint-legacy.cjs.json - 0.021s
+[ 47/528] - @fluidframework/tree: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.021s
+[ 48/528] - @fluidframework/tree: api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json - 0.021s
+[ 49/528] - @fluidframework/tree: api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json - 0.021s
+[ 50/528] - @fluidframework/tree: api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json - 0.022s
+[ 51/528] - @fluidframework/tree: api-extractor run --config api-extractor/api-extractor-lint-public.esm.json - 0.022s
+[ 52/528] - @fluidframework/sea-tree: tsc --project ./tsconfig.json - 0.103s
+[ 53/528] - @fluid-example/tree-cli-app: tsc --project ./tsconfig.json - 0.103s
+[ 54/528] - @fluidframework/sea-tree: flub generate entrypoints --outDir ./lib - 0.004s
+[ 55/528] - @fluid-example/tree-cli-app: eslint --quiet --format stylish src - 0.008s
+[ 56/528] - @fluidframework/sea-tree: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.008s
+[ 57/528] - @fluidframework/sea-tree: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.008s
+[ 58/528] - @fluid-example/tree-cli-app: tsc --project ./src/test/tsconfig.json - 0.009s
+[ 59/528] - @fluidframework/aqueduct: tsc --project ./tsconfig.json - 0.128s
+[ 60/528] - @fluidframework/aqueduct: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.102s
+[ 61/528] - @fluidframework/aqueduct: copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist - 0.001s
+[ 62/528] - @fluidframework/aqueduct: flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib - 0.003s
+[ 63/528] - @fluidframework/tree-agent: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.119s
+[ 64/528] - @fluidframework/tree-agent: tsc --project ./tsconfig.json - 0.139s
+[ 65/528] - @fluidframework/aqueduct: flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist - 0.031s
+[ 66/528] - @fluidframework/tree-agent: copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist - 0.024s
+[ 67/528] - @fluidframework/aqueduct: api-extractor run --local --config api-extractor/api-extractor-report.current.json - 0.051s
+[ 68/528] - @fluidframework/aqueduct: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.050s
+[ 69/528] - @fluidframework/aqueduct: eslint --quiet --format stylish src - 0.050s
+[ 70/528] - @fluidframework/aqueduct: api-extractor run --local --config api-extractor/api-extractor-report.legacy.json - 0.050s
+[ 71/528] - @fluidframework/tree-agent: flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib - 0.042s
+[ 72/528] - @fluidframework/aqueduct: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.038s
+[ 73/528] - @fluidframework/tree-agent: flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist - 0.043s
+[ 74/528] - @fluidframework/tree-agent: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.043s
+[ 75/528] - @fluidframework/tree-agent: eslint --quiet --format stylish src - 0.043s
+[ 76/528] - @fluidframework/tree-agent: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.044s
+[ 77/528] - @fluidframework/tree-agent: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.024s
+[ 78/528] - @fluidframework/tree-agent-ses: tsc --project ./tsconfig.json - 0.060s
+[ 79/528] - @fluidframework/tree-agent-ses: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.019s
+[ 80/528] - @fluidframework/tree-agent-ses: copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist - 0.003s
+[ 81/528] - @fluidframework/tree-agent: tsc --project ./src/test/tsconfig.json - 0.073s
+[ 82/528] - @fluidframework/tree-agent: fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json - 0.049s
+[ 83/528] - @fluidframework/tree-agent-ses: flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib - 0.012s
+[ 84/528] - @fluid-experimental/last-edited: tsc --project ./tsconfig.json - 0.125s
+[ 85/528] - @fluid-experimental/data-objects: tsc --project ./tsconfig.json - 0.127s
+[ 86/528] - @fluid-experimental/last-edited: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.100s
+[ 87/528] - @fluid-experimental/data-objects: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.101s
+[ 88/528] - @fluidframework/tree-agent-ses: flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist - 0.017s
+[ 89/528] - @fluid-experimental/last-edited: copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist - 0.008s
+[ 90/528] - @fluid-experimental/data-objects: copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist - 0.009s
+[ 91/528] - @fluidframework/tree-agent-ses: eslint --quiet --format stylish src - 0.017s
+[ 92/528] - @fluidframework/tree-agent-ses: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.018s
+[ 93/528] - @fluid-experimental/last-edited: eslint --quiet --format stylish src - 0.021s
+[ 94/528] - @fluid-experimental/last-edited: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.021s
+[ 95/528] - @fluid-experimental/last-edited: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.021s
+[ 96/528] - @fluid-experimental/data-objects: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.021s
+[ 97/528] - @fluid-experimental/data-objects: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.021s
+[ 98/528] - @fluidframework/tree-agent-ses: tsc --project ./src/test/tsconfig.json - 0.024s
+[ 99/528] - @fluid-experimental/data-objects: eslint --quiet --format stylish src - 0.017s
+[100/528] - @fluidframework/tree-agent-ses: fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json - 0.016s
+[101/528] - @fluidframework/tree-agent-ses: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.016s
+[102/528] - @fluid-experimental/last-edited: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.011s
+[103/528] - @fluid-experimental/data-objects: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.012s
+[104/528] - @fluid-internal/test-service-load: tsc --project ./tsconfig.json - 0.156s
+[105/528] - @fluid-internal/test-service-load: tsc --project ./src/test/tsconfig.json - 0.005s
+[106/528] - @fluid-internal/test-service-load: eslint --quiet --format stylish src - 0.005s
+[107/528] - @fluidframework/fluid-runner: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.146s
+[108/528] - @fluidframework/fluid-runner: tsc --project ./tsconfig.json - 0.173s
+[109/528] - @fluidframework/fluid-runner: copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist - 0.002s
+[110/528] - @fluidframework/fluid-runner: flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib - 0.003s
+[111/528] - @fluidframework/fluid-runner: flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist - 0.008s
+[112/528] - @fluidframework/fluid-static: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.162s
+[113/528] - @fluidframework/fluid-static: tsc --project ./tsconfig.json - 0.191s
+[114/528] - @fluidframework/fluid-runner: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.014s
+[115/528] - @fluidframework/fluid-runner: eslint --quiet --format stylish src "bin/*" - 0.014s
+[116/528] - @fluidframework/fluid-runner: api-extractor run --local --config api-extractor/api-extractor-report.legacy.json - 0.014s
+[117/528] - @fluidframework/fluid-runner: api-extractor run --local --config api-extractor/api-extractor-report.current.json - 0.014s
+[118/528] - @fluidframework/fluid-static: copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist - 0.005s
+[119/528] - @fluidframework/fluid-runner: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.014s
+[120/528] - @fluidframework/fluid-static: flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib - 0.012s
+[121/528] - @fluidframework/fluid-static: flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist - 0.035s
+[122/528] - @fluidframework/fluid-static: api-extractor run --local --config api-extractor/api-extractor-report.legacy.json - 0.048s
+[123/528] - @fluidframework/fluid-static: api-extractor run --local --config api-extractor/api-extractor-report.current.json - 0.048s
+[124/528] - @fluidframework/fluid-static: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.048s
+[125/528] - @fluidframework/fluid-static: eslint --quiet --format stylish src - 0.048s
+[126/528] - @fluidframework/fluid-static: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.030s
+[127/528] - fluid-framework: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.046s
+[128/528] - fluid-framework: tsc --project ./tsconfig.json - 0.076s
+[129/528] - fluid-framework: tsc --project ./tsconfig.json --noEmit --exactOptionalPropertyTypes false --skipLibCheck --emitDeclarationOnly false --tsBuildInfoFile ./tsconfig.inexactOptionalPropertyTypes.tsbuildinfo - 0.073s
+[130/528] - fluid-framework: copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist - 0.004s
+[131/528] - fluid-framework: flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib - 0.006s
+[132/528] - @fluidframework/tinylicious-client: tsc --project ./tsconfig.json - 0.086s
+[133/528] - @fluidframework/tinylicious-client: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.057s
+[134/528] - fluid-framework: flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist - 0.020s
+[135/528] - @fluidframework/tinylicious-client: copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist - 0.015s
+[136/528] - @fluidframework/odsp-client: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.076s
+[137/528] - @fluidframework/odsp-client: tsc --project ./tsconfig.json - 0.102s
+[138/528] - @fluid-example/table-document: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.275s
+[139/528] - @fluid-example/table-document: tsc --project ./tsconfig.json - 0.300s
+[140/528] - fluid-framework: api-extractor run --local --config api-extractor/api-extractor-report.current.json - 0.030s
+[141/528] - fluid-framework: api-extractor run --local --config api-extractor/api-extractor-report.legacy.json - 0.029s
+[142/528] - fluid-framework: eslint --quiet --format stylish src - 0.029s
+[143/528] - fluid-framework: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.029s
+[144/528] - @fluidframework/tinylicious-client: flub generate entrypoints --outFileBeta beta --outDir ./lib - 0.033s
+[145/528] - @fluidframework/odsp-client: copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist - 0.016s
+[146/528] - @fluidframework/tinylicious-client: flub generate entrypoints --resolutionConditions require --outFileBeta beta --outDir ./dist - 0.042s
+[147/528] - @fluidframework/odsp-client: flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib - 0.038s
+[148/528] - fluid-framework: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.038s
+[149/528] - @fluidframework/tinylicious-client: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.029s
+[150/528] - @fluid-example/import-testing: tsc --project ./tsconfig.crossPackage.node20.json - 0.037s
+[151/528] - @fluid-example/import-testing: tsc --project ./tsconfig.crossPackage.node16.json - 0.038s
+[152/528] - @fluid-example/import-testing: tsc --project ./tsconfig.crossPackage.bundler.json - 0.066s
+[153/528] - @fluid-example/import-testing: tsc --project ./tsconfig.crossPackage.nodenext.json - 0.038s
+[154/528] - @fluid-example/import-testing: tsc --project ./tsconfig.json - 0.040s
+[155/528] - @fluidframework/tinylicious-client: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.022s
+[156/528] - @fluidframework/tinylicious-client: eslint --quiet --format stylish src - 0.027s
+[157/528] - @fluid-experimental/tree: tsc --project ./tsconfig.esnext.json - 0.502s
+[158/528] - @fluid-experimental/tree: fluid-tsc commonjs --project ./tsconfig.json - 0.484s
+[159/528] - @fluidframework/azure-client: tsc --project ./tsconfig.json - 0.099s
+[160/528] - @fluidframework/azure-client: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.082s
+[161/528] - @fluid-example/import-testing: fluid-tsc commonjs --project ./tsconfig.crossPackage.node20.cjs.json - 0.029s
+[162/528] - @fluidframework/tinylicious-client: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.040s
+[163/528] - @fluid-experimental/tree: copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist - 0.019s
+[164/528] - @fluid-example/import-testing: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.029s
+[165/528] - @fluidframework/odsp-client: flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist - 0.042s
+[166/528] - @fluidframework/azure-client: copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist - 0.026s
+[167/528] - @fluidframework/azure-client: flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib - 0.044s
+[168/528] - @fluid-internal/sea-integration-tests: tsc --project ./tsconfig.json - 0.056s
+[169/528] - @fluid-example/table-document: eslint --quiet --format stylish src - 0.041s
+[170/528] - @fluidframework/azure-client: flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist - 0.030s
+[171/528] - @fluidframework/odsp-client: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.010s
+[172/528] - @fluidframework/odsp-client: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.010s
+[173/528] - @fluidframework/react: tsc --project ./tsconfig.json - 0.147s
+[174/528] - @fluidframework/odsp-client: eslint --quiet --format stylish src - 0.013s
+[175/528] - @fluidframework/odsp-client: tsc --project ./src/test/tsconfig.json - 0.016s
+[176/528] - @fluidframework/react: copyfiles -f ../../../common/build/build-common/src/esm/package.json ./lib - 0.014s
+[177/528] - @fluid-example/bubblebench-common: tsc --project ./tsconfig.json - 0.104s
+[178/528] - @fluid-example/table-document: tsc --project ./src/test/tsconfig.json - 0.089s
+[179/528] - @fluid-example/import-testing: eslint --quiet --format stylish src - 0.023s
+[180/528] - @fluid-example/bubblebench-common: tsc --project ./tsconfig.json --noEmit --exactOptionalPropertyTypes false --skipLibCheck --emitDeclarationOnly false --tsBuildInfoFile ./tsconfig.inexactOptionalPropertyTypes.tsbuildinfo - 0.007s
+[181/528] - @fluidframework/react: flub generate entrypoints --outDir ./lib - 0.012s
+[182/528] - @fluid-experimental/tree: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.016s
+[183/528] - @fluid-example/example-utils: tsc --project ./tsconfig.json - 0.508s
+[184/528] - @fluid-example/example-utils: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.478s
+[185/528] - @fluid-experimental/tree: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.028s
+[186/528] - @fluid-internal/sea-integration-tests: tsc --project tsconfig.shared-tree.json - 0.092s
+[187/528] ✓ @fluid-internal/sea-integration-tests: esbuild browser/trace.mjs --bundle --format=esm --platform=browser --outfile=dist/driver-trace.js --external:@fluidframework/sea-typescript/internal/* --log-level=warning --log-override:package.json=silent - 0.124s (non-incremental)
+[188/528] - @fluid-experimental/tree: eslint --quiet src - 0.036s
+[189/528] - @fluid-example/example-utils: copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist - 0.013s
+[190/528] - @fluidframework/react: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.030s
+[191/528] - @fluidframework/devtools-core: tsc --project ./tsconfig.json - 0.557s
+[192/528] - @fluidframework/devtools-core: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.529s
+[193/528] - @fluidframework/react: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.029s
+[194/528] - @fluidframework/devtools-core: copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist - 0.003s
+[195/528] - @fluidframework/react: eslint --quiet --format stylish src - 0.009s
+[196/528] - @fluid-private/test-version-utils: tsc --project ./tsconfig.json - 0.563s
+[197/528] - @fluidframework/devtools-core: flub generate entrypoints --outDir ./lib - 0.012s
+[198/528] - @fluidframework/react: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.014s
+[199/528] - @fluidframework/devtools-core: flub generate entrypoints --resolutionConditions require --outDir ./dist - 0.059s
+[200/528] ✓ @fluid-internal/sea-integration-tests: esbuild browser/shared-tree-trace.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-trace.js --external:@fluidframework/sea-typescript/internal --log-level=warning --log-override:package.json=silent - 0.236s (non-incremental)
+[201/528] - @fluidframework/fluid-runner: fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json - 0.482s
+[202/528] - @fluid-example/multiview-coordinate-interface: tsc --project ./tsconfig.json - 0.158s
+[203/528] - @fluidframework/devtools-core: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.010s
+[204/528] - @fluidframework/devtools-core: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.016s
+[205/528] - @fluid-example/collaborative-textarea: tsc --project ./tsconfig.json - 0.130s
+[206/528] - @fluidframework/devtools-core: eslint --quiet src - 0.019s
+[207/528] - @fluid-example/multiview-coordinate-model: tsc --project ./tsconfig.json - 0.039s
+[208/528] - @fluid-example/multiview-slider-coordinate-view: tsc --project ./tsconfig.json - 0.036s
+[209/528] - @fluidframework/devtools-core: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.014s
+[210/528] - @fluidframework/tree-agent-langchain: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.637s
+[211/528] - @fluidframework/tree-agent-langchain: tsc --project ./tsconfig.json - 0.661s
+[212/528] - @fluidframework/tree-agent-langchain: copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist - 0.008s
+[213/528] - @fluid-example/example-utils: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.012s
+[214/528] - @fluidframework/tree-agent-langchain: flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib - 0.013s
+[215/528] - @fluid-example/migration-tools: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.210s
+[216/528] - @fluid-example/migration-tools: tsc --project ./tsconfig.json - 0.226s
+[217/528] - @fluid-internal/functional-tests: tsc --project ./tsconfig.json - 0.350s
+[218/528] - @fluidframework/tree-agent-langchain: flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist - 0.022s
+[219/528] - @fluid-example/migration-tools: copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist - 0.010s
+[220/528] - @fluid-example/migration-tools: flub generate entrypoints --outDir ./lib - 0.019s
+[221/528] - @fluid-example/multiview-plot-coordinate-view: tsc --project ./tsconfig.json - 0.038s
+[222/528] - @fluid-example/multiview-triangle-view: tsc --project ./tsconfig.json - 0.038s
+[223/528] - @fluid-example/migration-tools: flub generate entrypoints --resolutionConditions require --outDir ./dist - 0.022s
+[224/528] - @fluid-example/multiview-constellation-model: tsc --project ./tsconfig.json - 0.041s
+[225/528] - @fluidframework/quill-react: tsc --project ./tsconfig.json - 0.291s
+[226/528] - @fluid-example/example-utils: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.015s
+[227/528] - @fluid-example/multiview-constellation-view: tsc --project ./tsconfig.json - 0.040s
+[228/528] - @fluidframework/quill-react: copyfiles -f ../../../common/build/build-common/src/esm/package.json ./lib - 0.006s
+[229/528] - @fluid-example/example-utils: eslint --quiet --format stylish src - 0.014s
+[230/528] - @fluid-example/example-utils: api-extractor run --config ./api-extractor-lint.json - 0.015s
+[231/528] - @fluidframework/quill-react: flub generate entrypoints --outDir ./lib - 0.020s
+[232/528] - @fluid-example/example-utils: tsc --project ./src/test/tsconfig.json - 0.027s
+[233/528] - @fluid-internal/tablebench: tsc --project ./tsconfig.json - 0.066s
+[234/528] - @fluid-example/contact-collection: tsc --project ./tsconfig.json - 0.031s
+[235/528] - @fluid-example/diceroller: tsc --project ./tsconfig.json - 0.028s
+[236/528] - @fluidframework/react: tsc --project ./src/test/tsconfig.json - 0.279s
+[237/528] - @fluidframework/devtools: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.241s
+[238/528] - @fluidframework/devtools: tsc --project ./tsconfig.json - 0.294s
+[239/528] - @fluidframework/devtools: copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist - 0.004s
+[240/528] - @fluid-example/blobs: tsc --project ./tsconfig.json - 0.081s
+[241/528] - @fluidframework/devtools: flub generate entrypoints --outDir ./lib - 0.016s
+[242/528] - @fluidframework/devtools: flub generate entrypoints --resolutionConditions require --outDir ./dist - 0.025s
+[243/528] - @fluid-example/claims-example: tsc --project ./tsconfig.json - 0.100s
+[244/528] - @fluidframework/fluid-runner: tsc --project ./src/test/tsconfig.json - 0.739s
+[245/528] - @fluid-example/task-selection: tsc --project ./tsconfig.json - 0.091s
+[246/528] - @fluid-example/tree-comparison: tsc --project ./tsconfig.json - 0.089s
+[247/528] - @fluid-example/bundle-size-tests: tsc --project ./tsconfig.json - 0.166s
+[248/528] - @fluid-example/staging: tsc --project ./tsconfig.json - 0.108s
+[249/528] - @fluid-example/app-integration-container-views: tsc --project ./tsconfig.json - 0.056s
+[250/528] - @fluid-example/app-integration-external-data: tsc --project ./tsconfig.json - 0.249s
+[251/528] - @fluid-example/app-integration-live-schema-upgrade: tsc --project ./tsconfig.json - 0.096s
+[252/528] - @fluid-example/presence-tracker: tsc --project ./tsconfig.json - 0.153s
+[253/528] - @fluid-example/app-integration-external-views: tsc --project ./tsconfig.json - 0.067s
+[254/528] - @fluid-example/tree-shim: tsc --project ./tsconfig.json - 0.096s
+[255/528] - @fluid-experimental/tree: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.030s
+[256/528] - @fluid-internal/local-server-tests: eslint --quiet --format stylish src - 0.037s
+[257/528] - @fluid-internal/functional-tests: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.015s
+[258/528] - @fluid-example/import-testing: copyfiles -f ./src/cjs/package.json ./dist - 0.012s
+[259/528] - @fluid-example/version-migration-same-container: tsc --project ./tsconfig.json - 0.123s
+[260/528] - @fluidframework/odsp-client: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.014s
+[261/528] - @fluidframework/azure-client: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.011s
+[262/528] - @fluid-example/app-integration-external-controller: tsc --project ./tsconfig.json - 0.079s
+[263/528] - @fluidframework/azure-client: api-extractor run --local --config api-extractor/api-extractor-report.current.json - 0.014s
+[264/528] - @fluidframework/azure-client: api-extractor run --local --config api-extractor/api-extractor-report.legacy.json - 0.018s
+[265/528] - @fluid-example/azure-client-todo-list: tsc --project ./tsconfig.json - 0.069s
+[266/528] - @fluidframework/odsp-client: fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json - 0.030s
+[267/528] - @fluidframework/azure-client: eslint --quiet --format stylish src - 0.028s
+[268/528] - @fluidframework/azure-client: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.027s
+[269/528] - @fluid-example/bubblebench-common: eslint --quiet --format stylish src - 0.029s
+[270/528] - @fluid-example/app-integration-external-data: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.021s
+[271/528] - @fluid-example/view-framework-sampler: tsc --project ./tsconfig.json - 0.154s
+[272/528] - @fluid-internal/sea-integration-tests: tsc --project ./src/test/tsconfig.json - 0.078s
+[273/528] - @fluidframework/azure-end-to-end-tests: eslint --quiet --format stylish src - 0.055s
+[274/528] - @fluid-experimental/odsp-end-to-end-tests: eslint --quiet --format stylish src - 0.059s
+[275/528] - @fluid-private/test-end-to-end-tests: eslint --quiet --format stylish src - 0.041s
+[276/528] - @fluid-private/test-version-utils: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.019s
+[277/528] - @fluid-private/test-version-utils: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.009s
+[278/528] - @fluid-experimental/odsp-end-to-end-tests: tsc --project ./src/test/tsconfig.json - 0.070s
+[279/528] - @fluid-private/test-version-utils: eslint --quiet --format stylish src - 0.006s
+[280/528] - @fluid-internal/local-server-tests: tsc --project ./src/test/tsconfig.json - 0.185s
+[281/528] - @fluid-private/test-version-utils: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.008s
+[282/528] - @fluid-private/test-version-utils: api-extractor run --config api-extractor/api-extractor-lint-index.json - 0.008s
+[283/528] - @fluid-example/multiview-coordinate-interface: eslint --quiet --format stylish src - 0.006s
+[284/528] - @fluid-example/collaborative-textarea: eslint --quiet --format stylish src - 0.006s
+[285/528] - @fluid-example/multiview-coordinate-model: eslint --quiet --format stylish src - 0.007s
+[286/528] - @fluid-example/version-migration-separate-container: tsc --project ./tsconfig.json - 0.231s
+[287/528] - @fluid-example/multiview-slider-coordinate-view: eslint --quiet --format stylish src - 0.017s
+[288/528] - @fluidframework/tree-agent-langchain: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.016s
+[289/528] - @fluidframework/tree-agent-langchain: eslint --quiet --format stylish src - 0.016s
+[290/528] - @fluid-private/test-version-utils: tsc --project ./src/test/tsconfig.json - 0.039s
+[291/528] - @fluid-internal/functional-tests: eslint --quiet --format stylish src - 0.010s
+[292/528] - @fluidframework/tree-agent-langchain: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.010s
+[293/528] - @fluid-example/migration-tools: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.006s
+[294/528] - @fluid-example/migration-tools: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.005s
+[295/528] - @fluid-example/migration-tools: eslint --quiet --format stylish src - 0.005s
+[296/528] - @fluid-example/multiview-plot-coordinate-view: eslint --quiet --format stylish src - 0.006s
+[297/528] - @fluid-example/multiview-triangle-view: eslint --quiet --format stylish src - 0.006s
+[298/528] - @fluid-example/migration-tools: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.007s
+[299/528] - @fluid-example/multiview-constellation-model: eslint --quiet --format stylish src - 0.006s
+[300/528] - @fluid-example/multiview-constellation-view: eslint --quiet --format stylish src - 0.006s
+[301/528] - @fluidframework/quill-react: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.005s
+[302/528] - @fluidframework/quill-react: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.009s
+[303/528] - @fluidframework/quill-react: eslint --quiet --format stylish src - 0.011s
+[304/528] - @fluidframework/quill-react: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.010s
+[305/528] - @fluid-example/migration-tools: api-extractor run --config api-extractor/api-extractor-lint-alpha.cjs.json - 0.012s
+[306/528] - @fluid-example/migration-tools: api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json - 0.012s
+[307/528] - @fluid-example/webpack-fluid-loader: fluid-tsc commonjs --project ./tsconfig.cjs.json --noEmit --skipLibCheck --emitDeclarationOnly false --tsBuildInfoFile ./tsconfig.require-esm.tsbuildinfo - 0.198s
+[308/528] - @fluid-internal/tablebench: eslint --quiet --format stylish src - 0.011s
+[309/528] - @fluid-example/contact-collection: eslint --quiet --format stylish src - 0.009s
+[310/528] - @fluid-example/diceroller: eslint --quiet --format stylish src - 0.005s
+[311/528] - @fluid-example/blobs: eslint --quiet --format stylish src - 0.006s
+[312/528] - @fluidframework/quill-react: tsc --project ./src/test/tsconfig.json - 0.035s
+[313/528] - @fluidframework/devtools: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.006s
+[314/528] - @fluidframework/devtools: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.007s
+[315/528] - @fluid-internal/tablebench: tsc --project ./src/test/tsconfig.json - 0.025s
+[316/528] - @fluidframework/devtools: eslint --quiet src - 0.019s
+[317/528] - @fluidframework/devtools: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.017s
+[318/528] - @fluidframework/fluid-telemetry: tsc --project ./tsconfig.json - 0.918s
+[319/528] - @fluidframework/fluid-telemetry: fluid-tsc commonjs --project ./tsconfig.cjs.json - 0.917s
+[320/528] - @fluid-example/claims-example: eslint --quiet --format stylish src - 0.006s
+[321/528] - @fluid-example/task-selection: eslint --quiet --format stylish src - 0.006s
+[322/528] - @fluidframework/fluid-telemetry: copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist - 0.003s
+[323/528] - @fluid-example/shared-tree-demo: tsc --project ./tsconfig.json - 0.888s
+[324/528] - @fluid-example/app-insights-logger: tsc --project ./tsconfig.json - 0.435s
+[325/528] - @fluidframework/fluid-telemetry: flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib - 0.008s
+[326/528] - @fluid-example/tree-comparison: eslint --quiet --format stylish src - 0.008s
+[327/528] - @fluidframework/fluid-telemetry: flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist - 0.010s
+[328/528] - @fluid-example/bundle-size-tests: eslint --quiet --format stylish src - 0.011s
+[329/528] - @fluid-example/staging: eslint --quiet --format stylish src - 0.014s
+[330/528] - @fluid-example/app-integration-container-views: eslint --quiet --format stylish src - 0.015s
+[331/528] - @fluid-example/app-integration-external-data: eslint --quiet --format stylish src test - 0.015s
+[332/528] - @fluid-example/presence-tracker: eslint --quiet --format stylish src - 0.008s
+[333/528] - @fluid-example/app-integration-live-schema-upgrade: eslint --quiet --format stylish src - 0.008s
+[334/528] - @fluid-example/app-integration-external-views: eslint --quiet --format stylish src - 0.020s
+[335/528] - @fluid-example/tree-shim: eslint --quiet --format stylish src - 0.021s
+[336/528] - @fluid-example/version-migration-same-container: eslint --quiet --format stylish src - 0.012s
+[337/528] - @fluid-example/app-integration-external-controller: eslint --quiet --format stylish src - 0.006s
+[338/528] - @fluid-example/azure-client-todo-list: eslint --quiet --format stylish src - 0.006s
+[339/528] - @fluid-example/view-framework-sampler: eslint --quiet --format stylish src - 0.007s
+[340/528] - @fluid-example/version-migration-separate-container: eslint --quiet --format stylish src - 0.006s
+[341/528] - @fluid-example/shared-tree-demo: eslint --quiet --format stylish src - 0.007s
+[342/528] - @fluid-example/app-insights-logger: eslint --quiet src - 0.010s
+[343/528] - @fluidframework/fluid-telemetry: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.009s
+[344/528] - @fluidframework/fluid-telemetry: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.010s
+[345/528] - @fluidframework/fluid-telemetry: eslint --quiet --format stylish src - 0.008s
+[346/528] - @fluidframework/fluid-telemetry: api-extractor run --config api-extractor/api-extractor-lint-bundle.json - 0.015s
+[347/528] - @fluid-example/table-document: copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist - 0.001s
+[348/528] - @fluid-internal/functional-tests: copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist - 0.004s
+[349/528] - @fluid-example/app-integration-external-data: copyfiles -f ../../common/build/build-common/src/cjs/package.json ./dist - 0.001s
+[350/528] ✓ @fluid-example/table-document: echo skip concurrently "npm:check:exports:*" - 0.009s
+[351/528] - @fluid-example/app-integration-external-data: tsc --project ./src/test/tsconfig.json - 0.091s
+[352/528] - @fluidframework/fluid-telemetry: tsc --project ./src/test/tsconfig.json - 0.045s
+[353/528] - @fluidframework/fluid-telemetry: fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json - 0.040s
+[354/528] - @fluid-example/app-integration-external-data: tsc --project ./test/tsconfig.json - 0.154s
+[355/528] - @fluid-private/test-end-to-end-tests: tsc --project ./src/test/tsconfig.json - 0.341s
+[356/528] - @fluidframework/azure-end-to-end-tests: tsc --project ./src/test/tsconfig.json - 0.431s
+[357/528] ✓ client-release-group-root: flub check policy - 7.333s
+[358/528] - @fluidframework/tree: tsc --project ./src/test/tsconfig.json - 1.676s
+[359/528] - @fluidframework/aqueduct: api-extractor run --config api-extractor/api-extractor-lint-public.esm.json - 0.017s
+[360/528] - @fluidframework/aqueduct: api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json - 0.017s
+[361/528] - @fluidframework/aqueduct: api-extractor run --config api-extractor/api-extractor-lint-legacy.cjs.json - 0.019s
+[362/528] - @fluidframework/tree-agent: api-extractor run --config api-extractor/api-extractor-lint-alpha.cjs.json - 0.018s
+[363/528] - @fluidframework/aqueduct: api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json - 0.018s
+[364/528] - @fluidframework/tree-agent: api-extractor run --config api-extractor/api-extractor-lint-index.cjs.json - 0.018s
+[365/528] - @fluidframework/tree-agent: api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json - 0.018s
+[366/528] - @fluidframework/tree-agent: api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json - 0.018s
+[367/528] - @fluidframework/tree-agent: api-extractor run --config api-extractor/api-extractor-lint-index.esm.json - 0.019s
+[368/528] ✓ @fluid-experimental/tree: echo AB#8147 skip api-extractor run --config api-extractor/api-extractor-lint-EditLog.cjs.json - 0.017s
+[369/528] ✓ @fluid-experimental/tree: echo AB#8147 skip api-extractor run --config api-extractor/api-extractor-lint-EditLog.esm.json - 0.010s
+[370/528] - @fluidframework/tree-agent: api-extractor run --config api-extractor/api-extractor-lint-public.esm.json - 0.048s
+[371/528] - @fluidframework/sea-tree: api-extractor run --config api-extractor/api-extractor-lint-public.json - 0.050s
+[372/528] - @fluid-experimental/tree: api-extractor run --config api-extractor/api-extractor-lint-index.cjs.json - 0.051s
+[373/528] - @fluid-experimental/tree: api-extractor run --config api-extractor/api-extractor-lint-index.esm.json - 0.052s
+[374/528] - @fluidframework/tree-agent-langchain: api-extractor run --config api-extractor/api-extractor-lint-alpha.cjs.json - 0.023s
+[375/528] - @fluidframework/tree-agent-langchain: api-extractor run --config api-extractor/api-extractor-lint-index.cjs.json - 0.023s
+[376/528] - @fluidframework/tree-agent-langchain: api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json - 0.023s
+[377/528] - @fluidframework/tree-agent-langchain: api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json - 0.022s
+[378/528] - @fluidframework/tree-agent-langchain: api-extractor run --config api-extractor/api-extractor-lint-index.esm.json - 0.022s
+[379/528] - @fluid-internal/local-server-stress-tests: eslint --quiet --format stylish src - 0.076s
+[380/528] - @fluidframework/tree-agent-langchain: api-extractor run --config api-extractor/api-extractor-lint-public.esm.json - 0.025s
+[381/528] - @fluidframework/tree-agent-ses: api-extractor run --config api-extractor/api-extractor-lint-alpha.cjs.json - 0.025s
+[382/528] - @fluidframework/tree-agent-ses: api-extractor run --config api-extractor/api-extractor-lint-index.cjs.json - 0.014s
+[383/528] - @fluidframework/tree-agent-ses: api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json - 0.015s
+[384/528] - @fluidframework/tree-agent-ses: api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json - 0.014s
+[385/528] - @fluidframework/tree-agent-ses: api-extractor run --config api-extractor/api-extractor-lint-index.esm.json - 0.013s
+[386/528] - @fluidframework/tree-agent-ses: api-extractor run --config api-extractor/api-extractor-lint-public.esm.json - 0.008s
+[387/528] - @fluid-internal/local-server-stress-tests: tsc --project ./src/test/tsconfig.json - 0.105s
+[388/528] - @fluidframework/tree-agent-langchain: tsc --project ./src/test/tsconfig.json - 0.501s
+[389/528] - @fluidframework/tree-agent-langchain: fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json - 0.489s
+[390/528] - @fluidframework/aqueduct: tsc --project ./src/test/tsconfig.json - 1.684s
+[391/528] - @fluidframework/aqueduct: fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json - 1.657s
+[392/528] - @fluidframework/fluid-static: api-extractor run --config api-extractor/api-extractor-lint-alpha.cjs.json - 0.023s
+[393/528] - @fluidframework/fluid-static: api-extractor run --config api-extractor/api-extractor-lint-legacy.cjs.json - 0.023s
+[394/528] - @fluidframework/fluid-static: api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json - 0.023s
+[395/528] - @fluidframework/fluid-static: api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json - 0.023s
+[396/528] - @fluidframework/fluid-static: api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json - 0.023s
+[397/528] - @fluidframework/fluid-static: api-extractor run --config api-extractor/api-extractor-lint-public.esm.json - 0.023s
+[398/528] - @fluidframework/devtools-core: api-extractor run --config api-extractor/api-extractor-lint-alpha.cjs.json - 0.023s
+[399/528] - @fluidframework/devtools-core: api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json - 0.024s
+[400/528] - @fluidframework/devtools-core: api-extractor run --config api-extractor/api-extractor-lint-beta.cjs.json - 0.024s
+[401/528] - @fluidframework/devtools-core: api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json - 0.024s
+[402/528] - @fluid-experimental/data-objects: api-extractor run --config api-extractor/api-extractor-lint-index.cjs.json - 0.023s
+[403/528] - @fluidframework/devtools-core: api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json - 0.024s
+[404/528] - @fluidframework/devtools-core: api-extractor run --config api-extractor/api-extractor-lint-public.esm.json - 0.024s
+[405/528] - @fluid-experimental/data-objects: api-extractor run --config api-extractor/api-extractor-lint-index.esm.json - 0.010s
+[406/528] - @fluid-experimental/last-edited: api-extractor run --config api-extractor/api-extractor-lint-index.cjs.json - 0.010s
+[407/528] - @fluidframework/fluid-runner: api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json - 0.009s
+[408/528] - @fluidframework/fluid-runner: api-extractor run --config api-extractor/api-extractor-lint-legacy.cjs.json - 0.010s
+[409/528] - @fluidframework/fluid-runner: api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json - 0.009s
+[410/528] - @fluid-experimental/last-edited: api-extractor run --config api-extractor/api-extractor-lint-index.esm.json - 0.010s
+[411/528] - @fluidframework/fluid-runner: api-extractor run --config api-extractor/api-extractor-lint-public.esm.json - 0.009s
+[412/528] - @fluidframework/fluid-static: fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json - 1.497s
+[413/528] - @fluidframework/fluid-static: tsc --project ./src/test/tsconfig.json - 1.522s
+[414/528] - @fluidframework/tinylicious-client: api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json - 0.021s
+[415/528] - @fluidframework/tinylicious-client: api-extractor run --config api-extractor/api-extractor-lint-public.esm.json - 0.021s
+[416/528] - fluid-framework: api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json - 0.021s
+[417/528] - fluid-framework: api-extractor run --config api-extractor/api-extractor-lint-legacy.cjs.json - 0.021s
+[418/528] - fluid-framework: api-extractor run --config api-extractor/api-extractor-lint-alpha.cjs.json - 0.021s
+[419/528] - @fluidframework/tinylicious-client: api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json - 0.021s
+[420/528] - @fluidframework/tinylicious-client: api-extractor run --config api-extractor/api-extractor-lint-beta.cjs.json - 0.021s
+[421/528] - fluid-framework: api-extractor run --config api-extractor/api-extractor-lint-beta.cjs.json - 0.021s
+[422/528] - fluid-framework: api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json - 0.021s
+[423/528] - fluid-framework: api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json - 0.021s
+[424/528] - fluid-framework: api-extractor run --config api-extractor/api-extractor-lint-public.esm.json - 0.021s
+[425/528] - fluid-framework: api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json - 0.022s
+[426/528] - @fluidframework/odsp-client: api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json - 0.022s
+[427/528] - @fluidframework/odsp-client: api-extractor run --config api-extractor/api-extractor-lint-beta.cjs.json - 0.022s
+[428/528] - @fluidframework/odsp-client: api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json - 0.021s
+[429/528] - @fluidframework/odsp-client: api-extractor run --config api-extractor/api-extractor-lint-public.esm.json - 0.003s
+[430/528] - @fluidframework/azure-client: tsc --project ./src/test/tsconfig.json - 0.742s
+[431/528] - @fluidframework/azure-client: fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json - 0.734s
+[432/528] - @fluidframework/tinylicious-client: tsc --project ./src/test/tsconfig.json - 1.411s
+[433/528] - @fluidframework/tinylicious-client: fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json - 1.404s
+[434/528] - @fluidframework/react: api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json - 0.020s
+[435/528] - @fluidframework/react: api-extractor run --config api-extractor/api-extractor-lint-public.esm.json - 0.020s
+[436/528] - @fluidframework/react: api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json - 0.020s
+[437/528] - @fluidframework/fluid-telemetry: api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json - 0.011s
+[438/528] - @fluidframework/fluid-telemetry: api-extractor run --config api-extractor/api-extractor-lint-beta.cjs.json - 0.012s
+[439/528] - @fluidframework/fluid-telemetry: api-extractor run --config api-extractor/api-extractor-lint-public.esm.json - 0.012s
+[440/528] - @fluidframework/fluid-telemetry: api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json - 0.012s
+[441/528] - @fluidframework/quill-react: api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json - 0.005s
+[442/528] - @fluidframework/quill-react: api-extractor run --config api-extractor/api-extractor-lint-public.esm.json - 0.005s
+[443/528] - @fluidframework/quill-react: api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json - 0.005s
+[444/528] - @fluidframework/devtools-core: tsc --project ./src/test/tsconfig.json - 1.091s
+[445/528] - @fluidframework/devtools-core: fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json - 1.075s
+[446/528] - @fluidframework/devtools: tsc --project ./src/test/tsconfig.json - 0.540s
+[447/528] - @fluidframework/devtools: fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json - 0.536s
+[448/528] - @fluidframework/devtools: api-extractor run --config api-extractor/api-extractor-lint-alpha.cjs.json - 0.009s
+[449/528] - @fluidframework/devtools: api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json - 0.009s
+[450/528] - @fluidframework/devtools: api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json - 0.009s
+[451/528] - @fluidframework/devtools: api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json - 0.010s
+[452/528] - @fluidframework/devtools: api-extractor run --config api-extractor/api-extractor-lint-public.esm.json - 0.010s
+[453/528] - @fluidframework/devtools: api-extractor run --config api-extractor/api-extractor-lint-beta.cjs.json - 0.010s
+[454/528] - fluid-framework: fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json - 1.506s
+[455/528] - fluid-framework: tsc --project ./src/test/tsconfig.json - 1.529s
+[456/528] - @fluidframework/azure-client: api-extractor run --config api-extractor/api-extractor-lint-public.esm.json - 0.005s
+[457/528] - @fluidframework/azure-client: api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json - 0.005s
+[458/528] - @fluidframework/azure-client: api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json - 0.005s
+[459/528] - @fluidframework/azure-client: api-extractor run --config api-extractor/api-extractor-lint-legacy.cjs.json - 0.006s
+[460/528] - @fluid-internal/devtools-view: fluid-tsc module --project ./tsconfig.esm.json - 1.417s
+[461/528] - @fluid-internal/devtools-view: fluid-tsc commonjs --project ./tsconfig.cjs.json - 1.057s
+[462/528] - @fluid-internal/devtools-view: copyfiles -f ../../../../common/build/build-common/src/esm/package.json ./lib - 0.001s
+[463/528] - @fluid-internal/devtools-view: copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist - 0.005s
+[464/528] ✓ @fluid-internal/sea-integration-tests: esbuild browser/shared-tree-benchmark-rust.ts --bundle --minify --define:process.env.NODE_ENV=\"production\" --format=esm --platform=browser --outfile=dist/shared-tree-benchmark-rust.js --external:@fluidframework/sea-typescript/internal/* --log-level=warning --log-override:package.json=silent - 0.257s (non-incremental)
+[465/528] - @fluid-internal/devtools-view: api-extractor run --config ./api-extractor-lint.json - 0.036s
+[466/528] - @fluid-internal/devtools-view: api-extractor run --local --config api-extractor/api-extractor-model.json - 0.036s
+[467/528] - @fluid-internal/devtools-view: eslint --quiet src - 0.037s
+[468/528] - @fluid-internal/devtools-view: api-extractor run --local --config api-extractor/api-extractor-report.json - 0.037s
+[469/528] ✓ @fluid-internal/sea-integration-tests: esbuild browser/shared-tree-benchmark-local.ts --bundle --minify --define:process.env.NODE_ENV=\"production\" --format=esm --platform=browser --inject:browser/process-shim.ts --outfile=dist/shared-tree-benchmark-local.js --log-level=warning --log-override:package.json=silent - 0.738s (non-incremental)
+[470/528] ✓ @fluid-internal/sea-integration-tests: esbuild browser/shared-tree-benchmark-tinylicious.ts --bundle --minify --define:process.env.NODE_ENV=\"production\" --format=esm --platform=browser --outfile=dist/shared-tree-benchmark-tinylicious.js --log-level=warning --log-override:package.json=silent - 0.395s (non-incremental)
+[471/528] - client-release-group-root: copyfiles "azure/**/*.api.json" ./_api-extractor-temp/doc-models/ -e "**/node_modules/**" -f -V - 1.209s
+[472/528] - client-release-group-root: copyfiles "examples/**/*.api.json" ./_api-extractor-temp/doc-models/ -e "**/node_modules/**" -f -V - 1.218s
+[473/528] - client-release-group-root: copyfiles "experimental/**/*.api.json" ./_api-extractor-temp/doc-models/ -e "**/node_modules/**" -f -V - 1.223s
+[474/528] - client-release-group-root: copyfiles "packages/**/*.api.json" ./_api-extractor-temp/doc-models/ -e "**/node_modules/**" -f -V - 1.226s
+[475/528] - @fluid-private/devtools-test-app: tsc --project ./tsconfig.json - 1.270s
+[476/528] - @fluid-private/devtools-test-app: eslint --quiet src - 0.003s
+[477/528] - @fluid-internal/devtools-browser-extension: fluid-tsc commonjs --project ./tsconfig.cjs.json - 1.283s
+[478/528] - @fluid-internal/devtools-browser-extension: tsc --project ./tsconfig.json - 1.288s
+[479/528] - @fluid-internal/devtools-browser-extension: copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist - 0.006s
+[480/528] - @fluid-internal/devtools-browser-extension: eslint --quiet src - 0.009s
+[481/528] - @fluid-internal/devtools-browser-extension: tsc --project ./e2e-tests/tsconfig.json - 0.011s
+[482/528] - @fluid-internal/devtools-view: fluid-tsc module --project ./src/test/tsconfig.esm.json - 1.312s
+[483/528] ✓ @fluid-example/webpack-fluid-loader: webpack --color --config webpack.config.cjs - 6.838s
+[484/528] - @fluid-example/webpack-fluid-loader: tsc --project ./tsconfig.json - 0.012s
+[485/528] - @fluid-example/webpack-fluid-loader: eslint --quiet --format stylish src - 0.063s
+[486/528] - @fluid-example/clicker: tsc --project ./tsconfig.json - 0.086s
+[487/528] - @fluid-example/webpack-fluid-loader: tsc --project ./src/test/tsconfig.json - 0.068s
+[488/528] - @fluid-example/text-editor: tsc --project ./tsconfig.json - 0.084s
+[489/528] - @fluid-example/monaco: tsc --project ./tsconfig.json - 0.083s
+[490/528] - @fluid-example/clicker: eslint --quiet --format stylish src - 0.023s
+[491/528] - @fluid-example/smde: tsc --project ./tsconfig.json - 0.092s
+[492/528] - @fluid-example/inventory-app: tsc --project ./tsconfig.json - 0.109s
+[493/528] - @fluid-example/codemirror: tsc --project ./tsconfig.json - 0.114s
+[494/528] - @fluid-example/text-editor: eslint --quiet --format stylish src - 0.026s
+[495/528] - @fluid-example/monaco: eslint --quiet --format stylish src - 0.025s
+[496/528] - @fluid-example/table-tree: tsc --project ./tsconfig.json - 0.107s
+[497/528] - @fluid-example/todo: tsc --project ./tsconfig.json - 0.106s
+[498/528] - @fluid-example/smde: eslint --quiet --format stylish src - 0.017s
+[499/528] - @fluid-example/inventory-app: eslint --quiet --format stylish src tests playwright.config.ts - 0.014s
+[500/528] - @fluid-example/bubblebench-baseline: tsc --project ./tsconfig.json - 0.118s
+[501/528] - @fluid-example/codemirror: eslint --quiet --format stylish src - 0.012s
+[502/528] - @fluid-example/canvas: tsc --project ./tsconfig.json - 0.114s
+[503/528] - @fluid-example/text-editor: tsc --project ./src/test/tsconfig.json - 0.040s
+[504/528] - @fluid-example/table-tree: eslint --quiet --format stylish src - 0.010s
+[505/528] - @fluid-example/todo: eslint --quiet --format stylish src - 0.011s
+[506/528] - @fluid-example/bubblebench-baseline: eslint --quiet --format stylish src - 0.011s
+[507/528] - @fluid-example/multiview-container: tsc --project ./tsconfig.json - 0.122s
+[508/528] - @fluid-example/canvas: eslint --quiet --format stylish src - 0.010s
+[509/528] - @fluid-example/inventory-app: tsc --project ./src/test/tsconfig.json - 0.026s
+[510/528] - @fluid-example/prosemirror: tsc --project ./tsconfig.json - 0.138s
+[511/528] - @fluid-example/multiview-container: eslint --quiet --format stylish src - 0.005s
+[512/528] - @fluid-example/prosemirror: eslint --quiet --format stylish src - 0.010s
+[513/528] - @fluid-example/bubblebench-shared-tree: tsc --project ./tsconfig.json - 0.164s
+[514/528] - @fluid-example/bubblebench-experimental-tree: tsc --project ./tsconfig.json - 0.169s
+[515/528] - @fluid-example/bubblebench-shared-tree: eslint --quiet --format stylish src - 0.003s
+[516/528] - @fluid-example/bubblebench-experimental-tree: eslint --quiet --format stylish src - 0.002s
+[517/528] - @fluid-example/webflow: tsc --project ./tsconfig.json - 0.175s
+[518/528] - @fluid-example/webflow: eslint --quiet --format stylish src - 0.004s
+[519/528] - @fluid-example/bubblebench-ot: tsc --project ./tsconfig.json - 0.176s
+[520/528] - @fluid-example/bubblebench-ot: eslint --quiet --format stylish src - 0.002s
+[521/528] - @fluid-example/data-object-grid: tsc --project ./tsconfig.json - 0.051s
+[522/528] - @fluid-example/data-object-grid: eslint --quiet --format stylish src - 0.005s
+[523/528] - @fluid-example/webflow: tsc --project ./src/test/tsconfig.json - 0.020s
+[524/528] ✓ @fluid-example/import-testing: tsc --project ./src/test/tsconfig.json - 9.606s (non-incremental)
+[525/528] ✓ @fluid-example/import-testing: fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json - 9.645s (non-incremental)
+[526/528] ✓ @fluid-example/bundle-size-tests: webpack - 48.980s
+[527/528] - @fluid-example/bundle-size-tests: tsc --project ./src/test/tsconfig.json - 0.005s
+[528/528] ✓ client-release-group-root: flub generate assertTags --all --validate - 57.007s (non-incremental)
+Build succeeded
+Total time: 70.086s (1m 10.086s)

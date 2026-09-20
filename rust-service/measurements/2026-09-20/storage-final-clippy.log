@@ -1,0 +1,14 @@
+    Checking sea-webtransport-server v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-webtransport-server)
+error: this function has too many lines (102/100)
+  --> crates/sea-webtransport-server/src/main.rs:16:7
+   |
+16 | async fn main() -> Result<(), Box<dyn std::error::Error>> {
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#too_many_lines
+   = note: `-D clippy::too-many-lines` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::too_many_lines)]`
+
+error: could not compile `sea-webtransport-server` (bin "sea-webtransport-server") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `sea-webtransport-server` (bin "sea-webtransport-server" test) due to 1 previous error
