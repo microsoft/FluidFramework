@@ -207,7 +207,13 @@ function sweep(cells) {
 			native: "Cargo release, websocket-stream feature",
 			wasm: "Cargo release, simd128",
 			wireBytes: "not measured",
-			seaStorage: "memory",
+			seaStorage: [
+				...new Set(
+					cells
+						.filter((cell) => cell.backend === "sea")
+						.map((cell) => cell.storage ?? "memory"),
+				),
+			],
 			tinyliciousStorage: "default-in-memory-database",
 			generatorPhysicalCores: 4,
 			generatorCpus: "16,18,20,22",

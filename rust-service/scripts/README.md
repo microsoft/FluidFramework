@@ -58,7 +58,10 @@ For native Sea generation, build `cargo build --release -p sea-benchmarks --bin 
 The native worker uses the shared session client with one ordered submission queue per document and a single-thread Tokio runtime per pinned process.
 Its benchmark-only WebSocket adapter uses bounded tungstenite messages and independent child sockets; it is not a new supported production client.
 WebTransport pins the server certificate and includes QUIC/TLS; the local WebSocket listener is unencrypted, so the comparison is not equal-security transport performance.
-All current stress configurations use Sea memory storage or Tinylicious's default in-memory database, explicitly recorded in new results.
+Sea defaults to memory storage; set `"storage":"durable-file"` to measure the synchronized file backend.
+The harness verifies the server's logged storage mode before starting workers and records the selected modes in the campaign manifest.
+Durable-file rewrites and synchronizes the complete journal per mutation, so duration and retained history are essential measurement parameters.
+Tinylicious uses its default in-memory document/operation database and filesystem Git summary storage; it is not durability-equivalent to Sea durable-file.
 The 32-document workload uses four generator processes on four distinct physical cores; one-document runs use only one.
 
 Run these commands from `rust-service/`:

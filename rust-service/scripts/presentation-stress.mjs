@@ -368,7 +368,7 @@ async function run(configuration, output) {
 		env: {
 			...process.env,
 			NODE_ENV: "production",
-			SEA_STORAGE_MODE: "memory",
+			SEA_STORAGE_MODE: configuration.storage ?? "memory",
 			SEA_WEBSOCKET_BIND: `127.0.0.1:${port}`,
 			SEA_WEBSOCKET_ORIGINS: "http://localhost",
 			SEA_WEBSOCKET_ORIGINLESS_LOOPBACK: "1",
@@ -402,6 +402,11 @@ async function run(configuration, output) {
 			if (Date.now() > deadline) throw new Error(`Startup timeout: ${serviceLog}`);
 			await delay(50);
 		}
+		if (configuration.backend === "sea")
+			assert.equal(
+				serviceLog.match(/STORAGE_MODE=(\S+)/)?.[1],
+				configuration.storage ?? "memory",
+			);
 		const count = Math.min(4, configuration.documents);
 		const ready = [];
 		for (let index = 0; index < count; index++) {
@@ -493,7 +498,10 @@ async function run(configuration, output) {
 		result = {
 			status: "completed",
 			configuration,
-			storage: configuration.backend === "sea" ? "memory" : "default-in-memory-database",
+			storage:
+				configuration.backend === "sea"
+					? (configuration.storage ?? "memory")
+					: "default-in-memory-database",
 			transport:
 				configuration.backend === "sea"
 					? (configuration.transport ?? "websocket")
@@ -562,6 +570,11 @@ if (mode === "--help") {
 	const configuration = JSON.parse(configurationText);
 	assert.ok(["sea", "tinylicious"].includes(configuration.backend));
 	assert.ok([1, 4].includes(configuration.cores));
+	assert.ok(
+		configuration.storage === undefined ||
+			(configuration.backend === "sea" &&
+				["memory", "durable-file"].includes(configuration.storage)),
+	);
 	assert.ok(
 		Number.isInteger(configuration.documents) &&
 			configuration.documents >= 1 &&
