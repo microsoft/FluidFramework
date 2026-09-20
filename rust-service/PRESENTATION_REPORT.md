@@ -4,6 +4,7 @@ Status: collection and analysis complete; original 80-sample and native/Tinylici
 Format: video under two minutes; audience [TBD: assumed technical audience].
 Documentation reviewed at commit: `47448965bef3459d8ae52a6c19a2ff63cec5b3b4`.
 Measurement date: 2026-09-20 (UTC).
+Source-count refresh: `470af4508780e2579c66ee7675d0c89baffc75b1`, after the session-prefix refactor; performance measurements remain at their original revisions.
 Browser baseline: `6b90ec847902393fae178da1893eb14964be08ad`; source inventory: `c5b9e4901226c73feb2b2909184f37defbb9a82f`; exploratory service loads: `427a6493177a89c1daf42e7296e86974efdbfd77`; repeated service loads: `782051315cc`.
 Native generator and source-test inventory tooling: `3685c1985ab`; corrected fractional worker pacing and follow-up repeat matrix: `9449261083b`.
 Buffered-file and eight-core harness support: `354fc17264f157897ef4ff674569de2af51adf44`.
@@ -123,7 +124,7 @@ Report neutral or unfavorable results too.
 
 | Question | Proposed measurement and boundary | Result placeholder | Proposed visual |
 | --- | --- | --- | --- |
-| How much source is maintained? | Repository-owned native/server dependency scopes, including tests and conditional code | Sea: 17,899; Tinylicious: 35,927 source lines; these scopes do not provide equivalent features | Source lines to maintain; scope caveat must remain visible |
+| How much source is maintained? | Repository-owned native/server dependency scopes, including tests and conditional code | Sea: 17,662; Tinylicious: 35,927 source lines; these scopes do not provide equivalent features | Source lines to maintain; scope caveat must remain visible |
 | How much memory does the service use? | Main service process at 500 ops/s, with identical document/client counts and duration | Small payload: Sea 44.0 versus Tinylicious 168.9 MiB; large payload: 107.2 versus 220.6 MiB; medians of ten run means | Service memory at 500 ops/s; resident set size (RSS) in MiB |
 | How efficiently are small operations handled? | Minimal clients, 64-byte payloads, four service cores, one observer per writer | Native Sea WebSocket median: 23,998 ops/s; WebTransport: 11,998.8; Tinylicious: 749.8; ten passing runs per tested load | Tested delivered ops/s, not exact maxima or a capacity speedup ratio |
 | How efficiently are large operations handled? | Same clients with 8,192-byte payloads | Native Sea WebSocket median: 93.74 MiB/s; WebTransport: 46.87; Tinylicious: 5.86; ten passing runs per tested load | Tested payload MiB/s; actual wire bandwidth was not measured |
@@ -225,20 +226,29 @@ The evidence separates promising multi-document service behavior from an unfavor
 
 ### Source Lines to Maintain
 
-The [complete source inventory](measurements/2026-09-20/source-complete/source-summary.json) uses cloc 2.06, distributed as pinned npm `cloc@2.6.0`.
-It counts tracked Rust, TypeScript, and JavaScript sources and retains file lists and per-file counts.
+Source counts use cloc 2.06, distributed as pinned npm `cloc@2.6.0`, at clean revision `470af4508780e2579c66ee7675d0c89baffc75b1`.
+The [source inventory script](scripts/presentation-collect.mjs) counts tracked Rust, TypeScript, and JavaScript sources.
 Duplicate-content files are counted separately because both paths are maintained.
+Generated source-count evidence is disposable; the script and Git revision provide reproducibility.
+From the repository root at that revision, regenerate the inventory in a temporary directory:
+
+```bash
+cargo build --manifest-path rust-service/Cargo.toml --release -p sea-benchmarks --bin presentation-test-spans
+node rust-service/scripts/presentation-collect.mjs source "$(mktemp -d)"
+```
 
 | Scope | Files | Code lines | Comment lines | Test/support code subset | Other code |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Sea native server local non-development dependency closure | 49 | 17,899 | 1,998 | 6,279 | 11,620 |
+| Sea native server local non-development dependency closure | 49 | 17,662 | 1,974 | 6,238 | 11,424 |
 | Tinylicious local server dependency closure | 335 | 35,927 | 7,538 | 10,775 | 25,152 |
 | Tinylicious wrapper only, a subset of the preceding row | 35 | 2,442 | 356 | 472 | 1,970 |
-| Sea TypeScript clients and adapters, separate from native scope | 24 | 5,709 | 723 | 2,712 | 2,997 |
+| Sea TypeScript clients and adapters, separate from native scope | 24 | 5,628 | 716 | 2,669 | 2,959 |
 
 The dependency scopes follow manifests, not linker reachability.
 They include tests, Rust inline tests, and conditionally compiled features.
-The [expanded inventory](measurements/2026-09-20/source-breakdown/source-summary.json) preserves these totals and classifies test/support source using test directory/file names plus syntax-derived Rust `#[cfg(test)]` module and test-function spans.
+The refreshed inventory uses the same dependency scopes and test classification as the [earlier expanded inventory](measurements/2026-09-20/source-breakdown/source-summary.json): test directory/file names plus syntax-derived Rust `#[cfg(test)]` module and test-function spans.
+Compared with that earlier inventory, Sea native code decreased by 237 lines and its TypeScript adapters by 81 lines; Tinylicious counts and all four file counts are unchanged.
+These updated source counts do not imply that the historical performance measurements were rerun after the refactor.
 Test/support code is a subset of code lines, not a number of test cases; comments are a separate cloc category.
 The corresponding test/support comment counts are 25, 809, 33, and 50 for the four rows above.
 Complex Rust conditional expressions, test fixtures outside recognized paths, and integration tests outside the selected `src` scopes are not included in that subset.

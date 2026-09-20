@@ -12,6 +12,9 @@ Backlog inspection and interpretation are recorded in the presentation report.
 
 ## Evidence Index
 
+The presentation report records refreshed source counts, their Git revision, and the regeneration command.
+New source-count outputs are disposable and are not retained here; historical source inventories below remain part of the original collection.
+
 | Directory | Disposition |
 | --- | --- |
 | `build-client` | Initial client build and setup evidence |
