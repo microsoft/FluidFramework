@@ -1,3 +1,17 @@
+# Presentation Measurement Tools
+
+`presentation-native` is a benchmark-only, single-core generator for the existing native session client over WebTransport and a local WebSocket adapter.
+The [presentation harness](../../scripts/README.md) owns server startup, CPU affinity, start synchronization, resource sampling, deadlines, and result retention.
+The worker checks exact payload and per-document order at writer and observer, bounds outstanding operations, and drains deliveries before reporting.
+It uses one ordered submission queue per document for both transports and does not introduce a production client API.
+Local WebSocket is unencrypted; WebTransport includes QUIC/TLS with certificate pinning.
+
+`presentation-test-spans` parses Rust source with `syn` and emits outer test-module/function line spans for the source inventory.
+It recognizes explicit `#[cfg(test)]` modules and attributes ending in `test`, including `#[tokio::test]`; it does not evaluate complex conditional compilation expressions.
+The Node collector combines those spans with test-path classification and cloc counts.
+
+Build the tools with `cargo build --release -p sea-benchmarks --bins` and test their local fixtures with `cargo test -p sea-benchmarks --bins`.
+
 # Sea Benchmark Harness
 
 This workspace crate provides deterministic fixtures, correctness smoke workloads, and newline-delimited JSON measurements for the storage and transformation layers.

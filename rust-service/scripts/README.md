@@ -20,6 +20,9 @@ Copies exclude build outputs, installed dependencies, generated packages, Git me
 	Use `source <new-output-directory>`, `sweep <new-output-directory>`, `repeat <new-output-directory>`, or `matrix <new-output-directory> <cells.json>`.
 	The repeat campaign predeclares ten fresh runs per point, alternates backend order at the 500 ops/s matched-resource load, and checks observed Sea throughput lower bounds with three seconds of warmup and ten seconds of measurement.
 	Source scopes include tests and conditional code and follow local non-development dependency declarations, not linked-code reachability or equivalent product features.
+	Build `presentation-test-spans` from `sea-benchmarks` in release mode before running `source`; it classifies inline Rust test modules with `syn`, not text-based brace matching.
+	The inventory includes comment totals and a test/test-support subset, with exact paths and spans retained.
+	`followup-explore <new-output-directory>` compares native Sea WebSocket/WebTransport boundary points and finer Tinylicious loads.
 - [`presentation-stress.mjs`](presentation-stress.mjs) runs bounded, minimal-client Sea/Tinylicious comparisons on Linux.
 	It uses production client libraries without SharedTree or the container runtime, verifies payloads and ordered delivery to writer and observer, and records resource samples and failures.
 	Sea uses release-mode native code, release-mode WASM, and the optional loopback WebSocket listener, not QUIC.
@@ -48,6 +51,13 @@ These are experimental guardrails, not strict peak-memory enforcement.
 Payload throughput counts delivery to one remote observer per document, excluding the writer's echo and protocol overhead; actual network bytes are not measured.
 Service CPU and memory cover the owned service process, which currently has no companion service processes in these configurations.
 Generator resource totals are separate and include warmup and draining.
+
+For native Sea generation, build `cargo build --release -p sea-benchmarks --bin presentation-native` from `rust-service/`, then add `"generator":"native"` and `"transport":"websocket"` or `"transport":"webtransport"` to the workload.
+The native worker uses the shared session client with one ordered submission queue per document and a single-thread Tokio runtime per pinned process.
+Its benchmark-only WebSocket adapter uses bounded tungstenite messages and independent child sockets; it is not a new supported production client.
+WebTransport pins the server certificate and includes QUIC/TLS; the local WebSocket listener is unencrypted, so the comparison is not equal-security transport performance.
+All current stress configurations use Sea memory storage or Tinylicious's default in-memory database, explicitly recorded in new results.
+The 32-document workload uses four generator processes on four distinct physical cores; one-document runs use only one.
 
 Run these commands from `rust-service/`:
 

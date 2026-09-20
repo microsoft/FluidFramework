@@ -10,6 +10,7 @@ import { once } from "node:events";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { resolve } from "node:path";
+import { createInterface } from "node:readline";
 import { setTimeout as delay } from "node:timers/promises";
 
 const root = resolve(import.meta.dirname, "../..");
@@ -410,22 +411,43 @@ async function run(configuration, output) {
 				rate: configuration.rate / count,
 				endpoint:
 					configuration.backend === "sea"
-						? `ws://127.0.0.1:${port}/sea/websocket`
+						? configuration.transport === "webtransport"
+							? serviceLog.match(/WEBTRANSPORT_URL=(\S+)/)?.[1]
+							: `ws://127.0.0.1:${port}/sea/websocket`
 						: `http://127.0.0.1:${port}`,
+				transport: configuration.transport ?? "websocket",
+				certificateHash: serviceLog.match(/CERTIFICATE_SHA256=(\S+)/)?.[1] ?? "",
 			};
+			const native = configuration.generator === "native";
 			const child = spawn(
 				"taskset",
 				[
 					"-c",
 					String(16 + index * 2),
-					process.execPath,
-					script,
-					"worker",
+					...(native
+						? [resolve(root, "rust-service/target/release/presentation-native")]
+						: [process.execPath, script, "worker"]),
 					JSON.stringify(workerConfiguration),
 				],
-				{ stdio: ["ignore", "pipe", "pipe", "ipc"] },
+				{ stdio: native ? ["pipe", "pipe", "pipe"] : ["ignore", "pipe", "pipe", "ipc"] },
 			);
-			child.stdout.on("data", capture);
+			if (native) {
+				const lines = createInterface({ input: child.stdout });
+				lines.on("line", (line) => {
+					try {
+						const message = JSON.parse(line);
+						if (message.type === "result") {
+							const usage = processSample(child.pid);
+							message.generatorCpuSeconds =
+								(usage.cpuTicks - child.initialCpuTicks) / clockTicks;
+							message.generatorPeakRssKiB = usage.peakRssKiB;
+						}
+						child.emit("message", message);
+					} catch (error) {
+						child.emit("message", { type: "error", error: String(error) });
+					}
+				});
+			} else child.stdout.on("data", capture);
 			child.stderr.on("data", capture);
 			workers.push(child);
 			ready.push(messageFrom(child, "ready"));
@@ -451,7 +473,12 @@ async function run(configuration, output) {
 				(configuration.seconds + configuration.warmupSeconds + 30) * 1000,
 			),
 		);
-		for (const child of workers) child.send({ type: "start" });
+		for (const child of workers) {
+			if (configuration.generator === "native") {
+				child.initialCpuTicks = processSample(child.pid).cpuTicks;
+				child.stdin.write("start\n");
+			} else child.send({ type: "start" });
+		}
 		const results = await Promise.all(promises);
 		captureSample();
 		const measured = samples.filter(
@@ -466,8 +493,15 @@ async function run(configuration, output) {
 		result = {
 			status: "completed",
 			configuration,
+			storage: configuration.backend === "sea" ? "memory" : "default-in-memory-database",
+			transport:
+				configuration.backend === "sea"
+					? (configuration.transport ?? "websocket")
+					: "socket.io",
+			generator:
+				configuration.generator ?? (configuration.backend === "sea" ? "node-wasm" : "node"),
 			serviceCpu,
-			generatorCpus: "16,18,20,22",
+			generatorCpus: workers.map((_, index) => 16 + index * 2).join(","),
 			clockTicks,
 			deliveredOperationsPerSecond: delivered / configuration.seconds,
 			payloadMiBPerSecond:
@@ -536,6 +570,18 @@ if (mode === "--help") {
 	for (const key of ["rate", "payloadBytes", "seconds", "warmupSeconds"])
 		assert.ok(Number.isInteger(configuration[key]) && configuration[key] > 0, key);
 	assert.ok(configuration.payloadBytes >= 8 && configuration.payloadBytes <= 8192);
+	assert.ok(configuration.documents <= 4 || configuration.documents % 4 === 0);
+	assert.ok(
+		configuration.generator === undefined ||
+			(configuration.generator === "native" && configuration.backend === "sea"),
+	);
+	assert.ok(
+		configuration.transport === undefined ||
+			["websocket", "webtransport"].includes(configuration.transport),
+	);
+	assert.ok(
+		configuration.transport !== "webtransport" || configuration.generator === "native",
+	);
 	if (mode === "worker") {
 		await worker(configuration).catch((error) => {
 			process.send({ type: "error", error: String(error) });

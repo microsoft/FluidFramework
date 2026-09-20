@@ -1212,17 +1212,23 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 name = "sea-benchmarks"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "bytes",
  "futures-util",
+ "proc-macro2",
  "sea-compression",
  "sea-core",
  "sea-encryption",
  "sea-file",
  "sea-memory",
  "sea-sequencer",
+ "sea-webtransport",
  "serde",
  "serde_json",
+ "syn 2.0.119",
  "tokio",
+ "tokio-tungstenite",
+ "wtransport",
 ]
 
 [[package]]

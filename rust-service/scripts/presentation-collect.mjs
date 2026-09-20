@@ -6,7 +6,16 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	readdirSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, relative, resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "../..");
@@ -102,13 +111,75 @@ function sourceCounts() {
 			]),
 		);
 		save(`${name}-cloc.json`, raw);
-		results[name] = { prefixes, files: files.length, ...raw.SUM };
+		const rustFiles = files.filter((file) => file.endsWith(".rs"));
+		const spans =
+			rustFiles.length === 0
+				? {}
+				: JSON.parse(
+						command(
+							resolve(root, "rust-service/target/release/presentation-test-spans"),
+							rustFiles,
+						),
+					);
+		save(`${name}-test-spans.json`, spans);
+		const temporary = mkdtempSync(resolve(tmpdir(), "sea-source-tests-"));
+		const testFiles = [];
+		try {
+			for (const file of files) {
+				const wholeFile =
+					/\/(?:test|tests|test-utils|__tests__)\/|\.(?:spec|test)\.[^.]+$/.test(file);
+				const ranges = spans[file] ?? [];
+				if (!wholeFile && ranges.length === 0) continue;
+				const source = readFileSync(resolve(root, file), "utf8");
+				const extracted = wholeFile
+					? source
+					: source
+							.split("\n")
+							.map((line, index) =>
+								ranges.some(([start, end]) => index + 1 >= start && index + 1 <= end)
+									? line
+									: "",
+							)
+							.join("\n");
+				const target = resolve(temporary, file);
+				mkdirSync(dirname(target), { recursive: true });
+				writeFileSync(target, extracted);
+				testFiles.push({ file, wholeFile, ranges });
+			}
+			const testCounts =
+				testFiles.length === 0
+					? { SUM: { code: 0, comment: 0, blank: 0 } }
+					: JSON.parse(
+							command("npx", [
+								"--yes",
+								"cloc@2.6.0",
+								temporary,
+								"--skip-uniqueness",
+								"--json",
+								"--quiet",
+							]),
+						);
+			save(`${name}-test-files.json`, testFiles);
+			save(`${name}-test-cloc.json`, testCounts);
+			results[name] = {
+				prefixes,
+				files: files.length,
+				...raw.SUM,
+				testAndSupportCode: testCounts.SUM.code,
+				testAndSupportComments: testCounts.SUM.comment,
+				otherCode: raw.SUM.code - testCounts.SUM.code,
+			};
+		} finally {
+			rmSync(temporary, { recursive: true, force: true });
+		}
 	}
 	save("source-summary.json", {
 		commit: command("git", ["rev-parse", "HEAD"]).trim(),
 		tool: "cloc 2.06 (npm cloc@2.6.0)",
 		scope:
 			"Tracked source files, including tests and conditional code; excludes generated entrypoints, packageVersion, dependencies and build output. Dependency scopes follow local non-dev manifest edges, not linker reachability. Rust inline tests remain included.",
+		testClassification:
+			"Subset of total source: files in test/tests/test-utils/__tests__ directories or named *.spec.*/*.test.*, plus syntax-derived Rust #[cfg(test)] modules and #[test]/#[tokio::test] functions. Includes test support, not a count of test cases; complex cfg expressions, fixtures outside these paths, and integration tests outside the source scopes are not included.",
 		results,
 	});
 	console.log(JSON.stringify(results, null, 2));
@@ -122,6 +193,9 @@ function sweep(cells) {
 		"rust-service/scripts/presentation-stress.mjs",
 		"rust-service/scripts/presentation-collect.mjs",
 	];
+	if (cells.some((cell) => cell.generator === "native")) {
+		artifacts.push("rust-service/target/release/presentation-native");
+	}
 	save("manifest.json", {
 		startedAt: new Date().toISOString(),
 		commit: command("git", ["rev-parse", "HEAD"]).trim(),
@@ -133,6 +207,10 @@ function sweep(cells) {
 			native: "Cargo release, websocket-stream feature",
 			wasm: "Cargo release, simd128",
 			wireBytes: "not measured",
+			seaStorage: "memory",
+			tinyliciousStorage: "default-in-memory-database",
+			generatorPhysicalCores: 4,
+			generatorCpus: "16,18,20,22",
 		},
 		artifacts: artifacts.map((file) => ({
 			file,
@@ -252,8 +330,43 @@ else if (mode === "sweep") {
 		}
 	}
 	sweep(cells);
+} else if (mode === "followup-explore") {
+	const cells = [];
+	for (const cores of [1, 4]) {
+		for (const payloadBytes of [64, 8192]) {
+			for (const rate of payloadBytes === 64 ? [12000, 24000, 48000] : [6000, 12000, 24000]) {
+				for (const transport of cells.length % 4 === 0
+					? ["websocket", "webtransport"]
+					: ["webtransport", "websocket"]) {
+					cells.push({
+						backend: "sea",
+						generator: "native",
+						transport,
+						cores,
+						documents: 32,
+						payloadBytes,
+						rate,
+						seconds: 10,
+						warmupSeconds: 3,
+					});
+				}
+			}
+			for (const rate of [750, 1000, 1250]) {
+				cells.push({
+					backend: "tinylicious",
+					cores,
+					documents: 32,
+					payloadBytes,
+					rate,
+					seconds: 10,
+					warmupSeconds: 3,
+				});
+			}
+		}
+	}
+	sweep(cells);
 } else if (mode === "matrix") sweep(JSON.parse(readFileSync(resolve(inputText), "utf8")));
 else
 	throw new Error(
-		"Use source <output>, sweep <output>, repeat <output>, or matrix <output> <cells.json>",
+		"Use source <output>, sweep <output>, repeat <output>, followup-explore <output>, or matrix <output> <cells.json>",
 	);
