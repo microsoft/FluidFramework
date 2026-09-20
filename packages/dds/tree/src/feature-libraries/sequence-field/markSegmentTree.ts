@@ -50,8 +50,8 @@ export type MarkSegmentNode = MarkSegmentSummary &
 	);
 
 interface MarkLocation {
-	readonly mark: Mark;
-	readonly offset: number;
+	readonly mark: Mark; // The mark at this location
+	readonly offset: number; // Zero-based position withing the mark
 	/** Sum of mark counts before this mark, independent of the queried context. */
 	readonly countBefore: number;
 }
