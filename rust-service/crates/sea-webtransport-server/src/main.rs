@@ -38,19 +38,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let certificate_hash = identity.certificate_chain().as_slice()[0]
         .hash()
         .fmt(Sha256DigestFmt::DottedHex);
+    let maximum_connections = match env::var("SEA_MAX_CONNECTIONS") {
+        Ok(value) => Some(value),
+        Err(env::VarError::NotPresent) => None,
+        Err(error) => return Err(error.into()),
+    };
+    let transport_config = configured_transport(maximum_connections.as_deref())?;
     let host = Arc::new(BuiltInSeaHost::new(data, storage_mode));
-    let server =
-        WebTransportServer::bind(bind, identity, host.clone(), TransportConfig::default())?;
+    let server = WebTransportServer::bind(bind, identity, host.clone(), transport_config.clone())?;
     let address = server.local_addr()?;
     let liveness = server.liveness_policy();
     let measurements = server.measurement_handle();
     let mut shutdown_handles = vec![server.shutdown_handle()];
     #[cfg(feature = "websocket-stream")]
-    let websocket_server = optional_websocket_server(host, &mut shutdown_handles).await?;
+    let websocket_server =
+        optional_websocket_server(host, &mut shutdown_handles, transport_config.clone()).await?;
     println!("WEBTRANSPORT_URL=https://{address}/sea");
     println!("CERTIFICATE_SHA256={certificate_hash}");
     println!("STORAGE_MODE={}", storage_mode.name());
     println!("PROTOCOL=sea");
+    println!("MAX_CONNECTIONS={}", transport_config.max_connections);
     println!(
         "LIVENESS heartbeat_ms={} inactivity_ms={} reconnect_grace_ms={} max_event_lag={}",
         liveness.heartbeat_interval.as_millis(),
@@ -117,6 +124,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 async fn optional_websocket_server(
     host: Arc<BuiltInSeaHost>,
     shutdown_handles: &mut Vec<sea_webtransport_server::ShutdownHandle>,
+    transport_config: TransportConfig,
 ) -> Result<Option<sea_webtransport_server::WebSocketServer>, Box<dyn std::error::Error>> {
     let Ok(bind) = env::var("SEA_WEBSOCKET_BIND") else {
         return Ok(None);
@@ -129,7 +137,7 @@ async fn optional_websocket_server(
     let websocket = sea_webtransport_server::WebSocketServer::bind(
         bind.parse()?,
         host,
-        TransportConfig::default(),
+        transport_config,
         origins,
     )
     .await?;
@@ -144,6 +152,25 @@ async fn optional_websocket_server(
     );
     shutdown_handles.push(websocket.shutdown_handle());
     Ok(Some(websocket))
+}
+
+/// Applies a bounded per-listener connection override without changing other transport defaults.
+fn configured_transport(
+    maximum_connections: Option<&str>,
+) -> Result<TransportConfig, &'static str> {
+    let mut config = TransportConfig::default();
+    if let Some(value) = maximum_connections {
+        let invalid = "SEA_MAX_CONNECTIONS must be an integer from 1 through 4096";
+        if value.is_empty() || !value.bytes().all(|byte| byte.is_ascii_digit()) {
+            return Err(invalid);
+        }
+        let maximum = value.parse::<usize>().map_err(|_| invalid)?;
+        if !(1..=4096).contains(&maximum) {
+            return Err(invalid);
+        }
+        config.max_connections = maximum;
+    }
+    Ok(config)
 }
 
 async fn wait_for_shutdown_marker(marker: &Path) {
@@ -172,4 +199,39 @@ fn print_shutdown_outcome(
         measurement.connection_cleanups,
         measurement.active_connections,
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::configured_transport;
+    use sea_webtransport_server::TransportConfig;
+
+    #[test]
+    fn connection_override_preserves_defaults_and_rejects_invalid_limits() {
+        let defaults = TransportConfig::default();
+        assert_eq!(configured_transport(None).unwrap().max_connections, 16);
+        for maximum in [1, 64, 4096] {
+            let text = maximum.to_string();
+            let config = configured_transport(Some(&text)).unwrap();
+            assert_eq!(config.max_connections, maximum);
+            assert_eq!(config.max_frame_bytes, defaults.max_frame_bytes);
+            assert_eq!(
+                config.max_streams_per_connection,
+                defaults.max_streams_per_connection
+            );
+            assert_eq!(config.operation_timeout, defaults.operation_timeout);
+        }
+        for invalid in [
+            "",
+            "0",
+            "4097",
+            "-1",
+            "+1",
+            " 16",
+            "1.5",
+            "184467440737095516160",
+        ] {
+            assert!(configured_transport(Some(invalid)).is_err(), "{invalid}");
+        }
+    }
 }

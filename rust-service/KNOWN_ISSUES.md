@@ -119,8 +119,9 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Severity:** Low
 - **Area:** Deployment
 - **Evidence:** The server accepts bind, TLS, data-root, and optional shutdown-marker arguments; `SEA_STORAGE_MODE` selects one of three compiled-in backends.
-  Frame, connection, and stream limits use library defaults, and backends cannot be omitted with Cargo features.
-- **Impact:** Operators cannot tune limits or reduce binary size without source changes.
+  `SEA_MAX_CONNECTIONS` overrides the per-listener connection limit with a validated range of 1 through 4096; its default remains 16.
+  Frame and stream limits still use library defaults, and backends cannot be omitted with Cargo features.
+- **Impact:** Operators cannot tune frame or stream limits or reduce binary size without source changes.
 - **Trigger:** Add validated CLI/environment precedence and backend features when a deployment or binary-size measurement requires them.
 
 ## RS-020: Transformation metadata remains visible

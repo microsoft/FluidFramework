@@ -13,6 +13,10 @@ cargo run -p sea-webtransport-server -- \
 
 Set `SEA_STORAGE_MODE` to `memory`, `buffered-file`, or `durable-file`.
 The default is `durable-file`.
+`SEA_MAX_CONNECTIONS` sets the maximum concurrent sessions per listener from 1 through 4096; the default remains 16.
+Invalid values fail startup, and `MAX_CONNECTIONS` reports the effective setting.
+The limit applies independently to QUIC and the optional WebSocket listener, not to their combined total.
+Raising it increases admission capacity, not guaranteed throughput or a total memory bound.
 An optional fifth argument is a shutdown-marker path used by process harnesses.
 
 On startup the process prints `WEBTRANSPORT_URL`, `CERTIFICATE_SHA256`, `STORAGE_MODE`, and `PROTOCOL=sea`.
