@@ -216,5 +216,44 @@ else if (mode === "sweep") {
 						});
 				}
 	sweep(cells);
+} else if (mode === "repeat") {
+	const cells = [];
+	for (let repetition = 0; repetition < 10; repetition++) {
+		const backends = repetition % 2 === 0 ? ["sea", "tinylicious"] : ["tinylicious", "sea"];
+		for (const payloadBytes of [64, 8192]) {
+			for (const backend of backends)
+				cells.push({
+					backend,
+					cores: 4,
+					documents: 32,
+					payloadBytes,
+					rate: 500,
+					seconds: 10,
+					warmupSeconds: 3,
+					repetition,
+				});
+		}
+		for (const [payloadBytes, cores, rate] of [
+			[64, 1, 12000],
+			[64, 4, 16000],
+			[8192, 1, 6000],
+			[8192, 4, 8000],
+		]) {
+			cells.push({
+				backend: "sea",
+				cores,
+				documents: 32,
+				payloadBytes,
+				rate,
+				seconds: 10,
+				warmupSeconds: 3,
+				repetition,
+			});
+		}
+	}
+	sweep(cells);
 } else if (mode === "matrix") sweep(JSON.parse(readFileSync(resolve(inputText), "utf8")));
-else throw new Error("Use source <output>, sweep <output>, or matrix <output> <cells.json>");
+else
+	throw new Error(
+		"Use source <output>, sweep <output>, repeat <output>, or matrix <output> <cells.json>",
+	);

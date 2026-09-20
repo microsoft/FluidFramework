@@ -17,7 +17,8 @@ Copies exclude build outputs, installed dependencies, generated packages, Git me
 - [`presentation-run.mjs`](presentation-run.mjs) records a command, source state, machine metadata, raw log, and exit status in a new result directory.
 	Use an output directory outside the repository when running repository-wide format checks, then format completed JSON before retaining it.
 - [`presentation-collect.mjs`](presentation-collect.mjs) inventories tracked source with pinned `cloc`, or runs a sequential alternating-backend stress matrix with source and binary hashes.
-	Use `source <new-output-directory>`, `sweep <new-output-directory>`, or `matrix <new-output-directory> <cells.json>`.
+	Use `source <new-output-directory>`, `sweep <new-output-directory>`, `repeat <new-output-directory>`, or `matrix <new-output-directory> <cells.json>`.
+	The repeat campaign predeclares ten fresh runs per point, alternates backend order at the 500 ops/s matched-resource load, and checks observed Sea throughput lower bounds with three seconds of warmup and ten seconds of measurement.
 	Source scopes include tests and conditional code and follow local non-development dependency declarations, not linked-code reachability or equivalent product features.
 - [`presentation-stress.mjs`](presentation-stress.mjs) runs bounded, minimal-client Sea/Tinylicious comparisons on Linux.
 	It uses production client libraries without SharedTree or the container runtime, verifies payloads and ordered delivery to writer and observer, and records resource samples and failures.
