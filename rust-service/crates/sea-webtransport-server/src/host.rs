@@ -1259,8 +1259,10 @@ mod tests {
         .unwrap();
         let address = server.local_addr().unwrap();
         let shutdown = server.shutdown_handle();
+        let measurements = server.measurement_handle();
         let serving = server.serve_until_shutdown();
         let exercise = async {
+            let started = std::time::Instant::now();
             let client = NativeSeaClient::connect(
                 format!("https://{address}/sea"),
                 certificate_hash,
@@ -1274,7 +1276,14 @@ mod tests {
                 },
             )
             .await
-            .unwrap();
+            .unwrap_or_else(|error| {
+                panic!(
+                    "{} connection failed after {:?}: {error:?}; server: {:?}",
+                    mode.name(),
+                    started.elapsed(),
+                    measurements.snapshot(),
+                )
+            });
             let mut events = client.load(LoadStart::LatestSnapshot).await.unwrap().events;
             loop {
                 let sea_core::MonitoredStreamItem::Progress(progress) =

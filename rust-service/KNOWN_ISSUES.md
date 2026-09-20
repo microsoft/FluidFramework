@@ -3,6 +3,27 @@
 This file tracks current limitations of the experimental Sea implementation and its development tooling.
 Historical architecture findings remain in `decisions/` and `iterations/`.
 
+## Intermittent native connection timeout
+
+- **Status:** Open; cause not established
+- **Severity:** Medium
+- **Area:** Native WebTransport connection setup and test reliability
+- **Evidence:** `host::tests::native_client_round_trip_in_every_storage_mode` failed during initial `NativeSeaClient::connect` with `Transport(Timeout)` in workspace validation on 2026-09-20.
+  The original merge-validation failure remains in `/tmp/sea-storage-merge-final-test.log` for this environment.
+  Passing isolated and workspace retries do not resolve the failure.
+- **Investigation:** Temporary diagnostics distinguished handshake, event-stream opening, and author-stream opening timeouts.
+  The failure did not recur in 92 server-suite runs, six complete workspace runs, or 80 additional server-suite processes in ten waves of eight concurrent processes.
+  No failed stage was captured, and scheduling pressure did not establish a cause.
+  Temporary production logging was removed; the round-trip test now reports storage mode, elapsed connection time, and server measurements on failure.
+  The workspace investigation separately reproduced `cancelled_batch_retains_opening_until_worker_settles` failing with `Busy`.
+  That test incorrectly treated a zero `Arc` strong count as completed destruction and file-lock release.
+  It now waits for successful reopening within the existing deadline, still verifies exclusion before releasing the blocked worker, and passed twelve file-suite repetitions and the six workspace runs above.
+- **Impact:** Native test runs can fail without an established product or test-harness cause.
+  The transport timeout must not be classified as harmless host variability or resolved by a passing retry.
+- **Follow-up:** Capture the enhanced failure diagnostics and instrument the implicated connection stage to obtain a reproducible cause.
+  Preserve the original failure when retrying; do not increase deadlines or suppress the test without causal evidence.
+- **Trigger:** Close only after a causal fix and a regression check that exercises the failing condition.
+
 ## Rust CI support
 
 - **Status:** Open

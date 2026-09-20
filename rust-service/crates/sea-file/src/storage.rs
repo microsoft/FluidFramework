@@ -1021,7 +1021,6 @@ mod tests {
         let storage = FileStorage::<true>::open(&root).unwrap();
         let created = storage.create_document().await.unwrap();
         let events = created.components.events.clone();
-        let opening = Arc::downgrade(&events.0);
         let (entered, release) = block_write(&events, false);
         let append = tokio::spawn(async move { events.append_batch(batch()).await });
         entered.await.unwrap();
@@ -1033,14 +1032,16 @@ mod tests {
             Err(FileStorageError::Busy)
         ));
         release.send(()).unwrap();
-        tokio::time::timeout(std::time::Duration::from_secs(5), async {
-            while opening.strong_count() != 0 {
-                tokio::task::yield_now().await;
+        let reopened = tokio::time::timeout(std::time::Duration::from_secs(5), async {
+            loop {
+                match storage.open_document(&created.id).await {
+                    Err(FileStorageError::Busy) => tokio::task::yield_now().await,
+                    result => break result.unwrap().unwrap(),
+                }
             }
         })
         .await
         .unwrap();
-        let reopened = storage.open_document(&created.id).await.unwrap().unwrap();
         assert_eq!(
             reopened.events.head().await.unwrap(),
             Some(EventPosition::new(2))
