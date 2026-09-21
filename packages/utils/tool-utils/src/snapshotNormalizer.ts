@@ -123,16 +123,18 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
 	}
 
 	/**
-	 * The legacy catch-up ops blob in merge tree DDS contains sequenced messages. These ops used to have metadata property.
-	 * However, we stopped sending the metadata property to DDS because it was a Runtime layer concept. Remove the metadata
-	 * property from the ops because latest snapshots won't have the metadata property.
+	 * The legacy catch-up ops blob in merge tree DDS contains sequenced messages. Normalize
+	 * runtime-layer properties that differ across runtime versions.
 	 */
 	if (blobName === legacyCatchUpBlobName) {
 		try {
-			const catchupOps = JSON.parse(content) as ISequencedDocumentMessage[];
+			const catchupOps = JSON.parse(content) as (ISequencedDocumentMessage & {
+				indexInBatch?: number;
+			})[];
 			if (catchupOps !== undefined && catchupOps.length > 0) {
 				for (const [index, op] of catchupOps.entries()) {
 					op.metadata = undefined;
+					delete op.indexInBatch;
 					catchupOps[index] = op;
 				}
 			}
