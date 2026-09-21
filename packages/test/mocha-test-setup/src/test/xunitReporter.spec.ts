@@ -11,8 +11,26 @@ import path from "node:path";
 
 // eslint-disable-next-line import-x/no-internal-modules -- `Mocha.Suite`/`Mocha.Test` are only reachable via the package's default export; there is no separate named-export entrypoint for them.
 import Mocha from "mocha";
+import { parseStringPromise } from "xml2js";
 
 import { findRepoRoot, FluidXunitReporter } from "../xunitReporter.js";
+
+interface JUnitReportXml {
+	testsuite?: JUnitTestSuiteXml;
+}
+
+interface JUnitTestSuiteXml {
+	testcase?: JUnitTestCaseXml[];
+}
+
+interface JUnitTestCaseXml {
+	$: {
+		classname: string;
+		name: string;
+	};
+	failure?: unknown[];
+	skipped?: unknown[];
+}
 
 /**
  * `mocha-multi-reporters` loads this package's reporter via a plain CommonJS `require()` of the package
@@ -24,6 +42,12 @@ const requireFromHere = createRequire(import.meta.url);
 const FluidXunitReporterViaCjsWrapper: typeof FluidXunitReporter = requireFromHere(
 	"@fluid-internal/mocha-test-setup/xunit-reporter",
 );
+
+async function parseJUnitReport(reportXml: string): Promise<JUnitTestSuiteXml> {
+	const report = (await parseStringPromise(reportXml)) as JUnitReportXml;
+	assert.ok(report.testsuite);
+	return report.testsuite;
+}
 
 /**
  * Runs mocha, with the given reporter, against a small suite of tests defined in on-disk fixture
@@ -95,31 +119,30 @@ function describeFixtureSuiteBehavior(reporter: typeof FluidXunitReporter): void
 		let fixtureDir: string;
 		let fileA: string;
 		let fileB: string;
+		let testCases: JUnitTestCaseXml[];
 
 		before(async () => {
 			({ reportXml, fixtureDir, fileA, fileB } = await runFixtureSuite(reporter));
+			const testSuite = await parseJUnitReport(reportXml);
+			testCases = testSuite.testcase ?? [];
 		});
 
 		after(() => {
 			rmSync(fixtureDir, { recursive: true, force: true });
 		});
 
-		it("produces a well-formed, non-truncated report with a single <testsuite>", () => {
+		it("produces a well-formed, non-truncated report with the expected test cases", () => {
 			// This is a regression test for a real incident: an earlier, buggy version of this
 			// reporter's `test()` override crashed inside a mocha-internal event handler (because
 			// `test.parent.isPending` was undefined on a bare wrapper object used to override
 			// `classname`), which silently truncated the output file mid-write - with no visible
 			// error and a misleading exit code of 0. Asserting the file is well-formed guards
 			// against that class of bug recurring.
-			const testsuiteMatches = [...reportXml.matchAll(/<testsuite\b/g)];
-			assert.equal(testsuiteMatches.length, 1);
-			assert.match(reportXml.trim(), /<\/testsuite>$/);
+			assert.equal(testCases.length, 4);
 		});
 
 		it("sets each <testcase>'s name to its fully qualified title, disambiguating same-named tests", () => {
-			const names = [...reportXml.matchAll(/<testcase\b[^>]*\bname="([^"]*)"/g)].map(
-				(match) => match[1],
-			);
+			const names = testCases.map((testCase) => testCase.$.name);
 			assert.deepEqual(
 				[...names].sort(),
 				[
@@ -136,9 +159,7 @@ function describeFixtureSuiteBehavior(reporter: typeof FluidXunitReporter): void
 			const expectedClassnameA = path.relative(repoRoot, fileA);
 			const expectedClassnameB = path.relative(repoRoot, fileB);
 
-			const classnames = [...reportXml.matchAll(/<testcase\b[^>]*\bclassname="([^"]*)"/g)].map(
-				(match) => match[1],
-			);
+			const classnames = testCases.map((testCase) => testCase.$.classname);
 			assert.ok(classnames.length > 0);
 			for (const classname of classnames) {
 				assert.ok(
@@ -149,8 +170,8 @@ function describeFixtureSuiteBehavior(reporter: typeof FluidXunitReporter): void
 		});
 
 		it("still records failed and skipped tests, matching xunit's default behavior", () => {
-			assert.match(reportXml, /<failure>/);
-			assert.match(reportXml, /<skipped\/>/);
+			assert.ok(testCases.some((testCase) => testCase.failure !== undefined));
+			assert.ok(testCases.some((testCase) => testCase.skipped !== undefined));
 		});
 	});
 
@@ -172,10 +193,8 @@ function describeFixtureSuiteBehavior(reporter: typeof FluidXunitReporter): void
 			});
 
 			const reportXml = readFileSync(outputFile, "utf8");
-			assert.match(
-				reportXml,
-				/<testcase\b[^>]*\bclassname="suite with no file does something"/,
-			);
+			const testSuite = await parseJUnitReport(reportXml);
+			assert.equal(testSuite.testcase?.[0]?.$.classname, "suite with no file does something");
 		} finally {
 			rmSync(fixtureDir, { recursive: true, force: true });
 		}

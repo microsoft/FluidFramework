@@ -7050,6 +7050,9 @@ importers:
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
+      '@types/xml2js':
+        specifier: ^0.4.14
+        version: 0.4.14
       c8:
         specifier: ^10.1.3
         version: 10.1.3
@@ -7080,6 +7083,9 @@ importers:
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
+      xml2js:
+        specifier: ^0.6.2
+        version: 0.6.2
 
   packages/common/core-utils:
     devDependencies:
@@ -14130,6 +14136,9 @@ importers:
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
+      '@types/xml2js':
+        specifier: ^0.4.14
+        version: 0.4.14
       concurrently:
         specifier: ^10.0.3
         version: 10.0.3
@@ -14148,6 +14157,9 @@ importers:
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
+      xml2js:
+        specifier: ^0.6.2
+        version: 0.6.2
 
   packages/test/snapshots:
     dependencies:
@@ -19672,6 +19684,9 @@ packages:
 
   '@types/ws@8.5.13':
     resolution: {integrity: sha512-osM/gWBTPKgHV8XkTunnegTRIsvF6owmf5w+JtAfOw472dptdm0dlGv4xCt6GwQRcC2XVOvvRE/0bAoQcL2QkA==}
+
+  '@types/xml2js@0.4.14':
+    resolution: {integrity: sha512-4YnrRemBShWRO2QjvUin8ESA41rH+9nQGLUGZV/1IDhi3SL9OhdpNC/MrulTWuptXKwhx/aDxE7toV0f/ypIXQ==}
 
   '@types/yargs-parser@21.0.3':
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
@@ -32740,6 +32755,10 @@ snapshots:
       '@types/node': 22.19.17
 
   '@types/ws@8.5.13':
+    dependencies:
+      '@types/node': 22.19.17
+
+  '@types/xml2js@0.4.14':
     dependencies:
       '@types/node': 22.19.17
 

@@ -14,6 +14,20 @@ import path from "node:path";
 
 // eslint-disable-next-line import-x/no-internal-modules -- Mocha's programmatic API is exposed by its default export, not a separate entrypoint.
 import Mocha from "mocha";
+import { parseStringPromise } from "xml2js";
+
+interface JUnitReportXml {
+	testsuite: {
+		testcase?: JUnitTestCaseXml[];
+	};
+}
+
+interface JUnitTestCaseXml {
+	$: {
+		classname: string;
+		name: string;
+	};
+}
 
 describe("FluidMochaReporter", () => {
 	it("produces fully qualified names and repo-relative classnames through the package's multi-reporter configuration", async () => {
@@ -49,13 +63,13 @@ describe("FluidMochaReporter", () => {
 			});
 			assert.equal(failures, 0);
 
-			const reportXml = readFileSync(reportFile, "utf8");
-			assert.match(reportXml, /<testcase\b[^>]*\bname="fixture suite fixture test"/);
+			const reportXml = (await parseStringPromise(
+				readFileSync(reportFile, "utf8"),
+			)) as JUnitReportXml;
+			const testCase = reportXml.testsuite.testcase?.[0];
+			assert.equal(testCase?.$.name, "fixture suite fixture test");
 			const expectedClassname = path.relative(path.resolve("..", "..", ".."), fixtureFile);
-			assert.ok(
-				reportXml.includes(`classname="${expectedClassname}"`),
-				`expected classname '${expectedClassname}'`,
-			);
+			assert.equal(testCase?.$.classname, expectedClassname);
 		} finally {
 			rmSync(fixtureDir, { recursive: true, force: true });
 			rmSync(reportFile, { force: true });
