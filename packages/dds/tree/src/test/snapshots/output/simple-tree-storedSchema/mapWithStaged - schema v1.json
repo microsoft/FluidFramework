@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "nodes": {
+    "com.fluidframework.leaf.number": {
+      "leaf": 0
+    },
+    "com.fluidframework.leaf.string": {
+      "leaf": 1
+    },
+    "test.MapWithStaged": {
+      "map": {
+        "kind": "Optional",
+        "types": [
+          "com.fluidframework.leaf.number",
+          "com.fluidframework.leaf.string"
+        ]
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.MapWithStaged"
+    ]
+  }
+}

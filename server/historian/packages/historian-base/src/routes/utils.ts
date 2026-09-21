@@ -66,14 +66,7 @@ type SummaryOwnershipOutcome =
 	| "notFound"
 	| "identityMismatch"
 	| "scheduledDeletion"
-	| "initialReplay"
 	| "dependencyError";
-
-export interface IValidateInitialSummaryUploadArgs {
-	tenantId: string;
-	authorization: string | undefined;
-	documentManager: IDocumentManager;
-}
 
 export interface IValidateSummaryDocumentArgs {
 	tenantId: string;
@@ -83,6 +76,7 @@ export interface IValidateSummaryDocumentArgs {
 	routeType: SummaryRouteType;
 	ephemeralDocumentTTLSec: number;
 	ignoreEphemeralFlag?: boolean;
+	reuseCustomerAccessToken?: boolean;
 }
 
 function getEphemeralContainerCacheKey(tenantId: string, documentId: string): string {
@@ -272,19 +266,26 @@ async function checkAndCacheIsEphemeral({
 const ownershipEventName = "HistorianSummaryDocumentOwnershipValidation";
 const documentUnavailableMessage = "Document is deleted and cannot be accessed.";
 
-function getTokenDocumentId(tenantId: string, authorization: string | undefined): string {
+function getTokenDocumentIdentity(
+	tenantId: string,
+	authorization: string | undefined,
+): { accessToken: string; documentId: string } {
 	if (!authorization) {
 		throw new NetworkError(403, "Authorization header is missing.");
 	}
-	const token = parseToken(tenantId, authorization);
-	if (!token) {
+	const accessToken = parseToken(tenantId, authorization);
+	if (!accessToken) {
 		throw new NetworkError(403, "Authorization token is missing.");
 	}
-	const documentId = (decode(token) as ITokenClaims).documentId;
+	const documentId = (decode(accessToken) as ITokenClaims).documentId;
 	if (containsPathTraversal(documentId)) {
 		throw new NetworkError(400, `Invalid document id: ${documentId}`);
 	}
-	return documentId;
+	return { accessToken, documentId };
+}
+
+function getTokenDocumentId(tenantId: string, authorization: string | undefined): string {
+	return getTokenDocumentIdentity(tenantId, authorization).documentId;
 }
 
 function logOwnershipOutcome(
@@ -353,48 +354,6 @@ function validateAlfredDocumentResponse(
 	}
 }
 
-export async function validateInitialSummaryUpload({
-	tenantId,
-	authorization,
-	documentManager,
-}: IValidateInitialSummaryUploadArgs): Promise<void> {
-	const documentId = getTokenDocumentId(tenantId, authorization);
-	let document: IDocument | null;
-	try {
-		document = await runWithRetry(
-			async () => documentManager.readDocument(tenantId, documentId),
-			"utils.validateInitialSummaryUpload.readDocument",
-			3,
-			1000,
-			getLumberBaseProperties(documentId, tenantId),
-			undefined,
-			shouldRetryNetworkError,
-		);
-	} catch (error) {
-		if (error instanceof NetworkError && error.code === 404) {
-			logOwnershipOutcome(tenantId, documentId, "post", "notApplicable", "allowed");
-			return;
-		}
-		logOwnershipOutcome(
-			tenantId,
-			documentId,
-			"post",
-			"notApplicable",
-			"dependencyError",
-			error,
-		);
-		throw error;
-	}
-
-	if (document === null) {
-		logOwnershipOutcome(tenantId, documentId, "post", "notApplicable", "allowed");
-		return;
-	}
-
-	validateAlfredDocumentResponse(document, tenantId, documentId, "post", "notApplicable");
-	return denyDocumentAccess(tenantId, documentId, "post", "notApplicable", "initialReplay");
-}
-
 export async function validateSummaryDocument({
 	tenantId,
 	authorization,
@@ -403,12 +362,19 @@ export async function validateSummaryDocument({
 	routeType,
 	ephemeralDocumentTTLSec,
 	ignoreEphemeralFlag = false,
+	reuseCustomerAccessToken = false,
 }: IValidateSummaryDocumentArgs): Promise<IDocument> {
-	const documentId = getTokenDocumentId(tenantId, authorization);
+	const { accessToken, documentId } = getTokenDocumentIdentity(tenantId, authorization);
+	const readDocument = reuseCustomerAccessToken
+		? async () =>
+				documentManager.readDocument(tenantId, documentId, {
+					accessToken,
+				})
+		: async () => documentManager.readDocument(tenantId, documentId);
 	let document: IDocument | null;
 	try {
 		document = await runWithRetry(
-			async () => documentManager.readDocument(tenantId, documentId),
+			readDocument,
 			"utils.validateSummaryDocument.readDocument",
 			3,
 			1000,

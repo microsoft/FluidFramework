@@ -1,5 +1,9 @@
 # @fluid-example/bubblebench-experimental-tree
 
+## 3.1.0
+
+Dependency updates only.
+
 ## 3.0.0
 
 Dependency updates only.

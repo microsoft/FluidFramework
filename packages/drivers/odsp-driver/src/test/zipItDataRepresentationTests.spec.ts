@@ -120,6 +120,23 @@ describe("Tree Representation tests", () => {
 		validate(2 + 5);
 	});
 
+	it("loads from a Uint8Array with a non-zero byte offset", () => {
+		builder.addString("first");
+		builder.addBlob(createLongBuffer(3));
+
+		const serialized = builder.serialize();
+		const backingBuffer = new Uint8Array(serialized.length + 2);
+		backingBuffer.set(serialized, 1);
+		const offsetBuffer = backingBuffer.subarray(1, serialized.length + 1);
+		assert.notStrictEqual(offsetBuffer.byteOffset, 0, "Test buffer should have a byte offset");
+
+		const builder2 = TreeBuilder.load(
+			new ReadBuffer(offsetBuffer),
+			logger.toTelemetryLogger(),
+		).builder;
+		compareNodes(builder, builder2);
+	});
+
 	it("small const string", async () => {
 		builder.addDictionaryString("first");
 		validate(8 + 2);

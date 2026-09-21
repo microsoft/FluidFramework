@@ -11,7 +11,8 @@ const routes = [
 	// We previously only versioned our API documentation, where now we version everything.
 	// Forward versioned API paths to the new hierarchy.
 	{ from: "/docs/api/v1", to: "/docs/v1/api" },
-	{ from: "/docs/api/v2", to: "/docs/api" },
+	{ from: "/docs/api/v2", to: "/docs/v2/api" },
+	{ from: "/docs/api/v3", to: "/docs/api" },
 
 	// We previously supported a special path alias for accessing the "current" API docs.
 	// Docusaurus handles this automatically for us, but we still need to support the old pattern.
@@ -23,11 +24,12 @@ const routes = [
 	{ from: "/docs/api/lts", to: "/docs/v1/api" },
 
 	// Docusaurus serves the "current" version of the docs from the root path.
-	// If the user explicitly navigates to "v2", we should support that.
-	{ from: "/docs/v2", to: "/docs" },
+	// If the user explicitly navigates to "v3", we should support that.
+	{ from: "/docs/v3", to: "/docs" },
 
 	// Legacy path we wish to preserve.
 	{ from: "/docs/deep/architecture", to: "/docs/concepts/architecture" },
+	{ from: "/docs/build/dds", to: "/docs/data-structures/tree" },
 
 	// Counter DDS document was removed in v2.
 	// Redirect legacy URL to v1 document.

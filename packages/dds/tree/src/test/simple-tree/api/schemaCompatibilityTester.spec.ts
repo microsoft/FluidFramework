@@ -47,9 +47,10 @@ function expectCompatibility(
 	> & {
 		enabledUpgrades?: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
 	},
+	stagedSchemaUpgrades?: Parameters<typeof checkSchemaCompatibility>[2],
 ) {
 	const viewSchema = new TreeViewConfigurationAlpha({ schema: view });
-	const compatibility = checkSchemaCompatibility(viewSchema, stored);
+	const compatibility = checkSchemaCompatibility(viewSchema, stored, stagedSchemaUpgrades);
 	const { discrepancies, ...compatibilityWithoutDiscrepancies } = compatibility;
 	assert.deepEqual(compatibilityWithoutDiscrepancies, {
 		enabledUpgrades: new Map(),
@@ -686,7 +687,7 @@ describe("checkSchemaCompatibility", () => {
 				);
 			});
 
-			it("clients with staged schema preserve already enabled upgrades", () => {
+			it("clients with staged schema can preserve already enabled upgrades", () => {
 				const stagedString = SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string);
 				const upgrade = stagedString.metadata.stagedSchemaUpgrade;
 				assert(upgrade !== undefined);
@@ -706,6 +707,10 @@ describe("checkSchemaCompatibility", () => {
 						canUpgrade: true,
 						isEquivalent: true,
 						enabledUpgrades: new Map([[upgrade, "enabled"]]),
+					},
+					{
+						...StagedSchemaUpgradePolicy.restrictive,
+						includeAlreadyEnabledUpgrades: true,
 					},
 				);
 			});

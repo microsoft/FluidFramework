@@ -165,6 +165,7 @@ export {
 	type DirtyTreeStatus,
 	trackDirtyNodes,
 	type DirtyTreeMap,
+	type TreeIndexKeyFieldSelector,
 	type TreeIndexKey,
 	// experimental @alpha APIs:
 	adaptEnum,
