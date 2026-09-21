@@ -13,7 +13,7 @@ This is a release group root with two packages:
 
 ## Build & Dev
 
--   **Package manager:** pnpm (v10). Do not use npm install.
+-   **Package manager:** pnpm (v11.27.0). Do not use npm install.
 -   **Node:** >=22.22.2
 -   **Build:** `pnpm install && npm run build` (compiles TypeScript then lints)
 -   **Build (compile only):** `npm run build:compile`
