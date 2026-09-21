@@ -114,6 +114,7 @@ So **most changesets for `@fluidframework/tree` should list both `"@fluidframewo
 
 ## Formatting
 
+Follow our [Documentation Guidelines](../docs/content/Guidelines/Documentation-Guidelines.md) when writing or updating changesets.
 Changesets are Markdown documents, and unless otherwise stated below they should adhere to our [Markdown Best Practices](../docs/content/Guidelines/Documentation-Guidelines/Markdown-Best-Practices.md).
 
 - Each changeset needs at least two parts: a summary line (the heading) and a body paragraph.

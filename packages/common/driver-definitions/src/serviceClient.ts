@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { ErasedBaseType } from "@fluidframework/core-interfaces/internal";
+import type {
+	ErasedBaseType,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces/internal";
 
 /**
  * This file defines the external facing API for the {@link ServiceClient} and related types.
@@ -177,6 +180,11 @@ export function featureVersion<major extends `${bigint}`, minor extends `${bigin
  */
 export interface ServiceOptions {
 	/**
+	 * Optional logger that receives telemetry from containers created or loaded by this client.
+	 */
+	readonly logger?: ITelemetryBaseLogger;
+
+	/**
 	 * Oldest Fluid Framework client version that must be able to open and process documents written
 	 * by the service client.
 	 *
@@ -184,9 +192,8 @@ export interface ServiceOptions {
 	 * Choosing an older version may limit the features and write formats the application can use to
 	 * those supported by that version.
 	 *
-	 * A service may provide a default when this option is omitted.
 	 */
-	readonly oldestSupportedClient?: OldestSupportedServiceClientVersion;
+	readonly oldestSupportedClient: OldestSupportedServiceClientVersion;
 }
 
 /**

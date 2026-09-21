@@ -2072,7 +2072,8 @@ export interface ServiceClient {
 
 // @alpha @input
 export interface ServiceOptions {
-    readonly oldestSupportedClient?: OldestSupportedServiceClientVersion;
+    readonly logger?: ITelemetryBaseLogger;
+    readonly oldestSupportedClient: OldestSupportedServiceClientVersion;
 }
 
 // @alpha @sealed
