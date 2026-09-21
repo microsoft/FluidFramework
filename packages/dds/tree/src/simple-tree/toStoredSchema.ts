@@ -36,9 +36,9 @@ import {
 import {
 	ExpectStored,
 	NodeKind,
-	SchemaUpgrade,
 	StagedSchemaUpgradePolicy,
 	Unchanged,
+	type SchemaUpgrade,
 	type SimpleSchemaTransformationOptions,
 	type StoredSchemaGenerationOptions,
 } from "./core/index.js";
@@ -432,7 +432,9 @@ function filterFieldAllowedTypes(
 	options: SimpleSchemaTransformationOptions,
 ): SimpleFieldSchema {
 	const isStagedOptional =
-		preservesViewData(options) && f.isStagedOptional instanceof SchemaUpgrade
+		preservesViewData(options) &&
+		f.isStagedOptional !== undefined &&
+		f.isStagedOptional !== false
 			? f.isStagedOptional
 			: undefined;
 	return {

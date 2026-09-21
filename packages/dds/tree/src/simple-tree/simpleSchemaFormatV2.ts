@@ -27,8 +27,18 @@ export const SimpleSchemaFormatVersion = {
 export const SimpleAllowedTypesFormat = V1.SimpleAllowedTypesFormat;
 export type SimpleAllowedTypesFormat = V1.SimpleAllowedTypesFormat;
 
-export const SimpleFieldSchemaFormat = V1.SimpleFieldSchemaFormat;
-export type SimpleFieldSchemaFormat = V1.SimpleFieldSchemaFormat;
+/**
+ * Persisted format for a field schema.
+ */
+export const SimpleFieldSchemaFormat = Type.Object(
+	{
+		kind: Type.Integer(),
+		simpleAllowedTypes: SimpleAllowedTypesFormat,
+		isStagedOptional: Type.Optional(Type.Boolean()),
+	},
+	noAdditionalProps,
+);
+export type SimpleFieldSchemaFormat = Static<typeof SimpleFieldSchemaFormat>;
 
 export const SimpleArrayNodeSchemaFormat = V1.SimpleArrayNodeSchemaFormat;
 export type SimpleArrayNodeSchemaFormat = V1.SimpleArrayNodeSchemaFormat;
