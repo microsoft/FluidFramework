@@ -6,7 +6,7 @@
 
 Introduce an opt-in, per-channel configuration protocol, implemented by shared infrastructure rather
 than by individual DDSes. Each opted-in DDS has a persisted configuration and a monotonically
-increasing configuration revision. Configuration changes on published channels are explicit compare-and-swap (CAS) ops.
+increasing configuration revision. Configuration changes on attached channels are explicit compare-and-swap (CAS) ops.
 Ordinary DDS ops carry the configuration revision captured for their original logical submission.
 
 The shared mechanism accepts a configuration change only if its expected revision is current.
@@ -20,7 +20,7 @@ The following decisions were clarified for this proposal:
 | --- | --- |
 | Barrier semantics | Sequenced CAS, not consensus or a wait for all clients to acknowledge. |
 | Ordinary ops from earlier revisions | Delivered normally, with their configuration revision exposed to the DDS. Any invalidation policy and related events are DDS responsibilities, deferred from this design. |
-| Local application | Preserve each DDS's existing optimistic, acknowledgement, and resubmission behavior. Published configuration changes wait for sequencing; unpublished configuration changes apply locally. |
+| Local application | Preserve each DDS's existing optimistic, acknowledgement, and resubmission behavior. Attached configuration changes wait for sequencing; unattached configuration changes apply locally. |
 | Configuration values | Full replacement is allowed, including disabling or removing settings. |
 | Adoption | Creation-time opt-in for new DDS instances. Migrating existing instances is out of scope. |
 | Unloaded DDSes | Preserve lazy loading; validate and replay configuration before exposing the instance. |
@@ -309,13 +309,13 @@ including when grouped messages share a service sequence number.
 
 `requestChange` captures the current revision and clones the replacement values
 synchronously at invocation, before any asynchronous work. It validates locally, then submits
-one control op if the channel is published. It never changes published configuration optimistically.
-For an unpublished channel, it replaces the authoritative state and synchronously notifies listeners
+one control op if the channel is attached. It never changes attached configuration optimistically.
+For an unattached channel, it replaces the authoritative state and synchronously notifies listeners
 before returning its promise, without submitting any op or waiting for a connection.
 This is a final local change, not an optimistic proposal.
 Changes and results distinguish `source: "local"` from `source: "sequenced"`; only sequenced
 changes carry service sequence information.
-Before a service advertises its size limit, unpublished configuration uses a conservative
+Before a service advertises its size limit, unattached configuration uses a conservative
 16 KiB serialized UTF-8 bound. A known runtime limit takes precedence.
 Submission limits do not constrain persisted snapshot loads, including detached rehydration,
 or already-sequenced changes.
@@ -345,7 +345,7 @@ Reading that initial snapshot is not a configuration-change notification.
 The `"changed"` listener runs synchronously for every accepted barrier, local or remote,
 including barriers replayed during load. The controller's getter already exposes `current`.
 It does not run for conflicts. The next ordinary op cannot reach the DDS until this callback
-returns. It also runs for each final local change while unpublished.
+returns. It also runs for each final local change while unattached.
 
 Validation and the callback's effects on committed state must be deterministic and independent of
 local feature gates, connection state, wall-clock time, and local pending requests. A callback may
@@ -440,7 +440,7 @@ Configuration callback or validation failures reject pending configuration reque
 Runtime disposal closes outstanding requests for other fatal failures.
 Existing DDS event-listener error handling is unchanged.
 
-## Creation, publication, load, and summaries
+## Creation, attachment, load, and summaries
 
 At creation the wrapper uses `SharedObjectOptions.initialConfiguration`, when provided.
 Loading obtains configuration exclusively from persisted attributes. A supporting factory
@@ -449,27 +449,28 @@ present markers require supported, valid configuration. Never turn a legacy chan
 configured one by applying current factory defaults. Reader support remains enabled even
 when deployment policy stops creating new configured channels.
 
-Until publication, configuration replacements apply locally and immediately through the same
+Until attachment, configuration replacements apply locally and immediately through the same
 validation and immutable state path. Repeated replacements, including identical values, advance
 the revision and notify the active kernel. These changes require neither a control op nor a
 document-schema upgrade round trip. An unbound channel in an attached container is also
-unpublished. After publication, every replacement requires an actual sequenced barrier;
-disconnecting an already-published channel does not restore local authority.
+unattached. After attachment, every replacement requires an actual sequenced barrier;
+disconnecting an already-attached channel does not restore local authority.
 
-Unpublished channels retain the DDS's existing local-edit and initialization behavior. Local data
+Unattached channels retain the DDS's existing local-edit and initialization behavior. Local data
 included in the initial snapshot must not also be sent as trailing ops. The configuration mechanism
 does not introduce a separate local-commit handler or result for ordinary edits.
 
-Publication needs an explicit shared-layer hook at the point that the channel's initial snapshot
-is captured for container, datastore, or channel attachment. Freeze that snapshot's configuration
-and data together. From that point, edits are queued/sent as revision-stamped ops and cannot
-alter the captured baseline; optimistic updates to the live DDS continue according to its existing
-semantics. This boundary is not `connected`, and must not be inferred solely from
-`SharedObjectCore.isAttached()` or from a later attach acknowledgement.
+`SharedObjectCore.isAttached()` chooses between local changes and sequenced proposals, as it does for ordinary DDS ops.
+A bound channel in an attaching or attached datastore submits configuration ops, including while disconnected.
+An unbound channel or a channel in a detached datastore applies configuration changes locally.
+There is no separate publication flag, callback, or submission queue.
+The runtime checks type capability before it emits an attach snapshot.
+This change does not address the existing attach re-entrancy issue caused by synchronous DDS edits from dirty callbacks during incomplete binding.
 
-Detached serialization/rehydration retains the current configuration and local authority. A detached snapshot
-is not a license to regenerate it from new factory defaults. An interrupted attach must preserve
-its captured snapshot and trailing-op order through the existing pending attachment machinery.
+Detached serialization does not attach the channel.
+Later configuration changes still apply locally, and the actual attach summary includes the latest attributes.
+Detached rehydration restores persisted configuration instead of applying new factory defaults.
+Interrupted attachment uses the existing runtime pending attachment machinery.
 
 For loading an attached channel:
 
@@ -509,7 +510,7 @@ must not replace those paths with identity-only replay.
 
 | Flow | Required behavior |
 | --- | --- |
-| Disconnect/offline submission after publication | Retain pending revision metadata. Ordinary edits may be optimistic as usual; an offline configuration proposal is not locally activated. |
+| Disconnect/offline submission after attachment | Retain pending revision metadata. Ordinary edits may be optimistic as usual; an offline configuration proposal is not locally activated. |
 | Reconnect | Preserve a configuration proposal's expected revision. For ordinary ops, invoke the DDS's normal resubmission/rebase hooks and preserve revision metadata through the wrapper. |
 | Stashed state | Restore configuration requests without applying their proposed values. Restore ordinary payloads through the DDS's existing `applyStashedOp` behavior, including optimistic state, at the loader's historical replay position. |
 | Local acknowledgement | Consume configuration requests in the shared layer. Deliver all ordinary acknowledgements, including earlier-revision ops, through the existing DDS path without double application or leaked pending counts. |
@@ -596,25 +597,25 @@ the persisted array identity so equivalent, reordered, duplicate, or subset requ
 An existing persisted array need not be rewritten just to normalize its ordering.
 The earlier prototype boolean is not supported and has no wildcard meaning.
 
-The channel's type must be in the active document set before a configured channel can be published.
+The channel's type must be in the active document set before a configured channel can be attached.
 For a new container, include requested types in the initial document schema before attachment.
 For an existing container, `channelConfigurationTypes` requests additions through the normal desired
 schema. Ordinary outgoing traffic gives the schema controller an opportunity to propose the change.
-Publication is allowed only after a sequenced schema change activates that type, not merely because
-it was requested. An active type A does not permit publishing type B.
+Attachment is allowed only after a sequenced schema change activates that type, not merely because
+it was requested. An active type A does not permit attaching type B.
 
 The schema controller keeps its existing one-attempt policy. If another schema wins without
 adding a requested type, that type may remain unavailable for the rest of the session. A later
 session can propose the missing type while retaining the observed members. The runtime does
 not retry the upgrade automatically or provide a separate activation method. It does not create
 an ordinary edit just to trigger a schema proposal. Disabled schema upgrades remain disabled.
-Attempting to publish a configured channel while its type is unavailable throws an error;
+Attempting to attach a configured channel while its type is unavailable throws an error;
 it does not silently switch the channel to the legacy protocol.
 
-New-instance creation requires `isChannelConfigurationCreationEnabled(type)`; publication additionally
+New-instance creation requires `isChannelConfigurationCreationEnabled(type)`; attachment additionally
 requires `isChannelConfigurationEnabled(type)`. These optional internal runtime queries return
 booleans; a missing query does not grant permission. Creation uses the local requested type list.
-Publication and reads use persisted membership, even when the local list omits that type.
+Attachment and reads use persisted membership, even when the local list omits that type.
 Local configuration edits do not require document readiness. These datastore-runtime queries keep
 DDS packages independent of the container runtime implementation. Loading a configured detached
 snapshot preserves all persisted type memberships and explicit schema control even when the local
@@ -645,8 +646,8 @@ drops in this protocol; DDS-specific invalidation events and telemetry are outsi
 | Area | Proposed changes |
 | --- | --- |
 | `datastore-definitions` | Internal persisted-state/factory capability types, without new required members on legacy channel contracts. |
-| `shared-object-base` | Controller and compositional kernel facet; immutable per-instance attributes; control-op dispatch and ordinary-op revision metadata; configuration-request completion tracking; initialization and publication hooks. |
-| `datastore` | Factory compatibility check; propagate publication/readiness hooks; retain lazy replay ordering; align stashed-envelope handling and summary invalidation. |
+| `shared-object-base` | Controller and compositional kernel facet; immutable per-instance attributes; control-op dispatch and ordinary-op revision metadata; configuration-request completion tracking; normal DDS attachment state. |
+| `datastore` | Factory and attach capability checks; retain lazy replay ordering; align stashed-envelope handling and summary invalidation. |
 | `container-runtime` | Additive persisted type set requested through normal schema features; propagate per-type readiness; retain the existing one-attempt policy, pending accounting, and ordinary-op replay behavior. |
 | Initial adopter | New opt-in DDS instances with configuration validation and a synchronous change callback. Preserve their existing local mutation, acknowledgement, and ordinary-op lifecycle behavior. |
 
@@ -667,26 +668,26 @@ test harnesses. The key scenarios are:
 | Identical replacement; A-to-B-to-A replacement | Each successful barrier has a distinct revision; returning to earlier values does not erase an op's revision provenance. |
 | Barrier and data ops in one grouped envelope | Preserve logical order and callback boundaries, including shared sequence numbers. |
 | Multiple DDSes | Configuration and revision metadata for one channel do not affect another. |
-| Existing local application | Optimistic edits, local events, acknowledgements, and DDS-specific promises behave as before; only published configuration activation waits for sequencing. |
+| Existing local application | Optimistic edits, local events, acknowledgements, and DDS-specific promises behave as before; only attached configuration activation waits for sequencing. |
 | Non-invalidating configuration flag | An ordinary op in flight across a flag change reaches the data handler unchanged, with its earlier configuration revision. |
 | Disable/remove setting | Full replacement persists; no feature-gate/default merging on reload. |
 | Configuration callback updates DDS state | Data and configuration summarize/reload consistently; replay reproduces the update. |
 | Lazy load with several intervening barriers | Snapshot configuration initializes first; all configuration callbacks and ordinary ops replay in order with their revision metadata. |
 | Attributes-only change and incremental summary | New configuration cannot be hidden by a stale channel summary handle. |
-| New/detached/attaching/rehydrated channel | One initial baseline, correct publication boundary, no duplicate local commits. |
+| New/detached/attaching/rehydrated channel | Normal attachment selects local or sequenced changes; serialization stays local and attachment captures the latest attributes. |
 | Reconnect/stashed/already-acked/duplicate batch | Revision provenance survives DDS replay/rebase and local-metadata reconstruction; optimistic state is restored normally, with no double apply or leaked pending count. |
 | Staging rollback and disposal | Configuration requests receive explicit cancellation/error outcomes; ordinary DDS squash/rollback remains functional without crossing revision boundaries. |
 | Future revision, malformed input, unsupported winning config | Predictable failure before dependent state is processed. |
 | Unsupported obsolete config in a losing proposal | CAS conflict without attempting DDS-specific interpretation. |
 | Supported runtime with unsupported factory | Fail before loading the configured channel or rewriting its summary. |
 | Unsupported runtime and first configured attachment | Document-schema capability excludes it before it can process new-protocol data. |
-| Independent type rollouts | Creation and publication check the exact type; enabling A does not enable B. |
+| Independent type rollouts | Creation and attachment check the exact type; enabling A does not enable B. |
 | Equivalent type requests | Reordered, duplicate, subset, empty, and absent requests do not cause a schema proposal when no members are added. |
 | Concurrent type additions | A losing proposal is not retried automatically; later proposals retain all observed persisted members. |
 | Legacy document/channel | No opt-in, no new envelopes, and no changes to existing behavior. |
 
 The shared mechanism provides persisted configuration, ordered CAS updates, and op revision
-metadata without changing ordinary DDS consistency semantics. Published configuration activation incurs
-acknowledgement latency; unpublished changes apply locally and ordinary APIs retain their existing behavior. Flags that invalidate
+metadata without changing ordinary DDS consistency semantics. Attached configuration activation incurs
+acknowledgement latency; unattached changes apply locally and ordinary APIs retain their existing behavior. Flags that invalidate
 in-flight ops require a separate DDS-authored design, including reconciliation and events, rather
 than a universal dropping rule in the common wrapper.

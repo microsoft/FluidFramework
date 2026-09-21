@@ -47,9 +47,4 @@ export interface ChannelConfigurationFactory {
  * A configured instance registers its controller before connecting or replaying.
  * @internal
  */
-export interface ChannelConfigurationChannel extends ChannelConfigurationFactory {
-	/**
-	 * Marks the initial attach snapshot as published. Detached serialization does not call this hook.
-	 */
-	readonly onChannelConfigurationPublication?: () => void;
-}
+export interface ChannelConfigurationChannel extends ChannelConfigurationFactory {}

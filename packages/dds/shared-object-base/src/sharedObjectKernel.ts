@@ -4,7 +4,6 @@
  */
 
 import type { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type {
@@ -154,7 +153,6 @@ class SharedObjectFromKernel<
 
 	readonly #kernelArgs: KernelArgs<TConfig>;
 	readonly #configurationProtocol: ConfiguredKernelProtocol<TConfig> | undefined;
-	#configurationPublished = false;
 	#initializingConfiguration = true;
 	readonly #loadingConfiguration: boolean;
 
@@ -182,10 +180,6 @@ class SharedObjectFromKernel<
 			if (definition === undefined) {
 				throw new UsageError("Factory does not support channel configuration");
 			}
-			this.#configurationPublished =
-				this.#loadingConfiguration &&
-				((runtime as ChannelConfigurationRuntime).channelConfigurationPublicationRequired ??
-					runtime.attachState !== AttachState.Detached);
 			const controller = new ChannelConfigurationController({
 				definition,
 				source: this.#loadingConfiguration ? "load" : "create",
@@ -193,7 +187,7 @@ class SharedObjectFromKernel<
 					"snapshot" in source
 						? source.snapshot
 						: { version: 1, revision: 0, values: source.initialConfiguration },
-				isPublished: () => this.#configurationPublished,
+				isAttached: () => this.isAttached(),
 				verifyCanChange: () => {
 					this.#verifyConfigurationSubmission();
 					if (this.#initializingConfiguration) {
@@ -216,7 +210,6 @@ class SharedObjectFromKernel<
 				controller,
 				(content, metadata) => this.submitLocalMessage(content, metadata),
 				() => this.#verifyConfigurationSubmission(),
-				() => this.#configurationPublished,
 				(result) =>
 					extractTelemetryLoggerExt(this.logger).sendTelemetryEvent({
 						eventName: "ChannelConfiguration",
@@ -277,19 +270,6 @@ class SharedObjectFromKernel<
 
 	public get channelConfigurationProtocolVersion(): 1 | undefined {
 		return this.#configurationProtocol === undefined ? undefined : 1;
-	}
-
-	public onChannelConfigurationPublication(): void {
-		if (
-			(this.runtime as ChannelConfigurationRuntime).isChannelConfigurationEnabled?.(
-				this.attributes.type,
-			) !== true
-		) {
-			throw new UsageError(
-				"Channel configuration document capability is not enabled for this type",
-			);
-		}
-		this.#configurationPublished = true;
 	}
 
 	#verifyConfigurationSubmission(): void {
@@ -366,7 +346,16 @@ class SharedObjectFromKernel<
 	}
 
 	protected override didAttach(): void {
-		this.#configurationProtocol?.flushPendingSubmissions();
+		if (
+			this.#configurationProtocol !== undefined &&
+			(this.runtime as ChannelConfigurationRuntime).isChannelConfigurationEnabled?.(
+				this.attributes.type,
+			) !== true
+		) {
+			throw new UsageError(
+				"Channel configuration document capability is not enabled for this type",
+			);
+		}
 		this.#kernel.didAttach?.();
 	}
 }

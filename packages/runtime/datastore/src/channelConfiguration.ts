@@ -117,23 +117,20 @@ export function validateChannelConfiguration(
  */
 export function requireChannelConfigurationController(channel: IChannel): void {
 	const configured = channel as IChannel & ChannelConfigurationChannel;
-	if (
-		configured.channelConfigurationProtocolVersion !== 1 ||
-		typeof configured.onChannelConfigurationPublication !== "function"
-	) {
+	if (configured.channelConfigurationProtocolVersion !== 1) {
 		throw new DataCorruptionError("Configured channel did not register its controller", {});
 	}
 }
 
 /**
- * Checks publication readiness without changing local configuration authority.
+ * Checks document capability without changing channel attachment state.
  */
-export function verifyChannelConfigurationPublication(
+export function verifyChannelConfigurationCapability(
 	channel: IChannel,
 	runtime: IFluidDataStoreRuntime,
-): boolean {
+): void {
 	if (!validateChannelConfiguration(channel.attributes)) {
-		return false;
+		return;
 	}
 	requireChannelConfigurationController(channel);
 	if (
@@ -142,20 +139,7 @@ export function verifyChannelConfigurationPublication(
 		).isChannelConfigurationEnabled?.(channel.attributes.type) !== true
 	) {
 		throw new UsageError(
-			"Document channel configuration is not active for this type; cannot publish a configured channel",
+			"Document channel configuration is not active for this type; cannot attach a configured channel",
 		);
-	}
-	return true;
-}
-
-/**
- * Publishes a captured snapshot before connection callbacks or trailing ops can run.
- */
-export function publishChannelConfiguration(
-	channel: IChannel,
-	runtime: IFluidDataStoreRuntime,
-): void {
-	if (verifyChannelConfigurationPublication(channel, runtime)) {
-		(channel as IChannel & ChannelConfigurationChannel).onChannelConfigurationPublication?.();
 	}
 }

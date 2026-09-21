@@ -468,7 +468,7 @@ describe("Runtime", () => {
 				runtime.dispose();
 			});
 
-			it("publishes every captured channel before datastore attachment callbacks", async () => {
+			it("keeps detached serialization local with capability active before attachment", async () => {
 				const context = getMockContext({ attachState: AttachState.Detached });
 				const { runtime } = await ContainerRuntime.loadRuntime2({
 					context: context as IContainerContext,
@@ -478,24 +478,26 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 				const capability = runtime as ContainerRuntime & ChannelConfigurationRuntime;
-				const order: string[] = [];
-				capability.registerChannelConfigurationPublication?.(() =>
-					order.push("old serialization"),
-				);
 				runtime.createSummary();
-				capability.registerChannelConfigurationPublication?.(() =>
-					order.push("first channel"),
-				);
-				capability.registerChannelConfigurationPublication?.(() =>
-					order.push("second channel"),
-				);
+				assert.equal(runtime.attachState, AttachState.Detached);
+				assert.equal(capability.isChannelConfigurationEnabled?.(typeA), true);
+				assert.equal(submittedOps.length, 0);
 				const privates = runtime as unknown as ContainerRuntime_WithPrivates;
-				sandbox.stub(privates.channelCollection, "setAttachState").callsFake(() => {
-					order.push("datastore callback");
-				});
+				const attached = sandbox
+					.stub(privates.channelCollection, "setAttachState")
+					.callsFake((state) => {
+						assert.equal(state, AttachState.Attaching);
+						assert.equal(capability.isChannelConfigurationEnabled?.(typeA), true);
+						assert.equal(capability.isChannelConfigurationEnabled?.(typeB), false);
+					});
+				runtime.createSummary();
+				assert.equal(runtime.attachState, AttachState.Detached);
+				assert.equal(attached.callCount, 0);
 				Object.assign(context, { attachState: AttachState.Attaching });
 				runtime.setAttachState(AttachState.Attaching);
-				assert.deepEqual(order, ["first channel", "second channel", "datastore callback"]);
+				assert.equal(attached.callCount, 1);
+				assert.equal(runtime.attachState, AttachState.Attaching);
+				assert.equal(submittedOps.length, 0);
 				runtime.dispose();
 			});
 

@@ -46,7 +46,7 @@ function harness(
 		definition,
 		snapshot: { version: 1, revision: 0, values: { enabled: true } },
 		source: "load",
-		isPublished: () => true,
+		isAttached: () => true,
 		verifyCanChange: () => {},
 		submit: (message, metadata) => submitted.push({ message, metadata }),
 		maxMessageSize: () => 1024 * 1024,
@@ -219,7 +219,7 @@ describe("ChannelConfigurationController", () => {
 	});
 
 	it("applies repeated detached changes immediately without submit or service sequence fields", async () => {
-		const { controller, submitted, changes } = harness({ isPublished: () => false });
+		const { controller, submitted, changes } = harness({ isAttached: () => false });
 		const first = controller.requestChange({ enabled: false });
 		assert.deepEqual(controller.current.values, { enabled: false });
 		assert.equal(controller.current.revision, 1);
@@ -240,11 +240,11 @@ describe("ChannelConfigurationController", () => {
 		}
 	});
 
-	it("uses the publication callback rather than connection state to choose authority", async () => {
-		let published = false;
-		const { controller, submitted, changes } = harness({ isPublished: () => published });
+	it("uses attachment rather than connection state to choose authority", async () => {
+		let attached = false;
+		const { controller, submitted, changes } = harness({ isAttached: () => attached });
 		assert.equal((await controller.requestChange({})).source, "local");
-		published = true;
+		attached = true;
 		const next = controller.requestChange({ enabled: false });
 		assert.equal(controller.current.revision, 1);
 		assert.equal(changes.length, 1);
@@ -255,24 +255,24 @@ describe("ChannelConfigurationController", () => {
 	});
 
 	it("rejects local validation without submitting and permits a subsequent valid request", async () => {
-		for (const published of [true, false]) {
-			const { controller, submitted } = harness({ isPublished: () => published });
+		for (const attached of [true, false]) {
+			const { controller, submitted } = harness({ isAttached: () => attached });
 			await assert.rejects(controller.requestChange({ unsupported: true }), /Unsupported/);
 			await assert.rejects(controller.requestChange({ unsafe: true }), /Unsafe transition/);
 			assert.equal(controller.current.revision, 0);
 			assert.equal(submitted.length, 0);
 			const valid = controller.requestChange({});
-			if (published) {
+			if (attached) {
 				controller.process(at(submitted).message, context(), at(submitted).metadata);
 			}
 			assert.equal((await valid).status, "applied");
 		}
 	});
 
-	it("enforces the injected lifecycle guard for both published and unpublished changes", async () => {
-		for (const published of [true, false]) {
+	it("enforces the injected lifecycle guard for both attached and unattached changes", async () => {
+		for (const attached of [true, false]) {
 			const { controller, submitted } = harness({
-				isPublished: () => published,
+				isAttached: () => attached,
 				verifyCanChange: () => {
 					throw new Error("Read-only or prohibited phase");
 				},
@@ -285,7 +285,7 @@ describe("ChannelConfigurationController", () => {
 	});
 
 	it("prohibits reentrant requests and ordinary submission during callbacks", async () => {
-		const { controller } = harness({ isPublished: () => false });
+		const { controller } = harness({ isAttached: () => false });
 		let nested: Promise<unknown> | undefined;
 		controller.on("changed", () => {
 			nested = assert.rejects(controller.requestChange({}), /configuration callback/);
@@ -384,7 +384,7 @@ describe("ChannelConfigurationController", () => {
 	});
 
 	it("treats local callback failure as fatal rather than rolling back and continuing", async () => {
-		const { controller, submitted } = harness({ isPublished: () => false });
+		const { controller, submitted } = harness({ isAttached: () => false });
 		controller.on("changed", () => {
 			throw new Error("Local callback failed");
 		});
@@ -497,14 +497,14 @@ describe("ChannelConfigurationController", () => {
 		assert.equal((await accepted).status, "applied");
 	});
 
-	it("loads persisted snapshots independently of publication state and submission limits", () => {
+	it("loads persisted snapshots independently of attachment state and submission limits", () => {
 		const snapshot = { version: 1, revision: 4, values: { text: "a".repeat(1024) } };
 		for (const limit of [0, undefined, 64]) {
-			for (const published of [false, true]) {
+			for (const attached of [false, true]) {
 				let reads = 0;
 				const { controller, changes } = harness({
 					snapshot,
-					isPublished: () => published,
+					isAttached: () => attached,
 					maxMessageSize: () => {
 						reads++;
 						return limit;
@@ -579,7 +579,7 @@ describe("ChannelConfigurationController", () => {
 	it("allows detached changes with an unknown limit but still bounds their serialized size", async () => {
 		for (const limit of [0, undefined]) {
 			const { controller, submitted, changes } = harness({
-				isPublished: () => false,
+				isAttached: () => false,
 				maxMessageSize: () => limit,
 			});
 			const first = controller.requestChange({});
@@ -601,15 +601,15 @@ describe("ChannelConfigurationController", () => {
 		}
 	});
 
-	it("does not carry the detached fallback into published submissions", async () => {
-		let published = false;
+	it("does not carry the detached fallback into attached submissions", async () => {
+		let attached = false;
 		let limit = 0;
 		const { controller, submitted } = harness({
-			isPublished: () => published,
+			isAttached: () => attached,
 			maxMessageSize: () => limit,
 		});
 		await controller.requestChange({});
-		published = true;
+		attached = true;
 		await assert.rejects(controller.requestChange({}), /size limit/);
 		assert.equal(controller.current.revision, 1);
 		assert.equal(submitted.length, 0);
@@ -625,7 +625,7 @@ describe("ChannelConfigurationController", () => {
 			/Unsupported/,
 		);
 		assert.throws(
-			() => harness({ source: "create", isPublished: () => false, maxMessageSize: () => 1 }),
+			() => harness({ source: "create", isAttached: () => false, maxMessageSize: () => 1 }),
 			/message size/,
 		);
 		for (const limit of [0, undefined, -1, Number.NaN, Infinity, 1.5]) {
@@ -635,7 +635,7 @@ describe("ChannelConfigurationController", () => {
 		for (const limit of [-1, Number.NaN, Infinity, 1.5]) {
 			assert.throws(
 				() =>
-					harness({ source: "create", isPublished: () => false, maxMessageSize: () => limit }),
+					harness({ source: "create", isAttached: () => false, maxMessageSize: () => limit }),
 				/size limit/,
 			);
 		}
@@ -745,8 +745,8 @@ describe("channel configuration format", () => {
 		it(`rejects ${name} in copying and both local authority modes`, async () => {
 			const value = create();
 			assert.throws(() => copyChannelConfiguration(value));
-			for (const published of [true, false]) {
-				const { controller, submitted, changes } = harness({ isPublished: () => published });
+			for (const attached of [true, false]) {
+				const { controller, submitted, changes } = harness({ isAttached: () => attached });
 				await assert.rejects(controller.requestChange(value as ChannelConfiguration));
 				assert.equal(controller.current.revision, 0);
 				assert.equal(submitted.length, 0);

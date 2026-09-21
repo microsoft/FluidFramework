@@ -413,13 +413,6 @@ export class FluidDataStoreRuntime
 		policies?: Partial<IFluidDataStorePolicies>,
 	) {
 		super();
-		Object.defineProperty(this, "registerChannelConfigurationPublication", {
-			value: (publish: () => void): void => {
-				(
-					this.dataStoreContext.containerRuntime as ChannelConfigurationRuntime
-				).registerChannelConfigurationPublication?.(publish);
-			},
-		});
 		for (const key of [
 			"isChannelConfigurationEnabled",
 			"isChannelConfigurationCreationEnabled",
@@ -431,11 +424,6 @@ export class FluidDataStoreRuntime
 					) === true,
 			});
 		}
-		Object.defineProperty(this, "channelConfigurationPublicationRequired", {
-			get: () =>
-				(this.dataStoreContext.containerRuntime as ChannelConfigurationRuntime)
-					.channelConfigurationPublicationRequired === true,
-		});
 		this.sharedObjectRegistry = new LegacyTypeAwareRegistry(sharedObjectRegistry);
 
 		assert(

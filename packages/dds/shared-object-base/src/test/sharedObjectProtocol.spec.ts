@@ -91,7 +91,6 @@ describe("SharedObject protocol dispatch", () => {
 		const registered = {
 			prepareLocalMessage: (content: unknown) => ({ content }),
 			submitWhileDetached: defaultSharedObjectProtocol.submitWhileDetached,
-			flushPendingSubmissions: defaultSharedObjectProtocol.flushPendingSubmissions,
 			processMessages: defaultSharedObjectProtocol.processMessages,
 			applyStashedOp: defaultSharedObjectProtocol.applyStashedOp,
 			reSubmit: defaultSharedObjectProtocol.reSubmit,
@@ -136,7 +135,6 @@ describe("SharedObject protocol dispatch", () => {
 		const protocol = getSharedObjectProtocol({});
 		const content = {};
 		protocol.submitWhileDetached(content, {});
-		protocol.flushPendingSubmissions();
 		protocol.close(new Error("unrelated instance failure"));
 		const other = getSharedObjectProtocol({});
 		assert.equal(other.prepareLocalMessage(content), content);

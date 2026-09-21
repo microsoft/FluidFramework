@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import type {
 	ChannelConfigurationRuntime,
 	IChannel,
@@ -31,10 +32,9 @@ import {
 
 import { ChannelDeltaConnection } from "./channelDeltaConnection.js";
 import {
-	publishChannelConfiguration,
 	requireChannelConfigurationController,
 	validateChannelConfiguration,
-	verifyChannelConfigurationPublication,
+	verifyChannelConfigurationCapability,
 } from "./channelConfiguration.js";
 import { ChannelStorageService } from "./channelStorageService.js";
 import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
@@ -117,18 +117,15 @@ export function summarizeChannel(
 	fullTree: boolean = false,
 	trackState: boolean = false,
 	telemetryContext?: ITelemetryContext,
-	publicationRuntime?: IFluidDataStoreRuntime,
+	runtime?: IFluidDataStoreRuntime,
 ): ISummaryTreeWithStats {
-	if (publicationRuntime !== undefined) {
-		verifyChannelConfigurationPublication(channel, publicationRuntime);
+	if (runtime !== undefined) {
+		verifyChannelConfigurationCapability(channel, runtime);
 	}
 	const summarizeResult = channel.getAttachSummary(fullTree, trackState, telemetryContext);
 
 	// Add the channel attributes to the returned result.
 	addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
-	if (publicationRuntime !== undefined) {
-		publishChannelConfiguration(channel, publicationRuntime);
-	}
 	return summarizeResult;
 }
 
@@ -218,8 +215,7 @@ export async function loadChannel(
 	const configured = validateChannelConfiguration(attributes, factory);
 	if (
 		configured &&
-		(dataStoreRuntime as IFluidDataStoreRuntime & ChannelConfigurationRuntime)
-			.channelConfigurationPublicationRequired === true &&
+		dataStoreRuntime.attachState !== AttachState.Detached &&
 		(
 			dataStoreRuntime as IFluidDataStoreRuntime & ChannelConfigurationRuntime
 		).isChannelConfigurationEnabled?.(attributes.type) !== true
@@ -247,11 +243,8 @@ export async function loadChannel(
 		if (!validateChannelConfiguration(channel.attributes)) {
 			throw new DataCorruptionError("Configured channel lost its persisted attributes", {});
 		}
-		if (
-			(dataStoreRuntime as IFluidDataStoreRuntime & ChannelConfigurationRuntime)
-				.channelConfigurationPublicationRequired === true
-		) {
-			publishChannelConfiguration(channel, dataStoreRuntime);
+		if (dataStoreRuntime.attachState !== AttachState.Detached) {
+			verifyChannelConfigurationCapability(channel, dataStoreRuntime);
 		}
 	} else if (channel.attributes !== undefined && "configuration" in channel.attributes) {
 		throw new DataCorruptionError(

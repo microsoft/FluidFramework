@@ -1769,11 +1769,6 @@ export class ContainerRuntime
 	) {
 		super();
 		Object.defineProperties(this, {
-			registerChannelConfigurationPublication: {
-				value: (publish: () => void): void => {
-					this.channelConfigurationPublications.push(publish);
-				},
-			},
 			isChannelConfigurationEnabled: {
 				value: (type: string): boolean =>
 					this.documentsSchemaController.sessionSchema.runtime.channelConfiguration?.includes(
@@ -1783,9 +1778,6 @@ export class ContainerRuntime
 			isChannelConfigurationCreationEnabled: {
 				value: (type: string): boolean =>
 					this.runtimeOptions.channelConfigurationTypes?.includes(type) === true,
-			},
-			channelConfigurationPublicationRequired: {
-				get: () => this.attachState !== AttachState.Detached,
 			},
 		});
 
@@ -2460,8 +2452,6 @@ export class ContainerRuntime
 		}
 	}
 
-	private channelConfigurationPublications: (() => void)[] = [];
-
 	public getCreateChildSummarizerNodeFn(
 		id: string,
 		createParam: CreateChildSummarizerNodeParam,
@@ -2678,7 +2668,6 @@ export class ContainerRuntime
 			return;
 		}
 		this._disposed = true;
-		this.channelConfigurationPublications = [];
 
 		// The ContainerRuntimeDisposed event is redundant with the loader's ContainerDispose event
 		// (see #27126) and can be removed once the change for ContainerDispose has saturated in telemetry.
@@ -4320,13 +4309,6 @@ export class ContainerRuntime
 				this.attachState === AttachState.Attaching,
 				0x12d /* "Container Context should already be in attaching state" */,
 			);
-			// The loader captures its summary while still detached, then synchronously changes
-			// attach state. Publish all captured channels before any datastore can emit callbacks.
-			const publications = this.channelConfigurationPublications;
-			this.channelConfigurationPublications = [];
-			for (const publish of publications) {
-				publish();
-			}
 		} else {
 			assert(
 				this.attachState === AttachState.Attached,
@@ -4351,7 +4333,6 @@ export class ContainerRuntime
 		blobRedirectTable?: Map<string, string>,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTree {
-		this.channelConfigurationPublications = [];
 		if (blobRedirectTable) {
 			this.blobManager.patchRedirectTable(blobRedirectTable);
 		}

@@ -6,7 +6,6 @@
 import type { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import type {
-	ChannelConfigurationRuntime,
 	IChannel,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
@@ -38,7 +37,7 @@ import {
 	summarizeChannelAsync,
 } from "./channelContext.js";
 import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
-import { publishChannelConfiguration } from "./channelConfiguration.js";
+import { verifyChannelConfigurationCapability } from "./channelConfiguration.js";
 
 /**
  * Channel context for a locally created channel
@@ -156,24 +155,13 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 			this._channel !== undefined,
 			0x18d /* "Channel should be loaded to take snapshot" */,
 		);
-		const runtime = this.runtime as IFluidDataStoreRuntime & ChannelConfigurationRuntime;
-		const result = summarizeChannel(
+		return summarizeChannel(
 			this._channel,
 			true /* fullTree */,
 			false /* trackState */,
 			telemetryContext,
-			runtime.channelConfigurationPublicationRequired === true ? this.runtime : undefined,
+			this.runtime,
 		);
-		if (
-			runtime.channelConfigurationPublicationRequired !== true &&
-			"configuration" in this._channel.attributes
-		) {
-			const channel = this._channel;
-			runtime.registerChannelConfigurationPublication?.(() =>
-				publishChannelConfiguration(channel, this.runtime),
-			);
-		}
-		return result;
 	}
 
 	/**
@@ -199,7 +187,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 
 		if (this.isLoaded) {
 			assert(!!this._channel, 0x192 /* "Channel should be there if loaded!!" */);
-			publishChannelConfiguration(this._channel, this.runtime);
+			verifyChannelConfigurationCapability(this._channel, this.runtime);
 			this._channel.connect(this.services.value);
 		}
 		this.globallyVisible = true;
@@ -294,9 +282,6 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 						subLogger,
 						this.id,
 					);
-					if (this.isGloballyVisible) {
-						publishChannelConfiguration(channel, runtime);
-					}
 					// Send all pending messages to the channel
 					for (const messageCollection of this.pendingMessagesState.messageCollections) {
 						this.services.value.deltaConnection.processMessages(messageCollection);

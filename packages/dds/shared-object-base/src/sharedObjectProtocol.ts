@@ -12,7 +12,6 @@ import type { IRuntimeMessageCollection } from "@fluidframework/runtime-definiti
 export interface SharedObjectProtocol {
 	prepareLocalMessage(content: unknown): unknown;
 	submitWhileDetached(content: unknown, metadata: unknown): void;
-	flushPendingSubmissions(): void;
 	processMessages(
 		messages: IRuntimeMessageCollection,
 		deliver: (messages: IRuntimeMessageCollection) => void,
@@ -37,8 +36,6 @@ class DefaultSharedObjectProtocol implements SharedObjectProtocol {
 	}
 
 	public submitWhileDetached(content: unknown, metadata: unknown): void {}
-
-	public flushPendingSubmissions(): void {}
 
 	public processMessages(
 		messages: IRuntimeMessageCollection,

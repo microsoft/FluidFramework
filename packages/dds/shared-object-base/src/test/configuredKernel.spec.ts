@@ -13,7 +13,6 @@ import type {
 	IChannel,
 	IChannelAttributes,
 	IChannelServices,
-	ChannelConfigurationChannel,
 } from "@fluidframework/datastore-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import type {
@@ -207,12 +206,6 @@ function requireConfig(view: View): ChannelConfigurationFacet<Config> {
 	return view.config;
 }
 
-function publish(shared: IChannel): void {
-	const configured = shared as IChannel & ChannelConfigurationChannel;
-	assert(configured.onChannelConfigurationPublication !== undefined);
-	configured.onChannelConfigurationPublication();
-}
-
 function datastoreHarness(
 	factory: ReturnType<ReturnType<typeof makeKind>["getFactory"]>,
 	onLoad: (shared: IChannel & View) => void = () => {},
@@ -230,7 +223,6 @@ function datastoreHarness(
 	context.containerRuntime = Object.assign(context.containerRuntime, {
 		isChannelConfigurationEnabled: (type: string) => type === "configured-test",
 		isChannelConfigurationCreationEnabled: () => false,
-		channelConfigurationPublicationRequired: true,
 	});
 	context.baseSnapshot = {
 		blobs: {},
@@ -301,7 +293,6 @@ describe("configured kernel composition", () => {
 		context.containerRuntime = Object.assign(context.containerRuntime, {
 			isChannelConfigurationEnabled: (type: string) => type === "configured-test",
 			isChannelConfigurationCreationEnabled: () => false,
-			channelConfigurationPublicationRequired: true,
 		});
 		context.baseSnapshot = {
 			blobs: {},
@@ -571,31 +562,43 @@ describe("configured kernel composition", () => {
 	});
 
 	it("keeps an unbound channel local even inside an attached container", async () => {
-		const { runtime, submitted } = harness();
+		const { runtime, services, delta, submitted } = harness();
 		const shared = makeKind({}).getFactory().create(runtime, "unbound");
-		const result = await requireConfig(shared).requestChange({ retain: true });
+		const config = requireConfig(shared);
+		assert.equal(shared.isAttached(), false);
+		const result = await config.requestChange({ retain: true });
 		assert.equal(result.source, "local");
-		assert.deepEqual(submitted, []);
+		assert.equal(submitted.length, 0);
+		shared.connect(services);
+		assert.equal(shared.isAttached(), true);
+		const request = config.requestChange({ retain: false });
+		assert.equal(config.current.values.retain, true);
+		const proposal = submitted[0];
+		assert(proposal !== undefined);
+		delta.processMessages(collection([proposal.contents], true, [proposal.metadata]));
+		const sequenced = await request;
+		assert.equal(sequenced.source, "sequenced");
 	});
 
 	it("requires creation opt-in but not document-schema readiness for local configuration", async () => {
-		const { runtime } = harness(AttachState.Detached);
+		const { runtime, services } = harness(AttachState.Detached);
 		runtime.isChannelConfigurationCreationEnabled = () => false;
 		assert.throws(() => makeKind({}).getFactory().create(runtime, "dark"), /creation/i);
 		runtime.isChannelConfigurationCreationEnabled = (type) => type === "configured-test";
 		runtime.isChannelConfigurationEnabled = () => false;
 		const shared = makeKind({}).getFactory().create(runtime, "local");
 		await requireConfig(shared).requestChange({ retain: true });
-		assert.throws(() => publish(shared), /capability/i);
+		shared.connect(services);
+		assert.throws(() => runtime.setAttachState(AttachState.Attaching), /capability/i);
 		assert.equal(requireConfig(shared).current.values.retain, true);
 	});
 
-	it("checks the exact factory type separately for creation and publication", async () => {
-		const { runtime, submitted } = harness();
+	it("checks the exact factory type separately for creation and attachment", async () => {
+		const { runtime, services, submitted } = harness();
 		const firstFactory = makeKind({}).getFactory();
 		const secondFactory = makeKind({}, true, "other-configured-test").getFactory();
 		const first = firstFactory.create(runtime, "first-instance");
-		publish(first);
+		first.connect(services);
 		assert.throws(
 			() => secondFactory.create(runtime, firstFactory.type),
 			/creation is not enabled for this type/,
@@ -611,42 +614,68 @@ describe("configured kernel composition", () => {
 		const result = await change;
 		assert.equal(result.source, "local");
 		assert.equal(submitted.length, 0);
-		assert.throws(() => publish(second), /capability is not enabled for this type/);
+		assert.throws(
+			() => second.connect(harness().services),
+			/capability is not enabled for this type/,
+		);
 
 		runtime.isChannelConfigurationEnabled = (type) =>
 			type === firstFactory.type || type === secondFactory.type;
 		runtime.isChannelConfigurationCreationEnabled = () => false;
-		publish(second);
+		const loaded = await secondFactory.load(
+			runtime,
+			"reader",
+			harness().services,
+			second.attributes,
+		);
+		assert.equal(requireConfig(loaded).current.values.retain, true);
 		assert.equal(requireConfig(first).current.revision, 0);
 	});
 
-	it("captures latest local state and queues later changes until attachment without changing the baseline", async () => {
+	it("keeps connected detached changes local and sequences changes from attaching onward", async () => {
 		const { runtime, services, submitted, delta } = harness(AttachState.Detached);
 		const shared = makeKind({}).getFactory().create(runtime, "attaching");
 		const config = requireConfig(shared);
 		await config.requestChange({ retain: true });
 		shared.getAttachSummary();
 		const baseline = JSON.stringify(shared.attributes);
-		publish(shared);
-		const change = config.requestChange({ retain: false });
-		shared.edit("after snapshot");
-		assert.equal(config.current.values.retain, true);
-		assert.equal(JSON.stringify(shared.attributes), baseline);
-		assert.equal(submitted.length, 0);
 		shared.connect(services);
+		assert.equal(shared.isAttached(), false);
+		const local = config.requestChange({ retain: false });
+		shared.edit("detached after serialization");
+		assert.equal(config.current.values.retain, false);
+		assert.notEqual(JSON.stringify(shared.attributes), baseline);
+		assert.equal(submitted.length, 0);
+		const localResult = await local;
+		assert.equal(localResult.source, "local");
 		runtime.setAttachState(AttachState.Attaching);
+		assert.equal(shared.isAttached(), true);
+		const change = config.requestChange({ retain: true });
+		shared.edit("attaching");
+		assert.equal(config.current.values.retain, false);
 		assert.equal(submitted.length, 2);
 		const proposal = submitted[0];
 		assert(proposal !== undefined);
-		assert.deepEqual(proposal.contents, barrier(1, false));
-		assert.deepEqual(submitted[1]?.contents, operation("after snapshot", 1));
+		assert.deepEqual(proposal.contents, barrier(2, true));
+		assert.deepEqual(submitted[1]?.contents, operation("attaching", 2));
 		delta.processMessages(collection([proposal.contents], true, [proposal.metadata]));
 		const result = await change;
 		assert.equal(result.source, "sequenced");
-		assert.equal(config.current.values.retain, false);
+		assert.equal(config.current.values.retain, true);
+		runtime.setAttachState(AttachState.Attached);
+		const attached = config.requestChange({});
+		assert.equal(config.current.revision, 3);
+		const attachedProposal = submitted[2];
+		assert(attachedProposal !== undefined);
+		delta.processMessages(
+			collection([attachedProposal.contents], true, [attachedProposal.metadata]),
+		);
+		const attachedResult = await attached;
+		assert.equal(attachedResult.source, "sequenced");
+		assert.equal(config.current.revision, 4);
 	});
 
-	it("keeps disconnected published requests pending and preserves CAS completion through replay", async () => {
+	it("keeps disconnected attached requests pending and preserves CAS completion through replay", async () => {
 		const { runtime, delta, services, submitted } = harness();
 		const factory = makeKind({}).getFactory();
 		const shared = await factory.load(
@@ -681,88 +710,73 @@ describe("configured kernel composition", () => {
 		assert.equal(config.current.values.retain, true);
 	});
 
-	for (const queued of [false, true]) {
-		it(`envelopes ordinary edits from synchronous dirty listeners during ${queued ? "queued" : "immediate"} control submission`, async () => {
-			const events = new EventEmitter();
-			const { runtime, delta, services, submitted } = harness(AttachState.Attached, () =>
-				events.emit("dirty"),
-			);
-			const factory = makeKind({}).getFactory();
-			const shared = factory.create(runtime, "reentrant");
-			publish(shared);
-			const remote = harness();
-			const peer = await factory.load(
-				remote.runtime,
-				"peer",
-				remote.services,
-				shared.attributes,
-			);
-			if (!queued) {
-				shared.connect(services);
-			}
-			const config = requireConfig(shared);
-			const contents = { edit: "from dirty event" };
-			const metadata = { origin: "dirty listener" };
-			events.once("dirty", () => shared.edit(contents, metadata));
-
-			const request = config.requestChange({ retain: true });
-			if (queued) {
-				assert.equal(submitted.length, 0);
-				shared.connect(services);
-			}
-			assert.equal(submitted.length, 2);
-			assert.deepEqual(submitted[0]?.contents, barrier(0, true));
-			assert.deepEqual(submitted[1]?.contents, operation(contents));
-			assert.equal(submitted[1]?.metadata, metadata);
-			assert.equal(config.current.revision, 0);
-			assert.deepEqual(shared.observed.at(-1), ["optimistic", contents]);
-
-			delta.processMessages(
-				collection(
-					submitted.map((message) => message.contents),
-					true,
-					submitted.map((message) => message.metadata),
-				),
-			);
-			const result = await request;
-			assert.equal(result.status, "applied");
-			assert.deepEqual(shared.observed.at(-1), ["operation", contents, metadata, 0, 1, true]);
-			remote.delta.processMessages(collection(submitted.map((message) => message.contents)));
-			assert.deepEqual(peer.observed.at(-1), ["operation", contents, undefined, 0, 1, false]);
-		});
-	}
-
-	it("queues published changes while bound but not yet connected to services", async () => {
-		const { runtime, services, submitted, delta } = harness();
-		const shared = makeKind({}).getFactory().create(runtime, "bound");
-		(shared as View & ISharedObject).bindToContext();
-		assert(shared.isAttached());
-		publish(shared);
-		const request = requireConfig(shared).requestChange({ retain: true });
-		shared.edit("before services");
-		assert.equal(submitted.length, 0);
+	it("envelopes ordinary edits from synchronous dirty listeners on an attached channel", async () => {
+		const events = new EventEmitter();
+		const { runtime, delta, services, submitted } = harness(AttachState.Attached, () =>
+			events.emit("dirty"),
+		);
+		const factory = makeKind({}).getFactory();
+		const shared = factory.create(runtime, "reentrant");
+		const remote = harness();
+		const peer = await factory.load(
+			remote.runtime,
+			"peer",
+			remote.services,
+			shared.attributes,
+		);
 		shared.connect(services);
+		const config = requireConfig(shared);
+		const contents = { edit: "from dirty event" };
+		const metadata = { origin: "dirty listener" };
+		events.once("dirty", () => shared.edit(contents, metadata));
+
+		const request = config.requestChange({ retain: true });
 		assert.equal(submitted.length, 2);
-		const proposal = submitted[0];
-		assert(proposal !== undefined);
-		assert.deepEqual(submitted[1]?.contents, operation("before services"));
-		delta.processMessages(collection([proposal.contents], true, [proposal.metadata]));
+		assert.deepEqual(submitted[0]?.contents, barrier(0, true));
+		assert.deepEqual(submitted[1]?.contents, operation(contents));
+		assert.equal(submitted[1]?.metadata, metadata);
+		assert.equal(config.current.revision, 0);
+		assert.deepEqual(shared.observed.at(-1), ["optimistic", contents]);
+
+		delta.processMessages(
+			collection(
+				submitted.map((message) => message.contents),
+				true,
+				submitted.map((message) => message.metadata),
+			),
+		);
 		const result = await request;
 		assert.equal(result.status, "applied");
+		assert.deepEqual(shared.observed.at(-1), ["operation", contents, metadata, 0, 1, true]);
+		remote.delta.processMessages(collection(submitted.map((message) => message.contents)));
+		assert.deepEqual(peer.observed.at(-1), ["operation", contents, undefined, 0, 1, false]);
 	});
 
-	it("uses container publication state when a loaded datastore still reports detached", async () => {
-		const { runtime, services, submitted } = harness(AttachState.Detached);
+	it("keeps a rehydrated detached channel local until attaching", async () => {
+		const { runtime, services, delta, submitted } = harness(AttachState.Detached);
 		const factory = makeKind({}).getFactory();
 		const base = factory.create(runtime, "base");
-		Object.assign(runtime, { channelConfigurationPublicationRequired: true });
-		const shared = await factory.load(runtime, "loaded", services, base.attributes);
+		await requireConfig(base).requestChange({ retain: true });
+		const attributes = JSON.parse(JSON.stringify(base.attributes)) as IChannelAttributes;
+		runtime.isChannelConfigurationCreationEnabled = () => false;
+		const shared = await makeKind().getFactory().load(runtime, "loaded", services, attributes);
 		const config = requireConfig(shared);
-		const request = config.requestChange({ retain: true });
-		assert.equal(config.current.revision, 0);
+		assert.equal(config.current.values.retain, true);
+		const local = config.requestChange({ retain: false });
+		assert.equal(shared.isAttached(), false);
+		assert.equal(config.current.revision, 2);
+		const localResult = await local;
+		assert.equal(localResult.source, "local");
 		assert.equal(submitted.length, 0);
-		runtime.dispose();
-		await assert.rejects(request, /disposed/);
+		runtime.setAttachState(AttachState.Attaching);
+		const request = config.requestChange({});
+		assert.equal(config.current.revision, 2);
+		const proposal = submitted[0];
+		assert(proposal !== undefined);
+		delta.processMessages(collection([proposal.contents], true, [proposal.metadata]));
+		const result = await request;
+		assert.equal(result.source, "sequenced");
+		assert.equal(config.current.revision, 3);
 	});
 
 	it("restores configuration intent without activation and rejects rollback, read-only and disposal", async () => {

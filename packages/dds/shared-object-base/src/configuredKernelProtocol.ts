@@ -23,28 +23,15 @@ export class ConfiguredKernelProtocol<TConfig extends ChannelConfiguration>
 {
 	private replayRevision: number | undefined;
 	private submittingControl = false;
-	private readonly pendingSubmissions: { contents: unknown; metadata: unknown }[] = [];
 
 	public constructor(
 		public readonly controller: ChannelConfigurationController<TConfig>,
 		private readonly submit: (contents: unknown, metadata: unknown) => void,
 		private readonly verifyCanSubmit: () => void,
-		private readonly isPublished: () => boolean,
 		private readonly recordResult: (result: ConfigurationChangeResult<TConfig>) => void,
 	) {}
 
-	public submitWhileDetached(contents: unknown, metadata: unknown): void {
-		if (this.isPublished()) {
-			// The initial snapshot is already captured, but the runtime has not connected the channel.
-			this.pendingSubmissions.push({ contents, metadata });
-		}
-	}
-
-	public flushPendingSubmissions(): void {
-		for (const { contents, metadata } of this.pendingSubmissions.splice(0)) {
-			this.submitControl(contents, metadata);
-		}
-	}
+	public submitWhileDetached(contents: unknown, metadata: unknown): void {}
 
 	public submitControl(contents: unknown, metadata: unknown): void {
 		this.submittingControl = true;
@@ -147,7 +134,6 @@ export class ConfiguredKernelProtocol<TConfig extends ChannelConfiguration>
 
 	public close(error: unknown): void {
 		this.controller.dispose(error);
-		this.pendingSubmissions.length = 0;
 	}
 
 	private verifyRevision(revision: number): void {

@@ -15,9 +15,9 @@ import {
 
 /**
  * Bounds detached configuration before a service advertises its limit.
- * This is not a service capability; published submissions use the runtime's actual limit.
+ * This is not a service capability; attached submissions use the runtime's actual limit.
  */
-const unpublishedConfigurationMaxMessageSize = 16 * 1024;
+const detachedConfigurationMaxMessageSize = 16 * 1024;
 
 /**
  * An immutable JSON property bag without handles.
@@ -71,7 +71,7 @@ export interface ChannelConfigurationSequencedContext {
 }
 
 /**
- * A final, unpublished local change has no service sequence information.
+ * A final, unattached local change has no service sequence information.
  * @internal
  */
 export interface ChannelConfigurationLocalContext {
@@ -129,14 +129,14 @@ export interface ChannelConfigurationControllerOptions<TConfig extends ChannelCo
 	readonly definition: ChannelConfigurationDefinition<TConfig>;
 	readonly snapshot: unknown;
 	readonly source: "create" | "load";
-	readonly isPublished: () => boolean;
+	readonly isAttached: () => boolean;
 	readonly verifyCanChange: () => void;
 	readonly submit: (message: ChannelConfigurationMessageV1, localOpMetadata: unknown) => void;
 	/**
 	 * Maximum serialized submission size in bytes, supplied by the runtime.
-	 * When this returns zero or undefined for an unpublished channel, use a conservative
+	 * When this returns zero or undefined for an unattached channel, use a conservative
 	 * 16 KiB bound without waiting for a connection. Other invalid limits are rejected.
-	 * Published submissions require a valid runtime limit.
+	 * Attached submissions require a valid runtime limit.
 	 * This client-local limit does not constrain loaded snapshots, sequenced messages,
 	 * or stashed-op capture.
 	 */
@@ -150,7 +150,7 @@ interface PendingChange<TConfig extends ChannelConfiguration> {
 
 /**
  * Shared compare-and-swap state and local request completion tracking.
- * Published proposals are never activated before sequencing.
+ * Attached proposals are never activated before sequencing.
  * @internal
  */
 export class ChannelConfigurationController<TConfig extends ChannelConfiguration>
@@ -181,8 +181,8 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	}
 
 	/**
-	 * Captures the revision and replacement synchronously. Unpublished changes also apply
-	 * synchronously; published changes complete only after their sequenced outcome.
+	 * Captures the revision and replacement synchronously. Unattached changes also apply
+	 * synchronously; attached changes complete only after their sequenced outcome.
 	 */
 	public async requestChange(next: TConfig): Promise<ConfigurationChangeResult<TConfig>> {
 		this.verifyCanSubmit();
@@ -205,7 +205,7 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 			this.processing = false;
 		}
 		this.verifyCanSubmit();
-		if (!this.options.isPublished()) {
+		if (!this.options.isAttached()) {
 			this.processing = true;
 			try {
 				return this.apply(values, { source: "local", local: true });
@@ -370,8 +370,8 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	private checkSize(value: unknown): void {
 		const runtimeLimit = this.options.maxMessageSize();
 		const limit =
-			(runtimeLimit === 0 || runtimeLimit === undefined) && !this.options.isPublished()
-				? unpublishedConfigurationMaxMessageSize
+			(runtimeLimit === 0 || runtimeLimit === undefined) && !this.options.isAttached()
+				? detachedConfigurationMaxMessageSize
 				: runtimeLimit;
 		if (typeof limit !== "number" || !Number.isSafeInteger(limit) || limit <= 0) {
 			throw new UsageError("Channel configuration requires a supported message size limit");

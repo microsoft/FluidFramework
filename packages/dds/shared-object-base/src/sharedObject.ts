@@ -62,10 +62,7 @@ import { v4 as uuid } from "uuid";
 import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, type IFluidSerializer } from "./serializer.js";
-import {
-	defaultSharedObjectProtocol,
-	getSharedObjectProtocol,
-} from "./sharedObjectProtocol.js";
+import { getSharedObjectProtocol } from "./sharedObjectProtocol.js";
 import type { ISharedObject, ISharedObjectEvents } from "./types.js";
 import { bindHandles, makeHandlesSerializable, parseHandles } from "./utils.js";
 
@@ -352,7 +349,6 @@ export abstract class SharedObjectCore<
 			this.attachDeltaHandler();
 		}
 
-		getSharedObjectProtocol(this).flushPendingSubmissions();
 		this.setBoundAndHandleAttach();
 	}
 
@@ -444,12 +440,7 @@ export abstract class SharedObjectCore<
 		this.verifyNotClosed();
 		const protocol = getSharedObjectProtocol(this);
 		const preparedContent = protocol.prepareLocalMessage(content);
-		// Legacy attached submission requires services; configured channels can queue
-		// between initial snapshot publication and channel connection.
-		if (
-			this.isAttached() &&
-			(this.services !== undefined || protocol === defaultSharedObjectProtocol)
-		) {
+		if (this.isAttached()) {
 			// NOTE: We may also be encoding in the ContainerRuntime layer.
 			// Once the layer-compat window passes we can remove the encoding codepath here altogether
 			const onlyBind =
