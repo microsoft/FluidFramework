@@ -49,7 +49,7 @@ export function replaceRepoRootTokens(
  * @param task - The declarative task to validate.
  * @throws If a declarative glob or additional config file contains a backslash.
  */
-export function validateDeclarativeTaskGlobSeparators(task: TaskFileDependencies): void {
+export function validateDeclarativeTaskPathSeparators(task: TaskFileDependencies): void {
 	for (const [kind, paths] of [
 		["inputGlob", task.inputGlobs],
 		["outputGlob", task.outputGlobs],

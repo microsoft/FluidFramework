@@ -8,7 +8,7 @@ import {
 	REPO_ROOT_TOKEN,
 	replaceRepoRootToken,
 	replaceRepoRootTokens,
-	validateDeclarativeTaskGlobSeparators,
+	validateDeclarativeTaskPathSeparators,
 } from "../fluidBuild/fluidBuildConfig.js";
 
 describe("Repo Root Token", () => {
@@ -56,11 +56,11 @@ describe("Repo Root Token", () => {
 			]);
 		});
 
-		describe("validateDeclarativeTaskGlobSeparators", () => {
+		describe("validateDeclarativeTaskPathSeparators", () => {
 			it("rejects backslashes in declarative task paths", () => {
 				assert.throws(
 					() =>
-						validateDeclarativeTaskGlobSeparators({
+						validateDeclarativeTaskPathSeparators({
 							inputGlobs: ["${repoRoot}\\src\\**\\*.ts"],
 							outputGlobs: [],
 						}),
@@ -68,7 +68,7 @@ describe("Repo Root Token", () => {
 				);
 				assert.throws(
 					() =>
-						validateDeclarativeTaskGlobSeparators({
+						validateDeclarativeTaskPathSeparators({
 							inputGlobs: [],
 							outputGlobs: [],
 							additionalConfigFiles: ["${repoRoot}\\common\\config.json"],
