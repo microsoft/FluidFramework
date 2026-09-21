@@ -536,7 +536,7 @@ export class FluidDevtools implements IFluidDevtools {
  * It is automatically disposed on webpage unload, but it can be closed earlier by calling `dispose`
  * on the returned handle.
  *
- * See {@link initializeDevtoolsAlpha} for a variant of this which also supports service client containers.
+ * See {@link initializeDevtoolsAlpha} for a variant of this which also supports {@link @fluidframework/driver-definitions#ServiceClient} containers.
  * @beta
  */
 export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
@@ -544,7 +544,8 @@ export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
 }
 
 /**
- * {@link initializeDevtools} except the returned value exposes {@link FluidDevtoolsAlpha.registerContainerDevtools} which supports service client containers as well.
+ * {@link initializeDevtools} except the returned value exposes {@link FluidDevtoolsAlpha.registerContainerDevtools}
+ * which supports {@link @fluidframework/driver-definitions#ServiceClient} containers as well.
  *
  * @remarks
  * Uses the same singleton as {@link initializeDevtools}.

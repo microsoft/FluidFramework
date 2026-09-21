@@ -56,7 +56,7 @@ export interface IFluidDevtools extends IDisposable {
 }
 
 /**
- * Fluid Devtools with support for containers created by a
+ * {@link IFluidDevtools} with support for containers created by a
  * {@link @fluidframework/driver-definitions#ServiceClient}.
  * @remarks Obtain an instance with {@link initializeDevtoolsAlpha}.
  * @alpha
