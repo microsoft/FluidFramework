@@ -233,6 +233,7 @@ export type {
 
 export type {
 	ISequencedRuntimeMessage, // Leaked via ISharedObjectEvents
+	OldestSupportedClientVersion, // Leaked via CodecWriteOptionsBeta
 } from "@fluidframework/runtime-definitions/internal";
 
 export type {
