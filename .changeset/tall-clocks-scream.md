@@ -3,7 +3,7 @@
 "fluid-framework": minor
 "__section": tree
 ---
-New schema compatibility snapshots use stored keys instead of property keys
+New schema compatibility snapshots will use stored keys instead of property keys
 
 The new schema compatibility snapshot format keys object fields by their persisted stored keys, so renaming a developer-facing property no longer appears to change schema compatibility.
 It also preserves staged optional fields at the root and within objects, allowing compatibility checks to account for staged upgrade policies.
