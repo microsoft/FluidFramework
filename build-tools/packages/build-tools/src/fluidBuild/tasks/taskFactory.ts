@@ -6,6 +6,7 @@
 import { getExecutableFromCommand } from "../../common/utils.js";
 import type { BuildContext } from "../buildContext.js";
 import type { BuildPackage } from "../buildGraph.js";
+import { validateDeclarativeTaskPathSeparators } from "../fluidBuildConfig.js";
 import type { TaskFileDependencies } from "../fluidTaskDefinitions.js";
 import { isConcurrentlyCommand, parseConcurrentlyCommand } from "../parseCommands.js";
 import { GroupTask } from "./groupTask.js";
@@ -104,6 +105,7 @@ function getLeafTaskForCommand(
 		declarativeTasks?.[executable];
 
 	if (taskMatch !== undefined) {
+		validateDeclarativeTaskPathSeparators(taskMatch);
 		return new DeclarativeLeafTask(node, command, context, taskName, taskMatch);
 	}
 
