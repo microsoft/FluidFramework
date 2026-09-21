@@ -11,7 +11,6 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import type {
-	ChannelConfigurationChannel,
 	ChannelConfigurationFactory,
 	ChannelConfigurationRuntime,
 	IChannelAttributes,
@@ -85,12 +84,6 @@ function configuration(tree: ISharedTree): ChannelConfigurationFacet<Configurati
 	return facet;
 }
 
-function publish(tree: ISharedTree): void {
-	const channel = tree as ISharedTree & ChannelConfigurationChannel;
-	assert(channel.onChannelConfigurationPublication !== undefined);
-	channel.onChannelConfigurationPublication();
-}
-
 function revisions(tree: ISharedTree): string[] {
 	const result: string[] = [];
 	let commit = tree.kernel.checkout.branchHistory.getHead();
@@ -125,7 +118,6 @@ function setup(
 			deltaConnection: runtime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		});
-		publish(tree);
 		return {
 			tree,
 			runtime,
@@ -678,6 +670,7 @@ describe("SharedTree persisted configuration", () => {
 		const { tree, runtime, view, submitted } = detached();
 		view.root.insertAtEnd("before the detached barrier");
 		const prior = historyBlob(await summarize(tree));
+		assert.equal(tree.isAttached(), false);
 		assert.equal(typeof prior.detachedSequenceNumber, "number");
 		const changes: ChannelConfigurationChange<Configuration>[] = [];
 		const listener = (change: ChannelConfigurationChange<Configuration>): void => {
@@ -716,6 +709,42 @@ describe("SharedTree persisted configuration", () => {
 		assert.deepEqual(loaded.submitted, []);
 	});
 
+	it("keeps an unbound Tree local in an attached runtime until normal connection", async () => {
+		const runtime = new MockFluidDataStoreRuntime({ attachState: AttachState.Attached });
+		configureRuntime(runtime);
+		const tree = factory(disabledConfiguration).create(runtime, "unbound");
+		const submitted: { contents: unknown; metadata: unknown }[] = [];
+		const delta = new MockDeltaConnection(
+			(contents: unknown, metadata) => submitted.push({ contents, metadata }),
+			() => {},
+		);
+		const view = tree.viewWith(viewConfiguration);
+		view.initialize([]);
+		view.root.insertAtEnd("before binding");
+		tree.getAttachSummary();
+		assert.equal(tree.isAttached(), false);
+		const local = await configuration(tree).requestChange({ retainHistory: true });
+		assert.equal(local.source, "local");
+		const state = tree.kernel.getHistoryRetentionState();
+		assert(state !== undefined && state.start !== null);
+		view.root.insertAtEnd("retained before binding");
+		assert.equal(submitted.length, 0);
+
+		tree.connect({ deltaConnection: delta, objectStorage: new MockStorage() });
+		assert.equal(tree.isAttached(), true);
+		assert.deepEqual(tree.kernel.getHistoryRetentionState(), state);
+		const request = configuration(tree).requestChange({ retainHistory: false });
+		assert.equal(configuration(tree).current.values.retainHistory, true);
+		assert.deepEqual(tree.kernel.getHistoryRetentionState(), state);
+		assert.equal(submitted.length, 1);
+		const proposal = submitted[0];
+		deliverMessage(delta, proposal.contents, 100, true, proposal.metadata);
+		const sequenced = await request;
+		assert.equal(sequenced.source, "sequenced");
+		assert.deepEqual(tree.kernel.getHistoryRetentionState(), { version: 1, start: null });
+		assert.deepEqual([...view.root], ["before binding", "retained before binding"]);
+	});
+
 	it("preserves the detached cursor through summary reload, local changes, and attach", async () => {
 		const source = detached();
 		for (let i = 0; i < 5; i++) {
@@ -730,7 +759,10 @@ describe("SharedTree persisted configuration", () => {
 			factory(),
 			AttachState.Detached,
 		);
-		await configuration(loaded.tree).requestChange({ retainHistory: true });
+		loaded.tree.getAttachSummary();
+		assert.equal(loaded.tree.isAttached(), false);
+		const local = await configuration(loaded.tree).requestChange({ retainHistory: true });
+		assert.equal(local.source, "local");
 		const state = loaded.tree.kernel.getHistoryRetentionState();
 		assert.deepEqual(state, {
 			version: 1,
@@ -742,9 +774,19 @@ describe("SharedTree persisted configuration", () => {
 		});
 		loaded.tree.viewWith(viewConfiguration).root.insertAtEnd("after reload");
 		await configuration(loaded.tree).requestChange({ retainHistory: true });
-		assert.deepEqual(loaded.submitted, []);
+		assert.equal(loaded.submitted.length, 0);
+		loaded.runtime.setAttachState(AttachState.Attaching);
+		assert.equal(loaded.tree.isAttached(), true);
+		assert.deepEqual(loaded.tree.kernel.getHistoryRetentionState(), state);
+		const request = configuration(loaded.tree).requestChange({ retainHistory: true });
+		assert.equal(configuration(loaded.tree).current.revision, 2);
+		assert.equal(loaded.submitted.length, 1);
+		const proposal = loaded.submitted[0];
+		deliverMessage(loaded.delta, proposal.contents, 100, true, proposal.metadata);
+		const sequenced = await request;
+		assert.equal(sequenced.source, "sequenced");
+		assert.equal(configuration(loaded.tree).current.revision, 3);
 		loaded.runtime.setAttachState(AttachState.Attached);
-		publish(loaded.tree);
 		const attached = await load(await summarize(loaded.tree), compressor(source.runtime));
 		assert.deepEqual(attached.tree.kernel.getHistoryRetentionState(), state);
 		assert(attached.tree.viewWith(viewConfiguration).root.includes("after reload"));
@@ -802,7 +844,7 @@ describe("SharedTree persisted configuration", () => {
 		assert.deepEqual(loaded.submitted, []);
 	});
 
-	it("keeps an offline published request pending until sequencing and retains its pending edit", async () => {
+	it("keeps an offline attached request pending until sequencing and retains its pending edit", async () => {
 		const { clients, views, synchronize, advanceWindow } = setup();
 		clients[0].containerRuntime.connected = false;
 		let completed = false;

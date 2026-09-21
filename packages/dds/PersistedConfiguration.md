@@ -112,13 +112,15 @@ Only SharedTree adopts the configuration protocol in production in this prototyp
 The internal test/debug type `ISharedTree` in this example is imported from `treeFactory.ts` inside the Tree package.
 The creation entry point is exported as internal; the per-instance request surface is not a new public Tree API.
 `configuration.on("changed", listener)` and `off` expose the shared synchronous notifications.
-Published requests take effect only when sequenced, including requests made while disconnected.
-Detached or otherwise unpublished requests apply immediately without submitting an op.
-Publication requires the Tree type in the persisted document capability set.
+Requests from an attached Tree take effect only when sequenced, including requests made while disconnected.
+Normal DDS attachment controls this choice: an unbound Tree or a Tree in a detached datastore applies changes locally without an op.
+A bound Tree in an attaching or attached datastore submits configuration ops.
+Serialization alone does not attach the Tree or change this behavior.
+Attachment requires the Tree type in the persisted document capability set.
 In an existing document, normal outgoing traffic can propose adding the Tree type through the desired document schema.
-Publish only after `isChannelConfigurationEnabled(SharedTreeFactoryType)` reports that the type is active; setting the local option does not make publication ready.
+Attach only after `isChannelConfigurationEnabled(SharedTreeFactoryType)` reports that the type is active; setting the local option does not make attachment ready.
 If the proposal loses a compare-and-swap race, the type may remain unavailable for the session; there is no separate activation API or automatic retry.
-Publishing before readiness throws an error instead of switching to the legacy protocol.
+Attaching before readiness throws an error instead of switching to the legacy protocol.
 
 Enabling starts history at the accepted barrier, not at the oldest commit retained by the current client.
 Tree records the first covered main-trunk sequence number and Tree batch index, together with the enabling configuration revision, in its versioned `HistoryRetention` summary blob.
@@ -127,7 +129,7 @@ Thus a commit that sequences after enable is retained even if it was authored un
 An identical enabled replacement does not move the start.
 Disabling and then enabling starts a new retention epoch and cannot recover history already evicted.
 
-The same metadata preserves the unpublished synthetic sequence cursor, even if trimming leaves no commits in the summary.
+The same metadata preserves the unattached synthetic sequence cursor, even if trimming leaves no commits in the summary.
 This keeps the start stable through detached serialization, reload, further local configuration changes, and attach.
 It also preserves the last known collaboration-window minimum, so a configuration-only disable after loading can resume safe pruning without waiting for another Tree edit.
 Loading restores the saved start before replay; it never derives a new start from the latest unrelated configuration replacement or from the summarizer's locally retained ancestry.
