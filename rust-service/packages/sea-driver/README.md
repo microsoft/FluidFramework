@@ -73,8 +73,11 @@ Failed creation closes allocated resources, including a document service whose i
 A failed attachment can still leave backend-allocated data; it does not establish rollback or authorize an implicit retry.
 The shared Fluid container helpers retain their existing bounded cleanup-timer limitations.
 
-Automatic summarization and garbage collection are disabled for this adapter.
-The initial summary and subsequent operation history support loading, but no bounded-history or background-compaction guarantee is made.
+Automatic summarization uses the standard Fluid runtime's election and summary scheduling policy.
+The elected client starts a separate summarizer that publishes and acknowledges snapshots, including incremental summaries, for subsequent loads.
+Client-side garbage collection uses the standard Fluid runtime defaults and persists its state in summaries.
+This is independent of backend retention: Sea retains stored content and operation history, so automatic summaries do not provide bounded history or background compaction.
+The driver still scans retained history to reconstruct sequence-number mappings before replaying the selected snapshot's suffix.
 The wrapper does not add automatic reconnect, authentication, or production membership semantics.
 The driver depends on the standard loader/runtime helpers but still has no transitive SharedTree dependency, including development dependencies.
 
@@ -136,7 +139,7 @@ Full service disposal or a new delta session drains admitted archive work and cl
 Transferred projected subscriptions remain cancellation-owned by their driver consumer.
 The pre-opened event stream can be transferred only once; later subscriptions at the same cursor open independent readers, and cancelling one does not cancel another.
 
-Automatic reconnect, authentication, and garbage collection remain incomplete.
+Automatic reconnect, authentication, and backend garbage collection remain incomplete.
 Ordered writer membership is implemented, but this does not establish production driver conformance.
 Summary download materializes a full tree rather than preserving handles.
 
@@ -182,7 +185,6 @@ Disposal is synchronous at the Fluid interface boundary while session close and 
 The regular `SeaDriver` uses `ClientSelected` snapshot participation, leaving publisher selection to Fluid.
 The direct SharedTree benchmark uses `SeaSelected`, which grants one current publisher fence when no client-selected publisher is active.
 Both receive accepted-snapshot updates; `ReadOnly` receives updates but cannot publish.
-These participation policies do not enable automatic summarization in `createSeaServiceClient`.
 
 ## Development
 

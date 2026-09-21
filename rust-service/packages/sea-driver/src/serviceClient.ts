@@ -44,8 +44,9 @@ export interface SeaServiceOptions extends ServiceOptions {
  * @remarks
  * The caller owns the underlying service; closing containers does not close that service.
  * Document IDs are hexadecimal SEA identities scoped to the injected service.
- * Automatic reconnect, presence, authentication, garbage collection, and automatic summarization
- * are not supported by this adapter.
+ * The standard Fluid runtime elects a summarizer, generates summaries automatically, and manages client-side garbage collection.
+ * Sea retains backend content and history independently of client-side garbage collection.
+ * Automatic reconnect, presence, and authentication are not supported by this adapter.
  * @internal
  */
 export function createSeaServiceClient(options: SeaServiceOptions): ServiceClient {
@@ -62,8 +63,6 @@ const loadRuntime: ContainerRuntimeLoader = async (parameters) => {
 		minVersionForCollab: parameters.minVersionForCollab,
 		runtimeOptions: {
 			enableRuntimeIdCompressor: "on",
-			gcOptions: { gcAllowed: false },
-			summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 		},
 	});
 	if (!parameters.existing) {
