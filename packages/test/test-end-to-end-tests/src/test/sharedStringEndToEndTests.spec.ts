@@ -168,7 +168,7 @@ describeCompat("SharedString grouped batching", "NoCompat", (getTestObjectProvid
 
 	it("can load summarized grouped batch at min seqnum", async function () {
 		// We've seen flakiness in ODSP and r11s. This test is verifying SharedString logic regardless of what service handles the ops/summary.
-		if (!["local", "tinylicious", "t9s"].includes(provider.driver.type)) {
+		if (!["local", "tinylicious", "t9s", "sea-websocket"].includes(provider.driver.type)) {
 			this.skip();
 		}
 		const container1 = await provider.makeTestContainer(groupedBatchingContainerConfig);
@@ -201,7 +201,7 @@ describeCompat("SharedString grouped batching", "NoCompat", (getTestObjectProvid
 
 	it("can load summarized grouped batch", async function () {
 		// We've seen flakiness in ODSP and r11s. This test is verifying SharedString logic regardless of what service handles the ops/summary.
-		if (!["local", "tinylicious", "t9s"].includes(provider.driver.type)) {
+		if (!["local", "tinylicious", "t9s", "sea-websocket"].includes(provider.driver.type)) {
 			this.skip();
 		}
 		const container1 = await provider.makeTestContainer(groupedBatchingContainerConfig);

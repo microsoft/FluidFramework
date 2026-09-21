@@ -1,6 +1,7 @@
 # Sea: Rust Service Presentation
 
 **Measured 2026-09-20:** service/source results at Sea `92ecf30f4a7`; paired browser results at `9cb45f707ab`, with benchmark-only changes for WebSocketStream; Tinylicious LevelDB includes repair `cf89ceb2ec1`.
+**End-to-end tests refreshed 2026-09-21:** Sea passes all 669 recorded Tinylicious current-version passes, plus 20 more.
 160 retained passing browser samples (80 per DDS mode; one additional failed campaign retained), 180 passing repeated service samples, 104 storage probes, and 33 additional LevelDB probes.
 Local, single-host stack comparisons: different features, transports, and persistence guarantees; not production capacity or a language-only comparison.
 
@@ -70,14 +71,14 @@ These are single-run threshold passes from the storage exploration, not repeated
 
 | Aspect | Structured Event Archive (SEA) | Tinylicious |
 | --- | --- | --- |
-| Language | Rust service and shared native/WASM client; TypeScript Fluid adapters | TypeScript service on Node.js |
+| Language | Native Rust service | TypeScript service on Node.js |
 | Repository-owned server code | 19,211 lines: 7,090 test/support + 12,121 other | 35,927 lines: 10,775 test/support + 25,152 other |
-| Fluid end-to-end tests (recorded runs) | 100% of executed tests: 658 passed, 0 failed; 526 pending | 100% of executed tests; current version: 669 passed, 506 pending; compatibility: 3,380 passed, 1,415 pending; 0 failed |
+| Fluid end-to-end tests (689 selected relevant tests) | 100% | 100% |
 | Op throughput: memory (64 B / 8,192 B payload) | 46,000 / 28,000 ops/s | 950 / 850 ops/s |
 | Op throughput: disk, buffered (64 B / 8,192 B payload) | 26,000 / 17,000 ops/s | 900 / 100 ops/s (LevelDB) |
 | Op throughput: synchronized durable acknowledgment (64 B / 8,192 B payload) | 2,000 / 2,000 ops/s; inconsistent results | &#10060; No equivalent acknowledgment guarantee in this configuration |
 | Memory at matched 500 ops/s | 42.49 / 74.75 MiB RSS | 168.53 / 220.72 MiB RSS |
-| Transitive dependencies, excluding root | 163 crates: 156 external + 7 workspace | 317 npm packages: 305 external + 12 workspace |
+| Transitive dependencies | 163 crates: 156 external + 7 workspace | 317 npm packages: 305 external + 12 workspace |
 | Representative libraries | Tokio, Quinn/wtransport, rustls, Serde, Postcard | Express, Socket.IO, isomorphic-git, LevelDB, Winston |
 | Backpressure | Streaming transports; bounded fail-stop receive queues for ordinary WebSocket fallback | Socket.IO; operation and connection throttlers not configured |
 | Remote transports | WebTransport; optional WebSocket | Socket.IO and HTTP |
@@ -92,10 +93,15 @@ Test selections differ, and pending tests are not passes.
 <details>
 <summary>Feature comparison: test scope, dependency counting, and guarantees</summary>
 
-**Tests:** counts come from the [integration validation record](INTEGRATION_TEST_CONFIGURATION_PLAN.md), not a fresh end-to-end run for this table.
-SEA's selection is current-version-only; its 526 pending cases include six explicit historical-loader exclusions and inherited suite conditions.
+**Tests:** the refreshed Sea run started at 2026-09-21 00:49:50 UTC on `8cee1f04f0a` plus three test-allowlist changes, using the existing memory-backed WebSocket runner.
+The full run completed in 62.628 seconds: **691 passed, 0 failed, 493 pending**.
+The newly enabled 31 attach-lifecycle and two SharedString grouped-batching cases passed in two focused runs and again in the full suite, without changing assertions or timeouts.
+Sea's runner selects current-version APIs, but standalone historical suites also register tests outside that selection.
+The totals therefore comprise **689 current-version passes and 486 pending cases**, plus two historical-loader entry-point passes using the local driver and seven pending historical cases (six compression cases and one legacy-chunking case).
+Those two local passes are not Sea compatibility coverage.
+
 Tinylicious's default selection includes compatibility coverage and has a different denominator.
-Its split comes from the Tinylicious JUnit report dated 2026-09-19 21:16:07 UTC, whose totals match the recorded 4,049 passes and 1,921 pending tests.
+Its split comes from the Tinylicious JUnit report dated 2026-09-19 21:16:07 UTC, whose totals match the [integration validation record](INTEGRATION_TEST_CONFIGURATION_PLAN.md): 4,049 passes and 1,921 pending tests.
 The compatibility matrix repeats scenarios with old/new loader, driver, container-runtime, and data-store-runtime combinations, as well as different-version clients creating and loading documents.
 These are additional configurations of many of the same scenarios, not thousands of distinct service features.
 
@@ -109,9 +115,18 @@ These are additional configurations of many of the same scenarios, not thousands
 | Total | 4,049 | 1,921 |
 
 Classification uses each JUnit test's `classname`, with the standalone compression, entry-point, and legacy-chunking suites counted as compatibility because they explicitly request historical APIs.
-Thus compatibility explains 3,380 of Tinylicious's 3,391 additional passes over SEA; the remaining 11 are a difference in current-version results, not compatibility permutations.
-The two services' current-version selections and skips are still not identical.
+Comparing individual test identities confirms that Sea passes every one of Tinylicious's 669 recorded current-version passes, plus 20 cases Tinylicious skips: 11 reentry, four message-size/chunking, four blob/compression, and one snapshot-refresh case.
+Both current-version inventories contain 1,175 cases; Sea skips 486 and Tinylicious skips 506.
+Remaining skips include local-only coverage, capability restrictions, service-specific behavior, and disabled regressions; they are not all irrelevant.
 Both recorded runs passed every executed test; neither demonstrates 100% coverage of all Fluid behavior.
+
+Reproduce the newly enabled selection, then the full Sea suite, from `packages/test/test-end-to-end-tests/`:
+
+```bash
+pnpm build:test:esm
+node scripts/seaRunner.mjs --grep 'Validate Attach lifecycle|SharedString grouped batching' --no-bail
+node scripts/seaRunner.mjs --no-bail
+```
 
 **Dependencies:** counted at `9cb45f707ab` for Linux x86-64, deduplicated by package name and version, excluding the server/package root.
 The Sea graph includes default features plus `websocket-stream`, normal dependencies, build dependencies, and proc-macro dependencies; development-only edges are excluded.
