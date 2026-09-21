@@ -1,30 +1,32 @@
-# Sea: Rust Service Presentation
-
-**Measured 2026-09-20:** service/source results at Sea `92ecf30f4a7`; paired browser results at `9cb45f707ab`, with benchmark-only changes for WebSocketStream; Tinylicious LevelDB includes repair `cf89ceb2ec1`.
-**End-to-end tests refreshed 2026-09-21:** Sea passes all 669 recorded Tinylicious current-version passes, plus 20 more.
-160 retained passing browser samples (80 per DDS mode; one additional failed campaign retained), 180 passing repeated service samples, 104 storage probes, and 33 additional LevelDB probes.
-Local, single-host stack comparisons: different features, transports, and persistence guarantees; not production capacity or a language-only comparison.
-
-## What Is Sea?
+# Sea: Project Overview
 
 Sea (Snapshotted Event Archive) is an experimental Rust service for ordered application events, immutable blob trees, and snapshots.
 Applications own event meaning and snapshot content; the service owns ordering and publication authority.
 Fluid integration is optional.
 
+This overview describes the architecture, development workflow, measured behavior, and known limitations.
+Sea is a single-host experiment, not a production replacement for an existing Fluid service.
+For setup and usage, see the [project README](README.md); for service contracts, see the [architecture guide](SEA_ARCHITECTURE.md).
+
+## Architecture
+
+Native and browser clients access the sequencer locally or over a network transport.
+Storage options include memory, buffered-file, and durable-file backends with different persistence guarantees.
+
 ```mermaid
 flowchart LR
    Application[Application or Fluid adapter] --> Client[Native or browser client]
-   Client -->|Local or WebTransport| Sequencer[Sequencer]
+  Client -->|Local, WebTransport, or WebSocket| Sequencer[Sequencer]
    Sequencer --> Storage[Memory, buffered-file, or durable-file]
 ```
 
-## AI Workflow Story
+## AI-Assisted Development
 
-I had an agent write reusable skills for coordinating parallel groups of agents, then use that framework to design and run quality iterations.
+The project used agent-written reusable skills to coordinate parallel groups of agents and to design and run quality iterations.
 The coordinator knew a private evaluation target: a bug fix had exposed missing coverage, and the added regression test was poorly placed.
 The audit agents received general quality guidance, not that target.
 
-We refined the skills and repeated the audits.
+The skills were refined and the audits repeated.
 The objective was partly achieved, then further runs stopped producing material improvements within the chosen scope.
 That was a stopping condition, not evidence that the code was defect-free.
 
@@ -40,29 +42,17 @@ flowchart LR
    Review -->|No further material improvement in scope| Stop[Stop: partial objective achieved]
 ```
 
-<details>
-<summary>Video outline and remaining narrative checks</summary>
-
-Format: under two minutes; audience [TBD: assumed technical audience].
-
-| Time | Visual | Message |
-| --- | --- | --- |
-| 0-15 seconds | Architecture diagram | What Sea does |
-| 15-75 seconds | AI workflow diagram, revealed in stages | Coordination skills, private evaluation, refinement, partial success, and plateau |
-| 75-90 seconds | Source-size and matched-load memory bars | Absolute values and scope labels |
-| 90-105 seconds | Small-op and large-op throughput bars | Repeated passing ops/s and payload MiB/s |
-| 105-115 seconds | Closing caption | Experimental single-host system; no exhaustive quality assurance |
-
-Use zero-based bars, direct labels, consistent colors, and range markers; label throughput as tested loads, not maximum-capacity ratios.
-Keep the private-target branch separate from worker instructions.
 The diagram does not imply fully autonomous or concurrent execution of every step.
-
-The private-target account comes from the project author; attach the exact defect, test, iteration sequence, skill changes, and unmet objective before recording: [TBD].
-Do not imply deliberate defect seeding.
+The private-target account comes from the project author and does not describe deliberate defect seeding.
 Supporting records: [quality-iteration skill](../.github/skills/rust-service-quality-iteration/SKILL.md), [iteration 0016 skill review](historical/iterations/0016/skill-review.md), and [iteration 0017 convergence assessment](historical/iterations/0017/phase-3-report.md#convergence-assessment).
 They support the method and its limits, not the complete private-evaluation chronology.
 
-</details>
+## Measurement Scope
+
+**Measured 2026-09-20:** service/source results at Sea `92ecf30f4a7`; paired browser results at `9cb45f707ab`, with benchmark-only changes for WebSocketStream; Tinylicious LevelDB includes repair `cf89ceb2ec1`.
+**End-to-end tests refreshed 2026-09-21:** Sea passes all 669 recorded Tinylicious current-version passes, plus 20 more.
+160 retained passing browser samples (80 per distributed data structure (DDS) mode; one additional failed campaign retained), 180 passing repeated service samples, 104 storage probes, and 33 additional LevelDB probes.
+Local, single-host stack comparisons: different features, transports, and persistence guarantees; not production capacity or a language-only comparison.
 
 ## At a Glance
 
@@ -200,12 +190,8 @@ Test/support classification uses directory/file names and syntax-derived Rust `#
 It excludes complex conditional expressions, unrecognized fixtures, and integration tests outside selected `src` scopes; "other code" does not mean production-only code.
 Test/support comment counts are 28, 809, 33, and 50 in table order.
 
-Regenerate at the pinned revision from the repository root; source-count output is disposable:
-
-```bash
-cargo build --manifest-path rust-service/Cargo.toml --release -p sea-benchmarks --bin presentation-test-spans
-node rust-service/scripts/presentation-collect.mjs source "$(mktemp -d)"
-```
+To regenerate at the pinned revision, follow the source-inventory instructions in the [collection scripts guide](scripts/README.md#commands).
+Run from the repository root and use a disposable output directory.
 
 </details>
 
@@ -490,7 +476,7 @@ Experimental single-host software, not a proposed production replacement; Tinyli
 
 Sources: [overview](README.md), [architecture](SEA_ARCHITECTURE.md), and [known issues](KNOWN_ISSUES.md).
 Unmeasured here: many writers on one document, idle memory, wide-area networking, snapshot recovery, compression effects, and browser artifact size.
-Single-round-trip loading and complete direct SharedTree summary support require verification before presentation as capabilities.
+Single-round-trip loading and complete direct SharedTree summary support remain unverified.
 
 </details>
 

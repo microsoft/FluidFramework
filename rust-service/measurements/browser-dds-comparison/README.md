@@ -4,7 +4,7 @@ Measured 2026-09-20 at `9cb45f707ab8cec4b981e6884e600c9108bc6347`.
 The original six-path campaign had only presentation and evidence changes; the later WebSocketStream supplement includes benchmark-only transport selection changes.
 The original 120 samples and 40 retained WebSocketStream samples passed, with ten samples per path and DDS mode.
 One additional WebSocketStream campaign failed before an unchanged retry passed; see the supplement below.
-The [presentation](../../PRESENTATION_REPORT.md#optimized-browser-results) shows paired columns and vertically stacked Mermaid charts without an embedded SVG.
+The [project overview](../../PROJECT_OVERVIEW.md#optimized-browser-results) shows paired columns and vertically stacked Mermaid charts without an embedded SVG.
 
 ## Workloads
 

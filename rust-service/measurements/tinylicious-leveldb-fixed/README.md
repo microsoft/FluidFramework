@@ -22,7 +22,7 @@ The boundary workload uses 32 documents, four Node Socket.IO generators, one eve
 Payloads are 64 or 8,192 bytes.
 Service affinity is CPU 2, CPUs 2,4,6,8, or CPUs 0,2,4,6,8,10,12,14; generators use CPUs 16,18,20,22.
 Every cell starts a fresh service and documents, with LevelDB and Git summary files on workspace ext4.
-The same host and thresholds as the [presentation report](../../PRESENTATION_REPORT.md) apply.
+The same host and thresholds as the [project overview](../../PROJECT_OVERVIEW.md) apply.
 
 | Payload bytes | Service cores | Highest observed pass, ops/s | Higher observed failure, ops/s | Passing worst-worker p95, ms | Failing worst-worker p95, ms |
 | ---: | ---: | ---: | ---: | ---: | ---: |

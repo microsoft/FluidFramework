@@ -1,6 +1,6 @@
 # Presentation Refresh at 92ecf30f4a7
 
-The [presentation report](../../PRESENTATION_REPORT.md) interprets these measurements.
+The [project overview](../../PROJECT_OVERVIEW.md) interprets these measurements.
 Collection used `92ecf30f4a7d17db882cc39e7c60d8d19c1042ba` on 2026-09-20 UTC, after the session-prefix and storage-pipeline changes.
 Service source and optimized binaries stayed unchanged throughout collection.
 The only harness repair removed the obsolete operation-ID argument from the Node/WASM `submit` call.

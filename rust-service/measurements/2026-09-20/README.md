@@ -1,6 +1,6 @@
 # Presentation Measurement Evidence: 2026-09-20
 
-Use the [presentation report](../../PRESENTATION_REPORT.md) for interpretation and scope.
+Use the [project overview](../../PROJECT_OVERVIEW.md) for interpretation and scope.
 This directory retains successful measurements, unsuccessful attempts, and superseded configurations.
 Do not pool them into a single benchmark distribution.
 All timestamps are UTC.

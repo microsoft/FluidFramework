@@ -1,6 +1,6 @@
 # Tinylicious LevelDB Follow-up
 
-This follow-up adds the file-backed Tinylicious configuration to the [presentation report](../../PRESENTATION_REPORT.md).
+This follow-up adds the file-backed Tinylicious configuration to the [project overview](../../PROJECT_OVERVIEW.md).
 It ran at `92ecf30f4a7d17db882cc39e7c60d8d19c1042ba` on 2026-09-20 UTC with harness-only configuration changes; Tinylicious implementation and built artifacts were not modified.
 
 ## Result
