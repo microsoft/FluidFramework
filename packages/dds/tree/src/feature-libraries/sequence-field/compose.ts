@@ -109,14 +109,14 @@ function composeMarkLists(
 	moveEffects: MoveEffectTable,
 	revisionMetadata: RevisionMetadataSource,
 ): MarkList {
-	// MarkSegmentTrees when a reusable subtree is encountered in the queue.
-	// Marks are used when following normal path.
-	const segments: (Mark | MarkSegmentTree)[] = [];
+	const factory = new MarkListFactory();
 	const queue = new ComposeQueue(baseMarkList, newMarkList, moveEffects, revisionMetadata);
 	while (!queue.isEmpty()) {
 		const reused = queue.tryPopReusable();
 		if (reused !== undefined) {
-			segments.push(reused);
+			for (const mark of reused) {
+				factory.push(mark);
+			}
 			continue;
 		}
 		const { baseMark, newMark } = queue.pop();
@@ -125,7 +125,7 @@ function composeMarkLists(
 				baseMark !== undefined,
 				0x4db /* Non-empty queue should not return two undefined marks */,
 			);
-			segments.push(
+			factory.push(
 				composeMark(baseMark, moveEffects, (node: NodeId) =>
 					composeChildChanges(node, undefined, composeChild),
 				),
@@ -135,7 +135,7 @@ function composeMarkLists(
 			// It is therefore safe to remove any intentions that have no impact in the context they apply to.
 			const settledNewMark = settleMark(newMark);
 			if (baseMark === undefined) {
-				segments.push(
+				factory.push(
 					composeMark(settledNewMark, moveEffects, (node: NodeId) =>
 						composeChildChanges(undefined, node, composeChild),
 					),
@@ -151,23 +151,11 @@ function composeMarkLists(
 					composeChild,
 					moveEffects,
 				);
-				segments.push(composedMark);
+				factory.push(composedMark);
 			}
 		}
 	}
 
-	// Changesets are still arrays. Preserve shared subtrees until this final
-	// traversal, including normalization at the boundaries of reused segments.
-	const factory = new MarkListFactory();
-	for (const segment of segments) {
-		if (segment instanceof MarkSegmentTree) {
-			for (const mark of segment) {
-				factory.push(mark);
-			}
-		} else {
-			factory.push(segment);
-		}
-	}
 	return factory.list;
 }
 
@@ -552,26 +540,39 @@ export class ComposeQueue {
 	}
 
 	/**
-	 * Reuses blocks without visiting their marks. Marks requiring child callbacks,
+	 * Skips pairing for a reusable array range. Marks requiring child callbacks,
 	 * move effects, or settling are left for the ordinary pairing path.
+	 * The tree finds the boundary; counting and emitting the selected marks remain linear.
 	 */
-	public tryPopReusable(): MarkSegmentTree | undefined {
+	public tryPopReusable(): readonly Mark[] | undefined {
 		const baseMark = this.baseMarks.peek();
 		const newMark = this.newMarks.peek();
 		if (baseMark === undefined || (isNoopMark(baseMark) && baseMark.changes === undefined)) {
+			if (baseMark?.count === 0) {
+				return [this.baseMarks.dequeueUpTo(Number.POSITIVE_INFINITY)];
+			}
 			const reused = this.newMarks.tryDequeueReusable(baseMark, "input");
 			if (reused !== undefined) {
 				if (baseMark !== undefined) {
-					this.baseMarks.dequeueUpTo(reused.count);
+					const count = reused.reduce((sum, mark) => sum + mark.count, 0);
+					if (count > 0) {
+						this.baseMarks.dequeueUpTo(count);
+					}
 				}
 				return reused;
 			}
 		}
 		if (newMark === undefined || (isNoopMark(newMark) && newMark.changes === undefined)) {
+			if (newMark?.count === 0) {
+				return [this.newMarks.dequeueUpTo(Number.POSITIVE_INFINITY)];
+			}
 			const reused = this.baseMarks.tryDequeueReusable(newMark, "output");
 			if (reused !== undefined) {
 				if (newMark !== undefined) {
-					this.newMarks.dequeueUpTo(reused.count);
+					const count = reused.reduce((sum, mark) => sum + mark.count, 0);
+					if (count > 0) {
+						this.newMarks.dequeueUpTo(count);
+					}
 				}
 				return reused;
 			}

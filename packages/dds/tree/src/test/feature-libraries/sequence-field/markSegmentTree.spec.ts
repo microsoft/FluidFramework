@@ -28,21 +28,20 @@ function id(localId: number, revision?: RevisionTag): ChangeAtomId {
 
 describe("MarkSegmentTree", () => {
 	it("indexes empty trees", () => {
-		for (const tree of [MarkSegmentTree.fromMarks([]), MarkSegmentTree.fromRoot(undefined)]) {
-			assert.equal(tree.root, undefined);
-			assert.equal(tree.count, 0);
-			assert.equal(tree.markCount, 0);
-			assert.equal(tree.inputLength, 0);
-			assert.equal(tree.outputLength, 0);
-			assert.equal(tree.reusable, true);
-			assert.deepEqual([...tree], []);
-			for (const context of ["input", "output"] as const) {
-				assert.equal(tree.findByIndex(0, context), undefined);
-				assert.equal(tree.findById(id(0), context), undefined);
-				assert.deepEqual(tree.getCellSources(context), new Set());
-			}
-			assert.equal(tree.findById(id(0), "detach"), undefined);
+		const tree = MarkSegmentTree.fromMarks([]);
+		assert.equal(tree.root, undefined);
+		assert.equal(tree.count, 0);
+		assert.equal(tree.markCount, 0);
+		assert.equal(tree.inputLength, 0);
+		assert.equal(tree.outputLength, 0);
+		assert.equal(tree.reusable, true);
+		assert.deepEqual(tree.marks, []);
+		for (const context of ["input", "output"] as const) {
+			assert.equal(tree.findByIndex(0, context), undefined);
+			assert.equal(tree.findById(id(0), context), undefined);
+			assert.deepEqual(tree.getCellSources(context), new Set());
 		}
+		assert.equal(tree.findById(id(0), "detach"), undefined);
 	});
 
 	it("counts cells and locates populated cells in both contexts", () => {
@@ -60,32 +59,14 @@ describe("MarkSegmentTree", () => {
 		assert.equal(tree.inputLength, 9);
 		assert.equal(tree.outputLength, 8);
 		for (const [context, expected] of [
-			[
-				"input",
-				[
-					[1, 2],
-					[3, 9],
-					[4, 14],
-				],
-			],
-			[
-				"output",
-				[
-					[1, 2],
-					[2, 5],
-					[4, 14],
-				],
-			],
+			["input", [1, 3, 4]],
+			["output", [1, 2, 4]],
 		] as const) {
 			let index = 0;
-			for (const [markIndex, countBefore] of expected) {
+			for (const markIndex of expected) {
 				const mark = marks[markIndex];
 				for (let offset = 0; offset < mark.count; offset++, index++) {
-					assert.deepEqual(tree.findByIndex(index, context), {
-						mark,
-						offset,
-						countBefore,
-					});
+					assert.equal(tree.findByIndex(index, context), markIndex);
 				}
 			}
 			assert.equal(tree.findByIndex(index, context), undefined);
@@ -101,16 +82,8 @@ describe("MarkSegmentTree", () => {
 		assert.equal(MarkSegmentTree.fromMarks([inserted]).findByIndex(0, "input"), undefined);
 		assert.equal(MarkSegmentTree.fromMarks([removed]).findByIndex(0, "output"), undefined);
 		const tree = MarkSegmentTree.fromMarks([{ count: 0 }, inserted, removed, { count: 0 }]);
-		assert.deepEqual(tree.findByIndex(0, "input"), {
-			mark: removed,
-			offset: 0,
-			countBefore: 3,
-		});
-		assert.deepEqual(tree.findByIndex(0, "output"), {
-			mark: inserted,
-			offset: 0,
-			countBefore: 0,
-		});
+		assert.equal(tree.findByIndex(0, "input"), 2);
+		assert.equal(tree.findByIndex(0, "output"), 1);
 	});
 
 	it("indexes empty IDs across revisions, including anonymous IDs", () => {
@@ -122,19 +95,14 @@ describe("MarkSegmentTree", () => {
 		];
 		const tree = MarkSegmentTree.fromMarks(marks);
 		for (const context of ["input", "output"] as const) {
-			for (const [markIndex, countBefore] of [
-				[0, 0],
-				[2, 5],
-				[3, 8],
-			]) {
+			for (const markIndex of [0, 2, 3]) {
 				const mark = marks[markIndex];
 				assert(mark.cellId !== undefined);
 				for (let offset = 0; offset < mark.count; offset++) {
-					assert.deepEqual(tree.findById(id(10 + offset, mark.cellId.revision), context), {
-						mark,
-						offset,
-						countBefore,
-					});
+					assert.equal(
+						tree.findById(id(10 + offset, mark.cellId.revision), context),
+						markIndex,
+					);
 				}
 				assert.equal(
 					tree.findById(id(10 + mark.count, mark.cellId.revision), context),
@@ -159,16 +127,8 @@ describe("MarkSegmentTree", () => {
 				idOverride: id(20, revision2),
 			};
 			const tree = MarkSegmentTree.fromMarks([{ count: 5 }, mark]);
-			assert.deepEqual(tree.findById(id(12, revision1), "detach"), {
-				mark,
-				offset: 2,
-				countBefore: 5,
-			});
-			assert.deepEqual(tree.findById(id(22, revision2), "output"), {
-				mark,
-				offset: 2,
-				countBefore: 5,
-			});
+			assert.equal(tree.findById(id(12, revision1), "detach"), 1);
+			assert.equal(tree.findById(id(22, revision2), "output"), 1);
 			assert.equal(tree.findById(id(12, revision1), "output"), undefined);
 			assert.equal(tree.findById(id(22, revision2), "detach"), undefined);
 			assert.deepEqual(tree.getCellSources("input"), new Set());
@@ -197,11 +157,7 @@ describe("MarkSegmentTree", () => {
 			["output", id(30, revision2)],
 			["detach", id(20, revision1)],
 		] as const) {
-			assert.deepEqual(tree.findById(id(firstId.localId + 1, firstId.revision), context), {
-				mark,
-				offset: 1,
-				countBefore: 0,
-			});
+			assert.equal(tree.findById(id(firstId.localId + 1, firstId.revision), context), 0);
 		}
 		assert.equal(tree.findById(id(10, revision1), "detach"), undefined);
 		assert.equal(tree.findById(id(30, revision2), "detach"), undefined);
@@ -215,11 +171,7 @@ describe("MarkSegmentTree", () => {
 			idOverride: id(20, revision2),
 		};
 		const tree = MarkSegmentTree.fromMarks([mark]);
-		assert.deepEqual(tree.findById(id(21, revision2), "output"), {
-			mark,
-			offset: 1,
-			countBefore: 0,
-		});
+		assert.equal(tree.findById(id(21, revision2), "output"), 0);
 		assert.equal(tree.findById(id(21, revision2), "detach"), undefined);
 	});
 
@@ -229,16 +181,8 @@ describe("MarkSegmentTree", () => {
 			{ count: 4, cellId: id(11) },
 		];
 		const tree = MarkSegmentTree.fromMarks(marks);
-		assert.deepEqual(tree.findById(id(12), "input"), {
-			mark: marks[0],
-			offset: 2,
-			countBefore: 0,
-		});
-		assert.deepEqual(tree.findById(id(14), "input"), {
-			mark: marks[1],
-			offset: 3,
-			countBefore: 3,
-		});
+		assert.equal(tree.findById(id(12), "input"), 0);
+		assert.equal(tree.findById(id(14), "input"), 1);
 	});
 
 	it("only summarizes whole contiguous empty-cell runs", () => {
@@ -319,10 +263,7 @@ describe("MarkSegmentTree", () => {
 			Array.from({ length: 17 }, (_, index) => Object.freeze({ count: index + 1 })),
 		);
 		const tree = MarkSegmentTree.fromMarks(marks);
-		const flattened = [...tree];
-		for (const [index, mark] of marks.entries()) {
-			assert.strictEqual(flattened[index], mark);
-		}
+		assert.strictEqual(tree.marks, marks);
 		function check(node: MarkSegmentNode): void {
 			if ("mark" in node) {
 				assert.equal(node.markCount, 1);
@@ -337,7 +278,7 @@ describe("MarkSegmentTree", () => {
 		check(tree.root);
 	});
 
-	it("wraps subtrees by identity and reads cell sources without accessing leaves", () => {
+	it("queries array positions and cell sources without accessing mark properties", () => {
 		let visits = 0;
 		const marks: Mark[] = Array.from({ length: 8 }, (_, index) => ({
 			get count() {
@@ -350,34 +291,91 @@ describe("MarkSegmentTree", () => {
 			},
 		}));
 		const tree = MarkSegmentTree.fromMarks(marks);
-		assert(tree.root !== undefined && !("mark" in tree.root));
-		const subtree = tree.root.right;
-		const unreadableSubtree = new Proxy(subtree, {
-			get() {
-				assert.fail("Wrapping a subtree must not read any of its properties");
-			},
-		});
-		assert.strictEqual(MarkSegmentTree.fromRoot(unreadableSubtree).root, unreadableSubtree);
 		visits = 0;
-		const wrapped = MarkSegmentTree.fromRoot(subtree);
-		assert.strictEqual(wrapped.root, subtree);
-		assert.equal(wrapped.count, 8);
-		assert.equal(wrapped.markCount, 4);
-		assert.equal(wrapped.inputLength, 0);
-		assert.equal(wrapped.outputLength, 0);
-		assert.equal(wrapped.reusable, true);
 		for (const context of ["input", "output"] satisfies MarkContext[]) {
-			assert.deepEqual(wrapped.getCellSources(context), new Set([revision1]));
+			assert.deepEqual(tree.getCellSources(context), new Set([revision1]));
+			assert.equal(tree.findById(id(11, revision1), context), 5);
+			assert.equal(
+				tree.findReusableEnd(0, { count: 11, cellId: id(0, revision1) }, context),
+				5,
+			);
+			assert.equal(
+				tree.findReusableEnd(3, { count: 8, cellId: id(6, revision1) }, context),
+				7,
+			);
 		}
 		assert.equal(visits, 0);
-		assert.deepEqual(wrapped.findById(id(11, revision1), "input"), {
-			mark: marks[5],
-			offset: 1,
-			countBefore: 2,
-		});
-		const flattened = [...wrapped];
-		for (const [index, mark] of marks.slice(4).entries()) {
-			assert.strictEqual(flattened[index], mark);
+	});
+
+	it("finds whole-mark boundaries from any array position with unequal mark counts", () => {
+		const marks: Mark[] = Array.from({ length: 17 }, (_, index) => ({ count: index + 1 }));
+		const tree = MarkSegmentTree.fromMarks(marks);
+		for (const context of ["input", "output"] as const) {
+			for (let start = 0; start <= marks.length; start++) {
+				let count = 0;
+				for (let end = start; end <= marks.length; end++) {
+					assert.equal(tree.findReusableEnd(start, { count }, context), end);
+					if (end < marks.length) {
+						assert.equal(
+							tree.findReusableEnd(start, { count: count + marks[end].count - 1 }, context),
+							end,
+						);
+						count += marks[end].count;
+					}
+				}
+				assert.equal(tree.findReusableEnd(start, undefined, context), marks.length);
+			}
 		}
+	});
+
+	it("stops at child changes, move effects, and unsettled marks instead of jumping past them", () => {
+		for (const blocker of [
+			{ count: 1, changes: id(0) },
+			{ type: "MoveOut", count: 1, id: brand(0) },
+			{ type: "Insert", count: 1, id: brand(0) },
+		] satisfies Mark[]) {
+			const tree = MarkSegmentTree.fromMarks([{ count: 2 }, blocker, { count: 2 }]);
+			for (const context of ["input", "output"] as const) {
+				assert.equal(tree.findReusableEnd(0, { count: 5 }, context), 1);
+				assert.equal(tree.findReusableEnd(1, undefined, context), 1);
+				assert.equal(tree.findReusableEnd(2, undefined, context), 3);
+			}
+		}
+	});
+
+	it("finds a non-tree-aligned endpoint without scanning leaf summaries", () => {
+		const tree = MarkSegmentTree.fromMarks(
+			Array.from({ length: 2048 }, (): Mark => ({ count: 1 })),
+		);
+		let leafReads = 0;
+		const watchLeaves = (node: MarkSegmentNode): void => {
+			if ("mark" in node) {
+				Object.defineProperty(node, "reusable", {
+					get: () => {
+						leafReads++;
+						return true;
+					},
+				});
+			} else {
+				watchLeaves(node.left);
+				watchLeaves(node.right);
+			}
+		};
+		assert(tree.root !== undefined);
+		watchLeaves(tree.root);
+		assert.equal(tree.findReusableEnd(3, { count: 1531 }, "input"), 1534);
+		assert(leafReads <= 4, `Boundary query read ${leafReads} leaf summaries`);
+	});
+
+	it("validates query starts and rejects edits as opposing no-ops", () => {
+		const tree = MarkSegmentTree.fromMarks([{ count: 2 }]);
+		for (const start of [-1, 0.5, 2, Number.NaN, Number.POSITIVE_INFINITY]) {
+			assert.throws(() => tree.findReusableEnd(start, undefined, "input"));
+		}
+		assert.throws(() => tree.findReusableEnd(0, { count: 1, changes: id(0) }, "input"));
+		assert.throws(() =>
+			tree.findReusableEnd(0, { type: "Remove", count: 1, id: brand(0) }, "input"),
+		);
+		assert.equal(MarkSegmentTree.fromMarks([]).findReusableEnd(0, undefined, "input"), 0);
 	});
 });

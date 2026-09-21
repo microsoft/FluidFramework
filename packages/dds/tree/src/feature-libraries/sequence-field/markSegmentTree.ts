@@ -49,31 +49,26 @@ export type MarkSegmentNode = MarkSegmentSummary &
 		| { readonly left: MarkSegmentNode; readonly right: MarkSegmentNode }
 	);
 
-interface MarkLocation {
-	readonly mark: Mark; // The mark at this location
-	readonly offset: number; // Zero-based position withing the mark
-	/** Sum of mark counts before this mark, independent of the queried context. */
-	readonly countBefore: number;
-}
-
 /**
- * Immutable index over borrowed marks, retaining their identity.
+ * Immutable index over a borrowed mark array. Queries return positions in that array,
+ * not marks or subtrees. The array and its marks must not be mutated after indexing.
  *
  * The midpoint tree takes linear work to build apart from ID indexing. This naive implementation
  * copies child ID ranges into each ancestor: up to O(n log n) stored ranges and O(n log^2 n)
  * construction work for n marks. Merging large ID sets is not a constant-time operation.
  * Index lookup takes O(log n); ID lookup performs a range-map lookup at each tree level
- * (O(log^2 n) worst case). Wrapping an existing subtree takes O(1).
+ * (O(log^2 n) worst case). Reusable-prefix lookup visits O(log n) nodes, skipping
+ * whole aligned segments using their summaries.
  */
-export class MarkSegmentTree implements Iterable<Mark> {
-	private constructor(public readonly root: MarkSegmentNode | undefined) {}
+export class MarkSegmentTree {
+	public readonly root: MarkSegmentNode | undefined;
 
-	public static fromMarks(marks: readonly Mark[]): MarkSegmentTree {
-		return new MarkSegmentTree(marks.length === 0 ? undefined : build(marks, 0, marks.length));
+	private constructor(public readonly marks: readonly Mark[]) {
+		this.root = marks.length === 0 ? undefined : build(marks, 0, marks.length);
 	}
 
-	public static fromRoot(root: MarkSegmentNode | undefined): MarkSegmentTree {
-		return new MarkSegmentTree(root);
+	public static fromMarks(marks: readonly Mark[]): MarkSegmentTree {
+		return new MarkSegmentTree(marks);
 	}
 
 	public get count(): number {
@@ -96,8 +91,8 @@ export class MarkSegmentTree implements Iterable<Mark> {
 		return this.root?.reusable ?? true;
 	}
 
-	/** Finds a populated cell by its zero-based index in the selected context. */
-	public findByIndex(index: number, context: MarkContext): MarkLocation | undefined {
+	/** Returns the array index of the mark containing a populated cell in the selected context. */
+	public findByIndex(index: number, context: MarkContext): number | undefined {
 		let node = this.root;
 		if (
 			node === undefined ||
@@ -107,7 +102,7 @@ export class MarkSegmentTree implements Iterable<Mark> {
 		) {
 			return undefined;
 		}
-		let countBefore = 0;
+		let markIndex = 0;
 		let offset = index;
 		while (!("mark" in node)) {
 			const leftLength = contextLength(node.left, context);
@@ -115,34 +110,75 @@ export class MarkSegmentTree implements Iterable<Mark> {
 				node = node.left;
 			} else {
 				offset -= leftLength;
-				countBefore += node.left.count;
+				markIndex += node.left.markCount;
 				node = node.right;
 			}
 		}
-		return { mark: node.mark, offset, countBefore };
+		return markIndex;
 	}
 
 	/**
-	 * Finds the first mark containing an empty-cell ID, or an actual detach operation ID.
+	 * Returns the array index of the first mark containing an empty-cell ID or detach operation ID.
 	 * Detach operation IDs are distinct from the output cell IDs supplied by `idOverride`.
 	 */
-	public findById(id: ChangeAtomId, context: IdContext): MarkLocation | undefined {
+	public findById(id: ChangeAtomId, context: IdContext): number | undefined {
 		let node = this.root;
 		if (node?.ids[context].getFirst(id, 1).value === undefined) {
 			return undefined;
 		}
-		let countBefore = 0;
+		let markIndex = 0;
 		while (!("mark" in node)) {
 			if (node.left.ids[context].getFirst(id, 1).value === undefined) {
-				countBefore += node.left.count;
+				markIndex += node.left.markCount;
 				node = node.right;
 			} else {
 				node = node.left;
 			}
 		}
-		const start = markId(node.mark, context);
-		assert(start !== undefined, "An indexed mark must have an ID in the queried context");
-		return { mark: node.mark, offset: id.localId - start.localId, countBefore };
+		return markIndex;
+	}
+
+	/**
+	 * Returns the exclusive array index of the reusable prefix starting at `start`.
+	 * Only whole marks aligned with the opposing pure no-op are included. Stops at the
+	 * first unsafe mark, alignment mismatch, or partial mark; returns `start` if none fit.
+	 * An absent no-op represents an implicit unchanged suffix.
+	 */
+	public findReusableEnd(start: number, noop: Mark | undefined, context: MarkContext): number {
+		assert(
+			Number.isInteger(start) && start >= 0 && start <= this.marks.length,
+			"Expected an array boundary within the indexed marks",
+		);
+		assert(
+			noop === undefined || (noop.type === undefined && noop.changes === undefined),
+			"Only pure no-ops permit reusable alignment queries",
+		);
+		let end = start;
+		let count = 0;
+		const visit = (node: MarkSegmentNode, nodeStart: number): boolean => {
+			const nodeEnd = nodeStart + node.markCount;
+			if (nodeEnd <= start) {
+				return true;
+			}
+			if (
+				nodeStart >= start &&
+				node.reusable &&
+				isAlignedWithNoop(node, noop, context, count)
+			) {
+				end = nodeEnd;
+				count += node.count;
+				return true;
+			}
+			if ("mark" in node) {
+				return false;
+			}
+			// Short-circuit at the first blocker, rather than searching past it.
+			return visit(node.left, nodeStart) && visit(node.right, nodeStart + node.left.markCount);
+		};
+		if (this.root !== undefined) {
+			visit(this.root, 0);
+		}
+		return end;
 	}
 
 	/** Reads the root's aggregated ranges, without visiting marks. */
@@ -155,16 +191,35 @@ export class MarkSegmentTree implements Iterable<Mark> {
 		}
 		return sources;
 	}
-
-	public *[Symbol.iterator](): IterableIterator<Mark> {
-		if (this.root !== undefined) {
-			yield* iterate(this.root);
-		}
-	}
 }
 
 function contextLength(node: MarkSegmentNode, context: MarkContext): number {
 	return context === "input" ? node.inputLength : node.outputLength;
+}
+
+function isAlignedWithNoop(
+	node: MarkSegmentNode,
+	noop: Mark | undefined,
+	context: MarkContext,
+	count: number,
+): boolean {
+	if (noop === undefined) {
+		return true;
+	}
+	if (node.count > noop.count - count) {
+		return false;
+	}
+	if (noop.cellId === undefined) {
+		// A full-cell no-op cannot cover intervening empty cells.
+		return contextLength(node, context) === node.count;
+	}
+	// The summary ID exists only for a wholly empty, consecutive ID run.
+	const cellId = context === "input" ? node.inputCellId : node.outputCellId;
+	return (
+		cellId !== undefined &&
+		cellId.revision === noop.cellId.revision &&
+		cellId.localId === noop.cellId.localId + count
+	);
 }
 
 function markId(mark: Mark, context: IdContext): ChangeAtomId | undefined {
@@ -261,17 +316,4 @@ function build(marks: readonly Mark[], start: number, end: number): MarkSegmentN
 			detach: mergeRanges(left.ids.detach, right.ids.detach),
 		},
 	};
-}
-
-function* iterate(node: MarkSegmentNode): IterableIterator<Mark> {
-	const stack = [node];
-	while (stack.length > 0) {
-		const current = stack.pop();
-		assert(current !== undefined, "Expected a segment on the traversal stack");
-		if ("mark" in current) {
-			yield current.mark;
-		} else {
-			stack.push(current.right, current.left);
-		}
-	}
 }
