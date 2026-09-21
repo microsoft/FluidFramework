@@ -283,12 +283,14 @@ test.describe("text editor", () => {
 		await expect(originalUser.locator("textarea")).toHaveValue("Edited from another context");
 	});
 
-	test("rejects an invalid document ID", async ({ page }) => {
-		const invalidDocumentId = "f47ac10b-58cc-4372_a567-0e02b2c3d479";
-		await page.goto(`/#${invalidDocumentId}`, { waitUntil: "load" });
+	test("shows an error when loading a missing document", async ({ page }) => {
+		const missingDocumentId = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
+		await page.goto(`/?fluidClient=ephemeral#${missingDocumentId}`, { waitUntil: "load" });
 
-		await expect(page.getByRole("heading", { name: "Failed to load document" })).toBeVisible();
-		await expect(page.getByText(/Invalid container ID in URL hash/)).toBeVisible();
-		await expect(page.getByText(/Expected 3-64 alphanumeric or '-' characters/)).toBeVisible();
+		const alert = page.getByRole("alert");
+		await expect(alert).toBeVisible();
+		await expect(
+			alert.getByRole("heading", { name: "Failed to load document" }),
+		).toBeVisible();
 	});
 });

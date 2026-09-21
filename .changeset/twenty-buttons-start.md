@@ -5,10 +5,9 @@
 "fluid-framework": minor
 "__section": feature
 ---
-
 Collect container telemetry through ServiceClient
 
-The alpha `ServiceOptions` interface now accepts an optional `logger`.
+The alpha [ServiceOptions](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface) interface now accepts an optional `logger`.
 Session, ephemeral, and Tinylicious clients forward telemetry from containers they create or load to this logger.
 Existing callers can omit the option without changing their behavior.
 
