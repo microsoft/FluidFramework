@@ -7,7 +7,7 @@ Local, single-host stack comparisons: different features, transports, and persis
 
 ## What Is Sea?
 
-Sea (Structured Event Archive) is an experimental Rust service for ordered application events, immutable blob trees, and snapshots.
+Sea (Snapshotted Event Archive) is an experimental Rust service for ordered application events, immutable blob trees, and snapshots.
 Applications own event meaning and snapshot content; the service owns ordering and publication authority.
 Fluid integration is optional.
 
@@ -66,28 +66,31 @@ They support the method and its limits, not the complete private-evaluation chro
 
 ## At a Glance
 
-Throughput cells give **64-byte / 8,192-byte offered ops/s**, using four service cores and four separate generator cores.
+Throughput cells give **64-byte / 8,192-byte offered ops/s**, using eight service cores and four separate generator cores.
 These are single-run threshold passes from the storage exploration, not repeated capacity estimates or equal-durability comparisons.
+✅ marks a favorable measured result or a shared positive outcome within the stated scope, not overall superiority.
 
-| Aspect | Structured Event Archive (SEA) | Tinylicious |
+| Aspect | Snapshotted Event Archive (SEA) | Tinylicious |
 | --- | --- | --- |
-| Language | Native Rust service | TypeScript service on Node.js |
-| Repository-owned server code | 19,211 lines: 7,090 test/support + 12,121 other | 35,927 lines: 10,775 test/support + 25,152 other |
-| Fluid end-to-end tests (689 selected relevant tests) | 100% | 100% |
-| Op throughput: memory (64 B / 8,192 B payload) | 46,000 / 28,000 ops/s | 950 / 850 ops/s |
-| Op throughput: disk, buffered (64 B / 8,192 B payload) | 26,000 / 17,000 ops/s | 900 / 100 ops/s (LevelDB) |
-| Op throughput: synchronized durable acknowledgment (64 B / 8,192 B payload) | 2,000 / 2,000 ops/s; inconsistent results | &#10060; No equivalent acknowledgment guarantee in this configuration |
-| Memory at matched 500 ops/s | 42.49 / 74.75 MiB RSS | 168.53 / 220.72 MiB RSS |
-| Transitive dependencies | 163 crates: 156 external + 7 workspace | 317 npm packages: 305 external + 12 workspace |
+| Language | Rust | TypeScript |
+| Runtime | ✅ Native or WASM | JavaScript |
+| First part Code | ✅ 19,211 lines:<br>7,090 test/support + 12,121 other | 35,927 lines:<br>10,775 test/support + 25,152 other |
+| Transitive dependencies | ✅ 163 crates:<br>156 external + 7 workspace | 317 npm packages:<br>305 external + 12 workspace |
 | Representative libraries | Tokio, Quinn/wtransport, rustls, Serde, Postcard | Express, Socket.IO, isomorphic-git, LevelDB, Winston |
-| Backpressure | Streaming transports; bounded fail-stop receive queues for ordinary WebSocket fallback | Socket.IO; operation and connection throttlers not configured |
-| Remote transports | WebTransport; optional WebSocket | Socket.IO and HTTP |
-| Data model | Application-independent events, blob trees, and snapshots; optional Fluid adapter | Fluid ordering and Git-backed summary storage |
-| Required companion services in these runs | None | None; Git storage runs in-process |
-| Intended scope | Experimental single-host service; no replication or built-in authentication | Local Fluid development service, not a deployed Routerlicious baseline |
+| Supported Streams | ✅ WebTransport, WebSocketStream, WebSocket | WebSocket via Socket.IO<br>(❌ no application-level receive backpressure) |
+| Fluid end-to-end tests<br>(689 selected tests) | ✅ 100% | ✅ 100% |
+
+| Aspect | Snapshotted Event Archive (SEA) | Tinylicious |
+| --- | --- | --- |
+| Op throughput: memory<br>(64 B / 8,192 B payload)<br>(8 cores) | ✅ 88,000 / 38,000 ops/s | 950 / 800 ops/s |
+| Op throughput: disk, buffered<br>(64 B / 8,192 B payload)<br>(8 cores) | ✅ 46,000 / 30,000 ops/s | 900 / 100 ops/s (LevelDB) |
+| Op throughput: durable<br>(64 B / 8,192 B payload)<br>(8 cores) | ✅ 2,000 / 160 ops/s<br>(inconsistent) | ❌ No durable ack in tested config |
+| Memory at matched 500 ops/s<br>(64 B / 8,192 B payload)<br>(4 cores) | ✅ 42.49 / 74.75 MiB RSS | 168.53 / 220.72 MiB RSS |
 
 Source scopes include tests and different feature sets; dependency and test counts are not quality scores.
+Sea's WebTransport and WebSocketStream paths support streaming backpressure; ordinary WebSocket uses bounded fail-stop receive queues instead.
 RSS values are medians of ten run means; small/large payload order matches the throughput rows.
+Matched-load RSS and repeated-throughput results below retain their recorded core counts; no eight-core matched-load repeat was collected.
 Test selections differ, and pending tests are not passes.
 
 <details>
@@ -342,7 +345,7 @@ config:
 ---
 xychart-beta horizontal
   title "Dummy DDS"
-  x-axis ["Sea local direct", "Sea local Fluid", "TypeScript local", "Sea WT Fluid", "Sea WT direct", "Sea WS stream Fluid", "Sea WS stream direct", "Tinylicious"]
+  x-axis ["Sea local direct", "Sea local Fluid", "TypeScript local", "Sea WebTransport (Encrypted) Fluid", "Sea WebTransport (Encrypted) direct", "Sea WebSocketStream Fluid", "Sea WebSocketStream direct", "Tinylicious"]
   y-axis "Median edits/s (thousands)" 0 --> 10
   bar [8.921, 2.163, 0.869, 1.368, 2.863, 1.131, 2.154, 3.354]
 ```
@@ -358,7 +361,7 @@ config:
 ---
 xychart-beta horizontal
   title "Real SharedTree"
-  x-axis ["Sea local direct", "Sea local Fluid", "TypeScript local", "Sea WT Fluid", "Sea WT direct", "Sea WS stream Fluid", "Sea WS stream direct", "Tinylicious"]
+  x-axis ["Sea local direct", "Sea local Fluid", "TypeScript local", "Sea WebTransport (Encrypted) Fluid", "Sea WebTransport (Encrypted) direct", "Sea WebSocketStream Fluid", "Sea WebSocketStream direct", "Tinylicious"]
   y-axis "Median edits/s (thousands)" 0 --> 10
   bar [1.979, 1.260, 0.642, 0.936, 1.318, 0.829, 1.126, 1.549]
 ```
