@@ -214,9 +214,11 @@ function makeRealUnpackerFactory(): () => (
 describe("VersionMarkResolver", () => {
 	describe("sealAndCaptureVersionMark", () => {
 		it("returns a pending capture with the pending batchId and sequence number lower bound", () => {
+			const logger = new MockLogger();
 			const resolver = makeResolver({
 				currentSequenceNumber: 42,
 				currentPendingBatchId: "client_[3]",
+				logger,
 			});
 			assert.deepEqual(resolver.sealAndCaptureVersionMark(), {
 				kind: "pending",
@@ -225,15 +227,22 @@ describe("VersionMarkResolver", () => {
 				// so its first possible sequence number is 43.
 				sequenceNumberLowerBound: 43,
 			});
+			logger.assertMatch([{ eventName: "Capture", kind: "pending" }]);
 		});
 
 		it("returns a resolved capture at the current sequence number when nothing is pending", () => {
-			const resolver = makeResolver({ currentSequenceNumber: 42, currentTimestamp: 42000 });
+			const logger = new MockLogger();
+			const resolver = makeResolver({
+				currentSequenceNumber: 42,
+				currentTimestamp: 42000,
+				logger,
+			});
 			assert.deepEqual(resolver.sealAndCaptureVersionMark(), {
 				kind: "resolved",
 				sequenceNumber: 42,
 				timestamp: 42000,
 			});
+			logger.assertMatch([{ eventName: "Capture", kind: "resolved" }]);
 		});
 
 		it("flushes the current batch before reading, so a just-submitted edit's batchId is captured", () => {
@@ -282,6 +291,14 @@ describe("VersionMarkResolver", () => {
 			resolver.onBatchSequenced(() => {});
 			assert.equal(resolver.isTracking, true);
 		});
+
+		it("starts tracking after resolve(), even without a prior capture or subscription", async () => {
+			// resolve() must enable tracking so the runtime records a batch that sequences during the scan.
+			const resolver = makeResolver();
+			assert.equal(resolver.isTracking, false);
+			await resolver.resolve("client_[1]", 0);
+			assert.equal(resolver.isTracking, true);
+		});
 	});
 
 	describe("resolve - in-session fast path", () => {
@@ -308,12 +325,47 @@ describe("VersionMarkResolver", () => {
 			});
 			assert.equal(calls.length, 0, "history reader should not be called on a live-map hit");
 		});
+
+		it("prefers a live resolution that arrives while the history scan is in progress", async () => {
+			const logger = new MockLogger();
+			// eslint-disable-next-line prefer-const -- it is assigned below
+			let resolver: VersionMarkResolver;
+			const reader: IHistoricalOpReader = {
+				async fetchMessages(): Promise<IStream<ISequencedDocumentMessage[]>> {
+					return {
+						async read(): Promise<IStreamResult<ISequencedDocumentMessage[]>> {
+							// The batch sequences live mid-scan, after the resolver is assigned below.
+							resolver.processInboundBatch("client_[5]", 12, 12000);
+							return { done: true };
+						},
+					};
+				},
+			};
+			resolver = makeResolver({ reader, logger });
+
+			assert.deepEqual(await resolver.resolve("client_[5]", 1), {
+				kind: "resolved",
+				sequenceNumber: 12,
+				timestamp: 12000,
+			});
+			logger.assertMatch([
+				{
+					eventName: "Resolve",
+					outcome: "resolved",
+					path: "session",
+					sequenceNumber: 12,
+				},
+			]);
+		});
 	});
 
 	describe("resolve - no reader wired", () => {
 		it("reports an unknown batchId as pending when no reader is available", async () => {
 			const resolver = makeResolver();
-			assert.deepEqual(await resolver.resolve("missing_[1]", 0), { kind: "pending" });
+			assert.deepEqual(await resolver.resolve("missing_[1]", 0), {
+				kind: "pending",
+				reason: "historicalOpsUnavailable",
+			});
 		});
 	});
 
@@ -579,6 +631,7 @@ describe("VersionMarkResolver", () => {
 
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 1), 5), {
 				kind: "pending",
+				reason: "awaitingSequence",
 			});
 		});
 	});
@@ -592,6 +645,7 @@ describe("VersionMarkResolver", () => {
 			const resolver = makeResolver({ reader, currentSequenceNumber: 12 });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 1), {
 				kind: "unresolvable",
+				reason: "historyTrimmed",
 			});
 		});
 
@@ -601,6 +655,7 @@ describe("VersionMarkResolver", () => {
 			const resolver = makeResolver({ reader, currentSequenceNumber: 20 });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 1), {
 				kind: "unresolvable",
+				reason: "historyTrimmed",
 			});
 		});
 
@@ -611,6 +666,7 @@ describe("VersionMarkResolver", () => {
 			const resolver = makeResolver({ reader, currentSequenceNumber: 6 });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 6), {
 				kind: "unresolvable",
+				reason: "historyTrimmed",
 			});
 		});
 
@@ -625,6 +681,7 @@ describe("VersionMarkResolver", () => {
 			const resolver = makeResolver({ reader, currentSequenceNumber: 7 });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 6), {
 				kind: "pending",
+				reason: "awaitingSequence",
 			});
 		});
 
@@ -634,6 +691,7 @@ describe("VersionMarkResolver", () => {
 			const resolver = makeResolver({ reader, currentSequenceNumber: 5 });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 6), {
 				kind: "pending",
+				reason: "awaitingSequence",
 			});
 		});
 
@@ -821,7 +879,10 @@ describe("VersionMarkResolver", () => {
 			minimumSequenceNumber = 8;
 			resolver.processInboundBatch("c_[3]", 12, 12000);
 
-			assert.deepEqual(await resolver.resolve("a_[1]", 0), { kind: "pending" });
+			assert.deepEqual(await resolver.resolve("a_[1]", 0), {
+				kind: "pending",
+				reason: "historicalOpsUnavailable",
+			});
 			assert.deepEqual(await resolver.resolve("b_[2]", 0), {
 				kind: "resolved",
 				sequenceNumber: 10,
@@ -885,12 +946,14 @@ describe("VersionMarkResolver", () => {
 			const resolver = makeResolver({ logger });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 1), 5), {
 				kind: "pending",
+				reason: "historicalOpsUnavailable",
 			});
 			logger.assertMatch([
 				{
 					eventName: "Resolve",
 					outcome: "pending",
 					path: "noReader",
+					reason: "historicalOpsUnavailable",
 				},
 			]);
 		});

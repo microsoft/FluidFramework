@@ -3,13 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { AzureClient, type AzureLocalConnectionConfig } from "@fluidframework/azure-client";
+import {
+	createOrLoadExampleContainer,
+	defaultServiceOptions,
+	ExampleErrorView,
+	ExampleLoadingView,
+	getExampleServiceClient,
+	renderRoot,
+} from "@fluid-example/example-utils";
 import {
 	createDevtoolsLogger,
 	initializeDevtools,
 	type ContainerDevtoolsProps,
 	type IDevtoolsLogger,
-} from "@fluidframework/devtools/beta";
+} from "@fluidframework/devtools-core/beta";
 import {
 	FormattedMainView,
 	QuillMainView as PlainQuillView,
@@ -25,16 +32,11 @@ import {
 	PlainTextMainView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/react/internal";
-/**
- * InsecureTokenProvider is used here for local development and demo purposes only.
- * Do not use in production - implement proper authentication for production scenarios.
- */
 // eslint-disable-next-line import-x/no-internal-modules
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { TreeViewConfiguration } from "@fluidframework/tree";
+import { ServiceContainerBase } from "@fluidframework/runtime-utils/internal";
+import { TreeViewConfiguration, type ITree } from "@fluidframework/tree";
 import {
 	asAlpha,
-	configuredSharedTreeAlpha,
 	FluidClientVersion,
 	ForestTypeOptimized,
 	incrementalEncodingPolicyForAllowedTypes,
@@ -46,33 +48,16 @@ import {
 	TreeViewConfigurationAlpha,
 } from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules -- TODO: migrate to `FormattedText` with explicit parameterization.
-import { FormattedTextDefault } from "@fluidframework/tree/internal";
-import type { IFluidContainer } from "fluid-framework";
+import { configuredSharedTree, FormattedTextDefault } from "@fluidframework/tree/internal";
+import {
+	defineDataStore,
+	instantiateTreeFirstTime,
+	sharedObjectRegistryFromIterable,
+	type FluidContainer,
+} from "fluid-framework/alpha";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
 import { type CSSProperties, type FC, useCallback, useEffect, useMemo, useState } from "react";
-// eslint-disable-next-line import-x/no-internal-modules
-import { createRoot } from "react-dom/client";
-
-/**
- * Get the Tinylicious endpoint URL, handling Codespaces port forwarding. Tinylicious only works for localhost,
- * so in Codespaces we need to use the forwarded URL.
- */
-function getTinyliciousEndpoint(): string {
-	const hostname = window.location.hostname;
-	const tinyliciousPort = 7070;
-
-	// Detect GitHub Codespaces: hostname like "ideal-giggle-xxx-8080.app.github.dev"
-	if (hostname.endsWith(".app.github.dev")) {
-		const match = /^(.+)-\d+\.app\.github\.dev$/.exec(hostname);
-		if (match) {
-			const codespaceName = match[1];
-			return `https://${codespaceName}-${tinyliciousPort}.app.github.dev`;
-		}
-	}
-
-	return `http://localhost:${tinyliciousPort}`;
-}
 
 const sf = new SchemaFactoryAlpha("com.fluidframework.example.text-editor");
 
@@ -93,7 +78,7 @@ export const treeConfig = new TreeViewConfiguration({ schema: TextEditorRoot });
  * {@link incrementalSummaryHint} from the {@link TextEditorRoot}, so both the
  * plain and formatted text are encoded incrementally.
  */
-const SharedTree = configuredSharedTreeAlpha({
+const SharedTree = configuredSharedTree({
 	forest: ForestTypeOptimized,
 	treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
 	shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
@@ -102,21 +87,20 @@ const SharedTree = configuredSharedTreeAlpha({
 	minVersionForCollab: FluidClientVersion.v2_74,
 });
 
-const containerSchema = {
-	initialObjects: {
-		tree: SharedTree,
-	},
-};
-
-function getConnectionConfig(userId: string): AzureLocalConnectionConfig {
-	return {
-		type: "local",
-		tokenProvider: new InsecureTokenProvider("VALUE_NOT_USED", {
-			id: userId,
-			name: `User-${userId}`,
+const TextEditorDataStore = defineDataStore<TextEditorData, ITree>({
+	type: "text-editor",
+	registry: sharedObjectRegistryFromIterable([SharedTree]),
+	instantiateFirstTime: async (rootCreator, creator) =>
+		instantiateTreeFirstTime(rootCreator, creator, SharedTree, {
+			config: treeConfig,
+			initializer: () => createInitialRoot(),
 		}),
-		endpoint: getTinyliciousEndpoint(),
-	};
+	view: async (tree) => ({ tree, treeView: asAlpha(tree.viewWith(treeConfig)) }),
+});
+
+interface TextEditorData {
+	tree: ITree;
+	treeView: TreeViewAlpha<typeof TextEditorRoot>;
 }
 
 type ViewType = "plainTextarea" | "plainQuill" | "formatted";
@@ -137,8 +121,8 @@ const initialUserCount = 2;
 /**
  * Identifies one user in this app.
  *
- * Serves as the React key for the user's panel, the key for its Devtools registration,
- * and the user ID reported to the Fluid service's audience. IDs are randomly generated
+ * Serves as the React key for the user's panel and the key for its Devtools registration.
+ * IDs are randomly generated
  * and never reused within a page, so a removed user's ID is not given to a later-added
  * one.
  */
@@ -147,7 +131,7 @@ type UserId = string;
 /**
  * Generates a fresh {@link UserId}.
  *
- * Random so simulated users stay unique in the document's audience even across page
+ * Random so simulated users stay unique across page
  * reloads and multiple tabs open on the same document.
  */
 function makeUserId(): UserId {
@@ -160,10 +144,10 @@ export interface UserView {
 	readonly id: UserId;
 	/**
 	 * This user's own container. Held so the app can register it with Devtools and
-	 * dispose it when the panel is removed. Everything the panel renders comes from
+	 * close it when the panel is removed. Everything the panel renders comes from
 	 * {@link UserView.treeView}.
 	 */
-	readonly container: IFluidContainer<typeof containerSchema>;
+	readonly container: FluidContainer<TextEditorData>;
 	/** This user's view of the shared text, rendered and edited by the panel. */
 	readonly treeView: TreeViewAlpha<typeof TextEditorRoot>;
 }
@@ -172,10 +156,14 @@ export interface UserView {
  * Devtools registration props for one user's container. Keyed by user id, which is
  * never reused, so keys stay unique across add/remove cycles.
  */
-const devtoolsContainerProps = (user: UserView): ContainerDevtoolsProps => ({
-	container: user.container,
-	containerKey: `User ${user.id} Container`,
-});
+const devtoolsContainerProps = (user: UserView): ContainerDevtoolsProps => {
+	ServiceContainerBase.narrow(user.container);
+	return {
+		container: user.container.container,
+		containerData: { tree: user.container.data.tree },
+		containerKey: `User ${user.id} Container`,
+	};
+};
 
 /**
  * Creates a document root holding the given text as both plain and formatted text.
@@ -189,110 +177,41 @@ export function createInitialRoot(text = ""): TextEditorRoot {
 	});
 }
 
-async function createAndAttachNewContainer(client: AzureClient): Promise<{
-	container: IFluidContainer<typeof containerSchema>;
-	containerId: string;
-	treeView: TreeViewAlpha<typeof TextEditorRoot>;
-}> {
-	const { container } = await client.createContainer(containerSchema, "2.0.0");
-
-	const treeView = asAlpha<typeof TextEditorRoot>(
-		container.initialObjects.tree.viewWith(treeConfig),
-	);
-
-	treeView.initialize(createInitialRoot());
-
-	const containerId = await container.attach();
-
-	return {
-		container,
-		containerId,
-		treeView,
-	};
-}
-
-async function loadExistingContainer(
-	client: AzureClient,
-	containerId: string,
-): Promise<{
-	container: IFluidContainer<typeof containerSchema>;
-	treeView: TreeViewAlpha<typeof TextEditorRoot>;
-}> {
-	const { container } = await client.getContainer(containerId, containerSchema, "2.0.0");
-	const treeView = asAlpha(container.initialObjects.tree.viewWith(treeConfig));
-	return {
-		container,
-		treeView,
-	};
-}
-
-/**
- * Connects one user (its own Fluid client, under a fresh {@link UserId}) to an
- * existing document. Shared by the initial load and the "Add user" button.
- * @param containerId - Identifies the document (Fluid container) to load.
- * @param devtoolsLogger - Shared logger which routes this client's telemetry to Devtools.
- */
-async function connectUser(
-	containerId: string,
-	devtoolsLogger: IDevtoolsLogger,
-): Promise<UserView> {
-	const id = makeUserId();
-	const client = new AzureClient({
-		connection: getConnectionConfig(id),
-		logger: devtoolsLogger,
-	});
-	const { container, treeView } = await loadExistingContainer(client, containerId);
-	return { id, container, treeView };
-}
+type ConnectUser = (containerId: string) => Promise<UserView>;
 
 async function initFluid(): Promise<{
 	containerId: string;
 	devtoolsLogger: IDevtoolsLogger;
 	initialUsers: UserView[];
+	connectUser: ConnectUser;
 }> {
-	console.log(`Connecting to Tinylicious at: ${getTinyliciousEndpoint()}`);
 	const devtoolsLogger = createDevtoolsLogger();
-
-	let containerId: string;
-	const initialUsers: UserView[] = [];
-
-	if (location.hash) {
-		const rawContainerId = location.hash.slice(1);
-		// Basic validation for container ID from URL hash before making network requests
-		const isValidContainerId =
-			rawContainerId.length > 0 && /^[\dA-Za-z-]{3,64}$/.test(rawContainerId);
-		if (!isValidContainerId) {
-			console.error(`Invalid container ID in URL hash: "${rawContainerId}"`);
-			throw new Error(
-				"Invalid container ID in URL hash. Expected 3-64 alphanumeric or '-' characters.",
-			);
-		}
-		containerId = rawContainerId;
-		initialUsers.push(await connectUser(containerId, devtoolsLogger));
-	} else {
-		// First user creates and attaches the new document.
-		const userId = makeUserId();
-		const client = new AzureClient({
-			connection: getConnectionConfig(userId),
-			logger: devtoolsLogger,
-		});
-		const created = await createAndAttachNewContainer(client);
-		containerId = created.containerId;
-		// eslint-disable-next-line require-atomic-updates
-		location.hash = containerId;
-		initialUsers.push({
-			id: userId,
-			container: created.container,
-			treeView: created.treeView,
-		});
+	const client = getExampleServiceClient({ ...defaultServiceOptions, logger: devtoolsLogger });
+	const connectUser: ConnectUser = async (documentId) => {
+		const loaded = await client.loadContainer(documentId, TextEditorDataStore);
+		return { id: makeUserId(), container: loaded, treeView: loaded.data.treeView };
+	};
+	const rawContainerId = location.hash.slice(1);
+	if (rawContainerId.length > 0 && !/^[\dA-Za-z-]{3,64}$/.test(rawContainerId)) {
+		throw new Error(
+			"Invalid container ID in URL hash. Expected 3-64 alphanumeric or '-' characters.",
+		);
 	}
+	const container = await createOrLoadExampleContainer(client, TextEditorDataStore);
+	const containerId = container.id;
+	if (containerId === undefined) {
+		throw new Error("The example container is not attached.");
+	}
+	const initialUsers: UserView[] = [
+		{ id: makeUserId(), container, treeView: container.data.treeView },
+	];
 
 	// Connect the remaining initial users (the first was connected/created above).
-	for (let i = initialUsers.length; i < initialUserCount; i++) {
-		initialUsers.push(await connectUser(containerId, devtoolsLogger));
+	for (let userIndex = initialUsers.length; userIndex < initialUserCount; userIndex++) {
+		initialUsers.push(await connectUser(containerId));
 	}
 
-	return { containerId, devtoolsLogger, initialUsers };
+	return { containerId, devtoolsLogger, initialUsers, connectUser };
 }
 
 const viewLabels = {
@@ -335,7 +254,7 @@ const userPanelUndoRedoButtonStyleBase = {
 const UserPanel: FC<{
 	label: string;
 	color: string;
-	container: IFluidContainer<typeof containerSchema>;
+	container: UserView["container"];
 	treeView: TreeViewAlpha<typeof TextEditorRoot>;
 	/**
 	 * Removes this user from the side-by-side view. Omitted when removal is not
@@ -353,10 +272,10 @@ const UserPanel: FC<{
 		return () => {
 			manager.dispose();
 			treeView.dispose();
-			// Note: disposing while `isDirty` drops any local edits not yet acknowledged
+			// Note: closing drops any local edits not yet acknowledged
 			// by the service. Acceptable for this demo, and it avoids waiting on an ack
 			// that may never arrive (e.g. if the service is unreachable).
-			container.dispose();
+			container.close();
 		};
 	}, [manager, treeView, container]);
 
@@ -530,11 +449,10 @@ export const App: FC<{
 	devtoolsLogger: IDevtoolsLogger;
 	initialUsers: UserView[];
 	/**
-	 * How "Add user" connects a new user to the document. Defaults to
-	 * {@link connectUser}; tests inject a fake to avoid a real service connection.
+	 * Connects a new user to the document. Tests inject a fake to avoid a service connection.
 	 */
-	connectUser?: typeof connectUser;
-}> = ({ containerId, devtoolsLogger, initialUsers, connectUser: connect = connectUser }) => {
+	connectUser: ConnectUser;
+}> = ({ containerId, devtoolsLogger, initialUsers, connectUser: connect }) => {
 	const [users, setUsers] = useState<UserView[]>(initialUsers);
 
 	// Devtools defaults to off and is toggled at runtime (see DevtoolsToggle).
@@ -561,10 +479,10 @@ export const App: FC<{
 	}, [devtoolsEnabled, devtoolsLogger, users]);
 
 	const addUser = useCallback(() => {
-		connect(containerId, devtoolsLogger)
+		connect(containerId)
 			.then((user) => setUsers((prev) => [...prev, user]))
 			.catch((error: unknown) => console.error("Failed to add user:", error));
-	}, [connect, containerId, devtoolsLogger]);
+	}, [connect, containerId]);
 
 	// Drop the user from the list; the Devtools effect above re-initializes without it
 	// and its UserPanel disposes the view and container as it unmounts (see the teardown
@@ -585,6 +503,7 @@ export const App: FC<{
 		<div
 			style={{
 				padding: "20px",
+				fontFamily: "sans-serif",
 				minHeight: "100vh",
 				boxSizing: "border-box",
 				display: "flex",
@@ -636,27 +555,19 @@ async function start(): Promise<void> {
 	if (!rootElement) return;
 
 	try {
-		const { containerId, devtoolsLogger, initialUsers } = await initFluid();
-		const root = createRoot(rootElement);
-		root.render(
+		renderRoot(<ExampleLoadingView />);
+		const { containerId, devtoolsLogger, initialUsers, connectUser } = await initFluid();
+		renderRoot(
 			<App
 				containerId={containerId}
 				devtoolsLogger={devtoolsLogger}
 				initialUsers={initialUsers}
+				connectUser={connectUser}
 			/>,
 		);
 	} catch (error) {
 		console.error("Failed to start:", error);
-		rootElement.innerHTML = `<div style="color: #721c24; background: #f8d7da; padding: 20px; border-radius: 4px; border: 1px solid #f5c6cb;">
-			<h2>Failed to connect to Tinylicious</h2>
-			<p><strong>Error:</strong> ${error instanceof Error ? error.message : error}</p>
-			<p><strong>Tinylicious endpoint:</strong> ${getTinyliciousEndpoint()}</p>
-			<h3>Troubleshooting:</h3>
-			<ol>
-				<li>Make sure Tinylicious is running: <code>pnpm tinylicious</code></li>
-				<li>In Codespaces: Forward port 7070 and set visibility to <strong>Public</strong></li>
-			</ol>
-		</div>`;
+		renderRoot(<ExampleErrorView error={error} />);
 	}
 }
 

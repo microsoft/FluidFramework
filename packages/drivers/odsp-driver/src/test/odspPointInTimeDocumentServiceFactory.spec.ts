@@ -48,7 +48,7 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 		} as unknown as IOdspResolvedUrl;
 	}
 
-	function fakeDocumentService(): IDocumentService {
+	function fakeDocumentService(onDispose?: () => void): IDocumentService {
 		const service = {
 			on() {
 				return service;
@@ -56,7 +56,9 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 			off() {
 				return service;
 			},
-			dispose() {},
+			dispose() {
+				onDispose?.();
+			},
 		};
 		return service as unknown as IDocumentService;
 	}
@@ -148,6 +150,48 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 		assert.equal(capturedCacheAndTrackers.length, 2);
 		assert.equal(capturedCacheAndTrackers[0], capturedCacheAndTrackers[1]);
 		assert.equal(versionManagerEpochTracker, capturedCacheAndTrackers[0]?.epochTracker);
+	});
+
+	it("disposes the recoverable service when live service creation fails", async () => {
+		const resolvedUrl = await makeResolvedUrl();
+		const recoverableResolvedUrl = await makeResolvedUrl("42.0");
+		const liveServiceError = new Error("live service creation failed");
+		let createDocumentServiceCalls = 0;
+		let recoverableDisposeCount = 0;
+
+		await assert.rejects(
+			createPointInTimeDocumentServiceCore(
+				makeImplementationProps(resolvedUrl, async () => {
+					createDocumentServiceCalls++;
+					if (createDocumentServiceCalls === 1) {
+						return fakeDocumentService(() => {
+							recoverableDisposeCount++;
+						});
+					}
+					throw liveServiceError;
+				}),
+				{
+					createVersionManager: () => ({
+						findBaseForSeq: async (): Promise<BaseForSeq> => ({
+							kind: "found",
+							base: {
+								versionId: "42.0",
+								sequenceNumber: 5,
+								lastModifiedDateTime: "2026-01-01T00:00:00Z",
+							},
+						}),
+					}),
+					resolveFileVersion: () => recoverableResolvedUrl,
+				},
+			),
+			(error: unknown) => {
+				assert.equal(error, liveServiceError, "the live service error should be preserved");
+				return true;
+			},
+		);
+
+		assert.equal(createDocumentServiceCalls, 2);
+		assert.equal(recoverableDisposeCount, 1);
 	});
 
 	it("preserves routing metadata when resolving a recoverable version", async () => {

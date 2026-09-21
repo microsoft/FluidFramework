@@ -335,16 +335,16 @@ export type CreateIndependentTreeAlphaOptions = ForestOptions & IndependentViewT
 export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;
 
 // @beta
-export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue>(view: TreeView<TFieldSchema>, indexer: (schema: TreeNodeSchema) => string | undefined, getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey): TreeIndex<TKey, TValue>;
+export function createIndependentTreeView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: ForestOptions): TreeViewBeta<TSchema>;
+
+// @alpha
+export function createIndependentTreeViewAlpha<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: IndependentViewOptions): TreeViewAlpha<TSchema>;
 
 // @beta
-export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: (schema: TSchema) => string | undefined, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): TreeIndex<TKey, TValue>;
+export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue>(view: TreeView<TFieldSchema>, keyFieldSelector: TreeIndexKeyFieldSelector, getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey): TreeIndex<TKey, TValue>;
 
 // @beta
-export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey): TreeIndex<TKey, TValue>;
-
-// @beta
-export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): TreeIndex<TKey, TValue>;
+export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, keyFieldSelector: TreeIndexKeyFieldSelector<TSchema>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): TreeIndex<TKey, TValue>;
 
 // @alpha @sealed
 export interface CustomMetadataTree {
@@ -1087,7 +1087,7 @@ export const incrementalSummaryHint: unique symbol;
 // @alpha
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions & IndependentViewTelemetryOptions, content: ViewContent): TreeViewAlpha<TSchema>;
 
-// @alpha
+// @alpha @deprecated
 export function independentView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: IndependentViewOptions): TreeViewAlpha<TSchema>;
 
 // @alpha @input
@@ -1810,6 +1810,43 @@ export interface SchemaCompatibilityStatus {
     readonly isEquivalent: boolean;
 }
 
+// @beta @sealed
+export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
+    readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
+}
+
+// @beta @sealed
+export type SchemaDiscrepancy = {
+    readonly mismatch: "allowedTypes";
+    readonly location: "root" | {
+        readonly nodeType: string;
+        readonly fieldKey: string | undefined;
+    };
+    readonly view: readonly string[];
+    readonly stagedView?: readonly string[];
+    readonly stored: readonly string[];
+    readonly viewIsStagedOptional?: true;
+} | {
+    readonly mismatch: "fieldKind";
+    readonly location: "root" | {
+        readonly nodeType: string;
+        readonly fieldKey: string | undefined;
+    };
+    readonly view: string;
+    readonly stored: string;
+    readonly viewIsStagedOptional?: true;
+} | {
+    readonly mismatch: "valueSchema";
+    readonly nodeType: string;
+    readonly view: string | undefined;
+    readonly stored: string | undefined;
+} | {
+    readonly mismatch: "nodeKind";
+    readonly nodeType: string;
+    readonly view: string;
+    readonly stored: string;
+};
+
 // @public @sealed
 export class SchemaFactory<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory_base {
     constructor(
@@ -1963,7 +2000,8 @@ export interface ServiceClient {
 
 // @alpha @input
 export interface ServiceOptions {
-    readonly oldestSupportedClient?: OldestSupportedServiceClientVersion;
+    readonly logger?: ITelemetryBaseLogger;
+    readonly oldestSupportedClient: OldestSupportedServiceClientVersion;
 }
 
 // @alpha @sealed
@@ -2120,6 +2158,10 @@ export interface SnapshotSchemaCompatibilityOptions {
     readonly rejectVersionsWithNoSchemaChange?: true;
     readonly schema: TreeViewConfiguration;
     readonly snapshotDirectory: string;
+    readonly snapshotFileNameFormat?: {
+        readonly prefix?: string;
+        readonly suffix?: string;
+    };
     readonly snapshotUnchangedVersions?: true;
     readonly version: string;
     readonly versionComparer?: (a: string, b: string) => number;
@@ -2127,6 +2169,7 @@ export interface SnapshotSchemaCompatibilityOptions {
 
 // @alpha @input
 export interface StagedSchemaUpgradePolicy {
+    readonly includeAlreadyEnabledUpgrades?: boolean;
     includeStaged(upgrade: SchemaUpgrade): boolean;
     includeStagedOptional(upgrade: SchemaUpgrade): boolean;
 }
@@ -2615,6 +2658,11 @@ export interface TreeIndex<TKey, TValue> extends FluidReadonlyMap<TKey, TValue> 
 export type TreeIndexKey = TreeLeafValue;
 
 // @beta
+export type TreeIndexKeyFieldSelector<TSchema extends TreeNodeSchema = TreeNodeSchema> = ((schema: TSchema) => string | undefined) | {
+    get(schema: TSchema): string | undefined;
+};
+
+// @beta
 export type TreeIndexNodes<TNode> = readonly [first: TNode, ...rest: TNode[]];
 
 // @public
@@ -2756,6 +2804,7 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
 
 // @beta @sealed
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, UntypedTreeView {
+    readonly compatibility: SchemaCompatibilityStatusBeta;
     // (undocumented)
     fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
 }

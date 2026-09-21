@@ -541,7 +541,6 @@ export class NodeCore {
 
 		length = 0;
 		const input = buffer.buffer;
-		assert(input.byteOffset === 0, 0x3e8 /* code below assumes no offset */);
 
 		for (const el of stringsToResolve) {
 			for (let it = el.startPos; it < el.endPos; it++) {

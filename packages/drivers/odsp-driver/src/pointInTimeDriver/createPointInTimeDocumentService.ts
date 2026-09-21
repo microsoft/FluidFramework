@@ -51,6 +51,7 @@ async function createVersionManager(
 	logger: TelemetryLoggerExt,
 	epochTracker: EpochTracker,
 	getStorageToken: IOdspPointInTimeDocumentServiceImplementationProps["getStorageToken"],
+	requestHeaders?: Readonly<Record<string, string>>,
 ): Promise<IOdspVersionManager> {
 	const urlParts: IOdspUrlParts = {
 		siteUrl: odspResolvedUrl.siteUrl,
@@ -67,6 +68,7 @@ async function createVersionManager(
 		getAuthHeader,
 		epochTracker,
 		logger,
+		requestHeaders,
 	});
 }
 
@@ -120,6 +122,7 @@ export async function createPointInTimeDocumentServiceCore(
 		clientIsSummarizer,
 		persistedCache,
 		getStorageToken,
+		requestHeaders,
 		createDocumentService,
 	}: IOdspPointInTimeDocumentServiceImplementationProps,
 	dependencies: IPointInTimeDocumentServiceDependencies = {},
@@ -137,12 +140,13 @@ export async function createPointInTimeDocumentServiceCore(
 		},
 		extLogger,
 		clientIsSummarizer,
+		requestHeaders,
 	);
 
 	const versionManager = await (
 		dependencies.createVersionManager ??
 		(async (url, versionLogger, epochTracker) =>
-			createVersionManager(url, versionLogger, epochTracker, getStorageToken))
+			createVersionManager(url, versionLogger, epochTracker, getStorageToken, requestHeaders))
 	)(odspResolvedUrl, extLogger, cacheAndTracker.epochTracker);
 	const baseResult = await versionManager.findBaseForSeq(targetSequenceNumber);
 	if (baseResult.kind === "noBaseVersion") {
@@ -165,12 +169,25 @@ export async function createPointInTimeDocumentServiceCore(
 		cacheAndTracker,
 		clientIsSummarizer,
 	);
-	const liveDocumentService = await createDocumentService(
-		resolvedUrl,
-		odspLogger,
-		cacheAndTracker,
-		clientIsSummarizer,
-	);
+	let liveDocumentService: IDocumentService;
+	try {
+		liveDocumentService = await createDocumentService(
+			resolvedUrl,
+			odspLogger,
+			cacheAndTracker,
+			clientIsSummarizer,
+		);
+	} catch (error) {
+		try {
+			recoverableDocumentService.dispose();
+		} catch (disposeError) {
+			extLogger.sendErrorEvent(
+				{ eventName: "PointInTimeRecoverableDocumentServiceDisposeError" },
+				disposeError,
+			);
+		}
+		throw error;
+	}
 	return new OdspPointInTimeDocumentService(
 		recoverableResolvedUrl,
 		recoverableDocumentService,
