@@ -343,17 +343,21 @@ describe("MarkSegmentTree", () => {
 		}
 	});
 
-	it("finds a non-tree-aligned endpoint without scanning leaf summaries", () => {
+	it("uses precomputed safety bounds without reading reusable flags during queries", () => {
 		const tree = MarkSegmentTree.fromMarks(
-			Array.from({ length: 2048 }, (): Mark => ({ count: 1 })),
+			Array.from(
+				{ length: 2048 },
+				(_, index): Mark => (index === 1600 ? { count: 1, changes: id(0) } : { count: 1 }),
+			),
 		);
 		let leafReads = 0;
 		const watchLeaves = (node: MarkSegmentNode): void => {
 			if ("mark" in node) {
+				const reusable = node.reusable;
 				Object.defineProperty(node, "reusable", {
 					get: () => {
 						leafReads++;
-						return true;
+						return reusable;
 					},
 				});
 			} else {
@@ -364,7 +368,68 @@ describe("MarkSegmentTree", () => {
 		assert(tree.root !== undefined);
 		watchLeaves(tree.root);
 		assert.equal(tree.findReusableEnd(3, { count: 1531 }, "input"), 1534);
-		assert(leafReads <= 4, `Boundary query read ${leafReads} leaf summaries`);
+		assert.equal(tree.findReusableEnd(3, { count: 2000 }, "input"), 1600);
+		assert.equal(tree.findReusableEnd(3, { count: 3000 }, "input"), 1600);
+		assert.equal(tree.findReusableEnd(3, undefined, "input"), 1600);
+		assert.equal(leafReads, 0);
+	});
+
+	it("clamps found and missing ID endpoints to precomputed consecutive-ID runs", () => {
+		const tree = MarkSegmentTree.fromMarks([
+			{ count: 2, cellId: id(0, revision1) },
+			{ count: 3, cellId: id(2, revision1) },
+			{ count: 2, cellId: id(8, revision1) },
+			{ count: 2, cellId: id(10, revision2) },
+			{ count: 2 },
+		]);
+		for (const context of ["input", "output"] as const) {
+			assert.equal(
+				tree.findReusableEnd(0, { count: 10, cellId: id(0, revision1) }, context),
+				2,
+			);
+			assert.equal(
+				tree.findReusableEnd(0, { count: 7, cellId: id(0, revision1) }, context),
+				2,
+			);
+			assert.equal(
+				tree.findReusableEnd(0, { count: 4, cellId: id(0, revision1) }, context),
+				1,
+			);
+			assert.equal(
+				tree.findReusableEnd(1, { count: 3, cellId: id(2, revision1) }, context),
+				2,
+			);
+			assert.equal(
+				tree.findReusableEnd(2, { count: 4, cellId: id(8, revision1) }, context),
+				3,
+			);
+			assert.equal(
+				tree.findReusableEnd(3, { count: 4, cellId: id(10, revision2) }, context),
+				4,
+			);
+			assert.equal(
+				tree.findReusableEnd(0, { count: 5, cellId: id(0, revision2) }, context),
+				0,
+			);
+		}
+	});
+
+	it("does not jump backward to an already-consumed occurrence of an ID", () => {
+		const tree = MarkSegmentTree.fromMarks([
+			{ count: 3, cellId: id(0) },
+			{ count: 2, cellId: id(0) },
+		]);
+		for (const context of ["input", "output"] as const) {
+			assert.equal(tree.findReusableEnd(1, { count: 2, cellId: id(0) }, context), 1);
+		}
+	});
+
+	it("reuses available full-cell prefixes when the endpoint lies beyond the changeset", () => {
+		const tree = MarkSegmentTree.fromMarks([{ count: 2 }, { count: 3 }]);
+		for (const context of ["input", "output"] as const) {
+			assert.equal(tree.findReusableEnd(0, { count: 10 }, context), 2);
+			assert.equal(tree.findReusableEnd(1, { count: 10 }, context), 2);
+		}
 	});
 
 	it("validates query starts and rejects edits as opposing no-ops", () => {

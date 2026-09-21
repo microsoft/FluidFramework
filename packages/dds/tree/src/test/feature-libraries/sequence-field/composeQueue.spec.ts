@@ -87,21 +87,32 @@ describe("Array-indexed ComposeQueue", () => {
 
 		for (const context of ["input", "output"] as const) {
 			for (const empty of [false, true]) {
-				it(`jumps over a ${empty ? "empty" : "full"}-cell span in ${context} context with one query`, () => {
+				it(`uses ${empty ? "findById" : "findByIndex"} for ${context} endpoints before and after an array jump`, () => {
 					const marks = Array.from({ length: 2048 }, (_, index) =>
 						(context === "input") === empty ? insert(index) : remove(index),
 					);
 					const tree = MarkSegmentTree.fromMarks(marks);
-					const findReusableEnd = tree.findReusableEnd.bind(tree);
+					const findByIndex = tree.findByIndex.bind(tree);
+					const findById = tree.findById.bind(tree);
 					let searches = 0;
-					tree.findReusableEnd = (start, opposingNoop, actualContext) => {
-						assert.equal(start, 0);
+					const spanLength = 1531;
+					let expectedEndpoint = spanLength - 1;
+					tree.findByIndex = (index, actualContext) => {
+						assert(!empty);
+						assert.equal(index, expectedEndpoint);
 						assert.equal(actualContext, context);
 						searches++;
-						return findReusableEnd(start, opposingNoop, actualContext);
+						return findByIndex(index, actualContext);
+					};
+					tree.findById = (cellId, actualContext) => {
+						assert(empty);
+						assert.equal(cellId.localId, expectedEndpoint);
+						assert.equal(cellId.revision, revision);
+						assert.equal(actualContext, context);
+						searches++;
+						return findById(cellId, actualContext);
 					};
 					const queue = new SegmentMarkQueue(tree, noMoveEffects());
-					const spanLength = 1531;
 					const noop: Mark = empty
 						? { count: spanLength, cellId: { revision, localId: brand(0) } }
 						: { count: spanLength };
@@ -111,9 +122,40 @@ describe("Array-indexed ComposeQueue", () => {
 					);
 					assert.equal(searches, 1);
 					assert.strictEqual(queue.peek(), marks[spanLength]);
+					expectedEndpoint = spanLength + 2;
+					const nextNoop: Mark = empty
+						? { count: 3, cellId: { revision, localId: brand(spanLength) } }
+						: { count: 3 };
+					assert.deepEqual(
+						queue.tryDequeueReusable(nextNoop, context),
+						marks.slice(spanLength, spanLength + 3),
+					);
+					assert.equal(searches, 2);
+					assert.strictEqual(queue.peek(), marks[spanLength + 3]);
 				});
 			}
 		}
+
+		it("uses populated prefix lengths rather than array indexes after partial dequeues", () => {
+			const marks: Mark[] = [insert(100, 3), remove(0, 4), { count: 5 }];
+			const tree = MarkSegmentTree.fromMarks(marks);
+			const findByIndex = tree.findByIndex.bind(tree);
+			const queries: [number, string][] = [];
+			tree.findByIndex = (index, context) => {
+				queries.push([index, context]);
+				return findByIndex(index, context);
+			};
+			const queue = new SegmentMarkQueue(tree, noMoveEffects());
+			queue.dequeueUpTo(2);
+			queue.dequeueUpTo(1);
+			assert.deepEqual(queue.tryDequeueReusable({ count: 4 }, "input"), [marks[1]]);
+			assert.deepEqual(queue.tryDequeueReusable({ count: 5 }, "output"), [marks[2]]);
+			assert.deepEqual(queries, [
+				[3, "input"],
+				[7, "output"],
+			]);
+			assert(queue.isEmpty());
+		});
 	});
 
 	for (const side of ["base", "new"] as const) {
