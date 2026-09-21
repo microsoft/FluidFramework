@@ -9,7 +9,7 @@ The implementation and Firefox follow-up are committed through `031377a9cab` on 
 Anonymous-browser access and the revised page's absence of a Firefox permission prompt remain unverified, not implementation blockers.
 Use the linked client, server, and test guides for current supported behavior rather than the historical instructions below.
 
-Current recommendation: explicitly enable native `WebSocketStream` for the Codespaces development path; see [implementation and validation](../tests/webtransport-browser/README.md#optional-websocketstream-validation).
+Current recommendation: explicitly enable native `WebSocketStream` for the Codespaces development path; see [implementation and validation](../tests/webtransport-browser/README.md#websocketstream-validation).
 Where streaming APIs are unavailable, explicitly select ordinary WebSocket only when loss of receive backpressure is acceptable; see the compatibility follow-up below.
 The user declined third-party relay deployment; retain those options as alternatives only.
 Earlier recommendations below are historical evidence, not authorization to deploy a relay.
@@ -117,7 +117,7 @@ Both default WebTransport and feature-enabled WebSocketStream Chromium collabora
 Default generated bindings were restored after the optional-feature browser run.
 No push or merge into the active worktree was performed.
 
-This is an independently assignable investigation, separate from the [SEA WASM and ServiceClient integration plan](../SERVICE_CLIENT_PLAN.md).
+This is an independently assignable investigation, separate from the [SEA WASM and ServiceClient integration plan](SERVICE_CLIENT_PLAN.md).
 It does not require that plan's package extraction or inventory-app integration to be complete.
 Use the existing WebTransport client and server for the smallest useful probe.
 
@@ -146,7 +146,7 @@ Do not expand this assignment into implementing the WASM packages, ServiceClient
 
 ## Fresh-Context Entry
 
-- Read this plan's scope and acceptance criteria; the [main integration plan](../SERVICE_CLIENT_PLAN.md) supplies context, not additional implementation tasks or prerequisites.
+- Read this plan's scope and acceptance criteria; the [main integration plan](SERVICE_CLIENT_PLAN.md) supplies context, not additional implementation tasks or prerequisites.
 - Read [Sea architecture](../SEA_ARCHITECTURE.md), [Known Issues](../KNOWN_ISSUES.md), and [Development](../DEVELOPMENT.md), particularly current security and deployment limits.
 - Use the [WebTransport browser harness](../tests/webtransport-browser/README.md), [transport guide](../crates/sea-webtransport/README.md), and [server guide](../crates/sea-webtransport-server/README.md) as implementation anchors.
 - Check the assigned worktree path, branch, HEAD, and working-tree status; preserve existing changes.

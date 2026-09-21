@@ -1,7 +1,11 @@
-# Presentation Measurement Tools
+# Sea Benchmark Harness
+
+This workspace crate provides deterministic fixtures, correctness smoke workloads, and measurements for storage, transformations, and client transports.
+
+## Transport and Source Measurement Tools
 
 `presentation-native` is a benchmark-only, single-core generator for the existing native session client over WebTransport and a local WebSocket adapter.
-The [presentation harness](../../scripts/README.md) owns server startup, CPU affinity, start synchronization, resource sampling, deadlines, and result retention.
+The [collection harness](../../scripts/README.md) owns server startup, CPU affinity, start synchronization, resource sampling, deadlines, and result retention.
 The worker checks exact payload and per-document order at writer and observer, bounds outstanding operations, and drains deliveries before reporting.
 It uses one ordered submission queue per document for both transports and does not introduce a production client API.
 Local WebSocket is unencrypted; WebTransport includes QUIC/TLS with certificate pinning.
@@ -11,10 +15,6 @@ It recognizes explicit `#[cfg(test)]` modules and attributes ending in `test`, i
 The Node collector combines those spans with test-path classification and cloc counts.
 
 Build the tools with `cargo build --release -p sea-benchmarks --bins` and test their local fixtures with `cargo test -p sea-benchmarks --bins`.
-
-# Sea Benchmark Harness
-
-This workspace crate provides deterministic fixtures, correctness smoke workloads, and newline-delimited JSON measurements for the storage and transformation layers.
 
 ## Local Storage Pipeline
 
@@ -37,7 +37,7 @@ Submit futures use ordinary `buffered` polling without an `unconstrained` wrappe
 The retained measurements used the earlier whole-submission `unconstrained` workaround and were not rerun after the admission fix.
 Their source hash describes the measured version, not the final benchmark source.
 Successful replay is not proof of physical durability or absence of early acknowledgment under faults.
-The [storage optimization report](../../STORAGE_OPTIMIZATION.md) retains comparable baseline observations and focused fault-test evidence.
+The [storage optimization report](../../historical/STORAGE_OPTIMIZATION.md) retains comparable baseline observations and focused fault-test evidence.
 
 ## Commands
 

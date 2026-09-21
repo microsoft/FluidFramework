@@ -20,7 +20,17 @@ import { dirname, relative, resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "../..");
 const [mode, outputText, inputText] = process.argv.slice(2);
-const output = resolve(outputText ?? "/tmp/sea-presentation");
+if (mode === "--help") {
+	console.log("Use source, repeat, native-repeat <output>, or matrix <output> <cells.json>");
+	process.exit(0);
+}
+assert.ok(
+	["source", "repeat", "native-repeat", "matrix"].includes(mode),
+	"Unknown collection mode; use --help",
+);
+assert.ok(outputText, "A new output directory is required");
+if (mode === "matrix") assert.ok(inputText, "A matrix JSON file is required");
+const output = resolve(outputText);
 
 /** Retains machine-readable evidence without overwriting a previous artifact. */
 function save(name, value) {
@@ -190,8 +200,8 @@ function sweep(cells) {
 	const artifacts = [
 		"rust-service/target/release/sea-webtransport-server",
 		"rust-service/packages/sea-typescript/generated/websocket/node/sea_wasm_bg.wasm",
-		"rust-service/scripts/presentation-stress.mjs",
-		"rust-service/scripts/presentation-collect.mjs",
+		"rust-service/scripts/benchmark-stress.mjs",
+		"rust-service/scripts/benchmark-collect.mjs",
 	];
 	if (cells.some((cell) => cell.generator === "native")) {
 		artifacts.push("rust-service/target/release/presentation-native");
@@ -242,7 +252,7 @@ function sweep(cells) {
 		const execution = spawnSync(
 			process.execPath,
 			[
-				resolve(root, "rust-service/scripts/presentation-stress.mjs"),
+				resolve(root, "rust-service/scripts/benchmark-stress.mjs"),
 				"run",
 				JSON.stringify(configuration),
 				directory,
@@ -288,27 +298,7 @@ function sweep(cells) {
 
 mkdirSync(output, { recursive: true });
 if (mode === "source") sourceCounts();
-else if (mode === "sweep") {
-	const cells = [];
-	for (const cores of [1, 4])
-		for (const documents of [1, 32])
-			for (const payloadBytes of [64, 8192])
-				for (const rate of [1000, 4000, 16000]) {
-					const backends =
-						cells.length % 4 === 0 ? ["sea", "tinylicious"] : ["tinylicious", "sea"];
-					for (const backend of backends)
-						cells.push({
-							backend,
-							cores,
-							documents,
-							payloadBytes,
-							rate,
-							seconds: 5,
-							warmupSeconds: 1,
-						});
-				}
-	sweep(cells);
-} else if (mode === "repeat") {
+else if (mode === "repeat") {
 	const cells = [];
 	for (let repetition = 0; repetition < 10; repetition++) {
 		const backends = repetition % 2 === 0 ? ["sea", "tinylicious"] : ["tinylicious", "sea"];
@@ -344,57 +334,7 @@ else if (mode === "sweep") {
 		}
 	}
 	sweep(cells);
-} else if (mode === "followup-explore") {
-	const cells = [];
-	for (const cores of [1, 4]) {
-		for (const payloadBytes of [64, 8192]) {
-			for (const rate of payloadBytes === 64 ? [12000, 24000, 48000] : [6000, 12000, 24000]) {
-				for (const transport of cells.length % 4 === 0
-					? ["websocket", "webtransport"]
-					: ["webtransport", "websocket"]) {
-					cells.push({
-						backend: "sea",
-						generator: "native",
-						transport,
-						cores,
-						documents: 32,
-						payloadBytes,
-						rate,
-						seconds: 10,
-						warmupSeconds: 3,
-					});
-				}
-			}
-			for (const rate of [750, 1000, 1250]) {
-				cells.push({
-					backend: "tinylicious",
-					cores,
-					documents: 32,
-					payloadBytes,
-					rate,
-					seconds: 10,
-					warmupSeconds: 3,
-				});
-			}
-		}
-	}
-	sweep(cells);
-} else if (mode === "followup-tiny-retry") {
-	const cells = [];
-	for (const cores of [1, 4])
-		for (const payloadBytes of [64, 8192])
-			for (const rate of [750, 1250])
-				cells.push({
-					backend: "tinylicious",
-					cores,
-					documents: 32,
-					payloadBytes,
-					rate,
-					seconds: 10,
-					warmupSeconds: 3,
-				});
-	sweep(cells);
-} else if (mode === "followup-repeat") {
+} else if (mode === "native-repeat") {
 	const cells = [];
 	for (let repetition = 0; repetition < 10; repetition++) {
 		const points = [];
@@ -425,7 +365,3 @@ else if (mode === "sweep") {
 	}
 	sweep(cells);
 } else if (mode === "matrix") sweep(JSON.parse(readFileSync(resolve(inputText), "utf8")));
-else
-	throw new Error(
-		"Use source, sweep, repeat, followup-explore, followup-tiny-retry, followup-repeat <output>, or matrix <output> <cells.json>",
-	);

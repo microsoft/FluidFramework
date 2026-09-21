@@ -14,7 +14,7 @@ import { createInterface } from "node:readline";
 import { setTimeout as delay } from "node:timers/promises";
 
 const root = resolve(import.meta.dirname, "../..");
-const script = resolve(import.meta.dirname, "presentation-stress.mjs");
+const script = resolve(import.meta.dirname, "benchmark-stress.mjs");
 
 /** Samples one process, counting one fully occupied logical CPU as 100 percent. */
 function processSample(pid) {
@@ -573,7 +573,7 @@ async function run(configuration, output) {
 const [mode, configurationText, outputDirectory] = process.argv.slice(2);
 if (mode === "--help") {
 	console.log(
-		'node presentation-stress.mjs run \'{"backend":"sea","rate":100,"payloadBytes":64,"documents":1,"cores":1,"seconds":5,"warmupSeconds":1}\' <output>',
+		'node benchmark-stress.mjs run \'{"backend":"sea","rate":100,"payloadBytes":64,"documents":1,"cores":1,"seconds":5,"warmupSeconds":1}\' <output>',
 	);
 } else {
 	const configuration = JSON.parse(configurationText);

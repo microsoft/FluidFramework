@@ -31,7 +31,7 @@ Path decomposition was effective and all implementation commits cherry-picked wi
 
 ## Durable Lessons
 
-[LEARNINGS.md](../../../LEARNINGS.md) records that a fence must cover semantic validation through append, client-verifiable token envelopes preserve synchronous codec laws across process boundaries, and implementation agents must have write-capable tools. These lessons apply beyond the specific prototypes.
+[LEARNINGS.md](../../LEARNINGS.md) records that a fence must cover semantic validation through append, client-verifiable token envelopes preserve synchronous codec laws across process boundaries, and implementation agents must have write-capable tools. These lessons apply beyond the specific prototypes.
 
 ## Open Questions
 

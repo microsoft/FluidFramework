@@ -15,6 +15,7 @@ const groupingRoots = [
 	"crates/wrappers",
 	"crates/spikes",
 	"examples",
+	"historical",
 	"packages",
 	"tests",
 	"scripts",
@@ -22,9 +23,9 @@ const groupingRoots = [
 const requestedRoots = process.argv.slice(2);
 const markdownLink = /\[[^\]]*\]\(([^)]+)\)/g;
 const failures = [];
-const checkedReadmePaths = new Set();
+const checkedDocumentPaths = new Set();
 let checkedLinks = 0;
-let checkedReadmes = 0;
+let checkedDocuments = 0;
 
 function resolveWithinRustService(candidate) {
 	const resolved = path.resolve(rustServiceRoot, candidate);
@@ -76,11 +77,11 @@ function childDirectoryRoots(directory) {
 }
 
 function checkLinks(readme) {
-	if (checkedReadmePaths.has(readme)) {
+	if (checkedDocumentPaths.has(readme)) {
 		return;
 	}
-	checkedReadmePaths.add(readme);
-	checkedReadmes += 1;
+	checkedDocumentPaths.add(readme);
+	checkedDocuments += 1;
 	const contents = fs.readFileSync(readme, "utf8");
 	for (const match of contents.matchAll(markdownLink)) {
 		const destination = match[1].trim();
@@ -94,11 +95,11 @@ function checkLinks(readme) {
 		const withoutTitle = destination.replace(/\s+["'][^"']*["']$/, "");
 		const decodedPath = decodeURIComponent(withoutTitle.split("#", 1)[0]);
 		const target = path.resolve(path.dirname(readme), decodedPath);
-		const relativeTarget = path.relative(rustServiceRoot, target);
+		const relativeTarget = path.relative(path.dirname(rustServiceRoot), target);
 		checkedLinks += 1;
 		if (relativeTarget.startsWith("..") || path.isAbsolute(relativeTarget)) {
 			failures.push(
-				`${path.relative(rustServiceRoot, readme)}: link escapes rust-service: ${destination}`,
+				`${path.relative(rustServiceRoot, readme)}: link escapes repository: ${destination}`,
 			);
 		} else if (!fs.existsSync(target)) {
 			failures.push(
@@ -138,6 +139,14 @@ const roots =
 			].sort()
 		: requestedRoots;
 
+if (requestedRoots.length === 0) {
+	for (const entry of fs.readdirSync(rustServiceRoot, { withFileTypes: true })) {
+		if (entry.isFile() && entry.name.endsWith(".md")) {
+			checkLinks(path.join(rustServiceRoot, entry.name));
+		}
+	}
+}
+
 for (const root of roots) {
 	try {
 		checkRoot(root);
@@ -153,6 +162,6 @@ if (failures.length > 0) {
 	process.exitCode = 1;
 } else {
 	console.log(
-		`documentation check passed: ${roots.length} roots, ${checkedReadmes} READMEs, ${checkedLinks} local links`,
+		`documentation check passed: ${roots.length} roots, ${checkedDocuments} documents, ${checkedLinks} local links`,
 	);
 }

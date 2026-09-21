@@ -41,7 +41,7 @@ Dependency growth is confined to existing workspace Fluid packages plus direct e
 
 ## Learning and Process Findings
 
-The [retrospective](retrospective.md) records the serial accept-loop prerequisite, the staged Fluid contract failures, delegated-command checkout/evidence failures, and generated-artifact prerequisite. Durable architecture and correctness findings were promoted to [LEARNINGS.md](../../../LEARNINGS.md). Human direction established the concurrency-first dependency and requested parallel execution; no mid-implementation semantic correction was required.
+The [retrospective](retrospective.md) records the serial accept-loop prerequisite, the staged Fluid contract failures, delegated-command checkout/evidence failures, and generated-artifact prerequisite. Durable architecture and correctness findings were promoted to [LEARNINGS.md](../../LEARNINGS.md). Human direction established the concurrency-first dependency and requested parallel execution; no mid-implementation semantic correction was required.
 
 ## Skill Changes
 

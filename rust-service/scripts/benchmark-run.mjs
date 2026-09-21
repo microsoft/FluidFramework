@@ -32,7 +32,7 @@ function metadata(command, argumentsList) {
 
 const [outputDirectory, command, ...argumentsList] = process.argv.slice(2);
 if (outputDirectory === "--help") {
-	console.log("node presentation-run.mjs <new-output-directory> <command> [arguments...]");
+	console.log("node benchmark-run.mjs <new-output-directory> <command> [arguments...]");
 } else {
 	if (!outputDirectory || !command) {
 		throw new Error("Expected an output directory and command; see --help");

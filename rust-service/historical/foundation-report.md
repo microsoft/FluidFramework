@@ -52,8 +52,8 @@ Phase 1 will create the compilable Rust workspace, settle only the semantics nee
 - `snapshotted-stream-memory` is the reference implementation and currently passes the shared baseline plus local reader and snapshot regressions.
 - `snapshotted-stream-client` is a thin raw-trait helper; `snapshotted-stream-counter` demonstrates framed appends, snapshot publication, and recovery against memory.
 - File, durable-log, compression, and Fluid sequencer crates compile as isolated Phase 2 ownership boundaries depending inward on core.
-- [The workstream manifest](../WORKSTREAMS.md) records the complete dependency graph, active iteration `0001` owners, writable paths, evidence, deliverables, composition matrix, and deferrals.
-- [The benchmark specification](../BENCHMARKS.md) records workloads, procedure, statistics, semantic comparison rules, and required environment metadata.
+- [The workstream manifest](../WORKSPACE_ARCHITECTURE.md) records the complete dependency graph, active iteration `0001` owners, writable paths, evidence, deliverables, composition matrix, and deferrals.
+- [The benchmark specification](BENCHMARKS.md) records workloads, procedure, statistics, semantic comparison rules, and required environment metadata.
 
 ## Validation Evidence
 

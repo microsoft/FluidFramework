@@ -65,7 +65,7 @@ No new contract text was necessary because existing promises already cover both 
 
 ## Durable Lessons
 
-The [learning index](../../../LEARNINGS.md#agentic-development) now records the observed mismatch between coordinator and delegate capabilities and the verified coordinator-batched fallback.
+The [learning index](../../LEARNINGS.md#agentic-development) now records the observed mismatch between coordinator and delegate capabilities and the verified coordinator-batched fallback.
 The procedure remains in the [skill review's applied surfaces](skill-review.md#applied-changes), without duplicating instructions in the index.
 Live negative-delivery controls, announced membership before terminal-error checks, and callback/physical-release discrimination are concrete examples of the existing quality skill's owning-decision rule; no new skill is needed.
 Durable per-run completion evidence and direct report verification are already required, not new policy proposals.

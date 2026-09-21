@@ -42,7 +42,7 @@ Integration corrected a protocol decoder return mismatch, split an oversized ser
 
 ## Learning and Process Findings
 
-[The retrospective](retrospective.md) records wrong-worktree validation, stale generated provenance, protocol compile repairs, browser cleanup, benchmark-assumption corrections, and the rejected adaptive-compression path. Durable findings are promoted to [LEARNINGS.md](../../../LEARNINGS.md).
+[The retrospective](retrospective.md) records wrong-worktree validation, stale generated provenance, protocol compile repairs, browser cleanup, benchmark-assumption corrections, and the rejected adaptive-compression path. Durable findings are promoted to [LEARNINGS.md](../../LEARNINGS.md).
 
 ## Skill Changes
 

@@ -89,7 +89,7 @@ test exists.
 The [retrospective](retrospective.md) records repeated command routing and cold
 build interruptions, strict integration failures and repairs, and a repeated
 report-template append defect. The existing
-[durable lesson](../../../LEARNINGS.md#correctness-and-testing) now includes precise
+[durable lesson](../../LEARNINGS.md#correctness-and-testing) now includes precise
 contract traceability and owner-local diagnosis alongside exact decision
 discrimination.
 

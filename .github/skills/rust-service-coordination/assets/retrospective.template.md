@@ -24,7 +24,7 @@ For each substantial effort sink, record the trigger, attempted approaches, evid
 
 ## Durable Lessons
 
-<!-- TODO(required): identify findings promoted to LEARNINGS.md and explain why they generalize -->
+<!-- TODO(required): identify observations recorded in rust-service/historical/LEARNINGS.md and explain which rules generalize into current contracts, development guidance, or skills -->
 
 ## Open Questions
 

@@ -30,7 +30,7 @@ The decomposition was effective: no implementation paths overlapped and all work
 
 ## Durable Lessons
 
-[LEARNINGS.md](../../../LEARNINGS.md) now records that specialized fault suites do not replace shared semantic conformance, deterministic fault injection must not be presented as process/power-loss evidence, and valid-only service sequencing avoids conditional append only when fencing remains exclusive through append. These apply beyond the specific implementations in this iteration.
+[LEARNINGS.md](../../LEARNINGS.md) now records that specialized fault suites do not replace shared semantic conformance, deterministic fault injection must not be presented as process/power-loss evidence, and valid-only service sequencing avoids conditional append only when fencing remains exclusive through append. These apply beyond the specific implementations in this iteration.
 
 ## Open Questions
 

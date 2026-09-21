@@ -44,7 +44,7 @@ The workstreams corrected a projection fixture ordering error, a stale client qu
 
 ## Learning and Process Findings
 
-[The retrospective](retrospective.md) records wrong-worktree command summaries, stale Cargo and generated-WASM artifacts, missing generated Fluid declarations, process-test collisions, and the early two-session browser failure. Durable findings are promoted to [LEARNINGS.md](../../../LEARNINGS.md).
+[The retrospective](retrospective.md) records wrong-worktree command summaries, stale Cargo and generated-WASM artifacts, missing generated Fluid declarations, process-test collisions, and the early two-session browser failure. Durable findings are promoted to [LEARNINGS.md](../../LEARNINGS.md).
 
 ## Skill Changes
 

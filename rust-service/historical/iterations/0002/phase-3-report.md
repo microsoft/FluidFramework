@@ -41,7 +41,7 @@ Phase 3 commit: final record commit containing this file; its hash becomes the n
 
 ## Learning and Process Findings
 
-[The retrospective](retrospective.md) records repeated wrong-worktree validation routing, the value of parallel branch isolation, lockfile ownership constraints, and integrated conformance finding a local defect. Durable findings were promoted to [LEARNINGS.md](../../../LEARNINGS.md).
+[The retrospective](retrospective.md) records repeated wrong-worktree validation routing, the value of parallel branch isolation, lockfile ownership constraints, and integrated conformance finding a local defect. Durable findings were promoted to [LEARNINGS.md](../../LEARNINGS.md).
 
 ## Skill Changes
 

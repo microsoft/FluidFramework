@@ -2,7 +2,7 @@
 
 Sea separates durable document state, multi-user coordination, transport, and application policy.
 The core traits are independent of storage backends, network transports, and application frameworks.
-For setup and usage, start with the [README](README.md); for package dependencies, see [workspace architecture](WORKSTREAMS.md).
+For setup and usage, start with the [README](README.md); for package dependencies, see [workspace architecture](WORKSPACE_ARCHITECTURE.md).
 
 ## Ephemeral Messaging
 

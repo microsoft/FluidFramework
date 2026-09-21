@@ -128,10 +128,10 @@ Nonzero results are not suppressed.
 The lifecycle smoke passes with the neutral-session driver's ordered membership projection.
 The validated current-version SEA selection has 658 passing tests, 526 pending tests, and no failures.
 Pending cases include inherited service-selection conditions; they are not passes.
-See the [integration results](../../../rust-service/INTEGRATION_TEST_CONFIGURATION_PLAN.md#three-failure-repair-and-green-current-version-selection) for validation evidence and remaining coverage limitations.
+See the [integration results](../../../rust-service/historical/INTEGRATION_TEST_CONFIGURATION_PLAN.md#three-failure-repair-and-green-current-version-selection) for validation evidence and remaining coverage limitations.
 No SEA-specific behavioral tests are silently skipped by this configuration.
 The fixed historical-loader compression suite is explicitly pending for SEA because this configuration supports current-version APIs only.
-See the [SEA exclusion inventory](../../../rust-service/INTEGRATION_TEST_CONFIGURATION_PLAN.md#sea-exclusion-inventory) for the exact cases and local-driver comparison evidence.
+See the [SEA exclusion inventory](../../../rust-service/historical/INTEGRATION_TEST_CONFIGURATION_PLAN.md#sea-exclusion-inventory) for the exact cases and local-driver comparison evidence.
 
 Focused setup checks:
 

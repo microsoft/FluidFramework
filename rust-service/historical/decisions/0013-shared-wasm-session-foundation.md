@@ -9,7 +9,7 @@ Superseded by: none
 
 ## Context
 
-The [integration plan](../../SERVICE_CLIENT_PLAN.md) requires local and remote JavaScript sessions, optional decorators, and independently generated minimal bundles.
+The [integration plan](../SERVICE_CLIENT_PLAN.md) requires local and remote JavaScript sessions, optional decorators, and independently generated minimal bundles.
 Existing generated bindings belong to `sea-webtransport` and mix protocol values with general session operations.
 The native typed session client already implements the contracts consumed by the compression decorator, but was excluded from browser builds.
 

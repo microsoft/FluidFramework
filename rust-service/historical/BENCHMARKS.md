@@ -1,5 +1,8 @@
 # Benchmark Specification
 
+Historical procedure for the initial iteration, not the current benchmark specification.
+Use the [current harness guide](../crates/sea-benchmarks/README.md) for supported workloads and commands.
+
 Iteration `0001` measurements answer contract and cost questions; they are not production capacity claims.
 
 ## Workloads

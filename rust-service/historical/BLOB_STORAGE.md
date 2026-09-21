@@ -1,5 +1,8 @@
 # Blob-tree Storage
 
+Historical design proposal; retention and authorization ideas below are not implemented service guarantees.
+Current contracts live in the [architecture guide](../SEA_ARCHITECTURE.md), [core crate](../crates/sea-core/README.md), and [content-addressed storage crate](../crates/sea-content-addressed/README.md).
+
 Sea implements a unified content-addressed contract for binary blobs, immutable directories, snapshots, and content referenced by events.
 `sea-core` owns typed identities, storage components composed by `SeaView`, and the higher-level session contracts.
 The view establishes tree availability before appending an event and both tree and event availability before publishing a snapshot.
@@ -133,12 +136,12 @@ Update the table and its supporting details when behavior changes.
 
 ### Implementation entry points
 
-- [Fluid storage adapter](packages/sea-driver/src/storage.ts): `uploadBlobs`, `flattenSummary`, `downloadSummary`, and `readBlob` own upload admission, handle reuse, full-summary retrieval, and cache-policy metadata.
-- [Fluid session client](packages/sea-driver/src/sessionClient.ts): `uploadBlob`, `fetchBlob`, `publishDirectory`, and `flattenDirectory` bridge the adapter to neutral sessions and currently traverse directories sequentially.
-- [Shared native/browser session client](crates/sea-webtransport/src/native.rs): `SessionClient::content_request` holds the content-stream mutex across the response; `put_blob` and `get_blob` transfer whole payloads.
-- [Wire protocol](crates/sea-webtransport/src/protocol.rs) and [server dispatch](crates/sea-webtransport-server/src/dispatch.rs): own message shapes, correlation, completion, and routing. Use the [transport guide](crates/sea-webtransport/README.md) for stream ownership and cancellation contracts.
-- [Blob storage contract](crates/sea-core/src/storage/blob_store.rs) and [session contract](crates/sea-core/src/session.rs): own immutable content and availability semantics; transfer hints must not weaken them.
-- [Compression](crates/sea-compression/README.md) and [encryption](crates/sea-encryption/README.md): own payload transforms. Current identities name encoded stored bytes, including ciphertext when encryption is enabled; directories remain visible.
+- [Fluid storage adapter](../packages/sea-driver/src/storage.ts): `uploadBlobs`, `flattenSummary`, `downloadSummary`, and `readBlob` own upload admission, handle reuse, full-summary retrieval, and cache-policy metadata.
+- [Fluid session client](../packages/sea-driver/src/sessionClient.ts): `uploadBlob`, `fetchBlob`, `publishDirectory`, and `flattenDirectory` bridge the adapter to neutral sessions and currently traverse directories sequentially.
+- [Shared native/browser session client](../crates/sea-webtransport/src/native.rs): `SessionClient::content_request` holds the content-stream mutex across the response; `put_blob` and `get_blob` transfer whole payloads.
+- [Wire protocol](../crates/sea-webtransport/src/protocol.rs) and [server dispatch](../crates/sea-webtransport-server/src/dispatch.rs): own message shapes, correlation, completion, and routing. Use the [transport guide](../crates/sea-webtransport/README.md) for stream ownership and cancellation contracts.
+- [Blob storage contract](../crates/sea-core/src/storage/blob_store.rs) and [session contract](../crates/sea-core/src/session.rs): own immutable content and availability semantics; transfer hints must not weaken them.
+- [Compression](../crates/sea-compression/README.md) and [encryption](../crates/sea-encryption/README.md): own payload transforms. Current identities name encoded stored bytes, including ciphertext when encryption is enabled; directories remain visible.
 
 ### Cache knowledge, demand, and budgets
 
@@ -192,7 +195,7 @@ Current blob APIs and transforms buffer whole payloads: backpressure can bound t
 Ordinary WebSocket fallback cannot propagate receive backpressure when the application stops reading.
 Its send-buffer admission throttling and bounded receive queues do not provide the same guarantee; queue overflow fails the transport rather than silently dropping content.
 Use conservative bounded production for that mode, and define application-level receive credits or another explicit pacing mechanism if future speculative transfers need stronger slow-consumer guarantees.
-Do not assume that per-socket queue limits bound connection-wide, runtime, or proxy memory; see the [transport limitations](crates/sea-webtransport/README.md#optional-websocketstream-fallback).
+Do not assume that per-socket queue limits bound connection-wide, runtime, or proxy memory; see the [transport limitations](../crates/sea-webtransport/README.md#optional-websocketstream-fallback).
 
 ### Recursive fetch and initial load
 
@@ -234,7 +237,7 @@ Bound retained client cache state and decompression output as well as network by
 Start with the smallest independent optimization and update its status only after testing the owning layer and the actual remote path.
 An adapter concurrency test does not prove transport overlap, and storage deduplication does not prove fewer transferred bytes.
 Before wire changes, settle hint versioning, completion, cancellation, and load scheduling; preserve client/server compatibility through the repository's protocol-version policy.
-Follow [Development](DEVELOPMENT.md) for required validation and use existing owning-module, driver, and browser tests where possible.
+Follow [Development](../DEVELOPMENT.md) for required validation and use existing owning-module, driver, and browser tests where possible.
 
 Acceptance evidence should cover the relevant scenarios:
 

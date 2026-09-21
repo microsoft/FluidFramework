@@ -297,7 +297,7 @@ Use [integration report template](./assets/integration-report.template.md).
 3. Review every costly issue, human intervention, workaround, and proposed decision.
 4. Create or update decision records and link them from the Phase 3 report.
 5. Decide interactively which workstreams to keep, remove, replace, or add next.
-6. Complete the retrospective and promote durable lessons to `rust-service/LEARNINGS.md`.
+6. Complete the retrospective and record observed lessons in `rust-service/historical/LEARNINGS.md`. Promote applicable rules into current contract documentation, development guidance, or reusable skills so contributors do not need to read the history.
 7. Review candidate skills and coordination friction, including unresolved
    candidates and next-review triggers from prior iterations. Record accepted,
    rejected, and deferred changes in `skill-review.md`. For each accepted

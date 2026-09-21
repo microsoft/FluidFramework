@@ -24,7 +24,7 @@ Recovery must establish a final accepted prefix before a caller transforms the u
 Continuing the same session after failure permits holes and invalidates prefix counting.
 Blind retries can duplicate effects or bind unchanged payloads to a different context.
 Terminal append authority preserves the prefix while permitting independent archive replay and exact outcome lookup.
-Focused sequencer, encryption, transport, and generated-binding regressions are recorded in the [active plan](../../INTEGRATION_TEST_CONFIGURATION_PLAN.md#ordered-append-contract-correction).
+Focused sequencer, encryption, transport, and generated-binding regressions are recorded in the [active plan](../INTEGRATION_TEST_CONFIGURATION_PLAN.md#ordered-append-contract-correction).
 
 ## Decision
 

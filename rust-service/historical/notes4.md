@@ -79,9 +79,9 @@ A future subscription option may request delivery of every snapshot, with its re
 
 ## Prospective Content Optimizations
 
-The current optimization status and implementation guidance are maintained in [Blob-tree Storage: Optimizations](../BLOB_STORAGE.md#optimizations).
+The current optimization status and implementation guidance are maintained in [Blob-tree Storage: Optimizations](BLOB_STORAGE.md#optimizations).
 That section owns the design for cache knowledge, demand hints, initial-load and recursive transfers, heuristic budgets, and potential latency-aware refinement.
-The storage contract, retention model, upload lifetime design, and Fluid mapping are also maintained in [Blob-tree Storage](../BLOB_STORAGE.md).
+The storage contract, retention model, upload lifetime design, and Fluid mapping are also maintained in [Blob-tree Storage](BLOB_STORAGE.md).
 This historical flow note is not the source of truth for those designs.
 
 ## Notes

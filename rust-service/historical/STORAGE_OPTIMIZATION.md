@@ -1,5 +1,8 @@
 # Storage Optimization Evidence
 
+Historical investigation at the revisions listed below, not a benchmark of the current checkout.
+Use the [file backend guide](../crates/sea-file/README.md) for current behavior and the [benchmark harness](../crates/sea-benchmarks/README.md) for current commands.
+
 ## Focused Overhead Pass on the Merged Baseline
 
 This section supersedes the older comparisons below for the focused performance pass.
@@ -323,12 +326,12 @@ The benchmark directly exercises concurrent local session submissions.
 
 The session-sequence branch still needs semantic integration, particularly submission identity, accepted-prefix failure handling, cancellation, and terminal leave ordering.
 No merge was attempted while that independent work remained in progress.
-See [Decision 0019](historical/decisions/0019-bounded-storage-pipeline.md) for the approved storage assumptions and API boundary.
+See [Decision 0019](decisions/0019-bounded-storage-pipeline.md) for the approved storage assumptions and API boundary.
 
 ## Session-Sequence Merge Integration
 
 The merge combines storage checkpoint `47159ea46be` with incoming `7753aba04ac` in the storage worktree only.
-The incoming [Decision 0018](historical/decisions/0018-session-prefix-submission-identity.md) is preserved unchanged; the independently numbered storage decision is renumbered to 0019.
+The incoming [Decision 0018](decisions/0018-session-prefix-submission-identity.md) is preserved unchanged; the independently numbered storage decision is renumbered to 0019.
 This integration adds no performance optimization or new measurements.
 
 The pipeline no longer uses operation IDs, historical deduplication, or submission lookup.

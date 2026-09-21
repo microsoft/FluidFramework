@@ -42,7 +42,7 @@ Minimal file uses 430 pre-test source lines and five runtime dependencies; durab
 
 ## Learning and Process Findings
 
-[The retrospective](retrospective.md) records branch-ref collisions, shared-lockfile validation friction, misleading multi-worktree command summaries, the host reboot recovery, and successful parallel dispatch. Durable findings are promoted to [LEARNINGS.md](../../../LEARNINGS.md).
+[The retrospective](retrospective.md) records branch-ref collisions, shared-lockfile validation friction, misleading multi-worktree command summaries, the host reboot recovery, and successful parallel dispatch. Durable findings are promoted to [LEARNINGS.md](../../LEARNINGS.md).
 
 ## Skill Changes
 

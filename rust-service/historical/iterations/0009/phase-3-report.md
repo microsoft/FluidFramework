@@ -37,7 +37,7 @@ All arms proved the same logical workload and convergence condition, but guarant
 
 ## Learning and Process Findings
 
-The [retrospective](retrospective.md) records the user-directed workload correction, copied-worktree generated-output failure, WASM runtime issue, browser package shim, and provenance repair. The append-only count/final-convergence requirement is promoted to [LEARNINGS.md](../../../LEARNINGS.md). The workstream report retains the full [notable-event table](phase-2/full-driver-single-writer-capacity.md#notable-events).
+The [retrospective](retrospective.md) records the user-directed workload correction, copied-worktree generated-output failure, WASM runtime issue, browser package shim, and provenance repair. The append-only count/final-convergence requirement is promoted to [LEARNINGS.md](../../LEARNINGS.md). The workstream report retains the full [notable-event table](phase-2/full-driver-single-writer-capacity.md#notable-events).
 
 ## Skill Changes
 

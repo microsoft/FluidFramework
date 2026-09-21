@@ -36,7 +36,7 @@ Dependency waves prevented provisional wire contracts from diverging, and centra
 
 ## Durable Lessons
 
-[LEARNINGS.md](../../../LEARNINGS.md) now records that projected pagination must advance across filtered canonical spans, immutable summary acknowledgement requires durable verified references, consumer work should probe prerequisite runtime capabilities before dispatch, and generated or cached build state must be verified by the artifact needed downstream. These findings generalize to future protocols, storage adapters, browser consumers, and multi-worktree builds.
+[LEARNINGS.md](../../LEARNINGS.md) now records that projected pagination must advance across filtered canonical spans, immutable summary acknowledgement requires durable verified references, consumer work should probe prerequisite runtime capabilities before dispatch, and generated or cached build state must be verified by the artifact needed downstream. These findings generalize to future protocols, storage adapters, browser consumers, and multi-worktree builds.
 
 ## Open Questions
 

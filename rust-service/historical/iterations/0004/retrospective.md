@@ -36,7 +36,7 @@ Path decomposition produced conflict-free implementation cherry-picks, while dep
 
 ## Durable Lessons
 
-[LEARNINGS.md](../../../LEARNINGS.md) now records that public service history must not leak private canonical decoding into clients, live ambiguity must remain explicit until authoritatively resolved, browser transport requires browser evidence even when portable client logic runs in Node, and dependency-wave language must distinguish concurrent groundwork from independent completion. These findings apply to future drivers and multi-agent iterations.
+[LEARNINGS.md](../../LEARNINGS.md) now records that public service history must not leak private canonical decoding into clients, live ambiguity must remain explicit until authoritatively resolved, browser transport requires browser evidence even when portable client logic runs in Node, and dependency-wave language must distinguish concurrent groundwork from independent completion. These findings apply to future drivers and multi-agent iterations.
 
 ## Open Questions
 

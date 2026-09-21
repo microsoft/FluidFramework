@@ -1,7 +1,7 @@
 # Known Issues
 
 This file tracks current limitations of the experimental Sea implementation and its development tooling.
-Historical architecture findings remain in `decisions/` and `iterations/`.
+Historical findings and resolved investigations are retained in [Historical records](historical/README.md).
 
 ## Intermittent native connection timeout
 
@@ -9,15 +9,12 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 - **Severity:** Medium
 - **Area:** Native WebTransport connection setup and test reliability
 - **Evidence:** `host::tests::native_client_round_trip_in_every_storage_mode` failed during initial `NativeSeaClient::connect` with `Transport(Timeout)` in workspace validation on 2026-09-20.
-  The original merge-validation failure remains in `/tmp/sea-storage-merge-final-test.log` for this environment.
+  The original log was machine-local; the test now reports storage mode, elapsed connection time, and server measurements for future failures.
   Passing isolated and workspace retries do not resolve the failure.
 - **Investigation:** Temporary diagnostics distinguished handshake, event-stream opening, and author-stream opening timeouts.
   The failure did not recur in 92 server-suite runs, six complete workspace runs, or 80 additional server-suite processes in ten waves of eight concurrent processes.
   No failed stage was captured, and scheduling pressure did not establish a cause.
   Temporary production logging was removed; the round-trip test now reports storage mode, elapsed connection time, and server measurements on failure.
-  The workspace investigation separately reproduced `cancelled_batch_retains_opening_until_worker_settles` failing with `Busy`.
-  That test incorrectly treated a zero `Arc` strong count as completed destruction and file-lock release.
-  It now waits for successful reopening within the existing deadline, still verifies exclusion before releasing the blocked worker, and passed twelve file-suite repetitions and the six workspace runs above.
 - **Impact:** Native test runs can fail without an established product or test-harness cause.
   The transport timeout must not be classified as harmless host variability or resolved by a passing retry.
 - **Follow-up:** Capture the enhanced failure diagnostics and instrument the implicated connection stage to obtain a reproducible cause.
@@ -42,53 +39,11 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
 
 ## VS Code terminal tools can interfere across subagents
 
-- **Status:** Open; coordinator task-batched iteration verified; autonomous delegate scheduling/cancellation unavailable
-- **Severity:** High
-- **Area:** Agent execution and validation evidence
-- **Evidence:** The [execution isolation investigation](historical/EXECUTION_ISOLATION_INVESTIGATION.md) inspected VS Code revision `7debcd0e2acdea1c52de81bf9ee1620444407dda` and tested extracted methods with mocked terminals.
-  Subagents retain the parent chat's terminal cache key; foreground reuse has no exclusive execution ownership.
-  Command startup can send Ctrl+C, preparation can remove an absolute `cd`, and overlapping completion listeners can accept another command's result.
-  Original incident tool logs were unavailable, so this does not prove the cause of every historical failure.
-  [Iteration 0017's skill review](historical/iterations/0017/skill-review.md#verification-matrix) records overlapping coordinator-run checks and accepted native/full integration validation across six reviewed boundaries and two test-only repairs.
-  No interference, unexpected exit 130, or foreign checkout result was observed; a genuine recovery formatting failure was corrected and its rerun passed.
-- **Impact:** Concurrent calls through the shared foreground terminal can interrupt validation or return results from the wrong worktree.
-  Separate worktrees, execution-subagent IDs, and Cargo targets do not isolate terminal state or output.
-  Independent process tasks provide a tested alternative for parallel command batches; whole-workstream serialization is not the default mitigation.
-- **Workaround:** Follow [terminal coordination](../.github/skills/rust-service-coordination/SKILL.md#terminal-coordination) for lightweight work and iterations.
-  Use distinct process tasks with explicit cwd/environment and dedicated task terminals; a compound task with parallel dependencies passed an overlapping-process probe with correctly attributed exit codes.
-  Keep workstreams parallel and serialize only access to the shared foreground terminal across the parent chat and descendants.
-  Separate `run_task` calls did not overlap in the probe, and completed `get_task_output` calls returned blank output; use compound launches and preserve fresh per-run evidence rather than relying on terminal history.
-  Actual delegate discovery lacked `tool_search`; the coordinator used parallel file-edit batches followed immediately by task checks.
-  Autonomous delegate scheduling was unavailable; no task cancellation tool existed, so cancellation was not tested.
-  Full `run_task` output returned before its result existed; acceptance required the matching durable completion record and consumer outcomes.
-  Reject contaminated results and follow [execution isolation recovery](../.github/skills/rust-service-coordination/SKILL.md#execution-isolation-recovery) before rerunning checks.
-  Shared-terminal serialization is an instruction-level workaround, not an enforced tool lock.
-- **Follow-up:** When delegate task discovery/invocation or safe cancellation becomes available, verify it with approved disposable owned tasks before claiming autonomy or cancellation isolation.
-  Preserve attributable identities, output, and exits for each run; no throughput baseline or upstream fix was established by iteration 0017.
-- **Trigger:** Revisit when those capabilities become available or attributable interference recurs; no new iteration is scheduled.
-  Close the underlying issue only after the VS Code/Copilot terminal tools provide exclusive ownership and command-specific completion handling, validated with concurrent same-chat commands and cancellation isolation.
-  A successful workaround run does not establish that the underlying tool defect is fixed.
-
-## Admission cleanup callback lacks focused evidence
-
-- **Status:** Resolved by focused regression evidence
-- **Severity:** Medium
-- **Area:** Server admission cleanup regression coverage
-- **Evidence:** The [real-QUIC admission tests](crates/sea-webtransport-server/src/server.rs) now record actual `connection_closed` calls and assert `false` for timed-out, aborted, and rejected admissions, plus immediate and bounded-drain cancellation during admission.
-  These assertions complement capacity/listener/counter checks and close [iteration 0017's evidence gap](historical/iterations/0017/phase-3-report.md#contract-and-test-quality).
-- **Impact:** Missing callbacks or incorrect reconnect-grace arguments fail the owning server tests; no runtime change was required.
-- **Trigger:** Preserve these direct callback assertions when admission or cleanup changes.
-
-## Browser disconnect resource release lacks focused evidence
-
-- **Status:** Resolved by real Chromium physical-release regressions
-- **Severity:** Medium
-- **Area:** Browser WebTransport lifecycle regression coverage
-- **Evidence:** The [browser lifecycle fixture](tests/webtransport-browser/README.md#physical-connection-release) independently checks disconnect with the Rust owner retained and final-owner drop without disconnect.
-  Each must release a one-slot server's capacity within three seconds, with native JavaScript objects retained and inactivity expiry set to 120 seconds.
-  Removing either production close call independently failed its corresponding browser case; restoring it passed.
-- **Impact:** Physical release no longer relies on logical reopen, garbage collection, or server shutdown as evidence; no runtime change was required.
-- **Trigger:** Preserve both cases and their ownership controls when browser transport lifetime changes.
+- **Status:** Open tooling limitation; not a Sea runtime defect.
+- **Impact:** Concurrent shared-terminal calls can interrupt validation or return results from another worktree. Separate worktrees do not isolate terminal state.
+- **Workaround:** Follow the current [terminal coordination procedure](../.github/skills/rust-service-coordination/SKILL.md#terminal-coordination), including actual delegate capability checks and attributable completion evidence.
+- **Evidence:** The [execution isolation investigation](historical/EXECUTION_ISOLATION_INVESTIGATION.md) and [0017 retrospective](historical/iterations/0017/retrospective.md) describe tested workarounds and unverified scheduling and cancellation behavior.
+- **Trigger:** Revalidate when tool capabilities change or interference recurs. A passing workaround does not establish an upstream fix.
 
 ## Generic client disconnect error state is not defined
 
@@ -189,4 +144,4 @@ Historical architecture findings remain in `decisions/` and `iterations/`.
   Preserve FIN/cancellation semantics and the strict modes' independent-stream backpressure; opt into ordinary WebSocket only when its weaker receive guarantees are acceptable.
   Local Chromium and Node flows passed; the user also reported a passing Windows Firefox 156 ordinary-WebSocket collaboration flow through public Codespaces forwarding.
   A logged-out browser run remains unverified.
-  See [setup and validation](tests/webtransport-browser/README.md#optional-websocketstream-validation).
+  See [setup and validation](tests/webtransport-browser/README.md#websocketstream-validation).

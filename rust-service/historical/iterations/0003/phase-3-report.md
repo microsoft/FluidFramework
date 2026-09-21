@@ -40,7 +40,7 @@ Phase 3 commit: final record commit containing this file; its hash becomes the n
 
 ## Learning and Process Findings
 
-[The retrospective](retrospective.md) records the proposal-only first dispatch, repeated checkout-routing failures, the codec review correction, and successful process-boundary decomposition. General findings are promoted to [LEARNINGS.md](../../../LEARNINGS.md).
+[The retrospective](retrospective.md) records the proposal-only first dispatch, repeated checkout-routing failures, the codec review correction, and successful process-boundary decomposition. General findings are promoted to [LEARNINGS.md](../../LEARNINGS.md).
 
 ## Skill Changes
 

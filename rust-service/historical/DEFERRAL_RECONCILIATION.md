@@ -38,7 +38,7 @@ This closes the missing deterministic evidence, not the separate [production dur
 **Disposition: Resolved under the replacement settlement contract.**
 
 The historical deferral required a shared cancellation and resolution contract.
-The current [retry lookup and settlement contract](../crates/sea-sequencer/README.md#retry-lookup-and-settlement) now requires one retained backend future, no implicit retry, and bounded reconciliation after returned ambiguity.
+The current [submission identity and settlement contract](../crates/sea-sequencer/README.md#submission-identity-and-settlement) now requires one retained backend future, no implicit retry, and bounded reconciliation after returned ambiguity.
 An authoritative complete scan can establish commitment or absence; failed reconciliation produces `RecoveryRequired` and blocks mutation and absence claims.
 The [implementation](../crates/sea-sequencer/src/session.rs) implements the bounded scan in `append_once`.
 
@@ -74,7 +74,7 @@ The [browser harness](../tests/webtransport-browser/browser-test.mjs) closes log
 Those assertions do not observe the old physical connection's release and could pass while that connection remains open.
 No focused connection-release assertion was found in the tracked browser harness or TypeScript package tests.
 
-Retain the [browser resource-release evidence gap](../KNOWN_ISSUES.md#browser-disconnect-resource-release-lacks-focused-evidence).
+The browser resource-release evidence gap was open at this reconciliation; [later focused regressions](AGENTIC_DEVELOPMENT.md#representative-outcomes) addressed it.
 Close it with a real-browser regression that distinguishes logical close from transport disconnect and observes server cleanup or recovered capacity under a bounded deadline.
 Keep explicit disconnect and final-owner drop distinguishable so the drop path cannot hide a broken disconnect implementation.
 

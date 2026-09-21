@@ -69,7 +69,7 @@ The coordinator applied the refinement to these existing surfaces:
 Direct file reads confirm all three surfaces contain the refinement and preserve their surrounding ownership rules.
 The observed coordinator probe/check results support the fallback, not autonomous delegate execution.
 The [known issue](../../../KNOWN_ISSUES.md#vs-code-terminal-tools-can-interfere-across-subagents) records coordinator task-batched iteration verification while keeping the underlying issue open.
-The [learning index](../../../LEARNINGS.md#agentic-development) retains the capability mismatch and observed fallback outcome, not a duplicate procedure.
+The [learning index](../../LEARNINGS.md#agentic-development) retains the capability mismatch and observed fallback outcome, not a duplicate procedure.
 No validator change or new skill is needed.
 Phase 2, quality, documentation, scoped policy, and 186 local-link/anchor checks passed; complete-record validation gates the Phase 3 commit.
 

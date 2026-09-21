@@ -38,7 +38,7 @@ Under the same two-client sequential SharedTree workload, post-stream Rust media
 
 ## Learning and Process Findings
 
-The [retrospective](retrospective.md) records WASM cancellation aliasing, queue measurement semantics, the missing resume point, protocol fixture migration, and integration dependency setup under Node 22. No human intervention changed implementation semantics. Cursor-authoritative wakeups and cancellable async WASM ownership are promoted to [LEARNINGS.md](../../../LEARNINGS.md).
+The [retrospective](retrospective.md) records WASM cancellation aliasing, queue measurement semantics, the missing resume point, protocol fixture migration, and integration dependency setup under Node 22. No human intervention changed implementation semantics. Cursor-authoritative wakeups and cancellable async WASM ownership are promoted to [LEARNINGS.md](../../LEARNINGS.md).
 
 ## Skill Changes
 

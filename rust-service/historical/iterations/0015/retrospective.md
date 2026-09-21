@@ -90,7 +90,7 @@ independent.
 ## Durable Lessons
 
 The existing exact-decision lesson in
-[LEARNINGS.md](../../../LEARNINGS.md#correctness-and-testing) was extended: adequate
+[LEARNINGS.md](../../LEARNINGS.md#correctness-and-testing) was extended: adequate
 evidence also requires precise contract text and practical owner-local diagnosis.
 This generalizes across backends, decorators, transports, shared conformance,
 and workloads.

@@ -1,5 +1,8 @@
 # SEA Opt-In Integration-Test Configuration Plan
 
+Historical configuration and investigation record. The results below belong to the named revisions.
+For current execution and selection rules, see the [end-to-end test guide](../../packages/test/test-end-to-end-tests/README.md) and [Sea integration harness](../tests/sea-integration-tests/README.md).
+
 Status: Current-version SEA integration selection passes; default integration command and CI wiring enabled, with hosted CI execution unverified.
 Created: 2026-09-18.
 Updated: 2026-09-19.
@@ -17,7 +20,7 @@ Hosted CI execution, fresh agent provisioning, and cold-build timing remain unve
 
 ## Dependencies and Ownership
 
-The committed foundation now includes [sea-typescript](packages/sea-typescript/README.md), the [sea-driver adapter](packages/sea-driver/README.md), and the optional Node.js WebSocket transport from the completed [Codespaces investigation](historical/CODESPACES_WEBTRANSPORT_PLAN.md).
+The committed foundation now includes [sea-typescript](../packages/sea-typescript/README.md), the [sea-driver adapter](../packages/sea-driver/README.md), and the optional Node.js WebSocket transport from the completed [Codespaces investigation](CODESPACES_WEBTRANSPORT_PLAN.md).
 The existing test harness consumes `ITestDriver` and `IDocumentServiceFactory`, not the higher-level `ServiceClient` API.
 This work can therefore proceed alongside ServiceClient implementation using `SeaDriver`, `SeaSessionDriverClient`, and the neutral `openRemote` factory.
 The capability-specific socket entrypoint does not depend on the combined/split loader presets.
@@ -50,13 +53,13 @@ Coordinate other shared workspace/build changes and overlapping production edits
 
 | Responsibility | Starting point |
 | --- | --- |
-| Test-driver contract and selector type | [ITestDriver and TestDriverTypes](../packages/test/test-driver-definitions/src/interfaces.ts) |
-| Driver construction | [createFluidTestDriver](../packages/test/test-drivers/src/factory.ts) |
-| Command-line/environment selection and defaults | [Compatibility options](../packages/test/test-version-utils/src/compatOptions.ts) |
-| Versioned provider construction | [Compatibility utilities](../packages/test/test-version-utils/src/compatUtils.ts) |
-| Document identity and per-test reset | [TestObjectProvider](../packages/test/test-utils/src/testObjectProvider.ts) |
-| Suite-owned driver disposal | [describeCompat](../packages/test/test-version-utils/src/describeCompat.ts) and [describeWithVersions](../packages/test/test-version-utils/src/describeWithVersions.ts) |
-| Initial integration-suite target | [End-to-end tests](../packages/test/test-end-to-end-tests/README.md) |
+| Test-driver contract and selector type | [ITestDriver and TestDriverTypes](../../packages/test/test-driver-definitions/src/interfaces.ts) |
+| Driver construction | [createFluidTestDriver](../../packages/test/test-drivers/src/factory.ts) |
+| Command-line/environment selection and defaults | [Compatibility options](../../packages/test/test-version-utils/src/compatOptions.ts) |
+| Versioned provider construction | [Compatibility utilities](../../packages/test/test-version-utils/src/compatUtils.ts) |
+| Document identity and per-test reset | [TestObjectProvider](../../packages/test/test-utils/src/testObjectProvider.ts) |
+| Suite-owned driver disposal | [describeCompat](../../packages/test/test-version-utils/src/describeCompat.ts) and [describeWithVersions](../../packages/test/test-version-utils/src/describeWithVersions.ts) |
+| Initial integration-suite target | [End-to-end tests](../../packages/test/test-end-to-end-tests/README.md) |
 
 `TestObjectProvider` normally adopts the attached container's resolved document ID.
 Preserve that behavior for SEA-allocated identities; do not assume that a test-generated name is a SEA document ID.
@@ -74,7 +77,7 @@ Restart persistence is not promised by this initial memory-storage configuration
 In-process memory remains an optional lightweight smoke-test backend, not a second required deliverable.
 File-backed storage, browser WebTransport, and compression matrices are later extensions rather than prerequisites.
 
-Follow the [server listener guide](crates/sea-webtransport-server/README.md#optional-websocket-listener) for startup:
+Follow the [server listener guide](../crates/sea-webtransport-server/README.md#optional-websocket-listener) for startup:
 
 - Build with `websocket-stream`; bind the separate WebSocket listener to loopback on an available port and discover its printed `WEBSOCKET_URL`.
 - Use Node.js with a built-in WebSocket implementation; the retained evidence used Node 22.23.2.
@@ -92,9 +95,9 @@ The socket artifact does not support compression.
 ## Fresh-Context Entry
 
 - Read this plan's acceptance criteria and review boundary; the [main integration plan](SERVICE_CLIENT_PLAN.md) supplies dependency context, not additional assigned stages.
-- Read [Sea architecture](SEA_ARCHITECTURE.md), [Known Issues](KNOWN_ISSUES.md), and [Development](DEVELOPMENT.md) before implementation.
+- Read [Sea architecture](../SEA_ARCHITECTURE.md), [Known Issues](../KNOWN_ISSUES.md), and [Development](../DEVELOPMENT.md) before implementation.
 - Check the assigned worktree path, branch, HEAD, and working-tree status; preserve existing changes and confirm ownership before editing shared test infrastructure.
-- Use the [existing Fluid harness](tests/sea-integration-tests/README.md), [Node socket regression](packages/sea-typescript/test/websocket.test.mjs), and [sea-driver manifest](packages/sea-driver/package.json) for initialization, package entrypoints, and behavioral limits.
+- Use the [existing Fluid harness](../tests/sea-integration-tests/README.md), the Node socket regression (since removed; see the [current client tests](../packages/sea-typescript/README.md)), and [sea-driver manifest](../packages/sea-driver/package.json) for initialization, package entrypoints, and behavioral limits.
 - Confirm the extension points above before editing; the minimal Fluid harness is a reference, not the registration target.
 - Check installed tools, worktree-local dependencies and generated artifacts, and service startup prerequisites; record missing prerequisites as blocked validation, not behavioral test results.
 - Install dependencies in this worktree with the frozen lockfile before implementation validation; do not share an outer `node_modules` symlink or assume ignored outputs were copied with Git.
@@ -127,7 +130,7 @@ Existing non-SEA tests affected by the configuration changes must retain their b
 Run focused configuration and selection tests first, then the provider smoke test, the selected current-version SEA suite, and relevant existing-service regressions.
 Verify that non-SEA selections do not start a SEA service or initialize its WASM artifacts.
 Check cleanup after successful execution, failed initialization, and behavioral failure, including the distinction between per-test reset and suite disposal.
-Follow [Development](DEVELOPMENT.md) for applicable implementation gates, including canonical Rust-service validation when relevant, scoped policy checks, and repository-root `pnpm build:fast` for registered package or build-input changes.
+Follow [Development](../DEVELOPMENT.md) for applicable implementation gates, including canonical Rust-service validation when relevant, scoped policy checks, and repository-root `pnpm build:fast` for registered package or build-input changes.
 Run the owning test packages' required checks as well.
 Record blocked validation explicitly; setup failure alone is not evidence that the behavioral suite was exercised.
 
@@ -377,7 +380,7 @@ Relabeling the synthetic member, suppressing its interactive capability, or bypa
 The recommended next design is a Fluid-independent, service-authoritative membership facility at the session layer, with Fluid join/leave projection owned by `sea-driver`.
 This requires coordinating the neutral session API, transport/bindings, ordering relative to application events, replay/snapshot boundaries, and disconnect policy with the ServiceClient owner.
 The user approved this extension rather than pausing at the configuration checkpoint.
-The implemented design and compatibility boundary are recorded in [decision 0014](historical/decisions/0014-ordered-session-membership.md).
+The implemented design and compatibility boundary are recorded in [decision 0014](decisions/0014-ordered-session-membership.md).
 The neutral API remains opt-in, and no new SEA test exclusions have been added.
 
 ### ServiceClient Integration
@@ -401,7 +404,7 @@ The source branch and its running demo were not modified; SEA remains opt-in and
 
 The user rejected a permanent minimum-sequence-zero workaround and clarified two independent requirements: a durable monotonic document reference floor, and fail-stop append authority whose accepted events form a prefix ending at a durable leave.
 The required behavior was documented first in `f254dfeeb87`, including explicit TODOs and known issues RS-023, RS-024, and RS-025.
-[Decision 0015](historical/decisions/0015-terminal-append-authority.md) records the fail-stop contract implemented next.
+[Decision 0015](decisions/0015-terminal-append-authority.md) records the fail-stop contract implemented next.
 The reference floor and application-owned transformed resubmission remain separate follow-up work; passing existing tests does not resolve those requirements.
 
 RS-023 implementation evidence by boundary:
@@ -426,7 +429,7 @@ An eight-test current-version SEA sample at `15f49ba5981` passed with the normal
 
 ### Durable Reference Floor
 
-[Decision 0016](historical/decisions/0016-durable-reference-floor.md) records the RS-024 implementation.
+[Decision 0016](decisions/0016-durable-reference-floor.md) records the RS-024 implementation.
 The runtime now restores and enforces a document-wide committed floor, including absent-reference rejection, independently of membership admission and advancement policy.
 Advances commit atomically in ordered event metadata; cooperative progress and a coalesced bounded-lag window choose proposals but cannot lower the floor.
 Snapshot boundaries retain the floor in their immutable event envelopes, and the Fluid adapter maps that floor into dense sequence numbers for full and bounded replay.
@@ -487,5 +490,5 @@ Do not replace shared assertions or classify missing supported behavior as a tes
 Skip a SEA test only when its asserted implementation detail does not apply to SEA; retain its exact name, reason, and any alternative contract coverage in an exclusion inventory.
 SEA remains off by default even after the opt-in suite passes; enabling defaults, pushing, and merging require separate authorization.
 
-When this assignment is complete, keep run instructions with the owning test package and archive this plan and its evidence under [Historical records](historical/README.md).
-Do not start a numbered iteration unless that workflow is separately selected through the [coordination skill](../.github/skills/rust-service-coordination/SKILL.md).
+When this assignment is complete, keep run instructions with the owning test package and archive this plan and its evidence under [Historical records](README.md).
+Do not start a numbered iteration unless that workflow is separately selected through the [coordination skill](../../.github/skills/rust-service-coordination/SKILL.md).

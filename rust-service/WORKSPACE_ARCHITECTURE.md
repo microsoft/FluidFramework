@@ -24,7 +24,7 @@ Development-only conformance fixtures and integration-test dependencies are desc
 | `sea-webtransport-server` | `crates/sea-webtransport-server/` | `sea-core`, `sea-sequencer`, `sea-signals`, `sea-webtransport`, and all three storage backends | Native server executable and runtime backend composition. |
 | `sea-compression` | `crates/sea-compression/` | `sea-core` | Transparent stateless compression `SeaSession` decorator. |
 | `sea-encryption` | `crates/sea-encryption/` | `sea-core` | Transparent authenticated encryption `SeaSession` decorator. |
-| `sea-benchmarks` | `crates/sea-benchmarks/` | Core, storage backends, and decorators | Local storage and transformation measurements. |
+| `sea-benchmarks` | `crates/sea-benchmarks/` | Core, storage backends, sequencer, decorators, and transport | Storage, transformation, transport, and source-inventory measurements. |
 | `sea-counter` | `examples/sea-counter/` | `sea-core`, `sea-memory`, `sea-sequencer` | Snapshot and replay over a local session. |
 
 Storage implementations and session decorators use `sea-conformance` as a development dependency where applicable.

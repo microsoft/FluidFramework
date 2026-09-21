@@ -10,11 +10,11 @@
 
 ## Decisions
 
-<!-- TODO(required): mark each current and reconsidered candidate accepted, rejected, or deferred and record why. For accepted lessons, identify the reusable surface: skill, template, validation policy, LEARNINGS.md, local instruction, or no change needed because it is already enforced. -->
+<!-- TODO(required): mark each current and reconsidered candidate accepted, rejected, or deferred and record why. For accepted lessons, identify the reusable surface: skill, template, validation policy, current development guidance, local instruction, or no change needed because it is already enforced. Record historical observations in rust-service/historical/LEARNINGS.md. -->
 
 ## Applied Changes
 
-<!-- TODO(required): list skill, template, validation-policy, LEARNINGS.md, script, or instruction changes and their validation. If an accepted lesson causes no reusable change, state where it is already enforced or why local guidance is sufficient. -->
+<!-- TODO(required): list skill, template, validation-policy, development-guide, script, or instruction changes and their validation. If an accepted lesson causes no reusable change, state where it is already enforced or why local guidance is sufficient. -->
 
 ## Next Review Triggers
 

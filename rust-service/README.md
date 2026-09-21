@@ -6,11 +6,15 @@ Sea, short for Snapshotted Event Archive, is an experimental Rust service for sy
 - immutable blob trees and snapshots at known event positions; and
 - recovery by loading a snapshot and replaying later data.
 
-Applications can use Sea locally or over WebTransport, with a shared native and browser client implementation.
+Applications can use Sea locally or over WebTransport or the optional WebSocket transport, with a shared native and browser client implementation.
 Storage is selectable between memory, buffered-file, and durable-file backends.
 The Fluid driver is an application adapter, not a requirement for using Sea.
 
 This is a speculative learning project, not a proposed production replacement for an existing Fluid service.
+
+For the experiment's results, read the [project overview and measured results, September 2026](historical/PROJECT_OVERVIEW.md).
+For how agents contributed, read [agentic development: method, outcomes, and limits](historical/AGENTIC_DEVELOPMENT.md).
+Those are dated project records; the guides below describe the current code.
 
 ## Start Here
 
@@ -23,16 +27,17 @@ This is a speculative learning project, not a proposed production replacement fo
 | Use the Fluid driver or direct SharedTree integration | [TypeScript packages](packages/README.md) |
 | Run Fluid and SharedTree integration tests | [Integration harness](tests/sea-integration-tests/README.md) |
 | Run browser transport tests | [Browser harness](tests/webtransport-browser/README.md) |
-| Measure performance | [Benchmarks](BENCHMARKS.md) |
+| Measure performance | [Benchmark harness](crates/sea-benchmarks/README.md) and [collection scripts](scripts/README.md) |
 
 ## Understand the System
 
 - [Sea architecture](SEA_ARCHITECTURE.md) explains the system layers, core traits, and ownership boundaries.
 - [Ordered append and recovery](crates/sea-sequencer/README.md#ordered-append-and-recovery) defines accepted prefixes, terminal leave records, and client-owned resubmission; the same guide explains the required minimum-reference floor and current implementation gaps.
-- [Workspace architecture](WORKSTREAMS.md) maps packages, dependencies, and runtime composition.
+- [Workspace architecture](WORKSPACE_ARCHITECTURE.md) maps packages, dependencies, and runtime composition.
 - [Crate guides](crates/README.md) link to implementation-specific guarantees, limitations, and validation commands.
 
-Past plans, research notes, iteration reports, decisions, and benchmark evidence are collected in [Historical records](historical/README.md).
+Past plans, learnings, iteration reports, decisions, and retained measurement evidence are collected in [Historical records](historical/README.md).
+Current contributor requirements live in [Development](DEVELOPMENT.md); reusable agent workflows remain in the [coordination](../.github/skills/rust-service-coordination/SKILL.md) and [quality-iteration](../.github/skills/rust-service-quality-iteration/SKILL.md) skills.
 
 ## Limits
 

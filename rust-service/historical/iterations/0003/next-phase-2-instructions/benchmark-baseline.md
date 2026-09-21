@@ -10,7 +10,7 @@ Create a reproducible benchmark harness for startup, append latency/throughput, 
 
 ## Prior Evidence
 
-Iterations `0001`-`0003` recorded useful but ad hoc debug timings and byte counts in their Phase 3 reports. [LEARNINGS.md](../../../../LEARNINGS.md#performance-and-operations) requires visible guarantee differences. The integrated service, Unix transport, WebTransport, encryption, and compression paths need one controlled workload model before optimization.
+Iterations `0001`-`0003` recorded useful but ad hoc debug timings and byte counts in their Phase 3 reports. [LEARNINGS.md](../../../LEARNINGS.md#performance-and-operations) requires visible guarantee differences. The integrated service, Unix transport, WebTransport, encryption, and compression paths need one controlled workload model before optimization.
 
 ## Hypothesis and Discriminating Check
 

@@ -1,7 +1,7 @@
 # @fluidframework/sea-typescript
 
 This package provides non-Fluid-specific SEA sessions through package-owned WASM artifacts.
-Its APIs are internal; shared bindings and packaging presets are implemented, while higher-level ServiceClient and example integration remain in the [integration plan](../../SERVICE_CLIENT_PLAN.md).
+Its APIs are internal. Shared bindings and packaging presets are implemented; see the [Fluid driver](../sea-driver/README.md) for ServiceClient factories and the [example utilities](../../../examples/utils/example-utils/README.md) for application integration.
 Fluid summary tests, direct SharedTree package tests, and the SharedTree browser lifecycle trace now consume this package through the reusable `sea-driver` projection.
 Browser benchmarks and the canonical Node, Fluid driver, and transport/shutdown harnesses also use the neutral factories.
 

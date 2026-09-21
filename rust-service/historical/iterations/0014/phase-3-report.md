@@ -98,7 +98,7 @@ convergence evidence.
 
 The [retrospective](retrospective.md) records repeated cross-worktree command
 rebinding and interrupted cold builds. Checkout guards prevented false evidence
-but consumed substantial time. The retained [LEARNINGS entry](../../../LEARNINGS.md#correctness-and-testing)
+but consumed substantial time. The retained [LEARNINGS entry](../../LEARNINGS.md#correctness-and-testing)
 promotes only the owning-decision discrimination lesson; no further learning
 entry is justified by this run.
 

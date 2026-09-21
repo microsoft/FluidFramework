@@ -1,12 +1,15 @@
 # Sea: Project Overview
 
+Project record as of 2026-09-21; measurements use the revisions listed below.
+For the current implementation and limitations, start with the [project README](../README.md).
+
 Sea (Snapshotted Event Archive) is an experimental Rust service for ordered application events, immutable blob trees, and snapshots.
 Applications own event meaning and snapshot content; the service owns ordering and publication authority.
 Fluid integration is optional.
 
 This overview describes the architecture, development workflow, measured behavior, and known limitations.
 Sea is a single-host experiment, not a production replacement for an existing Fluid service.
-For setup and usage, see the [project README](README.md); for service contracts, see the [architecture guide](SEA_ARCHITECTURE.md).
+For setup and usage, see the [project README](../README.md); for service contracts, see the [architecture guide](../SEA_ARCHITECTURE.md).
 
 ## Architecture
 
@@ -21,6 +24,8 @@ flowchart LR
 ```
 
 ## AI-Assisted Development
+
+See the [agentic-development guide](AGENTIC_DEVELOPMENT.md) for the workflow, representative iterations, human involvement, and what the records can establish about effectiveness.
 
 The project used agent-written reusable skills to coordinate parallel groups of agents and to design and run quality iterations.
 The coordinator knew a private evaluation target: a bug fix had exposed missing coverage, and the added regression test was poorly placed.
@@ -44,7 +49,7 @@ flowchart LR
 
 The diagram does not imply fully autonomous or concurrent execution of every step.
 The private-target account comes from the project author and does not describe deliberate defect seeding.
-Supporting records: [quality-iteration skill](../.github/skills/rust-service-quality-iteration/SKILL.md), [iteration 0016 skill review](historical/iterations/0016/skill-review.md), and [iteration 0017 convergence assessment](historical/iterations/0017/phase-3-report.md#convergence-assessment).
+Supporting records: [quality-iteration skill](../../.github/skills/rust-service-quality-iteration/SKILL.md), [iteration 0016 skill review](iterations/0016/skill-review.md), and [iteration 0017 convergence assessment](iterations/0017/phase-3-report.md#convergence-assessment).
 They support the method and its limits, not the complete private-evaluation chronology.
 
 ## Measurement Scope
@@ -136,9 +141,9 @@ cargo tree --manifest-path rust-service/Cargo.toml --locked \
 pnpm --dir server/routerlicious --filter tinylicious list --prod --depth Infinity --json
 ```
 
-**Backpressure:** SEA's [transport contract](crates/sea-webtransport/README.md) distinguishes streaming receive backpressure from the ordinary WebSocket compatibility adapter.
+**Backpressure:** SEA's [transport contract](../crates/sea-webtransport/README.md) distinguishes streaming receive backpressure from the ordinary WebSocket compatibility adapter.
 The latter fails on overflow at 4 MiB or 256 queued messages per socket; it cannot pause incoming browser messages and does not bound total process memory.
-Tinylicious's [runner](../server/routerlicious/packages/tinylicious/src/runner.ts) leaves operation and connection throttlers unset; Socket.IO/TCP buffering is not an equivalent documented application-level receive-backpressure contract.
+Tinylicious's [runner](../../server/routerlicious/packages/tinylicious/src/runner.ts) leaves operation and connection throttlers unset; Socket.IO/TCP buffering is not an equivalent documented application-level receive-backpressure contract.
 
 **Disk and durability:** the Tinylicious disk entry is LevelDB without explicitly synchronized writes, not a configured synchronous durability mode.
 The cross denotes no equivalent per-operation synchronized acknowledgment guarantee in this configuration.
@@ -190,7 +195,7 @@ Test/support classification uses directory/file names and syntax-derived Rust `#
 It excludes complex conditional expressions, unrecognized fixtures, and integration tests outside selected `src` scopes; "other code" does not mean production-only code.
 Test/support comment counts are 28, 809, 33, and 50 in table order.
 
-To regenerate at the pinned revision, follow the source-inventory instructions in the [collection scripts guide](scripts/README.md#commands).
+To regenerate at the pinned revision, follow the source-inventory instructions in the [collection scripts guide](../scripts/README.md#commands).
 Run from the repository root and use a disposable output directory.
 
 </details>
@@ -453,7 +458,7 @@ Both Tinylicious database modes use filesystem Git summaries; LevelDB selection 
 LevelDB writes do not explicitly request synchronous persistence.
 Sea buffered-file appends without synchronizing each write; durable-file appends new frames and synchronizes once per event batch, with synchronized staging/rename on creation.
 Both Sea file modes retain complete history in memory.
-Durable acknowledgment relies on [interrupted-tail and synchronized-prefix integrity assumptions](crates/sea-file-durable/README.md#power-loss-model); physical power-cut qualification remains outstanding.
+Durable acknowledgment relies on [interrupted-tail and synchronized-prefix integrity assumptions](../crates/sea-file-durable/README.md#power-loss-model); physical power-cut qualification remains outstanding.
 
 </details>
 
@@ -474,7 +479,7 @@ Experimental single-host software, not a proposed production replacement; Tinyli
 | Network | QUIC/UDP WebTransport cannot use TCP-only Codespaces forwarding; WebSocket has different constraints |
 | Delivery | Network-isolated CI has a documented Cargo dependency-restoration gap |
 
-Sources: [overview](README.md), [architecture](SEA_ARCHITECTURE.md), and [known issues](KNOWN_ISSUES.md).
+Sources: [overview](../README.md), [architecture](../SEA_ARCHITECTURE.md), and [known issues](../KNOWN_ISSUES.md).
 Unmeasured here: many writers on one document, idle memory, wide-area networking, snapshot recovery, compression effects, and browser artifact size.
 Single-round-trip loading and complete direct SharedTree summary support remain unverified.
 
@@ -520,7 +525,7 @@ Tests establish selected behavior, not production availability, security, comple
 - [Paired browser evidence](measurements/browser-dds-comparison/README.md): dummy DDS and real SharedTree commands, raw samples, chart definitions, and build hashes.
 - [WebSocketStream supplement](measurements/browser-dds-comparison/websocket-summary.json): 40 added browser samples, explicit memory storage and unencrypted endpoints, retained timeout, and full harness validation.
 - [LevelDB evidence](measurements/tinylicious-leveldb-fixed/README.md) and [summary](measurements/tinylicious-leveldb-fixed/summary.json): repair provenance, all outcomes, and raw archive.
-- [Collection scripts](scripts/README.md): reproduction commands and configuration.
+- [Collection scripts](../scripts/README.md): reproduction commands and configuration.
 
 Wrapped campaigns record exact commands, environment, revision, status, and tracked patches; direct collectors retain configurations and artifact hashes in manifests.
 No service data-path optimization was made for recollection; the Tinylicious compatibility repair is disclosed separately.

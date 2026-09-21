@@ -65,4 +65,4 @@ The existing composition matrix checks public metadata and protected application
 Generated Node coverage checks the neutral binding; driver coverage checks identical replay and actual writer identities.
 The unchanged real-service lifecycle smoke passes.
 Canonical Rust/browser and repository gates are required before the fix checkpoint.
-Retain failures and justified exclusions in the [integration-test plan](../../INTEGRATION_TEST_CONFIGURATION_PLAN.md); this decision does not claim the complete suite passes.
+Retain failures and justified exclusions in the [integration-test plan](../INTEGRATION_TEST_CONFIGURATION_PLAN.md); this decision does not claim the complete suite passes.

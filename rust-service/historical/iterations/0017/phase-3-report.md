@@ -81,7 +81,7 @@ No production contract documentation or changeset is needed for these test-only 
 The [retrospective](retrospective.md) records blocked delegate discovery, coordinator-owned validation, package-cache contention, the genuine formatting failure, and partial task-output limitations.
 No unexpected exit 130 or foreign checkout result was observed; no cancellation capability was available, so cancellation was not attempted or verified.
 The coordinator removed the duplicate stale transport draft during integration.
-The [learning index](../../../LEARNINGS.md#agentic-development) records the observed delegate-capability limitation and successful coordinator batching.
+The [learning index](../../LEARNINGS.md#agentic-development) records the observed delegate-capability limitation and successful coordinator batching.
 The [known issues](../../../KNOWN_ISSUES.md) retain the underlying terminal issue and admission callback evidence gap.
 
 ## Skill Changes

@@ -25,7 +25,7 @@ Do not introduce service-owned retries or application rebasing.
 Whole-journal replacement protects synchronized inodes but has quadratic cumulative write volume.
 Append-only batches avoid that cost by relying on documented durable-prefix filesystem protection.
 A shared internal journal implementation supports buffered and synchronized completion without exposing buffered completion through the durable backend.
-See the [implementation evidence](../../STORAGE_OPTIMIZATION.md) for bounded local measurements, regressions, and limitations.
+See the [implementation evidence](../STORAGE_OPTIMIZATION.md) for bounded local measurements, regressions, and limitations.
 
 ## Decision
 

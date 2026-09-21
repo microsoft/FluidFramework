@@ -1,11 +1,14 @@
 # SEA WASM and ServiceClient Integration Plan
 
+Historical implementation plan. Status and checkboxes below record the planning state, not the current feature inventory.
+For current behavior, see the [neutral client](../packages/sea-typescript/README.md), [Fluid driver](../packages/sea-driver/README.md), and [example utilities](../../examples/utils/example-utils/README.md).
+
 Status: In progress; stages 1 through 4 are complete. Stage 5 example integration and interactive acceptance are next.
 Created: 2026-09-18.
 
 This is an active implementation plan, not a description of supported functionality.
-Use [Sea architecture](SEA_ARCHITECTURE.md) and [Development](DEVELOPMENT.md) as the current design and validation authorities.
-Archive this plan under [Historical records](historical/README.md) when the work is complete, after moving supported usage and guarantees into the relevant package guides.
+Use [Sea architecture](../SEA_ARCHITECTURE.md) and [Development](../DEVELOPMENT.md) as the current design and validation authorities.
+Archive this plan under [Historical records](README.md) when the work is complete, after moving supported usage and guarantees into the relevant package guides.
 
 ## Goals and Scope
 
@@ -21,7 +24,7 @@ Make adding another configuration, such as compression, a small extension of the
 
 ## Fresh-Context Entry
 
-1. Read this plan's scope and acceptance criteria, then the [project README](README.md), [Sea architecture](SEA_ARCHITECTURE.md), [Known Issues](KNOWN_ISSUES.md), and [Development](DEVELOPMENT.md).
+1. Read this plan's scope and acceptance criteria, then the [project README](../README.md), [Sea architecture](../SEA_ARCHITECTURE.md), [Known Issues](../KNOWN_ISSUES.md), and [Development](../DEVELOPMENT.md).
 2. Check the assigned worktree path, branch, HEAD, and working-tree status before editing; preserve existing changes and coordinate ownership of shared files.
 3. Check the pinned Rust toolchain, matching `wasm-bindgen` version, package dependencies, and available browser and network access using the development and harness guides.
 4. Start with the relevant implementation anchors below rather than assuming the proposed packages already exist.
@@ -31,12 +34,12 @@ Make adding another configuration, such as compression, a small extension of the
 
 | Area | Starting points |
 | --- | --- |
-| WASM bindings and build | [Shared bindings](crates/sea-wasm/src/bindings.rs), [package build script](packages/sea-typescript/scripts/build-wasm.mjs), and [package build tasks](packages/sea-typescript/package.json). |
-| Generated-client adaptation | [Neutral-session adapter](packages/sea-driver/src/sessionClient.ts) and [driver-owned contract](packages/sea-driver/src/wasmClient.ts); Fluid projection is now owned by the driver. |
-| TypeScript package conventions | [sea-driver](packages/sea-driver/README.md) and its [manifest](packages/sea-driver/package.json); reuse conventions, not Fluid-specific dependencies. |
-| ServiceClient | [Shared contract](../packages/common/driver-definitions/src/serviceClient.ts), [Tinylicious implementation](../packages/drivers/tinylicious-driver/src/tinyliciousService.ts), and [runtime helpers](../packages/runtime/runtime-utils/src/serviceClientUtils.ts). |
-| Example selection and bundling | [Example helpers](../examples/utils/example-utils/src/exampleApp.ts), [webpack configuration helper](../examples/utils/webpack-fluid-loader/src/appConfig.ts), and [inventory-app guide](../examples/data-objects/inventory-app/README.md). |
-| Browser validation | [WebTransport harness](tests/webtransport-browser/README.md) and [Fluid integration harness](tests/sea-integration-tests/README.md). |
+| WASM bindings and build | [Shared bindings](../crates/sea-wasm/src/bindings.rs), [package build script](../packages/sea-typescript/scripts/build-wasm.mjs), and [package build tasks](../packages/sea-typescript/package.json). |
+| Generated-client adaptation | [Neutral-session adapter](../packages/sea-driver/src/sessionClient.ts) and [driver-owned contract](../packages/sea-driver/src/wasmClient.ts); Fluid projection is now owned by the driver. |
+| TypeScript package conventions | [sea-driver](../packages/sea-driver/README.md) and its [manifest](../packages/sea-driver/package.json); reuse conventions, not Fluid-specific dependencies. |
+| ServiceClient | [Shared contract](../../packages/common/driver-definitions/src/serviceClient.ts), [Tinylicious implementation](../../packages/drivers/tinylicious-driver/src/tinyliciousService.ts), and [runtime helpers](../../packages/runtime/runtime-utils/src/serviceClientUtils.ts). |
+| Example selection and bundling | [Example helpers](../../examples/utils/example-utils/src/exampleApp.ts), [webpack configuration helper](../../examples/utils/webpack-fluid-loader/src/appConfig.ts), and [inventory-app guide](../../examples/data-objects/inventory-app/README.md). |
+| Browser validation | [WebTransport harness](../tests/webtransport-browser/README.md) and [Fluid integration harness](../tests/sea-integration-tests/README.md). |
 
 ## Design Boundaries
 
@@ -133,7 +136,7 @@ This combined phase does not require parallel workstreams or a numbered iteratio
 Foundation progress: `sea-wasm` now has shared session operations over a concrete-handle-preserving adapter, and `sea-webtransport` has a typed session client that compiles for native and browser transports.
 The `sea-typescript` package owns five isolated build configurations and exposes initial neutral memory and remote APIs.
 Node package tests passed for memory and compression, and Chromium 152 inside the Codespace passed real plain/compressed WebTransport blob and event round trips, snapshot publication, and reopening.
-See the [package guide](packages/sea-typescript/README.md) for commands and limitations.
+See the [package guide](../packages/sea-typescript/README.md) for commands and limitations.
 The foundation checkpoint is committed as `8defb28d049`.
 Continuation work adds submission content references, snapshot lookup, classified factory failures, and safe close during asynchronous operations.
 Fluid projection now lives in `sea-driver` as `SeaSessionDriverClient`, with summary tests, direct SharedTree package collaboration, and the real Chromium SharedTree lifecycle trace migrated to injected neutral factories.
@@ -205,7 +208,7 @@ Fluid adapters consume this layer, not the reverse; existing higher-level tests 
 The merged socket factory remains separate and unchanged; selecting either preset never enables socket fallback.
 The combined-compression configuration adds compression support without enabling it implicitly.
 Node and fresh-page Chromium scenarios cover both presets, explicit sharing/isolation, capability rejection, initialization caching, and exact selected-artifact loading.
-The [package guide](packages/sea-typescript/README.md#artifact-measurements) records raw/gzip/Brotli artifact sizes, build provenance, and tradeoffs.
+The [package guide](../packages/sea-typescript/README.md#artifact-measurements) records raw/gzip/Brotli artifact sizes, build provenance, and tradeoffs.
 Example selection remains unchanged; the build-time example preset override and non-SEA UI acceptance remain stage 5 responsibilities.
 
 Stage 3 validation passed all canonical Rust gates, documentation checks, `./test.sh`, scoped repository policy, and root `pnpm build:fast`.
@@ -291,7 +294,7 @@ Leave a usable example URL and concise startup instructions for the user, and do
 ## Validation and Documentation Gates
 
 Run the narrowest behavioral checks after each implementation change, then the required integration gates at completion.
-Follow [Development](DEVELOPMENT.md) and the [coordination skill](../.github/skills/rust-service-coordination/SKILL.md); commands below are a checklist, not a replacement for those authorities.
+Follow [Development](../DEVELOPMENT.md) and the [coordination skill](../../.github/skills/rust-service-coordination/SKILL.md); commands below are a checklist, not a replacement for those authorities.
 
 From `rust-service/`:
 

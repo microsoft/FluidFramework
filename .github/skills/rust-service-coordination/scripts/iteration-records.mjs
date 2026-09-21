@@ -519,8 +519,8 @@ async function validate(iteration, phase) {
 		}
 	}
 
-	if (!(await exists(resolve(projectRoot, "LEARNINGS.md")))) {
-		errors.push("missing rust-service/LEARNINGS.md");
+	if (!(await exists(resolve(historicalRoot, "LEARNINGS.md")))) {
+		errors.push("missing rust-service/historical/LEARNINGS.md");
 	}
 	if (!(await exists(resolve(historicalRoot, "decisions/README.md")))) {
 		errors.push("missing rust-service/historical/decisions/README.md");

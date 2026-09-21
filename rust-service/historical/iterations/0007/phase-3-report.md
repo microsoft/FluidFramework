@@ -43,7 +43,7 @@ Native shutdown measured 2-session natural drain in 1,147 ms, 2-session deadline
 
 ## Learning and Process Findings
 
-The [retrospective](retrospective.md) records four Fluid lifecycle falsifications, the delegated-work recovery, marker acknowledgement deadlock, lockfile-sensitive feature attempt, and Node engine mismatch. Durable architecture and agentic findings were promoted to [LEARNINGS.md](../../../LEARNINGS.md). The user approved the sequencing decision to finish reconnect and shutdown before streaming and supplied the practical Node 22 environment correction.
+The [retrospective](retrospective.md) records four Fluid lifecycle falsifications, the delegated-work recovery, marker acknowledgement deadlock, lockfile-sensitive feature attempt, and Node engine mismatch. Durable architecture and agentic findings were promoted to [LEARNINGS.md](../../LEARNINGS.md). The user approved the sequencing decision to finish reconnect and shutdown before streaming and supplied the practical Node 22 environment correction.
 
 ## Skill Changes
 

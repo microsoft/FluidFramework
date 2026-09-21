@@ -115,3 +115,7 @@ Use the [coordination skill](../.github/skills/rust-service-coordination/SKILL.m
 Use the [quality-iteration skill](../.github/skills/rust-service-quality-iteration/SKILL.md) for risk-driven contract and regression-test audits, inventory evidence, and stopping conditions.
 New iteration records also live under `historical/iterations/`; completed records remain append-only history.
 Record falsified hypotheses, repeated failed attempts, substantial effort sinks, human interventions, shared decisions, and reusable process findings as they occur.
+The [historical learning index](historical/LEARNINGS.md) records observations, not additional prerequisites for contributors.
+Promote an applicable rule into its owning contract, this guide, or a reusable skill rather than requiring readers to reconstruct the development history.
+Treat recorded claims as evidence to inspect: verify the named checkout, failing behavior, test assertions, and completed command results before accepting a repair.
+New benchmark output belongs outside the repository unless it supports a retained, dated result; include unsuccessful outcomes and guarantee differences when retaining a dataset.

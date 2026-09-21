@@ -1,6 +1,7 @@
 # Rust Service Scripts
 
-These shell and Node.js entry points validate or measure the benchmark harness in a disposable source copy.
+These shell and Node.js entry points validate or measure the current benchmark harness.
+The shell validation and measurement wrappers use a disposable source copy; the Node.js collectors use the current checkout and explicit output directories.
 `sea-benchmarks` is already a workspace member, so the scripts preserve the manifest without rewriting membership.
 Copies exclude build outputs, installed dependencies, generated packages, Git metadata, and benchmark-result directories; each run uses a separate Cargo target directory and removes the copy and target on exit.
 
@@ -12,20 +13,19 @@ Copies exclude build outputs, installed dependencies, generated packages, Git me
 - [`check-documentation.mjs`](check-documentation.mjs) discovers every Cargo
 	package under `crates/` and `examples/`, requires READMEs for those packages and
 	each direct integration-test harness, requires READMEs for the important
-	architectural grouping folders, and verifies local Markdown links. Explicit
+	architectural grouping folders, and verifies local Markdown links in those READMEs, historical READMEs, and top-level current guides. Explicit
 	path arguments restrict the check to those roots.
-- [`presentation-run.mjs`](presentation-run.mjs) records a command, source state, machine metadata, raw log, and exit status in a new result directory.
+- [`benchmark-run.mjs`](benchmark-run.mjs) records a command, source state, machine metadata, raw log, and exit status in a new result directory.
 	Use an output directory outside the repository when running repository-wide format checks, then format completed JSON before retaining it.
-- [`presentation-collect.mjs`](presentation-collect.mjs) inventories tracked source with pinned `cloc`, or runs a sequential alternating-backend stress matrix with source and binary hashes.
-	Use `source <new-output-directory>`, `sweep <new-output-directory>`, `repeat <new-output-directory>`, or `matrix <new-output-directory> <cells.json>`.
+- [`benchmark-collect.mjs`](benchmark-collect.mjs) inventories tracked source with pinned `cloc`, or runs a sequential alternating-backend stress matrix with source and binary hashes.
+	Use `source <new-output-directory>`, `repeat <new-output-directory>`, `native-repeat <new-output-directory>`, or `matrix <new-output-directory> <cells.json>`; `--help` lists the modes without collecting data.
 	The repeat campaign predeclares ten fresh runs per point, alternates backend order at the 500 ops/s matched-resource load, and checks observed Sea throughput lower bounds with three seconds of warmup and ten seconds of measurement.
 	Source scopes include tests and conditional code and follow local non-development dependency declarations, not linked-code reachability or equivalent product features.
 	Build `presentation-test-spans` from `sea-benchmarks` in release mode before running `source`; it classifies inline Rust test modules with `syn`, not text-based brace matching.
 	The inventory includes comment totals and a test/test-support subset, with exact paths and spans retained.
-	`followup-explore <new-output-directory>` compares native Sea WebSocket/WebTransport boundary points and finer Tinylicious loads.
-	`followup-tiny-retry <new-output-directory>` repeats the 750 and 1,250 ops/s probes after correcting fractional per-worker rate validation.
-	`followup-repeat <new-output-directory>` predeclares ten repeats of paired four-core native transport loads, higher WebSocket loads, and 750 ops/s Tinylicious loads on one and four service cores.
-- [`presentation-stress.mjs`](presentation-stress.mjs) runs bounded, minimal-client Sea/Tinylicious comparisons on Linux.
+	`native-repeat <new-output-directory>` predeclares ten repeats of paired four-core native transport loads, higher WebSocket loads, and 750 ops/s Tinylicious loads on one and four service cores.
+	Use `matrix` for other configurations; the JSON input is an array of workload objects accepted by the stress runner.
+- [`benchmark-stress.mjs`](benchmark-stress.mjs) runs bounded, minimal-client Sea/Tinylicious comparisons on Linux.
 	It uses production client libraries without SharedTree or the container runtime, verifies payloads and ordered delivery to writer and observer, and records resource samples and failures.
 	By default, Sea uses release-mode native service code, release-mode WASM clients, and the optional loopback WebSocket listener, not QUIC.
 	Tinylicious uses its normal Node.js server and Routerlicious Socket.IO client, with in-memory database defaults.
@@ -39,9 +39,9 @@ Copies exclude build outputs, installed dependencies, generated packages, Git me
 Example bounded stress sample from the repository root:
 
 ```bash
-SEA_MAX_CONNECTIONS=128 node rust-service/scripts/presentation-stress.mjs run \
+SEA_MAX_CONNECTIONS=128 node rust-service/scripts/benchmark-stress.mjs run \
 	'{"backend":"sea","rate":400,"payloadBytes":8192,"documents":16,"cores":4,"seconds":5,"warmupSeconds":1}' \
-	/tmp/sea-presentation-sample
+	/tmp/sea-benchmark-sample
 ```
 
 Use `tinylicious` as the backend for the matching comparison.
@@ -68,9 +68,7 @@ Tinylicious uses its default in-memory document/operation database and filesyste
 For Tinylicious, set `"storage":"leveldb"` to select its file-backed database, or `"storage":"memory"` for an explicit in-memory selection.
 The harness sets `db__inMemory` and a fresh per-cell `db__path`, and checks the LevelDB `CURRENT` marker after workers create documents and connect, before starting load.
 Both modes use separate filesystem Git summary storage.
-At revision `92ecf30f4a7`, LevelDB document connection fails with `Collection checkpoints not implemented.`; see the [retained attempts](../measurements/tinylicious-leveldb/README.md).
-The [repaired follow-up](../measurements/tinylicious-leveldb-fixed/README.md) records the adapter compatibility fix, passing regression tests, and measured LevelDB rates.
-This is a pre-load compatibility failure, not a throughput result or a durability qualification.
+The [historical LevelDB follow-up](../historical/measurements/tinylicious-leveldb-fixed/README.md) records the adapter repair and measured rates; use its pinned revision only when reproducing that experiment.
 The 32-document workload uses four generator processes on four distinct physical cores; one-document runs use only one.
 
 Run these commands from `rust-service/`:
@@ -83,8 +81,8 @@ node scripts/check-documentation.mjs
 
 The measurement scripts set source commit, build profile, filesystem, and storage-device metadata. They do not retain results automatically. Write exploratory output outside the repository; retain only evidence needed to support documented results, with its procedure, schema, and limitations.
 
-The historical Wave 3 runner was retired during final core-migration acceptance because its network/backend cells no longer exist.
-Historical reports remain unchanged; use `measure-benchmarks.sh` for current storage/decorator measurements and the [Fluid driver's benchmark runner](../tests/sea-integration-tests/README.md) for current local and WebTransport workflows.
-Their results are not directly comparable with the retired matrix.
+Use `measure-benchmarks.sh` for current storage/decorator measurements and the [Fluid driver's benchmark runner](../tests/sea-integration-tests/README.md) for current local and WebTransport workflows.
+The [historical evidence](../historical/measurements/README.md) preserves original command names and revisions; current Node.js tools use the `benchmark-` prefix.
+The `presentation-native` and `presentation-test-spans` binary names remain stable for compatibility with recorded build commands.
 
 The scripts require Bash, Node.js, Cargo, Git, tar, and standard Linux utilities used directly in their source. They add no dependencies and must leave the assigned `Cargo.toml`, `Cargo.lock`, and retained benchmark evidence unchanged.

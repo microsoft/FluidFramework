@@ -30,7 +30,7 @@ Phase 3 commit: <!-- TODO(required): record the final commit when created -->
 
 ## Learning and Process Findings
 
-<!-- TODO(required): link the retrospective, costly issues, human interventions, and promoted LEARNINGS.md entries -->
+<!-- TODO(required): link the retrospective, costly issues, human interventions, observations in rust-service/historical/LEARNINGS.md, and applicable rules promoted into current guidance -->
 
 ## Skill Changes
 

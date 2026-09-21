@@ -1,7 +1,20 @@
 # Historical Records
 
-This folder preserves the Rust service project's research history and retained evidence.
-These records describe earlier designs, migration work, experiments, and decisions; they are not the specification of the current implementation.
+This folder records the Sea experiment: what was built, how agents and people developed it, what was measured, and what remained unresolved.
+These are dated observations and design records, not current setup instructions, API contracts, or a roadmap.
+Source, tests, examples, current guides, and reusable skills remain outside this folder.
+
+## Reading Paths
+
+| Interest | Start here | Supporting records |
+| --- | --- | --- |
+| Project results | [Project overview](PROJECT_OVERVIEW.md), measured September 2026 | [Measurement evidence](measurements/README.md) |
+| Agentic development | [Method, outcomes, and limits](AGENTIC_DEVELOPMENT.md) | [Learnings](LEARNINGS.md), [iterations](iterations/), and [decisions](decisions/README.md) |
+| Design evolution | [Sea migration](SEA_MIGRATION_PLAN.md) and [core migration](CORE_MIGRATION_PLAN.md) | [Blob-tree design](BLOB_STORAGE.md), [client integration](SERVICE_CLIENT_PLAN.md), and [Fluid test integration](INTEGRATION_TEST_CONFIGURATION_PLAN.md) |
+
+The overview preserves the measured revisions, comparison limits, unsuccessful outcomes, and unverified claims.
+Iteration reports preserve the reasoning, repairs, no-change results, and human interventions needed to assess the development approach.
+An issue described as open or a stage described as pending in an old report is not necessarily open today; consult [current known issues](../KNOWN_ISSUES.md) and the owning code and tests.
 
 ## Contents
 
@@ -13,6 +26,7 @@ These records describe earlier designs, migration work, experiments, and decisio
 - [Historical deferral reconciliation](DEFERRAL_RECONCILIATION.md): current dispositions and remaining gaps for the six product deferrals retained by iteration 0016.
 - [Iterations](iterations/): charters, workstream instructions, reports, validation evidence, and retrospectives.
 - [Decisions](decisions/README.md): architectural and process decision history.
+- [Original benchmark specification](BENCHMARKS.md) and [storage optimization investigation](STORAGE_OPTIMIZATION.md): experiment procedures and observations at their recorded revisions.
 
 Historical commands, source paths, commit identifiers, and machine metadata record the environment at the time of the work.
 They may refer to removed implementations or old worktrees and are not necessarily runnable today.
@@ -21,9 +35,10 @@ Links to superseded benchmark artifacts use a pinned Git revision rather than fi
 
 ## Current Guidance
 
-Start with the [project README](../README.md), [Sea architecture](../SEA_ARCHITECTURE.md), [workspace architecture](../WORKSTREAMS.md), and [crate guides](../crates/README.md).
-Use [Development](../DEVELOPMENT.md) for current validation and quality requirements, [Known Issues](../KNOWN_ISSUES.md) for outstanding limitations, and [Learnings](../LEARNINGS.md) for reusable lessons.
-The [benchmark specification](../BENCHMARKS.md) and [benchmark scripts](../scripts/README.md) remain outside this folder.
+Start with the [project README](../README.md), [Sea architecture](../SEA_ARCHITECTURE.md), [workspace architecture](../WORKSPACE_ARCHITECTURE.md), and [crate guides](../crates/README.md).
+Use [Development](../DEVELOPMENT.md) for current validation and quality requirements and [Known Issues](../KNOWN_ISSUES.md) for outstanding limitations.
+Use the [benchmark harness](../crates/sea-benchmarks/README.md) and [collection scripts](../scripts/README.md) for current measurement commands.
+The [learning index](LEARNINGS.md) explains the observations behind practices; applicable requirements belong in current guides, contracts, and skills.
 
 ## Continuing the Iteration Process
 

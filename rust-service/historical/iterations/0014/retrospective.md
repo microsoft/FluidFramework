@@ -80,7 +80,7 @@ no issue-specific hidden finding was placed in trial-visible records.
 
 ## Durable Lessons
 
-One lesson was promoted to [LEARNINGS.md](../../../LEARNINGS.md#correctness-and-testing):
+One lesson was promoted to [LEARNINGS.md](../../LEARNINGS.md#correctness-and-testing):
 topical conformance or integration coverage is insufficient when another
 component can satisfy the assertion while the owning implementation decision is
 broken. It generalizes across storage backends, decorators, transports, and
