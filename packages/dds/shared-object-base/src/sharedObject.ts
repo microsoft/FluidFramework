@@ -62,7 +62,10 @@ import { v4 as uuid } from "uuid";
 import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, type IFluidSerializer } from "./serializer.js";
-import { sharedObjectProtocols } from "./sharedObjectProtocol.js";
+import {
+	defaultSharedObjectProtocol,
+	getSharedObjectProtocol,
+} from "./sharedObjectProtocol.js";
 import type { ISharedObject, ISharedObjectEvents } from "./types.js";
 import { bindHandles, makeHandlesSerializable, parseHandles } from "./utils.js";
 
@@ -247,7 +250,7 @@ export abstract class SharedObjectCore<
 		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.closeError === undefined) {
 			this.closeError = error;
-			sharedObjectProtocols.get(this)?.close(error);
+			getSharedObjectProtocol(this).close(error);
 		}
 	}
 
@@ -349,7 +352,7 @@ export abstract class SharedObjectCore<
 			this.attachDeltaHandler();
 		}
 
-		sharedObjectProtocols.get(this)?.flushPendingSubmissions();
+		getSharedObjectProtocol(this).flushPendingSubmissions();
 		this.setBoundAndHandleAttach();
 	}
 
@@ -439,10 +442,14 @@ export abstract class SharedObjectCore<
 	 */
 	protected submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
 		this.verifyNotClosed();
-		const protocol = sharedObjectProtocols.get(this);
-		const preparedContent =
-			protocol === undefined ? content : protocol.prepareLocalMessage(content);
-		if (this.isAttached() && (protocol === undefined || this.services !== undefined)) {
+		const protocol = getSharedObjectProtocol(this);
+		const preparedContent = protocol.prepareLocalMessage(content);
+		// Legacy attached submission requires services; configured channels can queue
+		// between initial snapshot publication and channel connection.
+		if (
+			this.isAttached() &&
+			(this.services !== undefined || protocol === defaultSharedObjectProtocol)
+		) {
 			// NOTE: We may also be encoding in the ContainerRuntime layer.
 			// Once the layer-compat window passes we can remove the encoding codepath here altogether
 			const onlyBind =
@@ -455,7 +462,7 @@ export abstract class SharedObjectCore<
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.services!.deltaConnection.submit(contentToSubmit, localOpMetadata);
 		} else {
-			protocol?.submitWhileDetached(preparedContent, localOpMetadata);
+			protocol.submitWhileDetached(preparedContent, localOpMetadata);
 		}
 	}
 
@@ -561,24 +568,16 @@ export abstract class SharedObjectCore<
 				this.reSubmit(content, localOpMetadata, squash);
 			},
 			applyStashedOp: (content: unknown): void => {
-				const apply = (ordinaryContent: unknown): void =>
-					this.applyStashedOp(parseHandles(ordinaryContent, this.serializer));
-				const protocol = sharedObjectProtocols.get(this);
-				if (protocol === undefined) {
-					apply(content);
-				} else {
-					protocol.applyStashedOp(content, apply);
-				}
+				getSharedObjectProtocol(this).applyStashedOp(content, (ordinaryContent) =>
+					this.applyStashedOp(parseHandles(ordinaryContent, this.serializer)),
+				);
 			},
 			rollback: (content: unknown, localOpMetadata: unknown) => {
-				const protocol = sharedObjectProtocols.get(this);
-				if (protocol === undefined) {
-					this.rollback(content, localOpMetadata);
-				} else {
-					protocol.rollback(content, localOpMetadata, (ordinaryContent, metadata) =>
-						this.rollback(ordinaryContent, metadata),
-					);
-				}
+				getSharedObjectProtocol(this).rollback(
+					content,
+					localOpMetadata,
+					(ordinaryContent, metadata) => this.rollback(ordinaryContent, metadata),
+				);
 			},
 		} satisfies IDeltaHandler);
 	}
@@ -629,24 +628,9 @@ export abstract class SharedObjectCore<
 	private processMessages(messagesCollection: IRuntimeMessageCollection): void {
 		this.verifyNotClosed(); // This will result in container closure.
 
-		const protocol = sharedObjectProtocols.get(this);
-		if (protocol === undefined) {
-			this.processOrdinaryMessages(messagesCollection);
-		} else {
-			try {
-				protocol.processMessages(messagesCollection, (messages) =>
-					this.processOrdinaryMessages(messages),
-				);
-			} catch (error) {
-				const processingError = DataProcessingError.wrapIfUnrecognized(
-					error,
-					"SharedObjectProtocol",
-					messagesCollection.envelope,
-				);
-				this.closeWithError(processingError);
-				throw processingError;
-			}
-		}
+		getSharedObjectProtocol(this).processMessages(messagesCollection, (messages) =>
+			this.processOrdinaryMessages(messages),
+		);
 	}
 
 	private processOrdinaryMessages(messagesCollection: IRuntimeMessageCollection): void {
@@ -712,12 +696,7 @@ export abstract class SharedObjectCore<
 				this.reSubmitCore(ordinaryContent, metadata);
 			}
 		};
-		const protocol = sharedObjectProtocols.get(this);
-		if (protocol === undefined) {
-			submit(content, localOpMetadata);
-		} else {
-			protocol.reSubmit(content, localOpMetadata, submit);
-		}
+		getSharedObjectProtocol(this).reSubmit(content, localOpMetadata, submit);
 	}
 
 	/**

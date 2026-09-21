@@ -417,6 +417,11 @@ and acknowledgement behavior. CAS remains entirely in the shared configuration m
 
 ### Shared wrapper integration
 
+Shared objects without a registered protocol use one stateless default protocol.
+It forwards ordinary messages and DDS hooks unchanged.
+It does nothing for detached submissions or protocol cleanup.
+The configured protocol uses the same dispatch interface.
+
 The protocol adapter separates configuration-control traffic from ordinary DDS traffic, forwarding
 ordinary message collections to `SharedKernel.processMessagesCore` with revision metadata.
 It handles configuration requests during resubmission, stashed-op restoration, and rollback,
@@ -428,6 +433,12 @@ handle decoding and DDS `pre-op`/`op` events. All valid ordinary envelopes, incl
 earlier revisions, use the existing handle serializer and event/error machinery. Config control
 messages do not become DDS data-op events. Runtime-level raw-op observability may still report
 that they sequenced.
+
+Processing errors propagate to the existing `ChannelDeltaConnection` error boundary, including buffered replay.
+There is no configured-only error wrapper in `SharedObjectCore`.
+Configuration callback or validation failures reject pending configuration requests before rethrowing.
+Runtime disposal closes outstanding requests for other fatal failures.
+Existing DDS event-listener error handling is unchanged.
 
 ## Creation, publication, load, and summaries
 

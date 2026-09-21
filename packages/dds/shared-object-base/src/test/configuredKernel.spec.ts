@@ -23,6 +23,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockDeltaConnection,
 	MockFluidDataStoreRuntime,
@@ -66,6 +67,10 @@ function makeKind(
 	initialConfiguration?: Config,
 	support: boolean = true,
 	type: string = "configured-test",
+	options: {
+		processMessages?: () => void;
+		configurationDefinition?: ChannelConfigurationDefinition<Config>;
+	} = {},
 ): ISharedObjectKind<View> & SharedObjectKindAlpha<View> {
 	function create(args: KernelArgs<Config>): FactoryOut<View> {
 		const observed: unknown[] = [["initial", args.configuration?.current]];
@@ -80,6 +85,7 @@ function makeKind(
 			summarizeCore: () => createSingleBlobSummary("data", JSON.stringify(observed)),
 			onDisconnect: () => {},
 			processMessagesCore: (messages: SharedKernelMessageCollection) => {
+				options.processMessages?.();
 				for (const message of messages.messagesContent) {
 					observed.push([
 						"operation",
@@ -108,7 +114,9 @@ function makeKind(
 		attributes: { type, snapshotFormatVersion: "1" },
 		telemetryContextPrefix: "configured-test",
 		factory: {
-			...(support ? { configurationDefinition: definition } : {}),
+			...(support
+				? { configurationDefinition: options.configurationDefinition ?? definition }
+				: {}),
 			create,
 			loadCore: async (args) => create(args),
 		},
@@ -203,6 +211,83 @@ function publish(shared: IChannel): void {
 	const configured = shared as IChannel & ChannelConfigurationChannel;
 	assert(configured.onChannelConfigurationPublication !== undefined);
 	configured.onChannelConfigurationPublication();
+}
+
+function datastoreHarness(
+	factory: ReturnType<ReturnType<typeof makeKind>["getFactory"]>,
+	onLoad: (shared: IChannel & View) => void = () => {},
+): {
+	runtime: FluidDataStoreRuntime;
+	errors: unknown[];
+	readonly shared: IChannel & View;
+	process: (contents: unknown) => void;
+} {
+	const baseline = factory.create(harness(AttachState.Detached).runtime, "baseline");
+	const attributes = JSON.stringify(baseline.attributes);
+	const context = new MockFluidDataStoreContext("store", true);
+	context.isLocalDataStore = false;
+	context.attachState = AttachState.Attached;
+	context.containerRuntime = Object.assign(context.containerRuntime, {
+		isChannelConfigurationEnabled: (type: string) => type === "configured-test",
+		isChannelConfigurationCreationEnabled: () => false,
+		channelConfigurationPublicationRequired: true,
+	});
+	context.baseSnapshot = {
+		blobs: {},
+		trees: { dds: { blobs: { ".attributes": "attributes" }, trees: {} } },
+	};
+	const storage: Pick<IRuntimeStorageService, "readBlob"> = {
+		readBlob: async (id) => {
+			assert.equal(id, "attributes");
+			return stringToBuffer(attributes, "utf8");
+		},
+	};
+	context.storage = storage as IRuntimeStorageService;
+	context.getCreateChildSummarizerNodeFn = () => () => {
+		const node: Pick<ISummarizerNodeWithGC, "invalidate"> = { invalidate: () => {} };
+		return node as ISummarizerNodeWithGC;
+	};
+	const errors: unknown[] = [];
+	let shared: (IChannel & View) | undefined;
+	const load = factory.load.bind(factory);
+	factory.load = async (dataStoreRuntime, id, services, channelAttributes) => {
+		const attach = services.deltaConnection.attach.bind(services.deltaConnection);
+		services.deltaConnection.attach = (handler) => {
+			attach({
+				...handler,
+				processMessages: (messages) => {
+					try {
+						handler.processMessages(messages);
+					} catch (error) {
+						// Observe the core's error before the real delta connection normalizes it.
+						errors.push(error);
+						throw error;
+					}
+				},
+			});
+		};
+		shared = await load(dataStoreRuntime, id, services, channelAttributes);
+		onLoad(shared);
+		return shared;
+	};
+	const runtime = new FluidDataStoreRuntime(
+		context,
+		{ get: () => factory },
+		true,
+		async () => ({}),
+	);
+	Object.defineProperty(runtime.deltaManagerInternal, "maxMessageSize", {
+		value: 1024 * 1024,
+	});
+	return {
+		runtime,
+		errors,
+		get shared() {
+			assert(shared !== undefined);
+			return shared;
+		},
+		process: (contents) => runtime.processMessages(collection([{ address: "dds", contents }])),
+	};
 }
 
 describe("configured kernel composition", () => {
@@ -301,6 +386,170 @@ describe("configured kernel composition", () => {
 		const attributesBlob = channelSummary.tree[".attributes"];
 		assert(attributesBlob?.type === SummaryType.Blob);
 		assert.equal(attributesBlob.content, JSON.stringify(loaded.attributes));
+	});
+
+	for (const lazy of [false, true]) {
+		for (const malformed of [false, true]) {
+			it(`leaves ${malformed ? "malformed envelopes" : "DDS processor errors"} to the real delta connection during ${lazy ? "lazy replay" : "live processing"}`, async () => {
+				const processorError = new Error("DDS processor failed");
+				const factory = makeKind({}, true, "configured-test", {
+					processMessages: () => {
+						throw processorError;
+					},
+				}).getFactory();
+				const rejections: unknown[] = [];
+				let pending: Promise<void>[] = [];
+				const test = datastoreHarness(factory, (shared) => {
+					const config = requireConfig(shared);
+					pending = [
+						config.requestChange({ retain: true }),
+						config.requestChange({ retain: false }),
+					].map(async (request) =>
+						assert.rejects(request, (error: unknown) => {
+							rejections.push(error);
+							return true;
+						}),
+					);
+				});
+				const checkError = (error: unknown): boolean => {
+					assert.equal(test.errors.length, 1);
+					const rawError = test.errors[0];
+					if (malformed) {
+						assert(rawError instanceof UsageError);
+						assert.equal(error, rawError);
+					} else {
+						assert.equal(rawError, processorError);
+						assert(error instanceof DataProcessingError);
+						assert.notEqual(error, processorError);
+					}
+					assert(error instanceof UsageError || error instanceof DataProcessingError);
+					assert.equal(
+						error.getTelemetryProperties().dataProcessingCodepath,
+						"channelDeltaConnectionFailedToProcessMessages",
+					);
+					return true;
+				};
+				const contents = malformed ? { version: 2, kind: "operation" } : operation("fail");
+				if (lazy) {
+					test.process(contents);
+					assert.equal(test.errors.length, 0);
+					await assert.rejects(test.runtime.getChannel("dds"), checkError);
+				} else {
+					await test.runtime.getChannel("dds");
+					assert.throws(() => test.process(contents), checkError);
+				}
+				assert.equal(test.runtime.disposed, false);
+				assert.doesNotThrow(() => test.shared.edit("still open"));
+				await new Promise<void>((resolve) => setImmediate(resolve));
+				assert.equal(rejections.length, 0);
+
+				test.runtime.dispose();
+				await Promise.all(pending);
+				assert.equal(rejections.length, 2);
+				for (const error of rejections) {
+					assert(error instanceof UsageError);
+					assert.match(error.message, /disposed/);
+					assert.notEqual(error, test.errors[0]);
+				}
+				await assert.rejects(requireConfig(test.shared).requestChange({}), /disposed/);
+			});
+		}
+	}
+
+	for (const callback of [false, true]) {
+		it(`rejects all pending requests with the original configuration ${callback ? "callback" : "validation"} error`, async () => {
+			const failure = new Error("configuration failed");
+			let failValidation = false;
+			const factory = makeKind({}, true, "configured-test", {
+				configurationDefinition: {
+					...definition,
+					validateTransition: () => {
+						if (failValidation) {
+							throw failure;
+						}
+					},
+				},
+			}).getFactory();
+			const test = datastoreHarness(factory);
+			await test.runtime.getChannel("dds");
+			const config = requireConfig(test.shared);
+			const pending = [
+				config.requestChange({ retain: true }),
+				config.requestChange({ retain: false }),
+			].map(async (request) => assert.rejects(request, (error: unknown) => error === failure));
+			if (callback) {
+				config.on("changed", () => {
+					throw failure;
+				});
+			} else {
+				failValidation = true;
+			}
+			assert.throws(
+				() => test.process(barrier(0, true)),
+				(error: unknown) => {
+					assert.equal(test.errors[0], failure);
+					assert(error instanceof DataProcessingError);
+					assert.notEqual(error, failure);
+					assert.equal(
+						error.getTelemetryProperties().dataProcessingCodepath,
+						"channelDeltaConnectionFailedToProcessMessages",
+					);
+					return true;
+				},
+			);
+			assert.equal(test.runtime.disposed, false);
+			await Promise.all(pending);
+			await assert.rejects(config.requestChange({}), (error: unknown) => error === failure);
+			assert.throws(
+				() => test.shared.edit("disposed configuration"),
+				(error: unknown) => error === failure,
+			);
+			test.runtime.dispose();
+		});
+	}
+
+	it("preserves common event-listener wrapping and channel closure", async () => {
+		const test = datastoreHarness(makeKind({}).getFactory());
+		await test.runtime.getChannel("dds");
+		const config = requireConfig(test.shared);
+		const pending = [config.requestChange({ retain: true }), config.requestChange({})];
+		const settled = Promise.allSettled(pending);
+		const listenerError = new Error("op listener failed");
+		(test.shared as View & ISharedObject).on("op", () => {
+			throw listenerError;
+		});
+		let closedError: unknown;
+		assert.throws(
+			() => test.process(operation("trigger listener")),
+			(error: unknown) => {
+				assert(error instanceof DataProcessingError);
+				assert.notEqual(error, listenerError);
+				assert.equal(test.errors[0], error);
+				assert.equal(
+					error.getTelemetryProperties().dataProcessingCodepath,
+					"SharedObjectEventListenerException",
+				);
+				assert.equal(error.getTelemetryProperties().emittedEventName, "op");
+				closedError = error;
+				return true;
+			},
+		);
+		assert.equal(test.runtime.disposed, false);
+		for (const result of await settled) {
+			assert.equal(result.status, "rejected");
+			assert(result.status === "rejected");
+			assert.equal(result.reason, closedError);
+		}
+		assert.throws(
+			() => test.shared.edit("closed"),
+			(error: unknown) => error === closedError,
+		);
+		assert.throws(
+			() => test.process(operation("closed")),
+			(error: unknown) => error === closedError,
+		);
+		await assert.rejects(config.requestChange({}), (error: unknown) => error === closedError);
+		test.runtime.dispose();
 	});
 
 	it("initializes the facet before create and makes local changes synchronously without ops", async () => {
