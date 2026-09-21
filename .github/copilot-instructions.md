@@ -25,6 +25,11 @@ When writing asserts (from `@fluidframework/core-utils`), use a string literal f
 
 API report files are **generated artifacts** — never hand-edit them. If they need updating, rebuild and regenerate via `build:api-reports`. If you are working in `@fluidframework/tree` or its aggregator (`fluid-framework`) and encounter unexpected API report diffs, read `.claude/skills/ci-readiness-check/tree-api-checks.md` before attempting to fix them.
 
+## Documentation Style
+
+When writing Markdown and documentation comments, prefer line breaks at semantically significant boundaries, such as the end of a sentence or a meaningful clause.
+Do not wrap prose at an arbitrary fixed column unless syntax, established file style, or readability requires it.
+
 ## Azure DevOps
 
 The ADO project for work items and pipelines is **`internal`** (not `FluidFramework`).
