@@ -32,7 +32,7 @@ import {
 	PlainTextMainView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/react/internal";
-// eslint-disable-next-line import-x/no-internal-modules -- FormattedTextDefault has no public export.
+// eslint-disable-next-line import-x/no-internal-modules -- FormattedTextDefault has no public export. TODO: remove or alpha stabilize FormattedTextDefault.
 import { FormattedTextDefault } from "@fluidframework/tree/internal";
 import { TreeViewConfiguration, type ITree } from "fluid-framework";
 import {
