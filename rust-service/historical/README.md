@@ -13,11 +13,11 @@ These records describe earlier designs, migration work, experiments, and decisio
 - [Historical deferral reconciliation](DEFERRAL_RECONCILIATION.md): current dispositions and remaining gaps for the six product deferrals retained by iteration 0016.
 - [Iterations](iterations/): charters, workstream instructions, reports, validation evidence, and retrospectives.
 - [Decisions](decisions/README.md): architectural and process decision history.
-- [Benchmarks](benchmarks/): saved measurements and profiles, organized by experiment or source revision.
 
 Historical commands, source paths, commit identifiers, and machine metadata record the environment at the time of the work.
 They may refer to removed implementations or old worktrees and are not necessarily runnable today.
 Preserve the recorded results and conclusions; later work can supersede them without rewriting their history.
+Links to superseded benchmark artifacts use a pinned Git revision rather than files in the current checkout.
 
 ## Current Guidance
 

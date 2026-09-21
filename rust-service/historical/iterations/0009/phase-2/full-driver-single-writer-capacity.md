@@ -17,7 +17,7 @@ Implemented and measured a six-arm, full-Fluid-driver SharedTree capacity matrix
 
 ## Hypothesis Results
 
-- **Fair full-driver workload: supported.** All six 100-edit smoke arms passed before measurement. The retained runs use two full Fluid containers, real append-only SharedTree edits, fixed writer `0`, observer `1`, identical 1,000-edit warmup and 10,000-edit measured bursts, and exact final convergence. See [`../../../benchmarks/shared-tree/4ce44213978/README.md`](../../../benchmarks/shared-tree/4ce44213978/README.md).
+- **Fair full-driver workload: supported.** All six 100-edit smoke arms passed before measurement. The retained runs use two full Fluid containers, real append-only SharedTree edits, fixed writer `0`, observer `1`, identical 1,000-edit warmup and 10,000-edit measured bursts, and exact final convergence. See [`../../../benchmarks/shared-tree/4ce44213978/README.md`](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/historical/benchmarks/shared-tree/4ce44213978/README.md).
 - **Rust storage substitution: supported for the tested contracts.** Memory, buffered-file, and durable-file modes share the same native service/sequencer dispatch. Service tests passed, all three WebTransport modes passed the same workload, and durable remains the default. Power-loss equivalence is intentionally not claimed.
 - **Capacity rather than round-trip latency: supported.** Submission is a burst without per-edit waits; throughput includes submission plus one final observer convergence. Append-only state proved that all 11,000 requested warmup-plus-measured edits survived. The result remains application-level logical edit throughput rather than sequenced-message or production capacity.
 
@@ -37,7 +37,7 @@ Implemented and measured a six-arm, full-Fluid-driver SharedTree capacity matrix
 - `RUSTFLAGS='--cfg=web_sys_unstable_apis' cargo clippy --locked -p fluid-native-service-browser --target wasm32-unknown-unknown --no-deps -- -D warnings`: passed.
 - `pnpm run check:format && pnpm run lint && pnpm run typecheck && pnpm run typecheck:shared-tree && pnpm test && pnpm run build:benchmarks`: passed in `rust-service/tests/minimal-fluid-driver` with Node `22.23.2`.
 - Six 100-edit, 10-warmup smoke runs through `benchmark:rust-local`, `benchmark:rust` for all three storage modes, `benchmark:local`, and `benchmark:tinylicious`: passed exact writer/observer convergence.
-- Ten repetitions of 10,000 measured edits and 1,000 warmup edits for all six arms: passed. The authoritative machine-readable outputs and aggregate validation are retained under [`../../../benchmarks/shared-tree/4ce44213978/`](../../../benchmarks/shared-tree/4ce44213978/README.md).
+- Ten repetitions of 10,000 measured edits and 1,000 warmup edits for all six arms: passed. The authoritative machine-readable outputs and aggregate validation are retained under [`../../../benchmarks/shared-tree/4ce44213978/`](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/historical/benchmarks/shared-tree/4ce44213978/README.md).
 - A focused validator checked six files, common source commit/configuration, clean provenance, 60 passing samples, exact final count/value, finite distributions, and expected service-process metadata; `git diff --check -- rust-service/benchmarks/shared-tree/4ce44213978` also passed.
 
 ## Notable Events
@@ -65,7 +65,7 @@ The user rejected earlier latency/offered-load figures as an unfair comparison a
 
 ## Measurements
 
-The retained comparison is [`../../../benchmarks/shared-tree/4ce44213978/README.md`](../../../benchmarks/shared-tree/4ce44213978/README.md). Mean throughput was: Tinylicious 3,327.6; TypeScript local service 3,293.4; Rust local memory 3,254.0; Rust WebTransport buffered file 3,247.4; Rust WebTransport memory 3,232.8; and Rust WebTransport durable file 3,210.9 logical edits/s. The six means span 3.6%; distributions overlap, so no statistical backend ranking is claimed.
+The retained comparison is [`../../../benchmarks/shared-tree/4ce44213978/README.md`](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/historical/benchmarks/shared-tree/4ce44213978/README.md). Mean throughput was: Tinylicious 3,327.6; TypeScript local service 3,293.4; Rust local memory 3,254.0; Rust WebTransport buffered file 3,247.4; Rust WebTransport memory 3,232.8; and Rust WebTransport durable file 3,210.9 logical edits/s. The six means span 3.6%; distributions overlap, so no statistical backend ranking is claimed.
 
 Environment: Linux `6.8.0-1064-azure`, AMD EPYC 7763 with 32 logical CPUs visible, Node `22.23.2`, and headless Chrome 152. External service metrics over all ten repetitions were 0.51-0.61 CPU seconds and 15,760-16,080 KiB final/peak RSS for Rust WebTransport, versus 3.46 CPU seconds, 165,332 KiB final RSS, and 168,640 KiB peak RSS for Tinylicious. Browser CPU/RSS, dependency size, and elapsed implementation effort were not measured.
 

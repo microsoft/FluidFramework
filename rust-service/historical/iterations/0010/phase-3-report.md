@@ -13,7 +13,7 @@ converged to the expected final scalar. The independent event-accounting
 hypothesis was falsified because turn-based Fluid processing coalesced observer
 notifications. The service-sensitive comparison remained partly inconclusive:
 means spanned 4.9%, but distributions overlapped and the serial controlled-local
-design does not support a statistical ranking. See the [retained comparison](../../benchmarks/shared-tree/26186ca7975/README.md).
+design does not support a statistical ranking. See the [retained comparison](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/historical/benchmarks/shared-tree/26186ca7975/README.md).
 
 ## Implementation Defects
 

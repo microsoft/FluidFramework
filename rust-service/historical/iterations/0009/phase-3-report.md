@@ -8,7 +8,7 @@ Phase 3 commit: the commit containing this completed report; its self-referentia
 
 All three charter hypotheses are supported within the declared controlled-local scope. Six full-driver arms used the same one-writer, one-observer append-only SharedTree workload. All 100-edit smokes and all 60 retained 10,000-edit samples converged to exact requested counts and final values. The Rust service substituted memory, buffered-file, and durable-file operation storage without changing the tested Fluid behavior, while durable file remained the default. Burst submission followed by one final convergence wait measured application-level logical edit capacity rather than per-edit round-trip latency.
 
-The retained [comparison and raw evidence](../../benchmarks/shared-tree/4ce44213978/README.md) report clean provenance, environment, distributions, external service CPU/RSS where available, guarantee labels, and explicit limitations. They do not claim production, multi-writer, packet-level, or power-loss capacity.
+The retained [comparison and raw evidence](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/historical/benchmarks/shared-tree/4ce44213978/README.md) report clean provenance, environment, distributions, external service CPU/RSS where available, guarantee labels, and explicit limitations. They do not claim production, multi-writer, packet-level, or power-loss capacity.
 
 ## Implementation Defects
 

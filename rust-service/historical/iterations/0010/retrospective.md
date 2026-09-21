@@ -28,7 +28,7 @@ For each substantial effort sink, record the trigger, attempted approaches, evid
 	ignored generated declarations and stale build metadata disagreed. Existing
 	same-source outputs and focused package checks completed validation.
 - A 10,000-edit Rust-local probe hit FSP4's 512 KiB field limit; 4,000 and 5,000
-	probes passed. [Calibration](../../benchmarks/shared-tree/26186ca7975/README.md#calibration)
+	probes passed. [Calibration](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/historical/benchmarks/shared-tree/26186ca7975/README.md#calibration)
 - Two WebTransport memory runs failed at repetition nine after eight successful
 	samples, matching two connections per sample and the native default of 16.
 - Four delegated Rust outputs were zero bytes despite success summaries. Direct

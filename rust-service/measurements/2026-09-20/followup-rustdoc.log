@@ -1,5 +1,0 @@
-    Checking sea-benchmarks v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-benchmarks)
- Documenting sea-benchmarks v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-benchmarks)
- Documenting sea-webtransport-server v0.1.0 (/workspaces/FluidFramework/rust-service/crates/sea-webtransport-server)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.79s
-   Generated /workspaces/FluidFramework/rust-service/target/doc/sea_benchmarks/index.html and 16 other files

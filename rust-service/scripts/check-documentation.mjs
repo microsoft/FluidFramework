@@ -17,7 +17,6 @@ const groupingRoots = [
 	"examples",
 	"packages",
 	"tests",
-	"historical/benchmarks",
 	"scripts",
 ];
 const requestedRoots = process.argv.slice(2);

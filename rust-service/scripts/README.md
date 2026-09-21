@@ -81,7 +81,7 @@ bash scripts/measure-benchmarks.sh --backend memory --fixture small-incompressib
 node scripts/check-documentation.mjs
 ```
 
-The measurement scripts set source commit, build profile, filesystem, and storage-device metadata. They do not retain results automatically. Redirect exploratory output outside [`../benchmarks/`](../historical/benchmarks/); evidence belongs there only after its procedure, schema, and limitations are reviewed and documented.
+The measurement scripts set source commit, build profile, filesystem, and storage-device metadata. They do not retain results automatically. Write exploratory output outside the repository; retain only evidence needed to support documented results, with its procedure, schema, and limitations.
 
 The historical Wave 3 runner was retired during final core-migration acceptance because its network/backend cells no longer exist.
 Historical reports remain unchanged; use `measure-benchmarks.sh` for current storage/decorator measurements and the [Fluid driver's benchmark runner](../tests/sea-integration-tests/README.md) for current local and WebTransport workflows.

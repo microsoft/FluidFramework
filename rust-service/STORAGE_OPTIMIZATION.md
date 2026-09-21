@@ -34,14 +34,14 @@ The candidate was rebuilt at `rust-service/target/release/storage-pipeline` with
 The dataset was `rust-service/target/storage-overhead-data`, created fresh and removed by each successful invocation.
 No dataset remains after collection.
 
-Raw structured evidence is retained in [storage-overhead](measurements/2026-09-20/storage-overhead/baseline.json):
+Raw structured evidence is retained in [storage-overhead](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/measurements/2026-09-20/storage-overhead/baseline.json):
 
-- [baseline.json](measurements/2026-09-20/storage-overhead/baseline.json): 36 exact-HEAD cells collected before production edits, three rounds with reversed cell order in round two.
-- [candidate.json](measurements/2026-09-20/storage-overhead/candidate.json): 72 alternating baseline/candidate cells, three samples per version for every backend/payload/window combination.
+- [baseline.json](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/measurements/2026-09-20/storage-overhead/baseline.json): 36 exact-HEAD cells collected before production edits, three rounds with reversed cell order in round two.
+- [candidate.json](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/measurements/2026-09-20/storage-overhead/candidate.json): 72 alternating baseline/candidate cells, three samples per version for every backend/payload/window combination.
   Version order is baseline/candidate, candidate/baseline, baseline/candidate by round; the middle round also reverses the cell order.
-- [durable-repeat.json](measurements/2026-09-20/storage-overhead/durable-repeat.json): seven additional alternating pairs for the suspicious durable 8192-byte/window-128 cell, with no source changes.
-- [summary.json](measurements/2026-09-20/storage-overhead/summary.json): per-cell sample counts, medians, minima, and maxima for throughput, elapsed time, and p50/p99 submit latency.
-- [validation.json](measurements/2026-09-20/storage-overhead/validation.json): exact validation commands, cwd, environment overrides, timestamps, exit status, and temporary log paths/hashes.
+- [durable-repeat.json](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/measurements/2026-09-20/storage-overhead/durable-repeat.json): seven additional alternating pairs for the suspicious durable 8192-byte/window-128 cell, with no source changes.
+- [summary.json](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/measurements/2026-09-20/storage-overhead/summary.json): per-cell sample counts, medians, minima, and maxima for throughput, elapsed time, and p50/p99 submit latency.
+- [validation.json](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/measurements/2026-09-20/storage-overhead/validation.json): exact validation commands, cwd, environment overrides, timestamps, exit status, and temporary log paths/hashes.
 
 Every collection file embeds its collector source, exact invocation arguments, UTC timestamps, source SHA-256 values, baseline/candidate executable hashes, kernel, Rust toolchain, and relevant environment variables.
 Reproduction uses the embedded collector with its recorded paths and fresh output names; its clean-checkout baseline mode must run before editing production sources.

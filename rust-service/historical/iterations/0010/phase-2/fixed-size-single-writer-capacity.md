@@ -26,7 +26,7 @@ intermediate scalar value.
 
 - **Fixed-size workload: supported.** All arms overwrite one numeric field in a
 	fixed-size object. No measured edit grows a SharedTree sequence. See
-	[`../../../benchmarks/shared-tree/26186ca7975/README.md`](../../../benchmarks/shared-tree/26186ca7975/README.md).
+	[`../../../benchmarks/shared-tree/26186ca7975/README.md`](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/historical/benchmarks/shared-tree/26186ca7975/README.md).
 - **Exact observer event count: falsified.** Default turn-based processing
 	coalesces the remote warmup and measured bursts into two observer
 	`nodeChanged` notifications. Final scalar convergence is authoritative and
@@ -56,7 +56,7 @@ intermediate scalar value.
 - One Rust-local 10,000-edit probe: correctly rejected by the 512 KiB FSP4 payload field limit.
 - One Rust-local 4,000-edit and one 5,000-edit calibration probe: passed; 5,000 was selected.
 - Two ten-repetition Rust WebTransport memory attempts: each passed eight samples and failed opening repetition nine at the native 16-connection ceiling.
-- Eight repetitions of 5,000 measured edits and 500 warmups for all six arms: passed. The authoritative outputs are retained under [`../../../benchmarks/shared-tree/26186ca7975/`](../../../benchmarks/shared-tree/26186ca7975/README.md).
+- Eight repetitions of 5,000 measured edits and 500 warmups for all six arms: passed. The authoritative outputs are retained under [`../../../benchmarks/shared-tree/26186ca7975/`](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/historical/benchmarks/shared-tree/26186ca7975/README.md).
 - An independent validator checked six nonempty files, common clean source commit/configuration, 48 samples, exact final values and writer diagnostics, positive finite timings, observer diagnostics, and expected service-process metadata.
 
 ## Notable Events
@@ -93,7 +93,7 @@ workload intended to expose service overhead more directly.
 ## Measurements
 
 The retained comparison is
-[`../../../benchmarks/shared-tree/26186ca7975/README.md`](../../../benchmarks/shared-tree/26186ca7975/README.md).
+[`../../../benchmarks/shared-tree/26186ca7975/README.md`](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/historical/benchmarks/shared-tree/26186ca7975/README.md).
 Mean throughput was: Tinylicious 3,959.2; Rust local memory 3,873.0;
 TypeScript local service 3,807.8; Rust WebTransport memory 3,797.1;
 Rust WebTransport buffered file 3,796.9; and Rust WebTransport durable file

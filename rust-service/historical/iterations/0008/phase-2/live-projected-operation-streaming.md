@@ -23,12 +23,12 @@ Confidence is high for the assigned bounded local contract. Focused race/recover
 - **Supported:** opaque cursor resume works without hidden retry. Every benchmark repetition established and resumed both client cursors, then converged a first post-resume pushed edit.
 - **Supported:** cancellation and native shutdown remain owned. Native tests passed, and the Chromium shutdown trace stopped acceptance, allowed the in-flight session during drain, rejected it after the deadline, rejected a third session, and reported two owned/two cancelled connections.
 - **Supported:** push delivery removes polling from live benchmark convergence. The committed harness contains no `connection.synchronize()` call; historical delta storage retains bounded projected reads.
-- **Inconclusive:** no claim is made about production throughput, multi-node operation, Routerlicious/ODSP equivalence, or packet-level network bytes. See [benchmark evidence](../../../benchmarks/shared-tree/0d6069e5eca/README.md).
+- **Inconclusive:** no claim is made about production throughput, multi-node operation, Routerlicious/ODSP equivalence, or packet-level network bytes. See [benchmark evidence](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/historical/benchmarks/shared-tree/0d6069e5eca/README.md).
 
 ## Deliverables and Commits
 
 1. `0d6069e5ecafcaf55ac5c067dbd42d5418064cb7` - `feat(rust-service): stream projected operations`: FSP4 v2 contract, atomic service stream, native/browser transports, push-driven Fluid driver, tests, benchmark harness, and [decision 0009](../../../decisions/0009-projected-operation-subscription.md).
-2. Closure commit containing this report and [retained benchmark evidence](../../../benchmarks/shared-tree/0d6069e5eca/README.md); the commit does not embed its own hash.
+2. Closure commit containing this report and [retained benchmark evidence](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/historical/benchmarks/shared-tree/0d6069e5eca/README.md); the commit does not embed its own hash.
 
 ## Validation Evidence
 
@@ -44,7 +44,7 @@ Confidence is high for the assigned bounded local contract. Focused race/recover
 - Minimal driver `pnpm check:format`, `pnpm lint`, `pnpm typecheck`, `pnpm typecheck:shared-tree`, `pnpm build`, `pnpm test`, `pnpm build:shared-tree`, and `pnpm build:benchmarks`: passed; driver contract 3 passed. Esbuild retained its existing package export-condition warnings.
 - Chromium SharedTree trace: passed with final value 3, three independent containers, five subscriptions, explicit ambiguity recovery, 42,638 FSP4 bytes, 1,421-byte peak subscription frame, and peak pending queue depth 2.
 - Chromium/native shutdown trace: passed; acceptance stopped, the existing session succeeded during drain and was rejected after the deadline, a third session was rejected, and native evidence reported `Cancelled`, two owned connections, two cancelled connections, and 5,082 ms elapsed.
-- Clean committed-source benchmark: ten repetitions of 100 measured edits after ten warmups for both Rust and Tinylicious; both raw artifacts report `sourceDirty: false` and commit `0d6069e5eca`. Raw evidence: [rust.json](../../../benchmarks/shared-tree/0d6069e5eca/rust.json) and [tinylicious.json](../../../benchmarks/shared-tree/0d6069e5eca/tinylicious.json).
+- Clean committed-source benchmark: ten repetitions of 100 measured edits after ten warmups for both Rust and Tinylicious; both raw artifacts report `sourceDirty: false` and commit `0d6069e5eca`. Raw evidence: [rust.json](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/historical/benchmarks/shared-tree/0d6069e5eca/rust.json) and [tinylicious.json](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/historical/benchmarks/shared-tree/0d6069e5eca/tinylicious.json).
 - `git diff --check`: passed. Root `pnpm-lock.yaml` and `rust-service/Cargo.lock` remained unchanged with SHA-256 `515717f196c0b624c4c33988968ed9a516b9b1634511ce3b75c2635e579c9d9c` and `66d8d42262ef8bcc269993f7a08709c0b85e185aa1a27376409dae49b9bb9015`.
 
 ## Notable Events

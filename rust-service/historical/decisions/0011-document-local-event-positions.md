@@ -24,7 +24,7 @@ Document identities are allocated or reserved by the service and are never reuse
 ## Options and Evidence
 
 - Retain service-scope-prefixed backend positions and reconstruct ordinal rank maps. Profiling showed repeated position collection, linear ranking, and projected replay dominated Rust local throughput, so this option was rejected.
-- Use document-local absolute event ordinals with cached authoritative sequencing and projected-read state. This was selected because document identities are never reused, routing establishes the document boundary, and the log is append-only. The paced comparison after implementation placed Rust local memory within 1.8% of TypeScript local service throughput. [Evidence](../benchmarks/shared-tree/8a1d4e690e4/README.md)
+- Use document-local absolute event ordinals with cached authoritative sequencing and projected-read state. This was selected because document identities are never reused, routing establishes the document boundary, and the log is append-only. The paced comparison after implementation placed Rust local memory within 1.8% of TypeScript local service throughput. [Evidence](https://github.com/CraigMacomber/FluidFramework/blob/74f3736e4afea1aa78600636e8b45a47243a6095/rust-service/historical/benchmarks/shared-tree/8a1d4e690e4/README.md)
 - Expose backend byte offsets directly. Absolute offsets can remain stable with a retained truncation base, but they are not a uniform representation for every backend and are unnecessary at the service protocol boundary. They remain an implementation option beneath the selected ordinal contract.
 
 ## Decision
