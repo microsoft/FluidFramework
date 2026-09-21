@@ -59,7 +59,13 @@ const server = createServer(async (request, response) => {
 	}
 });
 
-const httpPort = await freePort();
+const httpPort =
+	process.env.BENCHMARK_HTTP_PORT === undefined
+		? await freePort()
+		: Number(process.env.BENCHMARK_HTTP_PORT);
+if (!Number.isInteger(httpPort) || httpPort < 1 || httpPort > 65535) {
+	throw new Error("BENCHMARK_HTTP_PORT must be a valid TCP port");
+}
 await new Promise((resolve, reject) => {
 	server.once("error", reject);
 	server.listen(httpPort, "127.0.0.1", resolve);

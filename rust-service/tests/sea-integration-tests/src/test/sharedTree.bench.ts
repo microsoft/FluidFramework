@@ -28,7 +28,9 @@ interface BenchmarkCase {
 	readonly backend: "rust-local" | "rust" | "local" | "tinylicious";
 	/** Integration layer used by Rust service cases. */
 	readonly integration?: "fluid" | "direct";
-	/** Rust service persistence mode, when the case starts WebTransport. */
+	/** Explicit remote transport; omitted cases use WebTransport. */
+	readonly remoteTransport?: "websocket-stream";
+	/** Rust service persistence mode, when the case starts a remote service. */
 	readonly storageMode?: "memory" | "buffered-file" | "durable-file";
 }
 
@@ -70,6 +72,8 @@ interface RunningService {
 	readonly certificateHash?: string;
 	/** Dynamically allocated Tinylicious port. */
 	readonly port?: number;
+	/** Browser HTTP port allowlisted for a WebSocketStream case. */
+	readonly browserPort?: number;
 	/** Stops the process and removes temporary data. */
 	stop(): Promise<void>;
 }
@@ -150,6 +154,22 @@ const cases: readonly BenchmarkCase[] = [
 		integration: "fluid",
 	},
 	{
+		title: "Rust WebSocketStream memory",
+		slug: "rust-websocket-stream-memory",
+		backend: "rust",
+		storageMode: "memory",
+		integration: "fluid",
+		remoteTransport: "websocket-stream",
+	},
+	{
+		title: "Rust WebSocketStream memory direct",
+		slug: "rust-websocket-stream-memory-direct",
+		backend: "rust",
+		storageMode: "memory",
+		integration: "direct",
+		remoteTransport: "websocket-stream",
+	},
+	{
 		title: "Rust WebTransport buffered file direct",
 		slug: "rust-webtransport-buffered-file-direct",
 		backend: "rust",
@@ -206,6 +226,9 @@ async function runCase(
 			...process.env,
 			BENCHMARK_DDS: configuration.dataStructure,
 			BENCHMARK_INTEGRATION: benchmarkCase.integration,
+			BENCHMARK_REMOTE_TRANSPORT: benchmarkCase.remoteTransport,
+			BENCHMARK_HTTP_PORT:
+				service?.browserPort === undefined ? undefined : String(service.browserPort),
 			BENCHMARK_BROWSER_TIMEOUT_MS: String(configuration.browserTimeoutMilliseconds),
 			BENCHMARK_OPERATIONS_PER_TURN:
 				configuration.operationsPerTurn === undefined
@@ -306,9 +329,21 @@ function dataStructureEnvironmentVariable(): "dummy" | "shared-tree" {
 /** Incrementally builds native or Tinylicious prerequisites for a case. */
 function buildPrerequisites(benchmarkCase: BenchmarkCase): void {
 	if (benchmarkCase.backend === "rust") {
-		run("cargo", ["build", "--locked", "-p", "sea-webtransport-server", "--release"], {
-			cwd: rustServiceDirectory,
-		});
+		run(
+			"cargo",
+			[
+				"build",
+				"--locked",
+				"-p",
+				"sea-webtransport-server",
+				"--release",
+				"--features",
+				"websocket-stream",
+			],
+			{
+				cwd: rustServiceDirectory,
+			},
+		);
 		ensureCertificate();
 	}
 	if (benchmarkCase.backend === "tinylicious") {
@@ -337,7 +372,10 @@ async function startService(
 	benchmarkCase: BenchmarkCase,
 ): Promise<RunningService | undefined> {
 	if (benchmarkCase.backend === "rust") {
-		return startRustService(benchmarkCase.storageMode ?? "durable-file");
+		return startRustService(
+			benchmarkCase.storageMode ?? "durable-file",
+			benchmarkCase.remoteTransport,
+		);
 	}
 	if (benchmarkCase.backend === "tinylicious") {
 		return startTinylicious();
@@ -345,9 +383,13 @@ async function startService(
 	return undefined;
 }
 
-/** Starts an isolated Rust WebTransport service with temporary storage. */
-async function startRustService(storageMode: string): Promise<RunningService> {
+/** Starts an isolated Rust remote service with explicit storage and transport. */
+async function startRustService(
+	storageMode: string,
+	remoteTransport?: "websocket-stream",
+): Promise<RunningService> {
 	ensureCertificate();
+	const browserPort = remoteTransport === "websocket-stream" ? await freePort() : undefined;
 	const temporaryDirectory = await mkdtemp(path.join(tmpdir(), "fluid-rust-benchmark-"));
 	const certificateDirectory = path.join(webTransportTestDirectory, ".certs");
 	const child = spawn(
@@ -360,13 +402,24 @@ async function startRustService(storageMode: string): Promise<RunningService> {
 		],
 		{
 			cwd: repositoryDirectory,
-			env: { ...process.env, SEA_PROTOCOL: "sea", SEA_STORAGE_MODE: storageMode },
+			env: {
+				...process.env,
+				SEA_PROTOCOL: "sea",
+				SEA_STORAGE_MODE: storageMode,
+				SEA_WEBSOCKET_BIND: browserPort === undefined ? undefined : "127.0.0.1:0",
+				SEA_WEBSOCKET_ORIGINS:
+					browserPort === undefined ? undefined : `http://localhost:${browserPort}`,
+			},
 			stdio: ["ignore", "pipe", "pipe"],
 		},
 	);
 	let output: RegExpMatchArray;
 	try {
-		output = await waitForOutput(child, /^WEBTRANSPORT_URL=(.+)$/mu, 30_000);
+		output = await waitForOutput(
+			child,
+			browserPort === undefined ? /^WEBTRANSPORT_URL=(.+)$/mu : /^WEBSOCKET_URL=(.+)$/mu,
+			30_000,
+		);
 	} catch (error) {
 		await stopProcess(child);
 		await rm(temporaryDirectory, { recursive: true, force: true });
@@ -381,6 +434,7 @@ async function startRustService(storageMode: string): Promise<RunningService> {
 		process: child,
 		transportUrl: output[1] ?? fail("Rust service output omitted its transport URL"),
 		certificateHash,
+		...(browserPort === undefined ? {} : { browserPort }),
 		stop: async () => {
 			await stopProcess(child);
 			await rm(temporaryDirectory, { recursive: true, force: true });
@@ -399,6 +453,7 @@ async function startTinylicious(): Promise<RunningService> {
 		[path.join(tinyliciousDirectory, "dist/index.js"), "--port", String(port)],
 		{
 			cwd: temporaryDirectory,
+			env: { ...process.env, db__inMemory: "true" },
 			stdio: "ignore",
 		},
 	);

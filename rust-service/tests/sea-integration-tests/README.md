@@ -48,7 +48,7 @@ pnpm --dir rust-service/tests/sea-integration-tests test
 
 The package `build` script builds dependencies, generates the Rust WASM packages, checks formatting and lint, typechecks, and builds all browser bundles.
 The package `test` script depends on that complete build and runs the harness Mocha tests, package-owned driver and direct SharedTree regressions, neutral session tests and type assertions, and the real Chromium transport matrix.
-Ordinary `test:mocha:esm` discovery includes integration and payload tests, Chromium lifecycle regressions, and all ten benchmark cases as correctness tests.
+Ordinary `test:mocha:esm` discovery includes integration and payload tests, Chromium lifecycle regressions, and all twelve benchmark cases as correctness tests.
 Without performance mode, the benchmark defaults are one repetition, ten measured operations, and one warmup operation; convergence and resume assertions still run.
 These tests require Chromium, the Rust toolchain, and the separate Routerlicious workspace dependencies for Tinylicious.
 For an incremental correctness run, use `pnpm exec fluid-build rust-service/tests/sea-integration-tests --task test:mocha:esm` from the repository root.
@@ -142,6 +142,8 @@ Run `pnpm --dir rust-service/tests/sea-integration-tests run bench:run -- --help
 - `local`: TypeScript local service
 - `rust-memory`: Rust WebTransport memory
 - `rust-memory-direct`: Rust WebTransport memory without the Fluid container/runtime
+- `rust-websocket`: Rust WebSocketStream memory
+- `rust-websocket-direct`: Rust WebSocketStream memory without the Fluid container/runtime
 - `rust-buffered`: Rust WebTransport buffered file
 - `rust-buffered-direct`: Rust WebTransport buffered file without the Fluid container/runtime
 - `rust-durable`: Rust WebTransport durable file
@@ -149,6 +151,12 @@ Run `pnpm --dir rust-service/tests/sea-integration-tests run bench:run -- --help
 - `tinylicious`: Tinylicious
 
 `--case` accepts comma-separated aliases and may be repeated. For arbitrary selection, `--grep <pattern>` passes a regular expression to Mocha. The lower-level `bench` script remains available for standard Mocha flags and environment-only automation.
+
+WebSocketStream cases explicitly select the streaming browser API, without ordinary WebSocket fallback, over unencrypted loopback `ws://`.
+They use `SEA_STORAGE_MODE=memory` on the server and allowlist the browser page's allocated HTTP origin.
+WebTransport memory cases use the same storage mode but include QUIC/TLS.
+Tinylicious launches explicitly set `db__inMemory=true`, matching its default database configuration; Git summaries still use the filesystem.
+Detailed remote results record the transport, endpoint, storage mode, and loaded WASM capability.
 
 Configure the workload through environment variables:
 
@@ -165,6 +173,8 @@ Configure the workload through environment variables:
 | `BENCHMARK_ARTIFACT_DIR` | `benchmark-results` | Detailed JSON output directory, relative to this package unless absolute. |
 | `BENCHMARK_CPU_PROFILE_PATH` | unset | Chromium CPU profile base path. |
 | `BENCHMARK_SKIP_BUILD` | unset | Skip selected-case native or Tinylicious incremental builds. |
+| `BENCHMARK_REMOTE_TRANSPORT` | `webtransport` | Lower-level remote runner selection: `webtransport` or `websocket-stream`; case aliases set this automatically. |
+| `BENCHMARK_HTTP_PORT` | dynamically allocated | Browser page server port; WebSocketStream cases allocate and allowlist it automatically. |
 
 `turns` is the default throughput workload: it flushes one edit per Fluid batch without waiting for observer convergence after each edit, then waits for final convergence. `batched` has the same synchronization behavior but is intended for an explicit `BENCHMARK_OPERATIONS_PER_TURN` or `--operations-per-turn` value above one. `messages` waits for both containers to observe every edit before continuing, providing an unambiguous one-operation-per-convergence latency workload.
 

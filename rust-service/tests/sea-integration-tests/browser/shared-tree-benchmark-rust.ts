@@ -18,6 +18,7 @@ import {
 
 import { createMemoryService } from "@fluidframework/sea-typescript/internal/memory";
 import { openWebTransport } from "@fluidframework/sea-typescript/internal/webtransport";
+import { openRemote } from "@fluidframework/sea-typescript/internal/websocket";
 import { DirectDummyClient } from "../src/directDummy.js";
 import { DirectSharedTreeClient } from "@fluidframework/sea-tree/internal";
 import {
@@ -62,6 +63,8 @@ const dataStructure = parseBenchmarkDataStructure(parameters.get("dds"));
 const subscriptionBatchMaxOperations = numberParameter("subscriptionBatchOperations", 64);
 /** SharedTree integration path selected for this sample. */
 const integration = parameters.get("integration") ?? "fluid";
+/** Explicit remote transport; WebSocketStream never falls back to ordinary WebSocket. */
+const remoteTransport = parameters.get("remoteTransport") ?? "webtransport";
 /** Fluid code identity shared by both Rust-service benchmark containers. */
 const codeDetails = { package: "shared-tree-rust-service-benchmark", config: {} };
 
@@ -110,8 +113,11 @@ async function waitForConnected(container: {
 	});
 }
 
-/** Creates a two-client Rust local or WebTransport benchmark backend. */
+/** Creates a two-client Rust local or remote benchmark backend. */
 async function createPair(): Promise<SharedTreeBenchmarkPair> {
+	if (remoteTransport !== "webtransport" && remoteTransport !== "websocket-stream") {
+		throw new Error("unsupported benchmark remote transport");
+	}
 	const local = parameters.get("local") === "true";
 	const transportUrl = parameters.get("transport");
 	const certificateHex = parameters.get("hash");
@@ -132,6 +138,13 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		localService?.open ??
 		((document, options) => {
 			if (transportUrl === null) throw new Error("missing Rust-service transport URL");
+			if (remoteTransport === "websocket-stream") {
+				return openRemote(
+					{ mode: "WebSocketStream", websocketUrl: transportUrl },
+					document,
+					options,
+				);
+			}
 			return openWebTransport({ url: transportUrl, certificateHash: hash }, document, options);
 		});
 	const createWasmClient = async (): Promise<SeaDriverClient> => {
@@ -294,7 +307,7 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 		dataStructure,
 		backend: local
 			? "rust-service-local-memory-force-write"
-			: `rust-service-webtransport-${parameters.get("storage") ?? "unknown"}-force-write`,
+			: `rust-service-${remoteTransport}-${parameters.get("storage") ?? "unknown"}-force-write`,
 		clientCount: 2,
 		applyEdit: (clientIndex, value) => (clientIndex === 0 ? firstData : secondData).set(value),
 		appliedEditCounts: () => [firstData.appliedOpCount, secondData.appliedOpCount],
@@ -409,7 +422,7 @@ async function createDirectSharedTreePair(
 		dataStructure: "shared-tree",
 		backend: local
 			? "rust-service-local-memory-direct-shared-tree"
-			: `rust-service-webtransport-${parameters.get("storage") ?? "unknown"}-direct-shared-tree`,
+			: `rust-service-${remoteTransport}-${parameters.get("storage") ?? "unknown"}-direct-shared-tree`,
 		clientCount: 2,
 		applyEdit: (clientIndex, value) =>
 			(clientIndex === 0 ? writerData : observerData).set(value),
@@ -486,7 +499,7 @@ async function createDirectDummyPair(
 		dataStructure: "dummy",
 		backend: local
 			? "rust-service-local-memory-direct-dummy"
-			: `rust-service-webtransport-${parameters.get("storage") ?? "unknown"}-direct-dummy`,
+			: `rust-service-${remoteTransport}-${parameters.get("storage") ?? "unknown"}-direct-dummy`,
 		clientCount: 2,
 		applyEdit: (clientIndex, value) => (clientIndex === 0 ? writer : observer).set(value),
 		appliedEditCounts: () => [writer.appliedOpCount, observer.appliedOpCount],

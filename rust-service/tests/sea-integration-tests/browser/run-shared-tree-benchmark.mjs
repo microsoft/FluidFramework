@@ -42,6 +42,10 @@ const subscriptionBatchOperations =
 				"subscriptionBatchOperations",
 			);
 const integration = process.env.BENCHMARK_INTEGRATION ?? "fluid";
+const remoteTransport = process.env.BENCHMARK_REMOTE_TRANSPORT ?? "webtransport";
+if (remoteTransport !== "webtransport" && remoteTransport !== "websocket-stream") {
+	throw new Error("BENCHMARK_REMOTE_TRANSPORT must be webtransport or websocket-stream");
+}
 if (integration !== "fluid" && integration !== "direct") {
 	throw new Error("BENCHMARK_INTEGRATION must be fluid or direct");
 }
@@ -100,6 +104,7 @@ for (let repetition = 0; repetition < repetitions; repetition++) {
 				warmup: String(warmup),
 				subscriptionBatchOperations: String(subscriptionBatchOperations),
 				integration,
+				remoteTransport,
 				...(operationsPerTurn === undefined
 					? {}
 					: { operationsPerTurn: String(operationsPerTurn) }),
@@ -135,7 +140,12 @@ for (let repetition = 0; repetition < repetitions; repetition++) {
 		throw new Error(`benchmark repetition ${repetition + 1} failed: ${evidence}`);
 	}
 	if (backend === "rust" || backend === "rust-local") {
-		const configuration = backend === "rust-local" ? "memory" : "webtransport";
+		const configuration =
+			backend === "rust-local"
+				? "memory"
+				: remoteTransport === "websocket-stream"
+					? "websocket"
+					: "webtransport";
 		const expected = ["sea_wasm.js", "sea_wasm_bg.wasm"].map(
 			(file) => `/packages/sea-typescript/generated/${configuration}/web/${file}`,
 		);
@@ -171,6 +181,14 @@ const output = {
 		synchronizePerTurn,
 		subscriptionBatchOperations,
 		integration,
+		remoteTransport: backend === "rust" ? remoteTransport : null,
+		storageMode:
+			backend === "rust"
+				? (process.env.SEA_STORAGE_MODE ?? "durable-file")
+				: backend === "rust-local" || backend === "tinylicious"
+					? "memory"
+					: "sessionStorage",
+		transportUrl: backend === "rust" ? transport : null,
 		clients: samples[0].clientCount,
 	},
 	environment: {

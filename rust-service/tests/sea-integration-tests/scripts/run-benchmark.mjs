@@ -16,6 +16,8 @@ const caseTitles = new Map([
 	["local", "TypeScript local service"],
 	["rust-memory", "Rust WebTransport memory"],
 	["rust-memory-direct", "Rust WebTransport memory direct"],
+	["rust-websocket", "Rust WebSocketStream memory"],
+	["rust-websocket-direct", "Rust WebSocketStream memory direct"],
 	["rust-buffered", "Rust WebTransport buffered file"],
 	["rust-buffered-direct", "Rust WebTransport buffered file direct"],
 	["rust-durable", "Rust WebTransport durable file"],
