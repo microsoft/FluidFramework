@@ -908,7 +908,7 @@ export class Container
 						);
 					}
 				},
-				hasPendingOps: () => this._deltaManager.connectionManager.hasPendingOps(),
+				shouldClientJoinWrite: () => this._deltaManager.connectionManager.hasPendingOps(),
 				maxClientLeaveWaitTime: options.maxClientLeaveWaitTime,
 				logConnectionIssue: (
 					eventName: string,
@@ -2549,7 +2549,7 @@ export class Container
 		}
 		this._hasPendingOps = pending;
 		if (!pending) {
-			this.connectionStateHandler.pendingOpsSaved();
+			this.connectionStateHandler.containerSaved();
 			if (!this._hasPendingOps) {
 				this.pendingOpStateEvents.emit("saved");
 			}

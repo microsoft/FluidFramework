@@ -44,9 +44,10 @@ export interface IConnectionStateHandlerInputs {
 		reason?: IConnectionStateChangeReason,
 	) => void;
 	/**
-	 * Whether local operations may still be sequenced under the current or previous client ID.
+	 * Whether pending local operations require a write connection.
+	 * Non-operation work may also require write mode, but is not included here.
 	 */
-	hasPendingOps: () => boolean;
+	shouldClientJoinWrite: () => boolean;
 	/**
 	 * (Optional) How long should we wait on our previous client's Leave op before transitioning to Connected again
 	 */
@@ -89,7 +90,7 @@ export interface IConnectionStateHandler {
 	 */
 	readonly clientId: string | undefined;
 
-	pendingOpsSaved(): void;
+	containerSaved(): void;
 	dispose(): void;
 	initProtocol(protocol: IProtocolHandler): void;
 	receivedConnectEvent(details: IConnectionDetailsInternal): void;
@@ -172,8 +173,8 @@ class ConnectionStateHandlerPassThrough
 		return this.pimpl.clientId;
 	}
 
-	public pendingOpsSaved(): void {
-		return this.pimpl.pendingOpsSaved();
+	public containerSaved(): void {
+		return this.pimpl.containerSaved();
 	}
 	public dispose(): void {
 		return this.pimpl.dispose();
@@ -214,8 +215,8 @@ class ConnectionStateHandlerPassThrough
 	): void {
 		return this.inputs.connectionStateChanged(value, oldState, reason);
 	}
-	public hasPendingOps(): boolean {
-		return this.inputs.hasPendingOps();
+	public shouldClientJoinWrite(): boolean {
+		return this.inputs.shouldClientJoinWrite();
 	}
 	public get maxClientLeaveWaitTime(): number | undefined {
 		return this.inputs.maxClientLeaveWaitTime;
@@ -464,13 +465,13 @@ export class ConnectionStateHandler implements IConnectionStateHandler {
 		this.prevClientLeftTimer.clear();
 	}
 
-	public pendingOpsSaved(): void {
+	public containerSaved(): void {
 		// If we were waiting for moving to Connected state, then only apply for state change. Since the container
 		// has no pending ops to roundtrip, we can clear the timer and apply for connected state.
 		// Host-facing dirty state may remain true because of non-op work.
 		if (this.waitingForLeaveOp) {
 			this.prevClientLeftTimer.clear();
-			this.applyForConnectedState("pendingOpsSaved");
+			this.applyForConnectedState("containerSaved");
 		}
 	}
 
@@ -496,7 +497,7 @@ export class ConnectionStateHandler implements IConnectionStateHandler {
 					eventName: "WaitBeforeClientLeave",
 					details: JSON.stringify({
 						waitOnClientId: this._clientId,
-						hadOutstandingOps: this.handler.hasPendingOps(),
+						hadOutstandingOps: this.handler.shouldClientJoinWrite(),
 					}),
 				});
 			}
@@ -505,7 +506,7 @@ export class ConnectionStateHandler implements IConnectionStateHandler {
 	}
 
 	private applyForConnectedState(
-		source: "removeMemberEvent" | "addMemberEvent" | "timeout" | "pendingOpsSaved",
+		source: "removeMemberEvent" | "addMemberEvent" | "timeout" | "containerSaved",
 	): void {
 		assert(
 			this.protocol !== undefined,
@@ -610,8 +611,8 @@ export class ConnectionStateHandler implements IConnectionStateHandler {
 		// If user lost such access mid-session, user will not be able to get "write" connection.
 		//
 		// const writeConnection = details.mode === "write";
-		// assert(!this.handler.hasPendingOps() || writeConnection,
-		//    0x30a /* pending ops should imply this is a writeConnection */);
+		// assert(!this.handler.shouldClientJoinWrite() || writeConnection,
+		//    0x30a /* shouldClientJoinWrite should imply this is a writeConnection */);
 		// assert(!this.waitingForLeaveOp || writeConnection,
 		//    0x2a6 /* "waitingForLeaveOp should imply writeConnection (we need to be ready to flush pending ops)" */);
 
@@ -690,7 +691,7 @@ export class ConnectionStateHandler implements IConnectionStateHandler {
 			// don't want to reset the timer as we still want to wait on original client which started this timer.
 			if (
 				currentClientInQuorum &&
-				this.handler.hasPendingOps() &&
+				this.handler.shouldClientJoinWrite() &&
 				!this.waitingForLeaveOp // same as !this.prevClientLeftTimer.hasTimer
 			) {
 				this.prevClientLeftTimer.restart();
@@ -703,7 +704,7 @@ export class ConnectionStateHandler implements IConnectionStateHandler {
 							clientId: this._clientId,
 							inQuorum: currentClientInQuorum,
 							waitingForLeaveOp: this.waitingForLeaveOp,
-							hadOutstandingOps: this.handler.hasPendingOps(),
+							hadOutstandingOps: this.handler.shouldClientJoinWrite(),
 						}),
 					},
 					undefined, // error
@@ -774,7 +775,7 @@ export class ConnectionStateHandler implements IConnectionStateHandler {
 		// old clientId is still in the quorum (very unlikely, but you never know)
 		// if we have a clientId from a previous container we need to wait for its leave message
 		// This mimicks check in setConnectionState()
-		// Note that we are not consulting this.handler.hasPendingOps() here.
+		// Note that we are not consulting this.handler.shouldClientJoinWrite() here
 		// It could produce wrong results for stashed ops were never sent to Loader yet, and if this check
 		// makes determination only on that (and not uses "dirty" events), then it can produce wrong result.
 		// In most cases it does not matter, as this client already left quorum. But in really unfortunate case,

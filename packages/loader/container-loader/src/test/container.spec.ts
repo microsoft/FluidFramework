@@ -232,7 +232,7 @@ describe("Container", () => {
 
 		it("mirrors older runtime dirty reports without duplicate notifications", () => {
 			const connectionManager = container["_deltaManager"].connectionManager;
-			stub(container["connectionStateHandler"], "pendingOpsSaved").callsFake(() => {
+			stub(container["connectionStateHandler"], "containerSaved").callsFake(() => {
 				assert.strictEqual(container.isDirty, true);
 				notifications.push("reconnect");
 			});
@@ -262,7 +262,7 @@ describe("Container", () => {
 		});
 
 		it("notifies internal consumers when ops are saved while the host stays dirty", () => {
-			const reconnect = stub(container["connectionStateHandler"], "pendingOpsSaved");
+			const reconnect = stub(container["connectionStateHandler"], "containerSaved");
 			container["updatePendingOpState"](true);
 			assert.strictEqual(
 				container.isDirty,
@@ -311,7 +311,7 @@ describe("Container", () => {
 					: container["updateDirtyContainerState"];
 				reportPending(true);
 				container["updateDirtyContainerState"](true);
-				stub(container["connectionStateHandler"], "pendingOpsSaved").callsFake(() => {
+				stub(container["connectionStateHandler"], "containerSaved").callsFake(() => {
 					reportPending(true);
 					container["updateDirtyContainerState"](true);
 				});
