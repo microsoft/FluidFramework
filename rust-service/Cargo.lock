@@ -1323,21 +1323,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sea-file-durable"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "bytes",
- "crc32fast",
- "futures-util",
- "sea-conformance",
- "sea-core",
- "sea-file",
- "thiserror",
- "tokio",
-]
-
-[[package]]
 name = "sea-integration-tests"
 version = "0.1.0"
 dependencies = [
@@ -1446,7 +1431,6 @@ dependencies = [
  "sea-conformance",
  "sea-core",
  "sea-file",
- "sea-file-durable",
  "sea-memory",
  "sea-sequencer",
  "sea-signals",

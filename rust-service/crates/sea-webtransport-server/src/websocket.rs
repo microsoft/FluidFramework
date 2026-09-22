@@ -205,8 +205,15 @@ impl WebSocketServer {
         if let Some(error) = listener_error {
             return Err(transport_error(error));
         }
+        let flushed = match timeout_at(deadline, self.state.host.flush()).await {
+            Ok(result) => {
+                result?;
+                true
+            }
+            Err(_) => false,
+        };
         Ok(ShutdownOutcome {
-            disposition: if cancelled_connections == 0 {
+            disposition: if cancelled_connections == 0 && flushed {
                 ShutdownDisposition::Drained
             } else {
                 ShutdownDisposition::Cancelled

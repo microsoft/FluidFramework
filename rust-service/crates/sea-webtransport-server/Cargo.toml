@@ -17,7 +17,6 @@ futures-util.workspace = true
 rand_core = { version = "0.6.4", features = ["getrandom"] }
 sea-core = { path = "../sea-core" }
 sea-file = { path = "../sea-file" }
-sea-file-durable = { path = "../sea-file-durable" }
 sea-memory = { path = "../sea-memory" }
 sea-sequencer = { path = "../sea-sequencer" }
 sea-signals = { path = "../sea-signals" }

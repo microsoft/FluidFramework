@@ -9,7 +9,6 @@ members = [
     "crates/sea-sequencer",
     "crates/sea-signals",
     "crates/sea-memory",
-    "crates/sea-file-durable",
     "crates/sea-compression",
     "crates/sea-encryption",
     "crates/sea-wasm",

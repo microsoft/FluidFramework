@@ -8,8 +8,8 @@ use futures_util::{StreamExt as _, stream};
 use rand_core::{OsRng, RngCore as _};
 use sea_core::storage::{DocumentId, SeaStorage};
 use sea_core::{ClassifiedError, ErrorKind, EventPosition, archive::SessionId};
-use sea_file::storage::FileStorage;
-use sea_file_durable::storage::DurableStorage;
+use sea_file::buffered::FileStorage;
+use sea_file::durable::DurableStorage;
 use sea_memory::MemoryStorage;
 use sea_webtransport::protocol;
 use tokio::{sync::Mutex, time::sleep};
@@ -94,15 +94,30 @@ async fn storage_worker<Output: Send + 'static>(
         })?
 }
 
-/// Runtime-selected factory and its exclusively owned document views.
-enum Backend {
-    /// Ephemeral process-local document namespace.
-    Memory(DocumentRegistry<MemoryStorage>),
-    /// Buffered journal namespace.
-    Buffered(DocumentRegistry<FileStorage>),
-    /// Crash-durable journal namespace.
-    Durable(DocumentRegistry<DurableStorage>),
+/// Backend-independent document/session operations needed by the transport host.
+#[async_trait]
+trait HostedDocuments: Send + Sync {
+    /// Opens a logical membership through the document registry.
+    async fn open_session(
+        &self,
+        document: Vec<u8>,
+        intent: protocol::ArchiveIntent,
+        reference: Option<EventPosition>,
+    ) -> Result<(DocumentId, SessionId, Arc<dyn SeaConnectionService>), protocol::Response>;
+
+    /// Establishes document existence before admitting a signal connection.
+    async fn ensure_document(&self, id: &DocumentId) -> Result<(), protocol::Response>;
+
+    /// Completes accepted persistence without stopping sharing listeners.
+    async fn flush(&self) -> Result<(), crate::WebTransportError>;
+
+    /// Settles session cleanup and stops storage admission.
+    async fn shutdown(&self) -> Result<(), crate::WebTransportError>;
 }
+
+/// Retryable lazy construction, executed off the async executor.
+type InitializeDocuments =
+    dyn Fn() -> Result<Arc<dyn HostedDocuments>, protocol::Response> + Send + Sync;
 
 /// Runtime-selected built-in archive backend.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -139,19 +154,42 @@ impl StorageMode {
     }
 }
 
-impl Backend {
-    /// Opens a logical membership through the selected document registry.
+#[async_trait]
+impl<Storage: SeaStorage + 'static> HostedDocuments for DocumentRegistry<Storage> {
     async fn open_session(
         &self,
         document: Vec<u8>,
         intent: protocol::ArchiveIntent,
         reference: Option<EventPosition>,
     ) -> Result<(DocumentId, SessionId, Arc<dyn SeaConnectionService>), protocol::Response> {
-        match self {
-            Self::Memory(registry) => open(registry, document, intent, reference).await,
-            Self::Buffered(registry) => open(registry, document, intent, reference).await,
-            Self::Durable(registry) => open(registry, document, intent, reference).await,
+        open(self, document, intent, reference).await
+    }
+
+    async fn ensure_document(&self, id: &DocumentId) -> Result<(), protocol::Response> {
+        self.open(id).await.map(|_| ())
+    }
+
+    async fn flush(&self) -> Result<(), crate::WebTransportError> {
+        self.storage
+            .flush()
+            .await
+            .map_err(|error| crate::WebTransportError::StorageShutdown(error.to_string()))
+    }
+
+    async fn shutdown(&self) -> Result<(), crate::WebTransportError> {
+        let documents = self.documents.lock().await;
+        let mut failure = None;
+        for runtime in documents.values() {
+            if let Err(error) = runtime.shutdown().await {
+                failure = Some(error.to_string());
+            }
         }
+        if let Err(error) = self.storage.shutdown().await {
+            failure = Some(error.to_string());
+        }
+        failure.map_or(Ok(()), |error| {
+            Err(crate::WebTransportError::StorageShutdown(error))
+        })
     }
 }
 
@@ -191,14 +229,14 @@ where
 
 /// Shared lazy backend initialization and retained document ownership.
 struct HostInner {
+    /// Rejects new document/session admission after host-wide shutdown starts.
+    closed: std::sync::atomic::AtomicBool,
     /// Ephemeral rooms independent of retained document runtimes.
     signals: Mutex<BTreeMap<Vec<u8>, std::sync::Weak<sea_signals::SignalRoom>>>,
-    /// Storage namespace for file modes.
-    root: PathBuf,
-    /// Configured storage guarantees.
-    mode: StorageMode,
+    /// Construction policy supplied independently of transport operations.
+    initialize: Arc<InitializeDocuments>,
     /// Successful factory initialization; errors leave this empty for retry.
-    backend: Arc<Mutex<Option<Arc<Backend>>>>,
+    backend: Arc<Mutex<Option<Arc<dyn HostedDocuments>>>>,
 }
 
 /// Final Sea protocol host using the server's runtime-selected backend.
@@ -208,14 +246,57 @@ pub struct BuiltInSeaHost {
 }
 
 impl BuiltInSeaHost {
+    /// Stops host admission and drains storage after all sharing listeners have stopped.
+    ///
+    /// # Errors
+    /// Returns an error if accepted mutations cannot reach their persistence boundary.
+    pub async fn shutdown(&self) -> Result<(), crate::WebTransportError> {
+        self.inner
+            .closed
+            .store(true, std::sync::atomic::Ordering::Release);
+        let backend = self.inner.backend.lock().await;
+        if let Some(backend) = backend.as_ref() {
+            backend.shutdown().await?;
+        }
+        Ok(())
+    }
     /// Creates an empty archive registry rooted at `root`.
     #[must_use]
     pub fn new(root: PathBuf, mode: StorageMode) -> Self {
+        Self::with_initializer(move || {
+            let root = root.join("documents");
+            Ok(match mode {
+                StorageMode::Memory => Arc::new(DocumentRegistry::new(MemoryStorage::new())),
+                StorageMode::BufferedFile => Arc::new(DocumentRegistry::new(
+                    FileStorage::open(root).map_err(error_response)?,
+                )),
+                StorageMode::DurableFile => Arc::new(DocumentRegistry::new(
+                    DurableStorage::open(root).map_err(error_response)?,
+                )),
+            })
+        })
+    }
+
+    /// Hosts any storage implementation without backend-specific transport dispatch.
+    /// The caller owns any synchronous factory construction required by the backend.
+    #[must_use]
+    pub fn with_storage<Storage: SeaStorage + 'static>(storage: Storage) -> Self {
+        let documents: Arc<dyn HostedDocuments> = Arc::new(DocumentRegistry::new(storage));
+        Self::with_initializer(move || Ok(documents.clone()))
+    }
+
+    /// Retains a retryable construction policy without initializing storage eagerly.
+    fn with_initializer(
+        initialize: impl Fn() -> Result<Arc<dyn HostedDocuments>, protocol::Response>
+        + Send
+        + Sync
+        + 'static,
+    ) -> Self {
         Self {
             inner: Arc::new(HostInner {
+                closed: std::sync::atomic::AtomicBool::new(false),
                 signals: Mutex::new(BTreeMap::new()),
-                root,
-                mode,
+                initialize: Arc::new(initialize),
                 backend: Arc::new(Mutex::new(None)),
             }),
         }
@@ -228,40 +309,36 @@ impl BuiltInSeaHost {
         intent: protocol::ArchiveIntent,
         reference: Option<EventPosition>,
     ) -> Result<(DocumentId, SessionId, Arc<dyn SeaConnectionService>), protocol::Response> {
+        if self.inner.closed.load(std::sync::atomic::Ordering::Acquire) {
+            return Err(rejected("host is shut down"));
+        }
         let backend = self.backend().await?;
         backend.open_session(archive_id, intent, reference).await
     }
 
     /// Initializes storage without opening author membership.
-    async fn backend(&self) -> Result<Arc<Backend>, protocol::Response> {
-        let root = self.inner.root.join("documents");
-        let mode = self.inner.mode;
-        self.initialize_backend(move || {
-            Ok(match mode {
-                StorageMode::Memory => Backend::Memory(DocumentRegistry::new(MemoryStorage::new())),
-                StorageMode::BufferedFile => Backend::Buffered(DocumentRegistry::new(
-                    FileStorage::open(root).map_err(error_response)?,
-                )),
-                StorageMode::DurableFile => Backend::Durable(DocumentRegistry::new(
-                    DurableStorage::open(root).map_err(error_response)?,
-                )),
-            })
-        })
-        .await
+    async fn backend(&self) -> Result<Arc<dyn HostedDocuments>, protocol::Response> {
+        let initialize = self.inner.initialize.clone();
+        self.initialize_backend(move || initialize()).await
     }
 
     /// Keeps synchronous initialization off the executor and retains serialization after cancellation.
     /// A completed worker caches success even if its caller has gone away; failures remain retryable.
     async fn initialize_backend(
         &self,
-        initialize: impl FnOnce() -> Result<Backend, protocol::Response> + Send + 'static,
-    ) -> Result<Arc<Backend>, protocol::Response> {
+        initialize: impl FnOnce() -> Result<Arc<dyn HostedDocuments>, protocol::Response>
+        + Send
+        + 'static,
+    ) -> Result<Arc<dyn HostedDocuments>, protocol::Response> {
         let mut current = self.inner.backend.clone().lock_owned().await;
+        if self.inner.closed.load(std::sync::atomic::Ordering::Acquire) {
+            return Err(rejected("host is shut down"));
+        }
         if let Some(backend) = current.as_ref() {
             return Ok(backend.clone());
         }
         tokio::task::spawn_blocking(move || {
-            let backend = Arc::new(initialize()?);
+            let backend = initialize()?;
             *current = Some(backend.clone());
             Ok(backend)
         })
@@ -273,7 +350,15 @@ impl BuiltInSeaHost {
     }
 }
 
+#[async_trait]
 impl SeaServiceHost for BuiltInSeaHost {
+    async fn flush(&self) -> Result<(), crate::WebTransportError> {
+        let backend = self.inner.backend.lock().await;
+        let Some(backend) = backend.as_ref() else {
+            return Ok(());
+        };
+        backend.flush().await
+    }
     fn connect(&self, liveness: LivenessPolicy) -> Arc<dyn SeaConnectionService> {
         Arc::new(HostedConnection {
             signals: Mutex::new(None),
@@ -321,17 +406,7 @@ impl SeaConnectionService for HostedConnection {
         }
         let id = DocumentId::from_bytes(Bytes::copy_from_slice(&opening.document));
         let backend = self.host.backend().await?;
-        match backend.as_ref() {
-            Backend::Memory(registry) => {
-                registry.open(&id).await?;
-            }
-            Backend::Buffered(registry) => {
-                registry.open(&id).await?;
-            }
-            Backend::Durable(registry) => {
-                registry.open(&id).await?;
-            }
-        }
+        backend.ensure_document(&id).await?;
         let mut rooms = self.host.inner.signals.lock().await;
         rooms.retain(|_, room| room.strong_count() > 0);
         let room = if let Some(room) = rooms
@@ -593,11 +668,10 @@ mod tests {
     #[tokio::test]
     async fn file_registry_recovers_checkpointed_offsets_and_departures() {
         use sea_core::{MonitoredStreamItem, archive::SessionEventKind, storage::SeaStorage};
-        use sea_file::storage::FileStorage;
 
         let root =
             std::env::temp_dir().join(format!("sea-registry-checkpoint-{}", std::process::id()));
-        let storage = FileStorage::<true>::open(&root).unwrap();
+        let storage = sea_file::durable::DurableStorage::open(&root).unwrap();
         let registry = DocumentRegistry::new(storage.clone());
         let id = registry.create().await.unwrap();
         let runtime = registry.open(&id).await.unwrap();
@@ -673,7 +747,7 @@ mod tests {
                     released
                         .recv_timeout(Duration::from_secs(5))
                         .expect("executor must release initialization");
-                    Ok(super::Backend::Memory(DocumentRegistry::new(
+                    Ok(Arc::new(DocumentRegistry::new(
                         sea_memory::MemoryStorage::new(),
                     )))
                 })
@@ -861,6 +935,8 @@ mod tests {
         inner: sea_memory::MemoryStorage,
         /// One bounded blocking pause before creation or recovery.
         pause: std::sync::Mutex<Option<Box<dyn FnOnce() + Send>>>,
+        /// Lifecycle calls observed through the backend-independent host interface.
+        lifecycle: Arc<std::sync::Mutex<Vec<&'static str>>>,
     }
 
     impl PausedStorage {
@@ -881,6 +957,16 @@ mod tests {
 
         fn durability(&self) -> sea_core::Durability {
             self.inner.durability()
+        }
+
+        async fn flush(&self) -> Result<(), Self::Error> {
+            self.lifecycle.lock().unwrap().push("flush");
+            Ok(())
+        }
+
+        async fn shutdown(&self) -> Result<(), Self::Error> {
+            self.lifecycle.lock().unwrap().push("shutdown");
+            Ok(())
         }
 
         async fn create_document(
@@ -907,6 +993,39 @@ mod tests {
         }
     }
 
+    #[tokio::test]
+    async fn custom_storage_uses_generic_document_and_lifecycle_dispatch() {
+        let lifecycle = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let host = BuiltInSeaHost::with_storage(PausedStorage {
+            inner: sea_memory::MemoryStorage::new(),
+            pause: std::sync::Mutex::new(None),
+            lifecycle: lifecycle.clone(),
+        });
+        let (document, _, session) = host
+            .open_session(Vec::new(), protocol::ArchiveIntent::Create, None)
+            .await
+            .unwrap();
+        host.backend()
+            .await
+            .unwrap()
+            .ensure_document(&document)
+            .await
+            .unwrap();
+        session.connection_closed(false).await;
+        host.flush().await.unwrap();
+        host.shutdown().await.unwrap();
+        assert_eq!(*lifecycle.lock().unwrap(), vec!["flush", "shutdown"]);
+        assert!(
+            host.open_session(
+                document.as_bytes().to_vec(),
+                protocol::ArchiveIntent::Open,
+                None
+            )
+            .await
+            .is_err()
+        );
+    }
+
     #[tokio::test(flavor = "current_thread")]
     async fn slow_document_initialization_preserves_executor_progress_and_cancellation_ownership() {
         use sea_core::storage::SeaStorage as _;
@@ -919,6 +1038,7 @@ mod tests {
             let (release, released) = std::sync::mpsc::channel();
             let registry = Arc::new(DocumentRegistry::new(PausedStorage {
                 inner: storage,
+                lifecycle: Arc::default(),
                 pause: std::sync::Mutex::new(Some(Box::new(move || {
                     entered.send(()).unwrap();
                     released

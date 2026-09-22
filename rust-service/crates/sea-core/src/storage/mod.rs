@@ -142,6 +142,23 @@ pub trait SeaStorage: Send + Sync {
     /// Persistence class of documents created by this backend.
     fn durability(&self) -> Durability;
 
+    /// Waits for mutations accepted before this call to reach the backend's persistence boundary.
+    ///
+    /// Buffered persistence means completed operating-system writes, not synchronization.
+    /// Call this before dropping the last opening when an orderly reopen must retain its history.
+    /// Cancellation does not stop accepted writes or establish completion.
+    async fn flush(&self) -> Result<(), Self::Error> {
+        Ok(())
+    }
+
+    /// Completes backend-specific orderly shutdown and reports unwritten accepted work.
+    ///
+    /// Persistent backends stop admission before draining their accepted mutations.
+    /// The default suits backends without asynchronous persistence or owned workers.
+    async fn shutdown(&self) -> Result<(), Self::Error> {
+        self.flush().await
+    }
+
     /// Allocates a fresh document identity and creates its exclusive writable components.
     ///
     /// Identity allocation is owned by the backend so it may satisfy persistence layout,

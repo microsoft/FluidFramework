@@ -106,6 +106,9 @@ cargo test -p sea-webtransport-server --features websocket-stream websocket
 ## Document Ownership
 
 The host uses `SeaStorage` factories and `LocalSequencer`.
+`BuiltInSeaHost::with_storage(storage)` accepts any `SeaStorage` implementation.
+The generic document registry provides session opening, document existence checks, flush, and shutdown through one backend-independent interface.
+Only the built-in constructor selects memory, buffered-file, or durable-file storage; transport operations do not dispatch on backend kinds.
 Creation allocates an opaque backend document ID and returns it with session authority; callers retain that ID for reopening.
 No caller-name mapping is maintained.
 File modes keep their namespace below `root/documents`.

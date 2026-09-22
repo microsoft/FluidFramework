@@ -275,6 +275,9 @@ pub enum WebTransportError {
     /// The server cannot accept another shutdown request.
     #[error("server is no longer available for shutdown")]
     ShutdownUnavailable,
+    /// Accepted storage work could not complete during orderly shutdown.
+    #[error("storage shutdown failed: {0}")]
+    StorageShutdown(String),
 }
 
 /// Response stream returned by a connection-scoped Sea service.
@@ -337,9 +340,15 @@ pub trait SeaConnectionService: Send + Sync {
 }
 
 /// Creates isolated Sea protocol state for each WebTransport connection.
+#[async_trait]
 pub trait SeaServiceHost: Send + Sync {
     /// Creates one connection-scoped dispatcher.
     fn connect(&self, liveness: LivenessPolicy) -> Arc<dyn SeaConnectionService>;
+
+    /// Writes the accepted storage prefix without stopping a host shared by other listeners.
+    async fn flush(&self) -> Result<(), WebTransportError> {
+        Ok(())
+    }
 }
 
 /// Native WebTransport endpoint serving final Sea sessions at `/sea`.
@@ -437,6 +446,10 @@ impl WebTransportServer {
     /// # Errors
     ///
     /// Returns the first terminal established-connection error; failed admissions are local.
+    #[expect(
+        clippy::too_many_lines,
+        reason = "Keep connection drain and persistence deadline handling together"
+    )]
     pub async fn serve_until_shutdown(mut self) -> Result<ShutdownOutcome, WebTransportError> {
         let mut connections = FuturesUnordered::new();
         let mut active_services = BTreeMap::new();
@@ -530,8 +543,15 @@ impl WebTransportServer {
         }
         self.endpoint.close(CLOSE_CODE, b"server shutdown complete");
         self.endpoint.wait_idle().await;
+        let disposition = match timeout_at(deadline, self.service.flush()).await {
+            Ok(result) => {
+                result?;
+                ShutdownDisposition::Drained
+            }
+            Err(_) => ShutdownDisposition::Cancelled,
+        };
         Ok(ShutdownOutcome {
-            disposition: ShutdownDisposition::Drained,
+            disposition,
             owned_connections,
             cancelled_connections: 0,
             elapsed: started.elapsed(),

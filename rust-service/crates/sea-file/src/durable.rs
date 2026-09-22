@@ -1,18 +1,107 @@
-//! Durable specialization of the filesystem document engine.
-//!
-//! [`crate::storage::DurableStorage`] uses [`sea_file::storage::FileStorage`] in durable mode, which
-//! synchronizes each journal record and document-namespace publication before acknowledgment. The
-//! shared engine still owns framing, dependency validation, exclusive locking, handle provenance,
-//! and read behavior; this module adds focused evidence for durable tail recovery and cross-factory
-//! ownership.
-//!
-//! This path does not read or adapt the transitional file-storage format.
+//! Ordered, bounded execution for synchronized file storage.
 
-pub use sea_file::storage::{FileBlobs, FileEvents, FileHandle, FileSnapshots, FileStorageError};
+use std::sync::Arc;
+use tokio::sync::{Mutex, Notify, OwnedSemaphorePermit, Semaphore};
 
-/// Exclusive file documents synchronizing records and namespace publication before acknowledgment.
-pub type DurableStorage = sea_file::storage::FileStorage<true>;
+use crate::journal::FileStorageError;
 
+crate::common::file_factory!(DurableStorage, true);
+
+/// Document-local admission order and retained mutation budgets.
+pub(crate) struct Executor {
+    /// Async ordering authority; no worker waits for this mutex.
+    order: Arc<Mutex<()>>,
+    /// Bounds admitted requests, including work waiting for a worker.
+    requests: Arc<Semaphore>,
+    /// Bounds retained mutation input bytes, including in-flight work.
+    bytes: Arc<Semaphore>,
+    /// Factory-wide blocking concurrency shared with reads and recovery.
+    workers: Arc<Semaphore>,
+    /// Completion signal also emitted when a waiting caller cancels.
+    changed: Arc<Notify>,
+}
+
+/// Retains admission through cancellation and notifies after returning capacity.
+struct Admission {
+    /// Request permit released before notification.
+    request: Option<OwnedSemaphorePermit>,
+    /// Retained byte budget.
+    bytes: Option<OwnedSemaphorePermit>,
+    /// Shutdown waiters.
+    changed: Arc<Notify>,
+}
+
+impl Drop for Admission {
+    fn drop(&mut self) {
+        self.bytes.take();
+        self.request.take();
+        self.changed.notify_waiters();
+    }
+}
+
+/// Maximum retained mutation bytes in one document opening.
+pub(crate) const MAX_BYTES: usize = 16 * 1024 * 1024;
+
+impl Executor {
+    /// Creates an idle executor without starting a permanent worker.
+    pub(crate) fn new(workers: Arc<Semaphore>) -> Self {
+        Self {
+            order: Arc::new(Mutex::new(())),
+            requests: Arc::new(Semaphore::new(128)),
+            bytes: Arc::new(Semaphore::new(MAX_BYTES)),
+            workers,
+            changed: Arc::new(Notify::new()),
+        }
+    }
+
+    /// Rejects excess admission before retaining inputs and preserves admitted order through cancellation.
+    pub(crate) async fn run<Output: Send + 'static>(
+        &self,
+        bytes: usize,
+        operation: impl FnOnce() -> Result<Output, FileStorageError> + Send + 'static,
+    ) -> Result<Output, FileStorageError> {
+        if bytes > MAX_BYTES {
+            return Err(FileStorageError::Rejected("mutation exceeds byte limit"));
+        }
+        let request = self
+            .requests
+            .clone()
+            .try_acquire_owned()
+            .map_err(|_| FileStorageError::Rejected("mutation queue is full"))?;
+        let bytes = self
+            .bytes
+            .clone()
+            .try_acquire_many_owned(u32::try_from(bytes).expect("bounded mutation bytes fit u32"))
+            .map_err(|_| FileStorageError::Rejected("mutation byte budget is full"))?;
+        let admission = Admission {
+            request: Some(request),
+            bytes: Some(bytes),
+            changed: self.changed.clone(),
+        };
+        let order = self.order.clone().lock_owned().await;
+        crate::common::blocking(self.workers.clone(), move || {
+            let (_admission, _order) = (admission, order);
+            operation()
+        })
+        .await
+    }
+
+    /// Waits for retained admissions, closing admission first for shutdown.
+    pub(crate) async fn flush(&self, close: bool) {
+        if close {
+            self.requests.close();
+        }
+        loop {
+            let notified = self.changed.notified();
+            tokio::pin!(notified);
+            notified.as_mut().enable();
+            if self.requests.available_permits() == 128 {
+                return;
+            }
+            notified.await;
+        }
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;

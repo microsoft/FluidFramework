@@ -8,7 +8,7 @@ use sea_core::{
     Event, EventSubmission, MonitoredStreamItem, SeaAuthorSession, archive::SessionEventKind,
     session::SeaArchive, storage::SeaStorage,
 };
-use sea_file::storage::FileStorage;
+use sea_file::buffered::FileStorage;
 use sea_memory::MemoryStorage;
 use sea_sequencer::session::LocalSequencer;
 use serde_json::{Value, json};
@@ -53,7 +53,7 @@ async fn run() -> Result<(), String> {
                 }
                 "buffered-file" => {
                     exercise(
-                        FileStorage::<false>::open(&path).map_err(display_error)?,
+                        FileStorage::open(&path).map_err(display_error)?,
                         payload_bytes,
                         window,
                         operations,
@@ -62,7 +62,7 @@ async fn run() -> Result<(), String> {
                 }
                 "durable-file" => {
                     exercise(
-                        FileStorage::<true>::open(&path).map_err(display_error)?,
+                        sea_file::durable::DurableStorage::open(&path).map_err(display_error)?,
                         payload_bytes,
                         window,
                         operations,
@@ -138,6 +138,10 @@ async fn exercise<Storage: SeaStorage + 'static>(
         receipts.push(position);
         latencies.push(latency);
     }
+    let admission_seconds = started.elapsed().as_secs_f64();
+    let drain_started = Instant::now();
+    storage.flush().await.map_err(display_error)?;
+    let final_drain_seconds = drain_started.elapsed().as_secs_f64();
     let seconds = started.elapsed().as_secs_f64();
     let last = *receipts.last().ok_or("no receipts")?;
     let mut events = session.read(None, Some(last));
@@ -161,6 +165,7 @@ async fn exercise<Storage: SeaStorage + 'static>(
     drop(pending);
     session.close().await.map_err(display_error)?;
     sequencer.shutdown().await.map_err(display_error)?;
+    storage.shutdown().await.map_err(display_error)?;
     latencies.sort_by(f64::total_cmp);
     Ok(json!({
         "boundary": "local-sequencer-submit",
@@ -169,6 +174,9 @@ async fn exercise<Storage: SeaStorage + 'static>(
         "max_inflight": window,
         "async_workers": 1,
         "seconds": seconds,
+        "admission_seconds": admission_seconds,
+        "final_drain_seconds": final_drain_seconds,
+        "throughput_includes_final_drain": true,
         "operations_per_second": f64::from(operations) / seconds,
         "submit_latency_p50_us": latencies[latencies.len() / 2],
         "submit_latency_p99_us": latencies[(latencies.len() - 1) * 99 / 100],

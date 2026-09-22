@@ -26,7 +26,7 @@ use sea_core::{
     },
 };
 use sea_encryption::{ActiveKey, EncryptionKey, EncryptionSession, KeyId, KeyProvider};
-use sea_file::storage::FileStorage;
+use sea_file::buffered::FileStorage;
 use sea_memory::MemoryStorage;
 use sea_sequencer::session::{LocalSequencer, LocalSession};
 use tokio::task::JoinSet;
@@ -297,10 +297,11 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
         Backend::File => {
             let directory = unique_directory("measure");
             let startup = Instant::now();
-            let storage = FileStorage::<false>::open(&directory).map_err(display_error)?;
+            let storage = FileStorage::open(&directory).map_err(display_error)?;
             let (document, view) = storage.create_view().await.map_err(display_error)?;
             let mut measurements =
                 run_storage(Arc::new(view), config, elapsed_microseconds(startup)).await?;
+            storage.flush().await.map_err(display_error)?;
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
             let reopened = storage
@@ -317,7 +318,7 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
         Backend::Compression => {
             let directory = unique_directory("compression");
             let startup = Instant::now();
-            let factory = FileStorage::<false>::open(&directory).map_err(display_error)?;
+            let factory = FileStorage::open(&directory).map_err(display_error)?;
             let (document, view) = factory.create_view().await.map_err(display_error)?;
             let coordinators =
                 open_local_sessions::<FileStorage>(view, config.writers, "compression").await?;
@@ -329,6 +330,7 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
             let mut measurements =
                 run_session(sessions, config, elapsed_microseconds(startup)).await?;
             drop(coordinators);
+            factory.flush().await.map_err(display_error)?;
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
             let reopened = open_local_sessions::<FileStorage>(
@@ -353,7 +355,7 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
         Backend::Encryption => {
             let directory = unique_directory("encryption");
             let startup = Instant::now();
-            let factory = FileStorage::<false>::open(&directory).map_err(display_error)?;
+            let factory = FileStorage::open(&directory).map_err(display_error)?;
             let (document, view) = factory.create_view().await.map_err(display_error)?;
             let coordinators =
                 open_local_sessions::<FileStorage>(view, config.writers, "encryption").await?;
@@ -365,6 +367,7 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
             let mut measurements =
                 run_session(sessions, config, elapsed_microseconds(startup)).await?;
             drop(coordinators);
+            factory.flush().await.map_err(display_error)?;
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
             let reopened = open_local_sessions::<FileStorage>(

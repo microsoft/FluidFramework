@@ -243,6 +243,7 @@ pub async fn run_view_conformance<Storage: SeaStorage>(storage: &Storage) {
             .position,
         last_position
     );
+    storage.flush().await.expect("orderly persistence");
     drop((
         beginning, bounded, empty, loaded, root, first, second, third, fourth, view,
     ));

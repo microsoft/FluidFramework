@@ -55,8 +55,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let measurements = server.measurement_handle();
     let mut shutdown_handles = vec![server.shutdown_handle()];
     #[cfg(feature = "websocket-stream")]
-    let websocket_server =
-        optional_websocket_server(host, &mut shutdown_handles, transport_config.clone()).await?;
+    let websocket_server = optional_websocket_server(
+        host.clone(),
+        &mut shutdown_handles,
+        transport_config.clone(),
+    )
+    .await?;
     println!("WEBTRANSPORT_URL=https://{address}/sea");
     println!("CERTIFICATE_SHA256={certificate_hash}");
     println!("STORAGE_MODE={}", storage_mode.name());
@@ -109,6 +113,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         let outcome = result?;
                         std::fs::write(marker.with_extension("ack"), b"accepting stopped\n")?;
                         print_shutdown_outcome(outcome, measurements.snapshot());
+                        tokio::time::timeout(Duration::from_secs(5), host.shutdown()).await??;
                         return Ok(());
                     }
                 }
@@ -120,6 +125,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         serving.await?;
     }
+    tokio::time::timeout(Duration::from_secs(5), host.shutdown()).await??;
     Ok(())
 }
 
