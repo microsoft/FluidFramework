@@ -30,6 +30,8 @@ See [`src/lib.rs`](src/lib.rs) for API contracts and [architecture](../../SEA_AR
 The [`storage`](src/storage/mod.rs) module defines blob, event, and snapshot components and their composed document view.
 The sibling [`session`](src/session.rs) module adds multi-user policy above storage.
 `SeaStorage::create_view` and `SeaStorage::open_view` compose exclusive document views directly from backend components.
+The component bundle also carries `CheckpointStore`, whose two operations read and atomically replace opaque internal recovery state through `SeaView`.
+It shares the document opening and failure discipline but is independent of `SnapshotArchive` and all historical lookup structures.
 The host owns active-document caching and sequencer lifetime.
 `SeaView::blobs()` borrows the underlying blob store for content access and handle resolution; event and snapshot publication remain composed operations on the view.
 `Snapshot<BlobHandle, EventHandle>` carries availability handles and is shared by snapshot lookup, publication, and loading.

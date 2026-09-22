@@ -278,6 +278,7 @@ impl MemoryStorage {
             events: MemoryEventArchive {
                 opening: opening.clone(),
             },
+            checkpoints: Box::new(MemoryCheckpoint(opening.clone())),
             snapshots: MemorySnapshotArchive { opening },
         }
     }
@@ -577,14 +578,19 @@ impl Archive for MemorySnapshotArchive {
     }
 }
 
-#[async_trait]
-impl SnapshotArchive for MemorySnapshotArchive {
-    type BlobHandle = MemoryBlobHandle;
-    type EventHandle = MemoryEventHandle;
+/// Checkpoint authority retained independently of the snapshot archive.
+#[derive(Debug)]
+struct MemoryCheckpoint(Arc<DocumentOpening>);
 
+impl StorageSurface for MemoryCheckpoint {
+    type Error = MemoryStorageError;
+}
+
+#[async_trait]
+impl sea_core::storage::CheckpointStore for MemoryCheckpoint {
     async fn checkpoint(&self) -> Result<Option<Bytes>, Self::Error> {
         Ok(self
-            .opening
+            .0
             .document
             .checkpoint
             .lock()
@@ -596,15 +602,15 @@ impl SnapshotArchive for MemorySnapshotArchive {
         if checkpoint.is_empty() {
             return Err(MemoryStorageError::InconsistentHistory);
         }
-        *self
-            .opening
-            .document
-            .checkpoint
-            .lock()
-            .expect("checkpoint lock") = Some(checkpoint);
+        *self.0.document.checkpoint.lock().expect("checkpoint lock") = Some(checkpoint);
         Ok(())
     }
+}
 
+#[async_trait]
+impl SnapshotArchive for MemorySnapshotArchive {
+    type BlobHandle = MemoryBlobHandle;
+    type EventHandle = MemoryEventHandle;
     async fn get_snapshot_at(
         &self,
         position: EventPosition,

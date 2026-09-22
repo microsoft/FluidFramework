@@ -80,8 +80,10 @@ The [`sea-core::session`](crates/sea-core/src/session.rs) traits separate three 
 [`sea-sequencer`](crates/sea-sequencer/README.md) implements these contracts over one exclusive `SeaView`, shared across client memberships.
 It owns author identity, reference validation, event ordering, and snapshot publication authority.
 Persisted numeric session reservations and immutable event positions survive recovery; active memberships and publisher authority do not.
-Independent internal checkpoints restore the durable floor, bounded reference-policy state, and outstanding announcements before replaying a bounded event tail.
-File storage restores its lookup index without scanning older journal payloads; application snapshots do not control this recovery path.
+Independent internal checkpoints restore the applied boundary, durable floor, session-ID reservation, and outstanding announcements before replaying a bounded event tail.
+Recovery settles departures for prior sessions and resets runtime-only lag-window history before admitting fresh sessions.
+File storage restores settled-tail cursors without scanning older journal payloads; content is hash-addressed, events use byte offsets, and snapshot lookup traverses storage-private history backward.
+Application snapshots do not control this recovery path.
 Clients identify their own accepted submissions by session and application-event ordinal, not by a separate Sea operation ID.
 Sessions can opt into ordered durable announcements with immutable public metadata.
 Close and replacement append departures; recovery appends departures for outstanding announcements before new sessions are admitted.

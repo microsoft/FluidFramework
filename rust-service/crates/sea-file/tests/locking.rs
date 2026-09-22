@@ -1,7 +1,7 @@
 //! Cross-process lock checks run separately so fork cannot retain parallel unit tests' locks.
 
 use bytes::Bytes;
-use sea_core::storage::{DocumentId, SeaStorage};
+use sea_core::storage::{DocumentId, SeaStorage, StorageHandle};
 use sea_file::storage::{FileStorage, FileStorageError};
 use std::path::Path;
 
@@ -25,10 +25,14 @@ async fn append_keeps_exclusive_lock_across_processes() {
     let root = std::env::temp_dir().join(format!("sea-lock-{}", std::process::id()));
     let storage = FileStorage::<true>::open(&root).unwrap();
     let (id, view) = storage.create_view().await.unwrap();
+    let mut last = None;
     for payload in [b"first".as_slice(), b"second"] {
-        view.append(Bytes::from_static(payload), None)
-            .await
-            .unwrap();
+        last = Some(
+            view.append(Bytes::from_static(payload), None)
+                .await
+                .unwrap()
+                .id(),
+        );
         let output = std::process::Command::new(std::env::current_exe().unwrap())
             .args(["--exact", "append_keeps_exclusive_lock_across_processes"])
             .env("SEA_JOURNAL_LOCK_PROBE", &root)
@@ -38,10 +42,7 @@ async fn append_keeps_exclusive_lock_across_processes() {
     }
     drop(view);
     let reopened = storage.open_view(&id).await.unwrap().unwrap();
-    assert_eq!(
-        reopened.head().await.unwrap(),
-        Some(sea_core::EventPosition::new(2))
-    );
+    assert_eq!(reopened.head().await.unwrap(), last);
     drop(reopened);
     std::fs::remove_dir_all(root).unwrap();
 }

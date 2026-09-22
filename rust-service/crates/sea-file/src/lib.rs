@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-mod index;
+mod atomic_file;
 mod journal;
 
 /// Replacement document factory and independently usable file components.

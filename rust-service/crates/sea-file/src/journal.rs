@@ -1,7 +1,7 @@
 //! Exclusive framed journal for filesystem document components.
 //!
 //! Each record carries its length, complemented length, and content checksum. Recovery returns
-//! only complete verified suffix records after the published index boundary; interpretation and
+//! only complete verified suffix records after the storage cursor boundary; interpretation and
 //! dependency-closure checks remain the responsibility of `sea_file::storage`.
 //!
 //! Buffered openings append in place and reject incomplete tails.
@@ -11,7 +11,7 @@
 //! publishes through synchronized rename. Recovery truncates incomplete tails and synchronizes the
 //! selected journal and directory before exposing records.
 //! Complete malformed suffix frames remain corruption, not discardable uncommitted data.
-//! The indexed prefix is validated on historical access rather than rescanned during opening.
+//! The settled prefix is validated on historical access rather than rescanned during opening.
 //!
 //! Power-loss recovery assumes durable-prefix integrity, crash-atomic creation rename, truthful
 //! synchronization, and tails consisting of valid frames followed by at most a short header or
@@ -24,7 +24,7 @@
 //! mutations and authoritative observations return [`FileStorageError::Ambiguous`] until every
 //! owner drops the journal and a new exclusive opening recovers it.
 
-use crate::index::{Index, Key};
+use crate::atomic_file;
 use sea_core::{BlobId, ClassifiedError, ErrorKind};
 use std::{
     fs::{self, File, OpenOptions},
@@ -70,16 +70,18 @@ impl ClassifiedError for FileStorageError {
 }
 
 /// Format marker intentionally unrelated to the transitional backend format.
-const MAGIC: &[u8; 8] = b"SEANEXT1";
+const MAGIC: &[u8; 8] = b"SEANEXT2";
 /// Length, complemented length, and content hash protect frame boundaries.
 const FRAME_HEADER: usize = 48;
 
 /// An exclusive opening; the stable sidecar lock survives journal replacement.
 pub(crate) struct Journal {
-    /// Stable document name used to publish its lookup index.
+    /// Stable journal name used to publish its settled-tail cursor.
     path: PathBuf,
-    /// Latest published index, transferred to storage when the opening is composed.
-    pub(crate) index: Option<Index>,
+    /// Last record covered by the storage-owned settled cursor, or zero for an empty log.
+    pub(crate) last: u64,
+    /// First byte not covered by the storage-owned settled cursor.
+    pub(crate) recovered_from: u64,
     /// Published file, positioned at its validated append boundary.
     file: File,
     /// Never replaced or removed; owns the OS lock across publication and recovery.
@@ -175,8 +177,12 @@ impl Journal {
         if &magic != MAGIC {
             return Err(FileStorageError::Corrupt("journal header"));
         }
-        let index = if create { None } else { Index::open(path)? };
-        let start = index.as_ref().map_or(8, |index| index.boundary);
+        let cursor = if create {
+            None
+        } else {
+            atomic_file::read(&path.with_extension("cursor"))?
+        };
+        let (start, last) = Self::decode_cursor(cursor.as_deref())?;
         let length = file.metadata()?.len();
         let (records, boundary) = recover_tail(&mut file, start, length, durable)?;
         if boundary != length {
@@ -195,7 +201,8 @@ impl Journal {
         Ok((
             Self {
                 path: path.to_path_buf(),
-                index,
+                last,
+                recovered_from: start,
                 file,
                 _lock: lock,
                 durable,
@@ -209,6 +216,22 @@ impl Journal {
             },
             records,
         ))
+    }
+
+    /// Validates the fixed-size storage cursor without loading historical addresses.
+    fn decode_cursor(cursor: Option<&[u8]>) -> Result<(u64, u64), FileStorageError> {
+        let Some(cursor) = cursor else {
+            return Ok((8, 0));
+        };
+        if cursor.len() != 16 {
+            return Err(FileStorageError::Corrupt("journal cursor"));
+        }
+        let boundary = u64::from_be_bytes(cursor[..8].try_into().unwrap());
+        let last = u64::from_be_bytes(cursor[8..].try_into().unwrap());
+        if (boundary == 8) != (last == 0) || (last != 0 && (last < 8 || last >= boundary)) {
+            return Err(FileStorageError::Corrupt("journal cursor boundary"));
+        }
+        Ok((boundary, last))
     }
 
     /// Refuses observations that could mistake an uncertain tail for settled absence.
@@ -232,27 +255,68 @@ impl Journal {
         Ok(File::open(&self.path)?)
     }
 
-    /// Publishes lookup state only after making its journal prefix durable when required.
-    pub(crate) fn checkpoint(
-        &mut self,
-        metadata: &[u8],
-        entries: impl IntoIterator<Item = Result<(Key, u64), FileStorageError>>,
-    ) -> Result<Index, FileStorageError> {
+    /// Publishes the storage-owned validated tail without any historical address table.
+    pub(crate) fn remember_tail(&mut self, last: u64) -> Result<(), FileStorageError> {
         let boundary = self.boundary()?;
         self.failed = true;
-        let result = (|| {
-            if self.durable {
-                self.file.sync_all()?;
-            }
-            Index::publish(&self.path, boundary, metadata, entries, self.durable)
-        })();
+        let result = {
+            let mut cursor = boundary.to_be_bytes().to_vec();
+            cursor.extend_from_slice(&last.to_be_bytes());
+            atomic_file::write(&self.path.with_extension("cursor"), &cursor, self.durable)
+        };
         match result {
-            Ok(index) => {
+            Ok(()) => {
+                self.last = last;
                 self.failed = false;
-                Ok(index)
+                Ok(())
             }
             Err(_) => Err(FileStorageError::Ambiguous),
         }
+    }
+
+    /// Returns the publication policy shared by this document's immutable files.
+    pub(crate) const fn durable(&self) -> bool {
+        self.durable
+    }
+
+    /// Publishes a separate immutable value under the document's mutation authority.
+    pub(crate) fn write_value(
+        &mut self,
+        path: &Path,
+        value: &[u8],
+    ) -> Result<(), FileStorageError> {
+        self.ready()?;
+        #[cfg(test)]
+        let fault = {
+            let fault = self.fault.take();
+            if matches!(fault, Some(JournalFault::BeforeWrite)) {
+                return Err(FileStorageError::Rejected("injected before write"));
+            }
+            fault
+        };
+        self.failed = true;
+        #[cfg(test)]
+        {
+            if matches!(fault, Some(JournalFault::PartialWrite)) {
+                return Err(FileStorageError::Ambiguous);
+            }
+            if matches!(fault, Some(JournalFault::BeforeSync)) {
+                atomic_file::stage(path, value).map_err(|_| FileStorageError::Ambiguous)?;
+                return Err(FileStorageError::Ambiguous);
+            }
+        }
+        atomic_file::write(path, value, self.durable)?;
+        #[cfg(test)]
+        {
+            if self.durable {
+                self.syncs += 1;
+            }
+            if matches!(fault, Some(JournalFault::AfterSync)) {
+                return Err(FileStorageError::Ambiguous);
+            }
+        }
+        self.failed = false;
+        Ok(())
     }
 
     /// Arms one deterministic failure without exposing fault machinery to production callers.
@@ -274,11 +338,13 @@ impl Journal {
             return Ok(());
         }
         #[cfg(test)]
-        let fault = self.fault.take();
-        #[cfg(test)]
-        if matches!(fault, Some(JournalFault::BeforeWrite)) {
-            return Err(FileStorageError::Rejected("injected before write"));
-        }
+        let fault = {
+            let fault = self.fault.take();
+            if matches!(fault, Some(JournalFault::BeforeWrite)) {
+                return Err(FileStorageError::Rejected("injected before write"));
+            }
+            fault
+        };
         let mut frame = Vec::new();
         for payload in payloads {
             let length = payload.len() as u64;
@@ -299,25 +365,27 @@ impl Journal {
             .write_all(&frame)
             .map_err(|_| FileStorageError::Ambiguous)?;
         #[cfg(test)]
-        if matches!(fault, Some(JournalFault::BeforeSync)) {
-            return Err(FileStorageError::Ambiguous);
-        }
-        #[cfg(test)]
-        if let Some(before_sync) = self.before_sync.take() {
-            before_sync();
+        {
+            if matches!(fault, Some(JournalFault::BeforeSync)) {
+                return Err(FileStorageError::Ambiguous);
+            }
+            if let Some(before_sync) = self.before_sync.take() {
+                before_sync();
+            }
         }
         if self.durable {
             self.file
                 .sync_all()
                 .map_err(|_| FileStorageError::Ambiguous)?;
-            #[cfg(test)]
-            {
-                self.syncs += 1;
-            }
         }
         #[cfg(test)]
-        if matches!(fault, Some(JournalFault::AfterSync)) {
-            return Err(FileStorageError::Ambiguous);
+        {
+            if self.durable {
+                self.syncs += 1;
+            }
+            if matches!(fault, Some(JournalFault::AfterSync)) {
+                return Err(FileStorageError::Ambiguous);
+            }
         }
         self.failed = false;
         Ok(())
@@ -409,11 +477,11 @@ pub(crate) fn read_record(source: &mut File, offset: u64) -> Result<Vec<u8>, Fil
         .and_then(|start| start.checked_add(length))
         .ok_or(FileStorageError::Corrupt("frame overflow"))?;
     if end > source.metadata()?.len() {
-        return Err(FileStorageError::Corrupt("indexed frame length"));
+        return Err(FileStorageError::Corrupt("addressed frame length"));
     }
     let (mut records, boundary) = recover_tail(source, offset, end, false)?;
     if boundary != end || records.len() != 1 {
-        return Err(FileStorageError::Corrupt("indexed frame"));
+        return Err(FileStorageError::Corrupt("addressed frame"));
     }
     Ok(records.remove(0))
 }
@@ -423,21 +491,24 @@ mod tests {
     use super::*;
 
     #[test]
-    fn published_index_skips_old_frames_and_preserves_addressed_reads() {
+    fn storage_cursor_skips_old_frames_without_a_sequencer_checkpoint() {
         let root = std::env::temp_dir().join(format!("sea-indexed-journal-{}", std::process::id()));
         fs::create_dir_all(&root).unwrap();
         let path = root.join("document.sea");
         let (mut journal, _) = Journal::open(&path, true, true).unwrap();
         journal.append(b"old").unwrap();
         let boundary = journal.boundary().unwrap();
-        let index = journal.checkpoint(b"state", [Ok(([1; 33], 8))]).unwrap();
-        assert_eq!(index.boundary, boundary);
+        journal.remember_tail(8).unwrap();
         journal.append(b"tail").unwrap();
-        drop((journal, index));
+        drop(journal);
         let (journal, records) = Journal::open(&path, false, true).unwrap();
         assert_eq!(records, vec![b"tail".to_vec()]);
-        let index = journal.index.as_ref().unwrap();
-        assert_eq!(index.metadata, b"state");
+        assert_eq!(journal.recovered_from, boundary);
+        assert_eq!(journal.last, 8);
+        assert_eq!(
+            fs::metadata(path.with_extension("cursor")).unwrap().len(),
+            48
+        );
         let mut reader = journal.reader().unwrap();
         assert_eq!(read_record(&mut reader, 8).unwrap(), b"old");
         drop((journal, reader));

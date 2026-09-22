@@ -6,8 +6,10 @@ The same engine supplies synchronized storage to `sea-file-durable` through `Fil
 
 ## Persistence Model
 
-Each document has one dependency-ordered checksummed journal containing immutable content, events, and snapshots.
+Each document has an event journal, a fixed-width snapshot journal, a hash-addressed content directory, and independent internal checkpoint state.
 Frames contain a length, its complement, a BLAKE3 content hash, and the record bytes.
+Event positions are literal byte offsets in the event journal; predecessor offsets support backward traversal for arbitrary range bounds.
+Snapshot positions remain event positions; their physical records and backward lookup belong only to storage.
 The current experimental formats have no supported migration from earlier versions.
 Buffered writes reach the operating system before returning but are not synchronized, so their durability is `Durability::Buffered`.
 Durable mode appends to the journal and synchronizes it before acknowledgment, once per event batch.
@@ -16,11 +18,11 @@ On Unix, namespace synchronization stops when the parent belongs to a different 
 Mount configuration must already be stable and is outside this guarantee.
 Its [power-loss model](../sea-file-durable/README.md#power-loss-model) requires durable-prefix integrity, crash-atomic rename, and truthful synchronization; filesystem/device qualification remains outstanding.
 
-Recovery restores archive heads and internal sequencer metadata from an atomically published `.index` sidecar, then verifies framing, content identities, dependency closure, dense event positions, and snapshot dependencies in the journal suffix.
-The sidecar records the exact journal byte boundary and a sorted fixed-width address index.
-Opening reads its checksummed header and metadata, not all address entries or historical payloads.
-Historical content and archive lookups use binary search and validate addressed frames and logical identities on demand.
-The previously validated indexed prefix is trusted under the durable-prefix integrity model; independent media corruption is outside that model and may be detected only by an affected read.
+Each journal has a checksummed 48-byte `.cursor` containing its validated byte boundary and last record offset.
+Opening validates the named tail records and recovers only the suffix after that boundary.
+Content is retrieved directly by typed hash; event lookups seek to their byte offsets, and snapshot lookup walks its journal backward.
+There is no historical address table to load or rewrite.
+The previously validated prefix is trusted under the durable-prefix integrity model; independent media corruption is outside that model and may be detected only by an affected read.
 Buffered recovery rejects incomplete tails; durable recovery truncates an incomplete final frame and synchronizes the repaired journal.
 Complete corrupt suffix frames or missing required dependencies fail recovery rather than producing gaps.
 An unpublished creation `.pending` file is discarded even if it contains valid frames.
@@ -29,17 +31,19 @@ Raw event components treat tree identities as opaque, while the view establishes
 Snapshots persist only position/root identities, not handles or session publication metadata.
 
 Internal checkpoint metadata is separate from the application snapshot archive and does not create an application snapshot.
-Publication synchronizes the journal first in durable mode, writes a checksummed replacement index, synchronizes it, atomically renames it over `.index`, and synchronizes the directory before acknowledgment.
-An unpublished `.index-pending` is ignored by recovery; atomic rename selects the complete old or new index.
+Publication writes the opaque payload plus a 32-byte checksum to `.checkpoint.pending`, synchronizes it in durable mode, atomically renames it over `.checkpoint`, and synchronizes the directory before acknowledgment.
+An unpublished replacement is ignored by recovery; atomic rename selects the complete old or new value.
+Checkpoint publication neither reads nor rewrites content, journals, or storage cursors.
 Any uncertain publication poisons the opening.
-Storage automatically publishes an index after at least 256 new addresses, at mutation boundaries.
+Storage independently publishes its fixed-size cursor after each successful event batch or snapshot append, after settling the journal.
+In durable mode this adds a cursor-file synchronization and directory synchronization per batch, independent of history size.
 Single mutations and raw batches can contain arbitrarily large payloads or entry counts; the generic storage API promises no fixed byte bound.
 The sequencer bounds its event batches and independently checkpoints its applied state.
 
-Blob and directory content is immutable and deduplicated; directory publication checks child availability before modifying the journal.
+Blob and directory content is immutable and deduplicated; directory publication checks child availability before publishing its hash-addressed file.
 Directory membership proves transitive availability because publication and recovery establish closure and content is never removed.
 Reusing a stored directory checks membership under the state lock without taking the journal writer lock or checking its children again.
-Membership may require a synchronous lookup in the immutable index after checkpointing; writer independence does not imply an I/O-free lookup.
+Membership checks the hash-addressed filename; writer independence does not imply an I/O-free lookup.
 New directories are encoded once for identity and persistence, then rechecked under the writer and state locks before publication.
 Events are never deduplicated or retried, and snapshots must advance their event position.
 Session retry identities and conditional snapshot policy remain above storage.
@@ -58,7 +62,7 @@ Handles contain private canonical-document provenance but retain no writer owner
 After reopening, compatible handles can be revalidated against membership; foreign-document handles are rejected even for equal identities.
 Do not rename, replace, or externally modify files in an active namespace.
 Stop all old writers before upgrading: older binaries lock the journal itself and do not participate in sidecar locking.
-Journal record encoding is unchanged, but mixed-version writers are unsupported.
+The byte-offset journal format is incompatible with earlier experimental layouts; mixed-version writers are unsupported.
 
 Reads initialize lazily and register wakeups under the published-state lock.
 Mutations serialize separately in dependency order; event-batch disk I/O leaves the previously published prefix readable.
@@ -84,11 +88,12 @@ Poisoning blocks authoritative observations during unwinding, before explicit fa
 
 ## Limits
 
-Only the suffix after the storage index boundary is recovered into memory; history is never pruned, and namespace allocation searches for an unused numeric filename.
-Index publication merges all historical address entries with recent addresses, so its I/O grows with retained history even though recovery does not scan that history.
-This simple immutable index favors low implementation complexity over steady-state publication throughput.
+Only the suffix after the storage cursor is recovered into memory; history is never pruned, and namespace allocation searches for an unused numeric filename.
+Publication write volume does not grow with retained history.
+An old snapshot lookup or non-record event bound can traverse history backward; latest lookups and event reads from returned positions need no such traversal.
+Content uses one file per typed hash, so filesystem metadata costs remain workload-dependent.
 Namespace opening, document creation/recovery, blob/directory writes, and snapshot appends still perform synchronous I/O and can block the calling executor.
-Internal checkpoint publication and historical index/payload reads also perform synchronous I/O under the state lock.
+Internal checkpoint publication and historical reads also perform synchronous I/O.
 The built-in server host runs namespace initialization and document creation/recovery on blocking workers; direct storage callers must arrange their own execution isolation for these operations.
 Blob writes, new directory writes, and snapshot appends also synchronously wait for the journal writer mutex and hold the state mutex across their own I/O; reads may wait behind those barriers or an in-memory publication, but not event-batch disk I/O.
 Mutations write only new frames without replacing the journal inode; encoding memory is proportional to batch size.
@@ -109,5 +114,7 @@ RUSTDOCFLAGS='-D warnings' cargo doc -p sea-file --all-features --no-deps
 ```
 
 Tests cover framing/corruption, batch visibility and uncertainty, lost acknowledgments, cross-process locks, executor progress during event I/O, and cancellation/panic ownership.
-Index tests cover every truncated unpublished replacement, old/new selection, lazy historical corruption detection, and a seek-instrumented recovery that never reads bytes before its checkpoint boundary.
-Directory tests cover writer-independent deduplication of recent and reopened indexed content, missing-child rejection, failure-state checks, and recovery of nested content.
+Atomic-file tests cover every truncated unpublished replacement and complete old/new selection.
+Storage tests cover checkpoint size and historical-file independence, lazy historical corruption detection, byte-offset bounds, and backward snapshot lookup without sequencer state.
+Seek-instrumented journal recovery never reads bytes before its storage cursor boundary.
+Directory tests cover writer-independent deduplication of recent and reopened content, missing-child rejection, failure-state checks, and recovery of nested content.

@@ -25,9 +25,7 @@
 //! closed over that prefix. Every blob tree referenced by an exposed event or snapshot is
 //! available and valid.
 //! Every snapshot position identifies an event in the exposed prefix.
-//! Detected corruption fails recovery or the affected read rather than producing a gap.
-//! An implementation may restore a previously validated prefix from an atomic internal checkpoint
-//! under its documented integrity model, validating historical payloads lazily on access.
+//! Corruption within the required prefix fails recovery rather than producing a gap.
 //!
 //! These storage contracts do not support event or snapshot pruning.
 //! Archives retain every committed entry, and recovered event prefixes start with the first event.
@@ -37,6 +35,7 @@
 //! memory, orderly storage, or crash-resistant persistence and is not a runtime policy mechanism.
 
 mod blob_store;
+mod checkpoint;
 mod event_archive;
 mod ordered_archive;
 mod referenceable_store;
@@ -49,6 +48,7 @@ use bytes::Bytes;
 use crate::{ClassifiedError, Durability, Event, EventPosition};
 
 pub use blob_store::BlobStore;
+pub use checkpoint::CheckpointStore;
 pub use event_archive::{EventArchive, EventArchiveStream};
 pub use ordered_archive::{Archive, ArchiveStream};
 pub use referenceable_store::{ReferenceableStore, StorageHandle};
@@ -82,18 +82,20 @@ impl DocumentId {
 /// Components and dependent streams share ownership or locks for the resources they use.
 /// Dropping the component set does not release ownership still needed by a dependent stream.
 #[derive(Debug)]
-pub struct StorageComponents<Blobs, Events, Snapshots> {
+pub struct StorageComponents<Blobs: StorageSurface, Events, Snapshots> {
     /// Content-addressed blob store for this document.
     pub blobs: Blobs,
     /// Ordered event archive for this document.
     pub events: Events,
     /// Snapshot publication archive for this document.
     pub snapshots: Snapshots,
+    /// Internal state owned by the document opening, independent of application snapshots.
+    pub checkpoints: Box<dyn CheckpointStore<Error = Blobs::Error>>,
 }
 
 /// A newly created document identity and its open storage components.
 #[derive(Debug)]
-pub struct CreatedDocument<Blobs, Events, Snapshots> {
+pub struct CreatedDocument<Blobs: StorageSurface, Events, Snapshots> {
     /// Stable identity allocated according to backend requirements.
     pub id: DocumentId,
     /// Empty storage components created for the identity.
@@ -108,7 +110,7 @@ pub struct CreatedDocument<Blobs, Events, Snapshots> {
 ///
 /// The factory advertises one durability class for the complete document. More importantly,
 /// [`SeaStorage::open_document`] returns components only after enforcing this module's publication
-/// and recovery law. An implementation must fail opening on detected violations rather than return components containing
+/// and recovery law. An implementation must fail opening rather than return components containing
 /// an event gap, an unavailable referenced blob tree, or a snapshot outside the recovered event
 /// prefix. Creation and opening must also fail while another valid exclusive writable opening for
 /// the same document remains owned by components or dependent streams and handles.
@@ -256,6 +258,7 @@ where
     blobs: Blobs,
     events: Events,
     snapshots: Snapshots,
+    checkpoints: Box<dyn CheckpointStore<Error = Blobs::Error>>,
 }
 
 impl<Blobs, Events, Snapshots> SeaView<Blobs, Events, Snapshots>
@@ -274,6 +277,7 @@ where
             blobs: components.blobs,
             events: components.events,
             snapshots: components.snapshots,
+            checkpoints: components.checkpoints,
         }
     }
 
@@ -291,7 +295,7 @@ where
     /// # Errors
     /// Returns storage failures, including an invalidated exclusive opening.
     pub async fn checkpoint(&self) -> Result<Option<Bytes>, Blobs::Error> {
-        self.snapshots.checkpoint().await
+        self.checkpoints.checkpoint().await
     }
 
     /// Atomically publishes internal recovery state without changing application snapshots.
@@ -299,7 +303,7 @@ where
     /// # Errors
     /// Returns publication failures; ambiguous outcomes require reopening before mutation.
     pub async fn publish_checkpoint(&self, checkpoint: Bytes) -> Result<(), Blobs::Error> {
-        self.snapshots.publish_checkpoint(checkpoint).await
+        self.checkpoints.publish_checkpoint(checkpoint).await
     }
 
     /// Resolves an event position to availability evidence suitable for snapshot publication.

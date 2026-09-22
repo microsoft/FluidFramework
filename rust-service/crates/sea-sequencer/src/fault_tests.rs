@@ -297,10 +297,26 @@ impl<Store: Archive<Position = EventPosition, Error = MemoryStorageError> + 'sta
     }
 }
 
+/// Fault injection at the independent document checkpoint boundary.
+struct FaultCheckpoint {
+    /// Retains the document's independent checkpoint authority.
+    inner: Box<dyn sea_core::storage::CheckpointStore<Error = MemoryStorageError>>,
+    /// Controls publication failure and cancellation boundaries.
+    faults: Arc<Faults>,
+}
+
+impl fmt::Debug for FaultCheckpoint {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("FaultCheckpoint")
+    }
+}
+
+impl StorageSurface for FaultCheckpoint {
+    type Error = FaultError;
+}
+
 #[async_trait]
-impl SnapshotArchive for FaultStore<MemorySnapshotArchive> {
-    type BlobHandle = MemoryBlobHandle;
-    type EventHandle = MemoryEventHandle;
+impl sea_core::storage::CheckpointStore for FaultCheckpoint {
     async fn checkpoint(&self) -> Result<Option<Bytes>, Self::Error> {
         self.inner.checkpoint().await.map_err(FaultError::Backend)
     }
@@ -325,6 +341,12 @@ impl SnapshotArchive for FaultStore<MemorySnapshotArchive> {
             _ => Ok(()),
         }
     }
+}
+
+#[async_trait]
+impl SnapshotArchive for FaultStore<MemorySnapshotArchive> {
+    type BlobHandle = MemoryBlobHandle;
+    type EventHandle = MemoryEventHandle;
     async fn get_snapshot_at(
         &self,
         position: EventPosition,
@@ -387,7 +409,7 @@ async fn checkpoint_failure_stops_tail_growth_before_next_submission() {
                 .unwrap();
         let mut state = recovered.runtime.lock().await;
         assert_eq!(
-            state.positions.last().unwrap().get(),
+            state.applied_through.unwrap().get(),
             super::checkpoint::INTERVAL as u64
         );
         state.checkpoint_if_due().await.unwrap();
@@ -487,8 +509,8 @@ async fn interrupted_recovery_departures_are_not_duplicated_on_reopen() {
     }
     assert_eq!(departures, identities);
     assert_eq!(
-        recovered.runtime.lock().await.positions.last(),
-        Some(&EventPosition::new(4))
+        recovered.runtime.lock().await.applied_through,
+        Some(EventPosition::new(4))
     );
 }
 
@@ -503,6 +525,10 @@ impl FaultStorage {
         FaultStore<MemorySnapshotArchive>,
     > {
         StorageComponents {
+            checkpoints: Box::new(FaultCheckpoint {
+                inner: components.checkpoints,
+                faults: self.snapshots.clone(),
+            }),
             blobs: FaultStore::new(components.blobs, Arc::default()),
             events: FaultStore::new(components.events, self.events.clone()),
             snapshots: FaultStore::new(components.snapshots, self.snapshots.clone()),

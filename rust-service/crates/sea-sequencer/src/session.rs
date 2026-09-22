@@ -132,6 +132,9 @@ struct Pending<Error> {
     event: Option<Event>,
 }
 
+/// Recent positions required only by the live 1024-entry policy and its 64-entry debounce.
+const POSITION_WINDOW: usize = 1088;
+
 /// Authoritative mutable session state serialized across all clients.
 struct Runtime<Storage: SeaStorage> {
     /// Removed only by explicit shutdown after pending work settles.
@@ -140,12 +143,14 @@ struct Runtime<Storage: SeaStorage> {
     members: BTreeMap<SessionId, Membership>,
     /// Persisted announcements whose departure has not committed, including recovered sessions.
     announced: BTreeMap<SessionId, SessionCommittedEvent>,
-    /// Application positions used to validate references and snapshot boundaries.
+    /// Bounded recent event positions for live floor policy; reset after recovery ends old sessions.
     positions: BTreeSet<EventPosition>,
+    /// Last event incorporated into durable sequencer state, independent of the live policy window.
+    applied_through: Option<EventPosition>,
     /// Applied records since the last successful internal publication.
     since_checkpoint: usize,
-    /// Persisted upper bound for the forthcoming numeric session allocator.
-    reserved: u64,
+    /// Highest durably reserved session ID, including unused IDs that recovery must skip.
+    session_id_reserved_through: u64,
     /// Next unexposed identity in the current reservation; `None` denotes exhaustion.
     next_session: Option<u64>,
     /// Durable document-wide admission floor restored from ordered committed metadata.
@@ -298,7 +303,7 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         let Some(position) = reference else {
             return Ok(true);
         };
-        if Some(position) > self.positions.last().copied() {
+        if Some(position) > self.applied_through {
             return Ok(false);
         }
         if self.positions.contains(&position) {
@@ -326,9 +331,9 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
             return Err(SessionError::RecoveryRequired);
         }
         let checkpoint = checkpoint::Checkpoint {
-            reserved: self.reserved,
+            session_id_reserved_through: self.session_id_reserved_through,
             minimum_reference: self.minimum_reference,
-            positions: self.positions.clone(),
+            applied_through: self.applied_through,
             announced: self.announced.clone(),
         }
         .encode()?;
@@ -343,17 +348,27 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
     }
 
     /// Chooses an advance without coupling admission enforcement to membership progress.
-    /// A 1024-position lag window prevents idle readers from pinning the floor indefinitely;
-    /// window advances are rounded down to 64-position boundaries to coalesce small changes.
+    /// A 1024-entry lag window prevents idle readers from pinning the floor indefinitely.
+    /// Window advances require 64 committed entries beyond the floor, independent of position encoding.
     fn proposed_minimum(
         &self,
         cooperative: Option<EventPosition>,
         reference: Option<EventPosition>,
     ) -> Option<EventPosition> {
-        let window = self.positions.iter().rev().nth(1023).and_then(|position| {
-            let boundary = EventPosition::new(position.get() / 64 * 64);
-            self.positions.range(..=boundary).next_back().copied()
-        });
+        let window = self
+            .positions
+            .iter()
+            .rev()
+            .nth(1023)
+            .copied()
+            .filter(|candidate| {
+                self.positions
+                    .range(..=*candidate)
+                    .filter(|position| Some(**position) > self.minimum_reference)
+                    .take(64)
+                    .count()
+                    == 64
+            });
         self.minimum_reference
             .max(cooperative.max(window).min(reference))
     }
@@ -363,16 +378,16 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         let committed = decode_committed(record)?;
         if committed.minimum_reference < self.minimum_reference
             || committed.minimum_reference > committed.reference
-            || committed.minimum_reference > self.positions.last().copied()
+            || committed.minimum_reference > self.applied_through
             || (committed.kind == SessionEventKind::Application
                 && committed.reference < self.minimum_reference)
         {
             return Err(SessionError::Corrupt("invalid minimum reference floor"));
         }
-        if committed.reference > self.positions.last().copied() {
+        if committed.reference > self.applied_through {
             return Err(SessionError::Corrupt("reference is not a preceding event"));
         }
-        if committed.session_id.get() > self.reserved {
+        if committed.session_id.get() > self.session_id_reserved_through {
             return Err(SessionError::Corrupt(
                 "session exceeds persisted reservation",
             ));
@@ -383,7 +398,8 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
             member.reference = committed.reference;
         }
         self.positions.insert(record.position);
-        while self.positions.len() > checkpoint::POSITION_WINDOW {
+        self.applied_through = Some(record.position);
+        while self.positions.len() > POSITION_WINDOW {
             self.positions.pop_first();
         }
         self.since_checkpoint += 1;
@@ -427,7 +443,7 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         metadata: &[u8],
     ) -> Result<EventPosition, SessionError<Storage::Error>> {
         self.checkpoint_if_due().await?;
-        let reference = self.positions.last().copied();
+        let reference = self.applied_through;
         let minimum = self
             .members
             .iter()
@@ -447,7 +463,7 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
             future: Box::pin(async move { append_once::<Storage>(&view, input).await }),
         });
         self.settle_pending().await?;
-        Ok(*self.positions.last().expect("settled membership position"))
+        Ok(self.applied_through.expect("settled membership position"))
     }
 
     /// Commits an announced departure before ending authority; unannounced sessions add no event.
@@ -557,8 +573,8 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
         let ordinal = runtime
             .next_session
             .ok_or(SessionError::Rejected("session identity exhausted"))?;
-        if ordinal > runtime.reserved {
-            runtime.reserved = ordinal.saturating_add(255);
+        if ordinal > runtime.session_id_reserved_through {
+            runtime.session_id_reserved_through = ordinal.saturating_add(255);
             runtime.publish_checkpoint().await?;
         }
         runtime.next_session = ordinal.checked_add(1);
@@ -602,16 +618,17 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
             .map(checkpoint::Checkpoint::decode)
             .transpose()?
             .unwrap_or_default();
-        let after = recovered.positions.last().copied();
+        let after = recovered.applied_through;
         let mut runtime = Runtime {
             minimum_reference: recovered.minimum_reference,
             view: Some(view.clone()),
             members: BTreeMap::new(),
             announced: recovered.announced,
-            positions: recovered.positions,
+            positions: BTreeSet::new(),
+            applied_through: after,
             since_checkpoint: 0,
-            reserved: recovered.reserved,
-            next_session: recovered.reserved.checked_add(1),
+            session_id_reserved_through: recovered.session_id_reserved_through,
+            next_session: recovered.session_id_reserved_through.checked_add(1),
             pending: None,
             recovery_required: false,
             publishers: Arc::new(std::sync::Mutex::new(Publishers::default())),
@@ -643,6 +660,7 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
         for session in runtime.announced.keys().cloned().collect::<Vec<_>>() {
             runtime.close_member(&session).await?;
         }
+        runtime.positions.clear();
         Ok(Arc::new(Self {
             runtime: Arc::new(Mutex::new(runtime)),
             pipeline: pipeline::Pipeline::new(),
@@ -1225,6 +1243,28 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn floor_debounce_counts_events_not_numeric_position_units() {
+        let storage = MemoryStorage::new();
+        let (_, view) = storage.create_view().await.unwrap();
+        let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let mut runtime = sequencer.runtime.lock().await;
+        for ordinal in 1..=1152_u64 {
+            let position = EventPosition::new(8 + ordinal * ordinal * 4099);
+            runtime.positions.insert(position);
+            while runtime.positions.len() > POSITION_WINDOW {
+                runtime.positions.pop_first();
+            }
+            runtime.minimum_reference = runtime.proposed_minimum(None, Some(position));
+            let expected_ordinal = ordinal.saturating_sub(1023) / 64 * 64;
+            let expected = (expected_ordinal != 0)
+                .then(|| EventPosition::new(8 + expected_ordinal * expected_ordinal * 4099));
+            assert_eq!(runtime.minimum_reference, expected);
+        }
+    }
+
+    #[tokio::test]
     async fn idle_members_cannot_pin_the_debounced_reference_window() {
         let storage = MemoryStorage::new();
         let (_, view) = storage.create_view().await.unwrap();
@@ -1435,7 +1475,7 @@ mod tests {
         let unannounced = member(&runtime, "unannounced").await;
         let (boundary, floor, head) = {
             let state = runtime.runtime.lock().await;
-            assert_eq!(state.positions.len(), checkpoint::POSITION_WINDOW);
+            assert_eq!(state.positions.len(), POSITION_WINDOW);
             let view = state.view().unwrap();
             let checkpoint =
                 checkpoint::Checkpoint::decode::<()>(view.checkpoint().await.unwrap().unwrap())
@@ -1447,7 +1487,7 @@ mod tests {
                     .is_none()
             );
             (
-                checkpoint.positions.last().copied().unwrap(),
+                checkpoint.applied_through.unwrap(),
                 state.minimum_reference,
                 state.positions.last().copied().unwrap(),
             )
@@ -1462,6 +1502,8 @@ mod tests {
         {
             let state = recovered.runtime.lock().await;
             assert!(state.announced.is_empty());
+            assert!(state.positions.is_empty());
+            assert!(state.applied_through > Some(head));
             assert!(state.minimum_reference >= floor);
             assert!(state.since_checkpoint <= 2 * checkpoint::INTERVAL);
         }
@@ -1474,6 +1516,52 @@ mod tests {
             );
         }
         assert!(data(&mut departures).await.is_none());
+    }
+
+    #[tokio::test]
+    async fn checkpoint_at_head_recovers_without_live_policy_history() {
+        let storage = MemoryStorage::new();
+        let (id, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let writer = member(&runtime, "writer").await;
+        let first = writer.submit(submission(b"first")).await.unwrap();
+        let mut second = submission(b"second");
+        second.reference = Some(first);
+        let head = writer.submit(second).await.unwrap();
+        runtime
+            .runtime
+            .lock()
+            .await
+            .publish_checkpoint()
+            .await
+            .unwrap();
+        drop((writer, runtime));
+        let recovered = LocalSequencer::<MemoryStorage>::recover(
+            storage.open_view(&id).await.unwrap().unwrap(),
+        )
+        .await
+        .unwrap();
+        {
+            let mut state = recovered.runtime.lock().await;
+            assert!(state.positions.is_empty());
+            assert_eq!(state.applied_through, Some(head));
+            assert_eq!(state.minimum_reference, Some(first));
+            assert_eq!(state.since_checkpoint, 0);
+            assert!(state.known_reference(Some(first)).await.unwrap());
+        }
+        let fresh = member(&recovered, "fresh").await;
+        let mut next = submission(b"next");
+        next.reference = Some(head);
+        let next = fresh.submit(next).await.unwrap();
+        let state = recovered.runtime.lock().await;
+        assert_eq!(
+            state.positions.iter().copied().collect::<Vec<_>>(),
+            vec![next]
+        );
+        assert_eq!(state.applied_through, Some(next));
+        assert!(state.minimum_reference >= Some(first));
     }
 
     #[tokio::test]
@@ -1492,8 +1580,8 @@ mod tests {
             )
             .unwrap()
         };
-        assert_eq!(checkpoint.reserved, 256);
-        assert!(checkpoint.positions.is_empty());
+        assert_eq!(checkpoint.session_id_reserved_through, 256);
+        assert!(checkpoint.applied_through.is_none());
         drop((first, runtime));
         let runtime = LocalSequencer::<MemoryStorage>::recover(
             storage.open_view(&id).await.unwrap().unwrap(),
@@ -1506,7 +1594,7 @@ mod tests {
         drop(next);
         {
             let mut state = runtime.runtime.lock().await;
-            state.reserved = u64::MAX;
+            state.session_id_reserved_through = u64::MAX;
             state.next_session = Some(u64::MAX);
             state.publish_checkpoint().await.unwrap();
         }
@@ -1630,7 +1718,7 @@ mod tests {
         duplicate
             .publish_checkpoint(
                 checkpoint::Checkpoint {
-                    reserved: 256,
+                    session_id_reserved_through: 256,
                     ..checkpoint::Checkpoint::default()
                 }
                 .encode::<()>()

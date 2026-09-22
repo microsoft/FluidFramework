@@ -591,6 +591,76 @@ mod tests {
     };
 
     #[tokio::test]
+    async fn file_registry_recovers_checkpointed_offsets_and_departures() {
+        use sea_core::{MonitoredStreamItem, archive::SessionEventKind, storage::SeaStorage};
+        use sea_file::storage::FileStorage;
+
+        let root =
+            std::env::temp_dir().join(format!("sea-registry-checkpoint-{}", std::process::id()));
+        let storage = FileStorage::<true>::open(&root).unwrap();
+        let registry = DocumentRegistry::new(storage.clone());
+        let id = registry.create().await.unwrap();
+        let runtime = registry.open(&id).await.unwrap();
+        let idle = runtime.open_session(None).await.unwrap();
+        idle.announce_membership(Bytes::from_static(b"idle"))
+            .await
+            .unwrap();
+        let idle_id = idle.session_id().clone();
+        let writer = runtime.open_session(None).await.unwrap();
+        let mut reference = None;
+        for size in (0..1152).map(|ordinal| ordinal % 127) {
+            reference = Some(
+                writer
+                    .submit(EventSubmission {
+                        reference,
+                        event: Event {
+                            payload: Bytes::from(vec![42; size]),
+                            blob_tree: None,
+                        },
+                    })
+                    .await
+                    .unwrap(),
+            );
+        }
+        let head = reference.unwrap();
+        let mut history = writer.read(None, Some(head));
+        let mut floor = None;
+        while let Some(item) = history.next().await {
+            if let MonitoredStreamItem::Item(event) = item.unwrap() {
+                assert!(event.minimum_reference >= floor);
+                floor = event.minimum_reference;
+            }
+        }
+        assert!(floor.is_some());
+        drop((history, idle, writer, runtime, registry));
+        let view = storage.open_view(&id).await.unwrap().unwrap();
+        assert!(view.checkpoint().await.unwrap().is_some());
+        assert!(
+            view.get_snapshot(LoadStart::LatestSnapshot)
+                .await
+                .unwrap()
+                .is_none()
+        );
+        drop(view);
+        let registry = DocumentRegistry::new(storage);
+        let runtime = registry.open(&id).await.unwrap();
+        let reader = runtime.open_session(None).await.unwrap();
+        assert_eq!(reader.session_id().get(), 257);
+        let mut departures = reader.read(Some(head), None);
+        loop {
+            if let MonitoredStreamItem::Item(event) = departures.next().await.unwrap().unwrap() {
+                assert_eq!(event.kind, SessionEventKind::Left);
+                assert_eq!(event.session_id, idle_id);
+                assert!(event.minimum_reference >= floor);
+                assert!(event.committed.position > head);
+                break;
+            }
+        }
+        drop((departures, reader, runtime, registry));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
     async fn slow_backend_initialization_preserves_executor_progress_and_cancellation_ownership() {
         let host = BuiltInSeaHost::new(std::path::PathBuf::new(), StorageMode::Memory);
         let (entered, entering) = tokio::sync::oneshot::channel();

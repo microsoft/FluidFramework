@@ -113,7 +113,8 @@ Application/membership envelopes persist the resulting floor atomically with the
 Failed appends do not advance it; recovery rejects decreasing, forward, or context-inconsistent metadata and restores the floor before admitting mutations.
 Only committed advances are enforceable; policy heuristics and debouncing must not affect correctness.
 
-Advancement policy combines cooperative member progress with a 1024-position lag window, rounding window advances down to 64-position boundaries.
+Advancement policy combines cooperative member progress with a 1024-entry lag window, requiring 64 committed entries beyond the current floor before a window advance.
+Positions are opaque ordered values; numeric spacing does not affect this policy.
 Only the final candidate in a storage batch may advance the floor, preventing speculative advances from rejecting another entry in that batch.
 Earlier entries carry the frozen committed floor; an invalid final candidate defers advancement.
 An advance cannot exceed its carrying event's reference or lower the floor.
@@ -130,7 +131,9 @@ There is no supported data migration from the experimental earlier formats.
 
 ## Internal Checkpoints
 
-The `SEAC2` checkpoint contains the exact applied position, durable minimum-reference floor, the last 1088 positions needed by the advancement policy, outstanding announcement envelopes, and the inclusive session-allocation reservation.
+The `SEAC3` checkpoint contains the exact applied position, durable minimum-reference floor, outstanding announcement envelopes, and the inclusive session-allocation reservation.
+The lag-window history is runtime-only: recovery ends outstanding sessions with leave messages and clears the window before admitting fresh sessions.
+The committed floor remains monotonic; historical reference availability is resolved through storage.
 It retains no historical session or submission set.
 Outstanding announcement state scales with still-outstanding memberships, not total retained history.
 Historical reference checks use the storage resolver when a position is outside the recent window.
@@ -142,7 +145,7 @@ Publication failure or cancellation stops mutation until reopening; failures can
 Recovery appends terminal departures for restored outstanding announcements before returning fresh authority, using the same cadence during those departures.
 
 Internal metadata publication is independent of application snapshots and publisher nomination.
-File storage also checkpoints its own lookup state, so opening does not first reconstruct an index by scanning old payloads.
+File storage maintains fixed-size settled-tail cursors independently of sequencer checkpoints; hash-addressed content and byte-offset events need no reconstructed historical index.
 Memory storage keeps its already resident history and retains its in-process consistency validation on reopening.
 See the [checkpoint design and evidence](../../CHECKPOINT_PLAN.md) for publication ordering, tests, and implementation costs.
 

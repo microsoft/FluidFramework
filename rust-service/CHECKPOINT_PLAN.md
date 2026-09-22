@@ -1,7 +1,7 @@
 # Sequencer Checkpoint Plan
 
 Created: 2026-09-22.
-Status: implemented and validated sequentially on the current branch, with the unrelated repository formatting blocker recorded below.
+Status: corrected storage and minimal checkpoint state implemented and validated; the unrelated root formatting blocker remains below.
 
 ## Scope
 
@@ -24,7 +24,8 @@ Measure reads at that boundary, not only calls to the sequencer's event iterator
 Keep historical lookup separate from live sequencer state; do not move an unbounded history set into a checkpoint and call that bounded recovery.
 Define checkpoint cadence and backpressure so repeated publication failures cannot silently permit an unbounded recovery tail.
 
-The checkpoint needs the applied position, durable minimum-reference floor, outstanding announcements, bounded reference-policy state, and allocation reservation.
+The checkpoint needs the applied position, durable minimum-reference floor, outstanding announcements, and allocation reservation.
+Lag-window history is runtime-only because recovery ends prior sessions before admitting fresh sessions.
 Persist an allocation reservation before exposing any ID from it; restart skips its unused suffix.
 Updating the reservation must not advance the checkpoint's applied event position.
 Exhaustion rejects allocation instead of wrapping.
@@ -39,10 +40,11 @@ Exhaustion rejects allocation instead of wrapping.
 
 ## Implemented Design
 
-`SEAC2` stores the inclusive reservation high-water mark, durable minimum-reference floor, last 1088 positions, and outstanding announcement envelopes with their original committed positions.
-The last retained position is the exact applied boundary P; an empty position window represents an empty archive.
+`SEAC3` stores the inclusive reservation high-water mark, durable minimum-reference floor, explicit applied boundary P, and outstanding announcement envelopes with their original committed positions.
+An absent applied boundary represents an empty archive.
 No historical session-ID set or application snapshot is embedded.
-Checkpoint size depends on the fixed policy window and outstanding announcements, including their public metadata, rather than total document history.
+The fixed portion is at most 35 bytes, plus outstanding announcements and their public metadata; no recent position window is serialized.
+Recovery preserves the committed floor and resets the live lag window after settling all outstanding departures.
 
 The sequencer publishes before the next batch or lifecycle event once 256 entries have been applied.
 Its maximum 256-entry batch allows at most 511 entries after P.
@@ -50,16 +52,18 @@ Failure or cancellation during publication makes the runtime require recovery be
 Recovery restores the state, replays the suffix, and commits terminal departures for remaining announcements before exposing new session authority.
 Interrupted recovery can resume without duplicating a previously committed departure.
 
-The file backend's `.index` contains checksummed storage heads, opaque sequencer state, a journal byte boundary, and sorted fixed-width logical-key/address entries.
-Opening reads the header and metadata, then seeks directly to the boundary and validates the journal suffix.
-Historical dependency and payload lookups use logarithmic index reads; historical payloads are checked only when accessed.
-Publication settles the journal first, writes `.index-pending`, synchronizes that file in durable mode, atomically renames it to `.index`, then synchronizes the containing directory before acknowledgment.
-An unpublished replacement is ignored; after atomic rename, recovery selects a complete old or new index under the documented filesystem model.
+File content is retrieved directly by typed hash, events use literal journal byte offsets, and snapshot lookup walks a separate fixed-width log backward within storage.
+There is no persisted or reconstructed historical address table.
+Each journal has a checksummed 48-byte settled-tail cursor, published independently after each event batch or snapshot append.
+Opening validates the named tail records, seeks directly to the settled boundary, and validates only the suffix.
+Durable cursor publication adds one file synchronization and directory synchronization per batch, independent of retained history.
+Raw storage batches and individual payloads are not size-bounded, so this is not a universal recovery byte bound for the generic storage API.
 
-The backend also publishes storage indexes independently at mutation boundaries after at least 256 new addresses.
-Raw storage batches and individual payloads are not size-bounded, so this is not a universal byte bound for the generic storage API.
-Index publication merges all retained address entries, with cost proportional to retained history, but never copies old journal payloads.
-This is a deliberately simple recovery design, not a claim of constant-cost checkpoint publication or production filesystem qualification.
+The document's independent `CheckpointStore` capability reads and atomically replaces opaque internal state through `SeaView`; it is not part of `SnapshotArchive`.
+Publication writes only the checkpoint payload plus its 32-byte checksum, synchronizes it in durable mode, atomically renames it, and synchronizes the parent directory.
+An unpublished replacement is ignored; recovery selects a complete old or new value under the documented filesystem model.
+Checkpoint publication neither reads nor rewrites content, journals, cursors, or any historical mapping.
+The sequencer's floor policy counts committed entries rather than performing arithmetic on positions, including its 64-entry debounce.
 Memory storage keeps its existing resident-history consistency validation on reopen; the bounded historical I/O guarantee concerns persistent storage.
 
 IDs are nonzero document-scoped `u64` values reserved in ranges of up to 256 before exposure.
@@ -71,6 +75,27 @@ The Fluid adapter maps these to `sea-` plus hexadecimal client IDs.
 Earlier experimental protocols and persisted session formats are incompatible; no migration or identity reuse is implemented.
 
 ## Validation
+
+The correction removes the earlier history-sized `.index` design following user review.
+Focused tests cover hash lookup, literal event offsets, non-record range bounds, backward snapshot selection without a sequencer checkpoint, and checkpoint size/history independence.
+The existing journal crash, ambiguity, directory closure/deduplication, and cross-process locking tests continue to pass.
+Sparse-position sequencer coverage verifies event-count floor debouncing.
+No-tail checkpoint recovery verifies the independent applied boundary, preserved floor, storage-backed historical reference resolution, and an initially empty live policy window.
+A real file-backed registry restart verifies persisted reservations, the floor, and outstanding departures after checkpointed recovery without application snapshots.
+Formatting, strict workspace Clippy/rustdoc, all-target build, workspace tests, and the documentation checker pass on the correction.
+The final native run passed 226 tests, with one browser-only test ignored by Cargo and exercised separately by the aggregate browser harness.
+Repository policy and aggregate generated-client/Chromium `test:all` pass.
+Fluid Sea WebSocket E2E passed with 691 passing, 493 pending, and no failures.
+The root build completed the generated-client tasks but failed only on the unchanged historical JSON formatting issue recorded below.
+The previously flaky native connection test passed in the corrected workspace run; this does not prove the earlier untraced timeout cannot recur.
+
+Against the user-selected pre-checkpoint commit `bb0173b0439`, the core storage delta is only the two-method `CheckpointStore` capability, its component/view plumbing, and the required `StorageSurface` bounds on the component bundle.
+Existing blob, event, referenceable, ordered, and snapshot archive traits and their recovery laws are unchanged.
+The earlier numeric session-ID API change is retained separately from this storage correction.
+
+### Earlier Implementation Evidence
+
+The following records describe validation before the index-removal correction, not fresh evidence for the corrected file layout.
 
 | Boundary | Evidence |
 | --- | --- |
@@ -108,5 +133,7 @@ No pruning, identity reuse, further network compression, or new compatibility la
 
 - Starting implementation: `LocalSequencer::recover` scans from the beginning, and `Journal::open` reads the entire journal before recovering records.
   A sequencer-only checkpoint would not meet the storage I/O requirement.
-- The directory-dedup worktree has concurrent storage work; preserve it and reconcile any incoming changes rather than overwrite them.
-  Integration preserves checkpoint address lookups in the writer-independent directory fast path and tests both recent state and reopened indexed history under both durability modes.
+- The directory-dedup worktree supplied merged storage work; preserve it rather than overwrite it.
+  The corrected writer-independent fast path checks hash-addressed membership and tests both recent and reopened content under both durability modes.
+- The first checkpoint implementation unnecessarily rewrote a complete historical address index.
+  User review rejected that growing write cost and the checkpoint methods on `SnapshotArchive`; the correction removes both rather than preserving a compatibility layer.

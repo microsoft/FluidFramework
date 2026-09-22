@@ -120,7 +120,7 @@ The registry retains successful runtimes for the host lifetime, with no idle evi
 Dropping the host and its connections releases those views; stopping the listener alone does not evict a separately retained host.
 Live replay uses backend monitored streams; the legacy liveness lag setting does not bound this path.
 The registry still serializes first opens across documents, and blob/directory, snapshot, and checkpoint writes remain synchronous storage barriers.
-Checkpointed historical index/payload reads can also block the executor; initialization isolation does not offload subsequent session operations.
+Historical storage reads can also block the executor; initialization isolation does not offload subsequent session operations.
 Blocking workers preserve executor responsiveness during initialization, not bounded storage latency or constant durable throughput on shared or virtualized devices.
 
 Snapshot dispatch resolves wire roots and committed event positions through the session before constructing availability handles.
