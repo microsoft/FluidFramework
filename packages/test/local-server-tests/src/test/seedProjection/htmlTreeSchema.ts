@@ -6,6 +6,7 @@
 import { SchemaFactory, TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
 
 import { format, serializeHtml, type HtmlNode } from "./htmlSeedFormat.js";
+import type { HtmlParts } from "./externalSeedFile.js";
 
 const schemaFactory = new SchemaFactory(format);
 
@@ -25,8 +26,14 @@ export class HtmlElement extends schemaFactory.objectRecursive("Element", {
 	children: HtmlChildren,
 }) {}
 
-export const viewConfiguration = new TreeViewConfiguration({ schema: HtmlChildren });
-export type HtmlView = TreeView<typeof HtmlChildren>;
+/** Two separately subscribed subtrees correspond exactly to the two independently stored HTML parts. */
+export class HtmlDocument extends schemaFactory.object("Document", {
+	first: HtmlChildren,
+	second: HtmlChildren,
+}) {}
+
+export const viewConfiguration = new TreeViewConfiguration({ schema: HtmlDocument });
+export type HtmlView = TreeView<typeof HtmlDocument>;
 
 /**
  * Construct uninserted SharedTree nodes from plain application content without mutating it.
@@ -67,5 +74,14 @@ export function fromTree(nodes: HtmlChildren): HtmlNode[] {
  * For identical native content the output is identical; no session, clock, or entropy is consulted.
  */
 export function viewHtml(view: HtmlView): string {
-	return serializeHtml(fromTree(view.root));
+	const parts = viewHtmlParts(view);
+	return parts.first + parts.second;
+}
+
+/** Read both parts for display/test comparison; incremental projection serializes only changed parts instead. */
+export function viewHtmlParts(view: HtmlView): HtmlParts {
+	return {
+		first: serializeHtml(fromTree(view.root.first)),
+		second: serializeHtml(fromTree(view.root.second)),
+	};
 }

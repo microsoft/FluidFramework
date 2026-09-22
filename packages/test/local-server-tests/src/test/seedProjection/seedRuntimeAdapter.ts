@@ -92,7 +92,7 @@ export interface ProjectionLoad {
 	original: IContainerContext;
 	/** Runtime-facing context, with a coherent native snapshot/storage overlay only when projection was needed. */
 	context: IContainerContext;
-	/** Whether this runtime materialized a seed and therefore requires full structural summaries for its lifetime. */
+	/** Whether this runtime materialized a seed and needs full native state until its first tracked summary ACK. */
 	projected: boolean;
 	/** Reconstruction identity retained or produced by this load, when available. */
 	provenance?: Provenance;
@@ -104,7 +104,7 @@ export interface ProjectionLoad {
  * forward real context behavior while overlaying only runtime-facing snapshots and blob reads.
  * This adapter neither imports ContainerRuntime nor changes loader caches, protocol, checkpoint,
  * version, op handling, or pending replay order. Pending restoration rebuilds the same overlay.
- * The delegate must enforce full structural summaries for loads marked projected.
+ * The delegate must enforce full structural summaries until its first tracked ACK for loads marked projected.
  */
 export function seedRuntimeFactory(
 	projector: Projector,

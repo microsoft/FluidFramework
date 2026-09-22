@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	type ISummaryTreeWithStats,
@@ -32,6 +33,8 @@ export interface IGCSummaryTrackingData {
 	serializedGCState: string | undefined;
 	serializedTombstones: string | undefined;
 	serializedDeletedNodes: string | undefined;
+	/** The recovery request covered by this checkpoint, if a recovery GC run was completed. Not persisted. */
+	recoveryGeneration?: number;
 }
 
 /**
@@ -43,8 +46,15 @@ export interface IGCSummaryTrackingData {
 export class GCSummaryStateTracker {
 	// Keeps track of the GC data from the latest summary successfully acked by the server.
 	private latestSummaryData: IGCSummaryTrackingData | undefined;
-	// Keeps track of the GC data from the last summary submitted to the server but not yet acked.
-	private pendingSummaryData: IGCSummaryTrackingData | undefined;
+	// Generation is separate from submission: failures and untracked summaries must not replace a pending proposal.
+	private wipSummaryData: IGCSummaryTrackingData | undefined;
+	private readonly pendingSummaries = new Map<
+		string,
+		{
+			data: IGCSummaryTrackingData | undefined;
+			referenceSequenceNumber: number;
+		}
+	>();
 
 	// Tracks the count of data stores whose state updated since the last summary, i.e., they went from referenced
 	// to unreferenced or vice-versa.
@@ -89,6 +99,8 @@ export class GCSummaryStateTracker {
 		gcState: IGarbageCollectionState,
 		deletedNodes: Set<string>,
 		tombstones: string[],
+		fullTree = false,
+		recoveryGeneration?: number,
 	): ISummarizeResult | undefined {
 		if (!this.configs.gcAllowed) {
 			return;
@@ -109,13 +121,16 @@ export class GCSummaryStateTracker {
 		 * Otherwise, write the GC summary tree. In the tree, for each of these that changed, write a summary blob and
 		 * for each of these that did not change, write a summary handle.
 		 */
-		this.pendingSummaryData = {
-			serializedGCState,
-			serializedTombstones,
-			serializedDeletedNodes,
-		};
+		if (trackState) {
+			this.wipSummaryData = {
+				serializedGCState,
+				serializedTombstones,
+				serializedDeletedNodes,
+				recoveryGeneration,
+			};
+		}
 
-		if (trackState && this.latestSummaryData !== undefined) {
+		if (trackState && !fullTree && this.latestSummaryData !== undefined) {
 			// If nothing changed since last summary, send a summary handle for the entire GC data.
 			if (
 				this.latestSummaryData.serializedGCState === serializedGCState &&
@@ -215,16 +230,48 @@ export class GCSummaryStateTracker {
 	}
 
 	/**
+	 * Associate the generated GC state with the same proposal tracked by the native summarizer nodes.
+	 * Full summaries also participate, although they cannot reuse handles during generation.
+	 */
+	public completeSummary(proposalHandle: string, referenceSequenceNumber: number): void {
+		if (!this.configs.gcAllowed) {
+			return;
+		}
+		this.pendingSummaries.set(proposalHandle, {
+			data: this.wipSummaryData,
+			referenceSequenceNumber,
+		});
+		this.clearSummary();
+	}
+
+	/** Discard generation state without dropping submitted proposals that can still receive a late ACK. */
+	public clearSummary(): void {
+		this.wipSummaryData = undefined;
+	}
+
+	/**
 	 * Called to refresh the latest summary state. This happens when a pending summary is acked.
 	 */
-	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
+	public async refreshLatestSummary(
+		result: IRefreshSummaryResult,
+		proposalHandle: string,
+	): Promise<number | undefined> {
 		if (!this.configs.gcAllowed || !result.isSummaryTracked) {
 			return;
 		}
 
-		this.latestSummaryData = this.pendingSummaryData;
-		this.pendingSummaryData = undefined;
+		const pending = this.pendingSummaries.get(proposalHandle);
+		assert(pending !== undefined, "Tracked GC summary must have matching proposal state");
+		this.latestSummaryData = pending.data;
+		this.pendingSummaries.delete(proposalHandle);
+		// Match the native summarizer nodes' retirement of older pending proposals.
+		for (const [handle, summary] of this.pendingSummaries) {
+			if (summary.referenceSequenceNumber < pending.referenceSequenceNumber) {
+				this.pendingSummaries.delete(handle);
+			}
+		}
 		this.updatedDSCountSinceLastSummary = 0;
+		return pending.data?.recoveryGeneration;
 	}
 
 	/**

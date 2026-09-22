@@ -11,12 +11,13 @@ import {
 	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
+import type { SummaryGenerationContext } from "@fluidframework/container-runtime/internal";
 import {
 	SummaryType,
-	type ISnapshotTree,
 	type ISummaryTree,
 	type SummaryObject,
 } from "@fluidframework/driver-definitions";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	createSummarizerCore,
 	createTestConfigProvider,
@@ -30,11 +31,14 @@ import {
 import {
 	codeDetails,
 	createSeedSummary,
+	htmlPartIds,
 	projectionGroup,
 	projectionKey,
 	readApplicationProjection,
+	type HtmlPartId,
+	type HtmlParts,
 } from "./externalSeedFile.js";
-import { HtmlElement, HtmlText, viewHtml } from "./htmlTreeSchema.js";
+import { HtmlElement, HtmlText, viewHtml, viewHtmlParts } from "./htmlTreeSchema.js";
 import {
 	sampleRuntimeFactory,
 	type AppObservation,
@@ -43,21 +47,23 @@ import {
 import { forward } from "./seedRuntimeAdapter.js";
 import type { SeedWorkflowBackend } from "./seedWorkflowBackend.js";
 
-export const exampleHtml =
-	'<div class="document"><p id="first">Hello</p><p id="second">World</p></div>';
+export const exampleParts: HtmlParts = {
+	first: '<div class="document"><p id="first">Hello</p></div>',
+	second: '<div class="details"><p id="second">World</p></div>',
+};
 
 /** Select a known fixture paragraph, failing if loading or prior edits changed its expected structure. */
-function paragraph(app: HtmlEntryPoint, index: number): HtmlElement {
-	const root = app.view.root[0];
+function paragraph(app: HtmlEntryPoint, part: HtmlPartId): HtmlElement {
+	const root = app.view.root[part][0];
 	assert(root instanceof HtmlElement);
-	const result = root.children[index];
+	const result = root.children[0];
 	assert(result instanceof HtmlElement);
 	return result;
 }
 
 /** Select a fixture text node so concurrent and pending-edit tests mutate the actual collaborative DDS. */
-function text(app: HtmlEntryPoint, index: number): HtmlText {
-	const node = paragraph(app, index).children[0];
+function text(app: HtmlEntryPoint, part: HtmlPartId): HtmlText {
+	const node = paragraph(app, part).children[0];
 	assert(node instanceof HtmlText);
 	return node;
 }
@@ -85,15 +91,42 @@ function hasHandle(summary: ISummaryTree): boolean {
 	);
 }
 
-/** Validate the callback's in-memory subtree shape/group and return its HTML for checkpoint comparisons. */
-function summaryHtml(summary: ISummaryTree): string {
+/** Inspect the app callback output without rendering either part to infer reuse. */
+function projectionSummary(summary: ISummaryTree): ISummaryTree {
 	const subtree: SummaryObject | undefined = summary.tree[projectionKey];
 	assert(subtree?.type === SummaryType.Tree);
 	assert.equal(subtree.groupId, projectionGroup);
-	const content: SummaryObject | undefined = subtree.tree["document.html"];
-	assert(content?.type === SummaryType.Blob);
-	assert(typeof content.content === "string");
-	return content.content;
+	return subtree;
+}
+
+/** Prove an unchanged part is a previous-summary subtree handle, not a freshly serialized equivalent blob. */
+function assertReusedPart(summary: ISummaryTree, part: HtmlPartId): void {
+	assert.deepEqual(projectionSummary(summary).tree[part], {
+		type: SummaryType.Handle,
+		handleType: SummaryType.Tree,
+		handle: `/${projectionKey}/${part}`,
+	});
+}
+
+/** Read one newly encoded part from the submission; reused handles deliberately cannot pass this assertion. */
+function encodedPart(summary: ISummaryTree, part: HtmlPartId): string {
+	const subtree: SummaryObject | undefined = projectionSummary(summary).tree[part];
+	assert(subtree?.type === SummaryType.Tree);
+	const blob: SummaryObject | undefined = subtree.tree["document.html"];
+	assert(blob?.type === SummaryType.Blob && typeof blob.content === "string");
+	return blob.content;
+}
+
+/** Collect persisted part blob IDs for cross-summary reuse checks without downloading either HTML body. */
+function partBlobIds(snapshot: ISnapshotTree): Record<HtmlPartId, string> {
+	const projection: ISnapshotTree | undefined = snapshot.trees[projectionKey];
+	const first: string | undefined = projection?.trees.first?.blobs["document.html"];
+	const second: string | undefined = projection?.trees.second?.blobs["document.html"];
+	assert(
+		first !== undefined && second !== undefined,
+		"Both part IDs must survive snapshot loading",
+	);
+	return { first, second };
 }
 
 /** Test-only client orchestration and observations used by the lifecycle and pending-state scenarios. */
@@ -112,6 +145,12 @@ export interface SeedTestSession {
 	readonly projectionCalls: number;
 	/** Summarizer checkpoint observed by the most recent application projection callback. */
 	readonly projectionCheckpoint: number | undefined;
+	/** Counts at the actual part serializer entry, excluding display/test-only comparisons. */
+	readonly serializedParts: Readonly<Record<HtmlPartId, number>>;
+	/** Contexts delivered to application summary generation, including effective full-tree policy. */
+	readonly summaryContexts: readonly SummaryGenerationContext[];
+	/** Wait until runtime/native/GC and captured projection state have adopted a particular storage version. */
+	waitForSummaryAcceptance(version: string): Promise<void>;
 	/** Make exactly the next projection callback throw before any upload is possible. */
 	failNextProjection(): void;
 	/** Open a file/version or restore pending state with a newly constructed loader. */
@@ -141,6 +180,10 @@ export function referenceSession(
 	let failProjection = false;
 	let projectionCalls = 0;
 	let projectionCheckpoint: number | undefined;
+	const serializedParts: Record<HtmlPartId, number> = { first: 0, second: 0 };
+	const summaryContexts: SummaryGenerationContext[] = [];
+	const acceptedVersions = new Set<string>();
+	const acceptanceWaiters = new Map<string, () => void>();
 	/** Wire the sample runtime to the backend, optionally denying source reads to prove offline reconstruction. */
 	const makeLoader = (allowProjection = true, denySeedBodyReads = false): Loader => {
 		const appFactory = sampleRuntimeFactory({
@@ -153,6 +196,16 @@ export function referenceSession(
 					failProjection = false;
 					throw new Error("Injected projection failure before upload");
 				}
+			},
+			onSerializePart: (part) => {
+				serializedParts[part]++;
+			},
+			observeSummary: (context) => summaryContexts.push(context),
+			onSummaryAccepted: (context) => {
+				assert(context.ackHandle !== undefined);
+				acceptedVersions.add(context.ackHandle);
+				acceptanceWaiters.get(context.ackHandle)?.();
+				acceptanceWaiters.delete(context.ackHandle);
 			},
 		});
 		const factory: IRuntimeFactory = {
@@ -167,11 +220,18 @@ export function referenceSession(
 								? context.storage
 								: forward(context.storage, {
 										readBlob: async (id) => {
-											if (
-												Object.values(
-													context.baseSnapshot?.trees[projectionKey]?.blobs ?? {},
-												).includes(id)
-											) {
+											const projection: ISnapshotTree | undefined =
+												context.baseSnapshot?.trees[projectionKey];
+											const seedIds =
+												projection === undefined
+													? []
+													: [
+															...Object.values(projection.blobs),
+															...Object.values(projection.trees).flatMap((part) =>
+																Object.values(part.blobs),
+															),
+														];
+											if (seedIds.includes(id)) {
 												throw new Error(
 													"Seed bodies unavailable during pending-state reconstruction",
 												);
@@ -217,6 +277,12 @@ export function referenceSession(
 		get projectionCheckpoint(): number | undefined {
 			return projectionCheckpoint;
 		},
+		serializedParts,
+		summaryContexts,
+		async waitForSummaryAcceptance(version): Promise<void> {
+			if (acceptedVersions.has(version)) return;
+			await new Promise<void>((resolve) => acceptanceWaiters.set(version, resolve));
+		},
 		/** Inject one callback failure so the workflow can verify abort-before-upload and a successful retry. */
 		failNextProjection: (): void => {
 			failProjection = true;
@@ -258,39 +324,40 @@ async function verifyGroupedProjection(
 	backend: SeedWorkflowBackend,
 	url: string,
 	version: string | undefined,
-	expectedHtml: string,
-): Promise<void> {
+	expectedParts: HtmlParts,
+): Promise<Record<HtmlPartId, string>> {
 	const initial = await backend.inspect(url, version);
 	try {
 		const projectionTree: ISnapshotTree | undefined =
 			initial.snapshot.snapshotTree.trees[projectionKey];
 		assert(projectionTree !== undefined, "Persisted application projection must exist");
 		if (backend.supportsLoadingGroups) assert.equal(projectionTree.groupId, projectionGroup);
-		const htmlId: string | undefined = projectionTree.blobs["document.html"];
-		assert(htmlId !== undefined, "ID manifest must survive body omission");
+		const ids = partBlobIds(initial.snapshot.snapshotTree);
 		if (backend.omitsUnrequestedGroupBlobs) {
-			assert(!initial.snapshot.blobContents.has(htmlId));
+			for (const part of htmlPartIds) assert(!initial.snapshot.blobContents.has(ids[part]));
 		}
 		const projection = await readApplicationProjection(
 			initial.snapshot.snapshotTree,
 			initial.readBlob,
 		);
-		assert.equal(projection.html, expectedHtml);
-		if (!backend.supportsLoadingGroups) return;
+		assert.deepEqual(projection.parts, expectedParts);
+		if (!backend.supportsLoadingGroups) return ids;
 		const grouped = await backend.inspect(url, version, [projectionGroup]);
 		try {
-			const groupedProjection: ISnapshotTree | undefined =
-				grouped.snapshot.snapshotTree.trees[projectionKey];
-			assert(groupedProjection !== undefined, "Group fetch must include the projection tree");
-			const id: string | undefined = groupedProjection.blobs["document.html"];
-			assert(id !== undefined, "Group fetch must retain the HTML blob ID");
-			const bytes = grouped.snapshot.blobContents.get(id);
-			assert(bytes !== undefined, "Explicit group retrieval must return projection contents");
-			assert.equal(Buffer.from(bytes).toString(), expectedHtml);
+			const groupedIds = partBlobIds(grouped.snapshot.snapshotTree);
+			for (const part of htmlPartIds) {
+				const bytes = grouped.snapshot.blobContents.get(groupedIds[part]);
+				assert(
+					bytes !== undefined,
+					"Explicit group retrieval must return each part's contents",
+				);
+				assert.equal(Buffer.from(bytes).toString(), expectedParts[part]);
+			}
 			assert.equal(grouped.snapshot.sequenceNumber, initial.snapshot.sequenceNumber);
 		} finally {
 			grouped.dispose();
 		}
+		return ids;
 	} finally {
 		initial.dispose();
 	}
@@ -306,18 +373,19 @@ async function verifyGroupedProjection(
 export async function runReferenceWorkflow(backend: SeedWorkflowBackend): Promise<void> {
 	const session = referenceSession(backend);
 	try {
-		const url = await backend.create(createSeedSummary(exampleHtml));
+		const url = await backend.create(createSeedSummary(exampleParts));
 		const seedInspection = await backend.inspect(url);
 		const seedVersion = seedInspection.snapshot.snapshotTree.id;
 		seedInspection.dispose();
-		await verifyGroupedProjection(backend, url, seedVersion, exampleHtml);
+		await verifyGroupedProjection(backend, url, seedVersion, exampleParts);
 		const a = await session.load(url);
 		const b = await session.load(url);
 		await session.tracker.ensureSynchronized();
 		const appA = (await a.getEntryPoint()) as HtmlEntryPoint;
 		const appB = (await b.getEntryPoint()) as HtmlEntryPoint;
-		assert.equal(viewHtml(appA.view), exampleHtml);
-		assert.equal(viewHtml(appB.view), exampleHtml);
+		assert.deepEqual(viewHtmlParts(appA.view), exampleParts);
+		assert.deepEqual(viewHtmlParts(appB.view), exampleParts);
+		assert.notEqual(appA.view.root.first, appA.view.root.second);
 		assert.equal(
 			session.modelWrites,
 			0,
@@ -355,17 +423,17 @@ export async function runReferenceWorkflow(backend: SeedWorkflowBackend): Promis
 		const queueA = toIDeltaManagerFull(a.deltaManager).outbound;
 		const queueB = toIDeltaManagerFull(b.deltaManager).outbound;
 		await Promise.all([queueA.pause(), queueB.pause()]);
-		text(appA, 0).text = "Hello from A";
-		text(appB, 1).text = "World from B";
-		paragraph(appA, 0).children.insertAtEnd(new HtmlText({ text: " +A" }));
-		paragraph(appB, 0).children.insertAtEnd(new HtmlText({ text: " +B" }));
+		text(appA, "first").text = "Hello from A";
+		text(appB, "second").text = "World from B";
+		paragraph(appA, "first").children.insertAtEnd(new HtmlText({ text: " +A" }));
+		paragraph(appB, "first").children.insertAtEnd(new HtmlText({ text: " +B" }));
 		queueA.resume();
 		queueB.resume();
 		await session.tracker.ensureSynchronized();
-		const merged = viewHtml(appA.view);
-		assert.equal(viewHtml(appB.view), merged);
-		assert(merged.includes("Hello from A") && merged.includes("World from B"));
-		assert(merged.includes("+A") && merged.includes("+B"));
+		const merged = viewHtmlParts(appA.view);
+		assert.deepEqual(viewHtmlParts(appB.view), merged);
+		assert(merged.first.includes("Hello from A") && merged.second.includes("World from B"));
+		assert(merged.first.includes("+A") && merged.first.includes("+B"));
 
 		// This client loads the original seed plus real sequenced suffix, independently.
 		const { container: summarizerContainer, summarizer } = await createSummarizerCore(
@@ -378,8 +446,8 @@ export async function runReferenceWorkflow(backend: SeedWorkflowBackend): Promis
 		const summarizerObservation = session.observations.at(-1);
 		assert(summarizerObservation?.projected);
 		assert.equal(summarizerObservation.provenance?.fingerprint, obsA.provenance?.fingerprint);
-		assert.equal(
-			viewHtml(summarizerObservation.app.view),
+		assert.deepEqual(
+			viewHtmlParts(summarizerObservation.app.view),
 			merged,
 			"Normal sequenced suffix must apply after projection",
 		);
@@ -390,6 +458,7 @@ export async function runReferenceWorkflow(backend: SeedWorkflowBackend): Promis
 		);
 		assert.equal(backend.uploads.length, 0, "Failed projection must abort before upload");
 		let accepted = await summarizeNow(summarizer, "graduate the projected baseline");
+		await session.waitForSummaryAcceptance(accepted.summaryVersion);
 		assert.equal(backend.uploads[0].documentUrl, url);
 		assert.equal(
 			backend.uploads[0].context.ackHandle,
@@ -402,22 +471,96 @@ export async function runReferenceWorkflow(backend: SeedWorkflowBackend): Promis
 			accepted.summaryTree.tree.gc !== undefined,
 			"Graduation must emit real GC state too",
 		);
-		assert.equal(summaryHtml(accepted.summaryTree), merged);
+		for (const part of htmlPartIds)
+			assert.equal(encodedPart(accepted.summaryTree, part), merged[part]);
+		assert.equal(session.summaryContexts.at(-1)?.fullTree, true);
+		assert.deepEqual(session.serializedParts, { first: 1, second: 1 });
 		assert.equal(
 			accepted.summaryRefSeq,
 			session.projectionCheckpoint,
 			"Projection must be produced at the summarizer's own checkpoint",
 		);
-		await verifyGroupedProjection(backend, url, accepted.summaryVersion, merged);
-		accepted = await summarizeNow(summarizer, "seed-loaded runtime stays full after ACK");
-		assertFull(accepted.summaryTree);
-		assert.equal(summaryHtml(accepted.summaryTree), merged);
+		const firstNativeIds = await verifyGroupedProjection(
+			backend,
+			url,
+			accepted.summaryVersion,
+			merged,
+		);
+
+		// The SAME seed-loaded runtime adopts its first native ACK and now reuses unchanged state.
+		const firstNativeVersion = accepted.summaryVersion;
+		accepted = await summarizeNow(
+			summarizer,
+			"incremental immediately after first native ACK",
+		);
+		await session.waitForSummaryAcceptance(accepted.summaryVersion);
+		assert.equal(session.summaryContexts.at(-1)?.fullTree, false);
+		assert.equal(
+			session.summaryContexts.at(-1)?.previousSummary?.ackHandle,
+			firstNativeVersion,
+		);
+		for (const part of htmlPartIds) assertReusedPart(accepted.summaryTree, part);
+		assert.deepEqual(session.serializedParts, { first: 1, second: 1 });
+		const unchangedChannels: SummaryObject | undefined =
+			accepted.summaryTree.tree[".channels"];
+		assert(
+			unchangedChannels?.type === SummaryType.Tree && hasHandle(unchangedChannels),
+			"Second summary from the original seed runtime must reuse native handles",
+		);
+		assert.deepEqual(
+			await verifyGroupedProjection(backend, url, accepted.summaryVersion, merged),
+			firstNativeIds,
+			"Unchanged HTML must retain the actual stored blob IDs",
+		);
+
+		// Only the first part changes. The second subtree must bypass its serializer and upload entirely.
+		text(appA, "first").text = "Only first part changes";
+		await session.tracker.ensureSynchronized();
+		const editedParts = viewHtmlParts(appA.view);
+		assert.equal(editedParts.second, merged.second);
+		const previousVersion = accepted.summaryVersion;
+		accepted = await summarizeNow(summarizer, "encode only the changed HTML part");
+		await session.waitForSummaryAcceptance(accepted.summaryVersion);
+		assert.equal(session.summaryContexts.at(-1)?.fullTree, false);
+		assert.equal(session.summaryContexts.at(-1)?.previousSummary?.ackHandle, previousVersion);
+		assert.equal(encodedPart(accepted.summaryTree, "first"), editedParts.first);
+		assertReusedPart(accepted.summaryTree, "second");
+		assert.deepEqual(session.serializedParts, { first: 2, second: 1 });
+		const submitted = backend.uploads.at(-1);
+		assert(submitted !== undefined);
+		assert.equal(submitted.context.ackHandle, previousVersion);
+		assertReusedPart(submitted.summary, "second");
+		const editedIds = await verifyGroupedProjection(
+			backend,
+			url,
+			accepted.summaryVersion,
+			editedParts,
+		);
+		assert.notEqual(editedIds.first, firstNativeIds.first);
+		assert.equal(
+			editedIds.second,
+			firstNativeIds.second,
+			"Reusing the second subtree must preserve its stored HTML blob ID",
+		);
+
+		// Another accepted parent must carry forward the reusable paths without re-rendering either part.
+		accepted = await summarizeNow(
+			summarizer,
+			"reuse both parts against the new accepted parent",
+		);
+		await session.waitForSummaryAcceptance(accepted.summaryVersion);
+		for (const part of htmlPartIds) assertReusedPart(accepted.summaryTree, part);
+		assert.deepEqual(session.serializedParts, { first: 2, second: 1 });
+		assert.deepEqual(
+			await verifyGroupedProjection(backend, url, accepted.summaryVersion, editedParts),
+			editedIds,
+		);
 
 		// No materialization fallback: this must be an entirely normal native load.
 		const fresh = await session.load(url, false, accepted.summaryVersion);
 		const freshApp = (await fresh.getEntryPoint()) as HtmlEntryPoint;
 		await session.tracker.ensureSynchronized();
-		assert.equal(viewHtml(freshApp.view), merged);
+		assert.deepEqual(viewHtmlParts(freshApp.view), editedParts);
 		assert.equal(session.observations.at(-1)?.projected, false);
 		assert.equal(
 			session.observations
@@ -430,7 +573,7 @@ export async function runReferenceWorkflow(backend: SeedWorkflowBackend): Promis
 		// app projection callback must still run on every attempt/checkpoint.
 		summarizer.close();
 		summarizerContainer.close();
-		text(freshApp, 1).text = "Native follow-up";
+		text(freshApp, "second").text = "Native follow-up";
 		await session.tracker.ensureSynchronized(a, b, fresh);
 		const native = await createSummarizerCore(
 			fresh,
@@ -440,18 +583,21 @@ export async function runReferenceWorkflow(backend: SeedWorkflowBackend): Promis
 		session.track(native.container);
 		await session.tracker.ensureSynchronized(a, b, fresh, native.container);
 		const refreshed = await summarizeNow(native.summarizer, "refresh readable projection");
-		assert.equal(summaryHtml(refreshed.summaryTree), viewHtml(freshApp.view));
-		await verifyGroupedProjection(
-			backend,
-			url,
-			refreshed.summaryVersion,
-			viewHtml(freshApp.view),
-		);
+		await session.waitForSummaryAcceptance(refreshed.summaryVersion);
+		const nativeParts = viewHtmlParts(freshApp.view);
+		for (const part of htmlPartIds)
+			assert.equal(encodedPart(refreshed.summaryTree, part), nativeParts[part]);
+		assert.equal(session.summaryContexts.at(-1)?.fullTree, false);
+		await verifyGroupedProjection(backend, url, refreshed.summaryVersion, nativeParts);
 		// No content changes: native descendants can be handles; app output still exists.
 		const callsBeforeRepeat = session.projectionCalls;
+		const serializedBeforeRepeat = { ...session.serializedParts };
 		const repeated = await summarizeNow(native.summarizer, "repeat without native changes");
+		await session.waitForSummaryAcceptance(repeated.summaryVersion);
 		assert.equal(session.projectionCalls, callsBeforeRepeat + 1);
-		assert.equal(summaryHtml(repeated.summaryTree), viewHtml(freshApp.view));
+		assert.deepEqual(session.serializedParts, serializedBeforeRepeat);
+		for (const part of htmlPartIds) assertReusedPart(repeated.summaryTree, part);
+		await verifyGroupedProjection(backend, url, repeated.summaryVersion, nativeParts);
 		const channels: SummaryObject | undefined = repeated.summaryTree.tree[".channels"];
 		assert(
 			channels?.type === SummaryType.Tree && hasHandle(channels),
@@ -474,7 +620,7 @@ export async function runPendingRestoreWorkflow(
 ): Promise<void> {
 	const session = referenceSession(backend, useSnapshotApi);
 	try {
-		const url = await backend.create(createSeedSummary(exampleHtml));
+		const url = await backend.create(createSeedSummary(exampleParts));
 		const a = await session.load(url);
 		const b = await session.load(url);
 		await session.tracker.ensureSynchronized();
@@ -485,7 +631,7 @@ export async function runPendingRestoreWorkflow(
 			useSnapshotApi,
 		);
 		a.disconnect();
-		text(app, 0).text = "Pending edit";
+		text(app, "first").text = "Pending edit";
 		assert(a.getPendingLocalState !== undefined);
 		const pending = await a.getPendingLocalState();
 		assert(pending !== undefined);

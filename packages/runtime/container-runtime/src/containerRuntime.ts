@@ -75,6 +75,7 @@ import {
 	PromiseCache,
 	delay,
 	fail,
+	isPromiseLike,
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import type {
@@ -766,22 +767,76 @@ export interface UnknownIncomingTypedMessage extends TypedMessage {
 type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSequenceNumber">;
 
 /**
- * Experimental, per-runtime summary customization supplied by the application runtime factory.
+ * The checkpoint and accepted parent used to generate an application summary subtree.
+ * @legacy @beta
+ */
+export interface SummaryGenerationContext {
+	/** Whether this attempt must write all content without prior-summary handles. */
+	readonly fullTree: boolean;
+	/** Whether native summary state is being tracked for this attempt. */
+	readonly trackState: boolean;
+	/** The sequence number of the checkpoint being summarized. */
+	readonly referenceSequenceNumber: number;
+	/**
+	 * The exact accepted or loaded parent against which summary handles resolve.
+	 * Undefined for attach summaries and when no parent exists. This parent's reference sequence
+	 * number is not the reference sequence number of the current attempt.
+	 */
+	readonly previousSummary: ISummaryContext | undefined;
+}
+
+/**
+ * Application content and optional acceptance bookkeeping captured at one summary checkpoint.
+ * @legacy @beta
+ */
+export interface AdditionalSummaryTree {
+	/** A fresh tree that will not subsequently be mutated. It may specify a `groupId`. */
+	readonly summary: ISummaryTree;
+	/**
+	 * Synchronously promote the state captured when this tree was generated, not current mutable state.
+	 * Called at most once, only if this submitted proposal is adopted as the runtime's accepted parent,
+	 * after native and GC state have been refreshed. It can run after a later attempt was generated.
+	 * Never called for attach, direct summarize calls, failed submissions, or untracked acknowledgments.
+	 *
+	 * This callback must not mutate the document, submit ops, summarize, or return a promise/thenable.
+	 * Throwing or returning a thenable closes the runtime: native acceptance cannot be rolled back.
+	 */
+	readonly onAccepted?: (context: ISummaryContext) => void;
+}
+
+interface PendingSummaryGeneration {
+	readonly context: SummaryGenerationContext;
+	readonly onAccepted: AdditionalSummaryTree["onAccepted"];
+}
+
+/**
+ * Controls native summary generation and an additional application-owned root subtree.
+ * Supplied by the application runtime factory, independently of summary scheduling configuration.
  * These options are not persisted and must be supplied again when loading another runtime,
  * including a summarizer client.
  * @legacy @beta
  */
-export interface ExperimentalSummaryOptions {
+export interface SummaryGenerationOptions {
 	/**
 	 * Always generate full structural summaries of the native runtime tree, including data stores,
 	 * DDSes and GC state, without reusing summary handles. Defaults to false.
 	 *
 	 * @remarks
 	 * Applies for this runtime's entire lifetime, including automatic summaries and retries.
-	 * This is needed when loading from a projected base whose native summary paths do not exist
-	 * in storage. It does not inline attachment blob payloads or force full GC graph regeneration.
+	 * Use when the stored base cannot supply native paths that would otherwise be reused by handle.
+	 * Unlike fullTreeUntilFirstAck, this unconditional override never transitions back to incremental summaries.
+	 * It does not inline attachment blob payloads or force full GC graph regeneration.
 	 */
 	readonly forceFullTree?: boolean;
+
+	/**
+	 * Generate full native and application summaries until a full proposal submitted by this runtime
+	 * is acknowledged and adopted by its native, GC, and application summary tracking.
+	 * Defaults to false. Generated/uploaded-only attempts and remote acknowledgments do not clear it.
+	 * Use for a virtual loaded base whose native paths cannot yet be reused by handle.
+	 * This state is local to this runtime; the caller's options are never mutated.
+	 */
+	readonly fullTreeUntilFirstAck?: boolean;
 
 	/**
 	 * One application-owned subtree added at the runtime summary root, outside `.channels`.
@@ -793,7 +848,8 @@ export interface ExperimentalSummaryOptions {
 		 */
 		readonly key: string;
 		/**
-		 * Synchronously read this runtime's current checkpoint and return its additional tree.
+		 * Synchronously read this runtime's current checkpoint and return its additional tree and
+		 * optional acceptance callback.
 		 * The returned tree may specify a `groupId`. Its statistics are calculated by the runtime.
 		 *
 		 * @remarks
@@ -805,8 +861,11 @@ export interface ExperimentalSummaryOptions {
 		 * summarization is synchronous: the factory must realize all required data before summary
 		 * generation, on both interactive and summarizer runtimes. Return a fresh tree whose contents
 		 * will not subsequently be mutated.
+		 * Reuse handles only when fullTree is false and the captured application state belongs to
+		 * context.previousSummary. Newly loaded application revisions are not automatically comparable
+		 * to revisions captured by a previous runtime instance.
 		 */
-		readonly summarize: () => ISummaryTree;
+		readonly summarize: (context: SummaryGenerationContext) => AdditionalSummaryTree;
 	};
 }
 
@@ -834,9 +893,9 @@ export interface LoadContainerRuntimeParams {
 	 */
 	runtimeOptions?: IContainerRuntimeOptions;
 	/**
-	 * Experimental summary behavior, captured at load time for this runtime's lifetime.
+	 * Native summary generation policy and additional application content, captured at load time.
 	 */
-	experimentalSummaryOptions?: ExperimentalSummaryOptions;
+	summaryGenerationOptions?: SummaryGenerationOptions;
 	/**
 	 * runtime services provided with context
 	 */
@@ -1049,17 +1108,17 @@ export class ContainerRuntime
 
 		// Copy both levels before any asynchronous work: callers cannot change the summary policy
 		// or replace the registered callback after loading this runtime.
-		const experimentalSummaryOptions =
-			params.experimentalSummaryOptions === undefined
+		const summaryGenerationOptions =
+			params.summaryGenerationOptions === undefined
 				? undefined
 				: {
-						...params.experimentalSummaryOptions,
+						...params.summaryGenerationOptions,
 						additionalRootTree:
-							params.experimentalSummaryOptions.additionalRootTree === undefined
+							params.summaryGenerationOptions.additionalRootTree === undefined
 								? undefined
-								: { ...params.experimentalSummaryOptions.additionalRootTree },
+								: { ...params.summaryGenerationOptions.additionalRootTree },
 					};
-		const additionalRootKey = experimentalSummaryOptions?.additionalRootTree?.key;
+		const additionalRootKey = summaryGenerationOptions?.additionalRootTree?.key;
 		if (
 			additionalRootKey !== undefined &&
 			(additionalRootKey.length === 0 ||
@@ -1421,7 +1480,7 @@ export class ContainerRuntime
 			requestHandler,
 			undefined, // summaryConfiguration
 			recentBatchInfo,
-			experimentalSummaryOptions,
+			summaryGenerationOptions,
 		);
 
 		runtime.sharePendingBlobs();
@@ -1734,6 +1793,20 @@ export class ContainerRuntime
 	 */
 	private lastAckedSummaryContext: ISummaryContext | undefined;
 
+	/** The original loaded parent's checkpoint, unaffected by subsequent op processing. */
+	private readonly loadedSummaryContext: ISummaryContext | undefined;
+	private hasAcceptedFullSummary = false;
+	/** Only completed proposals retain application acceptance callbacks strongly. */
+	private readonly pendingSummaryGenerations = new Map<string, PendingSummaryGeneration>();
+	private readonly generatedSummaryStates = new WeakMap<
+		ISummaryTree,
+		PendingSummaryGeneration
+	>();
+	/** A failed coordinated adoption is terminal because native summary state cannot be rolled back. */
+	private summaryAcceptanceError: UsageError | undefined;
+	private summaryAckRefresh: Promise<void> = Promise.resolve();
+	private pendingSummaryAckRefreshes = 0;
+
 	/**
 	 * It a cache for holding mapping for loading groupIds with its snapshot from the service. Add expiry policy of 1 minute.
 	 * Starting with 1 min and based on recorded usage we can tweak it later on.
@@ -1790,7 +1863,7 @@ export class ContainerRuntime
 			...runtimeOptions.summaryOptions?.summaryConfigOverrides,
 		},
 		recentBatchInfo?: [number, string][],
-		private readonly experimentalSummaryOptions?: ExperimentalSummaryOptions,
+		private readonly summaryGenerationOptions?: SummaryGenerationOptions,
 	) {
 		super();
 
@@ -1900,6 +1973,14 @@ export class ContainerRuntime
 		this.clientDetails = clientDetails;
 		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
+		this.loadedSummaryContext =
+			this.loadedFromVersionId === undefined
+				? undefined
+				: Object.freeze({
+						proposalHandle: undefined,
+						ackHandle: this.loadedFromVersionId,
+						referenceSequenceNumber: context.deltaManager.initialSequenceNumber,
+					});
 		this._getClientId = () => context.clientId;
 		this._getAttachState = () => context.attachState;
 		this.getAbsoluteUrl = async (relativeUrl: string) => {
@@ -2700,6 +2781,7 @@ export class ContainerRuntime
 		}
 		this.garbageCollector.dispose();
 		this._summarizer?.dispose();
+		this.pendingSummaryGenerations.clear();
 		this.channelCollection.dispose();
 		this.pendingStateManager.dispose();
 		this.inboundBatchAggregator.dispose();
@@ -3012,9 +3094,33 @@ export class ContainerRuntime
 		}
 	}
 
-	private addAdditionalRootTreeToSummary(summaryTree: ISummaryTreeWithStats): void {
-		const additionalRootTree = this.experimentalSummaryOptions?.additionalRootTree;
+	private getEffectiveFullTree(requestedFullTree: boolean): boolean {
+		if (this.summaryAcceptanceError !== undefined) {
+			throw this.summaryAcceptanceError;
+		}
+		if (this.pendingSummaryAckRefreshes > 0) {
+			throw new UsageError("Cannot generate a summary during summary acceptance");
+		}
+		return (
+			requestedFullTree ||
+			this.summaryGenerationOptions?.forceFullTree === true ||
+			(this.summaryGenerationOptions?.fullTreeUntilFirstAck === true &&
+				!this.hasAcceptedFullSummary)
+		);
+	}
+
+	private addAdditionalRootTreeToSummary(
+		summaryTree: ISummaryTreeWithStats,
+		context: SummaryGenerationContext,
+	): void {
+		const additionalRootTree = this.summaryGenerationOptions?.additionalRootTree;
 		if (additionalRootTree === undefined) {
+			if (context.trackState && this.summarizerNode.isSummaryInProgress?.() === true) {
+				this.generatedSummaryStates.set(summaryTree.summary, {
+					context,
+					onAccepted: undefined,
+				});
+			}
 			return;
 		}
 
@@ -3022,16 +3128,46 @@ export class ContainerRuntime
 		if (key in summaryTree.summary.tree) {
 			throw new UsageError("Additional summary root key collides with a native root entry");
 		}
-		const summary = summarize();
-		if (summary?.type !== SummaryType.Tree) {
+		const result = summarize(context);
+		if (isPromiseLike(result)) {
+			// Observe a rejected async result as well as reporting the synchronous contract violation.
+			Promise.resolve(result).catch(() => {});
 			throw new UsageError(
-				"Additional summary root callback must synchronously return a tree",
+				"Additional summary root callback must synchronously return a tree result",
+			);
+		}
+		if (isPromiseLike(result?.summary)) {
+			Promise.resolve(result.summary).catch(() => {});
+			throw new UsageError(
+				"Additional summary root callback must synchronously return a tree result",
+			);
+		}
+		if (result?.summary?.type !== SummaryType.Tree) {
+			throw new UsageError(
+				"Additional summary root callback must synchronously return a tree result",
+			);
+		}
+		const onAccepted = result.onAccepted;
+		if (onAccepted !== undefined && typeof onAccepted !== "function") {
+			throw new UsageError("Additional summary acceptance callback must be a function");
+		}
+		const { summary } = result;
+		const stats = calculateStats(summary);
+		if (
+			stats.handleNodeCount > 0 &&
+			(context.fullTree || context.previousSummary === undefined)
+		) {
+			throw new UsageError(
+				"Additional summary handles require an incremental attempt with an accepted or loaded parent",
 			);
 		}
 		addSummarizeResultToSummary(summaryTree, key, {
 			summary,
-			stats: calculateStats(summary),
+			stats,
 		});
+		if (context.trackState && this.summarizerNode.isSummaryInProgress?.() === true) {
+			this.generatedSummaryStates.set(summaryTree.summary, { context, onAccepted });
+		}
 	}
 
 	// Track how many times the container tries to reconnect with pending messages.
@@ -4368,6 +4504,7 @@ export class ContainerRuntime
 		blobRedirectTable?: Map<string, string>,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTree {
+		this.getEffectiveFullTree(true);
 		if (blobRedirectTable) {
 			this.blobManager.patchRedirectTable(blobRedirectTable);
 		}
@@ -4392,7 +4529,15 @@ export class ContainerRuntime
 			false /* trackState */,
 			telemetryContext,
 		);
-		this.addAdditionalRootTreeToSummary(summarizeResult);
+		this.addAdditionalRootTreeToSummary(
+			summarizeResult,
+			Object.freeze({
+				fullTree: true,
+				trackState: false,
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				previousSummary: undefined,
+			}),
+		);
 		return summarizeResult.summary;
 	}
 
@@ -4411,8 +4556,7 @@ export class ContainerRuntime
 	): Promise<ISummarizeInternalResult> {
 		// Enforce the load-time policy at the native-tree boundary as well as summarize(), so
 		// every path through the root summarizer passes fullTree down to data stores and GC.
-		const fullTree =
-			requestedFullTree || this.experimentalSummaryOptions?.forceFullTree === true;
+		const fullTree = this.getEffectiveFullTree(requestedFullTree);
 		const summarizeResult = await this.channelCollection.summarize(
 			fullTree,
 			trackState,
@@ -4426,7 +4570,15 @@ export class ContainerRuntime
 		this.loadIdCompressor();
 
 		this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
-		this.addAdditionalRootTreeToSummary(summarizeResult);
+		this.addAdditionalRootTreeToSummary(
+			summarizeResult,
+			Object.freeze({
+				fullTree,
+				trackState,
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				previousSummary: this.lastAckedSummaryContext ?? this.loadedSummaryContext,
+			}),
+		);
 		return {
 			...summarizeResult,
 			id: "",
@@ -4440,7 +4592,7 @@ export class ContainerRuntime
 	public async summarize(options: {
 		/**
 		 * True to generate the full tree with no handle reuse optimizations; defaults to false.
-		 * The load-time experimental forceFullTree option takes precedence over false.
+		 * The load-time full-tree generation policies take precedence over false.
 		 */
 		fullTree?: boolean;
 		/**
@@ -4479,8 +4631,7 @@ export class ContainerRuntime
 			fullGC,
 			telemetryContext = new TelemetryContext(),
 		} = options;
-		const fullTree =
-			this.experimentalSummaryOptions?.forceFullTree === true || requestedFullTree;
+		const fullTree = this.getEffectiveFullTree(requestedFullTree);
 
 		// Add the options that are used to generate this summary to the telemetry context.
 		telemetryContext.setMultiple("fluid_Summarize", "Options", {
@@ -4512,6 +4663,9 @@ export class ContainerRuntime
 
 			return { stats, summary };
 		} finally {
+			if (this.summarizerNode.isSummaryInProgress?.() !== true) {
+				this.garbageCollector.clearSummary();
+			}
 			summaryLogger.sendTelemetryEvent({
 				eventName: "SummarizeTelemetry",
 				details: telemetryContext.serialize(),
@@ -4905,6 +5059,7 @@ export class ContainerRuntime
 
 			const trace = Trace.start();
 			let summarizeResult: ISummaryTreeWithStats;
+			let summaryGeneration: PendingSummaryGeneration | undefined;
 			try {
 				summarizeResult = await this.summarize({
 					fullTree,
@@ -4913,6 +5068,8 @@ export class ContainerRuntime
 					runGC: this.garbageCollector.shouldRunGC,
 					telemetryContext,
 				});
+				summaryGeneration = this.generatedSummaryStates.get(summarizeResult.summary);
+				this.generatedSummaryStates.delete(summarizeResult.summary);
 			} catch (error) {
 				return {
 					stage: "base",
@@ -5057,6 +5214,12 @@ export class ContainerRuntime
 
 			try {
 				this.summarizerNode.completeSummary(handle);
+				this.garbageCollector.completeSummary(handle, summaryRefSeqNum);
+				assert(
+					summaryGeneration !== undefined,
+					"Submitted summary generation must be tracked",
+				);
+				this.pendingSummaryGenerations.set(handle, summaryGeneration);
 			} catch (error) {
 				return {
 					stage: "upload",
@@ -5068,6 +5231,7 @@ export class ContainerRuntime
 		} finally {
 			// Cleanup wip summary in case of failure
 			this.summarizerNode.clearSummary();
+			this.garbageCollector.clearSummary();
 
 			// ! This needs to happen before we resume inbound queues to ensure heuristics are tracked correctly
 			this._summarizer?.recordSummaryAttempt?.(summaryRefSeqNum);
@@ -5609,13 +5773,31 @@ export class ContainerRuntime
 	 * Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck
 	 */
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void> {
+		// Serialize native/GC/application adoption, including duplicate or delayed ACKs.
+		this.pendingSummaryAckRefreshes++;
+		const refresh = this.summaryAckRefresh.then(async () => {
+			try {
+				if (this.summaryAcceptanceError !== undefined) {
+					throw this.summaryAcceptanceError;
+				}
+				await this.refreshLatestSummaryAckCore(options);
+			} finally {
+				this.pendingSummaryAckRefreshes--;
+			}
+		});
+		this.summaryAckRefresh = refresh.catch(() => {});
+		return refresh;
+	}
+
+	private async refreshLatestSummaryAckCore(
+		options: IRefreshSummaryAckOptions,
+	): Promise<void> {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
 		// proposalHandle is always passed from RunningSummarizer.
 		assert(proposalHandle !== undefined, 0x766 /* proposalHandle should be available */);
-		const result = await this.summarizerNode.refreshLatestSummary(
-			proposalHandle,
-			summaryRefSeq,
-		);
+		const result = await this.summarizerNode
+			.refreshLatestSummary(proposalHandle, summaryRefSeq)
+			.catch((error: unknown) => this.failSummaryAcceptance(error));
 
 		/* eslint-disable jsdoc/check-indentation */
 		/**
@@ -5643,15 +5825,46 @@ export class ContainerRuntime
 			return;
 		}
 
-		// Notify the garbage collector so it can update its latest summary state.
-		await this.garbageCollector.refreshLatestSummary(result);
+		try {
+			const generation = this.pendingSummaryGenerations.get(proposalHandle);
+			assert(generation !== undefined, "Tracked summary must have matching generation state");
+			assert(
+				generation.context.referenceSequenceNumber === summaryRefSeq,
+				"Accepted proposal must match its generated checkpoint",
+			);
+			// GC must adopt this proposal's captured state, never the most recently generated state.
+			await this.garbageCollector.refreshLatestSummary(result, proposalHandle);
+			this.verifyNotClosed();
+			this.lastAckedSummaryContext = Object.freeze({
+				proposalHandle,
+				ackHandle,
+				referenceSequenceNumber: summaryRefSeq,
+			});
+			this.pendingSummaryGenerations.delete(proposalHandle);
+			for (const [handle, pending] of this.pendingSummaryGenerations) {
+				if (pending.context.referenceSequenceNumber < summaryRefSeq) {
+					this.pendingSummaryGenerations.delete(handle);
+				}
+			}
+			const acceptedResult: unknown = generation.onAccepted?.(this.lastAckedSummaryContext);
+			if (isPromiseLike(acceptedResult)) {
+				Promise.resolve(acceptedResult).catch(() => {});
+				throw new UsageError("Additional summary acceptance callback must be synchronous");
+			}
+			// Promote only after all native, GC, parent, and application bookkeeping has succeeded.
+			if (generation.context.fullTree) {
+				this.hasAcceptedFullSummary = true;
+			}
+		} catch (error) {
+			this.failSummaryAcceptance(error);
+		}
+	}
 
-		// If we here, the ack was tracked by this client. Update the summary context of the last ack.
-		this.lastAckedSummaryContext = {
-			proposalHandle,
-			ackHandle,
-			referenceSequenceNumber: summaryRefSeq,
-		};
+	private failSummaryAcceptance(error: unknown): never {
+		this.summaryAcceptanceError = wrapError(error, (message) => new UsageError(message));
+		this.pendingSummaryGenerations.clear();
+		this.closeFn(this.summaryAcceptanceError);
+		throw this.summaryAcceptanceError;
 	}
 
 	private readonly readAndParseBlob = async <T>(id: string): Promise<T> =>

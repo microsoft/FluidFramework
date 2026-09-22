@@ -23,7 +23,8 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 import { configuredSharedTree } from "@fluidframework/tree/internal";
 
 import { parseHtml, serializeHtml } from "./htmlSeedFormat.js";
-import { toTree, viewConfiguration } from "./htmlTreeSchema.js";
+import { HtmlDocument, toTree, viewConfiguration } from "./htmlTreeSchema.js";
+import type { HtmlParts } from "./externalSeedFile.js";
 
 export const storeType = "reference-html-store";
 export const storeId = "document";
@@ -64,11 +65,14 @@ export interface NativeBaseline {
  * It preserves the source checkpoint and does not replay its op suffix. The fingerprint diagnoses
  * incompatible reconstruction; it is not a production first-op agreement or authentication protocol.
  */
-export function buildNativeBaseline(html: string, sequenceNumber: number): NativeBaseline {
+export function buildNativeBaseline(parts: HtmlParts, sequenceNumber: number): NativeBaseline {
 	if (!Number.isSafeInteger(sequenceNumber) || sequenceNumber < 0) {
 		throw new Error("A native baseline requires a nonnegative integer checkpoint");
 	}
-	const canonicalHtml = serializeHtml(parseHtml(html));
+	const canonicalParts = {
+		first: serializeHtml(parseHtml(parts.first)),
+		second: serializeHtml(parseHtml(parts.second)),
+	};
 	const compressor = toIdCompressorWithCore(createIdCompressor(genesisSession));
 	const runtime = new MockFluidDataStoreRuntime({
 		id: storeId,
@@ -79,7 +83,12 @@ export function buildNativeBaseline(html: string, sequenceNumber: number): Nativ
 	const channel = treeFactory.create(runtime, treeId);
 	const view = channel.viewWith(viewConfiguration);
 	try {
-		view.initialize(toTree(parseHtml(canonicalHtml)));
+		view.initialize(
+			new HtmlDocument({
+				first: toTree(parseHtml(canonicalParts.first)),
+				second: toTree(parseHtml(canonicalParts.second)),
+			}),
+		);
 		// Detached initialization allocates real stable IDs. Finalize once, then
 		// serialize without a session: every live client gets a NEW local session.
 		compressor.finalizeCreationRange(compressor.takeNextCreationRange());

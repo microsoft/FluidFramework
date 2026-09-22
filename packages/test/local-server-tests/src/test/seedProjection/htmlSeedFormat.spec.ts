@@ -45,8 +45,20 @@ describe("Seed projection reference: format and baseline", () => {
 
 	// Equivalent HTML must produce identical persistent identities/bytes, not merely equal rendered text.
 	it("independently constructs byte-identical native baselines and identity tables", () => {
-		const a = buildNativeBaseline('<p title="x" id="a">hello</p>', 0);
-		const b = buildNativeBaseline('<p id="a" title="x">hello</p>', 0);
+		const a = buildNativeBaseline(
+			{
+				first: '<p title="x" id="a">hello</p>',
+				second: "<p>second</p>",
+			},
+			0,
+		);
+		const b = buildNativeBaseline(
+			{
+				first: '<p id="a" title="x">hello</p>',
+				second: "<p>second</p>",
+			},
+			0,
+		);
 		assert.equal(a.fingerprint, b.fingerprint);
 		assert.deepEqual(a.summary, b.summary);
 		assert.deepEqual(a.blobs, b.blobs);

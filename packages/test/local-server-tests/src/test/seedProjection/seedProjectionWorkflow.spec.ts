@@ -18,8 +18,8 @@ describe("Seed projection reference: Memorylicious lifecycle", function () {
 		await backend.close();
 	});
 
-	// Cover the entire seed-to-native path, including no writes on open and post-graduation projection refresh.
-	it("externally creates, independently projects, merges, ACKs, and graduates to native state", async () => {
+	// Prove two-part convergence, first-ACK native graduation, zero encoding/upload of an unchanged part, and native reload.
+	it("graduates after one full summary and reuses unchanged native and HTML subtrees", async () => {
 		await runReferenceWorkflow(backend);
 	});
 	// Reconstruct omitted source bodies from pending state and replay a disconnected edit into real collaboration.

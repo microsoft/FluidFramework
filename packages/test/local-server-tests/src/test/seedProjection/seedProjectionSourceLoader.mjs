@@ -112,7 +112,9 @@ if (process.env.SEED_TYPECHECK === "1") {
 		return (
 			file?.includes("/seedProjection/") ||
 			file?.endsWith("/container-runtime/src/containerRuntime.ts") ||
-			file?.endsWith("/containerRuntime.experimentalSummary.spec.ts")
+			file?.includes("/container-runtime/src/gc/") ||
+			file?.includes("/container-runtime/src/test/gc/") ||
+			file?.endsWith("/containerRuntime.summaryGeneration.spec.ts")
 		);
 	});
 	console.log(

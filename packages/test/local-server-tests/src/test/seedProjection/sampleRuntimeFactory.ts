@@ -7,19 +7,25 @@ import type {
 	IContainerContext,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
-import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
+import {
+	loadContainerRuntime,
+	type AdditionalSummaryTree,
+	type SummaryGenerationContext,
+} from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import type { ITree } from "@fluidframework/tree";
 
 import {
-	createApplicationProjection,
 	projectionKey,
 	readApplicationProjection,
+	type HtmlPartId,
 } from "./externalSeedFile.js";
 import { format } from "./htmlSeedFormat.js";
-import { viewConfiguration, viewHtml, type HtmlView } from "./htmlTreeSchema.js";
+import { viewConfiguration, type HtmlView } from "./htmlTreeSchema.js";
+import { IncrementalHtmlProjection } from "./incrementalHtmlProjection.js";
 import {
 	buildNativeBaseline,
 	rootAlias,
@@ -106,7 +112,7 @@ export const htmlProjector: Projector = {
 			{ retained },
 		);
 	},
-	materialize: (seed, sequenceNumber) => buildNativeBaseline(seed.html, sequenceNumber),
+	materialize: (seed, sequenceNumber) => buildNativeBaseline(seed.parts, sequenceNumber),
 };
 
 /** Test-only observation joining the adapter's decision with the loaded native runtime and model. */
@@ -121,8 +127,8 @@ export interface AppObservation extends ProjectionLoad {
 
 /**
  * Create the sample application's IRuntimeFactory, composing seed adaptation with normal native loading.
- * Realize the persisted SharedTree on every client, keep seed-loaded runtimes on full structural
- * summaries, and register a synchronous projection of this runtime's own checkpoint. Loading emits no init ops.
+ * Realize the persisted SharedTree on every client, require full native state until its first tracked ACK,
+ * and project the two HTML subtrees incrementally at this runtime's checkpoint. Loading emits no init ops.
  */
 export function sampleRuntimeFactory(
 	options: {
@@ -132,12 +138,20 @@ export function sampleRuntimeFactory(
 		observe?: (observation: AppObservation) => void;
 		/** Test-only callback instrumentation/failure injection at the summarizer's checkpoint. */
 		beforeProjection?: (checkpoint: number) => void;
+		/** Test-only observation at the actual serializer boundary, never called for a reused part. */
+		onSerializePart?: (part: HtmlPartId) => void;
+		/** Observe effective generation mode and accepted parent without exposing mutable application state. */
+		observeSummary?: (context: SummaryGenerationContext) => void;
+		/** Observe adoption after the projection's captured state becomes an accepted reuse baseline. */
+		onSummaryAccepted?: (context: ISummaryContext) => void;
 	} = {},
 ): IRuntimeFactory {
 	return seedRuntimeFactory(
 		htmlProjector,
 		async (load, existing) => {
-			let readProjectionHtml = (): string => {
+			let summarizeProjection = (
+				_context: SummaryGenerationContext,
+			): AdditionalSummaryTree => {
 				throw new Error("Projection tree must be realized before summarization");
 			};
 			const runtime = await loadContainerRuntime({
@@ -158,13 +172,14 @@ export function sampleRuntimeFactory(
 					},
 				},
 				provideEntryPoint: entryPoint,
-				experimentalSummaryOptions: {
-					forceFullTree: load.projected,
+				summaryGenerationOptions: {
+					fullTreeUntilFirstAck: load.projected,
 					additionalRootTree: {
 						key: projectionKey,
-						summarize: () => {
+						summarize: (context) => {
 							options.beforeProjection?.(load.context.deltaManager.lastSequenceNumber);
-							return createApplicationProjection(readProjectionHtml());
+							options.observeSummary?.(context);
+							return summarizeProjection(context);
 						},
 					},
 				},
@@ -172,7 +187,22 @@ export function sampleRuntimeFactory(
 			// Realize on EVERY client, including the noninteractive summarizer. No model
 			// initialization, alias creation or DDS writes occur here.
 			const app = await entryPoint(runtime);
-			readProjectionHtml = () => viewHtml(app.view);
+			const projection = new IncrementalHtmlProjection(app.view, options.onSerializePart);
+			runtime.once("dispose", () => projection.dispose());
+			summarizeProjection = (context) => {
+				const result = projection.summarize(context);
+				const onAccepted = result.onAccepted;
+				return {
+					summary: result.summary,
+					onAccepted:
+						onAccepted === undefined
+							? undefined
+							: (accepted) => {
+									onAccepted(accepted);
+									options.onSummaryAccepted?.(accepted);
+								},
+				};
+			};
 			options.observe?.({ ...load, runtime, app });
 			return runtime;
 		},

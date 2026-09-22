@@ -10,6 +10,7 @@ import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal"
 
 import {
 	createSeedSummary,
+	createProjectionManifest,
 	projectionKey,
 	readApplicationProjection,
 	type ApplicationProjection,
@@ -23,8 +24,11 @@ function projectionSnapshot(): ISnapshotTree {
 		blobs: {},
 		trees: {
 			[projectionKey]: {
-				trees: {},
-				blobs: { "manifest.work": "manifest-id", "document.html": "html-id" },
+				trees: {
+					first: { trees: {}, blobs: { "document.html": "first-id" } },
+					second: { trees: {}, blobs: { "document.html": "second-id" } },
+				},
+				blobs: { "manifest.work": "manifest-id" },
 			},
 		},
 	};
@@ -34,9 +38,9 @@ function projectionSnapshot(): ISnapshotTree {
 function retainedProjection(): ApplicationProjection {
 	return {
 		manifestId: "manifest-id",
-		htmlId: "html-id",
-		manifest: JSON.stringify({ format, html: "document.html" }),
-		html: "<p>retained</p>",
+		partBlobIds: { first: "first-id", second: "second-id" },
+		manifest: createProjectionManifest(),
+		parts: { first: "<p>retained</p>", second: "<p>unchanged</p>" },
 	};
 }
 
@@ -44,8 +48,9 @@ function retainedProjection(): ApplicationProjection {
 describe("Seed projection reference: external file contract", () => {
 	// Repeated creation describes the same envelope; storage, not this serializer, assigns a file identity.
 	it("creates a deterministic protocol envelope with application bytes and no native graph", () => {
-		const seed = createSeedSummary("<p>external</p>");
-		assert.deepEqual(seed, createSeedSummary("<p>external</p>"));
+		const parts = { first: "<p>external</p>", second: "<p>second</p>" };
+		const seed = createSeedSummary(parts);
+		assert.deepEqual(seed, createSeedSummary(parts));
 		assert.deepEqual(Object.keys(seed.tree).sort(), [".app", ".protocol"]);
 		const app: SummaryObject | undefined = seed.tree[".app"];
 		assert(app?.type === SummaryType.Tree);
@@ -69,7 +74,12 @@ describe("Seed projection reference: external file contract", () => {
 			readApplicationProjection(
 				projectionSnapshot(),
 				async () => assert.fail("Mismatched retained IDs must fail before storage reads"),
-				{ retained: { ...retainedProjection(), htmlId: "another-file" } },
+				{
+					retained: {
+						...retainedProjection(),
+						partBlobIds: { first: "another-file", second: "second-id" },
+					},
+				},
 			),
 			/does not belong/,
 		);
@@ -84,7 +94,7 @@ describe("Seed projection reference: external file contract", () => {
 				{
 					retained: {
 						...retainedProjection(),
-						manifest: '{"format":"future","html":"document.html"}',
+						manifest: '{"format":"future","parts":{}}',
 					},
 				},
 			),
@@ -92,7 +102,7 @@ describe("Seed projection reference: external file contract", () => {
 		);
 	});
 
-	// Both IDs are required to distinguish an application projection from an unrelated snapshot subtree.
+	// All IDs are required to distinguish an application projection from an unrelated snapshot subtree.
 	it("rejects snapshots without the application payload", async () => {
 		await assert.rejects(
 			readApplicationProjection({ trees: {}, blobs: {} }, async () =>
@@ -106,12 +116,14 @@ describe("Seed projection reference: external file contract", () => {
 	it("creates and reads two independent files through the same backend", async () => {
 		const backend = createLocalSeedBackend();
 		try {
-			const first = await backend.create(createSeedSummary("<p>first</p>"));
-			const second = await backend.create(createSeedSummary("<p>second</p>"));
+			const firstParts = { first: "<p>first document</p>", second: "<p>one</p>" };
+			const secondParts = { first: "<p>second document</p>", second: "<p>two</p>" };
+			const first = await backend.create(createSeedSummary(firstParts));
+			const second = await backend.create(createSeedSummary(secondParts));
 			assert.notEqual(first, second);
-			for (const { url, html } of [
-				{ url: first, html: "<p>first</p>" },
-				{ url: second, html: "<p>second</p>" },
+			for (const { url, parts } of [
+				{ url: first, parts: firstParts },
+				{ url: second, parts: secondParts },
 			]) {
 				const inspection = await backend.inspect(url);
 				try {
@@ -119,8 +131,11 @@ describe("Seed projection reference: external file contract", () => {
 						inspection.snapshot.snapshotTree,
 						inspection.readBlob,
 					);
-					assert.equal(projection.html, html);
-					assert.deepEqual(JSON.parse(projection.manifest), { format, html: "document.html" });
+					assert.deepEqual(projection.parts, parts);
+					assert.deepEqual(JSON.parse(projection.manifest), {
+						format,
+						parts: { first: "first/document.html", second: "second/document.html" },
+					});
 				} finally {
 					inspection.dispose();
 				}
@@ -133,5 +148,39 @@ describe("Seed projection reference: external file contract", () => {
 		} finally {
 			await backend.close();
 		}
+	});
+
+	// Retained content for one part must not hide an incomplete second part in the source snapshot.
+	it("rejects a seed missing either HTML subtree", async () => {
+		const snapshot = projectionSnapshot();
+		const projection: ISnapshotTree | undefined = snapshot.trees[projectionKey];
+		assert(projection !== undefined);
+		delete projection.trees.second;
+		await assert.rejects(
+			readApplicationProjection(snapshot, async () =>
+				assert.fail("Missing IDs must fail before reads"),
+			),
+			/Not a supported seed envelope/,
+		);
+	});
+
+	// Documented paths are fixed in this version, rather than trusted filesystem or arbitrary blob references.
+	it("rejects an incompatible part mapping in the manifest", async () => {
+		await assert.rejects(
+			readApplicationProjection(
+				projectionSnapshot(),
+				async () => assert.fail("No reads expected"),
+				{
+					retained: {
+						...retainedProjection(),
+						manifest: JSON.stringify({
+							format,
+							parts: { first: "../other", second: "second/document.html" },
+						}),
+					},
+				},
+			),
+			/Unsupported manifest/,
+		);
 	});
 });

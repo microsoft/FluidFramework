@@ -363,8 +363,10 @@ export class GarbageCollector implements IGarbageCollector {
 		// - autoRecovery.onCompletedGCRun       :: "requested" --> "ran"
 		// - autoRecovery.onSummaryAck           :: "ran" --> undefined
 		let state: "requested" | "ran" | undefined;
+		let generation = 0;
 		return {
 			requestFullGCOnNextRun: () => {
+				generation++;
 				state = "requested";
 			},
 			onCompletedGCRun: () => {
@@ -372,8 +374,10 @@ export class GarbageCollector implements IGarbageCollector {
 					state = "ran";
 				}
 			},
-			onSummaryAck: () => {
-				if (state === "ran") {
+			generationForSummary: () => (state === "ran" ? generation : undefined),
+			onSummaryAck: (acceptedGeneration: number | undefined) => {
+				// An older proposal must not clear a recovery requested or run after its checkpoint.
+				if (state === "ran" && acceptedGeneration === generation) {
 					state = undefined;
 				}
 			},
@@ -895,10 +899,12 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		return this.summaryStateTracker.summarize(
-			trackState && !fullTree,
+			trackState,
 			gcState,
 			this.deletedNodes,
 			this.tombstones,
+			fullTree,
+			this.autoRecovery.generationForSummary(),
 		);
 	}
 
@@ -919,9 +925,25 @@ export class GarbageCollector implements IGarbageCollector {
 	/**
 	 * Called to refresh the latest summary state. This happens when either a pending summary is acked.
 	 */
-	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
-		this.autoRecovery.onSummaryAck();
-		return this.summaryStateTracker.refreshLatestSummary(result);
+	public completeSummary(proposalHandle: string, referenceSequenceNumber: number): void {
+		this.summaryStateTracker.completeSummary(proposalHandle, referenceSequenceNumber);
+	}
+
+	public clearSummary(): void {
+		this.summaryStateTracker.clearSummary();
+	}
+
+	public async refreshLatestSummary(
+		result: IRefreshSummaryResult,
+		proposalHandle: string,
+	): Promise<void> {
+		const recoveryGeneration = await this.summaryStateTracker.refreshLatestSummary(
+			result,
+			proposalHandle,
+		);
+		if (result.isSummaryTracked) {
+			this.autoRecovery.onSummaryAck(recoveryGeneration);
+		}
 	}
 
 	/**

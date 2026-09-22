@@ -10,7 +10,7 @@ import type {
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
 
-import { projectionKey } from "./externalSeedFile.js";
+import { createProjectionManifest, projectionKey } from "./externalSeedFile.js";
 import { format } from "./htmlSeedFormat.js";
 import { buildNativeBaseline } from "./nativeSeedBaseline.js";
 import { htmlProjector } from "./sampleRuntimeFactory.js";
@@ -59,12 +59,13 @@ describe("Seed projection reference: forwarding", () => {
 
 	// Identical visible HTML at another checkpoint must not be mistaken for the same native genesis.
 	it("binds the canonical fingerprint to the source checkpoint", () => {
+		const parts = { first: "<p>a</p>", second: "<p>b</p>" };
 		assert.notEqual(
-			buildNativeBaseline("<p>a</p>", 0).fingerprint,
-			buildNativeBaseline("<p>a</p>", 1).fingerprint,
+			buildNativeBaseline(parts, 0).fingerprint,
+			buildNativeBaseline(parts, 1).fingerprint,
 		);
-		assert.throws(() => buildNativeBaseline("<p>a</p>", -1));
-		assert.throws(() => buildNativeBaseline("<p>a</p>", Number.NaN));
+		assert.throws(() => buildNativeBaseline(parts, -1));
+		assert.throws(() => buildNativeBaseline(parts, Number.NaN));
 	});
 
 	// Reject incompatible reconstruction before a native delegate could interpret pending operations.
@@ -74,8 +75,11 @@ describe("Seed projection reference: forwarding", () => {
 				blobs: {},
 				trees: {
 					[projectionKey]: {
-						trees: {},
-						blobs: { "manifest.work": "manifest", "document.html": "html" },
+						trees: {
+							first: { trees: {}, blobs: { "document.html": "first" } },
+							second: { trees: {}, blobs: { "document.html": "second" } },
+						},
+						blobs: { "manifest.work": "manifest" },
 					},
 				},
 			},
@@ -85,9 +89,9 @@ describe("Seed projection reference: forwarding", () => {
 				provenance: { format, fingerprint: "wrong", sourceSequenceNumber: 0 },
 				seed: {
 					manifestId: "manifest",
-					htmlId: "html",
-					manifest: JSON.stringify({ format, html: "document.html" }),
-					html: "<p>a</p>",
+					partBlobIds: { first: "first", second: "second" },
+					manifest: createProjectionManifest(),
+					parts: { first: "<p>a</p>", second: "<p>b</p>" },
 				},
 				runtime: {},
 			},
