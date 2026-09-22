@@ -148,7 +148,6 @@ describe("publish tarballs", () => {
 		it("treats a failed publish as already published when the version appears afterward", async () => {
 			const tarball = createTarball("tarball");
 			let publishedCheckCount = 0;
-			const recoveredTarballs: TarballMetadata[] = [];
 
 			const [result] = await publishTarballsInOrder([tarball], {
 				retry: 0,
@@ -157,38 +156,13 @@ describe("publish tarballs", () => {
 					return publishedCheckCount > 1;
 				},
 				publish: async () => "Error",
-				onPublishRecovered: (recovered) => recoveredTarballs.push(recovered),
 			});
 
 			expect(result).to.deep.equal({
-				status: "AlreadyPublished",
+				status: "RecoveredAlreadyPublished",
 				tarball,
 				tryCount: 1,
 			});
-			expect(recoveredTarballs).to.deep.equal([tarball]);
-		});
-
-		it("does not invoke onPublishRecovered when preflight already reports a tarball as published", async () => {
-			const tarball = createTarball("tarball");
-			const recoveredTarballs: TarballMetadata[] = [];
-
-			const [result] = await publishTarballsInOrder([tarball], {
-				retry: 0,
-				isPublished: async () => true,
-				publish: async () => {
-					throw new Error(
-						"publish should not be called when preflight already found it published",
-					);
-				},
-				onPublishRecovered: (recovered) => recoveredTarballs.push(recovered),
-			});
-
-			expect(result).to.deep.equal({
-				status: "AlreadyPublished",
-				tarball,
-				tryCount: 0,
-			});
-			expect(recoveredTarballs).to.deep.equal([]);
 		});
 
 		it("does not retry when publishing reports an already published tarball", async () => {

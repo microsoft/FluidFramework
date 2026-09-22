@@ -94,20 +94,9 @@ export interface PublishTarballsOptions {
 	readonly onPublishAttempt?: (tarball: TarballMetadata, attempt: number) => void;
 
 	/**
-	 * Optional callback invoked when a publish attempt fails, but a subsequent registry recheck
-	 * reveals that the package version is already published.
-	 *
-	 * This can happen when a concurrent publisher wins the race to publish the same version, or
-	 * when this run's own `npm publish` call actually succeeded but its response was lost.
-	 *
-	 * @param tarball - The tarball whose failed publish attempt was recovered.
-	 */
-	readonly onPublishRecovered?: (tarball: TarballMetadata) => void;
-
-	/**
 	 * Maximum number of initial registry preflight checks to execute concurrently.
 	 *
-	 * @defaultValue {@link publishPreflightConcurrency}
+	 * @defaultValue 10
 	 */
 	readonly preflightConcurrency?: number;
 }
@@ -245,16 +234,19 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 			publish: async (tarball) => publishTarball(tarball, this.logger, publishArgs),
 			onPublishAttempt: (tarball, attempt) =>
 				this.info(`Publishing ${tarball.fileName}, attempt ${attempt}`),
-			onPublishRecovered: (tarball) =>
-				this.warning(
-					`Publish attempt for ${tarball.fileName} failed, but the registry now shows it is published; treating as already published.`,
-				),
 		});
 
 		for (const { status, tarball: toPublish, tryCount } of results) {
 			switch (status) {
 				case "AlreadyPublished": {
 					this.info(`Already published ${toPublish.fileName}, skipping`);
+					break;
+				}
+
+				case "RecoveredAlreadyPublished": {
+					this.warning(
+						`Publish attempt for ${toPublish.fileName} failed, but the registry now shows it is published; treating as already published.`,
+					);
 					break;
 				}
 
@@ -309,9 +301,15 @@ async function extractPackageJsonFromTarball(
  *
  * - `"SuccessfullyPublished"`: The package was published to the registry in this run.
  * - `"AlreadyPublished"`: The package version already existed in the registry and was skipped.
+ * - `"RecoveredAlreadyPublished"`: A publish attempt failed, but a follow-up registry check
+ *   showed that the package version is now published.
  * - `"Error"`: An error occurred and could not be resolved within the retry budget.
  */
-export type PublishStatus = "SuccessfullyPublished" | "AlreadyPublished" | "Error";
+export type PublishStatus =
+	| "SuccessfullyPublished"
+	| "AlreadyPublished"
+	| "RecoveredAlreadyPublished"
+	| "Error";
 
 /**
  * Resolves and deduplicates the list of tarballs to publish based on an ordered list of names.
@@ -366,14 +364,7 @@ export async function publishTarballsInOrder(
 	tarballs: readonly TarballMetadata[],
 	options: PublishTarballsOptions,
 ): Promise<PublishTarballResult[]> {
-	const {
-		isPublished,
-		onPublishAttempt,
-		onPublishRecovered,
-		preflightConcurrency,
-		publish,
-		retry,
-	} = options;
+	const { isPublished, onPublishAttempt, preflightConcurrency, publish, retry } = options;
 	if (retry < 0) {
 		throw new RangeError(`retry must be greater than or equal to 0`);
 	}
@@ -414,8 +405,7 @@ export async function publishTarballsInOrder(
 			// a concurrent publisher won the race or because this publish succeeded but lost its response.
 			// eslint-disable-next-line no-await-in-loop
 			if (await isPublished(tarball)) {
-				status = "AlreadyPublished";
-				onPublishRecovered?.(tarball);
+				status = "RecoveredAlreadyPublished";
 				break;
 			}
 		}
