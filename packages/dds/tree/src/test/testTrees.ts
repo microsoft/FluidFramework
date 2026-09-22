@@ -657,7 +657,7 @@ export const testDocuments: readonly TestDocument[] = [
 	),
 	{
 		ambiguous: false,
-		name: "AllowsUnknownOptionalFields",
+		name: "emptyUnknownOptionalFields",
 		schema: AllowsUnknownOptionalFields,
 		hasUnknownOptionalFieldSchema: true,
 		// Unknown optional fields are allowed but empty in this document.
