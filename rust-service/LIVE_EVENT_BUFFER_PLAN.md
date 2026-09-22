@@ -207,6 +207,8 @@ Transport completion does not establish application consumption, and fair host s
 Additional transport statistics may help diagnosis but must not be a prerequisite for correct accounting or safe backpressure.
 
 Default expiry uses an explicit configurable no-progress tolerance for pending delivery, excluding the host's own known scheduling wait where measurable.
+Start the clock when delivery changes from empty to pending, reset it on subsequent credited delivery progress, and clear it when pending delivery drains to zero.
+Prior idle time never counts toward expiry; additional queued events without credited progress do not reset the clock.
 It does not expire a subscription merely because its document is idle or its window is full while delivery continues.
 Even after excluding scheduler wait, an expiry can remove a functioning reader delayed by network congestion.
 Document this tradeoff and distinguish policy expiry, resource admission rejection, lag-floor termination, and actual transport failure in diagnostics.
@@ -825,7 +827,9 @@ Size and validate all windows, maximum-event-plus-control feasibility, stream li
    A failed service opportunity is a scheduling/transport diagnosis, not evidence that the reader was faulty.
 - Stop one observer completely while the others continue.
    Verify that its server send-completion boundary actually stalls; stopping application reads while transport buffers continue draining is insufficient.
-   Require its policy termination within six seconds of the last credited progress once it has pending delivery, including at most one second of reevaluation/scheduling allowance, and zero terminations of the progressing group.
+   Measure the expiry interval from the onset of the current nonempty pending-delivery period or the latest credited progress within that period, whichever is later, excluding known host scheduling wait as specified by the policy.
+   Require no policy expiry before five seconds of eligible no-progress time and termination by six seconds, including at most one second of reevaluation/scheduling allowance, with zero terminations of the progressing group.
+   Add a deterministic case that idles longer than six seconds before delivery becomes pending, verifies a fresh full tolerance, then checks progress resets the clock and draining clears it before another pending period.
    Require at least 80% egress utilization again during a ten-second interval beginning no later than two seconds after its credit is released.
    With expiry disabled, require bounded backpressure instead of a throughput or termination deadline.
 - Enforce charged byte, entry, subscription, and pending-cleanup limits at every sampled transition and in deterministic fixtures, including reserved publication slack.
