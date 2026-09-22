@@ -23,6 +23,9 @@ Raw event components treat tree identities as opaque, while the view establishes
 Snapshots persist only position/root identities, not handles or session publication metadata.
 
 Blob and directory content is immutable and deduplicated; directory publication checks child availability before modifying the journal.
+Directory membership proves transitive availability because publication and recovery establish closure and content is never removed.
+Reusing a stored directory checks membership under the state lock without taking the journal writer lock or checking its children again.
+New directories are encoded once for identity and persistence, then rechecked under the writer and state locks before publication.
 Events are never deduplicated or retried, and snapshots must advance their event position.
 Session retry identities and conditional snapshot policy remain above storage.
 
@@ -68,7 +71,7 @@ Poisoning blocks authoritative observations during unwinding, before explicit fa
 
 The complete journal is recovered into memory, history is never pruned, and namespace allocation searches for an unused numeric filename.
 Namespace opening, document creation/recovery, blob/directory writes, and snapshot appends still perform synchronous I/O and can block the calling executor.
-Blob/directory writes and snapshot appends also synchronously wait for the journal writer mutex and hold the state mutex across their own I/O; reads may wait behind those barriers or an in-memory publication, but not event-batch disk I/O.
+Blob writes, new directory writes, and snapshot appends also synchronously wait for the journal writer mutex and hold the state mutex across their own I/O; reads may wait behind those barriers or an in-memory publication, but not event-batch disk I/O.
 Mutations write only new frames without replacing the journal inode; encoding memory is proportional to batch size.
 Distributed filesystems, external file replacement, and writes through buffered mode are outside the durable guarantee.
 Malformed lengths and complete checksum failures are errors, including at the final frame.
@@ -87,3 +90,4 @@ RUSTDOCFLAGS='-D warnings' cargo doc -p sea-file --all-features --no-deps
 ```
 
 Tests cover framing/corruption, batch visibility and uncertainty, lost acknowledgments, cross-process locks, executor progress during event I/O, and cancellation/panic ownership.
+Directory tests cover writer-independent deduplication, missing-child rejection, failure-state checks, and recovery of nested content.

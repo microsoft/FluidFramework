@@ -448,22 +448,26 @@ impl BlobStore for FileBlobs {
             .ok_or(FileStorageError::Rejected("missing blob"))
     }
     async fn put_directory(&self, directory: BlobDirectory) -> Result<Self::Handle, Self::Error> {
-        let encoded = directory
-            .encode()
+        let (encoded, id) = directory
+            .encode_with_id()
             .map_err(|_| FileStorageError::Rejected("directory encoding"))?;
-        let id = directory
-            .id()
-            .map_err(|_| FileStorageError::Rejected("directory identity"))?;
+        if self.0.lock()?.directories.contains_key(&id) {
+            return Ok(self.0.handle(BlobTreeId::Directory(id)));
+        }
+        // Release the fast-path state lock before waiting for the journal.
+        // Writers acquire journal before state; reversing that order can deadlock with event publication.
+        // Leaving state unlocked also lets reads and deduplication proceed during event disk I/O.
+        // Recheck membership below because another writer may publish this directory while we wait.
         let mut journal = self.0.writer()?;
         let mut state = self.0.lock()?;
-        if directory
-            .entries()
-            .values()
-            .any(|child| !state.contains(*child))
-        {
-            return Err(FileStorageError::Rejected("missing directory child"));
-        }
         if !state.directories.contains_key(&id) {
+            if directory
+                .entries()
+                .values()
+                .any(|child| !state.contains(*child))
+            {
+                return Err(FileStorageError::Rejected("missing directory child"));
+            }
             let mut record = vec![2];
             record.extend_from_slice(&encoded);
             state = persist(&self.0, &mut journal, state, &record)?;
@@ -962,6 +966,174 @@ mod tests {
             };
             2
         ]
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn directory_deduplication_does_not_wait_for_writer() {
+        check_directory_deduplication::<false>().await;
+        check_directory_deduplication::<true>().await;
+    }
+
+    /// Checks that closed directories can be reused while another mutation owns the journal.
+    async fn check_directory_deduplication<const DURABLE: bool>() {
+        let root = root();
+        let storage = FileStorage::<DURABLE>::open(&root).unwrap();
+        let created = storage.create_document().await.unwrap();
+        let blobs = &created.components.blobs;
+        let leaf = blobs.put_blob(Bytes::from_static(b"leaf")).await.unwrap();
+        let directory =
+            BlobDirectory::new(BTreeMap::from([("leaf".to_owned(), leaf.id())])).unwrap();
+        let original = blobs.put_directory(directory.clone()).await.unwrap();
+        let duplicate = blobs.clone();
+        let (completed, completion) = std::sync::mpsc::channel();
+        let (worker, result) = {
+            let journal = blobs.0.writer().unwrap();
+            let syncs = journal.syncs;
+            let worker = tokio::task::spawn_blocking(move || {
+                let result =
+                    tokio::runtime::Handle::current().block_on(duplicate.put_directory(directory));
+                let _ = completed.send(result);
+            });
+            let result = completion.recv_timeout(std::time::Duration::from_secs(5));
+            assert_eq!(journal.syncs, syncs);
+            (worker, result)
+        };
+        worker.await.unwrap();
+        assert_eq!(
+            result
+                .expect("deduplication must not wait for the writer")
+                .unwrap()
+                .id(),
+            original.id()
+        );
+        assert_eq!(blobs.0.writer().unwrap().syncs, if DURABLE { 2 } else { 0 });
+        drop(created);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn directory_publication_preserves_closure_and_failed_deduplication_is_rejected() {
+        let root = root();
+        let storage = FileStorage::<true>::open(&root).unwrap();
+        let created = storage.create_document().await.unwrap();
+        let blobs = &created.components.blobs;
+        let leaf = blobs.put_blob(Bytes::from_static(b"leaf")).await.unwrap();
+        let child = BlobDirectory::new(BTreeMap::from([("leaf".to_owned(), leaf.id())])).unwrap();
+        let child_handle = blobs.put_directory(child.clone()).await.unwrap();
+        let parent =
+            BlobDirectory::new(BTreeMap::from([("child".to_owned(), child_handle.id())])).unwrap();
+        let parent_handle = blobs.put_directory(parent.clone()).await.unwrap();
+        let missing_blob = BlobTreeId::Blob(BlobId::for_bytes(b"missing"));
+        let missing_directory =
+            BlobDirectory::new(BTreeMap::from([("missing".to_owned(), missing_blob)])).unwrap();
+        for missing in [
+            missing_blob,
+            BlobTreeId::Directory(missing_directory.id().unwrap()),
+        ] {
+            let incomplete = BlobDirectory::new(BTreeMap::from([
+                ("available".to_owned(), child_handle.id()),
+                ("missing".to_owned(), missing),
+            ]))
+            .unwrap();
+            let id = BlobTreeId::Directory(incomplete.id().unwrap());
+            assert!(matches!(
+                blobs.put_directory(incomplete).await,
+                Err(FileStorageError::Rejected("missing directory child"))
+            ));
+            assert!(blobs.resolve(id).await.unwrap().is_none());
+        }
+        assert_eq!(blobs.0.writer().unwrap().syncs, 3);
+        blobs.0.writer().unwrap().inject(JournalFault::BeforeWrite);
+        assert_eq!(
+            blobs.put_directory(parent.clone()).await.unwrap().id(),
+            parent_handle.id()
+        );
+        assert!(matches!(
+            blobs.put_directory(BlobDirectory::default()).await,
+            Err(FileStorageError::Rejected(_))
+        ));
+        blobs.0.writer().unwrap().inject(JournalFault::PartialWrite);
+        assert!(matches!(
+            blobs.put_directory(BlobDirectory::default()).await,
+            Err(FileStorageError::Ambiguous)
+        ));
+        assert!(matches!(
+            blobs.put_directory(parent.clone()).await,
+            Err(FileStorageError::Ambiguous)
+        ));
+        drop(created.components);
+        let reopened = storage.open_document(&created.id).await.unwrap().unwrap();
+        reopened
+            .blobs
+            .ensure_available(&parent_handle)
+            .await
+            .unwrap();
+        for directory in [child, parent] {
+            assert_eq!(
+                reopened
+                    .blobs
+                    .get_directory(directory.id().unwrap())
+                    .await
+                    .unwrap(),
+                directory
+            );
+        }
+        assert_eq!(
+            reopened
+                .blobs
+                .get_blob(BlobId::for_bytes(b"leaf"))
+                .await
+                .unwrap(),
+            Bytes::from_static(b"leaf")
+        );
+        assert!(
+            reopened
+                .blobs
+                .resolve(BlobTreeId::Directory(
+                    BlobDirectory::default().id().unwrap()
+                ))
+                .await
+                .unwrap()
+                .is_none()
+        );
+        drop(reopened);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn directory_sync_failure_does_not_publish_parent() {
+        let root = root();
+        let storage = FileStorage::<true>::open(&root).unwrap();
+        let created = storage.create_document().await.unwrap();
+        let blobs = &created.components.blobs;
+        let child = blobs.put_blob(Bytes::from_static(b"child")).await.unwrap();
+        let parent =
+            BlobDirectory::new(BTreeMap::from([("child".to_owned(), child.id())])).unwrap();
+        let parent_id = parent.id().unwrap();
+        blobs.0.writer().unwrap().inject(JournalFault::BeforeSync);
+
+        assert!(matches!(
+            blobs.put_directory(parent).await,
+            Err(FileStorageError::Ambiguous)
+        ));
+        {
+            let state = blobs.0.state.lock().unwrap();
+            assert!(state.contains(child.id()));
+            assert!(
+                !state.directories.contains_key(&parent_id),
+                "the parent must not be published before synchronization succeeds"
+            );
+        }
+        assert!(matches!(
+            blobs.resolve(BlobTreeId::Directory(parent_id)).await,
+            Err(FileStorageError::Ambiguous)
+        ));
+        assert!(matches!(
+            blobs.get_directory(parent_id).await,
+            Err(FileStorageError::Ambiguous)
+        ));
+        drop(created);
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[tokio::test(flavor = "current_thread")]
