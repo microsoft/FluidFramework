@@ -992,6 +992,7 @@ export interface TreeViewAlpha<
 	 * Reports compatibility for this view's configuration and document, with schema differences and conditional blocker lists.
 	 * @remarks
 	 * See {@link SchemaCompatibilityStatusAlpha} for the viewing, upgrade, and equivalence checks and their conditional diagnostic lists.
+	 * @override
 	 */
 	readonly compatibility: SchemaCompatibilityStatusAlpha;
 

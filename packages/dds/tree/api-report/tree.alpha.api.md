@@ -2237,6 +2237,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 
 // @alpha @sealed
 export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeViewBeta<ReadSchema<TSchema>>, "root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync" | "isView">, UntypedTreeViewAlpha {
+    // @override
     readonly compatibility: SchemaCompatibilityStatusAlpha;
     // (undocumented)
     readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
