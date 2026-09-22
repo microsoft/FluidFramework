@@ -13,7 +13,7 @@ You can build the production container by running.
 
 And then mount it for development by running.
 
-`docker run -it -v "$(pwd):/home/node/server" -p 3000:3000 node:8.15.0-slim /bin/bash`
+`docker run -it -v "$(pwd):/home/node/server" -p 3000:3000 node:22.22.2-bookworm-slim /bin/bash`
 
 When mounted for development you'll want to run the following commands. These also work if you would like to
 develop outside of the container.
