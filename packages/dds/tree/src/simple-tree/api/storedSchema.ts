@@ -66,8 +66,8 @@ export function extractPersistedSchema(
 
 /**
  * Reports viewing compatibility and stored-schema upgrade diagnostics for a persisted schema and a view schema.
- * Reports the schema compatibility that {@link TreeView.compatibility} would report for a document using `persisted`
- * and a view configured with `view` and the default restrictive staged upgrade policy, without document initialization state.
+ * Uses the same schema compatibility checks as {@link TreeView.compatibility} for a document using `persisted` and a view configured with `view` and the default restrictive staged upgrade policy.
+ * The result does not include document initialization state.
  *
  * @param persisted - Schema persisted for a document. Typically persisted alongside the data and assumed to describe that data.
  * @param view - Schema which would be used to view persisted content.

@@ -265,9 +265,9 @@ export interface UntypedTreeView extends IDisposable, TreeContextBeta {
 	merge(view: UntypedTreeView, disposeMerged?: boolean): void;
 
 	/**
-	 * Advance this view forward such that all new changes on the proposed stored schema view become part of this view.
+	 * Advance this view forward such that all new changes on the target view become part of this view.
 	 * @param view - The view to rebase onto.
-	 * @remarks After rebasing, this view will be "ahead" of the proposed stored schema view, that is, its unique changes will have been recreated as if they happened after all changes on the proposed stored schema view.
+	 * @remarks After rebasing, this view will be "ahead" of the target view, that is, its unique changes will have been recreated as if they happened after all changes on the target view.
 	 * This method may only be called on views produced via {@link UntypedTreeView.fork | fork} - attempting to rebase the main view will throw.
 	 *
 	 * Rebasing long-lived branches is important to avoid consuming memory unnecessarily.

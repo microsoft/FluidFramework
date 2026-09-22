@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	EmptyKey,
 	LeafNodeStoredSchema,
@@ -32,7 +34,8 @@ import type { SchemaCompatibilityStatusBeta } from "./tree.js";
  * Identifies a schema element using persisted identifiers and field keys.
  *
  * @remarks
- * The root field uses `"root"`. A node location omits `fieldKey`.
+ * The root field uses `"root"`.
+ * A node location omits `fieldKey`.
  * An implicit map, record, or array field uses `fieldKey: null`.
  *
  * @alpha
@@ -41,12 +44,12 @@ export type SchemaDiscrepancyLocationAlpha =
 	| "root"
 	| {
 			/**
-			 * Persisted identifier of the node schema containing the difference.
+			 * Identifies the node schema containing the difference using its persisted identifier.
 			 */
 			readonly nodeType: string;
 			/**
-			 * Persisted field key, or null for an implicit map, record, or array field.
-			 * Omitted when the difference applies to the node rather than a field.
+			 * Identifies the field using its persisted key, or null for an implicit map, record, or array field.
+			 * This property is omitted when the difference applies to the node rather than a field.
 			 */
 			// eslint-disable-next-line @rushstack/no-new-null -- JSON must distinguish implicit fields from node locations.
 			readonly fieldKey?: string | null;
@@ -56,10 +59,11 @@ export type SchemaDiscrepancyLocationAlpha =
  * Describes one schema constraint that prevents a compatibility check from succeeding.
  *
  * @remarks
- * Each entry describes one aspect at one location. Missing side properties indicate absent values.
+ * Each entry describes one aspect at one location.
+ * Missing side properties indicate absent values, subject to the absent-field rules in {@link SchemaDiscrepancyValues}.
  * The `existingStored` side describes the document's existing stored schema.
- * The `view` side describes the schema being evaluated for access, with its constraints in stored-schema form and all staged changes included,
- * with relevant staging and unknown optional field context reported separately.
+ * The `view` side describes the schema being evaluated for access, with its constraints in stored-schema form and all staged changes included.
+ * Relevant staging and unknown optional field context is reported separately.
  * The `proposedStored` side describes the stored schema generated for an upgrade from the view schema and the configured staged upgrade policy,
  * as described by {@link SchemaCompatibilityStatus.canUpgrade}.
  * The proposed stored schema can differ from both the existing stored schema and the view's constraints.
@@ -84,16 +88,19 @@ export type SchemaDiscrepancyAlpha = {
 	 */
 	readonly location: SchemaDiscrepancyLocationAlpha;
 	/**
-	 * Whether the allowed type is staged in the view. Present only when true on an allowed-type discrepancy.
+	 * Indicates whether the allowed type is staged in the view.
+	 * This property is present only when true on an allowed-type discrepancy.
 	 * The configured upgrade policy determines whether the type is included in the proposed stored schema.
 	 */
 	readonly viewIsStagedType?: true;
 	/**
-	 * Whether the field's optionality is staged in the view. Present only when true on a field discrepancy.
+	 * Indicates whether the field's optionality is staged in the view.
+	 * This property is present only when true on a field discrepancy.
 	 */
 	readonly viewIsStagedOptional?: true;
 	/**
-	 * Whether the containing view object permits unknown optional fields. Present only when true on a field discrepancy.
+	 * Indicates whether the containing view object permits unknown optional fields.
+	 * This property is present only when true on a field discrepancy.
 	 * This can permit viewing without permitting removal of those fields from the stored schema.
 	 */
 	readonly viewAllowsUnknownOptionalFields?: true;
@@ -105,7 +112,7 @@ export type SchemaDiscrepancyAlpha = {
 			 */
 			readonly mismatch: "allowedType";
 			/**
-			 * Persisted identifier of the allowed type being compared.
+			 * Identifies the allowed type being compared using its persisted identifier.
 			 */
 			readonly allowedType: string;
 	  } & SchemaDiscrepancyValues<boolean>)
@@ -125,7 +132,7 @@ export type SchemaDiscrepancyAlpha = {
 	  } & SchemaDiscrepancyValues<SchemaNodeKindDescription>)
 	| ({
 			/**
-			 * Identifies a node definition that is absent from at least one schema.
+			 * Identifies a node definition that is absent from at least one of the two schemas used by the failed check.
 			 * Present side values describe only the node kinds.
 			 */
 			readonly mismatch: "missingNode";
@@ -137,11 +144,13 @@ export type SchemaDiscrepancyAlpha = {
 );
 
 /**
- * Values for one schema aspect on each side of the comparison.
+ * Contains values for one schema aspect on each side of the comparison.
  *
  * @remarks
  * Missing properties identify absent values, not values equal to false or null.
  * For boolean aspects, false indicates that the compared feature is absent or disabled.
+ * Field comparisons treat an absent field as a forbidden field with no allowed types.
+ * Its field-kind value is `"Forbidden"`, and its allowed-type membership values are false.
  *
  * @typeParam T - Value representation for the aspect selected by the discrepancy's `mismatch` property.
  *
@@ -151,17 +160,18 @@ export interface SchemaDiscrepancyValues<T> {
 	/**
 	 * Describes the view schema's constraint at this location.
 	 * Constraints include all staged changes, independently of the configured staged upgrade policy.
-	 * Absent when that value does not exist.
+	 * This property is absent when that value does not exist.
 	 */
 	readonly view?: T;
 	/**
-	 * Describes the value in the document's existing stored schema. Absent when that value does not exist.
+	 * Describes the value in the document's existing stored schema.
+	 * This property is absent when that value does not exist.
 	 */
 	readonly existingStored?: T;
 	/**
 	 * Describes the value in the proposed stored schema generated using the configured staged upgrade policy.
 	 * This is the proposed stored schema used by {@link SchemaCompatibilityStatus.canUpgrade}, not the full view schema.
-	 * Absent when that value does not exist.
+	 * This property is absent when that value does not exist.
 	 */
 	readonly proposedStored?: T;
 }
@@ -172,7 +182,7 @@ export interface SchemaDiscrepancyValues<T> {
  */
 export interface SchemaNodeKindDescription {
 	/**
-	 * The node kind represented by the stored schema structure.
+	 * Describes the node kind represented by the stored schema structure.
 	 * Arrays are represented by an object with one sequence field at the empty key.
 	 */
 	readonly kind: "leaf" | "map" | "array" | "object";
@@ -204,8 +214,8 @@ export type SchemaCompatibilityViewableStatus =
 			 */
 			readonly canView: false;
 			/**
-			 * Differences that cause {@link SchemaCompatibilityStatus.canView} to be false.
-			 * Contains at least one entry. Does not include differences accepted by the viewing rules.
+			 * Lists differences that cause {@link SchemaCompatibilityStatus.canView} to be false.
+			 * The list contains at least one entry and excludes differences accepted by the viewing rules.
 			 * Entries retain all three side values, but membership in this list depends on the view and existing stored schemas, not the proposed stored schema.
 			 */
 			readonly viewDiscrepancies: readonly SchemaDiscrepancyAlpha[];
@@ -238,8 +248,8 @@ export type SchemaCompatibilityUpgradeableStatus =
 			 */
 			readonly canUpgrade: false;
 			/**
-			 * Differences that cause {@link SchemaCompatibilityStatus.canUpgrade} to be false.
-			 * Contains at least one entry. Does not include differences accepted by the upgrade rules.
+			 * Lists differences that cause {@link SchemaCompatibilityStatus.canUpgrade} to be false.
+			 * The list contains at least one entry and excludes differences accepted by the upgrade rules.
 			 * Entries retain all three side values, but membership in this list depends on the existing and proposed stored schemas.
 			 */
 			readonly upgradeDiscrepancies: readonly SchemaDiscrepancyAlpha[];
@@ -273,8 +283,8 @@ export type SchemaCompatibilityEquivalenceStatus =
 			 */
 			readonly isEquivalent: false;
 			/**
-			 * Differences that cause {@link SchemaCompatibilityStatus.isEquivalent} to be false.
-			 * Contains at least one entry. Does not include differences accepted by all equivalence checks.
+			 * Lists differences that cause {@link SchemaCompatibilityStatus.isEquivalent} to be false.
+			 * The list contains at least one entry and excludes differences accepted by all equivalence checks.
 			 * Includes viewing blockers, upgrade blockers, and differences that prevent the reverse comparison from the proposed stored schema to the existing stored schema.
 			 */
 			readonly equivalenceDiscrepancies: readonly SchemaDiscrepancyAlpha[];
@@ -321,7 +331,7 @@ type SchemaSide = "view" | "stored" | "target";
 type Values = Record<SchemaSide, boolean | string | SchemaNodeKindDescription | undefined>;
 type Nodes = Record<SchemaSide, TreeNodeStoredSchema | undefined>;
 /**
- * Internal checks that select blocker subsets without adding check labels to public entries.
+ * Identifies internal checks that select blocker lists without adding check labels to public entries.
  * `upgrade` compares stored to target; `reverse` compares target to stored for equivalence.
  */
 type Blocker = "view" | "upgrade" | "reverse";
@@ -332,7 +342,7 @@ type Blocker = "view" | "upgrade" | "reverse";
  * @param node - Node definition to classify, or undefined for a missing definition.
  * @returns The diagnostic node kind, or undefined if the definition is absent or unrecognized.
  */
-function nodeKind(
+function getNodeKind(
 	node: TreeNodeStoredSchema | undefined,
 ): SchemaNodeKindDescription["kind"] | undefined {
 	if (node instanceof LeafNodeStoredSchema) {
@@ -399,7 +409,7 @@ export function collectSchemaDiagnostics(
 		mismatch: SchemaDiscrepancyAlpha["mismatch"],
 		location: SchemaDiscrepancyLocationAlpha,
 		values: Values,
-		allowedType?: string,
+		allowedType: string | undefined,
 	): SchemaDiscrepancyAlpha {
 		const normalized = {
 			view: values.view,
@@ -413,7 +423,7 @@ export function collectSchemaDiagnostics(
 			viewField = view.root;
 		} else if (isField && viewNode?.kind === NodeKind.Object) {
 			viewField = [...viewNode.fields.values()].find(
-				(field) => field.storedKey === location.fieldKey,
+				(field) => field.storedKey === (location.fieldKey ?? EmptyKey),
 			);
 		}
 		const allowedTypes =
@@ -485,7 +495,7 @@ export function collectSchemaDiagnostics(
 		location: SchemaDiscrepancyLocationAlpha,
 		mismatch: SchemaDiscrepancyAlpha["mismatch"],
 		check: Blocker,
-		allowedType?: string,
+		allowedType: string | undefined,
 	): void {
 		const identifier =
 			location === "root" ? undefined : brand<TreeNodeSchemaIdentifier>(location.nodeType);
@@ -497,10 +507,17 @@ export function collectSchemaDiagnostics(
 		const entryMismatch =
 			location !== "root" &&
 			location.fieldKey === undefined &&
-			Object.values(nodes).includes(undefined)
+			(nodes.stored === undefined ||
+				(check === "view" ? nodes.view : nodes.target) === undefined)
 				? "missingNode"
 				: mismatch;
-		const valueFor = (side: SchemaSide): Values[SchemaSide] => {
+		/**
+		 * Gets the constraint value for one side of the failed check.
+		 *
+		 * @param side - Schema whose constraint is needed.
+		 * @returns The constraint value, or undefined for an absent node definition.
+		 */
+		function getValue(side: SchemaSide): Values[SchemaSide] {
 			const node = nodes[side];
 			if (location === "root" || location.fieldKey !== undefined) {
 				const schema = side === "view" ? viewed : side === "stored" ? stored : target;
@@ -513,23 +530,25 @@ export function collectSchemaDiagnostics(
 								? node.objectNodeFields.get(brand(location.fieldKey ?? EmptyKey))
 								: undefined;
 				const actual = field ?? storedEmptyFieldSchema;
-				return mismatch === "allowedType"
-					? actual.types.has(brand(allowedType ?? ""))
-					: actual.kind;
+				if (mismatch === "allowedType") {
+					assert(allowedType !== undefined, "An allowed-type failure must identify its type");
+					return actual.types.has(brand(allowedType));
+				}
+				return actual.kind;
 			}
 			if (entryMismatch === "valueSchema") {
 				return node instanceof LeafNodeStoredSchema ? ValueSchema[node.leafValue] : undefined;
 			}
-			const kind = nodeKind(node);
+			const kind = getNodeKind(node);
 			return kind === undefined ? undefined : { kind };
-		};
+		}
 		const entry = add(
 			entryMismatch,
 			location,
 			{
-				view: valueFor("view"),
-				stored: valueFor("stored"),
-				target: valueFor("target"),
+				view: getValue("view"),
+				stored: getValue("stored"),
+				target: getValue("target"),
 			},
 			allowedType,
 		);
@@ -544,17 +563,19 @@ export function collectSchemaDiagnostics(
 	 * Viewing failures can use undefined for these locations.
 	 * @returns The corresponding public field location.
 	 */
-	function fieldLocation(
+	function getFieldLocation(
 		identifier: string | undefined,
 		fieldKey: string | undefined,
 	): SchemaDiscrepancyLocationAlpha {
-		if (identifier === undefined) return "root";
+		if (identifier === undefined) {
+			return "root";
+		}
 		return {
 			nodeType: identifier,
 			fieldKey:
 				fieldKey === EmptyKey &&
 				(view.definitions.get(identifier)?.kind === NodeKind.Array ||
-					nodeKind(stored.nodeSchema.get(brand(identifier))) === "array" ||
+					getNodeKind(stored.nodeSchema.get(brand(identifier))) === "array" ||
 					((view.definitions.get(identifier)?.kind === NodeKind.Map ||
 						view.definitions.get(identifier)?.kind === NodeKind.Record) &&
 						stored.nodeSchema.get(brand(identifier)) instanceof MapNodeStoredSchema))
@@ -566,14 +587,22 @@ export function collectSchemaDiagnostics(
 	// Reuse viewing decisions and beta context from the pre-target analysis.
 	for (const failure of viewFailures) {
 		if (failure.mismatch === "allowedTypes") {
-			const location = fieldLocation(failure.identifier, failure.fieldKey);
-			for (const { type } of failure.view)
+			const location = getFieldLocation(failure.identifier, failure.fieldKey);
+			for (const { type } of failure.view) {
 				mark(location, "allowedType", "view", type.identifier);
-			for (const type of failure.stored) mark(location, "allowedType", "view", type);
+			}
+			for (const type of failure.stored) {
+				mark(location, "allowedType", "view", type);
+			}
 		} else if (failure.mismatch === "fieldKind") {
-			mark(fieldLocation(failure.identifier, failure.fieldKey), "fieldKind", "view");
+			mark(
+				getFieldLocation(failure.identifier, failure.fieldKey),
+				"fieldKind",
+				"view",
+				undefined,
+			);
 		} else {
-			mark({ nodeType: failure.identifier }, failure.mismatch, "view");
+			mark({ nodeType: failure.identifier }, failure.mismatch, "view", undefined);
 		}
 	}
 
@@ -589,7 +618,7 @@ export function collectSchemaDiagnostics(
 		)) {
 			const location =
 				"fieldKey" in failure
-					? fieldLocation(failure.identifier, failure.fieldKey)
+					? getFieldLocation(failure.identifier, failure.fieldKey)
 					: { nodeType: failure.identifier };
 			mark(
 				location,

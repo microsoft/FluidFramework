@@ -293,6 +293,56 @@ describe("checkSchemaCompatibility", () => {
 		assert.deepEqual(status.equivalenceDiscrepancies, status.viewDiscrepancies);
 	});
 
+	it("keeps viewing value failures separate from a missing proposed definition", () => {
+		const identifier = "StagedLeafValueDiagnostics";
+		const view = new LeafNodeSchema(identifier, ValueSchema.Number);
+		const stored = toUpgradeSchema(new LeafNodeSchema(identifier, ValueSchema.String));
+		const status = checkSchemaCompatibility(
+			new TreeViewConfigurationAlpha({ schema: factory.types([factory.staged(view)]) }),
+			stored,
+		);
+		assert(!status.canView && !status.canUpgrade && !status.isEquivalent);
+		assert.deepEqual(status.viewDiscrepancies, [
+			{
+				mismatch: "valueSchema",
+				location: { nodeType: identifier },
+				view: "Number",
+				existingStored: "String",
+			},
+		]);
+		assert.deepEqual(
+			status.upgradeDiscrepancies.filter((entry) => entry.mismatch === "missingNode"),
+			[
+				{
+					mismatch: "missingNode",
+					location: { nodeType: identifier },
+					missingFrom: ["proposedStored"],
+					view: { kind: "leaf" },
+					existingStored: { kind: "leaf" },
+				},
+			],
+		);
+		assert(status.equivalenceDiscrepancies.includes(status.viewDiscrepancies[0]));
+	});
+
+	it("retains staged optionality when an empty-key object field is compared with an array", () => {
+		const view = factory.objectAlpha("StagedEmptyKey", {
+			"": factory.stagedOptional(factory.number),
+		});
+		const stored = factory.array("StagedEmptyKey", factory.number);
+		const status = checkSchemaCompatibility(
+			new TreeViewConfigurationAlpha({ schema: view }),
+			toUpgradeSchema(stored),
+		);
+		assert(!status.canView);
+		const fieldFailure = status.viewDiscrepancies.find(
+			(entry) => entry.mismatch === "fieldKind",
+		);
+		assert(fieldFailure !== undefined);
+		assert.deepEqual(fieldFailure.location, { nodeType: view.identifier, fieldKey: null });
+		assert.equal(fieldFailure.viewIsStagedOptional, true);
+	});
+
 	it("does not classify staged types as viewing blockers for an absent field", () => {
 		const view = factory.objectAlpha("AbsentStagedField", {
 			value: factory.types([factory.number, factory.staged(factory.string)]),

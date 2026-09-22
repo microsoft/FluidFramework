@@ -23,7 +23,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
 import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
 
 /**
- * Reports viewing compatibility and stored-schema upgrade diagnostics for a stored schema generated from `viewWhichCreatedStoredSchema.schema` and a proposed `view.schema`.
+ * Reports viewing compatibility and stored-schema upgrade diagnostics for `view.schema` against a stored schema generated from `viewWhichCreatedStoredSchema.schema`.
  *
  * @remarks
  * Only the `schema` property of each configuration is used.

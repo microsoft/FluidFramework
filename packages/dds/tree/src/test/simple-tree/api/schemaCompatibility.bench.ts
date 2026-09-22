@@ -154,8 +154,7 @@ describe("Schema compatibility benchmarks", () => {
 		}
 	}
 
-	// Change only a metadata label while varying the nested payload that must be compared or serialized.
-	// Metadata differences produce diagnostics without changing compatibility flags.
+	// Measures compatibility checking with ignored persisted metadata of varying sizes.
 	const metadataFactory = new SchemaFactoryAlpha("diagnostic-metadata-benchmark");
 	for (const size of [10, 100, 1000]) {
 		const metadata = Object.fromEntries(
@@ -182,7 +181,7 @@ describe("Schema compatibility benchmarks", () => {
 			);
 		}
 	}
-	// An accepted staged type adds diagnostic information without preventing access to stored numbers.
+	// Measures an accepted staged type that produces no blocker lists.
 	const staged = new TreeViewConfigurationAlpha({
 		schema: metadataFactory.types([
 			metadataFactory.number,

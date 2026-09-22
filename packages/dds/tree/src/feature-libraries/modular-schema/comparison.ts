@@ -44,21 +44,23 @@ export function allowsTreeSuperset(
 }
 
 /**
- * A failed stored-field comparison, independent of the public diagnostic representation.
+ * Describes a failed stored-field comparison independently of the public diagnostic representation.
  */
 export type FieldSupersetFailure =
 	| { readonly mismatch: "fieldKind" }
 	| { readonly mismatch: "allowedType"; readonly allowedType: TreeNodeSchemaIdentifier };
 
 /**
- * A failed node comparison. Maps use {@link EmptyKey} for their implicit field.
+ * Describes a failed node comparison.
+ * Maps use {@link EmptyKey} for their implicit field.
  */
 export type NodeSupersetFailure =
 	| { readonly mismatch: "nodeKind" | "valueSchema" }
 	| (FieldSupersetFailure & { readonly fieldKey: FieldKey });
 
 /**
- * A failed stored-schema comparison. Undefined identifiers identify the root field, which uses {@link EmptyKey}.
+ * Describes a failed stored-schema comparison.
+ * Undefined identifiers identify the root field, which uses {@link EmptyKey}.
  */
 export type StoredSchemaSupersetFailure =
 	| (FieldSupersetFailure & {
@@ -146,6 +148,7 @@ function* getTreeSupersetFailures(
 			originalData,
 			originalField,
 			supersetField,
+			true,
 		)) {
 			reported = true;
 			yield { ...failure, fieldKey };
@@ -212,7 +215,7 @@ function* getFieldSupersetFailures(
 	originalData: TreeStoredSchema,
 	original: TreeFieldStoredSchema,
 	superset: TreeFieldStoredSchema,
-	monotonicOnly: boolean = true,
+	monotonicOnly: boolean,
 ): Generator<FieldSupersetFailure> {
 	// Without monotonic upgrade restrictions, a field with no valid content is a subset of any field.
 	if (!monotonicOnly && isNeverField(policy, originalData, original)) {
@@ -344,6 +347,7 @@ export function* getStoredSchemaSupersetFailures(
 		original,
 		original.rootFieldSchema,
 		superset.rootFieldSchema,
+		true,
 	)) {
 		yield { ...failure, identifier: undefined, fieldKey: EmptyKey };
 	}
