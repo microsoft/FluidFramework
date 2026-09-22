@@ -7,6 +7,11 @@ The `common` module shares framing, atomic publication, recovery mechanisms, and
 The `buffered` and `durable` modules own independent admission and execution policies; shared components retain document identity and published state.
 The former `sea-file-durable` crate and const-generic factory have been retired without changing journal bytes.
 
+Private `RecordArchive<RecordType>` access shares framing and pending-record reads through the `Record` trait.
+Ordinal access and frame-stride arithmetic require `RecordType: FixedSize`; snapshot records implement that capability, while variable-width event records use length and predecessor information.
+Binary search remains snapshot-specific because publication guarantees that snapshot event positions increase.
+Typed event and snapshot cursors own selection and advancement, leaving the shared stream responsible for bounds, progress, wakeups, and completion without knowledge of record layout.
+
 **Buffered mode is for tests, demonstrations, and comparisons, not production persistence.**
 Success acknowledges bounded process-local admission before OS writes.
 A crash, forced shutdown, or background disk error can lose acknowledged events, blobs, directories, and snapshots, leave corrupt or incomplete journals, or prevent reopening.
@@ -19,7 +24,7 @@ Neither operation synchronizes buffered files or promises power-loss safety.
 Each document has an event journal, a fixed-width snapshot journal, a hash-addressed content directory, and independent internal checkpoint state.
 Frames contain a length, its complement, a BLAKE3 content hash, and the record bytes.
 Event positions are literal byte offsets in the event journal; predecessor offsets support backward traversal for arbitrary range bounds.
-Snapshot positions remain event positions; their physical records and backward lookup belong only to storage.
+Snapshot positions remain event positions; their physical offsets and lookup belong only to storage.
 The current experimental formats have no supported migration from earlier versions.
 Buffered writes publish pending records and final byte offsets at admission, with `Durability::Buffered`.
 Readers span the written prefix and bounded pending suffix; draining never renumbers an acknowledged position.
@@ -31,13 +36,17 @@ The [power-loss model](#power-loss-model) requires durable-prefix integrity, cra
 
 Each journal has a checksummed 48-byte `.cursor` containing its validated byte boundary and last record offset.
 Opening validates the named tail records and recovers only the suffix after that boundary.
-Content is retrieved directly by typed hash; event lookups seek to their byte offsets, and snapshot lookup walks its journal backward.
+Content is retrieved directly by typed hash; event lookups seek to their byte offsets, and bounded snapshot lookup uses binary search over fixed-width records.
+Latest snapshot lookup reads one frame, and snapshot streams advance a private physical cursor after initial bound selection.
 There is no historical address table to load or rewrite.
 The previously validated prefix is trusted under the durable-prefix integrity model; independent media corruption is outside that model and may be detected only by an affected read.
 Buffered recovery rejects incomplete tails; durable recovery truncates an incomplete final frame and synchronizes the repaired journal.
 Complete corrupt suffix frames or missing required dependencies fail recovery rather than producing gaps.
 An unpublished creation `.pending` file is discarded even if it contains valid frames.
 Durable reopening synchronizes the selected journal and parent directory before exposing records, including complete frames whose acknowledgment was lost.
+This settlement happens once after tail recovery; creation uses its atomic-publication barriers instead.
+An unchanged validated cursor is reused, while a missing or advanced cursor is atomically published.
+Each journal rejects record types belonging to another storage surface.
 Raw event components treat tree identities as opaque, while the view establishes availability before publication; raw writes with absent dependencies therefore make subsequent recovery fail.
 Snapshots persist only position/root identities, not handles or session publication metadata.
 
@@ -55,7 +64,8 @@ Blob and directory content is immutable and deduplicated; directory publication 
 Directory membership proves transitive availability because publication and recovery establish closure and content is never removed.
 Reusing a stored directory checks membership without taking the journal writer lock or checking its children again.
 Membership checks the hash-addressed filename; writer independence does not imply an I/O-free lookup.
-New directories are encoded once for identity and persistence; durable publication rechecks membership under writer ownership.
+New directories are encoded once for identity and persistence; durable publication rechecks membership within document mutation order.
+The document opening owns content and checkpoint publication failures independently of the event and snapshot journals.
 Events are never deduplicated or retried, and snapshots must advance their event position.
 Session retry identities and conditional snapshot policy remain above storage.
 
@@ -107,7 +117,8 @@ Poisoning blocks authoritative observations during unwinding, before explicit fa
 
 Only the suffix after the storage cursor is recovered into memory; history is never pruned, and namespace allocation searches for an unused numeric filename.
 Publication write volume does not grow with retained history.
-An old snapshot lookup or non-record event bound can traverse history backward; latest lookups and event reads from returned positions need no such traversal.
+A bounded snapshot lookup takes logarithmic frame reads, and streaming the full snapshot history takes linear frame reads with constant cursor space.
+A non-record event bound can traverse event history backward; latest lookups and event reads from returned positions need no such traversal.
 Content uses one file per typed hash, so filesystem metadata costs remain workload-dependent.
 Only synchronous factory construction requires caller-provided execution isolation.
 Creation/recovery, mutations, checkpoints, metadata checks, and lazy historical reads use bounded blocking workers, including for direct storage callers.
@@ -167,6 +178,8 @@ Tests cover framing/corruption, batch visibility and uncertainty, lost acknowled
 Policy tests cover bounded count/byte backpressure, cancelled waiters, durable prefix flush, shutdown wakeups, and hot/cold-document fairness.
 Paused-worker tests verify resident directory/snapshot admission, variable-sized offset reservation, checkpoint ordering, and orderly reopen.
 Atomic-file tests cover every truncated unpublished replacement and complete old/new selection.
-Storage tests cover checkpoint size and historical-file independence, lazy historical corruption detection, byte-offset bounds, and backward snapshot lookup without sequencer state.
+Storage tests cover checkpoint size and historical-file independence, lazy historical corruption detection, byte-offset bounds, and snapshot lookup without sequencer state.
+Read-count regressions cover snapshot lookup and streaming complexity; recovery tests cover journal-type rejection, unchanged cursor reuse, and document-owned checkpoint failures.
+Layout tests check both snapshot root variants, invalid widths, and checked ordinal arithmetic; sparse-range reads check cursor initialization independently of public event positions.
 Seek-instrumented journal recovery never reads bytes before its storage cursor boundary.
 Directory tests cover writer-independent deduplication of recent and reopened content, missing-child rejection, failure-state checks, and recovery of nested content.

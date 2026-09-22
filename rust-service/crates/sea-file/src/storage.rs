@@ -21,7 +21,7 @@
 pub use crate::journal::FileStorageError;
 use crate::{
     atomic_file,
-    journal::{Journal, read_record},
+    journal::{FRAME_HEADER, Journal, RECORD_START, read_record},
 };
 use async_trait::async_trait;
 use bytes::Bytes;
@@ -113,25 +113,30 @@ impl Factory {
         let mut boundary = journal.recovered_from;
         let mut state = State::new(path.clone(), &mut journal, &mut snapshots)?;
         for record in records {
-            state.recover_record(&record, boundary)?;
+            state.recover_event(&record, boundary)?;
             boundary += 48 + record.len() as u64;
         }
         journal.remember_tail(state.head)?;
         let mut snapshot_offset = snapshots.recovered_from;
         for record in snapshot_records {
-            state.recover_record(&record, snapshot_offset)?;
+            state.recover_snapshot(&record, snapshot_offset)?;
             snapshot_offset += 48 + record.len() as u64;
         }
         snapshots.remember_tail(if state.snapshot_end == 8 {
             0
         } else {
-            state.snapshot_end - 90
+            state.snapshot_end - RecordArchive::<SnapshotRecord>::FRAME_SIZE as u64
         })?;
         let opening = Arc::new(Opening {
             preparation: crate::common::PreparationBudget::new(),
             closed: self.closed.clone(),
             factory_failed: self.failed.clone(),
             buffered: (!journal.durable()).then(|| crate::buffered::Executor::new(workers.clone())),
+            durable: journal.durable(),
+            #[cfg(test)]
+            value_fault: Mutex::new(None),
+            #[cfg(test)]
+            value_syncs: std::sync::atomic::AtomicUsize::new(0),
             path: Arc::new(path),
             journal: Mutex::new(journal),
             snapshots: Mutex::new(snapshots),
@@ -341,11 +346,19 @@ struct Opening {
     factory_failed: Arc<AtomicBool>,
     /// Independent process-local admission authority for buffered mode.
     buffered: Option<Arc<crate::buffered::Executor>>,
+    /// Publication policy for content and checkpoint files.
+    durable: bool,
+    /// Injects whole-value publication failures independently of either journal.
+    #[cfg(test)]
+    value_fault: Mutex<Option<crate::journal::JournalFault>>,
+    /// Counts successful whole-value synchronizations without journal writes.
+    #[cfg(test)]
+    value_syncs: std::sync::atomic::AtomicUsize,
     /// Document provenance for minted handles.
     path: Arc<PathBuf>,
-    /// Serializes mutations; acquired before the published-state mutex.
+    /// Event append cursor; mutation ordering belongs to the document executor.
     journal: Mutex<Journal>,
-    /// Separate fixed-record snapshot log, ordered after the document mutation lock.
+    /// Separate fixed-record snapshot log within the same document mutation order.
     snapshots: Mutex<Journal>,
     /// Refuses observations after uncertain I/O or a failed worker.
     failed: AtomicBool,
@@ -358,6 +371,62 @@ struct Opening {
 }
 
 impl Opening {
+    /// Publishes a whole value in document order and fails the opening on uncertainty.
+    fn write_value(&self, path: &Path, value: &[u8]) -> Result<(), FileStorageError> {
+        drop(self.lock()?);
+        #[cfg(test)]
+        let fault = {
+            let fault = self.value_fault.lock().unwrap().take();
+            if matches!(fault, Some(crate::journal::JournalFault::BeforeWrite)) {
+                return Err(FileStorageError::Rejected("injected before write"));
+            }
+            fault
+        };
+        let result = (|| {
+            #[cfg(test)]
+            {
+                if matches!(fault, Some(crate::journal::JournalFault::PartialWrite)) {
+                    return Err(FileStorageError::Ambiguous);
+                }
+                if matches!(fault, Some(crate::journal::JournalFault::BeforeSync)) {
+                    atomic_file::stage(path, value).map_err(|_| FileStorageError::Ambiguous)?;
+                    return Err(FileStorageError::Ambiguous);
+                }
+            }
+            atomic_file::write(path, value, self.durable)?;
+            #[cfg(test)]
+            {
+                if self.durable {
+                    self.value_syncs.fetch_add(1, Ordering::Relaxed);
+                }
+                if matches!(fault, Some(crate::journal::JournalFault::AfterSync)) {
+                    return Err(FileStorageError::Ambiguous);
+                }
+            }
+            Ok(())
+        })();
+        if result.is_err() {
+            self.poison();
+        }
+        result
+    }
+
+    /// Keeps content invisible until its complete publication succeeds.
+    fn publish_content(
+        &self,
+        state: &State,
+        id: BlobTreeId,
+        record: &[u8],
+    ) -> Result<(), FileStorageError> {
+        let key = Key::Content(id);
+        state.unpublished.lock().unwrap().insert(key);
+        let result = self.write_value(&state.content_path(id), record);
+        if result.is_ok() || matches!(result, Err(FileStorageError::Rejected(_))) {
+            state.unpublished.lock().unwrap().remove(&key);
+        }
+        result
+    }
+
     /// Tests resident availability using only the short-lived published-state lock.
     fn resident(&self, keys: impl IntoIterator<Item = Key>) -> Result<bool, FileStorageError> {
         let state = self.lock()?;
@@ -376,26 +445,26 @@ impl Opening {
     fn buffered_task(self: &Arc<Self>, records: Vec<(Key, Bytes)>) -> crate::buffered::Task {
         let opening = self.clone();
         crate::buffered::Task {
-            events: records[0].0[0] == 3,
+            events: matches!(records[0].0, Key::Event(_)),
             records,
             run: Box::new(move |records| {
                 let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                    let mut journal = opening.writer()?;
                     let state = opening.published()?;
-                    match records[0].0[0] {
-                        1 | 2 => {
+                    match records[0].0 {
+                        Key::Content(_) => {
                             for (key, record) in &records {
-                                journal.write_value(&state.content_path(key), record)?;
+                                let Key::Content(id) = key else {
+                                    unreachable!()
+                                };
+                                opening.write_value(&state.content_path(*id), record)?;
                             }
                         }
-                        3 => {
+                        Key::Event(_) => {
+                            let mut journal = opening.writer()?;
                             let invalid = records.iter().any(|(_, record)| {
                                 decode_event(record).is_ok_and(|event| {
                                     event.event.blob_tree.is_some_and(|root| {
-                                        !matches!(
-                                            state.content_path(&tree_key(root)).try_exists(),
-                                            Ok(true)
-                                        )
+                                        !matches!(state.content_path(root).try_exists(), Ok(true))
                                     })
                                 })
                             });
@@ -410,19 +479,20 @@ impl Opening {
                                 published.invalid_dependency
                             };
                             if !invalid {
-                                journal
-                                    .remember_tail(key_position(records.last().unwrap().0).get())?;
+                                let Key::Event(position) = records.last().unwrap().0 else {
+                                    unreachable!()
+                                };
+                                journal.remember_tail(position.get())?;
                             }
                         }
-                        4 => {
+                        Key::Snapshot(offset) => {
                             let mut snapshots = opening
                                 .snapshots
                                 .lock()
                                 .map_err(|_| FileStorageError::Ambiguous)?;
                             snapshots.append(&records[0].1)?;
-                            snapshots.remember_tail(key_position(records[0].0).get())?;
+                            snapshots.remember_tail(offset)?;
                         }
-                        _ => unreachable!(),
                     }
                     let mut pending = state.pending.lock().unwrap();
                     for (key, _) in &records {
@@ -496,7 +566,10 @@ impl Opening {
     /// Acquires a usable state or refuses uncertain journal observations.
     fn lock(&self) -> Result<MutexGuard<'_, State>, FileStorageError> {
         let state = self.state.lock().map_err(|_| FileStorageError::Ambiguous)?;
-        if self.failed.load(Ordering::Acquire) || self.journal.is_poisoned() {
+        if self.failed.load(Ordering::Acquire)
+            || self.journal.is_poisoned()
+            || self.snapshots.is_poisoned()
+        {
             return Err(FileStorageError::Ambiguous);
         }
         Ok(state)
@@ -507,7 +580,7 @@ impl Opening {
         Ok(self.lock()?.clone())
     }
 
-    /// Holds the mutation order across disk I/O and in-memory publication.
+    /// Acquires the event append cursor within an already ordered mutation.
     fn writer(&self) -> Result<MutexGuard<'_, Journal>, FileStorageError> {
         let journal = self
             .journal
@@ -571,6 +644,9 @@ struct State {
     head: u64,
     /// Last application snapshot position, with zero representing no snapshots.
     snapshot_head: u64,
+    /// Counts snapshot frame reads for traversal regressions.
+    #[cfg(test)]
+    snapshot_reads: Arc<std::sync::atomic::AtomicU64>,
     /// Raw event writes with unavailable dependencies must never advance the trusted cursor.
     invalid_dependency: bool,
     /// Weak wake registrations pruned on mutation and reader initialization.
@@ -589,10 +665,7 @@ impl State {
             0
         } else {
             let record = read_record(&mut snapshot_reader, snapshots.last)?;
-            if record.len() != 42 || record[0] != 4 {
-                return Err(FileStorageError::Corrupt("snapshot record"));
-            }
-            u64::from_be_bytes(record[1..9].try_into().unwrap())
+            SnapshotRecord::decode(&record)?.position.get()
         };
         let state = Self {
             unpublished: Arc::default(),
@@ -604,6 +677,8 @@ impl State {
             snapshot_end: snapshots.recovered_from,
             head: events.last,
             snapshot_head,
+            #[cfg(test)]
+            snapshot_reads: Arc::default(),
             invalid_dependency: false,
             readers: Vec::new(),
         };
@@ -629,9 +704,13 @@ impl State {
     }
 
     /// Derives immutable content location directly from its typed hash.
-    fn content_path(&self, key: &Key) -> PathBuf {
-        let name: String = key
-            .iter()
+    fn content_path(&self, id: BlobTreeId) -> PathBuf {
+        let (tag, hash) = match &id {
+            BlobTreeId::Blob(id) => (1, id.as_bytes()),
+            BlobTreeId::Directory(id) => (2, id.as_bytes()),
+        };
+        let name: String = std::iter::once(tag)
+            .chain(hash.iter().copied())
             .flat_map(|byte| {
                 let digits = b"0123456789abcdef";
                 [
@@ -652,13 +731,16 @@ impl State {
         if let Some(record) = self.pending.lock().unwrap().get(key) {
             return Ok(Some(record.to_vec()));
         }
-        let record = if key[0] <= 2 {
-            let Some(record) = atomic_file::read(&self.content_path(key))? else {
+        let record = if let Key::Content(id) = key {
+            let Some(record) = atomic_file::read(&self.content_path(*id))? else {
                 return Ok(None);
             };
             record
         } else {
-            let offset = key_position(*key).get();
+            let Key::Event(position) = key else {
+                return Err(FileStorageError::Corrupt("event address"));
+            };
+            let offset = position.get();
             if offset < 8 || offset > self.head {
                 return Ok(None);
             }
@@ -676,112 +758,24 @@ impl State {
         Ok(Some(record))
     }
 
-    /// Reads one accepted frame from its pending buffer or the written journal prefix.
-    fn frame(&self, category: u8, offset: u64) -> Result<Vec<u8>, FileStorageError> {
-        let key = position_key(category, EventPosition::new(offset));
-        if let Some(record) = self.pending.lock().unwrap().get(&key) {
-            return Ok(record.to_vec());
-        }
-        let reader = if category == 3 {
-            &self.reader
-        } else {
-            &self.snapshot_reader
-        };
-        read_record(
-            &mut *reader.lock().map_err(|_| FileStorageError::Ambiguous)?,
-            offset,
-        )
-    }
-
-    /// Seeks from an event cursor, or walks snapshots backward to select its successor.
-    fn next(
-        &self,
-        category: u8,
-        after: Option<EventPosition>,
-    ) -> Result<Option<EventPosition>, FileStorageError> {
-        if category == 4 {
-            let mut next = None;
-            for ordinal in (0..(self.snapshot_end - 8) / 90).rev() {
-                let offset = 8 + ordinal * 90;
-                let record = self.frame(4, offset)?;
-                let position = key_position(record_key(&record)?);
-                if Some(position) <= after {
-                    break;
-                }
-                next = Some(position);
-            }
-            return Ok(next);
-        }
-        if self.head == 0 || after.is_some_and(|after| after.get() >= self.head) {
-            return Ok(None);
-        }
-        let offset = match after {
-            None => 8,
-            Some(after) if self.has_event(after)? => {
-                let record = self.frame(3, after.get())?;
-                after.get() + 48 + record.len() as u64
-            }
-            Some(after) => {
-                let mut candidate = self.head;
-                loop {
-                    let record = self.frame(3, candidate)?;
-                    let previous = event_previous(&record)?;
-                    if previous <= after.get() {
-                        break candidate;
-                    }
-                    candidate = previous;
-                }
-            }
-        };
-        Ok(Some(EventPosition::new(offset)))
-    }
-
-    /// Walks backward from the archive tail; latest lookups need no traversal.
-    fn floor(
-        &self,
-        category: u8,
-        through: Option<EventPosition>,
-    ) -> Result<Option<EventPosition>, FileStorageError> {
-        if category == 4 {
-            for ordinal in (0..(self.snapshot_end - 8) / 90).rev() {
-                let offset = 8 + ordinal * 90;
-                let record = self.frame(4, offset)?;
-                let position = key_position(record_key(&record)?);
-                if through.is_none_or(|bound| position <= bound) {
-                    return Ok(Some(position));
-                }
-            }
-            return Ok(None);
-        }
-        let mut candidate = self.head;
-        while candidate != 0 && through.is_some_and(|bound| candidate > bound.get()) {
-            candidate = event_previous(&self.frame(3, candidate)?)?;
-        }
-        Ok(nonzero_position(candidate))
-    }
-
     /// Fetches an event only when an archive reader requests it.
     fn event(&self, position: EventPosition) -> Result<CommittedEvent, FileStorageError> {
-        let record = self
-            .record(&position_key(3, position))?
-            .ok_or(FileStorageError::Corrupt("missing addressed event"))?;
-        decode_event(&record)
+        if position.get() < RECORD_START || position.get() > self.head {
+            return Err(FileStorageError::Corrupt("missing addressed event"));
+        }
+        let event = RecordArchive::<CommittedEvent>::new(self).read(position.get())?;
+        if event.position != position {
+            return Err(FileStorageError::Corrupt("addressed record identity"));
+        }
+        Ok(event)
     }
 
-    /// Fetches an application snapshot root by walking backward from the snapshot tail.
+    /// Fetches an application snapshot root by its event position.
     fn snapshot(&self, position: EventPosition) -> Result<Option<BlobTreeId>, FileStorageError> {
-        for ordinal in (0..(self.snapshot_end - 8) / 90).rev() {
-            let offset = 8 + ordinal * 90;
-            let record = self.frame(4, offset)?;
-            let found = key_position(record_key(&record)?);
-            if found == position {
-                return decode_tree(&record[9..]).map(Some);
-            }
-            if found < position {
-                break;
-            }
-        }
-        Ok(None)
+        Ok(RecordArchive::<SnapshotRecord>::new(self)
+            .floor(Some(position))?
+            .filter(|record| record.position == position)
+            .map(|record| record.root))
     }
 
     /// Rejects non-record positions without treating numeric ordering as availability.
@@ -794,7 +788,7 @@ impl State {
             .pending
             .lock()
             .unwrap()
-            .contains_key(&position_key(3, position))
+            .contains_key(&Key::Event(position))
         {
             return Ok(true);
         }
@@ -822,13 +816,13 @@ impl State {
     /// Membership implies transitive closure for immutable published directories.
     fn contains(&self, id: BlobTreeId) -> Result<bool, FileStorageError> {
         let publication = self.unpublished.lock().unwrap();
-        if publication.contains(&tree_key(id)) {
+        if publication.contains(&Key::Content(id)) {
             return Ok(false);
         }
-        if self.pending.lock().unwrap().contains_key(&tree_key(id)) {
+        if self.pending.lock().unwrap().contains_key(&Key::Content(id)) {
             return Ok(true);
         }
-        Ok(self.content_path(&tree_key(id)).try_exists()?)
+        Ok(self.content_path(id).try_exists()?)
     }
 
     /// Captures live readers to notify after releasing the state mutex.
@@ -845,120 +839,285 @@ impl State {
         readers
     }
 
-    /// Applies one checked frame, rejecting gaps, missing dependencies, and invalid encodings.
-    fn recover_record(&mut self, record: &[u8], offset: u64) -> Result<(), FileStorageError> {
-        let Some((&tag, body)) = record.split_first() else {
-            return Err(FileStorageError::Corrupt("empty record"));
-        };
-        match tag {
-            1 => {}
-            2 => {
-                let directory = BlobDirectory::decode(body)
-                    .map_err(|_| FileStorageError::Corrupt("directory encoding"))?;
-                for child in directory.entries().values() {
-                    if !self.contains(*child)? {
-                        return Err(FileStorageError::Corrupt("directory dependency"));
-                    }
-                }
-            }
-            3 => {
-                if body.len() < 17 {
-                    return Err(FileStorageError::Corrupt("event encoding"));
-                }
-                let position =
-                    EventPosition::new(u64::from_be_bytes(body[..8].try_into().unwrap()));
-                let (blob_tree, payload) = if body[16] == 0 {
-                    (None, &body[17..])
-                } else if body[16] == 1 && body.len() >= 50 {
-                    (Some(decode_tree(&body[17..50])?), &body[50..])
-                } else {
-                    return Err(FileStorageError::Corrupt("event tree"));
-                };
-                if position.get() != offset || event_previous(record)? != self.head {
-                    return Err(FileStorageError::Corrupt("event position or dependency"));
-                }
-                if let Some(root) = blob_tree
-                    && !self.contains(root)?
-                {
-                    return Err(FileStorageError::Corrupt("event dependency"));
-                }
-                let _ = payload;
-                self.head = position.get();
-            }
-            4 => {
-                if body.len() != 41 {
-                    return Err(FileStorageError::Corrupt("snapshot encoding"));
-                }
-                let position =
-                    EventPosition::new(u64::from_be_bytes(body[..8].try_into().unwrap()));
-                let root = decode_tree(&body[8..])?;
-                if self.snapshot_head >= position.get()
-                    || !self.has_event(position)?
-                    || !self.contains(root)?
-                {
-                    return Err(FileStorageError::Corrupt("snapshot order or dependency"));
-                }
-                self.snapshot_head = position.get();
-                self.snapshot_end = offset + 90;
-            }
-            _ => return Err(FileStorageError::Corrupt("record tag")),
+    /// Applies an event frame only when its predecessor and dependencies are available.
+    fn recover_event(&mut self, record: &[u8], offset: u64) -> Result<(), FileStorageError> {
+        let event = decode_event(record)?;
+        if event.position.get() != offset || event_previous(record)? != self.head {
+            return Err(FileStorageError::Corrupt("event position or dependency"));
         }
+        if let Some(root) = event.event.blob_tree
+            && !self.contains(root)?
+        {
+            return Err(FileStorageError::Corrupt("event dependency"));
+        }
+        self.head = event.position.get();
+        Ok(())
+    }
+
+    /// Applies a snapshot frame only when both identities are available and ordered.
+    fn recover_snapshot(&mut self, record: &[u8], offset: u64) -> Result<(), FileStorageError> {
+        let (position, root) = decode_snapshot(record)?;
+        if self.snapshot_head >= position.get()
+            || !self.has_event(position)?
+            || !self.contains(root)?
+        {
+            return Err(FileStorageError::Corrupt("snapshot order or dependency"));
+        }
+        self.snapshot_head = position.get();
+        self.snapshot_end = offset + RecordArchive::<SnapshotRecord>::FRAME_SIZE as u64;
         Ok(())
     }
 }
 
-/// Typed content identities and direct event positions, never an address table.
-type Key = [u8; 33];
-
-/// Forms a fixed-width key whose byte ordering matches event ordering.
-fn position_key(category: u8, position: EventPosition) -> Key {
-    let mut key = [0; 33];
-    key[0] = category;
-    key[25..].copy_from_slice(&position.get().to_be_bytes());
-    key
+/// Pending record identities keep content hashes and the two log coordinates distinct.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) enum Key {
+    /// Immutable content addressed by typed hash.
+    Content(BlobTreeId),
+    /// Physical event offset, also its public archive position.
+    Event(EventPosition),
+    /// Physical snapshot offset, independent of the referenced event position.
+    Snapshot(u64),
 }
 
-/// Recovers the position encoded in an archive lookup key.
-fn key_position(key: Key) -> EventPosition {
-    EventPosition::new(u64::from_be_bytes(key[25..].try_into().unwrap()))
-}
-
-/// Converts the dense archive's empty sentinel into its public optional head.
-fn nonzero_position(ordinal: u64) -> Option<EventPosition> {
-    (ordinal != 0).then(|| EventPosition::new(ordinal))
-}
-
-/// Forms a key for an immutable tree identity.
-fn tree_key(tree: BlobTreeId) -> Key {
-    let mut key = [0; 33];
-    match tree {
-        BlobTreeId::Blob(id) => {
-            key[0] = 1;
-            key[1..].copy_from_slice(id.as_bytes());
-        }
-        BlobTreeId::Directory(id) => {
-            key[0] = 2;
-            key[1..].copy_from_slice(id.as_bytes());
-        }
-    }
-    key
+/// Converts the empty sentinel into an optional event position.
+fn nonzero_position(offset: u64) -> Option<EventPosition> {
+    (offset != 0).then(|| EventPosition::new(offset))
 }
 
 /// Determines the identity represented by a journal record.
 fn record_key(record: &[u8]) -> Result<Key, FileStorageError> {
     match record.first() {
-        Some(1) => Ok(tree_key(BlobTreeId::Blob(BlobId::for_bytes(&record[1..])))),
-        Some(2) => Ok(tree_key(BlobTreeId::Directory(
+        Some(1) => Ok(Key::Content(BlobTreeId::Blob(BlobId::for_bytes(
+            &record[1..],
+        )))),
+        Some(2) => Ok(Key::Content(BlobTreeId::Directory(
             BlobDirectory::decode(&record[1..])
                 .and_then(|directory| directory.id())
                 .map_err(|_| FileStorageError::Corrupt("directory identity"))?,
         ))),
-        Some(category @ (3 | 4)) if record.len() >= 9 => Ok(position_key(
-            *category,
-            EventPosition::new(u64::from_be_bytes(record[1..9].try_into().unwrap())),
-        )),
+        Some(3) if record.len() >= 9 => Ok(Key::Event(EventPosition::new(u64::from_be_bytes(
+            record[1..9].try_into().unwrap(),
+        )))),
         _ => Err(FileStorageError::Corrupt("record identity")),
     }
+}
+
+/// A journal record's decoding and pending-record address space.
+trait Record: Sized {
+    /// Decodes checked frame bytes without performing I/O.
+    fn decode(bytes: &[u8]) -> Result<Self, FileStorageError>;
+    /// Identifies a pending record at its physical journal offset.
+    fn key(offset: u64) -> Key;
+    /// Selects the independent file cursor for this record type.
+    fn reader(state: &State) -> &Mutex<fs::File>;
+}
+
+/// Records whose encoded payload width is invariant across all valid values.
+trait FixedSize: Record {
+    /// Payload bytes, excluding the common journal frame header.
+    const ENCODED_SIZE: usize;
+}
+
+/// Application snapshot identities, ordered by referenced event position on publication.
+struct SnapshotRecord {
+    /// Event position represented by the snapshot.
+    position: EventPosition,
+    /// Immutable snapshot content identity.
+    root: BlobTreeId,
+}
+
+impl Record for SnapshotRecord {
+    fn decode(bytes: &[u8]) -> Result<Self, FileStorageError> {
+        if bytes.len() != Self::ENCODED_SIZE || bytes[0] != 4 {
+            return Err(FileStorageError::Corrupt("snapshot encoding"));
+        }
+        Ok(Self {
+            position: EventPosition::new(u64::from_be_bytes(bytes[1..9].try_into().unwrap())),
+            root: decode_tree(&bytes[9..])?,
+        })
+    }
+
+    fn key(offset: u64) -> Key {
+        Key::Snapshot(offset)
+    }
+
+    fn reader(state: &State) -> &Mutex<fs::File> {
+        #[cfg(test)]
+        state.snapshot_reads.fetch_add(1, Ordering::Relaxed);
+        &state.snapshot_reader
+    }
+}
+
+impl FixedSize for SnapshotRecord {
+    const ENCODED_SIZE: usize = 1 + 8 + 33;
+}
+
+impl Record for CommittedEvent {
+    fn decode(bytes: &[u8]) -> Result<Self, FileStorageError> {
+        decode_event(bytes)
+    }
+
+    fn key(offset: u64) -> Key {
+        Key::Event(EventPosition::new(offset))
+    }
+
+    fn reader(state: &State) -> &Mutex<fs::File> {
+        &state.reader
+    }
+}
+
+/// Typed access to a published journal prefix and its accepted pending suffix.
+struct RecordArchive<'state, RecordType> {
+    /// Coherent published bounds with shared pending buffers and file cursors.
+    state: &'state State,
+    /// Selects decoding and address space without retaining a decoded record.
+    record: std::marker::PhantomData<RecordType>,
+}
+
+impl<'state, RecordType: Record> RecordArchive<'state, RecordType> {
+    /// Borrows a coherent published-state snapshot for addressed reads.
+    fn new(state: &'state State) -> Self {
+        Self {
+            state,
+            record: std::marker::PhantomData,
+        }
+    }
+
+    /// Reads a checked frame from the pending overlay or written journal.
+    fn frame(&self, offset: u64) -> Result<Vec<u8>, FileStorageError> {
+        let reader = RecordType::reader(self.state);
+        if let Some(record) = self
+            .state
+            .pending
+            .lock()
+            .unwrap()
+            .get(&RecordType::key(offset))
+        {
+            return Ok(record.to_vec());
+        }
+        read_record(
+            &mut *reader.lock().map_err(|_| FileStorageError::Ambiguous)?,
+            offset,
+        )
+    }
+
+    /// Decodes the record at a known physical frame boundary.
+    fn read(&self, offset: u64) -> Result<RecordType, FileStorageError> {
+        RecordType::decode(&self.frame(offset)?)
+    }
+}
+
+impl<RecordType> RecordArchive<'_, RecordType>
+where
+    RecordType: FixedSize,
+{
+    /// Complete fixed-width frame stride, including common framing.
+    const FRAME_SIZE: usize = FRAME_HEADER + RecordType::ENCODED_SIZE;
+
+    /// Converts a record ordinal to a physical offset without truncating overflow.
+    fn offset(ordinal: u64) -> Result<u64, FileStorageError> {
+        ordinal
+            .checked_mul(Self::FRAME_SIZE as u64)
+            .and_then(|offset| offset.checked_add(RECORD_START))
+            .ok_or(FileStorageError::Corrupt("record offset overflow"))
+    }
+
+    /// Reads a fixed-width record by ordinal rather than public archive position.
+    fn read_at_ordinal(&self, ordinal: u64) -> Result<RecordType, FileStorageError> {
+        self.read(Self::offset(ordinal)?)
+    }
+
+    /// Validates and counts complete fixed-width records within a published boundary.
+    fn record_count(end: u64) -> Result<u64, FileStorageError> {
+        let bytes = end
+            .checked_sub(RECORD_START)
+            .ok_or(FileStorageError::Corrupt("record boundary"))?;
+        if !bytes.is_multiple_of(Self::FRAME_SIZE as u64) {
+            return Err(FileStorageError::Corrupt("fixed record boundary"));
+        }
+        Ok(bytes / Self::FRAME_SIZE as u64)
+    }
+}
+
+impl RecordArchive<'_, SnapshotRecord> {
+    /// Selects a snapshot by ordered search, or reads the final ordinal for the latest.
+    fn floor(
+        &self,
+        bound: Option<EventPosition>,
+    ) -> Result<Option<SnapshotRecord>, FileStorageError> {
+        let end = if bound.is_none_or(|bound| bound.get() >= self.state.snapshot_head) {
+            Self::record_count(self.state.snapshot_end)?
+        } else {
+            self.upper_bound(bound)?
+        };
+        end.checked_sub(1)
+            .map(|ordinal| self.read_at_ordinal(ordinal))
+            .transpose()
+    }
+
+    /// Searches monotonically ordered snapshot positions for the first ordinal above a bound.
+    fn upper_bound(&self, bound: Option<EventPosition>) -> Result<u64, FileStorageError> {
+        let Some(bound) = bound else { return Ok(0) };
+        let mut lower = 0;
+        let mut upper = Self::record_count(self.state.snapshot_end)?;
+        while lower < upper {
+            let middle = lower + (upper - lower) / 2;
+            if self.read_at_ordinal(middle)?.position <= bound {
+                lower = middle + 1;
+            } else {
+                upper = middle;
+            }
+        }
+        Ok(lower)
+    }
+}
+
+impl RecordArchive<'_, CommittedEvent> {
+    /// Seeks the next variable-width event using its length or predecessor links.
+    fn next(
+        &self,
+        after: Option<EventPosition>,
+    ) -> Result<Option<EventPosition>, FileStorageError> {
+        if self.state.head == 0 || after.is_some_and(|after| after.get() >= self.state.head) {
+            return Ok(None);
+        }
+        let offset = match after {
+            None => RECORD_START,
+            Some(after) if self.state.has_event(after)? => {
+                after.get() + FRAME_HEADER as u64 + self.frame(after.get())?.len() as u64
+            }
+            Some(after) => {
+                let mut candidate = self.state.head;
+                loop {
+                    let previous = event_previous(&self.frame(candidate)?)?;
+                    if previous <= after.get() {
+                        break candidate;
+                    }
+                    candidate = previous;
+                }
+            }
+        };
+        Ok(Some(EventPosition::new(offset)))
+    }
+
+    /// Walks predecessor links to select the last event within a public position bound.
+    fn floor(
+        &self,
+        through: Option<EventPosition>,
+    ) -> Result<Option<EventPosition>, FileStorageError> {
+        let mut candidate = self.state.head;
+        while candidate != 0 && through.is_some_and(|bound| candidate > bound.get()) {
+            candidate = event_previous(&self.frame(candidate)?)?;
+        }
+        Ok(nonzero_position(candidate))
+    }
+}
+
+/// Decodes snapshot identities for recovery without exposing physical offsets.
+fn decode_snapshot(record: &[u8]) -> Result<(EventPosition, BlobTreeId), FileStorageError> {
+    let record = SnapshotRecord::decode(record)?;
+    Ok((record.position, record.root))
 }
 
 /// Decodes one event payload after its framing checksum has been verified.
@@ -1046,7 +1205,7 @@ impl ReferenceableStore for FileBlobs {
     type Id = BlobTreeId;
     type Handle = FileHandle<BlobTreeId>;
     async fn resolve(&self, id: Self::Id) -> Result<Option<Self::Handle>, Self::Error> {
-        if self.0.resident([tree_key(id)])? {
+        if self.0.resident([Key::Content(id)])? {
             return Ok(Some(self.0.handle(id)));
         }
         let component = self.clone();
@@ -1054,7 +1213,7 @@ impl ReferenceableStore for FileBlobs {
     }
     async fn ensure_available(&self, handle: &Self::Handle) -> Result<(), Self::Error> {
         self.0.compatible(handle)?;
-        if self.0.resident([tree_key(handle.id)])? {
+        if self.0.resident([Key::Content(handle.id)])? {
             return Ok(());
         }
         let handle = handle.clone();
@@ -1109,8 +1268,8 @@ impl BlobStore for FileBlobs {
         let resident = self.0.buffered.is_some()
             && self
                 .0
-                .resident(directory.entries().values().copied().map(tree_key))?;
-        if self.0.resident([tree_key(BlobTreeId::Directory(id))])? {
+                .resident(directory.entries().values().copied().map(Key::Content))?;
+        if self.0.resident([Key::Content(BlobTreeId::Directory(id))])? {
             return Ok(self.0.handle(BlobTreeId::Directory(id)));
         }
         if !resident && let Some(handle) = self.resolve(BlobTreeId::Directory(id)).await? {
@@ -1162,7 +1321,7 @@ impl ReferenceableStore for FileEvents {
     type Id = EventPosition;
     type Handle = FileHandle<EventPosition>;
     async fn resolve(&self, id: Self::Id) -> Result<Option<Self::Handle>, Self::Error> {
-        if self.0.resident([position_key(3, id)])? {
+        if self.0.resident([Key::Event(id)])? {
             return Ok(Some(self.0.handle(id)));
         }
         let component = self.clone();
@@ -1170,7 +1329,7 @@ impl ReferenceableStore for FileEvents {
     }
     async fn ensure_available(&self, handle: &Self::Handle) -> Result<(), Self::Error> {
         self.0.compatible(handle)?;
-        if self.0.resident([position_key(3, handle.id)])? {
+        if self.0.resident([Key::Event(handle.id)])? {
             return Ok(());
         }
         let handle = handle.clone();
@@ -1236,7 +1395,7 @@ impl Archive for FileEvents {
                         offset = offset
                             .checked_add(48 + record.len() as u64)
                             .ok_or(FileStorageError::Rejected("event positions exhausted"))?;
-                        records.push((position_key(3, position), Bytes::from(record)));
+                        records.push((Key::Event(position), Bytes::from(record)));
                         handles.push(Ok(self.0.handle(position)));
                     }
                     state.head = previous;
@@ -1276,13 +1435,7 @@ impl Archive for FileEvents {
         after: Option<EventPosition>,
         stop_after: Option<EventPosition>,
     ) -> ArchiveStream<Self::Item, EventPosition, Self::Error> {
-        read(
-            self.0.clone(),
-            after,
-            stop_after,
-            3,
-            |_, state, position| state.event(position),
-        )
+        read(self.0.clone(), after, stop_after, EventCursor)
     }
     async fn head(&self) -> Result<Option<EventPosition>, Self::Error> {
         Ok(nonzero_position(self.0.lock()?.head))
@@ -1404,7 +1557,7 @@ impl Archive for FileSnapshots {
             let position = snapshot.at_event.id;
             if !self
                 .0
-                .resident([tree_key(root), position_key(3, position)])?
+                .resident([Key::Content(root), Key::Event(position)])?
             {
                 self.0
                     .query(move || {
@@ -1424,13 +1577,13 @@ impl Archive for FileSnapshots {
                     }
                     let offset = state.snapshot_end;
                     let end = offset
-                        .checked_add(90)
+                        .checked_add(RecordArchive::<SnapshotRecord>::FRAME_SIZE as u64)
                         .ok_or(FileStorageError::Rejected("snapshot positions exhausted"))?;
                     let mut record = vec![4];
                     record.extend_from_slice(&position.get().to_be_bytes());
                     encode_tree(&mut record, root);
                     let record = Bytes::from(record);
-                    let key = position_key(4, EventPosition::new(offset));
+                    let key = Key::Snapshot(offset);
                     state.pending.lock().unwrap().insert(key, record.clone());
                     state.snapshot_end = end;
                     state.snapshot_head = position.get();
@@ -1445,7 +1598,9 @@ impl Archive for FileSnapshots {
         }
         let component = self.clone();
         self.0
-            .execute(90, move || component.append_blocking(&snapshot))
+            .execute(RecordArchive::<SnapshotRecord>::FRAME_SIZE, move || {
+                component.append_blocking(&snapshot)
+            })
             .await
     }
     fn read(
@@ -1453,18 +1608,7 @@ impl Archive for FileSnapshots {
         after: Option<EventPosition>,
         stop_after: Option<EventPosition>,
     ) -> ArchiveStream<Self::Item, EventPosition, Self::Error> {
-        read(
-            self.0.clone(),
-            after,
-            stop_after,
-            4,
-            |opening, state, position| {
-                let root = state
-                    .snapshot(position)?
-                    .ok_or(FileStorageError::Corrupt("missing snapshot"))?;
-                Ok(opening.snapshot(position, root))
-            },
-        )
+        read(self.0.clone(), after, stop_after, SnapshotCursor::default())
     }
     async fn head(&self) -> Result<Option<EventPosition>, Self::Error> {
         Ok(nonzero_position(self.0.lock()?.snapshot_head))
@@ -1581,7 +1725,7 @@ impl FileBlobs {
             .unwrap()
             .admit(record.len().saturating_mul(3).saturating_add(128), || {
                 let state = self.0.lock()?;
-                let key = tree_key(id);
+                let key = Key::Content(id);
                 state.pending.lock().unwrap().insert(key, record.clone());
                 Ok((self.0.handle(id), self.0.buffered_task(vec![(key, record)])))
             })
@@ -1612,12 +1756,12 @@ impl FileBlobs {
         payload: &[u8],
     ) -> Result<FileHandle<BlobTreeId>, FileStorageError> {
         let id = BlobId::for_bytes(payload);
-        let mut journal = self.0.writer()?;
         let state = self.0.published()?;
         if !state.contains(BlobTreeId::Blob(id))? {
             let mut record = vec![1];
             record.extend_from_slice(payload);
-            drop(persist(&self.0, &mut journal, state, &record)?);
+            self.0
+                .publish_content(&state, BlobTreeId::Blob(id), &record)?;
         }
         Ok(self.0.handle(BlobTreeId::Blob(id)))
     }
@@ -1626,7 +1770,7 @@ impl FileBlobs {
         let record = self
             .0
             .published()?
-            .record(&tree_key(BlobTreeId::Blob(id)))?
+            .record(&Key::Content(BlobTreeId::Blob(id)))?
             .ok_or(FileStorageError::Rejected("missing blob"))?;
         Ok(Bytes::copy_from_slice(&record[1..]))
     }
@@ -1637,14 +1781,6 @@ impl FileBlobs {
         encoded: &[u8],
         id: BlobDirectoryId,
     ) -> Result<FileHandle<BlobTreeId>, FileStorageError> {
-        if self.0.published()?.contains(BlobTreeId::Directory(id))? {
-            return Ok(self.0.handle(BlobTreeId::Directory(id)));
-        }
-        // Release the fast-path state lock before waiting for the journal.
-        // Writers acquire journal before state; reversing that order can deadlock with event publication.
-        // Leaving state unlocked also lets reads and deduplication proceed during event disk I/O.
-        // Recheck membership below because another writer may publish this directory while we wait.
-        let mut journal = self.0.writer()?;
         let state = self.0.published()?;
         if !state.contains(BlobTreeId::Directory(id))? {
             for child in directory.entries().values() {
@@ -1654,7 +1790,8 @@ impl FileBlobs {
             }
             let mut record = vec![2];
             record.extend_from_slice(encoded);
-            drop(persist(&self.0, &mut journal, state, &record)?);
+            self.0
+                .publish_content(&state, BlobTreeId::Directory(id), &record)?;
         }
         Ok(self.0.handle(BlobTreeId::Directory(id)))
     }
@@ -1666,7 +1803,7 @@ impl FileBlobs {
         let record = self
             .0
             .published()?
-            .record(&tree_key(BlobTreeId::Directory(id)))?
+            .record(&Key::Content(BlobTreeId::Directory(id)))?
             .ok_or(FileStorageError::Rejected("missing directory"))?;
         BlobDirectory::decode(&record[1..])
             .map_err(|_| FileStorageError::Corrupt("directory encoding"))
@@ -1704,7 +1841,6 @@ impl FileSnapshots {
     fn append_blocking(&self, snapshot: &FileSnapshot) -> Result<(), FileStorageError> {
         self.0.compatible(&snapshot.root)?;
         self.0.compatible(&snapshot.at_event)?;
-        let mut journal = self.0.writer()?;
         let mut state = self.0.published()?;
         let position = snapshot.at_event.id;
         if !state.contains(snapshot.root.id)? || !state.has_event(position)? {
@@ -1716,7 +1852,24 @@ impl FileSnapshots {
         let mut record = vec![4];
         record.extend_from_slice(&position.get().to_be_bytes());
         encode_tree(&mut record, snapshot.root.id);
-        state = persist(&self.0, &mut journal, state, &record)?;
+        let result = {
+            let mut snapshots = self
+                .0
+                .snapshots
+                .lock()
+                .map_err(|_| FileStorageError::Ambiguous)?;
+            let offset = snapshots.boundary()?;
+            snapshots.append(&record).and_then(|()| {
+                state.recover_snapshot(&record, offset)?;
+                snapshots.remember_tail(offset)
+            })
+        };
+        if let Err(error) = result {
+            if matches!(error, FileStorageError::Ambiguous) {
+                self.0.poison();
+            }
+            return Err(error);
+        }
         let readers = {
             let mut published = self.0.lock()?;
             published.snapshot_head = state.snapshot_head;
@@ -1745,12 +1898,9 @@ impl FileSnapshots {
         position: Option<EventPosition>,
     ) -> Result<Option<FileSnapshot>, FileStorageError> {
         let state = self.0.published()?;
-        let Some(position) = state.floor(4, position)? else {
-            return Ok(None);
-        };
-        Ok(state
-            .snapshot(position)?
-            .map(|root| self.0.snapshot(position, root)))
+        Ok(RecordArchive::<SnapshotRecord>::new(&state)
+            .floor(position)?
+            .map(|record| self.0.snapshot(record.position, record.root)))
     }
 }
 
@@ -1765,51 +1915,151 @@ impl FileCheckpoint {
         if checkpoint.is_empty() {
             return Err(FileStorageError::Rejected("empty internal checkpoint"));
         }
-        let mut journal = self.0.writer()?;
-        if let Err(error) =
-            journal.write_value(&self.0.path.with_extension("checkpoint"), checkpoint)
-        {
-            drop(journal);
-            self.0.poison();
-            return Err(error);
-        }
-        Ok(())
+        self.0
+            .write_value(&self.0.path.with_extension("checkpoint"), checkpoint)
     }
 }
 
-/// Releases the mutation lock before notifying readers of an uncertain write.
-fn persist(
-    opening: &Opening,
-    journal: &mut Journal,
-    mut state: State,
-    record: &[u8],
-) -> Result<State, FileStorageError> {
-    let result = if matches!(record.first(), Some(1 | 2)) {
-        let key = record_key(record)?;
-        state.unpublished.lock().unwrap().insert(key);
-        let result = journal.write_value(&state.content_path(&key), record);
-        if result.is_ok() || matches!(result, Err(FileStorageError::Rejected(_))) {
-            state.unpublished.lock().unwrap().remove(&key);
-        }
-        result
-    } else {
-        let mut snapshots = opening
-            .snapshots
-            .lock()
-            .map_err(|_| FileStorageError::Ambiguous)?;
-        let offset = snapshots.boundary()?;
-        snapshots.append(record).and_then(|()| {
-            state.recover_record(record, offset)?;
-            snapshots.remember_tail(offset)
-        })
-    };
-    if let Err(error) = result {
-        if matches!(error, FileStorageError::Ambiguous) {
-            opening.poison();
-        }
-        return Err(error);
+/// Archive-specific selection and delivery, independent of stream progress and wakeups.
+trait ArchiveCursor: Send + 'static {
+    /// Public item delivered by this archive.
+    type Item: Send + 'static;
+    /// Selected identity or decoded record retained until delivery.
+    type Candidate;
+    /// Current public head used to validate initial stream bounds.
+    fn head(state: &State) -> Option<EventPosition>;
+    /// Last public position within the stream's upper bound.
+    fn latest(
+        &mut self,
+        state: &State,
+        stop: Option<EventPosition>,
+    ) -> Result<Option<EventPosition>, FileStorageError>;
+    /// Selects without advancing, so a progress notification cannot consume an item.
+    fn next(
+        &mut self,
+        state: &State,
+        previous: Option<EventPosition>,
+    ) -> Result<Option<Self::Candidate>, FileStorageError>;
+    /// Public position of a selected candidate, independent of its physical address.
+    fn position(candidate: &Self::Candidate) -> EventPosition;
+    /// Produces the public item and advances only after successful delivery preparation.
+    fn deliver(
+        &mut self,
+        opening: &Opening,
+        state: &State,
+        candidate: Self::Candidate,
+    ) -> Result<Self::Item, FileStorageError>;
+}
+
+/// Variable-width event traversal using public byte-offset positions.
+struct EventCursor;
+
+impl ArchiveCursor for EventCursor {
+    type Item = CommittedEvent;
+    type Candidate = EventPosition;
+
+    fn head(state: &State) -> Option<EventPosition> {
+        nonzero_position(state.head)
     }
-    Ok(state)
+
+    fn latest(
+        &mut self,
+        state: &State,
+        stop: Option<EventPosition>,
+    ) -> Result<Option<EventPosition>, FileStorageError> {
+        RecordArchive::<CommittedEvent>::new(state).floor(stop)
+    }
+
+    fn next(
+        &mut self,
+        state: &State,
+        previous: Option<EventPosition>,
+    ) -> Result<Option<EventPosition>, FileStorageError> {
+        RecordArchive::<CommittedEvent>::new(state).next(previous)
+    }
+
+    fn position(candidate: &EventPosition) -> EventPosition {
+        *candidate
+    }
+
+    fn deliver(
+        &mut self,
+        _: &Opening,
+        state: &State,
+        position: EventPosition,
+    ) -> Result<CommittedEvent, FileStorageError> {
+        state.event(position)
+    }
+}
+
+/// Fixed-width snapshot traversal retaining an ordinal, never a public event position as an offset.
+#[derive(Default)]
+struct SnapshotCursor {
+    /// Next physical record ordinal, initialized once from the exclusive lower bound.
+    ordinal: Option<u64>,
+    /// Cached finite upper-bound selection; new snapshots cannot enter a validated finite range.
+    latest: Option<EventPosition>,
+}
+
+impl ArchiveCursor for SnapshotCursor {
+    type Item = FileSnapshot;
+    type Candidate = SnapshotRecord;
+
+    fn head(state: &State) -> Option<EventPosition> {
+        nonzero_position(state.snapshot_head)
+    }
+
+    fn latest(
+        &mut self,
+        state: &State,
+        stop: Option<EventPosition>,
+    ) -> Result<Option<EventPosition>, FileStorageError> {
+        if stop.is_none() {
+            return Ok(Self::head(state));
+        }
+        if let Some(latest) = self.latest {
+            return Ok(Some(latest));
+        }
+        let latest = RecordArchive::<SnapshotRecord>::new(state)
+            .floor(stop)?
+            .map(|record| record.position);
+        self.latest = latest;
+        Ok(latest)
+    }
+
+    fn next(
+        &mut self,
+        state: &State,
+        previous: Option<EventPosition>,
+    ) -> Result<Option<SnapshotRecord>, FileStorageError> {
+        let archive = RecordArchive::<SnapshotRecord>::new(state);
+        let ordinal = match self.ordinal {
+            Some(ordinal) => ordinal,
+            None => archive.upper_bound(previous)?,
+        };
+        self.ordinal = Some(ordinal);
+        if ordinal == RecordArchive::<SnapshotRecord>::record_count(state.snapshot_end)? {
+            return Ok(None);
+        }
+        archive.read_at_ordinal(ordinal).map(Some)
+    }
+
+    fn position(candidate: &SnapshotRecord) -> EventPosition {
+        candidate.position
+    }
+
+    fn deliver(
+        &mut self,
+        opening: &Opening,
+        _: &State,
+        record: SnapshotRecord,
+    ) -> Result<FileSnapshot, FileStorageError> {
+        *self
+            .ordinal
+            .as_mut()
+            .expect("snapshot selected before delivery") += 1;
+        Ok(opening.snapshot(record.position, record.root))
+    }
 }
 
 /// Creates a lazy read retaining the opening, with notifications registered under the mutation lock.
@@ -1817,13 +2067,12 @@ fn persist(
     clippy::too_many_lines,
     reason = "Keep the bounded lazy-read state machine together"
 )]
-fn read<Item: Send + 'static>(
+fn read<Cursor: ArchiveCursor>(
     opening: Arc<Opening>,
     after: Option<EventPosition>,
     stop: Option<EventPosition>,
-    category: u8,
-    convert: fn(&Opening, &State, EventPosition) -> Result<Item, FileStorageError>,
-) -> ArchiveStream<Item, EventPosition, FileStorageError> {
+    mut cursor: Cursor,
+) -> ArchiveStream<Cursor::Item, EventPosition, FileStorageError> {
     let workers = opening.workers.clone();
     let initial = MonitoredStreamProgress {
         previous: after,
@@ -1850,11 +2099,7 @@ fn read<Item: Send + 'static>(
             }
         };
         waker.register(context.waker());
-        let head = nonzero_position(if category == 3 {
-            state.head
-        } else {
-            state.snapshot_head
-        });
+        let head = Cursor::head(&state);
         if !initialized {
             if !empty
                 && (after.is_some_and(|bound| Some(bound) > head)
@@ -1872,7 +2117,7 @@ fn read<Item: Send + 'static>(
             drop(state);
             snapshot
         };
-        let latest = match state.floor(category, stop) {
+        let latest = match cursor.latest(&state, stop) {
             Ok(latest) => latest,
             Err(error) => {
                 finished = true;
@@ -1882,22 +2127,25 @@ fn read<Item: Send + 'static>(
         let next = if empty {
             None
         } else {
-            match state.next(category, previous) {
-                Ok(next) => next.filter(|position| stop.is_none_or(|stop| *position <= stop)),
+            match cursor.next(&state, previous) {
+                Ok(next) => next.filter(|candidate| {
+                    stop.is_none_or(|stop| Cursor::position(candidate) <= stop)
+                }),
                 Err(error) => {
                     finished = true;
                     return Poll::Ready(Some(Err(error)));
                 }
             }
         };
-        let progress = observe(latest, next, previous, empty);
+        let progress = observe(latest, next.as_ref().map(Cursor::position), previous, empty);
         *observed.lock().expect("reader observation lock") = progress.clone();
         if reported.is_none() {
             reported = Some(progress.clone());
             return Poll::Ready(Some(Ok(MonitoredStreamItem::Progress(progress))));
         }
-        if let Some(position) = next {
-            let item = match convert(&opening, &state, position) {
+        if let Some(candidate) = next {
+            let position = Cursor::position(&candidate);
+            let item = match cursor.deliver(&opening, &state, candidate) {
                 Ok(item) => item,
                 Err(error) => {
                     finished = true;
@@ -2044,7 +2292,230 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn byte_offset_bounds_and_backward_snapshots_survive_reopen_without_checkpoint() {
+    async fn recovery_rejects_records_from_other_storage_surfaces() {
+        let root = root();
+        let storage = Factory::open(&root, true).unwrap();
+        let mut event_record = vec![3];
+        event_record.extend_from_slice(&8_u64.to_be_bytes());
+        event_record.extend_from_slice(&0_u64.to_be_bytes());
+        event_record.push(0);
+        let mut snapshot_record = vec![4];
+        snapshot_record.extend_from_slice(&8_u64.to_be_bytes());
+        encode_tree(
+            &mut snapshot_record,
+            BlobTreeId::Blob(BlobId::for_bytes(b"root")),
+        );
+        let mut directory_record = vec![2];
+        directory_record.extend_from_slice(&BlobDirectory::default().encode().unwrap());
+        for snapshot_log in [false, true] {
+            for record in [
+                vec![1],
+                directory_record.clone(),
+                if snapshot_log {
+                    event_record.clone()
+                } else {
+                    snapshot_record.clone()
+                },
+            ] {
+                let created = storage.create_document().await.unwrap();
+                let opening = &created.components.events.0;
+                if snapshot_log {
+                    opening.snapshots.lock().unwrap().append(&record).unwrap();
+                } else {
+                    opening.writer().unwrap().append(&record).unwrap();
+                }
+                drop(created.components);
+                assert!(matches!(
+                    storage.open_document(&created.id).await,
+                    Err(FileStorageError::Corrupt(_))
+                ));
+            }
+        }
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn checkpoint_failure_poisoning_and_recovery_are_document_owned() {
+        for fault in [
+            JournalFault::BeforeWrite,
+            JournalFault::PartialWrite,
+            JournalFault::BeforeSync,
+            JournalFault::AfterSync,
+        ] {
+            let root = root();
+            let storage = Factory::open(&root, true).unwrap();
+            let created = storage.create_document().await.unwrap();
+            let components = &created.components;
+            components
+                .checkpoints
+                .publish_checkpoint(Bytes::from_static(b"old"))
+                .await
+                .unwrap();
+            *components.events.0.value_fault.lock().unwrap() = Some(fault);
+            let result = components
+                .checkpoints
+                .publish_checkpoint(Bytes::from_static(b"new"))
+                .await;
+            assert!(components.events.0.journal.lock().unwrap().ready().is_ok());
+            if matches!(fault, JournalFault::BeforeWrite) {
+                assert!(matches!(result, Err(FileStorageError::Rejected(_))));
+                assert_eq!(
+                    components.checkpoints.checkpoint().await.unwrap().unwrap(),
+                    b"old"[..]
+                );
+                assert_eq!(components.events.head().await.unwrap(), None);
+            } else {
+                assert!(matches!(result, Err(FileStorageError::Ambiguous)));
+                assert!(matches!(
+                    components.events.head().await,
+                    Err(FileStorageError::Ambiguous)
+                ));
+                assert!(matches!(
+                    components.checkpoints.checkpoint().await,
+                    Err(FileStorageError::Ambiguous)
+                ));
+            }
+            drop(created.components);
+            let recovered = storage.open_document(&created.id).await.unwrap().unwrap();
+            let expected = if matches!(fault, JournalFault::AfterSync) {
+                b"new"
+            } else {
+                b"old"
+            };
+            assert_eq!(
+                recovered.checkpoints.checkpoint().await.unwrap().unwrap(),
+                expected[..]
+            );
+            assert_eq!(recovered.events.0.writer().unwrap().cursor_writes, 0);
+            assert_eq!(
+                recovered.events.0.snapshots.lock().unwrap().cursor_writes,
+                0
+            );
+            drop(recovered);
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn snapshot_reads_are_linear_and_bounded_lookups_are_logarithmic() {
+        let root = root();
+        let storage = Factory::open(&root, false).unwrap();
+        let created = storage.create_document().await.unwrap();
+        let components = created.components;
+        let blob = components
+            .blobs
+            .put_blob(Bytes::from_static(b"snapshot"))
+            .await
+            .unwrap();
+        let mut positions = Vec::new();
+        for _ in 0..128 {
+            let event = components.events.append(batch().remove(0)).await.unwrap();
+            positions.push(event.id());
+            components
+                .snapshots
+                .append(Snapshot {
+                    root: blob.clone(),
+                    at_event: event,
+                })
+                .await
+                .unwrap();
+        }
+        storage.flush().await.unwrap();
+        let reads = components.events.0.published().unwrap().snapshot_reads;
+        reads.store(0, Ordering::Relaxed);
+        let mut stream = components.snapshots.read(None, positions.last().copied());
+        let mut delivered = Vec::new();
+        while let Some(item) = stream.next().await {
+            if let MonitoredStreamItem::Item(snapshot) = item.unwrap() {
+                delivered.push(snapshot.at_event.id());
+            }
+        }
+        assert_eq!(delivered, positions);
+        assert!(reads.load(Ordering::Relaxed) <= 130);
+        reads.store(0, Ordering::Relaxed);
+        assert_eq!(
+            components
+                .snapshots
+                .latest_at_or_before(Some(positions[5]))
+                .await
+                .unwrap()
+                .unwrap()
+                .at_event
+                .id(),
+            positions[5]
+        );
+        assert!(reads.load(Ordering::Relaxed) <= 9);
+        reads.store(0, Ordering::Relaxed);
+        assert_eq!(
+            components
+                .snapshots
+                .latest_at_or_before(None)
+                .await
+                .unwrap()
+                .unwrap()
+                .at_event
+                .id(),
+            positions[127]
+        );
+        assert_eq!(reads.load(Ordering::Relaxed), 1);
+        reads.store(0, Ordering::Relaxed);
+        let mut bounded = components.snapshots.read(
+            Some(EventPosition::new(positions[5].get() + 1)),
+            Some(EventPosition::new(positions[11].get() + 1)),
+        );
+        let mut selected = Vec::new();
+        while let Some(item) = bounded.next().await {
+            if let MonitoredStreamItem::Item(snapshot) = item.unwrap() {
+                selected.push(snapshot.at_event.id());
+            }
+        }
+        assert_eq!(selected, positions[6..12]);
+        assert!(reads.load(Ordering::Relaxed) <= 25);
+        drop(bounded);
+        drop((stream, components));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn fixed_snapshot_layout_matches_encoding_and_checks_ordinal_arithmetic() {
+        for root in [
+            BlobTreeId::Blob(BlobId::for_bytes(b"root")),
+            BlobTreeId::Directory(BlobDirectory::default().id().unwrap()),
+        ] {
+            let position = EventPosition::new(137);
+            let mut encoded = vec![4];
+            encoded.extend_from_slice(&position.get().to_be_bytes());
+            encode_tree(&mut encoded, root);
+            assert_eq!(encoded.len(), SnapshotRecord::ENCODED_SIZE);
+            let decoded = SnapshotRecord::decode(&encoded).unwrap();
+            assert_eq!(decoded.position, position);
+            assert_eq!(decoded.root, root);
+            for length in 0..encoded.len() {
+                assert!(SnapshotRecord::decode(&encoded[..length]).is_err());
+            }
+            encoded.push(0);
+            assert!(SnapshotRecord::decode(&encoded).is_err());
+        }
+        assert_eq!(
+            RecordArchive::<SnapshotRecord>::offset(0).unwrap(),
+            RECORD_START
+        );
+        let end = RecordArchive::<SnapshotRecord>::offset(128).unwrap();
+        assert_eq!(
+            RecordArchive::<SnapshotRecord>::record_count(end).unwrap(),
+            128
+        );
+        assert_eq!(
+            RecordArchive::<SnapshotRecord>::record_count(RECORD_START).unwrap(),
+            0
+        );
+        assert!(RecordArchive::<SnapshotRecord>::record_count(RECORD_START - 1).is_err());
+        assert!(RecordArchive::<SnapshotRecord>::record_count(end - 1).is_err());
+        assert!(RecordArchive::<SnapshotRecord>::offset(u64::MAX).is_err());
+    }
+
+    #[tokio::test]
+    async fn byte_offset_bounds_and_snapshot_lookup_survive_reopen_without_checkpoint() {
         let root = root();
         let storage = Factory::open(&root, true).unwrap();
         let created = storage.create_document().await.unwrap();
@@ -2164,12 +2635,7 @@ mod tests {
             }
         }
         assert_eq!(count, 521);
-        let path = components
-            .blobs
-            .0
-            .lock()
-            .unwrap()
-            .content_path(&tree_key(blob.id()));
+        let path = components.blobs.0.lock().unwrap().content_path(blob.id());
         let checkpoint_path = components.events.0.path.with_extension("checkpoint");
         assert_eq!(fs::metadata(&checkpoint_path).unwrap().len(), 32 + 8);
         assert!(!components.events.0.path.with_extension("index").exists());
@@ -2204,9 +2670,9 @@ mod tests {
 
     #[tokio::test(flavor = "current_thread")]
     async fn directory_deduplication_does_not_wait_for_writer() {
-        for indexed in [false, true] {
-            check_directory_deduplication::<false>(indexed).await;
-            check_directory_deduplication::<true>(indexed).await;
+        for reopened in [false, true] {
+            check_directory_deduplication::<false>(reopened).await;
+            check_directory_deduplication::<true>(reopened).await;
         }
     }
 
@@ -2244,7 +2710,7 @@ mod tests {
     }
 
     /// Checks that closed directories can be reused while another mutation owns the journal.
-    async fn check_directory_deduplication<const DURABLE: bool>(indexed: bool) {
+    async fn check_directory_deduplication<const DURABLE: bool>(reopened: bool) {
         let root = root();
         let storage = Factory::open(&root, DURABLE).unwrap();
         let created = storage.create_document().await.unwrap();
@@ -2253,7 +2719,7 @@ mod tests {
         let directory =
             BlobDirectory::new(BTreeMap::from([("leaf".to_owned(), leaf.id())])).unwrap();
         let original = blobs.put_directory(directory.clone()).await.unwrap();
-        let components = if indexed {
+        let components = if reopened {
             created
                 .components
                 .checkpoints
@@ -2276,7 +2742,7 @@ mod tests {
             created.components
         };
         let blobs = &components.blobs;
-        let syncs_before = blobs.0.writer().unwrap().syncs;
+        let syncs_before = blobs.0.value_syncs.load(Ordering::Relaxed);
         let duplicate = blobs.clone();
         let (completed, completion) = std::sync::mpsc::channel();
         let (worker, result) = {
@@ -2299,7 +2765,7 @@ mod tests {
                 .id(),
             original.id()
         );
-        assert_eq!(blobs.0.writer().unwrap().syncs, syncs_before);
+        assert_eq!(blobs.0.value_syncs.load(Ordering::Relaxed), syncs_before);
         drop(components);
         fs::remove_dir_all(root).unwrap();
     }
@@ -2335,8 +2801,8 @@ mod tests {
             ));
             assert!(blobs.resolve(id).await.unwrap().is_none());
         }
-        assert_eq!(blobs.0.writer().unwrap().syncs, 3);
-        blobs.0.writer().unwrap().inject(JournalFault::BeforeWrite);
+        assert_eq!(blobs.0.value_syncs.load(Ordering::Relaxed), 3);
+        *blobs.0.value_fault.lock().unwrap() = Some(JournalFault::BeforeWrite);
         assert_eq!(
             blobs.put_directory(parent.clone()).await.unwrap().id(),
             parent_handle.id()
@@ -2345,7 +2811,7 @@ mod tests {
             blobs.put_directory(BlobDirectory::default()).await,
             Err(FileStorageError::Rejected(_))
         ));
-        blobs.0.writer().unwrap().inject(JournalFault::PartialWrite);
+        *blobs.0.value_fault.lock().unwrap() = Some(JournalFault::PartialWrite);
         assert!(matches!(
             blobs.put_directory(BlobDirectory::default()).await,
             Err(FileStorageError::Ambiguous)
@@ -2403,7 +2869,7 @@ mod tests {
         let parent =
             BlobDirectory::new(BTreeMap::from([("child".to_owned(), child.id())])).unwrap();
         let parent_id = parent.id().unwrap();
-        blobs.0.writer().unwrap().inject(JournalFault::BeforeSync);
+        *blobs.0.value_fault.lock().unwrap() = Some(JournalFault::BeforeSync);
 
         assert!(matches!(
             blobs.put_directory(parent).await,

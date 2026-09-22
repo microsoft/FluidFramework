@@ -14,7 +14,7 @@ pub(crate) const MAX_BYTES: usize = 16 * 1024 * 1024;
 /// Maximum queued and in-flight requests per document.
 const MAX_REQUESTS: usize = 128;
 /// Addressed encoded records shared between admission, reads, and drain workers.
-type Records = Vec<([u8; 33], bytes::Bytes)>;
+type Records = Vec<(crate::storage::Key, bytes::Bytes)>;
 /// One ordered filesystem operation over a selected record group.
 type WriteRecords = Box<dyn FnOnce(Records) -> Result<(), FileStorageError> + Send>;
 /// One mutation retained until its write and cursor publication settle.

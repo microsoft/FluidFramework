@@ -71,8 +71,10 @@ impl ClassifiedError for FileStorageError {
 
 /// Format marker intentionally unrelated to the transitional backend format.
 const MAGIC: &[u8; 8] = b"SEANEXT2";
+/// Physical offset of the first frame in either journal.
+pub(crate) const RECORD_START: u64 = MAGIC.len() as u64;
 /// Length, complemented length, and content hash protect frame boundaries.
-const FRAME_HEADER: usize = 48;
+pub(crate) const FRAME_HEADER: usize = 48;
 
 /// An exclusive opening; the stable sidecar lock survives journal replacement.
 pub(crate) struct Journal {
@@ -82,6 +84,8 @@ pub(crate) struct Journal {
     pub(crate) last: u64,
     /// First byte not covered by the storage-owned settled cursor.
     pub(crate) recovered_from: u64,
+    /// Last published cursor value; absence requires publication even for an empty journal.
+    cursor: Option<(u64, u64)>,
     /// Published file, positioned at its validated append boundary.
     file: File,
     /// Never replaced or removed; owns the OS lock across publication and recovery.
@@ -96,6 +100,12 @@ pub(crate) struct Journal {
     /// Counts successful append synchronization calls, excluding opening and recovery.
     #[cfg(test)]
     pub(crate) syncs: usize,
+    /// Counts journal synchronization barriers during creation or recovery.
+    #[cfg(test)]
+    opening_syncs: usize,
+    /// Counts actual cursor replacements during this opening.
+    #[cfg(test)]
+    pub(crate) cursor_writes: usize,
     /// Pauses or panics at a completed-write boundary in executor and cancellation tests.
     #[cfg(test)]
     pub(crate) before_sync: Option<Box<dyn FnOnce() + Send>>,
@@ -127,28 +137,22 @@ impl Journal {
                 std::io::ErrorKind::AlreadyExists.into(),
             ));
         }
-        let lock = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .truncate(false)
-            .open(path.with_extension("lock"))?;
-        lock.try_lock().map_err(|error| match error {
-            std::fs::TryLockError::WouldBlock if create => {
-                FileStorageError::Io(std::io::ErrorKind::AlreadyExists.into())
-            }
-            std::fs::TryLockError::WouldBlock => FileStorageError::Busy,
-            std::fs::TryLockError::Error(error) => FileStorageError::Io(error),
-        })?;
+        let lock = lock_journal(path, create)?;
         if create && path.try_exists()? {
             return Err(FileStorageError::Io(
                 std::io::ErrorKind::AlreadyExists.into(),
             ));
         }
+        #[cfg(test)]
+        let mut opening_syncs = 0;
         let mut file = if create && durable {
             let mut staged = staging_file(path)?;
             staged.write_all(MAGIC)?;
             publish(path, &staged)?;
+            #[cfg(test)]
+            {
+                opening_syncs += 1;
+            }
             staged
         } else {
             let mut file = OpenOptions::new()
@@ -161,10 +165,6 @@ impl Journal {
             }
             file
         };
-        if durable {
-            file.sync_all()?;
-            sync_parent(path)?;
-        }
         file.seek(SeekFrom::Start(0))?;
         let mut magic = [0; 8];
         match file.read_exact(&mut magic) {
@@ -188,14 +188,18 @@ impl Journal {
         if boundary != length {
             file.set_len(boundary)?;
         }
-        if durable {
-            file.sync_all()?;
-            sync_parent(path)?;
-        }
         match fs::remove_file(path.with_extension("pending")) {
             Ok(()) => {}
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
             Err(error) => return Err(error.into()),
+        }
+        if durable && !create {
+            file.sync_all()?;
+            sync_parent(path)?;
+            #[cfg(test)]
+            {
+                opening_syncs += 1;
+            }
         }
         file.seek(SeekFrom::End(0))?;
         Ok((
@@ -203,6 +207,7 @@ impl Journal {
                 path: path.to_path_buf(),
                 last,
                 recovered_from: start,
+                cursor: cursor.map(|_| (start, last)),
                 file,
                 _lock: lock,
                 durable,
@@ -211,6 +216,10 @@ impl Journal {
                 fault: None,
                 #[cfg(test)]
                 syncs: 0,
+                #[cfg(test)]
+                opening_syncs,
+                #[cfg(test)]
+                cursor_writes: 0,
                 #[cfg(test)]
                 before_sync: None,
             },
@@ -258,6 +267,9 @@ impl Journal {
     /// Publishes the storage-owned validated tail without any historical address table.
     pub(crate) fn remember_tail(&mut self, last: u64) -> Result<(), FileStorageError> {
         let boundary = self.boundary()?;
+        if self.cursor == Some((boundary, last)) {
+            return Ok(());
+        }
         self.failed = true;
         let result = {
             let mut cursor = boundary.to_be_bytes().to_vec();
@@ -267,6 +279,11 @@ impl Journal {
         match result {
             Ok(()) => {
                 self.last = last;
+                self.cursor = Some((boundary, last));
+                #[cfg(test)]
+                {
+                    self.cursor_writes += 1;
+                }
                 self.failed = false;
                 Ok(())
             }
@@ -277,46 +294,6 @@ impl Journal {
     /// Returns the publication policy shared by this document's immutable files.
     pub(crate) const fn durable(&self) -> bool {
         self.durable
-    }
-
-    /// Publishes a separate immutable value under the document's mutation authority.
-    pub(crate) fn write_value(
-        &mut self,
-        path: &Path,
-        value: &[u8],
-    ) -> Result<(), FileStorageError> {
-        self.ready()?;
-        #[cfg(test)]
-        let fault = {
-            let fault = self.fault.take();
-            if matches!(fault, Some(JournalFault::BeforeWrite)) {
-                return Err(FileStorageError::Rejected("injected before write"));
-            }
-            fault
-        };
-        self.failed = true;
-        #[cfg(test)]
-        {
-            if matches!(fault, Some(JournalFault::PartialWrite)) {
-                return Err(FileStorageError::Ambiguous);
-            }
-            if matches!(fault, Some(JournalFault::BeforeSync)) {
-                atomic_file::stage(path, value).map_err(|_| FileStorageError::Ambiguous)?;
-                return Err(FileStorageError::Ambiguous);
-            }
-        }
-        atomic_file::write(path, value, self.durable)?;
-        #[cfg(test)]
-        {
-            if self.durable {
-                self.syncs += 1;
-            }
-            if matches!(fault, Some(JournalFault::AfterSync)) {
-                return Err(FileStorageError::Ambiguous);
-            }
-        }
-        self.failed = false;
-        Ok(())
     }
 
     /// Arms one deterministic failure without exposing fault machinery to production callers.
@@ -390,6 +367,24 @@ impl Journal {
         self.failed = false;
         Ok(())
     }
+}
+
+/// Acquires a stable sidecar lock, distinguishing allocation races from occupied openings.
+fn lock_journal(path: &Path, create: bool) -> Result<File, FileStorageError> {
+    let lock = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .open(path.with_extension("lock"))?;
+    lock.try_lock().map_err(|error| match error {
+        std::fs::TryLockError::WouldBlock if create => {
+            FileStorageError::Io(std::io::ErrorKind::AlreadyExists.into())
+        }
+        std::fs::TryLockError::WouldBlock => FileStorageError::Busy,
+        std::fs::TryLockError::Error(error) => FileStorageError::Io(error),
+    })?;
+    Ok(lock)
 }
 
 /// Creates a fresh unpublished inode while the document's stable lock is held.
@@ -491,8 +486,49 @@ mod tests {
     use super::*;
 
     #[test]
+    fn reopening_settles_once_and_only_replaces_changed_cursors() {
+        let root =
+            std::env::temp_dir().join(format!("sea-cursor-settlement-{}", std::process::id()));
+        fs::create_dir_all(&root).unwrap();
+        let path = root.join("document.sea");
+        let (mut journal, _) = Journal::open(&path, true, true).unwrap();
+        assert_eq!(journal.opening_syncs, 1);
+        journal.remember_tail(0).unwrap();
+        assert_eq!(journal.cursor_writes, 1);
+        drop(journal);
+        let (mut journal, records) = Journal::open(&path, false, true).unwrap();
+        assert!(records.is_empty());
+        assert_eq!(journal.opening_syncs, 1);
+        journal.remember_tail(0).unwrap();
+        assert_eq!(journal.cursor_writes, 0);
+        journal.append(b"settled").unwrap();
+        journal.remember_tail(8).unwrap();
+        assert_eq!(journal.cursor_writes, 1);
+        let tail = journal.boundary().unwrap();
+        journal.inject(JournalFault::BeforeSync);
+        assert!(matches!(
+            journal.append(b"uncertain"),
+            Err(FileStorageError::Ambiguous)
+        ));
+        drop(journal);
+        let (mut journal, records) = Journal::open(&path, false, true).unwrap();
+        assert_eq!(records, vec![b"uncertain".to_vec()]);
+        assert_eq!(journal.opening_syncs, 1);
+        journal.remember_tail(tail).unwrap();
+        assert_eq!(journal.cursor_writes, 1);
+        drop(journal);
+        let (mut journal, records) = Journal::open(&path, false, true).unwrap();
+        assert!(records.is_empty());
+        assert_eq!(journal.opening_syncs, 1);
+        journal.remember_tail(tail).unwrap();
+        assert_eq!(journal.cursor_writes, 0);
+        drop(journal);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn storage_cursor_skips_old_frames_without_a_sequencer_checkpoint() {
-        let root = std::env::temp_dir().join(format!("sea-indexed-journal-{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("sea-cursor-journal-{}", std::process::id()));
         fs::create_dir_all(&root).unwrap();
         let path = root.join("document.sea");
         let (mut journal, _) = Journal::open(&path, true, true).unwrap();
