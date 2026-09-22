@@ -249,6 +249,29 @@ describe("publish tarballs", () => {
 
 			expect(error).to.be.instanceOf(RangeError);
 		});
+
+		it("rejects non-finite or fractional retry counts before preflight checks", async () => {
+			const invalidRetries = [Number.NaN, 1.5, Number.POSITIVE_INFINITY];
+			for (const retry of invalidRetries) {
+				let preflightCheckCount = 0;
+				let error: unknown;
+				try {
+					await publishTarballsInOrder([createTarball("tarball")], {
+						retry,
+						isPublished: async () => {
+							preflightCheckCount++;
+							return false;
+						},
+						publish: async () => "SuccessfullyPublished",
+					});
+				} catch (caught) {
+					error = caught;
+				}
+
+				expect(error).to.be.instanceOf(RangeError);
+				expect(preflightCheckCount).to.equal(0);
+			}
+		});
 	});
 
 	it("rejects negative retry counts when parsing command flags", () => {

@@ -365,15 +365,15 @@ export function getTarballsToPublish(
  * @param tarballs - Ordered list of tarballs to publish.
  * @param options - Configuration and callbacks for publishing and retries.
  * @returns Array of publish results corresponding to each attempted tarball up to first fatal error.
- * @throws `RangeError` if `options.retry` is negative.
+ * @throws `RangeError` if `options.retry` is not a finite integer greater than or equal to 0.
  */
 export async function publishTarballsInOrder(
 	tarballs: readonly TarballMetadata[],
 	options: PublishTarballsOptions,
 ): Promise<PublishTarballResult[]> {
 	const { isPublished, log, preflightConcurrency, publish, retry } = options;
-	if (retry < 0) {
-		throw new RangeError(`retry must be greater than or equal to 0`);
+	if (!Number.isInteger(retry) || retry < 0) {
+		throw new RangeError(`retry must be a finite integer greater than or equal to 0`);
 	}
 
 	// The registry check is independent for every package, unlike publishing which must remain
