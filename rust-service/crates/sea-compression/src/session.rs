@@ -189,8 +189,7 @@ impl<Session: SeaSnapshotCoordinator> SeaSnapshotCoordinator for CompressionSess
 mod tests {
     use super::*;
     use sea_core::{
-        ClassifiedError, ErrorKind, Event, MonitoredStreamItem,
-        archive::{AuthorId, SessionId},
+        ClassifiedError, ErrorKind, Event, MonitoredStreamItem, archive::SessionId,
         storage::SeaStorage,
     };
     use sea_memory::MemoryStorage;
@@ -205,21 +204,13 @@ mod tests {
             .unwrap();
         let first = CompressionSession::new(
             runtime
-                .open_session(
-                    AuthorId::new("first").unwrap(),
-                    SessionId::new("first").unwrap(),
-                    None,
-                )
+                .open_session(SessionId::new("first").unwrap(), None)
                 .await
                 .unwrap(),
         );
         let second = CompressionSession::new(
             runtime
-                .open_session(
-                    AuthorId::new("second").unwrap(),
-                    SessionId::new("second").unwrap(),
-                    None,
-                )
+                .open_session(SessionId::new("second").unwrap(), None)
                 .await
                 .unwrap(),
         );
@@ -234,11 +225,7 @@ mod tests {
             .await
             .unwrap();
         let raw = runtime
-            .open_session(
-                AuthorId::new("author").unwrap(),
-                SessionId::new("session").unwrap(),
-                None,
-            )
+            .open_session(SessionId::new("session").unwrap(), None)
             .await
             .unwrap();
         let position = raw

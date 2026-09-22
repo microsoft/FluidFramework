@@ -75,32 +75,7 @@ mod event_tests {
     }
 }
 
-/// Stable identity of one event author within an archive.
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct AuthorId(Bytes);
-
-impl AuthorId {
-    /// Creates a nonempty author identity.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error when `value` is empty.
-    pub fn new(value: impl Into<Bytes>) -> Result<Self, ValueError> {
-        let value = value.into();
-        if value.is_empty() {
-            return Err(ValueError::EmptyAuthorId);
-        }
-        Ok(Self(value))
-    }
-
-    /// Returns the opaque identity bytes.
-    #[must_use]
-    pub const fn as_bytes(&self) -> &Bytes {
-        &self.0
-    }
-}
-
-/// Fresh identity of one logical connection by an author.
+/// Fresh identity of one logical session.
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct SessionId(Bytes);
 
@@ -129,18 +104,12 @@ impl SessionId {
 mod identity_tests {
     use bytes::Bytes;
 
-    use super::{AuthorId, SessionId, ValueError};
+    use super::{SessionId, ValueError};
 
     #[test]
     fn caller_identities_preserve_nonempty_bytes_and_reject_empty_values() {
         let value = Bytes::from_static(b"identity");
 
-        assert_eq!(
-            AuthorId::new(value.clone())
-                .expect("nonempty author identity")
-                .as_bytes(),
-            &value
-        );
         assert_eq!(
             SessionId::new(value.clone())
                 .expect("nonempty session identity")
@@ -148,7 +117,6 @@ mod identity_tests {
             &value
         );
 
-        assert_eq!(AuthorId::new(Bytes::new()), Err(ValueError::EmptyAuthorId));
         assert_eq!(
             SessionId::new(Bytes::new()),
             Err(ValueError::EmptySessionId)
@@ -159,8 +127,6 @@ mod identity_tests {
 /// Invalid caller-created Sea values.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ValueError {
-    /// An author identity was empty.
-    EmptyAuthorId,
     /// A session identity was empty.
     EmptySessionId,
 }
@@ -194,8 +160,7 @@ pub struct SessionCommittedEvent {
     pub kind: SessionEventKind,
     /// Storage commitment and application event.
     pub committed: CommittedEvent,
-    /// Stable author identity supplied when the session opened.
-    pub author_id: AuthorId,
+
     /// Connection identity that submitted the event.
     pub session_id: SessionId,
     /// Sequenced history known when the author constructed this event, or initial state.

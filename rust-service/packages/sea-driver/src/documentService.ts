@@ -119,8 +119,6 @@ export class SeaDocumentService extends Events implements IDocumentService {
 	private sessionOpened = false;
 	/** Ordered session replacements; logical-stream operations remain independently concurrent. */
 	private sessionTransition: Promise<void> = Promise.resolve();
-	/** Stable author identity for storage access before a Fluid delta connection opens. */
-	private readonly storageAuthor = encoder.encode(`storage-${crypto.randomUUID()}`);
 	/** Fresh session identity for pre-delta storage access. */
 	private readonly storageSession = encoder.encode(`storage-session-${crypto.randomUUID()}`);
 
@@ -176,12 +174,7 @@ export class SeaDocumentService extends Events implements IDocumentService {
 			this.options.subscriptionBatchMaxPayloadBytes,
 		);
 		await this.transitionSession(async () => {
-			await wasm.openSession(
-				documentId(this.resolvedUrl),
-				lifecycle.writer,
-				session,
-				lifecycle.cursor,
-			);
+			await wasm.openSession(documentId(this.resolvedUrl), session, lifecycle.cursor);
 			await connection.open(true);
 		});
 		this.options.onDeltaConnection?.(connection);
@@ -219,11 +212,7 @@ export class SeaDocumentService extends Events implements IDocumentService {
 	private async ensureStorageSession(client: SeaDriverClient): Promise<void> {
 		await this.transitionSession(async () => {
 			if (!this.sessionOpened) {
-				await client.openSession(
-					documentId(this.resolvedUrl),
-					this.storageAuthor,
-					this.storageSession,
-				);
+				await client.openSession(documentId(this.resolvedUrl), this.storageSession);
 			}
 		});
 	}
@@ -239,14 +228,13 @@ export class SeaDocumentService extends Events implements IDocumentService {
 		this.sessionOpened = true;
 	}
 
-	/** Retains a service-unique SEA author across delta connections, independent of projected client labels. */
+	/** Retains Fluid client metadata and delivery state across delta connections. */
 	private getDeltaLifecycle(mode: ConnectionMode): DeltaConnectionLifecycle {
 		if (this.deltaLifecycle === undefined) {
 			const clientId = mode === "read" ? remoteClientId : `client-${crypto.randomUUID()}`;
 			this.deltaLifecycle = {
 				clientId,
 				remoteClientId: clientId === remoteClientId ? externalClientId : remoteClientId,
-				writer: encoder.encode(mode === "read" ? `reader-${crypto.randomUUID()}` : clientId),
 				cursor: undefined,
 				lastPosition: undefined,
 				remoteClientSequenceNumber: 0,

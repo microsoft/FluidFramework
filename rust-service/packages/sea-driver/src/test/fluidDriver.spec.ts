@@ -40,7 +40,7 @@ describe("SeaDriver", () => {
 		const observer = new SeaSessionDriverClient(service.open, "readOnly");
 		try {
 			const document = await writer.create();
-			await writer.openSession(document, encoder.encode("writer"), encoder.encode("session"));
+			await writer.openSession(document, encoder.encode("session"));
 			const root = await writer.publishSummary([]);
 			const version = await writer.publishSnapshotRoot(undefined, undefined, root.digest);
 			const handle = Buffer.from(version).toString("hex");
@@ -71,11 +71,7 @@ describe("SeaDriver", () => {
 				});
 				assert.equal((await subscription.next()).eventType, "application");
 				assert.equal((await subscription.next()).eventType, "summaryAck");
-				await observer.openSession(
-					document,
-					encoder.encode("observer"),
-					encoder.encode("observer-session"),
-				);
+				await observer.openSession(document, encoder.encode("observer-session"));
 				assert.deepEqual((await observer.readProjected()).operations, history.operations);
 				const page = await new SeaDeltaStorage(observer).fetchMessages(2, 3).read();
 				assert.equal(page.done, false);
@@ -102,18 +98,14 @@ describe("SeaDriver", () => {
 		const observer = new SeaSessionDriverClient(service.open, "readOnly");
 		try {
 			const document = await writer.create();
-			await writer.openSession(document, encoder.encode("writer"), encoder.encode("session"));
+			await writer.openSession(document, encoder.encode("session"));
 			const storage = new SeaDocumentStorage(writer);
 			await storage.uploadInitialSummary({ type: SummaryType.Tree, tree: {} });
 			const initial = (await storage.getVersions(null, 1))[0];
 			assert.ok(initial);
 			await writer.announceMembership(encoder.encode(JSON.stringify({ mode: "write" })));
 			await writer.readProjected();
-			await observer.openSession(
-				document,
-				encoder.encode("observer"),
-				encoder.encode("observer"),
-			);
+			await observer.openSession(document, encoder.encode("observer"));
 			const reference = writer.positionForSequence(1);
 			assert.ok(reference);
 			const abandoned = await storage.uploadSummaryWithContext(
@@ -127,11 +119,7 @@ describe("SeaDriver", () => {
 			assert.ok(beforeReplacement);
 			assert.equal(Buffer.from(beforeReplacement.id).toString("hex"), initial.id);
 			writer.disconnect();
-			await writer.openSession(
-				document,
-				encoder.encode("writer"),
-				encoder.encode("replacement"),
-			);
+			await writer.openSession(document, encoder.encode("replacement"));
 			const afterReplacement = await observer.latestSnapshot();
 			assert.ok(afterReplacement);
 			assert.equal(Buffer.from(afterReplacement.id).toString("hex"), initial.id);
@@ -185,11 +173,7 @@ describe("SeaDriver", () => {
 				submit: async (...submissionArgs) => {
 					const position = await session.submit(...submissionArgs);
 					if (JSON.parse(decoder.decode(submissionArgs[1])).type === MessageType.Summarize) {
-						await writer.openSession(
-							session.document,
-							encoder.encode("writer"),
-							encoder.encode("replacement"),
-						);
+						await writer.openSession(session.document, encoder.encode("replacement"));
 					}
 					return position;
 				},
@@ -197,7 +181,7 @@ describe("SeaDriver", () => {
 		}, "clientSelected");
 		try {
 			const document = await writer.create();
-			await writer.openSession(document, encoder.encode("writer"), encoder.encode("session"));
+			await writer.openSession(document, encoder.encode("session"));
 			const root = await writer.publishSummary([]);
 			const initial = await writer.publishSnapshotRoot(undefined, undefined, root.digest);
 			await writer.announceMembership(encoder.encode(JSON.stringify({ mode: "write" })));
@@ -236,7 +220,7 @@ describe("SeaDriver", () => {
 		const writer = new SeaSessionDriverClient(service.open, "clientSelected");
 		try {
 			const document = await writer.create();
-			await writer.openSession(document, encoder.encode("writer"), encoder.encode("session"));
+			await writer.openSession(document, encoder.encode("session"));
 			await writer.announceMembership(encoder.encode(JSON.stringify({ mode: "write" })));
 			await assert.rejects(
 				writer.submitEvent(
@@ -249,11 +233,7 @@ describe("SeaDriver", () => {
 				),
 				/published snapshot/,
 			);
-			await writer.openSession(
-				document,
-				encoder.encode("observer"),
-				encoder.encode("observer-session"),
-			);
+			await writer.openSession(document, encoder.encode("observer-session"));
 			assert.deepEqual(
 				(await writer.readProjected()).operations.map((operation) => operation.eventType),
 				["joined", "left"],
@@ -283,7 +263,7 @@ describe("SeaDriver", () => {
 		}, "clientSelected");
 		try {
 			const document = await writer.create();
-			await writer.openSession(document, encoder.encode("writer"), encoder.encode("session"));
+			await writer.openSession(document, encoder.encode("session"));
 			const root = await writer.publishSummary([]);
 			const version = await writer.publishSnapshotRoot(undefined, undefined, root.digest);
 			await writer.announceMembership(encoder.encode(JSON.stringify({ mode: "write" })));
@@ -299,11 +279,7 @@ describe("SeaDriver", () => {
 				),
 				/acknowledgment interrupted/,
 			);
-			await writer.openSession(
-				document,
-				encoder.encode("observer"),
-				encoder.encode("observer-session"),
-			);
+			await writer.openSession(document, encoder.encode("observer-session"));
 			assert.deepEqual(
 				(await writer.readProjected()).operations.map((operation) => operation.eventType),
 				["joined", "application", "left"],
@@ -322,11 +298,7 @@ describe("SeaDriver", () => {
 		const observer = new SeaSessionDriverClient(service.open, "readOnly");
 		try {
 			const document = await writer.create();
-			await writer.openSession(
-				document,
-				encoder.encode("writer"),
-				encoder.encode("writer-session"),
-			);
+			await writer.openSession(document, encoder.encode("writer-session"));
 			const root = await writer.publishSummary([]);
 			const initial = await writer.publishSnapshotRoot(undefined, undefined, root.digest);
 			assert.deepEqual(writer.positionForSequence(0), initial);
@@ -341,11 +313,7 @@ describe("SeaDriver", () => {
 			assert.deepEqual(writer.positionForSequence(1), position);
 			const version = await writer.publishSnapshotRoot(initial, position, root.digest);
 			assert.deepEqual(version, position);
-			await observer.openSession(
-				document,
-				encoder.encode("observer"),
-				encoder.encode("observer-session"),
-			);
+			await observer.openSession(document, encoder.encode("observer-session"));
 			assert.deepEqual(observer.positionForSequence(0), initial);
 			assert.deepEqual(observer.positionForSequence(1), position);
 			assert.equal((await observer.readProjected()).operations[0]?.sequenceNumber, 1n);
@@ -363,7 +331,6 @@ describe("SeaDriver", () => {
 				{
 					clientId: "observer",
 					remoteClientId: "writer",
-					writer: encoder.encode("observer"),
 					cursor: position,
 					lastPosition: initial,
 					remoteClientSequenceNumber: 0,
@@ -408,7 +375,6 @@ describe("SeaDriver", () => {
 			{
 				clientId: "writer",
 				remoteClientId: "remote",
-				writer: encoder.encode("writer"),
 				cursor: undefined,
 				lastPosition: undefined,
 				remoteClientSequenceNumber: 0,
@@ -489,7 +455,6 @@ describe("SeaDriver", () => {
 			{
 				clientId: "writer",
 				remoteClientId: "remote",
-				writer: encoder.encode("writer"),
 				cursor: undefined,
 				lastPosition: undefined,
 				remoteClientSequenceNumber: 0,
@@ -565,7 +530,6 @@ describe("SeaDriver", () => {
 			{
 				clientId: "writer",
 				remoteClientId: "remote",
-				writer: encoder.encode("writer"),
 				cursor: undefined,
 				lastPosition: undefined,
 				remoteClientSequenceNumber: 0,
@@ -672,9 +636,9 @@ describe("SeaDriver", () => {
 		const adapter = new SeaSessionDriverClient(service.open, "readOnly");
 		const document = await adapter.create();
 		try {
-			await adapter.openSession(document, encoder.encode("writer"), encoder.encode("old"));
+			await adapter.openSession(document, encoder.encode("old"));
 			await adapter.announceMembership(encoder.encode('{"mode":"write"}'));
-			await adapter.openSession(document, encoder.encode("writer"), encoder.encode("new"));
+			await adapter.openSession(document, encoder.encode("new"));
 			await adapter.announceMembership(encoder.encode('{"mode":"write"}'));
 			adapter.disconnect(encoder.encode("old"));
 			assert.deepEqual(
@@ -692,7 +656,7 @@ describe("SeaDriver", () => {
 			);
 			adapter.disconnect(encoder.encode("new"));
 			assert.deepEqual(await adapter.fetchBlob(blob.digest), payload);
-			await adapter.openSession(document, encoder.encode("reader"), encoder.encode("reader"));
+			await adapter.openSession(document, encoder.encode("reader"));
 			assert.deepEqual(
 				(await adapter.readProjected()).operations.map((operation) => operation.eventType),
 				["joined", "left", "joined", "left"],
@@ -719,7 +683,7 @@ describe("SeaDriver", () => {
 		let archiveOpens = 0;
 		let archiveCloses = 0;
 		const adapter = new SeaSessionDriverClient(async (document, options) => {
-			const archive = decoder.decode(options.author).startsWith("archive-");
+			const archive = decoder.decode(options.session).startsWith("archive-");
 			if (archive) {
 				archiveOpens += 1;
 				enteredOpen();
@@ -740,7 +704,7 @@ describe("SeaDriver", () => {
 			const payload = encoder.encode("lazy archive content");
 			const blob = await adapter.uploadBlob(payload);
 			const owner = encoder.encode("delta");
-			await adapter.openSession(document, encoder.encode("writer"), owner);
+			await adapter.openSession(document, owner);
 			adapter.disconnect(owner);
 			const reads = Promise.all([
 				adapter.fetchBlob(blob.digest),
@@ -767,7 +731,6 @@ describe("SeaDriver", () => {
 	it("neutral projection preserves the durable floor across membership close and reopen", async () => {
 		const service = await createMemoryService({ environment: "node" });
 		const writer = await service.open(undefined, {
-			author: encoder.encode("writer"),
 			session: encoder.encode("first"),
 		});
 		const adapter = new SeaSessionDriverClient(service.open, "readOnly");
@@ -775,11 +738,7 @@ describe("SeaDriver", () => {
 			const joined = await writer.announceMembership(encoder.encode('{"mode":"write"}'));
 			await writer.submit(joined, encoder.encode('{"clientSequenceNumber":1}'));
 			await writer.close();
-			await adapter.openSession(
-				writer.document,
-				encoder.encode("reader"),
-				encoder.encode("second"),
-			);
+			await adapter.openSession(writer.document, encoder.encode("second"));
 			await adapter.announceMembership(encoder.encode('{"mode":"write"}'));
 			const history = (await adapter.readProjected()).operations;
 			assert.deepEqual(
@@ -807,7 +766,6 @@ describe("SeaDriver", () => {
 	it("neutral session driver cancels startup history when initialization is invalid", async () => {
 		const service = await createMemoryService({ environment: "node" });
 		const client = await service.open(undefined, {
-			author: encoder.encode("author"),
 			session: encoder.encode("initial-session"),
 		});
 		const document = client.document;
@@ -832,11 +790,7 @@ describe("SeaDriver", () => {
 		}, "readOnly");
 		try {
 			await assert.rejects(
-				adapter.openSession(
-					document,
-					encoder.encode("reader"),
-					encoder.encode("reader-session"),
-				),
+				adapter.openSession(document, encoder.encode("reader-session")),
 				/invalid Fluid initialization event/,
 			);
 			assert.equal(cancelled, true, "failed startup must release its live history read");
@@ -904,11 +858,7 @@ describe("SeaDriver", () => {
 		const writing = adapter.uploadBlob(payload);
 		await uploading;
 		adapter.disconnect();
-		const replacement = adapter.openSession(
-			document,
-			encoder.encode("writer"),
-			encoder.encode("delta-session"),
-		);
+		const replacement = adapter.openSession(document, encoder.encode("delta-session"));
 		let laterCompleted = false;
 		const later = adapter.fetchBlob(blob.digest).then((value) => {
 			laterCompleted = true;
@@ -953,7 +903,6 @@ describe("SeaDriver", () => {
 	it("overlapping delta opens finish initialization before replacing the shared session", async () => {
 		const service = await createMemoryService({ environment: "node" });
 		const seed = await service.open(undefined, {
-			author: encoder.encode("seed"),
 			session: encoder.encode("seed"),
 		});
 		let releaseSignals = (): void => {};
@@ -1028,7 +977,6 @@ describe("SeaDriver", () => {
 	it("read-first document services retain independent memberships and shared writer identities", async () => {
 		const service = await createMemoryService({ environment: "node" });
 		const seed = await service.open(undefined, {
-			author: encoder.encode("seed"),
 			session: encoder.encode("seed"),
 		});
 		const payload = encoder.encode("shared archive content");
@@ -1208,7 +1156,6 @@ describe("SeaDriver", () => {
 
 		public async openSession(
 			_document: Uint8Array,
-			_writer: Uint8Array,
 			_session: Uint8Array,
 			_resumeAfter?: Uint8Array,
 		): Promise<void> {}

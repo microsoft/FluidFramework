@@ -41,12 +41,10 @@ describe("Neutral sessions", () => {
 		});
 		const open = async (
 			document: Uint8Array | undefined,
-			author: string,
 			membership: string,
 			reference?: bigint,
 		): Promise<SeaSession> => {
 			const session = await service.open(document, {
-				author: encode(author),
 				session: encode(membership),
 				...(reference === undefined ? {} : { reference }),
 			});
@@ -82,8 +80,8 @@ describe("Neutral sessions", () => {
 
 	it("neutral membership announcements and departures share application event order", async () => {
 		const { open, ownStream } = await sessionFixture();
-		const writer = await open(undefined, "writer", "writer-session");
-		const observer = await open(writer.document, "observer", "observer-session");
+		const writer = await open(undefined, "writer-session");
+		const observer = await open(writer.document, "observer-session");
 		const stream = ownStream(observer.read());
 		const joined = await writer.announceMembership(encode("public member"));
 		assert.equal(await writer.announceMembership(encode("public member")), joined);
@@ -111,8 +109,8 @@ describe("Neutral sessions", () => {
 
 	it("neutral signals broadcast, target, close pending reads, and leave history unchanged", async () => {
 		const { open, ownStream } = await sessionFixture();
-		const first = await open(undefined, "first", "first-session");
-		const second = await open(first.document, "second", "second-session");
+		const first = await open(undefined, "first-session");
+		const second = await open(first.document, "second-session");
 		const sender = await first.openSignals({
 			id: encode("first"),
 			metadata: encode("public"),
@@ -150,8 +148,8 @@ describe("Neutral sessions", () => {
 	it("invalid append input terminates the accepted prefix before queued work", async () => {
 		for (const invalidTree of [false, true]) {
 			const { open, ownStream } = await sessionFixture();
-			const writer = await open(undefined, "writer", "writer-session");
-			const observer = await open(writer.document, "observer", "observer-session");
+			const writer = await open(undefined, "writer-session");
+			const observer = await open(writer.document, "observer-session");
 			const joined = await writer.announceMembership(encode("member"));
 			await writer.submit(joined, encode("accepted"));
 			const failed = writer.submit(
@@ -179,7 +177,7 @@ describe("Neutral sessions", () => {
 
 	it("neutral sessions load backlog, tail a peer, and cancel a pending read", async () => {
 		const { open, ownStream } = await sessionFixture();
-		const writer = await open(undefined, "writer", "writer-session");
+		const writer = await open(undefined, "writer-session");
 		const position = await writer.submit(undefined, encode("first"));
 		assert.equal(typeof position, "bigint");
 		const load = ownStream(await writer.load());
@@ -191,7 +189,7 @@ describe("Neutral sessions", () => {
 			load,
 			(item) => item.kind === "progress" && item.status === "AwaitingNewItems",
 		);
-		const peer = await open(writer.document, "peer", "peer-session", position);
+		const peer = await open(writer.document, "peer-session", position);
 		const nextPosition = await peer.submit(position, encode("second"));
 		const event = await nextMatching(load, (item) => item.kind === "event");
 		assert.equal(event.position, nextPosition);
@@ -207,7 +205,7 @@ describe("Neutral sessions", () => {
 
 	it("neutral sessions preserve recursive content and idempotent snapshot publication", async () => {
 		const { open, ownStream } = await sessionFixture();
-		const session = await open(undefined, "writer", "writer-session");
+		const session = await open(undefined, "writer-session");
 		const coordination = ownStream(await session.coordinateSnapshots("clientSelected"));
 		await coordination.next();
 		const blob = await session.putBlob(encode("content"));
@@ -235,7 +233,7 @@ describe("Neutral sessions", () => {
 
 	it("neutral snapshot participation enforces read-only authority and explicit fences", async () => {
 		const { open, ownStream } = await sessionFixture();
-		const reader = await open(undefined, "reader", "reader-session");
+		const reader = await open(undefined, "reader-session");
 		const notifications = ownStream(await reader.coordinateSnapshots("readOnly"));
 		await notifications.next();
 		const root = await reader.putBlob(encode("state"));
@@ -246,7 +244,7 @@ describe("Neutral sessions", () => {
 		);
 		notifications.cancel();
 		await reader.close();
-		const selected = await open(reader.document, "selected", "selected-session");
+		const selected = await open(reader.document, "selected-session");
 		const coordination = ownStream(await selected.coordinateSnapshots("seaSelected"));
 		const state = await coordination.next();
 		assert.ok(state);
@@ -260,7 +258,7 @@ describe("Neutral sessions", () => {
 
 	it("neutral snapshot replacement and cancellation release only their own registration", async () => {
 		const { open, ownStream } = await sessionFixture();
-		const session = await open(undefined, "writer", "writer-session");
+		const session = await open(undefined, "writer-session");
 		const previous = ownStream(await session.coordinateSnapshots("clientSelected"));
 		await previous.next();
 		const ended = assert.rejects(previous.next(), /snapshot stream ended/);
@@ -282,24 +280,25 @@ describe("Neutral sessions", () => {
 		);
 	});
 
-	it("neutral sessions preserve equal submissions and reject superseded or reused memberships", async () => {
+	it("neutral sessions remain independent and reject reused memberships", async () => {
 		const { open } = await sessionFixture();
-		const first = await open(undefined, "author", "first-session");
+		const first = await open(undefined, "first-session");
 		const position = await first.submit(undefined, encode("first"));
 		assert.ok((await first.submit(undefined, encode("first"))) > position);
-		const replacement = await open(first.document, "author", "replacement-session");
-		await assert.rejects(first.getSnapshot(), /session is closed/);
-		await assert.rejects(open(first.document, "author", "first-session"), /reused session/);
+		const replacement = await open(first.document, "replacement-session");
+		assert.equal(await first.getSnapshot(), undefined);
+		await first.close();
+		await assert.rejects(open(first.document, "first-session"), /reused session/);
 		await replacement.submit(undefined, encode("still open"));
 	});
 
 	it("neutral sessions close and explicitly reopen retained content", async () => {
 		const { open } = await sessionFixture();
-		const first = await open(undefined, "author", "first-session");
+		const first = await open(undefined, "first-session");
 		const blob = await first.putBlob(encode("retained"));
 		await first.close();
 		await assert.rejects(first.getSnapshot(), { kind: "Closed" });
-		const replacement = await open(first.document, "author", "replacement-session");
+		const replacement = await open(first.document, "replacement-session");
 		assert.equal(await replacement.getSnapshot(), undefined);
 		assert.deepEqual(await replacement.getBlob(blob), encode("retained"));
 	});
@@ -307,13 +306,13 @@ describe("Neutral sessions", () => {
 	it("neutral services allocate document identities and never implicitly create on open", async () => {
 		const { open } = await sessionFixture();
 		await assert.rejects(
-			open(encode("missing"), "missing", "missing-session"),
+			open(encode("missing"), "missing-session"),
 			/document does not exist/,
 		);
-		const allocated = await open(undefined, "creator", "creator-session");
-		const another = await open(undefined, "another", "another-session");
+		const allocated = await open(undefined, "creator-session");
+		const another = await open(undefined, "another-session");
 		assert.notDeepEqual(allocated.document, another.document);
-		const reopened = await open(allocated.document, "reader", "reader-session");
+		const reopened = await open(allocated.document, "reader-session");
 		assert.deepEqual(reopened.document, allocated.document);
 	});
 
@@ -392,19 +391,16 @@ describe("Neutral sessions", () => {
 				const service = await factories.createMemoryService();
 				const isolated = await factories.createMemoryService();
 				const writer = await service.open(undefined, {
-					author: encode("writer"),
 					session: encode("writer-session"),
 					compression,
 				});
 				const reader = await service.open(writer.document, {
-					author: encode("reader"),
 					session: encode("reader-session"),
 					compression,
 				});
 				try {
 					await assert.rejects(
 						isolated.open(writer.document, {
-							author: encode("isolated"),
 							session: encode("isolated-session"),
 							compression,
 						}),
@@ -415,7 +411,6 @@ describe("Neutral sessions", () => {
 					assert.deepEqual(await reader.getBlob(blob), payload);
 					if (compression) {
 						const rawReader = await service.open(writer.document, {
-							author: encode("raw-reader"),
 							session: encode("raw-reader-session"),
 						});
 						try {
@@ -482,7 +477,6 @@ describe("Neutral sessions", () => {
 			try {
 				await assert.rejects(
 					service.open(undefined, {
-						author: encode("writer"),
 						session: encode("session"),
 						compression: true,
 					}),
@@ -500,11 +494,9 @@ describe("Neutral sessions", () => {
 				compressionSupport: true,
 			}).createMemoryService();
 			const session = await service.open(undefined, {
-				author: encode("writer"),
 				session: encode("writer-session"),
 			});
 			const raw = await service.open(session.document, {
-				author: encode("raw"),
 				session: encode("raw-session"),
 				compression: false,
 			});
@@ -533,7 +525,7 @@ describe("Neutral sessions", () => {
 				createSeaFactories({ preset, environment: "node" }).openWebTransport(
 					{ url: "https://unused.invalid/sea", certificateHash: new Uint8Array(32) },
 					undefined,
-					{ author: encode("writer"), session: encode("session") },
+					{ session: encode("session") },
 				),
 				{ kind: "Unavailable", message: "WebTransport requires a supported browser" },
 			);
@@ -572,7 +564,6 @@ describe("Neutral sessions", () => {
 	it("closing a memory service lets an admitted open settle without freeing its borrow", async () => {
 		const service = await createMemoryService({ environment: "node" });
 		const opening = service.open(undefined, {
-			author: encode("writer"),
 			session: encode("opening-session"),
 		});
 		let session: SeaSession | undefined;
@@ -580,10 +571,10 @@ describe("Neutral sessions", () => {
 			service.close();
 			service.close();
 			session = await opening;
-			await assert.rejects(
-				service.open(undefined, { author: encode("other"), session: encode("other") }),
-				{ kind: "Closed", message: "memory service is closed" },
-			);
+			await assert.rejects(service.open(undefined, { session: encode("other") }), {
+				kind: "Closed",
+				message: "memory service is closed",
+			});
 			const blob = await session.putBlob(encode("retained storage"));
 			assert.deepEqual(await session.getBlob(blob), encode("retained storage"));
 		} finally {
@@ -596,11 +587,9 @@ describe("Neutral sessions", () => {
 	it("session close is idempotent and rejects later calls without invalid WASM access", async () => {
 		const service = await createMemoryService({ environment: "node" });
 		const session = await service.open(undefined, {
-			author: encode("writer"),
 			session: encode("writer"),
 		});
 		const peer = await service.open(session.document, {
-			author: encode("peer"),
 			session: encode("peer"),
 		});
 		try {

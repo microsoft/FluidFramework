@@ -2,7 +2,7 @@ use bytes::Bytes;
 use futures_util::StreamExt as _;
 use sea_core::{
     BlobTreeId, Event, EventPosition, MonitoredStreamItem, MonitoredStreamStatus,
-    archive::{AuthorId, EventSubmission, SessionId, SnapshotParticipation},
+    archive::{EventSubmission, SessionId, SnapshotParticipation},
     session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
     storage::{LoadStart, SeaStorage, Snapshot, StorageHandle},
 };
@@ -12,7 +12,7 @@ use sea_sequencer::session::{LocalSequencer, LocalSession};
 /// Counter membership over one exclusively opened memory document.
 type CounterSession = LocalSession<MemoryStorage>;
 
-/// Opens an in-memory session for the counter's fixed author and session identifiers.
+/// Opens an in-memory session for the counter's session identity.
 async fn counter_session() -> CounterSession {
     let (_, view) = MemoryStorage::new()
         .create_view()
@@ -22,7 +22,6 @@ async fn counter_session() -> CounterSession {
         .await
         .expect("recover sequencer")
         .open_session(
-            AuthorId::new(Bytes::from_static(b"counter-author")).expect("author"),
             SessionId::new(Bytes::from_static(b"counter-session")).expect("session"),
             None,
         )

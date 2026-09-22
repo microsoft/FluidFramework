@@ -1,7 +1,7 @@
 # Sea WebTransport
 
 This crate owns the bounded, versioned Sea wire protocol, one platform-independent client implementation, and native and browser transport primitives.
-Native and browser builds share framing, correlation, logical-stream state machines, recovery, and lifecycle behavior.
+Native and browser builds share framing, ordered exchanges, logical-stream state machines, recovery, and lifecycle behavior.
 They differ only where their environments open connections and read or write bytes.
 
 ## Architecture
@@ -13,15 +13,22 @@ One document-bound connection supports five bidirectional logical stream roles:
 | Event | Open the session; return document ID/authority, selected snapshot, catch-up, progress, and live events. |
 | Author | Ordered submissions, receipts, and close under session authority. |
 | Snapshot | Coalesced notifications and policy-bound publication. |
-| Content | Correlated history/content/snapshot lookup; unary calls reuse a stream, each monitored read owns its stream. |
+| Content | Ordered history/content/snapshot lookup; unary calls reuse a stream, each monitored read owns its stream. |
 | Signal | Independent live membership and messages for an existing document, without archive mutations. |
 
-Each frame is length-delimited and contains an explicit `MessageKind`, stream-scoped correlation ID, and postcard-serialized kind-specific payload.
-The decoder accepts fragmentation and coalescing, rejects unknown kinds and wrong-stream messages, and enforces `max_frame_bytes` before payload decoding.
-Correlation ID zero is reserved for unsolicited event, snapshot, and signal notifications.
+Each frame contains one explicit `MessageKind` byte, a four-byte big-endian length counting the kind and payload bytes, then a postcard-serialized kind-specific payload.
+The five-byte envelope has no correlation ID.
+No-blob submissions and deliveries have distinct kinds and omit the blob option tag; both decode into the same event model as blob-bearing messages.
+The decoder accepts fragmentation and coalescing and enforces `max_frame_bytes` before payload decoding.
+An unknown kind fails as soon as its first byte arrives; invalid kinds, roles, or bodies terminate the owning connection without admitting later requests.
+Earlier accepted submissions remain committed and recoverable through the session's terminal departure.
+Each reusable stream completes one request before starting the next; bounded content responses end with `ResponseComplete`.
+Snapshot coordination and signal notifications are identified by kind and do not complete requests.
+Cancelling a response wait makes the affected exchange stream unusable, preventing a stale reply from completing a later request.
 Monitored progress responses are out-of-band observations and may cut ahead of buffered event responses without reordering those events.
 
-Protocol version 9 removes operation IDs and resolution messages while retaining signals and the durable monotonic reference floor.
+Protocol version 10 removes author identities and correlation IDs while retaining signals and the durable monotonic reference floor.
+Sea identifies session incarnations and orders their events; applications decide who those sessions represent.
 Equal submissions are new events; recovery uses ordered session history through the terminal departure.
 Rebuild client and server together; earlier protocol versions are not compatible.
 Documents use backend-assigned opaque IDs.
@@ -134,7 +141,7 @@ const session = await openRemote(
     timeoutMilliseconds: 5000,
   },
   document,
-  { author, session: sessionIdentity },
+  { session: sessionIdentity },
 );
 ```
 

@@ -47,7 +47,6 @@ export function makeOptions(
 	options: SeaSessionOptions,
 ): Generated.SeaSessionOptions {
 	return new bindings.SeaSessionOptions(
-		options.author,
 		options.session,
 		options.reference,
 		options.compression ?? false,

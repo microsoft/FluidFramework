@@ -148,7 +148,6 @@ async function run() {
 	};
 	if (websocket && ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname)) {
 		const options = {
-			author: encoder.encode("selection"),
 			session: encoder.encode("selection"),
 		};
 		const originalStreaming = Object.getOwnPropertyDescriptor(globalThis, "WebSocketStream");
@@ -227,12 +226,11 @@ async function run() {
 			restore("WebSocket", originalSocket);
 		}
 	}
-	const open = async (document, author, session, reference) => {
+	const open = async (document, session, reference) => {
 		const opened = await (websocket ? remote.openRemote : openWebTransport)(
 			websocket ? remoteOptions : { url: transportUrl, certificateHash: hash },
 			document,
 			{
-				author: encoder.encode(author),
 				session: encoder.encode(session),
 				...(reference === undefined ? {} : { reference }),
 			},
@@ -242,7 +240,7 @@ async function run() {
 	};
 	let missingArchiveError;
 	try {
-		const unexpected = await open(new Uint8Array(8), "missing-author", "missing-session");
+		const unexpected = await open(new Uint8Array(8), "missing-session");
 		await unexpected.close();
 	} catch (error) {
 		missingArchiveError = error;
@@ -251,7 +249,7 @@ async function run() {
 		missingArchiveError?.kind === "Rejected",
 		"service rejection omitted its structured error kind",
 	);
-	let first = await open(undefined, "browser-author", "browser-session");
+	let first = await open(undefined, "browser-session");
 	const archive = first.document;
 	const previousCoordination = await first.coordinateSnapshots(snapshotParticipation);
 	await previousCoordination.next();
@@ -284,7 +282,7 @@ async function run() {
 		(await nextEvent(load)).position === secondStreamedReceipt,
 		"load omitted the second streamed event",
 	);
-	const second = await open(archive, "second-author", "second-session", secondStreamedReceipt);
+	const second = await open(archive, "second-session", secondStreamedReceipt);
 	const sender = await first.openSignals({
 		id: encoder.encode("signal-first"),
 		metadata: encoder.encode("first metadata"),
@@ -321,7 +319,7 @@ async function run() {
 		const peer = await openWebTransport(
 			{ url: parameters.get("primaryTransport"), certificateHash: hash },
 			archive,
-			{ author: encoder.encode("mixed-peer"), session: encoder.encode("mixed-peer") },
+			{ session: encoder.encode("mixed-peer") },
 		);
 		transportSessionCount++;
 		const mixed = await peer.openSignals({
@@ -451,7 +449,7 @@ async function run() {
 	snapshotCoordination.cancel();
 	await cancelledNotification;
 	await first.close();
-	first = await open(archive, "browser-author", "browser-session-resumed", secondReceipt);
+	first = await open(archive, "browser-session-resumed", secondReceipt);
 	const resumedSnapshots = await first.coordinateSnapshots(snapshotParticipation);
 	await resumedSnapshots.next();
 	const resumedLoad = await first.load(secondReceipt);
@@ -477,7 +475,7 @@ async function run() {
 		disconnected = error.kind === "Closed";
 	}
 	assert(disconnected, "request unexpectedly retried after disconnect");
-	first = await open(archive, "browser-author", "browser-session-reconnected", secondReceipt);
+	first = await open(archive, "browser-session-reconnected", secondReceipt);
 	const recoveredSnapshots = await first.coordinateSnapshots(snapshotParticipation);
 	await recoveredSnapshots.next();
 	const recovered = await first.load(secondReceipt);
@@ -509,7 +507,7 @@ async function run() {
 		},
 		async thirdSession() {
 			try {
-				const client = await open(archive, "third-author", "third-session");
+				const client = await open(archive, "third-session");
 				await client.close();
 				return "unexpected-success";
 			} catch {

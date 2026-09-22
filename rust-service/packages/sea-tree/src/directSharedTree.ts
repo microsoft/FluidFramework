@@ -76,8 +76,7 @@ export class DirectSharedTreeClient {
 		createDocument: boolean,
 	): Promise<DirectSharedTreeClient> {
 		const idCompressor = createIdCompressor();
-		const writer = encoder.encode(idCompressor.localSessionId);
-		const session = writer;
+		const session = encoder.encode(idCompressor.localSessionId);
 		let host: DirectSharedTreeClient | undefined;
 		const tree = createDirectSharedTree({
 			forest: ForestTypeOptimized,
@@ -97,7 +96,7 @@ export class DirectSharedTreeClient {
 			session,
 		);
 		host.documentId = createDocument ? await client.create() : document;
-		await client.openSession(host.documentId, writer, session);
+		await client.openSession(host.documentId, session);
 		host.subscription = await client.subscribeProjected();
 		host.subscriptionPump = host.consumeSubscription(host.subscription);
 		return host;

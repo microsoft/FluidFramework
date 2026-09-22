@@ -247,11 +247,7 @@ mod tests {
     use super::*;
     use crate::tests::{CountingNonce, TestKeys};
     use futures_util::FutureExt;
-    use sea_core::{
-        Event, MonitoredStreamItem,
-        archive::{AuthorId, SessionId},
-        storage::SeaStorage,
-    };
+    use sea_core::{Event, MonitoredStreamItem, archive::SessionId, storage::SeaStorage};
     use sea_memory::MemoryStorage;
     use sea_sequencer::session::LocalSequencer;
     use std::sync::{
@@ -269,22 +265,14 @@ mod tests {
                 .unwrap();
             let first = EncryptionSession::new(
                 runtime
-                    .open_session(
-                        AuthorId::new("first").unwrap(),
-                        SessionId::new("first").unwrap(),
-                        None,
-                    )
+                    .open_session(SessionId::new("first").unwrap(), None)
                     .await
                     .unwrap(),
                 TestKeys::new(),
             );
             let second = EncryptionSession::new(
                 runtime
-                    .open_session(
-                        AuthorId::new("second").unwrap(),
-                        SessionId::new("second").unwrap(),
-                        None,
-                    )
+                    .open_session(SessionId::new("second").unwrap(), None)
                     .await
                     .unwrap(),
                 TestKeys::new(),
@@ -315,11 +303,7 @@ mod tests {
         };
         let first = EncryptionSession::with_nonce_source(
             runtime
-                .open_session(
-                    AuthorId::new("author").unwrap(),
-                    SessionId::new("first").unwrap(),
-                    None,
-                )
+                .open_session(SessionId::new("first").unwrap(), None)
                 .await
                 .unwrap(),
             keys.clone(),
@@ -333,14 +317,11 @@ mod tests {
             },
         };
         let position = first.submit(submission.clone()).await.unwrap();
+        first.close().await.unwrap();
         keys.rotate();
         let reconnected = EncryptionSession::with_nonce_source(
             runtime
-                .open_session(
-                    AuthorId::new("author").unwrap(),
-                    SessionId::new("reconnected").unwrap(),
-                    None,
-                )
+                .open_session(SessionId::new("reconnected").unwrap(), None)
                 .await
                 .unwrap(),
             keys.clone(),
@@ -350,11 +331,7 @@ mod tests {
         assert_eq!(calls.load(Ordering::Relaxed), 2);
         let other = EncryptionSession::with_nonce_source(
             runtime
-                .open_session(
-                    AuthorId::new("other").unwrap(),
-                    SessionId::new("other").unwrap(),
-                    None,
-                )
+                .open_session(SessionId::new("other").unwrap(), None)
                 .await
                 .unwrap(),
             keys,
@@ -387,11 +364,7 @@ mod tests {
             .unwrap();
         let session = EncryptionSession::new(
             runtime
-                .open_session(
-                    AuthorId::new("author").unwrap(),
-                    SessionId::new("first").unwrap(),
-                    None,
-                )
+                .open_session(SessionId::new("first").unwrap(), None)
                 .await
                 .unwrap(),
             TestKeys::new(),
@@ -420,11 +393,7 @@ mod tests {
         ));
         session.close().await.unwrap();
         let observer = runtime
-            .open_session(
-                AuthorId::new("observer").unwrap(),
-                SessionId::new("observer").unwrap(),
-                None,
-            )
+            .open_session(SessionId::new("observer").unwrap(), None)
             .await
             .unwrap();
         let mut events = observer.read(None, Some(EventPosition::new(2)));

@@ -20,8 +20,6 @@ export interface ProjectedOperation {
 	readonly sequenceNumber: bigint;
 	/** Minimum service position still referenced by this operation, when present. */
 	readonly minimumReference?: Uint8Array;
-	/** Stable identity of the writer that submitted the operation. */
-	readonly writer: Uint8Array;
 	/** Writer session in which the operation was submitted. */
 	readonly session: Uint8Array;
 	/** Writer-local sequence number carried by the submission. */
@@ -131,7 +129,6 @@ export interface SeaDriverClient {
 	/** Opens one archive-bound author session. */
 	openSession(
 		document: Uint8Array,
-		writer: Uint8Array,
 		session: Uint8Array,
 		resumeAfter?: Uint8Array,
 	): Promise<void>;

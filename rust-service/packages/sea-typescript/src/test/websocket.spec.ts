@@ -93,7 +93,6 @@ describe("WebSocket compatibility", () => {
 			);
 			const attempts = sockets.length;
 			const options = new websocketBindings.SeaSessionOptions(
-				new Uint8Array([1]),
 				new Uint8Array([2]),
 				undefined,
 				false,
@@ -236,7 +235,7 @@ describe("WebSocket compatibility", () => {
 					timeoutMilliseconds: 1000,
 				},
 				document,
-				{ author: encoder.encode(author), session: encoder.encode(author) },
+				{ session: encoder.encode(author) },
 			);
 		};
 		const first = await open(undefined, "first");

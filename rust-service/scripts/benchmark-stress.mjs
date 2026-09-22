@@ -75,7 +75,7 @@ async function openPair(configuration, received, failure) {
 			openRemote(
 				{ environment: "node", mode: "WebSocket", websocketUrl: configuration.endpoint },
 				document,
-				{ author: Buffer.from(randomUUID()), session: Buffer.from(randomUUID()) },
+				{ session: Buffer.from(randomUUID()) },
 			);
 		const writer = await open(undefined);
 		const observer = await open(writer.document);

@@ -44,12 +44,10 @@ export interface SeaTreeId {
 	readonly bytes: Uint8Array;
 }
 
-/** Explicit author membership and decorator configuration.
+/** Explicit session membership and decorator configuration.
  * @internal
  */
 export interface SeaSessionOptions {
-	/** Stable submission author. */
-	readonly author: Uint8Array;
 	/** Fresh membership identity. */
 	readonly session: Uint8Array;
 	/** Latest incorporated event. */
@@ -94,8 +92,6 @@ export interface SeaEvent {
 	readonly payload: Uint8Array;
 	/** Referenced content, if present. */
 	readonly blobTree?: SeaTreeId;
-	/** Stable author identity. */
-	readonly author: Uint8Array;
 	/** Membership identity. */
 	readonly session: Uint8Array;
 	/** Latest event incorporated by this author. */

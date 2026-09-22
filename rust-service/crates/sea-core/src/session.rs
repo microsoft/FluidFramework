@@ -112,9 +112,9 @@ pub trait SeaArchive: crate::SeaService {
 pub trait SeaAuthorSession: SeaArchive {
     /// Publishes this membership and immutable public metadata in the ordered event archive.
     /// Exact retries return the original position; different metadata is rejected.
-    /// Close, replacement, or recovery appends a service-authored departure before later mutation.
+    /// Close or recovery appends a service-authored departure before later mutation.
     /// Membership records do not occupy application-submission ordinals.
-    /// Metadata is control data like author/session identities: payload decorators do not protect it.
+    /// Metadata is control data like session identities: payload decorators do not protect it.
     /// Sessions that never call this method produce no membership records.
     async fn announce_membership(&self, metadata: Bytes) -> Result<EventPosition, Self::Error>;
     /// Submits one event with the reference state used to construct its payload.

@@ -286,11 +286,6 @@ async function createPair(): Promise<SharedTreeBenchmarkPair> {
 				throw new Error(
 					`resume probe did not converge edit ${expectedValue}: ${JSON.stringify({
 						expectedCount,
-						writer: {
-							count: firstData.appliedOpCount,
-							value: firstData.value,
-							closed: firstContainer.closed,
-						},
 						observer: {
 							count: secondData.appliedOpCount,
 							value: secondData.value,

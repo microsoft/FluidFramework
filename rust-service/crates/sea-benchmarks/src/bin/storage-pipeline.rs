@@ -5,7 +5,7 @@ use std::{env, fs, path::Path, time::Instant};
 use bytes::Bytes;
 use futures_util::{StreamExt, stream};
 use sea_core::{
-    AuthorId, Event, EventSubmission, MonitoredStreamItem, SeaAuthorSession, SessionId,
+    Event, EventSubmission, MonitoredStreamItem, SeaAuthorSession, SessionId,
     archive::SessionEventKind, session::SeaArchive, storage::SeaStorage,
 };
 use sea_file::storage::FileStorage;
@@ -99,11 +99,10 @@ async fn exercise<Storage: SeaStorage + 'static>(
     let sequencer = LocalSequencer::<Storage>::recover(view)
         .await
         .map_err(display_error)?;
-    let author = AuthorId::new(Bytes::from_static(b"benchmark-author")).expect("nonempty author");
     let identity =
         SessionId::new(Bytes::from_static(b"benchmark-session")).expect("nonempty session");
     let session = sequencer
-        .open_session(author.clone(), identity.clone(), None)
+        .open_session(identity.clone(), None)
         .await
         .map_err(display_error)?;
     let started = Instant::now();
@@ -150,7 +149,6 @@ async fn exercise<Storage: SeaStorage + 'static>(
     while let Some(event) = events.next().await {
         if let MonitoredStreamItem::Item(event) = event.map_err(display_error)? {
             if event.kind != SessionEventKind::Application
-                || event.author_id != author
                 || event.session_id != identity
                 || event.committed.event.payload != payload(delivered, payload_bytes)
                 || receipts.get(delivered as usize) != Some(&event.committed.position)

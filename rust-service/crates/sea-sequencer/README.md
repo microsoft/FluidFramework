@@ -10,10 +10,11 @@ Recovery performs a bounded scan only when `head` is nonempty and restores used 
 It rejects malformed envelopes and invalid references; equal submissions remain distinct events.
 Active authority and publisher selection are runtime-local.
 `announce_membership` optionally publishes immutable public member metadata in the same archive order as application events.
-Announced memberships receive a service-authored departure on close, replacement, shutdown, or recovery; unannounced memberships produce no control records.
+Announced memberships receive a service-authored departure on close, shutdown, or recovery; unannounced memberships produce no control records.
 Recovery closes outstanding announcements before admitting fresh sessions.
 Session identities used by committed events remain reserved after recovery; unused memberships need not survive a runtime restart.
-Opening another session for an author replaces its previous membership and closes that membership's streams.
+Sessions are independent; opening another session does not close an earlier one.
+Sea stores session incarnations, not author identities; applications own attribution in payloads or public membership metadata.
 
 All sessions share one view and mutation order:
 
@@ -120,8 +121,9 @@ The current backend retains that event and all history; snapshot consumers can r
 Any future compaction must preserve this floor metadata with the snapshot rather than discard the boundary envelope.
 The Fluid adapter maps the floor into its dense sequence space.
 
-Persisted application/membership encodings are `SEAQ4`/`SEAM3`; earlier envelopes are rejected and require an explicit migration before reuse.
-Wire protocol version 9 removes operation identities and resolution messages; rebuild clients and servers together.
+Persisted application/membership encodings are `SEAQ5`/`SEAM4` and omit author identities; earlier envelopes are rejected.
+Wire protocol version 10 also removes correlation IDs; rebuild clients and servers together.
+There is no supported data migration from the experimental earlier formats.
 
 ## Submission Identity and Settlement
 

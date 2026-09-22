@@ -8,7 +8,7 @@ use futures_util::{
 };
 use sea_core::{
     ClassifiedError, ErrorKind, Event, EventPosition,
-    archive::{AuthorId, EventSubmission, SessionId},
+    archive::{EventSubmission, SessionId},
     storage::{ReferenceableStore, SeaStorage, StorageHandle},
 };
 use tokio::sync::{Mutex, RwLock, oneshot};
@@ -29,8 +29,6 @@ type Driver = futures_util::future::LocalBoxFuture<'static, ()>;
 
 /// One admitted input and the caller waiting for its settled result.
 struct Entry<Error> {
-    /// Stable author used for encoding this membership's submissions.
-    author: AuthorId,
     /// Membership whose failure prevents dispatch of queued successors.
     session: SessionId,
     /// Original input, encoded only against settled runtime metadata.
@@ -88,7 +86,6 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
         &self,
         runtime: &Arc<Mutex<Runtime<Storage>>>,
         membership_admission: tokio::sync::MutexGuard<'_, ()>,
-        author: AuthorId,
         session: SessionId,
         submission: EventSubmission,
     ) -> Result<EventPosition, SessionError<Storage::Error>> {
@@ -96,7 +93,6 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
             .event
             .payload
             .len()
-            .saturating_add(author.as_bytes().len())
             .saturating_add(session.as_bytes().len())
             .saturating_add(128);
         let mut input = Some(submission);
@@ -129,7 +125,6 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
                     .start_idle(
                         runtime,
                         &mut state,
-                        author,
                         session,
                         input.take().expect("unadmitted input"),
                         bytes,
@@ -153,7 +148,6 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
                     queue.count += 1;
                     queue.bytes += bytes;
                     queue.entries.push_back(Entry {
-                        author: author.clone(),
                         session: session.clone(),
                         submission: input.take().expect("unadmitted input"),
                         bytes,
@@ -215,7 +209,6 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
         &self,
         runtime: &Arc<Mutex<Runtime<Storage>>>,
         state: &mut Runtime<Storage>,
-        author: AuthorId,
         session: SessionId,
         submission: EventSubmission,
         bytes: usize,
@@ -223,16 +216,11 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
         Result<EventPosition, SessionError<Storage::Error>>,
         oneshot::Receiver<Result<EventPosition, SessionError<Storage::Error>>>,
     > {
-        let event = match state.prepare_submission(
-            &author,
-            &session,
-            &submission,
-            state.minimum_reference,
-            true,
-        ) {
-            Ok(event) => event,
-            Err(error) => return Either::Left(Err(error)),
-        };
+        let event =
+            match state.prepare_submission(&session, &submission, state.minimum_reference, true) {
+                Ok(event) => event,
+                Err(error) => return Either::Left(Err(error)),
+            };
         let view = match state.view() {
             Ok(view) => view,
             Err(error) => return Either::Left(Err(error)),
@@ -248,7 +236,6 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
         }
         let (completion, receiver) = oneshot::channel();
         let entry = Entry {
-            author,
             session,
             submission,
             bytes,
@@ -308,7 +295,6 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
                             Err(SessionError::RecoveryRequired)
                         } else {
                             state.prepare_submission(
-                                &entry.author,
                                 &entry.session,
                                 &entry.submission,
                                 floor,

@@ -19,7 +19,7 @@ use sea_benchmarks::{
 use sea_compression::CompressionSession;
 use sea_core::{
     ArchiveEventStream, Event, EventPosition, MonitoredStreamItem,
-    archive::{AuthorId, EventSubmission, SessionId, SnapshotParticipation},
+    archive::{EventSubmission, SessionId, SnapshotParticipation},
     session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
     storage::{
         BlobStore, EventArchiveStream, LoadStart, SeaStorage, SeaView, Snapshot, StorageHandle,
@@ -407,13 +407,11 @@ where
         .map_err(display_error)?;
     let mut sessions = Vec::with_capacity(writers);
     for writer in 0..writers {
-        let author = AuthorId::new(Bytes::from(format!("{identity_prefix}-author-{writer}")))
-            .expect("generated author identity is nonempty");
         let session = SessionId::new(Bytes::from(format!("{identity_prefix}-session-{writer}")))
             .expect("generated session identity is nonempty");
         sessions.push(
             sequencer
-                .open_session(author, session, None)
+                .open_session(session, None)
                 .await
                 .map_err(display_error)?,
         );

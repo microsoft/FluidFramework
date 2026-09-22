@@ -22,7 +22,6 @@ export interface DeltaConnectionLifecycle {
     readonly remoteClientId: string;
     remoteClientSequenceNumber: number;
     readonly remoteSequenceNumbers: Map<string, number>;
-    readonly writer: Uint8Array;
 }
 
 // @internal
@@ -63,7 +62,6 @@ export interface ProjectedOperation {
     readonly reference?: Uint8Array;
     readonly sequenceNumber: bigint;
     readonly session: Uint8Array;
-    readonly writer: Uint8Array;
 }
 
 // @internal
@@ -177,7 +175,7 @@ export interface SeaDriverClient {
         readonly root: Uint8Array;
         readonly atEvent?: Uint8Array;
     } | undefined>;
-    openSession(document: Uint8Array, writer: Uint8Array, session: Uint8Array, resumeAfter?: Uint8Array): Promise<void>;
+    openSession(document: Uint8Array, session: Uint8Array, resumeAfter?: Uint8Array): Promise<void>;
     openSignals?(member: SeaSignalMember): Promise<SeaSignals>;
     positionForSequence(sequenceNumber: number): Uint8Array | undefined;
     publishSnapshotRoot(expectedParent: Uint8Array | undefined, atEvent: Uint8Array | undefined, root: Uint8Array): Promise<Uint8Array>;
@@ -216,7 +214,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
     fetchBlob(digest: Uint8Array): Promise<Uint8Array>;
     fetchSummary(digest: Uint8Array): Promise<readonly SummaryEntry[]>;
     latestSnapshot(): ReturnType<SeaDriverClient["latestSnapshot"]>;
-    openSession(document: Uint8Array, writer: Uint8Array, session: Uint8Array, resumeAfter?: Uint8Array): Promise<void>;
+    openSession(document: Uint8Array, session: Uint8Array, resumeAfter?: Uint8Array): Promise<void>;
     openSignals(member: SeaSignalMember): Promise<SeaSignals>;
     positionForSequence(sequenceNumber: number): Uint8Array | undefined;
     publishSnapshotRoot(expectedParent: Uint8Array | undefined, atEvent: Uint8Array | undefined, root: Uint8Array): Promise<Uint8Array>;

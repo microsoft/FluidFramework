@@ -121,6 +121,11 @@ Snapshots are versioned by event position, not publication-operation IDs.
 Each snapshot stream owns its own registration lease, so cleanup of an older stream cannot revoke its replacement.
 An explicit snapshot `Close` acknowledges and ends that transport stream; lease drop, not session-wide revocation, releases its registration.
 
+Invalid Sea message kinds, stream roles, or payloads terminate the owning native connection or WebSocket stream group.
+No subsequent request on that connection is admitted after the failure is observed.
+Earlier accepted submissions remain committed; terminal session cleanup preserves their recovery evidence.
+Protocol failure does not stop the listener or unrelated connections, and ordinary stream cancellation remains stream-local.
+
 ## Validation
 
 ```bash

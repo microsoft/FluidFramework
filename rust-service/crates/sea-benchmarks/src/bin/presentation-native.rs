@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{SinkExt as _, StreamExt as _};
 use sea_core::{
-    AuthorId, Event, EventSubmission, MonitoredStreamItem, SeaAuthorSession, SessionId,
+    Event, EventSubmission, MonitoredStreamItem, SeaAuthorSession, SessionId,
     archive::SessionEventKind,
 };
 use sea_webtransport::{
@@ -215,7 +215,7 @@ fn session_open(archive: Bytes, create: bool, index: usize) -> SessionOpen {
         } else {
             protocol::ArchiveIntent::Open
         },
-        author: AuthorId::new(identity.clone()).expect("nonempty identity"),
+
         session: SessionId::new(identity).expect("nonempty identity"),
         reference: None,
     }

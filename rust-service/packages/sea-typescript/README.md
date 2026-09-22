@@ -20,12 +20,13 @@ Author calls are serialized in invocation order, including local identity conver
 The first failed author call closes append authority and prevents queued submissions from committing.
 Recover through an independent session: replay through the old session's departure, count accepted application events, reconcile them, then transform the unaccepted suffix for a fresh session.
 Equal submissions are distinct events; there is no operation-ID lookup or automatic resubmission.
-Metadata is public control data, like author/session identities: compression and encryption decorators do not transform or protect it.
+Metadata is public control data, like session identities: compression and encryption decorators do not transform or protect it.
 Unannounced sessions retain application-only history.
 `minimumReference` is the durable document-wide admission floor, not an active-member minimum.
 It never decreases, including after new membership or recovery; an absent submission reference is below every concrete floor.
 Advances commit atomically with their carrying event and arrive in the same live/replay order.
-Remote consumers must rebuild client and server together for protocol version 9.
+Remote consumers must rebuild client and server together for protocol version 10.
+Session options and delivered events contain session identity only; applications own author attribution.
 
 ## Live Signals
 
@@ -65,7 +66,6 @@ import { createMemoryService } from "@fluidframework/sea-typescript/internal/mem
 const service = await createMemoryService({ environment: "node" });
 const encode = (value: string): Uint8Array => new TextEncoder().encode(value);
 const session = await service.open(undefined, {
-    author: encode("example-author"),
     session: encode("fresh-session"),
 });
 try {

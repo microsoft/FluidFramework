@@ -7,10 +7,7 @@ use bytes::Bytes;
 use futures_util::{StreamExt as _, stream};
 use rand_core::{OsRng, RngCore as _};
 use sea_core::storage::{DocumentId, SeaStorage};
-use sea_core::{
-    ClassifiedError, ErrorKind, EventPosition,
-    archive::{AuthorId, SessionId},
-};
+use sea_core::{ClassifiedError, ErrorKind, EventPosition, archive::SessionId};
 use sea_file::storage::FileStorage;
 use sea_file_durable::storage::DurableStorage;
 use sea_memory::MemoryStorage;
@@ -123,20 +120,13 @@ impl Backend {
         &self,
         document: Vec<u8>,
         intent: protocol::ArchiveIntent,
-        author: AuthorId,
         session: SessionId,
         reference: Option<EventPosition>,
     ) -> Result<(DocumentId, Arc<dyn SeaConnectionService>), protocol::Response> {
         match self {
-            Self::Memory(registry) => {
-                open(registry, document, intent, author, session, reference).await
-            }
-            Self::Buffered(registry) => {
-                open(registry, document, intent, author, session, reference).await
-            }
-            Self::Durable(registry) => {
-                open(registry, document, intent, author, session, reference).await
-            }
+            Self::Memory(registry) => open(registry, document, intent, session, reference).await,
+            Self::Buffered(registry) => open(registry, document, intent, session, reference).await,
+            Self::Durable(registry) => open(registry, document, intent, session, reference).await,
         }
     }
 }
@@ -146,7 +136,6 @@ async fn open<Storage>(
     registry: &DocumentRegistry<Storage>,
     document: Vec<u8>,
     intent: protocol::ArchiveIntent,
-    author: AuthorId,
     session: SessionId,
     reference: Option<EventPosition>,
 ) -> Result<(DocumentId, Arc<dyn SeaConnectionService>), protocol::Response>
@@ -167,7 +156,7 @@ where
     };
     let sequencer = registry.open(&id).await?;
     let session = sequencer
-        .open_session(author, session, reference)
+        .open_session(session, reference)
         .await
         .map_err(error_response)?;
     Ok((id, Arc::new(SessionDispatcher::new(Arc::new(session)))))
@@ -210,13 +199,12 @@ impl BuiltInSeaHost {
         &self,
         archive_id: Vec<u8>,
         intent: protocol::ArchiveIntent,
-        author: AuthorId,
         session: SessionId,
         reference: Option<EventPosition>,
     ) -> Result<(DocumentId, Arc<dyn SeaConnectionService>), protocol::Response> {
         let backend = self.backend().await?;
         backend
-            .open_session(archive_id, intent, author, session, reference)
+            .open_session(archive_id, intent, session, reference)
             .await
     }
 
@@ -351,7 +339,7 @@ impl SeaConnectionService for HostedConnection {
             version,
             archive,
             intent,
-            author,
+
             session,
             resume_after,
         } = request
@@ -359,8 +347,6 @@ impl SeaConnectionService for HostedConnection {
             if version != protocol::PROTOCOL_VERSION {
                 return Err(unsupported_version(version));
             }
-            let author = AuthorId::new(Bytes::from(author))
-                .map_err(|_| invalid("author identity is empty"))?;
             let session_id = SessionId::new(Bytes::from(session))
                 .map_err(|_| invalid("session identity is empty"))?;
             let mut current = self.session.lock().await;
@@ -375,7 +361,6 @@ impl SeaConnectionService for HostedConnection {
                 .open_session(
                     archive,
                     intent,
-                    author,
                     session_id,
                     resume_after.map(EventPosition::new),
                 )
@@ -554,7 +539,7 @@ mod tests {
     use futures_util::StreamExt as _;
     use sea_core::{
         BlobDirectory, BlobTreeId, Event, EventPosition,
-        archive::{AuthorId, EventSubmission, SessionId, SnapshotParticipation},
+        archive::{EventSubmission, SessionId, SnapshotParticipation},
         session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
         storage::{LoadStart, Snapshot, StorageHandle},
     };
@@ -600,7 +585,7 @@ mod tests {
                 NativeSessionOpen {
                     archive: Bytes::new(),
                     intent: protocol::ArchiveIntent::Create,
-                    author: AuthorId::new(Bytes::from_static(b"first")).unwrap(),
+
                     session: SessionId::new(Bytes::from_static(b"first")).unwrap(),
                     reference: None,
                 },
@@ -614,7 +599,7 @@ mod tests {
                 NativeSessionOpen {
                     archive: first.document().as_bytes().clone(),
                     intent: protocol::ArchiveIntent::Open,
-                    author: AuthorId::new(Bytes::from_static(b"second")).unwrap(),
+
                     session: SessionId::new(Bytes::from_static(b"second")).unwrap(),
                     reference: None,
                 },
@@ -759,13 +744,11 @@ mod tests {
             ));
             let _ = std::fs::remove_dir_all(&root);
             let host = BuiltInSeaHost::new(root.clone(), mode);
-            let author = AuthorId::new(Bytes::from_static(b"author")).unwrap();
             let session = |name: &'static [u8]| SessionId::new(Bytes::from_static(name)).unwrap();
             assert!(
                 host.open_session(
                     vec![0; 8],
                     protocol::ArchiveIntent::Open,
-                    author.clone(),
                     session(b"missing"),
                     None
                 )
@@ -778,7 +761,7 @@ mod tests {
                         version: protocol::PROTOCOL_VERSION + 1,
                         archive: Vec::new(),
                         intent: protocol::ArchiveIntent::Create,
-                        author: b"author".to_vec(),
+
                         session: b"invalid-version".to_vec(),
                         resume_after: None,
                     })
@@ -792,7 +775,6 @@ mod tests {
                 .open_session(
                     Vec::new(),
                     protocol::ArchiveIntent::Create,
-                    author.clone(),
                     session(b"created"),
                     None,
                 )
@@ -803,7 +785,6 @@ mod tests {
                 host.open_session(
                     document.as_bytes().to_vec(),
                     protocol::ArchiveIntent::Create,
-                    author.clone(),
                     session(b"named-create"),
                     None
                 )
@@ -814,7 +795,6 @@ mod tests {
                 .open_session(
                     document.as_bytes().to_vec(),
                     protocol::ArchiveIntent::Open,
-                    author.clone(),
                     session(b"opened"),
                     None,
                 )
@@ -833,7 +813,6 @@ mod tests {
                         .open_session(
                             document.as_bytes().to_vec(),
                             protocol::ArchiveIntent::Open,
-                            author,
                             session(b"recovered"),
                             None
                         )
@@ -860,7 +839,7 @@ mod tests {
                 version: protocol::PROTOCOL_VERSION,
                 archive: Vec::new(),
                 intent: protocol::ArchiveIntent::Create,
-                author: b"first-author".to_vec(),
+
                 session: b"first-session".to_vec(),
                 resume_after: None,
             })
@@ -908,7 +887,7 @@ mod tests {
                 version: protocol::PROTOCOL_VERSION,
                 archive: document.clone(),
                 intent: protocol::ArchiveIntent::Open,
-                author: b"second-author".to_vec(),
+
                 session: b"second-session".to_vec(),
                 resume_after: None,
             })
@@ -1003,7 +982,7 @@ mod tests {
                 version: protocol::PROTOCOL_VERSION,
                 archive: document,
                 intent: protocol::ArchiveIntent::Open,
-                author: b"client-selected-author".to_vec(),
+
                 session: b"client-selected-session".to_vec(),
                 resume_after: None,
             })
@@ -1096,7 +1075,7 @@ mod tests {
                 version: protocol::PROTOCOL_VERSION,
                 archive: Vec::new(),
                 intent: protocol::ArchiveIntent::Create,
-                author: b"author".to_vec(),
+
                 session: b"session".to_vec(),
                 resume_after: None,
             })
@@ -1129,7 +1108,7 @@ mod tests {
                 version: protocol::PROTOCOL_VERSION,
                 archive: document,
                 intent: protocol::ArchiveIntent::Open,
-                author: b"observer".to_vec(),
+
                 session: b"observer-session".to_vec(),
                 resume_after: None,
             })
@@ -1220,7 +1199,7 @@ mod tests {
                 NativeSessionOpen {
                     archive: Bytes::new(),
                     intent: protocol::ArchiveIntent::Create,
-                    author: AuthorId::new(Bytes::from_static(b"shutdown-author")).unwrap(),
+
                     session: SessionId::new(Bytes::from_static(b"shutdown-session")).unwrap(),
                     reference: None,
                 },
@@ -1270,7 +1249,7 @@ mod tests {
                 NativeSessionOpen {
                     archive: Bytes::new(),
                     intent: protocol::ArchiveIntent::Create,
-                    author: AuthorId::new(Bytes::from_static(b"author")).unwrap(),
+
                     session: SessionId::new(Bytes::from_static(b"session")).unwrap(),
                     reference: None,
                 },
@@ -1382,7 +1361,7 @@ mod tests {
         let shutdown = server.shutdown_handle();
         let serving = server.serve_until_shutdown();
         let exercise = async {
-            // Framing failures must terminate only the offending stream, not the server.
+            // Framing failures terminate the offending connection, not the server.
             send_malformed_stream(address, certificate_hash.clone()).await;
             timeout_in_flight_frame(address, certificate_hash.clone()).await;
 
@@ -1396,7 +1375,7 @@ mod tests {
                 NativeSessionOpen {
                     archive: Bytes::new(),
                     intent: protocol::ArchiveIntent::Create,
-                    author: AuthorId::new(Bytes::from_static(b"observer-author")).unwrap(),
+
                     session: SessionId::new(Bytes::from_static(b"observer-session")).unwrap(),
                     reference: None,
                 },
@@ -1406,6 +1385,7 @@ mod tests {
 
             // Once committed, submissions and snapshots remain resolvable even when the
             // requester abandons its response stream before reading the acknowledgement.
+            unknown_kind_rejects_suffix(address, certificate_hash.clone(), &client).await;
             let receipt =
                 abandon_submission_and_resolve(address, certificate_hash.clone(), &client).await;
             abandon_snapshot_and_resolve(address, certificate_hash, &client, receipt).await;
@@ -1429,7 +1409,6 @@ mod tests {
             &connection,
             b"",
             protocol::ArchiveIntent::Create,
-            b"malformed-snapshot-author",
             b"malformed-snapshot-session",
         )
         .await;
@@ -1437,7 +1416,6 @@ mod tests {
         let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
         send_raw_request(
             &mut send,
-            2,
             protocol::Request::OpenSnapshotStream {
                 authority,
                 participation: protocol::SnapshotParticipation::SeaSelected,
@@ -1445,29 +1423,16 @@ mod tests {
         )
         .await;
         assert_eq!(
-            read_raw_response(
-                &mut receive,
-                &mut decoder,
-                protocol::StreamRole::Snapshot,
-                2,
-            )
-            .await,
+            read_raw_response(&mut receive, &mut decoder, protocol::StreamRole::Snapshot).await,
             protocol::Response::Acknowledged
         );
         assert!(matches!(
-            read_raw_response(
-                &mut receive,
-                &mut decoder,
-                protocol::StreamRole::Snapshot,
-                0,
-            )
-            .await,
+            read_raw_response(&mut receive, &mut decoder, protocol::StreamRole::Snapshot).await,
             protocol::Response::SnapshotCoordination { fence: Some(_), .. }
         ));
 
         send_raw_request(
             &mut send,
-            3,
             protocol::Request::AnnounceMembership {
                 metadata: Vec::new(),
             },
@@ -1479,19 +1444,13 @@ mod tests {
 
         let (_observer_endpoint, observer_connection) =
             raw_connection(address, certificate_hash).await;
-        let (observer_authority, _observer_events) = open_raw_event_stream(
-            &observer_connection,
-            &document,
-            b"observer-author",
-            b"observer-session",
-        )
-        .await;
+        let (observer_authority, _observer_events) =
+            open_raw_event_stream(&observer_connection, &document, b"observer-session").await;
         let (mut observer_send, mut observer_receive) =
             observer_connection.open_bi().await.unwrap().await.unwrap();
         let mut observer_decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
         send_raw_request(
             &mut observer_send,
-            4,
             protocol::Request::OpenSnapshotStream {
                 authority: observer_authority,
                 participation: protocol::SnapshotParticipation::SeaSelected,
@@ -1502,8 +1461,7 @@ mod tests {
             read_raw_response(
                 &mut observer_receive,
                 &mut observer_decoder,
-                protocol::StreamRole::Snapshot,
-                4,
+                protocol::StreamRole::Snapshot
             )
             .await,
             protocol::Response::Acknowledged
@@ -1512,8 +1470,7 @@ mod tests {
             read_raw_response(
                 &mut observer_receive,
                 &mut observer_decoder,
-                protocol::StreamRole::Snapshot,
-                0,
+                protocol::StreamRole::Snapshot
             )
             .await,
             protocol::Response::SnapshotCoordination { fence: Some(_), .. }
@@ -1537,14 +1494,9 @@ mod tests {
             .expect("malformed stream response should close");
         assert!(matches!(result, Ok(None) | Err(_)));
 
-        let (_authority, _document, _events) = open_raw_event_stream_with_intent(
-            &connection,
-            b"",
-            protocol::ArchiveIntent::Create,
-            b"same-connection-author",
-            b"same-connection-session",
-        )
-        .await;
+        timeout(Duration::from_secs(2), connection.closed())
+            .await
+            .expect("malformed message must close its owning connection");
         connection.close(0_u32.into(), b"fault injected");
     }
 
@@ -1561,6 +1513,83 @@ mod tests {
         connection.close(0_u32.into(), b"in-flight read cancelled");
     }
 
+    async fn unknown_kind_rejects_suffix(
+        address: SocketAddr,
+        certificate_hash: wtransport::tls::Sha256Digest,
+        client: &NativeSeaClient,
+    ) {
+        let (_endpoint, connection) = raw_connection(address, certificate_hash).await;
+        let (authority, _events) = open_raw_event_stream(
+            &connection,
+            client.document().as_bytes(),
+            b"invalid-suffix-session",
+        )
+        .await;
+        let (mut send, mut receive) = connection.open_bi().await.unwrap().await.unwrap();
+        let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
+        send_raw_request(&mut send, protocol::Request::OpenAuthorStream { authority }).await;
+        assert_eq!(
+            read_raw_response(&mut receive, &mut decoder, protocol::StreamRole::Author).await,
+            protocol::Response::Acknowledged
+        );
+        send_raw_request(
+            &mut send,
+            protocol::Request::AnnounceMembership {
+                metadata: Vec::new(),
+            },
+        )
+        .await;
+        assert!(matches!(
+            read_raw_response(&mut receive, &mut decoder, protocol::StreamRole::Author).await,
+            protocol::Response::EventCommitted { .. }
+        ));
+        let request = |payload: &[u8]| protocol::Request::Submit {
+            reference: None,
+            event: protocol::Event {
+                payload: payload.to_vec(),
+                blob_tree: None,
+            },
+        };
+        send_raw_request(&mut send, request(b"accepted-prefix")).await;
+        assert!(matches!(
+            read_raw_response(&mut receive, &mut decoder, protocol::StreamRole::Author).await,
+            protocol::Response::EventCommitted { .. }
+        ));
+        let mut suffix = vec![0];
+        suffix.extend(
+            protocol::encode_request_frame(
+                protocol::StreamRole::Author,
+                &request(b"rejected-suffix"),
+                protocol::Limits::default(),
+            )
+            .unwrap(),
+        );
+        send.write_all(&suffix).await.unwrap();
+        timeout(Duration::from_secs(2), connection.closed())
+            .await
+            .expect("invalid kind closes connection");
+        timeout(Duration::from_secs(2), async {
+            let mut history = client.read(None, None);
+            let mut applications = Vec::new();
+            while let Some(item) = history.next().await {
+                if let sea_core::MonitoredStreamItem::Item(event) = item.unwrap()
+                    && event.session_id.as_bytes().as_ref() == b"invalid-suffix-session"
+                {
+                    if event.kind == sea_core::archive::SessionEventKind::Application {
+                        applications.push(event.committed.event.payload);
+                    }
+                    if event.kind == sea_core::archive::SessionEventKind::Left {
+                        assert_eq!(applications, vec![Bytes::from_static(b"accepted-prefix")]);
+                        return;
+                    }
+                }
+            }
+            panic!("missing terminal departure");
+        })
+        .await
+        .expect("accepted prefix and terminal departure survive connection failure");
+    }
+
     async fn abandon_submission_and_resolve(
         address: SocketAddr,
         certificate_hash: wtransport::tls::Sha256Digest,
@@ -1570,25 +1599,18 @@ mod tests {
         let (authority, _events) = open_raw_event_stream(
             &connection,
             client.document().as_bytes(),
-            b"submission-author",
             b"submission-session",
         )
         .await;
         let (mut send, mut receive) = connection.open_bi().await.unwrap().await.unwrap();
         let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
-        send_raw_request(
-            &mut send,
-            2,
-            protocol::Request::OpenAuthorStream { authority },
-        )
-        .await;
+        send_raw_request(&mut send, protocol::Request::OpenAuthorStream { authority }).await;
         assert_eq!(
-            read_raw_response(&mut receive, &mut decoder, protocol::StreamRole::Author, 2,).await,
+            read_raw_response(&mut receive, &mut decoder, protocol::StreamRole::Author).await,
             protocol::Response::Acknowledged
         );
         send_raw_request(
             &mut send,
-            3,
             protocol::Request::Submit {
                 reference: None,
                 event: protocol::Event {
@@ -1656,7 +1678,7 @@ mod tests {
             NativeSessionOpen {
                 archive: client.document().as_bytes().clone(),
                 intent: protocol::ArchiveIntent::Open,
-                author: AuthorId::new(Bytes::from_static(b"snapshot-resolver-author")).unwrap(),
+
                 session: SessionId::new(Bytes::from_static(b"snapshot-resolver-session")).unwrap(),
                 reference: None,
             },
@@ -1689,18 +1711,12 @@ mod tests {
         root: [u8; 32],
     ) {
         let (_endpoint, connection) = raw_connection(address, certificate_hash.clone()).await;
-        let (authority, _events) = open_raw_event_stream(
-            &connection,
-            document,
-            b"snapshot-author",
-            b"snapshot-session",
-        )
-        .await;
+        let (authority, _events) =
+            open_raw_event_stream(&connection, document, b"snapshot-session").await;
         let (mut send, mut receive) = connection.open_bi().await.unwrap().await.unwrap();
         let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
         send_raw_request(
             &mut send,
-            2,
             protocol::Request::OpenSnapshotStream {
                 authority,
                 participation: protocol::SnapshotParticipation::SeaSelected,
@@ -1708,30 +1724,17 @@ mod tests {
         )
         .await;
         assert_eq!(
-            read_raw_response(
-                &mut receive,
-                &mut decoder,
-                protocol::StreamRole::Snapshot,
-                2,
-            )
-            .await,
+            read_raw_response(&mut receive, &mut decoder, protocol::StreamRole::Snapshot).await,
             protocol::Response::Acknowledged
         );
         let protocol::Response::SnapshotCoordination {
             fence: Some(fence), ..
-        } = read_raw_response(
-            &mut receive,
-            &mut decoder,
-            protocol::StreamRole::Snapshot,
-            0,
-        )
-        .await
+        } = read_raw_response(&mut receive, &mut decoder, protocol::StreamRole::Snapshot).await
         else {
             panic!("raw snapshot publisher should be nominated");
         };
         send_raw_request(
             &mut send,
-            3,
             protocol::Request::PublishSnapshot {
                 fence: Some(fence),
                 expected_parent: None,
@@ -1766,14 +1769,12 @@ mod tests {
     async fn open_raw_event_stream(
         connection: &Connection,
         archive: &[u8],
-        author: &[u8],
         session: &[u8],
     ) -> (Vec<u8>, wtransport::RecvStream) {
         let (authority, _, events) = open_raw_event_stream_with_intent(
             connection,
             archive,
             protocol::ArchiveIntent::Open,
-            author,
             session,
         )
         .await;
@@ -1784,18 +1785,16 @@ mod tests {
         connection: &Connection,
         archive: &[u8],
         intent: protocol::ArchiveIntent,
-        author: &[u8],
         session: &[u8],
     ) -> (Vec<u8>, Vec<u8>, wtransport::RecvStream) {
         let (mut send, mut receive) = connection.open_bi().await.unwrap().await.unwrap();
         send_raw_request(
             &mut send,
-            1,
             protocol::Request::OpenEventStream {
                 version: protocol::PROTOCOL_VERSION,
                 archive: archive.to_vec(),
                 intent,
-                author: author.to_vec(),
+
                 session: session.to_vec(),
                 resume_after: None,
             },
@@ -1806,26 +1805,17 @@ mod tests {
         let protocol::Response::EventStreamOpened {
             authority,
             document,
-        } = read_raw_response(&mut receive, &mut decoder, protocol::StreamRole::Event, 1).await
+        } = read_raw_response(&mut receive, &mut decoder, protocol::StreamRole::Event).await
         else {
             panic!("raw event stream should return authority");
         };
         (authority, document, receive)
     }
 
-    async fn send_raw_request(
-        send: &mut wtransport::SendStream,
-        correlation_id: u64,
-        request: protocol::Request,
-    ) {
+    async fn send_raw_request(send: &mut wtransport::SendStream, request: protocol::Request) {
         let role = request.stream_role();
-        let bytes = protocol::encode_request_frame(
-            role,
-            correlation_id,
-            &request,
-            protocol::Limits::default(),
-        )
-        .unwrap();
+        let bytes =
+            protocol::encode_request_frame(role, &request, protocol::Limits::default()).unwrap();
         send.write_all(&bytes).await.unwrap();
     }
 
@@ -1833,12 +1823,10 @@ mod tests {
         receive: &mut wtransport::RecvStream,
         decoder: &mut protocol::NetworkFrameDecoder,
         role: protocol::StreamRole,
-        correlation_id: u64,
     ) -> protocol::Response {
         let mut buffer = [0_u8; 1024];
         loop {
             if let Some(frame) = decoder.next_frame().unwrap() {
-                assert_eq!(frame.correlation_id, correlation_id);
                 return protocol::decode_response_network_frame(role, &frame).unwrap();
             }
             let count = receive

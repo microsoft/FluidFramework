@@ -40,8 +40,8 @@ use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, CommittedEvent, ErrorKind,
     Event, EventPosition, MonitoredStreamItem, MonitoredStreamProgress, MonitoredStreamStatus,
     archive::{
-        AuthorId, EventSubmission, SessionCommittedEvent, SessionEventKind, SessionId,
-        SessionStream, SnapshotParticipation,
+        EventSubmission, SessionCommittedEvent, SessionEventKind, SessionId, SessionStream,
+        SnapshotParticipation,
     },
     boxed_monitored_stream,
     session::{
@@ -95,8 +95,6 @@ struct Publisher {
 
 /// One logical membership; clones observe the same closure signal.
 struct Membership {
-    /// Stable author whose current connection is represented.
-    author: AuthorId,
     /// Latest acknowledged application position.
     reference: Option<EventPosition>,
     /// Closing or replacing this membership ends its live streams.
@@ -239,7 +237,6 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
     /// Validates against the frozen committed floor; only the final candidate may advance it.
     fn prepare_submission(
         &self,
-        author: &AuthorId,
         session: &SessionId,
         submission: &EventSubmission,
         floor: Option<EventPosition>,
@@ -280,7 +277,6 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         };
         Ok(Event {
             payload: encode_submission(
-                author,
                 session,
                 submission.reference,
                 minimum,
@@ -345,13 +341,9 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
                 }
             }
             SessionEventKind::Left => {
-                let announced = self
-                    .announced
+                self.announced
                     .remove(&committed.session_id)
                     .ok_or(SessionError::Corrupt("departure without announcement"))?;
-                if announced.author_id != committed.author_id {
-                    return Err(SessionError::Corrupt("departure author mismatch"));
-                }
                 self.remove_member(&committed.session_id);
             }
         }
@@ -371,7 +363,6 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
     /// Retains and settles one service-authored membership mutation.
     async fn append_membership(
         &mut self,
-        author: &AuthorId,
         session: &SessionId,
         kind: SessionEventKind,
         metadata: &[u8],
@@ -386,7 +377,7 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
             .unwrap_or(reference);
         let minimum = self.proposed_minimum(minimum, reference);
         let event = Event {
-            payload: encode_membership(author, session, kind, reference, minimum, metadata)?,
+            payload: encode_membership(session, kind, reference, minimum, metadata)?,
             blob_tree: None,
         };
         let view = self.view()?;
@@ -405,15 +396,13 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         session: &SessionId,
     ) -> Result<(), SessionError<Storage::Error>> {
         self.remove_member(session);
-        if let Some(announcement) = self.announced.get(session) {
-            let author = announcement.author_id.clone();
-            if let Err(error) = self
-                .append_membership(&author, session, SessionEventKind::Left, &[])
+        if self.announced.contains_key(session)
+            && let Err(error) = self
+                .append_membership(session, SessionEventKind::Left, &[])
                 .await
-            {
-                self.recovery_required = true;
-                return Err(error);
-            }
+        {
+            self.recovery_required = true;
+            return Err(error);
         }
         Ok(())
     }
@@ -538,7 +527,7 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
         }))
     }
 
-    /// Opens a fresh membership, closing the previous connection for the same author.
+    /// Opens an independent fresh membership.
     ///
     /// # Errors
     /// Rejects reused sessions, invalid references, closed runtimes, or unsettled prior work.
@@ -546,7 +535,6 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
     /// Panics if an internal publisher-state lock was poisoned.
     pub async fn open_session(
         self: &Arc<Self>,
-        author: AuthorId,
         session: SessionId,
         reference: Option<EventPosition>,
     ) -> Result<LocalSession<Storage>, SessionError<Storage::Error>> {
@@ -561,20 +549,10 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
                 "reused session or invalid reference",
             ));
         }
-        let replaced = runtime
-            .members
-            .iter()
-            .filter(|(_, member)| member.author == author)
-            .map(|(session, _)| session.clone())
-            .collect::<Vec<_>>();
-        for previous in replaced {
-            runtime.close_member(&previous).await?;
-        }
         let (closed, _) = watch::channel(false);
         runtime.members.insert(
             session.clone(),
             Membership {
-                author: author.clone(),
                 reference,
                 closed,
                 failed: Arc::new(std::sync::atomic::AtomicBool::new(false)),
@@ -583,7 +561,7 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
         runtime.seen.insert(session.clone());
         Ok(LocalSession {
             sequencer: self.clone(),
-            author,
+
             session,
             admission: Arc::new(Mutex::new(())),
         })
@@ -618,8 +596,7 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
 pub struct LocalSession<Storage: SeaStorage> {
     /// Shared sequencing owner, not independent storage authority.
     sequencer: Arc<LocalSequencer<Storage>>,
-    /// Author identity encoded in this membership's submissions.
-    author: AuthorId,
+
     /// Unique connection identity for this membership.
     session: SessionId,
     /// Orders this membership's submissions through capacity waits, but not completion.
@@ -630,7 +607,7 @@ impl<Storage: SeaStorage> Clone for LocalSession<Storage> {
     fn clone(&self) -> Self {
         Self {
             sequencer: self.sequencer.clone(),
-            author: self.author.clone(),
+
             session: self.session.clone(),
             admission: self.admission.clone(),
         }
@@ -639,7 +616,7 @@ impl<Storage: SeaStorage> Clone for LocalSession<Storage> {
 
 impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
     /// Publishes this membership once in archive order, retaining opaque application metadata.
-    /// Close, same-author replacement, and recovery publish an ordered departure.
+    /// Close and recovery publish an ordered departure.
     /// Exact retries return the original position; metadata cannot change within a membership.
     ///
     /// # Errors
@@ -679,12 +656,7 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
             };
         }
         runtime
-            .append_membership(
-                &self.author,
-                &self.session,
-                SessionEventKind::Joined,
-                &metadata,
-            )
+            .append_membership(&self.session, SessionEventKind::Joined, &metadata)
             .await
     }
 
@@ -715,7 +687,6 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
             .submit(
                 &self.sequencer.runtime,
                 admission,
-                self.author.clone(),
                 self.session.clone(),
                 submission,
             )
@@ -1150,11 +1121,7 @@ mod tests {
         below.reference = Some(initial);
         assert!(fresh.submit(below).await.is_err());
         let valid = recovered
-            .open_session(
-                AuthorId::new("first").unwrap(),
-                SessionId::new("retry").unwrap(),
-                None,
-            )
+            .open_session(SessionId::new("retry").unwrap(), None)
             .await
             .unwrap();
         let observer = member(&recovered, "observer").await;
@@ -1261,7 +1228,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn announced_membership_orders_departure_on_close_replacement_and_recovery() {
+    async fn announced_membership_orders_departure_on_close_and_recovery() {
         let storage = MemoryStorage::new();
         let (id, view) = storage.create_view().await.unwrap();
         let runtime = LocalSequencer::<MemoryStorage>::recover(view)
@@ -1305,17 +1272,22 @@ mod tests {
         let second = member(&runtime, "second").await;
         second.announce_membership(Bytes::new()).await.unwrap();
         let replacement = runtime
-            .open_session(
-                AuthorId::new("second").unwrap(),
-                SessionId::new("replacement").unwrap(),
-                None,
-            )
+            .open_session(SessionId::new("replacement").unwrap(), None)
             .await
             .unwrap();
         assert_eq!(
             data(&mut history).await.unwrap().kind,
             SessionEventKind::Joined
         );
+        assert!(
+            runtime
+                .runtime
+                .lock()
+                .await
+                .members
+                .contains_key(&second.session)
+        );
+        second.close().await.unwrap();
         assert_eq!(
             data(&mut history).await.unwrap().kind,
             SessionEventKind::Left
@@ -1454,7 +1426,6 @@ mod tests {
         ));
         let (_, duplicate) = storage.create_view().await.unwrap();
         let payload = encode_submission::<sea_memory::MemoryStorageError>(
-            &AuthorId::new("author").unwrap(),
             &SessionId::new("session").unwrap(),
             None,
             None,
@@ -1481,11 +1452,7 @@ mod tests {
         name: &str,
     ) -> LocalSession<Storage> {
         runtime
-            .open_session(
-                AuthorId::new(name.to_owned()).unwrap(),
-                SessionId::new(name.to_owned()).unwrap(),
-                None,
-            )
+            .open_session(SessionId::new(name.to_owned()).unwrap(), None)
             .await
             .unwrap()
     }
@@ -1740,13 +1707,18 @@ mod tests {
             position
         );
         let replacement = runtime
-            .open_session(
-                AuthorId::new("first").unwrap(),
-                SessionId::new("replacement").unwrap(),
-                Some(position),
-            )
+            .open_session(SessionId::new("replacement").unwrap(), Some(position))
             .await
             .unwrap();
+        assert!(
+            runtime
+                .runtime
+                .lock()
+                .await
+                .members
+                .contains_key(&first.session)
+        );
+        first.close().await.unwrap();
         assert!(live.next().await.is_none());
         assert!(first.submit(submission(b"stale")).await.is_err());
         let mut retained = second.read(Some(position), None);
@@ -1802,20 +1774,12 @@ mod tests {
         .unwrap();
         assert!(
             recovered
-                .open_session(
-                    AuthorId::new("author").unwrap(),
-                    SessionId::new("author").unwrap(),
-                    None
-                )
+                .open_session(SessionId::new("author").unwrap(), None)
                 .await
                 .is_err()
         );
         let reconnected = recovered
-            .open_session(
-                AuthorId::new("author").unwrap(),
-                SessionId::new("new-session").unwrap(),
-                Some(position),
-            )
+            .open_session(SessionId::new("new-session").unwrap(), Some(position))
             .await
             .unwrap();
         assert!(reconnected.submit(submission(b"original")).await.unwrap() > position);
@@ -1844,19 +1808,11 @@ mod tests {
             .await
             .unwrap();
         let first = sequencer
-            .open_session(
-                AuthorId::new("first").unwrap(),
-                SessionId::new("first").unwrap(),
-                None,
-            )
+            .open_session(SessionId::new("first").unwrap(), None)
             .await
             .unwrap();
         let second = sequencer
-            .open_session(
-                AuthorId::new("second").unwrap(),
-                SessionId::new("second").unwrap(),
-                None,
-            )
+            .open_session(SessionId::new("second").unwrap(), None)
             .await
             .unwrap();
         assert!(storage.open_view(&id).await.is_err());

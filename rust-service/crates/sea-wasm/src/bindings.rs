@@ -15,9 +15,9 @@ use futures_util::{
 };
 use js_sys::{Array, Object, Reflect, Uint8Array};
 use sea_core::{
-    AuthorId, BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, Event,
-    EventPosition, EventSubmission, MonitoredStreamItem, SeaSession as SessionContract, SessionId,
-    SessionStream, SnapshotCoordination, SnapshotParticipation,
+    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, Event, EventPosition,
+    EventSubmission, MonitoredStreamItem, SeaSession as SessionContract, SessionId, SessionStream,
+    SnapshotCoordination, SnapshotParticipation,
     storage::{LoadStart, Snapshot, StorageHandle},
 };
 use wasm_bindgen::prelude::*;
@@ -120,11 +120,9 @@ impl SeaTreeId {
     }
 }
 
-/// Stable author identity and fresh session identity supplied to a stack factory.
+/// Fresh session identity and options supplied to a stack factory.
 #[wasm_bindgen]
 pub struct SeaSessionOptions {
-    /// Stable submission author.
-    author: AuthorId,
     /// Fresh membership identity.
     session: SessionId,
     /// Latest incorporated event.
@@ -138,14 +136,11 @@ impl SeaSessionOptions {
     /// Validates identities and records explicit session semantics.
     #[wasm_bindgen(constructor)]
     pub fn new(
-        author: &[u8],
         session: &[u8],
         reference: Option<u64>,
         compression: bool,
     ) -> Result<SeaSessionOptions, JsValue> {
         Ok(Self {
-            author: AuthorId::new(Bytes::copy_from_slice(author))
-                .map_err(|_| invalid("author identity must not be empty"))?,
             session: SessionId::new(Bytes::copy_from_slice(session))
                 .map_err(|_| invalid("session identity must not be empty"))?,
             reference: reference.map(EventPosition::new),
@@ -513,11 +508,6 @@ fn event_result(
             )?;
             set(
                 &result,
-                "author",
-                Uint8Array::from(event.author_id.as_bytes().as_ref()),
-            )?;
-            set(
-                &result,
                 "session",
                 Uint8Array::from(event.session_id.as_bytes().as_ref()),
             )?;
@@ -704,11 +694,7 @@ impl SeaMemoryService {
         };
         drop(runtimes);
         let session = sequencer
-            .open_session(
-                options.author.clone(),
-                options.session.clone(),
-                options.reference,
-            )
+            .open_session(options.session.clone(), options.reference)
             .await
             .map_err(|error| service_error(&error))?;
         let room = self
@@ -779,7 +765,7 @@ pub async fn open_remote(
         SessionOpen {
             archive: Bytes::from(document.unwrap_or_default()),
             intent,
-            author: options.author.clone(),
+
             session: options.session.clone(),
             reference: options.reference,
         },
@@ -822,7 +808,7 @@ pub async fn open_webtransport(
         SessionOpen {
             archive: Bytes::from(document.unwrap_or_default()),
             intent,
-            author: options.author.clone(),
+
             session: options.session.clone(),
             reference: options.reference,
         },

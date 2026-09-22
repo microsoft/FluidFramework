@@ -275,12 +275,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 	/** Opens delivery after the consumed cursor, independently of the last submitted event. */
 	public async open(sessionOpened = false): Promise<void> {
 		if (!sessionOpened) {
-			await this.client.openSession(
-				this.document,
-				this.lifecycle.writer,
-				this.session,
-				this.lifecycle.cursor,
-			);
+			await this.client.openSession(this.document, this.session, this.lifecycle.cursor);
 		}
 		if (this.client.announceMembership !== undefined) {
 			await this.client.announceMembership(encoder.encode(JSON.stringify(this.fluidClient)));
@@ -686,10 +681,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 				}
 				const messages = operations.map((operation) => {
 					this.lifecycle.cursor = operation.position;
-					if (
-						bytesEqual(operation.writer, this.lifecycle.writer) &&
-						bytesEqual(operation.session, this.session)
-					) {
+					if (bytesEqual(operation.session, this.session)) {
 						this.pending.delete(Number(operation.localSequenceNumber));
 					}
 					return projectOperation(this.lifecycle, operation);

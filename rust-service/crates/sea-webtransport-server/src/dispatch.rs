@@ -368,7 +368,7 @@ fn session_event_to_wire(event: &sea_core::archive::SessionCommittedEvent) -> pr
             sea_core::archive::SessionEventKind::Left => protocol::SessionEventKind::Left,
         },
         position: event.committed.position.get(),
-        author: event.author_id.as_bytes().to_vec(),
+
         session: event.session_id.as_bytes().to_vec(),
 
         reference: event.reference.map(EventPosition::get),
@@ -464,7 +464,7 @@ mod tests {
 
     use bytes::Bytes;
     use futures_util::StreamExt as _;
-    use sea_core::archive::{AuthorId, SessionId};
+    use sea_core::archive::SessionId;
     use sea_core::storage::SeaStorage as _;
     use sea_memory::MemoryStorage;
     use sea_sequencer::session::LocalSequencer;
@@ -481,19 +481,11 @@ mod tests {
             .await
             .unwrap();
         let session = sequencer
-            .open_session(
-                AuthorId::new("author").unwrap(),
-                SessionId::new("session").unwrap(),
-                None,
-            )
+            .open_session(SessionId::new("session").unwrap(), None)
             .await
             .unwrap();
         let observer = sequencer
-            .open_session(
-                AuthorId::new("observer").unwrap(),
-                SessionId::new("observer").unwrap(),
-                None,
-            )
+            .open_session(SessionId::new("observer").unwrap(), None)
             .await
             .unwrap();
         let dispatcher = SessionDispatcher::new(Arc::new(session));
@@ -546,7 +538,6 @@ mod tests {
             .unwrap();
         let session = sequencer
             .open_session(
-                AuthorId::new(Bytes::from_static(b"author")).unwrap(),
                 SessionId::new(Bytes::from_static(b"session")).unwrap(),
                 None,
             )
@@ -610,7 +601,6 @@ mod tests {
             .unwrap();
         let session = sequencer
             .open_session(
-                AuthorId::new(Bytes::from_static(b"author")).unwrap(),
                 SessionId::new(Bytes::from_static(b"session")).unwrap(),
                 None,
             )

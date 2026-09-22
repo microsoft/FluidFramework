@@ -148,7 +148,6 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	/** Opens content access without announcing a new Fluid delta membership. */
 	private async openArchiveSession(document: Uint8Array): Promise<SeaSession> {
 		const session = await this.factory(document, {
-			author: encoder.encode(`archive-${crypto.randomUUID()}`),
 			session: encoder.encode(`archive-session-${crypto.randomUUID()}`),
 		});
 		let stream: SeaStream<SeaLoadResult> | undefined;
@@ -174,7 +173,6 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		this.disconnect();
 		await this.closing;
 		this.session = await this.factory(undefined, {
-			author: encoder.encode(`create-${crypto.randomUUID()}`),
 			session: encoder.encode(`create-session-${crypto.randomUUID()}`),
 		});
 		return this.session.document;
@@ -183,17 +181,15 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	/** Opens fresh membership and rebuilds the retained Fluid sequence projection. */
 	public openSession(
 		document: Uint8Array,
-		writer: Uint8Array,
 		session: Uint8Array,
 		resumeAfter?: Uint8Array,
 	): Promise<void> {
-		return this.replace(() => this.replaceSession(document, writer, session, resumeAfter));
+		return this.replace(() => this.replaceSession(document, session, resumeAfter));
 	}
 
 	/** Rebuilds the projection inside an exclusive membership transition. */
 	private async replaceSession(
 		document: Uint8Array,
-		writer: Uint8Array,
 		session: Uint8Array,
 		resumeAfter?: Uint8Array,
 	): Promise<void> {
@@ -201,7 +197,6 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 		await this.closing;
 		const reference = decodePosition(resumeAfter);
 		this.session = await this.factory(document, {
-			author: writer,
 			session,
 			...(reference === undefined ? {} : { reference }),
 		});
@@ -595,7 +590,6 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 			...(item.minimumReference === undefined
 				? {}
 				: { minimumReference: encodePosition(item.minimumReference) }),
-			writer: item.author,
 			session: item.session,
 			localSequenceNumber: BigInt(message.clientSequenceNumber ?? 0),
 			...(item.reference === undefined ? {} : { reference: encodePosition(item.reference) }),

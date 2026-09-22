@@ -301,11 +301,15 @@ async fn handle_socket(
         }
         let _active = state.metrics.enter_stream();
         let (send, receive) = websocket_io::split(socket);
-        tokio::select! {
+        let result = tokio::select! {
             result = serve_sea_stream(send, receive, Arc::clone(&group.service), &state.config, &state.metrics) => result,
             _ = group_stop.changed() => Ok(()),
             _ = stopped.changed() => Ok(()),
+        };
+        if matches!(result, Err(WebTransportError::SeaProtocol(_))) {
+            group.stop.send_replace(true);
         }
+        result
     }
 }
 
@@ -335,6 +339,7 @@ async fn serve_group(
         group
     };
     let _active = state.metrics.enter_connection();
+    let mut group_stop = group.stop.subscribe();
     let result = async {
         timeout(state.config.operation_timeout, socket.send(Message::Text(token.clone().into()))).await.map_err(|_| WebTransportError::Timeout)?.map_err(transport_error)?;
         let mut heartbeat = tokio::time::interval(state.config.liveness.heartbeat_interval);
@@ -357,11 +362,13 @@ async fn serve_group(
                     timeout(state.config.operation_timeout, socket.send(Message::Ping(Bytes::new()))).await.map_err(|_| WebTransportError::Timeout)?.map_err(transport_error)?;
                 }
                 _ = stopped.changed() => break,
+                _ = group_stop.changed() => break,
             }
         }
         Ok(())
     }.await;
     state.groups.lock().await.remove(&token);
+    let reconnect_allowed = !*stopped.borrow() && !*group.stop.borrow();
     group.stop.send_replace(true);
     let _all_streams = Arc::clone(&group.streams)
         .acquire_many_owned(
@@ -369,7 +376,6 @@ async fn serve_group(
         )
         .await
         .map_err(transport_error)?;
-    let reconnect_allowed = !*stopped.borrow();
     group.service.connection_closed(reconnect_allowed).await;
     state.metrics.record_connection_cleanup();
     result

@@ -149,8 +149,6 @@ export interface DeltaConnectionLifecycle {
 	readonly clientId: string;
 	/** Synthetic identity assigned to operations from other writers. */
 	readonly remoteClientId: string;
-	/** Stable protocol writer identity. */
-	readonly writer: Uint8Array;
 	/** Last projected cursor consumed by reads or subscriptions. */
 	cursor: Uint8Array | undefined;
 	/** Last committed local submission position. */
@@ -167,7 +165,7 @@ export interface DeltaConnectionLifecycle {
  */
 export function toSequenced(
 	operation: ProjectedOperation,
-	localWriter?: Uint8Array,
+	localSession?: Uint8Array,
 	localClientId?: string,
 	projectedRemoteClientId = remoteClientId,
 	remoteClientSequenceNumber = Number(operation.sequenceNumber),
@@ -207,9 +205,9 @@ export function toSequenced(
 	}
 	const message = JSON.parse(decoder.decode(operation.payload)) as IDocumentMessage;
 	const isLocal =
-		localWriter !== undefined &&
+		localSession !== undefined &&
 		localClientId !== undefined &&
-		bytesEqual(operation.writer, localWriter);
+		bytesEqual(operation.session, localSession);
 	return {
 		...message,
 		clientId: isLocal ? localClientId : projectedRemoteClientId,
@@ -228,7 +226,7 @@ export function projectOperation(
 	lifecycle: DeltaConnectionLifecycle,
 	operation: ProjectedOperation,
 ): ISequencedDocumentMessage {
-	const isLocal = bytesEqual(operation.writer, lifecycle.writer);
+	const isLocal = bytesEqual(operation.session, encoder.encode(lifecycle.clientId));
 	let remoteSequenceNumber = lifecycle.remoteClientSequenceNumber;
 	if (!isLocal) {
 		const position = bytesToHex(operation.position);
@@ -240,7 +238,7 @@ export function projectOperation(
 	}
 	return toSequenced(
 		operation,
-		lifecycle.writer,
+		encoder.encode(lifecycle.clientId),
 		lifecycle.clientId,
 		lifecycle.remoteClientId,
 		remoteSequenceNumber,

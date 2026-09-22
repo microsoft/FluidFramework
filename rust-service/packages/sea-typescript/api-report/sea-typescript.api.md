@@ -32,7 +32,6 @@ export type SeaErrorKind = "InvalidPosition" | "StalePosition" | "Conflict" | "R
 
 // @internal
 export interface SeaEvent {
-    readonly author: Uint8Array;
     readonly blobTree?: SeaTreeId;
     readonly eventType: "application" | "joined" | "left";
     readonly kind: "event";
@@ -112,7 +111,6 @@ export interface SeaSession {
 
 // @internal
 export interface SeaSessionOptions {
-    readonly author: Uint8Array;
     readonly compression?: boolean;
     readonly reference?: bigint;
     readonly session: Uint8Array;

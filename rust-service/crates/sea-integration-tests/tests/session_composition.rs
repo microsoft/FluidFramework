@@ -44,9 +44,9 @@ use bytes::Bytes;
 use futures_util::{FutureExt, StreamExt, future::BoxFuture, stream};
 use sea_compression::CompressionSession;
 use sea_core::{
-    AuthorId, BlobDirectory, BlobTreeId, ClassifiedError, ErrorKind, Event, EventPosition,
-    EventSubmission, MonitoredStreamItem, MonitoredStreamStatus, SeaArchive, SeaAuthorSession,
-    SeaSession, SessionCommittedEvent, SessionId, SnapshotParticipation,
+    BlobDirectory, BlobTreeId, ClassifiedError, ErrorKind, Event, EventPosition, EventSubmission,
+    MonitoredStreamItem, MonitoredStreamStatus, SeaArchive, SeaAuthorSession, SeaSession,
+    SessionCommittedEvent, SessionId, SnapshotParticipation,
     storage::{LoadStart, SeaStorage, Snapshot, StorageHandle},
 };
 use sea_encryption::{ActiveKey, EncryptionKey, EncryptionSession, KeyId, KeyProvider};
@@ -136,8 +136,8 @@ struct Fixture {
     runtime: Arc<LocalSequencer<MemoryStorage>>,
     /// Backend-assigned document identity returned by every proxy hop.
     document: Bytes,
-    /// Stable author identity, independent of the connection generation.
-    author: &'static str,
+    /// Distinguishes independently generated test session names.
+    session_prefix: &'static str,
     /// Fresh memberships prevent accidental reuse of connection-scoped authority.
     generation: usize,
     /// Endpoints in inner-to-outer construction order.
@@ -156,7 +156,7 @@ impl Fixture {
                 .await
                 .unwrap(),
             document: document.as_bytes().clone(),
-            author: "author",
+            session_prefix: "primary",
             generation: 0,
             endpoints: Vec::new(),
             hops: Vec::new(),
@@ -164,11 +164,11 @@ impl Fixture {
     }
 
     /// Shares document state, but not author membership, wrappers, or transport resources.
-    fn peer(&self, author: &'static str) -> Self {
+    fn peer(&self, session_prefix: &'static str) -> Self {
         Self {
             runtime: self.runtime.clone(),
             document: self.document.clone(),
-            author,
+            session_prefix,
             generation: 0,
             endpoints: Vec::new(),
             hops: Vec::new(),
@@ -180,8 +180,11 @@ impl Fixture {
         self.generation += 1;
         self.runtime
             .open_session(
-                AuthorId::new(self.author).unwrap(),
-                SessionId::new(format!("{}-session-{}", self.author, self.generation)).unwrap(),
+                SessionId::new(format!(
+                    "{}-session-{}",
+                    self.session_prefix, self.generation
+                ))
+                .unwrap(),
                 None,
             )
             .await
@@ -224,9 +227,12 @@ impl Fixture {
             NativeSessionOpen {
                 archive: self.document.clone(),
                 intent: protocol::ArchiveIntent::Open,
-                author: AuthorId::new(self.author).unwrap(),
-                session: SessionId::new(format!("{}-session-{}", self.author, self.generation))
-                    .unwrap(),
+
+                session: SessionId::new(format!(
+                    "{}-session-{}",
+                    self.session_prefix, self.generation
+                ))
+                .unwrap(),
                 reference: None,
             },
         )
@@ -242,7 +248,7 @@ impl Fixture {
                 assert!(
                     hop.submissions.load(Ordering::SeqCst) > 0,
                     "{} / {scenario:?}: hop {index} received no submissions",
-                    self.author
+                    self.session_prefix
                 );
             }
         }
@@ -628,8 +634,7 @@ async fn after_reconnect<Session: SeaSession>(session: &Session, trace: &Trace) 
 struct ExpectedEvent {
     /// Receipt used to order concurrent submissions without assuming which author wins.
     position: EventPosition,
-    /// Author whose identity must survive every decorator and reconnect.
-    author: &'static str,
+
     /// Original operation, reference, and event bytes.
     submission: EventSubmission,
 }
@@ -716,11 +721,10 @@ async fn verify_tree<Session: SeaArchive>(session: &Session, tree: &ContentTree)
     assert!(session.get_blob(empty).await.unwrap().is_empty());
 }
 
-/// Checks original plaintext, author, position, and reference against the model.
+/// Checks original plaintext, position, and reference against the model.
 fn verify_event(actual: &SessionCommittedEvent, expected: &ExpectedEvent) {
     assert_eq!(actual.committed.position, expected.position);
     assert_eq!(actual.committed.event, expected.submission.event);
-    assert_eq!(actual.author_id, AuthorId::new(expected.author).unwrap());
     assert_eq!(actual.reference, expected.submission.reference);
 }
 
@@ -754,7 +758,7 @@ async fn cancel_idle_read<Session: SeaArchive>(session: &Session, after: Option<
 
 /// Creates submissions with empty, short, and larger binary payloads.
 fn collaborative_submission(
-    author: &str,
+    payload_seed: &str,
     round: usize,
     batch: usize,
     root: BlobTreeId,
@@ -768,7 +772,8 @@ fn collaborative_submission(
                 (0..length)
                     .map(|index| {
                         u8::try_from(
-                            (index * 17 + round + batch + usize::from(author.as_bytes()[0])) % 256,
+                            (index * 17 + round + batch + usize::from(payload_seed.as_bytes()[0]))
+                                % 256,
                         )
                         .unwrap()
                     })
@@ -933,12 +938,12 @@ async fn concurrent_batch<Session: SeaSession>(
     let mut pair = [
         ExpectedEvent {
             position: first_receipt,
-            author: "author",
+
             submission: first_submission,
         },
         ExpectedEvent {
             position: peer_receipt,
-            author: "peer",
+
             submission: peer_submission,
         },
     ];
@@ -1051,7 +1056,7 @@ async fn collaborate<Session, Build>(
         let receipt = first.submit(submission.clone()).await.unwrap();
         let expected = ExpectedEvent {
             position: receipt,
-            author: "author",
+
             submission,
         };
         verify_event(&next_event(&mut first_events).await, &expected);
@@ -1066,7 +1071,7 @@ async fn collaborate<Session, Build>(
     assert!(position > history.last().unwrap().position);
     let expected = ExpectedEvent {
         position,
-        author: "peer",
+
         submission,
     };
     verify_event(&next_event(&mut first_events).await, &expected);

@@ -19,7 +19,7 @@ use sea_core::{
     ErrorKind, Event, EventPosition, MonitoredStreamItem, MonitoredStreamProgress,
     MonitoredStreamStatus,
     archive::{
-        AuthorId, CommittedEvent, EventSubmission, SessionCommittedEvent, SessionId, SessionStream,
+        CommittedEvent, EventSubmission, SessionCommittedEvent, SessionId, SessionStream,
         SnapshotParticipation,
     },
     boxed_monitored_stream,
@@ -176,7 +176,6 @@ impl From<ClientStateError> for SeaClientError {
             ClientStateError::Closed => Self::Closed,
             ClientStateError::Disconnected => Self::disconnected(),
             ClientStateError::MissingAuthority => Self::UnexpectedResponse,
-            ClientStateError::Protocol(error) => error.into(),
             ClientStateError::Poisoned => {
                 Self::transport_message("shared client state is unavailable")
             }
@@ -234,7 +233,7 @@ impl<Identity: Copy + Send + Sync + 'static> StorageHandle for RemoteHandle<Iden
 
 /// One publication request processed without competing readers on the transport stream.
 struct SnapshotCommand {
-    /// Correlated request to send.
+    /// Ordered request to send.
     request: protocol::Request,
     /// Completion independent of the submitting future's lifetime.
     response: oneshot::Sender<Result<protocol::Response, SeaClientError>>,
@@ -337,8 +336,7 @@ pub struct SessionOpen {
     pub archive: Bytes,
     /// Whether the archive is created or must already exist.
     pub intent: protocol::ArchiveIntent,
-    /// Stable author identity.
-    pub author: AuthorId,
+
     /// Fresh session identity.
     pub session: SessionId,
     /// Latest event incorporated by the author.
@@ -375,7 +373,7 @@ impl SessionClient<NativeTransport> {
                 version: protocol::PROTOCOL_VERSION,
                 archive: open.archive.to_vec(),
                 intent: open.intent,
-                author: open.author.as_bytes().to_vec(),
+
                 session: open.session.as_bytes().to_vec(),
                 resume_after: resume_after.map(EventPosition::get),
             }),
@@ -416,7 +414,7 @@ where
                 version: protocol::PROTOCOL_VERSION,
                 archive: open.archive.to_vec(),
                 intent: open.intent,
-                author: open.author.as_bytes().to_vec(),
+
                 session: open.session.as_bytes().to_vec(),
                 resume_after: open.reference.map(EventPosition::get),
             })
@@ -972,8 +970,7 @@ fn session_event_from_wire(
             position: EventPosition::new(event.position),
             event: event_from_wire(event.event),
         },
-        author_id: AuthorId::new(Bytes::from(event.author))
-            .map_err(|_| SeaClientError::UnexpectedResponse)?,
+
         session_id: SessionId::new(Bytes::from(event.session))
             .map_err(|_| SeaClientError::UnexpectedResponse)?,
 

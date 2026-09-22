@@ -1,12 +1,10 @@
 //! Bounded versioned wire values for Sea sessions.
 
-use std::collections::BTreeSet;
-
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 /// Current Sea logical-stream opening version.
-pub const PROTOCOL_VERSION: u16 = 9;
+pub const PROTOCOL_VERSION: u16 = 10;
 
 pub mod signals;
 
@@ -48,6 +46,8 @@ pub enum MessageKind {
     OpenSignalStream = 23,
     /// Sends one opaque signal.
     SendSignal = 24,
+    /// Event submission without a blob-tree reference.
+    SubmitWithoutBlob = 25,
     /// Request acknowledgement response.
     Acknowledged = 128,
     /// Event-commit response.
@@ -76,6 +76,8 @@ pub enum MessageKind {
     ResponseComplete = 141,
     /// Live membership or application signal.
     SignalEvent = 142,
+    /// Delivered event without a blob-tree reference.
+    LoadEventWithoutBlob = 143,
     /// Classified service-error response.
     Error = 255,
 }
@@ -102,6 +104,7 @@ impl TryFrom<u8> for MessageKind {
             22 => Ok(Self::AnnounceMembership),
             23 => Ok(Self::OpenSignalStream),
             24 => Ok(Self::SendSignal),
+            25 => Ok(Self::SubmitWithoutBlob),
             128 => Ok(Self::Acknowledged),
             129 => Ok(Self::EventCommitted),
             131 => Ok(Self::BlobStored),
@@ -116,6 +119,7 @@ impl TryFrom<u8> for MessageKind {
             140 => Ok(Self::SnapshotCoordination),
             141 => Ok(Self::ResponseComplete),
             142 => Ok(Self::SignalEvent),
+            143 => Ok(Self::LoadEventWithoutBlob),
             255 => Ok(Self::Error),
             _ => Err(ProtocolError::UnknownMessageKind(value)),
         }
@@ -139,13 +143,13 @@ pub enum StreamRole {
     Author,
     /// Latest-value snapshot coordination stream.
     Snapshot,
-    /// Correlated content-operation stream.
+    /// Ordered content-operation stream.
     Content,
 }
 
 impl MessageKind {
     /// Every assigned message kind in numeric order.
-    pub const ALL: [Self; 32] = [
+    pub const ALL: [Self; 34] = [
         Self::Submit,
         Self::Read,
         Self::PutBlob,
@@ -163,6 +167,7 @@ impl MessageKind {
         Self::AnnounceMembership,
         Self::OpenSignalStream,
         Self::SendSignal,
+        Self::SubmitWithoutBlob,
         Self::Acknowledged,
         Self::EventCommitted,
         Self::BlobStored,
@@ -177,6 +182,7 @@ impl MessageKind {
         Self::SnapshotCoordination,
         Self::ResponseComplete,
         Self::SignalEvent,
+        Self::LoadEventWithoutBlob,
         Self::Error,
     ];
 
@@ -199,6 +205,7 @@ impl MessageKind {
                 Kind::OpenEventStream
                     | Kind::LoadSnapshot
                     | Kind::LoadEvent
+                    | Kind::LoadEventWithoutBlob
                     | Kind::StreamProgress
                     | Kind::EventStreamOpened
                     | Kind::Acknowledged
@@ -209,6 +216,7 @@ impl MessageKind {
                 Kind::OpenAuthorStream
                     | Kind::AnnounceMembership
                     | Kind::Submit
+                    | Kind::SubmitWithoutBlob
                     | Kind::EventCommitted
                     | Kind::Close
                     | Kind::Acknowledged
@@ -241,6 +249,7 @@ impl MessageKind {
                     | Kind::Directory
                     | Kind::Snapshot
                     | Kind::LoadEvent
+                    | Kind::LoadEventWithoutBlob
                     | Kind::StreamProgress
                     | Kind::ResponseComplete
                     | Kind::Acknowledged
@@ -255,9 +264,11 @@ impl MessageKind {
         match self {
             Self::OpenSignalStream | Self::SendSignal => Some(StreamRole::Signal),
             Self::OpenEventStream => Some(StreamRole::Event),
-            Self::OpenAuthorStream | Self::AnnounceMembership | Self::Submit | Self::Close => {
-                Some(StreamRole::Author)
-            }
+            Self::OpenAuthorStream
+            | Self::AnnounceMembership
+            | Self::Submit
+            | Self::SubmitWithoutBlob
+            | Self::Close => Some(StreamRole::Author),
             Self::Read
             | Self::OpenContentStream
             | Self::PutBlob
@@ -285,7 +296,7 @@ impl MessageKind {
 }
 
 const NETWORK_LENGTH_BYTES: usize = 4;
-const NETWORK_HEADER_BYTES: usize = 1 + 8;
+const NETWORK_HEADER_BYTES: usize = 1;
 /// Smallest complete length-delimited network frame.
 pub const MIN_FRAME_BYTES: usize = NETWORK_LENGTH_BYTES + NETWORK_HEADER_BYTES;
 
@@ -296,13 +307,11 @@ pub struct Limits {
     pub max_frame_bytes: usize,
 }
 
-/// One explicitly identified and correlated network frame.
+/// One explicitly identified network frame on an ordered stream.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct NetworkFrame {
     /// Explicit message kind encoded as one assigned byte.
     pub kind: MessageKind,
-    /// Stream-scoped request/response identity, or zero for an unsolicited notification.
-    pub correlation_id: u64,
     /// Message-kind-specific postcard payload without an outer enum discriminator.
     pub payload: Vec<u8>,
 }
@@ -311,12 +320,11 @@ pub struct NetworkFrame {
 ///
 /// # Errors
 ///
-/// Returns an error for an invalid opening correlation ID, length overflow, or configured limit.
+/// Returns an error for length overflow or a configured limit.
 pub fn encode_network_frame(
     frame: &NetworkFrame,
     limits: Limits,
 ) -> Result<Vec<u8>, ProtocolError> {
-    validate_correlation(frame.kind, frame.correlation_id)?;
     let declared_length = NETWORK_HEADER_BYTES
         .checked_add(frame.payload.len())
         .ok_or(ProtocolError::FrameTooLarge)?;
@@ -329,68 +337,10 @@ pub fn encode_network_frame(
     let declared_length =
         u32::try_from(declared_length).map_err(|_| ProtocolError::FrameTooLarge)?;
     let mut encoded = Vec::with_capacity(complete_length);
-    encoded.extend_from_slice(&declared_length.to_be_bytes());
     encoded.push(frame.kind.into());
-    encoded.extend_from_slice(&frame.correlation_id.to_be_bytes());
+    encoded.extend_from_slice(&declared_length.to_be_bytes());
     encoded.extend_from_slice(&frame.payload);
     Ok(encoded)
-}
-
-fn validate_correlation(kind: MessageKind, correlation_id: u64) -> Result<(), ProtocolError> {
-    if correlation_id == 0
-        && !matches!(
-            kind,
-            MessageKind::LoadEvent
-                | MessageKind::Snapshot
-                | MessageKind::SnapshotCoordination
-                | MessageKind::SignalEvent
-        )
-    {
-        Err(ProtocolError::InvalidCorrelationId)
-    } else {
-        Ok(())
-    }
-}
-
-/// Stream-scoped active correlation IDs.
-#[derive(Debug, Default)]
-pub struct CorrelationTracker {
-    active: BTreeSet<u64>,
-}
-
-impl CorrelationTracker {
-    /// Marks a nonzero correlation ID active until its response completes.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error for zero or an ID already active on this stream.
-    pub fn begin(&mut self, correlation_id: u64) -> Result<(), ProtocolError> {
-        if correlation_id == 0 {
-            return Err(ProtocolError::InvalidCorrelationId);
-        }
-        if !self.active.insert(correlation_id) {
-            return Err(ProtocolError::CorrelationInUse(correlation_id));
-        }
-        Ok(())
-    }
-
-    /// Completes one active request/response correlation.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error when the response ID does not match an active request.
-    pub fn complete(&mut self, correlation_id: u64) -> Result<(), ProtocolError> {
-        if !self.active.remove(&correlation_id) {
-            return Err(ProtocolError::UnknownCorrelation(correlation_id));
-        }
-        Ok(())
-    }
-
-    /// Returns whether `correlation_id` is currently active.
-    #[must_use]
-    pub fn is_active(&self, correlation_id: u64) -> bool {
-        self.active.contains(&correlation_id)
-    }
 }
 
 /// Incrementally decodes bounded network envelopes while retaining coalesced trailing bytes.
@@ -425,10 +375,13 @@ impl NetworkFrameDecoder {
     ///
     /// # Errors
     ///
-    /// Returns an error for malformed lengths, excessive frames, unknown kinds, or invalid
-    /// opening correlations.
+    /// Returns an error for malformed lengths, excessive frames, or unknown kinds.
     pub fn next_frame(&mut self) -> Result<Option<NetworkFrame>, ProtocolError> {
-        let Some(length_bytes) = self.buffered.get(..NETWORK_LENGTH_BYTES) else {
+        let Some(&kind) = self.buffered.first() else {
+            return Ok(None);
+        };
+        let kind = MessageKind::try_from(kind)?;
+        let Some(length_bytes) = self.buffered.get(1..MIN_FRAME_BYTES) else {
             return Ok(None);
         };
         let declared_length = usize::try_from(u32::from_be_bytes(
@@ -449,22 +402,10 @@ impl NetworkFrameDecoder {
         if self.buffered.len() < complete_length {
             return Ok(None);
         }
-        let kind = MessageKind::try_from(self.buffered[NETWORK_LENGTH_BYTES])?;
-        let correlation_start = NETWORK_LENGTH_BYTES + 1;
         let payload_start = NETWORK_LENGTH_BYTES + NETWORK_HEADER_BYTES;
-        let correlation_id = u64::from_be_bytes(
-            self.buffered[correlation_start..payload_start]
-                .try_into()
-                .map_err(|_| ProtocolError::IncompleteFrame)?,
-        );
-        validate_correlation(kind, correlation_id)?;
         let payload = self.buffered[payload_start..complete_length].to_vec();
         self.buffered.drain(..complete_length);
-        Ok(Some(NetworkFrame {
-            kind,
-            correlation_id,
-            payload,
-        }))
+        Ok(Some(NetworkFrame { kind, payload }))
     }
 
     /// Accepts clean frame-boundary EOF and rejects a truncated envelope.
@@ -545,8 +486,7 @@ pub struct StreamEvent {
     pub kind: SessionEventKind,
     /// Stable event position.
     pub position: u64,
-    /// Stable author identity.
-    pub author: Vec<u8>,
+
     /// Connection identity that submitted the event.
     pub session: Vec<u8>,
     /// Author reference position.
@@ -659,8 +599,7 @@ pub mod payload {
         pub archive: Vec<u8>,
         /// Requested archive lifecycle operation.
         pub intent: ArchiveIntent,
-        /// Stable author identity.
-        pub author: Vec<u8>,
+
         /// Fresh logical-session identity.
         pub session: Vec<u8>,
         /// Latest event already incorporated by the client.
@@ -717,6 +656,32 @@ pub mod payload {
         pub reference: Option<u64>,
         /// Event to sequence.
         pub event: Event,
+    }
+
+    /// Common submission with no blob-tree reference.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct SubmitWithoutBlob {
+        /// Latest incorporated event.
+        pub reference: Option<u64>,
+        /// Opaque application bytes.
+        pub payload: Vec<u8>,
+    }
+
+    /// Common delivered event with no blob-tree reference.
+    #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+    pub struct LoadEventWithoutBlob {
+        /// Application or membership record.
+        pub kind: super::SessionEventKind,
+        /// Committed archive position.
+        pub position: u64,
+        /// Submitting session identity.
+        pub session: Vec<u8>,
+        /// Sequenced context used to construct the event.
+        pub reference: Option<u64>,
+        /// Committed admission floor at this boundary.
+        pub minimum_reference: Option<u64>,
+        /// Opaque application bytes.
+        pub payload: Vec<u8>,
     }
 
     /// Bounded historical read payload.
@@ -900,8 +865,7 @@ pub enum Request {
         archive: Vec<u8>,
         /// Explicit archive lifecycle intent.
         intent: ArchiveIntent,
-        /// Stable author identity used by the later author stream.
-        author: Vec<u8>,
+
         /// Fresh logical session identity.
         session: Vec<u8>,
         /// Latest event already incorporated by this client.
@@ -999,7 +963,7 @@ pub enum Response {
         /// Current fence when this client is nominated.
         fence: Option<u64>,
     },
-    /// Marks the end of one bounded correlated response.
+    /// Marks the end of one bounded response.
     ResponseComplete,
 }
 
@@ -1016,6 +980,9 @@ impl Request {
             Self::OpenContentStream { .. } => MessageKind::OpenContentStream,
             Self::OpenSnapshotStream { .. } => MessageKind::OpenSnapshotStream,
             Self::PublishSnapshot { .. } => MessageKind::PublishSnapshot,
+            Self::Submit { event, .. } if event.blob_tree.is_none() => {
+                MessageKind::SubmitWithoutBlob
+            }
             Self::Submit { .. } => MessageKind::Submit,
             Self::Read { .. } => MessageKind::Read,
             Self::PutBlob { .. } => MessageKind::PutBlob,
@@ -1069,6 +1036,9 @@ impl Response {
             Self::Directory(_) => MessageKind::Directory,
             Self::Snapshot(_) => MessageKind::Snapshot,
             Self::LoadSnapshot(_) => MessageKind::LoadSnapshot,
+            Self::LoadEvent(event) if event.event.blob_tree.is_none() => {
+                MessageKind::LoadEventWithoutBlob
+            }
             Self::LoadEvent(_) => MessageKind::LoadEvent,
             Self::StreamProgress { .. } => MessageKind::StreamProgress,
             Self::Error { .. } => MessageKind::Error,
@@ -1079,20 +1049,13 @@ impl Response {
 fn encode_typed_payload<T: Serialize>(
     role: StreamRole,
     kind: MessageKind,
-    correlation_id: u64,
+
     payload: &T,
     limits: Limits,
 ) -> Result<Vec<u8>, ProtocolError> {
     kind.validate_on(role)?;
     let payload = postcard::to_allocvec(payload).map_err(ProtocolError::InvalidPayload)?;
-    encode_network_frame(
-        &NetworkFrame {
-            kind,
-            correlation_id,
-            payload,
-        },
-        limits,
-    )
+    encode_network_frame(&NetworkFrame { kind, payload }, limits)
 }
 
 fn decode_typed_payload<T: DeserializeOwned>(frame: &NetworkFrame) -> Result<T, ProtocolError> {
@@ -1103,39 +1066,35 @@ fn decode_typed_payload<T: DeserializeOwned>(frame: &NetworkFrame) -> Result<T, 
 ///
 /// # Errors
 ///
-/// Returns an error for a wrong-stream kind, zero request correlation, malformed payload, or size
+/// Returns an error for a wrong-stream kind, malformed payload, or size
 /// limit violation.
 #[allow(clippy::too_many_lines)]
 pub fn encode_request_frame(
     role: StreamRole,
-    correlation_id: u64,
     request: &Request,
     limits: Limits,
 ) -> Result<Vec<u8>, ProtocolError> {
     use payload as wire;
     match request {
         Request::OpenSignalStream(value) => {
-            encode_typed_payload(role, request.kind(), correlation_id, value, limits)
+            encode_typed_payload(role, request.kind(), value, limits)
         }
-        Request::SendSignal(value) => {
-            encode_typed_payload(role, request.kind(), correlation_id, value, limits)
-        }
+        Request::SendSignal(value) => encode_typed_payload(role, request.kind(), value, limits),
         Request::OpenEventStream {
             version,
             archive,
             intent,
-            author,
+
             session,
             resume_after,
         } => encode_typed_payload(
             role,
             request.kind(),
-            correlation_id,
             &wire::OpenEventStream {
                 version: *version,
                 archive: archive.clone(),
                 intent: *intent,
-                author: author.clone(),
+
                 session: session.clone(),
                 resume_after: *resume_after,
             },
@@ -1145,7 +1104,6 @@ pub fn encode_request_frame(
             encode_typed_payload(
                 role,
                 request.kind(),
-                correlation_id,
                 &wire::SessionAuthority {
                     authority: authority.clone(),
                 },
@@ -1158,7 +1116,6 @@ pub fn encode_request_frame(
         } => encode_typed_payload(
             role,
             request.kind(),
-            correlation_id,
             &wire::OpenSnapshotStream {
                 authority: authority.clone(),
                 participation: *participation,
@@ -1173,7 +1130,6 @@ pub fn encode_request_frame(
         } => encode_typed_payload(
             role,
             request.kind(),
-            correlation_id,
             &wire::PublishSnapshotRequest {
                 fence: *fence,
                 publication: wire::PublishSnapshot {
@@ -1187,16 +1143,23 @@ pub fn encode_request_frame(
         Request::AnnounceMembership { metadata } => encode_typed_payload(
             role,
             request.kind(),
-            correlation_id,
             &wire::AnnounceMembership {
                 metadata: metadata.clone(),
+            },
+            limits,
+        ),
+        Request::Submit { reference, event } if event.blob_tree.is_none() => encode_typed_payload(
+            role,
+            request.kind(),
+            &wire::SubmitWithoutBlob {
+                reference: *reference,
+                payload: event.payload.clone(),
             },
             limits,
         ),
         Request::Submit { reference, event } => encode_typed_payload(
             role,
             request.kind(),
-            correlation_id,
             &wire::Submit {
                 reference: *reference,
                 event: event.clone(),
@@ -1206,7 +1169,6 @@ pub fn encode_request_frame(
         Request::Read { after, stop_after } => encode_typed_payload(
             role,
             request.kind(),
-            correlation_id,
             &wire::Read {
                 after: *after,
                 stop_after: *stop_after,
@@ -1216,44 +1178,30 @@ pub fn encode_request_frame(
         Request::PutBlob { payload } => encode_typed_payload(
             role,
             request.kind(),
-            correlation_id,
             &wire::PutBlob {
                 payload: payload.clone(),
             },
             limits,
         ),
-        Request::GetBlob { id } => encode_typed_payload(
-            role,
-            request.kind(),
-            correlation_id,
-            &wire::BlobId { id: *id },
-            limits,
-        ),
+        Request::GetBlob { id } => {
+            encode_typed_payload(role, request.kind(), &wire::BlobId { id: *id }, limits)
+        }
         Request::PutDirectory { entries } => encode_typed_payload(
             role,
             request.kind(),
-            correlation_id,
             &wire::PutDirectory {
                 entries: entries.clone(),
             },
             limits,
         ),
-        Request::GetDirectory { id } => encode_typed_payload(
-            role,
-            request.kind(),
-            correlation_id,
-            &wire::DirectoryId { id: *id },
-            limits,
-        ),
-        Request::GetSnapshot { id } => encode_typed_payload(
-            role,
-            request.kind(),
-            correlation_id,
-            &wire::SnapshotId { id: *id },
-            limits,
-        ),
+        Request::GetDirectory { id } => {
+            encode_typed_payload(role, request.kind(), &wire::DirectoryId { id: *id }, limits)
+        }
+        Request::GetSnapshot { id } => {
+            encode_typed_payload(role, request.kind(), &wire::SnapshotId { id: *id }, limits)
+        }
         Request::LatestSnapshot | Request::Close => {
-            encode_typed_payload(role, request.kind(), correlation_id, &wire::Empty, limits)
+            encode_typed_payload(role, request.kind(), &wire::Empty, limits)
         }
     }
 }
@@ -1262,7 +1210,7 @@ pub fn encode_request_frame(
 ///
 /// # Errors
 ///
-/// Returns an error for a wrong-stream or response kind, invalid correlation, or malformed payload.
+/// Returns an error for a wrong-stream or response kind, or malformed payload.
 #[allow(clippy::too_many_lines)]
 pub fn decode_request_frame(
     role: StreamRole,
@@ -1270,7 +1218,7 @@ pub fn decode_request_frame(
 ) -> Result<Request, ProtocolError> {
     use payload as wire;
     frame.kind.validate_on(role)?;
-    validate_correlation(frame.kind, frame.correlation_id)?;
+
     Ok(match frame.kind {
         MessageKind::OpenSignalStream => Request::OpenSignalStream(decode_typed_payload(frame)?),
         MessageKind::SendSignal => Request::SendSignal(decode_typed_payload(frame)?),
@@ -1280,7 +1228,7 @@ pub fn decode_request_frame(
                 version: value.version,
                 archive: value.archive,
                 intent: value.intent,
-                author: value.author,
+
                 session: value.session,
                 resume_after: value.resume_after,
             }
@@ -1317,6 +1265,16 @@ pub fn decode_request_frame(
             let value: wire::AnnounceMembership = decode_typed_payload(frame)?;
             Request::AnnounceMembership {
                 metadata: value.metadata,
+            }
+        }
+        MessageKind::SubmitWithoutBlob => {
+            let value: wire::SubmitWithoutBlob = decode_typed_payload(frame)?;
+            Request::Submit {
+                reference: value.reference,
+                event: Event {
+                    payload: value.payload,
+                    blob_tree: None,
+                },
             }
         }
         MessageKind::Submit => {
@@ -1373,21 +1331,18 @@ pub fn decode_request_frame(
 ///
 /// # Errors
 ///
-/// Returns an error for a wrong-stream kind, invalid correlation, malformed payload, or size limit.
+/// Returns an error for a wrong-stream kind, malformed payload, or size limit.
 #[allow(clippy::too_many_lines)]
 pub fn encode_response_frame(
     role: StreamRole,
-    correlation_id: u64,
     response: &Response,
     limits: Limits,
 ) -> Result<Vec<u8>, ProtocolError> {
     use payload as wire;
     match response {
-        Response::SignalEvent(value) => {
-            encode_typed_payload(role, response.kind(), correlation_id, value, limits)
-        }
+        Response::SignalEvent(value) => encode_typed_payload(role, response.kind(), value, limits),
         Response::Acknowledged | Response::ResponseComplete => {
-            encode_typed_payload(role, response.kind(), correlation_id, &wire::Empty, limits)
+            encode_typed_payload(role, response.kind(), &wire::Empty, limits)
         }
         Response::EventStreamOpened {
             document,
@@ -1395,7 +1350,6 @@ pub fn encode_response_frame(
         } => encode_typed_payload(
             role,
             response.kind(),
-            correlation_id,
             &wire::EventStreamOpened {
                 document: document.clone(),
                 authority: authority.clone(),
@@ -1405,7 +1359,6 @@ pub fn encode_response_frame(
         Response::SnapshotCoordination { latest, fence } => encode_typed_payload(
             role,
             response.kind(),
-            correlation_id,
             &wire::SnapshotCoordination {
                 latest: *latest,
                 fence: *fence,
@@ -1415,23 +1368,17 @@ pub fn encode_response_frame(
         Response::EventCommitted { position } => encode_typed_payload(
             role,
             response.kind(),
-            correlation_id,
             &wire::EventCommitted {
                 position: *position,
             },
             limits,
         ),
-        Response::BlobStored { id } => encode_typed_payload(
-            role,
-            response.kind(),
-            correlation_id,
-            &wire::BlobId { id: *id },
-            limits,
-        ),
+        Response::BlobStored { id } => {
+            encode_typed_payload(role, response.kind(), &wire::BlobId { id: *id }, limits)
+        }
         Response::Blob(payload) => encode_typed_payload(
             role,
             response.kind(),
-            correlation_id,
             &wire::Blob {
                 payload: payload.clone(),
             },
@@ -1440,14 +1387,12 @@ pub fn encode_response_frame(
         Response::DirectoryStored { id } => encode_typed_payload(
             role,
             response.kind(),
-            correlation_id,
             &wire::DirectoryId { id: *id },
             limits,
         ),
         Response::Directory(entries) => encode_typed_payload(
             role,
             response.kind(),
-            correlation_id,
             &wire::Directory {
                 entries: entries.clone(),
             },
@@ -1456,7 +1401,6 @@ pub fn encode_response_frame(
         Response::Snapshot(snapshot) => encode_typed_payload(
             role,
             response.kind(),
-            correlation_id,
             &wire::OptionalSnapshot {
                 snapshot: snapshot.clone(),
             },
@@ -1465,16 +1409,27 @@ pub fn encode_response_frame(
         Response::LoadSnapshot(snapshot) => encode_typed_payload(
             role,
             response.kind(),
-            correlation_id,
             &wire::LoadSnapshot {
                 snapshot: snapshot.clone(),
+            },
+            limits,
+        ),
+        Response::LoadEvent(event) if event.event.blob_tree.is_none() => encode_typed_payload(
+            role,
+            response.kind(),
+            &wire::LoadEventWithoutBlob {
+                kind: event.kind,
+                position: event.position,
+                session: event.session.clone(),
+                reference: event.reference,
+                minimum_reference: event.minimum_reference,
+                payload: event.event.payload.clone(),
             },
             limits,
         ),
         Response::LoadEvent(event) => encode_typed_payload(
             role,
             response.kind(),
-            correlation_id,
             &wire::LoadEvent {
                 event: (**event).clone(),
             },
@@ -1487,7 +1442,6 @@ pub fn encode_response_frame(
         } => encode_typed_payload(
             role,
             response.kind(),
-            correlation_id,
             &wire::StreamProgress {
                 previous: *previous,
                 latest_known: *latest_known,
@@ -1498,7 +1452,6 @@ pub fn encode_response_frame(
         Response::Error { kind, message } => encode_typed_payload(
             role,
             response.kind(),
-            correlation_id,
             &wire::Error {
                 kind: *kind,
                 message: message.clone(),
@@ -1512,7 +1465,7 @@ pub fn encode_response_frame(
 ///
 /// # Errors
 ///
-/// Returns an error for a wrong-stream or request kind, invalid correlation, or malformed payload.
+/// Returns an error for a wrong-stream or request kind, or malformed payload.
 #[allow(clippy::too_many_lines)]
 pub fn decode_response_network_frame(
     role: StreamRole,
@@ -1520,7 +1473,7 @@ pub fn decode_response_network_frame(
 ) -> Result<Response, ProtocolError> {
     use payload as wire;
     frame.kind.validate_on(role)?;
-    validate_correlation(frame.kind, frame.correlation_id)?;
+
     Ok(match frame.kind {
         MessageKind::SignalEvent => Response::SignalEvent(decode_typed_payload(frame)?),
         MessageKind::Acknowledged => {
@@ -1574,6 +1527,20 @@ pub fn decode_response_network_frame(
         MessageKind::LoadSnapshot => {
             let value: wire::LoadSnapshot = decode_typed_payload(frame)?;
             Response::LoadSnapshot(value.snapshot)
+        }
+        MessageKind::LoadEventWithoutBlob => {
+            let value: wire::LoadEventWithoutBlob = decode_typed_payload(frame)?;
+            Response::LoadEvent(Box::new(StreamEvent {
+                kind: value.kind,
+                position: value.position,
+                session: value.session,
+                reference: value.reference,
+                minimum_reference: value.minimum_reference,
+                event: Event {
+                    payload: value.payload,
+                    blob_tree: None,
+                },
+            }))
         }
         MessageKind::LoadEvent => {
             let value: wire::LoadEvent = decode_typed_payload(frame)?;
@@ -1640,15 +1607,6 @@ pub enum ProtocolError {
         /// Logical stream on which the message appeared.
         role: StreamRole,
     },
-    /// A correlation ID violates envelope rules.
-    #[error("Sea frame correlation ID is invalid")]
-    InvalidCorrelationId,
-    /// A request reused an active stream-scoped correlation ID.
-    #[error("Sea correlation ID {0} is already active")]
-    CorrelationInUse(u64),
-    /// A response did not match an active stream-scoped correlation ID.
-    #[error("Sea correlation ID {0} is not active")]
-    UnknownCorrelation(u64),
     /// A length-delimited envelope ended before its declared boundary.
     #[error("Sea network frame is incomplete")]
     IncompleteFrame,
@@ -1664,11 +1622,11 @@ pub enum ProtocolError {
 mod tests {
     use super::signals;
     use super::{
-        ArchiveIntent, CorrelationTracker, DirectoryEntry, ErrorKind, Event, Limits, MessageKind,
-        NetworkFrame, NetworkFrameDecoder, PROTOCOL_VERSION, ProtocolError, Request, Response,
-        Snapshot, SnapshotParticipation, StreamEvent, StreamRole, StreamStatus, TreeId,
-        decode_request_frame, decode_response_network_frame, encode_network_frame,
-        encode_request_frame, encode_response_frame,
+        ArchiveIntent, DirectoryEntry, ErrorKind, Event, Limits, MessageKind, NetworkFrame,
+        NetworkFrameDecoder, PROTOCOL_VERSION, ProtocolError, Request, Response, Snapshot,
+        SnapshotParticipation, StreamEvent, StreamRole, StreamStatus, TreeId, decode_request_frame,
+        decode_response_network_frame, encode_network_frame, encode_request_frame,
+        encode_response_frame,
     };
 
     #[test]
@@ -1709,12 +1667,12 @@ mod tests {
         };
         let first = NetworkFrame {
             kind: MessageKind::Submit,
-            correlation_id: 7,
+
             payload: b"first".to_vec(),
         };
         let second = NetworkFrame {
             kind: MessageKind::Acknowledged,
-            correlation_id: 7,
+
             payload: Vec::new(),
         };
         let mut bytes = encode_network_frame(&first, limits).expect("first frame");
@@ -1722,28 +1680,19 @@ mod tests {
         let mut decoder = NetworkFrameDecoder::new(limits);
         decoder.push(&bytes[..2]);
         assert_eq!(decoder.next_frame().expect("partial length"), None);
-        decoder.push(&bytes[2..11]);
+        decoder.push(&bytes[2..7]);
         assert_eq!(decoder.next_frame().expect("partial frame"), None);
-        decoder.push(&bytes[11..]);
+        decoder.push(&bytes[7..]);
         assert_eq!(decoder.next_frame().expect("first decoded"), Some(first));
         assert_eq!(decoder.next_frame().expect("second decoded"), Some(second));
         decoder.finish().expect("clean boundary");
     }
 
     #[test]
-    fn network_frames_reject_limits_correlation_and_wrong_streams() {
-        let opening = NetworkFrame {
-            kind: MessageKind::OpenEventStream,
-            correlation_id: 0,
-            payload: Vec::new(),
-        };
-        assert!(matches!(
-            encode_network_frame(&opening, Limits::default()),
-            Err(ProtocolError::InvalidCorrelationId)
-        ));
+    fn network_frames_reject_limits_and_wrong_streams() {
         let oversized = NetworkFrame {
             kind: MessageKind::Blob,
-            correlation_id: 1,
+
             payload: vec![0; 16],
         };
         assert!(matches!(
@@ -1767,6 +1716,7 @@ mod tests {
         let mut decoder = NetworkFrameDecoder::new(Limits {
             max_frame_bytes: 32,
         });
+        decoder.push(&[u8::from(MessageKind::Submit)]);
         decoder.push(&u32::MAX.to_be_bytes());
         assert!(matches!(
             decoder.next_frame(),
@@ -1774,7 +1724,7 @@ mod tests {
         ));
 
         let mut truncated = NetworkFrameDecoder::new(Limits::default());
-        truncated.push(&[0, 0, 0, 9, u8::from(MessageKind::Submit)]);
+        truncated.push(&[u8::from(MessageKind::Submit), 0, 0, 0, 9]);
         assert!(matches!(
             truncated.finish(),
             Err(ProtocolError::IncompleteFrame)
@@ -1782,66 +1732,12 @@ mod tests {
     }
 
     #[test]
-    fn network_decoder_rejects_unknown_kinds_and_invalid_correlations() {
+    fn network_decoder_rejects_unknown_kinds() {
         let mut unknown_kind = NetworkFrameDecoder::new(Limits::default());
-        unknown_kind.push(&[0, 0, 0, 9, 12, 0, 0, 0, 0, 0, 0, 0, 1]);
+        unknown_kind.push(&[12]);
         assert!(matches!(
             unknown_kind.next_frame(),
             Err(ProtocolError::UnknownMessageKind(12))
-        ));
-
-        let mut zero_correlation = NetworkFrameDecoder::new(Limits::default());
-        zero_correlation.push(&[0, 0, 0, 9, 3, 0, 0, 0, 0, 0, 0, 0, 0]);
-        assert!(matches!(
-            zero_correlation.next_frame(),
-            Err(ProtocolError::InvalidCorrelationId)
-        ));
-    }
-
-    #[test]
-    fn correlations_reject_reuse_and_mismatched_completion() {
-        let mut tracker = CorrelationTracker::default();
-        tracker.begin(7).expect("first use");
-        assert!(tracker.is_active(7));
-        assert!(matches!(
-            tracker.begin(7),
-            Err(ProtocolError::CorrelationInUse(7))
-        ));
-        assert!(matches!(
-            tracker.complete(8),
-            Err(ProtocolError::UnknownCorrelation(8))
-        ));
-        tracker.complete(7).expect("matching response");
-        tracker.begin(7).expect("reuse after completion");
-        assert!(matches!(
-            tracker.begin(0),
-            Err(ProtocolError::InvalidCorrelationId)
-        ));
-    }
-
-    #[test]
-    fn zero_correlation_is_reserved_for_notifications() {
-        assert!(
-            encode_network_frame(
-                &NetworkFrame {
-                    kind: MessageKind::LoadEvent,
-                    correlation_id: 0,
-                    payload: Vec::new(),
-                },
-                Limits::default(),
-            )
-            .is_ok()
-        );
-        assert!(matches!(
-            encode_network_frame(
-                &NetworkFrame {
-                    kind: MessageKind::Acknowledged,
-                    correlation_id: 0,
-                    payload: Vec::new(),
-                },
-                Limits::default(),
-            ),
-            Err(ProtocolError::InvalidCorrelationId)
         ));
     }
 
@@ -1884,7 +1780,7 @@ mod tests {
                     version: PROTOCOL_VERSION,
                     archive: b"archive".to_vec(),
                     intent: ArchiveIntent::Open,
-                    author: b"author".to_vec(),
+
                     session: b"session".to_vec(),
                     resume_after: Some(1),
                 },
@@ -1951,11 +1847,11 @@ mod tests {
             (StreamRole::Author, Request::Close),
         ];
         for (role, request) in cases {
-            let encoded = encode_request_frame(role, 17, &request, Limits::default())
-                .expect("request encoding");
-            assert_eq!(encoded[4], u8::from(request.kind()));
+            let encoded =
+                encode_request_frame(role, &request, Limits::default()).expect("request encoding");
+            assert_eq!(encoded[0], u8::from(request.kind()));
             let frame = decode_one_network_frame(&encoded);
-            assert_eq!(frame.correlation_id, 17);
+
             assert_eq!(
                 decode_request_frame(role, &frame).expect("request decoding"),
                 request
@@ -1970,9 +1866,8 @@ mod tests {
                 authority: vec![7; 32],
                 participation,
             };
-            let encoded =
-                encode_request_frame(StreamRole::Snapshot, 18, &request, Limits::default())
-                    .expect("snapshot participation encoding");
+            let encoded = encode_request_frame(StreamRole::Snapshot, &request, Limits::default())
+                .expect("snapshot participation encoding");
             let frame = decode_one_network_frame(&encoded);
             assert_eq!(
                 decode_request_frame(StreamRole::Snapshot, &frame)
@@ -1980,6 +1875,94 @@ mod tests {
                 request
             );
         }
+    }
+
+    #[test]
+    fn event_sizes_cover_varint_boundaries_and_blob_presence() {
+        let limits = Limits::default();
+        for (payload_length, length_bytes) in [(0, 1), (127, 1), (128, 2), (16383, 2), (16384, 3)] {
+            for (position, position_bytes) in [(127, 1), (128, 2), (16383, 2), (16384, 3)] {
+                for (session_length, session_length_bytes) in [(1, 1), (16, 1), (127, 1), (128, 2)]
+                {
+                    for blob_tree in [None, Some(TreeId::Directory([1; 32]))] {
+                        let blob_bytes = if blob_tree.is_some() { 34 } else { 0 };
+                        let event = Event {
+                            payload: vec![42; payload_length],
+                            blob_tree,
+                        };
+                        let request = Request::Submit {
+                            reference: Some(position),
+                            event: event.clone(),
+                        };
+                        let encoded =
+                            encode_request_frame(StreamRole::Author, &request, limits).unwrap();
+                        assert_eq!(
+                            encoded.len(),
+                            5 + 1 + position_bytes + length_bytes + payload_length + blob_bytes
+                        );
+                        assert_eq!(
+                            decode_request_frame(
+                                StreamRole::Author,
+                                &decode_one_network_frame(&encoded)
+                            )
+                            .unwrap(),
+                            request
+                        );
+                        let response = Response::LoadEvent(Box::new(StreamEvent {
+                            kind: super::SessionEventKind::Application,
+                            position,
+                            session: vec![1; session_length],
+                            reference: Some(position),
+                            minimum_reference: Some(position),
+                            event,
+                        }));
+                        let encoded =
+                            encode_response_frame(StreamRole::Event, &response, limits).unwrap();
+                        assert_eq!(
+                            encoded.len(),
+                            5 + 1
+                                + position_bytes
+                                + session_length_bytes
+                                + session_length
+                                + 2 * (1 + position_bytes)
+                                + length_bytes
+                                + payload_length
+                                + blob_bytes
+                        );
+                        assert_eq!(
+                            decode_response_network_frame(
+                                StreamRole::Event,
+                                &decode_one_network_frame(&encoded)
+                            )
+                            .unwrap(),
+                            response
+                        );
+                    }
+                }
+            }
+        }
+        assert_eq!(
+            encode_response_frame(
+                StreamRole::Author,
+                &Response::EventCommitted { position: 1 },
+                limits
+            )
+            .unwrap()
+            .len(),
+            6
+        );
+        assert_eq!(
+            encode_response_frame(StreamRole::Author, &Response::Acknowledged, limits)
+                .unwrap()
+                .len(),
+            5
+        );
+        assert_eq!(
+            encode_request_frame(StreamRole::Author, &Request::Close, limits)
+                .unwrap()
+                .len(),
+            5
+        );
     }
 
     #[test]
@@ -1992,7 +1975,7 @@ mod tests {
         let stream_event = StreamEvent {
             kind: super::SessionEventKind::Application,
             position: 2,
-            author: b"author".to_vec(),
+
             session: b"session".to_vec(),
 
             reference: Some(1),
@@ -2088,9 +2071,9 @@ mod tests {
             ),
         ];
         for (role, response) in cases {
-            let encoded = encode_response_frame(role, 19, &response, Limits::default())
+            let encoded = encode_response_frame(role, &response, Limits::default())
                 .expect("response encoding");
-            assert_eq!(encoded[4], u8::from(response.kind()));
+            assert_eq!(encoded[0], u8::from(response.kind()));
             let frame = decode_one_network_frame(&encoded);
             assert_eq!(
                 decode_response_network_frame(role, &frame).expect("response decoding"),
@@ -2102,7 +2085,7 @@ mod tests {
     #[test]
     fn typed_payloads_reject_wrong_direction_and_malformed_bytes() {
         let response = Response::Acknowledged;
-        let encoded = encode_response_frame(StreamRole::Author, 1, &response, Limits::default())
+        let encoded = encode_response_frame(StreamRole::Author, &response, Limits::default())
             .expect("response encoding");
         let frame = decode_one_network_frame(&encoded);
         assert!(matches!(
@@ -2114,7 +2097,7 @@ mod tests {
 
         let wrong_stream = NetworkFrame {
             kind: MessageKind::Submit,
-            correlation_id: 1,
+
             payload: Vec::new(),
         };
         assert!(matches!(
@@ -2124,7 +2107,7 @@ mod tests {
 
         let malformed = NetworkFrame {
             kind: MessageKind::Submit,
-            correlation_id: 1,
+
             payload: vec![0xff],
         };
         assert!(matches!(

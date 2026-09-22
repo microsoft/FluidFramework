@@ -1,27 +1,22 @@
 //! Platform-independent Sea client connection state.
 
-use std::{
-    collections::BTreeMap,
-    sync::{Arc, Mutex, Weak},
-};
+use std::sync::{Arc, Mutex};
 
 use thiserror::Error;
 
-use crate::protocol::{
-    self, CorrelationTracker, NetworkFrameDecoder, ProtocolError, Request, Response, StreamRole,
-};
+use crate::protocol::{self, NetworkFrameDecoder, ProtocolError, Request, Response, StreamRole};
 use crate::transport::{BidirectionalStream, ClientTransport};
 
 /// Failure from the shared protocol client.
 #[derive(Debug)]
 pub enum ClientError<TransportError> {
-    /// Shared lifecycle or correlation state failed.
+    /// Shared connection lifecycle state failed.
     State(ClientStateError),
     /// A network frame violated the Sea protocol.
     Protocol(ProtocolError),
     /// A transport primitive failed.
     Transport(TransportError),
-    /// A correlated response ended before its required value arrived.
+    /// An ordered response ended before its required value arrived.
     ResponseEnded,
     /// An event stream did not begin with its authority response.
     UnexpectedResponse(Response),
@@ -74,10 +69,9 @@ where
         &self,
         opening: protocol::signals::OpenSignals,
     ) -> Result<SignalStream<Transport::Stream>, ClientError<Transport::Error>> {
-        let pending = self.state.begin(StreamRole::Signal)?;
+        self.state.check_connected()?;
         let outgoing = protocol::encode_request_frame(
             StreamRole::Signal,
-            pending.id(),
             &Request::OpenSignalStream(opening),
             self.limits,
         )?;
@@ -94,12 +88,13 @@ where
         let frame = receive_next_frame(&mut stream, &mut decoder)
             .await?
             .ok_or(ClientError::ResponseEnded)?;
-        pending.complete(frame.correlation_id)?;
+
         let response = protocol::decode_response_network_frame(StreamRole::Signal, &frame)?;
         if response != Response::Acknowledged {
             return Err(ClientError::UnexpectedResponse(response));
         }
         Ok(SignalStream {
+            terminal: false,
             stream,
             state: self.state.clone(),
             limits: self.limits,
@@ -122,7 +117,6 @@ where
     {
         let bytes = protocol::encode_request_frame(
             StreamRole::Signal,
-            1,
             &Request::SendSignal(submission.clone()),
             self.limits,
         )?;
@@ -158,7 +152,7 @@ where
                         },
                     ..
                 },
-            ) if frame.correlation_id == 0 => Ok(event),
+            ) => Ok(event),
             response => Err(ClientError::UnexpectedResponse(response)),
         }
     }
@@ -168,14 +162,9 @@ where
         &self,
         request: Request,
     ) -> Result<EventStream<Transport::Stream>, ClientError<Transport::Error>> {
-        let pending = self.state.begin(StreamRole::Event)?;
-        let correlation_id = pending.id();
-        let outgoing = protocol::encode_request_frame(
-            StreamRole::Event,
-            correlation_id,
-            &request,
-            self.limits,
-        )?;
+        self.state.check_connected()?;
+
+        let outgoing = protocol::encode_request_frame(StreamRole::Event, &request, self.limits)?;
         let mut stream = self
             .transport
             .open_bidirectional()
@@ -187,9 +176,10 @@ where
             .map_err(ClientError::Transport)?;
         stream.finish().await.map_err(ClientError::Transport)?;
         let mut responses = ResponseStream {
+            ended: false,
             stream,
             role: StreamRole::Event,
-            pending: Some(pending),
+
             decoder: NetworkFrameDecoder::new(self.limits),
         };
         let response = responses.next().await?.ok_or(ClientError::ResponseEnded)?;
@@ -213,15 +203,10 @@ where
         &self,
     ) -> Result<AuthorStream<Transport::Stream>, ClientError<Transport::Error>> {
         let authority = self.state.authority()?;
-        let pending = self.state.begin(StreamRole::Author)?;
-        let correlation_id = pending.id();
+        self.state.check_connected()?;
+
         let request = Request::OpenAuthorStream { authority };
-        let outgoing = protocol::encode_request_frame(
-            StreamRole::Author,
-            correlation_id,
-            &request,
-            self.limits,
-        )?;
+        let outgoing = protocol::encode_request_frame(StreamRole::Author, &request, self.limits)?;
         let mut stream = self
             .transport
             .open_bidirectional()
@@ -235,7 +220,7 @@ where
         let frame = receive_next_frame(&mut stream, &mut decoder)
             .await?
             .ok_or(ClientError::ResponseEnded)?;
-        pending.complete(frame.correlation_id)?;
+
         let response = protocol::decode_response_network_frame(StreamRole::Author, &frame)?;
         if response != Response::Acknowledged {
             return Err(ClientError::UnexpectedResponse(response));
@@ -255,18 +240,13 @@ where
         participation: protocol::SnapshotParticipation,
     ) -> Result<SnapshotStream<Transport::Stream>, ClientError<Transport::Error>> {
         let authority = self.state.authority()?;
-        let pending = self.state.begin(StreamRole::Snapshot)?;
-        let correlation_id = pending.id();
+        self.state.check_connected()?;
+
         let request = Request::OpenSnapshotStream {
             authority,
             participation,
         };
-        let outgoing = protocol::encode_request_frame(
-            StreamRole::Snapshot,
-            correlation_id,
-            &request,
-            self.limits,
-        )?;
+        let outgoing = protocol::encode_request_frame(StreamRole::Snapshot, &request, self.limits)?;
         let mut stream = self
             .transport
             .open_bidirectional()
@@ -280,12 +260,13 @@ where
         let frame = receive_next_frame(&mut stream, &mut decoder)
             .await?
             .ok_or(ClientError::ResponseEnded)?;
-        pending.complete(frame.correlation_id)?;
+
         let response = protocol::decode_response_network_frame(StreamRole::Snapshot, &frame)?;
         if response != Response::Acknowledged {
             return Err(ClientError::UnexpectedResponse(response));
         }
         let mut snapshot = SnapshotStream {
+            terminal: false,
             stream,
             state: Arc::clone(&self.state),
             limits: self.limits,
@@ -302,15 +283,10 @@ where
         &self,
     ) -> Result<ContentStream<Transport::Stream>, ClientError<Transport::Error>> {
         let authority = self.state.authority()?;
-        let pending = self.state.begin(StreamRole::Content)?;
-        let correlation_id = pending.id();
+        self.state.check_connected()?;
+
         let request = Request::OpenContentStream { authority };
-        let outgoing = protocol::encode_request_frame(
-            StreamRole::Content,
-            correlation_id,
-            &request,
-            self.limits,
-        )?;
+        let outgoing = protocol::encode_request_frame(StreamRole::Content, &request, self.limits)?;
         let mut stream = self
             .transport
             .open_bidirectional()
@@ -324,12 +300,13 @@ where
         let frame = receive_next_frame(&mut stream, &mut decoder)
             .await?
             .ok_or(ClientError::ResponseEnded)?;
-        pending.complete(frame.correlation_id)?;
+
         let response = protocol::decode_response_network_frame(StreamRole::Content, &frame)?;
         if response != Response::Acknowledged {
             return Err(ClientError::UnexpectedResponse(response));
         }
         Ok(ContentStream {
+            terminal: false,
             stream,
             state: Arc::clone(&self.state),
             limits: self.limits,
@@ -382,9 +359,11 @@ pub struct AuthorStream<Stream> {
 
 /// One independently pumped ephemeral signal stream.
 pub struct SignalStream<Stream> {
+    /// A cancelled or failed exchange cannot be reused.
+    terminal: bool,
     /// Sole owner of network reads and writes.
     stream: Stream,
-    /// Correlation lifecycle independent of author requests.
+    /// Connection lifecycle shared with other logical streams.
     state: Arc<ClientState>,
     /// Encoded frame bound.
     limits: protocol::Limits,
@@ -395,15 +374,16 @@ pub struct SignalStream<Stream> {
 impl<Stream: BidirectionalStream> SignalStream<Stream> {
     /// Receives an unsolicited signal or terminal service error.
     pub async fn next(&mut self) -> Result<protocol::signals::Event, ClientError<Stream::Error>> {
+        if self.terminal {
+            let _ = self.stream.cancel().await;
+            return Err(ClientStateError::Closed.into());
+        }
         let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
             .await?
             .ok_or(ClientError::ResponseEnded)?;
         let response = protocol::decode_response_network_frame(StreamRole::Signal, &frame)?;
         if matches!(response, Response::Error { .. }) {
             return Err(ClientError::UnexpectedResponse(response));
-        }
-        if frame.correlation_id != 0 {
-            return Err(ProtocolError::UnknownCorrelation(frame.correlation_id).into());
         }
         match response {
             Response::SignalEvent(event) => Ok(event),
@@ -417,13 +397,12 @@ impl<Stream: BidirectionalStream> SignalStream<Stream> {
         request: Request,
         mut receive: impl FnMut(protocol::signals::Event) -> Result<(), ClientError<Stream::Error>>,
     ) -> Result<(), ClientError<Stream::Error>> {
-        let pending = self.state.begin(StreamRole::Signal)?;
-        let outgoing = protocol::encode_request_frame(
-            StreamRole::Signal,
-            pending.id(),
-            &request,
-            self.limits,
-        )?;
+        if std::mem::replace(&mut self.terminal, true) {
+            let _ = self.stream.cancel().await;
+            return Err(ClientStateError::Closed.into());
+        }
+        self.state.check_connected()?;
+        let outgoing = protocol::encode_request_frame(StreamRole::Signal, &request, self.limits)?;
         self.stream
             .send(&outgoing)
             .await
@@ -436,15 +415,13 @@ impl<Stream: BidirectionalStream> SignalStream<Stream> {
             if matches!(response, Response::Error { .. }) {
                 return Err(ClientError::UnexpectedResponse(response));
             }
-            if frame.correlation_id == 0 {
-                if let Response::SignalEvent(event) = response {
-                    receive(event)?;
-                    continue;
-                }
-                return Err(ClientError::UnexpectedResponse(response));
+            if let Response::SignalEvent(event) = response {
+                receive(event)?;
+                continue;
             }
-            pending.complete(frame.correlation_id)?;
+
             return if response == Response::Acknowledged {
+                self.terminal = false;
                 Ok(())
             } else {
                 Err(ClientError::UnexpectedResponse(response))
@@ -461,6 +438,8 @@ impl<Stream: BidirectionalStream> SignalStream<Stream> {
 /// Latest-value coordination and fenced requests on one persistent snapshot stream.
 #[derive(Debug)]
 pub struct SnapshotStream<Stream> {
+    /// A cancelled or failed exchange cannot be reused.
+    terminal: bool,
     stream: Stream,
     state: Arc<ClientState>,
     limits: protocol::Limits,
@@ -469,9 +448,11 @@ pub struct SnapshotStream<Stream> {
     fence: Option<u64>,
 }
 
-/// Correlated bounded operations on one reusable content stream.
+/// Ordered bounded operations on one reusable content stream.
 #[derive(Debug)]
 pub struct ContentStream<Stream> {
+    /// A cancelled or failed exchange cannot be reused.
+    terminal: bool,
     stream: Stream,
     state: Arc<ClientState>,
     limits: protocol::Limits,
@@ -487,23 +468,23 @@ where
         mut self,
         request: Request,
     ) -> Result<ResponseStream<Stream>, ClientError<Stream::Error>> {
-        let pending = self.state.begin(StreamRole::Content)?;
-        let correlation_id = pending.id();
-        let outgoing = protocol::encode_request_frame(
-            StreamRole::Content,
-            correlation_id,
-            &request,
-            self.limits,
-        )?;
+        if self.terminal {
+            let _ = self.stream.cancel().await;
+            return Err(ClientStateError::Closed.into());
+        }
+        self.state.check_connected()?;
+
+        let outgoing = protocol::encode_request_frame(StreamRole::Content, &request, self.limits)?;
         self.stream
             .send(&outgoing)
             .await
             .map_err(ClientError::Transport)?;
         self.stream.finish().await.map_err(ClientError::Transport)?;
         Ok(ResponseStream {
+            ended: false,
             stream: self.stream,
             role: StreamRole::Content,
-            pending: Some(pending),
+
             decoder: self.decoder,
         })
     }
@@ -513,14 +494,13 @@ where
         &mut self,
         request: Request,
     ) -> Result<Vec<Response>, ClientError<Stream::Error>> {
-        let pending = self.state.begin(StreamRole::Content)?;
-        let correlation_id = pending.id();
-        let outgoing = protocol::encode_request_frame(
-            StreamRole::Content,
-            correlation_id,
-            &request,
-            self.limits,
-        )?;
+        if std::mem::replace(&mut self.terminal, true) {
+            let _ = self.stream.cancel().await;
+            return Err(ClientStateError::Closed.into());
+        }
+        self.state.check_connected()?;
+
+        let outgoing = protocol::encode_request_frame(StreamRole::Content, &request, self.limits)?;
         self.stream
             .send(&outgoing)
             .await
@@ -530,12 +510,9 @@ where
             let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
                 .await?
                 .ok_or(ClientError::ResponseEnded)?;
-            if frame.correlation_id != correlation_id {
-                return Err(ProtocolError::UnknownCorrelation(frame.correlation_id).into());
-            }
             let response = protocol::decode_response_network_frame(StreamRole::Content, &frame)?;
             if response == Response::ResponseComplete {
-                pending.complete(correlation_id)?;
+                self.terminal = false;
                 return Ok(responses);
             }
             responses.push(response);
@@ -566,12 +543,13 @@ where
 
     /// Waits for and applies the next latest-value coordination notification.
     pub async fn next_coordination(&mut self) -> Result<(), ClientError<Stream::Error>> {
+        if self.terminal {
+            let _ = self.stream.cancel().await;
+            return Err(ClientStateError::Closed.into());
+        }
         let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
             .await?
             .ok_or(ClientError::ResponseEnded)?;
-        if frame.correlation_id != 0 {
-            return Err(ProtocolError::UnknownCorrelation(frame.correlation_id).into());
-        }
         let response = protocol::decode_response_network_frame(StreamRole::Snapshot, &frame)?;
         if let Response::SnapshotCoordination { latest, fence } = response {
             self.latest = latest;
@@ -581,19 +559,18 @@ where
         Err(ClientError::UnexpectedResponse(response))
     }
 
-    /// Sends one correlated snapshot operation while retaining interleaved coordination updates.
+    /// Sends one ordered snapshot operation while retaining interleaved coordination updates.
     pub async fn request(
         &mut self,
         request: Request,
     ) -> Result<Response, ClientError<Stream::Error>> {
-        let pending = self.state.begin(StreamRole::Snapshot)?;
-        let correlation_id = pending.id();
-        let outgoing = protocol::encode_request_frame(
-            StreamRole::Snapshot,
-            correlation_id,
-            &request,
-            self.limits,
-        )?;
+        if std::mem::replace(&mut self.terminal, true) {
+            let _ = self.stream.cancel().await;
+            return Err(ClientStateError::Closed.into());
+        }
+        self.state.check_connected()?;
+
+        let outgoing = protocol::encode_request_frame(StreamRole::Snapshot, &request, self.limits)?;
         self.stream
             .send(&outgoing)
             .await
@@ -602,7 +579,7 @@ where
             let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
                 .await?
                 .ok_or(ClientError::ResponseEnded)?;
-            if frame.correlation_id == 0 {
+            if frame.kind == protocol::MessageKind::SnapshotCoordination {
                 let response =
                     protocol::decode_response_network_frame(StreamRole::Snapshot, &frame)?;
                 let Response::SnapshotCoordination { latest, fence } = response else {
@@ -612,9 +589,22 @@ where
                 self.fence = fence;
                 continue;
             }
-            pending.complete(frame.correlation_id)?;
-            return protocol::decode_response_network_frame(StreamRole::Snapshot, &frame)
-                .map_err(Into::into);
+
+            let response = protocol::decode_response_network_frame(StreamRole::Snapshot, &frame)?;
+            let completed = matches!(
+                (&request, &response),
+                (_, Response::Error { .. })
+                    | (Request::Close, Response::Acknowledged)
+                    | (
+                        Request::LatestSnapshot | Request::PublishSnapshot { .. },
+                        Response::Snapshot(_)
+                    )
+            );
+            if !completed {
+                return Err(ClientError::UnexpectedResponse(response));
+            }
+            self.terminal = false;
+            return Ok(response);
         }
     }
 
@@ -660,14 +650,9 @@ where
             }
             .into());
         }
-        let pending = self.state.begin(StreamRole::Author)?;
-        let correlation_id = pending.id();
-        let outgoing = protocol::encode_request_frame(
-            StreamRole::Author,
-            correlation_id,
-            &request,
-            self.limits,
-        )?;
+        self.state.check_connected()?;
+
+        let outgoing = protocol::encode_request_frame(StreamRole::Author, &request, self.limits)?;
         self.stream
             .send(&outgoing)
             .await
@@ -675,7 +660,7 @@ where
         let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
             .await?
             .ok_or(ClientError::ResponseEnded)?;
-        pending.complete(frame.correlation_id)?;
+
         protocol::decode_response_network_frame(StreamRole::Author, &frame).map_err(Into::into)
     }
 
@@ -692,15 +677,10 @@ where
         if self.terminal {
             return self.stream.cancel().await.map_err(ClientError::Transport);
         }
-        let pending = self.state.begin(StreamRole::Author)?;
-        let correlation_id = pending.id();
+        self.state.check_connected()?;
+
         let request = Request::Close;
-        let outgoing = protocol::encode_request_frame(
-            StreamRole::Author,
-            correlation_id,
-            &request,
-            self.limits,
-        )?;
+        let outgoing = protocol::encode_request_frame(StreamRole::Author, &request, self.limits)?;
         self.stream
             .send(&outgoing)
             .await
@@ -709,7 +689,7 @@ where
         let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
             .await?
             .ok_or(ClientError::ResponseEnded)?;
-        pending.complete(frame.correlation_id)?;
+
         let response = protocol::decode_response_network_frame(StreamRole::Author, &frame)?;
         if response != Response::Acknowledged {
             return Err(ClientError::UnexpectedResponse(response));
@@ -739,7 +719,7 @@ where
         self.responses.next().await
     }
 
-    /// Cancels this event stream and abandons its correlation.
+    /// Cancels this event stream.
     pub async fn cancel(self) -> Result<(), ClientError<Stream::Error>> {
         self.responses.cancel().await
     }
@@ -750,12 +730,12 @@ where
     }
 }
 
-/// Correlated response stream owned by the shared client.
+/// Bounded response stream owned by the shared client.
 #[derive(Debug)]
 pub struct ResponseStream<Stream> {
     stream: Stream,
     role: StreamRole,
-    pending: Option<PendingCorrelation>,
+    ended: bool,
     decoder: NetworkFrameDecoder,
 }
 
@@ -765,23 +745,14 @@ where
 {
     /// Receives and decodes the next response, or completes at clean EOF.
     pub async fn next(&mut self) -> Result<Option<Response>, ClientError<Stream::Error>> {
+        if self.ended {
+            return Ok(None);
+        }
         loop {
             if let Some(frame) = self.decoder.next_frame()? {
-                let expected = self
-                    .pending
-                    .as_ref()
-                    .expect("response stream correlation remains active")
-                    .id();
-                if frame.correlation_id != expected {
-                    return Err(ProtocolError::UnknownCorrelation(frame.correlation_id).into());
-                }
                 let response = protocol::decode_response_network_frame(self.role, &frame)?;
                 if response == Response::ResponseComplete {
-                    let pending = self
-                        .pending
-                        .take()
-                        .expect("response stream correlation remains active");
-                    pending.complete(expected)?;
+                    self.ended = true;
                     return Ok(None);
                 }
                 return Ok(Some(response));
@@ -793,21 +764,16 @@ where
                 .map_err(ClientError::Transport)?
             else {
                 self.decoder.finish()?;
-                let pending = self
-                    .pending
-                    .take()
-                    .expect("response stream correlation remains active");
-                let correlation_id = pending.id();
-                pending.complete(correlation_id)?;
+                self.ended = true;
                 return Ok(None);
             };
             self.decoder.push(&chunk);
         }
     }
 
-    /// Cancels the transport stream and abandons its active correlation.
+    /// Cancels the transport stream.
     pub async fn cancel(mut self) -> Result<(), ClientError<Stream::Error>> {
-        self.pending.take();
+        self.ended = true;
         self.stream.cancel().await.map_err(ClientError::Transport)
     }
 }
@@ -831,7 +797,7 @@ where
     }
 }
 
-/// Failure from shared client connection or correlation state.
+/// Failure from shared client connection state.
 #[derive(Debug, Error)]
 pub enum ClientStateError {
     /// The logical client connection is closed.
@@ -843,9 +809,6 @@ pub enum ClientStateError {
     /// An event stream must establish authority before another logical stream opens.
     #[error("Sea event stream is not open")]
     MissingAuthority,
-    /// A stream-scoped correlation invariant failed.
-    #[error(transparent)]
-    Protocol(#[from] ProtocolError),
     /// Shared state was poisoned by a panic.
     #[error("Sea client state is unavailable")]
     Poisoned,
@@ -855,8 +818,6 @@ pub enum ClientStateError {
 struct State {
     status: ConnectionStatus,
     authority: Option<Vec<u8>>,
-    next_correlation_id: u64,
-    correlations: BTreeMap<StreamRole, CorrelationTracker>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -878,38 +839,20 @@ impl Default for ClientState {
             inner: Mutex::new(State {
                 status: ConnectionStatus::Connected,
                 authority: None,
-                next_correlation_id: 1,
-                correlations: BTreeMap::new(),
             }),
         }
     }
 }
 
 impl ClientState {
-    /// Begins one stream-scoped request and returns its cancellation-safe guard.
-    pub fn begin(
-        self: &Arc<Self>,
-        role: StreamRole,
-    ) -> Result<PendingCorrelation, ClientStateError> {
-        let mut state = self.inner.lock().map_err(|_| ClientStateError::Poisoned)?;
+    /// Rejects admission after close or disconnect.
+    pub fn check_connected(&self) -> Result<(), ClientStateError> {
+        let state = self.inner.lock().map_err(|_| ClientStateError::Poisoned)?;
         match state.status {
-            ConnectionStatus::Connected => {}
-            ConnectionStatus::Disconnected => return Err(ClientStateError::Disconnected),
-            ConnectionStatus::Closed => return Err(ClientStateError::Closed),
+            ConnectionStatus::Connected => Ok(()),
+            ConnectionStatus::Disconnected => Err(ClientStateError::Disconnected),
+            ConnectionStatus::Closed => Err(ClientStateError::Closed),
         }
-        let correlation_id = state.next_correlation_id;
-        state.next_correlation_id = correlation_id.wrapping_add(1).max(1);
-        state
-            .correlations
-            .entry(role)
-            .or_default()
-            .begin(correlation_id)?;
-        Ok(PendingCorrelation {
-            client: Arc::downgrade(self),
-            role,
-            correlation_id,
-            active: true,
-        })
     }
 
     /// Marks the connection closed; future requests are rejected.
@@ -917,17 +860,15 @@ impl ClientState {
         let mut state = self.inner.lock().map_err(|_| ClientStateError::Poisoned)?;
         state.status = ConnectionStatus::Closed;
         state.authority = None;
-        state.correlations.clear();
         Ok(())
     }
 
-    /// Marks the connection unavailable and abandons all active correlations.
+    /// Marks the connection unavailable.
     pub fn disconnect(&self) -> Result<(), ClientStateError> {
         let mut state = self.inner.lock().map_err(|_| ClientStateError::Poisoned)?;
         if state.status != ConnectionStatus::Closed {
             state.status = ConnectionStatus::Disconnected;
             state.authority = None;
-            state.correlations.clear();
         }
         Ok(())
     }
@@ -954,17 +895,6 @@ impl ClientState {
             == ConnectionStatus::Closed)
     }
 
-    fn complete(&self, role: StreamRole, correlation_id: u64) -> Result<(), ClientStateError> {
-        self.inner
-            .lock()
-            .map_err(|_| ClientStateError::Poisoned)?
-            .correlations
-            .entry(role)
-            .or_default()
-            .complete(correlation_id)?;
-        Ok(())
-    }
-
     fn set_authority(&self, authority: Vec<u8>) -> Result<(), ClientStateError> {
         let mut state = self.inner.lock().map_err(|_| ClientStateError::Poisoned)?;
         state.authority = Some(authority);
@@ -978,55 +908,6 @@ impl ClientState {
             .authority
             .clone()
             .ok_or(ClientStateError::MissingAuthority)
-    }
-
-    fn abandon(&self, role: StreamRole, correlation_id: u64) {
-        if let Ok(mut state) = self.inner.lock() {
-            let _ = state
-                .correlations
-                .entry(role)
-                .or_default()
-                .complete(correlation_id);
-        }
-    }
-}
-
-/// One active request correlation that is abandoned automatically on cancellation.
-#[derive(Debug)]
-pub struct PendingCorrelation {
-    client: Weak<ClientState>,
-    role: StreamRole,
-    correlation_id: u64,
-    active: bool,
-}
-
-impl PendingCorrelation {
-    /// Returns the assigned nonzero correlation ID.
-    #[must_use]
-    pub const fn id(&self) -> u64 {
-        self.correlation_id
-    }
-
-    /// Completes this request after validating the response correlation.
-    pub fn complete(mut self, response_id: u64) -> Result<(), ClientStateError> {
-        if response_id != self.correlation_id {
-            return Err(ProtocolError::UnknownCorrelation(response_id).into());
-        }
-        if let Some(client) = self.client.upgrade() {
-            client.complete(self.role, self.correlation_id)?;
-        }
-        self.active = false;
-        Ok(())
-    }
-}
-
-impl Drop for PendingCorrelation {
-    fn drop(&mut self) {
-        if self.active
-            && let Some(client) = self.client.upgrade()
-        {
-            client.abandon(self.role, self.correlation_id);
-        }
     }
 }
 
@@ -1044,7 +925,7 @@ mod tests {
     use async_trait::async_trait;
 
     use super::{Client, ClientState, ClientStateError};
-    use crate::protocol::{self, ProtocolError, Request, Response, StreamRole};
+    use crate::protocol::{self, Request, Response, StreamRole};
     use crate::transport::{BidirectionalStream, ClientTransport};
 
     #[derive(Debug)]
@@ -1129,53 +1010,16 @@ mod tests {
     }
 
     #[test]
-    fn correlations_are_scoped_completed_and_abandoned() {
-        let state = Arc::new(ClientState::default());
-        let first = state.begin(StreamRole::Author).expect("first request");
-        let first_id = first.id();
-        assert_ne!(first_id, 0);
-        first.complete(first_id).expect("matching response");
-
-        let cancelled = state.begin(StreamRole::Content).expect("cancelled request");
-        let cancelled_id = cancelled.id();
-        drop(cancelled);
-        let next = state
-            .begin(StreamRole::Content)
-            .expect("request after cancellation");
-        assert_ne!(next.id(), cancelled_id);
-    }
-
-    #[test]
-    fn correlation_mismatch_and_closed_state_are_rejected() {
-        let state = Arc::new(ClientState::default());
-        let pending = state.begin(StreamRole::Event).expect("pending request");
-        assert!(matches!(
-            pending.complete(99),
-            Err(ClientStateError::Protocol(
-                ProtocolError::UnknownCorrelation(99)
-            ))
-        ));
-        state.close().expect("close");
-        assert!(matches!(
-            state.begin(StreamRole::Event),
-            Err(ClientStateError::Closed)
-        ));
-    }
-
-    #[test]
     fn disconnect_abandons_requests_and_requires_explicit_recovery() {
         let state = Arc::new(ClientState::default());
-        let pending = state.begin(StreamRole::Event).expect("pending request");
+        state.check_connected().expect("connected");
         state.disconnect().expect("disconnect");
         assert!(matches!(
-            state.begin(StreamRole::Event),
+            state.check_connected(),
             Err(ClientStateError::Disconnected)
         ));
-        drop(pending);
         state.reconnect().expect("reconnect");
-        state
-            .begin(StreamRole::Event)
-            .expect("request after recovery");
+        state.check_connected().expect("request after recovery");
         state.close().expect("close");
         assert!(matches!(state.reconnect(), Err(ClientStateError::Closed)));
     }
@@ -1185,7 +1029,6 @@ mod tests {
         let limits = protocol::Limits::default();
         let opened = protocol::encode_response_frame(
             StreamRole::Event,
-            1,
             &Response::EventStreamOpened {
                 document: vec![8; 8],
                 authority: vec![9; 32],
@@ -1195,7 +1038,6 @@ mod tests {
         .expect("event stream opening");
         let caught_up = protocol::encode_response_frame(
             StreamRole::Event,
-            1,
             &Response::StreamProgress {
                 previous: Some(2),
                 latest_known: Some(2),
@@ -1220,7 +1062,7 @@ mod tests {
                 version: protocol::PROTOCOL_VERSION,
                 archive: b"archive".to_vec(),
                 intent: protocol::ArchiveIntent::Open,
-                author: b"author".to_vec(),
+
                 session: b"session".to_vec(),
                 resume_after: Some(1),
             })
@@ -1243,7 +1085,6 @@ mod tests {
         let limits = protocol::Limits::default();
         let opened = protocol::encode_response_frame(
             StreamRole::Event,
-            1,
             &Response::EventStreamOpened {
                 document: vec![8; 8],
                 authority: vec![9; 32],
@@ -1264,7 +1105,7 @@ mod tests {
                 version: protocol::PROTOCOL_VERSION,
                 archive: b"archive".to_vec(),
                 intent: protocol::ArchiveIntent::Open,
-                author: b"author".to_vec(),
+
                 session: b"session".to_vec(),
                 resume_after: None,
             })
@@ -1284,7 +1125,6 @@ mod tests {
             let limits = protocol::Limits::default();
             let error = protocol::encode_response_frame(
                 StreamRole::Author,
-                1,
                 &Response::Error {
                     kind: protocol::ErrorKind::Rejected,
                     message: "rejected".into(),
@@ -1329,6 +1169,175 @@ mod tests {
         }
     }
 
+    #[tokio::test]
+    async fn cancelled_exchanges_cannot_consume_stale_replies() {
+        use futures_util::FutureExt;
+        let limits = protocol::Limits::default();
+        let cancelled = Arc::new(AtomicBool::new(false));
+        let suspended = || SuspendedAuthorStream {
+            inner: ScriptedStream {
+                chunks: VecDeque::new(),
+                cancelled: Some(cancelled.clone()),
+            },
+            suspend: true,
+        };
+        let mut content = super::ContentStream {
+            terminal: false,
+            stream: suspended(),
+            state: Arc::new(ClientState::default()),
+            limits,
+            decoder: protocol::NetworkFrameDecoder::new(limits),
+        };
+        assert!(
+            content
+                .request(Request::GetBlob { id: [0; 32] })
+                .now_or_never()
+                .is_none()
+        );
+        assert!(matches!(
+            content.request(Request::GetBlob { id: [0; 32] }).await,
+            Err(super::ClientError::State(ClientStateError::Closed))
+        ));
+        assert!(cancelled.swap(false, Ordering::Relaxed));
+        let mut snapshot = super::SnapshotStream {
+            terminal: false,
+            stream: suspended(),
+            state: Arc::new(ClientState::default()),
+            limits,
+            decoder: protocol::NetworkFrameDecoder::new(limits),
+            latest: None,
+            fence: None,
+        };
+        assert!(
+            snapshot
+                .request(Request::LatestSnapshot)
+                .now_or_never()
+                .is_none()
+        );
+        assert!(matches!(
+            snapshot.request(Request::LatestSnapshot).await,
+            Err(super::ClientError::State(ClientStateError::Closed))
+        ));
+        assert!(cancelled.swap(false, Ordering::Relaxed));
+        let mut signal = super::SignalStream {
+            terminal: false,
+            stream: suspended(),
+            state: Arc::new(ClientState::default()),
+            limits,
+            decoder: protocol::NetworkFrameDecoder::new(limits),
+        };
+        let request = Request::SendSignal(protocol::signals::Submission {
+            target: None,
+            payload: vec![1],
+            best_effort: false,
+        });
+        assert!(
+            signal
+                .request(request.clone(), |_| Ok(()))
+                .now_or_never()
+                .is_none()
+        );
+        assert!(matches!(
+            signal.request(request, |_| Ok(())).await,
+            Err(super::ClientError::State(ClientStateError::Closed))
+        ));
+        assert!(cancelled.load(Ordering::Relaxed));
+    }
+
+    #[tokio::test]
+    async fn signal_notifications_do_not_complete_ordered_requests() {
+        let limits = protocol::Limits::default();
+        let notification = protocol::signals::Event::Members(Vec::new());
+        let chunks = [
+            Response::SignalEvent(notification.clone()),
+            Response::Acknowledged,
+        ]
+        .iter()
+        .flat_map(|response| {
+            protocol::encode_response_frame(StreamRole::Signal, response, limits).unwrap()
+        })
+        .collect::<Vec<_>>();
+        let mut signal = super::SignalStream {
+            terminal: false,
+            stream: ScriptedStream {
+                chunks: chunks.chunks(2).map(<[u8]>::to_vec).collect(),
+                cancelled: None,
+            },
+            state: Arc::new(ClientState::default()),
+            limits,
+            decoder: protocol::NetworkFrameDecoder::new(limits),
+        };
+        let mut received = Vec::new();
+        signal
+            .request(
+                Request::SendSignal(protocol::signals::Submission {
+                    target: None,
+                    payload: vec![1],
+                    best_effort: false,
+                }),
+                |event| {
+                    received.push(event);
+                    Ok(())
+                },
+            )
+            .await
+            .unwrap();
+        assert_eq!(received, vec![notification]);
+        assert!(!signal.terminal);
+    }
+
+    #[tokio::test]
+    async fn snapshot_notifications_do_not_complete_ordered_requests() {
+        let limits = protocol::Limits::default();
+        let chunks = [
+            Response::SnapshotCoordination {
+                latest: Some(3),
+                fence: Some(7),
+            },
+            Response::Error {
+                kind: protocol::ErrorKind::Rejected,
+                message: "stale parent".into(),
+            },
+            Response::Snapshot(None),
+        ]
+        .iter()
+        .flat_map(|response| {
+            protocol::encode_response_frame(StreamRole::Snapshot, response, limits).unwrap()
+        })
+        .collect::<Vec<_>>();
+        let mut snapshot = super::SnapshotStream {
+            terminal: false,
+            stream: ScriptedStream {
+                chunks: chunks.chunks(2).map(<[u8]>::to_vec).collect(),
+                cancelled: None,
+            },
+            state: Arc::new(ClientState::default()),
+            limits,
+            decoder: protocol::NetworkFrameDecoder::new(limits),
+            latest: None,
+            fence: None,
+        };
+        assert!(matches!(
+            snapshot
+                .request(Request::PublishSnapshot {
+                    fence: Some(7),
+                    expected_parent: None,
+                    at_event: 3,
+                    root: protocol::TreeId::Directory([0; 32]),
+                })
+                .await
+                .unwrap(),
+            Response::Error { .. }
+        ));
+        assert_eq!(
+            snapshot.request(Request::LatestSnapshot).await.unwrap(),
+            Response::Snapshot(None)
+        );
+        assert_eq!(snapshot.latest(), Some(3));
+        assert_eq!(snapshot.fence(), Some(7));
+        assert!(!snapshot.terminal);
+    }
+
     /// Suspends receipt delivery so dropping an admitted request is deterministic.
     struct SuspendedAuthorStream {
         inner: ScriptedStream,
@@ -1360,7 +1369,6 @@ mod tests {
         let limits = protocol::Limits::default();
         let event_opened = protocol::encode_response_frame(
             StreamRole::Event,
-            1,
             &Response::EventStreamOpened {
                 document: vec![8; 8],
                 authority: vec![9; 32],
@@ -1369,11 +1377,10 @@ mod tests {
         )
         .expect("event opening");
         let author_opened =
-            protocol::encode_response_frame(StreamRole::Author, 2, &Response::Acknowledged, limits)
+            protocol::encode_response_frame(StreamRole::Author, &Response::Acknowledged, limits)
                 .expect("author opening");
         let committed = protocol::encode_response_frame(
             StreamRole::Author,
-            3,
             &Response::EventCommitted { position: 4 },
             limits,
         )
@@ -1395,7 +1402,7 @@ mod tests {
                 version: protocol::PROTOCOL_VERSION,
                 archive: b"archive".to_vec(),
                 intent: protocol::ArchiveIntent::Open,
-                author: b"author".to_vec(),
+
                 session: b"session".to_vec(),
                 resume_after: None,
             })

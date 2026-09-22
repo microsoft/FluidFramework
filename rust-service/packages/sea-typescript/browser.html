@@ -34,8 +34,7 @@ window.__seaPackageResult = (async () => {
         const { openWebTransport } = factories;
         assert(JSON.stringify(artifacts()) === JSON.stringify(before), "factory selection initialized WASM eagerly");
         const service = { url: parameters.get("transport"), certificateHash };
-        const unique = crypto.randomUUID();
-        const options = (name) => ({ author: encode(`${unique}-${name}`), session: encode(`${name === "writer" ? "0" : "1"}-${crypto.randomUUID()}`), compression });
+        const options = (name) => ({ session: encode(`${name === "writer" ? "0" : "1"}-${crypto.randomUUID()}`), compression });
         let missingError;
         try {
             const unexpected = await openWebTransport(service, new Uint8Array(8), options("missing"));
