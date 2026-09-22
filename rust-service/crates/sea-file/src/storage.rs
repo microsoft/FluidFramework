@@ -70,6 +70,20 @@ impl Factory {
     /// # Errors
     /// Returns filesystem failures, including namespace synchronization failures.
     pub(crate) fn open(root: impl AsRef<Path>, durable: bool) -> Result<Self, FileStorageError> {
+        Self::open_with_worker_limit(root, durable, if durable { 32 } else { 4 })
+    }
+
+    /// Opens a namespace after validating its shared filesystem concurrency budget.
+    pub(crate) fn open_with_worker_limit(
+        root: impl AsRef<Path>,
+        durable: bool,
+        worker_limit: usize,
+    ) -> Result<Self, FileStorageError> {
+        if worker_limit == 0 || worker_limit > tokio::sync::Semaphore::MAX_PERMITS {
+            return Err(FileStorageError::Rejected(
+                "invalid filesystem worker limit",
+            ));
+        }
         fs::create_dir_all(root.as_ref())?;
         let root = fs::canonicalize(root)?;
         if durable {
@@ -78,7 +92,7 @@ impl Factory {
         Ok(Self {
             root,
             durable,
-            workers: Arc::new(tokio::sync::Semaphore::new(4)),
+            workers: Arc::new(tokio::sync::Semaphore::new(worker_limit)),
             openings: Arc::default(),
             closed: Arc::default(),
             failed: Arc::default(),
@@ -2263,6 +2277,39 @@ mod tests {
     use std::sync::atomic::{AtomicU64, Ordering};
     /// Prevents collisions between concurrent tests and namespace factories.
     static NEXT_ROOT: AtomicU64 = AtomicU64::new(0);
+
+    #[test]
+    fn worker_limits_are_shared_and_policy_specific() {
+        for (durable, expected) in [(false, 4), (true, 32)] {
+            let root = root();
+            let factory = Factory::open(&root, durable).unwrap();
+            assert_eq!(factory.workers.available_permits(), expected);
+            drop(factory);
+            let factory = Factory::open_with_worker_limit(&root, durable, 2).unwrap();
+            let cloned = factory.clone();
+            let permits = factory.workers.try_acquire_many(2).unwrap();
+            assert!(cloned.workers.try_acquire().is_err());
+            drop(permits);
+            assert_eq!(cloned.workers.available_permits(), 2);
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[test]
+    fn worker_limits_reject_invalid_configuration_before_namespace_creation() {
+        let root = root();
+        for limit in [0, usize::MAX] {
+            assert!(matches!(
+                crate::FileStorage::open_with_worker_limit(&root, limit),
+                Err(FileStorageError::Rejected(_))
+            ));
+            assert!(matches!(
+                crate::DurableStorage::open_with_worker_limit(&root, limit),
+                Err(FileStorageError::Rejected(_))
+            ));
+            assert!(!root.exists());
+        }
+    }
 
     /// Counts actual wake notifications independently of eager manual polling.
     struct WakeCount(AtomicU64);

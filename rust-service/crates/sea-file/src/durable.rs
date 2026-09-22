@@ -132,6 +132,42 @@ mod tests {
     static NEXT_ROOT: AtomicU64 = AtomicU64::new(0);
 
     #[tokio::test]
+    async fn queued_document_mutations_leave_workers_for_reads_and_other_documents() {
+        let workers = Arc::new(Semaphore::new(1));
+        let hot = Executor::new(workers.clone());
+        let cold = Executor::new(workers.clone());
+        let held_order = hot.order.clone().lock_owned().await;
+        let completed = Arc::new(AtomicU64::new(0));
+        let mut mutations = Vec::new();
+        for _ in 0..128 {
+            let completed = completed.clone();
+            mutations.push(
+                hot.enqueue(1, move || {
+                    completed.fetch_add(1, Ordering::Relaxed);
+                    Ok(())
+                })
+                .unwrap(),
+            );
+        }
+        tokio::time::timeout(std::time::Duration::from_secs(5), async {
+            tokio::task::yield_now().await;
+            crate::common::blocking(workers.clone(), || Ok(()))
+                .await
+                .unwrap();
+            cold.run(1, || Ok(())).await.unwrap();
+            assert_eq!(completed.load(Ordering::Relaxed), 0);
+            drop(held_order);
+            for mutation in mutations {
+                mutation.await.unwrap().unwrap();
+            }
+        })
+        .await
+        .expect("queued document order must not occupy filesystem workers");
+        assert_eq!(completed.load(Ordering::Relaxed), 128);
+        assert_eq!(workers.available_permits(), 1);
+    }
+
+    #[tokio::test]
     async fn flush_captures_prefix_before_later_admission() {
         let executor = Executor::new(Arc::new(Semaphore::new(1)));
         let held = executor.order.clone().lock_owned().await;

@@ -64,6 +64,9 @@ macro_rules! file_factory {
         impl $name {
             /// Opens or creates a namespace synchronously; isolate this constructor on async callers.
             ///
+            /// Uses 32 concurrent filesystem workers for durable storage and four for buffered storage.
+            /// Use [`Self::open_with_worker_limit`] to tune the shared filesystem concurrency budget.
+            ///
             /// # Errors
             /// Returns namespace creation and required synchronization failures.
             pub fn open(
@@ -71,6 +74,29 @@ macro_rules! file_factory {
             ) -> Result<Self, crate::FileStorageError> {
                 Ok(Self {
                     inner: crate::storage::Factory::open(root, $durable)?,
+                })
+            }
+
+            /// Opens a namespace with a shared limit on concurrent blocking filesystem operations.
+            ///
+            /// All documents, reads, mutations, recovery, and factory clones share this budget.
+            /// Waiting operations do not occupy blocking workers; in-flight work retains its permit
+            /// through cancellation. The Tokio runtime can impose a lower blocking-thread limit.
+            /// Construction is synchronous and requires caller-provided execution isolation.
+            ///
+            /// # Errors
+            /// Returns an error for zero or unsupported worker limits, before filesystem changes,
+            /// or for namespace creation and required synchronization failures.
+            pub fn open_with_worker_limit(
+                root: impl AsRef<std::path::Path>,
+                worker_limit: usize,
+            ) -> Result<Self, crate::FileStorageError> {
+                Ok(Self {
+                    inner: crate::storage::Factory::open_with_worker_limit(
+                        root,
+                        $durable,
+                        worker_limit,
+                    )?,
                 })
             }
         }

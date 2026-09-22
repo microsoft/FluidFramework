@@ -1,0 +1,1628 @@
+{
+	"before": "5761a2bc481",
+	"after": "332ba4a1ac8",
+	"attempts": 84,
+	"cells": [
+		{
+			"campaign": "table",
+			"version": "before",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "memory",
+				"rate": 88000,
+				"payloadBytes": 64,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 0,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 43982.3,
+				"max": 70130.9,
+				"median": 52124.8
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 441.3868861385639,
+				"max": 654.6276912633859,
+				"median": 534.0560025382143
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 160.62607421875,
+				"max": 221.605078125,
+				"median": 200.86552734375
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 2,
+				"min": 337.37345,
+				"max": 383.90132,
+				"median": 360.637385
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 8261,
+				"max": 16472,
+				"median": 16413
+			},
+			"backlogQuarterMeans": [
+				[null, null, null, null],
+				[9017.088888888888, null, null, null],
+				[18134.4, null, null, null]
+			],
+			"workerErrors": [
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached"
+			]
+		},
+		{
+			"campaign": "table",
+			"version": "after",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "memory",
+				"rate": 88000,
+				"payloadBytes": 64,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 0,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 73216.4,
+				"max": 87965.2,
+				"median": 87645.1
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 676.5170410717127,
+				"max": 713.4835266933711,
+				"median": 704.8347084282392
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 227.78115234375,
+				"max": 242.3916015625,
+				"median": 241.953515625
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 176.826685,
+				"max": 362.003299,
+				"median": 323.204201
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 48,
+				"max": 8276,
+				"median": 3166
+			},
+			"backlogQuarterMeans": [
+				[61.1, 760.3000000000001, 3945.1, 4664.8],
+				[11881.3, 17012.7, null, null],
+				[48.3, 141.5, 102.3, 2044.7]
+			],
+			"workerErrors": ["bounded backlog or operation limit reached"]
+		},
+		{
+			"campaign": "table",
+			"version": "before",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "memory",
+				"rate": 38000,
+				"payloadBytes": 8192,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 1,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 19895.6,
+				"max": 37989.7,
+				"median": 37981.8
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 414.2637373975673,
+				"max": 620.8959918512529,
+				"median": 613.9636489491087
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 1743.11884765625,
+				"max": 2448.1267578125,
+				"median": 2435.7349609375
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 11.470609,
+				"max": 862.591857,
+				"median": 547.957298
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 0,
+				"max": 16407,
+				"median": 15
+			},
+			"backlogQuarterMeans": [
+				[4190.499999999999, 2656.7999999999997, 2.6, 27.1],
+				[21447.533333333333, null, null, null],
+				[20.700000000000003, 22.5, 31, 2.5]
+			],
+			"workerErrors": [
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached"
+			]
+		},
+		{
+			"campaign": "table",
+			"version": "after",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "memory",
+				"rate": 38000,
+				"payloadBytes": 8192,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 2,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 7839.8,
+				"max": 37994.6,
+				"median": 37993.1
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 419.62970908501205,
+				"max": 617.558653887569,
+				"median": 606.7187478101645
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 1345.6369485294117,
+				"max": 2450.0970703125,
+				"median": 2449.98251953125
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 5.219807,
+				"max": 845.441996,
+				"median": 5.264088999999999
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 0,
+				"max": 32894,
+				"median": 4
+			},
+			"backlogQuarterMeans": [
+				[3.3, 2.1, 7.699999999999999, 8.5],
+				[11571, null, null, null],
+				[4.3, 1, 0.1, 16]
+			],
+			"workerErrors": [
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached"
+			]
+		},
+		{
+			"campaign": "table",
+			"version": "before",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "buffered-file",
+				"rate": 46000,
+				"payloadBytes": 64,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 0,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 0,
+				"max": 0,
+				"median": 0
+			},
+			"serviceCpuPercent": {
+				"count": 0,
+				"min": null,
+				"median": null,
+				"max": null
+			},
+			"serviceMeanRssMiB": {
+				"count": 0,
+				"min": null,
+				"median": null,
+				"max": null
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 0,
+				"min": null,
+				"median": null,
+				"max": null
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 32890,
+				"max": 32925,
+				"median": 32899
+			},
+			"backlogQuarterMeans": [
+				[null, null, null, null],
+				[null, null, null, null],
+				[null, null, null, null]
+			],
+			"workerErrors": [
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached"
+			]
+		},
+		{
+			"campaign": "table",
+			"version": "after",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "buffered-file",
+				"rate": 46000,
+				"payloadBytes": 64,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 0,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 0,
+				"max": 0,
+				"median": 0
+			},
+			"serviceCpuPercent": {
+				"count": 0,
+				"min": null,
+				"median": null,
+				"max": null
+			},
+			"serviceMeanRssMiB": {
+				"count": 0,
+				"min": null,
+				"median": null,
+				"max": null
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 0,
+				"min": null,
+				"median": null,
+				"max": null
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 32885,
+				"max": 32909,
+				"median": 32895
+			},
+			"backlogQuarterMeans": [
+				[null, null, null, null],
+				[null, null, null, null],
+				[null, null, null, null]
+			],
+			"workerErrors": [
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached"
+			]
+		},
+		{
+			"campaign": "table",
+			"version": "before",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "buffered-file",
+				"rate": 30000,
+				"payloadBytes": 8192,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 0,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 0,
+				"max": 7498.5,
+				"median": 7095.7
+			},
+			"serviceCpuPercent": {
+				"count": 2,
+				"min": 498.3182254113424,
+				"max": 534.2228072281301,
+				"median": 516.2705163197363
+			},
+			"serviceMeanRssMiB": {
+				"count": 2,
+				"min": 48.6896484375,
+				"max": 50.92314453125,
+				"median": 49.806396484375
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 0,
+				"min": null,
+				"median": null,
+				"max": null
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 24589,
+				"max": 32847,
+				"median": 28656
+			},
+			"backlogQuarterMeans": [
+				[null, null, null, null],
+				[null, null, null, null],
+				[null, null, null, null]
+			],
+			"workerErrors": [
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached"
+			]
+		},
+		{
+			"campaign": "table",
+			"version": "after",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "buffered-file",
+				"rate": 30000,
+				"payloadBytes": 8192,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 0,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 0,
+				"max": 0,
+				"median": 0
+			},
+			"serviceCpuPercent": {
+				"count": 0,
+				"min": null,
+				"median": null,
+				"max": null
+			},
+			"serviceMeanRssMiB": {
+				"count": 0,
+				"min": null,
+				"median": null,
+				"max": null
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 0,
+				"min": null,
+				"median": null,
+				"max": null
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 32827,
+				"max": 32848,
+				"median": 32841
+			},
+			"backlogQuarterMeans": [
+				[null, null, null, null],
+				[null, null, null, null],
+				[null, null, null, null]
+			],
+			"workerErrors": [
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached",
+				"bounded backlog or operation limit reached"
+			]
+		},
+		{
+			"campaign": "table",
+			"version": "before",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "durable-file",
+				"rate": 2000,
+				"payloadBytes": 64,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 0,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 1226.3,
+				"max": 1829.9,
+				"median": 1777.5
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 109.26712658295641,
+				"max": 146.78226270472382,
+				"median": 146.61851881175176
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 46.34921875,
+				"max": 46.8740234375,
+				"median": 46.579296875
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 873.964754,
+				"max": 4173.2269320000005,
+				"median": 1187.536441
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 1691,
+				"max": 7740,
+				"median": 2222
+			},
+			"backlogQuarterMeans": [
+				[320.2, 705.9000000000001, 1113.3000000000002, 1538.2],
+				[797.3999999999999, 2336.9, 5295.3, 6992.9],
+				[947.0999999999999, 1156.8, 1509.3, 2022.5]
+			],
+			"workerErrors": [
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))"
+			]
+		},
+		{
+			"campaign": "table",
+			"version": "after",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "durable-file",
+				"rate": 2000,
+				"payloadBytes": 64,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 0,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 0,
+				"max": 146.1,
+				"median": 83.1
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 29.616419277999036,
+				"max": 48.3488167918014,
+				"median": 46.12511927817469
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 46.12998046875,
+				"max": 46.3447265625,
+				"median": 46.34052734375
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 2,
+				"min": 10322.861244,
+				"max": 10618.830407000001,
+				"median": 10470.8458255
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 18535,
+				"max": 21300,
+				"median": 19168
+			},
+			"backlogQuarterMeans": [
+				[6578.099999999999, 10545.8, 14497.400000000001, 19180.699999999997],
+				[6173.6, 9822.2, 13528.699999999999, 17401.2],
+				[5955.099999999999, 9586.300000000001, 13202.5, 16811.1]
+			],
+			"workerErrors": [
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))"
+			]
+		},
+		{
+			"campaign": "table",
+			"version": "before",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "durable-file",
+				"rate": 160,
+				"payloadBytes": 8192,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 1,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 135.5,
+				"max": 160,
+				"median": 160
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 14.434249683467781,
+				"max": 16.6959090477551,
+				"median": 16.490005092298954
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 48.6849609375,
+				"max": 49.01357421875,
+				"median": 48.86806640625
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 8.699768,
+				"max": 1895.5548869999998,
+				"median": 156.879806
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 0,
+				"max": 245,
+				"median": 0
+			},
+			"backlogQuarterMeans": [
+				[0.6000000000000001, 1, 2.8000000000000003, 10.2],
+				[0.8, 1.4000000000000001, 1.2, 78.5],
+				[1, 1.1, 2.7, 1.1]
+			],
+			"workerErrors": []
+		},
+		{
+			"campaign": "table",
+			"version": "after",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "durable-file",
+				"rate": 160,
+				"payloadBytes": 8192,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 1,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 69.4,
+				"max": 160,
+				"median": 105.3
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 8.39459885183212,
+				"max": 22.23765285780589,
+				"median": 14.949940424001024
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 49.002734375,
+				"max": 51.35400390625,
+				"median": 51.05302734375
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 9.397337,
+				"max": 3572.323227,
+				"median": 527.851932
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 0,
+				"max": 906,
+				"median": 547
+			},
+			"backlogQuarterMeans": [
+				[2.5, 23.4, 30.300000000000004, 352.7],
+				[240.70000000000002, 469.6, 311.70000000000005, 710.5999999999999],
+				[0.9, 1.1, 0.6, 0.8999999999999999]
+			],
+			"workerErrors": [
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))"
+			]
+		},
+		{
+			"campaign": "lower-loads",
+			"version": "before",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "memory",
+				"rate": 24000,
+				"payloadBytes": 64,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 3,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 23996.4,
+				"max": 24002.6,
+				"median": 24001.4
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 271.1684143967656,
+				"max": 273.3952118020517,
+				"median": 273.0920869484648
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 100.64365234375,
+				"max": 100.765625,
+				"median": 100.76123046875
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 1.66548,
+				"max": 1.689505,
+				"median": 1.6728640000000001
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 0,
+				"max": 0,
+				"median": 0
+			},
+			"backlogQuarterMeans": [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+			"workerErrors": []
+		},
+		{
+			"campaign": "lower-loads",
+			"version": "after",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "memory",
+				"rate": 24000,
+				"payloadBytes": 64,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 3,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 23995.8,
+				"max": 23998.8,
+				"median": 23996.7
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 272.33961852087896,
+				"max": 277.66880667848676,
+				"median": 275.11122549424215
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 100.71650390625,
+				"max": 100.9517578125,
+				"median": 100.7986328125
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 1.727916,
+				"max": 2.452499,
+				"median": 1.9992030000000003
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 0,
+				"max": 0,
+				"median": 0
+			},
+			"backlogQuarterMeans": [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+			"workerErrors": []
+		},
+		{
+			"campaign": "lower-loads",
+			"version": "before",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "memory",
+				"rate": 12000,
+				"payloadBytes": 8192,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 3,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 11998.2,
+				"max": 12000,
+				"median": 11999.2
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 221.17285369067022,
+				"max": 231.48640578139035,
+				"median": 225.0907388874176
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 803.27294921875,
+				"max": 803.621484375,
+				"median": 803.3564453125
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 1.8811520000000002,
+				"max": 2.319732,
+				"median": 2.077949
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 0,
+				"max": 0,
+				"median": 0
+			},
+			"backlogQuarterMeans": [[0, 0, 0, 0], [0, 0.1, 0, 0], [0, 0, 0, 0]],
+			"workerErrors": []
+		},
+		{
+			"campaign": "lower-loads",
+			"version": "after",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "memory",
+				"rate": 12000,
+				"payloadBytes": 8192,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 3,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 11996.4,
+				"max": 11999.2,
+				"median": 11997.8
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 221.69369989061903,
+				"max": 230.81965118595173,
+				"median": 226.03496413393276
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 803.34609375,
+				"max": 803.6029296875,
+				"median": 803.44833984375
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 1.866125,
+				"max": 1.988152,
+				"median": 1.963696
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 0,
+				"max": 0,
+				"median": 0
+			},
+			"backlogQuarterMeans": [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+			"workerErrors": []
+		},
+		{
+			"campaign": "lower-loads",
+			"version": "before",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "buffered-file",
+				"rate": 10000,
+				"payloadBytes": 64,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 0,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 8352.9,
+				"max": 9995.4,
+				"median": 9573.7
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 676.985213457574,
+				"max": 687.9764857720402,
+				"median": 684.1811379294563
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 47.65703125,
+				"max": 47.7060546875,
+				"median": 47.69853515625
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 172.63726200000002,
+				"max": 1819.168517,
+				"median": 623.9092499999999
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 20,
+				"max": 16457,
+				"median": 4237
+			},
+			"backlogQuarterMeans": [
+				[3542.3, 3673.3999999999996, 4938.200000000001, 4559.9],
+				[12697.6, 15469.599999999999, 16924.1, 16672.7],
+				[1125.4, 316.1, 11.6, 32.6]
+			],
+			"workerErrors": []
+		},
+		{
+			"campaign": "lower-loads",
+			"version": "after",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "buffered-file",
+				"rate": 10000,
+				"payloadBytes": 64,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 1,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 7360.2,
+				"max": 9998.9,
+				"median": 7815
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 462.96127336514166,
+				"max": 492.19301448239054,
+				"median": 490.0656015011001
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 47.851953125,
+				"max": 48.89423828125,
+				"median": 48.286328125
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 5.441571,
+				"max": 2564.4846770000004,
+				"median": 2388.239113
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 0,
+				"max": 26375,
+				"median": 21811
+			},
+			"backlogQuarterMeans": [
+				[23163.5, 23227.1, 23694.100000000002, 23122.5],
+				[9799.900000000001, 17120.5, 21763.9, 24808.100000000002],
+				[0.7, 2.9000000000000004, 2.5, 1.5]
+			],
+			"workerErrors": [
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))"
+			]
+		},
+		{
+			"campaign": "lower-loads",
+			"version": "before",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "buffered-file",
+				"rate": 6000,
+				"payloadBytes": 8192,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 1,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 5268,
+				"max": 5999.3,
+				"median": 5743
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 370.9885872683674,
+				"max": 418.7536073044454,
+				"median": 416.2459941103544
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 48.29638671875,
+				"max": 49.23740234375,
+				"median": 48.83154296875
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 2.669795,
+				"max": 1763.386434,
+				"median": 3.346108
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 0,
+				"max": 7312,
+				"median": 2571
+			},
+			"backlogQuarterMeans": [
+				[4.1, 0, 0, 261.5],
+				[0, 0, 146.8, 4229.799999999999],
+				[0, 0, 0, 0]
+			],
+			"workerErrors": [
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))"
+			]
+		},
+		{
+			"campaign": "lower-loads",
+			"version": "after",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "buffered-file",
+				"rate": 6000,
+				"payloadBytes": 8192,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 2,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 5994.1,
+				"max": 5999.2,
+				"median": 5998.8
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 385.049921644512,
+				"max": 406.2554825241943,
+				"median": 396.31290211639
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 47.7294921875,
+				"max": 55.46484375,
+				"median": 47.79921875
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 2.2599389999999997,
+				"max": 395.318266,
+				"median": 2.396315
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 0,
+				"max": 24,
+				"median": 0
+			},
+			"backlogQuarterMeans": [[0, 0, 0, 0], [0, 754.7, 204.7, 3.1], [0, 0, 0, 0]],
+			"workerErrors": []
+		},
+		{
+			"campaign": "lower-loads",
+			"version": "before",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "durable-file",
+				"rate": 500,
+				"payloadBytes": 64,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 2,
+			"passed": 1,
+			"deliveredOperationsPerSecond": {
+				"count": 2,
+				"min": 426,
+				"max": 499.7,
+				"median": 462.85
+			},
+			"serviceCpuPercent": {
+				"count": 2,
+				"min": 33.083904053528,
+				"max": 44.05840513581311,
+				"median": 38.57115459467056
+			},
+			"serviceMeanRssMiB": {
+				"count": 2,
+				"min": 45.5474609375,
+				"max": 45.86572265625,
+				"median": 45.706591796875
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 2,
+				"min": 8.08162,
+				"max": 2580.054781,
+				"median": 1294.0682004999999
+			},
+			"pendingAtLoadStop": {
+				"count": 2,
+				"min": 2,
+				"max": 736,
+				"median": 369
+			},
+			"backlogQuarterMeans": [
+				[105.4, 495.59999999999997, 96.70000000000002, 998.9],
+				[null, null, null, null],
+				[1.9, 2.0999999999999996, 1.9, 2.2]
+			],
+			"workerErrors": ["Error: Worker exited 1 before ready"]
+		},
+		{
+			"campaign": "lower-loads",
+			"version": "after",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "durable-file",
+				"rate": 500,
+				"payloadBytes": 64,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 1,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 360.7,
+				"max": 499.7,
+				"median": 459
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 37.365513413260054,
+				"max": 59.70131581004725,
+				"median": 43.67262909678754
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 46.18837890625,
+				"max": 46.4376953125,
+				"median": 46.218359375
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 11.314157,
+				"max": 3099.0757649999996,
+				"median": 920.338998
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 1,
+				"max": 1392,
+				"median": 410
+			},
+			"backlogQuarterMeans": [
+				[1291, 1378, 1328.6999999999998, 1471.7],
+				[363.79999999999995, 422.4, 307.6, 239.8],
+				[2.2, 1.9000000000000001, 1.9000000000000001, 3.5000000000000004]
+			],
+			"workerErrors": [
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))",
+				"transport failed: transport failed: unexpected socket message: Some(Err(Protocol(ResetWithoutClosingHandshake)))"
+			]
+		},
+		{
+			"campaign": "lower-loads",
+			"version": "before",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "durable-file",
+				"rate": 80,
+				"payloadBytes": 8192,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 2,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 78,
+				"max": 80,
+				"median": 80
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 8.916332965475156,
+				"max": 9.120804859812997,
+				"median": 9.117487569258937
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 48.10869140625,
+				"max": 49.05146484375,
+				"median": 48.32587890625
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 9.264339,
+				"max": 17.511208,
+				"median": 9.865221
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 0,
+				"max": 20,
+				"median": 0
+			},
+			"backlogQuarterMeans": [
+				[0.6, 0.30000000000000004, 0.5, 0.7],
+				[0.4, 0.7, 0.30000000000000004, 2.2],
+				[0.5, 0.2, 0.5, 0.5]
+			],
+			"workerErrors": []
+		},
+		{
+			"campaign": "lower-loads",
+			"version": "after",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "durable-file",
+				"rate": 80,
+				"payloadBytes": 8192,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 1,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 74.9,
+				"max": 80,
+				"median": 80
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 11.683015593273872,
+				"max": 12.092878167301613,
+				"median": 12.08081353575972
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 48.96103515625,
+				"max": 49.9443359375,
+				"median": 49.191015625
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 9.73083,
+				"max": 446.17143,
+				"median": 425.75657
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 0,
+				"max": 51,
+				"median": 0
+			},
+			"backlogQuarterMeans": [
+				[0.5, 0.2, 0.5, 8.5],
+				[0.8, 11, 6.5, 1.7000000000000002],
+				[0.6000000000000001, 0.1, 0.4, 0.5]
+			],
+			"workerErrors": []
+		},
+		{
+			"campaign": "buffered-control",
+			"version": "before",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "buffered-file",
+				"rate": 2000,
+				"payloadBytes": 64,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 3,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 1999.5,
+				"max": 2000.2,
+				"median": 1999.6
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 137.72192862415886,
+				"max": 138.8846951065379,
+				"median": 138.58661995602287
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 45.8025390625,
+				"max": 46.0900390625,
+				"median": 45.83671875
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 0.963539,
+				"max": 1.009234,
+				"median": 0.9820429999999999
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 0,
+				"max": 0,
+				"median": 0
+			},
+			"backlogQuarterMeans": [[0, 2.6, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+			"workerErrors": []
+		},
+		{
+			"campaign": "buffered-control",
+			"version": "after",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "buffered-file",
+				"rate": 2000,
+				"payloadBytes": 64,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 3,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 1999.5,
+				"max": 2000,
+				"median": 1999.9
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 179.86385857347068,
+				"max": 181.27673065880472,
+				"median": 179.92199813249346
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 46.29970703125,
+				"max": 46.62412109375,
+				"median": 46.34873046875
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 0.767674,
+				"max": 0.8289080000000001,
+				"median": 0.791388
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 0,
+				"max": 0,
+				"median": 0
+			},
+			"backlogQuarterMeans": [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+			"workerErrors": []
+		},
+		{
+			"campaign": "buffered-control",
+			"version": "before",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "buffered-file",
+				"rate": 2000,
+				"payloadBytes": 8192,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 3,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 1999.9,
+				"max": 2000,
+				"median": 2000
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 136.36106764454843,
+				"max": 137.89276697542178,
+				"median": 136.75938597570766
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 48.14306640625,
+				"max": 48.84296875,
+				"median": 48.2626953125
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 0.974639,
+				"max": 1.080147,
+				"median": 1.027279
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 0,
+				"max": 0,
+				"median": 0
+			},
+			"backlogQuarterMeans": [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0.7]],
+			"workerErrors": []
+		},
+		{
+			"campaign": "buffered-control",
+			"version": "after",
+			"configuration": {
+				"backend": "sea",
+				"generator": "native",
+				"transport": "websocket",
+				"storage": "buffered-file",
+				"rate": 2000,
+				"payloadBytes": 8192,
+				"documents": 32,
+				"cores": 8,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"attempts": 3,
+			"completed": 3,
+			"passed": 3,
+			"deliveredOperationsPerSecond": {
+				"count": 3,
+				"min": 1999.8,
+				"max": 2000,
+				"median": 2000
+			},
+			"serviceCpuPercent": {
+				"count": 3,
+				"min": 159.33780553176155,
+				"max": 160.87191132494158,
+				"median": 160.40766077479404
+			},
+			"serviceMeanRssMiB": {
+				"count": 3,
+				"min": 48.69375,
+				"max": 48.775,
+				"median": 48.69775390625
+			},
+			"worstWorkerP95Milliseconds": {
+				"count": 3,
+				"min": 0.950485,
+				"max": 1.0974789999999999,
+				"median": 0.9822839999999999
+			},
+			"pendingAtLoadStop": {
+				"count": 3,
+				"min": 0,
+				"max": 0,
+				"median": 0
+			},
+			"backlogQuarterMeans": [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+			"workerErrors": []
+		}
+	]
+}

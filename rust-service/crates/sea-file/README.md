@@ -124,7 +124,14 @@ A non-record event bound can traverse event history backward; latest lookups and
 Content uses one file per typed hash, so filesystem metadata costs remain workload-dependent.
 Only synchronous factory construction requires caller-provided execution isolation.
 Creation/recovery, mutations, checkpoints, metadata checks, and lazy historical reads use bounded blocking workers, including for direct storage callers.
-Each factory and its clones share four workers; independently constructed factories have independent budgets.
+Each durable factory and its clones share a default budget of 32 concurrent filesystem operations; buffered factories default to four.
+Use `DurableStorage::open_with_worker_limit(root, limit)` or `FileStorage::open_with_worker_limit(root, limit)` to select a different positive budget.
+Zero and limits above Tokio's semaphore capacity are rejected before creating the namespace.
+Independently constructed factories have independent budgets, and the Tokio runtime's blocking-thread limit can further restrict concurrency.
+This is an I/O concurrency limit, not a CPU allocation or a preallocated thread pool: durable workers remain occupied during filesystem synchronization.
+Tune it for the document count, device, and latency target; 32 is a starting default, not a measured universal optimum.
+Reads and mutations share the budget; FIFO worker admission and document ordering allow queued work to make progress, but do not promise a latency bound during slow syscalls.
+Document mutation order is acquired before worker capacity, so a document's queued mutations do not hold worker permits while awaiting earlier mutations.
 Each document bounds accepted mutations to 128 requests and 16 MiB of conservatively charged input, encoding, framing, and metadata space, including in-flight work.
 Content preparation has a separate 128-request/16-MiB budget acquired before encoding or metadata waits; worker-owned validation retains its charge after caller cancellation.
 Buffered callers wait FIFO for queue capacity, with a separate limit of 128 waiting calls and 16 MiB of charged waiting inputs; excess waiters and oversized requests are rejected.
