@@ -3,8 +3,8 @@
 Status: Proposed; implementation has not started.
 Written on 2026-09-22 against `sea-directory-dedup` at `9f22810a2f0`, including directory deduplication commit `b272851e8e3`.
 Reconcile this plan with intervening journal, checkpoint, and protocol changes before implementation; do not overwrite concurrent work or treat this checkout as the integration target.
-Reconciled on 2026-09-22 with checkpoint/session-allocation implementation `f1d4a366267` while merging into `rust-service`.
-The implementation baseline now includes internal checkpoints, lazy historical indexes, and protocol 11 allocated session IDs; select the resulting integration commit rather than the original worktree base for implementation.
+Reconciled on 2026-09-22 with corrected checkpoint implementation `f59c3ca14a4` on `rust-service`, superseding the index-based integration at `521a8362e42`.
+Use that corrected baseline or its successors: independent `CheckpointStore`, hash-addressed content, byte-offset events, fixed-size journal cursors, and protocol 11 allocated session IDs.
 
 ## Objective
 
@@ -26,8 +26,10 @@ It does not promise constant synchronization latency or production-qualified dur
 - Namespace initialization, creation/recovery, blob/directory writes, and snapshot writes remain synchronous storage barriers.
 - The [built-in host](crates/sea-webtransport-server/README.md) isolates initialization and creation/recovery on blocking workers, but direct storage callers do not receive that isolation automatically.
 - Stored-directory deduplication already avoids the writer lock and repeated child validation; preserve this fast path.
-- [Checkpoint recovery](CHECKPOINT_PLAN.md) restores internal sequencer state and session-ID reservations independently of application snapshots, using a journal boundary and immutable `.index` sidecar.
-- Historical index/payload reads and checkpoint publication are synchronous; directory membership can now require index I/O rather than an in-memory map lookup.
+- [Checkpoint recovery](CHECKPOINT_PLAN.md) restores opaque internal sequencer state and session-ID reservations through an independent `CheckpointStore`, not `SnapshotArchive`.
+- Content uses typed-hash files, events use literal journal byte offsets, and snapshots use a separate fixed-width journal with backward lookup.
+- Each journal has a fixed-size settled-tail cursor; no historical address table is persisted or rebuilt.
+- Historical payload reads, content membership checks, cursor publication, and checkpoint publication can perform synchronous I/O.
 
 The [timeout investigation](KNOWN_ISSUES.md#intermittent-native-connection-timeout) established executor starvation and unnecessary cross-filesystem synchronization as real problems.
 It did not attribute every historical timeout or the durable backend's steady-state benchmark variance to those problems.
@@ -64,7 +66,8 @@ Move its durable-specific tests and power-loss documentation into `sea-file` bef
 ### Shared Mechanisms
 
 Keep one implementation of journal framing, checksums, record encoding/decoding, dependency-closure validation, and recovered-state validation.
-Include immutable index encoding, logical-address lookup, and checkpoint-boundary validation in the shared mechanisms.
+Include typed-hash content lookup, byte-offset framing and traversal, fixed-width snapshot traversal, settled-tail cursor validation, and atomic-file replacement in the shared mechanisms.
+Keep opaque checkpoint payload handling separate from journal recovery; storage must not interpret sequencer state or reconstruct a historical address table.
 Share document identity and handle provenance rules, file-lock ownership primitives, error classification, and published-state/read notification mechanics where their contracts match.
 Share recovery parsing, but keep decisions about incomplete-tail repair and required synchronization explicit in the selected backend policy.
 
@@ -91,8 +94,14 @@ Coordinate worker exit with enqueueing so a racing submission cannot be stranded
 Reads, heads, and availability handles reflect admitted in-memory state, including content not yet written to the operating system.
 Order blobs, directories, events, and snapshots through the same document authority so workers persist dependencies before references.
 Keep deduplication of resident content in memory and preserve normal input validation; weak crash guarantees are not permission to reorder records or accept missing dependencies during healthy operation.
-For indexed historical content, isolate required lookup I/O rather than assuming all deduplication is memory-only.
+For nonresident content, isolate hash-addressed file lookup I/O rather than assuming all deduplication is memory-only.
 Preserve a no-worker-round-trip admission path when dependencies are already resident; measure historical lookup misses separately.
+
+Assign final event byte offsets and predecessor offsets during ordered admission, using exact encoded frame sizes and checked arithmetic.
+Track the logical reserved journal end separately from the written end; batching must not change offsets already returned to the sequencer.
+Reject invalid inputs before reserving visible positions, and fail the opening rather than reuse or renumber acknowledged offsets after a worker error.
+Retain bounded pending records so reads can span the disk prefix and admitted suffix without gaps or duplicates while workers drain them.
+Include those records and encoding buffers in memory accounting; evict pending records only once file-backed reads can serve them.
 
 Workers take the pending backlog up to a byte/work limit and encode/write it as one logical batch, continuing as needed with fairness between documents.
 Short writes can require multiple system calls; a batch is not an atomic disk write.
@@ -142,28 +151,38 @@ Start with existing explicit event batches and no deliberate batching delay.
 Once ordering and failure behavior are proven, consider coalescing consecutive compatible requests into one synchronization.
 Do not reorder across content dependencies or snapshots, and do not acknowledge any member before the covering synchronization succeeds.
 
-### Checkpoint And Indexed Read Integration
+### Checkpoint, Cursor, And Read Integration
 
-Preserve the exact applied checkpoint boundary, separately persisted session-allocation reservation, bounded sequencer recovery suffix, and independence from application snapshots.
-An index must never advertise journal bytes or dependencies that have not been written.
-For buffered write-behind, capture a coherent admitted boundary and drain through it before publishing its index; this control operation may await file I/O even though ordinary buffered event admission does not.
-If later writes continue, keep their addresses separate from the captured index boundary and retain their visibility after index replacement.
+Preserve the independent `CheckpointStore` capability and its component/view plumbing; do not move checkpoint methods back onto `SnapshotArchive`.
+The checkpoint remains an opaque payload whose logical replay boundary belongs to the sequencer.
+Preserve the minimal `SEAC3` state: explicit applied boundary, committed minimum-reference floor, allocation high-water mark, and outstanding announcements.
+The lag-policy window remains runtime-only and resets after recovery settles outstanding departures; do not reintroduce serialized recent-position history.
+
+Keep three boundaries distinct: admitted/published mutations, the written or durable journal prefix recorded by each storage cursor, and the sequencer's applied checkpoint boundary.
+A cursor must never advertise journal bytes or content dependencies that have not reached the backend's required persistence boundary.
+For buffered write-behind, serialize checkpoint publication after preceding accepted mutations drain, without holding a state lock while waiting.
+This control operation may await file I/O even though ordinary buffered event admission does not.
+Later admission must not change the captured checkpoint payload or become accidentally included in its applied boundary.
 Reservation publication must retain no-reuse across successful orderly shutdown/reopen; buffered crash loss remains explicitly outside its guarantees.
 Durable reservations must still be synchronized before exposing allocated IDs, including reservation-only updates that do not advance the applied event position.
 
-Keep the journal-before-index durability order, atomic replacement, directory synchronization, incomplete replacement handling, and uncertainty poisoning from the checkpoint implementation.
-Move automatic index publication and explicit checkpoint work off the executor without allowing a published pointer to outrun the file-write prefix.
-Keep indexed historical lookup/replay lazy: do not restore full-history scans or materialize all history to simplify queue ownership.
-Provide execution isolation for index and payload reads, including membership checks, without holding a shared state mutex across slow disk reads.
-Retain immutable index/file ownership across asynchronous reads and concurrent index replacement.
-Measure index-publication cost separately because merging all retained addresses grows with history even when recovery reads only a bounded suffix.
+Checkpoint replacement writes only its payload and checksum; it must not read or rewrite content, journals, cursors, or historical mappings.
+Waiting for earlier workers to settle is an ordering requirement, not permission to reconstruct storage during checkpoint publication.
+Preserve atomic replacement, durable file/directory synchronization, incomplete replacement handling, and uncertainty poisoning for checkpoints and cursors.
+Each successful event batch or snapshot append currently publishes its journal cursor after settling the journal; preserve this ordering and recovery contract when coalescing requests.
+Any proposal to reduce cursor publication frequency must separately justify its effect on recovery work and failure guarantees.
+
+Keep historical reads lazy: hash lookup for content, direct byte-offset lookup for events, and storage-owned backward traversal for snapshot selection and non-record bounds.
+Do not restore full-history scans or materialize a historical address table to simplify queue ownership.
+Isolate file reads and metadata checks from the executor without holding the shared state mutex across slow I/O; retain file/opening ownership while reads are pending.
+Preserve sparse-position semantics: count committed entries for checkpoint cadence and floor debounce rather than subtracting byte offsets.
 
 ## Required Contracts
 
 1. Preserve durable acknowledgment guarantees and the existing [power-loss model](crates/sea-file-durable/README.md#power-loss-model).
    Keep durable namespace creation, rename, reopening, and recovery-repair barriers; retain the filesystem-boundary synchronization fix.
    Explicitly revise buffered acknowledgment to bounded in-process admission; audit shared durability labels and consumer contracts so they do not imply completed file I/O for this mode.
-2. Preserve dense event order, advancing snapshot positions, transitive directory closure, and handle provenance.
+2. Preserve ordered event history with stable sparse byte-offset positions, advancing snapshot positions, transitive directory closure, and handle provenance.
    Preserve exact checkpoint boundaries, session-reservation ordering, and lazy historical recovery; apply backend-specific failure guarantees to their persistence.
    Establish admission order at a defined point, not from spawned-task order or assumptions about executor fairness.
 3. An unpolled mutation has no effect.
@@ -191,7 +210,7 @@ Measure index-publication cost separately because merging all retained addresses
 Inventory current callers, public Rust types, lock ordering, cancellation boundaries, recovery modes, and existing regression coverage.
 Audit `SeaStorage`, `Durability::Buffered`, sequencer acknowledgment, and conformance assumptions for the newly selected write-behind semantics.
 Update consequential contracts and mode-specific tests explicitly rather than silently retaining an operating-system-write guarantee or weakening durable tests.
-Reconcile checkpoint/index work on the selected integration base before changing shared journal ownership.
+Reconcile checkpoint/cursor work on the selected integration base before changing shared journal ownership.
 Record buffered and durable latency, throughput, synchronization counts, and memory under identical workloads, including unsuccessful runs.
 Separate initialization/recovery from steady-state operations.
 
@@ -220,7 +239,8 @@ Exit: buffered and durable scheduling can change independently, with no duplicat
 Introduce bounded admission with atomic in-memory publication and independently tracked file-write progress.
 Drain accumulated records in bounded batches without per-request worker completion on the sequencer hot path.
 Implement terminal background-error signaling, prefix flush, and orderly host/direct-caller shutdown.
-Order internal checkpoints and automatic indexes behind the written prefix, and test visibility across replacement while later admissions are pending.
+Reserve stable event offsets on admission, settle cursors behind their journal writes, and order independent checkpoints after preceding mutations drain.
+Test reads across the pending/disk boundary and checkpoint replacement while later admissions are pending.
 Update buffered contracts, risk documentation, and tests in the same stage as the acknowledgment change.
 
 Exit: acknowledgments and reads succeed while a worker is paused, admission blocks at the configured limits, failures surface explicitly, and successful orderly shutdown writes every accepted record for reopening.
@@ -274,8 +294,12 @@ Required regression cases include:
 - Failures before writing, partial writes, synchronization failure, worker panic, and wakeup/poison behavior for every affected result.
 - Incomplete-tail recovery, complete corruption rejection, lost acknowledgments, namespace durability, stable sidecar locks, and cross-process exclusion.
 - Existing directory deduplication and initialization regressions; real host round trips for all storage modes.
-- Checkpoint/index publication behind buffered draining, exact captured boundaries under concurrent admission, reservation-only updates, and durable no-reuse after recovery.
-- Lazy historical reads during index replacement, bounded suffix recovery, and directory deduplication against both recent and checkpointed addresses.
+- Buffered offset reservation with variable-sized frames, partial batches, and overflow; batching never changes acknowledged offsets or predecessor links.
+- Reads across pending and written prefixes, arbitrary non-record event bounds, and backward snapshot lookup independent of sequencer checkpoints.
+- Cursor publication after journal settlement, bounded suffix recovery, and directory deduplication against recent and reopened hash-addressed content.
+- Independent checkpoint publication after buffered draining, exact applied boundaries under concurrent admission, reservation-only updates, and durable no-reuse after recovery.
+- Checkpoint publication size/history independence and no reads or rewrites of content, journals, or cursors by the replacement operation.
+- Minimal checkpoint recovery with no tail, preserved floor, empty live lag window, storage-backed historical reference lookup, and event-count rather than byte-distance cadence/debounce.
 
 Run focused tests after each implementation step, then the canonical commands in [Development](DEVELOPMENT.md#canonical-workspace-commands):
 
@@ -301,7 +325,9 @@ Include final draining in end-to-end persisted-work measurements; a short run th
 Because scheduling and batch sizes differ, memory/buffered/durable comparisons show whole-backend overhead, not a pure measurement of `fsync` cost.
 Use matched batch shapes and completed writes in a controlled I/O comparison when isolating synchronization overhead.
 Record queue delay, lock wait, encoding/write time, synchronization time, publication time, batch size, synchronization count, worker utilization, and retained bytes.
-Include index publication, reservation replenishment, and historical lookup misses; benchmark across checkpoint boundaries rather than only before the first index is written.
+Separate event-journal synchronization, cursor-file/directory synchronization, opaque checkpoint replacement, and reservation replenishment costs.
+Measure hash-file metadata operations, historical read misses, and backward traversal at increasing history sizes; do not retain the removed history-sized index rewrite as an expected cost.
+Benchmark across cursor/checkpoint boundaries and reservation replenishments, including repeated checkpoints to verify publication work remains independent of retained history for a fixed payload.
 Report throughput and median, p95, and p99 operation latency with repetitions, commit, toolchain, filesystem/mount, and machine details.
 
 Run controlled delayed-I/O tests alongside real virtualized-storage measurements.
@@ -316,7 +342,8 @@ Benchmark variability and production durability qualification remain open unless
 
 ## Decisions Before Implementation
 
-- Select the integration base and reconcile concurrent checkpoint/index work.
+- Select the corrected integration base and preserve the independent checkpoint and fixed-size cursor design.
+- Choose exact-size offset reservation and pending-read mechanics for buffered admission without changing the byte-offset journal format.
 - Confirm the migration and temporary re-export strategy for const-generic callers, associated component types, and consumers of `sea-file-durable`.
 - Choose the scope and defaults of worker and queue budgets, including admission cancellation and oversized requests.
 - Choose the concrete flush/shutdown API and host ownership wiring that implement buffered orderly draining, and record the approved buffered acknowledgment change in shared contracts and the decision record.
