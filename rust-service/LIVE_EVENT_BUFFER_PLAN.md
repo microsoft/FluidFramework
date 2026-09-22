@@ -537,6 +537,110 @@ Catch-up sessions still obey writer-reference validation if they attempt to subm
 Clients remain responsible for reconnect and snapshot choices.
 Add client code only where end-to-end evidence shows that existing recovery does not handle the chosen eviction indication.
 
+## Execution And Progress
+
+Use one sequential implementation owner in the dedicated worktree below, with fresh read-only subagents for checkpoint review.
+This is not a multi-workstream iteration and does not require numbered iteration records or an integration branch.
+The user authorizes creating this implementation branch/worktree and committing validated, reviewed checkpoints to that branch without asking for approval for each commit.
+Do not merge, push, delete the worktree, rewrite committed history, or change the primary checkout as part of implementation without further authorization.
+
+| Item | Fixed location or state |
+| --- | --- |
+| Implementation branch | `rust-service-live-event-buffer` |
+| Implementation worktree | `/workspaces/FluidFramework-live-event-buffer` |
+| Working plan | `/workspaces/FluidFramework-live-event-buffer/rust-service/LIVE_EVENT_BUFFER_PLAN.md` |
+| Cumulative review report | `/workspaces/FluidFramework-live-event-buffer/rust-service/LIVE_EVENT_BUFFER_IMPLEMENTATION_REPORT.md` |
+| Setup state | Planned; branch, worktree, and report not yet created |
+| Starting revision | Pending setup; record the exact commit containing the finalized plan before implementation |
+
+At setup, verify that the latest plan, including performance thresholds, is committed in the selected starting revision.
+If it is not, stop for the plan to be committed rather than branching from an older version or silently carrying unrelated working-copy changes.
+Create the named branch and worktree from that revision without switching the primary checkout.
+If either name already exists, inspect its branch, starting revision, and worktree status; resume only if it is the intended implementation, otherwise ask the user rather than resetting or overwriting it.
+Update the setup state and starting revision here in the worktree's copy of the plan; that copy is authoritative for in-progress status.
+Record baseline validation commands and results, distinguishing pre-existing failures from regressions, and freeze the performance comparison inputs in checkpoint 0.
+Keep implementation edits, test artifacts, and report updates in the dedicated worktree and identify its absolute path in status reports.
+Verify the worktree path, branch, and revision before running modifying commands.
+
+Keep each checkpoint buildable and include its production changes, focused regression tests, and affected contract documentation together.
+Run the narrowest executable check after each substantive edit, then the applicable format, lint, documentation, and affected-package checks before declaring that checkpoint ready to commit.
+These checks do not replace the full implementation gates in the validation section.
+Keep incomplete delivery paths inactive and preserve existing behavior until the complete-path integration is validated; an intermediate commit must not expose partially enforced accounting or protection guarantees.
+If a boundary cannot stand alone safely, record the reason and combine it with its immediate dependency rather than committing a broken intermediate state.
+Do not defer all step 2 work into one unexplained implementation commit.
+
+### Pre-Commit Review
+
+After implementing a checkpoint and passing its applicable checks, request an independent review before committing.
+Use a fresh read-only subagent invocation with separate conversation context, not a continuation of the implementing agent's reasoning.
+Provide the exact worktree, checkpoint scope, fixed checkpoint-start commit, complete changed-file list including staged, unstaged, and untracked files, relevant plan contracts, and validation evidence.
+The first checkpoint starts at the recorded setup revision; later checkpoints start at the preceding checkpoint commit.
+Keep that comparison base fixed through repairs so the reviewer assesses the complete checkpoint rather than only the latest fix.
+Do not prime the initial reviewer with the implementer's conclusions; require concrete findings with severity, file/line evidence, failure mechanism, and a proposed correction, plus any unverified areas.
+Cover correctness, contract compatibility, cancellation, lock ordering, resource accounting, tests, and material performance risks as applicable to the checkpoint.
+
+The reviewer must not edit files, commit, stage, or start uncoordinated terminal commands.
+Pause implementation edits while it reviews the working tree so the reviewed state is stable.
+The implementing agent runs requested reproductions and checks, following the terminal-coordination rules in the Rust service coordination skill; a separate worktree or subagent does not isolate a shared terminal.
+If fresh-agent review is unavailable, report the blocker rather than substituting self-review and declaring convergence.
+
+Triage findings against code and contracts, fix actionable issues, and rerun affected checks.
+Allow at most two repair-and-review cycles after the initial review, using a fresh reviewer each time to verify fixes and assess the complete updated checkpoint for regressions.
+Supply prior findings and their dispositions to verification reviewers, without treating the implementer's disposition as proof.
+Convergence means no unresolved actionable correctness or contract findings and passing checkpoint checks, not the absence of every optional improvement suggestion.
+Document declined or deferred suggestions with evidence; do not dismiss a finding solely to meet the review limit.
+If issues remain after the bounded cycles, a consequential design disagreement persists, or an approved constraint must change, mark the checkpoint blocked and ask the user for guidance before committing or expanding scope.
+
+On convergence, update the report and checkpoint record, then commit only the reviewed checkpoint scope on the implementation branch and continue to the next checkpoint.
+Substantive changes after the final review require renewed review and affected validation; report/status-only bookkeeping can be included without restarting the cycle.
+Review does not replace executable validation or the full final gates.
+
+### Review Report
+
+Create `rust-service/LIVE_EVENT_BUFFER_IMPLEMENTATION_REPORT.md` in the implementation worktree when checkpoint 0 starts.
+Maintain one cumulative report with a section per checkpoint and short subsections for review rounds; do not create a report per subagent invocation or retain raw transcripts as the report.
+Record the checkpoint's purpose, starting revision, reviewed scope, reviewer invocation identifier when available, and validation evidence identifying the tested state.
+Summarize findings and severity, changes made in response, why those changes improve the implementation, and declined or deferred suggestions with reasons.
+Include tests added or rerun, exact commands and outcomes, remaining risks, and final review disposition.
+Preserve earlier failed checks and findings so the user can follow how the implementation changed rather than seeing only the final result.
+Include the report update in the checkpoint commit; record the resulting commit identifier in the next progress update rather than amending repeatedly to insert its own hash.
+Keep detailed benchmark evidence in the existing measurement locations and link it from the report and this plan.
+
+### Checkpoint Record
+
+All implementation checkpoints start as not started; plan review and documentation checks are not implementation evidence.
+Update the status and evidence as work proceeds, preserving failed checks and unresolved findings rather than replacing them with a success summary.
+
+| Checkpoint | Commit scope | Acceptance check | Status | Commit | Evidence / blockers |
+| --- | --- | --- | --- | --- | --- |
+| 0 | Concrete budgets, lock/ownership rules, transport completion findings, and deterministic resource fixtures | Checked event-plus-control and fan-out budgets; lifecycle waiting model; resolved interface and wakeup choices | Not started | None | Not run |
+| 1 | Floor computation, frozen announcements, and recovery contracts with tests | Equality, stale-reference rejection, accepted-prefix ordering, and committed-floor recovery pass | Not started | None | Not run |
+| 2a | Core policy trait, shared types, resource-aware and fixed implementations, and unit tests | Deterministic admission, hysteresis, idle behavior, and expiry decisions; native/WASM compatibility | Not started | None | Not run |
+| 2b | Sequencer publication ownership, credit reservations, lifecycle waiting, and shared-driver wakeups | Controlled-backend tests for whole-prefix bounds, cancellation settlement, concurrent closes, and exact-once credit release | Not started | None | Not run |
+| 2c | Local catch-up/live handoff, shared delivery, opening invalidation, and subscription termination | No live archive polls; race-safe handoff including pending leaves; idle failure notification and bounded cleanup | Not started | None | Not run |
+| 2d | Host/transport credit completion, fair scheduling, policy integration, and one complete Fluid path | Real blocked-send termination, bounded broadcast pressure, pending-operation recovery, and continued editing | Not started | None | Not run |
+| 3 | Early matched performance evidence and any separately identified local repairs | Sustainable baseline and constrained fan-out runs support proceeding; failures and drain results retained | Not started | None | Not run |
+| 4 | Remaining backend, transport, generated-client, and recovery coverage with required fixes | Validation-matrix recovery and compatibility cases pass across the required stacks | Not started | None | Not run |
+| 5 | Final measurements, contract documentation, accepted decision, and changeset | Complete validation gates and matched measurements recorded; remaining limitations explicit | Not started | None | Not run |
+
+Checkpoint 2d completes step 2's exit condition; do not start broad coverage expansion before step 3's performance decision.
+Split step 4 into named stack-specific commits if needed, updating this table before proceeding rather than creating an untracked workstream.
+Record actual commit identifiers only after commits exist; capture a checkpoint's identifier in the next progress update rather than amending repeatedly to record its own hash.
+For benchmark evidence, identify the measured source revision and any uncommitted changes separately from the later report commit.
+
+### Progress Reporting
+
+Report to the user when a checkpoint starts, reaches its acceptance check, completes a review round, or is committed, and promptly when validation fails, a blocker appears, or a design assumption changes.
+During long-running work, give concise interim updates describing the current check or unresolved issue; do not wait for an entire implementation step to finish.
+Before pausing or handing off, update this record with the current checkpoint, exact next action, and outstanding risks.
+
+Distinguish not started, in progress, implemented but unverified, focused checks passed, blocked, and full validation passed.
+Commit and review status are separate from validation status; a commit or clean review does not establish full acceptance.
+For each checkpoint, record the changed scope, exact validation commands and outcomes, evidence paths where applicable, unresolved failures or skipped checks, and next action.
+Include the exact implementation worktree and cumulative review-report paths so the user can find in-progress work from the primary checkout.
+Use this checkpoint table and the cumulative review report rather than adding another progress-report framework.
+Do not mark the implementation complete until all required gates and completion criteria pass, or present an explicitly accepted exception as a passing check.
+
 ## Implementation Sequence
 
 ### 0. Fix Resource And Lifecycle Boundaries
@@ -608,6 +712,8 @@ Keep the result, including failed drains; it is an early design check, not final
 
 Exit condition: evidence supports continuing with this architecture, or the plan is revised before expanding implementation scope.
 
+Use the performance acceptance gates below for this decision and step 5's final confirmation.
+
 ### 4. Complete Recovery And Backend Coverage
 
 Wire the lag termination through existing error and lifecycle mechanisms.
@@ -636,6 +742,104 @@ Retain failures and incomplete drains; do not turn this into an open-ended maxim
 
 Exit condition: evidence shows that live journal reads are removed without violating resource, ordering, durability, or reconnect guarantees.
 Report the measured CPU effect without promising the earlier diagnostic's speedup.
+
+## Performance Acceptance
+
+These thresholds are implementation decision gates, not service-level guarantees or claims of maximum capacity.
+Freeze the baseline revision, workload configuration, metric definitions, and thresholds in checkpoint 0 before collecting candidate results.
+Record any later change with its reason and rerun both sides; do not relax a threshold merely because the candidate missed it.
+
+### Evidence And Matched Workload
+
+The [retained production confirmation](historical/measurements/file-execution-e2e-20260922/README.md#production-confirmation) sustained approximately 999 delivered operations/s at 1,000 offered operations/s, with 123.53-123.94% service CPU and 12.98-13.65 ms worst-worker p95 latency.
+The later read-offload diagnostic reduced median CPU from 125.62% to 90.70%, approximately 28%, but used unsafe inline filesystem reads and shorter samples.
+It also retained an offloaded-control latency outlier of 610.84 ms.
+Use these observations to justify a material CPU-improvement target and noise handling, not as interchangeable baseline samples or a promise of a 28% production gain.
+
+Use a fresh pre-implementation baseline and candidate release build on the same machine and filesystem.
+The primary workload is durable storage with 32 documents, one writer and one observer per document, 64-byte application payloads, 1,000 total offered operations/s, four native WebSocket generator processes, and 32 file workers.
+Use the previously recorded eight service CPUs and four separate generator CPUs when available; otherwise record a fixed equivalent allocation for both sides.
+Each generator receives an integer rate of 250 operations/s.
+Use fresh storage for every sample, and do not mix WebTransport results into this WebSocket comparison.
+The ordinary workload must not trigger lag eviction, policy expiry, reconnect, or subscriber rejection.
+
+Run one startup/drain smoke pair, then three alternating-order baseline/candidate pairs.
+Checkpoint 3 may use one warmup second and three measured seconds per sample for an early decision.
+Checkpoint 5 uses three warmup seconds and ten measured seconds, followed by the existing ten-second drain allowance.
+Do not pool the short and long samples.
+Repeat the same paired workload with memory storage as the non-file regression control; use buffered storage for a paired smoke check and expand only if it exposes a regression.
+This fixed-rate comparison is not a capacity search.
+
+Use service-process CPU seconds per successfully delivered observer operation, with numerator and denominator covering the same measured interval, as the primary efficiency metric.
+Also report raw CPU utilization, where 100% means one fully busy CPU, and generator CPU so client saturation is visible.
+For each pair compute the candidate/baseline ratio; use the median of the three paired ratios rather than selecting the best runs.
+Latency is measured from scheduled submission through observer delivery and includes admission/queue delay, preserving the existing harness semantics.
+For each run retain the worst worker's p95, not an average of worker percentiles; compare the medians of those run-level values.
+
+### Fixed-Rate Gates
+
+| Metric | Checkpoint 3 continuation gate | Checkpoint 5 acceptance gate |
+| --- | --- | --- |
+| Durable CPU per delivered operation | Median paired ratio at most 0.90, with improvement in at least two of three pairs | Median paired ratio at most 0.85, with improvement in at least two of three pairs |
+| Memory CPU per delivered operation | Median paired ratio at most 1.10 | Median paired ratio at most 1.10 |
+| Delivered rate | Every candidate run delivers at least 98% of the offered rate during measurement | Same; at least 980 operations/s at the specified load |
+| Durable latency | Candidate median worst-worker p95 at most the larger of 1.20 times baseline or baseline plus 2 ms, and at most 25 ms | Same |
+| Memory latency | Candidate median worst-worker p95 at most the larger of 1.20 times baseline or baseline plus 1 ms | Same |
+| Tail outliers | No candidate run with worst-worker p95 above 100 ms without investigation | Same; an unresolved excursion blocks acceptance even if the median passes |
+| Completion and integrity | All submitted operations acknowledged and expected writer/observer deliveries complete by drain end; zero missing, duplicate, out-of-order, or corrupt events and zero worker errors | Same |
+| Live archive work | Zero archive polls attributable to already-live delivery after handoff in the controlled fixture | Same, with real-service counters separating catch-up/recovery reads from live reads |
+
+At the historical CPU level, the final CPU gate corresponds approximately to 105-107% CPU at unchanged throughput; use the matched ratio as the gate, not this machine-specific illustration.
+The 15% target deliberately asks for less than the diagnostic's 28% reduction while requiring enough benefit to justify the added accounting and policy work.
+Missing it is a performance decision to investigate or revisit, not permission to weaken durability, reader protection, or accounting.
+
+A baseline that cannot sustain the workload with complete drains and a median durable p95 at most 25 ms does not establish a usable comparison.
+Retain all failed attempts and label environmental or measurement uncertainty explicitly.
+Allow at most one additional complete three-pair block after a diagnosed transient problem; report both blocks separately and do not cherry-pick replacements or take the better block automatically.
+Unexplained disagreement is inconclusive and requires a user decision before broader coverage work or a performance-acceptance claim.
+Use identical lightweight measurement on both builds and collect expensive tracing/allocation diagnostics in separate runs.
+
+### Constrained Broadcast Gates
+
+These are proposed engineering thresholds because the retained measurements do not establish a 100-reader broadcast baseline.
+Start with one document, one writer, 100 admitted observer subscriptions, 64-byte payloads, memory storage, and WebTransport.
+Count any writer-echo subscription in the actual fan-out and byte accounting.
+Use a 1 MiB/s aggregate event-response egress budget for the controlled test, charged at a documented encoded-byte boundary; report physical link utilization separately rather than calling payload rate wire throughput.
+Cross-check actual transport backpressure with a bounded network shaper or equivalent controlled transport test, since an application rate limiter alone does not prove socket behavior.
+If shaping is unavailable, record that gate as unverified rather than substituting an unthrottled run.
+
+Measure encoded bytes per event across all recipients, including envelope and framing overhead, and derive the egress-limited event rate from that quantity and the configured budget.
+Offer 125% of that rate with bounded client-side submission storage.
+Confirm the unthrottled path sustains the offered rate before using this as an egress test; otherwise lower the egress budget once and freeze that calibration before comparing policies.
+Use a five-second warmup and twenty measured seconds; allow at most thirty seconds for the bounded accepted tail to drain after offered load stops.
+Record unadmitted/cancelled attempts separately from accepted operations and reconcile every ambiguous outcome.
+Run one early trial at checkpoint 3 and three trials for final acceptance.
+Use the selected resource-aware policy with a five-second pending-delivery no-progress tolerance for this test configuration, not as an unmeasured production default.
+Size and validate all windows, maximum-event-plus-control feasibility, stream limits, and transport deadlines before the run; report them with the result.
+
+- Over the measured interval, completed encoded event-response bytes must use at least 80% of the configured egress budget.
+   Require a final ten-second accepted event rate between 80% and 105% of the derived egress-limited rate, with bounded backlog and rising writer admission wait under excess offered load.
+   Persisted throughput above that range with growing delivery debt is not success.
+- Require zero evictions, expiries, reconnects, or lost deliveries among the protected progressing readers.
+   The declared no-disconnect envelope supplies each pending reader with a delivery-progress opportunity at least once per second and excludes injected outages exceeding the configured expiry tolerance.
+   A failed service opportunity is a scheduling/transport diagnosis, not evidence that the reader was faulty.
+- Stop one observer completely while the others continue.
+   Verify that its server send-completion boundary actually stalls; stopping application reads while transport buffers continue draining is insufficient.
+   Require its policy termination within six seconds of the last credited progress once it has pending delivery, including at most one second of reevaluation/scheduling allowance, and zero terminations of the progressing group.
+   Require at least 80% egress utilization again during a ten-second interval beginning no later than two seconds after its credit is released.
+   With expiry disabled, require bounded backpressure instead of a throughput or termination deadline.
+- Enforce charged byte, entry, subscription, and pending-cleanup limits at every sampled transition and in deterministic fixtures, including reserved publication slack.
+   All broadcast debt must return to zero after successful drain and termination, and remaining ownership must match the live membership/control state.
+   Report peak resident memory and allocation/copy volume, but do not equate process resident memory with the sequencer's logical budget or require it to fall immediately after deallocation.
+- For equal-weight, continuously backlogged documents in the cross-document case, require each to receive at least 80% of its configured equal share over the final ten seconds.
+   Measure this while catch-up traffic uses its configured bounded allocation; compare live shares against the remaining live-service budget.
+   Unequal configured weights must use their declared shares instead.
+
+Run policy alternatives under the same offered load, budgets, and reader behavior, reporting admitted/served counts and terminations.
+An intentionally different policy need not meet the default's expiry/no-disconnect promises, but must preserve hard bounds, ordering, and exact accounting.
+Do not claim an efficiency improvement by dropping readers, omitting drain work, increasing transport buffering without accounting, or lowering the offered workload after observing failure.
+Keep the existing one-million-submission and 4 GiB service resident-memory safety guards alongside bounded generator queues and explicit run deadlines.
+Hitting a safety guard fails or invalidates the run; it does not establish sustainable capacity.
 
 ## Validation Matrix
 
