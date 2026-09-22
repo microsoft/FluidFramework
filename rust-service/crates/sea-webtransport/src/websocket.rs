@@ -6,6 +6,10 @@ pub const SUBPROTOCOL: &str = "sea-stream-v1";
 pub const PATH: &str = "/sea/websocket";
 /// Maximum byte payload in one data message, independent of Sea frame size.
 pub const CHUNK_BYTES: usize = 64 * 1024;
+/// Record discriminator before each data payload.
+pub const RECORD_HEADER_BYTES: usize = size_of::<u8>();
+/// Maximum complete Sea WebSocket record, excluding the WebSocket protocol's own framing.
+pub const MAX_RECORD_BYTES: usize = RECORD_HEADER_BYTES + CHUNK_BYTES;
 /// Data record tag followed by one nonempty byte chunk.
 pub const DATA: u8 = 0;
 /// Directional EOF record; WebSocket close is not a substitute.
@@ -40,9 +44,13 @@ mod tests {
     fn records_require_bounded_data_or_exact_finish() {
         assert_eq!(decode(&[FIN]), Some(Record::Finish));
         assert_eq!(decode(&[DATA, 42]), Some(Record::Data(&[42])));
+        let maximum = vec![DATA; MAX_RECORD_BYTES];
+        assert!(
+            matches!(decode(&maximum), Some(Record::Data(payload)) if payload.len() == CHUNK_BYTES)
+        );
         for invalid in [&[][..], &[DATA], &[FIN, 1], &[2]] {
             assert_eq!(decode(invalid), None);
         }
-        assert!(decode(&vec![DATA; CHUNK_BYTES + 2]).is_none());
+        assert!(decode(&vec![DATA; MAX_RECORD_BYTES + 1]).is_none());
     }
 }

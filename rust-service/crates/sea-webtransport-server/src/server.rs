@@ -694,7 +694,7 @@ async fn serve_network_stream(
             ))?;
 
     let request = sea_v1::decode_request_frame(role, &frame)?;
-    metrics.add_wire_bytes(5 + frame.payload.len());
+    metrics.add_wire_bytes(frame.encoded_len()?);
     if let sea_v1::Request::OpenSignalStream(opening) = request {
         return serve_signal_stream(send, receive, service, config, metrics, opening, datagrams)
             .await;
@@ -817,7 +817,7 @@ async fn serve_author_stream(
                 }
                 .into());
             }
-            metrics.add_wire_bytes(5 + frame.payload.len());
+            metrics.add_wire_bytes(frame.encoded_len()?);
             let close = matches!(request, sea_v1::Request::Close);
             let response = service.author_request(request).await;
             write_network_response(
@@ -880,7 +880,7 @@ async fn serve_signal_stream(
             tokio::select! {
                 frame = read_next_network_frame(&mut receive, &mut decoder, config.operation_timeout) => {
                     let Some(frame) = frame? else { break; };
-                    metrics.add_wire_bytes(5 + frame.payload.len());
+                    metrics.add_wire_bytes(frame.encoded_len()?);
                     let request = sea_v1::decode_request_frame(role, &frame)?;
                     let close = matches!(request, sea_v1::Request::Close);
                     let response = match request {
@@ -969,7 +969,7 @@ async fn serve_snapshot_stream(
                 frame = read_next_network_frame(&mut receive, &mut decoder, config.operation_timeout) => {
                     let Some(frame) = frame? else { break };
                     let request = sea_v1::decode_request_frame(role, &frame)?;
-                    metrics.add_wire_bytes(5 + frame.payload.len());
+                    metrics.add_wire_bytes(frame.encoded_len()?);
                     let close = matches!(request, sea_v1::Request::Close);
                     let response = service.snapshot_request(request).await;
                     write_network_response(
@@ -1038,7 +1038,7 @@ async fn serve_content_stream(
         read_next_network_frame(&mut receive, &mut decoder, config.operation_timeout).await?
     {
         let request = sea_v1::decode_request_frame(role, &frame)?;
-        metrics.add_wire_bytes(5 + frame.payload.len());
+        metrics.add_wire_bytes(frame.encoded_len()?);
         let mut responses = match service.content_request(request).await {
             Ok(responses) => responses,
             Err(response) => Box::pin(stream::once(async move { response })),
@@ -1102,23 +1102,17 @@ async fn read_one_network_frame(
 ) -> Result<sea_v1::NetworkFrame, WebTransportError> {
     let mut decoder = sea_v1::NetworkFrameDecoder::new(limits);
     decoder.push(&prefix);
-    decoder.next_frame()?;
-    let mut length = [0; 4];
-    receive
-        .read_exact(&mut length)
-        .await
-        .map_err(transport_error)?;
-    decoder.push(&length);
-    if let Some(frame) = decoder.next_frame()? {
-        return Ok(frame);
+    loop {
+        if let Some(frame) = decoder.next_frame()? {
+            return Ok(frame);
+        }
+        let mut bytes = vec![0; decoder.next_read_size()?];
+        receive
+            .read_exact(&mut bytes)
+            .await
+            .map_err(transport_error)?;
+        decoder.push(&bytes);
     }
-    let mut payload = vec![0; usize::try_from(u32::from_be_bytes(length)).unwrap() - 1];
-    receive
-        .read_exact(&mut payload)
-        .await
-        .map_err(transport_error)?;
-    decoder.push(&payload);
-    decoder.next_frame()?.ok_or(WebTransportError::Disconnected)
 }
 
 #[allow(clippy::too_many_arguments)]

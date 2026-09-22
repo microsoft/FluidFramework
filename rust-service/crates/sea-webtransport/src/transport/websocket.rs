@@ -19,7 +19,9 @@ use crate::transport::{
 };
 use crate::{
     protocol,
-    websocket::{self, CHUNK_BYTES, DATA, FIN, Record, SUBPROTOCOL},
+    websocket::{
+        self, CHUNK_BYTES, DATA, FIN, MAX_RECORD_BYTES, RECORD_HEADER_BYTES, Record, SUBPROTOCOL,
+    },
 };
 use async_trait::async_trait;
 
@@ -570,9 +572,10 @@ impl SeaWebSocketBidirectionalStream {
                     u32::try_from(CHUNK_BYTES).map_err(|_| js_error("invalid chunk limit"))?,
                 )
                 .min(bytes.length());
-            let record = Uint8Array::new_with_length(end - offset + 1);
+            let header_bytes = u32::try_from(RECORD_HEADER_BYTES).expect("WebSocket tag fits u32");
+            let record = Uint8Array::new_with_length(end - offset + header_bytes);
             record.set_index(0, DATA);
-            record.set(&bytes.subarray(offset, end), 1);
+            record.set(&bytes.subarray(offset, end), header_bytes);
             self.socket.write(&record).await?;
             offset = end;
         }
@@ -616,12 +619,15 @@ impl SeaWebSocketBidirectionalStream {
                 .dyn_into::<Uint8Array>()
                 .map_err(|_| js_error("expected a binary WebSocket message"))?
         };
-        if bytes.length() as usize > CHUNK_BYTES + 1 {
+        if bytes.length() as usize > MAX_RECORD_BYTES {
             self.socket.close();
             return Err(js_error("oversized WebSocket record"));
         }
         match websocket::decode(&bytes.to_vec()) {
-            Some(Record::Data(_)) => Ok(Some(bytes.subarray(1, bytes.length()))),
+            Some(Record::Data(_)) => Ok(Some(bytes.subarray(
+                u32::try_from(RECORD_HEADER_BYTES).expect("WebSocket tag fits u32"),
+                bytes.length(),
+            ))),
             Some(Record::Finish) => {
                 self.ended.set(true);
                 Ok(None)

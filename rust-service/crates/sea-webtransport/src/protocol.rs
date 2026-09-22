@@ -316,6 +316,24 @@ pub struct NetworkFrame {
     pub payload: Vec<u8>,
 }
 
+impl NetworkFrame {
+    /// Returns the complete wire size, including the kind and length fields.
+    ///
+    /// # Errors
+    /// Returns [`ProtocolError::FrameTooLarge`] when the wire length cannot represent the payload.
+    pub fn encoded_len(&self) -> Result<usize, ProtocolError> {
+        let declared = self
+            .payload
+            .len()
+            .checked_add(NETWORK_HEADER_BYTES)
+            .ok_or(ProtocolError::FrameTooLarge)?;
+        u32::try_from(declared).map_err(|_| ProtocolError::FrameTooLarge)?;
+        NETWORK_LENGTH_BYTES
+            .checked_add(declared)
+            .ok_or(ProtocolError::FrameTooLarge)
+    }
+}
+
 /// Encodes one complete bounded network envelope.
 ///
 /// # Errors
@@ -325,17 +343,12 @@ pub fn encode_network_frame(
     frame: &NetworkFrame,
     limits: Limits,
 ) -> Result<Vec<u8>, ProtocolError> {
-    let declared_length = NETWORK_HEADER_BYTES
-        .checked_add(frame.payload.len())
-        .ok_or(ProtocolError::FrameTooLarge)?;
-    let complete_length = NETWORK_LENGTH_BYTES
-        .checked_add(declared_length)
-        .ok_or(ProtocolError::FrameTooLarge)?;
+    let complete_length = frame.encoded_len()?;
     if complete_length > limits.max_frame_bytes {
         return Err(ProtocolError::FrameTooLarge);
     }
-    let declared_length =
-        u32::try_from(declared_length).map_err(|_| ProtocolError::FrameTooLarge)?;
+    let declared_length = u32::try_from(complete_length - NETWORK_LENGTH_BYTES)
+        .map_err(|_| ProtocolError::FrameTooLarge)?;
     let mut encoded = Vec::with_capacity(complete_length);
     encoded.push(frame.kind.into());
     encoded.extend_from_slice(&declared_length.to_be_bytes());
@@ -371,17 +384,13 @@ impl NetworkFrameDecoder {
         !self.buffered.is_empty()
     }
 
-    /// Returns the next complete frame, retaining bytes for subsequent frames.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error for malformed lengths, excessive frames, or unknown kinds.
-    pub fn next_frame(&mut self) -> Result<Option<NetworkFrame>, ProtocolError> {
+    /// Validates the available envelope header before exposing its complete frame length.
+    fn header(&self) -> Result<Option<(MessageKind, usize)>, ProtocolError> {
         let Some(&kind) = self.buffered.first() else {
             return Ok(None);
         };
         let kind = MessageKind::try_from(kind)?;
-        let Some(length_bytes) = self.buffered.get(1..MIN_FRAME_BYTES) else {
+        let Some(length_bytes) = self.buffered.get(NETWORK_HEADER_BYTES..MIN_FRAME_BYTES) else {
             return Ok(None);
         };
         let declared_length = usize::try_from(u32::from_be_bytes(
@@ -399,6 +408,29 @@ impl NetworkFrameDecoder {
         if complete_length > self.limits.max_frame_bytes {
             return Err(ProtocolError::FrameTooLarge);
         }
+        Ok(Some((kind, complete_length)))
+    }
+
+    /// Returns the bytes needed to finish the header, then the validated frame, without overreading.
+    /// Returns zero when the first frame is complete, even if later frames are buffered.
+    ///
+    /// # Errors
+    /// Rejects unknown kinds and invalid or excessive declared lengths as soon as available.
+    pub fn next_read_size(&self) -> Result<usize, ProtocolError> {
+        Ok(self.header()?.map_or_else(
+            || MIN_FRAME_BYTES - self.buffered.len(),
+            |(_, length)| length.saturating_sub(self.buffered.len()),
+        ))
+    }
+
+    /// Returns the next complete frame, retaining bytes for subsequent frames.
+    ///
+    /// # Errors
+    /// Returns an error for malformed lengths, excessive frames, or unknown kinds.
+    pub fn next_frame(&mut self) -> Result<Option<NetworkFrame>, ProtocolError> {
+        let Some((kind, complete_length)) = self.header()? else {
+            return Ok(None);
+        };
         if self.buffered.len() < complete_length {
             return Ok(None);
         }
@@ -1657,6 +1689,51 @@ mod tests {
         assert!(matches!(
             SnapshotParticipation::try_from(4),
             Err(ProtocolError::UnknownSnapshotParticipation(4))
+        ));
+    }
+
+    #[test]
+    fn decoder_read_sizes_stop_at_one_frame_and_validate_before_allocation() {
+        use super::MIN_FRAME_BYTES;
+        let limits = Limits {
+            max_frame_bytes: 64,
+        };
+        for payload in [Vec::new(), b"payload".to_vec()] {
+            let frame = NetworkFrame {
+                kind: MessageKind::Blob,
+                payload,
+            };
+            let encoded = encode_network_frame(&frame, limits).unwrap();
+            assert_eq!(frame.encoded_len().unwrap(), encoded.len());
+            for split in 0..=encoded.len() {
+                let mut decoder = NetworkFrameDecoder::new(limits);
+                decoder.push(&encoded[..split]);
+                let expected = if split < MIN_FRAME_BYTES {
+                    MIN_FRAME_BYTES - split
+                } else {
+                    encoded.len() - split
+                };
+                assert_eq!(decoder.next_read_size().unwrap(), expected);
+                decoder.push(&encoded[split..]);
+                decoder.push(&encoded);
+                assert_eq!(decoder.next_read_size().unwrap(), 0);
+                assert_eq!(decoder.next_frame().unwrap(), Some(frame.clone()));
+                assert_eq!(decoder.next_read_size().unwrap(), 0);
+                assert_eq!(decoder.next_frame().unwrap(), Some(frame.clone()));
+                assert_eq!(decoder.next_read_size().unwrap(), MIN_FRAME_BYTES);
+            }
+        }
+        for length in [0, u32::MAX] {
+            let mut decoder = NetworkFrameDecoder::new(limits);
+            decoder.push(&[MessageKind::Blob.into()]);
+            decoder.push(&length.to_be_bytes());
+            assert!(decoder.next_read_size().is_err());
+        }
+        let mut decoder = NetworkFrameDecoder::new(limits);
+        decoder.push(&[12]);
+        assert!(matches!(
+            decoder.next_read_size(),
+            Err(ProtocolError::UnknownMessageKind(12))
         ));
     }
 

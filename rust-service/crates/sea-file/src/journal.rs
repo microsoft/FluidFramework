@@ -76,6 +76,35 @@ pub(crate) const RECORD_START: u64 = MAGIC.len() as u64;
 /// Length, complemented length, and content hash protect frame boundaries.
 pub(crate) const FRAME_HEADER: usize = 48;
 
+/// Computes the exclusive frame boundary without overflowing physical offsets.
+pub(crate) fn frame_end(offset: u64, payload_length: u64) -> Option<u64> {
+    offset
+        .checked_add(FRAME_HEADER as u64)?
+        .checked_add(payload_length)
+}
+
+/// Probes record identity bytes at a possible frame boundary without allocating its payload.
+/// A matching prefix still requires a complete checked record read before claiming availability.
+pub(crate) fn read_prefix<const LENGTH: usize>(
+    source: &mut File,
+    offset: u64,
+) -> Result<Option<[u8; LENGTH]>, FileStorageError> {
+    source.seek(SeekFrom::Start(offset))?;
+    let mut header = [0; FRAME_HEADER];
+    let mut prefix = [0; LENGTH];
+    match source
+        .read_exact(&mut header)
+        .and_then(|()| source.read_exact(&mut prefix))
+    {
+        Ok(()) => {}
+        Err(error) if error.kind() == std::io::ErrorKind::UnexpectedEof => return Ok(None),
+        Err(error) => return Err(error.into()),
+    }
+    let length = u64::from_be_bytes(header[..8].try_into().unwrap());
+    let inverse = u64::from_be_bytes(header[8..16].try_into().unwrap());
+    Ok((inverse == !length).then_some(prefix))
+}
+
 /// An exclusive opening; the stable sidecar lock survives journal replacement.
 pub(crate) struct Journal {
     /// Stable journal name used to publish its settled-tail cursor.
@@ -438,10 +467,8 @@ fn recover_tail(
         if inverse != !payload_length {
             return Err(FileStorageError::Corrupt("frame length"));
         }
-        let end = cursor
-            .checked_add(FRAME_HEADER as u64)
-            .and_then(|offset| offset.checked_add(payload_length))
-            .ok_or(FileStorageError::Corrupt("frame overflow"))?;
+        let end =
+            frame_end(cursor, payload_length).ok_or(FileStorageError::Corrupt("frame overflow"))?;
         if end > length {
             break;
         }
@@ -467,10 +494,7 @@ pub(crate) fn read_record(source: &mut File, offset: u64) -> Result<Vec<u8>, Fil
     let mut header = [0; FRAME_HEADER];
     source.read_exact(&mut header)?;
     let length = u64::from_be_bytes(header[..8].try_into().unwrap());
-    let end = offset
-        .checked_add(FRAME_HEADER as u64)
-        .and_then(|start| start.checked_add(length))
-        .ok_or(FileStorageError::Corrupt("frame overflow"))?;
+    let end = frame_end(offset, length).ok_or(FileStorageError::Corrupt("frame overflow"))?;
     if end > source.metadata()?.len() {
         return Err(FileStorageError::Corrupt("addressed frame length"));
     }
@@ -484,6 +508,32 @@ pub(crate) fn read_record(source: &mut File, offset: u64) -> Result<Vec<u8>, Fil
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn checked_boundaries_and_prefix_probes_match_persisted_frames() {
+        assert_eq!(frame_end(8, 9), Some(65));
+        assert_eq!(frame_end(u64::MAX, 0), None);
+        assert_eq!(frame_end(8, u64::MAX), None);
+        let root = std::env::temp_dir().join(format!("sea-prefix-probe-{}", std::process::id()));
+        fs::create_dir_all(&root).unwrap();
+        let path = root.join("document.sea");
+        let (mut journal, _) = Journal::open(&path, true, true).unwrap();
+        journal.append(b"identity!").unwrap();
+        assert_eq!(journal.boundary().unwrap(), 65);
+        let mut reader = journal.reader().unwrap();
+        assert_eq!(
+            read_prefix::<9>(&mut reader, 8).unwrap(),
+            Some(*b"identity!")
+        );
+        assert_eq!(read_prefix::<10>(&mut reader, 8).unwrap(), None);
+        assert_eq!(read_prefix::<9>(&mut reader, 65).unwrap(), None);
+        let mut writer = fs::OpenOptions::new().write(true).open(&path).unwrap();
+        writer.seek(SeekFrom::Start(16)).unwrap();
+        writer.write_all(&0_u64.to_be_bytes()).unwrap();
+        assert_eq!(read_prefix::<9>(&mut reader, 8).unwrap(), None);
+        drop((journal, reader, writer));
+        fs::remove_dir_all(root).unwrap();
+    }
 
     #[test]
     fn reopening_settles_once_and_only_replaces_changed_cursors() {

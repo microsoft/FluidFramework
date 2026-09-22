@@ -21,7 +21,7 @@
 pub use crate::journal::FileStorageError;
 use crate::{
     atomic_file,
-    journal::{FRAME_HEADER, Journal, RECORD_START, read_record},
+    journal::{FRAME_HEADER, Journal, RECORD_START, frame_end, read_prefix, read_record},
 };
 use async_trait::async_trait;
 use bytes::Bytes;
@@ -37,7 +37,6 @@ use sea_core::{
 };
 use std::{
     fs,
-    io::{Read, Seek, SeekFrom},
     path::{Path, PathBuf},
     sync::{
         Arc, Mutex, MutexGuard, Weak,
@@ -114,13 +113,15 @@ impl Factory {
         let mut state = State::new(path.clone(), &mut journal, &mut snapshots)?;
         for record in records {
             state.recover_event(&record, boundary)?;
-            boundary += 48 + record.len() as u64;
+            boundary = frame_end(boundary, record.len() as u64)
+                .ok_or(FileStorageError::Corrupt("event recovery boundary"))?;
         }
         journal.remember_tail(state.head)?;
         let mut snapshot_offset = snapshots.recovered_from;
         for record in snapshot_records {
             state.recover_snapshot(&record, snapshot_offset)?;
-            snapshot_offset += 48 + record.len() as u64;
+            snapshot_offset = frame_end(snapshot_offset, record.len() as u64)
+                .ok_or(FileStorageError::Corrupt("snapshot recovery boundary"))?;
         }
         snapshots.remember_tail(if state.snapshot_end == 8 {
             0
@@ -781,7 +782,7 @@ impl State {
     /// Rejects non-record positions without treating numeric ordering as availability.
     fn has_event(&self, position: EventPosition) -> Result<bool, FileStorageError> {
         let offset = position.get();
-        if offset < 8 || offset > self.head {
+        if offset < RECORD_START || offset > self.head {
             return Ok(false);
         }
         if self
@@ -796,17 +797,10 @@ impl State {
             .reader
             .lock()
             .map_err(|_| FileStorageError::Ambiguous)?;
-        reader.seek(SeekFrom::Start(offset))?;
-        let mut header = [0; 57];
-        if reader.read_exact(&mut header).is_err() {
+        let Some(prefix) = read_prefix::<EVENT_ID_END>(&mut reader, offset)? else {
             return Ok(false);
-        }
-        let length = u64::from_be_bytes(header[..8].try_into().unwrap());
-        let inverse = u64::from_be_bytes(header[8..16].try_into().unwrap());
-        if inverse != !length
-            || header[48] != 3
-            || u64::from_be_bytes(header[49..57].try_into().unwrap()) != offset
-        {
+        };
+        if prefix[0] != EVENT_TAG || u64::from_be_bytes(prefix[1..].try_into().unwrap()) != offset {
             return Ok(false);
         }
         decode_event(&read_record(&mut reader, offset)?)?;
@@ -950,7 +944,7 @@ impl Record for SnapshotRecord {
 }
 
 impl FixedSize for SnapshotRecord {
-    const ENCODED_SIZE: usize = 1 + 8 + 33;
+    const ENCODED_SIZE: usize = 1 + 8 + TREE_ID_BYTES;
 }
 
 impl Record for CommittedEvent {
@@ -1085,7 +1079,8 @@ impl RecordArchive<'_, CommittedEvent> {
         let offset = match after {
             None => RECORD_START,
             Some(after) if self.state.has_event(after)? => {
-                after.get() + FRAME_HEADER as u64 + self.frame(after.get())?.len() as u64
+                frame_end(after.get(), self.frame(after.get())?.len() as u64)
+                    .ok_or(FileStorageError::Corrupt("event frame boundary"))?
             }
             Some(after) => {
                 let mut candidate = self.state.head;
@@ -1120,15 +1115,45 @@ fn decode_snapshot(record: &[u8]) -> Result<(EventPosition, BlobTreeId), FileSto
     Ok((record.position, record.root))
 }
 
+/// Journal record discriminator for an event.
+const EVENT_TAG: u8 = 3;
+/// End of the event discriminator and physical identity fields.
+const EVENT_ID_END: usize = 1 + size_of::<u64>();
+/// Event discriminator, identity, predecessor, and optional-tree presence flag.
+const EVENT_HEADER_BYTES: usize = EVENT_ID_END + size_of::<u64>() + 1;
+/// Tree discriminator followed by the content hash in the persisted format.
+const TREE_ID_BYTES: usize = 1 + 32;
+/// Largest framed event overhead, used for conservative admission accounting.
+const MAX_EVENT_OVERHEAD: usize = FRAME_HEADER + EVENT_HEADER_BYTES + TREE_ID_BYTES;
+
+/// Encodes one event identically for buffered reservation and durable append.
+fn encode_event(event: &Event, offset: u64, previous: u64) -> Vec<u8> {
+    let mut record = vec![EVENT_TAG];
+    record.extend_from_slice(&offset.to_be_bytes());
+    record.extend_from_slice(&previous.to_be_bytes());
+    record.push(u8::from(event.blob_tree.is_some()));
+    if let Some(root) = event.blob_tree {
+        encode_tree(&mut record, root);
+    }
+    record.extend_from_slice(&event.payload);
+    record
+}
+
 /// Decodes one event payload after its framing checksum has been verified.
 fn decode_event(record: &[u8]) -> Result<CommittedEvent, FileStorageError> {
-    if record.len() < 18 || record[0] != 3 {
+    if record.len() < EVENT_HEADER_BYTES || record[0] != EVENT_TAG {
         return Err(FileStorageError::Corrupt("event encoding"));
     }
-    let position = EventPosition::new(u64::from_be_bytes(record[1..9].try_into().unwrap()));
-    let (blob_tree, payload) = match record[17] {
-        0 => (None, &record[18..]),
-        1 if record.len() >= 51 => (Some(decode_tree(&record[18..51])?), &record[51..]),
+    let position = EventPosition::new(u64::from_be_bytes(
+        record[1..EVENT_ID_END].try_into().unwrap(),
+    ));
+    let body = &record[EVENT_HEADER_BYTES..];
+    let (blob_tree, payload) = match record[EVENT_HEADER_BYTES - 1] {
+        0 => (None, body),
+        1 if body.len() >= TREE_ID_BYTES => (
+            Some(decode_tree(&body[..TREE_ID_BYTES])?),
+            &body[TREE_ID_BYTES..],
+        ),
         _ => return Err(FileStorageError::Corrupt("event tree")),
     };
     Ok(CommittedEvent {
@@ -1142,11 +1167,15 @@ fn decode_event(record: &[u8]) -> Result<CommittedEvent, FileStorageError> {
 
 /// Reads the previous event offset from a validated frame for backward bound selection.
 fn event_previous(record: &[u8]) -> Result<u64, FileStorageError> {
-    if record.len() < 18 || record[0] != 3 {
+    if record.len() < EVENT_HEADER_BYTES || record[0] != EVENT_TAG {
         return Err(FileStorageError::Corrupt("event link"));
     }
-    let previous = u64::from_be_bytes(record[9..17].try_into().unwrap());
-    let position = u64::from_be_bytes(record[1..9].try_into().unwrap());
+    let previous = u64::from_be_bytes(
+        record[EVENT_ID_END..EVENT_HEADER_BYTES - 1]
+            .try_into()
+            .unwrap(),
+    );
+    let position = u64::from_be_bytes(record[1..EVENT_ID_END].try_into().unwrap());
     if previous >= position {
         return Err(FileStorageError::Corrupt("event link order"));
     }
@@ -1365,7 +1394,9 @@ impl Archive for FileEvents {
         let count = values.len();
         let events = self.clone();
         let bytes = values.iter().try_fold(0usize, |total, event| {
-            total.checked_add(event.payload.len())?.checked_add(99)
+            total
+                .checked_add(event.payload.len())?
+                .checked_add(MAX_EVENT_OVERHEAD)
         });
         let Some(bytes) = bytes else {
             return vec![Err(FileStorageError::Rejected("batch size overflow"))];
@@ -1383,17 +1414,9 @@ impl Archive for FileEvents {
                     let mut handles = Vec::with_capacity(values.len());
                     for event in &values {
                         let position = EventPosition::new(offset);
-                        let mut record = vec![3];
-                        record.extend_from_slice(&offset.to_be_bytes());
-                        record.extend_from_slice(&previous.to_be_bytes());
-                        record.push(u8::from(event.blob_tree.is_some()));
-                        if let Some(root) = event.blob_tree {
-                            encode_tree(&mut record, root);
-                        }
-                        record.extend_from_slice(&event.payload);
+                        let record = encode_event(event, offset, previous);
                         previous = offset;
-                        offset = offset
-                            .checked_add(48 + record.len() as u64)
+                        offset = frame_end(offset, record.len() as u64)
                             .ok_or(FileStorageError::Rejected("event positions exhausted"))?;
                         records.push((Key::Event(position), Bytes::from(record)));
                         handles.push(Ok(self.0.handle(position)));
@@ -1470,19 +1493,8 @@ impl FileEvents {
         let mut previous = head;
         let mut records = Vec::with_capacity(values.len());
         for event in values {
-            let ordinal = offset;
-            let mut record = vec![3];
-            record.extend_from_slice(&ordinal.to_be_bytes());
-            record.extend_from_slice(&previous.to_be_bytes());
-            record.push(u8::from(event.blob_tree.is_some()));
-            if let Some(root) = event.blob_tree {
-                encode_tree(&mut record, root);
-            }
-            record.extend_from_slice(&event.payload);
-            let Some(next) = offset
-                .checked_add(48)
-                .and_then(|start| start.checked_add(record.len() as u64))
-            else {
+            let record = encode_event(event, offset, previous);
+            let Some(next) = frame_end(offset, record.len() as u64) else {
                 return vec![Err(FileStorageError::Rejected("event positions exhausted"))];
             };
             previous = offset;
@@ -2289,6 +2301,40 @@ mod tests {
             };
             2
         ]
+    }
+
+    #[test]
+    fn event_codec_preserves_wire_layout_with_and_without_tree() {
+        let blob = BlobId::for_bytes(b"root");
+        for blob_tree in [None, Some(BlobTreeId::Blob(blob))] {
+            let event = Event {
+                payload: Bytes::from_static(b"payload"),
+                blob_tree,
+            };
+            let record = encode_event(&event, 100, 8);
+            let mut expected = vec![3];
+            expected.extend_from_slice(&100_u64.to_be_bytes());
+            expected.extend_from_slice(&8_u64.to_be_bytes());
+            expected.push(u8::from(blob_tree.is_some()));
+            if blob_tree.is_some() {
+                expected.push(0);
+                expected.extend_from_slice(blob.as_bytes());
+            }
+            expected.extend_from_slice(b"payload");
+            assert_eq!(record, expected);
+            let decoded = decode_event(&record).unwrap();
+            assert_eq!(decoded.position, EventPosition::new(100));
+            assert_eq!(decoded.event, event);
+            assert_eq!(event_previous(&record).unwrap(), 8);
+            assert_eq!(
+                record.len(),
+                event.payload.len() + if blob_tree.is_some() { 51 } else { 18 }
+            );
+        }
+        assert_eq!(MAX_EVENT_OVERHEAD, 99);
+        for length in 0..EVENT_HEADER_BYTES {
+            assert!(decode_event(&vec![EVENT_TAG; length]).is_err());
+        }
     }
 
     #[tokio::test]

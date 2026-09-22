@@ -9,7 +9,7 @@ use sea_core::{
 use sea_webtransport::{
     NativeSeaClient, SeaClientError, SessionClient, SessionOpen, TransportConfig, protocol,
     transport::{BidirectionalStream, ClientTransport},
-    websocket::{self, CHUNK_BYTES, DATA, FIN, SUBPROTOCOL},
+    websocket::{self, CHUNK_BYTES, DATA, FIN, MAX_RECORD_BYTES, RECORD_HEADER_BYTES, SUBPROTOCOL},
 };
 use serde::Deserialize;
 use serde_json::json;
@@ -43,8 +43,8 @@ async fn socket(url: &str) -> Result<Socket, SeaClientError> {
         SUBPROTOCOL.parse().map_err(socket_error)?,
     );
     let config = WebSocketConfig::default()
-        .max_message_size(Some(CHUNK_BYTES + 1))
-        .max_frame_size(Some(CHUNK_BYTES + 1))
+        .max_message_size(Some(MAX_RECORD_BYTES))
+        .max_frame_size(Some(MAX_RECORD_BYTES))
         .write_buffer_size(0);
     let (socket, response) = connect_async_with_config(request, Some(config), true)
         .await
@@ -97,7 +97,7 @@ impl BidirectionalStream for SocketStream {
 
     async fn send(&mut self, bytes: &[u8]) -> Result<(), Self::Error> {
         for chunk in bytes.chunks(CHUNK_BYTES) {
-            let mut record = Vec::with_capacity(chunk.len() + 1);
+            let mut record = Vec::with_capacity(chunk.len() + RECORD_HEADER_BYTES);
             record.push(DATA);
             record.extend_from_slice(chunk);
             self.0

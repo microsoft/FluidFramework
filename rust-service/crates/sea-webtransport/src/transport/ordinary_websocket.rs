@@ -17,14 +17,14 @@ use wasm_bindgen::{JsCast as _, prelude::*};
 use web_sys::{BinaryType, Event, MessageEvent, WebSocket};
 
 use super::js_error;
-use crate::websocket::{CHUNK_BYTES, SUBPROTOCOL};
+use crate::websocket::{MAX_RECORD_BYTES, SUBPROTOCOL};
 
 /// Maximum adapter-owned receive bytes per logical socket, not a process bound.
 const MAX_QUEUED_BYTES: usize = 4 * 1024 * 1024;
 /// Also bounds overhead from very small or empty messages.
 const MAX_QUEUED_MESSAGES: usize = 256;
 /// At most two envelope-sized messages are admitted to the native send buffer.
-const MAX_BUFFERED_SEND: u32 = 2 * (64 * 1024 + 1);
+const MAX_BUFFERED_SEND: usize = 2 * MAX_RECORD_BYTES;
 
 /// Event callbacks own only this state; dropping the adapter detaches callbacks.
 struct State {
@@ -95,7 +95,7 @@ impl OrdinarySocket {
                 message_state.fail("unsupported WebSocket message type");
                 return;
             };
-            if size > CHUNK_BYTES + 1
+            if size > MAX_RECORD_BYTES
                 || message_state.queue.borrow().len() >= MAX_QUEUED_MESSAGES
                 || size > MAX_QUEUED_BYTES - message_state.queued_bytes.get()
             {
@@ -182,7 +182,7 @@ impl OrdinarySocket {
                 .socket
                 .buffered_amount()
                 .saturating_add(bytes.length())
-                <= MAX_BUFFERED_SEND
+                <= u32::try_from(MAX_BUFFERED_SEND).expect("WebSocket send budget fits u32")
             {
                 break;
             }

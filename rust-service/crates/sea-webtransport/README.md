@@ -20,6 +20,8 @@ Each frame contains one explicit `MessageKind` byte, a four-byte big-endian leng
 The five-byte envelope has no correlation ID.
 No-blob submissions and deliveries have distinct kinds and omit the blob option tag; both decode into the same event model as blob-bearing messages.
 The decoder accepts fragmentation and coalescing and enforces `max_frame_bytes` before payload decoding.
+It also reports the next exact read size, validating the header before requesting payload bytes, so callers can stop at one frame boundary.
+Encoded-length accounting belongs to the same codec; WebSocket adapters share the record header and maximum size from the WebSocket envelope module.
 An unknown kind fails as soon as its first byte arrives; invalid kinds, roles, or bodies terminate the owning connection without admitting later requests.
 Earlier accepted submissions remain committed and recoverable through the session's terminal departure.
 Each reusable stream completes one request before starting the next; bounded content responses end with `ResponseComplete`.

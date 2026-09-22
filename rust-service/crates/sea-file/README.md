@@ -23,6 +23,8 @@ Neither operation synchronizes buffered files or promises power-loss safety.
 
 Each document has an event journal, a fixed-width snapshot journal, a hash-addressed content directory, and independent internal checkpoint state.
 Frames contain a length, its complement, a BLAKE3 content hash, and the record bytes.
+Journal helpers own checked frame-boundary arithmetic and prefix probing; matching event identities still require full checksum and record validation.
+Buffered reservation and durable append share one event encoder, and admission overhead is derived from that layout.
 Event positions are literal byte offsets in the event journal; predecessor offsets support backward traversal for arbitrary range bounds.
 Snapshot positions remain event positions; their physical offsets and lookup belong only to storage.
 The current experimental formats have no supported migration from earlier versions.

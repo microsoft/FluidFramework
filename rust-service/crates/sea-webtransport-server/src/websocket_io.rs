@@ -5,7 +5,9 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{SinkExt as _, StreamExt as _, stream::SplitSink};
-use sea_webtransport::websocket::{self, CHUNK_BYTES, DATA, FIN, Record};
+use sea_webtransport::websocket::{
+    self, CHUNK_BYTES, DATA, FIN, MAX_RECORD_BYTES, RECORD_HEADER_BYTES, Record,
+};
 use tokio::{
     io::{AsyncRead, AsyncWrite},
     sync::{mpsc, watch},
@@ -22,13 +24,16 @@ use crate::{
     stream::{ReceiveStream, SendStream},
 };
 
+/// Conservative per-chunk allowance for the Sea tag and WebSocket framing in tungstenite's buffer.
+const WRITE_BUFFER_OVERHEAD_ALLOWANCE: usize = 32;
+
 /// Limits both complete messages and fragmented-message assembly.
 pub(crate) fn socket_config() -> WebSocketConfig {
     WebSocketConfig::default()
-        .max_message_size(Some(CHUNK_BYTES + 1))
-        .max_frame_size(Some(CHUNK_BYTES + 1))
+        .max_message_size(Some(MAX_RECORD_BYTES))
+        .max_frame_size(Some(MAX_RECORD_BYTES))
         .write_buffer_size(0)
-        .max_write_buffer_size(2 * (CHUNK_BYTES + 32))
+        .max_write_buffer_size(2 * (CHUNK_BYTES + WRITE_BUFFER_OVERHEAD_ALLOWANCE))
 }
 
 /// Aborts the reader task when both stream directions have been released.
@@ -136,7 +141,7 @@ where
             return Err(WebTransportError::Disconnected);
         }
         for chunk in bytes.chunks(CHUNK_BYTES) {
-            let mut record = Vec::with_capacity(chunk.len() + 1);
+            let mut record = Vec::with_capacity(chunk.len() + RECORD_HEADER_BYTES);
             record.push(DATA);
             record.extend_from_slice(chunk);
             self.sink
