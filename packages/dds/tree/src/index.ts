@@ -111,7 +111,6 @@ export {
 	type SchemaCompatibilityStatusBeta,
 	type SchemaCompatibilityStatusAlpha,
 	type SchemaComparisonStatusAlpha,
-	type CompleteSchemaDiscrepanciesAlpha,
 	type SchemaDiscrepancyAlpha,
 	type SchemaDiscrepancyValues,
 	type SchemaNodeKindDescription,

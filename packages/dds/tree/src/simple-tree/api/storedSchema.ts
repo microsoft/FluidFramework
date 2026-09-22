@@ -72,7 +72,7 @@ export function extractPersistedSchema(
  * @param persisted - Schema persisted for a document. Typically persisted alongside the data and assumed to describe that data.
  * @param view - Schema which would be used to view persisted content.
  * @param options - {@link ICodecOptions} used when parsing the provided schema.
- * @returns A {@link SchemaComparisonStatusAlpha} with complete differences and conditional viewing, upgrade, and equivalence blocker lists, without `canInitialize`.
+ * @returns A {@link SchemaComparisonStatusAlpha} with conditional viewing, upgrade, and equivalence blocker lists, without `canInitialize`.
  *
  * @remarks
  * Viewing diagnostics compare the view schema with the decoded stored schema.
@@ -80,9 +80,8 @@ export function extractPersistedSchema(
  * Equivalence also requires viewing compatibility and a successful reverse stored-schema comparison.
  * This function does not accept a staged upgrade policy or inspect document content.
  *
- * This compares schema data available in the persisted format, including persisted metadata when present.
- * Persisted metadata differences do not affect compatibility flags.
- * Non-persisted custom metadata and descriptions are not compared.
+ * This compares schema constraints available in the persisted format.
+ * Metadata and descriptions do not affect compatibility and are not reported.
  * Staging annotations are available from the view, but are not reconstructed from persisted input.
  * It also uses the persisted format so that this API can be used in tests to compare against saved schema from previous versions of the application.
  *

@@ -132,7 +132,7 @@ describe("SchematizingSimpleTreeView", () => {
 				assert.equal(view.root.content, 5);
 				assert.equal(JSON.stringify(beforeInitialization), serializedBefore);
 				assert.notEqual(view.compatibility, beforeInitialization);
-				assert.deepEqual(view.compatibility.allDiscrepancies, []);
+				assert.equal("allDiscrepancies" in view.compatibility, false);
 				const initialized = view.compatibility;
 				view.root.content = 6;
 				assert.equal(view.compatibility, initialized);
@@ -434,7 +434,6 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 		assert.deepEqual(viewGeneralized.compatibility, {
-			allDiscrepancies: [],
 			canView: true,
 			canUpgrade: true,
 			isEquivalent: true,
@@ -509,7 +508,6 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 		assert.deepEqual(viewGeneralized.compatibility, {
-			allDiscrepancies: [],
 			canView: true,
 			canUpgrade: true,
 			isEquivalent: true,

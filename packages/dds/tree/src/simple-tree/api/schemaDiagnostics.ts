@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-
 import {
 	EmptyKey,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	storedEmptyFieldSchema,
-	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	ValueSchema,
@@ -21,7 +19,7 @@ import {
 	FieldKinds,
 	getStoredSchemaSupersetFailures,
 } from "../../feature-libraries/index.js";
-import { brand, type JsonCompatibleReadOnly } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import { NodeKind, StagedSchemaUpgradePolicy } from "../core/index.js";
 import type { SimpleFieldSchema } from "../simpleSchema.js";
 import { toUpgradeSchema } from "../toStoredSchema.js";
@@ -55,13 +53,13 @@ export type SchemaDiscrepancyLocationAlpha =
 	  };
 
 /**
- * Describes one difference in schema constraints, persisted metadata, or view annotations.
+ * Describes one schema constraint that prevents a compatibility check from succeeding.
  *
  * @remarks
  * Each entry describes one aspect at one location. Missing side properties indicate absent values.
  * The `existingStored` side describes the document's existing stored schema.
  * The `view` side describes the schema being evaluated for access, with its constraints in stored-schema form and all staged changes included,
- * together with its staging annotations and unknown optional field policy.
+ * with relevant staging and unknown optional field context reported separately.
  * The `proposedStored` side describes the stored schema generated for an upgrade from the view schema and the configured staged upgrade policy,
  * as described by {@link SchemaCompatibilityStatus.canUpgrade}.
  * The proposed stored schema can differ from both the existing stored schema and the view's constraints.
@@ -69,10 +67,8 @@ export type SchemaDiscrepancyLocationAlpha =
  * The proposed stored schema can be identical to the existing stored schema.
  *
  * This is not a comparison of application classes, methods, or object identities, and it does not inspect document content.
- * Persisted metadata is compared by value and does not affect compatibility flags.
- * Non-persisted custom metadata and descriptions are not compared.
- * Staging annotations and the unknown optional field policy are view-only context, not properties of stored schema.
- * Their entries do not by themselves indicate a viewing or upgrade failure.
+ * Metadata and descriptions do not affect compatibility and are not reported.
+ * Staging annotations and the unknown optional field policy provide context for constraint failures, not standalone discrepancies.
  * Membership in a condition-specific discrepancy list identifies which compatibility checks a difference prevents.
  *
  * Entries support JSON serialization without a custom replacer.
@@ -87,14 +83,27 @@ export type SchemaDiscrepancyAlpha = {
 	 * Identifies the schema element that differs.
 	 */
 	readonly location: SchemaDiscrepancyLocationAlpha;
+	/**
+	 * Whether the allowed type is staged in the view. Present only when true on an allowed-type discrepancy.
+	 * The configured upgrade policy determines whether the type is included in the proposed stored schema.
+	 */
+	readonly viewIsStagedType?: true;
+	/**
+	 * Whether the field's optionality is staged in the view. Present only when true on a field discrepancy.
+	 */
+	readonly viewIsStagedOptional?: true;
+	/**
+	 * Whether the containing view object permits unknown optional fields. Present only when true on a field discrepancy.
+	 * This can permit viewing without permitting removal of those fields from the stored schema.
+	 */
+	readonly viewAllowsUnknownOptionalFields?: true;
 } & (
 	| ({
 			/**
-			 * Identifies allowed-type membership or a staging annotation for one allowed type.
-			 * Side values indicate whether that type is allowed or marked as staged, respectively.
-			 * Existing and proposed stored schemas do not retain staging annotations.
+			 * Identifies allowed-type membership that prevents the check from succeeding.
+			 * Side values indicate whether that type is allowed.
 			 */
-			readonly mismatch: "allowedType" | "stagedType";
+			readonly mismatch: "allowedType";
 			/**
 			 * Persisted identifier of the allowed type being compared.
 			 */
@@ -107,14 +116,6 @@ export type SchemaDiscrepancyAlpha = {
 			 */
 			readonly mismatch: "fieldKind" | "valueSchema";
 	  } & SchemaDiscrepancyValues<string>)
-	| ({
-			/**
-			 * Identifies an explicit field definition, optionality staging, or unknown-field policy difference.
-			 * Side values indicate whether the field definition, annotation, or policy is present or enabled.
-			 * Existing and proposed stored schemas do not retain staging annotations or the view's unknown-field policy.
-			 */
-			readonly mismatch: "fieldPresence" | "stagedOptional" | "allowUnknownOptionalFields";
-	  } & SchemaDiscrepancyValues<boolean>)
 	| ({
 			/**
 			 * Identifies a node-kind difference between existing definitions.
@@ -133,14 +134,6 @@ export type SchemaDiscrepancyAlpha = {
 			 */
 			readonly missingFrom: readonly ("view" | "existingStored" | "proposedStored")[];
 	  } & SchemaDiscrepancyValues<SchemaNodeKindDescription>)
-	| ({
-			/**
-			 * Identifies a persisted metadata difference at a node or field.
-			 * Side values contain the metadata values, compared independently of object property order.
-			 * This difference does not prevent viewing, upgrading, or equivalence.
-			 */
-			readonly mismatch: "persistedMetadata";
-	  } & SchemaDiscrepancyValues<JsonCompatibleReadOnly>)
 );
 
 /**
@@ -156,7 +149,7 @@ export type SchemaDiscrepancyAlpha = {
  */
 export interface SchemaDiscrepancyValues<T> {
 	/**
-	 * Describes the view schema's constraint, persisted metadata, or annotation at this location.
+	 * Describes the view schema's constraint at this location.
 	 * Constraints include all staged changes, independently of the configured staged upgrade policy.
 	 * Absent when that value does not exist.
 	 */
@@ -212,7 +205,7 @@ export type SchemaCompatibilityViewableStatus =
 			readonly canView: false;
 			/**
 			 * Differences that cause {@link SchemaCompatibilityStatus.canView} to be false.
-			 * Contains at least one entry from {@link CompleteSchemaDiscrepanciesAlpha.allDiscrepancies}.
+			 * Contains at least one entry. Does not include differences accepted by the viewing rules.
 			 * Entries retain all three side values, but membership in this list depends on the view and existing stored schemas, not the proposed stored schema.
 			 */
 			readonly viewDiscrepancies: readonly SchemaDiscrepancyAlpha[];
@@ -246,7 +239,7 @@ export type SchemaCompatibilityUpgradeableStatus =
 			readonly canUpgrade: false;
 			/**
 			 * Differences that cause {@link SchemaCompatibilityStatus.canUpgrade} to be false.
-			 * Contains at least one entry from {@link CompleteSchemaDiscrepanciesAlpha.allDiscrepancies}.
+			 * Contains at least one entry. Does not include differences accepted by the upgrade rules.
 			 * Entries retain all three side values, but membership in this list depends on the existing and proposed stored schemas.
 			 */
 			readonly upgradeDiscrepancies: readonly SchemaDiscrepancyAlpha[];
@@ -281,58 +274,27 @@ export type SchemaCompatibilityEquivalenceStatus =
 			readonly isEquivalent: false;
 			/**
 			 * Differences that cause {@link SchemaCompatibilityStatus.isEquivalent} to be false.
-			 * Contains at least one entry from {@link CompleteSchemaDiscrepanciesAlpha.allDiscrepancies}.
+			 * Contains at least one entry. Does not include differences accepted by all equivalence checks.
 			 * Includes viewing blockers, upgrade blockers, and differences that prevent the reverse comparison from the proposed stored schema to the existing stored schema.
 			 */
 			readonly equivalenceDiscrepancies: readonly SchemaDiscrepancyAlpha[];
 	  };
 
 /**
- * Reports differences in schema constraints, persisted metadata, and view annotations across the view, existing stored schema, and proposed stored schema.
- * @sealed
- * @alpha
- */
-export interface CompleteSchemaDiscrepanciesAlpha {
-	/**
-	 * Contains every distinct difference in the aspects described by {@link SchemaDiscrepancyAlpha}.
-	 *
-	 * @remarks
-	 * Reports the root field and node definitions, including stored definitions that are not reachable from the root.
-	 * Each entry describes values from the view, existing stored schema, and proposed stored schema where applicable.
-	 * The proposed stored schema is generated using the configured staged upgrade policy, as described by {@link SchemaCompatibilityStatus.canUpgrade}.
-	 * This is not solely a diff between the existing and proposed stored schemas: it also includes view-only staging annotations and unknown optional field policy.
-	 * It does not inspect the document's current content or explain {@link SchemaCompatibilityStatus.canInitialize}.
-	 *
-	 * This array is always available and can be nonempty when all compatibility flags are true.
-	 * Non-persisted custom metadata and descriptions are excluded. Their absence from stored schema
-	 * is not a discrepancy. For example, changing a schema description is ignored, while changing
-	 * `persistedMetadata` produces a discrepancy without changing compatibility flags.
-	 * The condition-specific lists select unchanged entries from this array.
-	 * A discrepancy can belong to more than one condition-specific list.
-	 *
-	 * @example Serializing discrepancies
-	 * ```typescript
-	 * console.log(JSON.stringify(view.compatibility.allDiscrepancies));
-	 * ```
-	 */
-	readonly allDiscrepancies: readonly SchemaDiscrepancyAlpha[];
-}
-
-/**
- * Reports compatibility for a view's configuration and document, with schema differences and conditional blocker subsets.
+ * Reports compatibility for a view's configuration and document, with conditional blocker lists.
  *
  * @remarks
  * Extends {@link SchemaCompatibilityStatusBeta} without changing its flags or beta discrepancy details.
  * Viewing discrepancies explain access under the existing stored schema; upgrade discrepancies explain the transition to the configuration's proposed stored schema.
  * Equivalence discrepancies also include failures of the reverse stored-schema comparison.
- * The complete list also includes differences that do not affect compatibility.
+ * These lists explain failed checks, not all schema differences or the changes a permitted upgrade would make.
+ * Persisted metadata differences and standalone view annotations are not reported.
  * None of these lists determines whether the document is uninitialized; {@link SchemaCompatibilityStatus.canInitialize} reports that state separately.
  *
  * @sealed
  * @alpha
  */
 export type SchemaCompatibilityStatusAlpha = SchemaCompatibilityStatusBeta &
-	CompleteSchemaDiscrepanciesAlpha &
 	SchemaCompatibilityViewableStatus &
 	SchemaCompatibilityUpgradeableStatus &
 	SchemaCompatibilityEquivalenceStatus;
@@ -351,51 +313,18 @@ export type SchemaComparisonStatusAlpha = Omit<
 	SchemaCompatibilityStatusBeta,
 	"canInitialize"
 > &
-	CompleteSchemaDiscrepanciesAlpha &
 	SchemaCompatibilityViewableStatus &
 	SchemaCompatibilityUpgradeableStatus &
 	SchemaCompatibilityEquivalenceStatus;
 
 type SchemaSide = "view" | "stored" | "target";
-type Values = Record<SchemaSide, JsonCompatibleReadOnly | undefined>;
-type Fields = Record<SchemaSide, TreeFieldStoredSchema | undefined>;
+type Values = Record<SchemaSide, boolean | string | SchemaNodeKindDescription | undefined>;
 type Nodes = Record<SchemaSide, TreeNodeStoredSchema | undefined>;
 /**
  * Internal checks that select blocker subsets without adding check labels to public entries.
  * `upgrade` compares stored to target; `reverse` compares target to stored for equivalence.
  */
 type Blocker = "view" | "upgrade" | "reverse";
-
-/**
- * Copies a JSON-compatible value with object keys in deterministic order.
- *
- * @remarks
- * Array order is preserved. Undefined object properties are omitted, and undefined array entries become null.
- * Callers must pass only comparison data or persisted metadata, never non-persisted metadata.
- *
- * @param value - Value to normalize. Object and array values must be acyclic.
- * @returns A normalized copy, or the original value when it is a primitive or undefined.
- */
-function canonical(
-	value: JsonCompatibleReadOnly | undefined,
-): JsonCompatibleReadOnly | undefined {
-	if (value === undefined || value === null || typeof value !== "object") {
-		return value;
-	}
-	if (Array.isArray(value)) {
-		return value.map((item) => canonical(item) ?? null);
-	}
-	return Object.fromEntries(
-		Object.keys(value)
-			.sort()
-			.flatMap((key) => {
-				const item = canonical(
-					(value as { readonly [key: string]: JsonCompatibleReadOnly })[key],
-				);
-				return item === undefined ? [] : [[key, item]];
-			}),
-	);
-}
 
 /**
  * Classifies the stored representation without expanding referenced node definitions.
@@ -423,47 +352,24 @@ function nodeKind(
 }
 
 /**
- * Gets fields by their stored keys, with null representing a map's implicit field.
- *
- * @remarks
- * Object keys are preserved, including the empty key used by stored arrays.
- * The caller converts array field keys to diagnostic locations separately.
- *
- * @param node - Node definition whose fields are needed.
- * @returns The node's fields, or an empty map for leaves and missing definitions.
- */
-function fieldsOf(
-	node: TreeNodeStoredSchema | undefined,
-	// eslint-disable-next-line @rushstack/no-new-null -- Matches the serializable location representation.
-): ReadonlyMap<string | null, TreeFieldStoredSchema> {
-	if (node instanceof MapNodeStoredSchema) {
-		return new Map([[null, node.mapFields]]);
-	}
-	if (node instanceof ObjectNodeStoredSchema) {
-		return node.objectNodeFields;
-	}
-	return new Map();
-}
-
-/**
- * Collects schema differences and selects the entries that block each compatibility check.
+ * Constructs diagnostics for failures of the viewing and stored-schema compatibility checks.
  *
  * @remarks
  * Viewing blockers come from the existing compatibility check to preserve its staging and policy rules.
  * Upgrade and reverse-comparison blockers use the stored schema rules.
  * The caller derives public compatibility flags from the presence of blockers in these results.
  *
- * Schema differences include persisted metadata and explicit staging annotations.
- * Non-persisted custom metadata and descriptions are not read.
+ * Relevant view annotations provide context on constraint failures.
+ * Metadata and descriptions are not compared.
  * Entries are deduplicated before the result lists are selected.
  * All lists use the same deterministic order and share entry objects.
  *
- * @param view - View schema, including staging annotations and persisted metadata.
- * @param stored - Current stored schema, including definitions unreachable from its root.
+ * @param view - View schema, including staging annotations and unknown optional field policy.
+ * @param stored - Existing stored schema, including definitions unreachable from its root.
  * @param target - Effective proposed stored schema after applying the configured staging policy.
  * @param viewFailures - Raw viewing discrepancies for these inputs from the existing compatibility check.
- * @returns The complete list and its viewing, upgrade, and equivalence blocker subsets.
- * Successful checks have empty subsets here; the caller omits those properties from the public status.
+ * @returns Viewing, upgrade, and equivalence blocker lists.
+ * Successful checks have empty lists here; the caller omits those properties from the public status.
  */
 export function collectSchemaDiagnostics(
 	view: TreeSchema,
@@ -471,7 +377,6 @@ export function collectSchemaDiagnostics(
 	target: TreeStoredSchema,
 	viewFailures: readonly Discrepancy[],
 ): {
-	all: readonly SchemaDiscrepancyAlpha[];
 	view: readonly SchemaDiscrepancyAlpha[];
 	upgrade: readonly SchemaDiscrepancyAlpha[];
 	equivalence: readonly SchemaDiscrepancyAlpha[];
@@ -480,23 +385,6 @@ export function collectSchemaDiagnostics(
 	const viewed = toUpgradeSchema(view.root, StagedSchemaUpgradePolicy.permissive);
 	const entries = new Map<string, SchemaDiscrepancyAlpha>();
 	const blockers = new Map<SchemaDiscrepancyAlpha, Set<Blocker>>();
-	const byAspect = new Map<string, SchemaDiscrepancyAlpha>();
-
-	/**
-	 * Identifies an aspect without including its values or comparison direction.
-	 *
-	 * @param location - Schema element containing the difference.
-	 * @param mismatch - Aspect being compared at this location.
-	 * @param allowedType - Type identifier for allowed-type and staged-type differences; otherwise omitted.
-	 * @returns A serialized key used to match compatibility blockers to diagnostic entries.
-	 */
-	function aspectKey(
-		location: SchemaDiscrepancyLocationAlpha,
-		mismatch: SchemaDiscrepancyAlpha["mismatch"],
-		allowedType?: string,
-	): string {
-		return JSON.stringify([location, mismatch, allowedType]);
-	}
 
 	/**
 	 * Records one distinct aspect difference without classifying it as a blocker.
@@ -504,34 +392,59 @@ export function collectSchemaDiagnostics(
 	 * @param mismatch - Aspect being compared. The caller must supply the matching value representation.
 	 * @param location - Schema element containing the difference.
 	 * @param values - Values on each side, with undefined for absent values.
-	 * @param allowedType - Type identifier, supplied only for allowed-type and staged-type differences.
-	 * @returns The shared entry for the difference, or undefined when all three values are equal.
+	 * @param allowedType - Type identifier, supplied only for allowed-type differences.
+	 * @returns The shared entry for the constraint failure, including relevant view context.
 	 */
 	function add(
 		mismatch: SchemaDiscrepancyAlpha["mismatch"],
 		location: SchemaDiscrepancyLocationAlpha,
 		values: Values,
 		allowedType?: string,
-	): SchemaDiscrepancyAlpha | undefined {
-		// Skip equal primitives and shared references before copying or serializing values.
-		if (values.view === values.stored && values.target === values.stored) {
-			return undefined;
-		}
-		// Compare metadata by value, independent of object property insertion order.
+	): SchemaDiscrepancyAlpha {
 		const normalized = {
-			view: canonical(values.view),
-			existingStored: canonical(values.stored),
-			proposedStored: canonical(values.target),
+			view: values.view,
+			existingStored: values.stored,
+			proposedStored: values.target,
 		};
-		if (
-			JSON.stringify(normalized.view) === JSON.stringify(normalized.existingStored) &&
-			JSON.stringify(normalized.proposedStored) === JSON.stringify(normalized.existingStored)
-		) {
-			return undefined;
+		const viewNode = location === "root" ? undefined : view.definitions.get(location.nodeType);
+		const isField = location === "root" || location.fieldKey !== undefined;
+		let viewField: SimpleFieldSchema | undefined;
+		if (location === "root") {
+			viewField = view.root;
+		} else if (isField && viewNode?.kind === NodeKind.Object) {
+			viewField = [...viewNode.fields.values()].find(
+				(field) => field.storedKey === location.fieldKey,
+			);
 		}
+		const allowedTypes =
+			viewField?.simpleAllowedTypes ??
+			(isField &&
+			viewNode !== undefined &&
+			viewNode.kind !== NodeKind.Leaf &&
+			viewNode.kind !== NodeKind.Object
+				? viewNode.simpleAllowedTypes
+				: undefined);
+		const isStagedType =
+			allowedType !== undefined &&
+			allowedTypes !== undefined &&
+			[...allowedTypes].some(
+				([type, attributes]) =>
+					type === allowedType &&
+					attributes.isStaged !== undefined &&
+					attributes.isStaged !== false,
+			);
 		const data = {
 			mismatch,
 			location,
+			...(isStagedType ? { viewIsStagedType: true } : {}),
+			...(viewField?.isStagedOptional !== undefined && viewField.isStagedOptional !== false
+				? { viewIsStagedOptional: true }
+				: {}),
+			...(isField &&
+			viewNode?.kind === NodeKind.Object &&
+			viewNode.allowUnknownOptionalFields === true
+				? { viewAllowsUnknownOptionalFields: true }
+				: {}),
 			...(mismatch === "missingNode"
 				? {
 						missingFrom: (["view", "existingStored", "proposedStored"] as const).filter(
@@ -556,13 +469,12 @@ export function collectSchemaDiagnostics(
 			return previous;
 		}
 		entries.set(key, entry);
-		byAspect.set(aspectKey(location, mismatch, allowedType), entry);
 		blockers.set(entry, new Set());
 		return entry;
 	}
 
 	/**
-	 * Associates an existing difference with a failed check without changing its public payload.
+	 * Constructs an entry for a failed check and records which check it prevents.
 	 *
 	 * @param location - Location of the failed comparison.
 	 * @param mismatch - Aspect rejected by the authoritative comparison.
@@ -575,11 +487,52 @@ export function collectSchemaDiagnostics(
 		check: Blocker,
 		allowedType?: string,
 	): void {
-		const entry =
-			byAspect.get(aspectKey(location, mismatch, allowedType)) ??
-			byAspect.get(aspectKey(location, "missingNode")) ??
-			byAspect.get(aspectKey(location, "fieldPresence"));
-		assert(entry !== undefined, "Every compatibility failure must have a diagnostic entry");
+		const identifier =
+			location === "root" ? undefined : brand<TreeNodeSchemaIdentifier>(location.nodeType);
+		const nodes: Nodes = {
+			view: identifier === undefined ? undefined : viewed.nodeSchema.get(identifier),
+			stored: identifier === undefined ? undefined : stored.nodeSchema.get(identifier),
+			target: identifier === undefined ? undefined : target.nodeSchema.get(identifier),
+		};
+		const entryMismatch =
+			location !== "root" &&
+			location.fieldKey === undefined &&
+			Object.values(nodes).includes(undefined)
+				? "missingNode"
+				: mismatch;
+		const valueFor = (side: SchemaSide): Values[SchemaSide] => {
+			const node = nodes[side];
+			if (location === "root" || location.fieldKey !== undefined) {
+				const schema = side === "view" ? viewed : side === "stored" ? stored : target;
+				const field =
+					location === "root"
+						? schema.rootFieldSchema
+						: node instanceof MapNodeStoredSchema
+							? node.mapFields
+							: node instanceof ObjectNodeStoredSchema
+								? node.objectNodeFields.get(brand(location.fieldKey ?? EmptyKey))
+								: undefined;
+				const actual = field ?? storedEmptyFieldSchema;
+				return mismatch === "allowedType"
+					? actual.types.has(brand(allowedType ?? ""))
+					: actual.kind;
+			}
+			if (entryMismatch === "valueSchema") {
+				return node instanceof LeafNodeStoredSchema ? ValueSchema[node.leafValue] : undefined;
+			}
+			const kind = nodeKind(node);
+			return kind === undefined ? undefined : { kind };
+		};
+		const entry = add(
+			entryMismatch,
+			location,
+			{
+				view: valueFor("view"),
+				stored: valueFor("stored"),
+				target: valueFor("target"),
+			},
+			allowedType,
+		);
 		blockers.get(entry)?.add(check);
 	}
 
@@ -610,197 +563,6 @@ export function collectSchemaDiagnostics(
 		};
 	}
 
-	/**
-	 * Records structural field differences without evaluating compatibility policy.
-	 *
-	 * @param location - Location shared by the fields being compared.
-	 * @param fields - Explicit field definitions on each side, before substituting absent fields.
-	 */
-	function compareFields(location: SchemaDiscrepancyLocationAlpha, fields: Fields): void {
-		// Preserve absent-versus-explicit differences even when both fields forbid all content.
-		add("fieldPresence", location, {
-			view: fields.view !== undefined,
-			stored: fields.stored !== undefined,
-			target: fields.target !== undefined,
-		});
-		// Compatibility treats an absent field as a forbidden field with no allowed types.
-		const actual = {
-			view: fields.view ?? storedEmptyFieldSchema,
-			stored: fields.stored ?? storedEmptyFieldSchema,
-			target: fields.target ?? storedEmptyFieldSchema,
-		};
-		add("fieldKind", location, {
-			view: actual.view.kind,
-			stored: actual.stored.kind,
-			target: actual.target.kind,
-		});
-		for (const type of new Set([
-			...actual.view.types,
-			...actual.stored.types,
-			...actual.target.types,
-		])) {
-			add(
-				"allowedType",
-				location,
-				{
-					view: actual.view.types.has(type),
-					stored: actual.stored.types.has(type),
-					target: actual.target.types.has(type),
-				},
-				type,
-			);
-		}
-		add("persistedMetadata", location, {
-			view: fields.view?.persistedMetadata,
-			stored: fields.stored?.persistedMetadata,
-			target: fields.target?.persistedMetadata,
-		});
-	}
-
-	/**
-	 * Records view-only staging annotations independently of their effect on the proposed stored schema.
-	 *
-	 * @param location - Location of the annotated field.
-	 * @param field - View field whose allowed types and optionality may be staged.
-	 */
-	function staging(location: SchemaDiscrepancyLocationAlpha, field: SimpleFieldSchema): void {
-		for (const [type, attributes] of field.simpleAllowedTypes) {
-			if (attributes.isStaged !== undefined && attributes.isStaged !== false) {
-				add("stagedType", location, { view: true, stored: false, target: false }, type);
-			}
-		}
-		if (field.isStagedOptional !== undefined && field.isStagedOptional !== false) {
-			add("stagedOptional", location, { view: true, stored: false, target: false });
-		}
-	}
-
-	compareFields("root", {
-		view: viewed.rootFieldSchema,
-		stored: stored.rootFieldSchema,
-		target: target.rootFieldSchema,
-	});
-	staging("root", view.root);
-	// Compare every definition, including stored definitions unreachable from the root.
-	for (const identifier of new Set([
-		...viewed.nodeSchema.keys(),
-		...stored.nodeSchema.keys(),
-		...target.nodeSchema.keys(),
-	])) {
-		const location = { nodeType: identifier };
-		const nodes: Nodes = {
-			view: viewed.nodeSchema.get(identifier),
-			stored: stored.nodeSchema.get(identifier),
-			target: target.nodeSchema.get(identifier),
-		};
-		const kinds = {
-			view: nodeKind(nodes.view),
-			stored: nodeKind(nodes.stored),
-			target: nodeKind(nodes.target),
-		};
-		const missing = Object.values(nodes).includes(undefined);
-		add(missing ? "missingNode" : "nodeKind", location, {
-			view: kinds.view === undefined ? undefined : { kind: kinds.view },
-			stored: kinds.stored === undefined ? undefined : { kind: kinds.stored },
-			target: kinds.target === undefined ? undefined : { kind: kinds.target },
-		});
-		// Avoid expanding a missing definition or a leaf/non-leaf mismatch into value details.
-		if (kinds.view === "leaf" && kinds.stored === "leaf") {
-			add("valueSchema", location, {
-				view:
-					nodes.view instanceof LeafNodeStoredSchema
-						? ValueSchema[nodes.view.leafValue]
-						: undefined,
-				stored:
-					nodes.stored instanceof LeafNodeStoredSchema
-						? ValueSchema[nodes.stored.leafValue]
-						: undefined,
-				target:
-					nodes.target instanceof LeafNodeStoredSchema
-						? ValueSchema[nodes.target.leafValue]
-						: undefined,
-			});
-		}
-		add("persistedMetadata", location, {
-			view: nodes.view?.metadata,
-			stored: nodes.stored?.metadata,
-			target: nodes.target?.metadata,
-		});
-		const fields = {
-			view: fieldsOf(nodes.view),
-			stored: fieldsOf(nodes.stored),
-			target: fieldsOf(nodes.target),
-		};
-		if (
-			nodes.view !== undefined &&
-			nodes.stored !== undefined &&
-			kinds.view !== "leaf" &&
-			kinds.stored !== "leaf"
-		) {
-			for (const fieldKey of new Set([
-				...fields.view.keys(),
-				...fields.stored.keys(),
-				...fields.target.keys(),
-			])) {
-				// Compare object fields against the map's implicit field, not an extra synthetic field.
-				if (
-					fieldKey === null &&
-					(nodes.view instanceof ObjectNodeStoredSchema ||
-						nodes.stored instanceof ObjectNodeStoredSchema)
-				) {
-					continue;
-				}
-				compareFields(
-					{
-						nodeType: identifier,
-						fieldKey:
-							fieldKey === EmptyKey && (kinds.view === "array" || kinds.stored === "array")
-								? null
-								: fieldKey,
-					},
-					{
-						view:
-							fields.view.get(fieldKey) ??
-							(nodes.view instanceof MapNodeStoredSchema ? fields.view.get(null) : undefined),
-						stored:
-							fields.stored.get(fieldKey) ??
-							(nodes.stored instanceof MapNodeStoredSchema
-								? fields.stored.get(null)
-								: undefined),
-						target:
-							fields.target.get(fieldKey) ??
-							(nodes.target instanceof MapNodeStoredSchema
-								? fields.target.get(null)
-								: undefined),
-					},
-				);
-			}
-		}
-		// Stored representations omit staging and unknown-field policies; read these from the view.
-		const viewNode = view.definitions.get(identifier);
-		if (viewNode?.kind === NodeKind.Object) {
-			for (const field of viewNode.fields.values()) {
-				staging({ nodeType: identifier, fieldKey: field.storedKey }, field);
-			}
-			if (viewNode.allowUnknownOptionalFields === true) {
-				add("allowUnknownOptionalFields", location, {
-					view: true,
-					stored: false,
-					target: false,
-				});
-			}
-		} else if (viewNode !== undefined && viewNode.kind !== NodeKind.Leaf) {
-			for (const [type, attributes] of viewNode.simpleAllowedTypes) {
-				if (attributes.isStaged !== undefined && attributes.isStaged !== false) {
-					add(
-						"stagedType",
-						{ nodeType: identifier, fieldKey: null },
-						{ view: true, stored: false, target: false },
-						type,
-					);
-				}
-			}
-		}
-	}
 	// Reuse viewing decisions and beta context from the pre-target analysis.
 	for (const failure of viewFailures) {
 		if (failure.mismatch === "allowedTypes") {
@@ -837,15 +599,13 @@ export function collectSchemaDiagnostics(
 			);
 		}
 	}
-	// Sort once so every subset preserves the complete list's order and entry identities.
-	const all = [...entries.entries()]
+	const ordered = [...entries.entries()]
 		.sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
 		.map(([, entry]) => entry);
 	return {
-		all,
-		view: all.filter((entry) => blockers.get(entry)?.has("view") === true),
-		upgrade: all.filter((entry) => blockers.get(entry)?.has("upgrade") === true),
+		view: ordered.filter((entry) => blockers.get(entry)?.has("view") === true),
+		upgrade: ordered.filter((entry) => blockers.get(entry)?.has("upgrade") === true),
 		// Equivalence requires viewing compatibility and superset checks in both directions.
-		equivalence: all.filter((entry) => (blockers.get(entry)?.size ?? 0) > 0),
+		equivalence: ordered,
 	};
 }

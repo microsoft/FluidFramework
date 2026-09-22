@@ -42,7 +42,6 @@ export type {
 	SchemaDiscrepancyValues,
 	SchemaNodeKindDescription,
 	SchemaDiscrepancyLocationAlpha,
-	CompleteSchemaDiscrepanciesAlpha,
 	SchemaCompatibilityStatusAlpha,
 	SchemaComparisonStatusAlpha,
 	SchemaCompatibilityViewableStatus,

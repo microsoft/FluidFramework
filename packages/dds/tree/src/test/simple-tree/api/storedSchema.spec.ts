@@ -22,7 +22,7 @@ import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js
 import { getStagedSchemaUpgrades, testDocuments } from "../../testTrees.js";
 
 describe("simple-tree storedSchema", () => {
-	it("reports metadata through both helpers without inspecting non-persisted metadata", () => {
+	it("ignores metadata differences through both helpers without inspecting non-persisted metadata", () => {
 		const factory = new SchemaFactoryAlpha("diagnostics");
 		const metadata = {
 			get custom(): never {
@@ -63,21 +63,13 @@ describe("simple-tree storedSchema", () => {
 			assert.equal(status.canView, true);
 			assert.equal(status.canUpgrade, true);
 			assert.equal(status.isEquivalent, true);
-			assert(
-				status.allDiscrepancies.some(
-					({ mismatch, location }) =>
-						mismatch === "persistedMetadata" &&
-						location !== "root" &&
-						location.fieldKey === "value",
-				),
-			);
+			assert.equal("allDiscrepancies" in status, false);
 			assert.equal("canInitialize" in status, false);
 			const serialized: unknown = JSON.parse(JSON.stringify(status));
 			assert.deepEqual(serialized, {
 				canView: true,
 				canUpgrade: true,
 				isEquivalent: true,
-				allDiscrepancies: status.allDiscrepancies,
 				enabledUpgrades: {},
 			});
 		}
@@ -128,12 +120,7 @@ describe("simple-tree storedSchema", () => {
 					const status = comparePersistedSchema(persistedA, test.schema, {
 						jsonValidator: FormatValidatorBasic,
 					});
-					const { allDiscrepancies, ...legacyStatus } = status;
-
-					// Verify that JSON serialization and parsing preserve the diagnostic payload without data loss.
-					assert.deepEqual(JSON.parse(JSON.stringify(allDiscrepancies)), allDiscrepancies);
-
-					assert.deepEqual(legacyStatus, {
+					assert.deepEqual(status, {
 						isEquivalent: true,
 						canView: true,
 						canUpgrade: true,

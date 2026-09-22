@@ -200,7 +200,6 @@ export function checkSchemaCompatibility(
 	const isEquivalent = diagnostics.equivalence.length === 0;
 
 	return {
-		allDiscrepancies: diagnostics.all,
 		...(canView
 			? { canView: true as const }
 			: { canView: false as const, viewDiscrepancies: diagnostics.view }),

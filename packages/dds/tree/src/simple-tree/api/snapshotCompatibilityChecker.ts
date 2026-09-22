@@ -34,9 +34,8 @@ import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
  * Equivalence also requires viewing compatibility and a successful reverse stored-schema comparison.
  * See {@link SchemaCompatibilityStatus} for the compatibility flags and {@link SchemaComparisonStatusAlpha} for the diagnostic lists.
  *
- * The complete discrepancy list also includes available persisted metadata and view-only staging annotations and unknown optional field policy.
- * Non-persisted custom metadata and descriptions are not compared, even if both inputs contain them.
- * Persisted metadata differences do not affect compatibility flags.
+ * Diagnostic lists contain only constraint failures, with relevant staging and unknown optional field context.
+ * Metadata and descriptions do not affect compatibility and are not reported.
  * This function does not inspect document content and does not report `canInitialize`.
  *
  * @example This example demonstrates checking the compatibility of a historical schema against a current schema.
@@ -78,7 +77,7 @@ import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
  *
  * @param viewWhichCreatedStoredSchema - Configuration whose `schema` is used to generate the existing stored schema with the default restrictive staged upgrade policy.
  * @param view - Configuration whose `schema` is used for viewing checks and to generate the proposed stored schema with the default restrictive staged upgrade policy.
- * @returns A {@link SchemaComparisonStatusAlpha} with complete differences and conditional viewing, upgrade, and equivalence blocker lists, without `canInitialize`.
+ * @returns A {@link SchemaComparisonStatusAlpha} with conditional viewing, upgrade, and equivalence blocker lists, without `canInitialize`.
  *
  * @privateRemarks
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.

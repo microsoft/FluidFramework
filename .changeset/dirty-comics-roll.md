@@ -3,16 +3,17 @@
 "fluid-framework": minor
 "__section": tree
 ---
-Add complete schema diagnostics to the alpha API
+Explain schema compatibility failures through the alpha API
 
-Alpha tree views expose `allDiscrepancies` through [compatibility](https://fluidframework.com/docs/api/tree/treeview-interface#compatibility-propertysignature).
-This list reports differences in schema constraints, persisted metadata, and view annotations.
-It covers the root field and node definitions, including stored definitions that are not reachable from the root.
+Alpha tree views expose targeted diagnostic lists through [compatibility](https://fluidframework.com/docs/api/tree/treeview-interface#compatibility-propertysignature).
+When `canView`, `canUpgrade`, or `isEquivalent` is false, the corresponding `viewDiscrepancies`, `upgradeDiscrepancies`, or `equivalenceDiscrepancies` list explains the failure.
+Each list is nonempty when present and absent when its check succeeds.
+Narrow the corresponding flag to `false` before accessing a list.
 
 Each entry describes one aspect at one location, with values for the applicable sides:
 
 - `existingStored`: the document's existing stored schema.
-- `view`: the schema being evaluated for access, with its constraints in stored-schema form and all staged changes included, together with its staging annotations and unknown optional field policy.
+- `view`: the schema being evaluated for access, with its constraints in stored-schema form and all staged changes included.
 - `proposedStored`: the stored schema generated from the view schema and the configured staged upgrade policy, including whether to retain upgrades already enabled in the document.
 
 The proposed stored schema is the schema used to check whether an upgrade is permitted.
@@ -20,21 +21,20 @@ The proposed stored schema does not imply that an upgrade has occurred or will o
 The proposed stored schema can be identical to the existing stored schema.
 It can differ from both the existing stored schema and the view's constraints.
 Stored schemas do not contain staging annotations or the view's unknown optional field policy.
-Those entries provide view-only context, so `allDiscrepancies` is not solely a diff between the existing and proposed stored schemas.
+The optional `viewIsStagedType`, `viewIsStagedOptional`, and `viewAllowsUnknownOptionalFields` properties provide relevant view context on constraint failures.
+They are present only when true and are not standalone discrepancies.
 The report does not compare application classes, methods, or object identities, and it does not inspect document content.
 
-When [canView](https://fluidframework.com/docs/api/tree/schemacompatibilitystatus-interface#canview-propertysignature), [canUpgrade](https://fluidframework.com/docs/api/tree/schemacompatibilitystatus-interface#canupgrade-propertysignature), or [isEquivalent](https://fluidframework.com/docs/api/tree/schemacompatibilitystatus-interface#isequivalent-propertysignature) is false, the status also exposes the corresponding `viewDiscrepancies`, `upgradeDiscrepancies`, or `equivalenceDiscrepancies` subset.
-Narrow the flag before accessing its subset.
-Each subset is nonempty and selects unchanged entries from `allDiscrepancies`:
+Each list has a specific scope:
 
 - `viewDiscrepancies` explains why the view schema cannot provide read-write access under the document's existing stored schema. This check does not compare against the proposed stored schema.
 - `upgradeDiscrepancies` explains why the existing stored schema cannot be upgraded to the proposed stored schema generated from the view's configuration.
 - `equivalenceDiscrepancies` includes viewing blockers, upgrade blockers, and differences that prevent the reverse stored-schema comparison from the proposed stored schema to the existing stored schema.
 
-A difference can belong to more than one subset.
-The complete list can be nonempty even when `canView`, `canUpgrade`, and `isEquivalent` are all true.
-Persisted metadata differences and view-only annotations do not by themselves prevent viewing, upgrading, or equivalence.
-Use the blocker subsets to identify which differences prevent each check from succeeding.
+A difference can belong to more than one list.
+These lists explain failed checks; they do not provide a complete schema diff or preview a permitted upgrade.
+Persisted metadata changes do not affect compatibility and are not reported.
+Stored-schema checks include definitions that are not reachable from the root.
 
 The alpha [checkCompatibility](https://fluidframework.com/docs/api/tree/#checkcompatibility-function) and [comparePersistedSchema](https://fluidframework.com/docs/api/tree/#comparepersistedschema-function) helpers return the same diagnostic information without [canInitialize](https://fluidframework.com/docs/api/tree/schemacompatibilitystatus-interface#caninitialize-propertysignature).
 That flag reports whether a document has neither stored schema nor tree content, which schema comparison alone cannot determine.
@@ -48,14 +48,12 @@ The beta `discrepancies` property continues to report viewing blockers rather th
 #### Inspect an alpha view's diagnostics
 
 Pass an alpha view's [compatibility](https://fluidframework.com/docs/api/tree/treeview-interface#compatibility-propertysignature) value to this function.
-The complete list is always available, while each blocker list requires narrowing its corresponding flag to `false`.
+Each blocker list requires narrowing its corresponding flag to `false`.
 
 ```typescript
 import type { SchemaCompatibilityStatusAlpha } from "@fluidframework/tree/alpha";
 
 function logCompatibility(status: SchemaCompatibilityStatusAlpha): void {
-	console.log(JSON.stringify(status.allDiscrepancies, undefined, 2));
-
 	if (!status.canView) {
 		console.log("Viewing blockers:", status.viewDiscrepancies);
 	}
@@ -89,9 +87,8 @@ const previous = new TreeViewConfiguration({ schema: factory.number });
 const proposed = new TreeViewConfiguration({ schema: factory.string });
 const status = checkCompatibility(previous, proposed);
 
-console.log(JSON.stringify(status.allDiscrepancies, undefined, 2));
 if (!status.canView) {
-	console.log(status.viewDiscrepancies);
+	console.log(JSON.stringify(status.viewDiscrepancies, undefined, 2));
 }
 ```
 
@@ -100,7 +97,7 @@ Its result supports the same diagnostic properties and flag narrowing.
 It decodes the original stored schema and generates the proposed stored schema from the view schema with the default restrictive staged upgrade policy.
 It does not accept a staged upgrade policy.
 
-For the number-to-string comparison above, `allDiscrepancies` contains:
+For the number-to-string comparison above, `viewDiscrepancies` contains:
 
 ```json
 [
@@ -119,34 +116,6 @@ For the number-to-string comparison above, `allDiscrepancies` contains:
 		"view": true,
 		"existingStored": false,
 		"proposedStored": true
-	},
-	{
-		"mismatch": "missingNode",
-		"location": {
-			"nodeType": "com.fluidframework.leaf.number"
-		},
-		"missingFrom": [
-			"view",
-			"proposedStored"
-		],
-		"existingStored": {
-			"kind": "leaf"
-		}
-	},
-	{
-		"mismatch": "missingNode",
-		"location": {
-			"nodeType": "com.fluidframework.leaf.string"
-		},
-		"missingFrom": [
-			"existingStored"
-		],
-		"view": {
-			"kind": "leaf"
-		},
-		"proposedStored": {
-			"kind": "leaf"
-		}
 	}
 ]
 ```
@@ -154,63 +123,18 @@ For the number-to-string comparison above, `allDiscrepancies` contains:
 All three compatibility flags are false.
 `viewDiscrepancies` contains the two `allowedType` entries.
 `upgradeDiscrepancies` contains the number `allowedType` entry and the missing number definition.
-`equivalenceDiscrepancies` contains all four entries.
+`equivalenceDiscrepancies` contains both allowed-type entries and both missing definitions.
 The missing definitions are reported separately because stored-schema comparisons also cover detached nodes.
 
-#### Compare a persisted metadata change
+#### Interpret staging and unknown-field context
 
-This example keeps the same node identifier and field schema but changes the persisted metadata.
-Both configurations describe `example.Item`, so the comparison reports a metadata difference on that definition.
+If an existing stored field is optional but the staged upgrade policy keeps it required in the proposed stored schema, `upgradeDiscrepancies` reports a `fieldKind` failure.
+The entry has `viewIsStagedOptional: true` when the view declares staged optionality.
+Similarly, excluding a staged type that the existing stored schema permits produces an `allowedType` failure with `viewIsStagedType: true`.
 
-```typescript
-import {
-	checkCompatibility,
-	SchemaFactoryAlpha,
-	TreeViewConfiguration,
-} from "@fluidframework/tree/alpha";
+A view can allow unknown optional fields and still be unable to upgrade the document.
+Removing those fields from the proposed stored schema can produce field-kind and allowed-type failures with `viewAllowsUnknownOptionalFields: true`.
+These entries explain why viewing succeeds but upgrading fails.
 
-const factory = new SchemaFactoryAlpha("example");
-const previousSchema = factory.objectAlpha(
-	"Item",
-	{ value: factory.number },
-	{ persistedMetadata: { version: 1 } },
-);
-const proposedSchema = factory.objectAlpha(
-	"Item",
-	{ value: factory.number },
-	{ persistedMetadata: { version: 2 } },
-);
-const previous = new TreeViewConfiguration({ schema: previousSchema });
-const proposed = new TreeViewConfiguration({ schema: proposedSchema });
-const status = checkCompatibility(previous, proposed);
-
-console.log(JSON.stringify(status.allDiscrepancies, undefined, 2));
-```
-
-The output is:
-
-```json
-[
-	{
-		"mismatch": "persistedMetadata",
-		"location": {
-			"nodeType": "example.Item"
-		},
-		"view": {
-			"version": 2
-		},
-		"existingStored": {
-			"version": 1
-		},
-		"proposedStored": {
-			"version": 2
-		}
-	}
-]
-```
-
-All three compatibility flags are true because persisted metadata does not affect compatibility.
-The `viewDiscrepancies`, `upgradeDiscrepancies`, and `equivalenceDiscrepancies` properties are absent.
-Equivalence does not require identical persisted metadata, and `upgradeSchema()` makes no change when `isEquivalent` is true.
-In both examples, `proposedStored` matches `view` because neither schema uses staged upgrades.
+Changing only persisted metadata leaves all three checks successful, so no diagnostic lists are present.
 The entry order shown here is illustrative; callers must not depend on a particular sorting rule.

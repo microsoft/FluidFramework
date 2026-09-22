@@ -80,7 +80,6 @@ export {
 	type SchemaCompatibilityStatusBeta,
 	type SchemaCompatibilityStatusAlpha,
 	type SchemaComparisonStatusAlpha,
-	type CompleteSchemaDiscrepanciesAlpha,
 	collectSchemaDiagnostics,
 	getDiscrepanciesInAllowedContent,
 	type SchemaDiscrepancyAlpha,

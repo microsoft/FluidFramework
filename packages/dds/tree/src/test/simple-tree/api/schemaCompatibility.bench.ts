@@ -57,7 +57,6 @@ function consume(
 		}
 		case "all lists": {
 			return [
-				status.allDiscrepancies,
 				status.canView ? undefined : status.viewDiscrepancies,
 				status.canUpgrade ? undefined : status.upgradeDiscrepancies,
 				status.isEquivalent ? undefined : status.equivalenceDiscrepancies,
@@ -68,11 +67,16 @@ function consume(
 				status.isEquivalent ? undefined : status.equivalenceDiscrepancies,
 				status.canUpgrade ? undefined : status.upgradeDiscrepancies,
 				status.canView ? undefined : status.viewDiscrepancies,
-				status.allDiscrepancies,
 			];
 		}
 		case "repeated access": {
-			return [status.allDiscrepancies, status.allDiscrepancies, status.allDiscrepancies];
+			return status.isEquivalent
+				? undefined
+				: [
+						status.equivalenceDiscrepancies,
+						status.equivalenceDiscrepancies,
+						status.equivalenceDiscrepancies,
+					];
 		}
 		case "serialize": {
 			return JSON.stringify(status);

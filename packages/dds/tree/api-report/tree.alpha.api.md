@@ -230,11 +230,6 @@ export type CommitRevision = string;
 // @alpha
 export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions): SchemaComparisonStatusAlpha;
 
-// @alpha @sealed
-export interface CompleteSchemaDiscrepanciesAlpha {
-    readonly allDiscrepancies: readonly SchemaDiscrepancyAlpha[];
-}
-
 // @alpha
 export namespace Component {
     export function compose<TComponent>(allComponents: readonly Factory<TComponent>[]): Composed<TComponent>;
@@ -1246,7 +1241,7 @@ export interface RunTransactionParamsBeta {
 }
 
 // @alpha @sealed
-export type SchemaComparisonStatusAlpha = Omit<SchemaCompatibilityStatusBeta, "canInitialize"> & CompleteSchemaDiscrepanciesAlpha & SchemaCompatibilityViewableStatus & SchemaCompatibilityUpgradeableStatus & SchemaCompatibilityEquivalenceStatus;
+export type SchemaComparisonStatusAlpha = Omit<SchemaCompatibilityStatusBeta, "canInitialize"> & SchemaCompatibilityViewableStatus & SchemaCompatibilityUpgradeableStatus & SchemaCompatibilityEquivalenceStatus;
 
 // @alpha @sealed
 export type SchemaCompatibilityEquivalenceStatus = {
@@ -1265,7 +1260,7 @@ export interface SchemaCompatibilityStatus {
 }
 
 // @alpha @sealed
-export type SchemaCompatibilityStatusAlpha = SchemaCompatibilityStatusBeta & CompleteSchemaDiscrepanciesAlpha & SchemaCompatibilityViewableStatus & SchemaCompatibilityUpgradeableStatus & SchemaCompatibilityEquivalenceStatus;
+export type SchemaCompatibilityStatusAlpha = SchemaCompatibilityStatusBeta & SchemaCompatibilityViewableStatus & SchemaCompatibilityUpgradeableStatus & SchemaCompatibilityEquivalenceStatus;
 
 // @beta @sealed
 export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
@@ -1323,21 +1318,20 @@ export type SchemaDiscrepancy = {
 // @alpha @sealed
 export type SchemaDiscrepancyAlpha = {
     readonly location: SchemaDiscrepancyLocationAlpha;
+    readonly viewIsStagedType?: true;
+    readonly viewIsStagedOptional?: true;
+    readonly viewAllowsUnknownOptionalFields?: true;
 } & (({
-    readonly mismatch: "allowedType" | "stagedType";
+    readonly mismatch: "allowedType";
     readonly allowedType: string;
 } & SchemaDiscrepancyValues<boolean>) | ({
     readonly mismatch: "fieldKind" | "valueSchema";
 } & SchemaDiscrepancyValues<string>) | ({
-    readonly mismatch: "fieldPresence" | "stagedOptional" | "allowUnknownOptionalFields";
-} & SchemaDiscrepancyValues<boolean>) | ({
     readonly mismatch: "nodeKind";
 } & SchemaDiscrepancyValues<SchemaNodeKindDescription>) | ({
     readonly mismatch: "missingNode";
     readonly missingFrom: readonly ("view" | "existingStored" | "proposedStored")[];
-} & SchemaDiscrepancyValues<SchemaNodeKindDescription>) | ({
-    readonly mismatch: "persistedMetadata";
-} & SchemaDiscrepancyValues<JsonCompatibleReadOnly>));
+} & SchemaDiscrepancyValues<SchemaNodeKindDescription>));
 
 // @alpha
 export type SchemaDiscrepancyLocationAlpha = "root" | {
