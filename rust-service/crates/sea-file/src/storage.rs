@@ -58,9 +58,7 @@ impl<const DURABLE: bool> FileStorage<DURABLE> {
         fs::create_dir_all(root.as_ref())?;
         let root = fs::canonicalize(root)?;
         if DURABLE {
-            for ancestor in root.ancestors() {
-                fs::File::open(ancestor)?.sync_all()?;
-            }
+            sync_namespace(&root, |directory| fs::File::open(directory)?.sync_all())?;
         }
         Ok(Self { root })
     }
@@ -152,6 +150,27 @@ impl<const DURABLE: bool> SeaStorage for FileStorage<DURABLE> {
             Err(error) => Err(error),
         }
     }
+}
+
+/// Synchronizes namespace bindings bottom-up without flushing unrelated parent filesystems.
+/// Mount configuration is external to the namespace's durability guarantee.
+fn sync_namespace(
+    root: &Path,
+    mut synchronize: impl FnMut(&Path) -> std::io::Result<()>,
+) -> std::io::Result<()> {
+    #[cfg(unix)]
+    use std::os::unix::fs::MetadataExt;
+
+    #[cfg(unix)]
+    let device = fs::metadata(root)?.dev();
+    for ancestor in root.ancestors() {
+        #[cfg(unix)]
+        if fs::metadata(ancestor)?.dev() != device {
+            break;
+        }
+        synchronize(ancestor)?;
+    }
+    Ok(())
 }
 
 /// Availability evidence scoped to a canonical document path, without writer ownership.
@@ -972,6 +991,39 @@ mod tests {
     async fn directory_deduplication_does_not_wait_for_writer() {
         check_directory_deduplication::<false>().await;
         check_directory_deduplication::<true>().await;
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn namespace_sync_stops_at_filesystem_boundary() {
+        let mut synchronized = Vec::new();
+        sync_namespace(Path::new("/proc"), |directory| {
+            synchronized.push(directory.to_path_buf());
+            Ok(())
+        })
+        .unwrap();
+        assert_eq!(synchronized, vec![PathBuf::from("/proc")]);
+    }
+
+    #[test]
+    fn namespace_sync_is_bottom_up_and_propagates_failure() {
+        let root = root();
+        fs::create_dir_all(root.join("nested")).unwrap();
+        let root = fs::canonicalize(root).unwrap();
+        let nested = root.join("nested");
+        let mut synchronized = Vec::new();
+        let error = sync_namespace(&nested, |directory| {
+            synchronized.push(directory.to_path_buf());
+            if directory == root {
+                Err(std::io::Error::other("injected namespace sync failure"))
+            } else {
+                Ok(())
+            }
+        })
+        .unwrap_err();
+        assert_eq!(error.to_string(), "injected namespace sync failure");
+        assert_eq!(synchronized, vec![nested, root.clone()]);
+        fs::remove_dir_all(root).unwrap();
     }
 
     /// Checks that closed directories can be reused while another mutation owns the journal.

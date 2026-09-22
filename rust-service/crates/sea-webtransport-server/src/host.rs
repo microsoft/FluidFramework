@@ -21,32 +21,40 @@ use crate::{
     LivenessPolicy, SeaConnectionService, SeaResponseStream, SeaServiceHost, SessionDispatcher,
 };
 
+/// Retained exclusive runtimes indexed by opaque document identity.
+type DocumentRuntimes<Storage> =
+    BTreeMap<Vec<u8>, Arc<sea_sequencer::session::LocalSequencer<Storage>>>;
+
 /// Serializes lazy runtime recovery within one backend namespace.
 struct DocumentRegistry<Storage: sea_core::storage::SeaStorage> {
     /// Factory retaining the backend namespace independently of active views.
-    storage: Storage,
+    storage: Arc<Storage>,
     /// Serializes first recovery; failed attempts are never cached.
-    documents: Mutex<BTreeMap<Vec<u8>, Arc<sea_sequencer::session::LocalSequencer<Storage>>>>,
+    documents: Arc<Mutex<DocumentRuntimes<Storage>>>,
 }
 
 impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage> {
     /// Creates an empty cache over one backend namespace.
     fn new(storage: Storage) -> Self {
         Self {
-            storage,
-            documents: Mutex::new(BTreeMap::new()),
+            storage: Arc::new(storage),
+            documents: Arc::new(Mutex::new(BTreeMap::new())),
         }
     }
 
     /// Allocates a backend identity and retains its recovered exclusive view.
     async fn create(&self) -> Result<sea_core::storage::DocumentId, protocol::Response> {
-        let mut documents = self.documents.lock().await;
-        let (id, view) = self.storage.create_view().await.map_err(error_response)?;
-        let runtime = sea_sequencer::session::LocalSequencer::recover(view)
-            .await
-            .map_err(error_response)?;
-        documents.insert(id.as_bytes().to_vec(), runtime);
-        Ok(id)
+        let mut documents = self.documents.clone().lock_owned().await;
+        let storage = self.storage.clone();
+        storage_worker(async move {
+            let (id, view) = storage.create_view().await.map_err(error_response)?;
+            let runtime = sea_sequencer::session::LocalSequencer::recover(view)
+                .await
+                .map_err(error_response)?;
+            documents.insert(id.as_bytes().to_vec(), runtime);
+            Ok(id)
+        })
+        .await
     }
 
     /// Shares the existing runtime or exclusively recovers one without caching failures.
@@ -54,22 +62,39 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
         &self,
         id: &sea_core::storage::DocumentId,
     ) -> Result<Arc<sea_sequencer::session::LocalSequencer<Storage>>, protocol::Response> {
-        let mut documents = self.documents.lock().await;
+        let mut documents = self.documents.clone().lock_owned().await;
         if let Some(runtime) = documents.get(id.as_bytes().as_ref()) {
             return Ok(runtime.clone());
         }
-        let view = self
-            .storage
-            .open_view(id)
-            .await
-            .map_err(error_response)?
-            .ok_or_else(|| rejected("document does not exist"))?;
-        let runtime = sea_sequencer::session::LocalSequencer::recover(view)
-            .await
-            .map_err(error_response)?;
-        documents.insert(id.as_bytes().to_vec(), runtime.clone());
-        Ok(runtime)
+        let storage = self.storage.clone();
+        let id = id.clone();
+        storage_worker(async move {
+            let view = storage
+                .open_view(&id)
+                .await
+                .map_err(error_response)?
+                .ok_or_else(|| rejected("document does not exist"))?;
+            let runtime = sea_sequencer::session::LocalSequencer::recover(view)
+                .await
+                .map_err(error_response)?;
+            documents.insert(id.as_bytes().to_vec(), runtime.clone());
+            Ok(runtime)
+        })
+        .await
     }
+}
+
+/// Runs potentially synchronous storage futures off the executor, retaining captured ownership on cancellation.
+/// A failed worker may have mutated storage, so its outcome is ambiguous and is never retried here.
+async fn storage_worker<Output: Send + 'static>(
+    operation: impl std::future::Future<Output = Result<Output, protocol::Response>> + Send + 'static,
+) -> Result<Output, protocol::Response> {
+    tokio::task::spawn_blocking(move || tokio::runtime::Handle::current().block_on(operation))
+        .await
+        .map_err(|error| protocol::Response::Error {
+            kind: protocol::ErrorKind::Ambiguous,
+            message: format!("storage worker failed: {error}"),
+        })?
 }
 
 /// Runtime-selected factory and its exclusively owned document views.
@@ -182,7 +207,7 @@ struct HostInner {
     /// Configured storage guarantees.
     mode: StorageMode,
     /// Successful factory initialization; errors leave this empty for retry.
-    backend: Mutex<Option<Arc<Backend>>>,
+    backend: Arc<Mutex<Option<Arc<Backend>>>>,
 }
 
 /// Final Sea protocol host using the server's runtime-selected backend.
@@ -200,7 +225,7 @@ impl BuiltInSeaHost {
                 signals: Mutex::new(BTreeMap::new()),
                 root,
                 mode,
-                backend: Mutex::new(None),
+                backend: Arc::new(Mutex::new(None)),
             }),
         }
     }
@@ -222,26 +247,42 @@ impl BuiltInSeaHost {
 
     /// Initializes storage without opening author membership.
     async fn backend(&self) -> Result<Arc<Backend>, protocol::Response> {
-        let backend = {
-            let mut current = self.inner.backend.lock().await;
-            if current.is_none() {
-                let root = self.inner.root.join("documents");
-                let backend = match self.inner.mode {
-                    StorageMode::Memory => {
-                        Backend::Memory(DocumentRegistry::new(MemoryStorage::new()))
-                    }
-                    StorageMode::BufferedFile => Backend::Buffered(DocumentRegistry::new(
-                        FileStorage::open(root).map_err(error_response)?,
-                    )),
-                    StorageMode::DurableFile => Backend::Durable(DocumentRegistry::new(
-                        DurableStorage::open(root).map_err(error_response)?,
-                    )),
-                };
-                *current = Some(Arc::new(backend));
-            }
-            current.as_ref().expect("backend initialized").clone()
-        };
-        Ok(backend)
+        let root = self.inner.root.join("documents");
+        let mode = self.inner.mode;
+        self.initialize_backend(move || {
+            Ok(match mode {
+                StorageMode::Memory => Backend::Memory(DocumentRegistry::new(MemoryStorage::new())),
+                StorageMode::BufferedFile => Backend::Buffered(DocumentRegistry::new(
+                    FileStorage::open(root).map_err(error_response)?,
+                )),
+                StorageMode::DurableFile => Backend::Durable(DocumentRegistry::new(
+                    DurableStorage::open(root).map_err(error_response)?,
+                )),
+            })
+        })
+        .await
+    }
+
+    /// Keeps synchronous initialization off the executor and retains serialization after cancellation.
+    /// A completed worker caches success even if its caller has gone away; failures remain retryable.
+    async fn initialize_backend(
+        &self,
+        initialize: impl FnOnce() -> Result<Backend, protocol::Response> + Send + 'static,
+    ) -> Result<Arc<Backend>, protocol::Response> {
+        let mut current = self.inner.backend.clone().lock_owned().await;
+        if let Some(backend) = current.as_ref() {
+            return Ok(backend.clone());
+        }
+        tokio::task::spawn_blocking(move || {
+            let backend = Arc::new(initialize()?);
+            *current = Some(backend.clone());
+            Ok(backend)
+        })
+        .await
+        .map_err(|error| protocol::Response::Error {
+            kind: protocol::ErrorKind::Unavailable,
+            message: format!("storage initialization worker failed: {error}"),
+        })?
     }
 }
 
@@ -573,6 +614,55 @@ mod tests {
     };
 
     #[tokio::test]
+    async fn slow_backend_initialization_preserves_executor_progress_and_cancellation_ownership() {
+        let host = BuiltInSeaHost::new(std::path::PathBuf::new(), StorageMode::Memory);
+        let (entered, entering) = tokio::sync::oneshot::channel();
+        let (release, released) = std::sync::mpsc::channel();
+        let initializing_host = host.clone();
+        let initialization = tokio::spawn(async move {
+            initializing_host
+                .initialize_backend(move || {
+                    entered.send(()).unwrap();
+                    released
+                        .recv_timeout(Duration::from_secs(5))
+                        .expect("executor must release initialization");
+                    Ok(super::Backend::Memory(DocumentRegistry::new(
+                        sea_memory::MemoryStorage::new(),
+                    )))
+                })
+                .await
+        });
+        entering.await.unwrap();
+        assert!(
+            timeout(Duration::from_millis(10), host.backend())
+                .await
+                .is_err()
+        );
+        initialization.abort();
+        assert!(matches!(initialization.await, Err(error) if error.is_cancelled()));
+        assert!(host.inner.backend.try_lock().is_err());
+        release.send(()).unwrap();
+        let backend = host
+            .initialize_backend(|| panic!("cancelled worker must cache its result"))
+            .await
+            .unwrap();
+        assert!(Arc::ptr_eq(&backend, &host.backend().await.unwrap()));
+    }
+
+    #[tokio::test]
+    async fn backend_initialization_failure_remains_retryable() {
+        let host = BuiltInSeaHost::new(std::path::PathBuf::new(), StorageMode::Memory);
+        assert!(
+            host.initialize_backend(|| Err(super::rejected("injected failure")))
+                .await
+                .is_err()
+        );
+        assert!(host.inner.backend.lock().await.is_none());
+        let backend = host.backend().await.unwrap();
+        assert!(Arc::ptr_eq(&backend, &host.backend().await.unwrap()));
+    }
+
+    #[tokio::test]
     #[allow(clippy::too_many_lines)]
     async fn signals_cross_native_connections_without_archive_events() {
         use sea_core::signals::{
@@ -720,6 +810,110 @@ mod tests {
         let fresh = registry.create().await.expect("allocate document");
         assert_ne!(fresh, id);
         assert!(registry.open(&fresh).await.is_ok());
+    }
+
+    /// Injects synchronous storage latency independently of filesystem and VM timing.
+    struct PausedStorage {
+        /// Real storage supplying exclusive document components after the pause.
+        inner: sea_memory::MemoryStorage,
+        /// One bounded blocking pause before creation or recovery.
+        pause: std::sync::Mutex<Option<Box<dyn FnOnce() + Send>>>,
+    }
+
+    impl PausedStorage {
+        /// Consumes the pause on the first storage operation only.
+        fn pause(&self) {
+            if let Some(pause) = self.pause.lock().unwrap().take() {
+                pause();
+            }
+        }
+    }
+
+    #[async_trait::async_trait]
+    impl sea_core::storage::SeaStorage for PausedStorage {
+        type Error = <sea_memory::MemoryStorage as sea_core::storage::SeaStorage>::Error;
+        type Blobs = <sea_memory::MemoryStorage as sea_core::storage::SeaStorage>::Blobs;
+        type Events = <sea_memory::MemoryStorage as sea_core::storage::SeaStorage>::Events;
+        type Snapshots = <sea_memory::MemoryStorage as sea_core::storage::SeaStorage>::Snapshots;
+
+        fn durability(&self) -> sea_core::Durability {
+            self.inner.durability()
+        }
+
+        async fn create_document(
+            &self,
+        ) -> Result<
+            sea_core::storage::CreatedDocument<Self::Blobs, Self::Events, Self::Snapshots>,
+            Self::Error,
+        > {
+            self.pause();
+            self.inner.create_document().await
+        }
+
+        async fn open_document(
+            &self,
+            id: &sea_core::storage::DocumentId,
+        ) -> Result<
+            Option<
+                sea_core::storage::StorageComponents<Self::Blobs, Self::Events, Self::Snapshots>,
+            >,
+            Self::Error,
+        > {
+            self.pause();
+            self.inner.open_document(id).await
+        }
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn slow_document_initialization_preserves_executor_progress_and_cancellation_ownership() {
+        use sea_core::storage::SeaStorage as _;
+
+        for create in [false, true] {
+            let storage = sea_memory::MemoryStorage::new();
+            let (existing, view) = storage.create_view().await.unwrap();
+            drop(view);
+            let (entered, entering) = tokio::sync::oneshot::channel();
+            let (release, released) = std::sync::mpsc::channel();
+            let registry = Arc::new(DocumentRegistry::new(PausedStorage {
+                inner: storage,
+                pause: std::sync::Mutex::new(Some(Box::new(move || {
+                    entered.send(()).unwrap();
+                    released
+                        .recv_timeout(Duration::from_secs(5))
+                        .expect("executor must release storage");
+                }))),
+            }));
+            let initializing_registry = registry.clone();
+            let initialization = tokio::spawn(async move {
+                if create {
+                    initializing_registry.create().await.unwrap();
+                } else {
+                    initializing_registry.open(&existing).await.unwrap();
+                }
+            });
+            entering.await.unwrap();
+            assert!(
+                timeout(Duration::from_millis(10), registry.documents.lock())
+                    .await
+                    .is_err()
+            );
+            initialization.abort();
+            assert!(initialization.await.unwrap_err().is_cancelled());
+            assert!(registry.documents.try_lock().is_err());
+            release.send(()).unwrap();
+            let (id, cached) = {
+                let documents = timeout(Duration::from_secs(5), registry.documents.lock())
+                    .await
+                    .unwrap();
+                assert_eq!(documents.len(), 1);
+                let (id, cached) = documents.first_key_value().unwrap();
+                (
+                    sea_core::storage::DocumentId::from_bytes(Bytes::copy_from_slice(id)),
+                    cached.clone(),
+                )
+            };
+            assert!(Arc::ptr_eq(&cached, &registry.open(&id).await.unwrap()));
+        }
     }
 
     #[tokio::test]

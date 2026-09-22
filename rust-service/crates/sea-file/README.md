@@ -12,6 +12,8 @@ The format is incompatible with the transitional journal; migrate before reuse.
 Buffered writes reach the operating system before returning but are not synchronized, so their durability is `Durability::Buffered`.
 Durable mode appends to the journal and synchronizes it before acknowledgment, once per event batch.
 Durable creation synchronizes a temporary file, renames it, and synchronizes the namespace and newly created ancestors.
+On Unix, namespace synchronization stops when the parent belongs to a different filesystem; synchronizing an unrelated parent filesystem cannot persist the namespace's entries.
+Mount configuration must already be stable and is outside this guarantee.
 Its [power-loss model](../sea-file-durable/README.md#power-loss-model) requires durable-prefix integrity, crash-atomic rename, and truthful synchronization; filesystem/device qualification remains outstanding.
 
 Recovery verifies framing, content identities, transitive directory closure, a dense event prefix, and strictly advancing snapshot dependencies before exposing components.
@@ -71,6 +73,7 @@ Poisoning blocks authoritative observations during unwinding, before explicit fa
 
 The complete journal is recovered into memory, history is never pruned, and namespace allocation searches for an unused numeric filename.
 Namespace opening, document creation/recovery, blob/directory writes, and snapshot appends still perform synchronous I/O and can block the calling executor.
+The built-in server host runs namespace initialization and document creation/recovery on blocking workers; direct storage callers must arrange their own execution isolation for these operations.
 Blob writes, new directory writes, and snapshot appends also synchronously wait for the journal writer mutex and hold the state mutex across their own I/O; reads may wait behind those barriers or an in-memory publication, but not event-batch disk I/O.
 Mutations write only new frames without replacing the journal inode; encoding memory is proportional to batch size.
 Distributed filesystems, external file replacement, and writes through buffered mode are outside the durable guarantee.

@@ -5,7 +5,7 @@ Historical findings and resolved investigations are retained in [Historical reco
 
 ## Intermittent native connection timeout
 
-- **Status:** Open; cause not established
+- **Status:** Partially addressed; storage-induced initialization stalls reproduced and fixed, original intermittent failure not captured under tracing
 - **Severity:** Medium
 - **Area:** Native WebTransport connection setup and test reliability
 - **Evidence:** `host::tests::native_client_round_trip_in_every_storage_mode` failed during initial `NativeSeaClient::connect` with `Transport(Timeout)` in workspace validation on 2026-09-20.
@@ -17,6 +17,18 @@ Historical findings and resolved investigations are retained in [Historical reco
   Temporary production logging was removed; the round-trip test now reports storage mode, elapsed connection time, and server measurements on failure.
 - **Impact:** Native test runs can fail without an established product or test-harness cause.
   The transport timeout must not be classified as harmless host variability or resolved by a passing retry.
+- **Storage findings (2026-09-22):** A durable-file connection failed after 74.44 seconds despite a five-second client operation timeout.
+  In a separate successful run, syscall tracing measured `fsync("/")` at 0.964 seconds while document-related synchronizations each took less than one millisecond.
+  The namespace was on the separate `/tmp` ext4 mount, but initialization also synchronized the unrelated container overlay root on the runtime thread.
+  A controlled seven-second `fsync` delay made the original round-trip test take 16.75 seconds without enforcing its operation deadline promptly.
+  With initialization offloaded, the same delay injection produced the expected connection timeout at 5.01 seconds while the blocking worker finished independently.
+  The original 74-second incident was not syscall-traced, so these results establish a causal stall mechanism, not attribution of every recorded timeout.
+- **Repair and regression evidence:** Unix namespace synchronization stops at a different filesystem, preserving bottom-up synchronization and error propagation within the namespace filesystem.
+  The built-in host offloads factory initialization, creation, and recovery while retaining cache ownership through caller cancellation.
+  Deterministically blocked factory/create/recovery tests verify executor deadlines and cancellation ownership; file tests verify filesystem boundaries and synchronization error propagation.
+- **Benchmark scope:** The durable startup failures in the [project overview](historical/PROJECT_OVERVIEW.md#storage-and-core-exploration) may share this mechanism.
+  Steady-state durable throughput variance remains unisolated: namespace initialization is not performed for every append, and virtualized storage can make necessary journal synchronization variable.
+  Blob and snapshot writes remain synchronous barriers; this repair does not claim general isolation of all storage operations or bounded filesystem latency.
 - **Follow-up:** Capture the enhanced failure diagnostics and instrument the implicated connection stage to obtain a reproducible cause.
   Preserve the original failure when retrying; do not increase deadlines or suppress the test without causal evidence.
 - **Trigger:** Close only after a causal fix and a regression check that exercises the failing condition.
