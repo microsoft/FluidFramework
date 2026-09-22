@@ -11387,6 +11387,9 @@ importers:
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
+      '@fluid-internal/react-19-test-dependencies':
+        specifier: workspace:~
+        version: link:../../test/react-19-test-dependencies
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
@@ -11462,18 +11465,12 @@ importers:
       react-18:
         specifier: npm:react@^18.3.1
         version: react@18.3.1
-      react-19:
-        specifier: npm:react@^19.0.0
-        version: react@19.2.8
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       react-dom-18:
         specifier: npm:react-dom@^18.3.1
         version: react-dom@18.3.1(react@18.3.1)
-      react-dom-19:
-        specifier: npm:react-dom@^19.0.0
-        version: react-dom@19.2.8(react@18.3.1)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -14196,6 +14193,15 @@ importers:
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
+
+  packages/test/react-19-test-dependencies:
+    dependencies:
+      react:
+        specifier: ^19.0.0
+        version: 19.2.8
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.8(react@19.2.8)
 
   packages/test/snapshots:
     dependencies:
@@ -39659,9 +39665,9 @@ snapshots:
       react: 18.3.1
       scheduler: 0.23.2
 
-  react-dom@19.2.8(react@18.3.1):
+  react-dom@19.2.8(react@19.2.8):
     dependencies:
-      react: 18.3.1
+      react: 19.2.8
       scheduler: 0.27.0
 
   react-draggable@4.4.6(react-dom@18.3.1)(react@18.3.1):

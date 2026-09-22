@@ -16,7 +16,7 @@ import {
 	type UnwrapPropTreeNodeRecord,
 	type WrapNodes,
 } from "./propNode.js";
-import type { FC, MemoExoticComponent, PropsAreEqual, ReactElement } from "./reactTypes.js";
+import type { FC, MemoExoticComponent, PropsAreEqual, ReactNode } from "./reactTypes.js";
 import { useObservation, type ObservationOptions } from "./useObservation.js";
 
 /**
@@ -61,7 +61,7 @@ export function withTreeObservations<TIn>(
 	component: FC<TIn>,
 	options?: ObservationOptions,
 ): FC<TIn> & FC<WrapNodes<TIn>> & FC<TIn | WrapNodes<TIn>> {
-	return (props: TIn | WrapNodes<TIn>): ReactElement =>
+	return (props: TIn | WrapNodes<TIn>): ReactNode =>
 		useTreeObservations(() => component(props as TIn), options);
 }
 

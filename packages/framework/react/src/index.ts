@@ -50,6 +50,7 @@ export type {
 	MemoExoticComponent,
 	PropsAreEqual,
 	ReactElement,
+	ReactNode,
 } from "./reactTypes.js";
 export {
 	syncTextToTree,

@@ -9,6 +9,12 @@ register("./hooks.mjs", import.meta.url);
 
 const reactVersion = process.env.REACT_VERSION === "19" ? "19" : "18";
 const requireFromHere = createRequire(import.meta.url);
+const react19PackageJson = requireFromHere.resolve(
+	"@fluid-internal/react-19-test-dependencies/package.json",
+);
+const requireFromReact19Dependencies = createRequire(react19PackageJson);
+const originalResolveFilename = Module._resolveFilename;
+let resolvingFromReact19Dependencies = false;
 
 function aliasFor(specifier) {
 	const firstSlash = specifier.indexOf("/");
@@ -23,8 +29,18 @@ function aliasFor(specifier) {
 	return undefined;
 }
 
-const originalResolveFilename = Module._resolveFilename;
 Module._resolveFilename = function (request, ...rest) {
+	if (resolvingFromReact19Dependencies) {
+		return originalResolveFilename.call(this, request, ...rest);
+	}
+	if (reactVersion === "19" && aliasFor(request) !== undefined) {
+		resolvingFromReact19Dependencies = true;
+		try {
+			return requireFromReact19Dependencies.resolve(request);
+		} finally {
+			resolvingFromReact19Dependencies = false;
+		}
+	}
 	const alias = aliasFor(request);
 	if (alias !== undefined) {
 		return requireFromHere.resolve(alias);

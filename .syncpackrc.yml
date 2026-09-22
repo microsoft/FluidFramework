@@ -202,12 +202,14 @@ versionGroups:
       - "**"
     isIgnored: true
 
-  - label: "Allow @fluidframework/react to support both React 18 and React 19"
+  - label: "Allow @fluidframework/react to support and test React 18 and React 19"
     dependencies:
       - "@types/react-19"
       - "react"
+      - "react-dom"
     packages:
       - "@fluidframework/react"
+      - "@fluid-internal/react-19-test-dependencies"
     isIgnored: true
 
   # eslint-config-fluid is an independent workspace linked via the link: protocol,

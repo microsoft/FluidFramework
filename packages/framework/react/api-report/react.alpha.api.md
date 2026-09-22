@@ -5,7 +5,7 @@
 ```ts
 
 // @alpha
-export type FC<in P = object> = (props: P) => ReactElement;
+export type FC<in P = object> = (props: P) => ReactNode;
 
 // @alpha @sealed
 export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
@@ -52,6 +52,9 @@ export interface ReactElement {
     readonly props: any;
     readonly type: any;
 }
+
+// @alpha
+export type ReactNode = ReactElement | null;
 
 // @alpha
 export interface SchemaIncompatibleProps {

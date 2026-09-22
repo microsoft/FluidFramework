@@ -26,11 +26,22 @@ export interface ReactElement {
 }
 
 /**
+ * Minimal React node type compatible with React 18 and React 19.
+ *
+ * @remarks
+ * Components exposed by this package support elements and `null`, the latter being React's standard
+ * way for a component to render nothing.
+ * @alpha
+ */
+// eslint-disable-next-line @rushstack/no-new-null -- React components use null to render nothing.
+export type ReactNode = ReactElement | null;
+
+/**
  * Minimal React function component type compatible with React 18 and React 19.
  * @typeParam P - The component's props.
  * @alpha
  */
-export type FC<in P = object> = (props: P) => ReactElement;
+export type FC<in P = object> = (props: P) => ReactNode;
 
 /**
  * Comparator for the props of a memoized component.
