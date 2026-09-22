@@ -98,6 +98,57 @@ export interface IndexRange {
 }
 
 /**
+ * Replaces a range of an array without exceeding runtime function-argument limits.
+ *
+ * @param array - The array to modify.
+ * @param startIndex - The index at which to start replacing, inclusive.
+ * @param endIndex - The index at which to stop replacing, exclusive.
+ * @param replacement - The items with which to replace the range.
+ *
+ * @remarks
+ * Equivalent to `array.splice(startIndex, endIndex - startIndex, ...replacement)`.
+ * Native `splice` is used for small replacements. Large replacements use `copyWithin` and indexed
+ * assignment because spreading a large array into a function call can exceed the runtime's argument
+ * limit.
+ */
+export function replaceArrayRange<T>(
+	array: T[],
+	startIndex: number,
+	endIndex: number,
+	replacement: readonly T[],
+): void {
+	validateIndexRange(startIndex, endIndex, array, "replaceArrayRange");
+
+	// Benchmarks show native splice is faster at 250 replacement items, while the argument-safe
+	// implementation is faster at 500.
+	if (replacement.length < 500) {
+		array.splice(startIndex, endIndex - startIndex, ...replacement);
+		return;
+	}
+
+	// Preserve splice semantics when the replacement aliases the array being modified.
+	const replacementItems = replacement === array ? [...replacement] : replacement;
+	const originalLength = array.length;
+	const replacedLength = endIndex - startIndex;
+	const newLength = originalLength + replacementItems.length - replacedLength;
+
+	// Extend before moving the suffix when growing; truncate after moving it when shrinking.
+	if (newLength > originalLength) {
+		array.length = newLength;
+	}
+	array.copyWithin(startIndex + replacementItems.length, endIndex, originalLength);
+	array.length = newLength;
+
+	for (
+		let replacementIndex = 0;
+		replacementIndex < replacementItems.length;
+		replacementIndex++
+	) {
+		array[startIndex + replacementIndex] = replacementItems[replacementIndex] as T;
+	}
+}
+
+/**
  * Walks `array` in order and collects the indices of every element for which `predicate` returns
  * `true` into contiguous `[start, end)` ranges.
  * @param array - The array (or array-like) to scan.

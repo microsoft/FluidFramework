@@ -6,6 +6,7 @@
 export {
 	collectContiguousRanges,
 	type IndexRange,
+	replaceArrayRange,
 	validateIndex,
 	validateIndexRange,
 	validatePositiveIndex,

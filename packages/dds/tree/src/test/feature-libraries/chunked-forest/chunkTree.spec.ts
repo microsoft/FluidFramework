@@ -1333,8 +1333,14 @@ describe("chunkTree", () => {
 			assertNumbersChunk(field[2], [4]);
 		});
 
+		// It's tempting to use splice with a spread in the implementation,
+		// which can hit the argument limit for long sequences of unmergeable chunks.
+		// This ensures we do not regress support for such cases.
 		it("supports coalescing fields larger than the function argument limit", () => {
 			const blocker = new BasicChunk(numberType, new Map(), 99);
+			// Only the first two chunks can merge. The remaining 199,998 entries deliberately use a
+			// non-uniform chunk, keeping the replacement array above the argument limit while still
+			// requiring coalescing to update the field.
 			const field = makeArray<TreeChunk>(200_000, (index) => {
 				switch (index) {
 					case 0: {

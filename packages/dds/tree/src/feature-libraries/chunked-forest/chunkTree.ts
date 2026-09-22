@@ -29,6 +29,7 @@ import {
 	assertNonNegativeSafeInteger,
 	getOrCreate,
 	type IndexRange,
+	replaceArrayRange,
 	validateIndexRange,
 } from "../../util/index.js";
 import { isStableNodeIdentifier } from "../node-identifier/index.js";
@@ -697,10 +698,7 @@ export function coalesceUniformChunks(
 	}
 
 	if (mutated) {
-		for (let resultIndex = 0; resultIndex < result.length; resultIndex++) {
-			chunks[rangeStart + resultIndex] = result[resultIndex] ?? oob();
-		}
-		chunks.splice(rangeStart + result.length, rangeEnd - rangeStart - result.length);
+		replaceArrayRange(chunks, rangeStart, rangeEnd, result);
 	}
 }
 
