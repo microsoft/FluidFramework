@@ -785,7 +785,7 @@ describe("ForestSummarizer", () => {
 		describe("4-depth schema with parameterized incremental summarization", () => {
 			/**
 			 * A 4-depth nested schema where each level's map field carries
-			 * {@link SchemaStaticsAlpha.incrementalSummary}, creating 4 independent incremental chunks:
+			 * {@link SchemaStaticsBeta.incrementalSummary}, creating 4 independent incremental chunks:
 			 * - Depth 1: the `documents` map (outermost chunk).
 			 * - Depth 2: each document's `sections` map.
 			 * - Depth 3: each section's `items` map.

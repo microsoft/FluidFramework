@@ -9,6 +9,7 @@ import type { RestrictiveStringRecord as _RestrictiveStringRecord } from "../../
 import {
 	AnnotatedAllowedTypesInternal,
 	createSchemaUpgrade,
+	normalizeAllowedTypes,
 	normalizeToAnnotatedAllowedType,
 	type AllowedTypesFullFromMixed,
 	type AllowedTypesMetadata,
@@ -53,6 +54,7 @@ import {
 	type ObjectSchemaOptions,
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
+import { incrementalSummaryHint } from "./incrementalAllowedTypes.js";
 import type {
 	AllowedTypesFullFromMixedUnsafe,
 	AnnotatedAllowedTypeUnsafe,
@@ -68,6 +70,57 @@ import type {
  * @system @sealed @beta
  */
 export interface SchemaStaticsBeta {
+	/**
+	 * Marks a set of allowed types as an incremental-summary boundary.
+	 *
+	 * @remarks
+	 * During incremental summarization, an unchanged field marked with this helper can reuse its
+	 * previously generated summary instead of being re-encoded and uploaded again.
+	 *
+	 * This helper accepts either a single schema or an array of allowed types.
+	 * For recursive schema declarations that require relaxed typing, use
+	 * {@link SchemaStaticsBeta.incrementalSummaryRecursive}.
+	 *
+	 * @param allowedTypes - The types allowed at the incremental-summary boundary.
+	 * @returns The normalized allowed types with incremental-summary metadata attached.
+	 *
+	 * @example
+	 * ```typescript
+	 * const sf = new SchemaFactoryBeta("example");
+	 *
+	 * class Section extends sf.object("Section", {
+	 *   title: sf.string,
+	 * }) {}
+	 *
+	 * class Document extends sf.object("Document", {
+	 *   sections: sf.incrementalSummary(sf.map(Section)),
+	 * }) {}
+	 * ```
+	 */
+	readonly incrementalSummary: {
+		<const T extends TreeNodeSchema>(allowedType: T): AllowedTypesFullFromMixed<readonly [T]>;
+		<const T extends readonly LazyItem<TreeNodeSchema>[]>(
+			allowedTypes: T,
+		): AllowedTypesFullFromMixed<T>;
+	};
+
+	/**
+	 * {@link SchemaStaticsBeta.incrementalSummary} except tweaked to work better for recursive types.
+	 *
+	 * @remarks
+	 * This version of {@link SchemaStaticsBeta.incrementalSummary} has fewer type constraints to
+	 * work around TypeScript limitations. Use with {@link ValidateRecursiveSchema} for improved type
+	 * safety.
+	 *
+	 * @param allowedTypes - The types allowed at the incremental-summary boundary.
+	 * @returns The normalized allowed types with incremental-summary metadata attached.
+	 */
+	readonly incrementalSummaryRecursive: <
+		const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
+	>(
+		allowedTypes: T,
+	) => AllowedTypesFullFromMixedUnsafe<T>;
+
 	/**
 	 * Declares a staged type in a set of {@link AllowedTypes}.
 	 *
@@ -163,12 +216,33 @@ const types = <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNod
 	return AnnotatedAllowedTypesInternal.createMixed<T>(t, metadata);
 };
 
+const typesRecursive = types as unknown as SchemaStaticsBeta["typesRecursive"];
+
+const incrementalSummaryMetadata = {
+	custom: { [incrementalSummaryHint]: true },
+};
+
+const incrementalSummary = (<const T extends ImplicitAllowedTypes>(allowedTypes: T) => {
+	const normalizedAllowedTypes = normalizeAllowedTypes(allowedTypes);
+	return types(normalizedAllowedTypes.types, incrementalSummaryMetadata);
+}) as unknown as SchemaStaticsBeta["incrementalSummary"];
+
+const incrementalSummaryRecursive = (<
+	const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
+>(
+	allowedTypes: T,
+) => {
+	return typesRecursive(allowedTypes, incrementalSummaryMetadata);
+}) as SchemaStaticsBeta["incrementalSummaryRecursive"];
+
 const schemaStaticsBeta: SchemaStaticsBeta = {
+	incrementalSummary,
+	incrementalSummaryRecursive,
 	staged,
 	types,
 
 	stagedRecursive: staged as SchemaStaticsBeta["stagedRecursive"],
-	typesRecursive: types as unknown as SchemaStaticsBeta["typesRecursive"],
+	typesRecursive,
 };
 
 /**
@@ -180,6 +254,26 @@ export class SchemaFactoryBeta<
 	out TScope extends string | undefined = string | undefined,
 	TName extends number | string = string,
 > extends SchemaFactory<TScope, TName> {
+	/**
+	 * {@inheritDoc SchemaStaticsBeta.incrementalSummary}
+	 */
+	public static incrementalSummary = schemaStaticsBeta.incrementalSummary;
+
+	/**
+	 * {@inheritDoc SchemaStaticsBeta.incrementalSummary}
+	 */
+	public incrementalSummary = schemaStaticsBeta.incrementalSummary;
+
+	/**
+	 * {@inheritDoc SchemaStaticsBeta.incrementalSummaryRecursive}
+	 */
+	public static incrementalSummaryRecursive = schemaStaticsBeta.incrementalSummaryRecursive;
+
+	/**
+	 * {@inheritDoc SchemaStaticsBeta.incrementalSummaryRecursive}
+	 */
+	public incrementalSummaryRecursive = schemaStaticsBeta.incrementalSummaryRecursive;
+
 	/**
 	 * {@inheritDoc SchemaStaticsBeta.staged}
 	 */

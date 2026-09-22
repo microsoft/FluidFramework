@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	SchemaFactoryAlpha,
+	SchemaFactoryBeta,
 	TreeViewConfigurationAlpha,
 	type ValidateRecursiveSchema,
 	incrementalEncodingPolicyForAllowedTypes,
@@ -17,7 +18,7 @@ import {
 import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
 
 describe("incremental allowed types", () => {
-	const sf = new SchemaFactoryAlpha("incrementalAllowedTypes");
+	const sf = new SchemaFactoryBeta("incrementalAllowedTypes");
 
 	it("preserves singleton and union types", () => {
 		const singleton = sf.incrementalSummary(sf.string);
@@ -26,7 +27,7 @@ describe("incremental allowed types", () => {
 		type _checkSingletonRead = requireTrue<areSafelyAssignable<SingletonRead, string>>;
 		type _checkSingletonInsert = requireTrue<areSafelyAssignable<SingletonInsert, string>>;
 
-		const union = SchemaFactoryAlpha.incrementalSummary([sf.string, sf.number]);
+		const union = SchemaFactoryBeta.incrementalSummary([sf.string, sf.number]);
 		type UnionRead = TreeNodeFromImplicitAllowedTypes<typeof union>;
 		type UnionInsert = InsertableTreeNodeFromImplicitAllowedTypes<typeof union>;
 		type _checkUnionRead = requireTrue<areSafelyAssignable<UnionRead, string | number>>;
@@ -49,7 +50,7 @@ describe("incremental allowed types", () => {
 			true,
 		);
 
-		class Root extends sf.objectAlpha("Root", {
+		class Root extends sf.object("Root", {
 			singleton,
 			union,
 		}) {}
@@ -78,5 +79,14 @@ describe("incremental allowed types", () => {
 			new TreeViewConfigurationAlpha({ schema: Recursive }),
 		);
 		assert.equal(policy(Recursive.identifier), true);
+	});
+
+	it("is inherited by SchemaFactoryAlpha", () => {
+		const alpha = new SchemaFactoryAlpha("incrementalAllowedTypesAlpha");
+		assert.deepEqual([...alpha.incrementalSummary(alpha.string)], [alpha.string]);
+		assert.deepEqual(
+			[...SchemaFactoryAlpha.incrementalSummary([alpha.string, alpha.number])],
+			[alpha.string, alpha.number],
+		);
 	});
 });

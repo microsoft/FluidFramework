@@ -1,8 +1,8 @@
 # Incremental Summary
 
-Incremental summary is an optimization that avoids re-summarizing parts of the tree that don't change between summaries. Fields in a schema can opt in to incremental summarization with `SchemaFactoryAlpha.incrementalSummary`. These fields are tracked as independent chunks in the summary. During summarization, if their content hasn't changed since the last summary, their previously generated summaries are reused. As a result, their data doesn't need to be re-encoded (saving processing time), and their summary trees don't need to be uploaded again (reducing summary upload size).
+Incremental summary is an optimization that avoids re-summarizing parts of the tree that don't change between summaries. Fields in a schema can opt in to incremental summarization with `SchemaFactoryBeta.incrementalSummary`. These fields are tracked as independent chunks in the summary. During summarization, if their content hasn't changed since the last summary, their previously generated summaries are reused. As a result, their data doesn't need to be re-encoded (saving processing time), and their summary trees don't need to be uploaded again (reducing summary upload size).
 
-> **Warning:** This is an alpha API and is actively under development. Interfaces and behavior may change in future releases without notice. Do not rely on it in production.
+> **Warning:** Incremental summary is an alpha feature and is actively under development. The schema helpers are beta, but supporting interfaces and behavior may change in future releases without notice. Do not rely on the feature in production.
 
 ## Requirements
 
@@ -14,7 +14,7 @@ All five of the following must be set for incremental summary to take effect:
 | Compression strategy | [`TreeCompressionStrategy.CompressedIncremental`](./src/feature-libraries/treeCompressionUtils.ts) |
 | [`shouldEncodeIncrementally`](./src/shared-tree/sharedTree.ts) option | result of [`incrementalEncodingPolicyForAllowedTypes(config)`](./src/simple-tree/api/incrementalAllowedTypes.ts) |
 | `minVersionForCollab` | [`FluidClientVersion.v2_74`](./src/codec/codec.ts) or higher |
-| Schema opt-in | Fields marked with [`SchemaFactoryAlpha.incrementalSummary`](./src/simple-tree/api/schemaFactoryAlpha.ts) |
+| Schema opt-in | Fields marked with [`SchemaFactoryBeta.incrementalSummary`](./src/simple-tree/api/schemaFactoryBeta.ts) |
 
 ## How to Enable
 
@@ -24,23 +24,23 @@ Use `sf.incrementalSummary(...)` to opt a field in.
 For recursive schema, use `sf.incrementalSummaryRecursive(...)` with an allowed-types array.
 
 ```typescript
-import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
+import { SchemaFactoryBeta } from "@fluidframework/tree/beta";
 
-const sf = new SchemaFactoryAlpha("my-app");
+const sf = new SchemaFactoryBeta("my-app");
 
-class Item extends sf.objectAlpha("Item", {
+class Item extends sf.object("Item", {
     id: sf.number,
     // This field will be incrementally summarized.
     payload: sf.incrementalSummary(sf.string),
 }) {}
 
-class ItemList extends sf.arrayAlpha(
+class ItemList extends sf.array(
     "ItemList",
     // Each element of this array will be tracked as a separate incremental chunk.
     sf.incrementalSummary(Item),
 ) {}
 
-class Root extends sf.objectAlpha("Root", {
+class Root extends sf.object("Root", {
     items: ItemList,
 }) {}
 ```
@@ -83,4 +83,4 @@ Fields that are _not_ opted in are encoded into the main summary blob as usual.
 
 - Root fields cannot be incrementally summarized (the callback always returns `false` for them).
 - If the view schema doesn't recognize a node type (e.g., due to schema mismatch or unknown optional fields), that node falls back to non-incremental encoding.
-- This feature is `@alpha` and may change as the APIs stabilize.
+- The schema helpers are `@beta`; the remaining incremental summary APIs are `@alpha` and may change as the feature stabilizes.

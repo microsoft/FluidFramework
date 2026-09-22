@@ -21,11 +21,11 @@ import type { TreeSchema } from "../treeSchema.js";
  * @remarks
  * See {@link incrementalEncodingPolicyForAllowedTypes} for more details.
  *
- * Use {@link SchemaStaticsAlpha.incrementalSummary} to mark an incremental-summary boundary.
+ * Use {@link SchemaStaticsBeta.incrementalSummary} to mark an incremental-summary boundary.
  * @example
  * ```typescript
- * const sf = new SchemaFactoryAlpha("IncrementalSummarization");
- * class Foo extends sf.objectAlpha("foo", {
+ * const sf = new SchemaFactoryBeta("IncrementalSummarization");
+ * class Foo extends sf.object("foo", {
  *   bar: sf.incrementalSummary(sf.string),
  * }) {}
  * ```
