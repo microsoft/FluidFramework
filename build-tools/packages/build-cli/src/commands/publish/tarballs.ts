@@ -24,18 +24,14 @@ export interface TarballMetadata {
 	/**
 	 * The npm package name.
 	 *
-	 * @example
-	 *
-	 * `@fluidframework/core-utils`
+	 * @example `@fluidframework/core-utils`
 	 */
 	readonly name: string;
 
 	/**
 	 * The package version.
 	 *
-	 * @example
-	 *
-	 * `2.0.0`
+	 * @example `2.0.0`
 	 */
 	readonly version: string;
 
@@ -47,9 +43,7 @@ export interface TarballMetadata {
 	/**
 	 * The tarball file name.
 	 *
-	 * @example
-	 *
-	 * `fluidframework-core-utils-2.0.0.tgz`
+	 * @example `fluidframework-core-utils-2.0.0.tgz`
 	 */
 	readonly fileName: string;
 }
@@ -95,7 +89,7 @@ export interface PublishTarballsOptions {
 	/**
 	 * Maximum number of initial registry preflight checks to execute concurrently.
 	 *
-	 * @defaultValue 10
+	 * @defaultValue {@link publishPreflightConcurrency}
 	 */
 	readonly preflightConcurrency?: number;
 }
@@ -315,8 +309,7 @@ async function extractPackageJsonFromTarball(
  *
  * - `"SuccessfullyPublished"`: The package was published to the registry in this run.
  * - `"AlreadyPublished"`: The package version already existed in the registry and was skipped.
- * - `"RecoveredAlreadyPublished"`: A publish attempt failed, but a follow-up registry check
- *   showed that the package version is now published.
+ * - `"RecoveredAlreadyPublished"`: A publish attempt failed, but a follow-up registry check showed that the package version is now published.
  * - `"Error"`: An error occurred and could not be resolved within the retry budget.
  */
 export type PublishStatus =
