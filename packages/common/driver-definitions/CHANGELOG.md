@@ -1,5 +1,41 @@
 # @fluidframework/driver-definitions
 
+## 3.2.0
+
+### Minor Changes
+
+- Require the oldest supported client version in ServiceOptions ([#27902](https://github.com/microsoft/FluidFramework/pull/27902)) [da0dd40c087](https://github.com/microsoft/FluidFramework/commit/da0dd40c087b075822f0a9be723e1879f25d23b5)
+
+  The alpha [`ServiceOptions.oldestSupportedClient`](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface#oldestsupportedclient-propertysignature) property is now required. Code that constructs service options must specify the oldest Fluid Framework client version that can open and process documents written by the service client.
+
+  ```typescript
+  const options: ServiceOptions = {
+    oldestSupportedClient: "2.100.0",
+  };
+  ```
+
+- Collect container telemetry through ServiceClient ([#28259](https://github.com/microsoft/FluidFramework/pull/28259)) [11261004291](https://github.com/microsoft/FluidFramework/commit/11261004291599575a23483fbaf8b20f4ff1afc1)
+
+  The alpha [ServiceOptions](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface) interface now accepts an optional `logger`.
+  Session, ephemeral, and Tinylicious clients forward telemetry from containers they create or load to this logger.
+  Existing callers can omit the option without changing their behavior.
+
+  ```typescript
+  import { startEphemeralService } from "@fluidframework/local-driver/alpha";
+
+  const service = startEphemeralService();
+  const client = service.newClient({
+    oldestSupportedClient: "2.100.0",
+    logger: {
+      send(event) {
+        console.log(event);
+      },
+    },
+  });
+  ```
+
+  The same `logger` option is supported by `getSessionService().newClient(...)` and `createTinyliciousServiceClient(...)`.
+
 ## 3.1.0
 
 Dependency updates only.

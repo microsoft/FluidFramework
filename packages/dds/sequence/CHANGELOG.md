@@ -1,5 +1,36 @@
 # @fluidframework/sequence
 
+## 3.2.0
+
+### Patch Changes
+
+- Fix intervals sharing an end position being dropped from the endpoint index ([#28191](https://github.com/microsoft/FluidFramework/pull/28191)) [63e64bf06cd](https://github.com/microsoft/FluidFramework/commit/63e64bf06cd3129e7335d288c830b1d716259f84)
+
+  [`ISequenceIntervalCollection.previousInterval`](https://fluidframework.com/docs/api/sequence/isequenceintervalcollection-interface#previousinterval-methodsignature) and
+  [`nextInterval`](https://fluidframework.com/docs/api/sequence/isequenceintervalcollection-interface#nextinterval-methodsignature) are backed by an index that ordered
+  intervals by end position alone. Because that ordering treats any two intervals ending at the same
+  position as the same entry, only one of them could be held at a time: adding a second interval with
+  an existing end position overwrote the first, and removing either one evicted both. Intervals that
+  were still present in the collection could therefore be missing from the results of
+  `previousInterval` and `nextInterval`.
+
+  The index now orders by end position and then by interval ID, so intervals sharing an end position
+  are stored and removed individually. Lookups continue to match on end position alone, so
+  `previousInterval` and `nextInterval` return the same results as before whenever end positions were
+  already distinct.
+
+- Fix interval iteration by start and end position returning nothing ([#28241](https://github.com/microsoft/FluidFramework/pull/28241)) [50c58d5cda1](https://github.com/microsoft/FluidFramework/commit/50c58d5cda1d720c674385f06893c157b4b3492e)
+
+  [`ISequenceOverlappingIntervalsIndex.gatherIterationResults`](https://fluidframework.com/docs/api/sequence/isequenceoverlappingintervalsindex-interface#gatheriterationresults-methodsignature)
+  gathered no intervals at all when it was given both a start and an end position. It compared the
+  range being searched for against each interval using an ordering that includes interval ID, and the
+  range being searched for is described by a temporary interval assigned a fresh random ID, so nothing
+  could ever compare equal to it.
+  Gathering by start position alone, by end position alone, or with no bounds was unaffected.
+
+  Interval IDs are no longer considered when gathering, so passing both a start and an end position now
+  yields every interval spanning exactly that range.
+
 ## 3.1.0
 
 Dependency updates only.
