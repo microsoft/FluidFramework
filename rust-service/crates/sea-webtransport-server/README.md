@@ -122,9 +122,11 @@ Concurrent sessions for one document share one recovered runtime and its exclusi
 The registry retains successful runtimes for the host lifetime, with no idle eviction.
 Dropping the host and its connections releases those views; stopping the listener alone does not evict a separately retained host.
 Live replay uses backend monitored streams; the legacy liveness lag setting does not bound this path.
-The registry still serializes first opens across documents, and blob/directory, snapshot, and checkpoint writes remain synchronous storage barriers.
-Historical storage reads can also block the executor; initialization isolation does not offload subsequent session operations.
-Blocking workers preserve executor responsiveness during initialization, not bounded storage latency or constant durable throughput on shared or virtualized devices.
+The registry still serializes first opens across documents.
+File backends isolate subsequent mutations and historical reads on bounded workers; this does not promise bounded storage latency or constant throughput on virtualized devices.
+Listener drains flush their accepted storage prefix within the drain deadline without stopping a host shared by another listener.
+The binary shuts down the shared host after both listeners finish; direct host owners call `BuiltInSeaHost::shutdown` themselves.
+An expired flush deadline reports cancellation, and a failed flush reports a storage error, not successful persistence.
 
 Snapshot dispatch resolves wire roots and committed event positions through the session before constructing availability handles.
 Snapshots are versioned by event position, not publication-operation IDs.

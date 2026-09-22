@@ -1,10 +1,20 @@
 # File Storage Execution Refactor Plan
 
-Status: Proposed; implementation has not started.
+Status: Implemented and validated on `sea-directory-dedup`; see the [completion and measurement report](historical/FILE_STORAGE_EXECUTION_REFACTOR.md).
 Written on 2026-09-22 against `sea-directory-dedup` at `9f22810a2f0`, including directory deduplication commit `b272851e8e3`.
 Reconcile this plan with intervening journal, checkpoint, and protocol changes before implementation; do not overwrite concurrent work or treat this checkout as the integration target.
 Reconciled on 2026-09-22 with corrected checkpoint implementation `f59c3ca14a4` on `rust-service`, superseding the index-based integration at `521a8362e42`.
 Use that corrected baseline or its successors: independent `CheckpointStore`, hash-addressed content, byte-offset events, fixed-size journal cursors, and protocol 11 allocated session IDs.
+
+## Completion
+
+Implementation starts from `5761a2bc481`, with checkpoint commit `5e9459eadaf` and its uncommitted completion changes.
+Both concrete factories now live in `sea-file`, with independent buffered and durable execution owners and shared journal/recovery mechanisms.
+The supported callers, lifecycle paths, conformance expectations, documentation, and crate dependencies have migrated.
+[Decision 0020](historical/decisions/0020-file-storage-execution.md) records the approved crate and acknowledgment changes.
+The report retains validation, repeated drain-inclusive comparisons, observed regressions, and the limits of performance evidence.
+No cross-request durable group commit, alternate I/O runtime, journal-format change, or production durability qualification is included.
+The starting-point inventory below describes the pre-refactor implementation, not the current execution model.
 
 ## Objective
 

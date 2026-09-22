@@ -1399,6 +1399,49 @@ mod tests {
         }
     }
 
+    /// Supplies storage settlement outcomes without involving a real network connection.
+    struct FlushService {
+        /// Fails immediately when set; otherwise leaves accepted storage work pending.
+        fail: bool,
+    }
+
+    #[async_trait]
+    impl SeaServiceHost for FlushService {
+        fn connect(&self, _liveness: LivenessPolicy) -> Arc<dyn SeaConnectionService> {
+            unreachable!("flush tests do not open connections")
+        }
+
+        async fn flush(&self) -> Result<(), WebTransportError> {
+            if self.fail {
+                Err(WebTransportError::StorageShutdown(
+                    "injected failure".into(),
+                ))
+            } else {
+                std::future::pending().await
+            }
+        }
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn storage_flush_timeout_and_failure_never_report_drained() {
+        for fail in [false, true] {
+            let (mut server, _, _) = admission_fixture();
+            server.service = Arc::new(FlushService { fail });
+            server
+                .shutdown_handle()
+                .shutdown(ShutdownMode::Drain {
+                    timeout: Duration::from_secs(1),
+                })
+                .unwrap();
+            let result = server.serve_until_shutdown().await;
+            if fail {
+                assert!(matches!(result, Err(WebTransportError::StorageShutdown(_))));
+            } else {
+                assert_eq!(result.unwrap().disposition, ShutdownDisposition::Cancelled);
+            }
+        }
+    }
+
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     #[ignore = "run by the browser harness after building the test-only WASM fixture"]
     async fn browser_disconnect_and_drop_release_capacity() {

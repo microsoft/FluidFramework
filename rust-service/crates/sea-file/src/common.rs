@@ -10,6 +10,47 @@ use tokio::sync::Semaphore;
 
 use journal::FileStorageError;
 
+/// Retained preprocessing capacity, shared with a worker if validation outlives its caller.
+pub(crate) type Preparation = Arc<(
+    tokio::sync::OwnedSemaphorePermit,
+    tokio::sync::OwnedSemaphorePermit,
+)>;
+
+/// Bounds content inputs and encodings before they reach a backend mutation queue.
+pub(crate) struct PreparationBudget {
+    /// Maximum concurrent content preparations per opening.
+    requests: Arc<Semaphore>,
+    /// Conservative input, encoding, and metadata charge.
+    bytes: Arc<Semaphore>,
+}
+
+impl PreparationBudget {
+    /// Creates a separate bounded staging budget without worker ownership.
+    pub(crate) fn new() -> Self {
+        Self {
+            requests: Arc::new(Semaphore::new(128)),
+            bytes: Arc::new(Semaphore::new(16 * 1024 * 1024)),
+        }
+    }
+
+    /// Rejects excess preprocessing before allocating encodings or waiting for metadata reads.
+    pub(crate) fn reserve(&self, bytes: usize) -> Result<Preparation, FileStorageError> {
+        let bytes = u32::try_from(bytes)
+            .map_err(|_| FileStorageError::Rejected("content preparation exceeds byte limit"))?;
+        let request = self
+            .requests
+            .clone()
+            .try_acquire_owned()
+            .map_err(|_| FileStorageError::Rejected("content preparation queue is full"))?;
+        let bytes = self
+            .bytes
+            .clone()
+            .try_acquire_many_owned(bytes)
+            .map_err(|_| FileStorageError::Rejected("content preparation byte budget is full"))?;
+        Ok(Arc::new((request, bytes)))
+    }
+}
+
 /// Defines a concrete policy factory while sharing namespace and recovery mechanisms.
 macro_rules! file_factory {
     ($name:ident, $durable:expr) => {

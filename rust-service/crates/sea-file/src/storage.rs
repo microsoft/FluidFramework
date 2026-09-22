@@ -13,8 +13,9 @@
 //! Reads initialize lazily, register wakeups under the published-state lock, and preserve
 //! exclusive-lower and inclusive-upper archive bounds. Event batches run on Tokio blocking workers
 //! that retain the opening after caller cancellation. Their disk I/O does not hold the state lock.
-//! Returned results establish settlement; cancellation does not. Creation, recovery, blob writes,
-//! and snapshot writes remain synchronous barriers. No mutation is retried automatically.
+//! Returned results establish publication; buffered persistence additionally requires factory flush.
+//! Creation, recovery, mutations, and historical reads use bounded blocking workers.
+//! Cancellation does not revoke accepted work. No mutation is retried automatically.
 //! Uncertain writes and failed workers terminate authoritative observations until recovery.
 
 pub use crate::journal::FileStorageError;
@@ -127,6 +128,7 @@ impl Factory {
             state.snapshot_end - 90
         })?;
         let opening = Arc::new(Opening {
+            preparation: crate::common::PreparationBudget::new(),
             closed: self.closed.clone(),
             factory_failed: self.failed.clone(),
             buffered: (!journal.durable()).then(|| crate::buffered::Executor::new(workers.clone())),
@@ -219,6 +221,15 @@ impl Factory {
             .filter_map(Weak::upgrade)
             .collect::<Vec<_>>();
         let mut failed = false;
+        if close {
+            for opening in &openings {
+                if let Some(executor) = &opening.buffered {
+                    executor.close();
+                } else {
+                    opening.executor.close();
+                }
+            }
+        }
         for opening in openings {
             if let Some(executor) = &opening.buffered {
                 failed |= executor.flush(close).await.is_err();
@@ -322,6 +333,8 @@ impl<Identity: Copy + Send + Sync + 'static> StorageHandle for FileHandle<Identi
 
 /// Shared writer ownership retained by components, reads, and workers, not availability handles.
 struct Opening {
+    /// Bounds content validation and encoding before mutation admission.
+    preparation: crate::common::PreparationBudget,
     /// Factory lifecycle fence checked before every new mutation.
     closed: Arc<AtomicBool>,
     /// Sticky failure accounting for factory flush and shutdown.
@@ -345,6 +358,12 @@ struct Opening {
 }
 
 impl Opening {
+    /// Tests resident availability using only the short-lived published-state lock.
+    fn resident(&self, keys: impl IntoIterator<Item = Key>) -> Result<bool, FileStorageError> {
+        let state = self.lock()?;
+        let pending = state.pending.lock().unwrap();
+        Ok(keys.into_iter().all(|key| pending.contains_key(&key)))
+    }
     /// Rejects new mutations once factory shutdown or terminal failure has begun.
     fn admission(&self) -> Result<(), FileStorageError> {
         if self.closed.load(Ordering::Acquire) {
@@ -626,7 +645,8 @@ impl State {
 
     /// Fetches a complete checked frame by logical identity.
     fn record(&self, key: &Key) -> Result<Option<Vec<u8>>, FileStorageError> {
-        if self.unpublished.lock().unwrap().contains(key) {
+        let publication = self.unpublished.lock().unwrap();
+        if publication.contains(key) {
             return Ok(None);
         }
         if let Some(record) = self.pending.lock().unwrap().get(key) {
@@ -801,7 +821,8 @@ impl State {
 
     /// Membership implies transitive closure for immutable published directories.
     fn contains(&self, id: BlobTreeId) -> Result<bool, FileStorageError> {
-        if self.unpublished.lock().unwrap().contains(&tree_key(id)) {
+        let publication = self.unpublished.lock().unwrap();
+        if publication.contains(&tree_key(id)) {
             return Ok(false);
         }
         if self.pending.lock().unwrap().contains_key(&tree_key(id)) {
@@ -1025,10 +1046,17 @@ impl ReferenceableStore for FileBlobs {
     type Id = BlobTreeId;
     type Handle = FileHandle<BlobTreeId>;
     async fn resolve(&self, id: Self::Id) -> Result<Option<Self::Handle>, Self::Error> {
+        if self.0.resident([tree_key(id)])? {
+            return Ok(Some(self.0.handle(id)));
+        }
         let component = self.clone();
         self.0.query(move || component.resolve_blocking(id)).await
     }
     async fn ensure_available(&self, handle: &Self::Handle) -> Result<(), Self::Error> {
+        self.0.compatible(handle)?;
+        if self.0.resident([tree_key(handle.id)])? {
+            return Ok(());
+        }
         let handle = handle.clone();
         let component = self.clone();
         self.0
@@ -1041,6 +1069,10 @@ impl ReferenceableStore for FileBlobs {
 impl BlobStore for FileBlobs {
     async fn put_blob(&self, payload: Bytes) -> Result<Self::Handle, Self::Error> {
         self.0.admission()?;
+        let _preparation = self
+            .0
+            .preparation
+            .reserve(payload.len().saturating_mul(3).saturating_add(128))?;
         if self.0.buffered.is_some() {
             let id = BlobTreeId::Blob(BlobId::for_bytes(&payload));
             if let Some(handle) = self.resolve(id).await? {
@@ -1049,13 +1081,14 @@ impl BlobStore for FileBlobs {
             let mut record = Vec::with_capacity(payload.len() + 1);
             record.push(1);
             record.extend_from_slice(&payload);
-            return self.admit_content(id, Bytes::from(record));
+            return self.admit_content(id, Bytes::from(record)).await;
         }
         let component = self.clone();
         self.0
-            .execute(payload.len().saturating_add(1), move || {
-                component.put_blob_blocking(&payload)
-            })
+            .execute(
+                payload.len().saturating_mul(3).saturating_add(128),
+                move || component.put_blob_blocking(&payload),
+            )
             .await
     }
     async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
@@ -1064,38 +1097,56 @@ impl BlobStore for FileBlobs {
     }
     async fn put_directory(&self, directory: BlobDirectory) -> Result<Self::Handle, Self::Error> {
         self.0.admission()?;
+        let charge = directory.entries().keys().fold(128usize, |total, name| {
+            total
+                .saturating_add(name.len().saturating_mul(3))
+                .saturating_add(256)
+        });
+        let preparation = self.0.preparation.reserve(charge)?;
         let (encoded, id) = directory
             .encode_with_id()
             .map_err(|_| FileStorageError::Rejected("directory encoding"))?;
-        if let Some(handle) = self.resolve(BlobTreeId::Directory(id)).await? {
+        let resident = self.0.buffered.is_some()
+            && self
+                .0
+                .resident(directory.entries().values().copied().map(tree_key))?;
+        if self.0.resident([tree_key(BlobTreeId::Directory(id))])? {
+            return Ok(self.0.handle(BlobTreeId::Directory(id)));
+        }
+        if !resident && let Some(handle) = self.resolve(BlobTreeId::Directory(id)).await? {
             return Ok(handle);
         }
         if self.0.buffered.is_some() {
             let id = BlobTreeId::Directory(id);
-            if let Some(handle) = self.resolve(id).await? {
-                return Ok(handle);
-            }
-            let component = self.clone();
-            self.0
-                .query(move || {
-                    let state = component.0.published()?;
-                    for child in directory.entries().values() {
-                        if !state.contains(*child)? {
-                            return Err(FileStorageError::Rejected("missing directory child"));
+            if !resident {
+                let component = self.clone();
+                let retained_preparation = preparation.clone();
+                self.0
+                    .query(move || {
+                        let _preparation = retained_preparation;
+                        let state = component.0.published()?;
+                        for child in directory.entries().values() {
+                            if !state.contains(*child)? {
+                                return Err(FileStorageError::Rejected("missing directory child"));
+                            }
                         }
-                    }
-                    Ok(())
-                })
-                .await?;
+                        Ok(())
+                    })
+                    .await?;
+            }
             let mut record = vec![2];
             record.extend_from_slice(&encoded);
-            return self.admit_content(id, Bytes::from(record));
+            return self.admit_content(id, Bytes::from(record)).await;
         }
         let component = self.clone();
         self.0
-            .execute(encoded.len(), move || {
-                component.put_directory_blocking(&directory, &encoded, id)
-            })
+            .execute(
+                encoded
+                    .len()
+                    .saturating_mul(3)
+                    .saturating_add(directory.entries().len().saturating_mul(128)),
+                move || component.put_directory_blocking(&directory, &encoded, id),
+            )
             .await
     }
     async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
@@ -1111,10 +1162,17 @@ impl ReferenceableStore for FileEvents {
     type Id = EventPosition;
     type Handle = FileHandle<EventPosition>;
     async fn resolve(&self, id: Self::Id) -> Result<Option<Self::Handle>, Self::Error> {
+        if self.0.resident([position_key(3, id)])? {
+            return Ok(Some(self.0.handle(id)));
+        }
         let component = self.clone();
         self.0.query(move || component.resolve_blocking(id)).await
     }
     async fn ensure_available(&self, handle: &Self::Handle) -> Result<(), Self::Error> {
+        self.0.compatible(handle)?;
+        if self.0.resident([position_key(3, handle.id)])? {
+            return Ok(());
+        }
         let handle = handle.clone();
         let component = self.clone();
         self.0
@@ -1153,10 +1211,12 @@ impl Archive for FileEvents {
         let Some(bytes) = bytes else {
             return vec![Err(FileStorageError::Rejected("batch size overflow"))];
         };
+        let bytes = bytes
+            .saturating_mul(3)
+            .saturating_add(values.len().saturating_mul(256));
         if let Some(executor) = &self.0.buffered {
-            return match executor.admit(
-                bytes.saturating_add(values.len().saturating_mul(128)),
-                || {
+            return match executor
+                .admit(bytes, || {
                     let mut state = self.0.lock()?;
                     let mut offset = state.event_end;
                     let mut previous = state.head;
@@ -1192,8 +1252,9 @@ impl Archive for FileEvents {
                         reader.wake();
                     }
                     Ok((handles, self.0.buffered_task(records)))
-                },
-            ) {
+                })
+                .await
+            {
                 Ok(results) => results,
                 Err(error) => vec![Err(error)],
             };
@@ -1341,39 +1402,46 @@ impl Archive for FileSnapshots {
             let component = self.clone();
             let root = snapshot.root.id;
             let position = snapshot.at_event.id;
-            self.0
-                .query(move || {
-                    let state = component.0.published()?;
-                    if !state.contains(root)? || !state.has_event(position)? {
-                        return Err(FileStorageError::Rejected("snapshot dependency"));
+            if !self
+                .0
+                .resident([tree_key(root), position_key(3, position)])?
+            {
+                self.0
+                    .query(move || {
+                        let state = component.0.published()?;
+                        if !state.contains(root)? || !state.has_event(position)? {
+                            return Err(FileStorageError::Rejected("snapshot dependency"));
+                        }
+                        Ok(())
+                    })
+                    .await?;
+            }
+            return executor
+                .admit(256, || {
+                    let mut state = self.0.lock()?;
+                    if state.snapshot_head >= position.get() {
+                        return Err(FileStorageError::Rejected("snapshot must advance"));
                     }
-                    Ok(())
+                    let offset = state.snapshot_end;
+                    let end = offset
+                        .checked_add(90)
+                        .ok_or(FileStorageError::Rejected("snapshot positions exhausted"))?;
+                    let mut record = vec![4];
+                    record.extend_from_slice(&position.get().to_be_bytes());
+                    encode_tree(&mut record, root);
+                    let record = Bytes::from(record);
+                    let key = position_key(4, EventPosition::new(offset));
+                    state.pending.lock().unwrap().insert(key, record.clone());
+                    state.snapshot_end = end;
+                    state.snapshot_head = position.get();
+                    let readers = state.readers();
+                    drop(state);
+                    for reader in readers {
+                        reader.wake();
+                    }
+                    Ok(((), self.0.buffered_task(vec![(key, record)])))
                 })
-                .await?;
-            return executor.admit(256, || {
-                let mut state = self.0.lock()?;
-                if state.snapshot_head >= position.get() {
-                    return Err(FileStorageError::Rejected("snapshot must advance"));
-                }
-                let offset = state.snapshot_end;
-                let end = offset
-                    .checked_add(90)
-                    .ok_or(FileStorageError::Rejected("snapshot positions exhausted"))?;
-                let mut record = vec![4];
-                record.extend_from_slice(&position.get().to_be_bytes());
-                encode_tree(&mut record, root);
-                let record = Bytes::from(record);
-                let key = position_key(4, EventPosition::new(offset));
-                state.pending.lock().unwrap().insert(key, record.clone());
-                state.snapshot_end = end;
-                state.snapshot_head = position.get();
-                let readers = state.readers();
-                drop(state);
-                for reader in readers {
-                    reader.wake();
-                }
-                Ok(((), self.0.buffered_task(vec![(key, record)])))
-            });
+                .await;
         }
         let component = self.clone();
         self.0
@@ -1437,35 +1505,41 @@ impl sea_core::storage::CheckpointStore for FileCheckpoint {
         if let Some(executor) = &self.0.buffered {
             let (sender, receiver) = tokio::sync::oneshot::channel();
             let component = self.clone();
-            executor.admit(checkpoint.len().saturating_add(128), || {
-                drop(self.0.lock()?);
-                Ok((
-                    (),
-                    crate::buffered::Task {
-                        records: Vec::new(),
-                        events: false,
-                        run: Box::new(move |_| {
-                            let result =
-                                std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                                    component.publish_checkpoint_blocking(&checkpoint)
-                                }));
-                            if !matches!(result, Ok(Ok(()))) {
-                                component.0.poison();
-                                return Err(FileStorageError::Ambiguous);
-                            }
-                            let _ = sender.send(());
-                            Ok(())
-                        }),
+            executor
+                .admit(
+                    checkpoint.len().saturating_mul(2).saturating_add(128),
+                    || {
+                        drop(self.0.lock()?);
+                        Ok((
+                            (),
+                            crate::buffered::Task {
+                                records: Vec::new(),
+                                events: false,
+                                run: Box::new(move |_| {
+                                    let result =
+                                        std::panic::catch_unwind(std::panic::AssertUnwindSafe(
+                                            || component.publish_checkpoint_blocking(&checkpoint),
+                                        ));
+                                    if !matches!(result, Ok(Ok(()))) {
+                                        component.0.poison();
+                                        return Err(FileStorageError::Ambiguous);
+                                    }
+                                    let _ = sender.send(());
+                                    Ok(())
+                                }),
+                            },
+                        ))
                     },
-                ))
-            })?;
+                )
+                .await?;
             return receiver.await.map_err(|_| FileStorageError::Ambiguous);
         }
         let component = self.clone();
         self.0
-            .execute(checkpoint.len(), move || {
-                component.publish_checkpoint_blocking(&checkpoint)
-            })
+            .execute(
+                checkpoint.len().saturating_mul(2).saturating_add(128),
+                move || component.publish_checkpoint_blocking(&checkpoint),
+            )
             .await
     }
 }
@@ -1496,7 +1570,7 @@ impl SnapshotArchive for FileSnapshots {
 
 impl FileBlobs {
     /// Publishes one immutable pending record in the document's buffered mutation order.
-    fn admit_content(
+    async fn admit_content(
         &self,
         id: BlobTreeId,
         record: Bytes,
@@ -1505,12 +1579,13 @@ impl FileBlobs {
             .buffered
             .as_ref()
             .unwrap()
-            .admit(record.len().saturating_add(128), || {
+            .admit(record.len().saturating_mul(3).saturating_add(128), || {
                 let state = self.0.lock()?;
                 let key = tree_key(id);
                 state.pending.lock().unwrap().insert(key, record.clone());
                 Ok((self.0.handle(id), self.0.buffered_task(vec![(key, record)])))
             })
+            .await
     }
     /// Executes resolve on an owned blocking worker.
     fn resolve_blocking(
@@ -1923,7 +1998,7 @@ where
 mod tests {
     use super::*;
     use crate::journal::JournalFault;
-    use futures_util::StreamExt;
+    use futures_util::{FutureExt, StreamExt};
     use std::collections::BTreeMap;
     use std::sync::atomic::{AtomicU64, Ordering};
     /// Prevents collisions between concurrent tests and namespace factories.
@@ -2382,11 +2457,13 @@ mod tests {
         for _ in 2..128 {
             events.append(batch().remove(0)).await.unwrap();
         }
-        assert!(matches!(
-            events.append(batch().remove(0)).await,
-            Err(FileStorageError::Rejected(_))
-        ));
         let head = events.head().await.unwrap();
+        {
+            let waiting = events.append(batch().remove(0));
+            tokio::pin!(waiting);
+            assert!(futures_util::poll!(&mut waiting).is_pending());
+            assert_eq!(events.head().await.unwrap(), head);
+        }
         let drain = storage.flush();
         tokio::pin!(drain);
         assert!(futures_util::poll!(&mut drain).is_pending());
@@ -2412,6 +2489,108 @@ mod tests {
             .unwrap()
             .unwrap();
         assert_eq!(reopened.events.head().await.unwrap(), head);
+        drop(reopened);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn buffered_resident_dependencies_and_checkpoint_keep_order_without_workers() {
+        let root = root();
+        let storage = Factory::open(&root, false).unwrap();
+        let created = storage.create_document().await.unwrap();
+        let components = &created.components;
+        let (entered, release) = block_write(&components.events, false);
+        let first = components.events.append(batch().remove(0)).await.unwrap();
+        entered.await.unwrap();
+        let blob = components
+            .blobs
+            .put_blob(Bytes::from_static(b"resident"))
+            .await
+            .unwrap();
+        let workers = storage.workers.clone().acquire_many_owned(3).await.unwrap();
+        let directory =
+            BlobDirectory::new(BTreeMap::from([("leaf".to_owned(), blob.id())])).unwrap();
+        let parent = components
+            .blobs
+            .put_directory(directory.clone())
+            .now_or_never()
+            .unwrap()
+            .unwrap();
+        let duplicate = components
+            .blobs
+            .put_directory(directory)
+            .now_or_never()
+            .unwrap()
+            .unwrap();
+        assert_eq!(duplicate.id(), parent.id());
+        let second = components
+            .events
+            .append(Event {
+                payload: Bytes::from_static(b"variable payload"),
+                blob_tree: Some(parent.id()),
+            })
+            .now_or_never()
+            .unwrap()
+            .unwrap();
+        assert_eq!(second.id().get(), first.id().get() + 71);
+        components
+            .events
+            .ensure_available(&second)
+            .now_or_never()
+            .unwrap()
+            .unwrap();
+        components
+            .snapshots
+            .append(Snapshot {
+                root: parent.clone(),
+                at_event: second.clone(),
+            })
+            .now_or_never()
+            .unwrap()
+            .unwrap();
+        let mut checkpoint = Box::pin(
+            components
+                .checkpoints
+                .publish_checkpoint(Bytes::from_static(b"captured checkpoint")),
+        );
+        assert!(futures_util::poll!(&mut checkpoint).is_pending());
+        let third = components
+            .events
+            .append(batch().remove(0))
+            .now_or_never()
+            .unwrap()
+            .unwrap();
+        assert_eq!(third.id().get(), second.id().get() + 99 + 16);
+        drop(workers);
+        release.send(()).unwrap();
+        checkpoint.await.unwrap();
+        storage.shutdown().await.unwrap();
+        assert_eq!(
+            components.checkpoints.checkpoint().await.unwrap(),
+            Some(Bytes::from_static(b"captured checkpoint"))
+        );
+        assert!(
+            components
+                .events
+                .0
+                .published()
+                .unwrap()
+                .pending
+                .lock()
+                .unwrap()
+                .is_empty()
+        );
+        let id = created.id.clone();
+        drop(created);
+        let reopened = Factory::open(&root, false)
+            .unwrap()
+            .open_document(&id)
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(reopened.events.head().await.unwrap(), Some(third.id()));
+        assert_eq!(reopened.snapshots.head().await.unwrap(), Some(second.id()));
+        assert!(reopened.blobs.resolve(parent.id()).await.unwrap().is_some());
         drop(reopened);
         fs::remove_dir_all(root).unwrap();
     }

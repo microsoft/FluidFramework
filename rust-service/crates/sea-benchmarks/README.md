@@ -23,6 +23,9 @@ It accepts payload sizes 64 or 8192 and an in-flight window of 1 or 128, preserv
 Replay verifies session identity and a sequential counter encoded in the opaque payload, without Sea operation IDs or submission deduplication.
 Each invocation emits separate JSON rows for a 128-operation warmup and a fresh 4096-operation measured document, then deletes its newly created data directory.
 Creation, replay, and shutdown are outside the submission timer; measured latency starts at each future's first poll.
+Throughput includes final factory flush, with admission duration and final-drain duration reported separately.
+Submit latency reports p50/p95/p99; replay and shutdown have separate durations, and Linux output includes whole-process peak RSS across warmup, writes, and replay.
+Buffered latency measures process-local publication, whereas durable latency includes required synchronization.
 Tokio uses one async worker, with blocking workers available for file I/O; no CPU affinity is imposed.
 The output is specific to this binary, not the general harness schema below.
 
@@ -34,10 +37,11 @@ timeout 180s target/release/storage-pipeline durable-file 64 128 target/storage-
 The directory must not already exist, and its parent must exist.
 The window bounds live futures, not guaranteed storage batch size.
 Submit futures use ordinary `buffered` polling without an `unconstrained` wrapper; the sequencer preserves their actual first-poll order at its admission gate.
-The retained measurements used the earlier whole-submission `unconstrained` workaround and were not rerun after the admission fix.
+The older storage-optimization measurements used the earlier whole-submission `unconstrained` workaround and were not rerun after the admission fix.
 Their source hash describes the measured version, not the final benchmark source.
 Successful replay is not proof of physical durability or absence of early acknowledgment under faults.
 The [storage optimization report](../../historical/STORAGE_OPTIMIZATION.md) retains comparable baseline observations and focused fault-test evidence.
+The [file execution refactor report](../../historical/FILE_STORAGE_EXECUTION_REFACTOR.md) records the newer three-repetition matrix, final draining, process memory, syscall observations, and guarantee differences.
 
 ## Commands
 
@@ -74,6 +78,8 @@ Unavailable counters are `null`; they are never inferred.
 Latency and throughput use a monotonic process clock. The distribution reports minimum, median, p95, maximum, mean, sample standard deviation, and coefficient of variation. Results are procedure observations, not capacity claims.
 
 For periodic snapshot workloads, commit throughput includes snapshot publication wall time and `snapshot_publish_microseconds` is the sum across all publications in the repetition.
+The general harness measures acknowledgment throughput; its later orderly file flush is outside that timer.
+Use `storage-pipeline` for drain-inclusive buffered throughput rather than interpreting acknowledgment-only measurements as sustained file-write capacity.
 
 ## Backends
 

@@ -33,6 +33,10 @@
 //!
 //! This law is distinct from [`crate::Durability`]. Durability remains descriptive metadata about
 //! memory, orderly storage, or crash-resistant persistence and is not a runtime policy mechanism.
+//! Buffered acknowledgment may precede operating-system writes.
+//! Use [`SeaStorage::flush`] before orderly reopening and [`SeaStorage::shutdown`] before stopping
+//! a persistence runtime; dropping components is not an asynchronous persistence barrier.
+//! A buffered crash or background write failure may lose acknowledged history or make opening fail.
 
 mod blob_store;
 mod checkpoint;

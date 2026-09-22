@@ -60,6 +60,12 @@ struct Queue {
 
 /// Short-lived drains sharing a factory-wide blocking budget.
 pub(crate) struct Executor {
+    /// FIFO admission without holding a worker while capacity is exhausted.
+    admission: tokio::sync::Mutex<()>,
+    /// Bounds callers retaining inputs while waiting for queue capacity.
+    waiting: Arc<Semaphore>,
+    /// Independent byte budget for waiting input and encoding buffers.
+    waiting_bytes: Arc<Semaphore>,
     /// Admission lock never covers disk I/O.
     queue: Mutex<Queue>,
     /// Written-prefix and terminal-state notification.
@@ -72,6 +78,9 @@ impl Executor {
     /// Creates an idle queue with no permanent task or thread.
     pub(crate) fn new(workers: Arc<Semaphore>) -> Arc<Self> {
         Arc::new(Self {
+            admission: tokio::sync::Mutex::new(()),
+            waiting: Arc::new(Semaphore::new(MAX_REQUESTS)),
+            waiting_bytes: Arc::new(Semaphore::new(MAX_BYTES)),
             queue: Mutex::default(),
             changed: Notify::new(),
             workers,
@@ -79,7 +88,48 @@ impl Executor {
     }
 
     /// Reserves bounded capacity and publishes atomically before scheduling an idle drain.
-    pub(crate) fn admit<Output>(
+    pub(crate) async fn admit<Output>(
+        self: &Arc<Self>,
+        bytes: usize,
+        publish: impl FnOnce() -> Result<(Output, Task), FileStorageError>,
+    ) -> Result<Output, FileStorageError> {
+        if bytes > MAX_BYTES {
+            return Err(FileStorageError::Rejected("mutation exceeds byte limit"));
+        }
+        let _waiting = self
+            .waiting
+            .clone()
+            .try_acquire_owned()
+            .map_err(|_| FileStorageError::Rejected("too many waiting mutations"))?;
+        let _bytes = self
+            .waiting_bytes
+            .clone()
+            .try_acquire_many_owned(u32::try_from(bytes).expect("bounded admission bytes fit u32"))
+            .map_err(|_| FileStorageError::Rejected("waiting mutation byte limit exceeded"))?;
+        let _order = self.admission.lock().await;
+        loop {
+            let notified = self.changed.notified();
+            tokio::pin!(notified);
+            notified.as_mut().enable();
+            {
+                let queue = self.queue.lock().map_err(|_| FileStorageError::Ambiguous)?;
+                if queue.failed {
+                    return Err(FileStorageError::Ambiguous);
+                }
+                if queue.closed {
+                    return Err(FileStorageError::Rejected("storage is shut down"));
+                }
+                if queue.requests < MAX_REQUESTS && bytes <= MAX_BYTES.saturating_sub(queue.bytes) {
+                    break;
+                }
+            }
+            notified.await;
+        }
+        self.publish(bytes, publish)
+    }
+
+    /// Transfers ownership and publishes while capacity and lifecycle state are locked.
+    fn publish<Output>(
         self: &Arc<Self>,
         bytes: usize,
         publish: impl FnOnce() -> Result<(Output, Task), FileStorageError>,
@@ -125,6 +175,17 @@ impl Executor {
             let executor = self.clone();
             let result =
                 crate::common::blocking(self.workers.clone(), move || executor.turn()).await;
+            if result.is_err() {
+                let mut queue = self
+                    .queue
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner);
+                queue.failed = true;
+                queue.active = false;
+                queue.jobs.clear();
+                drop(queue);
+                self.changed.notify_waiters();
+            }
             if !matches!(result, Ok(true)) {
                 return;
             }
@@ -140,6 +201,8 @@ impl Executor {
                 let mut queue = self.queue.lock().unwrap();
                 let Some(mut job) = queue.jobs.pop_front() else {
                     queue.active = false;
+                    drop(queue);
+                    self.changed.notify_waiters();
                     return Ok(false);
                 };
                 let mut requests = 1;
@@ -181,6 +244,12 @@ impl Executor {
         Ok(true)
     }
 
+    /// Fences admission immediately, including callers already waiting for capacity.
+    pub(crate) fn close(&self) {
+        self.queue.lock().unwrap().closed = true;
+        self.changed.notify_waiters();
+    }
+
     /// Captures and waits for the accepted prefix, optionally stopping further admission.
     pub(crate) async fn flush(&self, close: bool) -> Result<(), FileStorageError> {
         let target = {
@@ -188,6 +257,9 @@ impl Executor {
             queue.closed |= close;
             queue.accepted
         };
+        if close {
+            self.changed.notify_waiters();
+        }
         loop {
             let notified = self.changed.notified();
             tokio::pin!(notified);
@@ -197,11 +269,148 @@ impl Executor {
                 if queue.failed {
                     return Err(FileStorageError::Ambiguous);
                 }
-                if queue.written >= target {
+                if queue.written >= target && (!close || !queue.active) {
                     return Ok(());
                 }
             }
             notified.await;
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Provides an ordered control operation without filesystem dependencies.
+    fn task(operation: impl FnOnce() -> Result<(), FileStorageError> + Send + 'static) -> Task {
+        Task {
+            records: Vec::new(),
+            events: false,
+            run: Box::new(move |_| operation()),
+        }
+    }
+
+    #[tokio::test]
+    async fn hot_document_yields_worker_capacity_to_cold_document() {
+        let workers = Arc::new(Semaphore::new(1));
+        let held = workers.clone().acquire_owned().await.unwrap();
+        let hot = Executor::new(workers.clone());
+        let cold = Executor::new(workers);
+        let observations = Arc::new(Mutex::new(Vec::new()));
+        for _ in 0..128 {
+            let observed = observations.clone();
+            hot.admit(32 * 1024, || {
+                Ok((
+                    (),
+                    task(move || {
+                        observed.lock().unwrap().push("hot");
+                        Ok(())
+                    }),
+                ))
+            })
+            .await
+            .unwrap();
+        }
+        tokio::task::yield_now().await;
+        let observed = observations.clone();
+        cold.admit(1, || {
+            Ok((
+                (),
+                task(move || {
+                    observed.lock().unwrap().push("cold");
+                    Ok(())
+                }),
+            ))
+        })
+        .await
+        .unwrap();
+        tokio::task::yield_now().await;
+        drop(held);
+        hot.flush(false).await.unwrap();
+        cold.flush(false).await.unwrap();
+        let observations = observations.lock().unwrap();
+        assert_eq!(observations.len(), 129);
+        assert!(
+            observations
+                .iter()
+                .position(|value| *value == "cold")
+                .unwrap()
+                <= 32
+        );
+    }
+
+    #[tokio::test]
+    async fn shutdown_wakes_bounded_waiters_before_worker_settlement() {
+        let workers = Arc::new(Semaphore::new(1));
+        let held = workers.clone().acquire_owned().await.unwrap();
+        let executor = Executor::new(workers);
+        executor
+            .admit(MAX_BYTES, || Ok(((), task(|| Ok(())))))
+            .await
+            .unwrap();
+        let mut waiting = (0..MAX_REQUESTS)
+            .map(|_| Box::pin(executor.admit(1, || Ok(((), task(|| Ok(())))))))
+            .collect::<Vec<_>>();
+        for future in &mut waiting {
+            assert!(futures_util::poll!(future).is_pending());
+        }
+        assert!(executor.admit::<()>(1, || unreachable!()).await.is_err());
+        executor.close();
+        for future in waiting {
+            assert!(matches!(future.await, Err(FileStorageError::Rejected(_))));
+        }
+        let flush = executor.flush(true);
+        tokio::pin!(flush);
+        assert!(futures_util::poll!(&mut flush).is_pending());
+        drop(held);
+        flush.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn bounded_waiting_cancellation_shutdown_and_failure_wake_admission() {
+        for fail in [false, true] {
+            let workers = Arc::new(Semaphore::new(1));
+            let held = workers.clone().acquire_owned().await.unwrap();
+            let executor = Executor::new(workers);
+            executor
+                .admit(MAX_BYTES, || {
+                    Ok((
+                        (),
+                        task(move || {
+                            if fail {
+                                Err(FileStorageError::Ambiguous)
+                            } else {
+                                Ok(())
+                            }
+                        }),
+                    ))
+                })
+                .await
+                .unwrap();
+            assert!(
+                executor
+                    .admit::<()>(MAX_BYTES + 1, || unreachable!())
+                    .await
+                    .is_err()
+            );
+            {
+                let waiting = executor.admit(MAX_BYTES, || Ok(((), task(|| Ok(())))));
+                tokio::pin!(waiting);
+                assert!(futures_util::poll!(&mut waiting).is_pending());
+                assert!(executor.admit::<()>(1, || unreachable!()).await.is_err());
+            }
+            assert_eq!(executor.queue.lock().unwrap().accepted, 1);
+            let waiting = executor.admit(1, || Ok(((), task(|| Ok(())))));
+            tokio::pin!(waiting);
+            assert!(futures_util::poll!(&mut waiting).is_pending());
+            drop(held);
+            let result = tokio::time::timeout(std::time::Duration::from_secs(5), &mut waiting)
+                .await
+                .unwrap();
+            assert_eq!(result.is_err(), fail);
+            assert_eq!(executor.flush(true).await.is_err(), fail);
+            assert!(executor.admit::<()>(1, || unreachable!()).await.is_err());
         }
     }
 }

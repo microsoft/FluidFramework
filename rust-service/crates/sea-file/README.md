@@ -1,8 +1,18 @@
 # Sea File
 
-`sea-file::storage::FileStorage` implements `sea_core::storage::SeaStorage` with buffered filesystem documents.
-`FileStorage::<false>::open(root)` creates or opens a namespace; `create_view` allocates a document and `open_view` exclusively recovers one.
-The same engine supplies synchronized storage to `sea-file-durable` through `FileStorage<true>`.
+`sea-file::buffered::FileStorage` and `sea-file::durable::DurableStorage` implement `sea_core::storage::SeaStorage`.
+Both factories are also re-exported from the crate root.
+`FileStorage::open(root)` or `DurableStorage::open(root)` synchronously creates or opens a namespace; `create_view` allocates a document and `open_view` exclusively recovers one.
+The `common` module shares framing, atomic publication, recovery mechanisms, and bounded blocking dispatch.
+The `buffered` and `durable` modules own independent admission and execution policies; shared components retain document identity and published state.
+The former `sea-file-durable` crate and const-generic factory have been retired without changing journal bytes.
+
+**Buffered mode is for tests, demonstrations, and comparisons, not production persistence.**
+Success acknowledges bounded process-local admission before OS writes.
+A crash, forced shutdown, or background disk error can lose acknowledged events, blobs, directories, and snapshots, leave corrupt or incomplete journals, or prevent reopening.
+Clients may already have discarded resubmission state; neither resubmission nor snapshot recovery is guaranteed to repair that loss.
+Use `SeaStorage::flush` for completed OS writes and `SeaStorage::shutdown` for orderly admission-stop and drain before stopping the runtime.
+Neither operation synchronizes buffered files or promises power-loss safety.
 
 ## Persistence Model
 
@@ -11,12 +21,13 @@ Frames contain a length, its complement, a BLAKE3 content hash, and the record b
 Event positions are literal byte offsets in the event journal; predecessor offsets support backward traversal for arbitrary range bounds.
 Snapshot positions remain event positions; their physical records and backward lookup belong only to storage.
 The current experimental formats have no supported migration from earlier versions.
-Buffered writes reach the operating system before returning but are not synchronized, so their durability is `Durability::Buffered`.
+Buffered writes publish pending records and final byte offsets at admission, with `Durability::Buffered`.
+Readers span the written prefix and bounded pending suffix; draining never renumbers an acknowledged position.
 Durable mode appends to the journal and synchronizes it before acknowledgment, once per event batch.
 Durable creation synchronizes a temporary file, renames it, and synchronizes the namespace and newly created ancestors.
 On Unix, namespace synchronization stops when the parent belongs to a different filesystem; synchronizing an unrelated parent filesystem cannot persist the namespace's entries.
 Mount configuration must already be stable and is outside this guarantee.
-Its [power-loss model](../sea-file-durable/README.md#power-loss-model) requires durable-prefix integrity, crash-atomic rename, and truthful synchronization; filesystem/device qualification remains outstanding.
+The [power-loss model](#power-loss-model) requires durable-prefix integrity, crash-atomic rename, and truthful synchronization; filesystem/device qualification remains outstanding.
 
 Each journal has a checksummed 48-byte `.cursor` containing its validated byte boundary and last record offset.
 Opening validates the named tail records and recovers only the suffix after that boundary.
@@ -37,20 +48,21 @@ Checkpoint publication neither reads nor rewrites content, journals, or storage 
 Any uncertain publication poisons the opening.
 Storage independently publishes its fixed-size cursor after each successful event batch or snapshot append, after settling the journal.
 In durable mode this adds a cursor-file synchronization and directory synchronization per batch, independent of history size.
-Single mutations and raw batches can contain arbitrarily large payloads or entry counts; the generic storage API promises no fixed byte bound.
+Mutation admission is bounded as described below; oversized mutations are rejected before publication.
 The sequencer bounds its event batches and independently checkpoints its applied state.
 
 Blob and directory content is immutable and deduplicated; directory publication checks child availability before publishing its hash-addressed file.
 Directory membership proves transitive availability because publication and recovery establish closure and content is never removed.
-Reusing a stored directory checks membership under the state lock without taking the journal writer lock or checking its children again.
+Reusing a stored directory checks membership without taking the journal writer lock or checking its children again.
 Membership checks the hash-addressed filename; writer independence does not imply an I/O-free lookup.
-New directories are encoded once for identity and persistence, then rechecked under the writer and state locks before publication.
+New directories are encoded once for identity and persistence; durable publication rechecks membership under writer ownership.
 Events are never deduplicated or retried, and snapshots must advance their event position.
 Session retry identities and conditional snapshot policy remain above storage.
 
-Event batches become visible together only after writing and, in durable mode, synchronization.
+Buffered event batches become visible together at admission; durable batches become visible only after journal and cursor synchronization.
 Empty batches perform no I/O; pre-write rejection attempts no entries.
-An uncertain batch returns `Ambiguous` for every submitted entry because recovery may retain any prefix, including all entries.
+An uncertain durable batch returns `Ambiguous` for every submitted entry because recovery may retain any prefix, including all entries.
+Buffered background failure cannot retract returned successes; it poisons observations, admission, flush, and shutdown.
 Process the entire error suffix, not just its first error, and never automatically retry it.
 
 ## Ownership And Reads
@@ -74,12 +86,17 @@ Normal commits and uncertain writes wake readers outside the state lock; uncerta
 
 ## Cancellation And Failures
 
-Event appends require an active Tokio runtime and use one `spawn_blocking` task per nonempty batch, including single-event appends.
+Async operations require an active Tokio runtime.
+Buffered workers coalesce consecutive event jobs without a timer and drain finite turns; idle documents own no worker task.
+Durable requests preserve FIFO admission through cancellation, acquiring document order before factory worker capacity.
 The worker owns the inputs and retains the opening until work finishes; dropping the caller future does not stop an admitted worker or release its exclusive OS lock.
 An unpolled mutation has no effect, and an empty batch starts no worker.
-Returned batch results establish settlement: a subsequent successful head bounds every returned result, including errors.
+Returned batch results establish logical publication: a subsequent successful head bounds every returned result, including errors.
+Durable success also establishes synchronized persistence; buffered write completion is established separately by flush.
 Cancellation alone does not establish settlement, and a concurrent head may precede later publication by the cancelled worker.
-There is no public cancelled-worker join operation: drop all components and streams, then successfully reopen the document to establish settlement through exclusive locking and recovery.
+Factory flush waits for accepted work; shutdown stops admission and drains it, including work whose callers were cancelled.
+For buffered admission, cancellation while waiting for capacity has no storage effect; acceptance atomically publishes state and transfers ownership to the queue.
+For durable admission, reservation of bounded request/byte capacity transfers ownership to an independently retained ordered task.
 Reopening returns `Busy` while a retained worker still owns the opening; this is not permission to retry the append.
 A rejected input does not append a record.
 An I/O error after writing begins is `Ambiguous` and poisons the opening: later writes, heads, resolutions, and lookups fail until all opening owners are dropped and recovery succeeds.
@@ -92,10 +109,19 @@ Only the suffix after the storage cursor is recovered into memory; history is ne
 Publication write volume does not grow with retained history.
 An old snapshot lookup or non-record event bound can traverse history backward; latest lookups and event reads from returned positions need no such traversal.
 Content uses one file per typed hash, so filesystem metadata costs remain workload-dependent.
-Namespace opening, document creation/recovery, blob/directory writes, and snapshot appends still perform synchronous I/O and can block the calling executor.
-Internal checkpoint publication and historical reads also perform synchronous I/O.
-The built-in server host runs namespace initialization and document creation/recovery on blocking workers; direct storage callers must arrange their own execution isolation for these operations.
-Blob writes, new directory writes, and snapshot appends also synchronously wait for the journal writer mutex and hold the state mutex across their own I/O; reads may wait behind those barriers or an in-memory publication, but not event-batch disk I/O.
+Only synchronous factory construction requires caller-provided execution isolation.
+Creation/recovery, mutations, checkpoints, metadata checks, and lazy historical reads use bounded blocking workers, including for direct storage callers.
+Each factory and its clones share four workers; independently constructed factories have independent budgets.
+Each document bounds accepted mutations to 128 requests and 16 MiB of conservatively charged input, encoding, framing, and metadata space, including in-flight work.
+Content preparation has a separate 128-request/16-MiB budget acquired before encoding or metadata waits; worker-owned validation retains its charge after caller cancellation.
+Buffered callers wait FIFO for queue capacity, with a separate limit of 128 waiting calls and 16 MiB of charged waiting inputs; excess waiters and oversized requests are rejected.
+Durable saturation rejects before acceptance; bounded accepted tasks retain their budgets through cancellation and settlement.
+Caller-owned buffers, transport queues, read results, allocator overhead, and filesystem caches are not a total-process memory guarantee.
+Drain turns stop after bounded work or a 1 MiB batching target; a single admitted request can exceed that target but not its admission budget.
+Disk work does not hold the published-state mutex. Durable content visibility uses a separate publication fence.
+Checkpoints participate in mutation order and await their own write, including buffered checkpoints; they do not rebuild journals or historical indexes.
+Shutdown timeout can stop waiting, but cannot cancel a syscall or report successful flushing.
+Successful shutdown waits for accepted workers to settle; separately retained components and streams still own their document locks until dropped.
 Mutations write only new frames without replacing the journal inode; encoding memory is proportional to batch size.
 Distributed filesystems, external file replacement, and writes through buffered mode are outside the durable guarantee.
 Malformed lengths and complete checksum failures are errors, including at the final frame.
@@ -103,6 +129,30 @@ Checksums cannot distinguish a torn unacknowledged record from damaged acknowled
 
 See [`src/storage.rs`](src/storage.rs) for components and localized tests, and [`src/journal.rs`](src/journal.rs) for framing and fault boundaries.
 Shared view and sparse-archive laws come from [`sea-conformance`](../sea-conformance/README.md).
+
+## Power-Loss Model
+
+Durable mode preserves acknowledged records across power loss under these assumptions:
+
+- The local filesystem provides crash-atomic same-directory rename: before directory synchronization, recovery sees either the old name binding or the new one, not a missing or partially replaced binding.
+- Successful file synchronization persists content and length; successful directory synchronization persists name bindings.
+- Appends and recovery truncation preserve all previously synchronized journal bytes and length, including the final sector shared with new data.
+- An interrupted append leaves a prefix of valid complete frames and optionally an incomplete final header or payload with an intact length/complement pair.
+- The device honors flushes, and there is no independent media corruption or external namespace modification.
+
+Ordinary append plus fsync does not establish durable-prefix integrity by itself.
+Event and snapshot mutations append to their existing journal inodes; immutable content uses same-directory atomic publication.
+Readers observe a durable event batch only after both journal synchronization and fixed-cursor publication complete.
+Power loss before acknowledgment can retain any ordered prefix of the unacknowledged batch, including the entire batch.
+Never automatically retry an uncertain entry.
+
+Reopening holds a stable sidecar, truncates structurally incomplete suffix frames, synchronizes the selected journals and directories, and discards unpublished creation files.
+This makes a complete recovered but unacknowledged publication durable before another caller can depend on it.
+Malformed length complements and complete checksum failures remain errors, not permission to discard records.
+Checksums cannot distinguish acknowledged truncation from an interrupted append or safely repair a full-length torn frame; the assumptions exclude those cases.
+The settled prefix is trusted, so reopening is not a full media-integrity scrub.
+External replacement, distributed filesystems, media failure, and buffered writes are outside this model.
+Actual power-cut qualification remains outstanding, including each ZFS pool/device/flush configuration; `sync=disabled` is unsupported.
 
 ## Validation
 
@@ -114,6 +164,8 @@ RUSTDOCFLAGS='-D warnings' cargo doc -p sea-file --all-features --no-deps
 ```
 
 Tests cover framing/corruption, batch visibility and uncertainty, lost acknowledgments, cross-process locks, executor progress during event I/O, and cancellation/panic ownership.
+Policy tests cover bounded count/byte backpressure, cancelled waiters, durable prefix flush, shutdown wakeups, and hot/cold-document fairness.
+Paused-worker tests verify resident directory/snapshot admission, variable-sized offset reservation, checkpoint ordering, and orderly reopen.
 Atomic-file tests cover every truncated unpublished replacement and complete old/new selection.
 Storage tests cover checkpoint size and historical-file independence, lazy historical corruption detection, byte-offset bounds, and backward snapshot lookup without sequencer state.
 Seek-instrumented journal recovery never reads bytes before its storage cursor boundary.

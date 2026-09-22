@@ -1,7 +1,8 @@
 //! Ordered, bounded execution for synchronized file storage.
 
+use futures_util::FutureExt;
 use std::sync::Arc;
-use tokio::sync::{Mutex, Notify, OwnedSemaphorePermit, Semaphore};
+use tokio::sync::{Mutex, OwnedMutexGuard, Semaphore};
 
 use crate::journal::FileStorageError;
 
@@ -9,6 +10,8 @@ crate::common::file_factory!(DurableStorage, true);
 
 /// Document-local admission order and retained mutation budgets.
 pub(crate) struct Executor {
+    /// Serializes capacity reservation with FIFO registration and flush barriers.
+    admission: std::sync::Mutex<()>,
     /// Async ordering authority; no worker waits for this mutex.
     order: Arc<Mutex<()>>,
     /// Bounds admitted requests, including work waiting for a worker.
@@ -17,26 +20,6 @@ pub(crate) struct Executor {
     bytes: Arc<Semaphore>,
     /// Factory-wide blocking concurrency shared with reads and recovery.
     workers: Arc<Semaphore>,
-    /// Completion signal also emitted when a waiting caller cancels.
-    changed: Arc<Notify>,
-}
-
-/// Retains admission through cancellation and notifies after returning capacity.
-struct Admission {
-    /// Request permit released before notification.
-    request: Option<OwnedSemaphorePermit>,
-    /// Retained byte budget.
-    bytes: Option<OwnedSemaphorePermit>,
-    /// Shutdown waiters.
-    changed: Arc<Notify>,
-}
-
-impl Drop for Admission {
-    fn drop(&mut self) {
-        self.bytes.take();
-        self.request.take();
-        self.changed.notify_waiters();
-    }
 }
 
 /// Maximum retained mutation bytes in one document opening.
@@ -46,11 +29,11 @@ impl Executor {
     /// Creates an idle executor without starting a permanent worker.
     pub(crate) fn new(workers: Arc<Semaphore>) -> Self {
         Self {
+            admission: std::sync::Mutex::new(()),
             order: Arc::new(Mutex::new(())),
             requests: Arc::new(Semaphore::new(128)),
             bytes: Arc::new(Semaphore::new(MAX_BYTES)),
             workers,
-            changed: Arc::new(Notify::new()),
         }
     }
 
@@ -60,6 +43,20 @@ impl Executor {
         bytes: usize,
         operation: impl FnOnce() -> Result<Output, FileStorageError> + Send + 'static,
     ) -> Result<Output, FileStorageError> {
+        let task = self.enqueue(bytes, operation)?;
+        task.await.map_err(|_| FileStorageError::Ambiguous)?
+    }
+
+    /// Reserves and registers work without an intervening cancellation or scheduling point.
+    fn enqueue<Output: Send + 'static>(
+        &self,
+        bytes: usize,
+        operation: impl FnOnce() -> Result<Output, FileStorageError> + Send + 'static,
+    ) -> Result<tokio::task::JoinHandle<Result<Output, FileStorageError>>, FileStorageError> {
+        let _registration = self
+            .admission
+            .lock()
+            .map_err(|_| FileStorageError::Ambiguous)?;
         if bytes > MAX_BYTES {
             return Err(FileStorageError::Rejected("mutation exceeds byte limit"));
         }
@@ -73,33 +70,46 @@ impl Executor {
             .clone()
             .try_acquire_many_owned(u32::try_from(bytes).expect("bounded mutation bytes fit u32"))
             .map_err(|_| FileStorageError::Rejected("mutation byte budget is full"))?;
-        let admission = Admission {
-            request: Some(request),
-            bytes: Some(bytes),
-            changed: self.changed.clone(),
-        };
-        let order = self.order.clone().lock_owned().await;
-        crate::common::blocking(self.workers.clone(), move || {
-            let (_admission, _order) = (admission, order);
-            operation()
-        })
-        .await
+        let order = self.register_order();
+        let workers = self.workers.clone();
+        Ok(tokio::spawn(async move {
+            let _order = order.await;
+            crate::common::blocking(workers, move || {
+                let (_request, _bytes) = (request, bytes);
+                operation()
+            })
+            .await
+        }))
     }
 
-    /// Waits for retained admissions, closing admission first for shutdown.
-    pub(crate) async fn flush(&self, close: bool) {
-        if close {
-            self.requests.close();
-        }
-        loop {
-            let notified = self.changed.notified();
-            tokio::pin!(notified);
-            notified.as_mut().enable();
-            if self.requests.available_permits() == 128 {
-                return;
+    /// Registers FIFO order synchronously, even when the caller exhausted Tokio's cooperative budget.
+    fn register_order(&self) -> impl Future<Output = OwnedMutexGuard<()>> + Send + 'static {
+        let mut order = Box::pin(self.order.clone().lock_owned());
+        let acquired = tokio::task::unconstrained(order.as_mut()).now_or_never();
+        async move {
+            match acquired {
+                Some(guard) => guard,
+                None => order.await,
             }
-            notified.await;
         }
+    }
+
+    /// Fences admission without waiting for a worker or earlier mutations.
+    pub(crate) fn close(&self) {
+        let _registration = self.admission.lock().unwrap();
+        self.requests.close();
+    }
+
+    /// Waits for the captured admission prefix, closing admission first for shutdown.
+    pub(crate) async fn flush(&self, close: bool) {
+        let barrier = {
+            let _registration = self.admission.lock().unwrap();
+            if close {
+                self.requests.close();
+            }
+            self.register_order()
+        };
+        drop(barrier.await);
     }
 }
 #[cfg(test)]
@@ -120,6 +130,54 @@ mod tests {
 
     /// Unique local namespace for concurrently executing tests.
     static NEXT_ROOT: AtomicU64 = AtomicU64::new(0);
+
+    #[tokio::test]
+    async fn flush_captures_prefix_before_later_admission() {
+        let executor = Executor::new(Arc::new(Semaphore::new(1)));
+        let held = executor.order.clone().lock_owned().await;
+        let flush = executor.flush(false);
+        tokio::pin!(flush);
+        assert!(futures_util::poll!(&mut flush).is_pending());
+        let (release, wait) = std::sync::mpsc::channel();
+        let mutation = executor.run(1, move || {
+            wait.recv_timeout(std::time::Duration::from_secs(5))
+                .unwrap();
+            Ok(())
+        });
+        tokio::pin!(mutation);
+        assert!(futures_util::poll!(&mut mutation).is_pending());
+        drop(held);
+        tokio::time::timeout(std::time::Duration::from_secs(1), flush)
+            .await
+            .unwrap();
+        release.send(()).unwrap();
+        mutation.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn accepted_waiter_survives_cancellation_and_shutdown_drains_it() {
+        let executor = Executor::new(Arc::new(Semaphore::new(1)));
+        let held = executor.order.clone().lock_owned().await;
+        let completed = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let observed = completed.clone();
+        {
+            let mutation = executor.run(1, move || {
+                observed.store(true, Ordering::Release);
+                Ok(())
+            });
+            tokio::pin!(mutation);
+            assert!(futures_util::poll!(&mut mutation).is_pending());
+        }
+        let shutdown = executor.flush(true);
+        tokio::pin!(shutdown);
+        assert!(futures_util::poll!(&mut shutdown).is_pending());
+        assert!(executor.run(1, || Ok(())).await.is_err());
+        drop(held);
+        tokio::time::timeout(std::time::Duration::from_secs(5), shutdown)
+            .await
+            .unwrap();
+        assert!(completed.load(Ordering::Acquire));
+    }
     /// Allocates a fresh path without any old-format fixtures.
     fn root() -> PathBuf {
         std::env::temp_dir().join(format!(

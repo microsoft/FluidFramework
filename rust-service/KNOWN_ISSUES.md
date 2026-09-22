@@ -31,7 +31,8 @@ Historical findings and resolved investigations are retained in [Historical reco
   These fixes are implemented by `9f22810a2f0` and retained during checkpoint integration; they are not outstanding repair work.
 - **Benchmark scope:** The durable startup failures in the [project overview](historical/PROJECT_OVERVIEW.md#storage-and-core-exploration) may share this mechanism.
   Steady-state durable throughput variance remains unisolated: namespace initialization is not performed for every append, and virtualized storage can make necessary journal synchronization variable.
-  Blob, snapshot, and checkpoint writes and indexed historical reads remain synchronous barriers; this repair does not claim general isolation of all storage operations or bounded filesystem latency.
+  The file-storage execution refactor additionally isolates blob, snapshot, checkpoint, metadata, and lazy historical I/O on bounded workers.
+  This closes those known executor-blocking paths, not the unattributed timeout investigation or filesystem latency variability.
 - **Follow-up:** For a recurrence on the integrated code, capture the storage mode, elapsed time, server measurements, failing connection stage, and storage/worker timing before attributing it to the repaired initialization path.
   A timely timeout during genuinely slow required synchronization is distinct from executor starvation that prevents the deadline from being observed.
   Preserve the original failure when retrying; do not increase deadlines or suppress the test without causal evidence.
@@ -90,9 +91,9 @@ Historical findings and resolved investigations are retained in [Historical reco
 - **Status:** Open
 - **Severity:** High
 - **Area:** Durability
-- **Evidence:** `sea-file-durable` appends checksummed frames and synchronizes each event batch before acknowledgment.
+- **Evidence:** `sea-file::DurableStorage` appends checksummed frames and synchronizes each event batch before acknowledgment.
   Deterministic tests cover interrupted tails, grouped synchronization failures, lost acknowledgments, and stable sidecar locks across processes.
-  The [power-loss model](crates/sea-file-durable/README.md#power-loss-model) requires truthful synchronization and preservation of the synchronized prefix during later appends or recovery truncation, including a shared tail block.
+  The [power-loss model](crates/sea-file/README.md#power-loss-model) requires truthful synchronization and preservation of the synchronized prefix during later appends or recovery truncation, including a shared tail block.
   Document creation also requires crash-atomic rename and durable namespace synchronization.
   Actual power-cut qualification on target filesystems and devices remains outstanding; media failure, external namespace modification, old writers, and remote storage are outside the model.
 - **Impact:** `durable-file` must not be interpreted as a production durability claim.

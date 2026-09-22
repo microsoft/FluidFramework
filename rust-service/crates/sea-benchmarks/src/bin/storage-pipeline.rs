@@ -144,6 +144,7 @@ async fn exercise<Storage: SeaStorage + 'static>(
     let final_drain_seconds = drain_started.elapsed().as_secs_f64();
     let seconds = started.elapsed().as_secs_f64();
     let last = *receipts.last().ok_or("no receipts")?;
+    let replay_started = Instant::now();
     let mut events = session.read(None, Some(last));
     let mut delivered = 0_u32;
     while let Some(event) = events.next().await {
@@ -161,11 +162,14 @@ async fn exercise<Storage: SeaStorage + 'static>(
     if delivered != operations || receipts.len() != operations as usize {
         return Err("receipt or delivery count mismatch".into());
     }
+    let replay_seconds = replay_started.elapsed().as_secs_f64();
     drop(events);
     drop(pending);
     session.close().await.map_err(display_error)?;
     sequencer.shutdown().await.map_err(display_error)?;
+    let shutdown_started = Instant::now();
     storage.shutdown().await.map_err(display_error)?;
+    let shutdown_seconds = shutdown_started.elapsed().as_secs_f64();
     latencies.sort_by(f64::total_cmp);
     Ok(json!({
         "boundary": "local-sequencer-submit",
@@ -179,11 +183,28 @@ async fn exercise<Storage: SeaStorage + 'static>(
         "throughput_includes_final_drain": true,
         "operations_per_second": f64::from(operations) / seconds,
         "submit_latency_p50_us": latencies[latencies.len() / 2],
+        "submit_latency_p95_us": latencies[(latencies.len() - 1) * 95 / 100],
         "submit_latency_p99_us": latencies[(latencies.len() - 1) * 99 / 100],
+        "replay_seconds": replay_seconds,
+        "shutdown_seconds": shutdown_seconds,
+        "process_peak_resident_bytes": peak_resident_bytes(),
         "verified_deliveries": delivered,
         "verified_order": true,
         "physical_durability_verified": false,
     }))
+}
+
+/// Observes whole-process peak memory on Linux, including warmup and replay rather than only queue state.
+fn peak_resident_bytes() -> Option<u64> {
+    fs::read_to_string("/proc/self/status")
+        .ok()?
+        .lines()
+        .find_map(|line| line.strip_prefix("VmHWM:"))?
+        .split_whitespace()
+        .next()?
+        .parse::<u64>()
+        .ok()?
+        .checked_mul(1024)
 }
 
 /// Encodes the sequence in a fixed-size payload so replay detects reorder and corruption.

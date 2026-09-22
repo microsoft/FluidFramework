@@ -49,12 +49,14 @@ pub trait SeaService: SessionBounds {
     type Error: ClassifiedError;
 }
 
-/// The durability completed before a successful append was acknowledged.
+/// Persistence guarantees associated with successful publication.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Durability {
     /// Visible to readers in this process, with no persistence guarantee.
     Memory,
-    /// Submitted to an operating-system-backed store without a crash guarantee.
+    /// Accepted by an operating-system-backed store, possibly in a process-local write buffer.
+    /// Orderly persistence requires the backend's flush/shutdown contract; crashes or later
+    /// write failures can lose acknowledged data and prevent recovery.
     Buffered,
     /// Persisted according to the implementation's documented crash guarantee.
     Durable,

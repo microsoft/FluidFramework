@@ -51,7 +51,7 @@ Recovery must preserve those dependencies as well as event order.
 [`ReferenceableStore` and `StorageHandle`](crates/sea-core/src/storage/referenceable_store.rs) express this distinction between a value's identity and evidence that a store can make it available.
 This lets `SeaView` coordinate publication without requiring a distributed transaction across its components.
 
-[Memory](crates/sea-memory/README.md), [buffered-file](crates/sea-file/README.md), and [durable-file](crates/sea-file-durable/README.md) backends implement `SeaStorage` with different persistence guarantees.
+[Memory](crates/sea-memory/README.md) and [buffered/durable file](crates/sea-file/README.md) backends implement `SeaStorage` with different persistence guarantees.
 Storage does not manage client membership or publisher election; those belong to the session layer.
 Neither layer deduplicates event submissions.
 

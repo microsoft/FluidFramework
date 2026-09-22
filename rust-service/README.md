@@ -49,6 +49,6 @@ Current contributor requirements live in [Development](DEVELOPMENT.md); reusable
 
 The native server is single-host, and uploaded content, events, and snapshots are retained without garbage collection.
 The durable backend is designed for power-loss recovery on local filesystems with crash-atomic rename and reliable synchronization; qualification through power-cut testing remains outstanding.
-See the [durable backend](crates/sea-file-durable/README.md#power-loss-model) for assumptions and costs; it does not provide distributed durability.
+See the [durable backend](crates/sea-file/README.md#power-loss-model) for assumptions and costs; it does not provide distributed durability.
 Authentication, multi-tenant policy, cross-host fencing, replication, and production Fluid membership are not implemented.
 See [known issues](KNOWN_ISSUES.md) for outstanding limitations and future work.
