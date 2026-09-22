@@ -86,12 +86,11 @@ export interface PublishTarballsOptions {
 	readonly publish: (tarball: TarballMetadata) => Promise<PublishStatus>;
 
 	/**
-	 * Optional callback invoked immediately before each publish attempt.
+	 * Logger for publish progress and recovery messages.
 	 *
-	 * @param tarball - The tarball being attempted.
-	 * @param attempt - The 1-based attempt number (1 for initial attempt, 2 for first retry, etc.).
+	 * When omitted, publish orchestration does not emit progress messages.
 	 */
-	readonly onPublishAttempt?: (tarball: TarballMetadata, attempt: number) => void;
+	readonly log?: PublishTarballsLogger;
 
 	/**
 	 * Maximum number of initial registry preflight checks to execute concurrently.
@@ -119,6 +118,25 @@ export interface PublishTarballResult {
 	 * The total number of publish attempts made (0 if skipped via preflight check).
 	 */
 	readonly tryCount: number;
+}
+
+/**
+ * Logger used by {@link publishTarballsInOrder} for publish progress.
+ */
+export interface PublishTarballsLogger {
+	/**
+	 * Logs informational progress.
+	 *
+	 * @param message - Message to log.
+	 */
+	readonly info: (message: string) => void;
+
+	/**
+	 * Logs publish recovery warnings.
+	 *
+	 * @param message - Warning message to log.
+	 */
+	readonly warning: (message: string) => void;
 }
 
 /**
@@ -231,9 +249,8 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 		const results = await publishTarballsInOrder(tarballsToPublish, {
 			retry,
 			isPublished: async (tarball) => isTarballPublished(tarball, this.logger),
+			log: this,
 			publish: async (tarball) => publishTarball(tarball, this.logger, publishArgs),
-			onPublishAttempt: (tarball, attempt) =>
-				this.info(`Publishing ${tarball.fileName}, attempt ${attempt}`),
 		});
 
 		for (const { status, tarball: toPublish, tryCount } of results) {
@@ -244,9 +261,6 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 				}
 
 				case "RecoveredAlreadyPublished": {
-					this.warning(
-						`Publish attempt for ${toPublish.fileName} failed, but the registry now shows it is published; treating as already published.`,
-					);
 					break;
 				}
 
@@ -364,7 +378,7 @@ export async function publishTarballsInOrder(
 	tarballs: readonly TarballMetadata[],
 	options: PublishTarballsOptions,
 ): Promise<PublishTarballResult[]> {
-	const { isPublished, onPublishAttempt, preflightConcurrency, publish, retry } = options;
+	const { isPublished, log, preflightConcurrency, publish, retry } = options;
 	if (retry < 0) {
 		throw new RangeError(`retry must be greater than or equal to 0`);
 	}
@@ -389,7 +403,7 @@ export async function publishTarballsInOrder(
 		let status: PublishStatus = "Error";
 
 		while (tryCount <= retry) {
-			onPublishAttempt?.(tarball, tryCount + 1);
+			log?.info(`Publishing ${tarball.fileName}, attempt ${tryCount + 1}`);
 			// We publish one package at a time, in order, and we don't continue until the current package is successfully
 			// published. This ensures that no packages are published to npm without their dependencies first being
 			// published. Note that despite publishing in order, npm itself may still make packages available in a different
@@ -406,6 +420,9 @@ export async function publishTarballsInOrder(
 			// eslint-disable-next-line no-await-in-loop
 			if (await isPublished(tarball)) {
 				status = "RecoveredAlreadyPublished";
+				log?.warning(
+					`Publish attempt for ${tarball.fileName} failed, but the registry now shows it is published; treating as already published.`,
+				);
 				break;
 			}
 		}

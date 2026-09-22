@@ -148,12 +148,18 @@ describe("publish tarballs", () => {
 		it("treats a failed publish as already published when the version appears afterward", async () => {
 			const tarball = createTarball("tarball");
 			let publishedCheckCount = 0;
+			const infoMessages: string[] = [];
+			const warningMessages: string[] = [];
 
 			const [result] = await publishTarballsInOrder([tarball], {
 				retry: 0,
 				isPublished: async () => {
 					publishedCheckCount++;
 					return publishedCheckCount > 1;
+				},
+				log: {
+					info: (message) => infoMessages.push(message),
+					warning: (message) => warningMessages.push(message),
 				},
 				publish: async () => "Error",
 			});
@@ -163,6 +169,10 @@ describe("publish tarballs", () => {
 				tarball,
 				tryCount: 1,
 			});
+			expect(infoMessages).to.deep.equal(["Publishing tarball.tgz, attempt 1"]);
+			expect(warningMessages).to.deep.equal([
+				"Publish attempt for tarball.tgz failed, but the registry now shows it is published; treating as already published.",
+			]);
 		});
 
 		it("does not retry when publishing reports an already published tarball", async () => {
