@@ -150,3 +150,29 @@ The following remain outside the demonstrated SDK coverage; they are not hidden 
 
 The exposed generation options and test-internal construction fixture should be reviewed on their own API merits.
 This document makes no prescribed PR count or requirement to discard and reimplement the working reference.
+
+## Implementation map
+
+| Module | Maintainer responsibility |
+| --- | --- |
+| `externalSeedFile.ts` | Pure creation/readback contract and application summary subtree. |
+| `htmlSeedFormat.ts` | Restricted parser and canonical serializer; explicitly not a browser HTML parser. |
+| `htmlTreeSchema.ts` | Native recursive element/attribute/ordered-child/text schema and synchronous conversion. |
+| `nativeSeedBaseline.ts` | Test-internal complete native envelope; real DDS/compressor serializers own their codecs. |
+| `seedRuntimeAdapter.ts` | Context forwarding, coherent overlay/refetch, original source, and pending reconstruction. |
+| `sampleRuntimeFactory.ts` | Data-store registration and model realization on every client, including summarizers. |
+| `incrementalHtmlProjection.ts` | Per-part dirtiness, captured revisions, and accepted-parent subtree handles. |
+| `seedProjectionWorkflow.ts` | Backend-neutral lifecycle assertions and instrumentation. |
+| `localSeedWorkflowBackend.ts` | Memorylicious setup with local-driver and a shared `LocalDeltaConnectionServer`. |
+
+The disconnected construction mock is only a host for building/serializing a baseline, never the collaboration or
+summary service. The baseline determines store count; registering a factory does not instantiate another store.
+
+The backend's upload journal is append-only across files and records attempts, including failed calls, but excludes
+external creation. It is neither an accepted-summary inventory nor a latest-version cache. Each inspection opens a
+separate storage connection and must be disposed. Group-only responses and tree-only snapshot normalization must
+preserve the distinction between a whole native base and a selected application sidecar.
+
+The generation options are an exposed API surface with release tags matching their containing loading API, not
+internal-only merely because the sample lives in a test package. Normal workspace build, lint, and generated API checks
+remain necessary; the README's optional source loader only addresses stale local outputs.
