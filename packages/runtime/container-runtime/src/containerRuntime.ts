@@ -766,6 +766,51 @@ export interface UnknownIncomingTypedMessage extends TypedMessage {
 type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSequenceNumber">;
 
 /**
+ * Experimental, per-runtime summary customization supplied by the application runtime factory.
+ * These options are not persisted and must be supplied again when loading another runtime,
+ * including a summarizer client.
+ * @internal
+ */
+export interface ExperimentalSummaryOptions {
+	/**
+	 * Always generate full structural summaries of the native runtime tree, including data stores,
+	 * DDSes and GC state, without reusing summary handles. Defaults to false.
+	 *
+	 * @remarks
+	 * Applies for this runtime's entire lifetime, including automatic summaries and retries.
+	 * This is needed when loading from a projected base whose native summary paths do not exist
+	 * in storage. It does not inline attachment blob payloads or force full GC graph regeneration.
+	 */
+	readonly forceFullTree?: boolean;
+
+	/**
+	 * One application-owned subtree added at the runtime summary root, outside `.channels`.
+	 */
+	readonly additionalRootTree?: {
+		/**
+		 * A single, nonempty path segment unchanged by URI encoding. Dot-prefixed names, `gc`, and JavaScript prototype
+		 * property names are reserved. The key must not collide with native root entries.
+		 */
+		readonly key: string;
+		/**
+		 * Synchronously read this runtime's current checkpoint and return its additional tree.
+		 * The returned tree may specify a `groupId`. Its statistics are calculated by the runtime.
+		 *
+		 * @remarks
+		 * Called on every attach/detached summary and every normal summary attempt, even when
+		 * unchanged native descendants are represented by handles. Throwing aborts the attempt.
+		 *
+		 * This callback must only read state from this runtime at the checkpoint being summarized.
+		 * It must not mutate state, emit ops, or perform asynchronous work. In particular, attach
+		 * summarization is synchronous: the factory must realize all required data before summary
+		 * generation, on both interactive and summarizer runtimes. Return a fresh tree whose contents
+		 * will not subsequently be mutated.
+		 */
+		readonly summarize: () => ISummaryTree;
+	};
+}
+
+/**
  * This object holds the parameters necessary for the {@link loadContainerRuntime} function.
  * @legacy @beta
  */
@@ -788,6 +833,11 @@ export interface LoadContainerRuntimeParams {
 	 * Defaults to `{}`.
 	 */
 	runtimeOptions?: IContainerRuntimeOptions;
+	/**
+	 * Experimental summary behavior, captured at load time for this runtime's lifetime.
+	 * @internal
+	 */
+	experimentalSummaryOptions?: ExperimentalSummaryOptions;
 	/**
 	 * runtime services provided with context
 	 */
@@ -997,6 +1047,33 @@ export class ContainerRuntime
 			// eslint-disable-next-line import-x/no-deprecated -- accepted for compatibility. See #27851
 			minVersionForCollab: deprecatedMinVersionForCollab,
 		} = params;
+
+		// Copy both levels before any asynchronous work: callers cannot change the summary policy
+		// or replace the registered callback after loading this runtime.
+		const experimentalSummaryOptions =
+			params.experimentalSummaryOptions === undefined
+				? undefined
+				: {
+						...params.experimentalSummaryOptions,
+						additionalRootTree:
+							params.experimentalSummaryOptions.additionalRootTree === undefined
+								? undefined
+								: { ...params.experimentalSummaryOptions.additionalRootTree },
+					};
+		const additionalRootKey = experimentalSummaryOptions?.additionalRootTree?.key;
+		if (
+			additionalRootKey !== undefined &&
+			(additionalRootKey.length === 0 ||
+				additionalRootKey.includes("/") ||
+				additionalRootKey.includes("\\") ||
+				encodeURIComponent(additionalRootKey) !== additionalRootKey ||
+				additionalRootKey.startsWith(".") ||
+				additionalRootKey === gcTreeKey ||
+				additionalRootKey === "prototype" ||
+				additionalRootKey in Object.prototype)
+		) {
+			throw new UsageError("Invalid or reserved additional summary root key");
+		}
 
 		if (
 			oldestSupportedClientParam !== undefined &&
@@ -1345,6 +1422,7 @@ export class ContainerRuntime
 			requestHandler,
 			undefined, // summaryConfiguration
 			recentBatchInfo,
+			experimentalSummaryOptions,
 		);
 
 		runtime.sharePendingBlobs();
@@ -1713,6 +1791,7 @@ export class ContainerRuntime
 			...runtimeOptions.summaryOptions?.summaryConfigOverrides,
 		},
 		recentBatchInfo?: [number, string][],
+		private readonly experimentalSummaryOptions?: ExperimentalSummaryOptions,
 	) {
 		super();
 
@@ -2932,6 +3011,28 @@ export class ContainerRuntime
 		if (gcSummary !== undefined) {
 			addSummarizeResultToSummary(summaryTree, gcTreeKey, gcSummary);
 		}
+	}
+
+	private addAdditionalRootTreeToSummary(summaryTree: ISummaryTreeWithStats): void {
+		const additionalRootTree = this.experimentalSummaryOptions?.additionalRootTree;
+		if (additionalRootTree === undefined) {
+			return;
+		}
+
+		const { key, summarize } = additionalRootTree;
+		if (key in summaryTree.summary.tree) {
+			throw new UsageError("Additional summary root key collides with a native root entry");
+		}
+		const summary = summarize();
+		if (summary?.type !== SummaryType.Tree) {
+			throw new UsageError(
+				"Additional summary root callback must synchronously return a tree",
+			);
+		}
+		addSummarizeResultToSummary(summaryTree, key, {
+			summary,
+			stats: calculateStats(summary),
+		});
 	}
 
 	// Track how many times the container tries to reconnect with pending messages.
@@ -4292,6 +4393,7 @@ export class ContainerRuntime
 			false /* trackState */,
 			telemetryContext,
 		);
+		this.addAdditionalRootTreeToSummary(summarizeResult);
 		return summarizeResult.summary;
 	}
 
@@ -4308,6 +4410,9 @@ export class ContainerRuntime
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeInternalResult> {
+		// Enforce the load-time policy at the native-tree boundary as well as summarize(), so
+		// every path through the root summarizer passes fullTree down to data stores and GC.
+		fullTree ||= this.experimentalSummaryOptions?.forceFullTree === true;
 		const summarizeResult = await this.channelCollection.summarize(
 			fullTree,
 			trackState,
@@ -4321,6 +4426,7 @@ export class ContainerRuntime
 		this.loadIdCompressor();
 
 		this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
+		this.addAdditionalRootTreeToSummary(summarizeResult);
 		return {
 			...summarizeResult,
 			id: "",
@@ -4333,7 +4439,8 @@ export class ContainerRuntime
 	 */
 	public async summarize(options: {
 		/**
-		 * True to generate the full tree with no handle reuse optimizations; defaults to false
+		 * True to generate the full tree with no handle reuse optimizations; defaults to false.
+		 * The load-time experimental forceFullTree option takes precedence over false.
 		 */
 		fullTree?: boolean;
 		/**
@@ -4364,7 +4471,7 @@ export class ContainerRuntime
 		this.verifyNotClosed();
 
 		const {
-			fullTree = false,
+			fullTree: requestedFullTree = false,
 			trackState = true,
 			summaryLogger = this.mc.logger,
 			runGC = this.garbageCollector.shouldRunGC,
@@ -4372,6 +4479,8 @@ export class ContainerRuntime
 			fullGC,
 			telemetryContext = new TelemetryContext(),
 		} = options;
+		const fullTree =
+			this.experimentalSummaryOptions?.forceFullTree === true || requestedFullTree;
 
 		// Add the options that are used to generate this summary to the telemetry context.
 		telemetryContext.setMultiple("fluid_Summarize", "Options", {

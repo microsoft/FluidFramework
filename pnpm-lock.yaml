@@ -14045,6 +14045,9 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
+      '@fluidframework/test-runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/test-runtime-utils
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../test-utils

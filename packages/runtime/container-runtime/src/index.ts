@@ -12,6 +12,7 @@ export {
 	loadContainerRuntime,
 	loadContainerRuntimeAlpha,
 	type LoadContainerRuntimeParams,
+	type ExperimentalSummaryOptions,
 	agentSchedulerId,
 	ContainerRuntime,
 	DeletedResponseHeaderKey,
