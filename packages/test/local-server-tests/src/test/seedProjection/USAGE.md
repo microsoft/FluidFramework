@@ -102,6 +102,18 @@ accepted summaries.
 previous-summary handle before invoking an unchanged part's serializer. Native state becomes incremental after the
 first accepted full summary in the same runtime; an unconditional `forceFullTree` override is not needed for this flow.
 
+### Baseline agreement and recovery
+
+Seed-derived clients must agree on the initial native graph before consuming each other's edits. The reference factory
+carries its original baseline descriptor on outgoing runtime packets and validates incoming operation packets before
+native processing. It repeats the descriptor rather than relying on a one-time "sent" flag, preserving correctness
+through chunking, reconnect, and pending-state restoration without a write merely to open the document.
+
+Treat a mismatch as an explicit compatibility failure. The reference preserves the live model and a pending-work
+artifact before closing so the host can provide recovery/export. That artifact is not a complete Loader stash and must
+not be blindly restored against incompatible history. Earlier valid ungrouped edits are not automatically rolled back.
+See the maintainer guide for the exact protocol and tested boundaries.
+
 ## Storage and loading groups
 
 The local helper owns an in-process service for multiple files. `create(summary)` persists a file without an application

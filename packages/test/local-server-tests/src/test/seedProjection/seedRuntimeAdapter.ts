@@ -8,10 +8,22 @@ import type {
 	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
-import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import {
+	MessageType,
+	type ISnapshot,
+	type ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 
 import type { ApplicationProjection } from "./externalSeedFile.js";
 import type { NativeBaseline } from "./nativeSeedBaseline.js";
+import {
+	createSeedBaselineDescriptor,
+	readSeedBaselineDescriptor,
+	SeedBaselineMismatchError,
+	SeedBaselineProtocol,
+	type RetainedSeedBaseline,
+	type SeedBaselineDescriptor,
+} from "./seedBaselineFingerprint.js";
 
 /**
  * Forward getters against their real owner and bind methods to that owner.
@@ -54,6 +66,12 @@ interface PendingProjection {
 	provenance?: Provenance;
 	/** Source bytes needed when a restored loader snapshot omitted the projection's blob bodies. */
 	seed?: ApplicationProjection;
+	/** Agreement identity is retained even when pending operations were captured before transport stamping. */
+	baseline?: SeedBaselineDescriptor;
+	/** Native-summary descriptor bytes, bound to their source blob ID for offline restoration. */
+	retainedBaseline?: RetainedSeedBaseline;
+	/** Loaded source checkpoint/version, separate from genesis identity; version may be unavailable from a driver. */
+	loadedFrom?: { version?: string; sequenceNumber: number };
 	/** Native runtime pending state, forwarded unchanged to the delegated runtime. */
 	runtime: unknown;
 }
@@ -96,6 +114,8 @@ export interface ProjectionLoad {
 	projected: boolean;
 	/** Reconstruction identity retained or produced by this load, when available. */
 	provenance?: Provenance;
+	/** Immutable genesis agreement, computed for a seed or read from a native summary sidecar. */
+	baseline?: SeedBaselineDescriptor;
 }
 
 /**
@@ -103,8 +123,9 @@ export interface ProjectionLoad {
  * Read and deterministically materialize application bytes before invoking the native delegate;
  * forward real context behavior while overlaying only runtime-facing snapshots and blob reads.
  * This adapter neither imports ContainerRuntime nor changes loader caches, protocol, checkpoint,
- * version, op handling, or pending replay order. Pending restoration rebuilds the same overlay.
- * The delegate must enforce full structural summaries until its first tracked ACK for loads marked projected.
+ * version, or pending replay order. The optional packet protocol validates before native op handling.
+ * Pending restoration rebuilds the same overlay and verifies the retained agreement identity.
+ * The delegate must enforce full structural summaries until a projected load adopts a tracked native summary.
  */
 export function seedRuntimeFactory(
 	projector: Projector,
@@ -114,6 +135,10 @@ export function seedRuntimeFactory(
 		allowProjection?: boolean;
 		/** Test observation hook after adaptation and before invoking the native runtime factory. */
 		observe?: (load: ProjectionLoad, original: IContainerContext) => void;
+		/** Opt into the reference packet protocol; the sample factory always enables it. */
+		enforceBaselineFingerprint?: boolean;
+		/** Receive mismatch evidence and captured pending runtime work before the container closes. */
+		onFingerprintMismatch?: (failure: SeedBaselineMismatchError) => void;
 	} = {},
 ): IRuntimeFactory {
 	return {
@@ -133,6 +158,8 @@ export function seedRuntimeFactory(
 			});
 			let provenance = pending?.provenance;
 			let seed: ApplicationProjection | undefined;
+			let baselineDescriptor: SeedBaselineDescriptor | undefined;
+			let retainedBaseline: RetainedSeedBaseline | undefined;
 			const projected = !projector.isNative(original);
 			if (projected) {
 				if (options.allowProjection === false) {
@@ -156,6 +183,14 @@ export function seedRuntimeFactory(
 					sourceSequenceNumber: original.deltaManager.initialSequenceNumber,
 					fingerprint: baseline.fingerprint,
 				};
+				if (options.enforceBaselineFingerprint === true) {
+					baselineDescriptor = createSeedBaselineDescriptor(
+						seed,
+						provenance.sourceSequenceNumber,
+						provenance.format,
+						provenance.fingerprint,
+					);
+				}
 				const virtualBlobs = new Map(baseline.blobs);
 				// Preserve the complete original envelope, including protocol and app provenance.
 				const projectTree = (
@@ -249,18 +284,119 @@ export function seedRuntimeFactory(
 							};
 				context = forward(context, { baseSnapshot, snapshotWithContents, storage });
 			}
-			const load: ProjectionLoad = { original, context, projected, provenance };
+			if (options.enforceBaselineFingerprint === true && !projected) {
+				retainedBaseline = await readSeedBaselineDescriptor(
+					original.baseSnapshot,
+					original.storage.readBlob.bind(original.storage),
+					pending?.retainedBaseline,
+				);
+				baselineDescriptor = retainedBaseline.descriptor;
+				if (baselineDescriptor.profileVersion !== projector.format) {
+					throw new Error("Unsupported persisted seed baseline profile");
+				}
+			}
+			const protocol =
+				baselineDescriptor === undefined
+					? undefined
+					: new SeedBaselineProtocol(baselineDescriptor);
+			if (protocol !== undefined) {
+				if (original.pendingLocalState !== undefined) {
+					// Do not silently reinterpret stashed native operations under another genesis.
+					// Raw native state or an unknown wrapper has no verifiable agreement either.
+					try {
+						protocol.validateProof(pending?.baseline);
+					} catch (error) {
+						if (error instanceof SeedBaselineMismatchError) {
+							error.pendingLocalState = original.pendingLocalState;
+							options.onFingerprintMismatch?.(error);
+						}
+						throw error;
+					}
+				}
+				// Preserve capability detection: older loaders must retain the native submitFn fallback.
+				if (original.submitBatchFn !== undefined) {
+					context = forward(context, {
+						submitBatchFn: (batch, sequenceNumber) =>
+							original.submitBatchFn(protocol.stampBatch(batch), sequenceNumber),
+					});
+				}
+				context = forward(context, {
+					submitFn: (type, contents, batch, appData) => {
+						const metadata: unknown = appData;
+						if (type !== MessageType.Operation) {
+							return original.submitFn(type, contents, batch, appData);
+						}
+						if (
+							metadata !== undefined &&
+							(typeof metadata !== "object" || metadata === null || Array.isArray(metadata))
+						) {
+							throw new Error("Runtime operation metadata must be an object");
+						}
+						return original.submitFn(
+							type,
+							contents,
+							batch,
+							protocol.stampMetadata(metadata as Record<string, unknown> | undefined),
+						);
+					},
+				});
+			}
+			const load: ProjectionLoad = {
+				original,
+				context,
+				projected,
+				provenance,
+				baseline: baselineDescriptor,
+			};
 			options.observe?.(load, original);
 			const runtime = await delegate(load, existing);
+			const loadedFrom =
+				protocol === undefined
+					? undefined
+					: {
+							version: original.getLoadedFromVersion()?.id,
+							sequenceNumber: original.deltaManager.initialSequenceNumber,
+						};
 			// Generated overlays are intentionally not serialized. Only source dependencies
 			// omitted from the loader's initial ISnapshot are retained for reconstruction.
+			const capturePending: IRuntime["getPendingLocalState"] = (props): PendingProjection => ({
+				type: "seed-projection-pending/1",
+				provenance,
+				seed,
+				baseline: baselineDescriptor,
+				retainedBaseline,
+				loadedFrom,
+				runtime: runtime.getPendingLocalState(props),
+			});
+			let rejected: SeedBaselineMismatchError | undefined;
 			return forward(runtime, {
-				getPendingLocalState: (props): PendingProjection => ({
-					type: "seed-projection-pending/1",
-					provenance,
-					seed,
-					runtime: runtime.getPendingLocalState(props),
-				}),
+				getPendingLocalState: capturePending,
+				process: (message, local) => {
+					if (rejected !== undefined) throw rejected;
+					try {
+						protocol?.validateMessage(message);
+					} catch (error) {
+						if (!(error instanceof SeedBaselineMismatchError)) throw error;
+						rejected = error;
+						// Use the existing runtime connection contract to stop transmission before
+						// pending-state capture flushes a not-yet-flushed local batch. Close follows
+						// synchronously; this does not reach into a loader's private outbound queue.
+						try {
+							runtime.setConnectionState(false, original.clientId);
+							error.pendingLocalState = capturePending();
+						} catch (captureError) {
+							error.pendingCaptureError = captureError;
+						}
+						try {
+							options.onFingerprintMismatch?.(error);
+						} finally {
+							// Close, not dispose: the entry point remains readable for explicit user-work export.
+							original.closeFn(error);
+						}
+						throw error;
+					}
+					runtime.process(message, local);
+				},
 			});
 		},
 	};

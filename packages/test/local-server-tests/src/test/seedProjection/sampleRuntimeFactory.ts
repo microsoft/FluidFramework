@@ -11,7 +11,9 @@ import {
 	loadContainerRuntime,
 	type AdditionalSummaryTree,
 	type SummaryGenerationContext,
+	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
@@ -38,6 +40,10 @@ import {
 	type ProjectionLoad,
 	type Projector,
 } from "./seedRuntimeAdapter.js";
+import {
+	seedBaselineBlobName,
+	type SeedBaselineMismatchError,
+} from "./seedBaselineFingerprint.js";
 
 /** Live application surface exposed by each independently loaded sample runtime. */
 export interface HtmlEntryPoint {
@@ -97,7 +103,7 @@ async function entryPoint(runtime: IContainerRuntime): Promise<HtmlEntryPoint> {
  * A runtime metadata blob identifies a native snapshot; otherwise read the application projection
  * using the same external-reader contract and build the native baseline at the unchanged checkpoint.
  * The implementation details live in readApplicationProjection and buildNativeBaseline; the adapter
- * owns snapshot overlays and op ordering. See README.md's "Runtime projection" section.
+ * owns snapshot overlays and op ordering. See DESIGN.md's "Runtime-owned conversion" section.
  */
 export const htmlProjector: Projector = {
 	format,
@@ -144,6 +150,15 @@ export function sampleRuntimeFactory(
 		observeSummary?: (context: SummaryGenerationContext) => void;
 		/** Observe adoption after the projection's captured state becomes an accepted reuse baseline. */
 		onSummaryAccepted?: (context: ISummaryContext) => void;
+		/** Observe a fail-closed baseline disagreement, including captured pending runtime work. */
+		onFingerprintMismatch?: (failure: SeedBaselineMismatchError) => void;
+		/** Exercise ordinary native batching/compression/chunking without a separate test runtime. */
+		transportOptions?: Pick<
+			IContainerRuntimeOptions,
+			"enableGroupedBatching" | "compressionOptions" | "chunkSizeInBytes"
+		>;
+		/** Let a host/test explicitly create summarizers instead of electing automatic background clients. */
+		summaryOnRequest?: boolean;
 	} = {},
 ): IRuntimeFactory {
 	return seedRuntimeFactory(
@@ -160,11 +175,13 @@ export function sampleRuntimeFactory(
 				registryEntries: [[storeType, Promise.resolve(dataStoreFactory)]],
 				oldestSupportedClient: "2.0.0",
 				runtimeOptions: {
+					...options.transportOptions,
 					enableRuntimeIdCompressor: "on",
 					explicitSchemaControl: true,
 					summaryOptions: {
 						summaryConfigOverrides: {
-							state: "disableHeuristics",
+							state:
+								options.summaryOnRequest === true ? "summaryOnRequest" : "disableHeuristics",
 							initialSummarizerDelayMs: 0,
 							maxAckWaitTime: 20_000,
 							maxOpsSinceLastSummary: 7000,
@@ -187,13 +204,26 @@ export function sampleRuntimeFactory(
 			// Realize on EVERY client, including the noninteractive summarizer. No model
 			// initialization, alias creation or DDS writes occur here.
 			const app = await entryPoint(runtime);
+			const baseline = load.baseline;
+			if (baseline === undefined) {
+				throw new Error("The sample requires a seed baseline fingerprint");
+			}
 			const projection = new IncrementalHtmlProjection(app.view, options.onSerializePart);
 			runtime.once("dispose", () => projection.dispose());
 			summarizeProjection = (context) => {
 				const result = projection.summarize(context);
 				const onAccepted = result.onAccepted;
 				return {
-					summary: result.summary,
+					summary: {
+						...result.summary,
+						tree: {
+							...result.summary.tree,
+							[seedBaselineBlobName]: {
+								type: SummaryType.Blob,
+								content: JSON.stringify(baseline),
+							},
+						},
+					},
 					onAccepted:
 						onAccepted === undefined
 							? undefined
@@ -208,6 +238,8 @@ export function sampleRuntimeFactory(
 		},
 		{
 			allowProjection: options.allowProjection,
+			enforceBaselineFingerprint: true,
+			onFingerprintMismatch: options.onFingerprintMismatch,
 		},
 	);
 }

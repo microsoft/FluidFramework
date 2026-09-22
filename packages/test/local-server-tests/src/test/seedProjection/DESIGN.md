@@ -80,6 +80,41 @@ bind the payload bytes. It captures the initial graph and checkpoint, not later 
 transport and validation are specified separately from construction so a local equality assertion is not mistaken for
 an operation-level compatibility check.
 
+## Baseline proof on operation packets
+
+`seedBaselineFingerprint.ts` defines a descriptor containing `seedId`, `profileVersion`, `hashVersion`, and
+`baselineHash`. It is derived from the original seed provenance and persisted in
+`applicationProjection/seed-baseline.json`, outside the native graph being hashed. Clients loading later native
+summaries retain that original genesis descriptor; they do not hash the edited model as a new baseline.
+
+The factory adapter adds `seedBaseline` metadata to **every physical outgoing runtime operation packet** after native
+grouping, compression, and chunking. Repeating the proof deliberately avoids fragile "already sent once" state:
+the writer's first real operation is covered, and reconnect/resubmission reconstructs the same proof without an
+initialization operation. Existing batch/transport metadata is preserved. An older context without `submitBatchFn`
+retains its legacy `submitFn` path rather than advertising a capability it lacks.
+
+A forwarding `IRuntime.process` validates operation packets before handing them to native decoding or application,
+including accepted legacy unpacked runtime envelopes. Genuine service/control messages do not require the proof.
+Enforced restoration rejects missing, unrecognized, or incompatible pending-state proof before constructing the native
+runtime. The retained application envelope binds the pending work to its original baseline and source dependencies.
+
+For a loaded runtime, a mismatch captures local pending work and diagnostic identity/checkpoint information, then closes
+without disposing the application model. A failed restoration retains the rejected pending input before constructing
+any model. Pending application content is not telemetry. The recovery artifact is a **runtime
+pending envelope, not a complete Loader restoration string**; the host can offer explicit recovery/export, but must not
+automatically replay incompatible work into another model. Driver version identity is retained where the driver exposes
+it; projected recovery also retains source bytes and provenance.
+
+Validation is **per packet**, not a rollback protocol. A grouped/compressed/chunked operation reaches native application
+only after its carrier packets are validated. With deliberately mixed-proof ungrouped operations, an earlier compatible
+operation can already have applied when a later invalid packet closes the container; that earlier edit is not rolled
+back. The invalid packet itself never enters native processing.
+
+This detects incompatible reconstruction, not malicious peers or incompatible operations before the service sequences
+them. The reference exercises real Loader dispatch, transport modes, reconnect, pending recovery, and descriptor
+persistence through native reloads. Maximum-packet-size overhead and mixed-version deployment/recovery remain separate
+validation work. No new public ContainerRuntime API is required for this application-level protocol.
+
 ## First full summary, then incremental native state
 
 Virtual loading paths do not exist in storage. `summaryGenerationOptions.fullTreeUntilFirstAck` therefore requests full
@@ -160,6 +195,7 @@ This document makes no prescribed PR count or requirement to discard and reimple
 | `htmlTreeSchema.ts` | Native recursive element/attribute/ordered-child/text schema and synchronous conversion. |
 | `nativeSeedBaseline.ts` | Test-internal complete native envelope; real DDS/compressor serializers own their codecs. |
 | `seedRuntimeAdapter.ts` | Context forwarding, coherent overlay/refetch, original source, and pending reconstruction. |
+| `seedBaselineFingerprint.ts` | Genesis descriptor, operation-packet proof, mismatch evidence, and native-summary sidecar. |
 | `sampleRuntimeFactory.ts` | Data-store registration and model realization on every client, including summarizers. |
 | `incrementalHtmlProjection.ts` | Per-part dirtiness, captured revisions, and accepted-parent subtree handles. |
 | `seedProjectionWorkflow.ts` | Backend-neutral lifecycle assertions and instrumentation. |

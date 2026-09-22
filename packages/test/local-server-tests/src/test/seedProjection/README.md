@@ -52,6 +52,8 @@ The workflow covers external creation, independent clients, no initialization wr
 failure/retry and real ACKs. It verifies the same runtime's first-full-to-incremental transition, zero serialization or
 HTML upload for an unchanged part, stable persisted blob IDs, grouped readback, and native reload with conversion
 disabled. Pending-state cases reconstruct the baseline without the old overlay and with original seed-body reads denied.
+The fingerprint suites additionally exercise real operation transport, baseline agreement, reconnect, and mismatch
+recovery; the maintainer guide distinguishes per-packet rejection from rollback of an ungrouped batch.
 
 For the responsibilities and limitations behind these checks, follow the consumer or maintainer guide above rather than
 treating the test harness as a supported production SDK.
