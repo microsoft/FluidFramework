@@ -277,3 +277,54 @@ The full aggregate `./test.sh` was not rerun for this follow-up.
 
 The [production confirmation evidence](worker-policy-confirmation.json.gz) retains the source revision and patch, binary and runner hashes, three sample results, and validation records, including the initial root-build failure and successful retry.
 No diagnostic timing instrumentation or worker-count environment override was included in the production service.
+
+## Read-Poll CPU Investigation
+
+The worker-policy improvement and preceding evidence were committed as `eb7a806ade5`.
+A subsequent isolated investigation on that source localized a substantial remaining CPU cost to the per-poll file-read offload path.
+The production checkout was not changed by these diagnostic experiments.
+
+Both experiments used durable storage, 64-byte payloads, 1,000 offered operations/s, 32 documents, eight service cores, and four separate native WebSocket generators.
+Each sample used one warmup second and three measured seconds with fresh workspace-backed storage.
+Three paired repetitions alternated control/intervention order.
+Both modes in a pair used the same diagnostic binary; each experiment also had one smoke run, for 14 retained attempts in total.
+
+### Rejected Hypothesis: Unnecessary Pending Polls
+
+The first hypothesis was that parent-task polling scheduled additional blocking reads after a source returned `Pending`, without a corresponding source wakeup.
+A diagnostic gate prevented that repoll unless the source had signaled a wakeup, while preserving wakeups racing with worker completion.
+Sparse aggregate counters recorded scheduled source polls, pending results, and skipped repolls.
+
+Every paired run's last complete snapshot recorded 45,056 source polls, approximately 15,060 pending results, and **zero skipped repolls**.
+Counts include warmup and are sampled rather than final totals.
+All six runs passed, but median service CPU was 121.16% for the control and 123.71% for the gate.
+The hypothesized unnecessary repolls were not observed in this workload, and the gate did not improve performance.
+It was not promoted to production.
+
+### Read-Offload Control
+
+The next diagnostic bypassed `BlockingRead` and polled the underlying file stream directly on the async executor.
+The durable mutation path, 32-worker default, and synchronization barriers were unchanged.
+**This control is not a valid production optimization:** it performs synchronous file I/O on async threads and bypasses the shared worker budget for stream polls.
+It measures the combined effect of the read wrapper, per-poll blocking dispatch, synchronization between threads, and scheduling; it does not isolate those individual costs.
+
+Medians of three paired samples, without discarding the failed latency sample:
+
+| Read mode | Threshold passes | Delivered operations/s | Service CPU, % | Worst-worker p95, ms |
+| --- | ---: | ---: | ---: | ---: |
+| Per-poll offloading | 2/3 | 997.0 | 125.62 | 12.39 |
+| Diagnostic inline reads | 3/3 | 996.3 | 90.70 | 11.64 |
+
+CPU consumption decreased about 28% with inline reads.
+All 12 paired samples across both experiments had complete acknowledgments, zero missing deliveries, and zero worker errors.
+One offloaded-read control failed the latency criterion at 610.84 ms worst-worker p95; it remains included in the table and evidence.
+Short-run latency variability and the shared machine limit precision, but the CPU reduction occurred in every inline-read pair.
+
+This localizes much of the observed remaining CPU overhead to the read-offload path.
+It does not justify moving filesystem operations back onto the async executor, establish a new throughput maximum, or prove that all remaining refactor overhead has been explained.
+The next production investigation should distinguish read work that needs file I/O from progress and caught-up observations answerable from published memory state.
+Any fast path must preserve lazy observation bounds, failure visibility, and wakeup correctness; any read batching must also respect the existing no-background-prefetch contract.
+
+The [read-poll diagnostic evidence](read-poll-diagnosis.json.gz) retains both source variants and binary hashes, all 12 paired results and logs, the two smoke results, and checked acknowledgment and delivery outcomes.
+The isolated release builds and both smoke runs passed.
+No production code change or full workspace test rerun was needed for these experiments; documentation and scoped policy checks validate the retained report.
