@@ -486,7 +486,7 @@ describe("schemaBasedEncoding", () => {
 				FieldBatchDecodingContext.forOp({
 					idCompressor: testIdCompressor,
 					originatorId: testIdCompressor.localSessionId,
-				}),
+				}).idDecodingContext,
 			);
 			assert.equal(decoded.length, 1);
 			return decoded;
@@ -520,7 +520,7 @@ describe("schemaBasedEncoding", () => {
 				text: sf.string,
 			}) {}
 
-			const storedSchema = toStoredSchema(TextNode, restrictiveStoredSchemaGenerationOptions);
+			const storedSchema = toStoredSchema(TextNode, StagedSchemaUpgradePolicy.restrictive);
 
 			const makeText = (text: string): JsonableTree => ({
 				type: brand<TreeNodeSchemaIdentifier>(TextNode.identifier),
@@ -569,7 +569,7 @@ describe("schemaBasedEncoding", () => {
 				texts: TextArray,
 			}) {}
 
-			const storedSchema = toStoredSchema(Doc, restrictiveStoredSchemaGenerationOptions);
+			const storedSchema = toStoredSchema(Doc, StagedSchemaUpgradePolicy.restrictive);
 
 			// Three identical worthwhile values → one folded cohort → all three resolve to the same
 			// specialized shape, so the array is monomorphic.
@@ -632,7 +632,7 @@ describe("schemaBasedEncoding", () => {
 				),
 			}) {}
 
-			const storedSchema = toStoredSchema(Doc, restrictiveStoredSchemaGenerationOptions);
+			const storedSchema = toStoredSchema(Doc, StagedSchemaUpgradePolicy.restrictive);
 
 			// "a" appears twice inline — a cohort worth folding. "b" appears once inline and once in
 			// the incremental sub-chunk. If the outer count pass (wrongly) counted the sub-chunk
@@ -683,7 +683,7 @@ describe("schemaBasedEncoding", () => {
 				map: TextMap,
 			}) {}
 
-			const storedSchema = toStoredSchema(Doc, restrictiveStoredSchemaGenerationOptions);
+			const storedSchema = toStoredSchema(Doc, StagedSchemaUpgradePolicy.restrictive);
 
 			// Two TextNode children inside a Map sharing one worthwhile value: the count pass must
 			// visit both (correctly evaluating the Map parent's policy once with undefined fieldKey)
@@ -757,7 +757,7 @@ describe("schemaBasedEncoding", () => {
 				text: sf.string,
 			}) {}
 
-			const storedSchema = toStoredSchema(TextNode, restrictiveStoredSchemaGenerationOptions);
+			const storedSchema = toStoredSchema(TextNode, StagedSchemaUpgradePolicy.restrictive);
 
 			const makeText = (text: string): JsonableTree => ({
 				type: brand<TreeNodeSchemaIdentifier>(TextNode.identifier),
@@ -805,7 +805,7 @@ describe("schemaBasedEncoding", () => {
 				child: Inner,
 			}) {}
 
-			const storedSchema = toStoredSchema(Outer, restrictiveStoredSchemaGenerationOptions);
+			const storedSchema = toStoredSchema(Outer, StagedSchemaUpgradePolicy.restrictive);
 
 			const repeated = "shared inner value".repeat(4);
 			const tree: JsonableTree[] = Array.from({ length: 2 }, () => ({
@@ -860,7 +860,7 @@ describe("schemaBasedEncoding", () => {
 				body: sf.string,
 			}) {}
 
-			const storedSchema = toStoredSchema(Format, restrictiveStoredSchemaGenerationOptions);
+			const storedSchema = toStoredSchema(Format, StagedSchemaUpgradePolicy.restrictive);
 
 			// A repeated long value that WOULD fold into a specialized shape if it were not excluded
 			// by the incremental policy.
@@ -917,7 +917,7 @@ describe("schemaBasedEncoding", () => {
 				id: sf.identifier,
 			}) {}
 
-			const storedSchema = toStoredSchema(Doc, restrictiveStoredSchemaGenerationOptions);
+			const storedSchema = toStoredSchema(Doc, StagedSchemaUpgradePolicy.restrictive);
 
 			// Repeat one id across several nodes so that, if the identifier field were treated as
 			// an ordinary string leaf, its value would fold into a specialized shape.

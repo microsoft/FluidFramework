@@ -113,17 +113,17 @@
     "com.fluidframework.text.formatted.default.lineTag.unchecked": {
       "object": {}
     },
-    "com.fluidframework.text.formatted<default>.StringArray": {
+    "com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.StringArray": {
       "object": {
         "": {
           "kind": "Sequence",
           "types": [
-            "com.fluidframework.text.formatted<default>.StringAtom"
+            "com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.StringAtom"
           ]
         }
       }
     },
-    "com.fluidframework.text.formatted<default>.StringAtom": {
+    "com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.StringAtom": {
       "object": {
         "": {
           "kind": "Value",
@@ -140,12 +140,12 @@
         }
       }
     },
-    "com.fluidframework.text.formatted<default>.Text": {
+    "com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.Text": {
       "object": {
         "": {
           "kind": "Value",
           "types": [
-            "com.fluidframework.text.formatted<default>.StringArray"
+            "com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.StringArray"
           ]
         }
       }
@@ -154,7 +154,7 @@
   "root": {
     "kind": "Value",
     "types": [
-      "com.fluidframework.text.formatted<default>.Text"
+      "com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.Text"
     ]
   }
 }

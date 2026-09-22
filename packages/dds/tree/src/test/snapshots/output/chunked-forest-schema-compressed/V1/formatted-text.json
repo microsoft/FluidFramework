@@ -30,7 +30,7 @@
     },
     {
       "c": {
-        "type": "com.fluidframework.text.formatted<default>.Text",
+        "type": "com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.Text",
         "value": false,
         "fields": [
           [
@@ -42,7 +42,7 @@
     },
     {
       "c": {
-        "type": "com.fluidframework.text.formatted<default>.StringArray",
+        "type": "com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.StringArray",
         "value": false,
         "fields": [
           [
@@ -57,7 +57,7 @@
     },
     {
       "c": {
-        "type": "com.fluidframework.text.formatted<default>.StringAtom",
+        "type": "com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.StringAtom",
         "value": false,
         "fields": [
           [

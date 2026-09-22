@@ -147,19 +147,19 @@
         "object": {}
       }
     },
-    "com.fluidframework.text.formatted<default>.StringArray": {
+    "com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.StringArray": {
       "kind": {
         "object": {
           "": {
             "kind": "Sequence",
             "types": [
-              "com.fluidframework.text.formatted<default>.StringAtom"
+              "com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.StringAtom"
             ]
           }
         }
       }
     },
-    "com.fluidframework.text.formatted<default>.StringAtom": {
+    "com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.StringAtom": {
       "kind": {
         "object": {
           "": {
@@ -178,13 +178,13 @@
         }
       }
     },
-    "com.fluidframework.text.formatted<default>.Text": {
+    "com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.Text": {
       "kind": {
         "object": {
           "": {
             "kind": "Value",
             "types": [
-              "com.fluidframework.text.formatted<default>.StringArray"
+              "com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.StringArray"
             ]
           }
         }
@@ -194,7 +194,7 @@
   "root": {
     "kind": "Value",
     "types": [
-      "com.fluidframework.text.formatted<default>.Text"
+      "com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.Text"
     ]
   }
 }

@@ -65,7 +65,7 @@ import {
 	walkFieldSchema,
 	ObjectNodeSchema,
 } from "../simple-tree/index.js";
-import { FormattedTextAsTreeDefault } from "../text/index.js";
+import { FormattedTextDefault } from "../text/index.js";
 import { brand, Breakable } from "../util/index.js";
 
 // eslint-disable-next-line import-x/no-internal-modules
@@ -538,19 +538,19 @@ export const testSimpleTrees: readonly TestSimpleTree[] = [
  */
 export const testTrees: readonly TestTree[] = [
 	...testSimpleTrees.map(convertSimpleTreeTest),
-	// FormattedTextAsTreeDefault.Tree includes LineTag enum types (multiple empty objects with no
+	// FormattedTextDefault.Tree includes LineTag enum types (multiple empty objects with no
 	// distinguishing fields) which require permissive schema options.
 	{
 		name: "formatted-text",
 		schemaData: toStoredSchema(
-			FormattedTextAsTreeDefault.Tree,
-			permissiveStoredSchemaGenerationOptions,
+			FormattedTextDefault.Tree,
+			StagedSchemaUpgradePolicy.permissive,
 		),
 		treeFactory: (): JsonableTree[] =>
 			jsonableTreeFromFieldCursor(
 				fieldCursorFromInsertable<UnsafeUnknownSchema>(
-					FormattedTextAsTreeDefault.Tree,
-					FormattedTextAsTreeDefault.Tree.fromString("Hello, world! This is formatted text."),
+					FormattedTextDefault.Tree,
+					FormattedTextDefault.Tree.fromString("Hello, world! This is formatted text."),
 				),
 			),
 		policy: defaultSchemaPolicy,
@@ -558,14 +558,14 @@ export const testTrees: readonly TestTree[] = [
 	{
 		name: "formatted-text-uniform",
 		schemaData: toStoredSchema(
-			FormattedTextAsTreeDefault.Tree,
-			permissiveStoredSchemaGenerationOptions,
+			FormattedTextDefault.Tree,
+			StagedSchemaUpgradePolicy.permissive,
 		),
 		treeFactory: (): JsonableTree[] =>
 			jsonableTreeFromFieldCursor(
 				fieldCursorFromInsertable<UnsafeUnknownSchema>(
-					FormattedTextAsTreeDefault.Tree,
-					FormattedTextAsTreeDefault.Tree.fromString("a".repeat(20)),
+					FormattedTextDefault.Tree,
+					FormattedTextDefault.Tree.fromString("a".repeat(20)),
 				),
 			),
 		policy: defaultSchemaPolicy,

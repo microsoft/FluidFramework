@@ -60,17 +60,19 @@ export function compressedEncode(
 	context: EncoderContext,
 ): EncodedFieldBatchV1OrV2 {
 	context.beginBatch(fieldBatch);
-	const batchBuffer: BufferFormat[] = [];
+	try {
+		const batchBuffer: BufferFormat[] = [];
 
-	// Populate buffer, including shape and identifier references
-	for (const cursor of fieldBatch) {
-		const buffer: BufferFormat = [];
-		anyFieldEncoder.encodeField(cursor, context, buffer);
-		batchBuffer.push(buffer);
+		// Populate buffer, including shape and identifier references
+		for (const cursor of fieldBatch) {
+			const buffer: BufferFormat = [];
+			anyFieldEncoder.encodeField(cursor, context, buffer);
+			batchBuffer.push(buffer);
+		}
+		return updateShapesAndIdentifiersEncoding(context.version, batchBuffer);
+	} finally {
+		context.endBatch();
 	}
-	const result = updateShapesAndIdentifiersEncoding(context.version, batchBuffer);
-	context.endBatch();
-	return result;
 }
 
 export type BufferFormat = BufferFormatGeneric<EncodedChunkShape>;
