@@ -12,6 +12,8 @@ The current experimental formats have no supported migration from earlier versio
 Buffered writes reach the operating system before returning but are not synchronized, so their durability is `Durability::Buffered`.
 Durable mode appends to the journal and synchronizes it before acknowledgment, once per event batch.
 Durable creation synchronizes a temporary file, renames it, and synchronizes the namespace and newly created ancestors.
+On Unix, namespace synchronization stops when the parent belongs to a different filesystem; synchronizing an unrelated parent filesystem cannot persist the namespace's entries.
+Mount configuration must already be stable and is outside this guarantee.
 Its [power-loss model](../sea-file-durable/README.md#power-loss-model) requires durable-prefix integrity, crash-atomic rename, and truthful synchronization; filesystem/device qualification remains outstanding.
 
 Recovery restores archive heads and internal sequencer metadata from an atomically published `.index` sidecar, then verifies framing, content identities, dependency closure, dense event positions, and snapshot dependencies in the journal suffix.
@@ -35,6 +37,10 @@ Single mutations and raw batches can contain arbitrarily large payloads or entry
 The sequencer bounds its event batches and independently checkpoints its applied state.
 
 Blob and directory content is immutable and deduplicated; directory publication checks child availability before modifying the journal.
+Directory membership proves transitive availability because publication and recovery establish closure and content is never removed.
+Reusing a stored directory checks membership under the state lock without taking the journal writer lock or checking its children again.
+Membership may require a synchronous lookup in the immutable index after checkpointing; writer independence does not imply an I/O-free lookup.
+New directories are encoded once for identity and persistence, then rechecked under the writer and state locks before publication.
 Events are never deduplicated or retried, and snapshots must advance their event position.
 Session retry identities and conditional snapshot policy remain above storage.
 
@@ -82,7 +88,9 @@ Only the suffix after the storage index boundary is recovered into memory; histo
 Index publication merges all historical address entries with recent addresses, so its I/O grows with retained history even though recovery does not scan that history.
 This simple immutable index favors low implementation complexity over steady-state publication throughput.
 Namespace opening, document creation/recovery, blob/directory writes, and snapshot appends still perform synchronous I/O and can block the calling executor.
-Blob/directory writes and snapshot appends also synchronously wait for the journal writer mutex and hold the state mutex across their own I/O; reads may wait behind those barriers or an in-memory publication, but not event-batch disk I/O.
+Internal checkpoint publication and historical index/payload reads also perform synchronous I/O under the state lock.
+The built-in server host runs namespace initialization and document creation/recovery on blocking workers; direct storage callers must arrange their own execution isolation for these operations.
+Blob writes, new directory writes, and snapshot appends also synchronously wait for the journal writer mutex and hold the state mutex across their own I/O; reads may wait behind those barriers or an in-memory publication, but not event-batch disk I/O.
 Mutations write only new frames without replacing the journal inode; encoding memory is proportional to batch size.
 Distributed filesystems, external file replacement, and writes through buffered mode are outside the durable guarantee.
 Malformed lengths and complete checksum failures are errors, including at the final frame.
@@ -102,3 +110,4 @@ RUSTDOCFLAGS='-D warnings' cargo doc -p sea-file --all-features --no-deps
 
 Tests cover framing/corruption, batch visibility and uncertainty, lost acknowledgments, cross-process locks, executor progress during event I/O, and cancellation/panic ownership.
 Index tests cover every truncated unpublished replacement, old/new selection, lazy historical corruption detection, and a seek-instrumented recovery that never reads bytes before its checkpoint boundary.
+Directory tests cover writer-independent deduplication of recent and reopened indexed content, missing-child rejection, failure-state checks, and recovery of nested content.

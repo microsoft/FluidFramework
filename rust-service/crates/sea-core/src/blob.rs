@@ -183,6 +183,17 @@ impl BlobDirectory {
         Ok(encoded.freeze())
     }
 
+    /// Returns the canonical encoding and its domain-separated identity from one encoding pass.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the directory cannot be canonically encoded.
+    pub fn encode_with_id(&self) -> Result<(Bytes, BlobDirectoryId), BlobTreeError> {
+        let encoded = self.encode()?;
+        let id = BlobDirectoryId(domain_hash(DIRECTORY_DOMAIN, &encoded));
+        Ok((encoded, id))
+    }
+
     /// Decodes and validates one canonical directory encoding.
     ///
     /// # Errors
@@ -241,10 +252,7 @@ impl BlobDirectory {
     ///
     /// Returns an error when the directory cannot be canonically encoded.
     pub fn id(&self) -> Result<BlobDirectoryId, BlobTreeError> {
-        Ok(BlobDirectoryId(domain_hash(
-            DIRECTORY_DOMAIN,
-            &self.encode()?,
-        )))
+        self.encode_with_id().map(|(_, id)| id)
     }
 }
 
@@ -331,6 +339,18 @@ mod tests {
         );
         let directory = BlobDirectory::new(entries).expect("valid directory");
         let encoded = directory.encode().expect("canonical encoding");
+        for source in [&directory, &BlobDirectory::default()] {
+            let (combined_encoding, combined_id) = source.encode_with_id().unwrap();
+            assert_eq!(combined_encoding, source.encode().unwrap());
+            assert_eq!(
+                combined_id,
+                BlobDirectoryId(super::domain_hash(
+                    super::DIRECTORY_DOMAIN,
+                    &combined_encoding
+                ))
+            );
+            assert_eq!(combined_id, source.id().unwrap());
+        }
         assert_eq!(
             BlobDirectory::decode(&encoded).expect("canonical decoding"),
             directory

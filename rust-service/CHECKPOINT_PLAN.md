@@ -88,6 +88,16 @@ The first aggregate integration run timed out in the Chromium runner launch/clea
 One final native run hit the previously recorded `native_client_round_trip_in_every_storage_mode` durable-file connection timeout; isolated and full-workspace reruns passed without a production change.
 These remain timing risks, not checkpoint correctness failures established by those runs.
 
+Integration reconciliation (2026-09-22): the incoming storage-initialization fix `9f22810a2f0` removes cross-filesystem ancestor synchronization and moves host initialization/create/recovery off the executor while retaining worker ownership after cancellation.
+That reproduced stall mechanism is fixed, but the native timeout above was not traced and cannot be conclusively attributed to it.
+Track remaining native failures under [unattributed connection timeouts](KNOWN_ISSUES.md#intermittent-native-connection-timeout), not as an outstanding initialization repair.
+The [Chromium runner fixture timeout](KNOWN_ISSUES.md#intermittent-chromium-runner-fixture-timeout) remains a separate unresolved harness issue; neither passing retries nor the storage fix establish its resolution.
+
+Merged-tree validation passed formatting, strict workspace Clippy/rustdoc, all-target build, and 223 Rust tests with one browser-only Cargo test ignored.
+The generated-client build and aggregate `test:all` passed, including freshly executed Mocha runner fixtures and Chromium WebTransport, WebSocketStream, ordinary WebSocket, and shutdown scenarios.
+Documentation and repository policy checks passed; the root build still failed only on the unchanged historical JSON formatting issue below.
+This validation establishes compatibility of the combined changes, not a causal explanation for the earlier untraced failures.
+
 Root build remains blocked only by formatting in [`historical/measurements/browser-dds-comparison/websocket-summary.json`](historical/measurements/browser-dds-comparison/websocket-summary.json), unchanged by this task.
 No unrelated historical evidence was reformatted.
 Generated API differences were reviewed against the user-selected pre-task commit `bb0173b0439`; all changed declarations are `@internal`, with no customer-facing API or changeset requirement.
@@ -99,3 +109,4 @@ No pruning, identity reuse, further network compression, or new compatibility la
 - Starting implementation: `LocalSequencer::recover` scans from the beginning, and `Journal::open` reads the entire journal before recovering records.
   A sequencer-only checkpoint would not meet the storage I/O requirement.
 - The directory-dedup worktree has concurrent storage work; preserve it and reconcile any incoming changes rather than overwrite them.
+  Integration preserves checkpoint address lookups in the writer-independent directory fast path and tests both recent state and reopened indexed history under both durability modes.

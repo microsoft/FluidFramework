@@ -5,21 +5,48 @@ Historical findings and resolved investigations are retained in [Historical reco
 
 ## Intermittent native connection timeout
 
-- **Status:** Open; cause not established
+- **Status:** Open for unattributed connection timeouts only; the reproduced storage-initialization stall mechanism is fixed
 - **Severity:** Medium
 - **Area:** Native WebTransport connection setup and test reliability
 - **Evidence:** `host::tests::native_client_round_trip_in_every_storage_mode` failed during initial `NativeSeaClient::connect` with `Transport(Timeout)` in workspace validation on 2026-09-20.
   The original log was machine-local; the test now reports storage mode, elapsed connection time, and server measurements for future failures.
   Passing isolated and workspace retries do not resolve the failure.
+  Checkpoint integration at `f1d4a366267` also recorded a durable-file connection timeout before the storage-initialization fixes were merged; isolated and workspace retries passed.
+  That occurrence has no captured failing-stage/syscall evidence linking it to the fixed mechanism.
 - **Investigation:** Temporary diagnostics distinguished handshake, event-stream opening, and author-stream opening timeouts.
   The failure did not recur in 92 server-suite runs, six complete workspace runs, or 80 additional server-suite processes in ten waves of eight concurrent processes.
   No failed stage was captured, and scheduling pressure did not establish a cause.
   Temporary production logging was removed; the round-trip test now reports storage mode, elapsed connection time, and server measurements on failure.
 - **Impact:** Native test runs can fail without an established product or test-harness cause.
   The transport timeout must not be classified as harmless host variability or resolved by a passing retry.
-- **Follow-up:** Capture the enhanced failure diagnostics and instrument the implicated connection stage to obtain a reproducible cause.
+- **Storage findings (2026-09-22):** A durable-file connection failed after 74.44 seconds despite a five-second client operation timeout.
+  In a separate successful run, syscall tracing measured `fsync("/")` at 0.964 seconds while document-related synchronizations each took less than one millisecond.
+  The namespace was on the separate `/tmp` ext4 mount, but initialization also synchronized the unrelated container overlay root on the runtime thread.
+  A controlled seven-second `fsync` delay made the original round-trip test take 16.75 seconds without enforcing its operation deadline promptly.
+  With initialization offloaded, the same delay injection produced the expected connection timeout at 5.01 seconds while the blocking worker finished independently.
+  The original 74-second incident was not syscall-traced, so these results establish a causal stall mechanism, not attribution of every recorded timeout.
+- **Repair and regression evidence:** Unix namespace synchronization stops at a different filesystem, preserving bottom-up synchronization and error propagation within the namespace filesystem.
+  The built-in host offloads factory initialization, creation, and recovery while retaining cache ownership through caller cancellation.
+  Deterministically blocked factory/create/recovery tests verify executor deadlines and cancellation ownership; file tests verify filesystem boundaries and synchronization error propagation.
+  These fixes are implemented by `9f22810a2f0` and retained during checkpoint integration; they are not outstanding repair work.
+- **Benchmark scope:** The durable startup failures in the [project overview](historical/PROJECT_OVERVIEW.md#storage-and-core-exploration) may share this mechanism.
+  Steady-state durable throughput variance remains unisolated: namespace initialization is not performed for every append, and virtualized storage can make necessary journal synchronization variable.
+  Blob, snapshot, and checkpoint writes and indexed historical reads remain synchronous barriers; this repair does not claim general isolation of all storage operations or bounded filesystem latency.
+- **Follow-up:** For a recurrence on the integrated code, capture the storage mode, elapsed time, server measurements, failing connection stage, and storage/worker timing before attributing it to the repaired initialization path.
+  A timely timeout during genuinely slow required synchronization is distinct from executor starvation that prevents the deadline from being observed.
   Preserve the original failure when retrying; do not increase deadlines or suppress the test without causal evidence.
-- **Trigger:** Close only after a causal fix and a regression check that exercises the failing condition.
+- **Trigger:** Close the remaining unattributed issue only with causal evidence for the remaining failure, not successful retries or the existence of the initialization fix.
+
+## Intermittent Chromium Runner Fixture Timeout
+
+- **Status:** Open; cause not established
+- **Area:** Browser runner launch/cleanup test harness
+- **Evidence:** The [checkpoint validation](CHECKPOINT_PLAN.md#validation) aggregate run timed out in the Chromium runner launch/cleanup fixture before `f1d4a366267`.
+  All nine fixture tests passed in isolation and the aggregate rerun passed without a targeted fix.
+- **Disposition:** Separate from native durable connection timeouts.
+  No evidence connects this fixture failure to filesystem initialization, so the storage fixes do not close it.
+- **Follow-up:** Preserve the failing fixture name, child-process lifecycle output, and timeout/cleanup stage on recurrence.
+  Close only after the failing mechanism is identified and a targeted regression validates its repair.
 
 ## Rust CI support
 

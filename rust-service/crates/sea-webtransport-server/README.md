@@ -111,10 +111,17 @@ No caller-name mapping is maintained.
 File modes keep their namespace below `root/documents`.
 
 A host serializes lazy factory initialization and first document recovery.
+Factory initialization, document creation, and recovery run on Tokio blocking workers so slow filesystem synchronization does not stall network polling or operation deadlines.
+Workers retain their initialization locks and cache successful results even if the initiating request is cancelled.
+Cancellation or a client timeout does not roll back creation or stop filesystem work; a created document can remain retained without its ID reaching the caller.
+Pending workers retain the registry until they finish, and runtime shutdown may wait for them.
 Concurrent sessions for one document share one recovered runtime and its exclusive view; failed initialization is not cached and can be retried explicitly.
 The registry retains successful runtimes for the host lifetime, with no idle eviction.
 Dropping the host and its connections releases those views; stopping the listener alone does not evict a separately retained host.
 Live replay uses backend monitored streams; the legacy liveness lag setting does not bound this path.
+The registry still serializes first opens across documents, and blob/directory, snapshot, and checkpoint writes remain synchronous storage barriers.
+Checkpointed historical index/payload reads can also block the executor; initialization isolation does not offload subsequent session operations.
+Blocking workers preserve executor responsiveness during initialization, not bounded storage latency or constant durable throughput on shared or virtualized devices.
 
 Snapshot dispatch resolves wire roots and committed event positions through the session before constructing availability handles.
 Snapshots are versioned by event position, not publication-operation IDs.
