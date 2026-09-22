@@ -1935,12 +1935,6 @@ export interface TreeBeta {
 // @beta
 export const TreeBeta: TreeBeta;
 
-// @beta @deprecated
-export type TreeBranch = UntypedTreeView;
-
-// @alpha @deprecated
-export type TreeBranchAlpha = UntypedTreeViewAlpha;
-
 // @alpha @sealed
 export interface TreeBranchCommitMetadata {
     readonly custom: JsonCompatibleReadOnlyObject | undefined;
