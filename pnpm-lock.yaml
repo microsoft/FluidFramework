@@ -3393,18 +3393,15 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
-      '@fluidframework/azure-client':
+      '@fluidframework/devtools-core':
         specifier: workspace:~
-        version: link:../../../packages/service-clients/azure-client
+        version: link:../../../packages/tools/devtools/devtools-core
       '@fluidframework/quill-react':
         specifier: workspace:~
         version: link:../../../packages/framework/quill-react
       '@fluidframework/react':
         specifier: workspace:~
         version: link:../../../packages/framework/react
-      '@fluidframework/test-runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/test-runtime-utils
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
@@ -3436,9 +3433,6 @@ importers:
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
         version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
-      '@fluidframework/devtools':
-        specifier: workspace:~
-        version: link:../../../packages/tools/devtools/devtools
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@6.0.3)
@@ -3481,9 +3475,6 @@ importers:
       global-jsdom:
         specifier: ^26.0.0
         version: 26.0.0(jsdom@26.1.0)
-      html-webpack-plugin:
-        specifier: ^5.6.0
-        version: 5.6.3(webpack@5.109.0)
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
@@ -3496,18 +3487,12 @@ importers:
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
-      source-map-loader:
-        specifier: ^5.0.0
-        version: 5.0.0(webpack@5.109.0)
       style-loader:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.109.0)
       tinylicious:
         specifier: ^7.0.1
         version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
@@ -3520,9 +3505,6 @@ importers:
       webpack-dev-server:
         specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3)(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/data-objects/todo:
     dependencies:
@@ -7077,6 +7059,9 @@ importers:
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
+      '@types/xml2js':
+        specifier: ^0.4.14
+        version: 0.4.14
       c8:
         specifier: ^10.1.3
         version: 10.1.3
@@ -7107,6 +7092,9 @@ importers:
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
+      xml2js:
+        specifier: ^0.6.2
+        version: 0.6.2
 
   packages/common/core-utils:
     devDependencies:
@@ -14178,6 +14166,9 @@ importers:
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
+      '@types/xml2js':
+        specifier: ^0.4.14
+        version: 0.4.14
       concurrently:
         specifier: ^10.0.3
         version: 10.0.3
@@ -14196,6 +14187,9 @@ importers:
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
+      xml2js:
+        specifier: ^0.6.2
+        version: 0.6.2
 
   packages/test/snapshots:
     dependencies:
@@ -15636,6 +15630,9 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../../runtime/runtime-utils
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../../dds/sequence
@@ -15688,6 +15685,9 @@ importers:
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
+      '@types/node':
+        specifier: ~22.19.17
+        version: 22.19.17
       c8:
         specifier: ^10.1.3
         version: 10.1.3
@@ -19725,6 +19725,9 @@ packages:
 
   '@types/ws@8.5.13':
     resolution: {integrity: sha512-osM/gWBTPKgHV8XkTunnegTRIsvF6owmf5w+JtAfOw472dptdm0dlGv4xCt6GwQRcC2XVOvvRE/0bAoQcL2QkA==}
+
+  '@types/xml2js@0.4.14':
+    resolution: {integrity: sha512-4YnrRemBShWRO2QjvUin8ESA41rH+9nQGLUGZV/1IDhi3SL9OhdpNC/MrulTWuptXKwhx/aDxE7toV0f/ypIXQ==}
 
   '@types/yargs-parser@21.0.3':
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
@@ -32807,6 +32810,10 @@ snapshots:
       '@types/node': 22.19.17
 
   '@types/ws@8.5.13':
+    dependencies:
+      '@types/node': 22.19.17
+
+  '@types/xml2js@0.4.14':
     dependencies:
       '@types/node': 22.19.17
 

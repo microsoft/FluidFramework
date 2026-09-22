@@ -341,6 +341,7 @@ class LocalServiceImplementation
 		options?: Partial<ServiceOptions>,
 	): LocalServiceClientImplementation<LocalServiceImplementation> {
 		const finalOptions: LocalServiceOptions<LocalServiceImplementation> = {
+			...options,
 			oldestSupportedClient: options?.oldestSupportedClient ?? featureVersion(pkgVersion),
 			service: this,
 		};
@@ -645,6 +646,7 @@ export class EphemeralServiceContainer<TData>
 		LocalServiceImplementation.narrow(options.service);
 		const container: IContainer = await createDetachedContainer({
 			codeDetails: { package: "1.0" },
+			logger: options.logger,
 			urlResolver,
 			documentServiceFactory: options.service.getDocumentServiceFactory(),
 			codeLoader: makeCodeLoader(
@@ -672,6 +674,7 @@ export class EphemeralServiceContainer<TData>
 		LocalServiceImplementation.narrow(options.service);
 		const containerInner = await loadExistingContainer({
 			request: createLoadExistingRequest(id),
+			logger: options.logger,
 			urlResolver,
 			documentServiceFactory: options.service.getDocumentServiceFactory(),
 			codeLoader: makeCodeLoader(

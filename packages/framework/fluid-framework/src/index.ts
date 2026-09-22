@@ -130,6 +130,7 @@ export {
 } from "@fluidframework/driver-definitions/internal";
 
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
+import type { SharedObjectKindAlpha } from "@fluidframework/shared-object-base/internal";
 import type { ITree } from "@fluidframework/tree";
 import {
 	SharedTree as OriginalSharedTree,
@@ -174,7 +175,9 @@ export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
  * ```
  * @alpha
  */
-export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKind<ITree> {
+export function configuredSharedTree(
+	options: SharedTreeOptions,
+): SharedObjectKindAlpha<ITree> {
 	return originalConfiguredSharedTree(options);
 }
 
