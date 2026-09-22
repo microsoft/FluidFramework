@@ -7,27 +7,25 @@ WebTransport is one optional session decorator under test, alongside compression
 ## Session Composition Matrix
 
 The [composition matrix](tests/session_composition.rs) runs independent scenario and layer-configuration tables.
-Its five scenarios run against all twelve configurations, for sixty scenario/configuration combinations:
+Each scenario runs against every configured stack:
 
 | Scenario | Coverage |
 | --- | --- |
 | Open/close | Empty-session lifecycle without content or publisher registrations. |
 | Events and snapshots | Blob trees, snapshot publication, bounded replay, and live delivery. |
-| Reconnect | Fresh stacks, exact submission retries, changed-input rejection, and new snapshot publication. |
-| Collaboration | Two distinct authors submit concurrently through independent stacks and verify identical ordered delivery, cross-author retry rejection, shared content, and publisher coordination. |
+| Reconnect | Fresh memberships/connections, retained history, and new snapshot publication. |
+| Collaboration | Concurrent authors, identical ordered delivery, shared content, and publisher coordination. |
 | Collaboration stress | Four collaboration rounds with repeated peer reconnects, 36 committed events, four snapshots, historical snapshot lookup, and catch-up after writes made while the peer is disconnected. |
 
 Configurations range from a bare session to duplicate payload wrappers, reversed compression/encryption ordering, multiple real loopback WebTransport hops, and a nine-layer mixed stack.
 
-Each configuration first runs an isolated transport-path probe.
-Server-side counters track decoded submissions at every endpoint; rejecting a submission at each hop in turn must reach the caller, prevent commitment, and stop traffic before the deeper hops.
-Removing the rejection must let the same operation traverse every hop successfully.
-The scenarios also assert the configured endpoint count for every connection generation and submission traffic at every endpoint, except the intentionally submission-free open/close scenario.
-The nine-layer `repeated_stress` configuration requires three network hops per stack, including each rebuilt peer stack.
+Transport probes count decoded submissions at each endpoint and inject a rejection at each hop.
+The rejection must reach the caller without commitment or traffic to deeper hops; after removing it, submissions must traverse every hop.
+Scenarios check endpoint counts for every connection generation, including all three hops of `repeated_stress` after reconnect.
 
 The collaboration scenarios use empty and binary event payloads up to 8 KiB, nested blob directories with shared subtrees, and exact plaintext history expectations independent of the returned events.
 They cancel an initialized waiting read while other subscriptions remain active, reject read-only publication and stale fences, check client-selected suppression and renewed Sea selection, and reject wrong parents and conflicting snapshot roots.
-Successful retries and rejected mutations must leave no extra history entries.
+Rejected mutations and exact snapshot-publication retries must leave no extra history entries.
 
 Each matrix cell has a fresh in-memory document and a deadline.
 Reconnect rebuilds the entire stack with fresh memberships and connections over the retained sequencer.

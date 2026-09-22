@@ -1,4 +1,4 @@
-# Compression Wrapper
+# Sea Compression
 
 `sea-compression` transparently compresses event payloads and blob leaves through `CompressionSession<S>`.
 The wrapped session continues to own event positions, blob-tree identities, snapshot lineage, operation recovery, cancellation, and backpressure.
@@ -15,14 +15,11 @@ The wrapped session continues to own event positions, blob-tree identities, snap
 
 Directories and snapshot metadata remain visible so the server can validate reachability.
 For compression plus encryption, wrap an encrypted session in `CompressionSession`; the outer compression layer processes plaintext before the inner encryption layer stores it.
-The replacement `sea_core::session` facets are implemented directly on `CompressionSession`.
 Loads preserve the selected handle-based snapshot and decode its live suffix; read progress and source error classifications are preserved.
 Content identities and availability handles are those of the encoded stored bytes, not plaintext hashes.
 Directory references, handle resolution, snapshot publication, publisher participation/fences, and revocation pass through unchanged.
-Deterministic frames preserve exact submission retries without a wrapper identity registry.
+Deterministic encoding does not deduplicate submissions; each submit is a new event.
 Dropping a forwarded coordination stream revokes its underlying registration.
-
-Replacement tests run shared session conformance, including initialization, snapshots, retries, replay, and independent close.
 
 ## Use
 
@@ -32,3 +29,8 @@ use sea_compression::CompressionSession;
 # let session = ();
 let compressed = CompressionSession::new(session);
 ```
+
+## Validation
+
+From `rust-service/`, run `cargo test -p sea-compression`.
+Tests cover session conformance, decoding errors, replay, and independent close.

@@ -2,21 +2,20 @@
 
 `sea-memory` provides `MemoryStorage`, the process-local reference implementation of `sea_core::storage::SeaStorage`.
 
-## Behavior
+## Ownership
 
 `create_view` allocates a process-unique document identity; `open_view` returns `None` for unknown identities and rejects competing openings.
 Factory clones share the registry, and closed documents retain their complete histories while the registry lives.
 
-Blob, event, and snapshot components and their clones share one exclusive opening.
-The opening owns the document; writable components access their data through that opening rather than pairing data with a separate lifetime token.
-Dropping the last component or component clone releases writer ownership, even when reads remain alive.
-Reads retain data, not the opening: event reads keep their event archive, while snapshot reads also retain the document needed to resolve snapshot dependencies.
-Unpolled, live, failed, and completed reads do not prevent reopening.
-Dropping a view or reopening the document does not invalidate its reads; live reads continue receiving appends from subsequent openings.
+Components and their clones share one exclusive opening; dropping the last releases writer ownership.
+Reads retain data rather than writer ownership, regardless of their polling/completion state.
+They survive reopening, and live reads receive appends from subsequent openings.
 
 Availability handles have private, document-specific provenance and retain data, not writer ownership.
 A new opening of the same document can validate old handles with `ensure_available` or mint fresh ones with `resolve`.
 Handles from another document are rejected even when their content identities or event positions match.
+
+## Publication and Reads
 
 Blobs and directories deduplicate by content identity.
 Every object reachable from a stored directory is also stored: publication requires all direct children to exist, and content is never removed or modified.
@@ -29,7 +28,7 @@ It fails on inconsistent history rather than omitting records.
 Event appends assign increasing positions starting at one and never deduplicate equal input.
 Event batches publish under one archive lock and wake readers after releasing it.
 Position exhaustion retains the successful prefix and stops at the first error; batches never return ambiguous outcomes.
-The composed view checks dependency availability before publication and retains a checked prefix when a later capability is invalid.
+The view retains a checked prefix when a later dependency is invalid.
 Snapshots are sparse, strictly increasing publications at their event handle's position, with exact and optional inclusive-bound lookup.
 There is no initial empty-state snapshot.
 
@@ -49,16 +48,13 @@ No operation returns an ambiguous outcome or retries an append.
 
 ## Limits
 
-There is no persistence, crash recovery, pruning, outage simulation, or cross-process document identity guarantee.
+Storage is process-local, with no persistence or pruning; document identities are not guaranteed unique across processes.
 Data survives while the factory, components, streams, or availability handles retain the corresponding state; handles alone do not provide a factory or writer authority.
 The factory retains every created document without eviction.
-Session policy, application operation identities, and reconciliation belong above the view.
-This implementation is suitable for tests, examples, and process-local state, not crash recovery.
 
 The primary entry point is `MemoryStorage`; its components and handles are exported from the crate root.
-Shared replacement laws come from [`sea-conformance`](../sea-conformance/src/lib.rs).
-Localized tests in [`document.rs`](src/document.rs) exercise provenance, opening lifetimes, cancellation, concurrent appends, position exhaustion, shared-tree closure, lazy/live reads, and inconsistent-history rejection.
-Tests in [`memory_archive.rs`](src/memory_archive.rs) cover append-only assertions, sparse bounds and progress, finite completion, and weak subscription cleanup.
+Shared laws come from [`sea-conformance`](../sea-conformance/src/lib.rs).
+Local tests cover document invariants in [`document.rs`](src/document.rs) and archive bounds, progress, and subscription cleanup in [`memory_archive.rs`](src/memory_archive.rs).
 
 ## Validation
 

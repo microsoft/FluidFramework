@@ -1,30 +1,27 @@
-# Encryption Wrapper
+# Sea Encryption
 
 `sea-encryption` transparently encrypts event payloads and blob leaves through `EncryptionSession<S, K, N>` using AES-256-GCM-SIV.
 Each payload has an independent authenticated envelope; the wrapped session continues to own positions, blob-tree identities, snapshot lineage, operation recovery, cancellation, and backpressure.
 
 ## Envelope And Errors
 
-The envelope authenticates its magic value, format and algorithm versions,
-event-or-blob context, non-secret key identifier, nonce, and ciphertext.
+The envelope authenticates its magic, format/algorithm versions, event-or-blob context, non-secret key identifier, nonce, and ciphertext.
 The distinct contexts prevent swapping a stored event with a blob.
-`ENVELOPE_OVERHEAD` is the fixed number of bytes added before accounting for
-ciphertext, whose length equals the plaintext length.
+`ENVELOPE_OVERHEAD` is the fixed overhead; ciphertext length equals plaintext length.
 
-Malformed, truncated, tampered, wrongly keyed, or context-swapped envelopes use
-the single `CorruptEnvelope` error and classify as `ErrorKind::Corrupt`. Missing
-active or historical keys and nonce-source failure classify as `Unavailable`.
-Underlying errors preserve their classification, and encryption failure is
-`Rejected`.
+| Failure | Classification |
+| --- | --- |
+| Malformed, truncated, tampered, wrongly keyed, or context-swapped envelope | `CorruptEnvelope` / `Corrupt` |
+| Missing key or nonce-source failure | `Unavailable` |
+| Encryption failure | `Rejected` |
+| Underlying session error | Original classification |
 
 ## Keys And Nonces
 
-`KeyProvider::active_key` selects the key for new writes, while `key_for_id`
-must retain every historical key needed to read stored envelopes. `KeyId` is
-non-secret; `EncryptionKey` redacts debug output and zeroizes its bytes on drop.
-The default `OsNonceSource` uses the operating-system CSPRNG. An injected
-`NonceSource` must return a fresh nonce for every payload written under a key;
-deterministic sources are only appropriate for tests.
+`KeyProvider::active_key` selects new-write keys; `key_for_id` must retain all historical keys needed for reads.
+`KeyId` is public; `EncryptionKey` redacts debug output and zeroizes on drop.
+`OsNonceSource` uses the operating system's cryptographically secure random generator.
+Injected sources must provide a fresh nonce per payload/key; deterministic sources are for tests only.
 Each submission encrypts independently with a fresh nonce and is admitted under the current author membership.
 Equal plaintext submissions are distinct events; the wrapper performs no committed-event lookup or ciphertext reuse.
 Author operations are serialized across wrapper clones.
@@ -32,13 +29,11 @@ An append error or cancellation leaves the wrapper terminal; a later append cann
 Close, or the next attempted append, drives inner closure and its durable departure barrier.
 Uncertain writes are never blindly resubmitted to storage, and a rejection never triggers a retry.
 
-The wrapper buffers one complete payload for encryption or decryption and has
-no payload-size limit. Reads decrypt one event when polled and do not add a
-background task or stream buffer.
+The wrapper buffers one complete payload with no size limit; untrusted inputs need an outer limit.
+Reads decrypt on poll without a background task or extra stream buffer.
 
 Directories, event metadata, and snapshot metadata remain visible so the server can validate ordering and reachability.
 For compression plus encryption, wrap an `EncryptionSession` in `CompressionSession` so compression processes plaintext first.
-The replacement `sea_core::session` facets are implemented directly on `EncryptionSession`.
 Snapshot handles and publisher participation/fences pass through unchanged, and loads decrypt the direct live suffix.
 Blob identities and handles identify stored ciphertext; directory references remain in that stored identity space.
 Dropping a forwarded coordination stream revokes its underlying registration.
@@ -53,7 +48,4 @@ cargo clippy -p sea-encryption --all-targets --all-features -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc -p sea-encryption --all-features --no-deps
 ```
 
-The test suite covers session conformance and stable retries, empty payloads,
-key rotation and unavailability, nonce failure and retry cardinality, malformed
-and truncated envelopes, tampering, context separation, and key redaction.
-Replacement tests additionally cover shared session conformance, compression-over-encryption, reconnect/key-rotation retry cardinality, and cross-author conflict rejection.
+Tests cover session conformance, compression composition, nonce use, key rotation, terminal append failures, envelope corruption/context separation, and key redaction.

@@ -2,39 +2,43 @@
 
 These shell and Node.js entry points validate or measure the current benchmark harness.
 The shell validation and measurement wrappers use a disposable source copy; the Node.js collectors use the current checkout and explicit output directories.
-`sea-benchmarks` is already a workspace member, so the scripts preserve the manifest without rewriting membership.
 Copies exclude build outputs, installed dependencies, generated packages, Git metadata, and benchmark-result directories; each run uses a separate Cargo target directory and removes the copy and target on exit.
 
 ## Commands
 
-- [`validate-benchmarks.sh`](validate-benchmarks.sh) runs format checking, benchmark unit tests, strict Clippy, and the bounded correctness smoke across all backends.
-- [`measure-benchmarks.sh`](measure-benchmarks.sh) builds the harness in release mode and forwards one `measure` workload to it. Results are newline-delimited JSON on standard output.
-- [`benchmark-common.sh`](benchmark-common.sh) contains shared copy preparation and assigned-manifest integrity checks. Source it from another script; do not run it as a benchmark.
-- [`check-documentation.mjs`](check-documentation.mjs) discovers every Cargo
-	package under `crates/` and `examples/`, requires READMEs for those packages and
-	each direct integration-test harness, requires READMEs for the important
-	architectural grouping folders, and verifies local Markdown links in those READMEs, historical READMEs, and top-level current guides. Explicit
-	path arguments restrict the check to those roots.
-- [`benchmark-run.mjs`](benchmark-run.mjs) records a command, source state, machine metadata, raw log, and exit status in a new result directory.
-	Use an output directory outside the repository when running repository-wide format checks, then format completed JSON before retaining it.
-- [`benchmark-collect.mjs`](benchmark-collect.mjs) inventories tracked source with pinned `cloc`, or runs a sequential alternating-backend stress matrix with source and binary hashes.
-	Use `source <new-output-directory>`, `repeat <new-output-directory>`, `native-repeat <new-output-directory>`, or `matrix <new-output-directory> <cells.json>`; `--help` lists the modes without collecting data.
-	The repeat campaign predeclares ten fresh runs per point, alternates backend order at the 500 ops/s matched-resource load, and checks observed Sea throughput lower bounds with three seconds of warmup and ten seconds of measurement.
-	Source scopes include tests and conditional code and follow local non-development dependency declarations, not linked-code reachability or equivalent product features.
-	Build `presentation-test-spans` from `sea-benchmarks` in release mode before running `source`; it classifies inline Rust test modules with `syn`, not text-based brace matching.
-	The inventory includes comment totals and a test/test-support subset, with exact paths and spans retained.
-	`native-repeat <new-output-directory>` predeclares ten repeats of paired four-core native transport loads, higher WebSocket loads, and 750 ops/s Tinylicious loads on one and four service cores.
-	Use `matrix` for other configurations; the JSON input is an array of workload objects accepted by the stress runner.
-- [`benchmark-stress.mjs`](benchmark-stress.mjs) runs bounded, minimal-client Sea/Tinylicious comparisons on Linux.
-	It uses production client libraries without SharedTree or the container runtime, verifies payloads and ordered delivery to writer and observer, and records resource samples and failures.
-	By default, Sea uses release-mode native service code, release-mode WASM clients, and the optional loopback WebSocket listener, not QUIC.
-	Tinylicious uses its normal Node.js server and Routerlicious Socket.IO client, with in-memory database defaults.
-	Both services retain history; these are not equivalent durable-storage tests.
-	Service CPU affinity is one, four, or eight physical cores, while up to four generator processes use separate physical cores.
-	The eight-core option uses CPUs 0,2,4,6,8,10,12,14; the one/four-core options retain CPUs 2 and 2,4,6,8 respectively.
-	The editor and other host activity are not CPU-isolated.
-	The script requires the built Routerlicious workspace, generated Sea clients, and browser-test certificates.
-	It changes no production defaults; set `SEA_MAX_CONNECTIONS=128` when running more than eight document pairs.
+| Task | Script |
+| --- | --- |
+| Format, unit tests, Clippy, and bounded correctness smoke | [`validate-benchmarks.sh`](validate-benchmarks.sh) |
+| Release build and one `measure` workload; JSON lines to stdout | [`measure-benchmarks.sh`](measure-benchmarks.sh) |
+| Copy preparation and manifest-integrity helpers; source rather than execute | [`benchmark-common.sh`](benchmark-common.sh) |
+| Required README presence and local links; optional paths restrict roots | [`check-documentation.mjs`](check-documentation.mjs) |
+| Record command, source/machine metadata, log, and exit status | [`benchmark-run.mjs`](benchmark-run.mjs) |
+| Source inventory or repeated stress campaigns | [`benchmark-collect.mjs`](benchmark-collect.mjs) |
+| Bounded Linux Sea/Tinylicious client comparisons | [`benchmark-stress.mjs`](benchmark-stress.mjs) |
+
+Use new output directories outside the repository; format completed JSON before retaining it.
+`check-documentation.mjs` covers Cargo packages, direct harnesses, architectural groupings, historical READMEs, and current top-level guides; it checks local paths, not anchors or external URLs.
+
+### Collection Modes
+
+`benchmark-collect.mjs --help` lists `source`, `repeat`, `native-repeat`, and `matrix`.
+Each takes a new output directory; `matrix` also takes a JSON array of stress-runner workload objects.
+
+- `source`: pinned `cloc` plus the release `presentation-test-spans` binary. Scope follows local non-development dependencies, includes conditional/test code, and retains paths/spans; it is not linked-code reachability or feature equivalence.
+- `repeat`: ten fresh runs per point, alternating backend order at 500 ops/s, with three seconds of warmup and ten seconds measured.
+- `native-repeat`: ten paired four-core native runs, higher WebSocket loads, and 750 ops/s Tinylicious on one/four service cores.
+- `matrix`: custom workload configurations.
+
+### Stress Setup
+
+Build Routerlicious, generated Sea clients, and browser-test certificates first.
+The runner uses production client libraries without SharedTree/container runtime and verifies payloads and ordered delivery to writer and observer.
+Sea defaults to release native service/WASM clients over loopback WebSocket; Tinylicious uses its normal server/Socket.IO client and in-memory operation database.
+Both retain history; their default persistence guarantees differ.
+
+Service affinity uses CPUs 2; 2,4,6,8; or 0,2,4,6,8,10,12,14 for one/four/eight cores.
+Up to four generators use separate physical cores; editor/host activity is not isolated.
+Set `SEA_MAX_CONNECTIONS=128` for more than eight document pairs.
 
 Example bounded stress sample from the repository root:
 
@@ -61,10 +65,9 @@ Its benchmark-only WebSocket adapter uses bounded tungstenite messages and indep
 WebTransport pins the server certificate and includes QUIC/TLS; the local WebSocket listener is unencrypted, so the comparison is not equal-security transport performance.
 Sea defaults to memory storage; set `"storage":"buffered-file"` or `"storage":"durable-file"` to measure either file backend.
 The harness verifies the server's logged storage mode before starting workers and records the selected modes in the campaign manifest.
-Buffered-file appends reach the operating system without per-write synchronization; unlike Tinylicious's default operation database, it still writes an on-disk journal.
-Durable-file appends new frames and synchronizes once per event batch; its interrupted-tail and synchronized-prefix integrity assumptions still require filesystem/device qualification.
-Both file modes retain complete history in memory, so duration and retained history remain essential measurement parameters.
-Tinylicious uses its default in-memory document/operation database and filesystem Git summary storage; it is not durability-equivalent to Sea durable-file.
+Buffered-file writes an unsynchronized journal; durable-file synchronizes once per event batch under its [qualified power-loss model](../crates/sea-file-durable/README.md#power-loss-model).
+Both recover complete history into memory, making duration and retained history essential parameters.
+Tinylicious's in-memory operation database and filesystem Git summaries are not durability-equivalent to Sea durable-file.
 For Tinylicious, set `"storage":"leveldb"` to select its file-backed database, or `"storage":"memory"` for an explicit in-memory selection.
 The harness sets `db__inMemory` and a fresh per-cell `db__path`, and checks the LevelDB `CURRENT` marker after workers create documents and connect, before starting load.
 Both modes use separate filesystem Git summary storage.

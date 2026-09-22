@@ -11,48 +11,47 @@ cargo run -p sea-webtransport-server -- \
 	127.0.0.1:4433 cert.pem key.pem ./sea-data
 ```
 
-Set `SEA_STORAGE_MODE` to `memory`, `buffered-file`, or `durable-file`.
-The default is `durable-file`.
-`SEA_MAX_CONNECTIONS` sets the maximum concurrent sessions per listener from 1 through 4096; the default remains 16.
-Invalid values fail startup, and `MAX_CONNECTIONS` reports the effective setting.
-The limit applies independently to QUIC and the optional WebSocket listener, not to their combined total.
-Raising it increases admission capacity, not guaranteed throughput or a total memory bound.
+| Setting | Values | Default |
+| --- | --- | --- |
+| `SEA_STORAGE_MODE` | `memory`, `buffered-file`, `durable-file` | `durable-file` |
+| `SEA_MAX_CONNECTIONS` | Integer from 1 through 4096 | 16 per listener |
+
+Invalid connection limits fail startup; `MAX_CONNECTIONS` reports the effective value.
+Limits apply independently to QUIC and WebSocket and do not bound total memory or guarantee throughput.
 An optional fifth argument is a shutdown-marker path used by process harnesses.
 
 On startup the process prints `WEBTRANSPORT_URL`, `CERTIFICATE_SHA256`, `STORAGE_MODE`, and `PROTOCOL=sea`.
 Clients connect to the printed `/sea` URL and pin the printed SHA-256 certificate digest.
-It also prints the configured QUIC heartbeat interval, inactivity timeout, author reconnect grace, and live-event lag limit.
-Heartbeat uses QUIC PING frames; a peer is responsive when QUIC receives authenticated traffic before the inactivity timeout.
-Each admitted QUIC connection has one `operation_timeout` deadline for the complete WebTransport handshake, including path acceptance or rejection.
-Failed, rejected, and timed-out admissions release their capacity slot and connection-scoped service without stopping the listener or applying reconnect grace.
-Pending admissions count toward `max_connections` and remain subject to immediate or bounded-drain shutdown.
-After admission, the establishment deadline no longer applies: framed I/O uses operation deadlines, while idle streams rely on the connection liveness policy.
-Connection loss immediately removes snapshot participation, then releases author membership after reconnect grace.
-An author request error, including invalid input rejected before dispatch, terminates append authority.
-The author-stream loop stops at its first error and closes the session after decode, receive, or response-write failure.
-Session closure settles admitted work before a durable departure; an unknown storage outcome cannot produce a successful completion barrier.
-Snapshot-stream loss also immediately removes that stream's publisher participation while leaving the connection available for other logical streams.
-Read-only streams cannot publish; client-selected streams retain application-managed election; Sea-selected streams receive a deterministic fence only while no client-selected publisher is active.
+It also prints heartbeat, inactivity, reconnect-grace, and legacy live-lag settings.
+
+## Connection Lifecycle
+
+| Stage or event | Behavior |
+| --- | --- |
+| QUIC admission | One `operation_timeout` covers the full handshake and path decision; pending admissions consume capacity and participate in shutdown. |
+| Admission failure | Release capacity and connection-scoped service immediately, without reconnect grace or listener shutdown. |
+| Established connection | Framed I/O has operation deadlines; idle streams use QUIC PING/authenticated-traffic liveness instead. |
+| Connection loss | Revoke snapshot participation immediately; release author membership after reconnect grace. |
+| Author request error | Terminate append authority on the first decode, validation, receive, or response-write failure. |
+| Session close | Settle admitted work before the durable departure; unknown storage outcomes cannot claim completion. |
+| Snapshot-stream loss | Revoke that registration, leaving other logical streams available. |
+
+See [snapshot participation](../sea-webtransport/README.md#snapshot-participation) for publication authority.
 
 ## Ephemeral Signals
 
 The built-in host shares a [`SignalRoom`](../sea-signals/README.md) per existing document across both listeners.
-Admission checks document existence but does not grant or require append authority.
-Routing does not access storage or advance archive positions, reference floors, or snapshot nominations.
+Admission checks document existence independently of append authority; signals do not mutate the archive.
 Signal membership ends on signal-stream loss or connection loss, without the ordered author's reconnect grace.
 The host stamps the sender from the admitted registration; message payloads cannot select another sender.
 Current defaults are 1024 members per room, 256 queued events per recipient, 64 KiB payload/metadata limits, and 256-byte identities.
 These bounds are not a tenant quota or rate limiter.
 
-This experimental host has no user authentication: callers supply their document and proposed live identity.
-Document existence and unique live identity checks are not authorization.
-A production host must authenticate and authorize document access and identity admission before invoking the relay.
+**No user authentication:** callers supply document and live identity.
+A production host must authorize both before invoking the relay; existence and identity uniqueness are not authorization.
 Membership metadata and payloads are visible to the relay and recipients; they are not protected by archive decorators.
 One signal registration is admitted per connection lifetime, including after explicit signal close.
 Use a fresh connection for another registration; this prevents old datagrams from crossing registration lifetimes.
-
-The native host integration test covers independent signal delivery without archive events.
-The browser test's WebSocket mode also opens a QUIC peer against the same host and checks both mixed-transport directions.
 
 ## Optional WebSocket Listener
 
@@ -77,8 +76,7 @@ Both listeners share one `BuiltInSeaHost`, so they can collaborate on the same d
 Custom hosts can bind `WebSocketServer` directly without starting QUIC or loading a QUIC certificate.
 
 The listener speaks plain HTTP WebSocket upgrades at `/sea/websocket`, using subprotocol `sea-stream-v1`.
-Accepted sockets enable `TCP_NODELAY` before upgrade so small stream frames do not wait for TCP coalescing and delayed acknowledgments.
-This applies to both control and child sockets and does not change framing, stream limits, or backpressure.
+Control and child sockets enable `TCP_NODELAY` before upgrade.
 Native `WebSocketStream` and explicitly selected ordinary WebSocket clients use this same protocol and grouping.
 Ordinary clients enable Node and broader browser compatibility but cannot propagate application receive demand to the network.
 Their adapter queue fails on overflow; bounded server buffers do not provide a total memory bound for those clients or intermediaries.
@@ -98,7 +96,6 @@ The existing drain policy stops acceptance, lets admitted work proceed until its
 
 Server messages are capped at 64 KiB of DATA plus one tag byte, with a one-record receive queue and bounded write buffering per stream.
 FIN closes only the sender's direction; premature socket close, invalid tags, text on data sockets, and oversized messages fail the stream.
-Shared request handlers depend on a private byte-stream interface, not WebSocket-specific branching.
 
 Focused listener and stream tests:
 
@@ -108,7 +105,7 @@ cargo test -p sea-webtransport-server --features websocket-stream websocket
 
 ## Document Ownership
 
-The host uses the replacement `SeaStorage` factories and `LocalSequencer` directly.
+The host uses `SeaStorage` factories and `LocalSequencer`.
 Creation allocates an opaque backend document ID and returns it with session authority; callers retain that ID for reopening.
 No caller-name mapping is maintained.
 File modes keep their namespace below `root/documents`.
@@ -117,17 +114,19 @@ A host serializes lazy factory initialization and first document recovery.
 Concurrent sessions for one document share one recovered runtime and its exclusive view; failed initialization is not cached and can be retried explicitly.
 The registry retains successful runtimes for the host lifetime, with no idle eviction.
 Dropping the host and its connections releases those views; stopping the listener alone does not evict a separately retained host.
-Live replay uses backend monitored streams rather than the obsolete sequencer broadcast buffer; the legacy liveness lag setting does not bound this replay path.
+Live replay uses backend monitored streams; the legacy liveness lag setting does not bound this path.
 
 Snapshot dispatch resolves wire roots and committed event positions through the session before constructing availability handles.
 Snapshots are versioned by event position, not publication-operation IDs.
 Each snapshot stream owns its own registration lease, so cleanup of an older stream cannot revoke its replacement.
 An explicit snapshot `Close` acknowledges and ends that transport stream; lease drop, not session-wide revocation, releases its registration.
 
-Focused host tests cover shared first-open ownership, retry after failed initialization, backend-assigned IDs, native round trips across all three storage modes, authority checks, snapshot replacement, malformed streams, acknowledgement loss, and shutdown.
-Server tests cover admission timeout, handshake failure, path rejection, capacity reuse, and shutdown during establishment.
-The admission fixture records actual service cleanup calls and asserts the no-reconnect-grace argument for each failed admission and both shutdown modes.
-Idle and partial-frame timeout assertions use paused Tokio time at the byte-stream boundary; real QUIC admission tests use a short wall-clock deadline because its transport timers cannot safely share that virtual-clock test.
-The [browser harness](../../tests/webtransport-browser/README.md#physical-connection-release) explicitly runs a normally ignored one-slot server test for physical browser disconnect and final-owner release.
+## Validation
 
-Cross-crate decorator composition, including repeated WebTransport hops, is tested in [`sea-integration-tests`](../sea-integration-tests/README.md).
+```bash
+cargo test -p sea-webtransport-server --all-features
+```
+
+Host tests cover all storage modes, shared ownership, admission/authority failures, signals, and shutdown.
+Use virtual time for byte-stream deadlines, not real QUIC handshakes.
+The [browser harness](../../tests/webtransport-browser/README.md#physical-connection-release) tests physical release and mixed transports; [integration tests](../sea-integration-tests/README.md) cover decorator composition and repeated hops.

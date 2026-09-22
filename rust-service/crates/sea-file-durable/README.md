@@ -1,6 +1,6 @@
 # Sea Durable File
 
-`sea-file-durable::storage::DurableStorage` implements replacement `SeaStorage` using the shared filesystem engine's synchronized configuration.
+`sea-file-durable::storage::DurableStorage` implements `SeaStorage` using the shared filesystem engine's synchronized configuration.
 It provides independently usable blob, event, and snapshot components, exclusive OS-locked openings, dependency-closed recovery, and direct monitored live reads.
 The engine and format are documented in [sea-file](../sea-file/README.md).
 It remains experimental rather than a production storage backend.
@@ -9,17 +9,14 @@ It remains experimental rather than a production storage backend.
 Appending or truncating an unsynchronized tail must never damage previously synchronized bytes or length, including a shared final sector.
 Only filesystems and devices satisfying the interrupted-tail model below are supported; ordinary append plus fsync does not establish that property by itself.
 
-Every successful mutation appends new frames and synchronizes the journal, once per event batch.
-Document creation synchronizes a temporary journal, renames it, and synchronizes the containing namespace; namespace creation synchronizes its ancestors.
-Recovery preserves complete checksummed frames, ignores unpublished creation staging files, truncates structurally incomplete tails, and rejects corrupt frames or missing dependencies.
-Uncertain writes poison the opening until recovery, rather than claiming an authoritative head from stale state.
-Snapshot identities are event positions and there is no backend publication-operation registry.
-Handles carry provenance without retaining writer authority; components, reads, and pending event workers retain the opening.
-Event batches run in one Tokio blocking task per batch, without holding the reader state lock during writes or synchronization.
-Returned results establish settlement, but cancellation does not stop the worker or make a concurrent head a reconciliation bound.
-Drop all components and streams and successfully reopen to establish settlement after cancellation; reopening remains `Busy` until retained workers finish.
-Worker panics and join failures poison authoritative observations and wake readers, including after cancellation.
-Namespace opening, document creation/recovery, blob/directory writes, and snapshot appends remain synchronous barriers as detailed in the shared engine documentation.
+## Ownership and Cancellation
+
+Components, reads, and pending event workers retain the exclusive opening; availability handles do not.
+Event batches use one Tokio blocking task per batch and leave the published prefix readable during disk I/O.
+Other filesystem operations remain synchronous barriers; see the [shared engine limits](../sea-file/README.md#limits).
+Returned results establish settlement, but cancellation does not stop a worker or make a concurrent head authoritative.
+After cancellation, drop all components and streams and successfully reopen to establish settlement; `Busy` means an owner remains, not permission to retry.
+Uncertain writes, worker panics, and join failures poison authoritative observations until recovery and wake readers even after cancellation.
 
 ## Power-Loss Model
 
@@ -36,8 +33,7 @@ One journal synchronization settles an event batch; there is no retained-history
 Nothing is published to component readers before synchronization succeeds.
 Power loss before acknowledgment can retain any ordered prefix of the unacknowledged batch, including the entire batch.
 An uncertain batch therefore returns an `Ambiguous` result for every submitted entry and poisons the opening.
-This uncertain suffix follows the shared `Archive::append_batch` contract.
-No uncertain entry is automatically retried.
+Never automatically retry an uncertain entry; follow the shared `Archive::append_batch` contract.
 
 Reopening holds a stable `.lock` sidecar, truncates any structurally incomplete final frame, synchronizes the selected journal and its directory before exposing records, and discards creation staging files regardless of their contents.
 This also makes a recovered but previously unacknowledged publication durable before later callers can depend on it.
@@ -47,16 +43,13 @@ Checksums cannot identify whether damaged bytes were acknowledged, and the forma
 Consequently, truncation of acknowledged history is indistinguishable from an interrupted append, and full-length torn frames cannot be safely repaired.
 The assumptions above exclude these cases; arbitrary silent corruption is not tolerated or repaired.
 
-Both file modes share sidecar locking.
-Stop old binaries before upgrading; the journal encoding is unchanged but the lock protocol is not compatible with old writers.
-Never remove sidecars in an active namespace, and do not switch to buffered writes when relying on power-loss durability.
+Both file modes share sidecar locking, incompatible with old writers that lock the journal inode.
+Stop old binaries before upgrading, never remove active sidecars, and do not switch to buffered writes when relying on durability.
 
 Mutation write volume is proportional to new frames, while recovery still reads the complete retained history into memory.
 Batch encoding uses memory proportional to the batch size.
-Deterministic tests validate the modeled crash states, but actual power-cut qualification on filesystem and device combinations is still outstanding.
-Do not infer support for arbitrary sector tears or filesystem/device combinations from these deterministic tests.
-ZFS is not blanket-certified by this implementation or its tests: each filesystem, pool, device, and flush configuration must satisfy the assumptions above and requires power-cut qualification.
-ZFS datasets configured with `sync=disabled` are unsupported because they do not honor the required synchronization durability.
+Actual power-cut qualification remains outstanding; deterministic crash tests do not certify filesystems, devices, or arbitrary sector tears.
+This includes ZFS: each pool/device/flush configuration needs qualification, and `sync=disabled` is unsupported.
 
 ## Validation
 
@@ -67,11 +60,6 @@ cargo test -p sea-file-durable --all-targets --all-features
 cargo clippy -p sea-file-durable --all-targets --all-features -- -D warnings
 ```
 
-Replacement tests cover shared view/snapshot conformance, dependency-preserving reopen, incomplete-tail repair, checksum-corruption rejection, independent factories, live delivery, and stream-retained opening ownership.
-The owning shared engine tests pre-write rejection, every incomplete next-frame length, complete-frame corruption, inode reuse without history copying, single-sync batches, pre-sync uncertainty, post-sync lost acknowledgments, snapshot recovery, and wakeups on uncertainty.
-It also tests current-thread executor progress and published-prefix reads during blocked I/O, cancellation-retained ownership, and worker-panic poisoning and wakeups after cancellation.
-Its separate process test verifies that appends cannot release exclusive ownership or permit a buffered writer to bypass the lock.
-
-Successful tests are not certification of survival across power loss or filesystem/hardware failure.
-OS locks exclude competing valid openings; external replacement of journal or lock files and distributed filesystems are outside the supported model.
-There is no retention policy, replication, remote storage, capacity, or throughput claim.
+Tests cover conformance, dependency-closed recovery, tail repair, corruption rejection, live reads, and retained ownership.
+The shared engine adds fault-injected synchronization/cancellation/panic tests and a separate cross-process locking test.
+External journal/lock replacement, distributed filesystems, and media failure are outside the supported model.

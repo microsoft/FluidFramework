@@ -22,27 +22,29 @@ remote composition is tested by the server and generated browser harness.
 
 ## Relationships and Limits
 
-The memory, buffered-file, and durable-file packages implement `SeaStorage`.
-The conformance package tests their shared semantic laws.
-This crate defines no persistence layout, authentication policy, retention policy, or replication mechanism beyond the guarantees expressed by its traits.
-
-See [`src/lib.rs`](src/lib.rs) for the complete API contract.
+The memory, buffered-file, and durable-file backends implement `SeaStorage`; `sea-conformance` tests their shared laws.
+See [`src/lib.rs`](src/lib.rs) for API contracts and [architecture](../../SEA_ARCHITECTURE.md) for layer responsibilities.
 
 ## Storage And Sessions
 
 The [`storage`](src/storage/mod.rs) module defines blob, event, and snapshot components and their composed document view.
 The sibling [`session`](src/session.rs) module adds multi-user policy above storage.
 `SeaStorage::create_view` and `SeaStorage::open_view` compose exclusive document views directly from backend components.
-Active document caching, sequencer ownership, and session lifecycle policy belong to higher-level runtime management, not a storage collection wrapper.
+The host owns active-document caching and sequencer lifetime.
 `SeaView::blobs()` borrows the underlying blob store for content access and handle resolution; event and snapshot publication remain composed operations on the view.
 `Snapshot<BlobHandle, EventHandle>` carries availability handles and is shared by snapshot lookup, publication, and loading.
 Snapshot archives use event positions as their positions; initial empty state has no snapshot publication.
-These contracts do not define a persisted snapshot representation.
-`SeaView::get_snapshot` and `SeaView::load` share a `LoadStart` policy: `Beginning` skips snapshots, `ReplayAtLeastAllAfter(position)` selects the newest snapshot at or before the cursor, and `LatestSnapshot` selects the newest available snapshot.
-Snapshot selection returns `None` when no snapshot qualifies; callers can use the selected snapshot followed by a bounded `read` to reconstruct a particular event position.
-The stream returned by `load` catches up and then waits for new events, including for an initially empty archive.
-`load` combines `get_snapshot` and an unbounded `read` without an extra caller round trip; callers can drop the stream when done.
-Loads do not capture an event head.
+`get_snapshot` and `load` share these `LoadStart` policies:
+
+| Policy | Snapshot selection |
+| --- | --- |
+| `Beginning` | None; replay from the beginning. |
+| `ReplayAtLeastAllAfter(position)` | Newest at or before the cursor. |
+| `LatestSnapshot` | Newest available. |
+
+Selection returns `None` when no snapshot qualifies.
+`load` combines selection with a gap-free live suffix, including for an empty archive, without capturing an event head.
+Use a selected snapshot plus bounded `read` to reconstruct a fixed event position; drop streams to cancel.
 
 `Archive::append_batch` returns results for an input prefix; omitted inputs were not attempted.
 Successful results precede errors, and any results after the first error must be ambiguous.
@@ -52,12 +54,10 @@ The default implementation appends sequentially and stops at its first error.
 `SeaView::append_batch` checks tree capabilities in order and publishes the checked prefix even when a later dependency fails.
 Its dependency error is returned only after all preceding entries succeed.
 
-The session facets put membership, author ordering, stable event retries, and conditional snapshot coordination above storage.
-They reuse `SeaService` and its native/browser thread-safety bounds, the existing identity/event primitives, and handle-based `Snapshot` values.
-Loads return a selected snapshot and a direct live session-event stream; snapshots use document-scoped event positions as version identities.
+The session facets add membership, author ordering/recovery, and conditional snapshot coordination using `SeaService`'s native/browser thread-safety bounds.
 Initial application state is represented by an application event, not an initial storage snapshot.
 Session publication checks expected parents and current client-selected/Sea-selected authority, with exact position/root reconciliation instead of a separate snapshot operation ID.
-Behavioural evidence for these composition contracts is in `sea-conformance::run_session_conformance` and the owning `sea-sequencer::session` tests.
+See [sequencer contracts](../sea-sequencer/README.md) for accepted prefixes and recovery; submissions are not deduplicated.
 
 `SeaAuthorSession::announce_membership` opts into durable joined/left records sharing the application event order.
 `SessionCommittedEvent::kind` distinguishes application submissions from service-authored membership transitions.

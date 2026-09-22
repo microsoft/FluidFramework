@@ -7,10 +7,8 @@ It implements document services, summary and blob storage, bounded delta storage
 
 All exports are `@internal`; there is no supported public API yet.
 
-The factory publishes its generated package version, current Fluid layer generation, and loader requirements through the standard layer-compatibility interfaces.
-The loader validates both directions of that boundary before creating or loading a document service.
-The declarations use the shared driver-to-loader generation policy and no additional required or supported feature names.
-This metadata does not broaden the current-version-only SEA integration configuration or claim historical-loader conformance.
+The factory implements Fluid's driver-to-loader layer compatibility checks.
+Integration testing covers the current client version, not historical-loader conformance.
 
 ```typescript
 import { SeaDriver, type WasmClientFactory } from "@fluidframework/sea-driver/internal";
@@ -20,11 +18,9 @@ export function createDriver(createClient: WasmClientFactory): SeaDriver {
 }
 ```
 
-The client factory supplies transport initialization and returns a fresh client for each logical Fluid client.
-The package has no SharedTree dependency, including through workspace development dependencies.
-It does not generate or load WebAssembly (WASM), start a service, or select a transport.
-`SeaSessionDriverClient` adapts a neutral `sea-typescript` session supplied by an injected `SeaSessionFactory`.
-The factory retains the selected service and compression configuration and returns fresh membership for each create or open.
+The injected factory initializes transport and returns a fresh client for each logical Fluid client.
+`SeaSessionDriverClient` adapts a neutral `sea-typescript` session supplied by a `SeaSessionFactory`; keep service and compression settings consistent across memberships.
+This package has no SharedTree dependency and delegates WebAssembly (WASM) loading to `sea-typescript`.
 The [integration harness](../../tests/sea-integration-tests/README.md) provides local and WebTransport examples through the neutral package entrypoints.
 
 ```typescript
@@ -84,16 +80,12 @@ The driver depends on the standard loader/runtime helpers but still has no trans
 ## Guarantees and Limits
 
 Summary storage supports full and incremental summaries, blob and tree handles, attachments, and historical versions.
-Each summary uploads up to eight independent blobs concurrently, refilling a slot as soon as its request completes rather than waiting for a batch of round trips.
-The bound is shared across the summary's entire tree; content encoding waits until upload admission.
-Handles are validated before uploading, and manifest and snapshot publication wait for all uploads to succeed.
-On the first observed upload failure, no further blobs are scheduled; admitted uploads are drained before the error returns, with no implicit retries or partial snapshot publication.
-Incremental publication retains the acknowledged parent snapshot and rejects stale parents.
-The neutral-session adapter verifies that a summary proposal names a published snapshot before appending it.
-It then appends a separate durable Fluid acknowledgment referencing the proposal's sequence number.
-Live delivery and replay project that record as a system message with its own sequence position; the neutral sequencer does not interpret Fluid summaries.
-These adapter-owned acknowledgment records are not runtime submissions and are excluded from the runtime attempt-prefix ledger.
-A failure between proposal and acknowledgment closes the session and may leave a committed proposal without an acknowledgment; the adapter never blindly retries either record.
+Uploads validate handles, encode blobs on admission, and share an eight-blob concurrency limit across the summary tree.
+An upload failure stops new work and drains admitted uploads before returning; publication requires all uploads to succeed.
+Incremental publication rejects stale parents.
+Uploaded summaries remain private until their Fluid proposal commits, then the adapter publishes the snapshot and appends a durable acknowledgment referencing the proposal.
+Acknowledgments occupy their own sequence positions but are excluded from the runtime submission ledger.
+Failure between proposal and acknowledgment closes the session without retrying; a committed proposal may remain unacknowledged.
 Delta connections preserve pending messages and their original session across explicit recovery; they do not automatically retry or resubmit ambiguous writes.
 `recoverPending()` requires a fresh session and replays the old session through its durable leave.
 It counts and verifies the accepted application prefix against the ordered attempt ledger before returning the unaccepted suffix; a missing join, missing leave, or non-prefix history rejects recovery.
@@ -104,40 +96,28 @@ Neither an old payload nor its old reference is silently reused.
 Legacy synthetic-membership clients cannot prove this barrier and cannot use the explicit helper.
 Normal Fluid containers use the runtime's pending-state processing and reconnection instead; the driver does not implement DDS rebasing.
 
-The neutral-session adapter owns Fluid initialization events and the bidirectional mapping between opaque SEA positions and Fluid sequence numbers.
-It announces membership through the neutral session contract and projects shared joined/left records with per-connection identities.
-Read-only membership records occupy sequence positions without adding readers to the writer quorum.
-Initial audience state and live read-only joins/leaves use the independent signal room; writers remain controlled by sequenced quorum operations.
-Legacy injected clients without a signal capability retain the durable-history audience projection.
-Application signals use reliable delivery, including sender echo and optional `targetClientId`; Fluid never opts into Sea best effort.
-The driver preserves setup-time signals in a bounded initial batch and ignores observations from replaced registrations.
-Signal delivery failure disconnects the delta connection rather than silently dropping reliable messages.
-Payloads are unchanged Fluid signal strings; the Sea host does not interpret Presence state or revision semantics.
-Existing Fluid broadcast and targeted-signal E2E suites run against the Rust WebSocket listener.
-Presence uses this runtime signal path, but these tests are not a separate Presence convergence suite.
-The projected Fluid minimum sequence number maps SEA's durable admission floor into the same dense sequence space.
-It advances monotonically across membership changes and reopening, independently of server history retention.
-The adapter still retains all operation history; floor enforcement does not claim garbage collection or compaction.
-This path has no synthetic sequence offset; legacy injected benchmark clients retain the earlier two-slot projection.
-The two projections are not interoperable within one document; use fresh test documents when migrating from the synthetic projection.
-It watches snapshot coordination continuously so SEA-selected publication uses the current observed nomination fence.
-Summary uploads are staged privately until the matching Fluid summary proposal commits, then published before the durable acknowledgment.
-Closing or replacing the author discards unsubmitted proposals without advancing the latest snapshot; initial document summaries publish immediately.
-Pong listeners receive measured round-trip milliseconds from a read-only snapshot-metadata request, initially and once per minute after each completed attempt.
-This measures service-request latency, not a transport-only heartbeat; failed probes emit no pong and disconnected connections suppress late results.
-Membership replacement waits for admitted finite archive reads and blob uploads to finish and defers later reads and uploads until the replacement opens.
-Document services serialize each delta opening through membership announcement, signal registration, and subscription setup before another delta opening can replace the shared session.
-Independent blob uploads remain concurrent within that gate; no live session is selected before a pending replacement completes.
-Each document service retains a unique SEA author for read-first connections, independent of shared projected Fluid client labels.
-Document-service disposal cancels owned live streams and prevents new reads and uploads, but drains admitted finite archive reads and blob uploads before membership close.
-Reconnect waits for that cleanup, and the next open calls the injected factory.
-Delta disposal also closes its owning session so Fluid pending-state recovery can observe the old client's final leave.
-Cleanup carries the original session identity and cannot close a newer replacement sharing the same adapter.
-After delta disposal, the still-live document service can lazily open an unannounced archive session for finite storage work, including data-store blobs fetched by a paused container.
-Concurrent requests share that opening; it does not restore delta author authority or announce another Fluid member.
-Full service disposal or a new delta session drains admitted archive work and closes that archive session, including an opening still in progress.
-Transferred projected subscriptions remain cancellation-owned by their driver consumer.
-The pre-opened event stream can be transferred only once; later subscriptions at the same cursor open independent readers, and cancelling one does not cancel another.
+### Membership and Signals
+
+Ordered joined/left records carry per-connection identities; readers occupy sequence positions but do not enter the writer quorum.
+The signal room supplies initial audience state and live read-only membership; writer quorum changes remain sequenced.
+Signals preserve Fluid payloads, sender echo, and optional `targetClientId` with reliable delivery.
+Setup-time signals are bounded, replaced registrations are ignored, and delivery failure disconnects rather than silently dropping messages.
+Presence uses this path, but a dedicated convergence suite remains outstanding.
+
+The minimum sequence number maps Sea's durable admission floor into Fluid sequence space and remains monotonic across membership changes and reopening.
+Legacy injected benchmark clients use synthetic membership and a two-slot sequence offset; use fresh documents when switching to neutral sessions.
+
+### Lifetime
+
+- Membership replacement drains admitted finite reads and uploads, gates new work, and serializes announcement, signal registration, and subscription setup.
+- Document-service disposal cancels live streams, rejects new work, and drains finite operations before closing membership; reconnect waits for cleanup.
+- Delta disposal closes its session so recovery can observe its final leave. Cleanup cannot close a newer replacement.
+- A live document service can still open an unannounced archive session for finite reads after delta disposal. Full disposal or a new delta session drains and closes it.
+- Transferred subscriptions belong to their consumer. The pre-opened event stream transfers once; subsequent readers have independent cancellation.
+- Closing or replacing an author discards unsubmitted summary proposals. Initial summaries publish immediately; Sea-selected publication follows the current nomination fence.
+
+`pong` reports snapshot-metadata request latency, initially and once per minute after each attempt completes.
+Failed probes and late responses after disconnect emit no pong.
 
 Automatic reconnect, authentication, and backend garbage collection remain incomplete.
 Ordered writer membership is implemented, but this does not establish production driver conformance.
@@ -200,12 +180,7 @@ Package-owned Mocha suites exercise the implementation entrypoint, including inc
 The build compiles the separate test project; the test command uses the shared Fluid Mocha setup and reporters.
 To build and test in one step, run `pnpm exec fluid-build rust-service/packages/sea-driver --task test:mocha:esm` from the repository root.
 The [integration harness](../../tests/sea-integration-tests/README.md) retains SharedTree-based ServiceClient scenarios, browser traces, and benchmarks and includes these package tests in its aggregate command.
-The real Chromium SharedTree trace covers collaboration, explicit disconnect/recovery, and reload using the neutral remote factory.
-Eight consecutive migrated runs passed after fixing interrupted archive reads during membership replacement and author collisions between read-first containers.
-Deterministic Node regressions cover both ownership boundaries.
-Package-owned ServiceClient tests cover registry lookups, compatibility options, and failed-attachment cleanup without a SharedTree dependency.
-Harness ServiceClient tests cover both presets, detached creation without membership, concurrent/repeated attachment rejection, attached creation, reload, and SharedTree collaboration.
-The driver summary fixture separately localizes cleanup on initial-summary failure.
-The canonical browser harness runs real remote ServiceClient collaboration and reopening under both presets, with and without compression, in Chromium inside the Codespace.
-These tests do not establish inventory-app or external-browser acceptance.
+Package-owned ServiceClient tests cover automatic summaries, persisted client GC state, snapshot reload, registry lookup, compatibility options, and failed-attachment cleanup.
+The Chromium harness covers remote collaboration, explicit recovery, and reopening under both presets, with and without compression.
+Fluid broadcast and targeted-signal E2E tests use the Rust WebSocket listener; see the harness guide for separate inventory-app and external-browser coverage.
 All reported APIs are internal; API reports are generated, not edited by hand.

@@ -1,13 +1,7 @@
 # Sea Fluid and SharedTree Integration Harness
 
-This test package consumes [sea-driver](../../packages/sea-driver/README.md) and [sea-tree](../../packages/sea-tree/README.md).
-The reusable Fluid implementation lives in `@fluidframework/sea-driver`; the runtime-free SharedTree host lives in `@fluidframework/sea-tree`.
-Both expose only internal APIs through their `/internal` entrypoints.
-
-This harness consumes neutral `sea-typescript` sessions through the driver-owned `SeaSessionDriverClient` adapter.
-It owns local and browser test setup, integration tests, and benchmarks; the neutral package owns generated WebAssembly (WASM) builds and loading.
-TypeScript does not construct or parse Sea protocol frames.
-The same adapter accepts injected factories for local memory and browser WebTransport sessions.
+This package owns Fluid/SharedTree integration tests, browser traces, and comparison benchmarks.
+It consumes local and remote sessions through `sea-driver`'s `SeaSessionDriverClient`; reusable implementations and generated WebAssembly (WASM) belong to the packages below.
 
 ## Ownership and Coverage
 
@@ -23,19 +17,12 @@ The browser trace loads package-owned JavaScript and WASM and closes a session a
 Browser benchmarks explicitly close their memberships and local service and verify that each Rust-backed sample loads only its selected capability's generated artifacts.
 The native server owns a bounded set of concurrent connections; browser traces report actual session openings, including read-to-write replacement and explicit reconnection.
 
-The integration and transport runners share [Chromium lifecycle support](browser/chromium.mjs).
-It owns Chromium, its profile and temporary files, and the Chrome DevTools Protocol (CDP) connection for one scenario.
-CDP startup and commands have deadlines; connection loss rejects pending commands.
-Cleanup runs after success, scenario failure, startup failure, and CPU-profile finalization failure, escalating browser termination after five seconds when needed.
-Controlled-child regressions cover startup timeout both with normal termination and with a child that ignores `SIGTERM`.
-Each runner still owns its page server and scenario assertions; benchmark workload and measurement logic remain separate.
+Shared [Chromium lifecycle support](browser/chromium.mjs) owns the browser, profile, temporary files, and Chrome DevTools Protocol connection.
+Startup/commands have deadlines; disconnect rejects pending commands, and every exit path cleans up, escalating termination after five seconds.
+Controlled-child tests cover startup timeout and ignored `SIGTERM`.
+Runners own their page servers and assertions.
 
 ## Validation
-
-The package is registered in the root pnpm workspace. Install that workspace,
-then use its Fluid build graph to build client dependencies, generate the Rust
-WASM packages, typecheck the driver and SharedTree harnesses, and build the
-browser bundles in dependency order.
 
 From the repository root:
 
@@ -54,30 +41,20 @@ These tests require Chromium, the Rust toolchain, and the separate Routerlicious
 For an incremental correctness run, use `pnpm exec fluid-build rust-service/tests/sea-integration-tests --task test:mocha:esm` from the repository root.
 To build and test the entire Rust service, including the Cargo workspace, run `./test.sh` from `rust-service/`.
 
-The neutral package's `build:wasm` task uses verified input/output tracking and skips unchanged generation.
-The harness no longer has a transport-owned WASM build task or generated-client imports.
+The neutral package's `build:wasm` task tracks inputs/outputs and skips unchanged generation.
 The installed `wasm-bindgen` CLI version must match the workspace crate version.
 
-A future first-class Cargo/WASM Fluid build task could derive narrower inputs
-from Cargo metadata, validate Rust target and `wasm-bindgen` tool versions, and
-model individual generated packages without package-owned globs. The current
-neutral-package task provides hash-based incremental execution.
+| Suite | Coverage |
+| --- | --- |
+| `src/test/*.spec.ts` | ServiceClient attachment/reload/collaboration under both presets; captured payload. |
+| `src/test/*.bench.ts` | Comparison cases with convergence/resume assertions, also run as correctness tests. |
+| `browser/trace.mjs` | Summary reload, two-client delivery, explicit pre-commit recovery/resubmission, duplicate-free reconnect, bounded history. |
+| [Browser matrix](../webtransport-browser/README.md) | Neutral and ServiceClient presets/compression, transport selection, shutdown. |
 
-The harness `src/test/*.spec.ts` suites verify ServiceClient attachment, reload, and SharedTree collaboration under both presets, plus the captured benchmark payload.
-The neighboring `*.bench.ts` suite uses the same Mocha discovery and doubles as benchmark correctness coverage.
-Driver summary and lifecycle regressions run from `sea-driver`; direct SharedTree collaboration runs from `sea-tree`.
-The neutral package's own test command covers sessions and socket mechanics, including snapshot registration replacement and cancellation ownership.
-The real Chromium harness runs the Fluid driver trace, plain and compressed neutral scenarios, ServiceClient collaboration and reopen under both presets with and without compression, and transport/shutdown checks.
-Rust transport tests inject fragmented, coalesced, delayed, reset, malformed, and abandoned-response inputs without requiring browser timing.
+The trace and ServiceClient matrix run in `test:browser` and `rust-service/test.sh`.
+The legacy Loader-based SharedTree trace below is separate.
 
-The default browser page bundles `browser/trace.mjs` against the owning packages.
-It verifies initial summary reload, independent two-client push delivery, pre-commit pending recovery and explicit resubmission, duplicate-free reconnect, and a finite bounded historical range.
-It reports actual session openings rather than obsolete shared-transport assumptions or unavailable wire metrics, and closes all owned sessions.
-This trace and the ServiceClient SharedTree matrix are part of `test:browser` and `rust-service/test.sh`.
-The legacy Loader-based SharedTree trace below remains separately invoked.
-
-For Chromium, generate the existing browser harness certificate, start
-`sea-webtransport-server`, and run:
+Generate the browser harness certificate, start `sea-webtransport-server`, then run from this package:
 
 ```bash
 pnpm run typecheck:shared-tree
@@ -85,7 +62,7 @@ pnpm run build:shared-tree
 node browser/run-headless.mjs "$PWD" <WEBTRANSPORT_URL> <CERTIFICATE_SHA256_WITHOUT_COLONS> __sharedTreeResult shared-tree.html
 ```
 
-## Deterministic Fluid service comparison benchmark
+## Deterministic Fluid Service Comparison Benchmark
 
 The benchmark runs the same two-client operation workload through the Rust local service, TypeScript local service, Rust WebTransport service, or Tinylicious. By default it uses a minimal benchmark SharedObject that counts applied operations and submits a captured SharedTree operation body. It also generates one compressed ID per operation, causing Fluid's runtime to add the same ID-allocation message and grouped-batch envelope observed in the SharedTree workload. This keeps service and Fluid runtime serialization costs representative while removing SharedTree processing from the default measurement.
 
@@ -112,11 +89,8 @@ Tinylicious belongs to the separate Routerlicious pnpm workspace. Install that w
 pnpm --dir server/routerlicious install --frozen-lockfile
 ```
 
-Tinylicious prerequisites use the Routerlicious workspace's incremental Fluid `compile` graph.
-Unchanged dependency builds are reused, while a missing Tinylicious entry point triggers a rebuild of that package.
-This does not skip the browser workload, convergence assertions, or fresh service/data setup.
-On the same development checkout, the former recursive compile command took 48.4 seconds; the warm incremental prerequisite check took 1.6 seconds across 22 tasks in 13 packages.
-These timings describe local setup overhead, not service throughput or a clean-build comparison.
+Tinylicious prerequisites use the incremental Fluid `compile` graph; a missing entrypoint triggers rebuilding.
+Every run still uses fresh service/data setup and executes convergence assertions.
 
 Run all cases with the quick default performance configuration of three repetitions, 250 measured edits, 10 warmup edits, and one edit per Fluid batch without per-batch synchronization:
 
@@ -181,26 +155,6 @@ Configure the workload through environment variables:
 The table lists performance-mode defaults, enabled by `bench` and `bench:run`.
 The performance defaults favor quick directional throughput comparisons. Increase repetitions and operations explicitly when collecting more stable performance data.
 
-The event-author stream removes a per-operation WebTransport stream-open latency floor.
-On the same Linux host and Chromium 152, a three-repetition `rust-memory-direct` run with 100 measured dummy operations improved from 37.86 to 2,295.24 operations/s after stream reuse.
-Mean final convergence fell from 2,642.5 ms to 44.27 ms while all clients still observed all 110 warmup and measured edits.
-These are directional development measurements comparing baseline commit `b16f8d980bbebfe1e39b118fc9dcccb50a3e2a59` with this change, not production capacity claims.
-
-The comparison used this command in a clean checkout of each source commit:
-
-```bash
-pnpm --dir rust-service/tests/sea-integration-tests run bench:run -- \
-  --case rust-memory-direct \
-  --dds dummy \
-  --repetitions 3 \
-  --operations 100 \
-  --warmup 10
-```
-
-Before commit `30940207bc7e10081a3d9f364c9033b601c2cf5b`, every submission opened and closed a WebTransport bidirectional stream.
-That commit reused one browser submission stream for ordered requests and acknowledgements while retaining the per-operation path as a temporary fallback.
-The exact Linux distribution, kernel, CPU, memory, Node version, and raw per-repetition artifacts were not retained and are therefore unknown.
-
 The `bench:run` wrapper enables complete failure diagnostics and writes both reporter streams to stdout, so redirecting it with `> log.txt` retains the full errors.
 The report suite name includes the effective workload, operation count, warmup count, operations per turn, synchronization behavior, and repetition count.
 
@@ -232,7 +186,7 @@ pnpm --dir rust-service/tests/sea-integration-tests run bench:run -- \
 
 The case slug is added to the profile filename and each repetition is retained, such as `browser-rust-webtransport-memory-1.cpuprofile` through `browser-rust-webtransport-memory-3.cpuprofile`. A one-repetition run keeps the case-specific name without a numeric suffix. The detailed JSON also records Linux service CPU and peak RSS when the harness owns an external service.
 
-### Results and agent use
+### Results and Agent Use
 
 Mocha writes its standard aggregate report to `benchmarkOutput.json` by default. The harness additionally writes one detailed artifact per case and workload under `benchmark-results/`, including every repetition, environment and source metadata, workload semantics, distributions, observed values, and Rust FSP4 counters when available. Both paths are ignored locally.
 

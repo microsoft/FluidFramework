@@ -29,7 +29,7 @@ Subscription failures are surfaced by `waitForIdle()`.
 
 This is not a Fluid driver or container implementation.
 The host does not implement snapshot persistence, snapshot loading, or automatic reconnect and recovery.
-It consumes an injected client and does not generate or initialize WebAssembly (WASM).
+The caller supplies an initialized client.
 The [neutral package](../sea-typescript/README.md) supplies concrete sessions for the package-owned collaboration test.
 The [integration harness](../../tests/sea-integration-tests/README.md) supplies browser comparison benchmarks.
 
@@ -42,7 +42,6 @@ pnpm --dir rust-service/packages/sea-tree run build
 pnpm --dir rust-service/packages/sea-tree test
 ```
 
-The package build compiles TypeScript, generates entrypoints and API reports, and checks formatting, lint, and export release tags.
-The build compiles the separate test project; the Mocha suite verifies two-way collaboration between direct SharedTree hosts through the implementation entrypoint using the shared Fluid setup and reporters.
+The build checks TypeScript, API reports, formatting, lint, and exports; Mocha tests two-way collaboration through the package entrypoint.
 To build and test in one step, run `pnpm exec fluid-build rust-service/packages/sea-tree --task test:mocha:esm` from the repository root.
 The harness retains the direct SharedTree benchmarks and includes this package test in its aggregate command.

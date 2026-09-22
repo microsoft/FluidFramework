@@ -1,13 +1,10 @@
-# Sea WASM Node validation
+# Sea WASM Node Validation
 
 The Node command runs the neutral package's session tests directly.
 General session scenarios live in [sea-typescript's test suite](../../packages/sea-typescript/src/test/session.spec.ts) and exercise its capability factories.
-They cover submission resolution, backlog and live delivery, pending-read cancellation, recursive content, idempotent snapshots, publication authority, conflicting operations, superseded and reused memberships, explicit reopening, and backend-assigned document identities.
+They cover ordered submission, backlog/live delivery, cancellation, recursive content, snapshots, publication authority, membership replacement, reopening, and document allocation.
 
-The snapshot-registration ownership regression now uses neutral sessions: replacement ends the old pending read, cancelling the old registration cannot revoke its replacement, and cancelling the current registration revokes publication authority.
-The sequencer also retains its focused registration-replacement regression in `src/session.rs`.
-The optional injected JavaScript disconnect hook and named-create flag tests were retired with those obsolete APIs.
-The current browser transport implements disconnection directly, and the neutral factory allocates document identities only when the caller omits the document.
+Snapshot-registration tests require replacement to end the old pending read, old cancellation to leave the replacement intact, and current cancellation to revoke publication authority.
 
 Build the package-owned artifacts and run the tests from `rust-service/`:
 
@@ -21,5 +18,4 @@ Session consumers use `@fluidframework/sea-typescript`, which owns the shared `s
 Generated bindings and WASM binaries are ignored build outputs.
 
 The package's [websocket.spec.ts](../../packages/sea-typescript/src/test/websocket.spec.ts) retains focused low-level socket queue, upload-throttling, FIN, cancellation, handshake, and ownership regressions against the separate socket-capable artifact.
-These tests exercise transport mechanics, not the removed injected-session API.
-The browser harness enables its optional real Node collaboration test with `SEA_NODE_WEBSOCKET=1`; the test uses the neutral package's `openRemote` entrypoint.
+The [browser harness](../webtransport-browser/README.md) supplies a listener for the optional real Node `openRemote` test during all-mode and socket-mode runs.

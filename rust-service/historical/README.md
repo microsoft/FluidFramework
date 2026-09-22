@@ -43,27 +43,6 @@ The [learning index](LEARNINGS.md) explains the observations behind practices; a
 ## Continuing the Iteration Process
 
 The [coordination skill](../../.github/skills/rust-service-coordination/SKILL.md) defines the active workflow independently of the original research plan.
-New numbered iterations are created directly in `rust-service/historical/iterations/NNNN/` so active and completed research records share one location and numbering sequence.
-Active records are updated during work; completed iteration records and accepted decisions remain append-only history.
-New decision records belong in `rust-service/historical/decisions/`.
-
-From the repository root, use the existing commands:
-
-```bash
-node .github/skills/rust-service-coordination/scripts/iteration-records.mjs init NNNN workstream-name
-node .github/skills/rust-service-coordination/scripts/iteration-records.mjs validate NNNN start
-node .github/skills/rust-service-status-report/scripts/collect-status.mjs --summary NNNN
-```
-
-For a contract and regression-test audit, follow the [quality-iteration skill](../../.github/skills/rust-service-quality-iteration/SKILL.md).
-After `init` and before committing the kickoff records, add its inventory with:
-
-```bash
-node .github/skills/rust-service-coordination/scripts/iteration-records.mjs init-quality NNNN
-```
-
-This command adds the inventory only; it does not replace normal iteration initialization.
-At closeout, review the evidence and run `iteration-records.mjs validate-quality NNNN` using the same script path.
-No numbered records are required for lightweight work.
-
-The record tool also supports `validate-foundation` for checking the archived foundation report.
+See [iteration records](iterations/README.md) for layout and initialization, and [decision records](decisions/README.md) for decision triggers.
+Completed iterations and accepted decisions remain append-only; lightweight work needs no numbered records.
+Contract/regression audits additionally follow the [quality-iteration skill](../../.github/skills/rust-service-quality-iteration/SKILL.md).

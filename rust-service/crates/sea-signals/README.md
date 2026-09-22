@@ -30,19 +30,7 @@ Applications own current-state repair and notification semantics.
 Run `cargo test -p sea-signals` from `rust-service/`.
 Focused tests cover routing, initial membership, isolation, no replay, queue overflow, payload limits, and connection cleanup.
 
-Integration evidence for the signal implementation on branch `sea-signals`, based on `50d1553fcb0`:
-
-| Boundary | Check | Result |
-| --- | --- | --- |
-| Relay | `cargo test -p sea-signals` | Five tests passed, including canceled receive, concurrent receive rejection, and close wakeup. |
-| Transport codec/client | `cargo test -p sea-webtransport --lib` | Twenty tests passed, including signal payload round trips and bounded queue policy. |
-| Native composition | `signals_cross_native_connections_without_archive_events` | Reliable, targeted, small best-effort, and oversized fallback passed without archive events. |
-| Generated local binding | `sea-typescript/test/session.test.mjs` | Broadcast, targeting, unchanged history, and closing a pending read passed. |
-| Browser composition | `SEA_BROWSER_SKIP_BUILD=1 SEA_ORDINARY_WEBSOCKET=1 tests/webtransport-browser/run-test.sh` | Chromium passed mixed QUIC/WebSocket routing in both directions and oversized fallback. |
-| Workspace | Canonical commands in [DEVELOPMENT.md](../../DEVELOPMENT.md), plus WASM Clippy | 168 Rust tests, strict lint/docs, build, and `./test.sh` passed. |
-| Repository | Root `pnpm build:fast` and `pnpm policy-check --path rust-service` | Passed. |
-
-The adjacent Fluid adapter also passed all seven existing `TestSignals` and `Targeted Signals` E2E cases against Sea's ordinary WebSocket listener.
-Those checks exercise runtime delivery, not a separate Presence convergence suite.
-One unchanged idle-stream timeout test failed during the first full Rust run, then passed both in isolation and in the full rerun.
-The full Node harness exposed an audience-order assumption; its assertion now compares the current member set rather than imposing historical join order on a live snapshot.
+Native server and [browser harness](../../tests/webtransport-browser/README.md) tests cover reliable/datagram delivery, oversized fallback, generated bindings, and mixed QUIC/WebSocket recipients.
+Fluid broadcast/targeted-signal tests exercise runtime delivery, not Presence convergence.
+Compare initial live membership as a set, not historical join order.
+See [Decision 0017](../../historical/decisions/0017-document-signals.md) for implementation history and compatibility boundaries.
