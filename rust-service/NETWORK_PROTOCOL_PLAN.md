@@ -62,6 +62,9 @@ Keep them visible until each has an explicit disposition.
 
 ### Compact Session Identity
 
+[Independent checkpoint recovery](CHECKPOINT_PLAN.md) introduces sequencer-allocated `u64` identities with persisted reservations and no reuse.
+Protocol version 11 now uses those numbers directly; the F1 reuse design below remains deferred.
+
 For F1, prefer one canonical session identity model over adding durable opaque identities plus a second wire-alias layer.
 A proposed reuse rule is that the previous incarnation's durable leave position must be strictly below the minimum reference at reassignment.
 Establish an anchor at or above that minimum before the new client can submit events.

@@ -201,6 +201,8 @@ pub type NativeSeaClient = SessionClient<NativeTransport>;
 
 /// Typed archive session reusable across native and browser transports and session decorators.
 pub struct SessionClient<Transport: ClientTransport> {
+    /// Sequencer-allocated document-scoped identity.
+    session: SessionId,
     client: Arc<Client<Transport>>,
     event_stream: Arc<Mutex<Option<EventStream<Transport::Stream>>>>,
     author_stream: Mutex<Option<AuthorStream<Transport::Stream>>>,
@@ -337,8 +339,6 @@ pub struct SessionOpen {
     /// Whether the archive is created or must already exist.
     pub intent: protocol::ArchiveIntent,
 
-    /// Fresh session identity.
-    pub session: SessionId,
     /// Latest event incorporated by the author.
     pub reference: Option<EventPosition>,
 }
@@ -374,7 +374,6 @@ impl SessionClient<NativeTransport> {
                 archive: open.archive.to_vec(),
                 intent: open.intent,
 
-                session: open.session.as_bytes().to_vec(),
                 resume_after: resume_after.map(EventPosition::get),
             }),
         )
@@ -383,12 +382,7 @@ impl SessionClient<NativeTransport> {
         let author_stream = timeout(config.operation_timeout, client.open_author_stream())
             .await
             .map_err(|_| WebTransportError::Timeout)??;
-        Ok(Self::from_streams(
-            client,
-            event_stream,
-            author_stream,
-            resume_after,
-        ))
+        Self::from_streams(client, event_stream, author_stream, resume_after)
     }
 }
 
@@ -415,17 +409,11 @@ where
                 archive: open.archive.to_vec(),
                 intent: open.intent,
 
-                session: open.session.as_bytes().to_vec(),
                 resume_after: open.reference.map(EventPosition::get),
             })
             .await?;
         let author_stream = client.open_author_stream().await?;
-        Ok(Self::from_streams(
-            client,
-            event_stream,
-            author_stream,
-            open.reference,
-        ))
+        Self::from_streams(client, event_stream, author_stream, open.reference)
     }
 
     /// Retains the initially opened event stream and independent session channels.
@@ -434,8 +422,10 @@ where
         event_stream: EventStream<Transport::Stream>,
         author_stream: AuthorStream<Transport::Stream>,
         resume_after: Option<EventPosition>,
-    ) -> Self {
-        Self {
+    ) -> Result<Self, SeaClientError> {
+        Ok(Self {
+            session: SessionId::new(event_stream.session)
+                .map_err(|_| SeaClientError::UnexpectedResponse)?,
             document: DocumentId::from_bytes(Bytes::copy_from_slice(event_stream.document())),
             scope: Arc::new(()),
             client: Arc::new(client),
@@ -444,7 +434,13 @@ where
             snapshot_stream: Mutex::new(None),
             content_stream: Mutex::new(None),
             resume_after,
-        }
+        })
+    }
+
+    /// Returns the sequencer-allocated identity from the opening handshake.
+    #[must_use]
+    pub fn session_id(&self) -> &SessionId {
+        &self.session
     }
 
     /// Registers independent live messaging for this session's document.
@@ -971,7 +967,7 @@ fn session_event_from_wire(
             event: event_from_wire(event.event),
         },
 
-        session_id: SessionId::new(Bytes::from(event.session))
+        session_id: SessionId::new(event.session)
             .map_err(|_| SeaClientError::UnexpectedResponse)?,
 
         reference: event.reference.map(EventPosition::new),

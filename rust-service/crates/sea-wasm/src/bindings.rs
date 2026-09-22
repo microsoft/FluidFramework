@@ -120,11 +120,9 @@ impl SeaTreeId {
     }
 }
 
-/// Fresh session identity and options supplied to a stack factory.
+/// Reference and decorator options supplied to a stack factory.
 #[wasm_bindgen]
 pub struct SeaSessionOptions {
-    /// Fresh membership identity.
-    session: SessionId,
     /// Latest incorporated event.
     reference: Option<EventPosition>,
     /// Whether this session explicitly uses the compression decorator.
@@ -133,25 +131,21 @@ pub struct SeaSessionOptions {
 
 #[wasm_bindgen]
 impl SeaSessionOptions {
-    /// Validates identities and records explicit session semantics.
+    /// Records explicit session semantics; identity is allocated when opening succeeds.
     #[wasm_bindgen(constructor)]
-    pub fn new(
-        session: &[u8],
-        reference: Option<u64>,
-        compression: bool,
-    ) -> Result<SeaSessionOptions, JsValue> {
-        Ok(Self {
-            session: SessionId::new(Bytes::copy_from_slice(session))
-                .map_err(|_| invalid("session identity must not be empty"))?,
+    pub fn new(reference: Option<u64>, compression: bool) -> SeaSessionOptions {
+        Self {
             reference: reference.map(EventPosition::new),
             compression,
-        })
+        }
     }
 }
 
 /// One open session whose operations are shared by every concrete configuration.
 #[wasm_bindgen]
 pub struct SeaSession {
+    /// Numeric identity allocated by the document sequencer.
+    session_id: SessionId,
     /// Independent document signal factory, not wrapped by archive payload decorators.
     signal_factory: Rc<dyn crate::signals::SignalFactory>,
     /// Live registrations to close before session transport ownership is released.
@@ -168,6 +162,7 @@ impl SeaSession {
     fn from_stack<Session: SessionContract + 'static>(
         session: Session,
         document: Vec<u8>,
+        session_id: SessionId,
         compression: bool,
         signal_factory: Rc<dyn crate::signals::SignalFactory>,
     ) -> Result<Self, JsValue> {
@@ -186,6 +181,7 @@ impl SeaSession {
             Rc::new(SessionAdapter::new(session))
         };
         Ok(Self {
+            session_id,
             inner,
             document,
             signal_factory,
@@ -204,6 +200,12 @@ fn check_options(options: &SeaSessionOptions) -> Result<(), JsValue> {
 
 #[wasm_bindgen]
 impl SeaSession {
+    /// Returns the allocated session identity in canonical eight-byte big-endian form.
+    #[wasm_bindgen(getter, js_name = sessionId)]
+    pub fn session_id(&self) -> Vec<u8> {
+        self.session_id.as_bytes().to_vec()
+    }
+
     /// Returns the identity to retain for future opens on the same service.
     #[wasm_bindgen(getter)]
     pub fn document(&self) -> Vec<u8> {
@@ -694,7 +696,7 @@ impl SeaMemoryService {
         };
         drop(runtimes);
         let session = sequencer
-            .open_session(options.session.clone(), options.reference)
+            .open_session(options.reference)
             .await
             .map_err(|error| service_error(&error))?;
         let room = self
@@ -706,9 +708,11 @@ impl SeaMemoryService {
                     .expect("default signal limits are valid")
             })
             .clone();
+        let session_id = session.session_id().clone();
         SeaSession::from_stack(
             session,
             document,
+            session_id,
             options.compression,
             Rc::new(crate::signals::FactoryAdapter(
                 sea_signals::LocalSignalService::new(room),
@@ -765,8 +769,6 @@ pub async fn open_remote(
         SessionOpen {
             archive: Bytes::from(document.unwrap_or_default()),
             intent,
-
-            session: options.session.clone(),
             reference: options.reference,
         },
     )
@@ -774,7 +776,8 @@ pub async fn open_remote(
     .map_err(|error| service_error(&error))?;
     let document = session.document().as_bytes().to_vec();
     let signals = Rc::new(crate::signals::FactoryAdapter(session.signal_service()));
-    SeaSession::from_stack(session, document, options.compression, signals)
+    let session_id = session.session_id().clone();
+    SeaSession::from_stack(session, document, session_id, options.compression, signals)
 }
 
 /// Opens a real browser WebTransport session without fallback, optionally wrapped in compression.
@@ -808,8 +811,6 @@ pub async fn open_webtransport(
         SessionOpen {
             archive: Bytes::from(document.unwrap_or_default()),
             intent,
-
-            session: options.session.clone(),
             reference: options.reference,
         },
     )
@@ -817,5 +818,6 @@ pub async fn open_webtransport(
     .map_err(|error| service_error(&error))?;
     let document = session.document().as_bytes().to_vec();
     let signals = Rc::new(crate::signals::FactoryAdapter(session.signal_service()));
-    SeaSession::from_stack(session, document, options.compression, signals)
+    let session_id = session.session_id().clone();
+    SeaSession::from_stack(session, document, session_id, options.compression, signals)
 }

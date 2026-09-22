@@ -1,7 +1,7 @@
 //! Exclusive framed journal for filesystem document components.
 //!
 //! Each record carries its length, complemented length, and content checksum. Recovery returns
-//! only complete verified records and the last valid byte boundary; interpretation and
+//! only complete verified suffix records after the published index boundary; interpretation and
 //! dependency-closure checks remain the responsibility of `sea_file::storage`.
 //!
 //! Buffered openings append in place and reject incomplete tails.
@@ -10,7 +10,8 @@
 //! damage previously synchronized bytes, including bytes sharing its final sector. Creation still
 //! publishes through synchronized rename. Recovery truncates incomplete tails and synchronizes the
 //! selected journal and directory before exposing records.
-//! Complete malformed published frames remain corruption, not discardable uncommitted data.
+//! Complete malformed suffix frames remain corruption, not discardable uncommitted data.
+//! The indexed prefix is validated on historical access rather than rescanned during opening.
 //!
 //! Power-loss recovery assumes durable-prefix integrity, crash-atomic creation rename, truthful
 //! synchronization, and tails consisting of valid frames followed by at most a short header or
@@ -23,11 +24,12 @@
 //! mutations and authoritative observations return [`FileStorageError::Ambiguous`] until every
 //! owner drops the journal and a new exclusive opening recovers it.
 
+use crate::index::{Index, Key};
 use sea_core::{BlobId, ClassifiedError, ErrorKind};
 use std::{
     fs::{self, File, OpenOptions},
     io::{Read, Seek, SeekFrom, Write},
-    path::Path,
+    path::{Path, PathBuf},
 };
 use thiserror::Error;
 
@@ -74,6 +76,10 @@ const FRAME_HEADER: usize = 48;
 
 /// An exclusive opening; the stable sidecar lock survives journal replacement.
 pub(crate) struct Journal {
+    /// Stable document name used to publish its lookup index.
+    path: PathBuf,
+    /// Latest published index, transferred to storage when the opening is composed.
+    pub(crate) index: Option<Index>,
     /// Published file, positioned at its validated append boundary.
     file: File,
     /// Never replaced or removed; owns the OS lock across publication and recovery.
@@ -158,11 +164,23 @@ impl Journal {
             sync_parent(path)?;
         }
         file.seek(SeekFrom::Start(0))?;
-        let mut bytes = Vec::new();
-        file.read_to_end(&mut bytes)?;
-        let (records, boundary) = recover(&bytes, durable)?;
-        if boundary != bytes.len() {
-            file.set_len(boundary as u64)?;
+        let mut magic = [0; 8];
+        match file.read_exact(&mut magic) {
+            Ok(()) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::UnexpectedEof => {
+                return Err(FileStorageError::Corrupt("journal header"));
+            }
+            Err(error) => return Err(error.into()),
+        }
+        if &magic != MAGIC {
+            return Err(FileStorageError::Corrupt("journal header"));
+        }
+        let index = if create { None } else { Index::open(path)? };
+        let start = index.as_ref().map_or(8, |index| index.boundary);
+        let length = file.metadata()?.len();
+        let (records, boundary) = recover_tail(&mut file, start, length, durable)?;
+        if boundary != length {
+            file.set_len(boundary)?;
         }
         if durable {
             file.sync_all()?;
@@ -176,6 +194,8 @@ impl Journal {
         file.seek(SeekFrom::End(0))?;
         Ok((
             Self {
+                path: path.to_path_buf(),
+                index,
                 file,
                 _lock: lock,
                 durable,
@@ -197,6 +217,41 @@ impl Journal {
             Err(FileStorageError::Ambiguous)
         } else {
             Ok(())
+        }
+    }
+
+    /// Returns the settled append boundary while the caller holds the mutation order.
+    pub(crate) fn boundary(&mut self) -> Result<u64, FileStorageError> {
+        self.ready()?;
+        Ok(self.file.stream_position()?)
+    }
+
+    /// Opens an independent read cursor while this journal retains exclusive ownership.
+    pub(crate) fn reader(&self) -> Result<File, FileStorageError> {
+        self.ready()?;
+        Ok(File::open(&self.path)?)
+    }
+
+    /// Publishes lookup state only after making its journal prefix durable when required.
+    pub(crate) fn checkpoint(
+        &mut self,
+        metadata: &[u8],
+        entries: impl IntoIterator<Item = Result<(Key, u64), FileStorageError>>,
+    ) -> Result<Index, FileStorageError> {
+        let boundary = self.boundary()?;
+        self.failed = true;
+        let result = (|| {
+            if self.durable {
+                self.file.sync_all()?;
+            }
+            Index::publish(&self.path, boundary, metadata, entries, self.durable)
+        })();
+        match result {
+            Ok(index) => {
+                self.failed = false;
+                Ok(index)
+            }
+            Err(_) => Err(FileStorageError::Ambiguous),
         }
     }
 
@@ -296,46 +351,145 @@ fn sync_parent(path: &Path) -> Result<(), std::io::Error> {
     File::open(path.parent().ok_or(std::io::ErrorKind::InvalidInput)?)?.sync_all()
 }
 
-/// Accepts complete verified frames; only durable recovery tolerates an incomplete final frame.
-fn recover(bytes: &[u8], durable: bool) -> Result<(Vec<Vec<u8>>, usize), FileStorageError> {
-    if bytes.get(..8) != Some(MAGIC.as_slice()) {
-        return Err(FileStorageError::Corrupt("journal header"));
+/// Reads only frames at or after a trusted boundary; durable recovery tolerates a short final frame.
+fn recover_tail(
+    source: &mut (impl Read + Seek),
+    start: u64,
+    length: u64,
+    durable: bool,
+) -> Result<(Vec<Vec<u8>>, u64), FileStorageError> {
+    if start < MAGIC.len() as u64 || start > length {
+        return Err(FileStorageError::Corrupt("journal recovery boundary"));
     }
-    let mut cursor = 8;
+    source.seek(SeekFrom::Start(start))?;
+    let mut cursor = start;
     let mut records = Vec::new();
-    while cursor < bytes.len() {
-        let tail = &bytes[cursor..];
-        if tail.len() < FRAME_HEADER {
+    while cursor < length {
+        if length - cursor < FRAME_HEADER as u64 {
             break;
         }
-        let length = u64::from_be_bytes(tail[..8].try_into().unwrap());
-        let inverse = u64::from_be_bytes(tail[8..16].try_into().unwrap());
-        if inverse != !length {
+        let mut header = [0; FRAME_HEADER];
+        source.read_exact(&mut header)?;
+        let payload_length = u64::from_be_bytes(header[..8].try_into().unwrap());
+        let inverse = u64::from_be_bytes(header[8..16].try_into().unwrap());
+        if inverse != !payload_length {
             return Err(FileStorageError::Corrupt("frame length"));
         }
-        let length =
-            usize::try_from(length).map_err(|_| FileStorageError::Corrupt("frame overflow"))?;
-        let end = FRAME_HEADER
-            .checked_add(length)
+        let end = cursor
+            .checked_add(FRAME_HEADER as u64)
+            .and_then(|offset| offset.checked_add(payload_length))
             .ok_or(FileStorageError::Corrupt("frame overflow"))?;
-        let Some(payload) = tail.get(FRAME_HEADER..end) else {
+        if end > length {
             break;
-        };
-        if BlobId::for_bytes(payload).as_bytes() != &tail[16..48] {
+        }
+        let payload_length = usize::try_from(payload_length)
+            .map_err(|_| FileStorageError::Corrupt("frame overflow"))?;
+        let mut payload = vec![0; payload_length];
+        source.read_exact(&mut payload)?;
+        if BlobId::for_bytes(&payload).as_bytes() != &header[16..48] {
             return Err(FileStorageError::Corrupt("frame checksum"));
         }
-        records.push(payload.to_vec());
-        cursor += end;
+        records.push(payload);
+        cursor = end;
     }
-    if cursor != bytes.len() && !durable {
+    if cursor != length && !durable {
         return Err(FileStorageError::Corrupt("incomplete buffered journal"));
     }
     Ok((records, cursor))
 }
 
+/// Fetches and verifies exactly one historical frame through an independent read cursor.
+pub(crate) fn read_record(source: &mut File, offset: u64) -> Result<Vec<u8>, FileStorageError> {
+    source.seek(SeekFrom::Start(offset))?;
+    let mut header = [0; FRAME_HEADER];
+    source.read_exact(&mut header)?;
+    let length = u64::from_be_bytes(header[..8].try_into().unwrap());
+    let end = offset
+        .checked_add(FRAME_HEADER as u64)
+        .and_then(|start| start.checked_add(length))
+        .ok_or(FileStorageError::Corrupt("frame overflow"))?;
+    if end > source.metadata()?.len() {
+        return Err(FileStorageError::Corrupt("indexed frame length"));
+    }
+    let (mut records, boundary) = recover_tail(source, offset, end, false)?;
+    if boundary != end || records.len() != 1 {
+        return Err(FileStorageError::Corrupt("indexed frame"));
+    }
+    Ok(records.remove(0))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn published_index_skips_old_frames_and_preserves_addressed_reads() {
+        let root = std::env::temp_dir().join(format!("sea-indexed-journal-{}", std::process::id()));
+        fs::create_dir_all(&root).unwrap();
+        let path = root.join("document.sea");
+        let (mut journal, _) = Journal::open(&path, true, true).unwrap();
+        journal.append(b"old").unwrap();
+        let boundary = journal.boundary().unwrap();
+        let index = journal.checkpoint(b"state", [Ok(([1; 33], 8))]).unwrap();
+        assert_eq!(index.boundary, boundary);
+        journal.append(b"tail").unwrap();
+        drop((journal, index));
+        let (journal, records) = Journal::open(&path, false, true).unwrap();
+        assert_eq!(records, vec![b"tail".to_vec()]);
+        let index = journal.index.as_ref().unwrap();
+        assert_eq!(index.metadata, b"state");
+        let mut reader = journal.reader().unwrap();
+        assert_eq!(read_record(&mut reader, 8).unwrap(), b"old");
+        drop((journal, reader));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    /// Records the earliest byte requested by recovery and the total data read.
+    struct ObservedRead {
+        /// In-memory journal fixture with seek support.
+        source: std::io::Cursor<Vec<u8>>,
+        /// Inclusive lower bound on all reads.
+        earliest: u64,
+        /// Number of bytes actually read.
+        bytes: usize,
+    }
+
+    impl Read for ObservedRead {
+        fn read(&mut self, output: &mut [u8]) -> std::io::Result<usize> {
+            self.earliest = self.earliest.min(self.source.position());
+            let count = self.source.read(output)?;
+            self.bytes += count;
+            Ok(count)
+        }
+    }
+
+    impl Seek for ObservedRead {
+        fn seek(&mut self, position: SeekFrom) -> std::io::Result<u64> {
+            self.source.seek(position)
+        }
+    }
+
+    #[test]
+    fn recovery_from_boundary_never_reads_older_payloads() {
+        let payload = b"recent";
+        let start = 1024 * 1024;
+        let mut bytes = vec![0xff; start];
+        bytes.extend_from_slice(&(payload.len() as u64).to_be_bytes());
+        bytes.extend_from_slice(&(!(payload.len() as u64)).to_be_bytes());
+        bytes.extend_from_slice(BlobId::for_bytes(payload).as_bytes());
+        bytes.extend_from_slice(payload);
+        let length = bytes.len() as u64;
+        let mut observed = ObservedRead {
+            source: std::io::Cursor::new(bytes),
+            earliest: u64::MAX,
+            bytes: 0,
+        };
+        let (records, boundary) = recover_tail(&mut observed, start as u64, length, true).unwrap();
+        assert_eq!(records, vec![payload.to_vec()]);
+        assert_eq!(boundary, length);
+        assert_eq!(observed.earliest, start as u64);
+        assert_eq!(observed.bytes, FRAME_HEADER + payload.len());
+    }
 
     #[test]
     fn durable_append_reuses_inode_and_recovers_uncertain_prefix() {

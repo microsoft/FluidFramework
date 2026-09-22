@@ -6,13 +6,16 @@ The `sea_core::session` traits define content/history, author, and snapshot-coor
 ## Runtime
 
 Move a view into `session::LocalSequencer::<Storage>::recover`, then call `open_session` for each author connection.
-Recovery performs a bounded scan only when `head` is nonempty and restores used session identities and application positions.
+Recovery restores internal checkpoint state and replays only the bounded suffix after its applied position.
 It rejects malformed envelopes and invalid references; equal submissions remain distinct events.
 Active authority and publisher selection are runtime-local.
 `announce_membership` optionally publishes immutable public member metadata in the same archive order as application events.
 Announced memberships receive a service-authored departure on close, shutdown, or recovery; unannounced memberships produce no control records.
 Recovery closes outstanding announcements before admitting fresh sessions.
-Session identities used by committed events remain reserved after recovery; unused memberships need not survive a runtime restart.
+Session identities are document-scoped nonzero `u64` values allocated by `open_session`, not selected by callers.
+Reservations cover up to 256 consecutive values and are checkpointed before any identity in the range is exposed.
+Recovery skips the reservation's unused remainder; identities are never reused, and exhaustion rejects allocation without wrapping.
+The returned session exposes its identity through `session_id()`.
 Sessions are independent; opening another session does not close an earlier one.
 Sea stores session incarnations, not author identities; applications own attribution in payloads or public membership metadata.
 
@@ -117,13 +120,31 @@ An advance cannot exceed its carrying event's reference or lower the floor.
 Idle readers cannot indefinitely pin progressing writers; quiescent documents need no timer or extra append.
 
 Snapshots retain their exact event boundary, whose immutable envelope retains the floor at publication.
-The current backend retains that event and all history; snapshot consumers can read the boundary event, and recovery scans the archive before admitting mutations.
+The current backend retains that event and all history; snapshot consumers can read the boundary event, and recovery restores the internal checkpoint and suffix before admitting mutations.
 Any future compaction must preserve this floor metadata with the snapshot rather than discard the boundary envelope.
 The Fluid adapter maps the floor into its dense sequence space.
 
-Persisted application/membership encodings are `SEAQ5`/`SEAM4` and omit author identities; earlier envelopes are rejected.
-Wire protocol version 10 also removes correlation IDs; rebuild clients and servers together.
+Persisted application/membership encodings are `SEAQ6`/`SEAM5` with fixed-width numeric session identities; earlier envelopes are rejected.
+Wire protocol version 11 carries allocated identities in opening responses; rebuild clients and servers together.
 There is no supported data migration from the experimental earlier formats.
+
+## Internal Checkpoints
+
+The `SEAC2` checkpoint contains the exact applied position, durable minimum-reference floor, the last 1088 positions needed by the advancement policy, outstanding announcement envelopes, and the inclusive session-allocation reservation.
+It retains no historical session or submission set.
+Outstanding announcement state scales with still-outstanding memberships, not total retained history.
+Historical reference checks use the storage resolver when a position is outside the recent window.
+
+Before admitting another batch or lifecycle event, 256 applied entries trigger publication.
+With batches limited to 256 entries, at most 511 event entries follow the last sequencer checkpoint.
+Reservation publication captures the same exact applied prefix and does not invent an event position.
+Publication failure or cancellation stops mutation until reopening; failures cannot silently extend the tail.
+Recovery appends terminal departures for restored outstanding announcements before returning fresh authority, using the same cadence during those departures.
+
+Internal metadata publication is independent of application snapshots and publisher nomination.
+File storage also checkpoints its own lookup state, so opening does not first reconstruct an index by scanning old payloads.
+Memory storage keeps its already resident history and retains its in-process consistency validation on reopening.
+See the [checkpoint design and evidence](../../CHECKPOINT_PLAN.md) for publication ordering, tests, and implementation costs.
 
 ## Submission Identity and Settlement
 

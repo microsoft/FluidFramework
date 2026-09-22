@@ -18,7 +18,10 @@
 //! Uncertain writes and failed workers terminate authoritative observations until recovery.
 
 pub use crate::journal::FileStorageError;
-use crate::journal::Journal;
+use crate::{
+    index::{Index, Key},
+    journal::{Journal, read_record},
+};
 use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{Stream, stream, task::AtomicWaker};
@@ -68,18 +71,15 @@ impl<const DURABLE: bool> FileStorage<DURABLE> {
     /// Builds components only after all recovered records satisfy dependency closure.
     fn components(
         path: PathBuf,
-        journal: Journal,
+        mut journal: Journal,
         records: Vec<Vec<u8>>,
     ) -> Result<StorageComponents<FileBlobs, FileEvents, FileSnapshots>, FileStorageError> {
-        let mut state = State {
-            blobs: BTreeMap::new(),
-            directories: BTreeMap::new(),
-            events: BTreeMap::new(),
-            snapshots: BTreeMap::new(),
-            readers: Vec::new(),
-        };
+        let index = journal.index.take();
+        let mut boundary = index.as_ref().map_or(8, |index| index.boundary);
+        let mut state = State::new(index, journal.reader()?)?;
         for record in records {
-            state.recover_record(&record)?;
+            state.recover_record(&record, boundary)?;
+            boundary += 48 + record.len() as u64;
         }
         let opening = Arc::new(Opening {
             path: Arc::new(path),
@@ -251,25 +251,180 @@ impl Opening {
 
 /// Journal state is dependency-closed after recovery and immutable except for append.
 struct State {
-    /// Verified leaves, indexed by content identity.
-    blobs: BTreeMap<BlobId, Bytes>,
-    /// Immutable directories whose children were available at publication.
-    directories: BTreeMap<BlobDirectoryId, BlobDirectory>,
-    /// Full dense event prefix.
-    events: BTreeMap<EventPosition, CommittedEvent>,
-    /// Sparse snapshot positions and roots, without self-owned handles.
-    snapshots: BTreeMap<EventPosition, BlobTreeId>,
+    /// Historical lookup entries, read lazily from a published immutable index.
+    index: Option<Index>,
+    /// Addresses appended since the published index boundary.
+    addresses: BTreeMap<Key, u64>,
+    /// Independent journal cursor for addressed reads, never shared with the writer.
+    reader: Mutex<fs::File>,
+    /// Last committed dense event position, with zero representing an empty archive.
+    head: u64,
+    /// Last application snapshot position, with zero representing no snapshots.
+    snapshot_head: u64,
+    /// Opaque internal metadata independent of application snapshot publication.
+    checkpoint: Vec<u8>,
+    /// Raw event writes with unavailable dependencies must never become trusted indexed history.
+    invalid_dependency: bool,
     /// Weak wake registrations pruned on mutation and reader initialization.
     readers: Vec<Weak<AtomicWaker>>,
 }
 
 impl State {
-    /// Membership implies transitive closure for immutable published directories.
-    fn contains(&self, id: BlobTreeId) -> bool {
-        match id {
-            BlobTreeId::Blob(id) => self.blobs.contains_key(&id),
-            BlobTreeId::Directory(id) => self.directories.contains_key(&id),
+    /// Restores constant-size archive heads and internal metadata without scanning old addresses.
+    fn new(index: Option<Index>, reader: fs::File) -> Result<Self, FileStorageError> {
+        let (head, snapshot_head, checkpoint) = if let Some(index) = &index {
+            if index.metadata.len() < 16 {
+                return Err(FileStorageError::Corrupt("storage checkpoint metadata"));
+            }
+            let head = u64::from_be_bytes(index.metadata[..8].try_into().unwrap());
+            let snapshot_head = u64::from_be_bytes(index.metadata[8..16].try_into().unwrap());
+            if snapshot_head > head {
+                return Err(FileStorageError::Corrupt("checkpoint snapshot head"));
+            }
+            (head, snapshot_head, index.metadata[16..].to_vec())
+        } else {
+            (0, 0, Vec::new())
+        };
+        Ok(Self {
+            index,
+            addresses: BTreeMap::new(),
+            reader: Mutex::new(reader),
+            head,
+            snapshot_head,
+            checkpoint,
+            invalid_dependency: false,
+            readers: Vec::new(),
+        })
+    }
+
+    /// Resolves recent or historical lookup state without loading payloads.
+    fn address(&self, key: &Key) -> Result<Option<u64>, FileStorageError> {
+        if let Some(offset) = self.addresses.get(key) {
+            return Ok(Some(*offset));
         }
+        Ok(match &self.index {
+            Some(index) => index
+                .lower_bound(key)?
+                .filter(|(found, _)| found == key)
+                .map(|(_, offset)| offset),
+            None => None,
+        })
+    }
+
+    /// Fetches a complete checked frame by logical identity.
+    fn record(&self, key: &Key) -> Result<Option<Vec<u8>>, FileStorageError> {
+        let Some(offset) = self.address(key)? else {
+            return Ok(None);
+        };
+        let mut reader = self
+            .reader
+            .lock()
+            .map_err(|_| FileStorageError::Ambiguous)?;
+        let record = read_record(&mut reader, offset)?;
+        if record_key(&record)? != *key {
+            return Err(FileStorageError::Corrupt("indexed record identity"));
+        }
+        Ok(Some(record))
+    }
+
+    /// Selects the next archive position across the immutable index and recent addresses.
+    fn next(
+        &self,
+        category: u8,
+        after: Option<EventPosition>,
+    ) -> Result<Option<EventPosition>, FileStorageError> {
+        let Some(ordinal) = after.map_or(Some(1), |position| position.get().checked_add(1)) else {
+            return Ok(None);
+        };
+        let key = position_key(category, EventPosition::new(ordinal));
+        let recent = self.addresses.range(key..).next().map(|(key, _)| *key);
+        let indexed = match &self.index {
+            Some(index) => index.lower_bound(&key)?.map(|(key, _)| key),
+            None => None,
+        };
+        Ok(recent
+            .into_iter()
+            .chain(indexed)
+            .filter(|key| key[0] == category)
+            .min()
+            .map(key_position))
+    }
+
+    /// Selects the newest entry at or below a position from both lookup layers.
+    fn floor(
+        &self,
+        category: u8,
+        through: Option<EventPosition>,
+    ) -> Result<Option<EventPosition>, FileStorageError> {
+        let key = position_key(category, through.unwrap_or(EventPosition::new(u64::MAX)));
+        let recent = self
+            .addresses
+            .range(..=key)
+            .next_back()
+            .map(|(key, _)| *key);
+        let indexed = match &self.index {
+            Some(index) => index.floor(&key)?.map(|(key, _)| key),
+            None => None,
+        };
+        Ok(recent
+            .into_iter()
+            .chain(indexed)
+            .filter(|key| key[0] == category)
+            .max()
+            .map(key_position))
+    }
+
+    /// Fetches an event only when an archive reader requests it.
+    fn event(&self, position: EventPosition) -> Result<CommittedEvent, FileStorageError> {
+        let record = self
+            .record(&position_key(3, position))?
+            .ok_or(FileStorageError::Corrupt("missing indexed event"))?;
+        decode_event(&record)
+    }
+
+    /// Fetches an application snapshot root without traversing prior snapshot history.
+    fn snapshot(&self, position: EventPosition) -> Result<Option<BlobTreeId>, FileStorageError> {
+        self.record(&position_key(4, position))?
+            .map(|record| decode_tree(&record[9..]))
+            .transpose()
+    }
+
+    /// Merges lookup addresses and atomically advances the discoverable recovery boundary.
+    fn publish(&mut self, journal: &mut Journal) -> Result<(), FileStorageError> {
+        if self.invalid_dependency {
+            return Err(FileStorageError::Corrupt("event dependency"));
+        }
+        let mut metadata = self.head.to_be_bytes().to_vec();
+        metadata.extend_from_slice(&self.snapshot_head.to_be_bytes());
+        metadata.extend_from_slice(&self.checkpoint);
+        let mut old = self.index.iter().flat_map(Index::iter).peekable();
+        let mut recent = self.addresses.iter().peekable();
+        let entries = std::iter::from_fn(|| {
+            if old.peek().is_some_and(Result::is_err) {
+                return old.next();
+            }
+            match (old.peek(), recent.peek()) {
+                (Some(Ok((old_key, _))), Some((new_key, _))) if old_key < *new_key => old.next(),
+                (Some(Ok((old_key, _))), Some((new_key, _))) if old_key == *new_key => {
+                    old.next();
+                    recent.next().map(|(key, offset)| Ok((*key, *offset)))
+                }
+                (_, Some(_)) => recent.next().map(|(key, offset)| Ok((*key, *offset))),
+                (Some(_), None) => old.next(),
+                (None, None) => None,
+            }
+        });
+        let index = journal.checkpoint(&metadata, entries)?;
+        drop(old);
+        drop(recent);
+        self.index = Some(index);
+        self.addresses.clear();
+        Ok(())
+    }
+
+    /// Membership implies transitive closure for immutable published directories.
+    fn contains(&self, id: BlobTreeId) -> Result<bool, FileStorageError> {
+        Ok(self.address(&tree_key(id))?.is_some())
     }
 
     /// Captures live readers to notify after releasing the state mutex.
@@ -287,29 +442,20 @@ impl State {
     }
 
     /// Applies one checked frame, rejecting gaps, missing dependencies, and invalid encodings.
-    fn recover_record(&mut self, record: &[u8]) -> Result<(), FileStorageError> {
+    fn recover_record(&mut self, record: &[u8], offset: u64) -> Result<(), FileStorageError> {
         let Some((&tag, body)) = record.split_first() else {
             return Err(FileStorageError::Corrupt("empty record"));
         };
         match tag {
-            1 => {
-                self.blobs
-                    .insert(BlobId::for_bytes(body), Bytes::copy_from_slice(body));
-            }
+            1 => {}
             2 => {
                 let directory = BlobDirectory::decode(body)
                     .map_err(|_| FileStorageError::Corrupt("directory encoding"))?;
-                if directory
-                    .entries()
-                    .values()
-                    .any(|child| !self.contains(*child))
-                {
-                    return Err(FileStorageError::Corrupt("directory dependency"));
+                for child in directory.entries().values() {
+                    if !self.contains(*child)? {
+                        return Err(FileStorageError::Corrupt("directory dependency"));
+                    }
                 }
-                let id = directory
-                    .id()
-                    .map_err(|_| FileStorageError::Corrupt("directory identity"))?;
-                self.directories.insert(id, directory);
             }
             3 => {
                 if body.len() < 9 {
@@ -324,21 +470,16 @@ impl State {
                 } else {
                     return Err(FileStorageError::Corrupt("event tree"));
                 };
-                if position.get() != self.events.len() as u64 + 1
-                    || blob_tree.is_some_and(|root| !self.contains(root))
-                {
+                if self.head.checked_add(1) != Some(position.get()) {
                     return Err(FileStorageError::Corrupt("event position or dependency"));
                 }
-                self.events.insert(
-                    position,
-                    CommittedEvent {
-                        position,
-                        event: Event {
-                            payload: Bytes::copy_from_slice(payload),
-                            blob_tree,
-                        },
-                    },
-                );
+                if let Some(root) = blob_tree
+                    && !self.contains(root)?
+                {
+                    return Err(FileStorageError::Corrupt("event dependency"));
+                }
+                let _ = payload;
+                self.head = position.get();
             }
             4 => {
                 if body.len() != 41 {
@@ -347,21 +488,90 @@ impl State {
                 let position =
                     EventPosition::new(u64::from_be_bytes(body[..8].try_into().unwrap()));
                 let root = decode_tree(&body[8..])?;
-                if self
-                    .snapshots
-                    .last_key_value()
-                    .is_some_and(|(head, _)| *head >= position)
-                    || !self.events.contains_key(&position)
-                    || !self.contains(root)
+                if self.snapshot_head >= position.get()
+                    || position.get() > self.head
+                    || !self.contains(root)?
                 {
                     return Err(FileStorageError::Corrupt("snapshot order or dependency"));
                 }
-                self.snapshots.insert(position, root);
+                self.snapshot_head = position.get();
             }
             _ => return Err(FileStorageError::Corrupt("record tag")),
         }
+        self.addresses.insert(record_key(record)?, offset);
         Ok(())
     }
+}
+
+/// Forms a fixed-width key whose byte ordering matches event ordering.
+fn position_key(category: u8, position: EventPosition) -> Key {
+    let mut key = [0; 33];
+    key[0] = category;
+    key[25..].copy_from_slice(&position.get().to_be_bytes());
+    key
+}
+
+/// Recovers the position encoded in an archive index key.
+fn key_position(key: Key) -> EventPosition {
+    EventPosition::new(u64::from_be_bytes(key[25..].try_into().unwrap()))
+}
+
+/// Converts the dense archive's empty sentinel into its public optional head.
+fn nonzero_position(ordinal: u64) -> Option<EventPosition> {
+    (ordinal != 0).then(|| EventPosition::new(ordinal))
+}
+
+/// Forms a key for an immutable tree identity.
+fn tree_key(tree: BlobTreeId) -> Key {
+    let mut key = [0; 33];
+    match tree {
+        BlobTreeId::Blob(id) => {
+            key[0] = 1;
+            key[1..].copy_from_slice(id.as_bytes());
+        }
+        BlobTreeId::Directory(id) => {
+            key[0] = 2;
+            key[1..].copy_from_slice(id.as_bytes());
+        }
+    }
+    key
+}
+
+/// Determines the identity represented by a journal record.
+fn record_key(record: &[u8]) -> Result<Key, FileStorageError> {
+    match record.first() {
+        Some(1) => Ok(tree_key(BlobTreeId::Blob(BlobId::for_bytes(&record[1..])))),
+        Some(2) => Ok(tree_key(BlobTreeId::Directory(
+            BlobDirectory::decode(&record[1..])
+                .and_then(|directory| directory.id())
+                .map_err(|_| FileStorageError::Corrupt("directory identity"))?,
+        ))),
+        Some(category @ (3 | 4)) if record.len() >= 9 => Ok(position_key(
+            *category,
+            EventPosition::new(u64::from_be_bytes(record[1..9].try_into().unwrap())),
+        )),
+        _ => Err(FileStorageError::Corrupt("record identity")),
+    }
+}
+
+/// Decodes one event payload after its framing checksum has been verified.
+fn decode_event(record: &[u8]) -> Result<CommittedEvent, FileStorageError> {
+    if record.len() < 10 || record[0] != 3 {
+        return Err(FileStorageError::Corrupt("event encoding"));
+    }
+    let position = EventPosition::new(u64::from_be_bytes(record[1..9].try_into().unwrap()));
+    let (blob_tree, payload) = match record[9] {
+        0 => (None, &record[10..]),
+        1 if record.len() >= 43 => (Some(decode_tree(&record[10..43])?), &record[43..]),
+        _ => return Err(FileStorageError::Corrupt("event tree")),
+    };
+    Ok(CommittedEvent {
+        position,
+        event: Event {
+            payload: Bytes::copy_from_slice(payload),
+            blob_tree,
+        },
+    })
 }
 
 /// Encodes a typed tree identity without inventing an availability capability.
@@ -413,11 +623,11 @@ impl ReferenceableStore for FileBlobs {
     type Id = BlobTreeId;
     type Handle = FileHandle<BlobTreeId>;
     async fn resolve(&self, id: Self::Id) -> Result<Option<Self::Handle>, Self::Error> {
-        Ok(self.0.lock()?.contains(id).then(|| self.0.handle(id)))
+        Ok(self.0.lock()?.contains(id)?.then(|| self.0.handle(id)))
     }
     async fn ensure_available(&self, handle: &Self::Handle) -> Result<(), Self::Error> {
         self.0.compatible(handle)?;
-        if self.0.lock()?.contains(handle.id) {
+        if self.0.lock()?.contains(handle.id)? {
             Ok(())
         } else {
             Err(FileStorageError::Rejected("missing tree"))
@@ -430,22 +640,21 @@ impl BlobStore for FileBlobs {
     async fn put_blob(&self, payload: Bytes) -> Result<Self::Handle, Self::Error> {
         let id = BlobId::for_bytes(&payload);
         let mut journal = self.0.writer()?;
-        let mut state = self.0.lock()?;
-        if !state.blobs.contains_key(&id) {
+        let state = self.0.lock()?;
+        if !state.contains(BlobTreeId::Blob(id))? {
             let mut record = vec![1];
             record.extend_from_slice(&payload);
-            state = persist(&self.0, &mut journal, state, &record)?;
-            state.blobs.insert(id, payload);
+            drop(persist(&self.0, &mut journal, state, &record)?);
         }
         Ok(self.0.handle(BlobTreeId::Blob(id)))
     }
     async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
-        self.0
+        let record = self
+            .0
             .lock()?
-            .blobs
-            .get(&id)
-            .cloned()
-            .ok_or(FileStorageError::Rejected("missing blob"))
+            .record(&tree_key(BlobTreeId::Blob(id)))?
+            .ok_or(FileStorageError::Rejected("missing blob"))?;
+        Ok(Bytes::copy_from_slice(&record[1..]))
     }
     async fn put_directory(&self, directory: BlobDirectory) -> Result<Self::Handle, Self::Error> {
         let encoded = directory
@@ -455,29 +664,27 @@ impl BlobStore for FileBlobs {
             .id()
             .map_err(|_| FileStorageError::Rejected("directory identity"))?;
         let mut journal = self.0.writer()?;
-        let mut state = self.0.lock()?;
-        if directory
-            .entries()
-            .values()
-            .any(|child| !state.contains(*child))
-        {
-            return Err(FileStorageError::Rejected("missing directory child"));
+        let state = self.0.lock()?;
+        for child in directory.entries().values() {
+            if !state.contains(*child)? {
+                return Err(FileStorageError::Rejected("missing directory child"));
+            }
         }
-        if !state.directories.contains_key(&id) {
+        if !state.contains(BlobTreeId::Directory(id))? {
             let mut record = vec![2];
             record.extend_from_slice(&encoded);
-            state = persist(&self.0, &mut journal, state, &record)?;
-            state.directories.insert(id, directory);
+            drop(persist(&self.0, &mut journal, state, &record)?);
         }
         Ok(self.0.handle(BlobTreeId::Directory(id)))
     }
     async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error> {
-        self.0
+        let record = self
+            .0
             .lock()?
-            .directories
-            .get(&id)
-            .cloned()
-            .ok_or(FileStorageError::Rejected("missing directory"))
+            .record(&tree_key(BlobTreeId::Directory(id)))?
+            .ok_or(FileStorageError::Rejected("missing directory"))?;
+        BlobDirectory::decode(&record[1..])
+            .map_err(|_| FileStorageError::Corrupt("directory encoding"))
     }
 }
 
@@ -486,16 +693,11 @@ impl ReferenceableStore for FileEvents {
     type Id = EventPosition;
     type Handle = FileHandle<EventPosition>;
     async fn resolve(&self, id: Self::Id) -> Result<Option<Self::Handle>, Self::Error> {
-        Ok(self
-            .0
-            .lock()?
-            .events
-            .contains_key(&id)
-            .then(|| self.0.handle(id)))
+        Ok((id.get() != 0 && id.get() <= self.0.lock()?.head).then(|| self.0.handle(id)))
     }
     async fn ensure_available(&self, handle: &Self::Handle) -> Result<(), Self::Error> {
         self.0.compatible(handle)?;
-        if self.0.lock()?.events.contains_key(&handle.id) {
+        if handle.id.get() != 0 && handle.id.get() <= self.0.lock()?.head {
             Ok(())
         } else {
             Err(FileStorageError::Rejected("missing event"))
@@ -526,7 +728,7 @@ impl Archive for FileEvents {
         let events = self.clone();
         if let Ok(results) = tokio::task::spawn_blocking(move || {
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                events.append_batch_blocking(values)
+                events.append_batch_blocking(&values)
             }));
             match result {
                 Ok(results) => results,
@@ -555,17 +757,12 @@ impl Archive for FileEvents {
             self.0.clone(),
             after,
             stop_after,
-            |state| &state.events,
-            |_, _, event| event.clone(),
+            3,
+            |_, state, position| state.event(position),
         )
     }
     async fn head(&self) -> Result<Option<EventPosition>, Self::Error> {
-        Ok(self
-            .0
-            .lock()?
-            .events
-            .last_key_value()
-            .map(|(position, _)| *position))
+        Ok(nonzero_position(self.0.lock()?.head))
     }
 }
 
@@ -573,7 +770,7 @@ impl FileEvents {
     /// Settles a whole batch while the blocking worker retains the exclusive opening.
     fn append_batch_blocking(
         &self,
-        values: Vec<Event>,
+        values: &[Event],
     ) -> Vec<Result<FileHandle<EventPosition>, FileStorageError>> {
         let mut journal = match self.0.writer() {
             Ok(journal) => journal,
@@ -583,7 +780,12 @@ impl FileEvents {
             Ok(state) => state,
             Err(error) => return vec![Err(error)],
         };
-        let head = state.events.len() as u64;
+        let head = state.head;
+        let invalid_dependency = values.iter().any(|event| {
+            event
+                .blob_tree
+                .is_some_and(|root| !matches!(state.contains(root), Ok(true)))
+        });
         drop(state);
         if head.checked_add(values.len() as u64).is_none() {
             return vec![Err(FileStorageError::Rejected("event positions exhausted"))];
@@ -604,6 +806,10 @@ impl FileEvents {
             })
             .collect();
         let payloads: Vec<&[u8]> = records.iter().map(Vec::as_slice).collect();
+        let mut offset = match journal.boundary() {
+            Ok(offset) => offset,
+            Err(error) => return vec![Err(error)],
+        };
         if let Err(error) = journal.append_batch(&payloads) {
             drop(journal);
             if matches!(error, FileStorageError::Ambiguous) {
@@ -624,18 +830,26 @@ impl FileEvents {
                 .map(|_| Err(FileStorageError::Ambiguous))
                 .collect();
         };
-        let results = values
-            .into_iter()
+        state.invalid_dependency |= invalid_dependency;
+        let results = records
+            .iter()
             .enumerate()
-            .map(|(index, event)| {
+            .map(|(index, record)| {
                 let position = EventPosition::new(head + index as u64 + 1);
-                let replaced = state
-                    .events
-                    .insert(position, CommittedEvent { position, event });
-                assert!(replaced.is_none(), "new event position must be vacant");
+                state.addresses.insert(position_key(3, position), offset);
+                offset += 48 + record.len() as u64;
+                state.head = position.get();
                 Ok(self.0.handle(position))
             })
-            .collect();
+            .collect::<Vec<_>>();
+        if state.addresses.len() >= 256 && state.publish(&mut journal).is_err() {
+            drop(state);
+            drop(journal);
+            self.0.poison();
+            return (0..results.len())
+                .map(|_| Err(FileStorageError::Ambiguous))
+                .collect();
+        }
         let readers = state.readers();
         drop(state);
         drop(journal);
@@ -658,22 +872,17 @@ impl Archive for FileSnapshots {
         let mut journal = self.0.writer()?;
         let mut state = self.0.lock()?;
         let position = snapshot.at_event.id;
-        if !state.contains(snapshot.root.id) || !state.events.contains_key(&position) {
+        if !state.contains(snapshot.root.id)? || position.get() == 0 || position.get() > state.head
+        {
             return Err(FileStorageError::Rejected("snapshot dependency"));
         }
-        if state
-            .snapshots
-            .last_key_value()
-            .is_some_and(|(head, _)| *head >= position)
-        {
+        if state.snapshot_head >= position.get() {
             return Err(FileStorageError::Rejected("snapshot must advance"));
         }
         let mut record = vec![4];
         record.extend_from_slice(&position.get().to_be_bytes());
         encode_tree(&mut record, snapshot.root.id);
         state = persist(&self.0, &mut journal, state, &record)?;
-        let replaced = state.snapshots.insert(position, snapshot.root.id);
-        assert!(replaced.is_none(), "new snapshot position must be vacant");
         let readers = state.readers();
         drop(state);
         for reader in readers {
@@ -690,17 +899,17 @@ impl Archive for FileSnapshots {
             self.0.clone(),
             after,
             stop_after,
-            |state| &state.snapshots,
-            |opening, position, root| opening.snapshot(position, *root),
+            4,
+            |opening, state, position| {
+                let root = state
+                    .snapshot(position)?
+                    .ok_or(FileStorageError::Corrupt("missing indexed snapshot"))?;
+                Ok(opening.snapshot(position, root))
+            },
         )
     }
     async fn head(&self) -> Result<Option<EventPosition>, Self::Error> {
-        Ok(self
-            .0
-            .lock()?
-            .snapshots
-            .last_key_value()
-            .map(|(position, _)| *position))
+        Ok(nonzero_position(self.0.lock()?.snapshot_head))
     }
 }
 
@@ -708,6 +917,25 @@ impl Archive for FileSnapshots {
 impl SnapshotArchive for FileSnapshots {
     type BlobHandle = FileHandle<BlobTreeId>;
     type EventHandle = FileHandle<EventPosition>;
+    async fn checkpoint(&self) -> Result<Option<Bytes>, Self::Error> {
+        let state = self.0.lock()?;
+        Ok((!state.checkpoint.is_empty()).then(|| Bytes::copy_from_slice(&state.checkpoint)))
+    }
+    async fn publish_checkpoint(&self, checkpoint: Bytes) -> Result<(), Self::Error> {
+        if checkpoint.is_empty() {
+            return Err(FileStorageError::Rejected("empty internal checkpoint"));
+        }
+        let mut journal = self.0.writer()?;
+        let mut state = self.0.lock()?;
+        state.checkpoint = checkpoint.to_vec();
+        if let Err(error) = state.publish(&mut journal) {
+            drop(state);
+            drop(journal);
+            self.0.poison();
+            return Err(error);
+        }
+        Ok(())
+    }
     async fn get_snapshot_at(
         &self,
         position: EventPosition,
@@ -715,21 +943,20 @@ impl SnapshotArchive for FileSnapshots {
         Ok(self
             .0
             .lock()?
-            .snapshots
-            .get(&position)
-            .map(|root| self.0.snapshot(position, *root)))
+            .snapshot(position)?
+            .map(|root| self.0.snapshot(position, root)))
     }
     async fn latest_at_or_before(
         &self,
         position: Option<EventPosition>,
     ) -> Result<Option<Self::Item>, Self::Error> {
         let state = self.0.lock()?;
-        let upper = position.map_or(std::ops::Bound::Unbounded, std::ops::Bound::Included);
+        let Some(position) = state.floor(4, position)? else {
+            return Ok(None);
+        };
         Ok(state
-            .snapshots
-            .range((std::ops::Bound::Unbounded, upper))
-            .next_back()
-            .map(|(position, root)| self.0.snapshot(*position, *root)))
+            .snapshot(position)?
+            .map(|root| self.0.snapshot(position, root)))
     }
 }
 
@@ -740,7 +967,15 @@ fn persist<'state>(
     mut state: MutexGuard<'state, State>,
     record: &[u8],
 ) -> Result<MutexGuard<'state, State>, FileStorageError> {
-    if let Err(error) = journal.append(record) {
+    let offset = journal.boundary()?;
+    let result = journal.append(record).and_then(|()| {
+        state.recover_record(record, offset)?;
+        if state.addresses.len() >= 256 {
+            state.publish(journal)?;
+        }
+        Ok(())
+    });
+    if let Err(error) = result {
         if matches!(error, FileStorageError::Ambiguous) {
             opening.failed.store(true, Ordering::Release);
         }
@@ -755,14 +990,13 @@ fn persist<'state>(
 }
 
 /// Creates a lazy read retaining the opening, with notifications registered under the mutation lock.
-fn read<Stored: 'static, Item: Send + 'static>(
+fn read<Item: Send + 'static>(
     opening: Arc<Opening>,
     after: Option<EventPosition>,
     stop: Option<EventPosition>,
-    entries: fn(&State) -> &BTreeMap<EventPosition, Stored>,
-    convert: fn(&Opening, EventPosition, &Stored) -> Item,
+    category: u8,
+    convert: fn(&Opening, &State, EventPosition) -> Result<Item, FileStorageError>,
 ) -> ArchiveStream<Item, EventPosition, FileStorageError> {
-    use std::ops::Bound::{Excluded, Included, Unbounded};
     let initial = MonitoredStreamProgress {
         previous: after,
         latest_known: after,
@@ -788,8 +1022,11 @@ fn read<Stored: 'static, Item: Send + 'static>(
             }
         };
         waker.register(context.waker());
-        let archive = entries(&state);
-        let head = archive.last_key_value().map(|(position, _)| *position);
+        let head = nonzero_position(if category == 3 {
+            state.head
+        } else {
+            state.snapshot_head
+        });
         if !initialized {
             if !empty
                 && (after.is_some_and(|bound| Some(bound) > head)
@@ -802,28 +1039,45 @@ fn read<Stored: 'static, Item: Send + 'static>(
             state.readers.retain(|reader| reader.strong_count() != 0);
             state.readers.push(Arc::downgrade(&waker));
         }
-        let archive = entries(&state);
-        let upper = stop.map_or(Unbounded, Included);
-        let progress = observe(archive, previous, stop, empty);
+        let latest = match state.floor(category, stop) {
+            Ok(latest) => latest,
+            Err(error) => {
+                finished = true;
+                return Poll::Ready(Some(Err(error)));
+            }
+        };
+        let next = if empty {
+            None
+        } else {
+            match state.next(category, previous) {
+                Ok(next) => next.filter(|position| stop.is_none_or(|stop| *position <= stop)),
+                Err(error) => {
+                    finished = true;
+                    return Poll::Ready(Some(Err(error)));
+                }
+            }
+        };
+        let progress = observe(latest, next, previous, empty);
         *observed.lock().expect("reader observation lock") = progress.clone();
         if reported.is_none() {
             reported = Some(progress.clone());
             return Poll::Ready(Some(Ok(MonitoredStreamItem::Progress(progress))));
         }
-        if !empty
-            && let Some((position, item)) = archive
-                .range((previous.map_or(Unbounded, Excluded), upper))
-                .next()
-        {
-            previous = Some(*position);
+        if let Some(position) = next {
+            let item = match convert(&opening, &state, position) {
+                Ok(item) => item,
+                Err(error) => {
+                    finished = true;
+                    return Poll::Ready(Some(Err(error)));
+                }
+            };
+            previous = Some(position);
             let mut observation = observed.lock().expect("reader observation lock");
             observation.previous = previous;
             if previous == observation.latest_known {
                 observation.status = MonitoredStreamStatus::AwaitingNewItems;
             }
-            return Poll::Ready(Some(Ok(MonitoredStreamItem::Item(convert(
-                &opening, *position, item,
-            )))));
+            return Poll::Ready(Some(Ok(MonitoredStreamItem::Item(item))));
         }
         if reported.as_ref() != Some(&progress) {
             reported = Some(progress.clone());
@@ -851,32 +1105,20 @@ struct FileRead<Source> {
 }
 
 /// Computes a coherent in-range backlog observation from the same locked history.
-fn observe<Stored>(
-    archive: &BTreeMap<EventPosition, Stored>,
+fn observe(
+    latest: Option<EventPosition>,
+    next: Option<EventPosition>,
     previous: Option<EventPosition>,
-    stop: Option<EventPosition>,
     empty: bool,
 ) -> MonitoredStreamProgress<EventPosition> {
-    use std::ops::Bound::{Excluded, Included, Unbounded};
-    let upper = stop.map_or(Unbounded, Included);
     let latest_known = if empty {
         previous
     } else {
-        previous.max(
-            archive
-                .range((Unbounded, upper))
-                .next_back()
-                .map(|(position, _)| *position),
-        )
+        previous.max(latest)
     };
     let status = if previous == latest_known {
         MonitoredStreamStatus::AwaitingNewItems
-    } else if archive
-        .range((previous.map_or(Unbounded, Excluded), upper))
-        .take(2)
-        .count()
-        > 1
-    {
+    } else if next < latest_known {
         MonitoredStreamStatus::FallenBehind
     } else {
         MonitoredStreamStatus::StreamingBacklog
@@ -962,6 +1204,81 @@ mod tests {
             };
             2
         ]
+    }
+
+    #[tokio::test]
+    async fn indexed_reopen_keeps_history_lazy_and_internal_state_independent() {
+        use std::io::{Seek, SeekFrom, Write};
+        let root = root();
+        let storage = FileStorage::<true>::open(&root).unwrap();
+        let created = storage.create_document().await.unwrap();
+        let id = created.id;
+        let blob = created
+            .components
+            .blobs
+            .put_blob(Bytes::from_static(b"old payload"))
+            .await
+            .unwrap();
+        for _ in 0..520 {
+            created
+                .components
+                .events
+                .append(batch().remove(0))
+                .await
+                .unwrap();
+        }
+        created
+            .components
+            .snapshots
+            .publish_checkpoint(Bytes::from_static(b"internal"))
+            .await
+            .unwrap();
+        assert_eq!(created.components.snapshots.head().await.unwrap(), None);
+        created
+            .components
+            .events
+            .append(batch().remove(0))
+            .await
+            .unwrap();
+        drop(created.components);
+        let components = storage.open_document(&id).await.unwrap().unwrap();
+        assert_eq!(components.events.0.lock().unwrap().addresses.len(), 1);
+        assert_eq!(
+            components.events.head().await.unwrap(),
+            Some(EventPosition::new(521))
+        );
+        assert_eq!(
+            components.snapshots.checkpoint().await.unwrap().unwrap(),
+            b"internal"[..]
+        );
+        let BlobTreeId::Blob(blob_id) = blob.id() else {
+            panic!("leaf expected")
+        };
+        assert_eq!(
+            components.blobs.get_blob(blob_id).await.unwrap(),
+            b"old payload"[..]
+        );
+        let mut history = components.events.read(None, Some(EventPosition::new(521)));
+        let mut count = 0;
+        while let Some(item) = history.next().await {
+            if matches!(item.unwrap(), MonitoredStreamItem::Item(_)) {
+                count += 1;
+            }
+        }
+        assert_eq!(count, 521);
+        let path = components.events.0.path.as_ref().clone();
+        drop((history, components));
+        let mut file = fs::OpenOptions::new().write(true).open(&path).unwrap();
+        file.seek(SeekFrom::Start(8 + 48 + 1)).unwrap();
+        file.write_all(b"X").unwrap();
+        drop(file);
+        let components = storage.open_document(&id).await.unwrap().unwrap();
+        assert!(matches!(
+            components.blobs.get_blob(blob_id).await,
+            Err(FileStorageError::Corrupt(_))
+        ));
+        drop(components);
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[tokio::test(flavor = "current_thread")]
@@ -1203,7 +1520,7 @@ mod tests {
                         .iter()
                         .all(|result| matches!(result, Err(FileStorageError::Ambiguous)))
                 );
-                assert!(events.0.state.lock().unwrap().events.is_empty());
+                assert_eq!(events.0.state.lock().unwrap().head, 0);
                 assert!(matches!(
                     live.next().await,
                     Some(Err(FileStorageError::Ambiguous))

@@ -27,7 +27,9 @@ Snapshot coordination and signal notifications are identified by kind and do not
 Cancelling a response wait makes the affected exchange stream unusable, preventing a stale reply from completing a later request.
 Monitored progress responses are out-of-band observations and may cut ahead of buffered event responses without reordering those events.
 
-Protocol version 10 removes author identities and correlation IDs while retaining signals and the durable monotonic reference floor.
+Protocol version 11 replaces caller-selected session bytes with sequencer-allocated nonzero `u64` identities in opening responses and delivered events.
+Postcard encodes these integers as varints; no alias table or identity reuse is involved.
+The protocol retains signals and the durable monotonic reference floor, with no author identities or correlation IDs.
 Sea identifies session incarnations and orders their events; applications decide who those sessions represent.
 Equal submissions are new events; recovery uses ordered session history through the terminal departure.
 Rebuild client and server together; earlier protocol versions are not compatible.

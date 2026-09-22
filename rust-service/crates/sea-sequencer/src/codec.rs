@@ -17,10 +17,10 @@ use sea_core::{CommittedEvent, Event, EventPosition, SessionCommittedEvent, Sess
 use crate::session::SessionError;
 
 /// Identifies the submission-only encoding.
-const MAGIC: &[u8; 5] = b"SEAQ5";
+const MAGIC: &[u8; 5] = b"SEAQ6";
 
 /// Identifies a service-authored membership envelope around submission-shaped metadata.
-const MEMBERSHIP_MAGIC: &[u8; 5] = b"SEAM4";
+const MEMBERSHIP_MAGIC: &[u8; 5] = b"SEAM5";
 
 /// Encodes an announced membership transition in the same ordered archive as submissions.
 pub(crate) fn encode_membership<Error>(
@@ -52,7 +52,7 @@ pub(crate) fn encode_submission<Error>(
 ) -> Result<Bytes, SessionError<Error>> {
     let mut encoded = BytesMut::new();
     encoded.extend_from_slice(MAGIC);
-    put_field(&mut encoded, session.as_bytes())?;
+    encoded.put_u64(session.get());
     put_position(&mut encoded, reference);
     put_position(&mut encoded, minimum_reference);
     put_field(&mut encoded, payload)?;
@@ -84,8 +84,11 @@ pub(crate) fn decode_committed<Error>(
         return Err(SessionError::Corrupt("invalid submission marker"));
     };
     let mut bytes = Bytes::copy_from_slice(encoded);
-    let session_id = SessionId::new(take_field(&mut bytes)?)
-        .map_err(|_| SessionError::Corrupt("empty session identity"))?;
+    if bytes.remaining() < 8 {
+        return Err(SessionError::Corrupt("truncated session identity"));
+    }
+    let session_id = SessionId::new(bytes.get_u64())
+        .map_err(|_| SessionError::Corrupt("zero session identity"))?;
     let reference = take_position(&mut bytes)?;
     let minimum_reference = take_position(&mut bytes)?;
     let payload = take_field(&mut bytes)?;
@@ -112,7 +115,10 @@ pub(crate) fn decode_committed<Error>(
 }
 
 /// Writes a length-prefixed identity or payload.
-fn put_field<Error>(encoded: &mut BytesMut, bytes: &[u8]) -> Result<(), SessionError<Error>> {
+pub(super) fn put_field<Error>(
+    encoded: &mut BytesMut,
+    bytes: &[u8],
+) -> Result<(), SessionError<Error>> {
     encoded.put_u32(
         u32::try_from(bytes.len())
             .map_err(|_| SessionError::Rejected("submission field is too large"))?,
@@ -122,7 +128,7 @@ fn put_field<Error>(encoded: &mut BytesMut, bytes: &[u8]) -> Result<(), SessionE
 }
 
 /// Writes a tagged optional position.
-fn put_position(encoded: &mut BytesMut, position: Option<EventPosition>) {
+pub(super) fn put_position(encoded: &mut BytesMut, position: Option<EventPosition>) {
     encoded.put_u8(u8::from(position.is_some()));
     if let Some(position) = position {
         encoded.put_u64(position.get());
@@ -130,7 +136,7 @@ fn put_position(encoded: &mut BytesMut, position: Option<EventPosition>) {
 }
 
 /// Reads one length-prefixed field without trusting its declared size.
-fn take_field<Error>(bytes: &mut Bytes) -> Result<Bytes, SessionError<Error>> {
+pub(super) fn take_field<Error>(bytes: &mut Bytes) -> Result<Bytes, SessionError<Error>> {
     if bytes.remaining() < 4 {
         return Err(SessionError::Corrupt("truncated field length"));
     }
@@ -143,7 +149,9 @@ fn take_field<Error>(bytes: &mut Bytes) -> Result<Bytes, SessionError<Error>> {
 }
 
 /// Reads a tagged position without accepting unknown tags.
-fn take_position<Error>(bytes: &mut Bytes) -> Result<Option<EventPosition>, SessionError<Error>> {
+pub(super) fn take_position<Error>(
+    bytes: &mut Bytes,
+) -> Result<Option<EventPosition>, SessionError<Error>> {
     if !bytes.has_remaining() {
         return Err(SessionError::Corrupt("missing position tag"));
     }
@@ -167,7 +175,7 @@ mod tests {
                 b""
             };
             let encoded = encode_membership::<std::io::Error>(
-                &SessionId::new("session").unwrap(),
+                &SessionId::new(1).unwrap(),
                 kind,
                 Some(EventPosition::new(2)),
                 None,
@@ -206,7 +214,7 @@ mod tests {
     #[test]
     fn submission_round_trip_rejects_every_truncation_and_trailing_bytes() {
         let encoded = encode_submission::<std::io::Error>(
-            &SessionId::new("session").unwrap(),
+            &SessionId::new(1).unwrap(),
             Some(EventPosition::new(2)),
             None,
             b"payload",

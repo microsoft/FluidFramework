@@ -46,7 +46,7 @@ use sea_compression::CompressionSession;
 use sea_core::{
     BlobDirectory, BlobTreeId, ClassifiedError, ErrorKind, Event, EventPosition, EventSubmission,
     MonitoredStreamItem, MonitoredStreamStatus, SeaArchive, SeaAuthorSession, SeaSession,
-    SessionCommittedEvent, SessionId, SnapshotParticipation,
+    SessionCommittedEvent, SnapshotParticipation,
     storage::{LoadStart, SeaStorage, Snapshot, StorageHandle},
 };
 use sea_encryption::{ActiveKey, EncryptionKey, EncryptionSession, KeyId, KeyProvider};
@@ -178,17 +178,7 @@ impl Fixture {
     /// Opens the same author under a fresh logical membership.
     async fn open(&mut self) -> LocalSession<MemoryStorage> {
         self.generation += 1;
-        self.runtime
-            .open_session(
-                SessionId::new(format!(
-                    "{}-session-{}",
-                    self.session_prefix, self.generation
-                ))
-                .unwrap(),
-                None,
-            )
-            .await
-            .unwrap()
+        self.runtime.open_session(None).await.unwrap()
     }
 
     /// Serves an arbitrary concrete session through a real native transport hop.
@@ -227,12 +217,6 @@ impl Fixture {
             NativeSessionOpen {
                 archive: self.document.clone(),
                 intent: protocol::ArchiveIntent::Open,
-
-                session: SessionId::new(format!(
-                    "{}-session-{}",
-                    self.session_prefix, self.generation
-                ))
-                .unwrap(),
                 reference: None,
             },
         )
@@ -320,6 +304,7 @@ impl SeaConnectionService for TestHost {
         assert_eq!(archive, self.document);
         assert_eq!(version, protocol::PROTOCOL_VERSION);
         let opened = protocol::Response::EventStreamOpened {
+            session: 1,
             document: self.document.to_vec(),
             authority: b"composition-test".to_vec(),
         };

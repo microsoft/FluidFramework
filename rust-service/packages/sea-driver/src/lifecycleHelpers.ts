@@ -99,6 +99,14 @@ export function bytesToHex(bytes: Uint8Array): string {
 }
 
 /**
+ * Maps an allocated document-scoped session identity to Fluid's string client identity.
+ * @internal
+ */
+export function sessionClientId(session: Uint8Array): string {
+	return `sea-${bytesToHex(session)}`;
+}
+
+/**
  * Parses a nonempty even-length hexadecimal identity.
  * @internal
  */
@@ -171,7 +179,7 @@ export function toSequenced(
 	remoteClientSequenceNumber = Number(operation.sequenceNumber),
 ): ISequencedDocumentMessage {
 	if (operation.eventType !== undefined) {
-		const clientId = decoder.decode(operation.session);
+		const clientId = sessionClientId(operation.session);
 		const common = {
 			sequenceNumber: Number(operation.sequenceNumber),
 			minimumSequenceNumber: Number(operation.minimumSequenceNumber ?? 0n),

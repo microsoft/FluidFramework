@@ -92,11 +92,7 @@ describe("WebSocket compatibility", () => {
 				100,
 			);
 			const attempts = sockets.length;
-			const options = new websocketBindings.SeaSessionOptions(
-				new Uint8Array([2]),
-				undefined,
-				false,
-			);
+			const options = new websocketBindings.SeaSessionOptions(undefined, false);
 			try {
 				await assert.rejects(
 					websocketBindings.openRemote(
@@ -223,7 +219,7 @@ describe("WebSocket compatibility", () => {
 		const encoder = new TextEncoder();
 		const open = async (
 			document: Uint8Array | undefined,
-			author: string,
+			_author: string,
 		): Promise<SeaSession> => {
 			return openRemote(
 				{
@@ -235,7 +231,7 @@ describe("WebSocket compatibility", () => {
 					timeoutMilliseconds: 1000,
 				},
 				document,
-				{ session: encoder.encode(author) },
+				{},
 			);
 		};
 		const first = await open(undefined, "first");

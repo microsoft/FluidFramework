@@ -42,7 +42,7 @@ export class DirectSharedTreeClient {
 	/** Highest canonical service sequence applied to this kernel. */
 	public lastAppliedSequenceNumber = 0;
 
-	private readonly session: Uint8Array;
+	private session: Uint8Array;
 	private readonly positions = new Map<string, number>();
 	private subscription: ProjectedOperationSubscription | undefined;
 	private subscriptionPump: Promise<void> | undefined;
@@ -97,6 +97,7 @@ export class DirectSharedTreeClient {
 		);
 		host.documentId = createDocument ? await client.create() : document;
 		await client.openSession(host.documentId, session);
+		host.session = client.sessionId ?? session;
 		host.subscription = await client.subscribeProjected();
 		host.subscriptionPump = host.consumeSubscription(host.subscription);
 		return host;

@@ -216,11 +216,16 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
         Result<EventPosition, SessionError<Storage::Error>>,
         oneshot::Receiver<Result<EventPosition, SessionError<Storage::Error>>>,
     > {
-        let event =
-            match state.prepare_submission(&session, &submission, state.minimum_reference, true) {
-                Ok(event) => event,
-                Err(error) => return Either::Left(Err(error)),
-            };
+        if let Err(error) = state.checkpoint_if_due().await {
+            return Either::Left(Err(error));
+        }
+        let event = match state
+            .prepare_submission(&session, &submission, state.minimum_reference, true)
+            .await
+        {
+            Ok(event) => event,
+            Err(error) => return Either::Left(Err(error)),
+        };
         let view = match state.view() {
             Ok(view) => view,
             Err(error) => return Either::Left(Err(error)),
@@ -288,18 +293,31 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
                 let future: Driver = Box::pin(async move {
                     let mut prepared = Vec::new();
                     let mut state = runtime.lock().await;
+                    if state.checkpoint_if_due().await.is_err() {
+                        for entry in entries {
+                            finish(
+                                &mut state,
+                                &queue,
+                                entry,
+                                Err(SessionError::RecoveryRequired),
+                            );
+                        }
+                        return;
+                    }
                     let floor = state.minimum_reference;
                     let last = entries.len() - 1;
                     for (index, entry) in entries.into_iter().enumerate() {
                         let result = if state.recovery_required {
                             Err(SessionError::RecoveryRequired)
                         } else {
-                            state.prepare_submission(
-                                &entry.session,
-                                &entry.submission,
-                                floor,
-                                index == last,
-                            )
+                            state
+                                .prepare_submission(
+                                    &entry.session,
+                                    &entry.submission,
+                                    floor,
+                                    index == last,
+                                )
+                                .await
                         };
                         match result {
                             Ok(event) => {

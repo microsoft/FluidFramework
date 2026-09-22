@@ -301,6 +301,30 @@ impl<Store: Archive<Position = EventPosition, Error = MemoryStorageError> + 'sta
 impl SnapshotArchive for FaultStore<MemorySnapshotArchive> {
     type BlobHandle = MemoryBlobHandle;
     type EventHandle = MemoryEventHandle;
+    async fn checkpoint(&self) -> Result<Option<Bytes>, Self::Error> {
+        self.inner.checkpoint().await.map_err(FaultError::Backend)
+    }
+    async fn publish_checkpoint(&self, checkpoint: Bytes) -> Result<(), Self::Error> {
+        let failure = std::mem::take(&mut *self.faults.next.lock().unwrap());
+        match failure {
+            Failure::Reject => return Err(FaultError::Injected(ErrorKind::Rejected)),
+            Failure::AmbiguousAbsent => return Err(FaultError::Injected(ErrorKind::Ambiguous)),
+            Failure::GateBefore => self.faults.release.notified().await,
+            _ => {}
+        }
+        self.inner
+            .publish_checkpoint(checkpoint)
+            .await
+            .map_err(FaultError::Backend)?;
+        match failure {
+            Failure::AmbiguousCommitted => Err(FaultError::Injected(ErrorKind::Ambiguous)),
+            Failure::GateAfter => {
+                self.faults.release.notified().await;
+                Ok(())
+            }
+            _ => Ok(()),
+        }
+    }
     async fn get_snapshot_at(
         &self,
         position: EventPosition,
@@ -333,6 +357,139 @@ struct FaultStorage {
     events: Arc<Faults>,
     /// Snapshot-publication fault controls.
     snapshots: Arc<Faults>,
+}
+
+#[tokio::test]
+async fn checkpoint_failure_stops_tail_growth_before_next_submission() {
+    for failure in [
+        Failure::Reject,
+        Failure::AmbiguousAbsent,
+        Failure::AmbiguousCommitted,
+    ] {
+        let storage = FaultStorage::default();
+        let (id, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        let writer = member(&runtime, "checkpoint-failure").await;
+        for _ in 0..super::checkpoint::INTERVAL {
+            writer.submit(submission(b"accepted")).await.unwrap();
+        }
+        storage.snapshots.arm(failure);
+        assert!(writer.submit(submission(b"not admitted")).await.is_err());
+        assert!(runtime.runtime.lock().await.recovery_required);
+        assert_eq!(
+            storage.events.calls.load(Ordering::SeqCst),
+            super::checkpoint::INTERVAL
+        );
+        drop((writer, runtime));
+        let recovered =
+            LocalSequencer::<FaultStorage>::recover(storage.open_view(&id).await.unwrap().unwrap())
+                .await
+                .unwrap();
+        let mut state = recovered.runtime.lock().await;
+        assert_eq!(
+            state.positions.last().unwrap().get(),
+            super::checkpoint::INTERVAL as u64
+        );
+        state.checkpoint_if_due().await.unwrap();
+        assert!(!state.recovery_required);
+    }
+}
+
+#[tokio::test]
+async fn failed_reservations_expose_no_authority_and_recovery_skips_committed_ranges() {
+    for (failure, expected) in [
+        (Failure::Reject, 1),
+        (Failure::AmbiguousAbsent, 1),
+        (Failure::AmbiguousCommitted, 257),
+    ] {
+        let storage = FaultStorage::default();
+        let (id, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        storage.snapshots.arm(failure);
+        assert!(runtime.open_session(None).await.is_err());
+        assert!(runtime.runtime.lock().await.members.is_empty());
+        assert!(runtime.open_session(None).await.is_err());
+        drop(runtime);
+        let recovered =
+            LocalSequencer::<FaultStorage>::recover(storage.open_view(&id).await.unwrap().unwrap())
+                .await
+                .unwrap();
+        let session = recovered.open_session(None).await.unwrap();
+        assert_eq!(session.session_id().get(), expected);
+    }
+}
+
+#[tokio::test]
+async fn cancelled_reservations_require_recovery_before_allocating_again() {
+    for (failure, expected) in [(Failure::GateBefore, 1), (Failure::GateAfter, 257)] {
+        let storage = FaultStorage::default();
+        let (id, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        storage.snapshots.arm(failure);
+        let mut opening = Box::pin(runtime.open_session(None));
+        assert!(opening.as_mut().now_or_never().is_none());
+        drop(opening);
+        assert!(runtime.runtime.lock().await.members.is_empty());
+        assert!(runtime.open_session(None).await.is_err());
+        drop(runtime);
+        let recovered =
+            LocalSequencer::<FaultStorage>::recover(storage.open_view(&id).await.unwrap().unwrap())
+                .await
+                .unwrap();
+        assert_eq!(
+            recovered
+                .open_session(None)
+                .await
+                .unwrap()
+                .session_id()
+                .get(),
+            expected
+        );
+    }
+}
+
+#[tokio::test]
+async fn interrupted_recovery_departures_are_not_duplicated_on_reopen() {
+    let storage = FaultStorage::default();
+    let (id, view) = storage.create_view().await.unwrap();
+    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let first = member(&runtime, "first").await;
+    let second = member(&runtime, "second").await;
+    first.announce_membership(Bytes::new()).await.unwrap();
+    second.announce_membership(Bytes::new()).await.unwrap();
+    let identities = [first.session_id().clone(), second.session_id().clone()];
+    runtime
+        .runtime
+        .lock()
+        .await
+        .publish_checkpoint()
+        .await
+        .unwrap();
+    drop((first, second, runtime));
+
+    storage.events.arm(Failure::GateAfter);
+    let mut recovery = Box::pin(LocalSequencer::<FaultStorage>::recover(
+        storage.open_view(&id).await.unwrap().unwrap(),
+    ));
+    assert!(recovery.as_mut().now_or_never().is_none());
+    drop(recovery);
+    let recovered =
+        LocalSequencer::<FaultStorage>::recover(storage.open_view(&id).await.unwrap().unwrap())
+            .await
+            .unwrap();
+    let observer = recovered.open_session(None).await.unwrap();
+    let mut history = observer.read(None, Some(EventPosition::new(4)));
+    let mut departures = Vec::new();
+    while let Some(event) = super::tests::data(&mut history).await {
+        if event.kind == sea_core::archive::SessionEventKind::Left {
+            departures.push(event.session_id);
+        }
+    }
+    assert_eq!(departures, identities);
+    assert_eq!(
+        recovered.runtime.lock().await.positions.last(),
+        Some(&EventPosition::new(4))
+    );
 }
 
 impl FaultStorage {

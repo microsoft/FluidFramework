@@ -2,7 +2,7 @@ use bytes::Bytes;
 use futures_util::StreamExt as _;
 use sea_core::{
     BlobTreeId, Event, EventPosition, MonitoredStreamItem, MonitoredStreamStatus,
-    archive::{EventSubmission, SessionId, SnapshotParticipation},
+    archive::{EventSubmission, SnapshotParticipation},
     session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
     storage::{LoadStart, SeaStorage, Snapshot, StorageHandle},
 };
@@ -21,10 +21,7 @@ async fn counter_session() -> CounterSession {
     LocalSequencer::<MemoryStorage>::recover(view)
         .await
         .expect("recover sequencer")
-        .open_session(
-            SessionId::new(Bytes::from_static(b"counter-session")).expect("session"),
-            None,
-        )
+        .open_session(None)
         .await
         .expect("open session")
 }

@@ -19,7 +19,7 @@ use sea_benchmarks::{
 use sea_compression::CompressionSession;
 use sea_core::{
     ArchiveEventStream, Event, EventPosition, MonitoredStreamItem,
-    archive::{EventSubmission, SessionId, SnapshotParticipation},
+    archive::{EventSubmission, SnapshotParticipation},
     session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
     storage::{
         BlobStore, EventArchiveStream, LoadStart, SeaStorage, SeaView, Snapshot, StorageHandle,
@@ -393,11 +393,11 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
     Ok(measurements)
 }
 
-/// Recovers a local sequencer and opens one deterministic identity per writer.
+/// Recovers a local sequencer and allocates one session per writer.
 async fn open_local_sessions<S>(
     storage: BackendView<S>,
     writers: usize,
-    identity_prefix: &str,
+    _identity_prefix: &str,
 ) -> Result<Vec<LocalSession<S>>, String>
 where
     S: SeaStorage + 'static,
@@ -406,15 +406,8 @@ where
         .await
         .map_err(display_error)?;
     let mut sessions = Vec::with_capacity(writers);
-    for writer in 0..writers {
-        let session = SessionId::new(Bytes::from(format!("{identity_prefix}-session-{writer}")))
-            .expect("generated session identity is nonempty");
-        sessions.push(
-            sequencer
-                .open_session(session, None)
-                .await
-                .map_err(display_error)?,
-        );
+    for _ in 0..writers {
+        sessions.push(sequencer.open_session(None).await.map_err(display_error)?);
     }
     Ok(sessions)
 }

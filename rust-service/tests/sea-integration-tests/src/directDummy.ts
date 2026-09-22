@@ -29,7 +29,7 @@ export class DirectDummyClient {
 	/** Highest canonical service sequence applied by this client. */
 	public lastAppliedSequenceNumber = 0;
 
-	private readonly session: Uint8Array;
+	private session: Uint8Array;
 	private subscription: ProjectedOperationSubscription | undefined;
 	private subscriptionPump: Promise<void> | undefined;
 	private submissionChain: Promise<void> = Promise.resolve();
@@ -61,6 +61,7 @@ export class DirectDummyClient {
 		const host = new DirectDummyClient(client, batchMaxOperations, batchMaxPayloadBytes);
 		host.documentId = createDocument ? await client.create() : document;
 		await client.openSession(host.documentId, host.session);
+		host.session = client.sessionId ?? host.session;
 		host.subscription = await client.subscribeProjected();
 		host.subscriptionPump = host.consumeSubscription(host.subscription);
 		return host;

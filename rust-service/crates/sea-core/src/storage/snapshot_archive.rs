@@ -5,6 +5,7 @@
 //! content and events are available before publication.
 
 use async_trait::async_trait;
+use bytes::Bytes;
 
 use crate::{BlobTreeId, EventPosition};
 
@@ -37,6 +38,17 @@ pub trait SnapshotArchive:
 
     /// Availability handle for the event boundary represented by a snapshot.
     type EventHandle: StorageHandle<Id = EventPosition>;
+
+    /// Returns the last atomically published internal checkpoint, independently of application snapshots.
+    /// An empty document may already have an internal checkpoint, for example an identity reservation.
+    async fn checkpoint(&self) -> Result<Option<Bytes>, Self::Error>;
+
+    /// Atomically replaces the nonempty internal checkpoint after preceding mutations have settled.
+    /// The payload owns its replay boundary; replacing it does not publish an application snapshot.
+    /// A successful result has the document's advertised durability and survives reopening accordingly.
+    /// An uncertain publication is ambiguous and invalidates further mutations until recovery.
+    /// Cancellation requires the same settlement discipline as archive appends.
+    async fn publish_checkpoint(&self, checkpoint: Bytes) -> Result<(), Self::Error>;
 
     /// Returns the snapshot at this exact archive position, or `None` if no publication exists there.
     ///

@@ -120,13 +120,12 @@ impl Backend {
         &self,
         document: Vec<u8>,
         intent: protocol::ArchiveIntent,
-        session: SessionId,
         reference: Option<EventPosition>,
-    ) -> Result<(DocumentId, Arc<dyn SeaConnectionService>), protocol::Response> {
+    ) -> Result<(DocumentId, SessionId, Arc<dyn SeaConnectionService>), protocol::Response> {
         match self {
-            Self::Memory(registry) => open(registry, document, intent, session, reference).await,
-            Self::Buffered(registry) => open(registry, document, intent, session, reference).await,
-            Self::Durable(registry) => open(registry, document, intent, session, reference).await,
+            Self::Memory(registry) => open(registry, document, intent, reference).await,
+            Self::Buffered(registry) => open(registry, document, intent, reference).await,
+            Self::Durable(registry) => open(registry, document, intent, reference).await,
         }
     }
 }
@@ -136,9 +135,8 @@ async fn open<Storage>(
     registry: &DocumentRegistry<Storage>,
     document: Vec<u8>,
     intent: protocol::ArchiveIntent,
-    session: SessionId,
     reference: Option<EventPosition>,
-) -> Result<(DocumentId, Arc<dyn SeaConnectionService>), protocol::Response>
+) -> Result<(DocumentId, SessionId, Arc<dyn SeaConnectionService>), protocol::Response>
 where
     Storage: SeaStorage + 'static,
 {
@@ -156,10 +154,14 @@ where
     };
     let sequencer = registry.open(&id).await?;
     let session = sequencer
-        .open_session(session, reference)
+        .open_session(reference)
         .await
         .map_err(error_response)?;
-    Ok((id, Arc::new(SessionDispatcher::new(Arc::new(session)))))
+    Ok((
+        id,
+        session.session_id().clone(),
+        Arc::new(SessionDispatcher::new(Arc::new(session))),
+    ))
 }
 
 /// Shared lazy backend initialization and retained document ownership.
@@ -199,13 +201,10 @@ impl BuiltInSeaHost {
         &self,
         archive_id: Vec<u8>,
         intent: protocol::ArchiveIntent,
-        session: SessionId,
         reference: Option<EventPosition>,
-    ) -> Result<(DocumentId, Arc<dyn SeaConnectionService>), protocol::Response> {
+    ) -> Result<(DocumentId, SessionId, Arc<dyn SeaConnectionService>), protocol::Response> {
         let backend = self.backend().await?;
-        backend
-            .open_session(archive_id, intent, session, reference)
-            .await
+        backend.open_session(archive_id, intent, reference).await
     }
 
     /// Initializes storage without opening author membership.
@@ -340,15 +339,12 @@ impl SeaConnectionService for HostedConnection {
             archive,
             intent,
 
-            session,
             resume_after,
         } = request
         {
             if version != protocol::PROTOCOL_VERSION {
                 return Err(unsupported_version(version));
             }
-            let session_id = SessionId::new(Bytes::from(session))
-                .map_err(|_| invalid("session identity is empty"))?;
             let mut current = self.session.lock().await;
             if let Some(previous) = current.take() {
                 let _ = previous
@@ -356,14 +352,9 @@ impl SeaConnectionService for HostedConnection {
                     .author_request(protocol::Request::Close)
                     .await;
             }
-            let (document, service) = self
+            let (document, session, service) = self
                 .host
-                .open_session(
-                    archive,
-                    intent,
-                    session_id,
-                    resume_after.map(EventPosition::new),
-                )
+                .open_session(archive, intent, resume_after.map(EventPosition::new))
                 .await?;
             let authority = new_authority();
             *current = Some(HostedSession {
@@ -372,6 +363,7 @@ impl SeaConnectionService for HostedConnection {
             });
             let opened = stream::once(async move {
                 protocol::Response::EventStreamOpened {
+                    session: session.get(),
                     document: document.as_bytes().to_vec(),
                     authority,
                 }
@@ -539,7 +531,7 @@ mod tests {
     use futures_util::StreamExt as _;
     use sea_core::{
         BlobDirectory, BlobTreeId, Event, EventPosition,
-        archive::{EventSubmission, SessionId, SnapshotParticipation},
+        archive::{EventSubmission, SnapshotParticipation},
         session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
         storage::{LoadStart, Snapshot, StorageHandle},
     };
@@ -585,8 +577,6 @@ mod tests {
                 NativeSessionOpen {
                     archive: Bytes::new(),
                     intent: protocol::ArchiveIntent::Create,
-
-                    session: SessionId::new(Bytes::from_static(b"first")).unwrap(),
                     reference: None,
                 },
             )
@@ -599,8 +589,6 @@ mod tests {
                 NativeSessionOpen {
                     archive: first.document().as_bytes().clone(),
                     intent: protocol::ArchiveIntent::Open,
-
-                    session: SessionId::new(Bytes::from_static(b"second")).unwrap(),
                     reference: None,
                 },
             )
@@ -744,16 +732,10 @@ mod tests {
             ));
             let _ = std::fs::remove_dir_all(&root);
             let host = BuiltInSeaHost::new(root.clone(), mode);
-            let session = |name: &'static [u8]| SessionId::new(Bytes::from_static(name)).unwrap();
             assert!(
-                host.open_session(
-                    vec![0; 8],
-                    protocol::ArchiveIntent::Open,
-                    session(b"missing"),
-                    None
-                )
-                .await
-                .is_err()
+                host.open_session(vec![0; 8], protocol::ArchiveIntent::Open, None)
+                    .await
+                    .is_err()
             );
             assert!(matches!(
                 host.connect(LivenessPolicy::default())
@@ -761,8 +743,6 @@ mod tests {
                         version: protocol::PROTOCOL_VERSION + 1,
                         archive: Vec::new(),
                         intent: protocol::ArchiveIntent::Create,
-
-                        session: b"invalid-version".to_vec(),
                         resume_after: None,
                     })
                     .await,
@@ -771,13 +751,8 @@ mod tests {
                     ..
                 })
             ));
-            let (document, created) = host
-                .open_session(
-                    Vec::new(),
-                    protocol::ArchiveIntent::Create,
-                    session(b"created"),
-                    None,
-                )
+            let (document, created_id, created) = host
+                .open_session(Vec::new(), protocol::ArchiveIntent::Create, None)
                 .await
                 .unwrap();
             assert!(!document.as_bytes().is_empty());
@@ -785,22 +760,21 @@ mod tests {
                 host.open_session(
                     document.as_bytes().to_vec(),
                     protocol::ArchiveIntent::Create,
-                    session(b"named-create"),
                     None
                 )
                 .await
                 .is_err()
             );
-            let (opened_id, opened) = host
+            let (opened_id, opened_session_id, opened) = host
                 .open_session(
                     document.as_bytes().to_vec(),
                     protocol::ArchiveIntent::Open,
-                    session(b"opened"),
                     None,
                 )
                 .await
                 .unwrap();
             assert_eq!(document, opened_id);
+            assert!(opened_session_id > created_id);
             created.connection_closed(false).await;
             opened.connection_closed(false).await;
             drop((created, opened));
@@ -813,7 +787,6 @@ mod tests {
                         .open_session(
                             document.as_bytes().to_vec(),
                             protocol::ArchiveIntent::Open,
-                            session(b"recovered"),
                             None
                         )
                         .await
@@ -839,13 +812,12 @@ mod tests {
                 version: protocol::PROTOCOL_VERSION,
                 archive: Vec::new(),
                 intent: protocol::ArchiveIntent::Create,
-
-                session: b"first-session".to_vec(),
                 resume_after: None,
             })
             .await
             .expect("first event stream");
         let protocol::Response::EventStreamOpened {
+            session: _,
             authority: first_authority,
             document,
         } = first_stream.next().await.expect("opening authority")
@@ -887,8 +859,6 @@ mod tests {
                 version: protocol::PROTOCOL_VERSION,
                 archive: document.clone(),
                 intent: protocol::ArchiveIntent::Open,
-
-                session: b"second-session".to_vec(),
                 resume_after: None,
             })
             .await
@@ -982,8 +952,6 @@ mod tests {
                 version: protocol::PROTOCOL_VERSION,
                 archive: document,
                 intent: protocol::ArchiveIntent::Open,
-
-                session: b"client-selected-session".to_vec(),
                 resume_after: None,
             })
             .await
@@ -1075,13 +1043,12 @@ mod tests {
                 version: protocol::PROTOCOL_VERSION,
                 archive: Vec::new(),
                 intent: protocol::ArchiveIntent::Create,
-
-                session: b"session".to_vec(),
                 resume_after: None,
             })
             .await
             .unwrap();
         let protocol::Response::EventStreamOpened {
+            session: _,
             authority,
             document,
         } = events.next().await.expect("event authority")
@@ -1108,8 +1075,6 @@ mod tests {
                 version: protocol::PROTOCOL_VERSION,
                 archive: document,
                 intent: protocol::ArchiveIntent::Open,
-
-                session: b"observer-session".to_vec(),
                 resume_after: None,
             })
             .await
@@ -1199,8 +1164,6 @@ mod tests {
                 NativeSessionOpen {
                     archive: Bytes::new(),
                     intent: protocol::ArchiveIntent::Create,
-
-                    session: SessionId::new(Bytes::from_static(b"shutdown-session")).unwrap(),
                     reference: None,
                 },
             )
@@ -1249,8 +1212,6 @@ mod tests {
                 NativeSessionOpen {
                     archive: Bytes::new(),
                     intent: protocol::ArchiveIntent::Create,
-
-                    session: SessionId::new(Bytes::from_static(b"session")).unwrap(),
                     reference: None,
                 },
             )
@@ -1375,8 +1336,6 @@ mod tests {
                 NativeSessionOpen {
                     archive: Bytes::new(),
                     intent: protocol::ArchiveIntent::Create,
-
-                    session: SessionId::new(Bytes::from_static(b"observer-session")).unwrap(),
                     reference: None,
                 },
             )
@@ -1405,7 +1364,7 @@ mod tests {
         certificate_hash: wtransport::tls::Sha256Digest,
     ) {
         let (_endpoint, connection) = raw_connection(address, certificate_hash.clone()).await;
-        let (authority, document, _events) = open_raw_event_stream_with_intent(
+        let (authority, document, _, _events) = open_raw_event_stream_with_intent(
             &connection,
             b"",
             protocol::ArchiveIntent::Create,
@@ -1444,7 +1403,7 @@ mod tests {
 
         let (_observer_endpoint, observer_connection) =
             raw_connection(address, certificate_hash).await;
-        let (observer_authority, _observer_events) =
+        let (observer_authority, _, _observer_events) =
             open_raw_event_stream(&observer_connection, &document, b"observer-session").await;
         let (mut observer_send, mut observer_receive) =
             observer_connection.open_bi().await.unwrap().await.unwrap();
@@ -1519,7 +1478,7 @@ mod tests {
         client: &NativeSeaClient,
     ) {
         let (_endpoint, connection) = raw_connection(address, certificate_hash).await;
-        let (authority, _events) = open_raw_event_stream(
+        let (authority, _, _events) = open_raw_event_stream(
             &connection,
             client.document().as_bytes(),
             b"invalid-suffix-session",
@@ -1539,10 +1498,12 @@ mod tests {
             },
         )
         .await;
-        assert!(matches!(
-            read_raw_response(&mut receive, &mut decoder, protocol::StreamRole::Author).await,
-            protocol::Response::EventCommitted { .. }
-        ));
+        let joined =
+            match read_raw_response(&mut receive, &mut decoder, protocol::StreamRole::Author).await
+            {
+                protocol::Response::EventCommitted { position } => position,
+                response => panic!("expected join receipt, got {response:?}"),
+            };
         let request = |payload: &[u8]| protocol::Request::Submit {
             reference: None,
             event: protocol::Event {
@@ -1571,10 +1532,15 @@ mod tests {
         timeout(Duration::from_secs(2), async {
             let mut history = client.read(None, None);
             let mut applications = Vec::new();
+            let mut session = None;
             while let Some(item) = history.next().await {
-                if let sea_core::MonitoredStreamItem::Item(event) = item.unwrap()
-                    && event.session_id.as_bytes().as_ref() == b"invalid-suffix-session"
-                {
+                if let sea_core::MonitoredStreamItem::Item(event) = item.unwrap() {
+                    if event.committed.position.get() == joined {
+                        session = Some(event.session_id.clone());
+                    }
+                    if session.as_ref() != Some(&event.session_id) {
+                        continue;
+                    }
                     if event.kind == sea_core::archive::SessionEventKind::Application {
                         applications.push(event.committed.event.payload);
                     }
@@ -1596,7 +1562,7 @@ mod tests {
         client: &NativeSeaClient,
     ) -> EventPosition {
         let (_endpoint, connection) = raw_connection(address, certificate_hash).await;
-        let (authority, _events) = open_raw_event_stream(
+        let (authority, session, _events) = open_raw_event_stream(
             &connection,
             client.document().as_bytes(),
             b"submission-session",
@@ -1627,7 +1593,7 @@ mod tests {
             let mut history = client.read(None, None);
             while let Some(item) = history.next().await {
                 if let sea_core::MonitoredStreamItem::Item(event) = item.unwrap()
-                    && event.session_id.as_bytes().as_ref() == b"submission-session"
+                    && event.session_id.get() == session
                     && event.kind == sea_core::archive::SessionEventKind::Application
                 {
                     assert_eq!(
@@ -1678,8 +1644,6 @@ mod tests {
             NativeSessionOpen {
                 archive: client.document().as_bytes().clone(),
                 intent: protocol::ArchiveIntent::Open,
-
-                session: SessionId::new(Bytes::from_static(b"snapshot-resolver-session")).unwrap(),
                 reference: None,
             },
         )
@@ -1711,7 +1675,7 @@ mod tests {
         root: [u8; 32],
     ) {
         let (_endpoint, connection) = raw_connection(address, certificate_hash.clone()).await;
-        let (authority, _events) =
+        let (authority, _, _events) =
             open_raw_event_stream(&connection, document, b"snapshot-session").await;
         let (mut send, mut receive) = connection.open_bi().await.unwrap().await.unwrap();
         let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
@@ -1770,23 +1734,23 @@ mod tests {
         connection: &Connection,
         archive: &[u8],
         session: &[u8],
-    ) -> (Vec<u8>, wtransport::RecvStream) {
-        let (authority, _, events) = open_raw_event_stream_with_intent(
+    ) -> (Vec<u8>, u64, wtransport::RecvStream) {
+        let (authority, _, allocated, events) = open_raw_event_stream_with_intent(
             connection,
             archive,
             protocol::ArchiveIntent::Open,
             session,
         )
         .await;
-        (authority, events)
+        (authority, allocated, events)
     }
 
     async fn open_raw_event_stream_with_intent(
         connection: &Connection,
         archive: &[u8],
         intent: protocol::ArchiveIntent,
-        session: &[u8],
-    ) -> (Vec<u8>, Vec<u8>, wtransport::RecvStream) {
+        _session: &[u8],
+    ) -> (Vec<u8>, Vec<u8>, u64, wtransport::RecvStream) {
         let (mut send, mut receive) = connection.open_bi().await.unwrap().await.unwrap();
         send_raw_request(
             &mut send,
@@ -1794,8 +1758,6 @@ mod tests {
                 version: protocol::PROTOCOL_VERSION,
                 archive: archive.to_vec(),
                 intent,
-
-                session: session.to_vec(),
                 resume_after: None,
             },
         )
@@ -1803,13 +1765,14 @@ mod tests {
         send.finish().await.unwrap();
         let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
         let protocol::Response::EventStreamOpened {
+            session,
             authority,
             document,
         } = read_raw_response(&mut receive, &mut decoder, protocol::StreamRole::Event).await
         else {
             panic!("raw event stream should return authority");
         };
-        (authority, document, receive)
+        (authority, document, session, receive)
     }
 
     async fn send_raw_request(send: &mut wtransport::SendStream, request: protocol::Request) {

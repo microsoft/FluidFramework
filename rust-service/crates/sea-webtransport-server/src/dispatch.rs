@@ -369,7 +369,7 @@ fn session_event_to_wire(event: &sea_core::archive::SessionCommittedEvent) -> pr
         },
         position: event.committed.position.get(),
 
-        session: event.session_id.as_bytes().to_vec(),
+        session: event.session_id.get(),
 
         reference: event.reference.map(EventPosition::get),
         minimum_reference: event.minimum_reference.map(EventPosition::get),
@@ -462,9 +462,7 @@ pub(crate) fn error_response(error: impl ClassifiedError) -> protocol::Response 
 mod tests {
     use std::sync::Arc;
 
-    use bytes::Bytes;
     use futures_util::StreamExt as _;
-    use sea_core::archive::SessionId;
     use sea_core::storage::SeaStorage as _;
     use sea_memory::MemoryStorage;
     use sea_sequencer::session::LocalSequencer;
@@ -480,14 +478,8 @@ mod tests {
         let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
             .await
             .unwrap();
-        let session = sequencer
-            .open_session(SessionId::new("session").unwrap(), None)
-            .await
-            .unwrap();
-        let observer = sequencer
-            .open_session(SessionId::new("observer").unwrap(), None)
-            .await
-            .unwrap();
+        let session = sequencer.open_session(None).await.unwrap();
+        let observer = sequencer.open_session(None).await.unwrap();
         let dispatcher = SessionDispatcher::new(Arc::new(session));
         let observer = SessionDispatcher::new(Arc::new(observer));
         dispatcher
@@ -536,13 +528,7 @@ mod tests {
         let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
             .await
             .unwrap();
-        let session = sequencer
-            .open_session(
-                SessionId::new(Bytes::from_static(b"session")).unwrap(),
-                None,
-            )
-            .await
-            .unwrap();
+        let session = sequencer.open_session(None).await.unwrap();
         let dispatcher = SessionDispatcher::new(Arc::new(session));
         let opening = protocol::Request::OpenSnapshotStream {
             authority: Vec::new(),
@@ -599,13 +585,7 @@ mod tests {
         let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
             .await
             .unwrap();
-        let session = sequencer
-            .open_session(
-                SessionId::new(Bytes::from_static(b"session")).unwrap(),
-                None,
-            )
-            .await
-            .unwrap();
+        let session = sequencer.open_session(None).await.unwrap();
         let dispatcher = SessionDispatcher::new(Arc::new(session));
 
         let mut stored = dispatcher

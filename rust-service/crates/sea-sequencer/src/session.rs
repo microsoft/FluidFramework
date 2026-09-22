@@ -24,6 +24,9 @@ mod fault_tests;
 #[path = "pipeline.rs"]
 mod pipeline;
 
+#[path = "checkpoint.rs"]
+mod checkpoint;
+
 use std::{
     collections::{BTreeMap, BTreeSet},
     sync::Arc,
@@ -137,10 +140,14 @@ struct Runtime<Storage: SeaStorage> {
     members: BTreeMap<SessionId, Membership>,
     /// Persisted announcements whose departure has not committed, including recovered sessions.
     announced: BTreeMap<SessionId, SessionCommittedEvent>,
-    /// Identities cannot be reused within this runtime or after a committed submission.
-    seen: BTreeSet<SessionId>,
     /// Application positions used to validate references and snapshot boundaries.
     positions: BTreeSet<EventPosition>,
+    /// Applied records since the last successful internal publication.
+    since_checkpoint: usize,
+    /// Persisted upper bound for the forthcoming numeric session allocator.
+    reserved: u64,
+    /// Next unexposed identity in the current reservation; `None` denotes exhaustion.
+    next_session: Option<u64>,
     /// Durable document-wide admission floor restored from ordered committed metadata.
     minimum_reference: Option<EventPosition>,
     /// At most one outstanding mutation owns backend execution.
@@ -235,8 +242,8 @@ impl Drop for PublisherLease {
 
 impl<Storage: SeaStorage + 'static> Runtime<Storage> {
     /// Validates against the frozen committed floor; only the final candidate may advance it.
-    fn prepare_submission(
-        &self,
+    async fn prepare_submission(
+        &mut self,
         session: &SessionId,
         submission: &EventSubmission,
         floor: Option<EventPosition>,
@@ -244,10 +251,7 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
     ) -> Result<Event, SessionError<Storage::Error>> {
         self.member(session)?;
         self.view()?;
-        if submission
-            .reference
-            .is_some_and(|position| !self.positions.contains(&position))
-        {
+        if !self.known_reference(submission.reference).await? {
             return Err(SessionError::Rejected(
                 "reference is not an application event",
             ));
@@ -286,6 +290,58 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         })
     }
 
+    /// Checks historical references through storage instead of retaining all archive positions.
+    async fn known_reference(
+        &mut self,
+        reference: Option<EventPosition>,
+    ) -> Result<bool, SessionError<Storage::Error>> {
+        let Some(position) = reference else {
+            return Ok(true);
+        };
+        if Some(position) > self.positions.last().copied() {
+            return Ok(false);
+        }
+        if self.positions.contains(&position) {
+            return Ok(true);
+        }
+        Ok(self
+            .view()?
+            .resolve_position(position)
+            .await
+            .map_err(SessionError::Storage)?
+            .is_some())
+    }
+
+    /// Publishes an exact applied prefix before admitting work beyond the bounded tail policy.
+    async fn checkpoint_if_due(&mut self) -> Result<(), SessionError<Storage::Error>> {
+        if self.since_checkpoint < checkpoint::INTERVAL {
+            return Ok(());
+        }
+        self.publish_checkpoint().await
+    }
+
+    /// Invalidates mutation during publication so cancellation cannot silently extend the tail.
+    async fn publish_checkpoint(&mut self) -> Result<(), SessionError<Storage::Error>> {
+        if self.recovery_required {
+            return Err(SessionError::RecoveryRequired);
+        }
+        let checkpoint = checkpoint::Checkpoint {
+            reserved: self.reserved,
+            minimum_reference: self.minimum_reference,
+            positions: self.positions.clone(),
+            announced: self.announced.clone(),
+        }
+        .encode()?;
+        let view = self.view()?;
+        self.recovery_required = true;
+        view.publish_checkpoint(checkpoint)
+            .await
+            .map_err(SessionError::Storage)?;
+        self.since_checkpoint = 0;
+        self.recovery_required = false;
+        Ok(())
+    }
+
     /// Chooses an advance without coupling admission enforcement to membership progress.
     /// A 1024-position lag window prevents idle readers from pinning the floor indefinitely;
     /// window advances are rounded down to 64-position boundaries to coalesce small changes.
@@ -307,27 +363,30 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         let committed = decode_committed(record)?;
         if committed.minimum_reference < self.minimum_reference
             || committed.minimum_reference > committed.reference
-            || committed
-                .minimum_reference
-                .is_some_and(|position| !self.positions.contains(&position))
+            || committed.minimum_reference > self.positions.last().copied()
             || (committed.kind == SessionEventKind::Application
                 && committed.reference < self.minimum_reference)
         {
             return Err(SessionError::Corrupt("invalid minimum reference floor"));
         }
-        if committed
-            .reference
-            .is_some_and(|position| !self.positions.contains(&position))
-        {
+        if committed.reference > self.positions.last().copied() {
             return Err(SessionError::Corrupt("reference is not a preceding event"));
         }
-        self.seen.insert(committed.session_id.clone());
+        if committed.session_id.get() > self.reserved {
+            return Err(SessionError::Corrupt(
+                "session exceeds persisted reservation",
+            ));
+        }
         if committed.kind == SessionEventKind::Application
             && let Some(member) = self.members.get_mut(&committed.session_id)
         {
             member.reference = committed.reference;
         }
         self.positions.insert(record.position);
+        while self.positions.len() > checkpoint::POSITION_WINDOW {
+            self.positions.pop_first();
+        }
+        self.since_checkpoint += 1;
         self.minimum_reference = committed.minimum_reference;
         match committed.kind {
             SessionEventKind::Application => {}
@@ -367,6 +426,7 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         kind: SessionEventKind,
         metadata: &[u8],
     ) -> Result<EventPosition, SessionError<Storage::Error>> {
+        self.checkpoint_if_due().await?;
         let reference = self.positions.last().copied();
         let minimum = self
             .members
@@ -477,6 +537,48 @@ pub struct LocalSequencer<Storage: SeaStorage> {
 }
 
 impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
+    /// Allocates a document-scoped numeric identity only after persisting its reservation.
+    ///
+    /// # Errors
+    /// Rejects invalid references, exhausted identities, or unavailable checkpoint publication.
+    ///
+    /// # Panics
+    /// Panics if an internal allocation invariant or a publisher-state lock is violated.
+    pub async fn open_session(
+        self: &Arc<Self>,
+        reference: Option<EventPosition>,
+    ) -> Result<LocalSession<Storage>, SessionError<Storage::Error>> {
+        let _barrier = self.barrier().await;
+        let mut runtime = self.runtime.lock().await;
+        runtime.settle().await?;
+        if !runtime.known_reference(reference).await? {
+            return Err(SessionError::Rejected("invalid session reference"));
+        }
+        let ordinal = runtime
+            .next_session
+            .ok_or(SessionError::Rejected("session identity exhausted"))?;
+        if ordinal > runtime.reserved {
+            runtime.reserved = ordinal.saturating_add(255);
+            runtime.publish_checkpoint().await?;
+        }
+        runtime.next_session = ordinal.checked_add(1);
+        let session = SessionId::new(ordinal).expect("allocated identity is nonzero");
+        let (closed, _) = watch::channel(false);
+        runtime.members.insert(
+            session.clone(),
+            Membership {
+                reference,
+                closed,
+                failed: Arc::new(std::sync::atomic::AtomicBool::new(false)),
+            },
+        );
+        Ok(LocalSession {
+            sequencer: self.clone(),
+            session,
+            admission: Arc::new(Mutex::new(())),
+        })
+    }
+
     /// Excludes admission and settles every accepted application before lifecycle work.
     async fn barrier(&self) -> RwLockWriteGuard<'_, ()> {
         let guard = self.pipeline.gate.write().await;
@@ -493,21 +595,41 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
     /// Panics if an internal publisher-state lock was poisoned.
     pub async fn recover(view: View<Storage>) -> Result<Arc<Self>, SessionError<Storage::Error>> {
         let view = Arc::new(view);
+        let recovered = view
+            .checkpoint()
+            .await
+            .map_err(SessionError::Storage)?
+            .map(checkpoint::Checkpoint::decode)
+            .transpose()?
+            .unwrap_or_default();
+        let after = recovered.positions.last().copied();
         let mut runtime = Runtime {
-            minimum_reference: None,
+            minimum_reference: recovered.minimum_reference,
             view: Some(view.clone()),
             members: BTreeMap::new(),
-            announced: BTreeMap::new(),
-            seen: BTreeSet::new(),
-            positions: BTreeSet::new(),
+            announced: recovered.announced,
+            positions: recovered.positions,
+            since_checkpoint: 0,
+            reserved: recovered.reserved,
+            next_session: recovered.reserved.checked_add(1),
             pending: None,
             recovery_required: false,
             publishers: Arc::new(std::sync::Mutex::new(Publishers::default())),
         };
-        if let Some(head) = view.head().await.map_err(SessionError::Storage)? {
-            let mut records = view.read(None, Some(head));
+        let head = view.head().await.map_err(SessionError::Storage)?;
+        if after > head {
+            return Err(SessionError::Corrupt("checkpoint exceeds archive head"));
+        }
+        if let Some(head) = head {
+            let mut records = view.read(after, Some(head));
             while let Some(item) = records.next().await {
                 if let MonitoredStreamItem::Item(record) = item.map_err(SessionError::Storage)? {
+                    let event = decode_committed(&record)?;
+                    if !runtime.known_reference(event.reference).await?
+                        || !runtime.known_reference(event.minimum_reference).await?
+                    {
+                        return Err(SessionError::Corrupt("invalid recovered reference"));
+                    }
                     runtime.apply(&record)?;
                 }
             }
@@ -525,46 +647,6 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
             runtime: Arc::new(Mutex::new(runtime)),
             pipeline: pipeline::Pipeline::new(),
         }))
-    }
-
-    /// Opens an independent fresh membership.
-    ///
-    /// # Errors
-    /// Rejects reused sessions, invalid references, closed runtimes, or unsettled prior work.
-    /// # Panics
-    /// Panics if an internal publisher-state lock was poisoned.
-    pub async fn open_session(
-        self: &Arc<Self>,
-        session: SessionId,
-        reference: Option<EventPosition>,
-    ) -> Result<LocalSession<Storage>, SessionError<Storage::Error>> {
-        let _barrier = self.barrier().await;
-        let mut runtime = self.runtime.lock().await;
-        runtime.settle().await?;
-        runtime.view()?;
-        if runtime.seen.contains(&session)
-            || reference.is_some_and(|position| !runtime.positions.contains(&position))
-        {
-            return Err(SessionError::Rejected(
-                "reused session or invalid reference",
-            ));
-        }
-        let (closed, _) = watch::channel(false);
-        runtime.members.insert(
-            session.clone(),
-            Membership {
-                reference,
-                closed,
-                failed: Arc::new(std::sync::atomic::AtomicBool::new(false)),
-            },
-        );
-        runtime.seen.insert(session.clone());
-        Ok(LocalSession {
-            sequencer: self.clone(),
-
-            session,
-            admission: Arc::new(Mutex::new(())),
-        })
     }
 
     /// Settles retained backend work, closes every session, and releases the owned view.
@@ -615,6 +697,12 @@ impl<Storage: SeaStorage> Clone for LocalSession<Storage> {
 }
 
 impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
+    /// Returns this membership's stable identity, including allocated numeric identities.
+    #[must_use]
+    pub fn session_id(&self) -> &SessionId {
+        &self.session
+    }
+
     /// Publishes this membership once in archive order, retaining opaque application metadata.
     /// Close and recovery publish an ordered departure.
     /// Exact retries return the original position; metadata cannot change within a membership.
@@ -959,7 +1047,7 @@ impl<Storage: SeaStorage + 'static> SeaSnapshotCoordinator for LocalSession<Stor
         }
         let view = runtime.view()?;
         let position = snapshot.at_event.id();
-        if !runtime.positions.contains(&position) {
+        if !runtime.known_reference(Some(position)).await? {
             return Err(SessionError::Rejected(
                 "snapshot boundary is not an application event",
             ));
@@ -1120,10 +1208,7 @@ mod tests {
         let mut below = submission(b"below-floor");
         below.reference = Some(initial);
         assert!(fresh.submit(below).await.is_err());
-        let valid = recovered
-            .open_session(SessionId::new("retry").unwrap(), None)
-            .await
-            .unwrap();
+        let valid = recovered.open_session(None).await.unwrap();
         let observer = member(&recovered, "observer").await;
         let mut replay = observer.read(None, None);
         let mut minimum = None;
@@ -1271,10 +1356,7 @@ mod tests {
 
         let second = member(&runtime, "second").await;
         second.announce_membership(Bytes::new()).await.unwrap();
-        let replacement = runtime
-            .open_session(SessionId::new("replacement").unwrap(), None)
-            .await
-            .unwrap();
+        let replacement = runtime.open_session(None).await.unwrap();
         assert_eq!(
             data(&mut history).await.unwrap().kind,
             SessionEventKind::Joined
@@ -1328,6 +1410,119 @@ mod tests {
             data(&mut application).await.unwrap().committed.position,
             edit
         );
+    }
+
+    #[tokio::test]
+    async fn internal_checkpoints_recover_bounded_tail_and_outstanding_departures() {
+        let storage = MemoryStorage::new();
+        let (id, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let writer = member(&runtime, "checkpoint-writer").await;
+        writer
+            .announce_membership(Bytes::from_static(b"writer"))
+            .await
+            .unwrap();
+        let mut reference = None;
+        for _ in 0..1400 {
+            let mut event = submission(b"event");
+            event.reference = reference;
+            reference = Some(writer.submit(event).await.unwrap());
+        }
+        let late = member(&runtime, "tail-announcement").await;
+        late.announce_membership(Bytes::new()).await.unwrap();
+        let unannounced = member(&runtime, "unannounced").await;
+        let (boundary, floor, head) = {
+            let state = runtime.runtime.lock().await;
+            assert_eq!(state.positions.len(), checkpoint::POSITION_WINDOW);
+            let view = state.view().unwrap();
+            let checkpoint =
+                checkpoint::Checkpoint::decode::<()>(view.checkpoint().await.unwrap().unwrap())
+                    .unwrap();
+            assert!(
+                view.get_snapshot(LoadStart::LatestSnapshot)
+                    .await
+                    .unwrap()
+                    .is_none()
+            );
+            (
+                checkpoint.positions.last().copied().unwrap(),
+                state.minimum_reference,
+                state.positions.last().copied().unwrap(),
+            )
+        };
+        assert!(head.get() - boundary.get() < 2 * checkpoint::INTERVAL as u64);
+        drop((writer, late, unannounced, runtime));
+        let recovered = LocalSequencer::<MemoryStorage>::recover(
+            storage.open_view(&id).await.unwrap().unwrap(),
+        )
+        .await
+        .unwrap();
+        {
+            let state = recovered.runtime.lock().await;
+            assert!(state.announced.is_empty());
+            assert!(state.minimum_reference >= floor);
+            assert!(state.since_checkpoint <= 2 * checkpoint::INTERVAL);
+        }
+        let reader = member(&recovered, "checkpoint-reader").await;
+        let mut departures = reader.read(Some(head), Some(EventPosition::new(head.get() + 2)));
+        for _ in 0..2 {
+            assert_eq!(
+                data(&mut departures).await.unwrap().kind,
+                SessionEventKind::Left
+            );
+        }
+        assert!(data(&mut departures).await.is_none());
+    }
+
+    #[tokio::test]
+    async fn allocation_reserves_before_exposure_and_skips_unused_ids_after_restart() {
+        let storage = MemoryStorage::new();
+        let (id, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let first = runtime.open_session(None).await.unwrap();
+        assert_eq!(first.session_id().as_bytes().as_ref(), 1_u64.to_be_bytes());
+        let checkpoint = {
+            let state = runtime.runtime.lock().await;
+            checkpoint::Checkpoint::decode::<()>(
+                state.view().unwrap().checkpoint().await.unwrap().unwrap(),
+            )
+            .unwrap()
+        };
+        assert_eq!(checkpoint.reserved, 256);
+        assert!(checkpoint.positions.is_empty());
+        drop((first, runtime));
+        let runtime = LocalSequencer::<MemoryStorage>::recover(
+            storage.open_view(&id).await.unwrap().unwrap(),
+        )
+        .await
+        .unwrap();
+        let next = runtime.open_session(None).await.unwrap();
+        assert_eq!(next.session_id().as_bytes().as_ref(), 257_u64.to_be_bytes());
+        assert!(runtime.runtime.lock().await.positions.is_empty());
+        drop(next);
+        {
+            let mut state = runtime.runtime.lock().await;
+            state.reserved = u64::MAX;
+            state.next_session = Some(u64::MAX);
+            state.publish_checkpoint().await.unwrap();
+        }
+        let last = runtime.open_session(None).await.unwrap();
+        assert_eq!(
+            last.session_id().as_bytes().as_ref(),
+            u64::MAX.to_be_bytes()
+        );
+        assert!(runtime.open_session(None).await.is_err());
+        drop((last, runtime));
+        let runtime = LocalSequencer::<MemoryStorage>::recover(
+            storage.open_view(&id).await.unwrap().unwrap(),
+        )
+        .await
+        .unwrap();
+        assert!(runtime.open_session(None).await.is_err());
     }
 
     /// Produces one stable application submission for session tests.
@@ -1426,12 +1621,23 @@ mod tests {
         ));
         let (_, duplicate) = storage.create_view().await.unwrap();
         let payload = encode_submission::<sea_memory::MemoryStorageError>(
-            &SessionId::new("session").unwrap(),
+            &SessionId::new(1).unwrap(),
             None,
             None,
             b"payload",
         )
         .unwrap();
+        duplicate
+            .publish_checkpoint(
+                checkpoint::Checkpoint {
+                    reserved: 256,
+                    ..checkpoint::Checkpoint::default()
+                }
+                .encode::<()>()
+                .unwrap(),
+            )
+            .await
+            .unwrap();
         duplicate.append(payload.clone(), None).await.unwrap();
         duplicate.append(payload, None).await.unwrap();
         let recovered = LocalSequencer::<MemoryStorage>::recover(duplicate)
@@ -1449,12 +1655,9 @@ mod tests {
     /// Opens a named member without imposing backend-specific ownership rules.
     pub(super) async fn member<Storage: SeaStorage + 'static>(
         runtime: &Arc<LocalSequencer<Storage>>,
-        name: &str,
+        _name: &str,
     ) -> LocalSession<Storage> {
-        runtime
-            .open_session(SessionId::new(name.to_owned()).unwrap(), None)
-            .await
-            .unwrap()
+        runtime.open_session(None).await.unwrap()
     }
 
     /// Returns data while allowing an implementation to emit progress first.
@@ -1706,10 +1909,7 @@ mod tests {
                 .position,
             position
         );
-        let replacement = runtime
-            .open_session(SessionId::new("replacement").unwrap(), Some(position))
-            .await
-            .unwrap();
+        let replacement = runtime.open_session(Some(position)).await.unwrap();
         assert!(
             runtime
                 .runtime
@@ -1772,16 +1972,7 @@ mod tests {
         )
         .await
         .unwrap();
-        assert!(
-            recovered
-                .open_session(SessionId::new("author").unwrap(), None)
-                .await
-                .is_err()
-        );
-        let reconnected = recovered
-            .open_session(SessionId::new("new-session").unwrap(), Some(position))
-            .await
-            .unwrap();
+        let reconnected = recovered.open_session(Some(position)).await.unwrap();
         assert!(reconnected.submit(submission(b"original")).await.unwrap() > position);
         assert_eq!(
             reconnected
@@ -1807,14 +1998,8 @@ mod tests {
         let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
             .await
             .unwrap();
-        let first = sequencer
-            .open_session(SessionId::new("first").unwrap(), None)
-            .await
-            .unwrap();
-        let second = sequencer
-            .open_session(SessionId::new("second").unwrap(), None)
-            .await
-            .unwrap();
+        let first = sequencer.open_session(None).await.unwrap();
+        let second = sequencer.open_session(None).await.unwrap();
         assert!(storage.open_view(&id).await.is_err());
         let first_position = first.submit(submission(b"one")).await.unwrap();
         first.clone().close().await.unwrap();

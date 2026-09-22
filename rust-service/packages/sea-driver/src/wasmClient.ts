@@ -116,6 +116,8 @@ export interface SummaryPublication {
  * @internal
  */
 export interface SeaDriverClient {
+	/** Allocated identity when supplied by the neutral session implementation. */
+	readonly sessionId?: Uint8Array | undefined;
 	/** Opens independent live membership and reliable Fluid signal delivery. */
 	openSignals?(
 		member: import("@fluidframework/sea-typescript/internal").SeaSignalMember,

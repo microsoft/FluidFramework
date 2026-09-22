@@ -408,6 +408,7 @@ describe("SeaDriver", () => {
 		try {
 			await connection.open();
 			const initialOpens = sessionOpens;
+			const allocatedClientId = connection.clientId;
 			connection.submit([
 				{
 					clientSequenceNumber: 1,
@@ -421,7 +422,7 @@ describe("SeaDriver", () => {
 			assert.deepEqual(received, [1]);
 			const checkpoint = connection.checkpointSequenceNumber;
 			assert.equal(await connection.restartSubscription(), true);
-			assert.equal(connection.clientId, "writer");
+			assert.equal(connection.clientId, allocatedClientId);
 			assert.equal(sessionOpens, initialOpens);
 			assert.equal(connection.checkpointSequenceNumber, checkpoint);
 			assert.deepEqual(signals, []);
@@ -637,15 +638,17 @@ describe("SeaDriver", () => {
 		const document = await adapter.create();
 		try {
 			await adapter.openSession(document, encoder.encode("old"));
+			const oldSession = adapter.sessionId;
 			await adapter.announceMembership(encoder.encode('{"mode":"write"}'));
 			await adapter.openSession(document, encoder.encode("new"));
+			const newSession = adapter.sessionId;
 			await adapter.announceMembership(encoder.encode('{"mode":"write"}'));
-			adapter.disconnect(encoder.encode("old"));
+			adapter.disconnect(oldSession);
 			assert.deepEqual(
 				(await adapter.readProjected()).operations.map((operation) => operation.eventType),
 				["joined", "left", "joined"],
 			);
-			adapter.disconnect(encoder.encode("new"));
+			adapter.disconnect(newSession);
 			await adapter.reconnect();
 			const payload = encoder.encode("archive after delta disposal");
 			const blob = await adapter.uploadBlob(payload);
@@ -654,7 +657,7 @@ describe("SeaDriver", () => {
 				adapter.announceMembership(encoder.encode('{"mode":"write"}')),
 				/SEA session is not open/,
 			);
-			adapter.disconnect(encoder.encode("new"));
+			adapter.disconnect(newSession);
 			assert.deepEqual(await adapter.fetchBlob(blob.digest), payload);
 			await adapter.openSession(document, encoder.encode("reader"));
 			assert.deepEqual(
@@ -682,8 +685,9 @@ describe("SeaDriver", () => {
 		});
 		let archiveOpens = 0;
 		let archiveCloses = 0;
+		let blockArchive = false;
 		const adapter = new SeaSessionDriverClient(async (document, options) => {
-			const archive = decoder.decode(options.session).startsWith("archive-");
+			const archive = blockArchive;
 			if (archive) {
 				archiveOpens += 1;
 				enteredOpen();
@@ -705,7 +709,8 @@ describe("SeaDriver", () => {
 			const blob = await adapter.uploadBlob(payload);
 			const owner = encoder.encode("delta");
 			await adapter.openSession(document, owner);
-			adapter.disconnect(owner);
+			adapter.disconnect(adapter.sessionId);
+			blockArchive = true;
 			const reads = Promise.all([
 				adapter.fetchBlob(blob.digest),
 				adapter.fetchBlob(blob.digest),
@@ -730,9 +735,7 @@ describe("SeaDriver", () => {
 
 	it("neutral projection preserves the durable floor across membership close and reopen", async () => {
 		const service = await createMemoryService({ environment: "node" });
-		const writer = await service.open(undefined, {
-			session: encoder.encode("first"),
-		});
+		const writer = await service.open(undefined, {});
 		const adapter = new SeaSessionDriverClient(service.open, "readOnly");
 		try {
 			const joined = await writer.announceMembership(encoder.encode('{"mode":"write"}'));
@@ -765,9 +768,7 @@ describe("SeaDriver", () => {
 
 	it("neutral session driver cancels startup history when initialization is invalid", async () => {
 		const service = await createMemoryService({ environment: "node" });
-		const client = await service.open(undefined, {
-			session: encoder.encode("initial-session"),
-		});
+		const client = await service.open(undefined, {});
 		const document = client.document;
 		await client.submit(
 			undefined,
@@ -902,9 +903,7 @@ describe("SeaDriver", () => {
 
 	it("overlapping delta opens finish initialization before replacing the shared session", async () => {
 		const service = await createMemoryService({ environment: "node" });
-		const seed = await service.open(undefined, {
-			session: encoder.encode("seed"),
-		});
+		const seed = await service.open(undefined, {});
 		let releaseSignals = (): void => {};
 		const blocked = new Promise<void>((resolve) => {
 			releaseSignals = resolve;
@@ -976,9 +975,7 @@ describe("SeaDriver", () => {
 
 	it("read-first document services retain independent memberships and shared writer identities", async () => {
 		const service = await createMemoryService({ environment: "node" });
-		const seed = await service.open(undefined, {
-			session: encoder.encode("seed"),
-		});
+		const seed = await service.open(undefined, {});
 		const payload = encoder.encode("shared archive content");
 		const blob = await seed.putBlob(payload);
 		const id = Buffer.from(seed.document).toString("hex");

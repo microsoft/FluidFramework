@@ -188,10 +188,7 @@ impl<Session: SeaSnapshotCoordinator> SeaSnapshotCoordinator for CompressionSess
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sea_core::{
-        ClassifiedError, ErrorKind, Event, MonitoredStreamItem, archive::SessionId,
-        storage::SeaStorage,
-    };
+    use sea_core::{ClassifiedError, ErrorKind, Event, MonitoredStreamItem, storage::SeaStorage};
     use sea_memory::MemoryStorage;
     use sea_sequencer::session::LocalSequencer;
 
@@ -202,18 +199,8 @@ mod tests {
         let runtime = LocalSequencer::<MemoryStorage>::recover(view)
             .await
             .unwrap();
-        let first = CompressionSession::new(
-            runtime
-                .open_session(SessionId::new("first").unwrap(), None)
-                .await
-                .unwrap(),
-        );
-        let second = CompressionSession::new(
-            runtime
-                .open_session(SessionId::new("second").unwrap(), None)
-                .await
-                .unwrap(),
-        );
+        let first = CompressionSession::new(runtime.open_session(None).await.unwrap());
+        let second = CompressionSession::new(runtime.open_session(None).await.unwrap());
         sea_conformance::run_session_conformance(&first, &second).await;
     }
 
@@ -224,10 +211,7 @@ mod tests {
         let runtime = LocalSequencer::<MemoryStorage>::recover(view)
             .await
             .unwrap();
-        let raw = runtime
-            .open_session(SessionId::new("session").unwrap(), None)
-            .await
-            .unwrap();
+        let raw = runtime.open_session(None).await.unwrap();
         let position = raw
             .submit(EventSubmission {
                 reference: None,

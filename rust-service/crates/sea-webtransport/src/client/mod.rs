@@ -184,6 +184,7 @@ where
         };
         let response = responses.next().await?.ok_or(ClientError::ResponseEnded)?;
         let Response::EventStreamOpened {
+            session,
             document,
             authority,
         } = response
@@ -192,6 +193,7 @@ where
         };
         self.state.set_authority(authority.clone())?;
         Ok(EventStream {
+            session,
             document,
             authority,
             responses,
@@ -340,6 +342,8 @@ where
 /// Open event stream after its authority handshake has completed.
 #[derive(Debug)]
 pub struct EventStream<Stream> {
+    /// Sequencer-allocated session identity from the opening handshake.
+    pub(crate) session: u64,
     /// Backend identity returned by the opening handshake.
     document: Vec<u8>,
     authority: Vec<u8>,
@@ -1030,6 +1034,7 @@ mod tests {
         let opened = protocol::encode_response_frame(
             StreamRole::Event,
             &Response::EventStreamOpened {
+                session: 1,
                 document: vec![8; 8],
                 authority: vec![9; 32],
             },
@@ -1062,8 +1067,6 @@ mod tests {
                 version: protocol::PROTOCOL_VERSION,
                 archive: b"archive".to_vec(),
                 intent: protocol::ArchiveIntent::Open,
-
-                session: b"session".to_vec(),
                 resume_after: Some(1),
             })
             .await
@@ -1086,6 +1089,7 @@ mod tests {
         let opened = protocol::encode_response_frame(
             StreamRole::Event,
             &Response::EventStreamOpened {
+                session: 1,
                 document: vec![8; 8],
                 authority: vec![9; 32],
             },
@@ -1105,8 +1109,6 @@ mod tests {
                 version: protocol::PROTOCOL_VERSION,
                 archive: b"archive".to_vec(),
                 intent: protocol::ArchiveIntent::Open,
-
-                session: b"session".to_vec(),
                 resume_after: None,
             })
             .await
@@ -1370,6 +1372,7 @@ mod tests {
         let event_opened = protocol::encode_response_frame(
             StreamRole::Event,
             &Response::EventStreamOpened {
+                session: 1,
                 document: vec![8; 8],
                 authority: vec![9; 32],
             },
@@ -1402,8 +1405,6 @@ mod tests {
                 version: protocol::PROTOCOL_VERSION,
                 archive: b"archive".to_vec(),
                 intent: protocol::ArchiveIntent::Open,
-
-                session: b"session".to_vec(),
                 resume_after: None,
             })
             .await

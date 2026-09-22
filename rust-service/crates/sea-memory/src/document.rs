@@ -151,6 +151,8 @@ impl BlobStorageData {
 /// Retained state shared across successive exclusive openings.
 #[derive(Debug, Default)]
 struct Document {
+    /// Independently published sequencer state and allocation reservations.
+    checkpoint: Mutex<Option<Bytes>>,
     /// Blob-tree data shared by the components, but not their writer authority.
     blob_data: Mutex<BlobStorageData>,
     /// Complete opaque event history.
@@ -579,6 +581,29 @@ impl Archive for MemorySnapshotArchive {
 impl SnapshotArchive for MemorySnapshotArchive {
     type BlobHandle = MemoryBlobHandle;
     type EventHandle = MemoryEventHandle;
+
+    async fn checkpoint(&self) -> Result<Option<Bytes>, Self::Error> {
+        Ok(self
+            .opening
+            .document
+            .checkpoint
+            .lock()
+            .expect("checkpoint lock")
+            .clone())
+    }
+
+    async fn publish_checkpoint(&self, checkpoint: Bytes) -> Result<(), Self::Error> {
+        if checkpoint.is_empty() {
+            return Err(MemoryStorageError::InconsistentHistory);
+        }
+        *self
+            .opening
+            .document
+            .checkpoint
+            .lock()
+            .expect("checkpoint lock") = Some(checkpoint);
+        Ok(())
+    }
 
     async fn get_snapshot_at(
         &self,

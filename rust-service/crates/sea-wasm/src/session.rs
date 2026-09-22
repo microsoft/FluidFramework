@@ -285,7 +285,7 @@ impl<Session: SeaSession> SeaSnapshotCoordinator for SessionAdapter<Session> {
 #[cfg(all(test, feature = "memory", feature = "compression"))]
 mod tests {
     use super::*;
-    use sea_core::{Event, SessionId, storage::SeaStorage};
+    use sea_core::{Event, storage::SeaStorage};
     use sea_memory::MemoryStorage;
     use sea_sequencer::session::{LocalSequencer, LocalSession};
 
@@ -294,13 +294,7 @@ mod tests {
         let storage = MemoryStorage::new();
         let (_, view) = storage.create_view().await.unwrap();
         let sequencer = LocalSequencer::recover(view).await.unwrap();
-        sequencer
-            .open_session(
-                SessionId::new(Bytes::from_static(b"session")).unwrap(),
-                None,
-            )
-            .await
-            .unwrap()
+        sequencer.open_session(None).await.unwrap()
     }
 
     /// Exercises one object-safe session contract across concrete configurations.

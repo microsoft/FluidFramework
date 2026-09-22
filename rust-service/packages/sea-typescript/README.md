@@ -25,8 +25,10 @@ Unannounced sessions retain application-only history.
 `minimumReference` is the durable document-wide admission floor, not an active-member minimum.
 It never decreases, including after new membership or recovery; an absent submission reference is below every concrete floor.
 Advances commit atomically with their carrying event and arrive in the same live/replay order.
-Remote consumers must rebuild client and server together for protocol version 10.
-Session options and delivered events contain session identity only; applications own author attribution.
+Remote consumers must rebuild client and server together for protocol version 11.
+The sequencer allocates each session identity; opening options no longer accept one.
+`session.sessionId` and delivered event `session` values encode the document-scoped nonzero `u64` as eight big-endian bytes, preserving its full precision.
+Applications own author attribution.
 
 ## Live Signals
 
@@ -65,9 +67,7 @@ import { createMemoryService } from "@fluidframework/sea-typescript/internal/mem
 
 const service = await createMemoryService({ environment: "node" });
 const encode = (value: string): Uint8Array => new TextEncoder().encode(value);
-const session = await service.open(undefined, {
-    session: encode("fresh-session"),
-});
+const session = await service.open(undefined, {});
 try {
     const position = await session.submit(undefined, encode("opaque payload"));
 } finally {
@@ -76,7 +76,7 @@ try {
 }
 ```
 
-Use a fresh membership identity for each open.
+Each open returns a fresh allocated membership identity.
 Pass a returned `session.document` to another `open` on the same service to share a document.
 Separate `createMemoryService` calls have independent storage even when their WASM module is already initialized.
 Memory services do not persist across reloads or share storage across independent browser windows.

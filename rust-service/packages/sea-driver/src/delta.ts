@@ -35,6 +35,7 @@ import {
 	encoder,
 	Events,
 	projectOperation,
+	sessionClientId,
 	toSequenced,
 	type DeltaConnectionLifecycle,
 	type Listener,
@@ -278,6 +279,12 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 			await this.client.openSession(this.document, this.session, this.lifecycle.cursor);
 		}
 		if (this.client.announceMembership !== undefined) {
+			const allocated = this.client.sessionId;
+			if (allocated !== undefined) {
+				this.session = allocated;
+				this.clientId = sessionClientId(allocated);
+				this.claims.user.id = this.clientId;
+			}
 			await this.client.announceMembership(encoder.encode(JSON.stringify(this.fluidClient)));
 			const page = await this.client.readProjected(
 				this.opened ? this.lifecycle.cursor : undefined,
@@ -516,7 +523,7 @@ export class SeaDeltaConnection extends Events implements IDocumentDeltaConnecti
 		const members = new Map<string, ISignalClient>();
 		for (const operation of operations) {
 			if (operation.eventType !== "joined" && operation.eventType !== "left") continue;
-			const clientId = decoder.decode(operation.session);
+			const clientId = sessionClientId(operation.session);
 			const joined = operation.eventType === "joined";
 			const member = joined
 				? { clientId, client: JSON.parse(decoder.decode(operation.payload)) as IClient }

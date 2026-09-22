@@ -5,8 +5,8 @@ use std::{env, fs, path::Path, time::Instant};
 use bytes::Bytes;
 use futures_util::{StreamExt, stream};
 use sea_core::{
-    Event, EventSubmission, MonitoredStreamItem, SeaAuthorSession, SessionId,
-    archive::SessionEventKind, session::SeaArchive, storage::SeaStorage,
+    Event, EventSubmission, MonitoredStreamItem, SeaAuthorSession, archive::SessionEventKind,
+    session::SeaArchive, storage::SeaStorage,
 };
 use sea_file::storage::FileStorage;
 use sea_memory::MemoryStorage;
@@ -99,13 +99,9 @@ async fn exercise<Storage: SeaStorage + 'static>(
     let sequencer = LocalSequencer::<Storage>::recover(view)
         .await
         .map_err(display_error)?;
-    let identity =
-        SessionId::new(Bytes::from_static(b"benchmark-session")).expect("nonempty session");
-    let session = sequencer
-        .open_session(identity.clone(), None)
-        .await
-        .map_err(display_error)?;
+    let session = sequencer.open_session(None).await.map_err(display_error)?;
     let started = Instant::now();
+    let identity = session.session_id().clone();
     let mut pending = stream::iter(0..operations)
         .map(|index| {
             let session = &session;

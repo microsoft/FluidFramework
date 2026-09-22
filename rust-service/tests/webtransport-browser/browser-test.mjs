@@ -147,9 +147,7 @@ async function run() {
 		certificateHash: hash,
 	};
 	if (websocket && ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname)) {
-		const options = {
-			session: encoder.encode("selection"),
-		};
+		const options = {};
 		const originalStreaming = Object.getOwnPropertyDescriptor(globalThis, "WebSocketStream");
 		const originalSocket = Object.getOwnPropertyDescriptor(globalThis, "WebSocket");
 		const unavailable = `https://127.0.0.1:${location.port}/sea`;
@@ -231,7 +229,6 @@ async function run() {
 			websocket ? remoteOptions : { url: transportUrl, certificateHash: hash },
 			document,
 			{
-				session: encoder.encode(session),
 				...(reference === undefined ? {} : { reference }),
 			},
 		);
@@ -319,7 +316,7 @@ async function run() {
 		const peer = await openWebTransport(
 			{ url: parameters.get("primaryTransport"), certificateHash: hash },
 			archive,
-			{ session: encoder.encode("mixed-peer") },
+			{},
 		);
 		transportSessionCount++;
 		const mixed = await peer.openSignals({

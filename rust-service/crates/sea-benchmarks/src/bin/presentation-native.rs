@@ -4,8 +4,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{SinkExt as _, StreamExt as _};
 use sea_core::{
-    Event, EventSubmission, MonitoredStreamItem, SeaAuthorSession, SessionId,
-    archive::SessionEventKind,
+    Event, EventSubmission, MonitoredStreamItem, SeaAuthorSession, archive::SessionEventKind,
 };
 use sea_webtransport::{
     NativeSeaClient, SeaClientError, SessionClient, SessionOpen, TransportConfig, protocol,
@@ -205,9 +204,8 @@ fn payload(sequence: usize, bytes: usize) -> Bytes {
     Bytes::from(result)
 }
 
-/// Generates session identities unique within a fresh service and worker process.
-fn session_open(archive: Bytes, create: bool, index: usize) -> SessionOpen {
-    let identity = Bytes::from(format!("{}-{index}", std::process::id()));
+/// Selects creation or opening of an archive before service identity allocation.
+fn session_open(archive: Bytes, create: bool, _index: usize) -> SessionOpen {
     SessionOpen {
         archive,
         intent: if create {
@@ -215,8 +213,6 @@ fn session_open(archive: Bytes, create: bool, index: usize) -> SessionOpen {
         } else {
             protocol::ArchiveIntent::Open
         },
-
-        session: SessionId::new(identity).expect("nonempty identity"),
         reference: None,
     }
 }

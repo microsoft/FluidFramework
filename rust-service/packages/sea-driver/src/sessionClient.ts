@@ -55,6 +55,10 @@ const decoder = new TextDecoder();
  * @internal
  */
 export class SeaSessionDriverClient implements SeaDriverClient {
+	/** Identity assigned to the currently open membership. */
+	public get sessionId(): Uint8Array | undefined {
+		return this.sessionIdentity?.slice();
+	}
 	/** Membership records already occupy the projected history, without synthetic joins. */
 	public readonly applicationSequenceOffset = 0;
 	/** Announced modes are retained to distinguish read-only audience from writer quorum. */
@@ -147,9 +151,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 
 	/** Opens content access without announcing a new Fluid delta membership. */
 	private async openArchiveSession(document: Uint8Array): Promise<SeaSession> {
-		const session = await this.factory(document, {
-			session: encoder.encode(`archive-session-${crypto.randomUUID()}`),
-		});
+		const session = await this.factory(document, {});
 		let stream: SeaStream<SeaLoadResult> | undefined;
 		try {
 			stream = session.read();
@@ -172,9 +174,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	private async createSession(): Promise<Uint8Array> {
 		this.disconnect();
 		await this.closing;
-		this.session = await this.factory(undefined, {
-			session: encoder.encode(`create-session-${crypto.randomUUID()}`),
-		});
+		this.session = await this.factory(undefined, {});
 		return this.session.document;
 	}
 
@@ -190,17 +190,16 @@ export class SeaSessionDriverClient implements SeaDriverClient {
 	/** Rebuilds the projection inside an exclusive membership transition. */
 	private async replaceSession(
 		document: Uint8Array,
-		session: Uint8Array,
+		_session: Uint8Array,
 		resumeAfter?: Uint8Array,
 	): Promise<void> {
 		this.disconnect();
 		await this.closing;
 		const reference = decodePosition(resumeAfter);
 		this.session = await this.factory(document, {
-			session,
 			...(reference === undefined ? {} : { reference }),
 		});
-		this.sessionIdentity = session.slice();
+		this.sessionIdentity = this.session.sessionId.slice();
 		try {
 			this.positionSequences.clear();
 			this.sequencePositions.clear();

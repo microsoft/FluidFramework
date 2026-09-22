@@ -46,11 +46,7 @@ export function makeOptions(
 	bindings: BindingModule,
 	options: SeaSessionOptions,
 ): Generated.SeaSessionOptions {
-	return new bindings.SeaSessionOptions(
-		options.session,
-		options.reference,
-		options.compression ?? false,
-	);
+	return new bindings.SeaSessionOptions(options.reference, options.compression ?? false);
 }
 
 /** Creates an independent service while retaining admitted asynchronous opens until settled. */
@@ -301,6 +297,7 @@ export function wrapSession(
 		});
 	return {
 		document: session.document,
+		sessionId: session.sessionId,
 		openSignals: (member) =>
 			invoke(async () => {
 				const signals = wrapSignals(await session.openSignals(member.id, member.metadata));

@@ -106,6 +106,7 @@ export interface SeaSession {
     putBlob(payload: Uint8Array): Promise<SeaTreeId>;
     putDirectory(entries: readonly SeaDirectoryEntry[]): Promise<SeaTreeId>;
     read(after?: bigint, stopAfter?: bigint): SeaStream<SeaLoadResult>;
+    readonly sessionId: Uint8Array;
     submit(reference: bigint | undefined, payload: Uint8Array, blobTree?: SeaTreeId): Promise<bigint>;
 }
 
@@ -113,7 +114,6 @@ export interface SeaSession {
 export interface SeaSessionOptions {
     readonly compression?: boolean;
     readonly reference?: bigint;
-    readonly session: Uint8Array;
 }
 
 // @internal

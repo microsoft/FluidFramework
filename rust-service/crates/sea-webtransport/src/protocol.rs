@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 /// Current Sea logical-stream opening version.
-pub const PROTOCOL_VERSION: u16 = 10;
+pub const PROTOCOL_VERSION: u16 = 11;
 
 pub mod signals;
 
@@ -488,7 +488,7 @@ pub struct StreamEvent {
     pub position: u64,
 
     /// Connection identity that submitted the event.
-    pub session: Vec<u8>,
+    pub session: u64,
     /// Author reference position.
     pub reference: Option<u64>,
     /// Minimum active reference position.
@@ -600,8 +600,6 @@ pub mod payload {
         /// Requested archive lifecycle operation.
         pub intent: ArchiveIntent,
 
-        /// Fresh logical-session identity.
-        pub session: Vec<u8>,
         /// Latest event already incorporated by the client.
         pub resume_after: Option<u64>,
     }
@@ -609,6 +607,8 @@ pub mod payload {
     /// Opaque authority returned when an event stream opens.
     #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
     pub struct EventStreamOpened {
+        /// Document-scoped identity allocated for this logical session.
+        pub session: u64,
         /// Backend-assigned document identity retained for subsequent opens.
         pub document: Vec<u8>,
         /// Capability used to bind the session's other logical streams.
@@ -675,7 +675,7 @@ pub mod payload {
         /// Committed archive position.
         pub position: u64,
         /// Submitting session identity.
-        pub session: Vec<u8>,
+        pub session: u64,
         /// Sequenced context used to construct the event.
         pub reference: Option<u64>,
         /// Committed admission floor at this boundary.
@@ -866,8 +866,6 @@ pub enum Request {
         /// Explicit archive lifecycle intent.
         intent: ArchiveIntent,
 
-        /// Fresh logical session identity.
-        session: Vec<u8>,
         /// Latest event already incorporated by this client.
         resume_after: Option<u64>,
     },
@@ -951,6 +949,8 @@ pub enum Response {
     },
     /// The event stream opened with this opaque logical-session authority.
     EventStreamOpened {
+        /// Document-scoped identity allocated for this logical session.
+        session: u64,
         /// Backend-assigned document identity retained for subsequent opens.
         document: Vec<u8>,
         /// Capability required to bind later logical streams.
@@ -1085,7 +1085,6 @@ pub fn encode_request_frame(
             archive,
             intent,
 
-            session,
             resume_after,
         } => encode_typed_payload(
             role,
@@ -1095,7 +1094,6 @@ pub fn encode_request_frame(
                 archive: archive.clone(),
                 intent: *intent,
 
-                session: session.clone(),
                 resume_after: *resume_after,
             },
             limits,
@@ -1229,7 +1227,6 @@ pub fn decode_request_frame(
                 archive: value.archive,
                 intent: value.intent,
 
-                session: value.session,
                 resume_after: value.resume_after,
             }
         }
@@ -1345,12 +1342,14 @@ pub fn encode_response_frame(
             encode_typed_payload(role, response.kind(), &wire::Empty, limits)
         }
         Response::EventStreamOpened {
+            session,
             document,
             authority,
         } => encode_typed_payload(
             role,
             response.kind(),
             &wire::EventStreamOpened {
+                session: *session,
                 document: document.clone(),
                 authority: authority.clone(),
             },
@@ -1420,7 +1419,7 @@ pub fn encode_response_frame(
             &wire::LoadEventWithoutBlob {
                 kind: event.kind,
                 position: event.position,
-                session: event.session.clone(),
+                session: event.session,
                 reference: event.reference,
                 minimum_reference: event.minimum_reference,
                 payload: event.event.payload.clone(),
@@ -1487,6 +1486,7 @@ pub fn decode_response_network_frame(
         MessageKind::EventStreamOpened => {
             let value: wire::EventStreamOpened = decode_typed_payload(frame)?;
             Response::EventStreamOpened {
+                session: value.session,
                 document: value.document,
                 authority: value.authority,
             }
@@ -1780,8 +1780,6 @@ mod tests {
                     version: PROTOCOL_VERSION,
                     archive: b"archive".to_vec(),
                     intent: ArchiveIntent::Open,
-
-                    session: b"session".to_vec(),
                     resume_after: Some(1),
                 },
             ),
@@ -1882,8 +1880,14 @@ mod tests {
         let limits = Limits::default();
         for (payload_length, length_bytes) in [(0, 1), (127, 1), (128, 2), (16383, 2), (16384, 3)] {
             for (position, position_bytes) in [(127, 1), (128, 2), (16383, 2), (16384, 3)] {
-                for (session_length, session_length_bytes) in [(1, 1), (16, 1), (127, 1), (128, 2)]
-                {
+                for (session, session_bytes) in [
+                    (1, 1),
+                    (127, 1),
+                    (128, 2),
+                    (16383, 2),
+                    (16384, 3),
+                    (u64::MAX, 10),
+                ] {
                     for blob_tree in [None, Some(TreeId::Directory([1; 32]))] {
                         let blob_bytes = if blob_tree.is_some() { 34 } else { 0 };
                         let event = Event {
@@ -1911,7 +1915,7 @@ mod tests {
                         let response = Response::LoadEvent(Box::new(StreamEvent {
                             kind: super::SessionEventKind::Application,
                             position,
-                            session: vec![1; session_length],
+                            session,
                             reference: Some(position),
                             minimum_reference: Some(position),
                             event,
@@ -1922,8 +1926,7 @@ mod tests {
                             encoded.len(),
                             5 + 1
                                 + position_bytes
-                                + session_length_bytes
-                                + session_length
+                                + session_bytes
                                 + 2 * (1 + position_bytes)
                                 + length_bytes
                                 + payload_length
@@ -1976,7 +1979,7 @@ mod tests {
             kind: super::SessionEventKind::Application,
             position: 2,
 
-            session: b"session".to_vec(),
+            session: 1,
 
             reference: Some(1),
             minimum_reference: Some(1),
@@ -2020,6 +2023,7 @@ mod tests {
             (
                 StreamRole::Event,
                 Response::EventStreamOpened {
+                    session: 1,
                     document: vec![8; 8],
                     authority: vec![7; 32],
                 },

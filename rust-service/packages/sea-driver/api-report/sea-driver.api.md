@@ -182,6 +182,7 @@ export interface SeaDriverClient {
     publishSummary(entries: readonly SummaryEntry[]): Promise<SummaryPublication>;
     readProjected(after?: Uint8Array): Promise<ProjectedReadPage>;
     reconnect(...args: readonly unknown[]): void | Promise<void>;
+    readonly sessionId?: Uint8Array | undefined;
     snapshot(id: Uint8Array): Promise<{
         readonly id: Uint8Array;
         readonly root: Uint8Array;
@@ -221,6 +222,7 @@ export class SeaSessionDriverClient implements SeaDriverClient {
     publishSummary(entries: readonly SummaryEntry[]): Promise<SummaryPublication>;
     readProjected(after?: Uint8Array): Promise<ProjectedReadPage>;
     reconnect(..._args: readonly unknown[]): Promise<void>;
+    get sessionId(): Uint8Array | undefined;
     snapshot(id: Uint8Array): ReturnType<SeaDriverClient["snapshot"]>;
     stageSnapshotRoot(expectedParent: Uint8Array | undefined, atEvent: Uint8Array | undefined, root: Uint8Array): Promise<Uint8Array>;
     submitEvent(payload: Uint8Array, referencePosition?: Uint8Array): Promise<Uint8Array>;

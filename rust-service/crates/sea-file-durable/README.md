@@ -29,7 +29,8 @@ The design preserves acknowledged records across power loss under these assumpti
 - The device honors flushes, and there is no independent media corruption or external namespace modification.
 
 Each mutation writes only its new frames to the existing `.sea` inode.
-One journal synchronization settles an event batch; there is no retained-history copy or per-append directory synchronization.
+One journal synchronization settles an event batch.
+Periodic index publication additionally synchronizes an immutable replacement address index and its directory; it copies historical addresses but not historical journal payloads.
 Nothing is published to component readers before synchronization succeeds.
 Power loss before acknowledgment can retain any ordered prefix of the unacknowledged batch, including the entire batch.
 An uncertain batch therefore returns an `Ambiguous` result for every submitted entry and poisons the opening.
@@ -39,14 +40,16 @@ Reopening holds a stable `.lock` sidecar, truncates any structurally incomplete 
 This also makes a recovered but previously unacknowledged publication durable before later callers can depend on it.
 Document creation still uses synchronized staging and atomic rename to avoid publishing an incomplete format header.
 Malformed length complements and full-length checksum failures remain errors, not permission to drop a final frame.
-Checksums cannot identify whether damaged bytes were acknowledged, and the format has no separate persisted commit boundary.
+Checksums cannot identify whether damaged bytes beyond the indexed boundary were acknowledged.
 Consequently, truncation of acknowledged history is indistinguishable from an interrupted append, and full-length torn frames cannot be safely repaired.
 The assumptions above exclude these cases; arbitrary silent corruption is not tolerated or repaired.
 
 Both file modes share sidecar locking, incompatible with old writers that lock the journal inode.
 Stop old binaries before upgrading, never remove active sidecars, and do not switch to buffered writes when relying on durability.
 
-Mutation write volume is proportional to new frames, while recovery still reads the complete retained history into memory.
+Journal mutation write volume is proportional to new frames; periodic index publication rewrites the retained address index.
+Recovery reads checkpoint metadata and the recent journal suffix, using lazy indexed lookup for historical dependencies and payloads.
+An indexed prefix is already validated under the integrity assumptions above; reopening is not a full media-integrity scrub.
 Batch encoding uses memory proportional to the batch size.
 Actual power-cut qualification remains outstanding; deterministic crash tests do not certify filesystems, devices, or arbitrary sector tears.
 This includes ZFS: each pool/device/flush configuration needs qualification, and `sync=disabled` is unsupported.

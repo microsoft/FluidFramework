@@ -48,8 +48,6 @@ export interface SeaTreeId {
  * @internal
  */
 export interface SeaSessionOptions {
-	/** Fresh membership identity. */
-	readonly session: Uint8Array;
 	/** Latest incorporated event. */
 	readonly reference?: bigint;
 	/** Enables compression only when the loaded bundle supports it. */
@@ -188,6 +186,8 @@ export interface SeaSignals {
  * @internal
  */
 export interface SeaSession {
+	/** Sequencer-allocated identity in canonical eight-byte big-endian form. */
+	readonly sessionId: Uint8Array;
 	/** Opens independent document messaging; archive compression does not transform signal payloads. */
 	openSignals(member: SeaSignalMember): Promise<SeaSignals>;
 	/** Backend-assigned identity for reopening on the same service. */

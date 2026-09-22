@@ -41,11 +41,10 @@ describe("Neutral sessions", () => {
 		});
 		const open = async (
 			document: Uint8Array | undefined,
-			membership: string,
+			_membership: string,
 			reference?: bigint,
 		): Promise<SeaSession> => {
 			const session = await service.open(document, {
-				session: encode(membership),
 				...(reference === undefined ? {} : { reference }),
 			});
 			sessions.push(session);
@@ -104,7 +103,7 @@ describe("Neutral sessions", () => {
 		assert.ok(leaveEvent.position > edit);
 		assert.deepEqual(joinEvent.payload, encode("public member"));
 		assert.deepEqual(leaveEvent.payload, new Uint8Array());
-		assert.deepEqual(leaveEvent.session, encode("writer-session"));
+		assert.deepEqual(leaveEvent.session, writer.sessionId);
 	});
 
 	it("neutral signals broadcast, target, close pending reads, and leave history unchanged", async () => {
@@ -280,7 +279,7 @@ describe("Neutral sessions", () => {
 		);
 	});
 
-	it("neutral sessions remain independent and reject reused memberships", async () => {
+	it("neutral sessions remain independent and allocate distinct identities", async () => {
 		const { open } = await sessionFixture();
 		const first = await open(undefined, "first-session");
 		const position = await first.submit(undefined, encode("first"));
@@ -288,7 +287,10 @@ describe("Neutral sessions", () => {
 		const replacement = await open(first.document, "replacement-session");
 		assert.equal(await first.getSnapshot(), undefined);
 		await first.close();
-		await assert.rejects(open(first.document, "first-session"), /reused session/);
+		const reopened = await open(first.document, "first-session");
+		assert.equal(first.sessionId.length, 8);
+		assert.notDeepEqual(reopened.sessionId, first.sessionId);
+		assert.notDeepEqual(reopened.sessionId, replacement.sessionId);
 		await replacement.submit(undefined, encode("still open"));
 	});
 
@@ -391,17 +393,14 @@ describe("Neutral sessions", () => {
 				const service = await factories.createMemoryService();
 				const isolated = await factories.createMemoryService();
 				const writer = await service.open(undefined, {
-					session: encode("writer-session"),
 					compression,
 				});
 				const reader = await service.open(writer.document, {
-					session: encode("reader-session"),
 					compression,
 				});
 				try {
 					await assert.rejects(
 						isolated.open(writer.document, {
-							session: encode("isolated-session"),
 							compression,
 						}),
 						{ kind: "Rejected", message: "document does not exist in this memory service" },
@@ -410,9 +409,7 @@ describe("Neutral sessions", () => {
 					const blob = await writer.putBlob(payload);
 					assert.deepEqual(await reader.getBlob(blob), payload);
 					if (compression) {
-						const rawReader = await service.open(writer.document, {
-							session: encode("raw-reader-session"),
-						});
+						const rawReader = await service.open(writer.document, {});
 						try {
 							const stored = await rawReader.getBlob(blob);
 							assert.notDeepEqual(stored, payload);
@@ -477,7 +474,6 @@ describe("Neutral sessions", () => {
 			try {
 				await assert.rejects(
 					service.open(undefined, {
-						session: encode("session"),
 						compression: true,
 					}),
 					{ kind: "Rejected", message: "this WASM bundle does not support compression" },
@@ -493,11 +489,8 @@ describe("Neutral sessions", () => {
 				environment: "node",
 				compressionSupport: true,
 			}).createMemoryService();
-			const session = await service.open(undefined, {
-				session: encode("writer-session"),
-			});
+			const session = await service.open(undefined, {});
 			const raw = await service.open(session.document, {
-				session: encode("raw-session"),
 				compression: false,
 			});
 			try {
@@ -525,7 +518,7 @@ describe("Neutral sessions", () => {
 				createSeaFactories({ preset, environment: "node" }).openWebTransport(
 					{ url: "https://unused.invalid/sea", certificateHash: new Uint8Array(32) },
 					undefined,
-					{ session: encode("session") },
+					{},
 				),
 				{ kind: "Unavailable", message: "WebTransport requires a supported browser" },
 			);
@@ -563,15 +556,13 @@ describe("Neutral sessions", () => {
 
 	it("closing a memory service lets an admitted open settle without freeing its borrow", async () => {
 		const service = await createMemoryService({ environment: "node" });
-		const opening = service.open(undefined, {
-			session: encode("opening-session"),
-		});
+		const opening = service.open(undefined, {});
 		let session: SeaSession | undefined;
 		try {
 			service.close();
 			service.close();
 			session = await opening;
-			await assert.rejects(service.open(undefined, { session: encode("other") }), {
+			await assert.rejects(service.open(undefined, {}), {
 				kind: "Closed",
 				message: "memory service is closed",
 			});
@@ -586,12 +577,8 @@ describe("Neutral sessions", () => {
 
 	it("session close is idempotent and rejects later calls without invalid WASM access", async () => {
 		const service = await createMemoryService({ environment: "node" });
-		const session = await service.open(undefined, {
-			session: encode("writer"),
-		});
-		const peer = await service.open(session.document, {
-			session: encode("peer"),
-		});
+		const session = await service.open(undefined, {});
+		const peer = await service.open(session.document, {});
 		try {
 			const pending = session.putBlob(encode("in-flight content"));
 			const closing = session.close();

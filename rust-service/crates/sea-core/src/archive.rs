@@ -75,60 +75,56 @@ mod event_tests {
     }
 }
 
-/// Fresh identity of one logical session.
+/// Document-scoped identity allocated by the sequencer without reuse.
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct SessionId(Bytes);
+pub struct SessionId(u64);
 
 impl SessionId {
-    /// Creates a nonempty session identity.
+    /// Wraps a nonzero sequencer-assigned value.
     ///
     /// # Errors
     ///
-    /// Returns an error when `value` is empty.
-    pub fn new(value: impl Into<Bytes>) -> Result<Self, ValueError> {
-        let value = value.into();
-        if value.is_empty() {
-            return Err(ValueError::EmptySessionId);
+    /// Returns an error when `value` is zero.
+    pub const fn new(value: u64) -> Result<Self, ValueError> {
+        if value == 0 {
+            return Err(ValueError::ZeroSessionId);
         }
         Ok(Self(value))
     }
 
-    /// Returns the opaque identity bytes.
+    /// Returns the allocated numeric value.
     #[must_use]
-    pub const fn as_bytes(&self) -> &Bytes {
-        &self.0
+    pub const fn get(&self) -> u64 {
+        self.0
+    }
+
+    /// Returns its fixed-width canonical big-endian encoding.
+    #[must_use]
+    pub const fn as_bytes(&self) -> [u8; 8] {
+        self.0.to_be_bytes()
     }
 }
 
 #[cfg(test)]
 mod identity_tests {
-    use bytes::Bytes;
-
     use super::{SessionId, ValueError};
 
     #[test]
-    fn caller_identities_preserve_nonempty_bytes_and_reject_empty_values() {
-        let value = Bytes::from_static(b"identity");
-
-        assert_eq!(
-            SessionId::new(value.clone())
-                .expect("nonempty session identity")
-                .as_bytes(),
-            &value
-        );
-
-        assert_eq!(
-            SessionId::new(Bytes::new()),
-            Err(ValueError::EmptySessionId)
-        );
+    fn numeric_identities_preserve_all_nonzero_values() {
+        for value in [1, 256, u64::MAX] {
+            let session = SessionId::new(value).unwrap();
+            assert_eq!(session.get(), value);
+            assert_eq!(session.as_bytes(), value.to_be_bytes());
+        }
+        assert_eq!(SessionId::new(0), Err(ValueError::ZeroSessionId));
     }
 }
 
 /// Invalid caller-created Sea values.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ValueError {
-    /// A session identity was empty.
-    EmptySessionId,
+    /// Zero is reserved as the empty allocation high-water mark.
+    ZeroSessionId,
 }
 
 /// One committed application event returned through Sea interfaces.
