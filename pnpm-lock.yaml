@@ -10062,10 +10062,10 @@ importers:
         specifier: workspace:~
         version: link:../../loader/container-loader
       '@fluidframework/container-runtime':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../runtime/container-runtime
       '@fluidframework/container-runtime-definitions':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
