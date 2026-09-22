@@ -39,6 +39,9 @@ Those are dated project records; the guides below describe the current code.
 [Sea at scale](SEA_AT_SCALE.md) proposes a multi-hop gateway and document-worker deployment, with Azure as one infrastructure example and a distinction between existing capabilities and new work.
 It is an architectural proposal, not a current deployment guarantee.
 
+The active [protocol simplification plan](NETWORK_PROTOCOL_PLAN.md) tracks initial metadata and framing changes and the required review of follow-up size optimizations.
+It describes planned work, not current protocol guarantees.
+
 Past plans, learnings, iteration reports, decisions, and retained measurement evidence are collected in [Historical records](historical/README.md).
 Current contributor requirements live in [Development](DEVELOPMENT.md); reusable agent workflows remain in the [coordination](../.github/skills/rust-service-coordination/SKILL.md) and [quality-iteration](../.github/skills/rust-service-quality-iteration/SKILL.md) skills.
 
