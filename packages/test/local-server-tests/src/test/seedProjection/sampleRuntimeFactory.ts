@@ -13,24 +13,39 @@ import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import type { ITree } from "@fluidframework/tree";
 
-import { seedRuntimeFactory, type ProjectionLoad, type Projector } from "./adapter.js";
+import {
+	createApplicationProjection,
+	projectionKey,
+	readApplicationProjection,
+} from "./externalSeedFile.js";
+import { format } from "./htmlSeedFormat.js";
+import { viewConfiguration, viewHtml, type HtmlView } from "./htmlTreeSchema.js";
 import {
 	buildNativeBaseline,
-	projection,
-	projectionKey,
 	rootAlias,
 	storeType,
 	treeFactory,
 	treeId,
-} from "./baseline.js";
-import { format, viewConfiguration, viewHtml, type HtmlView } from "./html.js";
+} from "./nativeSeedBaseline.js";
+import {
+	seedRuntimeFactory,
+	type ProjectionLoad,
+	type Projector,
+} from "./seedRuntimeAdapter.js";
 
+/** Live application surface exposed by each independently loaded sample runtime. */
 export interface HtmlEntryPoint {
+	/** Collaborative HTML tree view, realized on interactive clients and summarizers before projection. */
 	view: HtmlView;
+	/** This client's fresh compressor session ID, used to verify genesis does not reuse a live session. */
 	sessionId: string | undefined;
 }
 
-/** One direct datastore, one DDS, no DataObject root Directory/Map. */
+/**
+ * Data store factory exposing a single SharedTree DDS per store instance, without a root Directory/Map.
+ * The baseline already contains each store and channel: loading realizes them but never initializes
+ * another graph or assigns aliases. This factory does not determine the number of store instances.
+ */
 const dataStoreFactory: IFluidDataStoreFactory = {
 	type: storeType,
 	get IFluidDataStoreFactory() {
@@ -58,6 +73,11 @@ const dataStoreFactory: IFluidDataStoreFactory = {
 	},
 };
 
+/**
+ * Resolve the persisted root alias in the native graph materialized by {@link htmlProjector}.
+ * sampleRuntimeFactory realizes this model before its factory returns; projection fails until it is ready.
+ * Missing aliases fail rather than triggering write-on-open repair or asynchronous alias creation.
+ */
 async function entryPoint(runtime: IContainerRuntime): Promise<HtmlEntryPoint> {
 	const handle = await runtime.getAliasedDataStoreEntryPoint(rootAlias);
 	if (handle === undefined) {
@@ -66,59 +86,60 @@ async function entryPoint(runtime: IContainerRuntime): Promise<HtmlEntryPoint> {
 	return (await handle.get()) as HtmlEntryPoint;
 }
 
+/**
+ * Implement the {@link Projector} contract for the reference HTML seed format.
+ * A runtime metadata blob identifies a native snapshot; otherwise read the application projection
+ * using the same external-reader contract and build the native baseline at the unchanged checkpoint.
+ * The implementation details live in readApplicationProjection and buildNativeBaseline; the adapter
+ * owns snapshot overlays and op ordering. See README.md's "Runtime projection" section.
+ */
 export const htmlProjector: Projector = {
 	format,
 	isNative: (context) => context.baseSnapshot?.blobs[".metadata"] !== undefined,
 	async readSeed(context, retained) {
-		const projectionTree = context.baseSnapshot?.trees[projectionKey];
-		const manifestId = projectionTree?.blobs["manifest.work"];
-		const htmlId = projectionTree?.blobs["document.html"];
-		if (manifestId === undefined || htmlId === undefined) {
+		if (context.baseSnapshot === undefined) {
 			throw new Error("Not a supported seed envelope");
 		}
-		if (
-			retained !== undefined &&
-			(retained.manifestId !== manifestId || retained.htmlId !== htmlId)
-		) {
-			throw new Error("Retained seed does not belong to this source snapshot");
-		}
-		const read = async (id: string): Promise<string> =>
-			Buffer.from(await context.storage.readBlob(id)).toString("utf8");
-		const manifest = retained?.manifest ?? (await read(manifestId));
-		const parsed: unknown = JSON.parse(manifest);
-		if (
-			typeof parsed !== "object" ||
-			parsed === null ||
-			!("format" in parsed) ||
-			parsed.format !== format ||
-			!("html" in parsed) ||
-			parsed.html !== "document.html" ||
-			Object.keys(parsed).length !== 2
-		) {
-			throw new Error("Unsupported manifest version or contents");
-		}
-		return { manifestId, htmlId, manifest, html: retained?.html ?? (await read(htmlId)) };
+		return readApplicationProjection(
+			context.baseSnapshot,
+			async (id) => context.storage.readBlob(id),
+			{ retained },
+		);
 	},
 	materialize: (seed, sequenceNumber) => buildNativeBaseline(seed.html, sequenceNumber),
 };
 
+/** Test-only observation joining the adapter's decision with the loaded native runtime and model. */
 export interface AppObservation extends ProjectionLoad {
+	/** Original loader context, kept separate from the native runtime's projected context. */
 	original: IContainerContext;
+	/** Actual loaded container runtime, not a mock or snapshot-builder instance. */
 	runtime: IContainerRuntime;
+	/** Realized application model whose state the projection callback reads. */
 	app: HtmlEntryPoint;
 }
 
-export function applicationFactory(
+/**
+ * Create the sample application's IRuntimeFactory, composing seed adaptation with normal native loading.
+ * Realize the persisted SharedTree on every client, keep seed-loaded runtimes on full structural
+ * summaries, and register a synchronous projection of this runtime's own checkpoint. Loading emits no init ops.
+ */
+export function sampleRuntimeFactory(
 	options: {
+		/** Disable materialization to validate that graduated snapshots load as ordinary native state. */
 		allowProjection?: boolean;
+		/** Receive a completed load's contexts, runtime, and model for workflow assertions. */
 		observe?: (observation: AppObservation) => void;
+		/** Test-only callback instrumentation/failure injection at the summarizer's checkpoint. */
 		beforeProjection?: (checkpoint: number) => void;
 	} = {},
 ): IRuntimeFactory {
 	return seedRuntimeFactory(
 		htmlProjector,
 		async (load, existing) => {
-			let app: HtmlEntryPoint | undefined;
+			let readProjectionHtml = (): string => {
+				throw new Error("Projection tree must be realized before summarization");
+			};
 			const runtime = await loadContainerRuntime({
 				context: load.context,
 				existing,
@@ -132,7 +153,7 @@ export function applicationFactory(
 							state: "disableHeuristics",
 							initialSummarizerDelayMs: 0,
 							maxAckWaitTime: 20_000,
-							maxOpsSinceLastSummary: 7_000,
+							maxOpsSinceLastSummary: 7000,
 						},
 					},
 				},
@@ -143,17 +164,15 @@ export function applicationFactory(
 						key: projectionKey,
 						summarize: () => {
 							options.beforeProjection?.(load.context.deltaManager.lastSequenceNumber);
-							if (app === undefined) {
-								throw new Error("Projection tree must be realized before summarization");
-							}
-							return projection(viewHtml(app.view));
+							return createApplicationProjection(readProjectionHtml());
 						},
 					},
 				},
 			});
 			// Realize on EVERY client, including the noninteractive summarizer. No model
 			// initialization, alias creation or DDS writes occur here.
-			app = await entryPoint(runtime);
+			const app = await entryPoint(runtime);
+			readProjectionHtml = () => viewHtml(app.view);
 			options.observe?.({ ...load, runtime, app });
 			return runtime;
 		},

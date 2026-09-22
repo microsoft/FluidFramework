@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactory, TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
-
 /**
  * This is a deliberately restricted, versioned format, NOT a browser HTML parser.
  * No error recovery, scripts, comments, URLs, styles, namespaces, or implicit closing tags.
@@ -13,6 +11,9 @@ export const format = "fluid-html-reference/1";
 const tags = new Set(["div", "p", "span", "strong", "em", "ul", "li", "h1", "h2", "br"]);
 // The reference format accepts only these names and lowercase data-* keys.
 const attributeNamePattern = /^(?:id|class|title|data-[a-z][a-z0-9-]*)$/u;
+// The format rejects control characters and unpaired UTF-16 surrogates, but accepts valid Unicode pairs.
+// eslint-disable-next-line no-control-regex -- Rejecting these control characters is part of the format contract.
+const unsupportedCharacterPattern = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\uD800-\uDFFF]/u;
 const entities: Record<string, string> = {
 	amp: "&",
 	lt: "<",
@@ -20,25 +21,14 @@ const entities: Record<string, string> = {
 	quot: '"',
 	apos: "'",
 };
-const sf = new SchemaFactory(format);
-export class HtmlAttributes extends sf.map("Attributes", sf.string) {}
-export class HtmlText extends sf.object("Text", { text: sf.string }) {}
-export class HtmlChildren extends sf.arrayRecursive("Children", [
-	HtmlText,
-	() => HtmlElement,
-]) {}
-export class HtmlElement extends sf.objectRecursive("Element", {
-	tag: sf.string,
-	attributes: HtmlAttributes,
-	children: HtmlChildren,
-}) {}
-export const viewConfiguration = new TreeViewConfiguration({ schema: HtmlChildren });
-export type HtmlView = TreeView<typeof HtmlChildren>;
-
+/** Plain application content, independent of Fluid runtimes, DDSs, and node identities. */
 export type HtmlNode =
+	/** A literal text node after entity decoding. */
 	| { text: string }
+	/** An element with validated attributes and document-ordered children. */
 	| { tag: string; attributes: Record<string, string>; children: HtmlNode[] };
 
+/** Decode only the reference format's five named entities; malformed entities fail. */
 function decode(text: string): string {
 	if (/&(?!amp;|lt;|gt;|quot;|apos;)/u.test(text)) {
 		throw new Error("Unsupported or unterminated entity");
@@ -46,6 +36,7 @@ function decode(text: string): string {
 	return text.replace(/&(amp|lt|gt|quot|apos);/gu, (_, name: string) => entities[name]);
 }
 
+/** Encode text and attribute values using one deterministic spelling per reserved character. */
 function escape(text: string): string {
 	return text.replace(/[&<>"']/gu, (character) => {
 		const names: Record<string, string> = {
@@ -59,18 +50,21 @@ function escape(text: string): string {
 	});
 }
 
+/** Reject names outside the format before either parsing or serializing an attribute. */
 function validateAttributeName(name: string): void {
 	if (attributeNamePattern.exec(name)?.[0] !== name) {
 		throw new Error("Unsupported attribute name");
 	}
 }
 
-/** Parse the complete input or fail; the tree never contains unvalidated markup. */
+/**
+ * Parse a complete reference-format document into plain application nodes, or throw.
+ * This must be a pure function: identical input produces structurally identical output.
+ * No timers, fresh GUIDs, randomness, locale, or other environmental entropy may affect it.
+ * Both the external creator and native baseline builder use this same format validation.
+ */
 export function parseHtml(html: string): HtmlNode[] {
-	if (
-		html.length > 100_000 ||
-		/[\u0000-\u0008\u000b\u000c\u000e-\u001f\ud800-\udfff]/u.test(html)
-	) {
+	if (html.length > 100_000 || unsupportedCharacterPattern.test(html)) {
 		throw new Error("Input exceeds reference format limits");
 	}
 	let offset = 0;
@@ -90,7 +84,8 @@ export function parseHtml(html: string): HtmlNode[] {
 				return children;
 			}
 			if (!rest.startsWith("<")) {
-				const length = rest.indexOf("<") === -1 ? rest.length : rest.indexOf("<");
+				const nextTag = rest.indexOf("<");
+				const length = nextTag < 0 ? rest.length : nextTag;
 				children.push({ text: decode(rest.slice(0, length)) });
 				offset += length;
 				continue;
@@ -134,7 +129,11 @@ export function parseHtml(html: string): HtmlNode[] {
 	return parseChildren();
 }
 
-/** Attribute order and entity spelling have one canonical representation. */
+/**
+ * Serialize supported application nodes to canonical HTML, rejecting unsupported native edits.
+ * This is pure and does not mutate its input: identical content has identical attribute order,
+ * entity spelling, and output bytes, with no clock, GUID, randomness, or environment dependence.
+ */
 export function serializeHtml(nodes: readonly HtmlNode[]): string {
 	// The SharedTree schema intentionally models structure rather than an HTML
 	// language grammar. Validate edited native nodes too, not only seed input.
@@ -143,6 +142,7 @@ export function serializeHtml(nodes: readonly HtmlNode[]): string {
 	return result;
 }
 
+/** Recursively serialize validated structure in document order, enforcing the nesting limit. */
 function serializeNodes(nodes: readonly HtmlNode[], depth: number): string {
 	if (depth > 64) {
 		throw new Error("HTML nesting exceeds reference format limit");
@@ -168,36 +168,4 @@ function serializeNodes(nodes: readonly HtmlNode[], depth: number): string {
 			return `<${node.tag}${attrs}>${node.tag === "br" ? "" : `${serializeNodes(node.children, depth + 1)}</${node.tag}>`}`;
 		})
 		.join("");
-}
-
-export function toTree(nodes: readonly HtmlNode[]): HtmlChildren {
-	return new HtmlChildren(
-		nodes.map((node): HtmlText | HtmlElement =>
-			"text" in node
-				? new HtmlText(node)
-				: new HtmlElement({
-						tag: node.tag,
-						attributes: new HtmlAttributes(node.attributes),
-						children: toTree(node.children),
-					}),
-		),
-	);
-}
-
-export function fromTree(nodes: HtmlChildren): HtmlNode[] {
-	return Array.from(
-		nodes,
-		(node): HtmlNode =>
-			node instanceof HtmlText
-				? { text: node.text }
-				: {
-						tag: node.tag,
-						attributes: Object.fromEntries(node.attributes),
-						children: fromTree(node.children),
-					},
-	);
-}
-
-export function viewHtml(view: HtmlView): string {
-	return serializeHtml(fromTree(view.root));
 }

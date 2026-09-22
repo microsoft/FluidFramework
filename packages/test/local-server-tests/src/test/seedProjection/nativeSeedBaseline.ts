@@ -7,91 +7,62 @@ import { createHash } from "node:crypto";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { stableGCVersion } from "@fluidframework/container-runtime/internal/test/gc";
-import { SummaryType, type ISummaryTree } from "@fluidframework/driver-definitions";
+import {
+	SummaryType,
+	type ISummaryTree,
+	type SummaryObject,
+} from "@fluidframework/driver-definitions";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	createIdCompressor,
 	toIdCompressorWithCore,
 	type SessionId,
 } from "@fluidframework/id-compressor/internal";
+import { addBlobToSummary, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { configuredSharedTree } from "@fluidframework/tree/internal";
 
-import { format, parseHtml, serializeHtml, toTree, viewConfiguration } from "./html.js";
+import { parseHtml, serializeHtml } from "./htmlSeedFormat.js";
+import { toTree, viewConfiguration } from "./htmlTreeSchema.js";
 
 export const storeType = "reference-html-store";
 export const storeId = "document";
 export const treeId = "tree";
 export const rootAlias = "root";
-export const projectionKey = "applicationProjection";
-export const projectionGroup = "application-projection";
-export const codeDetails = { package: "seed-projection-reference/1" };
 export const treeFactory = configuredSharedTree({ minVersionForCollab: "2.0.0" }).getFactory();
 const genesisSession = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 
-export const blob = (content: string): { type: SummaryType.Blob; content: string } => ({
-	type: SummaryType.Blob,
-	content,
-});
-export const tree = (children: ISummaryTree["tree"]): ISummaryTree => ({
-	type: SummaryType.Tree,
-	tree: children,
-});
-export const hash = (text: string): string => createHash("sha256").update(text).digest("hex");
-
-export function projection(html: string): ISummaryTree {
-	return {
-		...tree({
-			"manifest.work": blob(JSON.stringify({ format, html: "document.html" })),
-			"document.html": blob(html),
-		}),
-		groupId: projectionGroup,
-	};
-}
-
 /**
- * External creation never creates a Loader/Container/native model. This is just the
- * loader protocol envelope plus app-owned bytes, suitable for the backend create API.
+ * Complete native application baseline presented to ContainerRuntime before normal loading.
+ * This is an in-memory projection, not a new persisted snapshot or a replacement protocol envelope.
  */
-export function externalSeed(html: string): ISummaryTree {
-	parseHtml(html);
-	return tree({
-		".protocol": tree({
-			attributes: blob(JSON.stringify({ sequenceNumber: 0, minimumSequenceNumber: 0 })),
-			quorumMembers: blob("[]"),
-			quorumProposals: blob("[]"),
-			quorumValues: blob(
-				JSON.stringify([
-					[
-						"code",
-						{
-							key: "code",
-							value: codeDetails,
-							approvalSequenceNumber: 0,
-							commitSequenceNumber: 0,
-							sequenceNumber: 0,
-						},
-					],
-				]),
-			),
-		}),
-		".app": tree({ [projectionKey]: projection(html) }),
-	});
-}
-
 export interface NativeBaseline {
+	/** Full runtime-root summary containing native metadata, aliases, compressor, stores, and DDSs. */
 	summary: ISummaryTree;
+	/** Equivalent ID-only tree using deterministic `projected:<sha256>` virtual blob IDs. */
 	snapshot: ISnapshotTree;
+	/** UTF-8 or binary payloads for every virtual blob ID referenced by snapshot. */
 	blobs: Map<string, ArrayBuffer>;
+	/** Lowercase 64-hex SHA-256 of the sorted snapshot JSON, transitively binding bytes and checkpoint. */
 	fingerprint: string;
 }
 
 /**
- * INTERNAL FIXTURE scaffolding, not an application snapshot codec.
+ * Build an operation-compatible native SharedTree baseline for HTML at the source checkpoint.
+ *
+ * For fixed HTML, checkpoint, and pinned codec configuration, output must be byte-identical.
+ * No fresh GUID, clock, random value, or live client identity may affect persisted state.
+ * The fixed genesis session supplies shared construction identities; it is not a joining session.
+ *
+ * INTERNAL FIXTURE scaffolding, not a supported application snapshot codec.
  * The actual forest, schema, edit manager and compressor are serialized by Fluid.
  * Only the enclosing runtime/datastore/channel envelope is described here.
  * The mock supplies a disconnected DDS construction context; no collaboration or
  * summary upload/ACK is mocked in the scenario.
+ *
+ * htmlProjector invokes this before native runtime loading, including pending-state reconstruction.
+ * It preserves the source checkpoint and does not replay its op suffix. The fingerprint diagnoses
+ * incompatible reconstruction; it is not a production first-op agreement or authentication protocol.
  */
 export function buildNativeBaseline(html: string, sequenceNumber: number): NativeBaseline {
 	if (!Number.isSafeInteger(sequenceNumber) || sequenceNumber < 0) {
@@ -112,8 +83,8 @@ export function buildNativeBaseline(html: string, sequenceNumber: number): Nativ
 		// Detached initialization allocates real stable IDs. Finalize once, then
 		// serialize without a session: every live client gets a NEW local session.
 		compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-		const channelSummary = channel.getAttachSummary(true, false).summary;
-		channelSummary.tree[".attributes"] = blob(JSON.stringify(channel.attributes));
+		const channelSummary = channel.getAttachSummary(true, false);
+		addBlobToSummary(channelSummary, ".attributes", JSON.stringify(channel.attributes));
 		const metadata = {
 			summaryFormatVersion: 1,
 			summaryNumber: 0,
@@ -124,6 +95,7 @@ export function buildNativeBaseline(html: string, sequenceNumber: number): Nativ
 				minimumSequenceNumber: 0,
 				referenceSequenceNumber: sequenceNumber,
 				clientSequenceNumber: 0,
+				// eslint-disable-next-line unicorn/no-null -- Native message metadata represents an absent client as null.
 				clientId: null,
 				timestamp: 0,
 				type: "noop",
@@ -139,28 +111,35 @@ export function buildNativeBaseline(html: string, sequenceNumber: number): Nativ
 				},
 			},
 		};
-		const summary = tree({
-			".metadata": blob(JSON.stringify(metadata)),
-			".aliases": blob(JSON.stringify([[rootAlias, storeId]])),
-			".idCompressor": blob(JSON.stringify(compressor.serialize(false))),
-			".channels": tree({
-				[storeId]: tree({
-					".component": blob(
-						JSON.stringify({
-							pkg: JSON.stringify([storeType]),
-							summaryFormatVersion: 2,
-							isRootDataStore: true,
-						}),
-					),
-					".channels": tree({ [treeId]: channelSummary }),
-				}),
+		const dataStoreChannels = new SummaryTreeBuilder();
+		dataStoreChannels.addWithStats(treeId, channelSummary);
+		const dataStore = new SummaryTreeBuilder();
+		dataStore.addBlob(
+			".component",
+			JSON.stringify({
+				pkg: JSON.stringify([storeType]),
+				summaryFormatVersion: 2,
+				isRootDataStore: true,
 			}),
-		});
+		);
+		dataStore.addWithStats(".channels", dataStoreChannels);
+		const runtimeChannels = new SummaryTreeBuilder();
+		runtimeChannels.addWithStats(storeId, dataStore);
+		const runtimeSummary = new SummaryTreeBuilder();
+		runtimeSummary.addBlob(".metadata", JSON.stringify(metadata));
+		runtimeSummary.addBlob(".aliases", JSON.stringify([[rootAlias, storeId]]));
+		runtimeSummary.addBlob(".idCompressor", JSON.stringify(compressor.serialize(false)));
+		runtimeSummary.addWithStats(".channels", runtimeChannels);
+		const summary = runtimeSummary.summary;
 		const blobs = new Map<string, ArrayBuffer>();
+		// Sorted paths and content-addressed IDs make the snapshot and fingerprint deterministic.
 		const convert = (input: ISummaryTree): ISnapshotTree => {
 			const result: ISnapshotTree = { blobs: {}, trees: {} };
 			for (const key of Object.keys(input.tree).sort()) {
-				const value = input.tree[key];
+				const value: SummaryObject | undefined = input.tree[key];
+				if (value === undefined) {
+					throw new Error("A native baseline summary entry must be defined");
+				}
 				if (value.type === SummaryType.Tree) {
 					result.trees[key] = convert(value);
 				} else if (value.type === SummaryType.Blob) {
@@ -178,7 +157,12 @@ export function buildNativeBaseline(html: string, sequenceNumber: number): Nativ
 			return result;
 		};
 		const snapshot = convert(summary);
-		return { summary, snapshot, blobs, fingerprint: hash(JSON.stringify(snapshot)) };
+		return {
+			summary,
+			snapshot,
+			blobs,
+			fingerprint: createHash("sha256").update(JSON.stringify(snapshot)).digest("hex"),
+		};
 	} finally {
 		view.dispose();
 		runtime.dispose();

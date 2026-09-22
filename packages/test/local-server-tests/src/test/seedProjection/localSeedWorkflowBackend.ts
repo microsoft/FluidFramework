@@ -11,24 +11,30 @@ import {
 } from "@fluidframework/local-driver/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
-import { forward } from "./adapter.js";
-import type { ReferenceBackend } from "./backend.js";
+import { forward } from "./seedRuntimeAdapter.js";
+import type { SeedWorkflowBackend } from "./seedWorkflowBackend.js";
 
-/** Memorylicious in this reference means local-driver + one shared in-process server. */
-export function localBackend(): ReferenceBackend {
+/**
+ * Create the Memorylicious implementation of SeedWorkflowBackend: one in-process server plus local-driver.
+ * The returned backend can create multiple independent files and load multiple clients per file.
+ * Wrappers record client summary upload attempts; create() writes are deliberately not in that journal.
+ * This owns a real local service, not a mocked collaboration/summary transport; close it after each scenario.
+ */
+export function createLocalSeedBackend(): SeedWorkflowBackend {
 	const server = LocalDeltaConnectionServer.create();
 	const rawFactory = new LocalDocumentServiceFactory(server);
 	const resolver = new LocalResolver();
-	const uploads: ReferenceBackend["uploads"] = [];
+	const uploads: SeedWorkflowBackend["uploads"] = [];
 	const documentServiceFactory = forward(rawFactory, {
 		createDocumentService: async (...args) => {
 			const service = await rawFactory.createDocumentService(...args);
+			const documentUrl = await resolver.getAbsoluteUrl(service.resolvedUrl, "");
 			return forward(service, {
 				connectToStorage: async () => {
 					const storage = await service.connectToStorage();
 					return forward(storage, {
 						uploadSummaryWithContext: async (summary, context) => {
-							uploads.push({ summary, context });
+							uploads.push({ documentUrl, summary, context });
 							return storage.uploadSummaryWithContext(summary, context);
 						},
 					});
@@ -39,7 +45,7 @@ export function localBackend(): ReferenceBackend {
 	return {
 		documentServiceFactory,
 		urlResolver: resolver,
-		expectGroupOmission: true,
+		omitsUnrequestedGroupBlobs: true,
 		supportsLoadingGroups: true,
 		uploads,
 		async create(summary) {

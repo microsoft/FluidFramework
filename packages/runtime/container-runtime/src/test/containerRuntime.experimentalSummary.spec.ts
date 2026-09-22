@@ -10,7 +10,11 @@ import type {
 	IContainerContext,
 	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
-import { SummaryType, type ISummaryTree } from "@fluidframework/driver-definitions";
+import {
+	SummaryType,
+	type ISummaryTree,
+	type SummaryObject,
+} from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary, calculateStats } from "@fluidframework/runtime-utils/internal";
@@ -31,6 +35,7 @@ import {
 import { GarbageCollector } from "../gc/index.js";
 import { neverCancelledSummaryToken } from "../summary/index.js";
 
+// Verify opt-in summary contracts in the runtime itself, independent of the seed reference's app and service.
 describe("Experimental runtime summaries", () => {
 	let sandbox: Sinon.SinonSandbox;
 	let runtimes: ContainerRuntime[];
@@ -47,10 +52,22 @@ describe("Experimental runtime summaries", () => {
 		sandbox.restore();
 	});
 
+	/**
+	 * Load a real ContainerRuntime through the application-facing API with controlled storage and op submission.
+	 * The returned spies distinguish generation, upload, and submit failures; suite cleanup disposes the runtime.
+	 */
 	async function createRuntime(
 		experimentalSummaryOptions?: ExperimentalSummaryOptions,
 		attachState = AttachState.Attached,
-	) {
+	): Promise<{
+		runtime: ContainerRuntime;
+		logger: ReturnType<typeof createChildLogger>;
+		uploadSummary: Sinon.SinonStub<
+			Parameters<IContainerStorageService["uploadSummaryWithContext"]>,
+			ReturnType<IContainerStorageService["uploadSummaryWithContext"]>
+		>;
+		submitSummary: Sinon.SinonStub<[], number>;
+	}> {
 		const logger = createChildLogger({ logger: new MockLogger() });
 		const deltaManager = new MockDeltaManager();
 		deltaManager.lastMessage = {
@@ -101,6 +118,7 @@ describe("Experimental runtime summaries", () => {
 		return { runtime, logger, uploadSummary, submitSummary };
 	}
 
+	/** Create a fresh grouped application subtree so callback freshness, placement, and stats can be compared. */
 	function additionalTree(content = "checkpoint"): ISummaryTree {
 		return {
 			type: SummaryType.Tree,
@@ -114,6 +132,7 @@ describe("Experimental runtime summaries", () => {
 	const untrackedSummary = { trackState: false, runGC: false };
 
 	for (const forceFullTree of [undefined, false, true]) {
+		// Compare caller requests with the lifetime override at both native data-store and GC boundaries.
 		it(`propagates fullTree to native data stores and GC (load option ${forceFullTree})`, async () => {
 			const channels = sandbox.spy(ChannelCollection.prototype, "summarize");
 			const gc = sandbox.spy(GarbageCollector.prototype, "summarize");
@@ -131,6 +150,7 @@ describe("Experimental runtime summaries", () => {
 		});
 	}
 
+	// Mutating the caller-owned configuration after loading must not replace a validated registration or policy.
 	it("retains the load-time policy and registration even if the input object changes", async () => {
 		const channels = sandbox.spy(ChannelCollection.prototype, "summarize");
 		const summarize = sandbox.spy(() => additionalTree());
@@ -150,6 +170,7 @@ describe("Experimental runtime summaries", () => {
 		assert.deepEqual(summary.tree.application, additionalTree());
 	});
 
+	// Exercise submitSummary, not only direct summarize(), including a failed upload followed by a final retry.
 	it("forces fullTree through the summarizer submission path and its retry", async () => {
 		const channels = sandbox.spy(ChannelCollection.prototype, "summarize");
 		const gc = sandbox.spy(GarbageCollector.prototype, "summarize");
@@ -164,11 +185,14 @@ describe("Experimental runtime summaries", () => {
 			cancellationToken: neverCancelledSummaryToken,
 			latestSummaryRefSeqNum: 0,
 		};
-		assert.equal((await runtime.submitSummary(options)).stage, "generate");
-		assert.equal(
-			(await runtime.submitSummary({ ...options, fullTree: false, finalAttempt: true })).stage,
-			"submit",
-		);
+		const failed = await runtime.submitSummary(options);
+		assert.equal(failed.stage, "generate");
+		const retried = await runtime.submitSummary({
+			...options,
+			fullTree: false,
+			finalAttempt: true,
+		});
+		assert.equal(retried.stage, "submit");
 		assert.deepEqual(
 			channels.getCalls().map((call) => call.args[0]),
 			[true, true],
@@ -183,15 +207,15 @@ describe("Experimental runtime summaries", () => {
 		}
 	});
 
+	// The new callback is opt-in; neither attach nor normal summaries should gain application state by default.
 	it("does not add a root subtree by default", async () => {
 		const { runtime } = await createRuntime();
 		assert.equal(runtime.createSummary().tree.application, undefined);
-		assert.equal(
-			(await runtime.summarize(untrackedSummary)).summary.tree.application,
-			undefined,
-		);
+		const { summary } = await runtime.summarize(untrackedSummary);
+		assert.equal(summary.tree.application, undefined);
 	});
 
+	// Each summary must get a fresh checkpoint-specific root sibling, not a one-time or DDS-nested projection.
 	it("calls the callback synchronously for every attach and normal summary, preserving groupId", async () => {
 		let checkpoint = 0;
 		const summarize = sandbox.spy(() => additionalTree(String(++checkpoint)));
@@ -200,18 +224,22 @@ describe("Experimental runtime summaries", () => {
 			AttachState.Detached,
 		);
 		for (let attempt = 1; attempt <= 4; attempt++) {
-			const summary =
-				attempt <= 2
-					? runtime.createSummary()
-					: (await runtime.summarize(untrackedSummary)).summary;
+			let summary: ISummaryTree;
+			if (attempt <= 2) {
+				summary = runtime.createSummary();
+			} else {
+				const result = await runtime.summarize(untrackedSummary);
+				summary = result.summary;
+			}
 			assert.equal(summarize.callCount, attempt);
 			assert.deepEqual(summary.tree.application, additionalTree(String(attempt)));
-			const channels = summary.tree[".channels"];
-			assert(channels.type === SummaryType.Tree);
+			const channels: SummaryObject | undefined = summary.tree[".channels"];
+			assert(channels?.type === SummaryType.Tree);
 			assert.equal(channels.tree.application, undefined);
 		}
 	});
 
+	// Incremental reuse of native data must not bypass the application callback or omit its stats.
 	it("calls the callback again when native descendants are handles", async () => {
 		const nativeSummary: ISummaryTree = {
 			type: SummaryType.Tree,
@@ -241,6 +269,7 @@ describe("Experimental runtime summaries", () => {
 		}
 	});
 
+	// Summary accounting must include all projection descendants and actual encoded byte lengths.
 	it("accounts for nested trees and both UTF-8 and binary blob sizes", async () => {
 		const subtree = additionalTree("checkpoint \u{1F30D}");
 		subtree.tree.nested = {
@@ -287,6 +316,7 @@ describe("Experimental runtime summaries", () => {
 		"percent%",
 		"fragment#",
 	]) {
+		// Reject ambiguous/reserved registrations before invoking application code or generating any summary.
 		it(`rejects reserved or invalid root key ${JSON.stringify(key)} at load time`, async () => {
 			const summarize = sandbox.spy(() => additionalTree());
 			await assert.rejects(
@@ -297,6 +327,7 @@ describe("Experimental runtime summaries", () => {
 		});
 	}
 
+	// A future native root entry added after load-time validation must still win over a colliding registration.
 	it("rejects collisions with native root entries without overwriting or calling the callback", async () => {
 		// Simulate a native entry added in a future runtime version after key validation.
 		const nativeStatePrototype = ContainerRuntime.prototype as unknown as {
@@ -320,6 +351,7 @@ describe("Experimental runtime summaries", () => {
 		assert.equal(summarize.callCount, 0);
 	});
 
+	// Neither summary entry point may swallow a failed projection or return success with missing app content.
 	it("propagates callback failures from attach and normal summaries", async () => {
 		const failure = new Error("Cannot read checkpoint");
 		const { runtime } = await createRuntime({
@@ -337,6 +369,7 @@ describe("Experimental runtime summaries", () => {
 		await assert.rejects(runtime.summarize(untrackedSummary), (error) => error === failure);
 	});
 
+	// A projection error must abort before upload/submission; retry must run the callback again rather than reuse it.
 	it("does not upload a failed callback's summary, and invokes it again on retry", async () => {
 		let attempts = 0;
 		const { runtime, logger, uploadSummary, submitSummary } = await createRuntime({
@@ -360,12 +393,14 @@ describe("Experimental runtime summaries", () => {
 		assert.match(failed.error?.message ?? "", /Cannot read checkpoint/);
 		assert.equal(uploadSummary.callCount, 0);
 		assert.equal(submitSummary.callCount, 0);
-		assert.equal((await runtime.submitSummary(options)).stage, "submit");
+		const retried = await runtime.submitSummary(options);
+		assert.equal(retried.stage, "submit");
 		assert.equal(attempts, 2);
 		assert.equal(uploadSummary.callCount, 1);
 		assert.equal(submitSummary.callCount, 1);
 	});
 
+	// Runtime validation protects JS or mistyped callers from promises entering a synchronous summary contract.
 	it("rejects async callbacks rather than silently emitting an incomplete subtree", async () => {
 		const { runtime } = await createRuntime({
 			additionalRootTree: {

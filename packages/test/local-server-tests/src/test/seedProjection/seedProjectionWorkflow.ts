@@ -11,7 +11,12 @@ import {
 	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { SummaryType, type ISummaryTree } from "@fluidframework/driver-definitions";
+import {
+	SummaryType,
+	type ISnapshotTree,
+	type ISummaryTree,
+	type SummaryObject,
+} from "@fluidframework/driver-definitions";
 import {
 	createSummarizerCore,
 	createTestConfigProvider,
@@ -22,19 +27,26 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
-import { forward } from "./adapter.js";
 import {
-	applicationFactory,
+	codeDetails,
+	createSeedSummary,
+	projectionGroup,
+	projectionKey,
+	readApplicationProjection,
+} from "./externalSeedFile.js";
+import { HtmlElement, HtmlText, viewHtml } from "./htmlTreeSchema.js";
+import {
+	sampleRuntimeFactory,
 	type AppObservation,
 	type HtmlEntryPoint,
-} from "./application.js";
-import type { ReferenceBackend } from "./backend.js";
-import { codeDetails, externalSeed, projectionGroup, projectionKey } from "./baseline.js";
-import { HtmlElement, HtmlText, viewHtml } from "./html.js";
+} from "./sampleRuntimeFactory.js";
+import { forward } from "./seedRuntimeAdapter.js";
+import type { SeedWorkflowBackend } from "./seedWorkflowBackend.js";
 
 export const exampleHtml =
 	'<div class="document"><p id="first">Hello</p><p id="second">World</p></div>';
 
+/** Select a known fixture paragraph, failing if loading or prior edits changed its expected structure. */
 function paragraph(app: HtmlEntryPoint, index: number): HtmlElement {
 	const root = app.view.root[0];
 	assert(root instanceof HtmlElement);
@@ -43,12 +55,14 @@ function paragraph(app: HtmlEntryPoint, index: number): HtmlElement {
 	return result;
 }
 
+/** Select a fixture text node so concurrent and pending-edit tests mutate the actual collaborative DDS. */
 function text(app: HtmlEntryPoint, index: number): HtmlText {
 	const node = paragraph(app, index).children[0];
 	assert(node instanceof HtmlText);
 	return node;
 }
 
+/** Validate recursively that a seed-loaded runtime never references virtual native paths through handles. */
 function assertFull(summary: ISummaryTree): void {
 	for (const value of Object.values(summary.tree)) {
 		assert.notEqual(
@@ -62,6 +76,7 @@ function assertFull(summary: ISummaryTree): void {
 	}
 }
 
+/** Detect native handle reuse after graduation, proving the ordinary incremental-summary path remains enabled. */
 function hasHandle(summary: ISummaryTree): boolean {
 	return Object.values(summary.tree).some(
 		(entry) =>
@@ -70,19 +85,55 @@ function hasHandle(summary: ISummaryTree): boolean {
 	);
 }
 
+/** Validate the callback's in-memory subtree shape/group and return its HTML for checkpoint comparisons. */
 function summaryHtml(summary: ISummaryTree): string {
-	const subtree = summary.tree[projectionKey];
-	assert.equal(subtree.type, SummaryType.Tree);
-	assert(subtree.type === SummaryType.Tree);
+	const subtree: SummaryObject | undefined = summary.tree[projectionKey];
+	assert(subtree?.type === SummaryType.Tree);
 	assert.equal(subtree.groupId, projectionGroup);
-	const content = subtree.tree["document.html"];
-	assert(content.type === SummaryType.Blob);
-	assert.equal(typeof content.content, "string");
-	return content.content as string;
+	const content: SummaryObject | undefined = subtree.tree["document.html"];
+	assert(content?.type === SummaryType.Blob);
+	assert(typeof content.content === "string");
+	return content.content;
 }
 
-/** Common client plumbing; backend/auth/URL/server details remain outside this file. */
-export function referenceSession(backend: ReferenceBackend, useSnapshotApi = true) {
+/** Test-only client orchestration and observations used by the lifecycle and pending-state scenarios. */
+export interface SeedTestSession {
+	/** Coordinates real client queues and waits for convergence, rather than mocking op delivery. */
+	readonly tracker: LoaderContainerTracker;
+	/** Completed native loads and their original/projected contexts, in load-observation order. */
+	readonly observations: AppObservation[];
+	/** Construct a loader, optionally forbidding materialization or seed-body reads during restore. */
+	makeLoader(allowProjection?: boolean, denySeedBodyReads?: boolean): Loader;
+	/** Enroll a container in synchronization and cleanup, including separately created summarizers. */
+	track(container: IContainer): IContainer;
+	/** Count submitted model/runtime batch messages to detect initialization writes merely on open. */
+	readonly modelWrites: number;
+	/** Count callback attempts, including failures and summaries that reuse native handles. */
+	readonly projectionCalls: number;
+	/** Summarizer checkpoint observed by the most recent application projection callback. */
+	readonly projectionCheckpoint: number | undefined;
+	/** Make exactly the next projection callback throw before any upload is possible. */
+	failNextProjection(): void;
+	/** Open a file/version or restore pending state with a newly constructed loader. */
+	load(
+		url: string,
+		allowProjection?: boolean,
+		version?: string,
+		pending?: string,
+	): Promise<IContainer>;
+	/** Dispose all tracked containers and coordination listeners, leaving backend shutdown to the caller. */
+	close(): void;
+}
+
+/**
+ * Create real client loaders plus test-only observations, queue coordination, and failure injection.
+ * This harness measures write-on-open, projection checkpoints, and restoration; it does not simulate
+ * storage or ACKs. Backend/auth/URL/server details remain outside this file. Always close the session.
+ */
+export function referenceSession(
+	backend: SeedWorkflowBackend,
+	useSnapshotApi = true,
+): SeedTestSession {
 	const tracker = new LoaderContainerTracker(true);
 	const observations: AppObservation[] = [];
 	const containers: IContainer[] = [];
@@ -90,8 +141,9 @@ export function referenceSession(backend: ReferenceBackend, useSnapshotApi = tru
 	let failProjection = false;
 	let projectionCalls = 0;
 	let projectionCheckpoint: number | undefined;
+	/** Wire the sample runtime to the backend, optionally denying source reads to prove offline reconstruction. */
 	const makeLoader = (allowProjection = true, denySeedBodyReads = false): Loader => {
-		const appFactory = applicationFactory({
+		const appFactory = sampleRuntimeFactory({
 			allowProjection,
 			observe: (observation) => observations.push(observation),
 			beforeProjection: (checkpoint) => {
@@ -107,7 +159,7 @@ export function referenceSession(backend: ReferenceBackend, useSnapshotApi = tru
 			get IRuntimeFactory() {
 				return this;
 			},
-			instantiateRuntime: (context, existing) =>
+			instantiateRuntime: async (context, existing) =>
 				appFactory.instantiateRuntime(
 					forward(context, {
 						storage:
@@ -145,6 +197,7 @@ export function referenceSession(backend: ReferenceBackend, useSnapshotApi = tru
 			}),
 		});
 	};
+	/** Register interactive and summarizer containers for synchronization and deterministic cleanup. */
 	const track = (container: IContainer): IContainer => {
 		containers.push(container);
 		tracker.addContainer(container);
@@ -155,19 +208,26 @@ export function referenceSession(backend: ReferenceBackend, useSnapshotApi = tru
 		observations,
 		makeLoader,
 		track,
-		get modelWrites() {
+		get modelWrites(): number {
 			return modelWrites;
 		},
-		get projectionCalls() {
+		get projectionCalls(): number {
 			return projectionCalls;
 		},
-		get projectionCheckpoint() {
+		get projectionCheckpoint(): number | undefined {
 			return projectionCheckpoint;
 		},
-		failNextProjection: () => {
+		/** Inject one callback failure so the workflow can verify abort-before-upload and a successful retry. */
+		failNextProjection: (): void => {
 			failProjection = true;
 		},
-		async load(url: string, allowProjection = true, version?: string, pending?: string) {
+		/** Load a chosen stored version or restore pending state through a new, independently constructed loader. */
+		async load(
+			url: string,
+			allowProjection = true,
+			version?: string,
+			pending?: string,
+		): Promise<IContainer> {
 			return track(
 				await makeLoader(allowProjection, pending !== undefined).resolve(
 					{
@@ -178,7 +238,8 @@ export function referenceSession(backend: ReferenceBackend, useSnapshotApi = tru
 				),
 			);
 		},
-		close() {
+		/** Dispose every tracked client and reset synchronization listeners without shutting down the backend. */
+		close(): void {
 			for (const container of containers) {
 				if (!container.closed) container.close();
 				container.dispose();
@@ -188,26 +249,41 @@ export function referenceSession(backend: ReferenceBackend, useSnapshotApi = tru
 	};
 }
 
+/**
+ * Inspect a persisted seed or native summary independently of client overlays.
+ * Validate app-only reading, retained blob IDs, optional initial body omission, and explicit group
+ * retrieval at the same checkpoint. Only assert stronger storage behavior when the backend advertises it.
+ */
 async function verifyGroupedProjection(
-	backend: ReferenceBackend,
+	backend: SeedWorkflowBackend,
 	url: string,
 	version: string | undefined,
 	expectedHtml: string,
 ): Promise<void> {
 	const initial = await backend.inspect(url, version);
 	try {
-		const projectionTree = initial.snapshot.snapshotTree.trees[projectionKey];
+		const projectionTree: ISnapshotTree | undefined =
+			initial.snapshot.snapshotTree.trees[projectionKey];
+		assert(projectionTree !== undefined, "Persisted application projection must exist");
 		if (backend.supportsLoadingGroups) assert.equal(projectionTree.groupId, projectionGroup);
-		const htmlId = projectionTree.blobs["document.html"];
+		const htmlId: string | undefined = projectionTree.blobs["document.html"];
 		assert(htmlId !== undefined, "ID manifest must survive body omission");
-		if (backend.expectGroupOmission) {
+		if (backend.omitsUnrequestedGroupBlobs) {
 			assert(!initial.snapshot.blobContents.has(htmlId));
 		}
-		assert.equal(Buffer.from(await initial.readBlob(htmlId)).toString(), expectedHtml);
+		const projection = await readApplicationProjection(
+			initial.snapshot.snapshotTree,
+			initial.readBlob,
+		);
+		assert.equal(projection.html, expectedHtml);
 		if (!backend.supportsLoadingGroups) return;
 		const grouped = await backend.inspect(url, version, [projectionGroup]);
 		try {
-			const id = grouped.snapshot.snapshotTree.trees[projectionKey].blobs["document.html"];
+			const groupedProjection: ISnapshotTree | undefined =
+				grouped.snapshot.snapshotTree.trees[projectionKey];
+			assert(groupedProjection !== undefined, "Group fetch must include the projection tree");
+			const id: string | undefined = groupedProjection.blobs["document.html"];
+			assert(id !== undefined, "Group fetch must retain the HTML blob ID");
 			const bytes = grouped.snapshot.blobContents.get(id);
 			assert(bytes !== undefined, "Explicit group retrieval must return projection contents");
 			assert.equal(Buffer.from(bytes).toString(), expectedHtml);
@@ -221,13 +297,16 @@ async function verifyGroupedProjection(
 }
 
 /**
- * Entire behavior is real: external storage creation, loader, native runtimes,
- * SharedTree ops/rebase, summary upload, service ACK, and fresh native loading.
+ * Exercise external creation, independent seed loads, concurrent editing, graduation, and native reload.
+ * Validate no write-on-open, compatible genesis with distinct live sessions, real op convergence,
+ * callback failure/retry and ACKed full summaries, same-checkpoint projections, and native handle reuse.
+ * Storage creation, loaders, DDSs, sequencing, uploads, and ACKs are real; only observations and fault
+ * injection are test harness code. Pass a fresh backend and close it after this workflow returns.
  */
-export async function runReferenceWorkflow(backend: ReferenceBackend): Promise<void> {
+export async function runReferenceWorkflow(backend: SeedWorkflowBackend): Promise<void> {
 	const session = referenceSession(backend);
 	try {
-		const url = await backend.create(externalSeed(exampleHtml));
+		const url = await backend.create(createSeedSummary(exampleHtml));
 		const seedInspection = await backend.inspect(url);
 		const seedVersion = seedInspection.snapshot.snapshotTree.id;
 		seedInspection.dispose();
@@ -311,6 +390,7 @@ export async function runReferenceWorkflow(backend: ReferenceBackend): Promise<v
 		);
 		assert.equal(backend.uploads.length, 0, "Failed projection must abort before upload");
 		let accepted = await summarizeNow(summarizer, "graduate the projected baseline");
+		assert.equal(backend.uploads[0].documentUrl, url);
 		assert.equal(
 			backend.uploads[0].context.ackHandle,
 			summarizerObservation.original.getLoadedFromVersion()?.id,
@@ -372,9 +452,9 @@ export async function runReferenceWorkflow(backend: ReferenceBackend): Promise<v
 		const repeated = await summarizeNow(native.summarizer, "repeat without native changes");
 		assert.equal(session.projectionCalls, callsBeforeRepeat + 1);
 		assert.equal(summaryHtml(repeated.summaryTree), viewHtml(freshApp.view));
-		const channels = repeated.summaryTree.tree[".channels"];
+		const channels: SummaryObject | undefined = repeated.summaryTree.tree[".channels"];
 		assert(
-			channels.type === SummaryType.Tree && hasHandle(channels),
+			channels?.type === SummaryType.Tree && hasHandle(channels),
 			"Fresh native runtimes should retain normal native handle reuse",
 		);
 	} finally {
@@ -382,13 +462,19 @@ export async function runReferenceWorkflow(backend: ReferenceBackend): Promise<v
 	}
 }
 
+/**
+ * Load two seed clients, disconnect one, save its pending edit, and reconstruct it in a fresh loader.
+ * Deny retained seed-body storage reads during restoration to prove source dependencies, not virtual
+ * blobs or a live version object, suffice. Validate the same fingerprint, normal replay, and convergence.
+ * Cover both initial snapshot APIs; the loader's restored representation is ISnapshot in either case.
+ */
 export async function runPendingRestoreWorkflow(
-	backend: ReferenceBackend,
+	backend: SeedWorkflowBackend,
 	useSnapshotApi = true,
 ): Promise<void> {
 	const session = referenceSession(backend, useSnapshotApi);
 	try {
-		const url = await backend.create(externalSeed(exampleHtml));
+		const url = await backend.create(createSeedSummary(exampleHtml));
 		const a = await session.load(url);
 		const b = await session.load(url);
 		await session.tracker.ensureSynchronized();

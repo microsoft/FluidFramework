@@ -769,7 +769,7 @@ type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSeq
  * Experimental, per-runtime summary customization supplied by the application runtime factory.
  * These options are not persisted and must be supplied again when loading another runtime,
  * including a summarizer client.
- * @internal
+ * @legacy @beta
  */
 export interface ExperimentalSummaryOptions {
 	/**
@@ -835,7 +835,6 @@ export interface LoadContainerRuntimeParams {
 	runtimeOptions?: IContainerRuntimeOptions;
 	/**
 	 * Experimental summary behavior, captured at load time for this runtime's lifetime.
-	 * @internal
 	 */
 	experimentalSummaryOptions?: ExperimentalSummaryOptions;
 	/**
@@ -4406,13 +4405,14 @@ export class ContainerRuntime
 	 * so until we can provide a proper API for their scenario, we need to ensure this function doesn't change.
 	 */
 	private async summarizeInternal(
-		fullTree: boolean,
+		requestedFullTree: boolean,
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeInternalResult> {
 		// Enforce the load-time policy at the native-tree boundary as well as summarize(), so
 		// every path through the root summarizer passes fullTree down to data stores and GC.
-		fullTree ||= this.experimentalSummaryOptions?.forceFullTree === true;
+		const fullTree =
+			requestedFullTree || this.experimentalSummaryOptions?.forceFullTree === true;
 		const summarizeResult = await this.channelCollection.summarize(
 			fullTree,
 			trackState,

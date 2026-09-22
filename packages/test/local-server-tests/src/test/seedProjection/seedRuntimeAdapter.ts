@@ -10,7 +10,8 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
-import type { NativeBaseline } from "./baseline.js";
+import type { ApplicationProjection } from "./externalSeedFile.js";
+import type { NativeBaseline } from "./nativeSeedBaseline.js";
 
 /**
  * Forward getters against their real owner and bind methods to that owner.
@@ -20,39 +21,44 @@ import type { NativeBaseline } from "./baseline.js";
  */
 export function forward<T extends object>(source: T, overrides: Partial<T>): T {
 	return new Proxy(Object.create(null) as T, {
-		get: (_target, key) => {
+		get: (_target, key): unknown => {
 			if (Object.hasOwn(overrides, key)) {
-				return Reflect.get(overrides, key);
+				const override: unknown = Reflect.get(overrides, key);
+				return override;
 			}
 			const value: unknown = Reflect.get(source, key, source);
-			return typeof value === "function" ? value.bind(source) : value;
+			const forwarded: unknown = typeof value === "function" ? value.bind(source) : value;
+			return forwarded;
 		},
-		has: (_target, key) => key in overrides || key in source,
+		has: (_target, key): boolean => key in overrides || key in source,
 	});
 }
 
-export interface SeedInput {
-	/** Original persisted IDs bind retained bytes to this source snapshot. */
-	manifestId: string;
-	htmlId: string;
-	manifest: string;
-	html: string;
-}
-
+/** Reconstruction identity retained with pending state to detect a different source or codec. */
 export interface Provenance {
+	/** Versioned application format identifying the materialization rules. */
 	format: string;
+	/** Original persisted snapshot version, when the loader exposes one. */
 	sourceVersion?: string;
+	/** Source checkpoint before the loader applies the sequenced operation suffix. */
 	sourceSequenceNumber: number;
+	/** NativeBaseline's 64-hex SHA-256 identity; diagnostic, not a consensus protocol. */
 	fingerprint: string;
 }
 
+/** Runtime-owned pending-state envelope; loader caches keep their original, unprojected snapshot. */
 interface PendingProjection {
+	/** Version discriminator separating this envelope from ordinary runtime pending state. */
 	type: "seed-projection-pending/1";
+	/** Expected materialization identity when the previous runtime loaded a seed. */
 	provenance?: Provenance;
-	seed?: SeedInput;
+	/** Source bytes needed when a restored loader snapshot omitted the projection's blob bodies. */
+	seed?: ApplicationProjection;
+	/** Native runtime pending state, forwarded unchanged to the delegated runtime. */
 	runtime: unknown;
 }
 
+/** Recognize the reference envelope before unwrapping native pending state for runtime loading. */
 function isPendingProjection(value: unknown): value is PendingProjection {
 	return (
 		typeof value === "object" &&
@@ -62,29 +68,51 @@ function isPendingProjection(value: unknown): value is PendingProjection {
 	);
 }
 
+/**
+ * Application-owned codec used by seedRuntimeFactory before normal native runtime loading.
+ * This reference uses an HTML payload; this is not a proposed generic SDK codec interface.
+ */
 export interface Projector {
+	/** Versioned format governing accepted seed input and deterministic construction. */
 	format: string;
+	/** Recognize native state that must load normally rather than being regenerated from a projection. */
 	isNative(context: IContainerContext): boolean;
-	readSeed(context: IContainerContext, retained?: SeedInput): Promise<SeedInput>;
-	materialize(seed: SeedInput, sequenceNumber: number): NativeBaseline;
+	/** Read source bytes, optionally reusing retained bytes whose persisted blob IDs still match. */
+	readSeed(
+		context: IContainerContext,
+		retained?: ApplicationProjection,
+	): Promise<ApplicationProjection>;
+	/** Pure deterministic materialization for fixed seed/checkpoint/codec; never replay ops or allocate live sessions. */
+	materialize(seed: ApplicationProjection, sequenceNumber: number): NativeBaseline;
 }
 
+/** Both context views and the decision handed to the application's native runtime factory. */
 export interface ProjectionLoad {
+	/** Actual loader-owned context; its source snapshot, checkpoint, storage identity, and ops remain unchanged. */
 	original: IContainerContext;
+	/** Runtime-facing context, with a coherent native snapshot/storage overlay only when projection was needed. */
 	context: IContainerContext;
+	/** Whether this runtime materialized a seed and therefore requires full structural summaries for its lifetime. */
 	projected: boolean;
+	/** Reconstruction identity retained or produced by this load, when available. */
 	provenance?: Provenance;
 }
 
 /**
- * Factory-level adapter. It neither imports ContainerRuntime nor changes loader
- * caches, protocol, checkpoint, version, op handling, or pending replay order.
+ * Wrap an application runtime factory so it can load an external seed as coherent native state.
+ * Read and deterministically materialize application bytes before invoking the native delegate;
+ * forward real context behavior while overlaying only runtime-facing snapshots and blob reads.
+ * This adapter neither imports ContainerRuntime nor changes loader caches, protocol, checkpoint,
+ * version, op handling, or pending replay order. Pending restoration rebuilds the same overlay.
+ * The delegate must enforce full structural summaries for loads marked projected.
  */
 export function seedRuntimeFactory(
 	projector: Projector,
 	delegate: (load: ProjectionLoad, existing: boolean) => Promise<IRuntime>,
 	options: {
+		/** Set false to prove native reload works without a seed-materialization fallback. */
 		allowProjection?: boolean;
+		/** Test observation hook after adaptation and before invoking the native runtime factory. */
 		observe?: (load: ProjectionLoad, original: IContainerContext) => void;
 	} = {},
 ): IRuntimeFactory {
@@ -104,7 +132,7 @@ export function seedRuntimeFactory(
 					pending === undefined ? original.pendingLocalState : pending.runtime,
 			});
 			let provenance = pending?.provenance;
-			let seed: SeedInput | undefined;
+			let seed: ApplicationProjection | undefined;
 			const projected = !projector.isNative(original);
 			if (projected) {
 				if (options.allowProjection === false) {
@@ -152,6 +180,7 @@ export function seedRuntimeFactory(
 					return projectTree(source, fetchedBaseline);
 				};
 				const baseSnapshot = projectTree(original.baseSnapshot, baseline);
+				const getSnapshot = original.storage.getSnapshot?.bind(original.storage);
 				const storage = forward(original.storage, {
 					readBlob: async (id) => virtualBlobs.get(id) ?? original.storage.readBlob(id),
 					getSnapshotTree: async (...args) => {
@@ -170,16 +199,18 @@ export function seedRuntimeFactory(
 						return projectFetched(source, attributes.sequenceNumber);
 					},
 					getSnapshot:
-						original.storage.getSnapshot === undefined
+						getSnapshot === undefined
 							? undefined
 							: async (fetchOptions) => {
-									const source = await original.storage.getSnapshot!(fetchOptions);
+									const source = await getSnapshot(fetchOptions);
 									// Native DDSs in this fixture are ungrouped. A group-specific response
 									// is an app-owned sidecar fetch, potentially a stripped tree, NOT a
 									// replacement native base. Never overwrite it with the initial tree.
+									const loadingGroupIds = fetchOptions?.loadingGroupIds;
 									if (
-										fetchOptions?.loadingGroupIds?.length &&
-										!fetchOptions.loadingGroupIds.includes("")
+										loadingGroupIds !== undefined &&
+										loadingGroupIds.length > 0 &&
+										!loadingGroupIds.includes("")
 									)
 										return source;
 									if (

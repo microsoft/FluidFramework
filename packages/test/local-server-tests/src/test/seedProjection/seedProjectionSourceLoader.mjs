@@ -3,9 +3,16 @@
  * Licensed under the MIT License.
  */
 
-// Optional Node 24 source-validation fallback for an already-installed checkout
-// whose generated lib/ files are stale. Uses the actual TS compiler and Mocha;
-// it does NOT mock Fluid implementations or replace normal builds/API checks.
+/* eslint-disable @typescript-eslint/explicit-function-return-type -- This preloader runs as JavaScript before TypeScript loading is installed. */
+
+/**
+ * Optional Node 24 test-launcher preloader for an installed checkout with stale generated lib/ files.
+ * Invoke via node --import (see README.md); no application factory, external creator, or storage service
+ * imports this module. It only selects current workspace TS sources, compiles in memory, and registers
+ * Node resolution/loading hooks for the requested Mocha tests. Server packages stay real installed packages.
+ * SEED_TYPECHECK=1 additionally checks the changed source surface. This is not production workflow code
+ * or a substitute for normal builds, lint, API reports, or CI, and it writes no generated artifacts.
+ */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -24,6 +31,11 @@ if (Number.parseInt(ts.version, 10) < 6) {
 	);
 }
 const packages = new Map();
+/**
+ * Index client workspace package roots/manifests for import resolution, stopping at each package boundary.
+ * Skip generated and dependency directories. This scans metadata only; it neither loads Fluid documents
+ * nor discovers application data. Called once before compiling the command-line test roots.
+ */
 function scan(dir) {
 	if (fs.existsSync(path.join(dir, "package.json"))) {
 		const p = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
@@ -40,16 +52,18 @@ function scan(dir) {
 	}
 }
 scan(path.join(root, "packages"));
+/** Select a compatible ESM/default/Node export target from a package's conditional-export entry. */
 function choose(entry) {
 	if (typeof entry === "string") return entry;
 	if (!entry) return undefined;
 	return choose(entry.import) ?? choose(entry.default) ?? choose(entry.node);
 }
+/** Map a client workspace export to an existing TS source; leave other imports to ordinary Node resolution. */
 function workspaceSource(specifier) {
 	const [scope, name, ...sub] = specifier.split("/");
 	const pack = packages.get(`${scope}/${name}`);
 	if (!pack) return undefined;
-	const key = sub.length ? `./${sub.join("/")}` : ".";
+	const key = sub.length > 0 ? `./${sub.join("/")}` : ".";
 	const entry =
 		choose(pack.p.exports?.[key]) ?? (sub.length === 0 ? "./lib/index.js" : undefined);
 	if (!entry) return undefined;
@@ -89,7 +103,7 @@ host.resolveModuleNames = (names, containingFile) =>
 const program = ts.createProgram(roots, options, host);
 const outputs = new Map();
 program.emit(undefined, (fileName, text, _bom, _error, sourceFiles) => {
-	if (/\.(?:c|m)?js$/.test(fileName) && sourceFiles?.length === 1)
+	if (/\.[cm]?js$/.test(fileName) && sourceFiles?.length === 1)
 		outputs.set(path.normalize(sourceFiles[0].fileName), text);
 });
 if (process.env.SEED_TYPECHECK === "1") {
@@ -108,16 +122,17 @@ if (process.env.SEED_TYPECHECK === "1") {
 			getNewLine: () => "\n",
 		}),
 	);
-	if (diagnostics.length) process.exit(1);
+	if (diagnostics.length > 0) throw new Error("Targeted source typecheck failed.");
 	console.log("Targeted source typecheck passed (reference and changed runtime files).");
 }
 registerHooks({
+	/** Redirect workspace package imports and their relative JS paths to the current TS implementation. */
 	resolve(specifier, context, next) {
 		if (specifier.startsWith("@")) {
 			const source = workspaceSource(specifier);
 			if (source) return { url: pathToFileURL(source).href, shortCircuit: true };
 		}
-		if (/\.(?:c|m)?js$/.test(specifier) && context.parentURL?.startsWith("file:")) {
+		if (/\.[cm]?js$/.test(specifier) && context.parentURL?.startsWith("file:")) {
 			const url = new URL(specifier, context.parentURL);
 			const source = fileURLToPath(url).replace(/\.([cm]?)js$/, ".$1ts");
 			if (source.startsWith(root) && fs.existsSync(source) && !source.includes("node_modules"))
@@ -125,12 +140,9 @@ registerHooks({
 		}
 		return next(specifier, context);
 	},
+	/** Supply in-memory compiled JS for redirected sources; all other module loading remains Node-owned. */
 	load(url, context, next) {
-		if (
-			url.startsWith("file:") &&
-			/\.(?:c|m)?ts$/.test(url) &&
-			!url.includes("/node_modules/")
-		) {
+		if (url.startsWith("file:") && /\.[cm]?ts$/.test(url) && !url.includes("/node_modules/")) {
 			const fileName = fileURLToPath(url);
 			const source =
 				outputs.get(path.normalize(fileName)) ??

@@ -10,23 +10,26 @@ import type {
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
 
-import { forward, seedRuntimeFactory } from "./adapter.js";
-import { htmlProjector } from "./application.js";
-import { buildNativeBaseline, projectionKey } from "./baseline.js";
-import { format } from "./html.js";
+import { projectionKey } from "./externalSeedFile.js";
+import { format } from "./htmlSeedFormat.js";
+import { buildNativeBaseline } from "./nativeSeedBaseline.js";
+import { htmlProjector } from "./sampleRuntimeFactory.js";
+import { forward, seedRuntimeFactory } from "./seedRuntimeAdapter.js";
 
+// Validate context forwarding and the decisions made before any native runtime can load.
 describe("Seed projection reference: forwarding", () => {
+	// Overrides must not snapshot live loader state or change the receiver of inherited/future methods.
 	it("preserves live prototype getters, method receivers, and unknown capabilities", () => {
 		const capability = Symbol("future loader capability");
 		class Context {
 			value = 1;
-			get live() {
+			get live(): number {
 				return this.value;
 			}
-			method() {
+			method(): number {
 				return this.value;
 			}
-			[capability]() {
+			[capability](): number {
 				return this.value + 1;
 			}
 		}
@@ -42,6 +45,7 @@ describe("Seed projection reference: forwarding", () => {
 		assert.equal(original.value, 2);
 	});
 
+	// The forwarding facade must remain usable even when loader-owned properties cannot be redefined.
 	it("can overlay frozen source properties without mutating the source", () => {
 		const source: Readonly<{ baseSnapshot: string; other: string }> = Object.freeze({
 			baseSnapshot: "seed",
@@ -53,6 +57,7 @@ describe("Seed projection reference: forwarding", () => {
 		assert.equal(facade.other, "preserved");
 	});
 
+	// Identical visible HTML at another checkpoint must not be mistaken for the same native genesis.
 	it("binds the canonical fingerprint to the source checkpoint", () => {
 		assert.notEqual(
 			buildNativeBaseline("<p>a</p>", 0).fingerprint,
@@ -62,6 +67,7 @@ describe("Seed projection reference: forwarding", () => {
 		assert.throws(() => buildNativeBaseline("<p>a</p>", Number.NaN));
 	});
 
+	// Reject incompatible reconstruction before a native delegate could interpret pending operations.
 	it("rejects a pending-state fingerprint mismatch before native runtime creation", async () => {
 		const source = {
 			baseSnapshot: {
@@ -92,6 +98,7 @@ describe("Seed projection reference: forwarding", () => {
 		await assert.rejects(factory.instantiateRuntime(source, true), /fingerprint/);
 	});
 
+	// A graduated snapshot must load normally, even if materialization has explicitly been disabled.
 	it("bypasses projection and unwraps pending state when the loader base is already native", async () => {
 		const inner = { savedRuntimeState: true };
 		const source = {
