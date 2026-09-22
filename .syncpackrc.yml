@@ -202,6 +202,14 @@ versionGroups:
       - "**"
     isIgnored: true
 
+  - label: "Allow @fluidframework/react to support both React 18 and React 19"
+    dependencies:
+      - "@types/react-19"
+      - "react"
+    packages:
+      - "@fluidframework/react"
+    isIgnored: true
+
   # eslint-config-fluid is an independent workspace linked via the link: protocol,
   # which syncpack cannot resolve. Ignore it from version matching.
   - label: "Ignore eslint-config-fluid (independent workspace with link: protocol)"
