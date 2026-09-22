@@ -22,12 +22,20 @@ import { readLines } from "../../library/text.js";
  */
 export interface TarballMetadata {
 	/**
-	 * The npm package name (for example `@fluidframework/core-utils`).
+	 * The npm package name.
+	 *
+	 * @example
+	 *
+	 * `@fluidframework/core-utils`
 	 */
 	readonly name: string;
 
 	/**
-	 * The package version (for example `2.0.0`).
+	 * The package version.
+	 *
+	 * @example
+	 *
+	 * `2.0.0`
 	 */
 	readonly version: string;
 
@@ -37,7 +45,11 @@ export interface TarballMetadata {
 	readonly filePath: string;
 
 	/**
-	 * The tarball file name (for example `fluidframework-core-utils-2.0.0.tgz`).
+	 * The tarball file name.
+	 *
+	 * @example
+	 *
+	 * `fluidframework-core-utils-2.0.0.tgz`
 	 */
 	readonly fileName: string;
 }
@@ -53,7 +65,7 @@ const publishPreflightConcurrency = 10;
 export interface PublishTarballsOptions {
 	/**
 	 * Number of times to retry a failed publish after the first attempt.
-	 * Must be greater than or equal to 0.
+	 * Must be a finite integer greater than or equal to 0.
 	 */
 	readonly retry: number;
 
@@ -82,8 +94,20 @@ export interface PublishTarballsOptions {
 	readonly onPublishAttempt?: (tarball: TarballMetadata, attempt: number) => void;
 
 	/**
+	 * Optional callback invoked when a publish attempt fails, but a subsequent registry recheck
+	 * reveals that the package version is already published.
+	 *
+	 * This can happen when a concurrent publisher wins the race to publish the same version, or
+	 * when this run's own `npm publish` call actually succeeded but its response was lost.
+	 *
+	 * @param tarball - The tarball whose failed publish attempt was recovered.
+	 */
+	readonly onPublishRecovered?: (tarball: TarballMetadata) => void;
+
+	/**
 	 * Maximum number of initial registry preflight checks to execute concurrently.
-	 * Defaults to `10` when omitted.
+	 *
+	 * @defaultValue {@link publishPreflightConcurrency}
 	 */
 	readonly preflightConcurrency?: number;
 }
@@ -221,6 +245,10 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 			publish: async (tarball) => publishTarball(tarball, this.logger, publishArgs),
 			onPublishAttempt: (tarball, attempt) =>
 				this.info(`Publishing ${tarball.fileName}, attempt ${attempt}`),
+			onPublishRecovered: (tarball) =>
+				this.warning(
+					`Publish attempt for ${tarball.fileName} failed, but the registry now shows it is published; treating as already published.`,
+				),
 		});
 
 		for (const { status, tarball: toPublish, tryCount } of results) {
@@ -322,8 +350,8 @@ export function getTarballsToPublish(
  * Executes publish orchestration for a list of tarballs.
  *
  * Runs initial registry preflight checks concurrently up to `options.preflightConcurrency`
- * (default 10) to determine which packages are already published, then publishes unpublished
- * packages sequentially in the provided dependency order.
+ * to determine which packages are already published, then publishes unpublished packages
+ * sequentially in the provided dependency order.
  *
  * If a publish attempt fails, the registry is checked again to recover from lost responses
  * or concurrent publication. If a tarball exhausts retries with an unrecoverable error,
@@ -338,7 +366,14 @@ export async function publishTarballsInOrder(
 	tarballs: readonly TarballMetadata[],
 	options: PublishTarballsOptions,
 ): Promise<PublishTarballResult[]> {
-	const { isPublished, onPublishAttempt, preflightConcurrency, publish, retry } = options;
+	const {
+		isPublished,
+		onPublishAttempt,
+		onPublishRecovered,
+		preflightConcurrency,
+		publish,
+		retry,
+	} = options;
 	if (retry < 0) {
 		throw new RangeError(`retry must be greater than or equal to 0`);
 	}
@@ -380,6 +415,7 @@ export async function publishTarballsInOrder(
 			// eslint-disable-next-line no-await-in-loop
 			if (await isPublished(tarball)) {
 				status = "AlreadyPublished";
+				onPublishRecovered?.(tarball);
 				break;
 			}
 		}
