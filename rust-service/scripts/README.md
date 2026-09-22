@@ -15,6 +15,7 @@ Copies exclude build outputs, installed dependencies, generated packages, Git me
 | Record command, source/machine metadata, log, and exit status | [`benchmark-run.mjs`](benchmark-run.mjs) |
 | Source inventory or repeated stress campaigns | [`benchmark-collect.mjs`](benchmark-collect.mjs) |
 | Bounded Linux Sea/Tinylicious client comparisons | [`benchmark-stress.mjs`](benchmark-stress.mjs) |
+| Fluid summaries, persisted sizes, and process-cold loads | [`benchmark-summaries.mjs`](benchmark-summaries.mjs) |
 
 Use new output directories outside the repository; format completed JSON before retaining it.
 `check-documentation.mjs` covers Cargo packages, direct harnesses, architectural groupings, historical READMEs, and current top-level guides; it checks local paths, not anchors or external URLs.
@@ -28,6 +29,45 @@ Each takes a new output directory; `matrix` also takes a JSON array of stress-ru
 - `repeat`: ten fresh runs per point, alternating backend order at 500 ops/s, with three seconds of warmup and ten seconds measured.
 - `native-repeat`: ten paired four-core native runs, higher WebSocket loads, and 750 ops/s Tinylicious on one/four service cores.
 - `matrix`: custom workload configurations.
+
+### Summary and Cold-Load Setup
+
+`benchmark-summaries.mjs` uses the built current-version Fluid test runtime and drivers, real SharedMaps, and on-demand Fluid summaries.
+Build the client packages, Tinylicious, and the release Sea server with `websocket-stream` first; use the same certificates as the stress runner.
+The runner owns isolated service processes, fresh data directories, dynamically selected loopback ports, and fresh client processes.
+It requires Linux `taskset`; defaults reserve CPUs `2,4,6,8` for the service and `10,12` for the client.
+
+```bash
+node rust-service/scripts/benchmark-summaries.mjs run \
+	'{"backend":"sea","storage":"buffered-file","mode":"incremental"}' /tmp/summary-sample
+node rust-service/scripts/benchmark-summaries.mjs campaign \
+	'{"repetitions":3}' /tmp/summary-campaign
+node rust-service/scripts/benchmark-summaries.mjs report \
+	/tmp/summary-campaign /tmp/summary-report
+```
+
+Run from the repository root and supply a new output directory.
+Use `durable-file` for the other Sea backend, or `{"backend":"tinylicious","storage":"leveldb"}` for persisted Tinylicious.
+Single-run options include `maps`, `entries`, `valueBytes`, `operations`, `entropy` (`hash` or `repeated`), `mode` (`full` or `incremental`), `serviceCpus`, and `clientCpus`.
+Campaign options include `repetitions`, `sizes` (entries per map), `entropies`, and `operations`.
+The default campaign has 72 samples: three repetitions, two sizes, two entropy profiles, two summary modes, and three backends.
+
+Each sample attaches prepopulated maps, acknowledges a full baseline, changes one key, summarizes again, and appends a known tail.
+Upload timing covers `uploadSummaryWithContext`; separate summarization timing includes generation through acknowledgment.
+Download timing covers a fresh service's acknowledged snapshot and all unique blobs, with eight concurrent reads and content hashing.
+Cold-load timing covers a separate restarted service and fresh client through container loading, all DDS realization, and tail replay; content verification follows outside the timed interval.
+Client module imports and server startup are excluded, but lazy WASM initialization is included.
+The OS page cache is not cleared: these are process-cold, not physical-media-cold reads.
+Tinylicious can add service summaries on disconnect, so its latest snapshot can include server log-tail data.
+
+The runner asserts actual summary handles for incremental mode, no handles for full mode, identical snapshot fingerprints across restart, every expected map value, and every persisted tail operation.
+It checks Tinylicious's LevelDB `CURRENT` marker and records checkpoint-cleanup errors instead of suppressing them.
+Per-phase inventories retain file names, apparent bytes, and allocated blocks; Sea mixes content and events in one journal, while Tinylicious separates LevelDB and filesystem Git storage.
+Phase growth includes control records and metadata, and live inventories can precede background checkpoint work; stopped-service totals are retained separately.
+No compaction, garbage collection, or durability-equivalence claim follows from these sizes.
+The campaign retains manifests, binary/script hashes, successful and failed samples, and per-process logs, updating its result index after each sample.
+The report command retains compact raw samples and median/minimum/maximum aggregates, replacing duplicated file inventories with counts and hashes.
+Use repository Biome formatting before committing generated JSON.
 
 ### Stress Setup
 

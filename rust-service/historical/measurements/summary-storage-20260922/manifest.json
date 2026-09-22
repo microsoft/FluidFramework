@@ -1,0 +1,26 @@
+{
+	"date": "2026-09-22T02:11:36.088Z",
+	"options": {
+		"repetitions": 3
+	},
+	"source": "1386a1abe3f6130c026fd820dff3d673bcb4c55c",
+	"status": " M rust-service/historical/PROJECT_OVERVIEW.md\n M rust-service/scripts/README.md\n?? rust-service/scripts/benchmark-summaries.mjs\n",
+	"artifacts": [
+		{
+			"file": "/workspaces/FluidFramework/rust-service/scripts/benchmark-summaries.mjs",
+			"sha256": "dcddb6855a06dc2f4f2c726c507a9765e908ae54b228b797a39c3eee55612a80"
+		},
+		{
+			"file": "/workspaces/FluidFramework/rust-service/target/release/sea-webtransport-server",
+			"sha256": "dfc220ba665a6e4df0de06eafb0e339cc8233e550e63828867c1f3c9a7fb699c"
+		},
+		{
+			"file": "/workspaces/FluidFramework/rust-service/packages/sea-typescript/generated/websocket/node/sea_wasm_bg.wasm",
+			"sha256": "1d830a0e0232ddbac8453e290aa469bd98a406c2740cd34e4ca86b82c12ec0c9"
+		},
+		{
+			"file": "/workspaces/FluidFramework/server/routerlicious/packages/tinylicious/dist/services/levelDbCollection.js",
+			"sha256": "ec2383442dbc67276eaed7c723c4ba017bf4bc9eb0465eeb05bc6346be26bf9d"
+		}
+	]
+}

@@ -1,6 +1,6 @@
 # Sea: Project Overview
 
-Project record as of 2026-09-21; measurements use the revisions listed below.
+Project record as of 2026-09-22; measurements use the revisions listed below.
 For the current implementation and limitations, start with the [project README](../README.md).
 
 Sea (Snapshotted Event Archive) is an experimental Rust service for ordered application events, immutable blob trees, and snapshots.
@@ -461,6 +461,129 @@ Both Sea file modes retain complete history in memory.
 Durable acknowledgment relies on [interrupted-tail and synchronized-prefix integrity assumptions](../crates/sea-file-durable/README.md#power-loss-model); physical power-cut qualification remains outstanding.
 
 </details>
+
+## Summary and Cold-Load Measurement Campaign (2026-09-22)
+
+The summary and persisted-size campaign completed at source revision `1386a1abe3f6130c026fd820dff3d673bcb4c55c`, with benchmark-only working-tree changes.
+It compares Sea buffered-file and durable-file with Tinylicious LevelDB operation storage and filesystem Git summary storage.
+The first acceptance check used a full Fluid summary followed by an incremental summary with unchanged subtree handles, then a fresh service process and client that verified snapshot bytes and trailing operations.
+Measurements distinguish summary upload, complete snapshot download, process-cold snapshot-plus-event loading, and persisted file sizes.
+Process-cold means the service has restarted and must reopen its files; the operating-system page cache is not cleared.
+File-size accounting distinguishes logical payload bytes, apparent file bytes, allocated blocks, and cumulative retained history where the backend allows those categories to be separated.
+The six-case smoke matrix passed on 2026-09-22: both summary modes on all three backends, eight SharedMaps with four 1,024-byte values each, and five trailing operations.
+Each cold load verified every map value and independently fetched and verified every trailing operation from delta storage.
+The acknowledged snapshot's complete blob set matched its pre-restart SHA-256 fingerprint.
+These smoke timings are not the retained performance comparison.
+
+Two qualification findings affect the measurement method.
+Tinylicious's shredded-summary driver does not implement `downloadSummary`, so both drivers use `getVersions`, `getSnapshotTree`, and `readBlob` with eight concurrent blob requests.
+Downloads select the acknowledged client-summary version; ordinary cold loads request the latest version, which can be a Tinylicious service summary generated on disconnect and can include a log tail.
+Tinylicious LevelDB logs `Collection.deleteMany: Method not implemented` during Scribe checkpoint cleanup (12 occurrences in each tiny smoke case).
+The persistence assertions passed despite those errors, but these runs do not establish a healthy checkpoint-cleanup or retention implementation.
+The service was not repaired or reconfigured to hide that finding.
+
+The retained matrix uses eight SharedMaps containing either 32 or 512 values of 1,024 bytes each (256 KiB or 4 MiB of application values).
+It tests deterministic SHA-256 hexadecimal text and repeated text, changes one key after a full baseline, then requests a full or incremental summary and appends 200 unsummarized operations.
+Client op compression and grouped batching are disabled consistently; client garbage collection retains its default behavior.
+Three fresh-document repetitions rotate the order of the three backends.
+**All 72 retained samples passed**, including 14,400 individually verified persisted tail operations.
+The release Sea server and Tinylicious entry package were rebuilt before collection.
+Each service used CPUs `2,4,6,8`; each Node client used separate CPUs `10,12`, on the same Linux host and loopback network.
+The host reported AMD EPYC 7763, Linux `6.8.0-1064-azure`, Node `v22.23.2`, and filesystem type `ext2/ext3` through `stat -f`.
+Sea used the production Node/WASM WebSocket client; Tinylicious used its production HTTP/Socket.IO driver.
+These are stack comparisons with different persistence guarantees, not language-only or equal-durability comparisons.
+See the [retained dataset](measurements/summary-storage-20260922/README.md) for raw samples, hashes, ranges, and reproduction.
+
+### Summary and Cold-Load Timings
+
+Milliseconds, median of three independent documents per cell.
+Each paired cell gives **full / incremental** summary mode, not first / second run.
+Upload covers the storage call; generation-through-acknowledgment results are retained separately.
+Download uses a fresh service and client and retrieves every unique blob of the acknowledged version with fanout eight.
+Cold load uses another fresh service and client, requests the latest snapshot, realizes all eight DDSes, and replays the tail before stopping the timer.
+Server startup and JavaScript module imports are excluded; lazy WASM initialization is included.
+Snapshot download includes content hashing; cold-load content assertions run after the timer.
+Neither read measurement clears the OS page cache or measures raw wire bytes.
+
+| Application values | Data | Backend | Summary upload (ms) | Complete snapshot download (ms) | Process-cold document load (ms) |
+| --- | --- | --- | ---: | ---: | ---: |
+| 256 KiB | Hash text | Sea buffered | 19.0 / 11.2 | 108.9 / 113.5 | 184.0 / 183.4 |
+| 256 KiB | Hash text | Sea durable | 22.5 / 14.1 | 117.1 / 112.9 | 184.1 / 190.0 |
+| 256 KiB | Hash text | Tinylicious LevelDB | 51.8 / 37.3 | 157.6 / 156.4 | 248.5 / 252.7 |
+| 256 KiB | Repeated text | Sea buffered | 18.9 / 10.2 | 108.9 / 106.9 | 185.4 / 184.1 |
+| 256 KiB | Repeated text | Sea durable | 22.0 / 13.2 | 117.0 / 116.8 | 186.6 / 185.1 |
+| 256 KiB | Repeated text | Tinylicious LevelDB | 50.5 / 35.8 | 152.4 / 151.3 | 229.2 / 231.8 |
+| 4 MiB | Hash text | Sea buffered | 93.6 / 22.4 | 223.6 / 228.9 | 300.6 / 291.9 |
+| 4 MiB | Hash text | Sea durable | 97.9 / 26.1 | 230.4 / 225.0 | 295.2 / 294.4 |
+| 4 MiB | Hash text | Tinylicious LevelDB | 120.4 / 46.1 | 541.4 / 548.1 | 623.9 / 625.6 |
+| 4 MiB | Repeated text | Sea buffered | 90.9 / 25.6 | 224.2 / 228.8 | 296.5 / 296.1 |
+| 4 MiB | Repeated text | Sea durable | 93.0 / 25.5 | 225.0 / 220.3 | 299.0 / 297.5 |
+| 4 MiB | Repeated text | Tinylicious LevelDB | 119.1 / 49.2 | 506.0 / 511.8 | 607.1 / 580.7 |
+
+At 4 MiB of hash-text values, incremental upload was 4.18 times faster than full upload on buffered Sea and 2.61 times faster on Tinylicious.
+Buffered Sea's incremental cold load was 2.14 times faster than Tinylicious in this workload.
+With only three repetitions, these are observed medians, not confidence bounds or production latency predictions.
+Hash text contains deterministic hexadecimal SHA-256 output, so it is higher entropy than repeated text but is not incompressible binary data.
+
+### Summary and Operation Sizes
+
+Actual upload trees contained zero handles in full mode and nine in incremental mode.
+For the 4 MiB case, full / incremental blob payloads were 4,351,262 / 545,058 bytes for Sea and 4,350,497 / 544,293 bytes for Tinylicious.
+For 256 KiB, they were 275,230 / 35,554 and 274,465 / 34,789 bytes respectively.
+These are pre-driver blob payloads, not wire sizes; protocol metadata and serialization differ.
+Changing one key dirties one of eight SharedMaps, so incremental upload still includes that map's full summary content.
+
+The following are **actual apparent file bytes**, measured at attachment or immediately before/after the acknowledged update summary.
+Tinylicious's initial column counts Git storage alone; its initial LevelDB files added 1,259 bytes.
+Sea uses a mixed journal, so its initial column includes initial document records as well as summary content.
+Update growth counts all backend data files, including control records and checkpoint metadata.
+Values are medians from incremental-mode cells; corresponding full-mode growth was nearly identical, despite much larger upload payloads.
+
+| Application values | Data | Sea initial journal | Tinylicious initial Git files | Sea update growth | Tinylicious update growth |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 256 KiB | Hash text | 278,600 | 145,911 | 19,668 | 27,631 |
+| 256 KiB | Repeated text | 278,600 | 7,384 | 19,668 | 19,522 |
+| 4 MiB | Hash text | 4,376,648 | 2,287,737 | 20,951 | 28,389 |
+| 4 MiB | Repeated text | 4,376,648 | 69,688 | 20,951 | 20,279 |
+
+Content-addressed storage avoids writing all unchanged bytes again in both summary modes.
+Tinylicious's compressed Git objects save substantial apparent space for repeated content; the tested Sea configuration does not use its optional compression decorator.
+This result does not imply that incremental summaries are unnecessary: they reduce client generation and upload work.
+
+The 200-operation tail contains 204,800 bytes of application string values, plus Fluid envelopes and control records.
+Sea's measured append-phase growth was approximately **307,284 bytes buffered / 307,277 bytes durable**, largely independent of document size or entropy.
+Tinylicious's median live-file growth ranged from **2,496,751 to 3,359,328 bytes** across cells.
+Its LevelDB logs, checkpoints, and background table rewriting make that a short-run file-growth observation, not a stable encoded-bytes-per-op estimate.
+All 200 operations in every sample were retrieved independently from persisted delta storage after restart, not merely recovered from a service-summary log tail.
+
+Stopped-service totals below include attachment, both client summaries, the changed-key op, all 200 tail ops, and disconnect activity.
+They show **4 MiB incremental-mode** cells; full-mode and 256 KiB totals are in the dataset.
+MiB means 1,048,576 bytes.
+Allocated sizes use regular-file `stat.blocks * 512`; directory blocks and filesystem metadata are excluded.
+
+| Data | Backend/component | Apparent MiB, median (min-max) | Allocated MiB, median |
+| --- | --- | ---: | ---: |
+| Hash text | Sea buffered journal | 8.663 (8.663-8.663) | 8.664 |
+| Hash text | Sea durable journal | 8.663 (8.663-8.663) | 8.668 |
+| Hash text | Tinylicious Git | 4.491 (4.491-4.492) | 6.473 |
+| Hash text | Tinylicious LevelDB | 1.979 (1.936-2.336) | 1.996 |
+| Repeated text | Sea buffered journal | 8.663 (8.663-8.663) | 8.664 |
+| Repeated text | Sea durable journal | 8.663 (8.663-8.663) | 8.668 |
+| Repeated text | Tinylicious Git | 0.146 (0.146-0.146) | 2.355 |
+| Repeated text | Tinylicious LevelDB | 4.581 (0.989-4.618) | 4.594 |
+
+Tinylicious's loose Git objects have substantial allocation overhead, and LevelDB totals are sensitive to background work.
+Do not interpret differences between its full and incremental totals as causal summary-size savings.
+Scribe checkpoint cleanup logged 24-35 errors in every retained Tinylicious sample; the exact counts are retained alongside the passing integrity checks.
+Neither backend was compacted into a controlled steady-state representation.
+
+### Unsuccessful Attempt
+
+An earlier campaign stopped after two passing Sea samples when Tinylicious exceeded the harness's 10-second shutdown bound.
+The harness had sent SIGTERM while Tinylicious was still writing its disconnect-triggered service summary through its own HTTP endpoint, causing retries against the shutting-down listener.
+The corrected runner waits for the successful `ServiceSummary` record at or beyond the final operation sequence before stopping the server.
+The same 200-operation case then passed, followed by all 72 retained samples, without extending the shutdown timeout or modifying production code.
+The [dataset notes](measurements/summary-storage-20260922/README.md) retain the unsuccessful attempt separately; it is not pooled with the accepted matrix.
 
 ## Scope and Limitations
 
