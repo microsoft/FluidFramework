@@ -45,6 +45,7 @@
 		"check:are-the-types-wrong": "fluid-build --task check:are-the-types-wrong",
 		"check:assertTags": "flub generate assertTags --all --validate",
 		"check:format:repo": "biome check .",
+		"check:types:playwright-reporter": "tsc --allowJs --checkJs --noEmit --skipLibCheck --target ES2022 --module node16 --moduleResolution node16 scripts/playwright-reporter.cjs",
 		"check:versions": "flub check buildVersion -g client --path .",
 		"check:versions:fix": "flub check buildVersion -g client --path . --fix",
 		"checks": "fluid-build --task checks",
@@ -56,7 +57,7 @@
 		"ci:test:jest:coverage": "c8 --no-clean npm run test:jest:report",
 		"ci:test:mocha": "npm run test:mocha",
 		"ci:test:mocha:coverage": "cross-env FLUID_TEST_TIMEOUT=4s c8 --no-clean npm run test:mocha",
-		"ci:test:playwright": "npm run test:playwright:report",
+		"ci:test:playwright": "npm run test:playwright-reporter && npm run test:playwright:report",
 		"ci:test:realsvc:local": "pnpm run -r --no-sort --stream --no-bail test:realsvc:local:report",
 		"ci:test:realsvc:local:coverage": "c8 --no-clean pnpm recursive --no-sort --stream --no-bail run test:realsvc:local:report",
 		"ci:test:realsvc:tinylicious": "pnpm run -r --no-sort --stream --no-bail test:realsvc:tinylicious:report",
@@ -115,6 +116,7 @@
 		"test:mocha": "pnpm run -r --no-sort --stream --no-bail test:mocha --color",
 		"test:mocha:bail": "pnpm run -r --no-sort --stream test:mocha",
 		"test:playwright": "assign-test-ports && pnpm playwright install chromium && fluid-build --task test:playwright:packages --worker",
+		"test:playwright-reporter": "npm run check:types:playwright-reporter && node --test scripts/test/playwright-reporter.test.cjs",
 		"test:playwright:bail": "assign-test-ports && pnpm playwright install chromium && pnpm -r --no-sort --stream test:playwright",
 		"test:playwright:report": "assign-test-ports && pnpm playwright install --with-deps chromium && pnpm -r --no-sort --stream --no-bail --workspace-concurrency=4 test:playwright",
 		"test:realsvc": "pnpm run -r --no-sort --stream --no-bail test:realsvc",
@@ -179,6 +181,8 @@
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@fluidframework/test-tools": "^2.0.0",
 		"@microsoft/api-extractor": "7.58.1",
+		"@types/node": "catalog:types",
+		"@types/xml2js": "^0.4.14",
 		"auto-changelog": "^2.4.0",
 		"c8": "^10.1.3",
 		"changesets-format-with-issue-links": "^0.3.0",
@@ -193,7 +197,8 @@
 		"run-script-os": "^1.1.6",
 		"syncpack": "^15.1.2",
 		"type-fest": "^2.19.0",
-		"typescript": "~6.0.3"
+		"typescript": "~6.0.3",
+		"xml2js": "^0.6.2"
 	},
 	"packageManager": "pnpm@11.15.1+sha512.81350b07e53c9538a02f1f2303b4290fa2d7be04e56e2a970c4cc4b417dc761de196edabd49d55c7dc9580db81007c44143e4e3d7e462b3000d23c255122d065",
 	"engines": {

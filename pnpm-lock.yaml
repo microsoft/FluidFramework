@@ -135,6 +135,12 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
+      '@types/node':
+        specifier: ~22.19.17
+        version: 22.19.17
+      '@types/xml2js':
+        specifier: ^0.4.14
+        version: 0.4.14
       auto-changelog:
         specifier: ^2.4.0
         version: 2.5.0
@@ -180,6 +186,9 @@ importers:
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
+      xml2js:
+        specifier: ^0.6.2
+        version: 0.6.2
 
   azure/packages/azure-local-service:
     dependencies:

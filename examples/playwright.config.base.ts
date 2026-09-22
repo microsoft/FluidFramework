@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { resolve } from "node:path";
 import { devices, type PlaywrightTestConfig } from "@playwright/test";
 
 export const baseConfig: PlaywrightTestConfig = {
@@ -11,7 +12,7 @@ export const baseConfig: PlaywrightTestConfig = {
 	retries: 0,
 	timeout: 60_000,
 	outputDir: "nyc/test-results",
-	reporter: [["list"], ["junit", { outputFile: "nyc/junit-report.xml" }]],
+	reporter: [["list"], [resolve(__dirname, "../scripts/playwright-reporter.cjs")]],
 	use: {
 		headless: true,
 		launchOptions: {
