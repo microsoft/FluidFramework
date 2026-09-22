@@ -35,7 +35,9 @@ The matrix crosses two summary modes, two sizes, two entropy profiles, and three
 Each download and cold load has a fresh service and client process; the OS page cache is not cleared.
 All snapshot blobs match a pre-restart fingerprint, every map entry matches expected content, and all 200 tail operations are independently retrieved from persisted delta storage.
 
-The `hash` fixture is SHA-256 hexadecimal text, not incompressible bytes.
+The `hash` fixture is labeled **Pseudorandom hex text** in the report: deterministic hexadecimal output generated from SHA-256 hashes.
+Its 16-character alphabet remains compressible; this is not an incompressible-random-data fixture.
+The command-line option and recorded dataset identifier remain `hash` for reproducibility.
 The `repeated` fixture uses distinct index prefixes and repeated padding.
 Fluid op compression and grouped batching are disabled; client GC remains at its default.
 No SEA compression decorator is configured.

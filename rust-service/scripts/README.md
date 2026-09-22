@@ -49,6 +49,7 @@ node rust-service/scripts/benchmark-summaries.mjs report \
 Run from the repository root and supply a new output directory.
 Use `durable-file` for the other Sea backend, or `{"backend":"tinylicious","storage":"leveldb"}` for persisted Tinylicious.
 Single-run options include `maps`, `entries`, `valueBytes`, `operations`, `entropy` (`hash` or `repeated`), `mode` (`full` or `incremental`), `serviceCpus`, and `clientCpus`.
+The `hash` option generates **pseudorandom hex text** from deterministic SHA-256 hashes; its 16-character alphabet remains compressible.
 Campaign options include `repetitions`, `sizes` (entries per map), `entropies`, and `operations`.
 The default campaign has 72 samples: three repetitions, two sizes, two entropy profiles, two summary modes, and three backends.
 

@@ -483,7 +483,7 @@ The persistence assertions passed despite those errors, but these runs do not es
 The service was not repaired or reconfigured to hide that finding.
 
 The retained matrix uses eight SharedMaps containing either 32 or 512 values of 1,024 bytes each (256 KiB or 4 MiB of application values).
-It tests deterministic SHA-256 hexadecimal text and repeated text, changes one key after a full baseline, then requests a full or incremental summary and appends 200 unsummarized operations.
+It tests deterministic pseudorandom hex text generated from SHA-256 hashes and repeated text, changes one key after a full baseline, then requests a full or incremental summary and appends 200 unsummarized operations.
 Client op compression and grouped batching are disabled consistently; client garbage collection retains its default behavior.
 Three fresh-document repetitions rotate the order of the three backends.
 **All 72 retained samples passed**, including 14,400 individually verified persisted tail operations.
@@ -507,23 +507,24 @@ Neither read measurement clears the OS page cache or measures raw wire bytes.
 
 | Application values | Data | Backend | Summary upload (ms) | Complete snapshot download (ms) | Process-cold document load (ms) |
 | --- | --- | --- | ---: | ---: | ---: |
-| 256 KiB | Hash text | Sea buffered | 19.0 / 11.2 | 108.9 / 113.5 | 184.0 / 183.4 |
-| 256 KiB | Hash text | Sea durable | 22.5 / 14.1 | 117.1 / 112.9 | 184.1 / 190.0 |
-| 256 KiB | Hash text | Tinylicious LevelDB | 51.8 / 37.3 | 157.6 / 156.4 | 248.5 / 252.7 |
+| 256 KiB | Pseudorandom hex text | Sea buffered | 19.0 / 11.2 | 108.9 / 113.5 | 184.0 / 183.4 |
+| 256 KiB | Pseudorandom hex text | Sea durable | 22.5 / 14.1 | 117.1 / 112.9 | 184.1 / 190.0 |
+| 256 KiB | Pseudorandom hex text | Tinylicious LevelDB | 51.8 / 37.3 | 157.6 / 156.4 | 248.5 / 252.7 |
 | 256 KiB | Repeated text | Sea buffered | 18.9 / 10.2 | 108.9 / 106.9 | 185.4 / 184.1 |
 | 256 KiB | Repeated text | Sea durable | 22.0 / 13.2 | 117.0 / 116.8 | 186.6 / 185.1 |
 | 256 KiB | Repeated text | Tinylicious LevelDB | 50.5 / 35.8 | 152.4 / 151.3 | 229.2 / 231.8 |
-| 4 MiB | Hash text | Sea buffered | 93.6 / 22.4 | 223.6 / 228.9 | 300.6 / 291.9 |
-| 4 MiB | Hash text | Sea durable | 97.9 / 26.1 | 230.4 / 225.0 | 295.2 / 294.4 |
-| 4 MiB | Hash text | Tinylicious LevelDB | 120.4 / 46.1 | 541.4 / 548.1 | 623.9 / 625.6 |
+| 4 MiB | Pseudorandom hex text | Sea buffered | 93.6 / 22.4 | 223.6 / 228.9 | 300.6 / 291.9 |
+| 4 MiB | Pseudorandom hex text | Sea durable | 97.9 / 26.1 | 230.4 / 225.0 | 295.2 / 294.4 |
+| 4 MiB | Pseudorandom hex text | Tinylicious LevelDB | 120.4 / 46.1 | 541.4 / 548.1 | 623.9 / 625.6 |
 | 4 MiB | Repeated text | Sea buffered | 90.9 / 25.6 | 224.2 / 228.8 | 296.5 / 296.1 |
 | 4 MiB | Repeated text | Sea durable | 93.0 / 25.5 | 225.0 / 220.3 | 299.0 / 297.5 |
 | 4 MiB | Repeated text | Tinylicious LevelDB | 119.1 / 49.2 | 506.0 / 511.8 | 607.1 / 580.7 |
 
-At 4 MiB of hash-text values, incremental upload was 4.18 times faster than full upload on buffered Sea and 2.61 times faster on Tinylicious.
+At 4 MiB of pseudorandom hex text values, incremental upload was 4.18 times faster than full upload on buffered Sea and 2.61 times faster on Tinylicious.
 Buffered Sea's incremental cold load was 2.14 times faster than Tinylicious in this workload.
 With only three repetitions, these are observed medians, not confidence bounds or production latency predictions.
-Hash text contains deterministic hexadecimal SHA-256 output, so it is higher entropy than repeated text but is not incompressible binary data.
+Pseudorandom hex text contains deterministic hexadecimal SHA-256 output.
+Its 16-character alphabet remains compressible despite being much less repetitive than the repeated-text fixture; it is not incompressible random data.
 
 ### Summary and Operation Sizes
 
@@ -541,9 +542,9 @@ Values are medians from incremental-mode cells; corresponding full-mode growth w
 
 | Application values | Data | Sea initial journal | Tinylicious initial Git files | Sea update growth | Tinylicious update growth |
 | --- | --- | ---: | ---: | ---: | ---: |
-| 256 KiB | Hash text | 278,600 | 145,911 | 19,668 | 27,631 |
+| 256 KiB | Pseudorandom hex text | 278,600 | 145,911 | 19,668 | 27,631 |
 | 256 KiB | Repeated text | 278,600 | 7,384 | 19,668 | 19,522 |
-| 4 MiB | Hash text | 4,376,648 | 2,287,737 | 20,951 | 28,389 |
+| 4 MiB | Pseudorandom hex text | 4,376,648 | 2,287,737 | 20,951 | 28,389 |
 | 4 MiB | Repeated text | 4,376,648 | 69,688 | 20,951 | 20,279 |
 
 Content-addressed storage avoids writing all unchanged bytes again in both summary modes.
@@ -563,10 +564,10 @@ Allocated sizes use regular-file `stat.blocks * 512`; directory blocks and files
 
 | Data | Backend/component | Apparent MiB, median (min-max) | Allocated MiB, median |
 | --- | --- | ---: | ---: |
-| Hash text | Sea buffered journal | 8.663 (8.663-8.663) | 8.664 |
-| Hash text | Sea durable journal | 8.663 (8.663-8.663) | 8.668 |
-| Hash text | Tinylicious Git | 4.491 (4.491-4.492) | 6.473 |
-| Hash text | Tinylicious LevelDB | 1.979 (1.936-2.336) | 1.996 |
+| Pseudorandom hex text | Sea buffered journal | 8.663 (8.663-8.663) | 8.664 |
+| Pseudorandom hex text | Sea durable journal | 8.663 (8.663-8.663) | 8.668 |
+| Pseudorandom hex text | Tinylicious Git | 4.491 (4.491-4.492) | 6.473 |
+| Pseudorandom hex text | Tinylicious LevelDB | 1.979 (1.936-2.336) | 1.996 |
 | Repeated text | Sea buffered journal | 8.663 (8.663-8.663) | 8.664 |
 | Repeated text | Sea durable journal | 8.663 (8.663-8.663) | 8.668 |
 | Repeated text | Tinylicious Git | 0.146 (0.146-0.146) | 2.355 |
