@@ -35,7 +35,7 @@ import type { SchemaCompatibilityStatusBeta } from "./tree.js";
  *
  * @remarks
  * The root field uses `"root"`. A node location omits `fieldKey`.
- * An implicit map or array field uses `fieldKey: null`.
+ * An implicit map, record, or array field uses `fieldKey: null`.
  *
  * @alpha
  */
@@ -47,7 +47,7 @@ export type SchemaDiscrepancyLocationAlpha =
 			 */
 			readonly nodeType: string;
 			/**
-			 * Persisted field key, or null for an implicit map or array field.
+			 * Persisted field key, or null for an implicit map, record, or array field.
 			 * Omitted when the difference applies to the node rather than a field.
 			 */
 			// eslint-disable-next-line @rushstack/no-new-null -- JSON must distinguish implicit fields from node locations.
@@ -55,14 +55,26 @@ export type SchemaDiscrepancyLocationAlpha =
 	  };
 
 /**
- * Describes one difference between the stored schema, view schema, and effective upgrade target.
+ * Describes one difference in schema constraints, persisted metadata, or view annotations.
  *
  * @remarks
  * Each entry describes one aspect at one location. Missing side properties indicate absent values.
- * The target incorporates the configured staging policy. It need not match the view schema.
+ * The `existingStored` side describes the document's existing stored schema.
+ * The `view` side describes the schema being evaluated for access, with its constraints in stored-schema form and all staged changes included,
+ * together with its staging annotations and unknown optional field policy.
+ * The `proposedStored` side describes the stored schema generated for an upgrade from the view schema and the configured staged upgrade policy,
+ * as described by {@link SchemaCompatibilityStatus.canUpgrade}.
+ * The proposed stored schema can differ from both the existing stored schema and the view's constraints.
+ * The proposed stored schema does not imply that an upgrade has occurred or will occur.
+ * The proposed stored schema can be identical to the existing stored schema.
+ *
+ * This is not a comparison of application classes, methods, or object identities, and it does not inspect document content.
  * Persisted metadata is compared by value and does not affect compatibility flags.
  * Non-persisted custom metadata and descriptions are not compared.
- * Staging annotations are compared separately from custom metadata.
+ * Staging annotations and the unknown optional field policy are view-only context, not properties of stored schema.
+ * Their entries do not by themselves indicate a viewing or upgrade failure.
+ * Membership in a condition-specific discrepancy list identifies which compatibility checks a difference prevents.
+ *
  * Entries support JSON serialization without a custom replacer.
  * Ordering is deterministic within a library version, but no particular sorting rule is guaranteed.
  * Array position does not indicate severity or priority.
@@ -80,7 +92,7 @@ export type SchemaDiscrepancyAlpha = {
 			/**
 			 * Identifies allowed-type membership or a staging annotation for one allowed type.
 			 * Side values indicate whether that type is allowed or marked as staged, respectively.
-			 * Stored and target schemas do not retain staging annotations.
+			 * Existing and proposed stored schemas do not retain staging annotations.
 			 */
 			readonly mismatch: "allowedType" | "stagedType";
 			/**
@@ -99,7 +111,7 @@ export type SchemaDiscrepancyAlpha = {
 			/**
 			 * Identifies an explicit field definition, optionality staging, or unknown-field policy difference.
 			 * Side values indicate whether the field definition, annotation, or policy is present or enabled.
-			 * Stored and target schemas do not retain staging annotations or the view's unknown-field policy.
+			 * Existing and proposed stored schemas do not retain staging annotations or the view's unknown-field policy.
 			 */
 			readonly mismatch: "fieldPresence" | "stagedOptional" | "allowUnknownOptionalFields";
 	  } & SchemaDiscrepancyValues<boolean>)
@@ -119,7 +131,7 @@ export type SchemaDiscrepancyAlpha = {
 			/**
 			 * Identifies every side without this definition.
 			 */
-			readonly missingFrom: readonly ("view" | "stored" | "target")[];
+			readonly missingFrom: readonly ("view" | "existingStored" | "proposedStored")[];
 	  } & SchemaDiscrepancyValues<SchemaNodeKindDescription>)
 	| ({
 			/**
@@ -144,17 +156,21 @@ export type SchemaDiscrepancyAlpha = {
  */
 export interface SchemaDiscrepancyValues<T> {
 	/**
-	 * Describes the value in the view schema. Absent when that value does not exist.
+	 * Describes the view schema's constraint, persisted metadata, or annotation at this location.
+	 * Constraints include all staged changes, independently of the configured staged upgrade policy.
+	 * Absent when that value does not exist.
 	 */
 	readonly view?: T;
 	/**
-	 * Describes the value in the stored schema. Absent when that value does not exist.
+	 * Describes the value in the document's existing stored schema. Absent when that value does not exist.
 	 */
-	readonly stored?: T;
+	readonly existingStored?: T;
 	/**
-	 * Describes the value in the effective upgrade target. Absent when that value does not exist.
+	 * Describes the value in the proposed stored schema generated using the configured staged upgrade policy.
+	 * This is the proposed stored schema used by {@link SchemaCompatibilityStatus.canUpgrade}, not the full view schema.
+	 * Absent when that value does not exist.
 	 */
-	readonly target?: T;
+	readonly proposedStored?: T;
 }
 
 /**
@@ -170,9 +186,11 @@ export interface SchemaNodeKindDescription {
 }
 
 /**
- * Reports whether a schema can be viewed and the differences that prevent viewing.
+ * Reports whether the view schema can provide read-write access under the document's existing stored schema, and the differences that prevent access.
  *
  * @remarks
+ * Uses the viewing check described by {@link SchemaCompatibilityStatus.canView}, not a comparison with the proposed stored schema.
+ * The configured staged upgrade policy determines the proposed stored schema but does not change this viewing check.
  * `viewDiscrepancies` is absent when `canView` is true.
  * Narrow `canView` to false before accessing the nonempty blocker list.
  *
@@ -182,28 +200,33 @@ export interface SchemaNodeKindDescription {
 export type SchemaCompatibilityViewableStatus =
 	| {
 			/**
-			 * The view schema permits access to the stored document.
+			 * The view schema permits read-write access under the document's existing stored schema.
 			 */
 			readonly canView: true;
 	  }
 	| {
 			/**
-			 * Schema differences prevent access through this view schema.
+			 * Schema differences prevent read-write access through this view schema.
+			 * Accessing {@link TreeView.root} throws.
 			 */
 			readonly canView: false;
 			/**
-			 * Contains at least one viewing blocker selected from the complete list.
+			 * Differences that cause {@link SchemaCompatibilityStatus.canView} to be false.
+			 * Contains at least one entry from {@link CompleteSchemaDiscrepanciesAlpha.allDiscrepancies}.
+			 * Entries retain all three side values, but membership in this list depends on the view and existing stored schemas, not the proposed stored schema.
 			 */
 			readonly viewDiscrepancies: readonly SchemaDiscrepancyAlpha[];
 	  };
 
 /**
- * Reports whether a schema can be upgraded and the differences that prevent upgrading.
+ * Reports whether the document's stored schema can be upgraded to the proposed stored schema generated from the view's configuration, and the differences that prevent that upgrade.
  *
  * @remarks
+ * Uses the existing-to-proposed stored-schema check described by {@link SchemaCompatibilityStatus.canUpgrade}.
+ * The proposed stored schema incorporates the configured staged upgrade policy, including whether to retain upgrades already enabled in the document.
  * `upgradeDiscrepancies` is absent when `canUpgrade` is true.
  * Narrow `canUpgrade` to false before accessing the nonempty blocker list.
- * A true flag does not mean that an upgrade is necessary.
+ * A true flag does not mean that an upgrade is necessary or that it will change the stored schema.
  *
  * @sealed
  * @alpha
@@ -211,25 +234,30 @@ export type SchemaCompatibilityViewableStatus =
 export type SchemaCompatibilityUpgradeableStatus =
 	| {
 			/**
-			 * The stored schema can be upgraded to the effective target.
+			 * The existing stored schema can be upgraded to the proposed stored schema generated from the view's configuration.
 			 */
 			readonly canUpgrade: true;
 	  }
 	| {
 			/**
-			 * Schema differences prevent upgrading to the effective target.
+			 * Schema differences prevent upgrading to the proposed stored schema generated from the view's configuration.
+			 * Calling {@link TreeView.upgradeSchema} throws a `UsageError`.
 			 */
 			readonly canUpgrade: false;
 			/**
-			 * Contains at least one upgrade blocker selected from the complete list.
+			 * Differences that cause {@link SchemaCompatibilityStatus.canUpgrade} to be false.
+			 * Contains at least one entry from {@link CompleteSchemaDiscrepanciesAlpha.allDiscrepancies}.
+			 * Entries retain all three side values, but membership in this list depends on the existing and proposed stored schemas.
 			 */
 			readonly upgradeDiscrepancies: readonly SchemaDiscrepancyAlpha[];
 	  };
 
 /**
- * Reports schema equivalence under the existing document compatibility rules.
+ * Reports the equivalence described by {@link SchemaCompatibilityStatus.isEquivalent} and the differences that prevent it.
  *
  * @remarks
+ * Equivalence requires viewing compatibility and successful stored-schema upgrade checks in both directions between the existing and proposed stored schemas.
+ * The proposed stored schema is generated using the configured staged upgrade policy.
  * Equivalence does not require structural identity or equal persisted metadata.
  * `equivalenceDiscrepancies` is absent when `isEquivalent` is true.
  * Narrow `isEquivalent` to false before accessing the nonempty blocker list.
@@ -240,31 +268,41 @@ export type SchemaCompatibilityUpgradeableStatus =
 export type SchemaCompatibilityEquivalenceStatus =
 	| {
 			/**
-			 * The schemas are equivalent under the document compatibility rules.
+			 * The view can access the document, and the existing and proposed stored schemas pass the upgrade checks in both directions.
+			 * Calling {@link TreeView.upgradeSchema} makes no change to the stored schema.
 			 */
 			readonly isEquivalent: true;
 	  }
 	| {
 			/**
-			 * At least one document compatibility check prevents equivalence.
+			 * Viewing compatibility or at least one direction of the stored-schema upgrade checks fails.
+			 * This does not by itself mean that viewing or upgrading will throw; check `canView` and `canUpgrade`, respectively.
 			 */
 			readonly isEquivalent: false;
 			/**
-			 * Contains at least one equivalence blocker selected from the complete list.
+			 * Differences that cause {@link SchemaCompatibilityStatus.isEquivalent} to be false.
+			 * Contains at least one entry from {@link CompleteSchemaDiscrepanciesAlpha.allDiscrepancies}.
+			 * Includes viewing blockers, upgrade blockers, and differences that prevent the reverse comparison from the proposed stored schema to the existing stored schema.
 			 */
 			readonly equivalenceDiscrepancies: readonly SchemaDiscrepancyAlpha[];
 	  };
 
 /**
- * Reports all detected schema differences within the comparison scope.
+ * Reports differences in schema constraints, persisted metadata, and view annotations across the view, existing stored schema, and proposed stored schema.
  * @sealed
  * @alpha
  */
 export interface CompleteSchemaDiscrepanciesAlpha {
 	/**
-	 * Contains every distinct discrepancy, including staging and persisted metadata differences.
+	 * Contains every distinct difference in the aspects described by {@link SchemaDiscrepancyAlpha}.
 	 *
 	 * @remarks
+	 * Reports the root field and node definitions, including stored definitions that are not reachable from the root.
+	 * Each entry describes values from the view, existing stored schema, and proposed stored schema where applicable.
+	 * The proposed stored schema is generated using the configured staged upgrade policy, as described by {@link SchemaCompatibilityStatus.canUpgrade}.
+	 * This is not solely a diff between the existing and proposed stored schemas: it also includes view-only staging annotations and unknown optional field policy.
+	 * It does not inspect the document's current content or explain {@link SchemaCompatibilityStatus.canInitialize}.
+	 *
 	 * This array is always available and can be nonempty when all compatibility flags are true.
 	 * Non-persisted custom metadata and descriptions are excluded. Their absence from stored schema
 	 * is not a discrepancy. For example, changing a schema description is ignored, while changing
@@ -281,11 +319,14 @@ export interface CompleteSchemaDiscrepanciesAlpha {
 }
 
 /**
- * Reports schema compatibility with complete differences and conditional blocker subsets.
+ * Reports compatibility for a view's configuration and document, with schema differences and conditional blocker subsets.
  *
  * @remarks
  * Extends {@link SchemaCompatibilityStatusBeta} without changing its flags or beta discrepancy details.
+ * Viewing discrepancies explain access under the existing stored schema; upgrade discrepancies explain the transition to the configuration's proposed stored schema.
+ * Equivalence discrepancies also include failures of the reverse stored-schema comparison.
  * The complete list also includes differences that do not affect compatibility.
+ * None of these lists determines whether the document is uninitialized; {@link SchemaCompatibilityStatus.canInitialize} reports that state separately.
  *
  * @sealed
  * @alpha
@@ -419,7 +460,7 @@ function fieldsOf(
  *
  * @param view - View schema, including staging annotations and persisted metadata.
  * @param stored - Current stored schema, including definitions unreachable from its root.
- * @param target - Effective upgrade target after applying the configured staging policy.
+ * @param target - Effective proposed stored schema after applying the configured staging policy.
  * @param viewFailures - Raw viewing discrepancies for these inputs from the existing compatibility check.
  * @returns The complete list and its viewing, upgrade, and equivalence blocker subsets.
  * Successful checks have empty subsets here; the caller omits those properties from the public status.
@@ -479,12 +520,12 @@ export function collectSchemaDiagnostics(
 		// Compare metadata by value, independent of object property insertion order.
 		const normalized = {
 			view: canonical(values.view),
-			stored: canonical(values.stored),
-			target: canonical(values.target),
+			existingStored: canonical(values.stored),
+			proposedStored: canonical(values.target),
 		};
 		if (
-			JSON.stringify(normalized.view) === JSON.stringify(normalized.stored) &&
-			JSON.stringify(normalized.target) === JSON.stringify(normalized.stored)
+			JSON.stringify(normalized.view) === JSON.stringify(normalized.existingStored) &&
+			JSON.stringify(normalized.proposedStored) === JSON.stringify(normalized.existingStored)
 		) {
 			return undefined;
 		}
@@ -493,15 +534,19 @@ export function collectSchemaDiagnostics(
 			location,
 			...(mismatch === "missingNode"
 				? {
-						missingFrom: (["view", "stored", "target"] as const).filter(
-							(side) => values[side] === undefined,
+						missingFrom: (["view", "existingStored", "proposedStored"] as const).filter(
+							(side) => normalized[side] === undefined,
 						),
 					}
 				: {}),
 			...(allowedType === undefined ? {} : { allowedType }),
 			...(normalized.view === undefined ? {} : { view: normalized.view }),
-			...(normalized.stored === undefined ? {} : { stored: normalized.stored }),
-			...(normalized.target === undefined ? {} : { target: normalized.target }),
+			...(normalized.existingStored === undefined
+				? {}
+				: { existingStored: normalized.existingStored }),
+			...(normalized.proposedStored === undefined
+				? {}
+				: { proposedStored: normalized.proposedStored }),
 		};
 		const entry = data as SchemaDiscrepancyAlpha;
 		const key = JSON.stringify(entry);
@@ -613,7 +658,7 @@ export function collectSchemaDiagnostics(
 	}
 
 	/**
-	 * Records view-only staging annotations independently of their effect on the upgrade target.
+	 * Records view-only staging annotations independently of their effect on the proposed stored schema.
 	 *
 	 * @param location - Location of the annotated field.
 	 * @param field - View field whose allowed types and optionality may be staged.

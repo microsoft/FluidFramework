@@ -23,12 +23,21 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
 import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
 
 /**
- * Compute the compatibility of using `view` to {@link ViewableTree.viewWith | view a tree} who's {@link ITreeAlpha.exportSimpleSchema | stored schema} could be derived from `viewWhichCreatedStoredSchema` via either {@link TreeView.initialize} or {@link TreeView.upgradeSchema}.
+ * Reports viewing compatibility and stored-schema upgrade diagnostics for a stored schema generated from `viewWhichCreatedStoredSchema.schema` and a proposed `view.schema`.
  *
- * @remarks See {@link SchemaCompatibilityStatus} for details on the compatibility results.
- * The complete discrepancy list includes available persisted metadata and staging differences.
+ * @remarks
+ * Only the `schema` property of each configuration is used.
+ * The existing and proposed stored schemas are generated using the default restrictive staged upgrade policy;
+ * staged upgrade policies supplied through alpha configurations are not used.
+ * Viewing diagnostics compare `view.schema` with the generated existing stored schema.
+ * Upgrade diagnostics compare the generated existing and proposed stored schemas.
+ * Equivalence also requires viewing compatibility and a successful reverse stored-schema comparison.
+ * See {@link SchemaCompatibilityStatus} for the compatibility flags and {@link SchemaComparisonStatusAlpha} for the diagnostic lists.
+ *
+ * The complete discrepancy list also includes available persisted metadata and view-only staging annotations and unknown optional field policy.
  * Non-persisted custom metadata and descriptions are not compared, even if both inputs contain them.
  * Persisted metadata differences do not affect compatibility flags.
+ * This function does not inspect document content and does not report `canInitialize`.
  *
  * @example This example demonstrates checking the compatibility of a historical schema against a current schema.
  * In this case, the historical schema is a Point2D object with x and y fields, while the current schema is a Point3D object
@@ -67,9 +76,9 @@ import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
  * assert.equal(forwardsCompatibilityStatus.canView, true);
  * ```
  *
- * @param viewWhichCreatedStoredSchema - From which to derive the stored schema, as if it initialized or upgraded a tree via {@link TreeView}.
- * @param view - The view being tested to see if it could view tree created or initialized using `viewWhichCreatedStoredSchema`.
- * @returns The compatibility status.
+ * @param viewWhichCreatedStoredSchema - Configuration whose `schema` is used to generate the existing stored schema with the default restrictive staged upgrade policy.
+ * @param view - Configuration whose `schema` is used for viewing checks and to generate the proposed stored schema with the default restrictive staged upgrade policy.
+ * @returns A {@link SchemaComparisonStatusAlpha} with complete differences and conditional viewing, upgrade, and equivalence blocker lists, without `canInitialize`.
  *
  * @privateRemarks
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.

@@ -65,16 +65,21 @@ export function extractPersistedSchema(
 }
 
 /**
- * Compares two schema extracted using {@link extractPersistedSchema}.
- * Reports the same compatibility that {@link TreeView.compatibility} would report if
- * opening a document that used the `persisted` schema and provided `view` to {@link ViewableTree.viewWith}.
+ * Reports viewing compatibility and stored-schema upgrade diagnostics for a persisted schema and a view schema.
+ * Reports the schema compatibility that {@link TreeView.compatibility} would report for a document using `persisted`
+ * and a view configured with `view` and the default restrictive staged upgrade policy, without document initialization state.
  *
  * @param persisted - Schema persisted for a document. Typically persisted alongside the data and assumed to describe that data.
  * @param view - Schema which would be used to view persisted content.
  * @param options - {@link ICodecOptions} used when parsing the provided schema.
- * @returns Alpha compatibility diagnostics without document initialization state.
+ * @returns A {@link SchemaComparisonStatusAlpha} with complete differences and conditional viewing, upgrade, and equivalence blocker lists, without `canInitialize`.
  *
  * @remarks
+ * Viewing diagnostics compare the view schema with the decoded stored schema.
+ * Upgrade diagnostics compare the decoded stored schema with the proposed stored schema generated from `view` using the default restrictive staged upgrade policy.
+ * Equivalence also requires viewing compatibility and a successful reverse stored-schema comparison.
+ * This function does not accept a staged upgrade policy or inspect document content.
+ *
  * This compares schema data available in the persisted format, including persisted metadata when present.
  * Persisted metadata differences do not affect compatibility flags.
  * Non-persisted custom metadata and descriptions are not compared.

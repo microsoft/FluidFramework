@@ -47,7 +47,7 @@ const factory = new SchemaFactoryAlpha("");
 /**
  * Checks compatibility expectations and the diagnostic contract for a schema pair.
  *
- * @param inputs - View schema and current stored schema to compare.
+ * @param inputs - View schema and existing stored schema to compare.
  * @param expected - Expected compatibility flags and enabled upgrades. Enabled upgrades default to an empty map.
  * @param stagedSchemaUpgrades - Staging policy passed to the compatibility check.
  * @returns The checked status for additional fixture-specific assertions.
@@ -122,6 +122,19 @@ function expectCompatibility(
 		JSON.parse(JSON.stringify(compatibility.allDiscrepancies)),
 		compatibility.allDiscrepancies,
 	);
+	for (const entry of compatibility.allDiscrepancies) {
+		for (const oldName of ["proposedView", "currentStored", "stored", "target"]) {
+			assert.equal(oldName in entry, false);
+		}
+		if (entry.mismatch === "missingNode") {
+			assert.deepEqual(
+				entry.missingFrom,
+				(["view", "existingStored", "proposedStored"] as const).filter(
+					(side) => entry[side] === undefined,
+				),
+			);
+		}
+	}
 	assert.equal(
 		new Set(compatibility.allDiscrepancies.map((entry) => JSON.stringify(entry))).size,
 		compatibility.allDiscrepancies.length,
@@ -279,8 +292,8 @@ describe("checkSchemaCompatibility", () => {
 				mismatch: "valueSchema",
 				location: { nodeType: identifier },
 				view: "Number",
-				stored: "String",
-				target: "Number",
+				existingStored: "String",
+				proposedStored: "Number",
 			},
 		]);
 		assert(!status.canView && !status.canUpgrade && !status.isEquivalent);
@@ -433,8 +446,8 @@ describe("checkSchemaCompatibility", () => {
 					location: { nodeType: view.identifier, fieldKey: null },
 					allowedType: factory.string.identifier,
 					view: widening,
-					stored: !widening,
-					target: widening,
+					existingStored: !widening,
+					proposedStored: widening,
 				};
 				assert(!status.canView);
 				assert.deepEqual(status.viewDiscrepancies, [expected]);
@@ -505,8 +518,8 @@ describe("checkSchemaCompatibility", () => {
 				mismatch: "fieldPresence",
 				location: { nodeType: view.identifier, fieldKey: "value" },
 				view: false,
-				stored: true,
-				target: false,
+				existingStored: true,
+				proposedStored: false,
 			},
 		]);
 	});
@@ -582,8 +595,8 @@ describe("checkSchemaCompatibility", () => {
 				mismatch: "persistedMetadata",
 				location: { nodeType: viewNode.identifier },
 				view: { label: "new", nested: { value: null } },
-				stored: { label: "old", nested: { value: null } },
-				target: { label: "new", nested: { value: null } },
+				existingStored: { label: "old", nested: { value: null } },
+				proposedStored: { label: "new", nested: { value: null } },
 			},
 		]);
 		assert.doesNotThrow(() => JSON.stringify(status));
@@ -629,15 +642,15 @@ describe("checkSchemaCompatibility", () => {
 				location: { nodeType: proposedChild.identifier, fieldKey: "value" },
 				allowedType: factory.number.identifier,
 				view: true,
-				stored: true,
-				target: false,
+				existingStored: true,
+				proposedStored: false,
 			},
 			{
 				mismatch: "missingNode",
 				location: { nodeType: factory.number.identifier },
-				missingFrom: ["target"],
+				missingFrom: ["proposedStored"],
 				view: { kind: "leaf" },
-				stored: { kind: "leaf" },
+				existingStored: { kind: "leaf" },
 			},
 		]);
 		assert(!status.isEquivalent);
@@ -1013,8 +1026,8 @@ describe("checkSchemaCompatibility", () => {
 						mismatch: "allowUnknownOptionalFields",
 						location: { nodeType: Point2D.identifier },
 						view: true,
-						stored: false,
-						target: false,
+						existingStored: false,
+						proposedStored: false,
 					},
 				]);
 				assert(!status.canUpgrade && !status.isEquivalent);
@@ -1378,15 +1391,15 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 				mismatch: "fieldKind",
 				location: { nodeType: ObjStaged.identifier, fieldKey: "value" },
 				view: "Optional",
-				stored: "Optional",
-				target: "Value",
+				existingStored: "Optional",
+				proposedStored: "Value",
 			},
 			{
 				mismatch: "stagedOptional",
 				location: { nodeType: ObjStaged.identifier, fieldKey: "value" },
 				view: true,
-				stored: false,
-				target: false,
+				existingStored: false,
+				proposedStored: false,
 			},
 		]);
 		assert(status.canView && !status.canUpgrade && !status.isEquivalent);
@@ -1421,8 +1434,8 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 			mismatch: "stagedOptional",
 			location: { nodeType: ObjStaged.identifier, fieldKey: "value" },
 			view: true,
-			stored: false,
-			target: false,
+			existingStored: false,
+			proposedStored: false,
 		};
 		assert.deepEqual(
 			status.allDiscrepancies.filter((entry) => entry.mismatch === "stagedOptional"),
@@ -1431,7 +1444,7 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 		assert(status.canView && status.canUpgrade && status.isEquivalent);
 		assert.equal("equivalenceDiscrepancies" in status, false);
 
-		// Enable the upgrade in the proposed target without changing the current stored schema.
+		// Enable the upgrade in the proposed target without changing the existing stored schema.
 		const upgrading = checkSchemaCompatibility(
 			config,
 			stored,
@@ -1448,8 +1461,8 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 				mismatch: "fieldKind",
 				location: { nodeType: ObjStaged.identifier, fieldKey: "value" },
 				view: "Optional",
-				stored: "Value",
-				target: "Optional",
+				existingStored: "Value",
+				proposedStored: "Optional",
 			},
 		]);
 	});

@@ -1334,7 +1334,7 @@ export type SchemaDiscrepancyAlpha = {
     readonly mismatch: "nodeKind";
 } & SchemaDiscrepancyValues<SchemaNodeKindDescription>) | ({
     readonly mismatch: "missingNode";
-    readonly missingFrom: readonly ("view" | "stored" | "target")[];
+    readonly missingFrom: readonly ("view" | "existingStored" | "proposedStored")[];
 } & SchemaDiscrepancyValues<SchemaNodeKindDescription>) | ({
     readonly mismatch: "persistedMetadata";
 } & SchemaDiscrepancyValues<JsonCompatibleReadOnly>));
@@ -1347,8 +1347,8 @@ export type SchemaDiscrepancyLocationAlpha = "root" | {
 
 // @alpha
 export interface SchemaDiscrepancyValues<T> {
-    readonly stored?: T;
-    readonly target?: T;
+    readonly existingStored?: T;
+    readonly proposedStored?: T;
     readonly view?: T;
 }
 
