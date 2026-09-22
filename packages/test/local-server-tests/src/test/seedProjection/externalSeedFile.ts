@@ -69,7 +69,7 @@ export function createApplicationProjection(parts: HtmlParts): ISummaryTree {
 
 /**
  * Create a loader-valid seed summary containing only protocol metadata and application bytes.
- * This is external-producer sample code: pass the result to SeedWorkflowBackend.create(), or encode
+ * This is external-producer sample code: pass the result to IInspectableStorageAdapter.create(), or encode
  * the same envelope for a storage creation API. No Loader, Container, DDS, or native model is created.
  * The envelope and fixed code package are a reference protocol, not a stable public file format.
  * For identical HTML the result is identical; file identity is allocated by storage, not here.
@@ -109,7 +109,7 @@ export function createSeedSummary(parts: HtmlParts): ISummaryTree {
 
 /**
  * Read application content directly from a stored snapshot, without loading a Fluid runtime.
- * Accept the app-root snapshot returned by SeedWorkflowBackend.inspect() (the driver has unwrapped
+ * Accept the app-root snapshot returned by IInspectableStorageAdapter.inspect() (the driver has unwrapped
  * `.app`), and its readBlob callback. The same operation reads the initial seed and later native
  * summaries, even if loading groups omitted the payload bytes from the downloaded snapshot.
  * A retained payload may avoid reads during pending-state restoration, but its IDs must match.

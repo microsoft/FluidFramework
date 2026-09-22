@@ -11,72 +11,29 @@ import {
 } from "@fluidframework/local-driver/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
-import { forward } from "./seedRuntimeAdapter.js";
-import type { SeedWorkflowBackend } from "./seedWorkflowBackend.js";
+import {
+	createInspectableStorageAdapter,
+	type IInspectableStorageAdapter,
+} from "./inspectableStorageAdapter.js";
 
 /**
- * Create the Memorylicious implementation of SeedWorkflowBackend: one in-process server plus local-driver.
+ * Configure the generic storage adapter with a real Memorylicious server and local-driver.
  * The returned backend can create multiple independent files and load multiple clients per file.
  * Wrappers record client summary upload attempts; create() writes are deliberately not in that journal.
  * This owns a real local service, not a mocked collaboration/summary transport; close it after each scenario.
  */
-export function createLocalSeedBackend(): SeedWorkflowBackend {
+export function createLocalSeedBackend(): IInspectableStorageAdapter {
 	const server = LocalDeltaConnectionServer.create();
 	const rawFactory = new LocalDocumentServiceFactory(server);
 	const resolver = new LocalResolver();
-	const uploads: SeedWorkflowBackend["uploads"] = [];
-	const documentServiceFactory = forward(rawFactory, {
-		createDocumentService: async (...args) => {
-			const service = await rawFactory.createDocumentService(...args);
-			const documentUrl = await resolver.getAbsoluteUrl(service.resolvedUrl, "");
-			return forward(service, {
-				connectToStorage: async () => {
-					const storage = await service.connectToStorage();
-					return forward(storage, {
-						uploadSummaryWithContext: async (summary, context) => {
-							uploads.push({ documentUrl, summary, context });
-							return storage.uploadSummaryWithContext(summary, context);
-						},
-					});
-				},
-			});
-		},
-	});
-	return {
-		documentServiceFactory,
+	return createInspectableStorageAdapter({
+		documentServiceFactory: rawFactory,
 		urlResolver: resolver,
+		createCreateNewRequest: () => resolver.createCreateNewRequest(`seed-${randomUUID()}`),
 		omitsUnrequestedGroupBlobs: true,
 		supportsLoadingGroups: true,
-		uploads,
-		async create(summary) {
-			const request = resolver.createCreateNewRequest(`seed-${randomUUID()}`);
-			const resolved = await resolver.resolve(request);
-			const service = await rawFactory.createContainer(summary, resolved);
-			try {
-				return await resolver.getAbsoluteUrl(service.resolvedUrl, "");
-			} finally {
-				service.dispose();
-			}
-		},
-		async inspect(url, version, groups) {
-			const service = await rawFactory.createDocumentService(await resolver.resolve({ url }));
-			try {
-				const storage = await service.connectToStorage();
-				if (storage.getSnapshot === undefined) {
-					throw new Error("The backend does not support getSnapshot");
-				}
-				return {
-					snapshot: await storage.getSnapshot({ versionId: version, loadingGroupIds: groups }),
-					readBlob: storage.readBlob.bind(storage),
-					dispose: () => service.dispose(),
-				};
-			} catch (error) {
-				service.dispose();
-				throw error;
-			}
-		},
 		async close() {
 			await server.close();
 		},
-	};
+	});
 }

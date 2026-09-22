@@ -115,6 +115,16 @@ creation requests, and actual service guarantees belong to the backend integrati
 The test upload journal observes attempts, including failures; it is not an inventory of accepted summaries.
 Production readers should use a selected persisted version, not that journal.
 
+For a non-local driver, use `createInspectableStorageAdapter()` from `inspectableStorageAdapter.ts`. Supply the
+already-configured `IDocumentServiceFactory` and `IUrlResolver`, explicit loading-group flags, and a callback producing
+fresh service-specific create requests. A host can bind its test driver's `createCreateNewRequest()` or its production
+driver's request builder. Authentication, destination path, and required headers cannot be inferred from the resolver
+interface. Optional cleanup releases resources the adapter actually owns.
+
+The same generic wrapper observes real client uploads through the configured factory; it does not replace the service
+with mocks or need an ODSP-specific upload journal. Inspection currently requires `getSnapshot`; unsupported storage
+fails explicitly. `createLocalSeedBackend()` remains a small convenience for the in-process configuration.
+
 ## Boundaries to keep explicit
 
 The current executable reference has no images/attachment migration, browser UI, rich-text DDS graph, or real ODSP run.

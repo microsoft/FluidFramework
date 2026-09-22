@@ -137,8 +137,8 @@ retains original manifest/part bytes and their storage IDs; regenerated native b
 caches. Tests cover initial `ISnapshot` and tree-only loads, restoring either through the snapshot-based loader path.
 
 Memorylicious uses one real `LocalDeltaConnectionServer` and local-driver for clients, storage, sequencing, and ACKs.
-`SeedWorkflowBackend` separates creation, inspection, driver, and group capabilities so the scenario can later run on
-other services. Group support and guaranteed omission of unrequested bodies are separate capabilities.
+`IInspectableStorageAdapter` separates creation, inspection, driver, and group capabilities so the scenario can later
+run on other services. Group support and guaranteed omission of unrequested bodies are separate capabilities.
 
 The following remain outside the demonstrated SDK coverage; they are not hidden behind "all loading modes":
 
@@ -163,6 +163,7 @@ This document makes no prescribed PR count or requirement to discard and reimple
 | `sampleRuntimeFactory.ts` | Data-store registration and model realization on every client, including summarizers. |
 | `incrementalHtmlProjection.ts` | Per-part dirtiness, captured revisions, and accepted-parent subtree handles. |
 | `seedProjectionWorkflow.ts` | Backend-neutral lifecycle assertions and instrumentation. |
+| `inspectableStorageAdapter.ts` | Generic driver/resolver wrapper, external creation, storage inspection, and per-document upload journal. |
 | `localSeedWorkflowBackend.ts` | Memorylicious setup with local-driver and a shared `LocalDeltaConnectionServer`. |
 
 The disconnected construction mock is only a host for building/serializing a baseline, never the collaboration or
@@ -176,3 +177,20 @@ preserve the distinction between a whole native base and a selected application 
 The generation options are an exposed API surface with release tags matching their containing loading API, not
 internal-only merely because the sample lives in a test package. Normal workspace build, lint, and generated API checks
 remain necessary; the README's optional source loader only addresses stale local outputs.
+
+### Generic storage instrumentation
+
+`createInspectableStorageAdapter()` accepts a configured `IDocumentServiceFactory`, its `IUrlResolver`, a fresh
+driver-specific creation-request callback, explicit group capability flags, and optional cleanup. The resolver interface
+does not define a universal create-new request; the host supplies that path/auth/header setup.
+`createLocalSeedBackend()` only supplies Memorylicious configuration to this common adapter.
+
+Client connections are wrapped with the shared `wrapObjectAndOverride` test helper, intercepting storage
+`uploadSummaryWithContext` calls and preserving each service's document identity. External creation and independent
+inspection use the raw factory and therefore do not pollute the client upload journal. No application/seed format
+knowledge is needed in the adapter. The shared helper is exported from `test-runtime-utils`; its existing E2E import
+path remains a re-export.
+
+Inspection currently requires the driver's `getSnapshot` capability and fails explicitly when absent. A future
+tree-only normalization path must define checkpoint/body semantics rather than synthesize a successful snapshot
+with invented metadata. Configuring an ODSP driver in this wrapper is not itself real-service validation.

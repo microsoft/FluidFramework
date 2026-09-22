@@ -29,6 +29,12 @@ export {
 } from "./mocksForReconnection.js";
 export { MockStorage } from "./mockStorage.js";
 export {
+	type IWrapObjectAndOverrideOptions,
+	type OverrideFactory,
+	type UnPromise,
+	wrapObjectAndOverride,
+} from "./mocking.js";
+export {
 	validateAssertionError,
 	validateUsageError,
 	validateTypeError,

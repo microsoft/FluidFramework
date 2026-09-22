@@ -5,12 +5,12 @@
 
 import { createLocalSeedBackend } from "./localSeedWorkflowBackend.js";
 import { runPendingRestoreWorkflow, runReferenceWorkflow } from "./seedProjectionWorkflow.js";
-import type { SeedWorkflowBackend } from "./seedWorkflowBackend.js";
+import type { IInspectableStorageAdapter } from "./inspectableStorageAdapter.js";
 
 // Run backend-neutral lifecycle contracts against real in-process sequencing and summary storage.
 describe("Seed projection reference: Memorylicious lifecycle", function () {
 	this.timeout(60_000);
-	let backend: SeedWorkflowBackend;
+	let backend: IInspectableStorageAdapter;
 	beforeEach(() => {
 		backend = createLocalSeedBackend();
 	});

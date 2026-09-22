@@ -45,7 +45,7 @@ import {
 	type HtmlEntryPoint,
 } from "./sampleRuntimeFactory.js";
 import { forward } from "./seedRuntimeAdapter.js";
-import type { SeedWorkflowBackend } from "./seedWorkflowBackend.js";
+import type { IInspectableStorageAdapter } from "./inspectableStorageAdapter.js";
 
 export const exampleParts: HtmlParts = {
 	first: '<div class="document"><p id="first">Hello</p></div>',
@@ -170,7 +170,7 @@ export interface SeedTestSession {
  * storage or ACKs. Backend/auth/URL/server details remain outside this file. Always close the session.
  */
 export function referenceSession(
-	backend: SeedWorkflowBackend,
+	backend: IInspectableStorageAdapter,
 	useSnapshotApi = true,
 ): SeedTestSession {
 	const tracker = new LoaderContainerTracker(true);
@@ -321,7 +321,7 @@ export function referenceSession(
  * retrieval at the same checkpoint. Only assert stronger storage behavior when the backend advertises it.
  */
 async function verifyGroupedProjection(
-	backend: SeedWorkflowBackend,
+	backend: IInspectableStorageAdapter,
 	url: string,
 	version: string | undefined,
 	expectedParts: HtmlParts,
@@ -370,7 +370,9 @@ async function verifyGroupedProjection(
  * Storage creation, loaders, DDSs, sequencing, uploads, and ACKs are real; only observations and fault
  * injection are test harness code. Pass a fresh backend and close it after this workflow returns.
  */
-export async function runReferenceWorkflow(backend: SeedWorkflowBackend): Promise<void> {
+export async function runReferenceWorkflow(
+	backend: IInspectableStorageAdapter,
+): Promise<void> {
 	const session = referenceSession(backend);
 	try {
 		const url = await backend.create(createSeedSummary(exampleParts));
@@ -615,7 +617,7 @@ export async function runReferenceWorkflow(backend: SeedWorkflowBackend): Promis
  * Cover both initial snapshot APIs; the loader's restored representation is ISnapshot in either case.
  */
 export async function runPendingRestoreWorkflow(
-	backend: SeedWorkflowBackend,
+	backend: IInspectableStorageAdapter,
 	useSnapshotApi = true,
 ): Promise<void> {
 	const session = referenceSession(backend, useSnapshotApi);
