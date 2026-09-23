@@ -10,8 +10,10 @@ import type {
 	IContainerContext,
 	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
-import { SummaryType } from "@fluidframework/driver-definitions";
-import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+import { SummaryType, type SummaryObject } from "@fluidframework/driver-definitions";
+import { MessageType, type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockAudience,
@@ -48,9 +50,10 @@ describe("Runtime GC summary tracking", () => {
 
 	/**
 	 * Load a real runtime with controlled summary storage and submission.
+	 * When a factory is provided, load one root data store from an ordinary snapshot without initialization ops.
 	 * Every created runtime is disposed after its test.
 	 */
-	async function createRuntime(): Promise<{
+	async function createRuntime(dataStoreFactory?: IFluidDataStoreFactory): Promise<{
 		runtime: ContainerRuntime;
 		logger: ReturnType<typeof createChildLogger>;
 		uploadSummary: Sinon.SinonStub<
@@ -78,11 +81,45 @@ describe("Runtime GC summary tracking", () => {
 			>()
 			.resolves("proposal");
 		const submitSummary = sandbox.stub<[], number>().returns(1);
+		const baseSnapshot: ISnapshotTree | undefined =
+			dataStoreFactory === undefined
+				? undefined
+				: {
+						blobs: { ".metadata": "metadata" },
+						trees: {
+							".channels": {
+								blobs: {},
+								trees: {
+									store: {
+										blobs: { ".component": "attributes" },
+										trees: { ".channels": { blobs: {}, trees: {} } },
+									},
+								},
+							},
+						},
+					};
 		const storage: Partial<IContainerStorageService> = {
 			uploadSummaryWithContext: uploadSummary,
+			readBlob: async (id) => {
+				assert(
+					dataStoreFactory !== undefined,
+					"Only the loaded data store fixture reads blobs",
+				);
+				assert(id === "metadata" || id === "attributes", "Unexpected fixture blob");
+				const contents =
+					id === "metadata"
+						? { summaryFormatVersion: 1, gcFeature: 3 }
+						: {
+								pkg: JSON.stringify([dataStoreFactory.type]),
+								summaryFormatVersion: 2,
+								isRootDataStore: true,
+							};
+				return new TextEncoder().encode(JSON.stringify(contents)).buffer;
+			},
 		};
 		const context: Partial<IContainerContext> = {
 			attachState: AttachState.Attached,
+			baseSnapshot,
 			deltaManager,
 			audience: new MockAudience(),
 			quorum: new MockQuorumClients(),
@@ -92,14 +129,18 @@ describe("Runtime GC summary tracking", () => {
 			connected: true,
 			closeFn: () => {},
 			updateDirtyContainerState: () => {},
-			getLoadedFromVersion: () => undefined,
+			getLoadedFromVersion: () =>
+				baseSnapshot === undefined ? undefined : { id: "base", treeId: "base" },
 			submitSummaryFn: submitSummary,
 			storage: storage as IContainerStorageService,
 		};
 		const runtime = await loadContainerRuntime({
 			context: context as IContainerContext,
-			registryEntries: [],
-			existing: false,
+			registryEntries:
+				dataStoreFactory === undefined
+					? []
+					: [[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]],
+			existing: baseSnapshot !== undefined,
 			provideEntryPoint: async () => ({}),
 		});
 		assert(runtime instanceof ContainerRuntime);
@@ -165,6 +206,45 @@ describe("Runtime GC summary tracking", () => {
 		fixture.uploadSummary.resolves("full-again");
 		const fullAgain = await submit(fixture, true);
 		assert.equal(fullAgain.summaryTree.tree.gc?.type, SummaryType.Tree);
+	});
+
+	it("reuses both data-store and GC handles after accepting the first full summary", async () => {
+		const factory: IFluidDataStoreFactory = {
+			type: "test-store",
+			get IFluidDataStoreFactory() {
+				return factory;
+			},
+			instantiateDataStore: async (context, existing) =>
+				new FluidDataStoreRuntime(context, new Map(), existing, async () => ({})),
+		};
+		const summarizeDataStore = sandbox.spy(FluidDataStoreRuntime.prototype, "summarize");
+		const fixture = await createRuntime(factory);
+		const full = await submit(fixture, true);
+		const fullChannels: SummaryObject | undefined = full.summaryTree.tree[".channels"];
+		assert(fullChannels?.type === SummaryType.Tree);
+		assert.equal(fullChannels.tree.store?.type, SummaryType.Tree);
+		assert.equal(full.summaryTree.tree.gc?.type, SummaryType.Tree);
+		assert.equal(summarizeDataStore.callCount, 1);
+		assert.deepEqual(summarizeDataStore.firstCall.args.slice(0, 2), [true, true]);
+
+		await accept(fixture, "proposal");
+		fixture.uploadSummary.resolves("incremental");
+		const incremental = await submit(fixture);
+		const incrementalChannels: SummaryObject | undefined =
+			incremental.summaryTree.tree[".channels"];
+		assert(incrementalChannels?.type === SummaryType.Tree);
+		assert.deepEqual(incrementalChannels.tree.store, {
+			type: SummaryType.Handle,
+			handleType: SummaryType.Tree,
+			handle: "/.channels/store",
+		});
+		assert.equal(incremental.summaryTree.tree.gc?.type, SummaryType.Handle);
+		assert.equal(
+			summarizeDataStore.callCount,
+			1,
+			"Unchanged data-store serialization is skipped",
+		);
+		assert.equal(fixture.uploadSummary.lastCall.args[1].ackHandle, "ack-proposal");
 	});
 
 	it("keeps submitted GC proposals across direct summaries and failed retries", async () => {
