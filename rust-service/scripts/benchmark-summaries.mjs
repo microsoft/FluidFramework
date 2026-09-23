@@ -29,11 +29,24 @@ function inventory(directory) {
 	const files = [];
 	const visit = (path, prefix = "") => {
 		if (!existsSync(path)) return;
-		for (const entry of readdirSync(path, { withFileTypes: true })) {
+		let entries;
+		try {
+			entries = readdirSync(path, { withFileTypes: true });
+		} catch (error) {
+			if (error?.code === "ENOENT") return;
+			throw error;
+		}
+		for (const entry of entries) {
 			const name = `${prefix}${entry.name}`;
 			if (entry.isDirectory()) visit(resolve(path, entry.name), `${name}/`);
 			else if (entry.isFile()) {
-				const stat = statSync(resolve(path, entry.name));
+				let stat;
+				try {
+					stat = statSync(resolve(path, entry.name));
+				} catch (error) {
+					if (error?.code === "ENOENT") continue;
+					throw error;
+				}
 				files.push({ name, bytes: stat.size, allocatedBytes: stat.blocks * 512 });
 			}
 		}
