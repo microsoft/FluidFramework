@@ -155,7 +155,6 @@
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.3",
-		"ts-node": "^10.9.2",
 		"typescript": "~6.0.3"
 	},
 	"typeValidation": {

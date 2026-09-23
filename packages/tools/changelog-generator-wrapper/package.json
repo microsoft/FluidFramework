@@ -29,9 +29,7 @@
 	},
 	"dependencies": {
 		"@changesets/cli": "^2.29.8",
-		"@changesets/types": "^6.0.0",
-		"changesets-format-with-issue-links": "^0.3.0",
-		"typescript": "~6.0.3"
+		"changesets-format-with-issue-links": "^0.3.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",

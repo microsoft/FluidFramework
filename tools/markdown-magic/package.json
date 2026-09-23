@@ -33,12 +33,10 @@
 		"remark": "^15.0.1",
 		"remark-gfm": "^4.0.1",
 		"remark-mdx": "^3.1.1",
-		"unified": "^11.0.5",
 		"yargs": "17.7.2"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",
-		"@fluidframework/build-common": "^2.0.3",
 		"@types/mdast": "^4.0.4",
 		"@types/node": "catalog:types",
 		"@types/yargs": "^17.0.32",

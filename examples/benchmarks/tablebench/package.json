@@ -48,7 +48,6 @@
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
@@ -77,8 +76,7 @@
 		"typescript": "~6.0.3",
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4",
-		"webpack-dev-server": "~5.2.6",
-		"webpack-merge": "^6.0.1"
+		"webpack-dev-server": "~5.2.6"
 	},
 	"typeValidation": {
 		"disabled": true

@@ -112,9 +112,6 @@ importers:
       '@types/fs-extra':
         specifier: ^11.0.4
         version: 11.0.4
-      '@types/hast':
-        specifier: ^3.0.4
-        version: 3.0.4
       '@types/mdast':
         specifier: ^4.0.4
         version: 4.0.4
@@ -166,9 +163,6 @@ importers:
       linkcheck-bin:
         specifier: 3.0.0-2
         version: 3.0.0-2(supports-color@8.1.1)
-      lunr:
-        specifier: ^2.3.9
-        version: 2.3.9
       mdast-util-directive:
         specifier: ^3.1.0
         version: 3.1.0(supports-color@8.1.1)
@@ -6022,9 +6016,6 @@ packages:
     resolution: {integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==}
     engines: {node: '>=10'}
 
-  lunr@2.3.9:
-    resolution: {integrity: sha512-zTU3DaZaF3Rt9rhN3uBMGQD3dD2/vFQqnvZCDv4dl5iOzq2IZQqTxu90r4E5J+nP70J3ilqVCrbho2eWaeW8Ow==}
-
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
 
@@ -11284,7 +11275,6 @@ snapshots:
       remark: 15.0.1(supports-color@8.1.1)
       remark-gfm: 4.0.1(supports-color@8.1.1)
       remark-mdx: 3.1.1(supports-color@8.1.1)
-      unified: 11.0.5
       yargs: 17.7.2
     transitivePeerDependencies:
       - supports-color
@@ -16414,8 +16404,6 @@ snapshots:
   lru-cache@6.0.0:
     dependencies:
       yallist: 4.0.0
-
-  lunr@2.3.9: {}
 
   magic-string@0.30.21:
     dependencies:
