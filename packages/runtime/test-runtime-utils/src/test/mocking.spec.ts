@@ -59,13 +59,14 @@ describe("Seed projection reference: shared deep mocking", () => {
 	});
 
 	// Storage calls are reached through promises; both arguments and nested failure identity must survive.
-	it("wraps asynchronous results without swallowing thrown or rejected errors", async () => {
-		const failure = new Error("storage unavailable");
+	it("wraps asynchronous results without swallowing overridden rejections", async () => {
+		const originalFailure = new Error("storage unavailable");
+		const injectedFailure = new Error("injected storage failure");
 		const child = {
 			async read(id: string) {
 				assert.equal(this, child);
 				assert.equal(id, "blob");
-				throw failure;
+				throw originalFailure;
 			},
 		};
 		const original = {
@@ -76,10 +77,33 @@ describe("Seed projection reference: shared deep mocking", () => {
 			},
 		};
 		const wrapped = wrapObjectAndOverride(original, {
-			connect: { read: (owner) => async (id) => owner.read(id) },
+			connect: {
+				read: (owner) => async (id) => {
+					assert.equal(owner, child);
+					assert.equal(id, "blob");
+					throw injectedFailure;
+				},
+			},
 		});
 		const storage = await wrapped.connect("document");
-		await assert.rejects(storage.read("blob"), (error) => error === failure);
+		await assert.rejects(storage.read("blob"), (error) => error === injectedFailure);
+		await assert.rejects(child.read("blob"), (error) => error === originalFailure);
+	});
+
+	it("propagates synchronous throws from nested method calls", () => {
+		const failure = new Error("storage unavailable");
+		const original = {
+			connect(): { value: string } {
+				throw failure;
+			},
+		};
+		const wrapped = wrapObjectAndOverride(original, {
+			connect: { value: () => "overridden" },
+		});
+		assert.throws(
+			() => wrapped.connect(),
+			(error) => error === failure,
+		);
 	});
 
 	// Arbitrary driver extensions can use symbol methods or private fields in live prototype getters.
@@ -157,9 +181,9 @@ describe("Seed projection reference: shared deep mocking", () => {
 	// Observation must not advertise optional driver features which the underlying implementation lacks.
 	it("does not invent absent capabilities or change unoverridden property values", () => {
 		const policies = { supportGetSnapshotApi: false };
-		const original = { policies, getSnapshot: undefined };
+		const original = { policies };
 		const wrapped = wrapObjectAndOverride(original, {});
 		assert.equal(wrapped.policies, policies);
-		assert.equal(wrapped.getSnapshot, undefined);
+		assert.equal(Reflect.has(wrapped, "getSnapshot"), false);
 	});
 });

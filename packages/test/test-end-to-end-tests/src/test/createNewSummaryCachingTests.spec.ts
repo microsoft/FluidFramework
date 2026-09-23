@@ -16,13 +16,12 @@ import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/inte
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { wrapObjectAndOverride } from "@fluidframework/test-runtime-utils/internal";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	defaultTestOldestSupportedClient,
 } from "@fluidframework/test-utils/internal";
-
-import { wrapObjectAndOverride } from "../mocking.js";
 
 describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, apis) => {
 	const {

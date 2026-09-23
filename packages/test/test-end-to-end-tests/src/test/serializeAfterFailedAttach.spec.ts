@@ -16,6 +16,7 @@ import {
 	IContainerRuntimeBase,
 	type IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions/internal";
+import { wrapObjectAndOverride } from "@fluidframework/test-runtime-utils/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -24,8 +25,6 @@ import {
 	TestFluidObjectFactory,
 	createDocumentId,
 } from "@fluidframework/test-utils/internal";
-
-import { wrapObjectAndOverride } from "../mocking.js";
 
 describeCompat(
 	`Serialize After Failure to Attach Container Test`,
