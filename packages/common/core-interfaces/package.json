@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/core-interfaces",
-	"version": "3.0.0",
+	"version": "3.3.0",
 	"description": "Fluid object interfaces",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -117,11 +117,12 @@
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.116.0",
+		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@3.1.0",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
+		"@types/xml2js": "^0.4.14",
 		"c8": "^10.1.3",
 		"concurrently": "^10.0.3",
 		"copyfiles": "^2.4.1",
@@ -131,7 +132,8 @@
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.3",
-		"typescript": "catalog:TypeScript"
+		"typescript": "catalog:TypeScript",
+		"xml2js": "^0.6.2"
 	},
 	"fluidBuild": {
 		"tasks": {
@@ -141,14 +143,7 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"Interface_LogLevelConst": {
-				"backCompat": false
-			},
-			"Variable_LogLevel": {
-				"backCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "legacy"
 	}
 }

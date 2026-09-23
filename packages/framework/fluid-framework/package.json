@@ -1,6 +1,6 @@
 {
 	"name": "fluid-framework",
-	"version": "3.0.0",
+	"version": "3.3.0",
 	"description": "The main entry point into Fluid Framework public packages",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -111,20 +111,13 @@
 		"concurrently": "^10.0.3",
 		"copyfiles": "^2.4.1",
 		"eslint": "catalog:eslint",
-		"fluid-framework-previous": "npm:fluid-framework@2.116.0",
+		"fluid-framework-previous": "npm:fluid-framework@3.1.0",
 		"jiti": "^2.6.1",
 		"rimraf": "^6.1.3",
 		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
 		"entrypoint": "public",
-		"broken": {
-			"Interface_LogLevelConst": {
-				"backCompat": false
-			},
-			"Variable_LogLevel": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
