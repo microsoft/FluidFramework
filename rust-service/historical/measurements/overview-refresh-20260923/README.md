@@ -18,6 +18,10 @@ It does not change the service, client, workload, timing boundary, or persistenc
 
 SHA-256: `d95f52203f470675b04085089af74fb23626909dbff0ebebbe0ab922969ef18e`.
 
+[`native-webtransport-drain-fix.json`](native-webtransport-drain-fix.json) retains the
+post-fix native WebTransport aggregate values and exact-drain checks.
+Its SHA-256 is `f223b7e80a107c6c8a152ed9343a467cc95d79b793d367afa8afe434e6b7313f`.
+
 The uncompressed JSON is approximately 2,600 lines.
 Inspect it with:
 
@@ -37,6 +41,7 @@ The compact dataset contains all values used by the overview but is not a substi
 - 72 passing summary, download, cold-load, and persisted-size samples.
 - Complete Sea and Tinylicious end-to-end test inventories.
 - Current source and production dependency inventories.
+- 30 primary and three replacement native WebTransport post-fix attempts.
 
 Sea's primary results use the default-enabled live cache.
 Cache-disabled results are diagnostic controls and are not mixed into the overview tables.

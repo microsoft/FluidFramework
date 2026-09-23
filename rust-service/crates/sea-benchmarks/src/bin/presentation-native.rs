@@ -6,6 +6,7 @@ use futures_util::{SinkExt as _, StreamExt as _};
 use sea_benchmarks::measurement::MeasurementClock;
 use sea_core::{
     Event, EventSubmission, MonitoredStreamItem, SeaAuthorSession, archive::SessionEventKind,
+    storage::LoadStart,
 };
 use sea_webtransport::{
     NativeSeaClient, SeaClientError, SessionClient, SessionOpen, TransportConfig, protocol,
@@ -248,7 +249,14 @@ where
             let end_time = Arc::clone(&end_time);
             let bytes = configuration.payload_bytes;
             tasks.push(tokio::spawn(async move {
-                let mut events = session.read(None, None);
+                // Consume the connection's opening recovery/live stream instead of abandoning it.
+                let mut events = match session.load(LoadStart::LatestSnapshot).await {
+                    Ok(load) => load.events,
+                    Err(error) => {
+                        state.lock().expect("state lock").error = Some(error.to_string());
+                        return;
+                    }
+                };
                 while let Some(event) = events.next().await {
                     let mut state = state.lock().expect("state lock");
                     match event {

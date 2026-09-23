@@ -3,7 +3,7 @@
 Measured: 2026-09-23.
 Primary source revision: `240798434cf591f4db2366a1a3b6b6a7438bd015`.
 Summary-harness revision: `22309cf9d169c4f7986b6ce1db184427269f9656`.
-Status: refreshed investigation report; no new production optimization is included.
+Status: refreshed investigation report; native WebTransport benchmark lifecycle repair included.
 
 ## Summary
 
@@ -11,12 +11,11 @@ The shared live-event cache is implemented, enabled by default, and materially c
 The current eight-core buffered-file thresholds are 44,000 small and 36,000 large operations/s, compared with 10,000 and 9,000 in the last cache-disabled overview refresh.
 The improvement is consistent with the checkpoint-1 paired evidence, which measured approximately 44-50% lower service CPU for file-backed reader workloads.
 
-The highest-priority current finding is not an optimization:
-native WebTransport with 64-byte events failed exact drain in all ten runs at 12,000 operations/s and again in all ten controls at 10,000 operations/s.
-The large-event WebTransport group passed 10/10 at 6,000 operations/s, and browser WebTransport passed all 40 relevant samples.
-The small native failure must be diagnosed before using that path for optimization comparisons.
+The native WebTransport exact-drain regression was a benchmark-client lifecycle bug, not a service throughput limit.
+The generator opened a second content stream with `read()` and left the authoritative opening event stream unread.
+Consuming that stream through `load()` removed the flow-control stall; ten accepted runs now pass at both 10,000 and 12,000 small operations/s, and the repeated 6,000-large control also passes 10/10.
 
-After that correctness work, the best low-contract-risk opportunity remains borrowed response serialization.
+The best low-contract-risk opportunity remains borrowed response serialization.
 The protocol encoder still clones event payloads into owned wire values before serialization.
 Removing those copies can simplify ownership at the encoding boundary and reduce memory traffic without changing APIs, wire bytes, acknowledgment semantics, or persistence.
 
@@ -109,35 +108,28 @@ Sea and Tinylicious file data now use fresh owned `/tmp` directories on the same
 Artifacts are stored separately, and owned data is removed after each sample.
 This removes the previous workspace-versus-`/tmp` filesystem ambiguity.
 
+### Native WebTransport Opening-Stream Lifecycle
+
+The native benchmark regression is fixed.
+`SessionClient::connect` opens the event stream that establishes session identity and carries recovery plus live events.
+The benchmark instead called `read(None, None)`, which opened a second content stream and never polled the opening stream.
+The abandoned stream eventually exhausted its receive credit and stalled the connection.
+
+Changing the benchmark to consume the opening stream through `load(LoadStart::LatestSnapshot)` preserves exact-drain validation and removes the redundant stream.
+The one-document reproducer passed beyond the former failure boundary, followed by ten accepted samples for each repeated group:
+
+| Payload | Offered ops/s | Delivered ops/s median (min-max) | CPU, % | RSS median, MiB | Worst-worker p95 range, ms |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 64 bytes | 10,000 | 9,999.0 (9,997.8-10,000.5) | 106.04 | 39.22 | 0.96-1.07 |
+| 64 bytes | 12,000 | 11,998.8 (11,997.3-12,000.6) | 122.75 | 43.68 | 1.09-1.33 |
+| 8,192 bytes | 6,000 | 5,999.1 (5,998.2-5,999.9) | 160.65 | 399.15 | 1.89-2.23 |
+
+All accepted samples had exact acknowledgments and zero missing deliveries.
+Three otherwise exact-drain samples from one shared-host disturbance exceeded only the harness's 100 ms scheduling-lag threshold and were replaced rather than pooled.
+
 ## Ranked Remaining Work
 
-### 1. Diagnose Native WebTransport Exact-Drain Failures
-
-**Priority:** blocker.
-**Expected performance impact:** none directly; required for trustworthy transport comparisons.
-**Complexity:** diagnostic first.
-
-Observed:
-
-- 64-byte native WebTransport at 12,000 operations/s: 0/10 accepted;
-- 64-byte native WebTransport at 10,000 operations/s: 0/10 accepted;
-- 8,192-byte native WebTransport at 6,000 operations/s: 10/10 accepted;
-- browser WebTransport groups: 40/40 accepted across both DDS modes and direct/Fluid paths.
-
-The failed native workers report transport disconnects and missing final events after otherwise near-complete delivery.
-Because reducing rate did not help, do not classify this as simple saturation.
-
-Next measurement:
-
-1. Reproduce with one document and then 4, 8, 16, and 32 documents.
-2. Record the last acknowledged, writer-delivered, and observer-delivered positions.
-3. Distinguish connection close initiated by client, server, idle timeout, or stream failure.
-4. Compare explicit post-drain close with the current worker shutdown sequence.
-5. Add a focused regression only after the failing lifecycle boundary is identified.
-
-Avoid weakening exact-drain assertions or adding retries that turn missing events into a success-shaped result.
-
-### 2. Remove Owned Event-Payload Copies During Encoding
+### 1. Remove Owned Event-Payload Copies During Encoding
 
 **Priority:** highest non-breaking optimization.
 **Expected impact:** low-to-moderate CPU and allocation reduction, greatest for large payloads and fanout.
@@ -166,7 +158,7 @@ The old arithmetic estimate of approximately 1.16 GiB/s of avoidable copying at 
 At the current 28,000 large memory pass, two recipients, and two avoidable payload copies, the corresponding upper-bound traffic is approximately 875 MiB/s.
 That is memory-traffic arithmetic, not a predicted CPU saving.
 
-### 3. Add Bounded File-Reader Prefetch for Historical Catch-Up
+### 2. Add Bounded File-Reader Prefetch for Historical Catch-Up
 
 **Priority:** medium.
 **Expected impact:** potentially meaningful for replay; little expected benefit for caught-up live readers.
@@ -190,7 +182,7 @@ Measure:
 Keep this only if it simplifies or cleanly encapsulates the current one-item adapter.
 A second cache or unbounded read-ahead queue would be a net complexity increase and is not justified.
 
-### 4. Expose Explicit Durable Submission Concurrency
+### 3. Expose Explicit Durable Submission Concurrency
 
 **Priority:** potentially high impact, contract-sensitive.
 **Expected impact:** large for durable throughput.
@@ -215,7 +207,7 @@ Measure windows 1, 4, 16, 64, and 128 per document, including batch-size distrib
 
 This work requires user approval before implementation because it changes how callers submit and observe operation completion.
 
-### 5. Bound Large-Payload Retention Before Chasing Higher Memory Throughput
+### 4. Bound Large-Payload Retention Before Chasing Higher Memory Throughput
 
 **Priority:** medium for robustness; not a pure throughput optimization.
 **Expected impact:** prevents guard-bound failures and makes capacity interpretation clearer.
@@ -252,11 +244,10 @@ The borrowed serializer and bounded historical-read prefetch can be prototyped w
 
 ## Recommended Order
 
-1. Diagnose and fix the native WebTransport exact-drain regression.
-2. Implement and measure borrowed response serialization.
-3. Measure historical replay; add bounded file-reader prefetch only if dispatch remains material.
-4. Decide whether durable callers can adopt an explicit batch or bounded outstanding-submission contract.
-5. Decide the memory backend's retention policy before treating guard-bound large-payload results as an optimization target.
+1. Implement and measure borrowed response serialization.
+2. Measure historical replay; add bounded file-reader prefetch only if dispatch remains material.
+3. Decide whether durable callers can adopt an explicit batch or bounded outstanding-submission contract.
+4. Decide the memory backend's retention policy before treating guard-bound large-payload results as an optimization target.
 
 This order restores measurement validity first, then tries the lowest-contract-risk simplification.
 It defers API, acknowledgment, and retention changes until their use-case effects are explicitly accepted.

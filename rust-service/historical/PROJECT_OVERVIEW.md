@@ -59,6 +59,7 @@ They support the method and its limits, not the complete private-evaluation chro
 The complete current campaign used clean commit `240798434cf591f4db2366a1a3b6b6a7438bd015`.
 The 72-sample summary campaign used `22309cf9d169c4f7986b6ce1db184427269f9656`; the only intervening change makes point-in-time file inventory tolerate an atomic temporary-file rename between directory enumeration and `stat`.
 It does not change service, client, workload, timing, or persistence behavior.
+The corrected native WebTransport groups used `4bdd92ee38a7e599fbdc0116b11b4080d604e421` plus the benchmark lifecycle fix described below.
 
 All file-backed Sea and Tinylicious service data used fresh owned directories directly under `/tmp`.
 The host reported AMD EPYC 9V74, Linux `6.8.0-1064-azure`, Node.js `22.23.2`, Rust `1.98.1`, and 32 logical CPUs.
@@ -67,6 +68,7 @@ The host reported AMD EPYC 9V74, Linux `6.8.0-1064-azure`, Node.js `22.23.2`, Ru
 The campaign retained:
 
 - 180 primary repeated stress attempts and 20 bounded replacement attempts;
+- 30 post-fix native WebTransport attempts and three bounded replacements;
 - 135 capacity probes across all 30 storage/core/payload rows;
 - 160 passing browser samples;
 - 72 passing summary and cold-load samples;
@@ -218,16 +220,16 @@ WebTransport includes QUIC/TLS; loopback WebSocket is unencrypted.
 | Transport | Payload | Offered ops/s | Outcome | Delivered ops/s median (min-max) | CPU, % | RSS median, MiB | Worst-worker p95 range, ms |
 | --- | --- | ---: | --- | ---: | ---: | ---: | ---: |
 | WebSocket | 64 bytes | 12,000 | 10/10 pass | 11,999.5 (11,997.0-12,004.0) | 135.34 | 73.53 | 1.07-1.18 |
-| WebTransport | 64 bytes | 12,000 | **0/10 exact-drain failure** | Not accepted | Not accepted | Not accepted | Not accepted |
-| WebTransport control | 64 bytes | 10,000 | **0/10 exact-drain failure** | Not accepted | Not accepted | Not accepted | Not accepted |
+| WebTransport | 64 bytes | 12,000 | 10/10 pass | 11,998.8 (11,997.3-12,000.6) | 122.75 | 43.68 | 1.09-1.33 |
+| WebTransport control | 64 bytes | 10,000 | 10/10 pass | 9,999.0 (9,997.8-10,000.5) | 106.04 | 39.22 | 0.96-1.07 |
 | WebSocket | 64 bytes | 24,000 | 10/10 pass | 23,996.1 (23,994.1-24,000.2) | 266.54 | 100.89 | 2.23-2.41 |
 | WebSocket | 8,192 bytes | 6,000 | 10/10 pass | 5,999.6 (5,998.6-6,001.4) | 88.58 | 623.01 | 0.84-0.86 |
-| WebTransport | 8,192 bytes | 6,000 | 10/10 pass | 5,999.0 (5,998.0-6,000.4) | 151.96 | 564.10 | 2.44-2.62 |
+| WebTransport | 8,192 bytes | 6,000 | 10/10 pass | 5,999.1 (5,998.2-5,999.9) | 160.65 | 399.15 | 1.89-2.23 |
 | WebSocket | 8,192 bytes | 12,000 | 10/10 pass | 11,998.9 (11,996.9-12,000.3) | 176.35 | 1,223.90 | 1.56-1.69 |
 
-The small-event WebTransport failures delivered near the offered load but ended with transport disconnects, missing final events, and exact-drain assertion failures.
-Reducing the offered load from 12,000 to 10,000 operations/s did not change the 0/10 outcome.
-This is a current correctness regression, not a measured capacity bracket.
+The original native WebTransport campaign left each connection's authoritative opening event stream unread and opened a second content stream for observation.
+Flow control on the abandoned live stream eventually stalled the connection, producing transport disconnects and incomplete drains.
+The corrected generator consumes the opening stream through `load`; both small-event groups and the repeated large-event control then passed exact drain in all ten accepted samples.
 
 ### Tinylicious
 
@@ -395,6 +397,6 @@ No sample from the interrupted campaign is pooled with the accepted results.
 - Browser path order is fixed, not randomized or interleaved.
 - Direct browser paths omit Fluid runtime responsibilities.
 - Source, dependency, and test counts describe different feature sets and are not quality or maintenance scores.
-- The native WebTransport small-event exact-drain regression remains unresolved.
+- Native WebTransport results after the opening-stream lifecycle fix are not directly comparable with the original broken-stream samples.
 - Tinylicious checkpoint cleanup errors remain unresolved.
 - Sea is experimental and lacks production hardening, distributed failover, and physical-device durability qualification.
