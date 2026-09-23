@@ -5,13 +5,16 @@
 
 import { strict as assert } from "node:assert";
 
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IDocumentService } from "@fluidframework/driver-definitions/internal";
-import type {
-	IOdspResolvedUrl,
-	OdspResourceTokenFetchOptions,
-	TokenFetcher,
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
+import {
+	OdspErrorTypes,
+	type IOdspResolvedUrl,
+	type OdspResourceTokenFetchOptions,
+	type TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { EpochTracker, type ICacheAndTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
@@ -107,10 +110,12 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 	function makeImplementationProps(
 		resolvedUrl: IOdspResolvedUrl,
 		createDocumentService: IOdspPointInTimeDocumentServiceImplementationProps["createDocumentService"],
+		logger?: ITelemetryBaseLogger,
 	): IOdspPointInTimeDocumentServiceImplementationProps {
 		return {
 			resolvedUrl,
 			targetSequenceNumber: 8,
+			...(logger === undefined ? {} : { logger }),
 			persistedCache: new LocalPersistentCache(),
 			getStorageToken,
 			createDocumentService,
@@ -120,6 +125,7 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 	it("shares one epoch tracker across version selection and both document services", async () => {
 		const resolvedUrl = await makeResolvedUrl();
 		const recoverableResolvedUrl = await makeResolvedUrl("42.0");
+		const logger = new MockLogger();
 		let versionManagerEpochTracker: EpochTracker | undefined;
 		const manager: IOdspVersionManager = {
 			findBaseForSeq: async (): Promise<BaseForSeq> => ({
@@ -133,10 +139,14 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 		};
 		const capturedCacheAndTrackers: ICacheAndTracker[] = [];
 		const result = await createPointInTimeDocumentServiceCore(
-			makeImplementationProps(resolvedUrl, async (_url, _logger, cacheAndTracker) => {
-				capturedCacheAndTrackers.push(cacheAndTracker);
-				return fakeDocumentService();
-			}),
+			makeImplementationProps(
+				resolvedUrl,
+				async (_url, _logger, cacheAndTracker) => {
+					capturedCacheAndTrackers.push(cacheAndTracker);
+					return fakeDocumentService();
+				},
+				logger,
+			),
 			{
 				createVersionManager: (_url, _logger, epochTracker) => {
 					versionManagerEpochTracker = epochTracker;
@@ -150,6 +160,54 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 		assert.equal(capturedCacheAndTrackers.length, 2);
 		assert.equal(capturedCacheAndTrackers[0], capturedCacheAndTrackers[1]);
 		assert.equal(versionManagerEpochTracker, capturedCacheAndTrackers[0]?.epochTracker);
+		logger.assertMatch([
+			{
+				eventName: "OdspDriver:VersionMarkBaseVersionSelectionSucceeded",
+				targetSequenceNumber: 8,
+				baseSnapshotSequenceNumber: 5,
+			},
+		]);
+	});
+
+	it("reports classified failures during base-version selection", async () => {
+		const resolvedUrl = await makeResolvedUrl();
+		const logger = new MockLogger();
+		const error = new NonRetryableError(
+			"lineage mismatch",
+			OdspErrorTypes.fileOverwrittenInStorage,
+			{
+				driverVersion: undefined,
+				versionMarkAvailabilityOutcome: "lineageMismatch",
+			},
+		);
+
+		await assert.rejects(
+			createPointInTimeDocumentServiceCore(
+				makeImplementationProps(
+					resolvedUrl,
+					async () => assert.fail("document services must not be created"),
+					logger,
+				),
+				{
+					createVersionManager: () => ({
+						findBaseForSeq: async () => {
+							throw error;
+						},
+					}),
+				},
+			),
+			(candidate) => candidate === error,
+		);
+
+		logger.assertMatch([
+			{
+				eventName: "OdspDriver:VersionMarkBaseVersionSelectionFailed",
+				category: "error",
+				error: "lineage mismatch",
+				errorType: OdspErrorTypes.fileOverwrittenInStorage,
+				availabilityOutcome: "lineageMismatch",
+			},
+		]);
 	});
 
 	it("disposes the recoverable service when live service creation fails", async () => {
@@ -232,14 +290,19 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 			oldestResolvedSeq === undefined ? "" : " and includes the oldest sequence"
 		}`, async () => {
 			const resolvedUrl = await makeResolvedUrl();
+			const logger = new MockLogger();
 			let createDocumentServiceCalls = 0;
 			await assert.rejects(
 				async () =>
 					createPointInTimeDocumentServiceCore(
-						makeImplementationProps(resolvedUrl, async () => {
-							createDocumentServiceCalls++;
-							return fakeDocumentService();
-						}),
+						makeImplementationProps(
+							resolvedUrl,
+							async () => {
+								createDocumentServiceCalls++;
+								return fakeDocumentService();
+							},
+							logger,
+						),
 						{
 							createVersionManager: () => ({
 								findBaseForSeq: async (): Promise<BaseForSeq> =>
@@ -260,6 +323,14 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 				},
 			);
 			assert.equal(createDocumentServiceCalls, 0);
+			logger.assertMatch([
+				{
+					eventName: "OdspDriver:VersionMarkBaseVersionSelectionFailed",
+					category: "error",
+					availabilityOutcome: "baseVersionMissing",
+					oldestResolvedSequenceNumber: oldestResolvedSeq,
+				},
+			]);
 		});
 	}
 

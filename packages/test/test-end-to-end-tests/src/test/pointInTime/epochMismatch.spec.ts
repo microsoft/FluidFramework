@@ -45,15 +45,24 @@ describeCompat(
 	(getTestObjectProvider, apis) => {
 		const suite = setupPointInTimeSuite(getTestObjectProvider, apis);
 
-		// The failed point-in-time load closes its container with the driver's non-retryable
-		// fileOverwrittenInStorage (epoch-mismatch) error. That ContainerClose is the expected
-		// outcome, so declare it via itExpects; otherwise describeCompat's afterEach hook would
-		// flag it as an unexpected error in the logs and fail the suite.
+		// The failed point-in-time load reports the driver's base-selection failure, closes its
+		// container, and reports the loader's terminal failure. Declare all three error events via
+		// itExpects so describeCompat's afterEach hook does not flag the expected failure path.
 		itExpects(
 			"fails a point-in-time load after restoring a previous version bumps the epoch",
 			[
 				{
+					eventName: "fluid:telemetry:OdspDriver:VersionMarkBaseVersionSelectionFailed",
+					availabilityOutcome: "lineageMismatch",
+					errorType: "fileOverwrittenInStorage",
+				},
+				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
+					errorType: "fileOverwrittenInStorage",
+				},
+				{
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoadFailed",
+					availabilityOutcome: "lineageMismatch",
 					errorType: "fileOverwrittenInStorage",
 				},
 			],
@@ -106,7 +115,17 @@ describeCompat(
 			"fails a point-in-time load after restoring a middle version bumps the epoch",
 			[
 				{
+					eventName: "fluid:telemetry:OdspDriver:VersionMarkBaseVersionSelectionFailed",
+					availabilityOutcome: "lineageMismatch",
+					errorType: "fileOverwrittenInStorage",
+				},
+				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
+					errorType: "fileOverwrittenInStorage",
+				},
+				{
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoadFailed",
+					availabilityOutcome: "lineageMismatch",
 					errorType: "fileOverwrittenInStorage",
 				},
 			],
@@ -170,7 +189,7 @@ describeCompat(
 		);
 
 		// The failed point-in-time load closes its container non-retryably because the ops needed to
-		// reach the target are unavailable. The beyond-tip fetch deterministically logs three
+		// reach the target are unavailable. The beyond-tip fetch deterministically logs four
 		// error-category telemetry events, in this order, which must all be declared via itExpects;
 		// otherwise the suite's unexpected-error check would flag them and fail the test even though
 		// the assertion in the body passed:
@@ -178,13 +197,13 @@ describeCompat(
 		//      empty beyond-tip range after ~30s with a non-retryable `genericNetworkError`
 		//      ("Failed to retrieve ops from storage (Too Many Retries)").
 		//   2. DeltaManager:GetDeltas_Exception - the delta manager's catch-up fetch surfaces that
-		//      failure (converted by the bounded delta-storage wrapper to `cannotCatchUp`).
+		//      failure.
 		//   3. Container:ContainerClose - the delta manager closes the container with that error.
+		//   4. VersionMarkPointInTimeLoadFailed - the public loader reports its terminal failure.
 		//
-		// All three are matched by event name only: the bounded delta-storage wrapper is designed to
-		// convert the underlying `genericNetworkError` into the driver's canonical `cannotCatchUp`,
-		// but against the real service the container can close with either errorType, so the body
-		// asserts the specific op-availability failure rather than pinning an errorType here.
+		// The lower-level events are matched by event name only because the raw errorType can be either
+		// `cannotCatchUp` or the underlying `genericNetworkError`. The terminal event uses the stable
+		// `missingOps` availability outcome for both manifestations.
 		// Because of that ~30s retry window plus the summaries in setup, this test raises its timeout.
 		itExpects(
 			"fails a point-in-time load when the ops needed to reach the target are unavailable",
@@ -192,6 +211,10 @@ describeCompat(
 				{ eventName: "fluid:telemetry:OdspDriver:GetDeltas_Error" },
 				{ eventName: "fluid:telemetry:DeltaManager:GetDeltas_Exception" },
 				{ eventName: "fluid:telemetry:Container:ContainerClose" },
+				{
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoadFailed",
+					availabilityOutcome: "missingOps",
+				},
 			],
 			async function (this: Mocha.Context) {
 				this.timeout(120_000);
@@ -233,20 +256,13 @@ describeCompat(
 				// Accept the driver's canonical `cannotCatchUp` (the bounded delta-storage wrapper's
 				// intended conversion) as well as the underlying non-retryable ops-fetch failure it wraps
 				// ("Failed to retrieve ops from storage (Too Many Retries)"), since against the real
-				// service either can surface. The paused-load flow closes the container with the real
-				// ops-unavailable error and then, in its `finally`, calls `disconnect()` on the now-closed
-				// container - which throws `usageError` ("The Container is closed and cannot be
-				// disconnected") that masks the original error. Accept that masking signature too, since it
-				// only occurs after the container was closed by the genuine ops-unavailable failure. Any
-				// other error is a genuine failure and is reported with its real errorType/message so the
-				// cause is visible instead of an opaque assertion.
+				// service either can surface. Any other error is a genuine failure and is reported with
+				// its real errorType/message so the cause is visible instead of an opaque assertion.
 				const isOpUnavailableFailure =
 					caught.errorType === "cannotCatchUp" ||
 					/cannotcatchup|materialize/i.test(caught.message) ||
 					(caught.errorType === "genericNetworkError" &&
-						/failed to retrieve ops|too many retries/i.test(caught.message)) ||
-					(caught.errorType === "usageError" &&
-						/closed and cannot be disconnected/i.test(caught.message));
+						/failed to retrieve ops|too many retries/i.test(caught.message));
 				assert(
 					isOpUnavailableFailure,
 					`expected an ops-unavailable failure (cannotCatchUp) when the target is beyond the ` +

@@ -51,15 +51,23 @@ describeCompat(
 	(getTestObjectProvider, apis) => {
 		const suite = setupPointInTimeSuite(getTestObjectProvider, apis);
 
-		// A restore rewrites the file's head onto a fresh epoch; the point-in-time load then closes its
-		// container with the driver's non-retryable fileOverwrittenInStorage (epoch-mismatch) error.
-		// That ContainerClose is the expected outcome, so declare it via itExpects; otherwise
-		// describeCompat's afterEach hook would flag it as an unexpected error and fail the suite.
+		// A restore rewrites the file's head onto a fresh epoch. The failed load reports the driver's
+		// base-selection failure, closes its container, and reports the loader's terminal failure.
 		itExpects(
 			"fails a point-in-time load after restoring the newest recoverable version bumps the epoch",
 			[
 				{
+					eventName: "fluid:telemetry:OdspDriver:VersionMarkBaseVersionSelectionFailed",
+					availabilityOutcome: "lineageMismatch",
+					errorType: "fileOverwrittenInStorage",
+				},
+				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
+					errorType: "fileOverwrittenInStorage",
+				},
+				{
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoadFailed",
+					availabilityOutcome: "lineageMismatch",
 					errorType: "fileOverwrittenInStorage",
 				},
 			],
@@ -114,7 +122,17 @@ describeCompat(
 			"fails a point-in-time load whose base precedes the target after a disruptive restore",
 			[
 				{
+					eventName: "fluid:telemetry:OdspDriver:VersionMarkBaseVersionSelectionFailed",
+					availabilityOutcome: "lineageMismatch",
+					errorType: "fileOverwrittenInStorage",
+				},
+				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
+					errorType: "fileOverwrittenInStorage",
+				},
+				{
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoadFailed",
+					availabilityOutcome: "lineageMismatch",
 					errorType: "fileOverwrittenInStorage",
 				},
 			],
@@ -165,7 +183,7 @@ describeCompat(
 		);
 
 		// The failed point-in-time load closes its container non-retryably because the ops needed to
-		// reach the target are unavailable. The beyond-tip fetch deterministically logs three
+		// reach the target are unavailable. The beyond-tip fetch deterministically logs four
 		// error-category telemetry events, in this order, which must all be declared via itExpects;
 		// otherwise the suite's unexpected-error check would flag them even though the body's assertion
 		// passed. (This is the same ops-unavailable mode as epochMismatch.spec.ts, kept here so this
@@ -176,6 +194,10 @@ describeCompat(
 				{ eventName: "fluid:telemetry:OdspDriver:GetDeltas_Error" },
 				{ eventName: "fluid:telemetry:DeltaManager:GetDeltas_Exception" },
 				{ eventName: "fluid:telemetry:Container:ContainerClose" },
+				{
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoadFailed",
+					availabilityOutcome: "missingOps",
+				},
 			],
 			async function (this: Mocha.Context) {
 				this.timeout(120_000);
@@ -210,19 +232,14 @@ describeCompat(
 					caught !== undefined,
 					"expected the point-in-time load to fail when the target is beyond the retained ops",
 				);
-				// Accept the driver's canonical `cannotCatchUp`, the underlying non-retryable ops-fetch
-				// failure it wraps ("Failed to retrieve ops from storage (Too Many Retries)"), or the
-				// `usageError` the paused-load flow surfaces when it disconnects the container it just
-				// closed on the ops-unavailable error ("The Container is closed and cannot be
-				// disconnected"): against the real service any of the three can surface, and the last only
-				// occurs after the container was already closed by the genuine ops-unavailable failure.
+				// Accept the driver's canonical `cannotCatchUp` or the underlying non-retryable
+				// ops-fetch failure it wraps ("Failed to retrieve ops from storage (Too Many Retries)"):
+				// against the real service either can surface.
 				const isOpUnavailableFailure =
 					caught.errorType === "cannotCatchUp" ||
 					/cannotcatchup|materialize/i.test(caught.message) ||
 					(caught.errorType === "genericNetworkError" &&
-						/failed to retrieve ops|too many retries/i.test(caught.message)) ||
-					(caught.errorType === "usageError" &&
-						/closed and cannot be disconnected/i.test(caught.message));
+						/failed to retrieve ops|too many retries/i.test(caught.message));
 				assert(
 					isOpUnavailableFailure,
 					`expected an ops-unavailable failure (cannotCatchUp) when the target is beyond the ` +
@@ -236,9 +253,8 @@ describeCompat(
 		// reject the load (and close the container) with a cancellation error rather than hanging or
 		// materializing a container.
 		//
-		// The cancelled load closes its container with the loader's generic cancellation error, so that
-		// ContainerClose is the expected outcome and is declared via itExpects (otherwise the suite's
-		// afterEach would flag it as unexpected).
+		// The cancelled load closes its container with the loader's generic cancellation error, then
+		// reports the public loader's terminal cancellation event. Both are expected.
 		//
 		// The beyond-tip target used below to keep the load pending also makes the delta-storage layer
 		// emit the same ops-unavailable telemetry as the beyond-tip test - OdspDriver:GetDeltas_Error
@@ -254,6 +270,11 @@ describeCompat(
 			[
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
+					errorType: "genericError",
+				},
+				{
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoadFailed",
+					availabilityOutcome: "cancelled",
 					errorType: "genericError",
 				},
 			],
@@ -326,14 +347,8 @@ describeCompat(
 					),
 					(error: Error & { errorType?: string }) => {
 						// The abort rejects the wait with the loader's generic cancellation error and closes
-						// the container (logged as ContainerClose/genericError, declared above). The paused-load
-						// flow then disconnects the container it just closed, and disconnecting a closed
-						// container throws a usageError ("The Container is closed and cannot be disconnected")
-						// that supersedes the cancellation error - so either can surface. Both prove the abort
-						// tore the load down rather than letting it hang or produce a container.
-						const isCancellation =
-							/cancel/i.test(error.message) ||
-							/closed and cannot be disconnected/i.test(error.message);
+						// the container (logged as ContainerClose/genericError, declared above).
+						const isCancellation = /cancel/i.test(error.message);
 						assert(
 							isCancellation,
 							`expected a cancellation-driven failure, got errorType=${error.errorType} message=${error.message}`,

@@ -159,6 +159,7 @@ export class OdspVersionManager implements IOdspVersionManager {
 					driverVersion,
 					serverEpoch: liveEpoch,
 					clientEpoch: baseEpoch,
+					versionMarkAvailabilityOutcome: "lineageMismatch",
 				},
 			);
 		}

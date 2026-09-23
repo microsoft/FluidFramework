@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
-import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { isILoggingError, MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	OdspVersionManager,
@@ -357,6 +357,11 @@ describe("OdspVersionManager", () => {
 						(error as Partial<{ errorType: string }>).errorType,
 						OdspErrorTypes.fileOverwrittenInStorage,
 						"a lineage mismatch reuses the driver's fileOverwrittenInStorage error",
+					);
+					assert(isILoggingError(error), "expected a logging error");
+					assert.equal(
+						error.getTelemetryProperties().versionMarkAvailabilityOutcome,
+						"lineageMismatch",
 					);
 					return true;
 				},

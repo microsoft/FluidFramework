@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import type { IRequest, IErrorBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { GenericError } from "@fluidframework/telemetry-utils/internal";
+import { GenericError, isFluidError } from "@fluidframework/telemetry-utils/internal";
 
 import { loadExistingContainer } from "./createAndLoadContainerUtils.js";
 import type { ILoaderProps } from "./loader.js";
@@ -93,6 +93,11 @@ export async function loadContainerPaused(
 	if (lastProcessedSequenceNumber > loadToSequenceNumber) {
 		const error = new GenericError(
 			"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
+			undefined,
+			{
+				versionMarkAvailabilityOutcome: "targetOlderThanSnapshot",
+				versionMarkBaseSnapshotSequenceNumber: lastProcessedSequenceNumber,
+			},
 		);
 		container.close(error);
 		throw error;
@@ -103,7 +108,12 @@ export async function loadContainerPaused(
 	let onClose: (error?: IErrorBase) => void;
 
 	const promise = new Promise<void>((resolve, reject) => {
-		onAbort = (): void => reject(new GenericError("Canceled due to cancellation request."));
+		onAbort = (): void =>
+			reject(
+				new GenericError("Canceled due to cancellation request.", undefined, {
+					versionMarkAvailabilityOutcome: "cancelled",
+				}),
+			);
 		// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 		onClose = (error?: IErrorBase): void => reject(error);
 
@@ -138,6 +148,14 @@ export async function loadContainerPaused(
 	await promise
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		.catch((error: any) => {
+			// The container was loaded from its base snapshot before replay began. Attach that known
+			// sequence number to the actual replay/cancellation error so the public point-in-time
+			// terminal event can report it without inferring state independently.
+			if (isFluidError(error)) {
+				error.addTelemetryProperties({
+					versionMarkBaseSnapshotSequenceNumber: lastProcessedSequenceNumber,
+				});
+			}
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			container.close(error);
 			throw error;

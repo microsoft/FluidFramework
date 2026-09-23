@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { performanceNow } from "@fluid-internal/client-utils";
 import type {
 	IDocumentService,
 	IResolvedUrl,
@@ -14,6 +15,7 @@ import type {
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	createChildLogger,
+	isILoggingError,
 	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -143,21 +145,63 @@ export async function createPointInTimeDocumentServiceCore(
 		requestHeaders,
 	);
 
-	const versionManager = await (
-		dependencies.createVersionManager ??
-		(async (url, versionLogger, epochTracker) =>
-			createVersionManager(url, versionLogger, epochTracker, getStorageToken, requestHeaders))
-	)(odspResolvedUrl, extLogger, cacheAndTracker.epochTracker);
-	const baseResult = await versionManager.findBaseForSeq(targetSequenceNumber);
+	const baseSelectionStartTime = performanceNow();
+	let baseResult: Awaited<ReturnType<IOdspVersionManager["findBaseForSeq"]>>;
+	try {
+		const versionManager = await (
+			dependencies.createVersionManager ??
+			(async (url, versionLogger, epochTracker) =>
+				createVersionManager(
+					url,
+					versionLogger,
+					epochTracker,
+					getStorageToken,
+					requestHeaders,
+				))
+		)(odspResolvedUrl, extLogger, cacheAndTracker.epochTracker);
+		baseResult = await versionManager.findBaseForSeq(targetSequenceNumber);
+	} catch (error) {
+		extLogger.sendErrorEvent(
+			{
+				eventName: "VersionMarkBaseVersionSelectionFailed",
+				duration: performanceNow() - baseSelectionStartTime,
+				targetSequenceNumber,
+				errorType: (error as Partial<{ errorType: string }> | undefined)?.errorType,
+				availabilityOutcome: isILoggingError(error)
+					? error.getTelemetryProperties().versionMarkAvailabilityOutcome
+					: undefined,
+			},
+			error,
+		);
+		throw error;
+	}
 	if (baseResult.kind === "noBaseVersion") {
 		const oldestResolvedSequenceDetail =
 			baseResult.oldestResolvedSeq === undefined
 				? ""
 				: ` The oldest resolved file version is at sequence number ${baseResult.oldestResolvedSeq}.`;
-		throw new UsageError(
+		const error = new UsageError(
 			`No ODSP file version is available at or before sequence number ${targetSequenceNumber}.${oldestResolvedSequenceDetail}`,
 		);
+		error.addTelemetryProperties({
+			versionMarkAvailabilityOutcome: "baseVersionMissing",
+		});
+		extLogger.sendErrorEvent({
+			eventName: "VersionMarkBaseVersionSelectionFailed",
+			duration: performanceNow() - baseSelectionStartTime,
+			targetSequenceNumber,
+			availabilityOutcome: "baseVersionMissing",
+			oldestResolvedSequenceNumber: baseResult.oldestResolvedSeq,
+			errorType: error.errorType,
+		});
+		throw error;
 	}
+	extLogger.sendPerformanceEvent({
+		eventName: "VersionMarkBaseVersionSelectionSucceeded",
+		duration: performanceNow() - baseSelectionStartTime,
+		targetSequenceNumber,
+		baseSnapshotSequenceNumber: baseResult.base.sequenceNumber,
+	});
 
 	const recoverableResolvedUrl = await (dependencies.resolveFileVersion ?? resolveFileVersion)(
 		resolvedUrl,
@@ -182,7 +226,9 @@ export async function createPointInTimeDocumentServiceCore(
 			recoverableDocumentService.dispose();
 		} catch (disposeError) {
 			extLogger.sendErrorEvent(
-				{ eventName: "PointInTimeRecoverableDocumentServiceDisposeError" },
+				{
+					eventName: "VersionMarkRecoverableDocumentServiceDisposeError",
+				},
 				disposeError,
 			);
 		}
