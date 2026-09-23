@@ -81,8 +81,8 @@ export interface SchemaStaticsBeta {
 	 * For recursive schema declarations that require relaxed typing, use
 	 * {@link SchemaStaticsBeta.incrementalSummaryRecursive}.
 	 *
-	 * @param allowedTypes - The types allowed at the incremental-summary boundary.
-	 * @returns The normalized allowed types with incremental-summary metadata attached.
+	 * @param allowedTypes - the types allowed at the incremental-summary boundary
+	 * @returns the normalized allowed types with incremental-summary metadata attached
 	 *
 	 * @example
 	 * ```typescript
@@ -112,8 +112,8 @@ export interface SchemaStaticsBeta {
 	 * work around TypeScript limitations. Use with {@link ValidateRecursiveSchema} for improved type
 	 * safety.
 	 *
-	 * @param allowedTypes - The types allowed at the incremental-summary boundary.
-	 * @returns The normalized allowed types with incremental-summary metadata attached.
+	 * @param allowedTypes - the types allowed at the incremental-summary boundary
+	 * @returns the normalized allowed types with incremental-summary metadata attached
 	 */
 	readonly incrementalSummaryRecursive: <
 		const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
