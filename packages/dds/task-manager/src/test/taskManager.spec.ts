@@ -12,12 +12,60 @@ import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
+	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ITaskManager } from "../interfaces.js";
 import { TaskManagerClass } from "../taskManager.js";
 import { TaskManagerFactory } from "../taskManagerFactory.js";
+
+/**
+ * Internal shape exposed only for test introspection.
+ *
+ * Mirrors the `IndexedList` wrapper that `TaskManagerClass` uses for `taskQueues` so these
+ * helpers can traverse the queue without depending on the structural details of the wrapper.
+ */
+interface TaskQueueLike {
+	readonly length: number;
+	readonly first: { readonly data: string } | undefined;
+	[Symbol.iterator](): IterableIterator<{ readonly data: string }>;
+}
+
+/**
+ * Reads the private `taskQueues` map off a {@link TaskManagerClass} for test introspection.
+ */
+function getInternalTaskQueues(taskManager: TaskManagerClass): Map<string, TaskQueueLike> {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+	return (taskManager as any).taskQueues;
+}
+
+/**
+ * Returns the queue for `taskId` as an array of clientIds in queue order, or `undefined` if
+ * no queue exists for that task.
+ */
+function getTaskQueueAsArray(
+	taskManager: TaskManagerClass,
+	taskId: string,
+): string[] | undefined {
+	const queue = getInternalTaskQueues(taskManager).get(taskId);
+	if (queue === undefined) {
+		return undefined;
+	}
+	const clientIds: string[] = [];
+	for (const node of queue) {
+		clientIds.push(node.data);
+	}
+	return clientIds;
+}
+
+/**
+ * Returns the clientId at the head of the queue (the current lock holder candidate) for
+ * `taskId`, or `undefined` if no queue exists.
+ */
+function getTaskQueueHead(taskManager: TaskManagerClass, taskId: string): string | undefined {
+	return getInternalTaskQueues(taskManager).get(taskId)?.first?.data;
+}
 
 function createConnectedTaskManager(
 	id: string,
@@ -756,8 +804,7 @@ describe("TaskManager", () => {
 					assert.ok(taskManager1.queued(taskId), "Should be queued");
 					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
 					assert.strictEqual(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
-						(taskManager1 as any).taskQueues.get(taskId)?.[0],
+						getTaskQueueHead(taskManager1, taskId),
 						placeholderClientId,
 						"taskQueue should have placeholder clientId",
 					);
@@ -776,8 +823,10 @@ describe("TaskManager", () => {
 					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
 					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
 					assert.ok(taskManager1EventFired, "Should have raised lost event on taskManager1");
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					assert.ok((taskManager1 as any).taskQueues.size === 0, "taskQueue should be empty");
+					assert.ok(
+						getInternalTaskQueues(taskManager1).size === 0,
+						"taskQueue should be empty",
+					);
 				});
 			});
 
@@ -819,13 +868,11 @@ describe("TaskManager", () => {
 					assert.ok(taskManager1.subscribed(taskId), "Task manager 1 should be subscribed");
 
 					assert.ok(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
-						(taskManager1 as any).taskQueues.get(taskId)?.length !== 0,
+						(getInternalTaskQueues(taskManager1).get(taskId)?.length ?? 0) !== 0,
 						"taskQueue should not be empty",
 					);
 					assert.notStrictEqual(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
-						(taskManager1 as any).taskQueues.get(taskId)?.[0],
+						getTaskQueueHead(taskManager1, taskId),
 						placeholderClientId,
 						"taskQueue should not have placeholder clientId",
 					);
@@ -982,8 +1029,7 @@ describe("TaskManager", () => {
 					const clientId2 = containerRuntime2.clientId;
 
 					assert.deepEqual(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
-						(taskManager1 as any).taskQueues.get(taskId),
+						getTaskQueueAsArray(taskManager1, taskId),
 						[clientId1, clientId2],
 						"Task queue should have both clients",
 					);
@@ -992,8 +1038,7 @@ describe("TaskManager", () => {
 					containerRuntimeFactory.processAllMessages();
 
 					assert.deepEqual(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
-						(taskManager1 as any).taskQueues.get(taskId),
+						getTaskQueueAsArray(taskManager1, taskId),
 						[clientId1],
 						"Task queue should only have client 1",
 					);
@@ -1231,6 +1276,287 @@ describe("TaskManager", () => {
 			});
 
 			describe("Completing tasks", () => {});
+		});
+	});
+
+	describe("Queue ordering regressions", () => {
+		// These tests exercise invariants around queue ordering that were previously
+		// guaranteed by the side-by-side `taskQueues` + `taskQueueIndex` structures and
+		// are now guaranteed by the `IndexedList` wrapper.
+
+		describe("scrubClientsNotInQuorum", () => {
+			it("removes only the non-quorum clients and preserves the relative order of survivors", async () => {
+				// Wire up a queue with multiple clients via real volunteer ops so we don't
+				// have to manufacture an `IndexedList` from outside the module.
+				const containerRuntimeFactory = new MockContainerRuntimeFactory();
+				const taskManager1 = createConnectedTaskManager("tm1", containerRuntimeFactory);
+				const taskManager2 = createConnectedTaskManager("tm2", containerRuntimeFactory);
+				const taskManager3 = createConnectedTaskManager("tm3", containerRuntimeFactory);
+				const taskManager4 = createConnectedTaskManager("tm4", containerRuntimeFactory);
+
+				const taskId = "taskId";
+				const p1 = taskManager1.volunteerForTask(taskId);
+				// Subscribe the others (rather than awaiting their volunteer promises) so
+				// they join the queue without leaving outstanding promises that never
+				// settle (only the head of the queue resolves).
+				taskManager2.subscribeToTask(taskId);
+				taskManager3.subscribeToTask(taskId);
+				taskManager4.subscribeToTask(taskId);
+				containerRuntimeFactory.processAllMessages();
+				await p1;
+
+				// Capture the established queue order so the assertion is independent of
+				// the (random) clientId values.
+				const initialOrder = getTaskQueueAsArray(taskManager1, taskId);
+				assert.ok(initialOrder?.length === 4);
+				const c1 = initialOrder[0] as string;
+				const c2 = initialOrder[1] as string;
+				const c3 = initialOrder[2] as string;
+				const c4 = initialOrder[3] as string;
+
+				// Remove clients 2 and 4 from the quorum's underlying members map
+				// *without* emitting the `removeMember` event — that event is what would
+				// normally trigger removeClientFromAllQueues. By suppressing it, we leave
+				// stale entries in the queue and force scrubClientsNotInQuorum to do the
+				// work we want to test.
+				/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */
+				const quorumMembers: Map<string, unknown> = (taskManager1 as any).runtime.getQuorum()
+					.members;
+				quorumMembers.delete(c2);
+				quorumMembers.delete(c4);
+				(taskManager1 as any).scrubClientsNotInQuorum();
+				/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */
+
+				assert.deepEqual(
+					getTaskQueueAsArray(taskManager1, taskId),
+					[c1, c3],
+					"Survivors must remain in their original relative order",
+				);
+			});
+		});
+
+		describe("Placeholder → real clientId substitution", () => {
+			it("keeps the head of the queue stable when the placeholder is the lock holder", async () => {
+				const containerRuntimeFactory = new MockContainerRuntimeFactory();
+				const { taskManager: taskManagerDetached } = createDetachedTaskManager(
+					"detached",
+					containerRuntimeFactory,
+				);
+
+				// Force runtime.clientId to undefined so the detached volunteer path inserts
+				// the placeholder clientId rather than the auto-generated one. We then
+				// manually splice other clients in behind the placeholder via the private
+				// `addClientToQueue` so we can verify the placeholder→real swap preserves
+				// the placeholder's position rather than reinserting at the tail.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+				(taskManagerDetached as any).runtime.clientId = undefined;
+
+				const taskId = "taskId";
+				const volunteerP = taskManagerDetached.volunteerForTask(taskId);
+				containerRuntimeFactory.processAllMessages();
+				await volunteerP;
+
+				// Inject fake quorum members so addClientToQueue accepts them.
+				/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */
+				const quorum: { addMember: (id: string, c: unknown) => void } = (
+					taskManagerDetached as any
+				).runtime.getQuorum();
+				quorum.addMember("other-1", {});
+				quorum.addMember("other-2", {});
+				/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
+				(taskManagerDetached as any).addClientToQueue(taskId, "other-1");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
+				(taskManagerDetached as any).addClientToQueue(taskId, "other-2");
+
+				assert.deepEqual(
+					getTaskQueueAsArray(taskManagerDetached, taskId),
+					["placeholder", "other-1", "other-2"],
+					"Pre-condition: placeholder is at the head",
+				);
+
+				// Trigger the substitution path.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+				(taskManagerDetached as any).runtime.clientId = "real-client";
+				quorum.addMember("real-client", {});
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
+				(taskManagerDetached as any).replacePlaceholderInAllQueues();
+
+				assert.deepEqual(
+					getTaskQueueAsArray(taskManagerDetached, taskId),
+					["real-client", "other-1", "other-2"],
+					"Real clientId must take the placeholder's slot, not append at the tail",
+				);
+			});
+		});
+
+		describe("reSubmitCore", () => {
+			it("removes the matching pending op without disturbing siblings", async () => {
+				const containerRuntimeFactory = new MockContainerRuntimeFactory();
+				const taskManager = createConnectedTaskManager("tm", containerRuntimeFactory);
+				const taskId = "taskId";
+
+				// Submit three volunteer ops back-to-back without processing — this drives
+				// `latestPendingOps[taskId]` to hold three entries, each with a distinct
+				// messageId.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
+				(taskManager as any).submitVolunteerOp(taskId);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
+				(taskManager as any).submitVolunteerOp(taskId);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
+				(taskManager as any).submitVolunteerOp(taskId);
+
+				type PendingOpList = Iterable<{ data: { type: string; messageId: number } }>;
+				/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */
+				const pendingOps: PendingOpList = (taskManager as any).latestPendingOps.get(taskId);
+				/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */
+				assert.ok(pendingOps !== undefined);
+				const messageIds: number[] = [];
+				for (const node of pendingOps) {
+					messageIds.push(node.data.messageId);
+				}
+				assert.strictEqual(messageIds.length, 3);
+				const firstId = messageIds[0] as number;
+				const middleId = messageIds[1] as number;
+				const lastId = messageIds[2] as number;
+
+				// Resubmit only the middle op — the matching op should be removed and the
+				// surviving siblings should remain in their original relative order.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
+				(taskManager as any).reSubmitCore({ type: "volunteer", taskId }, middleId);
+
+				const surviving: number[] = [];
+				for (const node of pendingOps) {
+					surviving.push(node.data.messageId);
+				}
+				// reSubmitCore re-submits a fresh volunteer op when the last pending is not
+				// an abandon, which appends a new entry at the tail with a messageId greater
+				// than `lastId`. The leading entries should be the original first/last in
+				// their original relative order.
+				assert.strictEqual(surviving.length, 3);
+				assert.strictEqual(surviving[0], firstId, "First sibling must keep its slot");
+				assert.strictEqual(
+					surviving[1],
+					lastId,
+					"Last sibling must keep its slot (relative to surviving siblings)",
+				);
+				assert.ok(
+					(surviving[2] as number) > lastId,
+					"Resubmitted volunteer op should be appended at the tail",
+				);
+			});
+		});
+
+		describe("rollback", () => {
+			it("rolls back the latest pending op (LIFO)", async () => {
+				const containerRuntimeFactory = new MockContainerRuntimeFactory();
+				const taskManager = createConnectedTaskManager("tm", containerRuntimeFactory);
+				const taskId = "taskId";
+
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
+				(taskManager as any).submitVolunteerOp(taskId);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
+				(taskManager as any).submitAbandonOp(taskId);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
+				(taskManager as any).submitVolunteerOp(taskId);
+
+				type PendingOpList = Iterable<{ data: { type: string; messageId: number } }>;
+				/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */
+				const pendingOps: PendingOpList = (taskManager as any).latestPendingOps.get(taskId);
+				/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */
+				assert.ok(pendingOps !== undefined);
+				const messageIds: number[] = [];
+				const types: string[] = [];
+				for (const node of pendingOps) {
+					messageIds.push(node.data.messageId);
+					types.push(node.data.type);
+				}
+				assert.deepEqual(types, ["volunteer", "abandon", "volunteer"]);
+				const lastId = messageIds[2];
+
+				// Rolling back the last submitted op should pop only the tail entry and
+				// leave the head/middle untouched.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
+				(taskManager as any).rollback({ type: "volunteer", taskId }, lastId);
+
+				const remainingTypes: string[] = [];
+				for (const node of pendingOps) {
+					remainingTypes.push(node.data.type);
+				}
+				assert.deepEqual(
+					remainingTypes,
+					["volunteer", "abandon"],
+					"Rollback must pop only the tail (LIFO)",
+				);
+
+				// Rolling back the abandon (now the tail) should similarly only remove it.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
+				(taskManager as any).rollback({ type: "abandon", taskId }, messageIds[1]);
+
+				const finalTypes: string[] = [];
+				for (const node of pendingOps) {
+					finalTypes.push(node.data.type);
+				}
+				assert.deepEqual(finalTypes, ["volunteer"]);
+			});
+		});
+
+		describe("summarize → loadCore round-trip", () => {
+			it("preserves queue order across summary/load", async () => {
+				const containerRuntimeFactory = new MockContainerRuntimeFactory();
+				const taskManager1 = createConnectedTaskManager("tm1", containerRuntimeFactory);
+				const taskManager2 = createConnectedTaskManager("tm2", containerRuntimeFactory);
+				const taskManager3 = createConnectedTaskManager("tm3", containerRuntimeFactory);
+				const taskId1 = "taskA";
+				const taskId2 = "taskB";
+
+				// Use subscribe for the followers so we don't leave outstanding volunteer
+				// promises that never settle (only the head of each queue resolves).
+				const p1a = taskManager1.volunteerForTask(taskId1);
+				taskManager2.subscribeToTask(taskId1);
+				taskManager3.subscribeToTask(taskId1);
+				const p3b = taskManager3.volunteerForTask(taskId2);
+				taskManager1.subscribeToTask(taskId2);
+				containerRuntimeFactory.processAllMessages();
+				await Promise.all([p1a, p3b]);
+
+				const expectedA = getTaskQueueAsArray(taskManager1, taskId1);
+				const expectedB = getTaskQueueAsArray(taskManager1, taskId2);
+				assert.ok(expectedA?.length === 3);
+				assert.ok(expectedB?.length === 2);
+
+				// Round-trip the summary into a fresh TaskManager and verify the queues
+				// come back in the same order.
+				const summaryResult = await taskManager1.summarize();
+				const services = MockSharedObjectServices.createFromSummary(summaryResult.summary);
+
+				// We need all the original clientIds present in the new runtime's quorum
+				// so scrubClientsNotInQuorum (called from loadCore) doesn't drop them.
+				const reloadedRuntime = new MockFluidDataStoreRuntime();
+				containerRuntimeFactory.createContainerRuntime(reloadedRuntime);
+				for (const clientId of [...expectedA, ...expectedB]) {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
+					(reloadedRuntime as any).quorum.addMember(clientId, {});
+				}
+
+				const reloaded = new TaskManagerClass(
+					"tm-reloaded",
+					reloadedRuntime,
+					TaskManagerFactory.Attributes,
+				);
+				await reloaded.load(services);
+
+				assert.deepEqual(
+					getTaskQueueAsArray(reloaded, taskId1),
+					expectedA,
+					"taskA queue ordering must survive summary/load",
+				);
+				assert.deepEqual(
+					getTaskQueueAsArray(reloaded, taskId2),
+					expectedB,
+					"taskB queue ordering must survive summary/load",
+				);
+			});
 		});
 	});
 });
