@@ -6,528 +6,30 @@
 import { strict } from "node:assert";
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import { asAlpha } from "../../../api.js";
-import { FluidClientVersion, type ICodecOptions } from "../../../codec/index.js";
+// eslint-disable-next-line import-x/no-internal-modules -- The test requires internal Simple Tree APIs.
+import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
+import { hasSome } from "../../../util/index.js";
+import { StringArray, createTestUndoRedoStacks } from "../../utils.js";
+
 import {
-	findCommonAncestor,
-	type ChangeMetadata,
-	type GraphCommit,
-	type RevisionTag,
-} from "../../../core/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+	type AcknowledgmentMessage,
+	type DataChangeMessage,
+	type HostGuestMessage,
+	parseHostGuestMessage,
+} from "./common.js";
+import { Host } from "./host.js";
 import {
-	independentInitializedView,
-	SchematizingSimpleTreeView,
-	TreeAlpha,
-	type ForestOptions,
-	type ViewContent,
-} from "../../../shared-tree/index.js";
-import {
-	extractPersistedSchema,
-	type TreeViewAlpha,
-	// eslint-disable-next-line import-x/no-internal-modules -- The test requires internal Simple Tree APIs.
-} from "../../../simple-tree/api/index.js";
-import {
-	TreeViewConfiguration,
-	type ImplicitFieldSchema,
-	type UnsafeUnknownSchema,
-} from "../../../simple-tree/index.js";
-import { configuredSharedTree } from "../../../treeFactory.js";
-import { hasSome, type JsonCompatibleReadOnly } from "../../../util/index.js";
-import { TestTreeProviderLite, StringArray, createTestUndoRedoStacks } from "../../utils.js";
-
-/**
- * Gets the head commit of a view.
- * Used for debugging and logging purposes only.
- */
-function headFromView<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
-	view: TreeViewAlpha<TSchema>,
-): GraphCommit<unknown> {
-	// Commit information is not exposed via the public APIs,
-	// so we rely on implementation details to access it.
-	assert(
-		view instanceof SchematizingSimpleTreeView,
-		"Expected view to be a SchematizingSimpleTreeView",
-	);
-	return view.checkout.mainBranch.getHead();
-}
-
-/**
- * Gets the revisions of the commits that are in the `ahead` view but not in the `behind` view.
- * Note that the returned list includes commits that are in both views but have a different base.
- * Used for debugging and logging purposes only.
- */
-function getMissingCommits<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
-	behind: TreeViewAlpha<TSchema>,
-	ahead: TreeViewAlpha<TSchema>,
-): string {
-	const behindHead = headFromView(behind);
-	const aheadHead = headFromView(ahead);
-	const targetPath: GraphCommit<unknown>[] = [];
-	const ancestor = findCommonAncestor(behindHead, [aheadHead, targetPath]);
-	assert(ancestor !== undefined, "Branches do not share a common ancestor.");
-	return `[${targetPath.map((commit) => commit.revision).join(", ")}]`;
-}
-
-/**
- * Gets the revision of a change.
- * Used for debugging and logging purposes only.
- */
-function getRevision(newChange: JsonCompatibleReadOnly) {
-	return (newChange as unknown as { revision: RevisionTag }).revision;
-}
-
-/**
- * A serialized SharedTree change that one participant sends to the other participant.
- */
-interface DataChangeMessage {
-	/** Identifies this message as a data-change message. */
-	readonly type: "dataChange";
-	/** The serialized SharedTree change to apply. */
-	readonly change: JsonCompatibleReadOnly;
-}
-
-/**
- * Confirms that the receiver applied one data-change message.
- */
-interface AcknowledgmentMessage {
-	/** Identifies this message as an acknowledgment message. */
-	readonly type: "acknowledgment";
-}
-
-/** A message that the Host and the Guest can send through their shared protocol. */
-type HostGuestMessage = DataChangeMessage | AcknowledgmentMessage;
-
-/**
- * Validates data from a Host and Guest message channel.
- *
- * @param data - The message data to validate.
- * @returns The validated protocol message.
- * @throws An error if the data is not a valid protocol message envelope.
- */
-function parseHostGuestMessage(data: unknown): HostGuestMessage {
-	if (typeof data !== "object" || data === null || !("type" in data)) {
-		throw new Error("Invalid Host and Guest protocol message.");
-	}
-
-	if (data.type === "acknowledgment") {
-		return data as AcknowledgmentMessage;
-	}
-
-	if (data.type === "dataChange" && "change" in data) {
-		return data as DataChangeMessage;
-	}
-
-	throw new Error("Invalid Host and Guest protocol message.");
-}
-
-/** A promise and the function that resolves it. */
-interface PromiseWithResolver {
-	/** The synchronization operation that a caller can await. */
-	readonly promise: Promise<void>;
-	/** Resolves the synchronization operation. */
-	readonly resolver: () => void;
-}
-
-/**
- * Creates a promise and the function that resolves it.
- *
- * @returns The promise and its resolver.
- */
-function makePromiseWithResolver(): PromiseWithResolver {
-	let resolver: undefined | (() => void);
-	const promise = new Promise<void>((resolve) => {
-		resolver = resolve;
-	});
-	assert(resolver !== undefined, "Resolve function should have been assigned");
-	return { promise, resolver };
-}
-
-/**
- * Implements the default protocol-error behavior.
- *
- * @param error - The protocol error to throw.
- * @throws The specified protocol error.
- */
-function throwProtocolError(error: Error): never {
-	throw error;
-}
-
-/**
- * Converts a thrown value to an error that the protocol-error handler can process.
- *
- * @param error - The value that message processing threw.
- * @returns The original error, or a new error that has the thrown value as its cause.
- */
-function normalizeProtocolError(error: unknown): Error {
-	return error instanceof Error
-		? error
-		: new Error("Host and Guest protocol processing failed.", { cause: error });
-}
-
-class Host<const TSchema extends ImplicitFieldSchema> {
-	/** The main branch on the Host. Is automatically updated when peer changes are received. */
-	public readonly main: TreeViewAlpha<TSchema>;
-	/** The local branch on the Host. Always reflects the state of the Guest (though lags behind it due to async) */
-	public readonly local: TreeViewAlpha<TSchema>;
-	/**
-	 * The promise and resolver for the process of sending changes to the Guest.
-	 * When defined, the Guest is behind the Host's main branch. The promise resolves when the Guest has caught up with the Host's main branch.
-	 * When undefined, no update is in progress and the Guest is up-to-date with the Host's main branch.
-	 */
-	private updateInProgress?: PromiseWithResolver;
-	/**
-	 * Clone of main branch from when the last update to the Guest was initiated.
-	 */
-	private mainHeadFromLastUpdate?: TreeViewAlpha<TSchema>;
-	/**
-	 * True when the Host is applying changes from the Guest to the main branch.
-	 */
-	private isApplyingGuestChanges: boolean = false;
-	/**
-	 * The callback to unsubscribe from main branch changes.
-	 */
-	private readonly offMainChanged: () => void;
-
-	/** Receives and routes protocol messages from the Guest. */
-	private readonly onMessage = (event: MessageEvent<unknown>): void => {
-		try {
-			const message = parseHostGuestMessage(event.data);
-			switch (message.type) {
-				case "dataChange": {
-					this.receiveChangeFromGuest(message.change);
-					break;
-				}
-				case "acknowledgment": {
-					this.receiveAckFromGuest();
-					break;
-				}
-				default: {
-					fail("Unexpected Host and Guest message type");
-				}
-			}
-		} catch (error) {
-			this.handleProtocolError(normalizeProtocolError(error));
-		}
-	};
-
-	/** Reports a protocol message that the platform cannot deserialize. */
-	private readonly onMessageError = (): void => {
-		this.handleProtocolError(new Error("The Host could not deserialize a protocol message."));
-	};
-
-	public constructor(
-		main: TreeViewAlpha<TSchema>,
-		/** The Host endpoint of the Host and Guest message channel. */
-		private readonly port: MessagePort,
-		/** Receives errors from protocol validation and message processing. */
-		private readonly handleProtocolError: (error: Error) => void = throwProtocolError,
-		/** Receives diagnostic messages from the synchronization algorithm. */
-		private readonly logger: (message: string) => void = () => {},
-	) {
-		this.main = main;
-		this.local = main.fork();
-
-		this.offMainChanged = this.main.events.on("changed", () => {
-			if (this.isApplyingGuestChanges) {
-				// While we may need to update the Guest after applying changes from the Guest,
-				// we don't want to do so until we have sent an acknowledgment back to the Guest.
-			} else {
-				this.tryUpdateGuest("after main branch changed");
-			}
-		});
-		this.port.addEventListener("message", this.onMessage);
-		this.port.addEventListener("messageerror", this.onMessageError);
-		this.port.start();
-	}
-
-	public dispose(): void {
-		this.port.removeEventListener("message", this.onMessage);
-		this.port.removeEventListener("messageerror", this.onMessageError);
-		this.port.close();
-		this.updateInProgress = undefined;
-		this.offMainChanged();
-		this.mainHeadFromLastUpdate?.dispose();
-		this.mainHeadFromLastUpdate = undefined;
-		this.local.dispose();
-		this.main.dispose();
-	}
-
-	/**
-	 * Informs the Host of a new change made on the Guest.
-	 * This method synchronously applies the change to the Host's local and main branches
-	 * then asynchronously attempts to update the Guest if need be.
-	 */
-	private receiveChangeFromGuest(change: JsonCompatibleReadOnly): void {
-		this.logger(`Host: received change [${getRevision(change)}] from Guest`);
-		if (this.mainHeadFromLastUpdate !== undefined) {
-			// There is an update in progress but the Guest has authored and sent a new change before applying that update.
-			// This means that by the time the Guest processes the update, that update will be out-of-date
-			// (because it does not take into account this new change) and will be rejected by the Guest.
-			// A new update will be sent to the Guest after the new change is taken into account,
-			// and that update will be based on the updated main head that includes the new change.
-			// We can therefore stop tracking the head of the main branch from when the last update was initiated.
-			this.logger(
-				`Host:   abandoning update in progress for ${getMissingCommits(this.local, this.mainHeadFromLastUpdate)}`,
-			);
-			this.mainHeadFromLastUpdate.dispose();
-			this.mainHeadFromLastUpdate = undefined;
-		}
-		this.local.applyChange(change);
-		this.logger(
-			`Host:   merging changes from Guest: ${getMissingCommits(this.main, this.local)}`,
-		);
-		this.isApplyingGuestChanges = true;
-		try {
-			this.main.merge(this.local, false);
-		} finally {
-			this.isApplyingGuestChanges = false;
-		}
-		this.port.postMessage({ type: "acknowledgment" } satisfies AcknowledgmentMessage);
-		this.tryUpdateGuest("after receiving change from Guest");
-	}
-
-	/**
-	 * Attempts to send changes to the Guest if the Guest is behind the Host's main branch.
-	 * If the Guest is already up-to-date with the Host's main branch,
-	 * or if update is already in progress, then this method has no effect beyond logging.
-	 *
-	 * @remarks
-	 * Updating the Guest is asynchronous, so the Guest may still be behind the Host's main branch after this method returns.
-	 * See {@link updateGuestPromise} for a promise that resolves when the Guest is fully up-to-date with the Host's main branch.
-	 *
-	 * @param prompt - A string to include in the log message to indicate why the Guest update is being considered.
-	 */
-	private tryUpdateGuest(prompt: string): void {
-		this.logger(`Host: considering sync ${prompt}...`);
-		if (this.local.isMissingEditsFrom(this.main)) {
-			this.logger(
-				`Host:   detected changes that need to be reflected in Guest ${getMissingCommits(this.local, this.main)}`,
-			);
-			if (this.mainHeadFromLastUpdate !== undefined) {
-				this.logger(
-					"Host:   update already in progress. Will wait for it to complete or fail.",
-				);
-				return;
-			}
-			if (this.updateInProgress === undefined) {
-				this.logger(
-					"Host:   no pre-existing update in progress. Creating new update promise.",
-				);
-				this.updateInProgress = makePromiseWithResolver();
-			} else {
-				this.logger("Host:   Reusing existing update promise.");
-			}
-			this.mainHeadFromLastUpdate = this.main.fork();
-			const update = this.local.computeNetChangeIfRebasedOnto(this.mainHeadFromLastUpdate);
-			assert(
-				update !== undefined,
-				"Expected update to be defined since local is missing edits from main",
-			);
-			this.logger("Host:   sending update to Guest");
-			this.port.postMessage({
-				type: "dataChange",
-				change: update,
-			} satisfies DataChangeMessage);
-		} else {
-			this.logger("Host:   no changes that need to be reflected in Guest");
-			// The Guest is now caught up with the Host's main branch
-			if (this.updateInProgress !== undefined) {
-				this.logger("Host:   resolving update promise");
-				const resolver = this.updateInProgress.resolver;
-				this.updateInProgress = undefined;
-				resolver();
-			}
-		}
-	}
-
-	/**
-	 * Informs the Host that the Guest has acknowledged a change that the Host has sent.
-	 * This allows the Host to reflect the acknowledged change on the local branch.
-	 * This may also trigger the Host to send new changes to the Guest if the Guest is currently behind the Host's main branch.
-	 */
-	private receiveAckFromGuest(): void {
-		assert(this.updateInProgress !== undefined, "Expected update to be in progress");
-		assert(
-			this.mainHeadFromLastUpdate !== undefined,
-			"Expected main head from last update to be defined",
-		);
-		this.logger(
-			`Host: received ack of update from Guest for ${getMissingCommits(this.local, this.mainHeadFromLastUpdate)}`,
-		);
-		// Reflect the acknowledged update on the local branch
-		this.local.rebaseOnto(this.mainHeadFromLastUpdate);
-		this.mainHeadFromLastUpdate.dispose();
-		this.mainHeadFromLastUpdate = undefined;
-		// New changes could have come in since the update was sent,
-		// so we try to sync again to ensure the Guest is fully up-to-date.
-		this.tryUpdateGuest("after receiving ack of update");
-	}
-
-	/**
-	 * Returns a promise that resolves when all changes known to the Host have been reflected in the Guest,
-	 * or undefined if all such changes have already been reflected on the Guest.
-	 *
-	 * If new changes are received while a promise is already in progress,
-	 * the existing promise will only resolve once all Guest-bound changes (including the new ones) have been reflected in the Guest.
-	 * This means that there's no need to call this function again after receiving new changes if the previous promise is still pending.
-	 */
-	public get updateGuestPromise(): Promise<void> | undefined {
-		return this.updateInProgress?.promise;
-	}
-}
-
-class Guest<const TSchema extends ImplicitFieldSchema> {
-	/** The independent view on the Guest. */
-	public readonly view: TreeViewAlpha<TSchema>;
-	/** The number of local changes that have been made in the Guest but not yet reflected on the Host. */
-	private inFlight: number = 0;
-	/**
-	 * The promise and resolver for the process of sending changes to the Host.
-	 * When defined, the Host has not yet acknowledged the Guest changes.
-	 * The promise resolves when the Host acknowledges the Guest changes.
-	 * When undefined, the Host is up-to-date with the Guest.
-	 */
-	private pushInProgress?: PromiseWithResolver;
-	/**
-	 * Callback to unsubscribe from view changes.
-	 */
-	private readonly offViewChanged: () => void;
-	/**
-	 * True when the Guest is applying changes from the Host.
-	 */
-	private isApplyingChangesFromHost: boolean = false;
-
-	/** Receives and routes protocol messages from the Host. */
-	private readonly onMessage = (event: MessageEvent<unknown>): void => {
-		try {
-			const message = parseHostGuestMessage(event.data);
-			switch (message.type) {
-				case "dataChange": {
-					this.receiveChangeFromHost(message.change);
-					break;
-				}
-				case "acknowledgment": {
-					this.receiveAckFromHost();
-					break;
-				}
-				default: {
-					fail("Unexpected Host and Guest message type");
-				}
-			}
-		} catch (error) {
-			this.handleProtocolError(normalizeProtocolError(error));
-		}
-	};
-
-	/** Reports a protocol message that the platform cannot deserialize. */
-	private readonly onMessageError = (): void => {
-		this.handleProtocolError(new Error("The Guest could not deserialize a protocol message."));
-	};
-
-	public constructor(
-		config: TreeViewConfiguration<TSchema>,
-		options: ForestOptions & ICodecOptions,
-		content: ViewContent,
-		/** The Guest endpoint of the Host and Guest message channel. */
-		private readonly port: MessagePort,
-		/** Receives errors from protocol validation and message processing. */
-		private readonly handleProtocolError: (error: Error) => void = throwProtocolError,
-		/** Receives diagnostic messages from the synchronization algorithm. */
-		private readonly logger: (message: string) => void = () => {},
-	) {
-		this.view = independentInitializedView(config, options, content);
-		this.offViewChanged = this.view.events.on("changed", (metadata: ChangeMetadata) => {
-			if (metadata.isLocal && !this.isApplyingChangesFromHost) {
-				const newChange = metadata.getChange();
-				this.logger(
-					`Guest: new change [${getRevision(newChange)}] (inFlight:${this.inFlight}->${this.inFlight + 1})`,
-				);
-				if (this.pushInProgress === undefined) {
-					this.logger("Guest:   no pre-existing push in progress. Creating new push promise.");
-					this.pushInProgress = makePromiseWithResolver();
-				} else {
-					this.logger("Guest:   Reusing existing push promise.");
-				}
-				this.inFlight += 1;
-				this.port.postMessage({
-					type: "dataChange",
-					change: newChange,
-				} satisfies DataChangeMessage);
-			}
-		});
-		this.port.addEventListener("message", this.onMessage);
-		this.port.addEventListener("messageerror", this.onMessageError);
-		this.port.start();
-	}
-
-	public dispose(): void {
-		this.port.removeEventListener("message", this.onMessage);
-		this.port.removeEventListener("messageerror", this.onMessageError);
-		this.port.close();
-		this.pushInProgress = undefined;
-		this.offViewChanged();
-		this.view.dispose();
-	}
-
-	/**
-	 * Attempts to apply a change from the Host.
-	 * The change is ignored if there are local changes that have not yet been reflected on the Host.
-	 * The `ackChangeFromHost` callback will be invoked iff the update is applied.
-	 * @param change - The change to apply.
-	 */
-	private receiveChangeFromHost(change: JsonCompatibleReadOnly): void {
-		if (this.inFlight > 0) {
-			// There are local changes that have not yet been reflected on the Host,
-			// so this change is not applicable to the current state of the Guest.
-			// We ignore it (another will come once the Host has caught up to the Guest).
-			this.logger(`Guest: ignoring update from Host (inFlight=${this.inFlight})`);
-			return;
-		}
-		this.isApplyingChangesFromHost = true;
-		try {
-			this.view.applyChange(change);
-		} finally {
-			this.isApplyingChangesFromHost = false;
-		}
-		this.logger("Guest: applied update from Host");
-		this.port.postMessage({ type: "acknowledgment" } satisfies AcknowledgmentMessage);
-	}
-
-	/**
-	 * Must be called when the Host acknowledges a new local change.
-	 */
-	private receiveAckFromHost(): void {
-		assert(this.inFlight > 0, "Unexpectedly received ack from Host");
-		this.logger(`Guest: local change acked (inFlight:${this.inFlight}->${this.inFlight - 1})`);
-		this.inFlight -= 1;
-
-		if (this.inFlight === 0) {
-			// The Host has now caught up with all local changes
-			assert(
-				this.pushInProgress !== undefined,
-				"Missing push promise despite in-flight changes",
-			);
-			const resolver = this.pushInProgress.resolver;
-			this.pushInProgress = undefined;
-			this.logger(`Guest:   all my changes were acked. Resolving push promise.`);
-			resolver();
-		}
-	}
-
-	/**
-	 * Returns a promise that resolves when all changes made on the Guest have been acknowledged by the Host.
-	 * Undefined if there are no such changes in flight.
-	 *
-	 * If new local changes are made while a promise is already in progress,
-	 * the existing promise will only resolve once all local changes (including the new ones) have been reflected on the Host.
-	 * This means that there's no need to call this function again after making new local changes if the previous promise is still pending.
-	 */
-	public get updateHostPromise(): Promise<void> | undefined {
-		return this.pushInProgress?.promise;
-	}
-}
+	buildDirectSessionPorts,
+	buildIsolatedSessionPorts,
+	disposeActiveSessions,
+	handleArrayConfig,
+	type SessionPorts,
+	setup,
+	setupCustom,
+	stringArrayConfig,
+} from "./sandboxingTestUtils.js";
 
 describe("Host and Guest message protocol", () => {
 	it("accepts data changes and acknowledgments", () => {
@@ -556,162 +58,10 @@ describe("Host and Guest message protocol", () => {
 	});
 });
 
-describe("Host and Guest Demo", () => {
-	/**
-	 * The ports and test controls for one Host and Guest session.
-	 */
-	interface SessionPorts<TInterop> {
-		/** The port that the Host owns. */
-		readonly hostPort: MessagePort;
-		/** The port that the Guest owns. */
-		readonly guestPort: MessagePort;
-		/** The controls that the test uses to manage message delivery. */
-		readonly interop: TInterop;
-		/** Releases transport resources that the Host and the Guest do not own. */
-		dispose(): void;
-	}
-
-	/** A function that builds the ports and test controls for one session. */
-	type SessionPortsBuilder<TInterop> = () => SessionPorts<TInterop>;
-
-	/**
-	 * Builds a direct channel between the Host and the Guest.
-	 */
-	function buildDirectSessionPorts(): SessionPorts<undefined> {
-		const channel = new MessageChannel();
-		return {
-			hostPort: channel.port1,
-			guestPort: channel.port2,
-			interop: undefined,
-			dispose: () => {},
-		};
-	}
-
-	/** Ports that let a test send messages to each participant independently. */
-	interface IsolatedPortControls {
-		/** Sends a test message to the Host. */
-		readonly sendToHost: MessagePort;
-		/** Sends a test message to the Guest. */
-		readonly sendToGuest: MessagePort;
-	}
-
-	/**
-	 * Builds separate channels that let a test send messages to each participant.
-	 */
-	function buildIsolatedSessionPorts(): SessionPorts<IsolatedPortControls> {
-		const hostChannel = new MessageChannel();
-		const guestChannel = new MessageChannel();
-		return {
-			hostPort: hostChannel.port1,
-			guestPort: guestChannel.port1,
-			interop: {
-				sendToHost: hostChannel.port2,
-				sendToGuest: guestChannel.port2,
-			},
-			dispose: () => {
-				hostChannel.port2.close();
-				guestChannel.port2.close();
-			},
-		};
-	}
-
-	const activeTeardowns = new Set<() => void>();
-
-	afterEach(() => {
-		for (const teardown of [...activeTeardowns]) {
-			teardown();
-		}
+describe("Host and Guest correctness", () => {
+	afterEach(function () {
+		disposeActiveSessions(this.currentTest?.state === "failed");
 	});
-
-	/**
-	 * Sets up a Host, Guest, and peer with the given initial state and a direct message channel.
-	 * @param initialState - The initial state of the shared tree.
-	 * @returns The session components and teardown function.
-	 */
-	function setup(initialState: string[]) {
-		return setupCustom(initialState, buildDirectSessionPorts);
-	}
-
-	/**
-	 * Sets up a Host, Guest, and peer with the given initial state and session ports.
-	 * @param initialState - The initial state of the shared tree.
-	 * @param sessionPortsBuilder - A function that builds the ports and test controls.
-	 * @param logging - Whether to enable logging.
-	 * @param handleProtocolError - A function that handles protocol errors.
-	 * @returns The session components and test controls.
-	 */
-	function setupCustom<TInterop>(
-		initialState: string[],
-		sessionPortsBuilder: SessionPortsBuilder<TInterop>,
-		logging: boolean = false,
-		handleProtocolError: (error: Error) => void = throwProtocolError,
-	) {
-		const logger = (message: string) => {
-			if (logging) {
-				console.log(message);
-			}
-		};
-		const provider = new TestTreeProviderLite(
-			2,
-			configuredSharedTree({
-				jsonValidator: FormatValidatorBasic,
-				minVersionForCollab: FluidClientVersion.v2_80,
-			}).getFactory(),
-		);
-		const config = new TreeViewConfiguration({
-			schema: StringArray,
-			enableSchemaValidation: true,
-		});
-
-		const peer = asAlpha(provider.trees[0].viewWith(config));
-		peer.initialize(initialState);
-		provider.synchronizeMessages();
-
-		const main = asAlpha(provider.trees[1].viewWith(config));
-		const sessionPorts = sessionPortsBuilder();
-		const host = new Host(main, sessionPorts.hostPort, handleProtocolError, logger);
-
-		const hostCompressor = provider.getCompressor(provider.trees[1]);
-		const startingState = TreeAlpha.exportCompressed(host.local.root, {
-			// TODO: shard the compressor here?
-			idCompressor: hostCompressor,
-			minVersionForCollab: FluidClientVersion.v2_80,
-		});
-
-		const guest = new Guest(
-			config,
-			{ jsonValidator: FormatValidatorBasic },
-			{
-				tree: startingState,
-				schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_80, () => false),
-				// TODO: shard the compressor here?
-				idCompressor: hostCompressor,
-			},
-			sessionPorts.guestPort,
-			handleProtocolError,
-			logger,
-		);
-
-		const teardown = () => {
-			if (!activeTeardowns.delete(teardown)) {
-				return;
-			}
-			guest.dispose();
-			host.dispose();
-			sessionPorts.dispose();
-		};
-		activeTeardowns.add(teardown);
-
-		return {
-			teardown,
-			peer,
-			host,
-			guest,
-			provider,
-			interop: sessionPorts.interop,
-			logger,
-		};
-	}
 
 	// The Host and Guest are intended to support being run in separate JavaScript realms.
 	// Verify that protocol messages are serializable and that synchronization does not depend on shared object identity.
@@ -740,13 +90,40 @@ describe("Host and Guest Demo", () => {
 		channel.port2.close();
 	});
 
+	// TODO: Enable these tests after the protocol serializes handles as tokens and restores them across the MessagePort boundary.
+	it.skip("passes handles from the Host to the Guest", async () => {
+		const { host, guest } = setupCustom([], handleArrayConfig, buildDirectSessionPorts);
+		const value = "Host handle value";
+
+		host.main.root.push(new MockHandle(value));
+		await (host.updateGuestPromise ?? strict.fail("Expected update to be in progress"));
+
+		strict.equal(await guest.view.root[0].get(), value);
+	});
+
+	it.skip("passes handles from the Guest to the Host", async () => {
+		const { host, guest } = setupCustom([], handleArrayConfig, buildDirectSessionPorts);
+		const value = "Guest handle value";
+
+		guest.view.root.push(new MockHandle(value));
+		await (guest.updateHostPromise ?? strict.fail("Expected push to be in progress"));
+
+		strict.equal(await host.main.root[0].get(), value);
+	});
+
 	it("routes invalid messages to the protocol-error handler", async () => {
 		let reportProtocolError: ((error: Error) => void) | undefined;
 		const protocolError = new Promise<Error>((resolve) => {
 			reportProtocolError = resolve;
 		});
 		assert(reportProtocolError !== undefined, "Protocol error reporter should be assigned");
-		const { interop } = setupCustom([], buildIsolatedSessionPorts, false, reportProtocolError);
+		const { interop } = setupCustom(
+			[],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			reportProtocolError,
+		);
 
 		interop.sendToHost.postMessage({ type: "unknown" });
 
@@ -786,142 +163,6 @@ describe("Host and Guest Demo", () => {
 		strict.equal(acknowledgmentReceived, false);
 		host.dispose();
 		channel.port2.close();
-	});
-
-	it("the initial state is consistent across the Host and Guest", async () => {
-		const { host, guest } = setup(["A"]);
-		strict.deepEqual([...guest.view.root], ["A"]);
-		strict.deepEqual([...host.local.root], ["A"]);
-		strict.deepEqual([...host.main.root], ["A"]);
-	});
-
-	it("one Guest edit", async () => {
-		const { peer, host, guest, provider } = setup([]);
-
-		// Edit in the Guest
-		guest.view.root.push("B(g)");
-		// The edit is synchronously reflected in the Guest
-		strict.deepEqual([...guest.view.root], ["B(g)"]);
-		// The edit is not reflected in the Host yet
-		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...host.main.root], []);
-
-		// The Guest should have started the process of pushing the edit to the Host
-		const pushPromise =
-			guest.updateHostPromise ?? strict.fail("Expected push to be in progress");
-		// Wait for the edit to be pushed to the Host
-		await pushPromise;
-
-		// The edit is now reflected in the Host
-		strict.deepEqual([...host.local.root], ["B(g)"]);
-		strict.deepEqual([...host.main.root], ["B(g)"]);
-		// The edit is not reflected in the peer yet
-		strict.deepEqual([...peer.root], []);
-
-		provider.synchronizeMessages();
-
-		// The edit is now reflected in the peer
-		strict.deepEqual([...peer.root], ["B(g)"]);
-	});
-
-	it("new Guest edits during Guest edit push", async () => {
-		const { peer, host, guest, provider } = setup([]);
-
-		// Edit in the Guest
-		guest.view.root.push("B(g)");
-		// The edit is synchronously reflected in the Guest
-		strict.deepEqual([...guest.view.root], ["B(g)"]);
-		// The edit is not reflected in the Host yet
-		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...host.main.root], []);
-
-		// The Guest should have started the process of pushing the edit to the Host
-		const pushPromise =
-			guest.updateHostPromise ?? strict.fail("Expected push to be in progress");
-
-		// Before the push completes, other edits are made in the Guest
-		guest.view.root.push("C(g)");
-		guest.view.root.push("D(g)");
-
-		// The new edits are synchronously reflected in the Guest
-		strict.deepEqual([...guest.view.root], ["B(g)", "C(g)", "D(g)"]);
-		// The new edits are not reflected in the Host yet
-		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...host.main.root], []);
-
-		await pushPromise;
-
-		// The edits are now reflected in the Host
-		strict.deepEqual([...host.local.root], ["B(g)", "C(g)", "D(g)"]);
-		strict.deepEqual([...host.main.root], ["B(g)", "C(g)", "D(g)"]);
-		// The edits are not reflected in the peer yet
-		strict.deepEqual([...peer.root], []);
-
-		provider.synchronizeMessages();
-
-		// The edits are now reflected in the peer
-		strict.deepEqual([...peer.root], ["B(g)", "C(g)", "D(g)"]);
-	});
-
-	it("one peer edit", async () => {
-		const { peer, host, guest, provider } = setup([]);
-
-		// Edit on the peer
-		peer.root.push("B(p)");
-		// The edit is synchronously reflected in the peer
-		strict.deepEqual([...peer.root], ["B(p)"]);
-		// The edit is not reflected in the Host or the Guest yet
-		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...host.main.root], []);
-		strict.deepEqual([...guest.view.root], []);
-
-		provider.synchronizeMessages();
-
-		// The edit is now reflected in the Host but not the local or Guest yet
-		strict.deepEqual([...host.main.root], ["B(p)"]);
-		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...guest.view.root], []);
-
-		// The Host should have started the process of updating the Guest with the peer change
-		const updatePromise =
-			host.updateGuestPromise ?? strict.fail("Expected update to be in progress");
-		// Wait for the update to be applied to the Guest
-		await updatePromise;
-
-		// The peer edit is now reflected in the local and Guest
-		strict.deepEqual([...host.local.root], ["B(p)"]);
-		strict.deepEqual([...guest.view.root], ["B(p)"]);
-	});
-
-	it("new peer edits during Guest update", async () => {
-		const { peer, host, guest, provider } = setup([]);
-
-		// Edit on the peer
-		peer.root.push("B(p)");
-		provider.synchronizeMessages();
-		// The new peer edit is reflected in the Host but not the local or Guest yet.
-		strict.deepEqual([...host.main.root], ["B(p)"]);
-		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...guest.view.root], []);
-
-		// The Host should have started the process of updating the Guest with the peer change
-		const updatePromise =
-			host.updateGuestPromise ?? strict.fail("Expected update to be in progress");
-
-		// Before the update is applied to the Guest, other edits come in from the peer
-		peer.root.push("C(p)");
-		peer.root.push("D(p)");
-		provider.synchronizeMessages();
-		// The new peer edits are reflected in the Host but not the local or Guest yet.
-		strict.deepEqual([...host.main.root], ["B(p)", "C(p)", "D(p)"]);
-		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...guest.view.root], []);
-
-		await updatePromise;
-
-		// Once the promise resolves, all the peer edits should be reflected in the local and Guest
-		strict.deepEqual([...host.local.root], ["B(p)", "C(p)", "D(p)"]);
-		strict.deepEqual([...guest.view.root], ["B(p)", "C(p)", "D(p)"]);
 	});
 
 	it("attempts by the Host and Guest to concurrently notify one-another of concurrent edits do not lead to inconsistencies or dropped edits", async () => {
@@ -1347,6 +588,7 @@ describe("Host and Guest Demo", () => {
 			scenario += 1;
 			const { teardown, peer, host, guest, provider, interop, logger } = setupCustom(
 				[],
+				stringArrayConfig,
 				buildMessageRelay,
 				false,
 			);
