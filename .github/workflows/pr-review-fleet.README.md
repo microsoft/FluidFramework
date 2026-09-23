@@ -53,13 +53,15 @@ Add the reviewer ID, display label, and description to `REVIEWERS` in
 `../scripts/pr_review_propose.py`, then add a prompt with the same ID under
 `../prompts/reviewers/`. The prompt must instruct the agent to write
 `review-<id>.json` using the standard `findings` schema. Also add the ID to the
-fallback list in `pr-review-fleet.yml`.
+fallback list in `pr-review-fleet.yml`. The fallback list is the complete set
+of reviewers; set `reviewer_count` to its length when the fallback should run
+the full fleet.
 
-New reviewers appear in the confirmation comment but are opt-in unless they
-are added to the priority order used by `get_selected()`. To make a review
-area's HIGH findings request changes, add its display label to
-`PROMOTED_AREAS` in `../scripts/consolidate_reviews.py`; otherwise its
-findings remain advisory.
+New reviewers appear in the confirmation comment and can be selected
+explicitly. To make a review area's HIGH findings request changes, add its
+display label to `PROMOTED_AREAS` in `../scripts/consolidate_reviews.py`;
+otherwise its findings remain advisory. If a reviewer has a stricter severity
+cap, enforce it in `parse_review_file()` as well as in its prompt.
 - **Concurrency:** Keyed per PR; cancels in-progress runs.
 
 ### Jobs
