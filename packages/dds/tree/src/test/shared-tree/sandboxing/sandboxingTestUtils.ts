@@ -22,8 +22,9 @@ import {
 import { configuredSharedTree } from "../../../treeFactory.js";
 import { StringArray, TestTreeProviderLite } from "../../utils.js";
 
-import { normalizeProtocolError, throwProtocolError } from "./common.js";
+import { normalizeProtocolError, throwProtocolError, validateTreePayload } from "./common.js";
 import { Guest } from "./guest.js";
+import { normalizeTransportData } from "./handles.js";
 import { Host } from "./host.js";
 
 /**
@@ -172,14 +173,20 @@ export function setupCustom<TInterop, const TSchema extends ImplicitFieldSchema>
 			minVersionForCollab: FluidClientVersion.v2_80,
 		}).getFactory(),
 	);
-	const peerView = provider.trees[0].viewWith(config);
-	peerView.initialize(initialState);
-	const peer = asAlpha(peerView);
+	const mainView = provider.trees[1].viewWith(config);
+	mainView.initialize(initialState);
+	const main = asAlpha(mainView);
 	provider.synchronizeMessages();
 
-	const main = asAlpha(provider.trees[1].viewWith(config));
+	const peer = asAlpha(provider.trees[0].viewWith(config));
 	const sessionPorts = sessionPortsBuilder();
-	const host = new Host(main, sessionPorts.hostPort, handleProtocolError, logger);
+	const host = new Host(
+		main,
+		sessionPorts.hostPort,
+		provider.trees[1].handle,
+		handleProtocolError,
+		logger,
+	);
 
 	const hostCompressor = provider.getCompressor(provider.trees[1]);
 	const localRoot = host.local.root;
@@ -189,12 +196,14 @@ export function setupCustom<TInterop, const TSchema extends ImplicitFieldSchema>
 		idCompressor: hostCompressor,
 		minVersionForCollab: FluidClientVersion.v2_80,
 	});
+	const normalized = normalizeTransportData(startingState);
+	validateTreePayload(normalized);
 
 	const guest = new Guest(
 		config,
 		{ jsonValidator: FormatValidatorBasic },
 		{
-			tree: startingState,
+			tree: structuredClone(host.codec.encode(normalized)) as typeof startingState,
 			schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_80, () => false),
 			// TODO: shard the compressor here?
 			idCompressor: hostCompressor,

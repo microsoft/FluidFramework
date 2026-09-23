@@ -6,20 +6,23 @@
 import { strict } from "node:assert";
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
+import { compareFluidHandles } from "@fluidframework/runtime-utils/internal";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 // eslint-disable-next-line import-x/no-internal-modules -- The test requires internal Simple Tree APIs.
 import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
+import { SchemaFactoryAlpha, TreeViewConfiguration } from "../../../simple-tree/index.js";
 import { hasSome } from "../../../util/index.js";
 import { StringArray, createTestUndoRedoStacks } from "../../utils.js";
 
 import {
-	type AcknowledgmentMessage,
 	type DataChangeMessage,
 	type HostGuestMessage,
+	makePromiseWithResolver,
 	parseHostGuestMessage,
 } from "./common.js";
 import { Host } from "./host.js";
+import { normalizeTransportData } from "./handles.js";
 import {
 	buildDirectSessionPorts,
 	buildIsolatedSessionPorts,
@@ -33,8 +36,8 @@ import {
 
 describe("Host and Guest message protocol", () => {
 	it("accepts data changes and acknowledgments", () => {
-		const dataChange: DataChangeMessage = { type: "dataChange", change: { value: 1 } };
-		const acknowledgment: AcknowledgmentMessage = { type: "acknowledgment" };
+		const dataChange = normalizeTransportData({ type: "dataChange", change: { value: 1 } });
+		const acknowledgment = normalizeTransportData({ type: "acknowledgment" });
 
 		strict.equal(parseHostGuestMessage(dataChange), dataChange);
 		strict.equal(parseHostGuestMessage(acknowledgment), acknowledgment);
@@ -51,7 +54,7 @@ describe("Host and Guest message protocol", () => {
 
 		for (const message of invalidMessages) {
 			strict.throws(
-				() => parseHostGuestMessage(message),
+				() => parseHostGuestMessage(normalizeTransportData(message)),
 				/Invalid Host and Guest protocol message/,
 			);
 		}
@@ -72,7 +75,8 @@ describe("Host and Guest correctness", () => {
 		const received = new Promise<HostGuestMessage>((resolve) => {
 			channel.port2.addEventListener(
 				"message",
-				(event: MessageEvent<unknown>) => resolve(parseHostGuestMessage(event.data)),
+				(event: MessageEvent<unknown>) =>
+					resolve(parseHostGuestMessage(normalizeTransportData(event.data))),
 				{ once: true },
 			);
 			channel.port2.start();
@@ -81,7 +85,7 @@ describe("Host and Guest correctness", () => {
 		channel.port1.postMessage(message);
 		const receivedMessage = await received;
 
-		strict.deepEqual(receivedMessage, message);
+		strict.deepEqual(receivedMessage, normalizeTransportData(message));
 		strict.notEqual(receivedMessage, message);
 		if (receivedMessage.type === "dataChange") {
 			strict.notEqual(receivedMessage.change, change);
@@ -90,26 +94,215 @@ describe("Host and Guest correctness", () => {
 		channel.port2.close();
 	});
 
-	// TODO: Enable these tests after the protocol serializes handles as tokens and restores them across the MessagePort boundary.
-	it.skip("passes handles from the Host to the Guest", async () => {
+	it("preserves marker-shaped tree data during initialization and edits in both directions", async () => {
+		const factory = new SchemaFactoryAlpha("sandbox.marker-data");
+		class RecordNode extends factory.record("Record", [factory.string, factory.number]) {}
+		class Records extends factory.array("Records", RecordNode) {}
+		const values: Record<string, string | number>[] = [
+			{ type: "__sandbox_handle__", token: 0 },
+			{ type: "__sandbox_handle__", label: "ordinary user data" },
+			{ type: "__sandbox_handle__", token: 0, extra: "data" },
+			{ type: "__sandbox_object__", entries: "ordinary user data" },
+			{ ["__proto__"]: "data", constructor: "data", prototype: "data" },
+		];
+		const config = new TreeViewConfiguration({ schema: Records });
+		const { host, guest, provider, peer } = setupCustom(
+			values,
+			config,
+			buildDirectSessionPorts,
+		);
+		const read = (nodes: Iterable<RecordNode>) =>
+			Array.from(nodes, (node) => Object.fromEntries(Object.entries(node)));
+		strict.deepEqual(read(guest.view.root), values);
+		host.main.root.insertAtEnd(...values);
+		await host.updateGuestPromise;
+		strict.deepEqual(read(guest.view.root), [...values, ...values]);
+		guest.view.root.insertAtEnd(...values);
+		await guest.updateHostPromise;
+		strict.deepEqual(read(host.main.root), [...values, ...values, ...values]);
+		provider.synchronizeMessages();
+		strict.deepEqual(read(peer.root), [...values, ...values, ...values]);
+	});
+
+	it("passes blob handles from the Host to the Guest", async () => {
 		const { host, guest } = setupCustom([], handleArrayConfig, buildDirectSessionPorts);
-		const value = "Host handle value";
+		const value = new Uint8Array([1, 2, 3]).buffer;
 
 		host.main.root.push(new MockHandle(value));
 		await (host.updateGuestPromise ?? strict.fail("Expected update to be in progress"));
 
-		strict.equal(await guest.view.root[0].get(), value);
+		const resolved = await guest.view.root[0].get();
+		strict.deepEqual(resolved, value);
+		strict.notEqual(resolved, value);
+		strict.equal(value.byteLength, 3);
 	});
 
-	it.skip("passes handles from the Guest to the Host", async () => {
-		const { host, guest } = setupCustom([], handleArrayConfig, buildDirectSessionPorts);
-		const value = "Guest handle value";
+	it("passes existing handles from the Guest back to the Host and peers", async () => {
+		const value = new Uint8Array([4, 5]).buffer;
+		const handle = new MockHandle(value);
+		const { host, guest, peer, provider } = setupCustom(
+			[],
+			handleArrayConfig,
+			buildDirectSessionPorts,
+		);
+		host.main.root.push(handle);
+		await host.updateGuestPromise;
 
-		guest.view.root.push(new MockHandle(value));
+		guest.view.root.push(guest.view.root[0]);
 		await (guest.updateHostPromise ?? strict.fail("Expected push to be in progress"));
 
-		strict.equal(await host.main.root[0].get(), value);
+		strict.equal(host.main.root[1], host.main.root[0]);
+		strict.deepEqual(await host.main.root[1].get(), value);
+		provider.synchronizeMessages();
+		strict(compareFluidHandles(peer.root[1], handle));
 	});
+
+	it("preserves proxy identity across initialization and updates", async () => {
+		const handle = new MockHandle(new ArrayBuffer(2));
+		const { host, guest } = setupCustom(
+			[handle, handle],
+			handleArrayConfig,
+			buildDirectSessionPorts,
+		);
+		const proxy = guest.view.root[0];
+		strict.equal(proxy, guest.view.root[1]);
+		strict.notEqual(proxy, host.main.root[0]);
+		host.main.root.push(host.main.root[0]);
+		await host.updateGuestPromise;
+		strict.equal(proxy, guest.view.root[2]);
+		strict.deepEqual(await proxy.get(), new ArrayBuffer(2));
+	});
+
+	it("clearly rejects resolution of handles to Fluid objects", async () => {
+		const { host, guest, provider } = setupCustom(
+			[],
+			handleArrayConfig,
+			buildDirectSessionPorts,
+		);
+		host.main.root.push(provider.trees[1].handle);
+		await host.updateGuestPromise;
+		await strict.rejects(guest.view.root[0].get(), {
+			message:
+				"Cannot resolve this handle in the Guest: only blob handles resolving to an ArrayBuffer are supported. Handles to Fluid objects are not supported.",
+		});
+	});
+
+	it("propagates Host resolution failures through the port", async () => {
+		const { host, guest } = setupCustom([], handleArrayConfig, buildDirectSessionPorts);
+		const handle = Object.assign(new MockHandle(new ArrayBuffer(0)), {
+			get: async () => {
+				throw new Error("Blob retrieval failed");
+			},
+		});
+		host.main.root.push(handle);
+		await host.updateGuestPromise;
+		await strict.rejects(guest.view.root[0].get(), /Blob retrieval failed/);
+	});
+
+	it("continues synchronizing edits while a blob request is pending", async () => {
+		const { host, guest } = setupCustom([], handleArrayConfig, buildDirectSessionPorts);
+		const requested = makePromiseWithResolver();
+		const release = makePromiseWithResolver();
+		const blob = new Uint8Array([7]).buffer;
+		let requests = 0;
+		const handle = Object.assign(new MockHandle(blob), {
+			get: async () => {
+				requests++;
+				requested.resolver();
+				await release.promise;
+				return blob;
+			},
+		});
+		host.main.root.push(handle);
+		await host.updateGuestPromise;
+		const proxy = guest.view.root[0];
+		const first = proxy.get();
+		strict.equal(proxy.get(), first);
+		await requested.promise;
+		guest.view.root.push(proxy);
+		await guest.updateHostPromise;
+		strict.equal(host.main.root.length, 2);
+		host.main.root.push(handle);
+		await host.updateGuestPromise;
+		strict.equal(guest.view.root.length, 3);
+		release.resolver();
+		strict.deepEqual(await first, blob);
+		strict.equal(requests, 1);
+	});
+
+	it("retains a handle for Guest deletion, undo, and redo", async () => {
+		const { host, guest } = setupCustom([], handleArrayConfig, buildDirectSessionPorts);
+		const blob = new Uint8Array([8]).buffer;
+		const handle = new MockHandle(blob);
+		host.main.root.push(handle);
+		await host.updateGuestPromise;
+		const proxy = guest.view.root[0];
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(guest.view.events);
+		try {
+			guest.view.root.removeAt(0);
+			await guest.updateHostPromise;
+			strict.equal(host.main.root.length, 0);
+			strict.deepEqual(await proxy.get(), blob);
+			undoStack.pop()?.revert();
+			await guest.updateHostPromise;
+			strict.equal(guest.view.root[0], proxy);
+			strict.equal(host.main.root[0], handle);
+			redoStack.pop()?.revert();
+			await guest.updateHostPromise;
+			strict.equal(host.main.root.length, 0);
+		} finally {
+			unsubscribe();
+		}
+	});
+
+	it("returns an error for an unauthorized blob token", async () => {
+		const { interop } = setupCustom([], handleArrayConfig, buildIsolatedSessionPorts);
+		const received = new Promise<HostGuestMessage>((resolve) => {
+			interop.sendToHost.addEventListener(
+				"message",
+				(event: MessageEvent<unknown>) =>
+					resolve(parseHostGuestMessage(normalizeTransportData(event.data))),
+				{ once: true },
+			);
+			interop.sendToHost.start();
+		});
+		interop.sendToHost.postMessage({ type: "blobRequest", requestId: 0, token: 0 });
+		strict.deepEqual(
+			await received,
+			normalizeTransportData({
+				type: "blobResponse",
+				requestId: 0,
+				error: "Unknown sandbox handle token.",
+			}),
+		);
+	});
+
+	for (const receiver of ["Host", "Guest"] as const) {
+		it(`rejects blob messages sent in the wrong direction to the ${receiver}`, async () => {
+			let reportError: (error: Error) => void = () => strict.fail("Missing error resolver");
+			const error = new Promise<Error>((resolve) => {
+				reportError = resolve;
+			});
+			const { interop } = setupCustom(
+				[],
+				handleArrayConfig,
+				buildIsolatedSessionPorts,
+				false,
+				reportError,
+			);
+			if (receiver === "Host") {
+				interop.sendToHost.postMessage({
+					type: "blobResponse",
+					requestId: 0,
+					error: "failure",
+				});
+			} else {
+				interop.sendToGuest.postMessage({ type: "blobRequest", requestId: 0, token: 0 });
+			}
+			const reported = await error;
+			strict.match(reported.message, /cannot receive blob/);
+		});
+	}
 
 	it("routes invalid messages to the protocol-error handler", async () => {
 		let reportProtocolError: ((error: Error) => void) | undefined;
@@ -149,18 +342,34 @@ describe("Host and Guest correctness", () => {
 			events: { on: () => () => {} },
 			dispose: () => {},
 		} as unknown as TreeViewAlpha<typeof StringArray>;
-		const host = new Host(main, channel.port1, reportProtocolError);
+		let bindings = 0;
+		const host = new Host(
+			main,
+			channel.port1,
+			Object.assign(new MockHandle(undefined), {
+				bind: () => {
+					bindings++;
+				},
+			}),
+			reportProtocolError,
+		);
 		let acknowledgmentReceived = false;
 		channel.port2.addEventListener("message", () => {
 			acknowledgmentReceived = true;
 		});
 		channel.port2.start();
 
-		channel.port2.postMessage({ type: "dataChange", change: {} });
+		channel.port2.postMessage(
+			host.codec.encode({
+				type: "dataChange",
+				change: { handle: new MockHandle(new ArrayBuffer(0)) },
+			}),
+		);
 		await protocolError;
 		await new Promise((resolve) => setTimeout(resolve, 0));
 
 		strict.equal(acknowledgmentReceived, false);
+		strict.equal(bindings, 0);
 		host.dispose();
 		channel.port2.close();
 	});
@@ -544,7 +753,7 @@ describe("Host and Guest correctness", () => {
 
 			relayPortConnectedToHost.addEventListener("message", (event: MessageEvent<unknown>) => {
 				try {
-					relay.hostToGuest.push(parseHostGuestMessage(event.data));
+					relay.hostToGuest.push(parseHostGuestMessage(normalizeTransportData(event.data)));
 				} finally {
 					messagesMovingToRelay -= 1;
 					resolveIfSettled();
@@ -552,7 +761,7 @@ describe("Host and Guest correctness", () => {
 			});
 			relayPortConnectedToGuest.addEventListener("message", (event: MessageEvent<unknown>) => {
 				try {
-					relay.guestToHost.push(parseHostGuestMessage(event.data));
+					relay.guestToHost.push(parseHostGuestMessage(normalizeTransportData(event.data)));
 				} finally {
 					messagesMovingToRelay -= 1;
 					resolveIfSettled();

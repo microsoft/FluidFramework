@@ -23,13 +23,16 @@ import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 import {
 	type AcknowledgmentMessage,
 	type DataChangeMessage,
+	type HostGuestMessage,
 	getRevision,
 	makePromiseWithResolver,
 	normalizeProtocolError,
 	parseHostGuestMessage,
 	type PromiseWithResolver,
 	throwProtocolError,
+	validateTreePayload,
 } from "./common.js";
+import { GuestHandleCodec, normalizeTransportData } from "./handles.js";
 
 /**
  * An independent TreeView synchronized with a Host through a message protocol.
@@ -37,6 +40,7 @@ import {
  * @typeParam TSchema - The schema of the synchronized tree.
  */
 export class Guest<const TSchema extends ImplicitFieldSchema> {
+	private readonly codec: GuestHandleCodec;
 	/** The independent view on the Guest. */
 	public readonly view: TreeViewAlpha<TSchema>;
 	/** The number of local Guest changes that the Host has not acknowledged. */
@@ -56,7 +60,7 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	/** Receives and routes protocol messages from the Host. */
 	private readonly onMessage = (event: MessageEvent<unknown>): void => {
 		try {
-			const message = parseHostGuestMessage(event.data);
+			const message = parseHostGuestMessage(this.codec.decode(event.data));
 			switch (message.type) {
 				case "dataChange": {
 					this.receiveChangeFromHost(message.change);
@@ -65,6 +69,13 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 				case "acknowledgment": {
 					this.receiveAckFromHost();
 					break;
+				}
+				case "blobResponse": {
+					this.codec.receiveResponse(message);
+					break;
+				}
+				case "blobRequest": {
+					throw new Error("The Guest cannot receive blob requests.");
 				}
 				default: {
 					fail("Unexpected Host and Guest message type");
@@ -91,10 +102,21 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		/** Receives diagnostic messages from the synchronization algorithm. */
 		private readonly logger: (message: string) => void = () => {},
 	) {
-		this.view = independentInitializedView(config, options, content);
+		this.codec = new GuestHandleCodec((message) => this.postMessage(message));
+		const tree = this.codec.decode(content.tree);
+		validateTreePayload(tree);
+		this.view = independentInitializedView(config, options, {
+			...content,
+			tree: tree as ViewContent["tree"],
+		});
 		this.offViewChanged = this.view.events.on("changed", (metadata: ChangeMetadata) => {
 			if (metadata.isLocal && !this.isApplyingChangesFromHost) {
 				const newChange = metadata.getChange();
+				// MessagePort delivery is asynchronous. Validate and send before recording a pending edit.
+				this.postMessage({
+					type: "dataChange",
+					change: newChange,
+				} satisfies DataChangeMessage);
 				this.logger(
 					`Guest: new change [${getRevision(newChange)}] (inFlight:${this.inFlight}->${this.inFlight + 1})`,
 				);
@@ -105,10 +127,6 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 					this.logger("Guest:   Reusing existing push promise.");
 				}
 				this.inFlight += 1;
-				this.port.postMessage({
-					type: "dataChange",
-					change: newChange,
-				} satisfies DataChangeMessage);
 			}
 		});
 		this.port.addEventListener("message", this.onMessage);
@@ -117,6 +135,7 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	public dispose(): void {
+		this.codec.dispose();
 		this.port.removeEventListener("message", this.onMessage);
 		this.port.removeEventListener("messageerror", this.onMessageError);
 		this.port.close();
@@ -146,7 +165,13 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 			this.isApplyingChangesFromHost = false;
 		}
 		this.logger("Guest: applied update from Host");
-		this.port.postMessage({ type: "acknowledgment" } satisfies AcknowledgmentMessage);
+		this.postMessage({ type: "acknowledgment" } satisfies AcknowledgmentMessage);
+	}
+
+	private postMessage(message: HostGuestMessage): void {
+		const normalized = normalizeTransportData(message);
+		parseHostGuestMessage(normalized);
+		this.port.postMessage(this.codec.encode(normalized));
 	}
 
 	/** Processes the Host's acknowledgment of a local Guest change. */

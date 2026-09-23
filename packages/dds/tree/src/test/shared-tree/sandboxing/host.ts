@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import { findCommonAncestor, type GraphCommit } from "../../../core/index.js";
@@ -14,7 +15,10 @@ import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 
 import {
 	type AcknowledgmentMessage,
+	type BlobRequestMessage,
+	type BlobResponseMessage,
 	type DataChangeMessage,
+	type HostGuestMessage,
 	getRevision,
 	makePromiseWithResolver,
 	normalizeProtocolError,
@@ -22,6 +26,7 @@ import {
 	type PromiseWithResolver,
 	throwProtocolError,
 } from "./common.js";
+import { HostHandleCodec, normalizeTransportData } from "./handles.js";
 
 /**
  * Gets the revisions of the commits that are in the `ahead` view but not in the `behind` view.
@@ -59,6 +64,8 @@ function getMissingCommits<TSchema extends ImplicitFieldSchema | UnsafeUnknownSc
  * @typeParam TSchema - The schema of the synchronized tree.
  */
 export class Host<const TSchema extends ImplicitFieldSchema> {
+	public readonly codec: HostHandleCodec;
+	private disposed = false;
 	/** The main branch on the Host. Is automatically updated when peer changes are received. */
 	public readonly main: TreeViewAlpha<TSchema>;
 	/**
@@ -84,7 +91,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 	/** Receives and routes protocol messages from the Guest. */
 	private readonly onMessage = (event: MessageEvent<unknown>): void => {
 		try {
-			const message = parseHostGuestMessage(event.data);
+			const message = parseHostGuestMessage(this.codec.decode(event.data));
 			switch (message.type) {
 				case "dataChange": {
 					this.receiveChangeFromGuest(message.change);
@@ -93,6 +100,15 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 				case "acknowledgment": {
 					this.receiveAckFromGuest();
 					break;
+				}
+				case "blobRequest": {
+					this.receiveBlobRequest(message).catch((error: unknown) => {
+						this.handleProtocolError(normalizeProtocolError(error));
+					});
+					break;
+				}
+				case "blobResponse": {
+					throw new Error("The Host cannot receive blob responses.");
 				}
 				default: {
 					fail("Unexpected Host and Guest message type");
@@ -112,11 +128,14 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		main: TreeViewAlpha<TSchema>,
 		/** The Host endpoint of the Host and Guest message channel. */
 		private readonly port: MessagePort,
+		/** The SharedTree handle to which restored handles are bound. */
+		bind: IFluidHandle,
 		/** Receives errors from protocol validation and message processing. */
 		private readonly handleProtocolError: (error: Error) => void = throwProtocolError,
 		/** Receives diagnostic messages from the synchronization algorithm. */
 		private readonly logger: (message: string) => void = () => {},
 	) {
+		this.codec = new HostHandleCodec(bind);
 		this.main = main;
 		this.local = main.fork();
 		this.offMainChanged = this.main.events.on("changed", () => {
@@ -132,6 +151,8 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	public dispose(): void {
+		this.disposed = true;
+		this.codec.dispose();
 		this.port.removeEventListener("message", this.onMessage);
 		this.port.removeEventListener("messageerror", this.onMessageError);
 		this.port.close();
@@ -161,6 +182,8 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 			this.mainHeadFromLastUpdate = undefined;
 		}
 		this.local.applyChange(change);
+		// applyChange runs the tree codec before handles are bound or the main branch is updated.
+		this.codec.bindHandles(change);
 		this.logger(
 			`Host:   merging changes from Guest: ${getMissingCommits(this.main, this.local)}`,
 		);
@@ -170,7 +193,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		} finally {
 			this.isApplyingGuestChanges = false;
 		}
-		this.port.postMessage({ type: "acknowledgment" } satisfies AcknowledgmentMessage);
+		this.postMessage({ type: "acknowledgment" } satisfies AcknowledgmentMessage);
 		this.tryUpdateGuest("after receiving change from Guest");
 	}
 
@@ -213,7 +236,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 				"Expected update to be defined since local is missing edits from main",
 			);
 			this.logger("Host:   sending update to Guest");
-			this.port.postMessage({
+			this.postMessage({
 				type: "dataChange",
 				change: update,
 			} satisfies DataChangeMessage);
@@ -227,6 +250,30 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 				resolver();
 			}
 		}
+	}
+
+	private async receiveBlobRequest(message: BlobRequestMessage): Promise<void> {
+		let response: BlobResponseMessage;
+		try {
+			const blob = await this.codec.resolveBlob(message.token);
+			response = { type: "blobResponse", requestId: message.requestId, blob };
+		} catch (error) {
+			response = {
+				type: "blobResponse",
+				requestId: message.requestId,
+				error: normalizeProtocolError(error).message,
+			};
+		}
+		if (!this.disposed) {
+			// Do not transfer: detaching the Host's buffer could break other consumers.
+			this.postMessage(response);
+		}
+	}
+
+	private postMessage(message: HostGuestMessage): void {
+		const normalized = normalizeTransportData(message);
+		parseHostGuestMessage(normalized);
+		this.port.postMessage(this.codec.encode(normalized));
 	}
 
 	/**
