@@ -93,12 +93,12 @@ describe("Seed projection reference: shared deep mocking", () => {
 	it("propagates synchronous throws from nested method calls", () => {
 		const failure = new Error("storage unavailable");
 		const original = {
-			connect(): { value: string } {
+			connect(): { connectionId: string } {
 				throw failure;
 			},
 		};
 		const wrapped = wrapObjectAndOverride(original, {
-			connect: { value: () => "overridden" },
+			connect: { connectionId: () => "overridden" },
 		});
 		assert.throws(
 			() => wrapped.connect(),
