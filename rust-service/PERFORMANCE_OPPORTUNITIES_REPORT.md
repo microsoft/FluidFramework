@@ -1,360 +1,262 @@
 # Sea Performance Opportunities
 
 Measured: 2026-09-23.
-Source revision: `c41a02a33d5ec09f737b912e6b60d0eae1f88ecb`.
-Status: investigation report; no production optimization is included.
+Primary source revision: `240798434cf591f4db2366a1a3b6b6a7438bd015`.
+Summary-harness revision: `22309cf9d169c4f7986b6ce1db184427269f9656`.
+Status: refreshed investigation report; no new production optimization is included.
 
 ## Summary
 
-The benchmark results contain three different limits.
-They must be treated separately:
+The shared live-event cache is implemented, enabled by default, and materially changes the performance picture.
+The current eight-core buffered-file thresholds are 44,000 small and 36,000 large operations/s, compared with 10,000 and 9,000 in the last cache-disabled overview refresh.
+The improvement is consistent with the checkpoint-1 paired evidence, which measured approximately 44-50% lower service CPU for file-backed reader workloads.
 
-1. The four-core native generator limits the reported memory thresholds.
-   With eight generator cores, the previous 76,000 small-event and 38,000 large-event failures both passed three of three runs.
-2. Live file delivery is expensive even when append is fast.
-   Each writer and observer reads the same newly published event through an independent storage stream and file-worker dispatch.
-3. Durable throughput is primarily a concurrency and acknowledgment-contract problem.
-   One in-flight submission per document gives approximately 1,000 durable operations/s locally, while a window of 128 gives 20,000-50,000 operations/s.
+The highest-priority current finding is not an optimization:
+native WebTransport with 64-byte events failed exact drain in all ten runs at 12,000 operations/s and again in all ten controls at 10,000 operations/s.
+The large-event WebTransport group passed 10/10 at 6,000 operations/s, and browser WebTransport passed all 40 relevant samples.
+The small native failure must be diagnosed before using that path for optimization comparisons.
 
-The branch's active [live-read cache and session policy plan](SESSION_RESOURCE_POLICY_PLAN.md) already makes a shared live-read cache for caught-up readers its checkpoint-1 deliverable.
-Checkpoint 0 selected the ownership and revocation contract and froze the comparison baseline; it did not implement the Rust cache.
-The fresh measurements in this report strengthen the reason to execute that existing checkpoint next.
-The cache should preserve storage as the authority for recovery and catch-up.
-Existing controlled diagnostics suggest a 15-30% service CPU reduction is plausible for the current buffered writer-and-observer workload, but this estimate is not a measured cache result.
+After that correctness work, the best low-contract-risk opportunity remains borrowed response serialization.
+The protocol encoder still clones event payloads into owned wire values before serialization.
+Removing those copies can simplify ownership at the encoding boundary and reduce memory traffic without changing APIs, wire bytes, acknowledgment semantics, or persistence.
 
-The simplest independent improvement is to remove two full payload copies from event response encoding.
-This does not require an application programming interface (API), protocol, persistence, or acknowledgment change.
-It needs a focused benchmark before any impact is claimed.
+The largest potential throughput opportunity remains explicit durable submission concurrency.
+The current end-to-end durable path reaches 5,000 small and 4,000 large operations/s at eight cores, while the earlier isolated storage pipeline reached approximately 50,000 and 20,000 operations/s with a 128-operation window.
+Realizing that gap requires a batch or bounded outstanding-submission contract and therefore needs a product decision before implementation.
 
-The benchmark harness should use enough generator cores to keep service measurements load-generator independent.
-This changes benchmark resource allocation, not production behavior.
+## Current Measurements
 
-## Scope And Evidence
+The refreshed [project overview](historical/PROJECT_OVERVIEW.md) and [retained dataset](historical/measurements/overview-refresh-20260923/README.md) are the source of truth for current numbers.
+All file-backed service data used fresh owned directories on `/tmp`, ext4 on `/dev/sda1[/containerTmp]`.
+The host reported AMD EPYC 9V74, 32 logical CPUs, Linux `6.8.0-1064-azure`, Rust `1.98.1`, and Node.js `22.23.2`.
 
-This investigation covers the 32-document stress workload used by the [project overview](historical/PROJECT_OVERVIEW.md):
+### Eight-Core Capacity
 
-- one writer and one observer per document;
-- one ordered submission queue per document;
-- native WebSocket transport for throughput tests;
-- eight service cores;
-- memory, buffered-file, and durable-file storage;
-- 64-byte and 8,192-byte application payloads.
+Highest observed pass / higher observed failure:
 
-The following evidence classes are used:
+| Backend | 64-byte payload | 8,192-byte payload |
+| --- | ---: | ---: |
+| Memory | 68,000 / 72,000 | 28,000 / 30,000 |
+| Buffered file | 44,000 / 48,000 | 36,000 / 38,000 |
+| Durable file | 5,000 / 6,000 | 4,000 / 6,000 |
 
-- **Measured here:** fresh runs from this revision.
-- **Measured previously:** retained controlled evidence from the linked historical reports.
-- **Inferred:** a conclusion from code structure and measured bounds.
-- **Speculative:** an unmeasured candidate with an explicit validation step.
+These are short thresholds, not steady-state maxima.
+Some higher failures ended on exact drain or the 4 GiB memory guard rather than a clean latency threshold.
 
-Fresh tests ran on the same shared AMD EPYC 7763 host as the table refresh.
-The host was not isolated from all unrelated activity.
-Threshold tests used three warmup seconds and ten measured seconds.
-Short recipient-count diagnostics used one warmup second and three measured seconds.
+### Matched Load
 
-`perf` and FlameGraph tools were unavailable.
-System-call traces used `strace`; traced timings are not throughput results because tracing materially changes execution time.
+At 500 operations/s over 32 documents, all ten samples per payload passed:
 
-## Current Work Per Submitted Event
-
-The stress workload performs the following work for each application event:
-
-1. The generator creates and submits one payload.
-2. The sequencer validates the author reference and admits the event.
-3. Storage publishes or durably commits the event, depending on the backend.
-4. The writer's event stream reads and sends the event.
-5. The observer's event stream independently reads and sends the same event.
-6. Both clients recreate the expected payload and compare it.
-7. The observer delivery contributes to reported throughput and latency.
-
-For file storage, steps 4 and 5 each use a separate lazy archive stream.
-Each source poll is dispatched through the bounded blocking-worker adapter with no prefetch.
-Caught-up readers therefore pay filesystem-reader and cross-thread scheduling costs for data that was just published in the same process.
-
-The server also creates a new protocol event for each recipient.
-For the common event-without-blob path, it:
-
-1. copies the core `Bytes` payload into a protocol `Vec<u8>`;
-2. clones that vector into the serialization helper;
-3. serializes into a new frame vector; and
-4. copies each frame chunk into a WebSocket record vector.
-
-The first two payload copies can be removed with borrowed serialization.
-Sharing an encoded live frame between recipients could remove more repeated work, but it would require a carefully placed transport-level cache.
-
-## Fresh Measurements
-
-### Intrinsic Storage And Sequencer Ceiling
-
-The local `storage-pipeline` benchmark ran twice for every backend, payload, and in-flight window.
-Values are the median of two measured phases with 4,096 operations each.
-They include final drain and ordered replay verification.
-
-| Backend | Payload bytes | In-flight window | Operations/s | Submit p95, us | Replay 4,096 events, ms |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Memory | 64 | 1 | 304,386 | 5.4 | 1.16 |
-| Memory | 64 | 128 | 288,787 | 494.4 | 1.16 |
-| Memory | 8,192 | 1 | 112,921 | 15.8 | 4.46 |
-| Memory | 8,192 | 128 | 109,816 | 1,339.6 | 4.29 |
-| Buffered file | 64 | 1 | 147,085 | 19.2 | 198.21 |
-| Buffered file | 64 | 128 | 117,155 | 1,318.4 | 214.27 |
-| Buffered file | 8,192 | 1 | 49,499 | 19.9 | 307.48 |
-| Buffered file | 8,192 | 128 | 47,279 | 4,432.3 | 278.91 |
-| Durable file | 64 | 1 | 1,090 | 1,097.0 | 180.78 |
-| Durable file | 64 | 128 | 49,998 | 3,330.8 | 194.26 |
-| Durable file | 8,192 | 1 | 992 | 1,200.0 | 284.44 |
-| Durable file | 8,192 | 128 | 20,149 | 7,950.1 | 264.03 |
-
-The refreshed end-to-end buffered thresholds are only 10,000 small and 9,000 large operations/s.
-Local buffered admission is approximately 15 times the small end-to-end threshold and five times the large threshold.
-Append capacity is therefore not the primary buffered limit.
-
-The durable window result is different.
-Window 128 is approximately 46 times faster than window 1 for small payloads and 20 times faster for large payloads.
-The current stress client serializes submissions per document, so it cannot form large same-document durable batches.
-
-### One Recipient Versus Two
-
-A temporary benchmark-only option selected one or two active event recipients per document.
-The second session was still opened in both variants.
-Only its event read and delivery were omitted in the one-recipient variant.
-Production source and benchmark binaries were restored after collection.
-
-Both variants offered 2,000 buffered small operations/s over 32 documents.
-Values are medians of three alternating runs.
-
-| Active recipients per document | Threshold passes | Delivered operations/s | Service CPU, % | Mean RSS, MiB | Worst-worker p95, ms |
-| ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 3/3 | 2,000.3 | 131.47 | 28.06 | 0.659 |
-| 2 | 2/3 | 1,999.3 | 190.25 | 46.07 | 0.990 |
-
-The two-recipient p95 median is one of the two normal-latency runs.
-The remaining run delivered the offered load but had 125.9-133.9 ms worker p95 values and failed the 100 ms threshold.
-
-Removing the second active read and response path reduced median service CPU by 30.9% and mean resident set size (RSS) by 18.01 MiB.
-This is not a prediction that a cache will remove 30.9% CPU.
-A cache retains the second response serialization and network write.
-The result establishes that per-recipient work is a large part of this buffered workload.
-
-### Generator Ceiling
-
-The retained table-refresh campaign used four single-thread generator processes.
-At the 68,000 small-event pass they used approximately 370% aggregate generator CPU.
-At the 76,000 failure they reported approximately 448%, which indicates saturation and sampling across drain boundaries.
-The service used 618-661% of its eight assigned cores in those two runs.
-
-A temporary one-line runner diagnostic increased the generator count from four to eight and assigned eight physical cores.
-No server, client protocol, storage, or workload correctness behavior changed.
-Production benchmark source was restored after collection.
-
-| Payload bytes | Offered operations/s | Passes | Delivered median | Service CPU median, % | Generator CPU median, % | Worst-worker p95 median, ms | Service peak RSS median, MiB |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 64 | 76,000 | 3/3 | 75,983.6 | 672.19 | 468.6 | 3.411 | 319.25 |
-| 8,192 | 38,000 | 3/3 | 37,996.5 | 619.27 | 481.6 | 3.174 | 4,009.32 |
-| 64 | 88,000 | 0/3 | 87,986.5 | 747.38 | 576.5 | 272.378 | 362.61 |
-
-At 88,000 small operations/s, all runs delivered essentially the full load and drained with no missing events or final errors.
-They failed only the latency criterion.
-Worst-worker p95 values ranged from 208 to 284 ms.
-The service's small-event sustainable bracket with adequate generation is therefore 76,000 pass / 88,000 fail.
-
-The 38,000 large-event run peaks at 4,009 MiB, close to the harness's 4 GiB service limit.
-The memory backend retains the full event history.
-The next capacity step is therefore likely to reach the history-memory limit before it exhausts service CPU.
-
-### System-Call Trace
-
-One traced 64-byte/window-128 local run was collected for each backend.
-The file-backed runs each verified 4,096 measured events plus warmup.
-
-| Backend | `read` | `write` | `lseek` | `fsync` | `futex` |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Memory | 23 | 2 | 0 | 0 | 1 |
-| Buffered file | 46,475 | 4,584 | 29,657 | 0 | 19,872 |
-| Durable file | 46,475 | 4,562 | 29,708 | 260 | 18,682 |
-
-Most file reads and seeks occur during verified replay.
-The equal read counts show that replay, not durable synchronization, dominates the file-reader call count.
-Buffered storage performs no `fsync`.
-The durable trace made 260 `fsync` calls while processing 4,224 warmup-plus-measured events in this window-128 run.
-
-Tracing increased buffered replay from approximately 0.21 seconds to 4.72 seconds.
-Only call counts and relative path shape are used here.
-
-## Previous Controlled Evidence
-
-### File Read Dispatch
-
-The [file execution investigation](historical/measurements/file-execution-e2e-20260922/README.md#read-poll-cpu-investigation) compared normal per-poll offloading with diagnostic inline reads at 1,000 buffered small operations/s.
-
-| Read mode | Passes | Service CPU, % | Worst-worker p95, ms |
+| Payload | CPU median | Mean RSS median | Worst-worker p95 median |
 | --- | ---: | ---: | ---: |
-| Per-poll worker offload | 2/3 | 125.62 | 12.39 |
-| Diagnostic inline reads | 3/3 | 90.70 | 11.64 |
+| 64 bytes | 8.65% | 39.94 MiB | 0.46 ms |
+| 8,192 bytes | 12.14% | 72.56 MiB | 0.63 ms |
 
-Inline reads reduced service CPU by approximately 28% in every pair.
-They are not safe production behavior because synchronous file input/output can block async executor threads.
-The result localizes cost to the worker-dispatched file-read path and motivates removing live file reads, not moving them inline.
+The service is inexpensive at this load.
+Optimization should target capacity, historical replay, or durable latency rather than adding complexity to improve the matched-load row.
 
-The same investigation counted 45,056 source polls and approximately 15,060 pending results.
-A diagnostic wake gate skipped zero polls and did not improve CPU.
-Unnecessary parent repolling is eliminated as the cause.
+### Browser Application Throughput
 
-### Sequencer Ready Path
+All 160 browser samples passed.
+Sea local-direct improved to medians of 13,532 dummy-DDS edits/s and 2,276 SharedTree edits/s.
+The Fluid-integrated Sea local path reached 2,558 and 1,319 edits/s.
+Tinylicious reached 4,011 and 1,694 edits/s.
 
-The [storage optimization investigation](historical/STORAGE_OPTIMIZATION.md#focused-overhead-pass-on-the-merged-baseline) removed channel, shared-driver, and batch-vector setup when an idle append completes immediately.
-Local memory throughput improved by 8-57%, depending on payload and window.
-File-backed results were mostly within a few percent.
+The gap between direct and Fluid-integrated paths remains much larger than the difference among service transports.
+For application-level SharedTree benchmarks, Fluid runtime and DDS work therefore dominate enough that server micro-optimizations will have limited visible impact.
 
-This change is already present.
-It shows that sequencer allocation and coordination can matter for memory storage, but it also removed the largest known simple ready-path overhead.
-Further pipeline work should be profiled before another structural change.
+### Summary and Cold Load
 
-### Message Framing
+At 4 MiB of pseudorandom hexadecimal values:
 
-The protocol now uses `length | kind | payload`.
-Controlled alternating tests found no reproducible throughput improvement over kind-first framing.
-Steady-state reads were already buffered.
-Framing order is eliminated as a material performance opportunity.
+- buffered Sea full/incremental upload: 91.6 / 27.2 ms;
+- Tinylicious full/incremental upload: 123.6 / 45.5 ms;
+- buffered Sea full/incremental cold load: 256.5 / 269.3 ms;
+- Tinylicious full/incremental cold load: 613.9 / 605.8 ms.
 
-## Ranked Opportunities
+Sea summary upload and process-cold loading are already substantially faster in this bounded workload.
+No immediate complexity-increasing optimization is justified by these results.
+Historical catch-up remains worth measuring separately because the live cache intentionally does not serve it.
 
-| Rank | Opportunity | Expected impact | Confidence | Complexity change | Contract effect |
-| ---: | --- | --- | --- | --- | --- |
-| 1 | Use enough generator processes for capacity tests | Measured: 76k and 38k former failures became 3/3 passes | High | Small harness increase | Benchmark resource contract only |
-| 2 | Execute the existing checkpoint-1 shared cache for caught-up live events | Estimated 15-30% buffered service CPU; possible 1.2-1.5x capacity | Medium | Neutral if it replaces repeated live storage reads; higher if policy is coupled | Checkpoint 0 already selected the cache ownership and neutral revocation contract |
-| 3 | Borrow payloads during response serialization | Remove two full payload copies per recipient | High that copies are removed; impact unmeasured | Net simplification | None |
-| 4 | Share encoded live frames between recipients | Avoid repeated serialization for the second and later readers | Medium | Moderate increase unless combined with the live cache | Per-connection limits and error accounting must remain correct |
-| 5 | Add bounded file-read prefetch or multi-item worker turns | Reduce worker dispatches during catch-up and replay | Medium | Moderate increase | Preserve lazy reads, fairness, cancellation, and memory bounds |
-| 6 | Expose bounded durable concurrency or batch submission | Local evidence allows multi-fold gains, up to 20-46x in the synthetic window comparison | High for local storage; medium end-to-end | API increase, possibly simpler than implicit concurrency | Receipt timing, ordering, and backpressure become explicit |
-| 7 | Profile remaining sequencer clones and lock transitions | Estimated 5-15% memory CPU if a clear redundant step is found | Low-medium | Must be neutral or lower | None if ownership and receipts remain unchanged |
+## Completed Opportunities
 
-Expected impacts are targets for experiments, not commitments.
+### Shared Live-Event Cache
 
-## Recommended Designs And Tests
+The planned checkpoint-1 cache is complete and enabled by default.
+It shares the sequencer-published event among caught-up sessions while retaining storage as the authority for recovery and catch-up.
 
-### 1. Fix The Measurement Boundary First
+The implementation report records:
 
-Add an explicit generator-process count to the stress-run configuration.
-Do not silently change the historical default.
-For capacity searches, require generator CPU headroom and report aggregate generator CPU beside service CPU.
+- approximately 44-50% lower CPU for file-backed reader workloads;
+- approximately 3-5% higher CPU in memory-backed controls;
+- additional but accepted resident memory;
+- unchanged publication and acknowledgment boundaries;
+- passing reader and no-reader controls.
 
-Use eight generators for the current eight-service-core native capacity table.
-Retain four-generator cells when comparison with historical data is required.
-Mark any threshold as generator-limited when generator utilization is close to its assigned capacity.
+The refreshed buffered thresholds provide end-to-end confirmation that the cache removed the previous live file-reader bottleneck.
+Do not propose another live-read cache layer.
+Remaining file-reader work should target historical catch-up only.
 
-For memory large-event capacity, either:
+### Generator Headroom
 
-- shorten the run while preserving a stable measured interval;
-- add a bounded-retention memory backend used only for throughput diagnosis; or
-- report the 4 GiB history limit as the tested bound.
+The stress harness now supports eight generator processes on separate physical CPUs.
+Eight-core capacity cells use all eight, eliminating the known four-generator ceiling from the main Sea table.
+Generator count and affinity are recorded in every result.
 
-Do not describe a retained-history failure as a CPU throughput limit.
+### Reproducible Temporary Storage
 
-### 2. Execute The Existing Checkpoint-1 Cache Experiment
+Sea and Tinylicious file data now use fresh owned `/tmp` directories on the same recorded mount.
+Artifacts are stored separately, and owned data is removed after each sample.
+This removes the previous workspace-versus-`/tmp` filesystem ambiguity.
 
-The [staged plan](SESSION_RESOURCE_POLICY_PLAN.md) and its [implementation report](SESSION_RESOURCE_POLICY_IMPLEMENTATION_REPORT.md) already define this experiment.
-Checkpoint 0 is complete and committed.
-Checkpoint 1 remains not started and requires separate authorization under that plan.
+## Ranked Remaining Work
 
-Implement the planned canonical shared published-event representation near the sequencer publication boundary.
-Keep storage-backed reads for recovery and historical catch-up.
-Serve only readers that are caught up from the shared representation.
+### 1. Diagnose Native WebTransport Exact-Drain Failures
 
-Checkpoint 1 should not add writer admission policy, reference-floor coupling, tenant policy, or transport scheduling.
-Measure those concerns separately as required by the staged plan.
+**Priority:** blocker.
+**Expected performance impact:** none directly; required for trustworthy transport comparisons.
+**Complexity:** diagnostic first.
 
-The experiment must preserve:
+Observed:
 
-- publication only after the backend's existing acknowledgment boundary;
-- ordered application and membership events;
-- coherent transition between storage catch-up and live delivery;
-- buffered write-behind failure propagation;
+- 64-byte native WebTransport at 12,000 operations/s: 0/10 accepted;
+- 64-byte native WebTransport at 10,000 operations/s: 0/10 accepted;
+- 8,192-byte native WebTransport at 6,000 operations/s: 10/10 accepted;
+- browser WebTransport groups: 40/40 accepted across both DDS modes and direct/Fluid paths.
+
+The failed native workers report transport disconnects and missing final events after otherwise near-complete delivery.
+Because reducing rate did not help, do not classify this as simple saturation.
+
+Next measurement:
+
+1. Reproduce with one document and then 4, 8, 16, and 32 documents.
+2. Record the last acknowledged, writer-delivered, and observer-delivered positions.
+3. Distinguish connection close initiated by client, server, idle timeout, or stream failure.
+4. Compare explicit post-drain close with the current worker shutdown sequence.
+5. Add a focused regression only after the failing lifecycle boundary is identified.
+
+Avoid weakening exact-drain assertions or adding retries that turn missing events into a success-shaped result.
+
+### 2. Remove Owned Event-Payload Copies During Encoding
+
+**Priority:** highest non-breaking optimization.
+**Expected impact:** low-to-moderate CPU and allocation reduction, greatest for large payloads and fanout.
+**Complexity:** potentially neutral or lower if borrowing remains local to serialization.
+
+The response encoder still constructs owned protocol values:
+
+- the core event payload is converted to an owned vector;
+- the protocol event is cloned into the serialization helper;
+- serialization allocates the final frame;
+- transports may perform another framing or write copy.
+
+Use serialization-only borrowed wire structures so the encoder reads the existing event payload directly.
+Keep public protocol types and encoded bytes unchanged.
+Do not introduce lifetime parameters across the service API merely to avoid a local copy.
+
+Validation:
+
+- byte-for-byte encoding equality for every response variant;
+- 64-byte control at 24,000 WebSocket operations/s;
+- 8,192-byte WebSocket cells at 12,000 and 28,000 operations/s;
+- one and two recipients per document;
+- CPU, allocation count if available, RSS, and threshold outcome.
+
+The old arithmetic estimate of approximately 1.16 GiB/s of avoidable copying at 38,000 large operations/s is no longer the current accepted throughput.
+At the current 28,000 large memory pass, two recipients, and two avoidable payload copies, the corresponding upper-bound traffic is approximately 875 MiB/s.
+That is memory-traffic arithmetic, not a predicted CPU saving.
+
+### 3. Add Bounded File-Reader Prefetch for Historical Catch-Up
+
+**Priority:** medium.
+**Expected impact:** potentially meaningful for replay; little expected benefit for caught-up live readers.
+**Complexity:** modest if confined to the existing blocking adapter with explicit item/byte bounds.
+
+The file reader still dispatches one blocking read poll at a time with no background prefetch.
+The live cache now bypasses that path for caught-up sessions, so the opportunity has narrowed to recovery and historical replay.
+
+Allow one blocking turn to decode several immediately available events and return a bounded queue to the async side.
+Do not retain a blocking worker while the source is pending.
+
+Measure:
+
+- replay of 4 Ki, 64 Ki, and 1 MiB histories;
+- concurrent live writer latency;
+- hot/cold document fairness;
 - cancellation and shutdown;
-- direct and managed reader behavior.
+- peak retained bytes;
+- worker-dispatch count per replayed event.
 
-Compare current and candidate builds in alternating order at:
+Keep this only if it simplifies or cleanly encapsulates the current one-item adapter.
+A second cache or unbounded read-ahead queue would be a net complexity increase and is not justified.
 
-- buffered 64 bytes at 2,000, 10,000, and the next higher bracket;
-- buffered 8,192 bytes at 2,000, 9,000, and the next higher bracket;
-- memory controls at matched loads;
-- one, two, and at least eight live recipients per document.
+### 4. Expose Explicit Durable Submission Concurrency
 
-Record event-cache hits, storage fallbacks, worker-dispatched read polls, retained bytes, service CPU, RSS, and latency.
+**Priority:** potentially high impact, contract-sensitive.
+**Expected impact:** large for durable throughput.
+**Complexity:** unavoidable API and client-flow complexity.
 
-### 3. Remove Borrowable Payload Copies
+Earlier isolated storage-pipeline measurements found:
 
-Add serialization-only borrowed wire structures for event responses.
-Serialize directly from the core event payload instead of converting `Bytes` to an owned protocol vector and cloning it into another owned wire value.
+- small durable events: approximately 1,090 operations/s at window 1 and 49,998 at window 128;
+- large durable events: approximately 992 operations/s at window 1 and 20,149 at window 128.
 
-At 38,000 operations/s, two recipients, and 8,192-byte payloads, the two avoidable copies account for approximately 1.16 GiB/s of memory copying:
+The refreshed end-to-end eight-core passes are 5,000 and 4,000 operations/s.
+The remaining gap indicates that synchronization can be shared across a group, but the current per-document client flow does not consistently supply enough concurrent work.
 
-`38,000 * 2 recipients * 8,192 bytes * 2 copies`.
+Possible additive contracts:
 
-This arithmetic is not a CPU-impact estimate.
-Serialization and socket writes still need to copy or retain bytes according to their APIs.
+- batch submit with one ordered result per event;
+- bounded submission stream with ordered receipts;
+- client option allowing a fixed number of outstanding submissions.
 
-Validate exact encoded-byte compatibility for every response variant.
-Measure memory 8,192-byte cells at 30,000 and 38,000 operations/s, plus a 64-byte control.
-Keep the change only if CPU or capacity improves without making the protocol types harder to maintain.
+Do not add an implicit batching delay or acknowledge before durable synchronization.
+Measure windows 1, 4, 16, 64, and 128 per document, including batch-size distribution, synchronization count, p50/p95 acknowledgment latency, and shutdown integrity.
 
-### 4. Batch File Reader Work, Not Async-Executor Blocking
+This work requires user approval before implementation because it changes how callers submit and observe operation completion.
 
-For storage catch-up, let one worker turn read and decode multiple immediately available events up to explicit item and byte limits.
-Return a small bounded queue to the async side.
-Do not keep a worker while the source is pending.
+### 5. Bound Large-Payload Retention Before Chasing Higher Memory Throughput
 
-This can amortize semaphore, blocking-pool, wake, and cross-thread scheduling costs.
-It is less useful for a caught-up reader that receives one event at a time, which is why the live cache ranks higher.
+**Priority:** medium for robustness; not a pure throughput optimization.
+**Expected impact:** prevents guard-bound failures and makes capacity interpretation clearer.
+**Complexity:** policy-sensitive.
 
-Validate replay time, concurrent writer latency, hot/cold document fairness, cancellation, and peak retained bytes.
+The eight-core 8,192-byte memory path passes 28,000 operations/s and fails at 30,000 when a worker exits before producing a result.
+Earlier runs established that retained history can approach the 4 GiB service guard.
+The memory backend intentionally retains history, so this is not automatically a leak or CPU ceiling.
 
-### 5. Make Durable Grouping Explicit
+Before optimizing this cell, decide whether production memory storage should:
 
-The current durable guarantee does not need to be weakened to gain from grouping.
-The service can acknowledge every operation only after a shared journal write and synchronization complete.
-The missing input is enough same-document concurrency to form a group.
+- remain intentionally unbounded;
+- enforce a byte/item cap;
+- spill old history;
+- disconnect lagging readers;
+- expose a caller-managed retention policy.
 
-Consider one of these interfaces only after confirming the required use cases:
+Do not silently truncate history or reinterpret a guard termination as a throughput result.
 
-- an additive batch-submit request with one ordered result per event;
-- a bounded stream of submissions and ordered receipts;
-- a client option that permits a fixed number of outstanding submissions.
+## Changes Requiring Approval
 
-Do not add an implicit batching delay until its latency objective is agreed.
-Do not acknowledge before synchronization under the durable mode; that behavior already exists as buffered storage.
+Ask before implementing:
 
-Measure end-to-end durable throughput at windows 1, 4, 16, 64, and 128 per document.
-Report batch-size distribution and `fsync` count.
-The local 20-46x difference is an upper bound on opportunity, not an end-to-end forecast.
+- any durable batch or bounded-concurrency API;
+- implicit acknowledgment delay;
+- changes to durable synchronization or power-loss guarantees;
+- lagging-reader disconnection or shedding;
+- cache-retention policy changes;
+- memory-history caps or truncation;
+- removal of writer echo;
+- observer-delivery semantic changes.
 
-## Changes That Need A Decision Before Implementation
-
-The following changes can affect existing use cases and should not proceed as part of a performance cleanup without approval:
-
-- disconnecting or shedding lagging readers;
-- changing how a slow reader affects cache retention;
-- coupling cache reclamation to the writer reference floor;
-- changing durable acknowledgment or power-loss guarantees;
-- adding implicit durable batching delay;
-- changing per-operation receipt timing or ordering;
-- removing writer echo;
-- changing observer delivery semantics;
-- bounding or truncating the production memory backend's retained history.
-
-Checkpoint 0 already made the ownership and neutral revocation decision for the minimal cache experiment.
-Starting checkpoint 1 still requires the separate authorization required by the staged plan.
-Turning the experiment into a bounded production guarantee requires the later lag-policy checkpoints and their decisions.
+The borrowed serializer and bounded historical-read prefetch can be prototyped without changing external behavior if their implementation remains local and encoded bytes stay identical.
 
 ## Recommended Order
 
-1. Make generator count explicit and rerun the memory capacity table with generator headroom.
-2. Authorize and execute the existing checkpoint-1 shared-live-read experiment against its frozen baseline.
-3. If the cache wins, continue the staged plan and keep bounded retention and lag behavior in their later checkpoints.
-4. Implement and measure borrowed event serialization as a separate optimization so it does not contaminate the cache comparison.
-5. Add bounded multi-item file reads for historical catch-up if replay remains important.
-6. Decide whether durable callers can use bounded concurrency or a batch API.
-7. Profile the remaining sequencer path only after the larger delivery costs are removed.
+1. Diagnose and fix the native WebTransport exact-drain regression.
+2. Implement and measure borrowed response serialization.
+3. Measure historical replay; add bounded file-reader prefetch only if dispatch remains material.
+4. Decide whether durable callers can adopt an explicit batch or bounded outstanding-submission contract.
+5. Decide the memory backend's retention policy before treating guard-bound large-payload results as an optimization target.
 
-This order starts with measurement correctness and non-breaking simplifications.
-It defers policy and acknowledgment changes until their value and use-case effect are clear.
+This order restores measurement validity first, then tries the lowest-contract-risk simplification.
+It defers API, acknowledgment, and retention changes until their use-case effects are explicitly accepted.
