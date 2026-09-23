@@ -56,8 +56,13 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
 import {
 	buildContext,
+	chooseSpecialization,
 	getFieldEncoder,
 	getNodeEncoder,
+	newNodeGroupMap,
+	type NodeGroupCounts,
+	type NodeGroupKey,
+	type ReadonlyNodeGroupMap,
 	schemaCompressedEncodeVTextExperimental,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncode.js";
@@ -472,6 +477,71 @@ describe("schemaBasedEncoding", () => {
 		assert.deepEqual(bufferFull, [[0]]);
 	});
 
+	describe("chooseSpecialization", () => {
+		/** Makes node group counts from a list of node values. */
+		function countNodes(
+			nodes: readonly NodeGroupKey[],
+		): ReadonlyNodeGroupMap<NodeGroupCounts> {
+			const groups = newNodeGroupMap<NodeGroupCounts>();
+			for (const values of nodes) {
+				const existing = groups.get(values);
+				groups.set(values, { count: (existing?.count ?? 0) + 1, values });
+			}
+			return groups;
+		}
+
+		function repeat(count: number, values: NodeGroupKey): NodeGroupKey[] {
+			return Array.from({ length: count }, () => values);
+		}
+
+		it("specializes uniform data into one monomorphic shape", () => {
+			const decision = chooseSpecialization(1, countNodes(repeat(10, ["Arial"])));
+			assert.deepEqual(decision, {
+				selectedFieldIndices: [0],
+				specializedGroups: [["Arial"]],
+				polymorphic: false,
+			});
+		});
+
+		it("does not select a field with no repeated value", () => {
+			const decision = chooseSpecialization(
+				2,
+				countNodes(Array.from({ length: 10 }, (_, i) => [i, "Arial"])),
+			);
+			assert.deepEqual(decision, {
+				selectedFieldIndices: [1],
+				specializedGroups: [["Arial"]],
+				polymorphic: false,
+			});
+		});
+
+		it("specializes several worthwhile node groups into a polymorphic type", () => {
+			const decision = chooseSpecialization(
+				1,
+				countNodes([...repeat(50, ["Arial"]), ...repeat(50, ["Times New Roman"])]),
+			);
+			assert.deepEqual(decision, {
+				selectedFieldIndices: [0],
+				specializedGroups: [["Arial"], ["Times New Roman"]],
+				polymorphic: true,
+			});
+		});
+
+		it("does not specialize when the dispatch token costs more than specialization saves", () => {
+			// A node that contains one boolean. Separate true and false shapes save fewer bytes than
+			// the dispatch token that each instance then writes.
+			const decision = chooseSpecialization(
+				1,
+				countNodes([...repeat(50, [true]), ...repeat(50, [false])]),
+			);
+			assert.deepEqual(decision, {
+				selectedFieldIndices: [],
+				specializedGroups: [],
+				polymorphic: false,
+			});
+		});
+	});
+
 	describe("schemaCompressedEncodeVTextExperimental", () => {
 		// Setup used in multiple tests below, so defined in the outer scope of the describe block.
 		const countSpecializedShapes = (
@@ -531,8 +601,9 @@ describe("schemaBasedEncoding", () => {
 				},
 			});
 
-			// One repeated value (a cohort worth folding under the byte-gain rule) plus one unique
-			// value (folding it would cost more than it saves), so exactly one cohort folds.
+			// One repeated value and one unique value. The specialization of the repeated value saves
+			// bytes. The specialization of the unique value costs more than it saves. Thus the
+			// encoder specializes exactly one node group.
 			const repeated = "the quick brown fox".repeat(4);
 			const tree = [makeText(repeated), makeText(repeated), makeText("unique value")];
 
@@ -545,7 +616,7 @@ describe("schemaBasedEncoding", () => {
 				false,
 			);
 
-			// Exactly one specialized shape: only the worthwhile cohort is folded.
+			// Exactly one specialized shape: the encoder specializes only the repeated value.
 			assert.equal(countSpecializedShapes(encoded), 1);
 
 			// Round-trip: decode and compare to original tree.
@@ -556,10 +627,10 @@ describe("schemaBasedEncoding", () => {
 		});
 
 		it("does not force AnyShape indirection when every instance resolves to one shape", () => {
-			// When all members of a nested array resolve to a single shape (one cohort worth
-			// folding), the array's element shape should reference that concrete shape directly
-			// rather than AnyShape (`d`), which would otherwise prepend a shape-index token to
-			// every element's data. See PR #27515 review on schemaBasedEncode.ts:516.
+			// All items of a nested array use one shape, because they are in one specialized node
+			// group. Thus the element shape of the array must refer to that shape directly. It must
+			// not refer to AnyShape (`d`), because then each item writes a shape index before its
+			// data. See the PR #27515 review comment on schemaBasedEncode.ts:516.
 			const sf = new SchemaFactoryAlpha("test");
 			class TextNode extends sf.object("TextNode", {
 				text: sf.string,
@@ -571,7 +642,7 @@ describe("schemaBasedEncoding", () => {
 
 			const storedSchema = toStoredSchema(Doc, StagedSchemaUpgradePolicy.restrictive);
 
-			// Three identical worthwhile values → one folded cohort → all three resolve to the same
+			// Three equal values make one specialized node group. All three items use the same
 			// specialized shape, so the array is monomorphic.
 			const repeated = "monomorphic value".repeat(4);
 			const texts = Array.from({ length: 3 }, () => new TextNode({ text: repeated }));
@@ -590,7 +661,7 @@ describe("schemaBasedEncoding", () => {
 				false,
 			);
 
-			// One specialized shape: the single folded cohort.
+			// One specialized shape, for the one specialized node group.
 			assert.equal(countSpecializedShapes(encoded), 1);
 
 			// The nested array (`a`) for the `texts` field must point its element shape at the
@@ -634,9 +705,10 @@ describe("schemaBasedEncoding", () => {
 
 			const storedSchema = toStoredSchema(Doc, StagedSchemaUpgradePolicy.restrictive);
 
-			// "a" appears twice inline — a cohort worth folding. "b" appears once inline and once in
-			// the incremental sub-chunk. If the outer count pass (wrongly) counted the sub-chunk
-			// node, "b" would reach 2 and also fold, giving 2 specialized shapes instead of 1.
+			// "a" occurs two times inline. Its specialization saves bytes. "b" occurs one time inline
+			// and one time in the incremental sub-chunk. If the outer count pass counted the node in
+			// the sub-chunk (incorrect), "b" would have a count of 2. Then the encoder would also
+			// specialize "b", and the output would have 2 specialized shapes, not 1.
 			const a = "alpha value here".repeat(6);
 			const b = "bravo value here".repeat(6);
 			const makeText = (text: string): TextNode => new TextNode({ text });
@@ -685,9 +757,9 @@ describe("schemaBasedEncoding", () => {
 
 			const storedSchema = toStoredSchema(Doc, StagedSchemaUpgradePolicy.restrictive);
 
-			// Two TextNode children inside a Map sharing one worthwhile value: the count pass must
-			// visit both (correctly evaluating the Map parent's policy once with undefined fieldKey)
-			// and the encode pass must fold them into one specialized shape.
+			// Two TextNode children in a Map have the same value. The count pass must count both
+			// nodes. It must examine the policy of the Map parent one time, with an undefined
+			// fieldKey. The encode pass must use one specialized shape for the two nodes.
 			const repeated = "value in a map".repeat(6);
 			const doc = new Doc({
 				map: new TextMap(
@@ -751,7 +823,7 @@ describe("schemaBasedEncoding", () => {
 			);
 		});
 
-		it("folds multiple worthwhile cohorts into separate specialized shapes", () => {
+		it("specializes multiple worthwhile node groups into separate specialized shapes", () => {
 			const sf = new SchemaFactoryAlpha("test");
 			class TextNode extends sf.object("TextNode", {
 				text: sf.string,
@@ -768,7 +840,8 @@ describe("schemaBasedEncoding", () => {
 				},
 			});
 
-			// Two distinct repeated values, each worth folding on its own → two specialized shapes.
+			// Two different repeated values. The specialization of each value saves bytes. Thus the
+			// output has two specialized shapes.
 			const first = "first distinct value".repeat(4);
 			const second = "second distinct value".repeat(4);
 			const tree = [
@@ -792,11 +865,12 @@ describe("schemaBasedEncoding", () => {
 			assert.deepEqual(jsonableTreeFromFieldCursor(firstChunk.cursor()), tree);
 		});
 
-		it("folds leaf fields but not sub-object fields", () => {
-			// Inner has a boolean leaf, so its (flag:true) cohort folds into a specialized shape.
-			// Outer's only field is a sub-object (Inner), which is not a constant-foldable leaf,
-			// so Outer is not specialized. Nested ("subShape") specialization was removed: it
-			// measured net-negative on the corpus and required a multi-pass counting loop.
+		it("specializes leaf fields but not sub-object fields", () => {
+			// Inner has a boolean leaf. Thus its (flag:true) node group uses a specialized shape.
+			// The only field of Outer is a sub-object (Inner), which is not a specializable leaf.
+			// Thus the encoder does not specialize Outer. An earlier version ("subShape") specialized
+			// sub-objects. We removed it because the size tests showed a larger output, and because
+			// it needed more than one count pass.
 			const sf = new SchemaFactoryAlpha("test");
 			class Inner extends sf.object("Inner", {
 				text: sf.string,
@@ -836,11 +910,12 @@ describe("schemaBasedEncoding", () => {
 				false,
 			);
 
-			// Only Inner (the leaf-bearing node) specializes; Outer (sub-object field) does not.
+			// The encoder specializes Inner, which has a leaf field. It does not specialize Outer,
+			// which has only a sub-object field.
 			assert.equal(
 				countSpecializedShapes(encoded),
 				1,
-				"only Inner's leaf field should fold; Outer's sub-object field should not",
+				"only Inner's leaf field should specialize; Outer's sub-object field should not",
 			);
 
 			const decoded = decodeRoundTrip(encoded);
@@ -862,8 +937,8 @@ describe("schemaBasedEncoding", () => {
 
 			const storedSchema = toStoredSchema(Format, StagedSchemaUpgradePolicy.restrictive);
 
-			// A repeated long value that WOULD fold into a specialized shape if it were not excluded
-			// by the incremental policy.
+			// A repeated long value. Without the incremental policy, this value would use a
+			// specialized shape.
 			const repeated = "incremental body".repeat(6);
 			const tree = Array.from(
 				{ length: 5 },
@@ -899,19 +974,20 @@ describe("schemaBasedEncoding", () => {
 				true,
 			);
 
-			// Without the fix, the repeated body value would have been folded into a specialized
-			// shape, producing 1 specialized shape and 0 incremental calls.
+			// Without the fix, a specialized shape would keep the repeated body value. Then the
+			// output would have 1 specialized shape and 0 incremental calls.
 			assert.equal(countSpecializedShapes(encoded), 0);
 			assert.ok(chunkEncoderCalls > 0);
 		});
 
 		it("does not specialize identifier fields (they require id-compressor encoding)", () => {
-			// Regression: getNodeEncoderVText selected specializable fields by leaf ValueSchema
-			// (String/Number/Boolean) without checking field.kind. An identifier field is a
-			// required single string leaf, so it passed the filter and VText would constant-fold
-			// its value into a specialized shape — bypassing the SpecialField.Identifier op-space
-			// normalization the base path applies (see getFieldEncoder), which breaks cross-session
-			// summary reads.
+			// Regression: an earlier version found specializable fields by leaf ValueSchema
+			// (String/Number/Boolean) and did not examine field.kind. An identifier field is a
+			// required single string leaf. Thus it passed that test, and VText put its value in a
+			// specialized shape. This skipped the SpecialField.Identifier op-space normalization of
+			// the base encoder (see getFieldEncoder). Without that normalization, a different
+			// session cannot read the summary correctly. findSpecializableFields now examines
+			// field.kind.
 			const sf = new SchemaFactoryAlpha("test");
 			class Doc extends sf.object("Doc", {
 				id: sf.identifier,
@@ -919,8 +995,8 @@ describe("schemaBasedEncoding", () => {
 
 			const storedSchema = toStoredSchema(Doc, StagedSchemaUpgradePolicy.restrictive);
 
-			// Repeat one id across several nodes so that, if the identifier field were treated as
-			// an ordinary string leaf, its value would fold into a specialized shape.
+			// Use one id in many nodes. If the encoder used the identifier field as a usual string
+			// leaf, a specialized shape would keep its value.
 			const compressedId = testIdCompressor.generateCompressedId();
 			const stableId = testIdCompressor.decompress(compressedId);
 			const tree = Array.from(
@@ -947,8 +1023,8 @@ describe("schemaBasedEncoding", () => {
 				false,
 			);
 
-			// Without the fix, the repeated identifier value folds into one specialized shape,
-			// silently overriding the id-compressor encoding.
+			// Without the fix, a specialized shape keeps the repeated identifier value. This
+			// overrides the id-compressor encoding, and no error shows it.
 			assert.equal(countSpecializedShapes(encoded), 0);
 
 			// The identifier values must still round-trip through the base SpecialField.Identifier path.

@@ -14,8 +14,6 @@ import {
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type FieldKey,
-	type FieldKindData,
-	type FieldKindIdentifier,
 	type ITreeCursorSynchronous,
 	ValueSchema,
 	Multiplicity,
@@ -26,11 +24,13 @@ import {
 	forEachNode,
 } from "../../../core/index.js";
 import {
-	type Brand,
 	brand,
 	compareStrings,
-	getLast,
+	createTupleComparator,
+	getOrCreate,
+	newTupleBTree,
 	oneFromIterable,
+	type TupleBTree,
 } from "../../../util/index.js";
 
 import type { IncrementalEncoder } from "./codecs.js";
@@ -61,10 +61,7 @@ import {
 	FieldBatchFormatVersion,
 	SpecialField,
 } from "./format/index.js";
-import {
-	defaultIncrementalEncodingPolicy,
-	type IncrementalEncodingPolicy,
-} from "./incrementalEncodingPolicy.js";
+import { defaultIncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
 import { NodeShapeBasedEncoder, SpecializedNodeShapeEncoder } from "./nodeEncoder.js";
 
 /**
@@ -281,39 +278,42 @@ function valueShapeFromSchema(schema: ValueSchema | undefined): undefined | Enco
 // #region VText
 
 /**
- * The VText format: an encoding that removes repeated field values from the data array.
+ * The VText format: a format that removes repeated field values from the data array.
  *
  * @remarks
- * This region adds specialized node shapes to the codec. A specialized shape stores one or more
- * field values as constants in the shape itself. A node that uses a specialized shape does not
- * store those values in the data array. See {@link SpecializedNodeShapeEncoder}.
+ * This region adds specialized node shapes to the codec. A specialized shape keeps one or more
+ * field values as constants in the shape. A node that uses a specialized shape does not keep
+ * those values in the data array. See {@link SpecializedNodeShapeEncoder}.
  *
- * This region defines five terms. Every other comment in this region uses these terms without
- * defining them again.
+ * This region defines these terms. The other comments in this region use these terms and do not
+ * define them again.
  *
+ * - **Batch**: the data of one {@link compressedEncode} call. An incremental sub-chunk is a
+ * separate batch.
  * - **Specializable field**: a required field of an ObjectNode with one boolean, string, or
  * number value. See {@link SpecializableField}.
- * - **Node group**: a group of same-type nodes with equal values in all their specializable
- * fields. See {@link NodeGroupCounts}.
- * - **Select a field**: choose one specializable field as part of the test that groups nodes
- * into node groups. See {@link FoldDecision.selectedFieldIndices}.
- * - **Fold a node group**: build a specialized shape that stores a node group's selected field
- * values as constants. Nodes that use this shape do not store those values in the data array.
+ * - **Node group**: a group of nodes of one type that have equal values in all their
+ * specializable fields. See {@link NodeGroupCounts}.
+ * - **Select a field**: use a specializable field to put nodes into node groups. See
+ * {@link SpecializationDecision.selectedFieldIndices}.
+ * - **Specialize a node group**: make a specialized shape that keeps the selected field values of
+ * a node group as constants. Nodes that use this shape do not keep those values in the data
+ * array.
  * - **Dispatch token**: an index that a node writes before its data. A node writes a dispatch
  * token only when its type can use more than one shape. See {@link dispatchTokenBytes}.
  *
- * The VText format is still experimental. This region keeps its code apart from the plain v1 and
- * v2 code above it.
+ * The VText format is experimental. This region keeps its code separate from the v1 and v2 code
+ * above it.
  */
 
 /**
  * Encodes data from `fieldBatch` into an `EncodedChunk`.
  * @remarks
- * This function uses {@link FieldBatchFormatVersion.vTextExperimental}. It turns on the
- * specialized node shape ('f') optimization. See {@link SpecializedNodeShapeEncoder}.
+ * This function uses {@link FieldBatchFormatVersion.vTextExperimental}. This format can use
+ * specialized node shapes ('f'). See {@link SpecializedNodeShapeEncoder}.
  *
- * {@link chooseSelectedFold} decides which node groups to fold. It uses an estimated byte-gain
- * rule. There is no fixed occurrence threshold.
+ * {@link chooseSpecialization} decides which node groups to specialize. It uses an estimate of the
+ * saved bytes. It does not use a fixed minimum count.
  */
 export function schemaCompressedEncodeVTextExperimental(
 	schema: StoredSchemaCollection,
@@ -323,63 +323,107 @@ export function schemaCompressedEncodeVTextExperimental(
 	incrementalEncoder: IncrementalEncoder | undefined,
 	isSummary: boolean,
 ): EncodedFieldBatchVTextExperimental {
-	const context = buildContextVText(
-		schema,
+	const cache = new Map<TreeNodeSchemaIdentifier, readonly SpecializableField[]>();
+	return encodeBatchVText(fieldBatch, {
+		storedSchema: schema,
 		policy,
 		idCompressor,
 		incrementalEncoder,
-		brand(FieldBatchFormatVersion.vTextExperimental),
 		isSummary,
-	);
-	return compressedEncode(fieldBatch, context);
+		specializableFieldsOf: (type) =>
+			getOrCreate(cache, type, () =>
+				findSpecializableFields(schema, policy, incrementalEncoder, type),
+			),
+	});
 }
 
 /**
- * Single pass across every node in `fieldBatch`. For any node whose encoder is a
- * {@link VTextObjectNodeEncoder}, records its tuple occurrence.
+ * The inputs of one VText encode. These inputs are the same for all batches of the encode.
+ */
+interface VTextEncodeOptions {
+	readonly storedSchema: StoredSchemaCollection;
+	readonly policy: SchemaPolicy;
+	readonly idCompressor: IIdCompressor;
+	readonly incrementalEncoder: IncrementalEncoder | undefined;
+	readonly isSummary: boolean;
+	/**
+	 * Returns the specializable fields of a node type, in a fixed order. Returns an empty array if
+	 * the type has no specializable fields.
+	 */
+	readonly specializableFieldsOf: (
+		type: TreeNodeSchemaIdentifier,
+	) => readonly SpecializableField[];
+}
+
+/**
+ * Encodes one batch in the VText format.
+ * @remarks
+ * This function does four steps. Each step has its own input and output:
+ *
+ * 1. {@link collectBatchCounts} counts the node groups of each node type. It returns read-only
+ * {@link BatchCounts}. This step only counts. It cannot access a decision.
+ *
+ * 2. {@link decideBatchSpecializations} gives the counts of each node type to
+ * {@link chooseSpecialization}. It returns read-only {@link BatchSpecializations}. These are plain
+ * values. They contain no encoders.
+ *
+ * 3. {@link buildBatchContext} changes the decisions into an {@link EncoderContext}. In this
+ * context, each node type has one fixed encoder. See {@link nodeEncoderFromDecision}.
+ *
+ * 4. {@link compressedEncode} encodes the batch with that context.
+ *
+ * An incremental sub-chunk does the four steps again, with its own counts. See
+ * {@link EncoderContext.encodeIncrementalChunk}.
+ */
+function encodeBatchVText(
+	fieldBatch: FieldBatch,
+	options: VTextEncodeOptions,
+): EncodedFieldBatchV1OrV2 {
+	const counts = collectBatchCounts(fieldBatch, options);
+	const decisions = decideBatchSpecializations(counts, options.specializableFieldsOf);
+	return compressedEncode(fieldBatch, buildBatchContext(decisions, options));
+}
+
+/**
+ * Records the node group of each node in `fieldBatch` that has specializable fields.
  *
  * @remarks
- * Called as pass 1 of the VText two-pass encode. Pass 2 ({@link compressedEncode}) uses the
- * recorded counts to decide which tuples should use specialized shapes.
+ * This is step 1 of {@link encodeBatchVText}. This function reads each node one time. It only
+ * counts. It cannot access a specialization decision.
  *
- * Incremental fields are skipped. Their sub-chunks get their own count pass when
- * {@link compressedEncode} is invoked recursively, so counting them here would inflate
- * the outer batch's totals with nodes the outer batch does not actually emit.
+ * This function does not count the nodes in incremental fields. Those nodes are in a separate
+ * batch, which has its own counts. The outer batch does not encode those nodes. Thus they must not
+ * change the counts of the outer batch.
  */
-function countVTextSpecializationCandidates(
-	fieldBatch: FieldBatch,
-	context: EncoderContext,
-	storedSchema: StoredSchemaCollection,
-	batch: VTextBatchState,
-): void {
-	const shouldEncodeIncrementally = context.incrementalEncoder?.shouldEncodeIncrementally;
+function collectBatchCounts(fieldBatch: FieldBatch, options: VTextEncodeOptions): BatchCounts {
+	const counts: MutableBatchCounts = new Map();
 	for (const cursor of fieldBatch) {
 		forEachNode(cursor, () => {
-			countNodeAndDescendants(cursor, context, storedSchema, shouldEncodeIncrementally, batch);
+			countNodeAndDescendants(cursor, options, counts);
 		});
 	}
+	return counts;
 }
 
 /**
- * Recursively counts the current node and its descendants for VText specialization.
+ * Counts the current node and all nodes below it.
  *
  * @remarks
- * This function visits every node at every depth. Any ObjectNode can be a node group candidate.
+ * This function reads nodes at all depths. Each ObjectNode can be part of a node group.
  *
- * A node's node group key depends only on its own leaf values. Traversal order does not change
- * the result. One pass is enough. No count depends on another node's count.
+ * The node group key of a node uses only the leaf values of that node. Thus the order in which
+ * this function reads the nodes does not change the result, and one pass is sufficient.
  *
- * This function skips incremental fields.
+ * This function does not read incremental fields.
  */
 function countNodeAndDescendants(
 	cursor: ITreeCursorSynchronous,
-	context: EncoderContext,
-	storedSchema: StoredSchemaCollection,
-	shouldEncodeIncrementally: IncrementalEncodingPolicy | undefined,
-	batch: VTextBatchState,
+	options: VTextEncodeOptions,
+	counts: MutableBatchCounts,
 ): void {
+	const shouldEncodeIncrementally = options.incrementalEncoder?.shouldEncodeIncrementally;
 	const nodeType: TreeNodeSchemaIdentifier = cursor.type;
-	const schema = storedSchema.nodeSchema.get(nodeType);
+	const schema = options.storedSchema.nodeSchema.get(nodeType);
 	if (schema instanceof ObjectNodeStoredSchema) {
 		// Object/Array: per-field policy decision. The cursor's field key is the object field
 		// key for objects. For arrays, the field key is "". The contract accepts both forms.
@@ -388,13 +432,7 @@ function countNodeAndDescendants(
 				return;
 			}
 			forEachNode(cursor, () => {
-				countNodeAndDescendants(
-					cursor,
-					context,
-					storedSchema,
-					shouldEncodeIncrementally,
-					batch,
-				);
+				countNodeAndDescendants(cursor, options, counts);
 			});
 		});
 	} else if (schema instanceof MapNodeStoredSchema) {
@@ -405,140 +443,96 @@ function countNodeAndDescendants(
 		}
 		forEachField(cursor, () => {
 			forEachNode(cursor, () => {
-				countNodeAndDescendants(
-					cursor,
-					context,
-					storedSchema,
-					shouldEncodeIncrementally,
-					batch,
-				);
+				countNodeAndDescendants(cursor, options, counts);
 			});
 		});
 	}
-	const encoder = context.nodeEncoderFromSchema(nodeType);
-	if (encoder instanceof VTextObjectNodeEncoder) {
-		encoder.countNode(cursor, batch);
+	const fields = options.specializableFieldsOf(nodeType);
+	if (fields.length > 0) {
+		const values = readSpecializableValues(cursor, fields);
+		const nodeGroups = getOrCreate(counts, nodeType, () => newNodeGroupMap<NodeGroupTally>());
+		const existing = nodeGroups.get(values);
+		if (existing === undefined) {
+			nodeGroups.set(values, { count: 1, values });
+		} else {
+			existing.count += 1;
+		}
 	}
 }
 
 /**
- * {@link EncoderContext} for the VText format. Owns the per-batch node group state and runs
- * the counting pass at the start of each batch.
- *
+ * The {@link EncoderContext} of one VText batch.
  * @remarks
- * This class keeps a stack of {@link VTextBatchState} objects, one for each
- * {@link compressedEncode} call in progress. {@link beginBatch} runs the counting pass and
- * pushes a fresh state onto the stack. {@link endBatch} pops it off.
- *
- * The stack scopes node group decisions to each batch. A single field could not do this,
- * because a recursive incremental sub-chunk encode runs its own nested {@link compressedEncode}
- * call while the outer batch is still in progress.
+ * The node encoders of this context do not change during the batch. This class changes only one
+ * behavior: it encodes each incremental sub-chunk as a new batch, with its own counts and
+ * decisions.
  */
 class VTextEncoderContext extends EncoderContext {
-	private readonly batchStack: VTextBatchState[] = [];
-
 	public constructor(
 		nodeEncoderFromPolicy: NodeEncoderPolicy,
 		fieldEncoderFromPolicy: FieldEncoderPolicy,
-		fieldShapes: ReadonlyMap<FieldKindIdentifier, FieldKindData>,
-		idCompressor: IIdCompressor,
-		incrementalEncoder: IncrementalEncoder | undefined,
-		version: FieldBatchFormatVersion,
-		isSummary: boolean,
-		private readonly storedSchema: StoredSchemaCollection,
+		private readonly options: VTextEncodeOptions,
 	) {
 		super(
 			nodeEncoderFromPolicy,
 			fieldEncoderFromPolicy,
-			fieldShapes,
-			idCompressor,
-			incrementalEncoder,
-			version,
-			isSummary,
+			options.policy.fieldKinds,
+			options.idCompressor,
+			options.incrementalEncoder,
+			brand(FieldBatchFormatVersion.vTextExperimental),
+			options.isSummary,
 		);
 	}
 
-	public override beginBatch(fieldBatch: FieldBatch): void {
-		const batch = new VTextBatchState();
-		countVTextSpecializationCandidates(fieldBatch, this, this.storedSchema, batch);
-		this.batchStack.push(batch);
-	}
-
-	public override endBatch(): void {
-		this.batchStack.pop();
-	}
-
-	/**
-	 * The {@link VTextBatchState} for the innermost in-progress {@link compressedEncode} call.
-	 */
-	public currentBatch(): VTextBatchState {
-		const batch = getLast(this.batchStack);
-		assert(batch !== undefined, "VText encode requires an active batch state");
-		return batch;
+	public override encodeIncrementalChunk(fieldBatch: FieldBatch): EncodedFieldBatchV1OrV2 {
+		return encodeBatchVText(fieldBatch, this.options);
 	}
 }
 
 /**
- * Like {@link buildContext}. This function uses the VText-specific node encoder policy. That
- * policy produces {@link SpecializedNodeShapeEncoder} shapes through a {@link VTextEncoderContext}.
+ * Makes the {@link EncoderContext} of one batch from the decisions of the batch.
+ * @remarks
+ * This is step 3 of {@link encodeBatchVText}. A node type that has no decision uses its base
+ * encoder from {@link getNodeEncoder}.
  */
-function buildContextVText(
-	storedSchema: StoredSchemaCollection,
-	policy: SchemaPolicy,
-	idCompressor: IIdCompressor,
-	incrementalEncoder: IncrementalEncoder | undefined,
-	version: FieldBatchFormatVersion,
-	isSummary: boolean,
+function buildBatchContext(
+	decisions: BatchSpecializations,
+	options: VTextEncodeOptions,
 ): EncoderContext {
+	const { storedSchema, incrementalEncoder } = options;
 	const context: VTextEncoderContext = new VTextEncoderContext(
-		(fieldBuilder: FieldEncodeBuilder, schemaName: TreeNodeSchemaIdentifier) =>
-			getNodeEncoderVText(
-				fieldBuilder,
-				storedSchema,
-				schemaName,
-				incrementalEncoder,
-				context,
-				() => context.currentBatch(),
-			),
+		(fieldBuilder: FieldEncodeBuilder, schemaName: TreeNodeSchemaIdentifier) => {
+			const base = getNodeEncoder(fieldBuilder, storedSchema, schemaName, incrementalEncoder);
+			const decision = decisions.get(schemaName);
+			return decision === undefined
+				? base
+				: nodeEncoderFromDecision(base, options.specializableFieldsOf(schemaName), decision);
+		},
 		(nodeBuilder: NodeEncodeBuilder, fieldSchema: TreeFieldStoredSchema) =>
 			getFieldEncoder(nodeBuilder, fieldSchema, context, storedSchema),
-		policy.fieldKinds,
-		idCompressor,
-		incrementalEncoder,
-		version,
-		isSummary,
-		storedSchema,
+		options,
 	);
 	return context;
 }
 
 /**
- * Like {@link getNodeEncoder}. This function also applies VText node group wrapping.
+ * Finds the specializable fields of a node type.
  * @remarks
- * This function wraps ObjectNodes that have required, single-valued fields in a
- * {@link VTextObjectNodeEncoder}. That wrapper lets those fields fold into specialized shapes.
+ * This function sorts the result by field key. A node group key has one value for each field, in
+ * this order. Thus this order must be the same for all nodes of the type.
  */
-function getNodeEncoderVText(
-	fieldBuilder: FieldEncodeBuilder,
+function findSpecializableFields(
 	storedSchema: StoredSchemaCollection,
-	schemaName: TreeNodeSchemaIdentifier,
+	policy: SchemaPolicy,
 	incrementalEncoder: IncrementalEncoder | undefined,
-	context: EncoderContext,
-	currentBatch: () => VTextBatchState,
-): NodeEncoder {
-	const baseEncoder = getNodeEncoder(
-		fieldBuilder,
-		storedSchema,
-		schemaName,
-		incrementalEncoder,
-	);
-
+	schemaName: TreeNodeSchemaIdentifier,
+): readonly SpecializableField[] {
 	const schema = storedSchema.nodeSchema.get(schemaName) ?? fail("missing node schema");
 
 	const specializableFields: SpecializableField[] = [];
 	if (schema instanceof ObjectNodeStoredSchema) {
 		for (const [key, field] of schema.objectNodeFields ?? []) {
-			if (context.fieldShapes.get(field.kind)?.multiplicity !== Multiplicity.Single) {
+			if (policy.fieldKinds.get(field.kind)?.multiplicity !== Multiplicity.Single) {
 				continue;
 			}
 			// Identifier fields must keep the base SpecialField.Identifier encoding (id-compressor
@@ -546,15 +540,14 @@ function getNodeEncoderVText(
 			if (field.kind === identifierFieldKindIdentifier) {
 				continue;
 			}
-			// Defer to the caller's incremental policy: if a field is meant to be encoded
-			// out-of-band, constant-folding its value into a specialized shape would silently
-			// override that decision.
+			// Do not specialize a field that the incremental policy encodes out-of-band. If this
+			// code specialized the value of that field, it would override the decision of the caller.
 			if (incrementalEncoder?.shouldEncodeIncrementally?.(schemaName, key) === true) {
 				continue;
 			}
 			const type = oneFromIterable(field.types);
 			if (type === undefined) {
-				// Polymorphic field (multiple allowed types): not a constant-foldable leaf.
+				// A field with more than one allowed type is not a specializable leaf.
 				continue;
 			}
 			const nodeSchema = storedSchema.nodeSchema.get(type);
@@ -566,74 +559,62 @@ function getNodeEncoderVText(
 			) {
 				specializableFields.push({ key, leafType: type });
 			}
-			// Sub-object fields are not folded. Nested ("subShape") folding was tried and removed.
-			// It measured net-negative on the test corpus, and it needed a multi-pass counting
-			// loop. A node with sub-object fields can still fold on its own leaf fields, if it has
-			// any.
+			// This code does not specialize sub-object fields. An earlier version ("subShape") did
+			// this, but the size tests showed a larger output. That version also needed more than
+			// one count pass. A node with sub-object fields can specialize its own leaf fields.
 		}
 	}
 
-	if (specializableFields.length === 0) {
-		return baseEncoder;
-	}
-
-	// The node group key concatenates field values in this array's order. This order must stay
-	// the same across all nodes of this type, so that keys compare correctly. Sort by field key
-	// to fix the order.
 	specializableFields.sort((a, b) => compareStrings(a.key, b.key));
-
-	assert(
-		baseEncoder instanceof NodeShapeBasedEncoder,
-		"VText node encoder policy expects NodeShapeBasedEncoder as base",
-	);
-	return new VTextObjectNodeEncoder(baseEncoder, specializableFields, currentBatch);
+	return specializableFields;
 }
 
 /**
- * Estimated bytes of the per-instance dispatch token.
+ * Estimated bytes of the dispatch token of one instance.
  * @remarks
- * Every instance pays this cost once its node type resolves to `numShapes` shapes through
- * {@link AnyShape}. This cost is what makes folding a low-value node group a net loss.
+ * Each instance of a node type pays this cost when the type uses `numShapes` shapes through
+ * {@link AnyShape}. Because of this cost, the specialization of a node group with a low gain can
+ * make the output larger.
  *
- * The token is a number, so its width grows with the shape count. The `+ 2` covers the token's
- * delimiter and the fact that the index points into the larger global shape table, not just this
- * type's shapes. Because of this, a few node groups fold cheaply, but many marginal node groups
- * do not.
+ * The token is a number, so its width increases with the number of shapes. The `+ 2` is for the
+ * delimiter of the token. It is also for the global shape table, which is larger than the shapes
+ * of this type. Thus a small number of specialized node groups costs little. A large number of
+ * specialized node groups with a low gain costs more than it saves.
  *
- * This constant and the shape-cost constants below estimate the encoded JSON wire size. They are
- * not exact byte counts. The size tests are the ground truth. These estimates are calibrated so
- * the fold decision matches the real encoder output on those tests.
+ * This function and the constants below estimate the size of the encoded JSON. They do not give
+ * exact byte counts. The size tests give the correct values. These estimates are set so that the
+ * specialization decisions agree with the real encoder output in those tests.
  */
 function dispatchTokenBytes(numShapes: number): number {
 	return String(Math.max(1, numShapes) - 1).length + 2;
 }
 
 /**
- * Estimated serialized bytes of a specialized ('f') shape's own wrapper: its `base` field plus
- * its `fields` framing.
+ * Estimated bytes of the wrapper of a specialized ('f') shape: its `base` field and the frame of
+ * its `fields`.
  */
 const specializedShapeWrapperBytes = 16;
 
 /**
- * Estimated serialized bytes added per overridden field in a specialized shape: its
+ * Estimated bytes that each overridden field adds to a specialized shape: its
  * `[keyRef, shapeRef]` entry.
  */
 const overrideFieldBytes = 6;
 
 /**
- * Estimated bytes of one constant leaf shape's `{ c: { type, value } }` framing.
+ * Estimated bytes of the `{ c: { type, value } }` frame of one constant leaf shape.
  * @remarks
- * {@link valueByteEstimate} counts the value's own bytes separately. This constant does not
- * include them.
+ * This constant does not include the bytes of the value. {@link valueByteEstimate} counts them.
  */
 const constantLeafShapeWrapperBytes = 24;
 
 /**
- * Estimated bytes of a value's separator in the flat data array.
+ * Estimated bytes of the separator after a value in the data array.
  * @remarks
- * Folding a field removes the value's characters and its separator. The per-instance saving is
- * {@link valueByteEstimate} plus this constant. This matters most for nodes with several folded
- * fields. For example, folding a 3-coordinate point removes three values and three separators.
+ * When the encoder specializes a field, each instance does not write the value or its separator.
+ * Thus each instance saves {@link valueByteEstimate} plus this constant. This is most important
+ * for nodes with many specialized fields. For example, a specialized 3-coordinate point does not
+ * write three values and three separators.
  */
 const dataSeparatorBytes = 1;
 
@@ -662,8 +643,8 @@ function valueByteEstimate(value: Value): number {
 /**
  * A specializable field.
  * @remarks
- * This is a single-valued boolean, string, or number leaf field of an ObjectNode. This field's
- * value can fold into a {@link SpecializedNodeShapeEncoder}.
+ * This is a single-valued boolean, string, or number leaf field of an ObjectNode. A specialized
+ * shape can keep the value of this field as a constant. See {@link SpecializedNodeShapeEncoder}.
  */
 interface SpecializableField {
 	readonly key: FieldKey;
@@ -671,127 +652,155 @@ interface SpecializableField {
 }
 
 /**
- * Encodes a leaf value to a string suitable for use as a Map key. Strings, numbers, and
- * booleans are unambiguous when prefixed with their type tag.
+ * The value of a {@link SpecializableField}.
  */
-function valueKey(value: Value): string {
-	const valueType = typeof value;
-	assert(
-		valueType === "string" || valueType === "number" || valueType === "boolean",
-		"valueKey only supports primitive leaf values",
-	);
-	return `${valueType}:${value as string | number | boolean}`;
-}
+export type SpecializableValue = boolean | number | string;
 
 /**
  * Identifies a node group by its leaf values.
  * @remarks
- * Same-typed nodes that share equal values in the same set of specializable fields have equal
- * node group keys. Nodes with equal node group keys can share one
- * {@link SpecializedNodeShapeEncoder}.
+ * Nodes of one type that have equal values in the same specializable fields have equal node group
+ * keys. Nodes with equal node group keys can use one {@link SpecializedNodeShapeEncoder}.
  *
- * A node group key is a string made from one length-prefixed {@link valueKey} segment per
- * field.
+ * A node group key is a tuple with one value for each field, in a fixed field order. All keys in
+ * one {@link NodeGroupMap} have the same length. Each field has one leaf type. Thus values at the
+ * same index always have the same type, and {@link compareNodeGroupKeys} can compare them
+ * directly.
  */
-type NodeGroupKey = Brand<string, "tree.NodeGroupKey">;
+export type NodeGroupKey = readonly SpecializableValue[];
 
 /**
- * What the count pass records about one whole-node node group.
- * @remarks
- * This includes how many nodes are in the node group, and the node group's specializable field
- * values. {@link chooseSelectedFold} uses the stored values to choose which fields to select and
- * to build the folded shapes. Storing the values here means the fold step does not need to walk
- * a cursor again.
+ * Compares two {@link NodeGroupKey}s one element at a time.
  */
-interface NodeGroupCounts {
-	count: number;
-	/** Every specializable-field leaf value, in the encoder's sorted field order. */
-	readonly values: readonly Value[];
+const compareNodeGroupKeys = createTupleComparator<NodeGroupKey>();
+
+/**
+ * A map with {@link NodeGroupKey} keys.
+ */
+export type NodeGroupMap<V> = TupleBTree<NodeGroupKey, V>;
+
+/**
+ * The read-only part of {@link NodeGroupMap}.
+ */
+export interface ReadonlyNodeGroupMap<V> {
+	readonly size: number;
+	get(key: NodeGroupKey): V | undefined;
+	values(): IterableIterator<V>;
+	entries(): IterableIterator<[NodeGroupKey, V]>;
 }
 
 /**
- * A node group over the chosen selected fields only.
+ * Makes an empty {@link NodeGroupMap}.
+ */
+export function newNodeGroupMap<V>(): NodeGroupMap<V> {
+	return newTupleBTree<NodeGroupKey, V>(compareNodeGroupKeys);
+}
+
+/**
+ * The data that the count pass records for one node group.
  * @remarks
- * Nodes in a selected node group agree on every selected field. Their non-selected fields may
- * differ. This is the unit that folds into one specialized shape.
+ * This data is the number of nodes in the node group and the values of their specializable
+ * fields. {@link chooseSpecialization} uses these values to select fields and to choose node
+ * groups. Because this data contains the values, the later steps do not read a cursor again.
+ */
+export interface NodeGroupCounts {
+	/** The number of nodes in the node group. */
+	readonly count: number;
+	/** The values of all specializable fields, in the sorted field order of the type. */
+	readonly values: NodeGroupKey;
+}
+
+/**
+ * A {@link NodeGroupCounts} that the count pass can change.
+ */
+interface NodeGroupTally extends NodeGroupCounts {
+	count: number;
+}
+
+/**
+ * A node group that uses only the selected fields.
+ * @remarks
+ * The nodes in this group have equal values in all selected fields. Their other fields can have
+ * different values. One specialized shape is for one such group.
  */
 interface SelectedNodeGroupCounts {
-	count: number;
-	/** The selected-field leaf values, in selected-field order. */
-	readonly selectedValues: readonly Value[];
+	/** The number of nodes in the group. */
+	readonly count: number;
+	/** The values of the selected fields, in the order of the selected fields. */
+	readonly selectedValues: NodeGroupKey;
 }
 
 /**
- * Per-encoder bookkeeping for one batch.
+ * The data that the count pass ({@link collectBatchCounts}) records for one batch.
  * @remarks
- * The count pass fills the `nodeGroups` map. This class derives the `decision` field from that
- * map lazily: only once, and only on first access during the encoding pass.
+ * For each node type that has nodes in the batch, this map holds all node groups of that type.
+ * Each key is the node group key of all specializable fields. This data is read-only. It contains
+ * no decisions.
  */
-interface BatchCounts {
-	/** Every whole-node node group observed in the batch, keyed by its all-fields node group key. */
-	readonly nodeGroups: Map<NodeGroupKey, NodeGroupCounts>;
-	/** The fold decision. This field is computed once, lazily, on first access during the encoding pass. */
-	decision?: FoldDecision;
+type BatchCounts = ReadonlyMap<
+	TreeNodeSchemaIdentifier,
+	ReadonlyNodeGroupMap<NodeGroupCounts>
+>;
+
+/**
+ * The {@link BatchCounts} that the count pass changes while it counts.
+ */
+type MutableBatchCounts = Map<TreeNodeSchemaIdentifier, NodeGroupMap<NodeGroupTally>>;
+
+/**
+ * The specialization decisions for one batch.
+ * @remarks
+ * This map holds one {@link SpecializationDecision} for each node type that has nodes in the
+ * batch. {@link decideBatchSpecializations} makes this map from {@link BatchCounts}. It is
+ * read-only.
+ */
+type BatchSpecializations = ReadonlyMap<TreeNodeSchemaIdentifier, SpecializationDecision>;
+
+/**
+ * Makes the specialization decision of each node type in a batch from the counts of the batch.
+ * @remarks
+ * This is step 2 of {@link encodeBatchVText}.
+ */
+function decideBatchSpecializations(
+	counts: BatchCounts,
+	specializableFieldsOf: (type: TreeNodeSchemaIdentifier) => readonly SpecializableField[],
+): BatchSpecializations {
+	const decisions = new Map<TreeNodeSchemaIdentifier, SpecializationDecision>();
+	for (const [type, nodeGroups] of counts) {
+		decisions.set(type, chooseSpecialization(specializableFieldsOf(type).length, nodeGroups));
+	}
+	return decisions;
 }
 
-/** What {@link chooseSelectedFold} decides for one batch. */
-interface FoldDecision {
-	/** Indices into `specializableFields` chosen for selection. */
+/**
+ * The decision of {@link chooseSpecialization} for one node type in one batch.
+ * @remarks
+ * This is a plain value. It contains no encoders. {@link nodeEncoderFromDecision} makes the
+ * encoders from it.
+ */
+export interface SpecializationDecision {
+	/** The indices of the selected fields in the specializable fields of the type. */
 	readonly selectedFieldIndices: readonly number[];
-	/** Specialized shapes for the folded selected node groups, keyed by their selected-field node group key. */
-	readonly foldedEncoders: ReadonlyMap<NodeGroupKey, SpecializedNodeShapeEncoder>;
-	/** The shape the parent declares for this node type: a single shape, or {@link AnyShape}. */
-	readonly declared: DeclaredShape;
-}
-
-/**
- * The shape declared for a node type in a batch: a single concrete shape when monomorphic (it is
- * itself a {@link NodeEncoder}), or {@link AnyShape} when instances span multiple shapes.
- */
-type DeclaredShape = NodeShapeBasedEncoder | SpecializedNodeShapeEncoder | AnyShape;
-
-/**
- * Node group state for one {@link compressedEncode} call, which this region calls a "batch".
- * @remarks
- * A fresh instance of this class is created for each call, including recursive incremental
- * sub-chunk calls. This instance holds one {@link BatchCounts} for each encoder instance in the
- * batch.
- */
-class VTextBatchState {
-	private readonly perEncoder: Map<object, BatchCounts> = new Map();
-
+	/** The selected field values of each specialized node group, in the order of the selected fields. */
+	readonly specializedGroups: readonly NodeGroupKey[];
 	/**
-	 * The {@link BatchCounts} for `encoder`.
+	 * True if the instances of the type use more than one shape. In that case, each instance
+	 * writes a dispatch token.
 	 * @remarks
-	 * This function creates an empty {@link BatchCounts} on first access for a given encoder.
+	 * If this is false, all instances use one shape. This is the shape of the one specialized node
+	 * group, or the base shape if the decision specializes no node group.
 	 */
-	public forEncoder(encoder: object): BatchCounts {
-		let state = this.perEncoder.get(encoder);
-		if (state === undefined) {
-			state = { nodeGroups: new Map() };
-			this.perEncoder.set(encoder, state);
-		}
-		return state;
-	}
+	readonly polymorphic: boolean;
 }
 
 /**
- * Builds a node group key from leaf values.
- * @remarks
- * This function writes one length-prefixed {@link valueKey} segment per field. The length
- * prefix keeps `["a","b"]` distinct from `["ab"]`.
- *
- * This function uses string concatenation instead of `JSON.stringify`, because it runs once
- * per node and concatenation is cheaper.
+ * The decision that specializes no node group.
  */
-function nodeGroupKeyFromValues(values: readonly Value[]): NodeGroupKey {
-	let key = "";
-	for (const value of values) {
-		const part = valueKey(value);
-		key += `${part.length}:${part}`;
-	}
-	return brand(key);
-}
+const noSpecialization: SpecializationDecision = {
+	selectedFieldIndices: [],
+	specializedGroups: [],
+	polymorphic: false,
+};
 
 /**
  * The distinct-value count of each specializable field.
@@ -801,12 +810,12 @@ function nodeGroupKeyFromValues(values: readonly Value[]): NodeGroupKey {
  */
 function distinctValueCounts(
 	fieldCount: number,
-	nodeGroups: ReadonlyMap<NodeGroupKey, NodeGroupCounts>,
+	nodeGroups: ReadonlyNodeGroupMap<NodeGroupCounts>,
 ): number[] {
-	const seen = Array.from({ length: fieldCount }, () => new Set<string>());
+	const seen = Array.from({ length: fieldCount }, () => new Set<SpecializableValue>());
 	for (const nodeGroup of nodeGroups.values()) {
 		for (const [index, distinct] of seen.entries()) {
-			distinct.add(valueKey(nodeGroup.values[index]));
+			distinct.add(nodeGroup.values[index] ?? fail("field index out of range"));
 		}
 	}
 	return seen.map((distinct) => distinct.size);
@@ -830,22 +839,31 @@ function withoutMostDistinctValues(
 }
 
 /**
+ * Returns the values of the `selected` fields, in the order of `selected`.
+ */
+function selectValues(values: NodeGroupKey, selected: readonly number[]): NodeGroupKey {
+	return selected.map((f) => values[f] ?? fail("selected field index out of range"));
+}
+
+/**
  * Re-groups the whole-node node groups into node groups keyed only by the selected fields.
  * @remarks
  * This function sums the counts for nodes that agree on the selected fields but differ on
  * other fields.
  */
 function buildSelectedNodeGroups(
-	nodeGroups: ReadonlyMap<NodeGroupKey, NodeGroupCounts>,
+	nodeGroups: ReadonlyNodeGroupMap<NodeGroupCounts>,
 	selected: readonly number[],
-): Map<NodeGroupKey, SelectedNodeGroupCounts> {
-	const selectedNodeGroups = new Map<NodeGroupKey, SelectedNodeGroupCounts>();
+): ReadonlyNodeGroupMap<SelectedNodeGroupCounts> {
+	const selectedNodeGroups = newNodeGroupMap<{
+		count: number;
+		selectedValues: NodeGroupKey;
+	}>();
 	for (const nodeGroup of nodeGroups.values()) {
-		const values = selected.map((f) => nodeGroup.values[f]);
-		const key = nodeGroupKeyFromValues(values);
-		const existing = selectedNodeGroups.get(key);
+		const values = selectValues(nodeGroup.values, selected);
+		const existing = selectedNodeGroups.get(values);
 		if (existing === undefined) {
-			selectedNodeGroups.set(key, { count: nodeGroup.count, selectedValues: values });
+			selectedNodeGroups.set(values, { count: nodeGroup.count, selectedValues: values });
 		} else {
 			existing.count += nodeGroup.count;
 		}
@@ -854,12 +872,12 @@ function buildSelectedNodeGroups(
 }
 
 /**
- * Estimated bytes saved by folding one selected node group, before the batch-wide dispatch
- * token cost.
+ * Estimated bytes that the specialization of one selected node group saves. This estimate does
+ * not include the dispatch token cost.
  * @remarks
- * This is the per-instance data removed, multiplied by the member count, minus the one-time
- * cost of the node group's specialized shape. The per-instance data removed is each selected
- * value's inline bytes plus its separator.
+ * This is the data that each instance does not write, multiplied by the number of instances,
+ * minus the cost of the specialized shape. For each selected field, an instance does not write the
+ * value or its separator.
  */
 function nodeGroupMarginalGain(nodeGroup: SelectedNodeGroupCounts): number {
 	let perInstanceSaving = 0;
@@ -873,91 +891,73 @@ function nodeGroupMarginalGain(nodeGroup: SelectedNodeGroupCounts): number {
 }
 
 /**
- * Folds the worthwhile node groups and returns them with the declared shape.
+ * Chooses the node groups to specialize.
  * @remarks
- * If no node group is worth folding, this function returns an empty set and `base` as the
- * declared shape.
+ * If no specialization saves bytes, this function returns no node groups.
  *
- * Folding makes the type polymorphic. Every instance of that type then pays a per-instance
- * dispatch token cost. This function weighs the saved bytes against the shape cost and this
- * token cost.
+ * When the encoder specializes a node group, the type can become polymorphic. Then each instance
+ * of the type writes a dispatch token. This function compares the saved bytes with the cost of the
+ * shapes and the cost of the dispatch tokens.
  *
- * A single node group that covers every instance stays monomorphic and pays no token cost.
- * Many low-value node groups cannot outweigh the token cost together, so this function folds
- * nothing in that case.
+ * If one node group contains all instances, the type is not polymorphic. No instance writes a
+ * dispatch token. If many node groups each save a small number of bytes, their total can be less
+ * than the dispatch token cost. In that case, this function specializes no node group.
  */
-function foldSelectedNodeGroups(
-	selectedNodeGroups: ReadonlyMap<NodeGroupKey, SelectedNodeGroupCounts>,
-	selected: readonly number[],
-	base: NodeShapeBasedEncoder,
-	createSpecialized: (
-		selected: readonly number[],
-		values: readonly Value[],
-	) => SpecializedNodeShapeEncoder,
-): { folded: Map<NodeGroupKey, SpecializedNodeShapeEncoder>; declared: DeclaredShape } {
-	const folded = new Map<NodeGroupKey, SpecializedNodeShapeEncoder>();
+function specializeNodeGroups(
+	selectedNodeGroups: ReadonlyNodeGroupMap<SelectedNodeGroupCounts>,
+): { specializedGroups: NodeGroupKey[]; polymorphic: boolean } {
 	if (selectedNodeGroups.size === 1) {
-		const [key, nodeGroup] =
-			oneFromIterable(selectedNodeGroups) ?? fail("size-1 map has one entry");
+		const nodeGroup =
+			oneFromIterable(selectedNodeGroups.values()) ?? fail("size-1 map has one entry");
 		if (nodeGroupMarginalGain(nodeGroup) > 0) {
-			// One shape for every instance. This stays monomorphic. It pays no dispatch
-			// token cost.
-			const encoder = createSpecialized(selected, nodeGroup.selectedValues);
-			folded.set(key, encoder);
-			return { folded, declared: encoder };
+			// All instances use one shape. The type is not polymorphic. No instance writes a
+			// dispatch token.
+			return { specializedGroups: [nodeGroup.selectedValues], polymorphic: false };
 		}
 	} else if (selectedNodeGroups.size > 1) {
 		let totalInstances = 0;
 		let summedMarginal = 0;
-		const candidates: [NodeGroupKey, SelectedNodeGroupCounts][] = [];
-		for (const entry of selectedNodeGroups) {
-			totalInstances += entry[1].count;
-			const marginal = nodeGroupMarginalGain(entry[1]);
+		const candidates: NodeGroupKey[] = [];
+		for (const nodeGroup of selectedNodeGroups.values()) {
+			totalInstances += nodeGroup.count;
+			const marginal = nodeGroupMarginalGain(nodeGroup);
 			if (marginal > 0) {
 				summedMarginal += marginal;
-				candidates.push(entry);
+				candidates.push(nodeGroup.selectedValues);
 			}
 		}
-		// Folding any node group here makes the type polymorphic. All instances then pay the
-		// dispatch token cost. The type resolves to one shape per folded node group, plus the
-		// base shape if any node group stays unfolded. The dispatch token width grows with this
-		// shape count.
+		// If this code specializes a node group here, the type becomes polymorphic, and all
+		// instances write a dispatch token. The type uses one shape for each specialized node
+		// group. It also uses the base shape if a node group is not specialized. The width of the
+		// dispatch token increases with the number of shapes.
 		const distinctShapes =
 			candidates.length + (candidates.length < selectedNodeGroups.size ? 1 : 0);
 		if (summedMarginal - totalInstances * dispatchTokenBytes(distinctShapes) > 0) {
-			for (const [key, nodeGroup] of candidates) {
-				folded.set(key, createSpecialized(selected, nodeGroup.selectedValues));
-			}
-			return { folded, declared: AnyShape.instance };
+			return { specializedGroups: candidates, polymorphic: true };
 		}
 	}
-	return { folded, declared: base };
+	return { specializedGroups: [], polymorphic: false };
 }
 
 /**
- * Picks the selected-field set and the node groups to fold.
+ * Chooses the selected fields and the node groups to specialize.
  * @remarks
- * This function uses greedy elimination. First, it selects every field except fields with no
- * repeated value. Then, while nothing folds at a profit, it drops the remaining field with
- * the most distinct values and tries again. This lets mixed data fold on a later try, while
- * uniform data folds on the first try.
+ * This function removes fields one at a time. First, it selects all fields that have a repeated
+ * value. Then, if no specialization saves bytes, it removes the selected field that has the most
+ * different values, and tries again. Thus uniform data gets specialized shapes on the first try,
+ * and mixed data can get specialized shapes on a later try.
  *
- * This function takes its counts as a plain, read-only input, and returns a plain decision as
- * output. It has no dependency on any encoder instance. This makes it a pure function: a caller
- * can test it directly, with test-built counts, and no cursor or schema is needed.
+ * This function gets read-only counts and returns a plain decision. It does not use an encoder, a
+ * cursor, or a schema. Thus it is a pure function, and a test can call it directly with counts that
+ * the test makes.
  *
- * TODO: This greedy method does not guarantee the best fold. A more expensive search could
- * check every combination of selected fields instead.
+ * TODO: This method does not always find the best decision. A slower search could try all
+ * combinations of selected fields.
  */
-function chooseSelectedFold(
+export function chooseSpecialization(
 	fieldCount: number,
-	nodeGroups: ReadonlyMap<NodeGroupKey, NodeGroupCounts>,
-	base: NodeShapeBasedEncoder,
-	createSpecialized: (
-		selected: readonly number[],
-		values: readonly Value[],
-	) => SpecializedNodeShapeEncoder,
-): FoldDecision {
+	nodeGroups: ReadonlyNodeGroupMap<NodeGroupCounts>,
+): SpecializationDecision {
 	let totalInstances = 0;
 	for (const nodeGroup of nodeGroups.values()) {
 		totalInstances += nodeGroup.count;
@@ -970,183 +970,149 @@ function chooseSelectedFold(
 	);
 
 	while (selected.length > 0) {
-		const fold = foldSelectedNodeGroups(
-			buildSelectedNodeGroups(nodeGroups, selected),
-			selected,
-			base,
-			createSpecialized,
-		);
-		if (fold.folded.size > 0) {
-			return {
-				selectedFieldIndices: selected,
-				foldedEncoders: fold.folded,
-				declared: fold.declared,
-			};
+		const result = specializeNodeGroups(buildSelectedNodeGroups(nodeGroups, selected));
+		if (result.specializedGroups.length > 0) {
+			return { selectedFieldIndices: selected, ...result };
 		}
-		// Nothing folded with this set. Drop the field with the most distinct values and
-		// try again.
+		// No specialization saves bytes with these fields. Remove the field with the most
+		// different values, and try again.
 		selected = withoutMostDistinctValues(selected, distinctValueCount);
 	}
-	return { selectedFieldIndices: [], foldedEncoders: new Map(), declared: base };
+	return noSpecialization;
 }
 
 /**
- * Encodes ObjectNodes using {@link SpecializedNodeShapeEncoder} ('f') shapes.
+ * Makes the node encoder of a node type from its decision.
  * @remarks
- * These shapes constant-fold required, single-valued leaf fields whose values repeat across a
- * batch.
+ * This is part of step 3 of {@link encodeBatchVText}. The result is one of these encoders:
  *
- * This class runs two passes. Pass 1, {@link VTextObjectNodeEncoder.countNode}, groups this
- * type's nodes into whole-node node groups. Pass 1 only collects counts. It does not decide
- * anything.
+ * - `base`, if the decision specializes no node group.
  *
- * Between the passes, {@link chooseSelectedFold} chooses which fields to select and which node
- * groups to fold. This choice uses an estimated byte gain, not a fixed count.
- * {@link chooseSelectedFold} is a free function, not a method. It takes the counts from pass 1
- * as input, and returns a fold decision as output. It has no other dependency on this class.
+ * - The {@link SpecializedNodeShapeEncoder} of the one specialized node group, if the decision is
+ * not polymorphic. The parent refers to this shape directly. No instance writes a dispatch token.
  *
- * Selecting only some fields lets mixed data fold its repetitive fields while it leaves unique
- * fields in the stream. For example, a record with a unique id can still fold its other,
- * repeated fields. Pass 2, {@link VTextObjectNodeEncoder.encodeNode}, emits the node data using
- * this fold decision.
+ * - A {@link SpecializedShapeDispatchEncoder}, if the decision is polymorphic.
  */
-class VTextObjectNodeEncoder implements NodeEncoder {
-	private readonly constantNodeEncoders: Map<string, NodeShapeBasedEncoder> = new Map();
+function nodeEncoderFromDecision(
+	base: NodeShapeBasedEncoder,
+	fields: readonly SpecializableField[],
+	decision: SpecializationDecision,
+): NodeEncoder {
+	// Fields with the same leaf type and value use one constant encoder. Thus they use one shape.
+	const constantEncoders = new Map<
+		TreeNodeSchemaIdentifier,
+		Map<SpecializableValue, NodeShapeBasedEncoder>
+	>();
+	const specializedEncoders = newNodeGroupMap<SpecializedNodeShapeEncoder>();
+	for (const values of decision.specializedGroups) {
+		specializedEncoders.set(
+			values,
+			createSpecialized(base, fields, decision.selectedFieldIndices, values, constantEncoders),
+		);
+	}
+
+	if (decision.polymorphic) {
+		return new SpecializedShapeDispatchEncoder(
+			base,
+			fields,
+			decision.selectedFieldIndices,
+			specializedEncoders,
+		);
+	}
+	return oneFromIterable(specializedEncoders.values()) ?? base;
+}
+
+/**
+ * Makes an `f` shape that keeps the selected values of a node group as constants.
+ * @remarks
+ * Each selected field gets a constant {@link NodeShapeBasedEncoder}. This function gets it from
+ * `constantEncoders` by leaf type and value. The nodes of the node group write no data for a
+ * selected field. The other fields use the variable encoders of the base shape.
+ *
+ * `selected` holds indices into `fields`. `values` holds the value of each selected field, in the
+ * order of `selected`.
+ */
+function createSpecialized(
+	base: NodeShapeBasedEncoder,
+	fields: readonly SpecializableField[],
+	selected: readonly number[],
+	values: NodeGroupKey,
+	constantEncoders: Map<
+		TreeNodeSchemaIdentifier,
+		Map<SpecializableValue, NodeShapeBasedEncoder>
+	>,
+): SpecializedNodeShapeEncoder {
+	const overrides: KeyedFieldEncoder[] = selected.map((fieldIndex, i) => {
+		const field = fields[fieldIndex] ?? fail("selected field index out of range");
+		const value = values[i] ?? fail("selected value index out of range");
+		const nodeEncoder = getOrCreate(
+			getOrCreate(constantEncoders, field.leafType, () => new Map()),
+			value,
+			() => new NodeShapeBasedEncoder(field.leafType, [value], [], undefined),
+		);
+		return { key: field.key, encoder: asFieldEncoder(nodeEncoder) };
+	});
+	return new SpecializedNodeShapeEncoder(base, overrides);
+}
+
+/**
+ * Reads the specializable field values of a node, in the order of `fields`.
+ * @remarks
+ * `fields` contains only required, single-valued leaf fields. Thus each field contains exactly one
+ * node.
+ */
+function readSpecializableValues(
+	cursor: ITreeCursorSynchronous,
+	fields: readonly SpecializableField[],
+): NodeGroupKey {
+	const values: SpecializableValue[] = [];
+	for (const field of fields) {
+		cursor.enterField(brand(field.key));
+		assert(cursor.getFieldLength() === 1, "specializable field must contain exactly one node");
+		cursor.firstNode();
+		const value = cursor.value;
+		assert(
+			typeof value === "boolean" || typeof value === "number" || typeof value === "string",
+			"specializable field value must be a boolean, number, or string",
+		);
+		values.push(value);
+		cursor.exitNode();
+		cursor.exitField();
+	}
+	return values;
+}
+
+/**
+ * Encodes the instances of a polymorphic node type.
+ * @remarks
+ * The shape of this encoder is {@link AnyShape}. Each instance writes a dispatch token. Then it
+ * writes its data with its own shape. This is the specialized shape of its selected node group, or
+ * `base` if that node group is not specialized.
+ *
+ * The constructor gets all shapes. The shapes do not change after that. See
+ * {@link nodeEncoderFromDecision}.
+ */
+class SpecializedShapeDispatchEncoder implements NodeEncoder {
+	public readonly shape: Shape = AnyShape.instance;
 
 	public constructor(
 		private readonly base: NodeShapeBasedEncoder,
-		private readonly specializableFields: readonly SpecializableField[],
-		private readonly currentBatch: () => VTextBatchState,
+		private readonly fields: readonly SpecializableField[],
+		private readonly selectedFieldIndices: readonly number[],
+		private readonly specializedEncoders: ReadonlyNodeGroupMap<SpecializedNodeShapeEncoder>,
 	) {}
-
-	public get shape(): Shape {
-		return this.declaredShape(this.currentBatch());
-	}
-
-	/**
-	 * The counting-pass entry point for this node.
-	 * @remarks
-	 * This function tallies this node's whole-node node group. On the node group's first sight,
-	 * this function captures the node group's leaf values. This lets the fold step build the
-	 * node group's shape later, without reading a cursor again.
-	 */
-	public countNode(cursor: ITreeCursorSynchronous, batch: VTextBatchState): void {
-		const state = batch.forEncoder(this);
-		const values = this.readValues(cursor);
-		const key = nodeGroupKeyFromValues(values);
-		const existing = state.nodeGroups.get(key);
-		if (existing === undefined) {
-			state.nodeGroups.set(key, { count: 1, values });
-		} else {
-			existing.count += 1;
-		}
-	}
 
 	public encodeNode(
 		cursor: ITreeCursorSynchronous,
 		context: EncoderContext,
 		outputBuffer: BufferFormat,
 	): void {
-		const batch = this.currentBatch();
-		const declared = this.declaredShape(batch);
-		if (declared instanceof AnyShape) {
-			// This type resolves to more than one shape. Each instance writes its own dispatch
-			// token first, using AnyShape ('d') dispatch.
-			AnyShape.encodeNode(cursor, context, outputBuffer, this.resolveShape(cursor, batch));
-		} else {
-			// Every instance resolves to `declared`. The parent references `declared` directly.
-			// This encoder writes only the node's data. It writes no dispatch token.
-			declared.encodeNode(cursor, context, outputBuffer);
-		}
-	}
-
-	/**
-	 * The shape the parent declares for this node.
-	 * @remarks
-	 * This function runs the fold decision lazily, on first access during the encoding pass, and
-	 * caches the result. Counting is already complete by the encode pass. This caching keeps
-	 * per-node encoding O(1).
-	 */
-	private declaredShape(batch: VTextBatchState): DeclaredShape {
-		const state = batch.forEncoder(this);
-		state.decision ??= chooseSelectedFold(
-			this.specializableFields.length,
-			state.nodeGroups,
-			this.base,
-			(selected, values) => this.createSpecialized(selected, values),
+		const selectedValues = selectValues(
+			readSpecializableValues(cursor, this.fields),
+			this.selectedFieldIndices,
 		);
-		return state.decision.declared;
-	}
-
-	/**
-	 * The shape for this node.
-	 * @remarks
-	 * This is the specialized shape for this node's selected node group, if that node group was
-	 * folded. Otherwise, this is the base encoder.
-	 *
-	 * This function runs only on the polymorphic path, through {@link AnyShape}. The batch is
-	 * already finalized by that point.
-	 */
-	private resolveShape(
-		cursor: ITreeCursorSynchronous,
-		batch: VTextBatchState,
-	): NodeShapeBasedEncoder | SpecializedNodeShapeEncoder {
-		const decision =
-			batch.forEncoder(this).decision ?? fail("resolveShape requires a finalized batch");
-		const allValues = this.readValues(cursor);
-		const selectedValues = decision.selectedFieldIndices.map((f) => allValues[f]);
-		return decision.foldedEncoders.get(nodeGroupKeyFromValues(selectedValues)) ?? this.base;
-	}
-
-	/**
-	 * Reads this node's specializable field leaf values, in the encoder's fixed field order.
-	 * @remarks
-	 * This function reads only required, single-valued leaf fields. It leaves out optional
-	 * fields.
-	 */
-	private readValues(cursor: ITreeCursorSynchronous): Value[] {
-		const values: Value[] = [];
-		for (const field of this.specializableFields) {
-			cursor.enterField(brand(field.key));
-			assert(
-				cursor.getFieldLength() === 1,
-				"specializable field must contain exactly one node",
-			);
-			cursor.firstNode();
-			values.push(cursor.value);
-			cursor.exitNode();
-			cursor.exitField();
-		}
-		return values;
-	}
-
-	/**
-	 * Builds an `f` shape that bakes a selected node group's values in.
-	 * @remarks
-	 * Each selected field becomes a constant {@link NodeShapeBasedEncoder}. This function caches
-	 * each constant encoder by leaf type and value. Members of the node group emit no data for a
-	 * selected field. Non-selected fields stay as the base shape's variable encoders.
-	 *
-	 * `selected` holds indices into `specializableFields`. `values` holds each selected field's
-	 * value, in the same order as `selected`.
-	 */
-	private createSpecialized(
-		selected: readonly number[],
-		values: readonly Value[],
-	): SpecializedNodeShapeEncoder {
-		const overrides: KeyedFieldEncoder[] = selected.map((fieldIndex, i) => {
-			const field =
-				this.specializableFields[fieldIndex] ?? fail("selected field index out of range");
-			const value = values[i];
-			const cacheKey = `${field.leafType}:${valueKey(value)}`;
-			let nodeEncoder = this.constantNodeEncoders.get(cacheKey);
-			if (nodeEncoder === undefined) {
-				nodeEncoder = new NodeShapeBasedEncoder(field.leafType, [value], [], undefined);
-				this.constantNodeEncoders.set(cacheKey, nodeEncoder);
-			}
-			return { key: field.key, encoder: asFieldEncoder(nodeEncoder) };
-		});
-		return new SpecializedNodeShapeEncoder(this.base, overrides);
+		const shape = this.specializedEncoders.get(selectedValues) ?? this.base;
+		AnyShape.encodeNode(cursor, context, outputBuffer, shape);
 	}
 }
 
