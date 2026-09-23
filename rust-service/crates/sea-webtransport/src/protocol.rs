@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 /// Current Sea logical-stream opening version.
-pub const PROTOCOL_VERSION: u16 = 11;
+pub const PROTOCOL_VERSION: u16 = 12;
 
 pub mod signals;
 
@@ -350,8 +350,8 @@ pub fn encode_network_frame(
     let declared_length = u32::try_from(complete_length - NETWORK_LENGTH_BYTES)
         .map_err(|_| ProtocolError::FrameTooLarge)?;
     let mut encoded = Vec::with_capacity(complete_length);
-    encoded.push(frame.kind.into());
     encoded.extend_from_slice(&declared_length.to_be_bytes());
+    encoded.push(frame.kind.into());
     encoded.extend_from_slice(&frame.payload);
     Ok(encoded)
 }
@@ -386,11 +386,7 @@ impl NetworkFrameDecoder {
 
     /// Validates the available envelope header before exposing its complete frame length.
     fn header(&self) -> Result<Option<(MessageKind, usize)>, ProtocolError> {
-        let Some(&kind) = self.buffered.first() else {
-            return Ok(None);
-        };
-        let kind = MessageKind::try_from(kind)?;
-        let Some(length_bytes) = self.buffered.get(NETWORK_HEADER_BYTES..MIN_FRAME_BYTES) else {
+        let Some(length_bytes) = self.buffered.get(..NETWORK_LENGTH_BYTES) else {
             return Ok(None);
         };
         let declared_length = usize::try_from(u32::from_be_bytes(
@@ -408,6 +404,10 @@ impl NetworkFrameDecoder {
         if complete_length > self.limits.max_frame_bytes {
             return Err(ProtocolError::FrameTooLarge);
         }
+        let Some(&kind) = self.buffered.get(NETWORK_LENGTH_BYTES) else {
+            return Ok(None);
+        };
+        let kind = MessageKind::try_from(kind)?;
         Ok(Some((kind, complete_length)))
     }
 
@@ -1654,11 +1654,11 @@ pub enum ProtocolError {
 mod tests {
     use super::signals;
     use super::{
-        ArchiveIntent, DirectoryEntry, ErrorKind, Event, Limits, MessageKind, NetworkFrame,
-        NetworkFrameDecoder, PROTOCOL_VERSION, ProtocolError, Request, Response, Snapshot,
-        SnapshotParticipation, StreamEvent, StreamRole, StreamStatus, TreeId, decode_request_frame,
-        decode_response_network_frame, encode_network_frame, encode_request_frame,
-        encode_response_frame,
+        ArchiveIntent, DirectoryEntry, ErrorKind, Event, Limits, MessageKind, NETWORK_LENGTH_BYTES,
+        NetworkFrame, NetworkFrameDecoder, PROTOCOL_VERSION, ProtocolError, Request, Response,
+        Snapshot, SnapshotParticipation, StreamEvent, StreamRole, StreamStatus, TreeId,
+        decode_request_frame, decode_response_network_frame, encode_network_frame,
+        encode_request_frame, encode_response_frame,
     };
 
     #[test]
@@ -1725,11 +1725,11 @@ mod tests {
         }
         for length in [0, u32::MAX] {
             let mut decoder = NetworkFrameDecoder::new(limits);
-            decoder.push(&[MessageKind::Blob.into()]);
             decoder.push(&length.to_be_bytes());
             assert!(decoder.next_read_size().is_err());
         }
         let mut decoder = NetworkFrameDecoder::new(limits);
+        decoder.push(&1_u32.to_be_bytes());
         decoder.push(&[12]);
         assert!(matches!(
             decoder.next_read_size(),
@@ -1793,7 +1793,6 @@ mod tests {
         let mut decoder = NetworkFrameDecoder::new(Limits {
             max_frame_bytes: 32,
         });
-        decoder.push(&[u8::from(MessageKind::Submit)]);
         decoder.push(&u32::MAX.to_be_bytes());
         assert!(matches!(
             decoder.next_frame(),
@@ -1801,7 +1800,8 @@ mod tests {
         ));
 
         let mut truncated = NetworkFrameDecoder::new(Limits::default());
-        truncated.push(&[u8::from(MessageKind::Submit), 0, 0, 0, 9]);
+        truncated.push(&9_u32.to_be_bytes());
+        truncated.push(&[u8::from(MessageKind::Submit)]);
         assert!(matches!(
             truncated.finish(),
             Err(ProtocolError::IncompleteFrame)
@@ -1811,6 +1811,7 @@ mod tests {
     #[test]
     fn network_decoder_rejects_unknown_kinds() {
         let mut unknown_kind = NetworkFrameDecoder::new(Limits::default());
+        unknown_kind.push(&1_u32.to_be_bytes());
         unknown_kind.push(&[12]);
         assert!(matches!(
             unknown_kind.next_frame(),
@@ -1924,7 +1925,7 @@ mod tests {
         for (role, request) in cases {
             let encoded =
                 encode_request_frame(role, &request, Limits::default()).expect("request encoding");
-            assert_eq!(encoded[0], u8::from(request.kind()));
+            assert_eq!(encoded[NETWORK_LENGTH_BYTES], u8::from(request.kind()));
             let frame = decode_one_network_frame(&encoded);
 
             assert_eq!(
@@ -2154,7 +2155,7 @@ mod tests {
         for (role, response) in cases {
             let encoded = encode_response_frame(role, &response, Limits::default())
                 .expect("response encoding");
-            assert_eq!(encoded[0], u8::from(response.kind()));
+            assert_eq!(encoded[NETWORK_LENGTH_BYTES], u8::from(response.kind()));
             let frame = decode_one_network_frame(&encoded);
             assert_eq!(
                 decode_response_network_frame(role, &frame).expect("response decoding"),

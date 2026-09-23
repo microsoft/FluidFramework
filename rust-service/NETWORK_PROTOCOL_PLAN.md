@@ -39,7 +39,7 @@ This plan does not itself create an iteration or authorize parallel workstreams.
 - [x] **I4: Specialize the common no-blob event.** Use distinct no-blob and blob-bearing kinds, mapped to one internal event representation.
   Retain postcard varints for variable-size lengths and numeric fields.
   Avoid a cross-product of kinds for every metadata combination.
-- [x] **I5: Decide and implement the framing boundary.** Design kind-first messages without an outer message length using bounded schema-aware incremental decoding.
+- [x] **I5: Decide and implement the framing boundary.** Use a bounded four-byte length before the message kind and postcard payload.
   Require limits before allocation, an aggregate message budget, cancellation-safe partial state, and linear parsing across fragmented input.
   If this requires excessive permanent parser machinery, retain bounded length-delimited framing and record the reason and measured size cost here.
   Do not silently omit this decision when finishing the initial changes.
@@ -150,7 +150,7 @@ Update this section as work progresses; link tests, measurements, and any contin
 | Fail-closed recovery | Unknown kind followed by valid submit closes its connection, preserves the accepted prefix and terminal departure, and does not stop the listener | `host::tests::server_survives_malformed_and_abandoned_response_streams` |
 | Historical initial encoded sizes | Small no-blob submit: N+8 bytes (was N+17); receipt: 6 (was 14); delivery with 16-byte session: N+29 (was N+55); close/ack: 5 (was 13) | Initial comparison before numeric session IDs; present references and positions below 128, payload below 128, prior delivery also had a 16-byte author |
 | Current protocol-11 encoded sizes | Small no-blob submit: N+8 bytes; receipt: 6; application-event delivery: N+13; close/ack: 5 | `protocol::tests::event_sizes_cover_varint_boundaries_and_blob_presence`; one-byte numeric session ID, present references and positions below 128, payload below 128 |
-| Framing decision | Retain the four-byte outer length after the leading kind; no correlation ID. Unknown kinds fail immediately. | A schema-aware resumable parser would duplicate all message layouts; retrying postcard deserialization on partial input risks repeated parsing and allocation. The retained length costs four bytes per message and keeps bounded extraction independent of schemas. |
+| Framing decision | Place the four-byte outer length before the kind; no correlation ID. | The receiver validates the complete bound before reading the remaining frame. A schema-aware resumable parser would duplicate all message layouts; retrying postcard deserialization on partial input risks repeated parsing and allocation. |
 | Validation | Rust formatting, Clippy, rustdoc, workspace build and all-target/all-feature tests passed; policy and documentation checks passed; aggregate package/Fluid/Chromium tests passed | `cargo` canonical gates; `pnpm policy-check --path rust-service`; `pnpm --dir rust-service/tests/sea-integration-tests run test:all` (13 tasks) |
 | Fluid end-to-end | 691 passing, 493 pending, no failures; current-version `sea-websocket` selection with fail-fast disabled | Built `packages/test/test-end-to-end-tests` with `--task build:test:esm`, then ran `pnpm --dir packages/test/test-end-to-end-tests run test:realsvc:sea:report` |
 | API review | Removed fields and arguments are all `@internal`; generated reports updated; no customer-facing changeset or API Council review required | Compared against user-selected plan commit `03891e47514` |
@@ -159,8 +159,8 @@ Update this section as work progresses; link tests, measurements, and any contin
 
 ### Byte Accounting
 
-The current baseline is protocol 11 with numeric session IDs.
-The retained wire envelope is kind (one byte), length (four bytes), and postcard body.
+The current baseline is protocol 12 with length-first framing and numeric session IDs.
+The retained wire envelope is length (four bytes), kind (one byte), and postcard body.
 Length includes the kind and body, excluding the length itself.
 Let N be payload bytes, L the postcard width of N, P the delivered position width, S the numeric session-ID width, Q the submission/event reference width, and M the minimum-reference width.
 With present references and no blob, encoded sizes are:
