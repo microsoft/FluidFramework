@@ -327,8 +327,7 @@ export interface ISummaryGenerationOptions {
         readonly key: string;
         readonly summarize: (context: ISummaryGenerationContext) => IApplicationProjectionSummary;
     };
-    readonly forceFullTree?: boolean;
-    readonly fullTreeUntilFirstAck?: boolean;
+    readonly fullTreePolicy?: "default" | "untilFirstAck" | "always";
 }
 
 // @beta @legacy

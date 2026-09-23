@@ -12,8 +12,6 @@ export {
 	loadContainerRuntime,
 	loadContainerRuntimeAlpha,
 	type LoadContainerRuntimeParams,
-	type ISummaryGenerationOptions,
-	type ISummaryGenerationContext,
 	type IApplicationProjectionSummary,
 	agentSchedulerId,
 	ContainerRuntime,
@@ -58,6 +56,8 @@ export {
 	type IGCStats,
 } from "./gc/index.js";
 export {
+	type ISummaryGenerationOptions,
+	type ISummaryGenerationContext,
 	type IAckedSummary,
 	type ISummarizer,
 	type ISummarizeResults,

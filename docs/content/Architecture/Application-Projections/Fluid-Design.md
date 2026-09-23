@@ -158,8 +158,8 @@ This reference does not implement that broader native transport work.
 
 ## First full summary, then incremental native state
 
-Virtual loading paths do not exist in storage. `summaryGenerationOptions.fullTreeUntilFirstAck` therefore requests full
-structural native state, including GC, until a tracked full proposal is successfully adopted.
+Virtual loading paths do not exist in storage.
+Setting `summaryGenerationOptions.fullTreePolicy` to `"untilFirstAck"` therefore requests full structural native state, including GC, until a tracked full proposal is successfully adopted.
 
 Full tracked generation still records pending native baselines. `ContainerRuntime.refreshLatestSummaryAck` coordinates
 their adoption with the **matching proposal's GC state**, the actual accepted storage parent, and the application
@@ -168,7 +168,8 @@ ACK does not establish this baseline.
 
 Proposal-keyed state handles retries, delayed ACKs, and attempts at equal checkpoints. Duplicate ACKs do not promote
 application state twice. Errors during native/GC/application adoption fail closed rather than continue with inconsistent
-reuse baselines. The existing `forceFullTree` option remains an unconditional override; the example does not use it.
+reuse baselines. The alternative `"always"` policy requires full output for every summary; the example does not use it.
+The default policy preserves normal summary behavior, including explicit per-attempt full-tree requests.
 
 The lifecycle asserts that the same seed-loaded runtime's second accepted summary already contains native handles.
 This proves structural incremental reuse, not that the first full forest encoding has primed every SharedTree

@@ -33,15 +33,18 @@ export interface IGCSummaryTrackingData {
 	serializedGCState: string | undefined;
 	serializedTombstones: string | undefined;
 	serializedDeletedNodes: string | undefined;
-	/** The recovery request covered by this checkpoint, if a recovery GC run was completed. Not persisted. */
+	/**
+	 * The recovery request completed before this summary was generated, if any.
+	 * Not persisted.
+	 */
 	recoveryGeneration?: number;
 }
 
 /**
  * Encapsulates the garbage collection state that is tracked across summaries.
- * It maintains the GC state as per the latest summary in by the server. It updates state when a summary tracked by this
- * client is acked by the server or from a snapshot is downloaded from the server.
- * On summarize, it decides whether to write new state or re-use previous summary's state.
+ * Initializes state from the loaded snapshot and updates it when a summary tracked by this client is acknowledged.
+ * During summarization, it decides whether to write new state or reuse the previous summary's state.
+ * Proposal tracking applies to both full and incremental summaries, independently of whether handles can be reused.
  */
 export class GCSummaryStateTracker {
 	// Keeps track of the GC data from the latest summary successfully acked by the server.
@@ -230,8 +233,9 @@ export class GCSummaryStateTracker {
 	}
 
 	/**
-	 * Associate the generated GC state with the same proposal tracked by the native summarizer nodes.
+	 * Associate generated garbage-collection state with the same submitted proposal tracked by summarizer nodes.
 	 * Full summaries also participate, although they cannot reuse handles during generation.
+	 * The submitted capture is retained until its matching acknowledgment or a newer accepted proposal retires it.
 	 */
 	public completeSummary(proposalHandle: string, referenceSequenceNumber: number): void {
 		if (!this.configs.gcAllowed) {
@@ -244,13 +248,19 @@ export class GCSummaryStateTracker {
 		this.clearSummary();
 	}
 
-	/** Discard generation state without dropping submitted proposals that can still receive a late ACK. */
+	/**
+	 * Discard only the current generation's state.
+	 * Submitted proposals remain available for a delayed acknowledgment after a failed attempt or retry.
+	 */
 	public clearSummary(): void {
 		this.wipSummaryData = undefined;
 	}
 
 	/**
-	 * Called to refresh the latest summary state. This happens when a pending summary is acked.
+	 * Adopt the garbage-collection state captured for the acknowledged tracked proposal.
+	 * Retire older captures in the same order as summarizer nodes, and ignore untracked acknowledgments.
+	 *
+	 * @returns The recovery generation completed before this proposal was generated, if any.
 	 */
 	public async refreshLatestSummary(
 		result: IRefreshSummaryResult,
@@ -264,7 +274,7 @@ export class GCSummaryStateTracker {
 		assert(pending !== undefined, "Tracked GC summary must have matching proposal state");
 		this.latestSummaryData = pending.data;
 		this.pendingSummaries.delete(proposalHandle);
-		// Match the native summarizer nodes' retirement of older pending proposals.
+		// Match the summarizer nodes' retirement of older pending proposals.
 		for (const [handle, summary] of this.pendingSummaries) {
 			if (summary.referenceSequenceNumber < pending.referenceSequenceNumber) {
 				this.pendingSummaries.delete(handle);

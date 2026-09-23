@@ -39,8 +39,8 @@ Read the **@fluidframework/container-runtime** API documentation at <https://flu
 ## Summary generation and acceptance
 
 Summary generation distinguishes full output, state tracking, and adoption of an acknowledged proposal.
-Native state, garbage-collection state, and registered application projection callbacks must agree on the accepted parent
-before reusing summary handles.
+Runtime and distributed data structure (DDS) state, garbage-collection state, and application-provided content
+must refer to the same accepted summary before reusing its subtrees through summary handles.
 Full structural output does not imply a full GC reachability run.
 See [Summary Generation](Summary-Generation.md) for these generic runtime/GC contracts and their source/test map.
 [Application projections](../../../docs/content/Architecture/Application-Projections.md) are one use of these capabilities,

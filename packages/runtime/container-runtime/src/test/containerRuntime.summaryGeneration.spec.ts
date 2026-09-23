@@ -35,11 +35,14 @@ import {
 	ContainerRuntime,
 	loadContainerRuntime,
 	type IApplicationProjectionSummary,
-	type ISummaryGenerationContext,
-	type ISummaryGenerationOptions,
 } from "../containerRuntime.js";
 import { GarbageCollector } from "../gc/index.js";
-import { neverCancelledSummaryToken, type ISubmitSummaryOpResult } from "../summary/index.js";
+import {
+	neverCancelledSummaryToken,
+	type ISubmitSummaryOpResult,
+	type ISummaryGenerationContext,
+	type ISummaryGenerationOptions,
+} from "../summary/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- Inject native adoption failures without exporting a test-only runtime API.
 import { SummarizerNode } from "../summary/summarizerNode/summarizerNode.js";
 
@@ -152,6 +155,17 @@ describe("Runtime summary generation options", () => {
 
 	const untrackedSummary = { trackState: false, runGC: false };
 
+	// Invalid JavaScript inputs must not silently disable a required full-summary policy.
+	it("rejects unknown policy values before creating the runtime", async () => {
+		await assert.rejects(
+			createRuntime({
+				// @ts-expect-error -- Exercise the runtime boundary for a JavaScript caller.
+				fullTreePolicy: "sometimes",
+			}),
+			/Invalid full-tree summary policy/,
+		);
+	});
+
 	/** Submit through the real runtime so native and GC pending state are completed under the uploaded handle. */
 	async function submit(
 		fixture: Awaited<ReturnType<typeof createRuntime>>,
@@ -190,7 +204,7 @@ describe("Runtime summary generation options", () => {
 		const contexts: ISummaryGenerationContext[] = [];
 		const accepted: ISummaryContext[] = [];
 		const fixture = await createRuntime({
-			fullTreeUntilFirstAck: true,
+			fullTreePolicy: "untilFirstAck",
 			additionalRootTree: {
 				key: "application",
 				summarize: (context) => {
@@ -264,7 +278,7 @@ describe("Runtime summary generation options", () => {
 		});
 		const onAccepted = sandbox.spy();
 		const fixture = await createRuntime({
-			fullTreeUntilFirstAck: true,
+			fullTreePolicy: "untilFirstAck",
 			additionalRootTree: {
 				key: "application",
 				summarize: () => ({ summary: additionalTree(), onAccepted }),
@@ -285,12 +299,69 @@ describe("Runtime summary generation options", () => {
 		assert.equal(next.summaryTree.tree.gc?.type, SummaryType.Handle);
 	});
 
+	// A queued duplicate still blocks generation until its refresh finishes, but cannot repeat promotion.
+	it("serializes queued acknowledgments and keeps generation blocked through a duplicate refresh", async () => {
+		const firstGCStarted = new Deferred<void>();
+		const releaseGC = new Deferred<void>();
+		const duplicateStarted = new Deferred<void>();
+		const releaseDuplicate = new Deferred<void>();
+		const refreshNative = SummarizerNode.prototype.refreshLatestSummary;
+		let nativeCalls = 0;
+		sandbox.stub(SummarizerNode.prototype, "refreshLatestSummary").callsFake(async function (
+			this: SummarizerNode,
+			...args
+		) {
+			nativeCalls++;
+			if (nativeCalls === 2) {
+				duplicateStarted.resolve();
+				await releaseDuplicate.promise;
+			}
+			return refreshNative.apply(this, args);
+		});
+		const refreshGC = GarbageCollector.prototype.refreshLatestSummary;
+		const gc = sandbox
+			.stub(GarbageCollector.prototype, "refreshLatestSummary")
+			.callsFake(async function (this: GarbageCollector, ...args) {
+				firstGCStarted.resolve();
+				await releaseGC.promise;
+				return refreshGC.apply(this, args);
+			});
+		const onAccepted = sandbox.spy();
+		const fixture = await createRuntime({
+			fullTreePolicy: "untilFirstAck",
+			additionalRootTree: {
+				key: "application",
+				summarize: () => ({ summary: additionalTree(), onAccepted }),
+			},
+		});
+		await submit(fixture);
+		const first = accept(fixture, "summary-handle");
+		const duplicate = accept(fixture, "summary-handle");
+		await firstGCStarted.promise;
+		assert.equal(nativeCalls, 1);
+		assert.equal(onAccepted.callCount, 0);
+		releaseGC.resolve();
+		await first;
+		await duplicateStarted.promise;
+		assert.equal(onAccepted.callCount, 1);
+		await assert.rejects(
+			fixture.runtime.summarize(untrackedSummary),
+			/during summary acceptance/,
+		);
+		releaseDuplicate.resolve();
+		await duplicate;
+		assert.equal(gc.callCount, 1);
+		assert.equal(onAccepted.callCount, 1);
+		const next = await submit(fixture);
+		assert.equal(next.summaryTree.tree.gc?.type, SummaryType.Handle);
+	});
+
 	// A newer untracked ACK can refresh the storage cache, but never supplies this runtime's accepted baseline.
 	it("stays full after a newer remote ACK whose snapshot cannot be adopted", async () => {
 		const channels = sandbox.spy(ChannelCollection.prototype, "summarize");
 		const onAccepted = sandbox.spy();
 		const fixture = await createRuntime({
-			fullTreeUntilFirstAck: true,
+			fullTreePolicy: "untilFirstAck",
 			additionalRootTree: {
 				key: "application",
 				summarize: () => ({ summary: additionalTree(), onAccepted }),
@@ -327,7 +398,7 @@ describe("Runtime summary generation options", () => {
 			}
 			const onAccepted = sandbox.spy();
 			const fixture = await createRuntime({
-				fullTreeUntilFirstAck: true,
+				fullTreePolicy: "untilFirstAck",
 				additionalRootTree: {
 					key: "application",
 					summarize: () => ({ summary: additionalTree(), onAccepted }),
@@ -346,7 +417,7 @@ describe("Runtime summary generation options", () => {
 		let revision = 1;
 		const promoted: { revision: number; parent: ISummaryContext }[] = [];
 		const fixture = await createRuntime({
-			fullTreeUntilFirstAck: true,
+			fullTreePolicy: "untilFirstAck",
 			additionalRootTree: {
 				key: "application",
 				summarize: () => {
@@ -388,16 +459,16 @@ describe("Runtime summary generation options", () => {
 	});
 
 	// Both unconditional load-time policy and an individual fullTree request continue to override incremental reuse.
-	for (const forceFullTree of [false, true]) {
-		it(`respects explicit full-tree requests after adoption (forceFullTree ${forceFullTree})`, async () => {
+	for (const fullTreePolicy of ["default", "untilFirstAck", "always"] as const) {
+		it(`respects explicit full-tree requests after adoption (policy ${fullTreePolicy})`, async () => {
 			const channels = sandbox.spy(ChannelCollection.prototype, "summarize");
-			const fixture = await createRuntime({ fullTreeUntilFirstAck: true, forceFullTree });
-			await submit(fixture);
+			const fixture = await createRuntime({ fullTreePolicy });
+			await submit(fixture, true);
 			await accept(fixture, "summary-handle");
 			await submit(fixture, true);
 			assert.equal(channels.lastCall.args[0], true);
 			await submit(fixture);
-			assert.equal(channels.lastCall.args[0], forceFullTree);
+			assert.equal(channels.lastCall.args[0], fullTreePolicy === "always");
 		});
 	}
 
@@ -406,7 +477,7 @@ describe("Runtime summary generation options", () => {
 		const contexts: ISummaryGenerationContext[] = [];
 		const fixture = await createRuntime(
 			{
-				fullTreeUntilFirstAck: true,
+				fullTreePolicy: "untilFirstAck",
 				additionalRootTree: {
 					key: "application",
 					summarize: (context) => {
@@ -447,7 +518,7 @@ describe("Runtime summary generation options", () => {
 						},
 			);
 			const fixture = await createRuntime({
-				fullTreeUntilFirstAck: true,
+				fullTreePolicy: "untilFirstAck",
 				additionalRootTree: {
 					key: "application",
 					summarize: () => ({
@@ -469,17 +540,20 @@ describe("Runtime summary generation options", () => {
 		});
 	}
 
-	for (const forceFullTree of [undefined, false, true]) {
+	for (const fullTreePolicy of [undefined, "default", "untilFirstAck", "always"] as const) {
 		// Compare caller requests with the lifetime override at both native data-store and GC boundaries.
-		it(`propagates fullTree to native data stores and GC (load option ${forceFullTree})`, async () => {
+		it(`propagates fullTree to data stores and GC (load policy ${fullTreePolicy})`, async () => {
 			const channels = sandbox.spy(ChannelCollection.prototype, "summarize");
 			const gc = sandbox.spy(GarbageCollector.prototype, "summarize");
 			const { runtime } = await createRuntime(
-				forceFullTree === undefined ? undefined : { forceFullTree },
+				fullTreePolicy === undefined ? undefined : { fullTreePolicy },
 			);
 			for (const requestedFullTree of [undefined, false, true, false]) {
 				await runtime.summarize({ ...untrackedSummary, fullTree: requestedFullTree });
-				const expected = forceFullTree === true || requestedFullTree === true;
+				const expected =
+					fullTreePolicy === "always" ||
+					fullTreePolicy === "untilFirstAck" ||
+					requestedFullTree === true;
 				assert.equal(channels.lastCall.args[0], expected);
 				assert.equal(gc.lastCall.args[0], expected);
 			}
@@ -492,12 +566,15 @@ describe("Runtime summary generation options", () => {
 	it("retains the load-time policy and registration even if the input object changes", async () => {
 		const channels = sandbox.spy(ChannelCollection.prototype, "summarize");
 		const summarize = sandbox.spy(() => ({ summary: additionalTree() }));
-		const options = {
-			forceFullTree: true,
+		const options: {
+			fullTreePolicy: ISummaryGenerationOptions["fullTreePolicy"];
+			additionalRootTree: { key: string; summarize: () => IApplicationProjectionSummary };
+		} = {
+			fullTreePolicy: "always",
 			additionalRootTree: { key: "application", summarize },
 		};
 		const { runtime } = await createRuntime(options);
-		options.forceFullTree = false;
+		options.fullTreePolicy = "default";
 		options.additionalRootTree.key = ".channels";
 		options.additionalRootTree.summarize = sandbox.spy(() => {
 			throw new Error("Replacement must not be called");
@@ -514,7 +591,7 @@ describe("Runtime summary generation options", () => {
 		const gc = sandbox.spy(GarbageCollector.prototype, "summarize");
 		const summarize = sandbox.spy(() => ({ summary: additionalTree() }));
 		const { runtime, logger, uploadSummary } = await createRuntime({
-			forceFullTree: true,
+			fullTreePolicy: "always",
 			additionalRootTree: { key: "application", summarize },
 		});
 		uploadSummary.onFirstCall().rejects(new Error("Retry upload"));
@@ -825,10 +902,10 @@ describe("Runtime summary generation options", () => {
 	});
 
 	// Application code must honor the effective policy; invalid handles cannot escape into an uploaded summary.
-	for (const fullTreeUntilFirstAck of [false, true]) {
-		it(`rejects application handles without a reusable parent (full policy ${fullTreeUntilFirstAck})`, async () => {
+	for (const fullTreePolicy of ["default", "untilFirstAck", "always"] as const) {
+		it(`rejects application handles without a reusable parent (policy ${fullTreePolicy})`, async () => {
 			const { runtime } = await createRuntime({
-				fullTreeUntilFirstAck,
+				fullTreePolicy,
 				additionalRootTree: {
 					key: "application",
 					summarize: () => ({

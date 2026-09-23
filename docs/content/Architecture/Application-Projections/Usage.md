@@ -170,7 +170,7 @@ accepted summaries.
    `isNative`, `readSeed`, and `materialize`. Preserve source identity/checkpoint and retain required bytes for restore.
    Let ordinary loading process the operation suffix; do not replay it inside your converter.
 4. **Wire your native runtime factory.** Realize everything required for read-only projection before the factory
-   returns. Use `fullTreeUntilFirstAck` for projected loads, and register an `additionalRootTree` summary participant.
+   returns. Use `fullTreePolicy: "untilFirstAck"` for projected loads, and register an `additionalRootTree` summary participant.
 5. **Map model regions to projection parts.** Track dirtiness before encoding. Produce a complete tree when required;
    otherwise reuse unchanged parts only against the exact accepted parent supplied by the runtime. Promote captured
    revisions in `onAccepted`, not immediately after generation or upload.
@@ -180,7 +180,7 @@ accepted summaries.
 
 `IncrementalHtmlProjection` is the reference for step 5: two native subtrees map to two HTML subtrees. It returns a
 previous-summary handle before invoking an unchanged part's serializer. Native state becomes incremental after the
-first accepted full summary in the same runtime; an unconditional `forceFullTree` override is not needed for this flow.
+first accepted full summary in the same runtime; the `"always"` full-tree policy is not needed for this flow.
 
 The HTML example uses `reference-html-materialization/1` as its internal rule identity and retains `fluid-html-reference/2` as its independent SharedTree namespace.
 Neither is part of the external producer/reader contract.

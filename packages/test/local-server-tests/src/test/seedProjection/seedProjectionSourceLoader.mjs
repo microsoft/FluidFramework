@@ -112,6 +112,8 @@ if (process.env.SEED_TYPECHECK === "1") {
 		return (
 			file?.includes("/seedProjection/") ||
 			file?.endsWith("/container-runtime/src/containerRuntime.ts") ||
+			file?.endsWith("/container-runtime/src/summary/summaryGeneration.ts") ||
+			file?.endsWith("/container-runtime/src/summary/summaryGenerationTypes.ts") ||
 			file?.includes("/container-runtime/src/gc/") ||
 			file?.includes("/container-runtime/src/test/gc/") ||
 			file?.endsWith("/containerRuntime.summaryGeneration.spec.ts")

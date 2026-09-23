@@ -159,6 +159,9 @@ export class SeedBaselineMismatchError extends LoggingError {
 	/** Explicit capture failure, if capture was unavailable; never substitute an empty successful stash. */
 	public pendingCaptureError: unknown;
 
+	/**
+	 * Retain mismatch evidence for application recovery while excluding operation and pending payloads from telemetry.
+	 */
 	public constructor(
 		public readonly expected: ISeedBaselineDescriptor,
 		public readonly received: unknown,
@@ -198,6 +201,9 @@ function descriptorTelemetry(value: unknown): Record<string, string> {
  * no first-send flag, client-ID cache, or reliance on preserved inner compressed/grouped metadata.
  */
 export class SeedBaselineProtocol {
+	/**
+	 * Use the same immutable genesis descriptor for every outgoing packet and incoming comparison.
+	 */
 	public constructor(public readonly descriptor: ISeedBaselineDescriptor) {}
 
 	/** Preserve native metadata and reject a conflicting use of the reserved application metadata key. */

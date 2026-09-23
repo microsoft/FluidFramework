@@ -56,6 +56,10 @@ export class IncrementalHtmlProjection {
 	private accepted: IAcceptedProjection | undefined;
 	private readonly manifest: string | undefined;
 
+	/**
+	 * Subscribe to this view's changes and retain its opaque application metadata.
+	 * Local revisions become reusable only after the matching summary's acceptance callback runs.
+	 */
 	public constructor(
 		private readonly view: HtmlView,
 		private readonly onSerialize?: (part: HtmlPartId) => void,

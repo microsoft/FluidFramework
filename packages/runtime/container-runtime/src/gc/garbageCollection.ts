@@ -374,9 +374,12 @@ export class GarbageCollector implements IGarbageCollector {
 					state = "ran";
 				}
 			},
+			/**
+			 * Capture the recovery generation completed before this summary, not a later recovery request.
+			 */
 			generationForSummary: () => (state === "ran" ? generation : undefined),
 			onSummaryAck: (acceptedGeneration: number | undefined) => {
-				// An older proposal must not clear a recovery requested or run after its checkpoint.
+				// An older proposal must not clear a recovery requested or run after that summary was generated.
 				if (state === "ran" && acceptedGeneration === generation) {
 					state = undefined;
 				}
@@ -923,16 +926,24 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	/**
-	 * Called to refresh the latest summary state. This happens when either a pending summary is acked.
+	 * Associate generated garbage-collection state with the submitted proposal tracked by summarizer nodes.
+	 * This does not adopt the state; a matching acknowledgment must still be processed.
 	 */
 	public completeSummary(proposalHandle: string, referenceSequenceNumber: number): void {
 		this.summaryStateTracker.completeSummary(proposalHandle, referenceSequenceNumber);
 	}
 
+	/**
+	 * Discard only unsubmitted generation state, retaining proposals that can receive a delayed acknowledgment.
+	 */
 	public clearSummary(): void {
 		this.summaryStateTracker.clearSummary();
 	}
 
+	/**
+	 * Adopt the garbage-collection state captured for this tracked proposal.
+	 * Only its completed recovery generation can clear the matching automatic recovery request.
+	 */
 	public async refreshLatestSummary(
 		result: IRefreshSummaryResult,
 		proposalHandle: string,

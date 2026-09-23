@@ -81,6 +81,9 @@ function createDataStoreFactory(baseline: ISeedBaselineDescriptor): IFluidDataSt
 	 * Whole-store incremental handles retain the same immutable identity from the accepted parent.
 	 */
 	class HtmlDataStoreRuntime extends FluidDataStoreRuntime {
+		/**
+		 * Preserve ordinary channel summarization and add the immutable application identity with matching statistics.
+		 */
 		public override async summarize(
 			...args: Parameters<FluidDataStoreRuntime["summarize"]>
 		): Promise<ISummaryTreeWithStats> {
@@ -88,6 +91,9 @@ function createDataStoreFactory(baseline: ISeedBaselineDescriptor): IFluidDataSt
 			return appendIdentity(summary);
 		}
 
+		/**
+		 * Include the same identity through the synchronous attach-summary surface without initializing another channel.
+		 */
 		public override getAttachSummary(
 			...args: Parameters<FluidDataStoreRuntime["getAttachSummary"]>
 		): ISummaryTreeWithStats {
@@ -234,7 +240,7 @@ export function sampleRuntimeFactory(
 				},
 				provideEntryPoint: entryPoint,
 				summaryGenerationOptions: {
-					fullTreeUntilFirstAck: load.projected,
+					fullTreePolicy: load.projected ? "untilFirstAck" : "default",
 					additionalRootTree: {
 						key: projectionKey,
 						summarize: (context) => {

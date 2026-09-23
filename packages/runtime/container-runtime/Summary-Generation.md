@@ -1,24 +1,46 @@
 # Summary Generation and Acceptance
 
-This document describes generic ContainerRuntime and garbage-collection (GC) summary behavior.
-The contracts do not depend on an application format, manifest, schema, or method of constructing the loaded state.
-Application-owned projection callbacks participate in the same acceptance lifecycle without changing GC's responsibility.
+This document describes existing summary mechanisms and the changes added to support application projections.
+ContainerRuntime combines distributed data structure (DDS) subtrees, runtime metadata,
+and garbage-collection (GC) state into a summary.
+An application can also provide a callback that adds its own content, such as HTML, as another summary subtree.
+That content is an **application projection**; see [its callback contract](#application-projection-participation).
+
+## Existing mechanisms and changes
+
+| Area                | Existing mechanism                                                                                          | Change described here                                                                                       |
+| ------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Summary output      | Full summaries include complete trees; incremental summaries can reference unchanged subtrees with handles. | A load-time policy controls when full output is required.                                                   |
+| Summary tracking    | Summarizer nodes track proposals and accept their state after acknowledgment.                               | GC state is also associated with each submitted proposal, including full summaries.                         |
+| GC recovery         | Recovery requests a full GC run and waits for its summary acknowledgment.                                   | Recovery generations prevent an older acknowledgment from clearing a newer request.                         |
+| Application content | DDSs provide their summary subtrees.                                                                        | A new callback adds an application subtree and updates its reuse state after the same proposal is accepted. |
+
+The GC tracking and recovery changes are general runtime corrections, not special handling enabled only for seed files.
+They form a prerequisite review boundary separate from the application callback and example application.
+The remaining sections describe the resulting behavior, rather than implying that all of it existed before these changes.
 
 ## Full output, tracking, and accepted parents
 
-A summary handle references a path in a particular stored parent.
+A summary handle references a subtree or blob path in a previously stored summary, called the parent.
 It is valid only when the content being reused matches the state captured for that parent.
-Loaded state whose native paths do not exist in storage needs complete structural output before those paths can be reused.
+A summary describes the document after processing operations through its reference sequence number.
 
-`ISummaryGenerationOptions` separates two policies from summary scheduling:
+An application can construct DDS state from application content instead of loading DDS subtrees from a stored summary.
+In that case, the generated DDS summary paths do not yet exist in storage.
+The first accepted summary must write those trees before later summaries can reuse them by handle.
+See the [application loading example][application-design] for this use of the general full-output policy.
 
-- `forceFullTree` requests full structural output for the runtime's lifetime.
-- `fullTreeUntilFirstAck` requests full structural output
-  until this runtime's tracked full proposal is acknowledged and successfully adopted.
+`ISummaryGenerationOptions.fullTreePolicy` selects one of three policies, separate from summary scheduling:
 
-An explicit full-tree request also remains effective.
-`ContainerRuntime.getEffectiveFullTree()` combines these inputs
-and propagates the result to native descendants, GC serialization, and any application projection callback.
+| Value                    | Behavior                                                                                    |
+| ------------------------ | ------------------------------------------------------------------------------------------- |
+| `"default"` (or omitted) | Use normal summary behavior, including incremental subtree reuse when possible.             |
+| `"untilFirstAck"`        | Require full output until this runtime's tracked full proposal is acknowledged and adopted. |
+| `"always"`               | Require full output for the runtime's lifetime.                                             |
+
+An explicit per-attempt `fullTree: true` request remains effective with any policy.
+`shouldProduceFullSummary()` in [summary generation](src/summary/summaryGeneration.ts) evaluates the request and policy.
+The runtime propagates the result to data-store and DDS summaries, GC serialization, and any application projection callback.
 Unconditional forcing is not cleared by acceptance.
 
 `fullTree` controls the representation written to storage, not whether the attempt is tracked.
@@ -51,11 +73,11 @@ The tracker therefore keeps three states:
 | Submitted proposals | `completeSummary(proposalHandle, referenceSequenceNumber)` captures a proposal in `pendingSummaries`. | Acknowledgment identifies exactly which generated state to adopt.   |
 | Accepted baseline   | `refreshLatestSummary(result, proposalHandle)` adopts the matching tracked proposal.                  | Incremental comparisons and `/gc` handles describe the same parent. |
 
-ContainerRuntime invokes completion and cleanup alongside native summarizer-node hooks.
+ContainerRuntime invokes completion and cleanup alongside summarizer-node hooks.
 Cleanup removes only work in progress; submitted proposals remain eligible for delayed acknowledgments.
 Proposal handles distinguish attempts at the same reference sequence number.
-Retirement removes older-checkpoint proposals consistently with native tracking,
-not another proposal merely because its checkpoint is equal.
+Retirement removes proposals with older reference sequence numbers consistently with summarizer-node tracking,
+not another proposal merely because its reference sequence number is equal.
 
 ## Coordinated acceptance
 
@@ -63,8 +85,8 @@ not another proposal merely because its checkpoint is equal.
 A new generation is blocked while acceptance is in progress.
 For a locally tracked proposal it:
 
-1. Refreshes native summarizer nodes.
-2. Verifies the captured generation matches the proposal and checkpoint.
+1. Refreshes summarizer nodes.
+2. Verifies the captured generation matches the proposal and reference sequence number.
 3. Refreshes that proposal's GC state.
 4. Records the accepted parent: proposal handle, acknowledgment handle, and reference sequence number.
 5. Invokes that proposal's optional synchronous application acceptance callback.
@@ -74,8 +96,9 @@ A remote or untracked acknowledgment does not manufacture a local baseline.
 The existing fetch-latest/close handling remains applicable to a newer remote summary.
 Duplicate acknowledgments cannot promote an already-adopted application callback again.
 
-If native, GC, or application adoption fails, the runtime closes rather than continuing with inconsistent reuse state.
-This is fail-closed coordination, not transactional rollback of already-adopted native state.
+If summarizer-node, GC, or application adoption fails,
+the runtime closes rather than continuing with inconsistent reuse state.
+This is fail-closed coordination, not transactional rollback of state already adopted by summarizer nodes.
 
 ## Recovery generations
 
@@ -90,17 +113,18 @@ The mechanism coordinates persistence and recovery; it does not introduce a new 
 
 ## Application projection participation
 
-`additionalRootTree` registers an application-selected root key and a synchronous callback.
+`ISummaryGenerationOptions.additionalRootTree` registers a synchronous callback
+and the name of the application-provided summary subtree.
 The callback receives `ISummaryGenerationContext`,
-including the checkpoint, effective full-tree/tracking policy, and exact accepted parent.
+including the reference sequence number, effective full-tree/tracking policy, and exact accepted parent.
 It returns `IApplicationProjectionSummary`:
 an opaque application-owned tree and an optional proposal-specific `onAccepted` callback.
-The runtime requires no manifest, content-format identity, or predetermined root key.
+The runtime treats the subtree's content as opaque.
 
 Capture cannot mutate shared state or perform asynchronous work.
 The factory must realize required state before summary generation, including on summarizer clients.
 Acceptance promotes state captured for that proposal, not current mutable state.
-The callback still runs when native descendants reuse handles;
+The callback still runs when data-store or DDS subtrees reuse handles;
 full output or a missing valid parent prohibits application handles.
 
 See the [application projection design][application-design] for one consumer of this contract.
@@ -110,9 +134,11 @@ GC tracking remains independent of that application.
 
 ## Source and regression map
 
-| Source                                                        | Responsibility                                                                       | Focused coverage                                                                                                                                                                                                               |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [`containerRuntime.ts`](src/containerRuntime.ts)              | Generation policy, root participation, proposal capture, and coordinated acceptance. | [`containerRuntime.summaryGeneration.spec.ts`](src/test/containerRuntime.summaryGeneration.spec.ts): retries, delayed adoption, remote/duplicate acknowledgments, explicit full requests, callbacks, and handle preconditions. |
-| [`gcSummaryStateTracker.ts`](src/gc/gcSummaryStateTracker.ts) | Full tracked capture, submitted proposals, and accepted GC state.                    | [`gcSummaryStateTracker.spec.ts`](src/test/gc/gcSummaryStateTracker.spec.ts): adopt A after B and abandoned/untracked work, then independently adopt B.                                                                        |
-| [`garbageCollection.ts`](src/gc/garbageCollection.ts)         | Forward policy/proposal identity and correlate recovery.                             | [`garbageCollection.spec.ts`](src/test/gc/garbageCollection.spec.ts): early/older recovery acknowledgments retain the request; the matching accepted generation clears it.                                                     |
-| [`gcDefinitions.ts`](src/gc/gcDefinitions.ts)                 | Runtime/GC completion, cleanup, and proposal-aware refresh contract.                 | The runtime and GC suites exercise the shared lifecycle without depending on a content format.                                                                                                                                 |
+| Source                                                               | Responsibility                                                              | Focused coverage                                                                                                                                                                                                               |
+| -------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`summaryGenerationTypes.ts`](src/summary/summaryGenerationTypes.ts) | Summary policy, callback context, and generation options.                   | Package type and API-report checks verify the exported contracts.                                                                                                                                                              |
+| [`summaryGeneration.ts`](src/summary/summaryGeneration.ts)           | Policy evaluation, proposal bookkeeping, and application acceptance.        | [`containerRuntime.summaryGeneration.spec.ts`](src/test/containerRuntime.summaryGeneration.spec.ts): retries, delayed adoption, remote/duplicate acknowledgments, explicit full requests, callbacks, and handle preconditions. |
+| [`containerRuntime.ts`](src/containerRuntime.ts)                     | Connects summary generation and acceptance to runtime/DDS summaries and GC. | The runtime summary tests exercise the public loading and summarization paths, including cleanup failure telemetry.                                                                                                            |
+| [`gcSummaryStateTracker.ts`](src/gc/gcSummaryStateTracker.ts)        | Full tracked capture, submitted proposals, and accepted GC state.           | [`gcSummaryStateTracker.spec.ts`](src/test/gc/gcSummaryStateTracker.spec.ts): adopt A after B and abandoned/untracked work, then independently adopt B.                                                                        |
+| [`garbageCollection.ts`](src/gc/garbageCollection.ts)                | Forward policy/proposal identity and correlate recovery.                    | [`garbageCollection.spec.ts`](src/test/gc/garbageCollection.spec.ts): early/older recovery acknowledgments retain the request; the matching accepted generation clears it.                                                     |
+| [`gcDefinitions.ts`](src/gc/gcDefinitions.ts)                        | Runtime/GC completion, cleanup, and proposal-aware refresh contract.        | The runtime and GC suites exercise the shared lifecycle without depending on a content format.                                                                                                                                 |
