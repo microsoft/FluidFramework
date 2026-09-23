@@ -26,18 +26,32 @@ import { normalizeProtocolError, throwProtocolError } from "./common.js";
 import { Guest } from "./guest.js";
 import { Host } from "./host.js";
 
-/** The ports and test controls for one Host and Guest session. */
+/**
+ * The ports and test controls for one Host and Guest session.
+ *
+ * @typeParam TInterop - The test controls for the session's transport.
+ */
 export interface SessionPorts<TInterop> {
+	/** The port that the Host owns. */
 	readonly hostPort: MessagePort;
+	/** The port that the Guest owns. */
 	readonly guestPort: MessagePort;
+	/** The controls that the test uses to manage message delivery. */
 	readonly interop: TInterop;
+	/** Releases transport resources that the Host and the Guest do not own. */
 	dispose(): void;
 }
 
-/** A function that builds the ports and test controls for one session. */
+/**
+ * A function that builds the ports and test controls for one session.
+ *
+ * @typeParam TInterop - The test controls for the session's transport.
+ */
 export type SessionPortsBuilder<TInterop> = () => SessionPorts<TInterop>;
 
-/** Builds a direct channel between the Host and the Guest. */
+/**
+ * Builds a direct channel between the Host and the Guest.
+ */
 export function buildDirectSessionPorts(): SessionPorts<undefined> {
 	const channel = new MessageChannel();
 	return {
@@ -48,13 +62,19 @@ export function buildDirectSessionPorts(): SessionPorts<undefined> {
 	};
 }
 
-/** Ports that let a test send messages to each participant independently. */
+/**
+ * Ports that let a test send messages to each participant independently.
+ */
 export interface IsolatedPortControls {
+	/** Sends a test message to the Host. */
 	readonly sendToHost: MessagePort;
+	/** Sends a test message to the Guest. */
 	readonly sendToGuest: MessagePort;
 }
 
-/** Builds separate channels that let a test send messages to each participant. */
+/**
+ * Builds separate channels that let a test send messages to each participant.
+ */
 export function buildIsolatedSessionPorts(): SessionPorts<IsolatedPortControls> {
 	const hostChannel = new MessageChannel();
 	const guestChannel = new MessageChannel();
@@ -72,12 +92,21 @@ export function buildIsolatedSessionPorts(): SessionPorts<IsolatedPortControls> 
 	};
 }
 
+/**
+ * A validated string-array schema configuration for sandbox tests.
+ */
 export const stringArrayConfig = new TreeViewConfiguration({
 	schema: StringArray,
 	enableSchemaValidation: true,
 });
 const schemaFactory = new SchemaFactory("sandboxing");
+/**
+ * A schema for arrays of Fluid handles in sandbox tests.
+ */
 export class HandleArray extends schemaFactory.array("HandleArray", schemaFactory.handle) {}
+/**
+ * A validated handle-array schema configuration for sandbox tests.
+ */
 export const handleArrayConfig = new TreeViewConfiguration({
 	schema: HandleArray,
 	enableSchemaValidation: true,
@@ -85,7 +114,11 @@ export const handleArrayConfig = new TreeViewConfiguration({
 
 const activeTeardowns = new Set<() => void>();
 
-/** Disposes sessions created by tests in the current file. */
+/**
+ * Disposes sessions created by tests in the current file.
+ *
+ * @param ignoreErrors - Whether disposal errors should be ignored.
+ */
 export function disposeActiveSessions(ignoreErrors: boolean): void {
 	for (const teardown of [...activeTeardowns]) {
 		try {
@@ -98,12 +131,28 @@ export function disposeActiveSessions(ignoreErrors: boolean): void {
 	}
 }
 
-/** Sets up a Host, Guest, and peer with a string-array initial state. */
+/**
+ * Sets up a Host, Guest, and peer with a string-array initial state and a direct message channel.
+ *
+ * @param initialState - The initial state of the shared tree.
+ * @returns The session components and teardown function.
+ */
 export function setup(initialState: string[]) {
 	return setupCustom(initialState, stringArrayConfig, buildDirectSessionPorts);
 }
 
-/** Sets up a Host, Guest, and peer with the given schema and session ports. */
+/**
+ * Sets up a Host, Guest, and peer with the given initial state, schema, and session ports.
+ *
+ * @param initialState - The initial state of the shared tree.
+ * @param config - The schema configuration for the shared tree.
+ * @param sessionPortsBuilder - A function that builds the ports and test controls.
+ * @param logging - Whether to enable diagnostic logging.
+ * @param handleProtocolError - A function that handles protocol errors.
+ * @returns The session components and test controls.
+ * @typeParam TInterop - The test controls for the session's transport.
+ * @typeParam TSchema - The schema of the shared tree.
+ */
 export function setupCustom<TInterop, const TSchema extends ImplicitFieldSchema>(
 	initialState: InsertableTreeFieldFromImplicitField<TSchema>,
 	config: TreeViewConfiguration<TSchema>,
