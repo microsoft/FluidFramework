@@ -167,12 +167,6 @@ export class SpecializedNodeShapeEncoder
 	public constructor(
 		private readonly base: NodeShapeBasedEncoder,
 		public readonly fieldOverrides: readonly KeyedFieldEncoder[],
-		/**
-		 * If provided, replaces the resolved base's value shape on the wire. Wrapping in an
-		 * object distinguishes "no override" (omit) from an override to a specific shape
-		 * including `undefined` (the implicit-prefix encoding).
-		 */
-		public readonly valueOverride?: { readonly value: EncodedValueShape },
 	) {
 		super();
 		const overrideMap = new Map(fieldOverrides.map((override) => [override.key, override]));
@@ -191,7 +185,7 @@ export class SpecializedNodeShapeEncoder
 		}
 		this.inner = new NodeShapeBasedEncoder(
 			base.type,
-			valueOverride === undefined ? base.value : valueOverride.value,
+			base.value,
 			mergedFields,
 			base.otherFieldsEncoder,
 		);
@@ -212,18 +206,12 @@ export class SpecializedNodeShapeEncoder
 		const baseIndex =
 			shapes.valueToIndex.get(this.base) ??
 			fail("SpecializedNodeShapeEncoder: base shape missing from shapes table");
-		const f: {
-			base: number;
-			fields: EncodedFieldShape[];
-			value?: EncodedValueShape;
-		} = {
-			base: baseIndex,
-			fields: encodeFieldShapes(this.fieldOverrides, identifiers, shapes) ?? [],
+		return {
+			f: {
+				base: baseIndex,
+				fields: encodeFieldShapes(this.fieldOverrides, identifiers, shapes) ?? [],
+			},
 		};
-		if (this.valueOverride !== undefined) {
-			f.value = this.valueOverride.value;
-		}
-		return { f };
 	}
 
 	public countReferencedShapesAndIdentifiers(

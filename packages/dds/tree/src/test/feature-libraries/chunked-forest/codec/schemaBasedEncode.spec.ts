@@ -515,6 +515,21 @@ describe("schemaBasedEncoding", () => {
 			});
 		});
 
+		it("removes the field with the most distinct values when no specialization saves bytes", () => {
+			// Field 0 has 50 values, each repeated twice, so it passes the "repeated value" filter.
+			// With both fields selected, each node group has only 2 instances and saves fewer bytes
+			// than its shape costs. Without field 0, all nodes form one worthwhile node group.
+			const decision = chooseSpecialization(
+				2,
+				countNodes(Array.from({ length: 100 }, (_, i) => [i % 50, "Arial"])),
+			);
+			assert.deepEqual(decision, {
+				selectedFieldIndices: [1],
+				specializedGroups: [["Arial"]],
+				polymorphic: false,
+			});
+		});
+
 		it("specializes several worthwhile node groups into a polymorphic type", () => {
 			const decision = chooseSpecialization(
 				1,
