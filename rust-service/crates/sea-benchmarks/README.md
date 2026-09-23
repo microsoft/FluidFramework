@@ -14,7 +14,9 @@ Local WebSocket is unencrypted; WebTransport includes QUIC/TLS with certificate 
 It recognizes explicit `#[cfg(test)]` modules and attributes ending in `test`, including `#[tokio::test]`; it does not evaluate complex conditional compilation expressions.
 The Node collector combines those spans with test-path classification and cloc counts.
 
-Build the tools with `cargo build --release -p sea-benchmarks --bins` and test their local fixtures with `cargo test -p sea-benchmarks --bins`.
+Build and stage the tools with `bash scripts/build-benchmark-artifacts.sh` from `rust-service/`.
+The script uses Cargo's configured target directory for intermediate artifacts and copies only final executables to this worktree's `target/release` directory.
+Test their local fixtures with `cargo test -p sea-benchmarks --bins`.
 
 ## Local Storage Pipeline
 
@@ -30,7 +32,7 @@ Tokio uses one async worker, with blocking workers available for file I/O; no CP
 The output is specific to this binary, not the general harness schema below.
 
 ```bash
-cargo build --release -p sea-benchmarks --bin storage-pipeline --locked
+bash scripts/build-benchmark-artifacts.sh
 timeout 180s target/release/storage-pipeline durable-file 64 128 target/storage-pipeline-data
 ```
 
