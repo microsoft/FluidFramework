@@ -434,6 +434,14 @@ impl ReferenceableStore for MemoryEventArchive {
 
 #[async_trait]
 impl Archive for MemoryEventArchive {
+    fn observe_invalidation(
+        &self,
+        _callback: sea_core::storage::InvalidationCallback<Self::Error>,
+    ) -> Option<sea_core::storage::InvalidationRegistration> {
+        // Independent memory owners remain valid; factory shutdown does not invalidate them.
+        Some(sea_core::storage::InvalidationRegistration::never_invalidates())
+    }
+
     type Position = EventPosition;
     type Item = CommittedEvent;
     type Append = Event;

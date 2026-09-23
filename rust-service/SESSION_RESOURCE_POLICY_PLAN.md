@@ -2,7 +2,9 @@
 
 Created: 2026-09-23.
 Revised: 2026-09-23 to separate cache performance, wrapper overhead, lifecycle controls, and resource policy.
-Status: checkpoint 0 authorized from `852551e68182da4c7fca02c65a9b79351d055d2a`; later checkpoints are not authorized by this update.
+Status: checkpoints 0 and 1 completed; checkpoint 1 used approved base `c41a02a33d5ec09f737b912e6b60d0eae1f88ecb`.
+The user accepted the checkpoint-1 performance tradeoff and missing-raw-evidence exceptions on 2026-09-23; required validation and independent review passed.
+Checkpoints 2 through 5 are not authorized.
 Decisions, frozen measurements, validation, and review are tracked in the cumulative [implementation report](SESSION_RESOURCE_POLICY_IMPLEMENTATION_REPORT.md).
 Historical comparison baseline: `6231d99841a116edc0827ad9c37d1c4bf392f4f3`.
 Implementation starts from an explicitly recorded, approved revision of `rust-service`, not from the live-buffer experiment.
@@ -296,8 +298,8 @@ Do not copy code into main merely to delete it in a subsequent checkpoint.
 
 ## Implementation Checkpoints
 
-Checkpoint 0 is authorized; its progress is recorded in the cumulative implementation report.
-Checkpoints 1 through 5 remain not started.
+Checkpoints 0 and 1 are complete; decisions, evidence limitations, performance exceptions, validation, and review are recorded in the cumulative implementation report.
+Checkpoints 2 through 5 remain not started.
 Commit each coherent stage only after its exit checks, applicable canonical validation, and independent review pass; record authorization before making commits.
 Keep incomplete paths opt-in and preserve a baseline path for comparison.
 Do not add the next layer to rescue an unexplained regression in the current layer.

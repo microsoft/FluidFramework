@@ -14,9 +14,29 @@ Local WebSocket is unencrypted; WebTransport includes QUIC/TLS with certificate 
 It recognizes explicit `#[cfg(test)]` modules and attributes ending in `test`, including `#[tokio::test]`; it does not evaluate complex conditional compilation expressions.
 The Node collector combines those spans with test-path classification and cloc counts.
 
-Build and stage the tools with `bash scripts/build-benchmark-artifacts.sh` from `rust-service/`.
-The script uses Cargo's configured target directory for intermediate artifacts and copies only final executables to this worktree's `target/release` directory.
+Build and stage the tools with `CARGO_TARGET_DIR=/path/to/source-specific-target bash scripts/build-benchmark-artifacts.sh` from `rust-service/`.
+The script requires an explicit target directory and copies only final executables to this worktree's `target/release` directory.
 Test their local fixtures with `cargo test -p sea-benchmarks --bins`.
+
+### Aligned Checkpoint Measurements
+
+Native worker results include all successful application-observer delivery timestamps, including warmup and drain, anchored once to the host epoch with a monotonic clock.
+`benchmark-stress.mjs` brackets each CPU sample and counts deliveries in the exact half-open interval between the first and last measured CPU sample midpoints.
+Only `aligned.serviceCpuSecondsPerDeliveredOperation` uses that aligned denominator.
+Raw throughput, latency, backlog, and generator CPU remain separate observations.
+The runner rejects missing timestamp schemas, clock discrepancies or sample brackets above 2 ms, and endpoint ambiguity above 1% of aligned deliveries.
+Optional `serverBinary` and `generatorBinary` configuration paths select validated executable files from independently built source snapshots.
+`liveCache` controls and checks the experimental server marker.
+
+`checkpoint-no-reader` is a direct `LocalSequencer` fixture with 32 documents, no subscriptions during writes, four generator-equivalent shards, serial writes per document, and exact finite replay after measurement.
+It offers 1,000 64-byte operations/s for 3 seconds warmup and 10 seconds measurement, with at most 10 seconds to drain.
+The baseline build uses default APIs; the candidate build enables the benchmark-only `checkpoint-live-cache` feature.
+The same source, pacing, acknowledgment timestamps, and replay checks apply to both builds.
+`benchmark-no-reader.mjs` samples the complete fixture process on the eight service CPUs; identical pacing overhead is included on both sides, unlike the separate network generators.
+It applies the same aligned CPU interval, 120-second deadline, 250-ms RSS sampler, and 4-GiB guard.
+Candidate no-reader allocation observations report exact `LiveCacheStats` fields, not inferred allocation counts.
+`checkpoint1-pairs.mjs ARTIFACT_DIRECTORY CELL` runs three alternating pairs and stops on a blocking gate; controls require a passed primary summary.
+The cumulative implementation report freezes the comparison source, commands, complete matrix, and unchanged acceptance thresholds.
 
 ## Local Storage Pipeline
 
@@ -32,7 +52,7 @@ Tokio uses one async worker, with blocking workers available for file I/O; no CP
 The output is specific to this binary, not the general harness schema below.
 
 ```bash
-bash scripts/build-benchmark-artifacts.sh
+CARGO_TARGET_DIR=/path/to/source-specific-target bash scripts/build-benchmark-artifacts.sh
 timeout 180s target/release/storage-pipeline durable-file 64 128 target/storage-pipeline-data
 ```
 

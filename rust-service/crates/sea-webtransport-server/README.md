@@ -15,10 +15,16 @@ cargo run -p sea-webtransport-server -- \
 | --- | --- | --- |
 | `SEA_STORAGE_MODE` | `memory`, `buffered-file`, `durable-file` | `durable-file` |
 | `SEA_MAX_CONNECTIONS` | Integer from 1 through 4096 | 16 per listener |
+| `SEA_EXPERIMENTAL_LIVE_CACHE` | Exactly `true` or `false` | `false` |
 
 Invalid connection limits fail startup; `MAX_CONNECTIONS` reports the effective value.
 Limits apply independently to QUIC and WebSocket and do not bound total memory or guarantee throughput.
 An optional fifth argument is a shutdown-marker path used by process harnesses.
+Explicit live-cache activation prints `EXPERIMENTAL_LIVE_CACHE=true`.
+It configures document recovery for all backend modes and both transports without changing clients.
+`BuiltInSeaHost::new_with_live_cache` exposes the same opt-in to library callers; existing constructors remain disabled.
+This experiment has unbounded stalled-reader retention and is not a production resource policy.
+Invalid activation values fail startup rather than silently selecting a default.
 
 On startup the process prints `WEBTRANSPORT_URL`, `CERTIFICATE_SHA256`, `STORAGE_MODE`, and `PROTOCOL=sea`.
 Clients connect to the printed `/sea` URL and pin the printed SHA-256 certificate digest.

@@ -24,6 +24,8 @@ type DocumentRuntimes<Storage> =
 
 /// Serializes lazy runtime recovery within one backend namespace.
 struct DocumentRegistry<Storage: sea_core::storage::SeaStorage> {
+    /// Explicit opening-level experiment, never enabled by the default constructors.
+    live_cache: bool,
     /// Factory retaining the backend namespace independently of active views.
     storage: Arc<Storage>,
     /// Serializes first recovery; failed attempts are never cached.
@@ -33,7 +35,13 @@ struct DocumentRegistry<Storage: sea_core::storage::SeaStorage> {
 impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage> {
     /// Creates an empty cache over one backend namespace.
     fn new(storage: Storage) -> Self {
+        Self::with_live_cache(storage, false)
+    }
+
+    /// Selects the experiment independently of backend durability and session policy.
+    fn with_live_cache(storage: Storage, live_cache: bool) -> Self {
         Self {
+            live_cache,
             storage: Arc::new(storage),
             documents: Arc::new(Mutex::new(BTreeMap::new())),
         }
@@ -43,11 +51,15 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
     async fn create(&self) -> Result<sea_core::storage::DocumentId, protocol::Response> {
         let mut documents = self.documents.clone().lock_owned().await;
         let storage = self.storage.clone();
+        let live_cache = self.live_cache;
         storage_worker(async move {
             let (id, view) = storage.create_view().await.map_err(error_response)?;
-            let runtime = sea_sequencer::session::LocalSequencer::recover(view)
-                .await
-                .map_err(error_response)?;
+            let runtime = if live_cache {
+                sea_sequencer::session::LocalSequencer::recover_with_live_cache(view).await
+            } else {
+                sea_sequencer::session::LocalSequencer::recover(view).await
+            }
+            .map_err(error_response)?;
             documents.insert(id.as_bytes().to_vec(), runtime);
             Ok(id)
         })
@@ -64,6 +76,7 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
             return Ok(runtime.clone());
         }
         let storage = self.storage.clone();
+        let live_cache = self.live_cache;
         let id = id.clone();
         storage_worker(async move {
             let view = storage
@@ -71,9 +84,12 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
                 .await
                 .map_err(error_response)?
                 .ok_or_else(|| rejected("document does not exist"))?;
-            let runtime = sea_sequencer::session::LocalSequencer::recover(view)
-                .await
-                .map_err(error_response)?;
+            let runtime = if live_cache {
+                sea_sequencer::session::LocalSequencer::recover_with_live_cache(view).await
+            } else {
+                sea_sequencer::session::LocalSequencer::recover(view).await
+            }
+            .map_err(error_response)?;
             documents.insert(id.as_bytes().to_vec(), runtime.clone());
             Ok(runtime)
         })
@@ -263,15 +279,29 @@ impl BuiltInSeaHost {
     /// Creates an empty archive registry rooted at `root`.
     #[must_use]
     pub fn new(root: PathBuf, mode: StorageMode) -> Self {
+        Self::new_with_live_cache(root, mode, false)
+    }
+
+    /// Selects the experimental shared live cache for every recovered document.
+    ///
+    /// This is a benchmark opt-in, not a production resource policy.
+    /// Stalled subscriptions can retain unbounded history until closed or revoked.
+    #[must_use]
+    pub fn new_with_live_cache(root: PathBuf, mode: StorageMode, enabled: bool) -> Self {
         Self::with_initializer(move || {
             let root = root.join("documents");
             Ok(match mode {
-                StorageMode::Memory => Arc::new(DocumentRegistry::new(MemoryStorage::new())),
-                StorageMode::BufferedFile => Arc::new(DocumentRegistry::new(
-                    FileStorage::open(root).map_err(error_response)?,
+                StorageMode::Memory => Arc::new(DocumentRegistry::with_live_cache(
+                    MemoryStorage::new(),
+                    enabled,
                 )),
-                StorageMode::DurableFile => Arc::new(DocumentRegistry::new(
+                StorageMode::BufferedFile => Arc::new(DocumentRegistry::with_live_cache(
+                    FileStorage::open(root).map_err(error_response)?,
+                    enabled,
+                )),
+                StorageMode::DurableFile => Arc::new(DocumentRegistry::with_live_cache(
                     DurableStorage::open(root).map_err(error_response)?,
+                    enabled,
                 )),
             })
         })
@@ -664,6 +694,59 @@ mod tests {
         LivenessPolicy, SeaServiceHost, ShutdownDisposition, ShutdownMode, TransportConfig,
         WebTransportServer,
     };
+
+    /// Exercises real file invalidation through experimental document recovery, without polling.
+    async fn assert_cache_shutdown<Storage: sea_core::storage::SeaStorage + 'static>(
+        storage: Storage,
+    ) {
+        let registry = DocumentRegistry::with_live_cache(storage, true);
+        let id = registry.create().await.unwrap();
+        let runtime = registry.open(&id).await.unwrap();
+        let author = runtime.open_session(None).await.unwrap();
+        let mut live = author.read(None, None);
+        let unpolled = author.read(None, None);
+        assert!(matches!(
+            live.next().await.unwrap().unwrap(),
+            sea_core::MonitoredStreamItem::Progress(_)
+        ));
+        author
+            .submit(EventSubmission {
+                reference: None,
+                event: Event {
+                    payload: Bytes::from_static(b"retained"),
+                    blob_tree: None,
+                },
+            })
+            .await
+            .unwrap();
+        assert_eq!(runtime.live_cache_stats().unwrap().entries, 1);
+        registry.storage.shutdown().await.unwrap();
+        let stats = runtime.live_cache_stats().unwrap();
+        assert_eq!(
+            (stats.subscriptions, stats.entries, stats.payload_bytes),
+            (0, 0, 0)
+        );
+        assert!(matches!(
+            live.next().await.unwrap(),
+            Err(sea_sequencer::session::SessionError::StorageInvalidated(_))
+        ));
+        drop(unpolled);
+    }
+
+    #[tokio::test]
+    async fn experimental_file_registry_shutdown_releases_cache_without_subscriber_polling() {
+        let root = std::path::PathBuf::from("target")
+            .join(format!("cache-registry-{}", std::process::id()));
+        assert_cache_shutdown(
+            sea_file::buffered::FileStorage::open(root.join("buffered")).unwrap(),
+        )
+        .await;
+        assert_cache_shutdown(
+            sea_file::durable::DurableStorage::open(root.join("durable")).unwrap(),
+        )
+        .await;
+        std::fs::remove_dir_all(root).unwrap();
+    }
 
     #[tokio::test]
     async fn file_registry_recovers_checkpointed_offsets_and_departures() {

@@ -6,9 +6,16 @@ Copies exclude build outputs, installed dependencies, generated packages, Git me
 
 ## Commands
 
+`checkpoint1-pairs.mjs <artifact-directory> <cell>` runs the frozen cache comparison cells.
+It preserves unsuccessful samples and normally requires a passing primary before running controls.
+`--accepted-primary <report-path>` instead records the path and SHA-256 of an explicitly user-accepted primary evidence record.
+Use that option only for a documented exception, not to turn an automatic failure into a pass.
+It does not relax the selected control's gates.
+Copy measurement artifacts to persistent storage after each cell when using temporary data directories.
+
 | Task | Script |
 | --- | --- |
-| Build in Cargo's configured target and stage final native executables locally | [`build-benchmark-artifacts.sh`](build-benchmark-artifacts.sh) |
+| Build in an explicit source-specific target and stage final native executables locally | [`build-benchmark-artifacts.sh`](build-benchmark-artifacts.sh) |
 | Format, unit tests, Clippy, and bounded correctness smoke | [`validate-benchmarks.sh`](validate-benchmarks.sh) |
 | Release build and one `measure` workload; JSON lines to stdout | [`measure-benchmarks.sh`](measure-benchmarks.sh) |
 | Copy preparation and manifest-integrity helpers; source rather than execute | [`benchmark-common.sh`](benchmark-common.sh) |
@@ -35,10 +42,10 @@ Each takes a new output directory; `matrix` also takes a JSON array of stress-ru
 
 `benchmark-summaries.mjs` uses the built current-version Fluid test runtime and drivers, real SharedMaps, and on-demand Fluid summaries.
 Build the client packages, Tinylicious, and native benchmark artifacts first; use the same certificates as the stress runner.
-The native build compiles in Cargo's configured target directory and copies only final executables to this worktree's `target/release` directory:
+The native build requires an explicit source-specific target directory and copies only final executables to this worktree's `target/release` directory:
 
 ```bash
-bash rust-service/scripts/build-benchmark-artifacts.sh
+CARGO_TARGET_DIR=/path/to/source-specific-target bash rust-service/scripts/build-benchmark-artifacts.sh
 ```
 
 The runner owns isolated service processes, fresh data directories, dynamically selected loopback ports, and fresh client processes.
@@ -80,7 +87,7 @@ Use repository Biome formatting before committing generated JSON.
 ### Stress Setup
 
 Build Routerlicious, generated Sea clients, browser-test certificates, and the native benchmark artifacts first.
-Use `bash rust-service/scripts/build-benchmark-artifacts.sh` for the native artifacts.
+Use `CARGO_TARGET_DIR=/path/to/source-specific-target bash rust-service/scripts/build-benchmark-artifacts.sh` for the native artifacts.
 The runner uses production client libraries without SharedTree/container runtime and verifies payloads and ordered delivery to writer and observer.
 Sea defaults to release native service/WASM clients over loopback WebSocket; Tinylicious uses its normal server/Socket.IO client and in-memory operation database.
 Both retain history; their default persistence guarantees differ.
@@ -108,7 +115,7 @@ Payload throughput counts delivery to one remote observer per document, excludin
 Service CPU and memory cover the owned service process, which currently has no companion service processes in these configurations.
 Generator resource totals are separate and include warmup and draining.
 
-For native Sea generation, run `bash rust-service/scripts/build-benchmark-artifacts.sh`, then add `"generator":"native"` and `"transport":"websocket"` or `"transport":"webtransport"` to the workload.
+For native Sea generation, run `CARGO_TARGET_DIR=/path/to/source-specific-target bash rust-service/scripts/build-benchmark-artifacts.sh`, then add `"generator":"native"` and `"transport":"websocket"` or `"transport":"webtransport"` to the workload.
 The native worker uses the shared session client with one ordered submission queue per document and a single-thread Tokio runtime per pinned process.
 Its benchmark-only WebSocket adapter uses bounded tungstenite messages and independent child sockets; it is not a new supported production client.
 WebTransport pins the server certificate and includes QUIC/TLS; the local WebSocket listener is unencrypted, so the comparison is not equal-security transport performance.

@@ -143,6 +143,7 @@ impl Factory {
             state.snapshot_end - RecordArchive::<SnapshotRecord>::FRAME_SIZE as u64
         })?;
         let opening = Arc::new(Opening {
+            invalidation: sea_core::storage::InvalidationSource::default(),
             preparation: crate::common::PreparationBudget::new(),
             closed: self.closed.clone(),
             factory_failed: self.failed.clone(),
@@ -243,6 +244,9 @@ impl Factory {
         let mut failed = false;
         if close {
             for opening in &openings {
+                opening
+                    .invalidation
+                    .invalidate(FileStorageError::Rejected("storage is shut down"));
                 if let Some(executor) = &opening.buffered {
                     executor.close();
                 } else {
@@ -353,6 +357,8 @@ impl<Identity: Copy + Send + Sync + 'static> StorageHandle for FileHandle<Identi
 
 /// Shared writer ownership retained by components, reads, and workers, not availability handles.
 struct Opening {
+    /// Independent terminal observers; callbacks never acquire storage or runtime locks.
+    invalidation: sea_core::storage::InvalidationSource<FileStorageError>,
     /// Bounds content validation and encoding before mutation admission.
     preparation: crate::common::PreparationBudget,
     /// Factory lifecycle fence checked before every new mutation.
@@ -573,6 +579,7 @@ impl Opening {
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         let readers = state.readers();
         drop(state);
+        self.invalidation.invalidate(FileStorageError::Ambiguous);
         for reader in readers {
             reader.wake();
         }
@@ -1385,6 +1392,13 @@ impl ReferenceableStore for FileEvents {
 
 #[async_trait]
 impl Archive for FileEvents {
+    fn observe_invalidation(
+        &self,
+        callback: sea_core::storage::InvalidationCallback<Self::Error>,
+    ) -> Option<sea_core::storage::InvalidationRegistration> {
+        Some(self.0.invalidation.register(callback))
+    }
+
     type Position = EventPosition;
     type Item = CommittedEvent;
     type Append = Event;
@@ -2273,10 +2287,48 @@ mod tests {
     use super::*;
     use crate::journal::JournalFault;
     use futures_util::{FutureExt, StreamExt};
+    use sea_core::ClassifiedError;
     use std::collections::BTreeMap;
     use std::sync::atomic::{AtomicU64, Ordering};
     /// Prevents collisions between concurrent tests and namespace factories.
     static NEXT_ROOT: AtomicU64 = AtomicU64::new(0);
+
+    #[tokio::test]
+    async fn independent_invalidation_covers_poison_shutdown_and_late_registration() {
+        for durable in [false, true] {
+            for poison in [false, true] {
+                let root = root();
+                let storage = Factory::open(&root, durable).unwrap();
+                let created = storage.create_document().await.unwrap();
+                let events = &created.components.events;
+                let count = Arc::new(AtomicU64::new(0));
+                let observed = count.clone();
+                let callback: sea_core::storage::InvalidationCallback<FileStorageError> =
+                    Arc::new(move |error| {
+                        assert_eq!(
+                            error.kind(),
+                            if poison {
+                                sea_core::ErrorKind::Ambiguous
+                            } else {
+                                sea_core::ErrorKind::Rejected
+                            }
+                        );
+                        observed.fetch_add(1, Ordering::SeqCst);
+                    });
+                let registration = events.observe_invalidation(callback.clone()).unwrap();
+                if poison {
+                    events.0.poison();
+                } else {
+                    storage.shutdown().await.unwrap();
+                }
+                assert_eq!(count.load(Ordering::SeqCst), 1);
+                let late = events.observe_invalidation(callback).unwrap();
+                assert_eq!(count.load(Ordering::SeqCst), 2);
+                drop((registration, late, created, storage));
+                fs::remove_dir_all(root).unwrap();
+            }
+        }
+    }
 
     #[test]
     fn worker_limits_are_shared_and_policy_specific() {

@@ -60,6 +60,9 @@ pub(crate) fn encode_submission<Error>(
 }
 
 /// Decodes a persisted submission, rejecting truncation and trailing bytes.
+///
+/// The returned payload owns exact-sized backing, independent of the encoded record.
+/// Metadata parsing only borrows shared input backing; it does not copy the encoded body.
 pub(crate) fn decode_committed<Error>(
     record: &CommittedEvent,
 ) -> Result<SessionCommittedEvent, SessionError<Error>> {
@@ -83,7 +86,7 @@ pub(crate) fn decode_committed<Error>(
     let Some(encoded) = payload.strip_prefix(MAGIC) else {
         return Err(SessionError::Corrupt("invalid submission marker"));
     };
-    let mut bytes = Bytes::copy_from_slice(encoded);
+    let mut bytes = record.event.payload.slice_ref(encoded);
     if bytes.remaining() < 8 {
         return Err(SessionError::Corrupt("truncated session identity"));
     }
@@ -103,7 +106,7 @@ pub(crate) fn decode_committed<Error>(
         committed: CommittedEvent {
             position: record.position,
             event: Event {
-                payload,
+                payload: Bytes::from(payload.as_ref().to_vec().into_boxed_slice()),
                 blob_tree: record.event.blob_tree,
             },
         },
@@ -165,6 +168,55 @@ pub(super) fn take_position<Error>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn decoded_payload_has_exact_backing_and_does_not_retain_encoded_storage() {
+        for kind in [
+            SessionEventKind::Application,
+            SessionEventKind::Joined,
+            SessionEventKind::Left,
+        ] {
+            for length in [0, 64, 8192] {
+                if kind == SessionEventKind::Left && length != 0 {
+                    continue;
+                }
+                let payload = vec![7; length];
+                let session = SessionId::new(1).unwrap();
+                let reference = Some(EventPosition::new(2));
+                let encoded = if kind == SessionEventKind::Application {
+                    encode_submission::<std::io::Error>(&session, reference, reference, &payload)
+                } else {
+                    encode_membership::<std::io::Error>(
+                        &session, kind, reference, reference, &payload,
+                    )
+                }
+                .unwrap();
+                let offset = 123;
+                let mut backing = vec![0; 4 * 1024 * 1024];
+                backing[offset..offset + encoded.len()].copy_from_slice(&encoded);
+                let backing = std::sync::Arc::<[u8]>::from(backing);
+                let weak = std::sync::Arc::downgrade(&backing);
+                let record = CommittedEvent {
+                    position: EventPosition::new(3),
+                    event: Event {
+                        payload: Bytes::from_owner(backing).slice(offset..offset + encoded.len()),
+                        blob_tree: None,
+                    },
+                };
+                let decoded = decode_committed::<std::io::Error>(&record).unwrap();
+                assert_eq!(decoded.kind, kind);
+                assert_eq!(decoded.reference, reference);
+                assert_eq!(decoded.minimum_reference, reference);
+                assert_eq!(decoded.committed.event.payload.as_ref(), payload);
+                drop(record);
+                assert!(weak.upgrade().is_none(), "encoded backing must be released");
+                if length != 0 {
+                    let owned = decoded.committed.event.payload.try_into_mut().unwrap();
+                    assert_eq!(owned.capacity(), length, "charge the full allocation");
+                }
+            }
+        }
+    }
 
     #[test]
     fn membership_encoding_preserves_kind_and_rejects_malformed_records() {

@@ -22,6 +22,19 @@ pub type ArchiveStream<Item, Position, Error> = BoxMonitoredStream<Item, Positio
 /// Corruption within the required prefix fails recovery rather than producing a gap.
 #[async_trait]
 pub trait Archive: StorageSurface {
+    /// Optionally observes terminal opening invalidation independently of read polling.
+    ///
+    /// A supporting backend invokes the callback synchronously when invalidating the opening,
+    /// including registrations racing invalidation. The callback must not reenter storage or
+    /// wait for I/O. Errors retain their backend classification. `None` explicitly means this
+    /// capability is unsupported; existing archive implementations need not implement it.
+    fn observe_invalidation(
+        &self,
+        _callback: super::InvalidationCallback<Self::Error>,
+    ) -> Option<super::InvalidationRegistration> {
+        None
+    }
+
     /// Ordered position of one entry in this archive.
     type Position: Clone + Ord + Send + Sync + 'static;
 

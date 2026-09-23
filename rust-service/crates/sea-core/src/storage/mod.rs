@@ -41,6 +41,8 @@
 mod blob_store;
 mod checkpoint;
 mod event_archive;
+mod invalidation;
+pub use invalidation::{InvalidationCallback, InvalidationRegistration, InvalidationSource};
 mod ordered_archive;
 mod referenceable_store;
 mod snapshot_archive;
@@ -409,6 +411,15 @@ where
         stop_after: Option<EventPosition>,
     ) -> EventArchiveStream<Blobs::Error> {
         self.events.read(after, stop_after)
+    }
+
+    /// Registers for terminal event-opening invalidation without polling the archive.
+    /// `None` means the backend does not support independent terminal observation.
+    pub fn observe_invalidation(
+        &self,
+        callback: InvalidationCallback<Blobs::Error>,
+    ) -> Option<InvalidationRegistration> {
+        self.events.observe_invalidation(callback)
     }
 
     /// Returns the latest committed event position.

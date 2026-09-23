@@ -56,6 +56,14 @@ The default implementation appends sequentially and stops at its first error.
 `SeaView::append_batch` checks tree capabilities in order and publishes the checked prefix even when a later dependency fails.
 Its dependency error is returned only after all preceding entries succeed.
 
+`Archive::observe_invalidation` is an optional independent terminal-opening capability, also exposed by `SeaView`.
+Its default returns `None`, preserving compatibility for third-party archives and making unsupported observation explicit.
+Supporting backends return a registration that unregisters on drop.
+`InvalidationSource` provides sticky, classified-error-preserving notification, including registration racing or following invalidation.
+Callbacks run synchronously outside the source lock and must only update their own state, never reenter storage or wait for I/O.
+This lets a cache release ownership and wake live observers without an archive poll or a per-document task.
+The capability does not change the normal archive error or lifetime contract.
+
 The session facets add membership, author ordering/recovery, and conditional snapshot coordination using `SeaService`'s native/browser thread-safety bounds.
 Initial application state is represented by an application event, not an initial storage snapshot.
 Session publication checks expected parents and current client-selected/Sea-selected authority, with exact position/root reconciliation instead of a separate snapshot operation ID.

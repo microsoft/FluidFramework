@@ -52,6 +52,51 @@ Loads use `LoadStart`, returning a selected handle-based snapshot and the live s
 Backend monitored streams provide gap-free catch-up and live delivery.
 Publisher observations use coalescing watch streams because intermediate publisher states need not all be delivered.
 
+### Experimental Shared Live Cache
+
+`LocalSequencer::recover` remains storage-backed.
+`recover_with_live_cache` explicitly opts every unbounded read on that opening into one revocable cache, including direct reads and `load` suffixes.
+This experiment has no lag thresholds or resource policy: a stalled subscriber can retain unbounded history.
+Do not enable it for production workloads.
+Backends without `Archive::observe_invalidation` support are rejected before recovery starts.
+
+Publication occurs at `Runtime::apply`, after the existing backend acknowledgement and successful metadata application.
+Application events, ordered joins and leaves, idle-ready appends, and retained batches use the same path.
+Recovery starts a fresh cache at the recovered frontier without retaining replayed history.
+Finite reads remain storage-backed.
+Unbounded historical reads use finite storage segments without a retention claim, then atomically attach using their last delivered position.
+Progress can precede buffered data and never advances that cursor.
+Cached delivery reports a discovered frontier before returning items from that frontier, including after an idle wait.
+It drains that discovered prefix before reporting a newer frontier, so continuing publication cannot starve data with progress updates.
+Historical reads preserve backend `FallenBehind` observations.
+Cached discovery reports `FallenBehind` when more than one unread entry is retained, using entry counts rather than numeric differences between positions.
+After the reported frontier is delivered, the progress snapshot clears `FallenBehind`; it reports `AwaitingNewItems` only after the next empty-cache observation.
+A reclaimed handoff range causes another finite read from the delivered cursor with a cooperative yield, not a gap, duplicate, or retained historical suffix.
+
+Each entry has one exact-sized canonical payload backing allocation shared by returned `Bytes` handles.
+The decoder parses metadata through a temporary shared view of the encoded record and copies only the application payload or membership metadata into that allocation.
+Publication shares this decoded backing without another payload copy; neither cached entries nor returned handles retain the encoded record's backing.
+`live_cache_stats` reports subscription and live-claim counts, retained entry count, exact payload backing bytes, and allocated entry capacity.
+Payload bytes exclude entry metadata, registry overhead, storage allocations, and downstream handles already returned to callers.
+No claims means no retained entries or entry capacity; returned handles can independently keep their allocation alive.
+`read_with_live_cache_revocation` pairs a stream with its neutral `LiveReadRevocation`.
+`live_read_revocations` also exposes capabilities for ordinary direct reads, without requiring a factory or decorator.
+Revocation synchronously removes only that subscription and reports `SessionError::SubscriptionRevoked`; there is no storage fallback or automatic rejoin.
+Drop, membership close, shutdown, and independent backend invalidation remove ownership without another subscriber poll.
+Author authority, sibling subscriptions, and snapshot participation are not revoked by subscription-only revocation.
+
+The cache's short synchronous lock covers publication, delivered cursors, handoff, and reclamation, never I/O.
+Lock order is runtime then cache then subscription terminal state; cache and storage invalidation callbacks never enter the runtime or storage.
+The storage observer invokes callbacks outside its own lock.
+Coalesced notifications wake readers for both publication and installed retained work.
+An actively polled cached reader can drive cancelled application batches and already-retained runtime controls without archive polling or a task per document.
+Reader control polling releases its runtime and lifecycle guards before returning pending; a parked read cannot hold either guard until another poll.
+Control-future readiness also notifies the cache, so another cancelled driver cannot take away the reader's wakeup.
+Reads do not start failed-member cleanup or new checkpoint/control I/O; ordinary lifecycle operations retain that responsibility.
+The existing control-I/O runtime serialization and writer-reference floor are unchanged; delivery never gates admission or cleanup.
+
+Focused regressions run with `cargo test -p sea-sequencer live_cache_tests`.
+
 ## Ordered Append and Recovery
 
 The required append contract is strict order and termination at the first failure.

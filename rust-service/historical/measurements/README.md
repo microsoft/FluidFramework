@@ -5,6 +5,7 @@ The overview records the tested revisions, workloads, environment, and compariso
 
 | Dataset | Purpose |
 | --- | --- |
+| [Session resource policy checkpoint 1](session-resource-policy-checkpoint1-20260923.json.gz) | Experimental cache provenance, surviving measurements, validation, and explicit performance/missing-data exceptions; see the [cumulative report](../../SESSION_RESOURCE_POLICY_IMPLEMENTATION_REPORT.md). |
 | [Summary and storage comparison](summary-storage-20260922/README.md) | Full/incremental Fluid summaries, verified restart loads, and actual file-backend sizes. |
 | [Service refresh](refresh-92ecf30/README.md) | Repeated service loads, matched-load resources, and storage probes at `92ecf30f4a7`. |
 | [Paired browser comparison](browser-dds-comparison/README.md) | Dummy DDS and real SharedTree, including the WebSocketStream supplement. |

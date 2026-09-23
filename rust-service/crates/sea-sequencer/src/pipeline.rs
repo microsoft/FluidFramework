@@ -60,6 +60,11 @@ pub(super) struct Pipeline<Storage: SeaStorage> {
 }
 
 impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
+    /// Checks quiescence while the caller excludes admission through the lifecycle gate.
+    pub(super) fn is_empty(&self) -> bool {
+        self.queue.lock().expect("pipeline queue lock").count == 0
+    }
+
     #[cfg(test)]
     /// Reports total charged work, including any in-flight persistence batch.
     pub(super) fn occupancy(&self) -> (usize, usize) {
@@ -158,6 +163,11 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
                     None
                 }
             };
+            if admitted.is_some()
+                && let Some(cache) = &state.live_cache
+            {
+                cache.notify();
+            }
             drop(state);
             drop(admission);
             if let Some(pending) = admitted {
@@ -260,6 +270,9 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
             finish(&mut state, &queue, entry, result);
         });
         *self.driver.lock().expect("pipeline driver lock") = Some(driver.shared());
+        if let Some(cache) = &state.live_cache {
+            cache.notify();
+        }
         Either::Right(receiver)
     }
 
@@ -383,6 +396,9 @@ fn apply_result<Storage: SeaStorage + 'static>(
         Err(SessionError::RecoveryRequired | SessionError::Corrupt(_))
     ) {
         state.recovery_required = true;
+        if let Some(cache) = &state.live_cache {
+            cache.terminate(super::live_cache::Terminal::RecoveryRequired);
+        }
     }
     result
 }
