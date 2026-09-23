@@ -89,6 +89,10 @@ The format is selected automatically whenever stored schema includes a version m
 Unversioned schemas continue using the stable format selected by the existing codec options.
 An explicit format override that cannot represent versions causes encoding to fail rather than silently omitting the map.
 
+Because this persisted format is experimental, applications using schema versions must use the same Fluid Framework version for every client that loads or collaborates on the document.
+Clients from other Fluid Framework versions may not be able to decode schema changes or summaries containing versions.
+This lockstep requirement applies until the persisted format is stabilized.
+
 The map is encoded as an array of `[LibraryId, version]` pairs sorted lexically by `LibraryId`.
 For example:
 

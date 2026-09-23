@@ -12,6 +12,7 @@ Versions allow a schema change when existing documents remain valid and at least
 Existing versions cannot decrease or be removed.
 This prevents older applications from reversing the change and repeatedly conflicting with newer applications.
 Versioned schemas use an experimental persisted format.
+Every client that loads or collaborates on a versioned document must use the same Fluid Framework version until this format is stabilized.
 
 For example, changing a required string field to an identifier field is not normally allowed.
 Both fields accept the same stored values, so increasing the application version allows it:
