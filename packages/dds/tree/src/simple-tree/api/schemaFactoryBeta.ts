@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { RestrictiveStringRecord } from "../../util/index.js";
+import { isReadonlyArray, type RestrictiveStringRecord } from "../../util/index.js";
 // eslint-disable-next-line unused-imports/no-unused-imports, import-x/no-duplicates -- This import prevents a large number of type references in the API reports from showing up as *_2.
 import type { RestrictiveStringRecord as _RestrictiveStringRecord } from "../../util/index.js";
 import {
@@ -111,15 +111,19 @@ export interface SchemaStaticsBeta {
 	 * This version of {@link SchemaStaticsBeta.incrementalSummary} has fewer type constraints to
 	 * work around TypeScript limitations. Use with {@link ValidateRecursiveSchema} for improved type
 	 * safety.
+	 * It accepts either a single recursive allowed type or an array of recursive allowed types.
 	 *
 	 * @param allowedTypes - the types allowed at the incremental-summary boundary
 	 * @returns the normalized allowed types with incremental-summary metadata attached
 	 */
-	readonly incrementalSummaryRecursive: <
-		const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
-	>(
-		allowedTypes: T,
-	) => AllowedTypesFullFromMixedUnsafe<T>;
+	readonly incrementalSummaryRecursive: {
+		<const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]>(
+			allowedTypes: T,
+		): AllowedTypesFullFromMixedUnsafe<T>;
+		<const T extends Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>>(
+			allowedType: T,
+		): AllowedTypesFullFromMixedUnsafe<readonly [T]>;
+	};
 
 	/**
 	 * Declares a staged type in a set of {@link AllowedTypes}.
@@ -227,12 +231,9 @@ const incrementalSummary = (<const T extends ImplicitAllowedTypes>(allowedTypes:
 	return types(normalizedAllowedTypes.types, incrementalSummaryMetadata);
 }) as unknown as SchemaStaticsBeta["incrementalSummary"];
 
-const incrementalSummaryRecursive = (<
-	const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
->(
-	allowedTypes: T,
-) => {
-	return typesRecursive(allowedTypes, incrementalSummaryMetadata);
+const incrementalSummaryRecursive = ((allowedTypes: unknown) => {
+	const normalizedAllowedTypes = isReadonlyArray(allowedTypes) ? allowedTypes : [allowedTypes];
+	return typesRecursive(normalizedAllowedTypes, incrementalSummaryMetadata);
 }) as SchemaStaticsBeta["incrementalSummaryRecursive"];
 
 const schemaStaticsBeta: SchemaStaticsBeta = {

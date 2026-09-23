@@ -297,7 +297,7 @@ class RecordNodeSchema extends sf.object("recordNodeSchema", {
 
 class RecursiveArray extends sf.arrayRecursive(
 	"recursiveArray",
-	sf.incrementalSummaryRecursive([sf.string, () => RecursiveArray]),
+	sf.incrementalSummaryRecursive(() => RecursiveArray),
 ) {}
 type _checkRecursiveArray = ValidateRecursiveSchema<typeof RecursiveArray>;
 class RecursiveNodeSchema extends sf.object("recursiveNodeSchema", {
@@ -452,12 +452,17 @@ describe("ForestSummarizer", () => {
 			});
 
 			it("recursive nodes", async () => {
+				const child = new RecursiveArray([]);
+				const recursiveArray = new RecursiveArray([child]);
+				const inferredChild: RecursiveArray = recursiveArray[0];
+				assert.equal(inferredChild, child);
+
 				await summarizeAndValidateIncrementality(
 					RecursiveNodeSchema,
 					{
-						recursiveArray: new RecursiveArray(["value", new RecursiveArray(["nested"])]),
+						recursiveArray,
 					},
-					2 /* incrementalNodeCount */,
+					1 /* incrementalNodeCount */,
 				);
 			});
 

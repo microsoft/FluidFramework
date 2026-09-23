@@ -21,7 +21,7 @@ All five of the following must be set for incremental summary to take effect:
 ### 1. Mark fields in your schema
 
 Use `sf.incrementalSummary(...)` to opt a field in.
-For recursive schema, use `sf.incrementalSummaryRecursive(...)` with an allowed-types array.
+For recursive schema, use `sf.incrementalSummaryRecursive(...)` with a single recursive allowed type or an allowed-types array.
 
 ```typescript
 import { SchemaFactoryBeta } from "@fluidframework/tree/beta";
