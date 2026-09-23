@@ -8,9 +8,13 @@ argument-hint: "[branch-name]"
 /review my-feature-branch            # review a specific branch vs its resolved target
 ```
 
-Spawns dedicated Breaker (correctness) and API Analyst (compatibility/conventions) sub-agents in parallel while the orchestrator performs the Inspector pass (architecture, tests, performance, security). Depth is user-selected.
+In Standard and Deep modes, spawns dedicated Breaker (correctness) and API Analyst (compatibility/conventions) sub-agents in parallel while the orchestrator performs the Inspector pass (architecture, tests, performance, security).
+Quick mode is a single pass by the orchestrator.
 
 Optimize for high-confidence, concise findings. Silence is better than speculation.
+
+For agent-to-agent pre-commit checkpoint gates with a supplied fixed base, use the [checkpoint review workflow](../../../.github/skills/checkpoint-review/SKILL.md) instead of this interactive orchestration.
+Both workflows require [shared review criteria](review-criteria.md).
 
 ## Scope Gate
 
@@ -36,7 +40,9 @@ Parse `$ARGUMENTS`:
 
 ## Step 1: Confirm Mode
 
-Before doing anything, ask the user:
+Honor a depth already supplied by the user or approved plan without asking again.
+For a casual assessment of identified changes, such as "do these changes seem like good ideas?", default to Quick and state that choice.
+For an explicit review command or formal review request without a supplied depth, ask the user:
 
 > I can run a code review on your branch. Pick a depth (fastest to slowest):
 >
@@ -45,10 +51,10 @@ Before doing anything, ask the user:
 > 3. Standard — full swarm: Breaker + API Analyst sub-agents + Inspector
 > 4. Deep — Standard + reads full changed files (not just diffs) for deeper analysis
 
-Wait for the user's response. If they say skip, stop here.
+When prompting, wait for the user's response. If they say skip, stop here.
 
 <required>
-Immediately after the user picks a mode, create one task per applicable step using TaskCreate — before doing any other work. Mark each task in_progress when you start it and completed when you finish.
+Once the mode is selected or defaulted, create one task per applicable step using the available task-list tool before gathering changes. Mark each task in_progress when you start it and completed when you finish.
 
 Tasks to create by mode:
 
@@ -154,25 +160,8 @@ Files <=200 lines: embed in full. Store as `$EXTRACTED_SECTIONS`.
 
 ### Review Areas
 
-All reviews cover these areas. The mode determines whether sub-agents handle some of them.
-
-- Correctness — Logic bugs, null/undefined dangers, race conditions, error handling, edge cases, distributed systems concerns (op ordering, eventual consistency, merge conflicts), DDS lifecycle (attach/detach, summarization), SharedTree patterns (schema validation, tree transactions)
-- API Quality — Breaking changes, release tag correctness, naming conventions, type design, ergonomics, cross-package impact, deprecation patterns (informed by `api-conventions.md`)
-- Architecture — Readability, structure, API surface, stale references
-- Tests — Coverage, edge cases, assertion quality, test-code consistency
-- Performance — Algorithmic complexity, memory leaks, telemetry correctness (are events firing with the right data?)
-- Security — Injection, input validation, PII leaks, token handling
-
-### High-confidence gate
-
-Before a finding can appear in the report, verify ALL of these:
-
-1. The affected code path (changed or directly impacted adjacent path) is identified.
-2. The failure mechanism or violated invariant is concrete, not hypothetical.
-3. The claimed impact is proportional to the evidence.
-4. The suggested fix addresses the exact issue.
-
-If a claim depends on generic hardening advice, guessed nullability, speculative behavior, or an unverified assumption about a dependency, read more context or drop it.
+Read [shared review criteria](review-criteria.md) and apply its review areas, adversarial checks, evidence gate, and impact-based severity definitions.
+The selected mode determines which reviewer owns each area, not the evidence standard.
 
 Output format for all findings: `[SEVERITY] file:line — description — suggested fix` (CRITICAL, HIGH, MEDIUM).
 
@@ -250,27 +239,19 @@ Each sub-agent prompt includes — literally pasted into the prompt text:
 7. Review mode instruction:
    - If `$IS_LOCAL_REVIEW` is `true`: `"This is a LOCAL review — the workspace checkout matches the code under review. You may read workspace files for additional context (callers, type definitions, adjacent logic) when the embedded material is insufficient."`
    - Otherwise: `"This is a REMOTE review — the workspace checkout may be on a different branch. Do NOT read workspace files. ALL code you need is embedded above. Base your analysis ONLY on the diff and extracted sections provided."`
+8. Shared review criteria: paste the contents of `review-criteria.md` so each sub-agent applies the same evidence and severity rules.
 
 Perform the Inspector pass yourself while sub-agents run. Wait for all to complete.
 
 ## Step 7: De-duplicate and Classify
 
-Classify each finding and adjust severity:
-
-| Area | Max Severity | Adjustment |
-|------|:---:|:---:|
-| Correctness | CRITICAL | Promote +1 level (MEDIUM->HIGH, HIGH->CRITICAL) |
-| API Quality | CRITICAL | Promote +1 level (MEDIUM->HIGH, HIGH->CRITICAL) |
-| Performance | HIGH | Cap |
-| Architecture | HIGH | Cap |
-| Tests | HIGH | Cap |
-| Security | MEDIUM | Cap |
-
-Multi-area findings: classify in whichever area gives higher severity. Drop uncertain findings. If a concern depends on guesswork, hypothetical misuse, or hardening beyond an already-enforcing layer, omit it.
+Classify and deduplicate findings using the impact-based severity and evidence gate in [shared review criteria](review-criteria.md).
+Do not promote or cap severity by review area.
+Keep material unverified questions in coverage limitations rather than presenting them as confirmed defects.
 
 ## Step 8: Report
 
-Deduplicate on file:line, sort by severity. Drop "looks correct" findings.
+Deduplicate by underlying mechanism, retaining relevant file/line evidence, and sort by severity. Drop "looks correct" findings.
 
 Output routing:
 - 5 or fewer findings: Print the full report to the terminal.
@@ -291,7 +272,7 @@ If zero findings remain after the evidence gate, use the exact summary line:
 **Mode**: quick | standard | deep
 **Lines reviewed**: $LINES_REVIEWED ($LINES_CHANGED changed)
 
-## Verdict: Approve | Approve with suggestions | Request changes
+## Verdict: Approve | Approve with suggestions | Request changes | Incomplete
 
 N CRITICAL, N HIGH, N MEDIUM — one-line summary of the overall assessment.
 
@@ -319,11 +300,12 @@ Generated with review (mode)
 
 ### Verdict rules
 
-After severity caps and promotions:
+After evidence-based classification:
 
-- Approve: 0 CRITICAL, 0 HIGH
-- Approve with suggestions: 0 CRITICAL, 0 HIGH in Correctness/API Quality, some HIGH/MEDIUM elsewhere
-- Request changes: 1+ CRITICAL, or 1+ HIGH in Correctness/API Quality, or 3+ HIGH across other areas
+- Approve: complete coverage with no actionable findings.
+- Approve with suggestions: complete coverage with only optional, nonblocking suggestions.
+- Request changes: unresolved actionable correctness or contract findings, or material regressions requiring repair.
+- Incomplete: required diff, context, or review coverage is unavailable; do not substitute approval based on final-source inspection alone.
 
 ## Step 9: Offer Next Steps
 

@@ -1,38 +1,26 @@
 ---
 name: rust-service-coordination
-description: 'Choose between lightweight direct work and a full Rust service iteration, or coordinate Phase 2 and Phase 3 iterations including validation, workstreams, worktrees, integration, reports, retrospectives, and decisions. Use when deciding whether iteration overhead is justified, or when starting, implementing, validating, integrating, recovering, or closing a rust-service iteration.'
-argument-hint: 'choose lightweight work or run an iteration, integration, or review workflow'
+description: 'Coordinate a Rust service parallel iteration only when the user explicitly requests a "parallel iteration", or continues one already explicitly authorized. Covers workstreams, isolated execution, integration, validation, and reports. Do not trigger for ordinary implementation, sequential checkpoints, code review, benchmarking, quality audits, or deciding whether iteration overhead is justified.'
+argument-hint: 'start or continue an explicitly requested parallel iteration'
 ---
 
 # Rust Service Coordination
 
-Use this workflow to decide whether work needs a numbered iteration and to run
-every numbered iteration under `rust-service/historical/iterations/`.
+Use this workflow only for an explicitly requested parallel iteration.
+Keep its numbered records under `rust-service/historical/iterations/`.
 Keep active and completed records in that location and continue the existing four-digit numbering sequence.
 The archived plans and foundation report are historical evidence, not prerequisites or current design authority.
 
-## Choose the Workflow
+## Explicit Request Gate
 
-Do not initialize an iteration merely because work follows a completed iteration
-or concerns the Rust service. Choose the lightest workflow that preserves the
-evidence and coordination the task needs.
+Enter this workflow only when the user requests a "parallel iteration", or the current task continues a parallel iteration that the user already explicitly authorized.
+A reference from another document, an existing iteration directory, a complex task, or permission to use a review subagent is not authorization.
+If loaded without that trigger, return to the ordinary task workflow without prompting the user to choose an iteration mode.
+Do not propose or initialize iteration machinery merely because parallel work might be useful.
+Ordinary implementation, sequential checkpoints, reviews, measurements, and quality audits do not require this skill.
+Their repository validation and documentation requirements still apply independently through `rust-service/DEVELOPMENT.md` and applicable task instructions.
 
-Use lightweight direct work on the current branch when all of these are true:
-
-- one owner can perform the work sequentially;
-- there are no dependency-independent implementation workstreams worth running
-   concurrently;
-- no separate integration branch or cross-workstream reconciliation is needed;
-- the task does not need an immutable Phase 2 boundary followed by a distinct
-   multi-input Phase 3 synthesis; and
-- focused commits, tests, and proportionate documentation can preserve the
-   result.
-
-For lightweight work, do not create iteration records, an integration branch, or
-workstream worktrees. Keep normal implementation and validation evidence in the
-most local durable artifact: code and tests for a fix, an adjacent README or
-benchmark report for retained measurements, and a decision or `LEARNINGS.md`
-entry only when their existing triggers apply.
+## Parallel Iteration Validation
 
 For every behavior change or bug fix, identify the contract consumers rely on
 and inspect each changed production crate for proportionate documentation and
@@ -58,22 +46,7 @@ Rust sources or manifests consumed by generated WASM tasks. A package-scoped
 build does not replace this check. Documentation-only changes outside registered
 package build inputs do not require the repository build.
 
-A full iteration may provide material value when work has two or more genuinely
-independent workstreams, benefits from parallel agents, has meaningful ownership
-or integration risk, compares multiple implementations that need normalized
-reports, or needs an explicit implementation-to-synthesis decision boundary.
-One sequential workstream by itself is not sufficient justification.
-
-Honor an explicit user request to use or avoid an iteration. When a full
-iteration may provide material value but the user has not explicitly requested
-one, present the lightweight and iteration options with the concrete benefit and
-overhead, then ask the user which workflow to use before creating iteration
-records, branches, or worktrees. Do not silently decide either way. If iteration
-value emerges after lightweight work begins, pause before converting the task
-and ask the same question.
-
-Apply Terminal Coordination below to both lightweight work and full iterations.
-Once the user selects a full iteration, also follow the iteration sections of this skill.
+Apply the following sections within the explicitly authorized parallel iteration.
 Existing iteration records remain append-only historical artifacts.
 
 For a risk-driven contract and regression-test audit, also use the [quality-iteration skill](../rust-service-quality-iteration/SKILL.md).

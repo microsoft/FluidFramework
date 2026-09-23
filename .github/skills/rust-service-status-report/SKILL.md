@@ -121,4 +121,6 @@ A browser-WASM WebTransport workstream commonly requires separate native Cargo v
 
 ## Relationship to Coordination
 
-Use this skill for observation and reporting. Load the `rust-service-coordination` skill instead when asked to modify, integrate, recover, validate, or close an iteration.
+Use this skill for observation and reporting.
+Load `rust-service-coordination` for implementation or integration only when the user explicitly requests a "parallel iteration", or continues one already explicitly authorized.
+Ordinary implementation, checkpoint work, and status questions do not trigger coordination or a workflow-selection prompt.

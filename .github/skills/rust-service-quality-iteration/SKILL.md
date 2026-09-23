@@ -6,13 +6,13 @@ argument-hint: 'configure or run a Rust-service contract and test quality audit'
 
 # Rust Service Quality Iteration
 
-Use this workflow to configure and execute a numbered Rust-service iteration
-whose purpose is to find and repair consequential documentation and behavioral
-test gaps. Read `rust-service/DEVELOPMENT.md` for the quality bar and
-`.github/skills/rust-service-coordination/SKILL.md` for all iteration mechanics,
-validation gates, records, branches, worktrees, integration, and Phase 3 rules.
-This skill specializes what the iteration investigates; it does not replace or
-duplicate the coordination workflow.
+Use this workflow to find and repair consequential documentation and behavioral test gaps.
+Read `rust-service/DEVELOPMENT.md` for the quality bar and validation requirements.
+An ordinary quality audit is sequential work and does not trigger the coordination skill.
+Only when the user explicitly requests a "parallel iteration", or continues one already authorized, load `.github/skills/rust-service-coordination/SKILL.md` for iteration mechanics.
+The numbered-record, workstream, integration, and Phase 3 instructions below apply only in that case.
+Otherwise retain the audit configuration, findings, and evidence in an existing local report without creating iteration machinery.
+If no suitable report exists, create one local audit report in the repository's documentation location for the affected area and reuse it throughout the audit.
 
 ## Principles
 
@@ -46,7 +46,7 @@ Offer these starting modes, allowing combinations and explicit exclusions:
 When no scope is supplied, propose incremental review with the relevant prior inventory and change window, if available; do not silently assume approval.
 Confirm the effort budget and stopping conditions alongside the scope.
 If the user already supplied an explicit scope, restate it briefly and proceed without redundant confirmation; ask only about unresolved configuration choices.
-Scope confirmation does not replace the coordination skill's approval requirements for creating a numbered iteration.
+Scope confirmation is not a request for a parallel iteration and must not trigger iteration setup or a workflow-selection prompt.
 
 For full or targeted reassessments, retain prior inventories as evidence, but treat their conclusions as hypotheses to recheck rather than reasons to skip inspection.
 Record the user's request to revisit the area, improved skill guidance, or improved agent models as the reassessment trigger, as applicable.
@@ -67,15 +67,11 @@ Before initializing records, agree with the user on these run-specific inputs:
 - required validation beyond the canonical gates; and
 - independent review needs.
 
-Put these inputs in that run's charter and workstream instructions. Do not copy
-the general quality bar or audit method into them. Do not include private
+For sequential audits, put these inputs in the local audit report.
+For an explicitly authorized parallel iteration, put them in its charter and workstream instructions.
+Do not copy the general quality bar or audit method into these records. Do not include private
 evaluation expectations, seeded defects, expected findings, or expected test
 locations in records or prompts supplied to workstream agents.
-
-Use a full numbered iteration only when independent ownership areas, parallel
-audit and repair, or an implementation-to-synthesis boundary provide material
-value. Otherwise apply `rust-service/DEVELOPMENT.md` directly as lightweight
-work.
 
 ## Build a Risk Map
 
@@ -99,7 +95,9 @@ Do not assume that recent change implies a defect or that old code is safe.
 Use history to select where inspection has value, then judge the current
 contract and evidence on their merits.
 
-Record why selected boundaries outrank deferred candidates. Partition active
+Record why selected boundaries outrank deferred candidates.
+For sequential audits, inspect those boundaries in priority order within the approved budget.
+Only within an explicitly authorized parallel iteration, partition active
 workstreams by non-overlapping crate or responsibility ownership. Prefer
 dependency-independent workstreams in the same wave. Use a later review wave
 when independent assessment of accepted repairs is worth its cost.
@@ -129,11 +127,11 @@ For each selected boundary:
 7. Validate the focused test. When practical, demonstrate that it fails for the
    defective behavior or otherwise explain why it is a valid regression guard.
 8. Retain or add broader evidence only when it proves a distinct boundary.
-9. Record the result in the workstream report and quality inventory.
+9. Record the result in the local audit report, or in the workstream report and quality inventory for a parallel iteration.
 
-Do not expand from one finding into unrelated cleanup. A surprising shared
-semantic or ownership question follows the coordination skill's escalation and
-decision-record rules.
+Do not expand from one finding into unrelated cleanup.
+Ask for guidance on unresolved shared semantic or ownership choices and follow the repository's decision-record requirements.
+Within an explicitly authorized parallel iteration, also follow its coordination rules.
 
 ## Evidence for Dispositions
 
@@ -161,7 +159,9 @@ rationale; it is a deferral with remaining risk.
 
 ## Maintain the Quality Inventory
 
-For an approved numbered iteration, first initialize the normal records with the coordination skill's `init NNNN workstream-name...` command.
+For sequential work, retain the configuration, reviewed boundaries, dispositions, and validation evidence in the local audit report; do not create a numbered inventory.
+The remaining setup and reconciliation steps in this section apply only to explicitly authorized parallel iterations.
+First initialize the normal records with the coordination skill's `init NNNN workstream-name...` command.
 Then create `rust-service/historical/iterations/NNNN/quality-inventory.md` from
 [the quality inventory template](./assets/quality-inventory.template.md) before committing the kickoff records:
 
@@ -170,7 +170,6 @@ node .github/skills/rust-service-coordination/scripts/iteration-records.mjs init
 ```
 
 `init-quality` adds only the inventory; it does not replace `init` or create the charter, manifest, or workstream instructions.
-For lightweight work, do not create a numbered inventory; retain evidence in the local artifacts described by the coordination skill.
 
 Workstreams report their rows; the integrator reconciles them into the iteration
 copy and Phase 3 accepts its final dispositions.
@@ -185,7 +184,8 @@ Preserve completed iteration inventories as immutable history.
 
 ## Integrate and Review
 
-In addition to the coordination skill's normal Phase 2 checks, verify:
+For both sequential audits and parallel iterations, verify the following against the local report or quality inventory.
+Parallel iterations also require the coordination skill's normal Phase 2 checks.
 
 - each accepted change names the behavior and owning contract;
 - each changed production crate has focused evidence or a defensible rationale;
@@ -202,13 +202,13 @@ In addition to the coordination skill's normal Phase 2 checks, verify:
 - accepted changes contain no unrelated cleanup; and
 - inventory dispositions match the actual diff and validation.
 
-An independent review workstream should inspect integrated evidence without
+When independent review is part of the approved audit scope, the reviewer should inspect the resulting evidence without
 receiving expected findings. It may challenge dispositions and identify missed
 high-risk boundaries, but it must use the same configured scope and budget.
 
 ## Assess Convergence
 
-Phase 3 should compare this run with the inherited inventory and recent change
+At sequential audit closeout or parallel iteration Phase 3, compare this run with the inherited report or inventory and recent change
 history. A quality run is converging when it reduces material unresolved risk,
 does not recreate previously reviewed work without a trigger, and adds little or
 no redundant documentation or testing.
@@ -231,10 +231,10 @@ activity.
 
 ## Validate
 
-Use focused checks during each workstream and all canonical integration commands
-required by `rust-service/DEVELOPMENT.md` and the coordination skill. Validate
-the iteration records at start, Phase 2, and completion with
-`iteration-records.mjs`.
+Use focused checks during the audit and all applicable canonical commands required by `rust-service/DEVELOPMENT.md`.
+For sequential audits, record the checks and final dispositions in the local audit report, including unresolved items and their revisit triggers.
+The remaining validation steps apply only to explicitly authorized parallel iterations, which also follow the coordination skill's validation requirements.
+Validate the iteration records at start, Phase 2, and completion with `iteration-records.mjs`.
 
 Before completing Phase 3, verify that `quality-inventory.md` has no placeholder
 rows, every active workstream is represented, every unresolved item has an owner
