@@ -43,6 +43,11 @@ REVIEWERS: list[Reviewer] = [
     ),
     Reviewer("performance", "Performance", "algorithmic regressions, memory leaks"),
     Reviewer("testing", "Testing", "coverage gaps, hollow tests"),
+    Reviewer(
+        "documentation",
+        "Documentation / Developer Experience",
+        "missing or misleading docs, examples, and developer-facing guidance",
+    ),
 ]
 
 _LABEL_TO_ID: dict[str, str] = {r.label.lower(): r.id for r in REVIEWERS}

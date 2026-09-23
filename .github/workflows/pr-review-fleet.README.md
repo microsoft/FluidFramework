@@ -46,6 +46,20 @@ Four workflows compose the PR fleet review system:
 
 - **Triggers:** `workflow_run` on completion of "PR Review Fleet Dispatcher", **or** `workflow_dispatch` (manual / from the confirm workflow). The `workflow_run` path only proceeds if the dispatcher succeeded.
 - **Permissions:** `contents: read`, `pull-requests: write`, `actions: read` (to download the dispatcher artifact), `checks: write` (to surface a "Fleet Review" check on the PR — `workflow_dispatch` runs aren't otherwise visible in the Checks tab).
+
+### Adding a reviewer
+
+Add the reviewer ID, display label, and description to `REVIEWERS` in
+`../scripts/pr_review_propose.py`, then add a prompt with the same ID under
+`../prompts/reviewers/`. The prompt must instruct the agent to write
+`review-<id>.json` using the standard `findings` schema. Also add the ID to the
+fallback list in `pr-review-fleet.yml`.
+
+New reviewers appear in the confirmation comment but are opt-in unless they
+are added to the priority order used by `get_selected()`. To make a review
+area's HIGH findings request changes, add its display label to
+`PROMOTED_AREAS` in `../scripts/consolidate_reviews.py`; otherwise its
+findings remain advisory.
 - **Concurrency:** Keyed per PR; cancels in-progress runs.
 
 ### Jobs

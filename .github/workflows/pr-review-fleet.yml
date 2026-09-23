@@ -116,7 +116,7 @@ jobs:
             REVIEWERS=$(echo "$INPUT_REVIEWERS" | jq -c .)
             REVIEWER_COUNT=$(echo "$REVIEWERS" | jq 'length')
           else
-            ALL='["correctness","security","api-compatibility","performance","testing"]'
+            ALL='["correctness","security","api-compatibility","performance","testing","documentation"]'
             REVIEWERS=$(echo "$ALL" | jq -c --argjson n "$REVIEWER_COUNT" '.[:$n]')
           fi
 
