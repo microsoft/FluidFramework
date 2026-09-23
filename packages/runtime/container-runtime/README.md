@@ -36,6 +36,15 @@ Read the **@fluidframework/container-runtime** API documentation at <https://flu
 <!-- prettier-ignore-end -->
 <!-- markdown-magic:end -->
 
+## Application seed projection
+
+The [application-seed design](../../../docs/content/Architecture/Application-Seed-Projection/Fluid-Design.md) explains
+the summary-generation options, first-full-to-incremental transition, and proposal-correlated native, garbage-collection,
+and application acceptance state.
+It includes the rationale and source/test map for these runtime changes.
+The [architecture overview](../../../docs/content/Architecture/Application-Seed-Projection.md) distinguishes implemented
+contracts from application and storage proposals; the executable reference remains in the local-server test package.
+
 ## Data Virtualization For DataStores (Work in Progress)
 
 It's a capability to exclude some content from initial snapshot (used when loading container) and thus improve boot
@@ -55,9 +64,9 @@ continues to pay the cost for all such content indefinitely, even if those datas
 
 With this, we will provide a capability to:
 
--   Exclude some sub-trees from snapshot payload, thus allowing faster transfer times / boot times and smaller initial
-    memory footprint.
--   Ability to delay-load data stores later.
+- Exclude some sub-trees from snapshot payload, thus allowing faster transfer times / boot times and smaller initial
+  memory footprint.
+- Ability to delay-load data stores later.
 
 Container Runtime Apis like IContainerRuntimeBase.createDataStore and IContainerRuntimeBase.createDetachedDataStore
 provides an argument `loadingGroupId` which allows apps to mark a datastore at time of creation currently. Every data

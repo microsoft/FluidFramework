@@ -5,8 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { parseHtml, serializeHtml } from "./htmlSeedFormat.js";
-import { buildNativeBaseline } from "./nativeSeedBaseline.js";
+import { parseHtml, serializeHtml } from "../htmlSeedFormat.js";
+import { buildNativeBaseline } from "../nativeSeedBaseline.js";
 
 // Validate the pure application format and deterministic native materialization without a live service.
 describe("Seed projection reference: format and baseline", () => {

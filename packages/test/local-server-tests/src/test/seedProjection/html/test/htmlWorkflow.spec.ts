@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { createLocalSeedBackend } from "./localSeedWorkflowBackend.js";
-import { runPendingRestoreWorkflow, runReferenceWorkflow } from "./seedProjectionWorkflow.js";
-import type { IInspectableStorageAdapter } from "./inspectableStorageAdapter.js";
+import {
+	createLocalSeedBackend,
+	type IInspectableStorageAdapter,
+} from "../../harness/index.js";
+import { runPendingRestoreWorkflow, runReferenceWorkflow } from "./htmlWorkflow.js";
 
-// Run backend-neutral lifecycle contracts against real in-process sequencing and summary storage.
+// Run the HTML application's lifecycle assertions against real sequencing and summary storage.
 describe("Seed projection reference: Memorylicious lifecycle", function () {
 	this.timeout(60_000);
 	let backend: IInspectableStorageAdapter;

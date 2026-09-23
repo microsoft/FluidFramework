@@ -1,8 +1,8 @@
 # Using Application Seeds and Readable Projections
 
 **Audience: application developers and external file producers.** This guide explains how to use the reference's
-pattern, not how its runtime internals work. See [DESIGN.md](DESIGN.md) for maintainer details,
-[ARCHITECTURE.md](ARCHITECTURE.md) for the wider roadmap, and [README.md](README.md) for running the example.
+pattern, not how its runtime internals work.
+See the [Fluid design](./Fluid-Design.md) for maintainer details, the [architecture](../Application-Seed-Projection.md) for the wider roadmap, and the [reference README](../../../../packages/test/local-server-tests/src/test/seedProjection/README.md) for running the example.
 
 The code here is an executable reference in a test package, not a published application SDK. Its restricted HTML codec
 and single-store native snapshot builder are fixtures. Adapt the pattern to your application's supported schema and
@@ -10,11 +10,14 @@ creation contract rather than copying private DDS encodings.
 
 ## Choose the responsibility you own
 
-| Role | Responsibility | Starting point |
-| --- | --- | --- |
-| External producer/reader | Write supported application content into the seed envelope; read accepted projections | `externalSeedFile.ts` |
-| Application developer | Define a deterministic model profile, convert seeds, and project live state | `sampleRuntimeFactory.ts`, `htmlTreeSchema.ts` |
-| Host/service integrator | Supply normal code loading, driver/resolver, storage creation, and authentication | `seedProjectionWorkflow.ts`, local backend setup |
+| Role                     | Responsibility                                                                        | Starting point                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| External producer/reader | Write supported application content into the seed envelope; read accepted projections | `html/externalSeedFile.ts`                                                                |
+| Application developer    | Define a deterministic model profile, convert seeds, and project live state           | `html/sampleRuntimeFactory.ts`, `html/htmlTreeSchema.ts`                                  |
+| Host/service integrator  | Supply normal code loading, driver/resolver, storage creation, and authentication     | `harness/seedWorkflowSession.ts`, `html/test/htmlTestApplication.ts`, local backend setup |
+
+These module paths are relative to the [reference directory](../../../../packages/test/local-server-tests/src/test/seedProjection).
+`html/` is the sample application; `harness/` and `html/test/` are testing/integration examples, not application dependencies to ship.
 
 The external producer does not instantiate a Fluid Container or understand DDS state. The application does: it
 constructs the baseline inside its runtime factory, and normal Fluid loading handles collaboration and operation replay.
@@ -22,30 +25,32 @@ Later external readers consume the last accepted projection; they do not see edi
 
 ## Create and read a file without a Fluid application
 
-Run this example alongside the reference modules using the test harness documented in the README:
+Run this example from the reference directory using the test harness documented in the README:
 
 ```typescript
-import { createSeedSummary, readApplicationProjection } from "./externalSeedFile.js";
-import { createLocalSeedBackend } from "./localSeedWorkflowBackend.js";
+import { createSeedSummary, readApplicationProjection } from "./html/externalSeedFile.js";
+import { createLocalSeedBackend } from "./harness/localSeedWorkflowBackend.js";
 
 const backend = createLocalSeedBackend();
 try {
-    const url = await backend.create(createSeedSummary({
-        first: "<p>Hello</p>",
-        second: "<p>World</p>",
-    }));
-    const inspection = await backend.inspect(url);
-    try {
-        const content = await readApplicationProjection(
-            inspection.snapshot.snapshotTree,
-            inspection.readBlob,
-        );
-        // content.parts.first and content.parts.second need no Loader, Container, or DDS.
-    } finally {
-        inspection.dispose();
-    }
+	const url = await backend.create(
+		createSeedSummary({
+			first: "<p>Hello</p>",
+			second: "<p>World</p>",
+		}),
+	);
+	const inspection = await backend.inspect(url);
+	try {
+		const content = await readApplicationProjection(
+			inspection.snapshot.snapshotTree,
+			inspection.readBlob,
+		);
+		// content.parts.first and content.parts.second need no Loader, Container, or DDS.
+	} finally {
+		inspection.dispose();
+	}
 } finally {
-    await backend.close();
+	await backend.close();
 }
 ```
 
@@ -57,11 +62,11 @@ app-root view after the driver unwraps `.app`. `manifest.work` identifies `fluid
 
 ```json
 {
-    "format": "fluid-html-reference/2",
-    "parts": {
-        "first": "first/document.html",
-        "second": "second/document.html"
-    }
+	"format": "fluid-html-reference/2",
+	"parts": {
+		"first": "first/document.html",
+		"second": "second/document.html"
+	}
 }
 ```
 
@@ -72,7 +77,8 @@ a claim that every production storage service accepts an identical file-upload f
 
 Register `sampleRuntimeFactory()` with the host's normal code loader for the reference's `codeDetails`, and use the
 backend's `documentServiceFactory` and `urlResolver`. Resolve the created URL through a Loader.
-`seedProjectionWorkflow.ts` provides the complete setup, including multiple clients and a real summarizer.
+`html/test/htmlTestApplication.ts` provides the sample's test adapter; `harness/seedWorkflowSession.ts` supplies shared client/summary lifecycle.
+`html/test/htmlWorkflow.ts` demonstrates the complete HTML scenario, including multiple clients and a real summarizer.
 
 The factory loads a persisted native summary directly, or converts seed content before calling `loadContainerRuntime()`.
 It realizes SharedTree on interactive clients and summarizers without initialization writes. Edit that live model,

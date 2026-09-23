@@ -10,11 +10,11 @@ import type {
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
 
-import { createProjectionManifest, projectionKey } from "./externalSeedFile.js";
-import { format } from "./htmlSeedFormat.js";
-import { buildNativeBaseline } from "./nativeSeedBaseline.js";
-import { htmlProjector } from "./sampleRuntimeFactory.js";
-import { forward, seedRuntimeFactory } from "./seedRuntimeAdapter.js";
+import { createProjectionManifest, projectionKey } from "../externalSeedFile.js";
+import { format } from "../htmlSeedFormat.js";
+import { buildNativeBaseline } from "../nativeSeedBaseline.js";
+import { htmlProjector } from "../sampleRuntimeFactory.js";
+import { forward, seedRuntimeFactory } from "../seedRuntimeAdapter.js";
 
 // Validate context forwarding and the decisions made before any native runtime can load.
 describe("Seed projection reference: forwarding", () => {

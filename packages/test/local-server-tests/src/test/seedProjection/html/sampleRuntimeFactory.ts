@@ -103,7 +103,8 @@ async function entryPoint(runtime: IContainerRuntime): Promise<IHtmlEntryPoint> 
  * A runtime metadata blob identifies a native snapshot; otherwise read the application projection
  * using the same external-reader contract and build the native baseline at the unchanged checkpoint.
  * The implementation details live in readApplicationProjection and buildNativeBaseline; the adapter
- * owns snapshot overlays and op ordering. See DESIGN.md's "Runtime-owned conversion" section.
+ * overlays native state at the original checkpoint while the Loader owns op replay. See "Runtime-owned conversion"
+ * in docs/content/Architecture/Application-Seed-Projection/Fluid-Design.md from the repository root.
  */
 export const htmlProjector: IProjector = {
 	format,

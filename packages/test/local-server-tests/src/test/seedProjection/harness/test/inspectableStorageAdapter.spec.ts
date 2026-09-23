@@ -25,7 +25,7 @@ import {
 	createInspectableStorageAdapter,
 	type IInspectableStorageAdapterOptions,
 	type ISummaryUploadAttempt,
-} from "./inspectableStorageAdapter.js";
+} from "../inspectableStorageAdapter.js";
 
 /** Raw service state exposed only to the adapter's unit tests. */
 interface IStorageConnection {

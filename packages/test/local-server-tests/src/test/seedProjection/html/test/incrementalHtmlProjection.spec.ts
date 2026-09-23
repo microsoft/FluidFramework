@@ -15,17 +15,17 @@ import type { ISummaryContext } from "@fluidframework/driver-definitions/interna
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { projectionKey, type HtmlPartId } from "./externalSeedFile.js";
-import { parseHtml } from "./htmlSeedFormat.js";
+import { projectionKey, type HtmlPartId } from "../externalSeedFile.js";
+import { parseHtml } from "../htmlSeedFormat.js";
 import {
 	HtmlDocument,
 	HtmlElement,
 	toTree,
 	viewConfiguration,
 	type HtmlView,
-} from "./htmlTreeSchema.js";
-import { IncrementalHtmlProjection } from "./incrementalHtmlProjection.js";
-import { treeFactory, treeId } from "./nativeSeedBaseline.js";
+} from "../htmlTreeSchema.js";
+import { IncrementalHtmlProjection } from "../incrementalHtmlProjection.js";
+import { treeFactory, treeId } from "../nativeSeedBaseline.js";
 
 /** One synthetic accepted storage identity; the application may only reuse paths relative to this exact parent. */
 function acceptedContext(name: string, sequence = 1): ISummaryContext {

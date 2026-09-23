@@ -17,7 +17,7 @@ import {
 	SeedBaselineMismatchError,
 	SeedBaselineProtocol,
 	seedBaselineMetadataKey,
-} from "./seedBaselineFingerprint.js";
+} from "../seedBaselineFingerprint.js";
 
 const seed = {
 	manifestId: "manifest",

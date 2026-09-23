@@ -1,8 +1,15 @@
-# Application File Architecture and Roadmap
+# Application Seed Projection
 
 **This document describes the wider direction, including work outside this repository and unimplemented proposals.**
-The implemented Fluid mechanisms and remaining SDK work are in [DESIGN.md](DESIGN.md);
-[README.md](README.md) is the runnable walkthrough.
+This contributor-facing design spans application integration, ContainerRuntime, garbage collection, and storage.
+It is not owned by the test harness and does not promise production support for the reference's file format.
+
+## Documentation map
+
+- [Implemented Fluid design](./Application-Seed-Projection/Fluid-Design.md): runtime contracts, implementation rationale, acceptance/reuse mechanics, and remaining SDK work.
+- [Application usage](./Application-Seed-Projection/Usage.md): external creation/readback and application integration responsibilities.
+- [Executable reference](../../../packages/test/local-server-tests/src/test/seedProjection/README.md): run commands and scenario coverage.
+- [Reference structure](../../../packages/test/local-server-tests/src/test/seedProjection/DESIGN.md): sample application, test harness, instrumentation, and test boundaries.
 
 ## Goal and implemented foundation
 
@@ -35,10 +42,10 @@ creation, portable downloads, attachment ownership, and whether loading can omit
 
 ## Representations and authority
 
-| Representation | Contents | Authority |
-| --- | --- | --- |
-| Seed summary | Loader-valid envelope, versioned application manifest, HTML/Markdown parts and feature metadata | Defines the initial state; accepted operations extend it before a native summary exists. |
-| Native summary | Runtime/DDS state plus application projection at the same checkpoint | Native state and subsequent operations are authoritative; the projection is a read representation, not an alternative write target. |
+| Representation | Contents                                                                                        | Authority                                                                                                                           |
+| -------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Seed summary   | Loader-valid envelope, versioned application manifest, HTML/Markdown parts and feature metadata | Defines the initial state; accepted operations extend it before a native summary exists.                                            |
+| Native summary | Runtime/DDS state plus application projection at the same checkpoint                            | Native state and subsequent operations are authoritative; the projection is a read representation, not an alternative write target. |
 
 The general application manifest identifies its format, ordered parts, supported non-HTML features, and eventually asset
 references. A materialization profile pins parser/normalization, schema, defaults, identifiers, and asset binding.
@@ -205,10 +212,10 @@ Fluid persistence; easier creation/readback does not depend on replacing it.
 
 Paths are relative to this repository. These identify implementation boundaries, not commitments by external services.
 
-| Files / symbols | Relevance |
-| --- | --- |
-| `packages\runtime\container-runtime\src\blobManager\blobManagerSnapSum.ts`; `packages\drivers\odsp-driver\src\odspSummaryUploadManager.ts` | Attachment reachability and attachment-ID versus parent-summary-path references. |
-| `packages\runtime\container-runtime\src\blobManager\blobManager.ts`, `getGCData` | Nonidentity redirects and per-asset GC nodes. |
-| `packages\drivers\odsp-driver\src\createFile\createNewUtils.ts`; `contracts.ts` in the driver directory | Initial creation, loading groups, synthetic cache IDs, and response shape. |
-| `packages\common\driver-definitions\src\storage.ts`; `packages\drivers\odsp-driver\src\odspDocumentStorageManager.ts` | Group fetch, cache bypass, and blob GET; service guarantees are separate. |
-| `packages\dds\sequence\src\sequenceFactory.ts`; `packages\dds\merge-tree\src\snapshotLoader.ts`; `packages\dds\map\src\directory.ts` | Native detached construction, sequence-history restoration, and directory incarnation metadata. |
+| Files / symbols                                                                                                                            | Relevance                                                                                       |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `packages\runtime\container-runtime\src\blobManager\blobManagerSnapSum.ts`; `packages\drivers\odsp-driver\src\odspSummaryUploadManager.ts` | Attachment reachability and attachment-ID versus parent-summary-path references.                |
+| `packages\runtime\container-runtime\src\blobManager\blobManager.ts`, `getGCData`                                                           | Nonidentity redirects and per-asset GC nodes.                                                   |
+| `packages\drivers\odsp-driver\src\createFile\createNewUtils.ts`; `contracts.ts` in the driver directory                                    | Initial creation, loading groups, synthetic cache IDs, and response shape.                      |
+| `packages\common\driver-definitions\src\storage.ts`; `packages\drivers\odsp-driver\src\odspDocumentStorageManager.ts`                      | Group fetch, cache bypass, and blob GET; service guarantees are separate.                       |
+| `packages\dds\sequence\src\sequenceFactory.ts`; `packages\dds\merge-tree\src\snapshotLoader.ts`; `packages\dds\map\src\directory.ts`       | Native detached construction, sequence-history restoration, and directory incarnation metadata. |

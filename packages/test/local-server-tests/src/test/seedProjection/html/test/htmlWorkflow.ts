@@ -6,13 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import {
-	LoaderHeader,
-	type IContainer,
-	type IRuntimeFactory,
-} from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
-import type { ISummaryGenerationContext } from "@fluidframework/container-runtime/internal";
-import {
 	SummaryType,
 	type ISummaryTree,
 	type SummaryObject,
@@ -20,16 +13,12 @@ import {
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	createSummarizerCore,
-	createTestConfigProvider,
-	LoaderContainerTracker,
-	LocalCodeLoader,
 	summarizeNow,
 	toIDeltaManagerFull,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
 import {
-	codeDetails,
 	createSeedSummary,
 	htmlPartIds,
 	projectionGroup,
@@ -37,15 +26,14 @@ import {
 	readApplicationProjection,
 	type HtmlPartId,
 	type IHtmlParts,
-} from "./externalSeedFile.js";
-import { HtmlElement, HtmlText, viewHtml, viewHtmlParts } from "./htmlTreeSchema.js";
+} from "../externalSeedFile.js";
+import { HtmlElement, HtmlText, viewHtml, viewHtmlParts } from "../htmlTreeSchema.js";
+import type { IHtmlEntryPoint } from "../sampleRuntimeFactory.js";
 import {
-	sampleRuntimeFactory,
-	type IAppObservation,
-	type IHtmlEntryPoint,
-} from "./sampleRuntimeFactory.js";
-import { forward } from "./seedRuntimeAdapter.js";
-import type { IInspectableStorageAdapter } from "./inspectableStorageAdapter.js";
+	createSeedWorkflowSession,
+	type IInspectableStorageAdapter,
+} from "../../harness/index.js";
+import { createHtmlTestApplication } from "./htmlTestApplication.js";
 
 export const exampleParts: IHtmlParts = {
 	first: '<div class="document"><p id="first">Hello</p></div>',
@@ -129,192 +117,6 @@ function partBlobIds(snapshot: ISnapshotTree): Record<HtmlPartId, string> {
 	return { first, second };
 }
 
-/** Test-only client orchestration and observations used by the lifecycle and pending-state scenarios. */
-export interface ISeedTestSession {
-	/** Coordinates real client queues and waits for convergence, rather than mocking op delivery. */
-	readonly tracker: LoaderContainerTracker;
-	/** Completed native loads and their original/projected contexts, in load-observation order. */
-	readonly observations: IAppObservation[];
-	/** Construct a loader, optionally forbidding materialization or seed-body reads during restore. */
-	makeLoader(allowProjection?: boolean, denySeedBodyReads?: boolean): Loader;
-	/** Enroll a container in synchronization and cleanup, including separately created summarizers. */
-	track(container: IContainer): IContainer;
-	/** Count submitted model/runtime batch messages to detect initialization writes merely on open. */
-	readonly modelWrites: number;
-	/** Count callback attempts, including failures and summaries that reuse native handles. */
-	readonly projectionCalls: number;
-	/** Summarizer checkpoint observed by the most recent application projection callback. */
-	readonly projectionCheckpoint: number | undefined;
-	/** Counts at the actual part serializer entry, excluding display/test-only comparisons. */
-	readonly serializedParts: Readonly<Record<HtmlPartId, number>>;
-	/** Contexts delivered to application summary generation, including effective full-tree policy. */
-	readonly summaryContexts: readonly ISummaryGenerationContext[];
-	/** Wait until runtime/native/GC and captured projection state have adopted a particular storage version. */
-	waitForSummaryAcceptance(version: string): Promise<void>;
-	/** Make exactly the next projection callback throw before any upload is possible. */
-	failNextProjection(): void;
-	/** Open a file/version or restore pending state with a newly constructed loader. */
-	load(
-		url: string,
-		allowProjection?: boolean,
-		version?: string,
-		pending?: string,
-	): Promise<IContainer>;
-	/** Dispose all tracked containers and coordination listeners, leaving backend shutdown to the caller. */
-	close(): void;
-}
-
-/**
- * Create real client loaders plus test-only observations, queue coordination, and failure injection.
- * This harness measures write-on-open, projection checkpoints, and restoration; it does not simulate
- * storage or ACKs. Backend/auth/URL/server details remain outside this file. Always close the session.
- */
-export function referenceSession(
-	backend: IInspectableStorageAdapter,
-	useSnapshotApi = true,
-): ISeedTestSession {
-	const tracker = new LoaderContainerTracker(true);
-	const observations: IAppObservation[] = [];
-	const containers: IContainer[] = [];
-	let modelWrites = 0;
-	let failProjection = false;
-	let projectionCalls = 0;
-	let projectionCheckpoint: number | undefined;
-	const serializedParts: Record<HtmlPartId, number> = { first: 0, second: 0 };
-	const summaryContexts: ISummaryGenerationContext[] = [];
-	const acceptedVersions = new Set<string>();
-	const acceptanceWaiters = new Map<string, () => void>();
-	/** Wire the sample runtime to the backend, optionally denying source reads to prove offline reconstruction. */
-	const makeLoader = (allowProjection = true, denySeedBodyReads = false): Loader => {
-		const appFactory = sampleRuntimeFactory({
-			allowProjection,
-			observe: (observation) => observations.push(observation),
-			beforeProjection: (checkpoint) => {
-				projectionCalls++;
-				projectionCheckpoint = checkpoint;
-				if (failProjection) {
-					failProjection = false;
-					throw new Error("Injected projection failure before upload");
-				}
-			},
-			onSerializePart: (part) => {
-				serializedParts[part]++;
-			},
-			observeSummary: (context) => summaryContexts.push(context),
-			onSummaryAccepted: (context) => {
-				assert(context.ackHandle !== undefined);
-				acceptedVersions.add(context.ackHandle);
-				acceptanceWaiters.get(context.ackHandle)?.();
-				acceptanceWaiters.delete(context.ackHandle);
-			},
-		});
-		const factory: IRuntimeFactory = {
-			get IRuntimeFactory() {
-				return this;
-			},
-			instantiateRuntime: async (context, existing) =>
-				appFactory.instantiateRuntime(
-					forward(context, {
-						storage:
-							!denySeedBodyReads || context.pendingLocalState === undefined
-								? context.storage
-								: forward(context.storage, {
-										readBlob: async (id) => {
-											const projection: ISnapshotTree | undefined =
-												context.baseSnapshot?.trees[projectionKey];
-											const seedIds =
-												projection === undefined
-													? []
-													: [
-															...Object.values(projection.blobs),
-															...Object.values(projection.trees).flatMap((part) =>
-																Object.values(part.blobs),
-															),
-														];
-											if (seedIds.includes(id)) {
-												throw new Error(
-													"Seed bodies unavailable during pending-state reconstruction",
-												);
-											}
-											return context.storage.readBlob(id);
-										},
-									}),
-						submitBatchFn: (batch, sequence) => {
-							modelWrites += batch.length;
-							return context.submitBatchFn(batch, sequence);
-						},
-					}),
-					existing,
-				),
-		};
-		return new Loader({
-			documentServiceFactory: backend.documentServiceFactory,
-			urlResolver: backend.urlResolver,
-			codeLoader: new LocalCodeLoader([[codeDetails, factory]]),
-			configProvider: createTestConfigProvider({
-				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": useSnapshotApi,
-				"Fluid.Container.enableOfflineFull": true,
-			}),
-		});
-	};
-	/** Register interactive and summarizer containers for synchronization and deterministic cleanup. */
-	const track = (container: IContainer): IContainer => {
-		containers.push(container);
-		tracker.addContainer(container);
-		return container;
-	};
-	return {
-		tracker,
-		observations,
-		makeLoader,
-		track,
-		get modelWrites(): number {
-			return modelWrites;
-		},
-		get projectionCalls(): number {
-			return projectionCalls;
-		},
-		get projectionCheckpoint(): number | undefined {
-			return projectionCheckpoint;
-		},
-		serializedParts,
-		summaryContexts,
-		async waitForSummaryAcceptance(version): Promise<void> {
-			if (acceptedVersions.has(version)) return;
-			await new Promise<void>((resolve) => acceptanceWaiters.set(version, resolve));
-		},
-		/** Inject one callback failure so the workflow can verify abort-before-upload and a successful retry. */
-		failNextProjection: (): void => {
-			failProjection = true;
-		},
-		/** Load a chosen stored version or restore pending state through a new, independently constructed loader. */
-		async load(
-			url: string,
-			allowProjection = true,
-			version?: string,
-			pending?: string,
-		): Promise<IContainer> {
-			return track(
-				await makeLoader(allowProjection, pending !== undefined).resolve(
-					{
-						url,
-						headers: version === undefined ? undefined : { [LoaderHeader.version]: version },
-					},
-					pending,
-				),
-			);
-		},
-		/** Dispose every tracked client and reset synchronization listeners without shutting down the backend. */
-		close(): void {
-			for (const container of containers) {
-				if (!container.closed) container.close();
-				container.dispose();
-			}
-			tracker.reset();
-		},
-	};
-}
-
 /**
  * Inspect a persisted seed or native summary independently of client overlays.
  * Validate app-only reading, retained blob IDs, optional initial body omission, and explicit group
@@ -373,7 +175,8 @@ async function verifyGroupedProjection(
 export async function runReferenceWorkflow(
 	backend: IInspectableStorageAdapter,
 ): Promise<void> {
-	const session = referenceSession(backend);
+	const application = createHtmlTestApplication();
+	const session = createSeedWorkflowSession(backend, application);
 	try {
 		const url = await backend.create(createSeedSummary(exampleParts));
 		const seedInspection = await backend.inspect(url);
@@ -476,7 +279,7 @@ export async function runReferenceWorkflow(
 		for (const part of htmlPartIds)
 			assert.equal(encodedPart(accepted.summaryTree, part), merged[part]);
 		assert.equal(session.summaryContexts.at(-1)?.fullTree, true);
-		assert.deepEqual(session.serializedParts, { first: 1, second: 1 });
+		assert.deepEqual(application.serializedParts, { first: 1, second: 1 });
 		assert.equal(
 			accepted.summaryRefSeq,
 			session.projectionCheckpoint,
@@ -502,7 +305,7 @@ export async function runReferenceWorkflow(
 			firstNativeVersion,
 		);
 		for (const part of htmlPartIds) assertReusedPart(accepted.summaryTree, part);
-		assert.deepEqual(session.serializedParts, { first: 1, second: 1 });
+		assert.deepEqual(application.serializedParts, { first: 1, second: 1 });
 		const unchangedChannels: SummaryObject | undefined =
 			accepted.summaryTree.tree[".channels"];
 		assert(
@@ -527,7 +330,7 @@ export async function runReferenceWorkflow(
 		assert.equal(session.summaryContexts.at(-1)?.previousSummary?.ackHandle, previousVersion);
 		assert.equal(encodedPart(accepted.summaryTree, "first"), editedParts.first);
 		assertReusedPart(accepted.summaryTree, "second");
-		assert.deepEqual(session.serializedParts, { first: 2, second: 1 });
+		assert.deepEqual(application.serializedParts, { first: 2, second: 1 });
 		const submitted = backend.uploads.at(-1);
 		assert(submitted !== undefined);
 		assert.equal(submitted.context.ackHandle, previousVersion);
@@ -552,7 +355,7 @@ export async function runReferenceWorkflow(
 		);
 		await session.waitForSummaryAcceptance(accepted.summaryVersion);
 		for (const part of htmlPartIds) assertReusedPart(accepted.summaryTree, part);
-		assert.deepEqual(session.serializedParts, { first: 2, second: 1 });
+		assert.deepEqual(application.serializedParts, { first: 2, second: 1 });
 		assert.deepEqual(
 			await verifyGroupedProjection(backend, url, accepted.summaryVersion, editedParts),
 			editedIds,
@@ -593,11 +396,11 @@ export async function runReferenceWorkflow(
 		await verifyGroupedProjection(backend, url, refreshed.summaryVersion, nativeParts);
 		// No content changes: native descendants can be handles; app output still exists.
 		const callsBeforeRepeat = session.projectionCalls;
-		const serializedBeforeRepeat = { ...session.serializedParts };
+		const serializedBeforeRepeat = { ...application.serializedParts };
 		const repeated = await summarizeNow(native.summarizer, "repeat without native changes");
 		await session.waitForSummaryAcceptance(repeated.summaryVersion);
 		assert.equal(session.projectionCalls, callsBeforeRepeat + 1);
-		assert.deepEqual(session.serializedParts, serializedBeforeRepeat);
+		assert.deepEqual(application.serializedParts, serializedBeforeRepeat);
 		for (const part of htmlPartIds) assertReusedPart(repeated.summaryTree, part);
 		await verifyGroupedProjection(backend, url, repeated.summaryVersion, nativeParts);
 		const channels: SummaryObject | undefined = repeated.summaryTree.tree[".channels"];
@@ -620,7 +423,11 @@ export async function runPendingRestoreWorkflow(
 	backend: IInspectableStorageAdapter,
 	useSnapshotApi = true,
 ): Promise<void> {
-	const session = referenceSession(backend, useSnapshotApi);
+	const session = createSeedWorkflowSession(
+		backend,
+		createHtmlTestApplication(),
+		useSnapshotApi,
+	);
 	try {
 		const url = await backend.create(createSeedSummary(exampleParts));
 		const a = await session.load(url);

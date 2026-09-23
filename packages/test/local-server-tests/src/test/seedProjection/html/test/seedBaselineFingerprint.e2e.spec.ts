@@ -40,21 +40,23 @@ import {
 	createSeedSummary,
 	projectionKey,
 	readApplicationProjection,
-} from "./externalSeedFile.js";
-import { HtmlElement, HtmlText, viewHtmlParts } from "./htmlTreeSchema.js";
-import type { IInspectableStorageAdapter } from "./inspectableStorageAdapter.js";
-import { createLocalSeedBackend } from "./localSeedWorkflowBackend.js";
+} from "../externalSeedFile.js";
+import { HtmlElement, HtmlText, viewHtmlParts } from "../htmlTreeSchema.js";
+import {
+	createLocalSeedBackend,
+	type IInspectableStorageAdapter,
+} from "../../harness/index.js";
 import {
 	sampleRuntimeFactory,
 	type IAppObservation,
 	type IHtmlEntryPoint,
-} from "./sampleRuntimeFactory.js";
+} from "../sampleRuntimeFactory.js";
 import {
 	seedBaselineBlobName,
 	seedBaselineMetadataKey,
 	type SeedBaselineMismatchError,
-} from "./seedBaselineFingerprint.js";
-import { forward } from "./seedRuntimeAdapter.js";
+} from "../seedBaselineFingerprint.js";
+import { forward } from "../seedRuntimeAdapter.js";
 
 const parts = { first: "<p>one</p>", second: "<p>two</p>" };
 const largeText = Array.from({ length: 100 }, (_, i) =>

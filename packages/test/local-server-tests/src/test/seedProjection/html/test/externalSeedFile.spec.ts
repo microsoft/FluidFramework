@@ -14,9 +14,9 @@ import {
 	projectionKey,
 	readApplicationProjection,
 	type IApplicationProjection,
-} from "./externalSeedFile.js";
-import { format } from "./htmlSeedFormat.js";
-import { createLocalSeedBackend } from "./localSeedWorkflowBackend.js";
+} from "../externalSeedFile.js";
+import { format } from "../htmlSeedFormat.js";
+import { createLocalSeedBackend } from "../../harness/index.js";
 
 /** Construct an ID-only storage view so reader tests cannot accidentally depend on native DDS state. */
 function projectionSnapshot(): ISnapshotTree {

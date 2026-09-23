@@ -6,13 +6,17 @@ It uses an in-process service, not a browser application or external service.
 
 ## Choose a starting point
 
-| Task | Read |
-| --- | --- |
-| Create/read a seed or integrate a new application | [USAGE.md](USAGE.md): consumer responsibilities, examples, and integration steps |
-| Maintain the runtime/projection implementation | [DESIGN.md](DESIGN.md): contracts, acceptance/reuse mechanics, source map, and SDK gaps |
-| Understand the wider system and future dependencies | [ARCHITECTURE.md](ARCHITECTURE.md): storage interchange, assets, Markdown, and longer-term direction |
-| Follow the executable scenario | `seedProjectionWorkflow.ts` and `seedProjectionWorkflow.spec.ts` |
-| Run the reference | Commands below |
+| Task                                                | Read                                                                                                                                                                                   |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Create/read a seed or integrate a new application   | [Application usage](../../../../../../docs/content/Architecture/Application-Seed-Projection/Usage.md): consumer responsibilities, examples, and integration steps                      |
+| Maintain the runtime/projection implementation      | [Fluid design](../../../../../../docs/content/Architecture/Application-Seed-Projection/Fluid-Design.md): contracts, implementation rationale, acceptance/reuse mechanics, and SDK gaps |
+| Understand the wider system and future dependencies | [Architecture](../../../../../../docs/content/Architecture/Application-Seed-Projection.md): storage interchange, assets, Markdown, and longer-term direction                           |
+| Understand this sample and its test harness         | [DESIGN.md](DESIGN.md): local module responsibilities, instrumentation, and test boundaries                                                                                            |
+| Follow the executable scenario                      | [`html/test/htmlWorkflow.ts`](html/test/htmlWorkflow.ts) and [`html/test/htmlWorkflow.spec.ts`](html/test/htmlWorkflow.spec.ts)                                                        |
+| Run the reference                                   | Commands below                                                                                                                                                                         |
+
+`html/` contains the sample application, `html/test/` its adapter and scenarios, and `harness/` the reusable test infrastructure.
+Another application supplies the harness contract without adding HTML-specific knowledge to the session or storage helpers.
 
 ## Run with normal workspace outputs
 
@@ -34,7 +38,7 @@ Set-Location C:\git\FluidFramework\packages\test\local-server-tests
 $env:SEED_TYPECHECK = "1"
 $loaderUrl = ([System.Uri](Join-Path (Get-Location).Path 'src\test\seedProjection\seedProjectionSourceLoader.mjs')).AbsoluteUri
 node --import $loaderUrl node_modules\mocha\bin\mocha.js --no-config --no-package --exit --timeout 60000 `
-    "src\test\seedProjection\*.spec.ts" `
+    "src\test\seedProjection\**\*.spec.ts" `
     ..\..\runtime\container-runtime\src\test\containerRuntime.summaryGeneration.spec.ts `
     ..\..\runtime\container-runtime\src\test\gc\gcSummaryStateTracker.spec.ts `
     ..\..\runtime\container-runtime\src\test\gc\garbageCollection.spec.ts
