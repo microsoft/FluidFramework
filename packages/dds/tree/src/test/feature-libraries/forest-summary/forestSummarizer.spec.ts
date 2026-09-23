@@ -61,6 +61,7 @@ import {
 	TreeViewConfigurationAlpha,
 	type ImplicitFieldSchema,
 	type InsertableField,
+	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
@@ -276,7 +277,7 @@ async function summarizeAndValidateIncrementality<TSchema extends ImplicitFieldS
 const sf = new SchemaFactoryAlpha("IncrementalSummarization");
 
 class ObjectNodeSchema extends sf.object("objectNodeSchema", {
-	foo: sf.incrementalSummary(sf.string),
+	foo: sf.incrementalSummary([sf.string, sf.number]),
 }) {}
 
 class FooMap extends sf.mapAlpha("fooMap", sf.incrementalSummary(sf.string)) {}
@@ -292,6 +293,15 @@ class ArrayNodeSchema extends sf.object("arrayNodeSchema", {
 class FooRecord extends sf.recordAlpha("fooRecord", sf.incrementalSummary(sf.string)) {}
 class RecordNodeSchema extends sf.object("recordNodeSchema", {
 	fooRecord: FooRecord,
+}) {}
+
+class RecursiveArray extends sf.arrayRecursive(
+	"recursiveArray",
+	sf.incrementalSummaryRecursive([sf.string, () => RecursiveArray]),
+) {}
+type _checkRecursiveArray = ValidateRecursiveSchema<typeof RecursiveArray>;
+class RecursiveNodeSchema extends sf.object("recursiveNodeSchema", {
+	recursiveArray: RecursiveArray,
 }) {}
 
 const LeafNodeSchema = sf.required(sf.incrementalSummary(sf.string));
@@ -436,6 +446,16 @@ describe("ForestSummarizer", () => {
 					RecordNodeSchema,
 					{
 						fooRecord: new FooRecord({ key1: "value1", key2: "value2" }),
+					},
+					2 /* incrementalNodeCount */,
+				);
+			});
+
+			it("recursive nodes", async () => {
+				await summarizeAndValidateIncrementality(
+					RecursiveNodeSchema,
+					{
+						recursiveArray: new RecursiveArray(["value", new RecursiveArray(["nested"])]),
 					},
 					2 /* incrementalNodeCount */,
 				);
