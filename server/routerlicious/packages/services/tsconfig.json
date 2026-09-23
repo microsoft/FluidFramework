@@ -2,13 +2,15 @@
 	"extends": "@fluidframework/build-common/ts-common-config.json",
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
+		// Database extensions depend on dynamic imports being emitted as CommonJS requires.
+		"ignoreDeprecations": "6.0",
 		"paths": {
 			"@fluidframework/server-services": ["./src/index.ts"],
 		},
 		"strictNullChecks": true,
 		"rootDir": "./src",
 		"outDir": "./dist",
-		"types": ["mocha"],
+		"types": ["node", "mocha"],
 		"skipLibCheck": true,
 	},
 	"include": ["src/**/*"],

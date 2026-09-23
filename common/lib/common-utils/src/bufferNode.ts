@@ -70,12 +70,12 @@ export function stringToBuffer(input: string, encoding: string): ArrayBufferLike
 /**
  * Convert binary blob to string format
  *
- * @param blob - The binary blob
+ * @param blob - The binary buffer or typed-array view.
  * @param encoding - Output string's encoding
  * @returns The blob in string format
  *
  * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
-export const bufferToString = (blob: ArrayBufferLike, encoding: string): string =>
+export const bufferToString = (blob: ArrayBufferLike | Uint8Array, encoding: string): string =>
 	IsoBuffer.from(blob).toString(encoding);
