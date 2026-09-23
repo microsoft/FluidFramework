@@ -36,14 +36,8 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
-import {
-	codeDetails,
-	createSeedSummary,
-	projectionKey,
-	projectionManifestBlobName,
-	readApplicationProjection,
-} from "../externalSeedFile.js";
-import { externalHtmlFormat } from "../htmlSeedFormat.js";
+import { codeDetails, projectionLayout, readApplicationProjection } from "../appProjection.js";
+import { createSeedSummary } from "../externalSeedFile.js";
 import { HtmlElement, HtmlText, viewHtmlParts } from "../htmlTreeSchema.js";
 import {
 	createLocalSeedBackend,
@@ -53,7 +47,7 @@ import {
 	htmlMaterializationProfile,
 	htmlProjector,
 	sampleRuntimeFactory,
-	type IAppObservation,
+	type IHtmlApplicationLoad,
 	type IHtmlEntryPoint,
 } from "../sampleRuntimeFactory.js";
 import {
@@ -63,8 +57,14 @@ import {
 	type SeedBaselineMismatchError,
 } from "../seedBaselineFingerprint.js";
 import { forward } from "../seedRuntimeAdapter.js";
+import { treePart } from "./htmlTestUtils.js";
 
-const parts = { first: "<p>one</p>", second: "<p>two</p>" };
+/** Canonical two-part transport fixture; variable-part lifecycle coverage is in htmlWorkflow.spec.ts. */
+const parts = [
+	{ name: "first", payload: "<p>one</p>" },
+	{ name: "second", payload: "<p>two</p>" },
+];
+/** Deterministic, poorly compressible payload for genuine native compression/chunking tests. */
 const largeText = Array.from({ length: 100 }, (_, i) =>
 	createHash("sha256").update(String(i)).digest("hex"),
 ).join("");
@@ -113,8 +113,8 @@ function unpackDataStoreMessage(
 }
 
 /** Select a real shared text value; no native operations or DDS processing are mocked in these tests. */
-function text(app: IHtmlEntryPoint, part: "first" | "second"): HtmlText {
-	const element = app.view.root[part][0];
+function text(app: IHtmlEntryPoint, part: string): HtmlText {
+	const element = treePart(app.view, part)[0];
 	assert(element instanceof HtmlElement);
 	const node = element.children[0];
 	assert(node instanceof HtmlText);
@@ -144,7 +144,7 @@ describe("Seed baseline fingerprint: real runtime transport", function () {
 	let backend: IInspectableStorageAdapter;
 	let tracker: LoaderContainerTracker;
 	let containers: IContainer[];
-	let observations: IAppObservation[];
+	let observations: IHtmlApplicationLoad[];
 	let writes: IBatchMessage[];
 	let dispatches: ILoaderDispatch[];
 	let failures: SeedBaselineMismatchError[];
@@ -292,7 +292,11 @@ describe("Seed baseline fingerprint: real runtime transport", function () {
 		url: string,
 		pending?: string,
 		version?: string,
-	): Promise<{ container: IContainer; app: IHtmlEntryPoint; observation: IAppObservation }> {
+	): Promise<{
+		container: IContainer;
+		app: IHtmlEntryPoint;
+		observation: IHtmlApplicationLoad;
+	}> {
 		const container = track(
 			await loader().resolve(
 				{
@@ -344,8 +348,8 @@ describe("Seed baseline fingerprint: real runtime transport", function () {
 		assert(native.observation.original.baseSnapshot !== undefined);
 		assert(getSeedBaselineBlobId(native.observation.original.baseSnapshot) !== undefined);
 		assert.equal(
-			native.observation.original.baseSnapshot.trees[projectionKey]?.blobs[
-				projectionManifestBlobName
+			native.observation.original.baseSnapshot.trees[projectionLayout.key]?.blobs[
+				projectionLayout.manifest
 			],
 			undefined,
 			"Native publication must preserve the application's choice not to supply a manifest",
@@ -354,8 +358,6 @@ describe("Seed baseline fingerprint: real runtime transport", function () {
 
 	it("preserves custom application metadata without using it to select materialization rules", async () => {
 		const manifest = JSON.stringify({
-			format: externalHtmlFormat,
-			parts: { first: "first/document.html", second: "second/document.html" },
 			metadata: {
 				title: "Application-owned content",
 				materializationProfile: "not-a-native-rule-selector",
@@ -365,9 +367,9 @@ describe("Seed baseline fingerprint: real runtime transport", function () {
 		const seed = createSeedSummary(parts);
 		const app: SummaryObject | undefined = seed.tree[".app"];
 		assert(app?.type === SummaryType.Tree);
-		const projection: SummaryObject | undefined = app.tree[projectionKey];
+		const projection: SummaryObject | undefined = app.tree[projectionLayout.key];
 		assert(projection?.type === SummaryType.Tree);
-		projection.tree[projectionManifestBlobName] = {
+		projection.tree[projectionLayout.manifest] = {
 			type: SummaryType.Blob,
 			content: manifest,
 		};
@@ -915,7 +917,9 @@ describe("Seed baseline fingerprint: real runtime transport", function () {
 			const descriptorId = getSeedBaselineBlobId(inspection.snapshot.snapshotTree);
 			assert(descriptorId !== undefined);
 			assert.equal(
-				inspection.snapshot.snapshotTree.trees[projectionKey]?.blobs[seedBaselineBlobName],
+				inspection.snapshot.snapshotTree.trees[projectionLayout.key]?.blobs[
+					seedBaselineBlobName
+				],
 				undefined,
 				"Readable application content must not contain the compatibility descriptor",
 			);

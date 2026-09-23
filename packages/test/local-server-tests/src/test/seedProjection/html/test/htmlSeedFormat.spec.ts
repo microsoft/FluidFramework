@@ -5,8 +5,9 @@
 
 import { strict as assert } from "node:assert";
 
-import { parseHtml, serializeHtml } from "../htmlSeedFormat.js";
-import { buildNativeBaseline } from "../nativeSeedBaseline.js";
+import { parseHtml } from "../htmlSeedFormat.js";
+import { serializeHtml } from "../htmlSerializer.js";
+import { buildRuntimeSnapshot } from "../runtimeMaterialization.js";
 
 // Validate the pure application format and deterministic native materialization without a live service.
 describe("Seed projection reference: format and baseline", () => {
@@ -45,18 +46,20 @@ describe("Seed projection reference: format and baseline", () => {
 
 	// Equivalent HTML must produce identical persistent identities/bytes, not merely equal rendered text.
 	it("independently constructs byte-identical native baselines and identity tables", () => {
-		const a = buildNativeBaseline(
-			{
-				first: '<p title="x" id="a">hello</p>',
-				second: "<p>second</p>",
-			},
+		const a = buildRuntimeSnapshot(
+			[
+				{ name: "first", payload: '<p title="x" id="a">hello</p>' },
+				{ name: "second", payload: "<p>second</p>" },
+				{ name: "third", payload: "<p>third</p>" },
+			],
 			0,
 		);
-		const b = buildNativeBaseline(
-			{
-				first: '<p id="a" title="x">hello</p>',
-				second: "<p>second</p>",
-			},
+		const b = buildRuntimeSnapshot(
+			[
+				{ name: "third", payload: "<p>third</p>" },
+				{ name: "second", payload: "<p>second</p>" },
+				{ name: "first", payload: '<p id="a" title="x">hello</p>' },
+			],
 			0,
 		);
 		assert.equal(a.fingerprint, b.fingerprint);

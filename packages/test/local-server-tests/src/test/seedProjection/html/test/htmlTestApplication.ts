@@ -4,18 +4,22 @@
  */
 
 import type { ISeedWorkflowApplication } from "../../harness/index.js";
-import { codeDetails, projectionKey, type HtmlPartId } from "../externalSeedFile.js";
-import { sampleRuntimeFactory, type IAppObservation } from "../sampleRuntimeFactory.js";
+import { codeDetails, projectionLayout } from "../appProjection.js";
+import { sampleRuntimeFactory, type IHtmlApplicationLoad } from "../sampleRuntimeFactory.js";
 
-/** HTML-only observations belong to the sample tests, not the lifecycle harness. */
-export interface IHtmlTestApplication extends ISeedWorkflowApplication<IAppObservation> {
+/**
+ * HTML-only observations belong to the sample tests, not the lifecycle harness.
+ */
+export interface IHtmlTestApplication extends ISeedWorkflowApplication<IHtmlApplicationLoad> {
 	/** Calls at the actual serializer entry, excluding display/test-only comparisons. */
-	readonly serializedParts: Readonly<Record<HtmlPartId, number>>;
+	readonly serializedParts: Readonly<Record<string, number>>;
 }
 
-/** Adapt the HTML sample to the reusable harness while retaining its format-specific test probes. */
+/**
+ * Adapt the HTML sample to the reusable harness while retaining its format-specific test probes.
+ */
 export function createHtmlTestApplication(): IHtmlTestApplication {
-	const serializedParts: Record<HtmlPartId, number> = { first: 0, second: 0 };
+	const serializedParts: Record<string, number> = {};
 	return {
 		codeDetails,
 		serializedParts,
@@ -23,16 +27,18 @@ export function createHtmlTestApplication(): IHtmlTestApplication {
 			sampleRuntimeFactory({
 				...options,
 				onSerializePart: (part) => {
-					serializedParts[part]++;
+					serializedParts[part] = (serializedParts[part] ?? 0) + 1;
 				},
 			}),
 		seedBlobIds(snapshot) {
-			const projection = snapshot?.trees[projectionKey];
+			const projection = snapshot?.trees[projectionLayout.key];
 			return projection === undefined
 				? []
 				: [
 						...Object.values(projection.blobs),
-						...Object.values(projection.trees).flatMap((part) => Object.values(part.blobs)),
+						...Object.values(projection.trees[projectionLayout.parts]?.trees ?? {}).flatMap(
+							(part) => Object.values(part.blobs),
+						),
 					];
 		},
 	};

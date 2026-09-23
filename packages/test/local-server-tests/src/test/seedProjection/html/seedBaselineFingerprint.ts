@@ -14,15 +14,21 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
-import type { IApplicationProjection } from "./externalSeedFile.js";
-import { storeId } from "./nativeSeedBaseline.js";
+import { canonicalParts, type IApplicationProjection } from "./appProjection.js";
+import { storeId } from "./runtimeMaterialization.js";
 
 /**
  * Immutable compatibility metadata in the native data-store summary, outside exported application content.
  * The initial native hash is computed before this blob is written, so it does not hash itself.
  */
 export const seedBaselineBlobName = "seed-baseline.json";
+/**
+ * Transport metadata key carrying this application's immutable construction agreement.
+ */
 export const seedBaselineMetadataKey = "seedBaseline";
+/**
+ * Snapshot canonicalization/hash algorithm; unchanged by the named-parts model layout.
+ */
 export const seedBaselineHashVersion = "native-snapshot-sha256/1";
 
 /** Only known loader/service traffic is exempt; legacy or future native envelopes still need proof. */
@@ -30,7 +36,9 @@ const loaderMessageTypes = new Set<string>(
 	Object.values(MessageType).filter((type) => type !== MessageType.Operation),
 );
 
-/** Immutable identity of the native genesis, not a hash of the current edited document. */
+/**
+ * Immutable identity of the native genesis, not a hash of the current edited document.
+ */
 export interface ISeedBaselineDescriptor {
 	/** Digest of immutable source blob identities and the original source checkpoint. */
 	readonly seedId: string;
@@ -44,13 +52,17 @@ export interface ISeedBaselineDescriptor {
 	readonly baselineHash: string;
 }
 
-/** Retained descriptor bytes are reusable only for the same persisted sidecar blob. */
+/**
+ * Retained descriptor bytes are reusable only for the same persisted sidecar blob.
+ */
 export interface IRetainedSeedBaseline {
 	readonly blobId: string;
 	readonly descriptor: ISeedBaselineDescriptor;
 }
 
-/** Bind reconstruction to its source without incorporating the computed native hash into source identity. */
+/**
+ * Bind reconstruction to its source without incorporating the computed native hash into source identity.
+ */
 export function createSeedBaselineDescriptor(
 	seed: IApplicationProjection,
 	sourceSequenceNumber: number,
@@ -61,8 +73,7 @@ export function createSeedBaselineDescriptor(
 		.update(
 			JSON.stringify([
 				seed.manifestId,
-				seed.partBlobIds.first,
-				seed.partBlobIds.second,
+				canonicalParts(seed.parts).map(({ name }) => [name, seed.partBlobIds[name]]),
 				sourceSequenceNumber,
 			]),
 		)
@@ -75,7 +86,9 @@ export function createSeedBaselineDescriptor(
 	});
 }
 
-/** Validate the small versioned proof instead of accepting arbitrary metadata as an agreement. */
+/**
+ * Validate the small versioned proof instead of accepting arbitrary metadata as an agreement.
+ */
 export function parseSeedBaselineDescriptor(value: unknown): ISeedBaselineDescriptor {
 	if (
 		typeof value !== "object" ||
@@ -104,7 +117,9 @@ export function parseSeedBaselineDescriptor(value: unknown): ISeedBaselineDescri
 	});
 }
 
-/** Compare the entire descriptor, including source identity and both version discriminators. */
+/**
+ * Compare the entire descriptor, including source identity and both version discriminators.
+ */
 export function sameSeedBaseline(
 	a: ISeedBaselineDescriptor,
 	b: ISeedBaselineDescriptor,

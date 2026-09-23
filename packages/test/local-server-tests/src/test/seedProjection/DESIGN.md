@@ -13,13 +13,19 @@ consumer responsibilities.
 
 The HTML sample defines the format, SharedTree schema, deterministic materialization, runtime
 integration, and readable projection. The test harness supplies storage, clients, sequencing,
-summary observation, and lifecycle assertions. ContainerRuntime supplies the summary-generation and
+summary observation, and lifecycle assertions.
+The distributed data structure (DDS) in this sample is SharedTree.
+ContainerRuntime supplies the summary-generation and
 acceptance contract; it is not implemented inside this folder.
 
-The reference is headless and remains in a test package because its complete native graph builder
+The reference is headless and remains in a test package because its complete runtime/DDS graph builder
 uses test-internal construction support. It is not a supported production SDK or a browser demo. The
 restricted HTML codec and single-store graph deliberately bound the sample; they do not constrain
 the wider architecture to HTML or SharedTree.
+
+External file creation writes application content and a loader-valid envelope, without constructing a DDS.
+Runtime materialization is separate: the application builds its runtime/DDS snapshot when it loads that seed.
+That generated loading view is not the original stored snapshot and is not a file-creation utility.
 
 ## Application implementation
 
@@ -28,16 +34,26 @@ remain here: their reusable ideas do not make their present source a format-inde
 `html/test/` owns its unit/integration cases, HTML-specific assertions, and the adapter that
 connects this application to the common harness.
 
-| Module                                                                   | Responsibility                                                                                       |
-| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| [`html/externalSeedFile.ts`](html/externalSeedFile.ts)                   | Pure creation/readback contract and application summary subtree.                                     |
-| [`html/htmlSeedFormat.ts`](html/htmlSeedFormat.ts)                       | Restricted parser and canonical serializer; explicitly not a browser HTML parser.                    |
-| [`html/htmlTreeSchema.ts`](html/htmlTreeSchema.ts)                       | Recursive element/attribute/ordered-child/text schema and synchronous native conversion.             |
-| [`html/nativeSeedBaseline.ts`](html/nativeSeedBaseline.ts)               | Complete native fixture envelope; actual DDS/compressor serializers own their codecs.                |
-| [`html/seedRuntimeAdapter.ts`](html/seedRuntimeAdapter.ts)               | Context forwarding, coherent snapshot/storage overlay, original source, and pending reconstruction.  |
-| [`html/seedBaselineFingerprint.ts`](html/seedBaselineFingerprint.ts)     | Genesis descriptor, operation-packet proof, mismatch evidence, and internal native-identity reading. |
-| [`html/sampleRuntimeFactory.ts`](html/sampleRuntimeFactory.ts)           | Internal materialization profile, native data-store identity persistence, and model realization.     |
-| [`html/incrementalHtmlProjection.ts`](html/incrementalHtmlProjection.ts) | Per-part dirtiness, captured revisions, and accepted-parent subtree handles.                         |
+| Module                                                               | Responsibility                                                                                                              |
+| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| [`html/appProjection.ts`](html/appProjection.ts)                     | Shared named-part types, storage layout, metadata envelope, and external readback.                                          |
+| [`html/externalSeedFile.ts`](html/externalSeedFile.ts)               | External producer's seed envelope; no model construction or runtime loading.                                                |
+| [`html/htmlSeedFormat.ts`](html/htmlSeedFormat.ts)                   | Shared restricted HTML types/parser and documented supported tags; not a browser HTML parser.                               |
+| [`html/htmlSerializer.ts`](html/htmlSerializer.ts)                   | Canonical HTML encoding used when projecting model parts into summaries.                                                    |
+| [`html/htmlTreeSchema.ts`](html/htmlTreeSchema.ts)                   | Named-parts map, recursive HTML schema, and synchronous conversion between HTML nodes and SharedTree.                       |
+| [`html/runtimeMaterialization.ts`](html/runtimeMaterialization.ts)   | Generated loading snapshot and fixture envelope; actual DDS/compressor serializers own their codecs.                        |
+| [`html/seedRuntimeAdapter.ts`](html/seedRuntimeAdapter.ts)           | Context forwarding, coherent snapshot/storage overlay, original source, and pending reconstruction.                         |
+| [`html/seedBaselineFingerprint.ts`](html/seedBaselineFingerprint.ts) | Genesis descriptor, operation-packet proof, mismatch evidence, and internal native-identity reading.                        |
+| [`html/sampleRuntimeFactory.ts`](html/sampleRuntimeFactory.ts)       | Internal materialization profile, native data-store identity persistence, and model realization.                            |
+| [`html/htmlSummaryProjection.ts`](html/htmlSummaryProjection.ts)     | Model-to-application-summary projection: per-part dirtiness, captured subscriptions/revisions, and accepted-parent handles. |
+
+`HtmlDocument.parts` maps names to independently tracked subtrees.
+The default workflow uses two parts, but the format/model are not a fixed pair.
+The optional default manifest contains a format label, not a part index that becomes stale after structural edits.
+Its opaque bytes are preserved; the required `parts` subtree supplies the current inventory.
+
+The application's load observer is an optional instrumentation hook used by the tests, not a test service.
+The module-scope data-store runtime receives its retained metadata explicitly rather than closing over a factory invocation.
 
 The disconnected construction mock only hosts baseline construction/serialization. It is never the
 collaboration or summary service. The baseline determines the store count; registering a factory
@@ -48,8 +64,9 @@ does not instantiate another store.
 `harness/` owns application-independent test infrastructure. Its typed application contract and
 session lifecycle do not import HTML schema, content types, or runtime-factory implementation.
 [`html/test/htmlTestApplication.ts`](html/test/htmlTestApplication.ts) adapts the HTML application
-to that contract. [`html/test/htmlWorkflow.ts`](html/test/htmlWorkflow.ts) owns the HTML-specific
-workload and expectations; it is not the generic application API.
+to that contract.
+[`html/test/htmlWorkflow.spec.ts`](html/test/htmlWorkflow.spec.ts) contains the HTML-specific workload and expectations
+directly, rather than forwarding its only call to a separate workflow function.
 
 | Harness module                                                         | Responsibility                                                                                                             |
 | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
@@ -89,8 +106,8 @@ successful metadata. Configuring an ODSP driver here does not establish real-ser
 Put another application's format, model, and conversion code in its own sibling directory, not in
 `harness/`. Provide its test adapter for the shared application contract, then reuse the session and
 storage helpers. Keep its edit workload, serialization expectations, and model-specific assertions
-with its own tests. The generic harness must not learn that HTML has `first` and `second` parts or
-that the sample uses SharedTree.
+with its own tests.
+The generic harness must not learn the HTML application's part names or that the sample uses SharedTree.
 
 This separation creates a place for a later Markdown sample; it does not implement Markdown, a
 mixed-DDS native builder, or a universal application converter. Reuse the lifecycle machinery, not
@@ -103,12 +120,12 @@ than just equal HTML, and reads persisted part IDs from the accepted version. Th
 skipped work from work that merely produces identical bytes. It separately inspects native handles
 after the same runtime's first accepted full summary. Native reload disables seed conversion so a
 successful reload cannot accidentally hide continued dependence on the seed.
+The named-part cases also exercise empty/single/multiple-part documents and changing map membership.
+Undo regressions prevent a removed/restored subtree from reusing an older HTML handle after its subscription counter resets.
 
 Pending-state cases discard the original overlay and deny original seed-body reads. Fingerprint
 cases exercise real transport and native reload in addition to protocol units. The
-[README](README.md#what-the-scenario-checks) summarizes scenario coverage and provides normal and
-current-source commands. The source preloader is test tooling only; it is not an application loading
-layer or a replacement for package/API validation.
+[README](README.md#what-the-scenario-checks) summarizes scenario coverage and provides normal build/run commands.
 
 [`applicationIdentity.spec.ts`](html/test/applicationIdentity.spec.ts) verifies that external format,
 internal materialization rules, and native schema names are independent.

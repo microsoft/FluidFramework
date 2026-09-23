@@ -10,12 +10,8 @@ import type {
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
 
-import {
-	createProjectionManifest,
-	projectionKey,
-	projectionManifestBlobName,
-} from "../externalSeedFile.js";
-import { buildNativeBaseline } from "../nativeSeedBaseline.js";
+import { createProjectionManifest, projectionLayout } from "../appProjection.js";
+import { buildRuntimeSnapshot } from "../runtimeMaterialization.js";
 import { htmlMaterializationProfile, htmlProjector } from "../sampleRuntimeFactory.js";
 import { forward, seedRuntimeFactory } from "../seedRuntimeAdapter.js";
 
@@ -62,13 +58,16 @@ describe("Seed projection reference: forwarding", () => {
 
 	// Identical visible HTML at another checkpoint must not be mistaken for the same native genesis.
 	it("binds the canonical fingerprint to the source checkpoint", () => {
-		const parts = { first: "<p>a</p>", second: "<p>b</p>" };
+		const parts = [
+			{ name: "first", payload: "<p>a</p>" },
+			{ name: "second", payload: "<p>b</p>" },
+		];
 		assert.notEqual(
-			buildNativeBaseline(parts, 0).fingerprint,
-			buildNativeBaseline(parts, 1).fingerprint,
+			buildRuntimeSnapshot(parts, 0).fingerprint,
+			buildRuntimeSnapshot(parts, 1).fingerprint,
 		);
-		assert.throws(() => buildNativeBaseline(parts, -1));
-		assert.throws(() => buildNativeBaseline(parts, Number.NaN));
+		assert.throws(() => buildRuntimeSnapshot(parts, -1));
+		assert.throws(() => buildRuntimeSnapshot(parts, Number.NaN));
 	});
 
 	// Reject incompatible reconstruction before a native delegate could interpret pending operations.
@@ -77,12 +76,19 @@ describe("Seed projection reference: forwarding", () => {
 			baseSnapshot: {
 				blobs: {},
 				trees: {
-					[projectionKey]: {
+					[projectionLayout.key]: {
 						trees: {
-							first: { trees: {}, blobs: { "document.html": "first" } },
-							second: { trees: {}, blobs: { "document.html": "second" } },
+							[projectionLayout.parts]: {
+								blobs: {},
+								trees: {
+									first: { trees: {}, blobs: { "document.html": "first" } },
+									second: { trees: {}, blobs: { "document.html": "second" } },
+								},
+							},
 						},
-						blobs: { [projectionManifestBlobName]: "manifest" },
+						blobs: {
+							[projectionLayout.manifest]: "manifest",
+						},
 					},
 				},
 			},
@@ -98,7 +104,10 @@ describe("Seed projection reference: forwarding", () => {
 					manifestId: "manifest",
 					partBlobIds: { first: "first", second: "second" },
 					manifest: createProjectionManifest(),
-					parts: { first: "<p>a</p>", second: "<p>b</p>" },
+					parts: [
+						{ name: "first", payload: "<p>a</p>" },
+						{ name: "second", payload: "<p>b</p>" },
+					],
 				},
 				runtime: {},
 			},

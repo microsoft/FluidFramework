@@ -13,35 +13,40 @@ It is not owned by the test harness and does not promise production support for 
 
 ## Goal and implemented foundation
 
-Application projections connect application-owned representations and native collaborative state in both directions: load application content into the native model, and publish readable application content from that model.
+Application projections connect application-owned representations and Fluid's collaborative model in both directions: load application content into the model, and publish readable application content from it.
 A **seed** is the initial-file case, not the name of the whole capability.
+
+**Runtime/DDS state** means Fluid's runtime metadata and distributed data structure (DDS) representation, including the state that supports collaboration.
+It is not the original application seed.
+The word **native** in related code refers to this Fluid representation; it is not a separate summary type or another name for the original stored snapshot.
 
 Enable applications outside Fluid to create and read collaborative files through a documented application format.
 Creators supply application content, feature metadata, and assets; readers consume application state at a summary
 checkpoint without decoding DDS state or replaying operations.
 
 **Collaborative HTML canvases and rich-text documents motivate this work.** An external producer, including a Rust-based
-generator, should write HTML or Markdown without a native DDS encoder or document-conversion service. A collaborating
-application later loads that content, supports ordinary edits, and keeps a readable projection alongside native state.
+generator, should write HTML or Markdown without a DDS encoder or document-conversion service.
+A collaborating application later loads that content, supports ordinary edits, and keeps a readable projection alongside runtime/DDS state.
 The mechanisms are generic, but these creation, editing, reading, and asset requirements are the evaluation criteria.
 
 The implemented reference creates a two-part HTML seed without instantiating a Fluid Container, loads it into
-SharedTree, collaborates, and produces an accepted full native summary. The same runtime then generates incremental
-native summaries and skips serialization/upload of unchanged HTML parts. Pending-state restoration is also exercised.
+SharedTree, collaborates, and produces an accepted full summary containing runtime/DDS state.
+The same runtime then generates incremental summaries and skips serialization/upload of unchanged HTML parts.
+Pending-state restoration is also exercised.
 These mechanisms do not depend on a new storage download format, attachment-creation API, Markdown integration, or
 background worker.
 
 ```text
 External HTML/Markdown producer
   -> supported file-creation envelope and storage API
-  -> application runtime materializes a native Fluid model
+  -> application runtime materializes the Fluid model
   -> ordinary collaboration and accepted summaries
-  -> native Fluid state + readable application projection
+  -> runtime/DDS state + readable application projection
   -> external readers, optionally using a documented portable download format
 ```
 
-The application runtime owns parsing, schema, and native graph construction. Storage contracts independently determine
-creation, portable downloads, attachment ownership, and whether loading can omit large payload bodies.
+The application runtime owns parsing, schema, and construction of the runtime/DDS graph.
+Storage contracts independently determine creation, portable downloads, attachment ownership, and whether loading can omit large payload bodies.
 
 ## Priorities and independent directions
 
@@ -58,10 +63,11 @@ Use these priorities to evaluate the next work; none implies an external service
 
 ## Representations and authority
 
-| Representation | Contents                                                                                                 | Authority                                                                                                                           |
-| -------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Seed summary   | Loader-valid envelope and application-defined initial content, with any metadata the application chooses | Defines the initial state; accepted operations extend it before a native summary exists.                                            |
-| Native summary | Runtime/DDS state plus application projection at the same checkpoint                                     | Native state and subsequent operations are authoritative; the projection is a read representation, not an alternative write target. |
+| Representation            | Contents                                                                                                 | Authority                                                                                                                                |
+| ------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Seed summary              | Loader-valid envelope and application-defined initial content, with any metadata the application chooses | Defines the initial state; accepted operations extend it before a later summary stores the runtime/DDS state.                            |
+| Materialized loading view | Runtime/DDS snapshot generated locally from the original seed                                            | Represents the same source checkpoint without replacing the stored seed or writing initialization operations.                            |
+| Later accepted summary    | Runtime/DDS state plus application projection at the same checkpoint                                     | Runtime/DDS state and subsequent operations are authoritative; the projection is a read representation, not an alternative write target. |
 
 Applications define their own content layout, feature coverage, and optional manifest.
 The runtime does not require a manifest name, schema, format identifier, or version.
@@ -74,11 +80,11 @@ Never reconstruct an existing collaborative document from its projection while r
 | -------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | External content and optional manifest | Application and its file producers/readers. | A custom `manifest.json`, another metadata layout, or no manifest is valid from the generic runtime's perspective. The application reader, not Fluid, interprets any external format identity. |
 | Deterministic materialization profile  | Application runtime integration.            | Identify the reconstruction rules and enforce agreement between clients. Do not derive this identity from an external manifest or expose it as required application content.                   |
-| Native DDS schema identities           | Application's native model definition.      | Choose schema namespaces and evolution independently. The same schema can support different materialization rules, and a materialization policy can cover more than one schema.                |
+| DDS schema identities                  | Application's model definition.             | Choose schema namespaces and evolution independently. The same schema can support different materialization rules, and a materialization policy can cover more than one schema.                |
 
 Runtime support can compare compatibility evidence without defining what an application's profile means.
-The profile belongs to native/internal compatibility state, not the readable projection's content contract.
-Native snapshot and protocol metadata are not secret storage; keeping them outside the application representation is a separation of responsibilities, not a confidentiality guarantee.
+The profile belongs to internal runtime compatibility state, not the readable projection's content contract.
+Snapshot and protocol metadata are not secret storage; keeping them outside the application representation is a separation of responsibilities, not a confidentiality guarantee.
 
 **Seeds and projections are uncompressed trees of application blobs**, not nested archives. ZIP is only an option for
 the outer portable download containing the full file state: snapshot, blobs, operation tail, metadata, and attachments.

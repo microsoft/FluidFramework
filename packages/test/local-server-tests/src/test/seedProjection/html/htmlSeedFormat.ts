@@ -4,16 +4,35 @@
  */
 
 /**
- * This is a deliberately restricted, versioned format, NOT a browser HTML parser.
- * No error recovery, scripts, comments, URLs, styles, namespaces, or implicit closing tags.
+ * Example external format identifier recorded only in the application's optional manifest.
+ * It describes the readable layout, not runtime construction rules or the DDS schema.
+ * Readers recognize the parts subtree without depending on this metadata.
+ * Version 2 stores a variable set of named parts instead of the prototype's two fixed fields.
+ * Its HTML grammar has no browser error recovery, scripts, comments, URLs, styles, or namespaces.
  */
-export const externalHtmlFormat = "reference-html-parts/1";
-const tags = new Set(["div", "p", "span", "strong", "em", "ul", "li", "h1", "h2", "br"]);
-// The reference format accepts only these names and lowercase data-* keys.
+export const externalHtmlFormat = "reference-html-parts/2";
+/**
+ * Allowed element names in the application's restricted HTML grammar.
+ * Parsing seed bytes and serializing collaborative edits enforce the same allowlist.
+ */
+export const allowedHtmlTags: ReadonlySet<string> = new Set([
+	"div",
+	"p",
+	"span",
+	"strong",
+	"em",
+	"ul",
+	"li",
+	"h1",
+	"h2",
+	"br",
+]);
+/** Attribute names permitted in both external input and edited model output. */
 const attributeNamePattern = /^(?:id|class|title|data-[a-z][a-z0-9-]*)$/u;
-// The format rejects control characters and unpaired UTF-16 surrogates, but accepts valid Unicode pairs.
+/** Reject control characters and unpaired UTF-16 surrogates while accepting valid Unicode pairs. */
 // eslint-disable-next-line no-control-regex -- Rejecting these control characters is part of the format contract.
 const unsupportedCharacterPattern = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\uD800-\uDFFF]/u;
+/** The only named entities accepted by this deliberately restricted, non-browser parser. */
 const entities: Record<string, string> = {
 	amp: "&",
 	lt: "<",
@@ -21,7 +40,9 @@ const entities: Record<string, string> = {
 	quot: '"',
 	apos: "'",
 };
-/** Plain application content, independent of Fluid runtimes, DDSs, and node identities. */
+/**
+ * Plain application content, independent of Fluid runtimes, DDSs, and node identities.
+ */
 export type HtmlNode =
 	/** A literal text node after entity decoding. */
 	| { text: string }
@@ -33,25 +54,13 @@ function decode(text: string): string {
 	if (/&(?!amp;|lt;|gt;|quot;|apos;)/u.test(text)) {
 		throw new Error("Unsupported or unterminated entity");
 	}
-	return text.replace(/&(amp|lt|gt|quot|apos);/gu, (_, name: string) => entities[name]);
+	return text.replaceAll(/&(amp|lt|gt|quot|apos);/gu, (_, name: string) => entities[name]);
 }
 
-/** Encode text and attribute values using one deterministic spelling per reserved character. */
-function escape(text: string): string {
-	return text.replace(/[&<>"']/gu, (character) => {
-		const names: Record<string, string> = {
-			"&": "amp",
-			"<": "lt",
-			">": "gt",
-			'"': "quot",
-			"'": "apos",
-		};
-		return `&${names[character]};`;
-	});
-}
-
-/** Reject names outside the format before either parsing or serializing an attribute. */
-function validateAttributeName(name: string): void {
+/**
+ * Reject names outside the format before either parsing or serializing an attribute.
+ */
+export function validateAttributeName(name: string): void {
 	if (attributeNamePattern.exec(name)?.[0] !== name) {
 		throw new Error("Unsupported attribute name");
 	}
@@ -91,7 +100,7 @@ export function parseHtml(html: string): HtmlNode[] {
 				continue;
 			}
 			const start = /^<([a-z][a-z0-9]*)(?=[\s>])/u.exec(rest);
-			if (start === null || !tags.has(start[1])) {
+			if (start === null || !allowedHtmlTags.has(start[1])) {
 				throw new Error("Unsupported element");
 			}
 			const tag = start[1];
@@ -127,45 +136,4 @@ export function parseHtml(html: string): HtmlNode[] {
 		return children;
 	};
 	return parseChildren();
-}
-
-/**
- * Serialize supported application nodes to canonical HTML, rejecting unsupported native edits.
- * This is pure and does not mutate its input: identical content has identical attribute order,
- * entity spelling, and output bytes, with no clock, GUID, randomness, or environment dependence.
- */
-export function serializeHtml(nodes: readonly HtmlNode[]): string {
-	// The SharedTree schema intentionally models structure rather than an HTML
-	// language grammar. Validate edited native nodes too, not only seed input.
-	const result = serializeNodes(nodes, 0);
-	parseHtml(result);
-	return result;
-}
-
-/** Recursively serialize validated structure in document order, enforcing the nesting limit. */
-function serializeNodes(nodes: readonly HtmlNode[], depth: number): string {
-	if (depth > 64) {
-		throw new Error("HTML nesting exceeds reference format limit");
-	}
-	return nodes
-		.map((node) => {
-			if ("text" in node) {
-				return escape(node.text);
-			}
-			if (!tags.has(node.tag)) {
-				throw new Error("Unsupported element");
-			}
-			if (node.tag === "br" && node.children.length > 0) {
-				throw new Error("A br element cannot have children");
-			}
-			const attrs = Object.keys(node.attributes)
-				.sort()
-				.map((key) => {
-					validateAttributeName(key);
-					return ` ${key}="${escape(node.attributes[key])}"`;
-				})
-				.join("");
-			return `<${node.tag}${attrs}>${node.tag === "br" ? "" : `${serializeNodes(node.children, depth + 1)}</${node.tag}>`}`;
-		})
-		.join("");
 }

@@ -22,22 +22,37 @@ import { addBlobToSummary, SummaryTreeBuilder } from "@fluidframework/runtime-ut
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { configuredSharedTree } from "@fluidframework/tree/internal";
 
-import { parseHtml, serializeHtml } from "./htmlSeedFormat.js";
-import { HtmlDocument, toTree, viewConfiguration } from "./htmlTreeSchema.js";
-import type { IHtmlParts } from "./externalSeedFile.js";
+import type { IHtmlPart } from "./appProjection.js";
+import { documentFromParts, viewConfiguration } from "./htmlTreeSchema.js";
 
+/**
+ * Data store registry type selected by this application's runtime factory.
+ */
 export const storeType = "reference-html-store";
+/**
+ * Deterministic store ID in the generated runtime graph and compatibility descriptor path.
+ */
 export const storeId = "document";
+/**
+ * SharedTree channel ID inside the generated store.
+ */
 export const treeId = "tree";
+/**
+ * Persisted alias through which the runtime resolves its application entry point.
+ */
 export const rootAlias = "root";
+/**
+ * Genuine SharedTree factory with a pinned collaboration codec configuration.
+ */
 export const treeFactory = configuredSharedTree({ minVersionForCollab: "2.0.0" }).getFactory();
+/** Fixed allocation context for generated IDs; never reused as a live client's compressor session. */
 const genesisSession = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 
 /**
- * Complete native application baseline presented to ContainerRuntime before normal loading.
- * This is an in-memory projection, not a new persisted snapshot or a replacement protocol envelope.
+ * Generated runtime/DDS snapshot presented to ContainerRuntime before normal loading.
+ * This is not the original stored application seed, a persisted upload, or a replacement protocol envelope.
  */
-export interface INativeBaseline {
+export interface IMaterializedRuntimeSnapshot {
 	/** Full runtime-root summary containing native metadata, aliases, compressor, stores, and DDSs. */
 	summary: ISummaryTree;
 	/** Equivalent ID-only tree using deterministic `projected:<sha256>` virtual blob IDs. */
@@ -49,7 +64,7 @@ export interface INativeBaseline {
 }
 
 /**
- * Build an operation-compatible native SharedTree baseline for HTML at the source checkpoint.
+ * Generate an operation-compatible runtime/DDS snapshot for HTML at the stored seed's checkpoint.
  *
  * For fixed HTML, checkpoint, and pinned codec configuration, output must be byte-identical.
  * No fresh GUID, clock, random value, or live client identity may affect persisted state.
@@ -61,21 +76,21 @@ export interface INativeBaseline {
  * The mock supplies a disconnected DDS construction context; no collaboration or
  * summary upload/ACK is mocked in the scenario.
  *
- * htmlProjector invokes this before native runtime loading, including pending-state reconstruction.
+ * The application's htmlProjector invokes this during load, before loadContainerRuntime,
+ * including pending-state reconstruction. The non-Fluid producer never invokes this function.
+ * Once a stored runtime summary exists, the application loads it instead of rebuilding from HTML.
  * It preserves the source checkpoint and does not replay its op suffix. The fingerprint diagnoses
  * incompatible reconstruction; it is not a production first-op agreement or authentication protocol.
  */
-export function buildNativeBaseline(
-	parts: IHtmlParts,
+export function buildRuntimeSnapshot(
+	parts: readonly IHtmlPart[],
 	sequenceNumber: number,
-): INativeBaseline {
+): IMaterializedRuntimeSnapshot {
 	if (!Number.isSafeInteger(sequenceNumber) || sequenceNumber < 0) {
 		throw new Error("A native baseline requires a nonnegative integer checkpoint");
 	}
-	const canonicalParts = {
-		first: serializeHtml(parseHtml(parts.first)),
-		second: serializeHtml(parseHtml(parts.second)),
-	};
+	// Validate and sort before any runtime allocation. Parsing already canonicalizes attributes.
+	const document = documentFromParts(parts);
 	const compressor = toIdCompressorWithCore(createIdCompressor(genesisSession));
 	const runtime = new MockFluidDataStoreRuntime({
 		id: storeId,
@@ -86,12 +101,7 @@ export function buildNativeBaseline(
 	const channel = treeFactory.create(runtime, treeId);
 	const view = channel.viewWith(viewConfiguration);
 	try {
-		view.initialize(
-			new HtmlDocument({
-				first: toTree(parseHtml(canonicalParts.first)),
-				second: toTree(parseHtml(canonicalParts.second)),
-			}),
-		);
+		view.initialize(document);
 		// Detached initialization allocates real stable IDs. Finalize once, then
 		// serialize without a session: every live client gets a NEW local session.
 		compressor.finalizeCreationRange(compressor.takeNextCreationRange());

@@ -23,20 +23,16 @@ import type {
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import type { ITree } from "@fluidframework/tree";
 
-import {
-	projectionKey,
-	readApplicationProjection,
-	type HtmlPartId,
-} from "./externalSeedFile.js";
+import { projectionLayout, readApplicationProjection } from "./appProjection.js";
 import { viewConfiguration, type HtmlView } from "./htmlTreeSchema.js";
-import { IncrementalHtmlProjection } from "./incrementalHtmlProjection.js";
+import { HtmlSummaryProjection } from "./htmlSummaryProjection.js";
 import {
-	buildNativeBaseline,
+	buildRuntimeSnapshot,
 	rootAlias,
 	storeType,
 	treeFactory,
 	treeId,
-} from "./nativeSeedBaseline.js";
+} from "./runtimeMaterialization.js";
 import {
 	seedRuntimeFactory,
 	type IProjectionLoad,
@@ -52,9 +48,11 @@ import {
  * Application-internal identity of the deterministic HTML-to-SharedTree rules.
  * It is not the external HTML format, the native schema namespace, or a Fluid codec version.
  */
-export const htmlMaterializationProfile = "reference-html-materialization/1";
+export const htmlMaterializationProfile = "reference-html-materialization/2";
 
-/** Live application surface exposed by each independently loaded sample runtime. */
+/**
+ * Live application surface exposed by each independently loaded sample runtime.
+ */
 export interface IHtmlEntryPoint {
 	/** Collaborative HTML tree view, realized on interactive clients and summarizers before projection. */
 	view: HtmlView;
@@ -63,43 +61,51 @@ export interface IHtmlEntryPoint {
 }
 
 /**
- * Data store factory exposing a single SharedTree DDS per store instance, without a root Directory/Map.
- * The baseline already contains each store and channel: loading realizes them but never initializes
- * another graph or assigns aliases. This factory does not determine the number of store instances.
+ * Application data-store runtime preserving immutable construction identity beside the SharedTree channel.
+ * Loading realizes the generated or stored graph without initializing another graph or assigning aliases.
+ * The public summary extensions preserve ordinary native summary statistics and handle reuse.
  */
-function createDataStoreFactory(baseline: ISeedBaselineDescriptor): IFluidDataStoreFactory {
-	const identityContent = JSON.stringify(baseline);
-	const appendIdentity = (summary: ISummaryTreeWithStats): ISummaryTreeWithStats => {
+class HtmlDataStoreRuntime extends FluidDataStoreRuntime {
+	private readonly identityContent: string;
+
+	/** Capture the immutable descriptor independently of the factory's construction scope. */
+	public constructor(
+		baseline: ISeedBaselineDescriptor,
+		...args: ConstructorParameters<typeof FluidDataStoreRuntime>
+	) {
+		super(...args);
+		this.identityContent = JSON.stringify(baseline);
+	}
+
+	/** Add the internal descriptor without changing native channel summary statistics or handle rules. */
+	private appendIdentity(summary: ISummaryTreeWithStats): ISummaryTreeWithStats {
 		if (summary.summary.tree[seedBaselineBlobName] !== undefined) {
 			throw new Error("The native application identity path is reserved");
 		}
-		addBlobToSummary(summary, seedBaselineBlobName, identityContent);
+		addBlobToSummary(summary, seedBaselineBlobName, this.identityContent);
 		return summary;
-	};
-	/**
-	 * Extend the public data-store summary surface without adding a data structure or emitting operations.
-	 * Whole-store incremental handles retain the same immutable identity from the accepted parent.
-	 */
-	class HtmlDataStoreRuntime extends FluidDataStoreRuntime {
-		/**
-		 * Preserve ordinary channel summarization and add the immutable application identity with matching statistics.
-		 */
-		public override async summarize(
-			...args: Parameters<FluidDataStoreRuntime["summarize"]>
-		): Promise<ISummaryTreeWithStats> {
-			const summary = await super.summarize(...args);
-			return appendIdentity(summary);
-		}
-
-		/**
-		 * Include the same identity through the synchronous attach-summary surface without initializing another channel.
-		 */
-		public override getAttachSummary(
-			...args: Parameters<FluidDataStoreRuntime["getAttachSummary"]>
-		): ISummaryTreeWithStats {
-			return appendIdentity(super.getAttachSummary(...args));
-		}
 	}
+
+	/**
+	 * Preserve public native summarization and include the immutable identity with matching statistics.
+	 * Whole-store handles retain the identity already stored in the accepted parent.
+	 */
+	public override async summarize(
+		...args: Parameters<FluidDataStoreRuntime["summarize"]>
+	): Promise<ISummaryTreeWithStats> {
+		return this.appendIdentity(await super.summarize(...args));
+	}
+
+	/** Include the same descriptor through the public synchronous attach-summary surface. */
+	public override getAttachSummary(
+		...args: Parameters<FluidDataStoreRuntime["getAttachSummary"]>
+	): ISummaryTreeWithStats {
+		return this.appendIdentity(super.getAttachSummary(...args));
+	}
+}
+
+/** Load the already materialized store and DDS without initialization writes or new aliases. */
+function createDataStoreFactory(baseline: ISeedBaselineDescriptor): IFluidDataStoreFactory {
 	return {
 		type: storeType,
 		get IFluidDataStoreFactory() {
@@ -110,6 +116,7 @@ function createDataStoreFactory(baseline: ISeedBaselineDescriptor): IFluidDataSt
 				throw new Error("The baseline already contains the datastore and SharedTree");
 			}
 			const runtime = new HtmlDataStoreRuntime(
+				baseline,
 				context,
 				new Map([[treeFactory.type, treeFactory]]),
 				existing,
@@ -144,8 +151,8 @@ async function entryPoint(runtime: IContainerRuntime): Promise<IHtmlEntryPoint> 
 /**
  * Implement the {@link IProjector} contract for the reference HTML seed format.
  * A runtime metadata blob identifies a native snapshot; otherwise read the application projection
- * using the same external-reader contract and build the native baseline at the unchanged checkpoint.
- * The implementation details live in readApplicationProjection and buildNativeBaseline; the adapter
+ * using the same external-reader contract and generate the runtime snapshot at the unchanged checkpoint.
+ * The implementation details live in readApplicationProjection and buildRuntimeSnapshot; the adapter
  * overlays native state at the original checkpoint while the Loader owns op replay. See "Runtime-owned conversion"
  * in docs/content/Architecture/Application-Projections/Fluid-Design.md from the repository root.
  */
@@ -162,11 +169,14 @@ export const htmlProjector: IProjector = {
 			{ retained },
 		);
 	},
-	materialize: (seed, sequenceNumber) => buildNativeBaseline(seed.parts, sequenceNumber),
+	materialize: (seed, sequenceNumber) => buildRuntimeSnapshot(seed.parts, sequenceNumber),
 };
 
-/** Test-only observation joining the adapter's decision with the loaded native runtime and model. */
-export interface IAppObservation extends IProjectionLoad {
+/**
+ * Application load instrumentation for a host to inspect adaptation, runtime, and realized model.
+ * The test adapter records this same host-facing event; assertions and failure injection live in html/test.
+ */
+export interface IHtmlApplicationLoad extends IProjectionLoad {
 	/** Original loader context, kept separate from the native runtime's projected context. */
 	original: IContainerContext;
 	/** Actual loaded container runtime, not a mock or snapshot-builder instance. */
@@ -178,7 +188,7 @@ export interface IAppObservation extends IProjectionLoad {
 /**
  * Create the sample application's IRuntimeFactory, composing seed adaptation with normal native loading.
  * Realize the persisted SharedTree on every client, require full native state until its first tracked ACK,
- * and project the two HTML subtrees incrementally at this runtime's checkpoint. Loading emits no init ops.
+ * and project named HTML subtrees incrementally at this runtime's checkpoint. Loading emits no init ops.
  */
 export function sampleRuntimeFactory(
 	options: {
@@ -186,19 +196,19 @@ export function sampleRuntimeFactory(
 		allowProjection?: boolean;
 		/** Select application rules in the runtime factory, never from external content or the native schema. */
 		projector?: IProjector;
-		/** Receive a completed load's contexts, runtime, and model for workflow assertions. */
-		observe?: (observation: IAppObservation) => void;
-		/** Test-only callback instrumentation/failure injection at the summarizer's checkpoint. */
+		/** Inspect completed adaptation and model realization for host diagnostics. */
+		observe?: (observation: IHtmlApplicationLoad) => void;
+		/** Synchronous application checkpoint hook; throwing aborts projection before storage upload. */
 		beforeProjection?: (checkpoint: number) => void;
-		/** Test-only observation at the actual serializer boundary, never called for a reused part. */
-		onSerializePart?: (part: HtmlPartId) => void;
+		/** Measure actual serializer work; reused parts do not cross this boundary. */
+		onSerializePart?: (part: string) => void;
 		/** Observe effective generation mode and accepted parent without exposing mutable application state. */
 		observeSummary?: (context: ISummaryGenerationContext) => void;
 		/** Observe adoption after the projection's captured state becomes an accepted reuse baseline. */
 		onSummaryAccepted?: (context: ISummaryContext) => void;
 		/** Observe a fail-closed baseline disagreement, including captured pending runtime work. */
 		onFingerprintMismatch?: (failure: SeedBaselineMismatchError) => void;
-		/** Exercise ordinary native batching/compression/chunking without a separate test runtime. */
+		/** Configure ordinary native batching, compression, and chunking for the application transport. */
 		transportOptions?: Pick<
 			IContainerRuntimeOptions,
 			"enableGroupedBatching" | "compressionOptions" | "chunkSizeInBytes"
@@ -242,7 +252,7 @@ export function sampleRuntimeFactory(
 				summaryGenerationOptions: {
 					fullTreePolicy: load.projected ? "untilFirstAck" : "default",
 					additionalRootTree: {
-						key: projectionKey,
+						key: projectionLayout.key,
 						summarize: (context) => {
 							options.beforeProjection?.(load.context.deltaManager.lastSequenceNumber);
 							options.observeSummary?.(context);
@@ -254,7 +264,7 @@ export function sampleRuntimeFactory(
 			// Realize on EVERY client, including the noninteractive summarizer. No model
 			// initialization, alias creation or DDS writes occur here.
 			const app = await entryPoint(runtime);
-			const projection = new IncrementalHtmlProjection(app.view, options.onSerializePart, {
+			const projection = new HtmlSummaryProjection(app.view, options.onSerializePart, {
 				manifest: load.applicationManifest?.content,
 			});
 			runtime.once("dispose", () => projection.dispose());

@@ -11,14 +11,13 @@ import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal"
 import {
 	createApplicationProjection,
 	createProjectionManifest,
-	projectionKey,
-	projectionManifestBlobName,
+	projectionLayout,
 	readApplicationProjection,
 	type IApplicationProjection,
-} from "../externalSeedFile.js";
+} from "../appProjection.js";
 import { externalHtmlFormat } from "../htmlSeedFormat.js";
 import { HtmlDocument, htmlSchemaNamespace } from "../htmlTreeSchema.js";
-import { buildNativeBaseline } from "../nativeSeedBaseline.js";
+import { buildRuntimeSnapshot } from "../runtimeMaterialization.js";
 import { htmlMaterializationProfile, htmlProjector } from "../sampleRuntimeFactory.js";
 import {
 	createSeedBaselineDescriptor,
@@ -29,7 +28,11 @@ import {
 	SeedBaselineProtocol,
 } from "../seedBaselineFingerprint.js";
 
-const parts = { first: "<p>one</p>", second: "<p>two</p>" };
+/** Small named-parts source for independent application-identity tests. */
+const parts = [
+	{ name: "first", payload: "<p>one</p>" },
+	{ name: "second", payload: "<p>two</p>" },
+];
 
 /**
  * Build an application-only storage view.
@@ -39,11 +42,18 @@ function sourceSnapshot(manifest: boolean): ISnapshotTree {
 	return {
 		blobs: {},
 		trees: {
-			[projectionKey]: {
-				blobs: manifest ? { [projectionManifestBlobName]: "app-manifest" } : {},
+			[projectionLayout.key]: {
+				blobs: {
+					...(manifest ? { [projectionLayout.manifest]: "app-manifest" } : {}),
+				},
 				trees: {
-					first: { blobs: { "document.html": "first-html" }, trees: {} },
-					second: { blobs: { "document.html": "second-html" }, trees: {} },
+					[projectionLayout.parts]: {
+						blobs: {},
+						trees: {
+							first: { blobs: { "document.html": "first-html" }, trees: {} },
+							second: { blobs: { "document.html": "second-html" }, trees: {} },
+						},
+					},
 				},
 			},
 		},
@@ -55,8 +65,7 @@ function sourceSnapshot(manifest: boolean): ISnapshotTree {
  */
 async function readSource(manifest: string | undefined): Promise<IApplicationProjection> {
 	const blobs = new Map([
-		["first-html", parts.first],
-		["second-html", parts.second],
+		...parts.map(({ name, payload }): [string, string] => [`${name}-html`, payload]),
 	]);
 	if (manifest !== undefined) blobs.set("app-manifest", manifest);
 	return readApplicationProjection(sourceSnapshot(manifest !== undefined), async (id) => {
@@ -72,13 +81,12 @@ describe("HTML application identity separation", () => {
 			new Set([externalHtmlFormat, htmlMaterializationProfile, htmlSchemaNamespace]).size,
 			3,
 		);
-		assert.equal(htmlSchemaNamespace, "fluid-html-reference/2");
+		assert.equal(htmlSchemaNamespace, "fluid-html-reference/3");
 		assert.equal(HtmlDocument.identifier, `${htmlSchemaNamespace}.Document`);
 		assert.equal(htmlProjector.materializationProfile, htmlMaterializationProfile);
 		const manifest: unknown = JSON.parse(createProjectionManifest());
 		assert.deepEqual(manifest, {
 			format: externalHtmlFormat,
-			parts: { first: "first/document.html", second: "second/document.html" },
 		});
 	});
 
@@ -118,11 +126,11 @@ describe("HTML application identity separation", () => {
 			...htmlProjector,
 			materializationProfile: "application-with-wrapped-first-part/1",
 			materialize: (seed: IApplicationProjection, checkpoint: number) =>
-				buildNativeBaseline(
-					{
-						first: `<div>${seed.parts.first}</div>`,
-						second: seed.parts.second,
-					},
+				buildRuntimeSnapshot(
+					seed.parts.map(({ name, payload }) => ({
+						name,
+						payload: name === "first" ? `<div>${payload}</div>` : payload,
+					})),
 					checkpoint,
 				),
 		};
@@ -134,8 +142,7 @@ describe("HTML application identity separation", () => {
 
 	it("does not let application-owned manifest metadata choose native rules or a schema namespace", async () => {
 		const manifest = JSON.stringify({
-			format: externalHtmlFormat,
-			parts: { first: "first/document.html", second: "second/document.html" },
+			title: "Application-owned document metadata",
 			metadata: {
 				materializationProfile: "external-metadata-is-not-a-rule-selector",
 				schemaNamespace: "external-metadata-is-not-a-schema-selector",
@@ -145,31 +152,31 @@ describe("HTML application identity separation", () => {
 		assert.equal(source.manifest, manifest);
 		assert.deepEqual(
 			htmlProjector.materialize(source, 0).summary,
-			buildNativeBaseline(parts, 0).summary,
+			buildRuntimeSnapshot(parts, 0).summary,
 		);
 		assert.equal(htmlProjector.materializationProfile, htmlMaterializationProfile);
 		assert.equal(HtmlDocument.identifier, `${htmlSchemaNamespace}.Document`);
 	});
 
-	it("reads and materializes fixed application HTML paths without a manifest", async () => {
+	it("reads and materializes named application HTML paths without a manifest", async () => {
 		const source = await readSource(undefined);
 		assert.equal(source.manifestId, undefined);
 		assert.equal(source.manifest, undefined);
 		assert.deepEqual(source.parts, parts);
 		assert.deepEqual(
 			htmlProjector.materialize(source, 0).summary,
-			buildNativeBaseline(parts, 0).summary,
+			buildRuntimeSnapshot(parts, 0).summary,
 		);
 		const summary = createApplicationProjection(parts, { includeManifest: false });
-		assert.deepEqual(Object.keys(summary.tree).sort(), ["first", "second"]);
+		assert.deepEqual(Object.keys(summary.tree).sort(), [projectionLayout.parts]);
 	});
 
 	it("does not put its own compatibility descriptor into the canonical initial hash", () => {
-		const baseline = buildNativeBaseline(parts, 0);
+		const baseline = buildRuntimeSnapshot(parts, 0);
 		assert.equal(getSeedBaselineBlobId(baseline.snapshot), undefined);
 		const exported = createApplicationProjection(parts);
 		assert.equal(exported.tree[seedBaselineBlobName], undefined);
-		assert.equal(exported.tree[projectionManifestBlobName]?.type, SummaryType.Blob);
+		assert.equal(exported.tree[projectionLayout.manifest]?.type, SummaryType.Blob);
 	});
 
 	it("rejects retained manifest bytes without the source blob identity", async () => {
@@ -186,7 +193,7 @@ describe("HTML application identity separation", () => {
 
 	it("rejects an old exported descriptor instead of silently treating it as internal compatibility state", async () => {
 		const snapshot = sourceSnapshot(true);
-		const projection: ISnapshotTree | undefined = snapshot.trees[projectionKey];
+		const projection: ISnapshotTree | undefined = snapshot.trees[projectionLayout.key];
 		assert(projection !== undefined);
 		projection.blobs[seedBaselineBlobName] = "old-public-descriptor";
 		await assert.rejects(
@@ -199,7 +206,7 @@ describe("HTML application identity separation", () => {
 
 	it("does not silently reinterpret the old manifest.work envelope as manifest-free content", async () => {
 		const snapshot = sourceSnapshot(false);
-		const projection: ISnapshotTree | undefined = snapshot.trees[projectionKey];
+		const projection: ISnapshotTree | undefined = snapshot.trees[projectionLayout.key];
 		assert(projection !== undefined);
 		projection.blobs["manifest.work"] = "old-app-manifest";
 		await assert.rejects(

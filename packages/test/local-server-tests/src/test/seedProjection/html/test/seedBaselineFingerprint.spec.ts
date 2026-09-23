@@ -19,12 +19,17 @@ import {
 	seedBaselineMetadataKey,
 } from "../seedBaselineFingerprint.js";
 
+/** Retained named application content with stable storage IDs for descriptor tests. */
 const seed = {
 	manifestId: "manifest",
 	partBlobIds: { first: "first", second: "second" },
 	manifest: "{}",
-	parts: { first: "<p>one</p>", second: "<p>two</p>" },
+	parts: [
+		{ name: "first", payload: "<p>one</p>" },
+		{ name: "second", payload: "<p>two</p>" },
+	],
 };
+/** Fixed construction proof independent of any live runtime or transport session. */
 const descriptor = createSeedBaselineDescriptor(seed, 0, "profile/1", "a".repeat(64));
 
 function packet(metadata?: Record<string, unknown>): ISequencedDocumentMessage {
@@ -52,6 +57,32 @@ describe("Seed baseline fingerprint: packet contract", () => {
 		assert.throws(
 			() => new SeedBaselineProtocol(descriptor).validateProof(other),
 			SeedBaselineMismatchError,
+		);
+	});
+
+	it("binds the named blob mapping but not its enumeration order", () => {
+		const reordered = {
+			...seed,
+			parts: [...seed.parts].reverse(),
+			partBlobIds: { second: "second", first: "first" },
+		};
+		assert.equal(
+			createSeedBaselineDescriptor(reordered, 0, "profile/1", "a".repeat(64)).seedId,
+			descriptor.seedId,
+		);
+		const swapped = { ...seed, partBlobIds: { first: "second", second: "first" } };
+		assert.notEqual(
+			createSeedBaselineDescriptor(swapped, 0, "profile/1", "a".repeat(64)).seedId,
+			descriptor.seedId,
+		);
+		const renamed = {
+			...seed,
+			parts: [{ name: "renamed", payload: seed.parts[0].payload }, seed.parts[1]],
+			partBlobIds: { renamed: "first", second: "second" },
+		};
+		assert.notEqual(
+			createSeedBaselineDescriptor(renamed, 0, "profile/1", "a".repeat(64)).seedId,
+			descriptor.seedId,
 		);
 	});
 

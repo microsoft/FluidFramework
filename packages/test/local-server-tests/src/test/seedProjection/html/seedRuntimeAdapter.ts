@@ -14,12 +14,8 @@ import {
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 
-import {
-	projectionKey,
-	projectionManifestBlobName,
-	type IApplicationProjection,
-} from "./externalSeedFile.js";
-import type { INativeBaseline } from "./nativeSeedBaseline.js";
+import { projectionLayout, type IApplicationProjection } from "./appProjection.js";
+import type { IMaterializedRuntimeSnapshot } from "./runtimeMaterialization.js";
 import {
 	createSeedBaselineDescriptor,
 	readSeedBaselineDescriptor,
@@ -50,7 +46,9 @@ export function forward<T extends object>(source: T, overrides: Partial<T>): T {
 	});
 }
 
-/** Reconstruction identity retained with pending state to detect a different source or codec. */
+/**
+ * Reconstruction identity retained with pending state to detect a different source or codec.
+ */
 export interface IProvenance {
 	/**
 	 * Application-internal materialization rules, independent of the external format and native schema.
@@ -60,7 +58,7 @@ export interface IProvenance {
 	sourceVersion?: string;
 	/** Source checkpoint before the loader applies the sequenced operation suffix. */
 	sourceSequenceNumber: number;
-	/** INativeBaseline's 64-hex SHA-256 identity; diagnostic, not a consensus protocol. */
+	/** Generated runtime snapshot's 64-hex SHA-256 identity; diagnostic, not a consensus protocol. */
 	fingerprint: string;
 }
 
@@ -111,10 +109,15 @@ export interface IProjector {
 		retained?: IApplicationProjection,
 	): Promise<IApplicationProjection>;
 	/** Pure deterministic materialization for fixed seed/checkpoint/codec; never replay ops or allocate live sessions. */
-	materialize(seed: IApplicationProjection, sequenceNumber: number): INativeBaseline;
+	materialize(
+		seed: IApplicationProjection,
+		sequenceNumber: number,
+	): IMaterializedRuntimeSnapshot;
 }
 
-/** Both context views and the decision handed to the application's native runtime factory. */
+/**
+ * Both context views and the decision handed to the application's native runtime factory.
+ */
 export interface IProjectionLoad {
 	/** Actual loader-owned context; its source snapshot, checkpoint, storage identity, and ops remain unchanged. */
 	original: IContainerContext;
@@ -145,7 +148,7 @@ export function seedRuntimeFactory(
 	options: {
 		/** Set false to prove native reload works without a seed-materialization fallback. */
 		allowProjection?: boolean;
-		/** Test observation hook after adaptation and before invoking the native runtime factory. */
+		/** Observe adaptation at the loader/runtime boundary before the delegate realizes the model. */
 		observe?: (load: IProjectionLoad, original: IContainerContext) => void;
 		/** Opt into the reference packet protocol; the sample factory always enables it. */
 		enforceBaselineFingerprint?: boolean;
@@ -207,7 +210,7 @@ export function seedRuntimeFactory(
 				// Preserve the complete original envelope, including protocol and app provenance.
 				const projectTree = (
 					source: ISnapshotTree,
-					projectedBase: INativeBaseline,
+					projectedBase: IMaterializedRuntimeSnapshot,
 				): ISnapshotTree => ({
 					...source,
 					blobs: { ...source.blobs, ...projectedBase.snapshot.blobs },
@@ -354,7 +357,7 @@ export function seedRuntimeFactory(
 				});
 			}
 			const manifestId =
-				original.baseSnapshot.trees[projectionKey]?.blobs[projectionManifestBlobName];
+				original.baseSnapshot.trees[projectionLayout.key]?.blobs[projectionLayout.manifest];
 			const cachedManifest = pending?.applicationManifest;
 			const retainedManifest = projected
 				? seed?.manifest

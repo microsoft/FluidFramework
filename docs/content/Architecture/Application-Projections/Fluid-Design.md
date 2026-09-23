@@ -10,22 +10,28 @@ Sample-application and test-harness structure belongs in the [local design](../.
 Here, DDS means distributed data structure, GC means garbage collection, and ACK means a service acknowledgment of a summary proposal.
 Receiving an ACK and successfully adopting its state are distinct steps.
 
-One data store contains one real SharedTree with **two independently reusable HTML-part subtrees**. An external
-producer creates a loader-valid file from application content without instantiating a Fluid Container or encoding DDS
-state. The application runtime constructs that state locally; ordinary operations and accepted summaries then maintain
-both the collaborative model and the readable HTML projection.
+The **original seed snapshot** contains application content and loader protocol metadata, not DDS state.
+**Materialization** builds a local runtime/DDS snapshot from that seed, at the same source checkpoint.
+A later accepted summary stores runtime/DDS state and the readable application projection together.
+These are different stages: generated state is not the original stored seed, and opening the seed does not write a replacement file.
+The word **native** in related code is shorthand for Fluid's runtime/DDS representation, not a separate summary type.
+
+One data store contains one real SharedTree with **a map of independently reusable, named HTML-part subtrees**.
+The main scenario uses two parts; the same implementation supports variable part counts, including zero.
+An external producer creates a loader-valid file from application content without instantiating a Fluid container or encoding DDS state.
+The application runtime constructs that state locally; ordinary operations and accepted summaries then maintain both the collaborative model and the readable HTML projection.
 
 The reference contains no images or attachment migration. Application seeds and projections are uncompressed trees of
 blobs; an outer portable-download archive is a separate storage concern.
 
-| Component                  | Implemented behavior                                                                                                                                               |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| External creation/readback | Two HTML blobs and optional application-owned metadata; the same external reader consumes seed and accepted native snapshots without loading a runtime.            |
-| Deterministic bootstrap    | Bounded HTML codec, typed SharedTree schema, native DDS/compressor serializers, complete single-store fixture envelope, stable initial identities and fingerprint. |
-| Runtime-owned loading      | Seed-aware factory, coherent snapshot/storage overlay, retained source provenance, no initialization writes, and pending-state reconstruction.                     |
-| Native summaries           | Full structural native/GC state through the first tracked accepted summary, then incremental generation in the same runtime.                                       |
-| Application summaries      | Synchronous checkpoint capture, proposal-specific acceptance, dirty-part tracking, subtree-handle reuse, and loading-group metadata.                               |
-| Real lifecycle             | Independent clients, concurrent edits, failed summary/retry, storage upload/ACK, native reload, and grouped readback against Memorylicious.                        |
+| Component                  | Implemented behavior                                                                                                                                           |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| External creation/readback | Named HTML blobs and optional opaque application metadata; one reader consumes seeds and later accepted snapshots without loading a runtime.                   |
+| Deterministic bootstrap    | Restricted HTML codec, typed SharedTree schema, DDS/compressor serializers, complete single-store fixture envelope, stable initial identities and fingerprint. |
+| Runtime-owned loading      | Seed-aware factory, coherent snapshot/storage overlay, retained source provenance, no initialization writes, and pending-state reconstruction.                 |
+| Runtime summaries          | Full structural runtime/DDS and GC state through the first tracked accepted summary, then incremental generation in the same runtime.                          |
+| Application summaries      | Synchronous checkpoint capture, proposal-specific acceptance, dirty-part tracking, subtree-handle reuse, and loading-group metadata.                           |
+| Real lifecycle             | Independent clients, concurrent edits, failed summary/retry, storage upload/ACK, native reload, and grouped readback against Memorylicious.                    |
 
 Opening a file from an initial snapshot containing only seed data must not persist initialization, aliases, schema
 defaults, or a summary merely to render it and allow editing. Only actual user edits initiate document writes.
@@ -40,20 +46,20 @@ document/version identity, and replay of the sequenced operation suffix.
 ```text
 Load original seed snapshot and protocol
   -> application runtime factory reads application blobs
-  -> construct a deterministic native snapshot and runtime-local storage overlay
+  -> construct a deterministic runtime/DDS snapshot and runtime-local storage overlay
   -> load ContainerRuntime as an existing document at the original checkpoint
   -> ordinary collaboration
-  -> first accepted full native summary + readable projection
-  -> incremental native/projection summaries in the same runtime
-  -> later clients load the persisted native model directly
+  -> first accepted full summary containing runtime/DDS state + readable projection
+  -> incremental runtime/projection summaries in the same runtime
+  -> later clients load the persisted runtime/DDS state directly
 ```
 
 The adapter forwards the original context's live properties and method receivers. It overlays `baseSnapshot`,
 `snapshotWithContents`, and storage reads consistently; it does not modify loader/driver caches or replay operations
 itself. Group-only fetches are not substituted for the complete native loading snapshot.
 
-**After a native summary exists, loading that summary does not rebuild a model from HTML.** The factory recognizes
-persisted native metadata and loads the stored runtime/DDS state directly, followed by normal operation replay.
+**After a summary stores runtime/DDS state, loading it does not rebuild a model from HTML.**
+The factory recognizes the runtime metadata and loads the stored runtime/DDS state directly, followed by normal operation replay.
 The readable projection is not an alternate write authority.
 
 Loading groups address transport, not conversion: if storage includes every HTML body in the initial snapshot response,
@@ -64,37 +70,41 @@ The implementation uses the existing runtime-factory loading boundary without lo
 options to ContainerRuntime. Its exact tested and untested loading cases are listed below, rather than relying on an
 unspecified production-readiness claim.
 
-## File format and native baseline
+## File format and runtime materialization
 
-The HTML application stores `first/document.html` and `second/document.html` under `applicationProjection`.
-Its optional `manifest.json` uses the example-specific format identifier `reference-html-parts/1`.
-That file and identifier are application choices, not a required Fluid manifest or a selector for native reconstruction.
-The sample also accepts manifest-free content and preserves application metadata without treating it as runtime configuration.
-`HtmlDocument.first` and `.second` are distinct SharedTree child arrays.
+The HTML application stores `parts/<name>/document.html` under `applicationProjection`.
+The required `parts` subtree is the part index; an empty subtree represents an empty document.
+Its default optional `manifest.json` contains the example-specific format label `reference-html-parts/2`.
+That metadata is opaque to this reader and runtime integration: it is not a part index or a selector for materialization rules or schema.
+The sample also accepts manifest-free content and custom metadata, without a separate required format-identity blob.
+`HtmlDocument.parts` is a SharedTree map whose values are distinct child arrays.
+Part names are validated and sorted by code units before constructing nodes; enumeration order has no application meaning.
 The pure codec rejects unsupported HTML rather than silently dropping content.
-Creation and external reading import no DDS/runtime.
+External creation and reading do not instantiate a DDS or load an application runtime.
 
 The three identities are independent:
 
-| Identity                    | Sample choice                                                     | Meaning                                                                        |
-| --------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| External application format | `externalHtmlFormat = "reference-html-parts/1"`                   | Interpretation of the sample's optional application manifest.                  |
-| Materialization rules       | `htmlMaterializationProfile = "reference-html-materialization/1"` | Application-internal deterministic reconstruction contract.                    |
-| SharedTree namespace        | `htmlSchemaNamespace = "fluid-html-reference/2"`                  | Stable native schema identifiers, preserved independently of the other labels. |
+| Identity                    | Sample choice                                                     | Meaning                                                                                  |
+| --------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| External application format | `externalHtmlFormat = "reference-html-parts/2"`                   | Label written to the sample's default optional metadata; not interpreted by the runtime. |
+| Materialization rules       | `htmlMaterializationProfile = "reference-html-materialization/2"` | Application-internal deterministic reconstruction contract.                              |
+| SharedTree namespace        | `htmlSchemaNamespace = "fluid-html-reference/3"`                  | Schema identifiers, versioned independently of the other labels.                         |
 
 `IProjector.materializationProfile` is supplied by application code, never selected from external metadata.
 Clients must agree on the profile even when two profiles happen to produce identical native bytes for a particular input.
 The same schema can support different reconstruction rules; native schema naming is not a materialization-version scheme.
 
-`nativeSeedBaseline.ts` is a test-internal fixture builder, not a new public native-file encoder. Real SharedTree and
-compressor serializers own their formats. The fixture specifies the enclosing runtime/store/channel envelope, including
-the persisted root alias. Loading never calls alias assignment or creates a replacement graph.
+`runtimeMaterialization.ts` builds the generated runtime snapshot during application loading, not external file creation.
+It is a test-internal construction fixture, not a new public snapshot encoder.
+Real SharedTree and compressor serializers own their formats.
+The fixture specifies the enclosing runtime/store/channel envelope, including the persisted root alias.
+Loading never calls alias assignment or creates a replacement graph.
 
 Compatible inputs use a fixed, finalized genesis compressor session serialized without a live session. Each loaded
 client receives a different live compressor session. Pinned schema/codec/profile and deterministic traversal must not
 depend on wall clock, random IDs, host locale, or asynchronous completion order.
 
-The baseline fingerprint is a lowercase SHA-256 of the ordered native snapshot, whose content-addressed virtual blob IDs
+The baseline fingerprint is a lowercase SHA-256 of the ordered generated runtime snapshot, whose content-addressed virtual blob IDs
 bind the payload bytes. It captures the initial graph and checkpoint, not later edits or client-local state. Fingerprint
 transport and validation are specified separately from construction so a local equality assertion is not mistaken for
 an operation-level compatibility check.
@@ -112,7 +122,7 @@ The canonical initial native hash is computed before adding this descriptor, avo
 There is no extra DDS, initialization operation, or private runtime interception.
 The descriptor remains native/protocol metadata, not secret storage.
 
-Earlier prototype files using `manifest.work` or only an exported baseline descriptor are rejected explicitly.
+Earlier prototype files using fixed `first`/`second` fields, `manifest.work`, or only an exported baseline descriptor are rejected explicitly.
 This revision does not silently reinterpret those layouts or implement migration.
 
 The factory adapter adds `seedBaseline` metadata to **every physical outgoing runtime operation packet** after native
@@ -196,13 +206,15 @@ exact accepted parent. It returns `IApplicationProjectionSummary`, containing a 
 Capture uses the summarizer's sequenced state while incoming processing is paused, not an interactive client's
 optimistic pending edits. The root callback also runs when unchanged native descendants reuse handles.
 
-`IncrementalHtmlProjection` subscribes to each part's native subtree, the structural parent, and document-root
+`HtmlSummaryProjection` subscribes to each part's SharedTree subtree, the named-parts map, and document-root
 replacement. It checks local dirty counters **before traversing or serializing HTML**, and captures those counters with
 the proposal. Acceptance promotes captured counters, never the current counters at ACK time; edits during upload remain
 dirty.
+Reuse also requires the same uninterrupted subscription, not just the same node and counter value.
+If an edited part is removed and restored by undo, a new subscription cannot make its reset counter match an older accepted capture.
 
 An unchanged part with a matching accepted parent becomes a subtree handle at
-`/applicationProjection/first` or `/applicationProjection/second`. The storage driver resolves that path in the upload's
+`/applicationProjection/parts/<name>`. The storage driver resolves that path in the upload's
 accepted parent. This avoids both HTML encoding and payload upload; it is not a content hash or a virtual blob ID.
 The optional application manifest is preserved byte-for-byte, including custom metadata; manifest absence remains absence.
 
@@ -213,6 +225,7 @@ instead of comparing local event counts across clients. Replacing/moving content
 The real lifecycle edits only the first part and checks all three properties of the second: no additional serializer
 calls, a handle rather than payload in the submitted summary, and an unchanged persisted HTML blob ID after acceptance.
 Both parts remain readable through the external reader, including when loading groups omit their bodies initially.
+Additional real-service cases cover zero, one, and three parts, and changes to map membership.
 
 ## Loading, restoration, and remaining SDK work
 
@@ -240,7 +253,7 @@ This document makes no prescribed PR count or requirement to discard and reimple
 
 The generation options are an exposed API surface with release tags matching their containing loading API.
 They are not internal-only merely because one consumer lives in a test package.
-Normal workspace builds, lint, and generated API checks remain necessary; the reference's optional source loader only addresses stale local outputs.
+Use normal workspace builds, lint, and generated API checks to validate changes.
 
 The application-side changes solve different problems and do not require new Loader or driver conversion APIs:
 
