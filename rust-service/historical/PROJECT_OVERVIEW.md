@@ -1,6 +1,6 @@
 # Sea: Project Overview
 
-Project record as of 2026-09-22; measurements use the revisions listed below.
+Project record as of 2026-09-23; measurements use the revisions listed below.
 For the current implementation and limitations, start with the [project README](../README.md).
 
 Sea (Snapshotted Event Archive) is an experimental Rust service for ordered application events, immutable blob trees, and snapshots.
@@ -54,7 +54,8 @@ They support the method and its limits, not the complete private-evaluation chro
 
 ## Measurement Scope
 
-**Measured 2026-09-20:** service/source results at Sea `92ecf30f4a7`; paired browser results at `9cb45f707ab`, with benchmark-only changes for WebSocketStream; Tinylicious LevelDB includes repair `cf89ceb2ec1`.
+**SEA table values refreshed 2026-09-23:** service results at Sea `c9ce497936d`; Tinylicious values remain from the earlier campaigns described below.
+**Measured 2026-09-20:** remaining service/source results at Sea `92ecf30f4a7`; paired browser results at `9cb45f707ab`, with benchmark-only changes for WebSocketStream; Tinylicious LevelDB includes repair `cf89ceb2ec1`.
 **End-to-end tests refreshed 2026-09-21:** Sea passes all 669 recorded Tinylicious current-version passes, plus 20 more.
 160 retained passing browser samples (80 per distributed data structure (DDS) mode; one additional failed campaign retained), 180 passing repeated service samples, 104 storage probes, and 33 additional LevelDB probes.
 Local, single-host stack comparisons: different features, transports, and persistence guarantees; not production capacity or a language-only comparison.
@@ -62,7 +63,7 @@ Local, single-host stack comparisons: different features, transports, and persis
 ## At a Glance
 
 Throughput cells give **64-byte / 8,192-byte offered ops/s**, using eight service cores and four separate generator cores.
-These are single-run threshold passes from the storage exploration, not repeated capacity estimates or equal-durability comparisons.
+The refreshed Sea throughput values are single-run threshold passes, not repeated capacity estimates or equal-durability comparisons.
 ✅ marks a favorable measured result or a shared positive outcome within the stated scope, not overall superiority.
 
 | Aspect | Snapshotted Event Archive (SEA) | Tinylicious |
@@ -77,10 +78,10 @@ These are single-run threshold passes from the storage exploration, not repeated
 
 | Aspect | Snapshotted Event Archive (SEA) | Tinylicious |
 | --- | --- | --- |
-| Op throughput: memory<br>(64 B / 8,192 B payload)<br>(8 cores) | ✅ 88,000 / 38,000 ops/s | 950 / 800 ops/s |
-| Op throughput: disk, buffered<br>(64 B / 8,192 B payload)<br>(8 cores) | ✅ 46,000 / 30,000 ops/s | 900 / 100 ops/s (LevelDB) |
-| Op throughput: durable<br>(64 B / 8,192 B payload)<br>(8 cores) | ✅ 2,000 / 160 ops/s<br>(inconsistent) | ❌ No durable ack in tested config |
-| Memory at matched 500 ops/s<br>(64 B / 8,192 B payload)<br>(4 cores) | ✅ 42.49 / 74.75 MiB RSS | 168.53 / 220.72 MiB RSS |
+| Op throughput: memory<br>(64 B / 8,192 B payload)<br>(8 cores) | ✅ 68,000 / 36,000 ops/s | 950 / 800 ops/s |
+| Op throughput: disk, buffered<br>(64 B / 8,192 B payload)<br>(8 cores) | ✅ 10,000 / 9,000 ops/s | 900 / 100 ops/s (LevelDB) |
+| Op throughput: durable<br>(64 B / 8,192 B payload)<br>(8 cores) | ✅ 1,000 / 120 ops/s<br>(inconsistent) | ❌ No durable ack in tested config |
+| Memory at matched 500 ops/s<br>(64 B / 8,192 B payload)<br>(4 cores) | ✅ 42.11 / 74.40 MiB RSS | 168.53 / 220.72 MiB RSS |
 
 Source scopes include tests and different feature sets; dependency and test counts are not quality scores.
 Sea's WebTransport and WebSocketStream paths support streaming backpressure; ordinary WebSocket uses bounded fail-stop receive queues instead.
@@ -219,19 +220,40 @@ xychart-beta horizontal
   title "Service memory at 500 ops/s"
   x-axis ["Sea, 64 B", "Tinylicious, 64 B", "Sea, 8192 B", "Tinylicious, 8192 B"]
   y-axis "Median mean RSS (MiB)" 0 --> 250
-  bar [42.49, 168.53, 74.75, 220.72]
+  bar [42.11, 168.53, 74.40, 220.72]
 ```
 
 | Payload | Service | Mean RSS median (min-max), MiB | CPU, % | Worst-worker p95 median, ms |
 | --- | --- | ---: | ---: | ---: |
-| 64 bytes | Sea | 42.49 (42.40-42.64) | 9.43 | 0.46 |
+| 64 bytes | Sea | 42.11 (42.01-42.26) | 9.63 | 0.48 |
 | 64 bytes | Tinylicious | 168.53 (167.57-170.99) | 38.81 | 2.14 |
-| 8,192 bytes | Sea | 74.75 (74.69-74.86) | 14.85 | 0.71 |
+| 8,192 bytes | Sea | 74.40 (74.31-74.66) | 14.85 | 0.67 |
 | 8,192 bytes | Tinylicious | 220.72 (218.28-222.40) | 48.09 | 3.04 |
 
 RSS is the median of run means; CPU is the median, with 100% equal to one occupied core.
 Latency is the median of run worst-worker p95 values, not a pooled percentile.
 Every matched sample delivered 500 ops/s; retained history and duration match.
+
+### SEA Table Refresh (2026-09-23)
+
+The refreshed Sea cells use commit `c9ce497936d6ecbbacb3e529dd64bf5706816638`.
+The runner, native generator, and service configuration are unchanged from the documented stress method:
+32 documents, one writer and observer each, native WebSocket for throughput, four separate generator cores, three warmup seconds, and ten measured seconds.
+The matched-load samples use the production Node/WASM WebSocket client.
+
+The throughput rerun retained 24 attempts: ten passes, 13 completed threshold failures, and one durable-small pre-load failure.
+The table reports the highest observed pass for each cell.
+The corresponding higher failures were 76,000 / 38,000 ops/s for memory, 15,000 / 12,000 ops/s for buffered-file, and 1,500 / 160 ops/s for durable-file.
+The 1,500 ops/s durable-small bracket uses a separate completed threshold failure because the 1,250 ops/s probe failed before its workers were ready.
+Durable-large remained non-monotonic: 40 and 80 ops/s reset connections before the 120 ops/s pass, and 160 ops/s failed.
+
+All 20 matched-load samples passed with zero final errors or missing deliveries.
+Sea RSS values are medians of ten run means, with payload order matching the table.
+The rerun used the same AMD EPYC 7763 host and workspace-backed filesystem as the recent resource-policy baseline.
+The toolchain was Rust 1.98.1 and Node.js 22.23.2.
+An unrelated host file scan was stopped before retained collection began.
+These short single-host results do not establish stable maximum capacity.
+Commands, artifact hashes, manifests, and raw results are in the [retained refresh dataset](measurements/sea-table-refresh-20260923/README.md).
 
 ## Repeated Throughput
 
@@ -396,6 +418,9 @@ Commands, build hashes, raw results, and reproduction details: [paired browser e
 </details>
 
 ## Storage and Core Exploration
+
+This section preserves the 2026-09-20 campaign at `92ecf30f4a7`.
+Its Sea eight-core rows are historical; the refreshed values used by the overview table are in [SEA Table Refresh (2026-09-23)](#sea-table-refresh-2026-09-23).
 
 **Offered ops/s: highest observed threshold pass / higher completed threshold failure.**
 Single-run probes, not repeated capacity brackets; durable results are non-monotonic.
